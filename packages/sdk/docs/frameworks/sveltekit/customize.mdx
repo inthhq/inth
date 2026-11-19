@@ -1,6 +1,6 @@
 ---
 title: Customize
-description: Render c15t brand colors on the SvelteKit server with generateThemeCSS, and change slots, button styles, banner shape and copy.
+description: Render Inth brand colors on the SvelteKit server with generateThemeCSS, and change slots, button styles, banner shape and copy.
 group: frameworks
 ---
 
@@ -8,7 +8,7 @@ group: frameworks
 
 | Change | Use |
 | --- | --- |
-| Brand colors, radius, type, spacing | `generateThemeCSS()` in a server load, or `--c15t-*` variables in a stylesheet |
+| Brand colors, radius, type, spacing | `generateThemeCSS()` in a server load, or `--inth-*` variables in a stylesheet |
 | One part of one component | `theme.slots` on the provider |
 | Button styles by action | `theme.consentActions` |
 | Shape, position, blocking, button order | `ConsentBanner` props or `presentation` |
@@ -45,10 +45,10 @@ Render it in `<svelte:head>` in the layout:
 <include src="../../shared/examples/sveltekit/theme-style.mdx" />
 
 SvelteKit writes `<svelte:head>` content before its stylesheet links, and
-`c15tHandle` adds c15t's default rules at the end of `<head>`. The
+`inthHandle` adds Inth's default rules at the end of `<head>`. The
 `generateThemeCSS` selectors are more specific than those defaults, so the
-theme still wins. Keep the `c15t-theme` id. In development, the provider logs a warning when its
-`theme` prop has tokens and the page has no `<style id="c15t-theme">`. `generateThemeCSS` escapes `<`,
+theme still wins. Keep the `inth-theme` id. In development, the provider logs a warning when its
+`theme` prop has tokens and the page has no `<style id="inth-theme">`. `generateThemeCSS` escapes `<`,
 so its output is safe inside a `<style>` element.
 
 `generateThemeCSS` fills in what you leave out, such as a readable text color
@@ -59,7 +59,7 @@ only. [Theme tokens](/docs/customization/tokens) lists every token.
 
 ### Use a stylesheet instead
 
-For fixed brand values you can skip the generator. Write the `--c15t-*`
+For fixed brand values you can skip the generator. Write the `--inth-*`
 variables on `:root` in a stylesheet and import it in the root layout:
 
 <include src="../../shared/examples/svelte/theme-css.mdx" />
@@ -67,7 +67,7 @@ variables on `:root` in a stylesheet and import it in the root layout:
 Set the hover and text colors yourself; a stylesheet does not derive them.
 
 Pick one of the two for each token. `generateThemeCSS` output outranks a plain
-`:root` rule, so a `--c15t-*` value you set on `:root` loses to the generated
+`:root` rule, so a `--inth-*` value you set on `:root` loses to the generated
 theme wherever the two overlap. To override a generated value from your
 stylesheet, write the rule on `:root:root`, or move the value into the theme.
 

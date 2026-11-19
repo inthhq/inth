@@ -1,6 +1,6 @@
 'use client';
 
-import { benchPolicy } from '@c15t/benchmarking/bench-policy';
+import { benchPolicy } from '@inth/benchmarking/bench-policy';
 import { ConsentProvider } from '@inth/react/provider';
 import dynamic from 'next/dynamic';
 import { useState } from 'react';

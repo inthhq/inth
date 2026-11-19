@@ -1,5 +1,5 @@
 /* oxlint-disable no-await-in-loop -- Each capture navigates the same browser page and compares against the preceding React render. */
-import { diffComputedStyleMap } from '@c15t/conformance';
+import { diffComputedStyleMap } from '@inth/conformance';
 import { expect, test } from '@playwright/test';
 
 import { captureComputedStyleMap } from '../src/diff-computed-style';
@@ -27,7 +27,7 @@ const tabs = [
 	'Events',
 	'Actions',
 ] as const;
-const rootSelector = '[data-c15t-dev-tools]';
+const rootSelector = '[data-inth-dev-tools]';
 
 // All framework renders are captured in the same Chromium run. This avoids
 // OS-specific font baselines and deliberately does not use toHaveScreenshot,
@@ -89,14 +89,14 @@ for (const colorScheme of ['light', 'dark'] as const) {
 					document.documentElement.classList.toggle('dark', scheme === 'dark');
 					document.documentElement.style.colorScheme = scheme;
 				}, colorScheme);
-				await expect(root.locator('.c15t-dev-tools__panel')).toHaveCSS(
+				await expect(root.locator('.inth-dev-tools__panel')).toHaveCSS(
 					'background-color',
 					colorScheme === 'dark' ? 'rgb(18, 18, 18)' : 'rgb(255, 255, 255)'
 				);
 				for (const tab of [...tabs, 'Launcher']) {
 					if (tab === 'Launcher') {
 						await root
-							.getByRole('button', { name: 'Close c15t DevTools' })
+							.getByRole('button', { name: 'Close Inth DevTools' })
 							.click();
 					} else {
 						await root.getByRole('tab', { exact: true, name: tab }).click();
@@ -133,7 +133,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
 						[
 							element,
 							...element.querySelectorAll<HTMLElement>(
-								'.c15t-dev-tools__panel, .c15t-dev-tools__tabs, .c15t-dev-tools__content'
+								'.inth-dev-tools__panel, .inth-dev-tools__tabs, .inth-dev-tools__content'
 							),
 						].some((item) => item.scrollWidth > item.clientWidth + 1)
 					);
@@ -149,9 +149,9 @@ for (const colorScheme of ['light', 'dark'] as const) {
 					const dom = (
 						await captureDomSnapshot(page, rootSelector, { includeRoot: true })
 					)
-						.replace(/c15t-dev-tools-\d+/gu, 'c15t-dev-tools-instance')
-						.replace(/c15t-[0-9a-f]{8}\b/gu, 'c15t-anonymized-script');
-					expect(dom).toContain('data-c15t-dev-tools');
+						.replace(/inth-dev-tools-\d+/gu, 'inth-dev-tools-instance')
+						.replace(/inth-[0-9a-f]{8}\b/gu, 'inth-anonymized-script');
+					expect(dom).toContain('data-inth-dev-tools');
 					const a11y = await root.ariaSnapshot();
 					const styles = await captureComputedStyleMap(page, rootSelector, '*');
 					const reference = baseline.get(tab);

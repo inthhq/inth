@@ -4,7 +4,7 @@
  * Drives the shared `runConformanceSuite` against real Angular
  * applications:
  * - `mount` boots the fixture with `createApplication` under
- *   `provideC15t()`, rendering the components registered for the requested
+ *   `provideInth()`, rendering the components registered for the requested
  *   kind in `conformance-registry.ts`.
  * - `getStore` projects the provider's live kernel snapshot into the
  *   v2-compatible shape the shared suite asserts.
@@ -20,14 +20,14 @@ import {
 	IAB_FIXTURE_CMP_VERSION,
 	MINIMAL_GVL,
 	runConformanceSuite,
-} from '@c15t/conformance';
+} from '@inth/conformance';
 import type {
 	MountableComponent,
 	MountOptions,
 	MountResult,
 	SuiteApi,
 	TestDriver,
-} from '@c15t/conformance';
+} from '@inth/conformance';
 import { deferInitGvl } from '@inth/sdk/engine';
 import type {
 	AllConsentNames,
@@ -46,7 +46,7 @@ import { describe, expect, test } from 'vitest';
 
 import { testing } from '../../testing/src/testing-mode';
 import { whenIABReady } from '../lib/core/iab-loader';
-import type { C15tOptions, C15tProviderOptions } from '../lib/core/options';
+import type { InthOptions, InthProviderOptions } from '../lib/core/options';
 import { bootClient, renderServer } from './conformance-app';
 import type { ClientApp } from './conformance-app';
 import { CONFORMANCE_COMPONENTS } from './conformance-registry';
@@ -90,7 +90,7 @@ const entriesFor = function entriesFor(component: MountableComponent) {
 };
 
 const consentCategoriesFor = function consentCategoriesFor(
-	options: Partial<C15tOptions>
+	options: Partial<InthOptions>
 ) {
 	return options.consentCategories?.length === 0
 		? [...DEFAULT_CONSENT_CATEGORIES]
@@ -99,8 +99,8 @@ const consentCategoriesFor = function consentCategoriesFor(
 
 const buildProviderOptions = function buildProviderOptions(
 	opts: MountOptions
-): C15tOptions {
-	const provided = (opts.providerOptions ?? {}) as Partial<C15tOptions>;
+): InthOptions {
+	const provided = (opts.providerOptions ?? {}) as Partial<InthOptions>;
 	const rule = normalizePolicyRule({
 		categories: consentCategoriesFor(provided).filter(
 			(name) => name !== 'necessary'
@@ -131,7 +131,7 @@ const buildProviderOptions = function buildProviderOptions(
 		opts.initMode !== 'pending' && opts.initMode !== 'failing';
 	const prefetch: KernelConfig = {
 		...(provided.prefetch ?? {}),
-		initialBranding: 'c15t',
+		initialBranding: 'inth',
 		// A server that resolved an IAB policy ships the vendor list in the
 		// state; the lazy `@inth/sdk/iab` factory only seeds it on the client.
 		initialIab:
@@ -155,7 +155,7 @@ const buildProviderOptions = function buildProviderOptions(
 		persistence: opts.persistence ?? provided.persistence ?? false,
 		prefetch,
 		trapFocus: provided.trapFocus ?? false,
-	} as C15tOptions;
+	} as InthOptions;
 	// Real IAB wiring: the provider turns this into `createIAB`, which seeds
 	// the kernel's IAB slice (enabled + GVL + CMP id).
 	if (isIabComponent(opts.component)) {
@@ -247,7 +247,7 @@ const driver: TestDriver = {
 
 		const container = document.createElement('div');
 		document.body.append(container);
-		const app = await bootClient(container, options as C15tProviderOptions, {
+		const app = await bootClient(container, options as InthProviderOptions, {
 			entries,
 		});
 		lastApp = app;
@@ -292,7 +292,7 @@ const driver: TestDriver = {
 				deferInitGvl({ gvl: options.prefetch.initialIab.gvl }, '/test-gvl')
 			);
 		}
-		const rendered = await renderServer(options as C15tProviderOptions, {
+		const rendered = await renderServer(options as InthProviderOptions, {
 			entries,
 		});
 		return rendered.html;

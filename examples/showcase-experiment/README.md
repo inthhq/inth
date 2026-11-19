@@ -11,7 +11,7 @@ the test measures is the shape.
 | `control` | The stock floating card in Northwind's colors |
 | `bar` | The same banner as a bar across the bottom of the page |
 
-A feature flag picks the arm. When the flag has no value, c15t picks one
+A feature flag picks the arm. When the flag has no value, Inth picks one
 50/50 and keeps it for that visitor. Every banner impression and every choice
 goes to an analytics stub with the arm attached, so you can compare opt-in
 rates per arm.
@@ -46,8 +46,8 @@ Open <http://localhost:3115> and the browser console. You'll see lines like:
 [analytics] consent_choice_made { arm: 'bar', assigned_by: 'c15t', consent_action: 'all', experiment_id: 'banner-layout', surface: 'banner', time_to_decision_ms: 2140 }
 ```
 
-Set `NEXT_PUBLIC_C15T_BACKEND_URL` in `.env.local` to your Inth project URL,
-such as `https://your-project.inth.app`. c15t reads the project's consent
+Set `NEXT_PUBLIC_INTH_PROJECT_URL` in `.env.local` to your Inth project URL,
+such as `https://your-project.inth.app`. Inth reads the project's consent
 manifest and sends each choice there. The backend counts impressions and
 choices per arm on its own, including those of visitors your analytics never
 loads for.
@@ -64,8 +64,8 @@ NEXT_PUBLIC_BANNER_LAYOUT=control bun run --cwd examples/showcase-experiment dev
 
 With the flag set, the events say `assigned_by: 'host'`.
 
-Without the flag, c15t assigns the arm and stores it under
-`c15t-experiment-v1` in localStorage. To get a new draw, clear the site's
+Without the flag, Inth assigns the arm and stores it under
+`inth-experiment-v1` in localStorage. To get a new draw, clear the site's
 data (in Chrome DevTools: Application, Storage, Clear site data) and reload.
 That also clears your consent, so the banner comes back.
 

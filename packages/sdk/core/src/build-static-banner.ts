@@ -12,13 +12,12 @@ import { pathToFileURL } from 'node:url';
 
 import type { ConsentManifest, InitOutput } from '@inth/sdk-schema/types';
 
-import { storedAnswerKeys } from './libs/journey';
 import {
 	buildStaticBannerScript,
 	STATIC_BANNER_ATTR,
 	staticBannerCopyHash,
 } from './libs/static-banner';
-import { STORAGE_KEY_V2 } from './libs/storage-keys';
+import { storedChoiceNames } from './libs/storage-keys';
 import { resolveManifestInit } from './transports/manifest-cache';
 
 /** A stylesheet from `@inth/sdk/ui/styles/sheets/*`. */
@@ -39,21 +38,24 @@ export interface StaticBannerRenderer {
 }
 
 /**
- * Sheets `@inth/react` imports that a page with the static banner already
- * holds (`tokens`, `button`, `banner`), or that only a surface rendered
- * later needs (`trigger`, `consent-gate`). A client build gets each one's
- * `-deferred` module: the same `id`, no text, and a `load()` used only when
- * the page lacks the sheet. The Next.js adapter does the same for the sheets
- * its server HTML holds.
+ * Sheets `@inth/react` imports that a page with the static banner or a
+ * server-rendered banner already holds (`tokens`, `button`, `banner`), or
+ * that only a surface rendered later needs (`trigger`, `consent-gate`);
+ * `first-paint` is the one earlier `@inth/react` releases rendered for the
+ * IAB banner. A client build gets each one's `-deferred` module: the same
+ * `id`, no text, and a `load()` used only when the page lacks the sheet.
+ * A sheet the installed `@inth/sdk/ui` has no deferred module for keeps its
+ * text.
  */
-const DEFERRED_SHEETS = new Set([
+export const DEFERRED_SHEET_SPECIFIERS: readonly string[] = [
+	'first-paint',
 	'tokens',
 	'button',
 	'banner',
 	'trigger',
 	'consent-gate',
-]);
-const SHEETS_PREFIX = '@inth/sdk/ui/styles/sheets/';
+].map((name) => `@inth/sdk/ui/styles/sheets/${name}`);
+const DEFERRED_SHEETS: ReadonlySet<string> = new Set(DEFERRED_SHEET_SPECIFIERS);
 
 /** A module of the installed `@inth/react`, whatever the package manager. */
 const REACT_PACKAGE = /[\\/]node_modules[\\/]@inth[\\/]react[\\/]/u;
@@ -70,21 +72,13 @@ const BANNER_MODULE =
  * The `-deferred` twin of a sheet `@inth/react` imports, or `undefined` for
  * any other import.
  *
- * @param id - The import specifier.
- * @param importer - The importing module's path.
- * @returns The specifier to resolve instead.
  * @internal
  */
 export const deferredSheetSpecifier = function deferredSheetSpecifier(
 	id: string,
 	importer: string | undefined
 ): string | undefined {
-	if (
-		!(importer && REACT_PACKAGE.test(importer) && id.startsWith(SHEETS_PREFIX))
-	) {
-		return undefined;
-	}
-	return DEFERRED_SHEETS.has(id.slice(SHEETS_PREFIX.length))
+	return importer && REACT_PACKAGE.test(importer) && DEFERRED_SHEETS.has(id)
 		? `${id}-deferred`
 		: undefined;
 };
@@ -99,8 +93,6 @@ const CONSENT_BANNER_IMPORT = '#consent-banner';
  * one until its client loads, so the banner's code need not be in the
  * page's first-load JavaScript. Any other import is `undefined`.
  *
- * @param id - The import specifier.
- * @param importer - The importing module's path.
  * @returns The gate's path in the importer's `@inth/react`.
  * @internal
  */
@@ -134,12 +126,9 @@ export interface StaticBannerChunk {
  * Where the `@inth/react` a page's entry loads statically is installed,
  * when that includes the stock banner, or the browser `ConsentBanner` that
  * loads it; otherwise `undefined`. A page that imports the banner only in
- * a lazy chunk of its own, or no c15t at all, such as a second entry, gets
+ * a lazy chunk of its own, or no Inth at all, such as a second entry, gets
  * nothing.
  *
- * @param chunk - The page's entry chunk.
- * @param bundle - Every output, by file name.
- * @returns The package directory.
  * @internal
  */
 export const findPageBanner = function findPageBanner(
@@ -173,7 +162,6 @@ export const findPageBanner = function findPageBanner(
 /**
  * Loads `@inth/react/static-banner` from the installed package.
  *
- * @param reactRoot - The package directory.
  * @returns Its exports, or `undefined` when this version has none.
  * @internal
  */
@@ -221,16 +209,12 @@ const packInputs = function packInputs(
 };
 
 /**
- * Cookie and localStorage names holding a choice or a notice dismissal: what
- * the client-rendered provider reads to load the engine at once instead of
- * showing a banner.
+ * Names holding a choice or a notice dismissal: what the client-rendered
+ * provider reads to load the engine at once instead of showing a banner.
  */
-const storedKeys = function storedKeys(storageKey: string) {
-	const keys = storedAnswerKeys(storageKey);
-	return {
-		cookies: [...keys.cookies, keys.notice],
-		local: [...keys.local, keys.notice],
-	};
+const storedNames = function storedNames(storageKey: string | undefined) {
+	const names = storedChoiceNames({ storageKey });
+	return [...names.choice, ...names.notice];
 };
 
 /** The static banner for a page: markup and reveal script. */
@@ -247,7 +231,6 @@ export interface StaticBanner {
  * shows it when the page's `/init` answers with the same policy.
  *
  * @param renderer - `@inth/react/static-banner`.
- * @param manifest - The deployment's manifest.
  * @param options - Language to render, and the consent storage key.
  * @returns The banner, or `undefined` when no pack shows a choice banner.
  * @internal
@@ -280,7 +263,7 @@ export const renderStaticBannerHtml = function renderStaticBannerHtml(
 				language: init.translations.language,
 				policy,
 			},
-			storedKeys(options.storageKey || STORAGE_KEY_V2)
+			storedNames(options.storageKey)
 		);
 		// The early-tap script inside records a tap; the attribute marks
 		// the element the app's banner replaces.
@@ -299,7 +282,6 @@ export const renderStaticBannerHtml = function renderStaticBannerHtml(
  * loading a deferred sheet.
  *
  * @param sheets - The stylesheets, in cascade order.
- * @returns `<style>` elements.
  * @internal
  */
 export const renderStaticBannerSheets = function renderStaticBannerSheets(
@@ -308,7 +290,7 @@ export const renderStaticBannerSheets = function renderStaticBannerSheets(
 	return sheets
 		.map(
 			({ css, id }) =>
-				`<style data-href="${id}" data-precedence="c15t">${css.replaceAll('</style', '<\\/style')}</style>`
+				`<style data-href="${id}" data-precedence="inth">${css.replaceAll('</style', '<\\/style')}</style>`
 		)
 		.join('');
 };
@@ -318,8 +300,6 @@ export const renderStaticBannerSheets = function renderStaticBannerSheets(
  * the banner at the start of `<body>`, so it paints with the first frame
  * that shows it.
  *
- * @param html - The page.
- * @param parts - The sheets, and the banner if any.
  * @returns The page with both, or `html` when it has no `</head>`.
  * @internal
  */

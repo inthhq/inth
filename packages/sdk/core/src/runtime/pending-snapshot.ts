@@ -12,6 +12,7 @@
 import type { EvaluationPolicy } from '../consent-record/types';
 import { deepFreeze } from '../libs/freeze-data';
 import type { ConsentSnapshot, KernelConfig, KernelOverrides } from '../types';
+import { DEFAULT_BRANDING } from '../types';
 
 /** The provider options a pending snapshot depends on. @internal */
 export interface PendingSnapshotOptions {
@@ -49,7 +50,7 @@ const fallbackRule = (): ConsentSnapshot['policyRule'] => ({
 		required: ['accept', 'reject'],
 	},
 	copyRevision: null,
-	id: 'c15t_safe_fallback',
+	id: 'inth_safe_fallback',
 	model: 'opt-in',
 	preselectedCategories: [],
 	privacySignals: { gpc: { denyCategories: [] } },
@@ -76,6 +77,11 @@ const fallbackEvaluationPolicy = (
 				'145fd951c0967e210d905acf5859a93cd03095c0291816b9c424d740048b7a47',
 			maxAgeMs: FALLBACK_VALIDITY_MS,
 		},
+		choiceScope: consentCategories
+			? FALLBACK_SCOPE.filter((category) =>
+					consentCategories.includes(category)
+				)
+			: [...FALLBACK_SCOPE],
 		gpcDenyCategories: [],
 		legacyMaterialFingerprint: null,
 		model: 'opt-in',
@@ -88,11 +94,6 @@ const fallbackEvaluationPolicy = (
 		scope: [...FALLBACK_SCOPE],
 		scopeMode: 'strict',
 	};
-	if (consentCategories) {
-		policy.choiceScope = FALLBACK_SCOPE.filter((category) =>
-			consentCategories.includes(category)
-		);
-	}
 	return policy;
 };
 
@@ -118,8 +119,10 @@ export const pendingBootSnapshot = function pendingBootSnapshot(
 	const detected = options.gpc === true;
 	const snapshot: ConsentSnapshot = {
 		activeUI: 'none',
-		branding: null,
+		branding: DEFAULT_BRANDING,
 		consentCategories,
+		// Not DENIED_CONSENTS: importing it would list one more chunk in
+		// every first-load preload map.
 		effectivePermissions: {
 			experience: false,
 			functionality: false,

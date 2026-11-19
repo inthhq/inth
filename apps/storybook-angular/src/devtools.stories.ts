@@ -1,23 +1,23 @@
 import type { Meta, StoryObj } from '@analogjs/storybook-angular';
+import { provideInth } from '@inth/angular';
+import type { InthProviderOptions } from '@inth/angular';
+import { ConsentDevTools } from '@inth/angular/devtools';
 import {
 	devToolsProviderOptions,
 	getDevToolsCategories,
-} from '@c15t/conformance/fixtures/devtools';
-import { devToolsFlow, devToolsReady } from '@c15t/conformance/play/devtools';
-import { provideC15t } from '@inth/angular';
-import type { C15tProviderOptions } from '@inth/angular';
-import { ConsentDevTools } from '@inth/angular/devtools';
+} from '@inth/conformance/fixtures/devtools';
+import { devToolsFlow, devToolsReady } from '@inth/conformance/play/devtools';
 
 /** The DevTools panel the React and Svelte Storybooks show, for parity. */
 const meta = {
 	parameters: { layout: 'fullscreen' },
 	render: () => ({
 		applicationConfig: {
-			providers: [provideC15t(devToolsProviderOptions as C15tProviderOptions)],
+			providers: [provideInth(devToolsProviderOptions as InthProviderOptions)],
 		},
 		moduleMetadata: { imports: [ConsentDevTools] },
 		props: { getConsentCategories: getDevToolsCategories },
-		template: `<c15t-consent-dev-tools
+		template: `<inth-consent-dev-tools
 			defaultOpen
 			[getConsentCategories]="getConsentCategories"
 		/>`,

@@ -6,8 +6,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { createConsentKernel } from '../../kernel/index';
+import { PREFETCH_WINDOW_KEY } from '../../libs/page-globals';
 import type { PrefetchedInitialData } from '../../libs/prefetch/prefetch';
-import { PREFETCH_WINDOW_KEY } from '../../libs/prefetch/window-key';
 import { mapInitOutputToInitResponse } from '../../transports/init-output';
 import { hosted } from '../../transports/mode';
 import {
@@ -290,13 +290,13 @@ describe('findPrefetchedInitFor and primeInitRequest', () => {
 					credentials: 'same-origin',
 					gpc: false,
 					language: null,
-					projectUrl: 'https://app.example.com/api/c15t',
+					projectUrl: 'https://app.example.com/api/inth',
 					region: null,
 				},
 			},
 		};
-		expect(findPrefetchedInitFor('/api/c15t')).toBe(promise);
-		expect(findPrefetchedInitFor('https://app.example.com/api/c15t/')).toBe(
+		expect(findPrefetchedInitFor('/api/inth')).toBe(promise);
+		expect(findPrefetchedInitFor('https://app.example.com/api/inth/')).toBe(
 			promise
 		);
 		expect(findPrefetchedInitFor('/api/other')).toBeUndefined();

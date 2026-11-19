@@ -87,12 +87,12 @@ const DialogRoot = ({
 
 	const value = useMemo<DialogContextValue>(
 		() => ({
-			contentId: `c15t-dialog-content-${reactId}`,
-			descriptionId: `c15t-dialog-description-${reactId}`,
+			contentId: `inth-dialog-content-${reactId}`,
+			descriptionId: `inth-dialog-description-${reactId}`,
 			open: isOpen,
 			restoreFocusRef,
 			setOpen: setIsOpen,
-			titleId: `c15t-dialog-title-${reactId}`,
+			titleId: `inth-dialog-title-${reactId}`,
 		}),
 		[isOpen, reactId, restoreFocusRef, setIsOpen]
 	);

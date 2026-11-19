@@ -1,11 +1,11 @@
 /**
- * Hands the provider's server start to `c15tHandle`.
+ * Hands the provider's server start to `inthHandle`.
  *
  * When the visitor's consent already lets some `scripts` run, the server
  * render can run their setup and insert their tags from the HTML, before the
  * app hydrates. A Svelte component renders synchronously and cannot load
  * the server-only code itself, and a static import would ship it to the
- * browser. So `c15tHandle` loads it once, before it resolves the request,
+ * browser. So `inthHandle` loads it once, before it resolves the request,
  * and registers a start here; the provider calls it with its options while
  * it renders on the server.
  *
@@ -27,7 +27,7 @@ export type ServerStartOptions = Parameters<typeof serverScriptStart>[0] & {
 /** Starts the scripts a server render allows, for the current request. */
 export type ServerStart = (options: ServerStartOptions) => void;
 
-const REGISTRY = Symbol.for('c15t.svelte.serverScriptStart');
+const REGISTRY = Symbol.for('inth.svelte.serverScriptStart');
 
 interface Registry {
 	[REGISTRY]?: ServerStart;
@@ -46,8 +46,8 @@ export const registerServerScriptStart = function registerServerScriptStart(
 };
 
 /**
- * Hands a server render's options to the start `c15tHandle` registered.
- * Does nothing without `c15tHandle`.
+ * Hands a server render's options to the start `inthHandle` registered.
+ * Does nothing without `inthHandle`.
  *
  * @param options - The provider's runtime options, with its `prefetch`.
  * @internal

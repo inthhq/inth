@@ -1,17 +1,17 @@
 ---
 title: Adobe Analytics
-description: Load an Adobe Data Collection Tags property only after measurement consent with the c15t adobeAnalytics helper, and check its extensions in DevTools.
-seoTitle: Adobe Analytics cookie consent with c15t
-seoDescription: Load Adobe Analytics only with measurement consent. The c15t adobeAnalytics helper gates your Adobe Data Collection Tags property.
+description: Load an Adobe Data Collection Tags property only after measurement consent with the Inth adobeAnalytics helper, and check its extensions in DevTools.
+seoTitle: Adobe Analytics cookie consent with Inth
+seoDescription: Load Adobe Analytics only with measurement consent. The Inth adobeAnalytics helper gates your Adobe Data Collection Tags property.
 icon: adobe-analytics
 group: integrations
 ---
 
-The c15t `adobeAnalytics` helper keeps your Adobe Data Collection Tags property
+The Inth `adobeAnalytics` helper keeps your Adobe Data Collection Tags property
 off the page until `measurement` has consent. This property loads Adobe
 Analytics. The helper sends no consent signal to Adobe, so every extension in
 the property runs under the consent for `measurement`. If the visitor withdraws
-consent, c15t removes the script element. By default, c15t also reloads the
+consent, Inth removes the script element. By default, Inth also reloads the
 page.
 
 ## Configure Adobe Analytics
@@ -50,7 +50,7 @@ only while measurement is allowed. On revocation the helper removes the script
 element and calls no Adobe API.
 
 The property can load Adobe Analytics, Web SDK and other extensions through its
-rules. c15t sees only the embed script, so every extension runs under the one
+rules. Inth sees only the embed script, so every extension runs under the one
 measurement permission. If a rule loads a service with another purpose, such
 as advertising, configure that rule in Adobe to respect your consent model too.
 

@@ -110,7 +110,7 @@ export interface AdobeAnalyticsOptions {
 	/**
 	 * Seed the Adobe Client Data Layer queue before the Tags library loads.
 	 *
-	 * When enabled, c15t creates `window.adobeDataLayer = []` only when the
+	 * When enabled, Inth creates `window.adobeDataLayer = []` only when the
 	 * global is still undefined. This matches Adobe Client Data Layer's default
 	 * object name and is harmless for properties that do not use the extension.
 	 * @default true
@@ -123,9 +123,6 @@ export interface AdobeAnalyticsOptions {
  *
  * @see https://experienceleague.adobe.com/en/docs/experience-platform/tags/publish/environments/environments
  * @see https://experienceleague.adobe.com/en/docs/experience-platform/tags/extensions/client/client-data-layer/overview
- *
- * @param options - The options for the Adobe Analytics script.
- * @returns The Adobe Analytics script.
  *
  * @remarks
  * When `scriptUrl` is missing, blank, invalid, or not `https:`, the helper

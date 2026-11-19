@@ -45,7 +45,6 @@ import type { SavePayload } from '../types';
  *
  * @param base - Backend URL without a trailing slash.
  * @param journey - The journey the runtime added to the save.
- * @returns The URL to post the save to.
  * @internal
  */
 export const subjectsURL = function subjectsURL(
@@ -85,7 +84,7 @@ export interface SubjectPostBody {
 	addtlConsent?: string;
 	/** Granted flag per declared vendor after this act, when vendors exist. */
 	vendorChoice?: VendorChoiceWire;
-	/** Free-form audit metadata. `userProperties`, `timeToDecisionMs` and `experiment` are the keys c15t sets. */
+	/** Free-form audit metadata. `userProperties`, `timeToDecisionMs` and `experiment` are the keys Inth sets. */
 	metadata?: Record<string, unknown> & {
 		userProperties?: NonNullable<SavePayload['user']>['properties'];
 		/** Milliseconds from the surface's first impression to the action. */

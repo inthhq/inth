@@ -14,8 +14,7 @@ const resolveInit = function resolveInit<T>(init: UseStateInit<T>): T {
 /**
  * Keyed refs shared by every `useState` consumer. The store is torn down
  * when the last consuming component scope is disposed, so a fresh app
- * (or test) starts from clean state — the same lifecycle the previous
- * `createSharedComposable`-based implementation had.
+ * (or test) starts from clean state.
  */
 let store: Map<string, Ref<unknown>> | null = null;
 let subscribers = 0;
@@ -31,10 +30,6 @@ const releaseStore = function releaseStore() {
 /**
  * Plain-Vue stand-in for Nuxt's `useState`: a keyed ref shared across all
  * consumers for the lifetime of the app.
- *
- * @param key - Unique key identifying the shared state
- * @param init - Initial value, or a factory producing it
- * @returns The shared ref for `key`
  */
 export const useState = function useState<T>(
 	key: string,

@@ -15,7 +15,7 @@
  * native half is `native_bootstrap_to_snapshot_cold_ms`.
  */
 
-import { median } from '@c15t/benchmarking/utils';
+import { median } from '@inth/benchmarking/utils';
 
 import type { ColdStartReport } from '../support/cold-start-subject';
 import { spawnSubject } from '../support/spawn-subject';

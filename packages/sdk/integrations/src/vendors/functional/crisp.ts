@@ -33,7 +33,6 @@ export const crispManifest = {
 	category: 'functionality',
 	install: [
 		{
-			// Keep calls the page queued on `$crisp` before this helper ran.
 			ifUndefined: false,
 			keepExistingQueue: true,
 			name: '$crisp',
@@ -92,7 +91,6 @@ const createCrispManifest = function createCrispManifest(
 ): VendorManifest {
 	const install: VendorManifest['install'] = [
 		{
-			// Keep calls the page queued on `$crisp` before this helper ran.
 			ifUndefined: false,
 			keepExistingQueue: true,
 			name: '$crisp',
@@ -177,8 +175,6 @@ const createCrispManifest = function createCrispManifest(
  * This manifest-based helper keeps the serializable queue/bootstrap globals and
  * omits the upstream ready callback wrapper.
  *
- * @param options - The options for the Crisp script.
- * @returns The Crisp script configuration.
  * @remarks When `websiteId` is missing or blank, the
  *   helper logs `crisp: missing or invalid websiteId` with
  *   `console.error` and returns a script that never loads.

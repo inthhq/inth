@@ -135,7 +135,7 @@ class ConsentCore @InthInternalApi constructor(
 	 * Mints the inth-owned subject id, in the `sub_` format the backend validates.
 	 *
 	 * Separate from [queueIdGenerator] on purpose: a subject id travels and has to
-	 * satisfy `subjectIdSchema` in `@c15t/schema`, while a queue entry id is a local
+	 * satisfy `subjectIdSchema` in `@inth/sdk-schema`, while a queue entry id is a local
 	 * row id that never reaches the wire. The default follows the injected [clock],
 	 * so a test that pins time gets ids it can predict.
 	 */
@@ -861,7 +861,7 @@ class ConsentCore @InthInternalApi constructor(
 		var policy: EvaluationPolicy?
 		// The surface the subject acted on, read before the commit rewrites it.
 		// `uiSource` records where the decision was made, so a save that clears the
-		// prompt must not report "no surface": `buildSubjectPostBody` in `@c15t/core`
+		// prompt must not report "no surface": `buildSubjectPostBody` in `@inth/sdk-core`
 		// reads the pre-commit `activeUI` for the same reason.
 		var surfaceAtAction: ActiveUI? = null
 		var action: ConsentAction
@@ -947,7 +947,7 @@ class ConsentCore @InthInternalApi constructor(
 				return@mutate refusedCommit("iab-unavailable", "The resolved policy does not use IAB")
 			}
 			// A bulk action covers the categories the prompt asks about, which is what
-			// `resolveSaveSelection` in `@c15t/core` narrows it to. Before a policy
+			// `resolveSaveSelection` in `@inth/sdk-core` narrows it to. Before a policy
 			// resolves that is the safe fallback rule's: every optional category,
 			// narrowed by the declaration.
 			val policyScope = policy?.scope ?: ConsentCategory.OPTIONAL
@@ -1692,7 +1692,7 @@ class ConsentCore @InthInternalApi constructor(
 				// A local answer is the last word: no `/init` is coming to correct it.
 				mapped.isFinal -> mapped.evaluationPolicy
 				// An explicit `no-match` or `unconfigured` answer puts the safe fallback in force,
-				// as `resolveEffectivePolicy` in `@c15t/core` and core-swift's wire reader do. Only
+				// as `resolveEffectivePolicy` in `@inth/sdk-core` and core-swift's wire reader do. Only
 				// a failed init keeps the last policy.
 				mapped.resolution.status == com.inth.core.model.PolicyResolution.STATUS_NO_MATCH ||
 					mapped.resolution.status == com.inth.core.model.PolicyResolution.STATUS_UNCONFIGURED -> null
@@ -1710,7 +1710,7 @@ class ConsentCore @InthInternalApi constructor(
 			// The declared scope narrows what arrives, before the latch. Web does the same on both
 			// of its routes: `createIAB` in `packages/sdk/iab` asks the GVL endpoint for its scope and
 			// then prunes whatever comes back, in case the endpoint ignored the parameter. The prune
-			// is the part that carries the disclosure promise and the `x-c15t-vendors` header is the
+			// is the part that carries the disclosure promise and the `x-inth-vendors` header is the
 			// bytes-saving optimisation in front of it, so a producer that embeds the whole list
 			// here is answered by this line and not by the request.
 			//
@@ -1772,7 +1772,7 @@ class ConsentCore @InthInternalApi constructor(
 					location = mapped.location ?: base.location,
 					// The overrides the decision was actually made against, which is
 					// what the backend recomputes before it accepts a save.
-					// `mapResolvedOverrides` and the merge in `@c15t/core` fold the served
+					// `mapResolvedOverrides` and the merge in `@inth/sdk-core` fold the served
 					// location and translation language over the app's own overrides, so a
 					// device that pinned nothing still reports the country and region it
 					// was matched on. `gpc` survives from the app because `/init` serves a
@@ -2386,7 +2386,7 @@ class ConsentCore @InthInternalApi constructor(
 
 	/**
 	 * The overrides in force after an init, following `mapResolvedOverrides` and the
-	 * merge in `@c15t/core`: the served location and translation language win over
+	 * merge in `@inth/sdk-core`: the served location and translation language win over
 	 * what the app pinned, and `gpc` is the app's own because `/init` serves a
 	 * detection rather than an override.
 	 */

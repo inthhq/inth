@@ -8,7 +8,7 @@ export interface ConsentPrefetchHeadOptions extends PrefetchOptions {
 	 * Script element ID. Stable across renders so React reconciles the same
 	 * head element instead of inserting a second one.
 	 *
-	 * @default 'c15t-initial-data-prefetch'
+	 * @default 'inth-initial-data-prefetch'
 	 */
 	id?: string;
 }

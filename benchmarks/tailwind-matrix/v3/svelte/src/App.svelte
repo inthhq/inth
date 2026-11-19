@@ -4,7 +4,7 @@
 	const projectUrl = 'https://your-project.inth.app';
 </script>
 
-<!-- Tailwind 3 builds c15t's stylesheet from app.css. -->
+<!-- Tailwind 3 builds Inth's stylesheet from app.css. -->
 <ConsentProvider
 	{projectUrl}
 	persistence={false}

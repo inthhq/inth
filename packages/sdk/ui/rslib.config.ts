@@ -21,7 +21,7 @@ export default defineConfig({
 		cssModules: {
 			auto: true,
 			exportLocalsConvention: 'camelCase',
-			localIdentName: 'c15t-ui-[local]-[hash:base64:5]',
+			localIdentName: 'inth-ui-[local]-[hash:base64:5]',
 		},
 		injectStyles: false,
 		minify: {

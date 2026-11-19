@@ -58,7 +58,7 @@ export interface StatableAnalyticsOptions {
  *
  * Statable initializes its own `window.statable` event API. This helper leaves
  * that global absent before the tracker loads; early events are not queued.
- * Keep c15t's default reload on revocation to stop the running tracker.
+ * Keep Inth's default reload on revocation to stop the running tracker.
  *
  * @param options - Statable site ID and optional loader and ingestion URLs.
  * @returns The consent-gated script, or a disabled script for an invalid ID.

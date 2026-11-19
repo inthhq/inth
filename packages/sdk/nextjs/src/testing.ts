@@ -1,7 +1,7 @@
 /**
  * `@inth/nextjs/testing` — run the consent flow in tests with no backend.
  *
- * Set `mode: testing()` in `c15t.config.ts`, or pass it as
+ * Set `mode: testing()` in `inth.config.ts`, or pass it as
  * `ConsentRoot`'s `options.mode`. It needs no `projectUrl`. The server
  * resolves nothing, and the browser resolves the recommended policy pack
  * with no network; set `overrides.country` (and `overrides.region`) to
@@ -21,7 +21,7 @@
  *
  * @example
  * ```ts
- * // c15t.config.ts, in a test build
+ * // inth.config.ts, in a test build
  * import { defineConsentConfig } from '@inth/nextjs';
  * import { testing } from '@inth/nextjs/testing';
  *

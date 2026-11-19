@@ -6,8 +6,8 @@ import { registryItemSchema, registrySchema } from 'shadcn/schema';
 
 import type { Base, Framework, RegistryFile, SetupItem, UiItem } from './items';
 import {
-	c15tEntryByFramework,
-	c15tRange,
+	inthEntryByFramework,
+	inthRange,
 	frameworks,
 	itemName,
 	setupItems,
@@ -23,16 +23,16 @@ export interface BuildOptions {
 	baseUrl: string;
 	/**
 	 * What a dependency on an SDK package installs, given its name. Defaults
-	 * to the package at {@link c15tRange}.
+	 * to the package at {@link inthRange}.
 	 */
-	c15tDependency?: (packageName: string) => string;
+	inthDependency?: (packageName: string) => string;
 }
 
 /** Output files keyed by path under `dist/r`. */
 export type RegistryOutput = Map<string, unknown>;
 
 // Named so the docs and tests can say which specifiers a UI item may use.
-export const uiC15tImports = ['@inth/react', '@inth/react/headless'];
+export const uiInthImports = ['@inth/react', '@inth/react/headless'];
 
 const fromPattern = /(?<start>\bfrom\s+["'])(?<spec>[^"']+)(?<end>["'])/gu;
 const sideEffectPattern = /^\s*import\s+["'](?<spec>[^"']+)["']/gmu;
@@ -50,11 +50,7 @@ const providedPackages: Record<Framework, string[]> = {
 	],
 };
 
-const isC15tSpecifier = (spec: string): boolean =>
-	spec === 'c15t' ||
-	spec.startsWith('c15t/') ||
-	spec.startsWith('@c15t/') ||
-	spec.startsWith('@inth/');
+const isInthSpecifier = (spec: string): boolean => spec.startsWith('@inth/');
 
 const packageName = (spec: string): string => {
 	const parts = spec.split('/');
@@ -74,14 +70,13 @@ export const scanImports = (content: string): string[] => {
 
 /**
  * Turns a React UI source into one framework's copy. The headless hooks
- * and components are the same modules under each framework's c15t entry
+ * and components are the same modules under each framework's Inth entry
  * point, so only the import paths change.
  *
  * @param content - The React source.
  * @param file - The source path, for error messages.
- * @param framework - The framework the copy is for.
  * @returns The source with `@inth/react` imports pointing at the framework's entry point.
- * @throws {Error} When the source imports a c15t entry point other than {@link uiC15tImports}, which the other frameworks have no twin for.
+ * @throws {Error} When the source imports an Inth entry point other than {@link uiInthImports}, which the other frameworks have no twin for.
  */
 export const toFrameworkSource = (
 	content: string,
@@ -91,13 +86,13 @@ export const toFrameworkSource = (
 	content.replace(
 		fromPattern,
 		(match: string, start: string, spec: string, end: string) => {
-			if (uiC15tImports.includes(spec)) {
-				const entry = c15tEntryByFramework[framework];
+			if (uiInthImports.includes(spec)) {
+				const entry = inthEntryByFramework[framework];
 				return `${start}${spec.replace('@inth/react', entry)}${end}`;
 			}
-			if (isC15tSpecifier(spec)) {
+			if (isInthSpecifier(spec)) {
 				throw new Error(
-					`${file} imports ${spec}. UI items may only import ${uiC15tImports.join(' and ')}.`
+					`${file} imports ${spec}. UI items may only import ${uiInthImports.join(' and ')}.`
 				);
 			}
 			return match;
@@ -107,7 +102,7 @@ export const toFrameworkSource = (
 interface ItemContext {
 	appDir: string;
 	base: Base;
-	c15tDependency: (packageName: string) => string;
+	inthDependency: (packageName: string) => string;
 	framework: Framework;
 	itemUrl: (name: string) => string;
 	style: string;
@@ -168,8 +163,8 @@ const collectDependencies = (
 					);
 				}
 				registryDependencies.add(name);
-			} else if (spec.startsWith('@/components/c15t/')) {
-				const name = spec.slice('@/components/c15t/'.length);
+			} else if (spec.startsWith('@/components/inth/')) {
+				const name = spec.slice('@/components/inth/'.length);
 				if (!uiItems.some((item) => item.name === name)) {
 					throw new Error(
 						`${file} imports ${spec}, which isn't a registry item.`
@@ -182,10 +177,10 @@ const collectDependencies = (
 				registryDependencies.add('utils');
 			} else if (spec.startsWith('@/') || spec.startsWith('.')) {
 				throw new Error(
-					`${file} imports ${spec}. Use @/components/ui, @/components/c15t or @/lib/utils, which shadcn rewrites to the project's aliases.`
+					`${file} imports ${spec}. Use @/components/ui, @/components/inth or @/lib/utils, which shadcn rewrites to the project's aliases.`
 				);
-			} else if (isC15tSpecifier(spec)) {
-				dependencies.add(context.c15tDependency(packageName(spec)));
+			} else if (isInthSpecifier(spec)) {
+				dependencies.add(context.inthDependency(packageName(spec)));
 			} else if (
 				!providedPackages[context.framework].includes(packageName(spec))
 			) {
@@ -204,7 +199,7 @@ const filePath = (style: string, file: RegistryFile): string =>
 	// With no target, shadcn installs a component at the part of its path
 	// after `components/`, inside the project's components alias.
 	file.type === 'registry:component'
-		? `registry/${style}/components/c15t/${file.source}`
+		? `registry/${style}/components/inth/${file.source}`
 		: `registry/${style}/${file.source}`;
 
 const readSources = (
@@ -279,13 +274,12 @@ const buildItem = (
  * their file paths and cross-item URLs change.
  *
  * @param options - The app directory to read sources from and the URL the output is served at.
- * @returns Output files keyed by path under `dist/r`.
  * @throws {Error} When a source imports something the registry can't express, or an item fails shadcn's schema.
  */
 export const buildRegistry = (options: BuildOptions): RegistryOutput => {
 	const baseUrl = options.baseUrl.replace(/\/+$/u, '');
-	const c15tDependency =
-		options.c15tDependency ?? ((name: string) => `${name}@${c15tRange}`);
+	const inthDependency =
+		options.inthDependency ?? ((name: string) => `${name}@${inthRange}`);
 	const output: RegistryOutput = new Map();
 
 	for (const { base, name: style } of styles) {
@@ -294,7 +288,7 @@ export const buildRegistry = (options: BuildOptions): RegistryOutput => {
 			const context = {
 				appDir: options.appDir,
 				base,
-				c15tDependency,
+				inthDependency,
 				framework,
 				itemUrl,
 				style,

@@ -13,7 +13,7 @@ import { resolveOptions } from '../integration';
 import { hosted as hostedMode } from '../mode';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { C15tAstroOptions, C15tLocals } from '../types';
+import type { InthAstroOptions, InthLocals } from '../types';
 import { testRule, testWire } from './policy-fixture';
 
 let container: AstroContainer;
@@ -22,14 +22,14 @@ beforeAll(async () => {
 	container = await AstroContainer.create();
 });
 
-// Every c15t surface stays hidden without a matched rule, so the default
+// Every Inth surface stays hidden without a matched rule, so the default
 // fixture configures one the way a deployment would.
 const buildLocals = async function buildLocals(
-	options: C15tAstroOptions = {
+	options: InthAstroOptions = {
 		mode: testingMode({ policy: [testRule] }),
 	},
 	headers: Record<string, string> = {}
-): Promise<C15tLocals> {
+): Promise<InthLocals> {
 	return await resolveConsentContext({
 		headers: new Headers(headers),
 		options: resolveOptions(options),
@@ -41,15 +41,15 @@ const buildLocals = async function buildLocals(
  * class, so it is left out (`inline-styles.test.ts` covers it).
  */
 const render = async function render(
-	locals: C15tLocals,
+	locals: InthLocals,
 	props: Record<string, unknown> = {}
 ): Promise<string> {
 	const html = await container.renderToString(ConsentBanner, {
-		locals: { c15t: locals },
+		locals: { inth: locals },
 		props,
 	});
 	return html.replace(
-		/<style[^>]*data-c15t-styles[^>]*>[\s\S]*?<\/style>/gu,
+		/<style[^>]*data-inth-styles[^>]*>[\s\S]*?<\/style>/gu,
 		''
 	);
 };
@@ -74,9 +74,9 @@ describe('<ConsentBanner />', () => {
 
 	it('wires the buttons to runtime actions with data attributes only', async () => {
 		const html = await render(await buildLocals());
-		expect(html).toContain('data-c15t-action="accept"');
-		expect(html).toContain('data-c15t-action="reject"');
-		expect(html).toContain('data-c15t-action="customize"');
+		expect(html).toContain('data-inth-action="accept"');
+		expect(html).toContain('data-inth-action="reject"');
+		expect(html).toContain('data-inth-action="customize"');
 		// The shell itself carries no inline handlers.
 		expect(html).not.toContain('onclick=');
 	});
@@ -85,7 +85,7 @@ describe('<ConsentBanner />', () => {
 		const html = await render(await buildLocals());
 		// A data block: it never runs, so no CSP has to allow it.
 		expect(html).toMatch(
-			/<script[^>]*type="application\/json"[^>]*data-c15t-config[^>]*>\{/u
+			/<script[^>]*type="application\/json"[^>]*data-inth-config[^>]*>\{/u
 		);
 	});
 
@@ -136,7 +136,7 @@ describe('<ConsentBanner />', () => {
 		});
 		const html = await render(locals);
 		expect(html).toContain('data-variant="bar"');
-		expect(html).toContain('data-c15t-config');
+		expect(html).toContain('data-inth-config');
 		expect(html).toContain('"initialExperiment"');
 	});
 
@@ -228,7 +228,7 @@ describe('<ConsentBanner />', () => {
 
 	it('drops the styling class names with `noStyle`', async () => {
 		const html = await render(await buildLocals(), { noStyle: true });
-		expect(html).not.toContain('c15t-ui-root');
+		expect(html).not.toContain('inth-ui-root');
 		expect(html).toContain('data-testid="consent-banner-root"');
 	});
 
@@ -391,7 +391,7 @@ describe('<ConsentBanner />', () => {
 		)?.[0];
 		expect(branding).toBeDefined();
 		expect(branding).toContain('data-variant="banner-tag"');
-		expect(branding).toContain('data-branding="c15t"');
+		expect(branding).toContain('data-branding="inth"');
 		expect(html).toContain('Secured by');
 		// It sits beside the card, not inside it, so the tag can overlap the
 		// card's top edge the way the Svelte and React banners do.
@@ -401,7 +401,7 @@ describe('<ConsentBanner />', () => {
 	});
 
 	it('labels a legal link without a `label` from the translations', async () => {
-		const options: C15tAstroOptions = {
+		const options: InthAstroOptions = {
 			legalLinks: {
 				cookiePolicy: { href: '/cookies', label: 'Our cookies' },
 				privacyPolicy: { href: '/privacy' },
@@ -423,7 +423,7 @@ describe('<ConsentBanner />', () => {
 	});
 
 	it('separates legal links from the description and each other', async () => {
-		const options: C15tAstroOptions = {
+		const options: InthAstroOptions = {
 			legalLinks: {
 				cookiePolicy: { href: '/cookies', label: 'Cookies' },
 				privacyPolicy: { href: '/privacy', label: 'Privacy' },
@@ -484,7 +484,7 @@ describe('<ConsentBanner />', () => {
 	it('fails loudly when the middleware did not run', async () => {
 		await expect(
 			container.renderToString(ConsentBanner, { locals: {}, props: {} })
-		).rejects.toThrowError(/Astro\.locals\.c15t/u);
+		).rejects.toThrowError(/Astro\.locals\.inth/u);
 	});
 });
 
@@ -500,7 +500,7 @@ describe('<ConsentBanner /> without a resolved policy', () => {
 						policyResolution: testWire(),
 						translations: { language: 'en', translations: {} },
 					},
-					{ headers: { 'x-c15t-policy-contract': '999' } }
+					{ headers: { 'x-inth-policy-contract': '999' } }
 				)
 			) as never,
 			headers: new Headers(),
@@ -536,17 +536,17 @@ describe('<ConsentBanner /> without a resolved policy', () => {
 
 	it('hides the dialog trigger until a policy is resolved', async () => {
 		const hidden = await container.renderToString(ConsentDialogLink, {
-			locals: { c15t: await withoutPolicy() },
+			locals: { inth: await withoutPolicy() },
 		});
 		const trigger = /<[^>]*data-testid="consent-dialog-trigger"[^>]*>/u.exec(
 			hidden
 		)?.[0];
 		expect(trigger).toBeDefined();
 		expect(trigger).toContain('hidden');
-		expect(trigger).toContain('data-c15t-surface="trigger"');
+		expect(trigger).toContain('data-inth-surface="trigger"');
 
 		const shown = await container.renderToString(ConsentDialogLink, {
-			locals: { c15t: await buildLocals() },
+			locals: { inth: await buildLocals() },
 		});
 		const visible = /<[^>]*data-testid="consent-dialog-trigger"[^>]*>/u.exec(
 			shown
@@ -610,13 +610,13 @@ describe('<ConsentBanner /> under a notice prompt', () => {
 		// row. It opens the preference center through the same delegated
 		// handler as customize.
 		expect(optOutButton).toContain('data-action="right"');
-		expect(optOutButton).toContain('data-c15t-action="customize"');
+		expect(optOutButton).toContain('data-inth-action="customize"');
 		expect(optOutButton).toContain(bannerStyles.rightLink);
 		expect(optOutButton).not.toContain('data-variant=');
 		expect(optOutButton).not.toContain('data-mode=');
 		expect(html).toContain('Do not sell or share my data');
 		expect(html).toContain('data-action="dismiss"');
-		expect(html).toContain('data-c15t-action="dismiss"');
+		expect(html).toContain('data-inth-action="dismiss"');
 		// The only button leads, as it does in the React and Svelte banners.
 		expect(
 			/<button[^>]*data-action="dismiss"[^>]*>/u.exec(html)?.[0]
@@ -825,7 +825,7 @@ describe('<ConsentBanner /> under a none rule', () => {
 		expect(html).not.toContain('data-testid="consent-banner-root"');
 
 		const trigger = await container.renderToString(ConsentDialogLink, {
-			locals: { c15t: locals },
+			locals: { inth: locals },
 		});
 		expect(
 			/<[^>]*data-testid="consent-dialog-trigger"[^>]*>/u.exec(trigger)?.[0]
@@ -841,7 +841,7 @@ describe('<ConsentBanner /> under a none rule', () => {
 		expect(html).not.toContain('data-testid="consent-banner-root"');
 
 		const trigger = await container.renderToString(ConsentDialogLink, {
-			locals: { c15t: locals },
+			locals: { inth: locals },
 		});
 		expect(
 			/<[^>]*data-testid="consent-dialog-trigger"[^>]*>/u.exec(trigger)?.[0]

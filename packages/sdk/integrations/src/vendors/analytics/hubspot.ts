@@ -4,6 +4,7 @@ import type { IntegrationConsentCondition } from '../../registry';
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
+import { permitted } from '../_shared/permitted';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { trimToUndefined } from '../_shared/script-url';
 
@@ -120,7 +121,7 @@ const defaultScriptUrl = function defaultScriptUrl(
 const consentFor = function consentFor(
 	info: ScriptCallbackInfo
 ): HubSpotConsent {
-	if (!info.hasConsent || info.vendor?.granted === false) {
+	if (!permitted(info)) {
 		return DENIED_CONSENT;
 	}
 	return {
@@ -197,7 +198,7 @@ const createController = (host: Window, installation: HubSpotInstallation) => {
 	// A client that stops being current with a load in flight keeps a one-shot
 	// guard until it completes, even after chat ownership ends.
 	const pendingGuards = new Map<HubSpotConversationsClient, () => void>();
-	// Clients showing a widget c15t loaded or adopted. Only the current one may.
+	// Clients showing a widget Inth loaded or adopted. Only the current one may.
 	const loadedClients = new WeakSet<HubSpotConversationsClient>();
 	let requestSync: (() => void) | undefined;
 	const readWidgetLoaded = (conversations: HubSpotConversationsClient) => {
@@ -226,11 +227,7 @@ const createController = (host: Window, installation: HubSpotInstallation) => {
 							analytics: left.analytics && right.analytics,
 							functionality: left.functionality && right.functionality,
 						})),
-			gate:
-				states.length > 0 &&
-				states.every(
-					(info) => info.hasConsent && info.vendor?.granted !== false
-				),
+			gate: states.length > 0 && states.every((info) => permitted(info)),
 		};
 	};
 
@@ -249,7 +246,7 @@ const createController = (host: Window, installation: HubSpotInstallation) => {
 	};
 
 	// The current client's own listener handles its completion. Any other late
-	// load follows one rule: only the current client may show c15t's widget.
+	// load follows one rule: only the current client may show Inth's widget.
 	const settleLateLoad = (conversations: HubSpotConversationsClient) => {
 		if (started && conversations === client) {
 			return;
@@ -302,7 +299,7 @@ const createController = (host: Window, installation: HubSpotInstallation) => {
 		next: HubSpotConversationsClient
 	) => {
 		if (previous && loadedClients.has(previous)) {
-			// Only the current client may show c15t's widget.
+			// Only the current client may show Inth's widget.
 			loadedClients.delete(previous);
 			previous.widget.remove();
 		}
@@ -652,7 +649,7 @@ const createController = (host: Window, installation: HubSpotInstallation) => {
 };
 
 /**
- * Loads HubSpot after marketing consent and forwards c15t's consent categories.
+ * Loads HubSpot after marketing consent and forwards Inth's consent categories.
  *
  * @param options - Public portal ID, region, loader condition and chat choice.
  * @returns A consent-gated HubSpot script, or a skipped script for an invalid ID.
@@ -664,7 +661,7 @@ const createController = (host: Window, installation: HubSpotInstallation) => {
  *
  * Set `chat: true` to enable chat after functionality consent. The loader remains
  * on revocation to prevent reinjection. Consent signals, cookie revocation and
- * widget removal cannot unload HubSpot's child scripts. Keep c15t's default
+ * widget removal cannot unload HubSpot's child scripts. Keep Inth's default
  * reload on revocation enabled to stop the current page's running code.
  *
  * Remove other HubSpot installations. An existing `hs-script-loader` script is
@@ -765,6 +762,5 @@ export const hubspot = function hubspot(options: HubSpotOptions): Script {
 			}
 			script.onDispose?.(info);
 		},
-		serverStart: undefined,
 	};
 };

@@ -123,12 +123,12 @@ const PreferenceItemRoot = createForwardRef<
 		});
 		const contextValue = useMemo(
 			() => ({
-				contentId: `c15t-preference-item-content-${reactId}`,
+				contentId: `inth-preference-item-content-${reactId}`,
 				disabled,
 				noStyle: finalNoStyle,
 				open: isOpen,
 				setOpen: setIsOpen,
-				triggerId: `c15t-preference-item-trigger-${reactId}`,
+				triggerId: `inth-preference-item-trigger-${reactId}`,
 			}),
 			[disabled, finalNoStyle, isOpen, reactId, setIsOpen]
 		);

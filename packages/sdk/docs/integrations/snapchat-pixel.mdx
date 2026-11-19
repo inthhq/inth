@@ -1,16 +1,16 @@
 ---
 title: Snapchat Pixel
-description: Load the Snapchat Pixel only after marketing consent with the c15t snapchatPixel helper, guard snaptr event calls, and check it in DevTools.
-seoTitle: Snapchat Pixel cookie consent with c15t
-seoDescription: Load the Snapchat Pixel only with marketing consent. The c15t snapchatPixel helper keeps scevent.min.js off the page until then.
+description: Load the Snapchat Pixel only after marketing consent with the Inth snapchatPixel helper, guard snaptr event calls, and check it in DevTools.
+seoTitle: Snapchat Pixel cookie consent with Inth
+seoDescription: Load the Snapchat Pixel only with marketing consent. The Inth snapchatPixel helper keeps scevent.min.js off the page until then.
 icon: snapchat
 group: integrations
 ---
 
-The c15t `snapchatPixel` helper keeps the Snapchat Pixel off the page until
-`marketing` has consent. Until then, c15t does not define `snaptr`. The helper
-sends no consent signal to Snapchat. If the visitor withdraws consent, c15t
-removes the script element. By default, c15t also reloads the page.
+The Inth `snapchatPixel` helper keeps the Snapchat Pixel off the page until
+`marketing` has consent. Until then, Inth does not define `snaptr`. The helper
+sends no consent signal to Snapchat. If the visitor withdraws consent, Inth
+removes the script element. By default, Inth also reloads the page.
 
 ## Configure the Snapchat Pixel
 
@@ -39,7 +39,7 @@ export const scripts = [snapchatPixel({ pixelId: 'YOUR_PIXEL_ID' })];
 ## Loading and revocation
 
 `snapchatPixel` uses the `marketing` category. Before marketing is allowed,
-c15t defines no `snaptr` function and loads nothing from Snapchat. When
+Inth defines no `snaptr` function and loads nothing from Snapchat. When
 marketing becomes allowed, the helper queues `init` and `PAGE_VIEW`, then loads
 `scevent.min.js`.
 

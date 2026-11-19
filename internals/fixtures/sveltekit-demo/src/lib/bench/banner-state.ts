@@ -10,7 +10,7 @@ export interface BannerVisibilityBenchState {
 
 declare global {
 	interface Window {
-		__c15tBannerVisibilityBench?: BannerVisibilityBenchState;
+		__inthBannerVisibilityBench?: BannerVisibilityBenchState;
 	}
 }
 
@@ -20,15 +20,15 @@ export const getBenchState = function getBenchState():
 	if (typeof window === 'undefined') {
 		return undefined;
 	}
-	if (!window.__c15tBannerVisibilityBench) {
-		window.__c15tBannerVisibilityBench = {
+	if (!window.__inthBannerVisibilityBench) {
+		window.__inthBannerVisibilityBench = {
 			activeUI: 'unknown',
 			errorCount: 0,
 			errors: [],
 			renderCount: 0,
 		};
 	}
-	return window.__c15tBannerVisibilityBench;
+	return window.__inthBannerVisibilityBench;
 };
 
 const isElementVisible = function isElementVisible(element: Element): boolean {

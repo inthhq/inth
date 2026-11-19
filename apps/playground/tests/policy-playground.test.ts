@@ -14,7 +14,7 @@ import type { Browser, BrowserContext, Page } from 'playwright';
 import { afterAll, beforeAll, expect, it, vi } from 'vitest';
 
 const require = createRequire(import.meta.url);
-const port = process.env.C15T_EXAMPLE_TEST_PORT ?? '43129';
+const port = process.env.INTH_EXAMPLE_TEST_PORT ?? '43129';
 const origin = `http://127.0.0.1:${port}`;
 let browser: Browser;
 let server: ChildProcess;
@@ -201,9 +201,9 @@ it('keeps preferences reachable from the trigger toolbar after a notice is dismi
 			.poll(() => page.getByTestId('consent-banner-root').count())
 			.toBe(0);
 
-		const toolbar = page.locator('[data-c15t-trigger-toolbar="true"]');
+		const toolbar = page.locator('[data-inth-trigger-toolbar="true"]');
 		await toolbar.waitFor();
-		await toolbar.locator('[data-c15t-trigger-action="preferences"]').click();
+		await toolbar.locator('[data-inth-trigger-action="preferences"]').click();
 		await page.getByTestId('consent-dialog-root').waitFor();
 		expect(errors).toEqual([]);
 	} finally {

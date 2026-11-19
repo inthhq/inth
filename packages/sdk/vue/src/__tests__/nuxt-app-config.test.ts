@@ -15,7 +15,7 @@ vi.mock('#imports', async () => {
 		defineNuxtPlugin: (plugin: unknown) => plugin,
 		// `app.config.ts` is bundled with the app, so it can hold a function.
 		useAppConfig: () => ({
-			c15t: {
+			inth: {
 				networkBlocker: {
 					onRequestBlocked: nuxt.onRequestBlocked,
 					rules: [{ category: 'measurement', domain: 'tracker.example' }],
@@ -29,11 +29,11 @@ vi.mock('#imports', async () => {
 		// Module options arrive as JSON through the public runtime config.
 		useRuntimeConfig: () => ({
 			public: {
-				c15t: JSON.parse(
+				inth: JSON.parse(
 					JSON.stringify({
-						backendURL: 'https://consent.example.test',
 						iframeBlocker: false,
 						networkBlocker: { logBlockedRequests: false, rules: [] },
+						projectUrl: 'https://consent.example.test',
 					})
 				),
 			},

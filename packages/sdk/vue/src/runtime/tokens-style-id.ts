@@ -3,4 +3,4 @@
  * Its own module, so the Nuxt plugin names the element without loading
  * the CSS generator.
  */
-export const TOKENS_STYLE_ID = 'c15t-css-vars';
+export const TOKENS_STYLE_ID = 'inth-css-vars';

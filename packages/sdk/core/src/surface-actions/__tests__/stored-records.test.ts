@@ -2,22 +2,27 @@
 import { afterEach, describe, expect, test } from 'vitest';
 
 import { NOW } from '../../__tests__/fixtures/kernel-fixtures';
+import {
+	createMemoryOutboxStore,
+	enqueueSave,
+} from '../../kernel/save-outbox/store';
+import type { SavePayload } from '../../types';
 import { hasStoredClearEpoch } from '../instant-commit';
 import { clearStoredRecordsFor } from '../stored-records';
 
 describe('clearStoredRecordsFor', () => {
 	const store = () => {
 		const stored = `c.necessary:1,c.measurement:1,i.t:${NOW}`;
-		localStorage.setItem('c15t', stored);
-		document.cookie = `c15t=${stored}; path=/`;
+		localStorage.setItem('inth', stored);
+		document.cookie = `inth=${stored}; path=/`;
 	};
 	const cleared = () =>
-		localStorage.getItem('c15t') === null &&
-		!/(?:^|; )c15t=/u.test(document.cookie);
+		localStorage.getItem('inth') === null &&
+		!/(?:^|; )inth=/u.test(document.cookie);
 
 	afterEach(() => {
 		localStorage.clear();
-		for (const name of ['c15t', 'c15t-epoch']) {
+		for (const name of ['inth', 'inth-epoch']) {
 			document.cookie = `${name}=; Max-Age=0; path=/`;
 		}
 	});
@@ -27,6 +32,14 @@ describe('clearStoredRecordsFor', () => {
 		expect(clearStoredRecordsFor({}, NOW)).toBe(true);
 		expect(cleared()).toBe(true);
 		expect(hasStoredClearEpoch()).toBe(true);
+	});
+
+	test('drops a save an early commit queued, so the engine does not replay it', async () => {
+		const outbox = createMemoryOutboxStore();
+		await enqueueSave(outbox, {} as SavePayload, NOW);
+		expect(await outbox.transact((tx) => tx.read('saves'))).toHaveLength(1);
+		clearStoredRecordsFor({}, NOW, outbox);
+		expect(await outbox.transact((tx) => tx.read('saves'))).toBeUndefined();
 	});
 
 	test('uses the storage key persistence would', () => {

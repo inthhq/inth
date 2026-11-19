@@ -75,7 +75,7 @@ const translations: TranslationsResponse = {
 };
 
 const init: InitOutput = {
-	branding: 'c15t',
+	branding: 'inth',
 	location: {
 		countryCode: 'DE',
 		regionCode: null,
@@ -442,9 +442,10 @@ test('branding trigger renders the current brand mark instead of a menu icon', a
 		const trigger = document.querySelector(
 			'[data-testid="consent-dialog-trigger"]'
 		);
-		expect(trigger?.getAttribute('data-c15t-trigger')).toBe('true');
+		expect(trigger?.getAttribute('data-inth-trigger')).toBe('true');
+		// No branding from the backend: the INTH mark.
 		expect(trigger?.querySelector('svg')?.getAttribute('viewBox')).toBe(
-			'0 0 446 445'
+			'0 0 88 90'
 		);
 	} finally {
 		await cleanup(wrapper, context);

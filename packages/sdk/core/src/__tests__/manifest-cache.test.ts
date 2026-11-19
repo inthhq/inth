@@ -29,19 +29,20 @@ import {
 	readFillFailures,
 	readRevalidationFloors,
 	resolveManifestSourceUrl,
+	withResolutionBudget,
 } from '../libs/manifest-cache-runtime';
 import type {
 	CachedManifestResponse,
 	ManifestCache,
 	ManifestFetch,
 } from '../libs/manifest-cache-runtime';
+import { INTH_VERSION_HEADER } from '../libs/version-header';
 import * as server from '../server';
+import { stripIdentityForCleartext } from '../server/consent-proxy';
 import {
 	getResolverInputsFromHeaders,
 	resolveManifestInit,
-	withResolutionBudget,
 } from '../transports/manifest-cache';
-import { C15T_VERSION_HEADER } from '../transports/version-header';
 
 const SOURCE_URL = 'https://backend.example/manifest';
 
@@ -67,7 +68,7 @@ const createManifestFixture = function createManifestFixture(
 	revision = 'manifest-rev-1'
 ): ConsentManifest {
 	return {
-		branding: 'c15t',
+		branding: 'inth',
 		policyPacks: [
 			createConsentManifestPolicyPack({
 				categories: ['measurement', 'marketing'],
@@ -163,7 +164,7 @@ describe('fetchCachedManifest', () => {
 		expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
 			headers: {
 				accept: 'application/json',
-				[C15T_VERSION_HEADER]: expect.any(String),
+				[INTH_VERSION_HEADER]: expect.any(String),
 			},
 			method: 'GET',
 		});
@@ -358,7 +359,7 @@ describe('fetchCachedManifest', () => {
 
 		await expect(
 			fetchCachedManifest({ fetch: fetchMock, sourceUrl: SOURCE_URL })
-		).rejects.toThrow('c15t manifest cache: backend /manifest responded 503');
+		).rejects.toThrow('inth manifest cache: backend /manifest responded 503');
 	});
 
 	test('a refusal carries the backend message, status and code', async () => {
@@ -377,7 +378,7 @@ describe('fetchCachedManifest', () => {
 		).rejects.toMatchObject({
 			code: 'CONSENT_SESSIONS_EXHAUSTED',
 			message:
-				'c15t manifest cache: backend /manifest responded 402: This project is out of consent sessions. (CONSENT_SESSIONS_EXHAUSTED)',
+				'inth manifest cache: backend /manifest responded 402: This project is out of consent sessions. (CONSENT_SESSIONS_EXHAUSTED)',
 			status: 402,
 		});
 	});
@@ -391,11 +392,11 @@ describe('manifest source URLs', () => {
 				projectUrl: 'https://backend.example',
 			})
 		).toBe('https://cdn.example/manifest.json');
-		expect(resolveManifestSourceUrl({ projectUrl: '/api/c15t/' })).toBe(
-			'/api/c15t/manifest'
+		expect(resolveManifestSourceUrl({ projectUrl: '/api/inth/' })).toBe(
+			'/api/inth/manifest'
 		);
 		expect(() => resolveManifestSourceUrl({})).toThrow(
-			'c15t manifest cache: `projectUrl` or `manifestUrl` is required.'
+			'inth manifest cache: `projectUrl` or `manifestUrl` is required.'
 		);
 	});
 
@@ -487,14 +488,14 @@ describe('resolveManifestInit', () => {
 		const init = resolveManifestInit({
 			headers: {
 				'Accept-Language': 'de-DE,de;q=0.8,en;q=0.7',
-				'x-c15t-country': ['DE'],
-				'x-c15t-region': 'BE',
+				'x-inth-country': ['DE'],
+				'x-inth-region': 'BE',
 			},
 			manifest: createManifestFixture(),
 		});
 
 		expect(init).toMatchObject({
-			branding: 'c15t',
+			branding: 'inth',
 			location: { countryCode: 'DE', regionCode: 'BE' },
 			policyResolution: {
 				matchedBy: 'country',
@@ -635,7 +636,7 @@ describe('fetchCachedManifest: concurrency, explicit directives, headers', () =>
 		await fetchCachedManifest({
 			cache: createManifestCache(),
 			fetch: fetchMock,
-			headers: { authorization: 'Bearer token', cookie: 'c15t=abc' },
+			headers: { authorization: 'Bearer token', cookie: 'inth=abc' },
 			now: 1000,
 			sourceUrl: SOURCE_URL,
 		});
@@ -644,7 +645,7 @@ describe('fetchCachedManifest: concurrency, explicit directives, headers', () =>
 			headers: expect.objectContaining({
 				accept: 'application/json',
 				authorization: 'Bearer token',
-				cookie: 'c15t=abc',
+				cookie: 'inth=abc',
 			}),
 		});
 	});
@@ -737,7 +738,7 @@ describe('fetchCachedManifest: restrictive directives and credential scope', () 
 			fetchCachedManifest({
 				cache: createManifestCache(),
 				fetch: fetchMock,
-				headers: { cookie: 'c15t=abc' },
+				headers: { cookie: 'inth=abc' },
 				sourceUrl: 'http://backend.example/manifest',
 			})
 		).rejects.toThrow(/refusing to send credentials over http/u);
@@ -746,7 +747,7 @@ describe('fetchCachedManifest: restrictive directives and credential scope', () 
 		await fetchCachedManifest({
 			cache: createManifestCache(),
 			fetch: fetchMock,
-			headers: { cookie: 'c15t=abc' },
+			headers: { cookie: 'inth=abc' },
 			sourceUrl: 'http://localhost:3010/manifest',
 		});
 		expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -936,6 +937,24 @@ describe('credential-scoped keys without WebCrypto', () => {
 });
 
 describe('fetchCachedManifest: custom identity headers over cleartext', () => {
+	test('sends every header the consent proxy forwards over http, sec-fetch-site included', async () => {
+		const fetchMock = createFetchMock(() =>
+			manifestResponse({ 'cache-control': 'public, s-maxage=60' })
+		);
+		const forwarded = stripIdentityForCleartext(
+			{ cookie: 'inth=abc', 'sec-fetch-site': 'same-origin' },
+			'http://backend.example/manifest'
+		);
+		expect(forwarded).toEqual({ 'sec-fetch-site': 'same-origin' });
+		await fetchCachedManifest({
+			cache: createManifestCache(),
+			fetch: fetchMock,
+			headers: forwarded,
+			sourceUrl: 'http://backend.example/manifest',
+		});
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+	});
+
 	test('refuses a caller-supplied header such as x-api-key over remote http', async () => {
 		const fetchMock = createFetchMock(() =>
 			manifestResponse({ 'cache-control': 'public, s-maxage=60' })

@@ -98,7 +98,7 @@ describe('notice banner', () => {
 		const optOut = required(
 			query('[data-testid="consent-banner-right-link-opt-out"]')
 		);
-		expect(optOut.getAttribute('data-c15t-rights')?.split(' ')).toContain(
+		expect(optOut.getAttribute('data-inth-rights')?.split(' ')).toContain(
 			'opt-out'
 		);
 		await fireEvent.click(optOut);
@@ -137,6 +137,53 @@ describe('notice banner', () => {
 			)?.textContent?.trim()
 		).toBe('Got it');
 		second.view.unmount();
+	});
+
+	test('a language without notice copy uses its own banner copy, and English labels it leaves out', () => {
+		const { view } = renderFixture({
+			...notice(),
+			initialTranslations: {
+				language: 'de',
+				translations: {
+					common: {},
+					consentManagerDialog: {},
+					consentTypes: {},
+					cookieBanner: {
+						description: 'Wir verwenden Cookies.',
+						title: 'Ihre Privatsphäre',
+					},
+				},
+			},
+		});
+		expect(
+			query('[data-testid="consent-banner-title"]')?.textContent?.trim()
+		).toBe('Ihre Privatsphäre');
+		expect(
+			query('[data-testid="consent-banner-description"]')?.textContent?.trim()
+		).toBe('Wir verwenden Cookies.');
+		expect(
+			query(
+				'[data-testid="consent-banner-dismiss-button"]'
+			)?.textContent?.trim()
+		).toBe('OK');
+		view.unmount();
+	});
+
+	test('a bundle with only some sections keeps them and reads English for the rest', () => {
+		const { view } = renderFixture({
+			...policyFixture(),
+			initialTranslations: {
+				language: 'de',
+				translations: { cookieBanner: { title: 'Ihre Privatsphäre' } },
+			},
+		});
+		expect(
+			query('[data-testid="consent-banner-title"]')?.textContent?.trim()
+		).toBe('Ihre Privatsphäre');
+		expect(
+			query('[data-testid="consent-banner-accept-button"]')?.textContent?.trim()
+		).toBe('Accept All');
+		view.unmount();
 	});
 
 	test('a choice prompt with customize renders no rights group', () => {

@@ -11,6 +11,6 @@
 	if (!listed || w.top !== w) {
 		return false;
 	}
-	var api = w.__c15tNativeConsent;
+	var api = w.__inthNativeConsent;
 	return !!(api && typeof api.update === 'function' && api.update(token, next));
 });

@@ -57,10 +57,8 @@ interface GorgiasLoad {
  *
  * Disables Segment when measurement is denied, using Gorgias's documented
  * readiness wrapper. Gorgias has no documented analytics re-enable or full
- * shutdown API. Keep c15t's default reload on consent revocation enabled.
+ * shutdown API. Keep Inth's default reload on consent revocation enabled.
  *
- * @param options - Gorgias installation key and snippet version.
- * @returns The consent-gated Gorgias Chat script configuration.
  * @remarks Missing or blank `appKey` values log an error and return a script
  *   that never loads. Remove existing Gorgias installation snippets before
  *   registering this helper. Once disabled, Segment stays disabled until a
@@ -188,16 +186,11 @@ export const gorgiasChat = function gorgiasChat(
 		onDispose: cancel,
 		onError: cancel,
 		onLoad(info) {
-			if (!info.element?.isConnected) {
-				return;
-			}
 			const load = update(info);
 			if (load) {
 				void waitForInit(load);
 			}
 		},
-		// The readiness listener must exist before the remote loader executes.
-		serverStart: undefined,
 		target: 'body',
 	};
 };

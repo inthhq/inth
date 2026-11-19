@@ -20,7 +20,6 @@ const decodeKey = function decodeKey(raw: string): string {
  *
  * @param url - The request URL, possibly empty.
  * @param params - The parameters. Nothing changes when empty.
- * @returns The URL with the parameters.
  * @internal
  */
 export const appendSearchParams = function appendSearchParams(
@@ -53,4 +52,25 @@ export const appendSearchParams = function appendSearchParams(
 		});
 	kept.push(query);
 	return `${base.slice(0, start)}?${kept.join('&')}${fragment}`;
+};
+
+/**
+ * The query parameters of a request URL, absolute or relative, a `URL`, or
+ * the parameters themselves. A `?` inside a fragment is not a query.
+ *
+ * @returns The parameters; empty when the URL has no query.
+ */
+export const readSearchParams = function readSearchParams(
+	source: string | URL | URLSearchParams
+): URLSearchParams {
+	if (source instanceof URLSearchParams) {
+		return source;
+	}
+	if (source instanceof URL) {
+		return source.searchParams;
+	}
+	const fragment = source.indexOf('#');
+	const base = fragment === -1 ? source : source.slice(0, fragment);
+	const query = base.indexOf('?');
+	return new URLSearchParams(query === -1 ? '' : base.slice(query + 1));
 };

@@ -8,16 +8,16 @@
  * headers, then call into here to INTERPRET them. (An audit
  * found four diverged hand-rolled copies of these rules.)
  *
- * Precedence rule: the explicit `x-c15t-*` override headers ALWAYS win
+ * Precedence rule: the explicit `x-inth-*` override headers ALWAYS win
  * over infrastructure-derived headers (Cloudflare, Vercel, CloudFront,
  * generic proxies). Infra order after that: Cloudflare → Vercel →
  * CloudFront → generic.
  */
 import { parseAcceptLanguage } from '@inth/sdk-translations';
 
-/** Country headers, highest priority first. `x-c15t-country` always wins. */
+/** Country headers, highest priority first. `x-inth-country` always wins. */
 export const COUNTRY_HEADERS = [
-	'x-c15t-country',
+	'x-inth-country',
 	'cf-ipcountry',
 	'x-vercel-ip-country',
 	'x-amz-cf-ipcountry',
@@ -25,28 +25,28 @@ export const COUNTRY_HEADERS = [
 	'x-country',
 ] as const;
 
-/** Region headers, highest priority first. `x-c15t-region` always wins. */
+/** Region headers, highest priority first. `x-inth-region` always wins. */
 export const REGION_HEADERS = [
-	'x-c15t-region',
+	'x-inth-region',
 	'cf-region-code',
 	'x-vercel-ip-country-region',
 	'x-region-code',
 ] as const;
 
 /**
- * Every header name that carries a consent request input. This is the
- * canonical allowlist for forwarding to a c15t backend and for cache-key
- * derivation. Framework adapters may append transport-specific extras
- * (e.g. `user-agent`, prefetch hints) but must include all of these.
- */
-/**
- * GPC headers, highest priority first. `x-c15t-gpc` is the application
+ * GPC headers, highest priority first. `x-inth-gpc` is the application
  * override: browsers refuse to let scripts set `Sec-*` request headers, so a
  * client that needs to assert a GPC value on its own init request sends it
  * here, and the user agent's `Sec-GPC` remains the browser-provided signal.
  */
-export const GPC_HEADERS = ['x-c15t-gpc', 'sec-gpc'] as const;
+export const GPC_HEADERS = ['x-inth-gpc', 'sec-gpc'] as const;
 
+/**
+ * Every header name that carries a consent request input. This is the
+ * canonical allowlist for forwarding to an Inth backend and for cache-key
+ * derivation. Framework adapters may append transport-specific extras
+ * (e.g. `user-agent`, prefetch hints) but must include all of these.
+ */
 export const CONSENT_REQUEST_HEADER_NAMES = [
 	...COUNTRY_HEADERS,
 	...REGION_HEADERS,
@@ -130,6 +130,26 @@ export const extractConsentRequestInputs = function extractConsentRequestInputs(
 };
 
 /**
+ * Resolves country and region from common geo IP headers.
+ *
+ * @deprecated Use {@link extractConsentRequestInputs}: same precedence,
+ * plus language and GPC. Kept for the backend's existing call sites.
+ */
+export const getRegionFromHeaders = function getRegionFromHeaders(
+	headers: Record<string, string | undefined>
+): {
+	region?: string;
+	country?: string;
+} {
+	const country = pickHeader(headers, COUNTRY_HEADERS);
+	const region = pickHeader(headers, REGION_HEADERS);
+	return {
+		...(country && { country }),
+		...(region && { region }),
+	};
+};
+
+/**
  * Inputs → kernel-overrides record, dropping absent fields. Shared by the
  * server helpers that seed `KernelConfig.initialOverrides`.
  */
@@ -152,45 +172,9 @@ export const consentInputsToOverrides = function consentInputsToOverrides(
 	return overrides;
 };
 
-export const headersToRecord = function headersToRecord(
-	headers: Headers
-): Record<string, string> {
-	const record: Record<string, string> = {};
-	headers.forEach((value, key) => {
-		record[key.toLowerCase()] = value;
-	});
-	return record;
-};
-
-/**
- * Resolves country and region from common geo IP headers.
- *
- * @deprecated Use {@link extractConsentRequestInputs} — same precedence,
- * plus language and GPC. Kept for the backend's existing call sites.
- */
-export const getRegionFromHeaders = function getRegionFromHeaders(
-	headers: Record<string, string | undefined>
-): {
-	region?: string;
-	country?: string;
-} {
-	const country = pickHeader(headers, COUNTRY_HEADERS);
-	const region = pickHeader(headers, REGION_HEADERS);
-
-	return {
-		...(country && { country }),
-		...(region && { region }),
-	};
-};
-
 // Client IP derivation lives alongside geo: both recover request metadata
 // from proxy headers, and both are shared so two backends cannot disagree.
-export {
-	DEFAULT_IP_HEADERS_LIST,
-	getIpAddress,
-	type IpAddressConfig,
-	maskIpAddress,
-} from './client-ip';
+export { getIpAddress, type IpAddressConfig, maskIpAddress } from './client-ip';
 
 // Origin allowlisting: shared for the same reason as the rest of this
 // module — a security decision that two live backends must not disagree on.

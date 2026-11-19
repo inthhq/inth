@@ -23,12 +23,15 @@ export type ConsentSessionSource = v.InferOutput<
 	typeof consentSessionSourceSchema
 >;
 
+/** The consent models a policy can apply. */
+export const CONSENT_MODELS = ['opt-in', 'opt-out', 'iab', 'none'] as const;
+
 /** The matched policy a session resolved to. */
 export const consentSessionPolicySchema = v.object({
 	fingerprint: v.string(),
 	id: v.string(),
 	matchedBy: v.picklist(['region', 'country', 'default', 'fallback']),
-	model: v.picklist(['opt-in', 'opt-out', 'iab', 'none']),
+	model: v.picklist(CONSENT_MODELS),
 });
 
 /**

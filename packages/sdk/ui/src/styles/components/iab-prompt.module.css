@@ -1,49 +1,44 @@
 @import url('./animations/iab-prompt.css');
 
 :root {
-	/* Typography */
-	--iab-consent-banner-font-family: var(--c15t-font-family);
-	--iab-consent-banner-line-height: var(--c15t-line-height-normal);
+	--iab-consent-banner-font-family: var(--inth-font-family);
+	--iab-consent-banner-line-height: var(--inth-line-height-normal);
 	--iab-consent-banner-text-size-adjust: 100%;
 	--iab-consent-banner-tab-size: 4;
 
-	/* Layout variables */
-	--iab-consent-banner-border-radius-sm: var(--c15t-radius-sm);
-	--iab-consent-banner-border-radius: var(--c15t-radius-lg);
+	--iab-consent-banner-border-radius-sm: var(--inth-radius-sm);
+	--iab-consent-banner-border-radius: var(--inth-radius-lg);
 	--iab-consent-banner-max-width: 560px;
 
 	/* Animation variables. A banner that mounts after the page has painted
 	   fades in on the entry pair; hiding fades out on the exit pair. */
-	--iab-consent-banner-entry-duration: var(--c15t-duration-normal);
-	--iab-consent-banner-entry-timing: var(--c15t-easing-out);
-	--iab-consent-banner-animation-duration: var(--c15t-duration-fast);
-	--iab-consent-banner-animation-timing: var(--c15t-easing-in);
+	--iab-consent-banner-entry-duration: var(--inth-duration-normal);
+	--iab-consent-banner-entry-timing: var(--inth-easing-out);
+	--iab-consent-banner-animation-duration: var(--inth-duration-fast);
+	--iab-consent-banner-animation-timing: var(--inth-easing-in);
 
-	/* Border */
 	--iab-consent-banner-border-width: 1px;
 	--iab-consent-banner-border-width-hairline: 1px;
 
-	/* Shadow */
-	--iab-consent-banner-shadow: var(--c15t-shadow-lg);
-	--iab-consent-banner-shadow-dark: var(--c15t-shadow-lg);
+	--iab-consent-banner-shadow: var(--inth-shadow-lg);
+	--iab-consent-banner-shadow-dark: var(--inth-shadow-lg);
 
-	/* Colors */
-	--iab-consent-banner-background-color: var(--c15t-surface);
-	--iab-consent-banner-background-color-dark: var(--c15t-surface);
-	--iab-consent-banner-footer-background-color: var(--c15t-surface-hover);
-	--iab-consent-banner-footer-background-color-dark: var(--c15t-surface-hover);
-	--iab-consent-banner-text-color: var(--c15t-text);
-	--iab-consent-banner-text-color-dark: var(--c15t-text);
-	--iab-consent-banner-border-color: var(--c15t-border);
-	--iab-consent-banner-border-color-dark: var(--c15t-border);
-	--iab-consent-banner-title-color: var(--c15t-text);
-	--iab-consent-banner-title-color-dark: var(--c15t-text);
-	--iab-consent-banner-description-color: var(--c15t-text-muted);
-	--iab-consent-banner-description-color-dark: var(--c15t-text-muted);
-	--iab-consent-banner-overlay-background-color: var(--c15t-overlay);
-	--iab-consent-banner-overlay-background-color-dark: var(--c15t-overlay);
-	--iab-consent-banner-link-color: var(--c15t-primary);
-	--iab-consent-banner-link-color-dark: var(--c15t-primary);
+	--iab-consent-banner-background-color: var(--inth-surface);
+	--iab-consent-banner-background-color-dark: var(--inth-surface);
+	--iab-consent-banner-footer-background-color: var(--inth-surface-hover);
+	--iab-consent-banner-footer-background-color-dark: var(--inth-surface-hover);
+	--iab-consent-banner-text-color: var(--inth-text);
+	--iab-consent-banner-text-color-dark: var(--inth-text);
+	--iab-consent-banner-border-color: var(--inth-border);
+	--iab-consent-banner-border-color-dark: var(--inth-border);
+	--iab-consent-banner-title-color: var(--inth-text);
+	--iab-consent-banner-title-color-dark: var(--inth-text);
+	--iab-consent-banner-description-color: var(--inth-text-muted);
+	--iab-consent-banner-description-color-dark: var(--inth-text-muted);
+	--iab-consent-banner-overlay-background-color: var(--inth-overlay);
+	--iab-consent-banner-overlay-background-color-dark: var(--inth-overlay);
+	--iab-consent-banner-link-color: var(--inth-primary);
+	--iab-consent-banner-link-color-dark: var(--inth-primary);
 
 	/* Stacking. The banner's z-index must stay above its overlay's. */
 	--iab-consent-banner-z-index: 999998;
@@ -77,7 +72,7 @@
 	/* React marks the end of its streamed children. Painting the centered
 	   card before that marker arrives would move it as its content grows.
 	   The completed banner is visible without waiting for JavaScript. */
-	.root[data-c15t-streamed]:not(:has(> [data-c15t-stream-end])) {
+	.root[data-inth-streamed]:not(:has(> [data-inth-stream-end])) {
 		visibility: hidden;
 	}
 
@@ -120,7 +115,6 @@
 		}
 	}
 
-	/* Card styles */
 	.cardShell {
 		display: flex;
 		flex-direction: column;
@@ -139,20 +133,19 @@
 		overflow: hidden;
 	}
 
-	:global(.c15t-dark) .card {
+	:global(.inth-dark) .card {
 		background-color: var(--iab-consent-banner-background-color-dark);
 		border-color: var(--iab-consent-banner-border-color-dark);
 		box-shadow: var(--iab-consent-banner-shadow-dark);
 	}
 
-	/* Divider between sections */
 	.card > :not([hidden]) ~ :not([hidden]) {
 		border-top-width: var(--iab-consent-banner-border-width);
 		border-top-style: solid;
 		border-color: var(--iab-consent-banner-border-color);
 	}
 
-	:global(.c15t-dark) .card > :not([hidden]) ~ :not([hidden]) {
+	:global(.inth-dark) .card > :not([hidden]) ~ :not([hidden]) {
 		border-color: var(--iab-consent-banner-border-color-dark);
 	}
 
@@ -172,7 +165,7 @@
 		gap: 0.5rem;
 	}
 
-	:global(.c15t-dark) .header {
+	:global(.inth-dark) .header {
 		color: var(--iab-consent-banner-text-color-dark);
 	}
 
@@ -183,7 +176,7 @@
 	}
 
 	.title {
-		font-size: var(--c15t-font-size-lg);
+		font-size: var(--inth-font-size-lg);
 		line-height: 1.5rem;
 		letter-spacing: -0.011em;
 		font-weight: 600;
@@ -191,7 +184,7 @@
 		margin: 0;
 	}
 
-	:global(.c15t-dark) .title {
+	:global(.inth-dark) .title {
 		color: var(--iab-consent-banner-title-color-dark);
 	}
 
@@ -204,7 +197,7 @@
 		margin: 0;
 	}
 
-	:global(.c15t-dark) .description {
+	:global(.inth-dark) .description {
 		color: var(--iab-consent-banner-description-color-dark);
 	}
 
@@ -223,7 +216,7 @@
 		text-decoration: underline;
 	}
 
-	:global(.c15t-dark) .partnersLink {
+	:global(.inth-dark) .partnersLink {
 		color: var(--iab-consent-banner-link-color-dark);
 	}
 
@@ -246,7 +239,7 @@
 		list-style-type: none;
 	}
 
-	:global(.c15t-dark) .purposeList {
+	:global(.inth-dark) .purposeList {
 		color: var(--iab-consent-banner-description-color-dark);
 	}
 
@@ -257,7 +250,7 @@
 		margin-top: 0.25rem;
 	}
 
-	:global(.c15t-dark) .legitimateInterestNotice {
+	:global(.inth-dark) .legitimateInterestNotice {
 		color: var(--iab-consent-banner-description-color-dark);
 	}
 
@@ -275,7 +268,7 @@
 		text-decoration: underline;
 	}
 
-	:global(.c15t-dark) .privacyLink {
+	:global(.inth-dark) .privacyLink {
 		color: var(--iab-consent-banner-link-color-dark);
 	}
 
@@ -288,7 +281,7 @@
 		background-color: var(--iab-consent-banner-footer-background-color);
 	}
 
-	:global(.c15t-dark) .footer {
+	:global(.inth-dark) .footer {
 		background-color: var(--iab-consent-banner-footer-background-color-dark);
 	}
 
@@ -329,11 +322,10 @@
 			var(--iab-consent-banner-animation-timing);
 	}
 
-	:global(.c15t-dark) .overlay {
+	:global(.inth-dark) .overlay {
 		background-color: var(--iab-consent-banner-overlay-background-color-dark);
 	}
 
-	/* Reduced motion preference */
 	@media (prefers-reduced-motion: reduce) {
 		.bannerEntering[data-entry='late']:not(.bannerHidden),
 		.overlayEntering[data-entry='late']:not(.overlayHidden),

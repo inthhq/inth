@@ -22,7 +22,6 @@ export interface ConsentSurfaceIAB {
  * surface closes as {@link saveIABConsentSurface} describes. Otherwise it
  * is a category save that closes as {@link saveConsentSurface} describes.
  *
- * @param kernel - The kernel the choice is recorded in.
  * @param choice - `'all'` to accept, `'none'` to reject.
  * @param iab - The mounted CMP handle, when there is one.
  * @returns The save's result; `{ ok: false }` under an IAB policy with no

@@ -21,11 +21,14 @@ import {
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { buildPrefetchScript } from '../../libs/prefetch/prefetch';
-import { JOURNEY_STORAGE_KEY } from '../../libs/storage-keys';
+import {
+	C15T_JOURNEY_STORAGE_KEY,
+	JOURNEY_STORAGE_KEY,
+} from '../../libs/storage-keys';
+import { inthProtocolHeaders } from '../../libs/version-header';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { hosted } from '../../transports/mode';
 import type { ProviderTransportFactory } from '../../transports/mode';
-import { c15tProtocolHeaders } from '../../transports/version-header';
 import type { KernelTransport } from '../../types';
 import {
 	createConsentProviderRuntime,
@@ -76,13 +79,13 @@ const fakeFetch: typeof globalThis.fetch = (input, init) => {
 		Response.json(
 			url.pathname.endsWith('/init')
 				? {
-						branding: 'c15t',
+						branding: 'inth',
 						location: { countryCode: 'DE', regionCode: null },
 						policyResolution: writePolicyResolutionWire(initPolicy),
 						translations: { language: 'en', translations },
 					}
 				: { subjectId: 'sub_1' },
-			{ headers: c15tProtocolHeaders }
+			{ headers: inthProtocolHeaders }
 		)
 	);
 };
@@ -136,9 +139,9 @@ beforeEach(() => {
 	sessionStorage.clear();
 	clearStoredConsentRecords();
 	// Each test is a fresh page load.
-	delete (window as Window & { __c15tJourney?: unknown }).__c15tJourney;
-	delete (window as Window & { __c15tInitialDataPromises?: unknown })
-		.__c15tInitialDataPromises;
+	delete (window as Window & { __inthJourney?: unknown }).__inthJourney;
+	delete (window as Window & { __inthInitialDataPromises?: unknown })
+		.__inthInitialDataPromises;
 	vi.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
@@ -275,6 +278,29 @@ describe("journey: 'tab'", () => {
 		expect(sessionStorage.getItem(JOURNEY_STORAGE_KEY)).toBeNull();
 	});
 
+	test("continues an id only c15t's key holds", async () => {
+		const id = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
+		sessionStorage.setItem(C15T_JOURNEY_STORAGE_KEY, id);
+
+		const runtime = await load({ journey: 'tab' });
+		expect(init()[0]?.journey?.id).toBe(id);
+		expect(sessionStorage.getItem(C15T_JOURNEY_STORAGE_KEY)).toBe(id);
+		await runtime.kernel.commands.save('none');
+		expect(saves()[0]?.journey).toEqual({ id, scope: 'tab' });
+	});
+
+	test("an Inth id wins over c15t's, and a choice drops both", async () => {
+		const id = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
+		sessionStorage.setItem(JOURNEY_STORAGE_KEY, id);
+		sessionStorage.setItem(C15T_JOURNEY_STORAGE_KEY, SERVER_ID);
+
+		const runtime = await load({ journey: 'tab' });
+		expect(init()[0]?.journey?.id).toBe(id);
+		await runtime.kernel.commands.save('none');
+		expect(sessionStorage.getItem(JOURNEY_STORAGE_KEY)).toBeNull();
+		expect(sessionStorage.getItem(C15T_JOURNEY_STORAGE_KEY)).toBeNull();
+	});
+
 	test.each([
 		[
 			'a policy that prompts for nothing',
@@ -333,6 +359,10 @@ describe("journey: 'tab'", () => {
 			JOURNEY_STORAGE_KEY,
 			'f47ac10b-58cc-4372-a567-0e02b2c3d479'
 		);
+		sessionStorage.setItem(
+			C15T_JOURNEY_STORAGE_KEY,
+			'f47ac10b-58cc-4372-a567-0e02b2c3d479'
+		);
 		const runtime = createConsentRuntime({
 			consentCategories: ['necessary', 'measurement'],
 			journey: 'tab',
@@ -347,6 +377,7 @@ describe("journey: 'tab'", () => {
 		// The prompt is due, yet nothing is kept for later pages.
 		expect(runtime.kernel.getSnapshot().activeUI).toBe('banner');
 		expect(sessionStorage.getItem(JOURNEY_STORAGE_KEY)).toBeNull();
+		expect(sessionStorage.getItem(C15T_JOURNEY_STORAGE_KEY)).toBeNull();
 		await runtime.kernel.commands.save('all');
 		expect(saves()[0]?.journey).toEqual({ id: SERVER_ID, scope: 'page' });
 	});
@@ -717,7 +748,7 @@ describe('a journey a request before the runtime started', () => {
 	});
 
 	test('a server render id outranks an early request id', async () => {
-		(window as Window & { __c15tJourney?: unknown }).__c15tJourney = {
+		(window as Window & { __inthJourney?: unknown }).__inthJourney = {
 			id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
 			scope: 'page',
 			storedChoice: false,

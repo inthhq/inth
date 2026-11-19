@@ -54,9 +54,9 @@ for (const stylePackage of stylePackages) {
 				);
 			}
 
-			if (!distEntry.includes('c15t-ui-')) {
+			if (!distEntry.includes('inth-ui-')) {
 				failures.push(
-					`${stylePackage.name}/dist/${entry} does not contain generated c15t UI rules`
+					`${stylePackage.name}/dist/${entry} does not contain generated Inth UI rules`
 				);
 			}
 		} catch (error) {
@@ -78,5 +78,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-	'Tailwind v3 CSS entrypoint reproduction passed: root TW3 files resolve physically and dist TW3 files inline generated c15t UI rules.'
+	'Tailwind v3 CSS entrypoint reproduction passed: root TW3 files resolve physically and dist TW3 files inline generated Inth UI rules.'
 );

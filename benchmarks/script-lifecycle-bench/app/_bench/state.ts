@@ -24,7 +24,7 @@ export interface ScriptBenchState {
 
 declare global {
 	interface Window {
-		__c15tScriptBench?: ScriptBenchState;
+		__inthScriptBench?: ScriptBenchState;
 	}
 }
 
@@ -40,10 +40,10 @@ export const getBenchState = function getBenchState(
 	}
 
 	if (
-		!window.__c15tScriptBench ||
-		window.__c15tScriptBench.scenario !== scenario
+		!window.__inthScriptBench ||
+		window.__inthScriptBench.scenario !== scenario
 	) {
-		window.__c15tScriptBench = {
+		window.__inthScriptBench = {
 			activeUI: 'none',
 			beforeLoadEventCounts: {},
 			completionMarkers: {},
@@ -60,7 +60,7 @@ export const getBenchState = function getBenchState(
 		};
 	}
 
-	return window.__c15tScriptBench;
+	return window.__inthScriptBench;
 };
 
 export const incrementCounter = function incrementCounter(

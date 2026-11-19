@@ -1,11 +1,13 @@
 import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import {
+	afterNextRender,
 	ChangeDetectionStrategy,
 	Component,
 	computed,
 	DOCUMENT,
 	effect,
 	inject,
+	Injector,
 	input,
 	output,
 	PLATFORM_ID,
@@ -14,11 +16,24 @@ import {
 } from '@angular/core';
 import { ɵresolveNoStyle as resolveNoStyle } from '@inth/angular';
 import { uniqueId } from '@inth/angular/primitives';
-import type { AdTechProvider, GlobalVendorList } from '@inth/sdk/engine';
+import type {
+	AdTechProvider,
+	GlobalVendorList,
+	NonIABVendor,
+} from '@inth/sdk/engine';
 import {
-	resolveIABSafeUrl,
-	resolveIABVendorUrls,
+	formatVendorMaxAge,
+	isLegitimateInterestAllowed,
+	mapCustomVendor,
+	mapGvlVendor,
 } from '@inth/sdk/iab/headless';
+import type {
+	HeadlessIABVendorId,
+	IABLegitimateInterestState,
+	ProcessedPurpose,
+	ProcessedVendor,
+} from '@inth/sdk/iab/headless';
+import type { ResolvedIABCopy } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import switchStyles from '@inth/sdk/ui/styles/components/switch';
 import { switchVariants } from '@inth/sdk/ui/styles/primitives';
@@ -36,13 +51,6 @@ import {
 } from './iab-icons';
 import { PREFERENCE_ITEM, SWITCH } from './iab-purpose-item';
 import type { IABVendorChoice } from './iab-purpose-item';
-import type { IABTranslations } from './iab-translations';
-import type {
-	NonIABVendor,
-	ProcessedPurpose,
-	ProcessedVendor,
-	VendorId,
-} from './iab-types';
 
 const sw = switchVariants();
 
@@ -63,8 +71,10 @@ interface SimpleEntry {
 }
 
 /** A row's key: registered and custom vendors may share an id. */
-const vendorRowKey = (vendor: { id: VendorId; isCustom?: boolean }): string =>
-	`${vendor.isCustom ? 'custom' : 'gvl'}:${String(vendor.id)}`;
+const vendorRowKey = (vendor: {
+	id: HeadlessIABVendorId;
+	isCustom?: boolean;
+}): string => `${vendor.isCustom ? 'custom' : 'gvl'}:${String(vendor.id)}`;
 
 /** What one vendor row renders, computed once per vendor. */
 interface VendorRow {
@@ -131,7 +141,7 @@ const lookup = function lookup(
 		SearchIcon,
 		ShareIcon,
 	],
-	selector: 'c15t-iab-vendor-list',
+	selector: 'inth-iab-vendor-list',
 	template: `
 		@let t = iabT().preferenceCenter;
 		<div>
@@ -146,7 +156,7 @@ const lookup = function lookup(
 						[class]="cls(styles.clearSelectionButton)"
 					>
 						<svg
-							c15t-close-icon
+							inth-close-icon
 							[class]="cls(styles.clearIcon)"
 							width="16"
 							height="16"
@@ -158,7 +168,7 @@ const lookup = function lookup(
 				<div [class]="cls(styles.vendorListHeader)">
 					<div [class]="cls(styles.searchContainer)">
 						<svg
-							c15t-search-icon
+							inth-search-icon
 							[class]="cls(styles.searchIcon)"
 						></svg>
 						<input
@@ -184,7 +194,7 @@ const lookup = function lookup(
 					<div [class]="cls(styles.iabVendorSectionHeader)">
 						<h3 [class]="cls(styles.vendorSectionHeading)">
 							<svg
-								c15t-layers-icon
+								inth-layers-icon
 								[class]="cls(styles.vendorSectionIcon)"
 							></svg>
 							{{ t.vendorList.iabVendorsHeading }}
@@ -197,7 +207,7 @@ const lookup = function lookup(
 					<div>
 						@for (row of filteredIABRows(); track row.key) {
 							<div
-								c15tPreferenceItem
+								inthPreferenceItem
 								[open]="expandedVendors().has(row.key)"
 								(openChange)="setExpanded(row.key, $event)"
 								[noStyle]="true"
@@ -211,7 +221,7 @@ const lookup = function lookup(
 							>
 								<div [class]="cls(styles.vendorListItemHeader)">
 									<button
-										c15tPreferenceItemTrigger
+										inthPreferenceItemTrigger
 										[class]="cls(styles.vendorListTrigger)"
 									>
 										<div [class]="cls(styles.vendorListInfo)">
@@ -225,7 +235,7 @@ const lookup = function lookup(
 												@if (row.legIntCount > 0) {
 													<span [class]="cls(styles.vendorListLiBadge)">
 														<svg
-															c15t-legitimate-interest-icon
+															inth-legitimate-interest-icon
 															style="height: 0.625rem; width: 0.625rem"
 														></svg>
 														{{ row.legIntCount }}
@@ -235,7 +245,7 @@ const lookup = function lookup(
 											</div>
 										</div>
 										<svg
-											c15t-chevron-down-icon
+											inth-chevron-down-icon
 											[class]="cls(styles.purposeArrow)"
 											[expanded]="expandedVendors().has(row.key)"
 										></svg>
@@ -249,11 +259,11 @@ const lookup = function lookup(
 								</div>
 
 								<div
-									c15t-preference-item-content
+									inth-preference-item-content
 									[innerClassName]="cls(styles.vendorListContent)"
 									[noStyle]="resolvedNoStyle()"
 								>
-									<ng-template c15tPreferenceItemBody>
+									<ng-template inthPreferenceItemBody>
 										<div [class]="cls(styles.vendorLinks)">
 											@if (row.vendor.policyUrl) {
 												<ng-container
@@ -356,7 +366,7 @@ const lookup = function lookup(
 															@if (purpose.usesLegitimateInterest) {
 																<span [class]="cls(styles.vendorListLiBadge)">
 																	<svg
-																		c15t-legitimate-interest-icon
+																		inth-legitimate-interest-icon
 																		width="10"
 																		height="10"
 																	></svg>
@@ -403,7 +413,7 @@ const lookup = function lookup(
 											<div [class]="cls(styles.vendorPurposesList)">
 												<h4 [class]="cls(styles.vendorPurposesTitle)">
 													<svg
-														c15t-lock-icon
+														inth-lock-icon
 														role="img"
 														[attr.aria-label]="t.vendorList.specialPurposes"
 														[class]="cls(styles.legitimateInterestIcon)"
@@ -459,7 +469,7 @@ const lookup = function lookup(
 					<div [class]="cls(styles.customVendorSectionHeader)">
 						<h3 [class]="cls(styles.vendorSectionHeading)">
 							<svg
-								c15t-globe-icon
+								inth-globe-icon
 								[class]="cls(styles.vendorSectionIcon)"
 							></svg>
 							{{ t.vendorList.customVendorsHeading }}
@@ -472,7 +482,7 @@ const lookup = function lookup(
 					<div>
 						@for (row of filteredCustomRows(); track row.key) {
 							<div
-								c15tPreferenceItem
+								inthPreferenceItem
 								[open]="expandedVendors().has(row.key)"
 								(openChange)="setExpanded(row.key, $event)"
 								[noStyle]="true"
@@ -481,21 +491,21 @@ const lookup = function lookup(
 							>
 								<div [class]="cls(styles.vendorListItemHeader)">
 									<button
-										c15tPreferenceItemTrigger
+										inthPreferenceItemTrigger
 										[class]="cls(styles.vendorListTrigger)"
 									>
 										<div [class]="cls(styles.vendorListInfo)">
 											<h3 [class]="cls(styles.vendorListName)">
 												{{ row.vendor.name }}
 												<svg
-													c15t-globe-icon
+													inth-globe-icon
 													[class]="cls(styles.customVendorIcon)"
 													[attr.aria-label]="iabT().common.customPartner"
 												></svg>
 											</h3>
 										</div>
 										<svg
-											c15t-chevron-down-icon
+											inth-chevron-down-icon
 											[class]="cls(styles.purposeArrow)"
 											[expanded]="expandedVendors().has(row.key)"
 										></svg>
@@ -509,11 +519,11 @@ const lookup = function lookup(
 								</div>
 
 								<div
-									c15t-preference-item-content
+									inth-preference-item-content
 									[innerClassName]="cls(styles.vendorListContent)"
 									[noStyle]="resolvedNoStyle()"
 								>
-									<ng-template c15tPreferenceItemBody>
+									<ng-template inthPreferenceItemBody>
 										<div [class]="cls(styles.vendorLinks)">
 											@if (row.vendor.policyUrl) {
 												<ng-container
@@ -584,7 +594,7 @@ const lookup = function lookup(
 					<div [class]="cls(styles.customVendorSectionHeader)">
 						<h3 [class]="cls(styles.vendorSectionHeading)">
 							<svg
-								c15t-share-icon
+								inth-share-icon
 								aria-hidden="true"
 								[class]="cls(styles.vendorSectionIcon)"
 							></svg>
@@ -622,7 +632,7 @@ const lookup = function lookup(
 									</div>
 									<div [class]="cls(styles.vendorConsentControl)">
 										<button
-											c15tSwitch
+											inthSwitch
 											[attr.aria-label]="'Consent for ' + provider.name"
 											[checked]="consented"
 											(checkedChange)="
@@ -637,11 +647,11 @@ const lookup = function lookup(
 											data-size="medium"
 										>
 											<span
-												c15tSwitchControl
+												inthSwitchControl
 												[class]="cls(trackClass)"
 											>
 												<span
-													c15tSwitchThumb
+													inthSwitchThumb
 													[class]="cls(thumbClass)"
 												></span>
 											</span>
@@ -671,7 +681,7 @@ const lookup = function lookup(
 		>
 			<div [class]="cls(styles.vendorConsentControl)">
 				<button
-					c15tSwitch
+					inthSwitch
 					[attr.aria-label]="'Consent for ' + vendor.name"
 					[checked]="vendorConsents()['' + vendor.id] ?? false"
 					(checkedChange)="
@@ -681,11 +691,11 @@ const lookup = function lookup(
 					data-size="medium"
 				>
 					<span
-						c15tSwitchControl
+						inthSwitchControl
 						[class]="cls(trackClass)"
 					>
 						<span
-							c15tSwitchThumb
+							inthSwitchThumb
 							[class]="cls(thumbClass)"
 						></span>
 					</span>
@@ -705,7 +715,7 @@ const lookup = function lookup(
 				[class]="cls(styles.vendorLink)"
 			>
 				<svg
-					c15t-external-link-icon
+					inth-external-link-icon
 					[class]="cls(styles.vendorLinkIcon)"
 				></svg>
 				{{ label }}
@@ -717,12 +727,12 @@ const lookup = function lookup(
 			let-row
 		>
 			@if (row.hasLegitimateInterest && vendorObjection()) {
-				@let allowed = vendorLegitimateInterests()[row.id] ?? true;
+				@let allowed = legitimateInterestAllowed(row.id);
 				<div [class]="cls(styles.vendorLiSection)">
 					<div [class]="cls(styles.vendorLiSectionHeader)">
 						<h4 [class]="cls(styles.vendorPurposesTitle)">
 							<svg
-								c15t-legitimate-interest-icon
+								inth-legitimate-interest-icon
 								[class]="cls(styles.legitimateInterestIcon)"
 							></svg>
 							{{ iabT().preferenceCenter.purposeItem.legitimateInterest }}
@@ -805,9 +815,10 @@ const lookup = function lookup(
 })
 export class IABVendorList {
 	/** Prefix for this list's row ids, unique on the page. */
-	protected readonly idPrefix = uniqueId('c15t-iab-partners');
+	protected readonly idPrefix = uniqueId('inth-iab-partners');
 	readonly #document = inject(DOCUMENT);
 	readonly #browser = isPlatformBrowser(inject(PLATFORM_ID));
+	readonly #injector = inject(Injector);
 
 	/** The vendor list, after publisher restrictions. */
 	readonly vendorData = input<GlobalVendorList | null>(null);
@@ -816,13 +827,11 @@ export class IABVendorList {
 	/** Consent per vendor, keyed by vendor id. */
 	readonly vendorConsents = input<Readonly<Record<string, boolean>>>({});
 	/** Show only this vendor, as picked on the purposes tab. */
-	readonly selectedVendorId = input<VendorId | null>(null);
+	readonly selectedVendorId = input<HeadlessIABVendorId | null>(null);
 	/** Publisher-declared non-IAB vendors. */
 	readonly customVendors = input<readonly NonIABVendor[]>([]);
-	/** Legitimate interest per vendor; a missing vendor is allowed. */
-	readonly vendorLegitimateInterests = input<Readonly<Record<string, boolean>>>(
-		{}
-	);
+	/** Draft and vendor list the legitimate interest controls read. */
+	readonly legitimateInterests = input<IABLegitimateInterestState | null>(null);
 	/** Offer each legitimate-interest vendor's objection button. */
 	readonly vendorObjection = input(false);
 	/** Google ad tech providers disclosed for Additional Consent. */
@@ -836,7 +845,7 @@ export class IABVendorList {
 	/** @internal */
 	protected readonly resolvedNoStyle = resolveNoStyle(this.noStyle);
 	/** The IAB copy. */
-	readonly iabT = input.required<IABTranslations>();
+	readonly iabT = input.required<ResolvedIABCopy>();
 	/** The UI language, which picks each vendor's privacy links. */
 	readonly language = input<string | undefined>(undefined);
 
@@ -868,54 +877,16 @@ export class IABVendorList {
 
 	readonly #iabVendors = computed((): ProcessedVendor[] => {
 		const data = this.vendorData();
-		if (!data) {
-			return [];
-		}
 		const language = this.language();
-		return Object.entries(data.vendors).map(([id, vendor]) => ({
-			cookieMaxAgeSeconds: vendor.cookieMaxAgeSeconds,
-			cookieRefresh: vendor.cookieRefresh,
-			dataDeclaration:
-				(vendor as unknown as { dataDeclaration?: number[] }).dataDeclaration ||
-				[],
-			dataRetention: vendor.dataRetention,
-			deviceStorageDisclosureUrl: resolveIABSafeUrl(
-				vendor.deviceStorageDisclosureUrl
-			),
-			features: vendor.features || [],
-			id: Number(id),
-			isCustom: false,
-			legIntPurposes: vendor.legIntPurposes || [],
-			...resolveIABVendorUrls(vendor, language),
-			name: vendor.name,
-			purposes: vendor.purposes || [],
-			specialFeatures: vendor.specialFeatures || [],
-			specialPurposes: vendor.specialPurposes || [],
-			usesCookies: vendor.usesCookies,
-			usesNonCookieAccess: vendor.usesNonCookieAccess,
-		}));
+		return data
+			? Object.entries(data.vendors).map(([id, vendor]) =>
+					mapGvlVendor(id, vendor, language)
+				)
+			: [];
 	});
 
 	readonly #customVendors = computed((): ProcessedVendor[] =>
-		this.customVendors().map((cv) => ({
-			cookieMaxAgeSeconds: cv.cookieMaxAgeSeconds ?? null,
-			cookieRefresh: undefined,
-			dataDeclaration: cv.dataCategories || [],
-			dataRetention: undefined,
-			deviceStorageDisclosureUrl: null,
-			features: cv.features || [],
-			id: cv.id,
-			isCustom: true,
-			legIntPurposes: cv.legIntPurposes || [],
-			legitimateInterestUrl: null,
-			name: cv.name,
-			policyUrl: resolveIABSafeUrl(cv.privacyPolicyUrl) ?? '',
-			purposes: cv.purposes || [],
-			specialFeatures: cv.specialFeatures || [],
-			specialPurposes: [],
-			usesCookies: cv.usesCookies ?? false,
-			usesNonCookieAccess: cv.usesNonCookieAccess ?? false,
-		}))
+		this.customVendors().map((vendor) => mapCustomVendor(vendor))
 	);
 
 	/**
@@ -954,16 +925,11 @@ export class IABVendorList {
 				? lookup(vendor.specialFeatures, data.specialFeatures)
 				: [];
 			const features = data ? lookup(vendor.features || [], data.features) : [];
-			let maxAgeText: string | null = null;
-			if (vendor.cookieMaxAgeSeconds) {
-				maxAgeText = t.maxAge.replace(
-					'{days}',
-					String(Math.floor(vendor.cookieMaxAgeSeconds / 86_400))
-				);
-				if (vendor.cookieRefresh) {
-					maxAgeText = `${maxAgeText} ${t.maxAgeRefreshes}`;
-				}
-			}
+			const maxAgeText = formatVendorMaxAge(
+				vendor.cookieMaxAgeSeconds,
+				vendor.cookieRefresh,
+				t
+			);
 			const special =
 				specialPurposes.length > 0 ? `, ${specialPurposes.length} special` : '';
 			const featureCount =
@@ -1055,13 +1021,16 @@ export class IABVendorList {
 			if (!this.#browser) {
 				return;
 			}
-			const timer = setTimeout(() => {
-				const element = this.#document.getElementById(
-					`${this.idPrefix}-${row.domKey}`
-				);
-				element?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
-			}, 100);
-			onCleanup(() => clearTimeout(timer));
+			// Once the expanded row has rendered.
+			const scroll = afterNextRender(
+				() => {
+					this.#document
+						.getElementById(`${this.idPrefix}-${row.domKey}`)
+						?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+				},
+				{ injector: this.#injector }
+			);
+			onCleanup(() => scroll.destroy());
 		});
 	}
 
@@ -1073,6 +1042,15 @@ export class IABVendorList {
 					.map((name) => name || '')
 					.join(' ')
 					.trim();
+	}
+
+	/** @internal */
+	protected legitimateInterestAllowed(vendorId: string): boolean {
+		return isLegitimateInterestAllowed(
+			this.legitimateInterests(),
+			'vendor',
+			vendorId
+		);
 	}
 
 	/** @internal */

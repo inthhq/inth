@@ -1,12 +1,12 @@
 // #region docs:customize title="src/main.ts"
-import { c15tVue, manifest } from '@inth/vue/vue-plugin';
+import { inthVue, manifest } from '@inth/vue/vue-plugin';
 import { createApp } from 'vue';
 
 import App from './App.vue';
 import { scripts } from './scripts';
 
 createApp(App)
-	.use(c15tVue, {
+	.use(inthVue, {
 		components: {
 			banner: { card: { class: 'brand-consent-card' } },
 		},
@@ -16,10 +16,10 @@ createApp(App)
 		},
 		scripts,
 		tokens: {
-			'c15t-primary': '#6943a3',
-			'c15t-primary-hover': '#533285',
-			'c15t-radius-lg': '18px',
-			'c15t-text-on-primary': '#ffffff',
+			'inth-primary': '#6943a3',
+			'inth-primary-hover': '#533285',
+			'inth-radius-lg': '18px',
+			'inth-text-on-primary': '#ffffff',
 		},
 	})
 	.mount('#app');

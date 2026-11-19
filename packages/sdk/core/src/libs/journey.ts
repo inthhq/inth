@@ -1,5 +1,5 @@
 /**
- * Consent journey ids: a random UUID on requests c15t already makes, so a
+ * Consent journey ids: a random UUID on requests Inth already makes, so a
  * backend can link an init to the save that follows. Never the subject id.
  */
 
@@ -7,10 +7,11 @@ import { parseJourneyId, parseJourneyScope } from '@inth/sdk-schema/types';
 import type { ConsentJourneyScope } from '@inth/sdk-schema/types';
 
 import type { KernelJourney } from '../types';
+import { readCookieValueFromHeader } from './cookie/read-header';
 import {
+	C15T_JOURNEY_STORAGE_KEY,
 	JOURNEY_STORAGE_KEY,
-	STORAGE_KEY,
-	STORAGE_KEY_V2,
+	storedChoiceNames,
 } from './storage-keys';
 
 /**
@@ -68,6 +69,19 @@ export type JourneyStorage = Pick<
 export const sessionStorageOf = (): JourneyStorage | null =>
 	typeof window === 'undefined' ? null : window.sessionStorage;
 
+/**
+ * The tab's journey id, or `null`: Inth's, else the one a c15t page of this
+ * tab left. Reading writes nothing. May throw, as blocked storage does.
+ */
+const readTabJourneyId = function readTabJourneyId(
+	store: JourneyStorage
+): string | null {
+	return (
+		parseJourneyId(store.getItem(JOURNEY_STORAGE_KEY)) ??
+		parseJourneyId(store.getItem(C15T_JOURNEY_STORAGE_KEY))
+	);
+};
+
 /** A journey that was opened, and whether an earlier page started it. */
 export interface OpenedJourney {
 	journey: KernelJourney;
@@ -99,7 +113,7 @@ export const openJourney = function openJourney(options: {
 		try {
 			const store = (options.storage ?? sessionStorageOf)();
 			if (store) {
-				previous = parseJourneyId(store.getItem(JOURNEY_STORAGE_KEY));
+				previous = readTabJourneyId(store);
 			} else {
 				scope = 'page';
 			}
@@ -124,16 +138,14 @@ export const openJourney = function openJourney(options: {
  * check.
  *
  * @param storage - Where a `'tab'` journey is kept.
- * @returns The option to start the early journey with.
  * @internal
  */
 export const detectJourneyOption = function detectJourneyOption(
 	storage: () => JourneyStorage | null = sessionStorageOf
 ): ConsentJourneyScope {
 	try {
-		return parseJourneyId(storage()?.getItem(JOURNEY_STORAGE_KEY))
-			? 'tab'
-			: 'page';
+		const store = storage();
+		return store && readTabJourneyId(store) ? 'tab' : 'page';
 	} catch {
 		return 'page';
 	}
@@ -143,14 +155,13 @@ export const detectJourneyOption = function detectJourneyOption(
  * Window property holding the journey an early request (React's early
  * `/init`, the inline prefetch script) sent, for the runtime to continue.
  */
-export const JOURNEY_WINDOW_KEY = '__c15tJourney';
+export const JOURNEY_WINDOW_KEY = '__inthJourney';
 
 type JourneyWindow = Window & { [JOURNEY_WINDOW_KEY]?: unknown };
 
 /**
  * The journey an early request of this page started, if it is well formed.
  *
- * @returns The journey, or `undefined`.
  * @internal
  */
 export const readEarlyJourney = function readEarlyJourney():
@@ -199,66 +210,38 @@ export const claimEarlyJourney = function claimEarlyJourney(options: {
 };
 
 /**
- * Where a choice is stored, as cookie names and localStorage keys (with the
- * legacy one) for `storageKey`, and the key a notice dismissal uses for both.
- *
- * @param storageKey - The consent storage key.
- * @returns The choice's cookie names and localStorage keys, and the notice key.
- * @internal
- */
-export const storedAnswerKeys = function storedAnswerKeys(storageKey: string): {
-	cookies: string[];
-	local: string[];
-	notice: string;
-} {
-	return {
-		cookies: [storageKey],
-		local: [storageKey, ...(storageKey === STORAGE_KEY ? [] : [STORAGE_KEY])],
-		notice: `${storageKey}-notice`,
-	};
-};
-
-/**
  * Whether a consent choice, or with `notice` a notice dismissal too, is
- * stored under `storageKey`, without decoding it. The inline prefetch script
- * runs the same check.
+ * stored under `storageKey` or a legacy family it falls back to, without
+ * decoding it. Inline scripts run the same test (`STORED_NAMES_CHECK`).
  *
  * The journey's stored flag counts a dismissal. The experiment arm does not:
  * the runtime sends an arm until the visitor makes a choice.
  *
- * @param storageKey - The consent storage key. Defaults to `c15t`.
+ * @param storageKey - The consent storage key. Defaults to `inth`.
  * @param notice - Whether a notice dismissal counts. Defaults to `true`.
  * @returns `true` when a record is present.
  * @internal
  */
 export const hasStoredConsentRecord = function hasStoredConsentRecord(
-	storageKey: string = STORAGE_KEY_V2,
+	storageKey?: string,
 	notice = true
 ): boolean {
 	if (typeof document === 'undefined') {
 		return false;
 	}
-	const keys = storedAnswerKeys(storageKey);
-	const cookies = notice ? [...keys.cookies, keys.notice] : keys.cookies;
-	const local = notice ? [...keys.local, keys.notice] : keys.local;
+	const stored = storedChoiceNames({ storageKey });
+	const names = notice ? [...stored.choice, ...stored.notice] : stored.choice;
+	let cookies: string | undefined;
 	try {
-		if (
-			document.cookie
-				.split('; ')
-				.some((pair) =>
-					cookies.some(
-						(name) =>
-							pair.startsWith(`${name}=`) && pair.length > name.length + 1
-					)
-				)
-		) {
-			return true;
-		}
+		cookies = document.cookie;
 	} catch {
 		// Cookies blocked; localStorage may still answer.
 	}
+	if (names.some((name) => Boolean(readCookieValueFromHeader(cookies, name)))) {
+		return true;
+	}
 	try {
-		return local.some((key) => window.localStorage.getItem(key) !== null);
+		return names.some((name) => window.localStorage.getItem(name) !== null);
 	} catch {
 		return false;
 	}

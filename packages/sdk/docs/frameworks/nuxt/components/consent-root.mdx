@@ -1,6 +1,6 @@
 ---
 title: ConsentRoot
-description: Mount the c15t banner, preference dialog and floating trigger in Nuxt with the globally registered ConsentRoot, rendered on the server.
+description: Mount the Inth banner, preference dialog and floating trigger in Nuxt with the globally registered ConsentRoot, rendered on the server.
 group: frameworks
 ---
 
@@ -54,7 +54,7 @@ The banner and the trigger are separate chunks too, so their CSS is not part
 of your app's entry stylesheets. Every page preloads the banner chunk. With
 Nuxt's `features.inlineStyles`, on by default, it also preloads the banner's
 CSS instead of linking it: a server-rendered banner paints with the styles
-Nuxt writes into the page head, so no c15t stylesheet blocks the first paint.
+Nuxt writes into the page head, so no Inth stylesheet blocks the first paint.
 The browser applies the CSS with the chunk, before it shows a banner it
 renders itself. The trigger chunk loads after the page mounts, and only when
 `showTrigger` is `true`.
@@ -62,7 +62,7 @@ renders itself. The trigger chunk loads after the page mounts, and only when
 ## Theme tokens
 
 The Nuxt module's plugin, not `ConsentRoot`, writes the `tokens` option
-into a `<style id="c15t-css-vars">` tag in the page head, on every page and
+into a `<style id="inth-css-vars">` tag in the page head, on every page and
 with the module's `nonce`. During server rendering and prerendering the tag is
 in the first HTML. See
 [customize](/docs/frameworks/nuxt/customize#set-theme-tokens).
@@ -91,7 +91,7 @@ render `ConsentRoot` next to them, or the visitor sees two banners.
 
 Build and start the app, then view the source of a page under a policy that
 asks for consent. The HTML holds `data-testid="consent-banner-root"` and the
-`c15t-css-vars` style tag. Click Customize and the preference dialog opens.
+`inth-css-vars` style tag. Click Customize and the preference dialog opens.
 Reject, reload, and confirm the banner stays closed.
 
 ## Next steps

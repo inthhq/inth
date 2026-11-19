@@ -9,7 +9,7 @@
  *
  * Astro serializes the integration's options at build time, so a transport
  * cannot be picked per route. The runner therefore builds three variants of
- * one app — `manifest`, `hosted` and a zero-consent `baseline` with no c15t
+ * one app — `manifest`, `hosted` and a zero-consent `baseline` with no Inth
  * integration at all — and serves each scenario from the variant it belongs
  * to. The baseline is the floor `consentTax = bannerVisible − floor`
  * subtracts.
@@ -32,7 +32,7 @@ import { fileURLToPath } from 'node:url';
 import type {
 	BenchPerfMetrics,
 	readBenchNavigationTiming,
-} from '@c15t/benchmarking/browser';
+} from '@inth/benchmarking/browser';
 import {
 	applyBenchThrottleProfile,
 	benchNavigationTimingExpression,
@@ -42,24 +42,24 @@ import {
 	benchScenarioKey,
 	resolveBenchBackendLatencyMs,
 	parseBenchThrottleProfile,
-} from '@c15t/benchmarking/browser';
-import { astroBrowserBudgetsForScenario } from '@c15t/benchmarking/budgets';
+} from '@inth/benchmarking/browser';
+import { astroBrowserBudgetsForScenario } from '@inth/benchmarking/budgets';
 import {
 	analyzeServerHtmlStream,
 	bannerMarkupMarkers,
 	readServerHtmlStream,
-} from '@c15t/benchmarking/html-stream';
-import type { ServerHtmlStreamAnalysis } from '@c15t/benchmarking/html-stream';
-import { createRepeatVisitorCookie } from '@c15t/benchmarking/nuxt-repeat-visitor';
-import { BENCHMARK_SCHEMA_VERSION } from '@c15t/benchmarking/schema';
-import type { BenchmarkResult } from '@c15t/benchmarking/schema';
-import type { BenchScriptTiming } from '@c15t/benchmarking/script-timing';
+} from '@inth/benchmarking/html-stream';
+import type { ServerHtmlStreamAnalysis } from '@inth/benchmarking/html-stream';
+import { createRepeatVisitorCookie } from '@inth/benchmarking/nuxt-repeat-visitor';
+import { BENCHMARK_SCHEMA_VERSION } from '@inth/benchmarking/schema';
+import type { BenchmarkResult } from '@inth/benchmarking/schema';
+import type { BenchScriptTiming } from '@inth/benchmarking/script-timing';
 import {
 	benchScriptTimingExpression,
 	scriptTimingGlossary,
 	summarizeBenchScripts,
 	summarizeIdlePreloadMetrics,
-} from '@c15t/benchmarking/script-timing';
+} from '@inth/benchmarking/script-timing';
 import {
 	getEnvironment,
 	median,
@@ -69,22 +69,22 @@ import {
 	summarizeMetric,
 	summarizeNullableMetric,
 	writeJson,
-} from '@c15t/benchmarking/utils';
+} from '@inth/benchmarking/utils';
 import {
 	assertVisitBannerState,
 	coldStateMetadata,
 	describeColdState,
-} from '@c15t/benchmarking/visit-definitions';
+} from '@inth/benchmarking/visit-definitions';
 import type {
 	BenchColdState,
 	BenchVisitKind,
-} from '@c15t/benchmarking/visit-definitions';
+} from '@inth/benchmarking/visit-definitions';
 import {
 	serverHtmlMetadata,
 	summarizeServerHtmlMetrics,
 	summarizeVisitTimingMetrics,
 	visitMetricGlossary,
-} from '@c15t/benchmarking/visit-metrics';
+} from '@inth/benchmarking/visit-metrics';
 import { chromium } from 'playwright';
 import type * as PlaywrightTypes from 'playwright';
 
@@ -114,7 +114,7 @@ const expectedServerShutdownCodes = new Set([0, 137, 143]);
 const expectedServerShutdownSignals = new Set(['SIGTERM', 'SIGKILL']);
 const bannerRootTestId = 'consent-banner-root';
 const bannerAcceptButtonTestId = 'consent-banner-accept-button';
-const bannerElementTimingName = 'c15t-consent-banner';
+const bannerElementTimingName = 'inth-consent-banner';
 
 const buildOutDirs: Record<AstroBenchBuild, string> = {
 	baseline: 'dist-baseline',
@@ -128,7 +128,7 @@ const buildOutDirs: Record<AstroBenchBuild, string> = {
  * headless shell this Playwright version pins — point it at any Chromium
  * build and the suite runs unchanged.
  */
-const chromiumExecutablePath = process.env.C15T_BENCH_CHROMIUM_PATH;
+const chromiumExecutablePath = process.env.INTH_BENCH_CHROMIUM_PATH;
 
 const readCliFlag = function readCliFlag(name: string): string | undefined {
 	const index = process.argv.indexOf(name);
@@ -141,37 +141,37 @@ const readCliFlag = function readCliFlag(name: string): string | undefined {
 	return match?.slice(prefix.length);
 };
 
-// Baked into every build as `C15T_BENCH_ORIGIN`: the fixture URLs the
+// Baked into every build as `INTH_BENCH_ORIGIN`: the fixture URLs the
 // integration is configured with have to be absolute, because the shared
 // URL resolver assumes https for a relative URL with no forwarded proto.
 const PORT = Number(
-	readCliFlag('--port') ?? process.env.C15T_BENCH_PORT ?? `${DEFAULT_PORT}`
+	readCliFlag('--port') ?? process.env.INTH_BENCH_PORT ?? `${DEFAULT_PORT}`
 );
 const BASE_URL = `http://${HOST}:${PORT}`;
 /**
  * Records the origin a build was made for and a hash of its inputs, so a
  * port change, an app change or a package rebuild rebuilds it.
  */
-const buildStampFile = 'c15t-bench-build.json';
+const buildStampFile = 'inth-bench-build.json';
 
 const iterations = Number(
 	readCliFlag('--iterations') ??
-		process.env.C15T_BENCH_ITERATIONS ??
+		process.env.INTH_BENCH_ITERATIONS ??
 		process.env.BENCH_ITERATIONS ??
 		'7'
 );
 const warmupIterations = Number(
 	readCliFlag('--warmup') ??
-		process.env.C15T_BENCH_WARMUP_ITERATIONS ??
+		process.env.INTH_BENCH_WARMUP_ITERATIONS ??
 		process.env.BENCH_WARMUP_ITERATIONS ??
 		'1'
 );
 const throttleProfile = parseBenchThrottleProfile(
-	readCliFlag('--profile') ?? process.env.C15T_BENCH_PROFILE
+	readCliFlag('--profile') ?? process.env.INTH_BENCH_PROFILE
 );
 const backendLatencyMs = resolveBenchBackendLatencyMs(readCliFlag, process.env);
 const scenarioFilter =
-	readCliFlag('--scenario') ?? process.env.C15T_BENCH_SCENARIO;
+	readCliFlag('--scenario') ?? process.env.INTH_BENCH_SCENARIO;
 
 const allScenarios = [
 	{ build: 'baseline', name: 'baseline', path: '/baseline' },
@@ -244,9 +244,9 @@ const collectScriptTiming = async function collectScriptTiming(
 ): Promise<ScriptTimingSample> {
 	await page.waitForFunction(
 		(waitForHold) =>
-			typeof window.__c15tBenchScriptExecutedMs === 'number' &&
+			typeof window.__inthBenchScriptExecutedMs === 'number' &&
 			(!waitForHold ||
-				typeof window.__c15tAstroBenchScripts?.heldRequestMs === 'number'),
+				typeof window.__inthAstroBenchScripts?.heldRequestMs === 'number'),
 		returning,
 		{ timeout: 30_000 }
 	);
@@ -255,9 +255,9 @@ const collectScriptTiming = async function collectScriptTiming(
 			.getEntriesByType('resource')
 			.find((candidate) => new URL(candidate.name).pathname === path);
 		return {
-			acceptClickMs: window.__c15tAstroBenchScripts?.acceptClickMs ?? null,
-			executedMs: window.__c15tBenchScriptExecutedMs ?? null,
-			heldRequestMs: window.__c15tAstroBenchScripts?.heldRequestMs ?? null,
+			acceptClickMs: window.__inthAstroBenchScripts?.acceptClickMs ?? null,
+			executedMs: window.__inthBenchScriptExecutedMs ?? null,
+			heldRequestMs: window.__inthAstroBenchScripts?.heldRequestMs ?? null,
 			startMs: entry?.startTime ?? null,
 		};
 	}, benchScriptPath);
@@ -294,7 +294,7 @@ const measureInteractionLatency = async function measureInteractionLatency(
 		const startedAt = performance.now();
 		await page.click('[data-testid="consent-dialog-trigger"]');
 		await page.waitForFunction(
-			() => window.__c15tAstroBench?.activeUI === 'dialog',
+			() => window.__inthAstroBench?.activeUI === 'dialog',
 			undefined,
 			{ timeout: 30_000 }
 		);
@@ -302,13 +302,13 @@ const measureInteractionLatency = async function measureInteractionLatency(
 	}
 
 	const before = await page.evaluate(
-		() => window.__c15tAstroBench?.onConsentSetCount ?? 0
+		() => window.__inthAstroBench?.onConsentSetCount ?? 0
 	);
 	const startedAt = performance.now();
 	await page.click(`[data-testid="${bannerAcceptButtonTestId}"]`);
 	await page.waitForFunction(
 		(expected) => {
-			const state = window.__c15tAstroBench;
+			const state = window.__inthAstroBench;
 			return (
 				!!state &&
 				state.onConsentSetCount > expected &&
@@ -345,9 +345,9 @@ const runBuild = async function runBuild(build: AstroBenchBuild) {
 			cwd: appDir,
 			env: {
 				...process.env,
-				C15T_BENCH_ASTRO_MODE: build,
-				C15T_BENCH_ORIGIN: BASE_URL,
-				C15T_BENCH_OUT_DIR: `./${buildOutDirs[build]}`,
+				INTH_BENCH_ASTRO_MODE: build,
+				INTH_BENCH_ORIGIN: BASE_URL,
+				INTH_BENCH_OUT_DIR: `./${buildOutDirs[build]}`,
 			},
 			stdio: ['ignore', 'pipe', 'pipe'],
 		});
@@ -546,7 +546,7 @@ const seedRepeatVisitorCookie = async function seedRepeatVisitorCookie(
 			domain: HOST,
 			expires: Math.floor(Date.now() / 1000) + 60 * 60,
 			httpOnly: false,
-			name: 'c15t',
+			name: 'inth',
 			path: '/',
 			sameSite: 'Lax',
 			secure: false,
@@ -609,7 +609,7 @@ const collectScenarioMetrics = async function collectScenarioMetrics(
 	await page.waitForLoadState('domcontentloaded');
 	await page.waitForFunction(
 		(targetScenario) => {
-			const state = window.__c15tAstroBench;
+			const state = window.__inthAstroBench;
 			return (
 				!!state &&
 				state.scenario === targetScenario &&
@@ -622,7 +622,7 @@ const collectScenarioMetrics = async function collectScenarioMetrics(
 	await page.waitForLoadState('load');
 	await page.waitForTimeout(250);
 
-	const state = await page.evaluate(() => window.__c15tAstroBench);
+	const state = await page.evaluate(() => window.__inthAstroBench);
 	const navEntry = (await page.evaluate(
 		benchNavigationTimingExpression
 	)) as Awaited<ReturnType<typeof readBenchNavigationTiming>>;
@@ -887,7 +887,7 @@ const measureScenario = async function measureScenario(
 	const coldState = scenarioColdState(scenario);
 	const serverHtml = await readServerHtml(
 		scenario.path,
-		visit === 'fresh' ? undefined : `c15t=${createRepeatVisitorCookie()}`
+		visit === 'fresh' ? undefined : `inth=${createRepeatVisitorCookie()}`
 	);
 	const outputScenario = resultScenarioName(scenario.name);
 
@@ -1043,14 +1043,14 @@ const measureScenario = async function measureScenario(
 				: []),
 		],
 		notes: [
-			'Astro browser bench covers the server-rendered banner in manifest and hosted modes, the server:defer banner island, a pre-seeded repeat visitor, and a zero-consent baseline floor built without the c15t integration.',
+			'Astro browser bench covers the server-rendered banner in manifest and hosted modes, the server:defer banner island, a pre-seeded repeat visitor, and a zero-consent baseline floor built without the inth integration.',
 			'The banner ships no framework JavaScript, so bannerPaintMs is the honest first-pixel measure; bannerVisibleMs is anchored on the probe module, which runs after HTML parse.',
 			'The scripts arms add one measurement-gated script and a network-blocker rule to the manifest build: scripts as a first visit (script timing after the accept click), repeat-visitor-scripts with stored consent (script timing from navigation start, plus how long a matching fetch sent after the runtime was created was held).',
 			`Visit: ${visit}. Cold state: ${coldState.setup}.`,
 			...visitMetricGlossary,
 			...scriptTimingGlossary,
 		],
-		package: '@c15t/astro-browser-bench',
+		package: '@inth/astro-browser-bench',
 		runtime: 'playwright',
 		scenario: outputScenario,
 		schemaVersion: BENCHMARK_SCHEMA_VERSION,

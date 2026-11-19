@@ -1,11 +1,11 @@
 <script setup lang="ts">
 /**
- * Zero-consent baseline page: identical app shell, NO c15t (the module is
- * omitted entirely when built with C15T_BENCH_BASELINE=1). Measures the
+ * Zero-consent baseline page: identical app shell, NO Inth (the module is
+ * omitted entirely when built with INTH_BENCH_BASELINE=1). Measures the
  * page's own floor so `consentTaxMs = bannerVisible − pageFloor` can be
  * derived across runs.
  *
- * Fully self-contained: must not import any c15t composable or shared bench
+ * Fully self-contained: must not import any Inth composable or shared bench
  * component (they don't exist in the baseline build). The probe stub mirrors
  * the real probe's settle semantics (double-rAF after mount); here
  * `bannerReadyMs`/`bannerVisibleMs` mean "app hydrated and painted".
@@ -14,10 +14,10 @@ import { onMounted } from 'vue';
 
 onMounted(() => {
 	const w = window as typeof window & {
-		__c15tNuxtBench?: Record<string, unknown>;
+		__inthNuxtBench?: Record<string, unknown>;
 	};
-	if (!w.__c15tNuxtBench) {
-		w.__c15tNuxtBench = {
+	if (!w.__inthNuxtBench) {
+		w.__inthNuxtBench = {
 			activeUI: 'none',
 			mountCount: 1,
 			onBannerFetchedCount: 0,
@@ -30,7 +30,7 @@ onMounted(() => {
 	}
 	requestAnimationFrame(() => {
 		requestAnimationFrame(() => {
-			const state = w.__c15tNuxtBench;
+			const state = w.__inthNuxtBench;
 			if (state && state.bannerReadyMs === undefined) {
 				const now = performance.now();
 				state.bannerReadyMs = now;

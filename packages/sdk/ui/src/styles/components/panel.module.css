@@ -1,44 +1,40 @@
 @import url('./animations/enter-exit.css');
 
 :root {
-	/* Typography */
-	--consent-dialog-font-family: var(--c15t-font-family);
-	--consent-dialog-line-height: var(--c15t-line-height-tight);
-	--consent-dialog-title-font-size: var(--c15t-font-size-sm);
-	--consent-dialog-title-font-weight: var(--c15t-font-weight-semibold);
+	--consent-dialog-font-family: var(--inth-font-family);
+	--consent-dialog-line-height: var(--inth-line-height-tight);
+	--consent-dialog-title-font-size: var(--inth-font-size-sm);
+	--consent-dialog-title-font-weight: var(--inth-font-weight-semibold);
 	--consent-dialog-title-letter-spacing: -0.025em;
-	--consent-dialog-description-font-size: var(--c15t-font-size-base);
-	--consent-dialog-description-font-weight: var(--c15t-font-weight-normal);
-	--consent-dialog-description-line-height: var(--c15t-line-height-normal);
-	--consent-dialog-footer-gap: var(--c15t-space-sm);
-	--consent-dialog-footer-font-size: var(--c15t-font-size-sm);
+	--consent-dialog-description-font-size: var(--inth-font-size-base);
+	--consent-dialog-description-font-weight: var(--inth-font-weight-normal);
+	--consent-dialog-description-line-height: var(--inth-line-height-normal);
+	--consent-dialog-footer-gap: var(--inth-space-sm);
+	--consent-dialog-footer-font-size: var(--inth-font-size-sm);
 
-	/* Colors */
-	--consent-dialog-stroke-color: var(--c15t-border);
-	--consent-dialog-stroke-color-dark: var(--c15t-border);
-	--consent-dialog-link-text-color: var(--c15t-text);
-	--consent-dialog-link-text-color-dark: var(--c15t-text);
-	--consent-dialog-border-color: var(--c15t-border);
-	--consent-dialog-border-color-dark: var(--c15t-border);
-	--consent-dialog-background-color: var(--c15t-surface);
-	--consent-dialog-background-color-dark: var(--c15t-surface);
-	--consent-dialog-foreground-color: var(--c15t-text);
-	--consent-dialog-foreground-color-dark: var(--c15t-text);
-	--consent-dialog-muted-color: var(--c15t-text-muted);
-	--consent-dialog-muted-color-dark: var(--c15t-text-muted);
-	--consent-dialog-overlay-background-color: var(--c15t-overlay);
-	--consent-dialog-overlay-background-color-dark: var(--c15t-overlay);
+	--consent-dialog-stroke-color: var(--inth-border);
+	--consent-dialog-stroke-color-dark: var(--inth-border);
+	--consent-dialog-link-text-color: var(--inth-text);
+	--consent-dialog-link-text-color-dark: var(--inth-text);
+	--consent-dialog-border-color: var(--inth-border);
+	--consent-dialog-border-color-dark: var(--inth-border);
+	--consent-dialog-background-color: var(--inth-surface);
+	--consent-dialog-background-color-dark: var(--inth-surface);
+	--consent-dialog-foreground-color: var(--inth-text);
+	--consent-dialog-foreground-color-dark: var(--inth-text);
+	--consent-dialog-muted-color: var(--inth-text-muted);
+	--consent-dialog-muted-color-dark: var(--inth-text-muted);
+	--consent-dialog-overlay-background-color: var(--inth-overlay);
+	--consent-dialog-overlay-background-color-dark: var(--inth-overlay);
 
-	/* Spacing */
-	--consent-dialog-card-padding: var(--c15t-space-lg);
-	--consent-dialog-card-padding-mobile: var(--c15t-space-md);
-	--consent-dialog-card-gap: var(--c15t-space-xs);
-	--consent-dialog-header-gap: var(--c15t-space-xs);
-	--consent-dialog-content-gap: var(--c15t-space-md);
-	--consent-dialog-footer-padding-y: var(--c15t-space-md);
+	--consent-dialog-card-padding: var(--inth-space-lg);
+	--consent-dialog-card-padding-mobile: var(--inth-space-md);
+	--consent-dialog-card-gap: var(--inth-space-xs);
+	--consent-dialog-header-gap: var(--inth-space-xs);
+	--consent-dialog-content-gap: var(--inth-space-md);
+	--consent-dialog-footer-padding-y: var(--inth-space-md);
 
-	/* Layout */
-	--consent-dialog-card-radius: var(--c15t-radius-lg);
+	--consent-dialog-card-radius: var(--inth-radius-lg);
 	--consent-dialog-max-width: 28rem;
 	--consent-dialog-height: 100%;
 	/* The card never outgrows the viewport: content past this scrolls
@@ -51,15 +47,13 @@
 	--consent-dialog-z-index: 999999;
 	--consent-dialog-overlay-z-index: 999998;
 
-	/* Effects */
-	--consent-dialog-card-shadow: var(--c15t-shadow-sm);
+	--consent-dialog-card-shadow: var(--inth-shadow-sm);
 	--consent-dialog-border-width: 1px;
 	--consent-dialog-border-width-hairline: 1px;
 	--consent-dialog-border-style: solid;
 
-	/* Animation */
-	--consent-dialog-animation-duration: var(--c15t-duration-normal);
-	--consent-dialog-animation-timing: var(--c15t-easing-out);
+	--consent-dialog-animation-duration: var(--inth-duration-normal);
+	--consent-dialog-animation-timing: var(--inth-easing-out);
 }
 
 /* Hairline borders for retina displays */
@@ -75,7 +69,7 @@
 		box-sizing: border-box;
 		isolation: isolate;
 		font-family: var(--consent-dialog-font-family);
-		color: var(--c15t-text);
+		color: var(--inth-text);
 		line-height: var(--consent-dialog-line-height);
 		-webkit-text-size-adjust: 100%;
 		tab-size: 4;
@@ -153,7 +147,7 @@
 
 	.root[data-state='open'] .container:not(:global(.headless)) {
 		animation: enter var(--consent-dialog-animation-duration)
-			var(--c15t-easing-spring);
+			var(--inth-easing-spring);
 	}
 
 	.root[data-state='closed'] .container:not(:global(.headless)) {
@@ -285,7 +279,7 @@
 			opacity var(--consent-dialog-animation-duration)
 				var(--consent-dialog-animation-timing),
 			transform var(--consent-dialog-animation-duration)
-				var(--c15t-easing-spring);
+				var(--inth-easing-spring);
 	}
 
 	.contentHidden:not(:global(.headless)) {
@@ -336,7 +330,7 @@
 
 	.container:not(:global(.headless)):focus-visible
 		> .card:not(:global(.headless)) {
-		outline: 2px solid var(--c15t-primary);
+		outline: 2px solid var(--inth-primary);
 		outline-offset: 2px;
 	}
 
@@ -377,7 +371,7 @@
 		}
 	}
 
-	:global(.c15t-dark) .overlay:not(:global(.headless)) {
+	:global(.inth-dark) .overlay:not(:global(.headless)) {
 		background-color: var(--consent-dialog-overlay-background-color-dark);
 		color: var(--consent-dialog-link-text-color-dark);
 	}
@@ -399,7 +393,7 @@
 		overflow: visible;
 	}
 
-	:global(.c15t-dark) .card:not(:global(.headless)) {
+	:global(.inth-dark) .card:not(:global(.headless)) {
 		background-color: var(--consent-dialog-background-color-dark);
 		color: var(--consent-dialog-foreground-color-dark);
 		border-color: var(--consent-dialog-border-color-dark);
@@ -434,7 +428,7 @@
 		line-height: var(--consent-dialog-description-line-height);
 	}
 
-	:global(.c15t-dark) .description:not(:global(.headless)) {
+	:global(.inth-dark) .description:not(:global(.headless)) {
 		color: var(--consent-dialog-muted-color-dark);
 	}
 
@@ -445,7 +439,7 @@
 		line-height: var(--consent-dialog-description-line-height);
 	}
 
-	:global(.c15t-dark)
+	:global(.inth-dark)
 		.description[data-context='dialog']:not(:global(.headless)) {
 		color: var(--consent-dialog-muted-color-dark);
 	}
@@ -540,13 +534,12 @@
 			var(--consent-dialog-border-style) var(--consent-dialog-stroke-color);
 	}
 
-	/* Hide footer when it has no children */
 	.footer:not(:global(.headless)):empty {
 		display: none;
 		border-top: none;
 	}
 
-	:global(.c15t-dark) .footer:not(:global(.headless)) {
+	:global(.inth-dark) .footer:not(:global(.headless)) {
 		border-color: var(--consent-dialog-stroke-color-dark);
 	}
 

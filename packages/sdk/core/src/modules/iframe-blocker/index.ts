@@ -5,13 +5,6 @@
  * observes the DOM for iframes carrying a `data-category` or
  * `data-vendor` attribute, and toggles their `src` based on consent.
  *
- * Concerns are split across siblings:
- * - `types.ts`        — public type definitions.
- * - `reconcile.ts`    — pure per-iframe + bulk reconciliation.
- * - `index.ts`        — this file: MutationObserver wiring + lifecycle.
- *
- * v2 parity: `packages/sdk/core/src/libs/iframe-blocker/core.ts`.
- *
  * Semantics:
  * - iframes WITHOUT `data-category` or `data-vendor` are untouched.
  * - iframes WITH `data-category` and/or `data-vendor`:

@@ -1,20 +1,20 @@
 package com.inth.core.transport
 
 /**
- * Header contract shared with `@c15t/core`.
+ * Header contract shared with `@inth/sdk-core`.
  *
- * See `packages/sdk/core/src/transports/version-header.ts`. `x-c15t-version` is
- * telemetry only. `x-c15t-policy-contract` is the capability declaration: a
+ * See `packages/sdk/core/src/libs/version-header.ts`. `x-inth-version` is
+ * telemetry only. `x-inth-policy-contract` is the capability declaration: a
  * producer that speaks a different contract answers `unsupported-contract`
  * rather than a wire this build would misread.
  */
 object InthProtocol {
-	const val VERSION_HEADER = "x-c15t-version"
+	const val VERSION_HEADER = "x-inth-version"
 
-	const val POLICY_CONTRACT_HEADER = "x-c15t-policy-contract"
+	const val POLICY_CONTRACT_HEADER = "x-inth-policy-contract"
 
 	/**
-	 * The `x-c15t-vendors` header name: the publisher's declared vendor scope.
+	 * The `x-inth-vendors` header name: the publisher's declared vendor scope.
 	 *
 	 * A scope declaration, not a filter this client relies on. It is the mobile spelling of the
 	 * `vendorIds` parameter that `gvlRequestUrl` in `packages/backend/src/http/gvl.ts` puts on the
@@ -33,7 +33,7 @@ object InthProtocol {
 	 * server half of it is specified by the same name and the same cap recorded on
 	 * [MAX_VENDOR_SCOPE_HEADER_IDS].
 	 */
-	const val VENDOR_SCOPE_HEADER = "x-c15t-vendors"
+	const val VENDOR_SCOPE_HEADER = "x-inth-vendors"
 
 	/**
 	 * How many declared ids this build will still put on one request line.
@@ -47,17 +47,17 @@ object InthProtocol {
 	 */
 	const val MAX_VENDOR_SCOPE_HEADER_IDS = 500
 
-	/** Must stay equal to `POLICY_CONTRACT_VERSION` in `@c15t/schema`. */
+	/** Must stay equal to `POLICY_CONTRACT_VERSION` in `@inth/sdk-schema`. */
 	const val POLICY_CONTRACT_VERSION = 1
 
 	/**
-	 * The `x-c15t-platform` header name: which host built the request.
+	 * The `x-inth-platform` header name: which host built the request.
 	 *
 	 * The value is `<platform>-><sdkVersion>`, the same shape the Apple installer sends as
 	 * `apple-><version>`. The platform travels here rather than as a prefix on
 	 * [VERSION_HEADER], because hosted gateways may reject a version they cannot parse.
 	 */
-	const val PLATFORM_HEADER = "x-c15t-platform"
+	const val PLATFORM_HEADER = "x-inth-platform"
 
 	/** Platform tag for a Kotlin or Java app that installs the core itself. */
 	const val PLATFORM_ANDROID = "android"
@@ -65,13 +65,13 @@ object InthProtocol {
 	/** Platform tag for the Android side of `@inth/react-native`. */
 	const val PLATFORM_REACT_NATIVE = "rn"
 
-	/** Default SDK version, kept in step with the `@c15t/core` alpha line. */
+	/** Default SDK version, kept in step with the `@inth/sdk-core` alpha line. */
 	const val DEFAULT_SDK_VERSION = "3.0.0-alpha.1"
 
 	/**
 	 * Headers every inth-bound request carries.
 	 *
-	 * `x-c15t-version` is the unprefixed native version, matching the web format and the
+	 * `x-inth-version` is the unprefixed native version, matching the web format and the
 	 * Swift core. [platform] adds [PLATFORM_HEADER]; `null` sends no platform header.
 	 */
 	fun protocolHeaders(
@@ -84,7 +84,7 @@ object InthProtocol {
 	}
 
 	/**
-	 * The `x-c15t-vendors` value for a declared scope, or `null` for no header.
+	 * The `x-inth-vendors` value for a declared scope, or `null` for no header.
 	 *
 	 * Deduplicated and ascending, so two hosts who declared the same partners in a
 	 * different order, or twice in the same list, ask the same question of the backend.
@@ -120,7 +120,7 @@ object InthProtocol {
  * What the producer said about the policy contract it speaks.
  *
  * The three cases are not interchangeable, so they stay three cases:
- * `@c15t/core` reads the same distinction as `number | null | undefined`.
+ * `@inth/sdk-core` reads the same distinction as `number | null | undefined`.
  * A producer that claims a contract this client cannot even parse is worse than
  * one that claims none, and both differ from a producer that predates the header.
  */

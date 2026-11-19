@@ -2,7 +2,7 @@ import {
 	dialogContract,
 	dialogEscapeCloses,
 	saveFlow,
-} from '@c15t/conformance/play/consent-dialog';
+} from '@inth/conformance/play/consent-dialog';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 
 import ConsentDialogStory from './ConsentDialogStory.svelte';

@@ -12,7 +12,7 @@ import { createScriptTagConsentClient as createConsentClient } from '../script-t
 import { manifest, manifestNeedsLocation } from '../transports/manifest';
 import type { ConsentClient } from '../types';
 
-/** A query pair c15t adds to `/init`. */
+/** A query pair Inth adds to `/init`. */
 const INIT_PAIR =
 	/^(?:v|contract|country|region|gpc|experiment|journey|journeyScope|stored)=/u;
 
@@ -43,7 +43,7 @@ const clearCookies = function clearCookies(): void {
 };
 
 const everywhereManifest: ConsentManifest = {
-	branding: 'c15t',
+	branding: 'inth',
 	policyPacks: [
 		createConsentManifestPolicyPack({
 			...policyRulePresets.europeOptIn(),
@@ -584,7 +584,7 @@ describe('manifest()', () => {
 		expect(fetchSpy).not.toHaveBeenCalled();
 	});
 
-	it.each(['', 'https://api.example.test/c15t/'])(
+	it.each(['', 'https://api.example.test/inth/'])(
 		'uses the explicit backend %j for CDN manifest geo and saves',
 		async (projectUrl) => {
 			const manifestUrl = 'https://cdn.example.test/consent.json';
@@ -715,8 +715,8 @@ describe('manifest()', () => {
 		['/consent/manifest/?language=en#policy', '/consent'],
 		['./api/manifest', './api'],
 		[
-			'https://api.example.test/c15t/manifest?revision=1',
-			'https://api.example.test/c15t',
+			'https://api.example.test/inth/manifest?revision=1',
+			'https://api.example.test/inth',
 		],
 	])('derives the API endpoints from %s', async (manifestUrl, projectUrl) => {
 		const fetchSpy = vi.fn<typeof fetch>((input) => {

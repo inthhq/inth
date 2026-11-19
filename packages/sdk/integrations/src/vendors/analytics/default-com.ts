@@ -4,6 +4,7 @@ import type { IntegrationConsentCondition } from '../../registry';
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
+import { permitted } from '../_shared/permitted';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
 
@@ -358,7 +359,7 @@ const sameSdkOptions = (
 };
 type DefaultComLoader = 'defaultComPixel' | 'defaultComFormsSdk';
 const pageLoaders = new WeakMap<Document, DefaultComLoader>();
-const blockedLoaderType = 'application/x-c15t-default-conflict';
+const blockedLoaderType = 'application/x-inth-default-conflict';
 interface PixelConfiguration extends DefaultComFormsSdkInitOptions {
 	scriptUrl: string;
 }
@@ -390,7 +391,7 @@ const claimLoader = function claimLoader(
 	if (
 		typeof document === 'undefined' ||
 		!info.element ||
-		(!alwaysLoad && (!info.hasConsent || info.vendor?.granted === false))
+		(!alwaysLoad && !permitted(info))
 	) {
 		return false;
 	}
@@ -427,10 +428,10 @@ const ownsLoader = function ownsLoader(
 const mapConsent = function mapConsent(
 	info: ScriptCallbackInfo
 ): DefaultComConsent {
-	const permitted = info.hasConsent && info.vendor?.granted !== false;
+	const allowed = permitted(info);
 	return {
-		analytics: permitted && info.consents.measurement === true,
-		marketing: permitted && info.consents.marketing === true,
+		analytics: allowed && info.consents.measurement === true,
+		marketing: allowed && info.consents.marketing === true,
 	};
 };
 
@@ -481,7 +482,7 @@ const forwardPixelConsent = function forwardPixelConsent(
  *
  * The Pixel receives measurement consent as `analytics` and marketing consent
  * as `marketing`. Effective helper or vendor denial sends both values as false.
- * Keep c15t's default revocation reload enabled. Default's consent API does not
+ * Keep Inth's default revocation reload enabled. Default's consent API does not
  * stop form capture, scheduler activity or an already loaded Vector script.
  * `loadMode: 'always'` explicitly permits the loader and form-list requests
  * before consent, plus form capture and scheduling while tracking is denied.
@@ -571,8 +572,6 @@ export const defaultComPixel = function defaultComPixel(
 				forwardPixelConsent(info);
 			}
 		},
-		// The runtime wrapper must apply consent before the loader is inserted.
-		serverStart: undefined,
 		validate: () => assertPixelConfiguration(configuration),
 	};
 };
@@ -600,7 +599,7 @@ export const defaultComPixel = function defaultComPixel(
  * Removal and disposal withdraw consent from the owned SDK after its final
  * registration leaves. The loaded SDK stays for the page, and a later helper
  * with the same URL reuses it. A changed URL logs an error and does not load.
- * Keep c15t's default revocation reload enabled because
+ * Keep Inth's default revocation reload enabled because
  * Default does not offer a complete form or scheduler shutdown API.
  * Missing, blank or non-string keys log an error and skip loading.
  * @example defaultComFormsSdk({ publicKey: 'YOUR_PUBLIC_KEY' });
@@ -677,8 +676,8 @@ export const defaultComFormsSdk = function defaultComFormsSdk(
 			return;
 		}
 		const previous = sdkOwners.get(registration);
-		const permitted = info.hasConsent && info.vendor?.granted !== false;
-		const sdk = !permitted && previous ? previous : window.DefaultPixelSDK;
+		const allowed = permitted(info);
+		const sdk = !allowed && previous ? previous : window.DefaultPixelSDK;
 		if (!sdk) {
 			return;
 		}
@@ -695,7 +694,7 @@ export const defaultComFormsSdk = function defaultComFormsSdk(
 		state.registrations.set(registration, mapConsent(info));
 		joinPreloadOwners(state);
 		forwardSdkConsent(sdk);
-		if (permitted && !sameSdkOptions(state.options, initOptions)) {
+		if (allowed && !sameSdkOptions(state.options, initOptions)) {
 			const applied = snapshotSdkOptions(initOptions);
 			sdk.init(applied);
 			state.options = snapshotSdkOptions(applied);
@@ -731,6 +730,5 @@ export const defaultComFormsSdk = function defaultComFormsSdk(
 		// sdk.js keeps document listeners and a page-level module; running it
 		// again on remount would leave capture bound to the disposed client.
 		persistAfterDispose: true,
-		serverStart: undefined,
 	};
 };

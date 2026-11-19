@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import type { AdTechProvider } from '@inth/sdk/engine';
 import {
-	permittedLegitimateInterestPurposes,
-	resolveIABSafeUrl,
-	resolveIABVendorUrls,
+	isLegitimateInterestAllowed,
+	mapCustomVendor,
+	mapGvlVendor,
+} from '@inth/sdk/iab/headless';
+import type {
+	HeadlessIABProcessedVendor,
+	IABLegitimateInterestState,
 } from '@inth/sdk/iab/headless';
 import type { GlobalVendorList, NonIABVendor } from '@inth/sdk/schema/types';
 import dialogStyles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
@@ -15,7 +19,7 @@ import {
 	useConsentConfig,
 	useConsentInit,
 	useIabTranslations,
-} from '#c15t/composables';
+} from '#inth/composables';
 
 import type { IabProcessedPurpose, IabVendorId } from './iab-purpose-item.vue';
 import ConsentSwitch from './switch.vue';
@@ -26,7 +30,8 @@ const props = defineProps<{
 	vendorConsents: Record<string, boolean>;
 	selectedVendorId: IabVendorId | null;
 	customVendors?: NonIABVendor[];
-	vendorLegitimateInterests?: Record<string, boolean>;
+	/** Draft and vendor list the legitimate interest controls read. */
+	legitimateInterests?: IABLegitimateInterestState | null;
 	/** Google ad tech providers disclosed for Additional Consent. */
 	adTechProviders?: AdTechProvider[];
 	/** Consent switches for those providers, keyed by provider ID. */
@@ -46,6 +51,15 @@ const searchTerm = ref('');
 
 const iabT = useIabTranslations();
 
+/** A row lists the legal bases the vendor uses on any purpose. */
+const toItem = function toItem(vendor: HeadlessIABProcessedVendor) {
+	return {
+		...vendor,
+		usesConsent: vendor.purposes.length > 0,
+		usesLegitimateInterest: vendor.legIntPurposes.length > 0,
+	};
+};
+
 const iabVendors = computed(() => {
 	if (!props.vendorData) {
 		return [];
@@ -54,26 +68,13 @@ const iabVendors = computed(() => {
 	// The panel passes declarations after publisher restrictions, so these
 	// are the legal bases each vendor actually uses.
 	const language = toValue(init)?.translations?.language;
-	return Object.entries(props.vendorData.vendors).map(([id, vendor]) => ({
-		id: Number(id),
-		isCustom: false,
-		name: vendor.name,
-		policyUrl: resolveIABVendorUrls(vendor, language).policyUrl,
-		usesConsent: (vendor.purposes?.length ?? 0) > 0,
-		usesLegitimateInterest: (vendor.legIntPurposes?.length ?? 0) > 0,
-	}));
+	return Object.entries(props.vendorData.vendors).map(([id, vendor]) =>
+		toItem(mapGvlVendor(id, vendor, language))
+	);
 });
 
 const customVendorItems = computed(() =>
-	(props.customVendors ?? []).map((vendor) => ({
-		id: vendor.id,
-		isCustom: true,
-		name: vendor.name,
-		policyUrl: resolveIABSafeUrl(vendor.privacyPolicyUrl) ?? '',
-		usesConsent: (vendor.purposes?.length ?? 0) > 0,
-		usesLegitimateInterest:
-			permittedLegitimateInterestPurposes(vendor.legIntPurposes).length > 0,
-	}))
+	(props.customVendors ?? []).map((vendor) => toItem(mapCustomVendor(vendor)))
 );
 
 const filteredIabVendors = computed(() => {
@@ -143,25 +144,28 @@ const getVendorConsent = function getVendorConsent(vendorId: IabVendorId) {
 	return props.vendorConsents[String(vendorId)] ?? false;
 };
 
-/** Legitimate interest is allowed until the visitor objects. */
-const isLegitimateInterestAllowed = function isLegitimateInterestAllowed(
+const legitimateInterestAllowed = function legitimateInterestAllowed(
 	vendorId: IabVendorId
 ) {
-	return props.vendorLegitimateInterests?.[String(vendorId)] ?? true;
+	return isLegitimateInterestAllowed(
+		props.legitimateInterests,
+		'vendor',
+		vendorId
+	);
 };
 
+// After the render that filters the list to the selected vendor's row.
 watch(
 	() => props.selectedVendorId,
 	(vendorId) => {
 		if (vendorId === null) {
 			return;
 		}
-
-		window.setTimeout(() => {
-			const element = document.getElementById(`vendor-${String(vendorId)}`);
-			element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-		}, 100);
-	}
+		document
+			.getElementById(`vendor-${String(vendorId)}`)
+			?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+	},
+	{ flush: 'post' }
 );
 </script>
 
@@ -286,21 +290,21 @@ watch(
 								type="button"
 								:class="[
 									dialogStyles.objectButton,
-									isLegitimateInterestAllowed(vendor.id)
+									legitimateInterestAllowed(vendor.id)
 										? ''
 										: dialogStyles.objectButtonActive,
 								]"
-								:aria-pressed="!isLegitimateInterestAllowed(vendor.id)"
+								:aria-pressed="!legitimateInterestAllowed(vendor.id)"
 								@click="
 									emit(
 										'vendorLegitimateInterestToggle',
 										vendor.id,
-										!isLegitimateInterestAllowed(vendor.id)
+										!legitimateInterestAllowed(vendor.id)
 									)
 								"
 							>
 								{{
-									isLegitimateInterestAllowed(vendor.id)
+									legitimateInterestAllowed(vendor.id)
 										? iabT?.preferenceCenter?.purposeItem?.objectButton
 										: iabT?.preferenceCenter?.purposeItem?.objected
 								}}
@@ -359,21 +363,21 @@ watch(
 								type="button"
 								:class="[
 									dialogStyles.objectButton,
-									isLegitimateInterestAllowed(vendor.id)
+									legitimateInterestAllowed(vendor.id)
 										? ''
 										: dialogStyles.objectButtonActive,
 								]"
-								:aria-pressed="!isLegitimateInterestAllowed(vendor.id)"
+								:aria-pressed="!legitimateInterestAllowed(vendor.id)"
 								@click="
 									emit(
 										'vendorLegitimateInterestToggle',
 										vendor.id,
-										!isLegitimateInterestAllowed(vendor.id)
+										!legitimateInterestAllowed(vendor.id)
 									)
 								"
 							>
 								{{
-									isLegitimateInterestAllowed(vendor.id)
+									legitimateInterestAllowed(vendor.id)
 										? iabT?.preferenceCenter?.purposeItem?.objectButton
 										: iabT?.preferenceCenter?.purposeItem?.objected
 								}}

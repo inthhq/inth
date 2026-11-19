@@ -8,19 +8,19 @@ import { ConsentButton } from '@inth/angular';
 	selector: 'app-cookie-choices',
 	template: `
 		<button
-			c15t-consent-button
+			inth-consent-button
 			action="reject"
 		>
 			Reject optional
 		</button>
 		<button
-			c15t-consent-button
+			inth-consent-button
 			action="customize"
 		>
 			Choose cookies
 		</button>
 		<button
-			c15t-consent-button
+			inth-consent-button
 			action="accept"
 			variant="primary"
 			mode="filled"

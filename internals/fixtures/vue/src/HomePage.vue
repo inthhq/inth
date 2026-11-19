@@ -14,7 +14,7 @@ const snapshot = useConsentSnapshot();
 
 <template>
 	<main>
-		<p>c15t / Vue</p>
+		<p>Inth / Vue</p>
 		<h1>Consent example</h1>
 		<p>One consent setup for your analytics, advertising and video embeds.</p>
 		<nav aria-label="Banner design">

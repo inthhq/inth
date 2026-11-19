@@ -31,7 +31,7 @@ describe('versioned public vendor list route', () => {
 			);
 		}
 	);
-	test.each(['?c15t-gvl=wrong', '?c15t-gvl=42&language=../en'])(
+	test.each(['?inth-gvl=wrong', '?inth-gvl=42&language=../en'])(
 		'rejects invalid parameters %s',
 		async (query) => {
 			const load = vi.fn();
@@ -48,7 +48,7 @@ describe('versioned public vendor list route', () => {
 	);
 	test('never caches a different version under the requested version', async () => {
 		const response = await serveGvlReference(
-			new Request('https://app.test/init?c15t-gvl=41'),
+			new Request('https://app.test/init?inth-gvl=41'),
 			() => Promise.resolve(gvl)
 		);
 		expect(response?.status).toBe(409);

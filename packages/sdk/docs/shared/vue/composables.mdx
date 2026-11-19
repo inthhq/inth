@@ -1,6 +1,6 @@
 ---
 title: "Vue and Nuxt composables"
-description: "Shared composable reference for the c15t Vue plugin and Nuxt module."
+description: "Shared composable reference for the Inth Vue plugin and Nuxt module."
 group: reference
 ---
 
@@ -10,8 +10,8 @@ group: reference
   ## Where composables work
 
   Call the composables inside `setup` of a component that renders in the app
-  where c15t is installed. Anywhere else they throw an error such as
-  `[c15t] Kernel not found`. Most return a Vue `computed`, so read them with
+  where Inth is installed. Anywhere else they throw an error such as
+  `[inth] Kernel not found`. Most return a Vue `computed`, so read them with
   `.value` in `<script setup>` and without it in the template. They update
   whenever the consent runtime changes.
 </section>
@@ -57,7 +57,7 @@ group: reference
   ## Record a choice
 
   `useConsentSave()` returns a function that records a choice and resolves to
-  `{ ok }` once the backend has answered. c15t applies the choice in the page
+  `{ ok }` once the backend has answered. Inth applies the choice in the page
   before the request, so gated scripts start without waiting for it.
 
   | Argument | Records |
@@ -83,7 +83,7 @@ group: reference
 
   `useConsentLanguage()` returns a writable computed with the language
   override, or `null`. Assigning a new language code stores it and runs init
-  again, so c15t fetches the banner and dialog text in that language.
+  again, so Inth fetches the banner and dialog text in that language.
   Assigning the current language, or `null`, does nothing.
 </section>
 
@@ -147,5 +147,5 @@ group: reference
 
   `useConsentKernel().events.on()` returns an unsubscribe function. Call it in
   `onUnmounted`. For choice and permission events, prefer the `callbacks`
-  option, which c15t wires once for the whole app.
+  option, which Inth wires once for the whole app.
 </section>

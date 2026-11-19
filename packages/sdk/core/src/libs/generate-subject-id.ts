@@ -98,7 +98,6 @@ export const generateSubjectId = function generateSubjectId(): string {
 	// Create a 20-byte buffer (8 timestamp + 12 random)
 	const buf = crypto.getRandomValues(new Uint8Array(20));
 
-	// Calculate timestamp since custom epoch
 	const t = Date.now() - EPOCH_TIMESTAMP;
 
 	const view = new DataView(buf.buffer);
@@ -111,9 +110,6 @@ export const generateSubjectId = function generateSubjectId(): string {
 /**
  * Validates that a string matches the expected subject ID format.
  *
- * @param id - The string to validate
- * @returns True if the string is a valid subject ID format
- *
  * @example
  * ```typescript
  * isValidSubjectId('sub_2VZxR7YmNpKq3WfLs8TgHd'); // true
@@ -124,19 +120,16 @@ export const generateSubjectId = function generateSubjectId(): string {
  * @public
  */
 export const isValidSubjectId = function isValidSubjectId(id: string): boolean {
-	// Must start with 'sub_'
 	if (!id.startsWith('sub_')) {
 		return false;
 	}
 
 	const encoded = id.slice(4);
 
-	// Must have some content after prefix
 	if (encoded.length === 0) {
 		return false;
 	}
 
-	// All characters must be valid base58
 	for (const char of encoded) {
 		if (!BASE58_ALPHABET.includes(char)) {
 			return false;

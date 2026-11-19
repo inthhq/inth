@@ -24,21 +24,6 @@ import {
 	isProviderId,
 } from './additional-consent-codec';
 
-/**
- * Default provider list endpoint. It serves Google's
- * `additional-consent-providers.csv` as JSON, filtered by `providerIds`.
- *
- * @internal
- */
-export const AD_TECH_PROVIDERS_ENDPOINT = AD_TECH_PROVIDERS_URL;
-
-/**
- * TCF purposes a provider needs before the AC string lists it as consented.
- *
- * @internal
- */
-export { AD_TECH_PROVIDER_PURPOSES };
-
 export {
 	decodeAdditionalConsent,
 	encodeAdditionalConsent,
@@ -50,11 +35,9 @@ export {
  *
  * Every provider in `choices` was shown to the visitor, so it is disclosed.
  * It is consented when its switch is on and the TC string consents to every
- * purpose in {@link AD_TECH_PROVIDER_PURPOSES}.
+ * purpose in {@link AD_TECH_PROVIDER_PURPOSES}. Returns `undefined` when no
+ * provider was shown.
  *
- * @param choices - Provider switches keyed by provider ID, one per shown provider.
- * @param purposeConsents - Purpose consents encoded in the TC string.
- * @returns The AC string, or `undefined` when no provider was shown.
  * @internal
  */
 export const additionalConsentFor = function additionalConsentFor(
@@ -82,16 +65,14 @@ const inflight = new Map<string, Promise<AdTechProvider[]>>();
  * Fetches names and privacy policy links for Google ad tech providers.
  *
  * Providers Google no longer lists are left out: the AC string may only
- * carry IDs from Google's current file.
+ * carry IDs from Google's current file. `endpoint` defaults to
+ * {@link AD_TECH_PROVIDERS_URL}.
  *
- * @param providerIds - Google ATP IDs the publisher works with.
- * @param endpoint - Provider list URL. Defaults to {@link AD_TECH_PROVIDERS_ENDPOINT}.
- * @returns The listed providers, sorted by ID.
  * @throws {Error} When the request fails or the response has no provider map.
  */
 export const fetchAdTechProviders = function fetchAdTechProviders(
 	providerIds: readonly number[],
-	endpoint: string = AD_TECH_PROVIDERS_ENDPOINT
+	endpoint: string = AD_TECH_PROVIDERS_URL
 ): Promise<AdTechProvider[]> {
 	const ids = normalizeAdTechProviderIds(providerIds);
 	if (ids.length === 0) {

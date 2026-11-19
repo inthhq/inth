@@ -7,19 +7,12 @@ import { buildQueuePixelInstall } from '../_shared/install-builders';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { resolveScriptUrl } from '../_shared/script-url';
 
-/**
- * Represents the `contents` array object property.
- */
 export interface FbqContent {
 	id: string | number;
 	quantity: number;
 	[key: string]: unknown;
 }
 
-/**
- * Base interface for all possible event parameters.
- * All properties are optional here; specific event types will make them required.
- */
 export interface FbqBaseEventParams {
 	content_category?: string;
 	content_ids?: (string | number)[];
@@ -88,10 +81,7 @@ type ViewContentParams = WithCustomParams<
 	>
 >;
 
-/**
- * The 'Purchase' event has required properties.
- * We use TypeScript's utility types to enforce this.
- */
+/** Meta requires `currency` and `value` on `Purchase`. */
 type PurchaseParams = WithCustomParams<
 	Pick<
 		FbqBaseEventParams,
@@ -100,9 +90,7 @@ type PurchaseParams = WithCustomParams<
 		Required<Pick<FbqBaseEventParams, 'currency' | 'value'>>
 >;
 
-/**
- * Events with no specific properties listed can accept any of the base parameters.
- */
+/** Meta lists no specific properties for these events. */
 type ContactParams = WithCustomParams<FbqBaseEventParams>;
 type CustomizeProductParams = WithCustomParams<FbqBaseEventParams>;
 type DonateParams = WithCustomParams<FbqBaseEventParams>;
@@ -110,10 +98,6 @@ type FindLocationParams = WithCustomParams<FbqBaseEventParams>;
 type ScheduleParams = WithCustomParams<FbqBaseEventParams>;
 type SubmitApplicationParams = WithCustomParams<FbqBaseEventParams>;
 
-/**
- * A mapping of Standard Event names to their corresponding parameter types.
- * This is the core of our type-safety mechanism.
- */
 export interface StandardEventParams {
 	AddPaymentInfo: AddPaymentInfoParams;
 	AddToCart: AddToCartParams;
@@ -168,7 +152,6 @@ export interface MetaPixelDataProcessingOptions {
 	state?: number;
 }
 
-// Extended Window interface to include meta pixel specific properties
 declare global {
 	interface Window {
 		fbq: {
@@ -217,10 +200,8 @@ declare global {
 }
 
 /**
- * Meta Pixel vendor manifest.
- *
- * The Meta Pixel uses structured bootstrap steps to define the standard `fbq`
- * stub and provides a consent API via `fbq('consent', 'grant'|'revoke')`.
+ * Meta Pixel vendor manifest. Consent changes go through Meta's
+ * `fbq('consent', 'grant'|'revoke')` API.
  */
 export const metaPixelManifest = {
 	...vendorManifestContract,
@@ -314,7 +295,7 @@ export interface MetaPixelOptions {
 	/**
 	 * Optional Meta data processing options, such as Limited Data Use.
 	 *
-	 * When provided, c15t queues `fbq('dataProcessingOptions', ...)` before
+	 * When provided, Inth queues `fbq('dataProcessingOptions', ...)` before
 	 * `fbq('init', ...)`.
 	 */
 	dataProcessingOptions?: MetaPixelDataProcessingOptions;
@@ -391,11 +372,6 @@ const buildMetaPixelInstall = function buildMetaPixelInstall({
 /**
  * Creates a Meta Pixel script.
  *
- * The manifest defines a structured `fbq` stub plus the external loader URL,
- * avoiding raw inline vendor snippets in the manifest payload.
- *
- * @param options - The options for the Meta Pixel script
- * @returns The Meta Pixel script configuration
  * @remarks When `pixelId` is missing or blank, the
  *   helper logs `metaPixel: missing or invalid pixelId` with
  *   `console.error` and returns a script that never loads.
@@ -447,10 +423,6 @@ export const metaPixel = function metaPixel({
 	return resolved;
 };
 
-/**
- * Calls `window.fbq` when the Meta Pixel queue exists. Does nothing
- * otherwise, so the event helpers do not throw before the pixel is set up.
- */
 const callFbq = function callFbq(...args: unknown[]): void {
 	if (typeof window === 'undefined' || typeof window.fbq !== 'function') {
 		return;
@@ -474,14 +446,10 @@ const resolveMetaPixelEventOptions = function resolveMetaPixelEventOptions(
 /**
  * Tracks a Meta Pixel standard event.
  *
- * This is a wrapper around `fbq('track', ...)`.
+ * Calls `fbq('track', ...)`. Does nothing until the pixel is set up after
+ * marketing consent; events sent before then are dropped, not queued.
  *
- * @template TEventName - The Meta `StandardEventName` being tracked.
- * @param eventName - The `StandardEventName` to track.
- * @param params - Optional `StandardEventParams[TEventName]` payload.
- * @param eventOptions - Optional `MetaPixelEventOptions` or event ID string.
- * @returns `void`; calls `window.fbq`, or does nothing when the pixel is not
- * set up (before marketing consent). Events sent then are dropped, not queued.
+ * @param eventOptions - Event options, or an event ID string.
  *
  * @example
  * ```ts
@@ -503,13 +471,10 @@ export const metaPixelEvent = <TEventName extends StandardEventName>(
 	);
 
 /**
- * Tracks a Meta Pixel custom event with optional custom parameters.
+ * Tracks a Meta Pixel custom event. Does nothing until the pixel is set up
+ * after marketing consent; events sent before then are dropped, not queued.
  *
- * @param eventName - The custom event name to track
- * @param params - Optional custom parameters to track
- * @param eventOptions - Optional event options, including Conversions API eventID
- * @returns `void`; calls `window.fbq`, or does nothing when the pixel is not
- * set up (before marketing consent). Events sent then are dropped, not queued.
+ * @param eventOptions - Event options, or a Conversions API event ID string.
  */
 export const metaPixelCustomEvent = (
 	eventName: string,
@@ -527,15 +492,10 @@ export const metaPixelCustomEvent = (
  * Tracks a standard event for a single Meta Pixel ID.
  *
  * Use this when multiple Meta Pixels are initialized on the same page and the
- * event should not fire for every initialized pixel.
+ * event should not fire for every initialized pixel. Does nothing until the
+ * pixel is set up after marketing consent; earlier events are dropped.
  *
- * @template TEventName - The Meta `StandardEventName` being tracked.
- * @param pixelId - Meta Pixel ID that should receive the event.
- * @param eventName - The `StandardEventName` to track.
- * @param params - Optional `StandardEventParams[TEventName]` payload.
- * @param eventOptions - Optional `MetaPixelEventOptions` or event ID string.
- * @returns `void`; calls `window.fbq`, or does nothing when the pixel is not
- * set up (before marketing consent). Events sent then are dropped, not queued.
+ * @param eventOptions - Event options, or an event ID string.
  *
  * @example
  * ```ts
@@ -565,14 +525,10 @@ export const metaPixelSingleEvent = <TEventName extends StandardEventName>(
  * Tracks a custom event for a single Meta Pixel ID.
  *
  * Use this when multiple Meta Pixels are initialized on the same page and the
- * custom event should not fire for every initialized pixel.
+ * custom event should not fire for every initialized pixel. Does nothing
+ * until the pixel is set up after marketing consent; earlier events are dropped.
  *
- * @param pixelId - Meta Pixel ID that should receive the custom event.
- * @param eventName - Custom event name to track.
- * @param params - Optional `FbqCustomParams` payload.
- * @param eventOptions - Optional `MetaPixelEventOptions` or event ID string.
- * @returns `void`; calls `window.fbq`, or does nothing when the pixel is not
- * set up (before marketing consent). Events sent then are dropped, not queued.
+ * @param eventOptions - Event options, or an event ID string.
  *
  * @example
  * ```ts

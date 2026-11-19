@@ -6,7 +6,7 @@ package com.inth.core.gpp
  *
  * A port of `packages/sdk/iab/src/gpp/encoder.ts`, so a device and a web page given the
  * same inputs write the same bytes. `packages/native-protocol/gpp/cases.json` holds the
- * strings both cores and the web encoder must produce, and the `@c15t/iab` test
+ * strings both cores and the web encoder must produce, and the `@inth/sdk-iab` test
  * `native-gpp-fixtures.test.ts` decodes every one with the IAB reference library.
  *
  * `core-swift`'s `GPPEncoder.swift` mirrors this file function for function.

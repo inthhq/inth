@@ -1,9 +1,8 @@
 /**
- * Base legal-document policy families recognized by c15t.
+ * Base legal-document policy families recognized by Inth.
  *
  * A concrete consent `type` is valid when it equals one of these prefixes or is
- * a suffixed variant of one (see {@link isLegalDocumentType}). Declared
- * `as const`, so the entries are literal types and the array is read-only.
+ * a suffixed variant of one (see {@link isLegalDocumentType}).
  */
 export const LEGAL_DOCUMENT_TYPE_PREFIXES = [
 	'privacy_policy',

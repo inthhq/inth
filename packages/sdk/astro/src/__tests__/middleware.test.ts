@@ -2,6 +2,7 @@ import {
 	buildConsentManifestFromConfig,
 	policyRulePresets,
 } from '@inth/sdk/schema/types';
+import { clearManifestCache } from '@inth/sdk/server';
 import { enTranslations } from '@inth/sdk/translations';
 import { baseTranslations } from '@inth/sdk/translations/all';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -10,14 +11,13 @@ import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { resolveOptions } from '../integration';
 import { createConsentMiddleware } from '../middleware-handler';
 import { hosted as hostedMode, manifest as manifestMode } from '../mode';
-import { clearManifestCache } from '../server';
 import { testing as testingMode } from '../testing';
-import type { C15tAstroOptions, C15tLocals } from '../types';
+import type { InthAstroOptions, InthLocals } from '../types';
 import { testRule, testWire } from './policy-fixture';
 
 interface RunInput {
 	headers?: Record<string, string>;
-	options?: C15tAstroOptions;
+	options?: InthAstroOptions;
 	isPrerendered?: boolean;
 	fetch?: typeof globalThis.fetch;
 	/** Extra `Astro.locals` fields, such as an adapter runtime. */
@@ -29,14 +29,14 @@ interface RunInput {
 	setCookie?: (name: string, value: string, options: unknown) => void;
 }
 
-const run = async function run(input: RunInput = {}): Promise<C15tLocals> {
+const run = async function run(input: RunInput = {}): Promise<InthLocals> {
 	const middleware = createConsentMiddleware(
 		resolveOptions(
 			input.options ?? { mode: testingMode({ policy: [testRule] }) }
 		),
 		{ experimentArm: input.experimentArm, fetch: input.fetch }
 	);
-	const locals = { ...(input.locals ?? {}) } as { c15t: C15tLocals };
+	const locals = { ...(input.locals ?? {}) } as { inth: InthLocals };
 	const next = vi.fn(() => new Response('ok'));
 	await middleware(
 		{
@@ -50,7 +50,7 @@ const run = async function run(input: RunInput = {}): Promise<C15tLocals> {
 		next as never
 	);
 	expect(next).toHaveBeenCalledOnce();
-	return locals.c15t;
+	return locals.inth;
 };
 
 describe('consent middleware', () => {
@@ -62,7 +62,7 @@ describe('consent middleware', () => {
 	it("hands a stale manifest's background refresh to locals.runtime.ctx.waitUntil", async () => {
 		vi.useFakeTimers();
 		const manifest = await buildConsentManifestFromConfig({
-			branding: 'c15t',
+			branding: 'inth',
 			policyRules: [policyRulePresets.europeOptIn()],
 		});
 		const fetchImpl = vi.fn(() =>
@@ -89,7 +89,7 @@ describe('consent middleware', () => {
 		};
 		// A relative backend sends no session report, so the registrations
 		// counted below are the refresh alone.
-		const options: C15tAstroOptions = {
+		const options: InthAstroOptions = {
 			mode: manifestMode({
 				manifestUrl: 'https://consent.example.com/manifest',
 			}),
@@ -107,7 +107,7 @@ describe('consent middleware', () => {
 	});
 
 	it('resolves the experiment arm per request', async () => {
-		const options: C15tAstroOptions = {
+		const options: InthAstroOptions = {
 			experiment: {
 				arms: { bar: { prompt: { variant: 'bar' } } },
 				id: 'banner-shape',
@@ -136,23 +136,23 @@ describe('consent middleware', () => {
 	});
 
 	it('populates locals for a first-time visitor', async () => {
-		const c15t = await run();
-		expect(c15t.shouldShowBanner).toBe(true);
-		expect(c15t.snapshot.explicitChoice).toBeNull();
+		const inth = await run();
+		expect(inth.shouldShowBanner).toBe(true);
+		expect(inth.snapshot.explicitChoice).toBeNull();
 	});
 
 	it('reads geo through the shared header precedence', async () => {
-		const c15t = await run({
+		const inth = await run({
 			headers: {
 				'cf-ipcountry': 'FR',
-				'x-c15t-country': 'DE',
+				'x-inth-country': 'DE',
 				'x-vercel-ip-country-region': 'BY',
 			},
 		});
-		// `x-c15t-*` always outranks infrastructure headers.
-		expect(c15t.inputs.country).toBe('DE');
-		expect(c15t.inputs.region).toBe('BY');
-		expect(c15t.config.initialOverrides?.country).toBe('DE');
+		// `x-inth-*` always outranks infrastructure headers.
+		expect(inth.inputs.country).toBe('DE');
+		expect(inth.inputs.region).toBe('BY');
+		expect(inth.config.initialOverrides?.country).toBe('DE');
 	});
 
 	it('reads GPC', async () => {
@@ -162,26 +162,26 @@ describe('consent middleware', () => {
 	});
 
 	it('negotiates the language from accept-language', async () => {
-		const c15t = await run({
+		const inth = await run({
 			headers: { 'accept-language': 'de-DE,de;q=0.9,en;q=0.8' },
 		});
-		expect(c15t.inputs.language).toBe('de');
-		expect(c15t.snapshot.translations?.language).toBe('de');
+		expect(inth.inputs.language).toBe('de');
+		expect(inth.snapshot.translations?.language).toBe('de');
 	});
 
 	it('lets an explicit locale beat accept-language', async () => {
-		const c15t = await run({
+		const inth = await run({
 			headers: { 'accept-language': 'de-DE' },
 			options: {
 				i18n: { locale: 'fr' },
 				mode: testingMode({ policy: [testRule] }),
 			},
 		});
-		expect(c15t.snapshot.translations?.language).toBe('fr');
+		expect(inth.snapshot.translations?.language).toBe('fr');
 	});
 
 	it('keeps the other labels in a group when i18n.messages overrides one', async () => {
-		const c15t = await run({
+		const inth = await run({
 			options: {
 				i18n: {
 					locale: 'en',
@@ -195,7 +195,7 @@ describe('consent middleware', () => {
 				mode: testingMode({ policy: [testRule] }),
 			},
 		});
-		const translations = c15t.snapshot.translations?.translations;
+		const translations = inth.snapshot.translations?.translations;
 		expect(translations?.common.acceptAll).toBe('Yes please');
 		expect(translations?.common.rejectAll).toBe(
 			enTranslations.common.rejectAll
@@ -211,7 +211,7 @@ describe('consent middleware', () => {
 
 	it('renders a regional locale over its primary language bundle', async () => {
 		const stock = baseTranslations.de;
-		const c15t = await run({
+		const inth = await run({
 			options: {
 				i18n: {
 					locale: 'de-AT',
@@ -225,8 +225,8 @@ describe('consent middleware', () => {
 				mode: testingMode({ policy: [testRule] }),
 			},
 		});
-		const copy = c15t.snapshot.translations?.translations;
-		expect(c15t.snapshot.translations?.language).toBe('de-AT');
+		const copy = inth.snapshot.translations?.translations;
+		expect(inth.snapshot.translations?.language).toBe('de-AT');
 		expect(copy?.cookieBanner.title).toBe('Servus');
 		expect(copy?.cookieBanner.description).toBe(stock.cookieBanner.description);
 		expect(copy?.common.acceptAll).toBe(stock.common.acceptAll);
@@ -234,23 +234,22 @@ describe('consent middleware', () => {
 
 	it('sets no subject cookie for a new visitor, and the render has no subject', async () => {
 		const setCookie = vi.fn();
-		const c15t = await run({
+		const inth = await run({
 			headers: { cookie: 'theme=dark' },
 			options: {
-				middleware: { subjectCookie: true, trustForwardedHeaders: true },
 				mode: testingMode({ policy: [testRule] }),
 				storageConfig: { crossSubdomain: true, storageKey: 'consent' },
 			},
 			setCookie,
 		});
 		expect(setCookie).not.toHaveBeenCalled();
-		expect(c15t.config.initialRecords?.subject?.subjectId).toBeUndefined();
-		expect(c15t.config.initialRecords?.choice).toBeNull();
+		expect(inth.config.initialRecords?.subject?.subjectId).toBeUndefined();
+		expect(inth.config.initialRecords?.choice).toBeNull();
 	});
 
 	it('skips the network prefetch on a prerendered route', async () => {
 		const fetchImpl = vi.fn();
-		const c15t = await run({
+		const inth = await run({
 			fetch: fetchImpl as never,
 			isPrerendered: true,
 			options: {
@@ -261,14 +260,14 @@ describe('consent middleware', () => {
 		expect(fetchImpl).not.toHaveBeenCalled();
 		// No request to resolve means no server-side decision, so the banner
 		// stays out of the cached HTML and the browser decides instead.
-		expect(c15t.shouldShowBanner).toBe(false);
-		expect(c15t.snapshot.resolution.status).toBe('unconfigured');
+		expect(inth.shouldShowBanner).toBe(false);
+		expect(inth.snapshot.resolution.status).toBe('unconfigured');
 	});
 
 	it('folds a hosted /init response into the config', async () => {
 		const fetchImpl = vi.fn(() =>
 			Response.json({
-				branding: 'c15t',
+				branding: 'inth',
 				consents: {},
 				hasConsented: false,
 				location: { countryCode: 'DE', regionCode: null },
@@ -276,9 +275,9 @@ describe('consent middleware', () => {
 				translations: { language: 'en', translations: {} },
 			})
 		);
-		const c15t = await run({
+		const inth = await run({
 			fetch: fetchImpl as never,
-			headers: { 'x-c15t-country': 'DE' },
+			headers: { 'x-inth-country': 'DE' },
 			options: {
 				mode: hostedMode(),
 				projectUrl: 'https://consent.example.com',
@@ -288,10 +287,10 @@ describe('consent middleware', () => {
 		const [url, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
 		// The query carries the consent journey the render started.
 		expect(url.split('?')[0]).toBe('https://consent.example.com/init');
-		expect((init.headers as Record<string, string>)['x-c15t-country']).toBe(
+		expect((init.headers as Record<string, string>)['x-inth-country']).toBe(
 			'DE'
 		);
-		expect(c15t.config.initialLocation?.countryCode).toBe('DE');
+		expect(inth.config.initialLocation?.countryCode).toBe('DE');
 	});
 
 	it('keeps an app i18n override over hosted /init translations for the same language', async () => {
@@ -310,7 +309,7 @@ describe('consent middleware', () => {
 				},
 			})
 		);
-		const c15t = await run({
+		const inth = await run({
 			fetch: fetchImpl as never,
 			options: {
 				i18n: { messages: { en: { cookieBanner: { title: 'App title' } } } },
@@ -318,12 +317,12 @@ describe('consent middleware', () => {
 				projectUrl: 'https://consent.example.com',
 			},
 		});
-		const copy = c15t.snapshot.translations?.translations;
+		const copy = inth.snapshot.translations?.translations;
 		expect(copy?.cookieBanner.title).toBe('App title');
 		expect(copy?.cookieBanner.description).toBe('Backend description');
 		// The page's inlined config carries the same copy the server rendered.
 		expect(
-			c15t.config.initialTranslations?.translations.cookieBanner.title
+			inth.config.initialTranslations?.translations.cookieBanner.title
 		).toBe('App title');
 	});
 
@@ -342,7 +341,7 @@ describe('consent middleware', () => {
 				},
 			})
 		);
-		const c15t = await run({
+		const inth = await run({
 			fetch: fetchImpl as never,
 			options: {
 				i18n: { locale: 'de', messages: { de: { ...stock } } },
@@ -350,19 +349,19 @@ describe('consent middleware', () => {
 				projectUrl: 'https://consent.example.com',
 			},
 		});
-		expect(c15t.snapshot.translations?.translations.cookieBanner.title).toBe(
+		expect(inth.snapshot.translations?.translations.cookieBanner.title).toBe(
 			'Vom Backend'
 		);
 	});
 
 	it('deep-merges a partial i18n section over the bundled copy', async () => {
-		const c15t = await run({
+		const inth = await run({
 			options: {
 				i18n: { messages: { en: { cookieBanner: { title: 'App title' } } } },
 				mode: testingMode({ policy: [testRule] }),
 			},
 		});
-		const copy = c15t.snapshot.translations?.translations;
+		const copy = inth.snapshot.translations?.translations;
 		expect(copy?.cookieBanner.title).toBe('App title');
 		expect(copy?.cookieBanner.description).toBeTruthy();
 	});
@@ -370,7 +369,7 @@ describe('consent middleware', () => {
 	it.each(['999', 'invalid'])(
 		'denies an unsupported producer contract %s',
 		async (contract) => {
-			const c15t = await run({
+			const inth = await run({
 				fetch: vi.fn(() =>
 					Response.json(
 						{
@@ -378,7 +377,7 @@ describe('consent middleware', () => {
 							policyResolution: testWire({ model: 'opt-out', prompt: 'none' }),
 							translations: { language: 'en', translations: {} },
 						},
-						{ headers: { 'x-c15t-policy-contract': contract } }
+						{ headers: { 'x-inth-policy-contract': contract } }
 					)
 				) as never,
 				options: {
@@ -386,11 +385,11 @@ describe('consent middleware', () => {
 					projectUrl: 'https://consent.example.com',
 				},
 			});
-			expect(c15t.snapshot.resolution).toMatchObject({
+			expect(inth.snapshot.resolution).toMatchObject({
 				reason: 'unsupported-contract',
 				status: 'failed',
 			});
-			expect(c15t.snapshot.effectivePermissions.marketing).toBe(false);
+			expect(inth.snapshot.effectivePermissions.marketing).toBe(false);
 		}
 	);
 
@@ -398,21 +397,21 @@ describe('consent middleware', () => {
 		const fetchImpl = vi.fn(() => {
 			throw new Error('ECONNREFUSED');
 		});
-		const c15t = await run({
+		const inth = await run({
 			fetch: fetchImpl as never,
 			options: {
 				mode: hostedMode(),
 				projectUrl: 'https://consent.example.com',
 			},
 		});
-		expect(c15t.config.initialTranslations?.language).toBe('en');
+		expect(inth.config.initialTranslations?.language).toBe('en');
 	});
 
 	it('forwards only the consent cookie to the backend', async () => {
 		const fetchImpl = vi.fn(() => Response.json({}));
 		await run({
 			fetch: fetchImpl as never,
-			headers: { cookie: 'session=abc; c15t=c.necessary:1' },
+			headers: { cookie: 'session=abc; inth=c.necessary:1' },
 			options: {
 				mode: hostedMode(),
 				projectUrl: 'https://consent.example.com',
@@ -420,7 +419,7 @@ describe('consent middleware', () => {
 		});
 		const [, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
 		expect((init.headers as Record<string, string>).cookie).toBe(
-			'c15t=c.necessary:1'
+			'inth=c.necessary:1'
 		);
 	});
 
@@ -471,7 +470,7 @@ describe('consent middleware', () => {
 		const fetchImpl = vi.fn(() => Response.json({}));
 		const result = await run({
 			fetch: fetchImpl as never,
-			options: { mode: hostedMode(), projectUrl: '/api/c15t' },
+			options: { mode: hostedMode(), projectUrl: '/api/inth' },
 		});
 		expect(fetchImpl).not.toHaveBeenCalled();
 		expect(result.hasPolicy).toBe(false);
@@ -481,7 +480,7 @@ describe('consent middleware', () => {
 		const fetchImpl = vi.fn(() => Response.json({}));
 		await run({
 			fetch: fetchImpl as never,
-			headers: { cookie: 'c15t=c.necessary:1' },
+			headers: { cookie: 'inth=c.necessary:1' },
 			options: {
 				mode: hostedMode(),
 				projectUrl: 'http://consent.example.com',
@@ -495,23 +494,23 @@ describe('consent middleware', () => {
 		const fetchImpl = vi.fn(() => Response.json({}));
 		await run({
 			fetch: fetchImpl as never,
-			headers: { cookie: 'c15t=c.necessary:1' },
+			headers: { cookie: 'inth=c.necessary:1' },
 			options: { mode: hostedMode(), projectUrl: 'http://localhost:8787' },
 		});
 		const [, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
 		expect((init.headers as Record<string, string>).cookie).toBe(
-			'c15t=c.necessary:1'
+			'inth=c.necessary:1'
 		);
 	});
 });
 
-it.each(['c15t=consent', 'session=unrelated'])(
+it.each(['inth=consent', 'session=unrelated'])(
 	'preserves hosted Astro vendor loading when the request cookie is %s',
 	async (cookie) => {
 		const fetch = vi.fn(() =>
 			Promise.resolve(
 				Response.json({
-					branding: 'c15t',
+					branding: 'inth',
 					gvl: completeGVL,
 					location: { countryCode: 'DE', regionCode: null },
 					policyResolution: testWire({ model: 'iab' }),
@@ -532,10 +531,10 @@ it.each(['c15t=consent', 'session=unrelated'])(
 			});
 			expect(fetch).toHaveBeenCalledOnce();
 			expect(result.config.initialIab?.gvl).toEqual(
-				cookie.startsWith('c15t=') ? completeGVL : null
+				cookie.startsWith('inth=') ? completeGVL : null
 			);
 			expect(Boolean(result.config.initialIab?.gvlReference)).toBe(
-				!cookie.startsWith('c15t=')
+				!cookie.startsWith('inth=')
 			);
 		} finally {
 			vi.unstubAllGlobals();

@@ -9,7 +9,7 @@ import {
 	withEventReplay,
 } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { hosted, provideC15t } from '@inth/angular';
+import { hosted, provideInth } from '@inth/angular';
 
 import { scripts } from '../scripts';
 import { routes } from './app.routes';
@@ -20,10 +20,10 @@ export const appConfig: ApplicationConfig = {
 		provideZonelessChangeDetection(),
 		provideRouter(routes),
 		provideClientHydration(withEventReplay()),
-		provideC15t({
+		provideInth({
 			mode: hosted(),
 			// The consent route server.ts mounts.
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 			scripts,
 		}),
 	],

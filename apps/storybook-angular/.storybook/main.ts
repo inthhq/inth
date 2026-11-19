@@ -16,7 +16,7 @@ const workspace = (...segments: string[]) =>
  * component at runtime, so everything compiles JIT (Analog's default).
  *
  * `@inth/angular` and its component entry points resolve to their source,
- * so a component change shows up without an `ng-packagr` build. Its other `@c15t/*` imports resolve to
+ * so a component change shows up without an `ng-packagr` build. Its other `@inth/*` imports resolve to
  * their built `dist`: the class maps and the stylesheets the stock surfaces
  * insert come from the same `@inth/sdk/ui` build, as they do in an app.
  */
@@ -44,7 +44,7 @@ const scriptConditionsOnly = (): Plugin => ({
 		}
 	},
 	enforce: 'post',
-	name: 'c15t-storybook-script-conditions',
+	name: 'inth-storybook-script-conditions',
 });
 
 const config: StorybookConfig = {
@@ -69,7 +69,7 @@ const config: StorybookConfig = {
 			resolve: {
 				alias: [
 					{
-						find: /^@c15t\/conformance\/(?<capture1>.*)$/u,
+						find: /^@inth\/conformance\/(?<capture1>.*)$/u,
 						replacement: workspace('internals/conformance/src/$1'),
 					},
 					{

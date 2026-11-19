@@ -1,7 +1,7 @@
 import {
 	recipeAccepts,
 	recipeRejects,
-} from '@c15t/conformance/play/docs-recipes';
+} from '@inth/conformance/play/docs-recipes';
 import { ConsentDialog } from '@inth/react';
 import type { ConsentProviderOptions } from '@inth/react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
@@ -42,7 +42,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Each action is the app's button, carrying c15t's action attribute. */
+/** Each action is the app's button, carrying Inth's action attribute. */
 const actionsUseOwnButton: Story['play'] = async () => {
 	const body = within(document.body);
 	const accept = await body.findByRole('button', { name: /^accept all$/iu });

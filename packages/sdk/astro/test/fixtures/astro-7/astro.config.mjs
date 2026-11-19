@@ -2,14 +2,14 @@
 // ends up with. `src/__tests__/astro-build.test.ts` builds it once per `ui`.
 import react from '@astrojs/react';
 import svelte from '@astrojs/svelte';
-import { MINIMAL_GVL } from '@c15t/conformance/fixtures/gvl';
-import c15t from '@inth/astro';
+import inth from '@inth/astro';
 import { testing } from '@inth/astro/testing';
+import { MINIMAL_GVL } from '@inth/conformance/fixtures/gvl';
 import { defineConfig } from 'astro/config';
 
-const ui = process.env.C15T_UI ?? 'svelte';
-const iab = process.env.C15T_IAB === '1';
-const deferred = process.env.C15T_DEFERRED === '1';
+const ui = process.env.INTH_UI ?? 'svelte';
+const iab = process.env.INTH_IAB === '1';
+const deferred = process.env.INTH_DEFERRED === '1';
 
 export default defineConfig({
 	adapter: deferred
@@ -18,7 +18,7 @@ export default defineConfig({
 					'astro:config:done': ({ setAdapter }) => {
 						setAdapter({
 							entrypointResolution: 'auto',
-							name: 'c15t:test-server-island',
+							name: 'inth:test-server-island',
 							serverEntrypoint: new URL('./server.mjs', import.meta.url),
 							supportedAstroFeatures: {
 								i18nDomains: 'stable',
@@ -29,10 +29,10 @@ export default defineConfig({
 						});
 					},
 				},
-				name: 'c15t:test-server-island',
+				name: 'inth:test-server-island',
 			}
 		: undefined,
-	cacheDir: process.env.C15T_ASTRO_CACHE_DIR,
+	cacheDir: process.env.INTH_ASTRO_CACHE_DIR,
 	integrations: [
 		...(deferred
 			? [
@@ -46,12 +46,12 @@ export default defineConfig({
 								});
 							},
 						},
-						name: 'c15t:test-deferred-route',
+						name: 'inth:test-deferred-route',
 					},
 				]
 			: []),
 		ui === 'react' ? react() : svelte(),
-		c15t({
+		inth({
 			consentCategories: ['necessary', 'marketing'],
 			endpoints: false,
 			iab: iab ? { cmpId: 160, gvl: MINIMAL_GVL } : undefined,
@@ -71,6 +71,6 @@ export default defineConfig({
 		}),
 	],
 	vite: {
-		cacheDir: process.env.C15T_VITE_CACHE_DIR,
+		cacheDir: process.env.INTH_VITE_CACHE_DIR,
 	},
 });

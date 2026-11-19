@@ -27,7 +27,7 @@ test('the CocoaPods Apple module matches the standalone module', () => {
 });
 
 test('publish checks reject stale and unpacked Apple platform sources', () => {
-	const directory = mkdtempSync(join(tmpdir(), 'c15t-apple-copy-'));
+	const directory = mkdtempSync(join(tmpdir(), 'inth-apple-copy-'));
 	try {
 		cpSync(source, join(directory, 'vendor/InthApple'), { recursive: true });
 		expect(scanVendoredNativeSources(directory)).toEqual([]);

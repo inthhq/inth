@@ -1,0 +1,100 @@
+/**
+ * The `/init` request an `ssr: false` Nuxt page starts from its own HTML.
+ *
+ * Nuxt answers an `ssr: false` route with an HTML shell, and consent starts
+ * only once the app's JavaScript has downloaded and run. An inline script in
+ * the shell's `<head>`, core's `buildPrefetchScript`, starts `/init` while
+ * the browser is still parsing. When the plugin starts the runtime, the
+ * hosted transport finds that request on `window` and waits for it instead
+ * of sending its own.
+ *
+ * The script is written only when the server can tell which request the
+ * browser will make:
+ *
+ * - The page is a shell (`ssr: false` for the app or the route). A server
+ *   rendered page already carries the visitor's policy.
+ * - The app calls the backend's `/init`: `hosted()` mode, without init
+ *   `headers`. `manifest()` asks the Nuxt consent route, which core's
+ *   script does not address, or resolves in the browser; `local()` makes
+ *   no request.
+ * - Nothing replaces the request: no `consentSource`, `experiment` (the
+ *   arm travels with `/init`) or `prefetch`.
+ *
+ * The config is what both sides read: module options through the public
+ * runtime config, with `app.config.ts` merged over them. A page whose
+ * config the browser changes before the plugin runs (for example a client
+ * plugin that changes the consent config per route) turns the script off with
+ * the route rule `inth: { initPrefetch: false }`; otherwise its early
+ * request goes unused.
+ *
+ * The script carries the backend URL and protocol headers, nothing from the
+ * request, so prerendered and cached shells can hold it.
+ */
+import { buildPrefetchScript } from '@inth/sdk/engine';
+import { readNuxtMode } from '@inth/vue/nuxt';
+import type {
+	NuxtResolvedModeConfig,
+	RuntimeConsentConfig,
+} from '@inth/vue/nuxt';
+
+/** The `inth` key of a Nitro route rule. */
+export interface InitPrefetchRouteRule {
+	/** `false` writes no `/init` script into this route's HTML shell. */
+	initPrefetch?: boolean;
+}
+
+/** What {@link buildInitPrefetchTag} decides from. */
+export interface InitPrefetchInput {
+	/**
+	 * The Inth config the browser starts with: the public runtime config,
+	 * with the app config merged over it.
+	 */
+	config: Partial<RuntimeConsentConfig> & NuxtResolvedModeConfig;
+	/** Whether the HTML is a shell the server did not render (`ssr: false`). */
+	shell: boolean;
+	/** The route's `inth` route rule, if any. */
+	routeRule?: InitPrefetchRouteRule;
+	/**
+	 * A nonce for this response, such as `nuxt-security`'s. Wins over the
+	 * config's `nonce`.
+	 */
+	nonce?: string;
+}
+
+/** Matches the backend URLs the hosted transport fetches as written. */
+const FETCHABLE_BACKEND_RE = /^(?:https?:\/\/|\/)/u;
+
+const escapeAttribute = (value: string): string =>
+	value.replaceAll('&', '&amp;').replaceAll('"', '&quot;');
+
+/**
+ * The inline `<script>` that starts this page's `/init` request, or
+ * `undefined` when the page should not get one.
+ *
+ * @internal
+ */
+export const buildInitPrefetchTag = function buildInitPrefetchTag(
+	input: InitPrefetchInput
+): string | undefined {
+	const { config } = input;
+	const mode = readNuxtMode(config);
+	if (
+		!input.shell ||
+		input.routeRule?.initPrefetch === false ||
+		mode.type !== 'hosted' ||
+		Object.keys(mode.headers ?? {}).length > 0 ||
+		config.consentSource ||
+		config.experiment ||
+		config.prefetch
+	) {
+		return undefined;
+	}
+	// The URL the browser's hosted transport asks, so both match.
+	const { projectUrl } = config;
+	if (!(projectUrl && FETCHABLE_BACKEND_RE.test(projectUrl))) {
+		return undefined;
+	}
+	const nonce = input.nonce ?? config.nonce;
+	const attributes = nonce ? ` nonce="${escapeAttribute(nonce)}"` : '';
+	return `<script${attributes}>${buildPrefetchScript({ projectUrl })}</script>`;
+};

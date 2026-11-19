@@ -15,7 +15,7 @@ export const bannerExperiment = defineExperiment({
 
 /** One experiment event the page lists. */
 export interface ExperimentLogEntry {
-	name: 'c15t_surface_shown' | 'c15t_choice_recorded';
+	name: 'inth_surface_shown' | 'inth_choice_recorded';
 	arm: string;
 	/** The surface shown, or the consent action recorded. */
 	detail: string;
@@ -47,13 +47,13 @@ export const experimentCallbacks = function experimentCallbacks(
 			pushToDataLayer({
 				arm: experiment.arm,
 				consent_action: consentAction,
-				event: 'c15t_choice_recorded',
+				event: 'inth_choice_recorded',
 				experiment_id: experiment.id,
 			});
 			log({
 				arm: experiment.arm,
 				detail: consentAction,
-				name: 'c15t_choice_recorded',
+				name: 'inth_choice_recorded',
 			});
 		},
 		onSurfaceShown: ({ experiment, surface }: OnSurfaceShownPayload) => {
@@ -62,11 +62,11 @@ export const experimentCallbacks = function experimentCallbacks(
 			}
 			pushToDataLayer({
 				arm: experiment.arm,
-				event: 'c15t_surface_shown',
+				event: 'inth_surface_shown',
 				experiment_id: experiment.id,
 				surface,
 			});
-			log({ arm: experiment.arm, detail: surface, name: 'c15t_surface_shown' });
+			log({ arm: experiment.arm, detail: surface, name: 'inth_surface_shown' });
 		},
 	};
 };

@@ -1,14 +1,14 @@
 # Answers the Inth consent prompt if it appears, then carries on.
 #
-# Waits up to C15T_TIMEOUT milliseconds (default 10000) for the first-layer
-# prompt or the notice. The prompt gets Reject all unless C15T_CHOICE is
+# Waits up to INTH_TIMEOUT milliseconds (default 10000) for the first-layer
+# prompt or the notice. The prompt gets Reject all unless INTH_CHOICE is
 # accept-all; the notice gets Got it. With neither on screen the flow passes,
 # so it is safe at the start of every test.
 #
 #   - runFlow:
 #       file: ../node_modules/@inth/react-native/maestro/dismiss-if-shown.yaml
 #       env:
-#         C15T_CHOICE: accept-all
+#         INTH_CHOICE: accept-all
 # Maestro needs an appId in every flow file; the calling flow's appId is used.
 appId: ${APP_ID}
 ---
@@ -18,7 +18,7 @@ appId: ${APP_ID}
 - extendedWaitUntil:
     visible:
       id: "inth\\.(first-layer\\.title|notice)"
-    timeout: ${C15T_TIMEOUT || 10000}
+    timeout: ${INTH_TIMEOUT || 10000}
     optional: true
 - runFlow:
     when:
@@ -27,14 +27,14 @@ appId: ${APP_ID}
     commands:
       - scrollUntilVisible:
           element:
-            id: "inth.first-layer.${C15T_CHOICE || 'reject-all'}"
+            id: "inth.first-layer.${INTH_CHOICE || 'reject-all'}"
           direction: DOWN
       - tapOn:
-          id: "inth.first-layer.${C15T_CHOICE || 'reject-all'}"
+          id: "inth.first-layer.${INTH_CHOICE || 'reject-all'}"
       - extendedWaitUntil:
           notVisible:
             id: 'inth.first-layer'
-          timeout: ${C15T_TIMEOUT || 10000}
+          timeout: ${INTH_TIMEOUT || 10000}
 - runFlow:
     when:
       visible:
@@ -49,4 +49,4 @@ appId: ${APP_ID}
       - extendedWaitUntil:
           notVisible:
             id: 'inth.notice'
-          timeout: ${C15T_TIMEOUT || 10000}
+          timeout: ${INTH_TIMEOUT || 10000}

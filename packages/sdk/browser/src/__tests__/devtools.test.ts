@@ -6,10 +6,10 @@ import {
 	createTestingGlobal as createGlobal,
 	createTestingConsentClient as createConsentClient,
 } from '../testing-global';
-import type { TestingC15tGlobal as C15tGlobal } from '../testing-global';
+import type { TestingInthGlobal as InthGlobal } from '../testing-global';
 import type { ConsentClient } from '../types';
 
-type TestWindow = Window & { c15t?: unknown };
+type TestWindow = Window & { inth?: unknown };
 
 const testWindow = window as TestWindow;
 const clients: ConsentClient[] = [];
@@ -24,8 +24,8 @@ const clearCookies = function clearCookies(): void {
 };
 
 afterEach(() => {
-	(testWindow.c15t as C15tGlobal | undefined)?.dispose?.();
-	testWindow.c15t = undefined;
+	(testWindow.inth as InthGlobal | undefined)?.dispose?.();
+	testWindow.inth = undefined;
 	for (const client of clients.splice(0)) {
 		client.dispose();
 	}
@@ -50,12 +50,12 @@ describe('mountDevTools', () => {
 		const devtools = mountDevTools(client, { defaultOpen: true });
 
 		// The panel lives in a shadow root on a host in <body>.
-		const host = document.body.querySelector('[data-c15t-dev-tools-host]');
+		const host = document.body.querySelector('[data-inth-dev-tools-host]');
 		expect(devtools.element).not.toBeNull();
 		expect(host?.shadowRoot?.contains(devtools.element)).toBe(true);
 		devtools.destroy();
 		expect(
-			document.body.querySelector('[data-c15t-dev-tools-host]')
+			document.body.querySelector('[data-inth-dev-tools-host]')
 		).toBeNull();
 	});
 
@@ -83,10 +83,10 @@ describe('mountDevTools', () => {
 	});
 });
 
-describe('window.c15t.onInit', () => {
+describe('window.inth.onInit', () => {
 	it('runs queued onInit calls once the client exists', () => {
 		const onInit = vi.fn();
-		testWindow.c15t = [['onInit', onInit]];
+		testWindow.inth = [['onInit', onInit]];
 		const api = createGlobal({ pkg: 'test' });
 
 		installGlobal(api);

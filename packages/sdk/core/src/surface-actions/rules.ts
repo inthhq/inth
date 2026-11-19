@@ -31,15 +31,14 @@ export const beginAction = (kernel: ConsentKernel): object => {
 };
 
 /**
- * Whether the resolved rule owes any c15t consent UI.
+ * Whether the resolved rule owes any Inth consent UI.
  *
  * A prompt owes a banner and a preference center; rights owe a way back to
  * preferences. A `none` rule with no rights owes neither, so every surface
  * stays hidden while the permissions it grants apply. `false` until a rule
  * is resolved, and while an external CMP owns the decision.
  *
- * @param snapshot - The kernel snapshot.
- * @returns `true` when c15t should render its banner or dialog.
+ * @returns `true` when Inth should render its banner or dialog.
  */
 export const hasConsentUI = (snapshot: ConsentSnapshot): boolean =>
 	!snapshot.externalPermissions &&
@@ -48,10 +47,9 @@ export const hasConsentUI = (snapshot: ConsentSnapshot): boolean =>
 		snapshot.policyRule.rights.length > 0);
 
 /**
- * Whether a preferences control should be offered: c15t owes consent UI, or
+ * Whether a preferences control should be offered: Inth owes consent UI, or
  * an external CMP owns the decision and opens its own preferences.
  *
- * @param snapshot - The kernel snapshot.
  * @returns `true` when a "privacy settings" control has somewhere to go.
  */
 export const hasConsentPreferences = (snapshot: ConsentSnapshot): boolean =>
@@ -68,9 +66,6 @@ export const hasConsentPreferences = (snapshot: ConsentSnapshot): boolean =>
  * choice or a notice, otherwise nothing. A visitor who opens preferences
  * from the banner and backs out without saving gets the banner back.
  * `'none'` with the banner open hides it.
- *
- * @param kernel - The kernel the surface belongs to.
- * @param surface - `'banner'`, `'dialog'` or `'none'`.
  */
 export const showConsentSurface = (
 	kernel: ConsentKernel,

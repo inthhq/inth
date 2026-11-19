@@ -1,7 +1,7 @@
 {
 	"name": "@inth/tanstack-start",
 	"version": "3.2.0-canary.0",
-	"description": "TanStack cookie consent banner for TanStack Start, built on c15t. Server-rendered banner, request middleware and a preference center.",
+	"description": "TanStack cookie consent banner for TanStack Start, built on Inth. Server-rendered banner, request middleware and a preference center.",
 	"keywords": [
 		"banner",
 		"ccpa",
@@ -37,14 +37,14 @@
 		"tracking-consent",
 		"typescript"
 	],
-	"homepage": "https://c15t.com/docs/frameworks/tanstack-start/quickstart",
+	"homepage": "https://inth.com",
 	"bugs": {
-		"url": "https://github.com/c15t/c15t/issues"
+		"url": "https://github.com/inthhq/inth/issues"
 	},
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/c15t/c15t.git",
+		"url": "git+https://github.com/inthhq/inth.git",
 		"directory": "packages/sdk/tanstack-start"
 	},
 	"files": [
@@ -158,10 +158,10 @@
 		"access": "public"
 	},
 	"scripts": {
-		"build": "pnpm run prebuild && rslib build && node ../../../scripts/normalize-dist-types.mjs && bun scripts/generate-distribution-css.ts && node ../shared/restore-client-directives.mjs src dist && node ../shared/write-translation-entries.mjs dist dist-types",
+		"build": "pnpm run prebuild && rslib build && node ../../../scripts/normalize-dist-types.mjs && bun ../shared/generate-distribution-css.ts && node ../shared/restore-client-directives.mjs src dist && node ../shared/write-translation-entries.mjs dist dist-types",
 		"build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/tanstack-start",
 		"check-types": "pnpm run prebuild && tsc --noEmit && tsc -p tsconfig.type-tests.json",
-		"dev": "sh -c 'pnpm run prebuild && rslib build --no-dts --no-clean && bun scripts/generate-distribution-css.ts && rslib build --watch --no-dts --no-clean'",
+		"dev": "sh -c 'pnpm run prebuild && rslib build --no-dts --no-clean && bun ../shared/generate-distribution-css.ts && rslib build --watch --no-dts --no-clean'",
 		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
 		"lint": "oxlint -c ../../../oxlint.sdk.config.ts ./src",
 		"prebuild": "genversion --esm --semi src/version.ts",
@@ -174,9 +174,9 @@
 		"@inth/sdk": "workspace:*"
 	},
 	"devDependencies": {
-		"@c15t/conformance": "workspace:*",
-		"@c15t/typescript-config": "workspace:*",
-		"@c15t/vitest-config": "workspace:*",
+		"@inth/conformance": "workspace:*",
+		"@inth/typescript-config": "workspace:*",
+		"@inth/vitest-config": "workspace:*",
 		"@rsbuild/core": "1.7.5",
 		"@rsbuild/plugin-react": "1.4.6",
 		"@rslib/core": "0.23.2",

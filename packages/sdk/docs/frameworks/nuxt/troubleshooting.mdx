@@ -1,6 +1,6 @@
 ---
 title: Troubleshooting
-description: Fix common c15t Nuxt module problems, from a missing banner and scripts that never load to returning banners and static hosting.
+description: Fix common Inth Nuxt module problems, from a missing banner and scripts that never load to returning banners and static hosting.
 group: frameworks
 ---
 
@@ -17,24 +17,24 @@ Network tab, find the init request.
    [why the banner may be absent](/docs/concepts/policies#why-the-banner-may-be-absent).
 2. **`ConsentRoot` is inside a page that unmounts.** Put it in `app.vue`.
 3. **The policy did not resolve.** In the default `manifest()` mode,
-   `/api/c15t/init` must return 200. With `hosted()`, the backend's `/init`
-   must. While resolution fails, c15t shows no UI and keeps every optional
+   `/api/inth/init` must return 200. With `hosted()`, the backend's `/init`
+   must. While resolution fails, Inth shows no UI and keeps every optional
    category denied.
-4. **A stored choice exists.** Clear the `c15t` cookie and localStorage entry,
+4. **A stored choice exists.** Clear the `inth` cookie and localStorage entry,
    or use a private window.
 
 ## The page throws IABUnavailableError
 
 **Check.** Nuxt shows its error page, and the error has the code
-`C15T_IAB_UNAVAILABLE` and reads "c15t: this visitor's policy uses IAB TCF,
+`INTH_IAB_UNAVAILABLE` and reads "inth: this visitor's policy uses IAB TCF,
 but `iab` is not set." The visitor's policy uses the `iab` model and the
 backend sent its vendor list, but the module has no `iab` option, or has
 `iab: false` or `iab: { enabled: false }`. The standard banner does not
-handle the IAB model, so c15t throws rather than leave the visitor with no
+handle the IAB model, so Inth throws rather than leave the visitor with no
 consent UI. A server render fails with status 500. A prerendered or
 `ssr: false` page shows the error page once the browser resolves the policy.
 
-**Fix.** If the site uses IAB TCF, set `c15t: { iab: {} }` in
+**Fix.** If the site uses IAB TCF, set `inth: { iab: {} }` in
 `nuxt.config.ts`, or `iab: { cmpId }` when your backend sends no CMP ID. See
 [IAB TCF](/docs/frameworks/nuxt/iab). If it does not, remove the `iab` model
 from the policy for that region in your Inth project or policy pack. A
@@ -113,11 +113,11 @@ part in parentheses names the cause:
 - `/manifest responded 404 Not Found`, or another status: the URL doesn't
   point at your project's backend, or the backend is down.
 
-- `returned an invalid consent manifest`: the URL answers, but not with a c15t
+- `returned an invalid consent manifest`: the URL answers, but not with an Inth
   manifest.
 
 - `manifest() needs a backend URL`: neither `projectUrl` nor
-  `NUXT_PUBLIC_C15T_BACKEND_URL` (or `NUXT_PUBLIC_INTH_PROJECT_URL`) is set. `nuxt build` and `nuxt dev` both
+  `NUXT_PUBLIC_INTH_PROJECT_URL` is set. `nuxt build` and `nuxt dev` both
   stop, whatever `onBuildError` says, because the browser saves consent to
   the backend. `manifest({ snapshot })` stops with
   `manifest({ snapshot }) still needs a backend URL` for the same reason.
@@ -128,12 +128,11 @@ With `onBuildError: 'fail'`, this error also appears:
   `manifestUrl` is a relative path. Without `onBuildError: 'fail'`, the
   module skips the fetch instead.
 
-**Fix.** Set `NUXT_PUBLIC_C15T_BACKEND_URL` (or
-`NUXT_PUBLIC_INTH_PROJECT_URL`), or `projectUrl` under the `c15t` key, to your project's absolute backend URL, including any path prefix; the
+**Fix.** Set `NUXT_PUBLIC_INTH_PROJECT_URL`, or `projectUrl` under the `inth` key, to your project's absolute backend URL, including any path prefix; the
 module adds `/manifest`. To download from another address, set
 `mode: manifest({ manifestUrl })` to the full manifest URL, which is used as
 written. Make sure the build machine can reach the backend. To deploy while
-it is down, build with `C15T_ON_BUILD_ERROR=runtime`, or set
+it is down, build with `INTH_ON_BUILD_ERROR=runtime`, or set
 `onBuildError: 'runtime'`. To never fetch at build time, set
 `mode: manifest({ source: 'runtime' })`. `nuxt prepare` doesn't download the
 manifest, so installing dependencies works offline.
@@ -142,17 +141,17 @@ manifest, so installing dependencies works offline.
 
 **Check.** When the build bundles a manifest, the policy is fixed when you
 build.
-Changing `NUXT_PUBLIC_C15T_BACKEND_URL` on a running server moves consent
+Changing `NUXT_PUBLIC_INTH_PROJECT_URL` on a running server moves consent
 saves, not the policy.
 
 **Fix.** Build again after editing policies, translations or vendors. If your
 CI caches build output, skip the cache for that build. To pick up edits
 without rebuilding, set `mode: manifest({ source: 'runtime' })`.
 
-## Static hosting returns 404 for /api/c15t/init
+## Static hosting returns 404 for /api/inth/init
 
-**Check.** A static host has no Nuxt server routes, so `/api/c15t/init` and
-`/api/c15t/manifest` do not exist after deployment. `nuxt generate` warns
+**Check.** A static host has no Nuxt server routes, so `/api/inth/init` and
+`/api/inth/manifest` do not exist after deployment. `nuxt generate` warns
 about this when `mode` is the default `manifest()`.
 
 **Fix.** Set `mode: manifest({ resolve: 'browser' })` with
@@ -161,7 +160,7 @@ about this when `mode` is the default `manifest()`.
 If the browser reports a CORS error for a consent save or `/init`, add your
 site's origin to the Inth project's trusted origins.
 
-## The module throws "`c15t.mode` in nuxt.config.ts is a transport"
+## The module throws "`inth.mode` in nuxt.config.ts is a transport"
 
 **Check.** `nuxt.config.ts` imports `manifest`, `hosted` or `local` from
 `@inth/vue/vue-plugin`. Those return browser transports, which cannot travel
@@ -172,7 +171,7 @@ data.
 
 ## Options from an earlier alpha have no effect
 
-**Check.** The `c15t` key sets `manifest`, `manifestUrl`, `manifestSnapshot`,
+**Check.** The `inth` key sets `manifest`, `manifestUrl`, `manifestSnapshot`,
 `buildManifest`, `geoUrl`, `initRoute` or `manifestRoute`. The module no
 longer reads them.
 
@@ -187,7 +186,7 @@ longer reads them.
 | `buildManifest: false` | `mode: manifest({ source: 'runtime' })` |
 | `buildManifest: true` | `onBuildError: 'fail'` |
 | `initRoute`, `manifestRoute` | `routePrefix`, one catch-all for both |
-| `NUXT_PUBLIC_C15T_MANIFEST_URL`, `NUXT_C15T_MANIFEST_URL` | `mode: manifest({ manifestUrl })` in `nuxt.config.ts`. The variables are no longer read, so the manifest URL is fixed at build time. `NUXT_PUBLIC_C15T_BACKEND_URL` and `NUXT_C15T_BACKEND_URL` still work. |
+| `NUXT_PUBLIC_C15T_MANIFEST_URL`, `NUXT_C15T_MANIFEST_URL` | `mode: manifest({ manifestUrl })` in `nuxt.config.ts`. The variables are no longer read, so the manifest URL is fixed at build time. `NUXT_PUBLIC_INTH_PROJECT_URL` and `NUXT_INTH_PROJECT_URL` still work. |
 | `domain` | Nothing. Saves send the page's hostname. |
 | `ConsentPreferencesLink` | `ConsentDialogLink`. The floating `ConsentDialogTrigger` keeps its name. |
 | `ConsentFrame` | `ConsentGate` |
@@ -212,7 +211,7 @@ route or a plain module.
 
 ## Every visitor resolves the same location
 
-**Check.** The server found no location header, or an `x-c15t-country` header
+**Check.** The server found no location header, or an `x-inth-country` header
 that your own code adds, such as a test middleware, won. A header a visitor
 sends only changes that visitor's policy. Check which headers reach Nuxt.
 

@@ -5,7 +5,7 @@
  * `storybook-astro` package renders through the Vite dev server's HMR
  * channel, so a static `storybook build` — which is what CI serves to the
  * parity runner — has no renderer at all, and it offers no way to populate
- * `Astro.locals`, which every c15t `.astro` component needs. So this
+ * `Astro.locals`, which every Inth `.astro` component needs. So this
  * plugin does the rendering itself.
  *
  * It boots one Vite server in middleware mode with Astro's own plugins (via
@@ -19,7 +19,7 @@
  * Astro's build pipeline is what would normally bundle them, and the story
  * boots `@inth/astro/client` itself instead. The JSON config block the
  * banner emits is captured separately and replayed as
- * `window.__c15tAstroConfig`, which the client reads before the block.
+ * `window.__inthAstroConfig`, which the client reads before the block.
  */
 
 import path from 'node:path';
@@ -43,7 +43,7 @@ const astroSrc = path.resolve(astroPackage, 'src');
  * The virtual module this plugin serves, imported by
  * `render-astro-story.ts` to reach the prerendered variants.
  */
-export const VIRTUAL_ID = 'virtual:c15t-astro-prerendered';
+export const VIRTUAL_ID = 'virtual:inth-astro-prerendered';
 const RESOLVED_VIRTUAL_ID = `\0${VIRTUAL_ID}`;
 
 /** One prerendered variant, as the browser receives it. */
@@ -57,7 +57,7 @@ export interface PrerenderedVariant {
 }
 
 const SCRIPT_TAG = /<script\b[^>]*>[\s\S]*?<\/script>/giu;
-const CONFIG_BLOCK = /^<script\b[^>]*\bdata-c15t-config\b[^>]*>/iu;
+const CONFIG_BLOCK = /^<script\b[^>]*\bdata-inth-config\b[^>]*>/iu;
 
 /**
  * Pull the kernel config out of the JSON block the banner emits.
@@ -162,7 +162,7 @@ const renderVariants = async function renderVariants(
 		// URL is answered with the stories' list: the build fetches nothing.
 		const snapshotOf = (policyRules: unknown[], iab?: unknown) =>
 			schema.buildConsentManifestFromConfig({
-				branding: 'c15t',
+				branding: 'inth',
 				iab,
 				policyRules,
 			});
@@ -221,14 +221,14 @@ const renderVariants = async function renderVariants(
 			) => {
 				const part = await server?.ssrLoadModule(path.join(astroSrc, partFile));
 				return container.renderToString(part?.default, {
-					locals: { c15t: locals },
+					locals: { inth: locals },
 					props,
 					slots,
 				});
 			};
 			// oxlint-disable-next-line no-await-in-loop -- See above.
 			const raw = await container.renderToString(component.default, {
-				locals: { c15t: locals },
+				locals: { inth: locals },
 				props: variant.props ?? {},
 				slots: variant.slots,
 			});
@@ -284,7 +284,7 @@ export const astroPrerender = function astroPrerender(
 			const rendered = await pending;
 			return `export default ${JSON.stringify(rendered)};`;
 		},
-		name: 'c15t:astro-prerender',
+		name: 'inth:astro-prerender',
 		resolveId(id: string) {
 			return id === VIRTUAL_ID ? RESOLVED_VIRTUAL_ID : undefined;
 		},

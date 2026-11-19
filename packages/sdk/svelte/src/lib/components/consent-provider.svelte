@@ -44,7 +44,7 @@
 					)
 				)
 			: undefined;
-	// Names the on-demand chunks this page starts with, so `c15tHandle` can
+	// Names the on-demand chunks this page starts with, so `inthHandle` can
 	// preload them from the server-rendered head. The same on the server and
 	// in the browser, so hydration keeps it.
 	const preloadMarker = ownedRuntime

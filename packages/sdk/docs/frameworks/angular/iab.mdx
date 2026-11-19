@@ -1,6 +1,6 @@
 ---
 title: IAB TCF
-description: Turn on the IAB TCF 2.4 banner and preference center in an Angular app with c15t-iab-consent-banner, c15t-iab-consent-dialog and the iab option of provideC15t.
+description: Turn on the IAB TCF 2.4 banner and preference center in an Angular app with inth-iab-consent-banner, inth-iab-consent-dialog and the iab option of provideInth.
 group: frameworks
 ---
 
@@ -11,7 +11,7 @@ in your Inth project and a CMP ID. IAB Europe assigns a CMP ID to a company
 when it registers as a CMP
 ([register.consensu.org/CMP](https://register.consensu.org/CMP)). Every TC
 String names the CMP that wrote it, so an ID you did not register attributes
-your visitors' consent to someone else. Example CMP IDs in c15t demos are not
+your visitors' consent to someone else. Example CMP IDs in Inth demos are not
 production configuration.
 
 `@inth/angular` loads the TCF add-on from `@inth/sdk/iab`, which it installs as a
@@ -20,13 +20,13 @@ dependency. The add-on arrives through a dynamic import, so apps without the
 
 ## Add the IAB components
 
-Turn IAB on with the `iab` option of `provideC15t()`, keeping your existing
+Turn IAB on with the `iab` option of `provideInth()`, keeping your existing
 `mode`, `scripts` and other options. `registeredCmpId` stands for the number
 IAB Europe assigned to your company:
 
 <include src="../../shared/examples/angular/iab-config.mdx" />
 
-Then render `<c15t-iab-consent-banner>` and `<c15t-iab-consent-dialog>` next
+Then render `<inth-iab-consent-banner>` and `<inth-iab-consent-dialog>` next
 to the standard components. The standard components cover visitors whose
 policy is not IAB, such as those outside Europe:
 
@@ -37,7 +37,7 @@ dialog adds its rules when it opens, including the base rules it needs when
 rendered without a banner. Each sheet appears once per page.
 
 To run the CSS through Tailwind CSS 3 or put it in a named cascade layer,
-set `styles: false` in `provideC15t()` and add `@inth/angular/styles.css`
+set `styles: false` in `provideInth()` and add `@inth/angular/styles.css`
 followed by `@inth/angular/iab/styles.css` to the `styles` array in
 `angular.json`.
 [Stylesheets and CSS layers](/docs/customization/stylesheets#import-the-stylesheet-yourself)
@@ -58,7 +58,7 @@ explains when to use that option.
 Pass `iab: false`, or omit it, to leave IAB off. If a visitor's policy then
 uses the `iab` model and the backend sends its vendor list,
 `ConsentManager.iabUnavailable()` turns `true` and the provider reports an
-`IABUnavailableError` (code `C15T_IAB_UNAVAILABLE`) to Angular's
+`IABUnavailableError` (code `INTH_IAB_UNAVAILABLE`) to Angular's
 `ErrorHandler`. The standard banner does not handle the IAB model, so the
 visitor would otherwise get no working consent UI. Set `iab`, or remove the
 `iab` model from the policy. A backend that answers `gvl: null` turns IAB off
@@ -68,7 +68,7 @@ for the request, and the policy runs as opt-in.
 [IABConsentDialog](./components/iab-consent-dialog) list each component's
 inputs.
 
-`<c15t-iab-consent-banner>` and `<c15t-iab-consent-dialog>` stay hidden until
+`<inth-iab-consent-banner>` and `<inth-iab-consent-dialog>` stay hidden until
 an IAB policy resolves for the visitor. Forcing the dialog open does not
 create a policy or a vendor list, so check the policy resolution and the
 vendor list request before changing how they render.
@@ -83,8 +83,9 @@ actions queue until the add-on loads; `whenIABReady()` resolves once it has.
 [ConsentManager](./services#read-and-change-iab-tcf-consent) lists every
 member.
 
-For a custom IAB banner, `getIABTranslations()` from `@inth/angular/iab` returns
-the IAB copy with English fallbacks.
+For a custom IAB banner, `resolveIABCopy(consent.copy())`, with
+`resolveIABCopy` from `@inth/angular/iab`, returns the IAB copy with English
+fallbacks.
 
 ## Restrict how vendors use a purpose
 

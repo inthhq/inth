@@ -356,7 +356,7 @@
 	},
 	"kind": "tc-string",
 	"notes": [
-		"Population parity: every non-default field here is one @c15t/iab writes, so expects.encode is true and a native encoder has to reproduce tcString byte for byte.",
+		"Population parity: every non-default field here is one @inth/sdk-iab writes, so expects.encode is true and a native encoder has to reproduce tcString byte for byte.",
 		"The encoder stops extending ranges once they stop being smaller and falls back to the bitfield, and that decision is taken from the last state of the loop rather than the best one, so a port that picks the smaller of the two complete encodings can disagree at sizes like this one. Check the string, not your arithmetic.",
 		"Most of the 350 ids here are absent from input.vendorList and all of them survive: vendorsDisclosed is the one vendor vector the reference never prunes against the list.",
 		"vendorListVersion (142) and policyVersion (5) are read out of input.vendorList, not out of the model: with a vendor list attached the reference's getters ignore anything written onto those two fields, which is why input.model omits them."

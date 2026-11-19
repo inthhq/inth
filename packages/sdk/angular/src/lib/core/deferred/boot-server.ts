@@ -11,7 +11,10 @@
 import type { ConsentSnapshot } from '@inth/sdk/engine';
 import { defaultTranslationConfig } from '@inth/sdk/runtime/provider';
 import type { ConsentProviderRuntime } from '@inth/sdk/runtime/provider';
-import { planInstantCommit } from '@inth/sdk/surface-actions/instant-commit';
+import {
+	canDeferEngine as canDeferBanner,
+	engineNeededNow,
+} from '@inth/sdk/server';
 import {
 	isPlainScript,
 	isRunnableNow,
@@ -20,28 +23,8 @@ import { deepMergeTranslations } from '@inth/sdk/translations';
 import type { Translations } from '@inth/sdk/translations';
 
 import { isIABConfigured } from '../iab-loader';
-import type { C15tResolvedOptions } from '../options';
+import type { InthResolvedOptions } from '../options';
 import type { ConsentBoot } from './boot';
-
-/** Options that need the engine as the page loads. */
-const needsEngineNow = function needsEngineNow(
-	snapshot: ConsentSnapshot,
-	options: C15tResolvedOptions
-): boolean {
-	return Boolean(
-		snapshot.model === 'iab' ||
-		snapshot.experiment ||
-		snapshot.experimentPending ||
-		snapshot.externalPermissions ||
-		isIABConfigured(options.iab) ||
-		options.consentSource ||
-		options.experiment ||
-		options.gpp ||
-		(options.networkBlocker && options.networkBlocker.enabled !== false) ||
-		options.enabled === false ||
-		options.persistence === false
-	);
-};
 
 /**
  * A decision that changes on its own this soon is left to the engine,
@@ -58,7 +41,7 @@ const DEADLINE_MARGIN_MS = 60_000;
  */
 const canDeferAnswered = function canDeferAnswered(
 	snapshot: ConsentSnapshot,
-	options: C15tResolvedOptions,
+	options: InthResolvedOptions,
 	now: number
 ): boolean {
 	if (
@@ -81,79 +64,36 @@ const canDeferAnswered = function canDeferAnswered(
 /**
  * Whether the browser may start this visitor from the server's snapshot
  * and load the engine after the page. No option may need the engine at
- * once (IAB, an experiment, a consent source, GPP, the network blocker,
- * `enabled: false` or `persistence: false`). Then either the stock banner
- * asks for a choice, an accept and a reject are both something the
- * first-load chunk can record on its own (`planInstantCommit`), nothing
- * optional is granted yet and no script may run now that the server did
- * not start (the rule of `@inth/svelte`'s `ConsentRoot` and `@inth/vue`'s
- * Nuxt module); or nothing is shown and every script that may run is one
- * the first-load chunk or the server starts (`canDeferAnswered`).
+ * once (`engineNeededNow`). Then either the stock banner asks for a choice
+ * the first-load chunk can record (core's `canDeferEngine`, the rule of
+ * every deferred root), or nothing is shown and every script that may run
+ * is one the first-load chunk or the server starts (`canDeferAnswered`).
  *
  * @param snapshot - The snapshot the server rendered with.
- * @param options - The provider's options.
  * @param now - The clock. Defaults to `Date.now()`.
- * @returns `true` when the engine may wait.
  * @internal
  */
 export const canDeferEngine = function canDeferEngine(
 	snapshot: ConsentSnapshot,
-	options: C15tResolvedOptions,
+	options: InthResolvedOptions,
 	now: number = Date.now()
 ): boolean {
-	if (needsEngineNow(snapshot, options)) {
-		return false;
-	}
 	if (snapshot.activeUI === 'none') {
-		return canDeferAnswered(snapshot, options, now);
+		return (
+			!engineNeededNow(snapshot, options) &&
+			canDeferAnswered(snapshot, options, now)
+		);
 	}
-	if (snapshot.activeUI !== 'banner') {
-		return false;
-	}
-	// The app's categories (configured and discovered): a permissive scope
-	// grants the ones outside the policy, which gate nothing here.
-	const permissions = snapshot.effectivePermissions as Record<
-		string,
-		boolean | undefined
-	>;
-	const granted = (snapshot.consentCategories ?? Object.keys(permissions)).some(
-		(category) => category !== 'necessary' && permissions[category]
-	);
-	if (granted) {
-		return false;
-	}
-	const serverStart = options.scriptLoader?.serverStart !== false;
-	if (
-		options.scripts?.some(
-			(script) =>
-				isRunnableNow(script, snapshot) &&
-				!(serverStart && script.serverStart && script.src)
-		)
-	) {
-		return false;
-	}
-	return (['all', 'none'] as const).every(
-		(choice) =>
-			planInstantCommit({
-				actionAt: now,
-				choice,
-				now,
-				snapshot,
-				subjectId: 'boot-check',
-			}) !== null
-	);
+	return canDeferBanner(snapshot, options, now);
 };
 
 /**
- * The snapshot's copy with every key the English defaults have. Before the
- * engine loads, the browser's surfaces have no defaults to fall back to
- * (`../translation-defaults.ts`), so the server fills the gaps of a
- * partial bundle. An English bundle comes back unchanged. The IAB copy is
- * left out unless the app configured IAB.
+ * The snapshot's copy with every key the English defaults have. The
+ * surfaces read the active language's bundle as a whole, so the server
+ * fills the gaps of a partial bundle. An English bundle comes back
+ * unchanged. The IAB copy is left out unless the app configured IAB.
  *
  * @param snapshot - The snapshot the server rendered with.
- * @param withIAB - Whether to keep the IAB copy.
- * @returns The snapshot with a complete bundle.
  * @internal
  */
 export const withCompleteTranslations = function withCompleteTranslations(
@@ -187,7 +127,7 @@ export const withCompleteTranslations = function withCompleteTranslations(
  */
 export const planServerBoot = function planServerBoot(
 	runtime: ConsentProviderRuntime,
-	options: C15tResolvedOptions
+	options: InthResolvedOptions
 ): ConsentBoot {
 	const snapshot = runtime.kernel.getServerSnapshot();
 	const boot: ConsentBoot = {

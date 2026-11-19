@@ -1,6 +1,7 @@
 import {
 	consentTypes,
-	deniedVendorIds,
+	resolveCategoryTitle,
+	resolveVendorListCopy,
 	vendorsListedUnder,
 } from '@inth/sdk-core';
 import type {
@@ -14,7 +15,7 @@ import type { CompleteTranslations } from '@inth/sdk-translations';
 import { classes } from '../generated/styles';
 import { renderActionFooter, resolveActions } from './actions';
 import { renderBranding } from './branding';
-import { formatCategoryName, resolveCopy } from './copy';
+import { resolveCopy } from './copy';
 import { cx, h, svg } from './dom';
 import type { SurfaceContext } from './surface';
 import { createVendorList } from './vendor-list';
@@ -32,7 +33,7 @@ export interface Widget {
 
 /** Options for {@link createWidget}. */
 export interface WidgetOptions {
-	/** Drop the "Secured by c15t" tag. Defaults to `true`. */
+	/** Drop the "Secured by" tag. Defaults to `true`. */
 	hideBranding?: boolean;
 }
 
@@ -67,7 +68,7 @@ const resolveRowCopy = function resolveRowCopy(
 		description: t.consentTypes[name]?.description ?? type?.description ?? '',
 		disabled: type?.disabled ?? false,
 		name,
-		title: t.consentTypes[name]?.title ?? formatCategoryName(name),
+		title: resolveCategoryTitle(t, name),
 	};
 };
 
@@ -186,10 +187,6 @@ const patchOpen = function patchOpen(row: Row, open: boolean): void {
  * disabled while their category is off in it, and Save records only the
  * vendors the visitor moved. When the policy or the vendor list changes
  * under a staged edit, a notice asks the visitor to review before saving.
- *
- * @param ctx - The mount context.
- * @param options - Widget options.
- * @returns The widget.
  */
 // oxlint-disable-next-line max-lines-per-function -- Rows, draft and footer are one unit.
 export const createWidget = function createWidget(
@@ -273,8 +270,8 @@ export const createWidget = function createWidget(
 	): Row {
 		const { name } = copy;
 		const ids = {
-			content: `c15t-pref-${name}-content`,
-			trigger: `c15t-pref-${name}-trigger`,
+			content: `inth-pref-${name}-content`,
+			trigger: `inth-pref-${name}-trigger`,
 		};
 		const arrow = buildArrow();
 		const trigger = h(
@@ -319,19 +316,12 @@ export const createWidget = function createWidget(
 		});
 		const vendorList = createVendorList({
 			category: name,
-			copy: t.consentManagerDialog.vendors,
+			copy: resolveVendorListCopy(t),
 			noStyle,
 			onToggle: toggleVendor,
 			openCards: openVendorCards,
 			slot,
-			vendors:
-				snapshot.model === 'iab'
-					? []
-					: vendorsListedUnder(
-							snapshot.vendors?.declared ?? [],
-							name,
-							deniedVendorIds(snapshot)
-						),
+			vendors: vendorsListedUnder(snapshot, name),
 		});
 		const content = buildContent(copy, ids, noStyle, vendorList);
 		const item = h(
@@ -373,15 +363,8 @@ export const createWidget = function createWidget(
 
 	const buildFooter = function buildFooter(
 		snapshot: ConsentSnapshot,
-		t: CompleteTranslations
+		labels: Record<PresentationAction, string>
 	): HTMLElement {
-		const labels: Record<PresentationAction, string> = {
-			accept: t.common.acceptAll,
-			customize: t.common.customize,
-			dismiss: t.common.acknowledge,
-			reject: t.common.rejectAll,
-			save: t.common.save,
-		};
 		const testIds: Record<PresentationAction, string> = {
 			accept: 'consent-widget-footer-accept-all-button',
 			customize: 'consent-widget-footer-customize-button',
@@ -390,7 +373,13 @@ export const createWidget = function createWidget(
 			save: 'consent-widget-footer-save-button',
 		};
 		return renderActionFooter({
-			actions: resolveActions(snapshot, 'preferences', ctx.client.presentation),
+			actions: resolveActions(
+				snapshot,
+				'preferences',
+				ctx.client.presentation,
+				undefined,
+				ctx.client.theme
+			),
 			buttonTestId: (action) => testIds[action],
 			footerClassName: classes.manager.footer,
 			footerSlot: 'consentWidgetFooter',
@@ -418,11 +407,12 @@ export const createWidget = function createWidget(
 			slot,
 			subGroupTestId: 'consent-widget-footer-sub-group',
 			testId: 'consent-widget-footer',
+			theme: ctx.client.theme,
 		});
 	};
 
 	const rebuild = function rebuild(snapshot: ConsentSnapshot): void {
-		const { t, dir } = resolveCopy(snapshot);
+		const { t, dir, actions } = resolveCopy(snapshot);
 		const categories = draft.getState().displayedCategories;
 		element.replaceChildren();
 		element.setAttribute('dir', dir);
@@ -456,7 +446,7 @@ export const createWidget = function createWidget(
 		for (const row of rows) {
 			list.append(row.item);
 		}
-		element.append(review, list, buildFooter(snapshot, t));
+		element.append(review, list, buildFooter(snapshot, actions));
 		patchAll();
 		const branding = slot(
 			renderBranding({
@@ -464,8 +454,7 @@ export const createWidget = function createWidget(
 				hide: hideBranding,
 				noStyle,
 				securedBy: t.common.securedBy,
-				testId: 'consent-widget-branding',
-				variant: 'dialog-tag',
+				surface: 'widget',
 			}),
 			'consentWidgetTag'
 		);

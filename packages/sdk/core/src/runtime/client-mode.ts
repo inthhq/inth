@@ -23,6 +23,7 @@ import { isProductionBuild } from '../libs/is-production';
  * snapshot or any translation.
  */
 import { hasPrefetchedInitialData } from '../libs/prefetch/window-key';
+import { trimSlash } from '../libs/url';
 import type { ConsentMode, TestingModeOptions } from '../modes';
 import { testingOptionsOf } from '../modes';
 import type { SSRInitialData } from '../options/ssr';
@@ -52,7 +53,7 @@ export interface ClientModeOptions {
 	 */
 	projectUrl?: string;
 	/**
-	 * Prefix of the app's own consent route, such as `/api/c15t`. Manifest
+	 * Prefix of the app's own consent route, such as `/api/inth`. Manifest
 	 * mode re-inits through `${routePrefix}/init`, and browser resolution
 	 * fetches `${routePrefix}/manifest`.
 	 */
@@ -94,10 +95,6 @@ const loadTestingModule: LoadTestingModule = () => import('./lazy-offline');
 const loadManifestBrowserModule: LoadManifestBrowserModule = () =>
 	import('./lazy-manifest-browser');
 
-const trimSlash = function trimSlash(url: string): string {
-	return url.endsWith('/') ? url.slice(0, -1) : url;
-};
-
 /**
  * A transport that loads its init path only when init runs.
  *
@@ -111,9 +108,8 @@ const trimSlash = function trimSlash(url: string): string {
  *
  * @param records - Record transport used until init starts.
  * @param load - Loads the transport that runs init.
- * @returns A kernel transport.
  */
-export const createLazyInitTransport = function createLazyInitTransport(
+const createLazyInitTransport = function createLazyInitTransport(
 	records: KernelTransport,
 	load: LoadInitTransport
 ): KernelTransport {
@@ -156,7 +152,7 @@ export const createLazyInitTransport = function createLazyInitTransport(
 		async save(payload) {
 			const transport = await recordTransport();
 			if (!transport.save) {
-				throw new Error('c15t: the init transport cannot save.');
+				throw new Error('inth: the init transport cannot save.');
 			}
 			return await transport.save(payload);
 		},
@@ -227,13 +223,13 @@ const withEarlyRequest = function withEarlyRequest(
 export interface LazyHostedOptions {
 	/** Backend URL for saves, and for `GET /init` without `initUrl`. */
 	projectUrl: string;
-	/** Same-origin route that resolves init, such as `/api/c15t/init`. */
+	/** Same-origin route that resolves init, such as `/api/inth/init`. */
 	initUrl?: string;
 	/** Defaults to whether `initUrl` is set. */
 	assertDecisionInputs?: boolean;
 	/** Headers forwarded to `GET /init`. */
 	headers?: Record<string, string>;
-	/** Kind reported through `window.c15t.mode`. Defaults to `'hosted'`. */
+	/** Kind reported through `window.__inthDebug.mode`. Defaults to `'hosted'`. */
 	kind?: ProviderTransportKind;
 	/**
 	 * An init response already requested. The first init reads it and sends
@@ -289,7 +285,6 @@ const startEarlyInit = function startEarlyInit(
  *
  * @param options - Backend URL and, for same-origin init, `initUrl`.
  * @param load - Loads the hosted transport's module.
- * @returns A provider transport factory.
  */
 export const lazyHosted = function lazyHosted(
 	options: LazyHostedOptions,
@@ -340,7 +335,6 @@ export const lazyHosted = function lazyHosted(
  *
  * @param entry - The testing entry named in the production error.
  * @param options - `iab` picks the pack's IAB TCF variant.
- * @param load - Loads the transport's module.
  * @returns A provider transport factory reporting `kind: 'offline'`.
  */
 export const lazyTesting = function lazyTesting(
@@ -402,7 +396,6 @@ const hasPolicy = function hasPolicy(
  * start once it arrives without one. Saves before the first init go out
  * through the record transport.
  *
- * @param options - Manifest source and backend.
  * @param load - Loads the browser resolver's module.
  * @returns A provider transport factory reporting `kind: 'manifest'`.
  */
@@ -528,7 +521,7 @@ let warnedImplementation = false;
  *
  * const mode = clientMode(manifest(), {
  *   projectUrl: 'https://your-project.inth.app',
- *   routePrefix: '/api/c15t',
+ *   routePrefix: '/api/inth',
  * });
  * ```
  */
@@ -542,7 +535,7 @@ export const clientMode = function clientMode(
 		if (!warnedImplementation && !isProductionBuild()) {
 			warnedImplementation = true;
 			console.warn(
-				`c15t: \`mode\` is the ${mode.kind}() transport itself, so its code ships in the client bundle. Pass the ${mode.kind}() your framework package exports instead: it is plain data, and the root loads the code only when it runs.`
+				`inth: \`mode\` is the ${mode.kind}() transport itself, so its code ships in the client bundle. Pass the ${mode.kind}() your framework package exports instead: it is plain data, and the root loads the code only when it runs.`
 			);
 		}
 		return mode;
@@ -559,7 +552,7 @@ export const clientMode = function clientMode(
 	const { projectUrl } = options;
 	if (projectUrl === undefined) {
 		throw new Error(
-			'c15t: `projectUrl` is required. Set it in your config, or use `mode: testing()` from a /testing entry in tests.'
+			'inth: `projectUrl` is required. Set it in your config, or use `mode: testing()` from a /testing entry in tests.'
 		);
 	}
 	if (mode.type === 'hosted') {

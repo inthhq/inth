@@ -1,11 +1,12 @@
 {
-	"extends": "@c15t/typescript-config/base.json",
+	"extends": "@inth/typescript-config/base.json",
 	"compilerOptions": {
 		"rootDir": "src",
 		"lib": ["dom", "esnext"],
 		"paths": {
 			"@inth/sdk-core": ["../core/dist-types/index.d.ts"],
 			"@inth/sdk-core/*": ["../core/dist-types/*"],
+			"@inth/sdk-schema/types": ["../schema/dist-types/types.d.ts"],
 			"~/*": ["./src/*"]
 		}
 	},

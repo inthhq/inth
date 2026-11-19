@@ -8,7 +8,7 @@ import { ShopifyScripts } from '@shopify/hydrogen/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-// One bridge per page. It sends each c15t choice to Shopify's Customer
+// One bridge per page. It sends each Inth choice to Shopify's Customer
 // Privacy API, and its `setup` holds Hydrogen's analytics until Shopify has
 // the visitor's choice.
 const shopifyPrivacy = createShopifyCustomerPrivacy();
@@ -34,7 +34,7 @@ export const ShopifyAnalytics = ({
 	);
 };
 
-/** Feeds each c15t snapshot to the bridge. Render it inside `ConsentRoot`. */
+/** Feeds each Inth snapshot to the bridge. Render it inside `ConsentRoot`. */
 export const ShopifyConsentSync = () => {
 	const snapshot = useSnapshot();
 	useEffect(() => shopifyPrivacy.update(snapshot), [snapshot]);

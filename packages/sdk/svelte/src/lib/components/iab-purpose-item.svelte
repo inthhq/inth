@@ -1,10 +1,17 @@
 <script lang="ts">
-	import { countIABPartners } from '@inth/sdk/iab/headless';
+	import {
+		countIABPartners,
+		isLegitimateInterestAllowed,
+	} from '@inth/sdk/iab/headless';
+	import type {
+		IABLegitimateInterestState,
+		HeadlessIABVendorId as VendorId,
+		ProcessedPurpose,
+	} from '@inth/sdk/iab/headless';
+	import type { ResolvedIABCopy } from '@inth/sdk/surface-state';
 	import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 	import switchStyles from '@inth/sdk/ui/styles/components/switch';
 
-	import type { IABTranslations } from '../iab-translations';
-	import type { ProcessedPurpose, VendorId } from '../iab-types';
 	import { PreferenceItem, Switch } from '../primitives';
 	import ChevronRightIcon from './icons/chevron-right-icon.svelte';
 	import GlobeIcon from './icons/globe-icon.svelte';
@@ -26,10 +33,9 @@
 		onVendorToggle,
 		onVendorClick,
 		isLocked = false,
-		vendorLegitimateInterests = {},
+		legitimateInterests,
 		onVendorLegitimateInterestToggle,
-		purposeLegitimateInterests = {},
-		onPurposeLegitimateInterestToggle,
+		onPurposeObjection,
 		noStyle = false,
 		iabT,
 	}: {
@@ -47,18 +53,16 @@
 		onVendorToggle: (vendorId: VendorId, value: boolean) => void;
 		onVendorClick: (vendorId: VendorId) => void;
 		isLocked?: boolean;
-		vendorLegitimateInterests?: Record<string, boolean>;
+		/** Draft and vendor list the legitimate interest controls read. */
+		legitimateInterests?: IABLegitimateInterestState;
 		onVendorLegitimateInterestToggle?: (
 			vendorId: VendorId,
 			value: boolean
 		) => void;
-		purposeLegitimateInterests?: Record<number, boolean>;
-		onPurposeLegitimateInterestToggle?: (
-			purposeId: number,
-			value: boolean
-		) => void;
+		/** Object to a purpose's legitimate interest, or withdraw the objection. */
+		onPurposeObjection?: (purposeId: number, objected: boolean) => void;
 		noStyle?: boolean;
-		iabT: IABTranslations;
+		iabT: ResolvedIABCopy;
 	} = $props();
 
 	let isExpanded = $state(false);
@@ -86,26 +90,17 @@
 	const getVendorLegitimateInterest = function getVendorLegitimateInterest(
 		vendorId: VendorId
 	): boolean {
-		return vendorLegitimateInterests[String(vendorId)] ?? true;
+		return isLegitimateInterestAllowed(legitimateInterests, 'vendor', vendorId);
 	};
 
-	// Check if purpose-level LI is allowed (not objected)
 	const isPurposeLIAllowed = $derived(
-		purposeLegitimateInterests[purpose.id] ?? true
+		isLegitimateInterestAllowed(legitimateInterests, 'purpose', purpose.id)
 	);
 
-	// Handler for purpose-level LI objection
 	const handlePurposeLIObjection = function handlePurposeLIObjection() {
-		const newValue = !isPurposeLIAllowed;
-		onPurposeLegitimateInterestToggle?.(purpose.id, newValue);
-		if (onVendorLegitimateInterestToggle) {
-			for (const vendor of legIntVendors) {
-				onVendorLegitimateInterestToggle(vendor.id, newValue);
-			}
-		}
+		onPurposeObjection?.(purpose.id, isPurposeLIAllowed);
 	};
 
-	// Separate IAB and custom vendors
 	const iabConsentVendors = $derived(consentVendors.filter((v) => !v.isCustom));
 	const customConsentVendors = $derived(
 		consentVendors.filter((v) => v.isCustom)
@@ -121,10 +116,9 @@
 	// while every vendor kept processing; the objection control is the one
 	// that counts.
 	const showConsentSwitch = $derived(
-		purpose.hasConsentBasis !== false || !onPurposeLegitimateInterestToggle
+		purpose.hasConsentBasis !== false || !onPurposeObjection
 	);
 
-	// Handle purpose toggle - also toggles all consent-based vendors
 	const handlePurposeToggle = function handlePurposeToggle(value: boolean) {
 		onToggle(value);
 		for (const vendor of consentVendors) {
@@ -204,8 +198,7 @@
 			{purpose.description}
 		</p>
 
-		<!-- Purpose-level Legitimate Interest Objection -->
-		{#if legIntVendors.length > 0 && onPurposeLegitimateInterestToggle}
+		{#if legIntVendors.length > 0 && onPurposeObjection}
 			<div class={noStyle ? '' : styles.purposeLiSection || ''}>
 				<div class={noStyle ? '' : styles.purposeLiSectionHeader || ''}>
 					<div class={noStyle ? '' : styles.purposeLiInfo || ''}>
@@ -238,8 +231,7 @@
 			</div>
 		{/if}
 
-		<!-- Legacy badge when no toggle handler -->
-		{#if legIntVendors.length > 0 && !onPurposeLegitimateInterestToggle}
+		{#if legIntVendors.length > 0 && !onPurposeObjection}
 			<div class={noStyle ? '' : styles.legitimateInterestBadge || ''}>
 				<LegitimateInterestIcon
 					class={noStyle ? '' : styles.legitimateInterestIcon || ''}
@@ -251,7 +243,6 @@
 			</div>
 		{/if}
 
-		<!-- Illustrations / Examples -->
 		{#if purpose.illustrations && purpose.illustrations.length > 0}
 			<div>
 				<PreferenceItem.Root
@@ -279,7 +270,6 @@
 			</div>
 		{/if}
 
-		<!-- Vendor list within purpose -->
 		<div>
 			<PreferenceItem.Root
 				bind:open={showVendors}
@@ -299,7 +289,6 @@
 					innerClassName={noStyle ? '' : styles.vendorSection || ''}
 					{noStyle}
 				>
-					<!-- IAB Consent Vendors -->
 					{#if iabConsentVendors.length > 0}
 						<h5 class={noStyle ? '' : styles.vendorSectionTitle || ''}>
 							{iabT.preferenceCenter.purposeItem.withYourPermission}
@@ -344,7 +333,6 @@
 						{/each}
 					{/if}
 
-					<!-- IAB Legitimate Interest Vendors -->
 					{#if iabLegIntVendors.length > 0}
 						<h5
 							class={noStyle
@@ -426,7 +414,6 @@
 						{/each}
 					{/if}
 
-					<!-- Custom Vendors -->
 					{#if customConsentVendors.length > 0 || customLegIntVendors.length > 0}
 						<div class={noStyle ? '' : styles.customVendorPurposeSection || ''}>
 							<h5 class={noStyle ? '' : styles.vendorSectionTitleCustom || ''}>

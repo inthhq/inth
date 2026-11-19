@@ -1,14 +1,7 @@
-// The package imports the build-time manifest and the app's config through
-// its own specifiers so `withConsentManifest` can alias them. Declared here,
+// The package imports the app's config through its own specifier so
+// `withConsentManifest` can alias it. Declared here,
 // not through `paths`, because the build would rewrite a `paths` import into
 // a relative one, which no alias reaches.
-declare module '@inth/nextjs/generated-manifest' {
-	import type { ConsentManifest } from '@inth/sdk/schema/types';
-
-	export const projectUrl: string | undefined;
-	export const snapshot: ConsentManifest | undefined;
-}
-
 declare module '@inth/nextjs/user-config' {
 	import type { ConsentConfig } from '~/config';
 

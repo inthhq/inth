@@ -1,5 +1,5 @@
 /**
- * The global API of `c15t.testing.js`: the stock UI with `testing()`, for
+ * The global API of `inth.testing.js`: the stock UI with `testing()`, for
  * tests of pages with no bundler.
  *
  * @internal
@@ -11,7 +11,7 @@ import { readList, readScriptOptions } from './auto-init';
 import { createConsentClientWith } from './client-base';
 import type { CreateConsentClientContext } from './client-base';
 import { createGlobalWith } from './global-base';
-import type { C15tGlobalBase } from './global-base';
+import type { InthGlobalBase } from './global-base';
 import { resolveRules } from './policy-rules';
 import type {
 	ConsentClient,
@@ -21,9 +21,9 @@ import type {
 
 const ENTRY = '@inth/sdk/testing';
 
-/** The global API installed by `c15t.testing.js`. */
-export interface TestingC15tGlobal extends C15tGlobalBase {
-	/** The testing mode, for `init({ mode: c15t.testing({ policy }) })`. */
+/** The global API installed by `inth.testing.js`. */
+export interface TestingInthGlobal extends InthGlobalBase {
+	/** The testing mode, for `init({ mode: inth.testing({ policy }) })`. */
 	testing: (
 		options?: TestingModeOptions
 	) => ReturnType<typeof createTestingMode>;
@@ -49,7 +49,7 @@ export const createTestingConsentClient = function createTestingConsentClient(
 		testOptions.manifestUrl !== undefined
 	) {
 		throw new Error(
-			`${ENTRY}: c15t.testing.js needs no backend. Load c15t.js for a page that talks to one.`
+			`${ENTRY}: inth.testing.js needs no backend. Load inth.js for a page that talks to one.`
 		);
 	}
 	const given = testOptions.mode;
@@ -58,7 +58,7 @@ export const createTestingConsentClient = function createTestingConsentClient(
 		typeof given !== 'function' &&
 		(typeof given !== 'object' || !('transport' in given))
 	) {
-		throw new Error(`${ENTRY}: c15t.testing.js runs testing() only.`);
+		throw new Error(`${ENTRY}: inth.testing.js runs testing() only.`);
 	}
 	const mode =
 		testOptions.mode ??
@@ -79,7 +79,7 @@ export const createTestingConsentClient = function createTestingConsentClient(
 };
 
 /**
- * Build the global API of `c15t.testing.js`.
+ * Build the global API of `inth.testing.js`.
  *
  * @param context - Entry-point wiring (UI mounter, package name).
  * @returns The API, not yet installed on `window`.
@@ -87,7 +87,7 @@ export const createTestingConsentClient = function createTestingConsentClient(
  */
 export const createTestingGlobal = function createTestingGlobal(
 	context: CreateConsentClientContext = {}
-): TestingC15tGlobal {
+): TestingInthGlobal {
 	return Object.assign(
 		createGlobalWith(
 			{ ...context, pkg: context.pkg ?? ENTRY },

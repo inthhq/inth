@@ -10,7 +10,7 @@
 import { applyExperimentTheme } from '@inth/sdk/engine';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
 
-import type { C15tResolvedOptions } from '../types';
+import type { InthResolvedOptions } from '../types';
 
 /**
  * The slice of the integration options a dialog island renders with.
@@ -20,7 +20,7 @@ import type { C15tResolvedOptions } from '../types';
  */
 export interface DialogPresentationOptions {
 	/**
-	 * Always `null`: the island's provider must leave `c15t-dark` alone.
+	 * Always `null`: the island's provider must leave `inth-dark` alone.
 	 *
 	 * The page's client boot owns the class on `<html>`, or the site does
 	 * with `colorScheme: 'none'`. A provider given no scheme falls back to
@@ -28,7 +28,7 @@ export interface DialogPresentationOptions {
 	 * so opening a dialog on a page without `.dark` would turn it light.
 	 */
 	colorScheme: null;
-	consentCategories?: C15tResolvedOptions['consentCategories'];
+	consentCategories?: InthResolvedOptions['consentCategories'];
 	/**
 	 * `<ConsentDialog disableAnimation>`, else the integration option.
 	 * Unset, the island's provider follows `prefers-reduced-motion`.
@@ -39,9 +39,9 @@ export interface DialogPresentationOptions {
 	 * runtime snapshot and merges that arm over `presentation`; `theme`
 	 * below already carries the arm's theme overrides.
 	 */
-	experiment?: C15tResolvedOptions['experiment'];
-	legalLinks?: C15tResolvedOptions['legalLinks'];
-	presentation?: C15tResolvedOptions['presentation'];
+	experiment?: InthResolvedOptions['experiment'];
+	legalLinks?: InthResolvedOptions['legalLinks'];
+	presentation?: InthResolvedOptions['presentation'];
 	/**
 	 * Always `false`: the page inlines the first-paint rules and the client
 	 * links the dialog's before the island mounts, so the island's own
@@ -53,7 +53,7 @@ export interface DialogPresentationOptions {
 	 * itself: Svelte reads them directly, React and Vue through their
 	 * `components` parts.
 	 */
-	theme?: C15tResolvedOptions['theme'];
+	theme?: InthResolvedOptions['theme'];
 }
 
 /** Props handed to `ConsentProvider` by the Svelte dialog surface. */
@@ -68,12 +68,10 @@ export interface DialogProviderProps {
  * Build the provider props for a dialog island.
  *
  * @param runtime - The page runtime that owns the kernel.
- * @param options - The resolved integration options.
- * @returns Props for `ConsentProvider`.
  */
 export const buildProviderProps = function buildProviderProps(
 	runtime: ConsentRuntime,
-	options: C15tResolvedOptions
+	options: InthResolvedOptions
 ): DialogProviderProps {
 	// The arm's theme overrides ride on the host theme. The island mounts
 	// after `start()`, so the assignment is already known.

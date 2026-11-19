@@ -11,8 +11,8 @@
  */
 import { join } from 'node:path';
 
-import { BENCHMARK_SCHEMA_VERSION } from '@c15t/benchmarking/schema';
-import type { BenchmarkResult } from '@c15t/benchmarking/schema';
+import { BENCHMARK_SCHEMA_VERSION } from '@inth/benchmarking/schema';
+import type { BenchmarkResult } from '@inth/benchmarking/schema';
 import {
 	getEnvironment,
 	percentile,
@@ -21,7 +21,7 @@ import {
 	safeGitDirty,
 	summarizeMetric,
 	writeJson,
-} from '@c15t/benchmarking/utils';
+} from '@inth/benchmarking/utils';
 
 import { scenarioDefinitions, STALL_THRESHOLD_MS } from './scenarios';
 import type { RequestSample, ScenarioResult } from './scenarios';
@@ -170,7 +170,7 @@ const runAll = async function runAll(): Promise<void> {
 				'benchmarks/manifest-cache-bench measures fetchCachedManifest against an in-process simulated Vercel CDN — see benchmarks/manifest-cache-bench/README.md.',
 				...result.notes,
 			],
-			package: '@c15t/manifest-cache-bench',
+			package: '@inth/manifest-cache-bench',
 			runtime: process.versions.bun ? 'bun' : 'node',
 			scenario: result.name,
 			schemaVersion: BENCHMARK_SCHEMA_VERSION,

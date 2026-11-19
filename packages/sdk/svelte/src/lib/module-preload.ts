@@ -5,12 +5,12 @@
  * The provider loads the script loader and the network blocker on demand,
  * as one chunk, so a page without scripts or blocker rules never downloads
  * them. A page with either would fetch the chunk only once the runtime
- * starts, one round trip after the app's own JavaScript. `c15tHandle` reads this marker
+ * starts, one round trip after the app's own JavaScript. `inthHandle` reads this marker
  * during the server render (and the prerender) and adds
  * `<link rel="modulepreload">` tags, so the browser fetches the chunk
  * alongside the app's code.
  *
- * The marker is `<meta name="c15t-modulepreload" content="…">`, rendered
+ * The marker is `<meta name="inth-modulepreload" content="…">`, rendered
  * the same on the server and in the browser, so hydration keeps it. The
  * links go at the end of `<head>`, outside what Svelte hydrates.
  */
@@ -34,9 +34,7 @@ interface ModulePreloadOptions {
  * management is enabled. Either one loads the shared chunk. `ConsentRoot`
  * adds its engine for a visitor the engine must serve at once.
  *
- * @param options - The provider's options.
  * @param extra - `engine: true` to preload `ConsentRoot`'s engine.
- * @returns The marker content.
  * @internal
  */
 export const modulePreloadMarker = function modulePreloadMarker(

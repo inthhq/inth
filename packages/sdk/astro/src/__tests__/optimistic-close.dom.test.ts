@@ -12,7 +12,7 @@ import { afterEach, beforeAll, expect, it, vi } from 'vitest';
 // takes seconds on a busy machine. A static import does it while this file
 // loads, so no test timeout covers the compile.
 import * as reactPanelSurface from '../components/islands/panel-surface';
-import type { C15tResolvedOptions } from '../types';
+import type { InthResolvedOptions } from '../types';
 import { registerDialogSurface } from '../ui/adapter';
 import type { ConsentDialogHandle } from '../ui/adapter';
 import { reactDialogAdapter } from '../ui/react';
@@ -24,7 +24,7 @@ const OPTIONS = {
 	endpoints: { enabled: false, initPath: '/i', manifestPath: '/m' },
 	mode: { type: 'testing' },
 	ui: 'react',
-} as unknown as C15tResolvedOptions;
+} as unknown as InthResolvedOptions;
 
 const cleanup: (() => Promise<void> | void)[] = [];
 

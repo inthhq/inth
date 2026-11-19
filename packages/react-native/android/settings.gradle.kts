@@ -26,15 +26,15 @@ dependencyResolutionManagement {
 	repositories {
 		google()
 		mavenCentral()
-		providers.environmentVariable("C15T_MAVEN_URL").orNull?.let { repositoryUrl ->
+		providers.environmentVariable("INTH_MAVEN_URL").orNull?.let { repositoryUrl ->
 			exclusiveContent {
 				forRepository {
 					maven {
 						url = uri(repositoryUrl)
 						if (repositoryUrl.startsWith("https://")) {
 							credentials {
-								username = providers.environmentVariable("C15T_MAVEN_USERNAME").orNull
-								password = providers.environmentVariable("C15T_MAVEN_TOKEN").orNull
+								username = providers.environmentVariable("INTH_MAVEN_USERNAME").orNull
+								password = providers.environmentVariable("INTH_MAVEN_TOKEN").orNull
 							}
 						}
 					}

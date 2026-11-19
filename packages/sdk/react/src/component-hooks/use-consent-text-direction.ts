@@ -5,11 +5,11 @@ import { getTextDirection } from '@inth/sdk/ui/utils';
 import { useTranslationLanguage } from '~/hooks/use-translation-language';
 
 /**
- * The text direction of the language c15t shows consent copy in, for a
+ * The text direction of the language Inth shows consent copy in, for a
  * custom banner or preference center.
  *
  * @remarks
- * c15t can pick the copy's language from the visitor's browser, so an
+ * Inth can pick the copy's language from the visitor's browser, so an
  * Arabic or Hebrew visitor can read right-to-left copy on a left-to-right
  * page. The stock banner and dialog set `dir` on their root from this
  * language. Set it on yours the same way.

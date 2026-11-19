@@ -7,9 +7,10 @@ import {
 	explicitChoice,
 	NOW,
 } from '../../../__tests__/fixtures/kernel-fixtures';
+import { encodeV2Cookie } from '../../../__tests__/fixtures/v2-cookie';
 import { createKernel as createConsentKernel } from '../../../kernel';
-import { deleteConsentFromStorage, setCookie } from '../../../libs/cookie';
-import { STORAGE_KEY_V2 } from '../../../libs/storage-keys';
+import { setCookie } from '../../../libs/cookie';
+import { C15T_STORAGE_KEY, STORAGE_KEY_V2 } from '../../../libs/storage-keys';
 import type { HydrationRecords } from '../../../types';
 import {
 	hydrateFromStorage,
@@ -19,12 +20,16 @@ import {
 import {
 	encodeNoticeDismissalCompact,
 	encodeStoredConsentEnvelopeCompact,
+	encodeVendorChoiceCompact,
 } from '../writer/encode';
-import { writeStoredConsentEnvelope } from './record-writes';
+import {
+	clearStoredConsentRecords,
+	writeStoredConsentEnvelope,
+} from './record-writes';
 
 beforeEach(() => {
 	localStorage.clear();
-	deleteConsentFromStorage();
+	clearStoredConsentRecords();
 	document.cookie = '';
 });
 
@@ -158,6 +163,69 @@ describe('readStoredRecordsFromCookieHeader', () => {
 	});
 });
 
+describe("a legacy family's own clear epoch", () => {
+	const grant = () =>
+		encodeStoredConsentEnvelopeCompact({
+			categories: explicitChoice({ marketing: true }).categories,
+			subject: { subjectId: 'sub_old' },
+			version: 3,
+		});
+	const notice = encodeNoticeDismissalCompact({
+		dismissedAt: NOW - 1000,
+		fingerprint: 'notice-fp',
+		version: 1,
+	});
+	const vendors = encodeVendorChoiceCompact({
+		confirmedAt: NOW - 1000,
+		denied: ['acme'],
+		version: 1,
+	});
+	// c15t cleared after the grant; an older c15t tab then wrote it back.
+	const c15tEpoch = `${C15T_STORAGE_KEY}-epoch=${NOW - 500}`;
+
+	afterEach(() => {
+		for (const name of [C15T_STORAGE_KEY, `${C15T_STORAGE_KEY}-epoch`]) {
+			document.cookie = `${name}=; path=/; max-age=0`;
+		}
+	});
+
+	test('voids c15t records from before c15t-epoch on the server', () => {
+		const header = `${C15T_STORAGE_KEY}=${grant()}; ${C15T_STORAGE_KEY}-notice=${notice}; ${C15T_STORAGE_KEY}-vendors=${vendors}; ${c15tEpoch}`;
+		expect(readStoredRecordsFromCookieHeader(header, undefined, NOW)).toEqual({
+			choice: null,
+			noticeDismissal: null,
+			now: NOW,
+			subject: null,
+			vendorChoice: null,
+		});
+	});
+
+	test('voids c15t records from before c15t-epoch in the browser', () => {
+		document.cookie = `${C15T_STORAGE_KEY}=${grant()}; path=/`;
+		document.cookie = `${C15T_STORAGE_KEY}-notice=${notice}; path=/`;
+		document.cookie = `${C15T_STORAGE_KEY}-vendors=${vendors}; path=/`;
+		localStorage.setItem(`${C15T_STORAGE_KEY}-epoch`, String(NOW - 500));
+		const stored = readStoredRecords(undefined, NOW);
+		expect(stored.found).toBe(false);
+		expect(stored.records.choice).toBeNull();
+		expect(stored.records.subject).toBeNull();
+	});
+
+	test('keeps a c15t record written after c15t-epoch', () => {
+		const header = `${C15T_STORAGE_KEY}=${grant()}; ${C15T_STORAGE_KEY}-epoch=${NOW - 2000}`;
+		expect(
+			readStoredRecordsFromCookieHeader(header, undefined, NOW).choice
+		).toEqual(explicitChoice({ marketing: true }));
+	});
+
+	test('never voids an Inth record', () => {
+		const header = `${STORAGE_KEY_V2}=${grant()}; ${STORAGE_KEY_V2}-notice=${notice}; ${c15tEpoch}`;
+		const records = readStoredRecordsFromCookieHeader(header, undefined, NOW);
+		expect(records.choice).toEqual(explicitChoice({ marketing: true }));
+		expect(records.noticeDismissal?.dismissedAt).toBe(NOW - 1000);
+	});
+});
+
 describe('hydrateFromStorage', () => {
 	const same = (records: HydrationRecords) => records;
 
@@ -174,10 +242,13 @@ describe('hydrateFromStorage', () => {
 	});
 
 	test('applies stored records through kernel.hydrate without a choice event', () => {
-		setCookie(STORAGE_KEY_V2, {
-			consentInfo: { subjectId: 'legacy-cookie', time: NOW - 5000 },
-			consents: { marketing: true, necessary: true },
-		});
+		setCookie(
+			STORAGE_KEY_V2,
+			encodeV2Cookie({
+				consentInfo: { subjectId: 'legacy-cookie', time: NOW - 5000 },
+				consents: { marketing: true, necessary: true },
+			})
+		);
 		const kernel = createConsentKernel({ now: NOW });
 		const choiceRecorded = vi.fn();
 		const permissions = vi.fn();

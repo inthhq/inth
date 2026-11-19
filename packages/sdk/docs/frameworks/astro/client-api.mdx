@@ -6,7 +6,7 @@ group: frameworks
 
 ## One runtime per page load
 
-The `c15t()` integration starts one consent runtime per page load and keeps
+The `inth()` integration starts one consent runtime per page load and keeps
 it across `ClientRouter` navigation. Every script and island on the page
 shares it. There is no provider to wrap your components in.
 `@inth/astro/client` is how browser code reaches that runtime.
@@ -20,7 +20,7 @@ The consent engine behind the client can load after the page (see
 [when the consent engine loads](/docs/frameworks/astro/rendering#know-when-the-consent-engine-loads)).
 The client exists before it: it answers reads from the consent state the
 server rendered the page with, and records a banner choice at once. On a page
-that renders no c15t component, `getConsentClient()` returns `null` until the
+that renders no Inth component, `getConsentClient()` returns `null` until the
 engine has loaded:
 
 <include src="../../shared/examples/astro/consent-video.mdx" />
@@ -139,12 +139,12 @@ ID. `identityProvider`, `properties` and an
 ## Run gated inline scripts
 
 `activateGatedScripts(snapshot, root?)` runs every inline script marked
-`type="text/plain"` and `data-c15t-category` that the snapshot allows, inside
-`root` or the whole document. A script that also carries `data-c15t-vendor`
+`type="text/plain"` and `data-inth-category` that the snapshot allows, inside
+`root` or the whole document. A script that also carries `data-inth-vendor`
 waits until the visitor has not switched that vendor off. It returns the
 number of scripts it ran.
 
-c15t calls it after every consent change and every `ClientRouter`
+Inth calls it after every consent change and every `ClientRouter`
 navigation. Call it yourself only for markup you insert from your own code:
 
 {/* example: fragment */}
@@ -209,7 +209,7 @@ the new page contains it.
 ## Send analytics events after consent
 
 `getEventDispatcher()` from `@inth/astro/client` returns the page's event
-dispatcher. It sends your own events to the `scripts` in `c15t.client.ts`, and
+dispatcher. It sends your own events to the `scripts` in `inth.client.ts`, and
 only while their consent allows it. Create it once at module level:
 
 <include src="../../shared/examples/astro/analytics-events.mdx" />
@@ -243,7 +243,7 @@ collection on purpose.
 `registerDialogSurface`, `registerDialogStyles`, `syncBannerVisibility` and
 `syncSurfaceVisibility`, plus the attribute names `ACTION_ATTRIBUTE`,
 `DIALOG_ATTRIBUTE` and `DIALOG_TAB_ATTRIBUTE`. The integration calls them for
-you. You need them only to run c15t's client without the integration, as a
+you. You need them only to run Inth's client without the integration, as a
 test harness does. The script loader, the network blocker and a
 `consentSource` connection come from the integration's page script, so
 `boot()` on its own throws when the options configure `scripts`,

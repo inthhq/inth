@@ -1,19 +1,19 @@
 ---
 title: IAB TCF
-description: Turn on IAB TCF in Nuxt with the c15t module's iab option, so visitors under an IAB policy get the IAB banner, preference centre and __tcfapi.
+description: Turn on IAB TCF in Nuxt with the Inth module's iab option, so visitors under an IAB policy get the IAB banner, preference centre and __tcfapi.
 group: frameworks
 ---
 
 ## Turn on IAB TCF
 
-IAB TCF is off until you turn it on. Add `iab` under the `c15t` key in
+IAB TCF is off until you turn it on. Add `iab` under the `inth` key in
 `nuxt.config.ts`; an empty object is enough:
 
 <include src="../../shared/examples/nuxt/iab-opt-in.mdx" />
 
 With `iab` set, `ConsentRoot` renders the IAB banner and preference centre in
 place of the standard ones while the visitor's policy uses the `iab` model and
-names your CMP ID, and c15t installs `__tcfapi`. Configure the CMP ID and
+names your CMP ID, and Inth installs `__tcfapi`. Configure the CMP ID and
 vendors in your Inth project, or see
 [IAB TCF for a self-hosted backend](/docs/self-host/guides/iab-tcf). No extra
 component or stylesheet is needed; the IAB components include their own
@@ -25,7 +25,7 @@ not prefetch it.
 
 If a visitor's policy uses the `iab` model and the backend sends its vendor
 list while IAB is off, the app throws an `IABUnavailableError` (code
-`C15T_IAB_UNAVAILABLE`). The standard banner does not handle the IAB model,
+`INTH_IAB_UNAVAILABLE`). The standard banner does not handle the IAB model,
 so the visitor would otherwise get no working consent UI. A server render
 fails and Nuxt renders its error page with status 500. On a page the browser
 resolves itself, such as a prerendered page or one with `ssr: false`, the
@@ -59,7 +59,7 @@ use vendors from your list whose declarations allow each restriction.
 ```ts title="nuxt.config.ts (partial)"
 export default defineNuxtConfig({
 	modules: ['@inth/nuxt'],
-	c15t: {
+	inth: {
 		iab: {
 			publisherRestrictions: [
 				// Vendors 10 and 755 may not use purpose 4.

@@ -1,13 +1,13 @@
 ---
 title: Matomo Analytics
-description: Load Matomo after measurement consent with the c15t matomoAnalytics helper, or use Matomo's own consent mode, and check each mode in DevTools.
-seoTitle: Matomo cookie consent with c15t
-seoDescription: Load Matomo only after measurement consent, or load it on every page and use the Matomo consent API. Set it up with the c15t matomoAnalytics helper.
+description: Load Matomo after measurement consent with the Inth matomoAnalytics helper, or use Matomo's own consent mode, and check each mode in DevTools.
+seoTitle: Matomo cookie consent with Inth
+seoDescription: Load Matomo only after measurement consent, or load it on every page and use the Matomo consent API. Set it up with the Inth matomoAnalytics helper.
 icon: matomo
 group: integrations
 ---
 
-By default, the c15t `matomoAnalytics` helper keeps Matomo off the page until
+By default, the Inth `matomoAnalytics` helper keeps Matomo off the page until
 `measurement` has consent. In this mode, the helper sends no consent signal to
 Matomo. With `defaultConsent`, the helper loads `matomo.js` on every page,
 before the visitor chooses. The helper then uses the Matomo consent API. It
@@ -80,7 +80,7 @@ separately in a private window with an opt-in policy:
 1. Load the page. `matomo.js` loads, and no `matomo.php` request follows.
 2. Open Privacy settings and allow measurement. Without a reload, a
    `matomo.php` request carries the page view.
-3. Turn measurement off and save. c15t reloads the page, and the new page
+3. Turn measurement off and save. Inth reloads the page, and the new page
    loads `matomo.js` without a `matomo.php` request.
 
 `'given'` behaves the same in this test. Under an opt-out policy, or after the

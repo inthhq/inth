@@ -56,11 +56,6 @@ const appendChildren = function appendChildren(
  * Attributes starting with `on` and holding a function become event
  * listeners; `class` is a plain attribute so an empty string stays off
  * the element when `noStyle` blanks every class.
- *
- * @param tag - Element tag.
- * @param attrs - Attributes.
- * @param children - Text or nodes to append.
- * @returns The element.
  */
 export const h = function h<TagName extends keyof HTMLElementTagNameMap>(
 	tag: TagName,
@@ -80,10 +75,7 @@ export const h = function h<TagName extends keyof HTMLElementTagNameMap>(
 /**
  * Create an inline SVG icon.
  *
- * @param viewBox - The `viewBox`.
  * @param paths - Path `d` strings, filled with `currentColor`.
- * @param attrs - Extra attributes on the `<svg>`.
- * @returns The element.
  */
 export const svg = function svg(
 	viewBox: string,
@@ -104,12 +96,7 @@ export const svg = function svg(
 	return element;
 };
 
-/**
- * Join class names, dropping blanks.
- *
- * @param names - Class names, possibly empty or undefined.
- * @returns The joined string.
- */
+/** Join class names, dropping blanks. */
 export const cx = function cx(
 	...names: (string | undefined | false | null)[]
 ): string {
@@ -119,10 +106,7 @@ export const cx = function cx(
 /**
  * Read a CSS duration custom property from an element, in milliseconds.
  *
- * @param element - The element carrying the variable.
- * @param name - The custom property name.
  * @param fallback - Used when the property is unset or unparsable.
- * @returns Milliseconds.
  */
 export const readDurationMs = function readDurationMs(
 	element: Element,
@@ -141,26 +125,11 @@ export const readDurationMs = function readDurationMs(
 };
 
 /**
- * Whether the visitor asked for reduced motion.
- *
- * @returns `true` when the media query matches.
- */
-export const prefersReducedMotion = function prefersReducedMotion(): boolean {
-	return (
-		typeof window !== 'undefined' &&
-		typeof window.matchMedia === 'function' &&
-		window.matchMedia('(prefers-reduced-motion: reduce)').matches
-	);
-};
-
-/**
  * Whether the browser applies `@starting-style`.
  *
  * With it, a surface inserted in its visible state transitions in from the
  * stylesheet's entering state on the first frame. Without it, the mount
  * has to insert the hidden state, force a layout and flip the classes.
- *
- * @returns `true` when `@starting-style` rules take effect.
  */
 export const supportsStartingStyle = function supportsStartingStyle(): boolean {
 	return 'CSSStartingStyleRule' in globalThis;

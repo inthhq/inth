@@ -14,8 +14,8 @@
  * ```ts
  * import { getConsentClient } from '@inth/astro/client';
  *
- * const c15t = getConsentClient();
- * c15t?.subscribe((snapshot) => console.log(snapshot.effectivePermissions));
+ * const Inth = getConsentClient();
+ * Inth?.subscribe((snapshot) => console.log(snapshot.effectivePermissions));
  * ```
  *
  * Everything here is small and ships in the page's first load. The engine
@@ -39,7 +39,7 @@ import type { ConsentDialogKind } from './ui/adapter';
  * The page's consent client, once the page script has run.
  *
  * @returns The client, or `null` outside the browser, before the page
- * script ran, or, on a page that renders no c15t component, until the
+ * script ran, or, on a page that renders no Inth component, until the
  * consent engine has loaded.
  */
 export const getConsentClient =
@@ -88,7 +88,7 @@ export const openDialog = async function openDialog(
 };
 
 /** `EVENTS_KEY` in `./client-engine`; a test keeps them equal. */
-const EVENTS_KEY = Symbol.for('c15t.astro.events');
+const EVENTS_KEY = Symbol.for('inth.astro.events');
 
 type WithEvents = AstroConsentClient & {
 	[EVENTS_KEY]?: (options: RuntimeEventDispatcherOptions) => EventDispatcher;

@@ -1,24 +1,24 @@
 ---
 title: Pinterest Tag
-description: Load the Pinterest Tag only after marketing consent with the c15t pinterestTag helper, guard pintrk event calls, and check it in DevTools.
-seoTitle: Pinterest Tag cookie consent with c15t
-seoDescription: Load the Pinterest Tag only with marketing consent. The c15t pinterestTag helper sends pintrk setconsent signals for you.
+description: Load the Pinterest Tag only after marketing consent with the Inth pinterestTag helper, guard pintrk event calls, and check it in DevTools.
+seoTitle: Pinterest Tag cookie consent with Inth
+seoDescription: Load the Pinterest Tag only with marketing consent. The Inth pinterestTag helper sends pintrk setconsent signals for you.
 icon: pinterest
 group: integrations
 ---
 
-The c15t `pinterestTag` helper keeps the Pinterest Tag off the page until
-`marketing` has consent. Until then, c15t does not define `pintrk`. When
+The Inth `pinterestTag` helper keeps the Pinterest Tag off the page until
+`marketing` has consent. Until then, Inth does not define `pintrk`. When
 `marketing` has consent, the helper queues `load`, `pintrk('setconsent', true)`,
 and a page visit before the loader. If the visitor withdraws consent, the helper
-calls `pintrk('setconsent', false)`. The tag stays on the page. By default, c15t
+calls `pintrk('setconsent', false)`. The tag stays on the page. By default, Inth
 also reloads the page.
 
 ## Configure the Pinterest Tag
 
 Copy the numeric tag ID from Pinterest Ads Manager. Remove Pinterest's base
 code and its `<noscript>` image. The helper does not emit that image, because
-it fires without JavaScript and c15t cannot gate it.
+it fires without JavaScript and Inth cannot gate it.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
@@ -41,7 +41,7 @@ export const scripts = [pinterestTag({ tagId: '2613654212508' })];
 
 ## Loading and revocation
 
-`pinterestTag` uses the `marketing` category. Before marketing is allowed, c15t
+`pinterestTag` uses the `marketing` category. Before marketing is allowed, Inth
 defines no `pintrk` function and loads nothing from Pinterest. When marketing
 becomes allowed, the helper queues `load`, `pintrk('setconsent', true)` and
 the page visit, then loads `core.js`.

@@ -1,8 +1,3 @@
-/**
- * Utility functions for DOM manipulation and browser-specific logic.
- * Framework-agnostic.
- */
-
 import { getTextDirection } from './text-direction';
 
 let lastFocusedElement: HTMLElement | null = null;
@@ -34,13 +29,13 @@ export const setupTextDirection = function setupTextDirection(
 ) {
 	const direction = getTextDirection(language);
 	if (direction === 'rtl') {
-		document.body.classList.add('c15t-rtl');
+		document.body.classList.add('inth-rtl');
 	} else {
-		document.body.classList.remove('c15t-rtl');
+		document.body.classList.remove('inth-rtl');
 	}
 
 	return () => {
-		document.body.classList.remove('c15t-rtl');
+		document.body.classList.remove('inth-rtl');
 	};
 };
 
@@ -103,7 +98,6 @@ export const getFocusableElements = function getFocusableElements(
 let scrollLockCount = 0;
 let scrollLockRestore: (() => void) | null = null;
 
-/** Whether an element's computed overflow is `visible` on both axes. */
 const hasVisibleOverflow = (style: CSSStyleDeclaration): boolean =>
 	[style.overflowX, style.overflowY].every(
 		(value) => value === '' || value === 'visible'
@@ -134,9 +128,9 @@ const toCSSPixels = (element: HTMLElement, width: number): number =>
  * `padding-right` instead, which keeps in-flow content still.
  *
  * Padding cannot hold fixed-position elements, so the lock also sets
- * `--c15t-scroll-lock-gap` on `<html>` to the width the viewport gained.
+ * `--inth-scroll-lock-gap` on `<html>` to the width the viewport gained.
  * A page offsets its own fixed elements with it, such as
- * `right: calc(1rem + var(--c15t-scroll-lock-gap, 0px))`. The variable is
+ * `right: calc(1rem + var(--inth-scroll-lock-gap, 0px))`. The variable is
  * only set while the lock pads `<body>`.
  *
  * @returns Cleanup function to restore scroll
@@ -146,7 +140,7 @@ const toCSSPixels = (element: HTMLElement, width: number): number =>
  * .site-header {
  * 	position: fixed;
  * 	inset-inline: 0;
- * 	padding-right: var(--c15t-scroll-lock-gap, 0px);
+ * 	padding-right: var(--inth-scroll-lock-gap, 0px);
  * }
  * ```
  */
@@ -198,7 +192,7 @@ export const setupScrollLock = function setupScrollLock() {
 		const fillGap = (gap: number) => {
 			const width = `${toCSSPixels(body, gap)}px`;
 			setStyle(body, 'padding-right', width);
-			setStyle(root, '--c15t-scroll-lock-gap', width);
+			setStyle(root, '--inth-scroll-lock-gap', width);
 		};
 
 		// While <html> has visible overflow, <body>'s overflow is what the
@@ -258,16 +252,20 @@ export const setupScrollLock = function setupScrollLock() {
 };
 
 /**
- * Finds a rendered equivalent of an element that was unmounted while a focus
- * trap was active. Consent surfaces often unmount their opener while open
- * (e.g. the floating dialog trigger hides while the dialog is shown and
- * re-renders as a new node on close), so restoring focus to the original
- * node would silently no-op and drop keyboard users at `<body>`. Matching by
- * `id`, then by `data-testid`, re-targets the remounted opener instead.
+ * Where focus returns after a surface closes: `element` while it is still
+ * in the page, else a rendered equivalent. Consent surfaces often unmount
+ * their opener while open (e.g. the floating dialog trigger hides while the
+ * dialog is shown and re-renders as a new node on close), so restoring
+ * focus to the original node would silently no-op and drop keyboard users
+ * at `<body>`. Matching by `id`, then by `data-testid`, re-targets the
+ * remounted opener instead.
  */
-const findFocusRestoreEquivalent = function findFocusRestoreEquivalent(
+export const findFocusRestoreEquivalent = function findFocusRestoreEquivalent(
 	element: HTMLElement
 ): HTMLElement | null {
+	if (element.isConnected) {
+		return element;
+	}
 	if (element.id) {
 		const byId = document.getElementById(element.id);
 		if (byId) {
@@ -317,9 +315,6 @@ const readActiveElement = (): Element | null => {
  * reaches them: the lowest positive `tabindex` first, then document order.
  * Controls a browser would refuse to focus, disabled through an ancestor
  * `fieldset` or inside an `inert` subtree, are left out.
- *
- * @param container - The element to search inside.
- * @returns The tabbable elements in sequential focus order.
  */
 export const tabbableElements = function tabbableElements(
 	container: HTMLElement
@@ -336,12 +331,7 @@ export const tabbableElements = function tabbableElements(
 	];
 };
 
-/**
- * The element sequential Tab would reach first inside `container`.
- *
- * @param container - The element to search inside.
- * @returns The first tabbable element, or `undefined` when there is none.
- */
+/** The element sequential Tab would reach first inside `container`. */
 export const firstTabbable = function firstTabbable(
 	container: HTMLElement
 ): HTMLElement | undefined {
@@ -419,7 +409,6 @@ export const setupFocusTrap = function setupFocusTrap(
 		}
 	}, 0);
 
-	// Tab key event handler
 	const handleKeyDown = (e: KeyboardEvent) => {
 		if (e.key !== 'Tab') {
 			return;
@@ -478,15 +467,11 @@ export const setupFocusTrap = function setupFocusTrap(
 		clearTimeout(focusTimer);
 		document.removeEventListener('keydown', handleKeyDown);
 
-		// Restore focus when trap is disabled. If the previously-focused
-		// element was unmounted while the trap was active, fall back to its
-		// re-rendered equivalent (matched by id/data-testid) when one exists.
 		if (previousFocus && typeof previousFocus.focus === 'function') {
 			setTimeout(() => {
-				const target = previousFocus.isConnected
-					? previousFocus
-					: findFocusRestoreEquivalent(previousFocus);
-				target?.focus({ preventScroll: true });
+				findFocusRestoreEquivalent(previousFocus)?.focus({
+					preventScroll: true,
+				});
 			}, 0);
 		}
 	};

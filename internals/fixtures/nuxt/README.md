@@ -1,6 +1,6 @@
-# c15t × Nuxt example
+# Inth × Nuxt example
 
-c15t Nuxt integration through the `@inth/nuxt` module. The consent setup is a module entry in a Nuxt layer under
+Inth Nuxt integration through the `@inth/nuxt` module. The consent setup is a module entry in a Nuxt layer under
 `config/`, `ConsentRoot` and `ConsentDialogLink` in `app/app.vue`, and
 `scripts` in `app/app.config.ts`. Without a backend URL the demo falls back to a
 self-hosted `@c15t/backend` mounted at `/api/self-host`
@@ -13,7 +13,7 @@ bun run dev
 
 `manifest()` enables same-origin, CDN-cacheable consent resolution — the
 module's consent route fetches `GET /api/self-host/manifest` once, caches it,
-and resolves `/api/c15t/init` locally from geo/language/GPC headers with no
+and resolves `/api/inth/init` locally from geo/language/GPC headers with no
 consent-backend round trip on the request path. The banner is server-rendered into
 the first HTML with zero CLS; live state is read via auto-imported
 composables (`useConsentActiveUI`, `useHasConsent`, `useConsentInit`).
@@ -34,7 +34,7 @@ config. Both modes are Postgres — only the destination changes:
 - **Deployed** — Postgres via `DATABASE_URL`. Deploys fail fast without it
   rather than falling back to an embedded database a read-only filesystem
   can't write. Migrate with `bun run db:migrate`, which runs
-  `@c15t/cli self-host migrate` against `c15t-backend.config.ts`.
+  `@c15t/cli self-host migrate` against `inth-backend.config.ts`.
 
 PGlite rather than SQLite on purpose: SQLite ships with `PRAGMA foreign_keys`
 off, so a consent row referencing a policy that doesn't exist inserts happily
@@ -43,7 +43,7 @@ constraint bugs surface here. Delete `.pgdata/` to reset the demo.
 
 The demo shell in `nuxt.config.ts` sets `projectUrl` to the self-hosted route,
 overriding the placeholder in the `config/` layers. The acceptance suite sets
-`NUXT_PUBLIC_C15T_BACKEND_URL` to point the demo at its mock backend instead.
+`NUXT_PUBLIC_INTH_PROJECT_URL` to point the demo at its mock backend instead.
 
 ## Consent example
 
@@ -54,12 +54,12 @@ and showcase routes remain available.
 `/cached/consent-example` is the same page cached by Nitro (`swr`). Every
 visitor gets the same HTML there, so it renders without the banner and the
 browser resolves the visitor's policy and stored choice after hydration. Set
-`C15T_NUXT_MANIFEST=client` at build time to run the demo in client manifest
+`INTH_NUXT_MANIFEST=client` at build time to run the demo in client manifest
 mode.
 
 For hosted operation, create an [Inth](https://inth.com) project, configure an
 opt-in policy covering `measurement` and `marketing`, and allow this app's
-origin. Set `NUXT_PUBLIC_C15T_BACKEND_URL` to the backend URL supplied by Inth,
+origin. Set `NUXT_PUBLIC_INTH_PROJECT_URL` to the backend URL supplied by Inth,
 or copy the layer config into your own app and replace
 `https://your-project.inth.app` there. Then run from the repository root:
 
@@ -90,17 +90,17 @@ already ran; application event calls must also stop after withdrawal.
 ## Banner experiment
 
 Module config is static, so the banner-shape experiment is switched on at
-build time. Run `C15T_NUXT_EXPERIMENT=1 bun run --cwd internals/fixtures/nuxt dev` and
-open `/consent-example`: c15t picks the `control` arm (the default banner) or
-the `wall` arm, and the page shows `banner-shape · <arm> · c15t` with a
-`c15t_surface_shown` and `c15t_choice_recorded` line for each impression and
+build time. Run `INTH_NUXT_EXPERIMENT=1 bun run --cwd internals/fixtures/nuxt dev` and
+open `/consent-example`: Inth picks the `control` arm (the default banner) or
+the `wall` arm, and the page shows `banner-shape · <arm> · inth` with a
+`inth_surface_shown` and `inth_choice_recorded` line for each impression and
 choice under the arm. `app/components/ExperimentReadout.vue` reads them from the
 kernel's `surface:shown` and `choice:recorded` events and pushes the same
-events to `window.dataLayer`. Add `C15T_NUXT_EXPERIMENT_ARM=wall` to set the
+events to `window.dataLayer`. Add `INTH_NUXT_EXPERIMENT_ARM=wall` to set the
 arm the way a flag provider would; any other value runs `control`. Both
 variables work with `bun run build` and `bun run generate` too. They are not
 `NUXT_PUBLIC_*` names because Nitro applies those at runtime over
-`runtimeConfig.public.c15t`. See
+`runtimeConfig.public.inth`. See
 https://c15t.com/docs/guides/banner-experiments.
 
 ## Layout
@@ -109,7 +109,7 @@ https://c15t.com/docs/guides/banner-experiments.
   runtime.
 - `config/static/nuxt.config.ts`: `ssr: false` with
   `manifest({ resolve: 'browser' })` and no consent route,
-  used when `C15T_NUXT_OUTPUT=static`. Build it with `bun run generate` and
+  used when `INTH_NUXT_OUTPUT=static`. Build it with `bun run generate` and
   serve it with `bun run preview:static`.
 - `app/app.config.ts` and `app/consent-scripts.ts`: vendor scripts.
 - `nuxt.config.ts`, `app/pages/`, `app/components/ConsentDebugTools.vue` and

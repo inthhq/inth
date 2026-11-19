@@ -3,36 +3,36 @@ import { expect, fireEvent, userEvent, waitFor, within } from 'storybook/test';
 
 /**
  * The mounted panel root. The panel renders inside a shadow root on a
- * `[data-c15t-dev-tools-host]` element by default, and directly in the
+ * `[data-inth-dev-tools-host]` element by default, and directly in the
  * page when an adapter passes `shadow: false`.
  */
 export const findDevToolsRoot =
 	function findDevToolsRoot(): HTMLElement | null {
 		for (const host of document.querySelectorAll(
-			'[data-c15t-dev-tools-host]'
+			'[data-inth-dev-tools-host]'
 		)) {
 			const root = host.shadowRoot?.querySelector<HTMLElement>(
-				'[data-c15t-dev-tools]'
+				'[data-inth-dev-tools]'
 			);
 			if (root) {
 				return root;
 			}
 		}
-		return document.querySelector<HTMLElement>('[data-c15t-dev-tools]');
+		return document.querySelector<HTMLElement>('[data-inth-dev-tools]');
 	};
 
 /**
  * Every mounted panel root, in shadow roots and in the page.
  */
 const allDevToolsRoots = function allDevToolsRoots(): HTMLElement[] {
-	const roots = [...document.querySelectorAll('[data-c15t-dev-tools-host]')]
+	const roots = [...document.querySelectorAll('[data-inth-dev-tools-host]')]
 		.map((host) =>
-			host.shadowRoot?.querySelector<HTMLElement>('[data-c15t-dev-tools]')
+			host.shadowRoot?.querySelector<HTMLElement>('[data-inth-dev-tools]')
 		)
 		.filter((root): root is HTMLElement => Boolean(root));
 	return [
 		...roots,
-		...document.querySelectorAll<HTMLElement>('[data-c15t-dev-tools]'),
+		...document.querySelectorAll<HTMLElement>('[data-inth-dev-tools]'),
 	];
 };
 

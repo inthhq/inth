@@ -25,24 +25,24 @@ import { uniqueId } from './unique-id';
  *
  * @example
  * ```html
- * <div c15tTabs [(value)]="tab">
- *   <div c15tTabsList aria-label="Preferences">
- *     <button c15tTabsTrigger value="purposes">Purposes</button>
- *     <button c15tTabsTrigger value="vendors">Vendors</button>
+ * <div inthTabs [(value)]="tab">
+ *   <div inthTabsList aria-label="Preferences">
+ *     <button inthTabsTrigger value="purposes">Purposes</button>
+ *     <button inthTabsTrigger value="vendors">Vendors</button>
  *   </div>
- *   <div c15tTabsContent value="purposes">…</div>
- *   <div c15tTabsContent value="vendors">…</div>
+ *   <div inthTabsContent value="purposes">…</div>
+ *   <div inthTabsContent value="vendors">…</div>
  * </div>
  * ```
  */
 @Directive({
-	exportAs: 'c15tTabs',
+	exportAs: 'inthTabs',
 	host: {
 		'[attr.data-disabled]': 'dataDisabled()',
 		'[attr.data-orientation]': 'orientation()',
 		'data-slot': 'tabs-root',
 	},
-	selector: '[c15tTabs]',
+	selector: '[inthTabs]',
 })
 export class Tabs {
 	/** The selected tab's value. */
@@ -55,7 +55,7 @@ export class Tabs {
 	readonly orientation = input<TabsOrientation>('horizontal');
 
 	/** @internal */
-	readonly baseId = uniqueId('c15t-tabs');
+	readonly baseId = uniqueId('inth-tabs');
 	/** @internal */
 	protected readonly dataDisabled = computed(() =>
 		getDataDisabled(this.disabled())
@@ -63,8 +63,6 @@ export class Tabs {
 
 	/**
 	 * Select a tab, unless the tabs are disabled.
-	 *
-	 * @param value - The tab's value.
 	 */
 	select(value: string): void {
 		if (!this.disabled()) {
@@ -82,7 +80,7 @@ export class Tabs {
 		'data-slot': 'tabs-list',
 		role: 'tablist',
 	},
-	selector: '[c15tTabsList]',
+	selector: '[inthTabsList]',
 })
 export class TabsList {
 	readonly #root = inject(Tabs);
@@ -118,16 +116,14 @@ export class TabsList {
 		'data-slot': 'tabs-trigger',
 		role: 'tab',
 	},
-	selector: '[c15tTabsTrigger]',
+	selector: '[inthTabsTrigger]',
 })
 export class TabsTrigger {
 	readonly #document = inject(DOCUMENT);
 	/** @internal */
 	protected readonly root = inject(Tabs);
 	readonly #list = inject(TabsList, { optional: true });
-	/** The tab's value. */
 	readonly value = input.required<string>();
-	/** The button's `type`. */
 	readonly type = input<'button' | 'submit' | 'reset'>('button');
 
 	/** Whether this tab is selected. */
@@ -176,7 +172,7 @@ export class TabsTrigger {
 
 /** One tab's panel: `role="tabpanel"`, `hidden` while not selected. */
 @Directive({
-	exportAs: 'c15tTabsContent',
+	exportAs: 'inthTabsContent',
 	host: {
 		'[attr.aria-labelledby]': 'triggerId()',
 		'[attr.data-state]': 'dataState()',
@@ -186,11 +182,10 @@ export class TabsTrigger {
 		role: 'tabpanel',
 		tabindex: '0',
 	},
-	selector: '[c15tTabsContent]',
+	selector: '[inthTabsContent]',
 })
 export class TabsContent {
 	readonly #root = inject(Tabs);
-	/** The tab's value. */
 	readonly value = input.required<string>();
 
 	/** Whether this panel's tab is selected. */

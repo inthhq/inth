@@ -33,7 +33,6 @@ export type LiveProbePhase =
  * Result of a single in-page or runner-side assertion.
  */
 export interface LiveProbeCheckResult {
-	/** Whether the assertion passed. */
 	ok: boolean;
 	/** Human-readable expected vs actual context for reports. */
 	detail?: string;
@@ -52,7 +51,6 @@ export interface LiveVendorProbeConfig {
 	vendor: string;
 	/** Browser user agent for vendors whose settings reject headless defaults. */
 	userAgent?: string;
-	/** Probe depth for this vendor. */
 	tier: LiveProbeTier;
 	/** Required when `tier` is `skip`; explains the coverage gap. */
 	skipReason?: string;
@@ -101,8 +99,6 @@ export interface LiveVendorProbeConfig {
 	 * a green run actually validated, so a later failure can be bisected by
 	 * comparing two reports instead of diffing published CDN bundles. Never
 	 * asserted — a vendor bumping their version is not a failure.
-	 *
-	 * @returns The runtime version, or `undefined` when it is unavailable.
 	 */
 	runtimeVersion?: () => string | undefined;
 	/**
@@ -154,7 +150,6 @@ export interface DeniedConsentProbeConfig {
 export interface LiveStorageSnapshot {
 	/** Cookie names visible via document.cookie. */
 	cookieNames: string[];
-	/** localStorage keys. */
 	localStorageKeys: string[];
 }
 
@@ -180,14 +175,8 @@ export interface LiveVendorProbeHarness {
 	vendors: string[];
 	/** Loads one vendor with granted or denied consent and checks bootstrap. */
 	load: (vendor: string, granted: boolean) => LiveProbeLoadOutcome;
-	/** Runs the vendor's runtime check. */
 	check: (vendor: string) => LiveProbeCheckResult;
-	/**
-	 * Reads the vendor runtime's self-reported version, if it exposes one.
-	 *
-	 * @param vendor - Registry vendor id with a probe config.
-	 * @returns The runtime version, or `undefined` when it is unavailable.
-	 */
+	/** Reads the vendor runtime's self-reported version, if it exposes one. */
 	version: (vendor: string) => string | undefined;
 	/** Snapshots cookie names and localStorage keys in the probed page. */
 	inspectStorage: () => LiveStorageSnapshot;
@@ -222,19 +211,14 @@ export interface LiveVendorResult {
 	vendor: string;
 	/** Public package subpath, e.g. `microsoft-clarity`. */
 	packageSubpath: string;
-	/** Human-readable integration label. */
 	label: string;
-	/** Probe depth used for this vendor. */
 	tier: LiveProbeTier;
 	/** Whether every asserted phase passed. */
 	ok: boolean;
-	/** True when the vendor was skipped instead of probed. */
 	skipped?: boolean;
-	/** Reason the vendor was skipped. */
 	skipReason?: string;
 	/** Number of probe attempts performed (failed probes retry once). */
 	attempts: number;
-	/** Per-phase assertion results. */
 	phases: Partial<Record<LiveProbePhase, LiveProbeCheckResult>>;
 	/** Loader response captured during the load phase, when one arrived. */
 	loader?: LiveLoaderResponse;
@@ -242,9 +226,7 @@ export interface LiveVendorResult {
 	sdkVersion?: string;
 	/** Count of third-party requests answered with an empty 204. */
 	blockedRequests: number;
-	/** Console error messages emitted by the probed page. */
 	consoleErrors: string[];
-	/** Uncaught page errors emitted by the probed page. */
 	pageErrors: string[];
 	/** Config caveats copied from the probe definition. */
 	notes?: string;
@@ -262,6 +244,5 @@ export interface LiveVendorReport {
 	runUrl?: string;
 	/** Vendor filter used for a focused run, absent for full runs. */
 	vendorFilter?: string[];
-	/** Per-vendor probe outcomes. */
 	results: LiveVendorResult[];
 }

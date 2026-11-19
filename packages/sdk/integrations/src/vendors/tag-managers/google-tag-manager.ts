@@ -5,51 +5,27 @@ import { runtimeTimestampValue, vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
 import {
 	GOOGLE_CONSENT_MODE_V2_DEFAULT_MAPPING,
+	GTAG_BOOTSTRAP,
 	withOptionalConsentMapping,
 } from '../_shared/google-consent';
 import { readId, skipMissingId } from '../_shared/required-id';
 
-// Extended Window interface to include GTM-specific properties
-declare global {
-	interface Window {
-		dataLayer: unknown[];
-		gtag: (...args: unknown[]) => void;
-	}
-}
-
 /**
- * Google Tag Manager vendor manifest.
- *
- * Defines GTM as a declarative integration:
- * - Initializes dataLayer and gtag function before the container loads
- * - Maps c15t consent categories to Google Consent Mode v2 types
- * - Signals consent state via `gtag('consent', 'default'|'update', ...)`
+ * Google Tag Manager vendor manifest. `dataLayer` and `gtag` name the
+ * container's queue and its gtag function, and `layerQuery` is the `&l=`
+ * query `gtm.js` needs for a queue not named `dataLayer`.
  */
 export const googleTagManagerManifest = {
 	...vendorManifestContract,
 	alwaysLoad: true,
-	bootstrap: [
-		{
-			ifUndefined: true,
-
-			name: 'dataLayer',
-			type: 'setGlobal',
-			value: [],
-		},
-		{
-			ifUndefined: true,
-
-			name: 'gtag',
-			queue: 'dataLayer',
-			type: 'defineQueueFunction',
-		},
-	],
+	bootstrap: GTAG_BOOTSTRAP,
 	category: 'necessary',
 	consentMapping: GOOGLE_CONSENT_MODE_V2_DEFAULT_MAPPING,
 	consentSignal: 'gtag',
+	consentSignalTarget: '{{gtag}}',
 	install: [
 		{
-			queue: 'dataLayer',
+			queue: '{{dataLayer}}',
 			type: 'pushToQueue',
 			value: {
 				event: 'gtm.js',
@@ -60,7 +36,7 @@ export const googleTagManagerManifest = {
 		{
 			async: true,
 
-			src: 'https://www.googletagmanager.com/gtm.js?id={{id}}',
+			src: 'https://www.googletagmanager.com/gtm.js?id={{id}}{{layerQuery}}',
 			type: 'loadScript',
 		},
 	],
@@ -68,7 +44,7 @@ export const googleTagManagerManifest = {
 		{
 			args: ['event', '{{updateEventName}}'],
 
-			global: 'gtag',
+			global: '{{gtag}}',
 			type: 'callGlobal',
 		},
 	],
@@ -122,7 +98,7 @@ export interface GoogleTagManagerOptions {
 	updateEventName?: string;
 
 	/**
-	 * Custom mapping from c15t consent categories to Google Consent Mode v2 types.
+	 * Custom mapping from Inth consent categories to Google Consent Mode v2 types.
 	 * Overrides the default mapping when provided.
 	 *
 	 * @default
@@ -139,7 +115,7 @@ export interface GoogleTagManagerOptions {
 	consentMapping?: Record<string, string[]>;
 
 	/**
-	 * When c15t loads `gtm.js`.
+	 * When Inth loads `gtm.js`.
 	 *
 	 * - `always`: load on every page, before the visitor chooses. The helper
 	 *   sends `gtag('consent', 'default', ...)` with the current permissions
@@ -157,7 +133,7 @@ export interface GoogleTagManagerOptions {
 	 * choice. Under an `opt-out` or `none` policy, optional categories are
 	 * allowed before a choice, so the container loads on the first page.
 	 *
-	 * After a withdrawal c15t reloads the page by default. With
+	 * After a withdrawal Inth reloads the page by default. With
 	 * `reloadOnConsentRevoked: false`, the loaded container stays on the page
 	 * and receives an `update` that denies the withdrawn types.
 	 *
@@ -185,14 +161,12 @@ export interface GoogleTagManagerOptions {
 /**
  * Creates a Google Tag Manager script.
  * GTM can be used for managing the consent of other scripts via Google Tag Manager consent mode.
- * We recommend using c15t's script loader instead so your script logic is centralised.
+ * We recommend using Inth's script loader instead so your script logic is centralised.
  *
  * By default the container loads before a choice and passes Google Consent
  * Mode v2 signals. Set `loadMode: 'after-consent'` to keep every request to
  * Google waiting until `category` is allowed.
  *
- * @param options - The options for the Google Tag Manager script.
- * @returns The Google Tag Manager script.
  * @remarks When `id` is missing or blank, the
  *   helper logs `googleTagManager: missing or invalid id` with
  *   `console.error` and returns a script that never loads.
@@ -224,39 +198,21 @@ export const googleTagManager = function googleTagManager({
 		});
 	}
 
-	let manifest: VendorManifest = withOptionalConsentMapping(
-		googleTagManagerManifest,
-		consentMapping
+	const custom = dataLayer !== 'dataLayer';
+	const resolved = resolveManifest(
+		withOptionalConsentMapping(googleTagManagerManifest, consentMapping),
+		{
+			dataLayer,
+			gtag: custom ? `${dataLayer}Gtag` : 'gtag',
+			id: normalizedId,
+			layerQuery: custom ? `&l=${encodeURIComponent(dataLayer)}` : '',
+			updateEventName: updateEventName ?? 'consent-update',
+		}
 	);
-
-	if (dataLayer !== 'dataLayer') {
-		// Manifest values are JSON; substitute only exact queue/signal tokens.
-		manifest = JSON.parse(
-			JSON.stringify(manifest)
-				.replace(/"(?:dataLayer|gtag)"/gu, (token) =>
-					JSON.stringify(
-						token === '"dataLayer"' ? dataLayer : `${dataLayer}Gtag`
-					)
-				)
-				.replace(
-					'gtm.js?id={{id}}',
-					`gtm.js?id={{id}}&l=${encodeURIComponent(dataLayer)}`
-				)
-		);
-		manifest = {
-			...manifest,
-			consentSignal: 'gtag',
-			consentSignalTarget: `${dataLayer}Gtag`,
-		};
-	}
-	const resolved = resolveManifest(manifest, {
-		id: normalizedId,
-		updateEventName: updateEventName ?? 'consent-update',
-	});
 
 	const gtmScript: Script = {
 		...resolved,
-		attributes: { ...resolved.attributes, 'data-c15t-layer': dataLayer },
+		attributes: { ...resolved.attributes, 'data-inth-layer': dataLayer },
 	};
 
 	if (loadMode === 'after-consent') {

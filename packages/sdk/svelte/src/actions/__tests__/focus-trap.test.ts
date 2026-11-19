@@ -112,7 +112,6 @@ describe('focusTrap action', () => {
 
 			const result = focusTrap(container, true);
 
-			// Should not throw
 			expect(() => result.destroy()).not.toThrow();
 			document.body.removeChild(container);
 		});

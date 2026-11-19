@@ -1,9 +1,6 @@
 import { join } from 'node:path';
 
-import { toPublicSpecifier } from '../sdk/scripts/assemble';
-
-const PRIVATE_NAME =
-	/^@inth\/sdk-(?:browser|core|dev-tools|iab|logger|schema|translations|ui)(?:\/|$)/u;
+import { isPrivateSdkName, toPublicSpecifier } from './sdk-parts';
 
 interface ResolveContext {
 	resolve: (
@@ -22,14 +19,13 @@ interface ResolveContext {
  * package, so it takes the same aliases and loads the same modules.
  *
  * @param root - The framework package's directory.
- * @returns The Vite plugin.
  */
 export const privateSdkNames = function privateSdkNames(root: string) {
 	return {
 		enforce: 'pre' as const,
 		name: 'inth:private-sdk-names',
 		resolveId(this: ResolveContext, id: string) {
-			if (!PRIVATE_NAME.test(id)) {
+			if (!isPrivateSdkName(id)) {
 				return null;
 			}
 			return this.resolve(toPublicSpecifier(id), join(root, 'package.json'), {

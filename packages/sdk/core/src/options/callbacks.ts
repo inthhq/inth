@@ -1,5 +1,4 @@
-import type { ConsentState } from '../consent/compliance';
-import type { KernelEvent } from '../types';
+import type { ConsentState, KernelEvent } from '../types';
 
 /**
  * A generic type for callback functions that can accept an argument of type T.
@@ -53,8 +52,6 @@ export interface Callbacks {
 	onSurfaceShown?: Callback<OnSurfaceShownPayload>;
 	/**
 	 * Called when an error occurs.
-	 *
-	 * @param payload - The payload containing the error information
 	 */
 	onError?: Callback<OnErrorPayload>;
 

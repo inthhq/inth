@@ -31,10 +31,10 @@ fun interface SubjectEntropy {
 /**
  * Generates the Inth subject id.
  *
- * Byte-for-byte the same as `generateSubjectId` in `@c15t/core`, so the backend sees
+ * Byte-for-byte the same as `generateSubjectId` in `@inth/sdk-core`, so the backend sees
  * one id format no matter which SDK wrote it. The wire format is not cosmetic:
  * `POST /subjects` validates `subjectId` against `subjectIdSchema` in
- * `@c15t/schema`, which answers anything else with `INPUT_VALIDATION_FAILED`, and a
+ * `@inth/sdk-schema`, which answers anything else with `INPUT_VALIDATION_FAILED`, and a
  * native install whose ids are rejected never drains its pending-save queue.
  *
  * The 20-byte buffer is the timestamp offset from [EPOCH_MILLIS] as eight big-endian

@@ -52,7 +52,7 @@
 		<Tabs.Content
 			value={tab}
 			class={classes.content()}
-			style="border:1px solid var(--c15t-border);border-radius:var(--c15t-radius-md);display:grid;gap:0.5rem;padding:1rem;width:28rem;"
+			style="border:1px solid var(--inth-border);border-radius:var(--inth-radius-md);display:grid;gap:0.5rem;padding:1rem;width:28rem;"
 		>
 			<strong>{tabLabels[tab]}</strong>
 			<p style="margin:0;">{getDescription(tab)}</p>

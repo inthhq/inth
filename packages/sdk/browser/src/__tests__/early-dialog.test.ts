@@ -1,5 +1,5 @@
 /**
- * `c15t.dialog.js` from source: the dialog the init script opens before
+ * `inth.dialog.js` from source: the dialog the init script opens before
  * the engine (`init/early-dialog.ts`) and its handoff, the loader both
  * bundles use (`init/dialog-file.ts`, `ui/dialog-import-script.ts`), and
  * the scroll lock it borrows (`ui/locks-shared.ts`). The built files run in
@@ -29,7 +29,7 @@ afterEach(() => {
 	}
 	target[DIALOG_KEY] = undefined;
 	target[LOCKS_KEY] = undefined;
-	target.__c15tDialogSrc = undefined;
+	target.__inthDialogSrc = undefined;
 	localStorage.clear();
 	document.head.querySelectorAll('script').forEach((script) => script.remove());
 	document.body.replaceChildren();
@@ -182,7 +182,7 @@ describe('the dialog before the engine', () => {
 	});
 });
 
-describe('loading c15t.dialog.js', () => {
+describe('loading inth.dialog.js', () => {
 	/** The script tag the loader added for `src`. */
 	const added = (src: string) =>
 		document.head.querySelector<HTMLScriptElement>(`script[src="${src}"]`);
@@ -196,9 +196,9 @@ describe('loading c15t.dialog.js', () => {
 	};
 
 	it('loads the file once and hands over what it published', async () => {
-		const pending = loadDialogFile('/one/c15t.dialog.js', 'nonce-1');
-		expect(loadDialogFile('/one/c15t.dialog.js')).toBe(pending);
-		const element = added('/one/c15t.dialog.js');
+		const pending = loadDialogFile('/one/inth.dialog.js', 'nonce-1');
+		expect(loadDialogFile('/one/inth.dialog.js')).toBe(pending);
+		const element = added('/one/inth.dialog.js');
 		expect(element?.nonce).toBe('nonce-1');
 
 		publish(version);
@@ -206,47 +206,47 @@ describe('loading c15t.dialog.js', () => {
 
 		expect((await pending)?.createDialog).toBe(createDialog);
 		// Published: a later call adds no tag.
-		await loadDialogFile('/other/c15t.dialog.js');
-		expect(added('/other/c15t.dialog.js')).toBeNull();
+		await loadDialogFile('/other/inth.dialog.js');
+		expect(added('/other/inth.dialog.js')).toBeNull();
 	});
 
 	it('refuses a file from another release, and tries again on the next call', async () => {
-		const pending = loadDialogFile('/stale/c15t.dialog.js');
+		const pending = loadDialogFile('/stale/inth.dialog.js');
 		publish('0.0.0-stale');
-		added('/stale/c15t.dialog.js')?.dispatchEvent(new Event('load'));
+		added('/stale/inth.dialog.js')?.dispatchEvent(new Event('load'));
 		expect(await pending).toBeUndefined();
 
-		added('/stale/c15t.dialog.js')?.remove();
-		void loadDialogFile('/stale/c15t.dialog.js');
-		expect(added('/stale/c15t.dialog.js')).not.toBeNull();
+		added('/stale/inth.dialog.js')?.remove();
+		void loadDialogFile('/stale/inth.dialog.js');
+		expect(added('/stale/inth.dialog.js')).not.toBeNull();
 	});
 
-	it('loads the engine’s dialog from __c15tDialogSrc and lends it the engine’s locks', async () => {
-		target.__c15tDialogSrc = '/engine/c15t.dialog.js';
+	it('loads the engine’s dialog from __inthDialogSrc and lends it the engine’s locks', async () => {
+		target.__inthDialogSrc = '/engine/inth.dialog.js';
 		const pending = importDialog();
 		expect(target[LOCKS_KEY]).toBeDefined();
 		// The file's factory, not the engine's own copy.
 		const fromFile = vi.fn() as unknown as typeof createDialog;
 		target[DIALOG_KEY] = { createDialog: fromFile, openEarlyDialog, version };
-		added('/engine/c15t.dialog.js')?.dispatchEvent(new Event('load'));
+		added('/engine/inth.dialog.js')?.dispatchEvent(new Event('load'));
 		expect(await pending).toBe(fromFile);
 	});
 
-	it('falls back to the engine’s own dialog when c15t.dialog.js is unavailable', async () => {
+	it('falls back to the engine’s own dialog when inth.dialog.js is unavailable', async () => {
 		// No URL to load it from.
 		await expect(importDialog()).resolves.toBe(createDialog);
 
 		// A missing file.
-		target.__c15tDialogSrc = '/missing/c15t.dialog.js';
+		target.__inthDialogSrc = '/missing/inth.dialog.js';
 		const missing = importDialog();
-		added('/missing/c15t.dialog.js')?.dispatchEvent(new Event('error'));
+		added('/missing/inth.dialog.js')?.dispatchEvent(new Event('error'));
 		await expect(missing).resolves.toBe(createDialog);
 
 		// A file from another release.
-		target.__c15tDialogSrc = '/stale-engine/c15t.dialog.js';
+		target.__inthDialogSrc = '/stale-engine/inth.dialog.js';
 		const stale = importDialog();
 		publish('0.0.0-stale');
-		added('/stale-engine/c15t.dialog.js')?.dispatchEvent(new Event('load'));
+		added('/stale-engine/inth.dialog.js')?.dispatchEvent(new Event('load'));
 		await expect(stale).resolves.toBe(createDialog);
 	});
 });

@@ -8,9 +8,9 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
-/** IAB TCF consent UI copy from `@c15t/translations`, one value per language. */
+/** IAB TCF consent UI copy from `@inth/sdk-translations`, one value per language. */
 data class IabCopy(
-    /** Language code, lowercase, as in `@c15t/translations`. */
+    /** Language code, lowercase, as in `@inth/sdk-translations`. */
     val language: String,
     /** `iab.banner.title` */
     val bannerTitle: String,

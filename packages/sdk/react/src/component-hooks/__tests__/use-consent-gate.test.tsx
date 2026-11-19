@@ -230,7 +230,7 @@ describe('useConsentGate copy', () => {
 		});
 	});
 
-	test('falls back to the category name and the English policy message', async () => {
+	test('falls back to the English category title and policy message', async () => {
 		const { result } = await renderGate('marketing', {
 			initialTranslations: {
 				language: 'en',
@@ -247,11 +247,11 @@ describe('useConsentGate copy', () => {
 			},
 		});
 		expect(result.current).toMatchObject({
-			actionLabel: 'Turn on marketing',
-			categoryTitle: 'marketing',
+			actionLabel: 'Turn on Marketing',
+			categoryTitle: 'Marketing',
 			policyBlockedMessage:
 				"This content is unavailable under your region's consent policy.",
-			title: 'Allow marketing to see this',
+			title: 'Allow Marketing to see this',
 		});
 	});
 });

@@ -6,7 +6,7 @@ import { formatDocsCode } from './docs-code-format';
 
 /**
  * Directories whose apps are built and tested in CI. Documentation code that
- * wires c15t into an application comes from marked regions in these files.
+ * wires Inth into an application comes from marked regions in these files.
  * `internals/fixtures` holds the apps the acceptance suite runs against, and
  * `internals/doc-snippets` holds type-checked code for docs pages that no app
  * runs. Both publish under the same names as an `examples` app would, so a

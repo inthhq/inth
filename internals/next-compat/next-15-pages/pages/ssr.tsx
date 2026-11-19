@@ -1,5 +1,5 @@
-import { COMPAT_HOSTED_CONFIG } from '@c15t/next-compat-shared/config';
-import { ConsentShell } from '@c15t/next-compat-shared/consent-shell';
+import { COMPAT_HOSTED_CONFIG } from '@inth/next-compat-shared/config';
+import { ConsentShell } from '@inth/next-compat-shared/consent-shell';
 import type { ConsentPageProps } from '@inth/nextjs/pages';
 import { withConsentProps } from '@inth/nextjs/pages';
 

@@ -7,8 +7,8 @@ import { afterEach, beforeAll, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h } from 'vue';
 
 import { testing } from '../testing';
-import { c15tVue } from './test-plugin';
-import type { C15tVuePluginOptions } from './test-plugin';
+import { inthVue } from './test-plugin';
+import type { InthVuePluginOptions } from './test-plugin';
 
 type GPPWindow = Window & {
 	__gpp?: (command: string, callback: (data: unknown) => void) => void;
@@ -45,7 +45,7 @@ afterEach(() => {
 	vi.unstubAllGlobals();
 });
 
-const mountApp = function mountApp(options: C15tVuePluginOptions) {
+const mountApp = function mountApp(options: InthVuePluginOptions) {
 	vi.stubGlobal(
 		'fetch',
 		vi.fn(() => Promise.resolve(new Response('{}', { status: 503 })))
@@ -53,7 +53,7 @@ const mountApp = function mountApp(options: C15tVuePluginOptions) {
 	const container = document.createElement('div');
 	document.body.append(container);
 	const app = createApp(defineComponent({ setup: () => () => h('main') }));
-	app.use(c15tVue, options);
+	app.use(inthVue, options);
 	let mounted = true;
 	app.mount(container);
 	const unmount = () => {

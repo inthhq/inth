@@ -1,6 +1,6 @@
 ---
 title: Choose your setup
-description: Pick the c15t setup for your framework, rendering mode and hosting, and decide who runs the consent backend.
+description: Pick the Inth setup for your framework, rendering mode and hosting, and decide who runs the consent backend.
 group: concepts
 ---
 
@@ -32,13 +32,13 @@ to the alternatives it rules out.
 | Svelte with Vite | Svelte provider, browser resolves consent | [Svelte](/docs/frameworks/svelte/quickstart) |
 | SvelteKit with a server | Root layout load resolves consent on the server | [SvelteKit](/docs/frameworks/sveltekit/quickstart) |
 | SvelteKit with `adapter-static`, prerendered pages or SPA mode | Browser resolves consent | [SvelteKit rendering](/docs/frameworks/sveltekit/rendering#build-a-static-site) |
-| Angular without server rendering | `provideC15t()`, browser resolves consent | [Angular](/docs/frameworks/angular/quickstart) |
-| Angular with `@angular/ssr` | `provideC15tServer()` resolves consent on the server for each request | [Angular rendering](/docs/frameworks/angular/rendering) |
+| Angular without server rendering | `provideInth()`, browser resolves consent | [Angular](/docs/frameworks/angular/quickstart) |
+| Angular with `@angular/ssr` | `provideInthServer()` resolves consent on the server for each request | [Angular rendering](/docs/frameworks/angular/rendering) |
 | Plain HTML, a CMS, a page builder, or a static site generator such as Hugo or Eleventy | One script tag, stock banner included | [HTML](/docs/frameworks/html/quickstart) |
 | JavaScript with a bundler and no UI framework | `@inth/sdk` module, stock banner included | [JavaScript](/docs/frameworks/javascript/quickstart) |
 | Your own UI, or a framework without an adapter such as Solid | Headless runtime | [JavaScript headless](/docs/frameworks/javascript/headless) |
 
-Solid has no c15t adapter. Use the [headless runtime](/docs/frameworks/javascript/headless#use-c15t-with-solid)
+Solid has no Inth adapter. Use the [headless runtime](/docs/frameworks/javascript/headless#use-inth-with-solid)
 and subscribe to it from your components.
 
 ## Building a native mobile app
@@ -85,7 +85,7 @@ Where consent resolves decides what the visitor's first HTML contains.
 
 A static or prerendered page cannot contain one visitor's consent, because the
 same HTML goes to everyone. Static sites still use Inth; the browser talks to it
-directly. A same-origin `/api/c15t` route only works where a server runs it.
+directly. A same-origin `/api/inth` route only works where a server runs it.
 
 Pages that are cached and shared between visitors, such as Next.js ISR or
 `'use cache'` routes, need browser resolution for the same reason. Cache the

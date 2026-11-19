@@ -12,7 +12,7 @@ describe('theTradeDeskPixel', () => {
 	it('matches registry metadata and the official loader URL', () => {
 		expectScriptMatchesIntegration(
 			'theTradeDeskPixel',
-			theTradeDeskPixel({ advertiserId: 'c15tfake', pixelIds: ['c15tfake'] }),
+			theTradeDeskPixel({ advertiserId: 'inthfake', pixelIds: ['inthfake'] }),
 			{
 				alwaysLoad: undefined,
 				persistAfterConsentRevoked: true,
@@ -26,7 +26,7 @@ describe('theTradeDeskPixel', () => {
 				() =>
 					theTradeDeskPixel({
 						advertiserId: id as string,
-						pixelIds: ['c15tfake'],
+						pixelIds: ['inthfake'],
 					}),
 				{ category: 'marketing', id: 'the-trade-desk' },
 				'theTradeDeskPixel: missing or invalid advertiserId'
@@ -36,13 +36,13 @@ describe('theTradeDeskPixel', () => {
 	it('uses custom URLs and falls back for blank overrides', () => {
 		expect(
 			theTradeDeskPixel({
-				...{ advertiserId: 'c15tfake', pixelIds: ['c15tfake'] },
+				...{ advertiserId: 'inthfake', pixelIds: ['inthfake'] },
 				scriptUrl: 'https://cdn.example.com/vendor.js',
 			}).src
 		).toBe('https://cdn.example.com/vendor.js');
 		expect(
 			theTradeDeskPixel({
-				...{ advertiserId: 'c15tfake', pixelIds: ['c15tfake'] },
+				...{ advertiserId: 'inthfake', pixelIds: ['inthfake'] },
 				scriptUrl: '   ',
 			}).src
 		).toBe('https://js.adsrvr.org/up_loader.3.0.0.js');

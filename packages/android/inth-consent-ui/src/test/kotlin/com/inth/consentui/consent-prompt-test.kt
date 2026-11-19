@@ -234,7 +234,7 @@ class ConsentPromptTest {
 
     private class Server(@Volatile var body: String) : HttpClient {
         override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
-            HttpResponse(200, mapOf("x-c15t-policy-contract" to "1"), body) else HttpResponse(503)
+            HttpResponse(200, mapOf("x-inth-policy-contract" to "1"), body) else HttpResponse(503)
     }
 
     private fun fixture(name: String) = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }

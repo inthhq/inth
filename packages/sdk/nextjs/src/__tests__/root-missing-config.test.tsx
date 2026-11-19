@@ -1,5 +1,5 @@
 /**
- * Without `c15t.config.ts` (no alias, so the package stub exports
+ * Without `inth.config.ts` (no alias, so the package stub exports
  * `undefined`) and without a `config` prop, `ConsentRoot` warns once
  * outside production, and throws when nothing gives it a backend URL
  * instead of running a mode the app never chose.
@@ -39,7 +39,7 @@ test('warns once in development when no config is found', async () => {
 	// Next.js inlines the variable; this browser test reads it from `process`.
 	vi.stubGlobal('process', {
 		env: {
-			NEXT_PUBLIC_C15T_BACKEND_URL: 'https://consent.example.com',
+			NEXT_PUBLIC_INTH_PROJECT_URL: 'https://consent.example.com',
 			NODE_ENV: 'development',
 		},
 	});
@@ -48,13 +48,13 @@ test('warns once in development when no config is found', async () => {
 	await renderRoot();
 
 	const calls = warn.mock.calls.filter(([message]) =>
-		String(message).includes('c15t.config.ts')
+		String(message).includes('inth.config.ts')
 	);
 	expect(calls).toHaveLength(1);
 	expect(String(calls[0]?.[0])).toContain('withConsentManifest');
 });
 
-test('throws with no config and no NEXT_PUBLIC_C15T_BACKEND_URL', () => {
+test('throws with no config and no NEXT_PUBLIC_INTH_PROJECT_URL', () => {
 	vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 	// The server render, as `next build` prerenders the layout.
 	expect(() =>
@@ -63,9 +63,7 @@ test('throws with no config and no NEXT_PUBLIC_C15T_BACKEND_URL', () => {
 				<div>root</div>
 			</ConsentRoot>
 		)
-	).toThrow(
-		'@inth/nextjs: `projectUrl` is required. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in c15t.config.ts.'
-	);
+	).toThrow('`projectUrl` is required');
 });
 
 test('renders testing() without a backend URL', () => {

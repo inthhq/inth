@@ -46,7 +46,7 @@ const assertPortAvailable = function assertPortAvailable(port) {
 	});
 };
 
-console.log('c15t CSS layer review');
+console.log('inth CSS layer review');
 console.log('');
 
 for (const { label, url } of apps) {
@@ -95,10 +95,10 @@ const child = spawn(
 		'run',
 		'dev',
 		'--only',
-		'--filter=@c15t/css-layer-preview',
-		'--filter=@c15t/tw3-css-test',
-		'--filter=@c15t/tw4-css-test',
-		'--filter=@c15t/no-tw-css-test',
+		'--filter=@inth/css-layer-preview',
+		'--filter=@inth/tw3-css-test',
+		'--filter=@inth/tw4-css-test',
+		'--filter=@inth/no-tw-css-test',
 	],
 	{
 		stdio: 'inherit',

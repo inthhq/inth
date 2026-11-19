@@ -3,11 +3,11 @@
  * the engine may wait.
  */
 import { defaultTranslationConfig } from '@inth/sdk/engine';
+import { canDeferEngine } from '@inth/sdk/server';
 import { afterEach, describe, expect, test } from 'vitest';
 
 import { readConsentBoot } from '../lib/deferred/boot';
 import {
-	canDeferEngine,
 	planServerBoot,
 	withCompleteTranslations,
 } from '../lib/deferred/boot-server';

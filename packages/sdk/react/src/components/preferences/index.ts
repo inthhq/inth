@@ -1,15 +1,5 @@
 'use client';
 
-/**
- * Enhanced ConsentWidget component with compound components attached.
- *
- * @remarks
- * This is the main export that provides access to all ConsentWidget components.
- * It follows the compound components pattern, allowing for flexible composition
- * of the widget's parts.
- *
- */
-
 import type { FC } from 'react';
 
 import {
@@ -38,10 +28,6 @@ import type { ConsentWidgetProps } from './types';
 export type { ConsentWidgetProps };
 
 /**
- * This interface extends the base ConsentWidget component with additional sub-components
- * that can be used to compose the widget's structure. Each component is designed to be
- * fully accessible and customizable while maintaining compliance with privacy regulations.
- *
  * @public
  */
 export interface ConsentWidgetCompoundComponent extends FC<ConsentWidgetProps> {
@@ -73,14 +59,6 @@ export interface ConsentWidgetCompoundComponent extends FC<ConsentWidgetProps> {
  * The main consent management widget component.
  * Provides a pre-configured interface for managing privacy consents.
  *
- * @remarks
- * Key features:
- * - Manages consent state and user interactions
- * - Provides accessible controls for consent management
- * - Supports comprehensive theming with tokens and slots
- * - Handles accordion state management
- * - Exposes compound primitives for advanced layout changes
- *
  * @example
  * Basic usage:
  * ```tsx
@@ -94,7 +72,7 @@ export interface ConsentWidgetCompoundComponent extends FC<ConsentWidgetProps> {
  * ```tsx
  * <ConsentProvider
  *   options={{
- *     mode: hosted({ projectUrl: '/api/c15t' }),
+ *     mode: hosted({ projectUrl: '/api/inth' }),
  *     components: {
  *       accordion: {
  *         root: { className: 'rounded-3xl border border-black/10' },
@@ -122,31 +100,26 @@ export interface ConsentWidgetCompoundComponent extends FC<ConsentWidgetProps> {
  *
  */
 const ConsentWidget = Object.assign(ConsentWidgetComponent, {
-	// Button components
 	AcceptAllButton,
 	Accordion,
 	AccordionArrow,
 	AccordionContent,
 	AccordionItem,
 	AccordionItems,
-	// Accordion components
 	AccordionTrigger,
 	AccordionTriggerInner,
 	CustomizeButton,
 	Footer,
 	FooterSubGroup,
 
-	// Footer components
 	PolicyActions,
 	RejectButton,
-	// Root component
 	Root,
 	SaveButton,
 	Switch,
 	VendorList,
 }) as ConsentWidgetCompoundComponent;
 
-// Export the main component as both default and named export
 export default ConsentWidget;
 
 // Export individual components for backward compatibility

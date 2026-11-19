@@ -1,7 +1,7 @@
 /**
- * What the init script (`c15t.js`) hands the engine (`c15t.hosted.js`).
+ * What the init script (`inth.js`) hands the engine (`inth.hosted.js`).
  *
- * The init script installs a stand-in `window.c15t` that carries this
+ * The init script installs a stand-in `window.inth` that carries this
  * object under {@link BOOT_KEY}. The engine finds it there when it
  * installs the real API: it reads the init tag's options from it, replays
  * the calls the page made in the meantime, adopts the banner the init
@@ -25,12 +25,13 @@ import type {
 	storeEarlyCommit,
 } from '@inth/sdk-core/surface-actions/early-commit';
 
-import type { C15tGlobalBase, QueuedCall } from '../global-base';
+import type { InthGlobalBase, QueuedCall } from '../global-base';
+import { GLOBAL_NAME } from '../global-name';
 import type { ConsentClient } from '../types';
 import type { Surface } from '../ui/surface';
 
-/** Property of the stand-in `window.c15t` that holds the {@link InitBoot}. */
-export const BOOT_KEY = '__c15tBoot';
+/** Property of the stand-in `window.inth` that holds the {@link InitBoot}. */
+export const BOOT_KEY = '__inthBoot';
 
 /** A banner element the engine's banner takes over. @internal */
 export interface AdoptedBanner {
@@ -59,15 +60,15 @@ export interface AdoptedDialog {
 
 /** The UI root the init script mounted, for the engine to reuse. @internal */
 export interface InitUI {
-	/** The `[data-c15t-ui]` host element. */
+	/** The `[data-inth-ui]` host element. */
 	host: HTMLElement;
 	/** Its shadow root, or the host in light-DOM mode. */
 	root: ShadowRoot | HTMLElement;
 	/** The `<style>` holding the banner's sheet. */
 	style: HTMLStyleElement | null;
-	/** The `.c15t-host` wrapper. */
+	/** The `.inth-host` wrapper. */
 	wrapper: HTMLElement;
-	/** The `.c15t-theme-root` surfaces render into. */
+	/** The `.inth-theme-root` surfaces render into. */
 	themeRoot: HTMLElement;
 	/** Stops following the colour scheme. */
 	releaseScheme: () => void;
@@ -96,7 +97,7 @@ export interface InitCommit {
 }
 
 /**
- * What `c15t.commit.js` hands the init script: core's code to store an
+ * What `inth.commit.js` hands the init script: core's code to store an
  * early choice and queue its save. @internal
  */
 export interface InitCommitPart {
@@ -108,7 +109,7 @@ export interface InitCommitPart {
 }
 
 /**
- * What `c15t.records.js` hands the init script: core's reader for a
+ * What `inth.records.js` hands the init script: core's reader for a
  * returning visitor's stored records. @internal
  */
 export interface InitRecordsPart {
@@ -159,31 +160,30 @@ export interface InitBoot {
 	 * answer. `null` when no request is in flight.
 	 */
 	settled: Promise<void> | null;
-	/** Called by `c15t.commit.js` and `c15t.records.js` when they run. */
+	/** Called by `inth.commit.js` and `inth.records.js` when they run. */
 	provide: (part: InitPart) => void;
 	/**
-	 * Called by the engine once `window.c15t` is the real API. The init
+	 * Called by the engine once `window.inth` is the real API. The init
 	 * script stops its own listeners and forwards every later call.
 	 */
-	attach: (api: C15tGlobalBase) => void;
+	attach: (api: InthGlobalBase) => void;
 }
 
-/** The stand-in `window.c15t`, as far as the engine reads it. @internal */
+/** The stand-in `window.inth`, as far as the engine reads it. @internal */
 export interface InitStandIn {
 	[BOOT_KEY]: InitBoot;
 }
 
 /**
- * The init script's handoff, when `window.c15t` is its stand-in.
+ * The init script's handoff, when `window.inth` is its stand-in.
  *
- * @returns The boot object, or `undefined`.
  * @internal
  */
 export const readBoot = function readBoot(): InitBoot | undefined {
 	if (typeof window === 'undefined') {
 		return undefined;
 	}
-	const current = (window as unknown as { c15t?: unknown }).c15t;
+	const current = (window as unknown as Record<string, unknown>)[GLOBAL_NAME];
 	return current !== null && typeof current === 'object' && BOOT_KEY in current
 		? (current as InitStandIn)[BOOT_KEY]
 		: undefined;

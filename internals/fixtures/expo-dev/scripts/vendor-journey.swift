@@ -23,7 +23,7 @@ final class VendorJourney: XCTestCase {
   // MARK: Fixture backend
 
   private func endpoint(_ path: String) -> URL {
-    URL(string: (ProcessInfo.processInfo.environment["C15T_E2E_URL"] ?? "http://localhost:3000") + path)!
+    URL(string: (ProcessInfo.processInfo.environment["INTH_E2E_URL"] ?? "http://localhost:3000") + path)!
   }
 
   private func fetchJSON(_ path: String, body: [String: Any]? = nil) throws -> [String: Any] {

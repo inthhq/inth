@@ -1,13 +1,13 @@
 import { setTimeout as sleep } from 'node:timers/promises';
 
-import { buildBrowserBenchManifest } from '@c15t/benchmarking/policy-fixtures';
+import { buildBrowserBenchManifest } from '@inth/benchmarking/policy-fixtures';
 import express from 'express';
 
 /**
  * Stand-in for the consent backend, mounted at `/api/bench-consent` by
  * `server.ts`. It serves the opt-in manifest every browser bench uses and
  * accepts saves and session reports. Each request waits
- * `C15T_BENCH_BACKEND_LATENCY_MS` first, as the other benches' fixtures do.
+ * `INTH_BENCH_BACKEND_LATENCY_MS` first, as the other benches' fixtures do.
  */
 export const benchBackend = express.Router();
 
@@ -15,7 +15,7 @@ const manifest = buildBrowserBenchManifest();
 const MANIFEST_ETAG = '"angular-browser-bench-manifest"';
 
 const latency = async function latency(): Promise<void> {
-	const ms = Number(process.env['C15T_BENCH_BACKEND_LATENCY_MS'] ?? '0');
+	const ms = Number(process.env['INTH_BENCH_BACKEND_LATENCY_MS'] ?? '0');
 	if (Number.isFinite(ms) && ms > 0) {
 		await sleep(ms);
 	}

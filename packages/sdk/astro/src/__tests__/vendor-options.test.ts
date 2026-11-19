@@ -2,11 +2,12 @@ import {
 	buildConsentManifestFromConfig,
 	policyRulePresets,
 } from '@inth/sdk/schema/types';
+import { clearManifestCache } from '@inth/sdk/server';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { resolveOptions } from '../integration';
 import { manifest as manifestMode } from '../mode';
-import { clearManifestCache, resolveConsentContext } from '../server';
+import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
 import { testRule } from './policy-fixture';
 
@@ -16,7 +17,7 @@ afterEach(() => {
 
 describe('the vendors option on the server', () => {
 	it('asks about the categories code-declared vendors sit in, as the browser does', async () => {
-		const c15t = await resolveConsentContext({
+		const inth = await resolveConsentContext({
 			headers: new Headers(),
 			options: resolveOptions({
 				mode: testingMode({ policy: [testRule] }),
@@ -30,8 +31,8 @@ describe('the vendors option on the server', () => {
 				],
 			}),
 		});
-		expect(c15t.snapshot.evaluationPolicy.choiceScope).toEqual(['measurement']);
-		expect(c15t.shouldShowBanner).toBe(true);
+		expect(inth.snapshot.evaluationPolicy.choiceScope).toEqual(['measurement']);
+		expect(inth.shouldShowBanner).toBe(true);
 	});
 });
 
@@ -48,7 +49,7 @@ describe('vendors from the backend manifest', () => {
 				},
 			],
 		});
-		const c15t = await resolveConsentContext({
+		const inth = await resolveConsentContext({
 			headers: new Headers({ 'x-vercel-ip-country': 'DE' }),
 			options: resolveOptions({
 				mode: manifestMode({ snapshot: manifest }),
@@ -64,9 +65,9 @@ describe('vendors from the backend manifest', () => {
 			}),
 		});
 		expect(
-			c15t.config.initialVendors?.declared.map((vendor) => vendor.id)
+			inth.config.initialVendors?.declared.map((vendor) => vendor.id)
 		).toEqual(['x-pixel']);
-		expect(c15t.snapshot.evaluationPolicy.choiceScope).toEqual(
+		expect(inth.snapshot.evaluationPolicy.choiceScope).toEqual(
 			expect.arrayContaining(['marketing', 'measurement'])
 		);
 	});

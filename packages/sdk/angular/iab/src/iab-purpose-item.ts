@@ -23,7 +23,16 @@ import {
 	Switch,
 	SwitchThumb,
 } from '@inth/angular/primitives';
-import { countIABPartners } from '@inth/sdk/iab/headless';
+import {
+	countIABPartners,
+	isLegitimateInterestAllowed,
+} from '@inth/sdk/iab/headless';
+import type {
+	HeadlessIABVendorId,
+	IABLegitimateInterestState,
+	ProcessedPurpose,
+} from '@inth/sdk/iab/headless';
+import type { ResolvedIABCopy } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import switchStyles from '@inth/sdk/ui/styles/components/switch';
 
@@ -33,12 +42,10 @@ import {
 	LegitimateInterestIcon,
 	LockIcon,
 } from './iab-icons';
-import type { IABTranslations } from './iab-translations';
-import type { ProcessedPurpose, VendorId } from './iab-types';
 
 /** A vendor's choice, as the IAB rows emit it. */
 export interface IABVendorChoice {
-	readonly vendorId: VendorId;
+	readonly vendorId: HeadlessIABVendorId;
 	readonly value: boolean;
 }
 
@@ -91,11 +98,11 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 		LegitimateInterestIcon,
 		LockIcon,
 	],
-	selector: 'c15t-iab-purpose-item',
+	selector: 'inth-iab-purpose-item',
 	template: `
 		@let t = iabT().preferenceCenter;
 		<div
-			c15tPreferenceItem
+			inthPreferenceItem
 			[(open)]="isExpanded"
 			[noStyle]="true"
 			[class]="cls(styles.purposeItem)"
@@ -103,34 +110,34 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 		>
 			<div [class]="cls(styles.purposeHeader)">
 				<button
-					c15tPreferenceItemTrigger
+					inthPreferenceItemTrigger
 					[class]="cls(styles.purposeTrigger)"
 				>
-					<span c15tPreferenceItemLeading>
+					<span inthPreferenceItemLeading>
 						<svg
-							c15t-chevron-right-icon
+							inth-chevron-right-icon
 							[class]="cls(styles.purposeArrow)"
 							[expanded]="isExpanded()"
 						></svg>
 					</span>
 					<div
-						c15tPreferenceItemHeader
+						inthPreferenceItemHeader
 						[class]="cls(styles.purposeInfo)"
 					>
 						<h3
-							c15tPreferenceItemTitle
+							inthPreferenceItemTitle
 							[class]="cls(styles.purposeName)"
 						>
 							{{ purpose().name }}
 							@if (isLocked()) {
 								<svg
-									c15t-lock-icon
+									inth-lock-icon
 									[class]="cls(styles.lockIcon)"
 								></svg>
 							}
 						</h3>
 						<p
-							c15tPreferenceItemMeta
+							inthPreferenceItemMeta
 							[class]="cls(styles.purposeMeta)"
 						>
 							{{
@@ -139,11 +146,11 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 						</p>
 						@if (legIntVendors().length > 0) {
 							<span
-								c15tPreferenceItemAuxiliary
+								inthPreferenceItemAuxiliary
 								[class]="cls(styles.legitimateInterestBadge)"
 							>
 								<svg
-									c15t-legitimate-interest-icon
+									inth-legitimate-interest-icon
 									[class]="cls(styles.legitimateInterestIcon)"
 								></svg>
 								{{ liCountText() }}
@@ -152,9 +159,9 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 					</div>
 				</button>
 				@if (showConsentSwitch()) {
-					<div c15tPreferenceItemControl>
+					<div inthPreferenceItemControl>
 						<button
-							c15tSwitch
+							inthSwitch
 							[attr.aria-label]="purpose().name"
 							[checked]="isEnabled()"
 							(checkedChange)="setPurposeConsent($event)"
@@ -163,11 +170,11 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 							data-size="medium"
 						>
 							<span
-								c15tSwitchControl
+								inthSwitchControl
 								[class]="cls(switchStyles.track)"
 							>
 								<span
-									c15tSwitchThumb
+									inthSwitchThumb
 									[class]="cls(switchStyles.thumb)"
 								></span>
 							</span>
@@ -177,11 +184,11 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 			</div>
 
 			<div
-				c15t-preference-item-content
+				inth-preference-item-content
 				[innerClassName]="cls(styles.purposeContent)"
 				[noStyle]="resolvedNoStyle()"
 			>
-				<ng-template c15tPreferenceItemBody>
+				<ng-template inthPreferenceItemBody>
 					<p [class]="cls(styles.purposeDescription)">
 						{{ purpose().description }}
 					</p>
@@ -191,7 +198,7 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 							<div [class]="cls(styles.purposeLiSectionHeader)">
 								<div [class]="cls(styles.purposeLiInfo)">
 									<svg
-										c15t-legitimate-interest-icon
+										inth-legitimate-interest-icon
 										[class]="cls(styles.legitimateInterestIcon)"
 									></svg>
 									<span>{{ liCountText() }}</span>
@@ -218,7 +225,7 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 					@if (legIntVendors().length > 0 && !purposeObjection()) {
 						<div [class]="cls(styles.legitimateInterestBadge)">
 							<svg
-								c15t-legitimate-interest-icon
+								inth-legitimate-interest-icon
 								[class]="cls(styles.legitimateInterestIcon)"
 							></svg>
 							{{ liCountText() }}
@@ -228,16 +235,16 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 					@if (purpose().illustrations.length > 0) {
 						<div>
 							<div
-								c15tPreferenceItem
+								inthPreferenceItem
 								[(open)]="showExamples"
 								[noStyle]="true"
 							>
 								<button
-									c15tPreferenceItemTrigger
+									inthPreferenceItemTrigger
 									[class]="cls(styles.examplesToggle)"
 								>
 									<svg
-										c15t-chevron-right-icon
+										inth-chevron-right-icon
 										style="height: 0.75rem; width: 0.75rem"
 										[expanded]="showExamples()"
 									></svg>
@@ -245,10 +252,10 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 									({{ purpose().illustrations.length }})
 								</button>
 								<div
-									c15t-preference-item-content
+									inth-preference-item-content
 									[noStyle]="resolvedNoStyle()"
 								>
-									<ng-template c15tPreferenceItemBody>
+									<ng-template inthPreferenceItemBody>
 										<ul [class]="cls(styles.examplesList)">
 											@for (
 												illustration of purpose().illustrations;
@@ -265,16 +272,16 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 
 					<div>
 						<div
-							c15tPreferenceItem
+							inthPreferenceItem
 							[(open)]="showVendors"
 							[noStyle]="true"
 						>
 							<button
-								c15tPreferenceItemTrigger
+								inthPreferenceItemTrigger
 								[class]="cls(styles.vendorsToggle)"
 							>
 								<svg
-									c15t-chevron-right-icon
+									inth-chevron-right-icon
 									style="height: 0.75rem; width: 0.75rem"
 									[expanded]="showVendors()"
 								></svg>
@@ -282,11 +289,11 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 								({{ partnerCount() }})
 							</button>
 							<div
-								c15t-preference-item-content
+								inth-preference-item-content
 								[innerClassName]="cls(styles.vendorSection)"
 								[noStyle]="resolvedNoStyle()"
 							>
-								<ng-template c15tPreferenceItemBody>
+								<ng-template inthPreferenceItemBody>
 									@if (iabConsentVendors().length > 0) {
 										<h5 [class]="cls(styles.vendorSectionTitle)">
 											{{ t.purposeItem.withYourPermission }}
@@ -335,7 +342,7 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 											"
 										>
 											<svg
-												c15t-legitimate-interest-icon
+												inth-legitimate-interest-icon
 												[class]="cls(styles.legitimateInterestIcon)"
 											></svg>
 											{{ t.purposeItem.legitimateInterest }}
@@ -386,7 +393,7 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 										<div [class]="cls(styles.customVendorPurposeSection)">
 											<h5 [class]="cls(styles.vendorSectionTitleCustom)">
 												<svg
-													c15t-globe-icon
+													inth-globe-icon
 													[class]="cls(styles.legitimateInterestIcon)"
 												></svg>
 												{{ t.vendorList.customVendorsHeading }}
@@ -465,7 +472,7 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 			let-vendor
 		>
 			<button
-				c15tSwitch
+				inthSwitch
 				[attr.aria-label]="vendor.name"
 				[checked]="vendorConsent(vendor.id)"
 				(checkedChange)="
@@ -475,11 +482,11 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 				data-size="small"
 			>
 				<span
-					c15tSwitchControl
+					inthSwitchControl
 					[class]="cls(switchStyles.track)"
 				>
 					<span
-						c15tSwitchThumb
+						inthSwitchThumb
 						[class]="cls(switchStyles.thumb)"
 					></span>
 				</span>
@@ -527,7 +534,7 @@ export const SWITCH = [SwitchControl, Switch, SwitchThumb];
 				>
 					<span>{{ vendor.name }}</span>
 					<svg
-						c15t-globe-icon
+						inth-globe-icon
 						[class]="cls(styles.customVendorIcon)"
 						[attr.aria-label]="iabT().common.customPartner"
 					></svg>
@@ -551,14 +558,8 @@ export class IABPurposeItem {
 	readonly vendorConsents = input<Readonly<Record<string, boolean>>>({});
 	/** Shows a locked row: the switch is on and cannot change. */
 	readonly isLocked = input(false);
-	/** Legitimate interest per vendor; a missing vendor is allowed. */
-	readonly vendorLegitimateInterests = input<Readonly<Record<string, boolean>>>(
-		{}
-	);
-	/** Legitimate interest per purpose; a missing purpose is allowed. */
-	readonly purposeLegitimateInterests = input<
-		Readonly<Record<number, boolean>>
-	>({});
+	/** Draft and vendor list the legitimate interest controls read. */
+	readonly legitimateInterests = input<IABLegitimateInterestState | null>(null);
 	/**
 	 * Offer the purpose-level objection. Without it, a purpose whose vendors
 	 * all use legitimate interest keeps its consent switch.
@@ -571,14 +572,14 @@ export class IABPurposeItem {
 	/** @internal */
 	protected readonly resolvedNoStyle = resolveNoStyle(this.noStyle);
 	/** The IAB copy. */
-	readonly iabT = input.required<IABTranslations>();
+	readonly iabT = input.required<ResolvedIABCopy>();
 
 	/** The consent switch changed. */
 	readonly purposeToggle = output<boolean>();
 	/** A vendor's consent switch changed. */
 	readonly vendorToggle = output<IABVendorChoice>();
 	/** A vendor name was clicked: show it on the vendors tab. */
-	readonly vendorClick = output<VendorId>();
+	readonly vendorClick = output<HeadlessIABVendorId>();
 	/** A vendor's objection changed. `value` is whether LI is allowed. */
 	readonly vendorLegitimateInterestToggle = output<IABVendorChoice>();
 	/** The purpose's objection changed. `value` is whether LI is allowed. */
@@ -631,8 +632,12 @@ export class IABPurposeItem {
 		this.legIntVendors().filter((v) => v.isCustom)
 	);
 	/** @internal */
-	protected readonly isPurposeLIAllowed = computed(
-		() => this.purposeLegitimateInterests()[this.purpose().id] ?? true
+	protected readonly isPurposeLIAllowed = computed(() =>
+		isLegitimateInterestAllowed(
+			this.legitimateInterests(),
+			'purpose',
+			this.purpose().id
+		)
 	);
 	/**
 	 * With no vendor on consent, a consent switch would look like an opt-out
@@ -667,13 +672,17 @@ export class IABPurposeItem {
 	}
 
 	/** @internal */
-	protected vendorConsent(vendorId: VendorId): boolean {
+	protected vendorConsent(vendorId: HeadlessIABVendorId): boolean {
 		return this.vendorConsents()[String(vendorId)] ?? false;
 	}
 
 	/** @internal */
-	protected vendorLegitimateInterest(vendorId: VendorId): boolean {
-		return this.vendorLegitimateInterests()[String(vendorId)] ?? true;
+	protected vendorLegitimateInterest(vendorId: HeadlessIABVendorId): boolean {
+		return isLegitimateInterestAllowed(
+			this.legitimateInterests(),
+			'vendor',
+			vendorId
+		);
 	}
 
 	/** The purpose switch also sets every consent-based vendor. @internal */
@@ -684,20 +693,11 @@ export class IABPurposeItem {
 		}
 	}
 
-	/** The purpose objection also sets every LI vendor. @internal */
+	/** @internal */
 	protected toggleObjection(): void {
-		const value = !this.isPurposeLIAllowed();
 		this.purposeLegitimateInterestToggle.emit({
 			purposeId: this.purpose().id,
-			value,
+			value: !this.isPurposeLIAllowed(),
 		});
-		if (this.vendorObjection()) {
-			for (const vendor of this.legIntVendors()) {
-				this.vendorLegitimateInterestToggle.emit({
-					value,
-					vendorId: vendor.id,
-				});
-			}
-		}
 	}
 }

@@ -167,9 +167,9 @@ package containing both products is published.
 
 ```sh
 # SPM: private source checkout when the default repo-relative path differs
-C15T_CORE_PATH=/absolute/path/to/packages/swift swift build --package-path packages/react-native
+INTH_CORE_PATH=/absolute/path/to/packages/swift swift build --package-path packages/react-native
 # Also build the React-linked target (needs a host app vending React's headers)
-C15T_SPM_INCLUDE_RN=1 swift build --package-path packages/react-native
+INTH_SPM_INCLUDE_RN=1 swift build --package-path packages/react-native
 ```
 
 ## Verifying locally

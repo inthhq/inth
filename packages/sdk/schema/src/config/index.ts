@@ -14,8 +14,6 @@ export type ConsentBannerPosition =
 
 export type ConsentManagerMode = 'dialog' | 'sidebar-left' | 'sidebar-right';
 
-export type ConsentSaveAction = 'all' | 'necessary' | 'custom';
-
 export type ConsentLegalLinkKey =
 	| 'privacyPolicy'
 	| 'cookiePolicy'
@@ -468,55 +466,59 @@ export interface ConsentConfig<T = Record<string, unknown>> {
 	triggerDefaultPosition?: ConsentDialogTriggerPosition;
 	triggerPersistPosition?: boolean;
 	triggerShowWhen?: ConsentDialogTriggerVisibility;
+	/**
+	 * The trigger's accessible name. Defaults to the active language's
+	 * `trigger.label` translation.
+	 */
 	triggerAriaLabel?: string;
 	triggerSize?: ConsentDialogTriggerSize;
 	triggerIcon?: ConsentDialogTriggerIcon;
 	/** CSS custom property values applied as `--{key}` on `:root`. */
 	tokens?: Partial<
 		Record<
-			| 'c15t-primary'
-			| 'c15t-primary-hover'
-			| 'c15t-surface'
-			| 'c15t-surface-hover'
-			| 'c15t-border'
-			| 'c15t-border-hover'
-			| 'c15t-text'
-			| 'c15t-text-muted'
-			| 'c15t-text-on-primary'
-			| 'c15t-overlay'
-			| 'c15t-switch-track'
-			| 'c15t-switch-track-active'
-			| 'c15t-switch-thumb'
-			| 'c15t-font-family'
-			| 'c15t-font-size-sm'
-			| 'c15t-font-size-base'
-			| 'c15t-font-size-lg'
-			| 'c15t-font-weight-normal'
-			| 'c15t-font-weight-medium'
-			| 'c15t-font-weight-semibold'
-			| 'c15t-line-height-tight'
-			| 'c15t-line-height-normal'
-			| 'c15t-line-height-relaxed'
-			| 'c15t-space-xs'
-			| 'c15t-space-sm'
-			| 'c15t-space-md'
-			| 'c15t-space-lg'
-			| 'c15t-space-xl'
-			| 'c15t-radius-sm'
-			| 'c15t-radius-md'
-			| 'c15t-radius-lg'
-			| 'c15t-radius-full'
-			| 'c15t-shadow-sm'
-			| 'c15t-shadow-md'
-			| 'c15t-shadow-lg'
-			| 'c15t-duration-fast'
-			| 'c15t-duration-normal'
-			| 'c15t-duration-slow'
-			| 'c15t-easing'
-			| 'c15t-easing-out'
-			| 'c15t-easing-in'
-			| 'c15t-easing-in-out'
-			| 'c15t-easing-spring',
+			| 'inth-primary'
+			| 'inth-primary-hover'
+			| 'inth-surface'
+			| 'inth-surface-hover'
+			| 'inth-border'
+			| 'inth-border-hover'
+			| 'inth-text'
+			| 'inth-text-muted'
+			| 'inth-text-on-primary'
+			| 'inth-overlay'
+			| 'inth-switch-track'
+			| 'inth-switch-track-active'
+			| 'inth-switch-thumb'
+			| 'inth-font-family'
+			| 'inth-font-size-sm'
+			| 'inth-font-size-base'
+			| 'inth-font-size-lg'
+			| 'inth-font-weight-normal'
+			| 'inth-font-weight-medium'
+			| 'inth-font-weight-semibold'
+			| 'inth-line-height-tight'
+			| 'inth-line-height-normal'
+			| 'inth-line-height-relaxed'
+			| 'inth-space-xs'
+			| 'inth-space-sm'
+			| 'inth-space-md'
+			| 'inth-space-lg'
+			| 'inth-space-xl'
+			| 'inth-radius-sm'
+			| 'inth-radius-md'
+			| 'inth-radius-lg'
+			| 'inth-radius-full'
+			| 'inth-shadow-sm'
+			| 'inth-shadow-md'
+			| 'inth-shadow-lg'
+			| 'inth-duration-fast'
+			| 'inth-duration-normal'
+			| 'inth-duration-slow'
+			| 'inth-easing'
+			| 'inth-easing-out'
+			| 'inth-easing-in'
+			| 'inth-easing-in-out'
+			| 'inth-easing-spring',
 			string | number
 		>
 	>;
@@ -524,8 +526,4 @@ export interface ConsentConfig<T = Record<string, unknown>> {
 	components?: ConsentComponentSlots<T>;
 }
 
-export {
-	DEFAULT_BANNER_POSITION,
-	DEFAULT_MANAGER_MODE,
-	defaultConsentConfig,
-} from './defaults';
+export { DEFAULT_BANNER_POSITION, defaultConsentConfig } from './defaults';

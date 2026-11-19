@@ -20,7 +20,7 @@
  * const runtime = createConsentRuntime({
  *   createIAB: iab.create,
  *   iab: { cmpId: 123 },
- *   mode: hosted({ projectUrl: '/api/c15t' }),
+ *   mode: hosted({ projectUrl: '/api/inth' }),
  * });
  * runtime.start();
  * await iab.whenReady();
@@ -70,6 +70,7 @@ const QUEUED_METHODS = new Set<keyof ConsentRuntimeIABHandle>([
 	'setAdTechProviderConsent',
 	'setPurposeConsent',
 	'setPurposeLegitimateInterest',
+	'setPurposeObjection',
 	'setSpecialFeatureOptIn',
 	'setVendorConsent',
 	'setVendorLegitimateInterest',
@@ -163,5 +164,49 @@ export const createLazyIABFactory = function createLazyIABFactory(
 		async whenReady() {
 			await ready;
 		},
+	};
+};
+
+/** The IAB actions a framework's IAB surface state exposes. */
+export type IABSurfaceActions = Pick<
+	Required<ConsentRuntimeIABHandle>,
+	| 'acceptAll'
+	| 'rejectAll'
+	| 'save'
+	| 'setAdTechProviderConsent'
+	| 'setPurposeConsent'
+	| 'setPurposeLegitimateInterest'
+	| 'setPurposeObjection'
+	| 'setSpecialFeatureOptIn'
+	| 'setVendorConsent'
+	| 'setVendorLegitimateInterest'
+>;
+
+/**
+ * The actions of an IAB surface state, forwarded to the runtime's handle.
+ * Without a handle they do nothing. A lazy handle queues them until
+ * `@inth/sdk/iab` lands.
+ */
+export const iabSurfaceActions = function iabSurfaceActions(
+	handle: ConsentRuntimeIABHandle | null | undefined
+): IABSurfaceActions {
+	return {
+		acceptAll: () => handle?.acceptAll(),
+		rejectAll: () => handle?.rejectAll(),
+		save: async () => {
+			await handle?.save();
+		},
+		setAdTechProviderConsent: (id, value) =>
+			handle?.setAdTechProviderConsent?.(id, value),
+		setPurposeConsent: (id, value) => handle?.setPurposeConsent(id, value),
+		setPurposeLegitimateInterest: (id, value) =>
+			handle?.setPurposeLegitimateInterest(id, value),
+		setPurposeObjection: (id, objected) =>
+			handle?.setPurposeObjection(id, objected),
+		setSpecialFeatureOptIn: (id, value) =>
+			handle?.setSpecialFeatureOptIn(id, value),
+		setVendorConsent: (id, value) => handle?.setVendorConsent(id, value),
+		setVendorLegitimateInterest: (id, value) =>
+			handle?.setVendorLegitimateInterest(id, value),
 	};
 };

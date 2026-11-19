@@ -8,8 +8,6 @@ import type { ClassNameStyle, ThemeValue } from '~/types/theme';
  *
  * @param style1 - The first style object to merge (lower precedence)
  * @param style2 - The second style object to merge (Takes precedence over style1)
- *
- * @returns The merged styles object
  */
 export const mergeStyles = function mergeStyles(
 	style1: ThemeValue,

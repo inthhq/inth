@@ -27,8 +27,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.inth.examples.swiftui
         INFOPLIST_KEY_CFBundleDisplayName: SwiftUI consent
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_InthBackendURL: $(C15T_BACKEND_URL)
-        INFOPLIST_KEY_InthPrivacyPolicyURL: $(C15T_PRIVACY_POLICY_URL)
+        INFOPLIST_KEY_InthBackendURL: $(INTH_PROJECT_URL)
+        INFOPLIST_KEY_InthPrivacyPolicyURL: $(INTH_PRIVACY_POLICY_URL)
   InthSwiftUITests:
     type: bundle.unit-test
     platform: iOS

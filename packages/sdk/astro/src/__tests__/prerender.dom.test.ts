@@ -1,4 +1,4 @@
-import { MINIMAL_GVL } from '@c15t/conformance/fixtures/gvl';
+import { MINIMAL_GVL } from '@inth/conformance/fixtures/gvl';
 import { createConsentKernel } from '@inth/sdk/engine';
 import { createPersistence } from '@inth/sdk/modules/persistence';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -13,7 +13,7 @@ import type { AstroConsentClient } from '../client';
 import { resolveOptions } from '../integration';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { C15tAstroOptions } from '../types';
+import type { InthAstroOptions } from '../types';
 import { createTestPageIAB } from './page-iab';
 import { testResolution, testRule } from './policy-fixture';
 // The client imports each banner renderer, and @inth/sdk/iab for an IAB policy,
@@ -30,7 +30,7 @@ import '../browser/render-prompt';
  * browser has to bring the visitor's own state to it.
  */
 
-const OPTIONS: C15tAstroOptions = {
+const OPTIONS: InthAstroOptions = {
 	mode: testingMode({ policy: [testRule] }),
 };
 
@@ -67,14 +67,14 @@ const saveChoice = async function saveChoice(value: 'all' | 'none') {
 
 /** Boot the way a prerendered page does: with the build's inlined config. */
 const bootPrerendered = async function bootPrerendered(
-	options: C15tAstroOptions = OPTIONS
+	options: InthAstroOptions = OPTIONS
 ): Promise<AstroConsentClient> {
 	const built = await resolveConsentContext({
 		headers: new Headers(),
 		options: resolveOptions(options),
 		prerendered: true,
 	});
-	globals.__c15tAstroConfig = JSON.parse(JSON.stringify(built.config));
+	globals.__inthAstroConfig = JSON.parse(JSON.stringify(built.config));
 	client = boot(resolveOptions(options));
 	return client;
 };
@@ -82,9 +82,9 @@ const bootPrerendered = async function bootPrerendered(
 beforeEach(() => {
 	clearCookies();
 	document.body.innerHTML = '';
-	globals.__c15tAstro = undefined;
-	globals.__c15tAstroConfig = undefined;
-	globals.__c15tAstroActions = undefined;
+	globals.__inthAstro = undefined;
+	globals.__inthAstroConfig = undefined;
+	globals.__inthAstroActions = undefined;
 });
 
 afterEach(() => {
@@ -142,7 +142,7 @@ describe('a prerendered page', () => {
 
 	it('reveals the hidden banner for a first-time visitor', async () => {
 		document.body.innerHTML =
-			'<div data-testid="consent-banner-root" data-c15t-visible="false" hidden></div>';
+			'<div data-testid="consent-banner-root" data-inth-visible="false" hidden></div>';
 
 		await bootPrerendered();
 
@@ -150,7 +150,7 @@ describe('a prerendered page', () => {
 			'[data-testid="consent-banner-root"]'
 		);
 		expect(banner?.hidden).toBe(false);
-		expect(banner?.dataset.c15tVisible).toBe('true');
+		expect(banner?.dataset.inthVisible).toBe('true');
 	});
 });
 
@@ -268,7 +268,7 @@ describe('the spot <ConsentBanner /> leaves', () => {
 });
 
 describe('the spot <IABConsentBanner /> leaves', () => {
-	const IAB_OPTIONS: C15tAstroOptions = {
+	const IAB_OPTIONS: InthAstroOptions = {
 		consentCategories: ['necessary', 'marketing'],
 		iab: { cmpId: 160, gvl: MINIMAL_GVL as never },
 		mode: testingMode({

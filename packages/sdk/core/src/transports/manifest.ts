@@ -10,6 +10,7 @@
 
 import {
 	POLICY_CONTRACT_VERSION,
+	primaryLanguage,
 	resolveInitFromManifest,
 } from '@inth/sdk-schema/types';
 import type {
@@ -31,6 +32,8 @@ import {
 	resolveSessionReportProjectUrl,
 } from '../libs/session-report';
 import type { SessionReportHeaders } from '../libs/session-report';
+import { trimSlash } from '../libs/url';
+import { inthProtocolHeaders } from '../libs/version-header';
 import type {
 	InitContext,
 	KernelOverrides,
@@ -49,8 +52,10 @@ import {
 import type { RememberedDecisionInputs } from './decision-inputs';
 import { fetchCachedGvl } from './gvl-cache';
 import { deferInitGvl, deferInitGvlToRoute } from './gvl-reference';
+import { toSaveResult } from './hosted-records';
 import { mapInitOutputToInitResponse } from './init-output';
 import type { TransportInitResponse } from './init-output';
+import { projectUrlOfManifest } from './manifest-url';
 import { saveFailure } from './save-rejection';
 import { buildSubjectPostBody, subjectsURL } from './subject-body';
 import type { SubjectSavePayload } from './subject-body';
@@ -59,7 +64,6 @@ import {
 	reviveSubjectRecord,
 } from './subject-record';
 import type { TransportHydrationRecords } from './subject-record';
-import { c15tProtocolHeaders } from './version-header';
 
 const getDefined = <Value>(
 	value: Value,
@@ -93,8 +97,9 @@ export interface ManifestTransportOptions {
 	snapshot?: ConsentManifest;
 
 	/**
-	 * Backend URL used for `POST /subjects`. Defaults to `manifestUrl` with a
-	 * trailing `/manifest` segment removed.
+	 * Backend URL used for `POST /subjects`. Defaults to `manifestUrl` without
+	 * its `/manifest` endpoint; a manifest URL that does not end in one names
+	 * no backend.
 	 */
 	projectUrl?: string;
 
@@ -197,28 +202,6 @@ export interface ManifestKernelTransport extends KernelTransport {
 	) => Promise<TransportHydrationRecords | null>;
 }
 
-const trimSlash = function trimSlash(url: string): string {
-	return url.endsWith('/') ? url.slice(0, -1) : url;
-};
-
-const deriveProjectUrl = function deriveProjectUrl(
-	options: ManifestTransportOptions
-): string {
-	if (options.projectUrl) {
-		return trimSlash(options.projectUrl);
-	}
-	if (!options.manifestUrl) {
-		return '';
-	}
-
-	const withoutQuery =
-		options.manifestUrl.split(/[?#]/u)[0] ?? options.manifestUrl;
-	const trimmed = trimSlash(withoutQuery);
-	return trimmed.endsWith('/manifest')
-		? trimmed.slice(0, -'/manifest'.length)
-		: trimmed;
-};
-
 /**
  * Places a relative provider list endpoint on the manifest's location, the
  * way a document resolves its own links. Node's fetch rejects a bare path.
@@ -296,20 +279,6 @@ const shouldFetchGvl = function shouldFetchGvl(
 	);
 };
 
-/**
- * A `SaveResult` from the backend's answer. Success is the HTTP status; the
- * 2.x body has no `ok` and must not be read as one.
- */
-const toSaveResult = function toSaveResult(data: unknown): SaveResult {
-	const subjectId =
-		typeof data === 'object' &&
-		data !== null &&
-		typeof (data as { subjectId?: unknown }).subjectId === 'string'
-			? (data as { subjectId: string }).subjectId
-			: undefined;
-	return subjectId === undefined ? { ok: true } : { ok: true, subjectId };
-};
-
 const defaultFetchGvl = function defaultFetchGvl(input: {
 	reference: ConsentManifestGVLReference;
 	language: string;
@@ -317,8 +286,8 @@ const defaultFetchGvl = function defaultFetchGvl(input: {
 }): Promise<GlobalVendorList | null> {
 	return fetchCachedGvl({
 		fetch: input.fetch,
-		headers: c15tProtocolHeaders,
-		label: 'c15t manifest transport',
+		headers: inthProtocolHeaders,
+		label: 'inth manifest transport',
 		language: input.language,
 		url: input.reference.url,
 	});
@@ -338,7 +307,6 @@ const defaultFetchGvl = function defaultFetchGvl(input: {
  * id, fingerprint, geo, language, and GPC signal so the backend can reject
  * a consent recorded against a stale policy.
  *
- * @param options - Manifest source, backend URL, and resolver inputs.
  * @returns A kernel transport backed by local manifest resolution.
  * @throws {Error} When neither `snapshot` nor `manifestUrl` is provided, or no
  * `fetch` implementation is available.
@@ -347,7 +315,7 @@ const defaultFetchGvl = function defaultFetchGvl(input: {
  * import { createManifestTransport } from '@inth/sdk-core/transports/manifest';
  *
  * const transport = createManifestTransport({
- *   manifestUrl: 'https://api.example.com/c15t/manifest',
+ *   manifestUrl: 'https://api.example.com/inth/manifest',
  *   inputs: { country: 'DE', language: 'de', region: null },
  * });
  * ```
@@ -367,14 +335,16 @@ export const createManifestTransport = function createManifestTransport(
 		);
 	}
 
-	const projectUrl = deriveProjectUrl(options);
+	const projectUrl = options.projectUrl
+		? trimSlash(options.projectUrl)
+		: (projectUrlOfManifest(options.manifestUrl) ?? '');
 	const credentials = options.credentials ?? 'include';
 	const domain = resolveDomain(projectUrl, options.domain);
 	const now = options.now ?? Date.now;
 	const jsonHeaders = {
 		accept: 'application/json',
 		'content-type': 'application/json',
-		...c15tProtocolHeaders,
+		...inthProtocolHeaders,
 	};
 	const requireProjectUrl = function requireProjectUrl(what: string): string {
 		if (!projectUrl) {
@@ -424,7 +394,7 @@ export const createManifestTransport = function createManifestTransport(
 						credentials,
 						headers: {
 							accept: 'application/json',
-							...c15tProtocolHeaders,
+							...inthProtocolHeaders,
 							...options.headers,
 						},
 						method: 'GET',
@@ -432,7 +402,7 @@ export const createManifestTransport = function createManifestTransport(
 
 					if (!response.ok) {
 						throw await failedResponseError(
-							'c15t manifest transport: /manifest',
+							'inth manifest transport: /manifest',
 							response
 						);
 					}
@@ -473,7 +443,7 @@ export const createManifestTransport = function createManifestTransport(
 			}
 			if (!response.ok) {
 				throw await failedResponseError(
-					'c15t manifest transport: /subjects/:id',
+					'inth manifest transport: /subjects/:id',
 					response
 				);
 			}
@@ -495,7 +465,7 @@ export const createManifestTransport = function createManifestTransport(
 				(reference) =>
 					fetchCachedAdTechProviders({
 						fetch: fetchImpl,
-						headers: c15tProtocolHeaders,
+						headers: inthProtocolHeaders,
 						reference: {
 							...reference,
 							url: resolveEndpoint(
@@ -506,7 +476,7 @@ export const createManifestTransport = function createManifestTransport(
 					})
 			);
 			if (shouldFetchGvl(manifest, payload) && manifest.iab?.gvl) {
-				const language = payload.translations.language.split('-')[0] || 'en';
+				const language = primaryLanguage(payload.translations.language) ?? 'en';
 				payload.gvl = await (options.fetchGvl ?? defaultFetchGvl)({
 					fetch: fetchImpl,
 					language,
@@ -543,9 +513,8 @@ export const createManifestTransport = function createManifestTransport(
 					journey,
 					manifest,
 					method: options.report.method,
-					// The caller's own backend, never the derived one: for a
-					// manifest URL that is not `<backend>/manifest`, the derived
-					// value is the manifest asset itself.
+					// The caller's own backend, never the one derived from the
+					// manifest URL.
 					projectUrl: options.report.projectUrl ?? options.projectUrl,
 					source: options.report.source,
 					waitUntil: options.report.waitUntil,
@@ -563,7 +532,7 @@ export const createManifestTransport = function createManifestTransport(
 		): Promise<TransportHydrationRecords | null> {
 			const response = await fetchImpl(subjectURL(subjectId), {
 				credentials,
-				headers: { accept: 'application/json', ...c15tProtocolHeaders },
+				headers: { accept: 'application/json', ...inthProtocolHeaders },
 				method: 'GET',
 			});
 			if (response.status === 404) {
@@ -571,14 +540,14 @@ export const createManifestTransport = function createManifestTransport(
 			}
 			if (!response.ok) {
 				throw await failedResponseError(
-					'c15t manifest transport: /subjects/:id',
+					'inth manifest transport: /subjects/:id',
 					response
 				);
 			}
 			const record = reviveSubjectRecord(await response.json());
 			if (!record) {
 				throw new Error(
-					'c15t manifest transport: /subjects/:id returned an unreadable record'
+					'inth manifest transport: /subjects/:id returned an unreadable record'
 				);
 			}
 			return mapSubjectRecordToHydrationRecords(record, { now: now() });
@@ -600,7 +569,7 @@ export const createManifestTransport = function createManifestTransport(
 			);
 
 			if (!response.ok) {
-				throw await saveFailure(response, 'c15t manifest transport');
+				throw await saveFailure(response, 'inth manifest transport');
 			}
 
 			return toSaveResult(await response.json());

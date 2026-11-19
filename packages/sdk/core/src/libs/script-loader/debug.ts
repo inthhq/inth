@@ -1,10 +1,10 @@
+import { SCRIPT_DEBUG_LISTENERS_KEY } from '../page-globals';
 import type {
 	ScriptDebugEvent,
 	ScriptDebugEventInput,
 	ScriptDebugListener,
 } from './types';
 
-const REGISTRY_KEY = '__c15tScriptDebugListeners';
 let fallbackListeners: Set<ScriptDebugListener> | null = null;
 
 const getListeners = function getListeners(): Set<ScriptDebugListener> {
@@ -16,14 +16,34 @@ const getListeners = function getListeners(): Set<ScriptDebugListener> {
 	}
 
 	const host = window as unknown as Record<string, unknown>;
-	const existing = host[REGISTRY_KEY] as Set<ScriptDebugListener> | undefined;
+	const existing = host[SCRIPT_DEBUG_LISTENERS_KEY] as
+		| Set<ScriptDebugListener>
+		| undefined;
 	if (existing) {
 		return existing;
 	}
 
 	const listeners = new Set<ScriptDebugListener>();
-	host[REGISTRY_KEY] = listeners;
+	host[SCRIPT_DEBUG_LISTENERS_KEY] = listeners;
 	return listeners;
+};
+
+/**
+ * Hands `event` to every subscribed listener. A listener that throws is
+ * logged, so debug instrumentation cannot break script loading.
+ *
+ * @internal
+ */
+export const dispatchScriptDebugEvent = function dispatchScriptDebugEvent(
+	event: ScriptDebugEvent
+): void {
+	for (const listener of getListeners()) {
+		try {
+			listener(event);
+		} catch (error) {
+			console.error('Failed to handle Inth script debug event listener', error);
+		}
+	}
 };
 
 export const emitScriptDebugEvent = function emitScriptDebugEvent(
@@ -33,15 +53,7 @@ export const emitScriptDebugEvent = function emitScriptDebugEvent(
 		...event,
 		timestamp: Date.now(),
 	};
-
-	for (const listener of getListeners()) {
-		try {
-			listener(fullEvent);
-		} catch (error) {
-			console.error('Failed to handle c15t script debug event listener', error);
-		}
-	}
-
+	dispatchScriptDebugEvent(fullEvent);
 	return fullEvent;
 };
 

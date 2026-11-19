@@ -5,7 +5,6 @@
  * same kernel a browser runtime would and serializes its snapshot, so every
  * rule here (vendor merging, inferred categories, the disabled policy, the
  * experiment seed) applies identically on both sides.
- *
  */
 import { deepMergeTranslations } from '@inth/sdk-translations';
 import type { I18nConfig } from '@inth/sdk-translations';
@@ -15,7 +14,7 @@ import { createKernel } from '../kernel';
 import type { InternalKernel } from '../kernel/internals';
 import { hostExperiment, seedExperiment } from '../libs/experiment';
 import { extractConsentNamesFromCondition } from '../libs/has';
-import { isProductionBuild } from '../libs/is-production';
+import { warnInDevelopment } from '../libs/is-production';
 import { resolveVendors } from '../libs/vendors';
 import type { User } from '../options/user';
 import { disabledPolicyResolution } from '../policy';
@@ -49,7 +48,6 @@ const DEFAULT_TRANSLATIONS: KernelTranslations = {
  * v2 callers pass `{ id, identityProvider }`; v3 callers pass
  * `{ externalId, identityProvider }`.
  *
- * @param user - The configured subject, if any.
  * @returns The kernel-shaped user, or `undefined` when none was supplied.
  */
 export const normalizeKernelUser = function normalizeKernelUser(
@@ -80,7 +78,7 @@ export const normalizeKernelUser = function normalizeKernelUser(
  * @param i18n - Locale and message overrides, if any.
  * @returns Kernel translations, or `undefined` when `i18n` says nothing.
  */
-export const resolveRuntimeTranslations = function resolveRuntimeTranslations(
+const resolveRuntimeTranslations = function resolveRuntimeTranslations(
 	i18n: Partial<I18nConfig> | undefined
 ): KernelTranslations | undefined {
 	if (!(i18n?.messages || i18n?.locale)) {
@@ -129,14 +127,6 @@ export const hasResolvedPrefetch = function hasResolvedPrefetch(
 	);
 };
 
-const warnInDevelopment = function warnInDevelopment(
-	...message: unknown[]
-): void {
-	if (!isProductionBuild()) {
-		console.warn(...message);
-	}
-};
-
 // Typed here so core needs no Node types; see `libs/is-production.ts`.
 declare const process: { env: { NODE_ENV?: string } };
 
@@ -152,7 +142,7 @@ const runtimeOwner = function runtimeOwner(pkg: string): string {
 		return 'init()';
 	}
 	if (pkg === '@inth/vue') {
-		return 'the c15tVue plugin';
+		return 'the inthVue plugin';
 	}
 	return pkg === '@inth/nextjs' || pkg === '@inth/tanstack-start'
 		? 'ConsentRoot'
@@ -163,12 +153,11 @@ const runtimeOwner = function runtimeOwner(pkg: string): string {
  * The transport factory the runtime's options select: `mode` when it is a
  * factory or a `testing()` value, else the hosted backend at `projectUrl`.
  *
- * @param options - The runtime options.
  * @param hostedMode - Builds the factory for `projectUrl`.
  * @returns The factory, or `undefined` when the options select none.
  * @internal
  */
-export const selectTransportFactory = function selectTransportFactory(
+const selectTransportFactory = function selectTransportFactory(
 	options: Pick<ConsentRuntimeOptions, 'projectUrl' | 'mode'>,
 	hostedMode?: (projectUrl: string) => ProviderTransportFactory
 ): ProviderTransportFactory | undefined {
@@ -275,7 +264,6 @@ export const inferConsentCategories = function inferConsentCategories(
  * Exported so servers can construct the same kernel a browser runtime
  * would and serialize its snapshot.
  *
- * @param options - The runtime options.
  * @param wrapTransport - Wraps the transport `mode` builds before the kernel
  *   gets it. The browser runtime adds its consent journey this way.
  * @param mode - The transport factory. Defaults to the one the options

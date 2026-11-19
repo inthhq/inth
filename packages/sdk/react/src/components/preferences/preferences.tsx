@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 import type { AccordionRootProps } from '~/components/shared/ui/accordion';
-import { BrandingLink } from '~/components/shared/ui/branding';
+import { BrandingTag } from '~/components/shared/ui/branding';
 import { useTheme } from '~/hooks/use-theme';
 
 import {
@@ -24,7 +24,6 @@ export const ConsentWidget = ({
 }: ConsentWidgetProps) => {
 	const [openItem, setOpenItem] = useState('');
 
-	// Get global theme context
 	const globalTheme = useTheme();
 
 	const mergedProps = {
@@ -47,11 +46,9 @@ export const ConsentWidget = ({
 				<ConsentWidgetAccordionItems />
 			</ConsentWidgetAccordion>
 			<ConsentWidgetPolicyActions />
-			<BrandingLink
+			<BrandingTag
+				surface="widget"
 				hideBranding={hideBranding ?? true}
-				variant="dialog-tag"
-				slotContext="manager"
-				data-testid="consent-widget-branding"
 			/>
 		</ConsentWidgetRoot>
 	);

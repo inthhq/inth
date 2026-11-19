@@ -50,7 +50,7 @@ export interface AmazonAdsTagOptions {
 	countryCode?: string;
 	/** Visitor IP address forwarded to ACS only when countryCode is supplied. */
 	ipAddress?: string;
-	/** Existing IAB GPP string forwarded to ACS. c15t does not create it. */
+	/** Existing IAB GPP string forwarded to ACS. Inth does not create it. */
 	gpp?: string;
 	/** Override the main amzn.js URL. */
 	scriptUrl?: string;
@@ -80,7 +80,7 @@ export const amazonAdsTagManifest = {
 	},
 } satisfies VendorManifest;
 
-// Different configurations can borrow the same c15t-created ACS element.
+// Different configurations can borrow the same Inth-created ACS element.
 const helperOwners = new WeakMap<HTMLScriptElement, number>();
 
 interface ConsentOwner {
@@ -327,8 +327,6 @@ const createAmazonAdsTag = (options: AmazonAdsTagOptions): Script => {
 				finish();
 			}
 		},
-		// The custom bootstrap must run in the client consent lifecycle.
-		serverStart: undefined,
 	};
 };
 
@@ -337,7 +335,6 @@ const reuseAmazonAdsTag = createScriptReuse<AmazonAdsTagOptions>();
 /**
  * Loads Amazon Ads after marketing consent, with optional Amazon Consent Signal.
  *
- * @param options - Amazon tag ID, account region, initial event and ACS options.
  * @returns A marketing-gated script retaining its loaders after revocation.
  * @remarks Blank tag IDs log an error and return a script that never loads.
  * ACS requires the visitor's actual country. Both ACS permissions follow the

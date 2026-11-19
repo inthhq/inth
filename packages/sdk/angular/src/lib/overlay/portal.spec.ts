@@ -12,7 +12,7 @@ import { Portal } from './portal';
 		<div class="local">
 			@if (shown()) {
 				<div
-					c15tPortal
+					inthPortal
 					data-testid="ported"
 				>
 					moved
@@ -30,7 +30,7 @@ afterEach(() => {
 	document.body.replaceChildren();
 });
 
-test('c15tPortal moves the element to the body and removes it with its view', async () => {
+test('inthPortal moves the element to the body and removes it with its view', async () => {
 	const fixture = TestBed.createComponent(PortalHost);
 	await fixture.whenStable();
 	const ported = document.querySelector('[data-testid="ported"]');

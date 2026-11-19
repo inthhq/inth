@@ -92,7 +92,7 @@ optional configuration and transport factories return `nil` for refused settings
 In a CocoaPods RN application, host Swift code must `import InthReactNative` and
 call that module's public `InthApple.install`, `InthApple.tracking`, `Inth.current`
 and `InthReactNativeBootstrap.install` APIs. The pod compiles the generated core,
-Apple services and bridge into that same module. Do not also link a `InthCore`
+Apple services and bridge into that same module. Do not also link an `InthCore`
 pod or a separate SwiftPM `InthCore`/`InthApple` product into that process. A second
 compiled copy has its own installation singleton and can compete for the same
 Keychain service. Changing the service does not make two consent authorities safe.
@@ -103,8 +103,8 @@ module imports and attachment ordering for this path.
 SwiftPM source consumers import `InthCore`, `InthApple` and
 `InthReactNativeBridge` from the same resolved source package. The RN SwiftPM
 manifest currently supports a local source checkout only, through its default
-path or `C15T_CORE_PATH`. It explicitly refuses `C15T_CORE_VERSION` and
-`C15T_CORE_URL` until a remote native package containing both products exists.
+path or `INTH_CORE_PATH`. It explicitly refuses `INTH_CORE_VERSION` and
+`INTH_CORE_URL` until a remote native package containing both products exists.
 The npm tarball does not include that workspace SwiftPM manifest. Remote native
 distribution and clean SwiftPM consumers remain release gates.
 
@@ -124,8 +124,8 @@ presentation and Settings changes still need on-device verification.
 
 ## Versions and validation limits
 
-Core requests report `x-c15t-version: <Inth.version>`. Platform-created
-hosted transports also report `x-c15t-platform: <platform>-><InthApple.version>`,
+Core requests report `x-inth-version: <Inth.version>`. Platform-created
+hosted transports also report `x-inth-platform: <platform>-><InthApple.version>`,
 where `InthAppleConfiguration.platform` is `apple` by default and `rn` for a core
 the React Native bridge configures, on
 init, save and identity requests. These native source versions are independent
@@ -133,7 +133,7 @@ of the RN npm version. None is the internal 12-bit IAB CMP version or a claim of
 CMP registration or certification. `Inth.version` in `Transports.swift` is the
 source of truth for the Swift native package. `InthApple.version` aliases it and
 the local `InthCore.podspec` reads it directly. The pod no longer accepts an
-independent `C15T_CORE_POD_VERSION`. Tests compare the native module versions;
+independent `INTH_CORE_POD_VERSION`. Tests compare the native module versions;
 request tests verify both header values.
 
 The CocoaPods RN package compiles generated copies of both native modules into

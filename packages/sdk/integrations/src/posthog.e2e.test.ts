@@ -5,7 +5,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMeasurementConsents,
 	installHeadProbe,
 	loadScripts,
@@ -57,7 +57,7 @@ describe('posthog contract', () => {
 					id: 'posthog-contract',
 				},
 			],
-			deniedConsents
+			ALL_DENIED
 		);
 
 		expect(attributes).toEqual({
@@ -163,7 +163,7 @@ describe('posthog contract', () => {
 	});
 
 	it('queues opt-out ahead of capture when measurement consent is denied', () => {
-		loadScripts([posthog({ id: 'phc_denied' })], deniedConsents);
+		loadScripts([posthog({ id: 'phc_denied' })], ALL_DENIED);
 
 		window.posthog.capture('signup');
 
@@ -179,7 +179,7 @@ describe('posthog contract', () => {
 		loadScripts([script], grantedMeasurementConsents);
 		expect(window.posthog._i).toHaveLength(1);
 
-		updateScripts([script], deniedConsents);
+		updateScripts([script], ALL_DENIED);
 
 		// array.js can still run after the <script> is removed. With no init
 		// tuple left it starts nothing, so it sends no event and writes no
@@ -196,7 +196,7 @@ describe('posthog contract', () => {
 		const script = posthog({ id: 'phc_always' });
 
 		loadScripts([script], grantedMeasurementConsents);
-		updateScripts([script], deniedConsents);
+		updateScripts([script], ALL_DENIED);
 
 		// Always-on PostHog still starts, opted out, so cookieless mode applies.
 		expect(window.posthog._i).toHaveLength(1);
@@ -245,7 +245,7 @@ describe('posthog contract', () => {
 		expect(loadScripts([script], grantedMeasurementConsents)).toEqual([
 			'posthog',
 		]);
-		expect(updateScripts([script], deniedConsents)).toEqual({
+		expect(updateScripts([script], ALL_DENIED)).toEqual({
 			loaded: [],
 			unloaded: ['posthog'],
 		});
@@ -275,7 +275,7 @@ describe('posthog contract', () => {
 					id: 'posthog-snippet-guard',
 				},
 			],
-			deniedConsents
+			ALL_DENIED
 		);
 
 		expect(acceptedBySnippetGuard).toBe(true);

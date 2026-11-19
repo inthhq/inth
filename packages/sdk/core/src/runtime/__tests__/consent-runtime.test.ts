@@ -45,6 +45,7 @@ const createIABHandle = function createIABHandle(): ConsentRuntimeIABHandle {
 		save: vi.fn().mockResolvedValue(undefined),
 		setPurposeConsent: vi.fn(),
 		setPurposeLegitimateInterest: vi.fn(),
+		setPurposeObjection: vi.fn(),
 		setSpecialFeatureOptIn: vi.fn(),
 		setVendorConsent: vi.fn(),
 		setVendorLegitimateInterest: vi.fn(),
@@ -72,7 +73,7 @@ beforeEach(() => {
 
 afterEach(() => {
 	vi.restoreAllMocks();
-	delete (window as { c15t?: unknown }).c15t;
+	delete (window as { __inthDebug?: unknown }).__inthDebug;
 });
 
 const RESOLVED_PREFETCH = {
@@ -139,7 +140,7 @@ describe('createRuntimeKernel', () => {
 		[undefined, '@inth/sdk/engine createConsentRuntime()'],
 		['@inth/react', '@inth/react ConsentProvider'],
 		['@inth/svelte', '@inth/svelte ConsentProvider'],
-		['@inth/vue', '@inth/vue the c15tVue plugin'],
+		['@inth/vue', '@inth/vue the inthVue plugin'],
 		['@inth/sdk', '@inth/sdk init()'],
 		['@inth/sdk/hosted', '@inth/sdk/hosted init()'],
 		['@inth/nextjs', '@inth/nextjs ConsentRoot'],
@@ -475,7 +476,7 @@ describe('offline copy with every bundled language loaded', () => {
 
 describe('createConsentRuntime', () => {
 	test('defers storage hydration until start and preserves valid legacy records', () => {
-		document.cookie = `c15t=c.necessary:1,c.marketing:1,i.t:${Date.now()}; path=/`;
+		document.cookie = `inth=c.necessary:1,c.marketing:1,i.t:${Date.now()}; path=/`;
 
 		const runtime = createConsentRuntime({
 			mode: transportMode(createTransport()),
@@ -491,7 +492,7 @@ describe('createConsentRuntime', () => {
 	});
 
 	test('skips early hydration when persistence is disabled', () => {
-		document.cookie = `c15t=c.necessary:1,c.marketing:1,i.t:${Date.now()}; path=/`;
+		document.cookie = `inth=c.necessary:1,c.marketing:1,i.t:${Date.now()}; path=/`;
 
 		const runtime = createConsentRuntime({
 			mode: transportMode(createTransport()),
@@ -597,12 +598,12 @@ describe('createConsentRuntime', () => {
 		});
 
 		runtime.start();
-		expect((window as { c15t?: { pkg?: string } }).c15t?.pkg).toBe(
-			'@inth/svelte'
-		);
+		expect(
+			(window as { __inthDebug?: { pkg?: string } }).__inthDebug?.pkg
+		).toBe('@inth/svelte');
 
 		runtime.dispose();
-		expect((window as { c15t?: unknown }).c15t).toBeUndefined();
+		expect((window as { __inthDebug?: unknown }).__inthDebug).toBeUndefined();
 	});
 
 	test('does not run init or mount modules when disabled', () => {
@@ -920,11 +921,11 @@ describe('createConsentRuntime', () => {
 	});
 });
 
-describe('windowDebug', () => {
-	type DebugWindow = Window & { c15t?: unknown };
+describe('the window debug object', () => {
+	type DebugWindow = Window & { __inthDebug?: unknown };
 
 	afterEach(() => {
-		(window as DebugWindow).c15t = undefined;
+		(window as DebugWindow).__inthDebug = undefined;
 	});
 
 	test('installs the debug object on start by default', () => {
@@ -934,7 +935,9 @@ describe('windowDebug', () => {
 
 		runtime.start();
 
-		expect((window as DebugWindow).c15t).toMatchObject({ mode: 'hosted' });
+		expect((window as DebugWindow).__inthDebug).toMatchObject({
+			mode: 'hosted',
+		});
 		runtime.dispose();
 	});
 
@@ -948,26 +951,31 @@ describe('windowDebug', () => {
 		});
 
 		runtime.start();
-		expect((window as DebugWindow).c15t).toMatchObject({ hosting: null });
+		expect((window as DebugWindow).__inthDebug).toMatchObject({
+			hosting: null,
+		});
 
 		await runtime.kernel.commands.init();
-		expect((window as DebugWindow).c15t).toMatchObject({ hosting: 'inth' });
+		expect((window as DebugWindow).__inthDebug).toMatchObject({
+			hosting: 'inth',
+		});
 		runtime.dispose();
 	});
 
-	test('leaves window.c15t alone when turned off', () => {
-		const owned = { mine: true };
-		(window as DebugWindow).c15t = owned;
+	test('leaves window.inth, the script-tag API, to the page', () => {
+		const api = { mine: true };
+		const page = window as Window & { inth?: unknown };
+		page.inth = api;
 		const runtime = createConsentRuntime({
 			mode: transportMode(createTransport()),
-			windowDebug: false,
 		});
 
 		runtime.start();
-		expect((window as DebugWindow).c15t).toBe(owned);
+		expect(page.inth).toBe(api);
 
 		runtime.dispose();
-		expect((window as DebugWindow).c15t).toBe(owned);
+		expect(page.inth).toBe(api);
+		Reflect.deleteProperty(page, 'inth');
 	});
 });
 
@@ -1268,7 +1276,7 @@ describe('lifecycle verbs', () => {
 
 		expect(cleared).toHaveBeenCalledOnce();
 		expect(runtime.kernel.getSnapshot().explicitChoice).toBeNull();
-		expect(document.cookie).not.toContain('c15t=');
+		expect(document.cookie).not.toContain('inth=');
 		runtime.dispose();
 	});
 

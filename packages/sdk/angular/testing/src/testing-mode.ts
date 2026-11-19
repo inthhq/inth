@@ -2,9 +2,9 @@ import { createTestingMode } from '@inth/sdk/testing';
 import type { ConsentTesting, TestingModeOptions } from '@inth/sdk/testing';
 
 /**
- * A `mode` for `provideC15t()` in tests. It needs no `projectUrl`. It
+ * A `mode` for `provideInth()` in tests. It needs no `projectUrl`. It
  * resolves `policy`, or the recommended policy pack, in the browser, and
- * on the server with `provideC15tServer()`, and makes no network
+ * on the server with `provideInthServer()`, and makes no network
  * requests. Set `overrides.country` (and `overrides.region`) to pick the
  * policy:
  *
@@ -21,16 +21,16 @@ import type { ConsentTesting, TestingModeOptions } from '@inth/sdk/testing';
  * app's own tests instead, set `enabled: false`.
  *
  * @param options - `policy` replaces the recommended pack; `iab: true` picks its IAB TCF variant.
- * @returns The value for `provideC15t()`'s `mode`.
+ * @returns The value for `provideInth()`'s `mode`.
  * @throws {Error} When the transport is built in a production build.
  * @example
  * ```ts
- * import { provideC15t } from '@inth/angular';
+ * import { provideInth } from '@inth/angular';
  * import { testing } from '@inth/angular/testing';
  *
  * TestBed.configureTestingModule({
  *   providers: [
- *     provideC15t({ overrides: { country: 'DE' }, mode: testing() }),
+ *     provideInth({ overrides: { country: 'DE' }, mode: testing() }),
  *   ],
  * });
  * ```

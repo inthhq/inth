@@ -1,3 +1,4 @@
+import { resolveIABCopy } from '@inth/sdk/surface-state';
 /**
  * TCF policy check 14: wherever the vendor list shows a partner's Features,
  * it shows each feature's description and the standard Features text, and no
@@ -8,7 +9,6 @@ import { expect, test, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import IABVendorList from '../lib/components/iab-vendor-list.svelte';
-import { getIABTranslations } from '../lib/iab-translations';
 
 const vendorId = Object.values(completeGVL.vendors).find(
 	(vendor) => (vendor.features ?? []).length > 0
@@ -16,7 +16,7 @@ const vendorId = Object.values(completeGVL.vendors).find(
 
 const renderList = async (vendorData: typeof completeGVL) => {
 	const view = render(IABVendorList, {
-		iabT: getIABTranslations(),
+		iabT: resolveIABCopy(undefined),
 		onClearSelection: vi.fn(),
 		onVendorToggle: vi.fn(),
 		purposes: [],
@@ -60,5 +60,5 @@ test('falls back to the translated Features text when the GVL has none', async (
 				`[data-testid="vendor-${vendorId}-features-standard-text"]`
 			)
 			?.textContent?.trim()
-	).toBe(getIABTranslations().preferenceCenter.features?.description);
+	).toBe(resolveIABCopy(undefined).preferenceCenter.features?.description);
 });

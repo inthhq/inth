@@ -18,7 +18,7 @@ enum WebViewConsentScripts {
 	if (!listed || w.top !== w) {
 		return;
 	}
-	var name = '__c15tNativeConsent';
+	var name = '__inthNativeConsent';
 	if (Object.prototype.hasOwnProperty.call(w, name)) {
 		return;
 	}
@@ -82,10 +82,10 @@ enum WebViewConsentScripts {
 		},
 		openPreferences: function () {
 			var message =
-				'{"type":"c15t:open-preferences","key":"' + requestKey + '"}';
+				'{"type":"inth:open-preferences","key":"' + requestKey + '"}';
 			var webkit = w.webkit && w.webkit.messageHandlers;
 			var channel =
-				(webkit && webkit.c15tConsent) || w.c15tConsent || w.ReactNativeWebView;
+				(webkit && webkit.inthConsent) || w.inthConsent || w.ReactNativeWebView;
 			if (channel && typeof channel.postMessage === 'function') {
 				channel.postMessage(message);
 				return true;
@@ -116,7 +116,7 @@ enum WebViewConsentScripts {
 	if (!listed || w.top !== w) {
 		return false;
 	}
-	var api = w.__c15tNativeConsent;
+	var api = w.__inthNativeConsent;
 	return !!(api && typeof api.update === 'function' && api.update(token, next));
 })
 """#

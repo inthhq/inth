@@ -11,8 +11,8 @@ export type ConsentWidgetHarnessFilters = BaseHarnessFilters;
 const ITEM_PREFIX = 'consent-widget-accordion-item-';
 
 /**
- * Drives the preference center: `<c15t-consent-widget>` on a page, and
- * the same widget inside `<c15t-consent-dialog>`.
+ * Drives the preference center: `<inth-consent-widget>` on a page, and
+ * the same widget inside `<inth-consent-dialog>`.
  *
  * A widget on a page renders in place, so the fixture's loader finds it.
  * The one inside the consent dialog renders into `<body>`: get it from
@@ -37,9 +37,6 @@ export class ConsentWidgetHarness extends ComponentHarness {
 
 	/**
 	 * A predicate for a widget that matches `options`.
-	 *
-	 * @param options - Selector and ancestor filters.
-	 * @returns A predicate to pass to a loader.
 	 */
 	static with(
 		options: ConsentWidgetHarnessFilters = {}
@@ -130,7 +127,6 @@ export class ConsentWidgetHarness extends ComponentHarness {
 	 * {@link ConsentWidgetHarness.save}.
 	 *
 	 * @param category - The category, such as `'marketing'`.
-	 * @param allowed - Whether the switch should be on.
 	 */
 	async setCategory(
 		category: AllConsentNames,

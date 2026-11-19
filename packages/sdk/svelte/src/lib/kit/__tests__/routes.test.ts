@@ -8,7 +8,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { setGenerated } from '../../__tests__/generated';
-import { c15tHandle } from '../handle';
+import { inthHandle } from '../handle';
 import { manifest as manifestMode } from '../index';
 import { loadConsent } from '../load-consent';
 import { createConsentRoute } from '../routes';
@@ -16,7 +16,7 @@ import { createEvent } from './event';
 import { MANIFEST_FIXTURE } from './manifest-fixture';
 
 const BACKEND = 'https://consent.example.com';
-const ROUTE_ID = '/api/c15t/[...path]';
+const ROUTE_ID = '/api/inth/[...path]';
 
 const upstream = () =>
 	vi.fn<typeof globalThis.fetch>().mockImplementation((input) =>
@@ -38,7 +38,7 @@ const restEvent = (
 	createEvent({
 		...init,
 		route: { id: ROUTE_ID, params: { path } },
-		url: `https://shop.example/api/c15t/${path}`,
+		url: `https://shop.example/api/inth/${path}`,
 	});
 
 beforeEach(() => {
@@ -86,7 +86,7 @@ describe('createConsentRoute', () => {
 		const manifest = await GET(restEvent('manifest'));
 		const root = await GET(restEvent(''));
 		const fixed = await GET(
-			createEvent({ url: 'https://shop.example/api/c15t/manifest' })
+			createEvent({ url: 'https://shop.example/api/inth/manifest' })
 		);
 		expect(manifest.headers.get('cache-control')).toContain('s-maxage=1');
 		expect(root.headers.get('cache-control')).toBe('private, no-store');
@@ -103,7 +103,7 @@ describe('createConsentRoute', () => {
 				fetch: eventFetch,
 				headers: { host: 'evil.example' },
 				route: { id: ROUTE_ID, params: { path: 'init' } },
-				url: 'https://shop.example/api/c15t/init',
+				url: 'https://shop.example/api/inth/init',
 			})
 		);
 		expect(eventFetch).toHaveBeenCalledWith(
@@ -152,18 +152,18 @@ describe('createConsentRoute', () => {
 		expect(fetch.mock.calls[0]?.[0]).toBe(`${BACKEND}/subjects`);
 		expect(headers.get('x-forwarded-for')).toBe('203.0.113.7');
 		expect(headers.get('x-forwarded-host')).toBe('shop.example');
-		expect(headers.get('x-c15t-proxy')).toBe('@inth/svelte');
+		expect(headers.get('x-inth-proxy')).toBe('@inth/svelte');
 	});
 });
 
-describe('createConsentRoute with c15tHandle', () => {
+describe('createConsentRoute with inthHandle', () => {
 	afterEach(() => {
 		setGenerated({});
 	});
 
 	/** Runs the handle, then the route, on one request, as SvelteKit does. */
 	const throughHandle = (
-		handle: ReturnType<typeof c15tHandle>,
+		handle: ReturnType<typeof inthHandle>,
 		route: (event: RequestEvent) => Response | Promise<Response>,
 		event: RequestEvent
 	): Promise<Response> =>
@@ -174,7 +174,7 @@ describe('createConsentRoute with c15tHandle', () => {
 		const own = { ...MANIFEST_FIXTURE, revision: 'from-the-handle' };
 		const { GET } = createConsentRoute({ fetch });
 		const response = await throughHandle(
-			c15tHandle({ projectUrl: BACKEND, snapshot: own }),
+			inthHandle({ projectUrl: BACKEND, snapshot: own }),
 			GET,
 			restEvent('manifest')
 		);
@@ -188,12 +188,12 @@ describe('createConsentRoute with c15tHandle', () => {
 		const fetch = upstream();
 		const { GET } = createConsentRoute({ fetch });
 		await throughHandle(
-			c15tHandle({ projectUrl: 'https://handle.example' }),
+			inthHandle({ projectUrl: 'https://handle.example' }),
 			GET,
 			restEvent('manifest')
 		);
 		await throughHandle(
-			c15tHandle({ projectUrl: 'https://hosted.example' }),
+			inthHandle({ projectUrl: 'https://hosted.example' }),
 			GET,
 			restEvent('manifest')
 		);
@@ -207,7 +207,7 @@ describe('createConsentRoute with c15tHandle', () => {
 		const fetch = upstream();
 		const { GET } = createConsentRoute({ fetch });
 		await throughHandle(
-			c15tHandle({
+			inthHandle({
 				mode: manifestMode({ manifestUrl: 'https://cdn.example/manifest' }),
 				projectUrl: BACKEND,
 			}),
@@ -226,7 +226,7 @@ describe('createConsentRoute with c15tHandle', () => {
 			projectUrl: 'https://route.example',
 		});
 		await throughHandle(
-			c15tHandle({ projectUrl: 'https://handle.example' }),
+			inthHandle({ projectUrl: 'https://handle.example' }),
 			GET,
 			restEvent('manifest')
 		);
@@ -235,54 +235,102 @@ describe('createConsentRoute with c15tHandle', () => {
 		);
 	});
 
-	test('the proxy setup forwards saves to the build backend, not to itself', async () => {
-		// c15tHandle({ projectUrl: '/api/c15t', routePrefix: '/api/c15t' })
-		// points the browser at the route; the route must forward upstream.
-		setGenerated({ projectUrl: BACKEND });
+	test("an absolute manifestUrl wins over the build's snapshot, as in loadConsent", async () => {
+		setGenerated({
+			projectUrl: BACKEND,
+			snapshot: { ...MANIFEST_FIXTURE, revision: 'from-the-build' },
+		});
 		const fetch = upstream();
-		const eventFetch = vi.fn<typeof globalThis.fetch>();
-		const handle = c15tHandle({
-			projectUrl: '/api/c15t',
-			routePrefix: '/api/c15t',
-		});
-		const { GET, POST } = createConsentRoute({ fetch, proxy: true });
-
-		const page = createEvent({ url: 'https://shop.example/' });
-		const { consent } = await handle({
-			event: page,
-			resolve: async (event) =>
-				Response.json(await loadConsent(event, { fetch })),
-		}).then((response) => response.json());
-		expect(consent).toMatchObject({
-			projectUrl: '/api/c15t',
-			routePrefix: '/api/c15t',
-		});
-
-		const save = await throughHandle(
-			handle,
-			POST,
-			restEvent('subjects', {
-				body: '{}',
-				clientAddress: '203.0.113.7',
-				fetch: eventFetch,
-				method: 'POST',
-			})
-		);
-		expect(save.status).toBe(201);
-		const init = await throughHandle(
-			handle,
+		const { GET } = createConsentRoute({ fetch });
+		const response = await throughHandle(
+			inthHandle({
+				mode: manifestMode({ manifestUrl: 'https://cdn.example/manifest' }),
+			}),
 			GET,
-			restEvent('init', {
-				fetch: eventFetch,
-				headers: { 'x-vercel-ip-country': 'DE' },
-			})
+			restEvent('manifest')
 		);
-		expect(await init.json()).toMatchObject({
-			policyResolution: { policyId: 'eu-opt-in', status: 'matched' },
+		expect(await response.json()).not.toMatchObject({
+			revision: 'from-the-build',
 		});
-		expect(eventFetch).not.toHaveBeenCalled();
-		expect(fetch.mock.calls.map(([url]) => String(url))).toEqual(
-			expect.arrayContaining([`${BACKEND}/subjects`, `${BACKEND}/manifest`])
+		expect(String(fetch.mock.calls[0]?.[0])).toBe(
+			'https://cdn.example/manifest'
 		);
 	});
+
+	test("a manifestUrl on the route's own prefix reads the backend's manifest", async () => {
+		const fetch = upstream();
+		const eventFetch = vi.fn<typeof globalThis.fetch>();
+		const { GET } = createConsentRoute({ fetch });
+		const response = await throughHandle(
+			inthHandle({
+				mode: manifestMode({ manifestUrl: '/api/inth/manifest' }),
+				projectUrl: BACKEND,
+				routePrefix: '/api/inth',
+			}),
+			GET,
+			restEvent('manifest', { fetch: eventFetch })
+		);
+		expect(response.status).toBe(200);
+		expect(String(fetch.mock.calls[0]?.[0])).toBe(`${BACKEND}/manifest`);
+		expect(eventFetch).not.toHaveBeenCalled();
+	});
+
+	test.each([
+		['proxy: true', { proxy: true, routePrefix: '/api/inth' }],
+		[
+			"a projectUrl naming the route's own prefix",
+			{ projectUrl: '/api/inth', routePrefix: '/api/inth' },
+		],
+		[
+			'a projectUrl naming the route, with routePrefix unset',
+			{ projectUrl: '/api/inth' },
+		],
+	])(
+		'the proxy setup forwards saves to the build backend, not to itself, with %s',
+		async (_name, setup) => {
+			// The handle points the browser at the route; the route forwards
+			// upstream.
+			setGenerated({ projectUrl: BACKEND });
+			const fetch = upstream();
+			const eventFetch = vi.fn<typeof globalThis.fetch>();
+			const handle = inthHandle(setup);
+			const { GET, POST } = createConsentRoute({ fetch, proxy: true });
+
+			const page = createEvent({ url: 'https://shop.example/' });
+			const { consent } = await handle({
+				event: page,
+				resolve: async (event) =>
+					Response.json(await loadConsent(event, { fetch })),
+			}).then((response) => response.json());
+			expect(consent).toMatchObject({ projectUrl: '/api/inth' });
+			expect(consent.routePrefix).toBe(setup.routePrefix);
+
+			const save = await throughHandle(
+				handle,
+				POST,
+				restEvent('subjects', {
+					body: '{}',
+					clientAddress: '203.0.113.7',
+					fetch: eventFetch,
+					method: 'POST',
+				})
+			);
+			expect(save.status).toBe(201);
+			const init = await throughHandle(
+				handle,
+				GET,
+				restEvent('init', {
+					fetch: eventFetch,
+					headers: { 'x-vercel-ip-country': 'DE' },
+				})
+			);
+			expect(await init.json()).toMatchObject({
+				policyResolution: { policyId: 'eu-opt-in', status: 'matched' },
+			});
+			expect(eventFetch).not.toHaveBeenCalled();
+			expect(fetch.mock.calls.map(([url]) => String(url))).toEqual(
+				expect.arrayContaining([`${BACKEND}/subjects`, `${BACKEND}/manifest`])
+			);
+		}
+	);
 });

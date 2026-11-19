@@ -10,9 +10,8 @@
  * @packageDocumentation
  */
 
-import type { GlobalVendorList } from '@inth/sdk-core';
-
-import type { PublisherRestriction } from './iab-tcf-types';
+import type { GlobalVendorList, PublisherRestriction } from '@inth/sdk-core';
+import { CONSENT_ONLY_PURPOSES } from '@inth/sdk-schema/types';
 
 /**
  * Restriction types defined by the TCF v2 core segment.
@@ -29,15 +28,6 @@ export const PUBLISHER_RESTRICTION_TYPES = {
 	/** A flexible purpose the vendor declares for consent must use LI. */
 	REQUIRE_LEGITIMATE_INTEREST: 2,
 } as const;
-
-/**
- * Purposes that TCF policy version 4 and later allow only with consent.
- * Purpose 1 was never allowed legitimate interest; TCF 2.2 removed it for
- * purposes 3 to 6.
- *
- * @public
- */
-export const CONSENT_ONLY_PURPOSES: readonly number[] = [1, 3, 4, 5, 6];
 
 /** The first TCF policy version (TCF 2.2) that bars LI for purposes 3 to 6. */
 const CONSENT_ONLY_POLICY_VERSION = 4;
@@ -58,7 +48,7 @@ const MAX_VENDOR_ID = 65_535;
 
 /**
  * Thrown when a publisher restriction cannot be encoded, or when a TC
- * string carries one c15t does not support.
+ * string carries one Inth does not support.
  *
  * @public
  */
@@ -74,18 +64,18 @@ export interface PublisherRestrictionContext {
 	 */
 	gvl?: GlobalVendorList;
 	/**
-	 * Ignored. c15t always writes service-specific TC strings, because TCF
+	 * Ignored. Inth always writes service-specific TC strings, because TCF
 	 * requires IsServiceSpecific=1, so restrictions are always allowed.
 	 * `decodeTCString` still rejects restrictions in a string that is not
 	 * service-specific.
 	 *
-	 * @deprecated Every TC string c15t writes is service-specific.
+	 * @deprecated Every TC string Inth writes is service-specific.
 	 */
 	isServiceSpecific?: boolean;
 	/**
 	 * TCF policy version of a decoded string. Strings written before policy
 	 * version 4 may require legitimate interest for purposes 3 to 6. Omit it
-	 * when encoding: c15t only writes restrictions valid under the current
+	 * when encoding: Inth only writes restrictions valid under the current
 	 * policy.
 	 */
 	policyVersion?: number;
@@ -197,10 +187,8 @@ const checkDeclaration = (
  *
  * Entries with the same purpose and type are merged, vendor IDs are sorted
  * and de-duplicated, and the result is ordered by purpose, then type.
+ * `undefined` returns an empty list.
  *
- * @param input - Restrictions from configuration or a decoded TC string.
- * @param context - Vendor list and string scope to check against.
- * @returns The normalized restrictions. `undefined` returns an empty list.
  * @throws {PublisherRestrictionError} When a restriction is malformed,
  * uses the reserved type `3`, requires legitimate interest for a purpose
  * that is consent-only under `context.policyVersion` (the current policy
@@ -290,9 +278,6 @@ export const validatePublisherRestrictions =
  * an array is returned as is for {@link validatePublisherRestrictions} to
  * reject; holes become `undefined` entries, which it also rejects.
  *
- * @param input - Restrictions as configured.
- * @returns A copy that shares no arrays or entries with `input`.
- *
  * @internal
  */
 export const copyPublisherRestrictionInput =
@@ -314,10 +299,7 @@ export const copyPublisherRestrictionInput =
 
 /**
  * Converts restrictions to the `__tcfapi` shape: purpose ID, then vendor
- * ID, then restriction type.
- *
- * @param restrictions - Normalized restrictions.
- * @returns The `publisher.restrictions` value for `TCData`.
+ * ID, then restriction type, as `TCData.publisher.restrictions`.
  *
  * @public
  */
@@ -339,12 +321,7 @@ export const toTCDataRestrictions = function toTCDataRestrictions(
  * Whether two restriction lists restrict the listed vendors the same way.
  *
  * Decoded ranges may cover IDs that are not in the vendor list, so only
- * vendors in `gvl` are compared.
- *
- * @param left - Restrictions from one source.
- * @param right - Restrictions from another source.
- * @param vendors - Vendors of the list whose entries are compared.
- * @returns `true` when every listed vendor has the same restrictions.
+ * vendors in `vendors` are compared.
  *
  * @internal
  */

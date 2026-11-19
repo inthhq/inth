@@ -18,7 +18,7 @@ export interface IABConsentDialogHarnessFilters extends BaseHarnessFilters {
 const VISIBLE_PANEL = '[role="tabpanel"]:not([hidden])';
 
 /**
- * Drives `<c15t-iab-consent-dialog>`, the IAB TCF preference center.
+ * Drives `<inth-iab-consent-dialog>`, the IAB TCF preference center.
  *
  * The dialog renders into `<body>`, so find it with
  * `TestbedHarnessEnvironment.documentRootLoader(fixture)`. It exists only
@@ -49,9 +49,6 @@ export class IABConsentDialogHarness extends ComponentHarness {
 
 	/**
 	 * A predicate for a dialog that matches `options`.
-	 *
-	 * @param options - Title and selector filters.
-	 * @returns A predicate to pass to a loader.
 	 */
 	static with(
 		options: IABConsentDialogHarnessFilters = {}
@@ -80,7 +77,6 @@ export class IABConsentDialogHarness extends ComponentHarness {
 		return this.locatorForOptional(`button[data-action="${action}"]`)();
 	}
 
-	/** The dialog's title. */
 	async getTitle(): Promise<string> {
 		return (await this.#title()).text();
 	}
@@ -105,8 +101,6 @@ export class IABConsentDialogHarness extends ComponentHarness {
 
 	/**
 	 * Show a tab.
-	 *
-	 * @param tab - `purposes` or `vendors`.
 	 */
 	async selectTab(tab: IABConsentDialogTab): Promise<void> {
 		const trigger = await this.locatorFor(`[role="tab"][value="${tab}"]`)();

@@ -65,7 +65,6 @@ export interface AppcuesOptions {
  * Keep `reloadOnConsentRevoked` enabled. Reset clears user state but does not
  * stop all SDK listeners or cancel a script download already in flight.
  *
- * @param options - Account, data region and SDK settings.
  * @returns A consent-gated Appcues script, or a skipped script for a blank ID.
  * @example
  * appcues({ accountId: 'YOUR_APPCUES_ID' });

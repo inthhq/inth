@@ -16,13 +16,6 @@ declare global {
 	}
 }
 
-/**
- * Removes an `http://` or `https://` prefix from a URL-like string.
- *
- * @param value - The input string that may include a protocol prefix.
- * @returns The input without a leading HTTP(S) protocol; unchanged when no
- * protocol prefix is present.
- */
 const stripProtocol = function stripProtocol(value: string): string {
 	if (value.startsWith('https://')) {
 		return value.slice('https://'.length);
@@ -35,15 +28,6 @@ const stripProtocol = function stripProtocol(value: string): string {
 	return value;
 };
 
-/**
- * Resolves the Matomo origin from integration options.
- *
- * @param options - Matomo integration options. `matomoUrl` is used first when
- * present; otherwise `cloudId` is converted to
- * `https://cdn.matomo.cloud/<cloudId>`.
- * @returns A normalized Matomo origin with protocol/trailing slashes removed as
- * needed, or `undefined` when neither `matomoUrl` nor `cloudId` is provided.
- */
 const resolveMatomoOrigin = function resolveMatomoOrigin(
 	options: MatomoAnalyticsOptions
 ): string | undefined {
@@ -208,24 +192,6 @@ const buildDeniedHooks = function buildDeniedHooks(
 	return onConsentDenied;
 };
 
-/**
- * Builds a Matomo `VendorManifest` from helper options.
- *
- * @param options - Manifest toggles:
- * - `enableConsentMode`: enables Matomo consent queue commands and sets
- * `alwaysLoad`/`persistAfterConsentRevoked`.
- * - `consentInitiallyGiven`: when consent mode is enabled, skips the
- * up-front `requireConsent` and queues it on load only when the visitor does
- * not have measurement consent.
- * - `enableLinkTracking`: queues `enableLinkTracking` during install.
- * - `disableCookies`: queues `disableCookies` during install.
- * - `trackPageView`: queues `trackPageView` immediately only when consent mode
- * is disabled; when consent mode is enabled, queues it when the script loads
- * with measurement consent and when that consent is granted later.
- * @returns A Matomo `VendorManifest` with `install`, consent lifecycle hooks,
- * and consent metadata (`alwaysLoad`, `persistAfterConsentRevoked`) derived
- * from `enableConsentMode`.
- */
 const createMatomoAnalyticsManifest = function createMatomoAnalyticsManifest(
 	options: MatomoManifestOptions
 ): VendorManifest {
@@ -295,8 +261,6 @@ export interface MatomoAnalyticsOptions {
 /**
  * Creates a Matomo Analytics script.
  *
- * @param options - The options for the Matomo Analytics script.
- * @returns The Matomo Analytics script configuration.
  * @remarks When the resolved `trackerUrl` or `scriptUrl` is missing, for
  *   example because neither `matomoUrl` nor `cloudId` is set and explicit
  *   `trackerUrl` and `scriptUrl` values are not supplied, the helper logs

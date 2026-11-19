@@ -16,7 +16,7 @@ const DevTools = import.meta.env.DEV
 
 /**
  * Links to each experiment run, the assigned arm and the experiment events
- * logged so far. Renders nothing unless `C15T_EXPERIMENT=1` selected the
+ * logged so far. Renders nothing unless `INTH_EXPERIMENT=1` selected the
  * experiment root.
  */
 const ExperimentReadout = () => {

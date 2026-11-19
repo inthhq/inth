@@ -40,7 +40,6 @@ export const ConsentBannerSurfaceContext = createContext<ConsentBannerSurface>(
  * Outside a root this returns the floating bottom-left default so compound
  * parts still render.
  *
- * @returns The resolved variant, position, its source and blocking state.
  * @public
  */
 export const useConsentBannerSurface =

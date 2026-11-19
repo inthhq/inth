@@ -1,17 +1,17 @@
 ---
 title: Clearbit
-description: Load the Clearbit enrichment tag only after marketing consent with the c15t clearbit helper, and check it in DevTools.
-seoTitle: Clearbit cookie consent with c15t
-seoDescription: Load Clearbit only with marketing consent, because Clearbit identifies visitors and their companies. Set it up with the c15t clearbit helper.
+description: Load the Clearbit enrichment tag only after marketing consent with the Inth clearbit helper, and check it in DevTools.
+seoTitle: Clearbit cookie consent with Inth
+seoDescription: Load Clearbit only with marketing consent, because Clearbit identifies visitors and their companies. Set it up with the Inth clearbit helper.
 icon: clearbit
 group: integrations
 ---
 
-The c15t `clearbit` helper keeps the Clearbit tag, `tags.js`, off the page until
+The Inth `clearbit` helper keeps the Clearbit tag, `tags.js`, off the page until
 `marketing` has consent. The category is `marketing`, not `measurement`, because
 Clearbit identifies visitors and their companies. The helper sends no consent
-signal to Clearbit. If the visitor withdraws consent, c15t removes the script
-element. By default, c15t also reloads the page.
+signal to Clearbit. If the visitor withdraws consent, Inth removes the script
+element. By default, Inth also reloads the page.
 
 ## Configure Clearbit
 
@@ -38,7 +38,7 @@ export const scripts = [clearbit({ publishableKey: 'YOUR_PUBLISHABLE_KEY' })];
 ## Loading and revocation
 
 `clearbit` uses the `marketing` category, not `measurement`. Clearbit
-identifies visitors and their companies for enrichment, so c15t treats it as
+identifies visitors and their companies for enrichment, so Inth treats it as
 marketing even though these docs list it with analytics. The `tags.js` script
 loads with `referrerpolicy="strict-origin-when-cross-origin"` only while
 marketing is allowed. On revocation the helper removes the script element and

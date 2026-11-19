@@ -15,13 +15,13 @@ The DOM comparison recognizes these specific implementation equivalents:
 - Hidden SVG labels and the built-in icon marker class are presentation metadata. SVG paths, view boxes, stroke/fill attributes, and actual size, position, computed paint, and transforms remain compared. Intrinsic dimensions can match CSS dimensions only at the same rendered bounds.
 - Fixed trigger positions can use classes or inline coordinates when their actual bounds agree. Computed position and stacking order remain checked.
 - Small switch variant classes can match the corresponding size attribute. Checked/disabled state remains in the DOM, and computed styles include the switch track and thumb.
-- On an Angular page (one with an `[ng-version]` root), empty attributes named `c15t…` are the attribute selectors Angular writes into the DOM: dash-case for components, such as `c15t-consent-button=""`, and lowercased camelCase for directives, such as `c15tconsentdialoglink=""`. They carry no state. The same attribute outside Angular, or with a value, remains compared.
+- On an Angular page (one with an `[ng-version]` root), empty attributes named `inth…` are the attribute selectors Angular writes into the DOM: dash-case for components, such as `inth-consent-button=""`, and lowercased camelCase for directives, such as `inthconsentdialoglink=""`. They carry no state. The same attribute outside Angular, or with a value, remains compared.
 
 Browser regressions cover incorrect dialog semantics, focus, visibility and geometry; wrong heading levels and ID references; changed SVG shape and position; substantive wrappers; and changed switch state or thumb styling. These rules do not permit blanket removal of attributes, classes, or descendants to make a failing story pass.
 
 # Cross-framework comparisons
 
-Cross-framework conformance for the c15t consent surfaces. It loads the
+Cross-framework conformance for the Inth consent surfaces. It loads the
 same story from every framework's Storybook and asserts they are the same
 component, not just components with the same name.
 
@@ -89,9 +89,9 @@ leaving it to rot.
 Every Storybook has to be built and served first:
 
 ```sh
-bun turbo run build --filter=@c15t/storybook-react --filter=@c15t/storybook-svelte \
-  --filter=@c15t/storybook-vue --filter=@c15t/storybook-astro \
-  --filter=@c15t/storybook-angular
+bun turbo run build --filter=@inth/storybook-react --filter=@inth/storybook-svelte \
+  --filter=@inth/storybook-vue --filter=@inth/storybook-astro \
+  --filter=@inth/storybook-angular
 
 bunx http-server apps/storybook-react/storybook-static  --port 6006 --silent &
 bunx http-server apps/storybook-svelte/storybook-static --port 6007 --silent &
@@ -131,7 +131,7 @@ drops out of every comparison.
 `Docs/` stories never pair. They render the recipe each adapter's docs
 publish, and the adapters customize the banner differently: React with
 compound parts, Vue and Svelte with slot classes. The shared plays in
-`@c15t/conformance/play/docs-recipes` check them in each Storybook's
+`@inth/conformance/play/docs-recipes` check them in each Storybook's
 `test-storybook` run instead.
 
 ## DevTools

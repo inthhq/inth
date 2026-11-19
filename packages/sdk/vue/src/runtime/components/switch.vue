@@ -3,7 +3,7 @@ import switchStyles from '@inth/sdk/ui/styles/components/switch';
 
 import '@inth/sdk/ui/styles/components/switch.css';
 
-import { useConsentConfig } from '#c15t/composables';
+import { useConsentConfig } from '#inth/composables';
 
 import { SwitchRoot, SwitchThumb } from '../primitives';
 import { slotAttrs } from '../utils/slot-attrs';

@@ -193,7 +193,7 @@ export default function remarkLintCanonicalIntegrations(options = {}) {
 					? `Keep this vendor's web and mobile setup together in docs/${issue.canonical}; remove the separate vendor page.`
 					: `Ambiguous integration pages: ${issue.conflicts.map((path) => `docs/${path}`).join(', ')}. Keep the established route and consolidate the duplicate.`,
 				{ column: 1, line: 1 },
-				'c15t:canonical-integration-page'
+				'inth:canonical-integration-page'
 			);
 		}
 	};

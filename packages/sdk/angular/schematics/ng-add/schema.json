@@ -1,12 +1,12 @@
 {
 	"$schema": "http://json-schema.org/draft-07/schema",
-	"$id": "c15t-angular-ng-add",
-	"title": "c15t ng-add",
+	"$id": "inth-angular-ng-add",
+	"title": "Inth ng-add",
 	"type": "object",
 	"properties": {
 		"project": {
 			"type": "string",
-			"description": "The application project to add c15t to.",
+			"description": "The application project to add Inth to.",
 			"$default": {
 				"$source": "projectName"
 			}
@@ -18,7 +18,7 @@
 		},
 		"components": {
 			"type": "boolean",
-			"description": "Add <c15t-consent-banner> and <c15t-consent-dialog> to the root component.",
+			"description": "Add <inth-consent-banner> and <inth-consent-dialog> to the root component.",
 			"default": true,
 			"x-prompt": "Add the consent banner and dialog to the root component?"
 		}

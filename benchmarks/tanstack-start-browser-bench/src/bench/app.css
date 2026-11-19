@@ -1,6 +1,6 @@
 /*
  * The app's own stylesheet. The baseline route links only this file; the
- * consent routes link `with-consent.css`, which imports it. c15t's surfaces
+ * consent routes link `with-consent.css`, which imports it. Inth's surfaces
  * render their own styles.
  */
 main {

@@ -8,6 +8,7 @@
  * @internal
  */
 import {
+	BASE_LANGUAGES,
 	POLICY_CONTRACT_VERSION,
 	resolveInitFromManifest,
 } from '@inth/sdk-schema/types';
@@ -27,18 +28,14 @@ import { locationFreeOutcome } from './manifest-browser-location';
 export type OtherLanguage = Exclude<keyof BaseTranslations, 'en'>;
 
 /**
- * Every language the resolver may pick besides English. Their loaders live
- * in `./manifest-browser-languages`, loaded on first use, so this chunk
- * names one chunk rather than one per language.
+ * Every language the resolver may pick. The loaders of all but English
+ * live in `./manifest-browser-languages`, loaded on first use, so this
+ * chunk names one chunk rather than one per language.
  */
-const otherLanguages = new Set<string>(
-	'ar bg bn cs cy da de el es et fi fr ga gu he hi hr ht hu id is it ja kn ko lb lt lv ml mr ms mt nb nl nn pa pl pt rm ro ru sk sl sv ta te th tr ur vi yi zh'.split(
-		' '
-	)
-);
+const baseLanguages: ReadonlySet<string> = new Set(BASE_LANGUAGES);
 
 const isOtherLanguage = (language: string): language is OtherLanguage =>
-	otherLanguages.has(language);
+	language !== 'en' && baseLanguages.has(language);
 
 /** Base copy loaded so far, shared by every transport on the page. */
 const loadedLanguages = new Map<string, Translations>([['en', enTranslations]]);
@@ -73,7 +70,7 @@ const selectableBaseTranslations = function selectableBaseTranslations(
 ): BaseTranslations {
 	const base: Record<string, Translations> = {};
 	if (withPlaceholders) {
-		for (const language of otherLanguages) {
+		for (const language of baseLanguages) {
 			base[language] = enTranslations;
 		}
 	}
@@ -110,8 +107,6 @@ const resolveWithLanguage = async function resolveWithLanguage(
  * Resolve init in the browser: the policy, the visitor's language and, for
  * an IAB policy, the vendor list.
  *
- * @param manifest - The manifest.
- * @param inputs - The visitor's decision inputs.
  * @param fetchImpl - Fetch implementation for the vendor list.
  * @returns The init response the kernel applies.
  * @internal
@@ -140,7 +135,6 @@ export const resolveLocally = async function resolveLocally(
  * Whether every location gets the same banner from this manifest, so the
  * browser can answer for a visitor whose location it doesn't know.
  *
- * @param manifest - The manifest.
  * @returns `true` when the location changes nothing the visitor sees.
  * @internal
  */

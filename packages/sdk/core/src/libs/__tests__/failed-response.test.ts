@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { failedResponseError } from '../failed-response';
 
-const PREFIX = 'c15t hosted transport: /init';
+const PREFIX = 'inth hosted transport: /init';
 
 afterEach(() => {
 	vi.useRealTimers();
@@ -22,7 +22,7 @@ describe('failedResponseError', () => {
 		const error = await failedResponseError(PREFIX, response);
 
 		expect(error.message).toBe(
-			'c15t hosted transport: /init responded 402: This project is out of consent sessions. Upgrade at https://dashboard.example.com/billing. (CONSENT_SESSIONS_EXHAUSTED)'
+			'inth hosted transport: /init responded 402: This project is out of consent sessions. Upgrade at https://dashboard.example.com/billing. (CONSENT_SESSIONS_EXHAUSTED)'
 		);
 		expect(error).toMatchObject({
 			code: 'CONSENT_SESSIONS_EXHAUSTED',
@@ -42,7 +42,7 @@ describe('failedResponseError', () => {
 		const error = await failedResponseError(PREFIX, response);
 
 		expect(error.message).toBe(
-			'c15t hosted transport: /init responded 422: The policy changed. (STALE_POLICY)'
+			'inth hosted transport: /init responded 422: The policy changed. (STALE_POLICY)'
 		);
 		expect(error).toMatchObject({ code: 'STALE_POLICY', status: 422 });
 	});
@@ -56,7 +56,7 @@ describe('failedResponseError', () => {
 		const error = await failedResponseError(PREFIX, response);
 
 		expect(error.message).toBe(
-			'c15t hosted transport: /init responded 502 Bad Gateway'
+			'inth hosted transport: /init responded 502 Bad Gateway'
 		);
 		expect(error).toMatchObject({ status: 502 });
 		expect(error).not.toHaveProperty('code');
@@ -68,7 +68,7 @@ describe('failedResponseError', () => {
 			new Response(null, { status: 429 })
 		);
 
-		expect(error.message).toBe('c15t hosted transport: /init responded 429 ');
+		expect(error.message).toBe('inth hosted transport: /init responded 429 ');
 	});
 
 	test('ignores a body larger than it reads', async () => {
@@ -80,7 +80,7 @@ describe('failedResponseError', () => {
 		const error = await failedResponseError(PREFIX, response);
 
 		expect(error.message).toBe(
-			'c15t hosted transport: /init responded 500 Internal Server Error'
+			'inth hosted transport: /init responded 500 Internal Server Error'
 		);
 	});
 
@@ -99,7 +99,7 @@ describe('failedResponseError', () => {
 		await vi.advanceTimersByTimeAsync(2000);
 
 		await expect(pending).resolves.toMatchObject({
-			message: 'c15t hosted transport: /init responded 503 Service Unavailable',
+			message: 'inth hosted transport: /init responded 503 Service Unavailable',
 			status: 503,
 		});
 	});

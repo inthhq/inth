@@ -1,3 +1,4 @@
+import { resolveIABCopy } from '@inth/sdk/surface-state';
 /**
  * A purpose row whose vendors all use legitimate interest has nothing a
  * consent switch could turn off. Showing one reads as an opt-out while
@@ -7,9 +8,9 @@ import { render } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { describe, expect, test, vi } from 'vitest';
 
+import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import IABPurposeItem from '../lib/components/iab-purpose-item.svelte';
 import IABStackItem from '../lib/components/iab-stack-item.svelte';
-import { getIABTranslations } from '../lib/iab-translations';
 
 const purpose = (hasConsentBasis: boolean) => ({
 	description: '',
@@ -37,7 +38,7 @@ const purpose = (hasConsentBasis: boolean) => ({
 });
 
 const handlers = {
-	onPurposeLegitimateInterestToggle: vi.fn(),
+	onPurposeObjection: vi.fn(),
 	onToggle: vi.fn(),
 	onVendorClick: vi.fn(),
 	onVendorToggle: vi.fn(),
@@ -52,7 +53,7 @@ describe('IAB purpose row consent switch', () => {
 		async (hasConsentBasis, count) => {
 			const { container } = render(IABPurposeItem, {
 				...handlers,
-				iabT: getIABTranslations(),
+				iabT: resolveIABCopy(undefined),
 				isEnabled: true,
 				purpose: purpose(hasConsentBasis),
 				vendorConsents: {},
@@ -65,7 +66,7 @@ describe('IAB purpose row consent switch', () => {
 			// The objection control is there either way, in the row's content,
 			// which mounts when the row first opens.
 			container
-				.querySelector<HTMLElement>('[id^="c15t-preference-item-trigger-"]')
+				.querySelector<HTMLElement>('[id^="inth-preference-item-trigger-"]')
 				?.click();
 			await tick();
 			expect(container.querySelector('button[aria-pressed]')).not.toBeNull();
@@ -76,7 +77,7 @@ describe('IAB purpose row consent switch', () => {
 		const { container } = render(IABStackItem, {
 			...handlers,
 			consents: {},
-			iabT: getIABTranslations(),
+			iabT: resolveIABCopy(undefined),
 			onToggle: vi.fn(),
 			stack: {
 				description: '',
@@ -95,7 +96,7 @@ describe('IAB purpose row consent switch', () => {
 		const onToggle = vi.fn();
 		const { container } = render(IABStackItem, {
 			consents: {},
-			iabT: getIABTranslations(),
+			iabT: resolveIABCopy(undefined),
 			onToggle,
 			onVendorClick: vi.fn(),
 			onVendorToggle: vi.fn(),
@@ -114,5 +115,61 @@ describe('IAB purpose row consent switch', () => {
 		stackSwitch?.click();
 		await Promise.resolve();
 		expect(onToggle).toHaveBeenCalledWith(7, true);
+	});
+});
+
+describe('IAB purpose row objection controls', () => {
+	// Vendor 10 declares purpose 7 on legitimate interest; the restriction
+	// moves vendor 755 there. With an empty draft a plain Save encodes the
+	// purpose and vendor 755 as allowed and vendor 10 as objected.
+	const legitimateInterests = {
+		gvl: completeGVL,
+		publisherRestrictions: [
+			{ purposeId: 7, restrictionType: 2 as const, vendorIds: [755] },
+		],
+		purposeLegitimateInterests: {},
+		vendorLegitimateInterests: {},
+	};
+	const row = purpose(false);
+	const twoVendors = {
+		...row,
+		vendors: [
+			...row.vendors,
+			{ ...row.vendors[0], id: 10, legIntPurposes: [7], name: 'Vendor 10' },
+		],
+	};
+
+	test('show what a plain Save encodes, and object through one call', async () => {
+		const onPurposeObjection = vi.fn();
+		const onVendorLegitimateInterestToggle = vi.fn();
+		const { container } = render(IABPurposeItem, {
+			...handlers,
+			iabT: resolveIABCopy(undefined),
+			isEnabled: false,
+			legitimateInterests,
+			onPurposeObjection,
+			onVendorLegitimateInterestToggle,
+			purpose: twoVendors,
+			vendorConsents: {},
+		});
+		container
+			.querySelector<HTMLElement>('[id^="inth-preference-item-trigger-"]')
+			?.click();
+		await tick();
+		for (const button of container.querySelectorAll<HTMLElement>(
+			'button[aria-expanded="false"]'
+		)) {
+			button.click();
+		}
+		await tick();
+		const pressed = [
+			...container.querySelectorAll<HTMLElement>('button[aria-pressed]'),
+		].map((button) => button.getAttribute('aria-pressed'));
+		// The purpose objection, then vendors 755 and 10.
+		expect(pressed).toEqual(['false', 'false', 'true']);
+
+		container.querySelector<HTMLElement>('button[aria-pressed]')?.click();
+		expect(onPurposeObjection).toHaveBeenCalledWith(7, true);
+		expect(onVendorLegitimateInterestToggle).not.toHaveBeenCalled();
 	});
 });

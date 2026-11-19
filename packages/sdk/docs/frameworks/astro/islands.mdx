@@ -1,22 +1,22 @@
 ---
 title: Islands
-description: Choose whether React, Vue or Svelte renders the c15t preference dialog on an Astro site, and read consent from your own framework islands through the page's shared consent runtime.
+description: Choose whether React, Vue or Svelte renders the Inth preference dialog on an Astro site, and read consent from your own framework islands through the page's shared consent runtime.
 group: frameworks
 ---
 
 ## How the dialog islands work
 
-The c15t banner is plain `.astro` markup. The preference dialog and the IAB
+The Inth banner is plain `.astro` markup. The preference dialog and the IAB
 TCF dialog need component state, so each one is an island in a UI framework.
 The integration's `ui` option picks that framework:
 
 | `ui` | Dialog comes from | Install |
 | --- | --- | --- |
-| `'svelte'` (default) | `@inth/svelte`, bundled with `c15t` | `@astrojs/svelte svelte` |
+| `'svelte'` (default) | `@inth/svelte`, bundled with `@inth/astro` | `@astrojs/svelte svelte` |
 | `'react'` | `@inth/react` | `@astrojs/react react react-dom` |
 | `'vue'` | `@inth/vue` | `@astrojs/vue vue` |
 
-The island is not a `client:load` island. c15t mounts it into
+The island is not a `client:load` island. Inth mounts it into
 `ConsentDialog`'s empty host the first time something opens the dialog. A
 visitor who only accepts or rejects from the banner downloads no framework
 code for the dialog at all.
@@ -29,12 +29,12 @@ integration among `@astrojs/svelte`, `@astrojs/react` and `@astrojs/vue` your
 site registers. With none or several, it picks Svelte, whose runtime is the
 smallest of the three; set `ui` yourself in that case.
 
-Register the framework's Astro integration before `c15t()`:
+Register the framework's Astro integration before `inth()`:
 
 {/* example: fragment */}
 
 ```js title="astro.config.mjs (partial)"
-integrations: [react(), c15t()],
+integrations: [react(), inth()],
 ```
 
 The build stops when that integration is missing, and names the packages to
@@ -72,7 +72,7 @@ Three details matter:
 - **Borrow the runtime.** With `runtime`, `ConsentProvider` neither starts nor
   disposes the runtime. The page owns it.
 - **Pass `colorScheme: null`.** Without it, the adapter manages the
-  `c15t-dark` class itself and can undo the integration's `colorScheme`.
+  `inth-dark` class itself and can undo the integration's `colorScheme`.
 - **Open dialogs through `@inth/astro/client`.** Call `openDialog()` to open
   preferences. An adapter's own dialog state, such as `useSetActiveUI()` in
   React, does not mount the Astro dialog island.
@@ -89,7 +89,7 @@ The Vue and Svelte adapters take the page runtime the same way:
 | Framework | Pass the runtime to | With |
 | --- | --- | --- |
 | React | `ConsentProvider` from `@inth/react` | `runtime={runtime}` and `options={{ colorScheme: null }}` |
-| Vue | `app.use(c15tVue, …)`, with `c15tVue` from `@inth/vue/vue-plugin` | `{ runtime, colorScheme: null }` |
+| Vue | `app.use(inthVue, …)`, with `inthVue` from `@inth/vue/vue-plugin` | `{ runtime, colorScheme: null }` |
 | Svelte | `ConsentProvider` from `@inth/svelte` | `runtime={runtime}` and `options={{ colorScheme: null }}` |
 
 For Vue, an island's app is set up in the `appEntrypoint` module of

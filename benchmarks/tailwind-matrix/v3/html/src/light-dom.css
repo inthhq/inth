@@ -1,8 +1,8 @@
 /* #region docs:tailwind-css-light-dom title="style.css" */
 /*
- * With `shadow: false`, c15t's injected stylesheet is layered and Tailwind
+ * With `shadow: false`, Inth's injected stylesheet is layered and Tailwind
  * 3's preflight is not, so preflight wins. Turn the injected sheet off and
- * build c15t's rules into your Tailwind CSS instead.
+ * build Inth's rules into your Tailwind CSS instead.
  */
 @import '@inth/sdk/styles.css';
 

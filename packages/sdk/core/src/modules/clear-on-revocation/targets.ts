@@ -1,6 +1,7 @@
 import type {
 	ClearOnRevocationCookie,
 	ClearOnRevocationTargets,
+	ClearOnRevocationTools,
 } from './types';
 
 const COOKIE_NAME = /^[!#$%&'*+\-.^_`|~\dA-Za-z]+$/u;
@@ -30,17 +31,14 @@ const cookiePaths = (): string[] => {
 	return [...paths].filter((path) => COOKIE_PATH.test(path));
 };
 
-const cookieDomains = (): string[] => {
-	const domains = [''];
+/** Host-only, then each domain `cookieDomainsOf` names for the page. */
+const cookieDomains = (
+	cookieDomainsOf: ClearOnRevocationTools['cookieDomainsOf']
+): string[] => {
 	const { hostname } = window.location;
-	if (!COOKIE_DOMAIN.test(hostname)) {
-		return domains;
-	}
-	const parts = hostname.split('.');
-	for (let index = 0; index < parts.length; index += 1) {
-		domains.push(parts.slice(index).join('.'));
-	}
-	return domains;
+	return COOKIE_DOMAIN.test(hostname)
+		? ['', ...cookieDomainsOf(hostname)]
+		: [''];
 };
 
 const visibleCookieNames = (): string[] => {
@@ -66,7 +64,8 @@ const validCookieTarget = ({
 
 const clearCookie = (
 	target: string | ClearOnRevocationCookie,
-	protectedKeys: ReadonlySet<string>
+	protectedKeys: ReadonlySet<string>,
+	cookieDomainsOf: ClearOnRevocationTools['cookieDomainsOf']
 ): void => {
 	const { name, domain, path, partitioned } =
 		typeof target === 'string' ? { name: target } : target;
@@ -74,7 +73,8 @@ const clearCookie = (
 		return;
 	}
 	const names = name.endsWith('*') ? visibleCookieNames() : [name];
-	const domains = domain === undefined ? cookieDomains() : [domain];
+	const domains =
+		domain === undefined ? cookieDomains(cookieDomainsOf) : [domain];
 	const paths = path === undefined ? cookiePaths() : [path];
 	const secure =
 		partitioned || window.location.protocol === 'https:' ? '; Secure' : '';
@@ -156,16 +156,21 @@ const clearStorage = (
  */
 export const clearTargets = (
 	targets: ClearOnRevocationTargets,
-	protectedKeys: ReadonlySet<string>
+	protectedKeys: ReadonlySet<string>,
+	protectedSessionKeys: ReadonlySet<string>,
+	cookieDomainsOf: ClearOnRevocationTools['cookieDomainsOf']
 ): void => {
 	for (const cookie of targets.cookies ?? []) {
-		clearCookie(cookie, protectedKeys);
+		clearCookie(cookie, protectedKeys, cookieDomainsOf);
 	}
 	if (targets.localStorage?.length) {
 		clearStorage('localStorage', targets.localStorage, protectedKeys);
 	}
 	if (targets.sessionStorage?.length) {
-		// c15t does not persist consent records in sessionStorage.
-		clearStorage('sessionStorage', targets.sessionStorage);
+		clearStorage(
+			'sessionStorage',
+			targets.sessionStorage,
+			protectedSessionKeys
+		);
 	}
 };

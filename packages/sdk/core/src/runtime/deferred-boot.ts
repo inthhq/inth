@@ -15,12 +15,11 @@
 
 import { hasGlobalPrivacyControlSignal } from '../libs/global-privacy-control';
 import { hasStoredConsentRecord } from '../libs/journey';
+import { PREFETCH_WINDOW_KEY } from '../libs/page-globals';
 import { primeInitRequest } from '../libs/prefetch/prefetch';
 import type { PrefetchedInitialData } from '../libs/prefetch/prefetch';
 import type { PrefetchOptions } from '../libs/prefetch/types';
-import { PREFETCH_WINDOW_KEY } from '../libs/prefetch/window-key';
 import { DEFAULT_INIT_CREDENTIALS } from '../libs/request-context-headers';
-import { STORAGE_KEY_V2 } from '../libs/storage-keys';
 import { readHostedMode } from '../transports/hosted-modes';
 import type { ProviderTransportFactory } from '../transports/mode';
 import type { KernelOverrides } from '../types';
@@ -39,7 +38,6 @@ export type { PendingSnapshotOptions } from './pending-snapshot';
  * data; the caller checks that.
  *
  * @param url - The backend URL the transport is given.
- * @param overrides - The location, language and GPC overrides.
  * @returns The pending response, or `undefined` when no inline prefetch
  * matches it.
  * @internal
@@ -96,8 +94,6 @@ export const findPrefetchedInitFor = function findPrefetchedInitFor(
  * The prefetched `/init` response the engine's `hosted()` transport will
  * take, without taking it.
  *
- * @param mode - The provider's `mode`.
- * @param overrides - The provider's `overrides`.
  * @returns The pending response, or `undefined` when `mode` is not
  * `hosted()` or no inline prefetch matches it.
  * @internal
@@ -128,8 +124,6 @@ export const findPrefetchedInit = function findPrefetchedInit(
  * whose hosted transport the engine builds later. Needs no transport
  * factory, so a deferred provider's first load carries none.
  *
- * @param projectUrl - The provider's `projectUrl`.
- * @param overrides - The provider's `overrides`.
  * @param request - The provider's `journey` setting and consent storage key.
  * @returns The pending response, or `undefined` outside a browser or for an
  * invalid backend URL.
@@ -167,8 +161,6 @@ export const startPrefetchedHostedInit = function startPrefetchedHostedInit(
  * renders, so the banner can show from the answer before the engine's
  * chunk arrives.
  *
- * @param mode - The provider's mode.
- * @param overrides - The provider's `overrides`.
  * @param request - The provider's `journey` setting and consent storage
  * key, which shape the request as they shape the transport's.
  * @returns The pending response, or `undefined` outside a browser and for
@@ -201,12 +193,11 @@ export const startPrefetchedInit = function startPrefetchedInit(
  * Whether a consent record or notice dismissal is stored, without decoding
  * it: a returning visitor, whose engine should not wait.
  *
- * @param storageKey - The consent storage key.
  * @returns `true` when one is present.
  * @internal
  */
 export const hasStoredConsent = function hasStoredConsent(
-	storageKey: string = STORAGE_KEY_V2
+	storageKey?: string
 ): boolean {
 	return hasStoredConsentRecord(storageKey);
 };

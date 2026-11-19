@@ -71,7 +71,7 @@ test('offline mode without rules resolves the recommended pack: strict opt-in fo
 	expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
 });
 
-test('exposes only the window.c15t debug object, not the kernel', async () => {
+test('exposes only the window.__inthDebug debug object, not the kernel', async () => {
 	const screen = await render(
 		<ConsentProvider
 			options={{
@@ -85,11 +85,13 @@ test('exposes only the window.c15t debug object, not the kernel', async () => {
 	await expect
 		.element(screen.getByTestId('consent-banner-accept-button'))
 		.toBeVisible();
-	expect((window as Window & { c15t?: unknown }).c15t).toMatchObject({
+	expect(
+		(window as Window & { __inthDebug?: unknown }).__inthDebug
+	).toMatchObject({
 		mode: 'offline',
 		pkg: '@inth/react',
 	});
-	expect('c15tKernel' in window).toBe(false);
+	expect('inthKernel' in window).toBe(false);
 });
 
 test('failed initialization keeps the first layer hidden and reports the error', async () => {
@@ -262,7 +264,7 @@ test.each([false, true])(
 		const executed = vi.fn();
 		const initialize = vi.fn();
 		const consent = vi.fn();
-		window.addEventListener('c15t-test-vendor-executed', executed);
+		window.addEventListener('inth-test-vendor-executed', executed);
 		const mode = transportMode({ init: vi.fn() });
 		const prefetch = policyFixture({ marketing: true });
 		const provider = () => (
@@ -279,7 +281,7 @@ test.each([false, true])(
 							onBeforeLoad: () => initialize(),
 							onConsentChange: ({ hasConsent }) => consent(hasConsent),
 							textContent: [
-								"window.dispatchEvent(new Event('c15t-test-vendor-executed'));",
+								"window.dispatchEvent(new Event('inth-test-vendor-executed'));",
 								selfRemoving ? 'document.currentScript.remove();' : '',
 							].join(' '),
 						},
@@ -299,7 +301,7 @@ test.each([false, true])(
 			expect(consent).toHaveBeenCalledWith(true);
 			expect(consent).not.toHaveBeenCalledWith(false);
 		} finally {
-			window.removeEventListener('c15t-test-vendor-executed', executed);
+			window.removeEventListener('inth-test-vendor-executed', executed);
 		}
 	}
 );

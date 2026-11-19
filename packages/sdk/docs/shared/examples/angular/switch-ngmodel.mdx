@@ -18,14 +18,14 @@ import {
 		<form method="post" action="/preferences">
 			<label id="marketing-label">Marketing emails</label>
 			<button
-				c15tSwitch
+				inthSwitch
 				aria-labelledby="marketing-label"
 				[(ngModel)]="marketing"
 				name="marketing-switch"
 			>
-				<span c15tSwitchControl><span c15tSwitchThumb></span></span>
+				<span inthSwitchControl><span inthSwitchThumb></span></span>
 				<!-- Submits "on" with the form while checked. -->
-				<input c15tSwitchHiddenInput name="marketing" />
+				<input inthSwitchHiddenInput name="marketing" />
 			</button>
 			<button type="submit">Save</button>
 		</form>

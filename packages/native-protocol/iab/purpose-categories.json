@@ -1,6 +1,6 @@
 {
-	"description": "The c15t categories an IAB TCF decision grants, as `iabPurposesToC15tConsents(purposeConsents, basis)` in `packages/sdk/iab/src/tcf/purpose-mapping.ts` derives them. The basis is what `consentBasisPurposes` in `packages/sdk/iab/src/index.ts` passes: the purposes `vendors` (registered vendors, after publisher restrictions) and `customVendors` (custom, non-IAB vendors) ask consent for, plus 1, 3 and 4 when ad tech providers are listed. A category is granted when every purpose of it in the basis is consented, or all of its purposes when none is. `expected` came from the web function.",
-	"generatedBy": "iabPurposesToC15tConsents in packages/sdk/iab",
+	"description": "The c15t categories an IAB TCF decision grants, as `iabPurposesToInthConsents(purposeConsents, basis)` in `packages/sdk/iab/src/tcf/purpose-mapping.ts` derives them. The basis is what `consentBasisPurposes` in `packages/sdk/iab/src/index.ts` passes: the purposes `vendors` (registered vendors, after publisher restrictions) and `customVendors` (custom, non-IAB vendors) ask consent for, plus 1, 3 and 4 when ad tech providers are listed. A category is granted when every purpose of it in the basis is consented, or all of its purposes when none is. `expected` came from the web function.",
+	"generatedBy": "iabPurposesToInthConsents in packages/sdk/iab",
 	"cases": [
 		{
 			"name": "registered vendors alone decide measurement",

@@ -1,4 +1,9 @@
-export { type Branding, brandingSchema, brandingValues } from './branding';
+export {
+	type Branding,
+	brandingSchema,
+	brandingValues,
+	DEFAULT_BRANDING,
+} from './branding';
 export { parseConsentManifest } from './consent-manifest-schema';
 export { type Hosting, hostingSchema, hostingValues } from './hosting';
 export {
@@ -10,11 +15,9 @@ export {
 export {
 	buildConsentManifestFromConfig,
 	type ConsentManifest,
-	type ConsentManifestBranding,
 	type ConsentManifestConfig,
 	type ConsentManifestAdditionalConsent,
 	type ConsentManifestGVLReference,
-	type ConsentManifestHosting,
 	type ConsentManifestIAB,
 	type ConsentManifestPolicyFailure,
 	type ConsentManifestPolicyPack,
@@ -41,6 +44,7 @@ export {
 	deriveJourneyPrompt,
 	formatExperimentHeader,
 	isSpeculativeRequest,
+	SPECULATION_HEADERS,
 	journeyDomainFrom,
 	parseExperimentHeader,
 	parseJourneyId,
@@ -63,8 +67,7 @@ export {
 	INIT_VERSION_PARAM,
 	type InitRequestParams,
 } from './init-request-params';
-// Export constants separately for runtime-safe usage
-export { brandingValues as brandingValuesConst } from './constants';
+export { DEFAULT_GVL_ENDPOINT } from './constants';
 export {
 	buildConsentId,
 	type ConsentSubmissionIdentity,
@@ -79,7 +82,7 @@ export {
 	consentInputsToOverrides,
 	extractConsentRequestInputs,
 	getRegionFromHeaders,
-	headersToRecord,
+	GPC_HEADERS,
 	parseGlobalPrivacyControl,
 	REGION_HEADERS,
 } from './geo-headers';
@@ -106,6 +109,7 @@ export {
 	gvlVendorUrlSchema,
 } from './gvl';
 export {
+	ADDITIONAL_CONSENT_V2_PATTERN,
 	AD_TECH_PROVIDER_FETCH_TIMEOUT_MS,
 	AD_TECH_PROVIDER_PURPOSES,
 	AD_TECH_PROVIDERS_URL,
@@ -113,10 +117,20 @@ export {
 	adTechProviderFetchSignal,
 	adTechProviderListUrl,
 	adTechProviderSchema,
-	MAX_AD_TECH_PROVIDER_QUERY_IDS,
 	normalizeAdTechProviderIds,
 	parseAdTechProviderList,
 } from './ad-tech-provider';
+export { IAB_STORAGE_KEYS } from './iab-storage-keys';
+export {
+	CONSENT_ONLY_PURPOSES,
+	permittedLegitimateInterestPurposes,
+} from './tcf-purposes';
+export { getIpAddress, type IpAddressConfig, maskIpAddress } from './client-ip';
+export {
+	type ForwardedElement,
+	forwardedNodeAddress,
+	parseForwarded,
+} from './forwarded';
 export {
 	type NonIABVendor,
 	type NonIABVendorConsent,
@@ -238,10 +252,12 @@ export {
 	policyRuleModelSchema,
 	resolvedPolicyRuleSchema,
 } from './policy-wire-schema';
+export { BASE_LANGUAGES } from './base-languages';
 export {
 	type PolicyI18nMessageProfileLike,
 	type PolicyI18nValidationOptions,
 	type PolicyI18nValidationResult,
+	primaryLanguage,
 	validatePolicyI18nConfig,
 } from './policy-i18n-validation';
 export {
@@ -256,22 +272,13 @@ export {
 	policyMatchers,
 	UK_COUNTRY_CODES,
 } from './policy-runtime';
+export { dedupeDefinedValues } from './policy-utils';
 export {
-	compactDefined,
-	dedupeDefinedValues,
-	dedupeTrimmedStrings,
-} from './policy-utils';
-export { resolveProjectUrl } from './server-url';
-export type { ResolveProjectUrlOptions } from './server-url';
-export {
-	getTranslations,
 	getTranslationsData,
 	type I18nMessageProfile,
 	type I18nMessageProfiles,
 	type I18nOptions,
 	type LoggerLike,
-	listProfiles,
-	validateMessages,
 } from './translations-runtime';
 
 export type {

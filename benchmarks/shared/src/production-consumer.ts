@@ -1,5 +1,5 @@
 /**
- * Pure helpers for the production-consumer bench: which c15t build an arm
+ * Pure helpers for the production-consumer bench: which Inth build an arm
  * installs, how its packed tarballs map to package names, the consumer
  * `package.json`, and the scenario definitions with their cold states.
  *
@@ -11,7 +11,7 @@
 import type { BenchColdState, BenchVisitKind } from './visit-definitions';
 import { describeColdState } from './visit-definitions';
 
-/** Where an arm's c15t packages come from. */
+/** Where an arm's Inth packages come from. */
 export type ConsumerArmSource =
 	| { kind: 'workspace' }
 	| { kind: 'root'; path: string }
@@ -27,7 +27,7 @@ const LABEL_PATTERN = /^[a-z0-9][a-z0-9-]*$/u;
 
 /**
  * Parse `--arm <label>=<source>`. Sources: `workspace`, `root:<path>` (pack
- * a built c15t checkout), `tarballs:<dir>` (pre-packed `.tgz` files), and
+ * a built Inth checkout), `tarballs:<dir>` (pre-packed `.tgz` files), and
  * `npm:<version>` (install the published version).
  *
  * @param spec - The flag value.
@@ -86,7 +86,7 @@ export interface WorkspacePackageInfo {
  * including `root` itself, in discovery order.
  *
  * @param packages - Every workspace package, keyed by name.
- * @param root - Entry package name, normally `c15t`.
+ * @param root - Entry package name, normally `inth`.
  * @returns The packages to pack.
  * @throws {Error} When `root` is not a workspace package.
  */
@@ -134,8 +134,8 @@ export const packedTarballName = function packedTarballName(
 export interface ConsumerPackageJsonInput {
 	/** Package name to `file:` tarball path, for tarball arms. */
 	tarballs?: ReadonlyMap<string, string>;
-	/** Published `c15t` version, for npm arms. */
-	c15tVersion?: string;
+	/** Published `inth` version, for npm arms. */
+	inthVersion?: string;
 	nextVersion: string;
 	reactVersion: string;
 	typescriptVersion: string;
@@ -145,39 +145,39 @@ export interface ConsumerPackageJsonInput {
 }
 
 /**
- * The consumer's `package.json`. Tarball arms depend on the `c15t` tarball
- * and override every other `@c15t/*` package to its tarball, so no
+ * The consumer's `package.json`. Tarball arms depend on the `inth` tarball
+ * and override every other `@inth/*` package to its tarball, so no
  * transitive dependency resolves from the registry or the workspace.
  *
  * @param input - Versions and tarball locations.
  * @returns A JSON-serializable package manifest.
- * @throws {Error} When neither tarballs nor a version is supplied, or `c15t` is missing.
+ * @throws {Error} When neither tarballs nor a version is supplied, or `inth` is missing.
  */
 export const consumerPackageJson = function consumerPackageJson(
 	input: ConsumerPackageJsonInput
 ): Record<string, unknown> {
-	let c15tSpecifier: string;
+	let inthSpecifier: string;
 	const overrides: Record<string, string> = {};
 	if (input.tarballs) {
-		const umbrella = input.tarballs.get('c15t');
+		const umbrella = input.tarballs.get('inth');
 		if (!umbrella) {
-			throw new Error('The tarball set has no c15t package.');
+			throw new Error('The tarball set has no inth package.');
 		}
-		c15tSpecifier = `file:${umbrella}`;
+		inthSpecifier = `file:${umbrella}`;
 		for (const [name, path] of input.tarballs) {
-			if (name !== 'c15t') {
+			if (name !== 'inth') {
 				overrides[name] = `file:${path}`;
 			}
 		}
-	} else if (input.c15tVersion) {
-		c15tSpecifier = input.c15tVersion;
+	} else if (input.inthVersion) {
+		inthSpecifier = input.inthVersion;
 	} else {
-		throw new Error('A consumer needs tarballs or a published c15t version.');
+		throw new Error('A consumer needs tarballs or a published inth version.');
 	}
 
 	return {
 		dependencies: {
-			c15t: c15tSpecifier,
+			inth: inthSpecifier,
 			next: input.nextVersion,
 			react: input.reactVersion,
 			'react-dom': input.reactVersion,
@@ -188,7 +188,7 @@ export const consumerPackageJson = function consumerPackageJson(
 			'@types/react-dom': input.typesReactDomVersion,
 			typescript: input.typescriptVersion,
 		},
-		name: 'c15t-production-consumer',
+		name: 'inth-production-consumer',
 		overrides,
 		private: true,
 		scripts: { build: 'next build', start: 'next start' },
@@ -196,7 +196,7 @@ export const consumerPackageJson = function consumerPackageJson(
 	};
 };
 
-/** How an arm's stock surfaces get c15t's rules. */
+/** How an arm's stock surfaces get Inth's rules. */
 export type ConsumerStyleDelivery = 'automatic' | 'external';
 
 /**
@@ -211,7 +211,7 @@ export const CONSUMER_EXTERNAL_STYLESHEET = '@inth/react/styles.css';
 
 /**
  * The consumer's global stylesheet for one arm. The template imports nothing
- * from c15t, as the docs recommend once components deliver their own styles.
+ * from Inth, as the docs recommend once components deliver their own styles.
  * An older build still needs the aggregate import for a styled banner, so the
  * comparison measures each product as its users set it up.
  *

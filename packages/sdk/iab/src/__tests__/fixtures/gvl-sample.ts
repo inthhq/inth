@@ -1,16 +1,5 @@
-/**
- * Sample GVL data for testing.
- *
- * This file contains realistic sample data that mirrors actual GVL structure.
- *
- * @packageDocumentation
- */
+import type { GlobalVendorList } from '@inth/sdk-core';
 
-import type { GlobalVendorList } from '../../tcf/iab-tcf-types';
-
-/**
- * A minimal GVL for fast tests.
- */
 export const minimalGVL: GlobalVendorList = {
 	features: {
 		1: {
@@ -88,9 +77,6 @@ export const minimalGVL: GlobalVendorList = {
 	},
 };
 
-/**
- * A more complete GVL with multiple vendors.
- */
 export const completeGVL: GlobalVendorList = {
 	features: {
 		1: {

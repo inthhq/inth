@@ -8,7 +8,7 @@ import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { PREFETCH_WINDOW_KEY } from '../../../../core/src/libs/prefetch/window-key';
+import { PREFETCH_WINDOW_KEY } from '../../../../core/src/libs/page-globals';
 import { STATIC_BANNER_ATTR as CORE_STATIC_BANNER_ATTR } from '../../../../core/src/libs/static-banner';
 import init from '../../../../core/src/runtime/__tests__/fixtures/hosted-init-gb.json' with { type: 'json' };
 import { ConsentBanner } from '../../components/prompt';
@@ -78,7 +78,7 @@ const mountStaticBanner = function mountStaticBanner(): HTMLElement {
 	for (const { css, id } of STATIC_BANNER_SHEETS) {
 		const style = document.createElement('style');
 		style.dataset.href = id;
-		style.dataset.precedence = 'c15t';
+		style.dataset.precedence = 'inth';
 		style.textContent = css;
 		document.head.append(style);
 		added.push(style);
@@ -120,13 +120,13 @@ afterEach(() => {
 	for (const element of added.splice(0)) {
 		element.remove();
 	}
-	for (const id of ['c15t-early-tap', 'c15t-early-commit']) {
+	for (const id of ['inth-early-tap', 'inth-early-commit']) {
 		document.getElementById(id)?.remove();
 	}
-	for (const key of [PREFETCH_WINDOW_KEY, '__c15tEarlyTaps']) {
+	for (const key of [PREFETCH_WINDOW_KEY, '__inthEarlyTaps']) {
 		Reflect.deleteProperty(window, key);
 	}
-	document.cookie = 'c15t=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+	document.cookie = 'inth=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
 	localStorage.clear();
 });
 
@@ -154,7 +154,6 @@ test('the client banner takes the static banner’s place: one banner, same mark
 	const banner = mountStaticBanner();
 	const staticRoot = banner.querySelector(ROOT)?.outerHTML;
 	expect(staticRoot).toBeTruthy();
-	// Record every frame until the client banner is in.
 	const frames: number[] = [];
 	let watching = true;
 	const watch = () => {
@@ -213,7 +212,7 @@ test('an Accept tapped on the static banner before the client banner is recorded
 	await expect
 		.element(screen.getByTestId('probe'))
 		.toHaveAttribute('data-marketing', 'true');
-	await vi.waitFor(() => expect(localStorage.getItem('c15t')).not.toBeNull(), {
+	await vi.waitFor(() => expect(localStorage.getItem('inth')).not.toBeNull(), {
 		timeout: 5000,
 	});
 	await vi.waitFor(() => expect(subjectSaves()).toHaveLength(1), {

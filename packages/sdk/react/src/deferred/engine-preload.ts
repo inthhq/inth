@@ -13,7 +13,7 @@
  *
  * Both sides read only URLs whose path holds the bundler's chunk path,
  * such as Next.js's `/_next/static/`. Other scripts, such as the
- * consent-gated vendor scripts c15t starts while the engine loads, are
+ * consent-gated vendor scripts Inth starts while the engine loads, are
  * neither preloaded (a visitor who later rejects would still fetch them)
  * nor part of the key (they change from one visit to the next). The
  * preload also requires each URL to sit under a chunk base, origin and
@@ -26,7 +26,7 @@
  */
 
 /** `localStorage` key. @internal */
-export const ENGINE_CHUNKS_KEY = 'c15t-engine-chunks';
+export const ENGINE_CHUNKS_KEY = 'inth-engine-chunks';
 
 /**
  * The origin and path up to the end of `chunks` in `src`'s path, or `''`
@@ -93,7 +93,7 @@ export const learnEngineChunks = function learnEngineChunks<Value>(
 	const loading = load();
 	// The bundler adds the import's chunk scripts within the `import()` call
 	// itself. Reading them now, before any other task runs, leaves out every
-	// script that starts later: a consent-gated script c15t inserts, even one
+	// script that starts later: a consent-gated script Inth inserts, even one
 	// served from the chunk base, and chunks of a later, separate import.
 	let added: string[] = [];
 	try {
@@ -124,8 +124,6 @@ export const learnEngineChunks = function learnEngineChunks<Value>(
 		}
 		learn();
 	};
-	// Records on the side, once the import succeeded; the caller gets
-	// `loading` itself.
 	void record();
 	return loading;
 };

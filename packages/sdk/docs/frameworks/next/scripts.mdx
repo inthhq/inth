@@ -24,13 +24,13 @@ choice allows it.
 
 ## Register several vendors
 
-Every helper goes in the same `scripts` array in `c15t.config.ts`, in the App
+Every helper goes in the same `scripts` array in `inth.config.ts`, in the App
 Router and the Pages Router alike. This config loads Google Tag Manager and
 Meta Pixel together:
 
 {/* example: fragment */}
 
-```ts title="c15t.config.ts"
+```ts title="inth.config.ts"
 import { googleTagManager } from '@inth/integrations/google-tag-manager';
 import { metaPixel } from '@inth/integrations/meta-pixel';
 import { defineConsentConfig } from '@inth/nextjs';
@@ -76,7 +76,7 @@ vendor without a helper. Google helpers follow the
 
 ## Embeds and other requests
 
-Scripts cover vendor code c15t loads for you. For the rest:
+Scripts cover vendor code Inth loads for you. For the rest:
 
 - [Embeds](/docs/frameworks/next/embeds) keeps iframes out of the page with
   `ConsentGate` or the iframe blocker.
@@ -105,12 +105,12 @@ To send your own events only to allowed integrations, see
 ## Migrate from `@next/third-parties`
 
 The components in `@next/third-parties/google` add `next/script` tags and
-embeds when the page renders. c15t never sees them, so the banner
+embeds when the page renders. Inth never sees them, so the banner
 cannot hold them back, and `GoogleAnalytics` and `GoogleTagManager` send no
 Consent Mode signals. Replace each export, keep your IDs, then remove the
 package.
 
-| `@next/third-parties/google` | c15t replacement |
+| `@next/third-parties/google` | Inth replacement |
 | --- | --- |
 | `<GoogleAnalytics gaId="G-XXXXXXXXXX" />` | `gtag({ id: 'G-XXXXXXXXXX', category: 'measurement' })` from `@inth/integrations/google-tag` |
 | `<GoogleTagManager gtmId="GTM-XXXXXXX" />` | `googleTagManager({ id: 'GTM-XXXXXXX' })` from `@inth/integrations/google-tag-manager` |
@@ -133,7 +133,7 @@ counts twice.
 
 The component props map to helper options:
 
-| Prop | c15t |
+| Prop | Inth |
 | --- | --- |
 | `gaId` | `id` on `gtag` |
 | `debugMode` | `config: { debug_mode: true }` on `gtag` |
@@ -151,7 +151,7 @@ that pushes the `gtm.js` start event, before the container script runs, so the
 container's startup triggers can read those values. Pushing the object later,
 like an event, can arrive after those triggers have run.
 
-Seed the queue in the initial HTML instead, before c15t loads the container.
+Seed the queue in the initial HTML instead, before Inth loads the container.
 Add a `beforeInteractive` script to the root `app/layout.tsx`, or to
 `pages/_document.tsx` with the Pages Router. Keep `ConsentRoot` and the rest
 of your layout as they are:
@@ -195,7 +195,7 @@ In `@next/third-parties` 16.x, once you remove the component, every call logs
 `sendGTMEvent` still pushes to `window.dataLayer` without its component, but
 importing it keeps the package installed.
 
-Call the `gtag` function and data layer that c15t sets up instead. The
+Call the `gtag` function and data layer that Inth sets up instead. The
 arguments do not change:
 
 {/* example: fragment */}
@@ -211,7 +211,7 @@ window.dataLayer?.push({ event: 'sign_up', method: 'email' });
 ```
 
 Call them from browser code, such as an event handler. `window.gtag` and
-`window.dataLayer` exist once c15t has set up the Google helper. Until then the
+`window.dataLayer` exist once Inth has set up the Google helper. Until then the
 optional call does nothing and the event is lost, as with `sendGAEvent`. With a
 custom `dataLayer` name on `googleTagManager`, push to `window[name]`
 instead.

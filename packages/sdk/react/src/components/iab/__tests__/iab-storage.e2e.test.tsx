@@ -1,9 +1,3 @@
-/**
- * IAB Storage E2E Tests
- *
- * Browser-based tests for TC String storage compliance.
- */
-
 import { userEvent } from '@vitest/browser/context';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -45,7 +39,6 @@ describe('IAB Storage E2E Tests', () => {
 			await userEvent.click(acceptButton);
 			await waitForElementRemoved('[data-testid="iab-consent-banner-card"]');
 
-			// Wait for localStorage to be updated
 			await vi.waitFor(
 				() => {
 					const stored = getStoredConsent();
@@ -75,7 +68,6 @@ describe('IAB Storage E2E Tests', () => {
 			await userEvent.click(acceptButton);
 			await waitForElementRemoved('[data-testid="iab-consent-banner-card"]');
 
-			// Verify TC string storage
 			const tcString = await vi.waitFor(
 				() => {
 					const stored = getStoredTCString();
@@ -133,13 +125,11 @@ describe('IAB Storage E2E Tests', () => {
 			);
 			await waitForCMP();
 
-			// Before action
 			expect(getStoredConsent()).toBeNull();
 
 			await userEvent.click(acceptButton);
 			await waitForElementRemoved('[data-testid="iab-consent-banner-card"]');
 
-			// After action
 			await vi.waitFor(
 				() => {
 					expect(getStoredConsent()).not.toBeNull();
@@ -161,7 +151,6 @@ describe('IAB Storage E2E Tests', () => {
 			);
 			await waitForCMP();
 
-			// Before action
 			expect(getStoredConsent()).toBeNull();
 
 			await userEvent.click(rejectButton);
@@ -288,8 +277,8 @@ describe('IAB Storage E2E Tests', () => {
 		});
 	});
 
-	describe('c15t Storage Key', () => {
-		test('should use "c15t" key in localStorage', async () => {
+	describe('inth Storage Key', () => {
+		test('should use "inth" key in localStorage', async () => {
 			render(
 				<ConsentProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
@@ -305,7 +294,6 @@ describe('IAB Storage E2E Tests', () => {
 			await userEvent.click(acceptButton);
 			await waitForElementRemoved('[data-testid="iab-consent-banner-card"]');
 
-			// Should use c15t key
 			await vi.waitFor(
 				() => {
 					expect(getStoredConsent()).not.toBeNull();

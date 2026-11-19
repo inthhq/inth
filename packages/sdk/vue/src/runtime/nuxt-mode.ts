@@ -4,16 +4,13 @@
  * build and every runtime agree on them.
  */
 import type { ConsentMode, HostedMode } from '@inth/sdk/modes';
-
-/** Where the module serves its consent route unless `routePrefix` says otherwise. */
-export const DEFAULT_NUXT_ROUTE_PREFIX = '/api/c15t';
+import { DEFAULT_CONSENT_ROUTE_PREFIX } from '@inth/sdk/server';
 
 /** The Nuxt module options that choose where the policy comes from. */
 export interface NuxtConsentModeConfig {
 	/**
-	 * Backend URL. Defaults to `NUXT_PUBLIC_C15T_BACKEND_URL`, then
-	 * `NUXT_PUBLIC_INTH_PROJECT_URL`, read when the build starts and again
-	 * by the server at runtime.
+	 * Backend URL. Defaults to `NUXT_PUBLIC_INTH_PROJECT_URL`, read when the
+	 * build starts and again by the server at runtime.
 	 */
 	projectUrl?: string;
 	/**
@@ -40,7 +37,7 @@ export interface NuxtConsentModeConfig {
 	 * and the browser asks the backend. `/` is rejected when the module
 	 * sets up: a catch-all route at the site root would catch every page.
 	 *
-	 * @default '/api/c15t'
+	 * @default '/api/inth'
 	 */
 	routePrefix?: string | false;
 }
@@ -67,8 +64,6 @@ export type NuxtResolvedModeConfig = Omit<NuxtConsentModeConfig, 'mode'> & {
 /**
  * The mode a config names, `manifest()` when it names none.
  *
- * @param config - The module options or the public runtime config.
- * @returns The mode as data.
  * @internal
  */
 export const readNuxtMode = function readNuxtMode(
@@ -83,8 +78,6 @@ export const readNuxtMode = function readNuxtMode(
  * The module checked the prefix at setup (it rejects `/`), so this runs in
  * the browser without the check.
  *
- * @param config - The module options or the public runtime config.
- * @returns The prefix without a trailing slash.
  * @internal
  */
 export const readNuxtRoutePrefix = function readNuxtRoutePrefix(
@@ -96,7 +89,9 @@ export const readNuxtRoutePrefix = function readNuxtRoutePrefix(
 	) {
 		return undefined;
 	}
-	return trimTrailingSlashes(config.routePrefix ?? DEFAULT_NUXT_ROUTE_PREFIX);
+	return trimTrailingSlashes(
+		config.routePrefix ?? DEFAULT_CONSENT_ROUTE_PREFIX
+	);
 };
 
 /**
@@ -105,7 +100,6 @@ export const readNuxtRoutePrefix = function readNuxtRoutePrefix(
  * does not render per visitor, and `local()` resolves in the browser,
  * where its rules and copy load on demand.
  *
- * @param mode - The mode.
  * @returns `true` when the browser receives a resolved policy.
  * @internal
  */

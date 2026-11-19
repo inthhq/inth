@@ -1,6 +1,6 @@
 /**
- * The preference dialog the init script (`c15t.js`) opens before the
- * engine, in `c15t.dialog.js`.
+ * The preference dialog the init script (`inth.js`) opens before the
+ * engine, in `inth.dialog.js`.
  *
  * It renders the stock dialog against the init script's stand-in: the
  * stand-in's snapshot, its accept and reject (recorded without the engine
@@ -9,7 +9,7 @@
  * same dialog talks to the engine. {@link EarlyDialog.handOver} then gives
  * it to the engine's UI.
  *
- * In `c15t.dialog.js`, not `c15t.js`: the init script carries only the
+ * In `inth.dialog.js`, not `inth.js`: the init script carries only the
  * hooks.
  *
  * @packageDocumentation
@@ -17,26 +17,25 @@
  */
 
 import type { ConsentSnapshot } from '@inth/sdk-core';
+import { prefersReducedMotion } from '@inth/sdk-ui/utils/reduced-motion';
 
 import { stylesheet } from '../generated/dialog-styles';
-import type { C15tGlobalBase } from '../global-base';
+import type { InthGlobalBase } from '../global-base';
 import type { ConsentClient, ScriptTagClientOptions } from '../types';
 import { createDialog } from '../ui/dialog';
-import { prefersReducedMotion } from '../ui/dom';
 import { createStyle } from '../ui/root';
 import type { Surface } from '../ui/surface';
 import type { InitUI } from './boot';
 
 /** What the init script hands the dialog. @internal */
 export interface EarlyDialogHost {
-	/** The stand-in `window.c15t`. */
-	standIn: Pick<C15tGlobalBase, 'getSnapshot' | 'subscribe'> & {
+	/** The stand-in `window.inth`. */
+	standIn: Pick<InthGlobalBase, 'getSnapshot' | 'subscribe'> & {
 		acceptAll: () => unknown;
 		rejectAll: () => unknown;
 	};
 	/** Saves the dialog's input: without the engine when it can. */
 	save: (input: Record<string, unknown>) => unknown;
-	/** Closes the dialog. */
 	closeDialog: () => unknown;
 	/** The presentation options the dialog's actions follow. */
 	presentation: () => ConsentClient['presentation'];
@@ -74,8 +73,6 @@ const RENDERED_FROM = [
  * Create the dialog in the init script's UI root. It opens on the first
  * snapshot whose `activeUI` is `dialog`.
  *
- * @param host - The init script's hooks.
- * @returns The dialog.
  * @internal
  */
 export const openEarlyDialog = function openEarlyDialog(

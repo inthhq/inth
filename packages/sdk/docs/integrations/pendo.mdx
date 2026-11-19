@@ -1,25 +1,25 @@
 ---
 title: Pendo
-description: Load Pendo after measurement consent, configure its tracking settings, and verify loading and withdrawal with c15t.
-seoTitle: Pendo cookie consent with c15t
-seoDescription: Load and initialize Pendo only after measurement consent. The c15t pendo helper stops and resumes event sending and keeps the visitor's identity.
+description: Load Pendo after measurement consent, configure its tracking settings, and verify loading and withdrawal with Inth.
+seoTitle: Pendo cookie consent with Inth
+seoDescription: Load and initialize Pendo only after measurement consent. The Inth pendo helper stops and resumes event sending and keeps the visitor's identity.
 icon: chart-line
 group: integrations
 ---
 
-Pendo records product usage and shows in-app guides. The c15t `pendo` helper
+Pendo records product usage and shows in-app guides. The Inth `pendo` helper
 waits until the `measurement` category is allowed before it downloads the
 Pendo agent, and it calls `pendo.initialize()` only once the agent has loaded
-and consent is still granted. Until then, c15t defines no `pendo` global.
+and consent is still granted. Until then, Inth defines no `pendo` global.
 
 When the visitor withdraws, the helper calls `pendo.stopSendingEvents()`. If
 consent comes back on the same page, it calls `startSendingEvents()` and keeps
-the same visitor identity. c15t still reloads the page by default.
+the same visitor identity. Inth still reloads the page by default.
 
 ## Configure Pendo
 
 Copy the web agent API key from Pendo. Then delete Pendo's install snippet from
-your app, and any tag manager copy, so Pendo can't load outside c15t. Pass
+your app, and any tag manager copy, so Pendo can't load outside Inth. Pass
 visitor and account metadata only when your app has permission to identify the
 visitor.
 
@@ -33,7 +33,7 @@ visitor.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `apiKey` | Required | Web agent API key. Trimmed and URL-encoded into the default loader URL. If it's missing or blank, c15t logs an error and never loads Pendo. |
+| `apiKey` | Required | Web agent API key. Trimmed and URL-encoded into the default loader URL. If it's missing or blank, Inth logs an error and never loads Pendo. |
 | `visitor` | Unset | Visitor metadata passed to `pendo.initialize()`. Replaces any `visitor` in `initializeOptions`. |
 | `account` | Unset | Account metadata passed to `pendo.initialize()`. Replaces any `account` in `initializeOptions`. |
 | `initializeOptions` | Unset | Other `initialize()` options, such as `disableCookies`, `localStorageOnly`, `excludeAllText` and `cookieDomain`. |

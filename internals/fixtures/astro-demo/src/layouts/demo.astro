@@ -4,7 +4,7 @@
  * layouts.
  *
  * One request resolves one policy, so the frame picks the IAB layout when
- * the server resolved a TCF policy (`C15T_IAB=1`) and the standard one
+ * the server resolved a TCF policy (`INTH_IAB=1`) and the standard one
  * otherwise. A real site ships the layout it needs.
  */
 import '../styles/global.css';
@@ -17,10 +17,10 @@ interface Props {
 
 const { title } = Astro.props;
 const Layout =
-	Astro.locals.c15t?.snapshot.model === 'iab' ? IABLayout : BaseLayout;
+	Astro.locals.inth?.snapshot.model === 'iab' ? IABLayout : BaseLayout;
 ---
 
-<Layout title={`${title} — c15t Astro demo`}>
+<Layout title={`${title} — Inth Astro demo`}>
 	<nav>
 		<a href="/">Home</a>
 		<a href="/consent-example">Consent example</a>

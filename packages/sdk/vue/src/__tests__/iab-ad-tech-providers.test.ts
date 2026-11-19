@@ -80,7 +80,7 @@ const policy = normalizePolicyRule({
 });
 
 const init = {
-	branding: 'c15t',
+	branding: 'inth',
 	cmpId: 28,
 	customVendors: [],
 	gvl: completeGVL,
@@ -113,8 +113,6 @@ afterEach(() => {
 /**
  * Mounts the real IAB panel over a CMP handle that loads two providers from
  * a stubbed provider list.
- *
- * @returns The kernel context the panel writes to.
  */
 const mountPanel = async function mountPanel() {
 	vi.stubGlobal(

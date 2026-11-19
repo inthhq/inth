@@ -27,7 +27,6 @@ interface GitHubIssue {
 /**
  * Reads the `--report` path from CLI arguments.
  *
- * @param argv - Arguments after the script path.
  * @returns The report path, defaulting to `live-vendors-report.json`.
  * @throws {Error} when `--report` is passed without a value.
  */
@@ -48,8 +47,6 @@ const parseReportPath = function parseReportPath(argv: string[]): string {
 /**
  * Reads a required environment variable.
  *
- * @param name - Environment variable name.
- * @returns The non-empty value.
  * @throws {Error} naming the variable when it is unset or empty.
  */
 const requireEnv = function requireEnv(name: string): string {
@@ -66,10 +63,7 @@ const requireEnv = function requireEnv(name: string): string {
  * Performs an authenticated GitHub REST request.
  *
  * @param token - GitHub token with `issues: write` scope.
- * @param method - HTTP method.
  * @param path - REST path beginning with `/`.
- * @param body - Optional JSON payload.
- * @returns The parsed JSON response.
  * @throws {Error} with the status and response text on non-2xx responses,
  * or an abort error when the request exceeds 30s.
  */

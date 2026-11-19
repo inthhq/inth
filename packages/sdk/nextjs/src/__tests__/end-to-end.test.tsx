@@ -1,13 +1,3 @@
-/**
- * End-to-end tests for the Next.js adapter.
- *
- * Covers the full flow:
- * 1. Server: resolveConsent calls the backend, returns the enriched state.
- * 2. Client: ConsentRoot with projectUrl auto-fires kernel.commands.init().
- * 3. Client: enabled=false disables init and treats consents as allowed.
- * 4. Prefetched banner visibility reaches the snapshot before the client
- *    roundtrip completes.
- */
 import { useConsent, useSaveConsents, useSnapshot } from '@inth/react';
 import type { KernelConfig } from '@inth/sdk/engine';
 import { manifest } from '@inth/sdk/modes';
@@ -25,8 +15,8 @@ import { testing } from '../testing';
 import { MANIFEST_FIXTURE } from './manifest-fixture';
 import { policyFixture } from './policy-fixture';
 
-type WindowWithC15t = Window & {
-	c15t?: {
+type WindowWithInth = Window & {
+	__inthDebug?: {
 		version: string;
 		pkg: string;
 		mode: string;
@@ -52,7 +42,7 @@ const POLICY_RESOLUTION = writePolicyResolutionWire(
 );
 
 describe('ConsentRoot: projectUrl triggers auto-init', () => {
-	test('root reports Next.js adapter identity on window.c15t', async () => {
+	test('root reports Next.js adapter identity on window.__inthDebug', async () => {
 		const fetchSpy = vi.fn().mockResolvedValue(
 			new Response(JSON.stringify({ policyResolution: POLICY_RESOLUTION }), {
 				headers: { 'content-type': 'application/json' },
@@ -61,13 +51,13 @@ describe('ConsentRoot: projectUrl triggers auto-init', () => {
 		);
 		const originalFetch = globalThis.fetch;
 		globalThis.fetch = fetchSpy as unknown as typeof globalThis.fetch;
-		delete (window as WindowWithC15t).c15t;
+		delete (window as WindowWithInth).__inthDebug;
 
 		try {
 			const { unmount } = await render(
 				<ConsentRoot
 					state={{}}
-					config={{ projectUrl: '/api/c15t' }}
+					config={{ projectUrl: '/api/inth' }}
 					persistence={false}
 				>
 					<div data-testid="probe">ready</div>
@@ -76,16 +66,18 @@ describe('ConsentRoot: projectUrl triggers auto-init', () => {
 
 			await vi.waitFor(() => {
 				// The default mode is manifest().
-				expect((window as WindowWithC15t).c15t).toMatchObject({
+				expect((window as WindowWithInth).__inthDebug).toMatchObject({
 					mode: 'manifest',
 					pkg: '@inth/nextjs',
 				});
 			});
-			expect(typeof (window as WindowWithC15t).c15t?.version).toBe('string');
+			expect(typeof (window as WindowWithInth).__inthDebug?.version).toBe(
+				'string'
+			);
 			unmount();
 		} finally {
 			globalThis.fetch = originalFetch;
-			delete (window as WindowWithC15t).c15t;
+			delete (window as WindowWithInth).__inthDebug;
 		}
 	});
 
@@ -93,7 +85,7 @@ describe('ConsentRoot: projectUrl triggers auto-init', () => {
 		const fetchSpy = vi.fn().mockResolvedValue(
 			new Response(
 				JSON.stringify({
-					branding: 'c15t',
+					branding: 'inth',
 					location: { countryCode: 'DE', regionCode: null },
 					policyResolution: POLICY_RESOLUTION,
 					translations: { language: 'en', translations: { common: {} } },
@@ -118,7 +110,7 @@ describe('ConsentRoot: projectUrl triggers auto-init', () => {
 			const { getByTestId } = await render(
 				<ConsentRoot
 					state={{}}
-					config={{ projectUrl: 'http://bench.example.com/api/c15t' }}
+					config={{ projectUrl: 'http://bench.example.com/api/inth' }}
 					persistence={false}
 				>
 					<Probe />
@@ -181,7 +173,7 @@ describe('ConsentRoot: projectUrl triggers auto-init', () => {
 			const { getByTestId } = await render(
 				<ConsentRoot
 					state={{}}
-					config={{ projectUrl: 'http://bench.example.com/api/c15t' }}
+					config={{ projectUrl: 'http://bench.example.com/api/inth' }}
 					options={{ enabled: false }}
 				>
 					<Probe />
@@ -201,7 +193,6 @@ describe('ConsentRoot: projectUrl triggers auto-init', () => {
 
 describe('ConsentRoot: resolved state reaches first paint', () => {
 	test('prepared policy renders without a duplicate browser init', async () => {
-		// Fetch that resolves on demand — simulates a slow roundtrip.
 		let resolveInit: (value: unknown) => void = () => undefined;
 		const fetchSpy = vi.fn(
 			() =>
@@ -232,15 +223,14 @@ describe('ConsentRoot: resolved state reaches first paint', () => {
 			const { getByTestId } = await render(
 				<ConsentRoot
 					state={state}
-					config={{ projectUrl: 'http://bench.example.com/api/c15t' }}
+					config={{ projectUrl: 'http://bench.example.com/api/inth' }}
 					persistence={false}
 				>
 					<Probe />
 				</ConsentRoot>
 			);
 
-			// First paint carries the prefetched values. The init roundtrip
-			// is still in flight (resolveInit has not been called).
+			// First paint carries the prefetched values.
 			await expect
 				.element(getByTestId('probe'))
 				.toHaveTextContent('gdpr|opt-in|banner');
@@ -307,7 +297,7 @@ describe('ConsentRoot: config picks the transport', () => {
 					url.endsWith('/subjects')
 						? jsonResponse({ ok: true, subjectId: 'sub_saved' })
 						: jsonResponse({
-								branding: 'c15t',
+								branding: 'inth',
 								location: { countryCode: 'DE', regionCode: null },
 								policyDecision: {
 									country: 'DE',
@@ -359,21 +349,29 @@ describe('ConsentRoot: config picks the transport', () => {
 				await expect
 					.element(getByTestId('probe'))
 					.toHaveTextContent('gdpr|DE|true');
+				// Every page of the origin shares the browser's save queue, and
+				// the kernel resends what another page queued once its init
+				// lands: other test files run in pages beside this one. Such a
+				// replay carries no journey; this page's requests carry its own.
+				const thisPage = () =>
+					fetchSpy.mock.calls.filter(
+						([url]) => readJourneyParams(String(url)) !== null
+					);
 				await vi.waitFor(() => {
-					expect(fetchSpy.mock.calls.map(([url]) => pathOf(url))).toEqual([
+					expect(thisPage().map(([url]) => pathOf(url))).toEqual([
 						'/api/consent/init',
 						saveURL,
 					]);
 				});
 				// The init and the save it led to carry one journey.
-				const [initJourney, saveJourney] = fetchSpy.mock.calls.map(([url]) =>
+				const [initJourney, saveJourney] = thisPage().map(([url]) =>
 					readJourneyParams(String(url))
 				);
 				expect(initJourney?.scope).toBe('page');
 				expect(saveJourney?.id).toBe(initJourney?.id);
 				// Manifest-resolved init issues no snapshot token, so the save
 				// asserts the policy it was made against.
-				const saveInit = fetchSpy.mock.calls[1]?.[1];
+				const saveInit = thisPage()[1]?.[1];
 				expect(JSON.parse(String(saveInit?.body))).toMatchObject({
 					fingerprint: policyFixture({}, { id: 'gdpr' }).initialPolicyResolution
 						.fingerprints.policy,
@@ -431,7 +429,7 @@ describe('ConsentRoot: config picks the transport', () => {
 			Promise.resolve(
 				pathOf(url).endsWith('/init')
 					? jsonResponse({
-							branding: 'c15t',
+							branding: 'inth',
 							location: { countryCode: 'US', regionCode: 'CA' },
 							policyResolution: writePolicyResolutionWire(
 								policyFixture({}, { id: 'us-ca-opt-out' })
@@ -475,7 +473,7 @@ describe('ConsentRoot: config picks the transport', () => {
 	test('projectUrl only: manifest() re-inits against the backend /init', async () => {
 		const fetchSpy = vi.fn().mockResolvedValue(
 			jsonResponse({
-				branding: 'c15t',
+				branding: 'inth',
 				location: { countryCode: 'DE', regionCode: null },
 				policyResolution: writePolicyResolutionWire(
 					policyFixture({}, { id: 'gdpr' }).initialPolicyResolution
@@ -516,7 +514,7 @@ describe('ConsentRoot: config picks the transport', () => {
 				pathOf(url).endsWith('/subjects')
 					? jsonResponse({ ok: true, subjectId: 'sub_saved' })
 					: jsonResponse({
-							branding: 'c15t',
+							branding: 'inth',
 							location: { countryCode: 'DE', regionCode: null },
 							policyResolution: writePolicyResolutionWire(
 								policyFixture({}, { id: 'gdpr' }).initialPolicyResolution

@@ -1,8 +1,8 @@
 # Custom banner
 
-Northwind Coffee's consent UI, built from c15t's headless hooks. c15t decides
+Northwind Coffee's consent UI, built from Inth's headless hooks. Inth decides
 when to ask, which buttons the visitor's policy needs and what gets recorded.
-The markup, copy and CSS belong to the shop, and the c15t stylesheet is never
+The markup, copy and CSS belong to the shop, and the Inth stylesheet is never
 loaded.
 
 The prompt is a centered dialog that blocks the page until the visitor
@@ -10,9 +10,9 @@ answers. It asks one question, lists the cookie categories, and shows the
 actions the policy returns in the order it returns them. Reject and Accept
 look the same.
 
-c15t has two surfaces, the banner and the preference dialog, and the policy
+Inth has two surfaces, the banner and the preference dialog, and the policy
 gives each its own actions. Save only exists on the second. So the modal has
-two steps instead of putting switches on the first one. Choose moves c15t to
+two steps instead of putting switches on the first one. Choose moves Inth to
 the dialog surface, and the same modal turns each category into a switch.
 Nothing opens on top of it.
 
@@ -33,7 +33,7 @@ Nothing opens on top of it.
   `inert` and stops scrolling.
 - **`components/consent.tsx`** mounts `ConsentRoot` with the PostHog script
   and `presentation: { prompt: { variant: 'wall' } }`, which makes the first
-  step blocking. c15t won't block a notice, so a notice policy gets the same
+  step blocking. Inth won't block a notice, so a notice policy gets the same
   modal without the backdrop.
 - **`lib/scripts.ts`** declares PostHog as an `after-consent` script in the
   `measurement` category.
@@ -53,12 +53,12 @@ bun run --cwd examples/showcase-custom-banner dev
 
 Then open http://localhost:3110.
 
-Set `NEXT_PUBLIC_C15T_BACKEND_URL` in `.env.local` to your Inth project URL,
-such as `https://your-project.inth.app`. c15t reads the project's consent
+Set `NEXT_PUBLIC_INTH_PROJECT_URL` in `.env.local` to your Inth project URL,
+such as `https://your-project.inth.app`. Inth reads the project's consent
 manifest and sends each choice there.
 
 Set `NEXT_PUBLIC_POSTHOG_KEY` to send events to your own PostHog project.
-Without it the app uses a placeholder key. c15t still loads PostHog after you
+Without it the app uses a placeholder key. Inth still loads PostHog after you
 allow Analytics, and PostHog's config request returns a 404.
 
 ## Docs

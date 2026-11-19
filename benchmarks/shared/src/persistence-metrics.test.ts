@@ -34,17 +34,17 @@ it('measures the real cookie projections and hydrates without writes', async () 
 	// the v1 notice cookie keeps its format. The companion repeats the
 	// notice fields it is bound to and adds the ID.
 	expect(cookies.map((cookie) => cookie.split('=')[0]).sort()).toEqual([
-		'c15t',
-		'c15t-notice',
-		'c15t-notice-subject',
+		'inth',
+		'inth-notice',
+		'inth-notice-subject',
 	]);
 	const cookieValue = (name: string) =>
 		cookies
 			.find((cookie) => cookie.startsWith(`${name}=`))
 			?.slice(name.length + 1);
 	const subjectId = kernel.getSnapshot().subject?.subjectId;
-	expect(cookieValue('c15t-notice-subject')).toBe(
-		`${cookieValue('c15t-notice')}&sid=${subjectId}`
+	expect(cookieValue('inth-notice-subject')).toBe(
+		`${cookieValue('inth-notice')}&sid=${subjectId}`
 	);
 	const bytes = Object.fromEntries(
 		cookies.map((cookie) => {
@@ -60,20 +60,20 @@ it('measures the real cookie projections and hydrates without writes', async () 
 		})
 	);
 	const budget = reactBrowserBudgetsForScenario('policy-notice').find(
-		(entry) => entry.metric === 'c15tCookieBytes'
+		(entry) => entry.metric === 'inthCookieBytes'
 	);
 	expect.assert(budget);
 	const headerBytes = new TextEncoder().encode(cookies.join('; ')).length;
 	expect(
 		evaluateBudget(
 			budget,
-			summarizeMetric('c15tCookieBytes', 'bytes', [headerBytes])
+			summarizeMetric('inthCookieBytes', 'bytes', [headerBytes])
 		).pass
 	).toBe(true);
 	expect(
 		evaluateBudget(
 			budget,
-			summarizeMetric('c15tCookieBytes', 'bytes', [budget.threshold + 1])
+			summarizeMetric('inthCookieBytes', 'bytes', [budget.threshold + 1])
 		).pass
 	).toBe(false);
 	const repeated = createConsentKernel({ initialPolicyResolution: resolution });

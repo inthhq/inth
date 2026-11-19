@@ -31,6 +31,7 @@ import {
 	saveIABConsentSurface,
 	showConsentSurface,
 } from '@inth/sdk-core/surface-actions';
+import { hosted } from '@inth/sdk-core/transports';
 import type { Theme } from '@inth/sdk-ui/theme';
 
 import { createBrowserRuntime } from './create-runtime';
@@ -52,7 +53,7 @@ import type {
 
 export { ACTION_ATTRIBUTE, PREFERENCES_HASH } from './page-actions';
 
-/** Values `data-c15t-action` accepts. */
+/** Values `data-inth-action` accepts. */
 export type PageAction =
 	| 'accept'
 	| 'reject'
@@ -84,10 +85,10 @@ export interface CreateConsentClientContext {
 	mountUI?: ConsentUIMounter;
 	/**
 	 * The launcher slot the prebuilt UI's trigger reads. Only the
-	 * script-tag global uses it; see `C15tGlobalBase.publishDevToolsLauncher`.
+	 * script-tag global uses it; see `InthGlobalBase.publishDevToolsLauncher`.
 	 */
 	publishDevToolsLauncher?: PublishDevToolsLauncher;
-	/** Package name reported on `window.c15t`. */
+	/** Package name reported on `window.inth`. */
 	pkg?: string;
 	/**
 	 * Set by the script-tag global. Script-tag files are always production
@@ -102,6 +103,40 @@ export interface ResolvedMode {
 	name: ConsentModeName | 'testing' | 'custom';
 }
 
+/**
+ * The mode a transport factory such as `hosted()` or `manifest()` names.
+ *
+ * @internal
+ */
+export const factoryMode = function factoryMode(
+	factory: ProviderTransportFactory
+): ResolvedMode {
+	const { kind } = factory;
+	return {
+		factory,
+		name: kind === 'hosted' || kind === 'manifest' ? kind : 'custom',
+	};
+};
+
+/**
+ * The hosted backend at `projectUrl`.
+ *
+ * @param pkg - The entry, for the error.
+ * @throws {Error} Without a `projectUrl`.
+ * @internal
+ */
+export const hostedMode = function hostedMode(
+	projectUrl: string | undefined,
+	pkg: string
+): ResolvedMode {
+	if (!projectUrl) {
+		throw new Error(
+			`${pkg}: \`projectUrl\` is required. Set it to your Inth project URL (data-project-url on a script tag), or use testing() from @inth/sdk/testing in tests.`
+		);
+	}
+	return { factory: hosted({ projectUrl }), name: 'hosted' };
+};
+
 const dispatchDocumentEvent = function dispatchDocumentEvent(
 	name: keyof ConsentClientEventMap,
 	detail: unknown
@@ -109,12 +144,12 @@ const dispatchDocumentEvent = function dispatchDocumentEvent(
 	if (typeof document === 'undefined') {
 		return;
 	}
-	document.dispatchEvent(new CustomEvent(`c15t:${name}`, { detail }));
+	document.dispatchEvent(new CustomEvent(`inth:${name}`, { detail }));
 };
 
 /**
  * Run one `on()` listener so a throw is reported instead of stopping the
- * listeners after it and the matching `c15t:*` document event.
+ * listeners after it and the matching `inth:*` document event.
  */
 const callListener = function callListener<PayloadType>(
 	event: keyof ConsentClientEventMap,
@@ -156,11 +191,7 @@ const resolvePageAction = function resolvePageAction(
  * Construction has no DOM or storage effects. Call {@link ConsentClient.start}
  * to hydrate stored records, resolve the policy and mount the UI.
  *
- * @param options - Client options.
- * @param mode - The selected transport.
- * @param context - Entry-point wiring.
- * @returns The client.
- * @throws {Error} When the mode cannot be resolved from the options.
+ * @throws {Error} When `options.iab` is on in an entry without IAB.
  */
 // oxlint-disable-next-line max-lines-per-function -- One cohesive lifecycle: construct, start, dispose.
 export const createConsentClientWith = function createConsentClientWith(
@@ -200,8 +231,6 @@ export const createConsentClientWith = function createConsentClientWith(
 		theme: options.ui === false ? undefined : options.ui?.theme,
 		user: options.user,
 		vendors: options.vendors,
-		// The script-tag build owns `window.c15t`; core must not overwrite it.
-		windowDebug: false,
 	});
 	const { kernel } = runtime;
 	// Inert tags own the vendor slugs they name, the way scripts, rules and
@@ -303,7 +332,7 @@ export const createConsentClientWith = function createConsentClientWith(
 				)
 			: new IABUnavailableError(
 					'this page loads the build without IAB',
-					'Load c15t.iab.js instead of c15t.js, or import from @inth/sdk/iab-client'
+					'Load inth.iab.js instead of inth.js, or import from @inth/sdk/iab-client'
 				);
 		emit('error', error);
 		queueMicrotask(() => {
@@ -376,6 +405,9 @@ export const createConsentClientWith = function createConsentClientWith(
 	 * UI has no opt-in fallback: without the CMP and its vendor list it shows
 	 * the error, so this reports one and confirms nothing.
 	 */
+	const emitError = (error: unknown): void => {
+		emit('error', error instanceof Error ? error : new Error(String(error)));
+	};
 	const saveIAB = async (blanket?: 'acceptAll' | 'rejectAll') => {
 		const handle = runtime.iab;
 		const snapshot = kernel.getSnapshot();
@@ -385,14 +417,18 @@ export const createConsentClientWith = function createConsentClientWith(
 			) {
 				throw new Error('IAB privacy settings are not ready.');
 			}
-			return await saveIABConsentSurface(kernel, () => {
-				if (blanket) {
-					handle[blanket]();
-				}
-				return handle.save();
-			});
+			return await saveIABConsentSurface(
+				kernel,
+				() => {
+					if (blanket) {
+						handle[blanket]();
+					}
+					return handle.save();
+				},
+				emitError
+			);
 		} catch (error) {
-			emit('error', error instanceof Error ? error : new Error(String(error)));
+			emitError(error);
 			return { ok: false };
 		}
 	};
@@ -491,7 +527,7 @@ export const createConsentClientWith = function createConsentClientWith(
 		mountUI(uiOptions?: ConsentUIOptions) {
 			if (!context.mountUI) {
 				throw new Error(
-					'@inth/sdk: this build is headless. Load c15t.js, or import `mountConsentUI` from "@inth/sdk".'
+					'@inth/sdk: this build is headless. Load inth.js, or import `mountConsentUI` from "@inth/sdk".'
 				);
 			}
 			ui?.destroy();
@@ -598,7 +634,7 @@ export const createConsentClientWith = function createConsentClientWith(
 			if (disposed) {
 				return;
 			}
-			// Inert `<script type="text/plain" data-c15t-category>` tags a
+			// Inert `<script type="text/plain" data-inth-category>` tags a
 			// returning visitor already consented to run straight away.
 			gatedScripts.scan();
 			if (disposed) {

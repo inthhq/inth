@@ -1,5 +1,5 @@
 /**
- * Clearing stored records: every c15t record removed, then the clear epoch
+ * Clearing stored records: every Inth record removed, then the clear epoch
  * stored.
  *
  * First-load code, unlike the other writes in `writer/`. `clear()` runs it
@@ -9,30 +9,31 @@
  *
  * @internal
  */
-import type { CookieOptions } from '../../libs/cookie';
-import { deleteCookie, writeCookie } from '../../libs/cookie';
+import { IAB_STORAGE_KEYS } from '@inth/sdk-schema/types';
+
+import {
+	deleteCookie,
+	deleteCookieInEveryScope,
+	writeCookie,
+} from '../../libs/cookie';
 import { removeLegacySubjectId } from '../../libs/legacy-subject-id';
+import { removeLocalStorageKey } from '../../libs/local-storage';
+import {
+	storageKeyFamilies,
+	resolveStorageKeys,
+} from '../../libs/storage-keys';
 import { EPOCH_CLOCK_TOLERANCE_MS } from './record-codec';
-import { readStoredClearEpoch, resolveStorageKeys } from './record-storage';
+import { readStoredClearEpoch } from './record-storage';
 import type { StorageConfig } from './types';
 
-const removeLocalStorageKey = function removeLocalStorageKey(
-	key: string
-): void {
-	try {
-		window.localStorage?.removeItem(key);
-	} catch {
-		// Blocked storage: the read path reports it, and holds nothing here.
-	}
-};
-
 /**
- * Removes explicit choices (configured and legacy keys, cookie and
- * localStorage), the notice dismissal and the vendor denials with their
- * cookie projections, the legacy `<key>-privacy` record an alpha may have
- * left, the `<key>-sid` subject ID c15t 3.2 stored before any choice, and
- * the IAB records. Cookie deletion uses the same domain handling
- * as writes so a cross-subdomain cookie is actually removed.
+ * Removes, for the configured family and every legacy family it reads,
+ * the explicit choice, the notice dismissal and the vendor denials with
+ * their cookie projections and the `<key>-privacy` record an alpha may
+ * have left; then the `<key>-sid` subject ID c15t 3.2 stored before any
+ * choice, and the IAB records. The configured family's cookies are
+ * deleted with the same domain handling as writes, so a cross-subdomain
+ * cookie is actually removed; a legacy family's at every scope.
  *
  * Queued backend replays and subject reassignments are the kernel's save
  * outbox: the kernel drops them on the `records:cleared` event that follows
@@ -41,41 +42,46 @@ const removeLocalStorageKey = function removeLocalStorageKey(
  * @internal
  */
 export const clearStoredConsentRecords = function clearStoredConsentRecords(
-	cookie?: CookieOptions,
 	config?: StorageConfig
 ): void {
 	if (typeof document === 'undefined') {
 		return;
 	}
-	const keys = resolveStorageKeys(config);
-	// v3 alphas stored standing GPC directives under `<key>-privacy`. GPC is
-	// a live signal now and never persisted, but clearing still deletes what
-	// an alpha left behind.
-	const both = [
-		keys.consent,
-		keys.legacyConsent,
-		keys.notice,
-		keys.noticeSubject,
-		`${keys.consent}-privacy`,
-		keys.vendors,
-	];
-	// localStorage first, then the cookies.
-	for (const key of [...both, keys.cookieMiss, keys.noticeCookieMiss]) {
-		if (key) {
+	for (const [index, family] of storageKeyFamilies(
+		resolveStorageKeys(config)
+	).entries()) {
+		const both = [
+			family.consent,
+			family.notice,
+			family.noticeSubject,
+			family.privacy,
+			family.vendors,
+		];
+		for (const key of [...both, family.cookieMiss, family.noticeCookieMiss]) {
 			removeLocalStorageKey(key);
 		}
-	}
-	for (const key of both) {
-		if (key) {
-			deleteCookie(key, cookie, config);
+		for (const key of both) {
+			// The readers take a legacy family's cookie at any scope this
+			// page is sent, such as c15t's with `crossSubdomain`.
+			if (index === 0) {
+				deleteCookie(key, config);
+			} else {
+				deleteCookieInEveryScope(key, config);
+			}
 		}
 	}
-	removeLegacySubjectId(config, cookie);
+	removeLegacySubjectId(config);
 	// Addon bytes must be removed even when the addon is not mounted.
-	removeLocalStorageKey('c15t-iab-authority-v1');
-	removeLocalStorageKey('euconsent-v2');
-	deleteCookie('euconsent-v2', cookie, config);
-	deleteCookie('euconsent-v2');
+	removeLocalStorageKey(IAB_STORAGE_KEYS.authority);
+	removeLocalStorageKey(IAB_STORAGE_KEYS.c15tAuthority);
+	for (const key of [
+		IAB_STORAGE_KEYS.tcString,
+		IAB_STORAGE_KEYS.additionalConsent,
+	]) {
+		removeLocalStorageKey(key);
+		deleteCookie(key, config);
+		deleteCookie(key);
+	}
 };
 
 /**
@@ -100,8 +106,7 @@ export const encodeClearEpoch = function encodeClearEpoch(
  */
 export const writeStoredClearEpoch = function writeStoredClearEpoch(
 	epoch: number,
-	config: StorageConfig | undefined,
-	cookie?: CookieOptions
+	config: StorageConfig | undefined
 ): void {
 	const key = resolveStorageKeys(config).epoch;
 	const text = encodeClearEpoch(epoch);
@@ -110,15 +115,13 @@ export const writeStoredClearEpoch = function writeStoredClearEpoch(
 	} catch {
 		// Blocked or full storage: the cookie copy still carries the epoch.
 	}
-	writeCookie(key, text, cookie, config);
+	writeCookie(key, text, config);
 };
 
 /**
  * Remove every stored record and store the clear epoch for a clear made at
  * `at`. A no-op without a document.
  *
- * @param config - Where the records live.
- * @param at - When the clear happened.
  * @param knownEpoch - The newest epoch the caller has read, so the new one
  * is past it even when storage lost it.
  * @internal
@@ -131,7 +134,7 @@ export const clearStoredRecords = function clearStoredRecords(
 	if (typeof document === 'undefined') {
 		return;
 	}
-	clearStoredConsentRecords(undefined, config);
+	clearStoredConsentRecords(config);
 	// The epoch outlives the clear it records: decisions confirmed before it
 	// stay void wherever another runtime writes them back. Always past the
 	// previous epoch, even when the clock went back: a lower epoch would let

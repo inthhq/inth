@@ -104,7 +104,7 @@ describe('fetchCachedAdTechProviders', () => {
 		const cache: AdTechProviderCache = new Map([
 			[
 				`${reference.url}|89`,
-				{ expiresAt: 1000, providers: [META], staleUntil: 5000 },
+				{ expiresAt: 1000, loaded: true, staleUntil: 5000, value: [META] },
 			],
 		]);
 		const { expire } = controlDeadline();
@@ -122,7 +122,7 @@ describe('fetchCachedAdTechProviders', () => {
 		const cache: AdTechProviderCache = new Map([
 			[
 				`${reference.url}|89`,
-				{ expiresAt: 1000, providers: [META], staleUntil: 5000 },
+				{ expiresAt: 1000, loaded: true, staleUntil: 5000, value: [META] },
 			],
 		]);
 		const providers = await fetchCachedAdTechProviders({
@@ -138,7 +138,12 @@ describe('fetchCachedAdTechProviders', () => {
 		const cache: AdTechProviderCache = new Map([
 			[
 				`${reference.url}|89`,
-				{ expiresAt: 1000, providers: [META], staleUntil: 10_000_000 },
+				{
+					expiresAt: 1000,
+					loaded: true,
+					staleUntil: 10_000_000,
+					value: [META],
+				},
 			],
 		]);
 		const load = (now: number, fetch: typeof globalThis.fetch) =>
@@ -169,7 +174,7 @@ describe('fetchCachedAdTechProviders', () => {
 		const cache: AdTechProviderCache = new Map([
 			[
 				`${reference.url}|89`,
-				{ expiresAt: 1000, providers: [META], staleUntil: 30_000 },
+				{ expiresAt: 1000, loaded: true, staleUntil: 30_000, value: [META] },
 			],
 		]);
 		const down = unavailable as unknown as typeof globalThis.fetch;
@@ -181,7 +186,7 @@ describe('fetchCachedAdTechProviders', () => {
 	});
 
 	test('keeps a relative endpoint apart for each fetch that resolves it', async () => {
-		const relative = { providers: [89], url: '/api/c15t/additional-consent' };
+		const relative = { providers: [89], url: '/api/inth/additional-consent' };
 		const TENANT_A = { ...META, name: 'Meta (tenant A)' };
 		const TENANT_B = { ...META, name: 'Meta (tenant B)' };
 		const tenantA = listing(TENANT_A);

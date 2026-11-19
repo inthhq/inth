@@ -15,7 +15,7 @@ import {
 } from './policy-rule-presets';
 
 const manifest = {
-	branding: 'c15t',
+	branding: 'inth',
 	revision: 'translations-test',
 	schemaVersion: 2,
 } satisfies ConsentManifest;
@@ -69,6 +69,21 @@ describe('manifest hosting', () => {
 
 		expect(built).not.toHaveProperty('hosting');
 		expect(resolveInitFromManifest(built, {})).not.toHaveProperty('hosting');
+	});
+});
+
+describe('manifest branding', () => {
+	test('defaults to Inth, the branding a snapshot starts with', async () => {
+		const built = await buildConsentManifestFromConfig({});
+
+		expect(built.branding).toBe('inth');
+		expect(resolveInitFromManifest(built, {}).branding).toBe('inth');
+	});
+
+	test('keeps the branding the config names', async () => {
+		const built = await buildConsentManifestFromConfig({ branding: 'c15t' });
+
+		expect(resolveInitFromManifest(built, {}).branding).toBe('c15t');
 	});
 });
 

@@ -6,17 +6,16 @@ first loads it:
 
 <include src="../examples/vue/vite-config.mdx" />
 
-Without a `projectUrl` option, the plugin reads `VITE_C15T_BACKEND_URL`, then
-`VITE_INTH_PROJECT_URL`, from the environment or `.env`. `manifest()` from `@inth/vue/vue-plugin`, with no
+Without a `projectUrl` option, the plugin reads `VITE_INTH_PROJECT_URL`, from the environment or `.env`. `manifest()` from `@inth/vue/vue-plugin`, with no
 options, reads the downloaded policy and the same backend URL, so `src/main.ts`
 needs no import of the snapshot:
 
 {/* example: fragment */}
 
 ```ts title="src/main.ts"
-import { c15tVue, manifest } from '@inth/vue/vue-plugin';
+import { inthVue, manifest } from '@inth/vue/vue-plugin';
 
-app.use(c15tVue, { mode: manifest(), scripts });
+app.use(inthVue, { mode: manifest(), scripts });
 ```
 
 The browser resolves the visitor's policy from the bundled snapshot, with no

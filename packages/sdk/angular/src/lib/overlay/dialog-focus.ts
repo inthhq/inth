@@ -12,24 +12,19 @@ import {
 } from '@angular/core';
 import type { Signal } from '@angular/core';
 import type { ActiveUI } from '@inth/sdk/engine';
-import { firstTabbable } from '@inth/sdk/ui/utils';
+import { findFocusRestoreEquivalent, firstTabbable } from '@inth/sdk/ui/utils';
 
 import { ConsentManager } from '../core/consent-manager';
 
 /**
- * Moves focus into a dialog: to an element marked
- * `data-c15t-dialog-focus="true"`, else the first tabbable one, else the
+ * Moves focus into a dialog: to its first tabbable element, else the
  * dialog itself. The same target a focus trap's `first-tabbable` uses, so
  * a trap never moves it a second time.
  *
- * @param node - The dialog element.
  * @internal
  */
 export const focusInitially = function focusInitially(node: HTMLElement): void {
-	const preferred = node.querySelector<HTMLElement>(
-		'[data-c15t-dialog-focus="true"]'
-	);
-	(preferred ?? firstTabbable(node) ?? node).focus();
+	(firstTabbable(node) ?? node).focus();
 };
 
 /**
@@ -39,7 +34,7 @@ export const focusInitially = function focusInitially(node: HTMLElement): void {
  *
  * @internal
  */
-@Directive({ selector: '[c15tInitialFocus]' })
+@Directive({ selector: '[inthInitialFocus]' })
 export class InitialFocus {
 	constructor() {
 		if (!isPlatformBrowser(inject(PLATFORM_ID))) {
@@ -58,33 +53,6 @@ export class InitialFocus {
 		});
 	}
 }
-
-/**
- * Where focus returns after a dialog: the opener itself, or the element
- * that took its place. A banner's Customize button is gone while the
- * dialog is open, and the banner renders a new one when it comes back.
- */
-const focusReturnTarget = function focusReturnTarget(
-	document: Document,
-	opener: HTMLElement
-): HTMLElement | null {
-	if (opener.isConnected) {
-		return opener;
-	}
-	if (opener.id) {
-		const byId = document.getElementById(opener.id);
-		if (byId) {
-			return byId;
-		}
-	}
-	const testId = opener.getAttribute('data-testid');
-	if (testId) {
-		return document.querySelector<HTMLElement>(
-			`[data-testid="${testId.replaceAll(/["\\]/gu, '\\$&')}"]`
-		);
-	}
-	return null;
-};
 
 /**
  * Returns focus to the control that opened the dialog once it closes.
@@ -125,7 +93,7 @@ export const returnFocusAfterDialog = function returnFocusAfterDialog(
 			) {
 				return;
 			}
-			focusReturnTarget(document, target)?.focus({ preventScroll: true });
+			findFocusRestoreEquivalent(target)?.focus({ preventScroll: true });
 		}, 0);
 	};
 	const remember = (): void => {
@@ -220,7 +188,7 @@ export const returnFocusAfterDialog = function returnFocusAfterDialog(
 					active === document.body ||
 					active === document.documentElement
 				) {
-					focusReturnTarget(document, target)?.focus({ preventScroll: true });
+					findFocusRestoreEquivalent(target)?.focus({ preventScroll: true });
 				}
 			}, 0);
 		}

@@ -1,35 +1,18 @@
-/**
- * Test setup and utilities for IAB TCF tests.
- *
- * This file provides:
- * - Mock factories for GVL, vendors, purposes, and consent data
- * - Window mock setup for __tcfapi
- * - Common test fixtures
- *
- * @packageDocumentation
- */
-
-import type { NonIABVendor } from '@inth/sdk-core';
-import { vi } from 'vitest';
-
 import type {
 	GlobalVendorList,
+	NonIABVendor,
+	TCFApi,
+	TCFConsentData,
+} from '@inth/sdk-core';
+import type {
 	GVLFeature,
 	GVLPurpose,
 	GVLSpecialFeature,
 	GVLStack,
 	GVLVendor,
-	TCFApi,
-	TCFConsentData,
-} from '../tcf/iab-tcf-types';
+} from '@inth/sdk-schema/types';
+import { vi } from 'vitest';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Purpose Mock Factory
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Creates a mock IAB purpose.
- */
 export const createMockPurpose = function createMockPurpose(
 	id: number,
 	overrides?: Partial<GVLPurpose>
@@ -68,10 +51,6 @@ export const createMockPurposes = function createMockPurposes(): Record<
 	return purposes;
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Special Purpose Mock Factory
-// ─────────────────────────────────────────────────────────────────────────────
-
 export const createMockSpecialPurposes =
 	function createMockSpecialPurposes(): Record<number, GVLPurpose> {
 		return {
@@ -89,10 +68,6 @@ export const createMockSpecialPurposes =
 			},
 		};
 	};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Feature Mock Factory
-// ─────────────────────────────────────────────────────────────────────────────
 
 export const createMockFeatures = function createMockFeatures(): Record<
 	number,
@@ -120,9 +95,6 @@ export const createMockFeatures = function createMockFeatures(): Record<
 	};
 };
 
-/**
- * Creates mock special features.
- */
 export const createMockSpecialFeatures =
 	function createMockSpecialFeatures(): Record<number, GVLSpecialFeature> {
 		return {
@@ -141,13 +113,6 @@ export const createMockSpecialFeatures =
 		};
 	};
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Vendor Mock Factory
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Creates a mock IAB vendor.
- */
 export const createMockVendor = function createMockVendor(
 	id: number,
 	overrides?: Partial<GVLVendor>
@@ -182,13 +147,6 @@ export const createMockVendors = function createMockVendors(
 	return vendors;
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Stack Mock Factory
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Creates mock stacks.
- */
 export const createMockStacks = function createMockStacks(): Record<
 	number,
 	GVLStack
@@ -225,10 +183,6 @@ export const createMockStacks = function createMockStacks(): Record<
 	};
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GVL Mock Factory
-// ─────────────────────────────────────────────────────────────────────────────
-
 export const createMockGVL = function createMockGVL(
 	overrides?: Partial<GlobalVendorList>
 ): GlobalVendorList {
@@ -250,10 +204,6 @@ export const createMockGVL = function createMockGVL(
 		...overrides,
 	};
 };
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Consent State Mock Factory
-// ─────────────────────────────────────────────────────────────────────────────
 
 export const createMockTCFConsent = function createMockTCFConsent(
 	overrides?: Partial<TCFConsentData>
@@ -295,9 +245,6 @@ export const createMockTCFConsent = function createMockTCFConsent(
 	};
 };
 
-/**
- * Creates a mock TCF consent data object with all consents granted.
- */
 export const createMockTCFConsentAllGranted =
 	function createMockTCFConsentAllGranted(): TCFConsentData {
 		const purposeConsents: Record<number, boolean> = {};
@@ -317,10 +264,6 @@ export const createMockTCFConsentAllGranted =
 			vendorsDisclosed: { 1: true, 10: true, 2: true, 755: true },
 		};
 	};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Non-IAB Vendor Mock Factory
-// ─────────────────────────────────────────────────────────────────────────────
 
 export const createMockNonIABVendor = function createMockNonIABVendor(
 	id: string,
@@ -342,13 +285,6 @@ export const createMockNonIABVendor = function createMockNonIABVendor(
 	};
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Window Mock for __tcfapi
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Sets up a mock __tcfapi on window for testing.
- */
 type TcfApiListener = (...args: unknown[]) => void;
 
 export const setupTCFApiMock = function setupTCFApiMock(): {
@@ -424,18 +360,11 @@ export const setupTCFApiMock = function setupTCFApiMock(): {
 	};
 };
 
-/**
- * Cleans up __tcfapi from window.
- */
 export const cleanupTCFApi = function cleanupTCFApi(): void {
 	if (typeof window !== 'undefined') {
 		delete (window as { __tcfapi?: TCFApi }).__tcfapi;
 	}
 };
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Fetch Mock Helper
-// ─────────────────────────────────────────────────────────────────────────────
 
 export const createMockFetchResponse = function createMockFetchResponse(
 	gvl: GlobalVendorList
@@ -464,10 +393,6 @@ export const setupFetchMock = function setupFetchMock(
 		mockFetch,
 	};
 };
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Storage Mock Helper
-// ─────────────────────────────────────────────────────────────────────────────
 
 export const setupStorageMock = function setupStorageMock(
 	initialData?: Record<string, string>
@@ -522,10 +447,6 @@ export const setupStorageMock = function setupStorageMock(
 	};
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Publisher Restrictions Mock Factory
-// ─────────────────────────────────────────────────────────────────────────────
-
 /**
  * Restriction types per IAB TCF spec.
  */
@@ -538,9 +459,6 @@ export enum RestrictionType {
 	REQUIRE_LEGITIMATE_INTEREST = 2,
 }
 
-/**
- * Publisher restriction entry.
- */
 export interface PublisherRestriction {
 	purposeId: number;
 	restrictionType: RestrictionType;
@@ -559,25 +477,19 @@ export const createMockPublisherRestriction =
 		};
 	};
 
-/**
- * Creates multiple publisher restrictions for testing.
- */
 export const createMockPublisherRestrictions =
 	function createMockPublisherRestrictions(): PublisherRestriction[] {
 		return [
-			// Type 0: Purpose 2 not allowed for vendors 1, 2
 			{
 				purposeId: 2,
 				restrictionType: RestrictionType.NOT_ALLOWED,
 				vendorIds: [1, 2],
 			},
-			// Type 1: Purpose 7 requires consent for vendor 10
 			{
 				purposeId: 7,
 				restrictionType: RestrictionType.REQUIRE_CONSENT,
 				vendorIds: [10],
 			},
-			// Type 2: Purpose 9 requires LI for vendor 755
 			{
 				purposeId: 9,
 				restrictionType: RestrictionType.REQUIRE_LEGITIMATE_INTEREST,
@@ -586,16 +498,6 @@ export const createMockPublisherRestrictions =
 		];
 	};
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Legitimate Interest State Mock Factory
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Creates a mock legitimate interest state with optional objections.
- *
- * @param objections - Object mapping vendorIds or purposeIds to objection state
- * @returns LI state object
- */
 export const createMockLegitimateInterestState =
 	function createMockLegitimateInterestState(objections?: {
 		vendorObjections?: Record<number, boolean>;
@@ -604,7 +506,6 @@ export const createMockLegitimateInterestState =
 		vendorLegitimateInterests: Record<number, boolean>;
 		purposeLegitimateInterests: Record<number, boolean>;
 	} {
-		// Default: all LI allowed (true)
 		const vendorLegitimateInterests: Record<number, boolean> = {
 			1: true,
 			10: true,
@@ -625,7 +526,6 @@ export const createMockLegitimateInterestState =
 			9: true,
 		};
 
-		// Apply objections (set to false)
 		if (objections?.vendorObjections) {
 			for (const [vendorId, objected] of Object.entries(
 				objections.vendorObjections
@@ -652,18 +552,11 @@ export const createMockLegitimateInterestState =
 		};
 	};
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Consent Event Mock Factory
-// ─────────────────────────────────────────────────────────────────────────────
-
 /**
  * Event status values per IAB TCF spec.
  */
 export type EventStatus = 'tcloaded' | 'cmpuishown' | 'useractioncomplete';
 
-/**
- * Creates a mock consent event.
- */
 export const createMockConsentEvent = function createMockConsentEvent(
 	status: EventStatus,
 	overrides?: Partial<{
@@ -730,17 +623,9 @@ export const createMockConsentEvent = function createMockConsentEvent(
 	};
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// LI Objection Simulation Helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
 /**
- * Simulates a user objecting to LI for a vendor and/or purpose.
- *
- * @param state - Current consent state
- * @param vendorId - Vendor to object to
- * @param purposeId - Optional purpose to object to (cascades to all vendors if set)
- * @returns Updated state with objection applied
+ * Objects to LI for a vendor. With `purposeId`, also objects at purpose
+ * level, which covers every vendor.
  */
 export const simulateUserObjection = function simulateUserObjection(
 	state: TCFConsentData,
@@ -749,13 +634,11 @@ export const simulateUserObjection = function simulateUserObjection(
 ): TCFConsentData {
 	const updated = { ...state };
 
-	// Always set vendor LI to false (objection)
 	updated.vendorLegitimateInterests = {
 		...state.vendorLegitimateInterests,
 		[vendorId]: false,
 	};
 
-	// If purpose is specified, also object at purpose level
 	if (purposeId !== undefined) {
 		updated.purposeLegitimateInterests = {
 			...state.purposeLegitimateInterests,
@@ -794,10 +677,6 @@ export const createMockGVLWithLIVendors =
 		});
 	};
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TC String Assertion Helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
 export const assertTCStringHasLIObjection =
 	function assertTCStringHasLIObjection(
 		decoded: { vendorLegitimateInterests: Record<number, boolean> },
@@ -812,9 +691,6 @@ export const assertTCStringHasLIObjection =
 		}
 	};
 
-/**
- * Asserts that a TC String contains consent for a specific purpose.
- */
 export const assertTCStringHasConsent = function assertTCStringHasConsent(
 	decoded: { purposeConsents: Record<number, boolean> },
 	purposeId: number

@@ -16,11 +16,20 @@
  * forward, even when the clock went back, so a later clear never lets
  * earlier decisions back in.
  *
+ * A legacy family that another runtime writes, such as c15t's, keeps its
+ * own epoch under its own key, which voids that family's records alone.
+ * A server seed of a kind the browser holds no configured-family record
+ * of may come from a legacy family, so the latest legacy epoch voids it
+ * too (`applyNewerStoredRecords`).
+ *
  * Ties: a category decision in the clearing millisecond counts only when
- * its writer had seen the clear (see {@link choiceSinceEpoch}). The notice
- * dismissal and vendor denials keep a tie: after a clear neither exists,
- * so one surviving a tie can only restrict or hide the notice, never
- * grant.
+ * its writer had seen the clear (see {@link choiceSinceEpoch}). One
+ * exception: a server seed keeps such a decision (`applyNewerStoredRecords`
+ * in `mount.ts`). The seed does not say who wrote it, and a server that
+ * read the cookies after the clear holds an envelope written under that
+ * epoch, whose tie counts. The notice dismissal and vendor denials keep a
+ * tie: after a clear neither exists, so one surviving a tie can only
+ * restrict or hide the notice, never grant.
  *
  * Pure.
  */
@@ -42,10 +51,8 @@ import type { VendorChoice } from '../../types';
  * clear. Anywhere else (a runtime that missed the clear, a record from an
  * older writer) it may predate the clear, so it is void.
  *
- * @param choice - The choice to filter.
  * @param epoch - The clear epoch in force; `0` voids nothing.
  * @param knowsClear - Whether the choice's writer had seen this clear.
- * @returns The surviving choice, or `null`.
  */
 export const choiceSinceEpoch = function choiceSinceEpoch(
 	choice: ExplicitChoice | null,

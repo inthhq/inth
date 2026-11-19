@@ -1,5 +1,5 @@
 /**
- * `ng add @inth/angular`: adds `provideC15t()` to the app's root providers
+ * `ng add @inth/angular`: adds `provideInth()` to the app's root providers
  * and, unless `components` is false, the consent banner and dialog to the
  * root component. It edits source files once and adds no build steps.
  *
@@ -61,11 +61,11 @@ const DEFAULT_BASE_INDENT = '    ';
 const DEFAULT_INDENT_UNIT = '  ';
 
 const COMPONENTS = [
-	{ from: PACKAGE_NAME, name: 'ConsentBanner', tag: 'c15t-consent-banner' },
+	{ from: PACKAGE_NAME, name: 'ConsentBanner', tag: 'inth-consent-banner' },
 	{
 		from: `${PACKAGE_NAME}/consent-dialog`,
 		name: 'ConsentDialog',
-		tag: 'c15t-consent-dialog',
+		tag: 'inth-consent-dialog',
 	},
 ] as const;
 
@@ -221,7 +221,7 @@ const resolveProject = async (
 		return only;
 	}
 	throw new SchematicsException(
-		'Pass --project with the application to add c15t to.'
+		'Pass --project with the application to add Inth to.'
 	);
 };
 
@@ -305,11 +305,11 @@ const backendOf = (options: NgAddOptions): string =>
 
 /** The provider call to add by hand, on one line. */
 const providerExpression = (options: NgAddOptions): string =>
-	`provideC15t({ projectUrl: ${backendOf(options)} })`;
+	`provideInth({ projectUrl: ${backendOf(options)} })`;
 
 /** What the provider rules leave for the rules after them. */
 interface ProviderOutcome {
-	/** Whether `provideC15t()` could not be added. */
+	/** Whether `provideInth()` could not be added. */
 	failed: boolean;
 }
 
@@ -327,7 +327,6 @@ interface Subscribable<Value> {
  * `lastValueFrom` without RxJS: the peer range includes RxJS 6, which has
  * no `lastValueFrom`.
  *
- * @param observable - What to wait for.
  * @returns Its last value, or `undefined` when it emits none.
  * @throws {unknown} What the Observable errors with.
  * @internal
@@ -364,15 +363,15 @@ const providerRules = (
 	];
 	const expression = (base: string, unit: string): string =>
 		[
-			'provideC15t({',
+			'provideInth({',
 			...bodyLines.map((line) => `${base}${unit}${line}`),
 			`${base}})`,
 		].join('\n');
 	const inserted = expression(DEFAULT_BASE_INDENT, DEFAULT_INDENT_UNIT);
 
 	const addProvider = addRootProvider(project, ({ code, external }) => {
-		const provide = external('provideC15t', PACKAGE_NAME);
-		const text = inserted.replace('provideC15t(', `${provide}(`);
+		const provide = external('provideInth', PACKAGE_NAME);
+		const text = inserted.replace('provideInth(', `${provide}(`);
 		return code`${text}`;
 	});
 
@@ -387,7 +386,7 @@ const providerRules = (
 			} catch {
 				outcome.failed = true;
 				context.logger.warn(
-					`Could not add provideC15t() to the providers of ${mainFile}. Add ${providerExpression(options)} to your application's providers.`
+					`Could not add provideInth() to the providers of ${mainFile}. Add ${providerExpression(options)} to your application's providers.`
 				);
 				return tree;
 			}
@@ -400,7 +399,7 @@ const providerRules = (
 		() => {
 			if (!answer) {
 				context.logger.warn(
-					`Replace ${PLACEHOLDER_URL} in provideC15t() with the backend URL of your Inth project.`
+					`Replace ${PLACEHOLDER_URL} in provideInth() with the backend URL of your Inth project.`
 				);
 			}
 		},
@@ -422,11 +421,11 @@ const MODULE_STUBS: Readonly<Record<string, { file: string; text: string }>> = {
 		text: 'export declare function bootstrapApplication(...args: unknown[]): any;\n',
 	},
 	[PACKAGE_NAME]: {
-		file: '/__c15t_angular__.d.ts',
-		text: 'export declare function provideC15t(...options: unknown[]): unknown;\nexport declare class ConsentBanner {}\n',
+		file: '/__inth_angular__.d.ts',
+		text: 'export declare function provideInth(...options: unknown[]): unknown;\nexport declare class ConsentBanner {}\n',
 	},
 	[`${PACKAGE_NAME}/consent-dialog`]: {
-		file: '/__c15t_angular_consent_dialog__.d.ts',
+		file: '/__inth_angular_consent_dialog__.d.ts',
 		text: 'export declare class ConsentDialog {}\n',
 	},
 };
@@ -494,7 +493,7 @@ const createAppProgram = (
 /**
  * Whether the name at `node` resolves, through imports, aliases, namespaces
  * and re-exports, to `name` exported by `from`, one of
- * {@link MODULE_STUBS}. Every lookup of a framework or c15t export goes
+ * {@link MODULE_STUBS}. Every lookup of a framework or Inth export goes
  * through here, so a local binding of the same name never counts.
  */
 const resolvesTo = (
@@ -521,19 +520,16 @@ const resolvesTo = (
 };
 
 /**
- * The first of `files` that calls `@inth/angular`'s `provideC15t`.
+ * The first of `files` that calls `@inth/angular`'s `provideInth`.
  *
  * The type checker resolves each call's callee through imports, aliases,
- * namespaces and local re-exports, so a barrel or `provideC15t as consent`
+ * namespaces and local re-exports, so a barrel or `provideInth as consent`
  * counts, and a local function of that name or the text in a comment does
  * not.
  *
- * @param tree - The workspace.
  * @param files - The reachable files, in search order.
- * @param resolve - Resolves the files' imports.
- * @returns The file, or `undefined`.
  */
-const findProvideC15tCall = (
+const findProvideInthCall = (
 	tree: Tree,
 	files: readonly string[],
 	resolve: ImportResolver
@@ -542,7 +538,7 @@ const findProvideC15tCall = (
 	const checker = program.getTypeChecker();
 	const calls = (node: ts.Node): boolean =>
 		(ts.isCallExpression(node) &&
-			resolvesTo(checker, node.expression, PACKAGE_NAME, 'provideC15t')) ||
+			resolvesTo(checker, node.expression, PACKAGE_NAME, 'provideInth')) ||
 		(ts.forEachChild(node, calls) ?? false);
 	return files.find((file) => {
 		const source = program.getSourceFile(toProgramPath(file));
@@ -550,9 +546,6 @@ const findProvideC15tCall = (
 	});
 };
 
-/**
- * The names `source` binds at its top level: imports and declarations.
- */
 /** A name `source` binds at its top level. */
 interface TopLevelBinding {
 	readonly name: ts.Identifier;
@@ -675,7 +668,7 @@ const templateElements = (text: string, path: string): Set<string> => {
 	return visitor.names;
 };
 
-/** How the root component refers to one c15t component. */
+/** How the root component refers to one Inth component. */
 interface ComponentBinding {
 	readonly from: string;
 	readonly imported: string;
@@ -690,9 +683,9 @@ interface ComponentBinding {
 }
 
 /**
- * The name the root component uses for each c15t component: a binding that
+ * The name the root component uses for each Inth component: a binding that
  * already resolves to it, else its own name, else an unused alias such as
- * `C15tConsentBanner` when a local binding has the name.
+ * `InthConsentBanner` when a local binding has the name.
  */
 const bindComponents = (
 	program: ts.Program,
@@ -717,10 +710,10 @@ const bindComponents = (
 				typeKeyword: existing.typeOnly ? existing.typeKeyword : undefined,
 			};
 		}
-		const candidates = [name, `C15t${name}`];
+		const candidates = [name, `Inth${name}`];
 		let local = candidates.find((candidate) => !used.has(candidate));
 		for (let suffix = 2; local === undefined; suffix += 1) {
-			const candidate = `C15t${name}${suffix}`;
+			const candidate = `Inth${name}${suffix}`;
 			local = used.has(candidate) ? undefined : candidate;
 		}
 		return { from, imported: name, local, needsImport: true };
@@ -790,8 +783,8 @@ const unwrap = (node: ts.Expression): ts.Expression =>
 		: node;
 
 /**
- * What a walk of the root providers found: `provideC15t()`, no
- * `provideC15t()`, or a value it cannot follow statically, such as a
+ * What a walk of the root providers found: `provideInth()`, no
+ * `provideInth()`, or a value it cannot follow statically, such as a
  * function that returns the config or a conditional.
  */
 type RootProviders = 'found' | 'absent' | 'unknown';
@@ -813,7 +806,7 @@ const propertyName = (name: ts.PropertyName): string | undefined =>
 		: undefined;
 
 /**
- * Whether the root injector gets `@inth/angular`'s `provideC15t()`. From
+ * Whether the root injector gets `@inth/angular`'s `provideInth()`. From
  * `bootstrapApplication(App, config)`, it follows `config` (inline, a name
  * of one through imports and `const` aliases, spreads of others, and each
  * config `mergeApplicationConfig` merges) to its `providers` (a property,
@@ -822,7 +815,7 @@ const propertyName = (name: ts.PropertyName): string | undefined =>
  * `makeEnvironmentProviders`. A call outside the root, such as on a route,
  * does not count. A value it cannot follow statically is `unknown`.
  */
-const rootProvidesC15t = (
+const rootProvidesInth = (
 	tree: Tree,
 	mainFile: string,
 	resolve: ImportResolver
@@ -939,7 +932,7 @@ const rootProvidesC15t = (
 						checker,
 						expression.expression,
 						PACKAGE_NAME,
-						'provideC15t'
+						'provideInth'
 					)
 				) {
 					return 'found';
@@ -963,7 +956,7 @@ const rootProvidesC15t = (
 					]);
 				}
 				// The app's own function could return anything; a library's
-				// provider function, such as `provideRouter()`, is not c15t's.
+				// provider function, such as `provideRouter()`, is not Inth's.
 				return callsLocalCode(expression) ? 'unknown' : 'absent';
 			},
 			'absent'
@@ -1206,7 +1199,7 @@ const addComponents = (
 ): void => {
 	const manual = (reason: string): void => {
 		context.logger.warn(
-			`${reason} Add ConsentBanner from ${PACKAGE_NAME} and ConsentDialog from ${PACKAGE_NAME}/consent-dialog to your root component's imports, and <c15t-consent-banner /> <c15t-consent-dialog /> to its template.`
+			`${reason} Add ConsentBanner from ${PACKAGE_NAME} and ConsentDialog from ${PACKAGE_NAME}/consent-dialog to your root component's imports, and <inth-consent-banner /> <inth-consent-dialog /> to its template.`
 		);
 	};
 
@@ -1288,10 +1281,9 @@ const addComponents = (
 };
 
 /**
- * Adds c15t to an Angular application.
+ * Adds Inth to an Angular application.
  *
  * @param options - Options from the prompts or command line.
- * @returns The rule the Angular CLI runs.
  */
 export const ngAdd =
 	(options: NgAddOptions): Rule =>
@@ -1308,10 +1300,10 @@ export const ngAdd =
 		const resolverFor: ResolverFor = (host) =>
 			createImportResolver(host, sourceRoot, tsconfig);
 		const resolve = resolverFor(tree);
-		const root = rootProvidesC15t(tree, mainFile, resolve);
+		const root = rootProvidesInth(tree, mainFile, resolve);
 		if (root === 'found') {
 			context.logger.info(
-				'The root providers already include provideC15t(); leaving them as they are.'
+				'The root providers already include provideInth(); leaving them as they are.'
 			);
 		} else if (root === 'unknown') {
 			// A second provider would split the consent state; the user
@@ -1319,20 +1311,20 @@ export const ngAdd =
 			// builds none, so they wait for the user too.
 			outcome.failed = true;
 			context.logger.warn(
-				`Could not tell whether the root providers in ${mainFile} include provideC15t(): the config is built in a way ng-add cannot follow. If they do not, add ${providerExpression(options)} to them.`
+				`Could not tell whether the root providers in ${mainFile} include provideInth(): the config is built in a way ng-add cannot follow. If they do not, add ${providerExpression(options)} to them.`
 			);
 		} else {
 			// A call outside the root providers, such as on a route, gives
 			// that part of the app its own consent state; the root still
 			// needs one.
-			const elsewhere = findProvideC15tCall(
+			const elsewhere = findProvideInthCall(
 				tree,
 				filesReachedFrom(tree, mainFile, resolve),
 				resolve
 			);
 			if (elsewhere) {
 				context.logger.warn(
-					`${elsewhere} calls provideC15t() outside the application's root providers. Adding one to the root providers; remove the other unless that part of the app needs its own consent state.`
+					`${elsewhere} calls provideInth() outside the application's root providers. Adding one to the root providers; remove the other unless that part of the app needs its own consent state.`
 				);
 			}
 			rules.push(
@@ -1353,7 +1345,7 @@ export const ngAdd =
 				// user adds both, so the app never runs half set up.
 				if (outcome.failed) {
 					context.logger.warn(
-						`Add ConsentBanner from ${PACKAGE_NAME} and ConsentDialog from ${PACKAGE_NAME}/consent-dialog to your root component's imports, and <c15t-consent-banner /> <c15t-consent-dialog /> to its template, once provideC15t() is in the providers.`
+						`Add ConsentBanner from ${PACKAGE_NAME} and ConsentDialog from ${PACKAGE_NAME}/consent-dialog to your root component's imports, and <inth-consent-banner /> <inth-consent-dialog /> to its template, once provideInth() is in the providers.`
 					);
 					return;
 				}

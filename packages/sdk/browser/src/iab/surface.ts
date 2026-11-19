@@ -1,6 +1,10 @@
 import type { ConsentSnapshot, PresentationAction } from '@inth/sdk-core';
 import type { ConsentRuntimeIABHandle } from '@inth/sdk-core/runtime';
-import { resolveIABBannerSummary } from '@inth/sdk-iab/headless';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk-core/runtime/page-globals';
+import {
+	resolveIABBannerCopy,
+	resolveIABBannerSummary,
+} from '@inth/sdk-iab/headless';
 import { setupFocusTrap, setupScrollLock } from '@inth/sdk-ui/utils';
 
 import { classes } from '../generated/iab-styles';
@@ -191,29 +195,31 @@ export const createIABSurface = (
 			);
 		} else {
 			const summary = resolveIABBannerSummary(snapshot.iab);
+			const bannerCopy = resolveIABBannerCopy(
+				t,
+				summary,
+				bannerOptions.description
+			);
+			// The link sits inside the sentence, as in the framework banners.
 			headerCopy.append(
 				h(
 					'p',
 					{ class: css(styles.description) },
-					(bannerOptions.description ?? t.banner.description).replace(
-						'{partnerCount}',
-						String(summary.vendorCount)
-					)
-				)
-			);
-			headerCopy.append(
-				h(
-					'button',
-					{
-						class: css(classes.banner.partnersLink),
-						'data-testid': 'iab-consent-banner-partners-link',
-						onclick: () => {
-							vendorsFirst = true;
-							client.openDialog();
+					bannerCopy.descriptionBefore,
+					h(
+						'button',
+						{
+							class: css(classes.banner.partnersLink),
+							'data-testid': 'iab-consent-banner-partners-link',
+							onclick: () => {
+								vendorsFirst = true;
+								client.openDialog();
+							},
+							type: 'button',
 						},
-						type: 'button',
-					},
-					t.banner.partnersLink.replace('{count}', String(summary.vendorCount))
+						bannerCopy.partnersLink
+					),
+					bannerCopy.descriptionAfter
 				)
 			);
 			headerCopy.append(
@@ -221,16 +227,7 @@ export const createIABSurface = (
 					'ul',
 					{ class: css(classes.banner.purposeList) },
 					...summary.displayItems.map((name) => h('li', {}, name)),
-					summary.remainingCount
-						? h(
-								'li',
-								{},
-								t.banner.andMore.replace(
-									'{count}',
-									String(summary.remainingCount)
-								)
-							)
-						: null
+					bannerCopy.andMore ? h('li', {}, bannerCopy.andMore) : null
 				)
 			);
 			headerCopy.append(
@@ -286,11 +283,10 @@ export const createIABSurface = (
 		const branding = slot(
 			renderBranding({
 				branding: snapshot.branding,
-				hide: dialog && (dialogOptions.hideBranding ?? false),
+				hide: surfaceOptions.hideBranding ?? false,
 				noStyle,
 				securedBy: all.common.securedBy,
-				testId: `${prefix}-branding`,
-				variant: dialog ? 'dialog-tag' : 'banner-tag',
+				surface: dialog ? 'iab-dialog' : 'iab-banner',
 			}),
 			dialog ? 'iabConsentDialogTag' : 'iabConsentBannerTag'
 		);
@@ -304,6 +300,7 @@ export const createIABSurface = (
 					{
 						class: css(classes.dialog.root, classes.dialog.dialogVisible),
 						'data-testid': `${prefix}-root`,
+						[SURFACE_ROOT_ATTRIBUTE]: 'dialog',
 						dir,
 						lang: language,
 					},
@@ -324,6 +321,7 @@ export const createIABSurface = (
 						'data-blocking': String(actions.blocking),
 						'data-position': position,
 						'data-testid': `${prefix}-root`,
+						[SURFACE_ROOT_ATTRIBUTE]: 'banner',
 						'data-variant': actions.variant,
 						dir,
 						lang: language,

@@ -94,8 +94,8 @@ const render = async function render({
 /** DevTools root inside its shadow host. */
 const devToolsRoot = function devToolsRoot(): HTMLElement {
 	const root = document
-		.querySelector('[data-c15t-dev-tools-host]')
-		?.shadowRoot?.querySelector<HTMLElement>('[data-c15t-dev-tools]');
+		.querySelector('[data-inth-dev-tools-host]')
+		?.shadowRoot?.querySelector<HTMLElement>('[data-inth-dev-tools]');
 	if (!root) {
 		throw new Error('Expected DevTools to be mounted');
 	}
@@ -105,13 +105,13 @@ const devToolsRoot = function devToolsRoot(): HTMLElement {
 const toolbarActions = () =>
 	[
 		...document.querySelectorAll<HTMLButtonElement>(
-			'[data-c15t-trigger-toolbar] button'
+			'[data-inth-trigger-toolbar] button'
 		),
-	].map((button) => button.dataset.c15tTriggerAction);
+	].map((button) => button.dataset.inthTriggerAction);
 
 const devToolsItem = () =>
 	document.querySelector<HTMLButtonElement>(
-		'[data-c15t-trigger-action="devtools"]'
+		'[data-inth-trigger-action="devtools"]'
 	);
 
 afterEach(() => {
@@ -130,7 +130,7 @@ describe('ConsentDialogTrigger with ConsentDevTools', () => {
 		expect(
 			document.querySelector('[data-testid="consent-dialog-trigger"]')
 		).not.toBeNull();
-		expect(document.querySelector('[data-c15t-trigger-toolbar]')).toBeNull();
+		expect(document.querySelector('[data-inth-trigger-toolbar]')).toBeNull();
 	});
 
 	test('becomes a toolbar that carries the launcher and docks the panel', async () => {
@@ -144,11 +144,11 @@ describe('ConsentDialogTrigger with ConsentDevTools', () => {
 		expect(toolbarActions()).toEqual(['devtools', 'preferences']);
 		expect(
 			document.querySelector(
-				'[data-c15t-trigger-action="preferences"][aria-label="Open privacy settings"]'
+				'[data-inth-trigger-action="preferences"][aria-label="Open privacy settings"]'
 			)
 		).not.toBeNull();
-		expect(devToolsItem()?.getAttribute('aria-label')).toBe('c15t DevTools');
-		expect(devToolsRoot().classList).toContain('c15t-dev-tools--docked');
+		expect(devToolsItem()?.getAttribute('aria-label')).toBe('Inth DevTools');
+		expect(devToolsRoot().classList).toContain('inth-dev-tools--docked');
 
 		const item = devToolsItem();
 		expect(item?.getAttribute('aria-expanded')).toBe('false');
@@ -161,7 +161,7 @@ describe('ConsentDialogTrigger with ConsentDevTools', () => {
 
 		document
 			.querySelector<HTMLButtonElement>(
-				'[data-c15t-trigger-action="preferences"]'
+				'[data-inth-trigger-action="preferences"]'
 			)
 			?.click();
 		expect(context.activeUI.value).toBe('manager');
@@ -171,24 +171,24 @@ describe('ConsentDialogTrigger with ConsentDevTools', () => {
 		const showTrigger = ref(true);
 		await render({ showTrigger });
 		await vi.waitFor(() =>
-			expect(devToolsRoot().classList).toContain('c15t-dev-tools--docked')
+			expect(devToolsRoot().classList).toContain('inth-dev-tools--docked')
 		);
 
 		showTrigger.value = false;
 		await flushPromises();
-		expect(devToolsRoot().classList).not.toContain('c15t-dev-tools--docked');
+		expect(devToolsRoot().classList).not.toContain('inth-dev-tools--docked');
 	});
 
 	test('DevTools keeps its own launcher while the trigger is hidden', async () => {
 		const context = await render({ triggerShowWhen: 'after-consent' });
 
-		expect(document.querySelector('[data-c15t-trigger]')).toBeNull();
-		expect(devToolsRoot().classList).not.toContain('c15t-dev-tools--docked');
+		expect(document.querySelector('[data-inth-trigger]')).toBeNull();
+		expect(devToolsRoot().classList).not.toContain('inth-dev-tools--docked');
 
 		await context.kernel.commands.save('all');
 		await flushPromises();
 		await vi.waitFor(() => expect(devToolsItem()).not.toBeNull());
-		expect(devToolsRoot().classList).toContain('c15t-dev-tools--docked');
+		expect(devToolsRoot().classList).toContain('inth-dev-tools--docked');
 	});
 
 	test('the trigger returns to a single button when DevTools unmounts', async () => {
@@ -198,7 +198,7 @@ describe('ConsentDialogTrigger with ConsentDevTools', () => {
 
 		showDevTools.value = false;
 		await flushPromises();
-		expect(document.querySelector('[data-c15t-trigger-toolbar]')).toBeNull();
+		expect(document.querySelector('[data-inth-trigger-toolbar]')).toBeNull();
 		expect(
 			document.querySelector('[data-testid="consent-dialog-trigger"]')
 		).not.toBeNull();

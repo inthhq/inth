@@ -1,0 +1,14 @@
+[
+  "apps",
+  "benchmarks",
+  "examples",
+  "internals",
+  "scripts",
+  "packages/sdk",
+  "packages/react-native",
+  "packages/swift",
+  "packages/android",
+  "packages/native-protocol",
+  "oxlint.sdk.config.ts",
+  "oxfmt.sdk.config.ts"
+]

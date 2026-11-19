@@ -16,7 +16,7 @@ export const Consent = ({ children }: { children: ReactNode }) => (
 					root: { className: '!p-[7px] dark:!p-[11px]' },
 				},
 			},
-			// Tailwind 3 builds c15t's stylesheet from globals.css.
+			// Tailwind 3 builds Inth's stylesheet from globals.css.
 			styles: false,
 		}}
 		// #endregion docs:slot

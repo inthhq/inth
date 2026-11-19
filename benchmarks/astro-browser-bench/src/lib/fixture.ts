@@ -4,10 +4,10 @@
  * Mirrors `benchmarks/nuxt-browser-bench`'s `bench-consent` fixture and the
  * SvelteKit bench's: one default-match opt-in policy pack served both as a
  * static manifest and as a pre-resolved init payload, with per-endpoint
- * execution counters and a `C15T_BENCH_BACKEND_LATENCY_MS` delay on every
+ * execution counters and a `INTH_BENCH_BACKEND_LATENCY_MS` delay on every
  * endpoint so the runner can model a real consent backend's round trip.
  *
- * The app's `/api/c15t/*` routes are injected by the shipped `c15t()`
+ * The app's `/api/inth/*` routes are injected by the shipped `inth()`
  * integration and point at this fixture; nothing here re-implements them.
  */
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -29,17 +29,17 @@ export type BenchConsentFixtureCounts = Record<
 >;
 
 const globalWithBenchCounts = globalThis as typeof globalThis & {
-	__c15tAstroBenchFixtureCounts?: BenchConsentFixtureCounts;
+	__inthAstroBenchFixtureCounts?: BenchConsentFixtureCounts;
 };
 
 const getMutableCounts =
 	function getMutableCounts(): BenchConsentFixtureCounts {
-		globalWithBenchCounts.__c15tAstroBenchFixtureCounts ??= {
+		globalWithBenchCounts.__inthAstroBenchFixtureCounts ??= {
 			init: 0,
 			manifest: 0,
 			subjects: 0,
 		};
-		return globalWithBenchCounts.__c15tAstroBenchFixtureCounts;
+		return globalWithBenchCounts.__inthAstroBenchFixtureCounts;
 	};
 
 /**
@@ -79,7 +79,7 @@ export const resetBenchConsentFixtureCounts =
 	};
 
 /**
- * Sleep for `C15T_BENCH_BACKEND_LATENCY_MS`, modelling the consent backend's
+ * Sleep for `INTH_BENCH_BACKEND_LATENCY_MS`, modelling the consent backend's
  * round trip. Every fixture endpoint (init, manifest, subjects) calls it, so
  * server-side fetches pay it as well as browser ones. The runner always sets
  * the variable (200 ms by default); when it is unset the app runs outside a
@@ -87,7 +87,7 @@ export const resetBenchConsentFixtureCounts =
  */
 export const applyBenchConsentLatency =
 	async function applyBenchConsentLatency(): Promise<void> {
-		const latencyMs = Number(process.env.C15T_BENCH_BACKEND_LATENCY_MS ?? '0');
+		const latencyMs = Number(process.env.INTH_BENCH_BACKEND_LATENCY_MS ?? '0');
 		if (Number.isFinite(latencyMs) && latencyMs > 0) {
 			await sleep(latencyMs);
 		}
@@ -141,7 +141,7 @@ const policy = {
 
 /** Pre-resolved `/init` payload, for the direct (hosted) arm. */
 export const benchConsentInitResponse = {
-	branding: 'c15t',
+	branding: 'inth',
 	location: {
 		countryCode: null,
 		regionCode: null,
@@ -157,7 +157,7 @@ export const benchConsentInitResponse = {
 
 /** Static manifest, for the manifest arms. */
 export const benchConsentManifestResponse = {
-	branding: 'c15t',
+	branding: 'inth',
 	policyPacks: [createConsentManifestPolicyPack(policy)],
 	revision: 'astro-browser-bench-manifest',
 	schemaVersion: 2,

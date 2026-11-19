@@ -109,7 +109,7 @@ final class GPPFixtureTests: XCTestCase {
 }
 
 /// `packages/native-protocol/gpp/policy-rights-cases.json`: how a matched rule's `rights` read.
-/// The expected answers are `readPolicyResolutionWire`'s in `@c15t/schema`, and
+/// The expected answers are `readPolicyResolutionWire`'s in `@inth/sdk-schema`, and
 /// `GppTest.kt` runs the same cases through `StrictPolicyReader`, so both cores hand the
 /// GPP resolver the same rights for the same `/init` body, or both refuse it.
 final class PolicyRightsFixtureTests: XCTestCase {
@@ -161,7 +161,7 @@ final class GPPCoreTests: XCTestCase {
     /// An opt-out rule served with the location the backend resolved.
     ///
     /// Once `/init` answers, the served location wins over the app's override, as in
-    /// `@c15t/core` and `core-android`. `Fixture.initResponse` serves Germany, so a test
+    /// `@inth/sdk-core` and `core-android`. `Fixture.initResponse` serves Germany, so a test
     /// of a US visitor has to say where the backend placed them: with Germany served, no
     /// US section applies, which is what the first run of this test reported.
     private func http(country: String = "US") -> StubHTTP {

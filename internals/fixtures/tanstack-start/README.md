@@ -1,6 +1,6 @@
-# c15t × TanStack Start example
+# Inth × TanStack Start example
 
-A TanStack Start app wired to c15t through `@inth/tanstack-start`. The files that set it up:
+A TanStack Start app wired to Inth through `@inth/tanstack-start`. The files that set it up:
 
 - `src/start.ts` registers `consentRequestMiddleware()`, so every server
   request reads one normalized set of geo, language and GPC headers.
@@ -10,7 +10,7 @@ A TanStack Start app wired to c15t through `@inth/tanstack-start`. The files tha
   `ConsentRoot` reads the result, which carries the backend URL, with
   `Route.useLoaderData()` and calls the backend directly from the browser.
 - `src/scripts.ts` registers PostHog and X Pixel.
-- `src/routes/api/c15t/$.ts` mounts
+- `src/routes/api/inth/$.ts` mounts
   `createConsentRoute({ projectUrl, proxy: true })` for the same-origin
   rendering variant.
 
@@ -25,42 +25,42 @@ backend URL written in the root route and the consent server route.
 
 ## Rendering variants
 
-`src/rendering` holds alternative root routes. `C15T_TANSTACK_RENDERING`
+`src/rendering` holds alternative root routes. `INTH_TANSTACK_RENDERING`
 selects one at build time; the pages stay the same.
 
 | Value | Root route | What changes |
 | --- | --- | --- |
 | unset | `src/routes/__root.tsx` | The loader awaits consent; the banner is in the server HTML |
 | `streamed` | `src/rendering/streamed-root.tsx` | The loader returns the pending consent state; the banner mounts after hydration |
-| `same-origin` | `src/rendering/same-origin-root.tsx` | The browser sends init and saves to `/api/c15t` on this origin |
+| `same-origin` | `src/rendering/same-origin-root.tsx` | The browser sends init and saves to `/api/inth` on this origin |
 | `static` | `src/rendering/static-root.tsx` | Every page is prerendered; the browser resolves consent |
 
 ```bash
-C15T_TANSTACK_RENDERING=static bun run build
+INTH_TANSTACK_RENDERING=static bun run build
 bun run start:static   # serves dist/client only, like a static host
 ```
 
 ## Banner experiment
 
-`C15T_EXPERIMENT=1` swaps in `src/experiment-root.tsx`, the default root plus
+`INTH_EXPERIMENT=1` swaps in `src/experiment-root.tsx`, the default root plus
 the banner-shape experiment. It cannot be combined with
-`C15T_TANSTACK_RENDERING`.
+`INTH_TANSTACK_RENDERING`.
 
 ```bash
-C15T_EXPERIMENT=1 bun run dev
+INTH_EXPERIMENT=1 bun run dev
 ```
 
-Open `/consent-example?experiment=1`: c15t picks the `control` arm (the
+Open `/consent-example?experiment=1`: Inth picks the `control` arm (the
 default banner) or the `wall` arm in the browser, and the page shows
-`banner-shape · <arm> · c15t`. `/consent-example?experiment=1&arm=wall`
+`banner-shape · <arm> · inth`. `/consent-example?experiment=1&arm=wall`
 resolves the arm in the root loader, on the server, where a flag provider's
 answer would go. The server function passes it to
 `resolveConsent({ experiment })`, which counts the arm through `/init` and
 returns the experiment in the state, so `ConsentRoot` needs no `experiment`
 option. Any other `arm` value runs `control`. The root's `onSurfaceShown` and
 `onChoiceRecorded` callbacks list each impression and choice under the arm and
-push them to `window.dataLayer` as `c15t_surface_shown` and
-`c15t_choice_recorded`. See https://c15t.com/docs/guides/banner-experiments.
+push them to `window.dataLayer` as `inth_surface_shown` and
+`inth_choice_recorded`. See https://c15t.com/docs/guides/banner-experiments.
 
 ## Demo files
 
@@ -82,7 +82,7 @@ config. Both modes are Postgres, only the destination changes:
 - **Deployed**: Postgres via `DATABASE_URL`. Deploys fail fast without it
   rather than falling back to an embedded database a read-only filesystem
   can't write. Migrate with `bun run db:migrate`, which runs
-  `@c15t/cli self-host migrate` against `c15t-backend.config.ts`.
+  `@c15t/cli self-host migrate` against `inth-backend.config.ts`.
 
 PGlite rather than SQLite on purpose: SQLite ships with `PRAGMA foreign_keys`
 off, so a consent row referencing a policy that doesn't exist inserts happily
@@ -91,11 +91,11 @@ locally and only fails once deployed. Delete `.pgdata/` to reset the demo.
 ## Pointing at a hosted backend
 
 Replace `https://your-project.inth.app` in the root routes and
-`src/routes/api/c15t/$.ts` with the backend URL from your
+`src/routes/api/inth/$.ts` with the backend URL from your
 [Inth](https://inth.com) project, and add this app's origin to the project's
 trusted origins.
 
-`VITE_C15T_BACKEND_URL` overrides that URL without editing the files.
+`VITE_INTH_PROJECT_URL` overrides that URL without editing the files.
 `src/test-backend.ts` applies it; `bun run dev` and the acceptance suite use
 it.
 
@@ -107,7 +107,7 @@ bun run start
 ```
 
 To build against the self-hosted route instead, set
-`VITE_C15T_BACKEND_URL=/api/self-host` and `DATABASE_URL`.
+`VITE_INTH_PROJECT_URL=/api/self-host` and `DATABASE_URL`.
 
 `vite build` emits `dist/server/server.js` as a bare `{ fetch }` handler with
 no listener, so `bun run start` hosts it with `scripts/serve.mjs`: srvx on

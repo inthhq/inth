@@ -1,54 +1,48 @@
 @import url('./animations/spin.css');
 
 :root {
-	/* Typography */
-	--iab-cd-font-family: var(--c15t-font-family);
-	--iab-cd-line-height: var(--c15t-line-height-tight);
-	--iab-cd-title-font-size: var(--c15t-font-size-lg);
-	--iab-cd-title-font-weight: var(--c15t-font-weight-semibold);
+	--iab-cd-font-family: var(--inth-font-family);
+	--iab-cd-line-height: var(--inth-line-height-tight);
+	--iab-cd-title-font-size: var(--inth-font-size-lg);
+	--iab-cd-title-font-weight: var(--inth-font-weight-semibold);
 	--iab-cd-description-font-size: 0.75rem;
-	--iab-cd-description-line-height: var(--c15t-line-height-normal);
+	--iab-cd-description-line-height: var(--inth-line-height-normal);
 
-	/* Colors */
-	--iab-cd-background-color: var(--c15t-surface);
-	--iab-cd-background-color-dark: var(--c15t-surface);
-	--iab-cd-text-color: var(--c15t-text);
-	--iab-cd-text-color-dark: var(--c15t-text);
-	--iab-cd-text-muted-color: var(--c15t-text-muted);
-	--iab-cd-text-muted-color-dark: var(--c15t-text-muted);
-	--iab-cd-border-color: var(--c15t-border);
-	--iab-cd-border-color-dark: var(--c15t-border);
-	--iab-cd-overlay-background: var(--c15t-overlay);
-	--iab-cd-overlay-background-dark: var(--c15t-overlay);
-	--iab-cd-primary-color: var(--c15t-primary);
-	--iab-cd-primary-color-dark: var(--c15t-primary);
-	--iab-cd-surface-hover: var(--c15t-surface-hover);
-	--iab-cd-surface-hover-dark: var(--c15t-surface-hover);
+	--iab-cd-background-color: var(--inth-surface);
+	--iab-cd-background-color-dark: var(--inth-surface);
+	--iab-cd-text-color: var(--inth-text);
+	--iab-cd-text-color-dark: var(--inth-text);
+	--iab-cd-text-muted-color: var(--inth-text-muted);
+	--iab-cd-text-muted-color-dark: var(--inth-text-muted);
+	--iab-cd-border-color: var(--inth-border);
+	--iab-cd-border-color-dark: var(--inth-border);
+	--iab-cd-overlay-background: var(--inth-overlay);
+	--iab-cd-overlay-background-dark: var(--inth-overlay);
+	--iab-cd-primary-color: var(--inth-primary);
+	--iab-cd-primary-color-dark: var(--inth-primary);
+	--iab-cd-surface-hover: var(--inth-surface-hover);
+	--iab-cd-surface-hover-dark: var(--inth-surface-hover);
 
-	/* Layout */
 	--iab-cd-max-width: 48rem;
 	--iab-cd-max-height: 85vh;
-	--iab-cd-border-radius: var(--c15t-radius-lg);
+	--iab-cd-border-radius: var(--inth-radius-lg);
 	--iab-cd-z-index: 999999;
 	--iab-cd-overlay-z-index: 999998;
 
-	/* Spacing */
-	--iab-cd-padding: var(--c15t-space-md);
-	--iab-cd-padding-sm: var(--c15t-space-sm);
-	--iab-cd-gap: var(--c15t-space-sm);
+	--iab-cd-padding: var(--inth-space-md);
+	--iab-cd-padding-sm: var(--inth-space-sm);
+	--iab-cd-gap: var(--inth-space-sm);
 
-	/* Animation */
-	--iab-cd-animation-duration: var(--c15t-duration-normal);
-	--iab-cd-animation-timing: var(--c15t-easing-out);
+	--iab-cd-animation-duration: var(--inth-duration-normal);
+	--iab-cd-animation-timing: var(--inth-easing-out);
 
 	/* The shadow scale stops at `lg`, and the consent dialog this surface
 	 * mirrors raises its card with `sm`, so an `xl` reference resolved to
 	 * nothing and left the IAB panel flat against the page. */
-	--iab-cd-shadow: var(--c15t-shadow-sm);
+	--iab-cd-shadow: var(--inth-shadow-sm);
 }
 
 @layer components {
-	/* Root container */
 	.root {
 		box-sizing: border-box;
 		isolation: isolate;
@@ -85,7 +79,7 @@
 		transform: scale(1);
 		transition:
 			opacity var(--iab-cd-animation-duration) var(--iab-cd-animation-timing),
-			transform var(--iab-cd-animation-duration) var(--c15t-easing-spring);
+			transform var(--iab-cd-animation-duration) var(--inth-easing-spring);
 	}
 
 	.contentHidden {
@@ -96,7 +90,6 @@
 			transform var(--iab-cd-animation-duration) var(--iab-cd-animation-timing);
 	}
 
-	/* Overlay */
 	.overlay {
 		position: fixed;
 		inset: 0;
@@ -125,11 +118,10 @@
 		}
 	}
 
-	:global(.c15t-dark) .overlay {
+	:global(.inth-dark) .overlay {
 		background-color: var(--iab-cd-overlay-background-dark);
 	}
 
-	/* Card container */
 	.card {
 		position: relative;
 		width: min(100%, var(--iab-cd-max-width));
@@ -144,12 +136,11 @@
 		overflow: visible;
 	}
 
-	:global(.c15t-dark) .card {
+	:global(.inth-dark) .card {
 		background-color: var(--iab-cd-background-color-dark);
 		border-color: var(--iab-cd-border-color-dark);
 	}
 
-	/* Header */
 	.header {
 		padding: 0.75rem 1rem;
 		border-bottom: 1px solid var(--iab-cd-border-color);
@@ -159,7 +150,7 @@
 		flex-shrink: 0;
 	}
 
-	:global(.c15t-dark) .header {
+	:global(.inth-dark) .header {
 		border-color: var(--iab-cd-border-color-dark);
 	}
 
@@ -181,7 +172,7 @@
 		line-height: 1.25;
 	}
 
-	:global(.c15t-dark) .title {
+	:global(.inth-dark) .title {
 		color: var(--iab-cd-text-color-dark);
 	}
 
@@ -192,13 +183,13 @@
 		line-height: var(--iab-cd-description-line-height);
 	}
 
-	:global(.c15t-dark) .description {
+	:global(.inth-dark) .description {
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
 	.closeButton {
 		padding: 0.375rem;
-		border-radius: var(--c15t-radius-md);
+		border-radius: var(--inth-radius-md);
 		background: transparent;
 		border: none;
 		cursor: pointer;
@@ -213,15 +204,14 @@
 		background-color: var(--iab-cd-surface-hover);
 	}
 
-	:global(.c15t-dark) .closeButton {
+	:global(.inth-dark) .closeButton {
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
-	:global(.c15t-dark) .closeButton:hover {
+	:global(.inth-dark) .closeButton:hover {
 		background-color: var(--iab-cd-surface-hover-dark);
 	}
 
-	/* Segmented Control Tabs */
 	.body {
 		display: flex;
 		flex: 1 1 auto;
@@ -249,11 +239,11 @@
 		grid-auto-flow: column;
 		gap: 0.25rem;
 		padding: 0.25rem;
-		border-radius: var(--c15t-radius-lg, 0.625rem);
+		border-radius: var(--inth-radius-lg, 0.625rem);
 		background-color: var(--iab-cd-surface-hover);
 	}
 
-	:global(.c15t-dark) .tabsList {
+	:global(.inth-dark) .tabsList {
 		background-color: var(--iab-cd-surface-hover-dark);
 	}
 
@@ -270,7 +260,7 @@
 		font-weight: 500;
 		white-space: nowrap;
 		border: none;
-		border-radius: var(--c15t-radius-md, 0.375rem);
+		border-radius: var(--inth-radius-md, 0.375rem);
 		background: transparent;
 		color: var(--iab-cd-text-muted-color);
 		cursor: pointer;
@@ -293,41 +283,39 @@
 		color: var(--iab-cd-text-color);
 	}
 
-	:global(.c15t-dark) .tabButton {
+	:global(.inth-dark) .tabButton {
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
-	:global(.c15t-dark) .tabButton:hover {
+	:global(.inth-dark) .tabButton:hover {
 		color: var(--iab-cd-text-color-dark);
 	}
 
-	:global(.c15t-dark) .tabButton[data-state='active'] {
+	:global(.inth-dark) .tabButton[data-state='active'] {
 		color: var(--iab-cd-text-color-dark);
 	}
 
-	/* Sliding indicator */
 	.tabIndicator {
 		position: absolute;
 		inset-block: 0.25rem;
 		z-index: 0;
-		border-radius: var(--c15t-radius-md, 0.375rem);
+		border-radius: var(--inth-radius-md, 0.375rem);
 		background-color: var(--iab-cd-background-color);
 		box-shadow:
 			0 1px 2px rgb(0 0 0 / 0.06),
 			0 1px 3px rgb(0 0 0 / 0.1);
 		transition:
-			transform var(--c15t-duration-slow) cubic-bezier(0.33, 1, 0.68, 1),
-			width var(--c15t-duration-slow) cubic-bezier(0.33, 1, 0.68, 1);
+			transform var(--inth-duration-slow) cubic-bezier(0.33, 1, 0.68, 1),
+			width var(--inth-duration-slow) cubic-bezier(0.33, 1, 0.68, 1);
 	}
 
-	:global(.c15t-dark) .tabIndicator {
+	:global(.inth-dark) .tabIndicator {
 		background-color: var(--iab-cd-background-color-dark);
 		box-shadow:
 			0 1px 2px rgb(0 0 0 / 0.2),
 			0 1px 3px rgb(0 0 0 / 0.3);
 	}
 
-	/* Tab indicator positions based on data attribute */
 	.tabIndicator[data-active-tab='purposes'] {
 		transform: translateX(0);
 		width: calc(50% - 0.125rem);
@@ -340,7 +328,6 @@
 		left: 0.125rem;
 	}
 
-	/* Content area */
 	.content {
 		flex: 1 1 auto;
 		min-height: 0;
@@ -355,15 +342,14 @@
 		}
 	}
 
-	/* Purpose item */
 	.purposeItem {
-		border-radius: var(--c15t-radius-md);
+		border-radius: var(--inth-radius-md);
 		border: 1px solid var(--iab-cd-border-color);
 		background-color: var(--iab-cd-background-color);
 		margin-bottom: 0.5rem;
 	}
 
-	:global(.c15t-dark) .purposeItem {
+	:global(.inth-dark) .purposeItem {
 		border-color: var(--iab-cd-border-color-dark);
 		background-color: var(--iab-cd-background-color-dark);
 	}
@@ -396,7 +382,7 @@
 		flex-shrink: 0;
 	}
 
-	:global(.c15t-dark) .purposeArrow {
+	:global(.inth-dark) .purposeArrow {
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
@@ -415,7 +401,7 @@
 		margin: 0;
 	}
 
-	:global(.c15t-dark) .purposeName {
+	:global(.inth-dark) .purposeName {
 		color: var(--iab-cd-text-color-dark);
 	}
 
@@ -425,7 +411,7 @@
 		color: var(--iab-cd-text-muted-color);
 	}
 
-	:global(.c15t-dark) .lockIcon {
+	:global(.inth-dark) .lockIcon {
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
@@ -435,7 +421,7 @@
 		margin: 0.125rem 0 0;
 	}
 
-	:global(.c15t-dark) .purposeMeta {
+	:global(.inth-dark) .purposeMeta {
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
@@ -474,7 +460,7 @@
 		padding-top: 0.75rem;
 	}
 
-	:global(.c15t-dark) .purposeContent {
+	:global(.inth-dark) .purposeContent {
 		border-color: var(--iab-cd-border-color-dark);
 	}
 
@@ -485,11 +471,10 @@
 		margin: 0;
 	}
 
-	:global(.c15t-dark) .purposeDescription {
+	:global(.inth-dark) .purposeDescription {
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
-	/* Examples section */
 	.examplesToggle {
 		display: flex;
 		align-items: center;
@@ -508,11 +493,11 @@
 		color: var(--iab-cd-primary-color);
 	}
 
-	:global(.c15t-dark) .examplesToggle {
+	:global(.inth-dark) .examplesToggle {
 		color: var(--iab-cd-text-color-dark);
 	}
 
-	:global(.c15t-dark) .examplesToggle:hover {
+	:global(.inth-dark) .examplesToggle:hover {
 		color: var(--iab-cd-primary-color-dark);
 	}
 
@@ -528,11 +513,10 @@
 		color: var(--iab-cd-text-muted-color);
 	}
 
-	:global(.c15t-dark) .examplesList li {
+	:global(.inth-dark) .examplesList li {
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
-	/* Vendors section in purpose */
 	.vendorsToggle {
 		display: flex;
 		align-items: center;
@@ -551,7 +535,7 @@
 		color: var(--iab-cd-primary-color);
 	}
 
-	:global(.c15t-dark) .vendorsToggle {
+	:global(.inth-dark) .vendorsToggle {
 		color: var(--iab-cd-text-color-dark);
 	}
 
@@ -570,7 +554,7 @@
 		margin: 0.5rem 0 0.375rem;
 	}
 
-	:global(.c15t-dark) .vendorSectionTitle {
+	:global(.inth-dark) .vendorSectionTitle {
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
@@ -587,12 +571,12 @@
 		justify-content: space-between;
 		gap: 0.5rem;
 		padding: 0.5rem;
-		border-radius: var(--c15t-radius-sm);
+		border-radius: var(--inth-radius-sm);
 		background-color: var(--iab-cd-surface-hover);
 		margin-bottom: 0.375rem;
 	}
 
-	:global(.c15t-dark) .vendorRow {
+	:global(.inth-dark) .vendorRow {
 		background-color: var(--iab-cd-surface-hover-dark);
 	}
 
@@ -624,7 +608,7 @@
 		color: var(--iab-cd-primary-color);
 	}
 
-	:global(.c15t-dark) .vendorName {
+	:global(.inth-dark) .vendorName {
 		color: var(--iab-cd-text-color-dark);
 	}
 
@@ -634,7 +618,7 @@
 		color: var(--iab-cd-primary-color);
 	}
 
-	:global(.c15t-dark) .customVendorIcon {
+	:global(.inth-dark) .customVendorIcon {
 		color: var(--iab-cd-primary-color-dark);
 	}
 
@@ -650,7 +634,7 @@
 		color: var(--iab-cd-text-muted-color);
 	}
 
-	:global(.c15t-dark) .vendorDetail {
+	:global(.inth-dark) .vendorDetail {
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
@@ -659,15 +643,14 @@
 		font-weight: 500;
 	}
 
-	/* Stack item */
 	.stackItem {
-		border-radius: var(--c15t-radius-md);
+		border-radius: var(--inth-radius-md);
 		border: 1px solid var(--iab-cd-border-color);
 		background-color: var(--iab-cd-background-color);
 		margin-bottom: 0.5rem;
 	}
 
-	:global(.c15t-dark) .stackItem {
+	:global(.inth-dark) .stackItem {
 		border-color: var(--iab-cd-border-color-dark);
 		background-color: var(--iab-cd-background-color-dark);
 	}
@@ -706,7 +689,7 @@
 		margin: 0;
 	}
 
-	:global(.c15t-dark) .stackName {
+	:global(.inth-dark) .stackName {
 		color: var(--iab-cd-text-color-dark);
 	}
 
@@ -716,7 +699,7 @@
 		margin: 0.25rem 0 0;
 	}
 
-	:global(.c15t-dark) .stackMeta {
+	:global(.inth-dark) .stackMeta {
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
@@ -749,7 +732,7 @@
 		margin-top: 0.25rem;
 	}
 
-	:global(.c15t-dark) .stackDescription {
+	:global(.inth-dark) .stackDescription {
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
@@ -759,20 +742,19 @@
 		padding: 0.5rem;
 	}
 
-	:global(.c15t-dark) .stackContent {
+	:global(.inth-dark) .stackContent {
 		border-color: var(--iab-cd-border-color-dark);
 		background-color: var(--iab-cd-surface-hover-dark);
 	}
 
-	/* Special purposes section */
 	.specialPurposesSection {
-		border-radius: var(--c15t-radius-md);
+		border-radius: var(--inth-radius-md);
 		border: 1px solid var(--iab-cd-border-color);
 		background-color: var(--iab-cd-background-color);
 		margin-bottom: 0.5rem;
 	}
 
-	:global(.c15t-dark) .specialPurposesSection {
+	:global(.inth-dark) .specialPurposesSection {
 		border-color: var(--iab-cd-border-color-dark);
 		background-color: var(--iab-cd-background-color-dark);
 	}
@@ -795,52 +777,52 @@
 		margin: 0;
 	}
 
-	:global(.c15t-dark) .specialPurposesTitle {
+	:global(.inth-dark) .specialPurposesTitle {
 		color: var(--iab-cd-text-color-dark);
 	}
 
 	/* Features section: informational, no controls (TCF Policies v5.0.b) */
 	.featuresSection {
-		border-radius: var(--c15t-radius-md);
+		border-radius: var(--inth-radius-md);
 		border: 1px solid var(--iab-cd-border-color);
 		background-color: var(--iab-cd-background-color);
-		margin-bottom: var(--c15t-space-sm);
+		margin-bottom: var(--inth-space-sm);
 	}
 
-	:global(.c15t-dark) .featuresSection {
+	:global(.inth-dark) .featuresSection {
 		border-color: var(--iab-cd-border-color-dark);
 		background-color: var(--iab-cd-background-color-dark);
 	}
 
 	.featuresHeader {
-		padding: calc(var(--c15t-space-md) * 0.75);
+		padding: calc(var(--inth-space-md) * 0.75);
 	}
 
 	.featuresTitle {
-		font-size: var(--c15t-font-size-sm);
-		font-weight: var(--c15t-font-weight-medium);
+		font-size: var(--inth-font-size-sm);
+		font-weight: var(--inth-font-weight-medium);
 		color: var(--iab-cd-text-color);
 		margin: 0;
 	}
 
-	:global(.c15t-dark) .featuresTitle {
+	:global(.inth-dark) .featuresTitle {
 		color: var(--iab-cd-text-color-dark);
 	}
 
 	.featuresDescription {
-		font-size: calc(var(--c15t-font-size-base) * 0.75);
-		line-height: var(--c15t-line-height-normal);
+		font-size: calc(var(--inth-font-size-base) * 0.75);
+		line-height: var(--inth-line-height-normal);
 		color: var(--iab-cd-text-muted-color);
-		margin: var(--c15t-space-xs) 0 0;
+		margin: var(--inth-space-xs) 0 0;
 	}
 
-	:global(.c15t-dark) .featuresDescription {
+	:global(.inth-dark) .featuresDescription {
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
 	.featuresList {
-		padding: 0 calc(var(--c15t-space-md) * 0.75)
-			calc(var(--c15t-space-md) * 0.75);
+		padding: 0 calc(var(--inth-space-md) * 0.75)
+			calc(var(--inth-space-md) * 0.75);
 	}
 
 	.infoIcon {
@@ -850,7 +832,7 @@
 		cursor: help;
 	}
 
-	:global(.c15t-dark) .infoIcon {
+	:global(.inth-dark) .infoIcon {
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
@@ -862,8 +844,8 @@
 		padding: 0.5rem;
 		background-color: var(--iab-cd-background-color);
 		border: 1px solid var(--iab-cd-border-color);
-		border-radius: var(--c15t-radius-md);
-		box-shadow: var(--c15t-shadow-lg);
+		border-radius: var(--inth-radius-md);
+		box-shadow: var(--inth-shadow-lg);
 		font-size: 0.75rem;
 		color: var(--iab-cd-text-color);
 		z-index: 10;
@@ -879,13 +861,12 @@
 		visibility: visible;
 	}
 
-	:global(.c15t-dark) .tooltip {
+	:global(.inth-dark) .tooltip {
 		background-color: var(--iab-cd-background-color-dark);
 		border-color: var(--iab-cd-border-color-dark);
 		color: var(--iab-cd-text-color-dark);
 	}
 
-	/* Vendor list tab */
 	.vendorListHeader {
 		position: sticky;
 		top: 0;
@@ -904,7 +885,7 @@
 		}
 	}
 
-	:global(.c15t-dark) .vendorListHeader {
+	:global(.inth-dark) .vendorListHeader {
 		background-color: var(--iab-cd-background-color-dark);
 	}
 
@@ -922,14 +903,14 @@
 		color: var(--iab-cd-text-muted-color);
 	}
 
-	:global(.c15t-dark) .searchIcon {
+	:global(.inth-dark) .searchIcon {
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
 	.searchInput {
 		width: 100%;
 		padding: 0.5rem 0.75rem 0.5rem 2rem;
-		border-radius: var(--c15t-radius-md);
+		border-radius: var(--inth-radius-md);
 		border: 1px solid var(--iab-cd-border-color);
 		background-color: var(--iab-cd-background-color);
 		font-size: 0.875rem;
@@ -943,7 +924,7 @@
 			color-mix(in srgb, var(--iab-cd-primary-color) 20%, transparent);
 	}
 
-	:global(.c15t-dark) .searchInput {
+	:global(.inth-dark) .searchInput {
 		background-color: var(--iab-cd-background-color-dark);
 		border-color: var(--iab-cd-border-color-dark);
 		color: var(--iab-cd-text-color-dark);
@@ -955,7 +936,7 @@
 		margin-top: 0.25rem;
 	}
 
-	:global(.c15t-dark) .vendorCount {
+	:global(.inth-dark) .vendorCount {
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
@@ -970,15 +951,15 @@
 		background-color: color-mix(
 			in srgb,
 			var(--iab-cd-primary-color) 14%,
-			var(--c15t-surface)
+			var(--inth-surface)
 		);
 		border: 1px solid
 			color-mix(in srgb, var(--iab-cd-primary-color) 30%, transparent);
-		border-radius: var(--c15t-radius-md);
+		border-radius: var(--inth-radius-md);
 		margin-bottom: 0.5rem;
 		z-index: 100;
 		isolation: isolate;
-		box-shadow: var(--c15t-shadow-sm);
+		box-shadow: var(--inth-shadow-sm);
 	}
 
 	.selectedVendorText {
@@ -1008,18 +989,17 @@
 		height: 0.75rem;
 	}
 
-	/* Vendor list items */
 	.vendorListItem {
 		position: relative;
 		z-index: 1;
 		border: 1px solid var(--iab-cd-border-color);
-		border-radius: var(--c15t-radius-md);
+		border-radius: var(--inth-radius-md);
 		overflow: hidden;
 		margin-bottom: 0.375rem;
 		scroll-margin-top: 6rem;
 	}
 
-	:global(.c15t-dark) .vendorListItem {
+	:global(.inth-dark) .vendorListItem {
 		border-color: var(--iab-cd-border-color-dark);
 	}
 
@@ -1037,7 +1017,7 @@
 		min-width: 2.25rem;
 		min-height: 2.25rem;
 		padding: 0.375rem;
-		border-radius: var(--c15t-radius-sm);
+		border-radius: var(--inth-radius-sm);
 		flex-shrink: 0;
 	}
 
@@ -1045,7 +1025,7 @@
 		background-color: var(--iab-cd-surface-hover);
 	}
 
-	:global(.c15t-dark) .vendorConsentControl:hover {
+	:global(.inth-dark) .vendorConsentControl:hover {
 		background-color: var(--iab-cd-surface-hover-dark);
 	}
 
@@ -1086,7 +1066,7 @@
 		margin: 0;
 	}
 
-	:global(.c15t-dark) .vendorListName {
+	:global(.inth-dark) .vendorListName {
 		color: var(--iab-cd-text-color-dark);
 	}
 
@@ -1103,7 +1083,7 @@
 		color: var(--iab-cd-text-muted-color);
 	}
 
-	:global(.c15t-dark) .vendorListMetaText {
+	:global(.inth-dark) .vendorListMetaText {
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
@@ -1122,7 +1102,7 @@
 		background-color: var(--iab-cd-surface-hover);
 	}
 
-	:global(.c15t-dark) .vendorListContent {
+	:global(.inth-dark) .vendorListContent {
 		border-color: var(--iab-cd-border-color-dark);
 		background-color: var(--iab-cd-surface-hover-dark);
 	}
@@ -1165,12 +1145,12 @@
 	.vendorBadge {
 		font-size: 0.625rem;
 		padding: 0.125rem 0.375rem;
-		border-radius: var(--c15t-radius-sm);
+		border-radius: var(--inth-radius-sm);
 		background-color: var(--iab-cd-surface-hover);
 		color: var(--iab-cd-text-muted-color);
 	}
 
-	:global(.c15t-dark) .vendorBadge {
+	:global(.inth-dark) .vendorBadge {
 		background-color: var(--iab-cd-surface-hover-dark);
 		color: var(--iab-cd-text-muted-color-dark);
 	}
@@ -1189,7 +1169,7 @@
 		gap: 0.5rem;
 	}
 
-	:global(.c15t-dark) .vendorPurposesTitle {
+	:global(.inth-dark) .vendorPurposesTitle {
 		color: var(--iab-cd-text-color-dark);
 	}
 
@@ -1211,7 +1191,7 @@
 		margin-bottom: 0.125rem;
 	}
 
-	:global(.c15t-dark) .vendorPurposeItem {
+	:global(.inth-dark) .vendorPurposeItem {
 		color: var(--iab-cd-text-muted-color-dark);
 		border-color: var(--iab-cd-border-color-dark);
 	}
@@ -1226,7 +1206,6 @@
 		opacity: 0.7;
 	}
 
-	/* Footer */
 	.footer {
 		padding: 0.75rem 1rem;
 		border-top: 1px solid var(--iab-cd-border-color);
@@ -1237,18 +1216,17 @@
 		flex-shrink: 0;
 	}
 
-	:global(.c15t-dark) .footer {
+	:global(.inth-dark) .footer {
 		border-color: var(--iab-cd-border-color-dark);
 		background-color: var(--iab-cd-surface-hover-dark);
 	}
 
-	/* Consent storage notice */
 	.consentNotice {
 		text-align: center;
 		padding-top: 1.5rem;
 	}
 
-	:global(.c15t-dark) .consentNotice {
+	:global(.inth-dark) .consentNotice {
 		border-color: var(--iab-cd-border-color-dark);
 	}
 
@@ -1259,11 +1237,10 @@
 		margin-block-end: 0em;
 	}
 
-	:global(.c15t-dark) .consentNoticeText {
+	:global(.inth-dark) .consentNoticeText {
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
-	/* Loading state */
 	.loadingContainer {
 		display: flex;
 		flex-direction: column;
@@ -1279,7 +1256,7 @@
 		border: 2px solid var(--iab-cd-border-color);
 		border-top-color: var(--iab-cd-primary-color);
 		border-radius: 50%;
-		animation: var(--c15t-spin-animation);
+		animation: var(--inth-spin-animation);
 	}
 
 	.loadingText {
@@ -1287,14 +1264,13 @@
 		color: var(--iab-cd-text-muted-color);
 	}
 
-	:global(.c15t-dark) .loadingText {
+	:global(.inth-dark) .loadingText {
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
-	/* Empty state */
 	.emptyState {
 		text-align: center;
-		padding: var(--c15t-space-xl);
+		padding: var(--inth-space-xl);
 	}
 
 	.emptyStateText {
@@ -1303,11 +1279,10 @@
 		margin: 0;
 	}
 
-	:global(.c15t-dark) .emptyStateText {
+	:global(.inth-dark) .emptyStateText {
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
-	/* Vendor sections */
 	.vendorSection {
 		position: relative;
 		z-index: 1;
@@ -1330,7 +1305,7 @@
 		border-bottom: 1px solid var(--iab-cd-border-color);
 	}
 
-	:global(.c15t-dark) .vendorSectionHeading {
+	:global(.inth-dark) .vendorSectionHeading {
 		color: var(--iab-cd-text-muted-color-dark);
 		background: var(--iab-cd-surface-hover-color-dark);
 		border-color: var(--iab-cd-border-color-dark);
@@ -1350,7 +1325,7 @@
 		padding: 0.25rem 0;
 	}
 
-	:global(.c15t-dark) .iabVendorSectionHeader {
+	:global(.inth-dark) .iabVendorSectionHeader {
 		border-color: var(--iab-cd-border-color-dark);
 		background-color: var(--iab-cd-background-color-dark);
 	}
@@ -1366,7 +1341,7 @@
 		margin: 0;
 	}
 
-	:global(.c15t-dark) .iabVendorNotice {
+	:global(.inth-dark) .iabVendorNotice {
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
@@ -1378,7 +1353,7 @@
 		padding: 0.5rem 0;
 	}
 
-	:global(.c15t-dark) .customVendorSectionHeader {
+	:global(.inth-dark) .customVendorSectionHeader {
 		border-color: var(--iab-cd-border-color-dark);
 		background-color: var(--iab-cd-background-color-dark);
 	}
@@ -1396,7 +1371,7 @@
 		margin: 0;
 	}
 
-	:global(.c15t-dark) .customVendorNotice {
+	:global(.inth-dark) .customVendorNotice {
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
@@ -1404,18 +1379,17 @@
 		border-left: 3px solid var(--iab-cd-primary-color);
 	}
 
-	:global(.c15t-dark) .customVendorItem {
+	:global(.inth-dark) .customVendorItem {
 		border-left-color: var(--iab-cd-primary-color-dark);
 	}
 
-	/* Custom vendor section within purpose item */
 	.customVendorPurposeSection {
 		margin-top: 0.75rem;
 		padding-top: 0.75rem;
 		border-top: 1px solid var(--iab-cd-border-color);
 	}
 
-	:global(.c15t-dark) .customVendorPurposeSection {
+	:global(.inth-dark) .customVendorPurposeSection {
 		border-color: var(--iab-cd-border-color-dark);
 	}
 
@@ -1431,16 +1405,15 @@
 		margin: 0 0 0.5rem;
 	}
 
-	:global(.c15t-dark) .vendorSectionTitleCustom {
+	:global(.inth-dark) .vendorSectionTitleCustom {
 		color: var(--iab-cd-primary-color-dark);
 	}
 
-	/* Legitimate Interest objection button */
 	.objectButton {
 		font-size: 0.6875rem;
 		font-weight: 500;
 		padding: 0.25rem 0.5rem;
-		border-radius: var(--c15t-radius-sm);
+		border-radius: var(--inth-radius-sm);
 		border: 1px solid var(--iab-cd-border-color);
 		background-color: transparent;
 		color: var(--iab-cd-text-muted-color);
@@ -1469,24 +1442,23 @@
 		opacity: 0.9;
 	}
 
-	:global(.c15t-dark) .objectButton {
+	:global(.inth-dark) .objectButton {
 		border-color: var(--iab-cd-border-color-dark);
 		color: var(--iab-cd-text-muted-color-dark);
 	}
 
-	:global(.c15t-dark) .objectButton:hover {
+	:global(.inth-dark) .objectButton:hover {
 		border-color: var(--iab-cd-text-muted-color-dark);
 		color: var(--iab-cd-text-color-dark);
 	}
 
-	:global(.c15t-dark) .objectButton[data-active],
-	:global(.c15t-dark) .objectButtonActive {
+	:global(.inth-dark) .objectButton[data-active],
+	:global(.inth-dark) .objectButtonActive {
 		background-color: var(--iab-cd-text-muted-color-dark);
 		border-color: var(--iab-cd-text-muted-color-dark);
 		color: var(--iab-cd-background-color-dark);
 	}
 
-	/* Legitimate Interest explanation text */
 	.liExplanation {
 		font-size: 0.6875rem;
 		font-style: italic;
@@ -1494,20 +1466,19 @@
 		background-color: var(--iab-cd-surface-hover);
 	}
 
-	:global(.c15t-dark) .liExplanation {
+	:global(.inth-dark) .liExplanation {
 		color: var(--iab-cd-text-muted-color-dark);
 		background-color: var(--iab-cd-surface-hover-dark);
 		border-color: var(--iab-cd-text-muted-color-dark);
 	}
 
-	/* Vendor LI Section in Vendors tab */
 	.vendorLiSection {
 		margin-top: 0.75rem;
 		padding-top: 0.75rem;
 		border-top: 1px solid var(--iab-cd-border-color);
 	}
 
-	:global(.c15t-dark) .vendorLiSection {
+	:global(.inth-dark) .vendorLiSection {
 		border-color: var(--iab-cd-border-color-dark);
 	}
 
@@ -1525,16 +1496,15 @@
 		align-items: center;
 	}
 
-	/* Purpose-level Legitimate Interest Section */
 	.purposeLiSection {
 		margin: 0.75rem 0;
 		padding: 0.75rem;
 		background-color: var(--iab-cd-surface-hover);
-		border-radius: var(--c15t-radius-sm);
+		border-radius: var(--inth-radius-sm);
 		border: 1px solid var(--iab-cd-border-color);
 	}
 
-	:global(.c15t-dark) .purposeLiSection {
+	:global(.inth-dark) .purposeLiSection {
 		background-color: var(--iab-cd-surface-hover-dark);
 		border-color: var(--iab-cd-border-color-dark);
 	}
@@ -1556,7 +1526,7 @@
 		color: var(--iab-cd-text-color);
 	}
 
-	:global(.c15t-dark) .purposeLiInfo {
+	:global(.inth-dark) .purposeLiInfo {
 		color: var(--iab-cd-text-color-dark);
 	}
 
@@ -1564,7 +1534,6 @@
 		flex-shrink: 0;
 	}
 
-	/* Reduced motion preference */
 	@media (prefers-reduced-motion: reduce) {
 		.dialogVisible,
 		.dialogHidden,

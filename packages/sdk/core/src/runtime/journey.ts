@@ -12,7 +12,10 @@ import {
 	sessionStorageOf,
 } from '../libs/journey';
 import type { ConsentJourneyOption, JourneyStorage } from '../libs/journey';
-import { JOURNEY_STORAGE_KEY } from '../libs/storage-keys';
+import {
+	C15T_JOURNEY_STORAGE_KEY,
+	JOURNEY_STORAGE_KEY,
+} from '../libs/storage-keys';
 import type {
 	ConsentKernel,
 	ConsentSnapshot,
@@ -22,6 +25,13 @@ import type {
 } from '../types';
 
 export type { JourneyStorage } from '../libs/journey';
+
+const removeTabJourney = function removeTabJourney(
+	store: JourneyStorage | null
+): void {
+	store?.removeItem(JOURNEY_STORAGE_KEY);
+	store?.removeItem(C15T_JOURNEY_STORAGE_KEY);
+};
 
 const hasStoredAnswer = (
 	snapshot: Pick<ConsentSnapshot, 'explicitChoice' | 'noticeDismissal'>
@@ -67,7 +77,6 @@ export interface JourneyController {
  * written before `start()`.
  *
  * @param options - The `journey` option, the server's id and the storage.
- * @returns The controller.
  * @internal
  */
 export const createJourneyController = function createJourneyController(
@@ -106,7 +115,7 @@ export const createJourneyController = function createJourneyController(
 			return;
 		}
 		try {
-			storage()?.removeItem(JOURNEY_STORAGE_KEY);
+			removeTabJourney(storage());
 		} catch {
 			// Unusable storage holds nothing this page wrote.
 		}
@@ -156,7 +165,7 @@ export const createJourneyController = function createJourneyController(
 		}
 		stored = false;
 		try {
-			storage()?.removeItem(JOURNEY_STORAGE_KEY);
+			removeTabJourney(storage());
 		} catch {
 			// The id outlives this page in a storage that rejects writes;
 			// nothing else reads it.
@@ -259,9 +268,6 @@ export const createJourneyController = function createJourneyController(
  * so a host that swaps one in place (React's early `/init`) still reaches
  * the swapped method. Methods the transport lacks stay absent.
  *
- * @param transport - The transport the runtime's `mode` built.
- * @param journey - The runtime's journey.
- * @returns The wrapped transport.
  * @internal
  */
 export const withJourney = function withJourney(

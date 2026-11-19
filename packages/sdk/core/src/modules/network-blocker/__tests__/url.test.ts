@@ -1,13 +1,8 @@
 import { describe, expect, test } from 'vitest';
 
+import { ruleMatches } from '../hold';
 import type { NetworkBlockerRule } from '../types';
-import {
-	hostnameMatchesRule,
-	methodMatchesRule,
-	normalizeMethod,
-	parseUrl,
-	pathMatchesRule,
-} from '../url';
+import { normalizeMethod, parseUrl } from '../url';
 
 const rule: NetworkBlockerRule = {
 	category: 'marketing',
@@ -46,60 +41,41 @@ describe('parseUrl', () => {
 	});
 });
 
-describe('hostnameMatchesRule', () => {
-	test('matches the exact domain', () => {
-		expect(hostnameMatchesRule('example.com', rule)).toBe(true);
+const at = (url: string) => new URL(url);
+
+describe('ruleMatches', () => {
+	test.each([
+		['the exact domain', 'https://example.com/', true],
+		['a subdomain', 'https://cdn.example.com/', true],
+		['a non-suffix substring', 'https://badexample.com/', false],
+		['mixed case', 'https://CDN.Example.Com/', true],
+	])('matches %s: %s', (_label, url, expected) => {
+		expect(ruleMatches(rule, at(url), 'GET')).toBe(expected);
 	});
 
-	test('matches a subdomain via suffix', () => {
-		expect(hostnameMatchesRule('cdn.example.com', rule)).toBe(true);
-	});
-
-	test('does not match a non-suffix substring', () => {
-		expect(hostnameMatchesRule('badexample.com', rule)).toBe(false);
-	});
-
-	test('is case-insensitive', () => {
-		expect(hostnameMatchesRule('CDN.Example.Com', rule)).toBe(true);
-	});
-
-	test('returns false for empty hostnames', () => {
-		expect(hostnameMatchesRule('', rule)).toBe(false);
-	});
-});
-
-describe('pathMatchesRule', () => {
-	test('matches every path when rule has no pathIncludes', () => {
-		expect(pathMatchesRule('/anything', rule)).toBe(true);
-	});
-
-	test('matches when pathname contains the substring', () => {
+	test('never matches a rule with a blank domain', () => {
 		expect(
-			pathMatchesRule('/api/track', { ...rule, pathIncludes: 'track' })
-		).toBe(true);
-	});
-
-	test('rejects when pathname does not contain the substring', () => {
-		expect(
-			pathMatchesRule('/api/health', { ...rule, pathIncludes: 'track' })
+			ruleMatches({ ...rule, domain: ' ' }, at('https://example.com/'), 'GET')
 		).toBe(false);
 	});
-});
 
-describe('methodMatchesRule', () => {
-	test('matches every method when rule has no methods list', () => {
-		expect(methodMatchesRule('POST', rule)).toBe(true);
-	});
-
-	test('matches when method is in the rule list (case-insensitive)', () => {
+	test('matches a pathname holding pathIncludes, and every path without it', () => {
+		const track = { ...rule, pathIncludes: 'track' };
+		expect(ruleMatches(rule, at('https://example.com/anything'), 'GET')).toBe(
+			true
+		);
+		expect(ruleMatches(track, at('https://example.com/api/track'), 'GET')).toBe(
+			true
+		);
 		expect(
-			methodMatchesRule('post', { ...rule, methods: ['POST', 'PUT'] })
-		).toBe(true);
-	});
-
-	test('rejects when method is not in the rule list', () => {
-		expect(
-			methodMatchesRule('GET', { ...rule, methods: ['POST', 'PUT'] })
+			ruleMatches(track, at('https://example.com/api/health'), 'GET')
 		).toBe(false);
+	});
+
+	test('matches one of methods, case-insensitive, and every method without it', () => {
+		const writes = { ...rule, methods: ['POST', 'PUT'] };
+		expect(ruleMatches(rule, at('https://example.com/'), 'POST')).toBe(true);
+		expect(ruleMatches(writes, at('https://example.com/'), 'post')).toBe(true);
+		expect(ruleMatches(writes, at('https://example.com/'), 'GET')).toBe(false);
 	});
 });

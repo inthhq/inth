@@ -2,14 +2,14 @@ import { defineConsentConfig, manifest } from '@inth/nextjs';
 
 /**
  * The `typical-install` arm's consent config, shaped like the Next.js
- * quickstart's `c15t.config.ts`: a hosted backend plus the app's cached
+ * quickstart's `inth.config.ts`: a hosted backend plus the app's cached
  * manifest route. The backend is the bench fixture, which sleeps for
- * `C15T_BENCH_BACKEND_LATENCY_MS` on every request.
+ * `INTH_BENCH_BACKEND_LATENCY_MS` on every request.
  */
 export const typicalInstallConfig = defineConsentConfig({
 	// The server reads the backend's manifest; a browser re-init resolves
 	// from the app's cached manifest route.
-	mode: manifest({ manifestUrl: '/api/c15t/manifest', resolve: 'browser' }),
+	mode: manifest({ manifestUrl: '/api/inth/manifest', resolve: 'browser' }),
 	projectUrl: '/api/bench-consent',
 });
 

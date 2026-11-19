@@ -1,20 +1,20 @@
 ---
 title: Clear on revocation
-description: Delete the first-party cookies and Web Storage keys a consent category owns on an Astro site when that category is denied, with the clearOnRevocation option of the c15t integration.
+description: Delete the first-party cookies and Web Storage keys a consent category owns on an Astro site when that category is denied, with the clearOnRevocation option of the Inth integration.
 group: frameworks
 ---
 
 ## Configure cleanup
 
 Gating stops new requests, but it leaves the cookies and storage keys a vendor
-already wrote. List the ones each optional category owns in the `c15t()`
-integration options in `astro.config.mjs`. When that category is denied, c15t
+already wrote. List the ones each optional category owns in the `inth()`
+integration options in `astro.config.mjs`. When that category is denied, Inth
 deletes them:
 
 {/* example: fragment */}
 
 ```js title="astro.config.mjs (partial)"
-c15t({
+inth({
   clearOnRevocation: {
     measurement: { cookies: ['_ga', '_ga_*'], localStorage: ['analytics:*'] },
     marketing: { cookies: ['_fbp'], sessionStorage: ['campaign-id'] },

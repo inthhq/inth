@@ -1,5 +1,6 @@
 import type { ConsentSnapshot, LegalLinks } from '@inth/sdk-core';
 import type { LegalLinksTranslations } from '@inth/sdk-translations';
+import { resolveLegalLinkEntries } from '@inth/sdk-ui/utils/legal-links';
 
 import { classes } from '../generated/styles';
 import type { ConsentClient } from '../types';
@@ -10,7 +11,7 @@ import type { SlotApplier } from './slots';
 export interface SurfaceContext {
 	/** The client whose kernel drives the surface. */
 	client: ConsentClient;
-	/** The `.c15t-theme-root` element surfaces append to. */
+	/** The `.inth-theme-root` element surfaces append to. */
 	root: HTMLElement;
 	/** Ship the DOM without class names. */
 	noStyle: boolean;
@@ -50,49 +51,42 @@ export interface LegalLinksParams {
  * Matches the React banner's `InlineLegalLinks`: a space first, then each
  * link, with a comma inside every link but the last and a space after it.
  *
- * @param params - Which links, their config and labels.
  * @returns A wrapper holding the links, or nothing when there are none.
  */
 export const renderLegalLinks = function renderLegalLinks(
 	params: LegalLinksParams
 ): HTMLElement[] {
-	const { keys, legalLinks, noStyle } = params;
-	if (!(keys && legalLinks)) {
-		return [];
-	}
-	const entries = keys.flatMap((key) => {
-		const link = legalLinks[key];
-		return link?.href ? [{ key, link }] : [];
-	});
+	const entries = resolveLegalLinkEntries(
+		params.legalLinks,
+		params.keys,
+		params.labels
+	);
 	if (entries.length === 0) {
 		return [];
 	}
-	const last = entries.length - 1;
 	return [
 		h(
 			'span',
 			{},
 			' ',
-			...entries.map(({ key, link }, index) => {
-				const target = link.target ?? '_blank';
-				const label = link.label ?? params.labels[key] ?? key;
-				return h(
+			...entries.map((link) =>
+				h(
 					'span',
 					{},
 					h(
 						'a',
 						{
-							class: noStyle ? '' : classes.legalLinks.legalLink,
-							'data-testid': `${params.testIdPrefix}-${key}`,
+							class: params.noStyle ? '' : classes.legalLinks.legalLink,
+							'data-testid': `${params.testIdPrefix}-${link.key}`,
 							href: link.href,
-							rel: link.rel ?? (target === '_blank' ? 'noreferrer' : undefined),
-							target,
+							rel: link.rel,
+							target: link.target,
 						},
-						index < last ? `${label},` : label
+						link.separated ? `${link.label},` : link.label
 					),
-					index < last ? ' ' : null
-				);
-			})
+					link.separated ? ' ' : null
+				)
+			)
 		),
 	];
 };

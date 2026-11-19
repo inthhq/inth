@@ -12,20 +12,20 @@ import { uniqueId } from './unique-id';
  *
  * @example
  * ```html
- * <div c15tCollapsible [(open)]="details">
- *   <button c15tCollapsibleTrigger>Details <span c15tCollapsibleIndicator></span></button>
- *   <div c15tCollapsibleContent>…</div>
+ * <div inthCollapsible [(open)]="details">
+ *   <button inthCollapsibleTrigger>Details <span inthCollapsibleIndicator></span></button>
+ *   <div inthCollapsibleContent>…</div>
  * </div>
  * ```
  */
 @Directive({
-	exportAs: 'c15tCollapsible',
+	exportAs: 'inthCollapsible',
 	host: {
 		'[attr.data-disabled]': 'dataDisabled()',
 		'[attr.data-state]': 'dataState()',
 		'data-slot': 'collapsible-root',
 	},
-	selector: '[c15tCollapsible]',
+	selector: '[inthCollapsible]',
 })
 export class Collapsible {
 	/** Whether the content is shown. */
@@ -34,9 +34,9 @@ export class Collapsible {
 	readonly disabled = input(false);
 
 	/** @internal */
-	readonly triggerId = uniqueId('c15t-collapsible-trigger');
+	readonly triggerId = uniqueId('inth-collapsible-trigger');
 	/** @internal */
-	readonly contentId = uniqueId('c15t-collapsible-content');
+	readonly contentId = uniqueId('inth-collapsible-content');
 	/** @internal */
 	readonly dataState = computed(() => getCollapsibleState(this.open()));
 	/** @internal */
@@ -64,7 +64,7 @@ export class Collapsible {
 		'[id]': 'root.triggerId',
 		'data-slot': 'collapsible-trigger',
 	},
-	selector: '[c15tCollapsibleTrigger]',
+	selector: '[inthCollapsibleTrigger]',
 })
 export class CollapsibleTrigger {
 	/** @internal */
@@ -83,7 +83,7 @@ export class CollapsibleTrigger {
 		'[id]': 'root.contentId',
 		'data-slot': 'collapsible-content',
 	},
-	selector: '[c15tCollapsibleContent]',
+	selector: '[inthCollapsibleContent]',
 })
 export class CollapsibleContent {
 	/** @internal */
@@ -96,7 +96,7 @@ export class CollapsibleContent {
 		'[attr.data-state]': 'root.dataState()',
 		'data-slot': 'collapsible-indicator',
 	},
-	selector: '[c15tCollapsibleIndicator]',
+	selector: '[inthCollapsibleIndicator]',
 })
 export class CollapsibleIndicator {
 	/** @internal */

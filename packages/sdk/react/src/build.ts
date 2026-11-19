@@ -12,7 +12,28 @@
  * export default defineConfig({ plugins: [react(), consentManifest()] });
  * ```
  */
-export { consentManifest } from '@inth/sdk/build';
+import { createConsentManifestPlugin } from '@inth/sdk/build';
+import type {
+	ConsentManifestPlugin,
+	ConsentManifestPluginOptions,
+} from '@inth/sdk/build';
+
+/**
+ * `consentManifest()` from `@inth/sdk/build`, which also serves
+ * `@inth/react/generated`.
+ *
+ * @param options - Backend URL, `onBuildError`, `source` and the
+ * `index.html` options.
+ */
+export const consentManifest = (
+	options: ConsentManifestPluginOptions = {}
+): ConsentManifestPlugin =>
+	createConsentManifestPlugin(options, {
+		adviseHostedForLocation: true,
+		envNames: ['VITE_INTH_PROJECT_URL'],
+		label: '@inth/react/build',
+		packages: ['@inth/react'],
+	});
 export type {
 	ConsentManifestPluginOptions,
 	ManifestBuildErrorMode,

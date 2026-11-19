@@ -26,10 +26,10 @@ Pod::Spec.new do |s|
     depends on nothing outside the OS, so the same sources serve SwiftPM, CocoaPods, a
     Command Line Tools build, and an app extension.
   DESC
-  s.homepage     = "https://c15t.com"
+  s.homepage     = "https://inth.com"
   s.license      = { :type => "Apache-2.0", :file => "../../LICENSE" }
-  s.authors      = { "c15t" => "https://c15t.com" }
-  s.source       = { :git => "https://github.com/c15t/c15t.git", :tag => "core-swift@#{s.version}" }
+  s.authors      = { "Inth" => "https://inth.com" }
+  s.source       = { :git => "https://github.com/inthhq/inth.git", :tag => "core-swift@#{s.version}" }
 
   # The library target only: Sources/InthCoreBench is an executable and Tests is not a
   # product, so neither may enter the pod.

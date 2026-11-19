@@ -40,7 +40,7 @@ export const resolveSaveSelection = function resolveSaveSelection(
 	categories?: readonly AllConsentNames[]
 ): { values: unknown; consentAction: SavePayload['consentAction'] } {
 	const rule = snapshot.policyRule;
-	const choiceScope = snapshot.evaluationPolicy.choiceScope ?? rule.scope;
+	const { choiceScope } = snapshot.evaluationPolicy;
 	const displayed =
 		categories === undefined
 			? choiceScope
@@ -72,11 +72,6 @@ export const resolveSaveSelection = function resolveSaveSelection(
 	return { consentAction: 'custom', values: input };
 };
 
-export const EMPTY_CHOICE: ExplicitChoice = Object.freeze({
-	categories: Object.freeze({}),
-	version: 3,
-}) as ExplicitChoice;
-
 /**
  * The acknowledgement a save records when the choice prompt has no category
  * to decide, or `null` when the choice scope has one. It is a dismissal
@@ -90,10 +85,7 @@ export const choiceAcknowledgement = function choiceAcknowledgement(
 	actionAt: number
 ): NoticeDismissal | null {
 	const policy = snapshot.evaluationPolicy;
-	if (
-		policy.prompt !== 'choice' ||
-		(policy.choiceScope ?? policy.scope).length > 0
-	) {
+	if (policy.prompt !== 'choice' || policy.choiceScope.length > 0) {
 		return null;
 	}
 	const current = snapshot.noticeDismissal;
@@ -243,7 +235,6 @@ export interface SavePayloadInput {
  *
  * @param after - The snapshot the action committed.
  * @param input - What the action recorded.
- * @returns The transport payload.
  * @internal
  */
 export const buildSavePayload = function buildSavePayload(

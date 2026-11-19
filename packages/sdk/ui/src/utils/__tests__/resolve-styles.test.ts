@@ -76,7 +76,6 @@ describe('resolveStyles', () => {
 				true
 			);
 			expect(result.noStyle).toBe(true);
-			// Base classes should be included in the merge, but noStyle flag is set
 			expect(result.className).toContain('component-class');
 		});
 

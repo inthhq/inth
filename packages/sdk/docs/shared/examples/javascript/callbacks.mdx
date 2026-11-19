@@ -24,7 +24,7 @@ export const consent = init({
 	scripts,
 });
 
-// The surface c15t wants shown: 'banner', 'dialog' or 'none'.
+// The surface Inth wants shown: 'banner', 'dialog' or 'none'.
 consent.on('ui', (surface) => {
 	document.documentElement.dataset.consentSurface = surface ?? 'none';
 });

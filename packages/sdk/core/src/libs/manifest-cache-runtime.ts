@@ -1,12 +1,20 @@
 /** Shared manifest HTTP cache. Does not load translations or resolve policy. */
 import type { ConsentManifest } from '@inth/sdk-schema/types';
-import { CONSENT_REQUEST_HEADER_NAMES } from '@inth/sdk-schema/types';
 
-import { c15tProtocolHeaders } from '../transports/version-header';
-import { parseCacheDirectiveSeconds } from './cache-directive';
+import { boundedSet, mapFor } from './bounded-map';
+import {
+	forbidsReuse,
+	parseCacheDirectiveSeconds,
+	readUpstreamAge,
+} from './cache-directive';
 import { failedResponseError } from './failed-response';
-
-export { parseCacheDirectiveSeconds } from './cache-directive';
+import {
+	identityHeaderOf,
+	isCleartextRemoteURL,
+	PUBLIC_REQUEST_HEADERS,
+} from './identity-headers';
+import { trimSlash } from './url';
+import { inthProtocolHeaders } from './version-header';
 
 /**
  * Just the call signature the manifest cache needs.
@@ -51,7 +59,6 @@ export interface CachedManifestResponse {
  * time it has spent in this cache. Forward it as `Age` so a downstream CDN
  * counts the remaining lifetime instead of restarting the TTL.
  *
- * @param entry - A cached manifest response.
  * @param now - Current time in epoch milliseconds. Defaults to `Date.now()`.
  * @returns The age in whole seconds.
  */
@@ -99,7 +106,6 @@ const DEFAULT_MAX_ENTRIES = 128;
  * a manifest read on every request stays put while keys minted once (a
  * `?language=` a visitor made up) age out.
  *
- * @param options - Size bound.
  * @returns A cache instance for {@link fetchCachedManifest}.
  */
 export const createManifestCache = function createManifestCache(
@@ -168,17 +174,6 @@ interface InflightFill {
 /** In-flight upstream requests, so concurrent misses share one fetch. */
 const inflightByCache = new WeakMap<ManifestCache, Map<string, InflightFill>>();
 
-const getInflight = function getInflight(
-	cache: ManifestCache
-): Map<string, InflightFill> {
-	let inflight = inflightByCache.get(cache);
-	if (!inflight) {
-		inflight = new Map();
-		inflightByCache.set(cache, inflight);
-	}
-	return inflight;
-};
-
 /**
  * Most revalidation floors held per cache. A floor exists only while a key
  * is being served stale after a failed or already-stale refresh, so a
@@ -222,32 +217,17 @@ export const readRevalidationFloors = function readRevalidationFloors(
 	return floors ? new Map(floors) : new Map();
 };
 
-const getRevalidateAfter = function getRevalidateAfter(
-	cache: ManifestCache
-): Map<string, number> {
-	let revalidateAfter = revalidateAfterByCache.get(cache);
-	if (!revalidateAfter) {
-		revalidateAfter = new Map();
-		revalidateAfterByCache.set(cache, revalidateAfter);
-	}
-	return revalidateAfter;
-};
-
 const setRevalidationFloor = function setRevalidationFloor(
 	cache: ManifestCache,
 	cacheKey: string,
 	deadline: number
 ): void {
-	const revalidateAfter = getRevalidateAfter(cache);
-	revalidateAfter.delete(cacheKey);
-	while (revalidateAfter.size >= MAX_REVALIDATION_FLOORS) {
-		const oldest = revalidateAfter.keys().next();
-		if (oldest.done) {
-			break;
-		}
-		revalidateAfter.delete(oldest.value);
-	}
-	revalidateAfter.set(cacheKey, deadline);
+	boundedSet(
+		mapFor(revalidateAfterByCache, cache),
+		cacheKey,
+		deadline,
+		MAX_REVALIDATION_FLOORS
+	);
 };
 
 /**
@@ -328,43 +308,25 @@ interface FillFailure {
  */
 const failuresByCache = new WeakMap<ManifestCache, Map<string, FillFailure>>();
 
-const getFailures = function getFailures(
-	cache: ManifestCache
-): Map<string, FillFailure> {
-	let failures = failuresByCache.get(cache);
-	if (!failures) {
-		failures = new Map();
-		failuresByCache.set(cache, failures);
-	}
-	return failures;
-};
-
 const recordFillFailure = function recordFillFailure(
 	cache: ManifestCache,
 	cacheKey: string,
 	error: unknown,
 	settledAt: number
 ): void {
-	const failures = getFailures(cache);
+	const failures = mapFor(failuresByCache, cache);
 	const previous = failures.get(cacheKey);
 	const count = (previous?.failures ?? 0) + 1;
 	const floor = Math.min(
 		MANIFEST_FAILURE_RETRY_MIN_MS * 2 ** (count - 1),
 		MANIFEST_FAILURE_RETRY_MAX_MS
 	);
-	failures.delete(cacheKey);
-	while (failures.size >= MAX_REVALIDATION_FLOORS) {
-		const oldest = failures.keys().next();
-		if (oldest.done) {
-			break;
-		}
-		failures.delete(oldest.value);
-	}
-	failures.set(cacheKey, {
-		error,
-		failures: count,
-		retryAt: settledAt + floor,
-	});
+	boundedSet(
+		failures,
+		cacheKey,
+		{ error, failures: count, retryAt: settledAt + floor },
+		MAX_REVALIDATION_FLOORS
+	);
 };
 
 /**
@@ -436,10 +398,6 @@ export const MANIFEST_PASSTHROUGH_HEADERS = [
  */
 export const MANIFEST_DEDUPE_TTL_SECONDS = 5;
 
-const trimSlash = function trimSlash(value: string): string {
-	return value.endsWith('/') ? value.slice(0, -1) : value;
-};
-
 const normalizeHeaders = function normalizeHeaders(
 	headers: Headers
 ): Record<string, string> {
@@ -453,7 +411,6 @@ const normalizeHeaders = function normalizeHeaders(
 /**
  * Reads the `s-maxage` directive from a `Cache-Control` header.
  *
- * @param cacheControl - The header value, if any.
  * @returns The directive in seconds, or `0` when absent or invalid.
  */
 export const getManifestSMaxAge = function getManifestSMaxAge(
@@ -465,7 +422,6 @@ export const getManifestSMaxAge = function getManifestSMaxAge(
 /**
  * Reads the `stale-while-revalidate` directive from a `Cache-Control` header.
  *
- * @param cacheControl - The header value, if any.
  * @returns The directive in seconds, or `0` when absent or invalid.
  */
 export const getManifestStaleWhileRevalidate =
@@ -476,30 +432,6 @@ export const getManifestStaleWhileRevalidate =
 			parseCacheDirectiveSeconds(cacheControl, 'stale-while-revalidate') ?? 0
 		);
 	};
-
-/** Reads the upstream `Age` header in seconds, `0` when absent or invalid. */
-const readUpstreamAge = function readUpstreamAge(
-	headers: Record<string, string>
-): number {
-	const parsed = Number.parseInt(headers.age ?? '', 10);
-	return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
-};
-
-/** `true` when the backend explicitly forbids reusing the response. */
-const forbidsReuse = function forbidsReuse(
-	cacheControl: string | undefined
-): boolean {
-	if (!cacheControl) {
-		return false;
-	}
-	return cacheControl
-		.split(',')
-		.some((part) =>
-			['no-store', 'no-cache', 'private'].includes(
-				part.trim().split('=')[0]?.toLowerCase() ?? ''
-			)
-		);
-};
 
 /** `true` when the backend sent an `s-maxage` directive, including `0`. */
 const hasSharedMaxAge = function hasSharedMaxAge(
@@ -568,8 +500,6 @@ export interface ManifestSourceOptions {
 /**
  * Resolves the upstream manifest URL from adapter configuration.
  *
- * @param options - Backend or explicit manifest URL.
- * @returns The URL to fetch the manifest from.
  * @throws {Error} When neither `manifestUrl` nor `projectUrl` is set.
  */
 export const resolveManifestSourceUrl = function resolveManifestSourceUrl(
@@ -580,7 +510,7 @@ export const resolveManifestSourceUrl = function resolveManifestSourceUrl(
 	}
 	if (!options.projectUrl) {
 		throw new Error(
-			'c15t manifest cache: `projectUrl` or `manifestUrl` is required.'
+			'inth manifest cache: `projectUrl` or `manifestUrl` is required.'
 		);
 	}
 	return `${trimSlash(options.projectUrl)}/manifest`;
@@ -682,7 +612,7 @@ export interface FetchCachedManifestOptions {
 	 * unless the host is a loopback address. Requests with identity headers
 	 * reject redirects so credentials cannot reach an unvalidated target.
 	 * Headers the cache already sends with the same value (`accept:
-	 * application/json` and the c15t protocol headers) are not part of the key.
+	 * application/json` and the Inth protocol headers) are not part of the key.
 	 */
 	headers?: Record<string, string>;
 	/**
@@ -719,43 +649,21 @@ export interface FetchCachedManifestOptions {
 	onBackgroundRevalidate?: (revalidation: Promise<void>) => void;
 }
 
-const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
-const CREDENTIAL_HEADERS = new Set([
-	'authorization',
-	'cookie',
-	'proxy-authorization',
-]);
-
 /**
- * Request headers that carry no visitor identity: the browser negotiation
- * headers, the consent resolver inputs, and this client's version headers.
- * Anything else a host forwards (an API key, a tenant selector) is treated
- * as a credential for transport purposes.
+ * Request headers that carry no visitor identity: the public browser
+ * headers and this client's protocol headers. Anything else a host
+ * forwards (an API key, a tenant selector) is treated as a credential for
+ * transport purposes.
  */
-const PUBLIC_MANIFEST_HEADERS = new Set([
-	'accept',
-	'accept-language',
-	'content-type',
-	'if-none-match',
-	'origin',
-	'referer',
-	'sec-gpc',
-	'user-agent',
-	...CONSENT_REQUEST_HEADER_NAMES,
-	...Object.keys(c15tProtocolHeaders),
+const PUBLIC_MANIFEST_HEADERS: ReadonlySet<string> = new Set([
+	...PUBLIC_REQUEST_HEADERS,
+	...Object.keys(inthProtocolHeaders),
 ]);
 
-const findIdentityHeader = function findIdentityHeader(
+const findIdentityHeader = (
 	headers: Record<string, string> | undefined
-): string | undefined {
-	if (!headers) {
-		return undefined;
-	}
-	return Object.keys(headers).find((name) => {
-		const lower = name.toLowerCase();
-		return CREDENTIAL_HEADERS.has(lower) || !PUBLIC_MANIFEST_HEADERS.has(lower);
-	});
-};
+): string | undefined =>
+	identityHeaderOf(Object.keys(headers ?? {}), PUBLIC_MANIFEST_HEADERS);
 
 /** Refuses to send credentials in clear text to anything but loopback. */
 const assertCredentialTransport = function assertCredentialTransport(
@@ -763,18 +671,9 @@ const assertCredentialTransport = function assertCredentialTransport(
 	headers: Record<string, string> | undefined
 ): void {
 	const identityHeader = findIdentityHeader(headers);
-	if (!identityHeader) {
-		return;
-	}
-	let url: URL;
-	try {
-		url = new URL(requestUrl);
-	} catch {
-		return;
-	}
-	if (url.protocol === 'http:' && !LOOPBACK_HOSTS.has(url.hostname)) {
+	if (identityHeader && isCleartextRemoteURL(requestUrl)) {
 		throw new Error(
-			`c15t manifest cache: refusing to send credentials over http to ${url.host} (${identityHeader}). Use https, or a loopback host for local development.`
+			`inth manifest cache: refusing to send credentials over http to ${new URL(requestUrl).host} (${identityHeader}). Use https, or a loopback host for local development.`
 		);
 	}
 };
@@ -821,7 +720,7 @@ const defaultRequestHeaders = function defaultRequestHeaders(): Record<
 	string,
 	string
 > {
-	return { accept: 'application/json', ...c15tProtocolHeaders };
+	return { accept: 'application/json', ...inthProtocolHeaders };
 };
 
 /**
@@ -897,7 +796,7 @@ const revalidateManifest = async function revalidateManifest(input: {
 			...normalizeHeaders(response.headers),
 		};
 		const sMaxAge = getManifestSMaxAge(responseHeaders['cache-control']);
-		const upstreamAge = readUpstreamAge(responseHeaders);
+		const upstreamAge = readUpstreamAge(responseHeaders.age);
 		const { expiresAt, staleUntil } = resolveEntryLifetime({
 			cacheControl: responseHeaders['cache-control'],
 			now,
@@ -926,7 +825,7 @@ const revalidateManifest = async function revalidateManifest(input: {
 		// `status` lets a host tell a backend without `/manifest` (404) from
 		// one that is failing, including through a `backoff` error's `cause`.
 		throw await failedResponseError(
-			'c15t manifest cache: backend /manifest',
+			'inth manifest cache: backend /manifest',
 			response
 		);
 	}
@@ -939,7 +838,7 @@ const revalidateManifest = async function revalidateManifest(input: {
 	// CDN is itself serving stale arrives with `Age` past `s-maxage` and is
 	// stored as already stale, so it is served while the next revalidation
 	// runs instead of costing every request an upstream round trip.
-	const upstreamAge = readUpstreamAge(responseHeaders);
+	const upstreamAge = readUpstreamAge(responseHeaders.age);
 	const { expiresAt, staleUntil } = resolveEntryLifetime({
 		cacheControl: responseHeaders['cache-control'],
 		now,
@@ -1015,7 +914,7 @@ const assertNotBackingOff = function assertNotBackingOff(
 		failure.failures === 1 ? 'request' : `${failure.failures} requests`;
 	throw new ManifestUnavailableError(
 		'backoff',
-		`c15t manifest cache: the last ${what} for this manifest failed; retrying in ${retryAfterMs} ms.`,
+		`inth manifest cache: the last ${what} for this manifest failed; retrying in ${retryAfterMs} ms.`,
 		{ cause: failure.error, retryAfterMs }
 	);
 };
@@ -1050,7 +949,7 @@ const waitForFill = function waitForFill(
 		}
 		return new ManifestUnavailableError(
 			'timeout',
-			`c15t manifest cache: no manifest within ${timeoutMs} ms; the request continues in the background.`
+			`inth manifest cache: no manifest within ${timeoutMs} ms; the request continues in the background.`
 		);
 	};
 	const remaining = fill.startedAt + timeoutMs - Date.now();
@@ -1067,7 +966,6 @@ const waitForFill = function waitForFill(
  * rejects with a {@link ManifestUnavailableError} (`reason: 'timeout'`) once
  * `timeoutMs` has passed. The task itself is not cancelled.
  *
- * @param task - The resolution to bound.
  * @param timeoutMs - Budget in milliseconds. `undefined` or a non-finite
  * value returns the task unchanged.
  * @returns The task's result, if it settles in time.
@@ -1087,7 +985,7 @@ export const withResolutionBudget = function withResolutionBudget<Value>(
 		() =>
 			new ManifestUnavailableError(
 				'timeout',
-				`c15t: consent resolution did not finish within ${budgetMs} ms.`
+				`inth: consent resolution did not finish within ${budgetMs} ms.`
 			)
 	);
 };
@@ -1121,7 +1019,6 @@ export const withResolutionBudget = function withResolutionBudget<Value>(
  * in between reject at once. With `timeoutMs`, a call stops waiting for the
  * upstream after that long and the request finishes in the background.
  *
- * @param options - Source URL, fetch, query, clock, budget, and cache overrides.
  * @returns The cached or freshly fetched manifest with its upstream headers.
  * @throws {ManifestUnavailableError} When `timeoutMs` runs out, or the key is
  * inside its retry floor after a failure.
@@ -1134,7 +1031,7 @@ export const fetchCachedManifest = async function fetchCachedManifest(
 ): Promise<CachedManifestResponse> {
 	const fetchImpl = options.fetch ?? globalThis.fetch?.bind(globalThis);
 	if (!fetchImpl) {
-		throw new Error('c15t manifest cache: a fetch implementation is required.');
+		throw new Error('inth manifest cache: a fetch implementation is required.');
 	}
 
 	const cache = options.cache ?? defaultManifestCache;
@@ -1162,7 +1059,7 @@ export const fetchCachedManifest = async function fetchCachedManifest(
 		return cached;
 	}
 
-	const inflight = getInflight(cache);
+	const inflight = mapFor(inflightByCache, cache);
 	const pending = inflight.get(cacheKey);
 	/**
 	 * Starts one upstream fill and registers it as in flight. A background
@@ -1177,7 +1074,7 @@ export const fetchCachedManifest = async function fetchCachedManifest(
 			? setTimeout(() => {
 					controller.abort(
 						new Error(
-							`c15t manifest cache: fetch timed out after ${MANIFEST_FETCH_TIMEOUT_MS} ms.`
+							`inth manifest cache: fetch timed out after ${MANIFEST_FETCH_TIMEOUT_MS} ms.`
 						)
 					);
 				}, MANIFEST_FETCH_TIMEOUT_MS)
@@ -1238,7 +1135,7 @@ export const fetchCachedManifest = async function fetchCachedManifest(
 		// and no sooner than the dedupe floor after the last one settled, so a
 		// source that keeps answering stale or keeps failing is not re-asked
 		// on every request.
-		const revalidateAfter = getRevalidateAfter(cache);
+		const revalidateAfter = mapFor(revalidateAfterByCache, cache);
 		if (!pending && (revalidateAfter.get(cacheKey) ?? 0) <= now) {
 			// Claim the slot before the first await so concurrent stale reads
 			// in the same tick do not each start a fill.

@@ -1,8 +1,8 @@
 import { afterEach, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h } from 'vue';
 
-import { c15tVue } from './test-plugin';
-import type { C15tVuePluginOptions } from './test-plugin';
+import { inthVue } from './test-plugin';
+import type { InthVuePluginOptions } from './test-plugin';
 
 const TRACKER = 'https://tracker.example/collect';
 
@@ -16,7 +16,7 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
-const mountWith = (options: C15tVuePluginOptions) => {
+const mountWith = (options: InthVuePluginOptions) => {
 	const network = vi.fn((_input: RequestInfo | URL) =>
 		Promise.resolve(new Response('{}', { status: 503 }))
 	);
@@ -26,7 +26,7 @@ const mountWith = (options: C15tVuePluginOptions) => {
 	const app = createApp(
 		defineComponent({ setup: () => () => h('main', 'App') })
 	);
-	app.use(c15tVue, options);
+	app.use(inthVue, options);
 	app.mount(container);
 	cleanups.push(() => {
 		app.unmount();

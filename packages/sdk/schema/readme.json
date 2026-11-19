@@ -1,6 +1,6 @@
 {
 	"title": "@inth/sdk-schema: Consent API Schemas and Types",
-	"description": "Valibot schemas and TypeScript types for the c15t consent API. The c15t backend, frontends, and Node.js SDK share them, so requests and responses match on both sides.",
+	"description": "Valibot schemas and TypeScript types for the Inth consent API. The Inth backend, frontends, and Node.js SDK share them, so requests and responses match on both sides.",
 	"features": [
 		"Valibot schemas for consent API requests and responses",
 		"TypeScript types inferred from the same schemas",
@@ -8,7 +8,7 @@
 	],
 	"manualInstallation": [
 		"",
-		"Most apps get this package through `c15t`, `@c15t/backend`, or `@c15t/node-sdk`. Install it directly to validate consent API payloads in your own code:",
+		"Most apps get this package through `@inth/sdk`, `@c15t/backend`, or `@c15t/node-sdk`. Install it directly to validate consent API payloads in your own code:",
 		"",
 		"```bash\npnpm add @inth/sdk-schema\n```"
 	],

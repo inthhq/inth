@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	installHeadProbe,
@@ -20,6 +20,34 @@ import { googleTagManager } from './vendors/tag-managers/google-tag-manager';
 
 describe('googleTagManager contract', () => {
 	registerVendorContractCleanup();
+
+	it('runs a custom dataLayer and its own gtag', () => {
+		loadScripts(
+			[googleTagManager({ dataLayer: 'shopLayer', id: 'GTM-LAYER' })],
+			grantedMarketingConsents
+		);
+
+		const win = window as TestWindow & Record<string, unknown>;
+		const layer = win.shopLayer as unknown[];
+		expect(win.dataLayer).toBeUndefined();
+		expect(typeof win.shopLayerGtag).toBe('function');
+		expect(toArgs(layer[0]).slice(0, 2)).toEqual(['consent', 'default']);
+		expect(layer).toContainEqual(expect.objectContaining({ event: 'gtm.js' }));
+		const src = document
+			.querySelector('script[src*="gtm.js"]')
+			?.getAttribute('src');
+		expect(src).toBe(
+			'https://www.googletagmanager.com/gtm.js?id=GTM-LAYER&l=shopLayer'
+		);
+
+		updateScripts(
+			[googleTagManager({ dataLayer: 'shopLayer', id: 'GTM-LAYER' })],
+			grantedMeasurementConsents
+		);
+		expect(layer.map((entry) => toArgs(entry)[1])).toContain('update');
+		Reflect.deleteProperty(win, 'shopLayer');
+		Reflect.deleteProperty(win, 'shopLayerGtag');
+	});
 
 	it('acknowledges the consent default before container boot', () => {
 		installHeadProbe((node, win) => {
@@ -51,7 +79,7 @@ describe('googleTagManager contract', () => {
 					id: 'google-tag-manager-contract',
 				},
 			],
-			deniedConsents
+			ALL_DENIED
 		);
 
 		const win = window as TestWindow;
@@ -79,7 +107,7 @@ describe('googleTagManager contract', () => {
 			requests.push(node.src);
 		});
 
-		loadScripts([googleTagManager({ id: 'GTM-DEFAULT' })], deniedConsents);
+		loadScripts([googleTagManager({ id: 'GTM-DEFAULT' })], ALL_DENIED);
 
 		expect(requests).toEqual([
 			'https://www.googletagmanager.com/gtm.js?id=GTM-DEFAULT',
@@ -113,8 +141,8 @@ describe('googleTagManager loadMode after-consent', () => {
 			googleTagManager({ id: 'GTM-GATED', loadMode: 'after-consent' }),
 		];
 
-		loadScripts(scripts, deniedConsents);
-		updateScripts(scripts, { ...deniedConsents, functionality: true });
+		loadScripts(scripts, ALL_DENIED);
+		updateScripts(scripts, { ...ALL_DENIED, functionality: true });
 
 		const win = window as TestWindow;
 		expect(requests).toEqual([]);
@@ -128,7 +156,7 @@ describe('googleTagManager loadMode after-consent', () => {
 			googleTagManager({ id: 'GTM-GATED', loadMode: 'after-consent' }),
 		];
 
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMarketingConsents);
 		updateScripts(scripts, {
 			...grantedMarketingConsents,
@@ -195,7 +223,7 @@ describe('googleTagManager loadMode after-consent', () => {
 
 		loadScripts(scripts, grantedMeasurementConsents);
 		const element = document.head.querySelector('script');
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 
 		const win = window as TestWindow;
 		expect(element?.isConnected).toBe(true);

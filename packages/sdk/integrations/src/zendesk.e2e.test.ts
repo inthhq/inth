@@ -7,7 +7,7 @@ import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
@@ -17,7 +17,7 @@ import {
 } from './e2e-test-utils';
 import { zendeskWidget } from './vendors/functional/zendesk';
 
-const functionalityConsents = { ...deniedConsents, functionality: true };
+const functionalityConsents = { ...ALL_DENIED, functionality: true };
 const allWidgetConsents = { ...functionalityConsents, measurement: true };
 
 const getLoader = function getLoader(): HTMLScriptElement {
@@ -51,8 +51,8 @@ describe('Zendesk Messaging loader contract', () => {
 		const fetchSpy = vi.spyOn(globalThis, 'fetch');
 		const xhrSpy = vi.spyOn(XMLHttpRequest.prototype, 'open');
 		const scripts = [zendeskWidget({ key: 'widget-key' })];
-		loadScripts(scripts, deniedConsents);
-		updateScripts(scripts, { ...deniedConsents, measurement: true });
+		loadScripts(scripts, ALL_DENIED);
+		updateScripts(scripts, { ...ALL_DENIED, measurement: true });
 		expect(onAppend).not.toHaveBeenCalled();
 		expect(document.cookie).toBe(cookies);
 		expect({ ...window.localStorage }).toEqual(local);
@@ -86,7 +86,7 @@ describe('Zendesk Messaging loader contract', () => {
 			loadScripts([zendeskWidget({ key: 'widget-key' })], consents);
 			expect(queueAtAppend).toEqual([['messenger:set', 'cookies', range]]);
 			expect(referenceAtAppend).toBe(getLoader());
-			expect(getLoader().id).toMatch(/^c15t-/u);
+			expect(getLoader().id).toMatch(/^inth-/u);
 		}
 	);
 
@@ -149,7 +149,7 @@ describe('Zendesk Messaging loader contract', () => {
 		const scripts = [zendeskWidget({ key: 'widget-key' })];
 		loadScripts(scripts, functionalityConsents);
 		const revoked = getLoader();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(revoked.isConnected).toBe(false);
 		expect(window.zE?._?.map(toArgs)).toEqual([
 			['messenger:set', 'cookies', 'functional'],
@@ -206,7 +206,7 @@ describe('Zendesk Messaging loader contract', () => {
 		loadScripts(scripts, functionalityConsents);
 		expect(document.head.querySelector('script')).toBeNull();
 		expect(window.zE).toBeUndefined();
-		updateScripts(scripts, { ...deniedConsents, experience: true });
+		updateScripts(scripts, { ...ALL_DENIED, experience: true });
 		expect(getLoader()).toBeDefined();
 		expect(window.zE?._?.map(toArgs)[0]).toEqual([
 			'messenger:set',
@@ -243,7 +243,7 @@ describe('Zendesk Messaging loader contract', () => {
 				);
 				expect(window.zE).toBe(api);
 				const callsAfterCleanup = api.mock.calls.length;
-				await kernel.commands.save(deniedConsents);
+				await kernel.commands.save(ALL_DENIED);
 				expect(api).toHaveBeenCalledTimes(callsAfterCleanup);
 				await kernel.commands.save(functionalityConsents);
 				const remounted = createScriptLoader({ kernel, scripts: [script] });
@@ -284,7 +284,7 @@ describe('Zendesk Messaging loader contract', () => {
 			expect(api).toHaveBeenLastCalledWith('messenger:set', 'cookies', 'all');
 			expect(api).not.toHaveBeenCalledWith('messenger:set', 'cookies', 'none');
 
-			updateScripts(replacement, deniedConsents);
+			updateScripts(replacement, ALL_DENIED);
 			expect(element.isConnected).toBe(false);
 			expect(api).toHaveBeenLastCalledWith('messenger:set', 'cookies', 'none');
 			updateScripts(replacement, functionalityConsents);
@@ -334,7 +334,7 @@ describe('Zendesk Messaging loader contract', () => {
 				} else if (cleanup === 'dispose') {
 					removed.dispose();
 				} else {
-					await removedKernel.commands.save(deniedConsents);
+					await removedKernel.commands.save(ALL_DENIED);
 				}
 				expect(getLoader()).toBe(element);
 				expect(api).not.toHaveBeenCalledWith(
@@ -344,7 +344,7 @@ describe('Zendesk Messaging loader contract', () => {
 				);
 				await survivingKernel.commands.save(allWidgetConsents);
 				expect(api).toHaveBeenLastCalledWith('messenger:set', 'cookies', 'all');
-				await survivingKernel.commands.save(deniedConsents);
+				await survivingKernel.commands.save(ALL_DENIED);
 				expect(element.isConnected).toBe(false);
 				expect(api).toHaveBeenLastCalledWith(
 					'messenger:set',

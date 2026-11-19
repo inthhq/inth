@@ -37,8 +37,8 @@ const pixel: Script = {
 const page = window as unknown as Record<string, unknown>;
 
 afterEach(() => {
-	Reflect.deleteProperty(page, '__c15tStarted');
-	Reflect.deleteProperty(page, '__c15tRender');
+	Reflect.deleteProperty(page, '__inthStarted');
+	Reflect.deleteProperty(page, '__inthRender');
 	document.head.replaceChildren();
 });
 
@@ -48,9 +48,18 @@ describe('startPlainScripts', () => {
 		expect(document.head.querySelectorAll('script')).toHaveLength(1);
 	});
 
+	test('leaves an integration script to the loader', () => {
+		// The loader may load it from the script registry instead.
+		const integration: Script = { ...pixel, id: 'vendor', integration: 'x' };
+		startPlainScripts([pixel, integration], granted, undefined);
+		expect(
+			[...document.querySelectorAll('script')].map((tag) => tag.src)
+		).toEqual([pixel.src]);
+	});
+
 	test('leaves a script with anonymizeId to the loader', () => {
 		// The loader sets its element id before appending it; a script with
-		// `anonymizeId: false` may read `c15t-script-<id>` as it runs.
+		// `anonymizeId: false` may read `inth-script-<id>` as it runs.
 		const named = { ...pixel, anonymizeId: false };
 		expect(isPlainScript(named)).toBe(false);
 		expect(startPlainScripts([named], granted, undefined)).toHaveLength(0);
@@ -102,7 +111,7 @@ describe('startPlainScripts', () => {
 		// The page object may be an earlier render's, after a client-side
 		// navigation whose render left none: the caller passes this
 		// render's reservations, read through its id check.
-		page.__c15tRender = { id: 'earlier', starts: { pixel: 1 } };
+		page.__inthRender = { id: 'earlier', starts: { pixel: 1 } };
 		expect(startPlainScripts([pixel], granted, undefined)).toHaveLength(1);
 	});
 });
@@ -115,13 +124,13 @@ describe('releasePlainScripts', () => {
 			src: 'https://cdn.example.com/other.js',
 		};
 		const keys = startPlainScripts([pixel, other], granted, undefined);
-		const started = page.__c15tStarted as Record<
+		const started = page.__inthStarted as Record<
 			string,
-			HTMLScriptElement & { __c15tAdopted?: boolean }
+			HTMLScriptElement & { __inthAdopted?: boolean }
 		>;
 		const adopted = started.other;
 		if (adopted) {
-			adopted.__c15tAdopted = true;
+			adopted.__inthAdopted = true;
 		}
 		releasePlainScripts(keys);
 		expect(started.pixel).toBeUndefined();

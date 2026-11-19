@@ -76,7 +76,7 @@ export const EarlyTapScript = () => {
 		<script
 			ref={script}
 			nonce={nonce}
-			// oxlint-disable-next-line react/no-danger -- c15t's own build-time script.
+			// oxlint-disable-next-line react/no-danger -- Inth's own build-time script.
 			dangerouslySetInnerHTML={{ __html: EARLY_CONSENT_TAP_SCRIPT }}
 		/>
 	);

@@ -5,12 +5,12 @@ import {
 	signal,
 } from '@angular/core';
 import { ɵresolveNoStyle as resolveNoStyle } from '@inth/angular';
+import type { ProcessedFeature } from '@inth/sdk/iab/headless';
+import type { ResolvedIABCopy } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 
 import { ChevronRightIcon } from './iab-icons';
 import { PREFERENCE_ITEM } from './iab-purpose-item';
-import type { IABTranslations } from './iab-translations';
-import type { ProcessedFeature } from './iab-types';
 
 /**
  * One informational IAB Feature row.
@@ -26,11 +26,11 @@ import type { ProcessedFeature } from './iab-types';
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	host: { style: 'display: contents' },
 	imports: [...PREFERENCE_ITEM, ChevronRightIcon],
-	selector: 'c15t-iab-feature-item',
+	selector: 'inth-iab-feature-item',
 	template: `
 		@let t = iabT().preferenceCenter;
 		<div
-			c15tPreferenceItem
+			inthPreferenceItem
 			[(open)]="isExpanded"
 			[noStyle]="true"
 			[class]="cls(styles.purposeItem)"
@@ -38,29 +38,29 @@ import type { ProcessedFeature } from './iab-types';
 		>
 			<div [class]="cls(styles.purposeHeader)">
 				<button
-					c15tPreferenceItemTrigger
+					inthPreferenceItemTrigger
 					[class]="cls(styles.purposeTrigger)"
 				>
-					<span c15tPreferenceItemLeading>
+					<span inthPreferenceItemLeading>
 						<svg
-							c15t-chevron-right-icon
+							inth-chevron-right-icon
 							aria-hidden="true"
 							[class]="cls(styles.purposeArrow)"
 							[expanded]="isExpanded()"
 						></svg>
 					</span>
 					<div
-						c15tPreferenceItemHeader
+						inthPreferenceItemHeader
 						[class]="cls(styles.purposeInfo)"
 					>
 						<h3
-							c15tPreferenceItemTitle
+							inthPreferenceItemTitle
 							[class]="cls(styles.purposeName)"
 						>
 							{{ feature().name }}
 						</h3>
 						<p
-							c15tPreferenceItemMeta
+							inthPreferenceItemMeta
 							[class]="cls(styles.purposeMeta)"
 						>
 							{{
@@ -75,11 +75,11 @@ import type { ProcessedFeature } from './iab-types';
 			</div>
 
 			<div
-				c15t-preference-item-content
+				inth-preference-item-content
 				[innerClassName]="cls(styles.purposeContent)"
 				[noStyle]="resolvedNoStyle()"
 			>
-				<ng-template c15tPreferenceItemBody>
+				<ng-template inthPreferenceItemBody>
 					<p [class]="cls(styles.purposeDescription)">
 						{{ feature().description }}
 					</p>
@@ -87,16 +87,16 @@ import type { ProcessedFeature } from './iab-types';
 					@if (feature().illustrations.length > 0) {
 						<div>
 							<div
-								c15tPreferenceItem
+								inthPreferenceItem
 								[(open)]="showExamples"
 								[noStyle]="true"
 							>
 								<button
-									c15tPreferenceItemTrigger
+									inthPreferenceItemTrigger
 									[class]="cls(styles.examplesToggle)"
 								>
 									<svg
-										c15t-chevron-right-icon
+										inth-chevron-right-icon
 										aria-hidden="true"
 										style="height: 0.75rem; width: 0.75rem"
 										[expanded]="showExamples()"
@@ -105,10 +105,10 @@ import type { ProcessedFeature } from './iab-types';
 									({{ feature().illustrations.length }})
 								</button>
 								<div
-									c15t-preference-item-content
+									inth-preference-item-content
 									[noStyle]="resolvedNoStyle()"
 								>
-									<ng-template c15tPreferenceItemBody>
+									<ng-template inthPreferenceItemBody>
 										<ul [class]="cls(styles.examplesList)">
 											@for (
 												illustration of feature().illustrations;
@@ -126,16 +126,16 @@ import type { ProcessedFeature } from './iab-types';
 					@if (feature().vendors.length > 0) {
 						<div>
 							<div
-								c15tPreferenceItem
+								inthPreferenceItem
 								[(open)]="showVendors"
 								[noStyle]="true"
 							>
 								<button
-									c15tPreferenceItemTrigger
+									inthPreferenceItemTrigger
 									[class]="cls(styles.vendorsToggle)"
 								>
 									<svg
-										c15t-chevron-right-icon
+										inth-chevron-right-icon
 										aria-hidden="true"
 										style="height: 0.75rem; width: 0.75rem"
 										[expanded]="showVendors()"
@@ -144,10 +144,10 @@ import type { ProcessedFeature } from './iab-types';
 									({{ feature().vendors.length }})
 								</button>
 								<div
-									c15t-preference-item-content
+									inth-preference-item-content
 									[noStyle]="resolvedNoStyle()"
 								>
-									<ng-template c15tPreferenceItemBody>
+									<ng-template inthPreferenceItemBody>
 										<ul [class]="cls(styles.examplesList)">
 											@for (vendor of feature().vendors; track vendor.id) {
 												<li>{{ vendor.name }}</li>
@@ -164,7 +164,6 @@ import type { ProcessedFeature } from './iab-types';
 	`,
 })
 export class IABFeatureItem {
-	/** The feature. */
 	readonly feature = input.required<ProcessedFeature>();
 	/** The row's `data-testid`, from the shared display model. */
 	readonly testId = input<string | undefined>(undefined);
@@ -173,7 +172,7 @@ export class IABFeatureItem {
 	/** @internal */
 	protected readonly resolvedNoStyle = resolveNoStyle(this.noStyle);
 	/** The IAB copy. */
-	readonly iabT = input.required<IABTranslations>();
+	readonly iabT = input.required<ResolvedIABCopy>();
 
 	/** @internal */
 	protected readonly styles = styles as Record<string, string | undefined>;

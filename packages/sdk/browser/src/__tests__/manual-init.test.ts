@@ -2,11 +2,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
 
 import { autoInit, createGlobal, installGlobal } from '../global';
-import type { C15tGlobal } from '../global';
+import type { InthGlobal } from '../global';
 import type { ConsentClientOptions } from '../types';
 
 type TestWindow = Window & {
-	c15t?: unknown;
+	inth?: unknown;
 };
 
 const testWindow = window as TestWindow;
@@ -22,7 +22,7 @@ const scriptWith = function scriptWith(
 };
 
 const installManual = function installManual(): {
-	api: C15tGlobal;
+	api: InthGlobal;
 	currentScript: MockInstance<() => Document['currentScript']>;
 	script: HTMLScriptElement;
 } {
@@ -46,8 +46,8 @@ const installManual = function installManual(): {
 };
 
 afterEach(() => {
-	(testWindow.c15t as C15tGlobal | undefined)?.dispose?.();
-	testWindow.c15t = undefined;
+	(testWindow.inth as InthGlobal | undefined)?.dispose?.();
+	testWindow.inth = undefined;
 	vi.restoreAllMocks();
 	localStorage.clear();
 	document.body.replaceChildren();
@@ -95,7 +95,7 @@ describe('manual initialization', () => {
 			projectUrl: 'https://queued.c15t.dev',
 			ui: { trigger: true },
 		};
-		testWindow.c15t = [['config', queuedOptions]];
+		testWindow.inth = [['config', queuedOptions]];
 		const { api, currentScript } = installManual();
 		api.config({ consentCategories: ['functionality'] });
 		currentScript.mockReturnValue(null);
@@ -136,7 +136,7 @@ describe('manual initialization', () => {
 	});
 
 	it('retains queued defaults after dispose while init overrides stay per-client', () => {
-		testWindow.c15t = [
+		testWindow.inth = [
 			[
 				'config',
 				{
@@ -170,7 +170,7 @@ describe('manual initialization', () => {
 	it('keeps the next initialization pending when a ready listener disposes', async () => {
 		const { api, currentScript } = installManual();
 		currentScript.mockReturnValue(null);
-		document.addEventListener('c15t:ready', () => api.dispose(), {
+		document.addEventListener('inth:ready', () => api.dispose(), {
 			once: true,
 		});
 

@@ -115,8 +115,8 @@ const API_FALLBACKS = [
 				"import { createScriptLoader } from '@inth/sdk/modules/script-loader';\nimport { onMounted, onUnmounted, watch } from 'vue';",
 			],
 			[
-				"import { useConsentSnapshot, useScriptLoader } from '#c15t/composables';",
-				"import { useConsentKernel, useConsentSnapshot } from '#c15t/composables';",
+				"import { useConsentSnapshot, useScriptLoader } from '#inth/composables';",
+				"import { useConsentKernel, useConsentSnapshot } from '#inth/composables';",
 			],
 			[
 				'const snapshot = useConsentSnapshot();\n// The scripts come from the page URL, so they register in the browser, as\n// the other gate pages do with useScriptLoader.\nuseScriptLoader(gateScripts());\nonMounted(() => {\n\tupdateGateBridge(snapshot.value);\n});',

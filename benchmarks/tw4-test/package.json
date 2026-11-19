@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/tw4-css-test",
+	"name": "@inth/tw4-css-test",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -8,7 +8,7 @@
 		"start": "next start --port 3122"
 	},
 	"dependencies": {
-		"@c15t/benchmarking": "workspace:*",
+		"@inth/benchmarking": "workspace:*",
 		"@inth/nextjs": "workspace:*",
 		"@inth/react": "workspace:*",
 		"@inth/sdk": "workspace:*",

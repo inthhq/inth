@@ -19,10 +19,10 @@ import {
 describe('prefetch utilities', () => {
 	beforeEach(() => {
 		vi.restoreAllMocks();
-		delete (window as Window & { __c15tInitialDataPromises?: unknown })
-			.__c15tInitialDataPromises;
-		delete (window as Window & { __c15tJourney?: unknown }).__c15tJourney;
-		delete (window as Window & { __c15tExperiment?: unknown }).__c15tExperiment;
+		delete (window as Window & { __inthInitialDataPromises?: unknown })
+			.__inthInitialDataPromises;
+		delete (window as Window & { __inthJourney?: unknown }).__inthJourney;
+		delete (window as Window & { __inthExperiment?: unknown }).__inthExperiment;
 		sessionStorage.clear();
 		localStorage.clear();
 	});
@@ -32,11 +32,11 @@ describe('prefetch utilities', () => {
 	});
 
 	it.each([
-		{ projectUrl: '/api/c15t/' },
+		{ projectUrl: '/api/inth/' },
 		{ credentials: 'omit' as const, projectUrl: 'https://consent.example.com' },
 		{
 			overrides: { country: 'DE', gpc: true, language: 'de', region: 'BE' },
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		},
 	])(
 		'the inline script and primePrefetchedInitialData share one cache entry for %j',
@@ -50,12 +50,12 @@ describe('prefetch utilities', () => {
 			window.eval(buildPrefetchScript(options));
 			const entries = (
 				window as Window & {
-					__c15tInitialDataPromises?: Record<
+					__inthInitialDataPromises?: Record<
 						string,
 						{ promise: Promise<unknown> }
 					>;
 				}
-			).__c15tInitialDataPromises;
+			).__inthInitialDataPromises;
 			const scripted = Object.values(entries ?? {})[0]?.promise;
 			expect(scripted).toBeDefined();
 			// The same key: priming finds the script's entry and fetches nothing.
@@ -73,7 +73,7 @@ describe('prefetch utilities', () => {
 		const fetchMock = vi.fn().mockResolvedValue(
 			new Response(
 				JSON.stringify({
-					branding: 'c15t',
+					branding: 'inth',
 					gvl: null,
 					location: { countryCode: 'US', regionCode: 'CA' },
 					translations: { language: 'de', translations: {} },
@@ -91,7 +91,7 @@ describe('prefetch utilities', () => {
 		const result = primePrefetchedInitialData({
 			credentials: 'same-origin',
 			overrides: { language: 'de' },
-			projectUrl: '/api/c15t/',
+			projectUrl: '/api/inth/',
 		});
 
 		await expect(result).resolves.toMatchObject({
@@ -101,7 +101,7 @@ describe('prefetch utilities', () => {
 					credentials: 'same-origin',
 					gpc: true,
 					language: 'de',
-					projectUrl: `${window.location.origin}/api/c15t`,
+					projectUrl: `${window.location.origin}/api/inth`,
 					region: null,
 				},
 			},
@@ -141,8 +141,8 @@ describe('prefetch utilities', () => {
 			projectUrl: 'https://consent.example.com',
 		};
 		window.eval(buildPrefetchScript(options));
-		delete (window as Window & { __c15tInitialDataPromises?: unknown })
-			.__c15tInitialDataPromises;
+		delete (window as Window & { __inthInitialDataPromises?: unknown })
+			.__inthInitialDataPromises;
 		void primePrefetchedInitialData(options);
 		const [script, runtime] = fetch.mock.calls as unknown as [
 			string,
@@ -159,8 +159,8 @@ describe('prefetch utilities', () => {
 		vi.stubGlobal('fetch', fetch);
 		try {
 			// Nitro's rollup replace: `typeof window` becomes `"undefined"` as
-			// text, in string literals too, wherever c15t is bundled.
-			const bundled = buildPrefetchScript({ projectUrl: '/api/c15t' }).replace(
+			// text, in string literals too, wherever Inth is bundled.
+			const bundled = buildPrefetchScript({ projectUrl: '/api/inth' }).replace(
 				/\btypeof window\b(?![.$])/gu,
 				'"undefined"'
 			);
@@ -181,7 +181,7 @@ describe('prefetch utilities', () => {
 			vi.fn().mockResolvedValue(
 				new Response(
 					JSON.stringify({
-						branding: 'c15t',
+						branding: 'inth',
 						gvl: null,
 						location: { countryCode: 'DE', regionCode: 'BE' },
 						translations: { language: 'de', translations: {} },
@@ -198,31 +198,31 @@ describe('prefetch utilities', () => {
 
 		const dePromise = primePrefetchedInitialData({
 			overrides: { country: 'DE' },
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 		await dePromise;
 
 		const frPromise = primePrefetchedInitialData({
 			overrides: { country: 'FR' },
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 		await frPromise;
 
 		expect(
 			getMatchingPrefetchedInitialData({
 				overrides: { country: 'DE' },
-				projectUrl: '/api/c15t',
+				projectUrl: '/api/inth',
 			})
 		).toBe(dePromise);
 		expect(
 			getMatchingPrefetchedInitialData({
-				projectUrl: '/api/c15t',
+				projectUrl: '/api/inth',
 			})
 		).toBeUndefined();
 		expect(
 			getMatchingPrefetchedInitialData({
 				overrides: { country: 'GB' },
-				projectUrl: '/api/c15t',
+				projectUrl: '/api/inth',
 			})
 		).toBeUndefined();
 	});
@@ -233,7 +233,7 @@ describe('prefetch utilities', () => {
 			value: false,
 		});
 		const fetchSpy = vi.fn().mockResolvedValue(
-			new Response(JSON.stringify({ branding: 'c15t' }), {
+			new Response(JSON.stringify({ branding: 'inth' }), {
 				headers: { 'content-type': 'application/json' },
 				status: 200,
 			})
@@ -241,24 +241,24 @@ describe('prefetch utilities', () => {
 		vi.stubGlobal('fetch', fetchSpy);
 
 		expect(
-			buildPrefetchScript({ overrides: { gpc: true }, projectUrl: '/api/c15t' })
+			buildPrefetchScript({ overrides: { gpc: true }, projectUrl: '/api/inth' })
 		).toContain('gpc=1');
 
 		const primed = primePrefetchedInitialData({
 			overrides: { gpc: true },
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 		const call = fetchSpy.mock.calls[0] as [string, RequestInit];
 		expect(new URL(call[0]).searchParams.get('gpc')).toBe('1');
 		expect(
 			getMatchingPrefetchedInitialData({
 				overrides: { gpc: true },
-				projectUrl: '/api/c15t',
+				projectUrl: '/api/inth',
 			})
 		).toBe(primed);
 		// The browser signal alone (false) must not pick up the override entry.
 		expect(
-			getMatchingPrefetchedInitialData({ projectUrl: '/api/c15t' })
+			getMatchingPrefetchedInitialData({ projectUrl: '/api/inth' })
 		).toBeUndefined();
 	});
 
@@ -272,7 +272,7 @@ describe('prefetch utilities', () => {
 			vi.fn().mockResolvedValue(
 				new Response(
 					JSON.stringify({
-						branding: 'c15t',
+						branding: 'inth',
 						gvl: null,
 						location: { countryCode: 'US', regionCode: 'CA' },
 						translations: { language: 'en', translations: {} },
@@ -288,7 +288,7 @@ describe('prefetch utilities', () => {
 		);
 
 		await primePrefetchedInitialData({
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 
 		Object.defineProperty(window.navigator, 'globalPrivacyControl', {
@@ -298,7 +298,7 @@ describe('prefetch utilities', () => {
 
 		expect(
 			getMatchingPrefetchedInitialData({
-				projectUrl: '/api/c15t',
+				projectUrl: '/api/inth',
 			})
 		).toBeUndefined();
 	});
@@ -314,7 +314,7 @@ describe('prefetch utilities', () => {
 		it('the inline script starts a page journey and records it for the runtime', () => {
 			const fetch = respond();
 			vi.stubGlobal('fetch', fetch);
-			window.eval(buildPrefetchScript({ projectUrl: '/api/c15t' }));
+			window.eval(buildPrefetchScript({ projectUrl: '/api/inth' }));
 			const journey = sent(fetch);
 			expect(journey).toEqual({
 				id: expect.stringMatching(/^[\da-f-]{36}$/u),
@@ -322,7 +322,7 @@ describe('prefetch utilities', () => {
 				storedChoice: false,
 			});
 			expect(
-				(window as Window & { __c15tJourney?: unknown }).__c15tJourney
+				(window as Window & { __inthJourney?: unknown }).__inthJourney
 			).toEqual(journey);
 			// A page journey touches no storage.
 			expect(sessionStorage.length).toBe(0);
@@ -334,7 +334,7 @@ describe('prefetch utilities', () => {
 			document.cookie = 'shop=c.necessary:1,c.marketing:0; path=/';
 			try {
 				window.eval(
-					buildPrefetchScript({ projectUrl: '/api/c15t', storageKey: 'shop' })
+					buildPrefetchScript({ projectUrl: '/api/inth', storageKey: 'shop' })
 				);
 				expect(sent(fetch)?.storedChoice).toBe(true);
 			} finally {
@@ -345,41 +345,66 @@ describe('prefetch utilities', () => {
 		it('says an answer is stored when a notice dismissal exists', () => {
 			const fetch = respond();
 			vi.stubGlobal('fetch', fetch);
-			document.cookie = 'c15t-notice=v=1&t=1&f=abc; path=/';
+			document.cookie = 'inth-notice=v=1&t=1&f=abc; path=/';
 			try {
-				window.eval(buildPrefetchScript({ projectUrl: '/api/c15t' }));
+				window.eval(buildPrefetchScript({ projectUrl: '/api/inth' }));
 				expect(sent(fetch)?.storedChoice).toBe(true);
 				// The script's twin reads the same keys.
-				delete (window as Window & { __c15tJourney?: unknown }).__c15tJourney;
+				delete (window as Window & { __inthJourney?: unknown }).__inthJourney;
 				void primePrefetchedInitialData({ projectUrl: '/api/other' });
 				expect(
 					readJourneyParams(String(fetch.mock.calls[1]?.[0]))?.storedChoice
 				).toBe(true);
 			} finally {
-				document.cookie = 'c15t-notice=; max-age=0; path=/';
+				document.cookie = 'inth-notice=; max-age=0; path=/';
+			}
+		});
+
+		it('says a choice is stored when c15t stored one, under the default key only', () => {
+			const fetch = respond();
+			vi.stubGlobal('fetch', fetch);
+			localStorage.setItem('c15t', '{"version":3,"categories":{}}');
+			try {
+				window.eval(buildPrefetchScript({ projectUrl: '/api/inth' }));
+				expect(sent(fetch)?.storedChoice).toBe(true);
+				// The script's twin reads the same keys.
+				delete (window as Window & { __inthJourney?: unknown }).__inthJourney;
+				void primePrefetchedInitialData({ projectUrl: '/api/other' });
+				expect(
+					readJourneyParams(String(fetch.mock.calls[1]?.[0]))?.storedChoice
+				).toBe(true);
+				delete (window as Window & { __inthJourney?: unknown }).__inthJourney;
+				window.eval(
+					buildPrefetchScript({ projectUrl: '/api/shop', storageKey: 'shop' })
+				);
+				expect(
+					readJourneyParams(String(fetch.mock.calls[2]?.[0]))?.storedChoice
+				).toBe(false);
+			} finally {
+				localStorage.removeItem('c15t');
 			}
 		});
 
 		it('a tab journey continues the id in sessionStorage', () => {
 			const id = '3b241101-e2bb-4255-8caf-4136c566a962';
-			sessionStorage.setItem('c15t-journey-v1', id);
+			sessionStorage.setItem('inth-journey-v1', id);
 			const fetch = respond();
 			vi.stubGlobal('fetch', fetch);
 			window.eval(
-				buildPrefetchScript({ journey: 'tab', projectUrl: '/api/c15t' })
+				buildPrefetchScript({ journey: 'tab', projectUrl: '/api/inth' })
 			);
 			expect(sent(fetch)).toEqual({ id, scope: 'tab', storedChoice: false });
 		});
 
 		it('with no journey option, continues a tab journey this tab holds', () => {
 			const id = '3b241101-e2bb-4255-8caf-4136c566a962';
-			sessionStorage.setItem('c15t-journey-v1', id);
+			sessionStorage.setItem('inth-journey-v1', id);
 			const fetch = respond();
 			vi.stubGlobal('fetch', fetch);
-			window.eval(buildPrefetchScript({ projectUrl: '/api/c15t' }));
+			window.eval(buildPrefetchScript({ projectUrl: '/api/inth' }));
 			expect(sent(fetch)).toEqual({ id, scope: 'tab', storedChoice: false });
 			// The script's twin makes the same call.
-			delete (window as Window & { __c15tJourney?: unknown }).__c15tJourney;
+			delete (window as Window & { __inthJourney?: unknown }).__inthJourney;
 			void primePrefetchedInitialData({ projectUrl: '/api/other' });
 			expect(readJourneyParams(String(fetch.mock.calls[1]?.[0]))).toEqual({
 				id,
@@ -388,15 +413,36 @@ describe('prefetch utilities', () => {
 			});
 		});
 
+		it("continues an id only c15t's key holds, and an Inth id wins over it", () => {
+			const id = '3b241101-e2bb-4255-8caf-4136c566a962';
+			const other = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
+			sessionStorage.setItem('c15t-journey-v1', id);
+			const fetch = respond();
+			vi.stubGlobal('fetch', fetch);
+			window.eval(buildPrefetchScript({ projectUrl: '/api/inth' }));
+			expect(sent(fetch)).toEqual({ id, scope: 'tab', storedChoice: false });
+			// The script's twin continues it too, and leaves c15t's key alone.
+			delete (window as Window & { __inthJourney?: unknown }).__inthJourney;
+			void primePrefetchedInitialData({ projectUrl: '/api/other' });
+			expect(readJourneyParams(String(fetch.mock.calls[1]?.[0]))?.id).toBe(id);
+			expect(sessionStorage.getItem('c15t-journey-v1')).toBe(id);
+
+			sessionStorage.setItem('inth-journey-v1', id);
+			sessionStorage.setItem('c15t-journey-v1', other);
+			delete (window as Window & { __inthJourney?: unknown }).__inthJourney;
+			window.eval(buildPrefetchScript({ projectUrl: '/api/third' }));
+			expect(readJourneyParams(String(fetch.mock.calls[2]?.[0]))?.id).toBe(id);
+		});
+
 		it('an explicit page journey ignores a tab id in sessionStorage', () => {
 			sessionStorage.setItem(
-				'c15t-journey-v1',
+				'inth-journey-v1',
 				'3b241101-e2bb-4255-8caf-4136c566a962'
 			);
 			const fetch = respond();
 			vi.stubGlobal('fetch', fetch);
 			window.eval(
-				buildPrefetchScript({ journey: 'page', projectUrl: '/api/c15t' })
+				buildPrefetchScript({ journey: 'page', projectUrl: '/api/inth' })
 			);
 			expect(sent(fetch)?.scope).toBe('page');
 			expect(sent(fetch)?.id).not.toBe('3b241101-e2bb-4255-8caf-4136c566a962');
@@ -405,13 +451,13 @@ describe('prefetch utilities', () => {
 		it('a second script on the page shares the journey, and false sends none', () => {
 			const fetch = respond();
 			vi.stubGlobal('fetch', fetch);
-			window.eval(buildPrefetchScript({ projectUrl: '/api/c15t' }));
+			window.eval(buildPrefetchScript({ projectUrl: '/api/inth' }));
 			window.eval(buildPrefetchScript({ projectUrl: '/api/other' }));
 			expect(readJourneyParams(String(fetch.mock.calls[1]?.[0]))?.id).toBe(
 				sent(fetch)?.id
 			);
 
-			delete (window as Window & { __c15tJourney?: unknown }).__c15tJourney;
+			delete (window as Window & { __inthJourney?: unknown }).__inthJourney;
 			window.eval(
 				buildPrefetchScript({ journey: false, projectUrl: '/api/third' })
 			);
@@ -426,7 +472,7 @@ describe('prefetch utilities', () => {
 		it('primePrefetchedInitialData sends the same journey as the script', () => {
 			const fetch = respond();
 			vi.stubGlobal('fetch', fetch);
-			window.eval(buildPrefetchScript({ projectUrl: '/api/c15t' }));
+			window.eval(buildPrefetchScript({ projectUrl: '/api/inth' }));
 			void primePrefetchedInitialData({ projectUrl: '/api/other' });
 			expect(readJourneyParams(String(fetch.mock.calls[1]?.[0]))?.id).toBe(
 				sent(fetch)?.id
@@ -453,9 +499,9 @@ describe('prefetch utilities', () => {
 				)
 			);
 		const early = () =>
-			(window as Window & { __c15tExperiment?: unknown }).__c15tExperiment;
+			(window as Window & { __inthExperiment?: unknown }).__inthExperiment;
 		const storeArm = (arm: string, id = 'banner-shape') =>
-			localStorage.setItem('c15t-experiment-v1', JSON.stringify({ arm, id }));
+			localStorage.setItem('inth-experiment-v1', JSON.stringify({ arm, id }));
 		const resolved = async (projectUrl: string) =>
 			(await primePrefetchedInitialData({ projectUrl }))?.metadata?.experiment;
 
@@ -463,16 +509,54 @@ describe('prefetch utilities', () => {
 			storeArm('floating');
 			const fetch = respond();
 			vi.stubGlobal('fetch', fetch);
-			window.eval(buildPrefetchScript({ experiment, projectUrl: '/api/c15t' }));
+			window.eval(buildPrefetchScript({ experiment, projectUrl: '/api/inth' }));
 			expect(sentArm(fetch)).toEqual({ arm: 'floating', id: 'banner-shape' });
 			expect(early()).toEqual({ arm: 'floating', id: 'banner-shape' });
-			expect(await resolved('/api/c15t')).toEqual({
+			expect(await resolved('/api/inth')).toEqual({
 				arm: 'floating',
 				id: 'banner-shape',
 			});
 		});
 
 		it('reads the arm from the cookie when localStorage has none', () => {
+			document.cookie = `inth-experiment-v1=${encodeURIComponent(
+				JSON.stringify({ arm: 'bar', id: 'banner-shape' })
+			)}; path=/`;
+			try {
+				const fetch = respond();
+				vi.stubGlobal('fetch', fetch);
+				window.eval(
+					buildPrefetchScript({ experiment, projectUrl: '/api/inth' })
+				);
+				expect(sentArm(fetch)?.arm).toBe('bar');
+			} finally {
+				document.cookie = 'inth-experiment-v1=; max-age=0; path=/';
+			}
+		});
+
+		it("reads c15t's arm only while Inth's key holds none", () => {
+			localStorage.setItem(
+				'c15t-experiment-v1',
+				JSON.stringify({ arm: 'bar', id: 'banner-shape' })
+			);
+			// A new pick would be the other arm each time.
+			const random = vi.spyOn(Math, 'random').mockReturnValue(0.7);
+			const fetch = respond();
+			vi.stubGlobal('fetch', fetch);
+			window.eval(buildPrefetchScript({ experiment, projectUrl: '/api/inth' }));
+			expect(sentArm(fetch)?.arm).toBe('bar');
+
+			delete (window as Window & { __inthExperiment?: unknown })
+				.__inthExperiment;
+			random.mockReturnValue(0.2);
+			storeArm('floating');
+			window.eval(
+				buildPrefetchScript({ experiment, projectUrl: '/api/other' })
+			);
+			expect(sentArm(fetch, 1)?.arm).toBe('floating');
+		});
+
+		it("reads c15t's cookie arm when no Inth arm is stored", () => {
 			document.cookie = `c15t-experiment-v1=${encodeURIComponent(
 				JSON.stringify({ arm: 'bar', id: 'banner-shape' })
 			)}; path=/`;
@@ -480,7 +564,7 @@ describe('prefetch utilities', () => {
 				const fetch = respond();
 				vi.stubGlobal('fetch', fetch);
 				window.eval(
-					buildPrefetchScript({ experiment, projectUrl: '/api/c15t' })
+					buildPrefetchScript({ experiment, projectUrl: '/api/inth' })
 				);
 				expect(sentArm(fetch)?.arm).toBe('bar');
 			} finally {
@@ -503,13 +587,13 @@ describe('prefetch utilities', () => {
 				window.eval(
 					buildPrefetchScript({
 						experiment: { ...experiment, split },
-						projectUrl: '/api/c15t',
+						projectUrl: '/api/inth',
 					})
 				);
 				expect(sentArm(fetch)?.arm).toBe(arm);
 				// The script's twin picks the same arm from the same draw.
-				delete (window as Window & { __c15tExperiment?: unknown })
-					.__c15tExperiment;
+				delete (window as Window & { __inthExperiment?: unknown })
+					.__inthExperiment;
 				void primePrefetchedInitialData({
 					experiment: { ...experiment, split },
 					projectUrl: '/api/other',
@@ -525,7 +609,7 @@ describe('prefetch utilities', () => {
 			window.eval(
 				buildPrefetchScript({
 					experiment: { ...experiment, arm: 'bar' },
-					projectUrl: '/api/c15t',
+					projectUrl: '/api/inth',
 				})
 			);
 			expect(sentArm(fetch)?.arm).toBe('bar');
@@ -534,7 +618,7 @@ describe('prefetch utilities', () => {
 		it('a second request on the page sends the arm the first one picked', () => {
 			const fetch = respond();
 			vi.stubGlobal('fetch', fetch);
-			window.eval(buildPrefetchScript({ experiment, projectUrl: '/api/c15t' }));
+			window.eval(buildPrefetchScript({ experiment, projectUrl: '/api/inth' }));
 			storeArm(sentArm(fetch)?.arm === 'bar' ? 'floating' : 'bar');
 			void primePrefetchedInitialData({ experiment, projectUrl: '/api/other' });
 			expect(sentArm(fetch, 1)).toEqual(sentArm(fetch));
@@ -542,37 +626,37 @@ describe('prefetch utilities', () => {
 
 		it('sends no arm for a visitor who already chose, but still records one', async () => {
 			storeArm('floating');
-			document.cookie = 'c15t=c.necessary:1,c.marketing:0; path=/';
+			document.cookie = 'inth=c.necessary:1,c.marketing:0; path=/';
 			try {
 				const fetch = respond();
 				vi.stubGlobal('fetch', fetch);
 				window.eval(
-					buildPrefetchScript({ experiment, projectUrl: '/api/c15t' })
+					buildPrefetchScript({ experiment, projectUrl: '/api/inth' })
 				);
 				expect(sentArm(fetch)).toBeNull();
 				expect(early()).toEqual({ arm: 'floating', id: 'banner-shape' });
-				expect(await resolved('/api/c15t')).toBeNull();
+				expect(await resolved('/api/inth')).toBeNull();
 				void primePrefetchedInitialData({
 					experiment,
 					projectUrl: '/api/other',
 				});
 				expect(sentArm(fetch, 1)).toBeNull();
 			} finally {
-				document.cookie = 'c15t=; max-age=0; path=/';
+				document.cookie = 'inth=; max-age=0; path=/';
 			}
 		});
 
 		it('still sends the arm after a notice dismissal, as the runtime does', async () => {
 			storeArm('floating');
-			document.cookie = 'c15t-notice=v=1&t=1&f=abc; path=/';
+			document.cookie = 'inth-notice=v=1&t=1&f=abc; path=/';
 			try {
 				const fetch = respond();
 				vi.stubGlobal('fetch', fetch);
 				window.eval(
-					buildPrefetchScript({ experiment, projectUrl: '/api/c15t' })
+					buildPrefetchScript({ experiment, projectUrl: '/api/inth' })
 				);
 				expect(sentArm(fetch)).toEqual({ arm: 'floating', id: 'banner-shape' });
-				expect(await resolved('/api/c15t')).toEqual({
+				expect(await resolved('/api/inth')).toEqual({
 					arm: 'floating',
 					id: 'banner-shape',
 				});
@@ -582,7 +666,7 @@ describe('prefetch utilities', () => {
 				});
 				expect(sentArm(fetch, 1)?.arm).toBe('floating');
 			} finally {
-				document.cookie = 'c15t-notice=; max-age=0; path=/';
+				document.cookie = 'inth-notice=; max-age=0; path=/';
 			}
 		});
 
@@ -593,12 +677,12 @@ describe('prefetch utilities', () => {
 			const fetch = respond();
 			vi.stubGlobal('fetch', fetch);
 			window.eval(
-				buildPrefetchScript({ experiment: option, projectUrl: '/api/c15t' })
+				buildPrefetchScript({ experiment: option, projectUrl: '/api/inth' })
 			);
 			expect(sentArm(fetch)).toBeNull();
 			expect(early()).toBeUndefined();
 			// Says it sent none, so a runtime running an arm fetches its own.
-			expect(await resolved('/api/c15t')).toBeNull();
+			expect(await resolved('/api/inth')).toBeNull();
 		});
 	});
 });

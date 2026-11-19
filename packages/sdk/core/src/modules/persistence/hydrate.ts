@@ -3,25 +3,23 @@
  *
  * Synchronous and read-only: the storage read never migrates, mirrors,
  * renews or deletes anything. The first structurally valid consent
- * candidate wins (cookie, configured localStorage, legacy localStorage),
- * the notice dismissal and vendor denials are read with the same `now`,
+ * candidate wins (cookie, then localStorage, under the configured key and
+ * then each legacy family), the notice dismissal and vendor denials are
+ * read with the same `now`,
  * and everything is applied through `kernel.hydrate()`, which
  * validates again and never emits a choice event.
  */
 import type { ConsentSubject } from '../../consent-record/types';
 import type { InternalKernel } from '../../kernel/internals';
 import type { HydrationRecords } from '../../types';
-import {
-	choiceSinceEpoch,
-	noticeSinceEpoch,
-	vendorChoiceSinceEpoch,
-} from './epoch';
+import { noticeSinceEpoch, vendorChoiceSinceEpoch } from './epoch';
 import type {
 	StoredIabMetadata,
 	StoredNoticeDismissal,
 	StoredVendorChoice,
 } from './record-codec';
 import {
+	consentSinceEpoch,
 	readStoredClearEpoch,
 	readStoredClearEpochFromCookieHeader,
 	readStoredConsentRecord,
@@ -96,23 +94,6 @@ const kernelNoticeDismissal = function kernelNoticeDismissal(
 };
 
 /**
- * The selected envelope as the clear in force leaves it. An envelope with
- * nothing left since the clear is a cleared one (the caller passes no
- * choice). One written before the clear in force, by a writer that missed
- * it, keeps only its later decisions: its subject and IAB metadata belong
- * to the cleared history and are void.
- */
-const envelopeSinceEpoch = function envelopeSinceEpoch(
-	selected: StoredConsentSelection['selected'],
-	writtenUnderEpoch: boolean
-): StoredConsentSelection['selected'] {
-	if (!selected || writtenUnderEpoch) {
-		return selected;
-	}
-	return { ...selected, iab: null, subject: null };
-};
-
-/**
  * The record that carries the subject among the surviving records: the
  * envelope, else the vendor record, else the notice record.
  */
@@ -157,18 +138,9 @@ const composeRecords = function composeRecords(
 	clearEpoch: number,
 	now: number
 ): StoredRecords {
-	const envelopeEpoch = selection.selected?.epoch ?? 0;
-	const epoch = Math.max(clearEpoch, envelopeEpoch);
-	// An envelope written under the epoch in force came from a runtime that
-	// had seen that clear, so its decisions in the clearing millisecond count.
-	const choice = choiceSinceEpoch(
-		selection.selected?.choice ?? null,
-		epoch,
-		envelopeEpoch === epoch
-	);
-	const selected = choice
-		? envelopeSinceEpoch(selection.selected, envelopeEpoch === epoch)
-		: null;
+	const epoch = Math.max(clearEpoch, selection.selected?.epoch ?? 0);
+	const selected = consentSinceEpoch(selection.selected, clearEpoch);
+	const choice = selected?.choice ?? null;
 	const vendorRecord = vendorChoiceSinceEpoch(
 		vendors?.ok ? vendors.record : null,
 		epoch
@@ -214,7 +186,6 @@ const hasUndecodableChoice = function hasUndecodableChoice(
 	);
 };
 
-/** Which records could not be read. */
 interface Unreadable {
 	choice: boolean;
 	notice: boolean;
@@ -318,7 +289,6 @@ export const readStoredRecordsForReconcile =
 		return readRecords(storageConfig, now, true);
 	};
 
-/** Every cookie-carried record from a `Cookie` header, composed. */
 const composeFromCookieHeader = function composeFromCookieHeader(
 	cookieHeader: string | undefined,
 	storageConfig: StorageConfig | undefined,
@@ -371,7 +341,7 @@ export const hydrateFromStorage = function hydrateFromStorage(
 	if (result.ok === false) {
 		// The storage layer already validated; a rejection here means the
 		// records changed shape between read and apply. Nothing is applied.
-		console.warn('[c15t] Stored consent records were rejected.', result.issues);
+		console.warn('[inth] Stored consent records were rejected.', result.issues);
 	}
 	return stored;
 };

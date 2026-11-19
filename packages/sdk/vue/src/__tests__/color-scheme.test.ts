@@ -10,14 +10,14 @@ import {
 } from 'vue';
 import type { App } from 'vue';
 
-import { c15tVue, generateTokensCSS } from './test-plugin';
-import type { C15tVuePluginOptions } from './test-plugin';
+import { inthVue, generateTokensCSS } from './test-plugin';
+import type { InthVuePluginOptions } from './test-plugin';
 
 const nuxt = vi.hoisted(() => ({
 	appConfig: {} as Record<string, unknown>,
 	head: [] as unknown[],
 	/** A reactive app config, as Nuxt's is; read instead of `appConfig`. */
-	liveAppConfig: undefined as { c15t: Record<string, unknown> } | undefined,
+	liveAppConfig: undefined as { inth: Record<string, unknown> } | undefined,
 	runtimeConfig: {} as Record<string, unknown>,
 	state: new Map<string, unknown>(),
 }));
@@ -26,7 +26,7 @@ vi.mock('#imports', async () => {
 	const { shallowRef: makeRef } = await import('vue');
 	return {
 		defineNuxtPlugin: (plugin: unknown) => plugin,
-		useAppConfig: () => nuxt.liveAppConfig ?? { c15t: nuxt.appConfig },
+		useAppConfig: () => nuxt.liveAppConfig ?? { inth: nuxt.appConfig },
 		useHead: (input: unknown) => {
 			nuxt.head.push(input);
 		},
@@ -35,8 +35,8 @@ vi.mock('#imports', async () => {
 		useRequestURL: () => new URL('https://app.example/'),
 		useRuntimeConfig: () => ({
 			public: {
-				c15t: {
-					backendURL: 'https://consent.example.test',
+				inth: {
+					projectUrl: 'https://consent.example.test',
 					...nuxt.runtimeConfig,
 				},
 			},
@@ -64,7 +64,7 @@ beforeAll(async () => {
 }, 30_000);
 
 const root = () => document.documentElement;
-const isDark = () => root().classList.contains('c15t-dark');
+const isDark = () => root().classList.contains('inth-dark');
 
 /** A `prefers-color-scheme: dark` query the test can flip. */
 const stubSystemScheme = (dark: boolean) => {
@@ -110,10 +110,10 @@ const mount = (app: App) => {
 };
 
 /** Install the plugin. The app is unmounted after the test. */
-const installVue = (options: C15tVuePluginOptions) => {
+const installVue = (options: InthVuePluginOptions) => {
 	failingFetch();
 	const app = createApp(defineComponent({ setup: () => () => h('main') }));
-	app.use(c15tVue, options);
+	app.use(inthVue, options);
 	apps.add(app);
 	return app;
 };
@@ -145,13 +145,13 @@ describe('generateTokensCSS with dark tokens', () => {
 		const css = generateTokensCSS(undefined, {
 			theme: { dark: { primary: '#40e0d0' } },
 		});
-		expect(css).toMatch(/\.c15t-dark[^{]*\{[^}]*--c15t-primary: #40e0d0;/u);
+		expect(css).toMatch(/\.inth-dark[^{]*\{[^}]*--inth-primary: #40e0d0;/u);
 	});
 
 	test('switches to the dark tokens by media query for system', () => {
 		const css = generateTokensCSS(undefined, { colorScheme: 'system' });
 		expect(css).toMatch(
-			/@media\(prefers-color-scheme:dark\)\{[^{]*\{[^}]*--c15t-surface: hsl\(0, 0%, 7%\);/u
+			/@media\(prefers-color-scheme:dark\)\{[^{]*\{[^}]*--inth-surface: hsl\(0, 0%, 7%\);/u
 		);
 	});
 
@@ -160,7 +160,7 @@ describe('generateTokensCSS with dark tokens', () => {
 			colorScheme: 'dark',
 			theme: { dark: { primary: '#40e0d0' } },
 		});
-		expect(css).toMatch(/:root:root[^{]*\{[^}]*--c15t-primary: #40e0d0;/u);
+		expect(css).toMatch(/:root:root[^{]*\{[^}]*--inth-primary: #40e0d0;/u);
 		expect(css).not.toContain('@media');
 	});
 
@@ -170,10 +170,10 @@ describe('generateTokensCSS with dark tokens', () => {
 			const css = generateTokensCSS(undefined, { colorScheme });
 			// The selectors React and Svelte get from the package stylesheet.
 			expect(css).toMatch(
-				/:root\.c15t-dark[^{]*\{[^}]*--c15t-surface: hsl\(0, 0%, 7%\);/u
+				/:root\.inth-dark[^{]*\{[^}]*--inth-surface: hsl\(0, 0%, 7%\);/u
 			);
 			expect(css).toMatch(
-				/:root\.dark[^{]*\{[^}]*--c15t-text: hsl\(0, 0%, 93%\);/u
+				/:root\.dark[^{]*\{[^}]*--inth-text: hsl\(0, 0%, 93%\);/u
 			);
 			expect(css).not.toContain('@media');
 		}
@@ -183,25 +183,25 @@ describe('generateTokensCSS with dark tokens', () => {
 		const css = generateTokensCSS(undefined, {
 			theme: { dark: { surface: '#101512' } },
 		});
-		expect(css.indexOf('--c15t-surface: hsl(0, 0%, 7%);')).toBeLessThan(
-			css.indexOf('--c15t-surface: #101512;')
+		expect(css.indexOf('--inth-surface: hsl(0, 0%, 7%);')).toBeLessThan(
+			css.indexOf('--inth-surface: #101512;')
 		);
 		expect(css).toMatch(
-			/:root:root\.c15t-dark[^{]*\{[^}]*--c15t-surface: #101512;/u
+			/:root:root\.inth-dark[^{]*\{[^}]*--inth-surface: #101512;/u
 		);
 	});
 });
 
 describe('the Vue plugin applies colorScheme', () => {
-	test('dark adds c15t-dark before the app mounts', () => {
+	test('dark adds inth-dark before the app mounts', () => {
 		stubSystemScheme(false);
 		installVue({ colorScheme: 'dark' });
 		expect(isDark()).toBe(true);
 	});
 
-	test('light removes a c15t-dark class', () => {
+	test('light removes a inth-dark class', () => {
 		stubSystemScheme(true);
-		root().classList.add('c15t-dark');
+		root().classList.add('inth-dark');
 		installVue({ colorScheme: 'light' });
 		expect(isDark()).toBe(false);
 	});
@@ -248,8 +248,8 @@ describe('the Vue plugin applies colorScheme', () => {
 	test('adds dark tokens to the token style element', () => {
 		stubSystemScheme(false);
 		installVue({ theme: { dark: { primary: '#40e0d0' } } });
-		expect(document.getElementById('c15t-css-vars')?.textContent).toContain(
-			'--c15t-primary: #40e0d0;'
+		expect(document.getElementById('inth-css-vars')?.textContent).toContain(
+			'--inth-primary: #40e0d0;'
 		);
 	});
 
@@ -260,7 +260,7 @@ describe('the Vue plugin applies colorScheme', () => {
 			projectUrl: 'https://consent.example.test',
 		});
 		const app = createApp(defineComponent({ setup: () => () => h('main') }));
-		app.use(c15tVue, { colorScheme: 'dark', runtime });
+		app.use(inthVue, { colorScheme: 'dark', runtime });
 		apps.add(app);
 		expect(isDark()).toBe(false);
 		runtime.dispose();
@@ -282,7 +282,7 @@ const renderNuxtHead = async (): Promise<NuxtHead> => {
 
 describe('the Nuxt plugin applies colorScheme', () => {
 	test.each([
-		{ colorScheme: 'dark', script: "classList.add('c15t-dark')" },
+		{ colorScheme: 'dark', script: "classList.add('inth-dark')" },
 		{ colorScheme: 'system', script: 'prefers-color-scheme:dark' },
 	] as const)(
 		'$colorScheme sets the class from a head script in the server HTML',
@@ -313,7 +313,7 @@ describe('the Nuxt plugin applies colorScheme', () => {
 			theme: { dark: { primary: '#40e0d0' } },
 		};
 		const head = await renderNuxtHead();
-		expect(head.style?.[0]?.innerHTML).toContain('--c15t-primary: #40e0d0;');
+		expect(head.style?.[0]?.innerHTML).toContain('--inth-primary: #40e0d0;');
 	});
 
 	test('null in app config leaves a .dark class alone', async () => {
@@ -336,7 +336,7 @@ describe('the Nuxt plugin applies colorScheme', () => {
 		'$label in the module options leaves the class to the site',
 		async ({ colorScheme }) => {
 			stubSystemScheme(false);
-			root().classList.add('c15t-dark');
+			root().classList.add('inth-dark');
 			nuxt.runtimeConfig = { colorScheme };
 			failingFetch();
 			const app = createSSRApp(
@@ -390,18 +390,18 @@ describe('the Nuxt plugin token styles in the browser', () => {
 		const head = await startClient(false);
 		expect(head().style?.[0]).toEqual(
 			expect.objectContaining({
-				id: 'c15t-css-vars',
-				innerHTML: expect.stringContaining('--c15t-primary:'),
+				id: 'inth-css-vars',
+				innerHTML: expect.stringContaining('--inth-primary:'),
 			})
 		);
 	});
 
 	test('a config change on a hydrated page writes the new tokens', async () => {
-		nuxt.liveAppConfig = reactive({ c15t: {} });
+		nuxt.liveAppConfig = reactive({ inth: {} });
 		const head = await startClient(true);
-		nuxt.liveAppConfig.c15t = { tokens: { 'c15t-primary': '#2f6f4e' } };
+		nuxt.liveAppConfig.inth = { tokens: { 'inth-primary': '#2f6f4e' } };
 		await vi.waitFor(() => {
-			expect(head().style?.[0]?.innerHTML).toContain('--c15t-primary:#2f6f4e;');
+			expect(head().style?.[0]?.innerHTML).toContain('--inth-primary:#2f6f4e;');
 		});
 	});
 });

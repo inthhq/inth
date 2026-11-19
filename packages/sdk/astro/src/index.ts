@@ -9,18 +9,18 @@
  * provider. The components are in `@inth/astro/components`.
  *
  * ```js
- * // astro.config.mjs, with PUBLIC_C15T_BACKEND_URL in .env
+ * // astro.config.mjs, with PUBLIC_INTH_PROJECT_URL in .env
  * import svelte from '@astrojs/svelte';
  * import { defineConfig } from 'astro/config';
- * import c15t from '@inth/astro';
+ * import Inth from '@inth/astro';
  *
  * export default defineConfig({
- *   integrations: [svelte(), c15t()],
+ *   integrations: [svelte(), inth()],
  * });
  * ```
  */
 
-export { c15t, c15t as default, resolveOptions } from './integration';
+export { inth, inth as default, resolveOptions } from './integration';
 export { createConsentMiddleware } from './middleware-handler';
 export type { ConsentMiddlewareOptions } from './middleware-handler';
 export { hosted, manifest } from './mode';
@@ -32,15 +32,15 @@ export type {
 	TestingMode,
 } from '@inth/sdk/modes';
 export type {
-	C15tAstroOptions,
-	C15tClientOptionsExtension,
-	C15tColorScheme,
-	C15tI18nOptions,
-	C15tIABOptions,
-	C15tLocals,
-	C15tMiddlewareOptions,
-	C15tResolvedOptions,
-	C15tUIAdapterName,
+	InthAstroOptions,
+	InthClientOptionsExtension,
+	InthColorScheme,
+	InthI18nOptions,
+	InthIABOptions,
+	InthLocals,
+	InthMiddlewareOptions,
+	InthResolvedOptions,
+	InthUIAdapterName,
 } from './types';
 export type {
 	ConsentDialogAdapter,

@@ -5,7 +5,7 @@
  * the config, including the integration's own `scripts` option. The
  * `clientEntrypoint` module only runs in the browser, so the inline scripts
  * it adds never reach that list. The browser then refuses them with a
- * violation that does not say which c15t script it was, after the visitor
+ * violation that does not say which Inth script it was, after the visitor
  * granted the category. This hashes each one the way the browser checks
  * it and logs the hash to add for any the policy does not allow.
  *
@@ -15,7 +15,7 @@
 import type { Script } from '@inth/sdk/engine';
 
 import { hashSource } from '../libs/csp-hash';
-import type { C15tBrowserCsp } from '../types';
+import type { InthBrowserCsp } from '../types';
 
 /**
  * Log an error for each inline script whose hash the policy lacks.
@@ -29,7 +29,7 @@ import type { C15tBrowserCsp } from '../types';
  */
 export const reportUnhashedScripts = async function reportUnhashedScripts(
 	scripts: readonly Script[],
-	csp: C15tBrowserCsp
+	csp: InthBrowserCsp
 ): Promise<void> {
 	// `crypto.subtle` only exists in a secure context; a plain-HTTP page is
 	// left to the browser's own violation report.
@@ -50,7 +50,7 @@ export const reportUnhashedScripts = async function reportUnhashedScripts(
 			return;
 		}
 		console.error(
-			`@inth/astro: Astro's Content Security Policy will block the inline script '${script.id}' from clientEntrypoint. Add '${hash}' to scriptDirective.hashes in the csp config, or move the script into the integration's \`scripts\` option, which c15t hashes for you.`
+			`@inth/astro: Astro's Content Security Policy will block the inline script '${script.id}' from clientEntrypoint. Add '${hash}' to scriptDirective.hashes in the csp config, or move the script into the integration's \`scripts\` option, which Inth hashes for you.`
 		);
 	});
 };

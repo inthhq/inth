@@ -1,7 +1,7 @@
 {
 	"name": "@inth/react",
 	"version": "3.2.0-canary.0",
-	"description": "React cookie consent banner and React consent dialog for c15t, plus a React cookie banner, preference center and headless hooks.",
+	"description": "React cookie consent banner and React consent dialog for Inth, plus a React cookie banner, preference center and headless hooks.",
 	"keywords": [
 		"cmp",
 		"consent",
@@ -15,14 +15,14 @@
 		"react-cookie-banner",
 		"react-cookie-consent"
 	],
-	"homepage": "https://c15t.com/docs/frameworks/react/quickstart",
+	"homepage": "https://inth.com",
 	"bugs": {
-		"url": "https://github.com/c15t/c15t/issues"
+		"url": "https://github.com/inthhq/inth/issues"
 	},
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/c15t/c15t.git",
+		"url": "git+https://github.com/inthhq/inth.git",
 		"directory": "packages/sdk/react"
 	},
 	"files": [
@@ -291,11 +291,11 @@
 		"access": "public"
 	},
 	"scripts": {
-		"build": "pnpm run prebuild && rslib build && node ../../../scripts/normalize-dist-types.mjs && bun scripts/generate-distribution-css.ts && pnpm run clean:dist:test-artifacts && node ../shared/restore-client-directives.mjs src dist && node ../shared/write-translation-entries.mjs dist dist-types",
+		"build": "pnpm run prebuild && rslib build && node ../../../scripts/normalize-dist-types.mjs && bun ../shared/generate-distribution-css.ts && pnpm run clean:dist:test-artifacts && node ../shared/restore-client-directives.mjs src dist && node ../shared/write-translation-entries.mjs dist dist-types",
 		"build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/react",
 		"check-types": "pnpm run prebuild && tsc --noEmit && tsc -p tsconfig.type-tests.json",
 		"clean:dist:test-artifacts": "bun --eval \"import { rmSync } from 'node:fs'; rmSync('dist/mockServiceWorker.js', { force: true });\"",
-		"dev": "sh -c 'pnpm run prebuild && rslib build --no-dts --no-clean && bun scripts/generate-distribution-css.ts && rslib build --watch --no-dts --no-clean'",
+		"dev": "sh -c 'pnpm run prebuild && rslib build --no-dts --no-clean && bun ../shared/generate-distribution-css.ts && rslib build --watch --no-dts --no-clean'",
 		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
 		"lint": "oxlint -c ../../../oxlint.sdk.config.ts ./src",
 		"prebuild": "genversion --esm --semi src/version.ts",
@@ -308,10 +308,10 @@
 		"@types/google.maps": "3.65.3"
 	},
 	"devDependencies": {
-		"@c15t/conformance": "workspace:*",
-		"@c15t/typescript-config": "workspace:*",
-		"@c15t/vitest-config": "workspace:*",
 		"@iabtechlabtcf/core": "^1.5.22",
+		"@inth/conformance": "workspace:*",
+		"@inth/typescript-config": "workspace:*",
+		"@inth/vitest-config": "workspace:*",
 		"@rsbuild/plugin-react": "1.4.6",
 		"@rslib/core": "0.23.2",
 		"@types/node": "25.5.0",

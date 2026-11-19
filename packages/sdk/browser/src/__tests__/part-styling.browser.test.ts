@@ -1,3 +1,4 @@
+import { css as emotionCss, flush } from '@emotion/css';
 /**
  * Which outside styles reach a stock UI part, in each mount mode.
  *
@@ -6,8 +7,7 @@
  * stylesheet. These tests check where that rule has to live for the class
  * to win over the part's own `@layer components` styles.
  */
-import { clearBrowserConsentStorage } from '@c15t/conformance/suite';
-import { css as emotionCss, flush } from '@emotion/css';
+import { clearBrowserConsentStorage } from '@inth/conformance/suite';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import type { ConsentClient, ConsentUIOptions } from '../types';
@@ -89,7 +89,7 @@ describe('styling stock UI parts from outside', () => {
 
 	it('lets page CSS style a shadow part through ::part() with the slot name', async () => {
 		addPageCSS(
-			`[data-c15t-ui]::part(consentBannerCard) { border-top-color: ${BRAND}; }`
+			`[data-inth-ui]::part(consentBannerCard) { border-top-color: ${BRAND}; }`
 		);
 
 		const card = await mountCard({});
@@ -110,7 +110,7 @@ describe('styling stock UI parts from outside', () => {
 
 	it('lets a Tailwind 4 style utilities layer beat the stock components layer', async () => {
 		// Tailwind 4 declares the same layer order the stock sheet declares
-		// first, so its utilities outrank c15t's components layer.
+		// first, so its utilities outrank Inth's components layer.
 		const card = await mountCard({
 			stylesheetUrls: [
 				cssURL(

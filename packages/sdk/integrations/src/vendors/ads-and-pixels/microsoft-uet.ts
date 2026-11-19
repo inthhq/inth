@@ -6,7 +6,6 @@ import type { VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { resolveScriptUrl } from '../_shared/script-url';
 
-// Extended Window interface to include microsoft uet specific properties
 declare global {
 	interface Window {
 		uetq: unknown[] | undefined;
@@ -125,8 +124,6 @@ export interface MicrosoftUetOptions {
  * This script loads in consent mode and stays persistent because UET can opt
  * into and out of tracking based on consent.
  *
- * @param options - The options for the Microsoft UET script
- * @returns The Microsoft UET script configuration
  * @remarks When `id` is missing or blank, the
  *   helper logs `microsoftUet: missing or invalid id` with
  *   `console.error` and returns a script that never loads.

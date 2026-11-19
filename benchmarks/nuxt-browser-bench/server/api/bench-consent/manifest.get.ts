@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
 	recordBenchConsentFixtureExecution('manifest');
 	recordBenchConsentVersionHeader(
 		'manifest',
-		getRequestHeader(event, 'x-c15t-version')
+		getRequestHeader(event, 'x-inth-version')
 	);
 	await applyBenchConsentLatency();
 

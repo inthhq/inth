@@ -11,7 +11,7 @@
 import type { ConsentSnapshot } from '../types';
 
 /** The `code` on every {@link IABUnavailableError}. */
-export const IAB_UNAVAILABLE_ERROR_CODE = 'C15T_IAB_UNAVAILABLE';
+export const IAB_UNAVAILABLE_ERROR_CODE = 'INTH_IAB_UNAVAILABLE';
 
 /**
  * Thrown when a visitor's policy uses IAB TCF and the app has not set IAB
@@ -35,7 +35,7 @@ export class IABUnavailableError extends Error {
 	 */
 	constructor(problem: string, fix: string) {
 		super(
-			`c15t: this visitor's policy uses IAB TCF, but ${problem}. ${fix}, or remove the IAB model from your policy.`
+			`inth: this visitor's policy uses IAB TCF, but ${problem}. ${fix}, or remove the IAB model from your policy.`
 		);
 		this.name = 'IABUnavailableError';
 	}
@@ -51,7 +51,6 @@ export class IABUnavailableError extends Error {
  * Offline mode without IAB resolves `iab` rules with no vendor list, so it
  * never needs one either.
  *
- * @param snapshot - The kernel snapshot.
  * @returns `true` when the page must mount a CMP for this visitor.
  * @example
  * ```ts

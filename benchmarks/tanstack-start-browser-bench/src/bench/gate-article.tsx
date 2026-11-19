@@ -2,11 +2,11 @@
 import {
 	gatePageCSS,
 	gatePageHTML,
-} from '@c15t/benchmarking/consent-gate-page';
+} from '@inth/benchmarking/consent-gate-page';
 
 /**
  * The consent gate article, shared by the gate page and its control. It
- * imports no consent code, so the control route stays free of c15t.
+ * imports no consent code, so the control route stays free of Inth.
  */
 export const GateArticle = () => (
 	<>

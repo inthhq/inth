@@ -18,7 +18,7 @@
 import type { LegalLinks } from '@inth/sdk/engine';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
 
-import type { C15tResolvedOptions, C15tUIAdapterName } from '../types';
+import type { InthResolvedOptions, InthUIAdapterName } from '../types';
 
 /** Which dialog a caller asked for. */
 export type ConsentDialogKind = 'preferences' | 'iab';
@@ -27,11 +27,9 @@ export type ConsentDialogKind = 'preferences' | 'iab';
 export interface ConsentDialogContext {
 	/** The page-level runtime that owns the kernel. */
 	runtime: ConsentRuntime;
-	/** The resolved integration options. */
-	options: C15tResolvedOptions;
+	options: InthResolvedOptions;
 	/** The element the surface mounts into. */
 	target: HTMLElement;
-	/** Which dialog to show. */
 	kind: ConsentDialogKind;
 	/**
 	 * Which IAB preference-centre tab to open on. Ignored by the
@@ -56,7 +54,7 @@ export interface ConsentDialogContext {
  */
 export type ConsentDialogSurfaceLoader = () => Promise<{ default: unknown }>;
 
-const surfaces = new Map<C15tUIAdapterName, ConsentDialogSurfaceLoader>();
+const surfaces = new Map<InthUIAdapterName, ConsentDialogSurfaceLoader>();
 
 /**
  * Register the component a dialog adapter should mount.
@@ -71,7 +69,7 @@ const surfaces = new Map<C15tUIAdapterName, ConsentDialogSurfaceLoader>();
  * ```
  */
 export const registerDialogSurface = function registerDialogSurface(
-	name: C15tUIAdapterName,
+	name: InthUIAdapterName,
 	load: ConsentDialogSurfaceLoader
 ): void {
 	surfaces.set(name, load);
@@ -80,17 +78,15 @@ export const registerDialogSurface = function registerDialogSurface(
 /**
  * The registered surface loader for an adapter.
  *
- * @param name - The adapter name.
- * @returns The loader.
  * @throws {Error} When no surface has been registered for that adapter.
  */
 export const requireDialogSurface = function requireDialogSurface(
-	name: C15tUIAdapterName
+	name: InthUIAdapterName
 ): ConsentDialogSurfaceLoader {
 	const load = surfaces.get(name);
 	if (!load) {
 		throw new Error(
-			`@inth/astro: no ${name} dialog surface registered. The integration registers it from the injected page script, so this usually means c15t() is missing from astro.config, or the page was rendered with \`middleware: false\` and no boot script.`
+			`@inth/astro: no ${name} dialog surface registered. The integration registers it from the injected page script, so this usually means inth() is missing from astro.config, or the page was rendered with \`middleware: false\` and no boot script.`
 		);
 	}
 	return load;
@@ -107,7 +103,7 @@ export interface ConsentDialogHandle {
 /** A dialog surface implementation. */
 export interface ConsentDialogAdapter {
 	/** Adapter name, matching the `ui` integration option. */
-	readonly name: C15tUIAdapterName;
+	readonly name: InthUIAdapterName;
 	/**
 	 * Mount the surface. Called on the first open only; later opens reuse
 	 * the returned handle.
@@ -124,12 +120,12 @@ export interface ConsentDialogAdapter {
 }
 
 const registry = new Map<
-	C15tUIAdapterName,
+	InthUIAdapterName,
 	() => Promise<ConsentDialogAdapter>
 >();
 
 /** First `load()` call per adapter, so a loader runs at most once. */
-const pending = new Map<C15tUIAdapterName, Promise<ConsentDialogAdapter>>();
+const pending = new Map<InthUIAdapterName, Promise<ConsentDialogAdapter>>();
 
 /**
  * Register a dialog surface implementation.
@@ -138,7 +134,7 @@ const pending = new Map<C15tUIAdapterName, Promise<ConsentDialogAdapter>>();
  * @param load - Loader returning the adapter. Called at most once.
  */
 export const registerDialogAdapter = function registerDialogAdapter(
-	name: C15tUIAdapterName,
+	name: InthUIAdapterName,
 	load: () => Promise<ConsentDialogAdapter>
 ): void {
 	registry.set(name, load);
@@ -170,12 +166,10 @@ export const resetDialogRegistriesForTest =
  * The import is dynamic so a page that never opens a dialog never
  * downloads the framework behind it.
  *
- * @param name - The adapter name.
- * @returns The adapter.
  * @throws {Error} When no adapter is registered under that name.
  */
 export const loadDialogAdapter = async function loadDialogAdapter(
-	name: C15tUIAdapterName
+	name: InthUIAdapterName
 ): Promise<ConsentDialogAdapter> {
 	const memo = pending.get(name);
 	if (memo) {

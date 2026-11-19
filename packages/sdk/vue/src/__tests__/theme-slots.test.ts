@@ -38,7 +38,7 @@ const rule: PolicyRule = {
 };
 
 const init = {
-	branding: 'c15t',
+	branding: 'inth',
 	location: { countryCode: 'DE', regionCode: null },
 	policyResolution: writePolicyResolutionWire(
 		resolvePolicyRules({ countryCode: null, regionCode: null, rules: [rule] })
@@ -208,7 +208,7 @@ test('applies the assigned experiment arm slots to the stock banner', async () =
 	context.kernel.set.experiment({
 		acknowledgedDiagnostics: false,
 		arm: 'branded',
-		assignedBy: 'c15t',
+		assignedBy: 'inth',
 		id: 'card-class',
 	});
 	await flushPromises();

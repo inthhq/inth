@@ -36,7 +36,7 @@ const config: StorybookConfig = {
 			resolve: {
 				alias: [
 					{
-						find: /^@c15t\/conformance\/(?<capture1>.*)$/u,
+						find: /^@inth\/conformance\/(?<capture1>.*)$/u,
 						replacement: workspace('internals/conformance/src/$1'),
 					},
 					// `@inth/astro` is consumed through its published entrypoints
@@ -63,7 +63,7 @@ const config: StorybookConfig = {
 						replacement: workspace('packages/sdk/vue/src/runtime/vue/stubs.ts'),
 					},
 					{
-						find: /^#c15t\/composables$/u,
+						find: /^#inth\/composables$/u,
 						replacement: workspace(
 							'packages/sdk/vue/src/runtime/composables/index.ts'
 						),
@@ -112,7 +112,7 @@ const config: StorybookConfig = {
 						replacement: workspace('packages/sdk/react/src/index.ts'),
 					},
 					{
-						find: /^c15t$/u,
+						find: /^inth$/u,
 						replacement: workspace('packages/sdk/core/src/index.ts'),
 					},
 					{

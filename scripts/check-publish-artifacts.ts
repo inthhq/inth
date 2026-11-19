@@ -4,6 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { PARTS } from '../packages/sdk/shared/sdk-parts';
 import type { PackageManifest } from './manifest-utils';
 import {
 	collectManifestTargets,
@@ -161,7 +162,6 @@ const INSTALLER_FIELDS = [
  * text the way a lexer does rather than matching a pattern, because only code decides
  * what a file imports, and a pattern cannot tell a comment's quotes from code's.
  *
- * @param code - The contents of a built file.
  * @returns The same text with comment bodies replaced by nothing.
  */
 export const withoutComments = function withoutComments(code: string): string {
@@ -232,10 +232,7 @@ export const withoutComments = function withoutComments(code: string): string {
  * check, and it is the right check: a bundled entry that mentions the kernel has
  * either imported it or reached above the package for it.
  *
- * @param packageDir - The package whose tarball is being judged.
  * @param packageName - The name npm packed it under.
- * @param manifest - That package's manifest.
- * @param packedFilePaths - Every path in the tarball.
  * @returns Every published surface that still names the kernel.
  */
 export const scanKernelFreePackage = function scanKernelFreePackage(
@@ -401,8 +398,6 @@ const rootTw3ProxyContents: Record<string, string> = {
  * repository one is edited, and nothing but this check would notice, which is the same failure
  * that had the podspec naming `../../LICENSE.md` in the first place.
  *
- * @param packageDir - The package whose tarball is being judged.
- * @param packedFilePaths - Every path in that tarball.
  * @returns Every license copy that does not match the root license, byte for byte.
  */
 export const scanPublishedLicenses = function scanPublishedLicenses(
@@ -486,8 +481,6 @@ export const scanVendoredNativeSources = function scanVendoredNativeSources(
  * consumer builds a pod with no consent kernel in it and the failure surfaces as a missing type
  * in an app that cannot see this repository.
  *
- * @param packageDir - The package whose tarball is being judged.
- * @param packedFilePaths - Every path in that tarball.
  * @returns Every vendored file the tarball left out.
  */
 export const scanPackedVendoredSources = function scanPackedVendoredSources(
@@ -535,7 +528,6 @@ const scanPackedManifestTargets = function scanPackedManifestTargets(
 /**
  * Ask npm what a package would publish, without writing a tarball.
  *
- * @param packageDir - The package to pack.
  * @param options - `ignoreScripts` skips the package's `prepack` hook. The
  *   hook verifies a build exists, so a caller that only wants the file list
  *   from an unbuilt checkout passes it.
@@ -670,14 +662,15 @@ export const getBlockedReason = function getBlockedReason(
 	packageName: string,
 	path: string
 ): string | null {
-	// `@inth/sdk` ships each private part under `lib/<folder>/`: judge those
+	// `@inth/sdk` ships each private part under `lib/<part>/`: judge those
 	// files as the part's own.
-	const part =
+	const lib =
 		packageName === '@inth/sdk'
-			? /^lib\/(?<folder>[^/]+)\/(?<rest>.+)$/u.exec(path)?.groups
+			? /^lib\/(?<part>[^/]+)\/(?<rest>.+)$/u.exec(path)?.groups
 			: undefined;
-	if (part?.folder && part.rest) {
-		return blockedReasonInPackage(`@inth/sdk-${part.folder}`, part.rest);
+	const part = PARTS.find((name) => name === lib?.part);
+	if (part && lib?.rest) {
+		return blockedReasonInPackage(`@inth/sdk-${part}`, lib.rest);
 	}
 	return blockedReasonInPackage(packageName, path);
 };
@@ -723,10 +716,10 @@ const scanStyleEntrypointsContent = function scanStyleEntrypointsContent(
 				size: content.length,
 			});
 		}
-		if (!content.includes('c15t-ui-')) {
+		if (!content.includes('inth-ui-')) {
 			issues.push({
 				path,
-				reason: 'Tailwind v3 dist CSS must contain generated c15t UI rules',
+				reason: 'Tailwind v3 dist CSS must contain generated Inth UI rules',
 				size: content.length,
 			});
 		}
@@ -796,10 +789,10 @@ export const scanUiComponentStyleArtifacts =
 						size: content.length,
 					});
 				}
-				if (!content.includes('c15t-ui-')) {
+				if (!content.includes('inth-ui-')) {
 					issues.push({
 						path: cssPath,
-						reason: 'component CSS must contain generated c15t UI class names',
+						reason: 'component CSS must contain generated Inth UI class names',
 						size: content.length,
 					});
 				}

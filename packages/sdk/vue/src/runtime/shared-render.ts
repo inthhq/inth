@@ -34,8 +34,6 @@ const asRecord = (
  * Nitro renders a cached route without the visitor's cookies or location
  * headers, so a cached render cannot know the visitor either way.
  *
- * @param input - The prerender marker and the request's event context.
- * @returns `true` when the render is shared between visitors.
  * @internal
  */
 export const isSharedNuxtRender = function isSharedNuxtRender(

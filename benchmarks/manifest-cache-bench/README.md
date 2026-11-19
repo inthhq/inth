@@ -9,7 +9,7 @@ Benchmarks the in-process manifest cache in
 `Cache-Control`-driven freshness model (`s-maxage`, `stale-while-revalidate`),
 `ETag` revalidation, and three fault modes (`originDown`, `edgeUnreachable`,
 `originError`). By default the simulated origin sends `CDN-Cache-Control` as
-the c15t backend does, so the CDN forwards `Cache-Control` intact; set
+the Inth backend does, so the CDN forwards `Cache-Control` intact; set
 `originSendsCdnCacheControl: false` to model an origin that sends only
 `Cache-Control`, which Vercel rewrites to `public, max-age=0, must-revalidate`.
 

@@ -4,13 +4,13 @@ import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
+import { resolveScriptUrl } from '../_shared/script-url';
 
 /**
  * Browser SDK 2 version used by the default Amplitude CDN loader URL.
  *
  * The Amplitude Browser SDK 2 public bundle path is versioned. A
- * `analytics-browser-latest-min.js.gz` path is not publicly available, so c15t
+ * `analytics-browser-latest-min.js.gz` path is not publicly available, so Inth
  * pins a known Browser SDK 2 version by default and lets callers override the
  * loader through `scriptUrl`.
  */
@@ -166,7 +166,7 @@ declare global {
  * Implements the essential Browser SDK 2 script-loader contract with
  * `window.amplitude.invoked`, an `_q` method-call queue, and an `_iq` registry
  * for named instances. It also defines the `Identify` queued helper used by
- * pre-load `identify()` calls. c15t gates the loader on `measurement` consent,
+ * pre-load `identify()` calls. Inth gates the loader on `measurement` consent,
  * queues `init(apiKey, initOptions)` and `setOptOut(false)` before the bundle
  * loads, and uses `setOptOut(false)` / `setOptOut(true)` for runtime consent
  * changes after the SDK has loaded.
@@ -289,9 +289,6 @@ export interface AmplitudeOptions {
 /**
  * Creates an Amplitude Browser SDK 2 script.
  *
- * @param options - The options for the Amplitude script.
- * @returns The Amplitude script configuration.
- *
  * @remarks
  * When `apiKey` is missing or blank, the helper logs
  * `amplitude: missing or invalid apiKey` with `console.error` and returns a
@@ -331,9 +328,6 @@ export const amplitude = function amplitude({
 	return resolveManifest(amplitudeManifest, {
 		apiKey: normalizedApiKey,
 		initOptions,
-		scriptUrl: resolveScriptUrl(
-			trimToUndefined(scriptUrl),
-			DEFAULT_AMPLITUDE_SCRIPT_URL
-		),
+		scriptUrl: resolveScriptUrl(scriptUrl, DEFAULT_AMPLITUDE_SCRIPT_URL),
 	});
 };

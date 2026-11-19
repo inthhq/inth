@@ -20,20 +20,28 @@ export { allConsentNames, consentTypes } from './consent/consent-types';
 export type { AllConsentNames, ConsentType } from './consent/consent-types';
 export { has } from './libs/has';
 export type { HasCondition } from './libs/has';
-export { deniedVendorIds } from './modules/has';
+export { deniedVendorIds } from './modules/vendor-denial';
 export { vendorsListedUnder } from './libs/vendor-listing';
 export { IABUnavailableError, policyNeedsIAB } from './libs/iab-unavailable';
 export { resolveConsentPresentation } from './libs/policy-actions';
 export {
 	resolveActionLabels,
+	resolveCategoryTitle,
+	resolveIABCopy,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
+	resolveSurfaceTranslations,
+	resolveTriggerLabels,
+	resolveVendorListCopy,
 } from './libs/consent-copy';
+export type { ResolvedIABCopy } from './libs/consent-copy';
 export {
 	applyExperimentAssignment,
 	applyExperimentTheme,
-} from './libs/experiment';
+} from './libs/experiment-presentation';
 export { hasGlobalPrivacyControlSignal } from './libs/global-privacy-control';
-export { createLazyIABFactory } from './runtime/lazy-iab';
+export { defaultTranslationConfig } from './translations/defaults';
+export { createLazyIABFactory, iabSurfaceActions } from './runtime/lazy-iab';
+export type { IABSurfaceActions } from './runtime/lazy-iab';
 export { pendingBootSnapshot } from './runtime/pending-snapshot';
 export type { PendingSnapshotOptions } from './runtime/pending-snapshot';

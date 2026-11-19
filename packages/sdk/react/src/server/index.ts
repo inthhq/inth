@@ -12,7 +12,7 @@
  * @example
  * ```ts
  * // Direct usage in any framework
- * import { fetchSSRData, extractRelevantHeaders, normalizeProjectUrl } from '@inth/react/server';
+ * import { fetchSSRData } from '@inth/react/server';
  *
  * // In your server handler
  * const data = await fetchSSRData({
@@ -26,9 +26,6 @@
  */
 
 export { fetchSSRData } from './fetch-ssr-data';
-export { extractRelevantHeaders } from './headers';
-export { createSSRInitCacheKey } from './init-cache-key';
-export { normalizeProjectUrl, validateProjectUrl } from './normalize-url';
 export type {
 	FetchSSRDataOptions,
 	FetchSSRDataOptionsBase,

@@ -10,7 +10,7 @@
  * `node_modules`, so the tests can only import what `files` and `exports`
  * publish. `pnpm install` restores the links; the next run replaces them.
  *
- * The devDependency on `@c15t/next-compat-shared` exists for the workspace
+ * The devDependency on `@inth/next-compat-shared` exists for the workspace
  * graph: a change to the pack step selects this fixture in CI.
  */
 

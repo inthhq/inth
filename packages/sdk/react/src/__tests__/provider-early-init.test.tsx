@@ -32,12 +32,12 @@ import { UNCOMMITTED_HOLD_MS } from '../module-hooks/network-hold';
 import { ConsentProvider } from '../provider';
 import { policyFixture } from './policy-fixture';
 
-const BACKEND = 'https://consent.example/api/c15t';
+const BACKEND = 'https://consent.example/api/inth';
 
 /** An `/init` body for a policy whose id tells the responses apart. */
 const initBody = (id: string) =>
 	JSON.stringify({
-		branding: 'c15t',
+		branding: 'inth',
 		location: { countryCode: 'DE', regionCode: null },
 		policyResolution: writePolicyResolutionWire(
 			policyFixture({}, { id }).initialPolicyResolution
@@ -60,7 +60,7 @@ beforeEach(() => {
 	localStorage.clear();
 	sessionStorage.clear();
 	// The page's early journey; each test is a fresh page load.
-	delete (window as Window & { __c15tJourney?: unknown }).__c15tJourney;
+	delete (window as Window & { __inthJourney?: unknown }).__inthJourney;
 	requests = [];
 	backendFetch = vi.fn(
 		(url: string, init: RequestInit & { headers: Record<string, string> }) =>
@@ -74,7 +74,7 @@ beforeEach(() => {
 					respond: (policyId) =>
 						resolve(
 							new Response(initBody(policyId), {
-								headers: { 'x-c15t-policy-contract': '1' },
+								headers: { 'x-inth-policy-contract': '1' },
 							})
 						),
 				});
@@ -184,7 +184,7 @@ test('the early /init and the save it leads to carry one journey', async () => {
 
 test('a tab journey on the early /init continues the id an earlier page kept', async () => {
 	const id = '3b241101-e2bb-4255-8caf-4136c566a962';
-	sessionStorage.setItem('c15t-journey-v1', id);
+	sessionStorage.setItem('inth-journey-v1', id);
 	const view = await render(
 		<ConsentProvider
 			options={{ journey: 'tab', mode: mode(), persistence: false }}
@@ -358,7 +358,7 @@ test('a retry after the shared hosted() options changed sends its own request', 
 	expect(initCalls()).toHaveLength(1);
 
 	// The same object, edited before React retries.
-	shared.projectUrl = 'https://other.example/api/c15t';
+	shared.projectUrl = 'https://other.example/api/inth';
 	shared.headers['accept-language'] = 'fr';
 	resume();
 	await expect.element(view.getByTestId('policy')).toHaveTextContent('pending');
@@ -831,10 +831,10 @@ test('skipHydration: the early /init says no choice is stored, as the runtime wi
 	});
 	const persistence = createPersistence({ kernel: earlier });
 	await earlier.commands.save('all');
-	await vi.waitFor(() => expect(document.cookie).toMatch(/(?:^|; )c15t=/u));
+	await vi.waitFor(() => expect(document.cookie).toMatch(/(?:^|; )inth=/u));
 
 	const loads = async (options: { skipHydration?: boolean }) => {
-		delete (window as Window & { __c15tJourney?: unknown }).__c15tJourney;
+		delete (window as Window & { __inthJourney?: unknown }).__inthJourney;
 		const before = initCalls().length;
 		const view = await render(
 			<ConsentProvider options={{ mode: mode(), persistence: options }}>
@@ -863,7 +863,7 @@ test('a dismissed notice: the early /init says an answer is stored', async () =>
 	);
 	const persistence = createPersistence({ kernel: earlier });
 	await earlier.commands.dismissNotice();
-	await vi.waitFor(() => expect(document.cookie).toContain('c15t-notice='));
+	await vi.waitFor(() => expect(document.cookie).toContain('inth-notice='));
 	try {
 		const view = await render(
 			<ConsentProvider options={{ mode: mode() }}>
@@ -941,7 +941,7 @@ test('unmounting before the response arrives applies it nowhere', async () => {
 	expect(seen[0]).toBe(1);
 	await view.unmount();
 	await vi.waitFor(() =>
-		expect((window as { c15t?: unknown }).c15t).toBeUndefined()
+		expect((window as { __inthDebug?: unknown }).__inthDebug).toBeUndefined()
 	);
 	onPermissionsChanged.mockClear();
 

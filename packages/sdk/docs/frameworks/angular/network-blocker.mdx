@@ -1,6 +1,6 @@
 ---
 title: Network blocker
-description: Hold fetch, XMLHttpRequest and HttpClient calls to tracking domains in an Angular app until their consent category is allowed, with the networkBlocker option of provideC15t.
+description: Hold fetch, XMLHttpRequest and HttpClient calls to tracking domains in an Angular app until their consent category is allowed, with the networkBlocker option of provideInth.
 group: frameworks
 ---
 
@@ -22,12 +22,12 @@ Write the configuration in its own module:
 
 <include src="../../shared/examples/angular/network-blocker.mdx" />
 
-Pass it to `provideC15t()` in `src/app/app.config.ts`:
+Pass it to `provideInth()` in `src/app/app.config.ts`:
 
 {/* example: fragment */}
 
 ```ts title="src/app/app.config.ts (partial)"
-provideC15t({ mode, scripts, networkBlocker });
+provideInth({ mode, scripts, networkBlocker });
 ```
 
 To change the rules later, call
@@ -49,7 +49,7 @@ is logged with `console.warn`; `onRequestBlocked` receives
 
 ## When blocking starts
 
-`provideC15t()` creates the runtime when the application is created in the
+`provideInth()` creates the runtime when the application is created in the
 browser, before any component runs, and the runtime starts holding matching
 requests from then. The blocker module loads when the runtime starts, after
 the first render, and then decides each held request:

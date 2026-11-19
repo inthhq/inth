@@ -3,7 +3,7 @@
  *
  * `evaluateConsent` (`./has.ts`) runs this for every target without IAB
  * fields. It is a module of its own so code that gates only on categories
- * and vendors, such as the script tag's inert `data-c15t-category` tags
+ * and vendors, such as the script tag's inert `data-inth-category` tags
  * before the engine loads, does not carry the IAB evaluation.
  *
  * @packageDocumentation
@@ -13,6 +13,7 @@ import { evaluateConsentRecord } from '../consent-record/evaluate';
 import type { AllConsentNames } from '../consent/consent-types';
 import { has } from '../libs/has';
 import type { HasCondition } from '../libs/has';
+import { vendorAxisActive } from '../libs/vendors';
 import type { ConsentSnapshot } from '../types';
 import { isVendorDenied } from './vendor-denial';
 
@@ -21,7 +22,6 @@ export { deniedVendorIds, isVendorDenied } from './vendor-denial';
 /**
  * Reads permissions at the gate's clock without changing the kernel.
  * Reuses evaluated fields until the next semantic deadline.
- * @param snapshot - Immutable kernel snapshot.
  * @param now - Current epoch milliseconds.
  * @returns Effective category permissions and independent restrictions.
  */
@@ -50,7 +50,6 @@ export const getEffectiveGateState = function getEffectiveGateState(
  * the gate's clock, then, outside `model === 'iab'`, its vendor not turned
  * off. The same answer `evaluateConsent` gives such a target.
  * @param target - Category condition and optional vendor slug.
- * @param snapshot - Immutable kernel snapshot.
  * @param now - Gate clock in epoch milliseconds.
  * @returns Whether the target may run at this time.
  * @throws {Error} For an unknown category, as `has` does.
@@ -66,7 +65,7 @@ export const evaluateCategoryGate = function evaluateCategoryGate<
 		target.category,
 		getEffectiveGateState(snapshot, now).effectivePermissions
 	);
-	if (!allowed || target.vendor === undefined || snapshot.model === 'iab') {
+	if (!allowed || target.vendor === undefined || !vendorAxisActive(snapshot)) {
 		return allowed;
 	}
 	return !isVendorDenied(snapshot, target.vendor);

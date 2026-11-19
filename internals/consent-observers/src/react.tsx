@@ -1,7 +1,7 @@
 import { KernelContext } from '@inth/react/context';
 /**
  * A React consumer that finds the kernel through `KernelContext` from
- * `@inth/react/context`, the way a component library built on top of c15t
+ * `@inth/react/context`, the way a component library built on top of Inth
  * would, and subscribes with `useSyncExternalStore`.
  */
 import type { AllConsentNames, ConsentSnapshot } from '@inth/sdk/engine';
@@ -31,7 +31,6 @@ export const useObservedSnapshot =
 		);
 	};
 
-/** Props for {@link ConsentProbe}. */
 export interface ConsentProbeProps {
 	/** Identifies the probe in the DOM. */
 	name: string;

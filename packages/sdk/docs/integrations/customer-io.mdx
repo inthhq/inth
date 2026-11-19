@@ -1,26 +1,26 @@
 ---
 title: Customer.io
-description: Load Customer.io Data Pipelines only after marketing consent with the c15t customerIo helper, set up a proxy, and check withdrawal.
-seoTitle: Customer.io cookie consent with c15t
-seoDescription: Load Customer.io only with marketing consent. Set your write key, region and proxy, and reset identity on withdrawal with c15t.
+description: Load Customer.io Data Pipelines only after marketing consent with the Inth customerIo helper, set up a proxy, and check withdrawal.
+seoTitle: Customer.io cookie consent with Inth
+seoDescription: Load Customer.io only with marketing consent. Set your write key, region and proxy, and reset identity on withdrawal with Inth.
 icon: chart-line
 group: integrations
 ---
 
 Customer.io collects events and visitor identity on your site through its
-Data Pipelines JavaScript source, for use in its messaging. The c15t
+Data Pipelines JavaScript source, for use in its messaging. The Inth
 `customerIo` helper waits for `marketing` consent before it creates the
 `cioanalytics` global or downloads the SDK.
 
 When the visitor withdraws, the helper calls `cioanalytics.reset()` to clear
-the stored identity, and c15t reloads the page. `reset()` is not an opt-out.
+the stored identity, and Inth reloads the page. `reset()` is not an opt-out.
 The reload is what stops the SDK.
 
 ## Configure Customer.io
 
 Create a JavaScript source in Customer.io Data Pipelines and copy its write
 key. Note the region of your workspace. Then remove the original Customer.io
-snippet from your site, so that c15t controls when it loads.
+snippet from your site, so that Inth controls when it loads.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
@@ -32,7 +32,7 @@ snippet from your site, so that c15t controls when it loads.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `writeKey` | Required | Write key of your Data Pipelines JavaScript source. Whitespace is trimmed. If it's missing or blank, c15t logs an error and never loads Customer.io. |
+| `writeKey` | Required | Write key of your Data Pipelines JavaScript source. Whitespace is trimmed. If it's missing or blank, Inth logs an error and never loads Customer.io. |
 | `region` | `us` | `us` uses `cdp.customer.io`. `eu` uses `cdp-eu.customer.io`. Any other value throws `customerIo: region must be 'us' or 'eu'`. |
 | `loadOptions` | Unset | Options for the Customer.io loader, such as destination settings. The helper always sets `initialPageview` to `false`, even if you pass `true`. |
 | `category` | `marketing` | Consent condition for the whole loader. |

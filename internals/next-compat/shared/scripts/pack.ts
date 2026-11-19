@@ -39,7 +39,7 @@ const sharedDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const repoRoot = resolve(sharedDir, '../../..');
 const packagesDir = join(repoRoot, 'packages', 'sdk');
 const ROOT_PACKAGE = '@inth/nextjs';
-const SHARED_PACKAGE = '@c15t/next-compat-shared';
+const SHARED_PACKAGE = '@inth/next-compat-shared';
 
 interface PackageManifest {
 	name: string;
@@ -200,7 +200,7 @@ const linkThirdPartyDependencies = function linkThirdPartyDependencies(
 };
 
 /**
- * Where a cell's tsconfig `paths` point `@c15t/next-compat-shared/*`,
+ * Where a cell's tsconfig `paths` point `@inth/next-compat-shared/*`,
  * relative to the cell.
  */
 const SHARED_COPY_DIR = '.compat-shared';
@@ -208,12 +208,12 @@ const SHARED_COPY_DIR = '.compat-shared';
 /**
  * Copies the shared fixture source into the cell as first-party code.
  *
- * Each cell maps `@c15t/next-compat-shared/*` to this copy through its
+ * Each cell maps `@inth/next-compat-shared/*` to this copy through its
  * tsconfig `paths`, so Next compiles it like the app's own files and the
  * cell needs no `transpilePackages`. That matters: any `transpilePackages`
  * entry makes webpack accept global CSS imported from `node_modules` in the
  * Pages Router, which would hide the build error a user without it gets.
- * The copy sits inside the cell, so its `@c15t/*` imports resolve to the
+ * The copy sits inside the cell, so its `@inth/*` imports resolve to the
  * extracted packages instead of the workspace links. The workspace link
  * under `node_modules` goes, so nothing can reach the source through it.
  */

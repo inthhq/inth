@@ -10,7 +10,7 @@ it.each([Date.UTC(2025, 0, 1), Date.UTC(2030, 0, 1)])(
 	'restores the real repeat-visitor cookie at %s',
 	(now) => {
 		const records = readStoredRecordsFromCookieHeader(
-			`c15t=${createRepeatVisitorCookie(now)}`,
+			`inth=${createRepeatVisitorCookie(now)}`,
 			undefined,
 			now
 		);

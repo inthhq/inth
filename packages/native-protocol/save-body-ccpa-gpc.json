@@ -57,7 +57,7 @@
 				}
 			},
 			"headers": {
-				"x-c15t-policy-contract": "1"
+				"x-inth-policy-contract": "1"
 			},
 			"method": "POST",
 			"path": "/subjects"
@@ -422,7 +422,7 @@
 				"policySnapshotToken": "tok-california-opt-out"
 			},
 			"headers": {
-				"x-c15t-policy-contract": "1"
+				"x-inth-policy-contract": "1"
 			},
 			"status": 200
 		},
@@ -446,7 +446,7 @@
 		"error is null in every fixture: no fixture exercises a transport failure or an unreadable wire.",
 		"Any field this file does not mention must not be invented. Unknown wire values fail closed.",
 		"savePayload is what the pending queue must persist before the request, byte-for-byte, and a replay must resend it unchanged after a later init changes policy.",
-		"request.headers must carry the policy contract declaration with exactly this value. x-c15t-version is platform telemetry and is deliberately not pinned.",
+		"request.headers must carry the policy contract declaration with exactly this value. x-inth-version is platform telemetry and is deliberately not pinned.",
 		"request.body is the POST /subjects body. tcString is absent because IAB is out of scope: never add the key.",
 		"the commit happens at input.now, so givenAt, every confirmedAt, and snapshotAfter.evaluatedAt all equal it.",
 		"snapshotBefore is the snapshot after init and before the commit, and snapshotAfter is the snapshot the commit leaves behind. Both are asserted.",

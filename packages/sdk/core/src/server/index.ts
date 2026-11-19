@@ -5,7 +5,8 @@
  * (`createConsentRouteHandler`) answers `/manifest` and `/init` for every
  * host integration (Next.js, Nuxt, SvelteKit, Astro, TanStack Start), and
  * `resolveRequestConsent` / `readRequestConsent` resolve the consent state a
- * server render hands the client, and `fetchCachedManifest` is the one
+ * server render hands the client, `fetchRequestInit` returns a hosted
+ * `/init` answer as received, and `fetchCachedManifest` is the one
  * process cache for the backend's manifest. Resolving `/init` from a
  * manifest, which imports every translation, is at
  * `@inth/sdk/transports/manifest-cache`.
@@ -33,25 +34,22 @@ export {
 } from './consent-route';
 export type {
 	ConsentRequestFacts,
+	FetchRequestInitOptions,
 	RequestConsentMode,
 	RequestConsentRead,
 	RequestConsentState,
+	RequestInitAnswer,
 	ResolveRequestConsentOptions,
 } from './request-consent';
 export {
-	DEFAULT_CONSENT_ROUTE_PREFIX,
+	fetchRequestInit,
 	readRequestConsent,
 	resolveRenderBudgetMs,
 	resolveRequestConsent,
 } from './request-consent';
-export type {
-	RequestSubject,
-	ResolveRequestSubjectOptions,
-	SubjectCookie,
-} from './request-subject';
-export { resolveRequestSubject } from './request-subject';
 export type { FetchCachedGvlOptions } from './gvl-cache';
-export { clearGvlCache, fetchCachedGvl } from './gvl-cache';
+export { fetchServerGvl } from './gvl-cache';
+export { clearGvlCache } from '../transports/gvl-cache';
 export type {
 	CachedManifestResponse,
 	FetchCachedManifestOptions,
@@ -64,6 +62,7 @@ export type {
 export {
 	clearManifestCache,
 	createManifestCache,
+	DEFAULT_RESOLVE_TIMEOUT_MS,
 	createManifestRequestUrl,
 	fetchCachedManifest,
 	getManifestSMaxAge,
@@ -72,13 +71,47 @@ export {
 	MANIFEST_PASSTHROUGH_HEADERS,
 	ManifestUnavailableError,
 	resolveManifestSourceUrl,
+	withResolutionBudget,
 } from '../libs/manifest-cache-runtime';
-export { normalizeRoutePrefix } from './route-prefix';
+export type {
+	ConsentProxyRouteMethodHandlers,
+	ConsentRouteMethodHandlers,
+	ConsentRouteMethodHandlersFor,
+} from './route-handlers';
 export {
+	createConsentRouteHandlerCache,
+	createConsentRouteMethodHandlers,
+} from './route-handlers';
+export { normalizeRoutePrefix } from './route-prefix';
+export type {
+	ServerMode,
+	ServerModeInput,
+	ServerModeOptions,
+} from './server-mode';
+export {
+	buildSnapshotSkipReason,
+	needsBuildSnapshot,
+	readModeData,
+	resolveServerMode,
+} from './server-mode';
+export type { ConsentInputHeaderTarget } from './shared';
+export {
+	DEFAULT_CONSENT_ROUTE_PREFIX,
+	IN_PROCESS_ORIGIN,
+	keepAlive,
+	SAFE_NONCE,
+	trimPathSlashes,
+	writeConsentInputHeaders,
+} from './shared';
+export {
+	createStaticManifestEntry,
 	createStaticManifestModule,
 	loadStaticManifest,
 } from './static-manifest';
-export type { StaticManifestModuleOptions } from './static-manifest';
+export type {
+	StaticManifestEntry,
+	StaticManifestModuleOptions,
+} from './static-manifest';
 export type {
 	RequestHeaderSource,
 	ResolveRequestOriginOptions,
@@ -87,3 +120,8 @@ export {
 	resolveRequestProjectUrl,
 	resolveRequestOrigin,
 } from './request-origin';
+export {
+	canDeferEngine,
+	engineNeededNow,
+} from '../surface-actions/defer-engine';
+export type { DeferEngineOptions } from '../surface-actions/defer-engine';

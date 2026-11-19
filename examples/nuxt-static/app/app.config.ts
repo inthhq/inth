@@ -1,7 +1,7 @@
 import { posthog } from '@inth/integrations/posthog';
 
 export default defineAppConfig({
-	c15t: {
+	inth: {
 		scripts: [
 			posthog({
 				id: 'phc_your_project_key',

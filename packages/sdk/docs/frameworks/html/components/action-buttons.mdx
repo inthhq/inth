@@ -1,22 +1,22 @@
 ---
 title: Action buttons
-description: Make your own HTML buttons accept, reject, open preferences, dismiss a notice or reopen the banner with the data-c15t-action attribute and the c15t script tag, with no JavaScript.
+description: Make your own HTML buttons accept, reject, open preferences, dismiss a notice or reopen the banner with the data-inth-action attribute and the Inth script tag, with no JavaScript.
 group: frameworks
 ---
 
 ## Wire a button without code
 
-Add `data-c15t-action` to any element and c15t runs that action when a
+Add `data-inth-action` to any element and Inth runs that action when a
 visitor clicks it. The page needs no script of its own:
 
 {/* example: fragment */}
 
 ```html
-<button type="button" data-c15t-action="customize">Cookie settings</button>
+<button type="button" data-inth-action="customize">Cookie settings</button>
 ```
 
-This works with `c15t.js`, `c15t.testing.js`,
-`c15t.headless.js` and `c15t.iab.js`, and with `init()` from `@inth/sdk`
+This works with `inth.js`, `inth.testing.js`,
+`inth.headless.js` and `inth.iab.js`, and with `init()` from `@inth/sdk`
 in a bundled app.
 
 ## Actions
@@ -28,14 +28,14 @@ the same click, then send the choice to the backend in the background.
 
 ## How clicks are matched
 
-c15t listens for clicks on the whole document, so:
+Inth listens for clicks on the whole document, so:
 
 - Buttons added after the page loaded, for example by a page builder widget
   or a CMS block, work too.
 - A click on a child element counts. An icon inside
-  `<button data-c15t-action="accept">` triggers the action.
-- c15t calls `preventDefault()` on the click. A `data-c15t-action` link does
-  not navigate, and a `data-c15t-action` button inside a form does not submit
+  `<button data-inth-action="accept">` triggers the action.
+- Inth calls `preventDefault()` on the click. A `data-inth-action` link does
+  not navigate, and a `data-inth-action` button inside a form does not submit
   it.
 
 ## Only record choices from visitor clicks
@@ -57,13 +57,13 @@ between them by policy.
 
 ## Accessibility
 
-c15t adds no role, label or keyboard handling. Use a native `button` for
+Inth adds no role, label or keyboard handling. Use a native `button` for
 actions and an `a` for navigation, so the control is focusable and responds to
-Enter and Space. A `div` with `data-c15t-action` responds to clicks only.
+Enter and Space. A `div` with `data-inth-action` responds to clicks only.
 
 ## Check it works
 
-1. Add a `data-c15t-action="reject"` button to a page and open it in a private
+1. Add a `data-inth-action="reject"` button to a page and open it in a private
    window.
 2. Click the button. The banner closes, and in DevTools the Network tab shows
    the save request to your backend's `/subjects`.

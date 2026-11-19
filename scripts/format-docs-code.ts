@@ -21,7 +21,6 @@ const isGenerated = (file: string): boolean =>
 /**
  * Lists hand-written docs files whose fences are not formatted.
  *
- * @param root - The repository root.
  * @param write - Rewrite the files instead of only reporting them.
  * @returns Repository-relative paths of the files that differ.
  */

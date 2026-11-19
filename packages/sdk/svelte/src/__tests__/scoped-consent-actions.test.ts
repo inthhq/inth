@@ -19,7 +19,7 @@ const required = <Value>(value: Value | undefined): Value => {
 
 beforeEach(() => {
 	localStorage.clear();
-	document.cookie = 'c15t=; Max-Age=0; path=/';
+	document.cookie = 'inth=; Max-Age=0; path=/';
 });
 
 describe('displayed consent actions', () => {

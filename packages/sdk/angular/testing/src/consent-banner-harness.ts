@@ -13,7 +13,7 @@ export interface ConsentBannerHarnessFilters extends BaseHarnessFilters {
 }
 
 /**
- * Drives `<c15t-consent-banner>`, and the banner `<c15t-consent-root>`
+ * Drives `<inth-consent-banner>`, and the banner `<inth-consent-root>`
  * renders.
  *
  * The banner renders into `<body>`, outside the component that declares it,
@@ -25,12 +25,8 @@ export interface ConsentBannerHarnessFilters extends BaseHarnessFilters {
  * the consent runtime has started and chosen the banner before the first
  * query.
  *
- * The banner animates out over 200ms after a choice. Set
- * `disableAnimation: true` in the test's `provideC15t()` options so it
- * leaves the page as soon as the choice is recorded.
- *
  * The action methods click the stock buttons. A banner that replaces them
- * with a `c15tConsentBannerAction` template keeps working if your buttons
+ * with an `inthConsentBannerAction` template keeps working if your buttons
  * set `data-action` to the action's id.
  *
  * @example
@@ -51,9 +47,6 @@ export class ConsentBannerHarness extends ComponentHarness {
 
 	/**
 	 * A predicate for a banner that matches `options`.
-	 *
-	 * @param options - Title, prompt and selector filters.
-	 * @returns A predicate to pass to a loader.
 	 */
 	static with(
 		options: ConsentBannerHarnessFilters = {}

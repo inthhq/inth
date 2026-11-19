@@ -30,7 +30,7 @@ export const appendActionFeedback = (
 		const feedback = createElement(
 			document,
 			'p',
-			'c15t-dev-tools__feedback',
+			'inth-dev-tools__feedback',
 			action.message
 		);
 		feedback.setAttribute(

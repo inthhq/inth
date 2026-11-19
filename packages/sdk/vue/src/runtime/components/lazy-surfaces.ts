@@ -39,14 +39,6 @@ export const LazyIabConsentDialog = defineAsyncComponent(
 );
 
 /**
- * The banner as its own chunk, for Nuxt's root. Its stylesheets then
- * belong to a lazy chunk instead of the entry: a server-rendered banner
- * paints with the styles Nuxt inlines into the HTML and hydrates once its
- * chunk arrives, and the module turns Nuxt's render-blocking links to
- * those rules into preloads. The browser applies them with the chunk,
- * before a banner it renders itself appears.
- */
-/**
  * The banner chunk. Vite's preload helper waits for the chunk's
  * stylesheets only in the first `import()` that asks for them: keep this
  * the only caller. The Nuxt plugin calls it with the consent engine's
@@ -56,6 +48,14 @@ export const LazyIabConsentDialog = defineAsyncComponent(
  */
 export const loadConsentBanner = () => import('./prompt.vue');
 
+/**
+ * The banner as its own chunk, for Nuxt's root. Its stylesheets then
+ * belong to a lazy chunk instead of the entry: a server-rendered banner
+ * paints with the styles Nuxt inlines into the HTML and hydrates once its
+ * chunk arrives, and the module turns Nuxt's render-blocking links to
+ * those rules into preloads. The browser applies them with the chunk,
+ * before a banner it renders itself appears.
+ */
 export const LazyConsentBanner = defineAsyncComponent({
 	// The root renders the banner component on every page (it decides its
 	// own visibility), so the chunk starts loading with the app's first
@@ -138,8 +138,7 @@ export const LazyConsentDialogTrigger = defineAsyncComponent({
  * Measured: prefetching on bare requestIdleCallback fired during the loading
  * window under CPU throttle and made banner-visible ~130ms WORSE on the SPA
  * arm. So we wait for the window `load` event first (banner is visible well
- * before it), then an idle slot. Intent warming (hover/focus on the
- * customize button) still wins the race for mouse users.
+ * before it), then an idle slot.
  */
 export const prefetchSurfaceAfterLoad = function prefetchSurfaceAfterLoad(
 	load: () => Promise<unknown>
@@ -176,6 +175,5 @@ export const prefetchConsentManager = () =>
 export const prefetchIabConsentDialog = () =>
 	prefetchSurfaceAfterLoad(loadIabConsentDialog);
 
-/** Immediate warm for user-intent signals (hover/focus on "customize"). */
 export const warmConsentManager = () => undefined;
 export const warmIabConsentDialog = () => undefined;

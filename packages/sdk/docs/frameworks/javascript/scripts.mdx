@@ -4,14 +4,14 @@ description: Register vendor scripts with @inth/sdk, createConsentRuntime or a c
 group: frameworks
 ---
 
-## Register scripts where you start c15t
+## Register scripts where you start Inth
 
-Pass the `scripts` list to whichever API starts c15t. The list is the same in
+Pass the `scripts` list to whichever API starts Inth. The list is the same in
 each case, built from `@inth/integrations` helpers or your own script objects:
 
 | Setup | Where `scripts` goes |
 | --- | --- |
-| `@inth/sdk` | `init({ scripts, … })`, as in the [quickstart](/docs/frameworks/javascript/quickstart#start-c15t). |
+| `@inth/sdk` | `init({ scripts, … })`, as in the [quickstart](/docs/frameworks/javascript/quickstart#start-inth). |
 | `@inth/sdk/runtime` | `createConsentRuntime({ mode, scripts })`, as in [headless](/docs/frameworks/javascript/headless#create-the-runtime). |
 | Your own kernel | `createScriptLoader({ kernel, scripts })`. See [script loader](/docs/frameworks/javascript/modules/script-loader#attach-the-loader-to-your-own-kernel). |
 
@@ -43,31 +43,31 @@ every field and callback.
 ## When the script loader downloads
 
 With `@inth/sdk` from npm, the script loader and the network blocker
-share a separate chunk. It loads when c15t starts, and only if `scripts` is
+share a separate chunk. It loads when Inth starts, and only if `scripts` is
 not empty or `networkBlocker` has rules, so a page with neither never
 downloads it. On a page with either, the browser requests it after your
 JavaScript has run, which delays a returning visitor's consented scripts and
 held requests by one request.
 
-Your bundler names that chunk, so c15t cannot link it from your HTML. To
+Your bundler names that chunk, so Inth cannot link it from your HTML. To
 start the download earlier, add a `<link rel="modulepreload">` for the chunk
-your build emits for `@inth/sdk/dist/modules/loader-and-blocker.js`. With
+your build emits for `@inth/sdk/lib/core/dist/modules/loader-and-blocker.js`. With
 Vite, `.vite/manifest.json` lists it under that path when `build.manifest` is
-on. Give the link `fetchpriority="low"`. c15t needs the chunk only when it
+on. Give the link `fetchpriority="low"`. Inth needs the chunk only when it
 starts, and at the default priority the preload can delay your app's own
-chunks over HTTP/1.1. The script-tag build, `c15t.js`, already contains the
+chunks over HTTP/1.1. The script-tag build, `inth.js`, already contains the
 loader.
 
 ## Gate a snippet in your HTML
 
-`@inth/sdk` also runs `<script type="text/plain" data-c15t-category>`
+`@inth/sdk` also runs `<script type="text/plain" data-inth-category>`
 tags in your `index.html` once their category is allowed, in page order. Use
 it for a vendor snippet you would rather keep in HTML. `createConsentRuntime`
 and a plain kernel do not scan the page for these tags;
 `activateGatedScripts(snapshot)` from `@inth/sdk` runs them for you.
 
 With the `nonce` option set, `@inth/sdk` runs only the tags that carry the
-same `nonce`, and marks the others `data-c15t-activated="untrusted"`. Pass
+same `nonce`, and marks the others `data-inth-activated="untrusted"`. Pass
 `{ nonce }` as the third argument of `activateGatedScripts` for the same
 check. See [Content Security Policy](/docs/frameworks/javascript/content-security-policy).
 
@@ -88,7 +88,7 @@ add `watchRevocationReload` from `@inth/sdk/engine` if you want it.
 ## Keep one owner per vendor
 
 Use stable script IDs and remove the vendor's original snippet, so each
-vendor loads once and only through c15t. Ordinary scripts wait for
+vendor loads once and only through Inth. Ordinary scripts wait for
 permission. Helpers with `alwaysLoad` load at once and pass consent to the
 vendor's own API instead. Read the individual integration guide before
 assuming all helpers have the same network behavior.

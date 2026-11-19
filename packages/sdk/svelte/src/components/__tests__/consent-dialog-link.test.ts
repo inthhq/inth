@@ -66,7 +66,7 @@ describe('ConsentDialogLink', () => {
 			expect(link).toHaveAttribute('data-mode', 'stroke');
 			expect(link).toHaveAttribute('data-size', 'small');
 			expect(link).toHaveAttribute(
-				'data-c15t-rights',
+				'data-inth-rights',
 				'disclosure preferences'
 			);
 		});
@@ -98,7 +98,7 @@ describe('ConsentDialogLink', () => {
 				document.querySelector('[data-testid="consent-dialog-branding"]')
 			).toHaveAttribute(
 				'href',
-				`https://c15t.com?ref=${window.location.hostname}`
+				`https://inth.com?ref=${window.location.hostname}`
 			);
 		});
 	});

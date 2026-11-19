@@ -152,7 +152,7 @@ export const seedStorybookChoice = (
 	policy: PolicyRule = storybookPolicy
 ): void => {
 	window.localStorage.setItem(
-		'c15t',
+		'inth',
 		JSON.stringify(storybookChoiceRecord(consents, policy))
 	);
 };

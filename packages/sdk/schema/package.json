@@ -2,7 +2,7 @@
 	"name": "@inth/sdk-schema",
 	"version": "3.1.1-canary.0",
 	"private": true,
-	"description": "Valibot schemas and TypeScript types for the c15t consent API, shared by the backend, frontends and Node.js SDK.",
+	"description": "Valibot schemas and TypeScript types for the Inth consent API, shared by the backend, frontends and Node.js SDK.",
 	"keywords": [
 		"ccpa",
 		"consent",
@@ -13,14 +13,14 @@
 		"valibot",
 		"validation"
 	],
-	"homepage": "https://c15t.com/docs",
+	"homepage": "https://inth.com",
 	"bugs": {
-		"url": "https://github.com/c15t/c15t/issues"
+		"url": "https://github.com/inthhq/inth/issues"
 	},
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/c15t/c15t.git",
+		"url": "git+https://github.com/inthhq/inth.git",
 		"directory": "packages/sdk/schema"
 	},
 	"files": [
@@ -73,8 +73,8 @@
 		"valibot": "1.4.2"
 	},
 	"devDependencies": {
-		"@c15t/typescript-config": "workspace:*",
-		"@c15t/vitest-config": "workspace:*",
+		"@inth/typescript-config": "workspace:*",
+		"@inth/vitest-config": "workspace:*",
 		"@rslib/core": "0.23.2",
 		"@types/bun": "1.3.9",
 		"@types/node": "25.5.0",

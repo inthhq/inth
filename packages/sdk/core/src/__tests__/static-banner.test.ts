@@ -32,7 +32,7 @@ const EAGER_CSS = '.banner{color:rebeccapurple}';
  * is given.
  */
 const createApp = async (): Promise<string> => {
-	const root = await mkdtemp(join(tmpdir(), 'c15t-static-banner-'));
+	const root = await mkdtemp(join(tmpdir(), 'inth-static-banner-'));
 	directories.push(root);
 	const react = join(root, 'node_modules/@inth/react');
 	await write(
@@ -67,7 +67,7 @@ const createApp = async (): Promise<string> => {
 	await write(
 		join(react, 'dist/static-banner.js'),
 		[
-			`export const STATIC_BANNER_SHEETS = [{ id: 'c15t-banner', css: ${JSON.stringify(EAGER_CSS)} }];`,
+			`export const STATIC_BANNER_SHEETS = [{ id: 'inth-banner', css: ${JSON.stringify(EAGER_CSS)} }];`,
 			'export const renderStaticBanner = (init) =>',
 			"\tinit.policyResolution?.policy?.prompt === 'choice'",
 			// oxlint-disable-next-line no-template-curly-in-string -- Source text of a module.
@@ -90,11 +90,11 @@ const createApp = async (): Promise<string> => {
 	const ui = join(sdk, 'lib/ui');
 	await write(
 		join(ui, 'dist/styles/sheets/banner.js'),
-		`export const id = 'c15t-banner';\nexport const css = ${JSON.stringify(EAGER_CSS)};\n`
+		`export const id = 'inth-banner';\nexport const css = ${JSON.stringify(EAGER_CSS)};\n`
 	);
 	await write(
 		join(ui, 'dist/styles/sheets/banner-deferred.js'),
-		"export const id = 'c15t-banner';\nexport const css = '';\nexport const load = () => import('./banner.js').then((sheet) => sheet.css);\n"
+		"export const id = 'inth-banner';\nexport const css = '';\nexport const load = () => import('./banner.js').then((sheet) => sheet.css);\n"
 	);
 	const page = (script: string) =>
 		`<!doctype html>\n<html lang="en">\n\t<head>\n\t\t<meta charset="UTF-8" />\n\t</head>\n\t<body>\n\t\t<div id="root"></div>\n\t\t<script type="module" src="${script}"></script>\n\t</body>\n</html>\n`;
@@ -109,7 +109,7 @@ const createApp = async (): Promise<string> => {
 };
 
 const CHOICE_MANIFEST = {
-	branding: 'c15t',
+	branding: 'inth',
 	policyPacks: [
 		createConsentManifestPolicyPack({
 			id: 'eu',
@@ -191,7 +191,7 @@ const buildApp = async (
 	return { code, pages };
 };
 
-const BANNER_TAG = '<div data-c15t-static-banner hidden>';
+const BANNER_TAG = '<div data-inth-static-banner hidden>';
 
 describe('consentManifest staticBanner', () => {
 	test("puts the stock banner, with the manifest's copy, and its sheets in index.html", async () => {
@@ -208,16 +208,16 @@ describe('consentManifest staticBanner', () => {
 		);
 		// The banner starts the body, hidden, followed by the reveal script.
 		expect(html).toMatch(
-			/<body>\s*<div data-c15t-static-banner hidden><div data-testid="consent-banner-root">Cookies on Example<\/div><\/div><script>/u
+			/<body>\s*<div data-inth-static-banner hidden><div data-testid="consent-banner-root">Cookies on Example<\/div><\/div><script>/u
 		);
 		expect(html).toContain(
-			`<style data-href="c15t-banner" data-precedence="c15t">${EAGER_CSS}</style></head>`
+			`<style data-href="inth-banner" data-precedence="inth">${EAGER_CSS}</style></head>`
 		);
 		// The sheet's text left the entry: it ships once, in the page.
 		expect(code).not.toContain('rebeccapurple');
 		// The page with no consent manager gets neither.
-		expect(pages['baseline.html']).not.toContain('data-c15t-static-banner');
-		expect(pages['baseline.html']).not.toContain('data-precedence="c15t"');
+		expect(pages['baseline.html']).not.toContain('data-inth-static-banner');
+		expect(pages['baseline.html']).not.toContain('data-precedence="inth"');
 	});
 
 	test("a page with the static banner loads ConsentBanner's code after its own", async () => {
@@ -269,7 +269,7 @@ describe('consentManifest staticBanner', () => {
 			})
 		);
 		expect(pages['index.html']).not.toContain(BANNER_TAG);
-		expect(pages['index.html']).toContain('<style data-href="c15t-banner"');
+		expect(pages['index.html']).toContain('<style data-href="inth-banner"');
 		expect(code).not.toContain('rebeccapurple');
 	});
 
@@ -287,7 +287,7 @@ describe('consentManifest staticBanner', () => {
 			warn
 		);
 		expect(pages['index.html']).not.toContain(BANNER_TAG);
-		expect(pages['index.html']).toContain('<style data-href="c15t-banner"');
+		expect(pages['index.html']).toContain('<style data-href="inth-banner"');
 		expect(warn).toHaveBeenCalledWith(
 			expect.stringContaining(
 				'staticBanner: could not fetch the consent manifest'
@@ -307,8 +307,8 @@ describe('consentManifest staticBanner', () => {
 			})
 		);
 		expect(fetch).not.toHaveBeenCalled();
-		expect(pages['index.html']).not.toContain('data-c15t-static-banner');
-		expect(pages['index.html']).not.toContain('data-precedence="c15t"');
+		expect(pages['index.html']).not.toContain('data-inth-static-banner');
+		expect(pages['index.html']).not.toContain('data-precedence="inth"');
 		expect(code).toContain('rebeccapurple');
 	});
 
@@ -350,6 +350,6 @@ describe('consentManifest staticBanner', () => {
 			})
 		);
 		expect(fetch).not.toHaveBeenCalled();
-		expect(pages['index.html']).not.toContain('data-c15t-static-banner');
+		expect(pages['index.html']).not.toContain('data-inth-static-banner');
 	});
 });

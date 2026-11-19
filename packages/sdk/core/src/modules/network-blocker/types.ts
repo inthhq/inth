@@ -24,6 +24,7 @@ import type {
 	failBlockedXhr,
 	NetworkHold,
 	releaseNetworkRequests,
+	ruleMatches,
 	stashXhr,
 	XHR_REQUEST,
 } from './hold';
@@ -75,17 +76,13 @@ export interface BlockDecision {
  */
 export interface NetworkBlockerTools {
 	blockedResponse: typeof blockedResponse;
-	/** `extractConsentNamesFromCondition`. */
 	categoriesOf: typeof extractConsentNamesFromCondition;
-	/** `declareOwnedVendors`. */
 	declareOwners: typeof declareOwnedVendors;
-	/** `evaluateConsent`. */
 	evaluate: typeof evaluateConsent;
 	failBlockedXhr: typeof failBlockedXhr;
-	/** `forgetOwnedVendors`. */
 	forgetOwners: typeof forgetOwnedVendors;
-	/** `releaseNetworkRequests`. */
 	releaseHolds: typeof releaseNetworkRequests;
+	ruleMatches: typeof ruleMatches;
 	stashXhr: typeof stashXhr;
 	/** The key the hold's XHR patch stores a request under. */
 	xhrRequest: typeof XHR_REQUEST;

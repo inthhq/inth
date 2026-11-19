@@ -15,8 +15,8 @@ import {
 	imports: [ConsentGate, ConsentGateContent],
 	selector: 'app-consent-embed',
 	template: `
-		<c15t-consent-gate [category]="category">
-			<ng-template c15tConsentGateContent>
+		<inth-consent-gate [category]="category">
+			<ng-template inthConsentGateContent>
 				<iframe
 					[src]="url"
 					[title]="title"
@@ -28,7 +28,7 @@ import {
 					[style.border]="'0'"
 				></iframe>
 			</ng-template>
-		</c15t-consent-gate>
+		</inth-consent-gate>
 	`,
 })
 export class ConsentEmbed {

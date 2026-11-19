@@ -1,6 +1,6 @@
 ---
 title: Translations
-description: Where c15t banner and dialog copy comes from in a React app, how the browser picks the visitor's language, and how to override copy and switch languages with the provider's i18n option and hooks.
+description: Where Inth banner and dialog copy comes from in a React app, how the browser picks the visitor's language, and how to override copy and switch languages with the provider's i18n option and hooks.
 group: frameworks
 ---
 
@@ -25,7 +25,7 @@ a deploy. Code can override that copy in two places:
 [Copy and translations](/docs/customization/translations) lists the message
 keys and explains how code messages combine with the project's copy.
 
-## How c15t picks the language
+## How Inth picks the language
 
 In `hosted()` mode the browser's `/init` request carries its own
 `Accept-Language` header, and the backend answers with copy in that language.
@@ -57,7 +57,7 @@ Pass them to the provider in the file that renders it, such as
 
 For the visitor's language, your messages replace the backend's copy key by
 key. Keys you leave out keep the project's wording, and messages for other
-languages are not applied. In `testing()` mode c15t bundles only English, so
+languages are not applied. In `testing()` mode Inth bundles only English, so
 keys you leave out for another language show in English.
 
 The provider reads `i18n` once, when it mounts. In development it logs a

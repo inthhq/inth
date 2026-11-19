@@ -30,7 +30,6 @@ import type {
 	KernelIABState,
 	Model,
 	ResolvedVendor,
-	TranslationConfig,
 } from '@inth/sdk/engine';
 import type { IABHandle } from '@inth/sdk/iab';
 import type {
@@ -51,17 +50,19 @@ import {
 	applyExperimentAssignment,
 	applyExperimentTheme,
 	consentTypes as defaultConsentTypes,
-	deniedVendorIds,
 	has as evaluateHas,
 	hasGlobalPrivacyControlSignal,
 	IABUnavailableError,
+	iabSurfaceActions,
 	pendingBootSnapshot,
 	policyNeedsIAB,
+	resolveSurfaceTranslations,
 	vendorsListedUnder,
 } from '@inth/sdk/surface-state';
+import type { CompleteTranslations } from '@inth/sdk/translations';
 import type { Theme } from '@inth/sdk/ui/theme';
 
-import { C15T_BOOT, restoreBoot } from './deferred/boot';
+import { INTH_BOOT, restoreBoot } from './deferred/boot';
 import type { ConsentBoot } from './deferred/boot';
 import { createDeferredRuntime } from './deferred/deferred-runtime';
 import type {
@@ -70,10 +71,9 @@ import type {
 } from './deferred/deferred-runtime';
 import type * as EngineModule from './deferred/engine';
 import { isIABConfigured } from './iab-loader';
-import { C15T_OPTIONS, runtimeOptionsFor } from './options';
-import type { C15tResolvedOptions, C15tSharedOptions } from './options';
-import { C15T_SERVER_STATE, C15T_SERVER_STATE_GATE } from './server-state';
-import { registeredDefaultTranslations } from './translation-defaults';
+import { INTH_OPTIONS, runtimeOptionsFor } from './options';
+import type { InthResolvedOptions, InthSharedOptions } from './options';
+import { INTH_SERVER_STATE, INTH_SERVER_STATE_GATE } from './server-state';
 
 /**
  * Loads the consent engine's chunk. Provide another to test a failed load.
@@ -82,7 +82,7 @@ import { registeredDefaultTranslations } from './translation-defaults';
  */
 export const CONSENT_ENGINE_MODULE = new InjectionToken<
 	() => Promise<typeof EngineModule>
->('C15T_CONSENT_ENGINE_MODULE', {
+>('INTH_CONSENT_ENGINE_MODULE', {
 	factory: () => () => import('./deferred/engine'),
 });
 
@@ -116,6 +116,8 @@ export interface AngularIABState extends KernelIABState {
 	) => void;
 	setPurposeConsent: (purposeId: number, value: boolean) => void;
 	setPurposeLegitimateInterest: (purposeId: number, value: boolean) => void;
+	/** Object to a purpose's legitimate interest, for it and its vendors. */
+	setPurposeObjection: (purposeId: number, objected: boolean) => void;
 	setSpecialFeatureOptIn: (featureId: number, value: boolean) => void;
 	/** Set consent for a Google ad tech provider (Additional Consent). */
 	setAdTechProviderConsent: (providerId: number, value: boolean) => void;
@@ -145,7 +147,6 @@ export interface ConsentDraftState {
 	/**
 	 * Stage one category.
 	 *
-	 * @param name - The category.
 	 * @param value - Whether it is granted once the draft is saved.
 	 */
 	set: (name: AllConsentNames, value: boolean) => void;
@@ -168,24 +169,6 @@ export interface ConsentDraftState {
 	save: (categories: readonly AllConsentNames[]) => Promise<void>;
 }
 
-const toTranslationConfig = function toTranslationConfig(
-	snapshot: ConsentSnapshot
-): TranslationConfig {
-	const defaults = registeredDefaultTranslations();
-	const resolved = snapshot.translations;
-	if (!resolved) {
-		return defaults;
-	}
-	return {
-		...defaults,
-		defaultLanguage: resolved.language,
-		translations: {
-			...defaults.translations,
-			[resolved.language]: resolved.translations,
-		},
-	};
-};
-
 /** Metadata for the displayed categories, in the draft's order. */
 const displayedConsentTypes = function displayedConsentTypes(
 	categories: readonly AllConsentNames[]
@@ -204,19 +187,16 @@ const displayedConsentTypes = function displayedConsentTypes(
 const EMPTY: Readonly<Record<string, boolean>> = Object.freeze({});
 
 const noop = () => {
-	/* no IAB handle yet */
-};
-const noopAsync = async () => {
-	/* no IAB handle yet */
+	/* nothing to stop yet */
 };
 
 /**
  * The consent state of the application, as signals, and the verbs that
  * change it.
  *
- * Provided by `provideC15t()`. Every readable field is a `Signal`, so it
+ * Provided by `provideInth()`. Every readable field is a `Signal`, so it
  * works in templates, `computed()` and `effect()`; every verb is a method.
- * It projects the c15t consent kernel: it subscribes to the kernel and
+ * It projects the Inth consent kernel: it subscribes to the kernel and
  * writes each snapshot to {@link ConsentManager.snapshot}.
  *
  * The consent engine is a chunk of its own. Until it loads, the manager
@@ -245,7 +225,7 @@ const noopAsync = async () => {
 @Injectable()
 export class ConsentManager {
 	readonly #browser = isPlatformBrowser(inject(PLATFORM_ID));
-	readonly #options = signal<C15tResolvedOptions>({});
+	readonly #options = signal<InthResolvedOptions>({});
 	readonly #owned: DeferredRuntime | undefined;
 	readonly #kernel: WritableSignal<ConsentKernel>;
 	readonly #snapshot: WritableSignal<ConsentSnapshot>;
@@ -276,20 +256,19 @@ export class ConsentManager {
 	 * The options the provider was given, minus `runtime`, as changed by
 	 * {@link ConsentManager.updateOptions}.
 	 */
-	readonly options: Signal<C15tResolvedOptions> = this.#options.asReadonly();
+	readonly options: Signal<InthResolvedOptions> = this.#options.asReadonly();
 
 	/**
 	 * The rendered kernel. An owned runtime swaps it when `enabled` toggles.
 	 */
 	readonly kernel: Signal<ConsentKernel>;
 
-	/** The kernel's latest snapshot. */
 	readonly snapshot: Signal<ConsentSnapshot>;
 
 	/** Which consent surface is open. */
 	readonly activeUI: Signal<ActiveUI>;
 	/** Attribution the surfaces show. */
-	readonly branding: Signal<NonNullable<ConsentSnapshot['branding']>>;
+	readonly branding: Signal<ConsentSnapshot['branding']>;
 	/** The draft's displayed categories: `necessary` plus the choice scope. */
 	readonly consentCategories: Signal<AllConsentNames[]>;
 	/** Metadata for {@link ConsentManager.consentCategories}. */
@@ -303,7 +282,7 @@ export class ConsentManager {
 	/** `'iab'` under an IAB policy, else the policy rule's model. */
 	readonly model: Signal<Model>;
 	/**
-	 * Whether a policy rule is resolved for this visitor. Every c15t surface
+	 * Whether a policy rule is resolved for this visitor. Every Inth surface
 	 * renders nothing until one is.
 	 */
 	readonly hasPolicy: Signal<boolean>;
@@ -312,12 +291,15 @@ export class ConsentManager {
 	 * resolved.
 	 */
 	readonly hasConsentUi: Signal<boolean>;
-	/** Whether c15t or an external CMP offers a preferences control. */
+	/** Whether Inth or an external CMP offers a preferences control. */
 	readonly hasConsentPreferences: Signal<boolean>;
 	/** The provider's `legalLinks` option. */
-	readonly legalLinks: Signal<C15tSharedOptions['legalLinks']>;
-	/** The translations the surfaces resolve their copy against. */
-	readonly translationConfig: Signal<TranslationConfig>;
+	readonly legalLinks: Signal<InthSharedOptions['legalLinks']>;
+	/**
+	 * The copy the surfaces render: the active language bundle with English
+	 * filling every key it leaves out.
+	 */
+	readonly copy: Signal<CompleteTranslations>;
 	/** The IAB TCF state, or `null` without IAB. */
 	readonly iab: Signal<AngularIABState | null>;
 	/**
@@ -326,7 +308,6 @@ export class ConsentManager {
 	 * when this turns `true`.
 	 */
 	readonly iabUnavailable: Signal<boolean>;
-	/** The preference draft. */
 	readonly draft: ConsentDraftState;
 	/** Staged values of the draft. Same as `draft.values`. */
 	readonly selectedConsents: Signal<Partial<ConsentState>>;
@@ -349,13 +330,11 @@ export class ConsentManager {
 	readonly privacySignals: Signal<ConsentSnapshot['privacySignals']>;
 	/** How the policy was resolved. */
 	readonly resolution: Signal<ConsentSnapshot['resolution']>;
-	/** The resolved policy rule. */
 	readonly policyRule: Signal<ConsentSnapshot['policyRule']>;
 	/** Restrictions the policy applies. */
 	readonly restrictions: Signal<ConsentSnapshot['restrictions']>;
 	/** When the state next changes on its own. */
 	readonly nextDeadline: Signal<ConsentSnapshot['nextDeadline']>;
-	/** The consent subject. */
 	readonly subject: Signal<ConsentSnapshot['subject']>;
 	/** The clock the snapshot was evaluated at. */
 	readonly evaluatedAt: Signal<ConsentSnapshot['evaluatedAt']>;
@@ -367,13 +346,9 @@ export class ConsentManager {
 	readonly location: Signal<ConsentSnapshot['location']>;
 	/** Overrides in effect. */
 	readonly overrides: Signal<ConsentSnapshot['overrides']>;
-	/** The snapshot revision. */
 	readonly revision: Signal<ConsentSnapshot['revision']>;
-	/** The resolved translations. */
 	readonly translations: Signal<ConsentSnapshot['translations']>;
-	/** The identified user. */
 	readonly user: Signal<ConsentSnapshot['user']>;
-	/** Declared vendors. */
 	readonly vendors: Signal<ConsentSnapshot['vendors']>;
 	/** The visitor's vendor choices. */
 	readonly vendorChoice: Signal<ConsentSnapshot['vendorChoice']>;
@@ -381,12 +356,12 @@ export class ConsentManager {
 	constructor() {
 		const destroyRef = inject(DestroyRef);
 		const errorHandler = inject(ErrorHandler);
-		const { runtime: external, ...given } = inject(C15T_OPTIONS);
-		// What `provideC15tServer()` resolved for this request: set on the
+		const { runtime: external, ...given } = inject(INTH_OPTIONS);
+		// What `provideInthServer()` resolved for this request: set on the
 		// server before the render, read back in the browser, so both start
 		// from it. A `prefetch` the app passed wins.
 		const transferState = inject(TransferState);
-		const serverState = transferState.get(C15T_SERVER_STATE, null);
+		const serverState = transferState.get(INTH_SERVER_STATE, null);
 		// Scripts the loader adds carry Angular's `CSP_NONCE` unless the app
 		// set `nonce` itself, as the injected `<style>` elements do.
 		const cspNonce = inject(CSP_NONCE, { optional: true });
@@ -421,7 +396,7 @@ export class ConsentManager {
 			computed(() => snapshot()[key]);
 
 		this.activeUI = computed(() => (snapshot().activeUI ?? 'none') as ActiveUI);
-		this.branding = computed(() => snapshot().branding ?? 'c15t');
+		this.branding = computed(() => snapshot().branding);
 		// The draft's displayed categories, without loading the draft: the
 		// runtime applies the same display-order rule. Reading the snapshot
 		// recomputes it when the policy changes.
@@ -460,7 +435,7 @@ export class ConsentManager {
 			hasConsentPreferences(snapshot())
 		);
 		this.legalLinks = computed(() => this.#options().legalLinks);
-		this.translationConfig = computed(() => toTranslationConfig(snapshot()));
+		this.copy = computed(() => resolveSurfaceTranslations(snapshot()));
 		this.iab = computed(() => this.#projectIAB());
 		this.iabUnavailable = computed(
 			() =>
@@ -545,7 +520,7 @@ export class ConsentManager {
 				errorHandler.handleError(
 					new IABUnavailableError(
 						'`iab` is not set',
-						'Set `iab` in provideC15t() and render <c15t-iab-consent-banner>'
+						'Set `iab` in provideInth() and render <inth-iab-consent-banner>'
 					)
 				);
 			}
@@ -580,7 +555,7 @@ export class ConsentManager {
 	 * @param patch - The options to change. `mode` is read once and ignored.
 	 * @returns Resolves once the runtime applied the change.
 	 */
-	updateOptions(patch: Partial<C15tSharedOptions>): Promise<void> {
+	updateOptions(patch: Partial<InthSharedOptions>): Promise<void> {
 		const next = { ...this.#options(), ...patch };
 		this.#options.set(next);
 		if (this.#owned) {
@@ -612,14 +587,7 @@ export class ConsentManager {
 	 * @returns The vendors to list, in declared order.
 	 */
 	getDisplayedVendors(category: AllConsentNames): ResolvedVendor[] {
-		const snapshot = this.#snapshot();
-		return snapshot.model === 'iab'
-			? []
-			: vendorsListedUnder(
-					snapshot.vendors?.declared ?? [],
-					category,
-					deniedVendorIds(snapshot)
-				);
+		return vendorsListedUnder(this.#snapshot(), category);
 	}
 
 	/**
@@ -651,8 +619,6 @@ export class ConsentManager {
 
 	/**
 	 * Record that the visitor dismissed a notice.
-	 *
-	 * @returns The kernel command's result.
 	 */
 	dismissNotice(): Promise<unknown> {
 		return untracked(this.#kernel).commands.dismissNotice();
@@ -665,7 +631,6 @@ export class ConsentManager {
 	 * scope; `'custom'` records the draft. The surface closes in this task
 	 * once the kernel has recorded the choice.
 	 *
-	 * @param type - What to record.
 	 * @throws {Error} When the save fails, or a custom save finds the draft
 	 * stale.
 	 */
@@ -693,8 +658,6 @@ export class ConsentManager {
 
 	/**
 	 * Open or close a consent surface.
-	 *
-	 * @param ui - The surface to show, or `'none'`.
 	 */
 	setActiveUI(ui: ActiveUI): void {
 		showConsentSurface(untracked(this.#kernel), ui as KernelActiveUI);
@@ -703,7 +666,6 @@ export class ConsentManager {
 	/**
 	 * Stage one category on the draft. Same as `draft.set`.
 	 *
-	 * @param name - The category.
 	 * @param value - Whether it is granted once the draft is saved.
 	 */
 	setConsent(name: AllConsentNames, value: boolean): void {
@@ -713,7 +675,6 @@ export class ConsentManager {
 	/**
 	 * Stage one category on the draft. Same as `draft.set`.
 	 *
-	 * @param name - The category.
 	 * @param value - Whether it is granted once the draft is saved.
 	 */
 	setSelectedConsent(name: AllConsentNames, value: boolean): void {
@@ -732,8 +693,6 @@ export class ConsentManager {
 
 	/**
 	 * Show the consent copy in another language.
-	 *
-	 * @param code - The language code.
 	 */
 	setLanguage(code: string): void {
 		this.runtime.setLanguage(code);
@@ -769,7 +728,6 @@ export class ConsentManager {
 	 * it renders seeded values in its first render.
 	 *
 	 * @param create - `createPreferenceDraft` from `@inth/sdk/preference-draft`.
-	 * @returns The started draft.
 	 * @internal
 	 */
 	provideDraft(create: typeof createPreferenceDraft): PreferenceDraft {
@@ -791,21 +749,21 @@ export class ConsentManager {
 	 * decides when; on the server it loads at once and the render waits.
 	 */
 	#createDeferred(
-		options: C15tResolvedOptions,
+		options: InthResolvedOptions,
 		transferState: TransferState
 	): DeferredRuntime {
 		const read = () => untracked(this.#options);
 		const importEngine = inject(CONSENT_ENGINE_MODULE);
 		const gate = this.#browser
 			? null
-			: inject(C15T_SERVER_STATE_GATE, { optional: true });
+			: inject(INTH_SERVER_STATE_GATE, { optional: true });
 		const loadEngine = async (): Promise<EngineFactory> => {
 			const engine = await importEngine();
 			if (gate) {
-				// Built before `provideC15tServer()` set the request's state:
+				// Built before `provideInthServer()` set the request's state:
 				// the engine starts from it once it is there.
 				await gate.ready;
-				const serverState = transferState.get(C15T_SERVER_STATE, null);
+				const serverState = transferState.get(INTH_SERVER_STATE, null);
 				if (serverState && read().prefetch === undefined) {
 					this.#options.update((current) => ({
 						...current,
@@ -819,7 +777,7 @@ export class ConsentManager {
 				updateOptions: (next) => next,
 			});
 		};
-		const stored = this.#browser ? transferState.get(C15T_BOOT, null) : null;
+		const stored = this.#browser ? transferState.get(INTH_BOOT, null) : null;
 		const boot: ConsentBoot = stored
 			? restoreBoot(stored, options.prefetch?.initialIab?.gvl)
 			: {
@@ -863,7 +821,7 @@ export class ConsentManager {
 			const { planServerBoot } = await import('./deferred/boot-server');
 			// The options the engine started from, with the request's state.
 			transferState.set(
-				C15T_BOOT,
+				INTH_BOOT,
 				planServerBoot(runtime, untracked(this.#options))
 			);
 		});
@@ -1040,26 +998,15 @@ export class ConsentManager {
 		// IAB surfaces in the first HTML. Until `@inth/sdk/iab` lands the lazy
 		// handle queues calls and replays them; without a handle the actions
 		// are no-ops.
-		const handle = this.#iabHandle();
 		const tab = this.#iabTab;
 		return {
 			...iab,
-			acceptAll: handle?.acceptAll ?? noop,
+			...iabSurfaceActions(this.#iabHandle()),
 			config: { cmpId: iab.cmpId, enabled: iab.enabled },
 			isLoadingGVL: iab.enabled && !iab.gvl,
 			nonIABVendors: iab.customVendors,
 			preferenceCenterTab: tab(),
-			rejectAll: handle?.rejectAll ?? noop,
-			save: handle?.save ?? noopAsync,
-			setAdTechProviderConsent: (providerId, value) =>
-				handle?.setAdTechProviderConsent?.(providerId, value),
 			setPreferenceCenterTab: (next) => tab.set(next),
-			setPurposeConsent: handle?.setPurposeConsent ?? noop,
-			setPurposeLegitimateInterest:
-				handle?.setPurposeLegitimateInterest ?? noop,
-			setSpecialFeatureOptIn: handle?.setSpecialFeatureOptIn ?? noop,
-			setVendorConsent: handle?.setVendorConsent ?? noop,
-			setVendorLegitimateInterest: handle?.setVendorLegitimateInterest ?? noop,
 		};
 	}
 }

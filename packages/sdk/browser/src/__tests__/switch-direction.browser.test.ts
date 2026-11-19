@@ -5,7 +5,7 @@
  * edge in RTL, so the checked state has to move it left there. No adapter
  * puts `dir` on the switch itself: it inherits it from the dialog.
  */
-import { clearBrowserConsentStorage } from '@c15t/conformance/suite';
+import { clearBrowserConsentStorage } from '@inth/conformance/suite';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import type { ConsentClient } from '../types';

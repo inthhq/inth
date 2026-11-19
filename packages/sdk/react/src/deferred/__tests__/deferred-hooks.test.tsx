@@ -1,5 +1,5 @@
 /**
- * c15t hooks in page code under a deferred root's stand-in kernel, before
+ * Inth hooks in page code under a deferred root's stand-in kernel, before
  * and after the engine attaches: they must not throw before it, must not
  * load it just by mounting, and must end up on the engine's kernel.
  */
@@ -89,7 +89,7 @@ const Engine = ({
 );
 
 afterEach(() => {
-	Reflect.deleteProperty(globalThis, Symbol.for('c15t.react.iab-provider'));
+	Reflect.deleteProperty(globalThis, Symbol.for('inth.react.iab-provider'));
 });
 
 describe('useEventDispatcher under a stand-in kernel', () => {

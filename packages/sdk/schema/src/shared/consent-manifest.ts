@@ -5,8 +5,10 @@ import {
 	AD_TECH_PROVIDERS_URL,
 	normalizeAdTechProviderIds,
 } from './ad-tech-provider';
+import { DEFAULT_BRANDING, DEFAULT_GVL_ENDPOINT } from './constants';
 import type { brandingValues, hostingValues } from './constants';
 import { createDeterministicFingerprintSync } from './policy-fingerprint';
+import { primaryLanguage } from './policy-i18n-validation';
 import {
 	matchPolicyRules,
 	readPolicyResolutionWire,
@@ -23,8 +25,8 @@ import { getTranslationsData } from './translations-runtime';
 import type { I18nOptions, LoggerLike } from './translations-runtime';
 import type { Vendor } from './vendor';
 
-export type ConsentManifestBranding = (typeof brandingValues)[number];
-export type ConsentManifestHosting = (typeof hostingValues)[number];
+type ConsentManifestBranding = (typeof brandingValues)[number];
+type ConsentManifestHosting = (typeof hostingValues)[number];
 
 export interface ConsentManifestGVLReference {
 	version?: number | string;
@@ -101,7 +103,7 @@ export interface ConsentManifest {
 	/** Version label of `vendors`, surfaced for display and audit only. */
 	vendorListVersion?: string;
 	/**
-	 * What the Inth script registry tells c15t, such as where it serves
+	 * What the Inth script registry tells Inth, such as where it serves
 	 * each script. Copied onto every `/init` resolved from this manifest.
 	 * Absent from producers without a registry.
 	 */
@@ -122,13 +124,6 @@ export interface ResolveInitFromManifestOptions {
 	/** Logger used for one-time translation fallback warnings. */
 	logger?: LoggerLike;
 }
-
-const normalizeLanguageSlice = function normalizeLanguageSlice(
-	value: string
-): string {
-	const normalized = value.split(',')[0]?.split(';')[0]?.trim().toLowerCase();
-	return normalized?.split('-')[0] ?? value;
-};
 
 const stripIabTranslations = function stripIabTranslations(
 	translations: Record<string, unknown>
@@ -251,7 +246,7 @@ export const sliceConsentManifestLanguage =
 		manifest: ConsentManifest,
 		language: string
 	): ConsentManifest {
-		const normalizedLanguage = normalizeLanguageSlice(language);
+		const normalizedLanguage = primaryLanguage(language) ?? language;
 		const customTranslations = manifest.translations?.customTranslations;
 		const i18n = manifest.translations?.i18n;
 
@@ -406,8 +401,6 @@ export interface ConsentManifestConfig {
 	readonly vendorListVersion?: string;
 }
 
-const DEFAULT_GVL_ENDPOINT = 'https://gvl.inth.app';
-
 const buildGvlReference = function buildGvlReference(
 	config: ConsentManifestConfig
 ): ConsentManifest['iab'] {
@@ -472,7 +465,7 @@ export const buildConsentManifestFromConfig =
 
 		const manifest: ConsentManifest = {
 			appName: config.appName,
-			branding: config.branding || 'c15t',
+			branding: config.branding || DEFAULT_BRANDING,
 			cmpId: config.iab?.cmpId,
 			...(config.hosting !== undefined && { hosting: config.hosting }),
 			iab: buildGvlReference(config),

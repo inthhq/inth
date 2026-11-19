@@ -18,7 +18,7 @@ const visitors = [
 type Visitor = (typeof visitors)[number];
 
 /**
- * Shows the shop as a visitor from another region sees it. c15t matches the
+ * Shows the shop as a visitor from another region sees it. Inth matches the
  * location against its policy rules and the banner follows: opt-in in
  * Germany, opt-out with no banner in California, nothing in Brazil.
  *

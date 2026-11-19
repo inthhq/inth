@@ -60,7 +60,7 @@ export const useConsentPolicyActions = function useConsentPolicyActions(
 		presentation,
 		(value) => {
 			for (const diagnostic of value.diagnostics) {
-				console.warn(`[c15t] ${diagnostic.code}: ${diagnostic.message}`);
+				console.warn(`[inth] ${diagnostic.code}: ${diagnostic.message}`);
 			}
 		},
 		{ immediate: true }

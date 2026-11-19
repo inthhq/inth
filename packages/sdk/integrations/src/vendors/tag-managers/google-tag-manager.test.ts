@@ -59,7 +59,7 @@ describe('googleTagManager', () => {
 			expectGoogleConsentDefault(queue[0]);
 			expect(queue[1]).toMatchObject({ event: 'gtm.js' });
 			expect(script.src).toContain(`&l=${dataLayer}`);
-			expect(script.attributes?.['data-c15t-layer']).toBe(dataLayer);
+			expect(script.attributes?.['data-inth-layer']).toBe(dataLayer);
 		}
 	);
 

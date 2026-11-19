@@ -6,6 +6,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { setCookie } from '..';
+import { encodeV2Cookie } from '../../../__tests__/fixtures/v2-cookie';
 import { readStoredRecords } from '../../../modules/persistence/hydrate';
 import { STORAGE_KEY, STORAGE_KEY_V2 } from '../../storage-keys';
 
@@ -13,6 +14,7 @@ const SUBJECT_ID = 'sub_2VZxR7YmNpKq3WfLs8TgHd';
 const ORIGINAL_TIME = 1_700_000_000_000;
 
 interface StoredConsentRecord {
+	[key: string]: unknown;
 	consents: Record<string, boolean>;
 	consentInfo: {
 		subjectId?: string;
@@ -64,7 +66,7 @@ describe('readStoredRecords', () => {
 	});
 
 	it('prefers the cookie and leaves localStorage alone', () => {
-		setCookie(STORAGE_KEY_V2, stored());
+		setCookie(STORAGE_KEY_V2, encodeV2Cookie(stored()));
 		const cookieBefore = document.cookie;
 
 		const result = readStoredRecords(undefined, ORIGINAL_TIME + 1);

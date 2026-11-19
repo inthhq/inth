@@ -6,7 +6,6 @@
 // oxlint-disable-next-line import/no-mutable-exports -- A live binding, as SvelteKit's own is per build.
 export let building = false;
 
-/** Sets what `building` reads until the next call. */
 export const setBuilding = (value: boolean): void => {
 	building = value;
 };

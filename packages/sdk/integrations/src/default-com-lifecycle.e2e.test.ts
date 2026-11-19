@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultComFormsSdkMock } from './__tests__/default-com-sdk';
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	installHeadProbe,
@@ -78,7 +78,7 @@ describe('Default explicit marketing gate lifecycle', () => {
 			persistAfterConsentRevoked: true,
 			vendor: 'default-com',
 		});
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMeasurementConsents);
 		updateScripts(scripts, {
 			...grantedMeasurementConsents,
@@ -229,7 +229,7 @@ describe('Default explicit marketing gate lifecycle', () => {
 				...options,
 				publicKey: 'other-workspace',
 			});
-			const consents = alwaysLoad ? deniedConsents : fullConsent;
+			const consents = alwaysLoad ? ALL_DENIED : fullConsent;
 			loadScripts([initial], consents);
 			const element = getLoader();
 			expect(() => updateScripts([replacement], consents)).toThrow(
@@ -255,7 +255,7 @@ describe('Default explicit marketing gate lifecycle', () => {
 	it('allows changing Pixel settings before the first permitted load', () => {
 		loadScripts(
 			[defaultComPixel({ publicKey: 'first-workspace' })],
-			deniedConsents
+			ALL_DENIED
 		);
 		const replacement = defaultComPixel({ publicKey: 'next-workspace' });
 		updateScripts([replacement], fullConsent);
@@ -342,7 +342,7 @@ describe('Default explicit marketing gate lifecycle', () => {
 		const setConsent = vi.fn();
 		const denied = createConsentKernel();
 		const allowed = createConsentKernel();
-		await denied.commands.save(deniedConsents);
+		await denied.commands.save(ALL_DENIED);
 		await allowed.commands.save(grantedMarketingConsents);
 		const first = createScriptLoader({
 			kernel: denied,
@@ -387,12 +387,12 @@ describe('Default explicit marketing gate lifecycle', () => {
 		try {
 			window.DefaultPixelSDK = createDefaultComFormsSdkMock({ setConsent });
 			getLoader().dispatchEvent(new Event('load'));
-			await first.commands.save(deniedConsents);
+			await first.commands.save(ALL_DENIED);
 			expect(setConsent).toHaveBeenLastCalledWith({
 				analytics: false,
 				marketing: false,
 			});
-			await first.commands.save({ ...deniedConsents, measurement: true });
+			await first.commands.save({ ...ALL_DENIED, measurement: true });
 			expect(setConsent).toHaveBeenLastCalledWith({
 				analytics: false,
 				marketing: false,
@@ -502,7 +502,7 @@ describe('Default explicit marketing gate lifecycle', () => {
 			grantedMarketingConsents
 		);
 		expect(getLoader().getAttribute('src')).toBeNull();
-		expect(getLoader().type).toBe('application/x-c15t-default-conflict');
+		expect(getLoader().type).toBe('application/x-inth-default-conflict');
 		expect(error).toHaveBeenCalledWith(
 			'defaultComFormsSdk: Reload the page to change the Forms SDK URL.'
 		);
@@ -577,7 +577,7 @@ describe('Default explicit marketing gate lifecycle', () => {
 			marketing: true,
 		});
 		expect(init).toHaveBeenCalledOnce();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, fullConsent);
 		expect(init).toHaveBeenCalledOnce();
 		expect(getLoader()).toBe(element);
@@ -658,7 +658,7 @@ describe('Default explicit marketing gate lifecycle', () => {
 					return appendChild(node);
 				}
 			);
-			loadScripts(scripts, deniedConsents);
+			loadScripts(scripts, ALL_DENIED);
 			updateScripts(scripts, grantedMeasurementConsents);
 			expect(inserted).toEqual([]);
 			expect('__defaultPixel__' in window).toBe(false);
@@ -670,11 +670,11 @@ describe('Default explicit marketing gate lifecycle', () => {
 					: 'https://handshake.default.com/sdk.js';
 			expect(inserted).toEqual([
 				{ src: expectedUrl, type: '' },
-				{ src: null, type: 'application/x-c15t-default-conflict' },
+				{ src: null, type: 'application/x-inth-default-conflict' },
 			]);
 			expect(error).toHaveBeenCalledOnce();
 			const blocked = document.querySelector<HTMLScriptElement>(
-				'script[type="application/x-c15t-default-conflict"]'
+				'script[type="application/x-inth-default-conflict"]'
 			);
 			const init = vi.fn();
 			const setConsent = vi.fn();
@@ -686,7 +686,7 @@ describe('Default explicit marketing gate lifecycle', () => {
 			expect(init).not.toHaveBeenCalled();
 			expect(setConsent).not.toHaveBeenCalled();
 			expect('__defaultPixel__' in window).toBe(order === 'pixel-first');
-			updateScripts(scripts, deniedConsents);
+			updateScripts(scripts, ALL_DENIED);
 			updateScripts(scripts, fullConsent);
 			expect(inserted).toHaveLength(2);
 			expect(document.querySelectorAll('script[src]')).toHaveLength(1);
@@ -702,7 +702,7 @@ describe('Default explicit marketing gate lifecycle', () => {
 			fullConsent
 		);
 		expect(getLoader().getAttribute('src')).toBeNull();
-		expect(getLoader().type).toBe('application/x-c15t-default-conflict');
+		expect(getLoader().type).toBe('application/x-inth-default-conflict');
 		expect(window.__defaultPixel__).toBe(config);
 		expect(config).toEqual({ key: 'existing-key', q: [['existing']] });
 	});
@@ -713,7 +713,7 @@ describe('Default explicit marketing gate lifecycle', () => {
 		window.DefaultPixelSDK = sdk;
 		loadScripts([defaultComPixel({ publicKey: 'workspace-key' })], fullConsent);
 		expect(getLoader().getAttribute('src')).toBeNull();
-		expect(getLoader().type).toBe('application/x-c15t-default-conflict');
+		expect(getLoader().type).toBe('application/x-inth-default-conflict');
 		expect('__defaultPixel__' in window).toBe(false);
 		expect(window.DefaultPixelSDK).toBe(sdk);
 	});
@@ -740,7 +740,7 @@ describe('Default explicit marketing gate lifecycle', () => {
 				order === 'sdk-first' ? ['https://handshake.default.com/sdk.js'] : []
 			);
 			expect(document.querySelector('script:not([src])')?.type).toBe(
-				'application/x-c15t-default-conflict'
+				'application/x-inth-default-conflict'
 			);
 		}
 	);

@@ -56,7 +56,7 @@ const journey = (withdrawn: string) => [
 ];
 
 const check = (lines: string[], expectApps: string[] = []) => {
-	const directory = mkdtempSync(join(tmpdir(), 'c15t-firebase-log-'));
+	const directory = mkdtempSync(join(tmpdir(), 'inth-firebase-log-'));
 	const log = join(directory, 'device-log.ndjson');
 	const evidence = join(directory, 'evidence.json');
 	// Shuffle two lines: the stream does not promise order across processes.

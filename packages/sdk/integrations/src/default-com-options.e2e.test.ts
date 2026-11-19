@@ -4,8 +4,9 @@ import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultComFormsSdkMock } from './__tests__/default-com-sdk';
+import { grantedServerStart } from './__tests__/helpers';
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	installHeadProbe,
@@ -41,9 +42,9 @@ describe('Default loader options', () => {
 		({ name, category }) => {
 			const script = helpers[name]({ publicKey: 'workspace-key' });
 			expect(script.category).toBe(category);
-			loadScripts([script], deniedConsents);
+			loadScripts([script], ALL_DENIED);
 			expect(document.querySelector('script')).toBeNull();
-			updateScripts([script], { ...deniedConsents, [category]: true });
+			updateScripts([script], { ...ALL_DENIED, [category]: true });
 			const element = document.querySelector('script');
 			expect(element).not.toBeNull();
 			const init = vi.fn();
@@ -76,7 +77,7 @@ describe('Default loader options', () => {
 				analytics: true,
 				marketing: true,
 			});
-			updateScripts([script], deniedConsents);
+			updateScripts([script], ALL_DENIED);
 			expect(setConsent).toHaveBeenLastCalledWith({
 				analytics: false,
 				marketing: false,
@@ -116,7 +117,7 @@ describe('Default loader options', () => {
 		});
 		loadScripts(
 			[helpers.defaultComPixel({ loadMode: 'always', publicKey: 'key' })],
-			deniedConsents
+			ALL_DENIED
 		);
 		expect(beforeInsert).toHaveBeenCalledExactlyOnceWith([
 			['setConsent', { analytics: false, marketing: false }],
@@ -126,7 +127,7 @@ describe('Default loader options', () => {
 		);
 	});
 
-	it.each([deniedConsents, allConsents])(
+	it.each([ALL_DENIED, allConsents])(
 		'always forwards the initial choice and vendor changes without replacing the loader: %j',
 		async (initialConsents) => {
 			const queued = ['existing', { preserved: true }];
@@ -177,7 +178,7 @@ describe('Default loader options', () => {
 					analytics: true,
 					marketing: true,
 				});
-				await kernel.commands.save(deniedConsents);
+				await kernel.commands.save(ALL_DENIED);
 				expect(setConsent).toHaveBeenLastCalledWith({
 					analytics: false,
 					marketing: false,
@@ -194,11 +195,11 @@ describe('Default loader options', () => {
 
 	it('initializes a late Forms SDK only after functionality is regranted', () => {
 		const scripts = [helpers.defaultComFormsSdk({ publicKey: 'key' })];
-		const functionality = { ...deniedConsents, functionality: true };
+		const functionality = { ...ALL_DENIED, functionality: true };
 		loadScripts(scripts, functionality);
 		const element = document.querySelector('script');
 		expect(element).not.toBeNull();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		const init = vi.fn();
 		const setConsent = vi.fn();
 		window.DefaultPixelSDK = createDefaultComFormsSdkMock({ init, setConsent });
@@ -213,7 +214,7 @@ describe('Default loader options', () => {
 			init.mock.invocationCallOrder[0] ?? 0
 		);
 		expect(init).toHaveBeenCalledOnce();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, functionality);
 		expect(init).toHaveBeenCalledOnce();
 		expect(document.querySelector('script')).toBe(element);
@@ -229,9 +230,9 @@ describe('Default loader options', () => {
 			});
 			const sdk = helpers.defaultComFormsSdk({ publicKey: 'key' });
 			const scripts = order === 'sdk-first' ? [sdk, pixel] : [pixel, sdk];
-			loadScripts(scripts, deniedConsents);
+			loadScripts(scripts, ALL_DENIED);
 			updateScripts(scripts, {
-				...deniedConsents,
+				...ALL_DENIED,
 				functionality: order === 'sdk-first',
 				measurement: order !== 'sdk-first',
 			});
@@ -246,10 +247,10 @@ describe('Default loader options', () => {
 			expect(document.querySelectorAll('script[src]')).toHaveLength(1);
 			expect(
 				document.querySelector(
-					'script[type="application/x-c15t-default-conflict"]'
+					'script[type="application/x-inth-default-conflict"]'
 				)
 			).not.toBeNull();
-			updateScripts(scripts, deniedConsents);
+			updateScripts(scripts, ALL_DENIED);
 			updateScripts(scripts, allConsents);
 			expect(document.querySelector('script[src]')).toBe(first);
 			expect(error).toHaveBeenCalledOnce();
@@ -280,7 +281,7 @@ describe('Default loader options', () => {
 		'%s defers setup to browser lifecycle callbacks',
 		(name) => {
 			const script = helpers[name]({ publicKey: 'workspace-key' });
-			expect(script.serverStart).toBeUndefined();
+			expect(grantedServerStart(script)).toBeUndefined();
 			expect(script.vendor).toBe('default-com');
 			expect(script.id).toBe(
 				name === 'defaultComPixel' ? 'default-com' : 'default-com-forms-sdk'

@@ -8,10 +8,9 @@
 	 * identical DOM.
 	 */
 	import type { AllConsentNames, ResolvedVendor } from '@inth/sdk/engine';
-	import { defaultTranslationConfig } from '@inth/sdk/engine';
+	import { resolveVendorListCopy } from '@inth/sdk/surface-state';
 	import switchStyles from '@inth/sdk/ui/styles/components/switch';
 	import vendorListStyles from '@inth/sdk/ui/styles/components/vendor-list';
-	import { resolveTranslations } from '@inth/sdk/ui/utils';
 
 	import { getConsentContext } from '../context.svelte';
 	import { PreferenceItem, Switch } from '../primitives';
@@ -20,29 +19,14 @@
 		category,
 		noStyle = false,
 	}: {
-		/** Category whose vendors to list. */
 		category: AllConsentNames;
-		/** Drop the built-in styling. */
 		noStyle?: boolean;
 	} = $props();
 
 	const consent = getConsentContext();
 	const uid = $props.id();
 
-	const DEFAULT_COPY = {
-		disabledByCategory: 'Turn on this category to choose vendors.',
-		privacyPolicy: 'Privacy policy',
-		switchLabel: 'Allow {vendor}',
-		title: 'Vendors ({count})',
-	};
-
-	const copy = $derived({
-		...DEFAULT_COPY,
-		...resolveTranslations(
-			consent.state.translationConfig,
-			defaultTranslationConfig
-		).consentManagerDialog.vendors,
-	});
+	const copy = $derived(resolveVendorListCopy(consent.state.copy));
 	const vendors = $derived(consent.state.getDisplayedVendors(category));
 	const categoryOn = $derived(
 		consent.state.selectedConsents[category] === true

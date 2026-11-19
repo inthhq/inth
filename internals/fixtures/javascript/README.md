@@ -36,7 +36,7 @@ Reject, reload, reopen preferences and allow measurement only. The video and
 PostHog should load while X Pixel stays blocked. Then allow marketing. Test
 revocation and a failed backend request as well. The shared acceptance suite
 runs both pages with a fixture backend and intercepted vendor requests. It
-sets `VITE_C15T_BACKEND_URL`, which `src/test-backend.ts` applies over the
+sets `VITE_INTH_PROJECT_URL`, which `src/test-backend.ts` applies over the
 placeholder URL:
 
 ```sh
@@ -47,10 +47,10 @@ DevTools mounts only in development.
 
 ## Banner experiment
 
-Open `/experiment/` to run the banner-shape experiment: c15t picks the
+Open `/experiment/` to run the banner-shape experiment: Inth picks the
 `control` arm (the default banner) or the `wall` arm, and the page shows
-`banner-shape · <arm> · c15t` with a `c15t_surface_shown` and
-`c15t_choice_recorded` line for each impression and choice under the arm.
+`banner-shape · <arm> · inth` with a `inth_surface_shown` and
+`inth_choice_recorded` line for each impression and choice under the arm.
 Open `/experiment/?arm=wall` to set the arm the way a flag provider would
 (`assignedBy: host`); any other `arm` value runs `control`.
 `src/experiment.ts` passes the experiment to `init()` and logs the

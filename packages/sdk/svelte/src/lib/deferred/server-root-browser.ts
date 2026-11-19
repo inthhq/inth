@@ -17,5 +17,5 @@ import type { createServerRoot as CreateServerRoot } from './server-root';
  * @internal
  */
 export const createServerRoot: typeof CreateServerRoot = () => {
-	throw new Error('[c15t] createServerRoot runs only on the server.');
+	throw new Error('[inth] createServerRoot runs only on the server.');
 };

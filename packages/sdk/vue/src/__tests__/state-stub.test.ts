@@ -27,10 +27,10 @@ describe('useState stub', () => {
 		let second!: Ref<number>;
 
 		const a = mountConsumer(() => {
-			first = createVueState('c15t:count', () => 1);
+			first = createVueState('inth:count', () => 1);
 		});
 		const b = mountConsumer(() => {
-			second = createVueState('c15t:count', () => 99);
+			second = createVueState('inth:count', () => 99);
 		});
 
 		expect(second.value).toBe(1);
@@ -44,14 +44,14 @@ describe('useState stub', () => {
 	it('resets state after the last consumer unmounts', () => {
 		let initial!: Ref<number>;
 		const a = mountConsumer(() => {
-			initial = createVueState('c15t:count', () => 1);
+			initial = createVueState('inth:count', () => 1);
 		});
 		initial.value = 42;
 		a.unmount();
 
 		let fresh!: Ref<number>;
 		const b = mountConsumer(() => {
-			fresh = createVueState('c15t:count', () => 1);
+			fresh = createVueState('inth:count', () => 1);
 		});
 		expect(fresh.value).toBe(1);
 		b.unmount();
@@ -60,10 +60,10 @@ describe('useState stub', () => {
 	it('keeps state while any consumer is still mounted', () => {
 		let first!: Ref<number>;
 		const a = mountConsumer(() => {
-			first = createVueState('c15t:count', () => 1);
+			first = createVueState('inth:count', () => 1);
 		});
 		const b = mountConsumer(() => {
-			createVueState('c15t:count', () => 1);
+			createVueState('inth:count', () => 1);
 		});
 
 		first.value = 7;
@@ -71,7 +71,7 @@ describe('useState stub', () => {
 
 		let stillShared!: Ref<number>;
 		const c = mountConsumer(() => {
-			stillShared = createVueState('c15t:count', () => 1);
+			stillShared = createVueState('inth:count', () => 1);
 		});
 		expect(stillShared.value).toBe(7);
 

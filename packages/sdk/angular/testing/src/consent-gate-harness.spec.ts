@@ -21,22 +21,22 @@ import { SwitchHarness } from './switch-harness';
 	imports: [ConsentDialog, ConsentGate, ConsentGatePlaceholder],
 	selector: 'test-gate-host',
 	template: `
-		<c15t-consent-gate
+		<inth-consent-gate
 			category="marketing"
 			class="video"
 		>
 			<p>Video player</p>
-		</c15t-consent-gate>
-		<c15t-consent-gate
+		</inth-consent-gate>
+		<inth-consent-gate
 			category="measurement"
 			class="custom"
 		>
 			<p>Chart</p>
-			<ng-template c15tConsentGatePlaceholder>
+			<ng-template inthConsentGatePlaceholder>
 				<p>Allow measurement to see the chart.</p>
 			</ng-template>
-		</c15t-consent-gate>
-		<c15t-consent-dialog />
+		</inth-consent-gate>
+		<inth-consent-dialog />
 	`,
 })
 class GateHost {}

@@ -4,7 +4,7 @@
  * speak. Typed structurally so the public `@inth/nextjs/pages` surface does
  * not depend on `@types/node`.
  */
-import { resolveRequestOrigin } from '@inth/sdk/server';
+import { IN_PROCESS_ORIGIN, resolveRequestOrigin } from '@inth/sdk/server';
 
 /**
  * Node-style incoming headers: lowercase names, arrays for repeated headers.
@@ -114,7 +114,7 @@ export const toWebRequest = async function toWebRequest(
 ): Promise<Request> {
 	const origin =
 		resolveRequestOrigin({ headers: req.headers, trustForwardedHeaders }) ??
-		'http://localhost';
+		IN_PROCESS_ORIGIN;
 	const url = new URL(req.url ?? '/', origin);
 	const method = req.method ?? 'GET';
 	const body =

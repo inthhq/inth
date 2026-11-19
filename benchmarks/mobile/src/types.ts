@@ -1,13 +1,13 @@
 /**
  * Shapes shared by the measurement modules, the reporter, and the stored artifact.
  *
- * The artifact mirrors `BenchmarkResult` from `@c15t/benchmarking` closely enough
+ * The artifact mirrors `BenchmarkResult` from `@inth/benchmarking` closely enough
  * that a reader who knows the web reports recognises it, but the mobile suite is
  * row-oriented: one contract budget maps to one row, and a row that could not be
  * measured stays in the table with a reason instead of disappearing.
  */
 
-import type { BenchmarkEnvironment } from '@c15t/benchmarking/schema';
+import type { BenchmarkEnvironment } from '@inth/benchmarking/schema';
 
 /** Which implementation a measurement describes. */
 export type MobileSurface =

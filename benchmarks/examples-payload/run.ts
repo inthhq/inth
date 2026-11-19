@@ -40,7 +40,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
-import { resolveBenchBackendLatencyMs } from '@c15t/benchmarking/browser';
+import { resolveBenchBackendLatencyMs } from '@inth/benchmarking/browser';
 import { chromium } from 'playwright';
 import type { Browser, BrowserContext, Page, Response } from 'playwright';
 
@@ -90,7 +90,7 @@ const backendPort = Number(readFlag('--backend-port') ?? '4590');
 const bannerSamples = Number(readFlag('--banner-samples') ?? '5');
 // Bytes don't depend on latency; bannerVisibleMs does. Off unless asked for,
 // so the run stays fast; `scripts/benchmark-run.ts` passes its 200 ms.
-const latencyMs = process.env.C15T_BENCH_BACKEND_LATENCY_MS
+const latencyMs = process.env.INTH_BENCH_BACKEND_LATENCY_MS
 	? resolveBenchBackendLatencyMs(readFlag, process.env)
 	: Number(readFlag('--backend-latency-ms') ?? '0');
 
@@ -132,7 +132,7 @@ const exampleEnv = function exampleEnv(
 		ASTRO_TELEMETRY_DISABLED: '1',
 		// A failed snapshot fetch must fail the build rather than measure a
 		// runtime fallback. Revisions without the build policy ignore it.
-		C15T_ON_BUILD_ERROR: 'fail',
+		INTH_ON_BUILD_ERROR: 'fail',
 		NEXT_TELEMETRY_DISABLED: '1',
 		NODE_ENV: 'production',
 		NUXT_TELEMETRY_DISABLED: '1',
@@ -286,10 +286,10 @@ const emittedClientJsGzip = function emittedClientJsGzip(
 /** Record when the banner first becomes visible, in page time. */
 const BANNER_TIMING_SCRIPT = `(() => {
 	const check = () => {
-		if (window.__c15tBannerVisibleAt !== undefined) return true;
+		if (window.__inthBannerVisibleAt !== undefined) return true;
 		const element = document.querySelector('${BANNER}');
 		if (element && element.checkVisibility && element.checkVisibility({ visibilityProperty: true })) {
-			window.__c15tBannerVisibleAt = performance.now();
+			window.__inthBannerVisibleAt = performance.now();
 			return true;
 		}
 		return false;
@@ -547,8 +547,8 @@ const bannerTimings = async function bannerTimings(
 			// oxlint-disable-next-line no-await-in-loop -- Samples must not overlap.
 			const at = await page.evaluate(
 				() =>
-					(window as { __c15tBannerVisibleAt?: number })
-						.__c15tBannerVisibleAt ?? performance.now()
+					(window as { __inthBannerVisibleAt?: number })
+						.__inthBannerVisibleAt ?? performance.now()
 			);
 			samples.push(Math.round(at));
 		}
@@ -698,7 +698,7 @@ const main = async function main() {
 			metrics: summarize(measurement),
 		})),
 		method:
-			'Each example is built with its own build script against the fixture backend (all four *_C15T_BACKEND_URL variables set, *.inth.app routed to the fixture, other internet hosts blocked) and started with its own start script. Assets are the scripts and stylesheets Chromium received, each phase in a fresh context. Sizes are the response bodies; gzip and brotli use Node zlib defaults per asset. Boundary bytes are the gzip sizes of first-load JS assets that contain a boundary marker string.',
+			'Each example is built with its own build script against the fixture backend (all four *_INTH_PROJECT_URL variables set, *.inth.app routed to the fixture, other internet hosts blocked) and started with its own start script. Assets are the scripts and stylesheets Chromium received, each phase in a fresh context. Sizes are the response bodies; gzip and brotli use Node zlib defaults per asset. Boundary bytes are the gzip sizes of first-load JS assets that contain a boundary marker string.',
 		// Relative to the harness checkout, so reports don't carry home paths.
 		root: relative(harnessRoot, root) || '.',
 	};

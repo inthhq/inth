@@ -4,11 +4,11 @@ Apps you can read, run and copy from. Each one shows one thing.
 
 There are two kinds:
 
-- **Starters** (`examples/<framework>`) are the smallest correct c15t setup
+- **Starters** (`examples/<framework>`) are the smallest correct Inth setup
   for one framework and one rendering mode. The framework quickstarts quote
   them.
 - **Showcases** (`examples/showcase-*`) are small apps for Northwind Coffee, a
-  made-up coffee shop. Each one shows off one thing c15t can do, such as a
+  made-up coffee shop. Each one shows off one thing Inth can do, such as a
   banner built from headless hooks or a preference center inside account
   settings.
 
@@ -23,7 +23,7 @@ runnable native apps, test fixtures and installation snippets.
 
 1. **One idea per example.** The directory name says what it is. If the README
    needs "this example also shows…", split it.
-2. **c15t code first.** The file a reader opens first holds the c15t setup.
+2. **Inth code first.** The file a reader opens first holds the Inth setup.
    Page chrome stays minimal.
 3. **No test code.** No `testBackend` helpers, no `#hide docs` blocks, no
    environment switches that change what gets built. A server-rendered example

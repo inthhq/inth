@@ -15,10 +15,10 @@ import type {
 	ConsentProviderRuntime,
 	ConsentProviderRuntimeOptions,
 } from '@inth/sdk/runtime/provider';
+import type { DeferredCommitted } from '@inth/sdk/surface-actions/early-commit';
 
 import { createOwnedRuntime } from '../owned-runtime';
 import type { ConsentRootState } from '../types';
-import type { DeferredCommitted } from './commit';
 
 export { preloadSavePath } from '@inth/sdk/runtime/save-preload';
 
@@ -96,7 +96,6 @@ const committedOptions = function committedOptions(
  * Builds the root's runtime in the browser, from the server's state and,
  * after a deferred commit, from the committed records.
  *
- * @param input - What the root read.
  * @returns The runtime, not started, and its transport.
  * @internal
  */
@@ -104,7 +103,7 @@ export const createRootEngine = function createRootEngine(
 	input: RootEngineInput
 ): RootEngine {
 	const stateMode = input.state.mode;
-	// No mode at all is `manifest()`, as in `c15tHandle()`.
+	// No mode at all is `manifest()`, as in `inthHandle()`.
 	const transport = clientMode(
 		input.mode ?? stateMode,
 		input.state,

@@ -11,7 +11,7 @@ import { Badge } from '../ui/badge';
 
 /** One experiment event the readout lists. */
 export interface ExperimentLogEntry {
-	name: 'c15t_surface_shown' | 'c15t_choice_recorded';
+	name: 'inth_surface_shown' | 'inth_choice_recorded';
 	arm: string;
 	/** The surface shown, or the consent action recorded. */
 	detail: string;
@@ -44,7 +44,7 @@ export const useExperimentLog = function useExperimentLog(run: string) {
 					append({
 						arm: experiment.arm,
 						detail: consentAction,
-						name: 'c15t_choice_recorded',
+						name: 'inth_choice_recorded',
 					});
 				}
 			},
@@ -53,7 +53,7 @@ export const useExperimentLog = function useExperimentLog(run: string) {
 					append({
 						arm: experiment.arm,
 						detail: surface,
-						name: 'c15t_surface_shown',
+						name: 'inth_surface_shown',
 					});
 				}
 			},

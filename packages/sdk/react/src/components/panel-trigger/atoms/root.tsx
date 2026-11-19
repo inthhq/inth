@@ -1,12 +1,7 @@
 'use client';
 
-/**
- * Root component for the ConsentDialogTrigger compound component.
- * Provides context and handles portal rendering.
- *
- * @packageDocumentation
- */
-
+import type { KernelBranding } from '@inth/sdk/engine';
+import type { ConsentDialogTriggerVisibility } from '@inth/sdk/schema/config';
 import { createContext, useContext, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
@@ -21,31 +16,23 @@ import {
 } from '../../shared/surface-styles';
 import type { SurfaceStyleSheet } from '../../shared/surface-styles';
 import { TRIGGER_SHEETS } from '../../shared/trigger-sheets';
-import type { CornerPosition, TriggerVisibility } from '../types';
+import type { CornerPosition } from '../types';
 import { useDraggable } from '../use-draggable';
 import type { UseDraggableReturn } from '../use-draggable';
 
-/**
- * Context value for the ConsentDialogTrigger compound component.
- */
 export interface TriggerContextValue {
-	/** Current corner position */
 	corner: CornerPosition;
-	/** Whether currently dragging */
 	isDragging: boolean;
 	/** Whether transitioning to a new corner */
 	isSnapping: boolean;
-	/** Whether the last interaction was a drag */
-	wasDragged: () => boolean;
-	/** Drag event handlers */
+	/** Whether a click ends a drag; spends the guard. */
+	endsDrag: UseDraggableReturn['endsDrag'];
 	handlers: UseDraggableReturn['handlers'];
 	/** Current transform style for drag offset */
 	dragStyle: React.CSSProperties;
 	/** Branding from consent manager */
-	branding: string;
-	/** Open the consent dialog */
+	branding: KernelBranding;
 	openDialog: () => void;
-	/** Whether the trigger should be visible */
 	isVisible: boolean;
 }
 
@@ -66,9 +53,6 @@ export const useTriggerContext =
 		return context;
 	};
 
-/**
- * Props for the Root component.
- */
 export interface TriggerRootProps {
 	children: ReactNode;
 
@@ -88,7 +72,7 @@ export interface TriggerRootProps {
 	 * Controls when the trigger is visible.
 	 * @default 'always'
 	 */
-	showWhen?: TriggerVisibility;
+	showWhen?: ConsentDialogTriggerVisibility;
 
 	/**
 	 * Replaces the `showWhen` calculation with a host-computed value. The
@@ -97,14 +81,8 @@ export interface TriggerRootProps {
 	 */
 	visible?: boolean;
 
-	/**
-	 * Callback when position changes.
-	 */
 	onPositionChange?: (position: CornerPosition) => void;
 
-	/**
-	 * Callback when trigger is clicked.
-	 */
 	onClick?: () => void;
 }
 
@@ -132,14 +110,14 @@ export const TriggerRoot = ({
 	onPositionChange,
 	onClick,
 }: TriggerRootProps): ReactNode => {
-	const branding = useBranding() ?? 'c15t';
+	const branding = useBranding();
 	const { isVisible: computedVisible, openDialog } = useConsentDialogTrigger({
 		onClick,
 		showWhen,
 	});
 	const isVisible = visible ?? computedVisible;
 
-	const { corner, isDragging, isSnapping, wasDragged, handlers, dragStyle } =
+	const { corner, isDragging, isSnapping, endsDrag, handlers, dragStyle } =
 		useDraggable({
 			defaultPosition,
 			onPositionChange,
@@ -160,27 +138,26 @@ export const TriggerRoot = ({
 			branding,
 			corner,
 			dragStyle,
+			endsDrag,
 			handlers,
 			isDragging,
 			isSnapping,
 			isVisible,
 			openDialog,
-			wasDragged,
 		}),
 		[
 			branding,
 			corner,
 			dragStyle,
+			endsDrag,
 			handlers,
 			isDragging,
 			isSnapping,
 			isVisible,
 			openDialog,
-			wasDragged,
 		]
 	);
 
-	// Don't render on server or when not visible
 	if (!mounted || !isVisible || !sheetsReady) {
 		return null;
 	}

@@ -1,19 +1,19 @@
 ---
 title: ConsentButton
-description: Accept, reject, save or open preferences from your own Angular markup with the c15t-consent-button attribute component, and what each action records.
+description: Accept, reject, save or open preferences from your own Angular markup with the inth-consent-button attribute component, and what each action records.
 group: frameworks
 ---
 
 ## Add consent buttons to your own markup
 
 `ConsentButton` is a component on your own `<button>`, selected with
-`button[c15t-consent-button]`. It records a consent action on click and takes
+`button[inth-consent-button]`. It records a consent action on click and takes
 the stock button styles:
 
 <include src="../../../shared/examples/angular/consent-buttons.mdx" />
 
 Use it in a custom banner, on a privacy page, or in the banner's
-`c15tConsentBannerAction` template; see
+`inthConsentBannerAction` template; see
 [ConsentBanner](./consent-banner#replace-the-title-description-or-buttons).
 Your button keeps its content, so write the label yourself.
 
@@ -25,7 +25,7 @@ Your button keeps its content, so write the label yourself.
 | `variant` | `'primary'` or `'neutral'` | `'neutral'` | The theme's `buttonPrimary` or `buttonSecondary` color. |
 | `mode` | `'filled'`, `'stroke'`, `'lighter'` or `'ghost'` | `'stroke'` | The fill. |
 | `size` | `'medium'`, `'small'`, `'xsmall'` or `'xxsmall'` | `'small'` | The size. |
-| `noStyle` | `boolean` | provider's `noStyle` | Drops c15t's classes. |
+| `noStyle` | `boolean` | provider's `noStyle` | Drops Inth's classes. |
 
 ## What each action records
 

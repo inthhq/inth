@@ -10,7 +10,7 @@ import { useConsentTextDirection } from "@inth/react/headless"
 import {
   ConsentPreferences,
   ConsentPreferencesActions,
-} from "@/components/c15t/consent-preferences"
+} from "@/components/inth/consent-preferences"
 import {
   Card,
   CardContent,

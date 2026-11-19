@@ -7,11 +7,11 @@ import type * as ClientModule from '../client';
 import type { AstroConsentClient, PageIAB } from '../client';
 import type * as IntegrationModule from '../integration';
 import { testing as testingMode } from '../testing';
-import type { C15tAstroOptions } from '../types';
+import type { InthAstroOptions } from '../types';
 import { createTestPageIAB } from './page-iab';
 import { testResolution, testRule } from './policy-fixture';
 
-const OPTIONS: C15tAstroOptions = {
+const OPTIONS: InthAstroOptions = {
 	consentCategories: ['necessary', 'measurement', 'marketing'],
 	mode: testingMode({ policy: [testRule] }),
 };
@@ -23,7 +23,7 @@ let client: AstroConsentClient | null = null;
  * the way a page does before its boot script runs.
  */
 const loadClient = async function loadClient(): Promise<{
-	boot: (options: C15tAstroOptions) => AstroConsentClient;
+	boot: (options: InthAstroOptions) => AstroConsentClient;
 	registerIAB: typeof ClientModule.registerIAB;
 }> {
 	vi.resetModules();
@@ -58,8 +58,8 @@ beforeEach(() => {
 	localStorage.clear();
 	document.body.innerHTML = '';
 	const globals = window as unknown as Record<string, unknown>;
-	globals.__c15tAstro = undefined;
-	globals.__c15tAstroConfig = {
+	globals.__inthAstro = undefined;
+	globals.__inthAstroConfig = {
 		initialPolicyResolution: testResolution(),
 		initialTranslations: { language: 'en', translations: {} },
 	};

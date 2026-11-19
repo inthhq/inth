@@ -98,8 +98,6 @@ export interface FathomAnalyticsOptions {
  *
  * @see https://usefathom.com/docs/script/script-settings
  *
- * @param options - The options for the Fathom Analytics script.
- * @returns The Fathom Analytics script.
  * @remarks When `site` is missing or blank, the
  *   helper logs `fathomAnalytics: missing or invalid site` with
  *   `console.error` and returns a script that never loads.

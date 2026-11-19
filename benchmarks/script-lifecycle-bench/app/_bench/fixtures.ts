@@ -67,7 +67,7 @@ export const scriptFixtures: Record<string, Script> = {
 		category: 'functionality',
 		id: 'fixture-inline',
 		textContent:
-			'window.__c15tScriptBench?.recordScriptExecution?.("fixture-inline");',
+			'window.__inthScriptBench?.recordScriptExecution?.("fixture-inline");',
 	},
 	'fixture-persist': {
 		anonymizeId: false,

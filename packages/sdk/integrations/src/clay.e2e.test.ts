@@ -4,7 +4,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	loadScripts,
@@ -21,8 +21,8 @@ describe('Clay core loader consent contract', () => {
 		}
 	});
 	it('creates no vendor globals, requests or storage before mapped consent', () => {
-		const scripts = [clay({ siteId: 'c15tfake' })];
-		loadScripts(scripts, deniedConsents);
+		const scripts = [clay({ siteId: 'inthfake' })];
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMeasurementConsents);
 		expect(document.querySelector('script')).toBeNull();
 		for (const key of ['Claydar', '__RADAR_TRACKERS__']) {
@@ -32,17 +32,17 @@ describe('Clay core loader consent contract', () => {
 		updateScripts(scripts, grantedMarketingConsents);
 		const element = document.querySelector('script');
 		expect(element?.src).toBe(
-			'https://static.claydar.com/init.v1.js?id=c15tfake'
+			'https://static.claydar.com/init.v1.js?id=inthfake'
 		);
 		element?.dispatchEvent(new Event('load'));
 		updateScripts(scripts, grantedMarketingConsents);
 		expect(document.querySelectorAll('script')).toHaveLength(1);
 	});
 	it('retains one loader across in-flight revoke and regrant', () => {
-		const scripts = [clay({ siteId: 'c15tfake' })];
+		const scripts = [clay({ siteId: 'inthfake' })];
 		loadScripts(scripts, grantedMarketingConsents);
 		const old = document.querySelector('script');
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(old?.isConnected).toBe(true);
 		old?.dispatchEvent(new Event('load'));
 		expect(document.querySelector('script')).toBe(old);
@@ -61,7 +61,7 @@ describe('Clay consent forwarding', () => {
 		Reflect.deleteProperty(window, 'Claydar');
 	});
 	it('queues the initial grant and invokes the live consent methods on transitions', () => {
-		const base = clay({ siteId: 'c15tfake' });
+		const base = clay({ siteId: 'inthfake' });
 		const infos: unknown[] = [];
 		const scripts = [
 			{
@@ -91,15 +91,15 @@ describe('Clay consent forwarding', () => {
 				grants += 1;
 			},
 		});
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(denials).toBe(1);
 		updateScripts(scripts, grantedMarketingConsents);
 		expect(grants).toBe(1);
 	});
 	it('does not grant a loader that finishes after revocation', () => {
-		const scripts = [clay({ siteId: 'c15tfake' })];
+		const scripts = [clay({ siteId: 'inthfake' })];
 		loadScripts(scripts, grantedMarketingConsents);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		const queue: unknown[] = [];
 		Reflect.set(window, 'Claydar', queue);
 		document.querySelector('script')?.dispatchEvent(new Event('load'));
@@ -111,12 +111,12 @@ describe('Clay pending tracker consent', () => {
 	registerVendorContractCleanup();
 	afterEach(() => Reflect.deleteProperty(window, 'Claydar'));
 	it('queues withdrawal after the first stage while the tracker is pending', () => {
-		const scripts = [clay({ siteId: 'c15tfake' })];
+		const scripts = [clay({ siteId: 'inthfake' })];
 		loadScripts(scripts, grantedMarketingConsents);
 		const queue: unknown[] = [];
 		Reflect.set(window, 'Claydar', queue);
 		document.querySelector('script')?.dispatchEvent(new Event('load'));
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(queue).toEqual([['giveCookieConsent'], ['denyCookieConsent']]);
 		updateScripts(scripts, grantedMarketingConsents);
 		expect(queue).toEqual([

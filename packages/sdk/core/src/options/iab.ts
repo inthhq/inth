@@ -42,7 +42,7 @@ export interface IABConfig {
 	/** Publisher country code used in the TC string. */
 	publisherCountryCode?: string;
 	/**
-	 * Ignored: c15t always encodes IsServiceSpecific=1.
+	 * Ignored: Inth always encodes IsServiceSpecific=1.
 	 *
 	 * @deprecated TCF requires IsServiceSpecific=1. Group-specific scope is
 	 * also encoded as 1. Passing `false` logs a warning once and has no
@@ -88,7 +88,6 @@ export interface CMPApi {
 	 * Update public vendor metadata while retaining registered TCF listeners.
 	 * Publish confirmed data with updateConsent after replacing the list.
 	 * @param gvl - The new list, or null to mark a replacement as loading.
-	 * @returns Nothing.
 	 */
 	updateVendorList: (gvl: GlobalVendorList | null) => void;
 	/**
@@ -105,12 +104,4 @@ export interface CMPApi {
 	saveToStorage: (tcString: string) => void;
 	getTcString: () => string;
 	destroy: () => void;
-}
-
-/**
- * Result of fetching the Global Vendor List.
- */
-export interface FetchGVLResult {
-	gvl: GlobalVendorList;
-	fromCache: boolean;
 }

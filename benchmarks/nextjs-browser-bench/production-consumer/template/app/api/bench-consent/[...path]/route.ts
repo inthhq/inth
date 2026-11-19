@@ -6,7 +6,7 @@ import manifest from '../../../../fixture/manifest.json';
 /**
  * Deterministic consent backend for the production consumer. The harness
  * writes the fixture JSON before building. Every endpoint except `stats` answers
- * after `C15T_BENCH_BACKEND_LATENCY_MS`. `GET stats` reads how often the
+ * after `INTH_BENCH_BACKEND_LATENCY_MS`. `GET stats` reads how often the
  * SDK reached this origin; `POST stats` resets the counts.
  */
 interface FixtureCounts {
@@ -17,21 +17,21 @@ interface FixtureCounts {
 }
 
 const globalWithCounts = globalThis as typeof globalThis & {
-	__c15tConsumerFixtureCounts?: FixtureCounts;
+	__inthConsumerFixtureCounts?: FixtureCounts;
 };
 
 const counts = (): FixtureCounts => {
-	globalWithCounts.__c15tConsumerFixtureCounts ??= {
+	globalWithCounts.__inthConsumerFixtureCounts ??= {
 		init: 0,
 		manifest: 0,
 		sessions: 0,
 		subjects: 0,
 	};
-	return globalWithCounts.__c15tConsumerFixtureCounts;
+	return globalWithCounts.__inthConsumerFixtureCounts;
 };
 
 const applyLatency = async () => {
-	const latencyMs = Number(process.env.C15T_BENCH_BACKEND_LATENCY_MS ?? '0');
+	const latencyMs = Number(process.env.INTH_BENCH_BACKEND_LATENCY_MS ?? '0');
 	if (Number.isFinite(latencyMs) && latencyMs > 0) {
 		await sleep(latencyMs);
 	}

@@ -1,20 +1,20 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ConsentManager, provideC15t } from '@inth/angular';
+import { ConsentManager, provideInth } from '@inth/angular';
 import type { AllConsentNames } from '@inth/sdk/engine';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { CONSENT_ENGINE_MODULE } from '../../src/lib/core/consent-manager';
 import type { DeferredRuntime } from '../../src/lib/core/deferred/deferred-runtime';
 import { testing } from '../../testing/src/testing-mode';
-import { ConsentDevTools, provideC15tDevTools } from './public-api';
+import { ConsentDevTools, provideInthDevTools } from './public-api';
 import type { ConsentDevToolsOptions } from './public-api';
 
 /** The panel roots, which live inside each host's shadow root. */
 const mountedDevTools = (): HTMLElement[] =>
-	[...document.querySelectorAll<HTMLElement>('[data-c15t-dev-tools-host]')]
+	[...document.querySelectorAll<HTMLElement>('[data-inth-dev-tools-host]')]
 		.map((host) =>
-			host.shadowRoot?.querySelector<HTMLElement>('[data-c15t-dev-tools]')
+			host.shadowRoot?.querySelector<HTMLElement>('[data-inth-dev-tools]')
 		)
 		.filter((root): root is HTMLElement => root !== null && root !== undefined);
 
@@ -38,7 +38,7 @@ const queryDevTools = <ElementType extends Element = HTMLElement>(
 	imports: [ConsentDevTools],
 	selector: 'test-devtools-host',
 	template: `
-		<c15t-consent-dev-tools
+		<inth-consent-dev-tools
 			defaultOpen
 			[clearRecords]="clearRecords()"
 			[getConsentCategories]="getConsentCategories()"
@@ -68,7 +68,7 @@ const configure = (
 ) =>
 	TestBed.configureTestingModule({
 		providers: [
-			provideC15t({
+			provideInth({
 				consentCategories: categories,
 				mode: testing(),
 				persistence: false,
@@ -150,7 +150,7 @@ describe('@inth/angular/devtools', () => {
 				queryDevTools('[data-focus-key="consent:measurement"]')
 			).not.toBeNull();
 			expect(queryDevTools('[data-focus-key="consent:marketing"]')).toBeNull();
-			expect(queryDevTools('.c15t-dev-tools--bottom-left')).not.toBeNull();
+			expect(queryDevTools('.inth-dev-tools--bottom-left')).not.toBeNull();
 		});
 		expect(mountedDevTools()).toHaveLength(1);
 	});
@@ -162,26 +162,26 @@ describe('@inth/angular/devtools', () => {
 		await fixture.whenStable();
 		await vi.waitFor(() =>
 			expect(
-				document.body.querySelector('[data-c15t-dev-tools]')
+				document.body.querySelector('[data-inth-dev-tools]')
 			).not.toBeNull()
 		);
-		expect(document.querySelector('[data-c15t-dev-tools-host]')).toBeNull();
+		expect(document.querySelector('[data-inth-dev-tools-host]')).toBeNull();
 	});
 
-	test('provideC15tDevTools mounts the panel with the application', async () => {
+	test('provideInthDevTools mounts the panel with the application', async () => {
 		TestBed.configureTestingModule({
 			providers: [
-				provideC15t({
+				provideInth({
 					mode: testing(),
 					persistence: false,
 				}),
-				provideC15tDevTools({ position: 'bottom-right' }),
+				provideInthDevTools({ position: 'bottom-right' }),
 			],
 		});
 		const fixture = TestBed.createComponent(EmptyApp);
 		await fixture.whenStable();
 		await vi.waitFor(() =>
-			expect(queryDevTools('.c15t-dev-tools--bottom-right')).not.toBeNull()
+			expect(queryDevTools('.inth-dev-tools--bottom-right')).not.toBeNull()
 		);
 		TestBed.resetTestingModule();
 		expect(mountedDevTools()).toHaveLength(0);
@@ -190,7 +190,7 @@ describe('@inth/angular/devtools', () => {
 	test('lists the configured scripts, which register with the engine kernel', async () => {
 		TestBed.configureTestingModule({
 			providers: [
-				provideC15t({
+				provideInth({
 					consentCategories: ['measurement'],
 					mode: testing(),
 					persistence: false,
@@ -222,7 +222,7 @@ describe('@inth/angular/devtools', () => {
 		let loads = 0;
 		TestBed.configureTestingModule({
 			providers: [
-				provideC15t({
+				provideInth({
 					consentCategories: ['measurement'],
 					mode: testing(),
 					persistence: false,

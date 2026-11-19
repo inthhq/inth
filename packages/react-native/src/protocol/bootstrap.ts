@@ -19,8 +19,8 @@ export interface BootstrapPayload {
 	readonly maxSupportedProtocolVersion: number;
 	/**
 	 * Native SDK version, which the core sends unprefixed as the
-	 * `x-c15t-version` request header. The host platform travels separately
-	 * in `x-c15t-platform`.
+	 * `x-inth-version` request header. The host platform travels separately
+	 * in `x-inth-platform`.
 	 */
 	readonly nativeSdkVersion: string;
 	/**

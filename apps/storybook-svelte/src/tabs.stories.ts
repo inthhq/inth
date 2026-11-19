@@ -1,4 +1,4 @@
-import { keyboardNavigation, tabSwitching } from '@c15t/conformance/play/tabs';
+import { keyboardNavigation, tabSwitching } from '@inth/conformance/play/tabs';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 
 import TabsControlledDemo from './TabsControlledDemo.svelte';

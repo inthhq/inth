@@ -294,9 +294,7 @@ describe('mountScript', () => {
 		};
 		mountScript(deps, script, snap, true, batch);
 		expect(batch).toHaveLength(1);
-		// DOM not touched yet.
 		expect(document.head.querySelector('script')).toBeNull();
-		// Not registered until flush.
 		expect(deps.loadedElements.has('s')).toBe(false);
 	});
 
@@ -328,7 +326,7 @@ describe('mountScript', () => {
 			src: 'https://x/s.js',
 		};
 		const existing = document.createElement('script');
-		existing.id = 'c15t-script-s';
+		existing.id = 'inth-script-s';
 		document.head.appendChild(existing);
 
 		mountScript(deps, script, snap, true, null);
@@ -354,7 +352,7 @@ describe('mountScript', () => {
 			src: 'https://mirror/s.js',
 		};
 		const existing = document.createElement('script');
-		existing.id = 'c15t-script-s';
+		existing.id = 'inth-script-s';
 		existing.src = 'https://vendor/s.js';
 		document.head.appendChild(existing);
 
@@ -373,7 +371,7 @@ describe('mountScript', () => {
 
 describe('mountScript with a server-started element', () => {
 	type StartedWindow = Window & {
-		__c15tStarted?: Record<string, HTMLScriptElement>;
+		__inthStarted?: Record<string, HTMLScriptElement>;
 	};
 
 	const startOnServer = function startOnServer(
@@ -384,18 +382,18 @@ describe('mountScript with a server-started element', () => {
 	): HTMLScriptElement {
 		const element = document.createElement('script');
 		element.setAttribute('src', src);
-		Object.assign(element, { __c15tScript: scriptId });
+		Object.assign(element, { __inthScript: scriptId });
 		if (done) {
-			Object.assign(element, { __c15tDone: done });
+			Object.assign(element, { __inthDone: done });
 		}
 		document.head.appendChild(element);
 		const started = window as StartedWindow;
-		started.__c15tStarted = { ...started.__c15tStarted, [id]: element };
+		started.__inthStarted = { ...started.__inthStarted, [id]: element };
 		return element;
 	};
 
 	afterEach(() => {
-		delete (window as StartedWindow).__c15tStarted;
+		delete (window as StartedWindow).__inthStarted;
 	});
 
 	test.each(['load', 'error', undefined] as const)(
@@ -536,7 +534,7 @@ describe('mountScript with a server-started element', () => {
 	});
 
 	describe('still waiting to be inserted', () => {
-		type PendingElement = HTMLScriptElement & { __c15tInsert?: () => void };
+		type PendingElement = HTMLScriptElement & { __inthInsert?: () => void };
 
 		/** Mirrors the inline start's pending insert. */
 		const startPending = function startPending(
@@ -549,15 +547,15 @@ describe('mountScript with a server-started element', () => {
 			const element: PendingElement = document.createElement('script');
 			element.setAttribute('src', src);
 			const insert = () => {
-				if (element.__c15tInsert !== insert) {
+				if (element.__inthInsert !== insert) {
 					return;
 				}
-				delete element.__c15tInsert;
+				delete element.__inthInsert;
 				document.head.appendChild(element);
 			};
-			element.__c15tInsert = insert;
+			element.__inthInsert = insert;
 			const started = window as StartedWindow;
-			started.__c15tStarted = { ...started.__c15tStarted, [key]: element };
+			started.__inthStarted = { ...started.__inthStarted, [key]: element };
 			return { element, insert };
 		};
 
@@ -640,8 +638,8 @@ describe('mountScript with a server-started element', () => {
 		const startHeld = function startHeld(): HTMLScriptElement {
 			const element = document.createElement('script');
 			element.setAttribute('src', 'https://x/s.js');
-			Object.assign(element, { __c15tHeld: true });
-			(window as StartedWindow).__c15tStarted = { s: element };
+			Object.assign(element, { __inthHeld: true });
+			(window as StartedWindow).__inthStarted = { s: element };
 			return element;
 		};
 
@@ -695,7 +693,7 @@ describe('mountScript with a server-started element', () => {
 			src: 'https://x/s.js',
 		};
 		const started = startOnServer('s', script.src ?? '');
-		Object.assign(started, { __c15tConsent: false });
+		Object.assign(started, { __inthConsent: false });
 
 		mountScript(deps, script, createConsentKernel().getSnapshot(), false, null);
 
@@ -739,17 +737,17 @@ describe('mountScript with a server-started element', () => {
 
 		test('cancels an insert still waiting', () => {
 			const { deps } = makeDeps();
-			const element: HTMLScriptElement & { __c15tInsert?: () => void } =
+			const element: HTMLScriptElement & { __inthInsert?: () => void } =
 				document.createElement('script');
 			// Mirrors the inline start's pending insert.
 			const insert = () => {
-				if (element.__c15tInsert === insert) {
+				if (element.__inthInsert === insert) {
 					document.head.appendChild(element);
 				}
 			};
-			element.__c15tInsert = insert;
-			Object.assign(element, { __c15tScript: 's' });
-			(window as StartedWindow).__c15tStarted = { s: element };
+			element.__inthInsert = insert;
+			Object.assign(element, { __inthScript: 's' });
+			(window as StartedWindow).__inthStarted = { s: element };
 
 			unmountScript(
 				deps,
@@ -760,7 +758,7 @@ describe('mountScript with a server-started element', () => {
 			insert();
 
 			expect(document.head.querySelector('script')).toBeNull();
-			expect((window as StartedWindow).__c15tStarted).toEqual({});
+			expect((window as StartedWindow).__inthStarted).toEqual({});
 		});
 
 		test('removes an inserted element and tells the script', () => {
@@ -828,9 +826,7 @@ describe('unmountScript', () => {
 		mountScript(deps, script, snap, true, null);
 		expect(document.head.querySelector('script')).not.toBeNull();
 		unmountScript(deps, script, snap, false);
-		// DOM stays.
 		expect(document.head.querySelector('script')).not.toBeNull();
-		// Registry reference is gone.
 		expect(deps.loadedElements.has('s')).toBe(false);
 	});
 
@@ -859,7 +855,7 @@ describe('unmountScript', () => {
 			src: 'https://x/s.js',
 		};
 		const existing = document.createElement('script');
-		existing.id = 'c15t-script-s';
+		existing.id = 'inth-script-s';
 		document.head.appendChild(existing);
 		mountScript(deps, script, snap, true, null);
 
@@ -933,6 +929,31 @@ describe('flushPendingMounts', () => {
 		flushPendingMounts(deps, batch);
 		expect(document.head.querySelectorAll('script')).toHaveLength(2);
 		expect(document.body.querySelectorAll('script')).toHaveLength(1);
+	});
+
+	test('a body script mounted before <body> exists goes to <head>', () => {
+		const { deps } = makeDeps();
+		const { body } = document;
+		body.remove();
+		try {
+			mountScript(
+				deps,
+				{
+					category: 'necessary',
+					id: 'early-body',
+					src: 'https://x/early.js',
+					target: 'body',
+				},
+				deps.getSnapshot(),
+				true,
+				null
+			);
+			expect(document.head.querySelector('script')?.getAttribute('src')).toBe(
+				'https://x/early.js'
+			);
+		} finally {
+			document.documentElement.append(body);
+		}
 	});
 
 	test('empty batch is a no-op', () => {

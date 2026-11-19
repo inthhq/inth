@@ -357,7 +357,7 @@ final class InstallationTests: XCTestCase {
         XCTAssertEqual(http.requests.first?.url, URL(string: "https://acme.inth.app/init"))
         for request in http.requests {
             XCTAssertEqual(request.headers[Inth.versionHeader], Inth.version)
-            XCTAssertEqual(request.headers["x-c15t-platform"], "apple->\(InthApple.version)")
+            XCTAssertEqual(request.headers["x-inth-platform"], "apple->\(InthApple.version)")
             XCTAssertFalse(request.headers.values.contains { $0.hasPrefix("rn->") })
         }
     }

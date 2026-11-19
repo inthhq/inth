@@ -20,23 +20,24 @@ import {
 	CONSENT_CHUNK_GROUP,
 	consentManifest,
 	createConsentManifestPlugin,
-	GENERATED_MODULE_IDS,
-	formatEnvNames,
+	GENERATED_MODULE_ID,
+	legacyEnvName,
 	loadBuildManifest,
 	MANIFEST_CACHE_DIR,
 	readBuildEnv,
+	readBuildEnvEntry,
 	writeManifestCacheModule,
 } from '../build';
 
 const MANIFEST_FIXTURE = {
-	branding: 'c15t',
+	branding: 'inth',
 	revision: 'build-test',
 	schemaVersion: 2,
 };
 
 const directories: string[] = [];
 const createRoot = async () => {
-	const root = await mkdtemp(join(tmpdir(), 'c15t-manifest-'));
+	const root = await mkdtemp(join(tmpdir(), 'inth-manifest-'));
 	directories.push(root);
 	return root;
 };
@@ -106,7 +107,7 @@ describe('@inth/sdk/generated in Vite', () => {
 		expect(code).toContain('build-test');
 		expect(code).toContain('https://consent.example.com');
 		expect(options.fetch).toHaveBeenCalledTimes(1);
-		await expect(stat(join(root, 'src/c15t-manifest.ts'))).rejects.toThrow();
+		await expect(stat(join(root, 'src/inth-manifest.ts'))).rejects.toThrow();
 	});
 
 	test('a build that never reads the snapshot does not fetch the manifest', async () => {
@@ -187,7 +188,7 @@ describe('@inth/sdk/generated in Vite', () => {
 			consentManifest({ ...options, onBuildError: 'runtime' }),
 			"import { snapshot } from '@inth/sdk/generated';\nexport const policy = snapshot ?? 'no snapshot';\n"
 		);
-		expect(code).not.toContain('__c15t_build_snapshot__');
+		expect(code).not.toContain('__inth_build_snapshot__');
 		expect(code).toContain('no snapshot');
 		expect(options.fetch).toHaveBeenCalledTimes(1);
 	});
@@ -205,14 +206,14 @@ describe('@inth/sdk/generated in Vite', () => {
 			"import { projectUrl, snapshot } from '@inth/sdk/generated';\nexport const mode = { projectUrl, snapshot: location.hash ? undefined : snapshot };\n"
 		);
 		expect(options.fetch).not.toHaveBeenCalled();
-		expect(code).not.toContain('__c15t_build_snapshot__');
+		expect(code).not.toContain('__inth_build_snapshot__');
 		expect(code).toContain('https://consent.example.com');
 
 		const plugin = consentManifest({ ...options, source: 'runtime' });
 		await plugin.configResolved({ command: 'serve', root });
 		const dev = await plugin.load.call(
 			undefined,
-			plugin.resolveId(GENERATED_MODULE_IDS[0]) as string
+			plugin.resolveId(GENERATED_MODULE_ID) as string
 		);
 		expect(dev).toContain('export const snapshot = undefined;');
 		expect(options.fetch).not.toHaveBeenCalled();
@@ -230,7 +231,7 @@ describe('@inth/sdk/generated in Vite', () => {
 		const options = optionsFor(root);
 		const plugin = () =>
 			createConsentManifestPlugin(options, {
-				envNames: ['VITE_C15T_BACKEND_URL'],
+				envNames: ['VITE_INTH_PROJECT_URL'],
 				label: 'test/build',
 				serverRendered: true,
 			});
@@ -258,7 +259,7 @@ describe('@inth/sdk/generated in Vite', () => {
 				serverRendered,
 			});
 			await plugin.configResolved({ command: 'serve', root });
-			const id = plugin.resolveId(GENERATED_MODULE_IDS[0]);
+			const id = plugin.resolveId(GENERATED_MODULE_ID);
 			expect(id).toBeDefined();
 			expect(plugin.resolveId('@inth/sdk/generated')).toBe(id);
 			const source = await plugin.load.call(
@@ -280,7 +281,7 @@ describe('@inth/sdk/generated in Vite', () => {
 			serverRendered: true,
 		});
 		await plugin.configResolved({ command: 'serve', root });
-		const id = plugin.resolveId(GENERATED_MODULE_IDS[0]) as string;
+		const id = plugin.resolveId(GENERATED_MODULE_ID) as string;
 		expect(await plugin.load.call(undefined, id, { ssr: true })).toContain(
 			'build-test'
 		);
@@ -296,7 +297,7 @@ describe('@inth/sdk/generated in Vite', () => {
 				config.plugins?.some((entry) => entry.name === 'framework') ?? false,
 		});
 		await plugin.configResolved({ plugins: [{ name: 'framework' }], root });
-		const id = plugin.resolveId(GENERATED_MODULE_IDS[0]) as string;
+		const id = plugin.resolveId(GENERATED_MODULE_ID) as string;
 		expect(
 			await plugin.load.call(
 				{ environment: { config: { consumer: 'client' } } },
@@ -305,15 +306,54 @@ describe('@inth/sdk/generated in Vite', () => {
 		).not.toContain('build-test');
 	});
 
-	test('keeps the module out of pre-bundling and bundles c15t packages on the server', () => {
+	test('keeps the module out of pre-bundling and bundles inth packages on the server', () => {
 		const { optimizeDeps, ssr } = consentManifest().config();
-		expect(optimizeDeps.exclude).toEqual([...GENERATED_MODULE_IDS]);
-		expect(ssr.noExternal).toEqual(
-			expect.arrayContaining(['@inth/sdk', '@inth/react'])
+		expect(optimizeDeps.exclude).toEqual([GENERATED_MODULE_ID]);
+		expect(ssr.noExternal).toEqual(['@inth/sdk']);
+	});
+
+	test('serves the generated entry of each package an adapter names', () => {
+		const plugin = createConsentManifestPlugin(
+			{},
+			{ envNames: [], label: 'test', packages: ['@inth/example'] }
+		);
+		const { optimizeDeps, ssr } = plugin.config();
+		expect(optimizeDeps.exclude).toEqual([
+			GENERATED_MODULE_ID,
+			'@inth/example/generated',
+		]);
+		expect(ssr.noExternal).toEqual(['@inth/sdk', '@inth/example']);
+		expect(plugin.resolveId('@inth/example/generated')).toBe(
+			plugin.resolveId(GENERATED_MODULE_ID)
 		);
 	});
 
-	test('puts the c15t modules a client entry imports into one chunk', () => {
+	// A function `serverRendered` used to count as server-rendered in the
+	// `config` hook, so a single-page app it described never got the group.
+	test.each([
+		[false, [CONSENT_CHUNK_GROUP]],
+		[true, []],
+	])(
+		'decides the chunk group from a serverRendered function once the config is resolved (%s)',
+		(rendered, groups) => {
+			const plugin = createConsentManifestPlugin(
+				{ projectUrl: 'https://consent.example.com' },
+				{ envNames: [], label: 'test', serverRendered: () => rendered }
+			);
+			const rolldown = { meta: { rolldownVersion: '1.2.11' } };
+			const config = plugin.config.call(rolldown, {}, {});
+			plugin.configResolved({
+				build: config.build as never,
+				command: 'build',
+				root: '/app',
+			});
+			expect(config.build?.rolldownOptions.output.codeSplitting.groups).toEqual(
+				groups
+			);
+		}
+	);
+
+	test('puts the inth modules a client entry imports into one chunk', () => {
 		const plugin = consentManifest();
 		const rolldown = { meta: { rolldownVersion: '1.2.11' } };
 		const group = plugin.config.call(rolldown, {}, {}).build?.rolldownOptions
@@ -419,7 +459,7 @@ describe('@inth/sdk/generated in Vite', () => {
 		expect(options.fetch).not.toHaveBeenCalled();
 		const source = await plugin.load.call(
 			undefined,
-			plugin.resolveId(GENERATED_MODULE_IDS[0]) as string
+			plugin.resolveId(GENERATED_MODULE_ID) as string
 		);
 		expect(logger.warn).toHaveBeenCalledWith(
 			expect.stringMatching(
@@ -429,11 +469,11 @@ describe('@inth/sdk/generated in Vite', () => {
 		expect(source).toContain('export const snapshot = undefined;');
 	});
 
-	test('reads VITE_C15T_BACKEND_URL from .env and exposes it', async () => {
+	test('reads VITE_INTH_PROJECT_URL from .env and exposes it', async () => {
 		const root = await createRoot();
 		await writeFile(
 			join(root, '.env.production'),
-			'VITE_C15T_BACKEND_URL="https://env.example.com/api"\n'
+			'VITE_INTH_PROJECT_URL="https://env.example.com/api"\n'
 		);
 		const { fetch } = optionsFor(root);
 		const env: Record<string, unknown> = {};
@@ -444,11 +484,11 @@ describe('@inth/sdk/generated in Vite', () => {
 			mode: 'production',
 			root,
 		});
-		expect(env.VITE_C15T_BACKEND_URL).toBe('https://env.example.com/api');
+		expect(env.VITE_INTH_PROJECT_URL).toBe('https://env.example.com/api');
 		expect(
 			await plugin.load.call(
 				undefined,
-				plugin.resolveId(GENERATED_MODULE_IDS[0]) as string
+				plugin.resolveId(GENERATED_MODULE_ID) as string
 			)
 		).toContain('export const projectUrl = "https://env.example.com/api";');
 		expect(fetch).toHaveBeenCalledWith(
@@ -473,39 +513,39 @@ describe('@inth/sdk/generated in Vite', () => {
 			});
 			const source = await plugin.load.call(
 				undefined,
-				plugin.resolveId(GENERATED_MODULE_IDS[0]) as string
+				plugin.resolveId(GENERATED_MODULE_ID) as string
 			);
 			return { fetch, source };
 		};
 
-		test('alone gives the backend URL and sets VITE_C15T_BACKEND_URL', async () => {
+		test('VITE_C15T_BACKEND_URL alone gives the backend URL and sets VITE_INTH_PROJECT_URL', async () => {
 			const env: Record<string, unknown> = {
-				VITE_INTH_PROJECT_URL: 'https://inth.example.com',
+				VITE_C15T_BACKEND_URL: 'https://inth.example.com',
 			};
 			const { fetch, source } = await resolveProjectUrl(env);
 			expect(source).toContain(
 				'export const projectUrl = "https://inth.example.com";'
 			);
-			expect(env.VITE_C15T_BACKEND_URL).toBe('https://inth.example.com');
+			expect(env.VITE_INTH_PROJECT_URL).toBe('https://inth.example.com');
 			expect(fetch).toHaveBeenCalledWith(
 				'https://inth.example.com/manifest',
 				expect.any(Object)
 			);
 		});
 
-		test('loses to VITE_C15T_BACKEND_URL when both are set', async () => {
+		test('wins over VITE_C15T_BACKEND_URL when both are set', async () => {
 			const { source } = await resolveProjectUrl({
-				VITE_C15T_BACKEND_URL: 'https://c15t.example.com',
+				VITE_C15T_BACKEND_URL: 'https://inth.example.com',
 				VITE_INTH_PROJECT_URL: 'https://inth.example.com',
 			});
 			expect(source).toContain(
-				'export const projectUrl = "https://c15t.example.com";'
+				'export const projectUrl = "https://inth.example.com";'
 			);
 		});
 
 		test('an explicit projectUrl beats both variables', async () => {
 			const env: Record<string, unknown> = {
-				VITE_C15T_BACKEND_URL: 'https://c15t.example.com',
+				VITE_C15T_BACKEND_URL: 'https://inth.example.com',
 				VITE_INTH_PROJECT_URL: 'https://inth.example.com',
 			};
 			const { source } = await resolveProjectUrl(env, {
@@ -543,7 +583,7 @@ describe('@inth/sdk/generated in Vite', () => {
 			plugin.configResolved({ command, logger: warnings, root });
 			const source = await plugin.load.call(
 				undefined,
-				plugin.resolveId(GENERATED_MODULE_IDS[0]) as string
+				plugin.resolveId(GENERATED_MODULE_ID) as string
 			);
 			await plugin.renderChunk(source as string);
 		};
@@ -575,7 +615,7 @@ describe('@inth/sdk/generated in Vite', () => {
 		const options = optionsFor(root);
 		const plugin = consentManifest(options);
 		await plugin.configResolved({ command: 'serve', root });
-		const id = plugin.resolveId(GENERATED_MODULE_IDS[0]) as string;
+		const id = plugin.resolveId(GENERATED_MODULE_ID) as string;
 		await Promise.all([
 			plugin.load.call(undefined, id),
 			plugin.load.call(undefined, id, { ssr: true }),
@@ -591,7 +631,7 @@ describe('@inth/sdk/generated in Vite', () => {
 		);
 		const plugin = consentManifest({ ...options, onBuildError: 'fail' });
 		await plugin.configResolved({ command: 'serve', root });
-		const id = plugin.resolveId(GENERATED_MODULE_IDS[0]) as string;
+		const id = plugin.resolveId(GENERATED_MODULE_ID) as string;
 		const results = await Promise.allSettled([
 			plugin.load.call(undefined, id),
 			plugin.load.call(undefined, id),
@@ -695,7 +735,7 @@ const buildPage = async (
 
 const HOSTED_ENTRY =
 	"import { projectUrl } from '@inth/sdk/generated';\nconsole.log(projectUrl);\n";
-const PREFETCH_TAG = '<script id="c15t-initial-data-prefetch"';
+const PREFETCH_TAG = '<script id="inth-initial-data-prefetch"';
 
 describe('initPrefetch', () => {
 	test('puts the /init script after the charset and before the stylesheet by default', async () => {
@@ -745,7 +785,7 @@ describe('initPrefetch', () => {
 		expect(html).toMatch(/[?&]country=DE[&"]/u);
 		expect(html).toContain('"language":"de"');
 		expect(html).toContain('"journey":null');
-		expect(html).toContain('"notice":"shop-consent-notice"');
+		expect(html).toContain('"notice":["shop-consent-notice"');
 		expect(html).toContain('"arms":["control","wall"]');
 		expect(html).toContain('"weights":[60,40]');
 		// Only the arm names reach the page, not what each arm changes.
@@ -761,7 +801,7 @@ describe('initPrefetch', () => {
 			{ cspNonce: 'n0nce' }
 		);
 		expect(html).toMatch(
-			/<script id="c15t-initial-data-prefetch" nonce="n0nce">/u
+			/<script id="inth-initial-data-prefetch" nonce="n0nce">/u
 		);
 	});
 
@@ -846,7 +886,7 @@ describe('initPrefetch', () => {
 			'<!doctype html>\n<html lang="en"><body></body></html>'
 		);
 		expect(html).toMatch(
-			/^<!doctype html>\n<html lang="en">\n<script id="c15t-initial-data-prefetch"/u
+			/^<!doctype html>\n<html lang="en">\n<script id="inth-initial-data-prefetch"/u
 		);
 	});
 
@@ -859,7 +899,7 @@ describe('initPrefetch', () => {
 		plugin.configResolved({ command: 'build', logger: createLogger(), root });
 		const source = await plugin.load.call(
 			undefined,
-			plugin.resolveId(GENERATED_MODULE_IDS[0]) as string
+			plugin.resolveId(GENERATED_MODULE_ID) as string
 		);
 		await plugin.renderChunk(source as string);
 		expect(await plugin.transformIndexHtml('<head></head>')).toBeUndefined();
@@ -918,10 +958,10 @@ describe('@inth/sdk/generated typings', () => {
 	});
 });
 
-describe('node_modules/.cache/c15t output', () => {
+describe('node_modules/.cache/inth output', () => {
 	const defaultsFor = (rootDir: string) => ({
 		command: 'build' as const,
-		envNames: ['NEXT_PUBLIC_C15T_BACKEND_URL'],
+		envNames: ['NEXT_PUBLIC_INTH_PROJECT_URL'],
 		importSource: '@inth/nextjs/static',
 		label: 'test/build',
 		rootDir,
@@ -998,8 +1038,8 @@ describe('node_modules/.cache/c15t output', () => {
 		['https://consent.example.com', 'https://consent.example.com/manifest'],
 		['https://consent.example.com/', 'https://consent.example.com/manifest'],
 		[
-			'https://consent.example.com/api/c15t///',
-			'https://consent.example.com/api/c15t/manifest',
+			'https://consent.example.com/api/inth///',
+			'https://consent.example.com/api/inth/manifest',
 		],
 		[
 			'https://consent.example.com/api/?key=x#config',
@@ -1027,7 +1067,7 @@ describe('build-time manifest policy', () => {
 	const STUB = 'export const snapshot = undefined;';
 	const defaultsFor = (rootDir: string, command: 'build' | 'dev') => ({
 		command,
-		envNames: ['VITE_C15T_BACKEND_URL', 'VITE_INTH_PROJECT_URL'],
+		envNames: ['VITE_INTH_PROJECT_URL'],
 		importSource: '@inth/sdk/build',
 		label: 'test/build',
 		rootDir,
@@ -1065,7 +1105,7 @@ describe('build-time manifest policy', () => {
 		const { logger, source } = await write({ fetch });
 		expect(source).toContain(STUB);
 		expect(logger.warn).toHaveBeenCalledWith(
-			"could not fetch the consent manifest from https://consent.example.com/manifest during the build (fetch failed: connect ECONNREFUSED 127.0.0.1:9). The server fetches it at runtime instead, and asks the backend's /init while it is unavailable. Set `C15T_ON_BUILD_ERROR=fail` (or `onBuildError: 'fail'`) to stop the build on this error."
+			"could not fetch the consent manifest from https://consent.example.com/manifest during the build (fetch failed: connect ECONNREFUSED 127.0.0.1:9). The server fetches it at runtime instead, and asks the backend's /init while it is unavailable. Set `INTH_ON_BUILD_ERROR=fail` (or `onBuildError: 'fail'`) to stop the build on this error."
 		);
 	});
 
@@ -1073,7 +1113,7 @@ describe('build-time manifest policy', () => {
 		const fetch = vi.fn<typeof globalThis.fetch>().mockRejectedValue(refused());
 		const { error, root } = await write({ fetch, onBuildError: 'fail' });
 		expect(error?.message).toBe(
-			"test/build: could not fetch the consent manifest from https://consent.example.com/manifest during the build (fetch failed: connect ECONNREFUSED 127.0.0.1:9). Set `C15T_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
+			"test/build: could not fetch the consent manifest from https://consent.example.com/manifest during the build (fetch failed: connect ECONNREFUSED 127.0.0.1:9). Set `INTH_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
 		);
 		await expect(
 			stat(join(root, MANIFEST_CACHE_DIR, 'manifest.js'))
@@ -1085,7 +1125,7 @@ describe('build-time manifest policy', () => {
 		const { logger, source } = await write({ fetch }, 'dev');
 		expect(source).toContain(STUB);
 		expect(logger.warn).toHaveBeenCalledWith(
-			"could not fetch the consent manifest from https://consent.example.com/manifest during dev (fetch failed: connect ECONNREFUSED 127.0.0.1:9). The server fetches it at runtime instead, and asks the backend's /init while it is unavailable. Set `C15T_ON_BUILD_ERROR=fail` (or `onBuildError: 'fail'`) to stop the build on this error."
+			"could not fetch the consent manifest from https://consent.example.com/manifest during dev (fetch failed: connect ECONNREFUSED 127.0.0.1:9). The server fetches it at runtime instead, and asks the backend's /init while it is unavailable. Set `INTH_ON_BUILD_ERROR=fail` (or `onBuildError: 'fail'`) to stop the build on this error."
 		);
 	});
 
@@ -1108,7 +1148,25 @@ describe('build-time manifest policy', () => {
 		expect(error?.message).toContain('during dev (backend unavailable)');
 	});
 
-	test("C15T_ON_BUILD_ERROR=runtime overrides onBuildError: 'fail'", async () => {
+	test("INTH_ON_BUILD_ERROR=runtime overrides onBuildError: 'fail'", async () => {
+		vi.stubEnv('INTH_ON_BUILD_ERROR', 'runtime');
+		const fetch = vi
+			.fn<typeof globalThis.fetch>()
+			.mockRejectedValue(new Error('backend unavailable'));
+		const { source } = await write({ fetch, onBuildError: 'fail' });
+		expect(source).toContain(STUB);
+	});
+
+	test("INTH_ON_BUILD_ERROR=fail overrides onBuildError: 'runtime'", async () => {
+		vi.stubEnv('INTH_ON_BUILD_ERROR', 'fail');
+		const fetch = vi
+			.fn<typeof globalThis.fetch>()
+			.mockRejectedValue(new Error('backend unavailable'));
+		const { error } = await write({ fetch, onBuildError: 'runtime' }, 'dev');
+		expect(error?.message).toContain('backend unavailable');
+	});
+
+	test('reads C15T_ON_BUILD_ERROR when INTH_ON_BUILD_ERROR is unset', async () => {
 		vi.stubEnv('C15T_ON_BUILD_ERROR', 'runtime');
 		const fetch = vi
 			.fn<typeof globalThis.fetch>()
@@ -1117,20 +1175,44 @@ describe('build-time manifest policy', () => {
 		expect(source).toContain(STUB);
 	});
 
-	test("C15T_ON_BUILD_ERROR=fail overrides onBuildError: 'runtime'", async () => {
-		vi.stubEnv('C15T_ON_BUILD_ERROR', 'fail');
+	test('INTH_ON_BUILD_ERROR wins over C15T_ON_BUILD_ERROR', async () => {
+		vi.stubEnv('C15T_ON_BUILD_ERROR', 'runtime');
+		vi.stubEnv('INTH_ON_BUILD_ERROR', 'fail');
 		const fetch = vi
 			.fn<typeof globalThis.fetch>()
 			.mockRejectedValue(new Error('backend unavailable'));
-		const { error } = await write({ fetch, onBuildError: 'runtime' }, 'dev');
+		const { error } = await write({ fetch });
 		expect(error?.message).toContain('backend unavailable');
 	});
 
-	test('rejects an unknown C15T_ON_BUILD_ERROR or onBuildError', async () => {
+	test('reads INTH_ON_BUILD_ERROR from a .env file', async () => {
+		const root = await createRoot();
+		await writeFile(join(root, '.env'), 'INTH_ON_BUILD_ERROR=fail\n');
+		const fetch = vi
+			.fn<typeof globalThis.fetch>()
+			.mockRejectedValue(new Error('backend unavailable'));
+		await expect(
+			writeManifestCacheModule(
+				{ ...optionsFor(root), fetch },
+				defaultsFor(root, 'dev'),
+				createLogger()
+			)
+		).rejects.toThrow('backend unavailable');
+	});
+
+	test('names C15T_ON_BUILD_ERROR when its value is unknown', async () => {
 		vi.stubEnv('C15T_ON_BUILD_ERROR', 'warn');
+		const { error } = await write();
+		expect(error?.message).toContain(
+			"C15T_ON_BUILD_ERROR must be 'runtime' or 'fail'"
+		);
+	});
+
+	test('rejects an unknown INTH_ON_BUILD_ERROR or onBuildError', async () => {
+		vi.stubEnv('INTH_ON_BUILD_ERROR', 'warn');
 		const fromEnv = await write();
 		expect(fromEnv.error?.message).toContain(
-			"C15T_ON_BUILD_ERROR must be 'runtime' or 'fail'"
+			"INTH_ON_BUILD_ERROR must be 'runtime' or 'fail'"
 		);
 		expect(fromEnv.options.fetch).not.toHaveBeenCalled();
 		vi.unstubAllEnvs();
@@ -1140,7 +1222,7 @@ describe('build-time manifest policy', () => {
 		);
 	});
 
-	test.each(['/api/c15t', 'file:///backend'])(
+	test.each(['/api/inth', 'file:///backend'])(
 		'skips the fetch in a production build for projectUrl %j',
 		async (projectUrl) => {
 			const { logger, options, source } = await write({ projectUrl });
@@ -1160,7 +1242,7 @@ describe('build-time manifest policy', () => {
 				projectUrl,
 			});
 			expect(error?.message).toBe(
-				"test/build: no backend URL is set, so the build cannot fetch the consent manifest. Pass projectUrl or set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL). Set `C15T_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to build without a snapshot."
+				"test/build: no backend URL is set, so the build cannot fetch the consent manifest. Pass projectUrl or set VITE_INTH_PROJECT_URL. Set `INTH_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to build without a snapshot."
 			);
 			expect(options.fetch).not.toHaveBeenCalled();
 		}
@@ -1175,7 +1257,7 @@ describe('build-time manifest policy', () => {
 			);
 			expect(source).toContain(STUB);
 			expect(logger.warn).toHaveBeenCalledWith(
-				`no backend URL is set, so ${command === 'build' ? 'the build' : 'dev'} cannot fetch the consent manifest. Pass projectUrl or set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL). The server fetches it at runtime, or asks the backend's /init.`
+				`no backend URL is set, so ${command === 'build' ? 'the build' : 'dev'} cannot fetch the consent manifest. Pass projectUrl or set VITE_INTH_PROJECT_URL. The server fetches it at runtime, or asks the backend's /init.`
 			);
 		}
 	);
@@ -1188,17 +1270,17 @@ describe('build-time manifest policy', () => {
 		expect(source).toContain(STUB);
 		expect(logger.warn).not.toHaveBeenCalled();
 		expect(logger.info).toHaveBeenCalledWith(
-			'skipped the consent manifest fetch because no backend URL is set. Pass projectUrl or set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL).'
+			'skipped the consent manifest fetch because no backend URL is set. Pass projectUrl or set VITE_INTH_PROJECT_URL.'
 		);
 	});
 
 	test("rejects a relative projectUrl with onBuildError: 'fail'", async () => {
 		const { error, options } = await write({
 			onBuildError: 'fail',
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 		expect(error?.message).toContain(
-			'build-time manifests require an absolute upstream URL. Pass projectUrl or set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL).'
+			'build-time manifests require an absolute upstream URL. Pass projectUrl or set VITE_INTH_PROJECT_URL.'
 		);
 		expect(options.fetch).not.toHaveBeenCalled();
 	});
@@ -1245,7 +1327,7 @@ describe('framework build snapshot', () => {
 		);
 	});
 
-	test.each(['/api/c15t/manifest', 'file:///manifest.json', ''])(
+	test.each(['/api/inth/manifest', 'file:///manifest.json', ''])(
 		'rejects a source the build cannot fetch: %s',
 		(manifestUrl) => {
 			expect(() => loadBuildManifest({ manifestUrl }, 'test/build')).toThrow(
@@ -1377,33 +1459,43 @@ describe('build snapshot validation', () => {
 });
 
 describe('readBuildEnv', () => {
-	test('an earlier name in a .env file beats a later one in the environment', async () => {
+	test('reads the c15t name when the Inth name is unset', () => {
+		vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', 'https://inth.example.com');
+		expect(readBuildEnvEntry(['NEXT_PUBLIC_INTH_PROJECT_URL'])).toEqual({
+			name: 'NEXT_PUBLIC_C15T_BACKEND_URL',
+			value: 'https://inth.example.com',
+		});
+	});
+
+	test('the Inth name in a .env file beats the c15t name in the environment', async () => {
 		const root = await createRoot();
 		await writeFile(
 			join(root, '.env'),
-			'NEXT_PUBLIC_C15T_BACKEND_URL=https://c15t.example.com\n'
+			'NEXT_PUBLIC_INTH_PROJECT_URL=https://inth.example.com\n'
 		);
-		vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', 'https://inth.example.com');
+		vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', 'https://inth.example.com');
+		expect(readBuildEnv(['NEXT_PUBLIC_INTH_PROJECT_URL'], { root })).toBe(
+			'https://inth.example.com'
+		);
+	});
+
+	test('reads every Inth name before any c15t name', () => {
+		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://inth.example.com');
+		vi.stubEnv('VITE_INTH_PROJECT_URL', 'https://inth.example.com');
 		expect(
-			readBuildEnv(
-				['NEXT_PUBLIC_C15T_BACKEND_URL', 'NEXT_PUBLIC_INTH_PROJECT_URL'],
-				{ root }
-			)
-		).toBe('https://c15t.example.com');
+			readBuildEnv(['PUBLIC_INTH_PROJECT_URL', 'VITE_INTH_PROJECT_URL'])
+		).toBe('https://inth.example.com');
 	});
 
 	test('an empty value counts as unset', async () => {
 		const root = await createRoot();
 		await writeFile(
 			join(root, '.env'),
-			'NEXT_PUBLIC_C15T_BACKEND_URL=\nNEXT_PUBLIC_INTH_PROJECT_URL=https://inth.example.com\n'
+			'NEXT_PUBLIC_INTH_PROJECT_URL=\nNEXT_PUBLIC_C15T_BACKEND_URL=https://inth.example.com\n'
 		);
-		expect(
-			readBuildEnv(
-				['NEXT_PUBLIC_C15T_BACKEND_URL', 'NEXT_PUBLIC_INTH_PROJECT_URL'],
-				{ root }
-			)
-		).toBe('https://inth.example.com');
+		expect(readBuildEnv(['NEXT_PUBLIC_INTH_PROJECT_URL'], { root })).toBe(
+			'https://inth.example.com'
+		);
 	});
 });
 
@@ -1417,8 +1509,8 @@ describe('readBuildEnv quoting', () => {
 		['https://api.example'],
 	])('reads %s as the bare URL', async (value) => {
 		const root = await createRoot();
-		await writeFile(join(root, '.env'), `PUBLIC_C15T_BACKEND_URL=${value}\n`);
-		expect(readBuildEnv(['PUBLIC_C15T_BACKEND_URL'], { root })).toBe(
+		await writeFile(join(root, '.env'), `PUBLIC_INTH_PROJECT_URL=${value}\n`);
+		expect(readBuildEnv(['PUBLIC_INTH_PROJECT_URL'], { root })).toBe(
 			'https://api.example'
 		);
 	});
@@ -1431,44 +1523,50 @@ describe('readBuildEnv expansion', () => {
 	test.each([
 		[ref('BASE'), 'https://api.example'],
 		['$BASE', 'https://api.example'],
-		[`${ref('BASE')}/c15t`, 'https://api.example/c15t'],
+		[`${ref('BASE')}/inth`, 'https://api.example/inth'],
 		['\\$BASE', '$BASE'],
 	])('expands %s from another .env line', async (value, expected) => {
 		const root = await createRoot();
 		await writeFile(
 			join(root, '.env'),
-			`BASE=https://api.example\nPUBLIC_C15T_BACKEND_URL=${value}\n`
+			`BASE=https://api.example\nPUBLIC_INTH_PROJECT_URL=${value}\n`
 		);
-		expect(readBuildEnv(['PUBLIC_C15T_BACKEND_URL'], { root })).toBe(expected);
+		expect(readBuildEnv(['PUBLIC_INTH_PROJECT_URL'], { root })).toBe(expected);
+	});
+
+	test('an Inth name that expands to nothing falls through to the c15t name', async () => {
+		const root = await createRoot();
+		await writeFile(
+			join(root, '.env'),
+			`PUBLIC_INTH_PROJECT_URL=${ref('UNSET_BASE')}\nPUBLIC_C15T_BACKEND_URL=https://c15t.example\n`
+		);
+		expect(readBuildEnv(['PUBLIC_INTH_PROJECT_URL'], { root })).toBe(
+			'https://c15t.example'
+		);
 	});
 
 	test('reads a reference from the process environment first', async () => {
 		const root = await createRoot();
 		await writeFile(
 			join(root, '.env'),
-			`BASE=https://file.example\nPUBLIC_C15T_BACKEND_URL=${ref('BASE')}\n`
+			`BASE=https://file.example\nPUBLIC_INTH_PROJECT_URL=${ref('BASE')}\n`
 		);
 		vi.stubEnv('BASE', 'https://process.example');
-		expect(readBuildEnv(['PUBLIC_C15T_BACKEND_URL'], { root })).toBe(
+		expect(readBuildEnv(['PUBLIC_INTH_PROJECT_URL'], { root })).toBe(
 			'https://process.example'
 		);
 	});
 });
 
-describe('formatEnvNames', () => {
-	test('puts the Inth names in parentheses', () => {
-		expect(
-			formatEnvNames([
-				'PUBLIC_C15T_BACKEND_URL',
-				'VITE_C15T_BACKEND_URL',
-				'PUBLIC_INTH_PROJECT_URL',
-				'VITE_INTH_PROJECT_URL',
-			])
-		).toBe(
-			'PUBLIC_C15T_BACKEND_URL or VITE_C15T_BACKEND_URL (or PUBLIC_INTH_PROJECT_URL or VITE_INTH_PROJECT_URL)'
-		);
-		expect(formatEnvNames(['VITE_C15T_BACKEND_URL'])).toBe(
-			'VITE_C15T_BACKEND_URL'
-		);
+describe('legacyEnvName', () => {
+	test.each([
+		['INTH_PROJECT_URL', 'C15T_BACKEND_URL'],
+		['NUXT_INTH_PROJECT_URL', 'NUXT_C15T_BACKEND_URL'],
+		['NEXT_PUBLIC_INTH_PROJECT_URL', 'NEXT_PUBLIC_C15T_BACKEND_URL'],
+		['INTH_ON_BUILD_ERROR', 'C15T_ON_BUILD_ERROR'],
+		['XINTH_PROJECT_URL', undefined],
+		['VITE_API_URL', undefined],
+	])('maps %s to %s', (name, legacy) => {
+		expect(legacyEnvName(name)).toBe(legacy);
 	});
 });

@@ -29,10 +29,10 @@ import {
 } from '../runtime/utils/symbols';
 import type { RuntimeConsentConfig } from './test-kernel';
 import { createVueConsentKernelContext } from './test-kernel';
-import { c15tVue } from './test-plugin';
+import { inthVue } from './test-plugin';
 
 const initFixture: InitOutput = {
-	branding: 'c15t',
+	branding: 'inth',
 	location: { countryCode: 'DE', regionCode: null },
 	policyResolution: writePolicyResolutionWire(
 		resolvePolicyRules({
@@ -55,7 +55,7 @@ const initFixture: InitOutput = {
 		language: 'en',
 		translations: {
 			cookieBanner: {
-				description: 'Pick how c15t may use cookies.',
+				description: 'Pick how Inth may use cookies.',
 				title: 'Cookie choices',
 			},
 		},
@@ -117,7 +117,7 @@ describe.each([
 	test('renders the banner and, after mount, the lazy dialog trigger', async () => {
 		const wrapper = mount(Root, {
 			attachTo: document.body,
-			global: { plugins: [[c15tVue, config]] },
+			global: { plugins: [[inthVue, config]] },
 		});
 		try {
 			expect(await waitFor(banner)).toBeTruthy();

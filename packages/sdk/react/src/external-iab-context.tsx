@@ -76,7 +76,6 @@ const createActionQueue = (runtime: ConsentRuntime) => {
 /**
  * Publish an externally owned runtime's CMP into React context.
  *
- * @param props - The owning runtime and the tree to render.
  * @returns The children, wrapped in the IAB context.
  */
 export const ExternalIABProvider = ({

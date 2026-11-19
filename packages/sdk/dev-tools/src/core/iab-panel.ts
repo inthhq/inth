@@ -1,5 +1,7 @@
 import { getIABControls } from '@inth/sdk-core';
 import type { ConsentKernel, KernelIABControls } from '@inth/sdk-core';
+import { isLegitimateInterestAllowed } from '@inth/sdk-core/iab-support';
+import { permittedLegitimateInterestPurposes } from '@inth/sdk-schema/types';
 
 import type { RunAction } from './action-runner';
 import {
@@ -29,18 +31,6 @@ interface Choice {
 
 const PAGE_SIZE = 20;
 
-/**
- * Purposes TCF Policies Appendix A allows only with consent. A custom vendor
- * may still declare them for legitimate interest, so the panel must not
- * offer that switch. Mirrors `CONSENT_ONLY_PURPOSES` in `@inth/sdk/iab`.
- */
-const CONSENT_ONLY_PURPOSES: readonly number[] = [1, 3, 4, 5, 6];
-
-const permittedLegitimateInterest = (
-	purposeIds: readonly number[] | undefined
-): number[] =>
-	(purposeIds ?? []).filter((id) => !CONSENT_ONLY_PURPOSES.includes(id));
-
 const createSwitch = (
 	document: Document,
 	label: string,
@@ -49,7 +39,7 @@ const createSwitch = (
 	disabled: boolean,
 	onChange: (value: boolean) => void
 ): HTMLElement => {
-	const row = createElement(document, 'label', 'c15t-dev-tools__check');
+	const row = createElement(document, 'label', 'inth-dev-tools__check');
 	const input = createElement(document, 'input');
 	input.type = 'checkbox';
 	input.setAttribute('role', 'switch');
@@ -97,12 +87,12 @@ export const renderIABPanel = (
 			createElement(
 				document,
 				'p',
-				'c15t-dev-tools__muted',
+				'inth-dev-tools__muted',
 				'Read-only: waiting for this provider’s IAB module.'
 			)
 		);
 	}
-	const actions = createElement(document, 'div', 'c15t-dev-tools__actions');
+	const actions = createElement(document, 'div', 'inth-dev-tools__actions');
 	const save = createButton(
 		document,
 		'Save IAB consent',
@@ -132,7 +122,7 @@ export const renderIABPanel = (
 		state.search
 	);
 	filter.input.type = 'search';
-	const groupField = createElement(document, 'label', 'c15t-dev-tools__field');
+	const groupField = createElement(document, 'label', 'inth-dev-tools__field');
 	const group = createElement(document, 'select');
 	group.dataset.focusKey = 'iab:group';
 	for (const [value, label] of [
@@ -149,7 +139,7 @@ export const renderIABPanel = (
 		createElement(document, 'span', undefined, 'IAB view'),
 		group
 	);
-	const list = createElement(document, 'div', 'c15t-dev-tools__iab-list');
+	const list = createElement(document, 'div', 'inth-dev-tools__iab-list');
 	const selections = createSection(document, 'Choices');
 	selections.append(groupField, filter.field, list);
 	container.append(selections);
@@ -169,9 +159,10 @@ export const renderIABPanel = (
 					: undefined,
 				custom: vendor.custom,
 				id: vendor.id,
-				legitimateInterest: permittedLegitimateInterest(vendor.legIntPurposes)
-					.length
-					? (iab.vendorLegitimateInterests[String(vendor.id)] ?? false)
+				legitimateInterest: permittedLegitimateInterestPurposes(
+					vendor.legIntPurposes
+				).length
+					? isLegitimateInterestAllowed(iab, 'vendor', vendor.id)
 					: undefined,
 				name: vendor.name,
 				setConsent: (api, value) => api.setVendorConsent(vendor.id, value),
@@ -192,9 +183,11 @@ export const renderIABPanel = (
 			consent: iab.purposeConsents[purpose.id] ?? false,
 			id: purpose.id,
 			legitimateInterest: vendors.some((vendor) =>
-				permittedLegitimateInterest(vendor.legIntPurposes).includes(purpose.id)
+				permittedLegitimateInterestPurposes(vendor.legIntPurposes).includes(
+					purpose.id
+				)
 			)
-				? (iab.purposeLegitimateInterests[purpose.id] ?? false)
+				? isLegitimateInterestAllowed(iab, 'purpose', purpose.id)
 				: undefined,
 			name: purpose.name,
 			setConsent: (api, value) => api.setPurposeConsent(purpose.id, value),
@@ -220,7 +213,7 @@ export const renderIABPanel = (
 				createElement(
 					document,
 					'p',
-					'c15t-dev-tools__empty',
+					'inth-dev-tools__empty',
 					query
 						? 'No IAB choices match your search.'
 						: 'No choices are configured in this group.'
@@ -232,12 +225,12 @@ export const renderIABPanel = (
 			createElement(
 				document,
 				'p',
-				'c15t-dev-tools__muted',
+				'inth-dev-tools__muted',
 				`${choices.filter((choice) => choice.consent).length} of ${choices.length} matching choices enabled`
 			)
 		);
 		for (const choice of choices.slice(offset, offset + PAGE_SIZE)) {
-			const item = createElement(document, 'div', 'c15t-dev-tools__iab-choice');
+			const item = createElement(document, 'div', 'inth-dev-tools__iab-choice');
 			item.append(
 				createElement(
 					document,
@@ -251,7 +244,7 @@ export const renderIABPanel = (
 					createElement(
 						document,
 						'span',
-						'c15t-dev-tools__badge',
+						'inth-dev-tools__badge',
 						'Custom vendor'
 					)
 				);
@@ -295,7 +288,7 @@ export const renderIABPanel = (
 			const pagination = createElement(
 				document,
 				'div',
-				'c15t-dev-tools__actions'
+				'inth-dev-tools__actions'
 			);
 			const previous = createButton(document, 'Previous IAB page', () => {
 				state.page -= 1;
@@ -343,7 +336,7 @@ export const renderIABPanel = (
 		createElement(
 			document,
 			'p',
-			'c15t-dev-tools__muted',
+			'inth-dev-tools__muted',
 			'Last generated string. Unsaved edits are not reflected here.'
 		)
 	);
@@ -372,16 +365,16 @@ export const renderIABPanel = (
 			createElement(
 				document,
 				'p',
-				'c15t-dev-tools__empty',
+				'inth-dev-tools__empty',
 				'No TC string generated yet. Save IAB consent to generate one.'
 			)
 		);
 	}
-	const raw = createElement(document, 'details', 'c15t-dev-tools__script');
+	const raw = createElement(document, 'details', 'inth-dev-tools__script');
 	const rawContent = createElement(
 		document,
 		'div',
-		'c15t-dev-tools__script-body'
+		'inth-dev-tools__script-body'
 	);
 	const updateRaw = (): void => {
 		rawContent.replaceChildren(
@@ -399,7 +392,7 @@ export const renderIABPanel = (
 		createElement(
 			document,
 			'summary',
-			'c15t-dev-tools__script-summary',
+			'inth-dev-tools__script-summary',
 			'Raw IAB state'
 		),
 		rawContent

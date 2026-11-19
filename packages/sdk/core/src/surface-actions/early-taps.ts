@@ -19,13 +19,16 @@
  */
 
 import type { AllConsentNames } from '../consent/consent-types';
-import type { ConsentKernel, ConsentSnapshot, SaveUISource } from '../types';
 import {
 	EARLY_TAP_ROOT,
 	EARLY_TAP_STYLE_ID,
 	EARLY_TAPS_WINDOW_KEY,
-} from './early-tap-script';
-import type { EarlyConsentTap, EarlyConsentTapQueue } from './early-tap-script';
+} from '../libs/page-globals';
+import type {
+	EarlyConsentTap,
+	EarlyConsentTapQueue,
+} from '../libs/page-globals';
+import type { ConsentKernel, ConsentSnapshot, SaveUISource } from '../types';
 import { showConsentSurface } from './rules';
 import { saveConsentSurface } from './save';
 

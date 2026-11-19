@@ -4,7 +4,7 @@
 import type { KernelHosting } from '../../types';
 
 /**
- * The transport kind reported on `window.c15t`. Reflects what the
+ * The transport kind reported on `window.__inthDebug`. Reflects what the
  * adapter actually built.
  */
 export type WindowDebugMode = 'hosted' | 'offline' | 'manifest' | 'custom';
@@ -19,7 +19,7 @@ export interface WindowDebugOptions {
 	mode: WindowDebugMode;
 	/**
 	 * Reads who runs the backend, from the kernel snapshot. Called on each
-	 * read of `window.c15t.hosting`, because `/init` answers after install.
+	 * read of `window.__inthDebug.hosting`, because `/init` answers after install.
 	 */
 	getHosting?: () => KernelHosting | null;
 }
@@ -29,7 +29,7 @@ export interface WindowDebugOptions {
  */
 export interface WindowDebugHandle {
 	/**
-	 * Removes `window.c15t` — only when it is still the exact object this
+	 * Removes `window.__inthDebug` — only when it is still the exact object this
 	 * handle installed, so an unmounting older provider cannot clobber a
 	 * newer provider's debug object.
 	 */
@@ -37,12 +37,12 @@ export interface WindowDebugHandle {
 }
 
 /**
- * The frozen object installed at `window.c15t`. Public, read-only
- * metadata for debugging and for detecting c15t on a page — never the
+ * The frozen object installed at `window.__inthDebug`. Public, read-only
+ * metadata for debugging and for detecting Inth on a page — never the
  * store, consent state, or backend configuration.
  */
-export interface C15tWindowDebug {
-	/** The `c15t` core package version. */
+export interface InthWindowDebug {
+	/** The `inth` core package version. */
 	readonly version: string;
 	/** The installed adapter package name, e.g. `@inth/nextjs`. */
 	readonly pkg: string;

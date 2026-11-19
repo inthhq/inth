@@ -21,8 +21,8 @@ const renderWithDevTools = function renderWithDevTools(trigger: ReactNode) {
 /** DevTools root inside its shadow host. */
 const devToolsRoot = function devToolsRoot(): HTMLElement {
 	const root = document
-		.querySelector('[data-c15t-dev-tools-host]')
-		?.shadowRoot?.querySelector<HTMLElement>('[data-c15t-dev-tools]');
+		.querySelector('[data-inth-dev-tools-host]')
+		?.shadowRoot?.querySelector<HTMLElement>('[data-inth-dev-tools]');
 	if (!root) {
 		throw new Error('Expected DevTools to be mounted');
 	}
@@ -32,11 +32,11 @@ const devToolsRoot = function devToolsRoot(): HTMLElement {
 const devToolsItem = async function devToolsItem(): Promise<HTMLButtonElement> {
 	await vi.waitFor(() => {
 		expect(
-			document.querySelector('[data-c15t-trigger-action="devtools"]')
+			document.querySelector('[data-inth-trigger-action="devtools"]')
 		).toBeInTheDocument();
 	});
 	return document.querySelector<HTMLButtonElement>(
-		'[data-c15t-trigger-action="devtools"]'
+		'[data-inth-trigger-action="devtools"]'
 	) as HTMLButtonElement;
 };
 
@@ -45,7 +45,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-	for (const host of document.querySelectorAll('[data-c15t-dev-tools-host]')) {
+	for (const host of document.querySelectorAll('[data-inth-dev-tools-host]')) {
 		host.remove();
 	}
 });
@@ -72,17 +72,17 @@ describe('DevTools launcher in the consent trigger', () => {
 
 		// Bottom-right: the DevTools item sits farthest from the corner.
 		const actions = [...toolbar.querySelectorAll('button')].map(
-			(button) => button.dataset.c15tTriggerAction
+			(button) => button.dataset.inthTriggerAction
 		);
 		expect(actions).toEqual(['devtools', 'custom', 'preferences']);
 
 		const root = devToolsRoot();
 		await vi.waitFor(() => {
-			expect(root.classList).toContain('c15t-dev-tools--docked');
+			expect(root.classList).toContain('inth-dev-tools--docked');
 		});
 		const toolbarTop = toolbar.getBoundingClientRect().top;
 		const block = Number.parseFloat(
-			root.style.getPropertyValue('--c15t-dev-tools-dock-block')
+			root.style.getPropertyValue('--inth-dev-tools-dock-block')
 		);
 		expect(document.documentElement.clientHeight - block).toBeLessThan(
 			toolbarTop
@@ -93,7 +93,7 @@ describe('DevTools launcher in the consent trigger', () => {
 		await vi.waitFor(() => {
 			expect(item).toHaveAttribute('aria-expanded', 'true');
 		});
-		const panel = root.querySelector<HTMLElement>('.c15t-dev-tools__panel');
+		const panel = root.querySelector<HTMLElement>('.inth-dev-tools__panel');
 		expect(panel?.hidden).toBe(false);
 		const panelRect = panel?.getBoundingClientRect();
 		const toolbarRect = toolbar.getBoundingClientRect();
@@ -119,7 +119,7 @@ describe('DevTools launcher in the consent trigger', () => {
 		await devToolsItem();
 		expect(
 			document.querySelector(
-				'[data-c15t-trigger-action="preferences"][aria-label="Open privacy settings"]'
+				'[data-inth-trigger-action="preferences"][aria-label="Open privacy settings"]'
 			)
 		).toBeInTheDocument();
 	});
@@ -128,7 +128,7 @@ describe('DevTools launcher in the consent trigger', () => {
 		const screen = await renderWithDevTools(<ConsentDialogTriggerToolbar />);
 		await devToolsItem();
 		await vi.waitFor(() => {
-			expect(devToolsRoot().classList).toContain('c15t-dev-tools--docked');
+			expect(devToolsRoot().classList).toContain('inth-dev-tools--docked');
 		});
 
 		await screen.rerender(
@@ -137,7 +137,7 @@ describe('DevTools launcher in the consent trigger', () => {
 			</ComponentFixtureProvider>
 		);
 		await vi.waitFor(() => {
-			expect(devToolsRoot().classList).not.toContain('c15t-dev-tools--docked');
+			expect(devToolsRoot().classList).not.toContain('inth-dev-tools--docked');
 		});
 	});
 });

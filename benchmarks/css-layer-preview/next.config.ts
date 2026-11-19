@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next';
 
 const transpilePackages = [
-	'@c15t/benchmarking',
+	'@inth/benchmarking',
 	'@inth/react',
 	'@inth/nextjs',
 	'@inth/sdk',

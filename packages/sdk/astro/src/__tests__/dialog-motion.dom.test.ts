@@ -17,7 +17,7 @@ import type { AstroConsentClient } from '../client';
 import * as vuePanelSurface from '../components/islands/panel-surface.vue';
 import { resolveOptions } from '../integration';
 import { testing as testingMode } from '../testing';
-import type { C15tAstroOptions } from '../types';
+import type { InthAstroOptions } from '../types';
 import {
 	registerDialogAdapter,
 	registerDialogSurface,
@@ -55,7 +55,7 @@ afterEach(async () => {
 		await step();
 	}
 	resetDialogRegistriesForTest();
-	(window as unknown as Record<string, unknown>).__c15tAstroConfig = undefined;
+	(window as unknown as Record<string, unknown>).__inthAstroConfig = undefined;
 	localStorage.clear();
 });
 
@@ -70,7 +70,7 @@ const renderDialogHost = function renderDialogHost(
 	disableAnimation: 'true' | 'false' | undefined
 ): void {
 	const host = document.createElement('div');
-	host.setAttribute('data-c15t-dialog-host', 'preferences');
+	host.setAttribute('data-inth-dialog-host', 'preferences');
 	if (disableAnimation !== undefined) {
 		host.setAttribute('data-disable-animation', disableAnimation);
 	}
@@ -79,7 +79,7 @@ const renderDialogHost = function renderDialogHost(
 };
 
 const bootClient = function bootClient(
-	options: Partial<C15tAstroOptions>
+	options: Partial<InthAstroOptions>
 ): AstroConsentClient {
 	const client = boot(
 		resolveOptions({
@@ -91,14 +91,14 @@ const bootClient = function bootClient(
 	);
 	cleanup.push(() => {
 		client.dispose();
-		document.getElementById('c15t-dialog-host')?.remove();
+		document.getElementById('inth-dialog-host')?.remove();
 	});
 	return client;
 };
 
 /** Open the dialog through a stand-in adapter and return what it got. */
 const openWithRecordingAdapter = async function openWithRecordingAdapter(
-	options: Partial<C15tAstroOptions>
+	options: Partial<InthAstroOptions>
 ): Promise<ConsentDialogContext> {
 	const mount = vi.fn((_context: ConsentDialogContext) =>
 		Promise.resolve({ close: () => undefined, destroy: () => undefined })

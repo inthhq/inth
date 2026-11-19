@@ -7,7 +7,7 @@ import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMeasurementConsents,
 	loadScripts,
 	registerVendorContractCleanup,
@@ -15,7 +15,7 @@ import {
 } from './e2e-test-utils';
 import { optimizelyWeb } from './vendors/functional/optimizely';
 
-const grantedExperienceConsents = { ...deniedConsents, experience: true };
+const grantedExperienceConsents = { ...ALL_DENIED, experience: true };
 const LOADER_SRC = 'https://cdn.optimizely.com/js/12345678.js';
 
 const getLoaders = function getLoaders(): HTMLScriptElement[] {
@@ -47,7 +47,7 @@ describe('Optimizely Web loader contract', () => {
 		const writeCookie = vi.spyOn(document, 'cookie', 'set');
 		const scripts = [optimizelyWeb({ projectId: '12345678' })];
 
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMeasurementConsents);
 
 		expect(append).not.toHaveBeenCalled();
@@ -93,9 +93,7 @@ describe('Optimizely Web loader contract', () => {
 		window.optimizely = api;
 		element.dispatchEvent(new Event('load'));
 
-		expect(updateScripts(scripts, deniedConsents).unloaded).toEqual([
-			'optimizely',
-		]);
+		expect(updateScripts(scripts, ALL_DENIED).unloaded).toEqual(['optimizely']);
 		expect(element.isConnected).toBe(false);
 		expect(getLoaders()).toHaveLength(0);
 		expect(window.optimizely).toBe(api);
@@ -106,7 +104,7 @@ describe('Optimizely Web loader contract', () => {
 		const scripts = [optimizelyWeb({ projectId: '12345678' })];
 		loadScripts(scripts, grantedExperienceConsents);
 		const revoked = getLoader();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		const api = { push: vi.fn() };
 		window.optimizely = api;
 		revoked.dispatchEvent(new Event('load'));
@@ -172,7 +170,7 @@ describe('Optimizely Web loader contract', () => {
 				(element) => element.src === scriptSrc
 			);
 		try {
-			await kernel.commands.save(deniedConsents);
+			await kernel.commands.save(ALL_DENIED);
 			await kernel.commands.save(grantedExperienceConsents);
 			expect(findLoaders()).toHaveLength(0);
 			expect(window.optimizely).toBeUndefined();
@@ -188,7 +186,7 @@ describe('Optimizely Web loader contract', () => {
 			await kernel.commands.save(grantedMeasurementConsents);
 			expect(findLoaders()).toEqual([pending]);
 
-			await kernel.commands.save(deniedConsents);
+			await kernel.commands.save(ALL_DENIED);
 			expect(findLoaders()).toHaveLength(0);
 			expect(pending?.isConnected).toBe(false);
 			pending?.dispatchEvent(new Event('load'));

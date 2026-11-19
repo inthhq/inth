@@ -850,7 +850,7 @@ export const buildProviderSnippet = function buildProviderSnippet(
 		? 'ConsentBanner, ConsentDialog, ConsentDialogTriggerToolbar, ConsentProvider'
 		: 'ConsentBanner, ConsentDialog, ConsentProvider';
 	const toolbarLine = options.toolbar
-		? '\n    <ConsentDialogTriggerToolbar showWhen="after-prompt" />'
+		? '\n    <ConsentDialogTriggerToolbar showWhen="after-consent" />'
 		: '';
 	const rulesBlock = recommended
 		? `${RECOMMENDED_PACK_COMMENT}\n`

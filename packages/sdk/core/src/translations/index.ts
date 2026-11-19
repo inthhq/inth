@@ -1,4 +1,5 @@
-import type { TranslationConfig, Translations } from '@inth/sdk-translations';
+import { primaryLanguage } from '@inth/sdk-schema/types';
+import type { Translations } from '@inth/sdk-translations';
 import {
 	deepMergeTranslations,
 	enTranslations,
@@ -8,13 +9,7 @@ import {
 
 import type { KernelTranslations } from '../types';
 
-export const defaultTranslationConfig: TranslationConfig = {
-	defaultLanguage: 'en',
-	disableAutoLanguageSwitch: false,
-	translations: {
-		en: enTranslations,
-	},
-};
+export { defaultTranslationConfig } from './defaults';
 
 /**
  * Message overrides an app declares in code, keyed by language, as in
@@ -25,33 +20,36 @@ export type TranslationOverrides = Readonly<
 >;
 
 /**
- * Pick the overrides declared for a language: an exact key first, then its
- * primary subtag (`de` for `de-AT`). An exact key set to `undefined` counts
- * as missing. Own keys only, so a language named `constructor` never reads
- * the prototype.
+ * The value `record` holds for a language: under the exact key first, then
+ * under its primary subtag (`de` for `de-AT`). An exact key set to
+ * `undefined` counts as missing. Own keys only, so a language named
+ * `constructor` never reads the prototype.
  *
- * @param overrides - Overrides keyed by language.
- * @param language - The language to look up.
- * @returns The overrides for that language, or `undefined`.
+ * @internal
  */
-export const selectTranslationOverride = function selectTranslationOverride(
+export const pickByLanguage = function pickByLanguage<Value>(
+	record: Readonly<Record<string, Value | undefined>>,
+	language: string
+): Value | undefined {
+	const exact = Object.hasOwn(record, language) ? record[language] : undefined;
+	if (exact) {
+		return exact;
+	}
+	const primary = primaryLanguage(language);
+	return primary && primary !== language && Object.hasOwn(record, primary)
+		? record[primary]
+		: undefined;
+};
+
+/** The overrides declared for a language, picked by {@link pickByLanguage}. */
+const selectTranslationOverride = function selectTranslationOverride(
 	overrides: TranslationOverrides | undefined,
 	language: string
 ): Partial<Translations> | undefined {
 	if (!overrides) {
 		return undefined;
 	}
-	const exact = Object.hasOwn(overrides, language)
-		? overrides[language]
-		: undefined;
-	if (exact) {
-		return exact;
-	}
-	const primary = language.split('-')[0]?.toLowerCase();
-	if (primary && primary !== language && Object.hasOwn(overrides, primary)) {
-		return overrides[primary];
-	}
-	return undefined;
+	return pickByLanguage(overrides, language);
 };
 
 type TranslationTree = Readonly<Record<string, unknown>>;
@@ -73,7 +71,7 @@ const sameLeaf = function sameLeaf(left: unknown, right: unknown): boolean {
 
 /**
  * The part of an override that should apply over `base`: every key that
- * differs from c15t's built-in copy, and every key `base` does not supply.
+ * differs from Inth's built-in copy, and every key `base` does not supply.
  * A key that repeats the built-in text yields to the base, so passing a
  * stock bundle to enable a language does not hide backend edits.
  */
@@ -109,7 +107,7 @@ const pickEffectiveOverride = function pickEffectiveOverride(
 const findStockTranslations = function findStockTranslations(
 	language: string
 ): Translations | undefined {
-	const primary = language.split('-')[0]?.toLowerCase();
+	const primary = primaryLanguage(language);
 	return (
 		getStockTranslations(language) ??
 		(primary ? getStockTranslations(primary) : undefined)
@@ -121,7 +119,7 @@ const findStockTranslations = function findStockTranslations(
  *
  * The resolved bundle (from a backend, a manifest, a prefetch or the bundled
  * defaults) is the base for its language. An app key replaces the base when
- * it differs from c15t's built-in copy for that language, or when the base
+ * it differs from Inth's built-in copy for that language, or when the base
  * does not supply it. A key equal to the built-in text leaves the base alone,
  * so an app passing a stock bundle to enable a language still shows backend
  * edits, while a genuine customization wins. Built-in copy is known for
@@ -129,8 +127,6 @@ const findStockTranslations = function findStockTranslations(
  * without it every app key counts as a customization. Overrides for other
  * languages are ignored: mixing languages is worse than showing the base.
  *
- * @param translations - The resolved translations for one language.
- * @param overrides - Message overrides keyed by language.
  * @returns The merged translations, or the input unchanged when no override
  * applies.
  * @example
@@ -187,7 +183,7 @@ export const applyTranslationOverrides = function applyTranslationOverrides(
 };
 
 /**
- * Resolve copy for a language from what the client has on hand: c15t's
+ * Resolve copy for a language from what the client has on hand: Inth's
  * built-in copy for it, the app's overrides for it, or both.
  *
  * Both fall back to the primary subtag, so `de-AT` uses German copy. English
@@ -200,8 +196,6 @@ export const applyTranslationOverrides = function applyTranslationOverrides(
  * `undefined`, so the caller keeps its current copy instead of labelling
  * another language's text with this one.
  *
- * @param language - The requested language.
- * @param overrides - Message overrides keyed by language.
  * @returns Translations for that language, or `undefined` when none exist.
  */
 export const resolveLocalTranslations = function resolveLocalTranslations(

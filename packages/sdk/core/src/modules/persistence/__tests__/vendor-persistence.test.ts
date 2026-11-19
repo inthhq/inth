@@ -15,15 +15,14 @@ import {
 	optInRule,
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../index';
+import { resolveStorageKeys } from '../../../libs/storage-keys';
 import { readRequestConsent } from '../../../server/request-consent';
-import { resolveRequestSubject } from '../../../server/request-subject';
 import type { HydrationRecords, KernelVendorsState } from '../../../types';
 import { watchRevocationReload } from '../../revocation-reload';
 import { createPersistence } from '../index';
 import {
 	readStoredNoticeDismissal,
 	readStoredVendorChoice,
-	resolveStorageKeys,
 } from '../record-storage';
 import {
 	encodeVendorChoiceCompact,
@@ -341,6 +340,47 @@ describe('vendor persistence', () => {
 		}
 	});
 
+	it('a seed from a newer c15t vendor cookie yields to an older Inth list only localStorage holds', () => {
+		writeStoredVendorChoice(
+			{ confirmedAt: NOW - 1000, denied: ['meta-pixel'], version: 1 },
+			undefined,
+			NOW
+		);
+		// The Inth cookie write was dropped; its localStorage copy landed.
+		document.cookie = `inth-vendors=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+		writeStoredVendorChoice(
+			{ confirmedAt: NOW - 1, denied: [], version: 1 },
+			{ storageKey: 'c15t' },
+			NOW
+		);
+		const { state } = readRequestConsent({
+			adapter: '@c15t/test',
+			now: NOW,
+			request: { cookie: document.cookie, headers: new Headers() },
+		});
+		expect(state.initialRecords?.vendorChoice?.denied).toEqual([]);
+		const kernel = createConsentKernel({
+			initialPolicyResolution: matchedResolution(
+				optInRule({ categories: ['marketing'] })
+			),
+			initialRecords: state.initialRecords,
+			initialVendors: vendors,
+			now: NOW,
+		});
+		const persistence = createPersistence({
+			kernel,
+			now: () => NOW,
+			skipHydration: true,
+		});
+
+		expect(kernel.getSnapshot().vendorChoice?.denied).toEqual(['meta-pixel']);
+		expect(readStoredVendorChoice(undefined, NOW)).toMatchObject({
+			record: { denied: ['meta-pixel'] },
+		});
+		persistence.dispose();
+		kernel.dispose();
+	});
+
 	it('clear() removes the stored record and the in-memory denials', async () => {
 		const kernel = createKernel();
 		const persistence = createPersistence({ kernel, now: () => NOW });
@@ -372,16 +412,12 @@ describe('vendor-only subject through a server render', () => {
 		return pair ? decodeURIComponent(pair.slice(name.length + 1)) : null;
 	};
 	const serverRender = () => {
-		const subject = resolveRequestSubject({
-			now: NOW,
-			request: { cookie: document.cookie, url: 'https://example.com/' },
-		});
 		const { state } = readRequestConsent({
 			adapter: '@c15t/test',
 			now: NOW,
-			request: { cookie: subject?.cookie, headers: new Headers() },
+			request: { cookie: document.cookie, headers: new Headers() },
 		});
-		return { initialRecords: state.initialRecords, subject };
+		return { initialRecords: state.initialRecords };
 	};
 	const seed = (initialRecords?: HydrationRecords) => {
 		const kernel = vendorOnlyKernel(initialRecords);
@@ -411,7 +447,7 @@ describe('vendor-only subject through a server render', () => {
 		const drop = vi
 			.spyOn(document, 'cookie', 'set')
 			.mockImplementation((value: string) => {
-				if (!value.startsWith('c15t-vendors=')) {
+				if (!value.startsWith('inth-vendors=')) {
 					setter?.call(document, value);
 				}
 			});
@@ -424,9 +460,8 @@ describe('vendor-only subject through a server render', () => {
 		handle.dispose();
 		kernel.dispose();
 
-		const { initialRecords, subject } = serverRender();
-		expect(subject?.subjectId).toBe(old);
-		expect(subject?.setCookie).toBeNull();
+		const { initialRecords } = serverRender();
+		expect(initialRecords?.subject?.subjectId).toBe(old);
 		const seeded = seed(initialRecords);
 		expect(seeded.kernel.getSnapshot().subject?.subjectId).toBe('sub_next');
 		expect(seeded.kernel.getSnapshot().vendorChoice?.denied).toEqual([
@@ -451,11 +486,10 @@ describe('vendor-only subject through a server render', () => {
 		}
 		handle.dispose();
 		kernel.dispose();
-		document.cookie = `c15t-vendors=${encodeVendorChoiceCompact({ ...record, subject: { subjectId: 'sub_sibling' } })}; path=/`;
+		document.cookie = `inth-vendors=${encodeVendorChoiceCompact({ ...record, subject: { subjectId: 'sub_sibling' } })}; path=/`;
 
-		const { initialRecords, subject } = serverRender();
-		expect(subject?.subjectId).toBe('sub_sibling');
-		expect(subject?.setCookie).toBeNull();
+		const { initialRecords } = serverRender();
+		expect(initialRecords?.subject?.subjectId).toBe('sub_sibling');
 		const seeded = seed(initialRecords);
 		const hydrating = vendorOnlyKernel();
 		const hydratingHandle = createPersistence({
@@ -468,7 +502,7 @@ describe('vendor-only subject through a server render', () => {
 		// Focus and a storage event read the records again. Neither moves the
 		// local ID.
 		window.dispatchEvent(new Event('focus'));
-		window.dispatchEvent(new StorageEvent('storage', { key: 'c15t-vendors' }));
+		window.dispatchEvent(new StorageEvent('storage', { key: 'inth-vendors' }));
 		await vi.runAllTimersAsync();
 		expect(seeded.kernel.getSnapshot().vendorChoice?.denied).toEqual([
 			'meta-pixel',
@@ -488,7 +522,7 @@ describe('vendor-only subject through a server render', () => {
 			false
 		);
 		expect(seeded.kernel.getSnapshot().vendorChoice?.denied).toEqual([]);
-		expect(serverRender().subject?.subjectId).toBe(local);
+		expect(serverRender().initialRecords?.subject?.subjectId).toBe(local);
 		expect(cookieValue('c15t-sid')).toBeNull();
 		seeded.handle.dispose();
 		seeded.kernel.dispose();

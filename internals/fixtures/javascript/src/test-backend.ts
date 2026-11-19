@@ -1,6 +1,6 @@
 // The acceptance suite points this app at a mock backend through
-// VITE_C15T_BACKEND_URL.
-const testProjectUrl = import.meta.env.VITE_C15T_BACKEND_URL;
+// VITE_INTH_PROJECT_URL.
+const testProjectUrl = import.meta.env.VITE_INTH_PROJECT_URL;
 
 /** Overrides the placeholder backend URL when the acceptance suite sets one. */
 export const testBackend = <Key extends string>(key: Key) =>

@@ -1,7 +1,7 @@
 {
 	"name": "@inth/angular",
 	"version": "3.2.0-canary.0",
-	"description": "Angular cookie consent banner for c15t, with a consent dialog and preference center. Standalone components, signals and zoneless change detection.",
+	"description": "Angular cookie consent banner for Inth, with a consent dialog and preference center. Standalone components, signals and zoneless change detection.",
 	"keywords": [
 		"angular",
 		"angular-cookie-consent",
@@ -27,14 +27,14 @@
 		"typescript",
 		"user-consent"
 	],
-	"homepage": "https://c15t.com/docs/frameworks/angular/quickstart",
+	"homepage": "https://inth.com",
 	"bugs": {
-		"url": "https://github.com/c15t/c15t/issues"
+		"url": "https://github.com/inthhq/inth/issues"
 	},
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/c15t/c15t.git",
+		"url": "git+https://github.com/inthhq/inth.git",
 		"directory": "packages/sdk/angular"
 	},
 	"files": [
@@ -157,10 +157,10 @@
 		"@angular/platform-server": "22.2.5",
 		"@angular/router": "22.2.5",
 		"@angular/ssr": "22.2.6",
-		"@c15t/conformance": "workspace:*",
-		"@c15t/typescript-config": "workspace:*",
-		"@c15t/vitest-config": "workspace:*",
+		"@inth/conformance": "workspace:*",
 		"@inth/integrations": "workspace:*",
+		"@inth/typescript-config": "workspace:*",
+		"@inth/vitest-config": "workspace:*",
 		"@schematics/angular": "22.2.6",
 		"@types/node": "25.5.0",
 		"@vitest/coverage-istanbul": "4.1.10",

@@ -74,7 +74,7 @@ const cases = subsets.map((granted) => {
 const fixture = {
 	cases,
 	description:
-		'Google Consent Mode v2: the c15t category that grants each consent type, and the signals the web sends for every combination of optional categories.',
+		'Google Consent Mode v2: the Inth category that grants each consent type, and the signals the web sends for every combination of optional categories.',
 	generatedBy: 'bun scripts/generate-google-consent-mode-fixture.ts',
 	mapping: GOOGLE_CONSENT_MODE_V2_DEFAULT_MAPPING,
 	oracle: 'packages/sdk/integrations/src/vendors/_shared/google-consent.ts',

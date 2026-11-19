@@ -7,7 +7,7 @@ import type { CSSVariables, ExtendThemeKeys } from '~/types/theme';
 export type ConsentButtonElement = ComponentRef<'button'>;
 
 /**
- * Props for CookieBanner button components.
+ * Props for the stock consent buttons.
  *
  * @public
  */
@@ -24,13 +24,8 @@ export interface ConsentButtonProps
 	/**
 	 * @remarks
 	 * When true, the button will render its children directly without wrapping them in a button element.
-	 * This enables better composition with custom button implementations.
 	 */
 	asChild?: boolean;
-	/**
-	 * @remarks
-	 * Allows for custom click handling.
-	 */
 	onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
 	/**
 	 * @remarks

@@ -1,9 +1,3 @@
-/**
- * IAB Preference Center E2E Tests
- *
- * Browser-based tests for IAB TCF 2.4 preference center.
- */
-
 import { userEvent } from '@vitest/browser/context';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -32,7 +26,6 @@ describe('IAB Preference Center E2E Tests', () => {
 
 		await waitForElement('[data-testid="iab-consent-dialog-root"]');
 
-		// Find tab buttons by their text content
 		const tabButtons = Array.from(
 			document.querySelectorAll(
 				'[data-testid="iab-consent-dialog-root"] button'
@@ -67,7 +60,6 @@ describe('IAB Preference Center E2E Tests', () => {
 			// brings the user agent's 1em padding with it.
 			expect(dialog.getAttribute('role')).toBe('dialog');
 
-			// Should have aria-label
 			expect(dialog.getAttribute('aria-label')).toBeTruthy();
 		});
 	});

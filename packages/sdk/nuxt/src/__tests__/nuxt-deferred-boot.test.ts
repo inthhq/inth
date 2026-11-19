@@ -1,6 +1,6 @@
 /**
  * Which visitors the Nuxt plugin starts from the server's snapshot, and the
- * names the first-load chunk copies from core and the build.
+ * names the first-load chunk copies from the build.
  */
 import type { ConsentSnapshot } from '@inth/sdk/engine';
 import type { InitOutput, PolicyRule } from '@inth/sdk/schema/types';
@@ -8,22 +8,13 @@ import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
 } from '@inth/sdk/schema/types';
-import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
 import { translations } from '@inth/sdk/translations/en';
 import { describe, expect, test } from 'vitest';
 
+import { canDeferEngine } from '../../../core/src/surface-actions/defer-engine';
 import { createVueConsentKernelContext } from '../../../vue/src/__tests__/test-kernel';
-import {
-	canDeferEngine,
-	DEFERRED_ENGINE_MANIFEST_KEY,
-} from '../../../vue/src/runtime/deferred/boot';
+import { DEFERRED_ENGINE_MANIFEST_KEY } from '../../../vue/src/runtime/deferred/boot';
 import { isDeferredBannerModule } from '../../../vue/src/runtime/deferred/lazy-modules';
-import {
-	BANNER_ROOT,
-	EARLY_TAP_NOTIFY,
-	EARLY_TAP_STYLE_ID as STYLE_ID,
-	EARLY_TAPS_KEY,
-} from '../../../vue/src/runtime/deferred/trigger';
 import type { RuntimeConsentConfig } from '../../../vue/src/runtime/kernel';
 import {
 	DEFERRED_ENGINE_MANIFEST_KEY as BUILD_KEY,
@@ -32,7 +23,7 @@ import {
 import type { ClientManifestChunk } from '../prefetch';
 
 const initFor = (rule: Partial<PolicyRule>): InitOutput => ({
-	branding: 'c15t',
+	branding: 'inth',
 	location: { countryCode: 'GB', regionCode: null },
 	policyResolution: writePolicyResolutionWire(
 		resolvePolicyRules({
@@ -148,17 +139,6 @@ describe('canDeferEngine', () => {
 	});
 });
 
-test('the first-load chunk’s copies of the early-tap script’s names match', () => {
-	// The script leaves its queue under the key, hides the root with the
-	// style id, and calls the notify hook after each tap.
-	expect(EARLY_CONSENT_TAP_SCRIPT).toContain(`'${EARLY_TAPS_KEY}')`);
-	expect(EARLY_CONSENT_TAP_SCRIPT).toContain(`R='${BANNER_ROOT}'`);
-	expect(EARLY_CONSENT_TAP_SCRIPT).toContain(`s.id='${STYLE_ID}'`);
-	expect(EARLY_CONSENT_TAP_SCRIPT).toContain(
-		`if(w[k].${EARLY_TAP_NOTIFY})w[k].${EARLY_TAP_NOTIFY}()`
-	);
-});
-
 describe('preloadDeferredEngine', () => {
 	const ENGINE =
 		'node_modules/@inth/vue/dist/runtime/deferred/engine.js' as const;
@@ -198,7 +178,7 @@ describe('preloadDeferredEngine', () => {
 		expect(edited['entry.js']?.imports).toEqual([BANNER, ENGINE]);
 	});
 
-	test('leaves a manifest without the c15t engine alone', () => {
+	test('leaves a manifest without the inth engine alone', () => {
 		const edited = manifest();
 		preloadDeferredEngine(edited, '/app', () => false, true);
 		expect(edited[DEFERRED_ENGINE_MANIFEST_KEY]).toBeUndefined();
@@ -208,7 +188,7 @@ describe('preloadDeferredEngine', () => {
 describe('isDeferredBannerModule', () => {
 	test('matches the banner from an installed, a workspace and a source build', () => {
 		for (const id of [
-			'../node_modules/.pnpm/@c15t+vue@3.3.0/node_modules/@inth/vue/dist/runtime/components/prompt.vue',
+			'../node_modules/.pnpm/@inth+vue@3.3.0/node_modules/@inth/vue/dist/runtime/components/prompt.vue',
 			// A workspace or linked install: Vite names the real path.
 			'../../../packages/sdk/vue/dist/runtime/components/prompt.vue',
 			'/repo/packages/sdk/vue/src/runtime/components/button.vue',

@@ -17,7 +17,7 @@ the current policy contract when native contract and version headers are present
 verified live hosted receipts. No credential or substitute customer binding is included.
 
 The apps live in `examples/native/consent-demo`. The iOS app also accepts build
-settings `C15T_BACKEND_URL` and `C15T_PRIVACY_POLICY_URL`. Android currently takes
+settings `INTH_PROJECT_URL` and `INTH_PRIVACY_POLICY_URL`. Android currently takes
 both URLs through its connection screen. These public configuration values do
 not replace backend policy authoring.
 
@@ -41,14 +41,14 @@ is ready, once per owed prompt. `ConsentPrompt.onFinished` reports each closed
 session with its outcome, which is where a follow-up step such as Apple's
 tracking request attaches.
 
-On Apple platforms, apply `.c15tConsent(configuration, privacyPolicyURL:)` to the
+On Apple platforms, apply `.inth(configuration, privacyPolicyURL:)` to the
 SwiftUI root, or make `ConsentRootViewController` the UIKit window root. Both
 install the engine on first appearance and retry after protected data becomes
-available. `.c15tConsent(privacyPolicyURL:)` attaches to a core the app
+available. `.inth(privacyPolicyURL:)` attaches to a core the app
 installed itself. Call `ConsentPrompt.current?.presentPreferences()` from the
 app's standing Privacy settings entry. An app that needs its own presenter
 lifetime can still keep a `ConsentPresenter(core:)` and apply
-`c15tConsent(presenter:privacyPolicyURL:)`, as
+`inth(presenter:privacyPolicyURL:)`, as
 `ios/Sources/consent-demo-app.swift` does.
 
 On Android, install with `InthAndroid.install`, then place
@@ -127,7 +127,7 @@ recording anything. Standing settings opened later from the host's own Privacy
 entry are a large sheet on iOS and a full-screen window with Close on Android,
 because by then the app behind them belongs to the user.
 
-The `c15t` appearance is warm paper (`#F8F4EE` light, `#171411` dark), ink text,
+The `paper` appearance is warm paper (`#F8F4EE` light, `#171411` dark), ink text,
 the platform system typeface, and Inth blue only for links, switches and Save.
 Headlines use San Francisco on iOS and the system sans serif on Android; a host
 can still opt into a different headline face.
@@ -202,7 +202,7 @@ minimum target, and on iOS 17 and later sections sit 24pt apart.
 
 `ConsentTheme` (Swift, `InthConsentUI`) and `com.inth.consentui.ConsentTheme`
 (Kotlin) are the one customization surface. Names with a web token follow
-`--c15t-*` in `@inth/sdk/ui`. Each holds nine semantic colours (`canvas`,
+`--inth-*` in `@inth/sdk/ui`. Each holds nine semantic colours (`canvas`,
 `surface`, `surfaceMuted`, `text`, `textMuted`, `primary`, `textOnPrimary`,
 `decision`, `textOnDecision`), radii (`sm`, `md`, `lg`), spacing (`xs` to `xl`),
 typography (`fontFamily`, `fontSize` `sm`/`base`/`lg`, and the headline
@@ -222,18 +222,18 @@ takes precedence over both and uses exactly the values passed by the host.
 ```swift
 // 1. Set once at launch; every presenter that does not pass a theme uses it.
 ConsentTheme.current = ConsentTheme(
-    colors: .c15t, radius: .init(md: 10), typography: .init(headlineFont: .rounded),
+    colors: .inth, radius: .init(md: 10), typography: .init(headlineFont: .rounded),
     brand: ConsentTheme.Brand(name: "Pantry", markImageName: "ConsentDemoMark"),
     copy: ConsentTheme.Copy(headline: "Before you shop.", introduction: "Pantry uses data to remember your basket, measure what works and show offers you might like."))
 
 // 2. Pass one to the root modifier.
-content.c15tConsent(presenter: presenter, privacyPolicyURL: policyURL, theme: PantryBrand.theme)
+content.inth(presenter: presenter, privacyPolicyURL: policyURL, theme: PantryBrand.theme)
 ```
 
 ```kotlin
 // 1. Set once in Application.onCreate.
 ConsentTheme.current = ConsentTheme(
-    colors = ConsentTheme.Colors.c15t.copy(primary = ConsentThemeColor(0x00796B, 0x4FD1C0)),
+    colors = ConsentTheme.Colors.inth.copy(primary = ConsentThemeColor(0x00796B, 0x4FD1C0)),
     brand = ConsentTheme.Brand(name = "Pantry", markResId = R.drawable.consent_demo_mark))
 
 // 2. Pass one to the composable.
@@ -309,14 +309,14 @@ components only styles the fake-core demo surfaces and does not reach the native
 screens.
 
 The demo apps carry a sample brand, `PantryBrand`, behind the debug fixture
-switch `C15T_FIXTURE_THEME=brand` (an iOS launch environment value, an Android
+switch `INTH_FIXTURE_THEME=brand` (an iOS launch environment value, an Android
 intent extra). It changes the accent, decision fill, radius, headline face, mark
 and copy, and the UI tests check that Accept and Reject stay the same size under
 it.
 
 ## Deterministic app tests
 
-Only debug builds accept `C15T_FIXTURE_SCENARIO`. iOS uses a launch environment
+Only debug builds accept `INTH_FIXTURE_SCENARIO`. iOS uses a launch environment
 value; Android uses an intent extra. The current scenarios are
 `fresh-online`, `fresh-online-iab`, `fresh-online-notice`, `fresh-offline-none`
 and `gpc-on`. The in-process fixture supplies `/init` protocol responses to the real
@@ -325,15 +325,15 @@ native core. It deliberately refuses save delivery and writes the latest
 request body to `last-save.json`. This is a controlled protocol peer, not proof
 of a successful hosted receipt.
 
-`C15T_FIXTURE_THEME=brand` applies the sample brand theme described under Appearance.
-`C15T_FIXTURE_IDENTITY=generic` points the app mark at a missing asset to show the drawn
-initial tile; `C15T_FIXTURE_IDENTITY=hidden` starts the page at the headline.
-`C15T_FIXTURE_RESET=1` clears only the selected scenario's test storage.
-`C15T_FIXTURE_OFFLINE=1` fails init while retaining that storage.
-`C15T_FIXTURE_FAIL_NEXT_WRITE=1` arms a durable decision-write refusal after initial
+`INTH_FIXTURE_THEME=brand` applies the sample brand theme described under Appearance.
+`INTH_FIXTURE_IDENTITY=generic` points the app mark at a missing asset to show the drawn
+initial tile; `INTH_FIXTURE_IDENTITY=hidden` starts the page at the headline.
+`INTH_FIXTURE_RESET=1` clears only the selected scenario's test storage.
+`INTH_FIXTURE_OFFLINE=1` fails init while retaining that storage.
+`INTH_FIXTURE_FAIL_NEXT_WRITE=1` arms a durable decision-write refusal after initial
 hydration. On Apple platforms, policy-only startup refreshes do not consume
 this test fault. Android uses Boolean extras for these switches. iOS debug fixtures also accept
-`C15T_FIXTURE_APPEARANCE=dark` for reproducible native theme captures. Normal app launches
+`INTH_FIXTURE_APPEARANCE=dark` for reproducible native theme captures. Normal app launches
 do not select fixtures or reset state.
 
 XCUITest lives in `ios/UITests/consent-journey-tests.swift`. Run it with the
@@ -352,7 +352,7 @@ For the HTTP receipt journey, start the reviewed
 on free loopback port 3000. Use a fresh backend per platform. Android also needs
 `adb -s <owned-serial> reverse tcp:3000 tcp:3000`. The dedicated iOS
 `ProtocolReceiptTests` and Android `realControlsDeliverNativeReceipts` test select
-`C15T_FIXTURE_BACKEND=http://localhost:3000/api/self-host` explicitly. This override
+`INTH_FIXTURE_BACKEND=http://localhost:3000/api/self-host` explicitly. This override
 is accepted only in debug fixture builds and only for exact loopback hosts. Each
 host declares the four optional categories before loading the permissive policy.
 The tests tap the real Reject all control and compare the core's recorded category
@@ -441,8 +441,8 @@ resumes and one final event afterward. The journey also checks repeated requests
 obsolete close, backgrounding, Android recreation, notice pass-through and durable
 notice acknowledgement. The runner preserves XCTest/JUnit
 reports, recordings, screenshots and backend/native observations, including
-failed runs. Set `C15T_APP_E2E_PORT` to a free host port and
-`C15T_APP_E2E_OUT` to a new evidence directory. Android reverses device port
+failed runs. Set `INTH_APP_E2E_PORT` to a free host port and
+`INTH_APP_E2E_OUT` to a new evidence directory. Android reverses device port
 3000 only on the device the runner creates. This proves controlled local
 protocol delivery, not hosted receipt acceptance.
 

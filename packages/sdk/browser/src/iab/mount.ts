@@ -10,8 +10,6 @@ import { createIABSurface } from './surface';
 
 /**
  * Mount IAB UI alongside the ordinary UI for non-IAB policy regions.
- * @param client - The IAB-capable client to render.
- * @param options - Theme, CSS, and mount settings.
  * @returns The shared UI host and its teardown.
  */
 export const mountIABConsentUI = (

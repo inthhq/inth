@@ -1,7 +1,3 @@
-/**
- * Shared types for the persistence module.
- */
-
 import type { StorageConfig } from '../../libs/cookie';
 import type { ConsentKernel } from '../../types';
 
@@ -30,7 +26,7 @@ export interface PersistenceOptions {
 	 *
 	 * While mounted in a browser, the module schedules
 	 * {@link PersistenceHandle.reconcile} when another tab or window of the
-	 * same origin changes a c15t localStorage key (the `storage` event), when
+	 * same origin changes an Inth localStorage key (the `storage` event), when
 	 * the page becomes visible again, and when the window regains focus.
 	 * Bursts coalesce into one reconciliation in a later macrotask.
 	 * `dispose()` removes every listener and cancels a scheduled run.
@@ -90,7 +86,7 @@ export interface PersistenceHandle {
 	 */
 	reconcile: () => boolean;
 	/**
-	 * Cancel queued writes, clear every c15t record (choice, notice, vendors,
+	 * Cancel queued writes, clear every Inth record (choice, notice, vendors,
 	 * their cookie projections, the legacy `<key>-privacy` record an earlier
 	 * v3 alpha may have stored, and the queued backend replays) and reset
 	 * the kernel's in-memory records.

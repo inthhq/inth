@@ -1,16 +1,11 @@
 'use client';
 
-/**
- * Button component for the ConsentDialogTrigger compound component.
- *
- * @packageDocumentation
- */
-
 import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import { forwardRef as createForwardRef } from 'react';
 import type { FocusEvent, MouseEvent, PointerEvent, ReactNode } from 'react';
 
 import { useIdleDialogWarming, warmDialogChunk } from '~/chunk-warming';
+import { useTriggerLabels } from '~/component-hooks/use-trigger-labels';
 import { usePolicyRule } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
 import { useUIConfig } from '~/ui-config-context';
@@ -19,9 +14,6 @@ import { mergeSlotProps } from '~/utils/merge-slot-props';
 import type { CornerPosition, TriggerSize } from '../types';
 import { useTriggerContext } from './root';
 
-/**
- * Maps corner position to CSS class name.
- */
 const cornerClassMap = {
 	'bottom-left': styles.bottomLeft,
 	'bottom-right': styles.bottomRight,
@@ -29,18 +21,12 @@ const cornerClassMap = {
 	'top-right': styles.topRight,
 } as const satisfies Record<CornerPosition, string | undefined>;
 
-/**
- * Maps size to CSS class name.
- */
 const sizeClassMap = {
 	lg: styles.lg,
 	md: styles.md,
 	sm: styles.sm,
 } as const;
 
-/**
- * Props for the Button component.
- */
 export interface TriggerButtonProps {
 	children: ReactNode;
 
@@ -51,14 +37,11 @@ export interface TriggerButtonProps {
 	size?: TriggerSize;
 
 	/**
-	 * Accessible label for the button.
-	 * @default 'Open privacy settings'
+	 * Accessible label for the button. Defaults to the `trigger.label`
+	 * translation ("Open privacy settings").
 	 */
 	ariaLabel?: string;
 
-	/**
-	 * Additional CSS class names.
-	 */
 	className?: string;
 
 	/**
@@ -89,7 +72,7 @@ export const TriggerButton = createForwardRef<
 		{
 			children,
 			size = 'md',
-			ariaLabel = 'Open privacy settings',
+			ariaLabel,
 			className,
 			'data-testid': dataTestId = 'consent-dialog-trigger',
 			noStyle,
@@ -97,13 +80,14 @@ export const TriggerButton = createForwardRef<
 		ref
 	) => {
 		const policy = usePolicyRule();
+		const triggerLabels = useTriggerLabels();
 		const { components } = useUIConfig();
 		const { disableAnimation, noStyle: contextNoStyle } = useTheme();
 		const {
 			corner,
 			isDragging,
 			isSnapping,
-			wasDragged,
+			endsDrag,
 			handlers,
 			dragStyle,
 			openDialog,
@@ -114,8 +98,7 @@ export const TriggerButton = createForwardRef<
 		useIdleDialogWarming(true);
 
 		const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
-			// Don't open dialog if this was a drag interaction
-			if (event.detail !== 0 && wasDragged()) {
+			if (endsDrag(event)) {
 				return;
 			}
 			openDialog();
@@ -153,11 +136,11 @@ export const TriggerButton = createForwardRef<
 				{...buttonStyle}
 				ref={ref}
 				type="button"
-				data-c15t-trigger="true"
-				data-c15t-rights={policy.rights.join(' ')}
+				data-inth-trigger="true"
+				data-inth-rights={policy.rights.join(' ')}
 				// Stops the hover and snap transitions, as on the other surfaces.
 				data-disable-animation={disableAnimation ? '' : undefined}
-				aria-label={ariaLabel}
+				aria-label={ariaLabel ?? triggerLabels.label}
 				onClick={handleClick}
 				onFocus={handleFocus}
 				onPointerEnter={handlePointerEnter}

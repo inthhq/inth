@@ -8,7 +8,7 @@
  * policy itself.
  */
 import {
-	C15T_POLICY_CONTRACT_HEADER,
+	INTH_POLICY_CONTRACT_HEADER,
 	IAB_UNAVAILABLE_ERROR_CODE,
 } from '@inth/sdk/engine';
 import type { InitOutput } from '@inth/sdk/schema/types';
@@ -24,7 +24,7 @@ import type { App, ShallowRef } from 'vue';
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 
 const NUXT_MESSAGE =
-	"c15t: this visitor's policy uses IAB TCF, but `iab` is not set. Set `c15t: { iab: {} }` in nuxt.config.ts, or `iab: { cmpId }` when your backend sends no CMP ID, or remove the IAB model from your policy.";
+	"inth: this visitor's policy uses IAB TCF, but `iab` is not set. Set `inth: { iab: {} }` in nuxt.config.ts, or `iab: { cmpId }` when your backend sends no CMP ID, or remove the IAB model from your policy.";
 
 const nuxt = vi.hoisted(() => ({
 	iab: undefined as object | undefined,
@@ -38,7 +38,7 @@ vi.mock('#imports', async () => {
 		defineNuxtPlugin: (plugin: unknown) => plugin,
 		showError: nuxt.showError,
 		useAppConfig: () => ({
-			c15t: {
+			inth: {
 				consentCategories: ['necessary', 'measurement', 'marketing'],
 				iab: nuxt.iab,
 				iframeBlocker: false,
@@ -52,7 +52,7 @@ vi.mock('#imports', async () => {
 		useRequestHeaders: () => ({ 'x-vercel-ip-country': 'DE' }),
 		useRequestURL: () => new URL('https://app.example/'),
 		useRuntimeConfig: () => ({
-			public: { c15t: { mode: { type: 'hosted' } } },
+			public: { inth: { mode: { type: 'hosted' } } },
 		}),
 		useState: (key: string, init: () => unknown) => {
 			if (!nuxt.state.has(key)) {
@@ -71,7 +71,7 @@ type NuxtPlugin = (app: {
 }) => Promise<void>;
 
 const iabInit = {
-	branding: 'c15t',
+	branding: 'inth',
 	cmpId: 28,
 	gvl: completeGVL,
 	location: { countryCode: 'DE', regionCode: null },
@@ -100,7 +100,7 @@ const stubBackend = () =>
 				new Response(JSON.stringify(iabInit), {
 					headers: {
 						'content-type': 'application/json',
-						[C15T_POLICY_CONTRACT_HEADER]: '1',
+						[INTH_POLICY_CONTRACT_HEADER]: '1',
 					},
 				})
 			)

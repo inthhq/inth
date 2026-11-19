@@ -1,11 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { grantedServerStart } from '../../__tests__/helpers';
 import { adrollPixel } from './adroll';
 
 describe('AdRoll account configuration', () => {
 	it('uses the browser lifecycle for the official bootstrap', () => {
 		expect(
-			adrollPixel({ advertiserId: 'advertiser', pixelId: 'pixel' }).serverStart
+			grantedServerStart(
+				adrollPixel({ advertiserId: 'advertiser', pixelId: 'pixel' })
+			)
 		).toBeUndefined();
 	});
 	it('encodes the trimmed advertiser as one URL segment', () => {

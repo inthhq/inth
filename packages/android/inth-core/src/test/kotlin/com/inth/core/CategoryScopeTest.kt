@@ -94,7 +94,7 @@ class CategoryScopeTest {
 		// that rule, narrowed by the declaration, instead of inventing a scope.
 		val kernel = testKernel(
 			config = NativeConfig(
-				backendUrl = "https://test.c15t.app",
+				backendUrl = "https://test.inth.app",
 				consentCategories = listOf(ConsentCategory.FUNCTIONALITY),
 			),
 			store = InthStore(InMemoryKeyValueStore()),
@@ -114,7 +114,7 @@ class CategoryScopeTest {
 	): ConsentCore {
 		val kernel = testKernel(
 			config = NativeConfig(
-				backendUrl = "https://test.c15t.app",
+				backendUrl = "https://test.inth.app",
 				consentCategories = declared,
 			),
 			store = InthStore(InMemoryKeyValueStore()),

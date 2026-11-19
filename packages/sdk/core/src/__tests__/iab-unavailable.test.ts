@@ -120,7 +120,7 @@ describe('IABUnavailableError', () => {
 		expect(error.name).toBe('IABUnavailableError');
 		expect(error.code).toBe(IAB_UNAVAILABLE_ERROR_CODE);
 		expect(error.message).toBe(
-			"c15t: this visitor's policy uses IAB TCF, but `iab` is not set. Set the `iab` option, or remove the IAB model from your policy."
+			"inth: this visitor's policy uses IAB TCF, but `iab` is not set. Set the `iab` option, or remove the IAB model from your policy."
 		);
 	});
 });

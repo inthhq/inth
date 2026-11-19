@@ -42,10 +42,10 @@ const mount = async (page: Page, order: string[]) => {
 	}
 	await page.setContent(`
 		<style>
-			:root { --c15t-space-sm: 8px; --c15t-space-md: 16px;
-				--c15t-text: rgb(26, 26, 26);
-				--c15t-text-muted: rgb(102, 102, 102); --c15t-primary: blue;
-				--c15t-duration-normal: 0s; --c15t-easing: ease; }
+			:root { --inth-space-sm: 8px; --inth-space-md: 16px;
+				--inth-text: rgb(26, 26, 26);
+				--inth-text-muted: rgb(102, 102, 102); --inth-primary: blue;
+				--inth-duration-normal: 0s; --inth-easing: ease; }
 		</style>
 		${order.map((kind) => `<style>${styles[kind]?.code}</style>`).join('')}
 		<section id="scope">
@@ -87,9 +87,9 @@ for (const order of [
 			'rgb(102, 102, 102)'
 		);
 		await page.locator('#scope').evaluate((element) => {
-			element.classList.add('c15t-dark');
+			element.classList.add('inth-dark');
 		});
-		// The dark description follows --c15t-text-muted, which this page does
+		// The dark description follows --inth-text-muted, which this page does
 		// not redefine for dark mode.
 		await expect(page.locator('#component-description')).toHaveCSS(
 			'color',
@@ -106,9 +106,9 @@ for (const order of [
 	}) => {
 		await mount(page, order);
 		await page.locator('#scope').evaluate((element) => {
-			element.style.setProperty('--c15t-space-sm', '12px');
-			element.style.setProperty('--c15t-space-md', '24px');
-			element.style.setProperty('--c15t-text-muted', 'rgb(10, 20, 30)');
+			element.style.setProperty('--inth-space-sm', '12px');
+			element.style.setProperty('--inth-space-md', '24px');
+			element.style.setProperty('--inth-text-muted', 'rgb(10, 20, 30)');
 		});
 		await expect(page.locator('#primitive')).toHaveCSS('padding-top', '24px');
 		await expect(page.locator('#component-row')).toHaveCSS(
@@ -158,7 +158,7 @@ for (const order of [
 		);
 		await page
 			.locator('#scope')
-			.evaluate((element) => element.classList.add('c15t-dark'));
+			.evaluate((element) => element.classList.add('inth-dark'));
 		await page.locator('#primitive-button').focus();
 		await expect(page.locator('#primitive')).toHaveCSS(
 			'box-shadow',

@@ -29,6 +29,16 @@ export interface RightsTranslations {
 	preferences: string;
 }
 
+/** Accessible names for the floating trigger that reopens preferences. */
+export interface TriggerTranslations {
+	/** Accessible name of the trigger button. */
+	label: string;
+	/** Accessible name of the toolbar that holds the trigger and DevTools. */
+	toolbarLabel: string;
+	/** Accessible name of the toolbar item that opens DevTools. */
+	devToolsLabel: string;
+}
+
 export interface LegalLinksTranslations {
 	privacyPolicy: string;
 	cookiePolicy: string;
@@ -158,7 +168,6 @@ export interface IABPreferenceCenterTranslations {
 	};
 	/** Informational Features section (TCF Policies v5.0.b). */
 	features?: {
-		/** Section heading. */
 		title: string;
 		/**
 		 * Explains that Features only serve the purposes the user chooses.
@@ -231,7 +240,7 @@ export interface IABCommonTranslations {
 
 /**
  * IAB copy for native mobile apps, where the web copy's "website" and
- * cookie wording does not apply. The c15t iOS and Android SDKs read it
+ * cookie wording does not apply. The Inth iOS and Android SDKs read it
  * through generated files (`scripts/generate-native-iab-copy.ts`).
  */
 export interface IABAppTranslations {
@@ -258,10 +267,6 @@ export interface IABTranslations {
 	common: IABCommonTranslations;
 }
 
-/**
- * Maps consent type names to their respective translations.
- * Uses the name property from ConsentType to ensure type safety.
- */
 export type ConsentTypesTranslations = {
 	[key in AllConsentNames]: ConsentTypeTranslations;
 };
@@ -276,6 +281,11 @@ export interface CompleteTranslations {
 	legalLinks: LegalLinksTranslations;
 	iab: IABTranslations;
 	rights: RightsTranslations;
+	/**
+	 * Optional so custom translation objects keep compiling; English
+	 * provides it and fills the gaps for every other language.
+	 */
+	trigger?: TriggerTranslations;
 }
 
 // Partial translations interface (used for other languages)
@@ -297,9 +307,9 @@ export interface Translations {
 	legalLinks?: Partial<LegalLinksTranslations>;
 	iab?: DeepPartial<IABTranslations>;
 	rights?: Partial<RightsTranslations>;
+	trigger?: Partial<TriggerTranslations>;
 }
 
-// Helper type for deep partial
 type DeepPartial<T> = {
 	[P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 };
@@ -311,7 +321,7 @@ export interface TranslationConfig {
 }
 
 /**
- * Preferred i18n configuration shape for c15t v2.
+ * Preferred i18n configuration shape, added in v2.
  *
  * @remarks
  * This maps to the legacy {@link TranslationConfig} as follows:

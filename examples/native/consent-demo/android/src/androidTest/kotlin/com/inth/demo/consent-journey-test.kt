@@ -24,9 +24,9 @@ class ConsentJourneyTest {
     private val device get() = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
     private fun launch(name: String = "fresh-online", fail: Boolean = false, reset: Boolean = true, offline: Boolean = false, backend: String? = null, theme: String? = null, branding: String? = null, identity: String? = null) {
         scenario?.close()
-        scenario = ActivityScenario.launch(Intent(context, ConsentDemoActivity::class.java).putExtra("C15T_FIXTURE_SCENARIO",name)
-            .putExtra("C15T_FIXTURE_RESET",reset).putExtra("C15T_FIXTURE_FAIL_NEXT_WRITE",fail).putExtra("C15T_FIXTURE_OFFLINE",offline).putExtra("C15T_FIXTURE_BACKEND", backend)
-            .putExtra("C15T_FIXTURE_THEME", theme).putExtra("C15T_FIXTURE_BRANDING", branding).putExtra("C15T_FIXTURE_IDENTITY", identity))
+        scenario = ActivityScenario.launch(Intent(context, ConsentDemoActivity::class.java).putExtra("INTH_FIXTURE_SCENARIO",name)
+            .putExtra("INTH_FIXTURE_RESET",reset).putExtra("INTH_FIXTURE_FAIL_NEXT_WRITE",fail).putExtra("INTH_FIXTURE_OFFLINE",offline).putExtra("INTH_FIXTURE_BACKEND", backend)
+            .putExtra("INTH_FIXTURE_THEME", theme).putExtra("INTH_FIXTURE_BRANDING", branding).putExtra("INTH_FIXTURE_IDENTITY", identity))
     }
     private fun waitFor(id: String): SemanticsNodeInteraction {
         compose.waitUntil(15000) { compose.onAllNodesWithTag(id).fetchSemanticsNodes().isNotEmpty() }
@@ -102,7 +102,7 @@ class ConsentJourneyTest {
         val testContext = InstrumentationRegistry.getInstrumentation().context
         val metadata = testContext.packageManager.getApplicationInfo(testContext.packageName,
             android.content.pm.PackageManager.GET_META_DATA).metaData
-        val theme = com.inth.consentui.ConsentTheme.c15t.applying(metadata, testContext)
+        val theme = com.inth.consentui.ConsentTheme.default.applying(metadata, testContext)
         Assert.assertEquals(com.inth.consentui.ConsentThemeColor(0x009688), theme.colors.primary)
         Assert.assertEquals(com.inth.consentui.ConsentThemeColor(0xFFFFFF), theme.colors.textOnPrimary)
         Assert.assertEquals(com.inth.consentui.ConsentThemeColor(0x009688, 0x4FD1C0), theme.colors.decision)

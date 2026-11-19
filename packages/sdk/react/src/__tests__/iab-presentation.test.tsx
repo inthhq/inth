@@ -1,4 +1,4 @@
-import { MINIMAL_GVL } from '@c15t/conformance';
+import { MINIMAL_GVL } from '@inth/conformance';
 import {
 	deferInitGvl,
 	createConsentKernel,
@@ -12,11 +12,10 @@ import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
-import { useHeadlessIABConsentUI } from '../component-hooks/use-headless-iab-consent-ui';
 import { IABConsentDialog } from '../components/iab-panel';
 import { IABConsentBanner } from '../components/iab-prompt';
 import { KernelContext } from '../context';
-import { useHeadlessIABConsentUI as usePublicHeadlessIABConsentUI } from '../hooks/use-headless-iab-consent-ui';
+import { useHeadlessIABConsentUI } from '../hooks/use-headless-iab-consent-ui';
 import { IABProvider, useIAB } from '../iab-context';
 import { ComponentFixtureProvider } from './component-fixture-provider';
 import type { ComponentFixtureOptions } from './component-fixture-provider';
@@ -231,7 +230,7 @@ it.each(
 			vi.unstubAllGlobals();
 		});
 		vi.stubGlobal('fetch', fetch);
-		vi.stubGlobal('__c15t_mock_gvl', undefined);
+		vi.stubGlobal('__inth_mock_gvl', undefined);
 		const mounted: { screen?: Awaited<ReturnType<typeof render>> } = {};
 		onTestFinished(async () => {
 			await mounted.screen?.unmount();
@@ -404,10 +403,10 @@ it.each(['acceptAll', 'rejectAll', 'savePreferences'] as const)(
 	'the public headless IAB %s closes the dialog without showing the banner',
 	async (method) => {
 		const save = vi.fn(() => Promise.resolve({ ok: true }));
-		let controls!: ReturnType<typeof usePublicHeadlessIABConsentUI>;
+		let controls!: ReturnType<typeof useHeadlessIABConsentUI>;
 		let kernel: ConsentKernel | null = null;
 		const Probe = () => {
-			const current = usePublicHeadlessIABConsentUI();
+			const current = useHeadlessIABConsentUI();
 			const currentKernel = useContext(KernelContext);
 			useEffect(() => {
 				controls = current;

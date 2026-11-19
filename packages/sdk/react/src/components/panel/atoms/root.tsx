@@ -1,12 +1,7 @@
 'use client';
 
-import type * as C15tCoreTypes from '@inth/sdk/engine';
-/**
- * @packageDocumentation
- * Provides the root component for the Consent Dialog.
- * Implements context provider pattern with theme support, state management,
- * focus trapping, scroll locking and portal rendering.
- */
+import type * as InthCoreTypes from '@inth/sdk/engine';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { onDialogDismiss } from '@inth/sdk/ui/primitives/dialog';
 import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 import type { FC, HTMLAttributes, ReactNode, RefObject } from 'react';
@@ -39,7 +34,7 @@ import { Overlay } from './overlay';
 
 // `none` is included: it never owes a prompt, but a `none` rule that lists
 // the `preferences` right still opens this dialog as its settings route.
-const DEFAULT_MODELS: C15tCoreTypes.Model[] = ['opt-in', 'opt-out', 'none'];
+const DEFAULT_MODELS: InthCoreTypes.Model[] = ['opt-in', 'opt-out', 'none'];
 
 const resolveDialogOptions = (
 	localDisableAnimation: boolean | undefined,
@@ -57,8 +52,8 @@ const resolveDialogOptions = (
 const resolveDialogOpen = (
 	sheetsReady: boolean,
 	hasConsentUI: boolean,
-	models: C15tCoreTypes.Model[],
-	model: C15tCoreTypes.Model | null,
+	models: InthCoreTypes.Model[],
+	model: InthCoreTypes.Model | null,
 	open: boolean | undefined,
 	activeUI: string | null
 ): boolean => {
@@ -105,7 +100,7 @@ export interface ConsentDialogRootProps extends HTMLAttributes<HTMLDivElement> {
 	 * Which consent models this dialog responds to.
 	 * @default ['opt-in', 'opt-out', 'none']
 	 */
-	models?: C15tCoreTypes.Model[];
+	models?: InthCoreTypes.Model[];
 
 	/**
 	 * When true, the component will not apply any internal styles.
@@ -170,11 +165,9 @@ const ConsentDialogRoot: FC<ConsentDialogRootProps> = ({
 	...rest
 }) => {
 	useIABPolicyGuard();
-	// Global theme from provider (if any)
 	const globalTheme = useTheme();
 	const { components } = useUIConfig();
 
-	// Consent manager state
 	const activeUI = useActiveUI();
 	const model = useModel();
 	const language = useTranslationLanguage();
@@ -191,7 +184,6 @@ const ConsentDialogRoot: FC<ConsentDialogRootProps> = ({
 		);
 	const textDirection = useTextDirection(language);
 
-	// Final open state (controlled or managed by consent manager).
 	const hasConsentUI = useHasConsentUI();
 	// A deferred first-paint sheet the page does not hold yet loads with
 	// the dialog's code; the dialog opens once both are here.
@@ -205,20 +197,17 @@ const ConsentDialogRoot: FC<ConsentDialogRootProps> = ({
 		activeUI
 	);
 
-	// Animation visibility flag – mirrors logic in original component
 	const [isVisible, setIsVisible] = useState(false);
 
-	// Refs used for focus trapping
 	const dialogRef = useRef<HTMLDivElement>(null);
 	const contentRef = useRef<HTMLDivElement>(null);
 
-	// Handle mounting (avoid SSR mismatch when using portal)
+	// The portal waits for hydration so the first client render matches the
+	// server's.
 	const isMounted = useIsHydrated();
 
-	// Get animation duration from theme
 	const animationDuration = globalTheme.theme?.motion?.duration?.normal;
 
-	// Manage visibility with respect to animation
 	useEffect(() => {
 		if (isOpen) {
 			const frame = requestAnimationFrame(() => setIsVisible(true));
@@ -228,7 +217,6 @@ const ConsentDialogRoot: FC<ConsentDialogRootProps> = ({
 			const frame = requestAnimationFrame(() => setIsVisible(false));
 			return () => cancelAnimationFrame(frame);
 		}
-		// Get duration from theme tokens, falling back to 200ms
 		const durationStr = animationDuration || '200ms';
 		const duration = Number.parseInt(durationStr.replace('ms', ''), 10);
 
@@ -236,7 +224,6 @@ const ConsentDialogRoot: FC<ConsentDialogRootProps> = ({
 		return () => clearTimeout(timer);
 	}, [isOpen, disableAnimation, animationDuration]);
 
-	// Trap focus when dialog open
 	useFocusTrap(isOpen && trapFocus, contentRef as RefObject<HTMLElement>, {
 		initialFocus: 'first-tabbable',
 	});
@@ -249,7 +236,6 @@ const ConsentDialogRoot: FC<ConsentDialogRootProps> = ({
 		return onDialogDismiss(document.documentElement, closeUI);
 	}, [closeUI, isOpen]);
 
-	// Lock scroll when required
 	useScrollLock(isOpen && scrollLock);
 
 	const rootClasses = getRootClasses(disableAnimation, isVisible);
@@ -294,7 +280,6 @@ const ConsentDialogRoot: FC<ConsentDialogRootProps> = ({
 							sheets={DIALOG_SHEETS}
 							noStyle={noStyle}
 						/>
-						{/* Backdrop (customisable) */}
 						{dialog.blocking && overlay !== false
 							? (overlay ?? <Overlay open={isOpen} />)
 							: null}
@@ -319,6 +304,7 @@ const ConsentDialogRoot: FC<ConsentDialogRootProps> = ({
 								aria-modal={trapFocus ? 'true' : undefined}
 								data-blocking={blockingAttribute}
 								data-testid="consent-dialog-root"
+								{...{ [SURFACE_ROOT_ATTRIBUTE]: 'dialog' }}
 								dir={textDirection}
 								// oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- A native `dialog` is the positioning shell here, not the panel; the panel is what carries the role.
 								role="dialog"

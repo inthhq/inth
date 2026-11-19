@@ -1,9 +1,3 @@
-/**
- * @packageDocumentation
- * Button variant types and helper functions for generating CSS classes.
- * This module is framework-agnostic and can be used with React, Vue, Svelte, etc.
- */
-
 import styles from './button.module.css';
 
 /**
@@ -49,19 +43,12 @@ export interface ButtonVariantsProps {
 /**
  * Helper function to generate button CSS classes based on variants.
  *
- * @remarks
- * This function takes variant props and returns an object with methods
- * to generate the appropriate CSS class names for the button root and icon.
- *
  * @example
  * ```ts
  * const variants = buttonVariants({ variant: 'primary', mode: 'filled', size: 'medium' });
  * const rootClass = variants.root(); // Returns combined CSS classes
  * const iconClass = variants.icon(); // Returns icon-specific classes
  * ```
- *
- * @param props - The variant props for the button
- * @returns An object with `root()` and `icon()` methods for generating class names
  *
  * @public
  */
@@ -91,18 +78,8 @@ export const buttonVariants = ({
 	const iconClasses = [styles['button-icon']];
 
 	return {
-		/**
-		 * Generates the CSS class string for the button icon element.
-		 * @param options - Optional configuration with a custom class to append
-		 * @returns The combined CSS class string
-		 */
 		icon: (options?: { class?: string }) =>
 			[...iconClasses, options?.class].filter(Boolean).join(' '),
-		/**
-		 * Generates the CSS class string for the button root element.
-		 * @param options - Optional configuration with a custom class to append
-		 * @returns The combined CSS class string
-		 */
 		root: (options?: { class?: string }) =>
 			[...rootClasses, options?.class].filter(Boolean).join(' '),
 	};

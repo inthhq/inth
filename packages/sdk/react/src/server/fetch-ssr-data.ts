@@ -1,30 +1,21 @@
-import { C15T_VERSION_HEADER } from '@inth/sdk/engine';
-import type { InitOutput, SSRInitialData } from '@inth/sdk/engine';
+import { INTH_POLICY_CONTRACT_HEADER } from '@inth/sdk/engine';
+import type { SSRInitialData } from '@inth/sdk/engine';
+import { SPECULATION_HEADERS } from '@inth/sdk/schema/types';
+import { fetchRequestInit, resolveRequestProjectUrl } from '@inth/sdk/server';
 
-import { version } from '../version';
-import { CLIENT_FORWARDING_HEADERS, extractRelevantHeaders } from './headers';
-import { normalizeProjectUrl } from './normalize-url';
 import type { FetchSSRDataOptions } from './types';
 
-interface SSRFetchResult {
-	init?: InitOutput;
-	metadata?: SSRInitialData['metadata'];
-}
-
-const buildRequestContext = function buildRequestContext(options: {
-	projectUrl: string;
-	headers: Record<string, string>;
-	overrides?: FetchSSRDataOptions['overrides'];
-}): NonNullable<SSRInitialData['metadata']>['requestContext'] {
+/** What the request told the backend, from the headers `/init` was sent. */
+const buildRequestContext = function buildRequestContext(
+	projectUrl: string,
+	sent: Readonly<Record<string, string>>
+): NonNullable<SSRInitialData['metadata']>['requestContext'] {
 	return {
-		country:
-			options.overrides?.country ?? options.headers['x-c15t-country'] ?? null,
-		gpc: options.headers['sec-gpc'] === '1',
-		language:
-			options.overrides?.language ?? options.headers['accept-language'] ?? null,
-		projectUrl: options.projectUrl,
-		region:
-			options.overrides?.region ?? options.headers['x-c15t-region'] ?? null,
+		country: sent['x-inth-country'] ?? null,
+		gpc: sent['sec-gpc'] === '1',
+		language: sent['accept-language'] ?? null,
+		projectUrl,
+		region: sent['x-inth-region'] ?? null,
 	};
 };
 
@@ -80,97 +71,12 @@ const inspectCacheHeaders = function inspectCacheHeaders(headers: Headers): {
 	};
 };
 
-const logRelevantHeaders = function logRelevantHeaders(
-	relevantHeaders: Record<string, string>,
-	debug?: boolean
-): void {
-	if (!debug) {
-		return;
-	}
-	const headerKeys = Object.keys(relevantHeaders);
-	console.log(
-		`[@inth/sdk/server] Detected headers: [${headerKeys.join(', ')}]`
-	);
-	const cfCountry = relevantHeaders['cf-ipcountry'];
-	const xCountry = relevantHeaders['x-vercel-ip-country'];
-	if (cfCountry) {
-		console.log(`[@inth/sdk/server] Country from cf-ipcountry: ${cfCountry}`);
-	} else if (xCountry) {
-		console.log(
-			`[@inth/sdk/server] Country from x-vercel-ip-country: ${xCountry}`
-		);
-	}
-};
-
-/**
- * Performs the init fetch request.
- * All async work (header resolution) should be done before calling this.
- * GVL is now included in the init response when server has it configured.
- */
-const performInitFetch = async function performInitFetch(
-	normalizedUrl: string,
-	relevantHeaders: Record<string, string>,
-	requestContext: NonNullable<SSRInitialData['metadata']>['requestContext'],
-	debug?: boolean
-): Promise<SSRFetchResult> {
-	const startTime = getNowMs();
-
-	try {
-		const response = await fetch(`${normalizedUrl}/init`, {
-			cache: 'no-store',
-			headers: relevantHeaders,
-			method: 'GET',
-		});
-		const requestDurationMs = Math.max(0, Math.round(getNowMs() - startTime));
-		const cache = inspectCacheHeaders(response.headers);
-		const metadata: SSRInitialData['metadata'] = {
-			cache,
-			requestContext,
-			requestDurationMs,
-		};
-
-		if (response.ok) {
-			const init = await response.json();
-			const result: SSRFetchResult = {
-				init: init as InitOutput,
-				metadata,
-			};
-			if (debug) {
-				console.log(
-					`[@inth/sdk/server] SSR fetch succeeded in ${result.metadata?.requestDurationMs ?? 0}ms`
-				);
-				if (result.metadata?.cache?.detail) {
-					console.log(
-						`[@inth/sdk/server] SSR cache status: ${result.metadata.cache.detail}`
-					);
-				}
-			}
-			return result;
-		}
-		if (debug) {
-			console.log(
-				`[@inth/sdk/server] SSR fetch failed with status: ${response.status}`
-			);
-			if (cache.detail) {
-				console.log(`[@inth/sdk/server] SSR cache status: ${cache.detail}`);
-			}
-		}
-		return { metadata };
-	} catch (error) {
-		if (debug) {
-			const message = error instanceof Error ? error.message : 'Unknown error';
-			console.log(`[@inth/sdk/server] SSR fetch error: ${message}`);
-		}
-		return {};
-	}
-};
-
 /**
  * Fetches initial consent data on the server for SSR hydration.
  *
  * @remarks
  * This is the framework-agnostic SSR data fetching function. It accepts
- * a standard Web API Headers object and performs the fetch to the c15t backend.
+ * a standard Web API Headers object and performs the fetch to the Inth backend.
  *
  * Framework-specific packages (like @inth/nextjs) wrap this function
  * with their own header resolution logic.
@@ -199,7 +105,6 @@ const performInitFetch = async function performInitFetch(
  * });
  * ```
  *
- * @param options - Configuration options including projectUrl, headers, overrides, and debug
  * @returns The SSR initial data or undefined if the fetch fails
  *
  * @public
@@ -210,91 +115,89 @@ export const fetchSSRData = async function fetchSSRData(
 	const { projectUrl, headers, overrides, debug } = options;
 
 	if (debug) {
-		console.log('[@inth/sdk/server] SSR fetch starting...');
+		console.log('[@inth/react/server] SSR fetch starting...');
 	}
 
-	// Extract relevant headers from the request
-	const relevantHeaders = extractRelevantHeaders(headers, {
-		trustForwardedHeaders: options.trustForwardedHeaders,
-	});
-
-	logRelevantHeaders(relevantHeaders, debug);
-
-	// We can't fetch from the server if the headers are not present. Untrusted
-	// forwarding headers are not sent, but they still mark a live request.
-	const hasRequestHeaders =
-		Object.keys(relevantHeaders).length > 0 ||
-		CLIENT_FORWARDING_HEADERS.some((name) => headers.has(name));
-	if (!hasRequestHeaders) {
+	// A render with no request headers, such as a prerender, has no visitor
+	// to ask the backend about.
+	if (headers.keys().next().done) {
 		if (debug) {
 			console.log(
-				'[@inth/sdk/server] No relevant headers found, skipping SSR fetch'
+				'[@inth/react/server] The request has no headers, skipping SSR fetch'
 			);
 		}
 		return undefined;
 	}
 
-	// Normalize URL synchronously
-	const normalizedUrl = normalizeProjectUrl(projectUrl, headers, {
+	const normalizedUrl = resolveRequestProjectUrl(projectUrl, {
+		headers,
 		trustForwardedHeaders: options.trustForwardedHeaders,
 	});
 	if (!normalizedUrl) {
 		if (debug) {
 			console.log(
-				'[@inth/sdk/server] Failed to normalize URL, skipping SSR fetch'
+				'[@inth/react/server] Failed to normalize URL, skipping SSR fetch'
 			);
 		}
 		return undefined;
 	}
 
 	if (debug) {
-		console.log(`[@inth/sdk/server] Fetching from: ${normalizedUrl}/init`);
+		console.log(`[@inth/react/server] Fetching from: ${normalizedUrl}/init`);
 	}
 
-	// Preserve an incoming client version; direct SSR requests use this
-	// package's version so the backend can attribute them to a release.
-	const initHeaders = { [C15T_VERSION_HEADER]: version, ...relevantHeaders };
-	if (overrides?.country) {
-		initHeaders['x-c15t-country'] = overrides.country;
+	const startTime = getNowMs();
+	const answer = await fetchRequestInit({
+		adapter: '@inth/react',
+		forwardHeaders: SPECULATION_HEADERS,
+		// The provider's own init carries the journey; this request starts none.
+		journey: false,
+		onError: debug
+			? (error) => {
+					const message =
+						error instanceof Error ? error.message : 'Unknown error';
+					console.log(`[@inth/react/server] SSR fetch error: ${message}`);
+				}
+			: undefined,
+		overrides,
+		// A relative `projectUrl` is often this app's own proxy route.
+		ownRoutes: [],
+		projectUrl: normalizedUrl,
+		request: { headers },
+		sendConsentCookie: false,
+		timeoutMs: false,
+		trustForwardedHeaders: options.trustForwardedHeaders,
+	});
+	if (!answer) {
 		if (debug) {
-			console.log(`[@inth/sdk/server] Country override: ${overrides.country}`);
+			console.log('[@inth/react/server] SSR fetch returned no data');
 		}
+		return undefined;
 	}
-	if (overrides?.region) {
-		initHeaders['x-c15t-region'] = overrides.region;
-		if (debug) {
-			console.log(`[@inth/sdk/server] Region override: ${overrides.region}`);
-		}
-	}
-	if (overrides?.language) {
-		initHeaders['accept-language'] = overrides.language;
-		if (debug) {
+	const metadata: SSRInitialData['metadata'] = {
+		cache: inspectCacheHeaders(answer.responseHeaders),
+		requestContext: buildRequestContext(normalizedUrl, answer.requestHeaders),
+		requestDurationMs: Math.max(0, Math.round(getNowMs() - startTime)),
+	};
+	if (debug) {
+		console.log(
+			`[@inth/react/server] SSR fetch succeeded in ${metadata.requestDurationMs}ms, sending [${Object.keys(answer.requestHeaders).join(', ')}]`
+		);
+		if (metadata.cache?.detail) {
 			console.log(
-				`[@inth/sdk/server] Language override: ${overrides.language}`
+				`[@inth/react/server] SSR cache status: ${metadata.cache.detail}`
 			);
 		}
 	}
 
-	// Fetch init data (GVL is included in response when server has it configured)
-	const initResult = await performInitFetch(
-		normalizedUrl,
-		initHeaders,
-		buildRequestContext({
-			headers: initHeaders,
-			overrides,
-			projectUrl: normalizedUrl,
-		}),
-		debug
-	);
-	const { init } = initResult;
-
-	if (!init) {
-		if (debug) {
-			console.log('[@inth/sdk/server] SSR fetch returned no data');
-		}
-		return undefined;
-	}
-
-	// GVL is now part of the init response
-	return { gvl: init.gvl, init, metadata: initResult.metadata };
+	// The backend sends the GVL in the init response when it has one
+	// configured.
+	return {
+		gvl: answer.init.gvl,
+		init: answer.init,
+		metadata,
+		producerPolicyContract: answer.responseHeaders.get(
+			INTH_POLICY_CONTRACT_HEADER
+		),
+	};
 };

@@ -14,7 +14,8 @@ type TranslationSection =
 	| 'consentGate'
 	| 'legalLinks'
 	| 'iab'
-	| 'rights';
+	| 'rights'
+	| 'trigger';
 
 const isPlainObject = function isPlainObject(
 	value: unknown
@@ -106,7 +107,7 @@ const warnLegacyFrameOnce = function warnLegacyFrameOnce(): void {
 	}
 	warnedLegacyFrame = true;
 	console.warn(
-		'c15t: the `frame` translations were renamed to `consentGate`. c15t reads `frame` as `consentGate` for now; rename the key in your translations.'
+		'inth: the `frame` translations were renamed to `consentGate`. Inth reads `frame` as `consentGate` for now; rename the key in your translations.'
 	);
 };
 
@@ -119,7 +120,6 @@ const warnLegacyFrameOnce = function warnLegacyFrameOnce(): void {
  * and the `frame` key is dropped. Warns once outside production when it
  * finds one.
  *
- * @param translations - Translations that may use the old key.
  * @returns The translations with `frame` folded into `consentGate`, or the
  * input unchanged when it has no `frame` key.
  * @example
@@ -170,6 +170,7 @@ export const deepMergeTranslations = function deepMergeTranslations(
 		'legalLinks',
 		'iab',
 		'rights',
+		'trigger',
 	];
 
 	const result: Partial<Translations> = {};
@@ -340,7 +341,6 @@ export const toTranslationConfig = function toTranslationConfig(
 /**
  * Resolves legacy and v2 i18n inputs into a normalized legacy translation config.
  *
- * @param legacyConfig Legacy translation input.
  * @param i18nConfig Preferred v2 i18n input.
  */
 export const resolveTranslationInput = function resolveTranslationInput(
@@ -359,9 +359,6 @@ export const resolveTranslationInput = function resolveTranslationInput(
 	return toTranslationConfig(normalizeI18nConfig(config));
 };
 
-/**
- * Merges custom translations with defaults
- */
 export const mergeTranslationConfigs = function mergeTranslationConfigs(
 	defaultConfig: TranslationInputConfig,
 	customConfig?: TranslationInputConfig
@@ -406,9 +403,6 @@ export const mergeTranslationConfigs = function mergeTranslationConfigs(
 	});
 };
 
-/**
- * Detects browser language and returns appropriate default language
- */
 export const detectBrowserLanguage = function detectBrowserLanguage(
 	translations: Record<string, unknown>,
 	defaultLanguage: string | undefined,

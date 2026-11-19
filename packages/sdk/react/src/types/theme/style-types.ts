@@ -49,7 +49,7 @@ export type ExtendThemeKeys<VariableMap = Record<string, string | number>> =
 	ClassNameStyle<VariableMap>;
 
 /**
- * Complete theme configuration for c15t consent components (v2).
+ * Complete theme configuration for Inth consent components (v2).
  * @public
  */
 export interface Theme extends Omit<BaseTheme, 'slots'> {

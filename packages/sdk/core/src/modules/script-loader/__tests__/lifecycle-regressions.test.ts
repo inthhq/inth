@@ -1009,7 +1009,7 @@ test('stops a consent callback feedback loop and reports the failure', () => {
 
 test('configuration removal leaves a borrowed retained element in place', () => {
 	const foreign = document.createElement('script');
-	foreign.id = 'c15t-script-borrowed';
+	foreign.id = 'inth-script-borrowed';
 	foreign.src = 'https://example.com/foreign.js';
 	document.head.appendChild(foreign);
 	const { kernel, loader } = mount([
@@ -1187,7 +1187,7 @@ test.each([false, true])(
 		};
 		if (borrowed) {
 			const foreign = document.createElement('script');
-			foreign.id = 'c15t-script-disable-retention';
+			foreign.id = 'inth-script-disable-retention';
 			foreign.src = script.src ?? '';
 			document.head.appendChild(foreign);
 		}

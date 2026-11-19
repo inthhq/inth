@@ -15,19 +15,19 @@ import {
 import { displayedCategories } from '../../consent/consent-types';
 import { createKernel } from '../../kernel/index';
 import { createMemoryOutboxStore } from '../../kernel/save-outbox/store';
+import { EARLY_TAPS_WINDOW_KEY } from '../../libs/page-globals';
+import type { EarlyConsentTapQueue } from '../../libs/page-globals';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { readStoredRecords } from '../../modules/persistence/hydrate';
+import { createStandInKernel } from '../../runtime/stand-in-kernel';
 import type { KernelConfig, KernelEvent, SavePayload } from '../../types';
 import {
+	completeCommit,
 	hasStoredClearEpoch,
 	planEarlyCommit,
 	storeEarlyCommit,
 } from '../early-commit';
-import {
-	EARLY_CONSENT_TAP_SCRIPT,
-	EARLY_TAPS_WINDOW_KEY,
-} from '../early-tap-script';
-import type { EarlyConsentTapQueue } from '../early-tap-script';
+import { EARLY_CONSENT_TAP_SCRIPT } from '../early-tap-script';
 
 const TAP_AT = NOW + 4000;
 const CLOCK = NOW + 5000;
@@ -226,7 +226,7 @@ describe('storeEarlyCommit', () => {
 
 	test('a stored clear epoch is reported, so the kernel records the choice', () => {
 		expect(hasStoredClearEpoch()).toBe(false);
-		localStorage.setItem('c15t-epoch', String(NOW));
+		localStorage.setItem('inth-epoch', String(NOW));
 		expect(hasStoredClearEpoch()).toBe(true);
 	});
 });
@@ -257,4 +257,35 @@ test('the early-tap script tells a deferred root about each tap', () => {
 		'customize',
 	]);
 	queue?.stop?.();
+});
+
+describe('completeCommit', () => {
+	test('stores the record where persistence keeps it, as the engine reads it', async () => {
+		const handle = createStandInKernel({
+			requestEngine: () => undefined,
+			snapshot: createKernel(config(), {
+				outboxStore: createMemoryOutboxStore(),
+			}).getSnapshot(),
+		});
+		const storageConfig = { storageKey: 'site-consent' };
+		const done = await completeCommit({
+			actionAt: TAP_AT,
+			choice: 'all',
+			config: {
+				// The raw option the engine ignores when persistence names one.
+				persistence: { storageConfig },
+				storageConfig: { storageKey: 'ignored' },
+			},
+			handle,
+			instant: null,
+		});
+		expect(done?.result.ok).toBe(true);
+		expect(readStoredRecords(storageConfig, CLOCK).records.choice).toEqual(
+			done?.committed.records.choice
+		);
+		expect(localStorage.getItem('ignored')).toBeNull();
+		expect(handle.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+			true
+		);
+	});
 });

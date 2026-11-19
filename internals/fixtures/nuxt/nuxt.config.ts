@@ -1,5 +1,5 @@
 /**
- * Demo shell for the c15t Nuxt example.
+ * Demo shell for the Inth Nuxt example.
  *
  * The consent setup lives in a layer per output mode:
  *
@@ -7,34 +7,34 @@
  *   reading the manifest at runtime (`source: 'runtime'`).
  * - `config/static`: prerendered or SPA output with
  *   `manifest({ resolve: 'browser' })` and no consent route. Selected with
- *   `C15T_NUXT_OUTPUT=static` and built with `nuxt generate`.
+ *   `INTH_NUXT_OUTPUT=static` and built with `nuxt generate`.
  *
  * Everything here is demo-only: the backend URL override, the system color
  * scheme with its dark primary, styles, the test switch for browser
  * resolution, and two copies of `/consent-example` whose HTML every visitor shares
- * (`routeRules`), one prerendered at build time and one cached by Nitro. c15t leaves visitor state out of that HTML
+ * (`routeRules`), one prerendered at build time and one cached by Nitro. Inth leaves visitor state out of that HTML
  * and resolves the visitor in the browser after hydration.
- * `C15T_NUXT_MANIFEST=client` builds the server output with browser
+ * `INTH_NUXT_MANIFEST=client` builds the server output with browser
  * resolution.
  *
  * Module config is static, so the banner-shape experiment is switched on at
- * build time with `C15T_NUXT_EXPERIMENT=1`. `C15T_NUXT_EXPERIMENT_ARM` stands
+ * build time with `INTH_NUXT_EXPERIMENT=1`. `INTH_NUXT_EXPERIMENT_ARM` stands
  * in for a flag provider: `wall` runs the wall arm, any other value runs
- * `control` (the default banner), and leaving it unset lets c15t pick. These
+ * `control` (the default banner), and leaving it unset lets Inth pick. These
  * are not `NUXT_PUBLIC_*` names because Nitro would apply those at runtime
- * over `runtimeConfig.public.c15t.experiment`.
+ * over `runtimeConfig.public.inth.experiment`.
  */
 import { manifest } from '@inth/nuxt';
 import type { ModuleOptions } from '@inth/nuxt';
 
-const staticOutput = process.env.C15T_NUXT_OUTPUT === 'static';
+const staticOutput = process.env.INTH_NUXT_OUTPUT === 'static';
 // The acceptance suite points the demo at a mock backend with this variable.
 // Without it the demo uses the placeholder project URL, so set the variable
 // to your Inth project URL to run it by hand.
-const testProjectUrl = process.env.NUXT_PUBLIC_C15T_BACKEND_URL;
-const experimentArm = process.env.C15T_NUXT_EXPERIMENT_ARM;
+const testProjectUrl = process.env.NUXT_PUBLIC_INTH_PROJECT_URL;
+const experimentArm = process.env.INTH_NUXT_EXPERIMENT_ARM;
 const experiment: ModuleOptions['experiment'] =
-	process.env.C15T_NUXT_EXPERIMENT === '1'
+	process.env.INTH_NUXT_EXPERIMENT === '1'
 		? {
 				arms: { wall: { prompt: { variant: 'wall' as const } } },
 				id: 'banner-shape',
@@ -44,26 +44,26 @@ const experiment: ModuleOptions['experiment'] =
 			}
 		: undefined;
 
-const c15t: ModuleOptions = {
+const inth: ModuleOptions = {
 	// Follow the visitor's system setting, with a dark primary of our own.
 	colorScheme: 'system',
 	projectUrl: testProjectUrl ?? 'https://your-project.inth.app',
 	theme: { dark: { primary: '#7fd1a8' } },
 };
 if (experiment) {
-	c15t.experiment = experiment;
+	inth.experiment = experiment;
 }
 // Left unset otherwise, so the layer's `mode` applies.
-if (process.env.C15T_NUXT_MANIFEST === 'client') {
-	c15t.mode = manifest({ resolve: 'browser', source: 'runtime' });
+if (process.env.INTH_NUXT_MANIFEST === 'client') {
+	inth.mode = manifest({ resolve: 'browser', source: 'runtime' });
 }
 
 export default defineNuxtConfig({
-	c15t,
 	compatibilityDate: '2026-07-04',
 	css: ['~/consent-example.css'],
 	devtools: { enabled: true },
 	extends: [staticOutput ? './config/static' : './config/server'],
+	inth,
 	// `vite preview` serves `/consent-example` from `consent-example.html`.
 	nitro: staticOutput ? { prerender: { autoSubfolderIndex: false } } : {},
 	routeRules: staticOutput

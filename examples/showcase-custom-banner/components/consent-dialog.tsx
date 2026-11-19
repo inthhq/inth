@@ -47,7 +47,7 @@ const preferenceLabels = {
 } as const;
 
 // Northwind's own words for each category. Anything not listed here falls
-// back to c15t's translated title and description.
+// back to Inth's translated title and description.
 const categoryCopy: Partial<
 	Record<AllConsentNames, { title: string; description: string }>
 > = {
@@ -293,9 +293,9 @@ const CloseIcon = () => (
 );
 
 /**
- * Northwind's consent dialog: one centered modal for both of c15t's
+ * Northwind's consent dialog: one centered modal for both of Inth's
  * surfaces. The banner surface is the first step (the question, the
- * categories and the policy's actions). "Choose" moves c15t to the dialog
+ * categories and the policy's actions). "Choose" moves Inth to the dialog
  * surface, and the same modal turns each category into a switch.
  */
 export const ConsentDialog = () => {
@@ -350,7 +350,7 @@ export const ConsentDialog = () => {
 	});
 
 	// On the banner step the visitor still owes an answer, so Escape does
-	// nothing. On the dialog step it calls `closeUI()`: c15t goes back to
+	// nothing. On the dialog step it calls `closeUI()`: Inth goes back to
 	// the banner step while the answer is owed, and closes the modal once
 	// the visitor has chosen (when it was opened from Privacy settings).
 	useEffect(() => {

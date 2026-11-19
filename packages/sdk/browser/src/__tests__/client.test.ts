@@ -108,7 +108,7 @@ beforeAll(async () => {
 	await vi.waitFor(
 		() => {
 			expect(save).toHaveBeenCalledOnce();
-			expect(localStorage.getItem('c15t')).toContain('measurement');
+			expect(localStorage.getItem('inth')).toContain('measurement');
 			expect(
 				Array.from(document.scripts).some((script) =>
 					script.textContent?.includes('__warmUp')
@@ -145,7 +145,7 @@ describe('createConsentClient', () => {
 				expect(save).not.toHaveBeenCalled();
 				expect(client.hasConsented()).toBe(true);
 				await vi.waitFor(() => expect(save).toHaveBeenCalledOnce());
-				expect(localStorage.getItem('c15t')).toContain('measurement');
+				expect(localStorage.getItem('inth')).toContain('measurement');
 				const settled = await Promise.race([
 					saving,
 					new Promise<null>((resolve) => {
@@ -207,8 +207,8 @@ describe('createConsentClient', () => {
 		]);
 		expect(client.consentCategories).toEqual([
 			'necessary',
-			'measurement',
 			'experience',
+			'measurement',
 			'marketing',
 		]);
 	});
@@ -255,14 +255,14 @@ describe('createConsentClient', () => {
 		const onUI = vi.fn();
 		const onDocument = vi.fn();
 		client.on('ui', onUI);
-		document.addEventListener('c15t:ui', onDocument);
+		document.addEventListener('inth:ui', onDocument);
 
 		client.openDialog();
 
 		expect(onUI).toHaveBeenCalledWith('dialog');
 		expect(onDocument).toHaveBeenCalledOnce();
 		expect(onDocument.mock.calls[0]?.[0]).toMatchObject({ detail: 'dialog' });
-		document.removeEventListener('c15t:ui', onDocument);
+		document.removeEventListener('inth:ui', onDocument);
 	});
 
 	it('emits a surface impression as a client event and a document event', async () => {
@@ -270,7 +270,7 @@ describe('createConsentClient', () => {
 		const onShown = vi.fn();
 		const onDocument = vi.fn();
 		client.on('surfaceShown', onShown);
-		document.addEventListener('c15t:surfaceShown', onDocument);
+		document.addEventListener('inth:surfaceShown', onDocument);
 		await client.ready();
 
 		expect(onShown).toHaveBeenCalledOnce();
@@ -281,7 +281,7 @@ describe('createConsentClient', () => {
 		expect(client.getSnapshot().surfaceShownAt.banner).toBe(
 			onShown.mock.calls[0]?.[0].shownAt
 		);
-		document.removeEventListener('c15t:surfaceShown', onDocument);
+		document.removeEventListener('inth:surfaceShown', onDocument);
 	});
 
 	it('replays ready and the current surface to listeners attached after init', async () => {
@@ -297,11 +297,11 @@ describe('createConsentClient', () => {
 		expect(onUI).toHaveBeenCalledWith('banner');
 	});
 
-	it('wires data-c15t-action buttons anywhere on the page', async () => {
+	it('wires data-inth-action buttons anywhere on the page', async () => {
 		const client = start();
 		await client.ready();
 		const accept = document.createElement('button');
-		accept.setAttribute('data-c15t-action', 'accept');
+		accept.setAttribute('data-inth-action', 'accept');
 		document.body.append(accept);
 
 		accept.click();
@@ -310,11 +310,11 @@ describe('createConsentClient', () => {
 		});
 	});
 
-	it('opens the preference centre from a #c15t-preferences link', async () => {
+	it('opens the preference centre from a #inth-preferences link', async () => {
 		const client = start();
 		await client.ready();
 		const link = document.createElement('a');
-		link.href = '#c15t-preferences';
+		link.href = '#inth-preferences';
 		link.textContent = 'Cookie settings';
 		document.body.append(link);
 
@@ -448,7 +448,7 @@ describe('on() listener isolation', () => {
 			throw failure;
 		});
 		client.on('consent', later);
-		document.addEventListener('c15t:consent', onDocument);
+		document.addEventListener('inth:consent', onDocument);
 
 		await client.acceptAll();
 
@@ -458,7 +458,7 @@ describe('on() listener isolation', () => {
 			expect.stringContaining('"consent" listener threw'),
 			failure
 		);
-		document.removeEventListener('c15t:consent', onDocument);
+		document.removeEventListener('inth:consent', onDocument);
 		error.mockRestore();
 	});
 
@@ -491,7 +491,7 @@ describe('runtime options', () => {
 		});
 
 		expect(client.has('measurement')).toBe(true);
-		expect(document.cookie).not.toContain('c15t');
+		expect(document.cookie).not.toContain('inth');
 		expect(Object.keys(localStorage)).toEqual([]);
 	});
 

@@ -1,9 +1,3 @@
-/**
- * Comprehensive tests for shared UI primitives (Button, Switch, Accordion).
- *
- * @packageDocumentation
- */
-
 import type { ReactNode, RefObject } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -51,7 +45,6 @@ import {
 	Trigger as TabsTrigger,
 } from '../tabs/tabs';
 
-// Wrapper to provide theme context for accordion tests
 const ThemeWrapper = ({ children }: { children: ReactNode }) => (
 	<StableGlobalThemeProvider value={{ noStyle: false }}>
 		{children}
@@ -157,7 +150,6 @@ describe('Button', () => {
 				() => {
 					const button = document.querySelector('button');
 					expect(button).toBeInTheDocument();
-					// When noStyle is true, only the custom className should be applied
 					expect(button?.className).toBe('only-this-class');
 				},
 				{ timeout: 3000 }
@@ -530,7 +522,6 @@ describe('Accordion', () => {
 				{ timeout: 3000 }
 			);
 
-			// Click the second item
 			const triggers = document.querySelectorAll('button');
 			const secondTrigger = triggers.item(1);
 			expect(secondTrigger).toBeInstanceOf(HTMLElement);
@@ -539,7 +530,6 @@ describe('Accordion', () => {
 			}
 			await userEvent.click(secondTrigger);
 
-			// First item should now be closed, second should be open
 			await vi.waitFor(
 				() => {
 					const firstTrigger = document.querySelector(
@@ -618,7 +608,6 @@ describe('Accordion', () => {
 			}
 			await userEvent.click(secondTrigger);
 
-			// Both should be open
 			await vi.waitFor(
 				() => {
 					const openTriggers = document.querySelectorAll(

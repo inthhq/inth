@@ -6,8 +6,8 @@ export const GET = async function GET(
 ) {
 	const { id } = await params;
 	const body = [
-		`window.__c15tScriptBench?.recordScriptExecution?.(${JSON.stringify(id)});`,
-		`window.__c15tScriptBench && (window.__c15tScriptBench.scriptEvents[${JSON.stringify(id)}] = performance.now());`,
+		`window.__inthScriptBench?.recordScriptExecution?.(${JSON.stringify(id)});`,
+		`window.__inthScriptBench && (window.__inthScriptBench.scriptEvents[${JSON.stringify(id)}] = performance.now());`,
 	].join('\n');
 
 	return new NextResponse(body, {

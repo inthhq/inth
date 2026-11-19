@@ -53,7 +53,7 @@ export const ConsentGPP = ({
 	const kernel = useContext(KernelContext);
 	if (!kernel) {
 		throw new Error(
-			'c15t: ConsentGPP must be rendered inside <ConsentProvider> from @inth/react.'
+			'inth: ConsentGPP must be rendered inside <ConsentProvider> from @inth/react.'
 		);
 	}
 	// A key, so an inline array does not remount the API on every render.
@@ -76,7 +76,7 @@ export const ConsentGPP = ({
 		} catch (error) {
 			// Another CMP owns `__gpp`; consent keeps working without it.
 			// oxlint-disable-next-line no-console -- Integration diagnostic.
-			console.error('c15t: GPP was not installed.', error);
+			console.error('inth: GPP was not installed.', error);
 		}
 		return () => handle?.dispose();
 	}, [categories, cmpId, kernel, mspaMode, tcf, usApproach, usFallback]);

@@ -3,7 +3,7 @@
 import { hosted } from '@inth/nuxt';
 
 export default defineNuxtConfig({
-	c15t: { projectUrl: '/api/c15t', mode: hosted() },
+	inth: { projectUrl: '/api/inth', mode: hosted() },
 	compatibilityDate: '2026-07-04',
 	css: ['~/assets/css/main.css'],
 	modules: ['@inth/nuxt'],

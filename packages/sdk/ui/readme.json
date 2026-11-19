@@ -1,10 +1,10 @@
 {
 	"title": "@inth/sdk-ui: Cookie consent UI primitives and theme system",
-	"description": "The framework-agnostic cookie consent UI primitives, CSS, and theme tokens behind the c15t React, Vue, Svelte, and Astro components. Most apps get this package through a framework adapter and do not install it directly.",
+	"description": "The framework-agnostic cookie consent UI primitives, CSS, and theme tokens behind the Inth React, Vue, Svelte, and Astro components. Most apps get this package through a framework adapter and do not install it directly.",
 	"features": [
-		"One theme system for every c15t framework: set `--c15t-*` tokens once and the banner, dialog, and preference center follow",
+		"One theme system for every Inth framework: set `--inth-*` tokens once and the banner, dialog, and preference center follow",
 		"Stylesheets for plain CSS and Tailwind CSS, with a separate file for Tailwind CSS 3",
-		"Framework-agnostic primitives for building a c15t adapter for another UI framework"
+		"Framework-agnostic primitives for building an Inth adapter for another UI framework"
 	],
 	"manualInstallation": [
 		"",

@@ -65,7 +65,6 @@ export interface PinterestTagLineItem {
 	/** Quantity of this product in the event. */
 	product_quantity?: number;
 
-	/** Brand name. */
 	product_brand?: string;
 
 	[key: string]: unknown;
@@ -264,7 +263,6 @@ interface PinterestTagFunction {
 	(command: string, ...args: unknown[]): void;
 }
 
-// Extended Window interface to include Pinterest Tag-specific properties
 declare global {
 	interface Window {
 		pintrk?: PinterestTagFunction & {
@@ -378,19 +376,13 @@ export interface PinterestTagOptions {
  * Creates a Pinterest Tag script.
  *
  * This script persists after consent is revoked because Pinterest exposes
- * `pintrk('setconsent', boolean)`, which lets c15t disable tracking and clear
+ * `pintrk('setconsent', boolean)`, which lets Inth disable tracking and clear
  * Pinterest's first-party storage without removing the script element.
  *
  * @param options.tagId - Pinterest Tag ID used in `pintrk('load', ...)`.
  *   Numeric string from Pinterest Ads Manager, for example `'2613654212508'`.
  * @param options.loadOptions - Optional object passed as the third argument to
  *   `pintrk('load', tagId, loadOptions)`, for example `{ em: 'user@example.com' }`.
- * @param options.trackPageVisit - Whether to queue the default `pintrk('page')`
- *   call during setup. Defaults to `true`.
- * @param options.scriptUrl - Override for Pinterest's `core.js` loader URL.
- * @returns A resolved c15t `Script` configuration that defines the `pintrk`
- *   queue stub, queues `load`, `setconsent`, and optionally `page`, then loads
- *   Pinterest's `core.js`.
  * @remarks When `tagId` is missing or blank, the
  *   helper logs `pinterestTag: missing or invalid tagId` with
  *   `console.error` and returns a script that never loads.

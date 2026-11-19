@@ -7,7 +7,7 @@ import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	installHeadProbe,
@@ -20,7 +20,7 @@ import { klaviyo } from './vendors/email-and-sms/klaviyo';
 const LOADER_SRC = 'https://static.klaviyo.com/onsite/js/AbC123/klaviyo.js';
 
 const bothGranted = {
-	...deniedConsents,
+	...ALL_DENIED,
 	marketing: true,
 	measurement: true,
 };
@@ -43,7 +43,7 @@ describe('Klaviyo loader contract', () => {
 	it('loads once, only after both marketing and measurement are granted', () => {
 		const scripts = [klaviyo({ publicApiKey: 'AbC123' })];
 
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		expect(getLoaders()).toHaveLength(0);
 		updateScripts(scripts, grantedMarketingConsents);
 		expect(getLoaders()).toHaveLength(0);
@@ -70,7 +70,7 @@ describe('Klaviyo loader contract', () => {
 		const result = updateScripts(scripts, grantedMarketingConsents);
 
 		// Only the loader element goes. Code Klaviyo.js already ran stays until
-		// c15t reloads the page, so the helper leaves the onsite object alone.
+		// Inth reloads the page, so the helper leaves the onsite object alone.
 		expect(result.unloaded).toEqual(['klaviyo']);
 		expect(getLoaders()).toHaveLength(0);
 		expect(window.klaviyo).toBe(stub);
@@ -117,7 +117,7 @@ describe('Klaviyo loader contract', () => {
 
 		loadScripts(scripts, grantedMeasurementConsents);
 		expect(getLoaders()).toHaveLength(0);
-		updateScripts(scripts, { ...deniedConsents, functionality: true });
+		updateScripts(scripts, { ...ALL_DENIED, functionality: true });
 		expect(getLoaders()).toHaveLength(1);
 	});
 

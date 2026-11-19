@@ -10,4 +10,4 @@ appId: ${APP_ID}
 - extendedWaitUntil:
     notVisible:
       id: "inth\\.(prefs|iab)\\.save"
-    timeout: ${C15T_TIMEOUT || 15000}
+    timeout: ${INTH_TIMEOUT || 15000}

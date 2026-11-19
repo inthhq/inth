@@ -1,4 +1,4 @@
-import { loadBrowserBenchInit } from '@c15t/benchmarking/policy-fixtures';
+import { loadBrowserBenchInit } from '@inth/benchmarking/policy-fixtures';
 import { NextResponse } from 'next/server';
 
 /**

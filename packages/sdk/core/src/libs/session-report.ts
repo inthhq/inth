@@ -29,7 +29,9 @@ import {
 } from '@inth/sdk-schema/types';
 import type { BuildConsentSessionReportOptions } from '@inth/sdk-schema/types';
 
-import { c15tProtocolHeaders } from '../transports/version-header';
+import { readHeader, toHeaders } from './headers';
+import { trimSlash } from './url';
+import { inthProtocolHeaders } from './version-header';
 
 /**
  * The only request headers a report carries about the visitor: the user
@@ -64,10 +66,6 @@ export type SessionReportHeaders =
 	| Headers
 	| Record<string, string | string[] | undefined>;
 
-const trimSlash = function trimSlash(url: string): string {
-	return url.endsWith('/') ? url.slice(0, -1) : url;
-};
-
 const ABSOLUTE_URL = /^https?:\/\//iu;
 
 /**
@@ -92,53 +90,11 @@ export const resolveSessionReportProjectUrl =
 			: undefined;
 	};
 
-const readHeader = function readHeader(
-	headers: SessionReportHeaders | undefined,
-	name: string
-): string | undefined {
-	if (!headers) {
-		return undefined;
-	}
-	if (headers instanceof Headers) {
-		return headers.get(name) ?? undefined;
-	}
-	const direct = headers[name] ?? headers[name.toLowerCase()];
-	if (direct !== undefined) {
-		return Array.isArray(direct) ? direct[0] : direct;
-	}
-	for (const [key, value] of Object.entries(headers)) {
-		if (key.toLowerCase() === name) {
-			return Array.isArray(value) ? value[0] : value;
-		}
-	}
-	return undefined;
-};
-
-const toHeaders = function toHeaders(
-	headers: SessionReportHeaders | undefined
-): Headers {
-	if (!headers) {
-		return new Headers();
-	}
-	if (headers instanceof Headers) {
-		return headers;
-	}
-	const result = new Headers();
-	for (const [key, value] of Object.entries(headers)) {
-		const single = Array.isArray(value) ? value[0] : value;
-		if (single) {
-			result.set(key, single);
-		}
-	}
-	return result;
-};
-
 /**
  * Whether a request is a prefetch or prerender the visitor may never open.
  * The shared check from `@inth/sdk/schema`, accepting any header shape a server
  * runtime hands over.
  *
- * @param headers - The incoming request's headers.
  * @returns `true` for a speculative request.
  */
 export const isSpeculativeRequest = function isSpeculativeRequest(
@@ -152,12 +108,11 @@ export const isSpeculativeRequest = function isSpeculativeRequest(
  *
  * The client IP is the address the shared derivation recovers from the
  * request's proxy headers, unmasked: masking is the backend's decision and
- * happens there. An `x-c15t-client-ip` already on the incoming request is
+ * happens there. An `x-inth-client-ip` already on the incoming request is
  * ignored on purpose: a visitor can send that header to a public init
  * route, and honouring it would let them choose the address the backend
  * attributes to them.
  *
- * @param headers - The incoming request's headers.
  * @returns The user agent and client IP that were present.
  */
 export const forwardSessionReportHeaders = function forwardSessionReportHeaders(
@@ -276,7 +231,7 @@ export const reportConsentSession = function reportConsentSession(
 				body: JSON.stringify(body),
 				headers: {
 					'content-type': 'application/json',
-					...c15tProtocolHeaders,
+					...inthProtocolHeaders,
 					...forwardSessionReportHeaders(options.headers),
 				},
 				method: 'POST',

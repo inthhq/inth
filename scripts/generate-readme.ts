@@ -1,18 +1,14 @@
-// scripts/generate-readmes.ts
-
 import * as fssync from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Resolve __dirname in ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Default support and contributing sections
 const DEFAULT_SUPPORT_SECTIONS = [
 	'Join our [Discord community](https://c15t.link/discord)',
-	'Open an issue on our [GitHub repository](https://github.com/c15t/c15t/issues)',
+	'Open an issue on our [GitHub repository](https://github.com/inthhq/inth/issues)',
 	'Visit [inth.com](https://inth.com) and use the chat widget',
 	'Contact our support team via email [support@inth.com](mailto:support@inth.com)',
 ];
@@ -24,24 +20,20 @@ const DEFAULT_CONTRIBUTING_SECTIONS = [
 
 const DEFAULT_SECURITY_SECTION = `## Security
 
-Do not open a public issue for a security vulnerability. Report it privately through [GitHub's vulnerability reporting](https://github.com/c15t/c15t/security/advisories/new). We examine every valid report.
+Do not open a public issue for a security vulnerability. Report it privately through [GitHub's vulnerability reporting](https://github.com/inthhq/inth/security/advisories/new). We examine every valid report.
 
 - Do not share the vulnerability in public forums, issues, or pull requests
 - Give the steps to reproduce it and the versions it affects
 - Give us time to release a fix before you disclose it`;
 
-const SOCIAL_PROOF_LINE =
-	'c15t is used by [2,100+ sites](https://www.wappalyzer.com/technologies/cookie-compliance/c15t/), including expo.dev, zed.dev, unkey.dev, mintlify.com, and sazabi.com.';
-
 /**
  * Renders the shared hosting section with Inth links tagged for one package.
  *
  * @param npmBadgeName - URL-encoded package name used as the UTM content.
- * @returns The Markdown for the Hosting section.
  */
 const renderHostingSection = (npmBadgeName: string) => `## Hosting
 
-c15t needs somewhere to keep policies and consent records. Pick one:
+Inth needs somewhere to keep policies and consent records. Pick one:
 
 - **Hosted on [Inth](https://inth.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=${npmBadgeName})**: Inth runs the backend for you. You get policy storage, consent records, audit history, and a dashboard, with no database or server to run. Sign-up is free.
 - **Self-hosted**: Run [\`@c15t/backend\`](https://www.npmjs.com/package/@c15t/backend) on your own server with PostgreSQL, MySQL, or SQLite. You own migrations, backups, and uptime. See the [self-hosting guide](https://c15t.com/docs/self-host/quickstart).
@@ -49,7 +41,6 @@ c15t needs somewhere to keep policies and consent records. Pick one:
 
 The frontend code is the same for Inth and a self-hosted backend. Only the backend URL changes.`;
 
-// Types
 interface PackageReadmeConfig {
 	packageName: string;
 	title: string;
@@ -79,8 +70,6 @@ interface PackageReadmeConfig {
 	docsLink?: string;
 	quickStartLink?: string;
 	showCLIGeneration?: boolean;
-	/** Omit the shared web banner when its assets are not bundled. */
-	showBanner?: boolean;
 	customSections?: Record<string, string>;
 	/** Sections rendered directly after Key Features, before setup steps. */
 	leadSections?: Record<string, string>;
@@ -95,7 +84,6 @@ interface PackageReadmeConfig {
 	privatePackage?: boolean;
 }
 
-// Helpers
 const isNonEmpty = (v?: string) => Boolean(v && v.trim().length > 0);
 
 const encodeNpmName = (name: string) => encodeURIComponent(name);
@@ -110,15 +98,7 @@ const INTH_BADGE_QUERY = new URLSearchParams({
 	valueColor: '000000',
 }).toString();
 
-/**
- * Appends a ShieldCN color mode query parameter to a badge URL.
- *
- * @param url - Badge URL that may already include query parameters.
- * @param mode - Color mode to request from ShieldCN.
- * @returns The badge URL with the mode query parameter appended.
- *
- * Uses `&` instead of `?` when the URL already has query parameters.
- */
+/** Appends a ShieldCN color mode query parameter to a badge URL. */
 const withBadgeMode = (url: string, mode: 'light' | 'dark'): string => {
 	const separator = url.includes('?') ? '&' : '?';
 	return `${url}${separator}mode=${mode}`;
@@ -127,10 +107,7 @@ const withBadgeMode = (url: string, mode: 'light' | 'dark'): string => {
 /**
  * Renders a badge link that switches image sources with the user's color scheme.
  *
- * @param badge.alt - Accessible text for the badge image.
- * @param badge.href - Destination URL for the badge link.
  * @param badge.src - Base ShieldCN badge image URL before color mode is added.
- * @returns The HTML anchor and picture markup for a theme-aware badge.
  */
 const renderThemeAwareBadge = ({
 	alt,
@@ -142,19 +119,16 @@ const renderThemeAwareBadge = ({
 	src: string;
 }): string =>
 	`<a href="${href}"><picture><source media="(prefers-color-scheme: dark)" srcset="${withBadgeMode(src, 'dark')}"><img src="${withBadgeMode(src, 'light')}" alt="${alt}"></picture></a>`;
-// Modify the renderNumberedWithCodeBlocks function to add blank lines around code blocks and lists
 const renderNumberedWithCodeBlocks = (items: string[]) => {
 	let i = 1;
 	const lines: string[] = [];
 	for (const raw of items) {
 		const item = raw.trim();
 		if (item.startsWith('```')) {
-			// Add blank lines before and after code blocks
 			lines.push('');
 			lines.push(item);
 			lines.push('');
 		} else if (item.startsWith('- ')) {
-			// Add blank lines before and after lists
 			if (lines.length === 0 || lines[lines.length - 1] !== '') {
 				lines.push('');
 			}
@@ -172,7 +146,6 @@ const renderNumberedWithCodeBlocks = (items: string[]) => {
 		.trim()}\n\n\n\n`;
 };
 
-// Modify the addSection function to ensure blank lines around sections
 const addSection = (
 	header: string,
 	content: string[] | undefined,
@@ -191,7 +164,6 @@ const addSection = (
 const baseReadmeTemplate = (rawConfig: PackageReadmeConfig) => {
 	const config: PackageReadmeConfig = { ...rawConfig };
 
-	// Defaults
 	if (!config.support || config.support.length === 0) {
 		config.support = DEFAULT_SUPPORT_SECTIONS;
 	}
@@ -202,7 +174,6 @@ const baseReadmeTemplate = (rawConfig: PackageReadmeConfig) => {
 		config.security = DEFAULT_SECURITY_SECTION;
 	}
 
-	// npm badge name: ensure scoped packages are encoded
 	const npmBadgeName = encodeNpmName(config.packageName);
 	const npmPackageLink = `https://www.npmjs.com/package/${config.packageName}`;
 	const madeByInthBadgeUrl = `https://shieldcn.dev/badge/Made%20By-Inth-ffc803.svg?${INTH_BADGE_QUERY}`;
@@ -219,23 +190,18 @@ ${[
 			]),
 	renderThemeAwareBadge({
 		alt: 'Stars',
-		href: 'https://github.com/c15t/c15t',
-		src: 'https://shieldcn.dev/github/c15t/c15t/stars.svg?variant=outline',
+		href: 'https://github.com/inthhq/inth',
+		src: 'https://shieldcn.dev/github/inthhq/inth/stars.svg?variant=outline',
 	}),
 	renderThemeAwareBadge({
 		alt: 'License',
-		href: 'https://github.com/c15t/c15t/blob/main/LICENSE.md',
-		src: 'https://shieldcn.dev/github/c15t/c15t/license.svg?variant=outline',
+		href: 'https://github.com/inthhq/inth/blob/main/LICENSE',
+		src: 'https://shieldcn.dev/github/inthhq/inth/license.svg?variant=outline',
 	}),
 	renderThemeAwareBadge({
 		alt: 'Discord',
 		href: 'https://c15t.link/discord',
 		src: 'https://shieldcn.dev/discord/1312171102268690493.svg?variant=outline',
-	}),
-	renderThemeAwareBadge({
-		alt: 'Skills',
-		href: 'https://skills.sh/c15t/skills/c15t',
-		src: 'https://shieldcn.dev/skills/c15t/skills/c15t.svg?variant=outline',
 	}),
 	renderThemeAwareBadge({
 		alt: 'Made by Inth',
@@ -245,26 +211,12 @@ ${[
 ].join('\n')}
 </p>`;
 
-	// Build sections
-	const bannerImage =
-		config.showBanner === false
-			? ''
-			: `<p align="center">
-  <a href="https://c15t.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=${npmBadgeName}" target="_blank" rel="noopener noreferrer">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="../docs/assets/c15t-banner-readme-dark.png">
-      <img src="../docs/assets/c15t-banner-readme-light.png" alt="c15t: the open standard for cookie banners">
-    </picture>
-  </a>
-</p>`;
 	// A published @inth package opens with what it is and its install line.
 	const plainOpening =
 		config.packageName.startsWith('@inth/') && !config.privatePackage;
 	const bannerBlock = plainOpening
 		? `# ${config.packageName}`
-		: `${bannerImage}
-
-# ${config.title}
+		: `# ${config.title}
 
 ${badgeBlock}`;
 	const installLine = plainOpening
@@ -287,20 +239,20 @@ ${config.features.map((f) => `- ${f}`).join('\n')}`;
 	if (config.showCLIGeneration) {
 		quickStartBlock = `## Quick Start
 
-Easiest setup with @c15t/cli:
+Easiest setup with @inth/cli:
 
 \`\`\`bash
-# Set up c15t in your project
-pnpm dlx @c15t/cli setup
+# Set up Inth in your project
+pnpm dlx @inth/cli c15t
 # Alternatives:
-# npx @c15t/cli setup
-# bunx --bun @c15t/cli setup
+# npx @inth/cli c15t
+# bunx --bun @inth/cli c15t
 \`\`\`
 
 The CLI will:
 
 - Install necessary packages
-- Configure your c15t instance
+- Configure your Inth instance
 - Set up environment variables
 - Add consent management components to your app
 `;
@@ -387,7 +339,7 @@ See the [documentation](${config.docsLink}) for guides, API reference, and examp
 
 This package ships its documentation as Markdown, matched to the installed version. After you install it, point your coding agent at \`node_modules/${config.packageName}/AGENTS.md\`. It indexes every guide in \`node_modules/${config.packageName}/docs/\`.
 
-On the web, every page of the [c15t docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the c15t agent skills with \`npx skills add c15t/skills\`.`;
+On the web, every page of the [Inth docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the c15t agent skills with \`npx skills add c15t/skills\`.`;
 	}
 
 	const hostingBlock = config.showHosting
@@ -406,7 +358,7 @@ On the web, every page of the [c15t docs](https://c15t.com/docs) has a Markdown 
 
 	const licenseBlock = `## License
 
-[Apache License 2.0](https://github.com/c15t/c15t/blob/main/LICENSE.md)
+[Apache License 2.0](https://github.com/inthhq/inth/blob/main/LICENSE)
 
 ---
 
@@ -416,7 +368,6 @@ On the web, every page of the [c15t docs](https://c15t.com/docs) has a Markdown 
 		bannerBlock,
 		config.description,
 		installLine,
-		plainOpening ? '' : SOCIAL_PROOF_LINE,
 		featuresBlock,
 		leadSectionsBlock,
 		config.showHosting === 'lead' ? hostingBlock : '',
@@ -440,18 +391,12 @@ On the web, every page of the [c15t docs](https://c15t.com/docs) has a Markdown 
 		.filter((section) => isNonEmpty(section))
 		.join('\n\n')
 		.replace(/\n{3,}/gu, '\n\n')
-		// Remove multiple trailing newlines
 		.replace(/\n{2,}$/u, '\n');
 
 	return `${readmeContent.trim()}\n`;
 };
 
-/**
- * Generates README files for all packages with readme.json configurations
- * @throws {Error} If packages directory doesn't exist
- * @throws {SyntaxError} If readme.json or package.json contains invalid JSON
- * @throws {Error} If file write operations fail
- */
+/** Generates README files for all packages with readme.json configurations. */
 const generateReadmes = async function generateReadmes() {
 	// The web packages sit in packages/sdk. React Native sits beside that folder.
 	const packagesDir = path.resolve(__dirname, '../packages/sdk');
@@ -479,12 +424,10 @@ const generateReadmes = async function generateReadmes() {
 			const raw = await fs.readFile(readmeConfigPath, 'utf8');
 			const readmeConfig = JSON.parse(raw) as PackageReadmeConfig;
 
-			// Read package.json to supplement missing details
 			const packageJson = JSON.parse(
 				await fs.readFile(packageJsonPath, 'utf8')
 			);
 
-			// Set package name
 			readmeConfig.packageName = packageJson.name || packageName;
 			readmeConfig.privatePackage = packageJson.private === true;
 
@@ -492,7 +435,6 @@ const generateReadmes = async function generateReadmes() {
 				? packageJson.files.includes('AGENTS.md')
 				: false;
 
-			// Set description from package.json if not in readme.json
 			if (!readmeConfig.description) {
 				readmeConfig.description = packageJson.description || '';
 			}

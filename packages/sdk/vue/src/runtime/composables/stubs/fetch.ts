@@ -6,7 +6,7 @@ type QueryPrimitive = string | number | boolean | null | undefined;
 type QueryValue = QueryPrimitive | MaybeRefOrGetter<QueryPrimitive>;
 export type SearchParams = Record<string, QueryValue>;
 
-export interface C15tUseFetchOptions {
+export interface InthUseFetchOptions {
 	baseURL?: MaybeRefOrGetter<string | undefined>;
 	query?: MaybeRefOrGetter<SearchParams>;
 	method?: MaybeRefOrGetter<string>;
@@ -15,7 +15,7 @@ export interface C15tUseFetchOptions {
 	immediate?: boolean;
 }
 
-export interface C15tUseFetchReturn<T> {
+export interface InthUseFetchReturn<T> {
 	data: Ref<T | null>;
 	pending: Ref<boolean>;
 	error: Ref<Error | null>;
@@ -53,7 +53,7 @@ const flattenQuery = function flattenQuery(
 
 const resolveFetchUrl = function resolveFetchUrl(
 	path: string | null,
-	options: C15tUseFetchOptions
+	options: InthUseFetchOptions
 ): string | null {
 	if (!path) {
 		return null;
@@ -72,7 +72,7 @@ const resolveFetchUrl = function resolveFetchUrl(
 
 const createFetchEntry = function createFetchEntry<T>(
 	target: string,
-	options: C15tUseFetchOptions
+	options: InthUseFetchOptions
 ): FetchCacheEntry<T> {
 	const data = ref<T | null>(null) as Ref<T | null>;
 	const pending = ref(false);
@@ -90,7 +90,7 @@ const createFetchEntry = function createFetchEntry<T>(
 
 			if (!response.ok) {
 				throw new Error(
-					`[c15t] fetch failed (${response.status} ${response.statusText})`
+					`[inth] fetch failed (${response.status} ${response.statusText})`
 				);
 			}
 
@@ -117,7 +117,7 @@ const createFetchEntry = function createFetchEntry<T>(
 
 const getOrCreateEntry = function getOrCreateEntry<T>(
 	target: string,
-	options: C15tUseFetchOptions
+	options: InthUseFetchOptions
 ): FetchCacheEntry<T> {
 	const existing = fetchCache.get(target);
 	if (existing) {
@@ -131,8 +131,8 @@ const getOrCreateEntry = function getOrCreateEntry<T>(
 
 export const useFetch = function useFetch<T>(
 	url: MaybeRefOrGetter<string | null>,
-	options: C15tUseFetchOptions = {}
-): C15tUseFetchReturn<T> {
+	options: InthUseFetchOptions = {}
+): InthUseFetchReturn<T> {
 	const requestUrl = computed(() => resolveFetchUrl(toValue(url), options));
 
 	const data = ref<T | null>(null) as Ref<T | null>;

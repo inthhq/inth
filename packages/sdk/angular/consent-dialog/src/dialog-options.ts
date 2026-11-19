@@ -6,8 +6,8 @@ import type {
 import type { LegalLinks, Model } from '@inth/sdk/engine';
 
 /**
- * The trigger `<c15t-consent-dialog>` renders when `showTrigger` is an
- * object: the inputs of `<c15t-consent-dialog-trigger>`.
+ * The trigger `<inth-consent-dialog>` renders when `showTrigger` is an
+ * object: the inputs of `<inth-consent-dialog-trigger>`.
  */
 export interface ConsentDialogTriggerOptions {
 	defaultPosition?: ConsentDialogTriggerPosition;
@@ -28,7 +28,7 @@ export type ConsentDialogModels = readonly Model[];
 /**
  * The models the dialog opens for by default, as React's dialog. A `none`
  * rule that grants the preferences right still opens it. IAB policies
- * belong to `<c15t-iab-consent-dialog>`.
+ * belong to `<inth-iab-consent-dialog>`.
  */
 export const DEFAULT_DIALOG_MODELS: ConsentDialogModels = [
 	'opt-in',

@@ -200,7 +200,7 @@ describe('IAB controls with publisher restrictions', () => {
 		// TCF allows purpose 1 only with consent.
 		expect(find(client, 'purpose-item-1-li')).toBeNull();
 		client.ui?.root
-			.querySelector<HTMLButtonElement>('#c15t-iab-vendors-tab')
+			.querySelector<HTMLButtonElement>('#inth-iab-vendors-tab')
 			?.click();
 		expect(find(client, 'iab-vendor-consent-only-consent')).not.toBeNull();
 		expect(find(client, 'iab-vendor-consent-only-li')).toBeNull();
@@ -221,7 +221,7 @@ describe('IAB controls with publisher restrictions', () => {
 	it('lists a vendor moved to legitimate interest with an objection control', async () => {
 		const client = await start({ publisherRestrictions: restrictions });
 		client.ui?.root
-			.querySelector<HTMLButtonElement>('#c15t-iab-vendors-tab')
+			.querySelector<HTMLButtonElement>('#inth-iab-vendors-tab')
 			?.click();
 		expect(find(client, 'iab-vendor-755-li')).not.toBeNull();
 	});
@@ -258,7 +258,7 @@ describe('legitimate interest a restriction introduces', () => {
 			control(client, 'purpose-item-7-li').getAttribute('aria-checked')
 		).toBe('true');
 		client.ui?.root
-			.querySelector<HTMLButtonElement>('#c15t-iab-vendors-tab')
+			.querySelector<HTMLButtonElement>('#inth-iab-vendors-tab')
 			?.click();
 		expect(
 			control(client, 'iab-vendor-755-li').getAttribute('aria-checked')

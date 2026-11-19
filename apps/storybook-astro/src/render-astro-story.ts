@@ -9,7 +9,7 @@
  * that the story exercises the shipped runtime, not a stand-in.
  */
 
-import type { C15tClientOptionsExtension } from '@inth/astro';
+import type { InthClientOptionsExtension } from '@inth/astro';
 import {
 	boot,
 	getConsentClient,
@@ -20,7 +20,7 @@ import {
 } from '@inth/astro/client';
 import { createLazyIABFactory } from '@inth/sdk/runtime';
 import { mountRuntimeIAB } from '@inth/sdk/runtime/on-demand';
-import prerendered from 'virtual:c15t-astro-prerendered';
+import prerendered from 'virtual:inth-astro-prerendered';
 
 import {
 	storybookIABPolicy,
@@ -30,7 +30,7 @@ import {
 import { requireStoryVariant } from './story-variants';
 import type { AstroUIAdapter } from './story-variants';
 
-const DIALOG_HOST_ID = 'c15t-dialog-host';
+const DIALOG_HOST_ID = 'inth-dialog-host';
 
 const registered = new Set<string>();
 
@@ -117,10 +117,10 @@ const clearCookies = function clearCookies(): void {
 const resetPage = function resetPage(): void {
 	getConsentClient()?.dispose();
 	document.getElementById(DIALOG_HOST_ID)?.remove();
-	for (const host of document.querySelectorAll('[data-c15t-story-host]')) {
+	for (const host of document.querySelectorAll('[data-inth-story-host]')) {
 		host.remove();
 	}
-	document.documentElement.classList.remove('c15t-dark');
+	document.documentElement.classList.remove('inth-dark');
 	window.localStorage.clear();
 	clearCookies();
 };
@@ -135,7 +135,7 @@ const resetPage = function resetPage(): void {
  */
 export const renderAstroStory = function renderAstroStory(
 	variantId: string,
-	extension?: C15tClientOptionsExtension
+	extension?: InthClientOptionsExtension
 ): HTMLElement {
 	const variant = requireStoryVariant(variantId);
 	const entry = prerendered[variantId];
@@ -155,16 +155,16 @@ export const renderAstroStory = function renderAstroStory(
 	}
 
 	const host = document.createElement('div');
-	host.setAttribute('data-c15t-story-host', variantId);
+	host.setAttribute('data-inth-story-host', variantId);
 	host.innerHTML = entry.html;
 
 	// The banner reads its kernel config off `window` exactly as it does on
 	// a server-rendered page, so it must be there before `boot()` runs.
-	(window as unknown as Record<string, unknown>).__c15tAstroConfig =
+	(window as unknown as Record<string, unknown>).__inthAstroConfig =
 		entry.config;
 
 	if (variant.dark) {
-		document.documentElement.classList.add('c15t-dark');
+		document.documentElement.classList.add('inth-dark');
 	}
 
 	// Storybook mounts the returned element after the story function

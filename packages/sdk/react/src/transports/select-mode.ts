@@ -48,7 +48,6 @@ export interface ModeOptions {
 /**
  * The transport factory the options select.
  *
- * @param options - The provider's options.
  * @returns The factory, or `undefined` when the options set none.
  * @internal
  */

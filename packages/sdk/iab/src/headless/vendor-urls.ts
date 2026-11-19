@@ -14,7 +14,7 @@ export interface IABVendorUrls {
  * Returns a vendor link only if it is safe to put in an `href`.
  *
  * Vendor links come from the Global Vendor List and from custom vendor
- * config, so c15t does not control them. Only absolute `http:` and `https:`
+ * config, so Inth does not control them. Only absolute `http:` and `https:`
  * URLs with a host pass. Other schemes, relative paths, protocol-relative
  * URLs and strings that do not parse return `null`, and the vendor lists
  * show no link for them. A URL that passes is returned unchanged.
@@ -23,7 +23,6 @@ export interface IABVendorUrls {
  * `https:example.com` as absolute, but a link on an https page resolves it
  * as a path on the current site.
  *
- * @param value - A link from vendor data.
  * @returns The link, or `null` when it is missing or unsafe.
  * @example
  * ```ts
@@ -57,7 +56,6 @@ export const resolveIABSafeUrl = function resolveIABSafeUrl(
  * {@link resolveIABSafeUrl} rejects are skipped, so the next language's
  * link is used, or none.
  *
- * @param vendor - A vendor from the Global Vendor List.
  * @param language - The language the consent UI shows, such as `'de'`.
  * @returns The links to show, empty when the vendor declares none.
  */

@@ -33,6 +33,7 @@ import type {
 const GVL_VENDOR_1: ConsentIabProcessedVendor = {
 	cookieMaxAgeSeconds: 7776000,
 	cookieRefresh: true,
+	dataDeclaration: [],
 	dataRetention: undefined,
 	deviceStorageDisclosureUrl: null,
 	features: [1, 2, 3],
@@ -50,7 +51,7 @@ const GVL_VENDOR_1: ConsentIabProcessedVendor = {
 	usesNonCookieAccess: false,
 };
 
-/** Partner 1 on the partners tab. The web builds that row off the GVL entry rather than off a purpose, so it is the one shape here that carries the partner's declared data categories and none of its legitimate-interest flags. */
+/** Partner 1 on the partners tab. The web builds that row off the GVL entry rather than off a purpose, so it carries none of its legitimate-interest flags. */
 const GVL_VENDOR_1_PARTNER: ConsentIabProcessedVendor = {
 	cookieMaxAgeSeconds: 7776000,
 	cookieRefresh: true,
@@ -75,6 +76,7 @@ const GVL_VENDOR_1_PARTNER: ConsentIabProcessedVendor = {
 const GVL_VENDOR_2: ConsentIabProcessedVendor = {
 	cookieMaxAgeSeconds: 31536000,
 	cookieRefresh: true,
+	dataDeclaration: [],
 	dataRetention: undefined,
 	deviceStorageDisclosureUrl: null,
 	features: [1, 2, 3],
@@ -92,7 +94,7 @@ const GVL_VENDOR_2: ConsentIabProcessedVendor = {
 	usesNonCookieAccess: true,
 };
 
-/** Partner 2 on the partners tab. The web builds that row off the GVL entry rather than off a purpose, so it is the one shape here that carries the partner's declared data categories and none of its legitimate-interest flags. */
+/** Partner 2 on the partners tab. The web builds that row off the GVL entry rather than off a purpose, so it carries none of its legitimate-interest flags. */
 const GVL_VENDOR_2_PARTNER: ConsentIabProcessedVendor = {
 	cookieMaxAgeSeconds: 31536000,
 	cookieRefresh: true,
@@ -117,6 +119,7 @@ const GVL_VENDOR_2_PARTNER: ConsentIabProcessedVendor = {
 const GVL_VENDOR_10: ConsentIabProcessedVendor = {
 	cookieMaxAgeSeconds: 31536000,
 	cookieRefresh: true,
+	dataDeclaration: [],
 	dataRetention: undefined,
 	deviceStorageDisclosureUrl: null,
 	features: [2, 3],
@@ -138,6 +141,7 @@ const GVL_VENDOR_10: ConsentIabProcessedVendor = {
 const GVL_VENDOR_10_CLAIMS_LI: ConsentIabProcessedVendor = {
 	cookieMaxAgeSeconds: 31536000,
 	cookieRefresh: true,
+	dataDeclaration: [],
 	dataRetention: undefined,
 	deviceStorageDisclosureUrl: null,
 	features: [2, 3],
@@ -155,7 +159,7 @@ const GVL_VENDOR_10_CLAIMS_LI: ConsentIabProcessedVendor = {
 	usesNonCookieAccess: false,
 };
 
-/** Partner 10 on the partners tab. The web builds that row off the GVL entry rather than off a purpose, so it is the one shape here that carries the partner's declared data categories and none of its legitimate-interest flags. */
+/** Partner 10 on the partners tab. The web builds that row off the GVL entry rather than off a purpose, so it carries none of its legitimate-interest flags. */
 const GVL_VENDOR_10_PARTNER: ConsentIabProcessedVendor = {
 	cookieMaxAgeSeconds: 31536000,
 	cookieRefresh: true,
@@ -180,6 +184,7 @@ const GVL_VENDOR_10_PARTNER: ConsentIabProcessedVendor = {
 const GVL_VENDOR_755: ConsentIabProcessedVendor = {
 	cookieMaxAgeSeconds: 63072000,
 	cookieRefresh: true,
+	dataDeclaration: [],
 	dataRetention: undefined,
 	deviceStorageDisclosureUrl: null,
 	features: [1, 2, 3],
@@ -197,7 +202,7 @@ const GVL_VENDOR_755: ConsentIabProcessedVendor = {
 	usesNonCookieAccess: true,
 };
 
-/** Partner 755 on the partners tab. The web builds that row off the GVL entry rather than off a purpose, so it is the one shape here that carries the partner's declared data categories and none of its legitimate-interest flags. */
+/** Partner 755 on the partners tab. The web builds that row off the GVL entry rather than off a purpose, so it carries none of its legitimate-interest flags. */
 const GVL_VENDOR_755_PARTNER: ConsentIabProcessedVendor = {
 	cookieMaxAgeSeconds: 63072000,
 	cookieRefresh: true,

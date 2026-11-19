@@ -1,6 +1,6 @@
 ---
 title: Transports
-description: Choose where a JavaScript app's c15t policy comes from and where choices go, with projectUrl and the hosted, manifest and testing modes for @inth/sdk, createConsentRuntime and your own kernel.
+description: Choose where a JavaScript app's Inth policy comes from and where choices go, with projectUrl and the hosted, manifest and testing modes for @inth/sdk, createConsentRuntime and your own kernel.
 group: frameworks
 ---
 
@@ -31,7 +31,7 @@ Each setup takes the transport in a slightly different form:
 | --- | --- |
 | `@inth/sdk` | `init({ projectUrl, mode })`. `mode` is optional: `manifest()` or `hosted()` from `@inth/sdk`, or `testing()` from `@inth/sdk/testing`. |
 | `createConsentRuntime` | `projectUrl`, and an optional `mode` from the same entries. |
-| Script tag | `data-project-url`, and `data-mode="hosted"` or `"manifest"` on the headless and IAB scripts. Tests load `c15t.testing.js`. |
+| Script tag | `data-project-url`, and `data-mode="hosted"` or `"manifest"` on the headless and IAB scripts. Tests load `inth.testing.js`. |
 | `createConsentKernel` | `transport`, the transport object itself, such as `createHostedTransport({ projectUrl })`. |
 
 A factory is created once. To switch transports, dispose the client or
@@ -63,7 +63,7 @@ create yourself, `createHostedTransport({ projectUrl })` from
 
 | Option | What it does |
 | --- | --- |
-| `projectUrl` | The backend URL. Relative URLs such as `/api/c15t` work behind a proxy. |
+| `projectUrl` | The backend URL. Relative URLs such as `/api/inth` work behind a proxy. |
 | `headers` | Request headers to forward on `/init`: `accept-language`, the geo headers and `sec-gpc`. Meant for server code forwarding a visitor's request. |
 | `fetch` | A `fetch` implementation, for tests or unusual runtimes. |
 | `domain` | The domain recorded with each save. Defaults to the page's host. |
@@ -121,8 +121,8 @@ and region. Code that reads the visitor's country should supply it through
 `inputs`, or use `/init`. IAB GPP needs it for its US state sections, so when
 GPP is on, through the runtime's `gpp` option, `<ConsentGPP>` or `mountGPP()`,
 an unknown location goes to `/init` even when every location gets the same
-banner. The script-tag build counts GPP as on, because `c15t.gpp.js` can load
-after `init()`; pass `gpp: false` to `c15t.init()` to resolve in the browser on
+banner. The script-tag build counts GPP as on, because `inth.gpp.js` can load
+after `init()`; pass `gpp: false` to `inth.init()` to resolve in the browser on
 pages that do not load it.
 
 `createManifestTransport` from `@inth/sdk/transports/manifest` is for server code
@@ -132,7 +132,7 @@ only. It bundles every language. Browser code uses `manifest()`, or
 ### Bundle the manifest during Vite builds
 
 The [quickstart](/docs/frameworks/javascript/quickstart) and
-`examples/javascript` in the c15t repository use this setup.
+`examples/javascript` in the Inth repository use this setup.
 
 <include src="../../shared/build-manifests/javascript.mdx" />
 
@@ -167,7 +167,7 @@ locations, opt-out for US states with a privacy law, and no prompt elsewhere.
 The browser cannot see the visitor's country, so set `overrides.country` to
 pick a rule. [Policies](/docs/concepts/policies) lists the presets.
 
-A test page with no bundler loads `c15t.testing.js`, which takes preset names
+A test page with no bundler loads `inth.testing.js`, which takes preset names
 in `data-policy`; see [Modes](/docs/concepts/modes#testing).
 
 ## Check it works
@@ -177,5 +177,5 @@ in `data-policy`; see [Modes](/docs/concepts/modes#testing).
 2. With a build-time manifest, it shows no `/manifest` request. With runtime
    manifest mode, it shows a `/manifest` request. Neither calls `/init`, unless
    the policy needs a country the page did not supply.
-3. In a test with `testing()`, it shows no c15t request at all, and the
+3. In a test with `testing()`, it shows no Inth request at all, and the
    choice survives a reload.

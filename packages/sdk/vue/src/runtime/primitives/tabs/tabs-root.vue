@@ -25,7 +25,7 @@ const props = withDefaults(
 const emit = defineEmits<{ 'update:value': [value: string] }>();
 
 const componentId = useId();
-const baseId = `c15t-tabs-${componentId}`;
+const baseId = `inth-tabs-${componentId}`;
 const value = ref<string | null>(props.value);
 watch(
 	() => props.value,

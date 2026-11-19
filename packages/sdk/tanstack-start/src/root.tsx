@@ -9,7 +9,7 @@
  * - The server renders the whole root (`EagerConsentRoot`): the banner, its
  *   styles and the scripts the server starts are in the first HTML, plus
  *   the snapshots the page rendered from.
- * - The browser renders the page at once, with c15t's hooks reading those
+ * - The browser renders the page at once, with Inth's hooks reading those
  *   snapshots. Hook actions ask for the engine and run when it attaches.
  * - When the visitor still has to choose and nothing optional is granted,
  *   nothing the engine does can show before a tap, so it loads after the
@@ -23,7 +23,7 @@
  */
 import {
 	DeferredConsentShell,
-	canDeferEngine,
+	awaitsChoice,
 	engineNeededAtLoad,
 	iabProviderLoaded,
 	liveRootKey,
@@ -53,7 +53,7 @@ type EngineModule = typeof RootEngine;
 let engineModule: Recorded<EngineModule> | undefined;
 // No learned preload, as the Next.js root has: Vite's native `import()`
 // adds no `<script>` elements, so the only scripts a recording would
-// catch are the consent-gated ones c15t starts meanwhile.
+// catch are the consent-gated ones Inth starts meanwhile.
 const importEngine = recordOnce(() => import('./root-engine'));
 
 /** The engine's module, loading once, or again after a failed import. */
@@ -75,7 +75,6 @@ const loadEngine = (): Recorded<EngineModule> => {
  * once (a client-only render, or one the shell cannot stand in for) then
  * renders without suspending. Tests use it before a synchronous render.
  *
- * @returns The engine's module.
  * @internal
  */
 export const preloadConsentRoot = (): Promise<EngineModule> => loadEngine();
@@ -157,7 +156,7 @@ const planRoot = function planRoot(
 		// The shell starts the root's plain `scripts` itself only with a
 		// commit path to read them from.
 		defer:
-			(canDeferEngine(snapshot) || startScripts) &&
+			(awaitsChoice(snapshot) || startScripts) &&
 			!scriptsNeedEngine(
 				props.scripts,
 				snapshot,
@@ -202,7 +201,7 @@ const ClientConsentRoot = (props: ConsentRootProps) => {
  * Wraps the app in a consent provider seeded with the server-resolved state.
  *
  * The consent engine loads after the page. Components under the root that
- * call c15t's hooks render from the server's consent state until then, and
+ * call Inth's hooks render from the server's consent state until then, and
  * their actions run once it has loaded. For a visitor the banner asks to
  * choose, it loads after the page's priority images, or at the first input
  * or scroll; a banner accept or reject before then is recorded at once.

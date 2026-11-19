@@ -14,7 +14,7 @@ const denied: ConsentState = {
 	necessary: true,
 };
 const granted = { ...denied, marketing: true };
-const pixelId = 'c15t-test-pixel';
+const pixelId = 'inth-test-pixel';
 const disposers: (() => void)[] = [];
 
 interface VectorClient {
@@ -53,7 +53,7 @@ afterEach(() => {
 		'vector',
 		'Vector',
 		'__vector_manager',
-		'__c15tRunSteps',
+		'__inthRunSteps',
 	]) {
 		Reflect.deleteProperty(window, name);
 	}

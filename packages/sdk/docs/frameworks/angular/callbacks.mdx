@@ -1,13 +1,13 @@
 ---
 title: Callbacks
-description: Run your own code in an Angular app when a visitor records a choice, permissions change or a banner shows, with the callbacks option of provideC15t and script callbacks.
+description: Run your own code in an Angular app when a visitor records a choice, permissions change or a banner shows, with the callbacks option of provideInth and script callbacks.
 group: frameworks
 ---
 
 ## Pick the right callback
 
 Run your own code when consent changes through the `callbacks` option of
-`provideC15t()`, a script's own callbacks, or a signal in one component:
+`provideInth()`, a script's own callbacks, or a signal in one component:
 
 | You want to | Use |
 | --- | --- |
@@ -49,7 +49,7 @@ Then pass them in `src/app/app.config.ts`, next to `mode`:
 {/* example: fragment */}
 
 ```ts title="src/app/app.config.ts (partial)"
-provideC15t({ mode, scripts, callbacks });
+provideInth({ mode, scripts, callbacks });
 ```
 
 The callbacks are plain functions, outside any injection context, so they
@@ -64,7 +64,7 @@ cannot call `inject()`. To reach an Angular service from one, read
 | `onError` | `error`, a message string. |
 | `onBeforeConsentRevocationReload` | `preferences`, the permissions after the withdrawal. |
 
-Callbacks run after c15t updates its own state, so `snapshot` and
+Callbacks run after Inth updates its own state, so `snapshot` and
 `ConsentManager` already hold the new values. Visitor actions happen in the
 browser, and the runtime never starts on the server, so the callbacks run in
 the browser only.

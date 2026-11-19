@@ -1,12 +1,12 @@
 ---
 title: ConsentGate
-description: Keep an embed or widget out of an Angular page until its consent category, and optionally one vendor, is allowed, with c15t-consent-gate and its content and placeholder templates.
+description: Keep an embed or widget out of an Angular page until its consent category, and optionally one vendor, is allowed, with inth-consent-gate and its content and placeholder templates.
 group: frameworks
 ---
 
 ## Gate an embed
 
-`<c15t-consent-gate>` renders its content only while one consent category is
+`<inth-consent-gate>` renders its content only while one consent category is
 allowed, and a placeholder otherwise. Import `ConsentGate` and the
 template directives you use:
 
@@ -24,11 +24,11 @@ reload.
 | --- | --- | --- | --- |
 | `category` | `AllConsentNames` | required | The category the content needs, such as `'measurement'` or `'marketing'`. |
 | `vendor` | `string` | none | A vendor id the content also needs. The content waits for both the category and `isVendorAllowed(vendor)`. |
-| `noStyle` | `boolean` | provider's `noStyle` | Drops c15t's classes from the built-in placeholder. |
-| `ng-template[c15tConsentGateContent]` | template | none | The gated content, created only while allowed. |
-| `ng-template[c15tConsentGatePlaceholder]` | template | built-in placeholder | Replaces the placeholder while the category is denied. |
+| `noStyle` | `boolean` | provider's `noStyle` | Drops Inth's classes from the built-in placeholder. |
+| `ng-template[inthConsentGateContent]` | template | none | The gated content, created only while allowed. |
+| `ng-template[inthConsentGatePlaceholder]` | template | built-in placeholder | Replaces the placeholder while the category is denied. |
 
-Without a `c15tConsentGateContent` template, the gate projects its children.
+Without an `inthConsentGateContent` template, the gate projects its children.
 Angular creates projected nodes with the parent view even while the gate
 keeps them out of the document, so an `<iframe>` loads nothing, but a
 component inside still runs its constructor. Use the template for anything
@@ -40,7 +40,7 @@ category, and `openDialog`, a function that opens the preference dialog:
 {/* example: fragment */}
 
 ```html
-<ng-template c15tConsentGatePlaceholder let-category let-open="openDialog">
+<ng-template inthConsentGatePlaceholder let-category let-open="openDialog">
 	<p>Allow {{ category }} to load this video.</p>
 	<button type="button" (click)="open()">Choose video permissions</button>
 </ng-template>
@@ -52,18 +52,18 @@ The host element stays in the page in every state. Until the gate has
 rendered in the browser it is empty, so the server HTML holds neither the
 content nor the placeholder, and the browser fills it one frame after the
 first render. For gated content in the server HTML, use
-[`*c15tIfConsent`](../embeds#render-content-only-while-consent-holds).
+[`*inthIfConsent`](../embeds#render-content-only-while-consent-holds).
 
 ## The built-in placeholder
 
 The built-in placeholder shows the `consentGate.title` copy and a button
 labelled with `consentGate.actionButton`, with the category's translated
 title in place of `{category}`. The button opens the preference dialog; it
-does not grant the category, so render `<c15t-consent-dialog>` too. Under a
+does not grant the category, so render `<inth-consent-dialog>` too. Under a
 policy that blocks the category, the button is left out, since preferences
 cannot allow it.
 
-`<c15t-consent-gate>` does not add its category to the preference dialog.
+`<inth-consent-gate>` does not add its category to the preference dialog.
 Keep the category in your policy's scope, and in `consentCategories` if you
 set that option.
 
@@ -76,7 +76,7 @@ store address next to the map.
 
 ## Style the placeholder
 
-Set `class` on `<c15t-consent-gate>` to size the wrapper to the embed, for
+Set `class` on `<inth-consent-gate>` to size the wrapper to the embed, for
 example an `aspect-ratio` for a video, so the page does not shift when the
 embed replaces the placeholder.
 

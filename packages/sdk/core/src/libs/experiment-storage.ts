@@ -1,16 +1,19 @@
 /**
  * The arm a browser was shown, kept under {@link EXPERIMENT_STORAGE_KEY} so
- * a visitor keeps seeing the banner they saw. Read at start, when c15t picks
+ * a visitor keeps seeing the banner they saw. Read at start, when Inth picks
  * the arm; written by the experiment controller once the banner has shown
  * it. Holds `{ id, arm }` and nothing that identifies the visitor.
  */
 import { deleteCookie, getRawCookieValue, setCookie } from './cookie';
 import type { StorageConfig } from './cookie';
-import { EXPERIMENT_STORAGE_KEY } from './storage-keys';
+import { localStorageOf } from './local-storage';
+import {
+	C15T_EXPERIMENT_STORAGE_KEY,
+	EXPERIMENT_STORAGE_KEY,
+} from './storage-keys';
 
 /** What the browser keeps between visits: the arm the banner showed. */
 export interface StoredExperimentArm {
-	/** The experiment id. */
 	id: string;
 	/** The arm the banner rendered. */
 	arm: string;
@@ -36,55 +39,15 @@ const parseStored = function parseStored(
 	}
 };
 
-const localStorageAvailable = function localStorageAvailable(): boolean {
-	try {
-		return typeof localStorage !== 'undefined' && localStorage !== null;
-	} catch {
-		return false;
-	}
-};
-
-/**
- * Read the stored arm, from localStorage first and the cookie fallback
- * second. Never throws; unreadable storage reads as no record.
- *
- * @returns The stored arm, or `null`.
- */
-export const readStoredExperimentArm =
-	function readStoredExperimentArm(): StoredExperimentArm | null {
-		if (localStorageAvailable()) {
-			try {
-				const stored = parseStored(
-					localStorage.getItem(EXPERIMENT_STORAGE_KEY)
-				);
-				if (stored) {
-					return stored;
-				}
-			} catch {
-				// Fall through to the cookie.
-			}
-		}
-		const raw = getRawCookieValue(EXPERIMENT_STORAGE_KEY);
-		if (!raw) {
-			return null;
-		}
-		try {
-			return parseStored(decodeURIComponent(raw));
-		} catch {
-			return null;
-		}
-	};
-
 /**
  * Window property holding the arm an early `/init` request (the inline
  * prefetch script) picked, so the runtime runs the arm that request sent.
  */
-export const EXPERIMENT_WINDOW_KEY = '__c15tExperiment';
+export const EXPERIMENT_WINDOW_KEY = '__inthExperiment';
 
 /**
  * The arm an early request of this page picked, if it is well formed.
  *
- * @returns The arm, or `null`.
  * @internal
  */
 export const readEarlyExperimentArm =
@@ -103,7 +66,6 @@ export const readEarlyExperimentArm =
 /**
  * Record the arm an early request picked, for the runtime to run.
  *
- * @param record - The experiment id and arm.
  * @internal
  */
 export const writeEarlyExperimentArm = function writeEarlyExperimentArm(
@@ -123,7 +85,6 @@ export const writeEarlyExperimentArm = function writeEarlyExperimentArm(
  * drops any fallback cookie a previous visit left, so a later read that has
  * to fall back to the cookie cannot restore an older arm. Never throws.
  *
- * @param record - The experiment id and arm.
  * @param storageConfig - Cookie domain and path for the fallback.
  */
 export const writeStoredExperimentArm = function writeStoredExperimentArm(
@@ -131,11 +92,12 @@ export const writeStoredExperimentArm = function writeStoredExperimentArm(
 	storageConfig?: StorageConfig
 ): void {
 	const serialized = JSON.stringify({ arm: record.arm, id: record.id });
-	if (localStorageAvailable()) {
+	const storage = localStorageOf();
+	if (storage) {
 		try {
-			localStorage.setItem(EXPERIMENT_STORAGE_KEY, serialized);
+			storage.setItem(EXPERIMENT_STORAGE_KEY, serialized);
 			if (getRawCookieValue(EXPERIMENT_STORAGE_KEY)) {
-				deleteCookie(EXPERIMENT_STORAGE_KEY, undefined, storageConfig);
+				deleteCookie(EXPERIMENT_STORAGE_KEY, storageConfig);
 			}
 			return;
 		} catch {
@@ -145,7 +107,54 @@ export const writeStoredExperimentArm = function writeStoredExperimentArm(
 	setCookie(
 		EXPERIMENT_STORAGE_KEY,
 		encodeURIComponent(serialized),
-		undefined,
 		storageConfig
 	);
+};
+
+const readArmUnder = function readArmUnder(
+	key: string
+): StoredExperimentArm | null {
+	const storage = localStorageOf();
+	if (storage) {
+		try {
+			const stored = parseStored(storage.getItem(key));
+			if (stored) {
+				return stored;
+			}
+		} catch {
+			// Fall through to the cookie.
+		}
+	}
+	const raw = getRawCookieValue(key);
+	if (!raw) {
+		return null;
+	}
+	try {
+		return parseStored(decodeURIComponent(raw));
+	} catch {
+		return null;
+	}
+};
+
+/**
+ * Read the stored arm, from localStorage first and the cookie fallback
+ * second, then from c15t's key the same way. An arm only c15t's key holds
+ * is copied to Inth's and left for c15t pages on the same site, so both
+ * keep showing the visitor one arm. Never throws; unreadable storage reads
+ * as no record.
+ *
+ * @param storageConfig - Cookie domain and path for a copied arm.
+ */
+export const readStoredExperimentArm = function readStoredExperimentArm(
+	storageConfig?: StorageConfig
+): StoredExperimentArm | null {
+	const stored = readArmUnder(EXPERIMENT_STORAGE_KEY);
+	if (stored) {
+		return stored;
+	}
+	const c15t = readArmUnder(C15T_EXPERIMENT_STORAGE_KEY);
+	if (c15t) {
+		writeStoredExperimentArm(c15t, storageConfig);
+	}
+	return c15t;
 };

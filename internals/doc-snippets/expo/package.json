@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/doc-snippets-expo",
+	"name": "@inth/doc-snippets-expo",
 	"private": true,
 	"description": "Type-checked Expo code for docs pages that no fixture runs, such as gating Expo Observe and the EAS PostHog setup.",
 	"scripts": {

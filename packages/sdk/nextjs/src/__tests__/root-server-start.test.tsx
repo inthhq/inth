@@ -130,7 +130,7 @@ test('renders no inline script when the app turns the server start off', async (
 				!groups?.attributes?.includes('type="application/json"') &&
 				groups?.body !== '' &&
 				!groups?.body?.includes('g.current=function') &&
-				!groups?.body?.includes('c15t-engine-chunks')
+				!groups?.body?.includes('inth-engine-chunks')
 		)
 	).toEqual([]);
 	expect(html).not.toContain(JSON.stringify(pixel.src));
@@ -162,7 +162,7 @@ test('renders the empty script the browser hydrates when the start module fails 
 
 		expect(onError).not.toHaveBeenCalled();
 		expect(html).toMatch(
-			/<\/main><!--\$--><script[^>]*><\/script><script data-c15t-boot[^>]*>[^<]*<\/script><script[^>]*>[^<]*c15t-engine-chunks[^<]*<\/script><!--\$--><script[^>]*><\/script><!--\/\$-->/u
+			/<\/main><!--\$--><script[^>]*><\/script><script data-inth-boot[^>]*>[^<]*<\/script><script[^>]*>[^<]*inth-engine-chunks[^<]*<\/script><!--\$--><script[^>]*><\/script><!--\/\$-->/u
 		);
 		expect(html).not.toContain(JSON.stringify(pixel.src));
 	} finally {
@@ -201,7 +201,7 @@ test('a render whose start module loads late names the start script’s render i
 		const html = await new Response(stream).text();
 
 		expect(html).toContain(JSON.stringify(pixel.src));
-		const boot = /<script data-c15t-boot[^>]*>(?<data>[^<]*)<\/script>/u.exec(
+		const boot = /<script data-inth-boot[^>]*>(?<data>[^<]*)<\/script>/u.exec(
 			html
 		)?.groups?.data;
 		const parsed: unknown = JSON.parse(boot ?? '{}');
@@ -282,7 +282,7 @@ test('finishes the render on React 18 when the start module fails to load', asyn
 		const html = await new Response(stream).text();
 
 		expect(html).toMatch(
-			/<\/main><!--\$--><script[^>]*><\/script><script data-c15t-boot[^>]*>[^<]*<\/script><script[^>]*>[^<]*c15t-engine-chunks[^<]*<\/script><!--\$--><script[^>]*><\/script><!--\/\$-->/u
+			/<\/main><!--\$--><script[^>]*><\/script><script data-inth-boot[^>]*>[^<]*<\/script><script[^>]*>[^<]*inth-engine-chunks[^<]*<\/script><!--\$--><script[^>]*><\/script><!--\/\$-->/u
 		);
 	} finally {
 		vi.doUnmock('@inth/sdk/runtime/script-server-start');
@@ -333,7 +333,7 @@ test('finishes concurrent React 18 renders while a failed start module reloads',
 		expect(pages).toHaveLength(2);
 		for (const html of pages) {
 			expect(html).toMatch(
-				/<\/main><!--\$--><script[^>]*><\/script><script data-c15t-boot[^>]*>[^<]*<\/script><script[^>]*>[^<]*c15t-engine-chunks[^<]*<\/script><!--\$--><script[^>]*><\/script><!--\/\$-->/u
+				/<\/main><!--\$--><script[^>]*><\/script><script data-inth-boot[^>]*>[^<]*<\/script><script[^>]*>[^<]*inth-engine-chunks[^<]*<\/script><!--\$--><script[^>]*><\/script><!--\/\$-->/u
 			);
 		}
 	} finally {

@@ -12,7 +12,8 @@ import type { ExperimentAssignment } from './experiment';
  *
  * @param value - A parsed storage value.
  * @returns `true` for an object with a string `id` and `arm`, an
- * `assignedBy` of `host` or `c15t`, and a boolean `acknowledgedDiagnostics`.
+ * `assignedBy` of `host` or `inth`, and a boolean `acknowledgedDiagnostics`.
+ * A save queued before the Inth rename says `c15t` and replays as recorded.
  */
 export const isExperimentAssignment = function isExperimentAssignment(
 	value: unknown
@@ -24,7 +25,9 @@ export const isExperimentAssignment = function isExperimentAssignment(
 	return (
 		typeof record.id === 'string' &&
 		typeof record.arm === 'string' &&
-		(record.assignedBy === 'host' || record.assignedBy === 'c15t') &&
+		(record.assignedBy === 'host' ||
+			record.assignedBy === 'inth' ||
+			record.assignedBy === 'c15t') &&
 		typeof record.acknowledgedDiagnostics === 'boolean'
 	);
 };

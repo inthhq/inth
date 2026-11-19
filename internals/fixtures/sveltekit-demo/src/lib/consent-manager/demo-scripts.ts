@@ -22,7 +22,7 @@ const fixture = (name: string): string => `/api/devtools-scripts/${name}`;
 export const createDemoScripts = (ids: DemoScriptIds = {}): Script[] => {
 	const googleTag = gtag({
 		category: 'measurement',
-		id: ids.googleTag || 'G-C15T-DEMO',
+		id: ids.googleTag || 'G-INTH-DEMO',
 	});
 	if (!ids.googleTag) {
 		googleTag.src = fixture('google-tag');
@@ -30,7 +30,7 @@ export const createDemoScripts = (ids: DemoScriptIds = {}): Script[] => {
 	return [
 		{
 			...metaPixel({
-				pixelId: ids.metaPixel || 'c15t-demo-meta',
+				pixelId: ids.metaPixel || 'inth-demo-meta',
 				scriptSrc: ids.metaPixel ? undefined : fixture('meta-pixel'),
 				trackPageView: false,
 			}),
@@ -38,7 +38,7 @@ export const createDemoScripts = (ids: DemoScriptIds = {}): Script[] => {
 		},
 		{
 			...tiktokPixel({
-				pixelId: ids.tiktokPixel || 'c15t-demo-tiktok',
+				pixelId: ids.tiktokPixel || 'inth-demo-tiktok',
 				scriptSrc: ids.tiktokPixel ? undefined : fixture('tiktok-pixel'),
 			}),
 			id: ids.tiktokPixel ? 'tiktok-pixel-live' : 'tiktok-pixel-local-fixture',
@@ -49,7 +49,7 @@ export const createDemoScripts = (ids: DemoScriptIds = {}): Script[] => {
 		},
 		{
 			...clarity({
-				id: ids.clarity || 'c15t-demo-clarity',
+				id: ids.clarity || 'inth-demo-clarity',
 				scriptUrl: ids.clarity ? undefined : fixture('clarity'),
 			}),
 			id: ids.clarity ? 'clarity-live' : 'clarity-local-fixture',

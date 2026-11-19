@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/fixture-tanstack-start",
+	"name": "@inth/fixture-tanstack-start",
 	"private": true,
 	"type": "module",
 	"scripts": {

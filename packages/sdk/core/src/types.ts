@@ -72,12 +72,15 @@ export type {
 
 /**
  * Brand palette served by `/init` (or chosen offline). Drives default
- * UI theme but has no effect on consent semantics.
+ * UI theme but has no effect on consent semantics. `none` hides the
+ * "Secured by" tag.
  */
-export type KernelBranding = 'c15t' | 'consent' | 'inth';
+export type KernelBranding = 'c15t' | 'consent' | 'inth' | 'none';
+
+export { DEFAULT_BRANDING } from '@inth/sdk-schema/types';
 
 /**
- * Who runs the backend that served `/init`: inth's hosted platform or a
+ * Who runs the backend that served `/init`: Inth's hosted platform or a
  * site's own `@c15t/backend`. Reported, not verified, and independent of
  * branding.
  */
@@ -250,11 +253,9 @@ export interface KernelIABState {
 	cmpId: number | null;
 	/** Per-vendor consent (vendorId → boolean). */
 	vendorConsents: Record<string, boolean>;
-	/** Per-vendor legitimate interest. */
 	vendorLegitimateInterests: Record<string, boolean>;
 	/** Per-purpose consent (purposeId 1–11 → boolean). */
 	purposeConsents: Record<number, boolean>;
-	/** Per-purpose legitimate interest. */
 	purposeLegitimateInterests: Record<number, boolean>;
 	/** Special features (1 = geolocation, 2 = device ID). */
 	specialFeatureOptIns: Record<number, boolean>;
@@ -406,8 +407,8 @@ export interface ConsentSnapshot {
 	readonly location: Readonly<LocationResponse> | null;
 	/** Resolved translation bundle. */
 	readonly translations: Readonly<KernelTranslations> | null;
-	/** Branding identifier. */
-	readonly branding: KernelBranding | null;
+	/** Branding identifier. {@link DEFAULT_BRANDING} until init names one. */
+	readonly branding: KernelBranding;
 	/**
 	 * Who runs the backend, as `/init` reported it. `null` until init
 	 * resolves, and for transports or older backends that do not say.
@@ -520,7 +521,6 @@ export interface KernelConfig {
 	>;
 	/** Initial location (e.g. from prefetch). */
 	initialLocation?: LocationResponse;
-	/** Initial branding. */
 	initialBranding?: KernelBranding;
 	/** Initial backend hosting (e.g. from prefetch). */
 	initialHosting?: KernelHosting;
@@ -556,7 +556,6 @@ export interface KernelConfig {
 		| false;
 	/** Initial policy decision. */
 
-	/** Initial policy snapshot token. */
 	initialPolicySnapshotToken?: string;
 	/**
 	 * Impressions a stand-in recorded before this kernel: the epoch
@@ -566,7 +565,6 @@ export interface KernelConfig {
 	 * stand-in announced that impression itself.
 	 */
 	initialSurfaceShownAt?: Partial<Record<PromptSurface, number | null>>;
-	/** Initial IAB slice. */
 	initialIab?: Partial<KernelIABState>;
 	/** Vendors declared in code, already resolved. Presentation data only. */
 	initialVendors?: KernelVendorsState;
@@ -586,7 +584,7 @@ export interface InitContext {
 	user: Readonly<KernelUser> | null;
 	/**
 	 * The banner-experiment arm the visitor runs, set only while they have
-	 * no stored choice. Transports send it with the request (`x-c15t-experiment`)
+	 * no stored choice. Transports send it with the request (`x-inth-experiment`)
 	 * or put it on the session report, so the backend can count the visitors
 	 * each arm's banner was owed to.
 	 */
@@ -638,11 +636,10 @@ export interface InitResponse {
 	location?: LocationResponse;
 	/** Resolved translation bundle. */
 	translations?: KernelTranslations;
-	/** Branding preference. */
 	branding?: KernelBranding;
 	/** Who runs the backend that answered. */
 	hosting?: KernelHosting;
-	/** What the Inth script registry tells c15t, such as its `sources`. */
+	/** What the Inth script registry tells Inth, such as its `sources`. */
 	scriptRegistry?: ScriptRegistryWire;
 	/** Signed token for write-time consistency. Sent back on save. */
 	policySnapshotToken?: string;

@@ -39,7 +39,7 @@ data class PromptRequirement(
  *
  * [status] is the raw wire status: `matched`, `no-match`, `unconfigured`, or
  * `failed`. [reason] is only present for `failed` and names why, mirroring
- * `PolicyResolutionFailure` in `@c15t/schema`.
+ * `PolicyResolutionFailure` in `@inth/sdk-schema`.
  */
 @Serializable
 data class PolicyResolution(
@@ -99,7 +99,7 @@ data class ConsentLocation(
 /**
  * Developer overrides that steer policy evaluation.
  *
- * [gpc] is the app's override, not a detection. It is load bearing: `@c15t/core`
+ * [gpc] is the app's override, not a detection. It is load bearing: `@inth/sdk-core`
  * compares it against the decision inputs remembered from the last init and
  * rejects a save whose inputs no longer match, so a save body without it cannot
  * pass the backend's staleness check. Detection lives on [PrivacySignals.gpc].
@@ -146,7 +146,7 @@ data class GpcSignal(
 	fun withDetection(detected: Boolean): GpcSignal = derive(override = override, detected = detected)
 
 	companion object {
-		/** Derive the view the way `derivePrivacySignals` in `@c15t/core` does. */
+		/** Derive the view the way `derivePrivacySignals` in `@inth/sdk-core` does. */
 		fun derive(override: Boolean?, detected: Boolean): GpcSignal = GpcSignal(
 			detected = detected,
 			override = override,

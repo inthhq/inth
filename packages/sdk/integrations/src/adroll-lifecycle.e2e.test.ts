@@ -5,7 +5,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	installHeadProbe,
@@ -17,7 +17,7 @@ import {
 } from './e2e-test-utils';
 import { adrollPixel } from './vendors/ads-and-pixels/adroll';
 
-const account = { advertiserId: 'c15t-advertiser', pixelId: 'c15t-pixel' };
+const account = { advertiserId: 'inth-advertiser', pixelId: 'inth-pixel' };
 const vendorGlobals = [
 	'adroll',
 	'adroll_adv_id',
@@ -56,7 +56,7 @@ describe('AdRoll production core loader contract', () => {
 		const cookieWrite = vi.spyOn(document, 'cookie', 'set');
 		const scripts = [adrollPixel(account)];
 
-		expect(loadScripts(scripts, deniedConsents)).toEqual([]);
+		expect(loadScripts(scripts, ALL_DENIED)).toEqual([]);
 		expect(updateScripts(scripts, grantedMeasurementConsents).loaded).toEqual(
 			[]
 		);
@@ -74,7 +74,7 @@ describe('AdRoll production core loader contract', () => {
 		]);
 		expect(append).toHaveBeenCalledOnce();
 		expect(document.querySelector('script')?.src).toBe(
-			'https://s.adroll.com/j/c15t-advertiser/roundtrip.js'
+			'https://s.adroll.com/j/inth-advertiser/roundtrip.js'
 		);
 	});
 
@@ -128,7 +128,7 @@ describe('AdRoll production core loader contract', () => {
 			if (completion === 'before revoke') {
 				element?.dispatchEvent(new Event('load'));
 			}
-			updateScripts(scripts, deniedConsents);
+			updateScripts(scripts, ALL_DENIED);
 			expect(element?.isConnected).toBe(true);
 			expect(window.adroll).toBe(queue);
 			expect(queuedCalls()).toEqual([['track', ['pageView']]]);
@@ -152,7 +152,7 @@ describe('AdRoll production core loader contract', () => {
 		const existing = Object.assign([], { identify, setProperties, track });
 		window.adroll = existing;
 		const scripts = [adrollPixel(account)];
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		expect(track).not.toHaveBeenCalled();
 		updateScripts(scripts, grantedMarketingConsents);
 		expect(window.adroll).toBe(existing);
@@ -160,7 +160,7 @@ describe('AdRoll production core loader contract', () => {
 		expect(window.adroll?.identify).toBe(identify);
 		expect(window.adroll?.setProperties).toBe(setProperties);
 		expect(track).toHaveBeenCalledExactlyOnceWith('pageView');
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMarketingConsents);
 		expect(track).toHaveBeenCalledExactlyOnceWith('pageView');
 		expect(identify).not.toHaveBeenCalled();
@@ -178,7 +178,7 @@ describe('AdRoll production core loader contract', () => {
 			track: vi.fn(),
 		};
 		Reflect.set(window, 'adroll', runtime);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		element?.dispatchEvent(new Event('load'));
 		updateScripts([adrollPixel(account)], grantedMarketingConsents);
 		expect(window.adroll).toBe(runtime);

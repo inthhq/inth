@@ -2,7 +2,11 @@
 import type { AdTechProvider } from '@inth/sdk/engine';
 
 import '@inth/sdk/ui/styles/components/iab-consent-dialog.css';
-import { countIABPartners } from '@inth/sdk/iab/headless';
+import {
+	countIABPartners,
+	isLegitimateInterestAllowed,
+} from '@inth/sdk/iab/headless';
+import type { IABLegitimateInterestState } from '@inth/sdk/iab/headless';
 
 import '@inth/sdk/ui/styles/components/switch.css';
 import dialogStyles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
@@ -24,7 +28,7 @@ import {
 	useConsentConfig,
 	useConsentInit,
 	useIabTranslations,
-} from '#c15t/composables';
+} from '#inth/composables';
 
 import {
 	PreferenceItemAuxiliary,
@@ -85,15 +89,15 @@ const props = defineProps<{
 	isEnabled: boolean;
 	isLocked?: boolean;
 	vendorConsents: Record<string, boolean>;
-	vendorLegitimateInterests?: Record<string, boolean>;
-	purposeLegitimateInterests?: Record<number, boolean>;
+	/** Draft and vendor list the legitimate interest controls read. */
+	legitimateInterests?: IABLegitimateInterestState | null;
 }>();
 
 const emit = defineEmits<{
 	toggle: [value: boolean];
 	vendorToggle: [vendorId: IabVendorId, value: boolean];
 	vendorClick: [vendorId: IabVendorId];
-	purposeLegitimateInterestToggle: [value: boolean];
+	purposeObjection: [objected: boolean];
 	vendorLegitimateInterestToggle: [vendorId: IabVendorId, value: boolean];
 }>();
 
@@ -129,8 +133,12 @@ const customLegIntVendors = computed(() =>
 	legIntVendors.value.filter((vendor) => vendor.isCustom)
 );
 
-const isPurposeLiAllowed = computed(
-	() => props.purposeLegitimateInterests?.[props.purpose.id] ?? true
+const isPurposeLiAllowed = computed(() =>
+	isLegitimateInterestAllowed(
+		props.legitimateInterests,
+		'purpose',
+		props.purpose.id
+	)
 );
 
 // With no vendor on consent, a consent switch would look like an opt-out
@@ -157,15 +165,15 @@ const getVendorConsent = function getVendorConsent(vendorId: IabVendorId) {
 const getVendorLegitimateInterest = function getVendorLegitimateInterest(
 	vendorId: IabVendorId
 ) {
-	return props.vendorLegitimateInterests?.[String(vendorId)] ?? true;
+	return isLegitimateInterestAllowed(
+		props.legitimateInterests,
+		'vendor',
+		vendorId
+	);
 };
 
 const handlePurposeLiObjection = function handlePurposeLiObjection() {
-	const nextValue = !isPurposeLiAllowed.value;
-	emit('purposeLegitimateInterestToggle', nextValue);
-	for (const vendor of legIntVendors.value) {
-		emit('vendorLegitimateInterestToggle', vendor.id, nextValue);
-	}
+	emit('purposeObjection', isPurposeLiAllowed.value);
 };
 
 const interpolate = function interpolate(

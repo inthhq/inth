@@ -67,7 +67,7 @@
 
 import { isProductionBuild } from '../libs/is-production';
 
-const LOADED = Symbol('c15t-lazy-module-loaded');
+const LOADED = Symbol('inth-lazy-module-loaded');
 
 /**
  * Run `next` once a module handle from {@link lazyRuntimeModule} has loaded
@@ -77,7 +77,6 @@ const LOADED = Symbol('c15t-lazy-module-loaded');
  * a module it waits for did not load.
  *
  * @param handle - A module handle, lazy or not.
- * @param next - What to run after it.
  * @internal
  */
 export const afterModuleLoaded = function afterModuleLoaded(
@@ -144,7 +143,7 @@ export const lazyRuntimeModule = function lazyRuntimeModule<
 				// one again.
 				if (!isProductionBuild()) {
 					console.warn(
-						'c15t: a runtime module failed to load and stays inactive.',
+						'inth: a runtime module failed to load and stays inactive.',
 						error
 					);
 				}

@@ -2,7 +2,7 @@
 	"name": "@inth/sdk-core",
 	"version": "3.2.0-canary.0",
 	"private": true,
-	"description": "Headless consent engine behind c15t. Stores consent, decides who sees the banner and gates configured scripts on each visitor's consent policy.",
+	"description": "Headless consent engine behind Inth. Stores consent, decides who sees the banner and gates configured scripts on each visitor's consent policy.",
 	"keywords": [
 		"banner",
 		"ccpa",
@@ -36,14 +36,14 @@
 		"tracking-consent",
 		"typescript"
 	],
-	"homepage": "https://c15t.com/docs/frameworks/javascript/quickstart",
+	"homepage": "https://inth.com",
 	"bugs": {
-		"url": "https://github.com/c15t/c15t/issues"
+		"url": "https://github.com/inthhq/inth/issues"
 	},
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/c15t/c15t.git",
+		"url": "git+https://github.com/inthhq/inth.git",
 		"directory": "packages/sdk/core"
 	},
 	"files": [
@@ -235,6 +235,21 @@
 			"import": "./dist/runtime/deferred-snapshot.js",
 			"default": "./dist/runtime/deferred-snapshot.js"
 		},
+		"./runtime/page-globals": {
+			"types": "./dist-types/libs/page-globals.d.ts",
+			"import": "./dist/libs/page-globals.js",
+			"default": "./dist/libs/page-globals.js"
+		},
+		"./runtime/stand-in-kernel": {
+			"types": "./dist-types/runtime/stand-in-kernel.d.ts",
+			"import": "./dist/runtime/stand-in-kernel.js",
+			"default": "./dist/runtime/stand-in-kernel.js"
+		},
+		"./runtime/storage-for": {
+			"types": "./dist-types/libs/storage-for.d.ts",
+			"import": "./dist/libs/storage-for.js",
+			"default": "./dist/libs/storage-for.js"
+		},
 		"./runtime/save-preload": {
 			"types": "./dist-types/runtime/save-preload.d.ts",
 			"import": "./dist/runtime/save-preload.js",
@@ -302,8 +317,8 @@
 		"@inth/sdk-translations": "workspace:*"
 	},
 	"devDependencies": {
-		"@c15t/typescript-config": "workspace:*",
-		"@c15t/vitest-config": "workspace:*",
+		"@inth/typescript-config": "workspace:*",
+		"@inth/vitest-config": "workspace:*",
 		"@rsbuild/plugin-react": "1.4.6",
 		"@rslib/core": "0.23.2",
 		"@types/node": "25.5.0",

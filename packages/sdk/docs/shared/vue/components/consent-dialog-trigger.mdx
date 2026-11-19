@@ -1,6 +1,6 @@
 ---
 title: "ConsentDialogTrigger"
-description: "Shared ConsentDialogTrigger reference for the c15t Vue plugin and Nuxt module."
+description: "Shared ConsentDialogTrigger reference for the Inth Vue plugin and Nuxt module."
 group: reference
 ---
 
@@ -10,8 +10,9 @@ group: reference
   ## What ConsentDialogTrigger renders
 
   `ConsentDialogTrigger` renders a round floating button, fixed to a corner of
-  the viewport, that opens the preference dialog. Visitors can drag it to
-  another spot. It has no props. Your c15t options configure it.
+  the viewport, that opens the preference dialog. Visitors can drag it toward
+  another corner, and it snaps there. It has no props. Your Inth options
+  configure it.
 
   The trigger renders in the browser only, after mount, in `document.body`. It
   hides while the preference dialog is open, until the visitor's policy has
@@ -34,23 +35,25 @@ group: reference
   | `triggerDefaultPosition` | `'top-left' \| 'top-right' \| 'bottom-left' \| 'bottom-right'` | `'bottom-right'` | Starting corner. |
   | `triggerSize` | `'sm' \| 'md' \| 'lg'` | `'md'` | 32, 40 or 48 pixels. |
   | `triggerIcon` | `'branding' \| 'fingerprint' \| 'settings'` | `'fingerprint'` | The icon inside the button. `'branding'` shows the c15t or Inth mark. |
-  | `triggerPersistPosition` | `boolean` | `true` | Remembers where the visitor dragged it, in localStorage under `c15t:dialog-trigger-position`. |
+  | `triggerPersistPosition` | `boolean` | `true` | Remembers the corner the visitor dragged it to, in localStorage under `inth-trigger-position`, the key the other Inth triggers use. |
   | `triggerShowWhen` | `'always' \| 'after-consent' \| 'never'` | `'after-consent'` | `'after-consent'` shows the trigger once the policy owes no prompt: the visitor saved a choice or dismissed a notice. `'always'` also shows it while the banner is open. `'never'` hides it. |
-  | `triggerAriaLabel` | `string` | `'Open privacy settings'` | The button's accessible name. |
+  | `triggerAriaLabel` | `string` | The `trigger.label` translation | The button's accessible name. |
 </section>
 
 <section id="accessibility">
   ## Accessibility and styling
 
   The trigger is a native `button` with `aria-label` set from
-  `triggerAriaLabel`. The icon is hidden from assistive technology. Set
-  `triggerAriaLabel` in the visitor's language, because the default is
-  English.
+  `triggerAriaLabel`, else the `trigger.label` translation ("Open privacy
+  settings" in English). The icon is hidden from assistive technology. The
+  DevTools toolbar reads its names from `trigger.toolbarLabel` and
+  `trigger.devToolsLabel`.
 
   The `components.trigger` option adds attributes to `root`, `icon` and
   `text`. Setting `components.trigger.text`, even to `{}`, shows
-  `triggerAriaLabel` as visible text next to the icon. The button carries
-  `data-size` and, while dragged, `data-dragging`.
+  the label as visible text next to the icon. The button carries
+  `data-size`, `data-dragging` while dragged and `data-snapping` while it
+  moves to the new corner.
   The toolbar shown while `ConsentDevTools` is mounted takes `toolbar`,
   `toolbarItem` and `toolbarIcon` instead.
 </section>
@@ -60,6 +63,6 @@ group: reference
 
   Load a page under a policy with a prompt and answer the banner. Confirm the
   button appears in the corner you set. Click it and the preference dialog opens while the
-  button hides. Drag it, reload, and confirm it keeps its place when
-  `triggerPersistPosition` is on.
+  button hides. Drag it toward another corner, reload, and confirm it stays in
+  that corner when `triggerPersistPosition` is on.
 </section>

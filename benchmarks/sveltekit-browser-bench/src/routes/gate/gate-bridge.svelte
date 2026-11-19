@@ -3,7 +3,7 @@
 	 * Publishes the kernel snapshot to the gate bridge, as CookieBench's
 	 * `lib/bridge.svelte` does with its `updateBridge`.
 	 */
-	import { updateGateBridge } from '@c15t/benchmarking/consent-gate-page';
+	import { updateGateBridge } from '@inth/benchmarking/consent-gate-page';
 	import { getConsentKernel } from '@inth/svelte';
 	import { onMount } from 'svelte';
 

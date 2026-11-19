@@ -3,7 +3,7 @@
  *
  * Three shapes, one per thing the model can hand over: a row with one toggle, a
  * stack that groups N toggles, and a partner whose claims are listed rather than
- * switched. Each is the web's own card -- a hairline on `--c15t-radius-md`, a
+ * switched. Each is the web's own card -- a hairline on `--inth-radius-md`, a
  * 12-point header, and 12 between the text, the disclosure, and the control --
  * and each keeps the disclosure's own switch and glyph sizes, which are a sixth
  * smaller than the consent dialog's.

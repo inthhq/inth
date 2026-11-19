@@ -22,7 +22,7 @@ See the [documentation](https://c15t.com/docs/integrations) for guides, API refe
 ## Integrations
 
 - **Google Tag Manager**: Sends current permissions through Google Consent Mode v2; configure consent checks for non-Google tags ([guide](https://c15t.com/docs/integrations/google-tag-manager))
-- **Cloudflare Zaraz**: Maps c15t effective permissions to Zaraz purpose IDs for tools managed in Cloudflare ([guide](https://c15t.com/docs/integrations/cloudflare-zaraz))
+- **Cloudflare Zaraz**: Maps Inth effective permissions to Zaraz purpose IDs for tools managed in Cloudflare ([guide](https://c15t.com/docs/integrations/cloudflare-zaraz))
 - **Google Analytics 4 + Google Ads (gtag.js)**: Consent Mode v2 defaults and consent updates when users make a choice ([guide](https://c15t.com/docs/integrations/google-tag))
 - **Conversion pixels**: Meta Pixel, OpenAI Pixel, Pinterest Tag, TikTok Pixel, LinkedIn Insights, Microsoft UET (Microsoft Ads), X Pixel, Reddit Pixel, Snapchat Pixel
 - **PostHog**: Loads before or after measurement consent, with switches that stop PostHog downloading its surveys, heatmaps, dead clicks and web vitals modules or requesting `/flags` ([guide](https://c15t.com/docs/integrations/posthog))
@@ -31,7 +31,7 @@ See the [documentation](https://c15t.com/docs/integrations) for guides, API refe
 - **Sentry**: Loads Sentry from its CDN or works with your own SDK; Session Replay and user data wait for measurement, and error monitoring can too ([guide](https://c15t.com/docs/integrations/sentry))
 - **Email and SMS**: ActiveCampaign site tracking, loaded after marketing consent ([guide](https://c15t.com/docs/integrations/activecampaign)); Attentive loads after marketing consent and requires a page reload on withdrawal; Customer.io loads after marketing consent by default ([guide](https://c15t.com/docs/integrations/customer-io)). Insider, loaded after marketing consent; Klaviyo loads only once marketing and measurement are both allowed; Marketo Munchkin and Salesforce Account Engagement load after marketing consent ([guide](https://c15t.com/docs/integrations/overview#email-and-sms))
 - **Chat widgets**: Ada, Intercom, Crisp, Front Chat, Gorgias Chat, Zendesk Messaging
-- **Shopify**: Sends c15t consent to Shopify's Customer Privacy API from a Hydrogen storefront ([guide](https://c15t.com/docs/integrations/shopify))
+- **Shopify**: Sends Inth consent to Shopify's Customer Privacy API from a Hydrogen storefront ([guide](https://c15t.com/docs/integrations/shopify))
 - **HubSpot**: Loads after marketing consent ([guide](https://c15t.com/docs/integrations/hubspot))
 - **Default**: Pixel after measurement consent or standalone Forms SDK after functionality consent, with configurable categories and an opt-in always mode for the Pixel ([guide](https://c15t.com/docs/integrations/default-com))
 - **The Trade Desk**: Loads after marketing consent ([guide](https://c15t.com/docs/integrations/the-trade-desk))
@@ -59,7 +59,7 @@ const scripts = [
 
 This package ships its documentation as Markdown, matched to the installed version. After you install it, point your coding agent at `node_modules/@inth/integrations/AGENTS.md`. It indexes every guide in `node_modules/@inth/integrations/docs/`.
 
-On the web, every page of the [c15t docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the c15t agent skills with `npx skills add c15t/skills`.
+On the web, every page of the [Inth docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the c15t agent skills with `npx skills add c15t/skills`.
 
 ## Support
 

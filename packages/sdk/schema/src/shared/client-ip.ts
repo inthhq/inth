@@ -40,7 +40,6 @@ const expandIPv6 = function expandIPv6(ip: string): string {
 	const emptyIndex = parts.indexOf('');
 
 	if (emptyIndex !== -1) {
-		// Count how many groups we need to insert
 		const nonEmptyParts = parts.filter((p) => p !== '');
 		const missingGroups = 8 - nonEmptyParts.length;
 		const zeros = Array(missingGroups).fill('0000');
@@ -67,7 +66,6 @@ const expandIPv6 = function expandIPv6(ip: string): string {
 		}
 	}
 
-	// Pad each group to 4 characters
 	return parts.map((p) => p.padStart(4, '0')).join(':');
 };
 
@@ -75,10 +73,8 @@ const expandIPv6 = function expandIPv6(ip: string): string {
  * Compresses an IPv6 address by removing leading zeros and using :: for consecutive zero groups.
  */
 const compressIPv6 = function compressIPv6(ip: string): string {
-	// Remove leading zeros from each group
 	const groups = ip.split(':').map((g) => g.replace(/^0+/u, '') || '0');
 
-	// Find the longest run of consecutive zeros
 	let longestStart = -1;
 	let longestLength = 0;
 	let currentStart = -1;
@@ -102,13 +98,11 @@ const compressIPv6 = function compressIPv6(ip: string): string {
 		}
 	}
 
-	// Check final run
 	if (currentLength > longestLength) {
 		longestStart = currentStart;
 		longestLength = currentLength;
 	}
 
-	// Replace longest run with ::
 	if (longestLength > 1) {
 		const before = groups.slice(0, longestStart);
 		const after = groups.slice(longestStart + longestLength);
@@ -132,9 +126,6 @@ const compressIPv6 = function compressIPv6(ip: string): string {
  * Masks an IP address to reduce PII.
  * - IPv4: Replaces last octet with 0 (e.g., 192.168.1.100 -> 192.168.1.0)
  * - IPv6: Masks last 80 bits (e.g., 2001:db8:85a3::1 -> 2001:db8:85a3::)
- *
- * @param ip - The IP address to mask
- * @returns The masked IP address
  */
 export const maskIpAddress = function maskIpAddress(
 	ip: string | null
@@ -143,7 +134,6 @@ export const maskIpAddress = function maskIpAddress(
 		return null;
 	}
 
-	// IPv4 detection (no colons, has dots)
 	if (ip.includes('.') && !ip.includes(':')) {
 		const parts = ip.split('.');
 		if (parts.length === 4) {
@@ -153,7 +143,6 @@ export const maskIpAddress = function maskIpAddress(
 		return ip;
 	}
 
-	// IPv6 detection
 	if (ip.includes(':')) {
 		// Handle IPv4-mapped IPv6 (::ffff:192.168.1.100)
 		if (ip.includes('.')) {
@@ -173,7 +162,6 @@ export const maskIpAddress = function maskIpAddress(
 		const expanded = expandIPv6(ip);
 		const groups = expanded.split(':');
 
-		// Zero out groups 4-8 (indices 3-7)
 		for (let i = 3; i < 8; i += 1) {
 			groups[i] = '0000';
 		}
@@ -204,9 +192,6 @@ const firstAddress = function firstAddress(
 	}
 	return first;
 };
-
-/** Header names checked in order, first match wins. */
-export const DEFAULT_IP_HEADERS_LIST: readonly string[] = DEFAULT_IP_HEADERS;
 
 export interface IpAddressConfig {
 	readonly tracking?: boolean;

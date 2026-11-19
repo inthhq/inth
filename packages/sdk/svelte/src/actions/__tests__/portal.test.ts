@@ -1,9 +1,3 @@
-/**
- * Tests for the portal Svelte action.
- *
- * Svelte-specific portal action tests.
- */
-
 import { describe, expect, test } from 'vitest';
 
 import { portal } from '../../lib/actions/portal';
@@ -57,11 +51,9 @@ describe('portal action', () => {
 
 		const result = portal(node, '#nonexistent');
 
-		// Portal now always returns {update, destroy} for proper lifecycle handling
 		expect(result).toBeDefined();
 		expect(result.destroy).toBeInstanceOf(Function);
 		expect(result.update).toBeInstanceOf(Function);
-		// Node should not have been moved
 		expect(document.body.contains(node)).toBe(false);
 	});
 

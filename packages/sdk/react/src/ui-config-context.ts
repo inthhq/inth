@@ -28,7 +28,7 @@ export interface V3UIConfigValue {
 }
 
 export const V3UIConfigContext = createContext<V3UIConfigValue>({});
-V3UIConfigContext.displayName = 'C15tV3UIConfigContext';
+V3UIConfigContext.displayName = 'InthV3UIConfigContext';
 
 export const useUIConfig = function useUIConfig() {
 	return useContext(V3UIConfigContext);

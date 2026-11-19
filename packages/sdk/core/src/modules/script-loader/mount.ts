@@ -12,6 +12,11 @@
  * `persistAfterConsentRevoked` and just drops our reference), then
  * fires `onConsentChange` if wired.
  */
+import type {
+	LOADER_RAN_KEY,
+	STARTED_KEY,
+	StartedElement,
+} from '../../libs/page-globals';
 import type { ConsentSnapshot } from '../../types';
 import { isCallbackOnly } from './callback-only';
 import { buildCallbackInfo, hasAnyCallback, invokeCallback } from './callbacks';
@@ -37,6 +42,7 @@ export interface MountDeps {
 		| 'getConsentReader'
 		| 'getLoadErrorReporter'
 		| 'registration'
+		| 'vendorAxisActive'
 	>;
 	/** Stop lifecycle callbacks when disposal is requested during mounting. */
 	isDisposed: () => boolean;
@@ -114,7 +120,7 @@ const elementObservers = new WeakMap<
 // Keep physical completion when another registration joins after the event.
 const elementCompletions = new WeakMap<HTMLScriptElement, ElementCompletion>();
 
-// c15t-created resources released without removal can be owned again on adoption.
+// Inth-created resources released without removal can be owned again on adoption.
 const retainedResources = new WeakSet<HTMLScriptElement>();
 const retainedCompletions = new WeakSet<HTMLScriptElement>();
 
@@ -238,45 +244,28 @@ const observeElement = (
 	}
 };
 
-/**
- * An element the page's inline `serverStart` code created. `__c15tInsert`
- * is set while it waits for the page's priority images; deleting it
- * cancels the insert. `__c15tHeld` is set when the stored consent changed
- * during that wait: its setup ran, and only a loader that runs the script
- * inserts it. `__c15tConsent` is whether its setup ran with consent,
- * `__c15tScript` the id of the script whose setup ran, and `__c15tAdopted`
- * that a loader took it over.
- */
-type ServerStartedElement = HTMLScriptElement & {
-	__c15tAdopted?: boolean;
-	__c15tConsent?: boolean;
-	__c15tDone?: ElementCompletion;
-	__c15tHeld?: boolean;
-	__c15tInsert?: () => void;
-	__c15tScript?: string;
-};
+// Written out, not imported: the loader's chunk imports nothing the first
+// load has. The types keep them equal to `../../libs/page-globals`.
+const LOADER_RAN: typeof LOADER_RAN_KEY = '__inthLoaderRan';
+const STARTED: typeof STARTED_KEY = '__inthStarted';
 
-type ServerStartedRegistry = Record<string, ServerStartedElement>;
+const startedElements = (): Record<string, StartedElement> | undefined =>
+	(globalThis as Record<string, unknown>)[STARTED] as
+		| Record<string, StartedElement>
+		| undefined;
 
 /** A server-started element that is waiting to be inserted, or held. */
 const notYetInserted = function notYetInserted(
-	element: ServerStartedElement | null | undefined
+	element: StartedElement | null | undefined
 ): boolean {
-	return Boolean(element?.__c15tInsert || element?.__c15tHeld);
-};
-
-const serverStartedRegistry = function serverStartedRegistry():
-	| ServerStartedRegistry
-	| undefined {
-	return (globalThis as { __c15tStarted?: ServerStartedRegistry })
-		.__c15tStarted;
+	return Boolean(element?.__inthInsert || element?.__inthHeld);
 };
 
 /** Drops a removed server-started element from the page's registry. */
 const forgetServerStarted = function forgetServerStarted(
-	element: ServerStartedElement
+	element: StartedElement
 ): void {
-	const started = serverStartedRegistry();
+	const started = startedElements();
 	for (const key of Object.keys(started ?? {})) {
 		if (started?.[key] === element) {
 			Reflect.deleteProperty(started, key);
@@ -286,9 +275,9 @@ const forgetServerStarted = function forgetServerStarted(
 
 /** Drop the last owner of an element, keeping it when retention applies. */
 const releaseLastOwner = (element: HTMLScriptElement, retain: boolean) => {
-	const started = element as ServerStartedElement;
-	delete started.__c15tInsert;
-	delete started.__c15tHeld;
+	const started = element as StartedElement;
+	delete started.__inthInsert;
+	delete started.__inthHeld;
 	forgetServerStarted(started);
 	retentionRequests.delete(element);
 	if (retain && element.isConnected) {
@@ -390,14 +379,14 @@ const completeMount = (deps: MountDeps, pending: PendingMount): void => {
  * It may still be waiting to be inserted, or held. An element that is
  * none of these, such as one a loader removed, is dropped.
  *
- * Sets `__c15tLoaderRan`, so HTML code that hasn't run yet leaves the
+ * Sets `LOADER_RAN_KEY`, so HTML code that hasn't run yet leaves the
  * script to this loader.
  */
 const serverStartedFor = function serverStartedFor(
 	script: Script
-): ServerStartedElement | undefined {
-	(globalThis as { __c15tLoaderRan?: boolean }).__c15tLoaderRan = true;
-	const started = serverStartedRegistry();
+): StartedElement | undefined {
+	(globalThis as Record<string, unknown>)[LOADER_RAN] = true;
+	const started = startedElements();
 	const key = script.resourceKey ?? script.id;
 	const element = started?.[key];
 	if (!(started && element)) {
@@ -426,13 +415,13 @@ const adoptServerStarted = function adoptServerStarted(
 	snapshot: ConsentSnapshot,
 	hasConsent: boolean,
 	elementId: string,
-	element: ServerStartedElement
+	element: StartedElement
 ): void {
-	const startedWithConsent = element.__c15tConsent ?? true;
-	element.__c15tAdopted = true;
+	const startedWithConsent = element.__inthConsent ?? true;
+	element.__inthAdopted = true;
 	element.id = elementId;
-	if (element.__c15tDone) {
-		elementCompletions.set(element, element.__c15tDone);
+	if (element.__inthDone) {
+		elementCompletions.set(element, element.__inthDone);
 	}
 	deps.loadedElements.set(script.id, element);
 	deps.ownedScriptIds.add(script.id);
@@ -492,16 +481,16 @@ const adoptToRevoke = function adoptToRevoke(
 	deps: MountDeps,
 	script: Script,
 	snapshot: ConsentSnapshot
-): ServerStartedElement | undefined {
+): StartedElement | undefined {
 	const started = serverStartedFor(script);
-	if (!started || started.__c15tAdopted || started.__c15tScript !== script.id) {
+	if (!started || started.__inthAdopted || started.__inthScript !== script.id) {
 		return;
 	}
 	adoptServerStarted(
 		deps,
 		script,
 		snapshot,
-		started.__c15tConsent ?? true,
+		started.__inthConsent ?? true,
 		deps.elementIds.resolve(script),
 		started
 	);
@@ -601,12 +590,12 @@ export const mountScript = function mountScript(
 	}
 
 	const started = serverStartedFor(script);
-	if (started && !started.__c15tAdopted) {
+	if (started && !started.__inthAdopted) {
 		adoptServerStarted(deps, script, snapshot, hasConsent, elementId, started);
 		// Its setup ran, but the stored consent changed before its insert.
 		// This loader runs the script, so it inserts the element.
-		if (started.__c15tHeld && !deps.isDisposed()) {
-			delete started.__c15tHeld;
+		if (started.__inthHeld && !deps.isDisposed()) {
+			delete started.__inthHeld;
 			(script.target === 'body'
 				? (document.body ?? document.head)
 				: document.head
@@ -727,7 +716,9 @@ export const mountScript = function mountScript(
 
 	const target =
 		pendingResource?.target ??
-		(script.target === 'body' ? document.body : document.head);
+		(script.target === 'body'
+			? (document.body ?? document.head)
+			: document.head);
 
 	if (batch) {
 		const pending: PendingMount = {

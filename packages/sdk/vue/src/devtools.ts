@@ -5,7 +5,7 @@ import type {
 	DevToolsPosition,
 	DevToolsTab,
 } from '@inth/sdk/devtools';
-import { publishDevToolsLauncher } from '@inth/sdk/ui/utils/devtools-launcher';
+import { attachDevToolsLauncher } from '@inth/sdk/ui/utils/devtools-launcher';
 import {
 	defineComponent,
 	h,
@@ -30,7 +30,7 @@ export type ConsentDevToolsProps = Omit<
 >;
 
 /** Backward-compatible props name for {@link ConsentDevTools}. */
-export type C15TDevToolsProps = ConsentDevToolsProps;
+export type InthDevToolsProps = ConsentDevToolsProps;
 
 /** Compatible props name for the {@link DevTools} alias. */
 export type DevToolsProps = ConsentDevToolsProps;
@@ -80,12 +80,9 @@ const useProviderDevTools = (
 			props.getConsentCategories?.() ?? config.value.consentCategories
 		);
 	let devTools: DevToolsInstance | null = null;
-	let withdrawLauncher: (() => void) | undefined;
 	let stopWatching: (() => void) | undefined;
 
 	const destroyDevTools = () => {
-		withdrawLauncher?.();
-		withdrawLauncher = undefined;
 		devTools?.destroy();
 		devTools = null;
 	};
@@ -105,26 +102,27 @@ const useProviderDevTools = (
 				if (!placement) {
 					return;
 				}
-				devTools = createDevTools({
-					...placement,
-					clearRecords:
-						props.clearRecords || context
-							? () => (props.clearRecords ?? context?.clearRecords)?.()
-							: undefined,
-					defaultTab: props.defaultTab,
-					getConsentCategories: getCategories,
-					getPresentation: () =>
-						props.getPresentation
-							? props.getPresentation()
-							: presentation.value,
-					kernel,
-					maxEvents: props.maxEvents,
-				});
 				// A visible consent trigger can render the floating launcher
 				// instead; an embedded panel has none to hand over.
-				if (!placement.embedded) {
-					withdrawLauncher = publishDevToolsLauncher(kernel, devTools);
-				}
+				devTools = attachDevToolsLauncher(
+					kernel,
+					createDevTools({
+						...placement,
+						clearRecords:
+							props.clearRecords || context
+								? () => (props.clearRecords ?? context?.clearRecords)?.()
+								: undefined,
+						defaultTab: props.defaultTab,
+						getConsentCategories: getCategories,
+						getPresentation: () =>
+							props.getPresentation
+								? props.getPresentation()
+								: presentation.value,
+						kernel,
+						maxEvents: props.maxEvents,
+					}),
+					{ embedded: placement.embedded }
+				);
 			},
 			{ immediate: true }
 		);
@@ -137,7 +135,7 @@ const useProviderDevTools = (
 };
 
 /**
- * Mounts the c15t DevTools engine for the nearest Vue consent provider.
+ * Mounts the Inth DevTools engine for the nearest Vue consent provider.
  *
  * @returns A renderless Vue component; the engine mounts into `document.body`.
  * @throws {Error} When rendered outside a consent provider.
@@ -170,7 +168,7 @@ export const ConsentDevTools = defineComponent({
 });
 
 /**
- * Embeds c15t DevTools in its parent element instead of floating over the
+ * Embeds Inth DevTools in its parent element instead of floating over the
  * page. Use it to host the panel in another devtools UI or a debug page;
  * give the parent a height.
  *
@@ -208,7 +206,7 @@ export const ConsentDevToolsPanel = defineComponent({
 export const DevTools = ConsentDevTools;
 
 /** Backward-compatible name for {@link ConsentDevTools}. */
-export const C15TDevTools = ConsentDevTools;
+export const InthDevTools = ConsentDevTools;
 
 export default ConsentDevTools;
 

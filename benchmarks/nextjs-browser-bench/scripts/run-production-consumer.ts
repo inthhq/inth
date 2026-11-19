@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
  * Production-consumer bench: a Next.js App Router site built from packed or
- * published c15t artifacts, outside the workspace.
+ * published Inth artifacts, outside the workspace.
  *
- * Each arm installs one c15t build into its own consumer directory, builds
+ * Each arm installs one Inth build into its own consumer directory, builds
  * it with `next build` (Turbopack), and serves it with `next start`. Arms
  * are measured interleaved (ABBA) on the same routes and scenarios. The
- * consumer imports no c15t stylesheet when the installed build delivers its
+ * consumer imports no Inth stylesheet when the installed build delivers its
  * own styles, and the aggregate stylesheet otherwise. It uses a custom theme,
  * server-resolved consent from the cached manifest under a Suspense
  * boundary, and the deferred preference dialog, so duplicate stylesheets,
@@ -14,7 +14,7 @@
  *
  * Usage (from benchmarks/nextjs-browser-bench):
  *   bunx tsx scripts/run-production-consumer.ts \
- *     --arm base=root:/path/to/c15t-base --arm head=workspace \
+ *     --arm base=root:/path/to/inth-base --arm head=workspace \
  *     --iterations 7 --warmup 1 --profile mobile --backend-latency-ms 200
  *
  * The consent backend answers after `--backend-latency-ms` (default 200; 0
@@ -42,7 +42,7 @@ import type {
 	BenchPerfMetrics,
 	BenchStylesheetResource,
 	readBenchNavigationTiming,
-} from '@c15t/benchmarking/browser';
+} from '@inth/benchmarking/browser';
 import {
 	applyBenchThrottleProfile,
 	benchNavigationTimingExpression,
@@ -53,18 +53,18 @@ import {
 	benchScenarioKey,
 	resolveBenchBackendLatencyMs,
 	parseBenchThrottleProfile,
-} from '@c15t/benchmarking/browser';
+} from '@inth/benchmarking/browser';
 import {
 	analyzeServerHtmlStream,
 	bannerMarkupMarkers,
 	readServerHtmlStream,
 	toCookieHeader,
-} from '@c15t/benchmarking/html-stream';
-import type { ServerHtmlStreamAnalysis } from '@c15t/benchmarking/html-stream';
+} from '@inth/benchmarking/html-stream';
+import type { ServerHtmlStreamAnalysis } from '@inth/benchmarking/html-stream';
 import {
 	buildBrowserBenchManifest,
 	loadBrowserBenchInit,
-} from '@c15t/benchmarking/policy-fixtures';
+} from '@inth/benchmarking/policy-fixtures';
 import {
 	AUTOMATIC_STYLES_MODULE,
 	consumerGlobalStyles,
@@ -74,28 +74,28 @@ import {
 	packedTarballName,
 	parseConsumerArm,
 	workspaceDependencyClosure,
-} from '@c15t/benchmarking/production-consumer';
+} from '@inth/benchmarking/production-consumer';
 import type {
 	ConsumerArm,
 	ConsumerScenarioDefinition,
 	ConsumerStyleDelivery,
 	WorkspacePackageInfo,
-} from '@c15t/benchmarking/production-consumer';
-import { BENCHMARK_SCHEMA_VERSION } from '@c15t/benchmarking/schema';
+} from '@inth/benchmarking/production-consumer';
+import { BENCHMARK_SCHEMA_VERSION } from '@inth/benchmarking/schema';
 import type {
 	BenchmarkResult,
 	MetricSampleSet,
-} from '@c15t/benchmarking/schema';
+} from '@inth/benchmarking/schema';
 import type {
 	BenchScriptResourceMetrics,
 	BenchScriptTiming,
-} from '@c15t/benchmarking/script-timing';
+} from '@inth/benchmarking/script-timing';
 import {
 	benchScriptTimingExpression,
 	summarizeBenchScripts,
-} from '@c15t/benchmarking/script-timing';
-import { findStylesheetOverlap } from '@c15t/benchmarking/stylesheet-overlap';
-import type { StylesheetOverlap } from '@c15t/benchmarking/stylesheet-overlap';
+} from '@inth/benchmarking/script-timing';
+import { findStylesheetOverlap } from '@inth/benchmarking/stylesheet-overlap';
+import type { StylesheetOverlap } from '@inth/benchmarking/stylesheet-overlap';
 import {
 	getEnvironment,
 	safeCommitSha,
@@ -103,17 +103,17 @@ import {
 	summarizeMetric,
 	summarizeNullableMetric,
 	writeJson,
-} from '@c15t/benchmarking/utils';
+} from '@inth/benchmarking/utils';
 import {
 	assertVisitBannerState,
 	coldStateMetadata,
-} from '@c15t/benchmarking/visit-definitions';
+} from '@inth/benchmarking/visit-definitions';
 import {
 	serverHtmlMetadata,
 	summarizeServerHtmlMetrics,
 	summarizeVisitTimingMetrics,
 	visitMetricGlossary,
-} from '@c15t/benchmarking/visit-metrics';
+} from '@inth/benchmarking/visit-metrics';
 import { chromium } from 'playwright';
 import type * as PlaywrightTypes from 'playwright';
 
@@ -122,8 +122,8 @@ const benchDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const repoRoot = resolve(benchDir, '../..');
 const templateDir = join(benchDir, 'production-consumer', 'template');
 const bannerRootTestId = 'consent-banner-root';
-const bannerElementTimingName = 'c15t-consent-banner';
-const manifestTokenHeader = 'x-c15t-bench-manifest-token';
+const bannerElementTimingName = 'inth-consent-banner';
+const manifestTokenHeader = 'x-inth-bench-manifest-token';
 
 const readCliFlags = function readCliFlags(name: string): string[] {
 	const values: string[] = [];
@@ -147,7 +147,7 @@ if (new Set(arms.map((arm) => arm.label)).size !== arms.length) {
 	throw new Error('Arm labels must be unique.');
 }
 const workRoot = resolve(
-	readCliFlag('--work-dir') ?? join(tmpdir(), 'c15t-production-consumer')
+	readCliFlag('--work-dir') ?? join(tmpdir(), 'inth-production-consumer')
 );
 const outputDir = resolve(
 	readCliFlag('--output-dir') ??
@@ -157,7 +157,7 @@ const outputDir = resolve(
 const iterations = Number(readCliFlag('--iterations') ?? '7');
 const warmupIterations = Number(readCliFlag('--warmup') ?? '1');
 const throttleProfile = parseBenchThrottleProfile(
-	readCliFlag('--profile') ?? process.env.C15T_BENCH_PROFILE
+	readCliFlag('--profile') ?? process.env.INTH_BENCH_PROFILE
 );
 const backendLatencyMs = resolveBenchBackendLatencyMs(readCliFlag, process.env);
 const portBase = Number(readCliFlag('--port-base') ?? '4620');
@@ -234,21 +234,21 @@ const readWorkspacePackages = function readWorkspacePackages(
 	return packages;
 };
 
-/** Pack `c15t` and its workspace dependencies from a built checkout. */
+/** Pack `inth` and its workspace dependencies from a built checkout. */
 const packCheckout = function packCheckout(
 	root: string,
 	destination: string
 ): Map<string, string> {
 	const closure = workspaceDependencyClosure(
 		readWorkspacePackages(root),
-		'c15t'
+		'inth'
 	);
 	const missingBuilds = closure.filter(
 		(info) => !existsSync(join(info.dir, 'dist'))
 	);
 	if (missingBuilds.length > 0) {
 		throw new Error(
-			`Build ${root} first (bun turbo run build --filter=c15t...). Missing dist/ in: ${missingBuilds
+			`Build ${root} first (bun turbo run build --filter=inth...). Missing dist/ in: ${missingBuilds
 				.map((info) => info.name)
 				.join(', ')}`
 		);
@@ -299,7 +299,7 @@ const consumerDir = (arm: ConsumerArm): string => join(workRoot, arm.label);
 interface ArmProvenance {
 	label: string;
 	source: string;
-	installedC15tVersion: string;
+	installedInthVersion: string;
 	nextVersion: string;
 	styles: ConsumerStyleDelivery;
 	tarballs: string[];
@@ -311,8 +311,8 @@ const installedStyleDelivery = function installedStyleDelivery(
 	dir: string
 ): ConsumerStyleDelivery {
 	const packageDir = [
-		join(dir, 'node_modules', 'c15t', 'node_modules', '@c15t', 'react'),
-		join(dir, 'node_modules', '@c15t', 'react'),
+		join(dir, 'node_modules', 'inth', 'node_modules', '@inth', 'react'),
+		join(dir, 'node_modules', '@inth', 'react'),
 	].find((candidate) => existsSync(join(candidate, 'package.json')));
 	if (!packageDir) {
 		throw new Error(`${dir} has no installed @inth/react.`);
@@ -334,7 +334,7 @@ const describeSource = function describeSource(arm: ConsumerArm): string {
 			return `tarballs ${resolve(arm.source.dir)}`;
 		}
 		case 'npm': {
-			return `npm c15t@${arm.source.version}`;
+			return `npm inth@${arm.source.version}`;
 		}
 		default: {
 			return 'unknown';
@@ -384,7 +384,7 @@ const prepareArm = async function prepareArm(
 		join(dir, 'package.json'),
 		`${JSON.stringify(
 			consumerPackageJson({
-				c15tVersion: arm.source.kind === 'npm' ? arm.source.version : undefined,
+				inthVersion: arm.source.kind === 'npm' ? arm.source.version : undefined,
 				nextVersion,
 				reactVersion,
 				tarballs,
@@ -412,11 +412,11 @@ const prepareArm = async function prepareArm(
 	const buildMs = Math.round(performance.now() - buildStartedAt);
 
 	const installed = JSON.parse(
-		readFileSync(join(dir, 'node_modules', 'c15t', 'package.json'), 'utf8')
+		readFileSync(join(dir, 'node_modules', 'inth', 'package.json'), 'utf8')
 	) as { version: string };
 	const provenance: ArmProvenance = {
 		buildMs,
-		installedC15tVersion: installed.version,
+		installedInthVersion: installed.version,
 		label: arm.label,
 		nextVersion,
 		source: describeSource(arm),
@@ -567,7 +567,7 @@ interface ProbeState {
 
 declare global {
 	interface Window {
-		__c15tConsumerBench?: ProbeState;
+		__inthConsumerBench?: ProbeState;
 	}
 }
 
@@ -613,7 +613,7 @@ const waitForProbe = async function waitForProbe(
 ) {
 	await page.waitForFunction(
 		(target) => {
-			const state = window.__c15tConsumerBench;
+			const state = window.__inthConsumerBench;
 			if (!state) {
 				return false;
 			}
@@ -683,7 +683,7 @@ const measureVisit = async function measureVisit(
 	const after = await readFixtureCounts(server);
 
 	const state = (await page.evaluate(
-		() => window.__c15tConsumerBench
+		() => window.__inthConsumerBench
 	)) as ProbeState;
 	const bannerCount = await page
 		.locator(`[data-testid="${bannerRootTestId}"]`)
@@ -753,7 +753,7 @@ const recordChoice = async function recordChoice(
 		await page.click(`[data-testid="consent-banner-${action}-button"]`);
 		await page.waitForFunction(
 			() => {
-				const state = window.__c15tConsumerBench;
+				const state = window.__inthConsumerBench;
 				return (
 					!!state &&
 					state.onChoiceRecordedCount > 0 &&
@@ -767,7 +767,7 @@ const recordChoice = async function recordChoice(
 			() =>
 				document.cookie
 					.split(';')
-					.some((entry) => entry.trim().startsWith('c15t=')),
+					.some((entry) => entry.trim().startsWith('inth=')),
 			undefined,
 			{ timeout: 10_000 }
 		);
@@ -1137,7 +1137,7 @@ const buildResult = function buildResult(input: {
 				input.overlapAfterDialog?.sharedClassCount ?? null,
 			cssSharedClassSample: input.overlap?.sharedClassSample ?? [],
 			gitDirty: safeGitDirty(),
-			installedC15tVersion: input.provenance.installedC15tVersion,
+			installedInthVersion: input.provenance.installedInthVersion,
 			nextVersion: input.provenance.nextVersion,
 			profile: throttleProfile,
 			route: input.route,
@@ -1155,7 +1155,7 @@ const buildResult = function buildResult(input: {
 			...summarizeServerHtmlMetrics(input.serverHtml),
 		],
 		notes: [
-			'Next.js App Router consumer installed from packed or published c15t artifacts outside the workspace: automatic component styles, or the aggregate stylesheet for a build without them, custom theme, server consent from the cached manifest inside a Suspense boundary, deferred preference dialog.',
+			'Next.js App Router consumer installed from packed or published inth artifacts outside the workspace: automatic component styles, or the aggregate stylesheet for a build without them, custom theme, server consent from the cached manifest inside a Suspense boundary, deferred preference dialog.',
 			`Visit: ${input.scenario.visit}. Cold state: ${input.scenario.coldState.setup}.`,
 			'cssEncodedBytes sums Resource Timing encodedBodySize (compressed body) over every stylesheet; cssAssetCount counts them. cssSharedClassCount counts class selectors defined by more than one loaded stylesheet.',
 			'serverManifestFetches counts fixture-origin /manifest requests during the visit, so a warm SDK manifest cache reads 0.',
@@ -1210,11 +1210,11 @@ const toMarkdown = function toMarkdown(
 		'',
 		`Profile ${throttleProfile}, injected consent-origin latency ${backendLatencyMs} ms, ${iterations} measured samples plus ${warmupIterations} warm-up per arm, arms interleaved. Medians with (min–max).`,
 		'',
-		'| Arm | Source | c15t | Next | c15t styles |',
+		'| Arm | Source | inth | Next | inth styles |',
 		'| --- | --- | --- | --- | --- |',
 		...provenance.map(
 			(arm) =>
-				`| ${arm.label} | ${arm.source} | ${arm.installedC15tVersion} | ${arm.nextVersion} | ${arm.styles} |`
+				`| ${arm.label} | ${arm.source} | ${arm.installedInthVersion} | ${arm.nextVersion} | ${arm.styles} |`
 		),
 		'',
 		`| Route | Scenario | Arm | ${summaryColumns.join(' | ')} | Cold state |`,
@@ -1268,7 +1268,7 @@ const main = async function main() {
 	if (prepareOnly) {
 		for (const arm of provenance) {
 			console.log(
-				`[${arm.label}] prepared ${consumerDir(arms.find((entry) => entry.label === arm.label) as ConsumerArm)} (${arm.source}, c15t ${arm.installedC15tVersion})`
+				`[${arm.label}] prepared ${consumerDir(arms.find((entry) => entry.label === arm.label) as ConsumerArm)} (${arm.source}, inth ${arm.installedInthVersion})`
 			);
 		}
 		return;

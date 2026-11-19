@@ -8,7 +8,7 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { PREFETCH_WINDOW_KEY } from '../../../../core/src/libs/prefetch/window-key';
+import { PREFETCH_WINDOW_KEY } from '../../../../core/src/libs/page-globals';
 import init from '../../../../core/src/runtime/__tests__/fixtures/hosted-init-gb.json' with { type: 'json' };
 import { ConsentBanner } from '../../components/prompt';
 import { createConsentProvider } from '../client-provider';
@@ -28,7 +28,7 @@ const fetchMock = vi.fn((url: string) =>
 		new Response(JSON.stringify(String(url).includes('/init') ? init : {}), {
 			headers: {
 				'content-type': 'application/json',
-				'x-c15t-policy-contract': '1',
+				'x-inth-policy-contract': '1',
 			},
 			status: 200,
 		})

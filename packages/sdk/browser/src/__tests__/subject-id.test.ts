@@ -38,7 +38,7 @@ afterEach(() => {
 
 /** Opt-out with no prompt everywhere: everything is allowed until refused. */
 const optOutManifest: ConsentManifest = {
-	branding: 'c15t',
+	branding: 'inth',
 	policyPacks: [
 		createConsentManifestPolicyPack({
 			...policyRulePresets.californiaOptOut(),

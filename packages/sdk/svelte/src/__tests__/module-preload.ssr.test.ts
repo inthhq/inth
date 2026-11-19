@@ -1,6 +1,6 @@
 /**
  * The provider names the on-demand chunk its page starts with, and
- * `c15tHandle`'s page transform turns that into `<link rel="modulepreload">`.
+ * `inthHandle`'s page transform turns that into `<link rel="modulepreload">`.
  *
  * Runs in the `ssr` project, so the provider is server-compiled as it is
  * during a SvelteKit render or prerender.
@@ -42,7 +42,7 @@ const renderPage = function renderPage(
 			} as ConsentManagerOptions,
 		},
 	});
-	// What `c15tHandle` does to the page once the plugin wrote the URLs.
+	// What `inthHandle` does to the page once the plugin wrote the URLs.
 	return injectModulePreloads(`<head>${head}</head>`, HREFS);
 };
 
@@ -68,7 +68,7 @@ describe('module preloads for on-demand chunks', () => {
 	test('a page without scripts or rules preloads nothing', () => {
 		const head = renderPage({});
 		expect(preloads(head)).toEqual([]);
-		expect(head).not.toContain('c15t-modulepreload');
+		expect(head).not.toContain('inth-modulepreload');
 	});
 
 	test('a page with consent management disabled preloads no blocker', () => {

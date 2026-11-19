@@ -30,31 +30,31 @@ afterEach(() => {
 	selector: 'test-tabs',
 	template: `
 		<div
-			c15tTabs
+			inthTabs
 			[(value)]="tab"
 		>
-			<div c15tTabsList>
+			<div inthTabsList>
 				<button
-					c15tTabsTrigger
+					inthTabsTrigger
 					value="one"
 				>
 					One
 				</button>
 				<button
-					c15tTabsTrigger
+					inthTabsTrigger
 					value="two"
 				>
 					Two
 				</button>
 			</div>
 			<div
-				c15tTabsContent
+				inthTabsContent
 				value="one"
 			>
 				First
 			</div>
 			<div
-				c15tTabsContent
+				inthTabsContent
 				value="two"
 			>
 				Second
@@ -72,21 +72,21 @@ class TabsHost {
 	selector: 'test-vertical-list',
 	template: `
 		<div
-			c15tTabs
+			inthTabs
 			[(value)]="tab"
 		>
 			<div
-				c15tTabsList
+				inthTabsList
 				orientation="vertical"
 			>
 				<button
-					c15tTabsTrigger
+					inthTabsTrigger
 					value="one"
 				>
 					One
 				</button>
 				<button
-					c15tTabsTrigger
+					inthTabsTrigger
 					value="two"
 				>
 					Two
@@ -99,7 +99,7 @@ class VerticalListHost {
 	readonly tab = signal<string | null>('one');
 }
 
-describe('c15tTabs', () => {
+describe('inthTabs', () => {
 	test('selects with the arrow keys and moves focus', async () => {
 		const { fixture, root } = await render(TabsHost);
 		const [one, two] = Array.from(

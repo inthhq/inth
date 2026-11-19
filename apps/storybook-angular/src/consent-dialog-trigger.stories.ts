@@ -1,6 +1,4 @@
 import type { Meta, StoryObj } from '@analogjs/storybook-angular';
-import { dialogFocusManagement } from '@c15t/conformance/play/consent-dialog';
-import { triggerOpensDialog } from '@c15t/conformance/play/consent-dialog-trigger';
 import { ConsentDialog } from '@inth/angular/consent-dialog';
 import { ConsentDialogTrigger } from '@inth/angular/consent-dialog-trigger';
 import type {
@@ -8,6 +6,8 @@ import type {
 	ConsentDialogTriggerSize,
 	ConsentDialogTriggerVisibility,
 } from '@inth/angular/consent-dialog-trigger';
+import { dialogFocusManagement } from '@inth/conformance/play/consent-dialog';
+import { triggerOpensDialog } from '@inth/conformance/play/consent-dialog-trigger';
 
 import {
 	consentApplication,
@@ -40,8 +40,8 @@ const meta = {
 		},
 		props: args,
 		template: `
-			<c15t-consent-dialog />
-			<c15t-consent-dialog-trigger
+			<inth-consent-dialog />
+			<inth-consent-dialog-trigger
 				[defaultPosition]="defaultPosition"
 				[showWhen]="showWhen"
 				[size]="size"

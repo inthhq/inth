@@ -13,10 +13,22 @@ import {
 	PLATFORM_ID,
 } from '@angular/core';
 import type { Model, PromptPosition, PromptVariant } from '@inth/sdk/engine';
+import { actionAppearanceFromTheme } from '@inth/sdk/engine';
 import type { PolicyRight } from '@inth/sdk/schema/types';
 import { replayEarlyConsentTaps } from '@inth/sdk/surface-actions';
-import { resolveConsentPresentation } from '@inth/sdk/surface-state';
+import {
+	resolveActionLabels,
+	resolveConsentPresentation,
+	resolvePreferenceControlLabels,
+	resolvePromptCopy,
+} from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/consent-banner';
+import { resolveActionAppearance } from '@inth/sdk/ui/theme';
+import {
+	resolveLegalLinkEntries,
+	resolveStyles,
+	toStyleAttributeValue,
+} from '@inth/sdk/ui/utils';
 import { getTextDirection } from '@inth/sdk/ui/utils/text-direction';
 
 import { ConsentManager } from '../core/consent-manager';
@@ -27,25 +39,15 @@ import {
 } from '../core/consent-styles';
 import { ConsentTheme } from '../core/consent-theme';
 import { NoStyleScope, resolveNoStyle } from '../core/no-style';
-import {
-	resolveComponentStyles,
-	resolveConsentActionStyle,
-	toStyleAttribute,
-} from '../core/slot-styles';
-import { registeredDefaultTranslations } from '../core/translation-defaults';
 import { FocusTrap } from '../overlay/focus-trap';
 import { Overlay } from '../overlay/overlay';
 import { Portal } from '../overlay/portal';
 import { ScrollLock } from '../overlay/scroll-lock';
 import { Branding, shouldShowBranding } from '../shared/branding';
 import { ConsentButton } from '../shared/consent-button';
-import {
-	InlineLegalLinks,
-	selectLegalLinks,
-} from '../shared/inline-legal-links';
+import { InlineLegalLinks } from '../shared/inline-legal-links';
 import type { LegalLinkSelection } from '../shared/inline-legal-links';
 import { PolicyActions } from '../shared/policy-actions';
-import { resolvedTranslations } from '../shared/translations';
 import {
 	ConsentBannerAction,
 	ConsentBannerDescription,
@@ -70,7 +72,7 @@ const BANNER_ACTIONS = new Set<string>([
 	'dismiss',
 ]);
 
-// As React's banner: IAB policies belong to <c15t-iab-consent-banner>, so
+// As React's banner: IAB policies belong to <inth-iab-consent-banner>, so
 // the two render side by side without both showing.
 const DEFAULT_MODELS: readonly Model[] = ['opt-in', 'opt-out'];
 
@@ -94,12 +96,12 @@ const primaryActions = function primaryActions(
  * reads the provider's theme slots (`consentBanner*`).
  *
  * Content between the tags lands in the footer before the action groups.
- * `<ng-template c15tConsentBannerTitle>`, `c15tConsentBannerDescription` and
- * `c15tConsentBannerAction` replace the title, the description and each button.
+ * `<ng-template inthConsentBannerTitle>`, `inthConsentBannerDescription` and
+ * `inthConsentBannerAction` replace the title, the description and each button.
  *
  * @example
  * ```html
- * <c15t-consent-banner
+ * <inth-consent-banner
  *   [legalLinks]="['privacyPolicy']"
  *   variant="bar"
  *   position="bottom"
@@ -121,13 +123,13 @@ const primaryActions = function primaryActions(
 	],
 	// Its parts resolve `noStyle` through this surface.
 	providers: [NoStyleScope],
-	selector: 'c15t-consent-banner',
+	selector: 'inth-consent-banner',
 	template: `
 		@if (visibility.shouldRender()) {
-			<div c15tPortal>
+			<div inthPortal>
 				@if (presentation().scrollLock) {
 					<div
-						c15t-overlay
+						inth-overlay
 						[styles]="styles"
 						[entering]="!resolvedDisableAnimation()"
 						[lateEntry]="visibility.lateEntry() && !resolvedDisableAnimation()"
@@ -149,17 +151,16 @@ const primaryActions = function primaryActions(
 							: null
 					"
 					data-testid="consent-banner-root"
-					data-c15t-streamed=""
-					[c15tScrollLock]="presentation().scrollLock"
+					data-inth-surface="banner"
+					data-inth-streamed=""
+					[inthScrollLock]="presentation().scrollLock"
 				>
 					<div [class]="resolvedNoStyle() ? '' : styles.cardShell || ''">
 						@if (showBranding()) {
 							<a
-								c15t-branding
+								inth-branding
 								[noStyle]="resolvedNoStyle()"
-								[variant]="'banner-tag'"
-								[themeKey]="'consentBannerTag'"
-								data-testid="consent-banner-branding"
+								[surface]="'banner'"
 							></a>
 						}
 						<div
@@ -170,7 +171,7 @@ const primaryActions = function primaryActions(
 							[attr.role]="presentation().blocking ? 'dialog' : 'region'"
 							[attr.aria-modal]="presentation().blocking ? 'true' : null"
 							[attr.aria-label]="resolvedHeading()"
-							[c15tFocusTrap]="presentation().trapFocus"
+							[inthFocusTrap]="presentation().trapFocus"
 						>
 							<div
 								[class]="part().header.className"
@@ -213,7 +214,7 @@ const primaryActions = function primaryActions(
 									}
 									@if (hasLegalLinks()) {
 										<span
-											c15t-inline-legal-links
+											inth-inline-legal-links
 											[links]="legalLinks()"
 											[testIdPrefix]="'consent-banner-legal-link'"
 										></span>
@@ -221,7 +222,7 @@ const primaryActions = function primaryActions(
 								</div>
 							</div>
 							<div
-								c15t-policy-actions
+								inth-policy-actions
 								[actionGroups]="presentation().actionGroups"
 								[primaryActions]="presentation().primaryActions"
 								[shouldFillActions]="presentation().shouldFillActions"
@@ -251,7 +252,7 @@ const primaryActions = function primaryActions(
 												[style]="part().rightLink.style"
 												data-action="right"
 												[attr.data-right]="right"
-												[attr.data-c15t-rights]="rights()"
+												[attr.data-inth-rights]="rights()"
 												[attr.data-testid]="
 													'consent-banner-right-link-' + right
 												"
@@ -270,7 +271,7 @@ const primaryActions = function primaryActions(
 					banner hidden until it arrives, so a page whose HTML arrives
 					in pieces never paints a partial banner that then grows. -->
 					<span
-						data-c15t-stream-end=""
+						data-inth-stream-end=""
 						hidden
 					></span>
 				</div>
@@ -289,7 +290,7 @@ const primaryActions = function primaryActions(
 					/>
 				} @else {
 					<button
-						c15t-consent-button
+						inth-consent-button
 						[action]="context.$implicit"
 						[variant]="context.variant"
 						[mode]="context.mode"
@@ -382,10 +383,10 @@ export class ConsentBanner {
 		() => this.disableAnimation() ?? this.#theme.disableAnimation()
 	);
 
-	readonly #translations = resolvedTranslations(this.consent);
+	readonly #translations = this.consent.copy;
 	/** @internal */
 	protected readonly textDirection = computed(() =>
-		getTextDirection(this.consent.translationConfig()?.defaultLanguage)
+		getTextDirection(this.consent.translations()?.language)
 	);
 
 	readonly #shouldShow = computed(
@@ -399,23 +400,12 @@ export class ConsentBanner {
 	/** @internal */
 	protected readonly visibility = bannerVisibility(() => this.#shouldShow());
 
-	readonly #themedActions = computed(() => {
-		const theme = this.#theme.theme();
-		return {
-			accept: resolveConsentActionStyle(theme, 'accept'),
-			customize: resolveConsentActionStyle(theme, 'customize'),
-			dismiss: resolveConsentActionStyle(theme, 'dismiss'),
-			reject: resolveConsentActionStyle(theme, 'reject'),
-			save: resolveConsentActionStyle(theme, 'save'),
-		};
-	});
-
 	/** @internal */
 	protected readonly presentation = computed(() => {
 		const primary = this.primaryButton();
 		const presentation = this.consent.presentation();
 		return resolveConsentPresentation({
-			actionAppearance: this.#themedActions(),
+			actionAppearance: actionAppearanceFromTheme(this.#theme.theme()),
 			override: {
 				blocking: this.blocking(),
 				layout: this.layout(),
@@ -456,82 +446,47 @@ export class ConsentBanner {
 	/** @internal */
 	protected readonly hasLegalLinks = computed(
 		() =>
-			selectLegalLinks(this.consent.legalLinks(), this.legalLinks()).length > 0
+			resolveLegalLinkEntries(this.consent.legalLinks(), this.legalLinks())
+				.length > 0
 	);
 
-	// Before the engine registers its defaults there are none: the server
-	// completed the snapshot's bundle with them.
-	readonly #english = computed(() => {
-		// Read again when the snapshot changes, as the engine attaching does.
-		this.consent.snapshot();
-		return registeredDefaultTranslations()?.translations.en;
-	});
+	readonly #promptCopy = computed(() =>
+		resolvePromptCopy(this.#translations(), this.promptKind())
+	);
 
 	/** @internal */
-	protected readonly resolvedHeading = computed(() => {
-		const own = this.heading();
-		if (own !== undefined) {
-			return own;
-		}
-		const banner = this.#translations().cookieBanner;
-		return this.isNotice()
-			? (banner.noticeTitle ?? this.#english()?.cookieBanner?.noticeTitle ?? '')
-			: banner.title;
-	});
+	protected readonly resolvedHeading = computed(
+		() => this.heading() ?? this.#promptCopy().title
+	);
 	/** @internal */
-	protected readonly resolvedDescription = computed(() => {
-		const own = this.description();
-		if (own !== undefined) {
-			return own;
-		}
-		const banner = this.#translations().cookieBanner;
-		return this.isNotice()
-			? (banner.noticeDescription ??
-					this.#english()?.cookieBanner?.noticeDescription ??
-					'')
-			: banner.description;
-	});
+	protected readonly resolvedDescription = computed(
+		() => this.description() ?? this.#promptCopy().description
+	);
 	/** @internal */
 	protected readonly rightLabels = computed(
-		(): Partial<Record<PolicyRight, string | undefined>> => {
-			const { rights } = this.#translations();
-			const english = this.#english()?.rights;
-			return {
-				'opt-out': rights?.optOut ?? english?.optOut,
-				preferences: rights?.preferences ?? english?.preferences,
-			};
-		}
+		(): Partial<Record<PolicyRight, string | undefined>> =>
+			resolvePreferenceControlLabels(this.#translations())
 	);
 	readonly #labels = computed(() => {
-		const { common } = this.#translations();
+		const labels = resolveActionLabels(this.#translations());
 		return {
-			accept: this.acceptButtonText() ?? common.acceptAll,
-			customize: this.customizeButtonText() ?? common.customize,
+			accept: this.acceptButtonText() ?? labels.accept,
+			customize: this.customizeButtonText() ?? labels.customize,
 			// Acknowledgement records no category choice.
-			dismiss:
-				this.dismissButtonText() ??
-				common.acknowledge ??
-				common.dismiss ??
-				this.#english()?.common?.acknowledge ??
-				'',
-			reject: this.rejectButtonText() ?? common.rejectAll,
-		} satisfies Record<ConsentBannerButton, string | undefined>;
+			dismiss: this.dismissButtonText() ?? labels.dismiss,
+			reject: this.rejectButtonText() ?? labels.reject,
+		} satisfies Record<ConsentBannerButton, string>;
 	});
 
 	readonly #parts = computed(() => {
 		const noStyle = this.resolvedNoStyle();
 		const theme = this.#theme.theme();
 		const resolve = (
-			key: Parameters<typeof resolveComponentStyles>[0],
+			key: Parameters<typeof resolveStyles>[0],
 			baseClassName: string | undefined,
 			className?: string
 		) =>
-			resolveComponentStyles(
-				key,
-				theme,
-				{ baseClassName, className, noStyle },
-				noStyle
-			);
+			resolveStyles(key, theme, { baseClassName, className, noStyle }, noStyle);
 		return {
 			card: resolve('consentBannerCard', styles.card),
 			description: resolve('consentBannerDescription', styles.description),
@@ -555,7 +510,7 @@ export class ConsentBanner {
 		for (const key of Object.keys(parts) as (keyof typeof parts)[]) {
 			out[key] = {
 				className: parts[key].className || '',
-				style: toStyleAttribute(parts[key].style) ?? '',
+				style: toStyleAttributeValue(parts[key].style) ?? '',
 			};
 		}
 		return out;
@@ -600,7 +555,7 @@ export class ConsentBanner {
 
 	/**
 	 * A tap on the server-rendered banner before the app hydrated is held by
-	 * the script `provideC15tServer()` adds. From the first browser render
+	 * the script `provideInthServer()` adds. From the first browser render
 	 * the banner's own handlers work: stop the script and record its tap
 	 * once the runtime has started.
 	 */
@@ -629,14 +584,18 @@ export class ConsentBanner {
 			return null;
 		}
 		const id = action as ConsentBannerButton;
-		const themed = this.#themedActions()[id];
+		const { mode, variant } = resolveActionAppearance(
+			this.#theme.theme(),
+			id,
+			primary
+		);
 		return {
 			$implicit: id,
 			label: this.#labels()[id] ?? '',
-			mode: themed.mode ?? 'stroke',
+			mode,
 			primary,
 			testId: `consent-banner-${id}-button`,
-			variant: themed.variant ?? (primary ? 'primary' : 'neutral'),
+			variant,
 		};
 	}
 

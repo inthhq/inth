@@ -45,7 +45,7 @@ const parity = async function parity() {
 		'run',
 		'build',
 		'--concurrency=2',
-		...targets.map((target) => `--filter=@c15t/storybook-${target}`),
+		...targets.map((target) => `--filter=@inth/storybook-${target}`),
 	]);
 	const servers: Awaited<ReturnType<typeof startStaticServer>>[] = [];
 	const env: NodeJS.ProcessEnv = {
@@ -119,7 +119,7 @@ try {
 				'turbo',
 				'run',
 				'test:compat',
-				`--filter=@c15t/next-compat-${target}`,
+				`--filter=@inth/next-compat-${target}`,
 			]);
 		}
 	} else if (kind === 'parity') {
@@ -128,7 +128,7 @@ try {
 		await check(
 			'SSR consent journeys',
 			['pnpm', '--dir', 'internals/fixtures/acceptance', 'run', 'test:ssr'],
-			{ ...process.env, C15T_E2E_APPS: targets.join(',') }
+			{ ...process.env, INTH_E2E_APPS: targets.join(',') }
 		);
 	} else if (kind === 'styles') {
 		await runCommand(['pnpm', 'sdk:compat:styles:build', '--concurrency=2']);

@@ -1,5 +1,5 @@
-import { dialogFocusManagement } from '@c15t/conformance/play/consent-dialog';
-import { triggerOpensDialog } from '@c15t/conformance/play/consent-dialog-trigger';
+import { dialogFocusManagement } from '@inth/conformance/play/consent-dialog';
+import { triggerOpensDialog } from '@inth/conformance/play/consent-dialog-trigger';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect, useState } from 'react';
 
@@ -112,14 +112,14 @@ const ToolbarPreview = ({
 						id: 'accessibility',
 						label: 'Open accessibility options',
 						onSelect: () =>
-							window.dispatchEvent(new CustomEvent('c15t:accessibility')),
+							window.dispatchEvent(new CustomEvent('inth:accessibility')),
 					},
 					{
 						icon: <ChatIcon />,
 						id: 'support',
 						label: 'Open support chat',
 						onSelect: () =>
-							window.dispatchEvent(new CustomEvent('c15t:support')),
+							window.dispatchEvent(new CustomEvent('inth:support')),
 					},
 				]}
 				ariaLabel="Site controls"
@@ -229,7 +229,7 @@ const CustomStyledToolbarPreview = () => {
 						id: 'support',
 						label: 'Open support chat',
 						onSelect: () =>
-							window.dispatchEvent(new CustomEvent('c15t:support')),
+							window.dispatchEvent(new CustomEvent('inth:support')),
 					},
 				]}
 				ariaLabel="Custom site controls"

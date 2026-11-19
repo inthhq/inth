@@ -24,7 +24,7 @@ export interface CommonTransportOptions {
 	 * Transport factory the provider builds its kernel with.
 	 *
 	 * @remarks
-	 * Pass `hosted()` to talk to a c15t backend, `local()` to resolve
+	 * Pass `hosted()` to talk to an Inth backend, `local()` to resolve
 	 * policies locally with no network, or `custom()` to supply your own
 	 * kernel transport. Framework providers require this; it is optional
 	 * here so the base type can also describe partial option fragments.
@@ -39,10 +39,10 @@ export interface CommonTransportOptions {
  */
 export interface CommonInlineStoreOptions {
 	/**
-	 * Whether c15t should be active.
+	 * Whether Inth should be active.
 	 *
 	 * @remarks
-	 * When set to `false`, c15t will not run the initialization process and
+	 * When set to `false`, Inth will not run the initialization process and
 	 * all consents will be treated as granted on the client side.
 	 *
 	 * @default true
@@ -66,11 +66,11 @@ export interface CommonInlineStoreOptions {
 	scripts?: Script[];
 
 	/**
-	 * Content Security Policy nonce applied to DOM nodes c15t injects.
+	 * Content Security Policy nonce applied to DOM nodes Inth injects.
 	 *
 	 * @remarks
 	 * Set this when your CSP uses a nonce-based policy instead of
-	 * `'unsafe-inline'`. c15t forwards it to the injected theme `<style>`
+	 * `'unsafe-inline'`. Inth forwards it to the injected theme `<style>`
 	 * element and to every `<script>` element created by the script loader.
 	 *
 	 * A per-script `nonce` still takes precedence over this value.

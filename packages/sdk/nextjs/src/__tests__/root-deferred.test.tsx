@@ -81,7 +81,7 @@ const leaveBootData = (state: ConsentState): void => {
 			<ServerBootData renderId={RENDER_ID} />
 		</ConsentProvider>
 	);
-	const boot = holder.querySelector('script[data-c15t-boot]');
+	const boot = holder.querySelector('script[data-inth-boot]');
 	if (!boot) {
 		throw new Error('the server render left no boot data');
 	}
@@ -91,8 +91,8 @@ const leaveBootData = (state: ConsentState): void => {
 
 /** The globals the server's inline scripts leave in the page. */
 interface ServerStartGlobals {
-	__c15tRender?: { starts?: Record<string, number> };
-	__c15tStarted?: Record<string, HTMLScriptElement | undefined>;
+	__inthRender?: { starts?: Record<string, number> };
+	__inthStarted?: Record<string, HTMLScriptElement | undefined>;
 }
 
 /** The test's window, with what the server's inline scripts leave there. */
@@ -100,7 +100,7 @@ const startGlobals: Window & ServerStartGlobals = window;
 
 /** Marks `key` as started in the page object, as the server's start does. */
 const markStarted = (key: string): void => {
-	const starts = startGlobals.__c15tRender?.starts;
+	const starts = startGlobals.__inthRender?.starts;
 	if (starts) {
 		starts[key] = 1;
 	}
@@ -128,7 +128,7 @@ const runStoredChoiceCheck = (state: ConsentState): void => {
 	// oxlint-disable-next-line no-new-func -- Runs the server's inline script, as the page would.
 	new Function(code ?? '')();
 	cleanups.push(() => {
-		Reflect.deleteProperty(window, '__c15tRender');
+		Reflect.deleteProperty(window, '__inthRender');
 	});
 };
 
@@ -210,7 +210,7 @@ const mount = async (
 		});
 	};
 	return {
-		engineIn: () => container.querySelector('script[data-c15t-boot]') !== null,
+		engineIn: () => container.querySelector('script[data-inth-boot]') !== null,
 		main: () => container.querySelector('main'),
 		rerender,
 		unmount: () =>
@@ -239,8 +239,8 @@ beforeEach(async () => {
 	await new Promise<void>((resolve) => {
 		setTimeout(resolve, 0);
 	});
-	Reflect.deleteProperty(window, '__c15tRender');
-	Reflect.deleteProperty(window, '__c15tEndedRenders');
+	Reflect.deleteProperty(window, '__inthRender');
+	Reflect.deleteProperty(window, '__inthEndedRenders');
 });
 
 afterEach(() => {
@@ -252,7 +252,7 @@ afterEach(() => {
 	)) {
 		script.remove();
 	}
-	Reflect.deleteProperty(window, '__c15tStarted');
+	Reflect.deleteProperty(window, '__inthStarted');
 	localStorage.clear();
 });
 
@@ -335,7 +335,7 @@ test('a returning visitor whose browser holds a newer denial hears the callbacks
 		},
 	} as ConsentState;
 	localStorage.setItem(
-		'c15t',
+		'inth',
 		encodeStoredConsentEnvelopeJson({
 			categories: {
 				marketing: { ...grant, confirmedAt: fixture.now - 1000, value: false },
@@ -731,7 +731,7 @@ const mountWrapped = async (
 		container.remove();
 	});
 	return {
-		engineIn: () => container.querySelector('script[data-c15t-boot]') !== null,
+		engineIn: () => container.querySelector('script[data-inth-boot]') !== null,
 	};
 };
 
@@ -840,7 +840,7 @@ test('an accept after persistence is turned off records nothing through the old 
 	await page.rerender({ persistence: false }, <AcceptOnMount />);
 	await settle();
 	// The engine records it, under the root's new options.
-	expect(localStorage.getItem('c15t')).toBeNull();
+	expect(localStorage.getItem('inth')).toBeNull();
 	expect(page.engineIn()).toBe(true);
 });
 
@@ -850,7 +850,7 @@ test('a server start still waiting for the hero inserts nothing once the root un
 	leaveBootData(state);
 	runStoredChoiceCheck(state);
 	// An earlier test's loader marked the document; this page's has not run.
-	Reflect.deleteProperty(window, '__c15tLoaderRan');
+	Reflect.deleteProperty(window, '__inthLoaderRan');
 	// The server's start, as the page parses it: its insert waits for the
 	// hero.
 	const code = serverScriptStart(
@@ -892,7 +892,7 @@ const leaveServerStart = (state: ConsentState) => {
 	leaveBootData(state);
 	runStoredChoiceCheck(state);
 	// An earlier test's loader marked the document; this page's has not run.
-	Reflect.deleteProperty(window, '__c15tLoaderRan');
+	Reflect.deleteProperty(window, '__inthLoaderRan');
 	const code = serverScriptStart(
 		{
 			consentCategories: [...consentCategories],
@@ -905,7 +905,7 @@ const leaveServerStart = (state: ConsentState) => {
 	// oxlint-disable-next-line no-new-func -- Runs the server's inline script, as the page would.
 	new Function(code ?? '')();
 	const registered = (): HTMLScriptElement | undefined =>
-		startGlobals.__c15tStarted?.[serverStarted.id];
+		startGlobals.__inthStarted?.[serverStarted.id];
 	return { hero, registered };
 };
 
@@ -989,7 +989,7 @@ test('a server start still waiting for the hero inserts nothing once a navigatio
 	leaveBootData(state);
 	runStoredChoiceCheck(state);
 	// An earlier test's loader marked the document; this page's has not run.
-	Reflect.deleteProperty(window, '__c15tLoaderRan');
+	Reflect.deleteProperty(window, '__inthLoaderRan');
 	const code = serverScriptStart(
 		{
 			consentCategories: [...consentCategories],
@@ -1091,7 +1091,7 @@ test('a script the server start inserted leaves when the root unmounts before it
 	leaveBootData(state);
 	runStoredChoiceCheck(state);
 	// An earlier test's loader marked the document; this page's has not run.
-	Reflect.deleteProperty(window, '__c15tLoaderRan');
+	Reflect.deleteProperty(window, '__inthLoaderRan');
 	const code = serverScriptStart(
 		{
 			consentCategories: [...consentCategories],

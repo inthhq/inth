@@ -47,7 +47,7 @@ const query = function query(testId: string): HTMLElement | null {
 	return document.querySelector<HTMLElement>(`[data-testid="${testId}"]`);
 };
 
-/** Every c15t surface mounted at once, the way a host layout would. */
+/** Every Inth surface mounted at once, the way a host layout would. */
 const AllSurfaces = defineComponent({
 	name: 'AllSurfaces',
 	render: () => [

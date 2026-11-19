@@ -16,9 +16,9 @@ import { ConsentDialogHarness } from './consent-dialog-harness';
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentBanner, ConsentDialog],
 	selector: 'test-banner-host',
-	template: `<c15t-consent-banner
+	template: `<inth-consent-banner
 			[hideBranding]="true"
-		/><c15t-consent-dialog />`,
+		/><inth-consent-dialog />`,
 })
 class BannerHost {}
 

@@ -57,6 +57,7 @@ import type {
 	WithProjectUrl,
 } from '@inth/sdk/runtime/provider';
 import type { ConsentTesting } from '@inth/sdk/testing';
+import { warnOnUnappliedThemeTokens } from '@inth/sdk/ui/theme';
 import { applyThemeSlots } from '@inth/sdk/ui/utils';
 import type { ReactNode } from 'react';
 import {
@@ -147,7 +148,7 @@ export interface ConsentProviderOptions
 	 */
 	journey?: ConsentJourneyOption;
 	/**
-	 * Content Security Policy nonce applied to DOM nodes c15t injects.
+	 * Content Security Policy nonce applied to DOM nodes Inth injects.
 	 *
 	 * @remarks
 	 * Set this when your CSP uses a nonce-based policy instead of
@@ -163,9 +164,9 @@ export interface ConsentProviderOptions
 	 *
 	 * @remarks
 	 * The banner, dialog trigger, ConsentGate, dialog and preference widget
-	 * each render the c15t rules they use as a `<style>` element: in the
+	 * each render the Inth rules they use as a `<style>` element: in the
 	 * server-rendered HTML, or with the surface's own code in the browser.
-	 * No c15t stylesheet `<link>` then holds back the page's first paint.
+	 * No Inth stylesheet `<link>` then holds back the page's first paint.
 	 * React 19 moves them into `<head>` and renders each once. They carry
 	 * {@link ConsentProviderOptions.nonce}.
 	 *
@@ -176,14 +177,14 @@ export interface ConsentProviderOptions
 	 */
 	styles?: boolean;
 	/**
-	 * Backend URL, relative (`/api/c15t`) or absolute: your Inth project
+	 * Backend URL, relative (`/api/inth`) or absolute: your Inth project
 	 * URL, or the route that proxies it. Required unless `mode` is
 	 * `testing()` or `enabled` is `false`. Initial-only: remount the
 	 * provider to change it.
 	 *
 	 * @example
 	 * ```tsx
-	 * <ConsentProvider options={{ projectUrl: '/api/c15t' }}>
+	 * <ConsentProvider options={{ projectUrl: '/api/inth' }}>
 	 *   {children}
 	 * </ConsentProvider>
 	 * ```
@@ -339,7 +340,7 @@ export interface ConsentProviderOptions
 	 */
 	preloadDialog?: DialogPreload;
 	/**
-	 * Adapter package name reported by `window.c15t`.
+	 * Adapter package name reported by `window.__inthDebug`.
 	 * @internal
 	 */
 	__debugPkg?: string;
@@ -412,26 +413,6 @@ export type ConsentProviderProps =
 	| ExternalRuntimeProviderProps;
 
 /**
- * The modules a provider-built runtime mounts. Persistence, window debug
- * and the revocation reload are static: a returning visitor's choice must
- * apply before the banner shows, and the reload has to see the first save.
- * The rest load on demand, so a page that configures none of them never
- * downloads them:
- *
- * - the script loader and data clearing, when `scripts` or
- *   `clearOnRevocation` is set;
- * - the network blocker, when `networkBlocker` is set; the runtime holds
- *   matching requests from construction until it lands;
- * - the iframe blocker, when the first gated iframe is on the page; until
- *   then a watcher pauses gated frames consent does not allow.
- *
- * `lazyStreamPrefetch` lets `prefetch` be a promise a server streams in,
- * and loads that code only when it is one; a root that passes
- * `__resolveStreamedInit` has it in its first-load chunk instead. A root
- * that passes `__preloadScriptLoader` starts the script loader's download
- * during the first render when consent already lets a script run.
- */
-/**
  * Connects a `consentSource` once its module has loaded. Few sites borrow
  * their decisions from another CMP, so the rest do not download it. Until
  * it connects, the kernel grants no optional category.
@@ -461,6 +442,26 @@ const connectConsentSourceOnDemand: ConsentRuntimeModules['connectConsentSource'
 const loadScriptLoader = async () =>
 	(await import('@inth/sdk/modules/script-loader')).createScriptLoader;
 
+/**
+ * The modules a provider-built runtime mounts. Persistence, window debug
+ * and the revocation reload are static: a returning visitor's choice must
+ * apply before the banner shows, and the reload has to see the first save.
+ * The rest load on demand, so a page that configures none of them never
+ * downloads them:
+ *
+ * - the script loader and data clearing, when `scripts` or
+ *   `clearOnRevocation` is set;
+ * - the network blocker, when `networkBlocker` is set; the runtime holds
+ *   matching requests from construction until it lands;
+ * - the iframe blocker, when the first gated iframe is on the page; until
+ *   then a watcher pauses gated frames consent does not allow.
+ *
+ * `lazyStreamPrefetch` lets `prefetch` be a promise a server streams in,
+ * and loads that code only when it is one; a root that passes
+ * `__resolveStreamedInit` has it in its first-load chunk instead. A root
+ * that passes `__preloadScriptLoader` starts the script loader's download
+ * during the first render when consent already lets a script run.
+ */
 const reactRuntimeModules = function reactRuntimeModules(
 	options: ConsentProviderOptions
 ): ConsentRuntimeModules {
@@ -988,8 +989,6 @@ const isPromiseLike = function isPromiseLike(
 };
 
 /**
- * v3 ConsentProvider.
- *
  * Builds one consent runtime (`createConsentProviderRuntime`) per mounted
  * provider and renders its kernel: the kernel goes into context, and
  * selector hooks subscribe to it through `useSyncExternalStore`. New
@@ -1001,7 +1000,7 @@ const isPromiseLike = function isPromiseLike(
  *
  * Pass `runtime` to render a runtime someone else created. The provider
  * then borrows its kernel and starts nothing — no second `init()`, no
- * second persistence handle, no second `window.c15t` — and does not
+ * second persistence handle, no second `window.__inthDebug` — and does not
  * dispose it on unmount. Handing it a different runtime switches the tree
  * to that runtime's kernel; switching between a borrowed runtime and a
  * provider-built one still needs a remount.
@@ -1010,7 +1009,7 @@ const isPromiseLike = function isPromiseLike(
  * ```tsx
  * import { createConsentRuntime } from '@inth/sdk/runtime';
  *
- * const runtime = createConsentRuntime({ projectUrl: '/api/c15t' });
+ * const runtime = createConsentRuntime({ projectUrl: '/api/inth' });
  * runtime.start();
  *
  * <ConsentProvider runtime={runtime} options={{ theme }}>
@@ -1089,7 +1088,7 @@ export const ConsentProvider = (props: ConsentProviderProps) => {
 			return;
 		}
 		console.warn(
-			'c15t ConsentProvider: `options.callbacks` is ignored when you pass `runtime`. Pass them to createConsentRuntime({ callbacks }) instead.'
+			'inth ConsentProvider: `options.callbacks` is ignored when you pass `runtime`. Pass them to createConsentRuntime({ callbacks }) instead.'
 		);
 	}, [hasBorrowedCallbacks]);
 
@@ -1107,28 +1106,13 @@ export const ConsentProvider = (props: ConsentProviderProps) => {
 	// Development only: bundlers replace `process.env.NODE_ENV`, so production
 	// builds drop the check. Tokens need `ConsentTheme` or a stylesheet now.
 	useEffect(() => {
-		if (process.env.NODE_ENV === 'production') {
-			return;
+		if (process.env.NODE_ENV !== 'production') {
+			warnOnUnappliedThemeTokens(
+				userTheme,
+				document,
+				'Render <ConsentTheme theme={theme} /> on the server, or put the CSS from generateThemeCSS() in your stylesheet. See https://c15t.com/docs/frameworks/react/customize'
+			);
 		}
-		const tokenKeys = [
-			'colors',
-			'dark',
-			'motion',
-			'radius',
-			'shadows',
-			'spacing',
-			'typography',
-		];
-		if (
-			!userTheme ||
-			!tokenKeys.some((key) => key in userTheme) ||
-			document.getElementById('c15t-theme')
-		) {
-			return;
-		}
-		console.warn(
-			'c15t: `theme` tokens are no longer turned into CSS in the browser. Render <ConsentTheme theme={theme} /> on the server, or put the CSS from generateThemeCSS() in your stylesheet. See https://c15t.com/docs/frameworks/react/customize'
-		);
 	}, [userTheme]);
 
 	const themeContextValue = useMemo(

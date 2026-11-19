@@ -19,7 +19,6 @@ export type {
  * a granted category becomes denied. Draft edits do not trigger cleanup.
  * Browser storage failures are ignored so consent changes can still complete.
  *
- * @param options - Kernel, category targets, and persistence configuration.
  * @returns A subscription handle. Disposing does not clear data.
  * @example
  * ```ts

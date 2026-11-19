@@ -193,14 +193,14 @@ const bundleRouteBudget = function bundleRouteBudget(
  * script-lifecycle bench.
  */
 export const consentGatePackages: Record<ConsentGateTarget, string> = {
-	angular: '@c15t/angular-browser-bench',
-	astro: '@c15t/astro-browser-bench',
-	nextjs: '@c15t/nextjs-browser-bench',
+	angular: '@inth/angular-browser-bench',
+	astro: '@inth/astro-browser-bench',
+	nextjs: '@inth/nextjs-browser-bench',
 	nuxt: '@inth/vue',
-	react: '@c15t/react-browser-bench',
-	'script-tag': '@c15t/script-lifecycle-bench',
-	sveltekit: '@c15t/sveltekit-browser-bench',
-	'tanstack-start': '@c15t/tanstack-start-browser-bench',
+	react: '@inth/react-browser-bench',
+	'script-tag': '@inth/script-lifecycle-bench',
+	sveltekit: '@inth/sveltekit-browser-bench',
+	'tanstack-start': '@inth/tanstack-start-browser-bench',
 };
 
 /** The condition `scripts/benchmark-run.ts` measures by default. */
@@ -230,7 +230,7 @@ export const expectedBenchmarkResultsFor = function expectedBenchmarkResultsFor(
 			'repeat-visitor-scripts',
 		].map((scenario) =>
 			expect(
-				'@c15t/astro-browser-bench',
+				'@inth/astro-browser-bench',
 				browser(scenario),
 				'browser-runtime',
 				astroBrowserBudgetsForScenario(scenario)
@@ -248,7 +248,7 @@ export const expectedBenchmarkResultsFor = function expectedBenchmarkResultsFor(
 			'repeat-visitor-scripts',
 		].map((scenario) =>
 			expect(
-				'@c15t/sveltekit-browser-bench',
+				'@inth/sveltekit-browser-bench',
 				browser(scenario),
 				'browser-runtime',
 				sveltekitBrowserBudgetsForScenario(scenario)
@@ -266,14 +266,14 @@ export const expectedBenchmarkResultsFor = function expectedBenchmarkResultsFor(
 			'saved-consent-reject',
 		].map((scenario) =>
 			expect(
-				'@c15t/tanstack-start-browser-bench',
+				'@inth/tanstack-start-browser-bench',
 				browser(scenario),
 				'browser-runtime',
 				tanstackBrowserBudgetsForScenario(scenario)
 			)
 		),
 		...Object.keys(coreFixtures).map((fixture) =>
-			expect('@c15t/core-benchmarks', fixture, 'core-runtime', [
+			expect('@inth/core-benchmarks', fixture, 'core-runtime', [
 				...coreRuntimeBudgets,
 				...coreRuntimeCoverageBudgets,
 				...coreRuntimeV3Budgets,
@@ -281,7 +281,7 @@ export const expectedBenchmarkResultsFor = function expectedBenchmarkResultsFor(
 		),
 		...Object.values(policyBenchFixtures).map((fixture) =>
 			expect(
-				'@c15t/core-benchmarks',
+				'@inth/core-benchmarks',
 				fixture.name,
 				'policy-runtime',
 				policyRuntimeBudgetsForFixture(fixture)
@@ -289,7 +289,7 @@ export const expectedBenchmarkResultsFor = function expectedBenchmarkResultsFor(
 		),
 		...reactBrowserScenarios.map((scenario) =>
 			expect(
-				'@c15t/react-browser-bench',
+				'@inth/react-browser-bench',
 				browser(scenario),
 				'browser-runtime',
 				reactBrowserBudgetsForScenario(scenario)
@@ -297,7 +297,7 @@ export const expectedBenchmarkResultsFor = function expectedBenchmarkResultsFor(
 		),
 		...nextjsBrowserScenarios.map((scenario) =>
 			expect(
-				'@c15t/nextjs-browser-bench',
+				'@inth/nextjs-browser-bench',
 				browser(scenario),
 				'browser-runtime',
 				nextjsBrowserBudgetsForScenario(scenario)
@@ -313,7 +313,7 @@ export const expectedBenchmarkResultsFor = function expectedBenchmarkResultsFor(
 		),
 		...scriptLifecycleScenarios.map(([scenario, metric]) =>
 			expect(
-				'@c15t/script-lifecycle-bench',
+				'@inth/script-lifecycle-bench',
 				scenario,
 				'script-lifecycle',
 				scriptLifecycleBudgetsForMetric(metric)
@@ -321,16 +321,16 @@ export const expectedBenchmarkResultsFor = function expectedBenchmarkResultsFor(
 		),
 		...bundleRouteScenarios.map((scenario) =>
 			expect(
-				'@c15t/next-bundle-bench',
+				'@inth/next-bundle-bench',
 				scenario,
 				'bundle',
 				bundleRouteBudget(scenario)
 			)
 		),
-		expect('@c15t/next-bundle-bench', 'tarballs', 'artifact', artifactBudgets),
+		expect('@inth/next-bundle-bench', 'tarballs', 'artifact', artifactBudgets),
 		...bundleEntryScenarios.map((scenario) =>
 			expect(
-				'@c15t/next-bundle-bench',
+				'@inth/next-bundle-bench',
 				scenario,
 				'bundle',
 				bundleEntryBudgets(scenario)

@@ -2,7 +2,7 @@
 
 ```html title="index.html"
 <script
-	src="https://your-project.inth.app/c15t.headless.js"
+	src="https://your-project.inth.app/inth.headless.js"
 	defer
 ></script>
 
@@ -144,18 +144,18 @@
 		>
 	</fieldset>
 	<div class="cookie-bar__actions">
-		<!-- c15t wires data-c15t-action buttons itself; they need no code. -->
+		<!-- inth wires data-inth-action buttons itself; they need no code. -->
 		<button
 			type="button"
 			class="cookie-bar__link"
-			data-c15t-action="customize"
+			data-inth-action="customize"
 		>
 			Preferences
 		</button>
 		<button
 			type="button"
 			class="cookie-bar__button"
-			data-c15t-action="dismiss"
+			data-inth-action="dismiss"
 			data-notice-only
 			hidden
 		>
@@ -164,7 +164,7 @@
 		<button
 			type="button"
 			class="cookie-bar__button"
-			data-c15t-action="reject"
+			data-inth-action="reject"
 			data-choice-only
 		>
 			Reject all
@@ -172,7 +172,7 @@
 		<button
 			type="button"
 			class="cookie-bar__button"
-			data-c15t-action="accept"
+			data-inth-action="accept"
 			data-choice-only
 		>
 			Accept all
@@ -196,23 +196,23 @@
 	const choiceButtons = bar.querySelectorAll('[data-choice-only]');
 	const noticeButtons = bar.querySelectorAll('[data-notice-only]');
 
-	// The tag is deferred, so queue calls until window.c15t is the real API.
-	window.c15t = window.c15t || [];
+	// The tag is deferred, so queue calls until window.inth is the real API.
+	window.inth = window.inth || [];
 	const queue = (call) => {
-		if (Array.isArray(window.c15t)) {
-			window.c15t.push(call);
+		if (Array.isArray(window.inth)) {
+			window.inth.push(call);
 		} else {
-			window.c15t[call[0]](...call.slice(1));
+			window.inth[call[0]](...call.slice(1));
 		}
 	};
 
-	// c15t says which surface is due; the page decides what it looks like.
+	// inth says which surface is due; the page decides what it looks like.
 	// 'banner' shows the bar, 'dialog' opens the switches, 'none' hides it.
 	queue([
 		'on',
 		'ui',
 		(surface) => {
-			const { kind } = c15t.getSnapshot().promptRequirement;
+			const { kind } = inth.getSnapshot().promptRequirement;
 			const editing = surface === 'dialog';
 			// A notice gets one acknowledgement button instead of Accept and Reject.
 			for (const button of choiceButtons) {
@@ -222,7 +222,7 @@
 				button.hidden = kind !== 'notice' || editing;
 			}
 			for (const input of switches) {
-				input.checked = c15t.has(input.name);
+				input.checked = inth.has(input.name);
 			}
 			prefs.hidden = !editing;
 			saveButton.hidden = !editing;
@@ -237,7 +237,7 @@
 		for (const input of switches) {
 			choice[input.name] = input.checked;
 		}
-		c15t.save(choice);
+		inth.save(choice);
 	});
 </script>
 ```

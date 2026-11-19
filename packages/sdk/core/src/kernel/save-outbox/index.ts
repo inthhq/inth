@@ -54,6 +54,7 @@
  */
 
 import type { OptionalConsentCategory } from '../../consent-record/types';
+import { warnInDevelopment } from '../../libs/is-production';
 import {
 	isConsentSaveRejection,
 	isSubjectConflict,
@@ -73,7 +74,6 @@ import {
 	withoutSuperseded,
 	withSubjectId,
 } from './supersession';
-import { warnInDevelopment } from './warn';
 
 export type { OutboxSlot, OutboxTransaction, SaveOutboxStore } from './store';
 export { createBrowserOutboxStore, createMemoryOutboxStore } from './store';
@@ -131,11 +131,11 @@ export interface SaveOutboxOptions {
  */
 const SAVE_FAILED_WARNINGS = {
 	queued:
-		'[c15t] Consent save failed. The choice is kept in this browser and queued, and is resent on the next init or when the browser comes back online.',
+		'[inth] Consent save failed. The choice is kept in this browser and queued, and is resent on the next init or when the browser comes back online.',
 	rejected:
-		'[c15t] The backend refused the consent save, so it will not be resent. The choice is kept in this browser only.',
+		'[inth] The backend refused the consent save, so it will not be resent. The choice is kept in this browser only.',
 	unstored:
-		'[c15t] Consent save failed, and storage refused to queue it, so it will not be resent. The choice is kept in this browser only.',
+		'[inth] Consent save failed, and storage refused to queue it, so it will not be resent. The choice is kept in this browser only.',
 } as const;
 
 const warnSaveFailed = function warnSaveFailed(
@@ -148,9 +148,6 @@ const warnSaveFailed = function warnSaveFailed(
 	}
 };
 
-/**
- * Create the save outbox of one kernel.
- */
 export const createSaveOutbox = function createSaveOutbox({
 	runtime,
 	transport,
@@ -247,9 +244,8 @@ export const createSaveOutbox = function createSaveOutbox({
 		// page must not replay the cleared subject's saves. Then again under
 		// the lock, after any transaction that read the lists before this.
 		store.clear();
-		return store.transact((tx) => {
-			tx.write('saves', []);
-			tx.write('reassignments', []);
+		return store.transact(() => {
+			store.clear();
 		});
 	};
 

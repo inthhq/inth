@@ -3,7 +3,7 @@
  *
  * The stock components add the rules they use to the page themselves. Import
  * this stylesheet instead when the app serves its own CSS, and set
- * `styles: false` in `provideC15t()`.
+ * `styles: false` in `provideInth()`.
  *
  * `@inth/sdk/ui/styles.css` holds the tokens and every component rule, the
  * dialog's included, and `@inth/sdk/ui/styles/primitives.css` the rules of the

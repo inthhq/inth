@@ -22,8 +22,8 @@ export interface FetchSSRDataOptionsBase {
 	 * Resolve a relative `projectUrl` against the request's `forwarded`,
 	 * `x-forwarded-host` and `x-forwarded-proto` headers instead of `host`.
 	 * Any client can send those headers, so set this only behind a proxy
-	 * that sets them and drops incoming ones. Also forwards those three
-	 * headers to the backend, which is skipped otherwise.
+	 * that sets them and drops incoming ones. Also sends the visitor IP
+	 * from `x-forwarded-for` to the backend, unless it is a remote `http` URL.
 	 *
 	 * @default false
 	 */

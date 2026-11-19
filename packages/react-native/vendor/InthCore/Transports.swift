@@ -13,14 +13,14 @@ extension Inth {
     /// module and local CocoaPods spec. Independent of the RN npm version.
     public static let version = "3.0.0-alpha.1"
 
-    /// The `x-c15t-version` header name. Telemetry only: it lets the backend
+    /// The `x-inth-version` header name. Telemetry only: it lets the backend
     /// attribute traffic, and is never used to guess what a client can represent.
-    public static let versionHeader = "x-c15t-version"
+    public static let versionHeader = "x-inth-version"
 
-    /// The `x-c15t-policy-contract` header name: the capability declaration.
-    public static let policyContractHeader = "x-c15t-policy-contract"
+    /// The `x-inth-policy-contract` header name: the capability declaration.
+    public static let policyContractHeader = "x-inth-policy-contract"
 
-    /// The `x-c15t-vendors` header name: the publisher's declared vendor scope.
+    /// The `x-inth-vendors` header name: the publisher's declared vendor scope.
     ///
     /// A scope declaration, not a filter the client relies on. It is the mobile
     /// spelling of the `vendorIds` parameter that
@@ -37,7 +37,7 @@ extension Inth {
     /// sends the wide one, and ``CoreConfig/vendors`` prunes it on the way into
     /// state. That is why an over-cap declaration sends no header and still gets a
     /// narrow device.
-    public static let vendorScopeHeader = "x-c15t-vendors"
+    public static let vendorScopeHeader = "x-inth-vendors"
 
     /// How many declared ids this build will still put on one request line.
     ///
@@ -51,7 +51,7 @@ extension Inth {
     /// silently truncates a header into a different scope.
     public static let maxVendorScopeHeaderIds = 500
 
-    /// The `x-c15t-vendors` value for a declared scope, or `nil` for no header.
+    /// The `x-inth-vendors` value for a declared scope, or `nil` for no header.
     ///
     /// Deduplicated and ascending, so two hosts who declared the same partners in a
     /// different order, or twice in the same list, ask the same question of the
@@ -295,7 +295,7 @@ public struct HydrationRecords: Sendable, Equatable {
 
 /// A decoded `/init` response.
 ///
-/// Field-for-field the subset of `@c15t/core`'s `InitResponse` that means
+/// Field-for-field the subset of `@inth/sdk-core`'s `InitResponse` that means
 /// something on mobile. `gvl` is read: the backend embeds it whenever the matched
 /// policy model is `iab` (`buildInitResponse` in `packages/backend/src/http/init.ts`),
 /// and a mobile consent surface needs the purposes and vendor names to render the
@@ -548,8 +548,8 @@ public struct InitResponse: Sendable, Equatable {
         if let language = context.overrides.language, !language.isEmpty {
             headers["accept-language"] = language
         }
-        if let country = context.overrides.country { headers["x-c15t-country"] = country }
-        if let region = context.overrides.region { headers["x-c15t-region"] = region }
+        if let country = context.overrides.country { headers["x-inth-country"] = country }
+        if let region = context.overrides.region { headers["x-inth-region"] = region }
         if context.overrides.gpc == true { headers["sec-gpc"] = "1" }
         if let scope = Inth.vendorScopeHeaderValue(context.vendors) {
             headers[Inth.vendorScopeHeader] = scope

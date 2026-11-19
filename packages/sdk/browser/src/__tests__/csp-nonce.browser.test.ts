@@ -18,11 +18,11 @@ const frames: HTMLIFrameElement[] = [];
 const openPage = async (search = ''): Promise<UICSPPage> => {
 	const frame = document.createElement('iframe');
 	frames.push(frame);
-	frame.src = `/__c15t-test__/ui-csp${search}`;
+	frame.src = `/__inth-test__/ui-csp${search}`;
 	document.body.append(frame);
 	const read = () =>
-		(frame.contentWindow as (Window & { c15tUICSP?: UICSPPage }) | null)
-			?.c15tUICSP;
+		(frame.contentWindow as (Window & { inthUICSP?: UICSPPage }) | null)
+			?.inthUICSP;
 	await expect.poll(read, { timeout: 10_000 }).toBeDefined();
 	const page = read() as UICSPPage;
 	await page.ready;
@@ -47,7 +47,7 @@ describe('stock UI under a nonce-based style-src', () => {
 	it("applies the UI stylesheet with the loader tag's nonce", async () => {
 		const page = await openPage();
 
-		expect(page.nonce).toBe('c15t-test-nonce');
+		expect(page.nonce).toBe('inth-test-nonce');
 		await expect.poll(() => injectedStyle(page).sheet).not.toBeNull();
 		expect(page.violations).not.toContain('style-src-elem');
 	});

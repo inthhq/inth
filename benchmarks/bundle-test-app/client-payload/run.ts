@@ -10,7 +10,7 @@
  * - v2: `@inth/nextjs` 2.x, the v2 Next.js quickstart (client provider).
  * - v3: `@inth/nextjs`, the v3 App Router guide (server `resolveConsent` in
  *   Suspense, `ConsentRoot`, automatic component styles).
- * - v3-react: `@inth/react` umbrella `ConsentProvider`, as the c15t docs
+ * - v3-react: `@inth/react` umbrella `ConsentProvider`, as the Inth docs
  *   site uses it.
  * - v3-split: the same tree as v3-react through split `@inth/react/*` entries.
  *
@@ -27,7 +27,7 @@
  *     --render <client-payload.json>   # print the Markdown for a saved run
  *
  * `--v3 workspace` packs the current checkout; build it first with
- * `bun turbo run build --filter=c15t...`.
+ * `bun turbo run build --filter=inth...`.
  */
 import { spawn, spawnSync } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
@@ -71,7 +71,7 @@ const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, '../../..');
 const fixtureDir = join(scriptDir, 'fixture');
 
-/** Versions shared by every arm, pinned to the c15t docs site's stack. */
+/** Versions shared by every arm, pinned to the Inth docs site's stack. */
 const CONSUMER_DEPENDENCIES = {
 	next: '16.3.4',
 	react: '19.2.8',
@@ -87,7 +87,7 @@ const CONSUMER_DEV_DEPENDENCIES = {
 
 /** Workspace packages packed for `--v3 workspace`. */
 const PACKED_PACKAGES = [
-	'c15t',
+	'inth',
 	'core',
 	'react',
 	'nextjs',
@@ -137,7 +137,7 @@ for (const name of armNames) {
 const v3Spec = readFlag('--v3') ?? 'workspace';
 const v2Version = readFlag('--v2') ?? '2.2.1';
 const workDir = resolve(
-	readFlag('--work-dir') ?? join(tmpdir(), 'c15t-client-payload')
+	readFlag('--work-dir') ?? join(tmpdir(), 'inth-client-payload')
 );
 const outputDir = resolve(
 	readFlag('--output-dir') ??
@@ -177,7 +177,7 @@ const gitSha = function gitSha(): string | null {
 	return `${head.stdout.trim()}${status.stdout.trim() ? '-dirty' : ''}`;
 };
 
-/** Pack the checkout's packages into stable file names (`c15t-react.tgz`). */
+/** Pack the checkout's packages into stable file names (`inth-react.tgz`). */
 const packWorkspace = function packWorkspace(destination: string): string {
 	rmSync(destination, { force: true, recursive: true });
 	mkdirSync(destination, { recursive: true });
@@ -200,7 +200,7 @@ const packWorkspace = function packWorkspace(destination: string): string {
 	return destination;
 };
 
-/** Dependencies and npm overrides that install one c15t v3 build. */
+/** Dependencies and npm overrides that install one Inth v3 build. */
 const v3Dependencies = function v3Dependencies(): {
 	dependencies: Record<string, string>;
 	overrides: Record<string, string>;
@@ -208,7 +208,7 @@ const v3Dependencies = function v3Dependencies(): {
 } {
 	if (v3Spec.startsWith('npm:')) {
 		const version = v3Spec.slice('npm:'.length);
-		return { dependencies: { c15t: version }, overrides: {}, source: v3Spec };
+		return { dependencies: { inth: version }, overrides: {}, source: v3Spec };
 	}
 	const tarballDir = v3Spec.startsWith('tarballs:')
 		? resolve(v3Spec.slice('tarballs:'.length))
@@ -220,12 +220,12 @@ const v3Dependencies = function v3Dependencies(): {
 		}
 		const base = file.slice(0, -'.tgz'.length);
 		const name =
-			base === 'c15t' ? 'c15t' : `@c15t/${base.replace(/^c15t-/u, '')}`;
+			base === 'inth' ? 'inth' : `@inth/${base.replace(/^inth-/u, '')}`;
 		overrides[name] = `file:${join(tarballDir, file)}`;
 	}
-	const umbrella = overrides.c15t;
+	const umbrella = overrides.inth;
 	if (!umbrella) {
-		throw new Error(`No c15t.tgz in ${tarballDir}`);
+		throw new Error(`No inth.tgz in ${tarballDir}`);
 	}
 	const shaFile = join(tarballDir, 'SOURCE_SHA');
 	let sha: string | null = null;
@@ -235,7 +235,7 @@ const v3Dependencies = function v3Dependencies(): {
 		sha = gitSha();
 	}
 	return {
-		dependencies: { c15t: umbrella },
+		dependencies: { inth: umbrella },
 		overrides,
 		source: `${v3Spec}${sha ? ` @ ${sha}` : ''}`,
 	};
@@ -265,7 +265,7 @@ const prepareArm = function prepareArm(
 			{
 				dependencies: { ...CONSUMER_DEPENDENCIES, ...libraryDependencies },
 				devDependencies: CONSUMER_DEV_DEPENDENCIES,
-				name: `c15t-client-payload-${name}`,
+				name: `inth-client-payload-${name}`,
 				overrides: definition.library === 'v3' && v3 ? v3.overrides : {},
 				private: true,
 				type: 'module',
@@ -508,7 +508,7 @@ const main = async function main() {
 						'@inth/nextjs': installedVersion(armDir, '@inth/nextjs'),
 						'@inth/react': installedVersion(armDir, '@inth/react'),
 						'@inth/sdk': installedVersion(armDir, '@inth/sdk'),
-						c15t: installedVersion(armDir, 'c15t'),
+						inth: installedVersion(armDir, 'inth'),
 						next: installedVersion(armDir, 'next'),
 					},
 				});

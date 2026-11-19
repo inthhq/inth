@@ -1,4 +1,4 @@
-import { controlledToggle, toggleOnOff } from '@c15t/conformance/play/switch';
+import { controlledToggle, toggleOnOff } from '@inth/conformance/play/switch';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { ref } from 'vue';
 

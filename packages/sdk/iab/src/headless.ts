@@ -10,14 +10,20 @@
 export {
 	IAB_BANNER_MAX_DISPLAY_ITEMS,
 	resolveIABBannerSummary,
-} from './headless/banner-summary';
-export type { ResolveIABBannerSummaryOptions } from './headless/banner-summary';
+} from '@inth/sdk-core/iab-support';
+export type { ResolveIABBannerSummaryOptions } from '@inth/sdk-core/iab-support';
+export {
+	type IABBannerCopy,
+	resolveIABBannerCopy,
+} from '@inth/sdk-core/iab-support';
 export {
 	applyPublisherRestrictionsToGVL,
+	type IABLegitimateInterestState,
 	introducedLegitimateInterest,
 	type IntroducedLegitimateInterest,
-	permittedLegitimateInterestPurposes,
-} from './headless/effective-vendor-list';
+	isLegitimateInterestAllowed,
+} from '@inth/sdk-core/iab-support';
+export { permittedLegitimateInterestPurposes } from '@inth/sdk-schema/types';
 export {
 	type HeadlessIABDialogDisplayModel,
 	type HeadlessIABDisplayConsentRow,
@@ -30,6 +36,9 @@ export {
 	resolveIABDialogDisplayModel,
 } from './headless/display-model';
 export {
+	formatVendorMaxAge,
+	mapCustomVendor,
+	mapGvlVendor,
 	type ProcessedFeature,
 	type ProcessedGVLData,
 	type ProcessedPurpose,
@@ -37,6 +46,7 @@ export {
 	type ProcessedStack,
 	type ProcessedVendor,
 	processGVLForDialog,
+	type VendorMaxAgeCopy,
 } from './headless/dialog-data';
 export {
 	type IABVendorUrls,

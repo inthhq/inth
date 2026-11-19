@@ -59,7 +59,7 @@ describe('bundling the manifest at prebuild', () => {
 		).toBe('release');
 		expect(
 			manifestBuild(['node', 'expo', 'prebuild'], {
-				C15T_MANIFEST_BUILD: 'debug',
+				INTH_MANIFEST_BUILD: 'debug',
 			})
 		).toBe('debug');
 	});

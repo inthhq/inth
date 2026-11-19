@@ -26,7 +26,7 @@ export interface HeldScript {
 	script: Script;
 	/**
 	 * `waiting` until the registry's list arrives; `refused` when the list
-	 * names the script with an entry c15t cannot check: no https `src`, no
+	 * names the script with an entry Inth cannot check: no https `src`, no
 	 * integrity hash, or attributes that are not strings or `null`;
 	 * `unparsable` when a `scriptLoader.sources` entry gives an integrity
 	 * with no hash a browser can parse, so the browser would check nothing.

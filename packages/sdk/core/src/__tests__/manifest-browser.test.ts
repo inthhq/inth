@@ -22,7 +22,7 @@ import { manifestNeedsLocation } from '../transports/manifest-browser-location';
 import type { InitContext } from '../types';
 
 const everywhereManifest: ConsentManifest = {
-	branding: 'c15t',
+	branding: 'inth',
 	policyPacks: [
 		createConsentManifestPolicyPack({
 			...policyRulePresets.europeOptIn(),
@@ -195,8 +195,8 @@ describe('createBrowserManifestTransport()', () => {
 			String(input).startsWith('https://lists.example/ac-browser')
 		);
 		const headers = new Headers(providerRequest?.[1]?.headers);
-		expect(headers.has('x-c15t-version')).toBe(false);
-		expect(headers.has('x-c15t-policy-contract')).toBe(false);
+		expect(headers.has('x-inth-version')).toBe(false);
+		expect(headers.has('x-inth-policy-contract')).toBe(false);
 	});
 
 	test('withdraws ad tech providers once the manifest stops listing them', async () => {

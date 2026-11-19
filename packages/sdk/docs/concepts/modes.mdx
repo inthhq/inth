@@ -1,18 +1,18 @@
 ---
 title: Consent modes
-description: Reference for projectUrl and the optional mode, manifest(), hosted() and testing(), in every c15t framework package, where each one resolves the visitor's policy, what it adds to first-load JavaScript, the build-time manifest fetch and its fallback, and the backend URL variable each framework reads.
+description: Reference for projectUrl and the optional mode, manifest(), hosted() and testing(), in every Inth framework package, where each one resolves the visitor's policy, what it adds to first-load JavaScript, the build-time manifest fetch and its fallback, and the backend URL variable each framework reads.
 group: concepts
 ---
 
 ## Set the backend, then choose a mode if you need to
 
-Every c15t provider needs `projectUrl`: your Inth project URL, such as
+Every Inth provider needs `projectUrl`: your Inth project URL, such as
 `https://your-project.inth.app`. Consent choices are saved there. Most apps
 set nothing else; `mode` is optional.
 
 | Mode | Where the policy resolves | Backend requests on a first visit | Default in |
 | --- | --- | --- | --- |
-| `manifest()` | Your server, from the policy the build downloaded. With `resolve: 'browser'`, or in a single-page app, the browser. | None to resolve the policy, unless the browser needs a location it doesn't have. Choices post to `/subjects`. | Next.js, TanStack Start, Nuxt, SvelteKit, Astro, and Angular with `provideC15tServer()` |
+| `manifest()` | Your server, from the policy the build downloaded. With `resolve: 'browser'`, or in a single-page app, the browser. | None to resolve the policy, unless the browser needs a location it doesn't have. Choices post to `/subjects`. | Next.js, TanStack Start, Nuxt, SvelteKit, Astro, and Angular with `provideInthServer()` |
 | `hosted()` | The backend's `GET /init` | One `/init` per page that resolves consent. | React, Vue, Svelte, Angular in the browser, `@inth/sdk` and the script tag |
 | `testing()` | The browser, from a policy you pass or the recommended rule pack | None. | Never: import it from a package's `/testing` entry, in tests only |
 
@@ -22,7 +22,7 @@ every visitor, or `manifest()` to tune how the manifest is read.
 
 `manifest()` falls back to the backend's `/init` when the manifest is
 unavailable: the build could not download it, the backend has no
-`/manifest`, or reading it fails at runtime. c15t logs a warning and the
+`/manifest`, or reading it fails at runtime. Inth logs a warning and the
 visitor still gets a banner. A configuration error, such as an invalid
 `manifestUrl`, stays an error.
 
@@ -41,17 +41,17 @@ it needs.
 
 | Framework | Import `manifest()` and `hosted()` from | `testing()` from | Pass the mode to | Kind |
 | --- | --- | --- | --- | --- |
-| Next.js | `@inth/nextjs` | `@inth/nextjs/testing` | `mode` in `c15t.config.ts` | Data |
+| Next.js | `@inth/nextjs` | `@inth/nextjs/testing` | `mode` in `inth.config.ts` | Data |
 | TanStack Start | `@inth/tanstack-start` | `@inth/tanstack-start/testing` | `resolveConsent({ mode })` | Data |
-| Nuxt | `@inth/nuxt` | `@inth/nuxt/testing` | `c15t.mode` in `nuxt.config.ts` | Data |
-| Astro | `@inth/astro` | `@inth/astro/testing` | `c15t({ mode })` in `astro.config.mjs` | Data |
-| SvelteKit | `@inth/svelte/kit` | `@inth/svelte/testing` | `c15tHandle({ mode })` in `src/hooks.server.ts` | Data |
+| Nuxt | `@inth/nuxt` | `@inth/nuxt/testing` | `inth.mode` in `nuxt.config.ts` | Data |
+| Astro | `@inth/astro` | `@inth/astro/testing` | `inth({ mode })` in `astro.config.mjs` | Data |
+| SvelteKit | `@inth/svelte/kit` | `@inth/svelte/testing` | `inthHandle({ mode })` in `src/hooks.server.ts` | Data |
 | React | `@inth/react` | `@inth/react/testing` | `ConsentProvider`'s `options.mode` | Transport |
-| Vue | `@inth/vue/vue-plugin` | `@inth/vue/testing` | `app.use(c15tVue, { mode })` | Transport |
+| Vue | `@inth/vue/vue-plugin` | `@inth/vue/testing` | `app.use(inthVue, { mode })` | Transport |
 | Svelte | `@inth/svelte` | `@inth/svelte/testing` | `<ConsentProvider mode={...}>` | Transport |
-| Angular | `@inth/angular` | `@inth/angular/testing` | `provideC15t({ mode })` | Transport |
+| Angular | `@inth/angular` | `@inth/angular/testing` | `provideInth({ mode })` | Transport |
 | JavaScript | `@inth/sdk` | `@inth/sdk/testing` | `init({ mode })` | Transport |
-| Script tag | none | `c15t.testing.js` | `data-mode="manifest"` on the headless and IAB scripts | Name |
+| Script tag | none | `inth.testing.js` | `data-mode="manifest"` on the headless and IAB scripts | Name |
 
 **Data factories** return a plain object such as `{ type: 'manifest' }`.
 Server-rendered frameworks read their config on the server and in the
@@ -78,7 +78,7 @@ holds your policy rules and copy, and no visitor data.
 | `source` | `'build'` | `'build'` uses the snapshot the build integration downloaded. Without one, such as after a failed download, it fetches the manifest at runtime. `'runtime'` always fetches at runtime, so policy edits apply without a rebuild. |
 | `snapshot` | none | A manifest you supply. You can pass `snapshot` or `source`, not both. |
 | `resolve` | `'server'` | `'server'` resolves each visitor on the server and ships no resolver to the browser. `'browser'` resolves in the browser, for pages the server does not render per visitor. Server-rendered frameworks only. |
-| `manifestUrl` | see below | Where to fetch the manifest at runtime. On the server, `${projectUrl}/manifest`. In the browser, `${routePrefix}/manifest`, else `${projectUrl}/manifest`. |
+| `manifestUrl` | see below | Where to fetch the manifest at runtime. In the browser it defaults to `${routePrefix}/manifest`, else `${projectUrl}/manifest`. On the server it defaults to `${projectUrl}/manifest`. An absolute URL is read at runtime on the server too, so the build downloads no snapshot for it. A `/`-relative URL keeps the build's snapshot; without one the server reads that URL, except a URL on the app's own consent route, where the server reads `${projectUrl}/manifest` as the route does. With `resolve: 'browser'` only the browser reads it. |
 | `geoUrl` | none | A same-origin route that answers with the visitor's `{ country, region }`. Browser resolution only. |
 | `inputs` | none | `{ country, region }` when the page already knows the visitor's location, for example from an edge worker. Browser resolution only. |
 
@@ -162,7 +162,7 @@ import { testing } from '@inth/react/testing';
 To keep consent out of the way in an app's own tests instead, set
 `enabled: false`: it grants every category, shows no UI and sends nothing.
 
-The script tag has a separate file for tests, `c15t.testing.js`. The other
+The script tag has a separate file for tests, `inth.testing.js`. The other
 script files are production builds and contain neither the testing transport
 nor the policy pack.
 
@@ -196,27 +196,26 @@ Each framework reads its backend URL from a public environment variable, so
 the quickstarts never write it in code. Put it in `.env` or your host's build
 settings. The value is public configuration, not a secret.
 
-| Framework | Variable | Inth alternative |
+| Framework | Variable | c15t fallback |
 | --- | --- | --- |
-| Next.js | `NEXT_PUBLIC_C15T_BACKEND_URL` | `NEXT_PUBLIC_INTH_PROJECT_URL` |
-| Nuxt | `NUXT_PUBLIC_C15T_BACKEND_URL` | `NUXT_PUBLIC_INTH_PROJECT_URL` |
-| Astro | `PUBLIC_C15T_BACKEND_URL` | `PUBLIC_INTH_PROJECT_URL` |
-| SvelteKit and Svelte | `PUBLIC_C15T_BACKEND_URL`, then `VITE_C15T_BACKEND_URL` | `PUBLIC_INTH_PROJECT_URL`, then `VITE_INTH_PROJECT_URL` |
-| TanStack Start, React, Vue and JavaScript with Vite | `VITE_C15T_BACKEND_URL` | `VITE_INTH_PROJECT_URL` |
+| Next.js | `NEXT_PUBLIC_INTH_PROJECT_URL` | `NEXT_PUBLIC_C15T_BACKEND_URL` |
+| Nuxt | `NUXT_PUBLIC_INTH_PROJECT_URL` | `NUXT_PUBLIC_C15T_BACKEND_URL` |
+| Astro | `PUBLIC_INTH_PROJECT_URL` | `PUBLIC_C15T_BACKEND_URL` |
+| SvelteKit and Svelte | `PUBLIC_INTH_PROJECT_URL`, then `VITE_INTH_PROJECT_URL` | `PUBLIC_C15T_BACKEND_URL`, then `VITE_C15T_BACKEND_URL` |
+| TanStack Start, React, Vue and JavaScript with Vite | `VITE_INTH_PROJECT_URL` | `VITE_C15T_BACKEND_URL` |
 | Script tag | `data-project-url` on the script element | – |
 
-Set either variable. The Inth one holds your Inth project URL, so other Inth
-SDKs in the same app can read it too. When both are set, the c15t variable
+The c15t names still work as a fallback. When both are set, the Inth variable
 wins.
 
 A backend URL resolves in this order: the framework's `projectUrl` option,
-then the c15t variable, then the Inth variable. The build reads each variable from the process environment,
+then the Inth variable, then its c15t name. The build reads each variable from the process environment,
 then from `.env.[mode].local`, `.env.[mode]`, `.env.local` and `.env` in the
-project root, so a c15t variable in `.env` still beats an Inth variable in
-the environment. The Vite plugins set an unset `VITE_C15T_BACKEND_URL` to the
-URL they used, so `import.meta.env.VITE_C15T_BACKEND_URL` in app code reads
+project root, so an Inth variable in `.env` still beats a c15t variable in
+the environment. The Vite plugins set an unset `VITE_INTH_PROJECT_URL` to the
+URL they used, so `import.meta.env.VITE_INTH_PROJECT_URL` in app code reads
 the same value. `withConsentManifest()` does the same for
-`NEXT_PUBLIC_C15T_BACKEND_URL` in Next.js.
+`NEXT_PUBLIC_INTH_PROJECT_URL` in Next.js.
 
 Next.js inlines `NEXT_PUBLIC_` variables at build time. Changing the variable
 on a built app has no effect until you rebuild.
@@ -235,7 +234,7 @@ build integration downloads from `${projectUrl}/manifest`:
 | Vue | `consentManifest()` from `@inth/vue/vite` | `@inth/vue/vite` |
 | Svelte and SvelteKit | `consentManifest()` from `@inth/svelte/vite` | `@inth/svelte/vite` |
 | Nuxt | the `@inth/nuxt` module | `@inth/nuxt` |
-| Astro | the `c15t()` integration | `@inth/astro` |
+| Astro | the `inth()` integration | `@inth/astro` |
 
 The integration downloads the manifest when the production build or the dev
 server starts, and waits at most 10 seconds. Nothing is written into your
@@ -272,19 +271,20 @@ unavailable.
   the warning about a missing backend URL into a notice.
 
 Pass it where you configure the integration: the second argument of
-`withConsentManifest()`, `consentManifest({ onBuildError })`, the `c15t` key
-in `nuxt.config.ts`, or `c15t({ onBuildError })` in Astro.
+`withConsentManifest()`, `consentManifest({ onBuildError })`, the `inth` key
+in `nuxt.config.ts`, or `inth({ onBuildError })` in Astro.
 
-The `C15T_ON_BUILD_ERROR` environment variable overrides the option, so a CI
-job can require a snapshot without a code change:
+The `INTH_ON_BUILD_ERROR` environment variable overrides the option, so a CI
+job can require a snapshot without a code change. `C15T_ON_BUILD_ERROR` still
+works as a fallback:
 
 ```sh
-C15T_ON_BUILD_ERROR=fail npm run build
+INTH_ON_BUILD_ERROR=fail npm run build
 ```
 
 Any value other than `fail` or `runtime` stops the command. Turborepo's strict
 environment mode hides undeclared variables from tasks, so list
-`C15T_ON_BUILD_ERROR` in the build task's `passThroughEnv` there.
+`INTH_ON_BUILD_ERROR` in the build task's `passThroughEnv` there.
 
 A missing backend URL follows the same policy as a failed download. Astro
 and Nuxt are stricter in `manifest()` mode, including
@@ -294,12 +294,12 @@ missing backend URL stops `astro dev` and `nuxt dev`.
 The download is skipped without an error when the build cannot use a
 snapshot:
 
-- The backend URL is relative, such as `/api/c15t`. With an explicit
+- The backend URL is relative, such as `/api/inth`. With an explicit
   `onBuildError: 'fail'`, a relative URL stops the build instead.
 - Next.js builds with `output: 'export'`, which has no server.
 - The mode is `hosted()`, `testing()`, `manifest({ snapshot })` or
   `manifest({ source: 'runtime' })` in Next.js, Nuxt and Astro. Next.js reads
-  the mode from `c15t.config.ts`.
+  the mode from `inth.config.ts`.
 - A single-page app built with Vite (React, Vue, Svelte, JavaScript) does
   not use `manifest()`. The mode is set in app code, so the plugin downloads
   the manifest only once the bundle turns out to read it, after unused code

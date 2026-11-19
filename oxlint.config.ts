@@ -1,6 +1,8 @@
 import { defineConfig } from "oxlint";
 import core from "ultracite/oxlint/core";
 
+import sdkPaths from "./sdk-paths.json" with { type: "json" };
+
 export default defineConfig({
   extends: [core],
   ignorePatterns: [
@@ -10,18 +12,7 @@ export default defineConfig({
     "**/.inrepo/**",
     // The SDK keeps its own lint rules until it adopts the root ones. Lint it
     // with `pnpm sdk:lint`, which reads oxlint.sdk.config.ts.
-    "apps/**",
-    "benchmarks/**",
-    "examples/**",
-    "internals/**",
-    "scripts/**",
-    "packages/sdk/**",
-    "packages/react-native/**",
-    "packages/swift/**",
-    "packages/android/**",
-    "packages/native-protocol/**",
-    "oxlint.sdk.config.ts",
-    "oxfmt.sdk.config.ts",
+    ...sdkPaths.map((path) => (path.endsWith(".ts") ? path : `${path}/**`)),
     // c15t CLI mobile manifest code, kept as imported until Scriptc can compile
     // it; see packages/cli/vendor/c15t-mobile/README.md.
     "packages/cli/vendor/c15t-mobile/**",

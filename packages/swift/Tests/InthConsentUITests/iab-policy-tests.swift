@@ -50,7 +50,7 @@ final class IABPolicyTests: XCTestCase {
             XCTAssertFalse(line.localizedCaseInsensitiveContains("terms"), line)
         }
         // The theme's host copy has no slot for policy text; the policy is a URL the root modifier opens.
-        XCTAssertEqual(Mirror(reflecting: ConsentTheme.Copy.c15t).children.compactMap(\.label), ["headline", "introduction"])
+        XCTAssertEqual(Mirror(reflecting: ConsentTheme.Copy.default).children.compactMap(\.label), ["headline", "introduction"])
     }
 
     // TCF-CHECK: P3, P4, P5, P12
@@ -158,14 +158,14 @@ final class IABPolicyTests: XCTestCase {
             XCTAssertEqual(Set(plan.pair.map(\.style)).count, 1, "Accept all and Reject all share a style")
         }
         XCTAssertEqual(DecisionPlan.rows(first: true, labels: DecisionLabels(copy: ConsentCopy.forLanguage("en"))).pair.first?.style, .decision)
-        XCTAssertGreaterThanOrEqual(ConsentTheme.c15t.decisionContrast, ConsentTheme.minimumDecisionContrast)
+        XCTAssertGreaterThanOrEqual(ConsentTheme.default.decisionContrast, ConsentTheme.minimumDecisionContrast)
     }
 
     // TCF-CHECK: P13, P29
     func testHostsCannotReplaceStandardTextsOrIllustrations() async throws {
         // A host may change the headline and introduction, nothing else that the first layer says.
-        XCTAssertEqual(Mirror(reflecting: ConsentTheme.Copy.c15t).children.compactMap(\.label), ["headline", "introduction"])
-        let themeFields = Mirror(reflecting: ConsentTheme.c15t).children.compactMap(\.label)
+        XCTAssertEqual(Mirror(reflecting: ConsentTheme.Copy.default).children.compactMap(\.label), ["headline", "introduction"])
+        let themeFields = Mirror(reflecting: ConsentTheme.default).children.compactMap(\.label)
         for field in themeFields {
             for forbidden in ["stack", "purpose", "illustration", "feature"] {
                 XCTAssertFalse(field.localizedCaseInsensitiveContains(forbidden), field)
@@ -665,7 +665,7 @@ final class IABPolicyTests: XCTestCase {
         init(_ body: Data) { self.body = body }
         func send(_ request: HTTPRequest) async throws -> HTTPResponse {
             request.method == .get
-                ? HTTPResponse(status: 200, headers: ["x-c15t-policy-contract": "1"], body: body)
+                ? HTTPResponse(status: 200, headers: ["x-inth-policy-contract": "1"], body: body)
                 : HTTPResponse(status: 503)
         }
     }

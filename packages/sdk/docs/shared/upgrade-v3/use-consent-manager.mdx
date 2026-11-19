@@ -47,18 +47,17 @@ export function AcceptButton() {
 ```
 
 The codemod keeps the entry you imported from. Change `@c15t/react` to
-`c15t/react` afterwards if you moved to the umbrella package. Fields it cannot
-rewrite stay on a `useConsentManager()` call under a `TODO(c15t v3)` comment,
-which fails the build until you replace them. The table lists the v2 fields
+`@inth/react` afterwards. Fields it cannot rewrite stay on a
+`useConsentManager()` call under a `TODO(c15t v3)` comment, which fails the build until you replace them. The table lists the v2 fields
 components read. The other fields held provider configuration, such as
 `legalLinks`, `scripts` and `storageConfig`, or store internals; set
 configuration through `ConsentProvider` props.
-Import hooks from `c15t/react`, `c15t/next` or `c15t/tanstack-start`, and
+Import hooks from `@inth/react`, `@inth/nextjs` or `@inth/tanstack-start`, and
 `useHeadlessConsentUI` from the matching `/headless` entry.
 
 | v2 field | v3 replacement |
 | --- | --- |
-| `activeUI` | `useActiveUI()`. It returns `null` until c15t picks a surface, where v2 returned `'none'`. |
+| `activeUI` | `useActiveUI()`. It returns `null` until Inth picks a surface, where v2 returned `'none'`. |
 | `setActiveUI(ui)` | `useSetActiveUI()` |
 | `has(category)` | `useConsent(category)`, one call per category at the top of the component |
 | `consents` | `useConsents()` |
@@ -76,7 +75,7 @@ Import hooks from `c15t/react`, `c15t/next` or `c15t/tanstack-start`, and
 | `policyBanner` | `usePromptPresentation()` |
 | `policyDialog` | `usePreferencesPresentation()` |
 | `model` | `useModel()`. It returns `null` while no policy matches, where v2 returned `'opt-in'`. |
-| `branding` | `useBranding()`. It returns `null` when unset, where v2 returned `'c15t'`. |
+| `branding` | `useBranding()`. It returns `'inth'` when unset, where v2 returned `'c15t'`. |
 | `iab` | `useIABSnapshot()` |
 | `locationInfo` | `useLocation()` |
 | `overrides`, `setOverrides()` | `useOverrides()`, `useSetOverrides()` |

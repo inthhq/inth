@@ -23,7 +23,10 @@ export interface FetchPatchDeps {
 	getSnapshot: () => ConsentSnapshot;
 	isEnabled: () => boolean;
 	notifyBlocked: (info: BlockedRequestInfo) => void;
-	tools: Pick<NetworkBlockerTools, 'blockedResponse' | 'evaluate'>;
+	tools: Pick<
+		NetworkBlockerTools,
+		'blockedResponse' | 'evaluate' | 'ruleMatches'
+	>;
 	/**
 	 * Promise that settles once consent is known, or `null` when it already
 	 * is. A request that would be blocked waits for it and is evaluated again.
@@ -64,7 +67,7 @@ export const installFetchPatch = function installFetchPatch(
 			method,
 			deps.getRules(),
 			deps.getSnapshot(),
-			deps.tools.evaluate
+			deps.tools
 		);
 		if (decision.shouldBlock) {
 			const settled = deps.whenSettled?.();

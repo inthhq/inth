@@ -6,7 +6,7 @@ group: frameworks
 
 ## Register scripts on the provider
 
-Pass the array from `src/scripts.ts` to `provideC15t()` as the `scripts`
+Pass the array from `src/scripts.ts` to `provideInth()` as the `scripts`
 option. The [quickstart](/docs/frameworks/angular/quickstart) sets up this
 file:
 
@@ -78,18 +78,18 @@ integrations named in `pageviews`, and the first call records the path
 without sending. Every dispatcher under the provider shares one pageview
 history, so a component created again does not replay a navigation.
 `injectEventDispatcher()` throws outside an injection context, or without
-`provideC15t()`. See
+`provideInth()`. See
 [send events only to allowed integrations](/docs/integrations/overview#send-events-only-to-allowed-integrations)
 for the supported vendors.
 
 ## Gate embeds and your own content
 
-Iframes are not scripts. Wrap them in `<c15t-consent-gate>`, which keeps the
+Iframes are not scripts. Wrap them in `<inth-consent-gate>`, which keeps the
 iframe out of the DOM until its category is allowed:
 
 <include src="../../shared/examples/angular/youtube-embed.mdx" />
 
-For content without a placeholder, the `*c15tIfConsent` structural directive
+For content without a placeholder, the `*inthIfConsent` structural directive
 renders its template only while a condition holds. For iframes from a CMS or
 `[innerHTML]`, which you cannot wrap, use the iframe blocker's
 `data-category` and `data-src` attributes. [Embeds](./embeds) covers all
@@ -107,18 +107,18 @@ the rules and what it cannot stop.
 Removing a script tag cannot stop code that already ran. So when a save
 withdraws a category that was granted, the runtime reloads the page after the
 save request, and the new page starts with only the permitted code. Set
-`reloadOnConsentRevoked: false` in `provideC15t()` if you handle withdrawal
+`reloadOnConsentRevoked: false` in `provideInth()` if you handle withdrawal
 yourself, for example through a vendor's own opt-out call in
 `onConsentChange`.
 
-`<c15t-consent-gate>` and `*c15tIfConsent` content is destroyed without a
+`<inth-consent-gate>` and `*inthIfConsent` content is destroyed without a
 reload. To delete first-party cookies a vendor set, configure
 `clearOnRevocation`; see [clear on revocation](./clear-on-revocation).
 
 ## Let visitors turn off one vendor
 
 A visitor can allow marketing and still switch off one vendor in it. Pass
-`vendors` to `provideC15t()`; helpers from `@inth/integrations` already carry
+`vendors` to `provideInth()`; helpers from `@inth/integrations` already carry
 their vendor slug. See [vendor consent](./vendor-consent).
 
 ## Verify vendor loading

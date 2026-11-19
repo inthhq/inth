@@ -267,6 +267,5 @@ export const withActiveCampaignRuntime = (
 			reconcile(state);
 		},
 		persistAfterDispose: true,
-		serverStart: undefined,
 	};
 };

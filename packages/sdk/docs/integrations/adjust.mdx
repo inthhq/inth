@@ -1,8 +1,8 @@
 ---
 title: Adjust
-description: Keep the Adjust SDK disabled until c15t consent allows it and send third-party sharing with Google's DMA options, in Swift, Kotlin, React Native and Expo.
-seoTitle: Adjust consent for mobile apps with c15t
-seoDescription: Enable and disable Adjust from c15t consent and send Google DMA third-party sharing in Swift, Android, React Native and Expo apps.
+description: Keep the Adjust SDK disabled until Inth consent allows it and send third-party sharing with Google's DMA options, in Swift, Kotlin, React Native and Expo.
+seoTitle: Adjust consent for mobile apps with Inth
+seoDescription: Enable and disable Adjust from Inth consent and send Google DMA third-party sharing in Swift, Android, React Native and Expo apps.
 group: integrations
 ---
 
@@ -15,7 +15,7 @@ DMA values come from the shared
 so marketing grants them.
 
 The helper ships in `InthApple`, `inth-android` and
-`@inth/react-native/integrations`. c15t adds no Adjust dependency. The web
+`@inth/react-native/integrations`. Inth adds no Adjust dependency. The web
 has no Adjust helper.
 
 ## What the helper changes
@@ -37,7 +37,7 @@ first and sends sharing second, and sends no sharing on withdrawal.
 | `google_dma` `ad_personalization` | `adPersonalization` |
 | `google_dma` `ad_user_data` | `adUserData` |
 
-c15t's policy model says how the app asks for consent, not where the user
+Inth's policy model says how the app asks for consent, not where the user
 is, so `eea` comes from your own region logic. Adjust and Google expect `"1"`
 only for users in the European Economic Area.
 

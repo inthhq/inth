@@ -390,7 +390,7 @@ describe('heading rhythm', () => {
 		// banner title ends 8 above its copy; `panel.module.css` opens the dialog header at
 		// `gap: var(--consent-dialog-header-gap)` and then puts `margin-top:
 		// var(--consent-dialog-card-gap)` on `.header > * + *`, so the dialog title is 8
-		// above its copy too. Both tokens are `--c15t-space-xs`, so it is one number
+		// above its copy too. Both tokens are `--inth-space-xs`, so it is one number
 		// reached twice, and this reads the distance rather than the edge that spent it.
 		const banner = mountSurface(<ConsentBanner />, englishSnapshot());
 
@@ -701,7 +701,7 @@ describe('dialog card', () => {
 				.parentElement as HTMLElement
 		).parentElement as HTMLElement;
 
-		// `--consent-manager-footer-padding` is `var(--c15t-space-lg) 0 0 0`, so the
+		// `--consent-manager-footer-padding` is `var(--inth-space-lg) 0 0 0`, so the
 		// actions carry 24 above and nothing below -- the 24 under them is `.content`'s
 		// own bottom padding, which this footer is the last thing inside of. The stack's
 		// run underneath the last card is the other 24, the manager's `margin-top:
@@ -757,7 +757,7 @@ describe('card height', () => {
 
 		expect(rows).toBe(4);
 
-		// The web's copy is 16pt over `--c15t-line-height-normal`, and the live card
+		// The web's copy is 16pt over `--inth-line-height-normal`, and the live card
 		// carries the English notice across three of those lines at the card's own width.
 		const description = 3 * lightRoles.body.lineHeight;
 		const heading =

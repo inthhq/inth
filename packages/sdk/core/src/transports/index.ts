@@ -1,8 +1,8 @@
 /**
  * Transport factories. Each export is optional — consumers pick the one
- * that matches their backend shape. Adapter authors who want to build
- * their own transport should import from `./contract` (re-exports below)
- * for the typed surface.
+ * that matches their backend shape. An adapter author who builds their own
+ * transport returns a `KernelTransport`: a plain object with optional async
+ * `init`, `save` and `identify`, typed by the names re-exported below.
  *
  * Public subpath: `@inth/sdk/transports`.
  */
@@ -14,7 +14,7 @@ export type {
 	KernelTransport,
 	SavePayload,
 	SaveResult,
-} from './contract';
+} from '../types';
 export type { HostedKernelTransport, HostedTransportOptions } from './hosted';
 export { createHostedTransport } from './hosted';
 export type {
@@ -25,7 +25,6 @@ export { createHostedRecordTransport } from './hosted-records';
 export type {
 	MapInitOutputOptions,
 	TransportInitResponse,
-	TransportKernelConfig,
 } from './init-output';
 export {
 	initOutputToKernelConfig,
@@ -61,7 +60,6 @@ export type { SubjectPostBody, SubjectSavePayload } from './subject-body';
 export { buildConfirmedChoiceWire, buildSubjectPostBody } from './subject-body';
 export type {
 	MapSubjectRecordOptions,
-	SubjectRecordWire,
 	TransportHydrationRecords,
 } from './subject-record';
 export {
@@ -69,13 +67,13 @@ export {
 	reviveSubjectRecord,
 } from './subject-record';
 export {
-	C15T_POLICY_CONTRACT_HEADER,
-	C15T_VERSION_HEADER,
-	c15tProtocolHeaders,
-	c15tProtocolParams,
-	c15tVersionHeaders,
+	INTH_POLICY_CONTRACT_HEADER,
+	INTH_VERSION_HEADER,
+	inthProtocolHeaders,
+	inthProtocolParams,
+	inthVersionHeaders,
 	readProducerPolicyContract,
-} from './version-header';
+} from '../libs/version-header';
 export {
 	deferInitGvl,
 	createGvlReferenceUrl,

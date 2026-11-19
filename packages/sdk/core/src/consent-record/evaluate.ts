@@ -31,7 +31,6 @@ export interface ConsentEvaluationInput {
 	policy: EvaluationPolicy;
 	/** Validated explicit choice, or `null` when none is usable. */
 	choice: ExplicitChoice | null;
-	/** Validated notice dismissal, or `null`. */
 	noticeDismissal: NoticeDismissal | null;
 	/** Detected GPC signal. Only a strict `true` counts. */
 	gpc?: boolean;
@@ -158,7 +157,7 @@ const hasChoiceRefusal = function hasChoiceRefusal(
 	policy: EvaluationPolicy,
 	categories: Record<OptionalConsentCategory, CategoryEvaluation>
 ): boolean {
-	return (policy.choiceScope ?? policy.scope).some(
+	return policy.choiceScope.some(
 		(category) => categories[category].restrictions.length > 0
 	);
 };
@@ -250,7 +249,7 @@ const deriveChoiceRequirement = function deriveChoiceRequirement(
 	categories: Record<OptionalConsentCategory, CategoryEvaluation>
 ): PromptRequirement {
 	const { policy } = input;
-	const choiceScope = policy.choiceScope ?? policy.scope;
+	const { choiceScope } = policy;
 	if (choiceScope.length === 0) {
 		return deriveAcknowledgementRequirement(input, categories);
 	}
@@ -337,7 +336,7 @@ const acknowledgementDeadline = function acknowledgementDeadline(
 	const { policy } = input;
 	if (
 		policy.prompt !== 'choice' ||
-		(policy.choiceScope ?? policy.scope).length > 0 ||
+		policy.choiceScope.length > 0 ||
 		promptRequirement.kind !== 'none'
 	) {
 		return [];
@@ -360,7 +359,7 @@ const deriveNextDeadline = function deriveNextDeadline(
 ): number | null {
 	const { policy } = input;
 	const candidates: number[] = [];
-	const choiceScope = policy.choiceScope ?? policy.scope;
+	const { choiceScope } = policy;
 	// Expiry can only change a choice prompt from satisfied to expired.
 	// Missing coverage or a mismatch keeps precedence over later expiry.
 	const choicePromptCanChange =

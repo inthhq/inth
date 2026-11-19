@@ -14,13 +14,14 @@ import type {
 } from '@inth/sdk/engine';
 import { readStoredRecordsFromCookieHeader } from '@inth/sdk/modules/persistence';
 import { clientMode, lazyHosted } from '@inth/sdk/runtime/client-mode';
+import type { DeferredCommitted } from '@inth/sdk/surface-actions/early-commit';
 
 import { withClientData } from '../client-data';
 import type { ConsentConfig } from '../config';
+import { NUXT_PROJECT_URL_ENV } from '../env-names';
 import { createVueConsentKernelContext } from '../kernel';
 import type { RuntimeConsentConfig, VueConsentKernelContext } from '../kernel';
 import type { NuxtMode } from '../nuxt-mode';
-import type { DeferredCommitted } from './commit';
 
 /** What the plugin read before it loaded the engine. @internal */
 export interface NuxtEngineInput {
@@ -81,15 +82,6 @@ const committedConfig = function committedConfig(
 	};
 };
 
-/**
- * Builds the app's consent runtime in the browser, starting from the
- * server's state and, after a deferred commit, from the committed records.
- *
- * @param input - What the plugin read.
- * @returns The runtime context.
- * @throws {IABUnavailableError} When the state needs IAB and `iab` is not set.
- * @internal
- */
 /** Bundlers replace `process.env.NODE_ENV` at build time. */
 declare const process: { env: { NODE_ENV?: string } };
 
@@ -111,13 +103,20 @@ const nuxtClientMode = function nuxtClientMode(
 			`@inth/vue: \`projectUrl\` is required.${
 				process.env.NODE_ENV === 'production'
 					? ''
-					: ' Set NUXT_PUBLIC_C15T_BACKEND_URL (or NUXT_PUBLIC_INTH_PROJECT_URL), or `c15t.projectUrl` in nuxt.config.ts.'
+					: ` Set ${NUXT_PROJECT_URL_ENV}, or \`inth.projectUrl\` in nuxt.config.ts.`
 			}`
 		);
 	}
 	return lazyHosted({ headers: mode.headers, projectUrl });
 };
 
+/**
+ * Builds the app's consent runtime in the browser, starting from the
+ * server's state and, after a deferred commit, from the committed records.
+ *
+ * @throws {IABUnavailableError} When the state needs IAB and `iab` is not set.
+ * @internal
+ */
 export const createNuxtEngineContext = function createNuxtEngineContext(
 	input: NuxtEngineInput
 ): VueConsentKernelContext {

@@ -1,6 +1,6 @@
 /**
- * A site page running web c15t with its stock banner, the way a site does
- * when a c15t mobile app may open it in a WebView. The server put the native
+ * A site page running web Inth with its stock banner, the way a site does
+ * when an Inth mobile app may open it in a WebView. The server put the native
  * document-start script first in `<head>`, as `WKUserScript` and
  * `addDocumentStartJavaScript` would.
  */
@@ -26,7 +26,7 @@ const posted: string[] = [];
 Object.assign(window, {
 	webkit: {
 		messageHandlers: {
-			c15tConsent: { postMessage: (message: string) => posted.push(message) },
+			inthConsent: { postMessage: (message: string) => posted.push(message) },
 		},
 	},
 });
@@ -50,4 +50,4 @@ const page: WebViewPage = {
 	posted,
 	ready: client.ready(),
 };
-Object.assign(window, { c15tWebView: page });
+Object.assign(window, { inthWebView: page });

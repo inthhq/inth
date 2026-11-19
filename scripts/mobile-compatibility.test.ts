@@ -72,7 +72,7 @@ describe('mobile compatibility contract', () => {
 	});
 
 	it('preserves an existing consumer and refuses checkout paths including aliases', () => {
-		const directory = mkdtempSync(join(tmpdir(), 'c15t-compat-output-'));
+		const directory = mkdtempSync(join(tmpdir(), 'inth-compat-output-'));
 		try {
 			const existing = join(directory, 'existing');
 			mkdirSync(existing);

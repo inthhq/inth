@@ -21,19 +21,10 @@ import type {
 	InitOutput,
 } from '@inth/sdk-schema/types';
 
-interface CachedProviders {
-	/** Absent when no list has loaded and only a failed fetch is remembered. */
-	providers: AdTechProvider[] | undefined;
-	/**
-	 * Until when this entry is served without asking the endpoint again:
-	 * the list's freshness, or the backoff after a failed fetch.
-	 */
-	expiresAt: number;
-	/** Until when the list is served when a refresh fails. */
-	staleUntil: number;
-}
+import { clearStaleCache, readThrough } from './stale-on-error';
+import type { StaleCache } from './stale-on-error';
 
-export type AdTechProviderCache = Map<string, CachedProviders>;
+export type AdTechProviderCache = StaleCache<AdTechProvider[] | undefined>;
 
 export interface FetchCachedAdTechProvidersOptions {
 	/** The manifest's `iab.additionalConsent`. */
@@ -76,10 +67,6 @@ let relativeCaches = new WeakMap<
 	typeof globalThis.fetch,
 	AdTechProviderCache
 >();
-const inflightByCache = new WeakMap<
-	AdTechProviderCache,
-	Map<string, Promise<AdTechProvider[] | undefined>>
->();
 
 const isAbsoluteUrl = (url: string): boolean =>
 	/^[a-z][a-z\d+.-]*:/iu.test(url);
@@ -101,32 +88,6 @@ const cacheFor = function cacheFor(
 	return cache;
 };
 
-/** Stores `entry` as the newest under `key`, dropping the oldest past the cap. */
-const remember = function remember(
-	cache: AdTechProviderCache,
-	key: string,
-	entry: CachedProviders
-): void {
-	cache.delete(key);
-	cache.set(key, entry);
-	while (cache.size > MAX_ENTRIES) {
-		const oldest = cache.keys().next().value;
-		if (oldest === undefined) {
-			break;
-		}
-		cache.delete(oldest);
-	}
-};
-
-const inflightFor = function inflightFor(cache: AdTechProviderCache) {
-	let inflight = inflightByCache.get(cache);
-	if (!inflight) {
-		inflight = new Map();
-		inflightByCache.set(cache, inflight);
-	}
-	return inflight;
-};
-
 /**
  * Drops cached provider lists; the next call fetches again. Without an
  * argument, drops every list this module holds.
@@ -134,14 +95,10 @@ const inflightFor = function inflightFor(cache: AdTechProviderCache) {
 export const clearAdTechProviderCache = function clearAdTechProviderCache(
 	cache?: AdTechProviderCache
 ): void {
-	if (cache) {
-		cache.clear();
-		inflightByCache.delete(cache);
-		return;
+	clearStaleCache(cache ?? sharedCache);
+	if (!cache) {
+		relativeCaches = new WeakMap();
 	}
-	sharedCache.clear();
-	inflightByCache.delete(sharedCache);
-	relativeCaches = new WeakMap();
 };
 
 /**
@@ -165,38 +122,12 @@ export const fetchCachedAdTechProviders = function fetchCachedAdTechProviders(
 	if (ids.length === 0) {
 		return Promise.resolve([]);
 	}
-	const cache = cacheFor(options);
-	const inflight = inflightFor(cache);
-	const now = options.now ?? Date.now();
-	const key = `${options.reference.url}|${ids.join(',')}`;
-	const cached = cache.get(key);
-	if (cached && cached.expiresAt > now) {
-		return Promise.resolve(cached.providers);
-	}
-	const stale =
-		cached && cached.staleUntil > now ? cached.providers : undefined;
-	if (cached && !stale) {
-		cache.delete(key);
-	}
-	const pending = inflight.get(key);
-	if (pending) {
-		return pending;
-	}
-	// Serves the stale list, or nothing, until the next attempt; never past
-	// the list's own stale bound.
-	const backOff = () => {
-		const staleUntil = stale && cached ? cached.staleUntil : 0;
-		remember(cache, key, {
-			expiresAt: stale
-				? Math.min(now + FAILURE_BACKOFF_MS, staleUntil)
-				: now + FAILURE_BACKOFF_MS,
-			providers: stale,
-			staleUntil,
-		});
-		return stale;
-	};
-	const run = (async () => {
-		try {
+	return readThrough({
+		backoffMs: FAILURE_BACKOFF_MS,
+		cache: cacheFor(options),
+		fallback: () => undefined,
+		key: `${options.reference.url}|${ids.join(',')}`,
+		async load() {
 			const response = await options.fetch(
 				adTechProviderListUrl(options.reference.url, ids),
 				{
@@ -209,22 +140,13 @@ export const fetchCachedAdTechProviders = function fetchCachedAdTechProviders(
 				? parseAdTechProviderList(await response.json(), ids)
 				: null;
 			if (!providers) {
-				return backOff();
+				throw new Error('Additional Consent provider list unavailable');
 			}
-			remember(cache, key, {
-				expiresAt: now + TTL_MS,
-				providers,
-				staleUntil: now + STALE_TTL_MS,
-			});
-			return providers;
-		} catch {
-			return backOff();
-		} finally {
-			inflight.delete(key);
-		}
-	})();
-	inflight.set(key, run);
-	return run;
+			return { freshMs: TTL_MS, staleMs: STALE_TTL_MS, value: providers };
+		},
+		maxEntries: MAX_ENTRIES,
+		now: options.now ?? Date.now(),
+	});
 };
 
 /**

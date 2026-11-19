@@ -8,9 +8,6 @@ import * as v from 'valibot';
 
 import { consentItemSchema } from './get';
 
-/**
- * GET /subjects query params (requires API key)
- */
 export const listSubjectsQuerySchema = v.object({
 	externalId: v.pipe(
 		v.string(),
@@ -19,9 +16,6 @@ export const listSubjectsQuerySchema = v.object({
 	),
 });
 
-/**
- * Subject item in GET /subjects response
- */
 export const subjectItemSchema = v.object({
 	consents: v.array(consentItemSchema),
 	createdAt: v.date(),
@@ -29,16 +23,10 @@ export const subjectItemSchema = v.object({
 	id: v.string(),
 });
 
-/**
- * GET /subjects output schema
- */
 export const listSubjectsOutputSchema = v.object({
 	subjects: v.array(subjectItemSchema),
 });
 
-/**
- * Error schemas for GET /subjects
- */
 export const listSubjectsErrorSchemas = {
 	externalIdRequired: v.object({
 		message: v.string(),
@@ -53,7 +41,6 @@ export const listSubjectsErrorSchemas = {
 	}),
 };
 
-// Type exports
 export type ListSubjectsQuery = v.InferOutput<typeof listSubjectsQuerySchema>;
 export type ListSubjectsOutput = v.InferOutput<typeof listSubjectsOutputSchema>;
 export type SubjectItem = v.InferOutput<typeof subjectItemSchema>;

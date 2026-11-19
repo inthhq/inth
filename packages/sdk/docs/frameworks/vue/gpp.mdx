@@ -1,6 +1,6 @@
 ---
 title: IAB GPP
-description: Turn on the IAB Global Privacy Platform API (__gpp) in a Vue app with the c15t Vue plugin's gpp option, so ad tech can read US state opt-outs and the TCF EU consent string.
+description: Turn on the IAB Global Privacy Platform API (__gpp) in a Vue app with the Inth Vue plugin's gpp option, so ad tech can read US state opt-outs and the TCF EU consent string.
 group: frameworks
 ---
 
@@ -17,13 +17,13 @@ Pass `gpp` to the Vue plugin in `src/main.ts`:
 {/* example: fragment */}
 
 ```ts title="src/main.ts"
-import { c15tVue, hosted } from '@inth/vue/vue-plugin';
+import { inthVue, hosted } from '@inth/vue/vue-plugin';
 import { createApp } from 'vue';
 
 import App from './App.vue';
 
 createApp(App)
-	.use(c15tVue, {
+	.use(inthVue, {
 		// Loads @inth/sdk/iab/gpp and installs `__gpp` once the app mounts.
 		gpp: true,
 		mode: hosted(),

@@ -16,7 +16,7 @@ import { testing } from '../../testing';
 import type { ConsentClient } from '../../types';
 
 /** Subject ids the fake backend refuses, as a JSON array. */
-export const TAKEN_SUBJECTS_KEY = 'c15t-test-taken-subjects';
+export const TAKEN_SUBJECTS_KEY = 'inth-test-taken-subjects';
 
 /** What the test reads from each page. */
 export interface SubjectConflictPage {
@@ -114,4 +114,4 @@ const page: SubjectConflictPage = {
 		unreachable = value;
 	},
 };
-Object.assign(window, { c15tSubjectConflict: page });
+Object.assign(window, { inthSubjectConflict: page });

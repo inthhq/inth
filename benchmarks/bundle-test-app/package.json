@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/next-bundle-bench",
+	"name": "@inth/next-bundle-bench",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -15,7 +15,7 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
-		"@c15t/benchmarking": "workspace:*",
+		"@inth/benchmarking": "workspace:*",
 		"@inth/nextjs": "workspace:*",
 		"@inth/react": "workspace:*",
 		"@inth/sdk": "workspace:*",

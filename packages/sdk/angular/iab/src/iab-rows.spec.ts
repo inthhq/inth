@@ -19,16 +19,16 @@ import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
 } from '@inth/sdk/schema/types';
+import { resolveIABCopy } from '@inth/sdk/surface-state';
 import { afterEach, describe, expect, test } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import type { IABPurposeChoice, IABVendorChoice } from './iab-purpose-item';
 import { IABPurposeItem } from './iab-purpose-item';
 import { IABStackItem } from './iab-stack-item';
-import { getIABTranslations } from './iab-translations';
 import { IABVendorList } from './iab-vendor-list';
 
-const iabT = getIABTranslations();
+const iabT = resolveIABCopy(undefined);
 const disposers: (() => void)[] = [];
 
 afterEach(() => {
@@ -165,7 +165,7 @@ describe('IAB purpose row consent switch', () => {
 			// which is created when the row first opens.
 			expect(root.querySelector('button[aria-pressed]')).toBeNull();
 			root
-				.querySelector<HTMLElement>('[id^="c15t-preference-item-trigger-"]')
+				.querySelector<HTMLElement>('[id^="inth-preference-item-trigger-"]')
 				?.click();
 			await fixture.whenStable();
 			expect(root.querySelector('button[aria-pressed]')).not.toBeNull();
@@ -212,25 +212,27 @@ describe('IAB controls under a legitimate-interest restriction', () => {
 		const { handle, kernel } = await setupHandle();
 		const { emitted, fixture, root } = await mount(IABPurposeItem, {
 			iabT,
-			purpose: purpose(false),
 			// The visitor had objected; the only control lifts the objection.
-			purposeLegitimateInterests: { 7: false },
+			legitimateInterests: {
+				gvl: null,
+				purposeLegitimateInterests: { 7: false },
+				vendorLegitimateInterests: { 755: false },
+			},
+			purpose: purpose(false),
 			purposeObjection: true,
-			vendorLegitimateInterests: { 755: false },
 			vendorObjection: true,
 		});
 		root
-			.querySelector<HTMLElement>('[id^="c15t-preference-item-trigger-"]')
+			.querySelector<HTMLElement>('[id^="inth-preference-item-trigger-"]')
 			?.click();
 		await fixture.whenStable();
 		root.querySelector<HTMLElement>('button[aria-pressed]')?.click();
 
+		// The dialog applies the purpose choice as one objection.
 		for (const { purposeId, value } of emitted.purposeLegitimateInterest) {
-			handle.setPurposeLegitimateInterest(purposeId, value);
+			handle.setPurposeObjection(purposeId, !value);
 		}
-		for (const { vendorId, value } of emitted.vendorLegitimateInterest) {
-			handle.setVendorLegitimateInterest(vendorId, value);
-		}
+		expect(emitted.vendorLegitimateInterest).toEqual([]);
 		await handle.save();
 		expect(evaluateConsent(restrictedTarget, kernel.getSnapshot())).toBe(true);
 	});
@@ -254,13 +256,17 @@ describe('IAB controls under a legitimate-interest restriction', () => {
 		};
 		const { emitted, fixture, root } = await mount(IABVendorList, {
 			iabT,
+			legitimateInterests: {
+				gvl: null,
+				purposeLegitimateInterests: {},
+				vendorLegitimateInterests: { 755: false },
+			},
 			vendorData: restricted,
-			vendorLegitimateInterests: { 755: false },
 			vendorObjection: true,
 		});
 		root
 			.querySelector<HTMLElement>(
-				'[id$="-vendor-755"] [id^="c15t-preference-item-trigger-"]'
+				'[id$="-vendor-755"] [id^="inth-preference-item-trigger-"]'
 			)
 			?.click();
 		await fixture.whenStable();
@@ -275,6 +281,45 @@ describe('IAB controls under a legitimate-interest restriction', () => {
 		await handle.save();
 		expect(evaluateConsent(restrictedTarget, kernel.getSnapshot())).toBe(true);
 	});
+});
+
+test('an untouched objection control shows what a plain Save encodes', async () => {
+	// Vendor 10 declares purpose 7 on legitimate interest; the restriction
+	// moves vendor 755 there. A save with an empty draft encodes only 755.
+	const { handle, kernel } = await setupHandle();
+	const { fixture, root } = await mount(IABPurposeItem, {
+		iabT,
+		legitimateInterests: kernel.getSnapshot().iab,
+		purpose: {
+			...purpose(false),
+			vendors: [
+				purpose(false).vendors[0],
+				{ ...purpose(false).vendors[0], id: 10, name: 'Vendor 10' },
+			],
+		},
+		vendorObjection: true,
+	});
+	root
+		.querySelector<HTMLElement>('[id^="inth-preference-item-trigger-"]')
+		?.click();
+	await fixture.whenStable();
+	// The vendors sit behind their own disclosure.
+	for (const button of root.querySelectorAll<HTMLElement>(
+		'button[aria-expanded="false"]'
+	)) {
+		button.click();
+	}
+	await fixture.whenStable();
+	const objected = [
+		...root.querySelectorAll<HTMLElement>('button[aria-pressed]'),
+	].map((button) => button.getAttribute('aria-pressed'));
+	await handle.save();
+	const saved = kernel.getSnapshot().iab?.authority;
+	expect(objected).toEqual([
+		String(saved?.vendorLegitimateInterests['755'] !== true),
+		String(saved?.vendorLegitimateInterests['10'] !== true),
+	]);
+	expect(objected).toEqual(['false', 'true']);
 });
 
 describe('IAB vendor list', () => {
@@ -316,7 +361,7 @@ describe('IAB vendor list', () => {
 		// A closed row is its header only: no links, badges or lists yet.
 		expect(root.querySelectorAll('a[target="_blank"]')).toHaveLength(0);
 		rows[0]
-			?.querySelector<HTMLElement>('[id^="c15t-preference-item-trigger-"]')
+			?.querySelector<HTMLElement>('[id^="inth-preference-item-trigger-"]')
 			?.click();
 		await fixture.whenStable();
 		expect(
@@ -347,7 +392,7 @@ describe('IAB vendor list', () => {
 		expect(registered?.id).not.toBe(custom?.id);
 
 		custom
-			?.querySelector<HTMLElement>('[id^="c15t-preference-item-trigger-"]')
+			?.querySelector<HTMLElement>('[id^="inth-preference-item-trigger-"]')
 			?.click();
 		await fixture.whenStable();
 		expect(
@@ -355,6 +400,32 @@ describe('IAB vendor list', () => {
 		).toBeGreaterThan(0);
 		// Opening the custom row leaves the registered one closed.
 		expect(registered?.querySelectorAll('a[target="_blank"]')).toHaveLength(0);
+	});
+
+	test('a custom vendor offers no objection on a consent-only purpose and rounds its max age up', async () => {
+		const { fixture, root } = await mount(IABVendorList, {
+			customVendors: [
+				{
+					cookieMaxAgeSeconds: 3600,
+					id: 'custom-li',
+					legIntPurposes: [1],
+					name: 'Custom LI',
+					privacyPolicyUrl: 'https://example.test/privacy',
+					purposes: [],
+				},
+			],
+			iabT,
+			vendorObjection: true,
+		});
+		const row = root.querySelector('[id$="-vendor-custom-li"]');
+		row
+			?.querySelector<HTMLElement>('[id^="inth-preference-item-trigger-"]')
+			?.click();
+		await fixture.whenStable();
+		// TCF Policies Appendix A: purpose 1 allows consent only.
+		expect(row?.querySelector('button[aria-pressed]')).toBeNull();
+		// An hour is not "0d".
+		expect(row?.textContent).toContain('Max Age: 1d');
 	});
 
 	test('search filters the vendors and reports the count', async () => {

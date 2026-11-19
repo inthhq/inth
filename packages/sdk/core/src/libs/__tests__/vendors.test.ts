@@ -2,15 +2,15 @@ import type { VendorCategoryCondition } from '@inth/sdk-schema/types';
 import { describe, expect, test, vi } from 'vitest';
 
 import { choiceRecords, NOW } from '../../__tests__/fixtures/kernel-fixtures';
+import type { AllConsentNames } from '../../consent/consent-types';
 import { createConsentKernel } from '../../kernel';
 import type { ResolvedVendor } from '../../types';
+import { vendorRenders, vendorsListedUnder } from '../vendor-listing';
 import {
 	declareOwnedVendors,
 	forgetOwnedVendors,
 	mergeDeclaredVendors,
 	resolveVendors,
-	vendorRenders,
-	vendorsListedUnder,
 	withoutManifestVendors,
 	withoutOwnedVendors,
 	withoutSourceVendors,
@@ -22,6 +22,21 @@ const meta = {
 	name: 'Meta Pixel',
 	privacyPolicyUrl: 'https://www.facebook.com/privacy/policy/',
 };
+
+/** The vendors listed under a category for a snapshot declaring these. */
+const listedUnder = (
+	declared: readonly ResolvedVendor[],
+	category: AllConsentNames,
+	denied?: string[]
+) =>
+	vendorsListedUnder(
+		{
+			model: 'opt-in',
+			vendorChoice: denied ? { confirmedAt: 0, denied, version: 1 } : null,
+			vendors: { declared, listVersion: null },
+		},
+		category
+	);
 
 describe('resolveVendors', () => {
 	test('config presentation wins over manifest for the same id', () => {
@@ -194,22 +209,22 @@ describe('script vendor details', () => {
 		// Vendor switches are opt-in. A helper alone still gates loading by
 		// its slug, but the dialog shows only its category.
 		const helpersOnly = resolveVendors({ owners: [hotjar] });
-		expect(vendorsListedUnder(helpersOnly, 'measurement')).toEqual([]);
+		expect(listedUnder(helpersOnly, 'measurement')).toEqual([]);
 
 		// Declaring any vendor opts in, and the helper is then listed by name.
 		const optedIn = resolveVendors({ config: [meta], owners: [hotjar] });
 		expect(
-			vendorsListedUnder(optedIn, 'measurement').map((vendor) => vendor.id)
+			listedUnder(optedIn, 'measurement').map((vendor) => vendor.id)
 		).toEqual(['hotjar']);
 		expect(
-			vendorsListedUnder(optedIn, 'marketing').map((vendor) => vendor.id)
+			listedUnder(optedIn, 'marketing').map((vendor) => vendor.id)
 		).toEqual(['meta-pixel']);
 	});
 
 	test('a backend declaration opts in the same as the vendors option', () => {
 		const resolved = resolveVendors({ manifest: [meta], owners: [hotjar] });
 		expect(
-			vendorsListedUnder(resolved, 'measurement').map((vendor) => vendor.id)
+			listedUnder(resolved, 'measurement').map((vendor) => vendor.id)
 		).toEqual(['hotjar']);
 	});
 
@@ -218,7 +233,7 @@ describe('script vendor details', () => {
 			owners: [hotjar, { ...hotjar, vendor: 'other-helper' }],
 		});
 		expect(
-			vendorsListedUnder(resolved, 'measurement', new Set(['hotjar'])).map(
+			listedUnder(resolved, 'measurement', ['hotjar']).map(
 				(vendor) => vendor.id
 			)
 		).toEqual(['hotjar']);
@@ -706,7 +721,7 @@ describe('declareOwnedVendors', () => {
 
 describe('vendorsListedUnder', () => {
 	const listed = (category: 'marketing' | 'measurement') =>
-		vendorsListedUnder(
+		listedUnder(
 			[
 				{ ...meta, presentable: true, source: 'config' },
 				{

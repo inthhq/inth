@@ -62,7 +62,7 @@ const buildInit = function buildInit(
 	bundle: typeof translations = translations
 ): InitOutput {
 	return {
-		branding: 'c15t',
+		branding: 'inth',
 		location: { countryCode: 'US', regionCode: 'CA' },
 		policyResolution: writePolicyResolutionWire(
 			resolvePolicyRules({ countryCode: null, regionCode: null, rules: [rule] })
@@ -169,7 +169,7 @@ describe('ConsentBanner under a notice prompt', () => {
 		expect(optOut?.classList.contains(bannerStyles.rightLink)).toBe(true);
 		expect(optOut?.hasAttribute('data-variant')).toBe(false);
 		expect(optOut?.hasAttribute('data-mode')).toBe(false);
-		expect(optOut?.getAttribute('data-c15t-rights')?.split(' ')).toContain(
+		expect(optOut?.getAttribute('data-inth-rights')?.split(' ')).toContain(
 			'opt-out'
 		);
 		expect(query('consent-banner-right-link-preferences')).toBeNull();
@@ -252,5 +252,27 @@ describe('ConsentBanner under a choice prompt', () => {
 		expect(links.map((link) => link.getAttribute('data-right'))).toEqual([
 			'preferences',
 		]);
+	});
+
+	test('fills copy the bundle leaves out from the English bundle', async () => {
+		await renderBanner(
+			buildInit(choiceRule, {
+				...translations,
+				common: {},
+				cookieBanner: {},
+			} as unknown as typeof translations)
+		);
+		expect(query('consent-banner-title')?.textContent?.trim()).toBe(
+			enTranslations.cookieBanner.title
+		);
+		expect(query('consent-banner-description')?.textContent?.trim()).toBe(
+			enTranslations.cookieBanner.description
+		);
+		expect(query('consent-banner-accept-button')?.textContent?.trim()).toBe(
+			enTranslations.common.acceptAll
+		);
+		expect(query('consent-banner-reject-button')?.textContent?.trim()).toBe(
+			enTranslations.common.rejectAll
+		);
 	});
 });

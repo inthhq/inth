@@ -1,6 +1,6 @@
 ---
 title: Headless
-description: Replace the c15t banner or preference dialog with your own Angular templates while provideC15t keeps policy, storage and script loading, using HeadlessConsent, ConsentManager and the primitives.
+description: Replace the Inth banner or preference dialog with your own Angular templates while provideInth keeps policy, storage and script loading, using HeadlessConsent, ConsentManager and the primitives.
 group: frameworks
 ---
 
@@ -13,27 +13,27 @@ components cannot produce.
 
 | Goal | Approach |
 | --- | --- |
-| Keep the markup, drop c15t's styles | Set `noStyle` in `provideC15t()` or on one component, and style the `data-*` attributes and slot classes. |
-| Your own buttons in the stock banner | The `c15tConsentBannerAction` template; see [customize](./customize#replace-parts-of-the-banners-markup). |
-| Your own banner, stock dialog | `HeadlessConsent` for the banner, `<c15t-consent-dialog>` for preferences. This page's example. |
+| Keep the markup, drop Inth's styles | Set `noStyle` in `provideInth()` or on one component, and style the `data-*` attributes and slot classes. |
+| Your own buttons in the stock banner | The `inthConsentBannerAction` template; see [customize](./customize#replace-parts-of-the-banners-markup). |
+| Your own banner, stock dialog | `HeadlessConsent` for the banner, `<inth-consent-dialog>` for preferences. This page's example. |
 | Your own dialog too | Add `ConsentManager` for the category list and the draft, and the [primitives](./components/primitives) for accessible parts. |
 
-`provideC15t()`, scripts, `<c15t-consent-gate>` and the stored choice work the
+`provideInth()`, scripts, `<inth-consent-gate>` and the stored choice work the
 same with any of them. You only replace the markup.
 
 ## Build a banner with HeadlessConsent
 
 `HeadlessConsent` holds the banner and dialog state, with the policy's
 presentation already resolved, and one method per action. Inject it in any
-component below `provideC15t()`.
+component below `provideInth()`.
 
 This banner renders the actions the policy allows, grouped and ordered the way
 the policy asks, and hides itself when no banner is due:
 
 <include src="../../shared/examples/angular/custom-banner.mdx" />
 
-Render it where `<c15t-consent-banner>` would go. The stock dialog still
-handles Customize and the preferences link, so keep `<c15t-consent-dialog>`.
+Render it where `<inth-consent-banner>` would go. The stock dialog still
+handles Customize and the preferences link, so keep `<inth-consent-dialog>`.
 It adds its own rules when it opens:
 
 <include src="../../shared/examples/angular/headless-layout.mdx" />
@@ -72,18 +72,18 @@ draft from `ConsentManager`. This form uses the headless switch with
 `setConsent` changes the draft only. `saveConsents('custom')` records it. If
 the policy changes while the draft is open, `draft.isStale()` becomes `true`
 and saving throws, so the example disables Save and shows a message.
-Translated titles and descriptions are in `translationConfig()`.
+Translated titles and descriptions are in `copy()`.
 [ConsentManager](./services#work-with-the-draft) covers the draft.
 
 ## Build your own dialog
 
 The dialog primitives give your markup focus trapping, Escape handling, scroll
 locking and ARIA. Open it from the consent manager's active surface, so the
-banner's Customize button and `c15tConsentDialogLink` open your dialog:
+banner's Customize button and `inthConsentDialogLink` open your dialog:
 
 <include src="../../shared/examples/angular/primitives-dialog.mdx" />
 
-Render it in place of `<c15t-consent-dialog>`, not next to it, or both open.
+Render it in place of `<inth-consent-dialog>`, not next to it, or both open.
 [Primitives](./components/primitives) lists every part.
 
 ## Verify a custom UI
@@ -91,5 +91,5 @@ Render it in place of `<c15t-consent-dialog>`, not next to it, or both open.
 Run the same checks as the stock components: reject, reload and confirm no
 optional vendor requests; allow one category and confirm only its vendors
 load; reopen preferences from your footer link. Test keyboard focus and a
-screen reader on your markup, because c15t no longer owns it.
+screen reader on your markup, because Inth no longer owns it.
 [Verify consent](/docs/guides/verify-consent) has the full list.

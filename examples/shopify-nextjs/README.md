@@ -1,8 +1,8 @@
-# c15t with Shopify Hydrogen
+# Inth with Shopify Hydrogen
 
 A Next.js App Router store on mock.shop, built with Hydrogen's
 framework-agnostic packages. It has a product grid, product pages with
-variants, and a cart. Each c15t choice goes to Shopify's Customer Privacy API.
+variants, and a cart. Each Inth choice goes to Shopify's Customer Privacy API.
 Where the policy is opt-in, page, product and cart events go out only after
 the visitor has answered the banner.
 
@@ -12,7 +12,7 @@ the visitor has answered the banner.
   `@inth/integrations/shopify`. `ShopifyAnalytics` renders `ShopifyScripts`
   in the head with the bridge's `setup`, and `ShopifyConsentSync` feeds it
   each `useSnapshot()`.
-- `c15t.config.ts`: declares the categories the bridge maps. c15t can't see
+- `inth.config.ts`: declares the categories the bridge maps. Inth can't see
   Shopify's scripts, so without this the dialog offers only Necessary.
 - `proxy.ts`: Hydrogen's `handleShopifyRoutes`. It serves the cart at
   `/api/cart` and the Storefront API at `/api/<version>/graphql.json`, where
@@ -43,6 +43,6 @@ mock.shop accepts the consent request but sets no consent cookie, and Shopify
 doesn't record analytics for it. Use a real shop to see events in Shopify.
 
 The example connects to the public demo Inth project. Set
-`NEXT_PUBLIC_C15T_BACKEND_URL` in `.env.local` to use your own.
+`NEXT_PUBLIC_INTH_PROJECT_URL` in `.env.local` to use your own.
 
 See the [Shopify guide](https://c15t.com/docs/integrations/shopify).

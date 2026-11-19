@@ -9,6 +9,8 @@ import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import type { ScriptLoaderHandle } from '@inth/sdk/modules/script-loader';
 import { afterEach, vi } from 'vitest';
 
+import { ALL_DENIED } from './engine/vendor-consent';
+
 export interface GoogleTagDataState {
 	ics: {
 		usedDefault: boolean;
@@ -174,13 +176,12 @@ export type TestWindow = Window &
 	};
 
 /**
- * Imperative shim over the v3 script loader for vendor contract tests.
+ * Imperative shim over the script loader for vendor contract tests.
  *
  * The loader is bound to a kernel whose subscription is muted, so the DOM is
- * only reconciled on these explicit calls. That mirrors the v2 loader these
- * tests were written against: `loadScripts(scripts, consents)` mounts every
- * eligible script (firing `onConsentChange` for ones already mounted) and
- * `updateScripts` additionally reports what was unmounted.
+ * only reconciled on these explicit calls: `loadScripts(scripts, consents)`
+ * mounts every eligible script (firing `onConsentChange` for ones already
+ * mounted) and `updateScripts` additionally reports what was unmounted.
  */
 let kernel: ConsentKernel = createConsentKernel();
 let loader: ScriptLoaderHandle | null = null;
@@ -254,21 +255,15 @@ export const clearAllScripts = function clearAllScripts(): void {
 	kernel = createConsentKernel();
 };
 
-export const deniedConsents = {
-	experience: false,
-	functionality: false,
-	marketing: false,
-	measurement: false,
-	necessary: true,
-};
+export { ALL_DENIED };
 
 export const grantedMeasurementConsents = {
-	...deniedConsents,
+	...ALL_DENIED,
 	measurement: true,
 };
 
 export const grantedMarketingConsents = {
-	...deniedConsents,
+	...ALL_DENIED,
 	marketing: true,
 };
 
@@ -303,12 +298,6 @@ export const installHeadProbe = function installHeadProbe(
 	onAppend: (script: HTMLScriptElement, win: TestWindow) => void
 ) {
 	return installAppendProbe(document.head, onAppend);
-};
-
-export const installBodyProbe = function installBodyProbe(
-	onAppend: (script: HTMLScriptElement, win: TestWindow) => void
-) {
-	return installAppendProbe(document.body, onAppend);
 };
 
 export const resetVendorGlobals = function resetVendorGlobals() {

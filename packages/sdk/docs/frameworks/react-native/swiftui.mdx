@@ -35,7 +35,7 @@ The app constructs one `AppConsentModel` during `App.init` and gives it to `@Sta
 
 The sample retries `protectedStorageUnavailable` after protected-data availability or scene activation. It keeps the failed installation visible and does not substitute memory or plaintext storage. `InthApple` already owns foreground and reachability refresh. Do not add another refresh loop or call `shutdown()` when a view disappears.
 
-For hosted use, set `C15T_BACKEND_URL` and `C15T_PRIVACY_POLICY_URL` in the app target's build settings. Use the project URL from your Inth dashboard, such as `https://your-project.inth.app`, and your app's real privacy policy. Configure the project's policy before launch. The hosted branch uses this compiled installation code:
+For hosted use, set `INTH_PROJECT_URL` and `INTH_PRIVACY_POLICY_URL` in the app target's build settings. Use the project URL from your Inth dashboard, such as `https://your-project.inth.app`, and your app's real privacy policy. Configure the project's policy before launch. The hosted branch uses this compiled installation code:
 
 <include src="../../shared/examples/native/core-swift/swiftui-consent/swiftui-hosted.mdx" />
 
@@ -69,7 +69,7 @@ The stock presenter saves on a worker, prevents duplicate actions and keeps a fa
 
 ## Try a separate custom form
 
-Add `--headless` to the scheme's Run arguments and open Privacy settings. This mode never constructs `ConsentPresenter` or mounts `.c15tConsent`. Its category-only `HeadlessPreferences` form supports measurement, cancel, rejected writes and an explicit reload after concurrent changes. It refuses IAB editing. Use the stock presenter and current IAB configuration for vendor consent.
+Add `--headless` to the scheme's Run arguments and open Privacy settings. This mode never constructs `ConsentPresenter` or mounts `.inth`. Its category-only `HeadlessPreferences` form supports measurement, cancel, rejected writes and an explicit reload after concurrent changes. It refuses IAB editing. Use the stock presenter and current IAB configuration for vendor consent.
 
 The draft starts from explicit recorded choices and captures the revision it edits:
 

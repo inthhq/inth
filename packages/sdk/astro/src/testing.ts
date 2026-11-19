@@ -1,7 +1,7 @@
 /**
  * `@inth/astro/testing` — run the consent flow in tests with no backend.
  *
- * Pass `mode: testing()` to the `c15t()` integration. It needs no
+ * Pass `mode: testing()` to the `inth()` integration. It needs no
  * `projectUrl`. The server and the browser resolve the recommended policy
  * pack with no network; set `overrides.country` (and `overrides.region`)
  * to pick the policy:
@@ -21,11 +21,11 @@
  * @example
  * ```ts
  * // astro.config.mjs, in a test build
- * import c15t from '@inth/astro';
+ * import Inth from '@inth/astro';
  * import { testing } from '@inth/astro/testing';
  *
  * export default defineConfig({
- *   integrations: [c15t({ mode: testing() })],
+ *   integrations: [inth({ mode: testing() })],
  * });
  * ```
  *

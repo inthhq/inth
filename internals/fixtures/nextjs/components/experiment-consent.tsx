@@ -11,7 +11,7 @@ import type { ConsentRootProps } from '@inth/nextjs';
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import consentConfig from '@/c15t.config';
+import consentConfig from '@/inth.config';
 import { experimentCallbacks } from '@/lib/experiment';
 import type { ExperimentLogEntry } from '@/lib/experiment';
 import { scripts } from '@/lib/scripts';

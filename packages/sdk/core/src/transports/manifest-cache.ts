@@ -24,10 +24,6 @@ import type {
 } from '@inth/sdk-schema/types';
 import { baseTranslations } from '@inth/sdk-translations/all';
 
-export {
-	DEFAULT_RESOLVE_TIMEOUT_MS,
-	withResolutionBudget,
-} from '../libs/manifest-cache-runtime';
 /** Request headers accepted by {@link resolveManifestInit}. */
 export type ManifestRequestHeaders =
 	| Headers

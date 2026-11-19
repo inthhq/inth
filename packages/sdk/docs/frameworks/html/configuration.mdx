@@ -1,6 +1,6 @@
 ---
 title: Configuration
-description: Every option you can pass to the c15t script tag on a plain HTML page through a queued config call, including scripts with callbacks, the network blocker, theme tokens, presentation, translations and storage.
+description: Every option you can pass to the Inth script tag on a plain HTML page through a queued config call, including scripts with callbacks, the network blocker, theme tokens, presentation, translations and storage.
 group: frameworks
 ---
 
@@ -13,15 +13,15 @@ queue a `config` call in an inline script before the tag:
 
 ```html
 <script>
-  window.c15t = window.c15t || [];
-  c15t.push(['config', {
+  window.inth = window.inth || [];
+  inth.push(['config', {
     legalLinks: { privacyPolicy: { href: '/privacy' } },
     ui: { banner: { legalLinks: ['privacyPolicy'] } },
     reloadOnConsentRevoked: true,
   }]);
 </script>
 <script
-  src="https://your-project.inth.app/c15t.js"
+  src="https://your-project.inth.app/inth.js"
   defer
 ></script>
 ```
@@ -30,7 +30,7 @@ The tag has `defer`, so an inline script anywhere in `<head>` runs before it.
 Later `config` calls win over earlier ones, and all of them win over the tag's
 attributes. `ui`, `ui.banner` and `ui.dialog` merge key by key; other options
 replace the earlier value. A `config` call after the client started does
-nothing and logs a warning. [window.c15t API](/docs/frameworks/html/api#how-options-merge)
+nothing and logs a warning. [window.inth API](/docs/frameworks/html/api#how-options-merge)
 explains the order.
 
 A `config` object can hold functions, such as script callbacks, because it
@@ -64,7 +64,7 @@ The banner, dialog and trigger options are on their component pages:
 | `data-project-url` | `projectUrl` |
 | `data-mode` | `mode` |
 | `data-manifest-url` | `manifestUrl` |
-| `data-policy` | `policy` (`c15t.testing.js` only) |
+| `data-policy` | `policy` (`inth.testing.js` only) |
 | `data-categories` | `consentCategories` |
 | `data-country`, `data-region`, `data-language` | `overrides.country`, `overrides.region`, `overrides.language` |
 | `data-privacy-policy-url`, `data-cookie-policy-url`, `data-terms-url` | `legalLinks`, plus `ui.banner.legalLinks` and `ui.dialog.legalLinks` |
@@ -77,7 +77,7 @@ The banner, dialog and trigger options are on their component pages:
 
 ## Store the consent cookie across subdomains
 
-By default c15t stores choices in a cookie and a localStorage key named `c15t`
+By default Inth stores choices in a cookie and a localStorage key named `inth`
 on the current host, for 365 days. To share one choice between
 `www.example.com` and `shop.example.com`, set `storageConfig`:
 
@@ -85,15 +85,15 @@ on the current host, for 365 days. To share one choice between
 
 ```html
 <script>
-  window.c15t = window.c15t || [];
-  c15t.push(['config', {
+  window.inth = window.inth || [];
+  inth.push(['config', {
     storageConfig: { crossSubdomain: true, defaultExpiryDays: 180 },
   }]);
 </script>
 ```
 
 `crossSubdomain` sets the cookie on the root domain. `defaultDomain`, such as
-`'.example.com'`, sets it explicitly and wins over `crossSubdomain`. Use the
+`'.example.com'`, sets it explicitly when `crossSubdomain` is off. Use the
 same settings on every site that shares the cookie. localStorage stays per
 host, so a tab on another subdomain picks up a change when it next becomes
 visible. [Consent state](/docs/concepts/consent-state#keep-open-tabs-in-step)

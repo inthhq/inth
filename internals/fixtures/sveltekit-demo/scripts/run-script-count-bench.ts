@@ -142,14 +142,14 @@ const readState = async function readState(page: Page): Promise<BenchState> {
 	const state = await page.evaluate(() =>
 		JSON.parse(
 			JSON.stringify(
-				window.__c15tGetScriptCountBenchState?.() ??
-					window.__c15tScriptCountBench ??
+				window.__inthGetScriptCountBenchState?.() ??
+					window.__inthScriptCountBench ??
 					null
 			)
 		)
 	);
 	if (!state) {
-		throw new Error('Missing window.__c15tScriptCountBench');
+		throw new Error('Missing window.__inthScriptCountBench');
 	}
 	return state as BenchState;
 };
@@ -179,7 +179,7 @@ const assertState = function assertState(state: BenchState, count: number) {
 const collectSample = async function collectSample(page: Page, count: number) {
 	await page.goto(`/bench/script-count?count=${count}`);
 	await page.waitForFunction(
-		() => window.__c15tScriptCountBench?.initialReady === true,
+		() => window.__inthScriptCountBench?.initialReady === true,
 		undefined,
 		{ timeout: 30_000 }
 	);
@@ -188,8 +188,8 @@ const collectSample = async function collectSample(page: Page, count: number) {
 	await page.click('#run-script-count');
 	await page.waitForFunction(
 		(expectedCount) =>
-			window.__c15tScriptCountBench?.complete === true &&
-			window.__c15tScriptCountBench.executedIds.length === expectedCount,
+			window.__inthScriptCountBench?.complete === true &&
+			window.__inthScriptCountBench.executedIds.length === expectedCount,
 		count,
 		{ timeout: 30_000 }
 	);

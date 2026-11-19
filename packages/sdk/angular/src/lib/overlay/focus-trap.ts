@@ -16,7 +16,7 @@ export type FocusTrapParams =
 	| (FocusTrapOptions & { enabled: boolean });
 
 const resolve = function resolve(params: FocusTrapParams | '') {
-	// A bare `c15tFocusTrap` attribute binds the empty string.
+	// A bare `inthFocusTrap` attribute binds the empty string.
 	if (params === '' || typeof params === 'boolean') {
 		return { enabled: params !== false, options: {} };
 	}
@@ -32,13 +32,13 @@ const resolve = function resolve(params: FocusTrapParams | '') {
  *
  * @example
  * ```html
- * <div role="dialog" [c15tFocusTrap]="{ enabled: open(), initialFocus: 'first-tabbable' }">…</div>
+ * <div role="dialog" [inthFocusTrap]="{ enabled: open(), initialFocus: 'first-tabbable' }">…</div>
  * ```
  */
-@Directive({ selector: '[c15tFocusTrap]' })
+@Directive({ selector: '[inthFocusTrap]' })
 export class FocusTrap {
 	/** Whether the trap is on, and where focus starts. A bare attribute is on. */
-	readonly c15tFocusTrap = input<FocusTrapParams | ''>(true);
+	readonly inthFocusTrap = input<FocusTrapParams | ''>(true);
 
 	constructor() {
 		if (!isPlatformBrowser(inject(PLATFORM_ID))) {
@@ -46,7 +46,7 @@ export class FocusTrap {
 		}
 		const host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
 		effect((onCleanup) => {
-			const { enabled, options } = resolve(this.c15tFocusTrap());
+			const { enabled, options } = resolve(this.inthFocusTrap());
 			if (enabled) {
 				onCleanup(setupFocusTrap(host, options));
 			}

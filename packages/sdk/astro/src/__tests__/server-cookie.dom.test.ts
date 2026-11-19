@@ -5,7 +5,7 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { resolveOptions } from '../integration';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { C15tAstroOptions } from '../types';
+import type { InthAstroOptions } from '../types';
 import { testRule, testResolution } from './policy-fixture';
 
 /**
@@ -30,7 +30,7 @@ const clearCookies = function clearCookies(): void {
 
 const resolve = async function resolve(
 	cookieHeader: string,
-	options: Partial<C15tAstroOptions> = {}
+	options: Partial<InthAstroOptions> = {}
 ) {
 	return await resolveConsentContext({
 		headers: new Headers(cookieHeader ? { cookie: cookieHeader } : {}),

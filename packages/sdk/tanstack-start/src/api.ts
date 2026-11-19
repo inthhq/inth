@@ -4,20 +4,20 @@
  * Mount one splat server route and both endpoints exist:
  *
  * ```ts
- * // src/routes/api/c15t/$.ts
+ * // src/routes/api/inth/$.ts
  * import { createFileRoute } from '@tanstack/react-router';
  * import { createConsentRoute } from '@inth/tanstack-start/api';
  *
- * export const Route = createFileRoute('/api/c15t/$')({
+ * export const Route = createFileRoute('/api/inth/$')({
  *   server: { handlers: createConsentRoute() },
  * });
  * ```
  *
- * - `GET /api/c15t/manifest` passes the cached backend manifest through
+ * - `GET /api/inth/manifest` passes the cached backend manifest through
  *   with its cache headers, so browsers and CDNs can cache it.
- * - `GET /api/c15t/init` resolves init in-process from that manifest for
+ * - `GET /api/inth/init` resolves init in-process from that manifest for
  *   the request's geo, language, and GPC signal. Pass
- *   `routePrefix: '/api/c15t'` to `createConsentStateHandler()` to use it;
+ *   `routePrefix: '/api/inth'` to `createConsentStateHandler()` to use it;
  *   a client language switch re-hits it.
  *
  * The backend URL and the policy snapshot default to what
@@ -32,11 +32,18 @@ import {
 	projectUrl as generatedProjectUrl,
 	snapshot as generatedSnapshot,
 } from '@inth/sdk/generated';
+import type { ConsentMode } from '@inth/sdk/modes';
 import type { ConsentManifest } from '@inth/sdk/schema/types';
-import { createConsentRouteHandler } from '@inth/sdk/server';
+import {
+	createConsentRouteHandler,
+	createConsentRouteMethodHandlers,
+	normalizeRoutePrefix,
+	resolveServerMode,
+} from '@inth/sdk/server';
 import type {
 	ConsentProxyOptions,
 	ConsentRouteFetchGvl,
+	ConsentRouteMethodHandlersFor,
 	ConsentRouteRequestContext,
 	ManifestCache,
 } from '@inth/sdk/server';
@@ -52,22 +59,41 @@ export type { ConsentProxyOptions } from '@inth/sdk/server';
 /** Options for {@link createConsentRoute}. */
 export interface ConsentRouteOptions {
 	/**
+	 * The `mode` given to `createConsentStateHandler()`, so the route reads
+	 * the manifest where the render does: a `manifest()` mode's `snapshot`
+	 * or `manifestUrl` (unless that URL is this route's own), and no build
+	 * snapshot for `source: 'runtime'` or an absolute `manifestUrl`.
+	 *
+	 * @default manifest()
+	 */
+	mode?: ConsentMode;
+
+	/**
+	 * Where this route is mounted, the same `routePrefix` given to
+	 * `createConsentStateHandler()`. A mode's `manifestUrl` on it is the
+	 * browser's way here, not a manifest to read.
+	 *
+	 * @default '/api/inth'
+	 */
+	routePrefix?: string;
+
+	/**
 	 * Backend base URL that serves `/manifest`, for example
 	 * `https://your-project.inth.app`. Defaults to the URL
-	 * `consentManifest()` read from `VITE_C15T_BACKEND_URL` or
-	 * `VITE_INTH_PROJECT_URL`. The proxy forwards to it.
+	 * `consentManifest()` read from `VITE_INTH_PROJECT_URL`. The proxy forwards to it.
 	 */
 	projectUrl?: string;
 
 	/**
-	 * Full manifest URL. Overrides `${projectUrl}/manifest`.
+	 * Full manifest URL. Overrides `${projectUrl}/manifest` and the mode's.
 	 */
 	manifestUrl?: string;
 	/**
 	 * Deployment-bound manifest. Takes precedence over upstream URLs.
-	 * Defaults to the snapshot `consentManifest()` fetched during the build.
-	 * `undefined`, which a build that could not fetch the manifest produces,
-	 * makes the server fetch the policy at runtime.
+	 * Defaults to the mode's `snapshot`, then the one `consentManifest()`
+	 * fetched during the build. `undefined`, which a build that could not
+	 * fetch the manifest produces, makes the server fetch the policy at
+	 * runtime.
 	 */
 	snapshot?: ConsentManifest | undefined;
 
@@ -130,12 +156,12 @@ export interface ConsentRouteOptions {
 	 * the client IP chain in `x-forwarded-for` only under
 	 * `trustForwardedHeaders` (a client-controlled chain would let a visitor
 	 * choose the address the backend sees), and adds
-	 * `x-forwarded-host`, `x-forwarded-proto`, the c15t version header, and
-	 * `x-c15t-proxy: @inth/tanstack-start`. The hosted backend sits behind
+	 * `x-forwarded-host`, `x-forwarded-proto`, the Inth version header, and
+	 * `x-inth-proxy: @inth/tanstack-start`. The hosted backend sits behind
 	 * Vercel Firewall or Cloudflare, and a bare server-to-server fetch (server
 	 * TLS fingerprint, no user agent, one egress IP for every visitor) scores
 	 * as a bot. Forwarding those headers gives the WAF the same signals a
-	 * direct browser request would carry, and `x-c15t-proxy` plus the version
+	 * direct browser request would carry, and `x-inth-proxy` plus the version
 	 * header give the platform a stable key for a firewall bypass rule.
 	 *
 	 * Operational note: Vercel Attack Challenge Mode and Cloudflare Super Bot
@@ -162,51 +188,29 @@ export type ConsentRouteHandler = (
 	context: ConsentRouteHandlerContext
 ) => Promise<Response>;
 
-/** Handlers returned by {@link createConsentRoute}. */
-export interface ConsentRouteHandlers {
-	/**
-	 * Splat handler: serves `manifest` and `init` under one file route. With
-	 * `proxy` enabled, every other allowlisted path is forwarded upstream.
-	 */
-	GET: ConsentRouteHandler;
-}
-
 /**
- * Handlers returned by {@link createConsentRoute} when `proxy` is enabled:
- * `GET` plus one proxy handler per write method.
- */
-export interface ConsentProxyRouteHandlers extends ConsentRouteHandlers {
-	POST: ConsentRouteHandler;
-	PATCH: ConsentRouteHandler;
-	PUT: ConsentRouteHandler;
-	DELETE: ConsentRouteHandler;
-	OPTIONS: ConsentRouteHandler;
-}
-
-/**
- * Picks the handler shape from the options: the proxy handlers when
- * `proxy` is set to anything truthy, the plain handlers otherwise.
+ * Handlers returned by {@link createConsentRoute}: `GET`, plus `POST`,
+ * `PATCH`, `PUT`, `DELETE` and `OPTIONS` when `proxy` is set to anything
+ * truthy.
  */
 export type ConsentRouteHandlersFor<Options extends ConsentRouteOptions> =
-	Options extends { proxy: true | ConsentProxyOptions }
-		? ConsentProxyRouteHandlers
-		: ConsentRouteHandlers;
+	ConsentRouteMethodHandlersFor<Options, ConsentRouteHandler>;
 
 /**
  * Creates the handlers for the same-origin consent route,
- * `src/routes/api/c15t/$.ts`. The splat names the consent path.
+ * `src/routes/api/inth/$.ts`. The splat names the consent path.
  *
- * @param options - Backend, snapshot, fetch, GVL, cache, and proxy
+ * @param options - Mode, backend, snapshot, fetch, GVL, cache, and proxy
  * options. The backend URL and snapshot default to what
  * `consentManifest()` provides.
- * @returns Handlers for `createFileRoute('/api/c15t/$')({ server: { handlers } })`.
+ * @returns Handlers for `createFileRoute('/api/inth/$')({ server: { handlers } })`.
  * With `proxy` off the set is `GET`; with it on, `POST`, `PATCH`, `PUT`,
  * `DELETE` and `OPTIONS` join. Manifest and init requests fail when there
  * is no snapshot, backend URL or `manifestUrl`. Proxy writes need a
  * backend URL.
  * @example
  * ```ts
- * export const Route = createFileRoute('/api/c15t/$')({
+ * export const Route = createFileRoute('/api/inth/$')({
  *   server: { handlers: createConsentRoute() },
  * });
  * ```
@@ -214,7 +218,7 @@ export type ConsentRouteHandlersFor<Options extends ConsentRouteOptions> =
  * ```ts
  * // Saves go through the route too. Pass `proxy: true` and the same
  * // `routePrefix` to createConsentStateHandler().
- * export const Route = createFileRoute('/api/c15t/$')({
+ * export const Route = createFileRoute('/api/inth/$')({
  *   server: { handlers: createConsentRoute({ proxy: true }) },
  * });
  * ```
@@ -223,14 +227,24 @@ export const createConsentRoute = function createConsentRoute<
 	Options extends ConsentRouteOptions = ConsentRouteOptions,
 >(options?: Options): ConsentRouteHandlersFor<Options> {
 	const resolved: ConsentRouteOptions = options ?? {};
+	const source = resolveServerMode({
+		adapter: '@inth/tanstack-start',
+		buildSnapshot:
+			'snapshot' in resolved ? resolved.snapshot : generatedSnapshot,
+		mode: resolved.mode,
+		projectUrl: resolved.projectUrl ?? generatedProjectUrl,
+		routePrefix:
+			resolved.routePrefix === undefined
+				? undefined
+				: normalizeRoutePrefix('@inth/tanstack-start', resolved.routePrefix),
+	}).route;
 	const handle = createConsentRouteHandler({
+		...source,
 		adapter: '@inth/tanstack-start',
 		cache: resolved.cache,
 		fetch: resolved.fetch,
 		fetchGvl: resolved.fetchGvl,
-		manifest: 'snapshot' in resolved ? resolved.snapshot : generatedSnapshot,
-		manifestUrl: resolved.manifestUrl,
-		projectUrl: resolved.projectUrl ?? generatedProjectUrl,
+		manifestUrl: resolved.manifestUrl ?? source.manifestUrl,
 		proxy: resolved.proxy,
 		trustForwardedHeaders: resolved.trustForwardedHeaders,
 	});
@@ -257,21 +271,9 @@ export const createConsentRoute = function createConsentRoute<
 		};
 	};
 
-	const GET: ConsentRouteHandler = async (context) =>
-		handle(context.request, await contextFor(context));
-	if (!resolved.proxy) {
-		const handlers: ConsentRouteHandlers = { GET };
-		return handlers as ConsentRouteHandlersFor<Options>;
-	}
-	const proxyHandler: ConsentRouteHandler = async (context) =>
-		handle(context.request, await contextFor(context, 'proxy'));
-	const proxied: ConsentProxyRouteHandlers = {
-		DELETE: proxyHandler,
-		GET,
-		OPTIONS: proxyHandler,
-		PATCH: proxyHandler,
-		POST: proxyHandler,
-		PUT: proxyHandler,
-	};
-	return proxied as ConsentRouteHandlersFor<Options>;
+	return createConsentRouteMethodHandlers<Options, ConsentRouteHandler>(
+		resolved.proxy,
+		(route) => async (context) =>
+			handle(context.request, await contextFor(context, route))
+	);
 };

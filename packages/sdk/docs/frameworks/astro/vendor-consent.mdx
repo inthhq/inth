@@ -1,6 +1,6 @@
 ---
 title: Vendor consent
-description: Let visitors allow a category such as marketing on an Astro site and still turn off one vendor in it, with the vendors option on the c15t() integration and the page client from @inth/astro/client.
+description: Let visitors allow a category such as marketing on an Astro site and still turn off one vendor in it, with the vendors option on the inth() integration and the page client from @inth/astro/client.
 group: frameworks
 ---
 
@@ -12,7 +12,7 @@ Declaring a vendor turns on vendor switches. Built-in `@inth/integrations`
 helpers then list their own vendor by name, so you only declare a vendor for a
 script of your own, or to replace a helper's name and privacy policy.
 
-Add `vendors` to the `c15t()` integration in `astro.config.mjs`. Each entry
+Add `vendors` to the `inth()` integration in `astro.config.mjs`. Each entry
 uses the `vendor` slug its script already carries:
 
 <include src="../../shared/examples/astro/vendors-option.mdx" />
@@ -31,10 +31,10 @@ On an Astro site, two more targets take a vendor slug:
 
 | Target | Field |
 | --- | --- |
-| Inert inline script | `data-c15t-vendor="x-pixel"` next to `data-c15t-category` |
+| Inert inline script | `data-inth-vendor="x-pixel"` next to `data-inth-category` |
 | Your own custom element | `client.isVendorAllowed('youtube')` in its render function |
 
-An inert tag with `data-c15t-vendor` runs once its category is allowed and the
+An inert tag with `data-inth-vendor` runs once its category is allowed and the
 visitor has not switched the vendor off:
 
 {/* example: fragment */}
@@ -43,14 +43,14 @@ visitor has not switched the vendor off:
 <script
   is:inline
   type="text/plain"
-  data-c15t-category="marketing"
-  data-c15t-vendor="x-pixel"
+  data-inth-category="marketing"
+  data-inth-vendor="x-pixel"
 >
   // X Pixel's base code
 </script>
 ```
 
-`data-c15t-vendor` does nothing without `data-c15t-category`. Under a
+`data-inth-vendor` does nothing without `data-inth-category`. Under a
 nonce-based Content Security Policy, the tag still needs the page's nonce. See
 [gate an inline script](/docs/frameworks/astro/scripts#gate-an-inline-script).
 [Embeds](/docs/frameworks/astro/embeds) covers the iframe blocker's

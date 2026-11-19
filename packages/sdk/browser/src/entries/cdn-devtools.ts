@@ -1,25 +1,26 @@
 /**
- * `dist/c15t.devtools.js` — the DevTools panel as a second script tag.
+ * `dist/inth.devtools.js` — the DevTools panel as a second script tag.
  *
  * ```html
- * <script src=".../c15t.js" data-project-url="..." defer></script>
- * <script src=".../c15t.devtools.js" data-open data-tab="location" defer></script>
+ * <script src=".../inth.js" data-project-url="..." defer></script>
+ * <script src=".../inth.devtools.js" data-open data-tab="location" defer></script>
  * ```
  *
- * Order does not matter: loaded first, it queues itself on `window.c15t`
+ * Order does not matter: loaded first, it queues itself on `window.inth`
  * the way any pre-load call does and mounts once the client initialises.
- * The panel lands on `window.c15t.devtools`.
+ * The panel lands on `window.inth.devtools`.
  *
  * This file is its own bundle, so its copy of the launcher slot is not the
  * one the main tag's trigger reads. It publishes through
- * `window.c15t.publishDevToolsLauncher`, the main tag's copy, instead.
+ * `window.inth.publishDevToolsLauncher`, the main tag's copy, instead.
  */
 
 import type { DevToolsPosition, DevToolsTab } from '@inth/sdk-dev-tools';
 
 import { createBrowserDevTools } from '../devtools-mount';
 import type { BrowserDevToolsOptions } from '../devtools-mount';
-import type { C15tGlobal, QueuedCall } from '../global';
+import type { InthGlobal, QueuedCall } from '../global';
+import { GLOBAL_NAME } from '../global-name';
 import type { ConsentClient } from '../types';
 
 const TABS: ReadonlySet<string> = new Set<DevToolsTab>([
@@ -59,11 +60,13 @@ const readOptions = function readOptions(
 	return options;
 };
 
-type GlobalWindow = Window & { c15t?: C15tGlobal | QueuedCall[] };
+type GlobalWindow = Window & {
+	[GLOBAL_NAME]?: InthGlobal | QueuedCall[];
+};
 
 const options = readOptions(document.currentScript);
 const mount = function mount(client: ConsentClient): void {
-	const api = (window as GlobalWindow).c15t;
+	const api = (window as GlobalWindow)[GLOBAL_NAME];
 	const global = api && !Array.isArray(api) ? api : null;
 	// The headless tag has no trigger and no slot; the panel keeps its own
 	// launcher.
@@ -77,10 +80,13 @@ const mount = function mount(client: ConsentClient): void {
 	}
 };
 
-const existing = (window as GlobalWindow).c15t;
+const existing = (window as GlobalWindow)[GLOBAL_NAME];
 if (existing && !Array.isArray(existing)) {
 	existing.onInit(mount);
 } else {
 	// The main tag has not run yet; it replays this once it installs.
-	(window as GlobalWindow).c15t = [...(existing ?? []), ['onInit', mount]];
+	(window as GlobalWindow)[GLOBAL_NAME] = [
+		...(existing ?? []),
+		['onInit', mount],
+	];
 }

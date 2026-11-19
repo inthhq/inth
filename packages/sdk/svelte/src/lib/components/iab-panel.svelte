@@ -1,28 +1,33 @@
 <script lang="ts">
 	import {
-		defaultTranslationConfig,
 		resolveConsentPresentation,
 		resolveIABBannerSummary,
 	} from '@inth/sdk/engine';
 	import type { Model } from '@inth/sdk/engine';
-	import { applyPublisherRestrictionsToGVL } from '@inth/sdk/iab/headless';
+	import {
+		applyPublisherRestrictionsToGVL,
+		resolveIABDialogDisplayModel,
+	} from '@inth/sdk/iab/headless';
+	import type { HeadlessIABVendorId as VendorId } from '@inth/sdk/iab/headless';
+	import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 	import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
+	import { resolveIABCopy } from '@inth/sdk/surface-state';
 	import { isDialogDismissKey } from '@inth/sdk/ui/primitives/dialog';
 	import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 	import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 	import { buttonVariants } from '@inth/sdk/ui/styles/primitives';
-	import { getTextDirection, resolveTranslations } from '@inth/sdk/ui/utils';
+	import {
+		getTextDirection,
+		resolveStyles,
+		toStyleAttributeValue,
+	} from '@inth/sdk/ui/utils';
 
 	import { focusTrap } from '../actions/focus-trap';
 	import { portal } from '../actions/portal';
 	import { scrollLock } from '../actions/scroll-lock';
 	import { getConsentContext, getThemeContext } from '../context.svelte';
 	import { IAB_DIALOG_SHEETS } from '../iab-dialog-sheets';
-	import { getIABTranslations } from '../iab-translations';
-	import { resolveIABDialogDisplayModel } from '../iab-types';
-	import type { VendorId } from '../iab-types';
 	import { Tabs } from '../primitives';
-	import { resolveComponentStyles, toStyleAttribute } from '../utils';
 	import Branding from './branding.svelte';
 	import IABFeatureItem from './iab-feature-item.svelte';
 	import IABPurposeItem from './iab-purpose-item.svelte';
@@ -71,7 +76,7 @@
 
 	// Per-part theme slots, as on the stock consent dialog.
 	const rootStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentDialog',
 			theme.theme,
 			{ baseClassName: [styles.root, styles.dialogVisible], noStyle },
@@ -79,7 +84,7 @@
 		)
 	);
 	const cardStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentDialogCard',
 			theme.theme,
 			{
@@ -91,7 +96,7 @@
 		)
 	);
 	const headerStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentDialogHeader',
 			theme.theme,
 			{ baseClassName: styles.header, noStyle },
@@ -99,7 +104,7 @@
 		)
 	);
 	const footerStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentDialogFooter',
 			theme.theme,
 			{ baseClassName: [styles.footer, actionStyles.actionRoot], noStyle },
@@ -121,22 +126,14 @@
 		})
 	);
 
-	// IAB state
 	const iabState = $derived(consent.state.iab);
 
-	// Translations
-	const iabT = $derived(getIABTranslations(consent.state.translationConfig));
-	const coreTranslations = $derived(
-		resolveTranslations(
-			consent.state.translationConfig,
-			defaultTranslationConfig
-		)
-	);
+	const iabT = $derived(resolveIABCopy(consent.state.copy));
+	const coreTranslations = $derived(consent.state.copy);
 	const textDirection = $derived(
-		getTextDirection(consent.state.translationConfig?.defaultLanguage)
+		getTextDirection(consent.state.translations?.language)
 	);
 
-	// Open state
 	const isOpen = $derived(
 		consent.state.hasConsentUi &&
 			models.includes(consent.state.model) &&
@@ -144,7 +141,6 @@
 			iabState?.config.enabled === true
 	);
 
-	// Tab state
 	let activeTab = $state<string | null>('purposes');
 	let selectedVendorId = $state<VendorId | null>(null);
 	let specialPurposesExpanded = $state(false);
@@ -246,24 +242,19 @@
 			iabState?.setVendorLegitimateInterest(vendorId, value);
 		};
 
-	const handlePurposeLegitimateInterestToggle =
-		function handlePurposeLegitimateInterestToggle(
-			purposeId: number,
-			value: boolean
-		) {
-			iabState?.setPurposeLegitimateInterest(purposeId, value);
-		};
+	const handlePurposeObjection = function handlePurposeObjection(
+		purposeId: number,
+		objected: boolean
+	) {
+		iabState?.setPurposeObjection(purposeId, objected);
+	};
 
 	const handleSave = async function handleSave() {
 		if (!iabState) {
 			return;
 		}
 		const state = iabState;
-		try {
-			await saveIABConsentSurface(consent.kernel, () => state.save());
-		} catch {
-			// Keep the prompt available so a later action can retry the failed load/save.
-		}
+		await saveIABConsentSurface(consent.kernel, () => state.save());
 	};
 
 	const handleAcceptAll = function handleAcceptAll() {
@@ -295,12 +286,12 @@
 </script>
 
 <!--
-	Plain elements, not the Ark dialog: React's IAB preference centre is
-	hand-rolled, and a primitive library's `data-slot`/`data-state`
-	bookkeeping is exactly the kind of difference the cross-framework gate
-	is there to catch. The behaviour the primitive provided — portal, focus
-	trap, scroll lock, Escape to close — comes from the same actions the
-	IAB banner uses.
+	Plain elements, not the dialog primitive: React's IAB preference centre
+	is hand-rolled, and the primitive's `data-slot`/`data-state` bookkeeping
+	is exactly the kind of difference the cross-framework gate is there to
+	catch. The behaviour the primitive provides — portal, focus trap,
+	scroll lock, Escape to close — comes from the same actions the IAB
+	banner uses.
 -->
 {#if isOpen}
 	<div use:portal>
@@ -318,15 +309,16 @@
 		{/if}
 		<div
 			class={rootStyle.className || ''}
-			style={toStyleAttribute(rootStyle.style)}
+			style={toStyleAttributeValue(rootStyle.style)}
 			data-testid="iab-consent-dialog-root"
+			{...{ [SURFACE_ROOT_ATTRIBUTE]: 'dialog' }}
 			dir={textDirection}
 		>
 			<!-- A `div`, not a `dialog`: the user agent's dialog padding is
 			     1em, which the card sets for itself. -->
 			<div
 				class={cardStyle.className || ''}
-				style={toStyleAttribute(cardStyle.style)}
+				style={toStyleAttributeValue(cardStyle.style)}
 				data-testid="iab-consent-dialog-card"
 				role="dialog"
 				aria-modal={preferences.blocking ? 'true' : undefined}
@@ -340,10 +332,9 @@
 				use:scrollLock={preferences.blocking}
 				onkeydown={handleDialogKeydown}
 			>
-				<!-- Header -->
 				<div
 					class={headerStyle.className || ''}
-					style={toStyleAttribute(headerStyle.style)}
+					style={toStyleAttributeValue(headerStyle.style)}
 				>
 					<div class={noStyle ? '' : styles.headerContent || ''}>
 						<h2 class={noStyle ? '' : styles.title || ''}>
@@ -428,10 +419,9 @@
 											vendorConsents={iabState.vendorConsents}
 											onVendorToggle={handleVendorToggle}
 											onVendorClick={handleVendorClick}
-											vendorLegitimateInterests={iabState.vendorLegitimateInterests}
+											legitimateInterests={iabState}
 											onVendorLegitimateInterestToggle={handleVendorLegitimateInterestToggle}
-											purposeLegitimateInterests={iabState.purposeLegitimateInterests}
-											onPurposeLegitimateInterestToggle={handlePurposeLegitimateInterestToggle}
+											onPurposeObjection={handlePurposeObjection}
 											{noStyle}
 											{iabT}
 										/>
@@ -445,7 +435,7 @@
 											vendorConsents={iabState.vendorConsents}
 											onVendorToggle={handleVendorToggle}
 											onVendorClick={handleVendorClick}
-											vendorLegitimateInterests={iabState.vendorLegitimateInterests}
+											legitimateInterests={iabState}
 											onVendorLegitimateInterestToggle={handleVendorLegitimateInterestToggle}
 											{noStyle}
 											{iabT}
@@ -459,10 +449,9 @@
 											vendorConsents={iabState.vendorConsents}
 											onVendorToggle={handleVendorToggle}
 											onVendorClick={handleVendorClick}
-											vendorLegitimateInterests={iabState.vendorLegitimateInterests}
+											legitimateInterests={iabState}
 											onVendorLegitimateInterestToggle={handleVendorLegitimateInterestToggle}
-											purposeLegitimateInterests={iabState.purposeLegitimateInterests}
-											onPurposeLegitimateInterestToggle={handlePurposeLegitimateInterestToggle}
+											onPurposeObjection={handlePurposeObjection}
 											{noStyle}
 											{iabT}
 										/>
@@ -570,7 +559,6 @@
 									</section>
 								{/if}
 
-								<!-- Consent storage notice -->
 								<div class={noStyle ? '' : styles.consentNotice || ''}>
 									<p class={noStyle ? '' : styles.consentNoticeText || ''}>
 										{iabT.preferenceCenter.footer.consentStorage}
@@ -593,7 +581,7 @@
 									{selectedVendorId}
 									onClearSelection={() => (selectedVendorId = null)}
 									customVendors={iabState.nonIABVendors}
-									vendorLegitimateInterests={iabState.vendorLegitimateInterests}
+									legitimateInterests={iabState}
 									onVendorLegitimateInterestToggle={handleVendorLegitimateInterestToggle}
 									adTechProviders={iabState.adTechProviders}
 									adTechProviderConsents={iabState.adTechProviderConsents}
@@ -607,10 +595,9 @@
 					</div>
 				</Tabs.Root>
 
-				<!-- Footer -->
 				<div
 					class={footerStyle.className || ''}
-					style={toStyleAttribute(footerStyle.style)}
+					style={toStyleAttributeValue(footerStyle.style)}
 					data-direction="row"
 					data-split
 				>
@@ -655,9 +642,7 @@
 				<Branding
 					{hideBranding}
 					{noStyle}
-					variant="dialog-tag"
-					themeKey="iabConsentDialogTag"
-					data-testid="iab-consent-dialog-branding"
+					surface="iab-dialog"
 				/>
 			</div>
 		</div>

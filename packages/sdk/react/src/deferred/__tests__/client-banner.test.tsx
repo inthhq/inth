@@ -41,8 +41,11 @@ test('renders the stock banner, and its accept records the choice, under the eng
 				<ConsentBanner disableAnimation />
 			</EngineProvider>
 		);
-		await vi.waitFor(() =>
-			expect(document.querySelector(ACCEPT)).not.toBeNull()
+		// The banner's own chunk is the first import of this file; cold, it
+		// can outlast the default second.
+		await vi.waitFor(
+			() => expect(document.querySelector(ACCEPT)).not.toBeNull(),
+			{ timeout: 5000 }
 		);
 		document.querySelector<HTMLButtonElement>(ACCEPT)?.click();
 		await vi.waitFor(() => expect(document.querySelector(ACCEPT)).toBeNull());

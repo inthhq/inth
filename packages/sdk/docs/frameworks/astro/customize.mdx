@@ -1,12 +1,12 @@
 ---
 title: Customize
-description: Change the c15t banner and preference dialog on an Astro site with theme tokens, button styles, copy, dark mode, legal links and your own stylesheet order, all from the integration options.
+description: Change the Inth banner and preference dialog on an Astro site with theme tokens, button styles, copy, dark mode, legal links and your own stylesheet order, all from the integration options.
 group: frameworks
 ---
 
 ## Choose what to change
 
-Astro takes every customization through the `c15t()` options in
+Astro takes every customization through the `inth()` options in
 `astro.config.mjs`, and renders it on the server. The options must survive JSON
 serialization, so they hold values, not functions.
 
@@ -34,7 +34,7 @@ from a bottom bar to a fully custom one, with tested code for this framework.
 Put tokens in the integration's `theme` option:
 
 ```js title="astro.config.mjs (partial)"
-c15t({
+inth({
 	theme: {
 		colors: {
 			primary: '#146b56',
@@ -47,7 +47,7 @@ c15t({
 ```
 
 `ConsentScript` renders the tokens on the server as a
-`<style id="c15t-theme">` element, so the banner and the dialog share them from
+`<style id="inth-theme">` element, so the banner and the dialog share them from
 the first paint. Set hover and text colors together with a brand color, so each
 button state stays readable. [Theme tokens](/docs/customization/tokens)
 lists the tokens.
@@ -58,12 +58,12 @@ browser does not turn tokens into CSS, so tokens in the client entrypoint's
 
 ## Style the banner buttons
 
-`theme.consentActions` sets each button's `mode` and `variant`. c15t reads the
+`theme.consentActions` sets each button's `mode` and `variant`. Inth reads the
 button's own key first, then `primary` for the action the policy marks as
 primary, then `default`:
 
 ```js title="astro.config.mjs (partial)"
-c15t({
+inth({
 	theme: {
 		consentActions: {
 			primary: { mode: 'filled' },
@@ -81,7 +81,7 @@ For wording on every page and in the dialog, set `i18n.messages`, keyed by
 language:
 
 ```js title="astro.config.mjs (partial)"
-c15t({
+inth({
 	i18n: {
 		messages: {
 			en: {
@@ -116,7 +116,7 @@ and the message keys the banner reads.
 `presentation.prompt` sets the banner's shape and where it sits:
 
 ```js title="astro.config.mjs (partial)"
-c15t({ presentation: { prompt: { variant: 'bar', position: 'bottom' } } });
+inth({ presentation: { prompt: { variant: 'bar', position: 'bottom' } } });
 ```
 
 `variant` is `'floating'` (default), `'bar'`, `'widget'` or `'wall'`. The policy
@@ -126,7 +126,7 @@ explains what presentation can and cannot change.
 
 ## Set light or dark mode
 
-The banner and dialog turn dark when `<html>` has the `c15t-dark` class. The
+The banner and dialog turn dark when `<html>` has the `inth-dark` class. The
 integration's `colorScheme` option decides who sets it:
 
 | Value | Behavior |
@@ -137,11 +137,11 @@ integration's `colorScheme` option decides who sets it:
 | `'none'` or `null` | Never adds or removes the class. Your site sets it |
 
 With the first three values, `ConsentScript` sets the class before first paint,
-and c15t sets it again after each `ClientRouter` navigation. Set dark colors in
+and Inth sets it again after each `ClientRouter` navigation. Set dark colors in
 `theme.dark`. [Dark mode](/docs/customization/dark-mode) explains why Astro
 follows the system setting by default.
 
-Use `'none'` when your site has its own theme switch. Toggle `c15t-dark` on
+Use `'none'` when your site has its own theme switch. Toggle `inth-dark` on
 `<html>` together with your own dark class. If your theme script does not run
 on `astro:after-swap`, set the class again there, because a `ClientRouter`
 swap replaces the attributes of `<html>`.
@@ -151,7 +151,7 @@ swap replaces the attributes of `<html>`.
 Define the links once in the integration options:
 
 ```js title="astro.config.mjs (partial)"
-c15t({
+inth({
 	legalLinks: {
 		privacyPolicy: { href: '/privacy', label: 'Privacy policy' },
 		cookiePolicy: { href: '/cookies', label: 'Cookie policy' },
@@ -173,7 +173,7 @@ named part of the banner, the IAB banner and the dialogs:
 {/* example: fragment */}
 
 ```js title="astro.config.mjs (partial)"
-c15t({
+inth({
 	theme: {
 		slots: { consentBannerCard: 'brand-card', buttonPrimary: 'brand-button' },
 	},
@@ -190,7 +190,7 @@ for Tailwind 4 and 3.
 `disableAnimation` in the integration options skips the banner's entry
 animation and the dialogs' enter and exit animations. The same prop on
 `ConsentBanner`, `ConsentDialog`, `IABConsentBanner` or `IABConsentDialog`
-overrides it for one surface. c15t's stylesheet already stops these
+overrides it for one surface. Inth's stylesheet already stops these
 animations for visitors who ask for reduced motion. [Motion and animation](/docs/customization/motion) covers the duration
 and easing tokens.
 
@@ -198,10 +198,10 @@ and easing tokens.
 
 `ConsentScript`, or the first consent component on a layout without it,
 inlines base and configured IAB banner rules once per page as `<style>`
-elements. No c15t stylesheet holds back the first paint. A page the server
+elements. No Inth stylesheet holds back the first paint. A page the server
 shows no banner, such as a returning visitor's, leaves the base rules out, and
 the browser adds them when the dialog opens. When a visitor
-first reaches for a dialog, c15t links its rules and waits for them before
+first reaches for a dialog, Inth links its rules and waits for them before
 mounting the surface. Svelte also loads its primitives stylesheet. The IAB
 panel's rules load only when the IAB dialog opens.
 
@@ -215,12 +215,12 @@ order yourself, set `styles: false` and import the stylesheets from your own
 CSS. [Stylesheets and CSS layers](/docs/customization/stylesheets#load-astros-stylesheets-yourself)
 lists the files to import.
 
-For markup with no c15t class names at all, pass `noStyle` to `ConsentBanner`
+For markup with no Inth class names at all, pass `noStyle` to `ConsentBanner`
 and style its `data-testid` and `data-*` attributes.
 
 ## Check your changes
 
-- View the page source. It contains `<style id="c15t-theme">` with your tokens.
+- View the page source. It contains `<style id="inth-theme">` with your tokens.
 - Open the banner and the preference dialog in light and dark mode. Both use
   your colors, and every button label is readable.
 - Change the browser language and reload. The copy follows it, or stays in

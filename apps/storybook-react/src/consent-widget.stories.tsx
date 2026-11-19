@@ -1,7 +1,7 @@
 import {
 	expandedCategories,
 	expandedVendors,
-} from '@c15t/conformance/play/consent-widget';
+} from '@inth/conformance/play/consent-widget';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { ConsentWidget } from '../../../packages/sdk/react/src/index';

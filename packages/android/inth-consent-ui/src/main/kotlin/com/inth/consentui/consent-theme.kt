@@ -66,14 +66,14 @@ data class ConsentThemeColor(val light: Int, val dark: Int = light) {
  * an explicit theme passed to [InthConsent] takes precedence over both.
  */
 data class ConsentTheme(
-    val colors: Colors = Colors.c15t,
+    val colors: Colors = Colors.default,
     val radius: Radius = Radius(),
     val spacing: Spacing = Spacing(),
     val typography: Typography = Typography(),
     /** Per-part overrides on top of the tokens. */
     val slots: Map<Slot, SlotStyle> = emptyMap(),
     val brand: Brand = Brand(),
-    val copy: Copy = Copy.c15t,
+    val copy: Copy = Copy.default,
     /** Whether the small provider attribution line appears under the first-layer actions. */
     val showsBranding: Boolean = true,
     /** Provider identity in the attribution tag, independent of the app [brand]. */
@@ -90,22 +90,22 @@ data class ConsentTheme(
 
     /**
      * Semantic colours. Components never use a raw value outside this set. A name that has a web
-     * token is that token's name: [primary] is `--c15t-primary`, [textMuted] is `--c15t-text-muted`.
+     * token is that token's name: [primary] is `--inth-primary`, [textMuted] is `--inth-text-muted`.
      */
     data class Colors(
         /** Page background behind every consent screen. No web token. */
         val canvas: ConsentThemeColor,
-        /** Cards and list rows that sit on the canvas. Web: `--c15t-surface`. */
+        /** Cards and list rows that sit on the canvas. Web: `--inth-surface`. */
         val surface: ConsentThemeColor,
         /** A quieter surface for subordinate content such as the partner purposes list. No web token. */
         val surfaceMuted: ConsentThemeColor,
-        /** Primary text. Web: `--c15t-text`. */
+        /** Primary text. Web: `--inth-text`. */
         val text: ConsentThemeColor,
-        /** Supporting text and section labels. Web: `--c15t-text-muted`. */
+        /** Supporting text and section labels. Web: `--inth-text-muted`. */
         val textMuted: ConsentThemeColor,
-        /** Links, switches, the Save button, and the brand eyebrow. Web: `--c15t-primary`. */
+        /** Links, switches, the Save button, and the brand eyebrow. Web: `--inth-primary`. */
         val primary: ConsentThemeColor,
-        /** Text on [primary]. Web: `--c15t-text-on-primary`. */
+        /** Text on [primary]. Web: `--inth-text-on-primary`. */
         val textOnPrimary: ConsentThemeColor,
         /**
          * Fill of the two decision buttons. Accept all and Reject all always share it. In an
@@ -125,7 +125,7 @@ data class ConsentTheme(
 
         companion object {
             /** Warm paper, ink decisions, and the c15t blue for links and switches. */
-            val c15t = Colors(
+            val default = Colors(
                 canvas = ConsentThemeColor(0xF8F4EE, 0x171411),
                 surface = ConsentThemeColor(0xFFFFFF, 0x211D18),
                 surfaceMuted = ConsentThemeColor(0xEFE9DF, 0x2B2620),
@@ -139,11 +139,11 @@ data class ConsentTheme(
         }
     }
 
-    /** Corner radii, named after `--c15t-radius-*`. */
+    /** Corner radii, named after `--inth-radius-*`. */
     data class Radius(
         /** Status callouts. `null` follows [md] minus 2dp. */
         val sm: Dp? = null,
-        /** Buttons and cards. Web: `--c15t-radius-md`. */
+        /** Buttons and cards. Web: `--inth-radius-md`. */
         val md: Dp = 14.dp,
         /** The notice card and the dialogs. `null` follows [md] plus 6dp. */
         val lg: Dp? = null,
@@ -153,7 +153,7 @@ data class ConsentTheme(
     }
 
     /**
-     * Spacing scale, named after `--c15t-space-*`. Page gutters, stack gaps and section padding
+     * Spacing scale, named after `--inth-space-*`. Page gutters, stack gaps and section padding
      * read it; a control's own inset stays fixed so its tap target keeps its size.
      */
     data class Spacing(
@@ -166,7 +166,7 @@ data class ConsentTheme(
 
     /** Type settings, named after the web `typography` tokens. */
     data class Typography(
-        /** Face for every text role except the headline. `null` is the platform face. Web: `--c15t-font-family`. */
+        /** Face for every text role except the headline. `null` is the platform face. Web: `--inth-font-family`. */
         val fontFamily: FontFamily? = null,
         /** Typeface of the first-layer headline. No web token. */
         val headlineFont: HeadlineFont = HeadlineFont.SansSerif,
@@ -174,7 +174,7 @@ data class ConsentTheme(
     )
 
     /**
-     * Sizes in sp, named after `--c15t-font-size-*`. `null` keeps the Material size. Every text
+     * Sizes in sp, named after `--inth-font-size-*`. `null` keeps the Material size. Every text
      * role in a group scales with its token, so the hierarchy inside the group holds, and the
      * system font scale still applies on top.
      */
@@ -292,7 +292,7 @@ data class ConsentTheme(
      */
     enum class Appearance {
         /** Warm paper and ink. */
-        C15t,
+        Paper,
         /**
          * The platform's own backgrounds and text colours with the app's accent colour, and a
          * centred first-layer page.
@@ -302,7 +302,7 @@ data class ConsentTheme(
 
     /**
      * First-layer copy a host may replace. Decision labels are not here on purpose. A `null` field
-     * shows the stock copy from `@c15t/translations` in the policy's language; a host string is
+     * shows the stock copy from `@inth/sdk-translations` in the policy's language; a host string is
      * shown as given in every language.
      */
     data class Copy(
@@ -313,7 +313,7 @@ data class ConsentTheme(
     ) {
         companion object {
             /** The stock copy, translated. */
-            val c15t = Copy()
+            val default = Copy()
         }
     }
 
@@ -360,7 +360,7 @@ data class ConsentTheme(
         const val META_INTRODUCTION = "com.inth.consent.INTRODUCTION"
         /** `page`, `sheet` or `prompt`. */
         const val META_FIRST_LAYER = "com.inth.consent.FIRST_LAYER"
-        /** `c15t` or `system`. */
+        /** `paper` or `system`. */
         const val META_APPEARANCE = "com.inth.consent.APPEARANCE"
         /** `bottom` or `top`. */
         const val META_SAVE_PLACEMENT = "com.inth.consent.SAVE_PLACEMENT"
@@ -529,7 +529,7 @@ data class ConsentTheme(
      * pair for that appearance instead. The first fallback in a process is logged once.
      */
     internal fun withReadableDecisions(): ConsentTheme {
-        val stock = Colors.c15t
+        val stock = Colors.default
         val fill = decisionFill
         val label = decisionLabel
         val light = contrastRatio(fill.light, label.light) >= DECISION_CONTRAST_FLOOR
@@ -553,7 +553,7 @@ data class ConsentTheme(
      * This theme with [Appearance.System] applied: the platform's grouped backgrounds and label
      * colours, links and switches in [tint], and decisions filled with [tint] darkened until
      * white text on it reaches the 5:1 IAB TCF minimum. A sheet or prompt first layer takes it
-     * whatever its [appearance]. A `C15t` page, or a theme whose colours a host has set, is
+     * whatever its [appearance]. A `Paper` page, or a theme whose colours a host has set, is
      * returned unchanged.
      *
      * @param tint The app's accent colour as light and dark sRGB values.
@@ -579,7 +579,7 @@ data class ConsentTheme(
 
     /** Whether [withSystemAppearance] replaces the colours: a system appearance or a card, on stock colours. */
     internal val usesSystemColours: Boolean
-        get() = (appearance == Appearance.System || firstLayer != FirstLayer.Page) && colors == Colors.c15t
+        get() = (appearance == Appearance.System || firstLayer != FirstLayer.Page) && colors == Colors.default
 
     /**
      * The first layer's container. Large text always gets a page, where the decisions follow the
@@ -713,7 +713,7 @@ data class ConsentTheme(
         }
 
         /** The stock c15t appearance. */
-        val c15t = ConsentTheme()
+        val default = ConsentTheme()
 
         /** The theme hosts that present without passing one get. Set it once at launch. */
         @Volatile var current: ConsentTheme? = null
@@ -724,13 +724,13 @@ data class ConsentTheme(
             val bundle = runCatching {
                 application.packageManager.getApplicationInfo(application.packageName, PackageManager.GET_META_DATA).metaData
             }.getOrNull()
-            return (current ?: c15t).applying(bundle, application)
+            return (current ?: default).applying(bundle, application)
         }
     }
 }
 
 /** The theme in scope. Set by [InthConsent]; defaults to the stock appearance. */
-val LocalConsentTheme = staticCompositionLocalOf { ConsentTheme.c15t }
+val LocalConsentTheme = staticCompositionLocalOf { ConsentTheme.default }
 
 /** What the first layer is drawn on. Only the first layer sets it; every other screen is [Standard]. */
 internal enum class FirstLayerChrome {

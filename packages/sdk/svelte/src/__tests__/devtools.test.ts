@@ -2,7 +2,7 @@ import { render } from '@testing-library/svelte';
 import { describe, expect, test, vi } from 'vitest';
 
 import ConsentDevToolsDefault, {
-	C15TDevTools,
+	InthDevTools,
 	ConsentDevTools,
 	DevTools,
 } from '../lib/devtools';
@@ -10,9 +10,9 @@ import DevToolsFixture from './fixtures/devtools-fixture.svelte';
 
 /** The panel roots, which live inside each host's shadow root. */
 const mountedDevTools = (): HTMLElement[] =>
-	[...document.querySelectorAll<HTMLElement>('[data-c15t-dev-tools-host]')]
+	[...document.querySelectorAll<HTMLElement>('[data-inth-dev-tools-host]')]
 		.map((host) =>
-			host.shadowRoot?.querySelector<HTMLElement>('[data-c15t-dev-tools]')
+			host.shadowRoot?.querySelector<HTMLElement>('[data-inth-dev-tools]')
 		)
 		.filter((root): root is HTMLElement => root !== null && root !== undefined);
 
@@ -203,11 +203,11 @@ describe('@inth/svelte/devtools', () => {
 	test('updates presentation options without leaving duplicate instances', async () => {
 		const result = render(DevToolsFixture, { position: 'top-left' });
 		await vi.waitFor(() =>
-			expect(queryDevTools('.c15t-dev-tools--top-left')).not.toBeNull()
+			expect(queryDevTools('.inth-dev-tools--top-left')).not.toBeNull()
 		);
 		await result.rerender({ position: 'bottom-left' });
 		await vi.waitFor(() =>
-			expect(queryDevTools('.c15t-dev-tools--bottom-left')).not.toBeNull()
+			expect(queryDevTools('.inth-dev-tools--bottom-left')).not.toBeNull()
 		);
 		expect(mountedDevTools()).toHaveLength(1);
 		result.unmount();
@@ -217,10 +217,10 @@ describe('@inth/svelte/devtools', () => {
 		try {
 			await vi.waitFor(() =>
 				expect(
-					document.body.querySelector('[data-c15t-dev-tools]')
+					document.body.querySelector('[data-inth-dev-tools]')
 				).not.toBeNull()
 			);
-			expect(document.querySelector('[data-c15t-dev-tools-host]')).toBeNull();
+			expect(document.querySelector('[data-inth-dev-tools-host]')).toBeNull();
 		} finally {
 			result.unmount();
 		}
@@ -228,7 +228,7 @@ describe('@inth/svelte/devtools', () => {
 	test('exports compatible component names', () => {
 		expect(ConsentDevToolsDefault).toBe(ConsentDevTools);
 		expect(DevTools).toBe(ConsentDevTools);
-		expect(C15TDevTools).toBe(ConsentDevTools);
+		expect(InthDevTools).toBe(ConsentDevTools);
 	});
 
 	test('requires Svelte consent provider context', () => {
@@ -241,8 +241,8 @@ describe('@inth/svelte/devtools', () => {
 		await vi.waitFor(() => {
 			expect(mountedDevTools()).toHaveLength(2);
 		});
-		expect(queryDevTools('.c15t-dev-tools--top-left')).not.toBeNull();
-		expect(queryDevTools('.c15t-dev-tools--bottom-right')).not.toBeNull();
+		expect(queryDevTools('.inth-dev-tools--top-left')).not.toBeNull();
+		expect(queryDevTools('.inth-dev-tools--bottom-right')).not.toBeNull();
 
 		result.unmount();
 		expect(mountedDevTools()).toHaveLength(0);

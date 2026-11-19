@@ -4,8 +4,8 @@
  * adds the port, the flags those scripts accept, and where the client build
  * lands.
  */
-import { examplesPayloadExamples } from '@c15t/benchmarking/examples-payload';
-import type { ExamplesPayloadExample } from '@c15t/benchmarking/examples-payload';
+import { examplesPayloadExamples } from '@inth/benchmarking/examples-payload';
+import type { ExamplesPayloadExample } from '@inth/benchmarking/examples-payload';
 
 export interface ExampleRuntime extends ExamplesPayloadExample {
 	/** Port the started example listens on. */
@@ -40,7 +40,7 @@ const RUNTIMES: Record<
 		startArgs: ['--port', '4522', '--host', '127.0.0.1'],
 		startEnv: {},
 	},
-	// The page loads c15t.js from the backend, so there is no client build.
+	// The page loads inth.js from the backend, so there is no client build.
 	html: { ...portEnv(4523), clientDirs: [] },
 	javascript: { ...vitePreview(4524), clientDirs: ['dist'] },
 	// `next start --port 3100` is fixed in the example's script.
@@ -93,9 +93,9 @@ export const backendEnv = function backendEnv(
 	projectUrl: string
 ): Record<string, string> {
 	return {
-		NEXT_PUBLIC_C15T_BACKEND_URL: projectUrl,
-		NUXT_PUBLIC_C15T_BACKEND_URL: projectUrl,
-		PUBLIC_C15T_BACKEND_URL: projectUrl,
-		VITE_C15T_BACKEND_URL: projectUrl,
+		NEXT_PUBLIC_INTH_PROJECT_URL: projectUrl,
+		NUXT_PUBLIC_INTH_PROJECT_URL: projectUrl,
+		PUBLIC_INTH_PROJECT_URL: projectUrl,
+		VITE_INTH_PROJECT_URL: projectUrl,
 	};
 };

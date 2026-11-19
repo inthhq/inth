@@ -26,7 +26,6 @@ const runtimeFor = function runtimeFor(overrides: {
 		mode: testing(),
 		overrides,
 		persistence: false,
-		windowDebug: false,
 	});
 };
 
@@ -104,7 +103,6 @@ describe('testing()', () => {
 			mode: testing({ policy: [NOTICE_RULE] }),
 			overrides: { country: 'DE' },
 			persistence: false,
-			windowDebug: false,
 		});
 
 		await runtime.kernel.commands.init();
@@ -131,7 +129,6 @@ describe('testing()', () => {
 			}),
 			overrides: { country: 'JP' },
 			persistence: false,
-			windowDebug: false,
 		});
 
 		await runtime.kernel.commands.init();
@@ -161,7 +158,6 @@ describe('testing()', () => {
 			mode: testing(),
 			persistence: false,
 			projectUrl: 'https://backend.example',
-			windowDebug: false,
 		});
 
 		await runtime.kernel.commands.init();
@@ -188,7 +184,9 @@ describe('projectUrl', () => {
 		expect(String(fetchSpy.mock.calls[0]?.[0]).split('?')[0]).toBe(
 			'https://backend.example/init'
 		);
-		expect((window as { c15t?: { mode?: string } }).c15t?.mode).toBe('hosted');
+		expect(
+			(window as { __inthDebug?: { mode?: string } }).__inthDebug?.mode
+		).toBe('hosted');
 		runtime.dispose();
 	});
 

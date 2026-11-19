@@ -90,8 +90,8 @@ describe.each(['ordinary', 'IAB'])('%s script-tag legal links', (variant) => {
 		);
 		expect(links(client)).toEqual(legalURLs);
 		expect(
-			client.ui?.root.querySelector('[data-testid$="-branding"]') !== null
-		).toBe(variant === 'IAB');
+			client.ui?.root.querySelector('[data-testid$="-branding"]')
+		).toBeNull();
 
 		client.openDialog();
 		expect(links(client)).toEqual(legalURLs);
@@ -130,6 +130,13 @@ describe.each(['ordinary', 'IAB'])('%s script-tag legal links', (variant) => {
 		}
 	);
 
+	it('opens links in a new tab with noopener noreferrer', async () => {
+		const client = await start();
+		const link = client.ui?.root.querySelector('[data-testid*="-legal-link-"]');
+		expect(link?.getAttribute('target')).toBe('_blank');
+		expect(link?.getAttribute('rel')).toBe('noopener noreferrer');
+	});
+
 	it('separates the links from the copy and from each other', async () => {
 		const client = await start();
 		const linkGroup = (): Element | null | undefined =>
@@ -145,6 +152,6 @@ describe.each(['ordinary', 'IAB'])('%s script-tag legal links', (variant) => {
 	it('does not mount UI when the tag has data-no-ui', async () => {
 		const client = await start({ ...legalAttributes, 'data-no-ui': '' });
 		expect(client.ui).toBeNull();
-		expect(document.querySelector('[data-c15t-ui]')).toBeNull();
+		expect(document.querySelector('[data-inth-ui]')).toBeNull();
 	});
 });

@@ -1,6 +1,6 @@
 import { withConsentProps } from '@inth/nextjs/pages';
 
-import consentConfig from '@/c15t.config';
+import consentConfig from '@/inth.config';
 
 export const getServerSideProps = withConsentProps(undefined, {
 	config: consentConfig,

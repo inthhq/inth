@@ -1,19 +1,8 @@
 import { trimToUndefined } from './script-url';
 
 /**
- * Converts an optional boolean into a string suitable for a script `data-*`
- * attribute.
- *
- * @param value - Optional boolean value from a vendor option.
- * @returns `'true'` or `'false'` when a boolean is provided, otherwise
- * `undefined` so the manifest compiler can omit the attribute.
- *
- * @example
- * ```ts
- * booleanDataAttribute(true); // 'true'
- * booleanDataAttribute(false); // 'false'
- * booleanDataAttribute(undefined); // undefined
- * ```
+ * Converts an optional boolean into a script `data-*` attribute value.
+ * `undefined` stays `undefined` so the manifest compiler omits the attribute.
  */
 export const booleanDataAttribute = function booleanDataAttribute(
 	value: boolean | undefined
@@ -34,18 +23,9 @@ export const booleanDataAttribute = function booleanDataAttribute(
  * attribute value, the list format vendor trackers such as Umami and Pirsch
  * split on.
  *
- * @param value - Optional string value or string list from a vendor option.
  * @returns The trimmed string, the trimmed non-empty items joined with commas,
  * or `undefined` when nothing remains so the manifest compiler can omit the
  * attribute.
- *
- * @example
- * ```ts
- * listDataAttribute('example.com'); // 'example.com'
- * listDataAttribute(['a.com', ' b.com ']); // 'a.com,b.com'
- * listDataAttribute([]); // undefined
- * listDataAttribute(undefined); // undefined
- * ```
  */
 export const listDataAttribute = function listDataAttribute(
 	value: string[] | string | undefined

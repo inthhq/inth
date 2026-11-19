@@ -1,4 +1,4 @@
-import { gateScripts } from '@c15t/benchmarking/consent-gate-page';
+import { gateScripts } from '@inth/benchmarking/consent-gate-page';
 
 /**
  * The two gated scripts every gate page registers, one `measurement` and one

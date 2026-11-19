@@ -16,7 +16,7 @@ const browserDistFolder = join(import.meta.dirname, '../browser');
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
-// Before the Angular engine: answers /api/c15t and calls next() otherwise.
+// Before the Angular engine: answers /api/inth and calls next() otherwise.
 app.use(consentRoute.node);
 
 app.use(

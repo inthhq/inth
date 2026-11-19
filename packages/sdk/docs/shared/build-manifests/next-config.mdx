@@ -4,22 +4,22 @@ or function goes in as the first argument, unchanged:
 <include src="../examples/nextjs/next-config.mdx" />
 
 `next build`, `next dev` and `next typegen` fetch `${projectUrl}/manifest` and
-write the policy to `node_modules/.cache/c15t/`, outside your source tree, so
+write the policy to `node_modules/.cache/inth/`, outside your source tree, so
 there is nothing to keep out of Git. `next start` serves the built snapshot and
 fetches no policy. Without a `projectUrl` option, the build reads the
-`projectUrl` in `c15t.config.ts`, which defaults to
-`NEXT_PUBLIC_C15T_BACKEND_URL`, then `NEXT_PUBLIC_INTH_PROJECT_URL`, so saves
+`projectUrl` in `inth.config.ts`, which defaults to
+`NEXT_PUBLIC_INTH_PROJECT_URL`, so saves
 and the snapshot point at the same
 project.
 
-The wrapper reads `c15t.config.ts` the way Next.js reads `next.config.ts`, and
+The wrapper reads `inth.config.ts` the way Next.js reads `next.config.ts`, and
 skips the fetch for `mode: hosted()`, `mode: testing()`,
 `manifest({ snapshot })` and `manifest({ source: 'runtime' })`, which read no
 build-time manifest. Those builds never contact the backend. If the file can't
 be read at build time, for example because it imports something Node can't
 load, the build warns and fetches as for `manifest()`.
 
-The wrapper also finds `c15t.config.ts` (or `.mts`, `.js`, `.mjs`) at the
+The wrapper also finds `inth.config.ts` (or `.mts`, `.js`, `.mjs`) at the
 project root, next to `next.config.ts`, and points `@inth/nextjs/generated` at the
 cache, in Turbopack and webpack. `ConsentRoot`, `resolveConsent` and the
 consent route read both without an import. Server code that needs the
@@ -29,14 +29,14 @@ bundles get the snapshot: in a browser bundle,
 component fails the build. The wrapper also adds `@inth/sdk` and `@inth/nextjs` to
 `transpilePackages`, so Pages Router server bundles see the
 aliases. A package you list in `serverExternalPackages` stays external: it
-reads no `c15t.config.ts` and fetches the policy at runtime.
+reads no `inth.config.ts` and fetches the policy at runtime.
 
 If the fetch fails, `next build` stops. `next dev` logs a warning instead, and
 `snapshot` is `undefined`, so the server fetches and caches the policy at
 runtime, as with
 [runtime manifest caching](/docs/frameworks/next/optimization#reuse-cached-policy-data).
 To let a build continue the same way, set `onBuildError: 'runtime'`, or run it
-with `C15T_ON_BUILD_ERROR=runtime`:
+with `INTH_ON_BUILD_ERROR=runtime`:
 
 {/* example: fragment */}
 

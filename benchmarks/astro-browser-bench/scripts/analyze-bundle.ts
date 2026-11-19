@@ -7,15 +7,15 @@ import { gzipSync } from 'node:zlib';
 
 // Subpath imports on purpose: the package root also re-exports the CSS-layer
 // React runtime, which `tsx` cannot load (it imports `.css`).
-import { BENCHMARK_SCHEMA_VERSION } from '@c15t/benchmarking/schema';
-import type { BenchmarkResult } from '@c15t/benchmarking/schema';
+import { BENCHMARK_SCHEMA_VERSION } from '@inth/benchmarking/schema';
+import type { BenchmarkResult } from '@inth/benchmarking/schema';
 import {
 	getEnvironment,
 	safeBaseSha,
 	safeCommitSha,
 	summarizeMetric,
 	writeJson,
-} from '@c15t/benchmarking/utils';
+} from '@inth/benchmarking/utils';
 
 interface ClientAssetSize {
 	fileName: string;
@@ -132,7 +132,7 @@ const main = async function main() {
 			'Totals include every emitted .js and .css file in dist/client/_astro for the manifest build.',
 			'The dialog and IAB island chunks are counted here but only download when a visitor opens a dialog.',
 		],
-		package: '@c15t/astro-browser-bench',
+		package: '@inth/astro-browser-bench',
 		runtime: 'astro',
 		scenario: 'astro-client-bundle',
 		schemaVersion: BENCHMARK_SCHEMA_VERSION,

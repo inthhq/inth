@@ -30,18 +30,15 @@ const findDirectories = async function findDirectories(
 	for (const entry of entries) {
 		const fullPath = join(root, entry.name);
 
-		// Skip node_modules and .git
 		if (entry.name === 'node_modules' || entry.name === '.git') {
 			continue;
 		}
 
 		if (entry.isDirectory()) {
-			// Check if this is the directory we're looking for
 			if (entry.name === dirName) {
 				dirs.push(fullPath);
 			}
 
-			// Recursively search in subdirectories
 			try {
 				// oxlint-disable-next-line no-await-in-loop -- Preserve sequential execution and callback compatibility.
 				const subDirs = await findDirectories(fullPath, dirName);
@@ -64,13 +61,11 @@ const findCacheDirectories = async function findCacheDirectories(
 	for (const entry of entries) {
 		const fullPath = join(root, entry.name);
 
-		// Skip .git
 		if (entry.name === '.git') {
 			continue;
 		}
 
 		if (entry.isDirectory()) {
-			// Check for node_modules/.cache
 			if (entry.name === 'node_modules') {
 				const cachePath = join(fullPath, '.cache');
 				try {
@@ -84,7 +79,6 @@ const findCacheDirectories = async function findCacheDirectories(
 				}
 			}
 
-			// Recursively search in subdirectories (but skip node_modules)
 			if (entry.name !== 'node_modules') {
 				try {
 					// oxlint-disable-next-line no-await-in-loop -- Preserve sequential execution and callback compatibility.
@@ -105,17 +99,14 @@ const clearCache = async function clearCache(options: Options): Promise<void> {
 
 	const dirsToRemove: string[] = [];
 
-	// Find .rslib directories
 	console.log('Searching for .rslib directories...');
 	const rslibDirs = await findDirectories(ROOT_DIR, '.rslib');
 	dirsToRemove.push(...rslibDirs);
 
-	// Find node_modules/.cache directories
 	console.log('Searching for node_modules/.cache directories...');
 	const cacheDirs = await findCacheDirectories(ROOT_DIR);
 	dirsToRemove.push(...cacheDirs);
 
-	// Optionally find dist directories
 	if (options.dist) {
 		console.log('Searching for dist directories...');
 		const distDirs = await findDirectories(ROOT_DIR, 'dist');
@@ -135,7 +126,6 @@ const clearCache = async function clearCache(options: Options): Promise<void> {
 
 	console.log('\n');
 
-	// Remove directories
 	let removed = 0;
 	let failed = 0;
 
@@ -165,7 +155,6 @@ const clearCache = async function clearCache(options: Options): Promise<void> {
 	}
 };
 
-// Parse command line arguments
 const args = process.argv.slice(2);
 const options: Options = {
 	dist: args.includes('--dist'),

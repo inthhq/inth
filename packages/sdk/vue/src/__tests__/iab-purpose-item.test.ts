@@ -47,7 +47,7 @@ describe('IAB purpose row consent switch', () => {
 			// The objection control is there either way, in the row's content,
 			// which mounts when the row first opens.
 			await wrapper
-				.get('[id^="c15t-preference-item-trigger-"]')
+				.get('[id^="inth-preference-item-trigger-"]')
 				.trigger('click');
 			expect(wrapper.find('button[aria-pressed]').exists()).toBe(true);
 		}

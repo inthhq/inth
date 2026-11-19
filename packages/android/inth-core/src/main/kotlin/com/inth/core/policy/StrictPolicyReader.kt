@@ -46,14 +46,14 @@ sealed class PolicyRead {
  * Strict reader for the `policyResolution` value of an `/init` response.
  *
  * The reader never repairs, defaults, or guesses a permission. It accepts the
- * normalized `ResolvedPolicyRule` shape from `@c15t/schema` and rejects everything
+ * normalized `ResolvedPolicyRule` shape from `@inth/sdk-schema` and rejects everything
  * else. `iab` is part of that shape and is read -- [PolicyEvaluator] has a rule for it, and
  * each core keeps the vendor list `/init` serves. What stays refused is a model this enum
  * does not name: a value invented after this build is a producer speaking a contract this
  * reader does not have, and there is no default that could be guessed for it.
  */
 object StrictPolicyReader {
-	/** Policy wire contract version this build reads; matches `@c15t/schema`. */
+	/** Policy wire contract version this build reads; matches `@inth/sdk-schema`. */
 	const val POLICY_CONTRACT_VERSION = 1
 
 	/** Categories the `'*'` wildcard expands to. */
@@ -118,7 +118,7 @@ object StrictPolicyReader {
 		val fingerprints = root["fingerprints"] as? JsonObject
 		val choiceFingerprint = fingerprints.stringOrNull("choice") ?: return PolicyRead.Unreadable(PolicyResolution.REASON_INVALID_PAYLOAD)
 		val policyFingerprint = fingerprints.stringOrNull("policy") ?: return PolicyRead.Unreadable(PolicyResolution.REASON_INVALID_PAYLOAD)
-		// `policyFingerprintsSchema` in `@c15t/schema` requires all three; only
+		// `policyFingerprintsSchema` in `@inth/sdk-schema` requires all three; only
 		// `legacyMaterial` is optional. A notice dismissal is judged against this one.
 		val noticeFingerprint = fingerprints.stringOrNull("notice") ?: return PolicyRead.Unreadable(PolicyResolution.REASON_INVALID_PAYLOAD)
 
@@ -156,7 +156,7 @@ object StrictPolicyReader {
 
 		// `rights` decides whether a GPP US section applies and which notices it reports, so
 		// this reads it exactly as `PolicyWireReader` in core-swift and `readStringSet` plus
-		// `collectResolvedPolicyRuleIssues` in @c15t/schema do, in the same order. Absent, not
+		// `collectResolvedPolicyRuleIssues` in @inth/sdk-schema do, in the same order. Absent, not
 		// an array, a non-string or a repeat is an invalid payload; a value this build does not
 		// name is an unsupported contract; a set missing a right the model requires is an
 		// invalid payload. Each fails closed rather than reporting fewer rights than the rule has.

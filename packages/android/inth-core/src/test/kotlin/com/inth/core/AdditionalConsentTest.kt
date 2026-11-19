@@ -45,7 +45,7 @@ class AdditionalConsentTest {
 			val body = assertNotNull(entry.body)
 			assertEquals(row.expected, Json.parseToJsonElement(body).jsonObject["addtlConsent"]?.jsonPrimitive?.content)
 			assertEquals(body, http.saveRequests.first().body)
-			System.getenv("C15T_AC_SAVE_EVIDENCE_DIR")?.let { path ->
+			System.getenv("INTH_AC_SAVE_EVIDENCE_DIR")?.let { path ->
 				File(path).mkdirs(); File(path, "kotlin-${row.id}.json").writeText(body)
 			}
 		}

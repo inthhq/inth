@@ -2,25 +2,15 @@
  * DOM helpers shared by the browser-rendered banners.
  */
 
-import type { ConsentSnapshot } from '@inth/sdk/engine';
-import type { AllThemeKeys, Theme } from '@inth/sdk/ui/theme';
+import { brandMarkSvg } from '@inth/sdk/ui/utils/branding';
 
-import {
-	C15T_MARK_SVG,
-	INTH_LOGO_SVG,
-	resolveBrandingModel,
-} from '../banner/branding-model';
-import type { ClassNameMap } from '../banner/class-names';
+import { resolveBrandingModel } from '../banner/branding-model';
+import type { BrandingModelInput } from '../banner/branding-model';
 
 type Attributes = Record<string, string | undefined>;
 
 /**
  * Create an element, skipping undefined attributes.
- *
- * @param tag - The tag name.
- * @param attributes - Attributes to set.
- * @param children - Child nodes or text.
- * @returns The element.
  */
 export const element = function element(
 	tag: string,
@@ -58,50 +48,32 @@ export const readSpot = function readSpot(
 	}
 };
 
-/** Input for {@link renderBrandingTag}. */
-export interface BrandingTagInput {
-	snapshot: ConsentSnapshot;
-	hide?: boolean;
-	noStyle?: boolean;
-	styles: ClassNameMap;
-	securedBy: string;
-	testId: string;
-	/** The integration's `theme`, for the tag's `slots` entry. */
-	theme?: Theme;
-	/** The tag's `theme.slots` key. */
-	themeSlot?: AllThemeKeys;
-}
-
 /**
  * Build the "Secured by" tag `branding.astro` renders.
  *
- * @param input - The snapshot, the banner's options and its test id.
+ * @param input - The snapshot's brand and the banner's options.
+ * @param securedBy - "Secured by", already translated.
  * @returns The tag, or `null` when branding is hidden.
  */
 export const renderBrandingTag = function renderBrandingTag(
-	input: BrandingTagInput
+	input: Omit<BrandingModelInput, 'hostname'>,
+	securedBy: string
 ): HTMLElement | null {
-	const branding = resolveBrandingModel({
-		branding: input.snapshot.branding,
-		hide: input.hide,
+	const tag = resolveBrandingModel({
+		...input,
 		hostname: window.location.hostname,
-		noStyle: input.noStyle,
-		styles: input.styles,
-		theme: input.theme,
-		themeSlot: input.themeSlot,
-		variant: 'banner-tag',
 	});
-	if (!branding.show) {
+	if (!tag) {
 		return null;
 	}
-	const { classes } = branding;
+	const { classes } = tag;
 	let wordmark: HTMLElement;
-	if (branding.brand === 'inth') {
+	if (tag.brand === 'inth') {
 		wordmark = element('span', { class: classes.wordmark, dir: 'ltr' });
-		wordmark.innerHTML = INTH_LOGO_SVG;
+		wordmark.innerHTML = brandMarkSvg('inth');
 	} else {
 		const mark = element('span', { class: classes.mark });
-		mark.innerHTML = C15T_MARK_SVG;
+		mark.innerHTML = brandMarkSvg('c15t');
 		wordmark = element('span', { class: classes.wordmark, dir: 'ltr' }, [
 			mark,
 			element('span', { class: classes.label }, ['c15t']),
@@ -110,17 +82,17 @@ export const renderBrandingTag = function renderBrandingTag(
 	return element(
 		'a',
 		{
-			class: classes.root,
-			'data-branding': branding.brand,
-			'data-testid': input.testId,
-			'data-variant': branding.variant,
-			href: branding.href,
-			style: branding.style,
+			class: tag.root.class,
+			'data-branding': tag.brand,
+			'data-testid': tag.testId,
+			'data-variant': tag.variant,
+			href: tag.href,
+			style: tag.root.style,
 		},
 		[
 			element('span', { class: classes.content, 'data-slot': 'tag-content' }, [
 				element('span', { class: classes.copy }, [
-					element('span', { class: classes.text }, [input.securedBy]),
+					element('span', { class: classes.text }, [securedBy]),
 				]),
 				wordmark,
 			]),
@@ -132,7 +104,6 @@ export const renderBrandingTag = function renderBrandingTag(
  * Hide a freshly built banner until `syncBannerVisibility` decides, the
  * same as a prerendered server banner, with its overlay in front of it.
  *
- * @param root - The banner root.
  * @param overlay - The backdrop, for blocking banners.
  * @returns The nodes to insert, in document order.
  */
@@ -141,7 +112,7 @@ export const hiddenBanner = function hiddenBanner(
 	overlay: HTMLElement | null
 ): HTMLElement[] {
 	root.hidden = true;
-	root.setAttribute('data-c15t-visible', 'false');
+	root.setAttribute('data-inth-visible', 'false');
 	if (!overlay) {
 		return [root];
 	}

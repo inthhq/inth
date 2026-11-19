@@ -246,7 +246,7 @@ export const ScriptLifecycleProvider = ({
 
 		const initialize = async () => {
 			// The consent cookie; storage is cleared below.
-			document.cookie = 'c15t=; Max-Age=0; path=/';
+			document.cookie = 'inth=; Max-Age=0; path=/';
 			try {
 				window.localStorage.clear();
 				window.sessionStorage.clear();

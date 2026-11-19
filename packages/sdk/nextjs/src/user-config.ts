@@ -1,8 +1,8 @@
 /**
- * `@inth/nextjs/user-config` — the app's `c15t.config.ts`, found
+ * `@inth/nextjs/user-config` — the app's `inth.config.ts`, found
  * automatically.
  *
- * `withConsentManifest` aliases this specifier to `<root>/c15t.config.ts`
+ * `withConsentManifest` aliases this specifier to `<root>/inth.config.ts`
  * in Turbopack and webpack, for server and browser bundles. `ConsentRoot`,
  * `resolveConsent()`, `createConsentRoute()` and the Pages Router helpers
  * import it from inside the package, so the app never imports its own
@@ -10,7 +10,7 @@
  * `undefined`.
  *
  * Read the default export when it is needed (inside a function or a
- * render), never at module top level: `c15t.config.ts` imports `@inth/nextjs`,
+ * render), never at module top level: `inth.config.ts` imports `@inth/nextjs`,
  * so the browser graph has a cycle through this module.
  *
  * @internal

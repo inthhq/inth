@@ -4,7 +4,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { testOptions } from '../../__tests__/test-local';
 import { ConsentManager } from '../core/consent-manager';
-import { provideC15t } from '../core/provide-c15t';
+import { provideInth } from '../core/provide-inth';
 import { ConsentDialogLink } from './consent-dialog-link';
 
 @Component({
@@ -14,7 +14,7 @@ import { ConsentDialogLink } from './consent-dialog-link';
 	template: `
 		<button
 			type="button"
-			c15tConsentDialogLink
+			inthConsentDialogLink
 		>
 			Privacy settings
 		</button>
@@ -23,7 +23,7 @@ import { ConsentDialogLink } from './consent-dialog-link';
 class Host {}
 
 const boot = async () => {
-	TestBed.configureTestingModule({ providers: [provideC15t(testOptions())] });
+	TestBed.configureTestingModule({ providers: [provideInth(testOptions())] });
 	const fixture = TestBed.createComponent(Host);
 	const consent = TestBed.inject(ConsentManager);
 	await fixture.whenStable();
@@ -43,11 +43,11 @@ afterEach(() => {
 	document.body.replaceChildren();
 });
 
-describe('[c15tConsentDialogLink]', () => {
+describe('[inthConsentDialogLink]', () => {
 	test('opens the dialog and names the policy rights', async () => {
 		const { consent, link } = await boot();
 		expect(link.hidden).toBe(false);
-		expect(link.hasAttribute('data-c15t-rights')).toBe(true);
+		expect(link.hasAttribute('data-inth-rights')).toBe(true);
 		link.click();
 		expect(consent.activeUI()).toBe('dialog');
 	});

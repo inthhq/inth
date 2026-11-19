@@ -1,6 +1,8 @@
 import type { ConsentSnapshot, PresentationAction } from '@inth/sdk-core';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk-core/runtime/page-globals';
 import { setupFocusTrap, setupScrollLock } from '@inth/sdk-ui/utils';
 
+import { dropRejection } from '../drop-rejection';
 import { classes } from '../generated/styles';
 import type { AdoptedBanner } from '../init/boot';
 import type { ConsentBannerOptions } from '../types';
@@ -29,12 +31,9 @@ export interface BannerSurface extends Surface {
  * Reuses the framework banners' stylesheet classes and test IDs.
  * Shows when the kernel requests a category choice or notice prompt.
  *
- * @param ctx - The mount context.
- * @param options - Copy and behaviour overrides.
  * @param adopted - A banner another surface rendered (the init script's).
  * The first sync rebuilds it in place without an entry animation, or hides
  * it when no banner is due.
- * @returns The surface.
  */
 // oxlint-disable-next-line max-lines-per-function -- Build, show, hide and reconcile are one lifecycle.
 export const createBanner = function createBanner(
@@ -66,20 +65,14 @@ export const createBanner = function createBanner(
 	const build = function build(snapshot: ConsentSnapshot): HTMLElement {
 		const copy = resolveCopy(snapshot);
 		const { t } = copy;
-		const notice = snapshot.policyRule.prompt === 'notice';
 		const labels: Record<PresentationAction, string> = {
-			accept: options.acceptButtonText ?? t.common.acceptAll,
-			customize: options.customizeButtonText ?? t.common.customize,
-			dismiss: t.common.acknowledge,
-			reject: options.rejectButtonText ?? t.common.rejectAll,
-			save: t.common.save,
+			...copy.actions,
+			accept: options.acceptButtonText ?? copy.actions.accept,
+			customize: options.customizeButtonText ?? copy.actions.customize,
+			reject: options.rejectButtonText ?? copy.actions.reject,
 		};
-		const title =
-			options.title ??
-			(notice ? t.cookieBanner.noticeTitle : t.cookieBanner.title);
-		const description =
-			options.description ??
-			(notice ? t.cookieBanner.noticeDescription : t.cookieBanner.description);
+		const title = options.title ?? copy.prompt.title;
+		const description = options.description ?? copy.prompt.description;
 		const actions = resolveActions(
 			snapshot,
 			'prompt',
@@ -87,7 +80,8 @@ export const createBanner = function createBanner(
 			{
 				scrollLock: options.scrollLock,
 				trapFocus: options.trapFocus,
-			}
+			},
+			ctx.client.theme
 		);
 		({ trapFocus, scrollLock } = actions);
 		const { position } = actions;
@@ -153,11 +147,11 @@ export const createBanner = function createBanner(
 					noStyle,
 					onAction: (action) => {
 						if (action === 'accept') {
-							void ctx.client.acceptAll();
+							dropRejection(ctx.client.acceptAll());
 						} else if (action === 'reject') {
-							void ctx.client.rejectAll();
+							dropRejection(ctx.client.rejectAll());
 						} else if (action === 'dismiss') {
-							void ctx.client.dismissNotice();
+							dropRejection(ctx.client.dismissNotice());
 						} else {
 							ctx.client.openDialog();
 						}
@@ -165,6 +159,7 @@ export const createBanner = function createBanner(
 					slot,
 					subGroupTestId: 'consent-banner-footer-sub-group',
 					testId: 'consent-banner-footer',
+					theme: ctx.client.theme,
 				})
 			),
 			'consentBannerCard'
@@ -185,7 +180,7 @@ export const createBanner = function createBanner(
 							onclick: () => ctx.client.openDialog(),
 							type: 'button',
 						},
-						control === 'opt-out' ? t.rights.optOut : t.rights.preferences
+						copy.controls[control]
 					),
 					'consentBannerRightLink'
 				)
@@ -200,6 +195,7 @@ export const createBanner = function createBanner(
 					'data-blocking': String(actions.blocking),
 					'data-position': position,
 					'data-testid': 'consent-banner-root',
+					[SURFACE_ROOT_ATTRIBUTE]: 'banner',
 					'data-variant': actions.variant,
 					dir: copy.dir,
 					lang: copy.language,
@@ -213,8 +209,7 @@ export const createBanner = function createBanner(
 							hide: options.hideBranding ?? false,
 							noStyle,
 							securedBy: t.common.securedBy,
-							testId: 'consent-banner-branding',
-							variant: 'banner-tag',
+							surface: 'banner',
 						}),
 						'consentBannerTag'
 					),

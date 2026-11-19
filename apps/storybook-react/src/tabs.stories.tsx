@@ -4,7 +4,7 @@ import {
 	keyboardNavigation,
 	tabKeySkipsInactiveTabs,
 	tabSwitching,
-} from '@c15t/conformance/play/tabs';
+} from '@inth/conformance/play/tabs';
 import { Tabs } from '@inth/react/primitives';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type React from 'react';
@@ -23,8 +23,8 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const panelStyle: React.CSSProperties = {
-	border: '1px solid var(--c15t-border)',
-	borderRadius: 'var(--c15t-radius-md)',
+	border: '1px solid var(--inth-border)',
+	borderRadius: 'var(--inth-radius-md)',
 	display: 'grid',
 	gap: '0.5rem',
 	padding: '1rem',

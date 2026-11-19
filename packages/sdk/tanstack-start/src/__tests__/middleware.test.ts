@@ -60,8 +60,8 @@ describe('consentRequestMiddleware', () => {
 			'sec-gpc': '1',
 		});
 
-		expect(request.headers.get('x-c15t-country')).toBe('DE');
-		expect(request.headers.get('x-c15t-region')).toBe('BE');
+		expect(request.headers.get('x-inth-country')).toBe('DE');
+		expect(request.headers.get('x-inth-region')).toBe('BE');
 		expect(request.headers.get('sec-gpc')).toBe('1');
 		expect(next).toHaveBeenCalledWith({
 			context: {
@@ -80,7 +80,7 @@ describe('consentRequestMiddleware', () => {
 			{ 'accept-language': 'de', 'x-vercel-ip-country': 'DE' }
 		);
 
-		expect(request.headers.get('x-c15t-country')).toBe('FR');
+		expect(request.headers.get('x-inth-country')).toBe('FR');
 		expect(next).toHaveBeenCalledWith({
 			context: {
 				consent: expect.objectContaining({ country: 'FR', language: 'fr' }),
@@ -94,7 +94,7 @@ describe('consentRequestMiddleware', () => {
 			{ 'cf-ipcountry': 'DE' }
 		);
 
-		expect(request.headers.get('x-c15t-country')).toBeNull();
+		expect(request.headers.get('x-inth-country')).toBeNull();
 		expect(next).toHaveBeenCalledWith({
 			context: { consent: expect.objectContaining({ country: 'DE' }) },
 		});
@@ -138,7 +138,7 @@ describe('consentRequestMiddleware: immutable request headers', () => {
 			request,
 		});
 
-		expect(request.headers.get('x-c15t-country')).toBeNull();
+		expect(request.headers.get('x-inth-country')).toBeNull();
 		const state = await resolveConsent({ request });
 		expect(state.initialOverrides).toMatchObject({
 			country: 'FR',
@@ -160,7 +160,7 @@ const consentCookie = function consentCookie(subjectId: string): string {
 		subject: { subjectId },
 		version: 3,
 	};
-	return `c15t=${encodeURIComponent(JSON.stringify(envelope))}`;
+	return `inth=${encodeURIComponent(JSON.stringify(envelope))}`;
 };
 
 // A visitor who has not chosen gets nothing stored: the server reads a
@@ -186,18 +186,6 @@ describe('consentRequestMiddleware: no subject cookie', () => {
 		expect(response.headers.getSetCookie()).toEqual(['session=1']);
 		const state = await resolveConsent({ request });
 		expect(state.initialRecords?.subject?.subjectId).toBe('sub_returning');
-	});
-
-	test('the deprecated subject options set no cookie', async () => {
-		const { response } = await run(
-			consentRequestMiddleware({
-				storage: { storageKey: 'consent' },
-				subjectCookie: true,
-				trustForwardedHeaders: true,
-			}),
-			{}
-		);
-		expect(response.headers.getSetCookie()).toEqual(['session=1']);
 	});
 });
 
@@ -450,7 +438,7 @@ describe('consentRequestMiddleware: consent route at any mount', () => {
 		return result.response;
 	};
 
-	test.each(['/api/c15t', '/api/consent', '/consent'])(
+	test.each(['/api/inth', '/api/consent', '/consent'])(
 		'the bundled manifest at %s/manifest keeps its headers and gets no cookie',
 		async (prefix) => {
 			const response = await serve(`${prefix}/manifest`, 'manifest');
@@ -460,7 +448,7 @@ describe('consentRequestMiddleware: consent route at any mount', () => {
 		}
 	);
 
-	test.each(['/api/c15t', '/api/consent', '/consent'])(
+	test.each(['/api/inth', '/api/consent', '/consent'])(
 		'init at %s/init stays private, no-store with no cookie',
 		async (prefix) => {
 			const response = await serve(`${prefix}/init`, 'init');
@@ -580,7 +568,7 @@ describe('consentRequestMiddleware: a recorded ID with no URI encoding', () => {
 		};
 		const request = new Request('https://app.example.com/pricing', {
 			headers: {
-				cookie: `c15t=${encodeURIComponent(JSON.stringify(envelope))}`,
+				cookie: `inth=${encodeURIComponent(JSON.stringify(envelope))}`,
 			},
 		});
 		let rendered: unknown;

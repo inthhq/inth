@@ -1,18 +1,18 @@
 ---
 title: DevTools
-description: Add the c15t DevTools panel to a plain HTML page with a second script tag to inspect consent, gated scripts, the resolved policy and events, and to test other countries.
+description: Add the Inth DevTools panel to a plain HTML page with a second script tag to inspect consent, gated scripts, the resolved policy and events, and to test other countries.
 group: frameworks
 ---
 
 ## Add the panel
 
-Add the DevTools tag next to the c15t tag while you debug:
+Add the DevTools tag next to the Inth tag while you debug:
 
 {/* example: fragment */}
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/@inth/sdk/dist/c15t.devtools.js"
+  src="https://cdn.jsdelivr.net/npm/@inth/sdk/lib/browser/dist/inth.devtools.js"
   data-open
   data-tab="location"
   defer
@@ -20,8 +20,8 @@ Add the DevTools tag next to the c15t tag while you debug:
 ```
 
 Tag order does not matter. Loaded first, the DevTools tag queues itself on
-`window.c15t` and mounts once the client starts. Loaded after, it mounts at
-once. With `data-manual` on the c15t tag, it waits for `c15t.init()`.
+`window.inth` and mounts once the client starts. Loaded after, it mounts at
+once. With `data-manual` on the Inth tag, it waits for `inth.init()`.
 
 | Attribute | What it does |
 | --- | --- |
@@ -34,7 +34,7 @@ it.
 
 ## Open DevTools from the trigger
 
-With `data-trigger` on the c15t tag, the trigger shows a DevTools button next
+With `data-trigger` on the Inth tag, the trigger shows a DevTools button next
 to its own while the panel is mounted, and the panel hides its floating
 launcher, so one control sits in the corner. The DevTools button sits at the
 end farthest from the corner. The panel opens just past the trigger, aligned
@@ -43,7 +43,7 @@ corner.
 
 The trigger hides while the banner or the dialog is open. The panel then shows
 its own launcher in the `data-position` corner until the trigger returns. With
-`c15t.headless.js` there is no trigger, so the panel always keeps its launcher.
+`inth.headless.js` there is no trigger, so the panel always keeps its launcher.
 
 ## What each tab shows
 
@@ -53,7 +53,7 @@ its own launcher in the `data-position` corner until the trigger returns. With
 | Scripts | Scripts from `config` and their state: blocked, loading, loaded, failed or retained. A page scan lists other script and iframe elements. |
 | Location | The country, region, language and GPC signal. **Apply and refresh** resolves the policy again with your values; **Clear overrides** goes back to detection. |
 | Policy | The resolved policy rule and the prompt it requires. |
-| IAB | Purposes, vendors and the TC string, under an IAB policy with `c15t.iab.js`. |
+| IAB | Purposes, vendors and the TC string, under an IAB policy with `inth.iab.js`. |
 | Events | Every consent event in order. |
 | Actions | **Show banner**, **Open preferences** and **Clear stored records**. |
 
@@ -62,8 +62,8 @@ that a request was sent or held back; check the Network tab for that.
 
 ## Use it from the console
 
-Once mounted, the panel is `c15t.devtools` in the console. Call
-`c15t.devtools.destroy()` to remove it. `c15t.dispose()` removes it too.
+Once mounted, the panel is `inth.devtools` in the console. Call
+`inth.devtools.destroy()` to remove it. `inth.dispose()` removes it too.
 
 ## Test another country
 
@@ -84,4 +84,4 @@ blocks.
 1. Add the tag and reload. The panel opens on the tab you chose.
 2. Click **Accept All** in the banner. The Events tab lists the save, and
    the Consents tab shows each category allowed.
-3. Remove the tag and reload. No panel appears and `c15t.devtools` is `null`.
+3. Remove the tag and reload. No panel appears and `inth.devtools` is `null`.

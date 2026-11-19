@@ -9,13 +9,13 @@ const monorepoRoot = resolve(projectDir, '../..');
 /**
  * CSS delivery toggle for the `banner-css` page:
  * - default build: `bench-css-entry` imports the aggregate `styles.css`.
- * - `C15T_CSS=styles` build: `bench-css-entry` imports only the component
+ * - `INTH_CSS=styles` build: `bench-css-entry` imports only the component
  *   stylesheets the banner renders. It builds into `.next-css-styles`, so
  *   the two builds can sit side by side.
  * Both builds load the same JavaScript. Each imports its CSS explicitly
  * rather than relying on `@inth/sdk/ui` class maps to import it.
  */
-const useStylesCss = process.env.C15T_CSS === 'styles';
+const useStylesCss = process.env.INTH_CSS === 'styles';
 
 const cssEntryRel = useStylesCss
 	? './app/_bench/css-entry/styles.ts'
@@ -23,7 +23,7 @@ const cssEntryRel = useStylesCss
 const cssEntryAbs = resolve(projectDir, cssEntryRel);
 
 const transpilePackages = [
-	'@c15t/benchmarking',
+	'@inth/benchmarking',
 	'@inth/sdk',
 	'@inth/react',
 	'@inth/nextjs',

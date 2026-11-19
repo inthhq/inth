@@ -3,7 +3,7 @@ import type { ConsentProviderCallbacks } from '@inth/svelte';
 
 // Pass as `callbacks={callbacks}` on ConsentProvider.
 export const callbacks: ConsentProviderCallbacks = {
-	// Runs just before c15t reloads the page after a withdrawal.
+	// Runs just before Inth reloads the page after a withdrawal.
 	onBeforeConsentRevocationReload: ({ preferences }) => {
 		console.info('Reloading with', preferences);
 	},
@@ -15,7 +15,7 @@ export const callbacks: ConsentProviderCallbacks = {
 	// A failed command, such as an /init request that could not reach the
 	// backend.
 	onError: ({ error }) => {
-		console.warn('c15t error', error);
+		console.warn('inth error', error);
 	},
 	// Any change to what may run, whatever caused it.
 	onPermissionsChanged: ({ snapshot, previous }) => {

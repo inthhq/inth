@@ -23,10 +23,10 @@ export interface TailwindMatrixFixture {
 export interface TailwindMatrixPage {
 	path: string;
 	label: string;
-	/** The page passes utilities, with a `dark:` variant, to a c15t part. */
+	/** The page passes utilities, with a `dark:` variant, to a Inth part. */
 	slots: boolean;
 	/**
-	 * c15t switches to its dark tokens when `<html>` gets a `dark` class.
+	 * Inth switches to its dark tokens when `<html>` gets a `dark` class.
 	 * The script tag's shadow root follows its `colorScheme` option instead
 	 * of the page.
 	 */

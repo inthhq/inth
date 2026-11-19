@@ -31,7 +31,7 @@ export interface SurfaceParams {
 	blocking: boolean;
 	/** `experiment=1`: run the banner-shape experiment instead of `presentation`. */
 	experiment: boolean;
-	/** `arm=`: set the arm, as a flag provider would. Empty lets c15t pick. */
+	/** `arm=`: set the arm, as a flag provider would. Empty lets Inth pick. */
 	arm: ExperimentArm | '';
 }
 
@@ -169,7 +169,7 @@ export const withSurface = function withSurface(
  * ask for one. `control` is the default shape; `bar` is the arm under test.
  * A bar is valid for both `choice` and `notice` prompts; a wall would trip
  * `blocking-forbidden` under the opt-out notice scenario.
- * An `arm` in the URL shows host-resolved assignment; otherwise c15t picks.
+ * An `arm` in the URL shows host-resolved assignment; otherwise Inth picks.
  */
 export const demoExperiment = function demoExperiment(
 	surface: Pick<SurfaceParams, 'arm' | 'experiment'>

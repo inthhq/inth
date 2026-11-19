@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-	description: 'Deterministic script lifecycle benchmarks for c15t',
-	title: 'c15t Script Lifecycle Bench',
+	description: 'Deterministic script lifecycle benchmarks for inth',
+	title: 'inth Script Lifecycle Bench',
 };
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => (

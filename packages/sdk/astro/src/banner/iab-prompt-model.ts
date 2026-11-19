@@ -9,9 +9,15 @@
 import {
 	defaultTranslationConfig,
 	resolveConsentPresentation,
+	resolveIABBannerCopy,
 	resolveIABBannerSummary,
+	resolveIABCopy,
 } from '@inth/sdk/engine';
-import type { ConsentPresentation, ConsentSnapshot } from '@inth/sdk/engine';
+import type {
+	ConsentPresentation,
+	ConsentSnapshot,
+	IABTranslations,
+} from '@inth/sdk/engine';
 import type { Translations } from '@inth/sdk/translations';
 import type { AllThemeKeys, Theme } from '@inth/sdk/ui/theme';
 import { getTextDirection } from '@inth/sdk/ui/utils';
@@ -41,7 +47,7 @@ export interface IABPromptProps {
 	disableAnimation?: boolean;
 	/** Extra class on the banner root. */
 	class?: string;
-	/** Drop the "Secured by c15t" tag. */
+	/** Drop the "Secured by" tag. */
 	hideBranding?: boolean;
 	/** Paint the backdrop that goes with the banner's `aria-modal`. */
 	scrollLock?: boolean;
@@ -121,35 +127,26 @@ export interface IABPromptModel {
 	styles: Partial<Record<keyof IABPromptModel['classes'], string>>;
 }
 
-type IABCopy = NonNullable<Translations['iab']>;
 type IABSummary = ReturnType<typeof resolveIABBannerSummary>;
 
-/** The translated IAB copy, with the English bundle behind it. */
-interface IABTranslations {
-	iab: IABCopy;
-	english: IABCopy;
+/** The IAB copy, every key filled, and the branding line. */
+interface IABBannerCopy {
+	iab: IABTranslations;
 	securedBy: string;
 }
 
-const text = function text(
-	value: string | undefined,
-	backup: string | undefined
-): string {
-	return value ?? backup ?? '';
-};
-
-const resolveIABTranslations = function resolveIABTranslations(
+const resolveBannerTranslations = function resolveBannerTranslations(
 	snapshot: ConsentSnapshot
-): IABTranslations {
-	const fallback = defaultTranslationConfig.translations
-		.en as Partial<Translations>;
-	const bundle = (snapshot.translations?.translations ??
-		fallback) as Partial<Translations>;
-	const english = fallback.iab as IABCopy;
+): IABBannerCopy {
+	const bundle = snapshot.translations?.translations as
+		| Partial<Translations>
+		| undefined;
 	return {
-		english,
-		iab: (bundle.iab ?? english) as IABCopy,
-		securedBy: text(bundle.common?.securedBy, fallback.common?.securedBy),
+		iab: resolveIABCopy(bundle),
+		securedBy:
+			bundle?.common?.securedBy ??
+			defaultTranslationConfig.translations.en?.common?.securedBy ??
+			'',
 	};
 };
 
@@ -157,45 +154,16 @@ const resolveIABTranslations = function resolveIABTranslations(
  * Heading, description, partners link and notice, with the counts the
  * summary derived from the vendor list filled in.
  */
-const resolveIABCopy = function resolveIABCopy(
-	{ english, iab, securedBy }: IABTranslations,
+const resolveBannerCopy = function resolveBannerCopy(
+	{ iab, securedBy }: IABBannerCopy,
 	summary: IABSummary
 ): IABPromptModel['copy'] {
 	const { banner } = iab;
-	const { banner: englishBanner } = english;
-	const vendorCount = String(summary.vendorCount);
-	const description = text(
-		banner?.description,
-		englishBanner?.description
-	).replace('{partnerCount}', vendorCount);
-	const partnersLink = text(
-		banner?.partnersLink,
-		englishBanner?.partnersLink
-	).replace('{count}', vendorCount);
-	// The link sits inside the sentence, so the copy is split around it rather
-	// than concatenated — a translation is free to put it anywhere.
-	const [descriptionBefore = description, descriptionAfter = ''] =
-		description.split(partnersLink);
-	const andMore = text(banner?.andMore, englishBanner?.andMore);
-	const notice = text(
-		banner?.legitimateInterestNotice,
-		englishBanner?.legitimateInterestNotice
-	);
-	const scope = text(
-		banner?.scopeServiceSpecific,
-		englishBanner?.scopeServiceSpecific
-	);
 	return {
-		andMore:
-			summary.remainingCount > 0
-				? andMore.replace('{count}', String(summary.remainingCount))
-				: undefined,
-		descriptionAfter,
-		descriptionBefore,
-		notice: `${notice} ${scope}`,
-		partnersLink,
+		...resolveIABBannerCopy(iab, summary),
+		notice: `${banner.legitimateInterestNotice} ${banner.scopeServiceSpecific}`,
 		securedBy,
-		title: text(banner?.title, englishBanner?.title),
+		title: banner.title,
 	};
 };
 
@@ -273,15 +241,15 @@ const resolveIABClasses = function resolveIABClasses(
  */
 const resolveIABButton = function resolveIABButton(
 	action: IABAction,
-	{ english, iab }: IABTranslations,
+	{ iab }: IABBannerCopy,
 	props: IABPromptProps,
 	buttonClass: string,
 	theme: Theme | undefined
 ): IABPromptButton {
 	const labels: Record<IABAction, string> = {
-		accept: text(iab.common?.acceptAll, english.common?.acceptAll),
-		customize: text(iab.common?.customize, english.common?.customize),
-		reject: text(iab.common?.rejectAll, english.common?.rejectAll),
+		accept: iab.common.acceptAll,
+		customize: iab.common.customize,
+		reject: iab.common.rejectAll,
 	};
 	const label = labels[action];
 	const primary = action === (props.primaryButton ?? 'customize');
@@ -314,7 +282,6 @@ const resolveIABButton = function resolveIABButton(
  * Resolve the IAB banner's copy, summary, buttons and class names.
  *
  * @param input - The snapshot, the component props and the site options.
- * @returns The IAB banner model.
  */
 export const resolveIABPromptModel = function resolveIABPromptModel(
 	input: IABPromptModelInput
@@ -330,7 +297,7 @@ export const resolveIABPromptModel = function resolveIABPromptModel(
 	const summary = resolveIABBannerSummary(
 		snapshot.iab?.enabled === false ? null : (snapshot.iab ?? null)
 	);
-	const translations = resolveIABTranslations(snapshot);
+	const translations = resolveBannerTranslations(snapshot);
 	const textDirection = getTextDirection(snapshot.translations?.language);
 	const { position } = presentation;
 	const classesAndStyles = resolveIABClasses(
@@ -353,7 +320,7 @@ export const resolveIABPromptModel = function resolveIABPromptModel(
 		canRender: summary.isReady && models.includes(snapshot.policyRule.model),
 		choiceButtons: (['reject', 'accept'] as const).map(button),
 		...classesAndStyles,
-		copy: resolveIABCopy(translations, summary),
+		copy: resolveBannerCopy(translations, summary),
 		customizeButton: button('customize'),
 		displayItems: [...summary.displayItems],
 		language: snapshot.translations?.language,

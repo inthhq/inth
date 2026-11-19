@@ -1,6 +1,6 @@
 'use client';
 
-import type { PolicyBenchFixtureName } from '@c15t/benchmarking/policy-fixtures';
+import type { PolicyBenchFixtureName } from '@inth/benchmarking/policy-fixtures';
 import { useActiveUI, useSnapshot } from '@inth/react';
 import { useEffect, useRef } from 'react';
 
@@ -13,7 +13,7 @@ import {
 import type { PolicyBenchScenario } from './policy-state';
 import { hasRunningAnimations, isElementVisible } from './state';
 
-const BANNER_ELEMENT_TIMING_NAME = 'c15t-consent-banner';
+const BANNER_ELEMENT_TIMING_NAME = 'inth-consent-banner';
 
 /**
  * Records when the prompt for the current policy is ready: the snapshot

@@ -11,13 +11,13 @@ import {
 	choiceRecords,
 	iabRule,
 	matchedResolution,
+	noneRule,
 	NOW,
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../kernel';
-import { vendorsListedUnder } from '../../libs/vendors';
-import { deniedVendorIds } from '../../modules/has';
+import { vendorsListedUnder } from '../../libs/vendor-listing';
 import type {
 	ConsentKernel,
 	KernelConfig,
@@ -93,6 +93,21 @@ const recorded = function recorded(kernel: ConsentKernel) {
 };
 
 describe('seeding', () => {
+	test("a 'none' policy shows its categories on, as the evaluator allows them", () => {
+		const { kernel } = setup(
+			{},
+			noneRule({ categories: ['marketing', 'measurement'] })
+		);
+		expect(kernel.getSnapshot().effectivePermissions).toMatchObject({
+			marketing: true,
+			measurement: true,
+		});
+		expect(createPreferenceDraft(kernel).getState().values).toMatchObject({
+			marketing: true,
+			measurement: true,
+		});
+	});
+
 	test('values come from the record, then presentation defaults, then the policy', () => {
 		const { kernel } = setup(
 			{
@@ -145,8 +160,8 @@ describe('seeding', () => {
 		const expected = [
 			'necessary',
 			'functionality',
-			'measurement',
 			'experience',
+			'measurement',
 			'marketing',
 		];
 		expect(
@@ -204,11 +219,7 @@ describe('staging', () => {
 		);
 		const snapshot = kernel.getSnapshot();
 		expect(
-			vendorsListedUnder(
-				snapshot.vendors?.declared ?? [],
-				'marketing',
-				deniedVendorIds(snapshot)
-			).map((entry) => entry.id)
+			vendorsListedUnder(snapshot, 'marketing').map((entry) => entry.id)
 		).toEqual(['meta-pixel']);
 		const draft = createPreferenceDraft(kernel);
 		draft.setVendor('meta-pixel', true);

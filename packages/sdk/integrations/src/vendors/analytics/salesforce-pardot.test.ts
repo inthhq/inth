@@ -4,6 +4,7 @@ import {
 	createCallbackInfo,
 	expectScriptMatchesIntegration,
 	expectSkippedScript,
+	grantedServerStart,
 } from '../../__tests__/helpers';
 import { pardotTracking } from './salesforce-pardot';
 
@@ -25,11 +26,13 @@ describe('pardotTracking', () => {
 	});
 	it('waits for client readiness in consent mode and supports server starts in classic mode', () => {
 		expect(
-			pardotTracking({
-				piAId: '123456',
-				piCId: '654321',
-				piDomain: 'pi.pardot.com',
-			}).serverStart
+			grantedServerStart(
+				pardotTracking({
+					piAId: '123456',
+					piCId: '654321',
+					piDomain: 'pi.pardot.com',
+				})
+			)
 		).toBeUndefined();
 		const classic = pardotTracking({
 			mode: 'classic',

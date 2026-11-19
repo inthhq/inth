@@ -13,23 +13,27 @@
  * proxy's hop chain, and `platform.context.waitUntil` keeps detached work
  * alive.
  */
-import {
-	projectUrl as builtProjectUrl,
-	snapshot as builtSnapshot,
-} from '@inth/sdk/generated';
 import type { ConsentManifest } from '@inth/sdk/schema/types';
-import { createConsentRouteHandler, readWaitUntil } from '@inth/sdk/server';
+import {
+	createConsentRouteHandlerCache,
+	createConsentRouteMethodHandlers,
+	readWaitUntil,
+	trimPathSlashes,
+} from '@inth/sdk/server';
 import type {
 	ConsentProxyForwarding,
 	ConsentProxyOptions,
 	ConsentRouteFetchGvl,
 	ConsentRouteHandler,
+	ConsentRouteMethodHandlersFor,
+	ConsentRouteName,
 	ConsentRouteRequestContext,
 	ManifestFetch,
 } from '@inth/sdk/server';
 import type { RequestEvent, RequestHandler } from '@sveltejs/kit';
 
-import type { C15tLocals } from './types';
+import { readLocals, readServerMode } from './load-consent';
+import type { InthLocals } from './types';
 
 export type { ConsentProxyOptions } from '@inth/sdk/server';
 
@@ -50,24 +54,11 @@ export const waitUntilFromEvent = function waitUntilFromEvent(
 	)?.(revalidation);
 };
 
-/** Removes surrounding slashes in linear time. */
-const trimPathSlashes = function trimPathSlashes(value: string): string {
-	let start = 0;
-	let end = value.length;
-	while (end > 0 && value[end - 1] === '/') {
-		end -= 1;
-	}
-	while (start < end && value[start] === '/') {
-		start += 1;
-	}
-	return value.slice(start, end);
-};
-
 const REST_PARAM = /\[\.\.\.(?<name>[^\]=]+)(?:=[^\]]+)?\]/u;
 
 /**
  * The path below the route's rest parameter (`[...path]` in
- * `src/routes/api/c15t/[...path]/+server.ts`), or `undefined` when the route
+ * `src/routes/api/inth/[...path]/+server.ts`), or `undefined` when the route
  * has none.
  */
 const readRestPath = function readRestPath(
@@ -76,6 +67,26 @@ const readRestPath = function readRestPath(
 	const name = REST_PARAM.exec(event.route?.id ?? '')?.groups?.name;
 	const value = name ? event.params?.[name] : undefined;
 	return value === undefined ? undefined : trimPathSlashes(value);
+};
+
+/**
+ * Whether the handle's `projectUrl` names this route's own path, as
+ * `inthHandle({ projectUrl: '/api/inth' })` does when saves go through the
+ * proxy without `routePrefix`. The path is the request's, less the rest
+ * parameter. Forwarding there would call the route itself. With
+ * `routePrefix` set, the handle already dropped such a `projectUrl`.
+ */
+const projectUrlIsRoute = function projectUrlIsRoute(
+	event: RequestEvent,
+	{ projectUrl, routePrefix }: InthLocals
+): boolean {
+	if (routePrefix !== undefined || !projectUrl?.startsWith('/')) {
+		return false;
+	}
+	const rest = readRestPath(event);
+	const path = trimPathSlashes(event.url.pathname);
+	const mount = rest ? path.slice(0, -(rest.length + 1)) : path;
+	return trimPathSlashes(projectUrl) === mount;
 };
 
 /**
@@ -101,27 +112,24 @@ const readForwarding = function readForwarding(
 	};
 };
 
-/** Options for {@link createConsentRoute}. */
 export interface ConsentRouteOptions {
 	/**
-	 * The c15t backend. Defaults to what `c15tHandle()` was given: a
-	 * `hosted()` mode's `projectUrl`, then the handle's `projectUrl`, then
-	 * the URL `consentManifest()` read from `PUBLIC_C15T_BACKEND_URL` or
-	 * `PUBLIC_INTH_PROJECT_URL`. A
-	 * handle `projectUrl` that points at this route, as in the proxy setup,
-	 * is skipped. The manifest is read from `${projectUrl}/manifest` when
-	 * there is no snapshot.
+	 * The Inth backend. Defaults to the handle's `projectUrl`, then the URL
+	 * `consentManifest()` read from `PUBLIC_INTH_PROJECT_URL`. The manifest
+	 * is read from `${projectUrl}/manifest` when there is no snapshot.
 	 */
 	projectUrl?: string;
 	/**
 	 * Full manifest URL. Takes precedence over `${projectUrl}/manifest`.
-	 * Defaults to the `manifestUrl` of the handle's `manifest()` mode.
+	 * Defaults to the `manifestUrl` of the handle's `manifest()` mode,
+	 * unless that one is this route's own.
 	 */
 	manifestUrl?: string;
 	/**
 	 * A manifest to resolve with. Defaults to the handle's: the mode's
-	 * `snapshot`, then `c15tHandle({ snapshot })`, then the one
-	 * `consentManifest()` downloaded.
+	 * `snapshot`, then `inthHandle({ snapshot })`, then the one
+	 * `consentManifest()` downloaded. A mode that reads its manifest at
+	 * runtime (`source: 'runtime'`, an absolute `manifestUrl`) uses none.
 	 */
 	snapshot?: ConsentManifest;
 	/**
@@ -177,8 +185,8 @@ export interface ConsentRouteOptions {
 	 * `accept-language`, `origin`, `referer`, `sec-gpc`, the geo headers),
 	 * cookies only when {@link ConsentProxyOptions.cookieNames} names them,
 	 * and sets `x-forwarded-for` from `event.getClientAddress()`,
-	 * `x-forwarded-host` and `x-forwarded-proto` from `event.url`, the c15t
-	 * version header, and `x-c15t-proxy: @inth/svelte`. The hosted backend
+	 * `x-forwarded-host` and `x-forwarded-proto` from `event.url`, the Inth
+	 * version header, and `x-inth-proxy: @inth/svelte`. The hosted backend
 	 * sits behind a firewall that scores a bare server-to-server request as a
 	 * bot; these give it the signals a direct browser request carries, and a
 	 * stable key for a bypass rule. It needs `projectUrl`, not a
@@ -192,142 +200,25 @@ export interface ConsentRouteOptions {
 	proxy?: boolean | ConsentProxyOptions;
 }
 
-/** The route's handlers: `GET`, or every method with `proxy`. */
-export interface ConsentRouteHandlers {
-	/** Serves `manifest` and `init`; with `proxy`, forwards the rest. */
-	GET: RequestHandler;
-}
-
-/** The route's handlers when `proxy` is enabled. */
-export interface ConsentProxyRouteHandlers extends ConsentRouteHandlers {
-	POST: RequestHandler;
-	PATCH: RequestHandler;
-	PUT: RequestHandler;
-	DELETE: RequestHandler;
-	OPTIONS: RequestHandler;
-}
-
 /**
- * Picks the handler shape from the options: every method when `proxy` is
- * set to anything truthy, `GET` otherwise.
+ * The route's handlers: `GET`, which serves `manifest` and `init`, plus
+ * `POST`, `PATCH`, `PUT`, `DELETE` and `OPTIONS` when `proxy` is set to
+ * anything truthy.
  */
 export type ConsentRouteHandlersFor<Options extends ConsentRouteOptions> =
-	Options extends { proxy: true | ConsentProxyOptions }
-		? ConsentProxyRouteHandlers
-		: ConsentRouteHandlers;
-
-/** What the route resolves with, from its options and the handle's. */
-interface RouteSource {
-	projectUrl: string | undefined;
-	manifestUrl: string | undefined;
-	snapshot: ConsentManifest | undefined;
-}
-
-const trimTrailingSlashes = function trimTrailingSlashes(
-	value: string
-): string {
-	let end = value.length;
-	while (end > 1 && value[end - 1] === '/') {
-		end -= 1;
-	}
-	return value.slice(0, end);
-};
-
-/**
- * Whether a handle's relative `projectUrl` names this route, as
- * `c15tHandle({ projectUrl: '/api/c15t', routePrefix: '/api/c15t' })` does
- * when saves go through the proxy. Forwarding there would call the route
- * itself.
- */
-const pointsAtRoute = function pointsAtRoute(
-	projectUrl: string,
-	event: RequestEvent,
-	locals: C15tLocals | undefined
-): boolean {
-	if (!projectUrl.startsWith('/')) {
-		return false;
-	}
-	const target = trimTrailingSlashes(projectUrl);
-	if (
-		locals?.routePrefix !== undefined &&
-		target === trimTrailingSlashes(locals.routePrefix)
-	) {
-		return true;
-	}
-	const rest = readRestPath(event);
-	const pathname = trimTrailingSlashes(event.url.pathname);
-	const mount =
-		rest === undefined || rest === ''
-			? pathname
-			: pathname.slice(0, -(rest.length + 1));
-	return target === trimTrailingSlashes(mount || '/');
-};
-
-/** The handle's backend URL, unless it points at this route. */
-const readHandleProjectUrl = function readHandleProjectUrl(
-	event: RequestEvent,
-	locals: C15tLocals | undefined
-): string | undefined {
-	const fromHandle = locals?.projectUrl;
-	if (fromHandle === undefined || pointsAtRoute(fromHandle, event, locals)) {
-		return undefined;
-	}
-	return fromHandle;
-};
-
-/** The handle's snapshot, as `loadConsent` reads it. */
-const readHandleSnapshot = function readHandleSnapshot(
-	locals: C15tLocals | undefined
-): ConsentManifest | undefined {
-	const mode = locals?.mode;
-	if (mode?.type !== 'manifest') {
-		return locals?.snapshot ?? builtSnapshot;
-	}
-	if (mode.snapshot) {
-		return mode.snapshot;
-	}
-	return mode.source === 'runtime'
-		? undefined
-		: (locals?.snapshot ?? builtSnapshot);
-};
-
-/**
- * The route's sources: explicit options first, then what `c15tHandle()`
- * stored on `event.locals.c15t`, then what the build downloaded. The same
- * order `loadConsent` uses, so the two agree.
- */
-const readRouteSource = function readRouteSource(
-	options: ConsentRouteOptions,
-	event: RequestEvent
-): RouteSource {
-	const { c15t: locals } = (event.locals ?? {}) as { c15t?: C15tLocals };
-	const mode = locals?.mode;
-	// With browser resolution, `manifestUrl` is what the browser fetches
-	// instead of this route.
-	const modeManifestUrl =
-		mode?.type === 'manifest' && mode.resolve !== 'browser'
-			? mode.manifestUrl
-			: undefined;
-	return {
-		manifestUrl: options.manifestUrl ?? modeManifestUrl,
-		projectUrl:
-			options.projectUrl ??
-			readHandleProjectUrl(event, locals) ??
-			builtProjectUrl,
-		snapshot: options.snapshot ?? readHandleSnapshot(locals),
-	};
-};
+	ConsentRouteMethodHandlersFor<Options, RequestHandler>;
 
 /**
  * Creates the catch-all consent route. Only prerendered pages need it: the
  * server resolves every other page in `loadConsent`.
  *
- * The route reads the snapshot, backend URL and mode `c15tHandle()` was
- * given from `event.locals.c15t`, so they are set once, on the handle.
+ * The route reads the snapshot, backend URL and mode `inthHandle()` was
+ * given from `event.locals.inth`, so they are set once, on the handle, and
+ * the route and `loadConsent` read the manifest from the same place.
  * Options passed here win.
  *
  * ```ts
- * // src/routes/api/c15t/[...path]/+server.ts
+ * // src/routes/api/inth/[...path]/+server.ts
  * import { createConsentRoute } from '@inth/svelte/kit';
  *
  * export const { GET } = createConsentRoute();
@@ -337,19 +228,18 @@ const readRouteSource = function readRouteSource(
  *
  * ```ts
  * // src/hooks.server.ts
- * export const handle = c15tHandle({ routePrefix: '/api/c15t' });
+ * export const handle = inthHandle({ routePrefix: '/api/inth' });
  * ```
  *
  * With `proxy: true` the route also forwards consent writes to the
- * backend:
+ * backend, and `inthHandle({ proxy: true, routePrefix })` points the
+ * browser's saves at it:
  *
  * ```ts
  * export const { GET, POST, PATCH, PUT, DELETE, OPTIONS } =
  *   createConsentRoute({ proxy: true });
  * ```
  *
- * @param routeOptions - Manifest source, fetch implementation, GVL
- * fetcher, proxy. Every one is optional.
  * @returns `GET`; with `proxy` on, `POST`, `PATCH`, `PUT`, `DELETE` and
  * `OPTIONS` join.
  */
@@ -359,37 +249,32 @@ export const createConsentRoute = function createConsentRoute<
 	const options: ConsentRouteOptions = routeOptions ?? {};
 	// The handle passes the same values on every request, so the core
 	// handler is built once and rebuilt only if they change.
-	let built: { handle: ConsentRouteHandler; source: RouteSource } | undefined;
+	const cached = createConsentRouteHandlerCache();
 	const handlerFor = function handlerFor(
 		event: RequestEvent
 	): ConsentRouteHandler {
-		const source = readRouteSource(options, event);
-		if (
-			built &&
-			built.source.projectUrl === source.projectUrl &&
-			built.source.manifestUrl === source.manifestUrl &&
-			built.source.snapshot === source.snapshot
-		) {
-			return built.handle;
-		}
-		const handle = createConsentRouteHandler({
+		const locals = readLocals(event);
+		const { route } = readServerMode(
+			locals && projectUrlIsRoute(event, locals)
+				? { ...locals, projectUrl: undefined }
+				: locals
+		);
+		return cached({
 			adapter: '@inth/svelte',
 			fetch: options.fetch,
 			fetchGvl: options.fetchGvl,
-			manifest: source.snapshot,
-			manifestUrl: source.manifestUrl,
-			projectUrl: source.projectUrl,
+			manifest: options.snapshot ?? route.manifest,
+			manifestUrl: options.manifestUrl ?? route.manifestUrl,
+			projectUrl: options.projectUrl ?? route.projectUrl,
 			proxy: options.proxy,
 		});
-		built = { handle, source };
-		return handle;
 	};
 	const onBackgroundRevalidate =
 		options.onBackgroundRevalidate ?? waitUntilFromEvent;
 
 	const contextFor = function contextFor(
 		event: RequestEvent,
-		route?: 'proxy'
+		route: ConsentRouteName | undefined
 	): ConsentRouteRequestContext {
 		return {
 			forwarding: () => readForwarding(event),
@@ -403,20 +288,9 @@ export const createConsentRoute = function createConsentRoute<
 		};
 	};
 
-	const GET: RequestHandler = (event) =>
-		handlerFor(event)(event.request, contextFor(event));
-	if (!options.proxy) {
-		return { GET } as ConsentRouteHandlersFor<Options>;
-	}
-	const proxy: RequestHandler = (event) =>
-		handlerFor(event)(event.request, contextFor(event, 'proxy'));
-	const proxied: ConsentProxyRouteHandlers = {
-		DELETE: proxy,
-		GET,
-		OPTIONS: proxy,
-		PATCH: proxy,
-		POST: proxy,
-		PUT: proxy,
-	};
-	return proxied as ConsentRouteHandlersFor<Options>;
+	return createConsentRouteMethodHandlers<Options, RequestHandler>(
+		options.proxy,
+		(route) => (event) =>
+			handlerFor(event)(event.request, contextFor(event, route))
+	);
 };

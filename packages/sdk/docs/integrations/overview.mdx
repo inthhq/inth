@@ -1,8 +1,8 @@
 ---
 title: Integrations
-description: Find c15t integrations for web and mobile analytics, tag managers, advertising, experimentation, email, chat and embedded content.
-seoTitle: Cookie consent integrations for analytics and ads | c15t
-seoDescription: Connect analytics, ad pixels, chat widgets and embeds to your cookie banner. c15t has helpers for Google Tag Manager, Meta Pixel, PostHog, Segment and Hotjar.
+description: Find Inth integrations for web and mobile analytics, tag managers, advertising, experimentation, email, chat and embedded content.
+seoTitle: Cookie consent integrations for analytics and ads | Inth
+seoDescription: Connect analytics, ad pixels, chat widgets and embeds to your cookie banner. Inth has helpers for Google Tag Manager, Meta Pixel, PostHog, Segment and Hotjar.
 group: integrations
 ---
 
@@ -13,13 +13,13 @@ Swift, Android and React Native packages.
 ## Choose an integration
 
 Each web vendor helper in `@inth/integrations` returns a script configuration that you
-register with your c15t provider. Importing a helper installs nothing on its
+register with your Inth provider. Importing a helper installs nothing on its
 own. Set up consent with your [framework quickstart](/docs/frameworks) first,
 then follow the vendor guide.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
-`@inth/integrations` is a separate package. Keep importing c15t itself from
+`@inth/integrations` is a separate package. Keep importing Inth itself from
 your framework package, for example `@inth/react` or `@inth/nextjs`.
 
 The web tables below list script helpers. Their Loading behavior column shows
@@ -149,18 +149,18 @@ kernel to control its DOM lifecycle. Embeds do not require `@inth/integrations`.
 ## Load each vendor once
 
 Remove the vendor's own snippet, tracking image, framework plugin or tag
-manager entry before adding its helper. c15t cannot gate a copy it did not
+manager entry before adding its helper. Inth cannot gate a copy it did not
 load. Tag managers and data pipelines such as Segment can load further
 destinations, which need consent settings of their own.
 
-Framework packages are loaders too. To move their vendors to c15t, see
+Framework packages are loaders too. To move their vendors to Inth, see
 [migrate from `@next/third-parties`](/docs/frameworks/next/scripts#migrate-from-nextthird-parties)
 for Next.js, and
 [migrate from `@nuxt/scripts`](/docs/frameworks/nuxt/scripts#migrate-from-nuxtscripts)
 or [migrate from `nuxt-gtag`](/docs/frameworks/nuxt/scripts#migrate-from-nuxt-gtag)
 for Nuxt.
 
-When a visitor turns off a category they had allowed, c15t reloads the page so
+When a visitor turns off a category they had allowed, Inth reloads the page so
 that code which already ran stops. Each vendor guide lists what its helper does
 on revocation and how to check it.
 
@@ -169,7 +169,7 @@ on revocation and how to check it.
 Every helper sets a `vendor` slug and the vendor's name and privacy policy.
 Vendor switches are optional: the preference dialog shows only categories until
 you declare a vendor. Once you do, it lists each helper's vendor with its own
-switch, and a visitor can allow a category and still switch one vendor off. c15t then does not load that
+switch, and a visitor can allow a category and still switch one vendor off. Inth then does not load that
 vendor's script. Helpers that load on every page, such as Google Tag Manager,
 Microsoft UET and Mixpanel, still load and send the vendor a denied signal
 instead. The dialog lists `necessary` helpers without a switch. Declare
@@ -254,7 +254,7 @@ integration with the [consent verification guide](/docs/guides/verify-consent).
 
 ## Mobile SDKs
 
-c15t's mobile packages include consent helpers for Firebase Analytics, PostHog,
+Inth's mobile packages include consent helpers for Firebase Analytics, PostHog,
 Mixpanel, Amplitude, Sentry Session Replay, AdMob, AppsFlyer, Adjust, Meta App
 Events, Braze, Branch and Singular.
 Install the vendor's SDK in your app, then connect it to the native consent engine.
@@ -335,7 +335,7 @@ must prove destination startup, event creation, queue handling and withdrawal
 for the specific SDK versions it uses. Follow
 [Segment's consent configuration](https://www.twilio.com/docs/segment/privacy/consent-management/configure-consent-management)
 or [RudderStack's native consent setup](https://www.rudderstack.com/docs/sources/event-streams/sdks/client-side-features/consent-management/setup/)
-with c15t's native gates. Do not substitute the web script helpers.
+with Inth's native gates. Do not substitute the web script helpers.
 
 Support, messaging and advertising SDKs need their own app integration. Keep
 support availability separate from optional marketing tracking. Native IAB
@@ -356,11 +356,11 @@ callbacks are synchronous and nonthrowing. On both native platforms, call the
 vendor APIs directly in the callbacks; dispatching them asynchronously can reorder
 grants and withdrawals.
 
-If an RN error reporter throws or rejects, c15t logs that reporter failure to
+If an RN error reporter throws or rejects, Inth logs that reporter failure to
 the console while preserving the vendor rejection for the caller. Android logs
 ordinary exceptions from its reporter and continues notifying other integrations.
 
-If the vendor rejects a disable operation, report and retry the failure. c15t's
+If the vendor rejects a disable operation, report and retry the failure. Inth's
 stored refusal remains authoritative, but the app cannot claim that vendor
 collection stopped until its API succeeds. Keep optional app-side event calls
 behind the current permission too.

@@ -15,7 +15,7 @@ export const ScriptLifecyclePageShell = ({
 
 	return (
 		<main style={{ fontFamily: 'system-ui', padding: '2rem' }}>
-			<h1>c15t Script Lifecycle Benchmark</h1>
+			<h1>inth Script Lifecycle Benchmark</h1>
 			<p>Scenario: {config.name}</p>
 			<p>Ready: {ready ? 'yes' : 'no'}</p>
 			<div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>

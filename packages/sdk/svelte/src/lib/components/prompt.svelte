@@ -5,14 +5,23 @@
 		PromptPosition,
 		PromptVariant,
 	} from '@inth/sdk/engine';
-	import { resolveConsentPresentation } from '@inth/sdk/engine';
-	import type { PolicyRight } from '@inth/sdk/schema/types';
+	import {
+		actionAppearanceFromTheme,
+		resolveConsentPresentation,
+	} from '@inth/sdk/engine';
+	import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 	import {
 		EARLY_CONSENT_TAP_SCRIPT,
 		replayEarlyConsentTaps,
 	} from '@inth/sdk/surface-actions';
+	import {
+		resolveActionLabels,
+		resolvePreferenceControlLabels,
+		resolvePromptCopy,
+	} from '@inth/sdk/surface-state';
 	import styles from '@inth/sdk/ui/styles/components/consent-banner';
-	import { resolveTranslations } from '@inth/sdk/ui/utils';
+	import { resolveActionAppearance } from '@inth/sdk/ui/theme';
+	import { resolveStyles, toStyleAttributeValue } from '@inth/sdk/ui/utils';
 	import { getTextDirection } from '@inth/sdk/ui/utils/text-direction';
 	import { onMount } from 'svelte';
 
@@ -20,25 +29,14 @@
 		bannerFocusTrap as focusTrap,
 		bannerScrollLock as scrollLock,
 	} from '../actions/banner-actions';
-	// Banner uses custom portal/focus-trap/scroll-lock actions (not Ark UI's built-in)
-	// because the banner is not an Ark Dialog - it's a simpler container that
-	// conditionally acts as a dialog. The ConsentDialog uses Ark's Dialog which
-	// includes its own focus trap and scroll prevention. When transitioning from
-	// banner to dialog, the banner unmounts (removing its focus trap) before
-	// the dialog mounts (establishing Ark's focus trap), so they don't compete.
+	// The banner is not a dialog primitive: it acts as a dialog only when
+	// blocking, so it takes the portal, focus-trap and scroll-lock actions
+	// itself. Moving to the dialog unmounts the banner, and its focus trap,
+	// before the dialog mounts its own, so the two never compete.
 	import { portal } from '../actions/portal';
 	import { getConsentContext, getThemeContext } from '../context.svelte';
 	import { BANNER_SHEETS } from '../surface-styles';
-	import {
-		fallbackTranslations,
-		registeredDefaultTranslations,
-	} from '../translation-defaults';
 	import { useBannerVisibility } from '../use-banner-visibility.svelte';
-	import {
-		resolveComponentStyles,
-		resolveConsentActionStyle,
-		toStyleAttribute,
-	} from '../utils';
 	import ConsentButton from './action-button.svelte';
 	import Branding from './branding.svelte';
 	import InlineLegalLinks from './inline-legal-links.svelte';
@@ -46,9 +44,6 @@
 	import PolicyActionsRenderer from './policy-actions-renderer.svelte';
 	import SurfaceStyles from './surface-styles.svelte';
 
-	/**
-	 * Button identifiers for the consent banner layout.
-	 */
 	type ConsentBannerButton = 'reject' | 'accept' | 'customize' | 'dismiss';
 	type ConsentBannerLayout = (ConsentBannerButton | ConsentBannerButton[])[];
 
@@ -112,9 +107,9 @@
 
 	// The script that holds a tap on the server-rendered banner made before
 	// hydration. The browser renders the same markup, so hydration adopts
-	// it; a script the browser inserts never runs. `c15tHandle` gives it the
+	// it; a script the browser inserts never runs. `inthHandle` gives it the
 	// page's nonce when the provider has none.
-	const earlyTapMarkup = `<script data-c15t-early-tap${
+	const earlyTapMarkup = `<script data-inth-early-tap${
 		theme.nonce ? ` nonce="${theme.nonce.replaceAll('"', '&quot;')}"` : ''
 	}>${EARLY_CONSENT_TAP_SCRIPT}</${'script'}>`;
 
@@ -143,18 +138,11 @@
 		localDisableAnimation ?? theme.disableAnimation ?? false
 	);
 
-	// Translations
-	const translations = $derived(
-		resolveTranslations(
-			consent.state.translationConfig,
-			fallbackTranslations(consent.state.translationConfig)
-		)
-	);
+	const translations = $derived(consent.state.copy);
 	const textDirection = $derived(
-		getTextDirection(consent.state.translationConfig?.defaultLanguage)
+		getTextDirection(consent.state.translations?.language)
 	);
 
-	// Visibility logic
 	const shouldShowBanner = $derived(
 		consent.state.hasConsentUi &&
 			consent.state.activeUI === 'banner' &&
@@ -167,9 +155,8 @@
 		() => disableAnimation
 	);
 
-	// Styling - per-element theme key resolution shared across framework adapters.
 	const rootStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentBanner',
 			theme.theme,
 			{
@@ -182,7 +169,7 @@
 	);
 
 	const cardStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentBannerCard',
 			theme.theme,
 			{ baseClassName: styles.card, noStyle },
@@ -191,7 +178,7 @@
 	);
 
 	const headerStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentBannerHeader',
 			theme.theme,
 			{ baseClassName: styles.header, noStyle },
@@ -200,7 +187,7 @@
 	);
 
 	const titleStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentBannerTitle',
 			theme.theme,
 			{ baseClassName: styles.title, noStyle },
@@ -209,7 +196,7 @@
 	);
 
 	const descriptionStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentBannerDescription',
 			theme.theme,
 			{ baseClassName: styles.description, noStyle },
@@ -218,7 +205,7 @@
 	);
 
 	const footerStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentBannerFooter',
 			theme.theme,
 			{ baseClassName: styles.footer, noStyle },
@@ -227,7 +214,7 @@
 	);
 
 	const footerSubGroupStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentBannerFooterSubGroup',
 			theme.theme,
 			{ noStyle },
@@ -236,7 +223,7 @@
 	);
 
 	const rightsStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentBannerRights',
 			theme.theme,
 			{ baseClassName: styles.rights, noStyle },
@@ -245,7 +232,7 @@
 	);
 
 	const rightLinkStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentBannerRightLink',
 			theme.theme,
 			{ baseClassName: styles.rightLink, noStyle },
@@ -270,17 +257,9 @@
 		}
 		return Array.isArray(primaryButton) ? primaryButton : [primaryButton];
 	});
-	// Button helpers
-	const themedActions = $derived({
-		accept: resolveConsentActionStyle(theme.theme, 'accept'),
-		customize: resolveConsentActionStyle(theme.theme, 'customize'),
-		dismiss: resolveConsentActionStyle(theme.theme, 'dismiss'),
-		reject: resolveConsentActionStyle(theme.theme, 'reject'),
-		save: resolveConsentActionStyle(theme.theme, 'save'),
-	});
 	const presentation = $derived(
 		resolveConsentPresentation({
-			actionAppearance: themedActions,
+			actionAppearance: actionAppearanceFromTheme(theme.theme),
 			override: {
 				blocking,
 				layout,
@@ -307,7 +286,6 @@
 	// Additional buttons that open preferences, styled as underlined text.
 	const preferenceControls = $derived(presentation.preferenceControls);
 	const promptKind = $derived(consent.snapshot.policyRule.prompt);
-	const isNotice = $derived(promptKind === 'notice');
 	const direction = $derived(presentation.direction);
 	const shouldFillActions = $derived(presentation.shouldFillActions);
 	const shouldTrapFocus = $derived(presentation.trapFocus);
@@ -327,53 +305,21 @@
 		}
 	});
 
-	// Resolved texts. A notice has its own copy: it informs and points at
-	// the opt-out instead of asking for permission.
-	// Before `ConsentRoot`'s engine there are none: the server completed the
-	// snapshot's bundle with them.
-	const englishTranslations = $derived.by(() => {
-		// Read again when the engine attaches, which changes the snapshot.
-		void consent.snapshot;
-		return registeredDefaultTranslations()?.translations.en;
-	});
-	const resolvedTitle = $derived(
-		title ??
-			(isNotice
-				? (translations.cookieBanner.noticeTitle ??
-					englishTranslations?.cookieBanner?.noticeTitle)
-				: translations.cookieBanner.title)
-	);
-	const resolvedDescription = $derived(
-		description ??
-			(isNotice
-				? (translations.cookieBanner.noticeDescription ??
-					englishTranslations?.cookieBanner?.noticeDescription)
-				: translations.cookieBanner.description)
-	);
+	// A notice has its own copy: it informs and points at the opt-out
+	// instead of asking for permission.
+	const promptCopy = $derived(resolvePromptCopy(translations, promptKind));
+	const resolvedTitle = $derived(title ?? promptCopy.title);
+	const resolvedDescription = $derived(description ?? promptCopy.description);
+	const actionLabels = $derived(resolveActionLabels(translations));
+	const rightLabels = $derived(resolvePreferenceControlLabels(translations));
 	// Acknowledgement records no category choice.
 	const resolvedDismissText = $derived(
-		dismissButtonText ??
-			translations.common.acknowledge ??
-			translations.common.dismiss ??
-			englishTranslations?.common?.acknowledge
+		dismissButtonText ?? actionLabels.dismiss
 	);
-	const rightLabels = $derived<
-		Partial<Record<PolicyRight, string | undefined>>
-	>({
-		'opt-out':
-			translations.rights?.optOut ?? englishTranslations?.rights?.optOut,
-		preferences:
-			translations.rights?.preferences ??
-			englishTranslations?.rights?.preferences,
-	});
-	const resolvedRejectText = $derived(
-		rejectButtonText ?? translations.common.rejectAll
-	);
-	const resolvedAcceptText = $derived(
-		acceptButtonText ?? translations.common.acceptAll
-	);
+	const resolvedRejectText = $derived(rejectButtonText ?? actionLabels.reject);
+	const resolvedAcceptText = $derived(acceptButtonText ?? actionLabels.accept);
 	const resolvedCustomizeText = $derived(
-		customizeButtonText ?? translations.common.customize
+		customizeButtonText ?? actionLabels.customize
 	);
 </script>
 
@@ -394,7 +340,7 @@
 		<div
 			bind:this={visibility.bannerEl}
 			class={finalClassName}
-			style={toStyleAttribute(rootStyle.style)}
+			style={toStyleAttributeValue(rootStyle.style)}
 			dir={textDirection}
 			data-variant={resolvedVariant}
 			data-position={resolvedPosition}
@@ -405,20 +351,19 @@
 				? 'late'
 				: undefined}
 			data-testid="consent-banner-root"
+			{...{ [SURFACE_ROOT_ATTRIBUTE]: 'banner' }}
 			use:scrollLock={shouldScrollLock}
 		>
 			<div class={noStyle ? '' : styles.cardShell || ''}>
 				<Branding
 					{hideBranding}
 					{noStyle}
-					variant="banner-tag"
-					themeKey="consentBannerTag"
-					data-testid="consent-banner-branding"
+					surface="banner"
 				/>
 				<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 				<div
 					class={cardStyle.className || ''}
-					style={toStyleAttribute(cardStyle.style)}
+					style={toStyleAttributeValue(cardStyle.style)}
 					data-testid="consent-banner-card"
 					tabindex="-1"
 					role={isBlocking ? 'dialog' : 'region'}
@@ -428,19 +373,19 @@
 				>
 					<div
 						class={headerStyle.className || ''}
-						style={toStyleAttribute(headerStyle.style)}
+						style={toStyleAttributeValue(headerStyle.style)}
 						data-testid="consent-banner-header"
 					>
 						<h2
 							class={titleStyle.className || ''}
-							style={toStyleAttribute(titleStyle.style)}
+							style={toStyleAttributeValue(titleStyle.style)}
 							data-testid="consent-banner-title"
 						>
 							{resolvedTitle}
 						</h2>
 						<div
 							class={descriptionStyle.className || ''}
-							style={toStyleAttribute(descriptionStyle.style)}
+							style={toStyleAttributeValue(descriptionStyle.style)}
 							data-context="banner"
 							data-testid="consent-banner-description"
 						>
@@ -458,9 +403,11 @@
 						{direction}
 						{noStyle}
 						footerClassName={footerStyle.className || ''}
-						footerStyle={toStyleAttribute(footerStyle.style)}
+						footerStyle={toStyleAttributeValue(footerStyle.style)}
 						footerSubGroupClassName={footerSubGroupStyle.className || ''}
-						footerSubGroupStyle={toStyleAttribute(footerSubGroupStyle.style)}
+						footerSubGroupStyle={toStyleAttributeValue(
+							footerSubGroupStyle.style
+						)}
 						footerTestId="consent-banner-footer"
 						footerSubGroupTestId="consent-banner-footer-sub-group"
 					>
@@ -468,23 +415,23 @@
 							{#if preferenceControls.length > 0}
 								<div
 									class={rightsStyle.className || ''}
-									style={toStyleAttribute(rightsStyle.style)}
+									style={toStyleAttributeValue(rightsStyle.style)}
 									data-testid="consent-banner-rights"
 								>
 									{#each preferenceControls as right (right)}
 										<button
 											type="button"
 											class={rightLinkStyle.className || ''}
-											style={toStyleAttribute(rightLinkStyle.style)}
+											style={toStyleAttributeValue(rightLinkStyle.style)}
 											data-action="right"
 											data-right={right}
-											data-c15t-rights={consent.snapshot.policyRule.rights.join(
+											data-inth-rights={consent.snapshot.policyRule.rights.join(
 												' '
 											)}
 											data-testid={`consent-banner-right-link-${right}`}
 											onclick={openPreferences}
 										>
-											{rightLabels[right] ?? right}
+											{rightLabels[right]}
 										</button>
 									{/each}
 								</div>
@@ -494,9 +441,7 @@
 							{#if action === 'reject'}
 								<ConsentButton
 									action="reject-consent"
-									variant={themedActions.reject.variant ??
-										(isPrimary ? 'primary' : 'neutral')}
-									mode={themedActions.reject.mode ?? 'stroke'}
+									{...resolveActionAppearance(theme.theme, 'reject', isPrimary)}
 									closeConsentBanner
 									data-action="reject"
 									data-testid="consent-banner-reject-button"
@@ -506,9 +451,7 @@
 							{:else if action === 'accept'}
 								<ConsentButton
 									action="accept-consent"
-									variant={themedActions.accept.variant ??
-										(isPrimary ? 'primary' : 'neutral')}
-									mode={themedActions.accept.mode ?? 'stroke'}
+									{...resolveActionAppearance(theme.theme, 'accept', isPrimary)}
 									closeConsentBanner
 									data-action="accept"
 									data-testid="consent-banner-accept-button"
@@ -518,9 +461,11 @@
 							{:else if action === 'dismiss'}
 								<ConsentButton
 									action="dismiss-notice"
-									variant={themedActions.dismiss.variant ??
-										(isPrimary ? 'primary' : 'neutral')}
-									mode={themedActions.dismiss.mode ?? 'stroke'}
+									{...resolveActionAppearance(
+										theme.theme,
+										'dismiss',
+										isPrimary
+									)}
 									data-action="dismiss"
 									data-testid="consent-banner-dismiss-button"
 								>
@@ -529,9 +474,11 @@
 							{:else if action === 'customize'}
 								<ConsentButton
 									action="open-consent-dialog"
-									variant={themedActions.customize.variant ??
-										(isPrimary ? 'primary' : 'neutral')}
-									mode={themedActions.customize.mode ?? 'stroke'}
+									{...resolveActionAppearance(
+										theme.theme,
+										'customize',
+										isPrimary
+									)}
 									data-action="customize"
 									data-testid="consent-banner-customize-button"
 								>

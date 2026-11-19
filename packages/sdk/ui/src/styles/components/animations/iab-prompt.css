@@ -21,8 +21,8 @@
 }
 
 :root {
-	--c15t-iab-consent-banner-enter-animation: iabConsentBannerEnter
-		var(--c15t-duration-fast) var(--c15t-easing);
-	--c15t-iab-consent-banner-exit-animation: iabConsentBannerExit
-		var(--c15t-duration-fast) var(--c15t-easing);
+	--inth-iab-consent-banner-enter-animation: iabConsentBannerEnter
+		var(--inth-duration-fast) var(--inth-easing);
+	--inth-iab-consent-banner-exit-animation: iabConsentBannerExit
+		var(--inth-duration-fast) var(--inth-easing);
 }

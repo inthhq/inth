@@ -216,8 +216,6 @@ const reuseDynamicYieldScript = createScriptReuse<DynamicYieldOptions>();
  * Active Cookie Consent must also be enabled by Dynamic Yield Support for the
  * SDK to honor `DY.userActiveConsent` updates.
  *
- * @param options - Section, data center, page context, and consent gate.
- * @returns The Dynamic Yield script configuration.
  * @remarks A missing or blank `sectionId` logs
  * `dynamicYield: missing or invalid sectionId` and returns a script that never
  * loads. No Dynamic Yield global or preconnect is created before consent.

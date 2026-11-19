@@ -16,12 +16,12 @@ describe('server-rendered IAB styles', () => {
 			props: { options: iabStyleOptions({ nonce: 'request-nonce' }) },
 		});
 		expect(body).toContain('data-testid="iab-consent-banner-card"');
-		expect(head).toContain('c15t-first-paint c15t-iab-first-paint');
+		expect(head).toContain('inth-first-paint inth-iab-first-paint');
 		const html = documentHTML(head, body);
 		expect(html).toContain(
-			`<style data-c15t-styles="c15t-iab-first-paint" nonce="request-nonce">${iabFirstPaintCSS}</style>`
+			`<style data-inth-styles="inth-iab-first-paint" nonce="request-nonce">${iabFirstPaintCSS}</style>`
 		);
-		expect(html).not.toContain('data-c15t-styles="c15t-iab-dialog"');
+		expect(html).not.toContain('data-inth-styles="inth-iab-dialog"');
 		expect(html.indexOf(iabFirstPaintCSS)).toBeLessThan(
 			html.indexOf('</head>')
 		);
@@ -34,7 +34,7 @@ describe('server-rendered IAB styles', () => {
 		});
 		expect(body).toContain('data-testid="iab-consent-dialog-card"');
 		expect(head).toContain(
-			'c15t-first-paint c15t-dialog c15t-primitives c15t-iab-first-paint c15t-iab-dialog'
+			'inth-first-paint inth-dialog inth-primitives inth-iab-first-paint inth-iab-dialog'
 		);
 		const html = documentHTML(head, body);
 		expect(html).toContain(`>${iabFirstPaintCSS}</style>`);
@@ -57,7 +57,7 @@ describe('server-rendered IAB styles', () => {
 				},
 			});
 			expect(body).toContain('data-testid="iab-consent-dialog-card"');
-			expect(documentHTML(head, body)).not.toContain('data-c15t-styles');
+			expect(documentHTML(head, body)).not.toContain('data-inth-styles');
 		}
 	);
 });

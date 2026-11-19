@@ -4,7 +4,7 @@ import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
+import { resolveScriptUrl } from '../_shared/script-url';
 
 interface ClaydarClient {
 	giveCookieConsent?: () => void;
@@ -76,17 +76,12 @@ export const clay = function clay(options: ClayOptions): Script {
 	}
 	const script = resolveManifest(clayManifest, {
 		scriptUrl: resolveScriptUrl(
-			trimToUndefined(options.scriptUrl),
+			options.scriptUrl,
 			`https://static.claydar.com/init.v1.js?id=${encodeURIComponent(siteId)}`
 		),
 	});
 	return {
 		...script,
-		onLoad(info) {
-			if (info.element?.isConnected) {
-				script.onLoad?.(info);
-			}
-		},
 		target: 'body',
 	};
 };

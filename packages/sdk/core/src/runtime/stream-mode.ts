@@ -99,8 +99,6 @@ export const createStreamedMode = function createStreamedMode(
  * it. Pass it as `streamPrefetch` in `createConsentProviderRuntime`'s
  * modules.
  *
- * @param mode - The runtime's transport factory.
- * @param prefetch - The pending prefetch.
  * @param options - The runtime's `overrides` and `experiment`.
  * @param getKernel - The kernel being initialized, once it exists.
  * @returns A transport factory of the same kind.

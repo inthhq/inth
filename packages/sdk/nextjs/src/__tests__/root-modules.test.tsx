@@ -1,9 +1,3 @@
-/**
- * ConsentRoot module prop auto-wiring tests.
- *
- * Verifies that passing curated module props causes the corresponding
- * modules to mount and react to kernel state.
- */
 import { useDeclaredVendors, useVendorAllowed } from '@inth/react';
 import { ConsentGPP } from '@inth/react/gpp';
 import { describe, expect, test, vi } from 'vitest';
@@ -37,7 +31,6 @@ describe('ConsentRoot module props', () => {
 
 		await expect.element(getByText('root rendered')).toBeInTheDocument();
 
-		// Script should be appended to document.head by the script-loader module.
 		await vi.waitFor(
 			() => {
 				const scripts = document.head.querySelectorAll(

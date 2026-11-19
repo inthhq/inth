@@ -63,13 +63,13 @@ describe('Svelte manifest module', () => {
 	])(
 		'a $app gets the snapshot in the browser: $snapshotInBrowser',
 		async ({ plugins, snapshotInBrowser }) => {
-			const root = await mkdtemp(path.join(tmpdir(), 'c15t-svelte-manifest-'));
+			const root = await mkdtemp(path.join(tmpdir(), 'inth-svelte-manifest-'));
 			directories.push(root);
 			const [plugin] = consentManifest({
 				fetch: () =>
 					Promise.resolve(
 						Response.json({
-							branding: 'c15t',
+							branding: 'inth',
 							revision: 'svelte-build',
 							schemaVersion: 2,
 						})
@@ -94,7 +94,7 @@ describe('location advice', () => {
 	const regional = () =>
 		Promise.resolve(
 			Response.json({
-				branding: 'c15t',
+				branding: 'inth',
 				policyPacks: [
 					createConsentManifestPolicyPack({
 						id: 'regional',
@@ -171,7 +171,7 @@ describe('resolveChunkHrefs', () => {
 
 describe('consentManifest module preload', () => {
 	const setup = async function setup() {
-		const root = await mkdtemp(path.join(tmpdir(), 'c15t-preload-'));
+		const root = await mkdtemp(path.join(tmpdir(), 'inth-preload-'));
 		directories.push(root);
 		const server = path.join(root, '.svelte-kit', 'output', 'server');
 		await mkdir(path.join(server, 'chunks'), { recursive: true });
@@ -277,7 +277,7 @@ describe('Svelte backend URL variables', () => {
 		env: Record<string, unknown>,
 		options: { projectUrl?: string } = {}
 	) => {
-		const root = await mkdtemp(path.join(tmpdir(), 'c15t-inth-env-'));
+		const root = await mkdtemp(path.join(tmpdir(), 'inth-env-'));
 		try {
 			const [plugin] = consentManifest({
 				...options,
@@ -307,8 +307,8 @@ describe('Svelte backend URL variables', () => {
 			await rm(root, { force: true, recursive: true });
 		}
 	};
+	const C15T = 'https://inth.example.com';
 	const INTH = 'https://inth.example.com';
-	const C15T = 'https://c15t.example.com';
 
 	test('PUBLIC_INTH_PROJECT_URL alone gives the backend URL', async () => {
 		const { projectUrl } = await resolveProjectUrl({
@@ -317,34 +317,34 @@ describe('Svelte backend URL variables', () => {
 		expect(projectUrl).toBe(INTH);
 	});
 
-	test('either c15t variable beats either Inth variable', async () => {
+	test('either Inth variable beats either c15t variable', async () => {
 		const { projectUrl } = await resolveProjectUrl({
 			PUBLIC_C15T_BACKEND_URL: C15T,
 			PUBLIC_INTH_PROJECT_URL: INTH,
-			VITE_INTH_PROJECT_URL: INTH,
-		});
-		expect(projectUrl).toBe(C15T);
-		const vite = await resolveProjectUrl({
-			PUBLIC_INTH_PROJECT_URL: INTH,
 			VITE_C15T_BACKEND_URL: C15T,
 		});
-		expect(vite.projectUrl).toBe(C15T);
-	});
-
-	test('VITE_INTH_PROJECT_URL alone gives the backend URL', async () => {
-		const { projectUrl, env } = await resolveProjectUrl({
+		expect(projectUrl).toBe(INTH);
+		const vite = await resolveProjectUrl({
+			PUBLIC_C15T_BACKEND_URL: C15T,
 			VITE_INTH_PROJECT_URL: INTH,
 		});
-		expect(projectUrl).toBe(INTH);
-		expect(env.VITE_C15T_BACKEND_URL).toBe(INTH);
+		expect(vite.projectUrl).toBe(INTH);
 	});
 
-	test('VITE_C15T_BACKEND_URL wins when both are set', async () => {
+	test('VITE_C15T_BACKEND_URL alone gives the backend URL as VITE_INTH_PROJECT_URL', async () => {
+		const { projectUrl, env } = await resolveProjectUrl({
+			VITE_C15T_BACKEND_URL: C15T,
+		});
+		expect(projectUrl).toBe(C15T);
+		expect(env.VITE_INTH_PROJECT_URL).toBe(C15T);
+	});
+
+	test('VITE_INTH_PROJECT_URL wins when both are set', async () => {
 		const { projectUrl } = await resolveProjectUrl({
 			VITE_C15T_BACKEND_URL: C15T,
 			VITE_INTH_PROJECT_URL: INTH,
 		});
-		expect(projectUrl).toBe(C15T);
+		expect(projectUrl).toBe(INTH);
 	});
 
 	test('an explicit projectUrl beats both variables', async () => {
@@ -375,13 +375,15 @@ describe('consentManifest first-load chunk', () => {
 		});
 		const groups = groupsOf(options);
 
-		expect(groups.map((group) => group.name)).toEqual(['app', 'c15t']);
+		expect(groups.map((group) => group.name)).toEqual(['app', 'inth']);
 		const { test: matches } = groups[1] as Group;
 		for (const id of [
 			'/app/node_modules/@inth/sdk/lib/core/dist/libs/vendor-listing.js',
 			'/app/node_modules/@inth/sdk/lib/core/dist/libs/experiment-presentation.js',
 			'/app/node_modules/@inth/sdk/lib/core/dist/modules/vendor-allowed.js',
 			'/app/node_modules/@inth/sdk/lib/core/dist/surface-actions/instant-commit.js',
+			'/app/node_modules/@inth/sdk/lib/core/dist/translations/defaults.js',
+			'/app/node_modules/@inth/sdk/lib/translations/dist/translations/en.js',
 			'C:\\app\\node_modules\\@inth\\sdk\\lib\\ui\\dist\\utils\\text-direction.js',
 			'\0vite/preload-helper.js',
 		]) {
@@ -400,6 +402,8 @@ describe('consentManifest first-load chunk', () => {
 			'/app/node_modules/@inth/sdk/lib/core/dist/libs/cookie/operations.js',
 			'/app/node_modules/@inth/sdk/lib/core/dist/modules/has.js',
 			'/app/node_modules/@inth/sdk/lib/core/dist/consent-record/evaluate.js',
+			'/app/node_modules/@inth/sdk/lib/core/dist/translations/index.js',
+			'/app/node_modules/@inth/sdk/lib/translations/dist/languages/de.js',
 			'/app/node_modules/@inth/svelte/dist/deferred/commit.js',
 			'/app/node_modules/other/dist/libs/vendors.js',
 			'/app/node_modules/other/vite/preload-helper.js',

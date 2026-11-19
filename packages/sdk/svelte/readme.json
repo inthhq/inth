@@ -23,7 +23,7 @@
 		"To manually install, follow the [quickstart](https://c15t.com/docs/frameworks/svelte/quickstart)."
 	],
 	"usage": [
-		"Add `consentManifest()` from `@inth/svelte/vite` to `vite.config.ts`. It downloads your policy from `VITE_C15T_BACKEND_URL` (SvelteKit: `PUBLIC_C15T_BACKEND_URL`)",
+		"Add `consentManifest()` from `@inth/svelte/vite` to `vite.config.ts`. It downloads your policy from `VITE_INTH_PROJECT_URL` (SvelteKit: `PUBLIC_INTH_PROJECT_URL`)",
 		"Wrap your app with `ConsentProvider` in `manifest()` mode",
 		"Add `ConsentBanner` and `ConsentDialog` near the root",
 		"In SvelteKit, render `ConsentRoot` with the state `loadConsent` from `@inth/svelte/kit` returns; see the [SvelteKit quickstart](https://c15t.com/docs/frameworks/sveltekit/quickstart)",

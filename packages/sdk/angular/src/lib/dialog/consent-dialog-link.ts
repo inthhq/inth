@@ -22,7 +22,7 @@ import { holdIdleDialogWarming, warmDialog } from '../core/dialog-warming';
  *
  * @example
  * ```html
- * <button type="button" c15tConsentDialogLink>Privacy settings</button>
+ * <button type="button" inthConsentDialogLink>Privacy settings</button>
  * ```
  */
 @Directive({
@@ -30,11 +30,11 @@ import { holdIdleDialogWarming, warmDialog } from '../core/dialog-warming';
 		'(click)': 'open($event)',
 		'(focus)': 'warm()',
 		'(pointerenter)': 'warm()',
-		'[attr.data-c15t-rights]': 'offered() ? rights() : null',
+		'[attr.data-inth-rights]': 'offered() ? rights() : null',
 		'[attr.data-testid]': 'offered() ? "consent-dialog-link" : null',
 		'[attr.hidden]': 'offered() ? null : ""',
 	},
-	selector: '[c15tConsentDialogLink]',
+	selector: '[inthConsentDialogLink]',
 })
 export class ConsentDialogLink {
 	/** @internal */
@@ -68,7 +68,6 @@ export class ConsentDialogLink {
 	/**
 	 * Opens the dialog, unless a handler before it called `preventDefault()`.
 	 *
-	 * @param event - The click.
 	 * @internal
 	 */
 	protected open(event: Event): void {

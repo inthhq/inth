@@ -28,6 +28,7 @@ import type {
 	OptionalConsentCategory,
 	RestrictionReason,
 } from '../consent-record/types';
+import { readCookieValueFromHeader } from '../libs/cookie/read-header';
 import { generateSubjectId } from '../libs/generate-subject-id';
 import { resolveStorageKeys } from '../libs/storage-keys';
 import type { StorageConfig } from '../modules/persistence/types';
@@ -84,9 +85,7 @@ export const hasStoredClearEpoch = function hasStoredClearEpoch(
 		// Blocked storage: the cookie still tells.
 	}
 	try {
-		return document.cookie
-			.split(';')
-			.some((cookie) => cookie.trim().startsWith(`${key}=`));
+		return readCookieValueFromHeader(document.cookie, key) !== undefined;
 	} catch {
 		return false;
 	}
@@ -137,7 +136,7 @@ const selectionValues = function selectionValues(
 	const ruleScope = snapshot.policyRule.scope;
 	let entries: [string, unknown][];
 	if (choice === 'all' || choice === 'none') {
-		const displayed = policy.choiceScope ?? ruleScope;
+		const displayed = policy.choiceScope;
 		const keys = displayed.length === ruleScope.length ? ruleScope : displayed;
 		entries = keys.map((key) => [
 			key,
@@ -179,7 +178,6 @@ const selectionValues = function selectionValues(
  *
  * @param before - The snapshot the page renders from.
  * @param actionAt - Epoch milliseconds of the tap.
- * @param now - The clock now.
  * @returns `true` when an instant commit can apply.
  * @internal
  */
@@ -194,7 +192,7 @@ export const isShortCase = function isShortCase(
 		kernelOnly(before) ||
 		before.explicitChoice !== null ||
 		policy.prompt !== 'choice' ||
-		(policy.choiceScope ?? policy.scope).length === 0 ||
+		policy.choiceScope.length === 0 ||
 		gpc ||
 		before.privacySignals.gpc.active ||
 		before.iab?.authority ||
@@ -223,7 +221,7 @@ const evaluateChoice = function evaluateChoice(
 	values: Map<OptionalConsentCategory, boolean>,
 	expiresAt: number | null
 ): ChoiceEvaluation {
-	const choiceScope = policy.choiceScope ?? policy.scope;
+	const { choiceScope } = policy;
 	const permissions: Record<string, boolean> = { necessary: true };
 	const restrictions: ChoiceEvaluation['restrictions'] = {};
 	let refused = false;
@@ -318,7 +316,6 @@ const recordedSubject = function recordedSubject(
  * is generated here when the visitor has none.
  *
  * @param input - The rendered snapshot and the tap.
- * @returns The commit, or `null`.
  * @internal
  */
 export const planInstantCommit = function planInstantCommit(
@@ -378,4 +375,27 @@ export const planInstantCommit = function planInstantCommit(
 		},
 		subjectId: subject.subjectId,
 	};
+};
+
+/**
+ * Whether setters queued for the engine leave the snapshot as a commit
+ * reads it: only category registrations the snapshot already holds.
+ *
+ * @internal
+ */
+export const pendingIsInert = function pendingIsInert(handle: {
+	readonly kernel: { getSnapshot: () => ConsentSnapshot };
+	readonly pending: () => readonly { name: string; args: unknown[] }[];
+}): boolean {
+	const categories = handle.kernel.getSnapshot().consentCategories;
+	return handle
+		.pending()
+		.every(
+			({ args, name }) =>
+				name === 'registerConsentCategories' &&
+				Array.isArray(args[0]) &&
+				(args[0] as string[]).every((category) =>
+					categories?.includes(category as never)
+				)
+		);
 };

@@ -7,24 +7,24 @@ import { fileURLToPath } from 'node:url';
 import {
 	runConsentGate,
 	spawnGateServer,
-} from '@c15t/benchmarking/consent-gate';
-import type { GateServer } from '@c15t/benchmarking/consent-gate';
+} from '@inth/benchmarking/consent-gate';
+import type { GateServer } from '@inth/benchmarking/consent-gate';
 
 /**
  * The gate page and the control page are two Angular applications.
- * `provideC15tServer()` reads `provideC15t()` from the root injector, so an
- * SSR app set up as the rendering guide says carries c15t in its main
- * bundle on every route. A c15t-free control therefore needs its own build,
+ * `provideInthServer()` reads `provideInth()` from the root injector, so an
+ * SSR app set up as the rendering guide says carries Inth in its main
+ * bundle on every route. A inth-free control therefore needs its own build,
  * and each `@angular/ssr` server bundle runs one app per process. A small
  * router in front sends `/gate-control/*` to the control server and the
  * rest to the gate server, so both pages take the same extra hop.
  */
 const appDir = resolvePath(dirname(fileURLToPath(import.meta.url)), '..');
 const host = '127.0.0.1';
-const routerPort = Number(process.env.C15T_GATE_SERVER_PORT ?? '4338');
-const gatePort = Number(process.env.C15T_GATE_APP_PORT ?? '4339');
-const controlPort = Number(process.env.C15T_GATE_CONTROL_PORT ?? '4340');
-const proxyPort = Number(process.env.C15T_GATE_PORT ?? '4438');
+const routerPort = Number(process.env.INTH_GATE_SERVER_PORT ?? '4338');
+const gatePort = Number(process.env.INTH_GATE_APP_PORT ?? '4339');
+const controlPort = Number(process.env.INTH_GATE_CONTROL_PORT ?? '4340');
+const proxyPort = Number(process.env.INTH_GATE_PORT ?? '4438');
 const CONTROL_PREFIX = '/gate-control';
 
 const forward = function forward(
@@ -85,9 +85,9 @@ const startServers = async function startServers(
 			command: ['node', 'dist/gate/server/server.mjs'],
 			cwd: appDir,
 			env: {
-				C15T_BACKEND_URL: `http://${host}:${gatePort}/api/bench-consent`,
-				C15T_BENCH_BACKEND_LATENCY_MS: `${backendLatencyMs}`,
 				HOST: host,
+				INTH_BENCH_BACKEND_LATENCY_MS: `${backendLatencyMs}`,
+				INTH_PROJECT_URL: `http://${host}:${gatePort}/api/bench-consent`,
 				PORT: `${gatePort}`,
 			},
 			origin: `http://${host}:${gatePort}`,
@@ -121,9 +121,9 @@ try {
 	await runConsentGate({
 		framework: 'angular',
 		notes: [
-			'@inth/angular as the quickstart and rendering guide set it up: provideC15t() with hosted() on the /api/c15t consent route, provideC15tServer() with that route, and the stock banner, dialog and c15tConsentDialogLink in the root component. The control is a second Angular SSR app without c15t.',
+			'@inth/angular as the quickstart and rendering guide set it up: provideInth() with hosted() on the /api/inth consent route, provideInthServer() with that route, and the stock banner, dialog and inthConsentDialogLink in the root component. The control is a second Angular SSR app without inth.',
 		],
-		packageName: '@c15t/angular-browser-bench',
+		packageName: '@inth/angular-browser-bench',
 		paths: { control: `${CONTROL_PREFIX}/`, gate: '/gate' },
 		proxyPort,
 		startServer: startServers,

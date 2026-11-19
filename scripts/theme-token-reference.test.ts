@@ -21,17 +21,17 @@ test('the token reference matches ThemeCSSVariables', () => {
 test('reads each variable with its theme key and default', () => {
 	const tokens = readThemeTokens(`export interface ThemeCSSVariables {
 	/** \`radius.lg\` (default: \`0.75rem\`) */
-	'--c15t-radius-lg'?: string;
+	'--inth-radius-lg'?: string;
 }`);
 	expect(tokens).toEqual([
-		{ key: 'radius.lg', value: '`0.75rem`', variable: '--c15t-radius-lg' },
+		{ key: 'radius.lg', value: '`0.75rem`', variable: '--inth-radius-lg' },
 	]);
 });
 
 test('rejects a variable without a documented theme key', () => {
 	expect(() =>
 		readThemeTokens(`export interface ThemeCSSVariables {
-	'--c15t-new'?: string;
+	'--inth-new'?: string;
 }`)
 	).toThrow('lack a `theme.key`');
 });

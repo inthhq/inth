@@ -9,7 +9,7 @@ import type {
  * component tree that renders it. This module is the first half. It builds
  * a kernel from the prepared server snapshot, then mounts persistence,
  * the script loader, network and iframe blockers, IAB, the callback bridge,
- * `window.c15t` and the initial `init()` (or adopts a resolved prefetch) on
+ * `window.__inthDebug` and the initial `init()` (or adopts a resolved prefetch) on
  * `start()`, and undoes all of it on `dispose()`.
  *
  * Two constructors share that lifecycle. `createConsentRuntime` is for a
@@ -28,7 +28,7 @@ import type {
  * import { createConsentRuntime } from '@inth/sdk-core/runtime';
  *
  * const runtime = createConsentRuntime({
- *   projectUrl: '/api/c15t',
+ *   projectUrl: '/api/inth',
  *   pkg: '@inth/astro',
  * });
  * runtime.start();
@@ -87,9 +87,13 @@ export type {
 } from './types';
 export type { WireRuntimeCallbacksOptions } from './callbacks';
 export { wireRuntimeCallbacks } from './callbacks';
-export type { IABModuleLoader, LazyIABFactory } from './lazy-iab';
+export type {
+	IABModuleLoader,
+	IABSurfaceActions,
+	LazyIABFactory,
+} from './lazy-iab';
 export { isIABConfigured } from './iab-options';
-export { createLazyIABFactory } from './lazy-iab';
+export { createLazyIABFactory, iabSurfaceActions } from './lazy-iab';
 export { lazyRuntimeModule } from './lazy-module';
 export { mountRuntimeIAB } from './iab-mount';
 export type { RuntimeIABMountOptions } from './iab-mount';
@@ -159,15 +163,13 @@ export const defaultRuntimeModules: ConsentRuntimeModules = {
  *
  * Nothing else happens until {@link ConsentRuntime.start} is called.
  *
- * @param options - The runtime configuration.
- * @returns The runtime handle.
  * @throws {Error} When the options select no transport factory.
  *
  * @example
  * ```ts
  * const runtime = createConsentRuntime({
  *   createIAB,
- *   projectUrl: '/api/c15t',
+ *   projectUrl: '/api/inth',
  *   iab: { cmpId: 123 },
  *   scripts: [{ category: 'measurement', id: 'ga', src: '...' }],
  * });

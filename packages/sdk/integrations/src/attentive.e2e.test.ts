@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
 	clearAllScripts,
-	deniedConsents,
+	ALL_DENIED,
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
@@ -11,8 +11,8 @@ import {
 import { attentiveTag } from './vendors/email-and-sms/attentive';
 
 const GLOBALS = ['attentive', 'attentiveOptions'];
-const granted = { ...deniedConsents, marketing: true };
-const unrelated = { ...deniedConsents, measurement: true };
+const granted = { ...ALL_DENIED, marketing: true };
+const unrelated = { ...ALL_DENIED, measurement: true };
 const getLoader = (): HTMLScriptElement => {
 	const loader = document.querySelector<HTMLScriptElement>('script[src]');
 	if (!loader) {
@@ -37,11 +37,11 @@ describe('Attentive consent loader', () => {
 		vi.unstubAllGlobals();
 	});
 	it('creates no vendor requests, globals or storage before mapped consent', () => {
-		const scripts = [attentiveTag({ siteSlug: 'c15tfake' })];
+		const scripts = [attentiveTag({ siteSlug: 'inthfake' })];
 		const cookies = document.cookie;
 		const local = { ...localStorage };
 		const session = { ...sessionStorage };
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, unrelated);
 		expect(document.querySelector('script[src]')).toBeNull();
 		for (const name of GLOBALS) {
@@ -54,10 +54,10 @@ describe('Attentive consent loader', () => {
 		expect({ ...sessionStorage }).toEqual(session);
 		updateScripts(scripts, granted);
 		const first = getLoader();
-		expect(first.src).toBe('https://cdn.attn.tv/c15tfake/dtag.js');
+		expect(first.src).toBe('https://cdn.attn.tv/inthfake/dtag.js');
 		updateScripts(scripts, granted);
 		expect(getLoader()).toBe(first);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(first.isConnected).toBe(true);
 		updateScripts(scripts, granted);
 		expect(getLoader()).toBe(first);
@@ -65,11 +65,11 @@ describe('Attentive consent loader', () => {
 	});
 	it('honors an overridden category', () => {
 		const scripts = [
-			attentiveTag({ category: 'experience', siteSlug: 'c15tfake' }),
+			attentiveTag({ category: 'experience', siteSlug: 'inthfake' }),
 		];
 		loadScripts(scripts, granted);
 		expect(document.querySelector('script[src]')).toBeNull();
-		updateScripts(scripts, { ...deniedConsents, experience: true });
+		updateScripts(scripts, { ...ALL_DENIED, experience: true });
 		expect(getLoader()).toBeDefined();
 	});
 });
@@ -77,34 +77,34 @@ describe('Attentive consent loader', () => {
 describe('Attentive body tag lifecycle', () => {
 	registerVendorContractCleanup();
 	it('retains the validated configuration across caller mutation and remount', () => {
-		const options = { siteSlug: ' c15t-test_site-123 ' };
+		const options = { siteSlug: ' inth-test_site-123 ' };
 		const script = attentiveTag(options);
 		options.siteSlug = 'invalid/path';
-		loadScripts([script], deniedConsents);
+		loadScripts([script], ALL_DENIED);
 		expect(document.querySelector('script[src]')).toBeNull();
 		updateScripts([script], granted);
 		expect(getLoader().src).toBe(
-			'https://cdn.attn.tv/c15t-test_site-123/dtag.js'
+			'https://cdn.attn.tv/inth-test_site-123/dtag.js'
 		);
 		clearAllScripts();
 		loadScripts([script], granted);
 		expect(getLoader().src).toBe(
-			'https://cdn.attn.tv/c15t-test_site-123/dtag.js'
+			'https://cdn.attn.tv/inth-test_site-123/dtag.js'
 		);
 		expect(document.querySelectorAll('script[src]')).toHaveLength(1);
 	});
 	it('uses one body tag across pending withdrawal and helper recreation', () => {
-		const create = () => attentiveTag({ siteSlug: 'c15tfake' });
+		const create = () => attentiveTag({ siteSlug: 'inthfake' });
 		loadScripts([create()], granted);
 		const loader = getLoader();
 		expect(loader.parentElement).toBe(document.body);
-		updateScripts([create()], deniedConsents);
+		updateScripts([create()], ALL_DENIED);
 		loader.dispatchEvent(new Event('load'));
 		updateScripts([create()], granted);
 		expect(getLoader()).toBe(loader);
 		expect(document.querySelectorAll('script[src]')).toHaveLength(1);
 		expect(
 			document.querySelector('script[src*="dtag.js"]')?.getAttribute('src')
-		).toBe('https://cdn.attn.tv/c15tfake/dtag.js');
+		).toBe('https://cdn.attn.tv/inthfake/dtag.js');
 	});
 });

@@ -1,6 +1,6 @@
 const STORAGE_KEY = 'northwind:consent-revoked';
 
-/** Called by c15t right before it reloads the page after a revocation. */
+/** Called by Inth right before it reloads the page after a revocation. */
 export const rememberRevocation = () => {
 	try {
 		sessionStorage.setItem(STORAGE_KEY, '1');

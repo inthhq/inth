@@ -1,6 +1,6 @@
 ---
 title: Translations
-description: Where the c15t banner and dialog text comes from in Nuxt, how the server picks the visitor's language, and how to switch it at runtime.
+description: Where the Inth banner and dialog text comes from in Nuxt, how the server picks the visitor's language, and how to switch it at runtime.
 group: frameworks
 ---
 
@@ -14,7 +14,7 @@ module has no option for message overrides.
 [Copy and translations](/docs/customization/translations) lists the message
 keys and how to write labels that describe each action.
 
-## How c15t picks the language
+## How Inth picks the language
 
 The request's `Accept-Language` header decides:
 
@@ -28,7 +28,7 @@ The request's `Accept-Language` header decides:
   bundle carries English base copy; another language's base copy loads from
   your site the first time a visitor resolves to it.
 
-On prerendered and cached routes the browser requests `/api/c15t/init` after
+On prerendered and cached routes the browser requests `/api/inth/init` after
 hydration, and that request carries the browser's own header. When your
 project has no text for the language, the backend picks its fallback
 language.
@@ -59,16 +59,12 @@ language does nothing:
 The assignment alone loads the new text. The example's extra
 `kernel.commands.init()` call repeats the request and is not needed.
 
-## Text that does not come from translations
+## Trigger labels
 
-`ConsentDialogLink` and the `ConsentGate` placeholder read their default
-text from the translations, in English until init has delivered copy. One
-label is a module option instead. Set it in the visitor's language when your
-site has more than one:
-
-| Text | Where | How to change it |
-| --- | --- | --- |
-| "Open privacy settings" | `ConsentDialogTrigger` label | Set the `triggerAriaLabel` option. |
+`ConsentDialogLink`, the `ConsentGate` placeholder and `ConsentDialogTrigger`
+read their default text from the translations, in English until init has
+delivered copy. The trigger's accessible name is `trigger.label`; the
+`triggerAriaLabel` option overrides it in every language.
 
 ## Verify
 

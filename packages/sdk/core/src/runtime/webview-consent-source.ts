@@ -1,9 +1,9 @@
 /**
- * Read consent that a c15t mobile app injected into its WebView.
+ * Read consent that an Inth mobile app injected into its WebView.
  *
  * The Swift, Kotlin and React Native WebView helpers add a script that runs
  * at document start, in the main frame, on origins the app lists. It defines
- * `window.__c15tNativeConsent` as a frozen, non-writable, non-configurable
+ * `window.__inthNativeConsent` as a frozen, non-writable, non-configurable
  * object before any page script runs. This module reads that object and
  * returns it as an {@link ExternalConsentSource}, so the native app stays the
  * consent authority while the page runs inside the app. The contract is
@@ -12,8 +12,15 @@
 import type { ConsentState, Unsubscribe } from '../types';
 import type { ExternalConsentSource } from './types';
 
-/** The global the native document-start script defines. */
-export const WEBVIEW_CONSENT_GLOBAL = '__c15tNativeConsent';
+/**
+ * The globals the native document-start script defines, newest first. App
+ * builds made before the Inth rename define `__c15tNativeConsent`, and they
+ * stay installed long after a site updates.
+ */
+const WEBVIEW_CONSENT_GLOBALS = [
+	'__inthNativeConsent',
+	'__c15tNativeConsent',
+] as const;
 
 /** Consent state a native app injected into its WebView. */
 export interface WebViewConsentState {
@@ -94,16 +101,10 @@ const readState = (value: unknown): WebViewConsentState | null => {
  * script gives it. A plain assignment to the global, or an object that can
  * still be changed, is not the native one and is ignored.
  */
-const readInjected = (): InjectedConsent | null => {
-	if (typeof window === 'undefined') {
-		return null;
-	}
+const readInjectedGlobal = (name: string): InjectedConsent | null => {
 	let descriptor: PropertyDescriptor | undefined;
 	try {
-		descriptor = Object.getOwnPropertyDescriptor(
-			window,
-			WEBVIEW_CONSENT_GLOBAL
-		);
+		descriptor = Object.getOwnPropertyDescriptor(window, name);
 	} catch {
 		return null;
 	}
@@ -128,10 +129,23 @@ const readInjected = (): InjectedConsent | null => {
 	return injected as unknown as InjectedConsent;
 };
 
+const readInjected = (): InjectedConsent | null => {
+	if (typeof window === 'undefined') {
+		return null;
+	}
+	for (const name of WEBVIEW_CONSENT_GLOBALS) {
+		const injected = readInjectedGlobal(name);
+		if (injected) {
+			return injected;
+		}
+	}
+	return null;
+};
+
 /**
- * Use the consent a c15t mobile app injected into its WebView.
+ * Use the consent an Inth mobile app injected into its WebView.
  *
- * Pass the result as `consentSource`. Inside a WebView that a c15t mobile
+ * Pass the result as `consentSource`. Inside a WebView that an Inth mobile
  * app configured for this origin, it returns a source that reads the
  * native app's decision: no banner shows, nothing is stored or sent from
  * the page, and the page follows the app's choice as it changes. A request
@@ -139,7 +153,7 @@ const readInjected = (): InjectedConsent | null => {
  * show its own preferences.
  *
  * Everywhere else, including a normal browser and server rendering, it
- * returns `undefined`, so c15t behaves as if `consentSource` were not set.
+ * returns `undefined`, so Inth behaves as if `consentSource` were not set.
  *
  * Call it once, when you build the options. The native script runs before
  * any page script, so the injected state is already there.
@@ -152,7 +166,7 @@ const readInjected = (): InjectedConsent | null => {
  * import { webViewConsentSource } from '@inth/sdk/engine';
  *
  * const options = {
- * 	mode: hosted({ projectUrl: '/api/c15t' }),
+ * 	mode: hosted({ projectUrl: '/api/inth' }),
  * 	consentSource: webViewConsentSource(),
  * };
  * ```

@@ -1,18 +1,10 @@
 <script lang="ts">
-	import { defaultTranslationConfig } from '@inth/sdk/engine';
-	import { resolveTranslations } from '@inth/sdk/ui/utils';
-
 	import { getConsentContext, getThemeContext } from '../../lib/context.svelte';
 
 	const consent = getConsentContext();
 	const theme = getThemeContext();
 
-	const translations = $derived(
-		resolveTranslations(
-			consent.state.translationConfig,
-			defaultTranslationConfig
-		)
-	);
+	const translations = $derived(consent.state.copy);
 </script>
 
 <div data-testid="has-manager">{Boolean(consent.manager).toString()}</div>

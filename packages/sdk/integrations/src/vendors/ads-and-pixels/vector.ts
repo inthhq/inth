@@ -58,7 +58,6 @@ export interface VectorOptions {
 /**
  * Loads Vector after marketing consent, once per page.
  *
- * @param options - Public pixel ID and optional SDK URL.
  * @returns A consent-gated script, or a skipped script for an invalid ID.
  * @remarks A missing or blank pixelId logs an error and skips loading.
  * Vector has no documented stop API. Keep reload on revocation enabled;

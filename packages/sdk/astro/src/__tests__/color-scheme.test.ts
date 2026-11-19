@@ -1,7 +1,7 @@
 /**
  * Colour-scheme plumbing.
  *
- * `c15t-dark` on `<html>` is the only thing that makes the surfaces dark —
+ * `inth-dark` on `<html>` is the only thing that makes the surfaces dark —
  * the stylesheet carries no `prefers-color-scheme` block — so these cover
  * the two places that set it: the resolved option that reaches the browser,
  * and the inline script that runs before the first paint.
@@ -12,10 +12,10 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import ConsentScript from '../components/consent-script.astro';
 import ConsentBanner from '../components/prompt.astro';
-import { c15t, resolveOptions } from '../integration';
+import { inth, resolveOptions } from '../integration';
 import { buildColorSchemeScript, resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { C15tAstroOptions, C15tLocals } from '../types';
+import type { InthAstroOptions, InthLocals } from '../types';
 import { testRule } from './policy-fixture';
 
 let container: AstroContainer;
@@ -25,8 +25,8 @@ beforeAll(async () => {
 });
 
 const buildLocals = async function buildLocals(
-	options: C15tAstroOptions = { mode: testingMode({ policy: [testRule] }) }
-): Promise<C15tLocals> {
+	options: InthAstroOptions = { mode: testingMode({ policy: [testRule] }) }
+): Promise<InthLocals> {
 	return await resolveConsentContext({
 		headers: new Headers(),
 		options: resolveOptions(options),
@@ -34,9 +34,9 @@ const buildLocals = async function buildLocals(
 };
 
 const serializedOptions = async function serializedOptions(
-	options: C15tAstroOptions
+	options: InthAstroOptions
 ) {
-	const integration = c15t(options);
+	const integration = inth(options);
 	const updateConfig = vi.fn();
 	await integration.hooks['astro:config:setup']?.({
 		addMiddleware: vi.fn(),
@@ -58,7 +58,7 @@ const serializedOptions = async function serializedOptions(
 	];
 	const [plugin] = config.vite.plugins;
 	const loaded = plugin?.load(
-		plugin.resolveId('virtual:c15t/options') as string
+		plugin.resolveId('virtual:inth/options') as string
 	) as string;
 	return JSON.parse(loaded.replace(/^export default /u, '').replace(/;$/u, ''));
 };
@@ -121,7 +121,7 @@ describe('buildColorSchemeScript', () => {
 
 	it('sets the class unconditionally for dark', () => {
 		expect(buildColorSchemeScript('dark')).toContain(
-			"classList.add('c15t-dark')"
+			"classList.add('inth-dark')"
 		);
 		expect(buildColorSchemeScript('dark')).not.toContain('matchMedia');
 	});
@@ -129,7 +129,7 @@ describe('buildColorSchemeScript', () => {
 	it('reads prefers-color-scheme for system', () => {
 		const script = buildColorSchemeScript('system');
 		expect(script).toContain('(prefers-color-scheme:dark)');
-		expect(script).toContain("'c15t-dark'");
+		expect(script).toContain("'inth-dark'");
 	});
 
 	it('survives a webview with no matchMedia', () => {
@@ -149,14 +149,14 @@ describe('buildColorSchemeScript', () => {
 });
 
 describe('<ConsentScript />', () => {
-	// The inlined first-paint stylesheet styles `.c15t-dark` too; these
+	// The inlined first-paint stylesheet styles `.inth-dark` too; these
 	// tests read the scripts (`inline-styles.test.ts` covers the styles).
-	const render = async function render(locals: C15tLocals): Promise<string> {
+	const render = async function render(locals: InthLocals): Promise<string> {
 		const html = await container.renderToString(ConsentScript, {
-			locals: { c15t: locals },
+			locals: { inth: locals },
 		});
 		return html.replace(
-			/<style[^>]*data-c15t-styles[^>]*>[\s\S]*?<\/style>/gu,
+			/<style[^>]*data-inth-styles[^>]*>[\s\S]*?<\/style>/gu,
 			''
 		);
 	};
@@ -164,7 +164,7 @@ describe('<ConsentScript />', () => {
 	it('runs the colour-scheme script before the config script', async () => {
 		const html = await render(await buildLocals());
 		const colorScheme = html.indexOf('prefers-color-scheme');
-		const config = html.indexOf('data-c15t-config');
+		const config = html.indexOf('data-inth-config');
 		expect(colorScheme).toBeGreaterThan(-1);
 		expect(config).toBeGreaterThan(colorScheme);
 	});
@@ -176,7 +176,7 @@ describe('<ConsentScript />', () => {
 				mode: testingMode({ policy: [testRule] }),
 			})
 		);
-		expect(html).toContain("classList.add('c15t-dark')");
+		expect(html).toContain("classList.add('inth-dark')");
 		expect(html).not.toContain('prefers-color-scheme');
 	});
 
@@ -187,8 +187,8 @@ describe('<ConsentScript />', () => {
 				mode: testingMode({ policy: [testRule] }),
 			})
 		);
-		expect(html).not.toContain('c15t-dark');
-		expect(html).toContain('data-c15t-config');
+		expect(html).not.toContain('inth-dark');
+		expect(html).toContain('data-inth-config');
 	});
 
 	it('emits no colour-scheme script for none', async () => {
@@ -198,15 +198,15 @@ describe('<ConsentScript />', () => {
 				mode: testingMode({ policy: [testRule] }),
 			})
 		);
-		expect(html).not.toContain('c15t-dark');
-		expect(html).toContain('data-c15t-config');
+		expect(html).not.toContain('inth-dark');
+		expect(html).toContain('data-inth-config');
 	});
 
 	it('emits once per request, even alongside a banner', async () => {
 		// One `locals` object for both renders: that identity is what the
 		// emission guard keys off, and Astro hands the same one to every
 		// component in a request.
-		const locals = { c15t: await buildLocals() };
+		const locals = { inth: await buildLocals() };
 		const head = await container.renderToString(ConsentScript, { locals });
 		const banner = await container.renderToString(ConsentBanner, {
 			locals,
@@ -220,7 +220,7 @@ describe('<ConsentScript />', () => {
 describe('<ConsentBanner /> without a <ConsentScript /> in head', () => {
 	it('emits the colour-scheme script before its own markup', async () => {
 		const html = await container.renderToString(ConsentBanner, {
-			locals: { c15t: await buildLocals() },
+			locals: { inth: await buildLocals() },
 			props: {},
 		});
 		const script = html.indexOf('prefers-color-scheme');

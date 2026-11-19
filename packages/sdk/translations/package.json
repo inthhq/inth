@@ -2,22 +2,22 @@
 	"name": "@inth/sdk-translations",
 	"version": "3.2.0-canary.0",
 	"private": true,
-	"description": "Translations for c15t in 53 languages. Typed i18n strings for c15t banners, dialogs and preference centers.",
+	"description": "Translations for Inth in 53 languages. Typed i18n strings for Inth banners, dialogs and preference centers.",
 	"keywords": [
-		"c15t",
 		"i18n",
+		"inth",
 		"localization",
 		"translations",
 		"typescript"
 	],
-	"homepage": "https://c15t.com/docs/customization/translations",
+	"homepage": "https://inth.com",
 	"bugs": {
-		"url": "https://github.com/c15t/c15t/issues"
+		"url": "https://github.com/inthhq/inth/issues"
 	},
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/c15t/c15t.git",
+		"url": "git+https://github.com/inthhq/inth.git",
 		"directory": "packages/sdk/translations"
 	},
 	"files": [
@@ -319,8 +319,8 @@
 		"test:watch": "vitest"
 	},
 	"devDependencies": {
-		"@c15t/typescript-config": "workspace:*",
-		"@c15t/vitest-config": "workspace:*",
+		"@inth/typescript-config": "workspace:*",
+		"@inth/vitest-config": "workspace:*",
 		"@rslib/core": "0.23.2",
 		"@types/node": "25.5.0",
 		"@types/react": "19.2.17",

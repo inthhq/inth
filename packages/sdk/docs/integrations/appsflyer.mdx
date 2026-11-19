@@ -1,8 +1,8 @@
 ---
 title: AppsFlyer
-description: Run AppsFlyer only while c15t consent allows it and send Google's DMA consent through AppsFlyer's consent API, in Swift, Kotlin, React Native and Expo.
-seoTitle: AppsFlyer consent for mobile apps with c15t
-seoDescription: Start and stop AppsFlyer from c15t consent and send DMA consent data in Swift, Android, React Native and Expo apps.
+description: Run AppsFlyer only while Inth consent allows it and send Google's DMA consent through AppsFlyer's consent API, in Swift, Kotlin, React Native and Expo.
+seoTitle: AppsFlyer consent for mobile apps with Inth
+seoDescription: Start and stop AppsFlyer from Inth consent and send DMA consent data in Swift, Android, React Native and Expo apps.
 group: integrations
 ---
 
@@ -14,7 +14,7 @@ shared [Consent Mode mapping](/docs/integrations/google-tag#how-categories-map-t
 so marketing grants them too.
 
 The helper ships in `InthApple`, `inth-android` and
-`@inth/react-native/integrations`. c15t adds no AppsFlyer dependency. The web
+`@inth/react-native/integrations`. Inth adds no AppsFlyer dependency. The web
 has no AppsFlyer helper.
 
 ## What the helper changes
@@ -34,7 +34,7 @@ has no AppsFlyer helper.
 
 ### Who supplies `isUserSubjectToGDPR`
 
-c15t's policy model says how the app asks for consent, not which law applies,
+Inth's policy model says how the app asks for consent, not which law applies,
 so the helper does not guess. Set the flag from your own region logic. If you
 cannot tell, `true` is the cautious value: it limits what AppsFlyer passes on.
 
@@ -179,7 +179,7 @@ AppsFlyer 7 is a breaking release, and the snippets above do not work with it:
   runs after its session-ready listener has fired. Without the listener,
   `start` does nothing.
 
-The c15t helper's calls (`setConsentData`, `stop`, `start`) map onto SDK 7,
+The Inth helper's calls (`setConsentData`, `stop`, `start`) map onto SDK 7,
 but its `start` call can come before the session is ready, and coordinating
 the two is untested. Stay on AppsFlyer 6 with this helper for now. See
 AppsFlyer's [Android](https://dev.appsflyer.com/hc/docs/migrate-android-sdk-to-v7)

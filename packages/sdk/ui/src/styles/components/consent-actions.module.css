@@ -82,14 +82,14 @@
 		}
 	}
 
-	/* The banner's card shell is a `c15t-banner` container. When the card is
+	/* The banner's card shell is an `inth-banner` container. When the card is
 	   too narrow for one row, undo the row rules above so the actions keep
 	   the narrow layout on any viewport: grouped actions share a row and
 	   each group takes the full width. In English, one row needs about
 	   21.3rem (three labels, gaps and footer padding). Surfaces outside that
 	   container, and browsers without container queries, keep the
 	   viewport rule. */
-	@container c15t-banner (width < 22rem) {
+	@container inth-banner (width < 22rem) {
 		.actionRoot:not(:global(.headless))[data-split],
 		.actionRoot:not(:global(.headless))[data-direction='row']:not([data-fill]) {
 			flex-direction: column;

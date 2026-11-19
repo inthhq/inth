@@ -1,58 +1,17 @@
 /**
- * The inline script a server-rendered banner runs before hydration, and
- * the names it shares with the runtime. Apart from the replay, so the
- * banner's bundle carries the script text and the runtime's does not.
+ * The inline script a server-rendered banner runs before hydration. Apart
+ * from the replay, so the banner's bundle carries the script text and the
+ * runtime's does not. The names it shares with the runtime are in
+ * `../libs/page-globals`.
  */
 
-/** One recorded tap. @internal */
-export interface EarlyConsentTap {
-	action: 'accept' | 'reject' | 'dismiss' | 'customize';
-	/** Epoch milliseconds of the click. */
-	at: number;
-	/** The banner root's `data-model` when it was tapped. */
-	model: string | null;
-	/** The banner root's `data-prompt` when it was tapped. */
-	prompt: string | null;
-}
-
-/** What the inline script leaves on `window`. @internal */
-export interface EarlyConsentTapQueue {
-	taps?: EarlyConsentTap[];
-	stop?: () => void;
-	/**
-	 * Set by a deferred root ({@link EARLY_TAP_NOTIFY_KEY}): called after
-	 * each recorded tap, so the root records it without waiting for the
-	 * banner to hydrate.
-	 */
-	n?: () => void;
-	/**
-	 * Set by a deferred root ({@link EARLY_TAP_HOLD_PRESSES_KEY}) while its
-	 * banner cannot hydrate: presses on the banner's buttons stop at the
-	 * script.
-	 */
-	b?: number;
-}
-
-/**
- * Property of {@link EarlyConsentTapQueue} the script calls after it
- * records a tap. @internal
- */
-export const EARLY_TAP_NOTIFY_KEY = 'n';
-
-/**
- * Property of {@link EarlyConsentTapQueue} that, while truthy, makes the
- * script stop presses on the banner's buttons. @internal
- */
-export const EARLY_TAP_HOLD_PRESSES_KEY = 'b';
-
-/** Window property the inline script and the runtime share. @internal */
-export const EARLY_TAPS_WINDOW_KEY = '__c15tEarlyTaps';
-
-/** Id of the `<style>` that hides the banner after a tap. @internal */
-export const EARLY_TAP_STYLE_ID = 'c15t-early-tap';
-
-/** The stock banner's root. @internal */
-export const EARLY_TAP_ROOT = '[data-testid="consent-banner-root"]';
+import {
+	EARLY_TAP_HOLD_PRESSES_KEY,
+	EARLY_TAP_NOTIFY_KEY,
+	EARLY_TAP_ROOT,
+	EARLY_TAP_STYLE_ID,
+	EARLY_TAPS_WINDOW_KEY,
+} from '../libs/page-globals';
 
 /**
  * Attribute on a banner button whose click the stock action does not

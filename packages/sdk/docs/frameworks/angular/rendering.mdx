@@ -1,6 +1,6 @@
 ---
 title: Rendering and deployment
-description: Put the c15t banner in the server HTML of an Angular app with @angular/ssr, provideC15tServer and a same-origin consent route, or deploy a browser-only build.
+description: Put the Inth banner in the server HTML of an Angular app with @angular/ssr, provideInthServer and a same-origin consent route, or deploy a browser-only build.
 group: frameworks
 ---
 
@@ -8,8 +8,8 @@ group: frameworks
 
 | Your app | Setup |
 | --- | --- |
-| Browser-only Angular app served as static files | `provideC15t()` with `hosted()`, as in the [quickstart](/docs/frameworks/angular/quickstart). The banner mounts after the app bootstraps. |
-| Angular with `@angular/ssr` and a Node server | `provideC15tServer()` and `createConsentRoute()` from `@inth/angular/ssr`. The banner is in the first HTML, and the browser only talks to your origin. This page. |
+| Browser-only Angular app served as static files | `provideInth()` with `hosted()`, as in the [quickstart](/docs/frameworks/angular/quickstart). The banner mounts after the app bootstraps. |
+| Angular with `@angular/ssr` and a Node server | `provideInthServer()` and `createConsentRoute()` from `@inth/angular/ssr`. The banner is in the first HTML, and the browser only talks to your origin. This page. |
 | Prerendered routes (`RenderMode.Prerender`) | Every visitor gets the same HTML, so it carries no visitor's consent. The browser resolves consent after hydration. See [prerendered and cached pages](#prerendered-and-cached-pages). |
 | Tests with no backend | `testing()` from `@inth/angular/testing`, which the server resolves from its own rules. Throws in production builds. |
 
@@ -20,9 +20,9 @@ browser-only app does not install them.
 
 ## How server rendering works
 
-`provideC15tServer()` runs before each server render. It reads the request
+`provideInthServer()` runs before each server render. It reads the request
 through Angular's `REQUEST` token, resolves the visitor's consent with the
-`mode` you gave `provideC15t()`, and stores the result in `TransferState`:
+`mode` you gave `provideInth()`, and stores the result in `TransferState`:
 
 - `hosted()` asks the backend's `/init`, forwarding the visitor's cookie,
   location headers and language. With `route`, a backend on your own consent
@@ -39,7 +39,7 @@ chose. In the browser it reads the same state, and the snapshot the server
 rendered with, back from `TransferState`, so hydration matches, the browser
 makes no `/init` request, and the consent engine can load after the page's
 largest image; see
-[when the runtime starts](/docs/frameworks/angular/provide-c15t#when-the-runtime-starts).
+[when the runtime starts](/docs/frameworks/angular/provide-inth#when-the-runtime-starts).
 
 The server render never fails because of consent. An unreachable or slow
 upstream gives the cookie-only state after `timeoutMs`, 500 milliseconds by
@@ -59,21 +59,22 @@ Create it in a server-only module:
 
 <include src="../../shared/examples/angular/consent-route.mdx" />
 
-The route answers `/manifest` and `/init` below `/api/c15t`, resolved
+The route answers `/manifest` and `/init` below `/api/inth`, resolved
 in-process from the backend's manifest. With `proxy: true` it also forwards
 consent writes, such as saves to `/subjects`, to `projectUrl`. Only an
 allowlist of paths is forwarded, so the route is never an open proxy. Without
 `proxy`, anything but `GET` and `HEAD` gets `405`.
 
-`C15T_BACKEND_URL` is read at runtime, on the server only. Set it to your Inth
+`INTH_PROJECT_URL` is read at runtime, on the server only. Set it to your Inth
 project's backend URL in the server's environment.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `routePrefix` | `'/api/c15t'` | Where the route is mounted. Must be a path other than `/`. |
-| `projectUrl` | none | The c15t backend. The manifest is read from `${projectUrl}/manifest`; session reports and the proxy go here. Must not name this route. |
-| `manifestUrl` | `${projectUrl}/manifest` | A full manifest URL, such as a CDN copy. |
-| `snapshot` | none | A manifest to resolve with. Nothing is fetched. |
+| `routePrefix` | `'/api/inth'` | Where the route is mounted. Must be a path other than `/`. |
+| `mode` | `manifest()` | The `mode` given to `provideInth()`, so the route reads the manifest where the render does: a `manifest()` mode's `snapshot` or `manifestUrl`. |
+| `projectUrl` | none | The Inth backend. The manifest is read from `${projectUrl}/manifest`; session reports and the proxy go here. Must not name this route. |
+| `manifestUrl` | the mode's, else `${projectUrl}/manifest` | A full manifest URL, such as a CDN copy. |
+| `snapshot` | the mode's | A manifest to resolve with. Nothing is fetched. |
 | `proxy` | `false` | Forward consent writes to `projectUrl`. |
 | `trustForwardedHeaders` | `false` | Believe `Forwarded` and `X-Forwarded-*` headers. Only behind a proxy that sets them and drops incoming ones. |
 | `fetch`, `fetchGvl` | `globalThis.fetch` | Fetch for the manifest and for the Global Vendor List under an IAB policy. |
@@ -85,13 +86,13 @@ In `src/app/app.config.ts`, use the route as the backend and add hydration:
 
 <include src="../../shared/examples/angular/ssr-app-config.mdx" />
 
-The browser sends saves and any `/init` it still needs to `/api/c15t` on your
+The browser sends saves and any `/init` it still needs to `/api/inth` on your
 own origin. The server resolves the same relative URL through the route
 in-process.
 
-## Add provideC15tServer
+## Add provideInthServer
 
-Add `provideC15tServer()` to `src/app/app.config.server.ts`, next to
+Add `provideInthServer()` to `src/app/app.config.server.ts`, next to
 `provideServerRendering()`:
 
 <include src="../../shared/examples/angular/ssr-server-config.mdx" />
@@ -103,7 +104,7 @@ Render consent routes on the server, not as prerendered pages:
 | Option | Default | Behavior |
 | --- | --- | --- |
 | `route` | none | The route from `createConsentRoute()`. A relative backend below its prefix is resolved in-process. |
-| `cookieName` | `'c15t'` | The cookie holding stored consent. Set it only when `storageConfig` in `provideC15t()` uses another key; they must match. |
+| `cookieName` | `'inth'` | The cookie holding stored consent. Set it only when `storageConfig` in `provideInth()` uses another key; they must match. |
 | `country`, `region`, `language` | from the request | Replace what the request's geo headers and `Accept-Language` say. |
 | `forwardHeaders` | none | Extra request headers to forward upstream in hosted mode, such as a token a private backend needs. `cookie` and forwarding headers cannot be named. |
 | `trustForwardedHeaders` | `false` | Resolve a relative backend against the request's forwarding headers and forward the visitor IP. Only behind a proxy that sets those headers. |
@@ -112,13 +113,13 @@ Render consent routes on the server, not as prerendered pages:
 | `waitUntil` | none | Keeps session reports and late upstream work alive past the response. |
 | `shared` | `false` | The HTML is served to more than one visitor. No cookie, geo header or clock is read. |
 
-`provideC15tServer()` does nothing when `provideC15t()` has a `prefetch` you
+`provideInthServer()` does nothing when `provideInth()` has a `prefetch` you
 set yourself or an external `runtime`.
 
 ## Mount the route in server.ts
 
 Mount the route before the Angular engine in `src/server.ts`. Its `node`
-middleware answers requests below `/api/c15t` and calls `next()` for the
+middleware answers requests below `/api/inth` and calls `next()` for the
 rest:
 
 <include src="../../shared/examples/angular/ssr-server.mdx" />
@@ -138,7 +139,7 @@ const response =
 ## Prerendered and cached pages
 
 A page built with `RenderMode.Prerender`, or served from a shared cache,
-reaches every visitor with the same HTML. `provideC15tServer()` treats a
+reaches every visitor with the same HTML. `provideInthServer()` treats a
 render without a request as shared: it reads no cookie, geo header or clock,
 and resolves only `testing()` mode. Pass `shared: true` for a server-rendered
 page you cache. The browser then resolves the visitor's consent after
@@ -150,12 +151,12 @@ that a request-specific render produced.
 Build with `ng build`, start the server with `node dist/<app>/server/server.mjs`
 and open a private window:
 
-1. View the page source. The banner's markup and `<style data-c15t-styles>`
+1. View the page source. The banner's markup and `<style data-inth-styles>`
    elements are in the HTML.
 2. The Network panel has no `/init` request from the browser, and no request
    to your Inth backend's origin.
 3. Select **Accept All** and reload. The page source has no banner.
-4. Select **Privacy settings** and save. The save goes to `/api/c15t` on
+4. Select **Privacy settings** and save. The save goes to `/api/inth` on
    your origin.
 
 The console shows no Angular hydration errors. If it does, see

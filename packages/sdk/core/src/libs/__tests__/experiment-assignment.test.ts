@@ -6,18 +6,23 @@ import type { PolicyRule } from '@inth/sdk-schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
-import { createExperimentController } from '../../experiment';
 import { createConsentKernel } from '../../kernel';
 import { createConsentRuntime } from '../../runtime';
 import type { ConsentRuntimeOptions } from '../../runtime';
 import { createOfflineTransport } from '../../transports/offline';
 import type { KernelEvent, KernelTransport } from '../../types';
 import type { ConsentExperiment, ExperimentAssignment } from '../experiment';
+import { createExperimentControllerWith } from '../experiment-assignment';
+import type { ExperimentControllerOptions } from '../experiment-assignment';
 import {
-	readStoredExperimentArm,
 	writeStoredExperimentArm,
+	readStoredExperimentArm,
 } from '../experiment-storage';
 import { EXPERIMENT_STORAGE_KEY } from '../storage-keys';
+
+/** The controller as the runtime builds it. */
+const createExperimentController = (options: ExperimentControllerOptions) =>
+	createExperimentControllerWith(options, writeStoredExperimentArm);
 
 const choiceRule: PolicyRule = {
 	...policyRulePresets.europeOptIn(),
@@ -230,8 +235,8 @@ describe('createExperimentController', () => {
 		kernel.dispose();
 	});
 
-	test('stores a c15t-picked arm only once the banner has shown it', async () => {
-		const kernel = heldKernel([choiceRule], { arm: 'bar', assignedBy: 'c15t' });
+	test('stores a inth-picked arm only once the banner has shown it', async () => {
+		const kernel = heldKernel([choiceRule], { arm: 'bar', assignedBy: 'inth' });
 		const controller = createExperimentController({
 			experiment,
 			kernel,
@@ -251,7 +256,7 @@ describe('createExperimentController', () => {
 	test('stores nothing for a visitor who is never prompted', async () => {
 		const kernel = heldKernel([{ ...choiceRule, prompt: 'none' }], {
 			arm: 'bar',
-			assignedBy: 'c15t',
+			assignedBy: 'inth',
 		});
 		const controller = createExperimentController({
 			experiment,

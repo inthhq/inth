@@ -1,6 +1,6 @@
 ---
 title: Quickstart
-description: Add c15t consent management to a Next.js App Router app with Inth, a build-time policy manifest and consent-gated scripts, then check it works. Links to the Pages Router and static export guides.
+description: Add Inth consent management to a Next.js App Router app with Inth, a build-time policy manifest and consent-gated scripts, then check it works. Links to the Pages Router and static export guides.
 group: frameworks
 ---
 
@@ -28,7 +28,7 @@ This setup bundles your policy into the build. We recommend it for
 production, but it means you rebuild after you change policies, translations
 or vendors.
 
-## Install c15t
+## Install Inth
 
 <CommandTabs command="@inth/nextjs @inth/integrations" mode="install" />
 
@@ -44,11 +44,11 @@ Set your project's backend URL, including any path prefix, in `.env.local` and
 in your host's build settings:
 
 ```sh title=".env.local"
-NEXT_PUBLIC_C15T_BACKEND_URL=https://example-inth.inth.app
+NEXT_PUBLIC_INTH_PROJECT_URL=https://example-inth.inth.app
 ```
 
-If your app already sets `NEXT_PUBLIC_INTH_PROJECT_URL` for other Inth SDKs, that works
-too. When both are set, `NEXT_PUBLIC_C15T_BACKEND_URL` wins.
+The c15t name `NEXT_PUBLIC_C15T_BACKEND_URL` still works as a fallback. When both are
+set, `NEXT_PUBLIC_INTH_PROJECT_URL` wins.
 
 `https://example-inth.inth.app` is a demo project you can use to try the
 setup. Next.js inlines `NEXT_PUBLIC_` variables at build time. The build, the
@@ -64,8 +64,8 @@ or function goes in as the first argument, unchanged:
 
 <include src="../../shared/examples/nextjs/quickstart-next-config.mdx" />
 
-`next build` and `next dev` fetch `${NEXT_PUBLIC_C15T_BACKEND_URL}/manifest`
-and write the policy to `node_modules/.cache/c15t/`. That's outside your source
+`next build` and `next dev` fetch `${NEXT_PUBLIC_INTH_PROJECT_URL}/manifest`
+and write the policy to `node_modules/.cache/inth/`. That's outside your source
 tree, so there's nothing to add to `.gitignore`. `resolveConsent` finds the
 file on its own. When the build produced a snapshot, `next start` serves it
 without fetching the policy again.
@@ -74,7 +74,7 @@ without fetching the policy again.
 
 ## Add the consent config
 
-Create `c15t.config.ts` at the project root:
+Create `inth.config.ts` at the project root:
 
 <include src="../../shared/examples/nextjs/quickstart-config.mdx" />
 

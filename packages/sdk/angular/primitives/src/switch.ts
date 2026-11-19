@@ -25,15 +25,15 @@ import {
  *
  * @example
  * ```html
- * <button c15tSwitch [(checked)]="marketing" aria-label="Marketing">
- *   <span c15tSwitchControl><span c15tSwitchThumb></span></span>
+ * <button inthSwitch [(checked)]="marketing" aria-label="Marketing">
+ *   <span inthSwitchControl><span inthSwitchThumb></span></span>
  * </button>
  *
- * <button c15tSwitch formControlName="analytics" aria-label="Analytics"></button>
+ * <button inthSwitch formControlName="analytics" aria-label="Analytics"></button>
  * ```
  */
 @Directive({
-	exportAs: 'c15tSwitch',
+	exportAs: 'inthSwitch',
 	host: {
 		'(blur)': 'markTouched()',
 		'(click)': 'toggle()',
@@ -53,14 +53,12 @@ import {
 			useExisting: forwardRef(() => Switch),
 		},
 	],
-	selector: '[c15tSwitch]',
+	selector: '[inthSwitch]',
 })
 export class Switch implements ControlValueAccessor {
-	/** Whether the switch is on. */
 	readonly checked = model(false);
 	/** Whether the switch ignores input. */
 	readonly disabled = input(false);
-	/** The button's `type`. */
 	readonly type = input<'button' | 'submit' | 'reset'>('button');
 
 	readonly #formDisabled = signal(false);
@@ -121,24 +119,24 @@ export class Switch implements ControlValueAccessor {
 /** The switch's track: `data-slot="switch-track"`. */
 @Directive({
 	host: { 'data-slot': 'switch-track' },
-	selector: '[c15tSwitchControl]',
+	selector: '[inthSwitchControl]',
 })
 export class SwitchControl {}
 
 /** The switch's thumb: `data-slot="switch-thumb"`. */
 @Directive({
 	host: { 'data-slot': 'switch-thumb' },
-	selector: '[c15tSwitchThumb]',
+	selector: '[inthSwitchThumb]',
 })
 export class SwitchThumb {}
 
 /**
  * A visually hidden checkbox that mirrors the switch, so a native `<form>`
- * submits its value. Place it inside the `c15tSwitch` element.
+ * submits its value. Place it inside the `inthSwitch` element.
  *
  * @example
  * ```html
- * <button c15tSwitch [(checked)]="on"><input c15tSwitchHiddenInput name="marketing" /></button>
+ * <button inthSwitch [(checked)]="on"><input inthSwitchHiddenInput name="marketing" /></button>
  * ```
  */
 @Directive({
@@ -152,7 +150,7 @@ export class SwitchThumb {}
 		tabindex: '-1',
 		type: 'checkbox',
 	},
-	selector: 'input[c15tSwitchHiddenInput]',
+	selector: 'input[inthSwitchHiddenInput]',
 })
 export class SwitchHiddenInput {
 	/** @internal */

@@ -69,7 +69,6 @@ const toEntries = (headers: HeadersInit | undefined): [string, string][] => {
  * The reasons a fetch would need a CORS preflight, or none for a simple
  * request.
  *
- * @param init - The fetch options the code under test sent.
  * @returns One message per method or header that breaks the safelist.
  */
 export const corsPreflightReasons = function corsPreflightReasons(

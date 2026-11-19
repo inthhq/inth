@@ -2,7 +2,7 @@
 /**
  * In-page probe for the Astro browser bench.
  *
- * Publishes one object on `window.__c15tAstroBench` that the Playwright
+ * Publishes one object on `window.__inthAstroBench` that the Playwright
  * runner polls, using the same rAF-settled definition of "banner visible"
  * as the Nuxt and SvelteKit probes — banner root *and* accept button laid
  * out, painted and not animating — so the three suites' numbers mean the
@@ -19,7 +19,7 @@ const { scenario } = Astro.props;
 ---
 
 <span
-	data-c15t-bench-probe
+	data-inth-bench-probe
 	data-scenario={scenario}
 	hidden
 ></span>
@@ -35,20 +35,20 @@ const { scenario } = Astro.props;
 		loadTime?: number;
 	}
 
-	const BANNER_ELEMENT_TIMING_NAME = 'c15t-consent-banner';
+	const BANNER_ELEMENT_TIMING_NAME = 'inth-consent-banner';
 
 	const readScenario = () =>
 		document
-			.querySelector('[data-c15t-bench-probe]')
+			.querySelector('[data-inth-bench-probe]')
 			?.getAttribute('data-scenario') ?? 'unknown';
 
 	const getState = (): AstroBenchState => {
 		const scenario = readScenario();
 		if (
-			!window.__c15tAstroBench ||
-			window.__c15tAstroBench.scenario !== scenario
+			!window.__inthAstroBench ||
+			window.__inthAstroBench.scenario !== scenario
 		) {
-			window.__c15tAstroBench = {
+			window.__inthAstroBench = {
 				activeUI: 'none',
 				hasConsented: false,
 				location: null,
@@ -62,7 +62,7 @@ const { scenario } = Astro.props;
 				startedAtMs: performance.now(),
 			};
 		}
-		return window.__c15tAstroBench;
+		return window.__inthAstroBench;
 	};
 
 	const isElementVisible = (element: Element): boolean => {

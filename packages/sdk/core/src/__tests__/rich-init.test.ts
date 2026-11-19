@@ -39,7 +39,7 @@ describe('rich init: applies full response to snapshot', () => {
 		const transport: KernelTransport = {
 			init() {
 				return Promise.resolve({
-					branding: 'c15t',
+					branding: 'inth',
 					location: { countryCode: 'DE', regionCode: 'BE' },
 					policyResolution: GDPR_RESOLUTION,
 					policySnapshotToken: 'token-xyz',
@@ -59,7 +59,7 @@ describe('rich init: applies full response to snapshot', () => {
 
 		expect(snap.location).toEqual({ countryCode: 'DE', regionCode: 'BE' });
 		expect(snap.translations?.language).toBe('de');
-		expect(snap.branding).toBe('c15t');
+		expect(snap.branding).toBe('inth');
 		expect(snap.policyRule).toMatchObject({
 			id: 'gdpr-strict',
 			model: 'opt-in',

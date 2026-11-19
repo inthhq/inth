@@ -8,17 +8,17 @@ import {
 	EXAMPLES_PAYLOAD_BOUNDARY_METRICS,
 	EXAMPLES_PAYLOAD_PACKAGE,
 	examplesPayloadBudgetsFor,
-} from '@c15t/benchmarking/examples-payload';
+} from '@inth/benchmarking/examples-payload';
 import type {
 	ExampleKind,
 	ExamplesPayloadBoundaryMetric,
-} from '@c15t/benchmarking/examples-payload';
+} from '@inth/benchmarking/examples-payload';
 import type {
 	BenchmarkEnvironment,
 	BenchmarkFramework,
 	BenchmarkResult,
 	MetricSampleSet,
-} from '@c15t/benchmarking/schema';
+} from '@inth/benchmarking/schema';
 
 export type Phase = 'initial' | 'dialog' | 'accept';
 

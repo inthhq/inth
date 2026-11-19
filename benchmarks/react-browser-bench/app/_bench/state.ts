@@ -35,7 +35,7 @@ export interface BenchState {
 
 declare global {
 	interface Window {
-		__c15tReactBench?: BenchState;
+		__inthReactBench?: BenchState;
 	}
 }
 
@@ -51,10 +51,10 @@ export const getBenchState = function getBenchState(
 	}
 
 	if (
-		!window.__c15tReactBench ||
-		window.__c15tReactBench.scenario !== scenario
+		!window.__inthReactBench ||
+		window.__inthReactBench.scenario !== scenario
 	) {
-		window.__c15tReactBench = {
+		window.__inthReactBench = {
 			activeUI: 'none',
 			interaction: {},
 			mountCount: 0,
@@ -66,7 +66,7 @@ export const getBenchState = function getBenchState(
 		};
 	}
 
-	return window.__c15tReactBench;
+	return window.__inthReactBench;
 };
 
 export const markInteraction = function markInteraction(

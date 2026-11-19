@@ -23,7 +23,10 @@ import { recordCategoryPatch } from '../consent-record/record';
 import type { OptionalConsentCategory } from '../consent-record/types';
 import { buildNextSnapshot } from '../kernel/next-snapshot';
 import type { PolicyResolvers, SnapshotPatch } from '../kernel/next-snapshot';
-import { createBrowserOutboxStore } from '../kernel/save-outbox/store';
+import {
+	createBrowserOutboxStore,
+	enqueueSave,
+} from '../kernel/save-outbox/store';
 import type { SaveOutboxStore } from '../kernel/save-outbox/store';
 import {
 	applyNoticeAcknowledgement,
@@ -35,19 +38,35 @@ import {
 } from '../kernel/save-plan';
 import { deleteCookie, getRawCookieValue, writeCookie } from '../libs/cookie';
 import { generateSubjectId } from '../libs/generate-subject-id';
+import { removeLocalStorageKey } from '../libs/local-storage';
+import { storageFor } from '../libs/storage-for';
 import { resolveStorageKeys } from '../libs/storage-keys';
+import {
+	decodeNoticeDismissal,
+	decodeVendorChoice,
+	validateStoredConsentEnvelope,
+} from '../modules/persistence/record-codec';
 import type { StorageConfig } from '../modules/persistence/types';
 import { createRecordStore } from '../modules/persistence/writer/store';
-import type { PersistenceTools } from '../modules/persistence/writer/types';
+import type { RecordStoreTools } from '../modules/persistence/writer/types';
 import { buildStoredEnvelope } from '../modules/persistence/writer/write';
+import type { Callbacks } from '../options/callbacks';
+import type { StandInKernelHandle } from '../runtime/stand-in-kernel';
+import type { ConsentRuntimeOptions } from '../runtime/types';
 import type {
 	ConsentSnapshot,
 	HydrationRecords,
 	KernelEvent,
+	SaveResult,
 	SavePayload,
 	SaveUISource,
 } from '../types';
-import { kernelOnly } from './instant-commit';
+import {
+	hasStoredClearEpoch,
+	kernelOnly,
+	pendingIsInert,
+} from './instant-commit';
+import type { InstantCommit } from './instant-commit';
 
 export { hasStoredClearEpoch } from './instant-commit';
 
@@ -58,10 +77,10 @@ export { hasStoredClearEpoch } from './instant-commit';
  */
 const NO_POLICY_CHANGE: PolicyResolvers = {
 	buildEvaluationPolicy: () => {
-		throw new Error('c15t: a choice does not change the policy.');
+		throw new Error('inth: a choice does not change the policy.');
 	},
 	resolveEffectivePolicy: () => {
-		throw new Error('c15t: a choice does not change the policy.');
+		throw new Error('inth: a choice does not change the policy.');
 	},
 };
 
@@ -108,7 +127,6 @@ export interface EarlyCommitInput {
  * denied vendors, an acknowledgement record, or nothing to confirm.
  *
  * @param input - The rendered snapshot and the tap.
- * @returns The commit, or `null`.
  * @internal
  */
 export const planEarlyCommit = function planEarlyCommit(
@@ -203,14 +221,16 @@ export interface EarlyCommitStorage {
 	outbox?: SaveOutboxStore;
 }
 
-const writeTools = {
+const writeTools: RecordStoreTools = {
+	decodeNotice: decodeNoticeDismissal,
+	decodeVendors: decodeVendorChoice,
 	deleteCookie,
 	keys: resolveStorageKeys,
 	rawCookie: getRawCookieValue,
-	// The envelope is built from records the kernel's own code validated.
-	validateEnvelope: (envelope: unknown) => ({ ok: true, record: envelope }),
+	removeLocal: removeLocalStorageKey,
+	validateEnvelope: validateStoredConsentEnvelope,
 	writeCookie,
-} as unknown as PersistenceTools;
+};
 
 /**
  * Writes the commit's consent record to localStorage and its cookie, then
@@ -234,14 +254,205 @@ export const storeEarlyCommit = function storeEarlyCommit(
 			{ config: storage.storageConfig, now: Date.now() }
 		);
 		if (result.ok === false) {
-			console.warn('[c15t] Consent record was not written.', result.issues);
+			console.warn('[inth] Consent record was not written.', result.issues);
 		}
 	}
-	return (storage.outbox ?? createBrowserOutboxStore()).transact((tx) => {
-		const stored = tx.read('saves');
-		return tx.write('saves', [
-			...(Array.isArray(stored) ? stored : []),
-			{ attempts: 0, payload: commit.payload, queuedAt: Date.now() },
-		]);
+	return enqueueSave(
+		storage.outbox ?? createBrowserOutboxStore(),
+		commit.payload
+	);
+};
+
+/** A choice recorded before the engine loaded. @internal */
+export interface DeferredCommitted {
+	/** The records the engine's kernel starts from. */
+	records: Pick<HydrationRecords, 'choice' | 'subject'>;
+	/** The permissions the commit announced. */
+	permissions: ConsentSnapshot['effectivePermissions'];
+}
+
+/** @internal */
+export interface CompleteCommitInput {
+	/**
+	 * The stand-in kernel that reads the committed snapshot. Without one,
+	 * only an `instant` commit completes; the caller shows its snapshot.
+	 */
+	handle?: Pick<
+		StandInKernelHandle,
+		'attached' | 'commit' | 'kernel' | 'pending'
+	>;
+	/** What the tap's own task committed, if it did. */
+	instant: InstantCommit | null;
+	/** `'all'`, `'none'` or a form's selection, as `commands.save` takes. */
+	choice: EarlyCommitInput['choice'];
+	/** Epoch milliseconds of the tap. */
+	actionAt: number;
+	/** The surface the save is attributed to. Defaults to `banner`. */
+	uiSource?: SaveUISource;
+	/** The runtime options: where persistence stores, and the callbacks. */
+	config: Pick<
+		ConsentRuntimeOptions,
+		'callbacks' | 'consentSource' | 'persistence' | 'storageConfig'
+	>;
+	/**
+	 * Runs once the stand-in reads the committed snapshot, before the record
+	 * is stored: the page's scripts start with the choice.
+	 */
+	onCommitted?: (snapshot: ConsentSnapshot) => void;
+}
+
+/** @internal */
+export interface CompleteCommitResult {
+	committed: DeferredCommitted;
+	/**
+	 * The snapshot the save records: the instant snapshot when they hold the
+	 * same data, so listeners hear nothing new.
+	 */
+	snapshot: ConsentSnapshot;
+	/** What `commands.save` resolves with for the same save. */
+	result: SaveResult;
+}
+
+/** Whether two values hold the same data, in any key order. */
+const sameValue = function sameValue(left: unknown, right: unknown): boolean {
+	if (Object.is(left, right)) {
+		return true;
+	}
+	if (
+		typeof left !== 'object' ||
+		typeof right !== 'object' ||
+		left === null ||
+		right === null ||
+		Array.isArray(left) !== Array.isArray(right)
+	) {
+		return false;
+	}
+	const leftRecord = left as Record<string, unknown>;
+	const rightRecord = right as Record<string, unknown>;
+	const own = (value: Record<string, unknown>) =>
+		Object.keys(value).filter((key) => value[key] !== undefined);
+	const leftKeys = own(leftRecord);
+	return (
+		leftKeys.length === own(rightRecord).length &&
+		leftKeys.every((key) => sameValue(leftRecord[key], rightRecord[key]))
+	);
+};
+
+/** Calls the app callback the engine's runtime calls for `event`. */
+const announce = function announce(
+	callbacks: Callbacks | undefined,
+	event: KernelEvent
+): void {
+	const { type: _type, ...payload } = event;
+	try {
+		if (event.type === 'permissions:changed') {
+			callbacks?.onPermissionsChanged?.(
+				payload as Parameters<NonNullable<Callbacks['onPermissionsChanged']>>[0]
+			);
+		} else if (event.type === 'choice:recorded') {
+			callbacks?.onChoiceRecorded?.(
+				payload as Parameters<NonNullable<Callbacks['onChoiceRecorded']>>[0]
+			);
+		}
+	} catch (error) {
+		console.error('[inth] A consent callback threw.', error);
+	}
+};
+
+/**
+ * Plans the save from the snapshot the instant commit started from, when
+ * there was one, and gives the stand-in its snapshot and events.
+ */
+const planAndCommit = function planAndCommit(
+	input: CompleteCommitInput,
+	storageConfig: StorageConfig | undefined
+): EarlyCommit | null {
+	const { handle, instant } = input;
+	// Storage was read ahead of the tap; a clear stored since is the
+	// engine's to record.
+	if (hasStoredClearEpoch(storageConfig)) {
+		return null;
+	}
+	if (instant) {
+		const plan = planEarlyCommit({
+			actionAt: input.actionAt,
+			choice: input.choice,
+			now: instant.now,
+			snapshot: instant.previous,
+			subjectId: instant.subjectId,
+			uiSource: input.uiSource,
+		});
+		if (!plan) {
+			return null;
+		}
+		// Listeners already heard the instant snapshot; they hear nothing
+		// new for the same state.
+		const snapshot = sameValue(plan.snapshot, instant.snapshot)
+			? instant.snapshot
+			: plan.snapshot;
+		const events = plan.events.map((event) => ({ ...event, snapshot }));
+		return !handle || handle.commit(snapshot, events)
+			? { ...plan, events, snapshot }
+			: null;
+	}
+	if (!handle || handle.attached() || !pendingIsInert(handle)) {
+		return null;
+	}
+	const plan = planEarlyCommit({
+		actionAt: input.actionAt,
+		choice: input.choice,
+		snapshot: handle.kernel.getSnapshot(),
+		uiSource: input.uiSource,
 	});
+	// Listeners hear the snapshot first, then the events, as the kernel
+	// delivers a save: page loaders insert the granted scripts here.
+	return plan && handle.commit(plan.snapshot, plan.events) ? plan : null;
+};
+
+/**
+ * Records a choice on a deferred root's stand-in, or completes the instant
+ * commit the tap's task made: stores the record where persistence keeps it
+ * (`storageFor`), queues the save and calls the app's callbacks. Returns
+ * `null` when only the engine can record it (see `planEarlyCommit`), when
+ * setters wait for the engine, when a clear epoch is stored, once the
+ * engine has attached, or when the outbox could not keep the save; the
+ * engine records the choice then.
+ *
+ * @param input - The stand-in, the tap and the app's options.
+ * @returns What the engine needs to take over, or `null`.
+ * @internal
+ */
+export const completeCommit = async function completeCommit(
+	input: CompleteCommitInput
+): Promise<CompleteCommitResult | null> {
+	const storageConfig = storageFor(input.config);
+	const plan = planAndCommit(input, storageConfig);
+	if (!plan) {
+		return null;
+	}
+	input.onCommitted?.(plan.snapshot);
+	if (!(await storeEarlyCommit(plan, { storageConfig }))) {
+		// The record is stored, but the outbox could not keep its save: the
+		// engine records the choice, so the backend still gets it, and its
+		// callbacks announce it.
+		return null;
+	}
+	// The callbacks hear a choice once it is recorded.
+	for (const event of plan.events) {
+		announce(input.config.callbacks, event);
+	}
+	return {
+		committed: {
+			permissions: plan.snapshot.effectivePermissions,
+			records: plan.records,
+		},
+		result: {
+			confirmed: Object.keys(
+				plan.payload.confirmed.categories
+			) as SaveResult['confirmed'],
+			ok: true,
+			subjectId: plan.payload.subjectId,
+		},
+		snapshot: plan.snapshot,
+	};
 };

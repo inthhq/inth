@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
  * Consent model the runtime enforces.
  *
  * `iab` is a rule this core reads and evaluates: the categories it governs stay denied
- * until a valid explicit choice grants them, which is what the evaluator in `@c15t/core`
+ * until a valid explicit choice grants them, which is what the evaluator in `@inth/sdk-core`
  * already does for `iab` and for `opt-in` alike. See [runtimeModel] for what the snapshot
  * reports while one is in force.
  */
@@ -31,7 +31,7 @@ enum class ConsentModel(val wireName: String) {
 	 *
 	 * Port of `deriveModel` in `packages/sdk/core/src/policy.ts`, with the web's `iabEnabled`
 	 * argument answered for good: an IAB rule runs as `iab` on the web only once
-	 * `@c15t/iab` is installed, and a device has nothing to install in that place. It has no
+	 * `@inth/sdk-iab` is installed, and a device has nothing to install in that place. It has no
 	 * registered CMP ID to put in a TC String, no per-vendor vector to assert, and no
 	 * `IABTCF_*` bus to publish, so a snapshot reading `iab` would promise the vendor-side
 	 * record this build cannot produce. The web's own answer for that situation is the

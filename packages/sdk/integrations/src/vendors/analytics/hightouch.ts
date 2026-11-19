@@ -3,6 +3,7 @@ import type { Script } from '@inth/sdk/engine';
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
+import { ANALYTICS_JS_QUEUE_METHODS } from '../_shared/analytics-js';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
 
@@ -10,26 +11,7 @@ const DEFAULT_HIGHTOUCH_SCRIPT_URL =
 	'https://cdn.hightouch-events.com/browser/release/v1-latest/events.min.js';
 
 export const HIGHTOUCH_QUEUE_METHODS = [
-	'trackSubmit',
-	'trackClick',
-	'trackLink',
-	'trackForm',
-	'pageview',
-	'identify',
-	'reset',
-	'group',
-	'track',
-	'ready',
-	'alias',
-	'debug',
-	'page',
-	'once',
-	'off',
-	'on',
-	'addSourceMiddleware',
-	'addIntegrationMiddleware',
-	'setAnonymousId',
-	'addDestinationMiddleware',
+	...ANALYTICS_JS_QUEUE_METHODS,
 	'load',
 ] as const;
 
@@ -50,8 +32,6 @@ export interface HightouchApi {
 	 * Tracks a form submission.
 	 *
 	 * @param form - Form element, selector, or vendor-supported form target.
-	 * @param event - Event name to record.
-	 * @param properties - Optional event properties payload.
 	 * @returns The Hightouch runtime or a promise-like value from the SDK.
 	 */
 	trackSubmit: (
@@ -63,8 +43,6 @@ export interface HightouchApi {
 	 * Tracks a click interaction.
 	 *
 	 * @param element - Element, selector, or vendor-supported click target.
-	 * @param event - Event name to record.
-	 * @param properties - Optional event properties payload.
 	 * @returns The Hightouch runtime or a promise-like value from the SDK.
 	 */
 	trackClick: (
@@ -76,8 +54,6 @@ export interface HightouchApi {
 	 * Tracks link clicks before navigation.
 	 *
 	 * @param link - Link element, selector, or vendor-supported link target.
-	 * @param event - Event name to record.
-	 * @param properties - Optional event properties payload.
 	 * @returns The Hightouch runtime or a promise-like value from the SDK.
 	 */
 	trackLink: (
@@ -89,8 +65,6 @@ export interface HightouchApi {
 	 * Tracks form submissions with form-specific semantics.
 	 *
 	 * @param form - Form element, selector, or vendor-supported form target.
-	 * @param event - Event name to record.
-	 * @param properties - Optional event properties payload.
 	 * @returns The Hightouch runtime or a promise-like value from the SDK.
 	 */
 	trackForm: (
@@ -101,17 +75,13 @@ export interface HightouchApi {
 	/**
 	 * Tracks a classic pageview event.
 	 *
-	 * @param url - Optional URL override.
 	 * @returns The Hightouch runtime or a promise-like value from the SDK.
 	 */
 	pageview: (url?: string) => unknown;
 	/**
 	 * Identifies a user and associates traits with that identity.
 	 *
-	 * @param userId - Stable user identifier.
-	 * @param traits - Optional trait map associated with the user.
 	 * @param context - Optional event context overrides.
-	 * @param callback - Optional callback after processing.
 	 * @returns The Hightouch runtime or a promise-like value from the SDK.
 	 */
 	identify: (
@@ -129,10 +99,7 @@ export interface HightouchApi {
 	/**
 	 * Associates the current user with a group or account.
 	 *
-	 * @param groupId - Group or account identifier.
-	 * @param traits - Optional group trait map.
 	 * @param context - Optional event context overrides.
-	 * @param callback - Optional callback after processing.
 	 * @returns The Hightouch runtime or a promise-like value from the SDK.
 	 */
 	group: (
@@ -144,10 +111,7 @@ export interface HightouchApi {
 	/**
 	 * Tracks a named event.
 	 *
-	 * @param event - Event name to record.
-	 * @param properties - Optional event properties payload.
 	 * @param context - Optional event context overrides.
-	 * @param callback - Optional callback after processing.
 	 * @returns The Hightouch runtime or a promise-like value from the SDK.
 	 */
 	track: (
@@ -159,7 +123,6 @@ export interface HightouchApi {
 	/**
 	 * Registers a callback that fires when the SDK is ready.
 	 *
-	 * @param callback - Function to run once the SDK is ready.
 	 * @returns The Hightouch runtime or a promise-like value from the SDK.
 	 */
 	ready: (callback: () => void) => unknown;
@@ -169,7 +132,6 @@ export interface HightouchApi {
 	 * @param userId - New canonical user identifier.
 	 * @param previousId - Optional previous identifier.
 	 * @param context - Optional event context overrides.
-	 * @param callback - Optional callback after processing.
 	 * @returns The Hightouch runtime or a promise-like value from the SDK.
 	 */
 	alias: (
@@ -181,7 +143,6 @@ export interface HightouchApi {
 	/**
 	 * Enables or disables debug logging in the SDK.
 	 *
-	 * @param enabled - Whether debug logging should be enabled.
 	 * @returns The Hightouch runtime or a promise-like value from the SDK.
 	 */
 	debug: (enabled?: boolean) => unknown;
@@ -190,9 +151,7 @@ export interface HightouchApi {
 	 *
 	 * @param category - Optional page category or page name.
 	 * @param name - Optional page name or properties payload.
-	 * @param properties - Optional page metadata payload.
 	 * @param context - Optional event context overrides.
-	 * @param callback - Optional callback after processing.
 	 * @returns The Hightouch runtime or a promise-like value from the SDK.
 	 */
 	page: (
@@ -205,24 +164,18 @@ export interface HightouchApi {
 	/**
 	 * Registers a one-time event listener on the SDK emitter.
 	 *
-	 * @param event - Event name to listen for.
-	 * @param callback - Listener callback.
 	 * @returns The Hightouch runtime or a promise-like value from the SDK.
 	 */
 	once: (event: string, callback: (...args: unknown[]) => void) => unknown;
 	/**
 	 * Removes an SDK event listener.
 	 *
-	 * @param event - Event name to stop listening for.
-	 * @param callback - Listener callback to remove.
 	 * @returns The Hightouch runtime or a promise-like value from the SDK.
 	 */
 	off: (event: string, callback?: (...args: unknown[]) => void) => unknown;
 	/**
 	 * Registers an SDK event listener.
 	 *
-	 * @param event - Event name to listen for.
-	 * @param callback - Listener callback.
 	 * @returns The Hightouch runtime or a promise-like value from the SDK.
 	 */
 	on: (event: string, callback: (...args: unknown[]) => void) => unknown;
@@ -236,7 +189,6 @@ export interface HightouchApi {
 	/**
 	 * Adds integration middleware for destination-specific event transforms.
 	 *
-	 * @param integration - Integration name.
 	 * @param middleware - Middleware function or vendor-supported middleware.
 	 * @returns The Hightouch runtime or a promise-like value from the SDK.
 	 */
@@ -247,14 +199,12 @@ export interface HightouchApi {
 	/**
 	 * Sets the anonymous ID used for subsequent events.
 	 *
-	 * @param anonymousId - Anonymous identifier to assign.
 	 * @returns The Hightouch runtime or a promise-like value from the SDK.
 	 */
 	setAnonymousId: (anonymousId: string) => unknown;
 	/**
 	 * Adds destination middleware for event delivery.
 	 *
-	 * @param destination - Destination name.
 	 * @param middleware - Middleware function or vendor-supported middleware.
 	 * @returns The Hightouch runtime or a promise-like value from the SDK.
 	 */
@@ -275,7 +225,7 @@ declare global {
  *
  * Creates Hightouch's analytics.js-style `window.htevents` queue, records the
  * write key/load options expected by the standalone loader, queues the
- * `load()` and optional `page()` calls, then lets c15t own the script element.
+ * `load()` and optional `page()` calls, then lets Inth own the script element.
  */
 export const hightouchManifest = {
 	...vendorManifestContract,
@@ -376,16 +326,13 @@ const normalizeApiHost = function normalizeApiHost(
  *
  * @see https://hightouch.com/docs/events/sdks/browser
  *
- * @param options - The options for the Hightouch script.
- * @returns The Hightouch script configuration.
- *
  * @remarks
  * When `writeKey` is missing or blank, the helper logs
  * `hightouch: missing or invalid writeKey` with `console.error` and returns
  * a script that never loads.
  *
  * Hightouch Events collects customer behavior and sends it to the configured
- * Event Source. c15t gates the browser SDK on `measurement` consent and does
+ * Event Source. Inth gates the browser SDK on `measurement` consent and does
  * not allowlist collection endpoints in live probes beyond the CDN loader.
  *
  * @example
@@ -434,10 +381,7 @@ export const hightouch = function hightouch({
 
 	return resolveManifest(manifest, {
 		loadOptions,
-		scriptUrl: resolveScriptUrl(
-			trimToUndefined(scriptUrl),
-			DEFAULT_HIGHTOUCH_SCRIPT_URL
-		),
+		scriptUrl: resolveScriptUrl(scriptUrl, DEFAULT_HIGHTOUCH_SCRIPT_URL),
 		writeKey: normalizedWriteKey,
 	});
 };

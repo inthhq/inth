@@ -7,18 +7,19 @@
  * so the cross-framework parity runner sees identical DOM.
  */
 import type { AllConsentNames, ResolvedVendor } from '@inth/sdk/engine';
+import { resolveVendorListCopy } from '@inth/sdk/surface-state';
 import vendorListStyles from '@inth/sdk/ui/styles/components/vendor-list';
 
 import '@inth/sdk/ui/styles/components/vendor-list.css';
 import { computed, ref, useId } from 'vue';
 
-import { useConsentConfig, useConsentInit } from '../composables';
+import { useConsentConfig } from '../composables';
+import { useSurfaceTranslations } from '../composables/use-surface-translations';
 import { preferenceItemVariants } from '../primitives/preference-item/variants';
 import { switchVariants } from '../primitives/switch-variants';
 import { slotAttrs } from '../utils/slot-attrs';
 
 const props = defineProps<{
-	/** Category whose vendors to list. */
 	category: AllConsentNames;
 	/** Whether the category is on in the draft; off disables the switches. */
 	categoryOn: boolean;
@@ -26,7 +27,6 @@ const props = defineProps<{
 	vendors: readonly ResolvedVendor[];
 	/** Granted flag per vendor from the draft. */
 	granted: Readonly<Record<string, boolean>>;
-	/** Drop the built-in styling. */
 	noStyle: boolean;
 }>();
 
@@ -35,23 +35,13 @@ const emit = defineEmits<{
 }>();
 
 const config = useConsentConfig();
-const init = useConsentInit();
+const translations = useSurfaceTranslations();
 const pi = preferenceItemVariants();
 const sw = switchVariants();
 /** Two surfaces can list the same vendor at once, so ids are scoped per instance. */
 const uid = useId();
 
-const DEFAULT_COPY = {
-	disabledByCategory: 'Turn on this category to choose vendors.',
-	privacyPolicy: 'Privacy policy',
-	switchLabel: 'Allow {vendor}',
-	title: 'Vendors ({count})',
-};
-
-const copy = computed(() => ({
-	...DEFAULT_COPY,
-	...init.value?.translations?.translations?.consentManagerDialog?.vendors,
-}));
+const copy = computed(() => resolveVendorListCopy(translations.value));
 
 const styles = computed(() => (props.noStyle ? undefined : vendorListStyles));
 const title = computed(() =>
@@ -92,9 +82,9 @@ const isChecked = (vendor: ResolvedVendor) => props.granted[vendor.id] ?? true;
 const labelId = (vendor: ResolvedVendor) =>
 	`${uid}vendor-${props.category}-${vendor.id}`;
 const triggerId = (index: number) =>
-	`c15t-preference-item-trigger-${uid}-${index}`;
+	`inth-preference-item-trigger-${uid}-${index}`;
 const contentId = (index: number) =>
-	`c15t-preference-item-content-${uid}-${index}`;
+	`inth-preference-item-content-${uid}-${index}`;
 </script>
 
 <template>

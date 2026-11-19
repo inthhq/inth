@@ -18,7 +18,7 @@
 	} = $props();
 </script>
 
-<!-- Every c15t surface mounted at once, the way a host layout would. -->
+<!-- Every Inth surface mounted at once, the way a host layout would. -->
 <Provider {options}>
 	<Reader {capture} />
 	<Banner />

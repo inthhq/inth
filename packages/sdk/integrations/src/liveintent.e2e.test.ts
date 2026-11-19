@@ -4,7 +4,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	loadScripts,
@@ -32,14 +32,14 @@ describe('LiveIntent core loader consent contract', () => {
 				{ event: 'view', name: 'second event' },
 			];
 			const scripts = [liveIntentTag({ events, tagId: 'a-00xx' })];
-			loadScripts(scripts, deniedConsents);
+			loadScripts(scripts, ALL_DENIED);
 			expect(window.liQ).toBeUndefined();
 			updateScripts(scripts, grantedMarketingConsents);
 			expect(window.liQ).toEqual(events);
 			const loader = document.querySelector('script');
 			expect(loader?.src).toBe('https://b-code.liadm.com/a-00xx.min.js');
 			loader?.dispatchEvent(new Event('load'));
-			updateScripts(scripts, deniedConsents);
+			updateScripts(scripts, ALL_DENIED);
 			updateScripts(scripts, grantedMarketingConsents);
 			expect(window.liQ).toEqual(events);
 			expect(document.querySelectorAll('script')).toHaveLength(1);
@@ -47,7 +47,7 @@ describe('LiveIntent core loader consent contract', () => {
 	);
 	it('creates no vendor globals, requests or storage before mapped consent', () => {
 		const scripts = [liveIntentTag({ tagId: 'a-00xx' })];
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMeasurementConsents);
 		expect(document.querySelector('script')).toBeNull();
 		for (const key of ['liQ', 'LI', 'lc2', 'liQHub', 'liQ_instances']) {
@@ -65,7 +65,7 @@ describe('LiveIntent core loader consent contract', () => {
 		const scripts = [liveIntentTag({ tagId: 'a-00xx' })];
 		loadScripts(scripts, grantedMarketingConsents);
 		const old = document.querySelector('script');
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(old?.isConnected).toBe(true);
 		old?.dispatchEvent(new Event('load'));
 		expect(document.querySelector('script')).toBe(old);

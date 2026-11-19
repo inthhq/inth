@@ -3,7 +3,7 @@ import {
 	POLICY_MAX_AGE,
 	POLICY_NOW,
 	POLICY_SCENARIOS,
-} from '@c15t/conformance/fixtures';
+} from '@inth/conformance/fixtures';
 import type { ProviderTransportFactory } from '@inth/sdk-core';
 import { evaluateConsent } from '@inth/sdk-core';
 import { clearGVLCache } from '@inth/sdk-iab';

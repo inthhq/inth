@@ -1,17 +1,17 @@
 ---
 title: Components
-description: Every c15t Astro component, from ConsentScript and ConsentBanner to the server island banner, the preference dialog, its link and the IAB TCF surfaces, with import paths and links to each reference.
+description: Every Inth Astro component, from ConsentScript and ConsentBanner to the server island banner, the preference dialog, its link and the IAB TCF surfaces, with import paths and links to each reference.
 group: frameworks
 ---
 
 ## Where the components go
 
-Every component reads `Astro.locals.c15t`, which the integration's middleware
+Every component reads `Astro.locals.inth`, which the integration's middleware
 sets on each request. Put them in the layout that wraps every page:
 
 <include src="../../shared/examples/astro/layout.mdx" />
 
-The `c15t()` integration in `astro.config.mjs` plays the part a provider plays
+The `inth()` integration in `astro.config.mjs` plays the part a provider plays
 in React or Vue. It holds the configuration every component reads. See
 [Integration options](/docs/frameworks/astro/integration).
 
@@ -50,10 +50,10 @@ component. Gate embeds with the pattern in
 
 ## What every component needs
 
-- The `c15t()` integration in `astro.config.mjs`, with its middleware on.
-  `ConsentBanner` and `IABConsentBanner` throw when `Astro.locals.c15t` is
+- The `inth()` integration in `astro.config.mjs`, with its middleware on.
+  `ConsentBanner` and `IABConsentBanner` throw when `Astro.locals.inth` is
   missing, and the others render nothing useful without it.
 - A route that the middleware does not skip. A route in `middleware.skip` has
-  no `Astro.locals.c15t`.
+  no `Astro.locals.inth`.
 - For the dialogs, the Astro integration of the `ui` framework, listed before
-  `c15t()`.
+  `inth()`.

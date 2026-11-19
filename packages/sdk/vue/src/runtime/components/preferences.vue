@@ -4,7 +4,7 @@ import type { CONSENT_CATEGORY } from '@inth/sdk/consent-record';
  * Inline consent-management widget for settings and privacy pages.
  *
  * Renders the shared consent-widget DOM contract (see
- * `@c15t/conformance` — `DOM_CONTRACT.consentWidget` and
+ * `@inth/conformance` — `DOM_CONTRACT.consentWidget` and
  * `TEST_IDS.consentWidget`): a single-open category accordion with
  * per-category switches and a policy-driven action footer. The markup,
  * class names, and ARIA attributes intentionally mirror the React and
@@ -12,7 +12,11 @@ import type { CONSENT_CATEGORY } from '@inth/sdk/consent-record';
  * runner sees identical DOM.
  */
 import type { PresentationAction } from '@inth/sdk/engine';
-import { deniedVendorIds, vendorsListedUnder } from '@inth/sdk/engine';
+import { vendorsListedUnder } from '@inth/sdk/engine';
+import {
+	resolveActionLabels,
+	resolveCategoryTitle,
+} from '@inth/sdk/surface-state';
 import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
 
 import '@inth/sdk/ui/styles/components/accordion.css';
@@ -25,6 +29,7 @@ import '@inth/sdk/ui/styles/components/consent-actions.css';
 import managerStyles from '@inth/sdk/ui/styles/components/consent-manager';
 
 import '@inth/sdk/ui/styles/components/consent-manager.css';
+import { resolveActionAppearance } from '@inth/sdk/ui/theme';
 import { getTextDirection } from '@inth/sdk/ui/utils/dom';
 import { computed, inject, mergeProps, ref, useId } from 'vue';
 
@@ -96,18 +101,12 @@ const consentTypeTranslations = computed(
 		>
 );
 
-const formatConsentName = function formatConsentName(
-	category: CONSENT_CATEGORY
-): string {
-	return category
-		.replace(/_/gu, ' ')
-		.replace(/\b\w/gu, (character) => character.toUpperCase());
-};
-
 const consentTitle = function consentTitle(category: CONSENT_CATEGORY): string {
-	return (
-		consentTypeTranslations.value[category]?.title ??
-		formatConsentName(category)
+	return resolveCategoryTitle(
+		init.value?.translations?.translations as
+			| Parameters<typeof resolveCategoryTitle>[0]
+			| undefined,
+		category
 	);
 };
 
@@ -131,15 +130,8 @@ const categories = draftCategories;
 
 /** Vendors to list under each category; none under an `iab` policy. */
 const snapshot = useConsentSnapshot();
-const declaredVendors = computed(() =>
-	snapshot.value.model === 'iab' ? [] : (snapshot.value.vendors?.declared ?? [])
-);
 const displayedVendors = function displayedVendors(category: CONSENT_CATEGORY) {
-	return vendorsListedUnder(
-		declaredVendors.value,
-		category,
-		deniedVendorIds(snapshot.value)
-	);
+	return vendorsListedUnder(snapshot.value, category);
 };
 
 /** Single-open accordion state (opening one category closes the rest). */
@@ -184,21 +176,20 @@ const toggleConsent = function toggleConsent(category: CONSENT_CATEGORY) {
 };
 
 const triggerId = function triggerId(index: number): string {
-	return `c15t-preference-item-trigger-${uid}-${index}`;
+	return `inth-preference-item-trigger-${uid}-${index}`;
 };
 
 const contentId = function contentId(index: number): string {
-	return `c15t-preference-item-content-${uid}-${index}`;
+	return `inth-preference-item-content-${uid}-${index}`;
 };
 
-const labels = computed(() => {
-	const common = init.value?.translations?.translations?.common;
-	return {
-		accept: common?.acceptAll ?? 'Accept all',
-		reject: common?.rejectAll ?? 'Reject all',
-		save: common?.save ?? 'Save',
-	} as Partial<Record<PresentationAction, string>>;
-});
+const labels = computed(() =>
+	resolveActionLabels(
+		init.value?.translations?.translations as
+			| Parameters<typeof resolveActionLabels>[0]
+			| undefined
+	)
+);
 
 const ACTION_TEST_IDS: Partial<Record<PresentationAction, string>> = {
 	accept: 'consent-widget-footer-accept-all-button',
@@ -213,10 +204,12 @@ const actionClass = function actionClass(): string | undefined {
 	return buttonStyles.button;
 };
 
-const actionVariant = function actionVariant(
-	action: PresentationAction
-): 'primary' | 'neutral' {
-	return primaryActions.value.includes(action) ? 'primary' : 'neutral';
+const actionAppearance = function actionAppearance(action: PresentationAction) {
+	return resolveActionAppearance(
+		config.value.theme,
+		action,
+		primaryActions.value.includes(action)
+	);
 };
 
 const isSplitLayout = computed(() => actionGroups.value.length > 1);
@@ -449,7 +442,7 @@ const onAction = async function onAction(action: PresentationAction) {
 					type="button"
 					v-bind="
 						slotAttrs(
-							actionVariant(action) === 'primary'
+							actionAppearance(action).variant === 'primary'
 								? config.components?.button?.primary
 								: config.components?.button?.secondary,
 							actionClass()
@@ -457,10 +450,10 @@ const onAction = async function onAction(action: PresentationAction) {
 					"
 					:disabled="isStale"
 					:data-action="action"
-					:data-mode="noStyle ? undefined : 'stroke'"
+					:data-mode="noStyle ? undefined : actionAppearance(action).mode"
 					:data-size="noStyle ? undefined : 'small'"
 					:data-testid="ACTION_TEST_IDS[action]"
-					:data-variant="noStyle ? undefined : actionVariant(action)"
+					:data-variant="noStyle ? undefined : actionAppearance(action).variant"
 					@click="onAction(action)"
 				>
 					{{ labels[action] }}
@@ -469,8 +462,7 @@ const onAction = async function onAction(action: PresentationAction) {
 		</div>
 		<ConsentTag
 			v-if="!hideBranding"
-			context="dialog"
-			data-testid="consent-widget-branding"
+			surface="widget"
 		/>
 	</div>
 </template>

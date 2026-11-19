@@ -1,19 +1,19 @@
 ---
 title: Scripts
-description: Load vendor scripts by consent category in a Nuxt app with the c15t Nuxt module, what happens when a visitor withdraws consent, and how to move off @nuxt/scripts and nuxt-gtag.
+description: Load vendor scripts by consent category in a Nuxt app with the Inth Nuxt module, what happens when a visitor withdraws consent, and how to move off @nuxt/scripts and nuxt-gtag.
 group: frameworks
 ---
 
 ## Register vendor scripts
 
 A banner does not stop a script you load with a `<script>` tag, `useHead` or a
-vendor's Nuxt module. Remove those loaders and register the vendor with c15t
-instead, so c15t loads it only while its category is allowed. For
+vendor's Nuxt module. Remove those loaders and register the vendor with Inth
+instead, so Inth loads it only while its category is allowed. For
 `@nuxt/scripts` and `nuxt-gtag`, follow
 [migrate from `@nuxt/scripts`](#migrate-from-nuxtscripts) or
 [migrate from `nuxt-gtag`](#migrate-from-nuxt-gtag).
 
-Register the helpers from `@inth/integrations` under the `c15t` key in
+Register the helpers from `@inth/integrations` under the `inth` key in
 `app/app.config.ts`:
 
 <include src="../../shared/examples/nuxt/app-config.mdx" />
@@ -54,7 +54,7 @@ engine starts the plain entries it allows without waiting for it, as
 
 ## Embeds and other requests
 
-Scripts cover vendor code c15t loads for you. For the rest:
+Scripts cover vendor code Inth loads for you. For the rest:
 
 - [Embeds](/docs/frameworks/nuxt/embeds) gates iframes with `ConsentGate` or
   the iframe blocker.
@@ -64,7 +64,7 @@ Scripts cover vendor code c15t loads for you. For the rest:
 ## When a visitor withdraws consent
 
 Removing a script tag cannot stop code that already ran. When a save turns off
-a category or vendor that was allowed, c15t reloads the page so the new
+a category or vendor that was allowed, Inth reloads the page so the new
 document starts with only permitted code. Set `reloadOnConsentRevoked: false`
 to handle revocation yourself, or use the
 [`onBeforeConsentRevocationReload` callback](/docs/frameworks/nuxt/callbacks#before-a-revocation-reload)
@@ -90,15 +90,15 @@ See [Content Security Policy](/docs/frameworks/nuxt/content-security-policy).
 ## Migrate from `@nuxt/scripts`
 
 `@nuxt/scripts` loads a registry script when its own trigger fires, whatever
-the visitor chose in c15t. That covers a `useScriptGoogleAnalytics()` call in
+the visitor chose in Inth. That covers a `useScriptGoogleAnalytics()` call in
 a component, a `scripts.registry` entry with a `trigger` in `nuxt.config.ts`,
 and components such as `ScriptYouTubePlayer`. Move every tracking vendor to
-c15t's `scripts`. You can keep `@nuxt/scripts` for
+Inth's `scripts`. You can keep `@nuxt/scripts` for
 [necessary scripts](#keep-nuxtscripts-for-necessary-scripts).
 
 ### Map registry scripts to helpers
 
-| `@nuxt/scripts` | c15t helper |
+| `@nuxt/scripts` | Inth helper |
 | --- | --- |
 | `useScriptGoogleAnalytics` | [`gtag`](/docs/integrations/google-tag) |
 | `useScriptGoogleTagManager` | [`googleTagManager`](/docs/integrations/google-tag-manager) |
@@ -145,7 +145,7 @@ Register `scripts` in `app/app.config.ts` as in
 [register vendor scripts](#register-vendor-scripts). Then delete the
 `useScript*` calls for those vendors, their `scripts.registry` entries in
 `nuxt.config.ts`, and any `scripts.globals` entry that loads a tracker. A
-leftover composable call loads a second copy of the vendor outside c15t.
+leftover composable call loads a second copy of the vendor outside Inth.
 
 The helpers load each vendor from the host in its guide, usually the vendor's
 own domain, and the vendor's requests go straight to it. `@nuxt/scripts`
@@ -169,17 +169,17 @@ contacts in your
 ### Remove useScriptTriggerConsent
 
 `useScriptTriggerConsent` loads a script once its own `consented` ref turns
-true, through `accept()` or the `consent` option. c15t records consent
+true, through `accept()` or the `consent` option. Inth records consent
 separately, so you end up with two answers that can disagree. If any code
-calls `accept()`, the script loads even after the visitor rejects in the c15t
-banner. Global Privacy Control, vendor switches and policy changes in c15t
+calls `accept()`, the script loads even after the visitor rejects in the Inth
+banner. Global Privacy Control, vendor switches and policy changes in Inth
 never reach the trigger. Delete every `useScriptTriggerConsent` call and the
-banner code that called `accept()` or `revoke()`. c15t decides when each
+banner code that called `accept()` or `revoke()`. Inth decides when each
 registered script loads.
 
 Remove the Consent Mode calls too: the `defaultConsent` option and
 `consent.update()` on the Google registry scripts. The `gtag` and
-`googleTagManager` helpers send `default` and `update` from the visitor's c15t
+`googleTagManager` helpers send `default` and `update` from the visitor's Inth
 permissions, and a second source sends conflicting commands.
 
 ### Keep your event calls
@@ -187,7 +187,7 @@ permissions, and a second source sends conflicting commands.
 A registry composable returns a `proxy` that queues calls until its script
 loads. Calling the composable to get that proxy also loads the script through
 `@nuxt/scripts`, so event code has to stop calling it. Call the global the
-vendor defines once c15t loads it:
+vendor defines once Inth loads it:
 
 | Before | After |
 | --- | --- |
@@ -200,7 +200,7 @@ so call these from an event handler or `onMounted`:
 
 <include src="../../shared/examples/nuxt/nuxt-scripts-events.mdx" />
 
-Until c15t has set up a vendor, its global is undefined and the optional call
+Until Inth has set up a vendor, its global is undefined and the optional call
 drops the event. Other vendors' event APIs are in their
 [integration guides](/docs/integrations/overview).
 
@@ -222,7 +222,7 @@ allowed, and its links and requests wait with it.
 
 ### Keep @nuxt/scripts for necessary scripts
 
-c15t does not need to own every script. A first-party script or an SDK your
+Inth does not need to own every script. A first-party script or an SDK your
 checkout needs, such as Stripe, can stay on `@nuxt/scripts` with its usual
 trigger, provided your policy does not ask consent for it. Do not load a
 tracker there.
@@ -230,23 +230,23 @@ tracker there.
 ## Migrate from `nuxt-gtag`
 
 The `nuxt-gtag` client plugin adds `gtag.js` to every page as soon as the app
-loads, unless you set `initMode: 'manual'`. c15t cannot gate it. Replace the
+loads, unless you set `initMode: 'manual'`. Inth cannot gate it. Replace the
 module's configuration and composables:
 
-| `nuxt-gtag` | c15t |
+| `nuxt-gtag` | Inth |
 | --- | --- |
 | `gtag.id` in `nuxt.config.ts` | `gtag({ id, category: 'measurement' })` in `app/consent-scripts.ts` |
 | `gtag.config` | The `config` option on `gtag` |
 | `gtag.tags` with several IDs | One `gtag` helper, when the extra IDs need no `config` of their own. Add them as destinations of that Google tag in Google's tag settings. Otherwise see [tags with their own settings](#tags-with-their-own-settings). |
 | `gtag.initCommands` with `consent` `default` | Delete. The helper sends `default` from the visitor's permissions. |
-| `initMode: 'manual'` and `useGtag().initialize()` | Delete. c15t loads the tag. The helper needs its `id` when you register `scripts`, so an ID passed to `initialize()` at runtime, as in `nuxt-gtag`'s multi-tenancy setup, needs a [custom integration](/docs/integrations/building-integrations). |
+| `initMode: 'manual'` and `useGtag().initialize()` | Delete. Inth loads the tag. The helper needs its `id` when you register `scripts`, so an ID passed to `initialize()` at runtime, as in `nuxt-gtag`'s multi-tenancy setup, needs a [custom integration](/docs/integrations/building-integrations). |
 | `useGtag().gtag(...)` | `window.gtag?.(...)` |
 | `useTrackEvent(name, params)` | `window.gtag?.('event', name, params)` |
 | `useGtag().disableAnalytics()` and `enableAnalytics()` | Delete, and set `loadMode: 'after-consent'` if you used them to stop all Analytics requests. See [stop all requests until consent](#stop-all-requests-until-consent). |
 | `enabled: false` for an environment | Leave the helper out of `scripts` in that environment. |
 | `url`, `loadingStrategy` | No equivalent. The helper loads `gtag.js` from `googletagmanager.com` with `async`. |
 
-Register one `gtag` helper only. c15t tracks scripts by ID, and every `gtag`
+Register one `gtag` helper only. Inth tracks scripts by ID, and every `gtag`
 helper uses the script ID `gtag`.
 
 <include src="../../shared/examples/nuxt/nuxt-gtag-scripts.mdx" />
@@ -303,7 +303,7 @@ Consent Mode keeps the other purpose's destinations restricted:
 ## Send your own analytics events
 
 `useEventDispatcher()` is auto-imported. It returns the app's event
-dispatcher, which sends to the `scripts` in your c15t config and checks
+dispatcher, which sends to the `scripts` in your Inth config and checks
 consent when an event goes out. Watch `route.fullPath` for pageviews:
 
 <include src="../../shared/examples/nuxt/analytics-events.mdx" />

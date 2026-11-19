@@ -305,7 +305,7 @@
 	},
 	"kind": "tc-string",
 	"notes": [
-		"Population parity: every non-default field here is one @c15t/iab writes, so expects.encode is true and a native encoder has to reproduce tcString byte for byte.",
+		"Population parity: every non-default field here is one @inth/sdk-iab writes, so expects.encode is true and a native encoder has to reproduce tcString byte for byte.",
 		"deletedDate never reaches the wire, so the whole decision belongs to the encoder: a decoder reading this string sees 700 in one vector and its absence in another with nothing on the string to explain the difference, which is why a port that gets it wrong can only be caught by a golden string.",
 		"vendorConsents loses 700 to withdrawal, not to an undeclared purpose: those entries carry deletedDate, GVL.mapVendors leaves them out of gvl.vendors (the id is still in gvl.vendorIds and the entry still survives in gvl.fullVendorList), and SemanticPreEncoder unsets a positive signal for any vendor the GVL does not hand back. The ids stay declared in input.vendorList.vendors and stay valid as numbers, so a port that keeps withdrawn vendors in its vendor table and never reads deletedDate encodes bits the reference erases.",
 		"vendorsDisclosed keeps 700 even though the pruned vectors dropped those same ids, because vendorsDisclosed is copied through the pre-encoder untouched. The vectors therefore carry different maxIds off the same model: an encoder that prunes the disclosed list, or one that leaves the consent list alone, fails here in opposite directions.",

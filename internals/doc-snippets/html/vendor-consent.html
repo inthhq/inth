@@ -4,22 +4,22 @@
 		<meta charset="utf-8" />
 		<title>Vendor consent</title>
 		<script
-			src="https://your-project.inth.app/c15t.js"
+			src="https://your-project.inth.app/inth.js"
 			defer
 		></script>
 		<!-- #region docs:vendor-gated-scripts title="index.html" -->
 		<!-- PostHog's snippet, saved as a file on your site -->
 		<script
 			type="text/plain"
-			data-c15t-category="measurement"
-			data-c15t-vendor="posthog"
+			data-inth-category="measurement"
+			data-inth-vendor="posthog"
 			src="/vendor/posthog.js"
 		></script>
 		<!-- X Pixel's base code, pasted inline -->
 		<script
 			type="text/plain"
-			data-c15t-category="marketing"
-			data-c15t-vendor="x-pixel"
+			data-inth-category="marketing"
+			data-inth-vendor="x-pixel"
 		>
 			!function(e,t,n,s,u,a){e.twq||(s=e.twq=function(){s.exe?s.exe.apply(s,arguments):s.queue.push(arguments);
 			},s.version='1.1',s.queue=[],u=t.createElement(n),u.async=!0,u.src='https://static.ads-twitter.com/uwt.js',
@@ -28,10 +28,10 @@
 		</script>
 		<!-- #endregion docs:vendor-gated-scripts -->
 		<!-- #region docs:vendors title="index.html" -->
-		<!-- Runs before the deferred c15t.js tag, so init() picks it up -->
+		<!-- Runs before the deferred inth.js tag, so init() picks it up -->
 		<script>
-			window.c15t = window.c15t || [];
-			c15t.push([
+			window.inth = window.inth || [];
+			inth.push([
 				'config',
 				{
 					vendors: [
@@ -73,6 +73,6 @@
 			allowfullscreen
 		></iframe>
 		<!-- #endregion docs:vendor-gated-embed -->
-		<a href="#c15t-preferences">Privacy settings</a>
+		<a href="#inth-preferences">Privacy settings</a>
 	</body>
 </html>

@@ -1,5 +1,6 @@
 import { resolveConsentPresentation } from '@inth/sdk-core';
 import type { ConsentSnapshot } from '@inth/sdk-core';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk-core/runtime/page-globals';
 
 import { classes } from '../generated/styles';
 import type { ConsentDialogOptions } from '../types';
@@ -21,10 +22,6 @@ const DEFAULT_DURATION_MS = 200;
  * as in the React and Vue dialogs. Like the stock dialogs of the other
  * adapters it has no close button, and clicking the backdrop does not
  * close it: the visitor leaves through a choice or Escape.
- *
- * @param ctx - The mount context.
- * @param options - Dialog options.
- * @returns The surface.
  */
 // oxlint-disable-next-line max-lines-per-function -- Build, open, close and reconcile are one lifecycle.
 export const createDialog = function createDialog(
@@ -79,6 +76,7 @@ export const createDialog = function createDialog(
 					class: noStyle ? '' : styles.container,
 					'data-state': 'open',
 					'data-testid': 'consent-dialog-root',
+					[SURFACE_ROOT_ATTRIBUTE]: 'dialog',
 					dir: copy.dir,
 					lang: copy.language,
 					onkeydown: onKeyDown as EventListener,
@@ -151,8 +149,7 @@ export const createDialog = function createDialog(
 								hide: options.hideBranding ?? false,
 								noStyle,
 								securedBy: t.common.securedBy,
-								testId: 'consent-dialog-branding',
-								variant: 'dialog-tag',
+								surface: 'dialog',
 							}),
 							'consentDialogTag'
 						)

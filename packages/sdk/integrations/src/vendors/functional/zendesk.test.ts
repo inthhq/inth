@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	createCallbackInfo,
 	expectSkippedScript,
+	grantedServerStart,
 } from '../../__tests__/helpers';
 import { isArgumentsPayload, toArgs } from '../../e2e-test-utils';
 import { zendeskWidget } from './zendesk';
@@ -35,7 +36,7 @@ describe('zendeskWidget', () => {
 			'https://static.zdassets.com/ekr/snippet.js?key=widget%2Fkey%20%26%20value'
 		);
 		expect(script.alwaysLoad).toBeUndefined();
-		expect(script.serverStart).toBeUndefined();
+		expect(grantedServerStart(script)).toBeUndefined();
 		expect(script.persistAfterConsentRevoked).toBeUndefined();
 		expect(script.vendorDetails?.name).toBe('Zendesk Messaging');
 		expect(window.zE).toBeUndefined();
@@ -66,7 +67,7 @@ describe('zendeskWidget', () => {
 	it('queues functional storage and the loader reference before insertion', () => {
 		const script = zendeskWidget({ key: 'widget-key' });
 		const element = document.createElement('script');
-		element.id = 'c15t-test-id';
+		element.id = 'inth-test-id';
 		script.onBeforeLoad?.(
 			createCallbackInfo({
 				consents: allowedConsents,
@@ -83,7 +84,7 @@ describe('zendeskWidget', () => {
 		expect(window.zE?.s).toBe(element);
 		expect(window.zE?.t).toBeTypeOf('number');
 		expect(window.zEmbed).toBe(window.zE);
-		expect(element.id).toBe('c15t-test-id');
+		expect(element.id).toBe('inth-test-id');
 	});
 
 	it('preserves a loaded API and follows measurement-only changes', () => {

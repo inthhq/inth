@@ -4,8 +4,8 @@
  * IAB and primitive sheets load next to one of those and carry no second
  * copy.
  *
- * Without them every component rule resolves `var(--c15t-surface)`,
- * `var(--c15t-radius-lg)` and friends against nothing, and an app that imports
+ * Without them every component rule resolves `var(--inth-surface)`,
+ * `var(--inth-radius-lg)` and friends against nothing, and an app that imports
  * the stylesheet without passing a `theme` renders the banner unstyled.
  *
  * These read the built artifacts, so `bun run --cwd packages/sdk/ui build` (or
@@ -86,14 +86,14 @@ const readBlock = function readBlock(
 	return null;
 };
 
-const LIGHT_SELECTOR = ':root, :host, .c15t-theme-root';
+const LIGHT_SELECTOR = ':root, :host, .inth-theme-root';
 const DARK_SELECTOR = [
 	':root.dark',
 	':host(.dark)',
-	'.dark .c15t-theme-root',
-	':root.c15t-dark',
-	':host(.c15t-dark)',
-	'.c15t-dark .c15t-theme-root',
+	'.dark .inth-theme-root',
+	':root.inth-dark',
+	':host(.inth-dark)',
+	'.inth-dark .inth-theme-root',
 ].join(', ');
 
 describe.each(ENTRYPOINTS)('%s', (entrypoint) => {
@@ -107,7 +107,7 @@ describe.each(ENTRYPOINTS)('%s', (entrypoint) => {
 			themeToVars(defaultTheme, false)
 		)) {
 			expect(block).toContain(
-				`${name}: ${name === '--c15t-switch-track-active' ? 'var(--c15t-primary)' : value}`
+				`${name}: ${name === '--inth-switch-track-active' ? 'var(--inth-primary)' : value}`
 			);
 		}
 	});
@@ -120,7 +120,7 @@ describe.each(ENTRYPOINTS)('%s', (entrypoint) => {
 			themeToVars(defaultTheme, true)
 		)) {
 			expect(block).toContain(
-				`${name}: ${name === '--c15t-switch-track-active' ? 'var(--c15t-primary)' : value}`
+				`${name}: ${name === '--inth-switch-track-active' ? 'var(--inth-primary)' : value}`
 			);
 		}
 	});
@@ -159,7 +159,7 @@ describe.each(COMPANION_SHEETS)('%s', (entrypoint) => {
 	test('does not repeat the default tokens', () => {
 		expect(findBlockStart(css, LIGHT_SELECTOR)).toBe(-1);
 		expect(findBlockStart(css, DARK_SELECTOR)).toBe(-1);
-		expect(css).not.toContain('--c15t-surface:');
+		expect(css).not.toContain('--inth-surface:');
 	});
 
 	test('scopes every :root block to :host too, for shadow-root hosts', () => {
@@ -171,7 +171,7 @@ describe.each(COMPANION_SHEETS)('%s', (entrypoint) => {
 
 describe('surface font variables', () => {
 	/**
-	 * `typography.fontFamily` reaches the page as `--c15t-font-family`. A
+	 * `typography.fontFamily` reaches the page as `--inth-font-family`. A
 	 * surface whose own font variable hardcodes a stack instead ignores the
 	 * theme: the preference list did, so its category rows kept the system
 	 * font under a themed dialog title.
@@ -199,9 +199,9 @@ describe('surface font variables', () => {
 		);
 	});
 
-	test('every one resolves through --c15t-font-family', () => {
+	test('every one resolves through --inth-font-family', () => {
 		expect(
-			fontVariables.filter(([, value]) => value !== 'var(--c15t-font-family)')
+			fontVariables.filter(([, value]) => value !== 'var(--inth-font-family)')
 		).toEqual([]);
 	});
 });
@@ -236,28 +236,28 @@ describe('an app that imports the stylesheet without a theme', () => {
 
 		const computed = getComputedStyle(document.documentElement);
 
-		expect(computed.getPropertyValue('--c15t-surface')).toBe(
+		expect(computed.getPropertyValue('--inth-surface')).toBe(
 			defaultTheme.colors.surface
 		);
-		expect(computed.getPropertyValue('--c15t-radius-lg')).toBe(
+		expect(computed.getPropertyValue('--inth-radius-lg')).toBe(
 			defaultTheme.radius.lg
 		);
-		expect(computed.getPropertyValue('--c15t-font-family')).toBe(
+		expect(computed.getPropertyValue('--inth-font-family')).toBe(
 			defaultTheme.typography.fontFamily
 		);
 	});
 
-	test('lets a provider-injected <style id="c15t-theme"> override them', () => {
+	test('lets a provider-injected <style id="inth-theme"> override them', () => {
 		mountStylesheet();
 
 		const injected = document.createElement('style');
-		injected.id = 'c15t-theme';
-		injected.textContent = `${LIGHT_SELECTOR} { --c15t-surface: rebeccapurple; }`;
+		injected.id = 'inth-theme';
+		injected.textContent = `${LIGHT_SELECTOR} { --inth-surface: rebeccapurple; }`;
 		document.head.appendChild(injected);
 
 		expect(
 			getComputedStyle(document.documentElement).getPropertyValue(
-				'--c15t-surface'
+				'--inth-surface'
 			)
 		).toBe('rebeccapurple');
 	});

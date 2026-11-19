@@ -1,7 +1,7 @@
 import {
 	switchIndependentOfTrigger,
 	triggerExpandsContent,
-} from '@c15t/conformance/play/preference-item';
+} from '@inth/conformance/play/preference-item';
 import { enTranslations } from '@inth/sdk/translations';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 

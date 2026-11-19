@@ -1,24 +1,24 @@
 ---
 title: Vercel Speed Insights
-description: Load the Vercel Speed Insights collector only after measurement consent with the c15t vercelSpeedInsights helper, drop Web Vitals reports on revocation, and check it in DevTools.
-seoTitle: Vercel Speed Insights cookie consent with c15t
-seoDescription: Load Vercel Speed Insights only with measurement consent. The c15t vercelSpeedInsights helper drops every Web Vitals report after a withdrawal.
+description: Load the Vercel Speed Insights collector only after measurement consent with the Inth vercelSpeedInsights helper, drop Web Vitals reports on revocation, and check it in DevTools.
+seoTitle: Vercel Speed Insights cookie consent with Inth
+seoDescription: Load Vercel Speed Insights only with measurement consent. The Inth vercelSpeedInsights helper drops every Web Vitals report after a withdrawal.
 icon: vercel-analytics
 group: integrations
 ---
 
-The c15t `vercelSpeedInsights` helper keeps the Vercel Speed Insights collector
+The Inth `vercelSpeedInsights` helper keeps the Vercel Speed Insights collector
 off the page until `measurement` has consent. The helper sends no consent signal
 to Vercel. It registers a `beforeSend` callback that drops every Web Vitals
 report while `measurement` has no consent. If the visitor withdraws consent,
-c15t removes the script element. The collector keeps running, so the callback
-drops its reports. By default, c15t also reloads the page.
+Inth removes the script element. The collector keeps running, so the callback
+drops its reports. By default, Inth also reloads the page.
 
 ## Configure Vercel Speed Insights
 
 Enable Speed Insights for the project in Vercel. Remove the `SpeedInsights`
 component or `injectSpeedInsights()` call from `@vercel/speed-insights`. The
-collector starts once per page, so a copy loaded outside c15t keeps reporting
+collector starts once per page, so a copy loaded outside Inth keeps reporting
 before consent.
 
 <CommandTabs command="@inth/integrations" mode="install" />
@@ -43,7 +43,7 @@ export const scripts = [vercelSpeedInsights()];
 | `sampleRate` | `1` | Share of page loads that report, from `0` to `1`, set as `data-sample-rate`. Other values throw a `TypeError`. |
 | `beforeSend` | None | Edits or drops a report while measurement is allowed. Return the event, with a changed `url` if needed, or `null` to drop it. |
 
-The helper also sets `data-sdkn="c15t"` on the script element. Without `dsn`
+The helper also sets `data-sdkn="inth"` on the script element. Without `dsn`
 or `endpoint`, the collector posts to `/_vercel/speed-insights/vitals` on your
 own origin, which exists only on Vercel deployments with Speed Insights on.
 
@@ -56,7 +56,7 @@ unless they exist, registers a `beforeSend` callback and loads the script.
 The collector keeps its listeners after its script element is removed and
 sends queued reports on `pagehide` and navigation. On revocation the helper
 removes the script element and its `beforeSend` callback starts returning
-`null`, so no report is sent, including during the reload c15t runs on
+`null`, so no report is sent, including during the reload Inth runs on
 revocation. A later grant re-adds the script, which does not start a second
 collector, and reports resume. Reports also stop when the provider that owns
 the scripts unmounts.
@@ -78,7 +78,7 @@ by route pattern such as `/blog/[slug]`.
 ## Verify Vercel Speed Insights
 
 Filter DevTools Network by `speed-insights`. After you allow measurement,
-`script.js` loads from `va.vercel-scripts.com` with `data-sdkn="c15t"`. Change
+`script.js` loads from `va.vercel-scripts.com` with `data-sdkn="inth"`. Change
 route or switch tabs, and a `POST` to `/_vercel/speed-insights/vitals` follows.
 Automated browsers that set `navigator.webdriver` load the collector but send
 nothing. With `debug` or `mode: 'development'` the reports appear in the

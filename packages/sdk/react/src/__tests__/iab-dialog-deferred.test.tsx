@@ -1,4 +1,4 @@
-import { MINIMAL_GVL } from '@c15t/conformance';
+import { MINIMAL_GVL } from '@inth/conformance';
 import type { GlobalVendorList } from '@inth/sdk/schema/types';
 import { createRef } from 'react';
 import { hydrateRoot } from 'react-dom/client';

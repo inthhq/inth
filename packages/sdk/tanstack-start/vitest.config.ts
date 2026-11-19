@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 
-import { baseConfig } from '@c15t/vitest-config/base';
+import { baseConfig } from '@inth/vitest-config/base';
 import react from '@vitejs/plugin-react';
 import { playwright } from '@vitest/browser-playwright';
 import { defineConfig, mergeConfig } from 'vitest/config';
@@ -41,9 +41,17 @@ const alias = {
 		__dirname,
 		'../core/src/modules/window-debug/index.ts'
 	),
+	'@inth/sdk/runtime/storage-for': resolve(
+		__dirname,
+		'../core/src/libs/storage-for.ts'
+	),
 	'@inth/sdk/runtime/deferred-boot': resolve(
 		__dirname,
 		'../core/src/runtime/deferred-boot.ts'
+	),
+	'@inth/sdk/runtime/stand-in-kernel': resolve(
+		__dirname,
+		'../core/src/runtime/stand-in-kernel.ts'
 	),
 	'@inth/sdk/runtime/deferred-snapshot': resolve(
 		__dirname,
@@ -118,6 +126,10 @@ const alias = {
 	'@inth/sdk/runtime/client-mode': resolve(
 		__dirname,
 		'../core/src/runtime/client-mode.ts'
+	),
+	'@inth/sdk/runtime/page-globals': resolve(
+		__dirname,
+		'../core/src/libs/page-globals.ts'
 	),
 	'@inth/sdk/runtime': resolve(__dirname, '../core/src/runtime/index.ts'),
 	'@inth/sdk/generated': resolve(__dirname, '../core/src/generated.ts'),

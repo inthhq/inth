@@ -15,7 +15,7 @@ export interface ConsentButtonHarnessFilters extends BaseHarnessFilters {
 }
 
 /**
- * Drives a `<button c15t-consent-button>` in your own markup, such as a
+ * Drives a `<button inth-consent-button>` in your own markup, such as a
  * custom banner or a footer link, and the buttons inside the stock
  * surfaces.
  *
@@ -34,15 +34,10 @@ export interface ConsentButtonHarnessFilters extends BaseHarnessFilters {
  * ```
  */
 export class ConsentButtonHarness extends ComponentHarness {
-	/** Matches every `button[c15t-consent-button]`. */
-	static hostSelector = 'button[c15t-consent-button]';
+	/** Matches every `button[inth-consent-button]`. */
+	static hostSelector = 'button[inth-consent-button]';
 
-	/**
-	 * A predicate for a button that matches `options`.
-	 *
-	 * @param options - Text, action and selector filters.
-	 * @returns A predicate to pass to a loader.
-	 */
+	/** A predicate for a button that matches `options`. */
 	static with(
 		options: ConsentButtonHarnessFilters = {}
 	): HarnessPredicate<ConsentButtonHarness> {

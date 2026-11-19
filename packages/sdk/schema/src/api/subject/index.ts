@@ -1,9 +1,3 @@
-/**
- * Subject API schemas exports.
- *
- * @packageDocumentation
- */
-
 export {
 	type ConsentItem,
 	consentItemSchema,

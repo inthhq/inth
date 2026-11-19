@@ -7,7 +7,7 @@ import type { Overrides } from '../options/overrides';
  *
  * `/init` reads no cookie and sets none: its answer depends only on the
  * request's geo, language, GPC and declared contract. `same-origin` keeps
- * cookies on a same-origin init route (an app may gate `/api/c15t` behind
+ * cookies on a same-origin init route (an app may gate `/api/inth` behind
  * its own session), and leaves them off a cross-origin backend, which can
  * then answer with `Access-Control-Allow-Origin: *`. Saves keep
  * `include`.
@@ -26,9 +26,6 @@ export const DEFAULT_INIT_CREDENTIALS: RequestCredentials = 'same-origin';
  * In its own module so code that only builds the init request does not pull
  * in the rest of `request-context` (URL canonicalization, prefetch
  * matching, GPC detection).
- *
- * @param overrides - Country, region, language and GPC overrides.
- * @returns Header record of the overrides.
  */
 export const buildRequestContextHeaders = function buildRequestContextHeaders(
 	overrides?: Pick<Overrides, 'country' | 'region' | 'language' | 'gpc'>
@@ -38,15 +35,15 @@ export const buildRequestContextHeaders = function buildRequestContextHeaders(
 	if (overrides?.gpc !== undefined) {
 		// `Sec-*` request headers are forbidden to scripts, so the override
 		// travels on the adapter header the shared extractor reads first.
-		headers['x-c15t-gpc'] = overrides.gpc ? '1' : '0';
+		headers['x-inth-gpc'] = overrides.gpc ? '1' : '0';
 	}
 
 	if (overrides?.country) {
-		headers['x-c15t-country'] = overrides.country;
+		headers['x-inth-country'] = overrides.country;
 	}
 
 	if (overrides?.region) {
-		headers['x-c15t-region'] = overrides.region;
+		headers['x-inth-region'] = overrides.region;
 	}
 
 	if (overrides?.language) {
@@ -61,7 +58,6 @@ export const buildRequestContextHeaders = function buildRequestContextHeaders(
  * country, region and GPC. Language stays on `Accept-Language`, which is
  * CORS-safelisted (see {@link buildRequestContextSentHeaders}).
  *
- * @param overrides - Country, region and GPC overrides.
  * @returns The parameters for `appendInitParams`.
  */
 export const buildRequestContextParams = function buildRequestContextParams(
@@ -79,7 +75,6 @@ export const buildRequestContextParams = function buildRequestContextParams(
  * `Accept-Language`, which is CORS-safelisted and which every backend
  * already reads.
  *
- * @param overrides - The language override.
  * @returns Header record to spread into the init request.
  */
 export const buildRequestContextSentHeaders =

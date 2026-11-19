@@ -1,6 +1,6 @@
 ---
 title: App Router
-description: Set up c15t in the Next.js App Router with Inth, a build-time policy manifest, consent-gated scripts and a streamed or awaited root layout.
+description: Set up Inth in the Next.js App Router with Inth, a build-time policy manifest, consent-gated scripts and a streamed or awaited root layout.
 group: frameworks
 ---
 
@@ -20,18 +20,18 @@ This setup needs a Next.js server. For `output: 'export'`, follow
 [rendering and deployment](/docs/frameworks/next/rendering).
 
 Location-based policies need trusted location headers from your host. Without
-them, c15t applies your unknown-location rule. See
+them, Inth applies your unknown-location rule. See
 [Forward geography headers](/docs/frameworks/next/geography-headers) before
 you deploy.
 
-## Install c15t and configure your backend
+## Install Inth and configure your backend
 
 [Create an Inth project](https://inth.com), set its policy rules and add your
 site's origin to its trusted origins. Copy the project's backend URL.
 
 <CommandTabs command="@inth/nextjs @inth/integrations" mode="install" />
 
-There is no c15t stylesheet to import. The components render their own rules
+There is no Inth stylesheet to import. The components render their own rules
 as `<style>` elements, so no stylesheet request holds back the first paint.
 With Tailwind CSS 3, import `@inth/nextjs/styles.css` yourself and set
 `styles: false` in `ConsentRoot`'s `options`, as
@@ -40,15 +40,15 @@ shows.
 
 ## Set the backend URL
 
-Set `NEXT_PUBLIC_C15T_BACKEND_URL` to your project's backend URL, including
+Set `NEXT_PUBLIC_INTH_PROJECT_URL` to your project's backend URL, including
 any path prefix, in `.env.local` and in your host's build settings:
 
 ```sh title=".env.local"
-NEXT_PUBLIC_C15T_BACKEND_URL=https://your-project.inth.app
+NEXT_PUBLIC_INTH_PROJECT_URL=https://your-project.inth.app
 ```
 
-If your app already sets `NEXT_PUBLIC_INTH_PROJECT_URL` for other Inth SDKs, that works
-too. When both are set, `NEXT_PUBLIC_C15T_BACKEND_URL` wins.
+The c15t name `NEXT_PUBLIC_C15T_BACKEND_URL` still works as a fallback. When both are
+set, `NEXT_PUBLIC_INTH_PROJECT_URL` wins.
 
 Next.js inlines `NEXT_PUBLIC_` variables at build time, so the build, the
 server and the browser use the same URL, and changing the variable on a built
@@ -61,7 +61,7 @@ app has no effect until you rebuild. To set the URL in code instead, pass
 
 ## Add the consent config
 
-Create `c15t.config.ts` at the project root, next to `next.config.ts`:
+Create `inth.config.ts` at the project root, next to `next.config.ts`:
 
 <include src="../../shared/examples/nextjs/quickstart-config.mdx" />
 
@@ -72,7 +72,7 @@ so it can hold `scripts` but must hold no secrets.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `projectUrl` | `NEXT_PUBLIC_C15T_BACKEND_URL`, then `NEXT_PUBLIC_INTH_PROJECT_URL` | Backend base URL. Choices post to `${projectUrl}/subjects`. |
+| `projectUrl` | `NEXT_PUBLIC_INTH_PROJECT_URL` | Backend base URL. Choices post to `${projectUrl}/subjects`. |
 | `mode` | `manifest()` | `manifest()`, `hosted()` or `testing()` from `@inth/nextjs`. See [consent modes](/docs/concepts/modes). |
 | `routePrefix` | none | Where you mount the [consent route](#initialize-in-the-browser). Set it only when some pages resolve consent in the browser. |
 | `proxy` | `false` | Send browser saves through the consent route too. See [optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin). |
@@ -160,7 +160,7 @@ root layout:
 
 Without `state`, the browser resolves consent after hydration. Give it a
 route on your origin that resolves the bundled policy with the browser
-request's location headers. Set `routePrefix` in `c15t.config.ts`:
+request's location headers. Set `routePrefix` in `inth.config.ts`:
 
 <include src="../../shared/examples/nextjs/config.mdx" />
 
@@ -168,10 +168,10 @@ Then mount one catch-all route under it:
 
 <include src="../../shared/examples/nextjs/consent-route.mdx" />
 
-`createConsentRoute()` answers `GET /api/c15t/init` and
-`GET /api/c15t/manifest` from the bundled snapshot. Any other path under
-`/api/c15t` returns 404. To keep saves on your origin too, set `proxy: true`
-in `c15t.config.ts` and pass `createConsentRoute({ proxy: true })`, which
+`createConsentRoute()` answers `GET /api/inth/init` and
+`GET /api/inth/manifest` from the bundled snapshot. Any other path under
+`/api/inth` returns 404. To keep saves on your origin too, set `proxy: true`
+in `inth.config.ts` and pass `createConsentRoute({ proxy: true })`, which
 forwards the remaining consent paths, such as `/subjects`, to the backend; see
 [optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin).
 
@@ -182,18 +182,18 @@ server-rendered ones, see
 
 ## Use backend init instead of the manifest
 
-Set `mode: hosted()` in `c15t.config.ts`:
+Set `mode: hosted()` in `inth.config.ts`:
 
 {/* example: fragment */}
 
-```ts title="c15t.config.ts"
+```ts title="inth.config.ts"
 import { defineConsentConfig, hosted } from '@inth/nextjs';
 
 export default defineConsentConfig({ mode: hosted() });
 ```
 
 Keep `withConsentManifest` in `next.config.ts`: it is what finds
-`c15t.config.ts`. With `hosted()` it downloads no manifest, so `next build`
+`inth.config.ts`. With `hosted()` it downloads no manifest, so `next build`
 does not contact the backend. The layouts stay the same. `resolveConsent`
 and the browser now call `${projectUrl}/init`, and consent choices still go to
 `${projectUrl}/subjects`. Every visit makes a backend request, which the

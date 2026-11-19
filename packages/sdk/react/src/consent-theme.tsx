@@ -6,7 +6,11 @@
  * the default theme stay out of the browser bundle. Rendered from a client
  * component it still works, but ships the generator.
  */
-import { defaultTheme, generateThemeCSS } from '@inth/sdk/ui/theme';
+import {
+	defaultTheme,
+	generateThemeCSS,
+	THEME_STYLE_ELEMENT_ID,
+} from '@inth/sdk/ui/theme';
 
 import type { Theme } from './types/theme';
 
@@ -22,7 +26,7 @@ export interface ConsentThemeProps {
 	/**
 	 * Color scheme to apply before hydration. `'dark'` makes the dark
 	 * tokens the default, and `'system'` follows `prefers-color-scheme`.
-	 * Omit it to follow the `dark` / `c15t-dark` class on `<html>`. Pass the
+	 * Omit it to follow the `dark` / `inth-dark` class on `<html>`. Pass the
 	 * same value as the provider's `colorScheme` option.
 	 */
 	colorScheme?: 'light' | 'dark' | 'system' | null;
@@ -31,13 +35,12 @@ export interface ConsentThemeProps {
 }
 
 /**
- * Renders the `--c15t-*` CSS variables for a theme as a `<style>` element.
+ * Renders the `--inth-*` CSS variables for a theme as a `<style>` element.
  *
  * Render it once, next to the consent provider, where your framework renders
  * on the server. The provider does not generate theme CSS itself.
  *
- * @param props - The theme, color scheme and CSP nonce.
- * @returns A `<style id="c15t-theme">` element.
+ * @returns A `<style id="inth-theme">` element.
  * @example
  * ```tsx
  * // app/layout.tsx (Server Component)
@@ -53,7 +56,7 @@ export const ConsentTheme = ({
 	nonce,
 }: ConsentThemeProps) => (
 	<style
-		id="c15t-theme"
+		id={THEME_STYLE_ELEMENT_ID}
 		nonce={nonce}
 		// oxlint-disable-next-line react/no-danger -- generateThemeCSS escapes `<`
 		dangerouslySetInnerHTML={{

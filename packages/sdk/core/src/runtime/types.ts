@@ -156,7 +156,7 @@ export interface ConsentRuntimeIABFactoryOptions {
 	/** Publisher country code used in the TC string. */
 	publisherCountryCode?: string;
 	/**
-	 * Ignored: c15t always encodes IsServiceSpecific=1.
+	 * Ignored: Inth always encodes IsServiceSpecific=1.
 	 *
 	 * @deprecated TCF requires IsServiceSpecific=1. Group-specific scope is
 	 * also encoded as 1. Passing `false` logs a warning once and has no
@@ -192,6 +192,11 @@ export interface ConsentRuntimeIABHandle {
 	setPurposeConsent: (purposeId: number, value: boolean) => void;
 	/** Set legitimate interest for a specific IAB purpose. */
 	setPurposeLegitimateInterest: (purposeId: number, value: boolean) => void;
+	/**
+	 * Object to legitimate interest for a purpose, or withdraw the
+	 * objection, for the purpose and every vendor using it on that basis.
+	 */
+	setPurposeObjection: (purposeId: number, objected: boolean) => void;
 	/** Opt in/out of a special feature (1 = geo, 2 = device ID). */
 	setSpecialFeatureOptIn: (featureId: number, value: boolean) => void;
 	/** Set consent for a Google ad tech provider (Additional Consent). */
@@ -346,7 +351,7 @@ export interface ConsentRuntimeModules {
 	 * place before the first save: pass the real `watchRevocationReload`.
 	 */
 	watchRevocationReload: (options: RevocationReloadOptions) => () => void;
-	/** Mounted on `start()` unless `windowDebug: false`. */
+	/** Mounted on `start()`. */
 	createWindowDebug: (options: WindowDebugOptions) => WindowDebugHandle;
 	/**
 	 * Connects a `consentSource` on `start()` while enabled. Pass
@@ -414,7 +419,7 @@ export interface ConsentRuntimeModules {
  * External sources are initial-only; recreate the runtime to change authority.
  */
 export interface ConsentRuntimeOptions {
-	/** External authority. Disables c15t persistence, initialization, IAB and choice UI. */
+	/** External authority. Disables Inth persistence, initialization, IAB and choice UI. */
 	consentSource?: ExternalConsentSource;
 	/**
 	 * Set `false` to grant every category, suppress all UI and skip
@@ -424,7 +429,7 @@ export interface ConsentRuntimeOptions {
 	 */
 	enabled?: boolean;
 	/**
-	 * Backend URL, relative (`/api/c15t`) or absolute. Each init asks
+	 * Backend URL, relative (`/api/inth`) or absolute. Each init asks
 	 * `${projectUrl}/init` (or reads its consent manifest with
 	 * `mode: manifest()`), and saves go to `${projectUrl}/subjects`.
 	 * Required unless `mode` is `testing()` or `enabled` is `false`; a
@@ -534,7 +539,7 @@ export interface ConsentRuntimeOptions {
 	 */
 	vendors?: Vendor[];
 	/**
-	 * Content Security Policy nonce applied to DOM nodes c15t injects.
+	 * Content Security Policy nonce applied to DOM nodes Inth injects.
 	 *
 	 * Set this when your CSP uses a nonce-based policy instead of
 	 * `'unsafe-inline'`. The script loader stamps it on every `<script>` it
@@ -542,7 +547,6 @@ export interface ConsentRuntimeOptions {
 	 * `<style>` element. A per-script `nonce` takes precedence.
 	 */
 	nonce?: string;
-	/** Script-loader tuning. */
 	scriptLoader?: RuntimeScriptLoaderOptions;
 	/** Consent-gate outbound requests. Omitted or `false` disables it. */
 	networkBlocker?: RuntimeNetworkBlockerOptions | false;
@@ -580,13 +584,7 @@ export interface ConsentRuntimeOptions {
 	/** Categories to offer alongside discovered integration categories, within policy scope. */
 	consentCategories?: AllConsentNames[];
 	/**
-	 * Install the `window.c15t` debug object (`{ version, pkg, mode }`) on
-	 * `start()`. Defaults to `true`. A host that owns `window.c15t` itself,
-	 * such as the script-tag build, turns it off.
-	 */
-	windowDebug?: boolean;
-	/**
-	 * Package name reported through `window.c15t` — for example
+	 * Package name reported through `window.__inthDebug` — for example
 	 * `'@inth/svelte'`. Defaults to `'@inth/sdk/engine'`.
 	 */
 	pkg?: string;
@@ -701,7 +699,7 @@ export interface ConsentRuntime {
 	readonly started: boolean;
 	/**
 	 * Mount every browser side effect: persistence, script loader, network
-	 * and iframe blockers, IAB, GPP, `window.c15t`, and the initial
+	 * and iframe blockers, IAB, GPP, `window.__inthDebug`, and the initial
 	 * `kernel.commands.init()`, or the adoption of a resolved prefetch
 	 * (evaluated at the server's clock, marked live, GPC honoured,
 	 * `init:applied` replayed) in its place.
@@ -742,7 +740,7 @@ export interface ConsentRuntime {
 	 * changed, such as a denial saved or records cleared in another tab.
 	 *
 	 * With persistence on, the runtime already does this when another tab
-	 * changes c15t's localStorage keys, when the page becomes visible and
+	 * changes Inth's localStorage keys, when the page becomes visible and
 	 * when the window regains focus (see `persistence.sync`). Call it
 	 * yourself after a change no browser event reports: a second runtime
 	 * on the same page, or cookies rewritten without a localStorage change.
@@ -887,8 +885,8 @@ export interface ConsentProviderRuntime extends ConsentRuntime {
 	 * user is identified, new overrides are set and `init()` runs again,
 	 * vendors are re-declared, scripts and rules go to their modules, a
 	 * module turned on or off is mounted or unmounted. Callbacks are always
-	 * read from the latest set. A change to `mode`, `i18n`, `experiment`,
-	 * `persistence` or `storageConfig` logs a warning outside production.
+	 * read from the latest set. A change to any other option logs a warning
+	 * outside production.
 	 *
 	 * New overrides, `enabled` and `consentCategories` apply at once, and
 	 * requests that new network blocker rules match are held until the

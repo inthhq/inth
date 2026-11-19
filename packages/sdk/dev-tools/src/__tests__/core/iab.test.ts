@@ -8,7 +8,10 @@ import { createScriptLoader } from '@inth/sdk-core/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createIAB } from '../../../../iab/src';
-import { minimalGVL } from '../../../../iab/src/__tests__/fixtures/gvl-sample';
+import {
+	completeGVL,
+	minimalGVL,
+} from '../../../../iab/src/__tests__/fixtures/gvl-sample';
 import { createMockGVL } from '../../../../iab/src/__tests__/test-setup';
 import { decodeTCString } from '../../../../iab/src/tcf/tc-string';
 import { createDevTools } from '../../index';
@@ -210,6 +213,25 @@ describe('IAB DevTools', () => {
 			false
 		);
 	});
+	it('shows the legitimate interest a restriction introduces as a plain Save encodes it', () => {
+		// Vendor 755 declares purpose 7 on consent; the restriction moves it to
+		// legitimate interest, which an untouched save encodes as allowed.
+		const kernel = makeKernel();
+		const iab = createIAB({
+			cmpId: 28,
+			gvl: completeGVL,
+			kernel,
+			publisherRestrictions: [
+				{ purposeId: 7, restrictionType: 2, vendorIds: [755] },
+			],
+		});
+		cleanups.push(iab.dispose);
+		const tools = mount(kernel);
+		selectGroup(tools, 'purposes');
+		expect(toggle(tools, 'iab:purposes:7:li').checked).toBe(true);
+		expect(toggle(tools, 'iab:purposes:2:li').checked).toBe(false);
+	});
+
 	it('uses the existing module to edit vendors, purposes, legitimate interests, and features', () => {
 		const kernel = makeKernel();
 		attachIAB(kernel, gvlWithPurposeTwo);
@@ -310,8 +332,6 @@ describe('IAB DevTools', () => {
 			toggle(tools, 'iab:purposes:1:consent').click();
 			button(tools, 'Save IAB consent').click();
 			expect(button(tools, 'Save IAB consent').disabled).toBe(true);
-			// Encoding a TC string is real work, and a loaded CI runner takes
-			// longer over it than `waitFor`'s one-second default allows.
 			await vi.waitFor(
 				() =>
 					expect(
@@ -363,7 +383,7 @@ describe('IAB DevTools', () => {
 		attachIAB(kernel, { ...minimalGVL, vendors });
 		const tools = mount(kernel);
 		expect(
-			tools.element?.querySelectorAll('.c15t-dev-tools__iab-choice')
+			tools.element?.querySelectorAll('.inth-dev-tools__iab-choice')
 		).toHaveLength(20);
 		button(tools, 'Next IAB page').click();
 		expect(tools.element?.textContent).toContain('Page 2 of 3');
@@ -381,7 +401,7 @@ describe('IAB DevTools', () => {
 				?.value
 		).toBe('Vendor 45');
 		expect(
-			tools.element?.querySelectorAll('.c15t-dev-tools__iab-choice')
+			tools.element?.querySelectorAll('.inth-dev-tools__iab-choice')
 		).toHaveLength(1);
 	});
 });

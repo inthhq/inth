@@ -54,6 +54,8 @@ const CORE_SOURCE = '../../../core/src/';
 /** `@inth/sdk/engine` subpaths whose file name differs from the subpath. */
 const CORE_ENTRY_ALIASES: Record<string, string> = {
 	'modules/network-hold': 'modules/network-blocker/hold.ts',
+	'runtime/page-globals': 'libs/page-globals.ts',
+	'runtime/storage-for': 'libs/storage-for.ts',
 };
 
 /** `@inth/sdk` entries that are not the engine's: UI, schema, IAB and the rest. */

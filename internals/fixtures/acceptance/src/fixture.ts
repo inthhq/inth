@@ -97,7 +97,7 @@ export const startExampleFixture = async function startExampleFixture(
 			server.close();
 			await closed;
 		},
-		projectUrl: `http://127.0.0.1:${address.port}/api/c15t`,
+		projectUrl: `http://127.0.0.1:${address.port}/api/inth`,
 		setFailure(value: boolean) {
 			failing = value;
 		},

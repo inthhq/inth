@@ -5,6 +5,8 @@
  * remains separate from a developer override.
  */
 import {
+	GPC_HEADERS,
+	parseGlobalPrivacyControl,
 	POLICY_CONTRACT_VERSION,
 	readPolicyResolutionWire,
 	writePolicyResolutionWire,
@@ -18,7 +20,6 @@ import type {
 import { resolveVendors, withoutManifestVendors } from '../libs/vendors';
 import type {
 	InitResponse,
-	KernelBranding,
 	KernelConfig,
 	KernelIABState,
 	KernelOverrides,
@@ -57,12 +58,6 @@ const FAILED_UNSUPPORTED_CONTRACT: PolicyResolution = {
 	policy: null,
 	reason: 'unsupported-contract',
 	status: 'failed',
-};
-
-const mapBranding = function mapBranding(
-	branding: InitOutput['branding']
-): KernelBranding | undefined {
-	return branding === 'none' ? undefined : branding;
 };
 
 const mapResolvedOverrides = function mapResolvedOverrides(
@@ -141,11 +136,12 @@ export const mapInitOutputToInitResponse = function mapInitOutputToInitResponse(
 		translations: payload.translations,
 	};
 
-	const overrideGpc = headers['x-c15t-gpc'];
-	if (overrideGpc === '1' || overrideGpc === '0') {
+	// The application's override, not the browser's `sec-gpc`.
+	const overrideGpc = parseGlobalPrivacyControl(headers[GPC_HEADERS[0]]);
+	if (overrideGpc !== undefined) {
 		mapped.resolvedOverrides = {
 			...mapped.resolvedOverrides,
-			gpc: overrideGpc === '1',
+			gpc: overrideGpc,
 		};
 	}
 
@@ -154,9 +150,8 @@ export const mapInitOutputToInitResponse = function mapInitOutputToInitResponse(
 	if (privacySignals) {
 		mapped.resolvedPrivacySignals = privacySignals;
 	}
-	const branding = mapBranding(payload.branding);
-	if (branding !== undefined) {
-		mapped.branding = branding;
+	if (payload.branding !== undefined) {
+		mapped.branding = payload.branding;
 	}
 	if (payload.hosting !== undefined) {
 		mapped.hosting = payload.hosting;
@@ -189,22 +184,17 @@ export const mapInitOutputToInitResponse = function mapInitOutputToInitResponse(
 	return mapped;
 };
 
-/**
- * Configuration after folding validated prefetch records and policy.
- */
-export type TransportKernelConfig = KernelConfig;
-
 export const mergeInitResponseIntoKernelConfig =
 	// oxlint-disable-next-line complexity -- Preserve established branch order and control flow.
 	function mergeInitResponseIntoKernelConfig(
-		base: TransportKernelConfig,
+		base: KernelConfig,
 		response: TransportInitResponse | undefined
-	): TransportKernelConfig {
+	): KernelConfig {
 		if (!response) {
 			return base;
 		}
 
-		const merged: TransportKernelConfig = { ...base };
+		const merged: KernelConfig = { ...base };
 		const derivedOverrides: KernelOverrides = {};
 
 		if (response.location?.countryCode) {
@@ -247,10 +237,7 @@ export const mergeInitResponseIntoKernelConfig =
 		if (response.translations !== undefined) {
 			merged.initialTranslations = response.translations;
 		}
-		if (
-			response.branding !== undefined &&
-			(response.branding as KernelBranding | 'none') !== 'none'
-		) {
+		if (response.branding !== undefined) {
 			merged.initialBranding = response.branding;
 		}
 		if (response.hosting !== undefined) {
@@ -342,7 +329,7 @@ export const mergeInitResponseIntoKernelConfig =
 
 export const initResponseToKernelConfig = function initResponseToKernelConfig(
 	response: TransportInitResponse | undefined
-): TransportKernelConfig {
+): KernelConfig {
 	return mergeInitResponseIntoKernelConfig({}, response);
 };
 
@@ -453,11 +440,11 @@ export const kernelConfigToInitResponse = function kernelConfigToInitResponse(
 
 export const mergeInitOutputIntoKernelConfig =
 	function mergeInitOutputIntoKernelConfig(
-		base: TransportKernelConfig,
+		base: KernelConfig,
 		payload: RichInitOutput | undefined,
 		headers: Record<string, string> = {},
 		options: MapInitOutputOptions = {}
-	): TransportKernelConfig {
+	): KernelConfig {
 		return mergeInitResponseIntoKernelConfig(
 			base,
 			payload
@@ -470,6 +457,6 @@ export const initOutputToKernelConfig = function initOutputToKernelConfig(
 	payload: RichInitOutput | undefined,
 	headers: Record<string, string> = {},
 	options: MapInitOutputOptions = {}
-): TransportKernelConfig {
+): KernelConfig {
 	return mergeInitOutputIntoKernelConfig({}, payload, headers, options);
 };

@@ -24,7 +24,7 @@ export const captureDomSnapshot = function captureDomSnapshot(
 		// oxlint-disable-next-line prefer-named-capture-group -- This code supports pre-ES2018 declaration targets.
 		const CSS_MODULE = /^_([^_]+)_[^_]+_\d+$/u;
 		// oxlint-disable-next-line prefer-named-capture-group -- This code supports pre-ES2018 declaration targets.
-		const SVELTE_CSS_MODULE = /^c15t-ui-(.+)-[A-Za-z0-9_-]{4,}$/u;
+		const SVELTE_CSS_MODULE = /^inth-ui-(.+)-[A-Za-z0-9_-]{4,}$/u;
 		const AUTO_ID = /^(?::r[0-9a-z]+:|radix-[a-z0-9-]+|ark-[a-z0-9-]+)$/u;
 		// The branding link attributes the referral to the page's host,
 		// which is whatever port a Storybook happens to be served on.
@@ -32,7 +32,7 @@ export const captureDomSnapshot = function captureDomSnapshot(
 		const AUTO_ID_SUFFIX =
 			/-(?:_r_[0-9a-z]+_|r[0-9a-z]+|c[0-9]+|v(?:-[0-9]+)+)$/u;
 		// The same generated token, but in the middle of a composed id —
-		// `c15t-tabs-{id}-content-purposes`. React's `useId`, Svelte's
+		// `inth-tabs-{id}-content-purposes`. React's `useId`, Svelte's
 		// `$props.id()` and Vue's `useId()` will never agree on the token,
 		// and the surrounding structure is the part worth comparing.
 		const AUTO_ID_SEGMENT =
@@ -48,7 +48,7 @@ export const captureDomSnapshot = function captureDomSnapshot(
 		const isProviderArtifact = function isProviderArtifact(
 			element: Element
 		): boolean {
-			if (element.tagName === 'STYLE' && element.id === 'c15t-theme') {
+			if (element.tagName === 'STYLE' && element.id === 'inth-theme') {
 				return true;
 			}
 			// The empty parser marker a server-rendered banner ends with (React's
@@ -59,14 +59,14 @@ export const captureDomSnapshot = function captureDomSnapshot(
 			return (
 				element.tagName === 'SPAN' &&
 				element.attributes.length === 2 &&
-				element.getAttribute('data-c15t-stream-end') === '' &&
+				element.getAttribute('data-inth-stream-end') === '' &&
 				element.hasAttribute('hidden') &&
 				element.childNodes.length === 0 &&
 				parent !== null &&
 				['consent-banner-root', 'iab-consent-banner-root'].includes(
 					parent.getAttribute('data-testid') ?? ''
 				) &&
-				parent.hasAttribute('data-c15t-streamed') &&
+				parent.hasAttribute('data-inth-streamed') &&
 				parent.lastElementChild === element
 			);
 		};
@@ -176,7 +176,7 @@ export const captureDomSnapshot = function captureDomSnapshot(
 				case 'data-mode':
 					return attribute.value === 'dialog';
 				case 'id':
-					return attribute.value.startsWith('c15t-dialog-content-');
+					return attribute.value.startsWith('inth-dialog-content-');
 				default:
 					return false;
 			}
@@ -217,7 +217,7 @@ export const captureDomSnapshot = function captureDomSnapshot(
 			const id = element.getAttribute('data-testid') ?? '';
 			if (
 				id === 'iab-consent-banner-root' &&
-				attribute.name === 'data-c15t-streamed' &&
+				attribute.name === 'data-inth-streamed' &&
 				attribute.value === ''
 			) {
 				return true;
@@ -317,25 +317,24 @@ export const captureDomSnapshot = function captureDomSnapshot(
 			return Array.from(element.childNodes);
 		};
 		// Angular writes the attribute a component or directive is selected
-		// by into the page: `<button c15t-consent-button>` (a component, so
-		// dash-case) renders `c15t-consent-button=""`, and
-		// `<button c15tConsentDialogLink>` (a directive, camelCase) renders
-		// `c15tconsentdialoglink=""`. The marker carries no state. Every
-		// @inth/angular attribute selector starts with `c15t`, and no other
+		// by into the page: `<button inth-consent-button>` (a component, so
+		// dash-case) renders `inth-consent-button=""`, and
+		// `<button inthConsentDialogLink>` (a directive, camelCase) renders
+		// `inthconsentdialoglink=""`. The marker carries no state. Every
+		// @inth/angular attribute selector starts with `inth`, and no other
 		// adapter renders an attribute named that way (theirs are
-		// `data-c15t-*`), so the rule applies only on an Angular page and only
+		// `data-inth-*`), so the rule applies only on an Angular page and only
 		// to empty values.
 		const angularPage = document.querySelector('[ng-version]') !== null;
 		const angularSelectorMarker = (attribute: Attr): boolean =>
 			angularPage &&
 			attribute.value === '' &&
-			/^c15t[a-z0-9-]*$/u.test(attribute.name);
+			/^inth[a-z0-9-]*$/u.test(attribute.name);
 
 		const hiddenSvgMetadata = (element: Element, attribute: Attr): boolean =>
 			element.tagName.toLowerCase() === 'svg' &&
 			Boolean(element.closest('[aria-hidden="true"]')) &&
-			(attribute.name === 'aria-labelledby' ||
-				(attribute.name === 'class' && attribute.value === 'c15t-icon'));
+			attribute.name === 'aria-labelledby';
 
 		const needsSwitchSize = (element: Element): boolean =>
 			element.getAttribute('role') === 'switch' &&
@@ -400,7 +399,7 @@ export const captureDomSnapshot = function captureDomSnapshot(
 			angularSelectorMarker(attribute) ||
 			// The flag that pairs with the end marker above. It changes
 			// nothing once the marker is in the DOM.
-			(attribute.name === 'data-c15t-streamed' &&
+			(attribute.name === 'data-inth-streamed' &&
 				attribute.value === '' &&
 				element.getAttribute('data-testid') === 'consent-banner-root') ||
 			(attribute.name === 'value' &&

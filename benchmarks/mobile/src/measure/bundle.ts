@@ -345,7 +345,7 @@ export const measureAndroidBytes = function measureAndroidBytes(
 		{
 			cwd: androidBridge,
 			env: {
-				C15T_MAVEN_URL: pathToFileURL(join(androidCore, 'build/maven-staging'))
+				INTH_MAVEN_URL: pathToFileURL(join(androidCore, 'build/maven-staging'))
 					.href,
 			},
 		}

@@ -3,7 +3,7 @@
  * Consent kernel benchmark runner.
  *
  * Outputs one result per fixture. Imports stay on the narrow
- * `@c15t/benchmarking/*` subpaths: the package barrel pulls in the CSS
+ * `@inth/benchmarking/*` subpaths: the package barrel pulls in the CSS
  * layer runtime, whose stylesheet imports cannot load under Node.
  *
  * Two budget families are attached to every result:
@@ -20,14 +20,14 @@ import {
 	coreRuntimeBudgets,
 	coreRuntimeCoverageBudgets,
 	coreRuntimeV3Budgets,
-} from '@c15t/benchmarking/budgets';
-import { coreFixtures } from '@c15t/benchmarking/fixtures';
-import { BENCHMARK_SCHEMA_VERSION } from '@c15t/benchmarking/schema';
-import type { BenchmarkResult } from '@c15t/benchmarking/schema';
+} from '@inth/benchmarking/budgets';
+import { coreFixtures } from '@inth/benchmarking/fixtures';
+import { BENCHMARK_SCHEMA_VERSION } from '@inth/benchmarking/schema';
+import type { BenchmarkResult } from '@inth/benchmarking/schema';
 import {
 	benchSelectionFromEnv,
 	isBenchSelected,
-} from '@c15t/benchmarking/selection';
+} from '@inth/benchmarking/selection';
 import {
 	benchmarkCount,
 	getEnvironment,
@@ -38,16 +38,16 @@ import {
 	safeGitDirty,
 	summarizeMetric,
 	writeJson,
-} from '@c15t/benchmarking/utils';
+} from '@inth/benchmarking/utils';
 import { createConsentKernel } from '@inth/sdk/engine';
 import type { ConsentKernel } from '@inth/sdk/engine';
 
 const ITERATIONS = benchmarkCount(
-	process.env.C15T_CORE_BENCH_ITERATIONS ?? process.env.BENCH_ITERATIONS,
+	process.env.INTH_CORE_BENCH_ITERATIONS ?? process.env.BENCH_ITERATIONS,
 	25
 );
 const WARMUP = benchmarkCount(
-	process.env.C15T_CORE_BENCH_WARMUP_ITERATIONS ??
+	process.env.INTH_CORE_BENCH_WARMUP_ITERATIONS ??
 		process.env.BENCH_WARMUP_ITERATIONS,
 	10
 );
@@ -224,7 +224,7 @@ if (fixtures.length > 0) {
 				'Historical comparators only: fixture labels do not change these empty-kernel operations. Real policy and receipt operations are in policy-runtime.',
 				'v3-over-v2 improvement budgets target the v2 base arm and stay unevaluated without v2 artifacts.',
 			],
-			package: '@c15t/core-benchmarks',
+			package: '@inth/core-benchmarks',
 			runtime: process.versions.bun ? 'bun' : 'node',
 			scenario: fixture.name,
 			schemaVersion: BENCHMARK_SCHEMA_VERSION,

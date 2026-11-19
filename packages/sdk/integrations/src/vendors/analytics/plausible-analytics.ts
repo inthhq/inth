@@ -195,14 +195,12 @@ export interface PlausibleAnalyticsOptions {
 /**
  * Creates a Plausible Analytics script.
  *
- * Models Plausible's queue bootstrap and loader attributes as a c15t-managed
+ * Models Plausible's queue bootstrap and loader attributes as an Inth-managed
  * script. Supports both the new `scriptId`-based loader and the legacy
  * `domain` + extension-based loader.
  *
  * @see https://plausible.io/docs/script-extensions
  *
- * @param options - The options for the Plausible Analytics script.
- * @returns The Plausible Analytics script.
  * @remarks When neither `scriptId` nor `domain` is set, the helper logs
  *   `plausibleAnalytics: missing scriptId or domain` with `console.error`
  *   and returns a script that never loads.

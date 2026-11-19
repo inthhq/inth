@@ -8,7 +8,7 @@
  * This file must not import `@inth/react/iab`: loading it marks the app as
  * one that renders IAB. `iab-policy-guard-provider.test.tsx` covers that.
  */
-import { MINIMAL_GVL } from '@c15t/conformance';
+import { MINIMAL_GVL } from '@inth/conformance';
 import type { GlobalVendorList } from '@inth/sdk/engine';
 import { deferInitGvl, IAB_UNAVAILABLE_ERROR_CODE } from '@inth/sdk/engine';
 import { writePolicyResolutionWire } from '@inth/sdk/schema/types';

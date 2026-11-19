@@ -3,7 +3,7 @@
 /**
  * A consent root whose engine loads after the page.
  *
- * The page under it hydrates at once. Until the engine loads, c15t's hooks
+ * The page under it hydrates at once. Until the engine loads, Inth's hooks
  * read the snapshots the server rendered with, and their actions ask for
  * the engine and run on it when it attaches (see `deferred-kernel.ts`).
  * The stock banner keeps its server HTML until then; its inline script
@@ -19,6 +19,13 @@
 import type { SaveResult, SaveUISource } from '@inth/sdk/engine';
 import type { Script } from '@inth/sdk/modules/script-loader';
 import type { RuntimePrefetch } from '@inth/sdk/runtime';
+import {
+	EARLY_TAP_HOLD_PRESSES_KEY,
+	EARLY_TAP_ROOT,
+	EARLY_TAP_STYLE_ID,
+	EARLY_TAPS_WINDOW_KEY,
+	earlyTapQueue,
+} from '@inth/sdk/runtime/page-globals';
 import {
 	changedPlainScripts,
 	obsoletePlainScripts,
@@ -77,14 +84,7 @@ import {
 import { acceptedPermissions, isPlainScript, isRunnableNow } from './runnable';
 import { DeferredSessionContext, read, record, recordOnce } from './session';
 import type { DeferredSession, Recorded } from './session';
-import {
-	BANNER_ROOT,
-	EARLY_TAP_HOLD_PRESSES,
-	EARLY_TAPS_KEY,
-	earlyTapQueue,
-	importDialog,
-	scheduleDeferredEngine,
-} from './trigger';
+import { importDialog, scheduleDeferredEngine } from './trigger';
 
 /** The provider options the shell itself reads. @internal */
 export type DeferredShellOptions = Pick<
@@ -217,11 +217,8 @@ const settle = async function settle(
 	}
 };
 
-/** Id of the `<style>` the early-tap script hides the banner with. */
-const EARLY_TAP_STYLE_ID = 'c15t-early-tap';
-
 /** The same `<style>` once the root handles the tap. */
-const COMMITTED_STYLE_ID = 'c15t-early-commit';
+const COMMITTED_STYLE_ID = 'inth-early-commit';
 
 /** The stock dialog's root. */
 const DIALOG_ROOT = '[data-testid="consent-dialog-root"]';
@@ -243,7 +240,7 @@ const hideBanner = function hideBanner(nonce: string | undefined): void {
 	if (nonce) {
 		style.nonce = nonce;
 	}
-	style.textContent = `${BANNER_ROOT},[data-testid="consent-banner-overlay"]{display:none!important}`;
+	style.textContent = `${EARLY_TAP_ROOT},[data-testid="consent-banner-overlay"]{display:none!important}`;
 	document.head.append(style);
 };
 
@@ -259,7 +256,7 @@ const BANNER_LEAVE_MS = 10_000;
 const unhideWhenGone = function unhideWhenGone(
 	handle: DeferredKernelHandle
 ): void {
-	const roots = [...document.querySelectorAll(BANNER_ROOT)];
+	const roots = [...document.querySelectorAll(EARLY_TAP_ROOT)];
 	let deadline = Number.POSITIVE_INFINITY;
 	// oxlint-disable-next-line promise/prefer-await-to-then -- Starts the clock once the engine is in.
 	void handle.ready.then(() => {
@@ -344,15 +341,16 @@ const createSession = function createSession<EngineModule>(
 			resolve();
 		};
 	});
-	// Filled below, once the commit path is defined.
+	// Filled below, once the commit path and the engine load are defined.
 	const hooks: { early?: DeferredKernelOptions['early'] } = {};
+	let requestEngine: () => void = () => start();
 	let claimed = false;
 	const handle = createDeferredKernel({
 		consentCategories: options.consentCategories,
 		early: (name, args, onEngine) => hooks.early?.(name, args, onEngine),
 		localSurfaces: Boolean(commitConfig),
 		presentation: options.presentation,
-		requestEngine: () => start(),
+		requestEngine: () => requestEngine(),
 		serverSnapshot: boot.s,
 		settled:
 			isPromiseLike(prefetch) && options.streamBanner !== false
@@ -510,7 +508,7 @@ const createSession = function createSession<EngineModule>(
 	const holdPresses = (hold: boolean): void => {
 		const queue = earlyTapQueue();
 		if (queue) {
-			queue[EARLY_TAP_HOLD_PRESSES] = hold ? 1 : 0;
+			queue[EARLY_TAP_HOLD_PRESSES_KEY] = hold ? 1 : 0;
 		}
 	};
 	if (typeof document !== 'undefined') {
@@ -538,10 +536,21 @@ const createSession = function createSession<EngineModule>(
 					return loaded;
 				})()
 			);
+			// Commands waiting for the engine reject, so a surface an answer
+			// hid shows again; the next one asks for a new attempt.
+			// oxlint-disable-next-line promise/prefer-await-to-then -- Settles the waiting commands.
+			engineLoad.catch(handle.fail);
 		}
 		return engineLoad;
 	};
 	engine();
+	requestEngine = () => {
+		start();
+		const load = engine();
+		if (load.status === 'rejected') {
+			handle.fail(load.reason);
+		}
+	};
 
 	const loadCommit = recordOnce(importCommit);
 	/** Starts `load` in the next task: a tap's own task stays short. */
@@ -606,7 +615,6 @@ const createSession = function createSession<EngineModule>(
 		}
 	};
 
-	/** Takes the early-tap script's queue, so nothing replays the tap. */
 	/**
 	 * Keeps the banner hidden by the root rather than by the early-tap
 	 * script: a replay with no tap would show it again.
@@ -633,9 +641,10 @@ const createSession = function createSession<EngineModule>(
 		if (stop) {
 			queue?.stop?.();
 			if (queue) {
-				queue[EARLY_TAP_HOLD_PRESSES] = 0;
+				queue[EARLY_TAP_HOLD_PRESSES_KEY] = 0;
 			}
-			(window as unknown as Record<string, unknown>)[EARLY_TAPS_KEY] = {};
+			(window as unknown as Record<string, unknown>)[EARLY_TAPS_WINDOW_KEY] =
+				{};
 		}
 		keepHidden();
 	};
@@ -688,7 +697,6 @@ const createSession = function createSession<EngineModule>(
 		});
 	}
 
-	/** Whether a choice can go through the commit path now. */
 	const canCommit = (): boolean =>
 		Boolean(commitConfig) &&
 		!routing &&
@@ -714,13 +722,16 @@ const createSession = function createSession<EngineModule>(
 		routing = true;
 		// One config for the whole tap, so both paths record with the same.
 		const config = tapConfig();
+		const before = handle.kernel.getSnapshot();
 		const instant =
 			commitInstantly(handle, config, choice, actionAt, ahead) ?? undefined;
 		if (instant) {
 			// It started the root's plain scripts in this task.
 			claimRoot();
-			// The banner is hidden; nothing replays the tap.
-			claimTaps(true);
+			// The banner is hidden; nothing replays the tap. The tap script
+			// keeps listening until something stores the choice, so the
+			// banner still answers a press if neither path can.
+			claimTaps(false);
 			// A loader that registers its scripts after this starts them
 			// from the choice too.
 			setDeferredScriptStarter(handle.kernel, (scripts) =>
@@ -766,11 +777,30 @@ const createSession = function createSession<EngineModule>(
 				claimTaps(true);
 			} else if (instant) {
 				// The stand-in shows the choice, but nothing stored it: the
-				// engine records it (`routing` keeps this path closed).
-				void handle.kernel.commands.save(choice, { actionAt, uiSource });
+				// engine records it (`routing` keeps this path closed). When the
+				// engine can't load either, the visitor is asked again; scripts
+				// the tap already started keep running. Not awaited: the engine
+				// starts once this settles.
+				void (async () => {
+					try {
+						const saved = await handle.kernel.commands.save(choice, {
+							actionAt,
+							uiSource,
+						});
+						// Issues mean the engine refused the input and stored
+						// nothing; a refusal from the backend comes after the
+						// local record.
+						if (saved?.ok === false && saved.issues) {
+							throw new Error('The engine did not record the choice.');
+						}
+						claimTaps(true);
+					} catch {
+						handle.commit(before, []);
+						routing = false;
+					}
+				})();
 			}
 		})();
-		// The rest of the engine loads once the choice is in.
 		// oxlint-disable-next-line promise/prefer-await-to-then -- Never rejects.
 		void commitSettled.then(start);
 		if (instant) {
@@ -1048,7 +1078,7 @@ const AfterHydration = ({ children }: { children: ReactNode }): ReactNode =>
 		: null;
 
 /**
- * Renders `children` with c15t's contexts filled from the server's
+ * Renders `children` with Inth's contexts filled from the server's
  * snapshots, and the engine after them once it loads.
  *
  * @internal

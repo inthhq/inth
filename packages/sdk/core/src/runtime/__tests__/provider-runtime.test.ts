@@ -154,7 +154,7 @@ afterEach(() => {
 		runtime.dispose();
 	}
 	vi.restoreAllMocks();
-	delete (window as { c15t?: unknown }).c15t;
+	delete (window as { __inthDebug?: unknown }).__inthDebug;
 });
 
 describe('update()', () => {
@@ -611,6 +611,33 @@ describe('update()', () => {
 
 		expect(warn).toHaveBeenCalledWith(expect.stringContaining('read once'));
 	});
+
+	test.each([
+		['iab', { iab: { enabled: true } }],
+		['gpp', { gpp: true }],
+		['clearOnRevocation', { clearOnRevocation: { marketing: {} } }],
+		['journey', { journey: false }],
+		['experimentalScriptRegistry', { experimentalScriptRegistry: true }],
+	] as const)(
+		'a changed `%s` warns that it is read once',
+		async (key, change) => {
+			const warn = vi.spyOn(console, 'warn').mockImplementation(() => {
+				// Asserted below.
+			});
+			const options: ConsentProviderRuntimeOptions = {
+				mode: transportMode(createTransport()),
+			};
+			const runtime = create(options);
+
+			await runtime.update({ ...options, noStyle: true } as never);
+			expect(warn).not.toHaveBeenCalled();
+			await runtime.update({ ...options, ...change } as never);
+
+			expect(warn).toHaveBeenCalledWith(
+				expect.stringContaining(`\`${key}\` is read once`)
+			);
+		}
+	);
 
 	test('storage is read once: a new storage key warns and records stay under the first', async () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {
@@ -1314,7 +1341,7 @@ describe('lazyRuntimeModule', () => {
 
 		await vi.waitFor(() =>
 			expect(warn).toHaveBeenCalledWith(
-				'c15t: a runtime module failed to load and stays inactive.',
+				'inth: a runtime module failed to load and stays inactive.',
 				error
 			)
 		);

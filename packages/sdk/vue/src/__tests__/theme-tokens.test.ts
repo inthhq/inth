@@ -3,7 +3,7 @@ import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
 import { createApp, createSSRApp, defineComponent, h, toValue } from 'vue';
 import type { App } from 'vue';
 
-import { c15tVue, generateTokensCSS } from './test-plugin';
+import { inthVue, generateTokensCSS } from './test-plugin';
 
 const nuxt = vi.hoisted(() => ({
 	head: [] as unknown[],
@@ -15,7 +15,7 @@ vi.mock('#imports', async () => {
 	return {
 		defineNuxtPlugin: (plugin: unknown) => plugin,
 		useAppConfig: () => ({
-			c15t: { nonce: 'style-nonce', tokens: { 'c15t-primary': '#2f6f4e' } },
+			inth: { nonce: 'style-nonce', tokens: { 'inth-primary': '#2f6f4e' } },
 		}),
 		useHead: (input: unknown) => {
 			nuxt.head.push(input);
@@ -24,7 +24,7 @@ vi.mock('#imports', async () => {
 		useRequestHeaders: () => ({}),
 		useRequestURL: () => new URL('https://app.example/'),
 		useRuntimeConfig: () => ({
-			public: { c15t: { projectUrl: 'https://consent.example.test' } },
+			public: { inth: { projectUrl: 'https://consent.example.test' } },
 		}),
 		useState: (key: string, init: () => unknown) => {
 			if (!nuxt.state.has(key)) {
@@ -48,7 +48,7 @@ beforeAll(async () => {
 	));
 }, 30_000);
 
-const tokensStyle = () => document.getElementById('c15t-css-vars');
+const tokensStyle = () => document.getElementById('inth-css-vars');
 
 afterEach(() => {
 	vi.unstubAllGlobals();
@@ -60,15 +60,15 @@ afterEach(() => {
 
 describe('generateTokensCSS', () => {
 	test('writes configured tokens over the defaults', () => {
-		const css = generateTokensCSS({ 'c15t-primary': '#2f6f4e' });
+		const css = generateTokensCSS({ 'inth-primary': '#2f6f4e' });
 		expect(css).toMatch(/^:root,:host\{/u);
-		expect(css).toContain('--c15t-primary:#2f6f4e;');
-		expect(css).toContain('--c15t-radius-md:0.5rem;');
+		expect(css).toContain('--inth-primary:#2f6f4e;');
+		expect(css).toContain('--inth-radius-md:0.5rem;');
 	});
 
 	test('cannot close the style element', () => {
 		expect(
-			generateTokensCSS({ 'c15t-primary': 'red</style><script>' })
+			generateTokensCSS({ 'inth-primary': 'red</style><script>' })
 		).not.toContain('<');
 	});
 });
@@ -80,14 +80,14 @@ describe('the Vue plugin applies tokens', () => {
 			vi.fn(() => Promise.resolve(new Response('{}', { status: 503 })))
 		);
 		const app = createApp(defineComponent({ setup: () => () => h('main') }));
-		app.use(c15tVue, {
+		app.use(inthVue, {
 			nonce: 'style-nonce',
 			projectUrl: 'https://consent.example.test',
-			tokens: { 'c15t-primary': '#2f6f4e' },
+			tokens: { 'inth-primary': '#2f6f4e' },
 		});
 
 		const style = tokensStyle();
-		expect(style?.textContent).toContain('--c15t-primary:#2f6f4e;');
+		expect(style?.textContent).toContain('--inth-primary:#2f6f4e;');
 		expect(style?.getAttribute('nonce')).toBe('style-nonce');
 
 		const container = document.createElement('div');
@@ -105,9 +105,9 @@ describe('the Vue plugin applies tokens', () => {
 		);
 		const mountApp = () => {
 			const app = createApp(defineComponent({ setup: () => () => h('main') }));
-			app.use(c15tVue, {
+			app.use(inthVue, {
 				projectUrl: 'https://consent.example.test',
-				tokens: { 'c15t-primary': '#2f6f4e' },
+				tokens: { 'inth-primary': '#2f6f4e' },
 			});
 			const container = document.createElement('div');
 			document.body.append(container);
@@ -116,10 +116,10 @@ describe('the Vue plugin applies tokens', () => {
 		};
 		const first = mountApp();
 		const second = mountApp();
-		expect(document.querySelectorAll('#c15t-css-vars')).toHaveLength(1);
+		expect(document.querySelectorAll('#inth-css-vars')).toHaveLength(1);
 
 		first.unmount();
-		expect(tokensStyle()?.textContent).toContain('--c15t-primary:#2f6f4e;');
+		expect(tokensStyle()?.textContent).toContain('--inth-primary:#2f6f4e;');
 
 		second.unmount();
 		expect(tokensStyle()).toBeNull();
@@ -131,12 +131,12 @@ describe('the Vue plugin applies tokens', () => {
 			vi.fn(() => Promise.resolve(new Response('{}', { status: 503 })))
 		);
 		const serverStyle = document.createElement('style');
-		serverStyle.id = 'c15t-css-vars';
+		serverStyle.id = 'inth-css-vars';
 		document.head.append(serverStyle);
 		const app = createApp(defineComponent({ setup: () => () => h('main') }));
-		app.use(c15tVue, {
+		app.use(inthVue, {
 			projectUrl: 'https://consent.example.test',
-			tokens: { 'c15t-primary': '#2f6f4e' },
+			tokens: { 'inth-primary': '#2f6f4e' },
 		});
 		const container = document.createElement('div');
 		document.body.append(container);
@@ -152,7 +152,7 @@ describe('the Vue plugin applies tokens', () => {
 			projectUrl: 'https://consent.example.test',
 		});
 		const app = createApp(defineComponent({ setup: () => () => h('main') }));
-		app.use(c15tVue, { runtime });
+		app.use(inthVue, { runtime });
 
 		expect(tokensStyle()).toBeNull();
 		runtime.dispose();
@@ -175,8 +175,8 @@ describe('the Nuxt plugin applies tokens', () => {
 		};
 		expect(head.style).toEqual([
 			expect.objectContaining({
-				id: 'c15t-css-vars',
-				innerHTML: expect.stringContaining('--c15t-primary:#2f6f4e;'),
+				id: 'inth-css-vars',
+				innerHTML: expect.stringContaining('--inth-primary:#2f6f4e;'),
 				nonce: 'style-nonce',
 			}),
 		]);

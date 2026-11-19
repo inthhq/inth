@@ -21,40 +21,39 @@ import type {
  * boots without an `/init` roundtrip. Translations, the offline vendor
  * list, the snapshot and the banner flags stay Astro's own.
  */
-import { resolveStorageKeys } from '@inth/sdk/modules/persistence';
+import {
+	STORED_NAMES_CHECK,
+	storedChoiceNames,
+} from '@inth/sdk/modules/persistence';
 import { inferConsentCategories, isIABConfigured } from '@inth/sdk/runtime';
-import { recommendedPolicyRules } from '@inth/sdk/schema/types';
 import type {
 	ConsentRequestHeaderInputs,
 	GlobalVendorList,
-	PolicyRule,
 } from '@inth/sdk/schema/types';
 import {
-	fetchCachedGvl,
+	DEFAULT_RESOLVE_TIMEOUT_MS,
+	fetchServerGvl,
+	keepAlive,
 	readRequestConsent,
 	resolveRenderBudgetMs,
 	resolveRequestConsent,
+	resolveServerMode,
+	withResolutionBudget,
 } from '@inth/sdk/server';
 import type {
 	ManifestFetch,
 	ResolveRequestConsentOptions,
 } from '@inth/sdk/server';
 import { hasConsentUI } from '@inth/sdk/surface-actions';
-import { assertNotProduction } from '@inth/sdk/testing';
 import { baseTranslations } from '@inth/sdk/translations/all';
-import {
-	DEFAULT_RESOLVE_TIMEOUT_MS,
-	withResolutionBudget,
-} from '@inth/sdk/transports/manifest-cache';
 import { generateThemeCSS } from '@inth/sdk/ui/theme';
 import type { Theme } from '@inth/sdk/ui/theme';
 
 import { assertIABAvailable } from './libs/iab-unavailable';
-import type { C15tColorScheme, C15tLocals, C15tResolvedOptions } from './types';
+import type { InthLocals, InthResolvedOptions } from './types';
 
 /** Input for {@link resolveConsentContext}. */
 export interface ResolveConsentContextOptions {
-	/** The incoming request headers. */
 	headers: Headers;
 	/**
 	 * The absolute request URL. Used to resolve a relative `projectUrl` or
@@ -63,7 +62,7 @@ export interface ResolveConsentContextOptions {
 	 */
 	url?: string;
 	/** The integration options, already normalized. */
-	options: C15tResolvedOptions;
+	options: InthResolvedOptions;
 	/**
 	 * This request's experiment arm, resolved by the middleware's
 	 * `experimentArm`. Overrides a static `experiment.arm`.
@@ -120,7 +119,7 @@ export { DEFAULT_RESOLVE_TIMEOUT_MS };
  * serializable and typed loosely; the shape is the same.
  */
 const readTranslationOverrides = function readTranslationOverrides(
-	options: C15tResolvedOptions
+	options: InthResolvedOptions
 ): TranslationOverrides | undefined {
 	return options.i18n?.messages as TranslationOverrides | undefined;
 };
@@ -128,12 +127,11 @@ const readTranslationOverrides = function readTranslationOverrides(
 /**
  * Resolve the language the surfaces should render in.
  *
- * @param options - Integration options.
  * @param inputs - Request inputs from the geo/language headers.
  * @returns The kernel translations for this request.
  */
 export const resolveTranslations = function resolveTranslations(
-	options: C15tResolvedOptions,
+	options: InthResolvedOptions,
 	inputs: ConsentRequestHeaderInputs
 ): KernelTranslations {
 	const detect = options.i18n?.detectLanguage !== false;
@@ -164,54 +162,26 @@ export const resolveTranslations = function resolveTranslations(
 };
 
 /**
- * How the configured mode resolves through `resolveRequestConsent`. A
- * relative URL resolves against the request URL only, never a forwarded
- * header: the adapter builds `Request.url` from the deployment's own proxy
- * configuration.
+ * How the configured mode resolves through `resolveRequestConsent`, by the
+ * rule `resolveServerMode` applies in every adapter. A relative URL
+ * resolves against the request URL only, never a forwarded header: the
+ * adapter builds `Request.url` from the deployment's own proxy
+ * configuration. `testing()` resolves with this request's copy.
  */
 const modeOptions = function modeOptions(
-	options: C15tResolvedOptions,
-	translations: KernelTranslations,
-	fetch: typeof globalThis.fetch | undefined
+	options: InthResolvedOptions,
+	translations: KernelTranslations
 ): Partial<ResolveRequestConsentOptions> {
-	const { mode } = options;
-	switch (mode.type) {
-		case 'hosted':
-			return {
-				mode: 'hosted',
-				projectUrl: options.projectUrl,
-			};
-		case 'manifest':
-			return {
-				// The init route serves only lists from the shared cache; a
-				// caller's own fetch keeps its list inline.
-				gvlRoute:
-					fetch || options.routePrefix === undefined
-						? undefined
-						: `${options.routePrefix}/init`,
-				manifest: mode.snapshot,
-				manifestUrl: mode.manifestUrl,
-				mode: 'manifest',
-				projectUrl: options.projectUrl,
-			};
-		default: {
-			// `testing()`: never in production.
-			assertNotProduction('@inth/astro/testing');
-			// A pack whose model is `iab` needs a configured CMP to be eligible.
-			const iabEnabled = isIABConfigured(options.iab);
-			return {
-				mode: 'offline',
-				offline: {
-					iabEnabled,
-					policyRules:
-						mode.policy === undefined
-							? recommendedPolicyRules({ iab: mode.iab ?? iabEnabled })
-							: ([] as PolicyRule[]).concat(mode.policy),
-					translations,
-				},
-			};
-		}
-	}
+	const { consent } = resolveServerMode({
+		adapter: '@inth/astro',
+		iab: isIABConfigured(options.iab),
+		mode: options.mode,
+		projectUrl: options.projectUrl,
+		routePrefix: options.routePrefix,
+	});
+	return consent.offline
+		? { ...consent, offline: { ...consent.offline, translations } }
+		: consent;
 };
 
 /**
@@ -230,7 +200,7 @@ const modeOptions = function modeOptions(
  */
 const withResolvedGvl = async function withResolvedGvl(input: {
 	config: KernelConfig;
-	options: C15tResolvedOptions;
+	options: InthResolvedOptions;
 	language: string;
 	fetch?: typeof globalThis.fetch;
 }): Promise<KernelConfig> {
@@ -245,7 +215,7 @@ const withResolvedGvl = async function withResolvedGvl(input: {
 	let gvl: GlobalVendorList | null = iab.gvl ?? null;
 	if (!gvl && iab.gvlUrl) {
 		try {
-			gvl = await fetchCachedGvl({
+			gvl = await fetchServerGvl({
 				fetch: input.fetch as ManifestFetch | undefined,
 				language: input.language,
 				url: iab.gvlUrl,
@@ -275,7 +245,6 @@ const withResolvedGvl = async function withResolvedGvl(input: {
  * Kernel construction is pure — no DOM, no network, no storage — so this is
  * safe to run per request.
  *
- * @param config - The resolved kernel configuration.
  * @returns The snapshot, including derived `activeUI` and policy UI hints.
  */
 export const snapshotFromConfig = function snapshotFromConfig(
@@ -311,15 +280,6 @@ const resolveExperiment = function resolveExperiment(
 	};
 };
 
-/** Waits for work the render stopped waiting for, swallowing its outcome. */
-const settle = async function settle(task: Promise<unknown>): Promise<void> {
-	try {
-		await task;
-	} catch {
-		// Nothing waits on this result.
-	}
-};
-
 /**
  * Resolve everything the page needs about consent for one request.
  *
@@ -328,15 +288,15 @@ const settle = async function settle(task: Promise<unknown>): Promise<void> {
  * should render server-side.
  *
  * @param input - Request headers and integration options.
- * @returns The value the middleware stores on `Astro.locals.c15t`.
+ * @returns The value the middleware stores on `Astro.locals.inth`.
  * @example
  * ```ts
- * const c15t = await resolveConsentContext({ headers: request.headers, options });
+ * const Inth = await resolveConsentContext({ headers: request.headers, options });
  * ```
  */
 export const resolveConsentContext = async function resolveConsentContext(
 	input: ResolveConsentContextOptions
-): Promise<C15tLocals> {
+): Promise<InthLocals> {
 	const { options } = input;
 	const prerendered = input.prerendered === true;
 	const startedAt = Date.now();
@@ -348,11 +308,6 @@ export const resolveConsentContext = async function resolveConsentContext(
 		adapter: '@inth/astro',
 		// An explicit `i18n.locale` outranks Accept-Language negotiation.
 		overrides: { language: options.i18n?.locale },
-		// The injected route: a render never fetches it over the network.
-		ownRoutes:
-			options.routePrefix === undefined
-				? []
-				: [`${options.routePrefix}/init`, `${options.routePrefix}/manifest`],
 		request: { headers: input.headers, url: input.url },
 		// A prerendered page is one HTML file for every visitor.
 		shared: prerendered,
@@ -364,7 +319,7 @@ export const resolveConsentContext = async function resolveConsentContext(
 
 	const { experiment: _carried, ...resolved } = await resolveRequestConsent({
 		...facts,
-		...modeOptions(options, translations, input.fetch),
+		...modeOptions(options, translations),
 		experiment: seeded ? experiment : undefined,
 		fetch: input.fetch,
 		request: { ...facts.request, inputs },
@@ -395,7 +350,7 @@ export const resolveConsentContext = async function resolveConsentContext(
 		config = await withResolutionBudget(withGvl, budgetMs);
 	} catch {
 		// The list keeps filling the cache for the next render.
-		input.onBackgroundRevalidate?.(settle(withGvl));
+		keepAlive(input.onBackgroundRevalidate, withGvl);
 	}
 
 	config.initialPolicyPending = config.initialPolicyResolution === undefined;
@@ -442,20 +397,19 @@ export const resolveConsentContext = async function resolveConsentContext(
  * Build the boot payload as JSON for a data block.
  *
  * The components render it as
- * `<script type="application/json" data-c15t-config>`, which the browser
+ * `<script type="application/json" data-inth-config>`, which the browser
  * never runs. A Content Security Policy does not govern a data block, so a
  * policy that allows inline scripts only by hash or nonce still lets the
  * payload through, even though it changes per visitor.
  *
- * @param config - The resolved kernel configuration.
  * @returns JSON safe to place inside a `<script>` element.
  * @example
  * ```astro
  * <script
  *   is:inline
  *   type="application/json"
- *   data-c15t-config
- *   set:html={buildConfigJSON(Astro.locals.c15t.config)}
+ *   data-inth-config
+ *   set:html={buildConfigJSON(Astro.locals.inth.config)}
  * />
  * ```
  */
@@ -479,28 +433,26 @@ export const buildConfigJSON = function buildConfigJSON(
  * browser runtime reads it from there for the scripts and stylesheets it
  * adds.
  *
- * @param config - The resolved kernel configuration.
  * @returns JavaScript safe for inline `<script>` injection.
  */
 export const buildConfigScript = function buildConfigScript(
 	config: KernelConfig
 ): string {
-	return `window.__c15tAstroConfig=${buildConfigJSON(config)};`;
+	return `window.__inthAstroConfig=${buildConfigJSON(config)};`;
 };
 
 /**
  * Build the theme stylesheet for the configured theme tokens.
  *
  * The banner is server-rendered and the dialog islands no longer generate
- * theme CSS in the browser, so the server writes the `--c15t-*` variables
- * once, next to the config script. Dark tokens follow the `c15t-dark`
+ * theme CSS in the browser, so the server writes the `--inth-*` variables
+ * once, next to the config script. Dark tokens follow the `inth-dark`
  * class the colour-scheme script sets.
  *
- * @param theme - The integration's theme option.
  * @returns CSS for a `<style>` element, or an empty string without a theme.
  * @example
  * ```astro
- * <style is:inline id="c15t-theme" set:html={buildThemeCSS(theme)} />
+ * <style is:inline id="inth-theme" set:html={buildThemeCSS(theme)} />
  * ```
  */
 export const buildThemeCSS = function buildThemeCSS(
@@ -510,39 +462,16 @@ export const buildThemeCSS = function buildThemeCSS(
 };
 
 /**
- * Build the first-paint colour-scheme script.
+ * Build the first-paint colour-scheme script: `inth-dark` for `'dark'`, or
+ * from `prefers-color-scheme` for `'system'`. `'light'` and `'none'` need
+ * none.
  *
- * Dark mode is the `c15t-dark` class on `<html>`, and the client boot sets
- * it — but that runs after the stylesheet has already painted the
- * server-rendered banner in the light palette. This runs in `<head>`,
- * before the browser has anything to paint, so a system-dark visitor never
- * sees the flash. It is deliberately framework-free and unbundled: a
- * module script would be deferred and lose the race.
- *
- * `'light'` emits nothing. Light is the absence of the class, so there is
- * nothing to do before paint. `'none'` emits nothing either: the site owns
- * the class and sets it itself.
- *
- * @param colorScheme - The resolved colour scheme.
- * @returns Script source, or an empty string when none is needed.
  * @example
  * ```astro
  * <script is:inline set:html={buildColorSchemeScript('system')} />
  * ```
  */
-export const buildColorSchemeScript = function buildColorSchemeScript(
-	colorScheme: C15tColorScheme
-): string {
-	if (colorScheme === 'light' || colorScheme === 'none') {
-		return '';
-	}
-	if (colorScheme === 'dark') {
-		return "document.documentElement.classList.add('c15t-dark');";
-	}
-	// Wrapped because `matchMedia` is absent in some embedded webviews, and
-	// a throw here would abort the rest of the document's parsing.
-	return "try{document.documentElement.classList.toggle('c15t-dark',matchMedia('(prefers-color-scheme:dark)').matches)}catch(e){}";
-};
+export { buildColorSchemeScript } from '@inth/sdk/ui/utils/color-scheme';
 
 /**
  * Build the script that shows a prerendered banner at first paint.
@@ -555,7 +484,6 @@ export const buildColorSchemeScript = function buildColorSchemeScript(
  * Anyone with a stored record keeps waiting for the runtime, which
  * validates it.
  *
- * @param storageConfig - The integration's storage configuration.
  * @param testId - The banner's `data-testid` prefix.
  * @returns JavaScript safe for inline `<script>` injection.
  * @example
@@ -564,32 +492,25 @@ export const buildColorSchemeScript = function buildColorSchemeScript(
  * ```
  */
 export const buildBannerRevealScript = function buildBannerRevealScript(
-	storageConfig: C15tResolvedOptions['storageConfig'],
+	storageConfig: InthResolvedOptions['storageConfig'],
 	testId: 'consent-banner' | 'iab-consent-banner'
 ): string {
-	const keys = resolveStorageKeys(storageConfig);
-	const names = [keys.consent, keys.notice, keys.legacyConsent].filter(
-		(name): name is string => Boolean(name)
-	);
+	const stored = storedChoiceNames(storageConfig);
 	// `<` is escaped so a storage key can never close the script tag.
-	const json = JSON.stringify(names).replace(/</gu, '\\u003c');
-	// An IIFE keeps its variables out of the page's global scope. Blocked
-	// cookies or storage (sandboxes, some privacy modes) throw on access: each
-	// is read as "nothing stored there" so the other still decides, and any
-	// other throw is swallowed so it cannot abort the rest of the document.
-	return `(function(){try{var names=${json},cookies=[],stored;try{cookies=document.cookie.split(';').map(function(p){return p.split('=')[0].trim()})}catch(e){}stored=function(n){if(cookies.indexOf(n)>=0)return true;try{return window.localStorage.getItem(n)!==null}catch(e){return false}};if(names.some(stored))return;var root=document.querySelector('[data-testid="${testId}-root"][hidden]'),overlay=document.querySelector('[data-testid="${testId}-overlay"][hidden]');if(root){root.hidden=false;root.setAttribute('data-c15t-visible','true');if(overlay)overlay.hidden=false}}catch(e){}})();`;
+	const json = JSON.stringify([...stored.choice, ...stored.notice]).replace(
+		/</gu,
+		'\\u003c'
+	);
+	// An IIFE keeps its variables out of the page's global scope, and any
+	// throw is swallowed so it cannot abort the rest of the document.
+	return `(function(){try{if((${STORED_NAMES_CHECK})(${json}))return;var root=document.querySelector('[data-testid="${testId}-root"][hidden]'),overlay=document.querySelector('[data-testid="${testId}-overlay"][hidden]');if(root){root.hidden=false;root.setAttribute('data-inth-visible','true');if(overlay)overlay.hidden=false}}catch(e){}})();`;
 };
 
 export { buildPrefetchScript } from '@inth/sdk/engine';
-export {
-	C15T_MARK_SVG,
-	INTH_LOGO_SVG,
-	resolveBrandingModel,
-} from './banner/branding-model';
+export { resolveBrandingModel } from './banner/branding-model';
 export type {
 	BrandingModel,
 	BrandingModelInput,
-	BrandingVariant,
 } from './banner/branding-model';
 export { iabPromptClassNames, promptClassNames } from './banner/class-names';
 export type {
@@ -631,7 +552,7 @@ export type { KernelConfig } from '@inth/sdk/engine';
  * `Astro.locals`, which Astro creates fresh for every request.
  */
 export interface ConfigEmissionScope {
-	c15t?: C15tLocals;
+	inth?: InthLocals;
 }
 
 const emitted = new WeakSet<ConfigEmissionScope>();
@@ -684,31 +605,14 @@ export {
 
 // The handlers behind the injected route, for a site that sets
 // `routePrefix: false` and mounts them itself. The browser does not call
-// such a route for `/init`; see `createConsentRouteHandlers`. The manifest cache
-// lives in `@inth/sdk/server`, one process cache shared with the other
+// such a route for `/init`; see `createConsentRouteHandlers`. The manifest
+// cache is in `@inth/sdk/server`, one process cache shared with the other
 // framework adapters.
 export {
 	createConsentRouteHandlers,
-	resolveManifestSourceUrl,
 	waitUntilFromLocals,
 } from './api/handlers';
 export type {
 	ConsentRouteHandlerOptions,
 	RequestLifetime,
 } from './api/handlers';
-export { resolveManifestSourceFrom } from './api/manifest-init';
-export type { FetchGvl, RequestSource } from './api/manifest-init';
-export {
-	clearManifestCache,
-	createManifestRequestUrl,
-	fetchCachedManifest,
-	getManifestSMaxAge,
-	getManifestStaleWhileRevalidate,
-	MANIFEST_DEDUPE_TTL_SECONDS,
-	MANIFEST_PASSTHROUGH_HEADERS,
-} from '@inth/sdk/server';
-export type {
-	CachedManifestResponse,
-	FetchCachedManifestOptions,
-	ManifestFetch,
-} from '@inth/sdk/server';

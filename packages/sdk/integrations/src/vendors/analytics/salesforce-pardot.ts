@@ -264,7 +264,6 @@ export const pardotTracking = function pardotTracking(
 					grant(info);
 				}
 			},
-			serverStart: undefined,
 		};
 	};
 	return mode === 'classic'

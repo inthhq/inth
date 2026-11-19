@@ -4,7 +4,7 @@ import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
+import { resolveScriptUrl } from '../_shared/script-url';
 
 interface TradeDeskFunction {
 	(...args: unknown[]): void;
@@ -76,7 +76,6 @@ export interface TheTradeDeskPixelOptions {
 
 /**
  * Initializes The Trade Desk Universal Pixel after marketing consent.
- * @param options - Advertiser, pixel IDs and optional processing policy.
  * @returns A gated script, or a skipped script for missing IDs.
  * @remarks Keep reload on revocation enabled. There is no documented stop API.
  * @example theTradeDeskPixel({ advertiserId: 'ADVERTISER_ID', pixelIds: ['PIXEL_ID'] });
@@ -114,7 +113,7 @@ export const theTradeDeskPixel = function theTradeDeskPixel(
 		eventOptions,
 		initOptions,
 		scriptUrl: resolveScriptUrl(
-			trimToUndefined(options.scriptUrl),
+			options.scriptUrl,
 			'https://js.adsrvr.org/up_loader.3.0.0.js'
 		),
 	});

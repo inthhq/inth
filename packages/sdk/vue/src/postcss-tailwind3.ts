@@ -1,5 +1,5 @@
 /**
- * Tailwind 3 PostCSS plugin for c15t stylesheets, re-exported from
+ * Tailwind 3 PostCSS plugin for Inth stylesheets, re-exported from
  * `@inth/sdk/ui/postcss-tailwind3` so an app that installs `@inth/vue` can list
  * `@inth/vue/postcss-tailwind3` without installing `@inth/sdk/ui`.
  * See `@inth/sdk/ui/postcss-tailwind3` for what the plugin does. It must come

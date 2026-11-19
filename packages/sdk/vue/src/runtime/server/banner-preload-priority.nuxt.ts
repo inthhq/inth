@@ -4,7 +4,7 @@
  */
 import { defineNitroPlugin } from 'nitropack/runtime';
 
-import bannerFiles from '#c15t/banner-preload-files';
+import bannerFiles from '#inth/banner-preload-files';
 
 import { quietBannerHead } from './banner-preload-priority';
 

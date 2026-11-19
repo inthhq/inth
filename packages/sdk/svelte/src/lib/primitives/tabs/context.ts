@@ -1,7 +1,7 @@
 import type { TabsOrientation } from '@inth/sdk/ui/primitives';
 import { getContext, setContext } from 'svelte';
 
-const TABS_ROOT_CONTEXT_KEY = Symbol('c15t-svelte-tabs-root');
+const TABS_ROOT_CONTEXT_KEY = Symbol('inth-svelte-tabs-root');
 
 export interface TabsRootContextValue {
 	readonly baseId: string;

@@ -150,7 +150,7 @@ describe('ConsentGate server rendering', () => {
 			[...html.matchAll(/<style[^>]*data-href="(?<ids>[^"]+)"/gu)].flatMap(
 				(match) => match.groups?.ids?.split(' ') ?? []
 			)
-		).toEqual(['c15t-tokens', 'c15t-button', 'c15t-consent-gate']);
+		).toEqual(['inth-tokens', 'inth-button', 'inth-consent-gate']);
 	});
 
 	test('includes a supplied placeholder in the first HTML', () => {

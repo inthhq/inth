@@ -1,6 +1,6 @@
 /**
  * A page whose CSP allows styles only by nonce. It reads its options from a
- * nonced script tag the way `c15t.js` does, then mounts the stock UI.
+ * nonced script tag the way `inth.js` does, then mounts the stock UI.
  * `?nonce=off` drops the nonce so the test can see the policy block it.
  */
 import { readScriptOptions } from '../../auto-init';
@@ -23,7 +23,7 @@ document.addEventListener('securitypolicyviolation', (event) => {
 	violations.push(event.effectiveDirective);
 });
 
-const options = readScriptOptions(document.getElementById('c15t-loader'));
+const options = readScriptOptions(document.getElementById('inth-loader'));
 const nonce =
 	new URLSearchParams(location.search).get('nonce') === 'off'
 		? undefined
@@ -45,4 +45,4 @@ const page: UICSPPage = {
 	ready: client.ready(),
 	violations,
 };
-Object.assign(window, { c15tUICSP: page });
+Object.assign(window, { inthUICSP: page });

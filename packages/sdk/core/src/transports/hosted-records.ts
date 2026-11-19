@@ -13,6 +13,8 @@
  */
 import { failedResponseError } from '../libs/failed-response';
 import { isValidSubjectId } from '../libs/generate-subject-id';
+import { trimSlash } from '../libs/url';
+import { inthProtocolHeaders } from '../libs/version-header';
 import type { KernelTransport, KernelUser, SaveResult } from '../types';
 import { buildDecisionAssertion } from './decision-inputs';
 import type { RememberedDecisionInputs } from './decision-inputs';
@@ -20,12 +22,11 @@ import { saveFailure } from './save-rejection';
 import { buildSubjectPostBody, subjectsURL } from './subject-body';
 import type { SubjectSavePayload } from './subject-body';
 import type { TransportHydrationRecords } from './subject-record';
-import { c15tProtocolHeaders } from './version-header';
 
 /** Options for {@link createHostedRecordTransport}. */
 export interface HostedRecordTransportOptions {
 	/**
-	 * Backend URL. Can be relative (`/api/c15t`) or absolute.
+	 * Backend URL. Can be relative (`/api/inth`) or absolute.
 	 * Trailing slashes are stripped.
 	 */
 	projectUrl: string;
@@ -73,11 +74,6 @@ export interface HostedRecordTransport extends KernelTransport {
 	) => Promise<TransportHydrationRecords | null>;
 }
 
-/** Strip a single trailing slash so `${base}/subjects` doesn't double up. */
-export const trimSlash = function trimSlash(url: string): string {
-	return url.endsWith('/') ? url.slice(0, -1) : url;
-};
-
 /**
  * Resolve the `domain` field sent on `POST /subjects`: the explicit option,
  * the browser hostname, the backend URL hostname, then `'localhost'`.
@@ -106,7 +102,7 @@ const resolveDomain = function resolveDomain(
  * Reading the body as a `SaveResult` made every successful save look failed
  * and queued it for replay forever.
  */
-const toSaveResult = function toSaveResult(data: unknown): SaveResult {
+export const toSaveResult = function toSaveResult(data: unknown): SaveResult {
 	const subjectId =
 		typeof data === 'object' &&
 		data !== null &&
@@ -133,7 +129,6 @@ export const resolveFetch = function resolveFetch(
  * Build the record half of a hosted transport. Plain object, no listeners,
  * no caches. Safe to create per request.
  *
- * @param options - Backend connection options.
  * @param decision - Where saves find a remembered decision. Omit it when
  *   every save carries its own decision inputs.
  * @returns Save, identify and subject-read methods.
@@ -141,7 +136,7 @@ export const resolveFetch = function resolveFetch(
  * ```ts
  * import { createHostedRecordTransport } from '@inth/sdk-core';
  *
- * const records = createHostedRecordTransport({ projectUrl: '/api/c15t' });
+ * const records = createHostedRecordTransport({ projectUrl: '/api/inth' });
  * await records.save(payload);
  * ```
  */
@@ -158,7 +153,7 @@ export const createHostedRecordTransport = function createHostedRecordTransport(
 	const jsonHeaders = {
 		accept: 'application/json',
 		'content-type': 'application/json',
-		...c15tProtocolHeaders,
+		...inthProtocolHeaders,
 	};
 
 	const subjectURL = (subjectId: string): string =>
@@ -168,7 +163,7 @@ export const createHostedRecordTransport = function createHostedRecordTransport(
 		route: string,
 		response: Response
 	): Promise<Error> {
-		return failedResponseError(`c15t hosted transport: ${route}`, response);
+		return failedResponseError(`inth hosted transport: ${route}`, response);
 	};
 
 	return {
@@ -204,7 +199,7 @@ export const createHostedRecordTransport = function createHostedRecordTransport(
 		): Promise<TransportHydrationRecords | null> {
 			const response = await fetchImpl(subjectURL(subjectId), {
 				credentials,
-				headers: { accept: 'application/json', ...c15tProtocolHeaders },
+				headers: { accept: 'application/json', ...inthProtocolHeaders },
 				method: 'GET',
 			});
 			if (response.status === 404) {
@@ -220,7 +215,7 @@ export const createHostedRecordTransport = function createHostedRecordTransport(
 			const record = reviveSubjectRecord(body);
 			if (!record) {
 				throw new Error(
-					'c15t hosted transport: /subjects/:id returned an unreadable record'
+					'inth hosted transport: /subjects/:id returned an unreadable record'
 				);
 			}
 			return mapSubjectRecordToHydrationRecords(record, { now: now() });
@@ -245,7 +240,7 @@ export const createHostedRecordTransport = function createHostedRecordTransport(
 				}
 				if (!buildDecisionAssertion(payload, decision.inputs())) {
 					throw new Error(
-						'c15t hosted transport: cannot save before init resolved a policy decision (assertDecisionInputs is set).'
+						'inth hosted transport: cannot save before init resolved a policy decision (assertDecisionInputs is set).'
 					);
 				}
 			}
@@ -261,7 +256,7 @@ export const createHostedRecordTransport = function createHostedRecordTransport(
 			});
 
 			if (!response.ok) {
-				throw await saveFailure(response, 'c15t hosted transport');
+				throw await saveFailure(response, 'inth hosted transport');
 			}
 
 			return toSaveResult(await response.json());

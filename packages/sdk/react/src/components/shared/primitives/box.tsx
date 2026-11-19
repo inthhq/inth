@@ -11,8 +11,7 @@ import { useUIConfig } from '~/ui-config-context';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
 /**
- * Props for the description text component of the CookieBanner.
- * Extends standard HTML div attributes.
+ * Props for {@link Box}.
  *
  * @public
  */
@@ -23,36 +22,8 @@ export interface BoxProps
 }
 
 /**
- * Renders the descriptive text content within a CookieBanner.
- *
- * @remarks
- * This component is responsible for displaying the explanatory text that:
- * - Informs users about the site's cookie usage
- * - Explains what cookies are used for
- * - Provides context for the cookie consent choices
- *
- * The component automatically inherits styles from the CookieBanner context
- * and can be customized through className and style props.
- *
- * @example
- * Basic usage:
- * ```tsx
- * <CookieBanner.Description>
- *   We use cookies to enhance your browsing experience and analyze site traffic.
- * </CookieBanner.Description>
- * ```
- *
- * @example
- * With custom styling:
- * ```tsx
- * <CookieBanner.Description
- *   className="text-gray-600"
- *   style={{ maxWidth: '500px' }}
- * >
- *   By using our site, you acknowledge that you have read and understand our
- *   Cookie Policy and Privacy Policy.
- * </CookieBanner.Description>
- * ```
+ * A `div` that takes its classes and styles from the `components` slot
+ * named by `slotKey`, merged with its own props.
  *
  * @public
  */

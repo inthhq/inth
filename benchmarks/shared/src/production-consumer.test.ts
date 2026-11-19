@@ -16,7 +16,7 @@ import type { WorkspacePackageInfo } from './production-consumer';
 describe('parseConsumerArm', () => {
 	it.each([
 		['head=workspace', { kind: 'workspace' }],
-		['base=root:/src/c15t', { kind: 'root', path: '/src/c15t' }],
+		['base=root:/src/inth', { kind: 'root', path: '/src/inth' }],
 		['a=tarballs:/tmp/a', { dir: '/tmp/a', kind: 'tarballs' }],
 		['alpha2=npm:3.0.0-alpha.2', { kind: 'npm', version: '3.0.0-alpha.2' }],
 	])('parses %s', (spec, source) => {
@@ -36,8 +36,8 @@ describe('workspaceDependencyClosure', () => {
 		[
 			{
 				dependencies: { '@inth/react': 'workspace:*', react: '^19' },
-				dir: 'c15t',
-				name: 'c15t',
+				dir: 'inth',
+				name: 'inth',
 				version: '3.0.0',
 			},
 			{
@@ -54,8 +54,8 @@ describe('workspaceDependencyClosure', () => {
 
 	it('follows workspace specifiers only', () => {
 		expect(
-			workspaceDependencyClosure(packages, 'c15t').map((info) => info.name)
-		).toEqual(['c15t', '@inth/react', '@inth/sdk-core']);
+			workspaceDependencyClosure(packages, 'inth').map((info) => info.name)
+		).toEqual(['inth', '@inth/react', '@inth/sdk-core']);
 	});
 
 	it('throws for an unknown root', () => {
@@ -70,8 +70,8 @@ describe('packedTarballName', () => {
 		expect(packedTarballName('@inth/sdk-core', '3.0.0-alpha.2')).toBe(
 			'inth-sdk-core-3.0.0-alpha.2.tgz'
 		);
-		expect(packedTarballName('c15t', '3.0.0-alpha.2')).toBe(
-			'c15t-3.0.0-alpha.2.tgz'
+		expect(packedTarballName('inth', '3.0.0-alpha.2')).toBe(
+			'inth-3.0.0-alpha.2.tgz'
 		);
 	});
 });
@@ -86,16 +86,16 @@ describe('consumerPackageJson', () => {
 		typescriptVersion: '6.0.3',
 	};
 
-	it('installs c15t from its tarball and overrides every scoped package', () => {
+	it('installs inth from its tarball and overrides every scoped package', () => {
 		const manifest = consumerPackageJson({
 			...versions,
 			tarballs: new Map([
-				['c15t', '/t/c15t.tgz'],
+				['inth', '/t/inth.tgz'],
 				['@inth/sdk-core', '/t/core.tgz'],
 			]),
 		});
 		expect(manifest.dependencies).toMatchObject({
-			c15t: 'file:/t/c15t.tgz',
+			inth: 'file:/t/inth.tgz',
 			next: '16.2.10',
 		});
 		expect(manifest.overrides).toEqual({
@@ -106,9 +106,9 @@ describe('consumerPackageJson', () => {
 	it('installs a published version without overrides', () => {
 		const manifest = consumerPackageJson({
 			...versions,
-			c15tVersion: '3.0.0-alpha.2',
+			inthVersion: '3.0.0-alpha.2',
 		});
-		expect(manifest.dependencies).toMatchObject({ c15t: '3.0.0-alpha.2' });
+		expect(manifest.dependencies).toMatchObject({ inth: '3.0.0-alpha.2' });
 		expect(manifest.overrides).toEqual({});
 	});
 
@@ -118,7 +118,7 @@ describe('consumerPackageJson', () => {
 				...versions,
 				tarballs: new Map([['@inth/sdk-core', '/t/core.tgz']]),
 			})
-		).toThrow('no c15t package');
+		).toThrow('no inth package');
 	});
 });
 
@@ -131,9 +131,9 @@ describe('consumerGlobalStyles', () => {
 		'utf8'
 	);
 	const imports = (css: string) =>
-		css.match(/@import\s[^;]*(?:c15t|@inth\/)[^;]*;/gu) ?? [];
+		css.match(/@import\s[^;]*(?:inth|@inth\/)[^;]*;/gu) ?? [];
 
-	it('loads c15t only through the components when they deliver styles', () => {
+	it('loads inth only through the components when they deliver styles', () => {
 		expect(imports(consumerGlobalStyles(template, 'automatic'))).toEqual([]);
 	});
 

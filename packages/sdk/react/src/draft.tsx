@@ -177,7 +177,6 @@ export const useConsentDraftStore =
  * @param draft - Draft from {@link useConsentDraftStore}.
  * @param selector - Picks the slice. Return a primitive or a reference the
  * draft already holds.
- * @returns The selected slice.
  * @internal
  */
 export const useConsentDraftSlice = function useConsentDraftSlice<SliceType>(

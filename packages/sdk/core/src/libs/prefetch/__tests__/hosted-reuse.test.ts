@@ -16,18 +16,18 @@ const response = (
 ) =>
 	new Response(
 		JSON.stringify({
-			branding: 'c15t',
+			branding: 'inth',
 			location: { countryCode: null, regionCode: null },
 			translations: { language: 'en', translations: {} },
 			...body,
 		}),
-		{ headers: contract === null ? {} : { 'x-c15t-policy-contract': contract } }
+		{ headers: contract === null ? {} : { 'x-inth-policy-contract': contract } }
 	);
 beforeEach(() => {
-	delete (window as Window & { __c15tInitialDataPromises?: unknown })
-		.__c15tInitialDataPromises;
-	delete (window as Window & { __c15tExperiment?: unknown }).__c15tExperiment;
-	delete (window as JourneyWindow).__c15tJourney;
+	delete (window as Window & { __inthInitialDataPromises?: unknown })
+		.__inthInitialDataPromises;
+	delete (window as Window & { __inthExperiment?: unknown }).__inthExperiment;
+	delete (window as JourneyWindow).__inthJourney;
 	localStorage.clear();
 	Object.defineProperty(navigator, 'globalPrivacyControl', {
 		configurable: true,
@@ -38,11 +38,11 @@ afterEach(() => {
 	vi.unstubAllGlobals();
 	vi.restoreAllMocks();
 });
-type JourneyWindow = Window & { __c15tJourney?: KernelJourney };
+type JourneyWindow = Window & { __inthJourney?: KernelJourney };
 // The runtime's init carries the journey the early request claimed.
 const context = {
 	get journey() {
-		return (window as JourneyWindow).__c15tJourney;
+		return (window as JourneyWindow).__inthJourney;
 	},
 	overrides: {},
 	user: null,
@@ -57,8 +57,8 @@ describe('hosted browser prefetch consumption', () => {
 				.fn()
 				.mockImplementation(() => Promise.resolve(response()));
 			vi.stubGlobal('fetch', fetch);
-			await primePrefetchedInitialData({ overrides, projectUrl: '/api/c15t' });
-			await createHostedTransport({ projectUrl: '/api/c15t' }).init(context);
+			await primePrefetchedInitialData({ overrides, projectUrl: '/api/inth' });
+			await createHostedTransport({ projectUrl: '/api/inth' }).init(context);
 			expect(fetch).toHaveBeenCalledTimes(2);
 		}
 	);
@@ -67,8 +67,8 @@ describe('hosted browser prefetch consumption', () => {
 		const fetch = vi.fn().mockImplementation(() => Promise.resolve(response()));
 		vi.stubGlobal('fetch', fetch);
 		// Execute the actual beforeInteractive script, including its window registry.
-		window.eval(buildPrefetchScript({ projectUrl: '/api/c15t' }));
-		const transport = createHostedTransport({ projectUrl: '/api/c15t' });
+		window.eval(buildPrefetchScript({ projectUrl: '/api/inth' }));
+		const transport = createHostedTransport({ projectUrl: '/api/inth' });
 		expect(fetch).toHaveBeenCalledTimes(1);
 		const first = await transport.init?.(context);
 		expect(first?.policyResolution).toEqual(payload.policyResolution);
@@ -86,14 +86,14 @@ describe('hosted browser prefetch consumption', () => {
 			.fn()
 			.mockImplementation(() => Promise.resolve(response()));
 		vi.stubGlobal('fetch', pageFetch);
-		window.eval(buildPrefetchScript({ projectUrl: '/api/c15t' }));
+		window.eval(buildPrefetchScript({ projectUrl: '/api/inth' }));
 		// A wrapper that signs or routes requests has to see `/init`.
 		const signed = vi
 			.fn()
 			.mockImplementation(() => Promise.resolve(response()));
 		await createHostedTransport({
 			fetch: signed,
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		}).init?.(context);
 		expect(pageFetch).toHaveBeenCalledTimes(1);
 		expect(signed).toHaveBeenCalledTimes(1);
@@ -109,9 +109,9 @@ describe('hosted browser prefetch consumption', () => {
 				.fn()
 				.mockResolvedValue(response({ policy: legacyPolicy }, contract));
 			vi.stubGlobal('fetch', fetch);
-			await primePrefetchedInitialData({ projectUrl: '/api/c15t' });
+			await primePrefetchedInitialData({ projectUrl: '/api/inth' });
 			const result = await createHostedTransport({
-				projectUrl: '/api/c15t',
+				projectUrl: '/api/inth',
 			}).init?.(context);
 			expect(result?.policyResolution).toMatchObject({
 				reason,
@@ -126,9 +126,9 @@ describe('hosted browser prefetch consumption', () => {
 			'fetch',
 			vi.fn().mockResolvedValue(response({ policy: legacyPolicy }, null))
 		);
-		await primePrefetchedInitialData({ projectUrl: '/api/c15t' });
+		await primePrefetchedInitialData({ projectUrl: '/api/inth' });
 		const result = await createHostedTransport({
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		}).init?.(context);
 		expect(result?.policyResolution).toMatchObject({
 			reason: 'unsupported-contract',
@@ -142,8 +142,8 @@ describe('hosted browser prefetch consumption', () => {
 			.mockRejectedValueOnce(new Error('offline'))
 			.mockResolvedValue(response());
 		vi.stubGlobal('fetch', fetch);
-		await primePrefetchedInitialData({ projectUrl: '/api/c15t' });
-		await createHostedTransport({ projectUrl: '/api/c15t' }).init?.(context);
+		await primePrefetchedInitialData({ projectUrl: '/api/inth' });
+		await createHostedTransport({ projectUrl: '/api/inth' }).init?.(context);
 		expect(fetch).toHaveBeenCalledTimes(2);
 	});
 
@@ -152,16 +152,16 @@ describe('hosted browser prefetch consumption', () => {
 		vi.stubGlobal('fetch', fetch);
 		await primePrefetchedInitialData({
 			overrides: { country: 'DE' },
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
-		await createHostedTransport({ projectUrl: '/api/c15t' }).init?.({
+		await createHostedTransport({ projectUrl: '/api/inth' }).init?.({
 			...context,
 			overrides: { country: 'FR' },
 		});
 		expect(fetch).toHaveBeenCalledTimes(2);
 		await createHostedTransport({
 			initUrl: '/other/init',
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		}).init?.(context);
 		expect(fetch).toHaveBeenCalledTimes(3);
 	});
@@ -169,7 +169,7 @@ describe('hosted browser prefetch consumption', () => {
 	it('sends the request within init() when nothing was prefetched', async () => {
 		const fetch = vi.fn().mockResolvedValue(response());
 		vi.stubGlobal('fetch', fetch);
-		const sent = createHostedTransport({ projectUrl: '/api/c15t' }).init?.(
+		const sent = createHostedTransport({ projectUrl: '/api/inth' }).init?.(
 			context
 		);
 		// A provider sends init from its first render; the request has to be
@@ -185,16 +185,16 @@ describe('hosted browser prefetch consumption', () => {
 		});
 		const fetch = vi.fn().mockResolvedValue(response());
 		vi.stubGlobal('fetch', fetch);
-		window.eval(buildPrefetchScript({ projectUrl: '/api/c15t' }));
+		window.eval(buildPrefetchScript({ projectUrl: '/api/inth' }));
 		const entries = Object.values(
 			(
 				window as Window & {
-					__c15tInitialDataPromises?: Record<
+					__inthInitialDataPromises?: Record<
 						string,
 						{ requestContext: { gpc: boolean } }
 					>;
 				}
-			).__c15tInitialDataPromises ?? {}
+			).__inthInitialDataPromises ?? {}
 		);
 		expect(entries.map((entry) => entry.requestContext.gpc)).toEqual([false]);
 		// Detected GPC is never sent: browsers drop a script's `Sec-GPC`.
@@ -208,8 +208,8 @@ describe('hosted browser prefetch consumption', () => {
 				.fn()
 				.mockImplementation(() => Promise.resolve(response()));
 			vi.stubGlobal('fetch', fetch);
-			window.eval(buildPrefetchScript({ projectUrl: '/api/c15t' }));
-			await createHostedTransport({ projectUrl: '/api/c15t' }).init(
+			window.eval(buildPrefetchScript({ projectUrl: '/api/inth' }));
+			await createHostedTransport({ projectUrl: '/api/inth' }).init(
 				withoutJourney
 			);
 			expect(fetch).toHaveBeenCalledTimes(2);
@@ -225,9 +225,9 @@ describe('hosted browser prefetch consumption', () => {
 				.mockImplementation(() => Promise.resolve(response()));
 			vi.stubGlobal('fetch', fetch);
 			window.eval(
-				buildPrefetchScript({ journey: false, projectUrl: '/api/c15t' })
+				buildPrefetchScript({ journey: false, projectUrl: '/api/inth' })
 			);
-			await createHostedTransport({ projectUrl: '/api/c15t' }).init(
+			await createHostedTransport({ projectUrl: '/api/inth' }).init(
 				withoutJourney
 			);
 			expect(fetch).toHaveBeenCalledTimes(1);
@@ -251,7 +251,7 @@ describe('hosted browser prefetch consumption', () => {
 			window.eval(
 				buildPrefetchScript({
 					experiment: { ...experiment, arm: 'bar' },
-					projectUrl: '/api/c15t',
+					projectUrl: '/api/inth',
 				})
 			);
 			return fetch;
@@ -259,7 +259,7 @@ describe('hosted browser prefetch consumption', () => {
 
 		it('reuses an early request that sent the arm this init runs', async () => {
 			const fetch = prefetchBar();
-			await createHostedTransport({ projectUrl: '/api/c15t' }).init(
+			await createHostedTransport({ projectUrl: '/api/inth' }).init(
 				running('bar')
 			);
 			expect(fetch).toHaveBeenCalledTimes(1);
@@ -272,7 +272,7 @@ describe('hosted browser prefetch consumption', () => {
 			'sends its own /init when the early request sent %s',
 			async (_label, ctx) => {
 				const fetch = prefetchBar();
-				await createHostedTransport({ projectUrl: '/api/c15t' }).init(ctx);
+				await createHostedTransport({ projectUrl: '/api/inth' }).init(ctx);
 				expect(fetch).toHaveBeenCalledTimes(2);
 			}
 		);
@@ -282,8 +282,8 @@ describe('hosted browser prefetch consumption', () => {
 				.fn()
 				.mockImplementation(() => Promise.resolve(response()));
 			vi.stubGlobal('fetch', fetch);
-			window.eval(buildPrefetchScript({ projectUrl: '/api/c15t' }));
-			await createHostedTransport({ projectUrl: '/api/c15t' }).init(
+			window.eval(buildPrefetchScript({ projectUrl: '/api/inth' }));
+			await createHostedTransport({ projectUrl: '/api/inth' }).init(
 				running('bar')
 			);
 			expect(fetch).toHaveBeenCalledTimes(2);
@@ -297,7 +297,7 @@ describe('hosted browser prefetch consumption', () => {
 					init: await response().json(),
 					producerPolicyContract: '1',
 				}),
-				projectUrl: '/api/c15t',
+				projectUrl: '/api/inth',
 			});
 			await transport.init(running('bar'));
 			expect(fetch).not.toHaveBeenCalled();

@@ -1,13 +1,13 @@
 ---
 title: Dev tools
-description: Inspect consent state, scripts, policy, IAB and events in an Angular app with the c15t DevTools panel from @inth/angular/devtools, and keep it out of production.
+description: Inspect consent state, scripts, policy, IAB and events in an Angular app with the Inth DevTools panel from @inth/angular/devtools, and keep it out of production.
 group: frameworks
 ---
 
 ## Add the panel
 
 `@inth/angular/devtools` exports the panel two ways. Render
-`<c15t-consent-dev-tools>` once, anywhere below `provideC15t()`:
+`<inth-consent-dev-tools>` once, anywhere below `provideInth()`:
 
 <include src="../../../shared/examples/angular/dev-tools.mdx" />
 
@@ -16,7 +16,7 @@ on `<body>` in the browser, and is removed with the component. On the server
 it does nothing.
 
 Or mount it with the application, without a component, after
-`provideC15t()`:
+`provideInth()`:
 
 <include src="../../../shared/examples/angular/dev-tools-provider.mdx" />
 
@@ -41,7 +41,7 @@ the current page only.
 
 ## Inputs
 
-`provideC15tDevTools()` takes the same fields as one options object.
+`provideInthDevTools()` takes the same fields as one options object.
 
 | Input | Type | Default | Behavior |
 | --- | --- | --- | --- |
@@ -56,7 +56,7 @@ the current page only.
 
 ## Open DevTools from the consent trigger
 
-While `<c15t-consent-dialog-trigger>` is visible, it becomes a two-button
+While `<inth-consent-dialog-trigger>` is visible, it becomes a two-button
 toolbar with a DevTools button, and DevTools hides its own floating launcher,
 so one control occupies the corner. The panel opens next to the toolbar and
 follows it when a visitor drags the toolbar to another corner. `position`
@@ -69,7 +69,7 @@ Render it in development only. `isDevMode()` is a runtime check, so on its own
 it does not remove the panel's code from a production bundle. In the component
 example, `@defer` moves `ConsentDevTools` and the panel's engine into
 a separate chunk that the browser fetches only when the `@if` is true.
-`provideC15tDevTools()` in `app.config.ts` keeps the panel in the main bundle
+`provideInthDevTools()` in `app.config.ts` keeps the panel in the main bundle
 even behind `isDevMode()`; to drop it, provide it from a development-only
 file swapped in with `fileReplacements` in `angular.json`.
 

@@ -100,7 +100,7 @@ describe('consent banner SSR', () => {
 		expect(tag?.[0]).not.toMatch(/bannerHidden/u);
 	});
 
-	test('names its stylesheets in <head> for c15tHandle to inline', () => {
+	test('names its stylesheets in <head> for inthHandle to inline', () => {
 		const { head } = render(BannerFixture, {
 			props: {
 				options: {
@@ -111,7 +111,7 @@ describe('consent banner SSR', () => {
 		});
 
 		expect(head).toContain(
-			'<meta name="c15t-styles" content="c15t-tokens c15t-button c15t-banner nonce=page-nonce"'
+			'<meta name="inth-styles" content="inth-tokens inth-button inth-banner nonce=page-nonce"'
 		);
 	});
 
@@ -126,7 +126,7 @@ describe('consent banner SSR', () => {
 		});
 
 		const script = body.indexOf(
-			'<script data-c15t-early-tap nonce="page-nonce">'
+			'<script data-inth-early-tap nonce="page-nonce">'
 		);
 		expect(script).toBeGreaterThan(-1);
 		expect(body).toContain(EARLY_CONSENT_TAP_SCRIPT);
@@ -144,7 +144,7 @@ describe('consent banner SSR', () => {
 		});
 
 		expect(body).toContain('data-testid="consent-banner-root"');
-		expect(head).not.toContain('c15t-styles');
+		expect(head).not.toContain('inth-styles');
 	});
 
 	test('renders nothing for a returning visitor', () => {

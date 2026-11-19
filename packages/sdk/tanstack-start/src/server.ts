@@ -72,14 +72,11 @@ import {
 import type { ConsentMode } from '@inth/sdk/modes';
 import type { ConsentManifest, InitOutput } from '@inth/sdk/schema/types';
 import {
-	DEFAULT_CONSENT_ROUTE_PREFIX,
 	normalizeRoutePrefix,
 	resolveRequestConsent,
+	resolveServerMode,
 } from '@inth/sdk/server';
-import type {
-	ManifestCache,
-	ResolveRequestConsentOptions,
-} from '@inth/sdk/server';
+import type { ManifestCache } from '@inth/sdk/server';
 
 import { handledRequestFor } from './libs/handled-request';
 import { isPrerendering } from './libs/prerendering';
@@ -131,7 +128,7 @@ export interface ConsentRequestOptions {
 	/** Request clock reused for validation and hydration. */
 	now?: number;
 	/**
-	 * Cookie name holding persisted consent. Defaults to `c15t`, the
+	 * Cookie name holding persisted consent. Defaults to `inth`, the
 	 * persistence module's storage key. Set this only if you customized
 	 * `storageConfig.storageKey` client-side; it must match.
 	 */
@@ -157,10 +154,6 @@ export interface ConsentRequestOptions {
 	request?: ConsentRequestSource;
 }
 
-/**
- * Type alias re-exported so consumers can stay within
- * `@inth/tanstack-start`.
- */
 export type { KernelConfig } from '@inth/sdk/engine';
 
 /**
@@ -175,7 +168,7 @@ export interface ConsentClientConfig {
 	projectUrl?: string;
 	/** The mode, as data. `undefined` means `manifest()`. */
 	mode?: ConsentMode;
-	/** Where the consent route is mounted, such as `/api/c15t`. */
+	/** Where the consent route is mounted, such as `/api/inth`. */
 	routePrefix?: string;
 }
 
@@ -217,9 +210,9 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	mode?: ConsentMode;
 
 	/**
-	 * Backend base URL of your c15t instance, for example
+	 * Backend base URL of your Inth instance, for example
 	 * `https://consent.example.com`. Defaults to the URL `consentManifest()`
-	 * read from `VITE_C15T_BACKEND_URL` or `VITE_INTH_PROJECT_URL`. The
+	 * read from `VITE_INTH_PROJECT_URL`. The
 	 * helper reads
 	 * `${projectUrl}/manifest` through the in-process manifest cache and
 	 * resolves init locally, so the first paint already carries policy, UI,
@@ -229,7 +222,7 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	 * (`request.url`); set `trustForwardedHeaders` to use `x-forwarded-*`
 	 * behind a trusted proxy. Do not point this at the app's own consent
 	 * route: a server fetching itself during SSR deadlocks the dev server,
-	 * so the helper never fetches under `routePrefix` (`/api/c15t` when
+	 * so the helper never fetches under `routePrefix` (`/api/inth` when
 	 * unset) and returns the cookie-and-headers state instead. Other
 	 * relative URLs are fetched.
 	 */
@@ -260,7 +253,7 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 
 	/**
 	 * Cookie names to forward on the manifest fetch. No cookies are
-	 * forwarded by default: the manifest is tenant-level data and the c15t
+	 * forwarded by default: the manifest is tenant-level data and the Inth
 	 * backend does not read cookies, so nothing from your origin's cookie
 	 * jar needs to leave. Set this only for a backend that gates the
 	 * manifest on a cookie.
@@ -330,8 +323,8 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	experiment?: ServerExperiment;
 
 	/**
-	 * Where you mounted `createConsentRoute()`, such as `/api/c15t` for
-	 * `src/routes/api/c15t/$.ts`. The state carries it to `ConsentRoot`: the
+	 * Where you mounted `createConsentRoute()`, such as `/api/inth` for
+	 * `src/routes/api/inth/$.ts`. The state carries it to `ConsentRoot`: the
 	 * browser then gets init from `${routePrefix}/init`, and saves assert the
 	 * decision inputs it resolved. Deferred public vendor lists load through
 	 * the route, and the render never fetches a URL under the prefix on its
@@ -362,79 +355,6 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	shared?: boolean;
 }
 
-/** What the server resolves for each mode. */
-const serverModeOptions = function serverModeOptions(
-	options: ResolveConsentOptions,
-	projectUrl: string | undefined
-): Pick<
-	ResolveRequestConsentOptions,
-	'projectUrl' | 'manifest' | 'manifestUrl' | 'mode'
-> {
-	const { mode: selected } = options;
-	if (selected?.type === 'testing') {
-		// The browser resolves it, with the transport that refuses to run in
-		// production.
-		return {};
-	}
-	// A snapshot passed in is a manifest to resolve from, as in Next.js.
-	if (selected?.type === 'hosted' && options.snapshot === undefined) {
-		return {
-			mode: projectUrl ? 'hosted' : undefined,
-			projectUrl,
-		};
-	}
-	const mode = selected?.type === 'manifest' ? selected : undefined;
-	if (mode?.resolve === 'browser') {
-		// The browser resolves the visitor; the render reads cookies and
-		// headers only.
-		return {};
-	}
-	let snapshot = mode?.snapshot;
-	if (!snapshot && mode?.source !== 'runtime') {
-		snapshot = 'snapshot' in options ? options.snapshot : generatedSnapshot;
-	}
-	const manifestUrl = mode?.manifestUrl;
-	return {
-		manifest: snapshot,
-		manifestUrl,
-		mode: projectUrl || manifestUrl || snapshot ? 'manifest' : undefined,
-		projectUrl,
-	};
-};
-
-/**
- * The browser's half of the options. A mode's `snapshot` stays on the
- * server unless the browser resolves the policy itself.
- */
-const clientConfigFor = function clientConfigFor(
-	options: ResolveConsentOptions,
-	projectUrl: string | undefined,
-	routePrefix: string | undefined
-): ConsentClientConfig {
-	if (options.proxy && routePrefix === undefined) {
-		throw new Error(
-			'@inth/tanstack-start: `proxy` sends saves through the consent route, so it needs `routePrefix`.'
-		);
-	}
-	const config: ConsentClientConfig = {};
-	const clientProjectUrl = options.proxy ? routePrefix : projectUrl;
-	if (clientProjectUrl !== undefined) {
-		config.projectUrl = clientProjectUrl;
-	}
-	const { mode } = options;
-	if (mode?.type === 'manifest' && mode.resolve !== 'browser') {
-		const { snapshot: _snapshot, ...data } = mode;
-		config.mode = data;
-	} else if (mode !== undefined) {
-		config.mode = mode;
-	}
-	if (routePrefix !== undefined) {
-		config.routePrefix = routePrefix;
-	}
-	return config;
-};
-
-/** The options' route prefix, checked; `undefined` when unset. */
 const readRoutePrefix = function readRoutePrefix(
 	options: ResolveConsentOptions
 ): string | undefined {
@@ -446,34 +366,43 @@ const readRoutePrefix = function readRoutePrefix(
 const resolveConsentState = async function resolveConsentState(
 	options: ResolveConsentOptions
 ): Promise<ConsentState> {
-	const projectUrl = options.projectUrl ?? generatedProjectUrl;
 	const routePrefix = readRoutePrefix(options);
-	const client = clientConfigFor(options, projectUrl, routePrefix);
+	const server = resolveServerMode({
+		adapter: '@inth/tanstack-start',
+		buildSnapshot: 'snapshot' in options ? options.snapshot : generatedSnapshot,
+		mode: options.mode,
+		projectUrl: options.projectUrl ?? generatedProjectUrl,
+		proxy: options.proxy,
+		routePrefix,
+	});
+	const client: ConsentClientConfig = {};
+	if (server.browser.projectUrl !== undefined) {
+		client.projectUrl = server.browser.projectUrl;
+	}
+	if (options.mode !== undefined) {
+		client.mode = server.browser.mode;
+	}
+	if (routePrefix !== undefined) {
+		client.routePrefix = routePrefix;
+	}
 	const request = await readCurrentRequest(options.request);
 	const handled = await handledRequestFor(request);
-	const server = serverModeOptions(options, projectUrl);
 	const shared = options.shared ?? isPrerendering();
 	if (!shared) {
 		// The middleware keeps this HTML out of shared caches.
 		rememberVisitorRender(handled);
 	}
 	const state = await resolveRequestConsent({
-		...server,
+		...server.consent,
 		adapter: '@inth/tanstack-start',
 		cache: options.cache,
 		cookieNames: options.cookieNames,
 		experiment: options.experiment,
 		fetch: options.fetch,
 		forwardHeaders: options.forwardHeaders,
-		gvlRoute: routePrefix === undefined ? undefined : `${routePrefix}/init`,
 		journey: options.journey,
 		now: options.now,
 		overrides: { country: options.country, language: options.language },
-		// The app's own consent route: a render fetching it would call
-		// itself. Other relative URLs, such as a backend mounted elsewhere
-		// on this origin, are fetched. Without a prefix, the conventional
-		// mount is guarded.
-		ownRoutes: [routePrefix ?? DEFAULT_CONSENT_ROUTE_PREFIX],
 		request: {
 			headers: request.headers,
 			// What `consentRequestMiddleware` normalized for this request, so
@@ -496,7 +425,7 @@ const resolveConsentState = async function resolveConsentState(
  * Resolves the visitor's consent state from the current TanStack Start
  * request.
  *
- * 1. Reads the consent cookie, the CDN geo headers (plus the `x-c15t-*`
+ * 1. Reads the consent cookie, the CDN geo headers (plus the `x-inth-*`
  *    overrides `consentRequestMiddleware()` wrote), `accept-language`, and
  *    `sec-gpc`.
  * 2. Resolves the policy for the {@link ResolveConsentOptions.mode}. The
@@ -531,8 +460,6 @@ export const resolveConsent = async function resolveConsent(
  *
  * @param base - Cookie-and-headers state, such as from
  * `resolveConsent({ mode: manifest({ resolve: 'browser' }) })`.
- * @param init - The init payload to merge.
- * @returns The merged state.
  */
 export const mergeInitIntoConsentState = function mergeInitIntoConsentState(
 	base: ConsentState,
@@ -567,13 +494,12 @@ export { consentLoaderOptions } from './libs/loader-options';
  *
  * @example
  * ```ts
- * // With src/routes/api/c15t/$.ts mounted, the browser re-inits there.
- * createConsentStateHandler({ routePrefix: '/api/c15t' });
+ * // With src/routes/api/inth/$.ts mounted, the browser re-inits there.
+ * createConsentStateHandler({ routePrefix: '/api/inth' });
  * ```
  *
  * @param options - {@link resolveConsent} options: `mode`, `routePrefix`,
  * `snapshot` and the rest. `request` defaults to `getRequest()`.
- * @returns A handler that resolves to the request's consent state.
  * @throws {TypeError} When `routePrefix` is `/` or not a path, when the
  * server function is declared rather than on a request.
  */

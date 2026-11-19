@@ -16,7 +16,7 @@
  * so a streamed banner doesn't wait for one more request after the engine.
  * Both routes here mount a deferred root, so the small modules the shell
  * shares with the engine, the commit path and the other route each get a
- * file of their own: 12 files, about 13 KB after Brotli. An app whose
+ * file of their own: 11 files, about 21 KB after Brotli. An app whose
  * routes all use `ConsentRoot` loads 9.
  */
 import { dirname, join } from 'node:path';
@@ -38,10 +38,10 @@ const fixture: Record<string, string> = {
 		"globalThis.routes = [() => import('fixture:root-route'), () => import('fixture:provider-route')];",
 	'provider-route': `import { createElement as h } from 'react';
 import { ConsentBanner, ConsentDialog, ConsentProvider } from '@inth/tanstack-start';
-export default () => h(ConsentProvider, { options: { projectUrl: '/api/c15t' } }, h(ConsentBanner), h(ConsentDialog));`,
+export default () => h(ConsentProvider, { options: { projectUrl: '/api/inth' } }, h(ConsentBanner), h(ConsentDialog));`,
 	'root-route': `import { createElement as h } from 'react';
 import { ConsentBanner, ConsentDialog, ConsentRoot } from '@inth/tanstack-start';
-export default () => h(ConsentRoot, { state: { projectUrl: '/api/c15t' } }, h(ConsentBanner), h(ConsentDialog));`,
+export default () => h(ConsentRoot, { state: { projectUrl: '/api/inth' } }, h(ConsentBanner), h(ConsentDialog));`,
 };
 
 interface FirstLoad {
@@ -167,14 +167,18 @@ const deferredModules = [
 
 describe('TanStack Start client chunks', () => {
 	test.each([
-		['root-route', 12],
+		['root-route', 11],
 		['provider-route', 22],
 	])(
 		'a %s loads at most %i files first',
 		async (route, bound) => {
 			// The route, the app entry, and the small modules the deferred
 			// shell shares with lazy chunks (the engine, the commit path, the
-			// stock surfaces) and with the other route. The provider route
+			// stock surfaces) and with the other route. The commit path no
+			// longer loads the shell's file, so the instant commit it shares
+			// with the shell is a file of its own. The plain-script rules share
+			// the registry's file only while the trigger's boot reader, which
+			// the dialog loads too, imports none of them. The provider route
 			// also builds the banner's snapshot from the inline prefetch
 			// before its engine loads, so it loads the policy and copy code.
 			const { files } = await routeFirstLoad(route);
@@ -206,8 +210,20 @@ describe('TanStack Start client chunks', () => {
 		// adds 66 bytes upstream (19,243 to 19,309). The plain-script checks
 		// also leave an `integration` script to the loader, which the script
 		// registry may move to another URL or hold: 34 bytes (19,336 to
-		// 19,370).
-		expect(brotli).toBeLessThanOrEqual(19_370);
+		// 19,370). Reading c15t's stored records as a fallback brings the
+		// storage-key families and the IAB storage keys, and the window keys
+		// and priority-image wait every adapter now shares from core's
+		// page-globals sit in a file of their own: 1,477 bytes (19,370 to
+		// 20,847). Removing the subject ID key c15t 3.2 wrote adds 37, and the
+		// surface root attribute 6 (20,890). Revocation cleanup's list of
+		// owned keys, with the IAB storage keys it brought, and that c15t
+		// key now live with the code that reads them, not in the first-load
+		// storage keys: 266 fewer (20,624). Core's stand-in kernel, which every
+		// deferred root now shares and which rejects a save waiting for an
+		// engine chunk that failed, replaces React's own copy. Core's build
+		// keeps its local names, which an app's minifier shortens, and the
+		// instant commit sits in a file of its own: 1,203 bytes (21,827).
+		expect(brotli).toBeLessThanOrEqual(21_827);
 	}, 60_000);
 
 	test('a root route applies a streamed state with code its engine brings', async () => {
@@ -229,7 +245,7 @@ describe('TanStack Start client chunks', () => {
 		const grouped = await routeFirstLoad('root-route', true);
 		expect(grouped.modules.toSorted()).toEqual(plain.modules.toSorted());
 		expect(grouped.files.length).toBeLessThanOrEqual(plain.files.length);
-		// This fixture's two routes set up c15t differently, so the dialog
+		// This fixture's two routes set up Inth differently, so the dialog
 		// shares code with each in its own way; an app with one setup gets
 		// fewer files still.
 		expect(

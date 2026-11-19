@@ -38,7 +38,7 @@ const result = (metrics: MetricSampleSet[]): BenchmarkResult => ({
 	metadata: { visit: 'fresh' },
 	metrics,
 	notes: [],
-	package: '@c15t/react-browser-bench',
+	package: '@inth/react-browser-bench',
 	runtime: 'chromium',
 	scenario: 'baseline',
 	schemaVersion: 1,
@@ -160,7 +160,7 @@ describe('poolRoundResults', () => {
 
 describe('poolRoundDirectories', () => {
 	it('fails when a round is missing a result', () => {
-		const root = mkdtempSync(join(tmpdir(), 'c15t-rounds-'));
+		const root = mkdtempSync(join(tmpdir(), 'inth-rounds-'));
 		try {
 			const metric = summarizeMetric('fcpMs', 'ms', [1]);
 			writeJson(join(root, '0/react/a.json'), result([metric]));

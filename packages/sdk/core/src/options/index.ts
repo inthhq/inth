@@ -10,7 +10,6 @@ export type {
 	AdditionalConsentConfig,
 	CMPApi,
 	CMPApiConfig,
-	FetchGVLResult,
 	IABConfig,
 } from './iab';
 export type {
@@ -21,6 +20,8 @@ export type {
 	PublisherRestriction,
 	TCData,
 	TCDataOutsideTCF,
+	TCFApi,
+	TCFApiCallback,
 	TCFConsentData,
 } from './iab-tcf';
 export type { LegalLink, LegalLinks } from './legal-links';
@@ -29,6 +30,5 @@ export type {
 	SSRInitialData,
 	SSRInitRequestContext,
 	SSRInitRequestMetadata,
-	SSRSkippedReason,
 } from './ssr';
 export type { User } from './user';

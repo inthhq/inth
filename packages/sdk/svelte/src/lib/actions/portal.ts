@@ -24,7 +24,7 @@ export const portal = function portal(
 			typeof process === 'undefined' ||
 			process.env?.NODE_ENV !== 'production'
 		) {
-			console.warn(`[c15t/portal] Target element not found: ${target}`);
+			console.warn(`[inth/portal] Target element not found: ${target}`);
 		}
 	}
 
@@ -39,7 +39,7 @@ export const portal = function portal(
 					typeof process === 'undefined' ||
 					process.env?.NODE_ENV !== 'production'
 				) {
-					console.warn(`[c15t/portal] Target element not found: ${newTarget}`);
+					console.warn(`[inth/portal] Target element not found: ${newTarget}`);
 				}
 				return;
 			}

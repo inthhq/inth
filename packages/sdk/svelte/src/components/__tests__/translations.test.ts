@@ -1,7 +1,7 @@
 /**
  * Tests for translation resolution through the consent context.
  *
- * Mirrors: packages/sdk/react/src/hooks/__tests__/use-translations.test.tsx
+ * Mirrors: packages/sdk/react/src/component-hooks/__tests__/use-translations.test.tsx
  */
 
 import type { KernelTranslations, Translations } from '@inth/sdk/engine';
@@ -165,7 +165,6 @@ describe('Translations', () => {
 		});
 
 		await waitFor(() => {
-			// Custom translations should override defaults
 			expect(screen.getByTestId('translation-banner-title')).toHaveTextContent(
 				'Custom Cookie Settings'
 			);
@@ -173,7 +172,6 @@ describe('Translations', () => {
 				screen.getByTestId('translation-banner-description')
 			).toHaveTextContent('Custom Description');
 
-			// Other translations should fall back to defaults
 			expect(screen.getByTestId('translation-dialog-title')).toHaveTextContent(
 				'Privacy Settings'
 			);

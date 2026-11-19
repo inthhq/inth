@@ -1,4 +1,5 @@
 import type { AllConsentNames, ResolvedVendor } from '@inth/sdk/engine';
+import { resolveVendorListCopy } from '@inth/sdk/surface-state';
 import vendorListStyles from '@inth/sdk/ui/styles/components/vendor-list';
 import { useId, useState } from 'react';
 
@@ -36,14 +37,7 @@ const ToggleIcon = ({ open }: { open: boolean }) => (
 	</svg>
 );
 
-const DEFAULT_COPY = {
-	disabledByCategory: 'Turn on this category to choose vendors.',
-	privacyPolicy: 'Privacy policy',
-	switchLabel: 'Allow {vendor}',
-	title: 'Vendors ({count})',
-};
-
-type Copy = typeof DEFAULT_COPY;
+type Copy = ReturnType<typeof resolveVendorListCopy>;
 
 interface VendorRowProps {
 	category: AllConsentNames;
@@ -192,8 +186,6 @@ const VendorRow = ({
  * vendor toggle never grants a category on its own. A `disabled` vendor is
  * listed without a switch.
  *
- * @param props - The category whose vendors to list, plus `Box` attributes.
- * @returns The vendor list, or `null` when there is nothing to list.
  * @public
  */
 export const ConsentWidgetVendorList = ({
@@ -212,7 +204,7 @@ export const ConsentWidgetVendorList = ({
 		draft,
 		(snapshot) => snapshot.vendors
 	);
-	const { consentManagerDialog } = useTranslations();
+	const translations = useTranslations();
 	const { noStyle: contextNoStyle } = useTheme();
 	// Two surfaces can list the same vendor at once, an inline widget and an
 	// open dialog for instance, so the label ids are scoped to this instance.
@@ -221,7 +213,7 @@ export const ConsentWidgetVendorList = ({
 	if (vendors.length === 0) {
 		return null;
 	}
-	const copy = { ...DEFAULT_COPY, ...consentManagerDialog.vendors };
+	const copy = resolveVendorListCopy(translations);
 	const styles = finalNoStyle ? undefined : vendorListStyles;
 	const title = copy.title.replace('{count}', String(vendors.length));
 

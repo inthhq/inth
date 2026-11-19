@@ -10,11 +10,11 @@ describe('attentiveTag', () => {
 	it('matches its public registry and export', () => {
 		expectScriptMatchesIntegration(
 			'attentiveTag',
-			attentiveTag({ siteSlug: 'c15tfake' }),
+			attentiveTag({ siteSlug: 'inthfake' }),
 			{
 				alwaysLoad: undefined,
 				persistAfterConsentRevoked: true,
-				src: 'https://cdn.attn.tv/c15tfake/dtag.js',
+				src: 'https://cdn.attn.tv/inthfake/dtag.js',
 			}
 		);
 	});
@@ -47,11 +47,11 @@ describe('attentiveTag', () => {
 		expect(
 			attentiveTag({
 				scriptUrl: ' https://example.com/vendor.js ',
-				siteSlug: ' c15tfake ',
+				siteSlug: ' inthfake ',
 			}).src
 		).toBe('https://example.com/vendor.js');
-		expect(attentiveTag({ scriptUrl: '   ', siteSlug: 'c15tfake' }).src).toBe(
-			'https://cdn.attn.tv/c15tfake/dtag.js'
+		expect(attentiveTag({ scriptUrl: '   ', siteSlug: 'inthfake' }).src).toBe(
+			'https://cdn.attn.tv/inthfake/dtag.js'
 		);
 	});
 });

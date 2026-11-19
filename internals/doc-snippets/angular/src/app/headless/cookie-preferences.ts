@@ -1,10 +1,5 @@
 // #region docs:own-preferences
-import {
-	ChangeDetectionStrategy,
-	Component,
-	computed,
-	inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ConsentManager } from '@inth/angular';
 import type { AllConsentNames } from '@inth/angular';
@@ -26,13 +21,13 @@ import { SwitchControl, Switch, SwitchThumb } from '@inth/angular/primitives';
 						title(category.name)
 					}}</span>
 					<button
-						c15tSwitch
+						inthSwitch
 						[attr.aria-labelledby]="'label-' + category.name"
 						[disabled]="category.name === 'necessary'"
 						[ngModel]="consent.draft.values()[category.name] ?? false"
 						(ngModelChange)="consent.setConsent(category.name, $event)"
 					>
-						<span c15tSwitchControl><span c15tSwitchThumb></span></span>
+						<span inthSwitchControl><span inthSwitchThumb></span></span>
 					</button>
 				</div>
 			}
@@ -49,13 +44,8 @@ import { SwitchControl, Switch, SwitchThumb } from '@inth/angular/primitives';
 export class CookiePreferences {
 	protected readonly consent = inject(ConsentManager);
 
-	readonly #copy = computed(() => {
-		const config = this.consent.translationConfig();
-		return config.translations[config.defaultLanguage ?? 'en'];
-	});
-
 	protected title(name: AllConsentNames): string {
-		return this.#copy()?.consentTypes?.[name]?.title ?? name;
+		return this.consent.copy().consentTypes[name]?.title ?? name;
 	}
 
 	protected async save(): Promise<void> {

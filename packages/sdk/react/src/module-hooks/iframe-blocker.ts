@@ -70,7 +70,7 @@ export const useIframeBlocker = function useIframeBlocker(
 const GATED_IFRAME = 'iframe[data-category], iframe[data-vendor]';
 
 /** Same marker the blocker sets, so it restores what this pauses. */
-const PAUSED_ATTRIBUTE = 'data-c15t-paused';
+const PAUSED_ATTRIBUTE = 'data-inth-paused';
 
 /**
  * Whether a node is an iframe. False for a node page script can't read:

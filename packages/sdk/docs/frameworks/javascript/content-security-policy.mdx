@@ -1,12 +1,12 @@
 ---
 title: Content Security Policy
-description: Allow c15t in a JavaScript app under a Content Security Policy, covering backend requests, the stock UI's styles, nonces for vendor scripts and gated snippets, and embeds.
+description: Allow Inth in a JavaScript app under a Content Security Policy, covering backend requests, the stock UI's styles, nonces for vendor scripts and gated snippets, and embeds.
 group: frameworks
 ---
 
-## What c15t needs from your policy
+## What Inth needs from your policy
 
-Your bundle contains c15t, so `script-src` already covers it. The rest:
+Your bundle contains Inth, so `script-src` already covers it. The rest:
 
 | Directive | Allow | Why |
 | --- | --- | --- |
@@ -39,12 +39,12 @@ allowed, so vendor origins need no entry. Some vendors then load more scripts
 of their own, which `'strict-dynamic'` allows too.
 
 With `nonce` set, `@inth/sdk` runs only the
-`<script type="text/plain" data-c15t-category>` tags in your HTML that carry
-the same nonce. c15t runs an inert tag by creating a new `<script>`, and
+`<script type="text/plain" data-inth-category>` tags in your HTML that carry
+the same nonce. Inth runs an inert tag by creating a new `<script>`, and
 `'strict-dynamic'` lets scripts that trusted code creates run without a
 nonce, so without this check injected markup would run once its category was
 allowed. A tag without the nonce is skipped with a console warning and marked
-`data-c15t-activated="untrusted"`. c15t never copies the nonce onto an inert
+`data-inth-activated="untrusted"`. Inth never copies the nonce onto an inert
 tag, so add it to every inert tag, including tags your code inserts later.
 `activateGatedScripts(snapshot, root, { nonce })` applies the same check.
 
@@ -66,7 +66,7 @@ import '@inth/sdk/styles.css';
 init({ mode: manifest(), ui: { shadow: false, styles: false } });
 ```
 
-With `styles: false` and no `theme` or `css` option, c15t adds no `<style>`
+With `styles: false` and no `theme` or `css` option, Inth adds no `<style>`
 element. Put token overrides in your own CSS. Under IAB, also import
 `@inth/sdk/iab/styles.css`.
 

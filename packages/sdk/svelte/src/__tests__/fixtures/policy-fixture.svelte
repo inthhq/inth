@@ -49,7 +49,7 @@
 			<iframe
 				title="probe"
 				sandbox=""
-				src="about:blank#c15t-policy-probe"
+				src="about:blank#inth-policy-probe"
 				data-testid="policy-iframe"
 			></iframe>
 		</ConsentGate>

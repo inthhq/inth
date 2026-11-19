@@ -3,7 +3,7 @@ import { useSyncExternalStore } from 'react';
 
 /** One experiment event `experiment-consent.tsx` pushed to the data layer. */
 interface ExperimentEvent {
-	event: 'c15t_surface_shown' | 'c15t_choice_recorded';
+	event: 'inth_surface_shown' | 'inth_choice_recorded';
 	arm: string;
 	surface?: string;
 	consent_action?: string;
@@ -16,8 +16,8 @@ const isExperimentEvent = (item: unknown): item is ExperimentEvent =>
 	typeof item === 'object' &&
 	item !== null &&
 	'event' in item &&
-	(item.event === 'c15t_surface_shown' ||
-		item.event === 'c15t_choice_recorded');
+	(item.event === 'inth_surface_shown' ||
+		item.event === 'inth_choice_recorded');
 
 /**
  * Watches `window.dataLayer` the way a tag manager does, so the page can list

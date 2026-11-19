@@ -1,7 +1,7 @@
 /**
- * The element the stock UI renders into: a `[data-c15t-ui]` host, by
- * default with a shadow root holding the stylesheet, a `.c15t-host`
- * wrapper and the `.c15t-theme-root` the surfaces append to.
+ * The element the stock UI renders into: a `[data-inth-ui]` host, by
+ * default with a shadow root holding the stylesheet, a `.inth-host`
+ * wrapper and the `.inth-theme-root` the surfaces append to.
  *
  * Shared by `mountConsentUI` and the init script's banner, so the engine
  * can take over the root the init script mounted.
@@ -9,7 +9,7 @@
 import type { ConsentUIOptions } from '../types';
 import { h } from './dom';
 
-const HOST_ATTRIBUTE = 'data-c15t-ui';
+const HOST_ATTRIBUTE = 'data-inth-ui';
 
 /** A mounted UI root. */
 export interface UIRoot {
@@ -37,10 +37,6 @@ const attachShadowRoot = function attachShadowRoot(
 /**
  * A `<style>` carrying the client's nonce: a nonce-based `style-src`
  * blocks an unnonced one, even in a shadow root.
- *
- * @param text - The sheet.
- * @param nonce - The page's CSP nonce.
- * @returns The element.
  */
 export const createStyle = function createStyle(
 	text: string,
@@ -56,16 +52,14 @@ export const createStyle = function createStyle(
 /**
  * Follow the configured colour scheme on the UI wrapper.
  *
- * The stylesheet keys dark tokens off a `.c15t-dark` ancestor of
- * `.c15t-theme-root`; inside a shadow root nothing on `<html>` reaches
+ * The stylesheet keys dark tokens off a `.inth-dark` ancestor of
+ * `.inth-theme-root`; inside a shadow root nothing on `<html>` reaches
  * it, so the wrapper carries the class itself. For the same reason `null`
  * cannot simply leave the class alone, as it does in the framework
  * providers: the page's class would never reach the UI. It copies it
- * instead, from either `dark` or `c15t-dark` on `<html>`.
+ * instead, from either `dark` or `inth-dark` on `<html>`.
  *
- * @param wrapper - The `.c15t-host` wrapper.
- * @param host - The host element.
- * @param scheme - The configured scheme.
+ * @param wrapper - The `.inth-host` wrapper.
  * @returns Stops following it.
  */
 export const applyColorScheme = function applyColorScheme(
@@ -74,17 +68,17 @@ export const applyColorScheme = function applyColorScheme(
 	scheme: Exclude<ConsentUIOptions['colorScheme'], undefined>
 ): () => void {
 	const set = function set(dark: boolean): void {
-		// The wrapper serves `.c15t-dark .c15t-theme-root`; the host serves the
-		// `:host(.c15t-dark)` variants the generated sheet adds for `:root`.
-		wrapper.classList.toggle('c15t-dark', dark);
-		host.classList.toggle('c15t-dark', dark);
+		// The wrapper serves `.inth-dark .inth-theme-root`; the host serves the
+		// `:host(.inth-dark)` variants the generated sheet adds for `:root`.
+		wrapper.classList.toggle('inth-dark', dark);
+		host.classList.toggle('inth-dark', dark);
 		host.style.colorScheme = dark ? 'dark' : 'light';
 	};
 	if (scheme === null) {
 		const html = document.documentElement;
 		const follow = function follow(): void {
 			set(
-				html.classList.contains('dark') || html.classList.contains('c15t-dark')
+				html.classList.contains('dark') || html.classList.contains('inth-dark')
 			);
 		};
 		follow();
@@ -114,13 +108,9 @@ export const applyColorScheme = function applyColorScheme(
 /**
  * Build the UI root and append it to `container`.
  *
- * @param container - Where the host goes.
- * @param options - Shadow and colour-scheme options.
  * @param styleText - The stock sheet; empty for none.
- * @param nonce - The page's CSP nonce.
  * @param beforeContent - Called with the root after the `<style>` and
  * before the wrapper, for `stylesheetUrls` links.
- * @returns The root.
  */
 export const createUIRoot = function createUIRoot(
 	container: HTMLElement,
@@ -137,8 +127,8 @@ export const createUIRoot = function createUIRoot(
 		root.append(style);
 	}
 	beforeContent?.(root);
-	const wrapper = h('div', { class: 'c15t-host' });
-	const themeRoot = h('div', { class: 'c15t-theme-root' });
+	const wrapper = h('div', { class: 'inth-host' });
+	const themeRoot = h('div', { class: 'inth-theme-root' });
 	wrapper.append(themeRoot);
 	root.append(wrapper);
 	container.append(host);

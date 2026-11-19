@@ -37,36 +37,36 @@ import {
 	selector: 'app-custom-dialog',
 	template: `
 		<ng-container
-			c15tDialog
-			#dialog="c15tDialog"
+			inthDialog
+			#dialog="inthDialog"
 			[open]="open()"
 			(openChange)="setOpen($event)"
 			[preventScroll]="true"
 			[unmountOnExit]="true"
 		>
 			@if (dialog.shouldRender()) {
-				<div c15tPortal>
+				<div inthPortal>
 					<div
-						c15tDialogBackdrop
+						inthDialogBackdrop
 						class="backdrop"
 					></div>
 					<div
-						c15tDialogPositioner
+						inthDialogPositioner
 						class="positioner"
 					>
 						<div
-							c15tDialogContent
+							inthDialogContent
 							class="card"
 						>
-							<h2 c15tDialogTitle>Cookie settings</h2>
-							<p c15tDialogDescription>Choose what this site may use.</p>
+							<h2 inthDialogTitle>Cookie settings</h2>
+							<p inthDialogDescription>Choose what this site may use.</p>
 							<label>
 								<button
-									c15tSwitch
+									inthSwitch
 									[checked]="consent.draft.values().measurement ?? false"
 									(checkedChange)="consent.setConsent('measurement', $event)"
 								>
-									<span c15tSwitchControl><span c15tSwitchThumb></span></span>
+									<span inthSwitchControl><span inthSwitchThumb></span></span>
 								</button>
 								Analytics
 							</label>
@@ -76,7 +76,7 @@ import {
 							>
 								Save
 							</button>
-							<button c15tDialogClose>Close</button>
+							<button inthDialogClose>Close</button>
 						</div>
 					</div>
 				</div>

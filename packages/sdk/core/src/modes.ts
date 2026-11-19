@@ -128,7 +128,6 @@ export interface TestingMode extends TestingModeOptions {
 /**
  * The options a {@link TestingMode} carries, without its `type`.
  *
- * @param mode - The testing mode.
  * @returns Its `policy` and `iab`, where set.
  * @internal
  */

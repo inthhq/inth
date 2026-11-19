@@ -4,15 +4,18 @@
  */
 import type { GlobalVendorList } from '@inth/sdk-schema/types';
 
-import { parseCacheDirectiveSeconds } from '../libs/cache-directive';
+import {
+	forbidsReuse,
+	parseCacheDirectiveSeconds,
+	readUpstreamAge,
+} from '../libs/cache-directive';
 import { failedResponseError } from '../libs/failed-response';
+import { clearStaleCache, readThrough } from './stale-on-error';
+import type { StaleCache, StaleEntry } from './stale-on-error';
 
-export interface CachedGvl {
-	gvl: GlobalVendorList | null;
-	expiresAt: number;
-}
+export type CachedGvl = StaleEntry<GlobalVendorList | null>;
 
-export type GvlCache = Map<string, CachedGvl>;
+export type GvlCache = StaleCache<GlobalVendorList | null>;
 
 export interface FetchCachedGvlOptions {
 	/** Vendor list endpoint from the manifest's `iab.gvl.url`. */
@@ -30,53 +33,40 @@ export interface FetchCachedGvlOptions {
 }
 
 const DEFAULT_TTL_SECONDS = 86_400;
+/**
+ * How long a failed fetch is remembered before the next call tries again.
+ * A stalled request holds an init for the full fetch timeout, so without
+ * this an outage would slow every init, not one a minute.
+ */
+const FAILURE_BACKOFF_MS = 60_000;
+/** Most lists one cache keeps, one per URL and language; the oldest goes first. */
+const MAX_ENTRIES = 64;
 
 const defaultGvlCache: GvlCache = new Map();
-const inflightByCache = new WeakMap<
-	GvlCache,
-	Map<string, Promise<GlobalVendorList | null>>
->();
-
-const getInflight = function getInflight(cache: GvlCache) {
-	let inflight = inflightByCache.get(cache);
-	if (!inflight) {
-		inflight = new Map();
-		inflightByCache.set(cache, inflight);
-	}
-	return inflight;
-};
 
 const ttlFromHeaders = function ttlFromHeaders(headers: Headers): number {
 	const cacheControl = headers.get('cache-control');
-	if (
-		cacheControl
-			?.split(',')
-			.some((part) =>
-				['no-store', 'no-cache', 'private'].includes(
-					part.trim().split('=')[0]?.toLowerCase() ?? ''
-				)
-			)
-	) {
+	if (forbidsReuse(cacheControl)) {
 		return 0;
 	}
 	const ttl =
 		parseCacheDirectiveSeconds(cacheControl, 's-maxage') ??
 		parseCacheDirectiveSeconds(cacheControl, 'max-age') ??
 		DEFAULT_TTL_SECONDS;
-	const age = Number(headers.get('age') ?? 0);
-	return Math.max(0, ttl - (Number.isFinite(age) && age > 0 ? age : 0));
+	return Math.max(0, ttl - readUpstreamAge(headers.get('age')));
 };
 
 /** Drops every cached list; the next call fetches again. */
 export const clearGvlCache = function clearGvlCache(
 	cache: GvlCache = defaultGvlCache
 ): void {
-	cache.clear();
-	inflightByCache.delete(cache);
+	clearStaleCache(cache);
 };
 
 /**
- * Fetches a vendor list through the cache.
+ * Fetches a vendor list through the cache. When a refresh fails, by status
+ * or by a thrown or aborted fetch, the last good list is served, and the
+ * endpoint is not asked again for a minute.
  *
  * @param options - Endpoint, language, and fetch implementation.
  * @returns The list, or `null` when the endpoint answered 204.
@@ -85,52 +75,34 @@ export const clearGvlCache = function clearGvlCache(
 export const fetchCachedGvl = function fetchCachedGvl(
 	options: FetchCachedGvlOptions
 ): Promise<GlobalVendorList | null> {
-	const cache = options.cache ?? defaultGvlCache;
-	const now = options.now ?? Date.now();
-	const key = `${options.url}|${options.language}`;
-	const cached = cache.get(key);
-	if (cached && cached.expiresAt > now) {
-		return Promise.resolve(cached.gvl);
-	}
-
-	const inflight = getInflight(cache);
-	const pending = inflight.get(key);
-	if (pending) {
-		return pending;
-	}
-
-	const label = options.label ?? 'c15t';
-	const run = (async () => {
-		try {
+	const label = options.label ?? 'inth';
+	return readThrough({
+		backoffMs: FAILURE_BACKOFF_MS,
+		cache: options.cache ?? defaultGvlCache,
+		fallback: (error) => {
+			throw error;
+		},
+		key: `${options.url}|${options.language}`,
+		async load() {
 			const response = await options.fetch(options.url, {
 				headers: { 'accept-language': options.language, ...options.headers },
 				method: 'GET',
 			});
 			if (!response.ok && response.status !== 204) {
-				if (cached) {
-					// Keep serving the last good list while the upstream misbehaves.
-					return cached.gvl;
-				}
 				throw await failedResponseError(`${label}: GVL`, response);
 			}
-			const gvl =
+			const value =
 				response.status === 204
 					? null
 					: ((await response.json()) as GlobalVendorList);
-			// A cleared cache belongs to newer requests; an old fill cannot repopulate it.
-			if (inflightByCache.get(cache) === inflight) {
-				const ttl = ttlFromHeaders(response.headers);
-				if (ttl > 0) {
-					cache.set(key, { expiresAt: now + ttl * 1000, gvl });
-				} else {
-					cache.delete(key);
-				}
-			}
-			return gvl;
-		} finally {
-			inflight.delete(key);
-		}
-	})();
-	inflight.set(key, run);
-	return run;
+			return {
+				freshMs: ttlFromHeaders(response.headers) * 1000,
+				// The last good list stays the fallback until a new one replaces it.
+				staleMs: Number.POSITIVE_INFINITY,
+				value,
+			};
+		},
+		maxEntries: MAX_ENTRIES,
+		now: options.now ?? Date.now(),
+	});
 };

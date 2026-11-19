@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "@c15t/fixture-expo-dev",
+      "name": "@inth/fixture-expo-dev",
       "dependencies": {
         "expo": "57.0.22",
         "expo-constants": "57.0.18",

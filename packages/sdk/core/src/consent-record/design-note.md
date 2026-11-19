@@ -31,4 +31,4 @@ A notice prompt depends only on its dismissal. Missing dismissal yields `missing
 
 The kernel records choices through accept, reject and save, then evaluates these records against the current resolved policy. Persistence reads raw v2 and v3 records without creating a choice or writing during hydration. Producers compute policy and prompt fingerprints before the kernel applies a resolution.
 
-Notice dismissal has its own command, record and event. GPC has no record: when the browser stops sending the signal, its restriction stops applying. Clearing c15t data invalidates pending record work. Transport acknowledgements may associate a successful current save with its canonical subject; failures preserve the local choice and existing subject.
+Notice dismissal has its own command, record and event. GPC has no record: when the browser stops sending the signal, its restriction stops applying. Clearing Inth data invalidates pending record work. Transport acknowledgements may associate a successful current save with its canonical subject; failures preserve the local choice and existing subject.

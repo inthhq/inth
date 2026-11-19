@@ -42,7 +42,7 @@ import type {
  */
 export const CONSENT_DIALOG_PANEL = new InjectionToken<
 	() => Promise<Type<ConsentDialogPanel>>
->('C15T_CONSENT_DIALOG_PANEL', {
+>('INTH_CONSENT_DIALOG_PANEL', {
 	factory: () => async () =>
 		(await import('./consent-dialog-panel')).ConsentDialogPanel,
 });
@@ -51,7 +51,7 @@ export const CONSENT_DIALOG_PANEL = new InjectionToken<
  * The preference dialog: the consent widget in a modal, with a title,
  * description, legal links and attribution. It opens when
  * `ConsentManager.activeUI()` is `'dialog'`: from the banner's Customize
- * button, a `[c15tConsentDialogLink]`, or `<c15t-consent-dialog-trigger>`.
+ * button, a `[inthConsentDialogLink]`, or `<inth-consent-dialog-trigger>`.
  * Escape closes it.
  *
  * The dialog's body, with the widget and primitives it renders, is a chunk
@@ -63,8 +63,8 @@ export const CONSENT_DIALOG_PANEL = new InjectionToken<
  *
  * @example
  * ```html
- * <c15t-consent-banner />
- * <c15t-consent-dialog [legalLinks]="['privacyPolicy']" />
+ * <inth-consent-banner />
+ * <inth-consent-dialog [legalLinks]="['privacyPolicy']" />
  * ```
  */
 @Component({
@@ -72,7 +72,7 @@ export const CONSENT_DIALOG_PANEL = new InjectionToken<
 	// The server renders nothing here, and the body is created in the
 	// browser: there is nothing to hydrate.
 	host: { ngSkipHydration: 'true' },
-	selector: 'c15t-consent-dialog',
+	selector: 'inth-consent-dialog',
 	template: '<ng-container #body />',
 })
 export class ConsentDialog {
@@ -97,12 +97,12 @@ export class ConsentDialog {
 	 * `disableAnimation`, which follows `prefers-reduced-motion`.
 	 */
 	readonly disableAnimation = input<boolean | undefined>(undefined);
-	/** Hide the "Secured by c15t" attribution. */
+	/** Hide the "Secured by" attribution. */
 	readonly hideBranding = input(false);
 	/** Which of the provider's legal links follow the description. */
 	readonly legalLinks = input<ConsentDialogLegalLinks | undefined>(undefined);
 	/**
-	 * Render a `<c15t-consent-dialog-trigger>` with the dialog. Pass an
+	 * Render a `<inth-consent-dialog-trigger>` with the dialog. Pass an
 	 * object to set the trigger's inputs.
 	 */
 	readonly showTrigger = input<boolean | ConsentDialogTriggerOptions>(false);

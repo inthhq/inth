@@ -12,7 +12,7 @@ which findings changed code and which recommendations were not adopted.
 | Missing state bypassed an explicit country rule | Match the explicit country rule before falling back. Without one, retain fallback or insufficient-inputs failure. Document the resulting choice banner and provide a US country-rule example. |
 | Policy edits re-solicited consent after refusal | Suppress automatic choice prompts whenever an in-scope refusal applies. This also covers new categories and expired grants, which could otherwise trigger Accept All and solicit reversal indirectly. Permissions still expire. User-initiated preferences remain available. |
 
-The refusal rule is a c15t product decision, not a claim that every law bans
+The refusal rule is a Inth product decision, not a claim that every law bans
 all later requests. It avoids a new per-jurisdiction flag or timer. It also
 honors active GPC and recorded opt-out directives. A refusal outside the
 requested scope does not suppress a choice for that scope. Notice delivery

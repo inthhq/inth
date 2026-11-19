@@ -7,7 +7,7 @@ const IntegrationStatesPage = () => (
 		<div className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-12 sm:px-6">
 			<header className="border-border/80 space-y-3 border-b pb-8">
 				<p className="label-pixel text-muted-foreground">
-					c15t demo / integration states
+					inth demo / integration states
 				</p>
 				<h1 className="text-3xl font-semibold tracking-[-0.04em]">
 					Inspect loading, error, and retry

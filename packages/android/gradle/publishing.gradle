@@ -1,8 +1,8 @@
 // Shared by the headless JVM and Android publications. Remote publication is opt-in.
 def nativeVersion = providers.gradleProperty('inth.native.version').get()
 def artifactName = project.name
-def centralPublication = providers.environmentVariable('C15T_MAVEN_CENTRAL').orNull == 'true'
-def privatePublication = providers.environmentVariable('C15T_MAVEN_PUBLISH').orNull == 'true'
+def centralPublication = providers.environmentVariable('INTH_MAVEN_CENTRAL').orNull == 'true'
+def privatePublication = providers.environmentVariable('INTH_MAVEN_PUBLISH').orNull == 'true'
 if (centralPublication && privatePublication) {
 	throw new GradleException('Choose Maven Central or the private pilot publication, not both.')
 }
@@ -18,10 +18,10 @@ publishing {
 		if (privatePublication) {
 			maven {
 				name = 'privateGitHub'
-				url = uri('https://maven.pkg.github.com/inthhq/c15t-private')
+				url = uri('https://maven.pkg.github.com/inthhq/inth')
 				credentials {
-					username = providers.environmentVariable('C15T_MAVEN_USERNAME').orNull
-					password = providers.environmentVariable('C15T_MAVEN_TOKEN').orNull
+					username = providers.environmentVariable('INTH_MAVEN_USERNAME').orNull
+					password = providers.environmentVariable('INTH_MAVEN_TOKEN').orNull
 				}
 			}
 		}
@@ -63,7 +63,7 @@ tasks.withType(AbstractArchiveTask).configureEach {
 tasks.withType(Jar).configureEach {
 	from(rootProject.file('../../LICENSE')) { into "META-INF/licenses/com.inth/${artifactName}"; rename { 'LICENSE' } }
 	from(rootProject.file('../../NOTICE')) { into "META-INF/licenses/com.inth/${artifactName}" }
-	manifest.attributes('Implementation-Version': nativeVersion, 'Implementation-Vendor': 'c15t')
+	manifest.attributes('Implementation-Version': nativeVersion, 'Implementation-Vendor': 'Inth')
 }
 
 def metadata = tasks.register('generateNativeMetadata') {
@@ -104,7 +104,7 @@ afterEvaluate {
 				description = project.name == 'inth-core' ?
 					'Headless Inth consent and IAB engine for the JVM.' :
 					(project.name == 'inth-consent-ui' ? 'Optional native Compose consent presenter for Inth.' : 'Android persistence, transport and lifecycle services for Inth. No UI dependency.')
-				url = 'https://c15t.com'
+				url = 'https://inth.com'
 				licenses {
 					license {
 						name = 'Apache License, Version 2.0'
@@ -112,24 +112,24 @@ afterEvaluate {
 						distribution = 'repo'
 					}
 				}
-				developers { developer { id = 'c15t'; name = 'c15t'; url = 'https://c15t.com' } }
+				developers { developer { id = 'inth'; name = 'Inth'; url = 'https://inth.com' } }
 				scm {
-					url = centralPublication ? 'https://github.com/c15t/c15t' : 'https://github.com/inthhq/c15t-private'
-					connection = centralPublication ? 'scm:git:https://github.com/c15t/c15t.git' : 'scm:git:https://github.com/inthhq/c15t-private.git'
+					url = 'https://github.com/inthhq/inth'
+					connection = 'scm:git:https://github.com/inthhq/inth.git'
 					if (centralPublication) {
-						developerConnection = 'scm:git:ssh://git@github.com/c15t/c15t.git'
+						developerConnection = 'scm:git:ssh://git@github.com/inthhq/inth.git'
 					}
 				}
 			}
 		}
 	}
 	if (centralPublication || privatePublication) {
-		def signingKey = providers.environmentVariable('C15T_MAVEN_SIGNING_KEY').orNull
-		def signingPassword = providers.environmentVariable('C15T_MAVEN_SIGNING_PASSWORD').orNull
+		def signingKey = providers.environmentVariable('INTH_MAVEN_SIGNING_KEY').orNull
+		def signingPassword = providers.environmentVariable('INTH_MAVEN_SIGNING_PASSWORD').orNull
 		if (!signingKey || !signingPassword) {
 			throw new GradleException('Signed Maven publication requires an in-memory signing key/password from the secure release environment.')
 		}
-		if (privatePublication && (!System.getenv('C15T_MAVEN_USERNAME') || !System.getenv('C15T_MAVEN_TOKEN'))) {
+		if (privatePublication && (!System.getenv('INTH_MAVEN_USERNAME') || !System.getenv('INTH_MAVEN_TOKEN'))) {
 			throw new GradleException('Private Maven publication requires repository credentials from the secure release environment.')
 		}
 		signing {

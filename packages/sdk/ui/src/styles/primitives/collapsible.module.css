@@ -1,7 +1,7 @@
 :root {
-	--collapsible-duration: var(--c15t-duration-normal);
-	--collapsible-ease: var(--c15t-easing);
-	--collapsible-content-color: var(--c15t-text-muted);
+	--collapsible-duration: var(--inth-duration-normal);
+	--collapsible-ease: var(--inth-easing);
+	--collapsible-content-color: var(--inth-text-muted);
 	--collapsible-gap: 0;
 }
 
@@ -21,7 +21,7 @@
 		align-items: center;
 		background: none;
 		border: 0;
-		color: var(--c15t-text);
+		color: var(--inth-text);
 		cursor: pointer;
 		display: inline-flex;
 		gap: 0.5rem;
@@ -30,7 +30,7 @@
 	}
 
 	.trigger:focus-visible {
-		outline: 2px solid var(--c15t-primary);
+		outline: 2px solid var(--inth-primary);
 		outline-offset: 2px;
 	}
 
@@ -60,8 +60,8 @@
 		opacity: 1;
 		transform: translateY(0);
 		transition:
-			opacity calc(var(--collapsible-duration) * 0.35) var(--c15t-easing-out),
-			transform calc(var(--collapsible-duration) * 0.35) var(--c15t-easing-out);
+			opacity calc(var(--collapsible-duration) * 0.35) var(--inth-easing-out),
+			transform calc(var(--collapsible-duration) * 0.35) var(--inth-easing-out);
 		will-change: opacity, transform;
 	}
 

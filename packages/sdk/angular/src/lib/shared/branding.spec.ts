@@ -4,7 +4,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { testOptions } from '../../__tests__/test-local';
 import { ConsentManager } from '../core/consent-manager';
-import { provideC15t } from '../core/provide-c15t';
+import { provideInth } from '../core/provide-inth';
 import { Branding } from './branding';
 
 @Component({
@@ -13,9 +13,8 @@ import { Branding } from './branding';
 	selector: 'test-host',
 	template: `
 		<a
-			c15t-branding
-			variant="banner-tag"
-			data-testid="branding"
+			inth-branding
+			[surface]="'banner'"
 		></a>
 	`,
 })
@@ -24,7 +23,7 @@ class Host {}
 const boot = async () => {
 	TestBed.configureTestingModule({
 		providers: [
-			provideC15t({
+			provideInth({
 				...testOptions(),
 				legalLinks: {
 					privacyPolicy: { href: '/privacy' },
@@ -54,9 +53,35 @@ afterEach(() => {
 describe('Branding', () => {
 	test('renders the stock attribution link', async () => {
 		const { byTestId } = await boot();
-		const branding = byTestId('branding') as HTMLAnchorElement;
+		const branding = byTestId('consent-banner-branding') as HTMLAnchorElement;
+		expect(branding.getAttribute('href')).toMatch(/^https:\/\/inth\.com/u);
+		expect(branding.getAttribute('target')).toBeNull();
+		expect(branding.dataset.branding).toBe('inth');
+		expect(branding.dataset.variant).toBe('banner-tag');
+		expect(branding.querySelector('svg')?.getAttribute('aria-hidden')).toBe(
+			'true'
+		);
+		expect(branding.querySelector('[id]')).toBeNull();
+		// The other frameworks render neither input as an attribute.
+		expect(branding.hasAttribute('surface')).toBe(false);
+		expect(branding.querySelector('[mark]')).toBeNull();
+	});
+
+	test('shows the c15t mark for c15t branding', async () => {
+		TestBed.configureTestingModule({
+			providers: [
+				provideInth({
+					...testOptions(),
+					prefetch: { initialBranding: 'c15t' },
+				}),
+			],
+		});
+		const fixture = TestBed.createComponent(Host);
+		await fixture.whenStable();
+		const branding = (fixture.nativeElement as HTMLElement).querySelector(
+			'[data-testid="consent-banner-branding"]'
+		) as HTMLAnchorElement;
 		expect(branding.getAttribute('href')).toMatch(/^https:\/\/c15t\.com/u);
-		expect(branding.dataset.branding).toBe('c15t');
-		expect(branding.querySelector('svg title')?.textContent).toBe('c15t');
+		expect(branding.textContent).toContain('c15t');
 	});
 });

@@ -7,7 +7,7 @@ description: "The measured web answer for category permissions, restrictions and
 
 Status: written 2026-09-18 against local checkout `v3-3` at `32628df38`.
 The clock is unsynced, so treat "current" here relative to that commit.
-Live behaviour changes this answer: web-side `@c15t/PLAYGROUND`, the platform
+Live behaviour changes this answer: web-side `@inth/PLAYGROUND`, the platform
 policy API and any editor that edits a policy. Re-derive before trusting it for
 a release note.
 

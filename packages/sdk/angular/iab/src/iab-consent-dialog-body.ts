@@ -15,14 +15,11 @@ import {
 	ConsentTheme,
 	FocusTrap,
 	Portal,
-	resolveComponentStyles,
 	ScrollLock,
-	toStyleAttribute,
 	ɵBranding as Branding,
 	ɵInitialFocus as InitialFocus,
 	ɵNoStyleScope as NoStyleScope,
 	ɵOverlay as Overlay,
-	ɵresolvedTranslations as resolvedTranslations,
 	ɵresolveNoStyle as resolveNoStyle,
 	ɵshouldShowBranding as shouldShowBranding,
 } from '@inth/angular';
@@ -34,23 +31,31 @@ import {
 	uniqueId,
 } from '@inth/angular/primitives';
 import { resolveIABBannerSummary } from '@inth/sdk/iab-support';
-import { applyPublisherRestrictionsToGVL } from '@inth/sdk/iab/headless';
+import {
+	applyPublisherRestrictionsToGVL,
+	resolveIABDialogDisplayModel,
+} from '@inth/sdk/iab/headless';
+import type { HeadlessIABVendorId } from '@inth/sdk/iab/headless';
 import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
-import { resolveConsentPresentation } from '@inth/sdk/surface-state';
+import {
+	resolveConsentPresentation,
+	resolveIABCopy,
+} from '@inth/sdk/surface-state';
 import { isDialogDismissKey } from '@inth/sdk/ui/primitives/dialog';
 import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import { buttonVariants } from '@inth/sdk/ui/styles/primitives';
-import { getTextDirection } from '@inth/sdk/ui/utils';
+import {
+	getTextDirection,
+	resolveStyles,
+	toStyleAttributeValue,
+} from '@inth/sdk/ui/utils';
 
 import { IABFeatureItem } from './iab-feature-item';
 import { ChevronRightIcon, CloseIcon, InfoIcon, LockIcon } from './iab-icons';
 import { IABPurposeItem } from './iab-purpose-item';
 import type { IABPurposeChoice, IABVendorChoice } from './iab-purpose-item';
 import { IABStackItem } from './iab-stack-item';
-import { getIABTranslations } from './iab-translations';
-import { resolveIABDialogDisplayModel } from './iab-types';
-import type { VendorId } from './iab-types';
 import { IABVendorList } from './iab-vendor-list';
 import type { IABAdTechProviderChoice } from './iab-vendor-list';
 
@@ -68,7 +73,7 @@ const primaryButtonClass = buttonVariants({
 }).root();
 
 /**
- * The IAB preference centre itself, which `<c15t-iab-consent-dialog>`
+ * The IAB preference centre itself, which `<inth-iab-consent-dialog>`
  * imports on demand so its code stays out of the first load.
  *
  * Plain elements, not the dialog primitive: React's IAB preference centre is
@@ -104,16 +109,16 @@ const primaryButtonClass = buttonVariants({
 	],
 	// Its parts resolve `noStyle` through this surface.
 	providers: [NoStyleScope],
-	selector: 'c15t-iab-consent-dialog-body',
+	selector: 'inth-iab-consent-dialog-body',
 	template: `
 		@if (open()) {
 			@let iabT = translations();
 			@let pc = iabT.preferenceCenter;
 			@let state = iab();
-			<div c15tPortal>
+			<div inthPortal>
 				@if (preferences().blocking) {
 					<div
-						c15t-overlay
+						inth-overlay
 						[styles]="styles"
 						[variant]="'iab-dialog'"
 						[entering]="!disableAnimation()"
@@ -124,6 +129,7 @@ const primaryButtonClass = buttonVariants({
 					[class]="rootStyle().className || ''"
 					[attr.style]="toStyle(rootStyle().style)"
 					data-testid="iab-consent-dialog-root"
+					data-inth-surface="dialog"
 					[attr.dir]="textDirection()"
 				>
 					<!-- A div, not a dialog: the user agent's dialog padding is
@@ -137,12 +143,12 @@ const primaryButtonClass = buttonVariants({
 						[attr.aria-label]="pc.title"
 						[attr.aria-describedby]="descriptionId"
 						tabindex="-1"
-						c15tInitialFocus
-						[c15tFocusTrap]="{
+						inthInitialFocus
+						[inthFocusTrap]="{
 							enabled: preferences().blocking,
 							initialFocus: 'first-tabbable',
 						}"
-						[c15tScrollLock]="preferences().blocking"
+						[inthScrollLock]="preferences().blocking"
 						(keydown)="dismissOnEscape($event)"
 					>
 						<div
@@ -166,7 +172,7 @@ const primaryButtonClass = buttonVariants({
 								(click)="close()"
 							>
 								<svg
-									c15t-close-icon
+									inth-close-icon
 									style="height: 1rem; width: 1rem"
 									aria-hidden="true"
 								></svg>
@@ -174,18 +180,18 @@ const primaryButtonClass = buttonVariants({
 						</div>
 
 						<div
-							c15tTabs
+							inthTabs
 							[value]="activeTab()"
 							(valueChange)="selectTab($event)"
 							[class]="cls(styles.body)"
 						>
 							<div [class]="cls(styles.tabsContainer)">
 								<div
-									c15tTabsList
+									inthTabsList
 									[class]="cls(styles.tabsList)"
 								>
 									<button
-										c15tTabsTrigger
+										inthTabsTrigger
 										value="purposes"
 										[class]="cls(styles.tabButton)"
 									>
@@ -195,7 +201,7 @@ const primaryButtonClass = buttonVariants({
 										}
 									</button>
 									<button
-										c15tTabsTrigger
+										inthTabsTrigger
 										value="vendors"
 										[class]="cls(styles.tabButton)"
 									>
@@ -214,7 +220,7 @@ const primaryButtonClass = buttonVariants({
 
 							<div [class]="cls(styles.content)">
 								<div
-									c15tTabsContent
+									inthTabsContent
 									value="purposes"
 									[class]="cls(styles.tabPanel)"
 								>
@@ -228,16 +234,11 @@ const primaryButtonClass = buttonVariants({
 									} @else if (display().isReady && state) {
 										@for (row of display().consentRows; track row.testId) {
 											@if (row.kind === 'stack') {
-												<c15t-iab-stack-item
+												<inth-iab-stack-item
 													[stack]="row"
 													[consents]="state.purposeConsents"
 													[vendorConsents]="state.vendorConsents"
-													[vendorLegitimateInterests]="
-														state.vendorLegitimateInterests
-													"
-													[purposeLegitimateInterests]="
-														state.purposeLegitimateInterests
-													"
+													[legitimateInterests]="state"
 													[purposeObjection]="true"
 													[vendorObjection]="true"
 													[noStyle]="resolvedNoStyle()"
@@ -249,20 +250,18 @@ const primaryButtonClass = buttonVariants({
 														setVendorLegitimateInterest($event)
 													"
 													(purposeLegitimateInterestToggle)="
-														setPurposeLegitimateInterest($event)
+														setPurposeObjection($event)
 													"
 												/>
 											} @else if (row.toggle === 'special-feature') {
-												<c15t-iab-purpose-item
+												<inth-iab-purpose-item
 													[purpose]="row"
 													[testId]="row.testId"
 													[isEnabled]="
 														state.specialFeatureOptIns[row.id] ?? false
 													"
 													[vendorConsents]="state.vendorConsents"
-													[vendorLegitimateInterests]="
-														state.vendorLegitimateInterests
-													"
+													[legitimateInterests]="state"
 													[vendorObjection]="true"
 													[noStyle]="resolvedNoStyle()"
 													[iabT]="iabT"
@@ -276,17 +275,12 @@ const primaryButtonClass = buttonVariants({
 													"
 												/>
 											} @else {
-												<c15t-iab-purpose-item
+												<inth-iab-purpose-item
 													[purpose]="row"
 													[testId]="row.testId"
 													[isEnabled]="state.purposeConsents[row.id] ?? false"
 													[vendorConsents]="state.vendorConsents"
-													[vendorLegitimateInterests]="
-														state.vendorLegitimateInterests
-													"
-													[purposeLegitimateInterests]="
-														state.purposeLegitimateInterests
-													"
+													[legitimateInterests]="state"
 													[purposeObjection]="true"
 													[vendorObjection]="true"
 													[noStyle]="resolvedNoStyle()"
@@ -303,7 +297,7 @@ const primaryButtonClass = buttonVariants({
 														setVendorLegitimateInterest($event)
 													"
 													(purposeLegitimateInterestToggle)="
-														setPurposeLegitimateInterest($event)
+														setPurposeObjection($event)
 													"
 												/>
 											}
@@ -319,7 +313,7 @@ const primaryButtonClass = buttonVariants({
 														(click)="toggleSpecialPurposes()"
 													>
 														<svg
-															c15t-chevron-right-icon
+															inth-chevron-right-icon
 															[class]="cls(styles.purposeArrow)"
 															aria-hidden="true"
 															[expanded]="specialPurposesExpanded()"
@@ -328,7 +322,7 @@ const primaryButtonClass = buttonVariants({
 															<h3 [class]="cls(styles.specialPurposesTitle)">
 																{{ pc.specialPurposes.title }}
 																<svg
-																	c15t-lock-icon
+																	inth-lock-icon
 																	[class]="cls(styles.lockIcon)"
 																	aria-hidden="true"
 																></svg>
@@ -345,7 +339,7 @@ const primaryButtonClass = buttonVariants({
 													</button>
 													<div style="position: relative">
 														<svg
-															c15t-info-icon
+															inth-info-icon
 															[class]="cls(styles.infoIcon)"
 															[attr.aria-label]="pc.specialPurposes.tooltip"
 														></svg>
@@ -358,7 +352,7 @@ const primaryButtonClass = buttonVariants({
 															row of display().essentialRows;
 															track row.testId
 														) {
-															<c15t-iab-purpose-item
+															<inth-iab-purpose-item
 																[purpose]="row"
 																[testId]="row.testId"
 																[isEnabled]="true"
@@ -398,7 +392,7 @@ const primaryButtonClass = buttonVariants({
 														row of display().featureRows;
 														track row.testId
 													) {
-														<c15t-iab-feature-item
+														<inth-iab-feature-item
 															[feature]="row"
 															[testId]="row.testId"
 															[noStyle]="resolvedNoStyle()"
@@ -418,20 +412,18 @@ const primaryButtonClass = buttonVariants({
 								</div>
 
 								<div
-									c15tTabsContent
+									inthTabsContent
 									value="vendors"
 									[class]="cls(styles.tabPanel)"
 								>
 									@if (state && vendorsVisited()) {
-										<c15t-iab-vendor-list
+										<inth-iab-vendor-list
 											[vendorData]="vendorData()"
 											[purposes]="display().data.purposes"
 											[vendorConsents]="state.vendorConsents"
 											[selectedVendorId]="selectedVendorId()"
 											[customVendors]="state.nonIABVendors"
-											[vendorLegitimateInterests]="
-												state.vendorLegitimateInterests
-											"
+											[legitimateInterests]="state"
 											[vendorObjection]="true"
 											[adTechProviders]="state.adTechProviders ?? []"
 											[adTechProviderConsents]="
@@ -498,11 +490,9 @@ const primaryButtonClass = buttonVariants({
 						</div>
 						@if (showBranding()) {
 							<a
-								c15t-branding
+								inth-branding
 								[noStyle]="resolvedNoStyle()"
-								[variant]="'dialog-tag'"
-								[themeKey]="'iabConsentDialogTag'"
-								data-testid="iab-consent-dialog-branding"
+								surface="iab-dialog"
 							></a>
 						}
 					</div>
@@ -547,13 +537,13 @@ export class IABConsentDialogBody {
 	protected readonly resolvedNoStyle = resolveNoStyle(this.noStyle);
 	/** @internal */
 	protected readonly translations = computed(() =>
-		getIABTranslations(this.#consent.translationConfig())
+		resolveIABCopy(this.#consent.copy())
 	);
 	/** @internal */
-	protected readonly coreTranslations = resolvedTranslations(this.#consent);
+	protected readonly coreTranslations = this.#consent.copy;
 	/** @internal */
 	protected readonly textDirection = computed(() =>
-		getTextDirection(this.#consent.translationConfig().defaultLanguage)
+		getTextDirection(this.#consent.translations()?.language)
 	);
 	/** @internal */
 	protected readonly language = computed(
@@ -581,7 +571,7 @@ export class IABConsentDialogBody {
 
 	/** @internal */
 	protected readonly rootStyle = computed(() =>
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentDialog',
 			this.#theme.theme(),
 			{
@@ -593,7 +583,7 @@ export class IABConsentDialogBody {
 	);
 	/** @internal */
 	protected readonly cardStyle = computed(() =>
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentDialogCard',
 			this.#theme.theme(),
 			{
@@ -606,7 +596,7 @@ export class IABConsentDialogBody {
 	);
 	/** @internal */
 	protected readonly headerStyle = computed(() =>
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentDialogHeader',
 			this.#theme.theme(),
 			{ baseClassName: styles.header, noStyle: this.resolvedNoStyle() },
@@ -615,7 +605,7 @@ export class IABConsentDialogBody {
 	);
 	/** @internal */
 	protected readonly footerStyle = computed(() =>
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentDialogFooter',
 			this.#theme.theme(),
 			{
@@ -630,7 +620,9 @@ export class IABConsentDialogBody {
 	protected readonly activeTab = signal<string | null>('purposes');
 	readonly #rememberedTab = computed(() => this.iab()?.preferenceCenterTab);
 	/** @internal */
-	protected readonly selectedVendorId = signal<VendorId | null>(null);
+	protected readonly selectedVendorId = signal<HeadlessIABVendorId | null>(
+		null
+	);
 	/** @internal */
 	protected readonly specialPurposesExpanded = signal(false);
 	/**
@@ -716,8 +708,8 @@ export class IABConsentDialogBody {
 	}
 
 	/** @internal */
-	protected toStyle(style: Parameters<typeof toStyleAttribute>[0]) {
-		return toStyleAttribute(style) ?? null;
+	protected toStyle(style: Parameters<typeof toStyleAttributeValue>[0]) {
+		return toStyleAttributeValue(style) ?? null;
 	}
 
 	/** @internal */
@@ -776,15 +768,12 @@ export class IABConsentDialogBody {
 	}
 
 	/** @internal */
-	protected setPurposeLegitimateInterest({
-		purposeId,
-		value,
-	}: IABPurposeChoice): void {
-		this.iab()?.setPurposeLegitimateInterest(purposeId, value);
+	protected setPurposeObjection({ purposeId, value }: IABPurposeChoice): void {
+		this.iab()?.setPurposeObjection(purposeId, !value);
 	}
 
 	/** @internal */
-	protected showVendor(vendorId: VendorId): void {
+	protected showVendor(vendorId: HeadlessIABVendorId): void {
 		this.selectedVendorId.set(vendorId);
 		this.selectTab('vendors');
 	}
@@ -795,12 +784,12 @@ export class IABConsentDialogBody {
 		if (!state) {
 			return;
 		}
-		try {
-			await saveIABConsentSurface(this.#consent.kernel(), () => state.save());
-			// The save closed the surface: a parent that owns `open` hears it.
+		const kernel = this.#consent.kernel();
+		await saveIABConsentSurface(kernel, () => state.save());
+		// The save closed the surface: a parent that owns `open` hears it.
+		// A save that recorded nothing brings the dialog back instead.
+		if (kernel.getSnapshot().activeUI !== 'dialog') {
 			this.openChange.emit(false);
-		} catch {
-			// Keep the prompt available so a later action can retry the failed load/save.
 		}
 	}
 

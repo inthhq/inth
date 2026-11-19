@@ -1,4 +1,4 @@
-import type { AllConsentNames } from '@inth/sdk/engine';
+import { POLICY_CONSENT_CATEGORIES } from '@inth/sdk/schema/types';
 import { describe, expect, it } from 'vitest';
 
 import packageJson from '../package.json' with { type: 'json' };
@@ -83,14 +83,6 @@ import { wisepopsManifest } from './vendors/functional/wisepops';
 import { zendeskWidgetManifest } from './vendors/functional/zendesk';
 import { googleTagManagerManifest } from './vendors/tag-managers/google-tag-manager';
 
-const validConsentCategories = [
-	'necessary',
-	'functionality',
-	'experience',
-	'measurement',
-	'marketing',
-] as const satisfies readonly AllConsentNames[];
-
 const vendorManifests = [
 	clayManifest,
 	hubspotManifest,
@@ -171,7 +163,6 @@ const getPublicScriptExportSubpaths =
 				(key) =>
 					key.startsWith('./') &&
 					key !== '.' &&
-					key !== './*' &&
 					key !== './package.json' &&
 					key !== './events' &&
 					// A consent bridge, not a script integration.
@@ -243,7 +234,7 @@ describe('script integration registry', () => {
 			for (const category of getConditionCategories(
 				integration.consentCategory
 			)) {
-				expect(validConsentCategories).toContain(category);
+				expect(POLICY_CONSENT_CATEGORIES).toContain(category);
 			}
 		}
 	});
@@ -263,6 +254,17 @@ describe('script integration registry', () => {
 		for (const vendor of manifestVendors) {
 			expect(getBuiltInScriptIntegrationByVendor(vendor)).toBeDefined();
 		}
+	});
+
+	it("labels each integration with its vendor's display name", () => {
+		const drifted = vendorManifests.flatMap((manifest) => {
+			const { label } = getBuiltInScriptIntegrationByVendor(
+				manifest.vendor
+			) ?? { label: undefined };
+			const name = manifest.vendorDetails?.name;
+			return label === name ? [] : [{ label, name, vendor: manifest.vendor }];
+		});
+		expect(drifted).toEqual([]);
 	});
 
 	it('runs helper parity cases from the registry list', () => {

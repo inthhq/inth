@@ -1,5 +1,7 @@
 export default defineNuxtConfig({
-	c15t: {
+	compatibilityDate: '2026-07-04',
+	css: ['~/assets/site.css', '~/assets/consent.css'],
+	inth: {
 		// The banner and dialog link to the shop's privacy policy. The label
 		// comes from the project's translations.
 		bannerLegalLinks: ['privacyPolicy'],
@@ -21,7 +23,7 @@ export default defineNuxtConfig({
 		legalLinks: { privacyPolicy: { href: '/privacy' } },
 		// A wall: the banner sits in the middle of the page and blocks it
 		// until the visitor chooses. A notice can't block, so where the
-		// policy only shows a notice, c15t uses the floating card instead.
+		// policy only shows a notice, Inth uses the floating card instead.
 		presentation: { prompt: { position: 'center', variant: 'wall' } },
 		// Northwind's colors and corners, in light and dark.
 		theme: {
@@ -46,7 +48,5 @@ export default defineNuxtConfig({
 			radius: { lg: '6px', md: '4px', sm: '3px' },
 		},
 	},
-	compatibilityDate: '2026-07-04',
-	css: ['~/assets/site.css', '~/assets/consent.css'],
 	modules: ['@inth/nuxt'],
 });

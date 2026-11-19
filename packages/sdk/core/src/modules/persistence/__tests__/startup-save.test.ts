@@ -3,22 +3,22 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 import { NOW } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../kernel';
-import { deleteConsentFromStorage } from '../../../libs/cookie';
 import { STORAGE_KEY_V2 } from '../../../libs/storage-keys';
 import { createOfflineTransport } from '../../../transports/offline';
 import type { InitResponse } from '../../../types';
 import { createPersistence } from '../index';
 import { readStoredConsentRecord } from '../record-storage';
+import { clearStoredConsentRecords } from './record-writes';
 
 beforeEach(() => {
 	vi.useFakeTimers();
 	vi.setSystemTime(NOW);
 	localStorage.clear();
-	deleteConsentFromStorage();
+	clearStoredConsentRecords();
 });
 
 afterEach(() => {
-	deleteConsentFromStorage();
+	clearStoredConsentRecords();
 	vi.useRealTimers();
 });
 

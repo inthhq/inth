@@ -178,6 +178,11 @@ export const translations: CompleteTranslations = {
 		optOut: 'Do not sell or share my data',
 		preferences: 'Manage preferences',
 	},
+	trigger: {
+		devToolsLabel: 'Inth DevTools',
+		label: 'Open privacy settings',
+		toolbarLabel: 'Privacy controls',
+	},
 };
 
 export default translations;

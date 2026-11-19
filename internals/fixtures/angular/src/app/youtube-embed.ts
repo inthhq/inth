@@ -17,8 +17,8 @@ import {
 	selector: 'app-youtube-embed',
 	template: `
 		<!-- The iframe is created only while measurement is allowed. -->
-		<c15t-consent-gate category="measurement">
-			<ng-template c15tConsentGateContent>
+		<inth-consent-gate category="measurement">
+			<ng-template inthConsentGateContent>
 				<iframe
 					title="YouTube video"
 					src="https://www.youtube-nocookie.com/embed/czTksCF6X8Y?playsinline=1"
@@ -26,18 +26,18 @@ import {
 					allowfullscreen
 				></iframe>
 			</ng-template>
-			<ng-template c15tConsentGatePlaceholder>
+			<ng-template inthConsentGatePlaceholder>
 				<div class="placeholder">
 					<p>Allow measurement to load this YouTube video.</p>
 					<button
 						type="button"
-						c15tConsentDialogLink
+						inthConsentDialogLink
 					>
 						Choose video permissions
 					</button>
 				</div>
 			</ng-template>
-		</c15t-consent-gate>
+		</inth-consent-gate>
 	`,
 })
 export class YouTubeEmbed {}

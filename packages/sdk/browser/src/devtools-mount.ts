@@ -1,5 +1,5 @@
 /**
- * Shared by `mountDevTools` and the `c15t.devtools.js` tag, which differ
+ * Shared by `mountDevTools` and the `inth.devtools.js` tag, which differ
  * only in which copy of the launcher slot they publish to.
  *
  * @internal
@@ -8,6 +8,7 @@
 
 import { createDevTools } from '@inth/sdk-dev-tools';
 import type { DevToolsInstance, DevToolsOptions } from '@inth/sdk-dev-tools';
+import { attachDevToolsLauncher } from '@inth/sdk-ui/utils/devtools-launcher';
 import type { publishDevToolsLauncher } from '@inth/sdk-ui/utils/devtools-launcher';
 
 import type { ConsentClient } from './types';
@@ -26,11 +27,9 @@ export type PublishDevToolsLauncher = typeof publishDevToolsLauncher;
  * stock trigger, which then shows a DevTools button and docks the panel
  * beside itself. `destroy()` withdraws the offer first.
  *
- * @param client - The page's client.
  * @param options - Panel placement and initial state.
  * @param publish - The launcher slot's `publishDevToolsLauncher`, from the
  * bundle that renders the trigger. Omit to keep the floating launcher.
- * @returns The panel.
  * @internal
  */
 export const createBrowserDevTools = function createBrowserDevTools(
@@ -45,15 +44,10 @@ export const createBrowserDevTools = function createBrowserDevTools(
 		getPresentation: options.getPresentation ?? (() => client.presentation),
 		kernel: client.kernel,
 	});
-	// An embedded panel has no floating launcher to hand over.
-	if (!publish || options.embedded) {
-		return instance;
-	}
-	const withdraw = publish(client.kernel, instance);
-	const { destroy } = instance;
-	instance.destroy = () => {
-		withdraw();
-		destroy();
-	};
-	return instance;
+	return publish
+		? attachDevToolsLauncher(client.kernel, instance, {
+				embedded: options.embedded,
+				publish,
+			})
+		: instance;
 };

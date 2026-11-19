@@ -17,7 +17,7 @@ import type { AstroConsentClient } from '../client';
 import * as reactPanelSurface from '../components/islands/panel-surface';
 import { resolveOptions } from '../integration';
 import { testing as testingMode } from '../testing';
-import type { C15tAstroOptions, C15tColorScheme } from '../types';
+import type { InthAstroOptions, InthColorScheme } from '../types';
 import { registerDialogAdapter, registerDialogSurface } from '../ui/adapter';
 import { reactDialogAdapter } from '../ui/react';
 import { testRule } from './policy-fixture';
@@ -53,10 +53,10 @@ const stubMatchMedia = function stubMatchMedia(matches: boolean): void {
 };
 
 const start = function start(
-	colorScheme?: C15tColorScheme,
-	extra: Partial<C15tAstroOptions> = {}
+	colorScheme?: InthColorScheme,
+	extra: Partial<InthAstroOptions> = {}
 ): AstroConsentClient {
-	const options: C15tAstroOptions = {
+	const options: InthAstroOptions = {
 		mode: testingMode(),
 		...extra,
 	};
@@ -71,20 +71,20 @@ beforeEach(() => {
 	stubMatchMedia(false);
 	document.documentElement.className = '';
 	const globals = window as unknown as Record<string, unknown>;
-	globals.__c15tAstro = undefined;
-	globals.__c15tAstroColorScheme = undefined;
-	globals.__c15tAstroConfig = undefined;
-	globals.__c15tAstroActions = undefined;
+	globals.__inthAstro = undefined;
+	globals.__inthAstroColorScheme = undefined;
+	globals.__inthAstroConfig = undefined;
+	globals.__inthAstroActions = undefined;
 });
 
 afterEach(() => {
 	client?.dispose();
 	client = null;
-	document.getElementById('c15t-dialog-host')?.remove();
+	document.getElementById('inth-dialog-host')?.remove();
 	vi.unstubAllGlobals();
 });
 
-const isDark = () => document.documentElement.classList.contains('c15t-dark');
+const isDark = () => document.documentElement.classList.contains('inth-dark');
 
 describe('boot applies the colour scheme', () => {
 	it('pins dark', () => {
@@ -94,7 +94,7 @@ describe('boot applies the colour scheme', () => {
 
 	it('pins light even when the system is dark', () => {
 		stubMatchMedia(true);
-		document.documentElement.classList.add('c15t-dark');
+		document.documentElement.classList.add('inth-dark');
 		start('light');
 		expect(isDark()).toBe(false);
 	});
@@ -128,7 +128,7 @@ describe('a webview with no matchMedia', () => {
 	});
 
 	it('falls system back to light rather than keeping a stale dark', () => {
-		document.documentElement.classList.add('c15t-dark');
+		document.documentElement.classList.add('inth-dark');
 		vi.stubGlobal('matchMedia', undefined);
 		Reflect.set(window, 'matchMedia', undefined);
 
@@ -167,7 +167,7 @@ describe('dispose', () => {
 
 		expect(media.listeners.size).toBe(0);
 		expect(
-			(window as unknown as Record<string, unknown>).__c15tAstroColorScheme
+			(window as unknown as Record<string, unknown>).__inthAstroColorScheme
 		).toBeUndefined();
 	});
 });
@@ -175,7 +175,7 @@ describe('dispose', () => {
 describe("colorScheme: 'none'", () => {
 	it('leaves a class the site set through boot and navigation', () => {
 		stubMatchMedia(false);
-		document.documentElement.classList.add('c15t-dark');
+		document.documentElement.classList.add('inth-dark');
 		start('none');
 		expect(isDark()).toBe(true);
 		expect(media.listeners.size).toBe(0);
@@ -213,7 +213,7 @@ describe('colorScheme: null', () => {
 
 describe('opening the React dialog', () => {
 	const openReactDialog = async function openReactDialog(
-		colorScheme: C15tColorScheme
+		colorScheme: InthColorScheme
 	): Promise<void> {
 		registerDialogAdapter('react', () => Promise.resolve(reactDialogAdapter));
 		registerDialogSurface('react', () => Promise.resolve(reactPanelSurface));
@@ -249,11 +249,11 @@ describe('opening the React dialog', () => {
 	});
 
 	it("leaves the site's class alone with colorScheme: 'none'", async () => {
-		document.documentElement.classList.add('c15t-dark');
+		document.documentElement.classList.add('inth-dark');
 		await openReactDialog('none');
 		expect(isDark()).toBe(true);
 
-		document.documentElement.classList.remove('c15t-dark');
+		document.documentElement.classList.remove('inth-dark');
 		await new Promise((resolve) => {
 			setTimeout(resolve, 0);
 		});

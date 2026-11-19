@@ -1,7 +1,7 @@
 {
 	"name": "@inth/integrations",
 	"version": "3.2.0-canary.0",
-	"description": "Consent-aware integrations for c15t: 40+ analytics, advertising and chat tools, including GTM, GA4 and Meta Pixel, with Google Consent Mode v2 and script gating.",
+	"description": "Consent-aware integrations for Inth: 40+ analytics, advertising and chat tools, including GTM, GA4 and Meta Pixel, with Google Consent Mode v2 and script gating.",
 	"keywords": [
 		"adobe-analytics",
 		"adroll",
@@ -9,7 +9,6 @@
 		"amplitude",
 		"analytics-consent",
 		"block-scripts-until-consent",
-		"c15t",
 		"ccpa",
 		"clay",
 		"clearbit",
@@ -30,6 +29,7 @@
 		"heap",
 		"hightouch",
 		"hubspot",
+		"inth",
 		"klaviyo",
 		"lgpd",
 		"linkedin-insights",
@@ -53,14 +53,14 @@
 		"vercel-speed-insights",
 		"x-pixel"
 	],
-	"homepage": "https://c15t.com/docs/integrations/overview",
+	"homepage": "https://inth.com",
 	"bugs": {
-		"url": "https://github.com/c15t/c15t/issues"
+		"url": "https://github.com/inthhq/inth/issues"
 	},
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/c15t/c15t.git",
+		"url": "git+https://github.com/inthhq/inth.git",
 		"directory": "packages/sdk/integrations"
 	},
 	"files": [
@@ -308,11 +308,6 @@
 			"import": "./dist/registry.js",
 			"default": "./dist/registry.js"
 		},
-		"./*": {
-			"types": "./dist-types/*.d.ts",
-			"import": "./dist/*.js",
-			"default": "./dist/*.js"
-		},
 		"./events": {
 			"types": "./dist-types/events.d.ts",
 			"import": "./dist/events.js",
@@ -478,8 +473,8 @@
 		"@inth/sdk": "workspace:*"
 	},
 	"devDependencies": {
-		"@c15t/typescript-config": "workspace:*",
-		"@c15t/vitest-config": "workspace:*",
+		"@inth/typescript-config": "workspace:*",
+		"@inth/vitest-config": "workspace:*",
 		"@rslib/core": "0.23.2",
 		"@types/bun": "1.3.9",
 		"@types/node": "25.5.0",

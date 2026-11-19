@@ -1,12 +1,12 @@
 ---
-title: c15t vs CookieYes
-description: Choose c15t for broader framework support, individual vendor choices and a supplied consent backend. Compare CookieYes SDKs and hosted services fairly.
+title: Inth vs CookieYes
+description: Choose Inth for broader framework support, individual vendor choices and a supplied consent backend. Compare CookieYes SDKs and hosted services fairly.
 group: reference
 ---
 
-## Choose c15t for one consent system across your applications
+## Choose Inth for one consent system across your applications
 
-c15t is the stronger fit when your products span multiple web frameworks and need individual vendor choices alongside category consent. Your team can use native components, own the interface and choose where policy and records live.
+Inth is the stronger fit when your products span multiple web frameworks and need individual vendor choices alongside category consent. Your team can use native components, own the interface and choose where policy and records live.
 
 CookieYes offers both a hosted service and open-source SDKs. Its SDKs include React components, Next.js server support, headless primitives and a JavaScript core. Both tools offer these features.
 
@@ -14,7 +14,7 @@ CookieYes offers both a hosted service and open-source SDKs. Its SDKs include Re
 
 ## Compare what you get
 
-| What you need | c15t | CookieYes |
+| What you need | Inth | CookieYes |
 | --- | --- | --- |
 | Use native framework components | React, Next.js, Vue, Nuxt, Svelte, SvelteKit, Astro and TanStack Start | Documented SDKs for React, Next.js and core JavaScript |
 | Build your own interface | Themes, component parts and headless APIs | SDK themes, parts, hooks and headless primitives. Hosted banner customisation too |
@@ -22,14 +22,14 @@ CookieYes offers both a hosted service and open-source SDKs. Its SDKs include Re
 | Control vendor activity | Category and individual vendor rules for registered scripts, requests and embeds | SDK category gates and configured network rules. Hosted script controls |
 | Store records on your server | Supplied backend with policy and record services | SDK sends records to an endpoint that you build and operate |
 | Use managed records | Inth hosts the backend and stores records in its database. Self-hosting is optional | Hosted consent log with CSV export |
-| Find cookies automatically | **Not included in the c15t packages** | Hosted website scanner |
+| Find cookies automatically | **Not included in the Inth packages** | Hosted website scanner |
 | Generate legal policies | **Not included** | Hosted privacy and cookie policy generators |
 
 Sources: [CookieYes SDK overview](https://developers.cookieyes.com/docs), [React APIs](https://developers.cookieyes.com/docs/react/getting-started/installation), [self-hosted records](https://developers.cookieyes.com/docs/nextjs/getting-started/self-hosted), [network rules](https://developers.cookieyes.com/docs/react/network-blocking) and [hosted features](https://www.cookieyes.com/features/).
 
 ## Keep consent consistent across your products
 
-Use c15t's [framework guides](/docs/frameworks) to connect each application to the same consent model. A Vue product and a React account page can each use native components.
+Use Inth's [framework guides](/docs/frameworks) to connect each application to the same consent model. A Vue product and a React account page can each use native components.
 
 With [vendor consent](/docs/frameworks/react/vendor-consent), a visitor can accept a category but refuse one named vendor. The interface and registered integrations can use that choice.
 
@@ -39,19 +39,19 @@ This distinction matters when two services serve the same purpose but a visitor 
 
 ## Choose a backend without building the record service first
 
-c15t supplies the backend as well as the client. Use Inth to manage it, or deploy the open-source service with your own database.
+Inth supplies the backend as well as the client. Use Inth to manage it, or deploy the open-source service with your own database.
 
 CookieYes's self-hosted SDK guide describes record delivery, retries and a sample receiver. Your team supplies durable storage and operates that endpoint.
 
-Both approaches can keep records under your control. c15t gives you a supplied policy and record service for this path.
+Both approaches can keep records under your control. Inth gives you a supplied policy and record service for this path.
 
 CookieYes's hosted service offers managed logs instead. Its [consent guide](https://www.cookieyes.com/documentation/cookieyes-for-gdpr-cookie-compliance/) documents exports, scans and policy tools. Compare that service separately from its SDK.
 
-## What c15t does not include
+## What Inth does not include
 
-c15t does not include CookieYes's hosted website scanner or legal policy generators. Your team must supply those services or processes separately.
+Inth does not include CookieYes's hosted website scanner or legal policy generators. Your team must supply those services or processes separately.
 
-c15t controls the scripts, requests and embeds that you configure. It does not automatically discover every tracker already on the site.
+Inth controls the scripts, requests and embeds that you configure. It does not automatically discover every tracker already on the site.
 
 Withdrawal normally reloads the page. Optional cleanup cannot remove every vendor cookie or erase data already sent to a vendor.
 

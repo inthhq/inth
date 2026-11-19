@@ -1,8 +1,8 @@
 ---
 title: Sentry
 description: Configure consent for Sentry error monitoring, user data and Session Replay on the web, and manual replay in Swift, Kotlin, React Native and Expo.
-seoTitle: Sentry consent for web and mobile with c15t
-seoDescription: Connect Sentry and Session Replay to c15t on the web, Swift, Android and React Native. Keep native replay permission separate from crash reporting.
+seoTitle: Sentry consent for web and mobile with Inth
+seoDescription: Connect Sentry and Session Replay to Inth on the web, Swift, Android and React Native. Keep native replay permission separate from crash reporting.
 icon: sentry
 group: integrations
 ---
@@ -14,7 +14,7 @@ of native crash reporting, profiling and user-data configuration.
 
 ## Web
 
-With a `dsn` and the default `loadMode`, the c15t `sentry` helper loads the
+With a `dsn` and the default `loadMode`, the Inth `sentry` helper loads the
 Sentry CDN bundle on every page, before the visitor chooses. Sentry reports
 errors under the `necessary` category. While `measurement` has no consent, error
 events contain no user data, cookies, request headers, or inferred IP address.
@@ -47,7 +47,7 @@ hash, or set `version` to an exact release in the supported SDK range below.
 
 The supported browser SDK range is `^10.67.0 || ^11.0.0`, including framework
 SDKs built on those versions. Version 10.67.0 added Replay's
-`stop({ flush: false })`, which c15t uses to discard pending recordings when
+`stop({ flush: false })`, which Inth uses to discard pending recordings when
 consent is withdrawn. Earlier versions flush those recordings when stopping.
 
 Pass your SDK's functions instead of `dsn`. Keep Replay in a separate module
@@ -93,7 +93,7 @@ it in the main bundle. A main-bundle `Sentry.replayIntegration` reference throug
 
 #### If Sentry already initializes independently
 
-c15t applies filters once it finds the client; it cannot retract earlier data.
+Inth applies filters once it finds the client; it cannot retract earlier data.
 For startup protection, disable collection and remove event users in your own
 `Sentry.init` call. With SDK 10.67, omit `queues`:
 
@@ -123,7 +123,7 @@ beforeSend(event) {
 ```
 
 These settings keep collection and event users disabled after consent too.
-To restore event users, check effective c15t permission in `beforeSend`. Wait
+To restore event users, check effective Inth permission in `beforeSend`. Wait
 until the adapter is registered before assigning scope users or capturing logs
 and metrics.
 
@@ -131,12 +131,12 @@ and metrics.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `dsn` | Required to load Sentry | Your project's DSN. c15t loads the SDK and calls `Sentry.init`. A blank DSN logs an error and the script does not load. |
-| `initOptions` | `{}` | Passed to `Sentry.init` with c15t's consent integration first. CDN `integrations` callbacks can access `window.Sentry`. |
+| `dsn` | Required to load Sentry | Your project's DSN. Inth loads the SDK and calls `Sentry.init`. A blank DSN logs an error and the script does not load. |
+| `initOptions` | `{}` | Passed to `Sentry.init` with Inth's consent integration first. CDN `integrations` callbacks can access `window.Sentry`. |
 | `version` | `'11.4.0'` | SDK version to load. Another version loads without subresource integrity. |
 | `tracing` | `true` when traces are sampled | Loads the tracing bundle and adds `browserTracingIntegration()`. |
 | `replay` | Loads CDN Replay when sampled | CDN: `{ category, options }` or `false`. SDK: `{ category, load }`. |
-| `getClient` | Required for your own SDK | Your SDK's `getClient`. Supports initialization after c15t starts. |
+| `getClient` | Required for your own SDK | Your SDK's `getClient`. Supports initialization after Inth starts. |
 | `setUser` | None | `setUser` from your Sentry SDK. Called with `null` while user data is not allowed. Required with `pii.user`. |
 | `init` | None | Your SDK's `init`, called once when `loadMode` allows. Required for SDK mode with `'after-consent'`. |
 | `replay.load` | None | With your own SDK, returns a new `replayIntegration()`. Called once, the first time Replay is allowed. |
@@ -159,11 +159,11 @@ enabled CDN Replay with a positive sample rate.
 Replay needs both `replay.category` and `pii.category`, because recordings
 include page URLs with queries and fragments. Keep Replay out of `Sentry.init`:
 `replaysOnErrorSampleRate` can buffer recordings before consent. On denial or
-final removal, c15t stops Replay without flushing, discards queued uploads and
+final removal, Inth stops Replay without flushing, discards queued uploads and
 blocks restarts. Data already sent stays in Sentry; a later grant preserves
 the original sampling decision.
 
-While PII is denied, c15t disables supported `dataCollection` settings and IP
+While PII is denied, Inth disables supported `dataCollection` settings and IP
 inference. Before sending, it removes user fields, feedback contact details,
 visitor identifiers in sessions, request data and URL queries/fragments from
 supported events, spans, logs, metrics and breadcrumbs, including retained
@@ -204,7 +204,7 @@ Test in a private window with an opt-in policy and
    `loadMode: 'after-consent'`, nothing loads.
 2. Allow measurement. Without a reload, Replay loads and `replay_recording`
    requests start.
-3. Turn measurement off and save. c15t reloads the page, and no replay request
+3. Turn measurement off and save. Inth reloads the page, and no replay request
    follows.
 
 See the [consent verification guide](/docs/guides/verify-consent) for
@@ -219,7 +219,7 @@ profiling, user identifiers and other Sentry products separately.
 
 The helper ships in `InthApple`, `inth-android` and
 `@inth/react-native/integrations`. Your app installs Sentry. No Sentry dependency
-is added by c15t.
+is added by Inth.
 
 ### Before you start
 
@@ -236,7 +236,7 @@ Use a Sentry SDK with manual replay start and stop APIs. The checked mappings
 use Sentry Cocoa 9.32.0, Android 8.62.0 and React Native 8.33.0. These examples
 do not target older SDKs without manual controls.
 
-Android Replay requires API 26 or later, even though c15t itself supports API
+Android Replay requires API 26 or later, even though Inth itself supports API
 24\. Do not treat a successfully initialized Sentry client on an older device
 as proof that replay can record there.
 
@@ -254,7 +254,7 @@ Add this owner to your app target:
 
 In your existing Sentry setup, set
 `options.sessionReplay.sessionSampleRate = 0` and
-`options.sessionReplay.onErrorSampleRate = 0`. After Sentry and c15t are
+`options.sessionReplay.onErrorSampleRate = 0`. After Sentry and Inth are
 installed, retain this owner on your app's service owner:
 
 {/* example: fragment */}
@@ -312,7 +312,7 @@ recipe. In the checked SDK, that experimental workaround can restart buffering
 on foreground independently of the consent-controlled stop command.
 If your app initializes Sentry natively first, disable native replay sampling
 there too. Expo needs a build containing both SDKs; Expo Go cannot provide
-c15t's native engine.
+Inth's native engine.
 
 Copy this function into `sentry-replay-consent.ts`:
 
@@ -327,7 +327,7 @@ import * as Sentry from '@sentry/react-native';
 
 const replay = Sentry.getReplay();
 if (!replay) {
-	throw new Error('Configure Sentry Session Replay before connecting c15t.');
+	throw new Error('Configure Sentry Session Replay before connecting inth.');
 }
 const replayConsent = connectAppSentryReplay(replay, reportReplayError);
 await replayConsent.ready;
@@ -344,7 +344,7 @@ through `onError` and at the returned promise's call site.
 Use the Swift owner's `syncAfterReset()`, Kotlin's `sync()` or
 `await replayConsent.sync()` after an app-owned vendor reset or reinitialization. Sentry can
 also stop a manually started replay when it starts a new app session. With
-sampling disabled, it may then remain stopped even though c15t permission is
+sampling disabled, it may then remain stopped even though Inth permission is
 still granted. Reapply permission after the vendor's session transition.
 This keeps consent authoritative without turning automatic replay sampling on.
 

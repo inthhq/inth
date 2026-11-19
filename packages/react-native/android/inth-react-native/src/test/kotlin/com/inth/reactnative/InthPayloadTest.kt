@@ -173,7 +173,7 @@ class InthPayloadTest {
 		val kernel = bridgeKernel(
 			InthStore(MemoryStore()),
 			config = NativeConfig(
-				backendUrl = "https://test.c15t.app",
+				backendUrl = "https://test.inth.app",
 				overrides = KernelOverrides(gpc = true),
 				detectedGpc = false,
 			),
@@ -410,7 +410,7 @@ class InthPayloadTest {
 		))
 		val transport = object : com.inth.core.transport.InthTransport {
 			override fun init(context: com.inth.core.transport.InitContext) =
-				com.inth.core.transport.TransportOutcome.Success(body, mapOf("x-c15t-policy-contract" to "1"))
+				com.inth.core.transport.TransportOutcome.Success(body, mapOf("x-inth-policy-contract" to "1"))
 
 			override fun save(entry: com.inth.core.model.QueuedSave) = com.inth.core.transport.SaveOutcome.Unavailable("offline")
 
@@ -420,7 +420,7 @@ class InthPayloadTest {
 		val now = headless.getValue("now").jsonPrimitive.content.toLong()
 		val configuration = Json.decodeFromJsonElement(IabConfiguration.serializer(), headless.getValue("configuration"))
 		return com.inth.core.ConsentCore(
-			config = NativeConfig(backendUrl = "https://test.c15t.app", iab = configuration),
+			config = NativeConfig(backendUrl = "https://test.inth.app", iab = configuration),
 			store = InthStore(MemoryStore()),
 			clock = { now },
 			transport = transport,

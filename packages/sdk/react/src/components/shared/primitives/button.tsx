@@ -1,5 +1,7 @@
 import type { AllConsentNames } from '@inth/sdk/engine';
 import { EARLY_TAP_OPT_OUT } from '@inth/sdk/surface-actions';
+import { resolveActionAppearance } from '@inth/sdk/ui/theme';
+import type { ConsentActionKey } from '@inth/sdk/ui/theme';
 import { forwardRef as createForwardRef, useCallback } from 'react';
 import type { FocusEvent, MouseEvent, PointerEvent } from 'react';
 
@@ -20,10 +22,6 @@ import * as Button from '../ui/button';
 import type { ButtonVariantsProps } from '../ui/button/button';
 import type { ConsentButtonElement, ConsentButtonProps } from './button.types';
 
-/**
- * Props that should be filtered out before spreading to the DOM element.
- * These are custom props used for component logic that are not valid HTML attributes.
- */
 const NON_DOM_PROPS = [
 	'primary',
 	'secondary',
@@ -32,13 +30,6 @@ const NON_DOM_PROPS = [
 	'isPrimary',
 	'performDefaultAction',
 ] as const;
-
-type ConsentActionThemeKey =
-	| 'accept'
-	| 'reject'
-	| 'customize'
-	| 'dismiss'
-	| 'save';
 
 /**
  * The `data-action` the banner's pre-hydration script replays for each
@@ -116,25 +107,12 @@ const renderedProp = function renderedProp(
 };
 
 /**
- * Resolves the final variant and mode for a consent button.
- *
- * @param params.consentAction Semantic consent action key.
- * @param params.isPrimary Whether the action is primary in the current UI.
- * @param params.theme Active theme containing `consentActions` overrides.
- * @param params.variant Explicit `ButtonVariantsProps['variant']` override.
- * @param params.mode Explicit `ButtonVariantsProps['mode']` override.
- * @returns The resolved `{ variant, mode }` pair for the button.
- *
- * @remarks
- * Resolution order:
- * 1. Explicit `variant` / `mode` props
- * 2. `theme.consentActions[consentAction]`
- * 3. `theme.consentActions.primary` when the action is primary
- * 4. `theme.consentActions.default`
- * 5. Hardcoded fallback based on `isPrimary`
+ * Resolves the final variant and mode for a consent button: explicit
+ * `variant` / `mode` props first, then the theme's `consentActions`
+ * through `resolveActionAppearance`.
  */
 const resolveConsentButtonStyle = function resolveConsentButtonStyle(params: {
-	consentAction?: ConsentActionThemeKey;
+	consentAction?: ConsentActionKey;
 	isPrimary?: boolean;
 	theme?: ReturnType<typeof useTheme>['theme'];
 	variant?: ButtonVariantsProps['variant'];
@@ -146,50 +124,19 @@ const resolveConsentButtonStyle = function resolveConsentButtonStyle(params: {
 			variant: params.variant ?? 'neutral',
 		};
 	}
-
-	const consentActions = params.theme?.consentActions;
-	// `save` has no theme key; every other action can be themed individually.
-	const themedAction =
-		params.consentAction && params.consentAction !== 'save'
-			? consentActions?.[params.consentAction]
-			: undefined;
-	// Most specific first; the last entry is the hardcoded fallback.
-	const layers = [
-		themedAction,
-		params.isPrimary ? consentActions?.primary : undefined,
-		consentActions?.default,
-		{
-			mode: 'stroke' as const,
-			variant: params.isPrimary ? ('primary' as const) : ('neutral' as const),
-		},
-	];
-
-	return {
-		mode: layers.find((layer) => layer?.mode)?.mode ?? 'stroke',
-		variant: layers.find((layer) => layer?.variant)?.variant ?? 'neutral',
-	};
+	// A button without an action has no key of its own, as `save` has none.
+	return resolveActionAppearance(
+		params.theme,
+		params.consentAction ?? 'save',
+		params.isPrimary === true
+	);
 };
 
-/**
- * Button component that allows users to reject non-essential cookies.
- *
- * @remarks
- * When clicked, this button saves only necessary cookie consents and closes the banner.
- *
- * @example
- * ```tsx
- * <CookieBannerRejectButton>
- *   Reject All Cookies
- * </CookieBannerRejectButton>
- * ```
- *
- * @public
- */
 export const ConsentButton = createForwardRef<
 	ConsentButtonElement,
 	ConsentButtonProps &
 		ButtonVariantsProps & {
-			consentAction?: ConsentActionThemeKey;
+			consentAction?: ConsentActionKey;
 			isPrimary?: boolean;
 			action:
 				| 'accept-consent'
@@ -271,7 +218,6 @@ export const ConsentButton = createForwardRef<
 			},
 		});
 
-		// Need to know what category to set
 		if (!category && action === 'set-consent') {
 			throw new Error('Category is required for set-consent action');
 		}
@@ -286,12 +232,10 @@ export const ConsentButton = createForwardRef<
 					action === 'accept-consent' ||
 					action === 'reject-consent' ||
 					action === 'custom-consent';
-				// Handle UI first - prioritize closing dialogs/banners
 				if ((closeConsentBanner || closeConsentDialog) && !actionSavesConsent) {
 					setActiveUI('none');
 				}
 
-				// Open privacy dialog if needed
 				if (action === 'open-consent-dialog') {
 					setActiveUI('dialog');
 				}
@@ -369,7 +313,6 @@ export const ConsentButton = createForwardRef<
 
 		const Comp = asChild ? Slot : 'button';
 
-		// Filter out non-DOM props to prevent React warnings
 		const domProps = Object.fromEntries(
 			Object.entries(props).filter(
 				([key]) =>

@@ -20,7 +20,7 @@ import { policyFixture } from './policy-fixture';
 
 const policyConfig = function policyConfig(): KernelConfig {
 	return {
-		initialBranding: 'c15t',
+		initialBranding: 'inth',
 		initialLocation: { countryCode: 'DE', regionCode: null },
 		initialOverrides: { country: 'DE', language: 'en' },
 		...policyFixture({}, { categories: ['marketing'], id: 'gdpr' }),
@@ -91,7 +91,7 @@ describe('ConsentProvider prefetch promise', () => {
 		const { getByTestId } = await render(
 			<ConsentProvider
 				options={{
-					mode: hosted({ fetch: fetchSpy, projectUrl: '/api/c15t' }),
+					mode: hosted({ fetch: fetchSpy, projectUrl: '/api/inth' }),
 					persistence: false,
 					prefetch: prefetch.promise,
 				}}
@@ -163,7 +163,7 @@ describe('a streamed policy', () => {
 						assertDecisionInputs: true,
 						fetch,
 						initUrl: '/api/consent/init',
-						projectUrl: '/api/c15t',
+						projectUrl: '/api/inth',
 					}),
 					persistence: false,
 					prefetch: prefetch.promise,
@@ -185,7 +185,7 @@ describe('a streamed policy', () => {
 		expect(fetch).toHaveBeenCalledTimes(1);
 		// The path; the query carries the consent journey.
 		expect(String(fetch.mock.calls[0]?.[0]).split('?')[0]).toBe(
-			'/api/c15t/subjects'
+			'/api/inth/subjects'
 		);
 		expect(JSON.parse(fetch.mock.calls[0]?.[1].body)).toMatchObject({
 			country: 'DE',

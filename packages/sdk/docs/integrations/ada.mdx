@@ -1,18 +1,18 @@
 ---
 title: Ada
-description: Load Ada Messaging after functionality consent with the c15t ada helper, configure regional Agents, and stop the widget when consent is revoked.
-seoTitle: Ada Messaging cookie consent with c15t
-seoDescription: Gate Ada Messaging on functionality consent with c15t. Keep the SDK interface private, stop the widget on revocation, and verify its requests and storage.
+description: Load Ada Messaging after functionality consent with the Inth ada helper, configure regional Agents, and stop the widget when consent is revoked.
+seoTitle: Ada Messaging cookie consent with Inth
+seoDescription: Gate Ada Messaging on functionality consent with Inth. Keep the SDK interface private, stop the widget on revocation, and verify its requests and storage.
 icon: bot
 group: integrations
 ---
 
-Ada Messaging adds an Ada AI Agent chat widget to your site. The c15t `ada`
+Ada Messaging adds an Ada AI Agent chat widget to your site. The Inth `ada`
 helper waits for `functionality` consent before it imports Ada's Messaging Web
 SDK, and it keeps the Messaging interface private.
 
 When the visitor withdraws, the helper calls Ada's `stop()` to remove the
-widget, and c15t reloads the page by default. `stop()` doesn't delete stored
+widget, and Inth reloads the page by default. `stop()` doesn't delete stored
 conversations or cookies.
 
 ## Configure Ada Messaging
@@ -22,7 +22,7 @@ need only the handle. Set `cluster` or `domain` only when Ada gives you a
 regional configuration.
 
 Remove any existing Ada module snippet, `embed2.js` script tag, or tag-manager
-installation. A separate Ada installation can load before c15t grants consent,
+installation. A separate Ada installation can load before Inth grants consent,
 and Ada allows only one Messaging interface per page.
 
 <CommandTabs command="@inth/integrations" mode="install" />
@@ -38,7 +38,7 @@ and has no `legacy` option.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `handle` | Required | Public AI Agent handle passed to `start()`. Surrounding whitespace is trimmed. If it's missing or blank, c15t logs `ada: missing or invalid handle` and never loads Ada. |
+| `handle` | Required | Public AI Agent handle passed to `start()`. Surrounding whitespace is trimmed. If it's missing or blank, Inth logs `ada: missing or invalid handle` and never loads Ada. |
 | `cluster` | Ada's default region | Regional segment, such as `eu`, `us2` or `maple`, or a full cluster domain supplied by Ada. Trimmed. Blank values are omitted. |
 | `domain` | Ada's default domain | Ada base-domain segment. Use only the value Ada gives you. Trimmed. Blank values are omitted. |
 
@@ -54,13 +54,13 @@ for the origin that matches your handle and region.
 
 ## Loading and revocation
 
-The helper returns a callback-only c15t script with no `src`. When its consent
+The helper returns a callback-only Inth script with no `src`. When its consent
 is granted, it imports the SDK, calls the module's `createAdaEmbedInterface()`
 export, and awaits `start({ handle, cluster, domain })`. It creates no
 `window.adaEmbed` or `window.adaSettings` global. Repeated consent updates don't
 start a second widget.
 
-The helper checks the permission c15t passes to it, so if you change the
+The helper checks the permission Inth passes to it, so if you change the
 script's category, the gate changes too. The visitor's Ada vendor switch
 applies inside an allowed category.
 
@@ -118,7 +118,7 @@ covers several SDK generations and optional integrations. Entries include:
 
 The hosted SDK bootstrap also stores rollout assignments under
 `ada-messaging-sdk-rollout:*` in the host page's local storage. This happens
-while the module evaluates, which is why c15t gates the import itself.
+while the module evaluates, which is why Inth gates the import itself.
 Rollout assignments can remain after `stop()`.
 
 Your Agent can embed other services, such as Calendly, YouTube or a live
@@ -138,7 +138,7 @@ DevTools, disable the Network cache and filter by `ada.support`:
 3. Allow functionality. Look for `sdk.js`, the rollout manifest, the versioned
    SDK module and the Ada launcher. `window.adaEmbed` stays undefined.
 4. Revoke functionality or turn off the Ada vendor switch. The helper calls
-   `stop()`, and c15t reloads by default. The new page makes no Ada request.
+   `stop()`, and Inth reloads by default. The new page makes no Ada request.
    Stored conversation data can remain.
 5. Allow functionality again. The widget starts once. Repeat the grant and
    revoke steps on a throttled network to check a pending startup.

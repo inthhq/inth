@@ -24,9 +24,6 @@ const sortedIds = (ids: Iterable<number>): number[] =>
  * A consented provider is disclosed by definition, so it is written in the
  * consented part only.
  *
- * @param signal - Consented and disclosed provider IDs.
- * @returns The AC string, such as `2~1.10~dv.2.3.4`.
- *
  * @example
  * ```ts
  * encodeAdditionalConsent({ consented: [1, 10], disclosed: [1, 2, 3, 4, 10] });
@@ -52,12 +49,7 @@ const parseIds = (part: string): number[] | null => {
 	return ids.every(isProviderId) ? ids : null;
 };
 
-/**
- * Reads an ACv2 string. Version 1 strings and malformed input return `null`.
- *
- * @param value - An AC string such as `2~1.10~dv.2.3.4`.
- * @returns Consented and disclosed IDs, or `null` when the string is not ACv2.
- */
+/** Reads an ACv2 string. Version 1 strings and malformed input return `null`. */
 export const decodeAdditionalConsent = function decodeAdditionalConsent(
 	value: string
 ): AdditionalConsentSignal | null {

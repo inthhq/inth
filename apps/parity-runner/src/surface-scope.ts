@@ -53,8 +53,6 @@ export const STORYBOOK_ROOT_SELECTOR = '#storybook-root';
  * document order so two frameworks that render the same surfaces compare
  * them in the same sequence.
  *
- * @param page - The page showing a story.
- * @param testIds - The surface roots to look for.
  * @param fallbackSelector - Scope to use when no surface is present.
  * @returns How many surface roots were marked; 0 means the fallback.
  */

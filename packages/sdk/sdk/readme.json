@@ -8,7 +8,7 @@
 	"usage": [
 		"Start the client with the project URL from your Inth project",
 		"```ts\nimport { init } from '@inth/sdk'\n\ninit({ projectUrl: 'https://your-project.inth.app' })\n```",
-		"For a site without a build step, load `lib/browser/dist/c15t.js` from a CDN instead. See the [script tag quickstart](https://c15t.com/docs/frameworks/html/quickstart)",
+		"For a site without a build step, load `lib/browser/dist/inth.js` from a CDN instead. See the [script tag quickstart](https://c15t.com/docs/frameworks/html/quickstart)",
 		"For the full setup, see the [JavaScript quickstart](https://c15t.com/docs/frameworks/javascript/quickstart)"
 	],
 	"docsLink": "https://c15t.com/docs/frameworks/javascript/quickstart",

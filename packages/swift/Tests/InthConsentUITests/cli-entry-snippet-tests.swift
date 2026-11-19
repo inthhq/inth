@@ -23,7 +23,7 @@ final class CLIEntrySnippetTests: XCTestCase {
         let view =
             // inth-cli-snippet:swiftui:start
             ContentView()
-                .c15tConsent(
+                .inth(
                     InthAppleConfiguration(
                         backendURL: "https://your-project.inth.app",
                         consentCategories: [.necessary, .measurement, .marketing]

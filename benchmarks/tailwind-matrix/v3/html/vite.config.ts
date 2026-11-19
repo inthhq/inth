@@ -5,16 +5,16 @@ import { defineConfig } from 'vite';
 import type { Plugin } from 'vite';
 
 /**
- * The script-tag build's files a page with a backend loads. `c15t.js` loads
- * `c15t.hosted.js` from its own folder, which loads `c15t.dialog.js`.
+ * The script-tag build's files a page with a backend loads. `inth.js` loads
+ * `inth.hosted.js` from its own folder, which loads `inth.dialog.js`.
  */
-const SCRIPT_FILES = ['c15t.js', 'c15t.hosted.js', 'c15t.dialog.js'];
+const SCRIPT_FILES = ['inth.js', 'inth.hosted.js', 'inth.dialog.js'];
 
 /**
  * Stands in for the CDN: emits `@inth/sdk`'s script-tag build next to
  * the page. Vite only builds the page's Tailwind stylesheet here.
  */
-const c15tScript = (): Plugin => ({
+const inthScript = (): Plugin => ({
 	generateBundle() {
 		for (const fileName of SCRIPT_FILES) {
 			this.emitFile({
@@ -27,7 +27,7 @@ const c15tScript = (): Plugin => ({
 			});
 		}
 	},
-	name: 'c15t-script-tag',
+	name: 'inth-script-tag',
 });
 
 export default defineConfig({
@@ -39,5 +39,5 @@ export default defineConfig({
 			},
 		},
 	},
-	plugins: [c15tScript()],
+	plugins: [inthScript()],
 });

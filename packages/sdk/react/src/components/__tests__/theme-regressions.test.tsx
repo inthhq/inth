@@ -68,7 +68,7 @@ describe('Theme regressions', () => {
 				'[role="toolbar"][aria-label="Privacy controls"]'
 			);
 			const item = document.querySelector<HTMLElement>(
-				'[data-c15t-trigger-item="preferences"]'
+				'[data-inth-trigger-item="preferences"]'
 			);
 			const icon = item?.querySelector<HTMLElement>('[aria-hidden="true"]');
 
@@ -208,15 +208,15 @@ describe('Theme regressions', () => {
 				</IABConsentBannerFooter>
 				<StableTriggerProvider
 					value={{
-						branding: 'c15t',
+						branding: 'inth',
 						corner: 'bottom-right',
 						dragStyle: {},
+						endsDrag: () => false,
 						handlers: {},
 						isDragging: false,
 						isSnapping: false,
 						isVisible: true,
 						openDialog: vi.fn(),
-						wasDragged: () => false,
 					}}
 				>
 					<TriggerButton data-testid="nostyle-trigger">Trigger</TriggerButton>

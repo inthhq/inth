@@ -12,7 +12,7 @@ export default defineConfig({
 			adapter: adapter(),
 			preprocess: vitePreprocess(),
 		}),
-		// Lets c15tHandle preload the script loader on pages with scripts. The
+		// Lets inthHandle preload the script loader on pages with scripts. The
 		// areas of this app use different backends, so a build without a
 		// backend URL keeps going and each server load reads its policy at
 		// runtime.

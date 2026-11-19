@@ -20,7 +20,7 @@ npx expo install --dev jest-expo jest @types/jest @testing-library/react-native 
 ```
 
 `@inth/react-native` ships ES modules, and `jest-expo` only compiles packages
-in its allowlist. Add `@c15t` to the preset's `transformIgnorePatterns` entry
+in its allowlist. Add `@inth` to the preset's `transformIgnorePatterns` entry
 in `package.json`:
 
 ```json title="package.json"
@@ -31,7 +31,7 @@ in `package.json`:
 	"jest": {
 		"preset": "jest-expo",
 		"transformIgnorePatterns": [
-			"/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|@c15t))"
+			"/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|@inth))"
 		]
 	}
 }

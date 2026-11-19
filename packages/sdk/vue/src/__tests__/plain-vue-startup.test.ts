@@ -1,7 +1,7 @@
 import { afterEach, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h, inject, onMounted } from 'vue';
 
-import { c15tVue, manifest } from '../index';
+import { inthVue, manifest } from '../index';
 import type { RuntimeConsentConfig } from '../runtime/kernel';
 import { symbolKernel } from '../runtime/utils/symbols';
 
@@ -53,7 +53,7 @@ test.each([false, true])(
 		const container = document.createElement('div');
 		document.body.append(container);
 		const app = createApp(root);
-		app.use(c15tVue, {
+		app.use(inthVue, {
 			projectUrl: 'https://consent.example.test',
 		});
 		let mounted = false;
@@ -82,7 +82,7 @@ test("manifest() without a build snapshot reads the backend's /manifest", async 
 	const container = document.createElement('div');
 	document.body.append(container);
 	const app = createApp(defineComponent({ setup: () => () => h('main') }));
-	app.use(c15tVue, {
+	app.use(inthVue, {
 		mode: manifest({ projectUrl: 'https://consent.example.test/api/' }),
 	});
 	app.mount(container);
@@ -127,7 +127,7 @@ test('holds tracker requests from child mount hooks until the blocker decides th
 			rules: [{ category: 'measurement', domain: 'tracker.example' }],
 		},
 	};
-	app.use(c15tVue, {
+	app.use(inthVue, {
 		...config,
 		projectUrl: 'https://consent.example.test',
 	});
@@ -155,8 +155,8 @@ test('manifest() with a manifestUrl asks the backend /init when the manifest is 
 	const container = document.createElement('div');
 	document.body.append(container);
 	const app = createApp(defineComponent({ setup: () => () => h('main') }));
-	// Plain Vue has no Nuxt server, so there is no `/api/c15t/init` to call.
-	app.use(c15tVue, {
+	// Plain Vue has no Nuxt server, so there is no `/api/inth/init` to call.
+	app.use(inthVue, {
 		mode: manifest({ manifestUrl: 'https://cdn.example.test/manifest' }),
 	});
 	cleanups.push(() => {
@@ -172,5 +172,5 @@ test('manifest() with a manifestUrl asks the backend /init when the manifest is 
 	await expect
 		.poll(() => requests.map((url) => url.split('?')[0]))
 		.toContain('https://cdn.example.test/init');
-	expect(requests.some((url) => url.includes('/api/c15t'))).toBe(false);
+	expect(requests.some((url) => url.includes('/api/inth'))).toBe(false);
 });

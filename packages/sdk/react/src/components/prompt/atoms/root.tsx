@@ -1,7 +1,9 @@
 'use client';
 
-import type * as C15tCoreTypes from '@inth/sdk/engine';
+import type * as InthCoreTypes from '@inth/sdk/engine';
 import type { PromptPosition, PromptVariant } from '@inth/sdk/engine';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
+import { defaultTranslationConfig } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/consent-banner';
 import {
 	forwardRef as createForwardRef,
@@ -26,7 +28,6 @@ import { useLateEntry } from '~/hooks/use-late-entry';
 import { useTextDirection } from '~/hooks/use-text-direction';
 import type { CSSPropertiesWithVars } from '~/types/theme';
 import { useUIConfig } from '~/ui-config-context';
-import { defaultTranslationConfig } from '~/utils/default-translation-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
 import { BANNER_SHEETS } from '../../shared/first-paint-sheets';
@@ -44,7 +45,7 @@ import type { ConsentBannerSurface } from '../surface-context';
 import { EarlyTapScript } from './early-tap-script';
 import { Overlay } from './overlay';
 
-const DEFAULT_MODELS: C15tCoreTypes.Model[] = ['opt-in', 'opt-out'];
+const DEFAULT_MODELS: InthCoreTypes.Model[] = ['opt-in', 'opt-out'];
 
 /** A layout effect in the browser; nothing to run on the server. */
 const useBrowserLayoutEffect =
@@ -67,39 +68,26 @@ const getBannerAnimationClass = (
 /**
  * Props for the root component of the ConsentBanner.
  *
- * @remarks
- * The root component serves as the top-level container and context provider
- * for the consent banner. It manages the consent state and styling configuration
- * for all child components.
- *
  * @public
  */
 interface ConsentBannerRootProps extends HTMLAttributes<HTMLDivElement> {
-	/**
-	 * @remarks
-	 * React elements to be rendered within the consent banner.
-	 * Typically includes Content, Title, Description, and Actions components.
-	 */
 	children: ReactNode;
 
 	/**
 	 * @remarks
 	 * When true, removes all default styling from the banner and its children.
-	 * Useful when implementing completely custom styles.
 	 */
 	noStyle?: boolean;
 
 	/**
 	 * @remarks
 	 * When true, disables the entrance/exit animations.
-	 * Useful for environments where animations are not desired.
 	 */
 	disableAnimation?: boolean;
 
 	/**
 	 * @remarks
 	 * When true, the consent banner will lock the scroll of the page.
-	 * Useful for implementing a consent banner that locks the scroll of the page.
 	 * @default false
 	 */
 	scrollLock?: boolean;
@@ -107,7 +95,6 @@ interface ConsentBannerRootProps extends HTMLAttributes<HTMLDivElement> {
 	/**
 	 * @remarks
 	 * When true, the consent banner will trap focus.
-	 * Useful for implementing a consent banner that traps focus.
 	 * @default true
 	 */
 	trapFocus?: boolean;
@@ -116,7 +103,7 @@ interface ConsentBannerRootProps extends HTMLAttributes<HTMLDivElement> {
 	 * Which consent models this banner responds to.
 	 * @default ['opt-in', 'opt-out']
 	 */
-	models?: C15tCoreTypes.Model[];
+	models?: InthCoreTypes.Model[];
 
 	/**
 	 * Override the UI source identifier sent with consent API calls.
@@ -146,114 +133,6 @@ interface ConsentBannerRootProps extends HTMLAttributes<HTMLDivElement> {
 	blocking?: boolean;
 }
 
-/**
- * Root component of the ConsentBanner that provides context and styling.
- *
- * @remarks
- * This component:
- * - Provides the ConsentBanner context to all child components
- * - Manages consent state through the consent manager
- * - Handles style distribution to child components
- * - Serves as the main container for the banner
- *
- * @example
- * Basic usage:
- * ```tsx
- * <ConsentBanner.Root>
- *   <ConsentBanner.Card>
- *     <ConsentBanner.Header>
- *       <ConsentBanner.Title />
- *       <ConsentBanner.Description />
- *     </ConsentBanner.Header>
- *     <ConsentBanner.Footer>
- *       <ConsentBanner.CustomizeButton />
- *       <ConsentBanner.FooterSubGroup>
- *         <ConsentBanner.RejectButton />
- *         <ConsentBanner.AcceptButton />
- *       </ConsentBanner.FooterSubGroup>
- *     </ConsentBanner.Footer>
- *   </ConsentBanner.Card>
- * </ConsentBanner.Root>
- * ```
- *
- * @example
- * Preferred styling with provider theme tokens and components:
- * ```tsx
- * <ConsentProvider
- *   options={{
- *     mode: hosted({ projectUrl: '/api/c15t' }),
- *     theme: {
- *       colors: {
- *         surface: '#fffdf8',
- *         surfaceHover: '#f6f3ee',
- *       },
- *     },
- *     components: {
- *       banner: {
- *         card: { className: 'rounded-3xl shadow-xl' },
- *         footer: { className: 'border-t border-black/10 px-6' },
- *         title: { className: 'tracking-tight' },
- *       },
- *     },
- *   }}
- * >
- *   <ConsentBanner.Root>
- *     <ConsentBanner.Card>
- *       <ConsentBanner.Header>
- *         <ConsentBanner.Title />
- *         <ConsentBanner.Description />
- *       </ConsentBanner.Header>
- *       <ConsentBanner.Footer>
- *         <ConsentBanner.CustomizeButton />
- *         <ConsentBanner.FooterSubGroup>
- *           <ConsentBanner.RejectButton />
- *           <ConsentBanner.AcceptButton />
- *         </ConsentBanner.FooterSubGroup>
- *       </ConsentBanner.Footer>
- *     </ConsentBanner.Card>
- *   </ConsentBanner.Root>
- * </ConsentProvider>
- * ```
- *
- * @public
- */
-/**
- * Content component for the ConsentBanner that handles layout and animations.
- *
- * @remarks
- * This component manages the main content area of the consent banner, including:
- * - Client-side portal rendering to ensure proper stacking context
- * - Optional entrance/exit animations (controlled via ConsentBanner.Root)
- * - Conditional rendering based on banner visibility state
- * - Style composition through the ConsentBanner context
- *
- * @example
- * Basic usage with default styling and animations:
- * ```tsx
- * <ConsentBannerRootChildren>
- *   <ConsentBanner.Title>Privacy Notice</ConsentBanner.Title>
- *   <ConsentBanner.Description>
- *     We use cookies to improve your experience
- *   </ConsentBanner.Description>
- *   <ConsentBanner.Actions>
- *     <ConsentBanner.RejectButton>Decline</ConsentBanner.RejectButton>
- *     <ConsentBanner.AcceptButton>Accept</ConsentBanner.AcceptButton>
- *   </ConsentBanner.Actions>
- * </ConsentBannerRootChildren>
- * ```
- *
- * @example
- * Using asChild for custom wrapper:
- * ```tsx
- * <ConsentBannerRootChildren asChild>
- *   <Card className="my-custom-card">
- *     {Content}
- *   </Card>
- * </ConsentBannerRootChildren>
- * ```
- *
- * @public
- */
 const ConsentBannerRootChildren = createForwardRef<
 	HTMLDivElement,
 	ConsentBannerRootChildrenProps
@@ -286,10 +165,8 @@ const ConsentBannerRootChildren = createForwardRef<
 		const textDirection = useTextDirection(
 			translations?.language ?? defaultTranslationConfig.defaultLanguage
 		);
-		// ConsentBanner shows when a policy is resolved, activeUI is 'banner'
-		// and the current model matches. Without a policy nothing renders.
-		// Mounted on every page, so a banner the browser shows later finds
-		// its sheet loaded.
+		// Runs on every page, banner or not, so a banner the browser shows
+		// later finds its sheet loaded.
 		const sheetsReady = useSurfaceSheetsReady(BANNER_SHEETS, noStyle);
 		const shouldShowBanner =
 			sheetsReady &&
@@ -314,11 +191,9 @@ const ConsentBannerRootChildren = createForwardRef<
 			...props,
 		});
 
-		// Create a final class name that respects the noStyle flag
 		const finalClassName = noStyle
 			? contentStyle.className || ''
 			: `${contentStyle.className || ''} ${getBannerAnimationClass(disableAnimation)}`;
-		// Only render when the banner should be shown
 		return shouldShowBanner ? (
 			<>
 				{/* Before the buttons, so a tap on them is never missed. */}
@@ -339,6 +214,7 @@ const ConsentBannerRootChildren = createForwardRef<
 					data-model={policy.model}
 					data-entry={lateEntry ? 'late' : undefined}
 					data-testid="consent-banner-root"
+					{...{ [SURFACE_ROOT_ATTRIBUTE]: 'banner' }}
 					dir={textDirection}
 				>
 					{children}
@@ -414,24 +290,10 @@ const ConsentBannerRootContent: FC<ConsentBannerRootProps> = ({
  * @public
  */
 interface ConsentBannerRootChildrenProps extends HTMLAttributes<HTMLDivElement> {
-	/**
-	 * @remarks
-	 * React elements to be rendered within the content section.
-	 * This typically includes the title, description, and action buttons.
-	 */
 	children: ReactNode;
 
-	/**
-	 * @remarks
-	 * When true, the component will not apply any styles.
-	 */
 	noStyle?: boolean;
 
-	/**
-	 * @remarks
-	 * When true, the component will render its children directly without wrapping them in a DOM element.
-	 * This enables better composition with other components.
-	 */
 	asChild?: boolean;
 
 	disableAnimation?: boolean;
@@ -440,7 +302,7 @@ interface ConsentBannerRootChildrenProps extends HTMLAttributes<HTMLDivElement> 
 	 * Which consent models this banner responds to.
 	 * @default ['opt-in', 'opt-out']
 	 */
-	models?: C15tCoreTypes.Model[];
+	models?: InthCoreTypes.Model[];
 }
 
 ConsentBannerRootChildren.displayName = 'ConsentBannerRootChildren';

@@ -305,7 +305,7 @@
 	},
 	"kind": "tc-string",
 	"notes": [
-		"Population decode-coverage: this model reaches past what @c15t/iab writes, so expects.encode is false and only the decode half is graded. An encoder that cannot produce this input is not wrong.",
+		"Population decode-coverage: this model reaches past what @inth/sdk-iab writes, so expects.encode is false and only the decode half is graded. An encoder that cannot produce this input is not wrong.",
 		"Segment order is core, vendorsDisclosed, vendorsAllowed, publisherTC, and each non-core segment opens with a 3-bit type: 1, 2 and 3. A decoder that reads segments positionally instead of by type gets the OOB lists backwards here, and both are vendor lists with a maxId, so the mistake decodes into numbers that look right.",
 		"The presence of vendorsAllowed depends on supportOOB and on the string being for vendors, neither of which is in the string. It is a property of how the string was produced, which means a decoder cannot tell an empty allowed list from a CMP that does not support out-of-band at all.",
 		"supportOOB is never encoded: the model said true and the decoder answers false, because the v2 core segment has no slot for it. It changes which segments get written, so an encoder has to hold it out of band.",

@@ -336,7 +336,7 @@
 	},
 	"kind": "tc-string",
 	"notes": [
-		"Population decode-coverage: this model reaches past what @c15t/iab writes, so expects.encode is false and only the decode half is graded. An encoder that cannot produce this input is not wrong.",
+		"Population decode-coverage: this model reaches past what @inth/sdk-iab writes, so expects.encode is false and only the decode half is graded. An encoder that cannot produce this input is not wrong.",
 		"This is the vector that pins numEntries above 1 with both single-word and pair-word entries in the same purpose: 41 alone, then a range, then 700 alone. It also pins what a range means on the way out, which is every id in the interval rather than the ids that went in.",
 		"The restriction survives at all only because every vendor in input.vendorList declares purpose 9 in flexiblePurposes. Remove that declaration and the reference silently encodes a zero restriction count.",
 		"publisherRestrictions for purpose 9 does not round-trip: the encoder merges the declared ids into one inclusive range whenever the vendor list names no vendor in the gap, and the decoder materialises every id in it, so 41, 60, 300, 700 reads back as 41, 60-300, 700. A native decoder must reproduce the extra ids exactly, and a native encoder that emitted the tighter ranges the input implies would produce a different string.",

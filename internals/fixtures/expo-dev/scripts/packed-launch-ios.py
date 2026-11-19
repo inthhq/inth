@@ -79,8 +79,8 @@ try:
             if 'TestBundlePath' in value:
                 value['UITargetAppPath'] = str(app)
                 value['UITargetAppBundleIdentifier'] = 'com.inth.expodev'
-                value.setdefault('EnvironmentVariables', {})['C15T_PACKED_FAULT'] = str(fault)
-                value['EnvironmentVariables']['C15T_PACKED_NATIVE_PROOF'] = '1' if args.native_proof else '0'
+                value.setdefault('EnvironmentVariables', {})['INTH_PACKED_FAULT'] = str(fault)
+                value['EnvironmentVariables']['INTH_PACKED_NATIVE_PROOF'] = '1' if args.native_proof else '0'
             for child in list(value.values()): configure(child)
         elif isinstance(value, list):
             for child in value: configure(child)

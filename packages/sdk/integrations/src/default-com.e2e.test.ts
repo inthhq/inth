@@ -4,7 +4,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMeasurementConsents,
 	loadScripts,
 	updateScripts,
@@ -20,9 +20,9 @@ describe('Default core loader consent contract', () => {
 		}
 	});
 	it('creates no vendor globals, requests or storage before mapped consent', () => {
-		const scripts = [defaultComPixel({ publicKey: 'c15tfake' })];
-		loadScripts(scripts, deniedConsents);
-		updateScripts(scripts, { ...deniedConsents, marketing: true });
+		const scripts = [defaultComPixel({ publicKey: 'inthfake' })];
+		loadScripts(scripts, ALL_DENIED);
+		updateScripts(scripts, { ...ALL_DENIED, marketing: true });
 		expect(document.querySelector('script')).toBeNull();
 		for (const key of ['__defaultPixel__', 'DefaultPixelSDK']) {
 			expect(key in window).toBe(false);
@@ -36,10 +36,10 @@ describe('Default core loader consent contract', () => {
 		expect(document.querySelectorAll('script')).toHaveLength(1);
 	});
 	it('retains one loader across in-flight revoke and regrant', () => {
-		const scripts = [defaultComPixel({ publicKey: 'c15tfake' })];
+		const scripts = [defaultComPixel({ publicKey: 'inthfake' })];
 		loadScripts(scripts, grantedMeasurementConsents);
 		const old = document.querySelector('script');
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(old?.isConnected).toBe(true);
 		old?.dispatchEvent(new Event('load'));
 		expect(document.querySelector('script')).toBe(old);

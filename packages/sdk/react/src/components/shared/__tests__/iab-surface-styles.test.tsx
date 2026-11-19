@@ -29,8 +29,8 @@ const fixture = (
 });
 
 const styleIds = (root: ParentNode = document) =>
-	[...root.querySelectorAll('style[data-c15t-styles]')].map((style) =>
-		style.getAttribute('data-c15t-styles')
+	[...root.querySelectorAll('style[data-inth-styles]')].map((style) =>
+		style.getAttribute('data-inth-styles')
 	);
 
 const renderBanner = (options: Partial<ComponentFixtureOptions> = {}) =>
@@ -61,8 +61,8 @@ describe('IAB styles without CSS imports', () => {
 				'[data-testid="iab-consent-banner-root"]'
 			);
 			const marker = root?.lastElementChild;
-			expect(root?.hasAttribute('data-c15t-streamed')).toBe(true);
-			expect(marker?.hasAttribute('data-c15t-stream-end')).toBe(true);
+			expect(root?.hasAttribute('data-inth-streamed')).toBe(true);
+			expect(marker?.hasAttribute('data-inth-stream-end')).toBe(true);
 			expect(marker?.hasAttribute('hidden')).toBe(true);
 			expect(root?.lastChild).toBe(marker);
 		}
@@ -74,7 +74,7 @@ describe('IAB styles without CSS imports', () => {
 		const root = container.querySelector(
 			'[data-testid="iab-consent-banner-root"]'
 		);
-		const marker = root?.querySelector('[data-c15t-stream-end]');
+		const marker = root?.querySelector('[data-inth-stream-end]');
 		if (!root || !marker) {
 			throw new Error('Expected the SSR banner and its end marker');
 		}
@@ -89,7 +89,7 @@ describe('IAB styles without CSS imports', () => {
 			expect(getComputedStyle(root).visibility).toBe('visible');
 			marker.remove();
 			// Other adapters use these classes without a React stream marker.
-			root.removeAttribute('data-c15t-streamed');
+			root.removeAttribute('data-inth-streamed');
 			expect(getComputedStyle(root).visibility).toBe('visible');
 		} finally {
 			container.remove();
@@ -103,12 +103,12 @@ describe('IAB styles without CSS imports', () => {
 			parsed.querySelector('[data-testid="iab-consent-banner-root"]')
 		).not.toBeNull();
 		expect(styleIds(parsed)).toEqual([
-			'c15t-tokens',
-			'c15t-button',
-			'c15t-banner',
-			'c15t-iab-first-paint',
+			'inth-tokens',
+			'inth-button',
+			'inth-banner',
+			'inth-iab-first-paint',
 		]);
-		for (const style of parsed.querySelectorAll('style[data-c15t-styles]')) {
+		for (const style of parsed.querySelectorAll('style[data-inth-styles]')) {
 			expect(style.getAttribute('nonce')).toBe('iab-style-nonce');
 			expect(style.textContent).not.toContain('&gt;');
 		}
@@ -151,15 +151,15 @@ describe('IAB styles without CSS imports', () => {
 				.element(screen.getByTestId('iab-consent-dialog-root'))
 				.toBeInTheDocument();
 			expect(styleIds()).toEqual([
-				'c15t-tokens',
-				'c15t-button',
-				'c15t-banner',
-				'c15t-iab-first-paint',
-				'c15t-dialog',
-				'c15t-iab-dialog',
+				'inth-tokens',
+				'inth-button',
+				'inth-banner',
+				'inth-iab-first-paint',
+				'inth-dialog',
+				'inth-iab-dialog',
 			]);
 			for (const style of document.querySelectorAll<HTMLStyleElement>(
-				'style[data-c15t-styles]'
+				'style[data-inth-styles]'
 			)) {
 				expect(style.nonce).toBe('iab-style-nonce');
 			}
@@ -187,26 +187,26 @@ describe('IAB styles without CSS imports', () => {
 			.element(screen.getByTestId('iab-consent-banner-root'))
 			.toBeInTheDocument();
 		const hoistedIds = () =>
-			[...document.head.querySelectorAll('style[data-precedence="c15t"]')].map(
+			[...document.head.querySelectorAll('style[data-precedence="inth"]')].map(
 				(style) => style.getAttribute('data-href')
 			);
 		expect(hoistedIds()).toEqual([
-			'c15t-tokens',
-			'c15t-button',
-			'c15t-banner',
-			'c15t-iab-first-paint',
+			'inth-tokens',
+			'inth-button',
+			'inth-banner',
+			'inth-iab-first-paint',
 		]);
 		await screen.getByTestId('iab-consent-banner-customize-button').click();
 		await expect
 			.element(screen.getByTestId('iab-consent-dialog-root'))
 			.toBeInTheDocument();
 		expect(hoistedIds()).toEqual([
-			'c15t-tokens',
-			'c15t-button',
-			'c15t-banner',
-			'c15t-iab-first-paint',
-			'c15t-dialog',
-			'c15t-iab-dialog',
+			'inth-tokens',
+			'inth-button',
+			'inth-banner',
+			'inth-iab-first-paint',
+			'inth-dialog',
+			'inth-iab-dialog',
 		]);
 		await screen.unmount();
 	});

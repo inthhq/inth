@@ -1,6 +1,6 @@
 /**
  * `@inth/angular/testing`: `testing()`, which runs the consent flow
- * with no backend, and Angular CDK component harnesses for the c15t
+ * with no backend, and Angular CDK component harnesses for the Inth
  * consent surfaces, for your own TestBed tests.
  *
  * The banner, dialog, trigger and IAB surfaces render into `<body>`: find

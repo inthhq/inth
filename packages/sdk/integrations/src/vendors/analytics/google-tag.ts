@@ -5,11 +5,11 @@ import { runtimeDateValue, vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
 import {
 	GOOGLE_CONSENT_MODE_V2_DEFAULT_MAPPING,
+	GTAG_BOOTSTRAP,
 	withOptionalConsentMapping,
 } from '../_shared/google-consent';
 import { readId, skipMissingId } from '../_shared/required-id';
 
-// Extended Window interface to include gtag specific properties
 declare global {
 	interface Window {
 		dataLayer: unknown[];
@@ -26,22 +26,7 @@ declare global {
 export const gtagManifest = {
 	...vendorManifestContract,
 	alwaysLoad: true,
-	bootstrap: [
-		{
-			ifUndefined: true,
-
-			name: 'dataLayer',
-			type: 'setGlobal',
-			value: [],
-		},
-		{
-			ifUndefined: true,
-
-			name: 'gtag',
-			queue: 'dataLayer',
-			type: 'defineQueueFunction',
-		},
-	],
+	bootstrap: GTAG_BOOTSTRAP,
 	category: '{{category}}',
 	consentMapping: GOOGLE_CONSENT_MODE_V2_DEFAULT_MAPPING,
 	consentSignal: 'gtag',
@@ -102,7 +87,7 @@ export interface GtagOptions {
 	category: AllConsentNames;
 
 	/**
-	 * Custom mapping from c15t consent categories to Google Consent Mode v2 types.
+	 * Custom mapping from Inth consent categories to Google Consent Mode v2 types.
 	 * Overrides the default mapping when provided.
 	 *
 	 * @default
@@ -119,7 +104,7 @@ export interface GtagOptions {
 	consentMapping?: Record<string, string[]>;
 
 	/**
-	 * When c15t loads `gtag/js`.
+	 * When Inth loads `gtag/js`.
 	 *
 	 * - `always`: load on every page, before the visitor chooses. The helper
 	 *   sends `gtag('consent', 'default', ...)` with the current permissions
@@ -138,7 +123,7 @@ export interface GtagOptions {
 	 * `necessary` is always allowed, so pair this mode with `measurement` or
 	 * `marketing`.
 	 *
-	 * After a withdrawal c15t reloads the page by default. With
+	 * After a withdrawal Inth reloads the page by default. With
 	 * `reloadOnConsentRevoked: false`, the loaded tag stays on the page and
 	 * receives an `update` that denies the withdrawn types.
 	 *
@@ -163,8 +148,6 @@ export interface GtagOptions {
  * v2 signals. Set `loadMode: 'after-consent'` to keep every request to Google
  * waiting until `category` is allowed.
  *
- * @param options - The options for the gtag script.
- * @returns The Google Tag script.
  * @remarks When `id` is missing or blank, the
  *   helper logs `gtag: missing or invalid id` with
  *   `console.error` and returns a script that never loads.
@@ -210,6 +193,8 @@ export const gtag = function gtag({
 	const resolved = resolveManifest(manifest, {
 		category,
 		config,
+		dataLayer: 'dataLayer',
+		gtag: 'gtag',
 		id: normalizedId,
 	});
 

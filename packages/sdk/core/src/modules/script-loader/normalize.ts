@@ -68,11 +68,11 @@ export interface ElementIdResolver {
  *
  * Resource keys let independent loaders select different physical resources
  * under the same logical script ID. Without one, use the script ID.
- * When `script.anonymizeId` is `false`, the ID is `c15t-script-<key>` —
+ * When `script.anonymizeId` is `false`, the ID is `inth-script-<key>` —
  * stable across mounts so consumers can target it from CSS / extensions.
  *
  * When `script.anonymizeId` is unset or `true`, the ID is a random
- * `c15t-<8 random chars>` token cached for the lifetime of this page's
+ * `inth-<8 random chars>` token cached for the lifetime of this page's
  * module instance. The cache makes `getElementId()` idempotent across
  * fresh loader instances — same script always gets the same anon ID.
  */
@@ -86,13 +86,13 @@ export const createElementIdResolver =
 				const key = script.resourceKey ?? script.id;
 				const anonymize = script.anonymizeId !== false;
 				if (!anonymize) {
-					return `c15t-script-${key}`;
+					return `inth-script-${key}`;
 				}
 				const cached = anonymizedElementIds.get(key);
 				if (cached) {
 					return cached;
 				}
-				const generated = `c15t-${generateRandomId()}`;
+				const generated = `inth-${generateRandomId()}`;
 				anonymizedElementIds.set(key, generated);
 				return generated;
 			},

@@ -20,7 +20,9 @@ import {
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createKernel as createConsentKernel } from '../../../kernel';
 import type { InternalKernel } from '../../../kernel/internals';
+import { SURFACE_ROOT_ATTRIBUTE } from '../../../libs/page-globals';
 import {
+	C15T_STORAGE_KEY,
 	PENDING_SAVES_STORAGE_KEY,
 	STORAGE_KEY_V2,
 } from '../../../libs/storage-keys';
@@ -144,7 +146,7 @@ afterEach(() => {
 // First in the file: several tests below leave a handle mounted, and the
 // focus events here would reach them.
 describe('queued records land under the subject the last handle holds', () => {
-	const sidKey = `${STORAGE_KEY_V2}-sid`;
+	const sidKey = `${C15T_STORAGE_KEY}-sid`;
 	const expireSid = () => {
 		document.cookie = `${sidKey}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
 	};
@@ -960,10 +962,12 @@ describe('before the write code lands', () => {
 		});
 		createPersistence({ kernel }, loader);
 		const banner = document.createElement('div');
-		banner.dataset.testid = 'consent-banner-root';
+		banner.setAttribute(SURFACE_ROOT_ATTRIBUTE, 'banner');
 		const button = document.createElement('button');
 		banner.append(button);
 		const outside = document.createElement('button');
+		// A test id alone does not mark a surface.
+		outside.dataset.testid = 'consent-banner-root';
 		document.body.append(banner, outside);
 		try {
 			// Before a banner is shown, a press does nothing.
@@ -1001,7 +1005,7 @@ describe('before the write code lands', () => {
 		createPersistence({ kernel }, loader);
 		kernel.markLive();
 		const dialog = document.createElement('div');
-		dialog.dataset.testid = 'iab-consent-dialog-root';
+		dialog.setAttribute(SURFACE_ROOT_ATTRIBUTE, 'dialog');
 		const toggle = document.createElement('input');
 		dialog.append(toggle);
 		document.body.append(dialog);

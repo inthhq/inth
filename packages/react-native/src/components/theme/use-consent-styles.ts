@@ -204,7 +204,7 @@ const TAG_SHADOW = '0 1px 2px rgba(15, 23, 42, 0.12)';
 const HAIRLINE = 1;
 
 /**
- * The web `--c15t-shadow-sm`: `0 1px 2px 0 rgb(0 0 0 / 0.05)`.
+ * The web `--inth-shadow-sm`: `0 1px 2px 0 rgb(0 0 0 / 0.05)`.
  *
  * It is the whole elevation budget of the light surfaces. A dialog card carries
  * it, and so does every consent action, which is why a button reads as a raised
@@ -305,7 +305,7 @@ const IAB_DESCRIPTION = {
  * - `tabHeight` / `tabFontSize`: `.tabButton` is `height: 2rem` with
  *   `font-size: .8125rem` at weight 500 and `padding: 0 .75rem`.
  * - `tabListPadding` / `tabListGap`: `.tabsList` pads `.25rem` and gaps
- *   `.25rem`, on `--c15t-radius-lg`.
+ *   `.25rem`, on `--inth-radius-lg`.
  * - `rowHeaderPadding` / `rowHeaderGap`: `.purposeHeader` is `padding: .75rem`
  *   with `gap: .75rem`.
  * - `rowTitleSize`: `.purposeName` and `.vendorListName` are both `.875rem` at
@@ -847,7 +847,7 @@ export const useConsentStyles = function useConsentStyles(
 				// The web spends its 8 twice as halved: `.header` opens at
 				// `gap: --consent-dialog-header-gap` and then puts `margin-top:
 				// --consent-dialog-card-gap` on `.header > * + *`, and both of those
-				// tokens are `--c15t-space-xs`. Box to box that is the 8 the live card
+				// tokens are `--inth-space-xs`. Box to box that is the 8 the live card
 				// leaves under its title, which is also the 8 the banner reaches in one
 				// rule.
 				headerGap: spacing.xs * 2,
@@ -1112,7 +1112,7 @@ export const useConsentStyles = function useConsentStyles(
 				padding: spacing.sm,
 			},
 			// The box the close control draws: `.closeButton` is `padding: .375rem`
-			// on `--c15t-radius-md` over the muted tone, with no border and no fill
+			// on `--inth-radius-md` over the muted tone, with no border and no fill
 			// until hover. The 44 a fingertip needs is reached through `hitSlop` in
 			// the control itself, exactly as every other control here does it, so the
 			// header stays the height the web header measures.
@@ -1205,7 +1205,7 @@ export const useConsentStyles = function useConsentStyles(
 			},
 			// The Object / Objected control on a partner's legitimate-interest leg.
 			// `.objectButton` is `.6875rem` at weight 500 on `padding: .25rem .5rem`, one
-			// hairline in the border token on `--c15t-radius-sm`, which is 4 and not this
+			// hairline in the border token on `--inth-radius-sm`, which is 4 and not this
 			// theme's own 8. It measures 53.6 x 23.8 at a 411 CSS px viewport, so the 44
 			// a fingertip needs comes from `hitSlop` here too rather than from the box.
 			objectButton: {
@@ -1254,7 +1254,7 @@ export const useConsentStyles = function useConsentStyles(
 			row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
 			// One row of the disclosure. `.purposeItem`, `.stackItem`, and
 			// `.specialPurposesSection` are the same bordered card: a hairline in the
-			// border token on `--c15t-radius-md`, which is this theme's own `control`
+			// border token on `--inth-radius-md`, which is this theme's own `control`
 			// radius, filled with the card colour. A partner row is the same card with
 			// the fill taken away, which is `.vendorListItem`.
 			rowCard: {
@@ -1442,7 +1442,7 @@ export const useConsentStyles = function useConsentStyles(
 				width: switchGeometry.width,
 			},
 			// One tab of the segmented control. `.tabButton` is a fixed `height: 2rem`
-			// with `padding: 0 .75rem` on `--c15t-radius-md`, and the two of them are
+			// with `padding: 0 .75rem` on `--inth-radius-md`, and the two of them are
 			// `1fr` tracks of `.tabsList`, which in React Native is a flexing child
 			// over a zero basis. It carries no fill of its own: the web slides one
 			// `.tabIndicator` behind the active trigger, and a selected tab here takes
@@ -1480,7 +1480,7 @@ export const useConsentStyles = function useConsentStyles(
 				lineHeight: 16.25,
 			},
 			// The segmented control the two tabs sit in: `.tabsList` is a `0.25rem`
-			// grid with a `0.25rem` gap on `--c15t-radius-lg`, filled with
+			// grid with a `0.25rem` gap on `--inth-radius-lg`, filled with
 			// `--iab-cd-surface-hover` so the pair reads as one control with a hole
 			// punched in it rather than two buttons side by side.
 			tabList: {

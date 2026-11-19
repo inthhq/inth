@@ -1,6 +1,6 @@
 ---
 title: Customize
-description: Change the colors, fonts, layout, button styles and copy of the c15t banner and dialog in a React app with theme tokens, provider options and slots, and load the stylesheet yourself when you need to.
+description: Change the colors, fonts, layout, button styles and copy of the Inth banner and dialog in a React app with theme tokens, provider options and slots, and load the stylesheet yourself when you need to.
 group: frameworks
 ---
 
@@ -24,10 +24,10 @@ from a bottom bar to a fully custom one, with tested code for this framework.
 
 ## Import the stylesheet yourself
 
-A React app imports no c15t stylesheet. `ConsentBanner`, `ConsentDialog` and
+A React app imports no Inth stylesheet. `ConsentBanner`, `ConsentDialog` and
 the other stock components render the rules they use as `<style>` elements.
 
-Import the stylesheet yourself with Tailwind CSS 3, to put c15t's rules in a
+Import the stylesheet yourself with Tailwind CSS 3, to put Inth's rules in a
 named cascade layer. Set `styles: false` in the provider
 options, so the components add no second copy, and import the stylesheet once
 in the module that renders `ConsentProvider`:
@@ -58,10 +58,10 @@ A single-page app has no server render, so pick one of two ways:
 
   ```css title="src/index.css"
   :root {
-    --c15t-primary: #2f6f4e;
-    --c15t-primary-hover: #24563c;
-    --c15t-text-on-primary: #fff;
-    --c15t-radius-lg: 4px;
+    --inth-primary: #2f6f4e;
+    --inth-primary-hover: #24563c;
+    --inth-text-on-primary: #fff;
+    --inth-radius-lg: 4px;
   }
   ```
 
@@ -187,4 +187,4 @@ keys. For one banner, `ConsentBanner` also accepts text props such as
 Clear site data and reload under a policy that shows a banner. Check the banner
 and the preferences dialog, since both read the same tokens. Test a narrow
 window, keyboard focus and contrast on the primary button. In development, the
-console warns if `theme` holds tokens but the page has no `c15t-theme` style.
+console warns if `theme` holds tokens but the page has no `inth-theme` style.

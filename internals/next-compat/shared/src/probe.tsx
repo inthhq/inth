@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 
 /**
  * Snapshot of consent runtime state that the compatibility suite reads
- * through `window.__c15tCompat`.
+ * through `window.__inthCompat`.
  */
 export interface CompatProbeState {
 	scenario: string;
@@ -21,8 +21,8 @@ export interface CompatProbeState {
 
 declare global {
 	interface Window {
-		__c15tCompat?: CompatProbeState;
-		__c15tCompatCounters?: Pick<
+		__inthCompat?: CompatProbeState;
+		__inthCompatCounters?: Pick<
 			CompatProbeState,
 			'onConsentSetCount' | 'onErrorCount'
 		>;
@@ -33,11 +33,11 @@ export const getCompatCounters = function getCompatCounters() {
 	if (typeof window === 'undefined') {
 		return undefined;
 	}
-	window.__c15tCompatCounters ??= {
+	window.__inthCompatCounters ??= {
 		onConsentSetCount: 0,
 		onErrorCount: 0,
 	};
-	return window.__c15tCompatCounters;
+	return window.__inthCompatCounters;
 };
 
 export const CompatProbe = ({ scenario }: { scenario: string }) => {
@@ -46,7 +46,7 @@ export const CompatProbe = ({ scenario }: { scenario: string }) => {
 
 	useEffect(() => {
 		const counters = getCompatCounters();
-		window.__c15tCompat = {
+		window.__inthCompat = {
 			activeUI: activeUI ?? 'none',
 			countryCode: snapshot.location?.countryCode ?? null,
 			hasConsented: snapshot.explicitChoice !== null,

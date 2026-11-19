@@ -1,5 +1,5 @@
 // #region docs:callbacks title="src/consent-callbacks.ts"
-import type { C15tVuePluginOptions } from '@inth/vue/vue-plugin';
+import type { InthVuePluginOptions } from '@inth/vue/vue-plugin';
 
 export const callbacks = {
 	// The visitor clicked Accept all, Reject all or Save.
@@ -7,12 +7,12 @@ export const callbacks = {
 		console.info('Choice recorded', snapshot.explicitChoice);
 	},
 	onError: ({ error }) => {
-		console.error('c15t', error);
+		console.error('inth', error);
 	},
 	// Permissions changed for any reason: a choice, an expired choice, a new
 	// policy or a privacy signal.
 	onPermissionsChanged: ({ previous, snapshot }) => {
 		console.info('Permissions', previous, snapshot.effectivePermissions);
 	},
-} satisfies NonNullable<C15tVuePluginOptions['callbacks']>;
+} satisfies NonNullable<InthVuePluginOptions['callbacks']>;
 // #endregion docs:callbacks

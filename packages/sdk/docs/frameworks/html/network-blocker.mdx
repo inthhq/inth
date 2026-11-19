@@ -1,6 +1,6 @@
 ---
 title: Network blocker
-description: Hold fetch and XMLHttpRequest calls from a plain HTML page until their consent category is allowed, with network blocker rules queued on the c15t script tag.
+description: Hold fetch and XMLHttpRequest calls from a plain HTML page until their consent category is allowed, with network blocker rules queued on the Inth script tag.
 group: frameworks
 ---
 
@@ -21,8 +21,8 @@ Queue a `config` call with `networkBlocker` before the script tag:
 
 ```html
 <script>
-  window.c15t = window.c15t || [];
-  c15t.push(['config', {
+  window.inth = window.inth || [];
+  inth.push(['config', {
     networkBlocker: {
       rules: [
         { id: 'collector', domain: 'collect.example.com', category: 'measurement' },
@@ -35,7 +35,7 @@ Queue a `config` call with `networkBlocker` before the script tag:
         },
       ],
       onRequestBlocked: ({ method, url, rule }) => {
-        console.info('c15t blocked', method, url, rule?.id);
+        console.info('inth blocked', method, url, rule?.id);
       },
     },
   }]);
@@ -73,7 +73,7 @@ to paths on `example.com` that contain `/api/track`.
   check `response.ok` in code that expects data.
 - A blocked `XMLHttpRequest` fires an `error` event.
 - A request sent before the policy resolves waits, then goes out or is
-  blocked once c15t knows the visitor's permissions. If the policy fails to
+  blocked once Inth knows the visitor's permissions. If the policy fails to
   load, it is blocked.
 - A request that does not match any rule goes out at once.
 
@@ -87,12 +87,12 @@ runs. It does not cover:
 
 - `navigator.sendBeacon`, WebSockets and `EventSource`;
 - requests from `<img>`, `<script>`, `<link>` and `<iframe>` elements;
-- requests sent before the c15t tag ran. With `defer`, the tag runs after the
+- requests sent before the Inth tag ran. With `defer`, the tag runs after the
   page has parsed, so inline scripts anywhere in the page run before it;
 - requests from other frames and from service workers.
 
 Use gated tags for scripts and iframes. When inline code sends requests while
-the page parses, load the c15t tag without `defer` at the top of `<head>`, so
+the page parses, load the Inth tag without `defer` at the top of `<head>`, so
 it runs first. The banner still waits for the document to parse before it
 mounts.
 
@@ -100,6 +100,6 @@ mounts.
 
 1. Open the page in a private window with the console and Network tab open.
 2. Trigger the request, for example by loading the page that sends it. The
-   console shows `[c15t] blocked POST https://example.com/api/track (rule: events)`
+   console shows `[inth] blocked POST https://example.com/api/track (rule: events)`
    and the Network tab shows no request.
 3. Allow measurement and trigger it again. The request goes out.

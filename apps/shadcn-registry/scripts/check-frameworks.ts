@@ -30,12 +30,12 @@ for (const framework of frameworks.filter((name) => name !== 'react')) {
 	for (const base of bases) {
 		const outDir = path.join(checkDir, framework, base);
 		const sourceDir = path.join(appDir, 'registry', sourceFolderByBase[base]);
-		mkdirSync(path.join(outDir, 'c15t'), { recursive: true });
+		mkdirSync(path.join(outDir, 'inth'), { recursive: true });
 
 		for (const file of readdirSync(sourceDir)) {
 			const source = path.join(sourceDir, file);
 			writeFileSync(
-				path.join(outDir, 'c15t', file),
+				path.join(outDir, 'inth', file),
 				toFrameworkSource(
 					readFileSync(source, 'utf8'),
 					path.relative(appDir, source),
@@ -56,13 +56,13 @@ for (const framework of frameworks.filter((name) => name !== 'react')) {
 			JSON.stringify({
 				compilerOptions: {
 					paths: {
-						'@/components/c15t/*': ['./c15t/*'],
+						'@/components/inth/*': ['./inth/*'],
 						'@/components/ui/*': [`${vendor}/components/ui/*`],
 						'@/lib/utils': [`${vendor}/lib/utils`],
 					},
 				},
 				extends: `${toApp}/tsconfig.${base}.json`,
-				include: ['c15t', 'setup', vendor],
+				include: ['inth', 'setup', vendor],
 			})
 		);
 

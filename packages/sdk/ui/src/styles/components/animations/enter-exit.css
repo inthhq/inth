@@ -21,6 +21,6 @@
 }
 
 :root {
-	--c15t-enter-animation: enter var(--c15t-duration-fast) var(--c15t-easing);
-	--c15t-exit-animation: exit var(--c15t-duration-fast) var(--c15t-easing);
+	--inth-enter-animation: enter var(--inth-duration-fast) var(--inth-easing);
+	--inth-exit-animation: exit var(--inth-duration-fast) var(--inth-easing);
 }

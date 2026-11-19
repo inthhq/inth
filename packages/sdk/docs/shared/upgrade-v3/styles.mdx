@@ -15,18 +15,18 @@ Render `ConsentTheme` with the same theme object, or put the output of
 The `theme-to-consent-theme` codemod marks a provider `theme` that sets
 tokens with a `TODO(c15t v3)` comment.
 
-A generated theme uses `:root:root`, so your own `--c15t-*` values on plain
+A generated theme uses `:root:root`, so your own `--inth-*` values on plain
 `:root` lose to it. Put them in the theme instead, or raise your selector.
 
 ### Stylesheets
 
 - Remove the c15t stylesheet import, such as `@c15t/react/styles.css` or
-  `@c15t/nextjs/styles.css`. The stock components in `c15t/react`,
-  `c15t/next` and `c15t/tanstack-start` render the rules they use as
+  `@c15t/nextjs/styles.css`. The stock components in `@inth/react`,
+  `@inth/nextjs` and `@inth/tanstack-start` render the rules they use as
   `<style>` elements, so no stylesheet request holds back the first paint. An
   import you keep still styles the components, but the rules ship twice and
   the stylesheet still delays the first paint.
-- Keep an import of the v3 stylesheet, such as `c15t/react/styles.css`, only
+- Keep an import of the v3 stylesheet, such as `@inth/react/styles.css`, only
   with Tailwind CSS 3 or a named cascade layer, and set
   `styles: false` in the provider options so the components add no second
   copy. See
@@ -36,9 +36,10 @@ A generated theme uses `:root:root`, so your own `--c15t-*` values on plain
   pointed at `c15t`, with a `TODO(c15t v3)` comment.
 - With manual styles, `iab/styles.css` no longer repeats the default tokens.
   Import it after `styles.css`. Automatic IAB styling needs neither import.
-- Tailwind CSS 3 needs a PostCSS plugin for c15t's `styles.css`. Add
-  `'c15t/postcss-tailwind3': {}` before `tailwindcss` in `postcss.config`,
-  and set `styles: false`. See [Tailwind CSS 3](/docs/customization/tailwind#set-up-tailwind-css-3).
+- Tailwind CSS 3 needs a PostCSS plugin for Inth's `styles.css`. Add
+  `'@inth/react/postcss-tailwind3': {}`, or
+  `'@inth/nextjs/postcss-tailwind3': {}` in Next.js, before `tailwindcss` in
+  `postcss.config`, and set `styles: false`. See [Tailwind CSS 3](/docs/customization/tailwind#set-up-tailwind-css-3).
   Create React App can't run the plugin. The `postcss-tailwind3` codemod adds
   it to an object-form `postcss.config` and warns about configs it can't
   edit.

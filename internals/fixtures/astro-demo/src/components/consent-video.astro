@@ -43,7 +43,7 @@ import ConsentDialogLink from '@inth/astro/components/consent-dialog-link.astro'
 		};
 
 		connectedCallback() {
-			// c15t boots from a module script, which can run after this one.
+			// Inth boots from a module script, which can run after this one.
 			document.addEventListener('DOMContentLoaded', this.connect, {
 				once: true,
 			});

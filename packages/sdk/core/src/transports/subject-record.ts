@@ -45,7 +45,7 @@ import type { HydrationRecords, VendorChoice } from '../types';
 export type TransportHydrationRecords = HydrationRecords;
 
 /** The subject read as the wire carries it, dates already revived. */
-export type SubjectRecordWire = GetSubjectOutput;
+type SubjectRecordWire = GetSubjectOutput;
 
 export interface MapSubjectRecordOptions {
 	/** Current time in epoch milliseconds. Future receipts are invalid. */

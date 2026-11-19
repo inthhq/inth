@@ -7,7 +7,7 @@ import {
 } from "@inth/react/headless"
 
 import { cn } from "@/lib/utils"
-import { ConsentBrandingMark } from "@/components/c15t/consent-branding"
+import { ConsentBrandingMark } from "@/components/inth/consent-branding"
 import { Button } from "@/components/ui/button"
 
 export function ConsentDialogTrigger({

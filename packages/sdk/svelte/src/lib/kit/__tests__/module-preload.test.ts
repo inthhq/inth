@@ -10,7 +10,7 @@ const LINK =
 	'<link rel="modulepreload" href="/_app/immutable/chunks/gates.js" fetchpriority="low">';
 
 const marker = (content: string): string =>
-	`<meta name="c15t-modulepreload" content="${content}">`;
+	`<meta name="inth-modulepreload" content="${content}">`;
 
 describe('injectModulePreloads', () => {
 	test('links the named chunk at the end of the head', () => {

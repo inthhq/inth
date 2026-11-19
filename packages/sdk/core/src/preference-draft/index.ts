@@ -35,10 +35,15 @@
  */
 import { compareCanonical } from '@inth/sdk-schema/canonical-order';
 
-import { displayedCategories as listDisplayed } from '../consent/consent-types';
+import {
+	DENIED_CONSENTS,
+	displayedCategories as listDisplayed,
+	policyDefault,
+} from '../consent/consent-types';
 import type { AllConsentNames } from '../consent/consent-types';
 import { listedVendors } from '../libs/vendor-listing';
-import { deniedVendorIds } from '../modules/has';
+import { vendorAxisActive } from '../libs/vendors';
+import { deniedVendorIds, toggleableVendorIds } from '../modules/vendor-denial';
 import type {
 	ConsentKernel,
 	ConsentSnapshot,
@@ -197,7 +202,7 @@ const keep = function keep<Value>(previous: Value, next: Value): Value {
 const vendorSurface = function vendorSurface(
 	snapshot: ConsentSnapshot
 ): string {
-	if (snapshot.model === 'iab') {
+	if (!vendorAxisActive(snapshot)) {
 		return '';
 	}
 	return JSON.stringify(
@@ -219,20 +224,13 @@ const recordedValues = function recordedValues(
 ): ConsentState {
 	const rule = snapshot.policyRule;
 	const recorded = snapshot.explicitChoice?.categories;
-	const values: ConsentState = {
-		experience: false,
-		functionality: false,
-		marketing: false,
-		measurement: false,
-		necessary: true,
-	};
+	const values: ConsentState = { ...DENIED_CONSENTS };
 	for (const category of scope) {
 		if (category !== 'necessary') {
 			values[category] =
 				recorded?.[category]?.value ??
 				defaults?.[category] ??
-				(rule.model === 'opt-out' ||
-					rule.preselectedCategories.includes(category));
+				policyDefault(rule, category);
 		}
 	}
 	return values;
@@ -248,17 +246,14 @@ const recordedVendors = function recordedVendors(
 	snapshot: ConsentSnapshot
 ): [Grants, Set<string>] {
 	const grants: Grants = {};
-	const toggleable = new Set<string>();
-	if (snapshot.model !== 'iab') {
-		const denied = deniedVendorIds(snapshot);
-		for (const vendor of snapshot.vendors?.declared ?? []) {
-			setOwn(grants, vendor.id, !denied?.has(vendor.id));
-			if (vendor.disabled !== true) {
-				toggleable.add(vendor.id);
-			}
-		}
+	if (!vendorAxisActive(snapshot)) {
+		return [grants, new Set()];
 	}
-	return [grants, toggleable];
+	const denied = deniedVendorIds(snapshot);
+	for (const vendor of snapshot.vendors?.declared ?? []) {
+		setOwn(grants, vendor.id, !denied?.has(vendor.id));
+	}
+	return [grants, toggleableVendorIds(snapshot)];
 };
 
 /** `value` over `base` for every staged key `include` accepts. */
@@ -294,7 +289,6 @@ const prune = function prune<KeyType extends string>(
  *
  * @param kernel - The kernel to read the record from and save into.
  * @param options - Presentation defaults.
- * @returns The draft.
  * @example
  * ```ts
  * import { createPreferenceDraft } from '@inth/sdk-core/preference-draft';
@@ -338,8 +332,7 @@ export const createPreferenceDraft = function createPreferenceDraft(
 	): PreferenceDraftState {
 		const snapshot = kernel.getSnapshot();
 		derivedFrom = snapshot;
-		const scope =
-			snapshot.evaluationPolicy.choiceScope ?? snapshot.policyRule.scope;
+		const scope = snapshot.evaluationPolicy.choiceScope;
 		const displayedCategories = listDisplayed(scope);
 		const isClean = () => staged.size === 0 && stagedVendors.size === 0;
 		if (isClean()) {

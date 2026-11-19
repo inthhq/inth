@@ -1,4 +1,4 @@
-import { linkOpensDialog } from '@c15t/conformance/play/consent-dialog-link';
+import { linkOpensDialog } from '@inth/conformance/play/consent-dialog-link';
 import type { HydrationRecords, HydrationResult } from '@inth/sdk/engine';
 import buttonStyles from '@inth/sdk/ui/styles/components/button';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';

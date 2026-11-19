@@ -4,7 +4,9 @@ import { basename, dirname, join } from 'node:path';
 
 import {
 	CONSENT_CHUNK_GROUP,
+	CORE_SURFACE_CONFIG_MODULES,
 	consentChunkGroupsConfig,
+	coreModulePattern,
 	shouldGroupConsentChunks,
 } from '@inth/sdk/build';
 import type {
@@ -15,7 +17,7 @@ import type {
 import type { Plugin, UserConfig } from 'vite';
 
 /**
- * The c15t packages a Nuxt app's client bundle can reach, each with a
+ * The Inth packages a Nuxt app's client bundle can reach, each with a
  * specifier that resolves (none exports its `package.json`).
  */
 const CONSENT_PACKAGES = [
@@ -23,7 +25,6 @@ const CONSENT_PACKAGES = [
 	['@inth/vue', '@inth/vue'],
 ] as const;
 
-/** The directory of the nearest `package.json` named `name` above `file`. */
 const packageRoot = function packageRoot(
 	file: string,
 	name: string
@@ -52,12 +53,11 @@ const escapeRegExp = (value: string): string =>
 	value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
 
 /**
- * The real directory of each c15t package this module resolves, the way
+ * The real directory of each Inth package this module resolves, the way
  * Vite names their modules. A workspace or linked install resolves outside
  * `node_modules`, where core's group test would not find them.
  *
  * @param from - A file inside `@inth/vue`.
- * @returns One directory per package that resolves.
  * @internal
  */
 export const consentPackageDirs = function consentPackageDirs(
@@ -79,13 +79,12 @@ export const consentPackageDirs = function consentPackageDirs(
 };
 
 /**
- * Core's c15t chunk group, also matching the given package directories:
- * the c15t modules the entry imports statically go into one chunk, not one
+ * Core's Inth chunk group, also matching the given package directories:
+ * the Inth modules the entry imports statically go into one chunk, not one
  * small chunk for each module the consent engine shares with the first
  * load.
  *
  * @param dirs - Real package directories, from {@link consentPackageDirs}.
- * @returns The group.
  * @internal
  */
 export const nuxtConsentChunkGroup = function nuxtConsentChunkGroup(
@@ -109,8 +108,7 @@ export const nuxtConsentChunkGroup = function nuxtConsentChunkGroup(
  * (the config composable, theme slots, slot attributes, the schema
  * defaults and the experiment theme merge) and the policy actions.
  */
-const CONFIG_MODULES =
-	'(?:vue/dist/runtime/composables/config|vue/dist/runtime/utils/slot-attrs|ui/dist/utils/theme-slots|schema/dist/config/defaults|core/dist/libs/experiment-presentation|core/dist/libs/policy-actions)\\.js$';
+const CONFIG_MODULES = `(?:(?:vue/dist/runtime/composables/config|vue/dist/runtime/utils/slot-attrs|ui/dist/utils/theme-slots|schema/dist/config/defaults)\\.js$|${coreModulePattern(CORE_SURFACE_CONFIG_MODULES)})`;
 
 /**
  * Keeps the modules every stock surface reads in one chunk. They leave the
@@ -120,7 +118,6 @@ const CONFIG_MODULES =
  * page whose first load still holds connections, each extra request can
  * cost a round trip before the dialog shows.
  *
- * @param dirs - Real package directories.
  * @returns The group; list it after {@link nuxtConsentChunkGroup}, which
  * keeps any of these modules a first load imports.
  * @internal
@@ -142,7 +139,7 @@ export const nuxtConsentConfigChunkGroup = function nuxtConsentConfigChunkGroup(
 	return {
 		entriesAware: false,
 		includeDependenciesRecursively: false,
-		name: 'c15t-config',
+		name: 'inth-config',
 		tags: [],
 		test: new RegExp(`(?:${roots})${CONFIG_MODULES}`, 'u'),
 	};
@@ -152,8 +149,6 @@ export const nuxtConsentConfigChunkGroup = function nuxtConsentConfigChunkGroup(
  * A client-build Vite plugin that adds {@link nuxtConsentChunkGroup}, when
  * the Rolldown in use supports it and the app sets no chunking of its own.
  *
- * @param dirs - Real package directories.
- * @returns The Vite plugin.
  * @internal
  */
 export const groupConsentChunks = function groupConsentChunks(

@@ -2,8 +2,9 @@
  * @vitest-environment jsdom
  * @vitest-environment-options {"url":"https://a.app.example.com/pricing"}
  *
- * c15t 3.2 stored the subject ID in `<key>-sid` before any choice, under
- * whichever cookie scope its server adapter or browser runtime used. Startup
+ * c15t 3.2 stored the subject ID in `<key>-sid` before any choice, `c15t-sid`
+ * under its default key, under whichever cookie scope its server adapter or
+ * browser runtime used. Startup
  * and `clear()` remove every copy, whatever the current configuration. A
  * visitor whose stored records carry no ID keeps the one 3.2 gave them.
  */
@@ -43,7 +44,7 @@ const plant = function plant(key = 'c15t-sid'): void {
 };
 
 afterEach(() => {
-	for (const key of ['c15t-sid', 'custom-sid', 'c15t-epoch']) {
+	for (const key of ['c15t', 'c15t-sid', 'custom-sid', 'inth-epoch']) {
 		for (const scope of SCOPES) {
 			document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/${scope}`;
 		}
@@ -82,6 +83,7 @@ test.each<[string, StorageConfig | undefined, string]>([
 	['crossSubdomain', { crossSubdomain: true }, 'c15t-sid'],
 	['a defaultDomain', { defaultDomain: 'app.example.com' }, 'c15t-sid'],
 	['a storage key of its own', { storageKey: 'custom' }, 'custom-sid'],
+	["c15t's storage key", { storageKey: 'c15t' }, 'c15t-sid'],
 ])('startup with %s removes every scope a 3.2 copy used', (_, config, key) => {
 	plant(key);
 	const { handle, kernel } = boot(config);
@@ -104,6 +106,23 @@ test('clear() removes every scope a copy written after startup used', () => {
 	expect(localStorage.getItem('c15t-sid')).toBeNull();
 	handle.dispose();
 });
+
+test.each(SCOPES.slice(1))(
+	'clear() under a host-only configuration removes a c15t record cookie scoped %s',
+	(scope) => {
+		const at = Date.now() - 1000;
+		document.cookie = `c15t=c.necessary:1,c.marketing:1,i.t:${at}; path=/${scope}`;
+		const { handle, kernel } = boot();
+		expect(
+			kernel.getSnapshot().explicitChoice?.categories.marketing?.value
+		).toBe(true);
+
+		handle.clear();
+
+		expect(sidCookies('c15t')).toEqual([]);
+		handle.dispose();
+	}
+);
 
 // Records an older version wrote carry no ID. 3.2 gave such a visitor the
 // ID in `c15t-sid`; dropping it would give them a new ID on every load

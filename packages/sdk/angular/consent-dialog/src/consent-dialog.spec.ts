@@ -10,7 +10,7 @@ import {
 	resetDialogWarmingForTests,
 	warmDialog,
 } from '../../src/lib/core/dialog-warming';
-import type { C15tProviderOptions } from '../../src/lib/core/options';
+import type { InthProviderOptions } from '../../src/lib/core/options';
 import { ConsentDialog } from './consent-dialog';
 
 let app: ClientApp | undefined;
@@ -24,7 +24,7 @@ const stable = async function stable(): Promise<void> {
 
 const mount = async function mount(
 	entries: readonly ConformanceEntry[],
-	options: Partial<C15tProviderOptions> = {}
+	options: Partial<InthProviderOptions> = {}
 ): Promise<ClientApp> {
 	container = document.createElement('div');
 	document.body.append(container);
@@ -34,7 +34,7 @@ const mount = async function mount(
 			...testOptions(),
 			disableAnimation: true,
 			...options,
-		} as C15tProviderOptions,
+		} as InthProviderOptions,
 		{ entries }
 	);
 	await stable();
@@ -76,7 +76,7 @@ afterEach(() => {
 	localStorage.clear();
 	resetDialogWarmingForTests();
 	for (const sheet of document.head.querySelectorAll(
-		'style[data-c15t-styles]'
+		'style[data-inth-styles]'
 	)) {
 		sheet.remove();
 	}
@@ -96,7 +96,7 @@ describe('ConsentWidget vendor list', () => {
 	test('lists declared vendors under their category, locked until the category is on', async () => {
 		await mount([{ component: ConsentWidget }], {
 			vendors,
-		} as Partial<C15tProviderOptions>);
+		} as Partial<InthProviderOptions>);
 
 		byTestId('consent-widget-accordion-trigger-marketing')?.click();
 		await stable();
@@ -125,7 +125,7 @@ describe('ConsentDialog', () => {
 	test('a warm signal loads its body before it opens', async () => {
 		await mount([{ component: ConsentDialog }]);
 		const dialogSheet = () =>
-			document.head.querySelector('style[data-c15t-styles="c15t-dialog"]');
+			document.head.querySelector('style[data-inth-styles="inth-dialog"]');
 		expect(dialogSheet()).toBeNull();
 
 		warmDialog();

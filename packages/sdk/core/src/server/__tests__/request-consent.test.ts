@@ -22,11 +22,14 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { clearManifestCache } from '../../libs/manifest-cache-runtime';
 import type { ManifestFetch } from '../../libs/manifest-cache-runtime';
+import { clearGvlCache } from '../../transports/gvl-cache';
 import { CONSENT_ROUTE_TIMEOUT_HEADER } from '../consent-route';
-import { clearGvlCache } from '../gvl-cache';
-import { readRequestConsent, resolveRequestConsent } from '../request-consent';
+import {
+	fetchRequestInit,
+	readRequestConsent,
+	resolveRequestConsent,
+} from '../request-consent';
 import type { ResolveRequestConsentOptions } from '../request-consent';
-import { resolveRequestSubject } from '../request-subject';
 
 const BACKEND = 'https://consent.example.com';
 const APP = 'https://app.example.com';
@@ -34,11 +37,12 @@ const GVL_URL = 'https://gvl.example/vendor-list.json';
 const NOW = 1_780_000_000_000;
 /** The URL a render fetched, without the consent journey it adds as a query. */
 const target = (input: unknown): string => String(input).split('?')[0] ?? '';
-const CONSENTED = `c15t=c.necessary:1,c.marketing:1,i.t:${NOW - 1000}`;
-const DISMISSED = `c15t-notice=v=1&t=${NOW - 1000}&f=${'a'.repeat(64)}`;
+const CONSENTED = `inth=c.necessary:1,c.marketing:1,i.t:${NOW - 1000}`;
+const INTH_CONSENTED = CONSENTED.replace('inth=', 'c15t=');
+const DISMISSED = `inth-notice=v=1&t=${NOW - 1000}&f=${'a'.repeat(64)}`;
 
 const MANIFEST = {
-	branding: 'c15t',
+	branding: 'inth',
 	policyPacks: [
 		createConsentManifestPolicyPack({
 			categories: ['measurement', 'marketing'],
@@ -84,7 +88,7 @@ const GVL = {
 } as unknown as GlobalVendorList;
 
 const INIT: InitOutput = {
-	branding: 'c15t',
+	branding: 'inth',
 	location: { countryCode: 'DE', regionCode: null },
 	policyResolution: writePolicyResolutionWire(
 		resolvePolicyRules({
@@ -112,7 +116,7 @@ const json = function json(
 	return new Response(JSON.stringify(body), {
 		headers: {
 			'content-type': 'application/json',
-			'x-c15t-policy-contract': '1',
+			'x-inth-policy-contract': '1',
 			...headers,
 		},
 	});
@@ -181,7 +185,7 @@ describe('request read', () => {
 			now: NOW,
 			request: {
 				headers: new Headers({
-					cookie: `other=1; ${CONSENTED.replace('c15t=', 'custom=')}`,
+					cookie: `other=1; ${CONSENTED.replace('inth=', 'custom=')}`,
 				}),
 			},
 			storage: { storageKey: 'custom' },
@@ -200,7 +204,7 @@ describe('request read', () => {
 	});
 
 	// Header names are case-insensitive, and some runtimes keep the casing
-	// the client sent. The subject resolver reads the same record.
+	// the client sent.
 	test.each(['Cookie', 'COOKIE'])(
 		'a Node header record with a %s header reads the stored records',
 		(name) => {
@@ -214,20 +218,17 @@ describe('request read', () => {
 			});
 			expect(state.initialRecords?.choice).not.toBeNull();
 			expect(state.initialRecords?.subject?.subjectId).toBe('sub_recorded');
-			expect(
-				resolveRequestSubject({ now: NOW, request: { headers } })
-			).toMatchObject({ setCookie: null, subjectId: 'sub_recorded' });
 		}
 	);
 
-	test('GPC comes from the shared extractor: x-c15t-gpc first, absent stays undefined', () => {
+	test('GPC comes from the shared extractor: x-inth-gpc first, absent stays undefined', () => {
 		const read = (headers: Record<string, string>) =>
 			readRequestConsent({
 				adapter: '@c15t/test',
 				request: { headers: new Headers(headers) },
 			}).state.initialPrivacySignals;
 		expect(read({ 'sec-gpc': '1' })).toEqual({ gpc: true });
-		expect(read({ 'sec-gpc': '1', 'x-c15t-gpc': '0' })).toEqual({
+		expect(read({ 'sec-gpc': '1', 'x-inth-gpc': '0' })).toEqual({
 			gpc: false,
 		});
 		// SvelteKit used to read raw `sec-gpc` and turn an absent signal into
@@ -316,9 +317,9 @@ describe('target resolution', () => {
 
 	describe('self-route guard', () => {
 		test.each([
-			['hosted', { projectUrl: '/api/c15t' }],
-			['manifest', { manifestUrl: '/api/c15t/manifest' }],
-			['an absolute same-origin URL', { projectUrl: `${APP}/api/c15t` }],
+			['hosted', { projectUrl: '/api/inth' }],
+			['manifest', { manifestUrl: '/api/inth/manifest' }],
+			['an absolute same-origin URL', { projectUrl: `${APP}/api/inth` }],
 		])('never fetches the app’s own consent route (%s)', async (_, source) => {
 			const fetch = upstream();
 			const onError = vi.fn();
@@ -350,14 +351,14 @@ describe('target resolution', () => {
 			expect(fetch).toHaveBeenCalledTimes(1);
 		});
 
-		test('an adapter with no own routes fetches a same-origin /api/c15t backend', async () => {
+		test('an adapter with no own routes fetches a same-origin /api/inth backend', async () => {
 			const fetch = upstream();
 			const state = await render({
 				fetch,
 				ownRoutes: [],
-				projectUrl: '/api/c15t',
+				projectUrl: '/api/inth',
 			});
-			expect(target(fetch.mock.calls[0]?.[0])).toBe(`${APP}/api/c15t/init`);
+			expect(target(fetch.mock.calls[0]?.[0])).toBe(`${APP}/api/inth/init`);
 			expect(state.initialPolicyResolution?.status).toBe('matched');
 		});
 
@@ -400,11 +401,11 @@ describe('target resolution', () => {
 			const state = await render({
 				fetch,
 				headers: { cookie: CONSENTED },
-				initUrl: '/api/c15t/init',
+				initUrl: '/api/inth/init',
 				localFetch,
 			});
 			expect(fetch).not.toHaveBeenCalled();
-			expect(target(localFetch.mock.calls[0]?.[0])).toBe('/api/c15t/init');
+			expect(target(localFetch.mock.calls[0]?.[0])).toBe('/api/inth/init');
 			const headers = new Headers(localFetch.mock.calls[0]?.[1]?.headers);
 			expect(headers.get(CONSENT_ROUTE_TIMEOUT_HEADER)).toMatch(/^\d+$/u);
 			// The app's own route reads no cookie, so none is sent.
@@ -563,14 +564,64 @@ describe('forwarding', () => {
 			cookie: CONSENTED,
 			'sec-gpc': '1',
 			'user-agent': 'Visitor/1.0',
-			'x-c15t-country': 'DE',
-			'x-c15t-policy-contract': '1',
-			'x-c15t-region': 'BE',
+			'x-inth-country': 'DE',
+			'x-inth-policy-contract': '1',
+			'x-inth-region': 'BE',
 		});
 		expect(headers.has('authorization')).toBe(false);
 		expect(headers.has('x-forwarded-for')).toBe(false);
 		expect(headers.has('x-forwarded-host')).toBe(false);
 		expect(headers.has('x-tenant')).toBe(false);
+	});
+
+	test.each([
+		['only a c15t choice', `session=secret; ${INTH_CONSENTED}`, INTH_CONSENTED],
+		['both choices', `${INTH_CONSENTED}; ${CONSENTED}`, CONSENTED],
+		[
+			'an empty Inth cookie and a c15t choice',
+			`inth=; ${INTH_CONSENTED}`,
+			INTH_CONSENTED,
+		],
+		[
+			'a malformed Inth cookie and a c15t choice',
+			`inth=v=3&broken; ${INTH_CONSENTED}`,
+			INTH_CONSENTED,
+		],
+		[
+			'only a pre-1.8 choice',
+			CONSENTED.replace('inth=', 'privacy-consent-storage='),
+			null,
+		],
+		[
+			'only a c15t choice from before c15t cleared',
+			`${INTH_CONSENTED}; c15t-epoch=${NOW - 500}`,
+			null,
+		],
+		[
+			'a malformed Inth cookie and a c15t choice from before the clear',
+			`inth=v=3&broken; ${INTH_CONSENTED}; inth-epoch=${NOW - 500}`,
+			'inth=v=3&broken',
+		],
+	])(
+		'hosted /init gets the consent cookie the reader picks, with %s',
+		async (_name, cookie, sent) => {
+			const fetch = upstream();
+			await render({ fetch, headers: { cookie }, projectUrl: BACKEND });
+			expect(sentHeaders(fetch, '/init').get('cookie')).toBe(sent);
+		}
+	);
+
+	test('hosted /init never gets the pre-1.8 cookie, even as the configured key', async () => {
+		const fetch = upstream();
+		await render({
+			fetch,
+			headers: {
+				cookie: CONSENTED.replace('inth=', 'privacy-consent-storage='),
+			},
+			projectUrl: BACKEND,
+			storage: { storageKey: 'privacy-consent-storage' },
+		});
+		expect(sentHeaders(fetch, '/init').get('cookie')).toBeNull();
 	});
 
 	test('named headers travel; cookies and hop-chain headers cannot be named', async () => {
@@ -613,7 +664,7 @@ describe('forwarding', () => {
 		expect(headers.has('cookie')).toBe(false);
 		expect(headers.has('x-tenant')).toBe(false);
 		expect(headers.has('x-forwarded-for')).toBe(false);
-		expect(headers.get('x-c15t-country')).toBe('DE');
+		expect(headers.get('x-inth-country')).toBe('DE');
 	});
 
 	test('a loopback backend counts as local', async () => {
@@ -672,11 +723,11 @@ describe('forwarding', () => {
 		const fetch = upstream();
 		await render({
 			fetch,
-			initHeaders: { 'X-C15T-Country': 'FR', 'x-private': 'no' },
+			initHeaders: { 'X-INTH-Country': 'FR', 'x-private': 'no' },
 			projectUrl: BACKEND,
 		});
 		const headers = sentHeaders(fetch, '/init');
-		expect(headers.get('x-c15t-country')).toBe('FR');
+		expect(headers.get('x-inth-country')).toBe('FR');
 		expect(headers.has('x-private')).toBe(false);
 	});
 });
@@ -692,12 +743,12 @@ describe('vendor list deferral', () => {
 		expect(toList.initialIab?.gvlReference?.url).toBe(GVL_URL);
 
 		const toRoute = await render({
-			gvlRoute: '/api/c15t/init',
+			gvlRoute: '/api/inth/init',
 			mode: 'manifest',
 			projectUrl: BACKEND,
 		});
 		expect(toRoute.initialIab?.gvlReference?.url).toMatch(
-			/^\/api\/c15t\/init\?c15t-gvl=42/u
+			/^\/api\/inth\/init\?inth-gvl=42/u
 		);
 	});
 
@@ -930,7 +981,7 @@ describe('experiment', () => {
 	test('an undecided visitor’s arm goes with hosted /init; the state carries the experiment', async () => {
 		const fetch = upstream();
 		const state = await render({ experiment, fetch, projectUrl: BACKEND });
-		expect(sentHeaders(fetch, '/init').get('x-c15t-experiment')).toBe(
+		expect(sentHeaders(fetch, '/init').get('x-inth-experiment')).toBe(
 			'banner-test=b'
 		);
 		expect(state.experiment).toBe(experiment);
@@ -944,7 +995,7 @@ describe('experiment', () => {
 			headers: { cookie: CONSENTED },
 			projectUrl: BACKEND,
 		});
-		expect(sentHeaders(fetch, '/init').has('x-c15t-experiment')).toBe(false);
+		expect(sentHeaders(fetch, '/init').has('x-inth-experiment')).toBe(false);
 		expect(state.experiment).toBe(experiment);
 	});
 
@@ -1087,7 +1138,7 @@ describe('consent journey', () => {
 	test('an in-process init route gets no Origin added', async () => {
 		const localFetch = upstream();
 		await render({
-			initUrl: '/api/c15t/init',
+			initUrl: '/api/inth/init',
 			localFetch: localFetch as unknown as ManifestFetch,
 			mode: 'hosted',
 		});
@@ -1215,5 +1266,78 @@ describe('shared renders', () => {
 		expect(state.initialOverrides?.language).toBe('fr');
 		expect(state.initialOverrides?.country).toBeUndefined();
 		expect(state.initialPolicyResolution?.status).toBe('matched');
+	});
+});
+
+describe('fetchRequestInit', () => {
+	const ask = (
+		options: Partial<ResolveRequestConsentOptions> & {
+			headers?: Record<string, string>;
+		} = {}
+	) => {
+		const { headers, ...rest } = options;
+		return fetchRequestInit({
+			adapter: '@c15t/test',
+			now: NOW,
+			request: { headers: new Headers(headers), url: `${APP}/` },
+			...rest,
+		});
+	};
+
+	test('returns the hosted answer as received, vendor list included', async () => {
+		const withGvl = { ...INIT, gvl: GVL } as unknown as InitOutput;
+		const fetch = upstream(MANIFEST, withGvl);
+		const answer = await ask({
+			fetch,
+			headers: { 'cf-ipcountry': 'DE', 'user-agent': 'UA' },
+			journey: false,
+			projectUrl: BACKEND,
+		});
+		expect(answer?.init).toEqual(withGvl);
+		expect(answer?.url).toBe(`${BACKEND}/init`);
+		expect(answer?.requestHeaders).toMatchObject({
+			'user-agent': 'UA',
+			'x-inth-country': 'DE',
+		});
+		expect(answer?.responseHeaders.get('content-type')).toContain('json');
+		expect(callsTo(fetch, '/manifest')).toHaveLength(0);
+	});
+
+	test("sends the visitor's full Accept-Language unless an override sets the language", async () => {
+		const headers = { 'accept-language': 'es,fr;q=0.9' };
+		const relayed = upstream();
+		await ask({ fetch: relayed, headers, projectUrl: BACKEND });
+		expect(sentHeaders(relayed, '/init').get('accept-language')).toBe(
+			'es,fr;q=0.9'
+		);
+		const overridden = upstream();
+		await ask({
+			fetch: overridden,
+			headers,
+			overrides: { language: 'de' },
+			projectUrl: BACKEND,
+		});
+		expect(sentHeaders(overridden, '/init').get('accept-language')).toBe('de');
+	});
+
+	test('returns undefined and tells onError when the request fails', async () => {
+		const onError = vi.fn();
+		const answer = await ask({
+			fetch: vi.fn<typeof globalThis.fetch>(() =>
+				Promise.resolve(new Response('nope', { status: 500 }))
+			),
+			onError,
+			projectUrl: BACKEND,
+		});
+		expect(answer).toBeUndefined();
+		expect(onError).toHaveBeenCalledWith(expect.any(Error), `${BACKEND}/init`);
+	});
+
+	test('a shared render asks nothing', async () => {
+		const fetch = upstream();
+		expect(await ask({ fetch, projectUrl: BACKEND, shared: true })).toBe(
+			undefined
+		);
+		expect(fetch).not.toHaveBeenCalled();
 	});
 });

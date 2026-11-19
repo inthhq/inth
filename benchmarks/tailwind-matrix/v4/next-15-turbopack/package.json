@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/tailwind-matrix-v4-next-15-turbopack",
+	"name": "@inth/tailwind-matrix-v4-next-15-turbopack",
 	"private": true,
 	"description": "Next.js 15 with Turbopack for the Tailwind 4 matrix fixture. The v4 workspace builds it; the package only pins its dependencies apart from the Next.js 16 fixtures.",
 	"type": "module",

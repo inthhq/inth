@@ -28,7 +28,7 @@ const _getSnapshot = function _getSnapshot() {
 const _setPreset = function _setPreset(name: ThemePresetName) {
 	disableTransitionsTemporarily();
 	_preset = name;
-	localStorage.setItem('c15t-theme-preset', name);
+	localStorage.setItem('inth-theme-preset', name);
 	for (const l of _listeners) {
 		l();
 	}
@@ -52,7 +52,7 @@ export const useThemePreset = function useThemePreset() {
 		if (!_initialized) {
 			_initialized = true;
 			const saved = localStorage.getItem(
-				'c15t-theme-preset'
+				'inth-theme-preset'
 			) as ThemePresetName;
 			if (saved && themePresets[saved]) {
 				_preset = saved;

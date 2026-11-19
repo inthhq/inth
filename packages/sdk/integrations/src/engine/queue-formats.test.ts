@@ -81,7 +81,7 @@ const start = (script: Script, mode: 'runtime' | 'inline') => {
 
 afterEach(() => {
 	Reflect.deleteProperty(window, 'queueSdk');
-	Reflect.deleteProperty(window, '__c15tRunSteps');
+	Reflect.deleteProperty(window, '__inthRunSteps');
 });
 
 describe.each(['runtime', 'inline'] as const)('%s queue formats', (mode) => {

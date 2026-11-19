@@ -1,9 +1,9 @@
 /**
- * Writes the stylesheets the script-tag build inlines into `dist/c15t.css`
- * and `dist/c15t.iab.css`.
+ * Writes the stylesheets the script-tag build inlines into `dist/inth.css`
+ * and `dist/inth.iab.css`.
  *
  * Bundler users who mount the UI into the light DOM (`shadow: false`)
- * import `@inth/sdk-browser/styles.css`; it is the same sheet the script-tag
+ * import `@inth/sdk/styles.css`; it is the same sheet the script-tag
  * build inlines: `@inth/sdk-ui/styles.css` plus the dialog rules, since this
  * package renders the dialog eagerly, pruned to the rules these surfaces can
  * match. Runs after `rslib build`, which cleans `dist/` first.
@@ -19,5 +19,5 @@ import { adapterStyles } from '../src/iab/styles';
 const dist = resolve(import.meta.dirname, '../dist');
 
 await mkdir(dist, { recursive: true });
-await writeFile(join(dist, 'c15t.css'), stylesheet);
-await writeFile(join(dist, 'c15t.iab.css'), iabStylesheet + adapterStyles);
+await writeFile(join(dist, 'inth.css'), stylesheet);
+await writeFile(join(dist, 'inth.iab.css'), iabStylesheet + adapterStyles);

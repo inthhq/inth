@@ -2,6 +2,8 @@
 	lang="ts"
 	module
 >
+	import { findFocusRestoreEquivalent } from '@inth/sdk/ui/utils/dom';
+
 	import type PanelComponent from './panel.svelte';
 
 	let pending: Promise<typeof PanelComponent> | null = null;
@@ -20,32 +22,6 @@
 			}
 		})();
 		return pending;
-	};
-
-	/**
-	 * Where focus returns after the dialog: the opener itself, or the element
-	 * that took its place. A banner's Customize button is gone while the
-	 * dialog is open, and the banner renders a new one when it comes back.
-	 */
-	const focusReturnTarget = function focusReturnTarget(
-		opener: HTMLElement
-	): HTMLElement | null {
-		if (opener.isConnected) {
-			return opener;
-		}
-		if (opener.id) {
-			const byId = document.getElementById(opener.id);
-			if (byId) {
-				return byId;
-			}
-		}
-		const testId = opener.getAttribute('data-testid');
-		if (testId) {
-			return document.querySelector<HTMLElement>(
-				`[data-testid="${testId.replaceAll(/["\\]/gu, '\\$&')}"]`
-			);
-		}
-		return null;
 	};
 </script>
 
@@ -110,7 +86,7 @@
 			) {
 				return;
 			}
-			focusReturnTarget(previous)?.focus({ preventScroll: true });
+			findFocusRestoreEquivalent(previous)?.focus({ preventScroll: true });
 		}, 0);
 		return () => clearTimeout(timer);
 	});

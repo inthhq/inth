@@ -12,12 +12,12 @@ import { SwitchHarness } from './switch-harness';
 	selector: 'test-switch-host',
 	template: `
 		<button
-			c15tSwitch
+			inthSwitch
 			aria-label="Marketing"
 			[(checked)]="marketing"
 		></button>
 		<button
-			c15tSwitch
+			inthSwitch
 			aria-label="Necessary"
 			[checked]="true"
 			[disabled]="true"

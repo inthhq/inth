@@ -12,14 +12,17 @@
 
 import type { AllConsentNames } from '../../consent/consent-types';
 import type { extractConsentNamesFromCondition } from '../../libs/has';
+import type { dispatchScriptDebugEvent } from '../../libs/script-loader/debug';
 import type {
 	Script,
 	ScriptCallbackInfo,
+	ScriptDebugEvent,
 } from '../../libs/script-loader/types';
 import type {
 	declareOwnedVendors,
 	forgetOwnedVendors,
 	isValidVendorId,
+	vendorAxisActive,
 	withoutOwnedVendors,
 } from '../../libs/vendors';
 import type {
@@ -61,31 +64,28 @@ export interface ScriptLoaderTools {
 		script: Script
 	) => ScriptCallbackInfo['reportLoadError'];
 
-	/** `extractConsentNamesFromCondition`. */
 	categoriesOf: typeof extractConsentNamesFromCondition;
-	/** `declareOwnedVendors`. */
+	/** Hands a debug event to the page's script debug listeners. */
+	debug: typeof dispatchScriptDebugEvent;
+	vendorAxisActive: typeof vendorAxisActive;
 	declareOwners: typeof declareOwnedVendors;
-	/** `deniedVendorIds`. */
 	deniedVendors: typeof deniedVendorIds;
-	/** `evaluateConsent`. */
 	evaluate: typeof evaluateConsent;
-	/** `forgetOwnedVendors`. */
 	forgetOwners: typeof forgetOwnedVendors;
 	/** Project declarations after this loader leaves, without mutations. */
 	withoutOwners: typeof withoutOwnedVendors;
-	/** `getEffectiveGateState`. */
 	gateState: typeof getEffectiveGateState;
 	has: typeof has;
-	/** `isValidVendorId`. */
 	isVendorId: typeof isValidVendorId;
 }
 
 /**
  * Structured debug event emitted at every reconcile / mount / unmount /
- * callback step. Consumed by adapter devtools and the v2 compat surface
- * (`window.__c15tScriptDebugListeners`).
+ * callback step. Consumed by adapter devtools and the page's script debug
+ * listeners (`subscribeToScriptDebugEvents`), which receive it as the
+ * {@link ScriptDebugEvent} it narrows.
  */
-export interface ScriptLoaderDebugEvent {
+export interface ScriptLoaderDebugEvent extends ScriptDebugEvent {
 	source: 'script-loader';
 	scope: 'lifecycle' | 'phase' | 'step';
 	action:
@@ -145,9 +145,8 @@ export interface ScriptLoaderOptions {
 		waitForInit: boolean;
 	};
 	/**
-	 * When true, also dispatch debug events to any listeners registered
-	 * on `window.__c15tScriptDebugListeners` (v2 compat). Default: true
-	 * when running in a browser.
+	 * When true, also dispatch debug events to the page's script debug
+	 * listeners (`subscribeToScriptDebugEvents`). Default: true.
 	 */
 	emitToV2DebugListeners?: boolean;
 }
@@ -157,7 +156,6 @@ export interface ScriptLoaderHandle {
 	dispose: () => void;
 	/** Swap the script configuration. Reconciles DOM immediately. */
 	updateScripts: (next: Script[]) => void;
-	/** Current set of loaded script IDs. */
 	getLoadedScriptIds: () => string[];
 }
 

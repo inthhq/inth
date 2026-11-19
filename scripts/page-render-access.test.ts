@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 
 /**
  * The page object a server render's inline scripts write
- * (`window.__c15tRender`) can belong to an earlier render after a
+ * (`window.__inthRender`) can belong to an earlier render after a
  * client-side navigation. Only the server start writes it, and only
  * `pageRender()` reads it, after checking its id against this document's
  * boot data. Any other read could trust another render's marks.
@@ -16,18 +16,19 @@ import { describe, expect, it } from 'vitest';
 const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
 
 /**
- * The one writer and the one reader, and the engine preload: an inline
- * script that runs before any module can, so it repeats `pageRender()`'s
- * id check in its own source.
+ * The names' definition, the one writer and the one reader, and the engine
+ * preload: an inline script that runs before any module can, so it repeats
+ * `pageRender()`'s id check in its own source.
  */
 const ALLOWED = new Set([
+	'packages/sdk/core/src/libs/page-globals.ts',
 	'packages/sdk/core/src/runtime/script-server-start.ts',
 	'packages/sdk/react/src/deferred/boot.ts',
 	'packages/sdk/react/src/deferred/engine-preload-script.ts',
 ]);
 
 const PAGE_OBJECT =
-	/__c15tRender|__c15tEndedRenders|PAGE_RENDER_KEY|ENDED_RENDERS_KEY/u;
+	/__inthRender|__inthEndedRenders|PAGE_RENDER_KEY|ENDED_RENDERS_KEY/u;
 
 const sourceFiles = (dir: string): string[] => {
 	let entries: Dirent[];

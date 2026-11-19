@@ -10,10 +10,10 @@
  */
 
 /** Measure only matching items. Unset or empty measures everything. */
-export const BENCH_ONLY_ENV = 'C15T_BENCH_ONLY';
+export const BENCH_ONLY_ENV = 'INTH_BENCH_ONLY';
 
 /** Never measure matching items, even when {@link BENCH_ONLY_ENV} names them. */
-export const BENCH_SKIP_ENV = 'C15T_BENCH_SKIP';
+export const BENCH_SKIP_ENV = 'INTH_BENCH_SKIP';
 
 export interface BenchSelection {
 	only: string[];

@@ -12,15 +12,17 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { NOW } from '../../../__tests__/fixtures/kernel-fixtures';
+import { encodeV2Cookie } from '../../../__tests__/fixtures/v2-cookie';
 import { createConsentKernel } from '../../../kernel';
+import { deleteCookie, setCookie } from '../../../libs/cookie';
 import {
-	deleteConsentFromStorage,
-	deleteCookie,
-	setCookie,
-} from '../../../libs/cookie';
-import { STORAGE_KEY, STORAGE_KEY_V2 } from '../../../libs/storage-keys';
+	C15T_STORAGE_KEY,
+	STORAGE_KEY,
+	STORAGE_KEY_V2,
+} from '../../../libs/storage-keys';
 import { createPersistence } from '../index';
 import { readStoredConsentRecord } from '../record-storage';
+import { clearStoredConsentRecords } from './record-writes';
 
 const DAY = 86_400_000;
 const ORIGINAL_TIME = NOW - 2 * DAY;
@@ -58,14 +60,14 @@ beforeEach(() => {
 	vi.useFakeTimers();
 	vi.setSystemTime(NOW);
 	localStorage.clear();
-	deleteConsentFromStorage();
-	deleteCookie(`${STORAGE_KEY_V2}-sid`);
+	clearStoredConsentRecords();
+	deleteCookie(`${C15T_STORAGE_KEY}-sid`);
 	deleteCookie(`${STORAGE_KEY_V2}-epoch`);
 	document.cookie = '';
 });
 
 afterEach(() => {
-	deleteConsentFromStorage(undefined, { storageKey: 'custom-key' });
+	clearStoredConsentRecords({ storageKey: 'custom-key' });
 	deleteCookie('custom-key-sid');
 	vi.useRealTimers();
 });
@@ -99,7 +101,7 @@ describe('persistence: hydration is read-only', () => {
 	});
 
 	test('hydrating from a cookie does not mirror it into localStorage', () => {
-		setCookie(STORAGE_KEY_V2, storedPayload());
+		setCookie(STORAGE_KEY_V2, encodeV2Cookie(storedPayload()));
 		const cookieBefore = document.cookie;
 
 		const kernel = createConsentKernel({ now: NOW });
@@ -172,7 +174,7 @@ describe('persistence: a clear keeps the subject ID in memory only', () => {
 		handle.dispose();
 
 		expect(readLocalStorage()).toBeNull();
-		expect(localStorage.getItem(`${STORAGE_KEY_V2}-sid`)).toBeNull();
+		expect(localStorage.getItem(`${C15T_STORAGE_KEY}-sid`)).toBeNull();
 		const reloaded = createConsentKernel({ now: NOW });
 		createPersistence({ kernel: reloaded }).dispose();
 		expect(reloaded.getSnapshot().explicitChoice).toBeNull();
@@ -337,7 +339,7 @@ describe('persistence: explicit choices still write', () => {
 		const storageConfig = { storageKey: 'custom-key' };
 		const defaultPayload = storedPayload();
 		localStorage.setItem(STORAGE_KEY_V2, JSON.stringify(defaultPayload));
-		setCookie(STORAGE_KEY_V2, defaultPayload);
+		setCookie(STORAGE_KEY_V2, encodeV2Cookie(defaultPayload));
 		const defaultCookie = document.cookie;
 
 		const kernel = createConsentKernel({ now: NOW });

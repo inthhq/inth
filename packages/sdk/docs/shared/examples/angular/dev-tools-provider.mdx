@@ -3,18 +3,18 @@
 ```ts title="src/app/app.config.ts"
 import { isDevMode, provideZonelessChangeDetection } from '@angular/core';
 import type { ApplicationConfig } from '@angular/core';
-import { hosted, provideC15t } from '@inth/angular';
-import { provideC15tDevTools } from '@inth/angular/devtools';
+import { hosted, provideInth } from '@inth/angular';
+import { provideInthDevTools } from '@inth/angular/devtools';
 
 export const appConfig: ApplicationConfig = {
 	providers: [
 		provideZonelessChangeDetection(),
-		provideC15t({
+		provideInth({
 			mode: hosted(),
 			projectUrl: 'https://your-project.inth.app',
 		}),
-		// After provideC15t(), and only in development builds.
-		isDevMode() ? provideC15tDevTools({ position: 'bottom-left' }) : [],
+		// After provideInth(), and only in development builds.
+		isDevMode() ? provideInthDevTools({ position: 'bottom-left' }) : [],
 	],
 };
 ```

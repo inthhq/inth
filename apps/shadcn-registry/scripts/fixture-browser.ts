@@ -32,8 +32,8 @@ const copy = {
 	acceptAll: 'Accept All',
 	allowVendor: 'Allow X Pixel',
 	bannerTitle: 'We value your privacy',
-	// The demo backend brands its projects INTH. Self-hosted ones show c15t.
-	branding: /^Secured by\s*(?:c15t|INTH)$/u,
+	// The demo backend brands its projects INTH. Self-hosted ones show Inth.
+	branding: /^Secured by\s*(?:inth|INTH)$/u,
 	close: 'Close',
 	// The demo policy picks one, depending on where the visitor is.
 	customize: /^(?:Customize|Manage preferences)$/u,
@@ -93,9 +93,9 @@ const toggle = async (control: Locator) => {
 const waitForConsentCookie = async (context: BrowserContext) => {
 	const deadline = Date.now() + timeout;
 	// oxlint-disable-next-line no-await-in-loop -- Polls the cookie jar.
-	while (!(await context.cookies()).some((cookie) => cookie.name === 'c15t')) {
+	while (!(await context.cookies()).some((cookie) => cookie.name === 'inth')) {
 		if (Date.now() > deadline) {
-			throw new Error(`no c15t cookie after ${timeout}ms`);
+			throw new Error(`no inth cookie after ${timeout}ms`);
 		}
 		// oxlint-disable-next-line no-await-in-loop -- Polls the cookie jar.
 		await sleep(100);

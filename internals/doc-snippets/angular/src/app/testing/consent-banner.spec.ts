@@ -1,7 +1,7 @@
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ConsentBanner, ConsentManager, provideC15t } from '@inth/angular';
+import { ConsentBanner, ConsentManager, provideInth } from '@inth/angular';
 import { ConsentDialog } from '@inth/angular/consent-dialog';
 // #region docs:harness-banner-test title="src/app/consent-banner.spec.ts"
 import {
@@ -15,7 +15,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentBanner, ConsentDialog],
 	selector: 'app-consent-test-host',
-	template: '<c15t-consent-banner /><c15t-consent-dialog />',
+	template: '<inth-consent-banner /><inth-consent-dialog />',
 })
 class ConsentTestHost {}
 
@@ -23,7 +23,7 @@ describe('consent banner', () => {
 	beforeEach(() => {
 		TestBed.configureTestingModule({
 			providers: [
-				provideC15t({
+				provideInth({
 					consentCategories: ['necessary', 'measurement', 'marketing'],
 					// Tests start with no stored choice and no motion.
 					disableAnimation: true,

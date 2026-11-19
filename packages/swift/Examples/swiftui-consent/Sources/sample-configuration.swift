@@ -71,8 +71,8 @@ enum ConfigurationError: LocalizedError {
     case invalidBackend, missingPrivacyPolicy
     var errorDescription: String? {
         switch self {
-        case .invalidBackend: return "Set C15T_BACKEND_URL to the project URL from your Inth dashboard, such as https://your-project.inth.app."
-        case .missingPrivacyPolicy: return "Set C15T_PRIVACY_POLICY_URL to your app's HTTPS privacy policy."
+        case .invalidBackend: return "Set INTH_PROJECT_URL to the project URL from your Inth dashboard, such as https://your-project.inth.app."
+        case .missingPrivacyPolicy: return "Set INTH_PRIVACY_POLICY_URL to your app's HTTPS privacy policy."
         }
     }
 }

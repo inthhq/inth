@@ -47,9 +47,6 @@ const validateScripts = (scripts: Script[]): void => {
 /**
  * Create a script loader from the tools it calls.
  *
- * @param options - The kernel and the scripts.
- * @param tools - The shared consent and vendor functions.
- * @returns The loader handle.
  * @internal
  */
 export const createScriptLoaderWith = function createScriptLoaderWith(
@@ -60,7 +57,10 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		tools;
 	const { kernel, onDebug } = options;
 	const emitToV2 = options.emitToV2DebugListeners ?? true;
-	const emitDebug = createDebugEmitter({ emitToV2, onDebug });
+	const emitDebug = createDebugEmitter({
+		dispatch: emitToV2 ? tools.debug : undefined,
+		onDebug,
+	});
 	const hasDebugListener = !!onDebug || emitToV2;
 	const lastEvents = new Map<string, ScriptLoaderDebugEvent>();
 	const statuses = new Map<string, ScriptDiagnosticStatus>();

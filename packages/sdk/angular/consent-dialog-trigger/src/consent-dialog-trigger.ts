@@ -1,6 +1,7 @@
 import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import {
 	afterNextRender,
+	afterRenderEffect,
 	ChangeDetectionStrategy,
 	Component,
 	computed,
@@ -22,24 +23,34 @@ import {
 	ConsentTheme,
 	holdIdleDialogWarming,
 	Portal,
-	resolveComponentStyles,
 	SURFACE_SCOPES,
-	toStyleAttribute,
 	TRIGGER_SHEETS,
 	warmDialog,
 	ɵBrandMarkIcon as BrandMarkIcon,
 	ɵNoStyleScope as NoStyleScope,
 	ɵresolveNoStyle as resolveNoStyle,
 } from '@inth/angular';
+import type { ConsentDialogTriggerVisibility } from '@inth/sdk/schema/config';
+import { resolveTriggerLabels } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import type { ClassNameStyle } from '@inth/sdk/ui/theme';
 import {
-	calculateCornerFromDrag,
 	createInitialDragState,
+	createTriggerDrag,
 	getPersistedPosition,
-	persistPosition as persistToStorage,
+	isTriggerVisible,
+	nextToolbarItem,
+	onSnapEnd,
+	resolveBrandMark,
+	resolveStyles,
+	toStyleAttributeValue,
+	toolbarOrder,
 } from '@inth/sdk/ui/utils';
-import type { CornerPosition, DragState } from '@inth/sdk/ui/utils';
+import type {
+	CornerPosition,
+	DragState,
+	TriggerToolbarItem,
+} from '@inth/sdk/ui/utils';
 import {
 	claimDevToolsLauncher,
 	EMPTY_DEVTOOLS_LAUNCHER_SNAPSHOT,
@@ -52,22 +63,14 @@ import type {
 	DevToolsLauncherTarget,
 } from '@inth/sdk/ui/utils/devtools-launcher';
 
-import { ConsentIcon, DevToolsIcon } from './trigger-icons';
+import { DevToolsIcon } from './trigger-icons';
 
 /** The corner the trigger sits in. */
 export type ConsentDialogTriggerPosition = CornerPosition;
 
-/** When the trigger shows. */
-export type ConsentDialogTriggerVisibility = 'always' | 'never';
+export type { ConsentDialogTriggerVisibility } from '@inth/sdk/schema/config';
 
-/** The trigger's size. */
 export type ConsentDialogTriggerSize = 'sm' | 'md' | 'lg';
-
-type ToolbarItem = 'devtools' | 'preferences';
-
-/** Moves under this many pixels count as a click, not a drag. */
-const DRAG_THRESHOLD_PX = 5;
-const SNAP_DURATION_MS = 300;
 
 const joinStyles = function joinStyles(
 	...parts: (string | undefined)[]
@@ -81,29 +84,28 @@ const joinStyles = function joinStyles(
  *
  * It shows once a policy rule that keeps a route to preferences is
  * resolved, and hides while the dialog is open. With
- * `<c15t-consent-dev-tools>` mounted it becomes a two-button toolbar that
+ * `<inth-consent-dev-tools>` mounted it becomes a two-button toolbar that
  * also opens DevTools.
  *
  * @example
  * ```html
- * <c15t-consent-dialog-trigger defaultPosition="bottom-left" size="sm" />
+ * <inth-consent-dialog-trigger defaultPosition="bottom-left" size="sm" />
  * ```
  */
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [BrandMarkIcon, ConsentIcon, DevToolsIcon, NgTemplateOutlet, Portal],
+	imports: [BrandMarkIcon, DevToolsIcon, NgTemplateOutlet, Portal],
 	// Its parts resolve `noStyle` through this surface.
 	providers: [NoStyleScope],
-	selector: 'c15t-consent-dialog-trigger',
+	selector: 'inth-consent-dialog-trigger',
 	template: `<ng-template #brandingIcon>
-			@if (consent.branding() === 'consent') {
-				<svg c15t-consent-icon></svg>
-			} @else {
-				<svg c15t-brand-mark-icon></svg>
-			}
+			<svg
+				inth-brand-mark-icon
+				[mark]="brandMark()"
+			></svg>
 		</ng-template>
 		@if (visible()) {
-			<div c15tPortal>
+			<div inthPortal>
 				@if (showToolbar()) {
 					<div
 						#toolbar
@@ -112,11 +114,11 @@ const joinStyles = function joinStyles(
 						role="toolbar"
 						tabindex="-1"
 						dir="ltr"
-						aria-label="Privacy controls"
+						[attr.aria-label]="labels().toolbarLabel"
 						aria-orientation="horizontal"
 						[attr.data-corner]="corner()"
-						data-c15t-trigger-toolbar="true"
-						data-c15t-trigger="true"
+						data-inth-trigger-toolbar="true"
+						data-inth-trigger="true"
 						[attr.data-disable-animation]="theme.disableAnimation() ? '' : null"
 						[attr.data-dragging]="isDragging() || null"
 						[attr.data-snapping]="isSnapping() || null"
@@ -124,7 +126,7 @@ const joinStyles = function joinStyles(
 						(pointerdown)="startDrag($event)"
 						(pointermove)="drag($event)"
 						(pointerup)="endDrag($event)"
-						(pointercancel)="cancelDrag($event)"
+						(pointercancel)="cancelDrag()"
 					>
 						@for (item of toolbarItems(); track item) {
 							@if (item === 'devtools') {
@@ -133,11 +135,11 @@ const joinStyles = function joinStyles(
 									[class]="devToolsItemStyle().className || ''"
 									[attr.style]="styleOf(devToolsItemStyle())"
 									[attr.tabindex]="tabStopItem() === item ? 0 : -1"
-									aria-label="c15t DevTools"
+									[attr.aria-label]="labels().devToolsLabel"
 									[attr.aria-expanded]="launcher().isOpen"
-									data-c15t-trigger-action="devtools"
-									data-c15t-trigger-item="devtools"
-									(click)="toggleDevTools()"
+									data-inth-trigger-action="devtools"
+									data-inth-trigger-item="devtools"
+									(click)="toggleDevTools($event)"
 									(focus)="focusedItem.set(item)"
 								>
 									<span
@@ -149,7 +151,7 @@ const joinStyles = function joinStyles(
 											[class]="iconStyle().className || ''"
 											[attr.style]="styleOf(iconStyle())"
 										>
-											<svg c15t-dev-tools-icon></svg>
+											<svg inth-dev-tools-icon></svg>
 										</span>
 									</span>
 								</button>
@@ -159,10 +161,10 @@ const joinStyles = function joinStyles(
 									[class]="preferencesItemStyle().className || ''"
 									[attr.style]="styleOf(preferencesItemStyle())"
 									[attr.tabindex]="tabStopItem() === item ? 0 : -1"
-									[attr.aria-label]="label()"
-									[attr.data-c15t-rights]="rights()"
-									data-c15t-trigger-action="preferences"
-									data-c15t-trigger-item="preferences"
+									[attr.aria-label]="resolvedLabel()"
+									[attr.data-inth-rights]="rights()"
+									data-inth-trigger-action="preferences"
+									data-inth-trigger-item="preferences"
 									(click)="openDialog($event)"
 									(pointerenter)="warm()"
 									(focus)="focusedItem.set(item); warm()"
@@ -186,18 +188,19 @@ const joinStyles = function joinStyles(
 					</div>
 				} @else {
 					<button
+						#button
 						type="button"
 						[class]="triggerStyle().className || ''"
 						[attr.style]="buttonStyle()"
-						data-c15t-trigger="true"
-						[attr.data-c15t-rights]="rights()"
+						data-inth-trigger="true"
+						[attr.data-inth-rights]="rights()"
 						[attr.data-disable-animation]="theme.disableAnimation() ? '' : null"
-						[attr.aria-label]="label()"
+						[attr.aria-label]="resolvedLabel()"
 						(click)="openDialog($event)"
 						(pointerdown)="startDrag($event)"
 						(pointermove)="drag($event)"
 						(pointerup)="endDrag($event)"
-						(pointercancel)="cancelDrag($event)"
+						(pointercancel)="cancelDrag()"
 						(pointerenter)="warm()"
 						(focus)="warm()"
 						data-testid="consent-dialog-trigger"
@@ -218,6 +221,10 @@ export class ConsentDialogTrigger {
 	/** @internal */
 	protected readonly consent = inject(ConsentManager);
 	/** @internal */
+	protected readonly brandMark = computed(() =>
+		resolveBrandMark(this.consent.branding())
+	);
+	/** @internal */
 	protected readonly theme = inject(ConsentTheme);
 	readonly #styles = inject(ConsentStyles);
 
@@ -226,12 +233,17 @@ export class ConsentDialogTrigger {
 		input<ConsentDialogTriggerPosition>('bottom-right');
 	/** Remember the corner the visitor dragged it to, in local storage. */
 	readonly persistPosition = input(true);
-	/** `'never'` hides the trigger. */
+	/**
+	 * `'always'` shows the trigger whenever the dialog is closed,
+	 * `'after-consent'` once no prompt is owed, and `'never'` hides it.
+	 */
 	readonly showWhen = input<ConsentDialogTriggerVisibility>('always');
-	/** The trigger's size. */
 	readonly size = input<ConsentDialogTriggerSize>('md');
-	/** The button's accessible name. */
-	readonly label = input('Open privacy settings');
+	/**
+	 * The button's accessible name. Defaults to the `trigger.label`
+	 * translation.
+	 */
+	readonly label = input<string | undefined>(undefined);
 	/** Drop the stock classes. Defaults to the provider's `noStyle`. */
 	readonly noStyle = input<boolean | undefined>(undefined);
 	/** Extra class for the button. */
@@ -255,9 +267,16 @@ export class ConsentDialogTrigger {
 	readonly #dragState = signal<DragState>(createInitialDragState());
 	/** @internal */
 	protected readonly isSnapping = signal(false);
-	#hasDragged = false;
-	#dragStartTime = 0;
-	#captured: HTMLElement | null = null;
+	readonly #drag = createTriggerDrag({
+		corner: () => this.corner(),
+		onCorner: (next) => {
+			this.isSnapping.set(true);
+			this.corner.set(next);
+			this.positionChange.emit(next);
+		},
+		onDrag: (state) => this.#dragState.set(state),
+		persist: () => this.persistPosition(),
+	});
 
 	/** @internal */
 	protected readonly isDragging = computed(() => this.#dragState().isDragging);
@@ -267,12 +286,24 @@ export class ConsentDialogTrigger {
 		this.consent.snapshot().policyRule.rights.join(' ')
 	);
 
-	/** Nothing to manage without a resolved policy. @internal */
-	protected readonly visible = computed(
-		() =>
-			this.consent.hasConsentPreferences() &&
-			this.showWhen() !== 'never' &&
-			this.consent.snapshot().activeUI !== 'dialog'
+	readonly #translations = this.consent.copy;
+	/** @internal */
+	protected readonly labels = computed(() =>
+		resolveTriggerLabels(this.#translations())
+	);
+	/** @internal */
+	protected readonly resolvedLabel = computed(
+		() => this.label() ?? this.labels().label
+	);
+
+	/** @internal */
+	protected readonly visible = computed(() =>
+		isTriggerVisible({
+			dialogOpen: this.consent.snapshot().activeUI === 'dialog',
+			hasConsentPreferences: this.consent.hasConsentPreferences(),
+			promptOwed: this.consent.promptRequirement().kind !== 'none',
+			showWhen: this.showWhen(),
+		})
 	);
 
 	readonly #launcherClaim = Symbol('ConsentDialogTrigger');
@@ -291,20 +322,16 @@ export class ConsentDialogTrigger {
 	});
 
 	private readonly toolbar = viewChild<ElementRef<HTMLDivElement>>('toolbar');
+	private readonly button = viewChild<ElementRef<HTMLButtonElement>>('button');
 
-	// Preferences sits in the corner; DevTools, a development aid, sits
-	// farthest from it.
 	/** @internal */
-	protected readonly toolbarItems = computed<ToolbarItem[]>(() => {
-		if (!this.#devTools()) {
-			return ['preferences'];
-		}
-		return this.corner().endsWith('left')
-			? ['preferences', 'devtools']
-			: ['devtools', 'preferences'];
-	});
+	protected readonly toolbarItems = computed<readonly TriggerToolbarItem[]>(
+		() => (this.#devTools() ? toolbarOrder(this.corner()) : ['preferences'])
+	);
 	/** @internal */
-	protected readonly focusedItem = signal<ToolbarItem | undefined>(undefined);
+	protected readonly focusedItem = signal<TriggerToolbarItem | undefined>(
+		undefined
+	);
 	/** @internal */
 	protected readonly tabStopItem = computed(() => {
 		const focused = this.focusedItem();
@@ -384,11 +411,17 @@ export class ConsentDialogTrigger {
 	);
 	/** @internal */
 	protected readonly toolbarAttributeStyle = computed(() =>
-		joinStyles(toStyleAttribute(this.toolbarStyle().style), this.#dragStyle())
+		joinStyles(
+			toStyleAttributeValue(this.toolbarStyle().style),
+			this.#dragStyle()
+		)
 	);
 	/** @internal */
 	protected readonly buttonStyle = computed(() =>
-		joinStyles(toStyleAttribute(this.triggerStyle().style), this.#dragStyle())
+		joinStyles(
+			toStyleAttributeValue(this.triggerStyle().style),
+			this.#dragStyle()
+		)
 	);
 
 	constructor() {
@@ -448,6 +481,24 @@ export class ConsentDialogTrigger {
 			}
 		});
 
+		// Ends the snap once the new corner's transition has run.
+		afterRenderEffect((onCleanup) => {
+			if (!this.isSnapping()) {
+				return;
+			}
+			const element =
+				this.toolbar()?.nativeElement ?? this.button()?.nativeElement;
+			if (!element) {
+				this.isSnapping.set(false);
+				return;
+			}
+			onCleanup(
+				onSnapEnd(element, () => {
+					this.isSnapping.set(false);
+				})
+			);
+		});
+
 		// Keep the docked panel beside the toolbar as it changes corner or
 		// size. Skip mid-drag; the drop re-runs this.
 		effect((onCleanup) => {
@@ -464,14 +515,12 @@ export class ConsentDialogTrigger {
 			);
 		});
 
-		inject(DestroyRef).onDestroy(() => {
-			this.#captured = null;
-		});
+		inject(DestroyRef).onDestroy(() => this.#drag.pointerCancel());
 	}
 
 	/** @internal */
 	protected styleOf(style: ClassNameStyle): string | null {
-		return toStyleAttribute(style.style) ?? null;
+		return toStyleAttributeValue(style.style) ?? null;
 	}
 
 	/** @internal */
@@ -481,84 +530,30 @@ export class ConsentDialogTrigger {
 
 	/** @internal */
 	protected startDrag(event: PointerEvent): void {
-		if (event.button !== 0) {
-			return;
+		if (event.button === 0) {
+			this.isSnapping.set(false);
 		}
-		const target = event.target as HTMLElement;
-		target.setPointerCapture?.(event.pointerId);
-		this.#captured = target;
-		this.#hasDragged = false;
-		this.#dragStartTime = Date.now();
-		this.#dragState.set({
-			currentX: event.clientX,
-			currentY: event.clientY,
-			isDragging: true,
-			startX: event.clientX,
-			startY: event.clientY,
-		});
-		this.isSnapping.set(false);
+		this.#drag.pointerDown(event);
 	}
 
 	/** @internal */
 	protected drag(event: PointerEvent): void {
-		const state = this.#dragState();
-		if (!state.isDragging) {
-			return;
-		}
-		const dx = Math.abs(event.clientX - state.startX);
-		const dy = Math.abs(event.clientY - state.startY);
-		if (dx > DRAG_THRESHOLD_PX || dy > DRAG_THRESHOLD_PX) {
-			this.#hasDragged = true;
-		}
-		this.#dragState.set({
-			...state,
-			currentX: event.clientX,
-			currentY: event.clientY,
-		});
+		this.#drag.pointerMove(event);
 	}
 
 	/** @internal */
 	protected endDrag(event: PointerEvent): void {
-		this.#release(event);
-		const state = this.#dragState();
-		if (!state.isDragging) {
-			return;
-		}
-		if (this.#hasDragged) {
-			const dragX = event.clientX - state.startX;
-			const dragY = event.clientY - state.startY;
-			const duration = Date.now() - this.#dragStartTime;
-			const corner = this.corner();
-			const next = calculateCornerFromDrag(corner, dragX, dragY, {
-				velocityX: duration > 0 ? dragX / duration : 0,
-				velocityY: duration > 0 ? dragY / duration : 0,
-			});
-			if (next !== corner) {
-				this.isSnapping.set(true);
-				setTimeout(() => {
-					this.isSnapping.set(false);
-				}, SNAP_DURATION_MS);
-				this.corner.set(next);
-				if (this.persistPosition()) {
-					persistToStorage(next);
-				}
-				this.positionChange.emit(next);
-			}
-		}
-		this.#dragState.set(createInitialDragState());
+		this.#drag.pointerUp(event);
 	}
 
 	/** @internal */
-	protected cancelDrag(event: PointerEvent): void {
-		this.#release(event);
-		// No click follows a cancelled pointer to spend the guard.
-		this.#hasDragged = false;
-		this.#dragState.set(createInitialDragState());
+	protected cancelDrag(): void {
+		this.#drag.pointerCancel();
 	}
 
 	/** @internal */
-	protected toggleDevTools(): void {
-		if (this.#endsDrag()) {
+	protected toggleDevTools(event: MouseEvent): void {
+		if (this.#drag.endsDrag(event)) {
 			return;
 		}
 		this.#devTools()?.toggle();
@@ -566,40 +561,26 @@ export class ConsentDialogTrigger {
 
 	/** @internal */
 	protected moveToolbarFocus(event: KeyboardEvent): void {
-		const items = this.toolbarItems();
-		const current = this.tabStopItem();
-		const index = current ? items.indexOf(current) : 0;
-		let next: ToolbarItem | undefined;
-		switch (event.key) {
-			case 'ArrowRight':
-				next = items[(index + 1) % items.length];
-				break;
-			case 'ArrowLeft':
-				next = items[(index - 1 + items.length) % items.length];
-				break;
-			case 'Home':
-				[next] = items;
-				break;
-			case 'End':
-				next = items.at(-1);
-				break;
-			default:
-				return;
+		const next = nextToolbarItem(
+			this.toolbarItems(),
+			this.tabStopItem(),
+			event.key
+		);
+		if (!next) {
+			return;
 		}
 		event.preventDefault();
-		if (next) {
-			this.focusedItem.set(next);
-			this.toolbar()
-				?.nativeElement.querySelector<HTMLElement>(
-					`[data-c15t-trigger-item="${next}"]`
-				)
-				?.focus();
-		}
+		this.focusedItem.set(next);
+		this.toolbar()
+			?.nativeElement.querySelector<HTMLElement>(
+				`[data-inth-trigger-item="${next}"]`
+			)
+			?.focus();
 	}
 
 	/** @internal */
 	protected openDialog(event: MouseEvent): void {
-		if (this.#endsDrag()) {
+		if (this.#drag.endsDrag(event)) {
 			return;
 		}
 		this.triggerClick.emit(event);
@@ -608,31 +589,13 @@ export class ConsentDialogTrigger {
 		}
 	}
 
-	/**
-	 * Whether this click ends a drag, which is not a click. The guard is
-	 * spent on it, so a later Enter or Space, which fires a click with no
-	 * pointer press first, still acts.
-	 */
-	#endsDrag(): boolean {
-		const dragged = this.#hasDragged;
-		this.#hasDragged = false;
-		return dragged;
-	}
-
-	#release(event: PointerEvent): void {
-		if (this.#captured) {
-			this.#captured.releasePointerCapture?.(event.pointerId);
-			this.#captured = null;
-		}
-	}
-
 	#resolve(
-		key: Parameters<typeof resolveComponentStyles>[0],
+		key: Parameters<typeof resolveStyles>[0],
 		baseClassName: ClassNameStyle['baseClassName'],
 		className?: string
 	): ClassNameStyle {
 		const noStyle = this.#resolvedNoStyle();
-		return resolveComponentStyles(
+		return resolveStyles(
 			key,
 			this.theme.theme(),
 			{ baseClassName, className, noStyle },

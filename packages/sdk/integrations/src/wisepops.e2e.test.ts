@@ -7,7 +7,7 @@ import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	installHeadProbe,
 	loadScripts,
@@ -16,11 +16,11 @@ import {
 } from './e2e-test-utils';
 import { wisepops } from './vendors/functional/wisepops';
 
-const LOADER_SRC = 'https://wisepops.net/loader.js?v=3&h=c15tfake';
+const LOADER_SRC = 'https://wisepops.net/loader.js?v=3&h=inthfake';
 
 const getLoader = function getLoader(): HTMLScriptElement {
 	const element = document.head.querySelector<HTMLScriptElement>(
-		'script[src="https://wisepops.net/loader.js?v=3&h=c15tfake"]'
+		'script[src="https://wisepops.net/loader.js?v=3&h=inthfake"]'
 	);
 	if (!element) {
 		throw new Error('Expected a Wisepops loader.');
@@ -68,10 +68,10 @@ describe('Wisepops loader contract', () => {
 		const localStorageBefore = { ...localStorage };
 		const sessionStorageBefore = { ...sessionStorage };
 		const append = installHeadProbe(() => undefined);
-		const scripts = [wisepops({ siteId: 'c15tfake' })];
+		const scripts = [wisepops({ siteId: 'inthfake' })];
 
-		loadScripts(scripts, deniedConsents);
-		updateScripts(scripts, { ...deniedConsents, measurement: true });
+		loadScripts(scripts, ALL_DENIED);
+		updateScripts(scripts, { ...ALL_DENIED, measurement: true });
 		expect(append).not.toHaveBeenCalled();
 		expect(window.wisepops).toBeUndefined();
 		// oxlint-disable-next-line unicorn/no-document-cookie -- Checks that denied setup leaves cookies unchanged.
@@ -92,7 +92,7 @@ describe('Wisepops loader contract', () => {
 		const scripts = [
 			wisepops({
 				options: { autoPageview: false, browserStorage: true },
-				siteId: 'c15tfake',
+				siteId: 'inthfake',
 			}),
 		];
 		loadScripts(scripts, grantedMarketingConsents);
@@ -116,13 +116,13 @@ describe('Wisepops loader contract', () => {
 
 	it('detaches on revocation without sending an unsupported denial or removing the runtime', () => {
 		const { calls } = installWisepopsTestDouble();
-		const scripts = [wisepops({ siteId: 'c15tfake' })];
+		const scripts = [wisepops({ siteId: 'inthfake' })];
 		loadScripts(scripts, grantedMarketingConsents);
 		const element = getLoader();
 		const snippet = window.wisepops;
 		element.dispatchEvent(new Event('load'));
 
-		const result = updateScripts(scripts, deniedConsents);
+		const result = updateScripts(scripts, ALL_DENIED);
 
 		expect(result.unloaded).toEqual(['wisepops']);
 		expect(element.isConnected).toBe(false);
@@ -135,19 +135,19 @@ describe('Wisepops loader contract', () => {
 
 	it('does not grant on a detached in-flight load', () => {
 		const { calls } = installWisepopsTestDouble();
-		const scripts = [wisepops({ siteId: 'c15tfake' })];
+		const scripts = [wisepops({ siteId: 'inthfake' })];
 		loadScripts(scripts, grantedMarketingConsents);
 		const revoked = getLoader();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		revoked.dispatchEvent(new Event('load'));
 		expect(calls).toEqual([['options', { defaultConsent: 'denied' }]]);
 	});
 
 	it('uses the category override and core-supplied CSP nonce', () => {
-		const scripts = [wisepops({ category: 'experience', siteId: 'c15tfake' })];
+		const scripts = [wisepops({ category: 'experience', siteId: 'inthfake' })];
 		loadScripts(scripts, grantedMarketingConsents, { nonce: 'provider-nonce' });
 		expect(window.wisepops).toBeUndefined();
-		updateScripts(scripts, { ...deniedConsents, experience: true });
+		updateScripts(scripts, { ...ALL_DENIED, experience: true });
 		expect(getLoader().nonce).toBe('provider-nonce');
 	});
 
@@ -155,7 +155,7 @@ describe('Wisepops loader contract', () => {
 		const kernel = createConsentKernel();
 		const loader = createScriptLoader({
 			kernel,
-			scripts: [wisepops({ siteId: 'c15tfake' })],
+			scripts: [wisepops({ siteId: 'inthfake' })],
 		});
 		try {
 			await kernel.commands.save(
@@ -185,7 +185,7 @@ describe('Wisepops loader contract', () => {
 	it('regrants after a completed load without replacing the SDK queue', async () => {
 		const { calls } = installWisepopsTestDouble();
 		const kernel = createConsentKernel();
-		const script = wisepops({ siteId: 'c15tfake' });
+		const script = wisepops({ siteId: 'inthfake' });
 		const loader = createScriptLoader({ kernel, scripts: [script] });
 		try {
 			await kernel.commands.save({ marketing: true });
@@ -198,7 +198,7 @@ describe('Wisepops loader contract', () => {
 			expect(first.isConnected).toBe(false);
 
 			// Framework rerenders can recreate a helper before the next grant.
-			loader.updateScripts([wisepops({ siteId: 'c15tfake' })]);
+			loader.updateScripts([wisepops({ siteId: 'inthfake' })]);
 			await kernel.commands.save({ marketing: true });
 			const second = getLoader();
 			expect(second).not.toBe(first);
@@ -206,7 +206,7 @@ describe('Wisepops loader contract', () => {
 			expect(window.wisepops?.q).toBe(queue);
 			expect(window.wisepops?.l).toBe(timestamp);
 			second.dispatchEvent(new Event('load'));
-			loader.updateScripts([wisepops({ siteId: 'c15tfake' })]);
+			loader.updateScripts([wisepops({ siteId: 'inthfake' })]);
 			await kernel.commands.save({ marketing: true, measurement: true });
 
 			expect(document.head.querySelectorAll('script')).toHaveLength(1);
@@ -227,7 +227,7 @@ describe('Wisepops loader contract', () => {
 		const kernel = createConsentKernel();
 		const loader = createScriptLoader({
 			kernel,
-			scripts: [wisepops({ siteId: 'c15tfake' })],
+			scripts: [wisepops({ siteId: 'inthfake' })],
 		});
 		try {
 			await kernel.commands.save({ marketing: true });
@@ -258,7 +258,7 @@ describe('Wisepops loader contract', () => {
 			scripts: [
 				wisepops({
 					category: { and: ['marketing', 'experience'] },
-					siteId: 'c15tfake',
+					siteId: 'inthfake',
 				}),
 			],
 		});

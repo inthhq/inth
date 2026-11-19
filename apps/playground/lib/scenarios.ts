@@ -2,7 +2,7 @@
  * Single source of truth for the demo's policy scenarios.
  *
  * Every scenario pairs a location with a policy pack so the demo can show
- * how c15t resolves policies by geography. The same definitions drive:
+ * how Inth resolves policies by geography. The same definitions drive:
  *
  * - The client demo in offline mode (`testing({ policyRules })`)
  */
@@ -15,7 +15,7 @@ import { baseTranslations } from '@inth/sdk/translations/all';
 import { presentationForRule } from './policy-playground';
 
 export const DEMO_POLICY_SNAPSHOT_KEY =
-	process.env.C15T_POLICY_SNAPSHOT_KEY ?? 'demo-policy-snapshot-key';
+	process.env.INTH_POLICY_SNAPSHOT_KEY ?? 'demo-policy-snapshot-key';
 
 export const DEFAULT_SCENARIO_ID = 'preset-europe-opt-in';
 
@@ -100,7 +100,7 @@ const profile = function profile(
 
 // oxlint-disable-next-line sort-keys -- Preserve declaration order, interface shape, and public compatibility.
 export const demoI18nMessages: I18nMessageProfiles = {
-	// Stock c15t translations, used by the shipped policy-pack presets.
+	// Stock Inth translations, used by the shipped policy-pack presets.
 	default: profile(),
 	eu: profile({
 		de: {

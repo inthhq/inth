@@ -26,8 +26,8 @@
 
 	const dataState = $derived(getCollapsibleState(open));
 	const dataDisabled = $derived(getDataDisabled(disabled));
-	const triggerId = `c15t-collapsible-trigger-${componentId}`;
-	const contentId = `c15t-collapsible-content-${componentId}`;
+	const triggerId = `inth-collapsible-trigger-${componentId}`;
+	const contentId = `inth-collapsible-content-${componentId}`;
 
 	const setOpen = function setOpen(nextOpen: boolean) {
 		if (disabled) {

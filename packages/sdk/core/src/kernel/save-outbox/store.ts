@@ -15,10 +15,25 @@
  *   without localStorage.
  */
 
+import { getRawCookieValue } from '../../libs/cookie/operations';
 import {
+	C15T_PENDING_SAVES_STORAGE_KEY,
+	C15T_STORAGE_KEY,
+	C15T_SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 	PENDING_SAVES_STORAGE_KEY,
+	resolveStorageKeys,
 	SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 } from '../../libs/storage-keys';
+import { decodeClearEpoch } from '../../modules/persistence/record-codec';
+import type { SavePayload } from '../../types';
+import type { PendingSaveEntry } from './supersession';
+
+/**
+ * The Web Lock every browser outbox transaction holds: c15t's, so c15t and
+ * Inth tabs of one origin take turns on c15t's lists, which a transaction
+ * adopts and a clear removes.
+ */
+const OUTBOX_LOCK_NAME = 'c15t-v3-pending-consent-saves:v1';
 
 /** The lists a store keeps. */
 export type OutboxSlot = 'saves' | 'reassignments';
@@ -55,11 +70,44 @@ export interface SaveOutboxStore {
 	 * Remove both lists now, without waiting for exclusive access, so a clear
 	 * holds even when the page closes before a transaction could run. A
 	 * transaction already running elsewhere can still write back what it
-	 * read; the outbox follows this with a transaction that empties the
-	 * lists again.
+	 * read; the outbox calls this again inside a transaction after it.
 	 */
 	clear: () => void;
 }
+
+/**
+ * A save as the outbox queues it.
+ *
+ * @param now - When it was queued.
+ * @internal
+ */
+export const pendingSave = (
+	payload: SavePayload,
+	now: number
+): PendingSaveEntry => ({ attempts: 0, payload, queuedAt: now });
+
+/**
+ * Queues `payload` after the saves `store` holds, for the kernel's replay
+ * to send. The replay validates and orders every entry, so this one
+ * appends without loading the queue's code.
+ *
+ * @param now - When it was queued.
+ * @returns Whether the store kept it.
+ * @internal
+ */
+export const enqueueSave = function enqueueSave(
+	store: SaveOutboxStore,
+	payload: SavePayload,
+	now: number = Date.now()
+): Promise<boolean> {
+	return store.transact((tx) => {
+		const stored = tx.read('saves');
+		return tx.write('saves', [
+			...(Array.isArray(stored) ? stored : []),
+			pendingSave(payload, now),
+		]);
+	});
+};
 
 /** The part of `Storage` a store uses. */
 type TextStorage = Pick<Storage, 'getItem' | 'removeItem' | 'setItem'>;
@@ -96,14 +144,67 @@ const SLOT_KEYS: Record<OutboxSlot, string> = {
 	saves: PENDING_SAVES_STORAGE_KEY,
 };
 
+const C15T_SLOT_KEYS: Record<OutboxSlot, string> = {
+	reassignments: C15T_SUBJECT_REASSIGNMENTS_STORAGE_KEY,
+	saves: C15T_PENDING_SAVES_STORAGE_KEY,
+};
+
+/** Marks an entry adopted from c15t's lists, which c15t's clear epoch still voids. */
+const ADOPTED = 'c15t';
+
+const markAdopted = (entry: unknown): unknown =>
+	entry !== null && typeof entry === 'object'
+		? { ...entry, adoptedFrom: ADOPTED }
+		: entry;
+
+const isAdopted = (entry: unknown): entry is Record<string, unknown> =>
+	entry !== null &&
+	typeof entry === 'object' &&
+	(entry as Record<string, unknown>).adoptedFrom === ADOPTED;
+
+/** When an adopted entry was made: a save's queue time, a reassignment's. */
+const adoptedAt = (
+	entry: Record<string, unknown>,
+	slot: OutboxSlot
+): number => {
+	const at = slot === 'saves' ? entry.queuedAt : entry.at;
+	return typeof at === 'number' ? at : 0;
+};
+
+// c15t's default family: a c15t site on another `storageKey` clears under
+// that key's epoch, which this doesn't read.
+const C15T_EPOCH_KEY = resolveStorageKeys({
+	storageKey: C15T_STORAGE_KEY,
+}).epoch;
+
+/** c15t's clear epoch, from its cookie or localStorage copy; `0` for none. */
+const c15tClearEpoch = function c15tClearEpoch(storage: TextStorage): number {
+	const now = Date.now();
+	let local: string | null = null;
+	try {
+		local = storage.getItem(C15T_EPOCH_KEY);
+	} catch {
+		// Blocked storage holds no epoch.
+	}
+	let latest = 0;
+	for (const text of [local, getRawCookieValue(C15T_EPOCH_KEY)]) {
+		const decoded = text ? decodeClearEpoch(text.trim(), now) : null;
+		if (decoded?.ok && decoded.record > latest) {
+			latest = decoded.record;
+		}
+	}
+	return latest;
+};
+
 /**
  * The outbox store every tab of an origin shares: JSON arrays in
- * localStorage under `c15t-v3-pending-consent-saves:v1` and
- * `c15t-v3-subject-reassignments:v1`, the keys earlier releases wrote, so
- * saves a visitor queued before an upgrade still replay.
+ * localStorage under {@link PENDING_SAVES_STORAGE_KEY} and
+ * {@link SUBJECT_REASSIGNMENTS_STORAGE_KEY}. Every transaction first
+ * appends c15t's lists to these and removes them, so the outbox replays
+ * what a c15t page queued; `clear` removes c15t's lists too.
  *
- * Every transaction holds the Web Lock named after the saves key, so two
- * tabs cannot overwrite each other's entries or replay one twice. Without
+ * Every transaction holds one Web Lock, so two tabs cannot overwrite each
+ * other's entries or replay one twice. Without
  * the Web Locks API, or when the lock request fails (insecure context,
  * aborted request), a transaction runs unsynchronized rather than being
  * dropped. Without localStorage (server, blocked storage) the store falls
@@ -127,7 +228,10 @@ export const createBrowserOutboxStore = function createBrowserOutboxStore(
 	return {
 		clear() {
 			const storage = environment.localStorage() ?? memory;
-			for (const key of Object.values(SLOT_KEYS)) {
+			for (const key of [
+				...Object.values(SLOT_KEYS),
+				...Object.values(C15T_SLOT_KEYS),
+			]) {
 				try {
 					storage.removeItem(key);
 				} catch {
@@ -137,14 +241,32 @@ export const createBrowserOutboxStore = function createBrowserOutboxStore(
 		},
 		async transact(run) {
 			const storage = environment.localStorage() ?? memory;
+			const readKey = (key: string): unknown => {
+				try {
+					const text = storage.getItem(key);
+					return text === null ? undefined : JSON.parse(text);
+				} catch {
+					return null;
+				}
+			};
 			const tx: OutboxTransaction = {
 				read(slot) {
-					try {
-						const text = storage.getItem(SLOT_KEYS[slot]);
-						return text === null ? undefined : JSON.parse(text);
-					} catch {
-						return null;
+					const value = readKey(SLOT_KEYS[slot]);
+					if (!Array.isArray(value) || !value.some(isAdopted)) {
+						return value;
 					}
+					// A c15t tab can still clear after its entries moved here. A
+					// save queued in the clear's millisecond goes too: unlike a
+					// seeded record, which only shows a decision, it would send
+					// one.
+					const epoch = c15tClearEpoch(storage);
+					const live = value.filter(
+						(entry) => !(isAdopted(entry) && adoptedAt(entry, slot) <= epoch)
+					);
+					if (live.length !== value.length) {
+						tx.write(slot, live);
+					}
+					return live;
 				},
 				write(slot, value) {
 					try {
@@ -160,14 +282,42 @@ export const createBrowserOutboxStore = function createBrowserOutboxStore(
 					}
 				},
 			};
+			const adoptC15tLists = () => {
+				for (const slot of ['saves', 'reassignments'] as const) {
+					const adopted = readKey(C15T_SLOT_KEYS[slot]);
+					if (adopted === undefined) {
+						continue;
+					}
+					if (Array.isArray(adopted)) {
+						const own = readKey(SLOT_KEYS[slot]);
+						if (
+							!tx.write(slot, [
+								...(Array.isArray(own) ? own : []),
+								...adopted.map(markAdopted),
+							])
+						) {
+							continue;
+						}
+					}
+					try {
+						storage.removeItem(C15T_SLOT_KEYS[slot]);
+					} catch {
+						// Left for the next transaction.
+					}
+				}
+			};
+			const runAdopting = () => {
+				adoptC15tLists();
+				return run(tx);
+			};
 			const locks = storage === memory ? null : environment.locks();
 			if (!locks) {
-				return run(tx);
+				return runAdopting();
 			}
 			try {
-				return await locks.request(PENDING_SAVES_STORAGE_KEY, () => run(tx));
+				return await locks.request(OUTBOX_LOCK_NAME, runAdopting);
 			} catch {
-				return run(tx);
+				return runAdopting();
 			}
 		},
 	};

@@ -18,7 +18,7 @@ import { useKernel } from '../kernel-selector';
 import { useUIConfig } from '../ui-config-context';
 import {
 	CONSENT_BOOT_ATTRIBUTE,
-	canDeferEngine,
+	awaitsChoice,
 	canDeferEngineAfterChoice,
 } from './boot';
 import type { ConsentBoot } from './boot';
@@ -111,7 +111,7 @@ const BootJSON = ({
 			{/* Runs before the preload below, which reads its result. */}
 			{storedChoice ? (
 				<script
-					// oxlint-disable-next-line react/no-danger -- c15t's own code; values are escaped.
+					// oxlint-disable-next-line react/no-danger -- Inth's own code; values are escaped.
 					dangerouslySetInnerHTML={{ __html: check ?? '' }}
 					nonce={nonce}
 					suppressHydrationWarning
@@ -129,10 +129,10 @@ const BootJSON = ({
 			now, not when the shell's chunk runs. Always rendered, empty
 			otherwise, so the browser renders the same elements. */}
 			<script
-				// oxlint-disable-next-line react/no-danger -- c15t's own constant script.
+				// oxlint-disable-next-line react/no-danger -- Inth's own constant script.
 				dangerouslySetInnerHTML={{
 					__html:
-						chunks === undefined || (!preload && canDeferEngine(snapshot))
+						chunks === undefined || (!preload && awaitsChoice(snapshot))
 							? ''
 							: enginePreloadScript(
 									chunks,
@@ -216,8 +216,6 @@ export const ServerBootData = ({
  * inside the provider, in a Suspense boundary: with a streamed state it
  * waits for the state. In the browser it keeps the server's element.
  *
- * @param props - The bundler's chunk path, and whether to preload the
- * engine whatever the snapshot says.
  * @internal
  */
 export const ConsentBootData = (props: ConsentBootDataProps) => {

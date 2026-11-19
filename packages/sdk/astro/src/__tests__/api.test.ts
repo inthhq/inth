@@ -7,22 +7,21 @@ import {
 	buildConsentManifestFromConfig,
 	policyRulePresets,
 } from '@inth/sdk/schema/types';
+import { clearManifestCache } from '@inth/sdk/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { resolveOptions } from '../integration';
 import { manifest as manifestMode } from '../mode';
 import {
-	clearManifestCache,
 	createConsentRouteHandlers,
 	resolveConsentContext,
-	resolveManifestSourceUrl,
 	waitUntilFromLocals,
 } from '../server';
-import type { C15tAstroOptions } from '../types';
+import type { InthAstroOptions } from '../types';
 
 const MANIFEST = await buildConsentManifestFromConfig({
-	branding: 'c15t',
+	branding: 'inth',
 	policyRules: [
 		policyRulePresets.europeOptIn(),
 		policyRulePresets.worldOptOutNoPrompt(),
@@ -35,7 +34,7 @@ const request = (path: string, headers: Record<string, string> = {}) =>
 	new Request(`https://site.example.com${path}`, { headers });
 
 const options = (
-	astroOptions: C15tAstroOptions = {
+	astroOptions: InthAstroOptions = {
 		mode: manifestMode(),
 		projectUrl: BACKEND,
 	}
@@ -69,12 +68,25 @@ describe('createConsentRouteHandlers', () => {
 			await createConsentRouteHandlers({
 				fetch,
 				options: options({ mode, projectUrl: BACKEND }),
-			}).manifest(request('/api/c15t/manifest'));
+			}).manifest(request('/api/inth/manifest'));
 			expect(fetch.mock.calls[0]?.[0]).toBe(expected);
 		}
-		expect(resolveManifestSourceUrl(request('/api/c15t/init'), options())).toBe(
-			`${BACKEND}/manifest`
-		);
+	});
+
+	it("serves a browser-resolved mode's absolute manifestUrl on a same-origin backend", async () => {
+		const fetch = upstream();
+		const response = await createConsentRouteHandlers({
+			fetch,
+			options: options({
+				mode: manifestMode({
+					manifestUrl: 'https://cdn.example.com/m.json',
+					resolve: 'browser',
+				}),
+				projectUrl: '',
+			}),
+		}).manifest(request('/api/inth/manifest'));
+		expect(response.status).toBe(200);
+		expect(fetch.mock.calls[0]?.[0]).toBe('https://cdn.example.com/m.json');
 	});
 
 	it('resolves an inline manifest without fetching it', async () => {
@@ -87,7 +99,7 @@ describe('createConsentRouteHandlers', () => {
 			}),
 		});
 		const response = await handlers.init(
-			request('/api/c15t/init', { 'x-c15t-country': 'DE' })
+			request('/api/inth/init', { 'x-inth-country': 'DE' })
 		);
 		expect(response.status).toBe(200);
 		expect(
@@ -106,26 +118,36 @@ describe('createConsentRouteHandlers', () => {
 		});
 		const payload = await (
 			await handlers.init(
-				request('/api/c15t/init', {
+				request('/api/inth/init', {
 					'accept-language': 'fr',
-					'x-c15t-country': 'DE',
+					'x-inth-country': 'DE',
 				})
 			)
 		).json();
 		expect(payload.translations.language).toBe('de');
 	});
 
-	it('GET dispatches the catch-all route by its last segment', async () => {
+	it('GET dispatches the catch-all route by its rest parameter', async () => {
 		const handlers = createConsentRouteHandlers({
 			fetch: upstream(),
 			options: options(),
 		});
-		const manifest = await handlers.GET(request('/api/c15t/manifest'));
-		const init = await handlers.GET(request('/api/c15t/init'));
-		const other = await handlers.GET(request('/api/c15t/subjects'));
+		const get = (path: string) =>
+			handlers.GET(request(`/api/inth/${path}`), { path });
+		const manifest = await get('manifest');
+		const init = await get('init');
+		const other = await get('subjects');
 		expect(manifest.headers.get('cache-control')).toBe('s-maxage=60');
 		expect(init.headers.get('cache-control')).toBe('private, no-store');
 		expect(other.status).toBe(404);
+	});
+
+	it('rejects a backend under its own route prefix when it is built', () => {
+		expect(() =>
+			createConsentRouteHandlers({
+				options: options({ projectUrl: '/api/inth/backend' }),
+			})
+		).toThrow(/beneath the consent route|names the consent route/u);
 	});
 
 	it('registers detached work with the waitUntil on locals', async () => {
@@ -133,7 +155,7 @@ describe('createConsentRouteHandlers', () => {
 		await createConsentRouteHandlers({
 			fetch: upstream(),
 			options: options(),
-		}).init(request('/api/c15t/init'), {
+		}).init(request('/api/inth/init'), {
 			locals: { cfContext: { waitUntil } },
 		});
 		expect(waitUntil).toHaveBeenCalledTimes(1);
@@ -165,7 +187,7 @@ describe('waitUntilFromLocals', () => {
 
 it('serves Astro manifest SSR references through the same-origin init route', async () => {
 	const manifest = await buildConsentManifestFromConfig({
-		branding: 'c15t',
+		branding: 'inth',
 		iab: {
 			cmpId: 28,
 			enabled: true,
@@ -187,18 +209,18 @@ it('serves Astro manifest SSR references through the same-origin init route', as
 		routePrefix: '/privacy',
 	});
 	const context = await resolveConsentContext({
-		headers: new Headers({ 'x-c15t-country': 'DE' }),
+		headers: new Headers({ 'x-inth-country': 'DE' }),
 		options: resolved,
 		url: 'https://site.example.com/page',
 	});
 	const reference = context.config.initialIab?.gvlReference;
 	expect(context.config.initialIab?.gvl).toBeNull();
 	expect(reference?.url).toBe(
-		`/privacy/init?c15t-gvl=${completeGVL.vendorListVersion}&language=en`
+		`/privacy/init?inth-gvl=${completeGVL.vendorListVersion}&language=en`
 	);
 	const handlers = createConsentRouteHandlers({ options: resolved });
 	const init = await handlers.init(
-		request('/privacy/init', { 'x-c15t-country': 'DE' })
+		request('/privacy/init', { 'x-inth-country': 'DE' })
 	);
 	expect((await init.json()).gvlReference.url).toBe(reference?.url);
 	const list = await handlers.init(request(reference?.url ?? ''));

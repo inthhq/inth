@@ -1,6 +1,6 @@
 ---
 title: ConsentDialogTrigger
-description: Show a floating, draggable button that reopens the c15t preference dialog in a Vue app, and configure its corner, size, icon and label.
+description: Show a floating, draggable button that reopens the Inth preference dialog in a Vue app, and configure its corner, size, icon and label.
 group: frameworks
 ---
 
@@ -12,7 +12,7 @@ then renders it:
 {/* example: fragment */}
 
 ```ts title="src/main.ts"
-app.use(c15tVue, {
+app.use(inthVue, {
 	mode: hosted(),
 	scripts,
 	showTrigger: true,
@@ -29,7 +29,7 @@ When you compose the surfaces without `ConsentRoot`, import the trigger from
 
 <import src="../../../shared/vue/components/consent-dialog-trigger.mdx#options" />
 
-All trigger options go in the object you pass to `app.use(c15tVue, ...)`.
+All trigger options go in the object you pass to `app.use(inthVue, ...)`.
 
 <import src="../../../shared/vue/components/consent-dialog-trigger.mdx#accessibility" />
 
@@ -39,4 +39,4 @@ All trigger options go in the object you pass to `app.use(c15tVue, ...)`.
 
 - [ConsentDialogLink](/docs/frameworks/vue/components/consent-dialog-link)
   is an inline alternative for a footer.
-- [c15tVue plugin](/docs/frameworks/vue/plugin) lists every option.
+- [inthVue plugin](/docs/frameworks/vue/plugin) lists every option.

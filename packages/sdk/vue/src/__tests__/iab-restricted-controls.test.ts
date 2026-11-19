@@ -90,10 +90,8 @@ const applyEmitted = (wrapper: VueWrapper, handle: IABHandle): void => {
 	][]) {
 		handle.setVendorLegitimateInterest(id, value);
 	}
-	for (const [value] of (emitted.purposeLegitimateInterestToggle ?? []) as [
-		boolean,
-	][]) {
-		handle.setPurposeLegitimateInterest(7, value);
+	for (const [objected] of (emitted.purposeObjection ?? []) as [boolean][]) {
+		handle.setPurposeObjection(7, objected);
 	}
 };
 
@@ -104,6 +102,12 @@ describe('Vue controls under a legitimate-interest restriction', () => {
 			global,
 			props: {
 				isEnabled: false,
+				// The visitor had objected; the only control lifts the objection.
+				legitimateInterests: {
+					gvl: null,
+					purposeLegitimateInterests: { 7: false },
+					vendorLegitimateInterests: { 755: false },
+				},
 				purpose: {
 					description: '',
 					hasConsentBasis: false,
@@ -114,14 +118,11 @@ describe('Vue controls under a legitimate-interest restriction', () => {
 						{ id: 755, name: 'Vendor 755', usesLegitimateInterest: true },
 					],
 				},
-				// The visitor had objected; the only control lifts the objection.
-				purposeLegitimateInterests: { 7: false },
 				vendorConsents: {},
-				vendorLegitimateInterests: { 755: false },
 			},
 		});
 		// The objection sits in the row's content, mounted on first open.
-		await wrapper.get('[id^="c15t-preference-item-trigger-"]').trigger('click');
+		await wrapper.get('[id^="inth-preference-item-trigger-"]').trigger('click');
 		await wrapper.get('button[aria-pressed]').trigger('click');
 		applyEmitted(wrapper, handle);
 		await handle.save();
@@ -148,11 +149,15 @@ describe('Vue controls under a legitimate-interest restriction', () => {
 		const wrapper = mount(IabVendorList, {
 			global,
 			props: {
+				legitimateInterests: {
+					gvl: null,
+					purposeLegitimateInterests: {},
+					vendorLegitimateInterests: { 755: false },
+				},
 				purposes: [],
 				selectedVendorId: null,
 				vendorConsents: {},
 				vendorData: restricted,
-				vendorLegitimateInterests: { 755: false },
 			},
 		});
 		await wrapper.get('#vendor-755 button[aria-pressed]').trigger('click');
@@ -160,6 +165,48 @@ describe('Vue controls under a legitimate-interest restriction', () => {
 		applyEmitted(wrapper, handle);
 		await handle.save();
 		expect(evaluateConsent(target, kernel.getSnapshot())).toBe(true);
+	});
+
+	test('an untouched objection control shows what a plain Save encodes', async () => {
+		// Vendor 10 declares purpose 7 on legitimate interest; the restriction
+		// moves vendor 755 there. A save with an empty draft encodes only 755.
+		const { handle, kernel } = await setup();
+		const wrapper = mount(IabPurposeItem, {
+			global,
+			props: {
+				isEnabled: false,
+				legitimateInterests: kernel.getSnapshot().iab,
+				purpose: {
+					description: '',
+					hasConsentBasis: false,
+					id: 7,
+					illustrations: [],
+					name: 'Measure advertising performance',
+					vendors: [
+						{ id: 755, name: 'Vendor 755', usesLegitimateInterest: true },
+						{ id: 10, name: 'Vendor 10', usesLegitimateInterest: true },
+					],
+				},
+				vendorConsents: {},
+			},
+		});
+		await wrapper.get('[id^="inth-preference-item-trigger-"]').trigger('click');
+		for (const toggle of wrapper.findAll('button[aria-expanded="false"]')) {
+			// oxlint-disable-next-line no-await-in-loop -- each row expands after the one before re-renders
+			await toggle.trigger('click');
+		}
+		const pressed = wrapper
+			.findAll('button[aria-pressed]')
+			.map((button) => button.attributes('aria-pressed'));
+		await handle.save();
+		const saved = kernel.getSnapshot().iab?.authority;
+		// The purpose objection, then vendors 755 and 10.
+		expect(pressed).toEqual([
+			String(saved?.purposeLegitimateInterests[7] !== true),
+			String(saved?.vendorLegitimateInterests['755'] !== true),
+			String(saved?.vendorLegitimateInterests['10'] !== true),
+		]);
+		expect(pressed).toEqual(['false', 'false', 'true']);
 	});
 
 	test('a vendor with no consent purposes has no consent switch', () => {

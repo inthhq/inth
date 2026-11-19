@@ -11,10 +11,10 @@ import ConsentRoot from '../../lib/components/consent-root.svelte';
 const mockFetch = vi.fn();
 window.fetch = mockFetch;
 
-type WindowWithC15t = Window & { c15t?: { mode: string } };
+type WindowWithInth = Window & { __inthDebug?: { mode: string } };
 
 const initResponse = () =>
-	new Response(JSON.stringify({ branding: 'c15t' }), {
+	new Response(JSON.stringify({ branding: 'inth' }), {
 		headers: { 'Content-Type': 'application/json' },
 		status: 200,
 	});
@@ -26,7 +26,7 @@ describe('ConsentRoot', () => {
 	});
 
 	afterEach(() => {
-		delete (window as WindowWithC15t).c15t;
+		delete (window as WindowWithInth).__inthDebug;
 	});
 
 	test('re-inits a manifest() page through the consent route', async () => {
@@ -35,16 +35,16 @@ describe('ConsentRoot', () => {
 				mode: { type: 'manifest' },
 				prefetch: {},
 				projectUrl: 'https://consent.example.com',
-				routePrefix: '/api/c15t',
+				routePrefix: '/api/inth',
 			},
 		});
 
 		await vi.waitFor(() => {
 			expect(String(mockFetch.mock.calls[0]?.[0])).toMatch(
-				/^\/api\/c15t\/init/u
+				/^\/api\/inth\/init/u
 			);
 		});
-		expect((window as WindowWithC15t).c15t?.mode).toBe('manifest');
+		expect((window as WindowWithInth).__inthDebug?.mode).toBe('manifest');
 		result.unmount();
 	});
 
@@ -62,7 +62,7 @@ describe('ConsentRoot', () => {
 				/^https:\/\/consent\.example\.com\/init/u
 			);
 		});
-		expect((window as WindowWithC15t).c15t?.mode).toBe('hosted');
+		expect((window as WindowWithInth).__inthDebug?.mode).toBe('hosted');
 		result.unmount();
 	});
 

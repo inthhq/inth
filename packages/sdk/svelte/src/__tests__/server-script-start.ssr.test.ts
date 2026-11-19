@@ -39,7 +39,7 @@ const optOut: PolicyRule = {
 	prompt: 'none',
 };
 
-/** The page `c15tHandle` sends: the render, after its page transform. */
+/** The page `inthHandle` sends: the render, after its page transform. */
 const renderPage = function renderPage({
 	rule = optOut,
 	shared = false,
@@ -51,7 +51,7 @@ const renderPage = function renderPage({
 	scriptRegistry?: RuntimePrefetch['initialScriptRegistry'];
 	shared?: boolean;
 }): string {
-	// `c15tHandle` makes the transform before SvelteKit renders the page.
+	// `inthHandle` makes the transform before SvelteKit renders the page.
 	const event = createEvent();
 	const inject = createServerStartInjector(event.locals);
 	setRequestEvent(event);

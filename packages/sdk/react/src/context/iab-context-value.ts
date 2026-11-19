@@ -38,4 +38,4 @@ export interface IABContextValue {
  * @internal
  */
 export const IABContext = createContext<IABContextValue | null>(null);
-IABContext.displayName = 'C15tIABContext';
+IABContext.displayName = 'InthIABContext';

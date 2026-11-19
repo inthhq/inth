@@ -114,9 +114,6 @@ declare global {
 
 /**
  * Snapchat Pixel vendor manifest.
- *
- * Uses a structured queue stub and queues `init` plus an optional
- * `PAGE_VIEW` event before the vendor bundle loads.
  */
 export const snapchatPixelManifest = {
 	...vendorManifestContract,
@@ -199,12 +196,6 @@ export interface SnapchatPixelOptions {
  * @param options.initOptions - Optional object passed as the third argument to
  *   `snaptr('init', pixelId, initOptions)`, for advanced initialization values.
  *   Example: `{ user_email: 'user@example.com', user_phone_number: '+15551234567' }`.
- * @param options.trackPageView - Whether to queue the default
- *   `snaptr('track', 'PAGE_VIEW')` call during setup. Defaults to `true`; set to
- *   `false` when you want to control page-view tracking manually.
- * @returns A resolved c15t `Script` configuration that defines the Snapchat
- *   queue stub, runs `init` (and optionally `PAGE_VIEW`), and then loads the
- *   Snapchat SDK script URL.
  * @remarks When `pixelId` is missing or blank, the
  *   helper logs `snapchatPixel: missing or invalid pixelId` with
  *   `console.error` and returns a script that never loads.
@@ -276,7 +267,6 @@ export const snapchatPixel = function snapchatPixel({
 /**
  * Tracks a Snapchat Pixel event.
  *
- * @param eventName - Snapchat standard event name or a custom event name.
  * @param properties - Optional event properties, including
  *   `client_dedup_id` for Pixel plus Conversions API deduplication.
  *

@@ -19,6 +19,7 @@ import type {
 	ConsentSnapshot,
 	LegalLinks,
 } from '@inth/sdk/engine';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import type { Theme } from '@inth/sdk/ui/theme';
 
 import type { PromptClassNames } from '../banner/class-names';
@@ -83,7 +84,7 @@ const renderFooter = function renderFooter(
 						{
 							class: model.classes.rightLink,
 							'data-action': 'right',
-							'data-c15t-action': 'customize',
+							'data-inth-action': 'customize',
 							'data-right': right,
 							'data-testid': `consent-banner-right-link-${right}`,
 							style: model.styles.rightLink,
@@ -112,7 +113,7 @@ const renderFooter = function renderFooter(
 						{
 							class: className,
 							'data-action': action,
-							'data-c15t-action': action,
+							'data-inth-action': action,
 							'data-mode': mode,
 							'data-size': props.noStyle ? undefined : 'small',
 							'data-testid': `consent-banner-${action}-button`,
@@ -148,10 +149,9 @@ const renderFooter = function renderFooter(
 const renderLegalLinks = function renderLegalLinks(
 	model: PromptModel
 ): HTMLElement {
-	const last = model.legalLinks.length - 1;
 	return element('span', {}, [
 		' ',
-		...model.legalLinks.map((link, index) =>
+		...model.legalLinks.map((link) =>
 			element('span', {}, [
 				element(
 					'a',
@@ -159,12 +159,12 @@ const renderLegalLinks = function renderLegalLinks(
 						class: model.classes.legalLink || undefined,
 						'data-testid': `consent-banner-legal-link-${link.key}`,
 						href: link.href,
-						rel: 'noreferrer',
-						target: '_blank',
+						rel: link.rel,
+						target: link.target,
 					},
-					[index < last ? `${link.label},` : link.label]
+					[link.separated ? `${link.label},` : link.label]
 				),
-				...(index < last ? [' '] : []),
+				...(link.separated ? [' '] : []),
 			])
 		),
 	]);
@@ -173,7 +173,6 @@ const renderLegalLinks = function renderLegalLinks(
 /**
  * Build the banner for a snapshot, without inserting it.
  *
- * @param snapshot - The resolved snapshot.
  * @param slot - The props and class names `<ConsentBanner />` left.
  * @param options - The site options the banner reads.
  * @returns The overlay (blocking banners only) followed by the banner root.
@@ -252,16 +251,17 @@ export const buildPrompt = function buildPrompt(
 			renderFooter(model, props),
 		]
 	);
-	const branding = renderBrandingTag({
-		hide: props.hideBranding,
-		noStyle: props.noStyle,
-		securedBy: model.copy.securedBy,
-		snapshot,
-		styles: slot.classNames.branding,
-		testId: 'consent-banner-branding',
-		theme,
-		themeSlot: 'consentBannerTag',
-	});
+	const branding = renderBrandingTag(
+		{
+			branding: snapshot.branding,
+			hide: props.hideBranding,
+			noStyle: props.noStyle,
+			styles: slot.classNames.branding,
+			surface: 'banner',
+			theme,
+		},
+		model.copy.securedBy
+	);
 	const root = element(
 		'div',
 		{
@@ -271,6 +271,7 @@ export const buildPrompt = function buildPrompt(
 			'data-position': model.position,
 			'data-prompt': model.prompt,
 			'data-testid': 'consent-banner-root',
+			[SURFACE_ROOT_ATTRIBUTE]: 'banner',
 			'data-variant': model.variant,
 			dir: model.textDirection,
 			lang: model.language,
@@ -300,7 +301,6 @@ export const buildPrompt = function buildPrompt(
 /**
  * Render the banner into the first spot `<ConsentBanner />` left for it.
  *
- * @param snapshot - The resolved snapshot.
  * @param options - The site options the banner reads.
  * @returns `true` when a banner was inserted.
  */

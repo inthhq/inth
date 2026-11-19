@@ -218,7 +218,7 @@ describe('analytics queue contracts', () => {
 			dataDisableAutoTrack: '1',
 			dataDsn: 'VERCEL-CONTRACT',
 			dataEndpoint: '/analytics',
-			dataSdkn: 'c15t',
+			dataSdkn: 'inth',
 			defer: true,
 		});
 		expect(queueSnapshot).toEqual([['Signup', { plan: 'pro' }]]);

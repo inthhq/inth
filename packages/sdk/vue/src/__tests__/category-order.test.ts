@@ -37,7 +37,7 @@ const rule: PolicyRule = {
 };
 
 const init: InitOutput = {
-	branding: 'c15t',
+	branding: 'inth',
 	location: { countryCode: 'DE', regionCode: null },
 	policyResolution: writePolicyResolutionWire(
 		resolvePolicyRules({ countryCode: null, regionCode: null, rules: [rule] })
@@ -94,8 +94,8 @@ test('the widget lists categories in the draft order, not the policy or configur
 		expect(rows).toEqual([
 			'necessary',
 			'functionality',
-			'measurement',
 			'experience',
+			'measurement',
 			'marketing',
 		]);
 	} finally {

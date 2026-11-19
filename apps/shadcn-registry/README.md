@@ -1,9 +1,9 @@
-# c15t shadcn registry
+# Inth shadcn registry
 
-Source for the c15t items in the shadcn registry, served from
+Source for the Inth items in the shadcn registry, served from
 `https://c15t.com/r`. The items are presentation only. Each one renders the
-project's own shadcn components and gets its state and actions from c15t's
-headless hooks, so consent logic stays in the `c15t` package.
+project's own shadcn components and gets its state and actions from Inth's
+headless hooks, so consent logic stays in the `@inth/react` package.
 
 Users install items with the shadcn CLI:
 
@@ -28,8 +28,8 @@ entry in the project's `components.json`:
 | --- | --- |
 | `registry/shared` | UI items for Radix and Base UI projects |
 | `registry/aria` | UI items for React Aria projects |
-| `registry/setup/<framework>` | The `consent-manager` item and, for Next.js, `c15t.config.ts` |
-| `src/items.ts` | Item names, titles, descriptions, install notes and the c15t range |
+| `registry/setup/<framework>` | The `consent-manager` item and, for Next.js, `inth.config.ts` |
+| `src/items.ts` | Item names, titles, descriptions, install notes and the Inth range |
 | `src/build-registry.ts` | Turns the sources into one JSON file per item per style |
 | `vendor/<base>` | Copies of the shadcn components the items import, used only for type-checking |
 
@@ -50,10 +50,10 @@ depend on.
 - Write in shadcn's style: 2-space indent, double quotes, no semicolons,
   function declarations. Oxfmt skips `registry/`, and `oxlint.config.ts` has
   an override for it.
-- Import c15t only from `@inth/react` and `@inth/react/headless`. Any other
-  c15t entry point fails the build, because the other frameworks have no
+- Import Inth only from `@inth/react` and `@inth/react/headless`. Any other
+  Inth entry point fails the build, because the other frameworks have no
   twin for it.
-- Import local code only from `@/components/ui/*`, `@/components/c15t/*` and
+- Import local code only from `@/components/ui/*`, `@/components/inth/*` and
   `@/lib/utils`. shadcn rewrites those to the project's aliases.
 - A `@/components/ui/*` import must be vendored for every base, so
   `check-types` covers it.
@@ -62,8 +62,8 @@ depend on.
 - The build derives dependencies from imports. Don't list them in
   `src/items.ts`.
 
-When an item starts using a hook or prop from a newer c15t release, raise
-`c15tRange` in `src/items.ts`.
+When an item starts using a hook or prop from a newer Inth release, raise
+`inthRange` in `src/items.ts`.
 
 Preferences are blocking by default. On every base, an outside click leaves
 blocking preferences open, and Escape and the close button close them.
@@ -80,9 +80,8 @@ components don't expose all of it. The dialog and sheet pass
 
 ## Commands
 
-Run these from `apps/shadcn-registry`. `check-types` and `fixtures` need a
-built `c15t`, so run `bun turbo run build --filter=c15t` from the repo root
-first.
+Run these from `apps/shadcn-registry`. `check-types` and `fixtures` need the
+framework packages built, so run `pnpm sdk:build` from the repo root first.
 
 ```bash
 bun run build         # write dist/r for https://c15t.com/r
@@ -95,11 +94,11 @@ bun run fixtures      # real shadcn projects, see below
 `fixtures` scaffolds a shadcn project for each framework and base with
 `shadcn init`, serves the registry from memory, runs `shadcn add` for every
 item, declares one marketing vendor, and type-checks the result. It packs
-the built workspace `c15t` and the `@c15t` packages it depends on, and the
+each framework's built `@inth` package and the `@inth` packages it depends on, and the
 projects install those tarballs the way they would install a release. The
 TanStack Start fixtures also replace `src/routes/__root.tsx` with the root
 route the install notes describe. Projects live in
-`/tmp/c15t-shadcn-fixtures` and are reused between runs. Pass `--fresh` to
+`/tmp/inth-shadcn-fixtures` and are reused between runs. Pass `--fresh` to
 scaffold them again, or narrow the run:
 
 ```bash
@@ -122,7 +121,7 @@ bun run fixtures --browser
 ```
 
 Each fixture writes its command output to
-`/tmp/c15t-shadcn-fixtures/<framework>-<base>.log`. A failed browser step
+`/tmp/inth-shadcn-fixtures/<framework>-<base>.log`. A failed browser step
 saves a screenshot next to it.
 
 ## Refreshing the vendored components
@@ -130,12 +129,12 @@ saves a screenshot next to it.
 The vendored files are shadcn's own components, as `shadcn init` installs
 them. To refresh them after a shadcn release, run `bun run fixtures --fresh`
 and copy `components/ui` and `lib/utils.ts` from each
-`/tmp/c15t-shadcn-fixtures/react-<base>/src` into `vendor/<base>`.
+`/tmp/inth-shadcn-fixtures/react-<base>/src` into `vendor/<base>`.
 
 ## Deploying
 
-The items pin `c15t@^3.2.0`, the first stable release with the headless
-hooks they use. 3.1.0 shipped without them. Publish 3.2.0 before deploying,
+The items pin their `@inth/*` framework package at `^3.2.0`, the first
+release with the headless hooks they use. Publish 3.2.0 before deploying,
 or installs fail to resolve the dependency.
 
 ```bash

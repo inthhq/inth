@@ -1,27 +1,27 @@
 ---
 title: Insider One
-description: Load Insider One after consent with current user attributes, currency and page context through the c15t insiderTag helper.
-seoTitle: Insider One cookie consent with c15t
-seoDescription: Load Insider One after marketing consent. Send gdpr_optin on grant and revocation, set page context, and check requests and storage with c15t.
+description: Load Insider One after consent with current user attributes, currency and page context through the Inth insiderTag helper.
+seoTitle: Insider One cookie consent with Inth
+seoDescription: Load Insider One after marketing consent. Send gdpr_optin on grant and revocation, set page context, and check requests and storage with Inth.
 icon: insider
 group: integrations
 ---
 
 Insider One runs personalized web campaigns and builds customer profiles from
-on-site behavior. The c15t `insiderTag` helper waits for `marketing` consent
+on-site behavior. The Inth `insiderTag` helper waits for `marketing` consent
 before it creates `InsiderQueue` or requests Insider's `ins.js`. On grant, it
 queues the current user with `gdpr_optin: true`, an optional currency, the page
 definition and `init`, then adds the loader.
 
 On withdrawal, it queues `gdpr_optin: false`, a neutral `{ type: 'other' }`
 page and `init`, then removes the loader. Insider has no unload method, so keep
-c15t's default reload on revocation to stop code the SDK already ran.
+Inth's default reload on revocation to stop code the SDK already ran.
 
 ## Configure Insider One
 
 Ask Insider for your public `partnerName` and `partnerId`, and confirm that
 Web SDK integration is turned on for your account. Remove any existing Insider
-tag or tag-manager installation so it can't load outside c15t's consent gate.
+tag or tag-manager installation so it can't load outside Inth's consent gate.
 Also remove any code that defines or fills `window.insider_object`. Insider
 doesn't support that legacy integration alongside `InsiderQueue`.
 
@@ -42,10 +42,10 @@ page. If you leave out `pageType`, the helper sends `{ type: 'other' }`.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `partnerName` | Required | Public partner name from Insider. Trimmed, lowercased and checked as a single DNS label for `<partnerName>.api.useinsider.com`. If it's missing, blank or invalid, c15t logs `insiderTag: missing or invalid partnerName` and never loads Insider. |
-| `partnerId` | Required | Public partner ID from Insider. Trimmed and URL-encoded as one query value. If it's missing or blank, c15t logs `insiderTag: missing or invalid partnerId` and never loads Insider. |
-| `user` | Omitted | Complete current user attributes for the grant push, including checkout identifiers and account-specific `custom` data. The helper sets `gdpr_optin` itself and sends none of these attributes on denial. If the object can't be serialized to JSON, such as a circular reference or a `BigInt`, c15t logs `insiderTag: user must be JSON-serializable` and never loads Insider. |
-| `currency` | Omitted | Current currency string, such as `'GBP'`, queued as `{ type: 'currency', value: 'GBP' }` before the page and `init`. Passed as-is, with no code list or case change. If it's set but isn't a non-blank string, c15t logs `insiderTag: currency must be a non-blank string` and never loads Insider. |
+| `partnerName` | Required | Public partner name from Insider. Trimmed, lowercased and checked as a single DNS label for `<partnerName>.api.useinsider.com`. If it's missing, blank or invalid, Inth logs `insiderTag: missing or invalid partnerName` and never loads Insider. |
+| `partnerId` | Required | Public partner ID from Insider. Trimmed and URL-encoded as one query value. If it's missing or blank, Inth logs `insiderTag: missing or invalid partnerId` and never loads Insider. |
+| `user` | Omitted | Complete current user attributes for the grant push, including checkout identifiers and account-specific `custom` data. The helper sets `gdpr_optin` itself and sends none of these attributes on denial. If the object can't be serialized to JSON, such as a circular reference or a `BigInt`, Inth logs `insiderTag: user must be JSON-serializable` and never loads Insider. |
+| `currency` | Omitted | Current currency string, such as `'GBP'`, queued as `{ type: 'currency', value: 'GBP' }` before the page and `init`. Passed as-is, with no code list or case change. If it's set but isn't a non-blank string, Inth logs `insiderTag: currency must be a non-blank string` and never loads Insider. |
 | `pageType` | `{ type: 'other' }` | Complete page push, including any required `value` fields. A purchase needs the per-order guard described below. |
 | `category` | `'marketing'` | Consent condition needed before the helper creates the queue or loads the tag. Accepts a category or an `and`/`or`/`not` condition. |
 
@@ -125,8 +125,8 @@ strings.
 <include src="../shared/examples/javascript/insider-product.mdx" />
 
 Page values must be JSON-serializable. The helper passes custom data through as
-literal JSON, including objects shaped like c15t runtime values
-(`kind: 'c15t.runtime-value'` with `value: 'date'` or `'timestamp'`). It
+literal JSON, including objects shaped like Inth runtime values
+(`kind: 'inth.runtime-value'` with `value: 'date'` or `'timestamp'`). It
 doesn't treat them as instructions. Normal JSON rules apply: a `Date` becomes a
 string, and properties set to `undefined` are dropped. Queue consumers get a
 copy, so their changes don't alter your page data. Server-started scripts use
@@ -176,7 +176,7 @@ consent. The `user` and `currency` options don't deduplicate purchases.
 
 The loader URL is
 `https://<partnerName>.api.useinsider.com/ins.js?id=<partnerId>`. After
-consent, c15t adds it to `<head>` as an async script. Before the first grant,
+consent, Inth adds it to `<head>` as an async script. Before the first grant,
 the helper creates no Insider global, request, cookie or Web Storage entry.
 That holds only if you removed other Insider installations.
 
@@ -201,11 +201,11 @@ running page can still send traffic after withdrawal. Replacing the page
 doesn't remove purchase entries queued earlier, so you still need the per-order
 guard and a guarded rebuild on reload or regrant.
 
-c15t removes the loader, but a download in flight can still finish, and code
+Inth removes the loader, but a download in flight can still finish, and code
 that already ran can keep listeners or timers. If consent is withdrawn before
 the SDK starts, the queue still holds the grant and `init` ahead of the denial.
 A late SDK can process those earlier entries first. Keep
-`reloadOnConsentRevoked` enabled. On the next page with consent denied, c15t
+`reloadOnConsentRevoked` enabled. On the next page with consent denied, Inth
 creates no queue and loads no Insider tag. The reload doesn't wait for Insider
 to confirm the update and doesn't delete existing vendor storage.
 
@@ -220,7 +220,7 @@ account settings and SDK updates can change the storage used.
 
 Check your account in DevTools Application after a grant and again after a
 withdrawal. Record cookie names, domains, paths and expiries, plus localStorage
-and sessionStorage keys. Set up c15t's clear-on-revocation rules from that
+and sessionStorage keys. Set up Inth's clear-on-revocation rules from that
 list. The helper doesn't guess storage prefixes to delete, and browser
 JavaScript can't remove HttpOnly or third-party cookies.
 

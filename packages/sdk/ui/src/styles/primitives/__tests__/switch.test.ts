@@ -2,14 +2,7 @@ import { describe, expect, test } from 'vitest';
 
 import { switchVariants } from '../switch';
 
-/**
- * Note: CSS modules return empty objects in test environments without a bundler.
- * These tests focus on:
- * 1. Function execution without errors
- * 2. Proper handling of variant props
- * 3. Custom class appending behavior
- * 4. Return type structure
- */
+/** CSS modules return empty objects in test environments without a bundler. */
 describe('switchVariants', () => {
 	describe('function structure', () => {
 		test('returns object with root, thumb, and track methods', () => {
@@ -108,7 +101,6 @@ describe('switchVariants', () => {
 			const variants = switchVariants();
 			const rootClass = variants.root({ class: '' });
 
-			// Should not have trailing/leading spaces from empty class
 			expect(rootClass.trim()).toBe(rootClass);
 		});
 

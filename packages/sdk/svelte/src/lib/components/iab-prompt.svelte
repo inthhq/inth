@@ -4,20 +4,25 @@
 		resolveConsentPresentation,
 	} from '@inth/sdk/engine';
 	import type { Model } from '@inth/sdk/engine';
+	import { resolveIABBannerCopy } from '@inth/sdk/iab/headless';
+	import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 	import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
+	import { resolveIABCopy } from '@inth/sdk/surface-state';
 	import buttonStyles from '@inth/sdk/ui/styles/components/button';
 	import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 	import styles from '@inth/sdk/ui/styles/components/iab-consent-banner';
-	import { getTextDirection } from '@inth/sdk/ui/utils';
+	import {
+		getTextDirection,
+		resolveStyles,
+		toStyleAttributeValue,
+	} from '@inth/sdk/ui/utils';
 
 	import { focusTrap } from '../actions/focus-trap';
 	import { portal } from '../actions/portal';
 	import { scrollLock } from '../actions/scroll-lock';
 	import { getConsentContext, getThemeContext } from '../context.svelte';
 	import { IAB_FIRST_PAINT_SHEETS } from '../iab-first-paint-sheets';
-	import { getIABTranslations } from '../iab-translations';
 	import { useBannerVisibility } from '../use-banner-visibility.svelte';
-	import { resolveComponentStyles, toStyleAttribute } from '../utils';
 	import Branding from './branding.svelte';
 	import Overlay from './overlay.svelte';
 	import SurfaceStyles from './surface-styles.svelte';
@@ -66,16 +71,13 @@
 	const shouldTrapFocus = $derived(presentation.blocking);
 	const shouldScrollLock = $derived(presentation.blocking);
 
-	// IAB state
 	const iabState = $derived(consent.state.iab);
 
-	// Translations
-	const iabT = $derived(getIABTranslations(consent.state.translationConfig));
+	const iabT = $derived(resolveIABCopy(consent.state.copy));
 	const textDirection = $derived(
-		getTextDirection(consent.state.translationConfig?.defaultLanguage)
+		getTextDirection(consent.state.translations?.language)
 	);
 
-	// Visibility logic
 	const shouldShowBanner = $derived(
 		consent.state.hasConsentUi &&
 			consent.state.activeUI === 'banner' &&
@@ -89,24 +91,18 @@
 	);
 
 	const summary = $derived(resolveIABBannerSummary(iabState));
-	const vendorCount = $derived(summary.vendorCount);
 	const displayItems = $derived({
 		displayed: summary.displayItems,
 		isReady: summary.isReady,
 		remainingCount: summary.remainingCount,
 	});
 
-	// Handlers
 	const handleSave = async function handleSave() {
 		if (!iabState) {
 			return;
 		}
 		const state = iabState;
-		try {
-			await saveIABConsentSurface(consent.kernel, () => state.save());
-		} catch {
-			// Keep the prompt available so a later action can retry the failed load/save.
-		}
+		await saveIABConsentSurface(consent.kernel, () => state.save());
 	};
 
 	const handleAcceptAll = function handleAcceptAll() {
@@ -151,9 +147,8 @@
 		} as const;
 	};
 
-	// Styling
 	const rootStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentBanner',
 			theme.theme,
 			{
@@ -166,7 +161,7 @@
 	);
 
 	const cardStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentBannerCard',
 			theme.theme,
 			{ baseClassName: styles.card, noStyle },
@@ -175,7 +170,7 @@
 	);
 
 	const headerStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentBannerHeader',
 			theme.theme,
 			{ baseClassName: styles.header, noStyle },
@@ -184,7 +179,7 @@
 	);
 
 	const footerStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentBannerFooter',
 			theme.theme,
 			{ baseClassName: [styles.footer, actionStyles.actionRoot], noStyle },
@@ -198,17 +193,8 @@
 			: `${rootStyle.className || ''} ${visibility.isVisible ? `${styles.bannerVisible}${disableAnimation ? '' : ` ${styles.bannerEntering}`}` : styles.bannerHidden}`
 	);
 
-	// Resolved texts
-	const descriptionText = $derived(
-		iabT.banner.description.replace('{partnerCount}', String(vendorCount))
-	);
-	const partnersLinkText = $derived(
-		iabT.banner.partnersLink.replace('{count}', String(vendorCount))
-	);
+	const bannerCopy = $derived(resolveIABBannerCopy(iabT, summary));
 	const scopeNotice = $derived(iabT.banner.scopeServiceSpecific);
-
-	// Split description around partners link
-	const descriptionParts = $derived(descriptionText.split(partnersLinkText));
 </script>
 
 {#if visibility.isMounted && visibility.shouldRender && displayItems.isReady}
@@ -229,13 +215,14 @@
 		<div
 			bind:this={visibility.bannerEl}
 			class={finalClassName}
-			style={toStyleAttribute(rootStyle.style)}
+			style={toStyleAttributeValue(rootStyle.style)}
 			dir={textDirection}
 			data-position="bottom-left"
 			data-entry={visibility.lateEntry && !disableAnimation
 				? 'late'
 				: undefined}
 			data-testid="iab-consent-banner-root"
+			{...{ [SURFACE_ROOT_ATTRIBUTE]: 'banner' }}
 			tabindex="-1"
 			use:scrollLock={shouldScrollLock}
 		>
@@ -243,47 +230,41 @@
 				<Branding
 					{hideBranding}
 					{noStyle}
-					variant="banner-tag"
-					themeKey="iabConsentBannerTag"
-					data-testid="iab-consent-banner-branding"
+					surface="iab-banner"
 				/>
 				<div
 					class={cardStyle.className || ''}
-					style={toStyleAttribute(cardStyle.style)}
+					style={toStyleAttributeValue(cardStyle.style)}
 					data-testid="iab-consent-banner-card"
 					role={shouldTrapFocus ? 'dialog' : 'region'}
 					aria-modal={shouldTrapFocus ? 'true' : undefined}
 					aria-label={iabT.banner.title}
 					use:focusTrap={shouldTrapFocus}
 				>
-					<!-- Header -->
 					<div
 						class={headerStyle.className || ''}
-						style={toStyleAttribute(headerStyle.style)}
+						style={toStyleAttributeValue(headerStyle.style)}
 						data-testid="iab-consent-banner-header"
 					>
 						<h2 class={noStyle ? '' : styles.title}>{iabT.banner.title}</h2>
 						<p class={noStyle ? '' : styles.description}>
-							{descriptionParts[0]}
+							{bannerCopy.descriptionBefore}
 							<button
 								type="button"
 								class={noStyle ? '' : styles.partnersLink}
 								data-testid="iab-consent-banner-partners-link"
 								onclick={handleViewVendors}
 							>
-								{partnersLinkText}
-							</button>{descriptionParts[1] ?? ''}
+								{bannerCopy.partnersLink}
+							</button>{bannerCopy.descriptionAfter}
 						</p>
 						<ul class={noStyle ? '' : styles.purposeList}>
 							{#each displayItems.displayed as name (name)}
 								<li>{name}</li>
 							{/each}
-							{#if displayItems.remainingCount > 0}
+							{#if bannerCopy.andMore}
 								<li class={noStyle ? '' : styles.purposeMore}>
-									{iabT.banner.andMore.replace(
-										'{count}',
-										String(displayItems.remainingCount)
-									)}
+									{bannerCopy.andMore}
 								</li>
 							{/if}
 						</ul>
@@ -293,10 +274,9 @@
 						</p>
 					</div>
 
-					<!-- Footer with buttons -->
 					<div
 						class={footerStyle.className || ''}
-						style={toStyleAttribute(footerStyle.style)}
+						style={toStyleAttributeValue(footerStyle.style)}
 						data-testid="iab-consent-banner-footer"
 						data-direction="row"
 						data-split="true"

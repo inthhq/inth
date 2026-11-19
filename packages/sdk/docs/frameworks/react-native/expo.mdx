@@ -27,7 +27,7 @@ Obtain the Maven repository URL and build-time access for Android. The plugin
 has no default artifact repository. [Mobile availability](/docs/guides/mobile-status)
 records the current distribution options.
 
-The package ships a `inth-react-native` agent skill. Since SDK 58, Expo links
+The package ships an `inth-react-native` agent skill. Since SDK 58, Expo links
 agent skills that installed packages ship: run `npx @expo/agent-cli
 skills:sync` to link it for your coding agent.
 
@@ -112,24 +112,24 @@ draw is `#RRGGBB`. A native `dark` value needs the same field in `colors`.
 
 | Field | Web token | Native setting |
 | --- | --- | --- |
-| `colors.primary` | `--c15t-primary` | Accent: links, switches, Save |
-| `colors.textOnPrimary` | `--c15t-text-on-primary` | Text on the accent |
-| `colors.surface` | `--c15t-surface` | Cards and list rows |
-| `colors.text` | `--c15t-text` | Main text |
-| `colors.textMuted` | `--c15t-text-muted` | Secondary text |
+| `colors.primary` | `--inth-primary` | Accent: links, switches, Save |
+| `colors.textOnPrimary` | `--inth-text-on-primary` | Text on the accent |
+| `colors.surface` | `--inth-surface` | Cards and list rows |
+| `colors.text` | `--inth-text` | Main text |
+| `colors.textMuted` | `--inth-text-muted` | Secondary text |
 | `colors.canvas` | None | Page background |
 | `colors.surfaceMuted` | None | Quieter surface for partner lists |
 | `colors.decision`, `colors.textOnDecision` | None | Accept all and Reject all fill and text |
-| `radius.sm`, `radius.md`, `radius.lg` | `--c15t-radius-*` | Callout, button and card, and notice card radius, in points or dp |
-| `spacing.xs` to `spacing.xl` | `--c15t-space-*` | Page gutters, section gaps and padding, in points or dp |
-| `typography.fontSize.sm`, `.base`, `.lg` | `--c15t-font-size-*` | Supporting, body and headline text sizes, in points or sp |
-| `typography.fontFamily` | `--c15t-font-family` | A bundled font for every role but the headline; see below |
+| `radius.sm`, `radius.md`, `radius.lg` | `--inth-radius-*` | Callout, button and card, and notice card radius, in points or dp |
+| `spacing.xs` to `spacing.xl` | `--inth-space-*` | Page gutters, section gaps and padding, in points or dp |
+| `typography.fontSize.sm`, `.base`, `.lg` | `--inth-font-size-*` | Supporting, body and headline text sizes, in points or sp |
+| `typography.fontFamily` | `--inth-font-family` | A bundled font for every role but the headline; see below |
 | `typography.headlineFont` | None | `serif`, `rounded`, `sans` or a bundled font; see below |
 | `slots.consentBannerTitle`, `slots.consentBannerDescription`, `slots.buttonPrimary`, `slots.buttonSecondary` | Web `slots` | One part's `color`, `backgroundColor`, `borderRadius` or `fontSize` |
 | `brand.name`, `brand.mark`, `brand.hidden` | None | App name and mark above the headline |
 | `branding.provider`, `branding.name`, `branding.mark`, `branding.hidden` | None | Provider attribution |
 | `firstLayer` | None | `page`, `sheet` or `prompt`: how the first choice is presented |
-| `appearance` | None | `system` (default) or `c15t`: where the stock colours come from |
+| `appearance` | None | `system` (default) or `paper`: where the stock colours come from |
 | `savePlacement` | None | `top` (default) or `bottom`: where Save sits in Privacy Settings |
 
 For a bundled font in `fontFamily` or `headlineFont`, iOS needs the

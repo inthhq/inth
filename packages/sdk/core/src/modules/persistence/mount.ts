@@ -11,6 +11,10 @@ import {
 	readLegacySubjectId,
 	removeLegacySubjectId,
 } from '../../libs/legacy-subject-id';
+import {
+	storageKeyFamilies,
+	resolveStorageKeys,
+} from '../../libs/storage-keys';
 import type {
 	ConsentSnapshot,
 	ConsentSubject,
@@ -18,12 +22,25 @@ import type {
 } from '../../types';
 import { clearStoredRecords } from './clear';
 import {
+	choiceSinceEpoch,
+	noticeSinceEpoch,
+	vendorChoiceSinceEpoch,
+} from './epoch';
+import {
 	hydrateFromStorage,
 	readStoredRecordsForReconcile,
 	readStoredRecordsFromCookieHeader,
 } from './hydrate';
 import type { StoredRecords } from './hydrate';
-import { isNewerDenial, resolveStorageKeys } from './record-storage';
+import {
+	isNewerDenial,
+	readLegacyClearEpoch,
+	readStoredConsentRecordFromCookieHeader,
+	readStoredNoticeDismissal,
+	readStoredNoticeDismissalFromCookieHeader,
+	readStoredVendorChoice,
+	readStoredVendorChoiceFromCookieHeader,
+} from './record-storage';
 import { persistenceTools } from './tools';
 import type { PersistenceHandle, PersistenceOptions } from './types';
 import { pageWriterLoader, preloadWriter } from './writer-loader';
@@ -133,9 +150,6 @@ const withHolderSubject = function withHolderSubject(
  * `createPersistence`, with the place the write code comes from. Tests
  * pass their own loader.
  *
- * @param options - Kernel, storage configuration, clock and sync.
- * @param loader - Where the write code comes from.
- * @returns The handle.
  * @internal
  */
 export const mountPersistence = function mountPersistence(
@@ -150,7 +164,6 @@ export const mountPersistence = function mountPersistence(
 		vendorsRecorded: false,
 	};
 	const browser = typeof document !== 'undefined';
-	// A browser page this module can listen to.
 	const listenable =
 		browser &&
 		typeof window !== 'undefined' &&
@@ -264,7 +277,6 @@ export const mountPersistence = function mountPersistence(
 		land(module);
 	};
 
-	/** Write `kinds` now through the writer, or once it has landed. */
 	const request = function request(...kinds: WriteKind[]): void {
 		const landed = landedWriter();
 		// A write stored from this kernel, which started from any queued
@@ -299,7 +311,6 @@ export const mountPersistence = function mountPersistence(
 	// Set from a save's start to its completion. The records it commits are
 	// announced in between, synchronously.
 	let saving = false;
-	// The notice acknowledgement when the latest save started.
 	let noticeBeforeSave: ConsentSnapshot['noticeDismissal'] = null;
 
 	const noteGeneratedSubject = function noteGeneratedSubject(
@@ -421,16 +432,122 @@ export const mountPersistence = function mountPersistence(
 			: records;
 	};
 
+	/** Which kinds of record the browser holds under the configured family. */
+	const configuredFamilyHolds = function configuredFamilyHolds(
+		read: StoredRecords,
+		at: number
+	): { choice: boolean; notice: boolean; vendors: boolean } {
+		const notice = readStoredNoticeDismissal(storageConfig, at);
+		const vendors = readStoredVendorChoice(
+			storageConfig,
+			at,
+			undefined,
+			read.epoch
+		);
+		return {
+			choice: read.candidates.some(
+				(candidate) =>
+					candidate.status === 'valid' && !candidate.source.startsWith('legacy')
+			),
+			notice: notice?.ok === true && !notice.legacy,
+			vendors: vendors?.ok === true && !vendors.legacy,
+		};
+	};
+
+	/**
+	 * How the seed weighs against the records `held` under the configured
+	 * family, from the cookies as the server read them:
+	 * - `outranks`: the cookie holds that kind only under a legacy family,
+	 *   so the configured family's record wins.
+	 * - `epochs`: the clear epoch that voids a seeded record. The legacy
+	 *   clear epoch counts unless the configured family still holds that
+	 *   kind in its cookie, since a seed no cookie holds any more may be a
+	 *   legacy family's that a legacy clear removed.
+	 */
+	const weighSeed = function weighSeed(
+		held: { choice: boolean; notice: boolean; vendors: boolean },
+		epoch: number,
+		at: number
+	) {
+		const header = readCookieHeader();
+		const choice =
+			header === null
+				? undefined
+				: readStoredConsentRecordFromCookieHeader(header, storageConfig, at)
+						.selected;
+		const vendors =
+			header === null
+				? undefined
+				: readStoredVendorChoiceFromCookieHeader(header, storageConfig, at);
+		const notice =
+			header === null
+				? undefined
+				: readStoredNoticeDismissalFromCookieHeader(header, storageConfig, at);
+		const gone = {
+			choice: header !== null && !choice,
+			notice: header !== null && notice?.ok !== true,
+			vendors: header !== null && !vendors,
+		};
+		const legacyEpoch = Math.max(
+			epoch,
+			readLegacyClearEpoch(storageConfig, at)
+		);
+		const epochOf = (kind: keyof typeof held) =>
+			held[kind] && !gone[kind] ? epoch : legacyEpoch;
+		return {
+			epochs: {
+				choice: epochOf('choice'),
+				notice: epochOf('notice'),
+				vendors: epochOf('vendors'),
+			},
+			outranks: {
+				choice: held.choice && choice?.source === 'legacy-cookie',
+				notice: held.notice && notice?.ok === true && notice.legacy === true,
+				vendors: held.vendors && vendors?.legacy === true,
+			},
+		};
+	};
+
+	/**
+	 * The patch for one seeded record, or `null` to keep it: a record the
+	 * clear epoch voided yields to what storage holds, and a kept one to a
+	 * stored record that `wins`.
+	 */
+	const seededRecordPatch = function seededRecordPatch<T>(
+		seeded: T | null,
+		kept: T | null,
+		stored: T | null | undefined,
+		wins: boolean
+	): { value: T | null } | null {
+		if (kept !== seeded) {
+			return { value: stored === undefined ? kept : stored };
+		}
+		return stored && wins ? { value: stored } : null;
+	};
+
 	/**
 	 * A server prefetch seeds the kernel from the cookie alone, and the seed
 	 * stays authoritative (`skipHydration`). But a browser can drop a cookie
 	 * write while localStorage takes it, so a newer record may exist only
 	 * there. A newer denial only restricts, so it is
 	 * applied on top of the seed; a stored grant never is. A denial from the
-	 * same millisecond as a seeded grant counts as newer. The vendor record
+	 * same millisecond as a seeded grant counts as newer. A seed read from
+	 * a legacy family's cookie (c15t's) yields whole to a configured-family
+	 * record, as the browser reader picks the families: the configured
+	 * family wins whatever the timestamps. The vendor record
 	 * outlives a dropped cookie most often, since many denied ids push it
 	 * past the per-cookie limit, so a newer stored one replaces the seeded
 	 * list before any gate consults the denials.
+	 *
+	 * Another tab can clear after the server read the cookies. The browser's
+	 * clear epoch then voids the seeded records from before it, as it voids
+	 * stored ones, and a record it voids yields to what storage holds. A
+	 * seeded decision from the clearing millisecond is kept: the seed does
+	 * not say whether its writer had seen the clear. A seeded record of a
+	 * kind the browser holds no configured-family copy of may have come
+	 * from a legacy family's cookie, so the latest legacy clear epoch
+	 * (`c15t-epoch`) voids it too; it never voids one the configured family
+	 * still holds.
 	 *
 	 * The read also becomes what the writer starts from: the kernel's
 	 * records stay the seed's, and storage is what it was read as here.
@@ -445,24 +562,51 @@ export const mountPersistence = function mountPersistence(
 			baseline = [read, false];
 			const records = withQueued(read.records);
 			const snapshot = kernel.getSnapshot();
+			const held = configuredFamilyHolds(read, at);
+			const { epochs, outranks } = weighSeed(held, read.epoch, at);
 			const patch: HydrationRecords = {};
-			const seeded = snapshot.explicitChoice?.categories ?? {};
+			const choice = choiceSinceEpoch(
+				snapshot.explicitChoice,
+				epochs.choice,
+				true
+			);
+			const seeded = choice?.categories ?? {};
 			const denials = Object.entries(records.choice?.categories ?? {}).filter(
 				([category, decision]) =>
 					isNewerDenial(decision, seeded[category as keyof typeof seeded])
 			);
-			if (denials.length > 0) {
+			if (choice !== snapshot.explicitChoice) {
+				patch.choice = records.choice === undefined ? choice : records.choice;
+			} else if (records.choice && outranks.choice) {
+				patch.choice = records.choice;
+			} else if (denials.length > 0) {
 				patch.choice = {
 					categories: { ...seeded, ...Object.fromEntries(denials) },
 					version: 3,
 				};
 			}
-			const { vendorChoice } = records;
-			if (
-				vendorChoice &&
-				vendorChoice.confirmedAt > (snapshot.vendorChoice?.confirmedAt ?? -1)
-			) {
-				patch.vendorChoice = vendorChoice;
+			const notice = seededRecordPatch(
+				snapshot.noticeDismissal,
+				noticeSinceEpoch(snapshot.noticeDismissal, epochs.notice),
+				records.noticeDismissal,
+				outranks.notice
+			);
+			if (notice) {
+				patch.noticeDismissal = notice.value;
+			}
+			const kept = vendorChoiceSinceEpoch(
+				snapshot.vendorChoice,
+				epochs.vendors
+			);
+			const vendors = seededRecordPatch(
+				snapshot.vendorChoice,
+				kept,
+				records.vendorChoice,
+				outranks.vendors ||
+					(records.vendorChoice?.confirmedAt ?? -1) > (kept?.confirmedAt ?? -1)
+			);
+			if (vendors) {
+				patch.vendorChoice = vendors.value;
 			}
 			if (Object.keys(patch).length > 0) {
 				kernel.hydrate({ ...patch, now: at });
@@ -514,7 +658,6 @@ export const mountPersistence = function mountPersistence(
 		if (landed) {
 			landed.flush();
 		} else if (requested.size > 0) {
-			// Its write code has not landed yet: hydrate once it has.
 			hydrateRequested = true;
 			void withWriter();
 			return null;
@@ -790,7 +933,6 @@ export const mountPersistence = function mountPersistence(
 			return () => undefined;
 		}
 		const listeners: [EventTarget, string, (event: Event) => void][] = [
-			// Leaving the page: a write still waiting for its macrotask runs now.
 			[window, 'pagehide', () => writer?.flush()],
 		];
 		if (options.sync !== false) {
@@ -798,11 +940,12 @@ export const mountPersistence = function mountPersistence(
 				scheduleReconcile();
 			};
 			const watched = new Set<string | null>([
-				consentKey,
-				keys.legacyConsent,
-				keys.notice,
-				keys.vendors,
-				keys.epoch,
+				...storageKeyFamilies(keys).flatMap((family) => [
+					family.consent,
+					family.notice,
+					family.vendors,
+					family.epoch,
+				]),
 				// Another page called `localStorage.clear()`.
 				null,
 			]);
@@ -961,7 +1104,6 @@ export const mountPersistence = function mountPersistence(
 			if (landed) {
 				return landed.reconcile();
 			}
-			// Runs once the write code has landed.
 			reconcileRequested = true;
 			void withWriter();
 			return false;

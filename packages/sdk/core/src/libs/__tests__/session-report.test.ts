@@ -12,7 +12,7 @@ import {
 } from '../session-report';
 
 const manifest: ConsentManifest = {
-	branding: 'c15t',
+	branding: 'inth',
 	policyPacks: [
 		createConsentManifestPolicyPack({
 			categories: ['marketing'],
@@ -114,7 +114,7 @@ describe('resolveSessionReportProjectUrl', () => {
 		).toBe('https://consent.example.com');
 		// A relative URL cannot be fetched from a server, and the app's own
 		// proxy route would count the visitor twice on the way through.
-		expect(resolveSessionReportProjectUrl({ projectUrl: '/api/c15t' })).toBe(
+		expect(resolveSessionReportProjectUrl({ projectUrl: '/api/inth' })).toBe(
 			undefined
 		);
 		expect(resolveSessionReportProjectUrl({})).toBe(undefined);
@@ -122,17 +122,17 @@ describe('resolveSessionReportProjectUrl', () => {
 });
 
 describe('forwardSessionReportHeaders', () => {
-	test('ignores a caller-supplied x-c15t-client-ip', () => {
+	test('ignores a caller-supplied x-inth-client-ip', () => {
 		// A visitor can send the report header to a public init route, so the
 		// address always comes from the proxy chain.
 		expect(
 			forwardSessionReportHeaders(
 				new Headers({
-					'x-c15t-client-ip': '198.51.100.7',
 					'x-forwarded-for': '203.0.113.42',
+					'x-inth-client-ip': '198.51.100.7',
 				})
 			)
-		).toEqual({ 'x-c15t-client-ip': '203.0.113.42' });
+		).toEqual({ 'x-inth-client-ip': '203.0.113.42' });
 	});
 
 	test('derives the client IP from the proxy chain and copies the user agent, never cookies', () => {
@@ -145,7 +145,7 @@ describe('forwardSessionReportHeaders', () => {
 		);
 		expect(forwarded).toEqual({
 			'user-agent': 'Mozilla/5.0',
-			'x-c15t-client-ip': '203.0.113.42',
+			'x-inth-client-ip': '203.0.113.42',
 		});
 	});
 
@@ -156,13 +156,13 @@ describe('forwardSessionReportHeaders', () => {
 				'User-Agent': ['UA'],
 				'X-Forwarded-For': '203.0.113.42',
 			})
-		).toEqual({ 'user-agent': 'UA', 'x-c15t-client-ip': '203.0.113.42' });
+		).toEqual({ 'user-agent': 'UA', 'x-inth-client-ip': '203.0.113.42' });
 	});
 });
 
 describe('reportConsentSession', () => {
 	const JOURNEY_ID = '3b241101-e2bb-4255-8caf-4136c566a962';
-	const journeyURL = `https://shop.example.com/api/c15t/init?journey=${JOURNEY_ID}&journeyScope=page&stored=1`;
+	const journeyURL = `https://shop.example.com/api/inth/init?journey=${JOURNEY_ID}&journeyScope=page&stored=1`;
 
 	test('reads the journey from the request URL, with the Origin as domain', async () => {
 		const init = await resolveInit();
@@ -223,7 +223,7 @@ describe('reportConsentSession', () => {
 			adapter: '@inth/svelte',
 			fetch: fetchSpy,
 			headers: new Headers({
-				cookie: 'c15t=secret',
+				cookie: 'inth=secret',
 				'user-agent': 'UA',
 				'x-forwarded-for': '203.0.113.42',
 			}),
@@ -243,10 +243,10 @@ describe('reportConsentSession', () => {
 		expect(request.method).toBe('POST');
 		const headers = request.headers as Record<string, string>;
 		expect(headers['content-type']).toBe('application/json');
-		expect(headers['x-c15t-client-ip']).toBe('203.0.113.42');
+		expect(headers['x-inth-client-ip']).toBe('203.0.113.42');
 		expect(headers['user-agent']).toBe('UA');
 		expect(headers).not.toHaveProperty('cookie');
-		expect(typeof headers['x-c15t-version']).toBe('string');
+		expect(typeof headers['x-inth-version']).toBe('string');
 		expect(readBody(fetchSpy.mock.calls[0])).toMatchObject({
 			adapter: '@inth/svelte',
 			country: 'DE',
@@ -274,7 +274,7 @@ describe('reportConsentSession', () => {
 			fetch: unused,
 			init: init as never,
 			manifest,
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 			source: 'render',
 		});
 		expect(unused).not.toHaveBeenCalled();
@@ -491,7 +491,7 @@ describe('createManifestTransport report option', () => {
 			.mockResolvedValue(new Response(null, { status: 204 }));
 		const transport = createManifestTransport({
 			fetch: fetchSpy,
-			headers: { cookie: 'c15t=secret', 'x-forwarded-for': '203.0.113.42' },
+			headers: { cookie: 'inth=secret', 'x-forwarded-for': '203.0.113.42' },
 			projectUrl: 'https://consent.example.com',
 			report: { adapter: '@inth/nextjs', source: 'render' },
 			snapshot: manifest,
@@ -514,7 +514,7 @@ describe('createManifestTransport report option', () => {
 			string,
 			string
 		>;
-		expect(headers['x-c15t-client-ip']).toBe('203.0.113.42');
+		expect(headers['x-inth-client-ip']).toBe('203.0.113.42');
 		expect(headers).not.toHaveProperty('cookie');
 		expect(readBody(call)).toMatchObject({
 			adapter: '@inth/nextjs',

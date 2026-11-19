@@ -16,7 +16,7 @@
 	</ConsentRoot>
 	```
 
-	The state names the mode `c15tHandle()` was given, as data. The root
+	The state names the mode `inthHandle()` was given, as data. The root
 	turns it into a transport that loads each init path only when it runs:
 	a page the server resolved saves through a small record transport and
 	ships no resolver, policy pack, snapshot or other language.
@@ -56,7 +56,7 @@
 	type ConsentRootProps = Omit<ConsentManagerOptions, 'mode' | 'prefetch'> & {
 		children?: Snippet;
 		/**
-		 * A transport of your own, instead of the mode `c15tHandle()` was given. Read once, when the
+		 * A transport of your own, instead of the mode `inthHandle()` was given. Read once, when the
 		 * root mounts.
 		 */
 		mode?: ProviderTransportFactory;

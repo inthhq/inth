@@ -1,4 +1,4 @@
-import { C15T_POLICY_CONTRACT_HEADER } from '@inth/sdk/engine';
+import { INTH_POLICY_CONTRACT_HEADER } from '@inth/sdk/engine';
 import type { ExternalConsentSource } from '@inth/sdk/runtime';
 import {
 	normalizePolicyRule,
@@ -6,7 +6,11 @@ import {
 	createPolicyRuleFingerprints,
 	writePolicyResolutionWire,
 } from '@inth/sdk/schema/types';
-import type { InitOutput, PolicyRule } from '@inth/sdk/schema/types';
+import type {
+	ConsentManifest,
+	InitOutput,
+	PolicyRule,
+} from '@inth/sdk/schema/types';
 import { translations } from '@inth/sdk/translations/en';
 import { resolveManifestInit } from '@inth/sdk/transports/manifest-cache';
 import { afterEach, expect, test, vi } from 'vitest';
@@ -38,6 +42,7 @@ const nuxt = vi.hoisted(() => ({
 	fetchHeaders: [] as Record<string, string>[],
 	headers: {} as Record<string, string | undefined>,
 	manifest: false as boolean | 'client',
+	manifestDocument: undefined as ConsentManifest | undefined,
 	requests: 0,
 	response: undefined as InitOutput | undefined,
 	state: new Map<string, ShallowRef<unknown>>(),
@@ -49,13 +54,13 @@ vi.mock('#imports', async () => {
 	return {
 		defineNuxtPlugin: (plugin: unknown) => plugin,
 		useAppConfig: () => ({
-			c15t: {
+			inth: {
 				consentSource: nuxt.consentSource,
 				disableAnimation: true,
 				experiment: nuxt.experiment,
 				hideBranding: true,
 				iframeBlocker: false,
-				projectUrl: '/api/c15t',
+				projectUrl: '/api/inth',
 			},
 		}),
 		useCookie: (name: string, options: Record<string, unknown>) => {
@@ -64,17 +69,24 @@ vi.mock('#imports', async () => {
 			return cookie;
 		},
 		useHead: () => undefined,
-		// Nitro's in-process fetch on the event answers the app's own routes.
+		// Nitro's in-process fetch on the event answers the app's own routes:
+		// the backend's manifest in manifest mode, its `/init` otherwise.
 		useRequestEvent: () => ({
 			context: {},
-			fetch: (_input: string, init?: RequestInit) => {
+			fetch: (input: string, init?: RequestInit) => {
 				const headers = Object.fromEntries(new Headers(init?.headers));
 				nuxt.fetchHeaders.push(headers);
-				expect(headers[C15T_POLICY_CONTRACT_HEADER]).toBe('1');
+				expect(headers[INTH_POLICY_CONTRACT_HEADER]).toBe('1');
 				nuxt.requests += 1;
+				const body = input.split('?')[0]?.endsWith('/manifest')
+					? nuxt.manifestDocument
+					: nuxt.response;
 				return Promise.resolve(
-					new Response(JSON.stringify(nuxt.response), {
-						headers: { [C15T_POLICY_CONTRACT_HEADER]: '1' },
+					new Response(JSON.stringify(body), {
+						headers: {
+							'content-type': 'application/json',
+							[INTH_POLICY_CONTRACT_HEADER]: '1',
+						},
 					})
 				);
 			},
@@ -84,7 +96,7 @@ vi.mock('#imports', async () => {
 		// `mode` comes from nuxt.config.ts, through the public runtime config.
 		useRuntimeConfig: () => ({
 			public: {
-				c15t: {
+				inth: {
 					mode:
 						nuxt.manifest === 'client'
 							? { resolve: 'browser', type: 'manifest' }
@@ -150,25 +162,26 @@ test.each([false, true])('Nuxt hydrates GPC: manifest=%s', async (manifest) => {
 	nuxt.requests = 0;
 	nuxt.headers = { 'accept-language': 'en', cookie: '', 'sec-gpc': '1' };
 	if (manifest) {
-		nuxt.response = resolveManifestInit({
-			headers: nuxt.headers,
-			manifest: {
-				branding: 'none',
-				policyPacks: [createConsentManifestPolicyPack(rule)],
-				revision: 'nuxt-ssr',
-				schemaVersion: 2,
-				translations: {
-					i18n: {
-						defaultProfile: 'default',
-						messages: {
-							default: {
-								fallbackLanguage: 'en',
-								translations: { en: nuxt.response.translations.translations },
-							},
+		nuxt.manifestDocument = {
+			branding: 'none',
+			policyPacks: [createConsentManifestPolicyPack(rule)],
+			revision: 'nuxt-ssr',
+			schemaVersion: 2,
+			translations: {
+				i18n: {
+					defaultProfile: 'default',
+					messages: {
+						default: {
+							fallbackLanguage: 'en',
+							translations: { en: nuxt.response.translations.translations },
 						},
 					},
 				},
 			},
+		} as ConsentManifest;
+		nuxt.response = resolveManifestInit({
+			headers: nuxt.headers,
+			manifest: nuxt.manifestDocument,
 		});
 	}
 	const { default: plugin } = await vi.importActual<{
@@ -276,7 +289,7 @@ test.each([false, true])('Nuxt hydrates GPC: manifest=%s', async (manifest) => {
 		expect(document.cookie).toBe(beforeCookie);
 		mounted?.();
 		await nextTick();
-		expect(localStorage.getItem('c15t-privacy')).toBeNull();
+		expect(localStorage.getItem('inth-privacy')).toBeNull();
 		expect(context.snapshot.value.explicitChoice).toBeNull();
 		expect(nuxt.requests).toBe(1);
 		expect(context.snapshot.value.privacySignals.gpc).toMatchObject({
@@ -334,7 +347,7 @@ test('Nuxt external authority skips server fetch and records, then connects only
 		vueApp: app,
 	});
 	expect(nuxt.requests).toBe(0);
-	expect(nuxt.state.get('c15t:records')?.value).toBeUndefined();
+	expect(nuxt.state.get('inth:records')?.value).toBeUndefined();
 	expect(getPermissions).not.toHaveBeenCalled();
 	const container = document.createElement('div');
 	document.body.append(container);
@@ -403,7 +416,7 @@ test('the server init fetch carries a fixed experiment arm until the visitor cho
 		runWithContext: (run) => run(),
 		vueApp: createSSRApp(defineComponent({ render: () => null })),
 	});
-	expect(nuxt.fetchHeaders[0]?.['x-c15t-experiment']).toBe('banner-shape=wall');
+	expect(nuxt.fetchHeaders[0]?.['x-inth-experiment']).toBe('banner-shape=wall');
 });
 
 test('an `ssr: false` route asks for the policy before the app mounts', async () => {
@@ -437,7 +450,7 @@ test('an `ssr: false` route asks for the policy before the app mounts', async ()
 			requests.push(String(input).split('?')[0] ?? '');
 			return Promise.resolve(
 				new Response(JSON.stringify(response), {
-					headers: { [C15T_POLICY_CONTRACT_HEADER]: '1' },
+					headers: { [INTH_POLICY_CONTRACT_HEADER]: '1' },
 				})
 			);
 		})

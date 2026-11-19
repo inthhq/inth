@@ -50,7 +50,6 @@ const ConsentGateComponent = createForwardRef<HTMLDivElement, ConsentGateProps>(
 				return null;
 			}
 
-			// Otherwise show placeholder
 			return (
 				placeholder || (
 					<DefaultPlaceholder

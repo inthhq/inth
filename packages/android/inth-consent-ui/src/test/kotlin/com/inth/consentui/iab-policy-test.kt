@@ -256,7 +256,7 @@ class IabPolicyTest {
     // TCF-CHECK: P11
     @Test fun primaryActionsShareTheirTextTreatmentAndReachFiveToOne() {
         // A host decision pair under 5:1 is replaced by the stock pair before anything draws.
-        val unreadable = ConsentTheme(colors = ConsentTheme.Colors.c15t.copy(decision = ConsentThemeColor(0x8CA2FF), textOnDecision = ConsentThemeColor(0xFFFFFF)))
+        val unreadable = ConsentTheme(colors = ConsentTheme.Colors.default.copy(decision = ConsentThemeColor(0x8CA2FF), textOnDecision = ConsentThemeColor(0xFFFFFF)))
         show(boot(), unreadable)
         val accept = buttonLabel("inth.first-layer.accept-all", en.commonAcceptAll)
         val reject = buttonLabel("inth.first-layer.reject-all", en.commonRejectAll)
@@ -266,7 +266,7 @@ class IabPolicyTest {
         assertEquals(accept.fontStyle, reject.fontStyle)
         assertEquals(FontWeight.SemiBold, accept.fontWeight)
         assertEquals(accept.color, reject.color)
-        val stock = ConsentTheme.Colors.c15t
+        val stock = ConsentTheme.Colors.default
         assertEquals(stock.textOnDecision.light, accept.color.toArgb() and 0xFFFFFF)
         assertTrue(ConsentTheme.contrastRatio(accept.color.toArgb() and 0xFFFFFF, stock.decision.light) >= 5.0)
         val a = compose.onNodeWithTag("inth.first-layer.accept-all").fetchSemanticsNode().size
@@ -748,7 +748,7 @@ class IabPolicyTest {
         val body = JsonObject(if (customVendors == null) served else served + ("customVendors" to customVendors)).toString()
         val client = object : HttpClient {
             override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
-                HttpResponse(200, mapOf("x-c15t-policy-contract" to "1"), body) else HttpResponse(503)
+                HttpResponse(200, mapOf("x-inth-policy-contract" to "1"), body) else HttpResponse(503)
         }
         val config = NativeConfig("https://fixture.invalid", iab = IabConfiguration(cmpId = 53, cmpVersion = 7, publisherCountryCode = "GB", consentLanguage = language))
         val core = ConsentCore(config, InthStore(Memory()), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)

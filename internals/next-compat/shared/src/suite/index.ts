@@ -68,7 +68,7 @@ export interface CompatSuiteOptions {
 const TEST_COUNTRY = 'FR';
 const BANNER_MARKER = 'consent-banner-root';
 const GATE_PLACEHOLDER_MARKER = 'data-testid="consent-gate-placeholder"';
-const GATED_EMBED_PATH = '/api/c15t/__compat/embed';
+const GATED_EMBED_PATH = '/api/inth/__compat/embed';
 
 const fetchHTML = async function fetchHTML(
 	baseURL: string,
@@ -89,7 +89,7 @@ interface RecordedInitRequest {
 const readProbe = function readProbe(
 	page: Page
 ): Promise<CompatProbeState | undefined> {
-	return page.evaluate(() => window.__c15tCompat);
+	return page.evaluate(() => window.__inthCompat);
 };
 
 /**
@@ -102,7 +102,7 @@ const waitForInit = async function waitForInit(
 ): Promise<CompatProbeState> {
 	await page.waitForFunction(
 		() => {
-			const state = window.__c15tCompat;
+			const state = window.__inthCompat;
 			return !!state && state.hasPolicy && !state.policyProvisional;
 		},
 		undefined,
@@ -118,7 +118,7 @@ const waitForInit = async function waitForInit(
 const fetchInitRequests = async function fetchInitRequests(
 	baseURL: string
 ): Promise<RecordedInitRequest[]> {
-	const response = await fetch(`${baseURL}/api/c15t/__compat/requests`);
+	const response = await fetch(`${baseURL}/api/inth/__compat/requests`);
 	const body = (await response.json()) as {
 		initRequests: RecordedInitRequest[];
 	};
@@ -128,7 +128,7 @@ const fetchInitRequests = async function fetchInitRequests(
 const fetchManifestRequests = async function fetchManifestRequests(
 	baseURL: string
 ): Promise<RecordedInitRequest[]> {
-	const response = await fetch(`${baseURL}/api/c15t/__compat/requests`);
+	const response = await fetch(`${baseURL}/api/inth/__compat/requests`);
 	const body = (await response.json()) as {
 		manifestRequests: RecordedInitRequest[];
 	};
@@ -171,7 +171,7 @@ const stylesheetPathsIn = function stylesheetPathsIn(html: string): string[] {
 };
 
 const clearInitRequests = async function clearInitRequests(baseURL: string) {
-	await fetch(`${baseURL}/api/c15t/__compat/requests`, { method: 'DELETE' });
+	await fetch(`${baseURL}/api/inth/__compat/requests`, { method: 'DELETE' });
 };
 
 /** Applies a style-only CSP to the document, leaving scripts unrestricted. */
@@ -359,7 +359,7 @@ export const defineCompatSuite = function defineCompatSuite({
 							// resulting policy reached the first HTML, so the banner is
 							// already in the document before hydration.
 							expect(serverSide.length).toBeGreaterThanOrEqual(1);
-							expect(serverSide[0]?.headers['x-c15t-country']).toBe(
+							expect(serverSide[0]?.headers['x-inth-country']).toBe(
 								TEST_COUNTRY
 							);
 							// The client's IP and user agent travel with the server call,
@@ -378,7 +378,7 @@ export const defineCompatSuite = function defineCompatSuite({
 							// browser did not, and the banner followed the shell in a
 							// later chunk of the same response.
 							expect(serverSide.length).toBeGreaterThanOrEqual(1);
-							expect(serverSide[0]?.headers['x-c15t-country']).toBe(
+							expect(serverSide[0]?.headers['x-inth-country']).toBe(
 								TEST_COUNTRY
 							);
 							expect(browserSide).toHaveLength(0);
@@ -463,7 +463,7 @@ export const defineCompatSuite = function defineCompatSuite({
 							.waitFor({ state: 'attached', timeout: 30_000 });
 						await expect.poll(embed.count, { timeout: 10_000 }).toBe(1);
 						await page.waitForFunction(
-							() => document.cookie.includes('c15t='),
+							() => document.cookie.includes('inth='),
 							undefined,
 							{ timeout: 10_000 }
 						);
@@ -493,7 +493,7 @@ export const defineCompatSuite = function defineCompatSuite({
 							await waitForInit(other);
 							await other.click('[data-testid="consent-banner-reject-button"]');
 							await other.waitForFunction(
-								() => document.cookie.includes('c15t='),
+								() => document.cookie.includes('inth='),
 								undefined,
 								{ timeout: 10_000 }
 							);
@@ -518,8 +518,8 @@ export const defineCompatSuite = function defineCompatSuite({
 					await page.click('[data-testid="consent-banner-accept-button"]');
 					await page.waitForFunction(
 						() =>
-							window.__c15tCompat?.hasConsented === true &&
-							window.__c15tCompat?.activeUI === 'none',
+							window.__inthCompat?.hasConsented === true &&
+							window.__inthCompat?.activeUI === 'none',
 						undefined,
 						{ timeout: 30_000 }
 					);
@@ -528,7 +528,7 @@ export const defineCompatSuite = function defineCompatSuite({
 					// wait for the cookie itself before reloading; otherwise a slow
 					// runner reloads before the consent is persisted.
 					await page.waitForFunction(
-						() => document.cookie.includes('c15t='),
+						() => document.cookie.includes('inth='),
 						undefined,
 						{ timeout: 10_000 }
 					);
@@ -540,8 +540,8 @@ export const defineCompatSuite = function defineCompatSuite({
 					// give hydration the same grace the click above gets.
 					await page.waitForFunction(
 						() =>
-							window.__c15tCompat?.hasConsented === true &&
-							window.__c15tCompat?.activeUI === 'none',
+							window.__inthCompat?.hasConsented === true &&
+							window.__inthCompat?.activeUI === 'none',
 						undefined,
 						{ timeout: 10_000 }
 					);
@@ -601,7 +601,7 @@ export const defineCompatSuite = function defineCompatSuite({
 			).toEqual({ display: 'flex', position: 'relative' });
 			if (styles === 'automatic') {
 				const nonces = await page
-					.locator('style[data-c15t-styles="c15t-dialog"]')
+					.locator('style[data-inth-styles="inth-dialog"]')
 					.evaluateAll((elements) =>
 						elements.map((element) =>
 							element instanceof HTMLStyleElement ? element.nonce : undefined

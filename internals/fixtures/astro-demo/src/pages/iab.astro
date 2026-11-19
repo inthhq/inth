@@ -2,7 +2,7 @@
 /**
  * The IAB TCF surfaces.
  *
- * Run the demo with `C15T_IAB=1` and the server resolves a TCF policy, so
+ * Run the demo with `INTH_IAB=1` and the server resolves a TCF policy, so
  * the layout renders `<IABConsentBanner />` and `<IABConsentDialog />`
  * instead of the core pair. Without the flag this page says so rather
  * than rendering a banner that is not there.
@@ -10,8 +10,8 @@
 import ConsentState from '../components/consent-state.astro';
 import BaseLayout from '../layouts/demo.astro';
 
-const { c15t } = Astro.locals;
-const isIAB = c15t.snapshot.model === 'iab';
+const { inth } = Astro.locals;
+const isIAB = inth.snapshot.model === 'iab';
 ---
 
 <BaseLayout title="IAB TCF">
@@ -27,7 +27,7 @@ const isIAB = c15t.snapshot.model === 'iab';
 			</p>
 		) : (
 			<p data-testid="iab-disabled-notice">
-				IAB is off. Restart the demo with <code>C15T_IAB=1</code> to resolve a
+				IAB is off. Restart the demo with <code>INTH_IAB=1</code> to resolve a
 				TCF policy and render the IAB surfaces.
 			</p>
 		)
@@ -37,10 +37,10 @@ const isIAB = c15t.snapshot.model === 'iab';
 		<h2>What the server decided</h2>
 		<pre>{JSON.stringify(
 			{
-				model: c15t.snapshot.model,
-				policy: c15t.snapshot.policyRule.id ?? null,
-				shouldShowBanner: c15t.shouldShowBanner,
-				vendorCount: Object.keys(c15t.snapshot.iab?.gvl?.vendors ?? {}).length,
+				model: inth.snapshot.model,
+				policy: inth.snapshot.policyRule.id ?? null,
+				shouldShowBanner: inth.shouldShowBanner,
+				vendorCount: Object.keys(inth.snapshot.iab?.gvl?.vendors ?? {}).length,
 			},
 			null,
 			2

@@ -55,7 +55,6 @@ const createAttentiveTag = function createAttentiveTag(
  * Keep reloadOnConsentRevoked enabled. Removing the tag does not stop the SDK.
  * The first permitted tag stays on this page to avoid duplicate installation.
  * Withdrawal reloads into a page where the stored denial blocks the whole tag.
- * @param options - Attentive site slug and optional loader override.
  * @returns A gated script, or an inactive script for a missing or invalid slug.
  * @example attentiveTag({ siteSlug: 'YOUR_SITE' });
  * @see https://help.attentive.com/hc/en-us/articles/10905920909460-The-Attentive-tag

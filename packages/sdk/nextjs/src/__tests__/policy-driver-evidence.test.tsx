@@ -1,4 +1,4 @@
-import { POLICY_CHOICE } from '@c15t/conformance/fixtures/policy-scenarios';
+import { POLICY_CHOICE } from '@inth/conformance/fixtures/policy-scenarios';
 import { expect, it } from 'vitest';
 
 import { createPolicySession } from './policy-driver';

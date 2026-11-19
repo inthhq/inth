@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
 	clearAllScripts,
-	deniedConsents,
+	ALL_DENIED,
 	grantedMeasurementConsents,
 	installHeadProbe,
 	loadScripts,
@@ -65,7 +65,7 @@ describe('databuddy contract', () => {
 
 		const script = databuddy({ clientId: 'db-contract' });
 
-		expect(loadScripts([script], deniedConsents)).toEqual([]);
+		expect(loadScripts([script], ALL_DENIED)).toEqual([]);
 		expect(loads).toBe(0);
 		expect((window as TestWindow).databuddyConfig).toBeUndefined();
 	});
@@ -120,7 +120,7 @@ describe('databuddy contract', () => {
 		expect(win.databuddyConfig).toEqual(configWhenGranted);
 		expect(win.databuddy?.options.disabled).toBe(false);
 
-		updateScripts([script], deniedConsents);
+		updateScripts([script], ALL_DENIED);
 
 		expect(win.databuddy?.options.disabled).toBe(true);
 
@@ -147,7 +147,7 @@ describe('databuddy contract', () => {
 		});
 
 		loadScripts([script], grantedMeasurementConsents);
-		updateScripts([script], deniedConsents);
+		updateScripts([script], ALL_DENIED);
 
 		// databuddy.js can still run after its <script> is removed, and it reads
 		// this config when it does.
@@ -226,7 +226,7 @@ describe('databuddy contract', () => {
 			id: 'databuddy-contract',
 		};
 
-		loadScripts([script], deniedConsents);
+		loadScripts([script], ALL_DENIED);
 
 		const win = window as TestWindow;
 		expect(initialConfig).toEqual(configWhenDenied);
@@ -257,7 +257,7 @@ describe('databuddy contract', () => {
 			replay: { maskText: false },
 		});
 
-		loadScripts([script], deniedConsents);
+		loadScripts([script], ALL_DENIED);
 		expect(replayScripts).toEqual([]);
 
 		updateScripts([script], grantedMeasurementConsents);
@@ -279,7 +279,7 @@ describe('databuddy contract', () => {
 			recordIframes: null,
 		});
 
-		updateScripts([script], deniedConsents);
+		updateScripts([script], ALL_DENIED);
 
 		expect(stop).toHaveBeenCalledTimes(1);
 		expect(replayScript?.isConnected).toBe(false);
@@ -299,7 +299,7 @@ describe('databuddy contract', () => {
 			replay: true,
 		});
 
-		loadScripts([script], deniedConsents);
+		loadScripts([script], ALL_DENIED);
 
 		const win = window as TestWindow;
 		expect(win.databuddy?.options.disabled).toBe(true);
@@ -310,7 +310,7 @@ describe('databuddy contract', () => {
 		expect(replayScripts).toHaveLength(1);
 		expect(replayScripts[0]?.hasAttribute('data-mask-text')).toBe(false);
 
-		updateScripts([script], deniedConsents);
+		updateScripts([script], ALL_DENIED);
 
 		expect(stop).toHaveBeenCalledTimes(1);
 		expect(replayScripts[0]?.isConnected).toBe(false);

@@ -8,6 +8,12 @@ import {
 } from '@angular/core';
 import { ɵresolveNoStyle as resolveNoStyle } from '@inth/angular';
 import { countIABPartners } from '@inth/sdk/iab/headless';
+import type {
+	HeadlessIABVendorId,
+	IABLegitimateInterestState,
+	ProcessedStack,
+} from '@inth/sdk/iab/headless';
+import type { ResolvedIABCopy } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import switchStyles from '@inth/sdk/ui/styles/components/switch';
 
@@ -18,8 +24,6 @@ import type {
 	IABPurposeRow,
 	IABVendorChoice,
 } from './iab-purpose-item';
-import type { IABTranslations } from './iab-translations';
-import type { ProcessedStack, VendorId } from './iab-types';
 
 /** A stack, or a display-model row whose purposes carry `hasConsentBasis`. */
 export type IABStackRow = Omit<ProcessedStack, 'purposes'> & {
@@ -36,10 +40,10 @@ export type IABStackRow = Omit<ProcessedStack, 'purposes'> & {
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	host: { style: 'display: contents' },
 	imports: [...PREFERENCE_ITEM, ...SWITCH, ChevronRightIcon, IABPurposeItem],
-	selector: 'c15t-iab-stack-item',
+	selector: 'inth-iab-stack-item',
 	template: `
 		<div
-			c15tPreferenceItem
+			inthPreferenceItem
 			[(open)]="isExpanded"
 			[noStyle]="true"
 			[class]="cls(styles.stackItem)"
@@ -47,28 +51,28 @@ export type IABStackRow = Omit<ProcessedStack, 'purposes'> & {
 		>
 			<div [class]="cls(styles.stackHeader)">
 				<button
-					c15tPreferenceItemTrigger
+					inthPreferenceItemTrigger
 					[class]="cls(styles.stackTrigger)"
 				>
-					<span c15tPreferenceItemLeading>
+					<span inthPreferenceItemLeading>
 						<svg
-							c15t-chevron-right-icon
+							inth-chevron-right-icon
 							[class]="cls(styles.purposeArrow)"
 							[expanded]="isExpanded()"
 						></svg>
 					</span>
 					<div
-						c15tPreferenceItemHeader
+						inthPreferenceItemHeader
 						[class]="cls(styles.stackInfo)"
 					>
 						<h3
-							c15tPreferenceItemTitle
+							inthPreferenceItemTitle
 							[class]="cls(styles.stackName)"
 						>
 							{{ stack().name }}
 						</h3>
 						<p
-							c15tPreferenceItemMeta
+							inthPreferenceItemMeta
 							[class]="cls(styles.stackMeta)"
 						>
 							{{ totalVendors() }}
@@ -81,7 +85,7 @@ export type IABStackRow = Omit<ProcessedStack, 'purposes'> & {
 					</div>
 				</button>
 				<div
-					c15tPreferenceItemControl
+					inthPreferenceItemControl
 					[class]="cls(styles.stackControls)"
 				>
 					@if (someEnabled()) {
@@ -90,7 +94,7 @@ export type IABStackRow = Omit<ProcessedStack, 'purposes'> & {
 					}
 					@if (consentPurposes().length > 0) {
 						<button
-							c15tSwitch
+							inthSwitch
 							[attr.aria-label]="stack().name"
 							[checked]="allEnabled()"
 							(checkedChange)="setStackConsent($event)"
@@ -98,11 +102,11 @@ export type IABStackRow = Omit<ProcessedStack, 'purposes'> & {
 							data-size="medium"
 						>
 							<span
-								c15tSwitchControl
+								inthSwitchControl
 								[class]="cls(switchStyles.track)"
 							>
 								<span
-									c15tSwitchThumb
+									inthSwitchThumb
 									[class]="cls(switchStyles.thumb)"
 								></span>
 							</span>
@@ -112,21 +116,20 @@ export type IABStackRow = Omit<ProcessedStack, 'purposes'> & {
 			</div>
 
 			<div
-				c15t-preference-item-content
+				inth-preference-item-content
 				[noStyle]="resolvedNoStyle()"
 			>
-				<ng-template c15tPreferenceItemBody>
+				<ng-template inthPreferenceItemBody>
 					<div [class]="cls(styles.stackDescription)">
 						<p>{{ stack().description }}</p>
 					</div>
 					<div [class]="cls(styles.stackContent)">
 						@for (purpose of stack().purposes; track purpose.id) {
-							<c15t-iab-purpose-item
+							<inth-iab-purpose-item
 								[purpose]="purpose"
 								[isEnabled]="consents()[purpose.id] ?? false"
 								[vendorConsents]="vendorConsents()"
-								[vendorLegitimateInterests]="vendorLegitimateInterests()"
-								[purposeLegitimateInterests]="purposeLegitimateInterests()"
+								[legitimateInterests]="legitimateInterests()"
 								[purposeObjection]="purposeObjection()"
 								[vendorObjection]="vendorObjection()"
 								[noStyle]="resolvedNoStyle()"
@@ -151,20 +154,13 @@ export type IABStackRow = Omit<ProcessedStack, 'purposes'> & {
 	`,
 })
 export class IABStackItem {
-	/** The stack. */
 	readonly stack = input.required<IABStackRow>();
 	/** Consent per purpose. */
 	readonly consents = input<Readonly<Record<number, boolean>>>({});
 	/** Consent per vendor, keyed by vendor id. */
 	readonly vendorConsents = input<Readonly<Record<string, boolean>>>({});
-	/** Legitimate interest per vendor. */
-	readonly vendorLegitimateInterests = input<Readonly<Record<string, boolean>>>(
-		{}
-	);
-	/** Legitimate interest per purpose. */
-	readonly purposeLegitimateInterests = input<
-		Readonly<Record<number, boolean>>
-	>({});
+	/** Draft and vendor list the legitimate interest controls read. */
+	readonly legitimateInterests = input<IABLegitimateInterestState | null>(null);
 	/**
 	 * Offer the purpose-level objection. Purposes with no vendor on consent
 	 * then leave the stack switch, which would change nothing for them.
@@ -177,14 +173,14 @@ export class IABStackItem {
 	/** @internal */
 	protected readonly resolvedNoStyle = resolveNoStyle(this.noStyle);
 	/** The IAB copy. */
-	readonly iabT = input.required<IABTranslations>();
+	readonly iabT = input.required<ResolvedIABCopy>();
 
 	/** A purpose's consent changed. */
 	readonly purposeToggle = output<IABPurposeChoice>();
 	/** A vendor's consent switch changed. */
 	readonly vendorToggle = output<IABVendorChoice>();
 	/** A vendor name was clicked. */
-	readonly vendorClick = output<VendorId>();
+	readonly vendorClick = output<HeadlessIABVendorId>();
 	/** A vendor's objection changed. */
 	readonly vendorLegitimateInterestToggle = output<IABVendorChoice>();
 	/** A purpose's objection changed. */

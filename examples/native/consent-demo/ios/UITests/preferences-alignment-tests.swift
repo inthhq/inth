@@ -26,8 +26,8 @@ final class PreferencesAlignmentTests: XCTestCase {
     private func checkPreferences(iab: Bool, accessibility: Bool) throws {
         app = XCUIApplication()
         app.launchEnvironment = [
-            "C15T_FIXTURE_SCENARIO": iab ? "iab-fresh" : "fresh-online",
-            "C15T_FIXTURE_RESET": "1",
+            "INTH_FIXTURE_SCENARIO": iab ? "iab-fresh" : "fresh-online",
+            "INTH_FIXTURE_RESET": "1",
         ]
         app.launchArguments = ["-UIPreferredContentSizeCategoryName",
             accessibility ? "UICTContentSizeCategoryAccessibilityXXXL" : "UICTContentSizeCategoryL"]

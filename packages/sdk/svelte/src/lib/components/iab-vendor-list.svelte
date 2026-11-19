@@ -1,23 +1,28 @@
 <script lang="ts">
-	import type { AdTechProvider, GlobalVendorList } from '@inth/sdk/engine';
+	import type {
+		AdTechProvider,
+		GlobalVendorList,
+		NonIABVendor,
+	} from '@inth/sdk/engine';
 	import {
-		permittedLegitimateInterestPurposes,
-		resolveIABSafeUrl,
-		resolveIABVendorUrls,
+		formatVendorMaxAge,
+		isLegitimateInterestAllowed,
+		mapCustomVendor,
+		mapGvlVendor,
 	} from '@inth/sdk/iab/headless';
+	import type {
+		HeadlessIABVendorId as VendorId,
+		IABLegitimateInterestState,
+		ProcessedPurpose,
+		ProcessedVendor,
+	} from '@inth/sdk/iab/headless';
+	import type { ResolvedIABCopy } from '@inth/sdk/surface-state';
 	import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 	import switchStyles from '@inth/sdk/ui/styles/components/switch';
 	import { switchVariants } from '@inth/sdk/ui/styles/primitives';
-	import { untrack } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
-	import type { IABTranslations } from '../iab-translations';
-	import type {
-		NonIABVendor,
-		ProcessedPurpose,
-		ProcessedVendor,
-		VendorId,
-	} from '../iab-types';
 	import { PreferenceItem, Switch } from '../primitives';
 	import ChevronDownIcon from './icons/chevron-down-icon.svelte';
 	import CloseIcon from './icons/close-icon.svelte';
@@ -39,7 +44,7 @@
 		selectedVendorId,
 		onClearSelection,
 		customVendors = [],
-		vendorLegitimateInterests = {},
+		legitimateInterests,
 		onVendorLegitimateInterestToggle,
 		adTechProviders = [],
 		adTechProviderConsents = {},
@@ -55,7 +60,8 @@
 		selectedVendorId: VendorId | null;
 		onClearSelection: () => void;
 		customVendors?: NonIABVendor[];
-		vendorLegitimateInterests?: Record<string, boolean>;
+		/** Draft and vendor list the legitimate interest controls read. */
+		legitimateInterests?: IABLegitimateInterestState;
 		onVendorLegitimateInterestToggle?: (
 			vendorId: VendorId,
 			value: boolean
@@ -66,7 +72,7 @@
 		adTechProviderConsents?: Record<string, boolean>;
 		onAdTechProviderToggle?: (providerId: number, value: boolean) => void;
 		noStyle?: boolean;
-		iabT: IABTranslations;
+		iabT: ResolvedIABCopy;
 		/** The UI language, which picks each vendor's privacy links. */
 		language?: string;
 	} = $props();
@@ -74,80 +80,46 @@
 	let searchTerm = $state('');
 	let expandedVendors = new SvelteSet<VendorId>();
 
-	// Map IAB vendors
-	const iabVendors = $derived.by((): ProcessedVendor[] => {
-		if (!vendorData) {
-			return [];
-		}
-		return Object.entries(vendorData.vendors).map(([id, vendor]) => ({
-			cookieMaxAgeSeconds: vendor.cookieMaxAgeSeconds,
-			cookieRefresh: vendor.cookieRefresh,
-			dataDeclaration:
-				(vendor as unknown as { dataDeclaration?: number[] }).dataDeclaration ||
-				[],
-			dataRetention: vendor.dataRetention,
-			deviceStorageDisclosureUrl: resolveIABSafeUrl(
-				vendor.deviceStorageDisclosureUrl
-			),
-			features: vendor.features || [],
-			id: Number(id),
-			isCustom: false,
-			legIntPurposes: vendor.legIntPurposes || [],
-			...resolveIABVendorUrls(vendor, language),
-			name: vendor.name,
-			purposes: vendor.purposes || [],
-			specialFeatures: vendor.specialFeatures || [],
-			specialPurposes: vendor.specialPurposes || [],
-			usesCookies: vendor.usesCookies,
-			usesNonCookieAccess: vendor.usesNonCookieAccess,
-		}));
-	});
-
-	// Map custom vendors
-	const mappedCustomVendors = $derived.by((): ProcessedVendor[] =>
-		customVendors.map((cv) => ({
-			cookieMaxAgeSeconds: cv.cookieMaxAgeSeconds ?? null,
-			cookieRefresh: undefined,
-			dataDeclaration: cv.dataCategories || [],
-			dataRetention: undefined,
-			deviceStorageDisclosureUrl: null,
-			features: cv.features || [],
-			id: cv.id,
-			isCustom: true,
-			legIntPurposes: permittedLegitimateInterestPurposes(cv.legIntPurposes),
-			legitimateInterestUrl: null,
-			name: cv.name,
-			policyUrl: resolveIABSafeUrl(cv.privacyPolicyUrl) ?? '',
-			purposes: cv.purposes || [],
-			specialFeatures: cv.specialFeatures || [],
-			specialPurposes: [],
-			usesCookies: cv.usesCookies ?? false,
-			usesNonCookieAccess: cv.usesNonCookieAccess ?? false,
-		}))
+	const iabVendors = $derived(
+		vendorData
+			? Object.entries(vendorData.vendors).map(([id, vendor]) =>
+					mapGvlVendor(id, vendor, language)
+				)
+			: []
+	);
+	const mappedCustomVendors = $derived(
+		customVendors.map((vendor) => mapCustomVendor(vendor))
 	);
 
-	// Combine and sort all vendors
 	const vendors = $derived(
 		[...iabVendors, ...mappedCustomVendors].sort((a, b) =>
 			a.name.localeCompare(b.name)
 		)
 	);
 
-	// Scroll to selected vendor.
-	// Uses untrack for expandedVendors write to avoid reactive cycle,
-	// and cleans up the timeout if selectedVendorId changes rapidly.
+	// Expand the selected vendor, then scroll to it once the expanded row
+	// has rendered. `untrack` keeps the write from re-running this effect.
 	$effect(() => {
-		if (selectedVendorId !== null) {
-			const id = selectedVendorId;
-			untrack(() => {
-				expandedVendors.add(id);
-			});
-			const timer = setTimeout(() => {
-				const element = document.getElementById(`vendor-${String(id)}`);
-				element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-			}, 100);
-			return () => clearTimeout(timer);
+		if (selectedVendorId === null) {
+			return;
 		}
+		const id = selectedVendorId;
+		untrack(() => {
+			expandedVendors.add(id);
+		});
+		let current = true;
+		const scrollToVendor = async () => {
+			await tick();
+			if (current) {
+				document
+					.getElementById(`vendor-${String(id)}`)
+					?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			}
+		};
+		void scrollToVendor();
+		return () => {
+			current = false;
+		};
 	});
 
 	const filteredVendors = $derived.by(() => {
@@ -190,7 +162,6 @@
 		}
 	};
 
-	// Precompute vendor lookup maps once (O(V+P)) instead of per-vendor-per-render (O(V×P)).
 	type VendorPurposeEntry = ProcessedPurpose & {
 		usesLegitimateInterest: boolean;
 	};
@@ -297,17 +268,11 @@
 	const getMaxAgeText = function getMaxAgeText(
 		vendor: ProcessedVendor
 	): string | null {
-		if (!vendor.cookieMaxAgeSeconds) {
-			return null;
-		}
-		let text = iabT.preferenceCenter.vendorList.maxAge.replace(
-			'{days}',
-			String(Math.floor(vendor.cookieMaxAgeSeconds / 86400))
+		return formatVendorMaxAge(
+			vendor.cookieMaxAgeSeconds,
+			vendor.cookieRefresh,
+			iabT.preferenceCenter.vendorList
 		);
-		if (vendor.cookieRefresh) {
-			text = `${text} ${iabT.preferenceCenter.vendorList.maxAgeRefreshes}`;
-		}
-		return text;
 	};
 </script>
 
@@ -349,7 +314,6 @@
 		</div>
 	{/if}
 
-	<!-- IAB Registered Vendors -->
 	{#if filteredIABVendors.length > 0}
 		<div class={noStyle ? '' : styles.vendorSection || ''}>
 			<div class={noStyle ? '' : styles.iabVendorSectionHeader || ''}>
@@ -373,8 +337,11 @@
 						(p) => p.usesLegitimateInterest
 					).length}
 					{@const hasLegitimateInterest = vendor.legIntPurposes.length > 0}
-					{@const isLegitimateInterestAllowed =
-						vendorLegitimateInterests[vendorKey] ?? true}
+					{@const liAllowed = isLegitimateInterestAllowed(
+						legitimateInterests,
+						'vendor',
+						vendor.id
+					)}
 					{@const standardRetentionDays = vendor.dataRetention?.stdRetention}
 					{@const maxAgeText = getMaxAgeText(vendor)}
 
@@ -455,7 +422,6 @@
 							innerClassName={noStyle ? '' : styles.vendorListContent || ''}
 							{noStyle}
 						>
-							<!-- Links -->
 							<div class={noStyle ? '' : styles.vendorLinks || ''}>
 								{#if vendor.policyUrl}
 									<a
@@ -498,7 +464,6 @@
 								{/if}
 							</div>
 
-							<!-- Badges -->
 							<div class={noStyle ? '' : styles.vendorBadges || ''}>
 								{#if vendor.usesCookies}
 									<span class={noStyle ? '' : styles.vendorBadge || ''}>
@@ -525,7 +490,6 @@
 								{/if}
 							</div>
 
-							<!-- Purposes -->
 							{#if vendorPurposes.length > 0}
 								<div class={noStyle ? '' : styles.vendorPurposesList || ''}>
 									<h4 class={noStyle ? '' : styles.vendorPurposesTitle || ''}>
@@ -577,7 +541,6 @@
 								</div>
 							{/if}
 
-							<!-- Legitimate Interest Objection -->
 							{#if hasLegitimateInterest && onVendorLegitimateInterestToggle}
 								<div class={noStyle ? '' : styles.vendorLiSection || ''}>
 									<div
@@ -596,14 +559,14 @@
 											onclick={() =>
 												onVendorLegitimateInterestToggle?.(
 													vendor.id,
-													!isLegitimateInterestAllowed
+													!liAllowed
 												)}
 											class={noStyle
 												? ''
-												: `${styles.objectButton || ''} ${!isLegitimateInterestAllowed ? styles.objectButtonActive || '' : ''}`}
-											aria-pressed={!isLegitimateInterestAllowed}
+												: `${styles.objectButton || ''} ${!liAllowed ? styles.objectButtonActive || '' : ''}`}
+											aria-pressed={!liAllowed}
 										>
-											{isLegitimateInterestAllowed
+											{liAllowed
 												? iabT.preferenceCenter.purposeItem.objectButton
 												: iabT.preferenceCenter.purposeItem.objected}
 										</button>
@@ -614,7 +577,6 @@
 								</div>
 							{/if}
 
-							<!-- Data Categories -->
 							{#if vendor.dataDeclaration && vendor.dataDeclaration.length > 0}
 								<div class={noStyle ? '' : styles.vendorPurposesList || ''}>
 									<h4 class={noStyle ? '' : styles.vendorPurposesTitle || ''}>
@@ -636,7 +598,6 @@
 								</div>
 							{/if}
 
-							<!-- Special Purposes -->
 							{#if vendorSpecialPurposes.length > 0}
 								<div class={noStyle ? '' : styles.vendorPurposesList || ''}>
 									<h4 class={noStyle ? '' : styles.vendorPurposesTitle || ''}>
@@ -679,7 +640,6 @@
 								</div>
 							{/if}
 
-							<!-- Special Features -->
 							{#if vendorSpecialFeatures.length > 0}
 								<div class={noStyle ? '' : styles.vendorPurposesList || ''}>
 									<h4 class={noStyle ? '' : styles.vendorPurposesTitle || ''}>
@@ -696,7 +656,6 @@
 								</div>
 							{/if}
 
-							<!-- Features -->
 							{#if vendorFeatures.length > 0}
 								<div class={noStyle ? '' : styles.vendorPurposesList || ''}>
 									<h4 class={noStyle ? '' : styles.vendorPurposesTitle || ''}>
@@ -737,7 +696,6 @@
 		</div>
 	{/if}
 
-	<!-- Custom/Non-IAB Vendors -->
 	{#if filteredCustomVendors.length > 0}
 		<div class={noStyle ? '' : styles.vendorSection || ''}>
 			<div class={noStyle ? '' : styles.customVendorSectionHeader || ''}>
@@ -757,8 +715,11 @@
 					{@const vendorSpecialFeatures = getVendorSpecialFeatures(vendor.id)}
 					{@const vendorFeatures = getVendorFeatures(vendor.id)}
 					{@const hasLegitimateInterest = vendor.legIntPurposes.length > 0}
-					{@const isLegitimateInterestAllowed =
-						vendorLegitimateInterests[vendorKey] ?? true}
+					{@const liAllowed = isLegitimateInterestAllowed(
+						legitimateInterests,
+						'vendor',
+						vendor.id
+					)}
 					{@const maxAgeText = getMaxAgeText(vendor)}
 
 					<PreferenceItem.Root
@@ -885,14 +846,14 @@
 											onclick={() =>
 												onVendorLegitimateInterestToggle?.(
 													vendor.id,
-													!isLegitimateInterestAllowed
+													!liAllowed
 												)}
 											class={noStyle
 												? ''
-												: `${styles.objectButton || ''} ${!isLegitimateInterestAllowed ? styles.objectButtonActive || '' : ''}`}
-											aria-pressed={!isLegitimateInterestAllowed}
+												: `${styles.objectButton || ''} ${!liAllowed ? styles.objectButtonActive || '' : ''}`}
+											aria-pressed={!liAllowed}
 										>
-											{isLegitimateInterestAllowed
+											{liAllowed
 												? iabT.preferenceCenter.purposeItem.objectButton
 												: iabT.preferenceCenter.purposeItem.objected}
 										</button>

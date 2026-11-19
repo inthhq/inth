@@ -6,7 +6,7 @@
  * contract the parity gate compares against React's.
  */
 
-import { MINIMAL_GVL } from '@c15t/conformance/fixtures/gvl';
+import { MINIMAL_GVL } from '@inth/conformance/fixtures/gvl';
 import iabBannerStyles from '@inth/sdk/ui/styles/components/iab-consent-banner';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -15,7 +15,7 @@ import IABConsentBanner from '../components/iab-prompt.astro';
 import { resolveOptions } from '../integration';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { C15tAstroOptions, C15tLocals } from '../types';
+import type { InthAstroOptions, InthLocals } from '../types';
 
 let container: AstroContainer;
 
@@ -32,15 +32,15 @@ const IAB_POLICY = {
 	scopeMode: 'permissive',
 } as const;
 
-const iabOptions: C15tAstroOptions = {
+const iabOptions: InthAstroOptions = {
 	consentCategories: ['necessary', 'marketing'],
 	iab: { cmpId: 160, gvl: MINIMAL_GVL as never },
 	mode: testingMode({ policy: [IAB_POLICY as never] }),
 };
 
 const buildLocals = async function buildLocals(
-	options: C15tAstroOptions = iabOptions
-): Promise<C15tLocals> {
+	options: InthAstroOptions = iabOptions
+): Promise<InthLocals> {
 	return await resolveConsentContext({
 		headers: new Headers(),
 		options: resolveOptions(options),
@@ -48,11 +48,11 @@ const buildLocals = async function buildLocals(
 };
 
 const render = async function render(
-	locals: C15tLocals,
+	locals: InthLocals,
 	props: Record<string, unknown> = { force: true }
 ): Promise<string> {
 	return await container.renderToString(IABConsentBanner, {
-		locals: { c15t: locals },
+		locals: { inth: locals },
 		props,
 	});
 };
@@ -99,16 +99,16 @@ describe('<IABConsentBanner />', () => {
 
 	it('ships no framework JavaScript, only action attributes', async () => {
 		const html = await render(await buildLocals());
-		expect(html).toContain('data-c15t-action="accept"');
-		expect(html).toContain('data-c15t-action="reject"');
-		expect(html).toContain('data-c15t-action="customize"');
+		expect(html).toContain('data-inth-action="accept"');
+		expect(html).toContain('data-inth-action="reject"');
+		expect(html).toContain('data-inth-action="customize"');
 		expect(html).not.toContain('onclick=');
 	});
 
 	it('sends the partners link to the vendors tab', async () => {
 		const html = await render(await buildLocals());
-		expect(html).toContain('data-c15t-tab="vendors"');
-		expect(html).toContain('data-c15t-dialog="iab"');
+		expect(html).toContain('data-inth-tab="vendors"');
+		expect(html).toContain('data-inth-dialog="iab"');
 	});
 
 	it('renders a modal card with a backdrop when blocking is enabled', async () => {
@@ -279,7 +279,7 @@ describe('<IABConsentBanner />', () => {
 		const html = await render(await buildLocals());
 		// A data block: it never runs, so no CSP has to allow it.
 		expect(html).toMatch(
-			/<script[^>]*type="application\/json"[^>]*data-c15t-config[^>]*>\{/u
+			/<script[^>]*type="application\/json"[^>]*data-inth-config[^>]*>\{/u
 		);
 	});
 });

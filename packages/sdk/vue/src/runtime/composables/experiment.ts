@@ -32,7 +32,7 @@ const useAnySnapshot = function useAnySnapshot(): Ref<ConsentSnapshot> {
 	}
 	const kernel = inject(symbolKernel, undefined);
 	if (!kernel) {
-		throw new Error('[c15t] Kernel not found');
+		throw new Error('[inth] Kernel not found');
 	}
 	const snapshot = shallowRef(kernel.getSnapshot());
 	onScopeDispose(
@@ -116,7 +116,6 @@ export const useResolvedPresentation =
  * `generateThemeCSS` from `@inth/sdk/ui/theme`). Equal to `base` while no arm
  * is assigned or the arm has no theme.
  *
- * @param base - The host theme, or nothing.
  * @returns The theme to render, reactive to `base` and the assignment.
  * @throws {Error} When no snapshot, kernel context or kernel is provided.
  *

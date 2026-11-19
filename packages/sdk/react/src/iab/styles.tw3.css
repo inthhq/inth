@@ -1,7 +1,7 @@
 /**
  * @inth/react/iab — Tailwind 3-compatible IAB component styles.
  *
- * Add this stylesheet to the same global CSS entrypoint as your base c15t styles.
+ * Add this stylesheet to the same global CSS entrypoint as your base Inth styles.
  * Do not import either stylesheet from JS/TSX files.
  *
  * Usage (src/index.css):

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useConsentActiveUI } from '#c15t/composables';
+import { useConsentActiveUI } from '#inth/composables';
 
 defineProps<{
 	scenario:

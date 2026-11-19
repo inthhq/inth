@@ -1,12 +1,18 @@
 ## Keep visitors' existing choices
 
-v3 uses the same `c15t` cookie and storage key as v2 and reads v2 records. It
-does not rewrite them on page load; the next accept, reject or save writes a
-v3 record.
+Inth stores consent under `inth`, and under that default key it also reads
+the records c15t v2 wrote under `c15t`. It does not rewrite them on page
+load; the next accept, reject or save writes a v3 record.
 
 A v2 denial keeps restricting its category. A v2 grant keeps applying until
-the policy's validity period runs out, and then c15t asks again. If the rule
-comes from a preset and the v2 record noted the policy it was made under, c15t
+the policy's validity period runs out, and then Inth asks again. If the rule
+comes from a preset and the v2 record noted the policy it was made under, Inth
 also asks again when that policy has changed. Under custom rules, a v2 grant
 applies until it expires. Do not copy permissions into new
-records yourself; c15t decides which v2 choices still count.
+records yourself; Inth decides which v2 choices still count.
+
+A c15t page queues a save it could not send and retries it later. Inth picks
+up those queued saves and sends them to the backend the Inth page is
+configured with, so point it at the same backend your c15t pages used. A
+save a c15t tab is sending at that moment can reach the backend twice, as it
+can between two Inth tabs.

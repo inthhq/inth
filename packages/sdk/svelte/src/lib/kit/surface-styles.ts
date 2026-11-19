@@ -1,8 +1,9 @@
+import { SAFE_NONCE } from '@inth/sdk/server';
 /**
  * Writes the stylesheets a server-rendered surface named into the page.
  *
  * A stock surface that renders on the server leaves a
- * `<meta name="c15t-styles">` marker in `<head>` naming the sheets it
+ * `<meta name="inth-styles">` marker in `<head>` naming the sheets it
  * needs (see `../surface-styles.ts`). This puts those sheets into the HTML
  * as `<style>` elements, so the banner is styled on the first paint
  * without a stylesheet `<link>` that holds the paint back. In the browser,
@@ -43,7 +44,6 @@ const MARKER = new RegExp(
 	`<meta name="${STYLES_MARKER}" content="(?<body>[^"]*)"`,
 	'gu'
 );
-const NONCE = /^[\w+/=-]+$/u;
 const SCRIPT_NONCE = /<script\b[^>]*\snonce="(?<nonce>[\w+/=-]+)"/u;
 const HEAD_END = '</head>';
 
@@ -59,8 +59,6 @@ const HEAD_END = '</head>';
  * else the nonce SvelteKit put on its own scripts, so a nonce-based
  * `style-src` admits them.
  *
- * @param html - A chunk of the rendered page.
- * @returns The chunk with the styles; unchanged without a marker.
  * @internal
  */
 export const injectSurfaceStyles = function injectSurfaceStyles(
@@ -78,7 +76,7 @@ export const injectSurfaceStyles = function injectSurfaceStyles(
 		for (const token of body.split(' ')) {
 			if (token.startsWith('nonce=')) {
 				const own = token.slice('nonce='.length);
-				nonce ??= NONCE.test(own) ? own : undefined;
+				nonce ??= SAFE_NONCE.test(own) ? own : undefined;
 			} else if (token) {
 				wanted.add(token);
 			}
@@ -99,15 +97,13 @@ export const injectSurfaceStyles = function injectSurfaceStyles(
 	return styles ? head + styles + html.slice(headEnd) : html;
 };
 
-const EARLY_TAP_TAG = '<script data-c15t-early-tap>';
+const EARLY_TAP_TAG = '<script data-inth-early-tap>';
 
 /**
  * Give the banner's early-tap script the nonce SvelteKit put on its own
  * scripts, when the provider had no `nonce` to render it with, so a
  * nonce-based `script-src` admits it.
  *
- * @param html - A chunk of the rendered page.
- * @returns The chunk; unchanged without the script or a page nonce.
  * @internal
  */
 export const nonceEarlyTapScript = function nonceEarlyTapScript(
@@ -120,7 +116,7 @@ export const nonceEarlyTapScript = function nonceEarlyTapScript(
 	return nonce
 		? html.replaceAll(
 				EARLY_TAP_TAG,
-				`<script data-c15t-early-tap nonce="${nonce}">`
+				`<script data-inth-early-tap nonce="${nonce}">`
 			)
 		: html;
 };

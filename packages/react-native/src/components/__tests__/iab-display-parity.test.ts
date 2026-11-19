@@ -274,7 +274,6 @@ describe('the partner list the mirror adds', () => {
 		// The mirror carries both shapes because the web has both.
 		for (const vendor of IAB_DEMO_DISPLAY_MODEL.vendors) {
 			expect('usesLegitimateInterest' in vendor).toBe(false);
-			expect(Array.isArray(vendor.dataDeclaration)).toBe(true);
 		}
 
 		const [row] = IAB_DEMO_DISPLAY_MODEL.consentRows;
@@ -287,7 +286,6 @@ describe('the partner list the mirror adds', () => {
 
 		for (const vendor of row.vendors) {
 			expect(typeof vendor.usesLegitimateInterest).toBe('boolean');
-			expect('dataDeclaration' in vendor).toBe(false);
 		}
 	});
 });

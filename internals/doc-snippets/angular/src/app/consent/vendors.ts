@@ -1,8 +1,8 @@
 // #region docs:vendors
-import type { C15tOptions } from '@inth/angular';
+import type { InthOptions } from '@inth/angular';
 
-// Pass as `vendors` to provideC15t() in app.config.ts.
-export const vendors: NonNullable<C15tOptions['vendors']> = [
+// Pass as `vendors` to provideInth() in app.config.ts.
+export const vendors: NonNullable<InthOptions['vendors']> = [
 	{
 		category: 'marketing',
 		id: 'x-pixel',

@@ -27,7 +27,7 @@ const inertScript = function inertScript(
 ): HTMLScriptElement {
 	const script = document.createElement('script');
 	script.type = 'text/plain';
-	script.setAttribute('data-c15t-category', category);
+	script.setAttribute('data-inth-category', category);
 	script.textContent = body;
 	document.body.append(script);
 	return script;
@@ -68,7 +68,7 @@ describe('gated inline scripts', () => {
 		await vi.waitFor(() => expect(own.isConnected).toBe(false));
 		expect(injected.isConnected).toBe(true);
 		expect(injected.type).toBe('text/plain');
-		expect(injected.getAttribute('data-c15t-activated')).toBe('untrusted');
+		expect(injected.getAttribute('data-inth-activated')).toBe('untrusted');
 		expect(warn).toHaveBeenCalledOnce();
 	});
 
@@ -92,7 +92,7 @@ describe('gated inline scripts', () => {
 			activateGatedScripts(client.getSnapshot(), root, { nonce: 'page-nonce' })
 		).toBe(1);
 		expect(own.isConnected).toBe(false);
-		expect(injected.getAttribute('data-c15t-activated')).toBe('untrusted');
+		expect(injected.getAttribute('data-inth-activated')).toBe('untrusted');
 
 		activateGatedScripts(client.getSnapshot(), root);
 		expect(injected.type).toBe('text/plain');
@@ -107,7 +107,7 @@ describe('gated inline scripts', () => {
 		const script = inertScript('necessary', 'window.__late = true;');
 		await vi.waitFor(() => expect(script.isConnected).toBe(false));
 		expect(
-			document.querySelector('[data-c15t-activated="true"]')
+			document.querySelector('[data-inth-activated="true"]')
 		).not.toBeNull();
 	});
 	it('activates a script once its category is granted', async () => {
@@ -121,19 +121,19 @@ describe('gated inline scripts', () => {
 		await client.ready();
 
 		expect(
-			document.querySelector('script[data-c15t-activated="true"]')
+			document.querySelector('script[data-inth-activated="true"]')
 		).toBeNull();
 
 		await client.acceptAll();
 
 		const activated = document.querySelector<HTMLScriptElement>(
-			'script[data-c15t-activated="true"]'
+			'script[data-inth-activated="true"]'
 		);
 		expect(activated).not.toBeNull();
 		expect(activated?.type).toBe('');
 		expect(activated?.textContent).toContain('__gated');
 		expect(
-			document.querySelectorAll('script[data-c15t-category]')
+			document.querySelectorAll('script[data-inth-category]')
 		).toHaveLength(1);
 	});
 
@@ -152,13 +152,13 @@ describe('gated inline scripts', () => {
 		expect(warn).toHaveBeenCalledOnce();
 		expect(
 			document
-				.querySelector('script[data-c15t-category="telemetry"]')
-				?.getAttribute('data-c15t-activated')
+				.querySelector('script[data-inth-category="telemetry"]')
+				?.getAttribute('data-inth-activated')
 		).toBe('invalid');
 		expect(
 			document
-				.querySelector('script[data-c15t-category="marketing"]')
-				?.hasAttribute('data-c15t-activated')
+				.querySelector('script[data-inth-category="marketing"]')
+				?.hasAttribute('data-inth-activated')
 		).toBe(false);
 	});
 });
@@ -202,7 +202,7 @@ describe('ordered gated scripts', () => {
 		expect(late.isConnected).toBe(false);
 		await Promise.resolve();
 		expect(
-			document.querySelectorAll('[data-c15t-activated="true"]')
+			document.querySelectorAll('[data-inth-activated="true"]')
 		).toHaveLength(5);
 	});
 
@@ -239,13 +239,13 @@ describe('ordered gated scripts', () => {
 		await client.ready();
 		await client.acceptAll();
 		const vendor = document.querySelector('script[src]');
-		expect(vendor?.getAttribute('data-c15t-activated')).toBe('true');
+		expect(vendor?.getAttribute('data-inth-activated')).toBe('true');
 		expect(setup.isConnected).toBe(true);
 
 		await client.rejectAll();
 		vendor?.dispatchEvent(new Event('load'));
 		expect(setup.isConnected).toBe(true);
-		expect(setup.hasAttribute('data-c15t-activated')).toBe(false);
+		expect(setup.hasAttribute('data-inth-activated')).toBe(false);
 		await client.acceptAll();
 		expect(setup.isConnected).toBe(false);
 		expect(document.querySelectorAll('script[src]')).toHaveLength(1);
@@ -265,8 +265,8 @@ describe('ordered gated scripts', () => {
 
 		expect(setup.isConnected).toBe(true);
 		expect(late.isConnected).toBe(true);
-		expect(setup.hasAttribute('data-c15t-activated')).toBe(false);
-		expect(late.hasAttribute('data-c15t-activated')).toBe(false);
+		expect(setup.hasAttribute('data-inth-activated')).toBe(false);
+		expect(late.hasAttribute('data-inth-activated')).toBe(false);
 	});
 
 	it("waits for an earlier client's external script after disposal and reinitialization", async () => {
@@ -315,18 +315,18 @@ describe('ordered gated scripts', () => {
 		removed.remove();
 		document.querySelector('script[src]')?.dispatchEvent(new Event('load'));
 
-		expect(removed.hasAttribute('data-c15t-activated')).toBe(false);
+		expect(removed.hasAttribute('data-inth-activated')).toBe(false);
 		expect(remaining.isConnected).toBe(false);
 		expect(document.querySelectorAll('script')).toHaveLength(2);
 	});
 });
 
 it('offers the category of a tag that ran before the client', async () => {
-	// `c15t.js` started the measurement tag for an early choice; the engine
+	// `inth.js` started the measurement tag for an early choice; the engine
 	// that takes over finds only the marketing tag still inert.
 	const ran = document.createElement('script');
-	ran.setAttribute('data-c15t-category', 'measurement');
-	ran.setAttribute('data-c15t-activated', 'true');
+	ran.setAttribute('data-inth-category', 'measurement');
+	ran.setAttribute('data-inth-activated', 'true');
 	document.body.append(ran);
 	inertScript('marketing', 'window.__ads = true;');
 	const client = createConsentClient({ ui: false });

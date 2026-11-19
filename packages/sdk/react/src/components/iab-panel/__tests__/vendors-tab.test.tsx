@@ -1,9 +1,3 @@
-/**
- * IAB Consent Dialog Vendors Tab Unit Tests
- *
- * Tests for the vendors tab in IAB Consent Dialog.
- */
-
 import { evaluateConsent } from '@inth/sdk/engine';
 import type { ConsentKernel } from '@inth/sdk/engine';
 import { useContext, useEffect } from 'react';
@@ -30,7 +24,6 @@ const getDefined = <Value,>(
 	return value;
 };
 
-// Mock localStorage
 const localStorageMock = (() => {
 	let store: Record<string, string> = {};
 	return {
@@ -312,6 +305,67 @@ describe('IAB preference item interactions', () => {
 
 		await vi.waitFor(() => {
 			expect(content?.getAttribute('aria-hidden')).toBe('false');
+		});
+	});
+
+	// Regression: the refresh note was hardcoded English.
+	test('shows the max age with the translated refresh note', async () => {
+		render(
+			<ConsentProvider
+				options={{
+					...defaultIABOptions,
+					i18n: {
+						locale: 'en',
+						messages: {
+							en: {
+								iab: {
+									preferenceCenter: {
+										vendorList: { maxAgeRefreshes: '(renewed)' },
+									},
+								},
+							},
+						},
+					},
+				}}
+			>
+				<IABConsentDialog open />
+			</ConsentProvider>
+		);
+
+		const vendorsTab = await vi.waitFor(
+			() => {
+				const el = Array.from(
+					document.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+				).find((button) =>
+					button.textContent?.toLowerCase().includes('vendor')
+				);
+				return getDefined(el);
+			},
+			{ timeout: 5000 }
+		);
+		await userEvent.click(vendorsTab);
+
+		const vendorHeader = await vi.waitFor(
+			() =>
+				getDefined(
+					Array.from(
+						document.querySelectorAll<HTMLElement>('[id^="vendor-"]')
+					).find((element) =>
+						element.textContent?.includes('Exponential Interactive')
+					)
+				),
+			{ timeout: 5000 }
+		);
+		await userEvent.click(
+			getDefined(
+				vendorHeader.querySelector<HTMLElement>(
+					'[data-slot="preference-item-trigger"]'
+				)
+			)
+		);
+
+		await vi.waitFor(() => {
+			expect(vendorHeader.textContent).toContain('Max Age: 365d (renewed)');
 		});
 	});
 

@@ -70,7 +70,7 @@ describe.each(startupCases)('%s client startup', (_name, options) => {
 			if (eventSource === 'client') {
 				client.on('ready', onReady);
 			} else {
-				document.addEventListener('c15t:ready', onReady, { once: true });
+				document.addEventListener('inth:ready', onReady, { once: true });
 			}
 
 			client.start();
@@ -79,7 +79,7 @@ describe.each(startupCases)('%s client startup', (_name, options) => {
 			expect(client.started).toBe(false);
 			await expect(client.ready()).resolves.toBeDefined();
 			const link = document.createElement('a');
-			link.href = '#c15t-preferences';
+			link.href = '#inth-preferences';
 			document.body.append(link);
 			const click = new MouseEvent('click', {
 				bubbles: true,

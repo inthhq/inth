@@ -9,7 +9,7 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { PREFETCH_WINDOW_KEY } from '../../../../core/src/libs/prefetch/window-key';
+import { PREFETCH_WINDOW_KEY } from '../../../../core/src/libs/page-globals';
 import init from '../../../../core/src/runtime/__tests__/fixtures/hosted-init-gb.json' with { type: 'json' };
 import { ConsentBanner } from '../../components/prompt';
 import { useSnapshot } from '../../hooks';

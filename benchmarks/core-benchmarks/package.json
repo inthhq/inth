@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/core-benchmarks",
+	"name": "@inth/core-benchmarks",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -12,7 +12,7 @@
 		"build": "echo 'core benchmarks are source-only'"
 	},
 	"dependencies": {
-		"@c15t/benchmarking": "workspace:*",
+		"@inth/benchmarking": "workspace:*",
 		"@inth/sdk": "workspace:*"
 	},
 	"devDependencies": {

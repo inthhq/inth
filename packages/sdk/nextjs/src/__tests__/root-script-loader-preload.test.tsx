@@ -200,7 +200,7 @@ describe('ConsentRoot: script loader before hydration', () => {
 				},
 			};
 			localStorage.setItem(
-				'c15t',
+				'inth',
 				encodeStoredConsentEnvelopeJson({
 					categories: {
 						marketing: {

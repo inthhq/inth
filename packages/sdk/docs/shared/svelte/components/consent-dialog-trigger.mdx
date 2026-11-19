@@ -19,10 +19,10 @@ first render.
 | --- | --- | --- | --- |
 | `defaultPosition` | `'bottom-right'`, `'bottom-left'`, `'top-right'` or `'top-left'` | `'bottom-right'` | The corner it starts in. |
 | `persistPosition` | `boolean` | `true` | Remembers the corner a visitor drags it to, in local storage. |
-| `showWhen` | `'always'` or `'never'` | `'always'` | `'never'` hides it. |
+| `showWhen` | `'always'`, `'after-consent'` or `'never'` | `'always'` | `'after-consent'` waits until the visitor has answered the banner. `'never'` hides it. |
 | `size` | `'sm'`, `'md'` or `'lg'` | `'md'` | Button size. |
-| `ariaLabel` | `string` | `'Open privacy settings'` | Accessible name. Translate it yourself; it does not come from `i18n`. |
-| `noStyle` | `boolean` | `false` | Drops c15t's classes, including the fixed positioning. |
+| `ariaLabel` | `string` | The `trigger.label` translation, "Open privacy settings" in English | Accessible name. |
+| `noStyle` | `boolean` | `false` | Drops Inth's classes, including the fixed positioning. |
 | `class` | `string` | none | Extra class on the button. |
 | `onclick` | `(event: MouseEvent) => void` | none | Runs before the dialog opens. Call `event.preventDefault()` to stop it. |
 | `onPositionChange` | `(corner) => void` | none | Runs after a drag moves it to another corner. |
@@ -46,7 +46,9 @@ first render.
 ## Accessibility
 
 The trigger is a `<button type="button">` with `aria-label`, since it shows
-only an icon. Keep the label in the page's language by passing `ariaLabel`.
+only an icon. The label, the toolbar's name and the DevTools button's name
+come from the `trigger` translations, and fall back to English for a
+language that does not set them.
 Dragging needs a pointer; keyboard users activate it with Enter or Space and
 cannot move it, so pick a `defaultPosition` that does not cover your own
 controls.
@@ -54,5 +56,5 @@ controls.
 ## Style the trigger
 
 The button carries `data-testid="consent-dialog-trigger"`,
-`data-c15t-trigger="true"` and `data-c15t-rights`. Its colors come from the
-`--c15t-*` tokens; [theme tokens](/docs/customization/tokens) lists them.
+`data-inth-trigger="true"` and `data-inth-rights`. Its colors come from the
+`--inth-*` tokens; [theme tokens](/docs/customization/tokens) lists them.

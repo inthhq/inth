@@ -22,7 +22,7 @@
 import type { AllConsentNames } from '../consent/consent-types';
 import type { InternalKernel } from '../kernel/internals';
 import { extractConsentNamesFromCondition } from '../libs/has';
-import { isProductionBuild } from '../libs/is-production';
+import { isProductionBuild, warnInDevelopment } from '../libs/is-production';
 import { declareOwnedVendors, resolveVendors } from '../libs/vendors';
 import { holdNetworkRequests, NOT_HELD } from '../modules/network-blocker/hold';
 import type { NetworkHold } from '../modules/network-blocker/hold';
@@ -53,7 +53,7 @@ import type {
 type Callbacks = NonNullable<ConsentRuntimeUpdate['callbacks']>;
 
 /** Options a running provider runtime follows. Everything else is read once. */
-const LIVE_OPTIONS = new Set<PropertyKey>([
+const LIVE_OPTION_NAMES = [
 	'consentCategories',
 	'iframeBlocker',
 	'networkBlocker',
@@ -64,7 +64,12 @@ const LIVE_OPTIONS = new Set<PropertyKey>([
 	'scripts',
 	'user',
 	'vendors',
-]);
+] as const satisfies readonly (keyof ConsentRuntimeUpdate)[];
+
+/** @internal */
+export type LiveOption = (typeof LIVE_OPTION_NAMES)[number];
+
+const LIVE_OPTIONS = new Set<PropertyKey>(LIVE_OPTION_NAMES);
 
 /** Overrides compared without regard to key order. */
 const overridesKey = function overridesKey(
@@ -223,8 +228,6 @@ const settle = function settle(
  * some on demand.
  *
  * @param options - The provider's options at mount.
- * @param modules - The module factories to mount.
- * @returns The provider runtime.
  * @throws {Error} When the options select no transport factory.
  *
  * @example
@@ -292,7 +295,7 @@ export const createConsentProviderRuntime =
 			const pending = on && initial.prefetch !== knownPrefetch;
 			if (pending && !streamPrefetch && !isProductionBuild()) {
 				console.warn(
-					'c15t: `prefetch` is a promise, but the runtime was created without `streamPrefetch` in its modules. It is ignored and the runtime requests the policy itself.'
+					'inth: `prefetch` is a promise, but the runtime was created without `streamPrefetch` in its modules. It is ignored and the runtime requests the policy itself.'
 				);
 			}
 			const mode =
@@ -549,6 +552,7 @@ export const createConsentProviderRuntime =
 				notHeld: NOT_HELD,
 				resolveVendors,
 				scriptRegistry,
+				warnInDevelopment,
 			},
 		};
 		/**

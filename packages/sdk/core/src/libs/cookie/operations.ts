@@ -1,50 +1,15 @@
 /**
  * @packageDocumentation
  * Low-level cookie operations.
- *
- * @remarks
- * This module provides basic cookie CRUD operations (create, read, delete).
  */
 
-import { getDefaultCookieOptions, getRootDomain } from './domain-utils';
-import { expandFlatKeys, shortenFlatKeys } from './key-mapping';
 import {
-	flatToString,
-	flattenObject,
-	stringToFlat,
-	unflattenObject,
-} from './serialization';
-import type { CookieOptions, StorageConfig } from './types';
-
-/**
- * Finds one cookie's raw value inside a `Cookie` header or
- * `document.cookie` string.
- *
- * @param cookieHeader - Raw `Cookie` header value, or `document.cookie`.
- * @param name - Cookie name to find
- * @returns The raw value exactly as stored, or `undefined` when the cookie
- * is absent. No decoding or parsing happens here.
- *
- * @internal
- */
-export const readCookieValueFromHeader = function readCookieValueFromHeader(
-	cookieHeader: string | undefined,
-	name: string
-): string | undefined {
-	if (!cookieHeader) {
-		return undefined;
-	}
-
-	const nameEQ = `${name}=`;
-	for (const cookie of cookieHeader.split(';')) {
-		const trimmed = cookie.trim();
-		if (trimmed.startsWith(nameEQ)) {
-			return trimmed.substring(nameEQ.length);
-		}
-	}
-
-	return undefined;
-};
+	cookieDomainsOf,
+	getRootDomain,
+	resolveCookieDomain,
+} from './domain-utils';
+import { readCookieValueFromHeader } from './read-header';
+import type { StorageConfig } from './types';
 
 /**
  * Outcome of one attempt to store a cookie.
@@ -64,20 +29,6 @@ export interface CookieWriteReport {
 	error?: unknown;
 }
 
-const serializeCookieValue = function serializeCookieValue(
-	value: unknown
-): string {
-	if (typeof value === 'string') {
-		return value;
-	}
-	// 1. Flatten the nested object
-	const flattened = flattenObject(value as Record<string, unknown>);
-	// 2. Shorten keys for compression
-	const shortened = shortenFlatKeys(flattened);
-	// 3. Convert to compact string format
-	return flatToString(shortened);
-};
-
 /**
  * Writes a cookie and reports what happened instead of swallowing it.
  *
@@ -89,44 +40,33 @@ const serializeCookieValue = function serializeCookieValue(
  */
 export const writeCookie = function writeCookie(
 	name: string,
-	value: unknown,
-	options?: CookieOptions,
+	value: string,
 	config?: StorageConfig
 ): CookieWriteReport {
 	if (typeof document === 'undefined') {
 		return { attempted: false, verified: false };
 	}
 
-	const opts = { ...getDefaultCookieOptions(config), ...options };
-
-	// Handle crossSubdomain flag: convert to domain if not explicitly set
-	if (opts.crossSubdomain && !options?.domain) {
-		opts.domain = getRootDomain();
-	}
-
-	let cookieValue: string;
 	try {
-		cookieValue = serializeCookieValue(value);
-
-		// Calculate expiry date
 		const date = new Date();
-		date.setTime(date.getTime() + opts.expiryDays * 24 * 60 * 60 * 1000);
-		const expires = `expires=${date.toUTCString()}`;
-
-		// Build cookie string
-		const parts = [`${name}=${cookieValue}`, expires, `path=${opts.path}`];
-
-		if (opts.domain) {
-			parts.push(`domain=${opts.domain}`);
+		const expiryDays = config?.defaultExpiryDays ?? 365;
+		date.setTime(date.getTime() + expiryDays * 24 * 60 * 60 * 1000);
+		const parts = [
+			`${name}=${value}`,
+			`expires=${date.toUTCString()}`,
+			'path=/',
+		];
+		const domain = resolveCookieDomain(config);
+		if (domain) {
+			parts.push(`domain=${domain}`);
 		}
-
-		if (opts.secure) {
+		if (
+			typeof window !== 'undefined' &&
+			window.location.protocol === 'https:'
+		) {
 			parts.push('secure');
 		}
-
-		if (opts.sameSite) {
-			parts.push(`SameSite=${opts.sameSite}`);
-		}
+		parts.push('SameSite=Lax');
 
 		document.cookie = parts.join('; ');
 	} catch (error) {
@@ -139,72 +79,29 @@ export const writeCookie = function writeCookie(
 	} catch {
 		readBack = undefined;
 	}
-	return { attempted: true, verified: readBack === cookieValue };
+	return { attempted: true, verified: readBack === value };
 };
 
 /**
- * Sets a cookie with the specified name, value, and options.
- *
- * @param name - Cookie name
- * @param value - Cookie value (will be flattened to compact string format)
- * @param options - Cookie configuration options
- * @param config - Storage configuration
- *
- * @throws {Error} When cookie cannot be set
- *
- * @remarks
- * Uses a flat key:value,key:value format without JSON special characters.
- * This avoids issues with curly braces, quotes, and simplifies encoding.
- * Only colons and commas are used as delimiters.
+ * {@link writeCookie}, warning instead of reporting when the assignment
+ * throws.
  *
  * @internal
  */
 export const setCookie = function setCookie(
 	name: string,
-	value: unknown,
-	options?: CookieOptions,
+	value: string,
 	config?: StorageConfig
 ): void {
-	const report = writeCookie(name, value, options, config);
+	const report = writeCookie(name, value, config);
 	if (!report.attempted && report.error !== undefined) {
 		console.warn(`Failed to set cookie "${name}":`, report.error);
 	}
 };
 
 /**
- * Parses a stored c15t cookie value using the same compact format that
- * `setCookie` writes. This is safe for server adapters that already have the
- * raw cookie value from a request header and cannot read `document.cookie`.
- *
- * @internal
- */
-export const parseCookieValue = function parseCookieValue<ReturnType = unknown>(
-	cookieValue: string
-): ReturnType | null {
-	try {
-		// Check if it's the flat format (contains colons)
-		if (cookieValue.includes(':')) {
-			// 1. Parse flat string to object
-			const shortened = stringToFlat(cookieValue);
-			// 2. Expand shortened keys back to full keys
-			const expanded = expandFlatKeys(shortened);
-			// 3. Unflatten to nested object
-			const nested = unflattenObject(expanded);
-			return nested as ReturnType;
-		}
-
-		// Plain string value
-		return cookieValue as ReturnType;
-	} catch (error) {
-		console.warn('Failed to parse cookie value:', error);
-		return null;
-	}
-};
-
-/**
  * Reads one cookie's raw value from `document.cookie` without parsing it.
  *
- * @param name - Cookie name to read
  * @param onUnavailable - Called when browser cookies cannot be read.
  * @returns The raw value, or `null` outside the browser, when the cookie
  * is absent, or when `document.cookie` cannot be read.
@@ -234,86 +131,59 @@ export const getRawCookieValue = function getRawCookieValue(
 };
 
 /**
- * Retrieves a cookie value by name.
- *
- * @typeParam ReturnType - The expected type of the parsed cookie value
- *
- * @param name - Cookie name to retrieve
- * @returns Parsed cookie value or null if not found
- *
- * @remarks
- * Parses flat key:value format and reconstructs nested objects.
- *
- * @internal
- */
-export const getCookie = function getCookie<ReturnType = unknown>(
-	name: string
-): ReturnType | null {
-	if (typeof document === 'undefined') {
-		return null;
-	}
-
-	try {
-		const nameEQ = `${name}=`;
-		const cookies = document.cookie.split(';');
-
-		for (const cookie of cookies) {
-			let c = cookie;
-			while (c.charAt(0) === ' ') {
-				c = c.substring(1);
-			}
-
-			if (c.indexOf(nameEQ) === 0) {
-				const cookieValue = c.substring(nameEQ.length);
-				return parseCookieValue<ReturnType>(cookieValue);
-			}
-		}
-
-		return null;
-	} catch (error) {
-		console.warn(`Failed to get cookie "${name}":`, error);
-		return null;
-	}
-};
-
-/**
- * Deletes a cookie by name.
- *
- * @param name - Cookie name to delete
- * @param options - Cookie configuration options (domain and path should match the original cookie)
- * @param config - Storage configuration
+ * Expires a cookie at the domain {@link resolveCookieDomain} picks for
+ * `config`, at path `/`.
  *
  * @internal
  */
 export const deleteCookie = function deleteCookie(
 	name: string,
-	options?: CookieOptions,
 	config?: StorageConfig
 ): void {
 	if (typeof document === 'undefined') {
 		return;
 	}
 
-	const opts = { ...getDefaultCookieOptions(config), ...options };
-
-	// Handle crossSubdomain flag
-	if (opts.crossSubdomain && !options?.domain) {
-		opts.domain = getRootDomain();
-	}
-
 	try {
 		const parts = [
 			`${name}=`,
 			'expires=Thu, 01 Jan 1970 00:00:00 GMT',
-			`path=${opts.path}`,
+			'path=/',
 		];
-
-		if (opts.domain) {
-			parts.push(`domain=${opts.domain}`);
+		const domain = resolveCookieDomain(config);
+		if (domain) {
+			parts.push(`domain=${domain}`);
 		}
 
 		document.cookie = parts.join('; ');
 	} catch (error) {
 		console.warn(`Failed to delete cookie "${name}":`, error);
+	}
+};
+
+/**
+ * Expires `name` host-only and at every parent domain of the page's host,
+ * and at `config.defaultDomain`, at path `/`: for a cookie another store
+ * or an earlier configuration may have scoped anywhere this page reads it.
+ * Writes nothing when the page is sent no such cookie.
+ *
+ * @internal
+ */
+export const deleteCookieInEveryScope = function deleteCookieInEveryScope(
+	name: string,
+	config?: StorageConfig
+): void {
+	if (getRawCookieValue(name) === null) {
+		return;
+	}
+	// `''` is host-only.
+	const domains = new Set([
+		'',
+		getRootDomain(),
+		...cookieDomainsOf(window.location.hostname),
+		config?.defaultDomain ?? '',
+	]);
+	for (const domain of domains) {
+		deleteCookie(name, { defaultDomain: domain });
 	}
 };

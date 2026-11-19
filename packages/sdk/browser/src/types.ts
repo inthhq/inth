@@ -33,6 +33,7 @@ import type {
 	RuntimeNetworkBlockerOptions,
 } from '@inth/sdk-core/runtime';
 import type { ConsentTesting } from '@inth/sdk-core/testing';
+import type { ConsentDialogTriggerVisibility } from '@inth/sdk-schema/config';
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 import type { Theme } from '@inth/sdk-ui/theme';
 
@@ -45,7 +46,7 @@ import type { Theme } from '@inth/sdk-ui/theme';
  *   resolved locally so the banner can render without waiting on `/init`.
  *   Falls back to `/init` with a warning when the manifest is unavailable.
  *
- * Tests load `c15t.testing.js` instead, which resolves a policy with no
+ * Tests load `inth.testing.js` instead, which resolves a policy with no
  * backend.
  */
 export type ConsentModeName = 'hosted' | 'manifest';
@@ -72,7 +73,7 @@ export interface ConsentBannerOptions {
 	rejectButtonText?: string;
 	/** "Customize" label. */
 	customizeButtonText?: string;
-	/** Drop the "Secured by c15t" tag. The IAB banner always retains its tag. */
+	/** Drop the "Secured by" tag. */
 	hideBranding?: boolean;
 	/** Which legal links to render inline. `null` renders none. */
 	legalLinks?: (keyof LegalLinks)[] | null;
@@ -86,7 +87,7 @@ export interface ConsentBannerOptions {
 
 /** Overrides for the preference centre dialog. */
 export interface ConsentDialogOptions {
-	/** Drop the "Secured by c15t" tag. */
+	/** Drop the "Secured by" tag. */
 	hideBranding?: boolean;
 	/** Which legal links to render inline. `null` renders none. */
 	legalLinks?: (keyof LegalLinks)[] | null;
@@ -101,11 +102,14 @@ export interface ConsentTriggerOptions {
 	/** Button size. Defaults to `md`. */
 	size?: 'sm' | 'md' | 'lg';
 	/**
-	 * When to show it. `always` (default) whenever no other surface is
-	 * open; `after-consent` only once the visitor has decided.
+	 * When to show it, by the framework triggers' rule. `always` (default)
+	 * whenever the dialog is closed, beside an open banner too;
+	 * `after-consent` only once no prompt is owed (a choice saved or a
+	 * notice dismissed); `never` not at all. It stays hidden while the
+	 * policy leaves nothing to manage.
 	 */
-	showWhen?: 'always' | 'after-consent';
-	/** Accessible name. */
+	showWhen?: ConsentDialogTriggerVisibility;
+	/** Accessible name. Defaults to the `trigger.label` translation. */
 	ariaLabel?: string;
 	/** Remember a dragged-to corner in localStorage. Defaults to `true`. */
 	persistPosition?: boolean;
@@ -131,13 +135,13 @@ export interface ConsentUIOptions {
 	 *
 	 * In the shadow root, page CSS still reaches each part through
 	 * `::part()`: every element `theme.slots` can name carries its slot key
-	 * as a part, as in `[data-c15t-ui]::part(consentBannerCard)`.
+	 * as a part, as in `[data-inth-ui]::part(consentBannerCard)`.
 	 */
 	shadow?: boolean;
 	/**
 	 * Colour scheme. `'system'` follows `prefers-color-scheme`. `null`
 	 * leaves the scheme to the page: the UI is dark while `<html>` has a
-	 * `dark` or `c15t-dark` class, and follows it as it changes. The script
+	 * `dark` or `inth-dark` class, and follows it as it changes. The script
 	 * tag reads `data-color-scheme`, with `none` for `null`.
 	 *
 	 * @default 'system'
@@ -222,17 +226,17 @@ export interface ConsentClientBaseOptions extends Pick<
 	'consentSource' | 'persistence' | 'scriptLoader' | 'vendors'
 > {
 	/**
-	 * Content Security Policy nonce for the elements c15t adds to the page:
+	 * Content Security Policy nonce for the elements Inth adds to the page:
 	 * the stock UI's `<style>` element and every `<script>` the `scripts`
 	 * option loads. Set it when your CSP allows styles or scripts by nonce
 	 * instead of `'unsafe-inline'`. A script's own `nonce` takes precedence.
 	 *
 	 * The script-tag build reads `data-nonce`, then the tag's own `nonce`, so
-	 * `<script nonce="…" src=".../c15t.js">` needs nothing else.
+	 * `<script nonce="…" src=".../inth.js">` needs nothing else.
 	 *
-	 * With a nonce set, inert `<script type="text/plain" data-c15t-category>`
+	 * With a nonce set, inert `<script type="text/plain" data-inth-category>`
 	 * tags run only when they carry the same nonce; others are skipped with
-	 * a warning and marked `data-c15t-activated="untrusted"`. Activation
+	 * a warning and marked `data-inth-activated="untrusted"`. Activation
 	 * creates a new script, which a `'strict-dynamic'` policy runs without a
 	 * nonce, so injected markup would otherwise run once consent is granted.
 	 * The configured nonce is never copied onto an inert tag.
@@ -241,7 +245,7 @@ export interface ConsentClientBaseOptions extends Pick<
 	/** IAB configuration. Requires the `@inth/sdk/iab-client` entry. */
 	iab?: ConsentRuntimeOptions['iab'];
 	/**
-	 * IAB GPP options for `c15t.gpp.js` on a script-tag page: an object sets
+	 * IAB GPP options for `inth.gpp.js` on a script-tag page: an object sets
 	 * `usApproach`, `usFallback`, `mspaMode`, `optOutCategories`, `cmpId`
 	 * or `tcf`, and `false` keeps GPP off although the script loaded. In a
 	 * bundled app, call `mountGPP()` from `@inth/sdk/gpp` instead.
@@ -270,9 +274,7 @@ export interface ConsentClientBaseOptions extends Pick<
 	 * @default true
 	 */
 	reloadOnConsentRevoked?: boolean;
-	/** Lifecycle callbacks. */
 	callbacks?: Callbacks;
-	/** Cookie and storage settings. */
 	storageConfig?: StorageConfig;
 	/** Known country, region, language or GPC signal. */
 	overrides?: KernelOverrides;
@@ -308,7 +310,7 @@ export interface ConsentClientBaseOptions extends Pick<
 	experiment?: ConsentExperiment;
 	/** UI options, or `false` for headless use. */
 	ui?: ConsentUIOptions | false;
-	/** Package name reported on `window.c15t`. */
+	/** Package name reported on `window.inth`. */
 	pkg?: string;
 }
 
@@ -318,7 +320,7 @@ export interface ConsentClientBaseOptions extends Pick<
  *
  * @example
  * ```ts
- * import { init } from '@inth/sdk-browser';
+ * import { init } from '@inth/sdk';
  *
  * init({ projectUrl: 'https://your-project.inth.app' });
  * ```
@@ -345,20 +347,20 @@ export interface ConsentClientOptions extends ConsentClientBaseOptions {
 
 /**
  * What the script-tag builds accept, from the tag's `data-*` attributes
- * and `c15t.push(['config', {...}])`. A no-code site can queue
+ * and `inth.push(['config', {...}])`. A no-code site can queue
  * serializable options, transport factories, callbacks, and DOM
  * containers that way.
  */
 export interface ScriptTagClientOptions extends ConsentClientBaseOptions {
 	/**
 	 * Transport. A name picks one of the built-in modes; a factory from
-	 * `c15t.manifest()` is used as is. Defaults to `manifest` when a
+	 * `inth.manifest()` is used as is. Defaults to `manifest` when a
 	 * manifest is given, otherwise `hosted`.
 	 */
 	mode?: ProviderTransportFactory | ConsentModeName;
 	/**
 	 * Backend origin: your Inth project URL. Required, except in
-	 * `c15t.testing.js`.
+	 * `inth.testing.js`.
 	 */
 	projectUrl?: string;
 	/** Inline consent manifest for `manifest` mode. */
@@ -370,7 +372,7 @@ export interface ScriptTagClientOptions extends ConsentClientBaseOptions {
 	manifestUrl?: string;
 }
 
-/** Options for `@inth/sdk/hosted` and the default `c15t.js` bundle. */
+/** Options for `@inth/sdk/hosted` and the default `inth.js` bundle. */
 export interface HostedConsentClientOptions extends Omit<
 	ScriptTagClientOptions,
 	'mode' | 'manifest' | 'manifestUrl'
@@ -383,13 +385,13 @@ export interface HostedConsentClientOptions extends Omit<
 	manifestUrl?: never;
 }
 
-/** Options for `c15t.testing.js`. */
+/** Options for `inth.testing.js`. */
 export interface TestingScriptTagOptions extends Omit<
 	ScriptTagClientOptions,
 	'mode' | 'projectUrl' | 'manifest' | 'manifestUrl'
 > {
 	/**
-	 * Always `testing()`: a value from `c15t.testing()`, or a transport
+	 * Always `testing()`: a value from `inth.testing()`, or a transport
 	 * factory a test stands in for the backend with, is used as is.
 	 */
 	mode?: ConsentTesting | ProviderTransportFactory;
@@ -470,12 +472,7 @@ export interface ConsentClient {
 	readonly started: boolean;
 	/** The current consent snapshot. */
 	getSnapshot: () => ConsentSnapshot;
-	/**
-	 * Observe every snapshot change.
-	 *
-	 * @param listener - Called with each new snapshot.
-	 * @returns An unsubscribe function.
-	 */
+	/** Observe every snapshot change. */
 	subscribe: (listener: (snapshot: ConsentSnapshot) => void) => Unsubscribe;
 	/**
 	 * Resolves once the policy is resolved and the UI can render. A
@@ -547,15 +544,9 @@ export interface ConsentClient {
 	/**
 	 * Merge into the geo, language and GPC context: a key you pass replaces
 	 * its value, `undefined` clears it, and a key you leave out stays.
-	 *
-	 * @param overrides - The keys to change.
 	 */
 	setOverrides: (overrides: KernelOverrides) => void;
-	/**
-	 * Associate the consent record with an external identity.
-	 *
-	 * @param user - The external user.
-	 */
+	/** Associate the consent record with an external identity. */
 	identify: (user: KernelUser) => Promise<void>;
 	/**
 	 * Listen for a client event.
@@ -564,11 +555,7 @@ export interface ConsentClient {
 	 * a new `ui` listener receives the surface currently up, so wiring
 	 * attached after a fast init misses nothing. A listener that throws is
 	 * reported with `console.error`; the listeners after it and the matching
-	 * `c15t:*` document event still run.
-	 *
-	 * @param event - The event name.
-	 * @param listener - Called with the event payload.
-	 * @returns An unsubscribe function.
+	 * `inth:*` document event still run.
 	 */
 	on: <EventName extends keyof ConsentClientEventMap>(
 		event: EventName,

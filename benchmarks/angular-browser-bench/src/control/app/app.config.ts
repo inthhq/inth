@@ -11,7 +11,7 @@ import { provideRouter } from '@angular/router';
 
 import { routes } from './app.routes';
 
-/** The gate app's config without `provideC15t()`. */
+/** The gate app's config without `provideInth()`. */
 export const appConfig: ApplicationConfig = {
 	providers: [
 		provideBrowserGlobalErrorListeners(),

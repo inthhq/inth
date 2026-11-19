@@ -85,10 +85,10 @@ export const renderPackageSkill = function renderPackageSkill(
 		return [
 			'---',
 			`name: ${packageSkillName(packageName)}`,
-			'description: Set up or debug native c15t consent in React Native, Expo, Swift and Kotlin apps. Read the private prerelease distribution limits before installing.',
+			'description: Set up or debug native Inth consent in React Native, Expo, Swift and Kotlin apps. Read the private prerelease distribution limits before installing.',
 			'---',
 			'',
-			'# c15t mobile consent',
+			'# Inth mobile consent',
 			'',
 			'This package is a private prerelease. The bundled docs describe source APIs, not a production release, verified registry installation or device certification.',
 			'',
@@ -116,7 +116,7 @@ export const renderPackageSkill = function renderPackageSkill(
 	}
 	const slug = packageSkillName(packageName);
 	const packageLabel = packageName;
-	const heading = `c15t with ${packageName}`;
+	const heading = `Inth with ${packageName}`;
 	const quickstarts = frameworkGuides
 		.map(([dir, label]) =>
 			link(bundledFiles, `frameworks/${dir}/quickstart.md`, label)
@@ -125,7 +125,7 @@ export const renderPackageSkill = function renderPackageSkill(
 	const lines = [
 		'---',
 		`name: ${slug}`,
-		`description: Set up, customize or debug c15t consent management with ${packageLabel}. Use when ${skill.topic}, or when a task mentions a cookie banner, consent dialog, GDPR or CCPA prompts, blocking analytics until consent, Google Consent Mode or IAB TCF.`,
+		`description: Set up, customize or debug Inth consent management with ${packageLabel}. Use when ${skill.topic}, or when a task mentions a cookie banner, consent dialog, GDPR or CCPA prompts, blocking analytics until consent, Google Consent Mode or IAB TCF.`,
 		'---',
 		'',
 		`# ${heading}`,
@@ -153,9 +153,9 @@ export const renderPackageSkill = function renderPackageSkill(
 		'',
 		'## Rules',
 		'',
-		`- Install with ${skill.install}. Keep every c15t package on the same release.`,
+		`- Install with ${skill.install}. Keep every Inth package on the same release.`,
 		"- The backend URL comes from the user's Inth project or self-hosted backend. It is public configuration. Never invent one; ask for it or read it from the environment.",
-		'- Register analytics, pixels and embeds through c15t and remove the vendor\'s own loader or plugin. With a bundler, use `@inth/integrations` helpers and `ConsentGate`. On a plain HTML page, change the vendor\'s `<script>` to `type="text/plain"` with `data-c15t-category`. A banner does not block code loaded elsewhere.',
+		'- Register analytics, pixels and embeds through Inth and remove the vendor\'s own loader or plugin. With a bundler, use `@inth/integrations` helpers and `ConsentGate`. On a plain HTML page, change the vendor\'s `<script>` to `type="text/plain"` with `data-inth-category`. A banner does not block code loaded elsewhere.',
 		'- Gate features on the current permission. Never save a consent choice on page load or from code; only a visitor action records one.',
 		'- Offline mode keeps policies in code and choices in the browser, with no consent records. Not recommended for production environments.',
 		'- Keep one consent provider or root for the whole app, mounted outside route-level components.',

@@ -34,14 +34,25 @@
  */
 export interface StorageConfig {
 	/**
-	 * Custom storage key for localStorage and cookies
+	 * Custom storage key for localStorage and cookies. The notice
+	 * dismissal, vendor denials and clear epoch use keys derived from it
+	 * (`<key>-notice`, `<key>-vendors`, `<key>-epoch`, ...).
 	 *
-	 * @default 'c15t'
+	 * @default 'inth'
 	 *
 	 * @remarks
-	 * The default changed from 'privacy-consent-storage' to 'c15t' in v1.8+
-	 * to reduce cookie size. Legacy data is automatically migrated.
+	 * Inth always writes under this key. Under the default key it also
+	 * reads records c15t stored under `c15t`, so a visitor who chose on a
+	 * c15t page of the same site, or of a sibling subdomain sharing the
+	 * cookie domain, is not asked again. A record under `inth` always wins
+	 * over one under `c15t`; Inth never rewrites c15t's records, and
+	 * `clear()` removes them too. A custom key reads no c15t records.
 	 *
+	 * To share choices both ways with a c15t site, set `storageKey: 'c15t'`:
+	 * Inth then reads and writes the same records c15t does.
+	 *
+	 * Every key except `'privacy-consent-storage'` also reads a record a
+	 * version before 1.8 stored under that key.
 	 */
 	storageKey?: string;
 
@@ -62,7 +73,7 @@ export interface StorageConfig {
 	 * @default '' (current domain only)
 	 *
 	 * @remarks
-	 * Overrides crossSubdomain if set.
+	 * Ignored when `crossSubdomain` is set, which uses the root domain.
 	 * Use '.example.com' for all subdomains.
 	 */
 	defaultDomain?: string;
@@ -73,72 +84,4 @@ export interface StorageConfig {
 	 * @default 365
 	 */
 	defaultExpiryDays?: number;
-}
-
-/**
- * Configuration options for cookie storage
- *
- * @public
- */
-export interface CookieOptions {
-	/**
-	 * Cookie expiration in days
-	 * @default 365
-	 */
-	expiryDays?: number;
-
-	/**
-	 * Enable cross-subdomain cookies
-	 *
-	 * @default false
-	 *
-	 * @remarks
-	 * Simpler alternative to setting domain explicitly.
-	 * Automatically uses getRootDomain() when true.
-	 */
-	crossSubdomain?: boolean;
-
-	/**
-	 * Cookie domain
-	 *
-	 * @remarks
-	 * - Empty string or undefined: Current domain only (most secure)
-	 * - `.example.com`: All subdomains (better UX, less secure)
-	 * - `example.com`: Exact domain match
-	 *
-	 * Takes precedence over crossSubdomain if both are set.
-	 *
-	 * @default '' (current domain only)
-	 *
-	 * @example
-	 * ```typescript
-	 * // Current domain only (default, most secure)
-	 * createPersistence({ kernel });
-	 *
-	 * // Easy way: Cross-subdomain
-	 * createPersistence({ kernel, storageConfig: { crossSubdomain: true } });
-	 *
-	 * // Advanced: Explicit domain
-	 * createPersistence({ kernel, storageConfig: { domain: '.example.com' } });
-	 * ```
-	 */
-	domain?: string;
-
-	/**
-	 * Cookie path
-	 * @default '/'
-	 */
-	path?: string;
-
-	/**
-	 * Whether the cookie should be secure (HTTPS only)
-	 * @default true in production
-	 */
-	secure?: boolean;
-
-	/**
-	 * SameSite attribute for the cookie
-	 * @default 'Lax'
-	 */
-	sameSite?: 'Strict' | 'Lax' | 'None';
 }

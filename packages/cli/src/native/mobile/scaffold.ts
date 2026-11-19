@@ -516,9 +516,9 @@ export const swiftUIEntry = (
 ): string =>
   configuration === ""
     ? `ContentView()
-    .c15tConsent(privacyPolicyURL: URL(string: ${swiftString(privacyPolicyUrl)})!)`
+    .inth(privacyPolicyURL: URL(string: ${swiftString(privacyPolicyUrl)})!)`
     : `ContentView()
-    .c15tConsent(
+    .inth(
         ${indentBlock(configuration, "        ")},
         privacyPolicyURL: URL(string: ${swiftString(privacyPolicyUrl)})!
     )`;

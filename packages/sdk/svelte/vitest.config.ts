@@ -2,7 +2,7 @@
 // requires the @sveltejs/vite-plugin-svelte transform pipeline for component
 // compilation.
 //
-// Two projects, because Svelte 5 dual-compiles components:
+// Three projects, because Svelte 5 dual-compiles components:
 // - `client` resolves the `browser` condition and gets client-compiled
 //   components, which is what `mount` and @testing-library/svelte need.
 // - `ssr` resolves `svelte`/`node` and gets server-compiled components, which
@@ -13,7 +13,7 @@
 //   focus.
 import { resolve } from 'node:path';
 
-import { baseConfig } from '@c15t/vitest-config/base';
+import { baseConfig } from '@inth/vitest-config/base';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { playwright } from '@vitest/browser-playwright';
 import { transformWithEsbuild } from 'vite';
@@ -92,6 +92,18 @@ const workspaceAliases = [
 		),
 	},
 	{
+		find: '@inth/sdk/runtime/page-globals',
+		replacement: resolve(__dirname, '../core/src/libs/page-globals.ts'),
+	},
+	{
+		find: '@inth/sdk/runtime/stand-in-kernel',
+		replacement: resolve(__dirname, '../core/src/runtime/stand-in-kernel.ts'),
+	},
+	{
+		find: '@inth/sdk/runtime/storage-for',
+		replacement: resolve(__dirname, '../core/src/libs/storage-for.ts'),
+	},
+	{
 		find: '@inth/sdk/runtime',
 		replacement: resolve(__dirname, '../core/src/runtime/index.ts'),
 	},
@@ -167,6 +179,13 @@ const workspaceAliases = [
 	{
 		find: '@inth/sdk/iab-support',
 		replacement: resolve(__dirname, '../core/src/iab-support.ts'),
+	},
+	{
+		find: '@inth/sdk/surface-actions/plain-scripts',
+		replacement: resolve(
+			__dirname,
+			'../core/src/surface-actions/plain-scripts.ts'
+		),
 	},
 	{
 		find: '@inth/sdk/surface-actions',

@@ -14,10 +14,7 @@
  * @internal
  */
 
-import {
-	defaultTranslationConfig,
-	watchRevocationReload,
-} from '@inth/sdk/engine';
+import { watchRevocationReload } from '@inth/sdk/engine';
 import { createIframeBlocker } from '@inth/sdk/modules/iframe-blocker';
 import { createPersistence } from '@inth/sdk/modules/persistence';
 import { createWindowDebug } from '@inth/sdk/modules/window-debug';
@@ -42,11 +39,6 @@ import type {
 export const createOwnedRuntime = function createOwnedRuntime(
 	options: ConsentProviderRuntimeOptions
 ): ConsentProviderRuntime {
-	// The surfaces' English fallback (`translation-defaults.ts`), under its
-	// global key: this module imports nothing of the package.
-	(globalThis as Record<symbol, unknown>)[
-		Symbol.for('c15t.svelte.defaultTranslations')
-	] = defaultTranslationConfig;
 	return createConsentProviderRuntime(options, {
 		// The script loader, network blocker, data clearing and a
 		// `consentSource` connection load on demand, each only when

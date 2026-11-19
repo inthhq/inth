@@ -150,7 +150,7 @@ test('root-relative prompt paths resolve like links', () => {
 
 test('prompt text keeps paths that are not site docs', () => {
 	const text =
-		'Proxy /api/c15t, keep `src/docs/notes.md`, and read /docsets/x, https://v3.c15t.com/docsets/x or https://inth.com/docs/a.md.';
+		'Proxy /api/inth, keep `src/docs/notes.md`, and read /docsets/x, https://v3.c15t.com/docsets/x or https://inth.com/docs/a.md.';
 	expect(packagePromptLinks(text, 'upgrade-v3.md', promptFiles, site)).toBe(
 		text
 	);
@@ -177,7 +177,7 @@ test('AGENTS.md root-relative links resolve beside the docs directory', () => {
 });
 
 test('unbundled pages use the docs site of the package release', () => {
-	// The @c15t/cli bundle holds upgrade-v3.md but not the framework guides,
+	// The @inth/cli bundle holds upgrade-v3.md but not the framework guides,
 	// and c15t.com documents v2 during the v3 prereleases.
 	const cliFiles = new Set(['upgrade-v3.md']);
 	const v3 = docsOriginForVersion('3.0.0-alpha.9');

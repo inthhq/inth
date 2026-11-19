@@ -1,18 +1,18 @@
 ---
 title: The Trade Desk
-description: Load The Trade Desk with c15t after marketing consent and verify its loader, storage and revocation behavior.
-seoTitle: The Trade Desk consent with c15t
+description: Load The Trade Desk with Inth after marketing consent and verify its loader, storage and revocation behavior.
+seoTitle: The Trade Desk consent with Inth
 seoDescription: Load The Trade Desk Universal Pixel only after marketing consent. Learn what theTradeDeskPixel queues, which cookies remain and how to verify it.
 icon: radar
 group: integrations
 ---
 
 The Trade Desk Universal Pixel records conversions and builds ad audiences.
-The c15t `theTradeDeskPixel` helper waits until the `marketing` category is
+The Inth `theTradeDeskPixel` helper waits until the `marketing` category is
 allowed before it defines the pixel globals and adds the loader.
 
 The Trade Desk has no API to stop its SDK. When the visitor withdraws, the
-helper leaves the SDK on the page, and c15t's default page reload removes it.
+helper leaves the SDK on the page, and Inth's default page reload removes it.
 
 ## Configure The Trade Desk
 
@@ -31,8 +31,8 @@ The Trade Desk without consent.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `advertiserId` | Required | Public advertiser ID. Trimmed. If it's missing or blank, c15t logs an error and never loads the pixel. |
-| `pixelIds` | Required | Nonempty array of public Universal Pixel IDs, each trimmed. If the array is empty or any entry is blank, c15t logs an error and skips the whole helper. |
+| `advertiserId` | Required | Public advertiser ID. Trimmed. If it's missing or blank, Inth logs an error and never loads the pixel. |
+| `pixelIds` | Required | Nonempty array of public Universal Pixel IDs, each trimmed. If the array is empty or any entry is blank, Inth logs an error and skips the whole helper. |
 | `enableCookieSyncing` | Vendor default | Passed to `init` when set. `false` turns off cookie syncing, but it doesn't stop all cookies and doesn't make loading before consent safe. |
 | `dataProcessingOption` | None | Limited data use setting, such as `{ policies: ['LDU'], region: 'US-CO' }`. It doesn't replace consent. |
 | `scriptUrl` | `https://js.adsrvr.org/up_loader.3.0.0.js` | Loader URL override. A blank value uses the default. Walmart DSP accounts use `https://azjs.adsrvr.org/thetradedesk-ads/up_loader.3.0.0.js`. |
@@ -48,11 +48,11 @@ If your page already defines `ttdConversionEvents` or the layer, the helper
 leaves them alone.
 
 The SDK reads TCF and GPP signals where they apply. Those signals control what
-the vendor does after it loads. They don't replace the c15t gate. Send your own
+the vendor does after it loads. They don't replace the Inth gate. Send your own
 conversion calls only while marketing and any vendor consent stay granted.
 
 The Trade Desk documents no way to stop or tear down the SDK in the browser.
-On withdrawal, the helper keeps the loader element on the page. Keep c15t's
+On withdrawal, the helper keeps the loader element on the page. Keep Inth's
 default `reloadOnConsentRevoked` enabled. Without the reload, existing code,
 requests and frames can keep running until the visitor navigates. If the
 visitor grants consent again on the same page, the helper reuses that loader

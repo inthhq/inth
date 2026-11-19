@@ -16,8 +16,10 @@
  */
 import type { AllConsentNames } from '../../consent/consent-types';
 import { allConsentNames } from '../../consent/consent-types';
+import { vendorAxisActive } from '../../libs/vendors';
 import type { ConsentSnapshot, ConsentState } from '../../types';
-import { deniedVendorIds, getEffectiveGateState, has } from '../has';
+import { getEffectiveGateState, has } from '../has';
+import { deniedVendorIds } from '../vendor-denial';
 
 /**
  * Per-pass eligibility context. Built once per kernel tick / DOM scan
@@ -53,7 +55,7 @@ export const buildReconcilePass = function buildReconcilePass(
 	return {
 		consents: getEffectiveGateState(snapshot).effectivePermissions,
 		declared: new Set(snapshot.vendors?.declared.map((vendor) => vendor.id)),
-		isIabMode: snapshot.model === 'iab',
+		isIabMode: !vendorAxisActive(snapshot),
 		storedDenied: stored && stored.length > 0 ? new Set(stored) : null,
 		vendorDenied: deniedVendorIds(snapshot),
 	};
@@ -97,7 +99,7 @@ export const determineCategory = function determineCategory(
  * `data-src` for their own lazy loading. Only a marked iframe is restored
  * when its last gate attribute is removed.
  */
-export const PAUSED_ATTRIBUTE = 'data-c15t-paused';
+export const PAUSED_ATTRIBUTE = 'data-inth-paused';
 
 /** Move a paused `data-src` back to `src` when it is a web URL. */
 const restoreSource = function restoreSource(iframe: HTMLIFrameElement): void {
@@ -150,7 +152,7 @@ export const reconcileIframe = function reconcileIframe(
 	if (category === null) {
 		// oxlint-disable-next-line no-console -- config bug the site owner must fix
 		console.warn(
-			`[c15t] iframe-blocker: invalid data-category "${iframe.getAttribute(
+			`[inth] iframe-blocker: invalid data-category "${iframe.getAttribute(
 				'data-category'
 			)}". Must be one of: ${allConsentNames.join(', ')}. The iframe stays blocked.`
 		);
@@ -181,7 +183,6 @@ export const reconcileIframe = function reconcileIframe(
 		return;
 	}
 
-	// Not allowed. Clear src if present.
 	const src = iframe.getAttribute('src');
 	if (!src) {
 		return;

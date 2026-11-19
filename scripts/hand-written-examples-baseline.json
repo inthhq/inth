@@ -68,6 +68,5 @@
 	"packages/sdk/docs/integrations/x-pixel.mdx": 1,
 	"packages/sdk/docs/shared/integrations/consent-embed.mdx": 7,
 	"packages/sdk/docs/shared/integrations/register-scripts.mdx": 5,
-	"packages/sdk/docs/shared/react/components/dev-tools.mdx": 1,
-	"packages/sdk/docs/shared/upgrade-v3/use-consent-manager.mdx": 1
+	"packages/sdk/docs/shared/react/components/dev-tools.mdx": 1
 }

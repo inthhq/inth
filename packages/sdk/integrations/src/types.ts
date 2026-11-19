@@ -4,14 +4,14 @@ import type {
 	VendorDetails,
 } from '@inth/sdk/engine';
 
-export const VENDOR_MANIFEST_KIND = 'c15t.vendor-manifest';
+export const VENDOR_MANIFEST_KIND = 'inth.vendor-manifest';
 export const VENDOR_MANIFEST_SCHEMA_VERSION = 1;
 export const vendorManifestContract = {
 	kind: VENDOR_MANIFEST_KIND,
 	schemaVersion: VENDOR_MANIFEST_SCHEMA_VERSION,
 } as const;
 
-export const RUNTIME_VALUE_KIND = 'c15t.runtime-value';
+export const RUNTIME_VALUE_KIND = 'inth.runtime-value';
 
 export interface RuntimeValue {
 	kind: typeof RUNTIME_VALUE_KIND;
@@ -37,10 +37,6 @@ type ManifestInterpolationToken = `{{${string}}}`;
 export type ManifestCategoryCondition = HasCondition<
 	AllConsentNames | ManifestInterpolationToken
 >;
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Manifest Step Types — individual operations the runtime can execute
-// ─────────────────────────────────────────────────────────────────────────────
 
 export interface LoadScriptStep {
 	type: 'loadScript';
@@ -130,7 +126,6 @@ export interface CallGlobalStep {
 	global: string;
 	/** Method to call on the global. If omitted, the global itself is called as a function. */
 	method?: string;
-	/** Arguments to pass */
 	args?: unknown[];
 	/**
 	 * Clone arguments as literal JSON without interpreting runtime value markers.
@@ -144,7 +139,6 @@ export interface PushToQueueStep {
 	type: 'pushToQueue';
 	/** Global array name that receives queued values (e.g. 'dataLayer') */
 	queue: string;
-	/** Value to push onto the queue */
 	value: unknown;
 }
 
@@ -152,7 +146,6 @@ export interface SetGlobalPathStep {
 	type: 'setGlobalPath';
 	/** Path segments under window (e.g. ['databuddy', 'options', 'disabled']) */
 	path: string[];
-	/** Value to assign at the target path */
 	value: unknown;
 	/** Only assign while the root global is still a snippet queue array. */
 	ifGlobalIsQueue?: boolean;
@@ -168,7 +161,6 @@ export interface DefineQueueMethodsStep {
 	type: 'defineQueueMethods';
 	/** Global array/object name that owns the queue methods */
 	target: string;
-	/** Method names to attach */
 	methods: string[];
 	/** Optional queue location. Defaults to the target itself. */
 	queue?:
@@ -286,7 +278,6 @@ export interface ConstructGlobalStep {
 	constructor: string;
 	/** Global name to assign the constructed instance to */
 	assignTo: string;
-	/** Constructor args */
 	args?: unknown[];
 	/**
 	 * Copies the current `window[assignTo]` value into the first constructor arg object
@@ -310,10 +301,6 @@ export type ManifestStep =
 	| DefineQueueProxyStep
 	| ConstructGlobalStep;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Consent Signal — how to communicate consent state to the vendor
-// ─────────────────────────────────────────────────────────────────────────────
-
 /**
  * Consent signal type determines how consent state is communicated to the vendor.
  *
@@ -321,15 +308,11 @@ export type ManifestStep =
  * - `'rudderstack'` — RudderStack consent-management pattern: calls
  *   `rudderanalytics.consent({ consentManagement: { enabled, provider: 'custom',
  *   allowedConsentIds, deniedConsentIds } })` with the mapping's consent IDs
- *   partitioned by the current c15t consent state
+ *   partitioned by the current Inth consent state
  * - `'clarity'` — Microsoft Clarity Consent V2: calls
  *   `clarity('consentv2', state)` with the mapping's storage names
  */
 export type ConsentSignalType = 'gtag' | 'rudderstack' | 'clarity';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Vendor Manifest — declarative vendor integration definition
-// ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * A declarative definition of a vendor integration.
@@ -338,10 +321,8 @@ export type ConsentSignalType = 'gtag' | 'rudderstack' | 'clarity';
  * serializable resolved manifest and then converts into a runtime `Script`.
  */
 export interface VendorManifest extends ManifestContract {
-	/** Manifest contract identifier. */
 	kind: typeof VENDOR_MANIFEST_KIND;
 
-	/** Manifest schema version. */
 	schemaVersion: typeof VENDOR_MANIFEST_SCHEMA_VERSION;
 
 	/** Unique vendor identifier (used as Script.id) */
@@ -414,9 +395,9 @@ export interface VendorManifest extends ManifestContract {
 	onConsentDenied?: ManifestStep[];
 
 	/**
-	 * Maps c15t consent categories to vendor-specific consent type names.
+	 * Maps Inth consent categories to vendor-specific consent type names.
 	 *
-	 * Used with `consentSignal` to translate c15t consent state into
+	 * Used with `consentSignal` to translate Inth consent state into
 	 * the vendor's consent API format.
 	 *
 	 * @example
@@ -441,7 +422,7 @@ export interface VendorManifest extends ManifestContract {
 
 	/**
 	 * Vendor consent types the `'default'` signal of a `'gtag'` or
-	 * `'clarity'` manifest sets whatever the c15t consent state says.
+	 * `'clarity'` manifest sets whatever the Inth consent state says.
 	 * Updates and a vendor the subject turned off ignore them.
 	 */
 	consentSignalDefaults?:

@@ -14,23 +14,23 @@ import { regionPreviewHeaders } from './scripts/region-preview.mjs';
  * - unset: `src/routes/__root.tsx`, the server resolves consent and the
  *   loader awaits it.
  * - `streamed`: the loader streams the pending consent state.
- * - `same-origin`: the browser talks to the `/api/c15t` server route.
+ * - `same-origin`: the browser talks to the `/api/inth` server route.
  * - `static`: every page is prerendered and the browser resolves consent.
  */
-const rendering = process.env.C15T_TANSTACK_RENDERING;
+const rendering = process.env.INTH_TANSTACK_RENDERING;
 const variants = new Set(['same-origin', 'static', 'streamed']);
 if (rendering && !variants.has(rendering)) {
-	throw new Error(`Unknown C15T_TANSTACK_RENDERING ${rendering}`);
+	throw new Error(`Unknown INTH_TANSTACK_RENDERING ${rendering}`);
 }
 
 /**
- * `C15T_EXPERIMENT=1` swaps in `src/experiment-root.tsx`: the default root
+ * `INTH_EXPERIMENT=1` swaps in `src/experiment-root.tsx`: the default root
  * plus the banner-shape experiment, run per request with `?experiment=1`.
  */
-const experiment = process.env.C15T_EXPERIMENT === '1';
+const experiment = process.env.INTH_EXPERIMENT === '1';
 if (experiment && rendering) {
 	throw new Error(
-		'C15T_EXPERIMENT runs on the default root; unset C15T_TANSTACK_RENDERING'
+		'INTH_EXPERIMENT runs on the default root; unset INTH_TANSTACK_RENDERING'
 	);
 }
 const rootFile = experiment
@@ -69,12 +69,12 @@ const regionPreview = (): Plugin => ({
 });
 
 export default defineConfig(() =>
-	// `src/test-backend.ts` applies `VITE_C15T_BACKEND_URL` over the
+	// `src/test-backend.ts` applies `VITE_INTH_PROJECT_URL` over the
 	// placeholder URL in the root routes. The acceptance suite sets it for
 	// production builds; set it to your Inth project URL to run by hand.
 	({
 		// Only the default `VITE_` prefix reaches `import.meta.env`. Server-only
-		// `C15T_*` secrets stay in `process.env` and never enter a bundle.
+		// `INTH_*` secrets stay in `process.env` and never enter a bundle.
 		plugins: [
 			regionPreview(),
 			rootVariant(),

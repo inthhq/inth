@@ -2,8 +2,8 @@ import { describe, expect, test } from 'vitest';
 
 import { choiceRecords } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../kernel';
-import { evaluateConsent } from '../../has';
 import { evaluateBlock } from '../decide';
+import { networkBlockerTools } from '../tools';
 import type { NetworkBlockerRule } from '../types';
 
 const makeRule = function makeRule(
@@ -25,7 +25,7 @@ describe('evaluateBlock', () => {
 			'GET',
 			[makeRule()],
 			snap,
-			evaluateConsent
+			networkBlockerTools
 		);
 		expect(decision.shouldBlock).toBe(false);
 	});
@@ -37,7 +37,7 @@ describe('evaluateBlock', () => {
 			'GET',
 			[makeRule()],
 			snap,
-			evaluateConsent
+			networkBlockerTools
 		);
 		expect(decision.shouldBlock).toBe(true);
 		expect(decision.rule?.id).toBe('r');
@@ -52,7 +52,7 @@ describe('evaluateBlock', () => {
 			'GET',
 			[makeRule()],
 			snap,
-			evaluateConsent
+			networkBlockerTools
 		);
 		expect(decision.shouldBlock).toBe(false);
 	});
@@ -66,7 +66,7 @@ describe('evaluateBlock', () => {
 			'GET',
 			[ruleA, ruleB],
 			snap,
-			evaluateConsent
+			networkBlockerTools
 		);
 		expect(decision.rule?.id).toBe('a');
 	});
@@ -79,14 +79,14 @@ describe('evaluateBlock', () => {
 			'GET',
 			[rule],
 			snap,
-			evaluateConsent
+			networkBlockerTools
 		);
 		const passed = evaluateBlock(
 			new URL('https://tracker.example/api/health'),
 			'GET',
 			[rule],
 			snap,
-			evaluateConsent
+			networkBlockerTools
 		);
 		expect(blocked.shouldBlock).toBe(true);
 		expect(passed.shouldBlock).toBe(false);
@@ -100,14 +100,14 @@ describe('evaluateBlock', () => {
 			'POST',
 			[rule],
 			snap,
-			evaluateConsent
+			networkBlockerTools
 		);
 		const passed = evaluateBlock(
 			new URL('https://tracker.example/'),
 			'GET',
 			[rule],
 			snap,
-			evaluateConsent
+			networkBlockerTools
 		);
 		expect(blocked.shouldBlock).toBe(true);
 		expect(passed.shouldBlock).toBe(false);

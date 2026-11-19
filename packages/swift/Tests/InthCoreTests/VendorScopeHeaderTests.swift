@@ -3,7 +3,7 @@ import XCTest
 
 @_spi(InthInternal) @testable import InthCore
 
-/// The `x-c15t-vendors` request line: its shape, and the cases where it stays off the request.
+/// The `x-inth-vendors` request line: its shape, and the cases where it stays off the request.
 ///
 /// The header is the mobile spelling of the `vendorIds` parameter that `gvlRequestUrl` in
 /// `packages/backend/src/http/gvl.ts` puts on the upstream GVL request, so the value contract is

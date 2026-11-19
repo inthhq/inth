@@ -27,15 +27,33 @@ import type {
 	SaveUISource,
 } from '@inth/sdk/engine';
 import type { Script } from '@inth/sdk/modules/script-loader';
+import {
+	EARLY_TAP_ROOT,
+	EARLY_TAP_STYLE_ID,
+	EARLY_TAPS_WINDOW_KEY,
+	earlyTapQueue,
+} from '@inth/sdk/runtime/page-globals';
 import type { ConsentRuntime } from '@inth/sdk/runtime/provider';
+import { createStandInKernel } from '@inth/sdk/runtime/stand-in-kernel';
+import { storageFor } from '@inth/sdk/runtime/storage-for';
 import type { ConsentActiveUI } from '@inth/sdk/schema/config';
 import { showConsentSurface } from '@inth/sdk/surface-actions';
+import type {
+	CompleteCommitInput,
+	CompleteCommitResult,
+	DeferredCommitted,
+} from '@inth/sdk/surface-actions/early-commit';
 import {
 	generateSubjectId,
 	hasStoredClearEpoch,
+	pendingIsInert,
 	planInstantCommit,
 } from '@inth/sdk/surface-actions/instant-commit';
 import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
+import {
+	isRunnableNow,
+	startPlainScripts,
+} from '@inth/sdk/surface-actions/plain-scripts';
 import { computed, ref, shallowRef } from 'vue';
 import type { Ref } from 'vue';
 
@@ -53,24 +71,8 @@ import type {
 } from '../kernel';
 import { withRegisteredScripts } from '../registered-scripts';
 import type { RegisteredScripts } from '../registered-scripts';
-import type {
-	CompleteCommitInput,
-	CompleteCommitResult,
-	DeferredCommitted,
-} from './commit';
-import {
-	isRunnableNow,
-	removePlainScripts,
-	startPlainScripts,
-} from './scripts';
-import { createStandInKernel, pendingIsInert } from './stand-in';
-import {
-	BANNER_ROOT,
-	EARLY_TAP_STYLE_ID,
-	EARLY_TAPS_KEY,
-	earlyTapQueue,
-	scheduleDeferredEngine,
-} from './trigger';
+import { removePlainScripts } from './scripts';
+import { scheduleDeferredEngine } from './trigger';
 
 /** Builds the engine's context, from a commit made before it, if any. @internal */
 export type DeferredEngineFactory = (
@@ -81,9 +83,7 @@ export type DeferredEngineFactory = (
 export interface DeferredContextOptions {
 	/** The snapshot the server rendered the page from. */
 	snapshot: ConsentSnapshot;
-	/** The app's current config. */
 	config: () => RuntimeConsentConfig;
-	/** Loads the engine chunk. */
 	loadEngine: () => Promise<DeferredEngineFactory>;
 	/** Completes a commit; loads `commit.ts` by default. A test seam. */
 	completeCommit?: (
@@ -94,9 +94,8 @@ export interface DeferredContextOptions {
 }
 
 /** The hiding `<style>` once the context handles the tap. */
-const COMMITTED_STYLE_ID = 'c15t-early-commit';
+const COMMITTED_STYLE_ID = 'inth-early-commit';
 
-/** The stock dialog's root. */
 const DIALOG_ROOT = '[data-testid="consent-dialog-root"]';
 
 /** Load the engine anyway this long after an early dialog opened. */
@@ -108,7 +107,8 @@ const BANNER_LEAVE_MS = 10_000;
 const loadCompleteCommit = async (
 	input: CompleteCommitInput
 ): Promise<CompleteCommitResult | null> => {
-	const { completeCommit } = await import('./commit');
+	const { completeCommit } =
+		await import('@inth/sdk/surface-actions/early-commit');
 	return completeCommit(input);
 };
 
@@ -122,8 +122,6 @@ const nextTask = (): Promise<void> =>
  * Creates the deferred context. Provide it like the engine's context; call
  * `start()` once the app has mounted.
  *
- * @param options - The server snapshot, the config and the engine loader.
- * @returns The context the plugin provides.
  * @internal
  */
 // oxlint-disable-next-line max-lines-per-function, max-statements -- One context, its tap routing and its engine handover.
@@ -131,12 +129,8 @@ export const createDeferredContext = function createDeferredContext(
 	options: DeferredContextOptions
 ): VueConsentKernelContext {
 	let requestEngine: () => void = () => undefined;
-	const requested = new Promise<void>((resolve) => {
-		requestEngine = resolve;
-	});
 	/** Scripts components registered before the engine (`registerScripts`). */
 	const registered = new Map<symbol, readonly Script[]>();
-	/** The app's config with the registered scripts in it. */
 	const configWithScripts = (): RuntimeConsentConfig =>
 		withRegisteredScripts(options.config(), registered.values());
 	/** The scripts still wanted besides registration `token`'s. */
@@ -176,7 +170,7 @@ export const createDeferredContext = function createDeferredContext(
 	let ahead: { clearEpoch: boolean; subjectId: string } | undefined;
 	const readAhead = () => {
 		ahead ??= {
-			clearEpoch: hasStoredClearEpoch(options.config().storageConfig),
+			clearEpoch: hasStoredClearEpoch(storageFor(options.config())),
 			subjectId: generateSubjectId(),
 		};
 		return ahead;
@@ -193,16 +187,10 @@ export const createDeferredContext = function createDeferredContext(
 
 	/** The engine's handle for each set registered before it attached. */
 	const handovers = new Map<symbol, RegisteredScripts>();
-	const engineReady = (async () => {
-		await requested;
-		let create: DeferredEngineFactory;
-		try {
-			create = await options.loadEngine();
-		} catch (error) {
-			// The page keeps the stand-in.
-			console.error('[c15t] The consent engine failed to load.', error);
-			return undefined;
-		}
+	const buildEngine = async (): Promise<
+		VueConsentKernelContext | undefined
+	> => {
+		const create = await options.loadEngine();
 		// A commit started while the chunk loaded: the engine starts from it.
 		await commitsSettled();
 		if (!active) {
@@ -227,7 +215,38 @@ export const createDeferredContext = function createDeferredContext(
 		fallback?.(context);
 		fallback = undefined;
 		return context;
-	})();
+	};
+
+	/** The load in flight. A failed one clears, so the next request retries. */
+	let loading: Promise<VueConsentKernelContext | undefined> | undefined;
+	/**
+	 * Loads the engine once; never rejects. A failure leaves the page on the
+	 * stand-in until something asks for the engine again, and rejects the
+	 * commands waiting for it so their surface shows again.
+	 */
+	const loadEngine = (): Promise<VueConsentKernelContext | undefined> => {
+		if (engine) {
+			return Promise.resolve(engine);
+		}
+		loading ??= (async () => {
+			try {
+				return await buildEngine();
+			} catch (error) {
+				console.error('[inth] The consent engine failed to load.', error);
+				if (handle.attached()) {
+					return engine;
+				}
+				engine = undefined;
+				loading = undefined;
+				handle.fail(error);
+				return undefined;
+			}
+		})();
+		return loading;
+	};
+	requestEngine = () => {
+		void loadEngine();
+	};
 
 	const activeUI = computed<ConsentActiveUI>({
 		get: () => toVueActiveUI(snapshot.value.activeUI),
@@ -251,7 +270,7 @@ export const createDeferredContext = function createDeferredContext(
 		if (nonce) {
 			style.nonce = nonce;
 		}
-		style.textContent = `${BANNER_ROOT},[data-testid="consent-banner-overlay"]{display:none!important}`;
+		style.textContent = `${EARLY_TAP_ROOT},[data-testid="consent-banner-overlay"]{display:none!important}`;
 		document.head.append(style);
 	};
 	/**
@@ -266,7 +285,7 @@ export const createDeferredContext = function createDeferredContext(
 		}
 		claimed = true;
 		style.id = COMMITTED_STYLE_ID;
-		const roots = [...document.querySelectorAll(BANNER_ROOT)];
+		const roots = [...document.querySelectorAll(EARLY_TAP_ROOT)];
 		let deadline = Number.POSITIVE_INFINITY;
 		// oxlint-disable-next-line promise/prefer-await-to-then -- Starts the clock once the engine is in.
 		void handle.ready.then(() => {
@@ -295,7 +314,8 @@ export const createDeferredContext = function createDeferredContext(
 		queue?.taps?.splice(0);
 		if (stop) {
 			queue?.stop?.();
-			(window as unknown as Record<string, unknown>)[EARLY_TAPS_KEY] = {};
+			(window as unknown as Record<string, unknown>)[EARLY_TAPS_WINDOW_KEY] =
+				{};
 		}
 		keepHidden();
 	};
@@ -496,9 +516,8 @@ export const createDeferredContext = function createDeferredContext(
 				engine.clearRecords();
 				return;
 			}
-			requestEngine();
 			// oxlint-disable-next-line promise/prefer-await-to-then -- Runs once attached.
-			void engineReady.then((attached) => attached?.clearRecords());
+			void loadEngine().then((attached) => attached?.clearRecords());
 		},
 		dispose() {
 			active = false;
@@ -585,18 +604,16 @@ export const createDeferredContext = function createDeferredContext(
 				engine.setLanguage(language);
 				return;
 			}
-			requestEngine();
 			// oxlint-disable-next-line promise/prefer-await-to-then -- Runs once attached.
-			void engineReady.then((attached) => attached?.setLanguage(language));
+			void loadEngine().then((attached) => attached?.setLanguage(language));
 		},
 		setOverrides(overrides) {
 			if (engine) {
 				engine.setOverrides(overrides);
 				return;
 			}
-			requestEngine();
 			// oxlint-disable-next-line promise/prefer-await-to-then -- Runs once attached.
-			void engineReady.then((attached) => attached?.setOverrides(overrides));
+			void loadEngine().then((attached) => attached?.setOverrides(overrides));
 		},
 		snapshot,
 		start() {

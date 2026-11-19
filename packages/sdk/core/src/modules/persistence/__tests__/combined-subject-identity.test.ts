@@ -20,9 +20,9 @@ import {
 import { createConsentKernel } from '../../../index';
 import { getRawCookieValue } from '../../../libs/cookie';
 import { generateSubjectId } from '../../../libs/generate-subject-id';
+import { legacySubjectIdKey } from '../../../libs/legacy-subject-id';
 import { resolveStorageKeys } from '../../../libs/storage-keys';
 import { readRequestConsent } from '../../../server/request-consent';
-import { resolveRequestSubject } from '../../../server/request-subject';
 import type { ConsentKernel, ConsentSnapshot, SaveInput } from '../../../types';
 import { createClearOnRevocation } from '../../clear-on-revocation';
 import { createPersistence, readStoredRecordsFromCookieHeader } from '../index';
@@ -148,7 +148,7 @@ const subjectIdOf = function subjectIdOf(kernel: ConsentKernel) {
 };
 
 const storedSid = function storedSid(storageConfig?: StorageConfig) {
-	const name = resolveStorageKeys(storageConfig).subject;
+	const name = legacySubjectIdKey(storageConfig);
 	const cookie = document.cookie
 		.split('; ')
 		.find((pair) => pair.startsWith(`${name}=`));
@@ -175,21 +175,16 @@ const everythingStored = function everythingStored(): string {
 
 /** What a server render of the next request reads from this browser. */
 const serverRead = function serverRead(storage?: StorageConfig) {
-	const subject = resolveRequestSubject({
-		now: Date.now(),
-		request: { cookie: document.cookie, url: 'http://localhost/' },
-		storage,
-	});
 	const { state } = readRequestConsent({
 		adapter: '@c15t/test',
 		now: Date.now(),
 		request: {
-			cookie: subject?.cookie ?? document.cookie,
+			cookie: document.cookie,
 			headers: new Headers(),
 		},
 		storage,
 	});
-	return { records: state.initialRecords, subject };
+	return { records: state.initialRecords };
 };
 
 const expectNoOptionalGrant = function expectNoOptionalGrant(
@@ -235,7 +230,7 @@ test.each(
 		expect(storedSid(storageConfig)).toEqual({ cookie: null, local: null });
 		expect(everythingStored()).not.toContain(startup);
 		const before = serverRead(storageConfig);
-		expect(before.subject).toBeNull();
+		expect(before.records?.subject ?? null).toBeNull();
 		expect(before.records?.choice).toBeNull();
 
 		await save(first.kernel, action);
@@ -255,8 +250,7 @@ test.each(
 		expectNoOptionalGrant(kernel.getSnapshot());
 
 		const after = serverRead(storageConfig);
-		expect(after.subject?.subjectId).toBe(startup);
-		expect(after.subject?.setCookie).toBeNull();
+		expect(after.records?.subject?.subjectId).toBe(startup);
 		expect(after.records?.choice).toBeNull();
 		expect(after.records?.subject?.subjectId).toBe(startup);
 	}
@@ -289,8 +283,7 @@ test.each(
 		expectNoOptionalGrant(first.kernel.getSnapshot());
 		expect(storedSid(storageConfig)).toEqual({ cookie: null, local: null });
 		const server = serverRead(storageConfig);
-		expect(server.subject?.subjectId).toBe(CANONICAL);
-		expect(server.subject?.setCookie).toBeNull();
+		expect(server.records?.subject?.subjectId).toBe(CANONICAL);
 		expect(server.records?.subject?.subjectId).toBe(CANONICAL);
 		expect(everythingStored()).not.toContain(startup);
 		first.handle.dispose();
@@ -348,7 +341,6 @@ test.each(STORAGE)(
 		// browser starts from what that render read.
 		const server = serverRead(storageConfig);
 		expect(server.records?.choice).toBeNull();
-		expect(server.subject?.setCookie ?? null).toBeNull();
 		const seeded = createConsentKernel({
 			consentCategories: ['necessary'],
 			initialRecords: server.records,
@@ -376,7 +368,6 @@ test.each(STORAGE)(
 test.each(STORAGE)(
 	'a notice record and a different legacy stored ID resolve to one ID in the server reader and the browser, with %s storage key',
 	async (_, storageConfig) => {
-		const keys = resolveStorageKeys(storageConfig);
 		const first = boot({ scope: 'necessary-only', storageConfig });
 		const recorded = subjectIdOf(first.kernel) as string;
 		await save(first.kernel, 'none');
@@ -384,13 +375,14 @@ test.each(STORAGE)(
 		// An older c15t on another tab, or a server response, stored its own
 		// ID meanwhile.
 		const other = generateSubjectId();
-		document.cookie = `${keys.subject}=${other}; path=/`;
-		localStorage.setItem(keys.subject, other);
+		const sid = legacySubjectIdKey(storageConfig);
+		document.cookie = `${sid}=${other}; path=/`;
+		localStorage.setItem(sid, other);
 
 		const server = serverRead(storageConfig);
 		const { kernel } = boot({ scope: 'necessary-only', storageConfig });
 
-		expect(server.subject?.subjectId).toBe(subjectIdOf(kernel));
+		expect(server.records?.subject?.subjectId).toBe(subjectIdOf(kernel));
 		// The ID the acknowledgement recorded wins over the bare stored one.
 		expect(subjectIdOf(kernel)).toBe(recorded);
 		expect(server.records?.subject?.subjectId).toBe(recorded);
@@ -454,7 +446,7 @@ test.each(
 		expect(stale.every((name) => left.includes(name))).toBe(dropNoticeDeletes);
 		expect(left.filter((name) => !stale.includes(name))).toEqual([keys.epoch]);
 		const server = serverRead(storageConfig);
-		expect(server.subject).toBeNull();
+		expect(server.records?.subject ?? null).toBeNull();
 		expect(server.records?.choice).toBeNull();
 		expect(server.records?.noticeDismissal).toBeNull();
 		first.handle.dispose();
@@ -517,7 +509,7 @@ test.each(
 		);
 		expect(stored.choice).toBeNull();
 		expect(stored.noticeDismissal).toBeNull();
-		expect(stored.subject).toBeNull();
+		expect(stored.subject ?? null).toBeNull();
 		expect(storedSid(storageConfig)).toEqual({ cookie: null, local: null });
 		expect(everythingStored()).not.toContain('account-1');
 		expect(everythingStored()).not.toContain(subjectId);
@@ -561,8 +553,7 @@ test.each(
 		expect(replaced).toBe(next ?? replaced);
 		expect(storedSid(storageConfig)).toEqual({ cookie: null, local: null });
 		const server = serverRead(storageConfig);
-		expect(server.subject?.subjectId).toBe(replaced);
-		expect(server.subject?.setCookie).toBeNull();
+		expect(server.records?.subject?.subjectId).toBe(replaced);
 		expect(server.records?.choice).toBeNull();
 		expect(everythingStored()).not.toContain(startup);
 		expect(everythingStored()).not.toContain(CANONICAL);
@@ -621,7 +612,9 @@ test.each(
 		for (const key of expected) {
 			expect(Object.keys(kept), key).toContain(key);
 		}
-		expect(Object.keys(kept)).not.toContain(`cookie:${keys.subject}`);
+		expect(Object.keys(kept)).not.toContain(
+			`cookie:${legacySubjectIdKey(storageConfig)}`
+		);
 
 		document.cookie = `${keys.consent}-analytics=tracking; path=/`;
 		document.cookie = '_ga=GA1.1.1; path=/';

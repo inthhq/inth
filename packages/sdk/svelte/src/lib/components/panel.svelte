@@ -1,17 +1,18 @@
 <script lang="ts">
 	import type { Model } from '@inth/sdk/engine';
-	import {
-		defaultTranslationConfig,
-		resolveConsentPresentation,
-	} from '@inth/sdk/engine';
+	import { resolveConsentPresentation } from '@inth/sdk/engine';
+	import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 	import { isDialogDismissKey } from '@inth/sdk/ui/primitives';
 	import styles from '@inth/sdk/ui/styles/components/consent-dialog';
-	import { getTextDirection, resolveTranslations } from '@inth/sdk/ui/utils';
+	import {
+		getTextDirection,
+		resolveStyles,
+		toStyleAttributeValue,
+	} from '@inth/sdk/ui/utils';
 
 	import { getConsentContext, getThemeContext } from '../context.svelte';
 	import { DIALOG_SHEETS } from '../dialog-sheets';
 	import { Dialog, Portal } from '../primitives';
-	import { resolveComponentStyles, toStyleAttribute } from '../utils';
 	import Branding from './branding.svelte';
 	import InlineLegalLinks from './inline-legal-links.svelte';
 	import type { ConsentDialogProps } from './panel-props';
@@ -53,18 +54,12 @@
 		localDisableAnimation ?? theme.disableAnimation ?? false
 	);
 
-	// Translations
-	const translations = $derived(
-		resolveTranslations(
-			consent.state.translationConfig,
-			defaultTranslationConfig
-		)
-	);
+	const translations = $derived(consent.state.copy);
 	const textDirection = $derived(
-		getTextDirection(consent.state.translationConfig?.defaultLanguage)
+		getTextDirection(consent.state.translations?.language)
 	);
 
-	// Open state. With `open` set the parent owns visibility, as in React:
+	// With `open` set the parent owns visibility, as in React:
 	// Escape still asks the consent manager to close (`activeUI` becomes
 	// `'none'`), but the dialog stays until `open` turns false.
 	const controlled = $derived(openProp !== undefined);
@@ -76,18 +71,12 @@
 	let dialogOpen = $state(false);
 	let lastResolvedOpen = $state(false);
 
-	// Per-element theme key styling
 	const rootStyle = $derived(
-		resolveComponentStyles(
-			'consentDialog',
-			theme.theme,
-			{ className, noStyle },
-			noStyle
-		)
+		resolveStyles('consentDialog', theme.theme, { className, noStyle }, noStyle)
 	);
 
 	const cardStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentDialogCard',
 			theme.theme,
 			{ baseClassName: styles.card, noStyle },
@@ -96,7 +85,7 @@
 	);
 
 	const headerStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentDialogHeader',
 			theme.theme,
 			{ baseClassName: styles.header, noStyle },
@@ -105,7 +94,7 @@
 	);
 
 	const titleStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentDialogTitle',
 			theme.theme,
 			{ baseClassName: styles.title, noStyle },
@@ -114,7 +103,7 @@
 	);
 
 	const descriptionStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentDialogDescription',
 			theme.theme,
 			{ baseClassName: styles.description, noStyle },
@@ -123,7 +112,7 @@
 	);
 
 	const contentStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentDialogContent',
 			theme.theme,
 			{ baseClassName: styles.content, noStyle },
@@ -132,7 +121,7 @@
 	);
 
 	const overlayStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentDialogOverlay',
 			theme.theme,
 			{ baseClassName: styles.overlay, noStyle },
@@ -140,7 +129,6 @@
 		)
 	);
 
-	// Trigger props
 	const triggerProps = $derived.by(() => {
 		if (showTrigger === true) {
 			return {};
@@ -194,7 +182,7 @@
 		{#if preferences.blocking}
 			<Dialog.Backdrop
 				class={overlayStyle.className || ''}
-				style={toStyleAttribute(overlayStyle.style)}
+				style={toStyleAttributeValue(overlayStyle.style)}
 				data-disable-animation={disableAnimation ? '' : undefined}
 				data-testid="consent-dialog-overlay"
 			/>
@@ -211,31 +199,30 @@
 				class={noStyle
 					? rootStyle.className || ''
 					: `${styles.container || ''} ${rootStyle.className || ''} ${!disableAnimation ? (isOpen ? styles.contentVisible || '' : styles.contentHidden || '') : ''}`}
-				style={toStyleAttribute(rootStyle.style)}
+				style={toStyleAttributeValue(rootStyle.style)}
 				dir={textDirection}
 				aria-labelledby="consent-dialog-title"
 				aria-describedby="consent-dialog-description"
 				data-blocking={preferences.blocking ? 'true' : undefined}
 				data-testid="consent-dialog-root"
+				{...{ [SURFACE_ROOT_ATTRIBUTE]: 'dialog' }}
 				onkeydown={handleControlledDismiss}
 			>
-				<!-- Card -->
 				<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 				<div
 					class={cardStyle.className || ''}
-					style={toStyleAttribute(cardStyle.style)}
+					style={toStyleAttributeValue(cardStyle.style)}
 					data-testid="consent-dialog-card"
 					tabindex={-1}
 				>
-					<!-- Header -->
 					<div
 						class={headerStyle.className || ''}
-						style={toStyleAttribute(headerStyle.style)}
+						style={toStyleAttributeValue(headerStyle.style)}
 						data-testid="consent-dialog-header"
 					>
 						<h2
 							class={titleStyle.className || ''}
-							style={toStyleAttribute(titleStyle.style)}
+							style={toStyleAttributeValue(titleStyle.style)}
 							data-testid="consent-dialog-title"
 							id="consent-dialog-title"
 						>
@@ -243,7 +230,7 @@
 						</h2>
 						<div
 							class={descriptionStyle.className || ''}
-							style={toStyleAttribute(descriptionStyle.style)}
+							style={toStyleAttributeValue(descriptionStyle.style)}
 							data-context="dialog"
 							data-testid="consent-dialog-description"
 							id="consent-dialog-description"
@@ -256,10 +243,9 @@
 						</div>
 					</div>
 
-					<!-- Content: ConsentWidget -->
 					<div
 						class={contentStyle.className || ''}
-						style={toStyleAttribute(contentStyle.style)}
+						style={toStyleAttributeValue(contentStyle.style)}
 						data-testid="consent-dialog-content"
 					>
 						<ConsentWidget
@@ -270,9 +256,7 @@
 					<Branding
 						{hideBranding}
 						{noStyle}
-						variant="dialog-tag"
-						themeKey="consentDialogTag"
-						data-testid="consent-dialog-branding"
+						surface="dialog"
 					/>
 				</div>
 			</Dialog.Content>

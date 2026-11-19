@@ -176,8 +176,6 @@ const UNITLESS_PROPERTIES = new Set([
  * `-webkit-mask`, `msFlex` to `-ms-flex`). Custom properties (`--brand`)
  * and keys that already contain a dash are kept as written.
  *
- * @param name - The style key.
- * @returns The CSS property name.
  * @internal
  */
 export const toCSSPropertyName = function toCSSPropertyName(
@@ -199,8 +197,6 @@ export const toCSSPropertyName = function toCSSPropertyName(
  * stays `0`, the way React writes numeric styles. Strings pass through.
  *
  * @param name - The style key, camelCase or kebab-case.
- * @param value - The declared value.
- * @returns The CSS value.
  * @internal
  *
  * @example
@@ -249,7 +245,6 @@ const withCSSLengths = function withCSSLengths(
  * and keeps the slot's, as in the other adapters. A `noStyle` set on the
  * part in `components` stays: either side turns it on.
  *
- * @param slots - The theme's `slots`.
  * @param components - The app's own `components` map, which wins where both
  * set the same attribute.
  * @param classAttribute - The attribute the framework reads classes from.
@@ -312,7 +307,6 @@ export const applyThemeSlots = function applyThemeSlots<
  * The declarations a style object sets, as CSS property and value pairs.
  * Empty values (`undefined`, `null`, `''`) are dropped.
  *
- * @param style - A slot or component style object.
  * @returns `[property, value]` pairs, ready for `style.setProperty`.
  * @internal
  */
@@ -331,7 +325,6 @@ export const toCSSDeclarations = function toCSSDeclarations(
 /**
  * Serialize a style object for a `style` attribute.
  *
- * @param style - A slot or component style object.
  * @returns The attribute value, or `undefined` when nothing is set.
  * @internal
  *

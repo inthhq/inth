@@ -1,8 +1,8 @@
 /**
  * Same-origin consent proxy shared by the server adapters.
  *
- * Lets an app point its consent client at its own origin (`/api/c15t`):
- * the browser talks to the app, the app forwards to the c15t backend. Only
+ * Lets an app point its consent client at its own origin (`/api/inth`):
+ * the browser talks to the app, the app forwards to the Inth backend. Only
  * the paths the client transport calls (`subjects`, `subjects/:id`, `init`,
  * `manifest`, `health`, `status`) plus explicitly allowlisted extras are
  * forwarded; everything else is a 404, so a route built on this is never an
@@ -13,7 +13,7 @@
  * fingerprint, no user agent, and one egress IP for every visitor, which
  * scores as a bot. Forwarding the browser's identity headers and the real
  * client IP gives the WAF the same signals a direct request would carry, and
- * `x-c15t-proxy` plus the version headers give the platform a stable key for
+ * `x-inth-proxy` plus the version headers give the platform a stable key for
  * a firewall bypass rule.
  *
  * Each adapter decides where the forwarding values come from (a trusted
@@ -21,12 +21,17 @@
  * them in as {@link ConsentProxyForwarding}.
  */
 
-import { CONSENT_REQUEST_HEADER_NAMES } from '@inth/sdk-schema/types';
-
-import { c15tVersionHeaders } from '../transports/version-header';
+import {
+	identityHeaderOf,
+	isCleartextRemoteURL,
+	markResponsePrivate,
+	PUBLIC_REQUEST_HEADERS,
+} from '../libs/identity-headers';
+import { inthVersionHeaders } from '../libs/version-header';
+import { trimPathSlashes } from './shared';
 
 /** Paths the proxy forwards when no extra `paths` are configured. */
-export const CONSENT_PROXY_DEFAULT_PATHS: readonly string[] = [
+const CONSENT_PROXY_DEFAULT_PATHS: readonly string[] = [
 	'subjects',
 	'subjects/*',
 	'init',
@@ -46,21 +51,12 @@ export const CONSENT_PROXY_DEFAULT_PATHS: readonly string[] = [
  * page on another site can't save through this route.
  */
 export const CONSENT_PROXY_DEFAULT_FORWARD_HEADERS: readonly string[] = [
-	'accept',
-	'accept-language',
-	'content-type',
+	...PUBLIC_REQUEST_HEADERS,
 	'cookie',
-	'if-none-match',
-	'origin',
-	'referer',
-	'sec-fetch-site',
-	'user-agent',
-	'sec-gpc',
-	...CONSENT_REQUEST_HEADER_NAMES,
 ];
 
 /** Deadline applied to upstream requests when none is configured. */
-export const CONSENT_PROXY_DEFAULT_TIMEOUT_MS = 10_000;
+const CONSENT_PROXY_DEFAULT_TIMEOUT_MS = 10_000;
 
 /**
  * Headers that describe the hop chain. They are never copied from the
@@ -74,28 +70,22 @@ export const CONSENT_PROXY_FORWARDING_HEADERS: ReadonlySet<string> = new Set([
 	'x-forwarded-proto',
 ]);
 
-/** Headers that carry credentials and must never cross a cleartext link. */
-const CREDENTIAL_HEADERS: ReadonlySet<string> = new Set([
-	'authorization',
-	'cookie',
-	'proxy-authorization',
-]);
-
 /** Browser headers the default allowlist forwards that carry no identity. */
-export const CONSENT_PROXY_PUBLIC_FORWARD_HEADERS: ReadonlySet<string> =
-	new Set(
-		CONSENT_PROXY_DEFAULT_FORWARD_HEADERS.filter(
-			(name) => !CREDENTIAL_HEADERS.has(name)
-		)
-	);
+const CONSENT_PROXY_PUBLIC_FORWARD_HEADERS: ReadonlySet<string> = new Set(
+	PUBLIC_REQUEST_HEADERS
+);
 
-/** Headers the proxy itself sets on every upstream request. */
-const PROXY_SET_HEADERS: ReadonlySet<string> = new Set([
-	'x-c15t-proxy',
+/**
+ * Headers an upstream request may carry without varying by visitor: the
+ * public allowlist and the headers the proxy itself sets.
+ */
+const PROXY_PUBLIC_HEADERS: ReadonlySet<string> = new Set([
+	...PUBLIC_REQUEST_HEADERS,
+	'x-inth-proxy',
 	'x-forwarded-for',
 	'x-forwarded-host',
 	'x-forwarded-proto',
-	...Object.keys(c15tVersionHeaders),
+	...Object.keys(inthVersionHeaders),
 ]);
 
 /**
@@ -126,13 +116,6 @@ const BODYLESS_METHODS: ReadonlySet<string> = new Set([
 	'OPTIONS',
 ]);
 
-const LOOPBACK_HOSTS: ReadonlySet<string> = new Set([
-	'localhost',
-	'127.0.0.1',
-	'[::1]',
-	'::1',
-]);
-
 const MAX_DECODE_PASSES = 3;
 
 /** Options for an adapter's opt-in consent proxy (`proxy: { ... }`). */
@@ -147,16 +130,15 @@ export interface ConsentProxyOptions {
 
 	/**
 	 * Extra request headers to forward from the browser in addition to the
-	 * default allowlist (`accept`, `accept-language`, `content-type`,
-	 * `cookie`, `if-none-match`, `origin`, `referer`, `user-agent`,
-	 * `sec-gpc`, and every consent request header). `forwarded` and
-	 * `x-forwarded-*` are ignored: the proxy sets those itself.
+	 * default allowlist, {@link CONSENT_PROXY_DEFAULT_FORWARD_HEADERS}.
+	 * `forwarded` and `x-forwarded-*` are ignored: the proxy sets those
+	 * itself.
 	 */
 	forwardHeaders?: readonly string[];
 
 	/**
 	 * Cookie names to forward upstream. No cookies are forwarded by default:
-	 * the c15t backend does not read cookies, and the consent cookie is
+	 * the Inth backend does not read cookies, and the consent cookie is
 	 * written and read in the browser, so nothing from your origin's cookie
 	 * jar needs to leave. Set this only for a backend that expects one.
 	 * Cookies are never sent to a remote `http:` backend.
@@ -211,20 +193,9 @@ const trimTrailingSlashes = function trimTrailingSlashes(
 	return value.slice(0, end);
 };
 
-/** Removes surrounding slashes, preserving interior path segments. */
-const trimPathSlashes = function trimPathSlashes(value: string): string {
-	const trimmed = trimTrailingSlashes(value);
-	let start = 0;
-	while (start < trimmed.length && trimmed[start] === '/') {
-		start += 1;
-	}
-	return trimmed.slice(start);
-};
-
 /**
  * Normalizes an adapter's `proxy: boolean | ConsentProxyOptions` option.
  *
- * @param proxy - The adapter's `proxy` option.
  * @returns The resolved options, or `undefined` when the proxy is off.
  * @example
  * ```ts
@@ -308,8 +279,6 @@ const isUnsafeSegment = function isUnsafeSegment(segment: string): boolean {
  * are rejected the same as a literal `..`.
  *
  * @param path - Path below the route prefix, for example `subjects/sub_1`.
- * @param allowed - Allowlist patterns.
- * @returns `true` when the path is allowed.
  */
 export const isConsentProxyPathAllowed = function isConsentProxyPathAllowed(
 	path: string,
@@ -324,23 +293,6 @@ export const isConsentProxyPathAllowed = function isConsentProxyPathAllowed(
 		return false;
 	}
 	return allowed.some((pattern) => matchesPattern(pattern, segments));
-};
-
-/**
- * Whether a URL is `http:` to a host other than loopback.
- *
- * @param url - The target URL.
- * @returns `true` for a cleartext remote target.
- */
-export const isCleartextRemoteURL = function isCleartextRemoteURL(
-	url: string
-): boolean {
-	try {
-		const parsed = new URL(url);
-		return parsed.protocol === 'http:' && !LOOPBACK_HOSTS.has(parsed.hostname);
-	} catch {
-		return false;
-	}
 };
 
 /**
@@ -370,8 +322,6 @@ export const stripIdentityForCleartext = function stripIdentityForCleartext(
 /**
  * Keeps only the named cookies from a `Cookie` request header.
  *
- * @param cookieHeader - The incoming `Cookie` header value.
- * @param names - Cookie names to keep.
  * @returns The filtered header, or `undefined` when nothing remains.
  */
 export const filterCookieHeader = function filterCookieHeader(
@@ -394,23 +344,8 @@ export const filterCookieHeader = function filterCookieHeader(
  * per visitor: a known credential, or any caller-configured header outside
  * the public default allowlist (an API key, a tenant selector, ...).
  */
-const carriesIdentity = function carriesIdentity(headers: Headers): boolean {
-	for (const name of headers.keys()) {
-		const lower = name.toLowerCase();
-		if (CREDENTIAL_HEADERS.has(lower)) {
-			return true;
-		}
-		if (
-			!(
-				CONSENT_PROXY_PUBLIC_FORWARD_HEADERS.has(lower) ||
-				PROXY_SET_HEADERS.has(lower)
-			)
-		) {
-			return true;
-		}
-	}
-	return false;
-};
+const carriesIdentity = (headers: Headers): boolean =>
+	identityHeaderOf(headers.keys(), PROXY_PUBLIC_HEADERS) !== undefined;
 
 /** Inputs for {@link buildConsentProxyRequestHeaders}. */
 export interface BuildConsentProxyRequestHeadersInput {
@@ -422,18 +357,17 @@ export interface BuildConsentProxyRequestHeadersInput {
 	cookieNames?: readonly string[];
 	/** Hop-chain values the adapter vouches for. */
 	forwarding: ConsentProxyForwarding;
-	/** Package name sent as `x-c15t-proxy`, for example `@inth/svelte`. */
+	/** Package name sent as `x-inth-proxy`, for example `@inth/svelte`. */
 	adapter: string;
 }
 
 /**
  * Builds the upstream request headers: the browser allowlist, then the
- * forwarding trio, then the c15t version header and `x-c15t-proxy`.
+ * forwarding trio, then the Inth version header and `x-inth-proxy`.
  *
  * @param input - Request, allowlists, forwarding values and adapter name.
- * @returns The headers for the upstream request.
  */
-export const buildConsentProxyRequestHeaders =
+const buildConsentProxyRequestHeaders =
 	function buildConsentProxyRequestHeaders({
 		adapter,
 		cookieNames,
@@ -467,10 +401,10 @@ export const buildConsentProxyRequestHeaders =
 		}
 		headers.set('x-forwarded-host', forwarding.host);
 		headers.set('x-forwarded-proto', forwarding.proto);
-		for (const [name, value] of Object.entries(c15tVersionHeaders)) {
+		for (const [name, value] of Object.entries(inthVersionHeaders)) {
 			headers.set(name, value);
 		}
-		headers.set('x-c15t-proxy', adapter);
+		headers.set('x-inth-proxy', adapter);
 		return headers;
 	};
 
@@ -478,7 +412,6 @@ export const buildConsentProxyRequestHeaders =
  * Drops the `Domain=` attribute so a cookie the backend scoped to its own
  * host becomes host-only for the app origin.
  *
- * @param value - One `Set-Cookie` value.
  * @returns The value without its `Domain` attribute.
  */
 export const rewriteProxySetCookie = function rewriteProxySetCookie(
@@ -507,10 +440,9 @@ const readSetCookies = function readSetCookies(headers: Headers): string[] {
  * value names), body-encoding, and CORS headers, and re-appends each
  * `set-cookie` without its `Domain` attribute.
  *
- * @param upstream - The backend's response headers.
  * @returns Headers to send to the browser.
  */
-export const buildConsentProxyResponseHeaders =
+const buildConsentProxyResponseHeaders =
 	function buildConsentProxyResponseHeaders(upstream: Headers): Headers {
 		const headers = new Headers();
 		const nominated = new Set(
@@ -544,11 +476,10 @@ export interface ForwardConsentRequestInput {
 	path: string;
 	/** Absolute backend base URL. */
 	projectUrl: string;
-	/** Resolved proxy options. */
 	options: ResolvedConsentProxyOptions;
 	/** Hop-chain values the adapter vouches for. */
 	forwarding: ConsentProxyForwarding;
-	/** Package name sent as `x-c15t-proxy`, for example `@inth/svelte`. */
+	/** Package name sent as `x-inth-proxy`, for example `@inth/svelte`. */
 	adapter: string;
 	/** Fetch implementation. Defaults to `globalThis.fetch`. */
 	fetch?: typeof globalThis.fetch;
@@ -576,7 +507,7 @@ const isTimeoutError = (error: unknown): boolean =>
  * @example
  * ```ts
  * return forwardConsentRequest({
- *   adapter: '@c15t/example',
+ *   adapter: '@inth/example',
  *   projectUrl: 'https://consent.example.com',
  *   forwarding: { host: url.host, proto: 'https' },
  *   options: resolveConsentProxyOptions(true)!,
@@ -650,9 +581,7 @@ export const forwardConsentRequest = async function forwardConsentRequest({
 	if (carriesIdentity(init.headers)) {
 		// The response may vary by the forwarded identity; never let a shared
 		// cache reuse it for the next visitor.
-		responseHeaders.set('cache-control', 'private, no-store');
-		responseHeaders.delete('etag');
-		responseHeaders.delete('last-modified');
+		markResponsePrivate(responseHeaders);
 	}
 	return new Response(upstream.body, {
 		headers: responseHeaders,

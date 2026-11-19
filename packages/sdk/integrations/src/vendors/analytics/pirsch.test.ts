@@ -92,7 +92,7 @@ describe('pirsch', () => {
 		script.onLoad?.(createCallbackInfo({ id: script.id }));
 
 		// pa.js only self-initializes from DOMContentLoaded, which has already
-		// fired by the time c15t injects the script post-consent.
+		// fired by the time Inth injects the script post-consent.
 		expect(pirschInit).toHaveBeenCalledTimes(1);
 	});
 

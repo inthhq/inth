@@ -1,12 +1,24 @@
 <script lang="ts">
+	import type { ConsentDialogTriggerVisibility } from '@inth/sdk/schema/config';
+	import { resolveTriggerLabels } from '@inth/sdk/surface-state';
 	import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 	import {
-		calculateCornerFromDrag,
 		createInitialDragState,
+		createTriggerDrag,
 		getPersistedPosition,
-		persistPosition as persistToStorage,
+		isTriggerVisible,
+		nextToolbarItem,
+		onSnapEnd,
+		resolveBrandMark,
+		resolveStyles,
+		toStyleAttributeValue,
+		toolbarOrder,
 	} from '@inth/sdk/ui/utils';
-	import type { CornerPosition, DragState } from '@inth/sdk/ui/utils';
+	import type {
+		CornerPosition,
+		DragState,
+		TriggerToolbarItem,
+	} from '@inth/sdk/ui/utils';
 	import {
 		claimDevToolsLauncher,
 		EMPTY_DEVTOOLS_LAUNCHER_SNAPSHOT,
@@ -24,21 +36,16 @@
 	import { getConsentContext, getThemeContext } from '../context.svelte';
 	import { holdIdleDialogWarming, warmDialog } from '../dialog-warming';
 	import { TRIGGER_SHEETS } from '../surface-styles';
-	import { resolveComponentStyles, toStyleAttribute } from '../utils';
-	import C15TIconOnly from './icons/c15-t-icon-only.svelte';
-	import ConsentIconOnly from './icons/consent-icon-only.svelte';
+	import BrandMark from './icons/brand-mark.svelte';
 	import DevToolsIcon from './icons/dev-tools-icon.svelte';
 	import SurfaceStyles from './surface-styles.svelte';
-
-	type TriggerVisibility = 'always' | 'never';
-	type ToolbarItem = 'devtools' | 'preferences';
 
 	let {
 		defaultPosition = 'bottom-right' as CornerPosition,
 		persistPosition = true,
-		showWhen = 'always' as TriggerVisibility,
+		showWhen = 'always' as ConsentDialogTriggerVisibility,
 		size = 'md' as 'sm' | 'md' | 'lg',
-		ariaLabel = 'Open privacy settings',
+		ariaLabel,
 		noStyle = false,
 		class: className,
 		onclick,
@@ -46,8 +53,12 @@
 	}: {
 		defaultPosition?: CornerPosition;
 		persistPosition?: boolean;
-		showWhen?: TriggerVisibility;
+		/**
+		 * `always`, `after-consent` (once no prompt is owed) or `never`.
+		 */
+		showWhen?: ConsentDialogTriggerVisibility;
 		size?: 'sm' | 'md' | 'lg';
+		/** Defaults to the `trigger.label` translation. */
 		ariaLabel?: string;
 		noStyle?: boolean;
 		class?: string;
@@ -60,12 +71,8 @@
 
 	let corner: CornerPosition = $state(untrack(() => defaultPosition));
 
-	// Drag state
 	let dragState: DragState = $state(createInitialDragState());
 	let isSnapping = $state(false);
-	let hasDragged = $state(false);
-	let dragStartTime = $state(0);
-	let capturedElement: HTMLElement | null = null;
 
 	onMount(() => {
 		if (persistPosition) {
@@ -76,13 +83,17 @@
 		}
 	});
 
-	const branding = $derived(consent.state.branding);
-	// Nothing to manage without a resolved policy.
+	const brandMark = $derived(resolveBrandMark(consent.state.branding));
 	const visible = $derived(
-		consent.state.hasConsentPreferences &&
-			showWhen !== 'never' &&
-			consent.snapshot.activeUI !== 'dialog'
+		isTriggerVisible({
+			dialogOpen: consent.snapshot.activeUI === 'dialog',
+			hasConsentPreferences: consent.state.hasConsentPreferences,
+			promptOwed: consent.snapshot.promptRequirement.kind !== 'none',
+			showWhen,
+		})
 	);
+	const labels = $derived(resolveTriggerLabels(consent.state.copy));
+	const preferencesLabel = $derived(ariaLabel ?? labels.label);
 
 	// Load the deferred dialog before the first click, but only while the
 	// button is shown: a hidden trigger can't open the dialog.
@@ -125,6 +136,7 @@
 	);
 	const isDragging = $derived(dragState.isDragging);
 	let toolbarElement: HTMLDivElement | undefined = $state();
+	let buttonElement: HTMLButtonElement | undefined = $state();
 
 	// Keep the docked panel beside the toolbar as it changes corner or size.
 	// Skip mid-drag; the drop re-runs this.
@@ -139,24 +151,16 @@
 		);
 	});
 
-	// Preferences sits in the corner; DevTools, a development aid, sits
-	// farthest from it.
-	const toolbarItems: ToolbarItem[] = $derived.by(() => {
-		if (!devTools) {
-			return ['preferences'];
-		}
-		return corner.endsWith('left')
-			? ['preferences', 'devtools']
-			: ['devtools', 'preferences'];
-	});
-	let focusedItem: ToolbarItem | undefined = $state();
+	const toolbarItems: readonly TriggerToolbarItem[] = $derived(
+		devTools ? toolbarOrder(corner) : ['preferences']
+	);
+	let focusedItem: TriggerToolbarItem | undefined = $state();
 	const tabStopItem = $derived(
 		focusedItem && toolbarItems.includes(focusedItem)
 			? focusedItem
 			: toolbarItems[0]
 	);
 
-	// Position class mapping
 	const cornerClassMap: Record<CornerPosition, string> = {
 		'bottom-left': styles.bottomLeft || '',
 		'bottom-right': styles.bottomRight || '',
@@ -172,142 +176,65 @@
 
 	const positionClass = $derived(cornerClassMap[corner] || '');
 
-	// Drag style
 	const dragStyle = $derived(
 		dragState.isDragging
 			? `transform: translate(${dragState.currentX - dragState.startX}px, ${dragState.currentY - dragState.startY}px); transition: none;`
 			: 'transform: none;'
 	);
 
-	const updateCorner = function updateCorner(newCorner: CornerPosition) {
-		corner = newCorner;
-		if (persistPosition) {
-			persistToStorage(newCorner);
-		}
-		onPositionChange?.(newCorner);
-	};
+	const drag = createTriggerDrag({
+		corner: () => corner,
+		onCorner: (next) => {
+			isSnapping = true;
+			corner = next;
+			onPositionChange?.(next);
+		},
+		onDrag: (next) => {
+			dragState = next;
+		},
+		persist: () => persistPosition,
+	});
 
 	const handlePointerDown = function handlePointerDown(e: PointerEvent) {
-		if (e.button !== 0) {
-			return;
+		if (e.button === 0) {
+			isSnapping = false;
 		}
-
-		(e.target as HTMLElement).setPointerCapture(e.pointerId);
-		capturedElement = e.target as HTMLElement;
-		hasDragged = false;
-		dragStartTime = Date.now();
-
-		dragState = {
-			currentX: e.clientX,
-			currentY: e.clientY,
-			isDragging: true,
-			startX: e.clientX,
-			startY: e.clientY,
-		};
-
-		isSnapping = false;
+		drag.pointerDown(e);
 	};
 
-	const handlePointerMove = function handlePointerMove(e: PointerEvent) {
-		if (!dragState.isDragging) {
-			return;
-		}
-
-		const dx = Math.abs(e.clientX - dragState.startX);
-		const dy = Math.abs(e.clientY - dragState.startY);
-		if (dx > 5 || dy > 5) {
-			hasDragged = true;
-		}
-
-		dragState = {
-			...dragState,
-			currentX: e.clientX,
-			currentY: e.clientY,
-		};
-	};
-
-	const handlePointerUp = function handlePointerUp(e: PointerEvent) {
-		if (capturedElement) {
-			capturedElement.releasePointerCapture(e.pointerId);
-			capturedElement = null;
-		}
-
-		if (!dragState.isDragging) {
-			return;
-		}
-
-		if (hasDragged) {
-			const dragX = e.clientX - dragState.startX;
-			const dragY = e.clientY - dragState.startY;
-			const dragDuration = Date.now() - dragStartTime;
-
-			const velocityX = dragDuration > 0 ? dragX / dragDuration : 0;
-			const velocityY = dragDuration > 0 ? dragY / dragDuration : 0;
-
-			const newCorner = calculateCornerFromDrag(corner, dragX, dragY, {
-				velocityX,
-				velocityY,
-			});
-
-			if (newCorner !== corner) {
-				isSnapping = true;
-				setTimeout(() => {
-					isSnapping = false;
-				}, 300);
-				updateCorner(newCorner);
-			}
-		}
-
-		dragState = createInitialDragState();
-	};
-
-	const handlePointerCancel = function handlePointerCancel(e: PointerEvent) {
-		if (capturedElement) {
-			capturedElement.releasePointerCapture(e.pointerId);
-			capturedElement = null;
-		}
-		dragState = createInitialDragState();
-	};
-
-	const handleDevToolsClick = function handleDevToolsClick() {
-		if (hasDragged) {
+	const handleDevToolsClick = function handleDevToolsClick(e: MouseEvent) {
+		if (drag.endsDrag(e)) {
 			return;
 		}
 		devTools?.toggle();
 	};
 
+	// The snap ends with the trigger's own transition, once the snapping
+	// class and the new corner have rendered.
+	$effect(() => {
+		const element = showToolbar ? toolbarElement : buttonElement;
+		if (!(isSnapping && element)) {
+			return;
+		}
+		return onSnapEnd(element, () => {
+			isSnapping = false;
+		});
+	});
+
 	const handleToolbarKeyDown = function handleToolbarKeyDown(e: KeyboardEvent) {
-		const index = tabStopItem ? toolbarItems.indexOf(tabStopItem) : 0;
-		let next: ToolbarItem | undefined;
-		switch (e.key) {
-			case 'ArrowRight':
-				next = toolbarItems[(index + 1) % toolbarItems.length];
-				break;
-			case 'ArrowLeft':
-				next =
-					toolbarItems[(index - 1 + toolbarItems.length) % toolbarItems.length];
-				break;
-			case 'Home':
-				[next] = toolbarItems;
-				break;
-			case 'End':
-				next = toolbarItems.at(-1);
-				break;
-			default:
-				return;
+		const next = nextToolbarItem(toolbarItems, tabStopItem, e.key);
+		if (!next) {
+			return;
 		}
 		e.preventDefault();
-		if (next) {
-			focusedItem = next;
-			toolbarElement
-				?.querySelector<HTMLElement>(`[data-c15t-trigger-item="${next}"]`)
-				?.focus();
-		}
+		focusedItem = next;
+		toolbarElement
+			?.querySelector<HTMLElement>(`[data-inth-trigger-item="${next}"]`)
+			?.focus();
 	};
 
 	const handleClick = function handleClick(e: MouseEvent) {
-		// Don't open dialog if this was a drag interaction
-		if (hasDragged) {
+		if (drag.endsDrag(e)) {
 			return;
 		}
 		onclick?.(e);
@@ -317,7 +244,7 @@
 	};
 
 	const triggerStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentDialogTrigger',
 			theme.theme,
 			{
@@ -335,7 +262,7 @@
 		)
 	);
 	const iconStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentDialogTriggerIcon',
 			theme.theme,
 			{ baseClassName: styles.icon, noStyle },
@@ -343,7 +270,7 @@
 		)
 	);
 	const toolbarStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentDialogTriggerToolbar',
 			theme.theme,
 			{
@@ -359,7 +286,7 @@
 		)
 	);
 	const preferencesItemStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentDialogTriggerToolbarItem',
 			theme.theme,
 			{
@@ -371,7 +298,7 @@
 		)
 	);
 	const devToolsItemStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentDialogTriggerToolbarItem',
 			theme.theme,
 			{ baseClassName: [styles.toolbarItem, sizeClassMap[size]], noStyle },
@@ -379,7 +306,7 @@
 		)
 	);
 	const toolbarIconStyle = $derived(
-		resolveComponentStyles(
+		resolveStyles(
 			'consentDialogTriggerToolbarIcon',
 			theme.theme,
 			{ baseClassName: styles.toolbarIcon, noStyle },
@@ -387,23 +314,19 @@
 		)
 	);
 	const toolbarAttributeStyle = $derived(
-		[toStyleAttribute(toolbarStyle.style), dragStyle]
+		[toStyleAttributeValue(toolbarStyle.style), dragStyle]
 			.filter(Boolean)
 			.join(';') || undefined
 	);
 	const buttonStyle = $derived(
-		[toStyleAttribute(triggerStyle.style), dragStyle]
+		[toStyleAttributeValue(triggerStyle.style), dragStyle]
 			.filter(Boolean)
 			.join(';') || undefined
 	);
 </script>
 
 {#snippet brandingIcon()}
-	{#if branding === 'consent'}
-		<ConsentIconOnly />
-	{:else}
-		<C15TIconOnly />
-	{/if}
+	<BrandMark mark={brandMark} />
 {/snippet}
 
 {#if visible}
@@ -419,42 +342,42 @@
 				role="toolbar"
 				tabindex="-1"
 				dir="ltr"
-				aria-label="Privacy controls"
+				aria-label={labels.toolbarLabel}
 				aria-orientation="horizontal"
 				data-corner={corner}
-				data-c15t-trigger-toolbar="true"
-				data-c15t-trigger="true"
+				data-inth-trigger-toolbar="true"
+				data-inth-trigger="true"
 				data-disable-animation={theme.disableAnimation ? '' : undefined}
 				data-dragging={isDragging || undefined}
 				data-snapping={isSnapping || undefined}
 				onkeydown={handleToolbarKeyDown}
 				onpointerdown={handlePointerDown}
-				onpointermove={handlePointerMove}
-				onpointerup={handlePointerUp}
-				onpointercancel={handlePointerCancel}
+				onpointermove={drag.pointerMove}
+				onpointerup={drag.pointerUp}
+				onpointercancel={drag.pointerCancel}
 			>
 				{#each toolbarItems as item (item)}
 					{#if item === 'devtools'}
 						<button
 							type="button"
 							class={devToolsItemStyle.className || ''}
-							style={toStyleAttribute(devToolsItemStyle.style)}
+							style={toStyleAttributeValue(devToolsItemStyle.style)}
 							tabindex={tabStopItem === item ? 0 : -1}
-							aria-label="c15t DevTools"
+							aria-label={labels.devToolsLabel}
 							aria-expanded={launcher.isOpen}
-							data-c15t-trigger-action="devtools"
-							data-c15t-trigger-item="devtools"
+							data-inth-trigger-action="devtools"
+							data-inth-trigger-item="devtools"
 							onclick={handleDevToolsClick}
 							onfocus={() => (focusedItem = item)}
 						>
 							<span
 								class={toolbarIconStyle.className || ''}
-								style={toStyleAttribute(toolbarIconStyle.style)}
+								style={toStyleAttributeValue(toolbarIconStyle.style)}
 								aria-hidden="true"
 							>
 								<span
 									class={iconStyle.className || ''}
-									style={toStyleAttribute(iconStyle.style)}
+									style={toStyleAttributeValue(iconStyle.style)}
 								>
 									<DevToolsIcon />
 								</span>
@@ -464,12 +387,12 @@
 						<button
 							type="button"
 							class={preferencesItemStyle.className || ''}
-							style={toStyleAttribute(preferencesItemStyle.style)}
+							style={toStyleAttributeValue(preferencesItemStyle.style)}
 							tabindex={tabStopItem === item ? 0 : -1}
-							aria-label={ariaLabel}
-							data-c15t-rights={consent.snapshot.policyRule.rights.join(' ')}
-							data-c15t-trigger-action="preferences"
-							data-c15t-trigger-item="preferences"
+							aria-label={preferencesLabel}
+							data-inth-rights={consent.snapshot.policyRule.rights.join(' ')}
+							data-inth-trigger-action="preferences"
+							data-inth-trigger-item="preferences"
 							onclick={handleClick}
 							onpointerenter={warmDialog}
 							onfocus={() => {
@@ -480,12 +403,12 @@
 						>
 							<span
 								class={toolbarIconStyle.className || ''}
-								style={toStyleAttribute(toolbarIconStyle.style)}
+								style={toStyleAttributeValue(toolbarIconStyle.style)}
 								aria-hidden="true"
 							>
 								<span
 									class={iconStyle.className || ''}
-									style={toStyleAttribute(iconStyle.style)}
+									style={toStyleAttributeValue(iconStyle.style)}
 								>
 									{@render brandingIcon()}
 								</span>
@@ -496,25 +419,26 @@
 			</div>
 		{:else}
 			<button
+				bind:this={buttonElement}
 				type="button"
 				class={triggerStyle.className || ''}
 				style={buttonStyle}
-				data-c15t-trigger="true"
-				data-c15t-rights={consent.snapshot.policyRule.rights.join(' ')}
+				data-inth-trigger="true"
+				data-inth-rights={consent.snapshot.policyRule.rights.join(' ')}
 				data-disable-animation={theme.disableAnimation ? '' : undefined}
-				aria-label={ariaLabel}
+				aria-label={preferencesLabel}
 				onclick={handleClick}
 				onpointerdown={handlePointerDown}
-				onpointermove={handlePointerMove}
-				onpointerup={handlePointerUp}
-				onpointercancel={handlePointerCancel}
+				onpointermove={drag.pointerMove}
+				onpointerup={drag.pointerUp}
+				onpointercancel={drag.pointerCancel}
 				onpointerenter={warmDialog}
 				onfocus={warmDialog}
 				data-testid="consent-dialog-trigger"
 			>
 				<span
 					class={iconStyle.className || ''}
-					style={toStyleAttribute(iconStyle.style)}
+					style={toStyleAttributeValue(iconStyle.style)}
 					aria-hidden="true"
 				>
 					{@render brandingIcon()}

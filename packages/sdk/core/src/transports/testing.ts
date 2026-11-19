@@ -54,7 +54,7 @@ export const assertNotProduction = function assertNotProduction(
 	}
 	if (production) {
 		throw new Error(
-			`c15t: testing() from ${entry} is for tests and does not run in production. Set \`projectUrl\` on the provider and remove \`mode: testing()\`.`
+			`inth: testing() from ${entry} is for tests and does not run in production. Set \`projectUrl\` on the provider and remove \`mode: testing()\`.`
 		);
 	}
 };

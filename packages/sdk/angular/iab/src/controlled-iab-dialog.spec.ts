@@ -3,8 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { testOptions } from '../../src/__tests__/test-local';
-import type { C15tProviderOptions } from '../../src/lib/core/options';
-import { provideC15t } from '../../src/lib/core/provide-c15t';
+import type { InthProviderOptions } from '../../src/lib/core/options';
+import { provideInth } from '../../src/lib/core/provide-inth';
 import { iabTestOptions } from '../../testing/src/__tests__/harness-test-bed';
 import { IABConsentDialog } from './iab-consent-dialog';
 
@@ -12,7 +12,7 @@ import { IABConsentDialog } from './iab-consent-dialog';
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [IABConsentDialog],
 	selector: 'test-controlled-iab-dialog',
-	template: `<c15t-iab-consent-dialog [(open)]="open" />`,
+	template: `<inth-iab-consent-dialog [(open)]="open" />`,
 })
 class ControlledIABDialog {
 	readonly open = signal<boolean | undefined>(true);
@@ -26,7 +26,7 @@ afterEach(() => {
 	document.body.replaceChildren();
 });
 
-describe('<c15t-iab-consent-dialog [(open)]>', () => {
+describe('<inth-iab-consent-dialog [(open)]>', () => {
 	test.each([
 		[
 			'Escape',
@@ -51,11 +51,11 @@ describe('<c15t-iab-consent-dialog [(open)]>', () => {
 	])('closes on %s when the parent owns open', async (_name, close) => {
 		TestBed.configureTestingModule({
 			providers: [
-				provideC15t({
+				provideInth({
 					...testOptions(),
 					disableAnimation: true,
 					...iabTestOptions(),
-				} as C15tProviderOptions),
+				} as InthProviderOptions),
 			],
 		});
 		const fixture = TestBed.createComponent(ControlledIABDialog);
@@ -82,11 +82,11 @@ describe('<c15t-iab-consent-dialog [(open)]>', () => {
 	])("closes the parent's open after %s", async (_name, selector) => {
 		TestBed.configureTestingModule({
 			providers: [
-				provideC15t({
+				provideInth({
 					...testOptions(),
 					disableAnimation: true,
 					...iabTestOptions(),
-				} as C15tProviderOptions),
+				} as InthProviderOptions),
 			],
 		});
 		const fixture = TestBed.createComponent(ControlledIABDialog);

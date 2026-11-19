@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import type {
 	BenchPerfMetrics,
 	readBenchNavigationTiming,
-} from '@c15t/benchmarking/browser';
+} from '@inth/benchmarking/browser';
 import {
 	applyBenchThrottleProfile,
 	benchNavigationTimingExpression,
@@ -19,27 +19,27 @@ import {
 	benchScenarioKey,
 	resolveBenchBackendLatencyMs,
 	parseBenchThrottleProfile,
-} from '@c15t/benchmarking/browser';
-import { nextjsBrowserBudgetsForScenario } from '@c15t/benchmarking/budgets';
+} from '@inth/benchmarking/browser';
+import { nextjsBrowserBudgetsForScenario } from '@inth/benchmarking/budgets';
 import {
 	analyzeServerHtmlStream,
 	bannerMarkupMarkers,
 	readServerHtmlStream,
 	toCookieHeader,
-} from '@c15t/benchmarking/html-stream';
-import type { ServerHtmlStreamAnalysis } from '@c15t/benchmarking/html-stream';
-import { BENCHMARK_SCHEMA_VERSION } from '@c15t/benchmarking/schema';
+} from '@inth/benchmarking/html-stream';
+import type { ServerHtmlStreamAnalysis } from '@inth/benchmarking/html-stream';
+import { BENCHMARK_SCHEMA_VERSION } from '@inth/benchmarking/schema';
 import type {
 	BenchmarkResult,
 	MetricSampleSet,
-} from '@c15t/benchmarking/schema';
-import type { BenchScriptTiming } from '@c15t/benchmarking/script-timing';
+} from '@inth/benchmarking/schema';
+import type { BenchScriptTiming } from '@inth/benchmarking/script-timing';
 import {
 	benchScriptTimingExpression,
 	scriptTimingGlossary,
 	summarizeBenchScripts,
 	summarizeIdlePreloadMetrics,
-} from '@c15t/benchmarking/script-timing';
+} from '@inth/benchmarking/script-timing';
 import {
 	getEnvironment,
 	median,
@@ -49,25 +49,25 @@ import {
 	summarizeMetric,
 	summarizeNullableMetric,
 	writeJson,
-} from '@c15t/benchmarking/utils';
+} from '@inth/benchmarking/utils';
 import {
 	assertVisitBannerState,
 	coldStateMetadata,
 	describeColdState,
 	savedConsentVisits,
-} from '@c15t/benchmarking/visit-definitions';
+} from '@inth/benchmarking/visit-definitions';
 import type {
 	BenchColdState,
 	BenchVisitKind,
 	SavedConsentVisitDefinition,
-} from '@c15t/benchmarking/visit-definitions';
+} from '@inth/benchmarking/visit-definitions';
 import {
 	serverHtmlForSampleGroup,
 	serverHtmlMetadata,
 	summarizeServerHtmlMetrics,
 	summarizeVisitTimingMetrics,
 	visitMetricGlossary,
-} from '@c15t/benchmarking/visit-metrics';
+} from '@inth/benchmarking/visit-metrics';
 import { chromium } from 'playwright';
 import type * as PlaywrightTypes from 'playwright';
 
@@ -79,7 +79,7 @@ const outputDir =
 const expectedServerShutdownCodes = new Set([0, 137, 143]);
 const expectedServerShutdownSignals = new Set(['SIGTERM', 'SIGKILL']);
 const bannerRootTestId = 'consent-banner-root';
-const bannerElementTimingName = 'c15t-consent-banner';
+const bannerElementTimingName = 'inth-consent-banner';
 
 const readCliFlag = function readCliFlag(name: string): string | undefined {
 	const index = process.argv.indexOf(name);
@@ -93,33 +93,33 @@ const readCliFlag = function readCliFlag(name: string): string | undefined {
 };
 
 const PORT = Number(
-	readCliFlag('--port') ?? process.env.C15T_BENCH_PORT ?? '4312'
+	readCliFlag('--port') ?? process.env.INTH_BENCH_PORT ?? '4312'
 );
 const BASE_URL = `http://${HOST}:${PORT}`;
 
 const iterations = Number(
 	readCliFlag('--iterations') ??
-		process.env.C15T_BENCH_ITERATIONS ??
+		process.env.INTH_BENCH_ITERATIONS ??
 		process.env.BENCH_ITERATIONS ??
 		'7'
 );
 const warmupIterations = Number(
 	readCliFlag('--warmup') ??
-		process.env.C15T_BENCH_WARMUP_ITERATIONS ??
+		process.env.INTH_BENCH_WARMUP_ITERATIONS ??
 		process.env.BENCH_WARMUP_ITERATIONS ??
 		'1'
 );
 const throttleProfile = parseBenchThrottleProfile(
-	readCliFlag('--profile') ?? process.env.C15T_BENCH_PROFILE
+	readCliFlag('--profile') ?? process.env.INTH_BENCH_PROFILE
 );
 const backendLatencyMs = resolveBenchBackendLatencyMs(readCliFlag, process.env);
 const scenarioFilter =
-	readCliFlag('--scenario') ?? process.env.C15T_BENCH_SCENARIO;
+	readCliFlag('--scenario') ?? process.env.INTH_BENCH_SCENARIO;
 const coldManifestMode =
 	readCliFlag('--cold-manifest') === 'true' ||
 	readCliFlag('--cold-manifest') === '1' ||
-	process.env.C15T_BENCH_COLD_MANIFEST === '1' ||
-	process.env.C15T_BENCH_COLD_MANIFEST === 'true';
+	process.env.INTH_BENCH_COLD_MANIFEST === '1' ||
+	process.env.INTH_BENCH_COLD_MANIFEST === 'true';
 
 const allScenarios = [
 	{ name: 'baseline', path: '/baseline' },
@@ -196,7 +196,7 @@ const measureInteractionLatency = async function measureInteractionLatency(
 		await page.click('#open-preferences');
 		await page.waitForFunction(
 			() => {
-				const state = window.__c15tNextBench;
+				const state = window.__inthNextBench;
 				return !!state && state.activeUI === 'dialog';
 			},
 			undefined,
@@ -206,13 +206,13 @@ const measureInteractionLatency = async function measureInteractionLatency(
 	}
 
 	const before = await page.evaluate(
-		() => window.__c15tNextBench?.onChoiceRecordedCount ?? 0
+		() => window.__inthNextBench?.onChoiceRecordedCount ?? 0
 	);
 	const startedAt = performance.now();
 	await page.click('[data-testid="consent-banner-accept-button"]');
 	await page.waitForFunction(
 		(expected) => {
-			const state = window.__c15tNextBench;
+			const state = window.__inthNextBench;
 			return (
 				!!state &&
 				state.onChoiceRecordedCount > expected &&
@@ -341,7 +341,7 @@ const waitForConsentCookie = async function waitForConsentCookie(
 		() =>
 			document.cookie
 				.split(';')
-				.some((entry) => entry.trim().startsWith('c15t=')),
+				.some((entry) => entry.trim().startsWith('inth=')),
 		undefined,
 		{ timeout: 10_000 }
 	);
@@ -431,7 +431,7 @@ const collectScenarioMetrics = async function collectScenarioMetrics(
 	await page.goto(path);
 	await page.waitForFunction(
 		({ targetScenario, mode }) => {
-			const state = window.__c15tNextBench;
+			const state = window.__inthNextBench;
 			if (!state || state.scenario !== targetScenario) {
 				return false;
 			}
@@ -445,7 +445,7 @@ const collectScenarioMetrics = async function collectScenarioMetrics(
 	await page.waitForLoadState('load');
 	await page.waitForTimeout(250);
 
-	const state = await page.evaluate(() => window.__c15tNextBench);
+	const state = await page.evaluate(() => window.__inthNextBench);
 	const navEntry = (await page.evaluate(
 		benchNavigationTimingExpression
 	)) as Awaited<ReturnType<typeof readBenchNavigationTiming>>;
@@ -556,7 +556,7 @@ const freshColdState = function freshColdState(
 		return describeColdState({
 			freshBrowserContext: true,
 			manifestCacheKeyIsNew: true,
-			note: 'first measured visit to this route since the server started with a new manifest token (includes loading the route module); earlier scenarios in the same process may have fetched the manifest through /api/c15t/manifest; server HTML reads are omitted because they run after the samples, with a warm cache',
+			note: 'first measured visit to this route since the server started with a new manifest token (includes loading the route module); earlier scenarios in the same process may have fetched the manifest through /api/inth/manifest; server HTML reads are omitted because they run after the samples, with a warm cache',
 			usesManifestCache,
 		});
 	}
@@ -627,7 +627,7 @@ const typicalVendorReadExpression = `(() => {
 	const vendorPaths = ${JSON.stringify(Object.fromEntries(typicalVendors.map((vendor) => [vendor.key, vendor.path])))};
 	const pathOf = (name) => { try { return new URL(name).pathname; } catch { return ''; } };
 	const entries = performance.getEntriesByType('resource');
-	const ran = window.__c15tBenchVendors || {};
+	const ran = window.__inthBenchVendors || {};
 	const vendors = {};
 	for (const [key, path] of Object.entries(vendorPaths)) {
 		const entry = entries.find((candidate) => pathOf(candidate.name) === path);
@@ -642,7 +642,7 @@ const typicalVendorReadExpression = `(() => {
 		.map((entry) => ({ startMs: entry.startTime, bytes: entry.transferSize || entry.encodedBodySize }));
 	const nav = performance.getEntriesByType('navigation')[0];
 	return {
-		acceptClickMs: typeof window.__c15tBenchAcceptClickMs === 'number' ? window.__c15tBenchAcceptClickMs : null,
+		acceptClickMs: typeof window.__inthBenchAcceptClickMs === 'number' ? window.__inthBenchAcceptClickMs : null,
 		loadEventStartMs: nav && nav.loadEventStart > 0 ? nav.loadEventStart : null,
 		vendors,
 		firstParty,
@@ -652,7 +652,7 @@ const typicalVendorReadExpression = `(() => {
 /** Records when the accept button was pressed, before any handler runs. */
 const acceptClickRecorderScript = `document.addEventListener('click', (event) => {
 	if (event.target instanceof Element && event.target.closest('[data-testid="consent-banner-accept-button"]')) {
-		window.__c15tBenchAcceptClickMs ??= performance.now();
+		window.__inthBenchAcceptClickMs ??= performance.now();
 	}
 }, true);`;
 
@@ -690,9 +690,9 @@ const waitForVendors = async function waitForVendors(
 				(name) =>
 					typeof (
 						window as unknown as {
-							__c15tBenchVendors?: Record<string, number>;
+							__inthBenchVendors?: Record<string, number>;
 						}
-					).__c15tBenchVendors?.[name] === 'number'
+					).__inthBenchVendors?.[name] === 'number'
 			),
 		keys,
 		{ timeout: 30_000 }
@@ -987,7 +987,7 @@ const writeScenarioResult = function writeScenarioResult(
 			...visitMetricGlossary,
 			...scriptTimingGlossary,
 		],
-		package: '@c15t/nextjs-browser-bench',
+		package: '@inth/nextjs-browser-bench',
 		runtime: 'playwright',
 		scenario: outputScenario,
 		schemaVersion: BENCHMARK_SCHEMA_VERSION,
@@ -1140,14 +1140,14 @@ const recordChoice = async function recordChoice(
 		const page = await context.newPage();
 		await page.goto(savedConsentScenario.path);
 		await page.waitForFunction(
-			() => typeof window.__c15tNextBench?.bannerReadyMs === 'number',
+			() => typeof window.__inthNextBench?.bannerReadyMs === 'number',
 			undefined,
 			{ timeout: 30_000 }
 		);
 		await page.click(`[data-testid="${visit.buttonTestId}"]`);
 		await page.waitForFunction(
 			() => {
-				const state = window.__c15tNextBench;
+				const state = window.__inthNextBench;
 				return (
 					!!state &&
 					state.onChoiceRecordedCount > 0 &&
@@ -1393,7 +1393,7 @@ const run = async function run() {
 		[BENCH_BACKEND_LATENCY_ENV]: `${backendLatencyMs}`,
 	};
 	if (coldManifestMode) {
-		env.C15T_BENCH_COLD_MANIFEST_TOKEN = String(Date.now());
+		env.INTH_BENCH_COLD_MANIFEST_TOKEN = String(Date.now());
 	}
 
 	const server = spawn(

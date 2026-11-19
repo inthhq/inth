@@ -1,6 +1,11 @@
 'use client';
 
-import { countIABPartners, iabDisplayTestId } from '@inth/sdk/iab/headless';
+import {
+	countIABPartners,
+	iabDisplayTestId,
+	isLegitimateInterestAllowed,
+} from '@inth/sdk/iab/headless';
+import type { IABLegitimateInterestState } from '@inth/sdk/iab/headless';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import { useState } from 'react';
 import type { FC } from 'react';
@@ -13,9 +18,6 @@ import { mergeSlotProps } from '~/utils/merge-slot-props';
 
 import type { ProcessedPurpose, ProcessedVendor, VendorId } from '../types';
 import { useIABTranslations } from '../use-iab-translations';
-
-const EMPTY_VENDOR_INTERESTS: Record<string, boolean> = {};
-const EMPTY_PURPOSE_INTERESTS: Record<number, boolean> = {};
 
 interface PurposeItemProps {
 	/** A purpose, or a display-model row carrying `hasConsentBasis`. */
@@ -32,20 +34,14 @@ interface PurposeItemProps {
 	onVendorToggle: (vendorId: VendorId, value: boolean) => void;
 	onVendorClick: (vendorId: VendorId) => void;
 	isLocked?: boolean;
-	/** Legitimate interest objections - true means user has NOT objected (allowed) */
-	vendorLegitimateInterests?: Record<string, boolean>;
-	/** Handler for legitimate interest objection toggle */
+	/** Draft and vendor list the legitimate interest controls read. */
+	legitimateInterests?: IABLegitimateInterestState;
 	onVendorLegitimateInterestToggle?: (
 		vendorId: VendorId,
 		value: boolean
 	) => void;
-	/** Purpose-level legitimate interest state - true means NOT objected (allowed) */
-	purposeLegitimateInterests?: Record<number, boolean>;
-	/** Handler for purpose-level legitimate interest objection toggle */
-	onPurposeLegitimateInterestToggle?: (
-		purposeId: number,
-		value: boolean
-	) => void;
+	/** Object to the purpose's legitimate interest, or withdraw the objection. */
+	onPurposeObjection?: (purposeId: number, objected: boolean) => void;
 }
 
 const VendorRow: FC<VendorRowProps> = ({
@@ -54,7 +50,7 @@ const VendorRow: FC<VendorRowProps> = ({
 	onToggle,
 	onClick,
 	isLegitimateInterest = false,
-	isLegitimateInterestAllowed = true,
+	isLegitimateInterestAllowed: allowed = false,
 	onLegitimateInterestToggle,
 }) => {
 	const iab = useIABTranslations();
@@ -118,13 +114,11 @@ const VendorRow: FC<VendorRowProps> = ({
 			{showLIControl ? (
 				<button
 					type="button"
-					onClick={() =>
-						onLegitimateInterestToggle(!isLegitimateInterestAllowed)
-					}
-					className={`${styles.objectButton} ${isLegitimateInterestAllowed ? '' : styles.objectButtonActive}`}
-					aria-pressed={!isLegitimateInterestAllowed}
+					onClick={() => onLegitimateInterestToggle(!allowed)}
+					className={`${styles.objectButton} ${allowed ? '' : styles.objectButtonActive}`}
+					aria-pressed={!allowed}
 				>
-					{isLegitimateInterestAllowed
+					{allowed
 						? iab.preferenceCenter.purposeItem.objectButton
 						: iab.preferenceCenter.purposeItem.objected}
 				</button>
@@ -153,10 +147,9 @@ export const PurposeItem: FC<PurposeItemProps> = ({
 	onVendorToggle,
 	onVendorClick,
 	isLocked = false,
-	vendorLegitimateInterests = EMPTY_VENDOR_INTERESTS,
+	legitimateInterests,
 	onVendorLegitimateInterestToggle,
-	purposeLegitimateInterests = EMPTY_PURPOSE_INTERESTS,
-	onPurposeLegitimateInterestToggle,
+	onPurposeObjection,
 }) => {
 	const { components } = useUIConfig();
 	const { noStyle } = useTheme();
@@ -172,30 +165,22 @@ export const PurposeItem: FC<PurposeItemProps> = ({
 	const getVendorConsent = (vendorId: VendorId) =>
 		vendorConsents[String(vendorId)] ?? false;
 	const getVendorLegitimateInterest = (vendorId: VendorId) =>
-		vendorLegitimateInterests[String(vendorId)] ?? true;
+		isLegitimateInterestAllowed(legitimateInterests, 'vendor', vendorId);
 
-	// Check if purpose-level LI is allowed (not objected)
-	const isPurposeLIAllowed = purposeLegitimateInterests[purpose.id] ?? true;
+	const isPurposeLIAllowed = isLegitimateInterestAllowed(
+		legitimateInterests,
+		'purpose',
+		purpose.id
+	);
 
-	// Handler for purpose-level LI objection - also objects to all LI vendors for this purpose
 	const handlePurposeLIObjection = () => {
-		const newValue = !isPurposeLIAllowed;
-		if (onPurposeLegitimateInterestToggle) {
-			onPurposeLegitimateInterestToggle(purpose.id, newValue);
-		}
-		// Also toggle all LI vendors for this purpose
-		if (onVendorLegitimateInterestToggle) {
-			for (const vendor of legIntVendors) {
-				onVendorLegitimateInterestToggle(vendor.id, newValue);
-			}
-		}
+		onPurposeObjection?.(purpose.id, isPurposeLIAllowed);
 	};
 
 	// Ad tech providers can be the only partners of a purpose they need.
 	const adTechProviders = purpose.adTechProviders ?? [];
 	const partnerCount = countIABPartners([purpose]);
 
-	// Separate IAB and custom vendors
 	const iabConsentVendors = consentVendors.filter((v) => !v.isCustom);
 	const customConsentVendors = consentVendors.filter((v) => v.isCustom);
 	const iabLegIntVendors = legIntVendors.filter((v) => !v.isCustom);
@@ -205,12 +190,10 @@ export const PurposeItem: FC<PurposeItemProps> = ({
 	// while every vendor kept processing; the objection control is the one
 	// that counts.
 	const showConsentSwitch =
-		purpose.hasConsentBasis !== false || !onPurposeLegitimateInterestToggle;
+		purpose.hasConsentBasis !== false || !onPurposeObjection;
 
-	// Handle purpose toggle - also toggles all consent-based vendors
 	const handlePurposeToggle = (value: boolean) => {
 		onToggle(value);
-		// Also toggle all consent-based vendors associated with this purpose
 		for (const vendor of consentVendors) {
 			onVendorToggle(vendor.id, value);
 		}
@@ -349,7 +332,7 @@ export const PurposeItem: FC<PurposeItemProps> = ({
 				<p className={styles.purposeDescription}>{purpose.description}</p>
 
 				{/* Purpose-level Legitimate Interest Objection */}
-				{legIntVendors.length > 0 && onPurposeLegitimateInterestToggle && (
+				{legIntVendors.length > 0 && onPurposeObjection && (
 					<div {...legitimateInterestProps}>
 						<div className={styles.purposeLiSectionHeader}>
 							<div className={styles.purposeLiInfo}>
@@ -387,7 +370,7 @@ export const PurposeItem: FC<PurposeItemProps> = ({
 				)}
 
 				{/* Legacy badge for when there's no toggle handler */}
-				{legIntVendors.length > 0 && !onPurposeLegitimateInterestToggle && (
+				{legIntVendors.length > 0 && !onPurposeObjection && (
 					<div className={styles.legitimateInterestBadge}>
 						<svg
 							className={styles.legitimateInterestIcon}

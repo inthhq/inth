@@ -10,7 +10,7 @@ describe('benchmark selection', () => {
 
 	it('matches whole suites and single scenarios', () => {
 		const selection = benchSelectionFromEnv({
-			C15T_BENCH_ONLY: 'core-runtime, policy-runtime:optin-choice-eu',
+			INTH_BENCH_ONLY: 'core-runtime, policy-runtime:optin-choice-eu',
 		});
 		expect(isBenchSelected(selection, 'core-runtime', 'xlarge')).toBe(true);
 		expect(
@@ -23,8 +23,8 @@ describe('benchmark selection', () => {
 
 	it('lets a skip win over an only that names the same suite', () => {
 		const selection = benchSelectionFromEnv({
-			C15T_BENCH_ONLY: 'policy-runtime',
-			C15T_BENCH_SKIP: 'policy-runtime:optin-choice-eu',
+			INTH_BENCH_ONLY: 'policy-runtime',
+			INTH_BENCH_SKIP: 'policy-runtime:optin-choice-eu',
 		});
 		expect(
 			isBenchSelected(selection, 'policy-runtime', 'optin-choice-eu')
@@ -36,7 +36,7 @@ describe('benchmark selection', () => {
 
 	it('does not treat a scenario prefix as a match', () => {
 		const selection = benchSelectionFromEnv({
-			C15T_BENCH_ONLY: 'policy-runtime:optout',
+			INTH_BENCH_ONLY: 'policy-runtime:optout',
 		});
 		expect(
 			isBenchSelected(selection, 'policy-runtime', 'optout-california')

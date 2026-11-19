@@ -1,39 +1,19 @@
-import { defaultTranslationConfig } from '@inth/sdk/engine';
-import type {
-	CompleteTranslations,
-	Translations,
-} from '@inth/sdk/translations';
+import { resolveSurfaceTranslations } from '@inth/sdk/surface-state';
+import type { CompleteTranslations } from '@inth/sdk/translations';
 import { computed } from 'vue';
 import type { ComputedRef } from 'vue';
 
 import { useConsentInit } from './init';
 
-const ENGLISH = defaultTranslationConfig.translations
-	.en as CompleteTranslations;
-
-/** The copy a consent surface reads, each key falling back to English. */
-export interface SurfaceTranslations {
-	/** Resolved translation bundle for the active language, if any. */
-	bundle: Partial<Translations> | undefined;
-	/** English defaults, for any key the bundle leaves out. */
-	english: CompleteTranslations;
-}
-
 /**
- * The init translations for the active language next to the English
- * defaults, so a surface renders its default copy in the visitor's language
- * and still has text before init has delivered any.
+ * The copy a consent surface renders: the init translations for the
+ * active language with English filling every key they leave out, so a
+ * surface has text before init has delivered any.
  *
- * @returns The active bundle and the English fallback.
  * @internal
  */
 export const useSurfaceTranslations =
-	function useSurfaceTranslations(): ComputedRef<SurfaceTranslations> {
+	function useSurfaceTranslations(): ComputedRef<CompleteTranslations> {
 		const init = useConsentInit();
-		return computed(() => ({
-			bundle: init.value?.translations?.translations as
-				| Partial<Translations>
-				| undefined,
-			english: ENGLISH,
-		}));
+		return computed(() => resolveSurfaceTranslations(init.value));
 	};

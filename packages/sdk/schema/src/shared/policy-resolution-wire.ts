@@ -105,7 +105,7 @@ export const FAILED_CONFIGURATION: PolicyResolutionFailed = {
 };
 
 /** Identifier of the runtime fallback rule. Never a matched policy. */
-export const SAFE_FALLBACK_POLICY_ID = 'c15t_safe_fallback';
+export const SAFE_FALLBACK_POLICY_ID = 'inth_safe_fallback';
 
 /**
  * The safe opt-in choice fallback used whenever resolution did not match.
@@ -603,7 +603,6 @@ const readWire = function readWire(input: unknown): PolicyResolution {
  * ({@link collectResolvedPolicyRuleIssues}). Never throws; needs no valibot.
  *
  * @param input - The raw `policyResolution` field from `/init`.
- * @returns A {@link PolicyResolution}.
  */
 export const readPolicyResolutionWire = function readPolicyResolutionWire(
 	input: unknown

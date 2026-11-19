@@ -1,5 +1,5 @@
 /**
- * The c15t docs site's custom theme: colors only, light and dark. Spacing,
+ * The Inth docs site's custom theme: colors only, light and dark. Spacing,
  * radius and duration tokens still come from the package stylesheet. Plain
  * data so the v2 and v3 provider option types both accept it.
  */

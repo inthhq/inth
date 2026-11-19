@@ -10,7 +10,7 @@ group: frameworks
 
 The blocker shares a separate chunk with the script loader. The chunk loads
 only on pages with `networkBlocker` rules or `scripts`, and matching requests
-wait until it has loaded. `consentManifest()` lets `c15tHandle` link the
+wait until it has loaded. `consentManifest()` lets `inthHandle` link the
 chunk from the page's `<head>`, so the browser fetches it with the app's own
 code.
 [Preload the script loader](./scripts#preload-the-script-loader) shows the
@@ -21,5 +21,5 @@ setup.
 The network blocker runs in the browser. A `fetch` in a SvelteKit `load`,
 `+server.ts` or `hooks.server.ts` is never blocked, even when the visitor has
 denied the category. If server code sends data to a vendor, check the
-visitor's stored choice yourself before it does; `event.locals.c15t.config`
-from [`c15tHandle`](./server-api#c15thandle) holds it.
+visitor's stored choice yourself before it does; `event.locals.inth.config`
+from [`inthHandle`](./server-api#inthhandle) holds it.

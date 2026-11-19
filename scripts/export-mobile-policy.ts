@@ -1,5 +1,5 @@
 /**
- * Repository wrapper around `c15t mobile-manifest`'s exporter, for the example
+ * Repository wrapper around `inth mobile-manifest`'s exporter, for the example
  * and fixture resources that need an explicit `--expires-at`. Apps use the CLI.
  */
 import { writeFile } from 'node:fs/promises';

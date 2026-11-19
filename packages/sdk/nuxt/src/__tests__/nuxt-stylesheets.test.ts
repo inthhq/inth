@@ -1,7 +1,7 @@
 /**
- * The Nuxt module turns the `<link>`s Nuxt writes for c15t stylesheets it
+ * The Nuxt module turns the `<link>`s Nuxt writes for Inth stylesheets it
  * already inlines into preloads. Nuxt drops the link for a chunk named
- * after a component it inlines, but c15t's components share chunks, and
+ * after a component it inlines, but Inth's components share chunks, and
  * each shared chunk's stylesheet stayed a render-blocking `<link>` next to
  * the inlined copy of the same rules. On a throttled phone, those links
  * held the first paint of a page with a banner from about 450 ms to
@@ -86,7 +86,7 @@ const createManifest = (): Record<string, ClientManifestChunk> => ({
 });
 
 describe('preloadInlinedConsentStyles', () => {
-	test('preloads, instead of linking, c15t stylesheets that only Vue components import from lazy chunks', () => {
+	test('preloads, instead of linking, inth stylesheets that only Vue components import from lazy chunks', () => {
 		const manifest = createManifest();
 		preloadInlinedConsentStyles(
 			manifest,
@@ -133,7 +133,7 @@ describe('preloadInlinedConsentStyles', () => {
 		expect(own?.assets).toEqual(['button.css']);
 	});
 
-	test("keeps a stylesheet in a component's own chunk that is not c15t's", () => {
+	test("keeps a stylesheet in a component's own chunk that is not Inth's", () => {
 		const manifest = createManifest();
 		const own =
 			manifest['node_modules/@inth/vue/dist/runtime/components/prompt.vue'];
@@ -164,7 +164,7 @@ describe('preloadInlinedConsentStyles', () => {
 		expect(manifest['_entry-shared.js']?.css).toEqual(['entry-shared.css']);
 	});
 
-	test('changes nothing when Nuxt does not inline c15t styles', () => {
+	test('changes nothing when Nuxt does not inline inth styles', () => {
 		for (const inlineStyles of [
 			false,
 			(id?: string) => !!id && !id.includes('node_modules'),

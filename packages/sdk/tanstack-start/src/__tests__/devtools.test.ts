@@ -1,15 +1,15 @@
 import {
-	C15TDevTools as ReactC15TDevTools,
+	InthDevTools as ReactInthDevTools,
 	ConsentDevTools as ReactConsentDevTools,
 	DevTools as ReactDevTools,
-	c15tDevtools as reactC15tDevtools,
+	inthDevtools as reactInthDevtools,
 } from '@inth/react/devtools';
 import { describe, expect, test } from 'vitest';
 
 import {
-	C15TDevTools,
+	InthDevTools,
 	ConsentDevTools,
-	c15tDevtools,
+	inthDevtools,
 	DevTools,
 } from '../devtools';
 
@@ -17,7 +17,7 @@ describe('@inth/tanstack-start/devtools', () => {
 	test('re-exports the React v3 adapter without wrapping it', () => {
 		expect(ConsentDevTools).toBe(ReactConsentDevTools);
 		expect(DevTools).toBe(ReactDevTools);
-		expect(C15TDevTools).toBe(ReactC15TDevTools);
-		expect(c15tDevtools).toBe(reactC15tDevtools);
+		expect(InthDevTools).toBe(ReactInthDevTools);
+		expect(inthDevtools).toBe(reactInthDevtools);
 	});
 });

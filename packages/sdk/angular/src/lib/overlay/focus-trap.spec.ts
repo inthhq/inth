@@ -10,7 +10,7 @@ import { FocusTrap } from './focus-trap';
 	selector: 'test-focus-trap-host',
 	template: `
 		<div
-			[c15tFocusTrap]="trap()"
+			[inthFocusTrap]="trap()"
 			data-testid="trap"
 		>
 			<button
@@ -37,7 +37,7 @@ afterEach(() => {
 	document.body.replaceChildren();
 });
 
-test('c15tFocusTrap keeps Tab inside the element while on', async () => {
+test('inthFocusTrap keeps Tab inside the element while on', async () => {
 	const fixture = TestBed.createComponent(FocusTrapHost);
 	document.body.append(fixture.nativeElement);
 	fixture.componentInstance.trap.set(true);

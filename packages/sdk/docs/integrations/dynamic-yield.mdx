@@ -1,13 +1,13 @@
 ---
 title: Dynamic Yield
-description: Load Dynamic Yield personalization scripts after experience consent, set the page context and synchronize Active Cookie Consent with c15t.
-seoTitle: Dynamic Yield cookie consent with c15t
-seoDescription: Gate both Dynamic Yield scripts on experience consent, select a US or EU section, and send Active Cookie Consent updates with c15t.
+description: Load Dynamic Yield personalization scripts after experience consent, set the page context and synchronize Active Cookie Consent with Inth.
+seoTitle: Dynamic Yield cookie consent with Inth
+seoDescription: Gate both Dynamic Yield scripts on experience consent, select a US or EU section, and send Active Cookie Consent updates with Inth.
 icon: sparkles
 group: integrations
 ---
 
-The c15t `dynamicYield` helper loads Dynamic Yield after `experience` consent.
+The Inth `dynamicYield` helper loads Dynamic Yield after `experience` consent.
 It sets `DY.userActiveConsent` before loading `api_dynamic.js`, then loads
 `api_static.js` after the first script finishes. No Dynamic Yield global,
 preconnect, loader request or storage is created before the helper's consent
@@ -28,7 +28,7 @@ Yield Support. Preview mode lets you check it first. Dynamic Yield ignores the
 consent API until this setting is enabled for your section.
 
 Remove existing Dynamic Yield snippets, tag-manager tags and preconnects.
-c15t gates only the scripts registered with it.
+Inth gates only the scripts registered with it.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
@@ -43,7 +43,7 @@ c15t gates only the scripts registered with it.
 | `sectionId` | Required | Public section ID. Trimmed and URL-encoded as one path segment. Missing or blank values log an error and skip the integration. |
 | `region` | `'us'` | `'us'` uses `cdn.dynamicyield.com`; `'eu'` uses `cdn-eu.dynamicyield.com`. Match the section's data center. |
 | `recommendationContext` | Not set | Page context assigned before either loader runs. Omit to preserve a context your app already set. |
-| `category` | `'experience'` | c15t consent category or condition that gates both loaders and the consent signal. |
+| `category` | `'experience'` | Inth consent category or condition that gates both loaders and the consent signal. |
 | `nonce` | None | CSP nonce for both loaders. A nonce supplied by your consent provider is forwarded to the second loader too. |
 
 `recommendationContext.type` accepts `HOMEPAGE`, `CATEGORY`, `PRODUCT`, `CART`,
@@ -85,7 +85,7 @@ skips the static loader. Granting consent again starts a new loader sequence.
 The SDK's consent setter applies only when Active Cookie Consent is enabled
 for the section. It changes data collection and personalization behavior. It
 does not unload the SDK or guarantee zero requests from code that already
-ran. Keep c15t's default `reloadOnConsentRevoked` behavior enabled.
+ran. Keep Inth's default `reloadOnConsentRevoked` behavior enabled.
 
 Dynamic Yield's denied mode can serve limited experiences. This helper waits
 for consent before loading either script, so it does not use denied-mode

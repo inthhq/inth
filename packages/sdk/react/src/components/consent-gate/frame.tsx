@@ -19,9 +19,6 @@ const warned = new Set<string>();
 /**
  * Warn once per name, outside production, that a `Frame` name is
  * deprecated.
- *
- * @param name - The deprecated name.
- * @param replacement - The `ConsentGate` name to use instead.
  */
 const warnDeprecated = function warnDeprecated(
 	name: string,
@@ -34,7 +31,7 @@ const warnDeprecated = function warnDeprecated(
 	warned.add(name);
 	// oxlint-disable-next-line no-console -- Development-only deprecation notice.
 	console.warn(
-		`c15t: \`${name}\` is deprecated and will be removed in a future major release. Use \`${replacement}\` instead.`
+		`inth: \`${name}\` is deprecated and will be removed in a future major release. Use \`${replacement}\` instead.`
 	);
 };
 

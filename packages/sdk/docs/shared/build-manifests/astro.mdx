@@ -4,15 +4,14 @@
 it when `astro build` or `astro dev` starts, then embeds it in its generated
 server options. The middleware and the consent route use that same snapshot.
 The browser options omit it; only `manifest({ resolve: 'browser' })` serves
-it to the browser, as the prerendered `/api/c15t/manifest`. No
+it to the browser, as the prerendered `/api/inth/manifest`. No
 generated file or extra import is needed. `astro check` and `astro sync` do
 not fetch, so type checks work without the backend. `astro preview` serves the
 completed build and never fetches a new snapshot.
 
 The build fetches only from an absolute upstream backend URL or
 `manifestUrl`, because it cannot fetch a route in the app it is still
-compiling. `c15t()` without a `projectUrl` reads `PUBLIC_C15T_BACKEND_URL`, then
-`PUBLIC_INTH_PROJECT_URL`.
+compiling. `inth()` without a `projectUrl` reads `PUBLIC_INTH_PROJECT_URL`.
 With a relative URL, `manifest({ source: 'runtime' })`,
 `manifest({ snapshot })`, `hosted()` or `testing()`, the integration skips
 the fetch. If the fetch fails, or no backend URL is set, `astro build` stops.
@@ -21,12 +20,12 @@ policy at runtime. The config is read once at build time, so the built server
 keeps the backend URL and the snapshot it was built with.
 
 To let a build continue when the snapshot can't be fetched, set
-`onBuildError: 'runtime'`, or build with `C15T_ON_BUILD_ERROR=runtime`:
+`onBuildError: 'runtime'`, or build with `INTH_ON_BUILD_ERROR=runtime`:
 
 {/* example: fragment */}
 
 ```js title="astro.config.mjs"
-c15t({ onBuildError: 'runtime' });
+inth({ onBuildError: 'runtime' });
 ```
 
 `onBuildError: 'fail'` stops `astro dev` too, and stops the build on a

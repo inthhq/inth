@@ -1,3 +1,4 @@
+import { BASE_LANGUAGES } from './base-languages';
 import type { PolicyRule } from './policy-rule';
 
 const DEFAULT_PROFILE = 'default';
@@ -5,61 +6,7 @@ const DEFAULT_PROFILE = 'default';
 /** Stock profiles use the base translations unless the host supplies a profile. */
 export const isBuiltInMessageProfile = (profile: string): boolean =>
 	profile === DEFAULT_PROFILE || profile === 'preferences';
-const SUPPORTED_BASE_LANGUAGES = new Set([
-	'ar',
-	'bg',
-	'bn',
-	'cs',
-	'cy',
-	'da',
-	'de',
-	'el',
-	'en',
-	'es',
-	'et',
-	'fi',
-	'fr',
-	'ga',
-	'gu',
-	'he',
-	'hi',
-	'hr',
-	'ht',
-	'hu',
-	'id',
-	'is',
-	'it',
-	'ja',
-	'kn',
-	'ko',
-	'lb',
-	'lt',
-	'lv',
-	'ml',
-	'mr',
-	'ms',
-	'mt',
-	'nb',
-	'nl',
-	'nn',
-	'pa',
-	'pl',
-	'pt',
-	'rm',
-	'ro',
-	'ru',
-	'sk',
-	'sl',
-	'sv',
-	'ta',
-	'te',
-	'th',
-	'tr',
-	'ur',
-	'vi',
-	'yi',
-	'zh',
-]);
+const SUPPORTED_BASE_LANGUAGES: ReadonlySet<string> = new Set(BASE_LANGUAGES);
 
 export interface PolicyI18nMessageProfileLike {
 	fallbackLanguage?: string;
@@ -81,7 +28,11 @@ export interface PolicyI18nValidationResult {
 	warnings: string[];
 }
 
-const normalizeLanguage = function normalizeLanguage(
+/**
+ * The primary language subtag of a language tag or `Accept-Language` value:
+ * `de` for `de-CH,de;q=0.9`.
+ */
+export const primaryLanguage = function primaryLanguage(
 	value: string | null | undefined
 ): string | undefined {
 	if (!value) {
@@ -118,11 +69,15 @@ const normalizeProfiles = function normalizeProfiles(
 	return {};
 };
 
-const resolveFallbackLanguage = function resolveFallbackLanguage(input: {
+/**
+ * A profile's fallback language: the configured one when the profile has
+ * it, else English when present, else its first language.
+ */
+export const resolveFallbackLanguage = function resolveFallbackLanguage(input: {
 	profile?: PolicyI18nMessageProfileLike;
 }): string {
 	const configuredFallbackLanguage =
-		normalizeLanguage(input.profile?.fallbackLanguage) ?? 'en';
+		primaryLanguage(input.profile?.fallbackLanguage) ?? 'en';
 	const profileLanguages = Object.keys(
 		input.profile?.translations ?? {}
 	).sort();
@@ -138,7 +93,8 @@ const resolveFallbackLanguage = function resolveFallbackLanguage(input: {
 	return profileLanguages[0] ?? configuredFallbackLanguage;
 };
 
-const resolveActiveProfile = function resolveActiveProfile(input: {
+/** The policy's message profile when configured, else the default profile. */
+export const resolveActiveProfile = function resolveActiveProfile(input: {
 	profiles: Record<string, PolicyI18nMessageProfileLike>;
 	defaultProfile: string;
 	policyProfile?: string;
@@ -184,7 +140,7 @@ export const validatePolicyI18nConfig = function validatePolicyI18nConfig(
 			policyProfile: policy.i18n.messageProfile,
 			profiles,
 		});
-		const language = normalizeLanguage(policy.i18n.language);
+		const language = primaryLanguage(policy.i18n.language);
 
 		const usesBuiltInProfile = Boolean(
 			policy.i18n.messageProfile &&

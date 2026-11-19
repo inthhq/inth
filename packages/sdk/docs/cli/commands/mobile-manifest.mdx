@@ -13,7 +13,7 @@ response. Run it as a build step so each build carries the latest policy.
 ```sh
 npx @c15t/cli mobile-manifest \
   --backend-url https://your-project.inth.app \
-  --out c15t-policy.json \
+  --out inth-policy.json \
   --build release
 ```
 
@@ -46,7 +46,7 @@ Pass `--dry-run` for that build, so the command accepts the URL the app uses:
 ```sh
 npx @c15t/cli mobile-manifest \
   --backend-url http://localhost:8787 \
-  --out c15t-policy.json \
+  --out inth-policy.json \
   --build debug \
   --dry-run
 ```

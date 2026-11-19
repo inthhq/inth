@@ -34,35 +34,35 @@ const config: StorybookConfig = {
 						replacement: vuePackage('runtime', 'vue', 'stubs.ts'),
 					},
 					{
-						find: /^#c15t\/composables$/u,
+						find: /^#inth\/composables$/u,
 						replacement: vuePackage('runtime', 'composables', 'index.ts'),
 					},
 					{
-						find: /^c15t\/v3\/modules\/script-loader$/u,
+						find: /^inth\/v3\/modules\/script-loader$/u,
 						replacement: core('v3', 'modules', 'script-loader', 'index.ts'),
 					},
 					{
-						find: /^c15t\/v3\/modules\/network-blocker$/u,
+						find: /^inth\/v3\/modules\/network-blocker$/u,
 						replacement: core('v3', 'modules', 'network-blocker', 'index.ts'),
 					},
 					{
-						find: /^c15t\/v3\/modules\/iframe-blocker$/u,
+						find: /^inth\/v3\/modules\/iframe-blocker$/u,
 						replacement: core('v3', 'modules', 'iframe-blocker', 'index.ts'),
 					},
 					{
-						find: /^c15t\/v3\/modules\/persistence$/u,
+						find: /^inth\/v3\/modules\/persistence$/u,
 						replacement: core('v3', 'modules', 'persistence', 'index.ts'),
 					},
 					{
-						find: /^c15t\/v3\/consent-record$/u,
+						find: /^inth\/v3\/consent-record$/u,
 						replacement: core('v3', 'consent-record', 'index.ts'),
 					},
 					{
-						find: /^c15t\/v3$/u,
+						find: /^inth\/v3$/u,
 						replacement: core('v3', 'index.ts'),
 					},
 					{
-						find: /^@c15t\/conformance\/(?<capture1>.*)$/u,
+						find: /^@inth\/conformance\/(?<capture1>.*)$/u,
 						replacement: path.resolve(repoRoot, 'internals/conformance/src/$1'),
 					},
 					{

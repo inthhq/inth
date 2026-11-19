@@ -156,7 +156,7 @@ extension IABCopy {
 }
 
 /// The IAB TCF side of a ``ConsentDraft``: the staged purpose, vendor and legal-basis selection
-/// with the commands `@c15t/react`'s `useIAB()` exposes, and the disclosure as rows to place.
+/// with the commands `@inth/react`'s `useIAB()` exposes, and the disclosure as rows to place.
 ///
 /// The core validates and encodes the selection on save exactly as it does for the stock
 /// screens, so the same choices write the same TC String. Gate vendors on the committed

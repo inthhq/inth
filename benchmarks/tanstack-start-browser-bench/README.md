@@ -15,13 +15,13 @@ provider" below.
 | --- | --- | --- |
 | `baseline` | `/baseline` | Page floor: identical shell, no consent code. |
 | `client` | `/client` | `ConsentProvider` with `hosted({ projectUrl: '/api/bench-consent' })`, `ssr: false`, so the provider mounts and runs init in the browser. |
-| `manifest-client` | `/manifest-client` | `custom(createManifestTransport(...))` reading the same-origin `/api/c15t/manifest` route, `ssr: false`. |
+| `manifest-client` | `/manifest-client` | `custom(createManifestTransport(...))` reading the same-origin `/api/inth/manifest` route, `ssr: false`. |
 | `ssr` | `/ssr` | Loader fetches `/api/bench-consent/init` server-side on every request and folds it in with `mergeInitIntoConsentState`; `ConsentRoot` without `routePrefix`. Direct-init semantics, matching the Next `ssr` arm. |
 | `ssr-stream` | `/ssr-stream` | The streamed setup `ConsentRoot` documents: the same direct-init loader, returned unawaited (`loader: () => ({ consent: getDirectInitConsentState() })`), so the router streams the state in after the shell. The server HTML has no banner; it shows once the state reaches the hydrated root. Start only. |
-| `manifest-ssr` | `/manifest-ssr` | Loader runs `createConsentStateHandler({ projectUrl, mode: manifest({ manifestUrl }), routePrefix: '/api/c15t' })` through the in-process manifest cache; `ConsentRoot` reads the route prefix from the state. Saves post to the fixture directly. |
-| `manifest-ssr-proxy` | `/manifest-ssr-proxy` | Same prefetch, but the state points `ConsentRoot` at `/api/c15t-proxy` for init and saves, a second `createConsentRoute({ proxy: true })` mount, so the accept click's `POST /subjects` takes one hop through the Start server. Start only. |
+| `manifest-ssr` | `/manifest-ssr` | Loader runs `createConsentStateHandler({ projectUrl, mode: manifest({ manifestUrl }), routePrefix: '/api/inth' })` through the in-process manifest cache; `ConsentRoot` reads the route prefix from the state. Saves post to the fixture directly. |
+| `manifest-ssr-proxy` | `/manifest-ssr-proxy` | Same prefetch, but the state points `ConsentRoot` at `/api/inth-proxy` for init and saves, a second `createConsentRoute({ proxy: true })` mount, so the accept click's `POST /subjects` takes one hop through the Start server. Start only. |
 | `repeat-visitor` | derived | After each measured `client` iteration a second browser context loads `/client` and the runner measures the Open Preferences click, exactly as the Next runner does. Note that neither runner preseeds the consent cookie for this arm. |
-| `manifest-ssr-root` | `/manifest-ssr` in the `dist-root/` build | `--root-provider` only. Same route and metrics as `manifest-ssr`, but the provider and the manifest prefetch loader live in `__root.tsx` and the route renders only the page shell. Built with `C15T_BENCH_ROOT_PROVIDER=1` (`bun run build:root`). |
+| `manifest-ssr-root` | `/manifest-ssr` in the `dist-root/` build | `--root-provider` only. Same route and metrics as `manifest-ssr`, but the provider and the manifest prefetch loader live in `__root.tsx` and the route renders only the page shell. Built with `INTH_BENCH_ROOT_PROVIDER=1` (`bun run build:root`). |
 
 The Next runner no longer has an `rsc-ssr` arm; older result tables in this
 file that list it are historical.
@@ -29,7 +29,7 @@ file that list it are historical.
 Fixture routes live under `src/routes/api/bench-consent/` and are a copy of
 the Next arm's `fixture.ts` (policy id, fingerprint, revision, and
 translations are byte-identical, so both arms resolve the same policy). They
-honour `C15T_BENCH_BACKEND_LATENCY_MS` (200 ms by default) and the `?cold=`
+honour `INTH_BENCH_BACKEND_LATENCY_MS` (200 ms by default) and the `?cold=`
 token the same way.
 
 ## Running
@@ -78,7 +78,7 @@ which writes `.benchmarks/compare/frameworks.md` and `frameworks.json`.
   request. Start uses a hand-written loader for this because the package
   helper always goes through the manifest cache; see `src/bench/loaders.ts`.
 - **`manifest-ssr` on the server.** Next's `resolveConsent` fetches
-  its own `/api/c15t/manifest` route over HTTP each request and the route
+  its own `/api/inth/manifest` route over HTTP each request and the route
   answers from the in-process cache. Start's prefetch refuses self-fetches and
   reads the same cache directly. That saved hop is a real adapter difference,
   not a harness artefact.
@@ -135,7 +135,7 @@ code itself adds the same amount on both (92 vs 98 kB).
 `next start` (`baseline` TTFB 8.7 vs 4.3 ms), which is the srvx plus Start
 router floor on this build. On `manifest-ssr` that reverses: Start reads the
 manifest cache in-process and answers in 11.6 ms where Next spends 16.9 ms
-fetching its own `/api/c15t/manifest` route over HTTP first. On `ssr` both
+fetching its own `/api/inth/manifest` route over HTTP first. On `ssr` both
 pay the direct init round trip on every request and the floor gap returns
 (20.9 vs 15.9 ms). With `--init-latency-ms 200` the `ssr` arms show the cost
 of that design on both sides (TTFB 221 ms) while every manifest arm stays
@@ -235,7 +235,7 @@ Default build (`dist/`, provider mounted in the route):
 /assets/manifest-ssr--5YaoUS4.js   (route definition chunk)
 ```
 
-Root-mounted build (`dist-root/`, `C15T_BENCH_ROOT_PROVIDER=1`):
+Root-mounted build (`dist-root/`, `INTH_BENCH_ROOT_PROVIDER=1`):
 
 ```text
 /assets/index-Bv1mi7H7.js
@@ -323,7 +323,7 @@ first wave in both builds (index at 426/429 ms, `router` at 595 ms,
 | 2: `router`'s second-level imports | 599 to 781: `preload-helper`, `ssr`, `manifest-ssr-proxy` | 599 to 778: `preload-helper`, `server`, `ssr`, `manifest-ssr-proxy` |
 | 2b: `provider`'s imports | (not yet requested) | 649 to 955: `policy-actions`, `context`, `use-component-config`, `state` |
 | 3 | 888 to 1081: `policy-actions`, `688`, `context`, `state`, `use-component-config` via Vite's preload helper, once the route component resolves | 843 to 1017: `688` (imported by `policy-actions`) |
-| after hydration | 1137 `/api/c15t/init`, 1175 to 1353 `theme` | 1197 `/api/c15t/init`, 1254 to 1429 `theme` |
+| after hydration | 1137 `/api/inth/init`, 1175 to 1353 `theme` | 1197 `/api/inth/init`, 1254 to 1429 `theme` |
 
 #### Reading it
 

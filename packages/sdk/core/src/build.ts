@@ -17,13 +17,27 @@ import {
 	renderStaticBannerSheets,
 } from './build-static-banner';
 import type { StaticBannerChunk } from './build-static-banner';
+import {
+	PREFETCH_SCRIPT_ID,
+	prefetchScriptOffset,
+} from './libs/prefetch/placement';
 import { buildPrefetchScript } from './libs/prefetch/prefetch';
 import type { PrefetchOptions } from './libs/prefetch/types';
+import type { ConsentMode } from './modes';
+import { buildSnapshotSkipReason } from './server/server-mode';
 import { loadStaticManifest } from './server/static-manifest';
 import { manifestNeedsLocation } from './transports/manifest-browser-location';
 
 export type { ConsentManifest } from '@inth/sdk-schema/types';
 export { createDialogChunkPlugin } from './build-dialog-chunk';
+export {
+	CORE_CHUNK_MODULES,
+	CORE_FIRST_LOAD_MODULES,
+	CORE_SURFACE_CONFIG_MODULES,
+	coreModuleFile,
+	coreModulePattern,
+} from './chunk-modules';
+export { DEFERRED_SHEET_SPECIFIERS } from './build-static-banner';
 export type { DialogChunkPlugin } from './build-dialog-chunk';
 
 const resolveBuildManifestUrl = (
@@ -57,7 +71,6 @@ const resolveBuildManifestUrl = (
  * Loads a snapshot from an absolute upstream URL during framework setup.
  * @param options - Manifest URL, or backend URL whose `/manifest` is read.
  * @param label - Framework name for errors.
- * @returns The deployment's manifest.
  * @throws {Error} When the source is relative, missing or cannot be fetched.
  * @internal
  */
@@ -91,7 +104,7 @@ const BUILD_MANIFEST_TIMEOUT_MS = 10_000;
  * @returns `true` when {@link loadBuildManifest} has a URL to fetch.
  * @internal
  */
-export const hasBuildManifestSource = (options: {
+const hasBuildManifestSource = (options: {
 	projectUrl?: string;
 	manifestUrl?: string;
 }): boolean => {
@@ -115,48 +128,41 @@ export type ManifestBuildErrorMode = 'runtime' | 'fail';
 export type ManifestBuildCommand = 'build' | 'dev';
 
 /** Environment variable that overrides `onBuildError` in every framework. */
-export const MANIFEST_BUILD_ERROR_ENV = 'C15T_ON_BUILD_ERROR';
+const MANIFEST_BUILD_ERROR_ENV = 'INTH_ON_BUILD_ERROR';
 
-const isBuildErrorMode = (value: unknown): value is ManifestBuildErrorMode =>
-	value === 'runtime' || value === 'fail';
+/** Inth variable suffixes, and the c15t suffixes they replaced. */
+const LEGACY_ENV_SUFFIXES = [
+	['INTH_PROJECT_URL', 'C15T_BACKEND_URL'],
+	['INTH_ON_BUILD_ERROR', 'C15T_ON_BUILD_ERROR'],
+] as const;
 
 /**
- * Decides what a failed manifest fetch does. `C15T_ON_BUILD_ERROR` wins over
- * `onBuildError`. Without either, the build and dev fall back to runtime
- * fetching with a warning.
- * @param onBuildError - The configured option, if any.
- * @param command - Whether this is a production build or dev.
- * @param label - Framework name for errors.
- * @param env - Environment to read the override from.
- * @returns The mode, and whether the user chose it.
- * @throws {Error} When the option or the variable has another value.
+ * The c15t name an Inth variable replaced, such as `VITE_C15T_BACKEND_URL`
+ * for `VITE_INTH_PROJECT_URL`. Builds still read it when the Inth name is
+ * unset.
+ * @param name - An Inth variable name, with any framework prefix.
+ * @returns The legacy name, or `undefined` when the name has none.
  * @internal
  */
-export const resolveManifestBuildErrorMode = (
-	onBuildError: unknown,
-	command: ManifestBuildCommand,
-	label: string,
-	env: Record<string, string | undefined> = process.env
-): { explicit: boolean; mode: ManifestBuildErrorMode } => {
-	const fromEnv = env[MANIFEST_BUILD_ERROR_ENV];
-	if (fromEnv) {
-		if (!isBuildErrorMode(fromEnv)) {
-			throw new Error(
-				`${label}: ${MANIFEST_BUILD_ERROR_ENV} must be 'runtime' or 'fail', received ${JSON.stringify(fromEnv)}.`
-			);
+export const legacyEnvName = (name: string): string | undefined => {
+	for (const [inth, legacy] of LEGACY_ENV_SUFFIXES) {
+		if (name === inth || name.endsWith(`_${inth}`)) {
+			return `${name.slice(0, -inth.length)}${legacy}`;
 		}
-		return { explicit: true, mode: fromEnv };
 	}
-	if (onBuildError !== undefined) {
-		if (!isBuildErrorMode(onBuildError)) {
-			throw new Error(
-				`${label}: onBuildError must be 'runtime' or 'fail', received ${JSON.stringify(onBuildError)}.`
-			);
-		}
-		return { explicit: true, mode: onBuildError };
-	}
-	return { explicit: false, mode: 'runtime' };
+	return undefined;
 };
+
+/**
+ * Where {@link readBuildEnv} looks besides the process environment:
+ * variables the framework already loaded, the directory with the `.env`
+ * files, and the mode, such as `production`.
+ */
+export interface BuildEnvSource {
+	env?: Record<string, unknown>;
+	mode?: string;
+	root?: string;
+}
 
 /** Values in a `.env` file. Handles `export`, quotes and comments. */
 const parseEnvFile = (source: string): Record<string, string> => {
@@ -183,26 +189,23 @@ const parseEnvFile = (source: string): Record<string, string> => {
 };
 
 /**
- * Reads the first of `names` that is set. Each name is looked up the way
- * Vite resolves variables: values the framework already loaded, then the
- * process environment, then `.env.[mode].local`, `.env.[mode]`,
- * `.env.local` and `.env` in `root`. An earlier name wins wherever it is
- * set, so `*_C15T_BACKEND_URL` in `.env` beats `*_INTH_PROJECT_URL` in the
- * environment. An empty value counts as unset.
- * @param names - Variable names in order of preference.
- * @param options - Variables the framework loaded, the directory with the
- * `.env` files and the mode, such as `production`.
- * @returns The value, or `undefined` when none of the names is set.
+ * Reads the first of `names` that is set, then the first of their
+ * {@link legacyEnvName legacy names}, and says which name it read. Each
+ * name is looked up the way Vite resolves variables: values the framework
+ * already loaded, then the process environment, then `.env.[mode].local`,
+ * `.env.[mode]`, `.env.local` and `.env` in `root`. An earlier name wins
+ * wherever it is set, so `VITE_INTH_PROJECT_URL` in `.env` beats
+ * `VITE_C15T_BACKEND_URL` in the environment. An empty value counts as
+ * unset.
+ * @param names - Inth variable names in order of preference.
+ * @param options - Where to look besides the process environment.
+ * @returns The name and its value, or `undefined` when no name is set.
  * @internal
  */
-export const readBuildEnv = (
+export const readBuildEnvEntry = (
 	names: readonly string[],
-	options: {
-		env?: Record<string, unknown>;
-		mode?: string;
-		root?: string;
-	} = {}
-): string | undefined => {
+	options: BuildEnvSource = {}
+): { name: string; value: string } | undefined => {
 	let parsed: Record<string, string>[] | undefined;
 	const readFiles = (root: string): Record<string, string>[] => {
 		const files = [
@@ -220,14 +223,15 @@ export const readBuildEnv = (
 			}
 		});
 	};
-	for (const name of names) {
+	const legacy = names.flatMap((name) => legacyEnvName(name) ?? []);
+	for (const name of [...names, ...legacy]) {
 		const loaded = options.env?.[name];
 		if (typeof loaded === 'string' && loaded !== '') {
-			return loaded;
+			return { name, value: loaded };
 		}
 		const fromProcess = process.env[name];
 		if (fromProcess) {
-			return fromProcess;
+			return { name, value: fromProcess };
 		}
 		if (!options.root) {
 			continue;
@@ -251,31 +255,64 @@ export const readBuildEnv = (
 						: expand(found, depth + 1);
 				}
 			);
-		for (const values of files) {
-			if (values[name]) {
-				return expand(values[name], 0) || undefined;
-			}
+		const raw = files.find((values) => values[name])?.[name];
+		const value = raw === undefined ? '' : expand(raw, 0);
+		if (value) {
+			return { name, value };
 		}
 	}
 	return undefined;
 };
 
 /**
- * Names backend URL variables for a message: the c15t names, then the Inth
- * ones in parentheses, as in
- * `VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL)`.
- * @param names - Variable names in order of preference.
- * @returns The names joined for a sentence.
+ * The value {@link readBuildEnvEntry} finds.
+ * @param names - Inth variable names in order of preference.
+ * @param options - Where to look besides the process environment.
+ * @returns The value, or `undefined` when no name is set.
  * @internal
  */
-export const formatEnvNames = (names: readonly string[]): string => {
-	const isInth = (name: string) => name.endsWith('_INTH_PROJECT_URL');
-	const primary = names.filter((name) => !isInth(name)).join(' or ');
-	const inth = names.filter(isInth).join(' or ');
-	if (!primary) {
-		return inth;
+export const readBuildEnv = (
+	names: readonly string[],
+	options: BuildEnvSource = {}
+): string | undefined => readBuildEnvEntry(names, options)?.value;
+
+const isBuildErrorMode = (value: unknown): value is ManifestBuildErrorMode =>
+	value === 'runtime' || value === 'fail';
+
+/**
+ * Decides what a failed manifest fetch does. `INTH_ON_BUILD_ERROR` wins over
+ * `onBuildError`. Without either, the build and dev fall back to runtime
+ * fetching with a warning.
+ * @param label - Framework name for errors.
+ * @param source - Where to read the variable besides the process
+ * environment.
+ * @returns The mode, and whether the user chose it.
+ * @throws {Error} When the option or the variable has another value.
+ * @internal
+ */
+const resolveManifestBuildErrorMode = (
+	onBuildError: unknown,
+	label: string,
+	source: BuildEnvSource = {}
+): { explicit: boolean; mode: ManifestBuildErrorMode } => {
+	const fromEnv = readBuildEnvEntry([MANIFEST_BUILD_ERROR_ENV], source);
+	if (fromEnv) {
+		if (!isBuildErrorMode(fromEnv.value)) {
+			throw new Error(
+				`${label}: ${fromEnv.name} must be 'runtime' or 'fail', received ${JSON.stringify(fromEnv.value)}.`
+			);
+		}
+		return { explicit: true, mode: fromEnv.value };
 	}
-	return inth ? `${primary} (or ${inth})` : primary;
+	if (onBuildError !== undefined) {
+		if (!isBuildErrorMode(onBuildError)) {
+			throw new Error(
+				`${label}: onBuildError must be 'runtime' or 'fail', received ${JSON.stringify(onBuildError)}.`
+			);
+		}
+		return { explicit: true, mode: onBuildError };
+	}
+	return { explicit: false, mode: 'runtime' };
 };
 
 /** Where a build reports a skipped or failed manifest fetch. */
@@ -287,12 +324,10 @@ export interface ManifestBuildLogger {
 /**
  * Prefixes every message with the framework label, for loggers that do not
  * add one themselves.
- * @param label - Framework name.
  * @param logger - Where messages go. Defaults to the console.
- * @returns The labelled logger.
  * @internal
  */
-export const labelledBuildLogger = (
+const labelledBuildLogger = (
 	label: string,
 	logger: ManifestBuildLogger = console
 ): ManifestBuildLogger => ({
@@ -306,19 +341,32 @@ export interface ManifestBuildPolicy {
 	command: ManifestBuildCommand;
 	/** Variables that can carry the backend URL, named in messages. */
 	envNames?: readonly string[];
+	/** Where `INTH_ON_BUILD_ERROR` is read besides the process environment. */
+	envSource?: BuildEnvSource;
 	/** Framework name for errors. */
 	label: string;
 	/** Receives skip notices and warnings, without the label. */
 	logger: ManifestBuildLogger;
-	/** The configured `onBuildError`. */
 	onBuildError?: unknown;
 	/**
 	 * Why the framework cannot use a snapshot, such as a static export. The
 	 * fetch is skipped and never fails.
 	 */
 	skipReason?: string;
+	/**
+	 * The app's mode, when the integration can read it. A mode that reads
+	 * no build snapshot (see `needsBuildSnapshot` in `@inth/sdk/server`)
+	 * skips the fetch, as `skipReason` does.
+	 */
+	mode?: ConsentMode;
 	/** Appended to the error a failed fetch throws, naming another fix. */
 	failureHint?: string;
+	/**
+	 * For a fetch the build can do without: a failure only warns, with the
+	 * message this returns for the failure's reason, whatever
+	 * `onBuildError` says.
+	 */
+	bestEffort?: (reason: string) => string;
 }
 
 const describeFailure = (error: unknown, label: string): string => {
@@ -337,6 +385,21 @@ const describeFailure = (error: unknown, label: string): string => {
 	}
 	return reason;
 };
+
+/**
+ * What a failed fetch does under this policy. A best-effort fetch only
+ * warns, as an explicit `'runtime'` would.
+ */
+const failureModeFor = (
+	policy: ManifestBuildPolicy
+): { explicit: boolean; mode: ManifestBuildErrorMode } =>
+	policy.bestEffort
+		? { explicit: true, mode: 'runtime' }
+		: resolveManifestBuildErrorMode(
+				policy.onBuildError,
+				policy.label,
+				policy.envSource
+			);
 
 /**
  * Applies the build policy to a missing backend URL, which counts as a
@@ -367,6 +430,38 @@ const reportMissingSource = (
 };
 
 /**
+ * Applies the build policy to a failed fetch: a best-effort fetch warns
+ * with its own message, `'fail'` throws, and `'runtime'` warns.
+ */
+const reportFetchFailure = (
+	policy: ManifestBuildPolicy,
+	resolved: { explicit: boolean; mode: ManifestBuildErrorMode },
+	url: string,
+	error: unknown
+): void => {
+	const { command, label, logger } = policy;
+	const reason = describeFailure(error, label);
+	if (policy.bestEffort) {
+		logger.warn(policy.bestEffort(reason));
+		return;
+	}
+	const failure = `could not fetch the consent manifest from ${url} during ${command === 'build' ? 'the build' : 'dev'} (${reason}).`;
+	if (resolved.mode === 'fail') {
+		throw new Error(
+			`${label}: ${failure} Set \`${MANIFEST_BUILD_ERROR_ENV}=runtime\` (or \`onBuildError: 'runtime'\`) to ${command === 'build' ? 'deploy' : 'run dev'} with runtime fetching.${policy.failureHint ?? ''}`,
+			{ cause: error }
+		);
+	}
+	logger.warn(
+		`${failure} The server fetches it at runtime instead, and asks the backend's /init while it is unavailable.${
+			resolved.explicit
+				? ''
+				: ` Set \`${MANIFEST_BUILD_ERROR_ENV}=fail\` (or \`onBuildError: 'fail'\`) to stop the build on this error.`
+		}`
+	);
+};
+
+/**
  * Loads the snapshot a framework integration bundles, following one policy
  * in every framework:
  *
@@ -374,7 +469,7 @@ const reportMissingSource = (
  * - When it fails, `onBuildError` decides: `'runtime'` (the default)
  *   warns and returns `undefined` so the server fetches the policy at
  *   runtime, and asks the backend's `/init` when that fails too. `'fail'`
- *   throws. `C15T_ON_BUILD_ERROR` overrides the option.
+ *   throws. `INTH_ON_BUILD_ERROR` overrides the option.
  * - A missing backend URL counts as a failed fetch: `'fail'` throws, the
  *   default warns, and an explicit `'runtime'` skips with a notice.
  * - A framework `skipReason` skips the fetch. So does a relative or
@@ -385,7 +480,7 @@ const reportMissingSource = (
  * @param policy - Command, label, logger, `onBuildError` and skip reason.
  * @returns The deployment's manifest, or `undefined` to fetch at runtime.
  * @throws {Error} When the fetch fails in `'fail'` mode, or `onBuildError`
- * or `C15T_ON_BUILD_ERROR` has an unknown value.
+ * or `INTH_ON_BUILD_ERROR` has an unknown value.
  * @internal
  */
 export const loadManifestForBuild = async (
@@ -396,20 +491,15 @@ export const loadManifestForBuild = async (
 	},
 	policy: ManifestBuildPolicy
 ): Promise<ConsentManifest | undefined> => {
-	const { command, label, logger } = policy;
-	const { explicit, mode } = resolveManifestBuildErrorMode(
-		policy.onBuildError,
-		command,
-		label
-	);
-	if (policy.skipReason) {
-		logger.info(
-			`skipped the consent manifest fetch because ${policy.skipReason}.`
-		);
+	const { label, logger } = policy;
+	const { explicit, mode } = failureModeFor(policy);
+	const skipReason = policy.skipReason ?? buildSnapshotSkipReason(policy.mode);
+	if (skipReason) {
+		logger.info(`skipped the consent manifest fetch because ${skipReason}.`);
 		return undefined;
 	}
 	const envHint = policy.envNames?.length
-		? ` Pass projectUrl or set ${formatEnvNames(policy.envNames)}.`
+		? ` Pass projectUrl or set ${policy.envNames.join(' or ')}.`
 		: '';
 	const configured = source.manifestUrl ?? source.projectUrl;
 	if (!configured) {
@@ -433,7 +523,6 @@ export const loadManifestForBuild = async (
 	}
 	const fetchImpl = source.fetch ?? globalThis.fetch?.bind(globalThis);
 	const url = resolveBuildManifestUrl(source, label);
-	const phase = command === 'build' ? 'the build' : 'dev';
 	try {
 		return await loadBuildManifest(
 			{
@@ -449,20 +538,7 @@ export const loadManifestForBuild = async (
 			label
 		);
 	} catch (error) {
-		const failure = `could not fetch the consent manifest from ${url} during ${phase} (${describeFailure(error, label)}).`;
-		if (mode === 'fail') {
-			throw new Error(
-				`${label}: ${failure} Set \`${MANIFEST_BUILD_ERROR_ENV}=runtime\` (or \`onBuildError: 'runtime'\`) to ${command === 'build' ? 'deploy' : 'run dev'} with runtime fetching.${policy.failureHint ?? ''}`,
-				{ cause: error }
-			);
-		}
-		logger.warn(
-			`${failure} The server fetches it at runtime instead, and asks the backend's /init while it is unavailable.${
-				explicit
-					? ''
-					: ` Set \`${MANIFEST_BUILD_ERROR_ENV}=fail\` (or \`onBuildError: 'fail'\`) to stop the build on this error.`
-			}`
-		);
+		reportFetchFailure(policy, { explicit, mode }, url, error);
 		return undefined;
 	}
 };
@@ -478,7 +554,7 @@ export interface ManifestBuildOptions {
 	 * What a failed manifest fetch does. `'runtime'` (the default) logs a
 	 * warning, and the server fetches the policy at runtime, asking the
 	 * backend's `/init` while the manifest is unavailable. `'fail'` stops
-	 * the command. The `C15T_ON_BUILD_ERROR` environment variable
+	 * the command. The `INTH_ON_BUILD_ERROR` environment variable
 	 * overrides this option.
 	 */
 	onBuildError?: ManifestBuildErrorMode;
@@ -494,10 +570,12 @@ export interface ConsentManifestPluginOptions extends ManifestBuildOptions {
 	/**
 	 * `'runtime'` never downloads a snapshot: `@inth/sdk/generated`
 	 * exports `snapshot: undefined` and the app reads the manifest at
-	 * runtime. Set it when the app's `manifest()` passes `manifestUrl` or
-	 * `source: 'runtime'`. Those discard the build's snapshot, but the
-	 * bundle still imports it, so without this option the build fetches
-	 * `${projectUrl}/manifest` and fails when that fetch fails.
+	 * runtime. Set it when the app's `manifest()` passes an absolute
+	 * `manifestUrl` or `source: 'runtime'` (the modes `needsBuildSnapshot`
+	 * in `@inth/sdk/server` says read none). Those discard the build's
+	 * snapshot, but the bundle still imports it, so without this option the
+	 * build fetches `${projectUrl}/manifest` and fails when that fetch
+	 * fails.
 	 *
 	 * @default 'build'
 	 */
@@ -565,34 +643,26 @@ export interface GeneratedManifestModule {
 }
 
 /**
- * Specifiers the build integrations answer with the fetched snapshot:
- * `@inth/sdk/generated` and the framework packages' `generated` entries,
- * which apps import so they need no direct `@inth/sdk` dependency.
+ * The module the build integrations answer with the fetched snapshot. A
+ * framework package's own `generated` entry re-exports it; the Vite plugin
+ * serves those too for the packages its adapter names.
  * @internal
  */
-export const GENERATED_MODULE_IDS = [
-	'@inth/sdk/generated',
-	'@inth/nextjs/generated',
-	'@inth/react/generated',
-	'@inth/svelte/generated',
-	'@inth/tanstack-start/generated',
-] as const;
+export const GENERATED_MODULE_ID = '@inth/sdk/generated';
 
 /** Where non-Vite builds write the snapshot, relative to the app root. */
-export const MANIFEST_CACHE_DIR = 'node_modules/.cache/c15t';
+export const MANIFEST_CACHE_DIR = 'node_modules/.cache/inth';
 
 /**
  * Renders the module behind `@inth/sdk/generated`. With `serverOnly`, it
  * imports `server-only`, so a bundler that knows the marker (Next.js) fails
  * the build when client code imports it. With `clientStub`, `snapshot` is
  * `undefined` whatever the build fetched.
- * @param module - Backend URL and snapshot.
  * @param options - Whether to leave the snapshot out, and whether to add
  * the `server-only` import.
- * @returns JavaScript source.
  * @internal
  */
-export const renderGeneratedModule = (
+const renderGeneratedModule = (
 	module: GeneratedManifestModule,
 	options: { clientStub?: boolean; serverOnly?: boolean } = {}
 ): string => {
@@ -605,7 +675,7 @@ export const renderGeneratedModule = (
 			'// The build has no snapshot, so the policy is read at runtime.\nexport const snapshot = undefined;';
 	}
 	return [
-		'// Written by the c15t build integration. Do not edit.',
+		'// Written by the Inth build integration. Do not edit.',
 		...(options.serverOnly ? ["import 'server-only';"] : []),
 		`export const projectUrl = ${JSON.stringify(module.projectUrl) ?? 'undefined'};`,
 		snapshot,
@@ -619,7 +689,7 @@ export const renderGeneratedModule = (
  * @returns TypeScript declarations.
  * @internal
  */
-export const renderGeneratedDeclarations = (importSource: string): string =>
+const renderGeneratedDeclarations = (importSource: string): string =>
 	[
 		`import type { ConsentManifest } from '${importSource}';`,
 		'',
@@ -660,7 +730,7 @@ export interface ManifestCacheFiles {
 
 /**
  * Fetches the snapshot under the policy of {@link loadManifestForBuild} and
- * writes it under `node_modules/.cache/c15t/`, for bundlers without virtual
+ * writes it under `node_modules/.cache/inth/`, for bundlers without virtual
  * modules. `manifest.js` holds the snapshot for server bundles.
  * `manifest.browser.js` is for browser bundles: it imports `server-only`, so
  * a bundler that knows the marker (Next.js) fails the build, and its
@@ -672,7 +742,6 @@ export interface ManifestCacheFiles {
  * `'fail'` mode leaves the files untouched. An unchanged file is not
  * rewritten.
  *
- * @param options - Backend URL and `onBuildError`.
  * @param defaults - Framework label, type import, app root, command,
  * backend URL variables, and why the framework cannot use a snapshot.
  * @param logger - Receives skip notices and warnings, without the label.
@@ -688,26 +757,30 @@ export const writeManifestCacheModule = async (
 		envNames?: readonly string[];
 		importSource: string;
 		label: string;
+		mode?: ConsentMode;
 		rootDir?: string;
 		skipReason?: string;
 	},
 	logger: ManifestBuildLogger = labelledBuildLogger(defaults.label)
 ): Promise<ManifestCacheFiles> => {
+	const rootDir = defaults.rootDir ?? process.cwd();
 	const snapshot = await loadManifestForBuild(
 		{ fetch: options.fetch, projectUrl: options.projectUrl },
 		{
 			command: defaults.command,
 			envNames: defaults.envNames,
+			envSource: {
+				mode: defaults.command === 'build' ? 'production' : 'development',
+				root: rootDir,
+			},
 			label: defaults.label,
 			logger,
+			mode: defaults.mode,
 			onBuildError: options.onBuildError,
 			skipReason: defaults.skipReason,
 		}
 	);
-	const directory = resolve(
-		defaults.rootDir ?? process.cwd(),
-		MANIFEST_CACHE_DIR
-	);
+	const directory = resolve(rootDir, MANIFEST_CACHE_DIR);
 	const module = { projectUrl: options.projectUrl, snapshot };
 	const [server, browser] = await Promise.all([
 		writeModuleFile(
@@ -732,6 +805,7 @@ export interface ManifestPluginConfig {
 	command?: 'build' | 'serve';
 	env?: Record<string, unknown>;
 	envDir?: string | false;
+	environments?: ConsentManifestUserConfig['environments'];
 	logger?: ManifestBuildLogger;
 	mode?: string;
 	plugins?: readonly { name: string }[];
@@ -805,25 +879,25 @@ export interface ConsentChunkGroup {
  * Every SDK package under `node_modules`, whatever the package manager:
  * `@inth/sdk` and the framework packages, not the CLI.
  */
-const C15T_MODULE = /[\\/]node_modules[\\/]@inth[\\/](?!cli[\\/])/u;
+const INTH_MODULE = /[\\/]node_modules[\\/]@inth[\\/](?!cli[\\/])/u;
 
 /**
- * Puts the c15t modules a page's entry imports statically into one chunk.
- * Rolldown otherwise splits the modules a page shares with c15t's lazy
+ * Puts the Inth modules a page's entry imports statically into one chunk.
+ * Rolldown otherwise splits the modules a page shares with Inth's lazy
  * chunks into many small ones, and each costs a request: on a slow mobile
  * connection with a warm cache, a revalidation round trip apiece before the
- * page renders. Only modules c15t ships; their dependencies (React) stay
- * where Rolldown puts them, so a page without c15t loads none of it. One
- * chunk for every entry (`entriesAware` would count c15t's lazy chunks as
+ * page renders. Only modules Inth ships; their dependencies (React) stay
+ * where Rolldown puts them, so a page without Inth loads none of it. One
+ * chunk for every entry (`entriesAware` would count Inth's lazy chunks as
  * entries and split it again): an app with several entries that use
- * different parts of c15t loads all of them on each.
+ * different parts of Inth loads all of them on each.
  */
 export const CONSENT_CHUNK_GROUP: ConsentChunkGroup = {
 	entriesAware: false,
 	includeDependenciesRecursively: false,
-	name: 'c15t',
+	name: 'inth',
 	tags: ['$initial'],
-	test: C15T_MODULE,
+	test: INTH_MODULE,
 };
 
 /** Rolldown versions whose groups take `tags` (tested with 1.2). */
@@ -989,24 +1063,6 @@ export interface ManifestHtmlContext {
 const LOCATION_ADVICE =
 	"the consent policy depends on the visitor's location, which the browser doesn't know. Unless you pass `inputs` or `geoUrl` to `manifest()`, every first visit still calls the backend's /init, so the bundled policy adds bytes without saving a request. Consider leaving out `mode` and setting only `projectUrl`, which asks the hosted backend instead.";
 
-/** Id of the inline script `initPrefetch` adds to `index.html`. */
-const PREFETCH_SCRIPT_ID = 'c15t-initial-data-prefetch';
-
-/**
- * Where the `/init` script goes: after `<meta charset>`, which must stay
- * in the first 1024 bytes, or else at the start of `<head>`. Either way it
- * comes before stylesheets, which would hold an inline script back until
- * they load.
- */
-const PREFETCH_ANCHORS = [
-	/<meta\s[^>]*charset[^>]*>/iu,
-	/<head(?:\s[^>]*)?>/iu,
-	// Without a `<head>`, stay after the doctype: a script before it puts
-	// the page in quirks mode.
-	/<html(?:\s[^>]*)?>/iu,
-	/<!doctype[^>]*>/iu,
-] as const;
-
 /** The resolved id of the virtual `@inth/sdk/generated` module. */
 const VIRTUAL_GENERATED_ID = '\0@inth/sdk/generated';
 
@@ -1016,8 +1072,8 @@ const VIRTUAL_GENERATED_ID = '\0@inth/sdk/generated';
  * an unread export removable and stops the bundler from folding the value.
  */
 const PLACEHOLDERS = {
-	projectUrl: '__c15t_build_backend_url__',
-	snapshot: '__c15t_build_snapshot__',
+	projectUrl: '__inth_build_backend_url__',
+	snapshot: '__inth_build_snapshot__',
 } as const;
 
 const placeholderExpression = (token: string): string =>
@@ -1031,24 +1087,37 @@ const placeholderPattern = (token: string): RegExp =>
 	);
 
 /**
- * Packages whose modules can import `@inth/sdk/generated`. Server builds
- * bundle them, so the import reaches the plugin instead of Node.
+ * Removes {@link CONSENT_CHUNK_GROUP} from a resolved config, for an app
+ * the plugin learns only then is server-rendered.
  */
-const GENERATED_IMPORTERS = [
-	'@inth/sdk',
-	'@inth/react',
-	'@inth/svelte',
-	'@inth/tanstack-start',
-	'@inth/vue',
-];
+const dropConsentChunkGroup = function dropConsentChunkGroup(
+	config: ManifestPluginConfig
+): void {
+	const builds = [
+		config.build,
+		...Object.values(config.environments ?? {}).map(
+			(environment) => environment?.build
+		),
+	];
+	for (const build of builds) {
+		const output = build?.rolldownOptions?.output as
+			| { codeSplitting?: { groups?: unknown[] } }
+			| undefined;
+		const groups = output?.codeSplitting?.groups;
+		const index = groups?.indexOf(CONSENT_CHUNK_GROUP) ?? -1;
+		if (groups && index !== -1) {
+			groups.splice(index, 1);
+		}
+	}
+};
 
 /**
  * Builds the Vite plugin behind each `consentManifest` export. It serves
  * the virtual `@inth/sdk/generated` module, so no file is written into the
  * app. Preview uses the existing build. Without `projectUrl`, the first of
- * `envNames` that is set supplies it; the first `VITE_` variable, when
- * unset or empty, is then set to the URL used, so app code reads the same
- * value. The c15t variables come before the Inth ones.
+ * `envNames` that is set supplies it, or else their c15t names; the first
+ * `VITE_` variable, when unset or empty, is then set to the URL used, so app
+ * code reads the same value under the Inth name.
  *
  * The manifest is fetched only for a bundle that reads `snapshot`, which
  * the hosted backend and a testing value never do. The mode is chosen in app code, so
@@ -1069,13 +1138,11 @@ const GENERATED_IMPORTERS = [
  * `projectUrl` is public and reaches every environment.
  *
  * The plugin keeps the virtual module out of dependency pre-bundling and
- * bundles the c15t packages in server builds, so a c15t package can import
+ * bundles the Inth packages in server builds, so an Inth package can import
  * `@inth/sdk/generated` as app code does.
  *
- * @param options - Backend URL and `onBuildError`.
  * @param defaults - Framework label, backend URL variables, and whether the
  * framework renders on the server (a function receives the resolved config).
- * @returns The Vite plugin.
  * @internal
  */
 export const createConsentManifestPlugin = (
@@ -1085,15 +1152,30 @@ export const createConsentManifestPlugin = (
 		label: string;
 		serverRendered?: boolean | ((config: ManifestPluginConfig) => boolean);
 		/**
+		 * Packages whose modules import `@inth/sdk/generated`, through their
+		 * own `generated` entry or directly. The plugin serves each one's
+		 * `generated` entry and keeps it out of dependency pre-bundling, and
+		 * server builds bundle the packages so the import reaches the plugin
+		 * instead of Node. `@inth/sdk` is always included.
+		 */
+		packages?: readonly string[];
+		/**
+		 * Packages that ship framework source files, such as `.vue`, which
+		 * Vite's dependency pre-bundling cannot load. They stay out of it.
+		 */
+		sourcePackages?: readonly string[];
+		/**
 		 * Warn when the snapshot's policy depends on the visitor's location,
 		 * which a single-page app's `manifest()` can't resolve on its own.
 		 */
 		adviseHostedForLocation?: boolean;
 	}
 ): ConsentManifestPlugin => {
+	const importers = ['@inth/sdk', ...(defaults.packages ?? [])];
+	const generatedIds = importers.map((name) => `${name}/generated`);
 	let resolved: ManifestPluginConfig | undefined;
 	let projectUrl: string | undefined;
-	let serverRendered = false;
+	let serverRendered = defaults.serverRendered === true;
 	let generation: Promise<ConsentManifest | undefined> | undefined;
 	let missingURLReported = false;
 	let bundlesSnapshot = false;
@@ -1106,12 +1188,19 @@ export const createConsentManifestPlugin = (
 		resolved?.command === 'serve' ? 'dev' : 'build';
 	const logger = (): ManifestBuildLogger =>
 		labelledBuildLogger(defaults.label, resolved?.logger);
+	const envSource = (): BuildEnvSource => ({
+		env: resolved?.env,
+		mode: resolved?.mode,
+		root:
+			typeof resolved?.envDir === 'string' ? resolved.envDir : resolved?.root,
+	});
 	const policy = (): ManifestBuildPolicy => ({
 		command: command(),
 		envNames: defaults.envNames,
+		envSource: envSource(),
 		// The mode is set in app code, which the plugin can't read.
 		failureHint:
-			" If the app passes manifest({ manifestUrl }) or manifest({ source: 'runtime' }), pass `source: 'runtime'` to this plugin so the build skips this download.",
+			" If the app passes manifest({ source: 'runtime' }) or an absolute manifest({ manifestUrl }), pass `source: 'runtime'` to this plugin so the build skips this download.",
 		label: defaults.label,
 		logger: logger(),
 		onBuildError: options.onBuildError,
@@ -1157,7 +1246,7 @@ export const createConsentManifestPlugin = (
 		}
 		missingURLReported = true;
 		logger().warn(
-			`no backend URL is set. A provider without \`projectUrl\`, and \`manifest()\` without its own, throw when the app starts. Pass projectUrl to the plugin or set ${formatEnvNames(defaults.envNames)}.`
+			`no backend URL is set. A provider without \`projectUrl\`, and \`manifest()\` without its own, throw when the app starts. Pass projectUrl to the plugin or set ${defaults.envNames.join(' or ')}.`
 		);
 	};
 	/** Warns once, for a multi-page app, why no page got the script. */
@@ -1204,16 +1293,13 @@ export const createConsentManifestPlugin = (
 		const script = `<script id="${PREFETCH_SCRIPT_ID}">${buildPrefetchScript(
 			prefetchOptions
 		)}</script>`;
-		for (const anchor of PREFETCH_ANCHORS) {
-			const match = anchor.exec(html);
-			if (match) {
-				const end = match.index + match[0].length;
-				const lineStart = html.lastIndexOf('\n', match.index) + 1;
-				const indent = /^[\t ]*/u.exec(html.slice(lineStart))?.[0] ?? '';
-				return `${html.slice(0, end)}\n${indent}${script}${html.slice(end)}`;
-			}
+		const end = prefetchScriptOffset(html);
+		if (end === undefined) {
+			return `${script}\n${html}`;
 		}
-		return `${script}\n${html}`;
+		const lineStart = html.lastIndexOf('\n', end - 1) + 1;
+		const indent = /^[\t ]*/u.exec(html.slice(lineStart))?.[0] ?? '';
+		return `${html.slice(0, end)}\n${indent}${script}${html.slice(end)}`;
 	};
 	/**
 	 * Whether this build puts the stock banner's stylesheets in its pages,
@@ -1234,29 +1320,14 @@ export const createConsentManifestPlugin = (
 	};
 	let manifestForBanner: Promise<ConsentManifest | undefined> | undefined;
 	const loadManifestForBanner = (): Promise<ConsentManifest | undefined> => {
-		const fetchImpl = options.fetch ?? globalThis.fetch?.bind(globalThis);
-		manifestForBanner ??= (async () => {
-			try {
-				return await loadBuildManifest(
-					{
-						fetch:
-							fetchImpl &&
-							((input, init) =>
-								fetchImpl(input, {
-									...init,
-									signal: AbortSignal.timeout(BUILD_MANIFEST_TIMEOUT_MS),
-								})),
-						projectUrl,
-					},
-					defaults.label
-				);
-			} catch (error) {
-				logger().warn(
-					`staticBanner: could not fetch the consent manifest (${describeFailure(error, defaults.label)}), so index.html gets no static banner. The app renders its banner as before.`
-				);
-				return undefined;
+		manifestForBanner ??= loadManifestForBuild(
+			{ fetch: options.fetch, projectUrl },
+			{
+				...policy(),
+				bestEffort: (reason) =>
+					`staticBanner: could not fetch the consent manifest (${reason}), so index.html gets no static banner. The app renders its banner as before.`,
 			}
-		})();
+		);
 		return manifestForBanner;
 	};
 	/**
@@ -1309,12 +1380,16 @@ export const createConsentManifestPlugin = (
 		},
 		config(this, userConfig, env) {
 			const base = {
-				optimizeDeps: { exclude: [...GENERATED_MODULE_IDS] },
-				ssr: { noExternal: [...GENERATED_IMPORTERS] },
+				optimizeDeps: {
+					exclude: [...generatedIds, ...(defaults.sourcePackages ?? [])],
+				},
+				ssr: { noExternal: [...importers] },
 			};
 			// Server-rendered adapters keep their framework's chunking.
 			if (
-				defaults.serverRendered ||
+				// A function decides once the config is resolved; see
+				// `configResolved`.
+				defaults.serverRendered === true ||
 				!shouldGroupConsentChunks(
 					this as ConsentManifestConfigContext | undefined,
 					userConfig,
@@ -1337,8 +1412,8 @@ export const createConsentManifestPlugin = (
 			// only when a bundle reads the snapshot.
 			resolveManifestBuildErrorMode(
 				options.onBuildError,
-				command(),
-				defaults.label
+				defaults.label,
+				envSource()
 			);
 			if (
 				options.source !== undefined &&
@@ -1352,20 +1427,17 @@ export const createConsentManifestPlugin = (
 			const { serverRendered: rendered = false } = defaults;
 			serverRendered =
 				typeof rendered === 'function' ? rendered(config) : rendered;
+			if (serverRendered && typeof rendered === 'function') {
+				// Server-rendered adapters keep their framework's chunking.
+				dropConsentChunkGroup(config);
+			}
 			if (serverRendered && options.initPrefetch) {
 				logger().warn(
 					'initPrefetch has no effect in a server-rendered app, which resolves consent on the server.'
 				);
 			}
-			const envRoot =
-				typeof config.envDir === 'string' ? config.envDir : config.root;
 			projectUrl =
-				options.projectUrl ??
-				readBuildEnv(defaults.envNames, {
-					env: config.env,
-					mode: config.mode,
-					root: envRoot,
-				});
+				options.projectUrl ?? readBuildEnv(defaults.envNames, envSource());
 			const exposed = defaults.envNames.find((name) =>
 				name.startsWith('VITE_')
 			);
@@ -1384,7 +1456,7 @@ export const createConsentManifestPlugin = (
 			}
 			if (!resolved) {
 				throw new Error(
-					`${defaults.label}: Vite loaded ${GENERATED_MODULE_IDS[0]} before the plugin read its configuration.`
+					`${defaults.label}: Vite loaded ${GENERATED_MODULE_ID} before the plugin read its configuration.`
 				);
 			}
 			const consumer =
@@ -1410,7 +1482,7 @@ export const createConsentManifestPlugin = (
 					"// source: 'runtime': the app reads the manifest at runtime.\nexport const snapshot = undefined;";
 			}
 			const lines = [
-				'// Written by the c15t build integration. Do not edit.',
+				'// Written by the Inth build integration. Do not edit.',
 				'// The build fills in what the bundle still reads after tree-shaking.',
 				`export const projectUrl = ${
 					projectUrl === undefined
@@ -1422,7 +1494,7 @@ export const createConsentManifestPlugin = (
 			];
 			return lines.join('\n');
 		},
-		name: 'c15t:consent-manifest',
+		name: 'inth:consent-manifest',
 		options: dialogChunks.options,
 		outputOptions: dialogChunks.outputOptions,
 		async renderChunk(code: string) {
@@ -1454,7 +1526,7 @@ export const createConsentManifestPlugin = (
 				Object.values(PLACEHOLDERS).some((token) => rendered.includes(token))
 			) {
 				throw new Error(
-					`${defaults.label}: the bundler rewrote the ${GENERATED_MODULE_IDS[0]} stand-ins, so the build cannot fill them in.`
+					`${defaults.label}: the bundler rewrote the ${GENERATED_MODULE_ID} stand-ins, so the build cannot fill them in.`
 				);
 			}
 			return { code: rendered, map: null };
@@ -1465,7 +1537,7 @@ export const createConsentManifestPlugin = (
 			importer?: string,
 			resolveOptions?: { ssr?: boolean }
 		): Promise<string | undefined> | string | undefined {
-			if ((GENERATED_MODULE_IDS as readonly string[]).includes(id)) {
+			if (generatedIds.includes(id)) {
 				return VIRTUAL_GENERATED_ID;
 			}
 			const context = this as ManifestPluginResolveContext | undefined;
@@ -1482,7 +1554,11 @@ export const createConsentManifestPlugin = (
 			}
 			const deferred = deferredSheetSpecifier(id, importer);
 			if (
-				!(deferred && context?.resolve && staticBannerOn()) ||
+				!(
+					deferred &&
+					context?.resolve &&
+					(serverRendered || staticBannerOn())
+				) ||
 				resolveOptions?.ssr ||
 				context.environment?.config?.consumer === 'server'
 			) {
@@ -1516,22 +1592,22 @@ export const createConsentManifestPlugin = (
  * testing builds never depend on the backend.
  *
  * A failed fetch stops `vite build` and warns in `vite dev`, where
- * `snapshot` is `undefined`. Set `onBuildError` or `C15T_ON_BUILD_ERROR` to
+ * `snapshot` is `undefined`. Set `onBuildError` or `INTH_ON_BUILD_ERROR` to
  * change that. When the policy depends on the visitor's location, it warns
  * and suggests the hosted backend, since the browser's `manifest()` then still asks
  * the backend's `/init` unless the page passes `inputs` or `geoUrl`. With
- * `manifest({ manifestUrl })` or `manifest({ source: 'runtime' })`, pass
- * `source: 'runtime'` here too, so the build never fetches a snapshot the
- * app would discard.
+ * an absolute `manifest({ manifestUrl })` or
+ * `manifest({ source: 'runtime' })`, pass `source: 'runtime'` here too, so
+ * the build never fetches a snapshot the app would discard.
  *
  * @param options - Backend URL, `onBuildError` and `source`. `projectUrl`
- * defaults to `VITE_C15T_BACKEND_URL`, then `VITE_INTH_PROJECT_URL`.
+ * defaults to `VITE_INTH_PROJECT_URL`.
  * @returns A Vite plugin, compatible with React, Vue, Svelte and Solid builds.
  * @throws {Error} When the fetch fails in `'fail'` mode, stopping Vite.
  * @example
  * ```ts
  * import { consentManifest } from '@inth/sdk/build';
- * // Reads VITE_C15T_BACKEND_URL, for example from `.env`.
+ * // Reads VITE_INTH_PROJECT_URL, for example from `.env`.
  * export default { plugins: [consentManifest()] };
  * ```
  */
@@ -1540,6 +1616,6 @@ export const consentManifest = (
 ): ConsentManifestPlugin =>
 	createConsentManifestPlugin(options, {
 		adviseHostedForLocation: true,
-		envNames: ['VITE_C15T_BACKEND_URL', 'VITE_INTH_PROJECT_URL'],
+		envNames: ['VITE_INTH_PROJECT_URL'],
 		label: '@inth/sdk/build',
 	});

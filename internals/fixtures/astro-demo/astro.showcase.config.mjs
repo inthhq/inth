@@ -4,7 +4,7 @@ import node from '@astrojs/node';
 import react from '@astrojs/react';
 import svelte from '@astrojs/svelte';
 import vue from '@astrojs/vue';
-import c15t, { hosted } from '@inth/astro';
+import inth, { hosted } from '@inth/astro';
 import { testing } from '@inth/astro/testing';
 import { defineConfig } from 'astro/config';
 
@@ -13,7 +13,7 @@ import { testBackend } from './test-backend.mjs';
 
 // The showcase build: offline policies, the IAB TCF surfaces and the
 // dialog-framework comparison. `astro.config.mjs` selects it when no
-// backend URL is set, or when `C15T_IAB` or `C15T_UI` is set. The server
+// backend URL is set, or when `INTH_IAB` or `INTH_UI` is set. The server
 // and static setups are `astro.server.config.mjs` and
 // `astro.static.config.mjs`.
 
@@ -21,8 +21,8 @@ import { testBackend } from './test-backend.mjs';
 // one; the demo takes it from the environment so the three builds can be
 // compared side by side:
 //
-//   C15T_UI=react bun run --cwd internals/fixtures/astro-demo build
-const ui = process.env.C15T_UI ?? 'svelte';
+//   INTH_UI=react bun run --cwd internals/fixtures/astro-demo build
+const ui = process.env.INTH_UI ?? 'svelte';
 
 // Banner-shape experiment. The banner is server-rendered, so
 // `@inth/astro` has no built-in assignment and the arm is resolved per
@@ -31,19 +31,19 @@ const ui = process.env.C15T_UI ?? 'svelte';
 // would. `src/experiment-client.ts` pushes each impression and choice to
 // `window.dataLayer`.
 //
-//   C15T_EXPERIMENT=1 bun run --cwd internals/fixtures/astro-demo dev
+//   INTH_EXPERIMENT=1 bun run --cwd internals/fixtures/astro-demo dev
 //
 // Then open /consent-example?experiment=1&arm=wall.
-const experiment = process.env.C15T_EXPERIMENT === '1';
+const experiment = process.env.INTH_EXPERIMENT === '1';
 
 // IAB TCF mode. The policy decides which surfaces a page gets, and one
 // request resolves one policy, so the whole demo switches together:
 //
-//   C15T_IAB=1 bun run --cwd internals/fixtures/astro-demo dev
+//   INTH_IAB=1 bun run --cwd internals/fixtures/astro-demo dev
 //
 // Then open /iab. A real site has one mode; the flag is here so the TCF
 // surfaces can be exercised without a second demo app.
-const iab = process.env.C15T_IAB === '1';
+const iab = process.env.INTH_IAB === '1';
 
 // The acceptance suite's mock backend, when it sets one. Without it the
 // showcase resolves its rules with `testing()` in `astro dev`. `testing()`
@@ -97,8 +97,8 @@ const uiIntegrations = {
 // stored choice. Real static sites look like this; the example suite runs
 // the same journeys against both builds.
 //
-//   C15T_ASTRO_OUTPUT=static bun run --cwd internals/fixtures/astro-demo build
-const isStatic = process.env.C15T_ASTRO_OUTPUT === 'static';
+//   INTH_ASTRO_OUTPUT=static bun run --cwd internals/fixtures/astro-demo build
+const isStatic = process.env.INTH_ASTRO_OUTPUT === 'static';
 
 // Server output otherwise, so the middleware sees a real request per
 // visitor: geo headers, the GPC signal and the consent cookie all have to
@@ -107,7 +107,7 @@ export default defineConfig({
 	adapter: isStatic ? undefined : node({ mode: 'standalone' }),
 	integrations: [
 		uiIntegrations[ui],
-		c15t({
+		inth({
 			clientEntrypoint: fileURLToPath(
 				new URL(
 					experiment ? './src/experiment-client.ts' : './src/consent-client.ts',
@@ -126,7 +126,7 @@ export default defineConfig({
 			},
 			// `testing()` resolves policies locally, so the demo runs with no
 			// backend. Swap in `hosted()` or `manifest()` and a `projectUrl`
-			// to talk to a real one. With `C15T_IAB=1` it also carries the
+			// to talk to a real one. With `INTH_IAB=1` it also carries the
 			// vendor list the server needs to render the IAB banner at all;
 			// hosted and manifest mode get theirs from `/init`.
 			...consentOptions,

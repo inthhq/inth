@@ -141,7 +141,7 @@
       "outputs": ["dist/**", "dist-types/**", "src/version.ts"],
       "env": ["WITH_RSDOCTOR"]
     },
-    "@c15t/fixture-nuxt#build": {
+    "@inth/fixture-nuxt#build": {
       "dependsOn": ["^build"],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -153,9 +153,9 @@
         "!readme.json"
       ],
       "outputs": [".nuxt/**", ".output/**", ".vercel/output/**"],
-      "env": ["VERCEL", "NITRO_PRESET", "NUXT_PUBLIC_C15T_BACKEND_URL"]
+      "env": ["VERCEL", "NITRO_PRESET", "NUXT_PUBLIC_INTH_PROJECT_URL"]
     },
-    "@c15t/fixture-nuxt-vapor#build": {
+    "@inth/fixture-nuxt-vapor#build": {
       "dependsOn": ["^build"],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -170,11 +170,11 @@
       "env": [
         "VERCEL",
         "NITRO_PRESET",
-        "NUXT_PUBLIC_C15T_BACKEND_URL",
-        "C15T_NUXT_FUTURE"
+        "NUXT_PUBLIC_INTH_PROJECT_URL",
+        "INTH_NUXT_FUTURE"
       ]
     },
-    "@c15t/fixture-tanstack-start#build": {
+    "@inth/fixture-tanstack-start#build": {
       "dependsOn": ["^build"],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -186,9 +186,9 @@
         "!readme.json"
       ],
       "outputs": ["dist/**"],
-      "env": ["VERCEL", "VITE_C15T_BACKEND_URL"]
+      "env": ["VERCEL", "VITE_INTH_PROJECT_URL"]
     },
-    "@c15t/benchmarking#build": {
+    "@inth/benchmarking#build": {
       "dependsOn": ["^build"],
       "outputs": [],
       "inputs": [
@@ -262,7 +262,7 @@
       "persistent": true,
       "interruptible": true
     },
-    "@c15t/playground#dev": {
+    "@inth/playground#dev": {
       "cache": false,
       "persistent": true,
       "interruptible": true,
@@ -279,7 +279,7 @@
         "@inth/sdk-ui#dev"
       ]
     },
-    "@c15t/fixture-nuxt#dev": {
+    "@inth/fixture-nuxt#dev": {
       "cache": false,
       "persistent": true,
       "interruptible": true,
@@ -292,7 +292,7 @@
         "@inth/sdk-ui#dev"
       ]
     },
-    "@c15t/fixture-tanstack-start#dev": {
+    "@inth/fixture-tanstack-start#dev": {
       "cache": false,
       "persistent": true,
       "interruptible": true,
@@ -338,7 +338,7 @@
         "@inth/sdk-ui#dev"
       ]
     },
-    "@c15t/nextjs-browser-bench#dev": {
+    "@inth/nextjs-browser-bench#dev": {
       "cache": false,
       "persistent": true,
       "interruptible": true,
@@ -352,7 +352,7 @@
         "@inth/sdk-ui#dev"
       ]
     },
-    "@c15t/tanstack-start-browser-bench#dev": {
+    "@inth/tanstack-start-browser-bench#dev": {
       "cache": false,
       "persistent": true,
       "interruptible": true,
@@ -366,12 +366,12 @@
         "@inth/sdk-ui#dev"
       ]
     },
-    "@c15t/astro-browser-bench#build": {
+    "@inth/astro-browser-bench#build": {
       "dependsOn": ["^build"],
       "env": [
-        "C15T_BENCH_ASTRO_MODE",
-        "C15T_BENCH_ORIGIN",
-        "C15T_BENCH_OUT_DIR"
+        "INTH_BENCH_ASTRO_MODE",
+        "INTH_BENCH_ORIGIN",
+        "INTH_BENCH_OUT_DIR"
       ],
       "outputs": [".astro/**", "dist/**", "dist-baseline/**", "dist-hosted/**"],
       "inputs": [
@@ -384,7 +384,7 @@
         "!readme.json"
       ]
     },
-    "@c15t/astro-browser-bench#dev": {
+    "@inth/astro-browser-bench#dev": {
       "cache": false,
       "interruptible": true,
       "persistent": true,
@@ -397,7 +397,7 @@
         "@inth/sdk-translations#dev"
       ]
     },
-    "@c15t/nuxt-browser-bench#dev": {
+    "@inth/nuxt-browser-bench#dev": {
       "cache": false,
       "persistent": true,
       "interruptible": true,
@@ -409,7 +409,7 @@
         "@inth/nuxt#dev"
       ]
     },
-    "@c15t/sveltekit-browser-bench#build": {
+    "@inth/sveltekit-browser-bench#build": {
       "dependsOn": ["^build"],
       "outputs": [".svelte-kit/**", "build/**"],
       "inputs": [
@@ -422,7 +422,7 @@
         "!readme.json"
       ]
     },
-    "@c15t/sveltekit-browser-bench#dev": {
+    "@inth/sveltekit-browser-bench#dev": {
       "cache": false,
       "interruptible": true,
       "persistent": true,
@@ -434,7 +434,7 @@
         "@inth/sdk-translations#dev"
       ]
     },
-    "@c15t/css-layer-preview#dev": {
+    "@inth/css-layer-preview#dev": {
       "cache": false,
       "persistent": true,
       "interruptible": true,
@@ -448,7 +448,7 @@
         "@inth/sdk-ui#dev"
       ]
     },
-    "@c15t/tw3-css-test#dev": {
+    "@inth/tw3-css-test#dev": {
       "cache": false,
       "persistent": true,
       "interruptible": true,
@@ -462,7 +462,7 @@
         "@inth/sdk-ui#dev"
       ]
     },
-    "@c15t/tw4-css-test#dev": {
+    "@inth/tw4-css-test#dev": {
       "cache": false,
       "persistent": true,
       "interruptible": true,
@@ -476,7 +476,7 @@
         "@inth/sdk-ui#dev"
       ]
     },
-    "@c15t/no-tw-css-test#dev": {
+    "@inth/no-tw-css-test#dev": {
       "cache": false,
       "persistent": true,
       "interruptible": true,
@@ -505,7 +505,7 @@
         "coverage/coverage-final.json",
         "coverage/html/**"
       ],
-      "env": ["C15T_TEST_PG_URL", "C15T_TEST_MYSQL_URL"]
+      "env": ["INTH_TEST_PG_URL", "INTH_TEST_MYSQL_URL"]
     },
     "@inth/react-native#test": {
       "dependsOn": ["build", "^build", "transit"],
@@ -515,9 +515,9 @@
         "coverage/html/**"
       ],
       "env": [
-        "C15T_TEST_PG_URL",
-        "C15T_TEST_MYSQL_URL",
-        "C15T_COVERAGE_RATCHET"
+        "INTH_TEST_PG_URL",
+        "INTH_TEST_MYSQL_URL",
+        "INTH_COVERAGE_RATCHET"
       ]
     },
     "@inth/react-native#test:coverage": {
@@ -528,22 +528,22 @@
         "coverage/html/**"
       ]
     },
-    "@c15t/next-compat-15-app#check-types": {
+    "@inth/next-compat-15-app#check-types": {
       "dependsOn": []
     },
-    "@c15t/next-compat-15-pages#check-types": {
+    "@inth/next-compat-15-pages#check-types": {
       "dependsOn": []
     },
-    "@c15t/next-compat-16-app#check-types": {
+    "@inth/next-compat-16-app#check-types": {
       "dependsOn": []
     },
-    "@c15t/next-compat-16-cache-components#check-types": {
+    "@inth/next-compat-16-cache-components#check-types": {
       "dependsOn": []
     },
-    "@c15t/next-compat-16-pages#check-types": {
+    "@inth/next-compat-16-pages#check-types": {
       "dependsOn": []
     },
-    "@c15t/next-compat-16-static-export#check-types": {
+    "@inth/next-compat-16-static-export#check-types": {
       "dependsOn": []
     },
     "test:compat": {
@@ -556,7 +556,7 @@
       ],
       "outputs": []
     },
-    "@c15t/next-compat-16-static-export#test:compat": {
+    "@inth/next-compat-16-static-export#test:compat": {
       "cache": false,
       "dependsOn": ["^build"],
       "env": [
@@ -597,7 +597,7 @@
       "cache": false,
       "outputs": [".benchmarks/**"]
     },
-    "@c15t/consent-observers#test": {
+    "@inth/consent-observers#test": {
       "dependsOn": ["build", "^build", "transit"],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -647,7 +647,7 @@
     "check-types:test": {
       "dependsOn": ["build", "^build"]
     },
-    "@c15t/next-bundle-bench#test": {
+    "@inth/next-bundle-bench#test": {
       "dependsOn": ["^build"],
       "outputs": []
     },
@@ -655,11 +655,11 @@
       "dependsOn": ["^build"],
       "outputs": [".svelte-kit/**", "build/**"]
     },
-    "@c15t/conformance#test": {
+    "@inth/conformance#test": {
       "dependsOn": ["build", "^build", "transit"],
       "outputs": []
     },
-    "@c15t/parity-runner#test": {
+    "@inth/parity-runner#test": {
       "dependsOn": ["build", "^build", "transit"],
       "outputs": []
     },
@@ -667,11 +667,11 @@
       "dependsOn": ["build", "^build", "transit", "@inth/sdk-iab#build"],
       "outputs": []
     },
-    "@c15t/benchmarking#test": {
+    "@inth/benchmarking#test": {
       "dependsOn": ["build", "^build", "transit"],
       "outputs": []
     },
-    "@c15t/playground#test": {
+    "@inth/playground#test": {
       "dependsOn": ["build", "^build", "transit"],
       "outputs": []
     }

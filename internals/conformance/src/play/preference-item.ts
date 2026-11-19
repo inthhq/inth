@@ -21,14 +21,12 @@ export const triggerExpandsContent: PlayFunction = async ({
 	const trigger = canvas.getByRole('button');
 	const content = canvasElement.querySelector('[data-state]');
 
-	// Toggle — click to change state
 	const initialState = content?.getAttribute('data-state');
 	await userEvent.click(trigger);
 
 	const expectedState = initialState === 'open' ? 'closed' : 'open';
 	await expect(content).toHaveAttribute('data-state', expectedState);
 
-	// Toggle back
 	await userEvent.click(trigger);
 	await expect(content).toHaveAttribute('data-state', initialState);
 };

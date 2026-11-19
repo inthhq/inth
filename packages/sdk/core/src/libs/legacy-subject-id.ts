@@ -6,32 +6,23 @@
  *
  * @internal
  */
-import type { CookieOptions, StorageConfig } from './cookie';
-import { deleteCookie, getRawCookieValue, getRootDomain } from './cookie';
-import { resolveStorageKeys } from './storage-keys';
-
-const removeLocalStorageKey = function removeLocalStorageKey(
-	key: string
-): void {
-	try {
-		window.localStorage?.removeItem(key);
-	} catch {
-		// Blocked storage holds nothing to remove.
-	}
-};
+import type { StorageConfig } from './cookie';
+import { deleteCookieInEveryScope, getRawCookieValue } from './cookie';
+import { localStorageOf } from './local-storage';
+import { C15T_STORAGE_KEY, STORAGE_KEY_V2 } from './storage-keys';
 
 /**
- * The page's host and every parent domain of it with at least two labels,
- * as cookie domains: `a.app.example.com`, `app.example.com`, `example.com`.
- * None for `localhost` or an IP address, which take host-only cookies.
+ * Where c15t 3.2 stored the visitor's subject ID before any choice:
+ * `c15t-sid` under the default key, which c15t's own default was, else
+ * `<storageKey>-sid`.
+ *
+ * @internal
  */
-const parentDomains = function parentDomains(): string[] {
-	const host = window.location.hostname;
-	if (!host.includes('.') || /^[\d.]+$/u.test(host) || host.includes(':')) {
-		return [];
-	}
-	const labels = host.split('.');
-	return labels.slice(0, -1).map((_, index) => labels.slice(index).join('.'));
+export const legacySubjectIdKey = function legacySubjectIdKey(
+	config: StorageConfig | undefined
+): string {
+	const consent = config?.storageKey || STORAGE_KEY_V2;
+	return `${consent === STORAGE_KEY_V2 ? C15T_STORAGE_KEY : consent}-sid`;
 };
 
 /**
@@ -48,7 +39,7 @@ export const readLegacySubjectId = function readLegacySubjectId(
 	if (typeof document === 'undefined') {
 		return null;
 	}
-	const key = resolveStorageKeys(config).subject;
+	const key = legacySubjectIdKey(config);
 	const raw = getRawCookieValue(key);
 	if (raw) {
 		try {
@@ -61,7 +52,7 @@ export const readLegacySubjectId = function readLegacySubjectId(
 		}
 	}
 	try {
-		return window.localStorage?.getItem(key) || null;
+		return localStorageOf()?.getItem(key) || null;
 	} catch {
 		return null;
 	}
@@ -83,33 +74,21 @@ export const readLegacySubjectId = function readLegacySubjectId(
  * @internal
  */
 export const removeLegacySubjectId = function removeLegacySubjectId(
-	config: StorageConfig | undefined,
-	cookie?: CookieOptions
+	config: StorageConfig | undefined
 ): void {
 	if (typeof document === 'undefined') {
 		return;
 	}
-	const key = resolveStorageKeys(config).subject;
+	const key = legacySubjectIdKey(config);
 	try {
-		if (window.localStorage?.getItem(key) !== null) {
-			removeLocalStorageKey(key);
+		const storage = localStorageOf();
+		if (storage?.getItem(key) !== null) {
+			storage?.removeItem(key);
 		}
 	} catch {
 		// Blocked storage holds nothing to remove.
 	}
-	if (getRawCookieValue(key) === null) {
-		return;
-	}
-	// `''` is host-only. The scopes are expired whatever the current
-	// configuration says, since the copy may predate it.
-	const domains = new Set([
-		'',
-		getRootDomain(),
-		...parentDomains(),
-		config?.defaultDomain ?? '',
-		cookie?.domain ?? '',
-	]);
-	for (const domain of domains) {
-		deleteCookie(key, { crossSubdomain: false, domain, path: '/' });
-	}
+	// Whatever the current configuration says, since the copy may predate
+	// it.
+	deleteCookieInEveryScope(key, config);
 };

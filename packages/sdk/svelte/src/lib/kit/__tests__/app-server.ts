@@ -8,7 +8,6 @@ import type { RequestEvent } from '@sveltejs/kit';
 
 let current: RequestEvent | undefined;
 
-/** Sets the event `getRequestEvent()` returns until the next call. */
 export const setRequestEvent = (event: RequestEvent | undefined): void => {
 	current = event;
 };

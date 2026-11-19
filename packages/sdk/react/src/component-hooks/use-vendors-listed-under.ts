@@ -1,10 +1,11 @@
 'use client';
 
 import type { AllConsentNames, ResolvedVendor } from '@inth/sdk/engine';
-import { deniedVendorIds, vendorsListedUnder } from '@inth/sdk/engine';
+import { vendorsListedUnder } from '@inth/sdk/engine';
 import { useMemo } from 'react';
 
-import { useDeclaredVendors, useVendorChoice } from '~/hooks';
+import { useVendorChoice } from '~/hooks';
+import { useKernelSelector } from '~/kernel-selector';
 
 /**
  * The vendors the stock preference center lists under one category, for a
@@ -16,7 +17,6 @@ import { useDeclaredVendors, useVendorChoice } from '~/hooks';
  * turned it off. Then it stays listed so the visitor can turn it on again.
  * Under an `iab` policy the list is empty.
  *
- * @param category - The category row being rendered.
  * @returns The vendors to list, in declared order.
  *
  * @example
@@ -37,18 +37,11 @@ import { useDeclaredVendors, useVendorChoice } from '~/hooks';
 export const useVendorsListedUnder = function useVendorsListedUnder(
 	category: AllConsentNames
 ): ResolvedVendor[] {
-	const declared = useDeclaredVendors();
+	const model = useKernelSelector((snapshot) => snapshot.model);
+	const vendors = useKernelSelector((snapshot) => snapshot.vendors);
 	const vendorChoice = useVendorChoice();
 	return useMemo(
-		() =>
-			vendorsListedUnder(
-				declared,
-				category,
-				deniedVendorIds({
-					vendorChoice,
-					vendors: { declared, listVersion: null },
-				})
-			),
-		[declared, category, vendorChoice]
+		() => vendorsListedUnder({ model, vendorChoice, vendors }, category),
+		[model, vendors, vendorChoice, category]
 	);
 };

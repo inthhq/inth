@@ -3,7 +3,7 @@
  *
  * Server-only: import it from `app.config.server.ts` and `server.ts`.
  *
- * - `provideC15tServer()` resolves the visitor's consent for each request
+ * - `provideInthServer()` resolves the visitor's consent for each request
  *   and hands it to the browser through `TransferState`, so the first HTML
  *   carries the right banner and hydration matches.
  * - `createConsentRoute()` serves the consent backend routes (`/manifest`,
@@ -22,5 +22,5 @@ export type {
 	NodeRequest,
 	NodeResponse,
 } from './consent-route';
-export { provideC15tServer } from './provide-c15t-server';
-export type { C15tServerOptions } from './provide-c15t-server';
+export { provideInthServer } from './provide-inth-server';
+export type { InthServerOptions } from './provide-inth-server';

@@ -6,13 +6,13 @@
  * (`../ui/copy.ts`). The init script carries no copy of its own, so it
  * renders its banner only when the answer has every string the banner can
  * show ({@link hasBannerCopy}), and leaves any other banner to the engine.
- * `rslib.config.ts` swaps this module in for `../ui/copy.ts` in `c15t.js`.
+ * `rslib.config.ts` swaps this module in for `../ui/copy.ts` in `inth.js`.
  *
  * @packageDocumentation
  * @internal
  */
 
-import type { ConsentSnapshot } from '@inth/sdk-core';
+import type { ConsentSnapshot, Translations } from '@inth/sdk-core';
 import type { CompleteTranslations } from '@inth/sdk-translations';
 import { getTextDirection } from '@inth/sdk-ui/utils';
 
@@ -35,7 +35,6 @@ const BANNER_COPY = {
 /**
  * Whether the snapshot's translations hold every string the banner reads.
  *
- * @param snapshot - The snapshot the banner renders from.
  * @returns `true` when the banner needs no bundled copy.
  */
 export const hasBannerCopy = function hasBannerCopy(
@@ -51,18 +50,40 @@ export const hasBannerCopy = function hasBannerCopy(
 
 /**
  * The copy a surface renders: the snapshot's translations as they are.
- * Call only when {@link hasBannerCopy} holds.
- *
- * @param snapshot - The snapshot.
- * @returns The copy.
+ * Call only when {@link hasBannerCopy} holds, so every string core's
+ * `consent-copy` order would reach is in the bundle and no English is
+ * needed behind it.
  */
 export const resolveCopy = function resolveCopy(
 	snapshot: ConsentSnapshot
 ): SurfaceCopy {
 	const language = snapshot.translations?.language;
+	const t = snapshot.translations?.translations as CompleteTranslations;
+	const { rights } = t as Partial<Translations>;
+	const notice = snapshot.policyRule.prompt === 'notice';
 	return {
+		actions: {
+			accept: t.common.acceptAll,
+			customize: t.common.customize,
+			dismiss: t.common.acknowledge,
+			reject: t.common.rejectAll,
+			save: t.common.save,
+		},
+		controls: {
+			'opt-out': rights?.optOut ?? '',
+			preferences: rights?.preferences ?? '',
+		},
 		dir: getTextDirection(language),
 		language,
-		t: snapshot.translations?.translations as CompleteTranslations,
+		prompt: notice
+			? {
+					description: t.cookieBanner.noticeDescription,
+					title: t.cookieBanner.noticeTitle,
+				}
+			: {
+					description: t.cookieBanner.description,
+					title: t.cookieBanner.title,
+				},
+		t,
 	};
 };

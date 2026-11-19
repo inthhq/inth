@@ -1,4 +1,4 @@
-/** c15t brand mark shared with the consent UI. */
+/** Inth brand mark shared with the consent UI. */
 export const createLogo = (document: Document): SVGSVGElement => {
 	const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 	svg.setAttribute('viewBox', '0 0 446 445');
@@ -6,7 +6,7 @@ export const createLogo = (document: Document): SVGSVGElement => {
 	svg.setAttribute('height', '24');
 	svg.setAttribute('aria-hidden', 'true');
 	svg.setAttribute('focusable', 'false');
-	svg.classList.add('c15t-dev-tools__logo');
+	svg.classList.add('inth-dev-tools__logo');
 	const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 	path.setAttribute('fill', 'currentColor');
 	path.setAttribute(

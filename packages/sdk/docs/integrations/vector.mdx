@@ -1,23 +1,23 @@
 ---
 title: Vector
-description: Load the Vector pixel only after marketing consent with the c15t vector helper, and check its queue, storage and revocation.
-seoTitle: Vector consent with c15t
-seoDescription: Load Vector's pixel only after marketing consent with c15t, and check its loader, storage and page reload on withdrawal.
+description: Load the Vector pixel only after marketing consent with the Inth vector helper, and check its queue, storage and revocation.
+seoTitle: Vector consent with Inth
+seoDescription: Load Vector's pixel only after marketing consent with Inth, and check its loader, storage and page reload on withdrawal.
 icon: radar
 group: integrations
 ---
 
 Vector identifies the people and companies visiting your site and builds
-advertising audiences from their activity. The c15t `vector` helper keeps
+advertising audiences from their activity. The Inth `vector` helper keeps
 Vector off the page until the `marketing` category is allowed. Vector has no
-documented stop API, so on withdrawal c15t reloads the page to stop it.
+documented stop API, so on withdrawal Inth reloads the page to stop it.
 
 ## Configure Vector
 
 Copy the pixel ID from **Settings > Pixel** in your Vector account, where the
 install snippet calls `vector.load`. Vector's own consent example requires
 advertising consent, so this helper uses the `marketing` category. Remove the
-direct snippet and any tag manager copy so they can't bypass c15t.
+direct snippet and any tag manager copy so they can't bypass Inth.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
@@ -42,7 +42,7 @@ methods are preserved. The helper sends no identification calls itself.
 
 The loader stays registered across withdrawal and regrant to avoid duplicate
 execution on the same page. Vector has no documented complete shutdown API.
-Keep c15t's default page reload on revocation enabled. With reload disabled,
+Keep Inth's default page reload on revocation enabled. With reload disabled,
 running code, pending loads and partner activity can continue until navigation.
 The reload doesn't clear Vector's storage.
 
@@ -79,7 +79,7 @@ marketing consent and confirm that `pixel.js` loads once. Withdraw consent and
 confirm the page reloads and blocks Vector on the new page. Check Network,
 cookies, local storage and session storage.
 
-c15t's live vendor probe uses a placeholder pixel ID. It confirms that the
+Inth's live vendor probe uses a placeholder pixel ID. It confirms that the
 downloaded SDK replaces the queue, replays the nested calls and registers the
 pixel. It blocks settings, identity and collection requests, so the SDK can log
 a JSON error for the empty settings response. Vector checks the requesting

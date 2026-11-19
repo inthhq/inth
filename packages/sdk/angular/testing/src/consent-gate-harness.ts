@@ -10,7 +10,7 @@ import { clickAction } from './click-action';
 export type ConsentGateHarnessFilters = BaseHarnessFilters;
 
 /**
- * Drives `<c15t-consent-gate>`, which renders its content only while a
+ * Drives `<inth-consent-gate>`, which renders its content only while a
  * consent category is allowed.
  *
  * The gate renders in place, so the fixture's loader finds it. Tell gates
@@ -22,7 +22,7 @@ export type ConsentGateHarnessFilters = BaseHarnessFilters;
  * harness waits for that frame before it reads the gate.
  *
  * The built-in placeholder shows while the category is denied. A gate
- * with a `c15tConsentGatePlaceholder` template renders your markup
+ * with an `inthConsentGatePlaceholder` template renders your markup
  * instead, and `isPlaceholderShown()` reports `false` for it: check your
  * own markup with `getText()` or a harness of your own.
  *
@@ -37,14 +37,9 @@ export type ConsentGateHarnessFilters = BaseHarnessFilters;
  */
 export class ConsentGateHarness extends ContentContainerComponentHarness {
 	/** Matches the gate's host element, which stays where you put it. */
-	static hostSelector = 'c15t-consent-gate';
+	static hostSelector = 'inth-consent-gate';
 
-	/**
-	 * A predicate for a gate that matches `options`.
-	 *
-	 * @param options - Selector and ancestor filters.
-	 * @returns A predicate to pass to a loader.
-	 */
+	/** A predicate for a gate that matches `options`. */
 	static with(
 		options: ConsentGateHarnessFilters = {}
 	): HarnessPredicate<ConsentGateHarness> {

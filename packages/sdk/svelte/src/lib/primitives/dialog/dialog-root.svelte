@@ -32,9 +32,9 @@
 	const shouldRender = $derived(
 		open || (!unmountOnExit && (!lazyMount || hasOpened))
 	);
-	const contentId = `c15t-dialog-content-${componentId}`;
-	const titleId = `c15t-dialog-title-${componentId}`;
-	const descriptionId = `c15t-dialog-description-${componentId}`;
+	const contentId = `inth-dialog-content-${componentId}`;
+	const titleId = `inth-dialog-title-${componentId}`;
+	const descriptionId = `inth-dialog-description-${componentId}`;
 
 	const setOpen = function setOpen(nextOpen: boolean) {
 		open = nextOpen;

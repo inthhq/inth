@@ -35,7 +35,7 @@ const requiredUiClasses = (css: string): Set<string> => {
 	const names = new Set<string>();
 	const withoutNegations = css.replace(/:not\((?:[^()]|\([^()]*\))*\)/gu, '');
 	for (const match of withoutNegations.matchAll(
-		/\.(?<name>c15t-ui-[\w-]+-[\w-]{5})(?![\w-])/gu
+		/\.(?<name>inth-ui-[\w-]+-[\w-]{5})(?![\w-])/gu
 	)) {
 		names.add(match.groups?.name ?? '');
 	}
@@ -63,7 +63,7 @@ describe('inlined stylesheet', () => {
 		expect(stylesheet).not.toContain('/*');
 		expect(iabStylesheet).not.toContain('/*');
 		// The tokens and the class-map rules the banner starts from are there.
-		expect(stylesheet).toContain('--c15t-surface');
+		expect(stylesheet).toContain('--inth-surface');
 		expect(stylesheet).toContain(`.${classes.banner.card?.split(' ')[0]}`);
 	});
 
@@ -76,49 +76,49 @@ describe('inlined stylesheet', () => {
 });
 
 describe('pruneStylesheet', () => {
-	const used = new Set(['c15t-ui-root-AAAAA']);
+	const used = new Set(['inth-ui-root-AAAAA']);
 	const keeps = (selector: string) =>
 		pruneStylesheet(`${selector}{color:red}`, used) !== '';
 
 	it('drops a selector that needs an unrendered ui class', () => {
-		expect(keeps('.c15t-ui-list-BBBBB .c15t-ui-root-AAAAA')).toBe(false);
-		expect(keeps('.c15t-ui-root-AAAAA:has(.c15t-ui-x-CCCCC)')).toBe(false);
+		expect(keeps('.inth-ui-list-BBBBB .inth-ui-root-AAAAA')).toBe(false);
+		expect(keeps('.inth-ui-root-AAAAA:has(.inth-ui-x-CCCCC)')).toBe(false);
 	});
 
 	it('ignores negations and classes @inth/sdk/ui does not generate', () => {
-		expect(keeps('.c15t-ui-root-AAAAA:not(.c15t-ui-x-CCCCC)')).toBe(true);
-		expect(keeps('.c15t-dark .c15t-ui-root-AAAAA')).toBe(true);
+		expect(keeps('.inth-ui-root-AAAAA:not(.inth-ui-x-CCCCC)')).toBe(true);
+		expect(keeps('.inth-dark .inth-ui-root-AAAAA')).toBe(true);
 		expect(keeps(':root,:host')).toBe(true);
 	});
 
 	it('drops only the unmatchable selectors of a rule', () => {
 		expect(
 			pruneStylesheet(
-				'.c15t-ui-root-AAAAA,.c15t-ui-x-CCCCC{color:red}@media (min-width:1px){.c15t-ui-x-CCCCC{color:blue}}@keyframes k{0%{opacity:0}}',
+				'.inth-ui-root-AAAAA,.inth-ui-x-CCCCC{color:red}@media (min-width:1px){.inth-ui-x-CCCCC{color:blue}}@keyframes k{0%{opacity:0}}',
 				used
 			)
-		).toBe('.c15t-ui-root-AAAAA{color:red}@keyframes k{0%{opacity:0}}');
+		).toBe('.inth-ui-root-AAAAA{color:red}@keyframes k{0%{opacity:0}}');
 	});
 
 	it('drops a component variable only the removed rules read', () => {
 		expect(
 			pruneStylesheet(
-				':root,:host{--tabs-gap:1px;--tabs-ring:var(--tabs-color);--tabs-color:red;--root-gap:2px;--unread:3px;--c15t-tabs:4px}:root,:host{--tabs-only:0}.c15t-ui-x-CCCCC{gap:var(--tabs-gap);outline-color:var(--tabs-ring);margin:var(--c15t-tabs) var(--tabs-only)}.c15t-ui-root-AAAAA{gap:var(--root-gap)}',
+				':root,:host{--tabs-gap:1px;--tabs-ring:var(--tabs-color);--tabs-color:red;--root-gap:2px;--unread:3px;--inth-tabs:4px}:root,:host{--tabs-only:0}.inth-ui-x-CCCCC{gap:var(--tabs-gap);outline-color:var(--tabs-ring);margin:var(--inth-tabs) var(--tabs-only)}.inth-ui-root-AAAAA{gap:var(--root-gap)}',
 				used
 			)
 		).toBe(
-			':root,:host{--root-gap:2px;--unread:3px;--c15t-tabs:4px}.c15t-ui-root-AAAAA{gap:var(--root-gap)}'
+			':root,:host{--root-gap:2px;--unread:3px;--inth-tabs:4px}.inth-ui-root-AAAAA{gap:var(--root-gap)}'
 		);
 	});
 
 	it('keeps a variable a kept rule still reads', () => {
 		expect(
 			pruneStylesheet(
-				':root{--shared:1px;--chain:var(--shared)}.c15t-ui-x-CCCCC{gap:var(--shared)}.c15t-ui-root-AAAAA{gap:var(--chain)}',
+				':root{--shared:1px;--chain:var(--shared)}.inth-ui-x-CCCCC{gap:var(--shared)}.inth-ui-root-AAAAA{gap:var(--chain)}',
 				used
 			)
 		).toBe(
-			':root{--shared:1px;--chain:var(--shared)}.c15t-ui-root-AAAAA{gap:var(--chain)}'
+			':root{--shared:1px;--chain:var(--shared)}.inth-ui-root-AAAAA{gap:var(--chain)}'
 		);
 	});
 });

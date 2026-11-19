@@ -1,7 +1,7 @@
 /**
  * Vue `#imports` shim. Shared composables import `#imports`; Nuxt resolves to
- * real composables, plain Vue resolves here via the Vite plugin. Compatibility
- * is enforced by `check-types:nuxt` and `check-types:vue`, not a separate
+ * real composables, plain Vue resolves here via the Vite plugin. The Vue and
+ * Nuxt packages' `check-types` keep the two compatible, not a separate
  * typeof contract (Nuxt's `useFetch` overloads are not assignable to a narrow
  * stub signature).
  */

@@ -3,7 +3,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { safeCommitSha, safeGitDirty } from '@c15t/benchmarking/utils';
+import { safeCommitSha, safeGitDirty } from '@inth/benchmarking/utils';
 import { chromium } from 'playwright';
 
 import {
@@ -40,7 +40,7 @@ const contentSelector =
 		: rootSelector;
 const output =
 	process.env.BENCH_OUTPUT ??
-	`/tmp/c15t-loader-audit-${variant}${warm ? '-warm' : ''}.json`;
+	`/tmp/inth-loader-audit-${variant}${warm ? '-warm' : ''}.json`;
 interface Sample {
 	mounted: number;
 	ready: number;

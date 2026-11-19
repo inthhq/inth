@@ -24,7 +24,6 @@ import type { PrefetchedInitialData } from '../libs/prefetch/prefetch';
 import type {
 	ConsentSnapshot,
 	HydrationRecords,
-	KernelBranding,
 	KernelConfig,
 	KernelOverrides,
 } from '../types';
@@ -141,7 +140,6 @@ const overridesFromInit = function overridesFromInit(
  * and sends no `/init` of its own. Records, categories and other options
  * are left to the runtime.
  *
- * @param prefetched - The resolved prefetch.
  * @param overrides - The overrides the request was sent with.
  * @param now - Evaluation clock. Defaults to `Date.now()`.
  * @returns The configuration, or `undefined` for a response only the
@@ -159,10 +157,7 @@ export const configFromPrefetchedInit = function configFromPrefetchedInit(
 	}
 	try {
 		return {
-			initialBranding:
-				payload.branding && payload.branding !== 'none'
-					? (payload.branding as KernelBranding)
-					: undefined,
+			initialBranding: payload.branding,
 			initialHosting: payload.hosting,
 			initialLocation: payload.location,
 			initialOverrides: overridesFromInit(overrides, payload),
@@ -184,7 +179,6 @@ export const configFromPrefetchedInit = function configFromPrefetchedInit(
  * resolved: for a visitor with no stored records, or with the records in
  * `options.records`.
  *
- * @param prefetched - The resolved prefetch.
  * @param options - Categories and overrides from the provider options.
  * @param now - Evaluation clock. Defaults to `Date.now()`.
  * @returns A frozen snapshot, or `undefined` for a response that could not

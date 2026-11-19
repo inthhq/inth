@@ -6,14 +6,14 @@
  * and an asset that contains one counts toward that boundary. Every marker
  * is ASCII, because some minifiers escape non-ASCII characters.
  */
-import type { ExamplesPayloadBoundaryMetric } from '@c15t/benchmarking/examples-payload';
+import type { ExamplesPayloadBoundaryMetric } from '@inth/benchmarking/examples-payload';
 
 export type MarkerTable = Record<ExamplesPayloadBoundaryMetric, string[]>;
 
 /** Markers that don't depend on the fixture backend. */
 export const STATIC_MARKERS: Omit<MarkerTable, 'snapshotBytes'> = {
 	// `@inth/sdk/devtools` class names.
-	devtoolsBytes: ['c15t-dev-tools__'],
+	devtoolsBytes: ['inth-dev-tools__'],
 	// The CMP API global from `@inth/sdk/iab`.
 	iabBytes: ['__tcfapi'],
 	// The cookie banner title in German and French.
@@ -23,7 +23,7 @@ export const STATIC_MARKERS: Omit<MarkerTable, 'snapshotBytes'> = {
 	// Errors thrown only by core's manifest transport, the browser resolver.
 	resolverBytes: [
 		'createManifestTransport: either',
-		'c15t manifest transport: /manifest responded',
+		'inth manifest transport: /manifest responded',
 	],
 };
 

@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/bundle-bench-react",
+	"name": "@inth/bundle-bench-react",
 	"private": true,
 	"type": "module",
 	"scripts": {

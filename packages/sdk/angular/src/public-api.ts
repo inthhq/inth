@@ -9,21 +9,21 @@
  */
 
 // core
-export { provideC15t } from './lib/core/provide-c15t';
-export { C15T_OPTIONS } from './lib/core/options';
+export { provideInth } from './lib/core/provide-inth';
+export { INTH_OPTIONS } from './lib/core/options';
 // Private (`ɵ`): the TransferState key `@inth/angular/ssr` writes.
 export {
-	C15T_SERVER_STATE as ɵC15T_SERVER_STATE,
-	C15T_SERVER_STATE_GATE as ɵC15T_SERVER_STATE_GATE,
+	INTH_SERVER_STATE as ɵINTH_SERVER_STATE,
+	INTH_SERVER_STATE_GATE as ɵINTH_SERVER_STATE_GATE,
 	ServerStateGate as ɵServerStateGate,
 } from './lib/core/server-state';
 export type {
-	C15tCallbacks,
-	C15tOptions,
-	C15tProviderOptions,
-	C15tResolvedOptions,
-	C15tRuntimeOptions,
-	C15tSharedOptions,
+	InthCallbacks,
+	InthOptions,
+	InthProviderOptions,
+	InthResolvedOptions,
+	InthRuntimeOptions,
+	InthSharedOptions,
 	NetworkBlockerOptions,
 	PersistenceOptions,
 	ProviderIABOptions,
@@ -49,12 +49,6 @@ export {
 	TRIGGER_SHEETS,
 } from './lib/core/consent-styles';
 export type { SurfaceStyleSheet } from './lib/core/consent-styles';
-export {
-	resolveComponentStyles,
-	resolveConsentActionStyle,
-	toStyleAttribute,
-} from './lib/core/slot-styles';
-export { fallbackTranslations } from './lib/core/translation-defaults';
 export { whenIABReady } from './lib/core/iab-loader';
 export {
 	holdIdleDialogWarming,
@@ -67,7 +61,7 @@ export type { DialogPreload } from './lib/core/dialog-warming';
 export { manifest } from './lib/core/modes';
 export { hosted, type HostedMode } from '@inth/sdk/modes';
 export type { ConsentTesting } from '@inth/sdk/testing';
-export { defaultTranslationConfig } from './lib/core/translation-defaults';
+export { defaultTranslationConfig } from '@inth/sdk/surface-state';
 export {
 	detectBrowserLanguage,
 	mergeTranslationConfigs,
@@ -198,8 +192,6 @@ export {
 	Branding as ɵBranding,
 	InlineLegalLinks as ɵInlineLegalLinks,
 	PolicyActions as ɵPolicyActions,
-	resolvedTranslations as ɵresolvedTranslations,
-	selectLegalLinks as ɵselectLegalLinks,
 	shouldShowBranding as ɵshouldShowBranding,
 } from './lib/shared';
 export type { LegalLinkSelection as ɵLegalLinkSelection } from './lib/shared';

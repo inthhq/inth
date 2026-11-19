@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { countIABPartners } from '@inth/sdk/iab/headless';
+import type { IABLegitimateInterestState } from '@inth/sdk/iab/headless';
 
 import '@inth/sdk/ui/styles/components/iab-consent-dialog.css';
 import dialogStyles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
@@ -19,7 +20,7 @@ import {
 	useConsentConfig,
 	useConsentInit,
 	useIabTranslations,
-} from '#c15t/composables';
+} from '#inth/composables';
 
 import {
 	PreferenceItemContent,
@@ -49,15 +50,15 @@ const props = defineProps<{
 	stack: IabProcessedStack;
 	consents: Record<number, boolean>;
 	vendorConsents: Record<string, boolean>;
-	vendorLegitimateInterests?: Record<string, boolean>;
-	purposeLegitimateInterests?: Record<number, boolean>;
+	/** Draft and vendor list the legitimate interest controls read. */
+	legitimateInterests?: IABLegitimateInterestState | null;
 }>();
 
 const emit = defineEmits<{
 	toggle: [purposeId: number, value: boolean];
 	vendorToggle: [vendorId: IabVendorId, value: boolean];
 	vendorClick: [vendorId: IabVendorId];
-	purposeLegitimateInterestToggle: [purposeId: number, value: boolean];
+	purposeObjection: [purposeId: number, objected: boolean];
 	vendorLegitimateInterestToggle: [vendorId: IabVendorId, value: boolean];
 }>();
 
@@ -178,8 +179,7 @@ const stackChecked = computed({
 					:purpose="purpose"
 					:is-enabled="consents[purpose.id] ?? false"
 					:vendor-consents="vendorConsents"
-					:vendor-legitimate-interests="vendorLegitimateInterests"
-					:purpose-legitimate-interests="purposeLegitimateInterests"
+					:legitimate-interests="legitimateInterests"
 					@toggle="(value) => emit('toggle', purpose.id, value)"
 					@vendor-toggle="
 						(vendorId, value) => emit('vendorToggle', vendorId, value)
@@ -189,9 +189,8 @@ const stackChecked = computed({
 						(vendorId, value) =>
 							emit('vendorLegitimateInterestToggle', vendorId, value)
 					"
-					@purpose-legitimate-interest-toggle="
-						(value) =>
-							emit('purposeLegitimateInterestToggle', purpose.id, value)
+					@purpose-objection="
+						(objected) => emit('purposeObjection', purpose.id, objected)
 					"
 				/>
 			</div>

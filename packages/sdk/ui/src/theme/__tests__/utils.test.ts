@@ -63,8 +63,8 @@ describe('themeToVars', () => {
 			},
 		};
 		const vars = themeToVars(theme);
-		expect(vars['--c15t-primary']).toBe('#ff0000');
-		expect(vars['--c15t-surface']).toBe('#ffffff');
+		expect(vars['--inth-primary']).toBe('#ff0000');
+		expect(vars['--inth-surface']).toBe('#ffffff');
 	});
 
 	test('converts switch color tokens to CSS variables', () => {
@@ -75,8 +75,8 @@ describe('themeToVars', () => {
 			},
 		};
 		const vars = themeToVars(theme);
-		expect(vars['--c15t-switch-track']).toBe('#123456');
-		expect(vars['--c15t-switch-track-active']).toBe('#654321');
+		expect(vars['--inth-switch-track']).toBe('#123456');
+		expect(vars['--inth-switch-track-active']).toBe('#654321');
 	});
 
 	test('converts typography tokens to CSS variables', () => {
@@ -94,11 +94,11 @@ describe('themeToVars', () => {
 			},
 		};
 		const vars = themeToVars(theme);
-		expect(vars['--c15t-font-family']).toBe('Arial, sans-serif');
-		expect(vars['--c15t-font-size-sm']).toBe('0.875rem');
-		expect(vars['--c15t-font-size-base']).toBe('1rem');
-		expect(vars['--c15t-font-weight-normal']).toBe('400');
-		expect(vars['--c15t-font-weight-medium']).toBe('500');
+		expect(vars['--inth-font-family']).toBe('Arial, sans-serif');
+		expect(vars['--inth-font-size-sm']).toBe('0.875rem');
+		expect(vars['--inth-font-size-base']).toBe('1rem');
+		expect(vars['--inth-font-weight-normal']).toBe('400');
+		expect(vars['--inth-font-weight-medium']).toBe('500');
 	});
 
 	test('converts spacing tokens to CSS variables', () => {
@@ -110,9 +110,9 @@ describe('themeToVars', () => {
 			},
 		};
 		const vars = themeToVars(theme);
-		expect(vars['--c15t-space-xs']).toBe('0.25rem');
-		expect(vars['--c15t-space-sm']).toBe('0.5rem');
-		expect(vars['--c15t-space-md']).toBe('1rem');
+		expect(vars['--inth-space-xs']).toBe('0.25rem');
+		expect(vars['--inth-space-sm']).toBe('0.5rem');
+		expect(vars['--inth-space-md']).toBe('1rem');
 	});
 
 	test('converts radius tokens to CSS variables', () => {
@@ -125,10 +125,10 @@ describe('themeToVars', () => {
 			},
 		};
 		const vars = themeToVars(theme);
-		expect(vars['--c15t-radius-sm']).toBe('4px');
-		expect(vars['--c15t-radius-md']).toBe('8px');
-		expect(vars['--c15t-radius-lg']).toBe('12px');
-		expect(vars['--c15t-radius-full']).toBe('9999px');
+		expect(vars['--inth-radius-sm']).toBe('4px');
+		expect(vars['--inth-radius-md']).toBe('8px');
+		expect(vars['--inth-radius-lg']).toBe('12px');
+		expect(vars['--inth-radius-full']).toBe('9999px');
 	});
 
 	test('converts shadow tokens to CSS variables', () => {
@@ -139,8 +139,8 @@ describe('themeToVars', () => {
 			},
 		};
 		const vars = themeToVars(theme);
-		expect(vars['--c15t-shadow-sm']).toBe('0 1px 2px rgba(0,0,0,0.05)');
-		expect(vars['--c15t-shadow-md']).toBe('0 4px 6px rgba(0,0,0,0.1)');
+		expect(vars['--inth-shadow-sm']).toBe('0 1px 2px rgba(0,0,0,0.05)');
+		expect(vars['--inth-shadow-md']).toBe('0 4px 6px rgba(0,0,0,0.1)');
 	});
 
 	test('converts motion tokens to CSS variables', () => {
@@ -158,19 +158,19 @@ describe('themeToVars', () => {
 			},
 		};
 		const vars = themeToVars(theme);
-		expect(vars['--c15t-duration-fast']).toBe('100ms');
-		expect(vars['--c15t-duration-normal']).toBe('200ms');
-		expect(vars['--c15t-easing']).toBe('ease-in-out');
-		expect(vars['--c15t-easing-out']).toBe(
+		expect(vars['--inth-duration-fast']).toBe('100ms');
+		expect(vars['--inth-duration-normal']).toBe('200ms');
+		expect(vars['--inth-easing']).toBe('ease-in-out');
+		expect(vars['--inth-easing-out']).toBe(
 			'cubic-bezier(0.215, 0.61, 0.355, 1)'
 		);
-		expect(vars['--c15t-easing-in']).toBe(
+		expect(vars['--inth-easing-in']).toBe(
 			'cubic-bezier(0.55, 0.055, 0.675, 0.19)'
 		);
-		expect(vars['--c15t-easing-in-out']).toBe(
+		expect(vars['--inth-easing-in-out']).toBe(
 			'cubic-bezier(0.645, 0.045, 0.355, 1)'
 		);
-		expect(vars['--c15t-easing-spring']).toBe(
+		expect(vars['--inth-easing-spring']).toBe(
 			'cubic-bezier(0.34, 1.56, 0.64, 1)'
 		);
 	});
@@ -187,8 +187,8 @@ describe('themeToVars', () => {
 		const lightVars = themeToVars(theme, false);
 		const darkVars = themeToVars(theme, true);
 
-		expect(lightVars['--c15t-surface']).toBe('#ffffff');
-		expect(darkVars['--c15t-surface']).toBe('#000000');
+		expect(lightVars['--inth-surface']).toBe('#ffffff');
+		expect(darkVars['--inth-surface']).toBe('#000000');
 	});
 
 	test('returns empty object for empty theme', () => {
@@ -200,12 +200,11 @@ describe('themeToVars', () => {
 		const theme: Theme = {
 			colors: {
 				primary: '#ff0000',
-				// other colors undefined
 			},
 		};
 		const vars = themeToVars(theme);
-		expect(vars['--c15t-primary']).toBe('#ff0000');
-		expect(vars['--c15t-surface']).toBeUndefined();
+		expect(vars['--inth-primary']).toBe('#ff0000');
+		expect(vars['--inth-surface']).toBeUndefined();
 	});
 
 	test('derives text-on-primary when primary is bright', () => {
@@ -215,7 +214,7 @@ describe('themeToVars', () => {
 			},
 		});
 
-		expect(vars['--c15t-text-on-primary']).toBe('#000000');
+		expect(vars['--inth-text-on-primary']).toBe('#000000');
 	});
 
 	test('derives text-on-primary from dark primary overrides', () => {
@@ -231,7 +230,7 @@ describe('themeToVars', () => {
 			true
 		);
 
-		expect(vars['--c15t-text-on-primary']).toBe('#ffffff');
+		expect(vars['--inth-text-on-primary']).toBe('#ffffff');
 	});
 
 	test('preserves explicit text-on-primary overrides', () => {
@@ -242,7 +241,7 @@ describe('themeToVars', () => {
 			},
 		});
 
-		expect(vars['--c15t-text-on-primary']).toBe('#112233');
+		expect(vars['--inth-text-on-primary']).toBe('#112233');
 	});
 });
 
@@ -302,8 +301,8 @@ describe('generateDefaultThemeCSS', () => {
 			dark: { primary: '#80ff80', switchTrackActive: '#ff80ff' },
 		});
 
-		expect(css).toContain('--c15t-switch-track-active: #ff8000');
-		expect(css).toContain('--c15t-switch-track-active: #ff80ff');
+		expect(css).toContain('--inth-switch-track-active: #ff8000');
+		expect(css).toContain('--inth-switch-track-active: #ff80ff');
 	});
 });
 
@@ -316,7 +315,7 @@ describe('generateThemeCSS', () => {
 		};
 		const css = generateThemeCSS(theme);
 		expect(css).toContain(':root');
-		expect(css).toContain('.c15t-theme-root');
+		expect(css).toContain('.inth-theme-root');
 	});
 
 	test('includes light mode variables', () => {
@@ -326,7 +325,7 @@ describe('generateThemeCSS', () => {
 			},
 		};
 		const css = generateThemeCSS(theme);
-		expect(css).toContain('--c15t-primary: #ff0000');
+		expect(css).toContain('--inth-primary: #ff0000');
 	});
 
 	test('includes switch token variables in generated CSS', () => {
@@ -337,8 +336,8 @@ describe('generateThemeCSS', () => {
 			},
 		};
 		const css = generateThemeCSS(theme);
-		expect(css).toContain('--c15t-switch-track: #123456');
-		expect(css).toContain('--c15t-switch-track-active: #654321');
+		expect(css).toContain('--inth-switch-track: #123456');
+		expect(css).toContain('--inth-switch-track-active: #654321');
 	});
 
 	test('includes dark mode selector', () => {
@@ -352,7 +351,7 @@ describe('generateThemeCSS', () => {
 		};
 		const css = generateThemeCSS(theme);
 		expect(css).toContain('.dark');
-		expect(css).toContain('.c15t-dark');
+		expect(css).toContain('.inth-dark');
 	});
 
 	test('uses base colors in dark mode when dark overrides are not provided', () => {
@@ -363,9 +362,9 @@ describe('generateThemeCSS', () => {
 		};
 		const css = generateThemeCSS(theme);
 
-		expect(css).toContain('--c15t-primary: #123456');
-		expect(css).not.toContain('--c15t-surface: hsl(0, 0%, 7%)');
-		expect(css).not.toContain('--c15t-primary: hsl(228, 100%, 70%)');
+		expect(css).toContain('--inth-primary: #123456');
+		expect(css).not.toContain('--inth-surface: hsl(0, 0%, 7%)');
+		expect(css).not.toContain('--inth-primary: hsl(228, 100%, 70%)');
 	});
 
 	test('generates valid CSS structure', () => {
@@ -376,8 +375,6 @@ describe('generateThemeCSS', () => {
 			},
 		};
 		const css = generateThemeCSS(theme);
-		// Should have opening and closing braces
-		// (light, dark, and no-transitions utility with pseudo-elements = 4 selectors)
 		const openBraces = css.match(/\{/gu)?.length ?? 0;
 		const closeBraces = css.match(/\}/gu)?.length ?? 0;
 		expect(openBraces).toBe(closeBraces);
@@ -395,15 +392,13 @@ describe('generateThemeCSS', () => {
 		};
 		const css = generateThemeCSS(theme);
 
-		// Should use compound selectors (:root.dark) not descendant selectors (.dark :root)
 		expect(css).toContain(':root.dark');
-		expect(css).toContain(':root.c15t-dark');
+		expect(css).toContain(':root.inth-dark');
 		expect(css).not.toContain('.dark :root');
-		expect(css).not.toContain('.c15t-dark :root');
+		expect(css).not.toContain('.inth-dark :root');
 
-		// Descendant selectors for .c15t-theme-root should still be used
-		expect(css).toContain('.dark .c15t-theme-root');
-		expect(css).toContain('.c15t-dark .c15t-theme-root');
+		expect(css).toContain('.dark .inth-theme-root');
+		expect(css).toContain('.inth-dark .inth-theme-root');
 	});
 
 	test('includes no-transitions utility class', () => {
@@ -413,7 +408,7 @@ describe('generateThemeCSS', () => {
 			},
 		};
 		const css = generateThemeCSS(theme);
-		expect(css).toContain('.c15t-no-transitions');
+		expect(css).toContain('.inth-no-transitions');
 		expect(css).toContain('transition: none !important');
 		expect(css).toContain('animation: none !important');
 	});

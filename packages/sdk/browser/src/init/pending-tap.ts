@@ -3,7 +3,7 @@
  * init script showed at once but has not stored yet.
  *
  * The init script hides the banner and starts the scripts in the tap's own
- * task, then stores the choice with `c15t.commit.js`, which it fetches at
+ * task, then stores the choice with `inth.commit.js`, which it fetches at
  * the tap. If the visitor leaves before that file arrives, the choice would
  * be lost, so the tap's task also writes this small marker. Whichever
  * stores the choice removes it: the commit file, or the engine recording
@@ -16,10 +16,11 @@
 
 import type { ConsentSnapshot } from '@inth/sdk-core';
 
+import { dropRejection } from '../drop-rejection';
 import type { ConsentClient } from '../types';
 
 /** localStorage key of the marker. */
-export const PENDING_TAP_KEY = 'c15t-pending-tap';
+export const PENDING_TAP_KEY = 'inth-pending-tap';
 
 /** The marker. */
 export interface PendingTap {
@@ -66,17 +67,12 @@ export const clearPendingTap = function clearPendingTap(): void {
 	}
 };
 
-/**
- * The marker, or `null` when there is none or it cannot be read.
- *
- * @returns The marker.
- */
+/** The marker, or `null` when there is none or it cannot be read. */
 export const readPendingTap = function readPendingTap(): PendingTap | null {
 	try {
 		const tap = JSON.parse(
 			localStorage.getItem(PENDING_TAP_KEY) ?? 'null'
 		) as PendingTap | null;
-		// `all`, `none` or a categories object.
 		return tap?.c &&
 			(typeof tap.c === 'object' || tap.c === 'all' || tap.c === 'none')
 			? tap
@@ -102,23 +98,28 @@ export const recordPendingTap = function recordPendingTap(
 	if (!tap) {
 		return;
 	}
-	// oxlint-disable-next-line promise/prefer-await-to-then -- Called from a synchronous start.
-	void client.ready().then((snapshot) => {
-		if (readPendingTap()?.t !== tap.t) {
-			return;
-		}
-		clearPendingTap();
-		const { choice } = snapshot.evaluationPolicy;
-		if (
-			snapshot.activeUI === 'banner' &&
-			choice.fingerprint === tap.f &&
-			(choice.maxAgeMs === null || Date.now() - tap.t < choice.maxAgeMs)
-		) {
-			if (typeof tap.c === 'object') {
-				void client.save(tap.c);
-			} else {
-				void (tap.c === 'all' ? client.acceptAll() : client.rejectAll());
+	dropRejection(
+		// Called from a synchronous start.
+		(async () => {
+			const snapshot = await client.ready();
+			if (readPendingTap()?.t !== tap.t) {
+				return;
 			}
-		}
-	});
+			clearPendingTap();
+			const { choice } = snapshot.evaluationPolicy;
+			if (
+				snapshot.activeUI === 'banner' &&
+				choice.fingerprint === tap.f &&
+				(choice.maxAgeMs === null || Date.now() - tap.t < choice.maxAgeMs)
+			) {
+				if (typeof tap.c === 'object') {
+					dropRejection(client.save(tap.c));
+				} else {
+					dropRejection(
+						tap.c === 'all' ? client.acceptAll() : client.rejectAll()
+					);
+				}
+			}
+		})()
+	);
 };

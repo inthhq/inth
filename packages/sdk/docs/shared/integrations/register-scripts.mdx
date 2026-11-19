@@ -1,6 +1,6 @@
 ---
 title: Register vendor scripts
-description: Add a vendor script configuration to the c15t provider you already have, in each framework.
+description: Add a vendor script configuration to the Inth provider you already have, in each framework.
 group: integrations
 ---
 
@@ -9,22 +9,22 @@ group: integrations
 <section id="registration">
   Complete your [framework quickstart](/docs/frameworks) first. Keep its Inth
   endpoint, policy, styles and consent UI. Remove the vendor's original script,
-  SDK initializer or tag-manager entry, so the vendor loads only through c15t.
+  SDK initializer or tag-manager entry, so the vendor loads only through Inth.
 
   The vendor pages put the helper in `src/consent-scripts.ts`. If your framework
-  quickstart already has a `scripts` array, such as the one in `c15t.config.ts`
+  quickstart already has a `scripts` array, such as the one in `inth.config.ts`
   in the Next.js guide, add the helper to that array instead of creating a
   second file.
-  The `scripts` export is a configuration, not an initializer. Add it to the c15t provider you already have, at the registration
+  The `scripts` export is a configuration, not an initializer. Add it to the Inth provider you already have, at the registration
   point for your framework below. These are edits to that provider, not a second
   provider.
 
   <Tabs items={['Next.js', 'TanStack Start', 'React', 'Nuxt', 'Vue', 'Astro', 'Svelte', 'SvelteKit', 'Angular', 'HTML', 'JavaScript']}>
     <Tab value="Next.js">
-      Add the configuration to `scripts` in `c15t.config.ts`, next to
+      Add the configuration to `scripts` in `inth.config.ts`, next to
       `next.config.ts`:
 
-      ```ts title="c15t.config.ts"
+      ```ts title="inth.config.ts"
       import { defineConsentConfig } from '@inth/nextjs';
       import { scripts } from './src/consent-scripts';
 
@@ -72,14 +72,14 @@ group: integrations
     </Tab>
 
     <Tab value="Nuxt">
-      Register the scripts under the `c15t` key in `app/app.config.ts`. Adjust the
+      Register the scripts under the `inth` key in `app/app.config.ts`. Adjust the
       relative import to where you created `consent-scripts.ts`:
 
       ```ts title="app/app.config.ts"
       import { scripts } from '../src/consent-scripts';
 
       export default defineAppConfig({
-        c15t: { scripts },
+        inth: { scripts },
       });
       ```
 
@@ -92,15 +92,15 @@ group: integrations
     </Tab>
 
     <Tab value="Vue">
-      Pass the scripts to the existing `c15tVue` plugin call in `src/main.ts`:
+      Pass the scripts to the existing `inthVue` plugin call in `src/main.ts`:
 
       {/* example: fragment */}
 
       ```ts title="src/main.ts"
-      import { c15tVue, manifest } from '@inth/vue/vue-plugin';
+      import { inthVue, manifest } from '@inth/vue/vue-plugin';
       import { scripts } from './consent-scripts';
 
-      app.use(c15tVue, {
+      app.use(inthVue, {
         mode: manifest(),
         scripts,
       });
@@ -114,15 +114,15 @@ group: integrations
 
     <Tab value="Astro">
       Add the scripts to the client entrypoint from the
-      [Astro quickstart](/docs/frameworks/astro/quickstart), `src/c15t.client.ts`,
+      [Astro quickstart](/docs/frameworks/astro/quickstart), `src/inth.client.ts`,
       which the integration finds on its own. Keep `astro.config.mjs` as it is.
       If the module already exports scripts, combine the two arrays.
 
-      ```ts title="src/c15t.client.ts"
-      import type { C15tClientOptionsExtension } from '@inth/astro';
+      ```ts title="src/inth.client.ts"
+      import type { InthClientOptionsExtension } from '@inth/astro';
       import { scripts } from './consent-scripts';
 
-      export default { scripts } satisfies C15tClientOptionsExtension;
+      export default { scripts } satisfies InthClientOptionsExtension;
       ```
 
       Vendor helpers contain callbacks, and the integration options in
@@ -176,7 +176,7 @@ group: integrations
     </Tab>
 
     <Tab value="Angular">
-      Pass the scripts to the existing `provideC15t()` call in
+      Pass the scripts to the existing `provideInth()` call in
       `src/app/app.config.ts`, next to `mode`:
 
       <include src="../examples/angular/integration-register.mdx" />
@@ -186,23 +186,23 @@ group: integrations
       starts one script loader in the browser after the first render, once it
       has applied the visitor's stored choice. With server rendering, the
       server starts the scripts the stored choice already allows. Keep
-      `provideC15t()` in `app.config.ts`, which the server config merges, not
+      `provideInth()` in `app.config.ts`, which the server config merges, not
       in a server-only file. See
       [Angular scripts](/docs/frameworks/angular/scripts).
     </Tab>
 
     <Tab value="HTML">
       The helpers in `@inth/integrations` are ES modules that need a bundler. On a
-      page that loads the c15t script tag, paste the vendor's own snippet instead
+      page that loads the Inth script tag, paste the vendor's own snippet instead
       and keep it inert until its category is allowed:
 
       ```html
-      <script type="text/plain" data-c15t-category="measurement">
+      <script type="text/plain" data-inth-category="measurement">
         // The vendor's snippet, unchanged
       </script>
       ```
 
-      Use the category this guide names for the vendor. c15t runs the snippet
+      Use the category this guide names for the vendor. Inth runs the snippet
       once that category is allowed, and reloads the page when the visitor
       withdraws it. Helper options on this page, such as `loadMode`, do not apply
       to a pasted snippet. See [HTML scripts](/docs/frameworks/html/scripts).

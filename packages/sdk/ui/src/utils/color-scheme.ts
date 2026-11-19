@@ -1,5 +1,5 @@
 /**
- * The `c15t-dark` class, kept in its own module so a page that only sets
+ * The `inth-dark` class, kept in its own module so a page that only sets
  * the color scheme does not load the dialog's focus-trap and scroll-lock
  * helpers.
  */
@@ -11,12 +11,16 @@
  * `'system'` is light.
  *
  * @param colorScheme - 'light' | 'dark' | 'system'. Unset mirrors a `dark`
- * class on `<html>` into `c15t-dark` as it changes.
+ * class on `<html>` into `inth-dark` as it changes. `null` leaves the class
+ * to the site and does nothing, as does a call on the server.
  * @returns Cleanup function
  */
 export const setupColorScheme = function setupColorScheme(
-	colorScheme?: 'light' | 'dark' | 'system'
-) {
+	colorScheme?: 'light' | 'dark' | 'system' | null
+): () => void {
+	if (colorScheme === null || typeof document === 'undefined') {
+		return () => undefined;
+	}
 	const systemDarkQuery =
 		typeof window.matchMedia === 'function'
 			? window.matchMedia('(prefers-color-scheme: dark)')
@@ -24,7 +28,7 @@ export const setupColorScheme = function setupColorScheme(
 	const defaultDarkQuery = document.documentElement.classList.contains('dark');
 
 	const updateSystemColorScheme = (e: { matches: boolean }) => {
-		document.documentElement.classList.toggle('c15t-dark', e.matches);
+		document.documentElement.classList.toggle('inth-dark', e.matches);
 	};
 
 	const updateDefaultColorScheme = (mutationList: MutationRecord[]) => {
@@ -34,7 +38,7 @@ export const setupColorScheme = function setupColorScheme(
 				mutation.attributeName === 'class'
 			) {
 				const darkExists = document.documentElement.classList.contains('dark');
-				document.documentElement.classList.toggle('c15t-dark', darkExists);
+				document.documentElement.classList.toggle('inth-dark', darkExists);
 			}
 		}
 	};
@@ -44,11 +48,11 @@ export const setupColorScheme = function setupColorScheme(
 	const apply = () => {
 		switch (colorScheme) {
 			case 'light': {
-				document.documentElement.classList.remove('c15t-dark');
+				document.documentElement.classList.remove('inth-dark');
 				break;
 			}
 			case 'dark': {
-				document.documentElement.classList.add('c15t-dark');
+				document.documentElement.classList.add('inth-dark');
 				break;
 			}
 			case 'system': {
@@ -58,7 +62,7 @@ export const setupColorScheme = function setupColorScheme(
 			}
 			default: {
 				document.documentElement.classList.toggle(
-					'c15t-dark',
+					'inth-dark',
 					defaultDarkQuery
 				);
 				observer.observe(document.documentElement, { attributes: true });
@@ -73,4 +77,29 @@ export const setupColorScheme = function setupColorScheme(
 		systemDarkQuery?.removeEventListener('change', updateSystemColorScheme);
 		observer.disconnect();
 	};
+};
+
+/**
+ * Inline script that sets `inth-dark` before the first paint, for a server
+ * to render in `<head>` ahead of the stylesheet. It runs unbundled, so a
+ * module script's deferral cannot lose the race against the first paint.
+ *
+ * Only `'dark'` and `'system'` need one. Light is the absence of the class,
+ * and any other value leaves the class to the site.
+ *
+ * @param colorScheme - The provider's color scheme.
+ * @returns Script source, or an empty string when none is needed.
+ */
+export const buildColorSchemeScript = function buildColorSchemeScript(
+	colorScheme: string | null | undefined
+): string {
+	if (colorScheme === 'dark') {
+		return "document.documentElement.classList.add('inth-dark');";
+	}
+	if (colorScheme === 'system') {
+		// `matchMedia` is missing in some embedded webviews, and a throw here
+		// would stop the rest of the document from parsing.
+		return "try{document.documentElement.classList.toggle('inth-dark',matchMedia('(prefers-color-scheme:dark)').matches)}catch(e){}";
+	}
+	return '';
 };

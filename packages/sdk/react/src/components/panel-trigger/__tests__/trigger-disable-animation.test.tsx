@@ -49,7 +49,7 @@ describe.each([false, true])('disableAnimation %s', (disableAnimation) => {
 				disableAnimation
 			);
 		}
-		const item = toolbar()?.querySelector('[data-c15t-trigger-item]') ?? null;
+		const item = toolbar()?.querySelector('[data-inth-trigger-item]') ?? null;
 		// The stock trigger animates hover and snap; the flag stops both it
 		// and the toolbar items.
 		expect(longestTransition(trigger()) > 0).toBe(!disableAnimation);

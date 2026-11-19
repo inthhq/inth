@@ -1,12 +1,12 @@
 /**
- * `@inth/react` — React adapter for the c15t consent kernel.
+ * `@inth/react` — React adapter for the Inth consent kernel.
  *
  * Pattern:
  *   import { ConsentProvider, useConsent, useSaveConsents } from '@inth/react';
  *
  *   function App({ children }) {
  *     return (
- *       <ConsentProvider options={{ projectUrl: '/api/c15t' }}>
+ *       <ConsentProvider options={{ projectUrl: '/api/inth' }}>
  *         {children}
  *       </ConsentProvider>
  *     );
@@ -16,15 +16,6 @@
  *     const allowed = useConsent('marketing');
  *     return allowed ? <GoogleTagManager /> : null;
  *   }
- *
- * Design notes:
- * - Selector hooks subscribe via `useSyncExternalStore` so re-renders
- *   stay scoped to the exact slice each hook reads.
- * - Action hooks return stable kernel methods — no `useCallback` dance
- *   required at the consumer site.
- * - No provider-level useEffect syncing state into React state. No
- *   cache patching. No method rewriting. Provider boot work is explicit
- *   module wiring around a single per-mount kernel.
  */
 
 // Re-export kernel types so consumers need only one import.

@@ -12,10 +12,10 @@ import { offlineMode } from '../../src/__tests__/fixtures/transport-mode';
 import { TEST_OPT_IN_RULE, testOptions } from '../../src/__tests__/test-local';
 import { ConsentManager } from '../../src/lib/core/consent-manager';
 import type {
-	C15tOptions,
-	C15tProviderOptions,
+	InthOptions,
+	InthProviderOptions,
 } from '../../src/lib/core/options';
-import { provideC15t } from '../../src/lib/core/provide-c15t';
+import { provideInth } from '../../src/lib/core/provide-inth';
 import {
 	ConsentGate,
 	ConsentGateContent,
@@ -44,7 +44,7 @@ class GatedWidget {
 	imports: [ConsentGate],
 	selector: 'test-stock-gate',
 	template: `
-		<c15t-consent-gate
+		<inth-consent-gate
 			category="measurement"
 			class="video"
 		>
@@ -52,7 +52,7 @@ class GatedWidget {
 				title="video"
 				data-testid="video"
 			></iframe>
-		</c15t-consent-gate>
+		</inth-consent-gate>
 	`,
 })
 class StockGate {}
@@ -67,13 +67,13 @@ class StockGate {}
 	],
 	selector: 'test-template-gate',
 	template: `
-		<c15t-consent-gate
+		<inth-consent-gate
 			category="marketing"
 			[vendor]="vendor()"
 		>
-			<ng-template c15tConsentGateContent><test-gated-widget /></ng-template>
+			<ng-template inthConsentGateContent><test-gated-widget /></ng-template>
 			<ng-template
-				c15tConsentGatePlaceholder
+				inthConsentGatePlaceholder
 				let-category
 				let-open="openDialog"
 			>
@@ -85,7 +85,7 @@ class StockGate {}
 					Allow {{ category }}
 				</button>
 			</ng-template>
-		</c15t-consent-gate>
+		</inth-consent-gate>
 	`,
 })
 class TemplateGate {
@@ -97,11 +97,11 @@ const testId = (root: HTMLElement, id: string) =>
 
 const boot = async <ComponentType>(
 	component: new () => ComponentType,
-	options: Partial<C15tOptions> = {}
+	options: Partial<InthOptions> = {}
 ) => {
 	TestBed.configureTestingModule({
 		providers: [
-			provideC15t({ ...testOptions(), ...options } as C15tProviderOptions),
+			provideInth({ ...testOptions(), ...options } as InthProviderOptions),
 		],
 	});
 	const fixture = TestBed.createComponent(component);
@@ -111,7 +111,7 @@ const boot = async <ComponentType>(
 	await vi.waitFor(async () => {
 		await fixture.whenStable();
 		expect(
-			(fixture.nativeElement as HTMLElement).querySelector('c15t-consent-gate')
+			(fixture.nativeElement as HTMLElement).querySelector('inth-consent-gate')
 				?.childElementCount
 		).toBeGreaterThan(0);
 	});
@@ -127,7 +127,7 @@ afterEach(() => {
 	lifecycle.created = 0;
 	lifecycle.destroyed = 0;
 	document.head
-		.querySelectorAll('style[data-c15t-styles]')
+		.querySelectorAll('style[data-inth-styles]')
 		.forEach((element) => element.remove());
 });
 
@@ -141,7 +141,7 @@ describe('ConsentGate', () => {
 		const button = testId(root, 'consent-gate-button');
 		expect(button?.textContent?.trim()).toBe('Enable Analytics consent');
 		expect(
-			document.head.querySelector('style[data-c15t-styles]')
+			document.head.querySelector('style[data-inth-styles]')
 		).not.toBeNull();
 
 		button?.click();
@@ -156,7 +156,7 @@ describe('ConsentGate', () => {
 		expect(testId(root, 'video')).not.toBeNull();
 		expect(testId(root, 'consent-gate-placeholder')).toBeNull();
 		// The host is the wrapper and keeps the class in every state.
-		expect(root.querySelector('c15t-consent-gate')?.classList).toContain(
+		expect(root.querySelector('inth-consent-gate')?.classList).toContain(
 			'video'
 		);
 
@@ -173,7 +173,7 @@ describe('ConsentGate', () => {
 		const custom = testId(root, 'custom');
 		expect(custom?.textContent?.trim()).toBe('Allow marketing');
 		// A custom placeholder brings its own look: no stock sheets.
-		expect(document.head.querySelector('style[data-c15t-styles]')).toBeNull();
+		expect(document.head.querySelector('style[data-inth-styles]')).toBeNull();
 
 		custom?.click();
 		await settle();
@@ -239,7 +239,7 @@ describe('ConsentGate', () => {
 		const { root } = await boot(StockGate, { noStyle: true });
 		expect(testId(root, 'consent-gate-placeholder')?.className).toBe('');
 		expect(testId(root, 'consent-gate-button')?.className).toBe('');
-		expect(document.head.querySelector('style[data-c15t-styles]')).toBeNull();
+		expect(document.head.querySelector('style[data-inth-styles]')).toBeNull();
 	});
 
 	test('a strict policy that leaves the category out offers no button', async () => {

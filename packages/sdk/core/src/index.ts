@@ -36,10 +36,14 @@ export {
 export { createConsentKernel } from './kernel';
 
 export {
+	resolveIABBannerCopy,
 	resolveIABBannerSummary,
 	IAB_BANNER_MAX_DISPLAY_ITEMS,
 } from './libs/iab-banner-summary';
-export type { ResolveIABBannerSummaryOptions } from './libs/iab-banner-summary';
+export type {
+	IABBannerCopy,
+	ResolveIABBannerSummaryOptions,
+} from './libs/iab-banner-summary';
 export type {
 	ClearOnRevocationConfig,
 	ClearOnRevocationCookie,
@@ -56,7 +60,7 @@ export {
 	isValidSubjectId,
 } from './libs/generate-subject-id';
 export type {
-	C15tWindowDebug,
+	InthWindowDebug,
 	WindowDebugHandle,
 	WindowDebugMode,
 	WindowDebugModeInput,
@@ -79,8 +83,6 @@ export type {
 } from './transports/hosted-records';
 export { createHostedRecordTransport } from './transports/hosted-records';
 export type { HostedInitRequest } from './transports/hosted-init-request';
-export { createHostedInitRequest } from './transports/hosted-init-request';
-export { hasPrefetchedInitialData } from './libs/prefetch/window-key';
 export {
 	ConsentSaveRejectedError,
 	isConsentSaveRejection,
@@ -110,19 +112,14 @@ export type {
 } from './modes';
 export { hosted } from './modes';
 export type { ConsentTesting } from './transports/testing';
-export {
-	NO_RECORDS_WARNING,
-	warnNoConsentRecords,
-	warnNoConsentRecordsInDevelopment,
-} from './libs/no-records-warning';
 export { buildSubjectPostBody } from './transports/subject-body';
 export {
-	C15T_POLICY_CONTRACT_HEADER,
-	C15T_VERSION_HEADER,
-	c15tProtocolHeaders,
-	c15tProtocolParams,
-	c15tVersionHeaders,
-} from './transports/version-header';
+	INTH_POLICY_CONTRACT_HEADER,
+	INTH_VERSION_HEADER,
+	inthProtocolHeaders,
+	inthProtocolParams,
+	inthVersionHeaders,
+} from './libs/version-header';
 export type {
 	AdTechProvider,
 	ConfirmedCoverage,
@@ -172,20 +169,16 @@ export type {
 } from './types';
 
 // -- Consent categories --------------------------------------------------------
-export type {
-	AllConsentNames,
-	ConsentInfo,
-	ConsentType,
-} from './consent/consent-types';
+export type { AllConsentNames, ConsentType } from './consent/consent-types';
 export { allConsentNames, consentTypes } from './consent/consent-types';
-export type { NamespaceProps } from './consent/compliance';
 
 // -- Consent conditions --------------------------------------------------------
 export type { HasCondition } from './libs/has';
 export { has } from './libs/has';
+export { policyDefault } from './consent/consent-types';
 
 // -- Storage -------------------------------------------------------------------
-export type { CookieOptions, StorageConfig } from './libs/cookie';
+export type { StorageConfig } from './libs/cookie';
 export { getRootDomain } from './libs/cookie';
 
 // -- Blockers ------------------------------------------------------------------
@@ -227,7 +220,6 @@ export type {
 	CMPStatus,
 	DisplayStatus,
 	EventStatus,
-	FetchGVLResult,
 	IABConfig,
 	LegalLink,
 	LegalLinks,
@@ -241,9 +233,10 @@ export type {
 	SSRInitialData,
 	SSRInitRequestContext,
 	SSRInitRequestMetadata,
-	SSRSkippedReason,
 	TCData,
 	TCDataOutsideTCF,
+	TCFApi,
+	TCFApiCallback,
 	TCFConsentData,
 	User,
 } from './options';
@@ -254,6 +247,8 @@ export type { PrefetchOptions } from './libs/prefetch';
 export {
 	buildPrefetchScript,
 	getMatchingPrefetchedInitialData,
+	insertPrefetchScript,
+	PREFETCH_SCRIPT_ID,
 	primePrefetchedInitialData,
 } from './libs/prefetch';
 
@@ -265,9 +260,11 @@ export type {
 	ConsentTypeTranslations,
 	CookieBannerTranslations,
 	I18nConfig,
+	IABTranslations,
 	LegalLinksTranslations,
 	TranslationConfig,
 	Translations,
+	TriggerTranslations,
 } from '@inth/sdk-translations';
 export {
 	deepMergeTranslations,
@@ -307,16 +304,18 @@ export {
 	resolveConsentPresentation,
 } from './libs/policy-actions';
 export {
+	defineExperiment,
+	hostExperiment,
+	seedExperiment,
+} from './libs/experiment';
+export {
 	actionAppearanceFromTheme,
 	applyExperimentAssignment,
 	applyExperimentTheme,
-	defineExperiment,
-	hostExperiment,
 	resolveExperimentTheme,
-	seedExperiment,
-} from './libs/experiment';
+} from './libs/experiment-presentation';
+export type { ActionAppearance } from './libs/experiment-presentation';
 export type {
-	ActionAppearance,
 	ConsentExperiment,
 	ExperimentActionStyle,
 	ExperimentArm,
@@ -329,7 +328,6 @@ export type {
 	StartExperimentOptions,
 } from './libs/experiment';
 export type { ConsentJourneyOption, JourneyState } from './libs/journey';
-export { createUnreportedJourneys } from './libs/journey';
 export {
 	EXPERIMENT_STORAGE_KEY,
 	JOURNEY_STORAGE_KEY,
@@ -351,10 +349,19 @@ export type {
 } from './libs/policy-actions';
 export {
 	resolveActionLabels,
+	resolveCategoryTitle,
+	resolveIABCopy,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
+	resolveSurfaceTranslations,
+	resolveTriggerLabels,
+	resolveVendorListCopy,
 } from './libs/consent-copy';
-export type { PreferenceControl, PromptCopy } from './libs/consent-copy';
+export type {
+	PreferenceControl,
+	PromptCopy,
+	ResolvedIABCopy,
+} from './libs/consent-copy';
 
 export {
 	deniedVendorIds,
@@ -366,11 +373,8 @@ export {
 export type { RevocationReloadOptions } from './modules/revocation-reload';
 export { watchRevocationReload } from './modules/revocation-reload';
 export type { ResolveVendorsInput, VendorOwner } from './libs/vendors';
-export {
-	declareOwnedVendors,
-	forgetOwnedVendors,
-	vendorsListedUnder,
-} from './libs/vendors';
+export { declareOwnedVendors, forgetOwnedVendors } from './libs/vendors';
+export { vendorsListedUnder } from './libs/vendor-listing';
 export { deferInitGvl } from './transports/gvl-reference';
 export {
 	IAB_UNAVAILABLE_ERROR_CODE,

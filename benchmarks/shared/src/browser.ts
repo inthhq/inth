@@ -168,10 +168,10 @@ export const DEFAULT_BENCH_BACKEND_LATENCY_MS = 200;
  * sessions) by this many milliseconds, and server-side fetches of those
  * endpoints pay it too. Static assets and app HTML are not delayed.
  */
-export const BENCH_BACKEND_LATENCY_ENV = 'C15T_BENCH_BACKEND_LATENCY_MS';
+export const BENCH_BACKEND_LATENCY_ENV = 'INTH_BENCH_BACKEND_LATENCY_MS';
 
 /** Older name of {@link BENCH_BACKEND_LATENCY_ENV}, still read as an alias. */
-export const BENCH_INIT_LATENCY_ENV = 'C15T_BENCH_INIT_LATENCY_MS';
+export const BENCH_INIT_LATENCY_ENV = 'INTH_BENCH_INIT_LATENCY_MS';
 
 /** CLI flags that set the backend latency, in precedence order. */
 export const BENCH_BACKEND_LATENCY_FLAGS = [
@@ -259,7 +259,7 @@ export const resolveBenchConditionFromEnv =
 	): BenchCondition {
 		return {
 			backendLatencyMs: resolveBenchBackendLatencyMs(() => undefined, env),
-			profile: parseBenchThrottleProfile(env.C15T_BENCH_PROFILE),
+			profile: parseBenchThrottleProfile(env.INTH_BENCH_PROFILE),
 		};
 	};
 
@@ -350,7 +350,7 @@ export const benchPerformanceObserverScript =
 		fcpMs: null,
 		lcpMs: null,
 	};
-	Object.defineProperty(window, '__c15tBenchPerfMetrics', {
+	Object.defineProperty(window, '__inthBenchPerfMetrics', {
 		value: metrics,
 		configurable: true,
 	});
@@ -359,7 +359,7 @@ export const benchPerformanceObserverScript =
 	// idle-time preload from a script the page needed to start. The window
 	// runs until the next task, so it covers the callback's microtasks.
 	const idleTasks = [];
-	Object.defineProperty(window, '__c15tBenchIdleTasks', {
+	Object.defineProperty(window, '__inthBenchIdleTasks', {
 		value: idleTasks,
 		configurable: true,
 	});
@@ -514,7 +514,7 @@ export interface BenchPerfMetrics {
  * String for the same reason as `benchNavigationTimingExpression`.
  */
 export const benchPerfMetricsExpression = `(() => {
-	const metrics = window.__c15tBenchPerfMetrics;
+	const metrics = window.__inthBenchPerfMetrics;
 	const finite = (value) =>
 		typeof value === 'number' && Number.isFinite(value)
 			? Number(value.toFixed(3))

@@ -8,18 +8,8 @@ import { createScriptLoaderWith } from './loader';
  * `onConsentChange` callbacks, honors `alwaysLoad` /
  * `persistAfterConsentRevoked` / `callbackOnly` / `anonymizeId`.
  *
- * Concerns are split across siblings:
- * - `types.ts`        — public + internal type definitions.
- * - `normalize.ts`    — script normalization + element-ID resolution.
- * - `eligibility.ts`  — consent-gate evaluation.
- * - `callbacks.ts`    — lifecycle callback dispatch.
- * - `debug.ts`        — debug-event emission (consumer + v2 compat).
- * - `mount.ts`        — DOM mount / unmount / batched append.
- * - `loader.ts`       — wiring + reconcile loop, written against the
- *   tools `index.ts` passes in, so it can load on demand as one chunk.
- * - `index.ts`        — this file: the public entry.
- *
- * v2 parity: `packages/sdk/core/src/libs/script-loader/{core,utils,store,types}.ts`.
+ * `loader.ts` is written against the tools `index.ts` passes in, so it
+ * can load on demand as one chunk.
  *
  * Invariants:
  * - Idempotent by resolved element ID: calling `createScriptLoader` twice
@@ -27,8 +17,8 @@ import { createScriptLoaderWith } from './loader';
  *   the existing DOM element as loaded but do not own it.
  * - Minimal module state: anonymized element IDs are cached per page so
  *   fresh loader instances resolve the same DOM IDs. Other state remains
- *   per loader, except DOM append targets and optional
- *   `window.__c15tScriptDebugListeners` for v2 debug-event compatibility.
+ *   per loader, except DOM append targets and the page's script debug
+ *   listeners.
  * - `dispose()` removes every element this loader mounted and
  *   disconnects the kernel subscription. Elements mounted by other
  *   loaders (or already in the DOM) are left alone.
@@ -53,9 +43,6 @@ export type {
 /**
  * Create a script loader: mounts each script whose consent condition
  * passes and unmounts it when consent is withdrawn.
- *
- * @param options - The kernel and the scripts.
- * @returns The loader handle.
  */
 export const createScriptLoader = function createScriptLoader(
 	options: ScriptLoaderOptions

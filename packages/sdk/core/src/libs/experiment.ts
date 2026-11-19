@@ -3,15 +3,16 @@
  *
  * The host's own `presentation` is the `control` arm. Every other arm is a
  * {@link ConsentPresentation} fragment merged over it. The host passes the
- * arm its feature-flag provider resolved, or a `split` for c15t to pick
+ * arm its feature-flag provider resolved, or a `split` for Inth to pick
  * one. The arm goes out with `/init` and is recorded on the choices of
  * visitors the banner showed it to, so a dashboard can compare opt-in
  * rates per arm. Arms vary presentation and theme tokens only; policy
  * semantics and copy are untouched.
  *
  * This module holds the types and the seed. Merging an arm over the host
- * presentation lives in `experiment-presentation` (re-exported here), so a
- * first paint carries the merge without the seed. Assignment and
+ * presentation, and `actionAppearanceFromTheme`, live in
+ * `experiment-presentation`, so a first paint carries them without this
+ * module and the assignment loader it holds. Assignment and
  * validation live in `experiment-assignment` and `experiment-engine`,
  * loaded on demand.
  */
@@ -26,14 +27,6 @@ import {
 } from './experiment-storage';
 import type { StoredExperimentArm } from './experiment-storage';
 import type { ConsentPresentation, PresentationAction } from './policy-actions';
-
-export {
-	applyExperimentAssignment,
-	applyExperimentTheme,
-	CONTROL_ARM,
-	resolveExperimentPresentation,
-	resolveExperimentTheme,
-} from './experiment-presentation';
 
 /**
  * Styling of one consent action, the shape `theme.consentActions` uses.
@@ -99,12 +92,12 @@ export interface ConsentExperiment<Arm extends string = string> {
 	arms: Readonly<Record<Arm, ExperimentArm>>;
 	/**
 	 * The arm your flag provider resolved for this visitor: `control` or a
-	 * key of `arms`. Omit it and set `split` to let c15t pick. An arm that is
+	 * key of `arms`. Omit it and set `split` to let Inth pick. An arm that is
 	 * not declared logs an error and runs no experiment.
 	 */
 	arm?: NoInfer<Arm> | typeof CONTROL_ARM;
 	/**
-	 * How c15t splits visitors when you do not pass `arm`, as relative
+	 * How Inth splits visitors when you do not pass `arm`, as relative
 	 * weights: `{ control: 60, wall: 40 }`. Default: equal. An arm missing
 	 * from the map gets none. Every key must be `control` or an arm.
 	 */
@@ -123,7 +116,6 @@ export interface ConsentExperiment<Arm extends string = string> {
  * or `split` key is a type error. Returns its argument.
  *
  * @typeParam Arm - The arm names, inferred from `arms`.
- * @param experiment - The experiment definition.
  * @returns `experiment`, unchanged.
  *
  * @example
@@ -189,8 +181,8 @@ export interface ExperimentAssignment {
 	id: string;
 	/** `control` or a key of {@link ConsentExperiment.arms}. */
 	arm: string;
-	/** `host` when the host passed `arm`, `c15t` when c15t picked it. */
-	assignedBy: 'host' | 'c15t';
+	/** `host` when the host passed `arm`, `inth` when Inth picked it. */
+	assignedBy: 'host' | 'inth';
 	/** Whether the host acknowledged presentation diagnostics for this experiment. */
 	acknowledgedDiagnostics: boolean;
 }
@@ -228,48 +220,11 @@ export const hostExperiment = function hostExperiment(
 /**
  * The `{ id, arm }` a server sends with `/init`: the arm alone, never the
  * presentation each arm carries.
- *
- * @param experiment - The experiment the server resolved.
- * @returns The id and arm.
  */
 export const experimentArmRef = function experimentArmRef(
 	experiment: ServerExperiment
 ): { id: string; arm: string } {
 	return { arm: experiment.arm, id: experiment.id };
-};
-
-/** Appearance per action, as `resolveConsentPresentation` consumes it. */
-export type ActionAppearance = Partial<
-	Record<PresentationAction, ExperimentActionStyle>
->;
-
-/**
- * Derive per-action appearance from `theme.consentActions`, the way the
- * framework adapters do before resolving a surface. `default` is spread
- * under each action. Returns `undefined` when no action is styled, so the
- * prominence check falls back to the policy's own defaults.
- *
- * @param theme - A theme carrying `consentActions`, or nothing.
- * @returns Appearance keyed by action, or `undefined`.
- */
-export const actionAppearanceFromTheme = function actionAppearanceFromTheme(
-	theme: Pick<ExperimentArmTheme, 'consentActions'> | undefined
-): ActionAppearance | undefined {
-	const styles = theme?.consentActions;
-	if (
-		!styles?.accept &&
-		!styles?.reject &&
-		!styles?.customize &&
-		!styles?.dismiss
-	) {
-		return undefined;
-	}
-	return {
-		accept: { ...styles.default, ...styles.accept },
-		customize: { ...styles.default, ...styles.customize },
-		dismiss: { ...styles.default, ...styles.dismiss },
-		reject: { ...styles.default, ...styles.reject },
-	};
 };
 
 /**
@@ -284,13 +239,12 @@ export type ExperimentGate = (snapshot: ConsentSnapshot) => boolean;
  * an `arms` entry named `control`, an undeclared `arm`, or a `split` that
  * names an unknown arm or gives no arm a positive weight.
  *
- * @param experiment - The experiment definition.
  * @returns A message naming the problem, or `null`.
  */
 export const experimentConfigError = function experimentConfigError(
 	experiment: ConsentExperiment
 ): string | null {
-	const label = `c15t experiment "${experiment.id}"`;
+	const label = `inth experiment "${experiment.id}"`;
 	if (Object.hasOwn(experiment.arms, CONTROL_ARM)) {
 		return `${label}: \`control\` is your \`presentation\`; do not list it in \`arms\`.`;
 	}
@@ -340,7 +294,7 @@ export const experimentArmWeights = function experimentArmWeights(
 };
 
 /**
- * Pick an arm for a visitor c15t assigns: the arm this browser already saw
+ * Pick an arm for a visitor Inth assigns: the arm this browser already saw
  * when it still exists, otherwise a weighted random pick over `split`
  * (equal by default). Nothing here is stored; the controller stores the arm
  * once the banner has shown it.
@@ -348,7 +302,7 @@ export const experimentArmWeights = function experimentArmWeights(
  * @param experiment - A valid experiment definition without `arm`.
  * @param stored - The arm this browser stored, if any.
  * @param random - A number in `[0, 1)`; injectable for tests.
- * @returns The assignment, `assignedBy: 'c15t'`.
+ * @returns The assignment, `assignedBy: 'inth'`.
  */
 export const pickExperimentArm = function pickExperimentArm(
 	experiment: ConsentExperiment,
@@ -358,7 +312,7 @@ export const pickExperimentArm = function pickExperimentArm(
 	const assignment = (arm: string): ExperimentAssignment => ({
 		acknowledgedDiagnostics: experiment.acknowledgeDiagnostics === true,
 		arm,
-		assignedBy: 'c15t',
+		assignedBy: 'inth',
 		id: experiment.id,
 	});
 	if (stored?.id === experiment.id && isExperimentArm(experiment, stored.arm)) {
@@ -378,17 +332,18 @@ export const pickExperimentArm = function pickExperimentArm(
 };
 
 /**
- * The arm c15t starts from: the one this page's early `/init` picked, else
+ * The arm Inth starts from: the one this page's early `/init` picked, else
  * the one this browser stored. Either only when it is an arm of
  * `experiment`.
  */
 const knownArm = function knownArm(
-	experiment: ConsentExperiment
+	experiment: ConsentExperiment,
+	storageConfig?: StorageConfig
 ): StoredExperimentArm | null {
 	const early = readEarlyExperimentArm();
 	return early?.id === experiment.id && isExperimentArm(experiment, early.arm)
 		? early
-		: readStoredExperimentArm();
+		: readStoredExperimentArm(storageConfig);
 };
 
 /**
@@ -397,7 +352,6 @@ const knownArm = function knownArm(
  * {@link pickExperimentArm}. Recorded for the runtime, which runs the same
  * arm. The inline prefetch script does the same.
  *
- * @param experiment - The experiment definition.
  * @returns The arm, or `undefined` for an invalid definition or outside a
  * browser.
  * @internal
@@ -423,7 +377,7 @@ export const claimEarlyExperimentArm = function claimEarlyExperimentArm(
  * - A server prefetch that already rendered an arm of this experiment
  *   (the Astro middleware, a server seed) keeps it: the visitor saw it.
  * - Otherwise a host `arm` is the arm.
- * - Otherwise c15t picks one in the browser when the runtime starts.
+ * - Otherwise Inth picks one in the browser when the runtime starts.
  *
  * The prompt is held until the controller has checked the arm against the
  * visitor's policy, so the banner never swaps from one presentation to
@@ -495,7 +449,7 @@ export interface StartExperimentOptions {
  * Run the experiment on a started runtime. Call it after hydration and
  * before `init()`.
  *
- * When c15t picks the arm, it does so here, synchronously, so the `/init`
+ * When Inth picks the arm, it does so here, synchronously, so the `/init`
  * that follows already carries it. An arm this page's early `/init` sent
  * wins, so the banner runs the arm that request counted. Then the controller loads as its own
  * chunk, checks the arm against the visitor's policy and releases the held
@@ -503,7 +457,6 @@ export interface StartExperimentOptions {
  * A failed load runs no experiment and still releases the prompt, so a
  * visitor is never left without a banner.
  *
- * @param options - The experiment, kernel and host presentation.
  * @returns Detach the controller.
  * @internal
  */
@@ -517,7 +470,9 @@ export const startExperiment = function startExperiment(
 		return () => undefined;
 	}
 	if (!kernel.getSnapshot().experiment && experiment.arm === undefined) {
-		kernel.set.experiment(pickExperimentArm(experiment, knownArm(experiment)));
+		kernel.set.experiment(
+			pickExperimentArm(experiment, knownArm(experiment, options.storageConfig))
+		);
 	}
 	let detach: (() => void) | null = null;
 	let stopped = false;
@@ -533,7 +488,7 @@ export const startExperiment = function startExperiment(
 			}
 		} catch (failure) {
 			console.error(
-				`c15t experiment "${experiment.id}": the experiment module failed to load, so no experiment runs.`,
+				`inth experiment "${experiment.id}": the experiment module failed to load, so no experiment runs.`,
 				failure
 			);
 			if (!stopped) {

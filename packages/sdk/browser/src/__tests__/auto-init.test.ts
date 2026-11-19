@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readPageOptions, readScriptOptions } from '../auto-init';
 import { autoInit, installGlobal } from '../global';
 import { createTestingGlobal as createGlobal } from '../testing-global';
-import type { TestingC15tGlobal as C15tGlobal } from '../testing-global';
+import type { TestingInthGlobal as InthGlobal } from '../testing-global';
 
 /** A transport factory that hands the client `transport`. */
 const custom = (
@@ -15,7 +15,7 @@ const custom = (
 	});
 
 type TestWindow = Window & {
-	c15t?: unknown;
+	inth?: unknown;
 };
 
 const testWindow = window as TestWindow;
@@ -40,8 +40,8 @@ const scriptWith = function scriptWith(
 };
 
 afterEach(() => {
-	(testWindow.c15t as C15tGlobal | undefined)?.dispose?.();
-	testWindow.c15t = undefined;
+	(testWindow.inth as InthGlobal | undefined)?.dispose?.();
+	testWindow.inth = undefined;
 	localStorage.clear();
 	clearCookies();
 	document.body.replaceChildren();
@@ -246,7 +246,7 @@ describe('readPageOptions', () => {
 	});
 });
 
-describe('window.c15t', () => {
+describe('window.inth', () => {
 	it('reuses the installed client when the script tag loads twice', async () => {
 		const first = installGlobal(createGlobal({ pkg: '@inth/sdk' }));
 		first.init({ ui: false });
@@ -292,13 +292,13 @@ describe('window.c15t', () => {
 			expect(onReady).toHaveBeenCalledOnce();
 		});
 		expect(api.mode).toBe('testing');
-		expect(testWindow.c15t).toBe(api);
+		expect(testWindow.inth).toBe(api);
 		expect(api.version).toBeTypeOf('string');
 	});
 
 	it('replays calls queued before the script loaded, config included', async () => {
 		const onConsent = vi.fn();
-		testWindow.c15t = [
+		testWindow.inth = [
 			[
 				'config',
 				{
@@ -364,14 +364,14 @@ describe('window.c15t', () => {
 		expect(api.client).toBe(second);
 	});
 
-	it('stays on window.c15t after the runtime starts', () => {
+	it('stays on window.inth after the runtime starts', () => {
 		const api = createGlobal({ pkg: '@inth/sdk/test' });
 		installGlobal(api);
 
 		api.init({ ui: false });
 
 		// `@inth/sdk/engine` writes its own frozen debug object there on start.
-		expect(testWindow.c15t).toBe(api);
+		expect(testWindow.inth).toBe(api);
 		expect(api.init({ ui: false })).toBe(api.client);
 	});
 

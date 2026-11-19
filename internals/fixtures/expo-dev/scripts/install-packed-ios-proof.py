@@ -17,5 +17,5 @@ if 'PackedNativeProof' in text:
     parser.error('Native proof is already installed')
 needle = '    return super.application(application, didFinishLaunchingWithOptions: launchOptions)'
 assert text.count(needle) == 1
-text = text.replace(needle, '    if ProcessInfo.processInfo.environment["C15T_PACKED_NATIVE_PROOF"] == "1" { PackedNativeProof.start() }\n' + needle)
+text = text.replace(needle, '    if ProcessInfo.processInfo.environment["INTH_PACKED_NATIVE_PROOF"] == "1" { PackedNativeProof.start() }\n' + needle)
 app.write_text(text + '\n' + (source / 'packed-native-proof.swift').read_text())

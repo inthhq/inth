@@ -19,8 +19,6 @@ export type GVLData = HeadlessIABDialogData;
  * @remarks
  * React wrapper around the framework-agnostic headless processor from
  * `@inth/sdk/iab/headless`.
- *
- * @returns Processed GVL data ready for UI rendering
  * @public
  */
 export const useGVLData = function useGVLData(): GVLData {

@@ -5,14 +5,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
 } from './e2e-test-utils';
 import { frontChat } from './vendors/functional/front-chat';
 
-const grantedConsents = { ...deniedConsents, functionality: true };
+const grantedConsents = { ...ALL_DENIED, functionality: true };
 
 const getLoader = function getLoader(): HTMLScriptElement {
 	const element = document.body.querySelector('script');
@@ -31,7 +31,7 @@ describe('Front Chat loader contract', () => {
 	it('waits for functionality consent and SDK load, then initialises once', () => {
 		const scripts = [frontChat({ chatId: 'channel-id' })];
 		window.FrontChat = vi.fn();
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		expect(document.body.querySelector('script')).toBeNull();
 		expect(window.FrontChat).not.toHaveBeenCalled();
 
@@ -54,7 +54,7 @@ describe('Front Chat loader contract', () => {
 		window.FrontChat = vi.fn();
 		loadScripts(scripts, grantedConsents);
 		const revoked = getLoader();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(revoked.isConnected).toBe(false);
 		revoked.dispatchEvent(new Event('load'));
 		expect(window.FrontChat).not.toHaveBeenCalled();

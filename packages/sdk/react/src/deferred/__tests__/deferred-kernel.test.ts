@@ -7,11 +7,10 @@ import type { ConsentKernel, ConsentSnapshot } from '@inth/sdk/engine';
 import { describe, expect, test, vi } from 'vitest';
 
 import {
-	EARLY_TAP_HOLD_PRESSES_KEY,
 	EARLY_TAP_NOTIFY_KEY,
-	EARLY_TAP_ROOT,
 	EARLY_TAPS_WINDOW_KEY,
-} from '../../../../core/src/surface-actions/early-tap-script';
+	SERVER_START_FAILED_EVENT,
+} from '../../../../core/src/libs/page-globals';
 import {
 	DISPLAY_ONLY_OPTIONS,
 	liveRootKey,
@@ -22,14 +21,7 @@ import { createDeferredKernel } from '../deferred-kernel';
 import type { DeferredEngine } from '../deferred-kernel';
 import { deferredModules, deferredScriptsReady } from '../registry';
 import { scriptsNeedEngine } from '../runnable';
-import {
-	BANNER_ROOT,
-	EARLY_TAP_HOLD_PRESSES,
-	EARLY_TAP_NOTIFY,
-	EARLY_TAPS_KEY,
-	scheduleDeferredEngine,
-	SERVER_START_FAILED,
-} from '../trigger';
+import { scheduleDeferredEngine } from '../trigger';
 import { OPTIONS } from './live-key-fields.type-test';
 
 const snapshot = (activeUI: string, revision = 0) =>
@@ -267,13 +259,6 @@ describe('createDeferredKernel', () => {
 });
 
 describe('scheduleDeferredEngine', () => {
-	test('names the same window key, banner root, notify and hold keys as the early-tap script', () => {
-		expect(EARLY_TAPS_KEY).toBe(EARLY_TAPS_WINDOW_KEY);
-		expect(BANNER_ROOT).toBe(EARLY_TAP_ROOT);
-		expect(EARLY_TAP_NOTIFY).toBe(EARLY_TAP_NOTIFY_KEY);
-		expect(EARLY_TAP_HOLD_PRESSES).toBe(EARLY_TAP_HOLD_PRESSES_KEY);
-	});
-
 	test('with a tap router: banner input routes instead of starting, page input still starts', () => {
 		const image = document.createElement('img');
 		image.setAttribute('fetchpriority', 'high');
@@ -286,7 +271,7 @@ describe('scheduleDeferredEngine', () => {
 		document.body.append(image, banner);
 		const host = window as unknown as Record<string, Record<string, unknown>>;
 		const queue: Record<string, unknown> = { taps: [] };
-		host[EARLY_TAPS_KEY] = queue;
+		host[EARLY_TAPS_WINDOW_KEY] = queue;
 
 		const start = vi.fn();
 		const onTap = vi.fn();
@@ -298,13 +283,13 @@ describe('scheduleDeferredEngine', () => {
 		// A press names the button, ahead of its click.
 		expect(onTap).toHaveBeenCalledWith('accept');
 		// The early-tap script calls this after it queued a click.
-		(queue[EARLY_TAP_NOTIFY] as () => void)();
+		(queue[EARLY_TAP_NOTIFY_KEY] as () => void)();
 		expect(onTap).toHaveBeenLastCalledWith();
 		expect(start).not.toHaveBeenCalled();
 		document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
 		expect(start).toHaveBeenCalledTimes(1);
 		stop();
-		expect(queue[EARLY_TAP_NOTIFY]).toBeUndefined();
+		expect(queue[EARLY_TAP_NOTIFY_KEY]).toBeUndefined();
 
 		// A tap queued before hydration is routed when scheduled.
 		queue.taps = [{ action: 'accept', at: 1 }];
@@ -314,7 +299,7 @@ describe('scheduleDeferredEngine', () => {
 		expect(routed).toHaveBeenCalledTimes(1);
 		expect(early).not.toHaveBeenCalled();
 		stopEarly();
-		Reflect.deleteProperty(host, EARLY_TAPS_KEY);
+		Reflect.deleteProperty(host, EARLY_TAPS_WINDOW_KEY);
 		image.remove();
 		banner.remove();
 	});
@@ -329,7 +314,7 @@ describe('scheduleDeferredEngine', () => {
 		document.body.append(banner);
 		const host = window as unknown as Record<string, Record<string, unknown>>;
 		const queue: Record<string, unknown> = { taps: [] };
-		host[EARLY_TAPS_KEY] = queue;
+		host[EARLY_TAPS_WINDOW_KEY] = queue;
 
 		const start = vi.fn();
 		const onTap = vi.fn();
@@ -338,14 +323,14 @@ describe('scheduleDeferredEngine', () => {
 		// The engine is still downloading: a tap is still the root's.
 		accept.dispatchEvent(new Event('pointerdown', { bubbles: true }));
 		expect(onTap).toHaveBeenCalledWith('accept');
-		(queue[EARLY_TAP_NOTIFY] as () => void)();
+		(queue[EARLY_TAP_NOTIFY_KEY] as () => void)();
 		expect(onTap).toHaveBeenLastCalledWith();
 		expect(start).toHaveBeenCalledTimes(1);
 		stop();
-		expect(queue[EARLY_TAP_NOTIFY]).toBeUndefined();
+		expect(queue[EARLY_TAP_NOTIFY_KEY]).toBeUndefined();
 		accept.dispatchEvent(new Event('pointerdown', { bubbles: true }));
 		expect(onTap).toHaveBeenCalledTimes(2);
-		Reflect.deleteProperty(host, EARLY_TAPS_KEY);
+		Reflect.deleteProperty(host, EARLY_TAPS_WINDOW_KEY);
 		banner.remove();
 	});
 
@@ -425,11 +410,11 @@ describe('scheduleDeferredEngine', () => {
 		stopSecond();
 
 		const host = window as unknown as Record<string, unknown>;
-		host[EARLY_TAPS_KEY] = { taps: [{ action: 'accept' }] };
+		host[EARLY_TAPS_WINDOW_KEY] = { taps: [{ action: 'accept' }] };
 		const early = vi.fn();
 		scheduleDeferredEngine(early);
 		expect(early).toHaveBeenCalledTimes(1);
-		Reflect.deleteProperty(host, EARLY_TAPS_KEY);
+		Reflect.deleteProperty(host, EARLY_TAPS_WINDOW_KEY);
 		image.remove();
 		banner.remove();
 	});
@@ -482,7 +467,7 @@ describe('watchStoredChoice', () => {
 /**
  * Leaves what a server render with id `id` leaves in the test's document:
  * boot data carrying the id, and the page object its inline scripts write.
- * c15t's modules run in the test's window, so that is where they look.
+ * Inth's modules run in the test's window, so that is where they look.
  */
 const leavePageRender = (
 	pageObject: Record<string, unknown>,
@@ -490,13 +475,13 @@ const leavePageRender = (
 ): (() => void) => {
 	const boot = document.createElement('script');
 	boot.type = 'application/json';
-	boot.setAttribute('data-c15t-boot', '');
+	boot.setAttribute('data-inth-boot', '');
 	boot.textContent = JSON.stringify({ i: id, s: {} });
 	document.head.prepend(boot);
-	(globalThis as Record<string, unknown>).__c15tRender = { id, ...pageObject };
+	(globalThis as Record<string, unknown>).__inthRender = { id, ...pageObject };
 	return () => {
 		boot.remove();
-		Reflect.deleteProperty(globalThis, '__c15tRender');
+		Reflect.deleteProperty(globalThis, '__inthRender');
 	};
 };
 
@@ -510,18 +495,12 @@ describe('a server start that fails while the engine waits', () => {
 		return () => image.remove();
 	};
 
-	test('uses the name core sets', () => {
-		// `SERVER_START_FAILED_EVENT` in core's `runtime/script-server-start`,
-		// whose own test pins the same string.
-		expect(SERVER_START_FAILED).toBe('__c15tServerStartFailed');
-	});
-
 	test('loads the engine when the page reports it', () => {
 		const removeHero = loadingHero();
 		const start = vi.fn();
 		const dispose = scheduleDeferredEngine(start);
 		expect(start).not.toHaveBeenCalled();
-		window.dispatchEvent(new Event('__c15tServerStartFailed'));
+		window.dispatchEvent(new Event(SERVER_START_FAILED_EVENT));
 		expect(start).toHaveBeenCalledTimes(1);
 		dispose();
 		removeHero();
@@ -548,7 +527,7 @@ test("a failure an earlier render's server start recorded does not wake this roo
 	Object.defineProperty(image, 'complete', { value: false });
 	document.body.append(image);
 	const cleanup = leavePageRender({ starts: {} });
-	(globalThis as Record<string, unknown>).__c15tRender = {
+	(globalThis as Record<string, unknown>).__inthRender = {
 		failed: 1,
 		id: 'an-earlier-render',
 		starts: {},

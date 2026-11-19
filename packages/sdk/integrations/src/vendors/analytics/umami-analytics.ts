@@ -85,7 +85,7 @@ export interface UmamiAnalyticsOptions {
 	/**
 	 * Optional global hook name used for Umami's `data-before-send` attribute.
 	 *
-	 * Callback functions are intentionally not supported here because the c15t
+	 * Callback functions are intentionally not supported here because the Inth
 	 * manifest runtime cannot serialize custom JavaScript functions.
 	 */
 	beforeSend?: string;
@@ -102,8 +102,6 @@ export interface UmamiAnalyticsOptions {
  *
  * @see https://umami.is/docs/tracker-config
  *
- * @param options - The options for the Umami Analytics script.
- * @returns The Umami Analytics script.
  * @remarks When `websiteId` is missing or blank, the helper logs
  *   `umamiAnalytics: missing or invalid websiteId` with `console.error` and
  *   returns a script that never loads.

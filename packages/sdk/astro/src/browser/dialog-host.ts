@@ -11,12 +11,11 @@ import type { LegalLinks } from '@inth/sdk/engine';
 import type { ConsentDialogKind } from '../ui/adapter';
 
 /** The element dialog islands mount into. @internal */
-export const DIALOG_HOST_ID = 'c15t-dialog-host';
+export const DIALOG_HOST_ID = 'inth-dialog-host';
 
 /**
  * The element dialog islands mount into, added to `<body>` on first use.
  *
- * @returns The host element.
  * @internal
  */
 export const ensureDialogHost = function ensureDialogHost(): HTMLElement {
@@ -43,7 +42,7 @@ export const readDialogLegalLinks = function readDialogLegalLinks():
 	| (keyof LegalLinks)[]
 	| undefined {
 	const value = document
-		.querySelector('[data-c15t-dialog-host="preferences"]')
+		.querySelector('[data-inth-dialog-host="preferences"]')
 		?.getAttribute('data-legal-links');
 	if (value === null || value === undefined) {
 		return undefined;
@@ -58,7 +57,6 @@ export const readDialogLegalLinks = function readDialogLegalLinks():
  * Read when the island mounts, like the legal links, so it follows the
  * page a ClientRouter navigation swapped in.
  *
- * @param kind - Which dialog is opening.
  * @returns The prop, or `undefined` when the page left it unset.
  * @internal
  */
@@ -66,7 +64,7 @@ export const readDialogDisableAnimation = function readDialogDisableAnimation(
 	kind: ConsentDialogKind
 ): boolean | undefined {
 	const value = document
-		.querySelector(`[data-c15t-dialog-host="${kind}"]`)
+		.querySelector(`[data-inth-dialog-host="${kind}"]`)
 		?.getAttribute('data-disable-animation');
 	if (value === 'true' || value === 'false') {
 		return value === 'true';

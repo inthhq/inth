@@ -1,17 +1,17 @@
 :root {
 	--legal-links-gap: 0.75rem;
-	--legal-links-font-size: var(--c15t-font-size-sm);
-	--legal-links-transition: text-decoration var(--c15t-duration-slow)
-		var(--c15t-easing);
+	--legal-links-font-size: var(--inth-font-size-sm);
+	--legal-links-transition: text-decoration var(--inth-duration-slow)
+		var(--inth-easing);
 	--legal-links-text-decoration: none;
 	--legal-links-text-decoration-hover: underline;
 	--legal-links-outline: 2px solid currentColor;
 	--legal-links-outline-offset: 2px;
-	/* The dark palette redefines --c15t-primary under .c15t-dark, so the
+	/* The dark palette redefines --inth-primary under .inth-dark, so the
 	   -dark variable follows it too. */
-	--legal-links-color: var(--c15t-primary);
-	--legal-links-focus-color: var(--c15t-primary);
-	--legal-links-focus-color-dark: var(--c15t-primary);
+	--legal-links-color: var(--inth-primary);
+	--legal-links-focus-color: var(--inth-primary);
+	--legal-links-focus-color-dark: var(--inth-primary);
 }
 
 @layer components {
@@ -29,7 +29,7 @@
 		transition: var(--legal-links-transition);
 	}
 
-	:global(.c15t-dark) .legalLink:not(:global(.headless)) {
+	:global(.inth-dark) .legalLink:not(:global(.headless)) {
 		color: var(--legal-links-focus-color-dark);
 	}
 
@@ -42,7 +42,6 @@
 		text-decoration: underline;
 	}
 
-	/* Reduced motion preference */
 	@media (prefers-reduced-motion: reduce) {
 		.legalLink:not(:global(.headless)) {
 			transition: none;

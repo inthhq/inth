@@ -20,6 +20,7 @@ import { hostExperiment, startExperiment } from '../libs/experiment';
 import { generateSubjectId } from '../libs/generate-subject-id';
 import { extractConsentNamesFromCondition } from '../libs/has';
 import { removeLegacySubjectId } from '../libs/legacy-subject-id';
+import { storageFor } from '../libs/storage-for';
 import type { IframeBlockerHandle } from '../modules/iframe-blocker/types';
 import { holdNetworkRequests, NOT_HELD } from '../modules/network-blocker/hold';
 import type { NetworkHold } from '../modules/network-blocker/hold';
@@ -38,7 +39,6 @@ import {
 	requireTransportFactory,
 } from './runtime-kernel';
 import { scriptRegistry } from './script-registry';
-import { storageFor } from './storage-for';
 import type {
 	ConsentRuntime,
 	ConsentRuntimeIABHandle,
@@ -61,7 +61,7 @@ export interface AssembledRuntime {
 	adoptJourney: (id: string | null | undefined) => void;
 	runtime: ConsentRuntime;
 	/**
-	 * Unmount every module and `window.c15t` and detach callbacks, keeping
+	 * Unmount every module and `window.__inthDebug` and detach callbacks, keeping
 	 * the kernel and its records. `start()` mounts them again, then adopts
 	 * the prefetch at the current clock or runs `init()`.
 	 */
@@ -84,13 +84,10 @@ const isRecordSeed = function isRecordSeed(
 	);
 };
 
-export { storageFor } from './storage-for';
-
 /**
  * Build a runtime from options and module factories.
  *
  * @param options - The runtime configuration, read when used.
- * @param modules - The module factories to mount.
  * @returns The runtime and its `stop()`.
  * @throws {Error} When the options select no transport factory.
  * @internal
@@ -197,9 +194,7 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 		},
 		get consentCategories(): AllConsentNames[] {
 			const snapshot = kernel.getSnapshot();
-			return displayedCategories(
-				snapshot.evaluationPolicy.choiceScope ?? snapshot.policyRule.scope
-			);
+			return displayedCategories(snapshot.evaluationPolicy.choiceScope);
 		},
 		dispose() {
 			disposed = true;
@@ -260,14 +255,12 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 				disposers = wire();
 			}
 
-			if (options.windowDebug !== false) {
-				const windowDebug = modules.createWindowDebug({
-					getHosting: () => kernel.getSnapshot().hosting,
-					mode: resolveWindowDebugMode(mode),
-					pkg: options.pkg ?? '@inth/sdk/engine',
-				});
-				disposers.push(() => windowDebug.dispose());
-			}
+			const windowDebug = modules.createWindowDebug({
+				getHosting: () => kernel.getSnapshot().hosting,
+				mode: resolveWindowDebugMode(mode),
+				pkg: options.pkg ?? '@inth/sdk/engine',
+			});
+			disposers.push(() => windowDebug.dispose());
 
 			const { persistence: persistenceOption } = options;
 			if (enabled && !consentSource && persistenceOption !== false) {

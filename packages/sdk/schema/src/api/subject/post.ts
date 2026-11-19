@@ -15,9 +15,6 @@ import { ADDITIONAL_CONSENT_V2_PATTERN } from '../../shared/ad-tech-provider';
 import { subjectChoiceWireSchema } from './choice-wire';
 import { vendorChoiceWireSchema } from './vendor-choice-wire';
 
-/**
- * Base subject ID validation - must be in sub_xxx format
- */
 export const subjectIdSchema = v.pipe(
 	v.string(),
 	v.regex(/^sub_[1-9A-HJ-NP-Za-km-z]+$/u, 'Invalid subject ID format'),
@@ -25,10 +22,6 @@ export const subjectIdSchema = v.pipe(
 	v.examples(['sub_2jv6z8n4q9'])
 );
 
-/**
- * Base consent input schema for POST /subject
- * Note: subjectId is now required (client-generated)
- */
 const baseSubjectConsentSchema = v.object({
 	/**
 	 * Google Additional Consent v2 string, sent beside `tcString`. The
@@ -96,7 +89,6 @@ const baseSubjectConsentSchema = v.object({
 		v.description('Timestamp when consent was given, in epoch milliseconds.'),
 		v.examples([1_735_689_600_000])
 	),
-	/** Identity provider name (optional) */
 	identityProvider: v.optional(
 		v.pipe(
 			v.string(),
@@ -143,7 +135,6 @@ const baseSubjectConsentSchema = v.object({
 			v.examples(['opt-in', 'opt-out', 'iab'])
 		)
 	),
-	/** Additional metadata */
 	metadata: v.optional(
 		v.pipe(
 			v.record(v.string(), v.unknown()),
@@ -176,7 +167,6 @@ const baseSubjectConsentSchema = v.object({
 			v.description('IAB TCF TC string for IAB consent submissions.')
 		)
 	),
-	/** Type of consent */
 	type: policyTypeSchema,
 	/** Which UI component collected this consent (e.g., 'banner', 'dialog', 'widget') */
 	uiSource: v.optional(
@@ -247,9 +237,6 @@ const manifestDecisionInputEntries = {
 	),
 };
 
-/**
- * Cookie banner consent - requires preferences
- */
 export const subjectCookieBannerInputSchema = v.object({
 	...baseSubjectConsentSchema.entries,
 	...manifestDecisionInputEntries,
@@ -277,7 +264,7 @@ export const subjectCookieBannerInputSchema = v.object({
  *
  * For legal documents, callers should prefer `documentSnapshotToken` when
  * available. `policyHash` is intended as a lighter-weight fallback when the
- * client knows the rendered release hash but not the internal c15t policy ID.
+ * client knows the rendered release hash but not the internal Inth policy ID.
  */
 export const subjectPolicyBasedInputSchema = v.object({
 	...baseSubjectConsentSchema.entries,
@@ -292,7 +279,7 @@ export const subjectPolicyBasedInputSchema = v.object({
 		v.pipe(
 			v.string(),
 			v.description(
-				'Internal c15t policy ID. Prefer documentSnapshotToken or policyHash for legal documents when available.'
+				'Internal Inth policy ID. Prefer documentSnapshotToken or policyHash for legal documents when available.'
 			),
 			v.examples(['pol_123'])
 		)
@@ -306,9 +293,6 @@ export const subjectPolicyBasedInputSchema = v.object({
 	type: legalDocumentPolicyTypeSchema,
 });
 
-/**
- * Other consent types
- */
 export const subjectOtherConsentInputSchema = v.object({
 	...baseSubjectConsentSchema.entries,
 	preferences: v.optional(
@@ -320,18 +304,12 @@ export const subjectOtherConsentInputSchema = v.object({
 	type: v.picklist(['marketing_communications', 'age_verification', 'other']),
 });
 
-/**
- * POST /subject input schema - variant (discriminated union)
- */
 export const postSubjectInputSchema = v.variant('type', [
 	subjectCookieBannerInputSchema,
 	subjectPolicyBasedInputSchema,
 	subjectOtherConsentInputSchema,
 ]);
 
-/**
- * POST /subject output schema
- */
 export const postSubjectOutputSchema = v.object({
 	appliedPreferences: v.optional(v.record(v.string(), v.boolean())),
 	consentId: v.string(),
@@ -344,9 +322,6 @@ export const postSubjectOutputSchema = v.object({
 	uiSource: v.optional(v.string()),
 });
 
-/**
- * Error schemas for POST /subject
- */
 export const postSubjectErrorSchemas = {
 	consentCreationFailed: v.object({
 		domain: v.string(),
@@ -405,6 +380,5 @@ export const postSubjectErrorSchemas = {
 	}),
 };
 
-// Type exports
 export type PostSubjectInput = v.InferOutput<typeof postSubjectInputSchema>;
 export type PostSubjectOutput = v.InferOutput<typeof postSubjectOutputSchema>;

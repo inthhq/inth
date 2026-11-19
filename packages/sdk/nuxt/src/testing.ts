@@ -1,5 +1,5 @@
 /**
- * `@inth/nuxt/testing`: pass `testing()` as `c15t.mode` in `nuxt.config.ts`
+ * `@inth/nuxt/testing`: pass `testing()` as `inth.mode` in `nuxt.config.ts`
  * to resolve a policy in the browser without a backend. The same entry as
  * `@inth/vue/testing`.
  */

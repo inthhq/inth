@@ -74,7 +74,7 @@ export interface WisepopsOptions {
 	category?: HasCondition<AllConsentNames>;
 	/** Documented runtime options. The helper always sets `defaultConsent: 'denied'`. */
 	options?: WisepopsRuntimeOptions;
-	/** CSP nonce for the c15t-managed loader element. */
+	/** CSP nonce for the Inth-managed loader element. */
 	nonce?: string;
 }
 
@@ -88,8 +88,6 @@ export interface WisepopsOptions {
  * Keep `reloadOnConsentRevoked` enabled. Wisepops cannot revoke cookie consent
  * programmatically, and removing the loader cannot stop an SDK that has run.
  *
- * @param options - Wisepops site, consent condition and runtime configuration.
- * @returns The Wisepops script configuration.
  * @remarks When `siteId` is missing or blank, the helper logs
  *   `wisepops: missing or invalid siteId` with `console.error` and returns a
  *   script that never loads. Copy the public ID from Settings > Install Wisepops.
@@ -121,8 +119,7 @@ export const wisepops = function wisepops(options: WisepopsOptions): Script {
 		...script,
 		nonce: trimToUndefined(options.nonce),
 		onLoad(info) {
-			// Core can detach the loader while it is still downloading.
-			if (!info.hasConsent || !info.element?.isConnected) {
+			if (!info.hasConsent) {
 				return;
 			}
 			script.onLoad?.(info);

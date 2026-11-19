@@ -7,7 +7,10 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type { ConsentExperiment } from '../../libs/experiment';
-import { EXPERIMENT_STORAGE_KEY } from '../../libs/storage-keys';
+import {
+	C15T_EXPERIMENT_STORAGE_KEY,
+	EXPERIMENT_STORAGE_KEY,
+} from '../../libs/storage-keys';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { createOfflineTransport } from '../../transports/offline';
 import type { KernelEvent, KernelTransport, SavePayload } from '../../types';
@@ -68,8 +71,8 @@ beforeEach(() => {
 });
 afterEach(() => {
 	vi.restoreAllMocks();
-	delete (window as { c15t?: unknown }).c15t;
-	delete (window as { __c15tExperiment?: unknown }).__c15tExperiment;
+	delete (window as { __inthDebug?: unknown }).__inthDebug;
+	delete (window as { __inthExperiment?: unknown }).__inthExperiment;
 });
 
 /** Wait for the lazily loaded controller to release the held prompt. */
@@ -91,7 +94,7 @@ describe('runtime experiments', () => {
 		await vi.waitFor(() => expect(shown).toHaveLength(1));
 		const assignment = first.runtime.kernel.getSnapshot().experiment;
 		expect(assignment).toMatchObject({
-			assignedBy: 'c15t',
+			assignedBy: 'inth',
 			id: 'banner-shape',
 		});
 		// The first impression already carries the arm.
@@ -112,6 +115,37 @@ describe('runtime experiments', () => {
 		await settled(second.runtime);
 		expect(second.runtime.kernel.getSnapshot().experiment?.arm).toBe(other);
 		second.runtime.dispose();
+	});
+
+	test("runs an arm only c15t's key holds, copies it to Inth's and leaves c15t's", async () => {
+		const stored = JSON.stringify({ arm: 'bar', id: 'banner-shape' });
+		localStorage.setItem(C15T_EXPERIMENT_STORAGE_KEY, stored);
+		document.cookie = `${C15T_EXPERIMENT_STORAGE_KEY}=${encodeURIComponent(stored)}; path=/`;
+		const { runtime } = createRuntime();
+		runtime.start();
+		await settled(runtime);
+		expect(runtime.kernel.getSnapshot().experiment?.arm).toBe('bar');
+		expect(localStorage.getItem(EXPERIMENT_STORAGE_KEY)).toBe(stored);
+		// A c15t page on the same site keeps showing the visitor this arm.
+		expect(localStorage.getItem(C15T_EXPERIMENT_STORAGE_KEY)).toBe(stored);
+		expect(document.cookie).toContain(`${C15T_EXPERIMENT_STORAGE_KEY}=`);
+		runtime.dispose();
+	});
+
+	test("an Inth arm wins over c15t's", async () => {
+		localStorage.setItem(
+			EXPERIMENT_STORAGE_KEY,
+			JSON.stringify({ arm: 'floating', id: 'banner-shape' })
+		);
+		localStorage.setItem(
+			C15T_EXPERIMENT_STORAGE_KEY,
+			JSON.stringify({ arm: 'bar', id: 'banner-shape' })
+		);
+		const { runtime } = createRuntime();
+		runtime.start();
+		await settled(runtime);
+		expect(runtime.kernel.getSnapshot().experiment?.arm).toBe('floating');
+		runtime.dispose();
 	});
 
 	test('a prefetched arm the server rendered seeds the snapshot and survives start', async () => {
@@ -156,7 +190,7 @@ describe('runtime experiments', () => {
 			EXPERIMENT_STORAGE_KEY,
 			JSON.stringify({ arm: 'bar', id: 'banner-shape' })
 		);
-		(window as { __c15tExperiment?: unknown }).__c15tExperiment = {
+		(window as { __inthExperiment?: unknown }).__inthExperiment = {
 			arm: 'floating',
 			id: 'banner-shape',
 		};
@@ -181,7 +215,7 @@ describe('runtime experiments', () => {
 			EXPERIMENT_STORAGE_KEY,
 			JSON.stringify({ arm: 'bar', id: 'banner-shape' })
 		);
-		(window as { __c15tExperiment?: unknown }).__c15tExperiment = early;
+		(window as { __inthExperiment?: unknown }).__inthExperiment = early;
 		const { runtime } = createRuntime();
 		runtime.start();
 		await settled(runtime);
@@ -278,7 +312,7 @@ describe('runtime experiments', () => {
 		second.runtime.dispose();
 	});
 
-	test('a c15t-picked arm is on /init too', async () => {
+	test('a inth-picked arm is on /init too', async () => {
 		const { runtime, transport } = createRuntime({
 			split: { bar: 1, control: 0, floating: 0 },
 		});

@@ -7,7 +7,7 @@ import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
@@ -37,10 +37,10 @@ type TargetWindow = Window & {
 const webSdkOptions = {
 	datastreamId: '00000000-0000-4000-8000-000000000000',
 	mode: 'websdk',
-	orgId: 'C15TFAKE@AdobeOrg',
+	orgId: 'INTHFAKE@AdobeOrg',
 	version: '2.30.0',
 } as const;
-const grantedExperience = { ...deniedConsents, experience: true };
+const grantedExperience = { ...ALL_DENIED, experience: true };
 const consent = (general: 'in' | 'out') => ({
 	consent: [{ standard: 'Adobe', value: { general }, version: '1.0' }],
 });
@@ -108,9 +108,9 @@ describe('Adobe Target core-loader contracts', () => {
 			).map((method) => vi.spyOn(Storage.prototype, method));
 			const cookieWrite = vi.spyOn(document, 'cookie', 'set');
 			const scripts = [adobeTarget(options)];
-			loadScripts(scripts, deniedConsents);
+			loadScripts(scripts, ALL_DENIED);
 			updateScripts(scripts, {
-				...deniedConsents,
+				...ALL_DENIED,
 				marketing: true,
 				measurement: true,
 			});
@@ -158,7 +158,7 @@ describe('Adobe Target core-loader contracts', () => {
 		expect(loader.src).toBe(new URL('/scripts/at.js', document.baseURI).href);
 		updateScripts(scripts, { ...grantedExperience, measurement: true });
 		expect(win.adobe.optIn.approve).toHaveBeenCalledOnce();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(loader.isConnected).toBe(true);
 		expect(win.adobe.optIn.deny).toHaveBeenCalledExactlyOnceWith('target');
 		loader.dispatchEvent(new Event('load'));
@@ -189,7 +189,7 @@ describe('Adobe Target core-loader contracts', () => {
 		];
 		loadScripts(scripts, grantedExperience);
 		const element = getLoader();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		element.dispatchEvent(new Event('load'));
 		expect(win.adobe.optIn.approve).toHaveBeenCalledOnce();
 		expect(win.adobe.optIn.deny).toHaveBeenCalledExactlyOnceWith('target');
@@ -202,7 +202,7 @@ describe('Adobe Target core-loader contracts', () => {
 		const scripts = [adobeTarget({ ...webSdkOptions, category: 'marketing' })];
 		loadScripts(scripts, grantedExperience, { nonce: 'provider-nonce' });
 		expect(document.head.querySelector('script')).toBeNull();
-		updateScripts(scripts, { ...deniedConsents, marketing: true });
+		updateScripts(scripts, { ...ALL_DENIED, marketing: true });
 		expect(getLoader().nonce).toBe('provider-nonce');
 		expect((window as TargetWindow).__alloyNS).toEqual(['alloy']);
 	});
@@ -235,7 +235,7 @@ describe('Adobe Target core-loader contracts', () => {
 		updateScripts(scripts, { ...grantedExperience, functionality: true });
 		await vi.runOnlyPendingTimersAsync();
 		expect(commands).toHaveLength(2);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		await vi.runOnlyPendingTimersAsync();
 		expect(commands.at(-1)).toEqual(['setConsent', consent('out')]);
 		expect(loader.isConnected).toBe(true);
@@ -264,7 +264,7 @@ describe('Adobe Target core-loader contracts', () => {
 		loadScripts(scripts, grantedExperience);
 		const loader = getLoader();
 		const { commands } = activateAlloy();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		loader.dispatchEvent(new Event('load'));
 		await vi.runOnlyPendingTimersAsync();
 		expect(commands).toEqual([]);
@@ -330,7 +330,7 @@ describe('Adobe Target core-loader contracts', () => {
 		const { commands } = activateAlloy(configuring);
 		getLoader().dispatchEvent(new Event('load'));
 		await vi.runOnlyPendingTimersAsync();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		finishConfigure(undefined);
 		await configuring;
 		await vi.runOnlyPendingTimersAsync();

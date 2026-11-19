@@ -1,5 +1,5 @@
 /**
- * The prebuilt styles read `--c15t-*` custom properties. `ConsentTheme`
+ * The prebuilt styles read `--inth-*` custom properties. `ConsentTheme`
  * renders them for a custom theme; the provider no longer generates theme
  * CSS in the browser. Kept in its own file: the provider suite leaves
  * overlapping act() work behind that starves a trailing render of its
@@ -49,7 +49,7 @@ describe('ConsentProvider theme tokens', () => {
 				<div data-testid="themed-child" />
 			</ConsentProvider>
 		);
-		expect(document.getElementById('c15t-theme')).toBeNull();
+		expect(document.getElementById('inth-theme')).toBeNull();
 		unmount();
 	});
 
@@ -77,7 +77,7 @@ describe('ConsentProvider theme tokens', () => {
 			</>
 		);
 		await vi.waitFor(() => {
-			expect(document.getElementById('c15t-theme')?.nonce).toBe('csp-nonce');
+			expect(document.getElementById('inth-theme')?.nonce).toBe('csp-nonce');
 			expect(
 				document.head.querySelector<HTMLScriptElement>(
 					'script[src="https://example.com/nonce.js"]'
@@ -106,7 +106,7 @@ describe('ConsentProvider theme tokens', () => {
 		await vi.waitFor(() => {
 			expect(
 				getComputedStyle(document.documentElement).getPropertyValue(
-					'--c15t-surface'
+					'--inth-surface'
 				)
 			).toContain('rgb(1, 2, 3)');
 		});

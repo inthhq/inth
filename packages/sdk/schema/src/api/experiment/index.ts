@@ -1,9 +1,3 @@
-/**
- * Experiment API schemas exports.
- *
- * @packageDocumentation
- */
-
 export {
 	EXPERIMENT_SUMMARY_ACTIONS,
 	type ExperimentSummaryAction,

@@ -111,7 +111,7 @@ const createConfig = function createConfig(
  * points at the framework combination, not at fixture drift. Mirrors the
  * v3 pattern: one `ConsentRoot`, hosted mode against `projectUrl` by
  * default, and the server state (when any) passed as a plain prop. No cell
- * has a `c15t.config.ts`, so the shell passes `config` itself.
+ * has a `inth.config.ts`, so the shell passes `config` itself.
  */
 export const ConsentShell = ({
 	children,

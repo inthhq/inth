@@ -12,10 +12,5 @@ export type ColorScheme = 'light' | 'dark' | 'system' | null;
 export const useColorScheme = function useColorScheme(
 	colorScheme?: ColorScheme
 ) {
-	useEffect(() => {
-		if (colorScheme === null) {
-			return;
-		}
-		return setupColorScheme(colorScheme as 'light' | 'dark' | 'system');
-	}, [colorScheme]);
+	useEffect(() => setupColorScheme(colorScheme), [colorScheme]);
 };

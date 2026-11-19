@@ -5,7 +5,7 @@
  * Shopify's Dawn theme ships `div:empty { display: none; }`, which hid the
  * banner while the client reported it as shown.
  */
-import { clearBrowserConsentStorage } from '@c15t/conformance/suite';
+import { clearBrowserConsentStorage } from '@inth/conformance/suite';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import type { ConsentClient } from '../types';

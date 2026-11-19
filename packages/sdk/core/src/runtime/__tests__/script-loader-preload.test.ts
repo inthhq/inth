@@ -87,7 +87,6 @@ const create = function create(
 			}),
 			persistence: false,
 			scripts: [pixel],
-			windowDebug: false,
 			...options,
 		},
 		{
@@ -118,7 +117,7 @@ const storeChoice = function storeChoice(
 ): void {
 	const resolution = matchedResolution(optInRule());
 	localStorage.setItem(
-		'c15t',
+		'inth',
 		encodeStoredConsentEnvelopeJson({
 			categories: explicitChoice(
 				{ marketing },
@@ -574,7 +573,6 @@ describe('the kernel the decision builds', () => {
 					}),
 					persistence: false,
 					scripts: [pixel],
-					windowDebug: false,
 					...options,
 				},
 				{

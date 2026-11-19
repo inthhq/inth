@@ -135,6 +135,24 @@ test('loads after the hero image and keeps the server HTML until then', async ()
 	expect(container.querySelectorAll('[data-testid="inside"]')).toHaveLength(1);
 });
 
+test('waits for every hero image, not only the first', async () => {
+	const first = heroImage();
+	const second = heroImage();
+	const Inner = () => null;
+	const load = vi.fn(() => Promise.resolve({ default: Inner }));
+	const Island = deferConsent(load);
+	mount(serverHTML(<Inner />), <Island />);
+
+	await islandListening();
+	first.dispatchEvent(new Event('load'));
+	await new Promise((resolve) => {
+		setTimeout(resolve, 20);
+	});
+	expect(load).not.toHaveBeenCalled();
+	second.dispatchEvent(new Event('error'));
+	await vi.waitFor(() => expect(load).toHaveBeenCalledTimes(1));
+});
+
 test('a click before hydration starts the load and replays once hydrated', async () => {
 	heroImage();
 	const onClick = vi.fn();
@@ -165,7 +183,7 @@ test('a click before hydration starts the load and replays once hydrated', async
 	expect(errors).toEqual([]);
 });
 
-test("leaves stock banner actions to c15t's early-tap script", async () => {
+test("leaves stock banner actions to Inth's early-tap script", async () => {
 	heroImage();
 	const Inner = () => (
 		<div data-testid="consent-banner-root">

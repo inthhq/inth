@@ -1,18 +1,18 @@
 /**
  * The stylesheets the stock Svelte surfaces render themselves.
  *
- * An app that imports no c15t stylesheet still gets styled surfaces. In
+ * An app that imports no Inth stylesheet still gets styled surfaces. In
  * the browser, each surface inserts the sheets it uses into `<head>` as it
  * renders, once per page, before its own elements. On a server-rendered
  * SvelteKit page, the banner names its sheets in a `<meta>` marker and
- * `c15tHandle` writes them into the HTML, so no stylesheet `<link>` holds
+ * `inthHandle` writes them into the HTML, so no stylesheet `<link>` holds
  * back the first paint and the banner is styled before hydration.
  *
  * Each surface names only the sheets it renders: the banner the tokens,
  * button and banner rules, the trigger the tokens and its own, the
  * ConsentGate the tokens, button and its own. They are the deferred form:
  * an id and a `load()`, without the text. On a server-rendered page the
- * surfaces find the copy `c15tHandle` wrote and download nothing; a page
+ * surfaces find the copy `inthHandle` wrote and download nothing; a page
  * rendered only in the browser loads each text once.
  */
 import * as banner from '@inth/sdk/ui/styles/sheets/banner-deferred';
@@ -56,18 +56,16 @@ export const CONSENT_GATE_SHEETS: readonly SurfaceStyleSheet[] = [
 ];
 
 /** Marks the `<style>` elements that hold a sheet; the value is its `id`. */
-export const STYLE_ATTRIBUTE = 'data-c15t-styles';
+export const STYLE_ATTRIBUTE = 'data-inth-styles';
 
 /** Name of the `<meta>` marker a server-rendered surface leaves in `<head>`. */
-export const STYLES_MARKER = 'c15t-styles';
+export const STYLES_MARKER = 'inth-styles';
 
 /**
  * The marker's `content`: the sheet ids, space-separated, then an optional
- * `nonce=…` for the `<style>` elements `c15tHandle` writes.
+ * `nonce=…` for the `<style>` elements `inthHandle` writes.
  *
- * @param sheets - The surface's sheets.
  * @param nonce - The provider's `nonce` option.
- * @returns The marker content.
  * @internal
  */
 export const stylesMarker = function stylesMarker(
@@ -94,7 +92,7 @@ const PENDING_CSS =
 	'@layer components{[data-testid^="consent-"],[data-testid^="iab-consent-"]{opacity:0!important}}';
 
 /** Marks the element of a deferred sheet whose text is still loading. */
-const PENDING_ATTRIBUTE = 'data-c15t-pending';
+const PENDING_ATTRIBUTE = 'data-inth-pending';
 
 /**
  * Fills a deferred sheet's element with its text. A failed load empties
@@ -116,13 +114,13 @@ const fillDeferred = async function fillDeferred(
  * Insert each sheet the page does not hold yet into `<head>`, in order.
  *
  * Elements stay when the surface unmounts, so the next surface finds them.
- * A sheet `c15tHandle` already wrote into the page counts as held. A
+ * A sheet `inthHandle` already wrote into the page counts as held. A
  * deferred sheet the page lacks gets its element at once, in cascade
  * order, with its text once `load()` resolves; the stock surfaces stay
  * hidden until then.
  *
  * Without the provider's `nonce`, new elements take the nonce of a sheet
- * `c15tHandle` wrote, else of a page script: SvelteKit puts its nonce on
+ * `inthHandle` wrote, else of a page script: SvelteKit puts its nonce on
  * both, and never hands it to components.
  *
  * @param sheets - The surface's sheets, in cascade order.

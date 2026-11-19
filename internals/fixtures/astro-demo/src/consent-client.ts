@@ -1,5 +1,5 @@
-import type { C15tClientOptionsExtension } from '@inth/astro';
+import type { InthClientOptionsExtension } from '@inth/astro';
 
 import { scripts } from './example-scripts';
 
-export default { scripts } satisfies C15tClientOptionsExtension;
+export default { scripts } satisfies InthClientOptionsExtension;

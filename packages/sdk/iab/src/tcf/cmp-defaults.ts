@@ -1,5 +1,5 @@
 /**
- * CMP defaults. Single source of truth for the CMP version c15t reports.
+ * CMP defaults. Single source of truth for the CMP version Inth reports.
  *
  * There is deliberately no default CMP ID. A CMP ID is assigned by IAB Europe
  * at registration, so a placeholder would produce a TC String that names a
@@ -9,10 +9,9 @@
  * @packageDocumentation
  */
 
-import { version } from '../version';
+import type { PingData } from '@inth/sdk-core';
 
-/** CMP version as published, e.g. `3.0.0-alpha.1`. */
-export const CMP_VERSION = version;
+import { version } from '../version';
 
 /**
  * CMP version as the integer the TC String and `__tcfapi` report.
@@ -21,3 +20,20 @@ export const CMP_VERSION = version;
  * it carries the package major rather than the full semver string.
  */
 export const CMP_VERSION_NUMBER = Number.parseInt(version, 10) || 1;
+
+/**
+ * The `ping` answer, for the stub and the loaded CMP alike, so a vendor that
+ * pings before and after load reads the same API and CMP versions.
+ */
+export const createPingData = function createPingData(
+	state: Omit<PingData, 'apiVersion' | 'cmpLoaded' | 'cmpVersion'> & {
+		cmpVersion: string | number;
+	}
+): PingData {
+	return {
+		...state,
+		apiVersion: '2.3',
+		cmpLoaded: state.cmpStatus === 'loaded',
+		cmpVersion: String(state.cmpVersion),
+	};
+};

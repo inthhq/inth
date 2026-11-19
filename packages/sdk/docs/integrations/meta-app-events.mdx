@@ -1,8 +1,8 @@
 ---
 title: Meta App Events
-description: Connect the Meta (Facebook) SDK's automatic App Events, advertiser ID collection and Limited Data Use to c15t consent in Swift, Kotlin, React Native and Expo.
-seoTitle: Meta (Facebook) SDK consent for mobile apps with c15t
-seoDescription: Turn Meta App Events, advertiser ID collection and Limited Data Use on and off from c15t consent in Swift, Android, React Native and Expo.
+description: Connect the Meta (Facebook) SDK's automatic App Events, advertiser ID collection and Limited Data Use to Inth consent in Swift, Kotlin, React Native and Expo.
+seoTitle: Meta (Facebook) SDK consent for mobile apps with Inth
+seoDescription: Turn Meta App Events, advertiser ID collection and Limited Data Use on and off from Inth consent in Swift, Android, React Native and Expo.
 group: integrations
 ---
 
@@ -13,7 +13,7 @@ otherwise. The category defaults to `marketing`, as for the web's
 [Meta Pixel](/docs/integrations/meta-pixel).
 
 The helper ships in `InthApple`, `inth-android` and
-`@inth/react-native/integrations`. c15t adds no Meta dependency. For
+`@inth/react-native/integrations`. Inth adds no Meta dependency. For
 websites, use the [Meta Pixel helper](/docs/integrations/meta-pixel).
 
 ## What the helper changes
@@ -29,7 +29,7 @@ states it covers.
 
 The helper does not set ATT. On iOS 17 and later, the Meta SDK 17 and later
 [reads the ATT status itself](https://developers.facebook.com/documentation/app-events/guides/advertising-tracking-enabled).
-Request ATT separately; c15t keeps it apart from consent.
+Request ATT separately; Inth keeps it apart from consent.
 
 ## Before you start
 
@@ -41,7 +41,7 @@ SDK through Meta's [Android](https://developers.facebook.com/docs/app-events/get
 or iOS guide, or `react-native-fbsdk-next` for React Native.
 
 Turn both settings off in the native build so nothing is collected before
-c15t connects. On iOS, in `Info.plist`:
+Inth connects. On iOS, in `Info.plist`:
 
 {/* example: fragment */}
 

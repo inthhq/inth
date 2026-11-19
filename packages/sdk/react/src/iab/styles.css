@@ -1,7 +1,7 @@
 /**
  * @inth/react — IAB TCF component styles.
  *
- * Add this stylesheet to the same global CSS entrypoint as your base c15t styles
+ * Add this stylesheet to the same global CSS entrypoint as your base Inth styles
  * when using IAB consent components. Do not import either stylesheet from JS/TSX.
  *
  * Usage (src/index.css):

@@ -48,11 +48,8 @@ import {
 } from './write';
 
 /**
- * Create the write half of one persistence handle.
- *
- * @param context - The handle's kernel, storage, clock and event state.
- * @param tools - First-load functions the writer calls.
- * @returns The writer. It writes nothing until asked.
+ * Create the write half of one persistence handle. It writes nothing until
+ * asked.
  */
 export const createPersistenceWriter = function createPersistenceWriter(
 	{ kernel, now, state, storageConfig }: PersistenceContext,
@@ -451,7 +448,7 @@ export const createPersistenceWriter = function createPersistenceWriter(
 		const result = kernel.hydrate(records);
 		if (result.ok === false) {
 			console.warn(
-				'[c15t] Stored consent records were rejected.',
+				'[inth] Stored consent records were rejected.',
 				result.issues
 			);
 			return false;

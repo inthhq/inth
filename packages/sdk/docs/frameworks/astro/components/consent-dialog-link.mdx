@@ -1,6 +1,6 @@
 ---
 title: ConsentDialogLink
-description: Add a footer button or link that reopens the c15t preference dialog or the IAB TCF preference center on an Astro site, with no JavaScript of its own.
+description: Add a footer button or link that reopens the Inth preference dialog or the IAB TCF preference center on an Astro site, with no JavaScript of its own.
 group: frameworks
 ---
 
@@ -12,7 +12,7 @@ choice at any time. Its children are the label:
 <include src="../../../shared/examples/astro/layout.mdx" />
 
 `ConsentDialogLink` renders a plain `<button>` or `<a>` with no styles of
-its own. It carries `data-c15t-action="customize"`, and the same shared
+its own. It carries `data-inth-action="customize"`, and the same shared
 listener the banner uses opens the dialog on click.
 
 ## Props
@@ -20,7 +20,7 @@ listener the banner uses opens the dialog on click.
 | Prop | Type | Default | Effect |
 | --- | --- | --- | --- |
 | `kind` | `'preferences' \| 'iab'` | `'preferences'` | Which dialog to open |
-| `as` | `'button' \| 'a'` | `'button'` | Renders a `<button type="button">`, or an `<a href="#c15t-preferences">` |
+| `as` | `'button' \| 'a'` | `'button'` | Renders a `<button type="button">`, or an `<a href="#inth-preferences">` |
 | `class` | `string` | None | Class names for your own styles |
 
 Use `as="a"` when your footer styles links and not buttons. The click handler

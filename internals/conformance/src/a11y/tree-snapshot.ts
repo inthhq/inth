@@ -1,12 +1,6 @@
 /**
- * Accessibility-tree snapshot utilities.
- *
- * Playwright's `page.accessibility.snapshot()` returns a tree of
- * role/name/state. This module defines the shape we normalize to so that
- * React and Svelte snapshots can be compared.
- *
- * Expected usage: `apps/parity-runner` captures the raw Playwright snapshot
- * per framework, passes it through `normalizeA11ySnapshot`, then diffs.
+ * Accessibility-tree snapshot utilities: the shape a role/name/state tree
+ * is normalized to so that two frameworks' trees can be compared.
  */
 
 export interface RawA11yNode {

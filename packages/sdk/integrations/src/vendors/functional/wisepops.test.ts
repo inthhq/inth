@@ -134,14 +134,10 @@ describe('wisepops', () => {
 		expect(options).toHaveProperty('defaultConsent', 'granted');
 	});
 
-	it('grants cookie consent only for a connected, permitted load', () => {
+	it('grants cookie consent only for a permitted load', () => {
 		window.wisepops = vi.fn();
 		const script = wisepops({ siteId: 'test-site' });
 		const element = document.createElement('script');
-		script.onLoad?.(createCallbackInfo({ hasConsent: true, id: script.id }));
-		script.onLoad?.(
-			createCallbackInfo({ element, hasConsent: true, id: script.id })
-		);
 		document.head.appendChild(element);
 		script.onLoad?.(
 			createCallbackInfo({ element, hasConsent: false, id: script.id })

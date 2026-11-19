@@ -22,7 +22,7 @@ import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * The Kotlin half of "WebView consent" in `packages/native-protocol/CONTRACT.md`. The scripts
- * themselves run in a browser in `@c15t/core` and `@c15t/browser` tests.
+ * themselves run in a browser in `@inth/sdk-core` and `@inth/sdk-browser` tests.
  */
 class WebViewConsentTest {
 	private fun root(path: String) = generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
@@ -136,10 +136,10 @@ class WebViewConsentTest {
 
 	@Test fun `a preferences request must carry the key only the top frame holds`() {
 		val script = WebViewConsentScript(listOf("https://app.example"), requestKey = "k3y")
-		assertTrue(script.isPreferencesRequest("""{"type":"c15t:open-preferences","key":"k3y"}"""))
+		assertTrue(script.isPreferencesRequest("""{"type":"inth:open-preferences","key":"k3y"}"""))
 		// What a frame that can post to the channel, but cannot read the key, can send.
-		assertFalse(script.isPreferencesRequest("""{"type":"c15t:open-preferences"}"""))
-		assertFalse(script.isPreferencesRequest("""{"type":"c15t:open-preferences","key":"guess"}"""))
+		assertFalse(script.isPreferencesRequest("""{"type":"inth:open-preferences"}"""))
+		assertFalse(script.isPreferencesRequest("""{"type":"inth:open-preferences","key":"guess"}"""))
 		assertFalse(script.isPreferencesRequest(null))
 	}
 
@@ -152,6 +152,6 @@ class WebViewConsentTest {
 			"${WebViewConsentScripts.UPDATE}([\"https://www.example.com\"],\"t0k3n\",${state.toJson()});",
 			next.update(state),
 		)
-		assertTrue(next.isPreferencesRequest("""{"type":"c15t:open-preferences","key":"k3y"}"""))
+		assertTrue(next.isPreferencesRequest("""{"type":"inth:open-preferences","key":"k3y"}"""))
 	}
 }

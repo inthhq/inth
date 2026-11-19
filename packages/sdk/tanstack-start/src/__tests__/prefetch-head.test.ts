@@ -19,9 +19,9 @@ afterEach(() => {
 
 describe('consentPrefetchHead', () => {
 	test('returns a head() fragment with one inline script', () => {
-		const head = consentPrefetchHead({ projectUrl: '/api/c15t' });
+		const head = consentPrefetchHead({ projectUrl: '/api/inth' });
 		expect(head.scripts).toHaveLength(1);
-		expect(head.scripts[0]?.id).toBe('c15t-initial-data-prefetch');
+		expect(head.scripts[0]?.id).toBe('inth-initial-data-prefetch');
 		expect(head.scripts[0]?.children).toContain('/init');
 	});
 });
@@ -49,11 +49,11 @@ describe('readPrefetchedInitialData', () => {
 		);
 		vi.stubGlobal('fetch', fetchSpy);
 
-		const primed = primePrefetchedInitialData({ projectUrl: '/api/c15t' });
+		const primed = primePrefetchedInitialData({ projectUrl: '/api/inth' });
 		const found = readPrefetchedInitialData({
 			overrides: undefined,
 			projectUrl: 'https://consent.example.com',
-			routePrefix: '/api/c15t/',
+			routePrefix: '/api/inth/',
 		});
 
 		expect(found).toBe(primed);
@@ -72,19 +72,19 @@ describe('readPrefetchedInitialData', () => {
 
 		const primed = primePrefetchedInitialData({
 			overrides: { gpc: true },
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 		expect(
 			readPrefetchedInitialData({
 				overrides: { gpc: true },
-				projectUrl: '/api/c15t',
+				projectUrl: '/api/inth',
 				routePrefix: undefined,
 			})
 		).toBe(primed);
 		expect(
 			readPrefetchedInitialData({
 				overrides: undefined,
-				projectUrl: '/api/c15t',
+				projectUrl: '/api/inth',
 				routePrefix: undefined,
 			})
 		).toBeUndefined();
@@ -123,7 +123,7 @@ describe('readPrefetchedInitialData: route prefix', () => {
 			readPrefetchedInitialData({
 				overrides: undefined,
 				projectUrl: 'https://consent.example.com',
-				routePrefix: '/api/c15t',
+				routePrefix: '/api/inth',
 			})
 		).toBeUndefined();
 	});

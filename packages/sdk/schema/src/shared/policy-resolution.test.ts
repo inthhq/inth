@@ -472,7 +472,7 @@ describe('readPolicyResolutionWire', () => {
 
 describe('contract header', () => {
 	test('parses only plain integers', () => {
-		expect(POLICY_CONTRACT_HEADER).toBe('x-c15t-policy-contract');
+		expect(POLICY_CONTRACT_HEADER).toBe('x-inth-policy-contract');
 		expect(parsePolicyContractHeader('1')).toBe(1);
 		expect(parsePolicyContractHeader(' 2 ')).toBe(2);
 		expect(parsePolicyContractHeader('1junk')).toBeUndefined();

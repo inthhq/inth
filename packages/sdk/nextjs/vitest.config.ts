@@ -1,7 +1,7 @@
 import { readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { baseConfig } from '@c15t/vitest-config/base';
+import { baseConfig } from '@inth/vitest-config/base';
 import react from '@vitejs/plugin-react';
 import { playwright } from '@vitest/browser-playwright';
 import { defineConfig, mergeConfig } from 'vitest/config';
@@ -42,10 +42,6 @@ export default mergeConfig(
 				// The browser build; the node project overrides it with the
 				// server's, which imports the engine statically.
 				'#engine-now': resolve(__dirname, './src/engine-now-browser.ts'),
-				'@inth/nextjs/generated-manifest': resolve(
-					__dirname,
-					'./src/generated-manifest.ts'
-				),
 				'@inth/nextjs/user-config': resolve(__dirname, './src/user-config.ts'),
 				'@inth/sdk/modes': resolve(__dirname, '../core/src/modes.ts'),
 				'@inth/sdk/testing': resolve(__dirname, '../core/src/testing.ts'),
@@ -111,9 +107,17 @@ export default mergeConfig(
 					__dirname,
 					'../core/src/transports/hosted-factory.ts'
 				),
+				'@inth/sdk/runtime/storage-for': resolve(
+					__dirname,
+					'../core/src/libs/storage-for.ts'
+				),
 				'@inth/sdk/runtime/deferred-boot': resolve(
 					__dirname,
 					'../core/src/runtime/deferred-boot.ts'
+				),
+				'@inth/sdk/runtime/stand-in-kernel': resolve(
+					__dirname,
+					'../core/src/runtime/stand-in-kernel.ts'
 				),
 				'@inth/sdk/runtime/deferred-snapshot': resolve(
 					__dirname,
@@ -182,6 +186,10 @@ export default mergeConfig(
 				'@inth/sdk/runtime/streamed-init': resolve(
 					__dirname,
 					'../core/src/runtime/streamed-init.ts'
+				),
+				'@inth/sdk/runtime/page-globals': resolve(
+					__dirname,
+					'../core/src/libs/page-globals.ts'
 				),
 				'@inth/sdk/runtime': resolve(__dirname, '../core/src/runtime/index.ts'),
 				'@inth/sdk/engine': resolve(__dirname, '../core/src/index.ts'),

@@ -14,19 +14,18 @@ import { IABUnavailableError, policyNeedsIAB } from '@inth/sdk/engine';
 import type { ConsentSnapshot } from '@inth/sdk/engine';
 import { isIABConfigured } from '@inth/sdk/runtime';
 
-import type { C15tAstroOptions } from '../types';
+import type { InthAstroOptions } from '../types';
 
 /**
  * Whether the site cannot answer for the snapshot's policy.
  *
- * @param snapshot - The kernel snapshot.
  * @param iab - The site's `iab` option.
  * @returns `true` for an `iab` policy with vendor data on a site without
  * `iab`.
  */
 export const isIABUnavailable = function isIABUnavailable(
 	snapshot: Parameters<typeof policyNeedsIAB>[0],
-	iab: C15tAstroOptions['iab']
+	iab: InthAstroOptions['iab']
 ): boolean {
 	return !isIABConfigured(iab) && policyNeedsIAB(snapshot);
 };
@@ -34,18 +33,17 @@ export const isIABUnavailable = function isIABUnavailable(
 /**
  * Throw when the site cannot answer for the snapshot's policy.
  *
- * @param snapshot - The kernel snapshot.
  * @param iab - The site's `iab` option.
  * @throws {IABUnavailableError} When {@link isIABUnavailable} holds.
  */
 export const assertIABAvailable = function assertIABAvailable(
 	snapshot: ConsentSnapshot,
-	iab: C15tAstroOptions['iab']
+	iab: InthAstroOptions['iab']
 ): void {
 	if (isIABUnavailable(snapshot, iab)) {
 		throw new IABUnavailableError(
 			'`iab` is not set',
-			'Set `iab` in the c15t() integration options in astro.config'
+			'Set `iab` in the inth() integration options in astro.config'
 		);
 	}
 };

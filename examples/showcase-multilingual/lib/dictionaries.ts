@@ -1,6 +1,6 @@
 import type { Locale } from './locales';
 
-// The site's own copy. c15t's banner and dialog copy lives in
+// The site's own copy. Inth's banner and dialog copy lives in
 // consent-i18n.ts; this file is only the shop around it.
 
 const en = {
@@ -33,13 +33,13 @@ const en = {
 	preview: {
 		label: 'Preview as a visitor from',
 		outcome: {
-			none: 'No banner. c15t’s default rules don’t ask for consent here.',
+			none: 'No banner. Inth’s default rules don’t ask for consent here.',
 			'opt-in':
 				'Opt-in. Analytics and ads wait for a yes, so the banner asks first.',
 			'opt-out':
 				'Opt-out. No banner. Analytics run until the visitor turns them off in Privacy settings.',
 			unknown:
-				'No location yet, so c15t applies its strictest rules and asks before anything optional runs.',
+				'No location yet, so Inth applies its strictest rules and asks before anything optional runs.',
 		},
 		regions: {
 			br: 'Brazil',
@@ -107,13 +107,13 @@ const de: Dictionary = {
 	preview: {
 		label: 'Vorschau für Besucher aus',
 		outcome: {
-			none: 'Kein Banner. Die Standardregeln von c15t verlangen hier keine Einwilligung.',
+			none: 'Kein Banner. Die Standardregeln von Inth verlangen hier keine Einwilligung.',
 			'opt-in':
 				'Opt-in. Analyse und Werbung warten auf ein Ja, deshalb fragt das Banner zuerst.',
 			'opt-out':
 				'Opt-out. Kein Banner. Analyse läuft, bis der Besucher sie in den Datenschutzeinstellungen abschaltet.',
 			unknown:
-				'Noch kein Standort, also wendet c15t die strengsten Regeln an und fragt, bevor etwas Optionales läuft.',
+				'Noch kein Standort, also wendet Inth die strengsten Regeln an und fragt, bevor etwas Optionales läuft.',
 		},
 		regions: {
 			br: 'Brasilien',
@@ -179,13 +179,13 @@ const fr: Dictionary = {
 	preview: {
 		label: 'Aperçu selon la région du visiteur',
 		outcome: {
-			none: 'Pas de bannière. Les règles par défaut de c15t ne demandent pas de consentement ici.',
+			none: 'Pas de bannière. Les règles par défaut d’Inth ne demandent pas de consentement ici.',
 			'opt-in':
 				'Opt-in. Mesure d’audience et publicité attendent un oui, la bannière demande donc d’abord.',
 			'opt-out':
 				'Opt-out. Pas de bannière. La mesure d’audience tourne jusqu’à ce que le visiteur la coupe dans les paramètres de confidentialité.',
 			unknown:
-				'Pas encore de localisation : c15t applique ses règles les plus strictes et demande avant tout traitement optionnel.',
+				'Pas encore de localisation : Inth applique ses règles les plus strictes et demande avant tout traitement optionnel.',
 		},
 		regions: {
 			br: 'Brésil',

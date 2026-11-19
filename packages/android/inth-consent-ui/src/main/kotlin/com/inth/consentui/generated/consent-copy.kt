@@ -8,9 +8,9 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
-/** Category-mode consent UI copy from `@c15t/translations`, one value per language. */
+/** Category-mode consent UI copy from `@inth/sdk-translations`, one value per language. */
 data class ConsentCopy(
-    /** Language code, lowercase, as in `@c15t/translations`. */
+    /** Language code, lowercase, as in `@inth/sdk-translations`. */
     val language: String,
     /** `common.acceptAll` */
     val acceptAll: String,

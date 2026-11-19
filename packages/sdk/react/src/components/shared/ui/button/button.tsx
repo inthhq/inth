@@ -6,7 +6,6 @@ import type { PolymorphicComponentProps } from '../../libs/polymorphic';
 import { recursiveCloneChildren } from '../../libs/recursive-clone-children';
 import { Slot } from '../../libs/slot';
 
-// Re-export types for convenience
 export type ButtonVariant = 'primary' | 'neutral' | 'secondary';
 export type ButtonMode = 'filled' | 'stroke' | 'lighter' | 'ghost';
 export type ButtonSize = 'medium' | 'small' | 'xsmall' | 'xxsmall';
@@ -16,7 +15,6 @@ export interface ButtonVariantsProps {
 	size?: ButtonSize;
 }
 
-// Re-export the helper function
 export const buttonVariants = (_props: ButtonVariantsProps = {}) => ({
 	icon: (options?: { class?: string }) =>
 		[styles.buttonIcon, options?.class].filter(Boolean).join(' '),
@@ -24,33 +22,21 @@ export const buttonVariants = (_props: ButtonVariantsProps = {}) => ({
 		[styles.button, options?.class].filter(Boolean).join(' '),
 });
 
-/**
- * Constants for component display names
- * @internal
- */
 const BUTTON_ROOT_NAME = 'ButtonRoot';
 const BUTTON_ICON_NAME = 'ButtonIcon';
 
-// Define a type that can be used with PolymorphicComponentProps
 export interface ButtonIconProps extends Record<string, unknown> {
 	variant?: ButtonVariant;
 	mode?: ButtonMode;
 	size?: ButtonSize;
 }
 
-// Type for props that can be used with recursiveCloneChildren
 export type RecursiveCloneableProps = Record<string, unknown>;
 
-/**
- * Type definitions for button props
- * @internal
- */
+/** @internal */
 export type ButtonSharedProps = ButtonVariantsProps;
 
-/**
- * Props interface for the ButtonRoot component
- * @public
- */
+/** @public */
 type ButtonRootProps = ButtonSharedProps &
 	ButtonHTMLAttributes<HTMLButtonElement> & {
 		/**
@@ -78,9 +64,6 @@ type ButtonRootProps = ButtonSharedProps &
  * </ButtonRoot>
  * ```
  *
- * @param props - Component props including variant styles, mode, size, and standard button attributes
- * @param ref - Forward ref to access the underlying button element
- *
  * @public
  */
 const ButtonRoot = createForwardRef<HTMLButtonElement, ButtonRootProps>(
@@ -101,17 +84,14 @@ const ButtonRoot = createForwardRef<HTMLButtonElement, ButtonRootProps>(
 		const uniqueId = useId();
 		const Component = asChild ? Slot : 'button';
 
-		// Only apply button variants if noStyle is false
 		const variantClasses = noStyle
 			? ''
 			: buttonVariants({ mode, size, variant }).root();
 
-		// Always include custom className
 		const finalClassName = [variantClasses, className]
 			.filter(Boolean)
 			.join(' ');
 
-		// Create shared props object that can be safely passed to recursiveCloneChildren
 		const cloneableProps: RecursiveCloneableProps = {
 			...(variant && { variant }),
 			...(mode && { mode }),
@@ -158,9 +138,6 @@ ButtonRoot.displayName = BUTTON_ROOT_NAME;
  * </ButtonRoot>
  * ```
  *
- * @typeParam T - The element type to render the icon as
- * @param props - Component props including the polymorphic 'as' prop and shared button variant props
- *
  * @public
  */
 const ButtonIcon = <T extends ElementType>({
@@ -187,8 +164,5 @@ const ButtonIcon = <T extends ElementType>({
 };
 ButtonIcon.displayName = BUTTON_ICON_NAME;
 
-/**
- * Export the compound components
- * @public
- */
+/** @public */
 export { ButtonIcon as Icon, ButtonRoot as Root };

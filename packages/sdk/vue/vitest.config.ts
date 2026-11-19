@@ -1,7 +1,7 @@
 import { readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { baseConfig } from '@c15t/vitest-config/base';
+import { baseConfig } from '@inth/vitest-config/base';
 import vue from '@vitejs/plugin-vue';
 import { defineConfig, mergeConfig } from 'vitest/config';
 
@@ -33,25 +33,13 @@ export default mergeConfig(
 				{ '@inth/sdk/build': resolve(__dirname, '../core/src/build.ts') },
 				{ '#imports': resolve(__dirname, './src/runtime/vue/stubs.ts') },
 				{
-					'#c15t/composables': resolve(
+					'#inth/composables': resolve(
 						__dirname,
 						'./src/runtime/composables/index.ts'
 					),
 				},
 				{
-					'#@inth/sdk/server-app-config': resolve(
-						__dirname,
-						'./src/__tests__/server-app-config.ts'
-					),
-				},
-				{
-					'#@inth/sdk/build-options': resolve(
-						__dirname,
-						'./src/__tests__/build-options-virtual.ts'
-					),
-				},
-				{
-					'#c15t/banner-preload-files': resolve(
+					'#inth/banner-preload-files': resolve(
 						__dirname,
 						'./src/__tests__/banner-preload-files-virtual.ts'
 					),
@@ -61,11 +49,7 @@ export default mergeConfig(
 						__dirname,
 						'./src/__tests__/manifest-snapshot.ts'
 					),
-					'#c15t/client-manifest-snapshot': resolve(
-						__dirname,
-						'./src/__tests__/manifest-snapshot.ts'
-					),
-					'#c15t/manifest-snapshot': resolve(
+					'#inth/client-manifest-snapshot': resolve(
 						__dirname,
 						'./src/__tests__/manifest-snapshot.ts'
 					),
@@ -166,6 +150,12 @@ export default mergeConfig(
 					),
 				},
 				{
+					'@inth/sdk/surface-actions/plain-scripts': resolve(
+						__dirname,
+						'../core/src/surface-actions/plain-scripts.ts'
+					),
+				},
+				{
 					'@inth/sdk/surface-actions': resolve(
 						__dirname,
 						'../core/src/surface-actions/index.ts'
@@ -196,6 +186,20 @@ export default mergeConfig(
 					'@inth/sdk/preference-draft': resolve(
 						__dirname,
 						'../core/src/preference-draft/index.ts'
+					),
+				},
+				{
+					'@inth/sdk/runtime/page-globals': resolve(
+						__dirname,
+						'../core/src/libs/page-globals.ts'
+					),
+					'@inth/sdk/runtime/stand-in-kernel': resolve(
+						__dirname,
+						'../core/src/runtime/stand-in-kernel.ts'
+					),
+					'@inth/sdk/runtime/storage-for': resolve(
+						__dirname,
+						'../core/src/libs/storage-for.ts'
 					),
 				},
 				{
@@ -231,7 +235,7 @@ export default mergeConfig(
 					),
 				},
 				{
-					'@c15t/conformance': resolve(
+					'@inth/conformance': resolve(
 						__dirname,
 						'../../../internals/conformance/src/index.ts'
 					),

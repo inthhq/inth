@@ -15,7 +15,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import angular from '@analogjs/vite-plugin-angular';
-import { baseConfig } from '@c15t/vitest-config/base';
+import { baseConfig } from '@inth/vitest-config/base';
 import { defineConfig, mergeConfig } from 'vitest/config';
 
 import { privateSdkNames } from '../shared/private-sdk-names';
@@ -97,6 +97,10 @@ const workspaceAliases = [
 		replacement: resolve(__dirname, '../core/src/runtime/deferred-boot.ts'),
 	},
 	{
+		find: '@inth/sdk/runtime/stand-in-kernel',
+		replacement: resolve(__dirname, '../core/src/runtime/stand-in-kernel.ts'),
+	},
+	{
 		find: '@inth/sdk/runtime/save-preload',
 		replacement: resolve(__dirname, '../core/src/runtime/save-preload.ts'),
 	},
@@ -106,6 +110,14 @@ const workspaceAliases = [
 			__dirname,
 			'../core/src/runtime/script-server-start.ts'
 		),
+	},
+	{
+		find: '@inth/sdk/runtime/page-globals',
+		replacement: resolve(__dirname, '../core/src/libs/page-globals.ts'),
+	},
+	{
+		find: '@inth/sdk/runtime/storage-for',
+		replacement: resolve(__dirname, '../core/src/libs/storage-for.ts'),
 	},
 	{
 		find: '@inth/sdk/runtime',
@@ -251,7 +263,7 @@ const workspaceAliases = [
 		replacement: resolve(__dirname, '$1/src/public-api.ts'),
 	},
 	{
-		find: '@c15t/conformance',
+		find: '@inth/conformance',
 		replacement: resolve(
 			__dirname,
 			'../../../internals/conformance/src/index.ts'

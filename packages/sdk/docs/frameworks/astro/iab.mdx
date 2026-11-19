@@ -1,6 +1,6 @@
 ---
 title: IAB TCF
-description: Render the IAB TCF 2.4 banner and preference center on an Astro site with the c15t integration, and configure the CMP ID, vendor list source and publisher restrictions.
+description: Render the IAB TCF 2.4 banner and preference center on an Astro site with the Inth integration, and configure the CMP ID, vendor list source and publisher restrictions.
 group: frameworks
 ---
 
@@ -23,7 +23,7 @@ Add `iab` to the integration options from the
 [quickstart](/docs/frameworks/astro/quickstart):
 
 ```js title="astro.config.mjs (partial)"
-c15t({ iab: { cmpId: 123 } });
+inth({ iab: { cmpId: 123 } });
 ```
 
 Replace `123` with your registered CMP ID. A hosted backend can supply the CMP
@@ -39,7 +39,7 @@ downloads `@inth/sdk/iab`.
 
 If a visitor's policy uses the `iab` model and the backend sends its vendor
 list while `iab` is unset, the server render throws an `IABUnavailableError`
-(code `C15T_IAB_UNAVAILABLE`). A page the browser resolves itself, such as a
+(code `INTH_IAB_UNAVAILABLE`). A page the browser resolves itself, such as a
 prerendered one, throws it there as an uncaught error. The standard banner
 does not handle the IAB model, so the visitor would otherwise get no working
 consent UI. Set `iab`, or remove the `iab` model from the policy. A backend
@@ -71,13 +71,13 @@ partners link opens `IABConsentDialog` on the vendors tab. See
 
 With server output, the layout can choose per request. When only some visitors
 get an IAB policy, render the IAB pair when
-`Astro.locals.c15t.snapshot.model` is `'iab'` and the standard pair otherwise.
+`Astro.locals.inth.snapshot.model` is `'iab'` and the standard pair otherwise.
 
 ## Where the vendor list comes from
 
 | Mode | Vendor list source |
 | --- | --- |
-| `manifest()` | The server resolves it, and the browser reads it through the same-origin `/api/c15t/init` route |
+| `manifest()` | The server resolves it, and the browser reads it through the same-origin `/api/inth/init` route |
 | `hosted()` | The browser fetches it from the backend's `/init` after the page loads |
 | `testing()` | The `gvl` or `gvlUrl` option |
 

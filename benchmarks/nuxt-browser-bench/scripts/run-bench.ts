@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import type {
 	BenchPerfMetrics,
 	readBenchNavigationTiming,
-} from '@c15t/benchmarking/browser';
+} from '@inth/benchmarking/browser';
 import {
 	applyBenchThrottleProfile,
 	benchNavigationTimingExpression,
@@ -18,31 +18,31 @@ import {
 	benchScenarioKey,
 	resolveBenchBackendLatencyMs,
 	parseBenchThrottleProfile,
-} from '@c15t/benchmarking/browser';
-import { nuxtBrowserBudgetsForScenario } from '@c15t/benchmarking/budgets';
+} from '@inth/benchmarking/browser';
+import { nuxtBrowserBudgetsForScenario } from '@inth/benchmarking/budgets';
 import {
 	analyzeServerHtmlStream,
 	bannerMarkupMarkers,
 	readServerHtmlStream,
-} from '@c15t/benchmarking/html-stream';
-import type { ServerHtmlStreamAnalysis } from '@c15t/benchmarking/html-stream';
+} from '@inth/benchmarking/html-stream';
+import type { ServerHtmlStreamAnalysis } from '@inth/benchmarking/html-stream';
 import {
 	assertConsentFreeBaseline,
 	baselineServerOutputDir,
-} from '@c15t/benchmarking/nuxt-baseline';
+} from '@inth/benchmarking/nuxt-baseline';
 import {
 	assertRepeatVisitor,
 	createRepeatVisitorCookie,
-} from '@c15t/benchmarking/nuxt-repeat-visitor';
-import { BENCHMARK_SCHEMA_VERSION } from '@c15t/benchmarking/schema';
-import type { BenchmarkResult } from '@c15t/benchmarking/schema';
-import type { BenchScriptTiming } from '@c15t/benchmarking/script-timing';
+} from '@inth/benchmarking/nuxt-repeat-visitor';
+import { BENCHMARK_SCHEMA_VERSION } from '@inth/benchmarking/schema';
+import type { BenchmarkResult } from '@inth/benchmarking/schema';
+import type { BenchScriptTiming } from '@inth/benchmarking/script-timing';
 import {
 	benchScriptTimingExpression,
 	scriptTimingGlossary,
 	summarizeBenchScripts,
 	summarizeIdlePreloadMetrics,
-} from '@c15t/benchmarking/script-timing';
+} from '@inth/benchmarking/script-timing';
 import {
 	getEnvironment,
 	median,
@@ -52,23 +52,23 @@ import {
 	summarizeMetric,
 	summarizeNullableMetric,
 	writeJson,
-} from '@c15t/benchmarking/utils';
+} from '@inth/benchmarking/utils';
 import {
 	assertVisitBannerState,
 	coldStateMetadata,
 	describeColdState,
-} from '@c15t/benchmarking/visit-definitions';
+} from '@inth/benchmarking/visit-definitions';
 import type {
 	BenchColdState,
 	BenchVisitKind,
-} from '@c15t/benchmarking/visit-definitions';
+} from '@inth/benchmarking/visit-definitions';
 import {
 	serverHtmlForSampleGroup,
 	serverHtmlMetadata,
 	summarizeServerHtmlMetrics,
 	summarizeVisitTimingMetrics,
 	visitMetricGlossary,
-} from '@c15t/benchmarking/visit-metrics';
+} from '@inth/benchmarking/visit-metrics';
 import { chromium } from 'playwright';
 import type * as PlaywrightTypes from 'playwright';
 
@@ -98,7 +98,7 @@ interface NuxtBrowserBenchState {
 
 declare global {
 	interface Window {
-		__c15tNuxtBench?: NuxtBrowserBenchState;
+		__inthNuxtBench?: NuxtBrowserBenchState;
 	}
 }
 
@@ -116,7 +116,7 @@ const expectedServerShutdownCodes = new Set([0, 137, 143]);
 const expectedServerShutdownSignals = new Set(['SIGTERM', 'SIGKILL']);
 const bannerRootTestId = 'consent-banner-root';
 const bannerAcceptButtonTestId = 'consent-banner-accept-button';
-const bannerElementTimingName = 'c15t-consent-banner';
+const bannerElementTimingName = 'inth-consent-banner';
 
 const readCliFlag = function readCliFlag(name: string): string | undefined {
 	const index = process.argv.indexOf(name);
@@ -130,33 +130,33 @@ const readCliFlag = function readCliFlag(name: string): string | undefined {
 };
 
 const PORT = Number(
-	readCliFlag('--port') ?? process.env.C15T_BENCH_PORT ?? '4313'
+	readCliFlag('--port') ?? process.env.INTH_BENCH_PORT ?? '4313'
 );
 const BASE_URL = `http://${HOST}:${PORT}`;
 
 const iterations = Number(
 	readCliFlag('--iterations') ??
-		process.env.C15T_BENCH_ITERATIONS ??
+		process.env.INTH_BENCH_ITERATIONS ??
 		process.env.BENCH_ITERATIONS ??
 		'7'
 );
 const warmupIterations = Number(
 	readCliFlag('--warmup') ??
-		process.env.C15T_BENCH_WARMUP_ITERATIONS ??
+		process.env.INTH_BENCH_WARMUP_ITERATIONS ??
 		process.env.BENCH_WARMUP_ITERATIONS ??
 		'1'
 );
 const throttleProfile = parseBenchThrottleProfile(
-	readCliFlag('--profile') ?? process.env.C15T_BENCH_PROFILE
+	readCliFlag('--profile') ?? process.env.INTH_BENCH_PROFILE
 );
 const backendLatencyMs = resolveBenchBackendLatencyMs(readCliFlag, process.env);
 const scenarioFilter =
-	readCliFlag('--scenario') ?? process.env.C15T_BENCH_SCENARIO;
+	readCliFlag('--scenario') ?? process.env.INTH_BENCH_SCENARIO;
 const coldManifestMode =
 	readCliFlag('--cold-manifest') === 'true' ||
 	readCliFlag('--cold-manifest') === '1' ||
-	process.env.C15T_BENCH_COLD_MANIFEST === '1' ||
-	process.env.C15T_BENCH_COLD_MANIFEST === 'true';
+	process.env.INTH_BENCH_COLD_MANIFEST === '1' ||
+	process.env.INTH_BENCH_COLD_MANIFEST === 'true';
 
 const allScenarios = [
 	{ name: 'baseline', path: '/baseline' },
@@ -197,7 +197,7 @@ const measureInteractionLatency = async function measureInteractionLatency(
 		await page.click('#open-preferences');
 		await page.waitForFunction(
 			() => {
-				const state = window.__c15tNuxtBench;
+				const state = window.__inthNuxtBench;
 				return !!state && state.activeUI === 'dialog';
 			},
 			undefined,
@@ -207,13 +207,13 @@ const measureInteractionLatency = async function measureInteractionLatency(
 	}
 
 	const before = await page.evaluate(
-		() => window.__c15tNuxtBench?.onChoiceRecordedCount ?? 0
+		() => window.__inthNuxtBench?.onChoiceRecordedCount ?? 0
 	);
 	const startedAt = performance.now();
 	await page.click(`[data-testid="${bannerAcceptButtonTestId}"]`);
 	await page.waitForFunction(
 		(expected) => {
-			const state = window.__c15tNuxtBench;
+			const state = window.__inthNuxtBench;
 			return (
 				!!state &&
 				state.onChoiceRecordedCount > expected &&
@@ -252,7 +252,7 @@ const runCommand = async function runCommand(
 	return await new Promise<void>((_resolve, reject) => {
 		const command = spawn('bun', args, {
 			cwd: appDir,
-			env: { ...process.env, C15T_BENCH_BASELINE: baseline ? '1' : '0' },
+			env: { ...process.env, INTH_BENCH_BASELINE: baseline ? '1' : '0' },
 			stdio: ['ignore', 'pipe', 'pipe'],
 		});
 
@@ -306,7 +306,7 @@ const seedRepeatVisitorCookie = async function seedRepeatVisitorCookie(
 			domain: HOST,
 			expires: Math.floor(Date.now() / 1000) + 60 * 60,
 			httpOnly: false,
-			name: 'c15t',
+			name: 'inth',
 			path: '/',
 			sameSite: 'Lax',
 			secure: false,
@@ -367,7 +367,7 @@ const collectScenarioMetrics = async function collectScenarioMetrics(
 	await page.waitForLoadState('domcontentloaded');
 	await page.waitForFunction(
 		(targetScenario) => {
-			const state = window.__c15tNuxtBench;
+			const state = window.__inthNuxtBench;
 			return (
 				state &&
 				state.scenario === targetScenario &&
@@ -391,7 +391,7 @@ const collectScenarioMetrics = async function collectScenarioMetrics(
 		});
 	}
 
-	const state = await page.evaluate(() => window.__c15tNuxtBench);
+	const state = await page.evaluate(() => window.__inthNuxtBench);
 	if (scenario === 'repeat-visitor') {
 		assertRepeatVisitor({
 			bannerCount: await page
@@ -553,19 +553,19 @@ const run = async function run(baseline: boolean) {
 		PORT: `${PORT}`,
 	};
 	if (coldManifestMode) {
-		env.C15T_BENCH_COLD_MANIFEST_TOKEN = String(Date.now());
+		env.INTH_BENCH_COLD_MANIFEST_TOKEN = String(Date.now());
 	}
 	if (!baseline) {
 		// `nuxt.config.ts` bakes the fixture manifest URL (default port, no
 		// cold token) into the build. Override it at runtime so `--port` and
 		// `--cold-manifest` reach the server without a rebuild.
 		const manifestBase =
-			process.env.C15T_BENCH_MANIFEST_URL ??
+			process.env.INTH_BENCH_MANIFEST_URL ??
 			`${BASE_URL}/api/bench-consent/manifest`;
-		const manifestUrl = env.C15T_BENCH_COLD_MANIFEST_TOKEN
-			? `${manifestBase}${manifestBase.includes('?') ? '&' : '?'}cold=${encodeURIComponent(env.C15T_BENCH_COLD_MANIFEST_TOKEN)}`
+		const manifestUrl = env.INTH_BENCH_COLD_MANIFEST_TOKEN
+			? `${manifestBase}${manifestBase.includes('?') ? '&' : '?'}cold=${encodeURIComponent(env.INTH_BENCH_COLD_MANIFEST_TOKEN)}`
 			: manifestBase;
-		env.NUXT_PUBLIC_C15T_MODE_MANIFEST_URL = manifestUrl;
+		env.NUXT_PUBLIC_INTH_MODE_MANIFEST_URL = manifestUrl;
 	}
 
 	const server = spawn('node', [serverEntry(baseline)], {
@@ -652,7 +652,7 @@ const run = async function run(baseline: boolean) {
 				const visit = visitForScenario(scenario.name);
 				const serverHtml = await readServerHtml(
 					scenario.path,
-					visit === 'fresh' ? undefined : `c15t=${createRepeatVisitorCookie()}`
+					visit === 'fresh' ? undefined : `inth=${createRepeatVisitorCookie()}`
 				);
 
 				const grouped = new Map<string, typeof samples>();

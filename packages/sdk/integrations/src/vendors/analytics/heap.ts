@@ -4,11 +4,7 @@ import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import {
-	joinUrlPath,
-	resolveScriptUrl,
-	trimToUndefined,
-} from '../_shared/script-url';
+import { joinUrlPath, resolveScriptUrl } from '../_shared/script-url';
 
 /**
  * Default Heap config-loader base URL.
@@ -69,7 +65,7 @@ export interface HeapReadyCallback {
 /**
  * Minimal public heap.js API exposed on `window.heap`.
  *
- * Before the real SDK loads, c15t creates an array-backed stub with these
+ * Before the real SDK loads, Inth creates an array-backed stub with these
  * methods. The config loader calls `heap.init(envId, clientConfig,
  * serverConfig)`, and heap.js drains `window.heapReadyCb` by invoking each
  * stored callback.
@@ -86,10 +82,7 @@ export interface HeapApi {
 	/**
 	 * Initializes the heap.js runtime.
 	 *
-	 * @param envId - Heap environment/app id.
-	 * @param clientConfig - Client-side configuration options.
 	 * @param serverConfig - Server-side configuration loaded by Heap.
-	 * @returns Vendor-specific runtime result.
 	 */
 	init: (
 		envId: string,
@@ -98,42 +91,26 @@ export interface HeapApi {
 	) => unknown;
 	/**
 	 * Starts Heap autocapture and event delivery.
-	 *
-	 * @returns Vendor-specific runtime result.
 	 */
 	startTracking: () => unknown;
 	/**
 	 * Stops Heap tracking for the current runtime session.
-	 *
-	 * @returns Vendor-specific runtime result.
 	 */
 	stopTracking: () => unknown;
 	/**
 	 * Tracks a custom Heap event.
-	 *
-	 * @param event - Event name to record.
-	 * @param properties - Optional event properties.
-	 * @returns Vendor-specific runtime result.
 	 */
 	track: (event: string, properties?: Record<string, unknown>) => unknown;
 	/**
 	 * Clears the current Heap identity.
-	 *
-	 * @returns Vendor-specific runtime result.
 	 */
 	resetIdentity: () => unknown;
 	/**
 	 * Identifies the current user.
-	 *
-	 * @param identity - Stable user identity.
-	 * @returns Vendor-specific runtime result.
 	 */
 	identify: (identity: string) => unknown;
 	/**
 	 * Identifies the current user with a hashed identity.
-	 *
-	 * @param identity - Hashed user identity.
-	 * @returns Vendor-specific runtime result.
 	 */
 	identifyHashed: (identity: string) => unknown;
 	/**
@@ -158,89 +135,70 @@ export interface HeapApi {
 	 * Adds properties to the current user.
 	 *
 	 * @param properties - User properties to merge.
-	 * @returns Vendor-specific runtime result.
 	 */
 	addUserProperties: (properties: Record<string, unknown>) => unknown;
 	/**
 	 * Adds properties to every subsequent event.
 	 *
 	 * @param properties - Event properties to merge.
-	 * @returns Vendor-specific runtime result.
 	 */
 	addEventProperties: (properties: Record<string, unknown>) => unknown;
 	/**
 	 * Removes a single persisted event property.
 	 *
 	 * @param property - Event property name to remove.
-	 * @returns Vendor-specific runtime result.
 	 */
 	removeEventProperty: (property: string) => unknown;
 	/**
 	 * Clears persisted event properties.
-	 *
-	 * @returns Vendor-specific runtime result.
 	 */
 	clearEventProperties: () => unknown;
 	/**
 	 * Adds properties to the current account.
 	 *
 	 * @param properties - Account properties to merge.
-	 * @returns Vendor-specific runtime result.
 	 */
 	addAccountProperties: (properties: Record<string, unknown>) => unknown;
 	/**
 	 * Adds a Heap adapter.
 	 *
 	 * @param adapter - Adapter implementation accepted by heap.js.
-	 * @returns Vendor-specific runtime result.
 	 */
 	addAdapter: (adapter: unknown) => unknown;
 	/**
 	 * Adds a Heap event transformer.
 	 *
 	 * @param transformer - Transformer implementation accepted by heap.js.
-	 * @returns Vendor-specific runtime result.
 	 */
 	addTransformer: (transformer: unknown) => unknown;
 	/**
 	 * Adds a Heap transformer function.
 	 *
 	 * @param transformer - Transformer callback accepted by heap.js.
-	 * @returns Vendor-specific runtime result.
 	 */
 	addTransformerFn: (transformer: (...args: unknown[]) => unknown) => unknown;
 	/**
 	 * Registers a callback for Heap readiness.
-	 *
-	 * @param callback - Function to call once Heap is ready.
-	 * @returns Vendor-specific runtime result.
 	 */
 	onReady: (callback: () => void) => unknown;
 	/**
 	 * Adds properties to subsequent pageview events.
 	 *
 	 * @param properties - Pageview properties to merge.
-	 * @returns Vendor-specific runtime result.
 	 */
 	addPageviewProperties: (properties: Record<string, unknown>) => unknown;
 	/**
 	 * Removes a single persisted pageview property.
 	 *
 	 * @param property - Pageview property name to remove.
-	 * @returns Vendor-specific runtime result.
 	 */
 	removePageviewProperty: (property: string) => unknown;
 	/**
 	 * Clears persisted pageview properties.
-	 *
-	 * @returns Vendor-specific runtime result.
 	 */
 	clearPageviewProperties: () => unknown;
 	/**
 	 * Tracks a pageview event.
-	 *
-	 * @param properties - Optional pageview properties.
-	 * @returns Vendor-specific runtime result.
 	 */
 	trackPageview: (properties?: Record<string, unknown>) => unknown;
 }
@@ -261,7 +219,7 @@ declare global {
  * Heap configuration script chain-loads the versioned heap.js runtime.
  *
  * Heap does not document a browser opt-out API that can make an already loaded
- * runtime inert for c15t's purposes, so c15t gates the load on `measurement`
+ * runtime inert for Inth's purposes, so Inth gates the load on `measurement`
  * consent and unloads the script when that consent is revoked.
  */
 export const heapManifest = {
@@ -326,7 +284,7 @@ export interface HeapOptions {
 	/**
 	 * Heap environment/app id.
 	 *
-	 * Heap's app UI commonly shows this as a numeric string. c15t validates only
+	 * Heap's app UI commonly shows this as a numeric string. Inth validates only
 	 * that the value is a non-empty string after trimming because Heap's public
 	 * install docs describe it generically as `YOUR_APP_ID`.
 	 */
@@ -335,7 +293,7 @@ export interface HeapOptions {
 	 * Optional heap.js client configuration.
 	 *
 	 * Values must be JSON-serializable: plain objects, arrays, strings, finite
-	 * numbers, booleans, and `null`. c15t adds `shouldFetchServerConfig: false`
+	 * numbers, booleans, and `null`. Inth adds `shouldFetchServerConfig: false`
 	 * to match Heap's current web installation snippet.
 	 */
 	clientConfig?: Record<string, unknown>;
@@ -420,7 +378,7 @@ const resolveHeapScriptUrl = function resolveHeapScriptUrl(
 	scriptUrl: string | undefined
 ): string {
 	return resolveScriptUrl(
-		trimToUndefined(scriptUrl),
+		scriptUrl,
 		joinUrlPath(DEFAULT_HEAP_CONFIG_BASE_URL, `${envId}/heap_config.js`)
 	);
 };
@@ -430,8 +388,6 @@ const resolveHeapScriptUrl = function resolveHeapScriptUrl(
  *
  * @see https://developers.heap.io/docs/web
  *
- * @param options - The options for the Heap script.
- * @returns The Heap script configuration.
  * @throws {TypeError} When `clientConfig` contains non-JSON values.
  *
  * @remarks
@@ -439,7 +395,7 @@ const resolveHeapScriptUrl = function resolveHeapScriptUrl(
  * `heap: missing or invalid envId` with `console.error` and returns a script
  * that never loads.
  *
- * Heap autocaptures interactions as soon as heap.js loads. c15t therefore
+ * Heap autocaptures interactions as soon as heap.js loads. Inth therefore
  * gates the config loader on `measurement` consent and unloads the script when
  * that consent is revoked.
  *

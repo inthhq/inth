@@ -93,7 +93,7 @@ export const snapshotToDisplayData = function snapshotToDisplayData(
 		return undefined;
 	}
 	return {
-		branding: snapshot.branding ?? 'c15t',
+		branding: snapshot.branding,
 		cmpId: snapshot.iab?.cmpId ?? undefined,
 		customVendors: snapshot.iab?.customVendors,
 		gvl: snapshot.iab?.gvl ?? undefined,

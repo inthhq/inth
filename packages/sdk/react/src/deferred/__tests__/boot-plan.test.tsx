@@ -15,7 +15,7 @@ const cleanups: (() => void)[] = [];
 const leaveBootData = (): void => {
 	const boot = document.createElement('script');
 	boot.type = 'application/json';
-	boot.setAttribute('data-c15t-boot', '');
+	boot.setAttribute('data-inth-boot', '');
 	boot.textContent = JSON.stringify({ s: { activeUI: 'none' } });
 	document.head.append(boot);
 	cleanups.push(() => boot.remove());

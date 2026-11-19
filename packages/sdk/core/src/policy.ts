@@ -161,13 +161,3 @@ export const buildEvaluationPolicy = function buildEvaluationPolicy(
 	}
 	return projectEvaluationPolicy(effective, consentCategories);
 };
-
-// Kept here for existing importers; they live apart so the commit path
-// (`surface-actions/early-commit.ts`) can use them without the policy
-// resolution code.
-export {
-	deriveModel,
-	presentedSelection,
-	scopeSelection,
-} from './policy-choice';
-export type { PresentedSelection } from './policy-choice';

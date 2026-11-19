@@ -83,7 +83,7 @@ export const createGateHeroPng = function createGateHeroPng(): Buffer {
 
 /**
  * Body of one gated script. Like CookieBench's `/controlled/script`, it only
- * records that it executed, so `scriptsCompleteMs` measures when c15t let the
+ * records that it executed, so `scriptsCompleteMs` measures when Inth let the
  * script run, not what the script does.
  *
  * @param id - Script id from `gateScripts()`.

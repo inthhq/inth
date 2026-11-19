@@ -10,7 +10,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * The `x-c15t-vendors` request line: its shape, and the cases where it stays off the request.
+ * The `x-inth-vendors` request line: its shape, and the cases where it stays off the request.
  *
  * The header is the mobile spelling of the `vendorIds` parameter that `gvlRequestUrl` in
  * `packages/backend/src/http/gvl.ts` puts on the upstream GVL request, so the value contract is
@@ -100,9 +100,9 @@ class VendorScopeHeaderTest {
 		// reaches the request through the init context the kernel hands over, which is the one shape
 		// `core-swift` has too, and a transport that read the scope off its own copy of the config
 		// would pass this test while the kernel's declaration went nowhere.
-		val transportConfig = NativeConfig(backendUrl = "https://test.c15t.app")
+		val transportConfig = NativeConfig(backendUrl = "https://test.inth.app")
 		testKernel(
-			config = NativeConfig(backendUrl = "https://test.c15t.app", vendors = listOf(755, 8, 42, 8)),
+			config = NativeConfig(backendUrl = "https://test.inth.app", vendors = listOf(755, 8, 42, 8)),
 			store = InthStore(InMemoryKeyValueStore()),
 			transport = HostedTransport(http, transportConfig),
 		).bootstrap()
@@ -123,9 +123,9 @@ class VendorScopeHeaderTest {
 		for (declared in listOf(null, emptyList(), (1..501).toList())) {
 			val http = RecordingHttpClient { HttpResponse(status = 200, body = initBody()) }
 			testKernel(
-				config = NativeConfig(backendUrl = "https://test.c15t.app", vendors = declared),
+				config = NativeConfig(backendUrl = "https://test.inth.app", vendors = declared),
 				store = InthStore(InMemoryKeyValueStore()),
-				transport = HostedTransport(http, NativeConfig(backendUrl = "https://test.c15t.app")),
+				transport = HostedTransport(http, NativeConfig(backendUrl = "https://test.inth.app")),
 			).bootstrap()
 
 			val init = http.requests.first { it.url.endsWith("/init") }

@@ -3,8 +3,11 @@ import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 
 import '@inth/sdk/ui/styles/components/consent-actions.css';
 import type { ButtonSize } from '@inth/sdk/ui/styles/primitives';
+import { resolveActionAppearance } from '@inth/sdk/ui/theme';
+import type { ConsentActionKey } from '@inth/sdk/ui/theme';
 import { computed } from 'vue';
 
+import { useConsentConfig } from '../composables/config';
 import { slotAttrs } from '../utils/slot-attrs';
 import ConsentButton from './button.vue';
 
@@ -30,7 +33,7 @@ const props = withDefaults(
 		groupAttrs?: object;
 		/**
 		 * Test id for the action root. A surface whose footer *is* the
-		 * action root — every c15t consent surface — names it after the
+		 * action root — every Inth consent surface — names it after the
 		 * footer, so the slot means the same element it does in React.
 		 * `null` renders none, which is what the IAB dialog footer needs:
 		 * React's and Svelte's carry no test id.
@@ -50,9 +53,7 @@ const props = withDefaults(
 	}>(),
 	{
 		direction: 'row',
-		primaryMode: 'stroke',
 		rootTestId: 'consent-actions',
-		secondaryMode: 'stroke',
 		size: 'small',
 		uiProfile: 'compact',
 	}
@@ -108,13 +109,7 @@ const shouldFill = computed(() => {
 });
 
 const isPrimary = function isPrimary(action: T) {
-	if (props.primaryActions && props.primaryActions.length > 0) {
-		return props.primaryActions.includes(action);
-	}
-	return (
-		actionGroups.value.flat().includes('customize' as T) &&
-		action === ('customize' as T)
-	);
+	return props.primaryActions?.includes(action) ?? false;
 };
 
 const actionLabel = function actionLabel(action: T) {
@@ -131,11 +126,26 @@ const actionTestId = function actionTestId(action: T) {
 	return `consent-actions-${action}-button`;
 };
 
-const buttonMode = function buttonMode(action: T) {
-	if (isPrimary(action)) {
-		return props.primaryMode;
+const config = useConsentConfig();
+
+/**
+ * A surface that sets `primaryMode` or `secondaryMode`, as the IAB ones
+ * do, picks the mode itself. Otherwise the theme's `consentActions` style
+ * the buttons, as in the other SDKs.
+ */
+const appearance = function appearance(action: T) {
+	const primary = isPrimary(action);
+	if (props.primaryMode || props.secondaryMode) {
+		return {
+			mode: (primary ? props.primaryMode : props.secondaryMode) ?? 'stroke',
+			variant: primary ? ('primary' as const) : ('neutral' as const),
+		};
 	}
-	return props.secondaryMode;
+	return resolveActionAppearance(
+		config.value.theme,
+		action as ConsentActionKey,
+		primary
+	);
 };
 </script>
 
@@ -160,8 +170,7 @@ const buttonMode = function buttonMode(action: T) {
 			<ConsentButton
 				v-for="action in group"
 				:key="action"
-				:variant="isPrimary(action) ? 'primary' : 'neutral'"
-				:mode="buttonMode(action)"
+				v-bind="appearance(action)"
 				:size="buttonSize ?? size"
 				:disabled="disabled || disabledActions?.includes(action)"
 				:data-action="action"

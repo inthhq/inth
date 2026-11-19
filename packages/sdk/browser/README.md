@@ -1,12 +1,3 @@
-<p align="center">
-  <a href="https://c15t.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=%40inth%2Fsdk-browser" target="_blank" rel="noopener noreferrer">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="../docs/assets/c15t-banner-readme-dark.png">
-      <img src="../docs/assets/c15t-banner-readme-light.png" alt="c15t: the open standard for cookie banners">
-    </picture>
-  </a>
-</p>
-
 # @inth/sdk-browser: Cookie banner and cookie consent for any website, with one script tag
 
 <p>
@@ -19,54 +10,52 @@
 
 Cookie banner, preference center, and consent-gated scripts for sites without a build step: Webflow, WordPress, Framer, Squarespace, and plain HTML. Configure consent policies for GDPR and other privacy laws, then paste one script tag. Bundled apps can import the same runtime as an ES module.
 
-c15t is used by [2,100+ sites](https://www.wappalyzer.com/technologies/cookie-compliance/c15t/), including expo.dev, zed.dev, unkey.dev, mintlify.com, and sazabi.com.
-
 ## Key Features
 
-- One script tag from a CDN, configured with data attributes or calls queued on `window.c15t`
+- One script tag from a CDN, configured with data attributes or calls queued on `window.inth`
 - Prebuilt banner and preference dialog in a shadow root, so your site's CSS does not change them
-- Vendor scripts use `<script type="text/plain" data-c15t-category>` and iframes use `data-src` and `data-category`. They load when the resolved policy allows their categories
-- Buttons with `data-c15t-action` and links to `#c15t-preferences` work without code
-- A headless build with the same runtime and `window.c15t` API, for your own banner
-- DevTools (`c15t.devtools.js`) and IAB GPP (`c15t.gpp.js`) load as a second tag. For IAB TCF 2.4, load `c15t.iab.js` instead of `c15t.js`
+- Vendor scripts use `<script type="text/plain" data-inth-category>` and iframes use `data-src` and `data-category`. They load when the resolved policy allows their categories
+- Buttons with `data-inth-action` and links to `#inth-preferences` work without code
+- A headless build with the same runtime and `window.inth` API, for your own banner
+- DevTools (`inth.devtools.js`) and IAB GPP (`inth.gpp.js`) load as a second tag. For IAB TCF 2.4, load `inth.iab.js` instead of `inth.js`
 - ES module entry points for bundled apps, which can use the @inth/integrations vendor loaders
 
 ## Prerequisites
 
 - A page where you can add a `<script>` tag
-- An [Inth project](https://inth.com) (free sign-up), a [self-hosted backend](https://c15t.com/docs/self-host/quickstart), or local mode for development and tests
+- An [Inth project](https://inth.com) (free sign-up), a [self-hosted backend](https://c15t.com/docs/self-host/quickstart), or `inth.testing.js` on test pages
 
 ## Installation
 
-Paste before `</head>`, with the backend URL from your Inth project:
+Paste before `</head>`, with the project URL from your Inth project:
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/@inth/sdk-browser/dist/c15t.js"
-  data-project-url="YOUR_INTH_BACKEND_URL"
+  src="https://cdn.jsdelivr.net/npm/@inth/sdk/lib/browser/dist/inth.js"
+  data-project-url="YOUR_INTH_PROJECT_URL"
   defer
 ></script>
 ```
 
-A URL without a version loads the newest release, so pin an exact version, such as `@inth/sdk-browser@3.2.0`, in production. The default `c15t.js` requires a backend URL. Load `dist/c15t.local.js` for local mode or `dist/c15t.headless.js` for the runtime without any UI.
+A URL without a version loads the newest release, so pin an exact version, such as `@inth/sdk@3.2.0`, in production. The default `inth.js` requires a project URL. Load `lib/browser/dist/inth.testing.js` on test pages with no backend, or `lib/browser/dist/inth.headless.js` for the runtime without any UI.
 
 For bundled apps:
 
 ```bash
-npm install @inth/sdk-browser
+npm install @inth/sdk
 ```
 
 ## Usage
 
 1. Add the tag and reload. The banner appears when the visitor's policy asks for one
-2. Change vendor tags to `type="text/plain"` with `data-c15t-category="measurement"` so they load when the resolved policy allows that category
-3. Link to `#c15t-preferences` so visitors can reopen the preference dialog
+2. Change vendor tags to `type="text/plain"` with `data-inth-category="measurement"` so they load when the resolved policy allows that category
+3. Link to `#inth-preferences` so visitors can reopen the preference dialog
 4. For every attribute and method, see the [HTML docs](https://c15t.com/docs/frameworks/html/attributes-and-api)
 
 ```js
-window.c15t = window.c15t || [];
-c15t.push(['on', 'consent', () => {
-  if (c15t.has('measurement')) {
+window.inth = window.inth || [];
+inth.push(['on', 'consent', () => {
+  if (inth.has('measurement')) {
     startAnalytics();
   }
 }]);
@@ -74,7 +63,7 @@ c15t.push(['on', 'consent', () => {
 
 ## Hosting
 
-c15t needs somewhere to keep policies and consent records. Pick one:
+Inth needs somewhere to keep policies and consent records. Pick one:
 
 - **Hosted on [Inth](https://inth.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=%40inth%2Fsdk-browser)**: Inth runs the backend for you. You get policy storage, consent records, audit history, and a dashboard, with no database or server to run. Sign-up is free.
 - **Self-hosted**: Run [`@c15t/backend`](https://www.npmjs.com/package/@c15t/backend) on your own server with PostgreSQL, MySQL, or SQLite. You own migrations, backups, and uptime. See the [self-hosting guide](https://c15t.com/docs/self-host/quickstart).
@@ -90,18 +79,18 @@ See the [documentation](https://c15t.com/docs/frameworks/html/quickstart) for gu
 
 | File | Use it for |
 | --- | --- |
-| `c15t.js` | Inth or a self-hosted backend. Set `data-project-url`. A self-hosted backend also serves a preconfigured script at `/c15t.js` |
-| `c15t.local.js` | Local mode, for development and tests: choices stay in the browser, with local policy rules, and c15t keeps no server-side record of consent. Before 3.2.0 this file was `c15t.offline.js` |
-| `c15t.headless.js` | The runtime without UI, for your own banner. Can inline or fetch the backend's cacheable `/manifest` |
-| `c15t.iab.js` | IAB TCF 2.4. Configure `iab` with your registered CMP ID and vendor list. See the [IAB example](https://c15t.com/docs/frameworks/html/iab) |
-| `c15t.devtools.js` | A DevTools panel, with a Location tab to try policies by region |
-| `c15t.gpp.js` | IAB GPP (`__gpp`) for US state opt-outs. Also available as `mountGPP` from `@inth/sdk-browser/gpp` |
+| `inth.js` | Inth or a self-hosted backend. Set `data-project-url`. A self-hosted backend also serves a preconfigured script at `/inth.js` |
+| `inth.testing.js` | Test pages only: the stock UI with `testing()`, which resolves a policy in the browser with no backend |
+| `inth.headless.js` | The runtime without UI, for your own banner. Can inline or fetch the backend's cacheable `/manifest` |
+| `inth.iab.js` | IAB TCF 2.4. Configure `iab` with your registered CMP ID and vendor list. See the [IAB example](https://c15t.com/docs/frameworks/html/iab) |
+| `inth.devtools.js` | A DevTools panel, with a Location tab to try policies by region |
+| `inth.gpp.js` | IAB GPP (`__gpp`) for US state opt-outs. Also available as `mountGPP` from `@inth/sdk/gpp` |
 
 ## Docs for AI Agents
 
 This package ships its documentation as Markdown, matched to the installed version. After you install it, point your coding agent at `node_modules/@inth/sdk-browser/AGENTS.md`. It indexes every guide in `node_modules/@inth/sdk-browser/docs/`.
 
-On the web, every page of the [c15t docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the c15t agent skills with `npx skills add c15t/skills`.
+On the web, every page of the [Inth docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the c15t agent skills with `npx skills add c15t/skills`.
 
 ## Support
 

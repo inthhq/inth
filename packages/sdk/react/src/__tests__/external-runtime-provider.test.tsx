@@ -22,7 +22,7 @@ const createRuntime = function createRuntime(
 			'marketing',
 		],
 		mode: testing(),
-		pkg: '@c15t/react-external-test',
+		pkg: '@inth/react-external-test',
 		prefetch: policyFixture({ measurement: false }),
 	});
 };
@@ -140,7 +140,7 @@ describe('ConsentProvider with an external runtime', () => {
 		expect(localStorage.getItem('analytics:visitor')).toBe('owner');
 		localStorage.removeItem('analytics:visitor');
 		expect(
-			(window as Window & { c15t?: { pkg: string } }).c15t
+			(window as Window & { __inthDebug?: { pkg: string } }).__inthDebug
 		).toBeUndefined();
 	});
 

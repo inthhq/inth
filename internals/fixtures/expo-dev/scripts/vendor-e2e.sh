@@ -4,7 +4,7 @@
 #
 #   scripts/vendor-e2e.sh ios|android
 #
-# C15T_EXPO_CELL=expo-55|expo-56|expo-57 builds a packed consumer at that cell's pinned
+# INTH_EXPO_CELL=expo-55|expo-56|expo-57 builds a packed consumer at that cell's pinned
 # Expo, React Native and React (scripts/mobile-compatibility.json), outside the
 # checkout. Unset, it builds this fixture in place at its committed versions.
 # The backend, capture server and Firebase log check are the bare fixture's.
@@ -14,10 +14,10 @@ REPO_ROOT="$(cd "${APP_DIR}/../../.." && pwd)"
 BARE_DIR="${REPO_ROOT}/internals/fixtures/react-native-bare"
 PLATFORM="${1:?Usage: vendor-e2e.sh ios|android}"
 [[ "${PLATFORM}" == ios || "${PLATFORM}" == android ]] || { echo "Unknown platform: ${PLATFORM}" >&2; exit 2; }
-CELL="${C15T_EXPO_CELL:-}"
+CELL="${INTH_EXPO_CELL:-}"
 LABEL="${CELL:-fixture}"
 RUN_ID="$(date +%Y%m%d-%H%M%S)-$$"
-OUT="${C15T_APP_E2E_OUT:-${APP_DIR}/.artifacts/vendor-e2e/${LABEL}-${PLATFORM}-${RUN_ID}}"
+OUT="${INTH_APP_E2E_OUT:-${APP_DIR}/.artifacts/vendor-e2e/${LABEL}-${PLATFORM}-${RUN_ID}}"
 mkdir -p "${OUT}"
 OUT="$(cd "${OUT}" && pwd)"
 [[ ! -e "${OUT}/backend-ready" && ! -e "${OUT}/result.json" ]] || { echo "Use a fresh evidence directory: ${OUT}" >&2; exit 2; }
@@ -25,7 +25,7 @@ OUT="$(cd "${OUT}" && pwd)"
 TASK_TMP="$(mktemp -d /tmp/inth-expo-e2e.XXXXXX)"
 export TMPDIR="${TASK_TMP}/"
 printf '%s\n' "${LABEL}" > "${OUT}/cell.txt"
-BACKEND_PORT="${C15T_APP_E2E_PORT:-39875}"
+BACKEND_PORT="${INTH_APP_E2E_PORT:-39875}"
 BACKEND_PID=""; VIDEO_PID=""; LOG_PID=""; FIREBASE_LOG_PID=""; DEVICE=""; EMULATOR_PID=""; AVD_NAME=""; CONSUMER=""
 
 cleanup() {
@@ -82,7 +82,7 @@ PYVIDEO
     python3 "${BARE_DIR}/scripts/verify-vendor-firebase.py" "${OUT}" "${PLATFORM}" > "${OUT}/vendor-firebase-verification.log" 2>&1 || result=1
   fi
   python3 "${APP_DIR}/scripts/vendor-e2e-result.py" "${OUT}" "${PLATFORM}" "${result}" || result=1
-  if [[ -n "${CONSUMER}" && "${C15T_KEEP_CONSUMER:-0}" != 1 ]]; then
+  if [[ -n "${CONSUMER}" && "${INTH_KEEP_CONSUMER:-0}" != 1 ]]; then
     rm -rf "$(dirname "${CONSUMER}")"
   fi
   rm -rf "${TASK_TMP}"
@@ -207,18 +207,18 @@ else
   MIXPANEL_URL="${APP_URL}"
 fi
 mkdir -p "${OUT}/policy-assets"
-C15T_E2E_BINDING="${APP_URL}" C15T_E2E_FETCH="http://localhost:${BACKEND_PORT}" \
+INTH_E2E_BINDING="${APP_URL}" INTH_E2E_FETCH="http://localhost:${BACKEND_PORT}" \
   bunx tsx scripts/export-mobile-e2e-policy.ts "${OUT}/policy-assets/inth-policy.json"
 
-export CI=1 EXPO_NO_TELEMETRY=1 SENTRY_DISABLE_AUTO_UPLOAD=true C15T_LOCAL_PODS=false
-export EXPO_PUBLIC_C15T_APP_E2E=1 EXPO_PUBLIC_C15T_FAKE_NATIVE=false
-export EXPO_PUBLIC_C15T_BACKEND_URL="${APP_URL}/api/self-host"
-export EXPO_PUBLIC_C15T_E2E_URL="${APP_URL}" EXPO_PUBLIC_C15T_E2E_MIXPANEL_URL="${MIXPANEL_URL}"
-export C15T_E2E_POLICY="${OUT}/policy-assets/inth-policy.json"
+export CI=1 EXPO_NO_TELEMETRY=1 SENTRY_DISABLE_AUTO_UPLOAD=true INTH_LOCAL_PODS=false
+export EXPO_PUBLIC_INTH_APP_E2E=1 EXPO_PUBLIC_INTH_FAKE_NATIVE=false
+export EXPO_PUBLIC_INTH_PROJECT_URL="${APP_URL}/api/self-host"
+export EXPO_PUBLIC_INTH_E2E_URL="${APP_URL}" EXPO_PUBLIC_INTH_E2E_MIXPANEL_URL="${MIXPANEL_URL}"
+export INTH_E2E_POLICY="${OUT}/policy-assets/inth-policy.json"
 
 if [[ -n "${CELL}" ]]; then
   # A packed consumer at the cell's versions, outside the checkout.
-  CONSUMER="$(mktemp -d "${C15T_EXPO_CONSUMER_ROOT:-${HOME}}/inth-expo-${CELL}.XXXXXX")/app"
+  CONSUMER="$(mktemp -d "${INTH_EXPO_CONSUMER_ROOT:-${HOME}}/inth-expo-${CELL}.XXXXXX")/app"
   # pnpm, not `bun pm pack`: the workspace is a pnpm install, so only pnpm can
   # resolve the package's `workspace:` dependency versions.
   (cd "${REPO_ROOT}/packages/react-native" && pnpm --config.ignore-scripts=true pack --out "${OUT}/inth-react-native.tgz") > "${OUT}/pack.log" 2>&1
@@ -263,11 +263,11 @@ if [[ "${PLATFORM}" == ios ]]; then
   PICK=oldest
   if compgen -G "${APP}/ios/*/SceneDelegate.swift" > /dev/null; then PICK=newest; fi
   printf '%s\n' "${PICK}" > "${OUT}/runtime-pick.txt"
-  SIM_DEVICE="${C15T_IOS_DEVICE:-iPhone 17 Pro}"
+  SIM_DEVICE="${INTH_IOS_DEVICE:-iPhone 17 Pro}"
   # Only runtimes that can run the device (Xcode also ships device-specific ones) and
   # that the selected Xcode's simulator SDK supports: a runner can carry newer
   # runtimes than its pinned Xcode, as run-vendor-e2e.sh notes.
-  RUNTIME="${C15T_IOS_RUNTIME:-$(xcrun simctl list runtimes -j | PICK="${PICK}" SIM_DEVICE="${SIM_DEVICE}" \
+  RUNTIME="${INTH_IOS_RUNTIME:-$(xcrun simctl list runtimes -j | PICK="${PICK}" SIM_DEVICE="${SIM_DEVICE}" \
     SIM_SDK="$(xcrun --sdk iphonesimulator --show-sdk-version)" python3 -c 'import json,os,sys
 version=lambda text: tuple(int(part) for part in text.split(".")[:2])
 sdk=version(os.environ["SIM_SDK"])
@@ -283,7 +283,7 @@ print(ios[-1 if os.environ["PICK"] == "newest" else 0][1])')}"
   xcrun simctl boot "${DEVICE}"
   xcrun simctl bootstatus "${DEVICE}" -b > "${OUT}/boot.log" 2>&1
   xcrun simctl ui "${DEVICE}" appearance light
-  DERIVED="${C15T_APP_E2E_DERIVED:-${OUT}/derived}"
+  DERIVED="${INTH_APP_E2E_DERIVED:-${OUT}/derived}"
   # Keep the ad-hoc signature: an unsigned Simulator app cannot write the Keychain.
   xcodebuild build -workspace "${APP}/ios/inthExpoDev.xcworkspace" -scheme inthExpoDev \
     -configuration Release -destination "platform=iOS Simulator,id=${DEVICE}" \
@@ -320,7 +320,7 @@ def update(value):
     if 'TestBundlePath' in value:
       value['UITargetAppPath']=app
       value['UITargetAppBundleIdentifier']='com.inth.expodev'
-      value.setdefault('EnvironmentVariables',{})['C15T_E2E_URL']=url
+      value.setdefault('EnvironmentVariables',{})['INTH_E2E_URL']=url
     for child in list(value.values()): update(child)
   elif isinstance(value,list):
     for child in value: update(child)
@@ -342,9 +342,9 @@ else
   export ANDROID_HOME="${ANDROID_HOME:-${HOME}/Library/Android/sdk}"
   ADB="${ANDROID_HOME}/platform-tools/adb"
   AVDMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/avdmanager"
-  IMAGE="${C15T_ANDROID_IMAGE:-system-images;android-36;google_apis;arm64-v8a}"
-  ARCH="${C15T_ANDROID_ARCH:-arm64-v8a}"
-  export C15T_MAVEN_URL="file://${REPO_ROOT}/packages/android/build/maven-staging"
+  IMAGE="${INTH_ANDROID_IMAGE:-system-images;android-36;google_apis;arm64-v8a}"
+  ARCH="${INTH_ANDROID_ARCH:-arm64-v8a}"
+  export INTH_MAVEN_URL="file://${REPO_ROOT}/packages/android/build/maven-staging"
   sh "${REPO_ROOT}/packages/android/gradlew" -p "${REPO_ROOT}/packages/android" --max-workers=4 \
     :inth-core:publishAllPublicationsToStagingRepository :inth-android:publishAllPublicationsToStagingRepository :inth-consent-ui:publishAllPublicationsToStagingRepository > "${OUT}/native-artifacts.log" 2>&1
   (cd "${APP}" && bun x expo prebuild --platform android --clean --no-install) > "${OUT}/prebuild.log" 2>&1

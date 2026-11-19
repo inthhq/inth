@@ -5,7 +5,7 @@ group: frameworks
 ---
 
 `ConsentManager` is the consent state of the application, as signals, and the
-methods that change it. `provideC15t()` provides it. Inject it in any
+methods that change it. `provideInth()` provides it. Inject it in any
 component, directive or service:
 
 <include src="../../shared/examples/angular/consent-status.mdx" />
@@ -37,17 +37,17 @@ actually chose, never `has()`.
 
 | Member | Value |
 | --- | --- |
-| `hasPolicy()` | Whether a policy rule is resolved for this visitor. Every c15t component renders nothing until it is. |
+| `hasPolicy()` | Whether a policy rule is resolved for this visitor. Every Inth component renders nothing until it is. |
 | `policyPending()` | Whether a policy is still being resolved. |
 | `policyRule()` | The resolved rule: `model`, `prompt`, `rights`, scope and more. |
 | `model()` | `'iab'` under an IAB policy, else the rule's model: `opt-in`, `opt-out` or `none`. |
 | `hasConsentUi()` | Whether the rule owes any consent UI. |
-| `hasConsentPreferences()` | Whether c15t or an external CMP offers a way back to preferences. `c15tConsentDialogLink` hides its host while this is `false`. |
+| `hasConsentPreferences()` | Whether Inth or an external CMP offers a way back to preferences. `inthConsentDialogLink` hides its host while this is `false`. |
 | `activeUI()` | `'banner'`, `'dialog'` or `'none'`. |
 | `location()`, `resolution()` | The visitor's resolved location, and how the policy was resolved. |
 | `consentCategories()`, `consentTypes()` | The categories the preference UI shows, and their metadata. |
 | `presentation()`, `theme()`, `experiment()` | The configured presentation and theme, with the assigned experiment arm merged in. |
-| `translations()`, `translationConfig()` | The resolved copy in the active language, and the full configuration the components read. |
+| `copy()`, `translations()` | The copy the components render, with English filling every key the active language leaves out, and the active language's translations as the backend sent them. |
 | `legalLinks()` | The provider's `legalLinks`. |
 | `options()` | The provider's options, as changed by `updateOptions()`. |
 | `snapshot()` | The whole kernel snapshot. Each field above is a slice of it. |
@@ -67,7 +67,7 @@ The other snapshot fields are signals too: `restrictions()`,
 | `setActiveUI(ui)` | Opens `'banner'` or `'dialog'`, or closes with `'none'`. |
 | `setLanguage(code)` | Switches the copy and resolves the policy again. See [translations](./translations). |
 | `clearRecords()` | Clears receipts, identity and stored records, for tests and dev tools. |
-| `updateOptions(patch)` | Changes provider options after bootstrap. See [provideC15t](./provide-c15t#change-options-after-bootstrap). |
+| `updateOptions(patch)` | Changes provider options after bootstrap. See [provideInth](./provide-inth#change-options-after-bootstrap). |
 
 `saveConsents()` closes the surface in the same task once the kernel has
 recorded the choice. The backend request runs after. A failed request is
@@ -76,7 +76,7 @@ save fails, so `await` it and handle the error where you show your own UI.
 
 ## Work with the draft
 
-The preference dialog, `<c15t-consent-widget>` and your own preference UI
+The preference dialog, `<inth-consent-widget>` and your own preference UI
 stage changes on one draft before saving:
 
 | Member | Value or effect |
@@ -102,7 +102,7 @@ example.
 ## Read and change IAB TCF consent
 
 `iab()` is the live IAB state, or `null` when IAB is off. `iabUnavailable()`
-is `true` when the resolved policy needs IAB and `provideC15t()` has no
+is `true` when the resolved policy needs IAB and `provideInth()` has no
 `iab` option.
 
 | Member | Value or effect |
@@ -114,11 +114,12 @@ is `true` when the resolved policy needs IAB and `provideC15t()` has no
 | `nonIABVendors` | Custom vendors outside the IAB list. |
 | `acceptAll()`, `rejectAll()` | Stage every TCF signal on, or off. |
 | `setPurposeConsent(id, value)`, `setPurposeLegitimateInterest(id, value)` | Change one purpose. |
+| `setPurposeObjection(id, objected)` | Object to a purpose's legitimate interest, or withdraw the objection, for the purpose and every vendor using it on that basis. |
 | `setVendorConsent(id, value)`, `setVendorLegitimateInterest(id, value)` | Change one vendor. |
 | `setSpecialFeatureOptIn(id, value)` | Change one special feature. |
 | `setAdTechProviderConsent(id, value)` | Change one Google ad tech provider (Additional Consent). |
 | `save()` | Writes the TC String and records the choice. |
-| `preferenceCenterTab`, `setPreferenceCenterTab(tab)` | The tab `<c15t-iab-consent-dialog>` shows. |
+| `preferenceCenterTab`, `setPreferenceCenterTab(tab)` | The tab `<inth-iab-consent-dialog>` shows. |
 
 Until the TCF add-on finishes loading, the action methods queue and replay.
 `whenIABReady()` from `@inth/angular` resolves once it has loaded. See
@@ -146,8 +147,8 @@ from code outside Angular's reactivity.
 | `ConsentTheme` | The provider's `theme`, `noStyle`, `disableAnimation`, `scrollLock`, `trapFocus`, `colorScheme`, `legalLinks`, `preloadDialog`, `styles` and `nonce`, as signals. |
 | `injectEventDispatcher()` | Send analytics events to the provider's scripts. See [scripts](./scripts#send-your-own-analytics-events). |
 | `resolvePromptCopy`, `resolveActionLabels`, `resolvePreferenceControlLabels` | Banner copy and button labels in the active language. |
-| `getIABTranslations` | IAB copy with English fallbacks, for a custom IAB banner. |
-| `createConsentRuntime` | A runtime you own, for [sharing one](./provide-c15t#share-one-runtime). |
+| `resolveIABCopy` | IAB copy with English fallbacks, for a custom IAB banner: `resolveIABCopy(consent.copy())`. |
+| `createConsentRuntime` | A runtime you own, for [sharing one](./provide-inth#share-one-runtime). |
 
 ## Verify the state you read
 

@@ -1,6 +1,6 @@
 /**
  * A consent backend for the examples: `/manifest`, `/init`, `/subjects`
- * and the script-tag build at `/c15t.js`.
+ * and the script-tag build at `/inth.js`.
  *
  * The manifest comes from the measured checkout's own
  * `buildBrowserBenchManifest()`, so its schema and the example's runtime
@@ -38,7 +38,7 @@ interface PolicyFixturesModule {
 }
 
 /**
- * Set by the runner when it routes a hard-coded host here, so `/c15t.js`
+ * Set by the runner when it routes a hard-coded host here, so `/inth.js`
  * is configured for the origin the page asked for.
  */
 export const PUBLIC_ORIGIN_HEADER = 'x-examples-payload-origin';
@@ -50,7 +50,7 @@ export const PUBLIC_ORIGIN_HEADER = 'x-examples-payload-origin';
  */
 export const scriptPrelude = function scriptPrelude(projectUrl: string) {
 	const config = JSON.stringify({ mode: 'hosted', projectUrl });
-	return `(function(c){window.c15t=window.c15t||[];Array.isArray(window.c15t)?window.c15t.unshift(["config",c]):window.c15t.config(c)})(${config});\n`;
+	return `(function(c){window.inth=window.inth||[];Array.isArray(window.inth)?window.inth.unshift(["config",c]):window.inth.config(c)})(${config});\n`;
 };
 
 const readBody = async function readBody(
@@ -65,7 +65,7 @@ const readBody = async function readBody(
 
 /**
  * Cross-origin with credentials: echo the caller's origin and any
- * requested headers, because examples send c15t's protocol headers.
+ * requested headers, because examples send Inth's protocol headers.
  */
 const corsHeaders = function corsHeaders(
 	request: IncomingMessage
@@ -143,7 +143,7 @@ export const startFixtureBackend = async function startFixtureBackend(
 		const projectUrl =
 			request.headers[PUBLIC_ORIGIN_HEADER] ?? `http://${request.headers.host}`;
 		response.end(
-			path === '/c15t.js'
+			path === '/inth.js'
 				? `${scriptPrelude(String(projectUrl))}${readFileSync(file, 'utf8')}`
 				: readFileSync(file)
 		);

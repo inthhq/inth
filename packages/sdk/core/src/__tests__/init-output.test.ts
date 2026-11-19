@@ -5,6 +5,7 @@
 import { enTranslations } from '@inth/sdk-translations';
 import { describe, expect, test } from 'vitest';
 
+import { buildInitialSnapshot } from '../kernel/snapshot';
 import {
 	initOutputToKernelConfig,
 	kernelConfigToInitResponse,
@@ -93,17 +94,18 @@ describe('mergeInitResponseIntoKernelConfig', () => {
 		expect(merged).not.toHaveProperty('initialHasConsented');
 	});
 
-	test("branding 'none' is filtered — KernelBranding has no 'none'", () => {
-		const merged = mergeInitResponseIntoKernelConfig(
-			{},
-			// oxlint-disable-next-line typescript/no-explicit-any -- backend can send 'none'
-			{ branding: 'none' as any }
-		);
-		expect(merged.initialBranding).toBeUndefined();
+	test("branding 'none' reaches the snapshot, so stock UI can hide its tag", () => {
+		const merged = mergeInitResponseIntoKernelConfig({}, { branding: 'none' });
+		expect(merged.initialBranding).toBe('none');
+		expect(buildInitialSnapshot(merged).branding).toBe('none');
 		expect(
-			mergeInitResponseIntoKernelConfig({}, { branding: 'c15t' })
+			mergeInitResponseIntoKernelConfig({}, { branding: 'inth' })
 				.initialBranding
-		).toBe('c15t');
+		).toBe('inth');
+	});
+
+	test('a snapshot no init has answered carries the inth branding', () => {
+		expect(buildInitialSnapshot({}).branding).toBe('inth');
 	});
 
 	test('hosting survives a prefetch round trip', () => {
@@ -187,7 +189,7 @@ describe('mergeInitResponseIntoKernelConfig', () => {
 	test('initOutputToKernelConfig wraps the full pipeline', () => {
 		const config = initOutputToKernelConfig(
 			{
-				branding: 'c15t',
+				branding: 'inth',
 				location: { countryCode: 'DE', regionCode: null },
 				// oxlint-disable-next-line typescript/no-explicit-any -- minimal policy fixture
 				policyResolution: POLICY,
@@ -206,7 +208,7 @@ describe('mergeInitResponseIntoKernelConfig', () => {
 			policyId: 'p1',
 			status: 'matched',
 		});
-		expect(config.initialBranding).toBe('c15t');
+		expect(config.initialBranding).toBe('inth');
 		// A producer that sent no `policyResolution` and declared no contract
 		// is a legacy producer: its policy is lifted on the server, once.
 		expect(config.initialPolicyResolution).toMatchObject({
@@ -233,7 +235,7 @@ describe('kernelConfigToInitResponse', () => {
 			const base: KernelConfig = { initialRecords: records };
 			const config: KernelConfig = {
 				...base,
-				initialBranding: 'c15t',
+				initialBranding: 'inth',
 				initialLocation: { countryCode: 'DE', regionCode: null },
 				initialOverrides: { country: 'DE', gpc: false, language: 'de' },
 				initialPolicyResolution,
@@ -279,7 +281,7 @@ test('server mapping accepts a reference without a redundant gvl field', () => {
 	const gvlReference = {
 		language: 'en',
 		summary: { items: ['Storage'], vendorCount: 2 },
-		url: '/api/c15t/init?c15t-gvl=1',
+		url: '/api/inth/init?inth-gvl=1',
 		vendorListVersion: 1,
 	};
 	const result = mergeInitResponseIntoKernelConfig({}, { gvlReference });

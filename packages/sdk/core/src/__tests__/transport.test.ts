@@ -9,14 +9,11 @@ import { createConsentManifestPolicyPack } from '@inth/sdk-schema/types';
 import type { ConsentManifest, InitOutput } from '@inth/sdk-schema/types';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import {
-	createHostedInitRequest,
-	createHostedTransport,
-	isConsentSaveRejection,
-} from '../index';
+import { createHostedTransport, isConsentSaveRejection } from '../index';
 import type { InitResponse, KernelConfig, KernelTransport } from '../index';
 import { createKernel } from '../kernel';
 import { createMemoryOutboxStore } from '../kernel/save-outbox';
+import { createHostedInitRequest } from '../transports/hosted-init-request';
 import { createManifestTransport } from '../transports/manifest';
 import { corsPreflightReasons } from './fixtures/cors-safelist';
 import {
@@ -51,10 +48,10 @@ const JOURNEY_UUID = '3b241101-e2bb-4255-8caf-4136c566a962';
 
 /** A request URL's query parameters. */
 const queryOf = (url: unknown): URLSearchParams =>
-	new URL(String(url), 'http://c15t.test').searchParams;
+	new URL(String(url), 'http://inth.test').searchParams;
 
 const REALISTIC_INIT_OUTPUT = {
-	branding: 'c15t',
+	branding: 'inth',
 	cmpId: 28,
 	customVendors: [
 		{
@@ -140,7 +137,7 @@ const REALISTIC_INIT_OUTPUT = {
 } satisfies InitOutput;
 
 const MANIFEST_FIXTURE = {
-	branding: 'c15t',
+	branding: 'inth',
 	cmpId: 28,
 	iab: {
 		customVendors: [
@@ -974,7 +971,7 @@ describe('hosted transport: save refusals', () => {
 			expect(isConsentSaveRejection(error)).toBe(true);
 			expect(error).toMatchObject({
 				code,
-				message: `c15t hosted transport: /subjects responded 402${said}`,
+				message: `inth hosted transport: /subjects responded 402${said}`,
 				reason,
 				status: 402,
 			});
@@ -1182,15 +1179,15 @@ describe('hosted init: CORS simple request', () => {
 		});
 		// The response is still read against the overrides as headers.
 		expect(request.requestHeaders).toMatchObject({
-			'x-c15t-country': 'US',
-			'x-c15t-gpc': '1',
-			'x-c15t-region': 'CA',
+			'x-inth-country': 'US',
+			'x-inth-gpc': '1',
+			'x-inth-region': 'CA',
 		});
 	});
 
 	test('replaces a parameter an app already put on initUrl', () => {
 		// The names are generic, so an app's own init route may use one. The
-		// value c15t sends wins and appears once; the app's own parameters
+		// value Inth sends wins and appears once; the app's own parameters
 		// stay.
 		const request = createHostedInitRequest({
 			initUrl: '/api/consent/init?country=US&site=shop&journey=stale',
@@ -1208,15 +1205,15 @@ describe('hosted init: CORS simple request', () => {
 
 	test('reads the response against a parameter initUrl keeps', () => {
 		// The backend resolves `?gpc=1` from the URL, so the response side must
-		// see it too. A value c15t sends still wins over the URL's.
+		// see it too. A value Inth sends still wins over the URL's.
 		const request = createHostedInitRequest({
 			initUrl: '/api/consent/init?gpc=1&country=US',
 			overrides: { country: 'GB' },
 			projectUrl: 'https://backend.example',
 		});
 		expect(request.requestHeaders).toMatchObject({
-			'x-c15t-country': 'GB',
-			'x-c15t-gpc': '1',
+			'x-inth-country': 'GB',
+			'x-inth-gpc': '1',
 		});
 	});
 
@@ -1291,7 +1288,7 @@ describe('createHostedTransport: request shape', () => {
 		);
 		const transport = createHostedTransport({
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
-			projectUrl: 'https://api.example.com/c15t/',
+			projectUrl: 'https://api.example.com/inth/',
 		});
 
 		const response = await transport.init?.({
@@ -1303,7 +1300,7 @@ describe('createHostedTransport: request shape', () => {
 		expect(fetchSpy).toHaveBeenCalledTimes(1);
 		const [url, init] = fetchSpy.mock.calls[0] ?? [];
 		// Trailing slash on projectUrl is stripped.
-		expect(withoutQuery(url)).toBe('https://api.example.com/c15t/init');
+		expect(withoutQuery(url)).toBe('https://api.example.com/inth/init');
 		expect(queryOf(url).get('country')).toBe('DE');
 		expect((init as RequestInit).method).toBe('GET');
 		expect((init as RequestInit).body).toBeUndefined();
@@ -1317,7 +1314,7 @@ describe('createHostedTransport: request shape', () => {
 			);
 		const transport = createHostedTransport({
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 
 		await transport.identify?.(
@@ -1331,7 +1328,7 @@ describe('createHostedTransport: request shape', () => {
 		);
 
 		expect(fetchSpy).toHaveBeenCalledWith(
-			'/api/c15t/subjects/subject%2F42',
+			'/api/inth/subjects/subject%2F42',
 			expect.objectContaining({ method: 'PATCH' })
 		);
 		const [, init] = fetchSpy.mock.calls[0] ?? [];
@@ -1351,7 +1348,7 @@ describe('createHostedTransport: request shape', () => {
 		);
 		const transport = createHostedTransport({
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 		const user = {
 			externalId: 'user-42',
@@ -1387,7 +1384,7 @@ describe('createHostedTransport: request shape', () => {
 		});
 		expect(fetchSpy).toHaveBeenCalledTimes(1);
 		const [url, init] = fetchSpy.mock.calls[0] ?? [];
-		expect(url).toBe('/api/c15t/subjects');
+		expect(url).toBe('/api/inth/subjects');
 		expect(JSON.parse((init as RequestInit).body as string)).toMatchObject({
 			externalSubjectId: 'user-42',
 			identityProvider: 'clerk',
@@ -1403,7 +1400,7 @@ describe('createHostedTransport: request shape', () => {
 		);
 		const transport = createHostedTransport({
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 
 		await transport.save({
@@ -1435,7 +1432,7 @@ describe('createHostedTransport: request shape', () => {
 		expect(fetchSpy).toHaveBeenCalledTimes(2);
 		const [, patchCall] = fetchSpy.mock.calls;
 		const [patchUrl, patchInit] = patchCall ?? [];
-		expect(patchUrl).toBe('/api/c15t/subjects/sub-created');
+		expect(patchUrl).toBe('/api/inth/subjects/sub-created');
 		expect((patchInit as RequestInit).method).toBe('PATCH');
 	});
 
@@ -1526,7 +1523,7 @@ describe('createHostedTransport: request shape', () => {
 		}
 	);
 
-	// An ID c15t generated that no record carries is gone on the next page
+	// An ID Inth generated that no record carries is gone on the next page
 	// load. Linking it would leave the backend a subject per page view.
 	test('a provisional ID is not linked; the identity goes with the first save', async () => {
 		const fetchSpy = vi.fn((_url: unknown, _init?: RequestInit) =>
@@ -1575,8 +1572,8 @@ describe('createHostedTransport: request shape', () => {
 			);
 		const transport = createHostedTransport({
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
-			initUrl: '/api/c15t/init',
-			projectUrl: 'https://api.example.com/c15t',
+			initUrl: '/api/inth/init',
+			projectUrl: 'https://api.example.com/inth',
 		});
 
 		await transport.init?.({ overrides: {}, user: null });
@@ -1601,8 +1598,8 @@ describe('createHostedTransport: request shape', () => {
 		});
 
 		expect(fetchSpy.mock.calls.map(([url]) => withoutQuery(url))).toEqual([
-			'/api/c15t/init',
-			'https://api.example.com/c15t/subjects',
+			'/api/inth/init',
+			'https://api.example.com/inth/subjects',
 		]);
 	});
 
@@ -1615,7 +1612,7 @@ describe('createHostedTransport: request shape', () => {
 		);
 		const transport = createHostedTransport({
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 
 		const values = {
@@ -1653,7 +1650,7 @@ describe('createHostedTransport: request shape', () => {
 
 		expect(result?.subjectId).toBe('sub-1');
 		const [url, init] = fetchSpy.mock.calls[0] ?? [];
-		expect(url).toBe('/api/c15t/subjects');
+		expect(url).toBe('/api/inth/subjects');
 		const body = JSON.parse((init as RequestInit).body as string);
 		expect(body).toMatchObject({
 			consentAction: 'all',
@@ -1689,7 +1686,7 @@ describe('createHostedTransport: request shape', () => {
 			);
 		const transport = createHostedTransport({
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 
 		await transport.save?.({
@@ -1732,7 +1729,7 @@ describe('createHostedTransport: request shape', () => {
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
 			headers: { 'sec-gpc': '1' },
 			initUrl: '/internal/consent/init',
-			projectUrl: 'https://api.example.com/c15t',
+			projectUrl: 'https://api.example.com/inth',
 		});
 
 		await transport.init?.({ overrides: {}, user: null });
@@ -1758,7 +1755,7 @@ describe('createHostedTransport: request shape', () => {
 
 		expect(fetchSpy.mock.calls.map(([url]) => withoutQuery(url))).toEqual([
 			'/internal/consent/init',
-			'https://api.example.com/c15t/subjects',
+			'https://api.example.com/inth/subjects',
 		]);
 		const [, saveInit] = fetchSpy.mock.calls[1] ?? [];
 		expect(JSON.parse((saveInit as RequestInit).body as string)).toMatchObject({
@@ -1793,7 +1790,7 @@ describe('createHostedTransport: request shape', () => {
 				assertDecisionInputs: true,
 				fetch: fetchSpy as unknown as typeof globalThis.fetch,
 				headers,
-				projectUrl: '/api/c15t',
+				projectUrl: '/api/inth',
 			});
 
 			await transport.init?.({ overrides: {}, user: null });
@@ -1834,15 +1831,15 @@ describe('createHostedTransport: request shape', () => {
 		const transport = createHostedTransport({
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
 			headers: {
-				'X-C15T-Region': 'BE',
+				'X-INTH-Region': 'BE',
 				'accept-language': 'de-DE,de;q=0.9',
 				authorization: 'Bearer t',
 				cookie: 'session=secret',
 				'sec-gpc': '1',
-				'x-c15t-country': 'DE',
 				'x-forwarded-for': '203.0.113.1',
+				'x-inth-country': 'DE',
 			},
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 
 		await transport.init?.({ overrides: {}, user: null });
@@ -1853,8 +1850,8 @@ describe('createHostedTransport: request shape', () => {
 			accept: 'application/json',
 			'accept-language': 'de-DE,de;q=0.9',
 			'sec-gpc': '1',
-			'x-c15t-country': 'DE',
-			'x-c15t-region': 'BE',
+			'x-inth-country': 'DE',
+			'x-inth-region': 'BE',
 		});
 	});
 
@@ -1868,13 +1865,13 @@ describe('createHostedTransport: request shape', () => {
 		const transport = createHostedTransport({
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
 			headers: { 'sec-gpc': '1' },
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 
 		const response = await transport.init?.({ overrides: {}, user: null });
 
 		expect(response).toMatchObject({
-			branding: 'c15t',
+			branding: 'inth',
 			cmpId: 28,
 			customVendors: [{ id: 'internal-analytics' }],
 			gvl: { vendorListVersion: 42 },
@@ -1910,7 +1907,7 @@ describe('createHostedTransport: request shape', () => {
 			);
 		const transport = createHostedTransport({
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 
 		const response = await transport.init?.({ overrides: {}, user: null });
@@ -1926,7 +1923,7 @@ describe('createHostedTransport: request shape', () => {
 			);
 		const transport = createHostedTransport({
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 
 		await expect(
@@ -1966,7 +1963,7 @@ describe('createHostedTransport: request shape', () => {
 		expect(failures[0]?.error).toMatchObject({
 			code: 'CONSENT_SESSIONS_EXHAUSTED',
 			message:
-				'c15t hosted transport: /init responded 402: This project is out of consent sessions. (CONSENT_SESSIONS_EXHAUSTED)',
+				'inth hosted transport: /init responded 402: This project is out of consent sessions. (CONSENT_SESSIONS_EXHAUSTED)',
 			status: 402,
 		});
 		expect(warn).toHaveBeenCalledWith(
@@ -1986,7 +1983,7 @@ describe('createManifestTransport: local init resolution', () => {
 				deferGvl,
 				fetchGvl,
 				inputs: { country: 'DE', region: 'BE' },
-				projectUrl: 'https://api.example.com/c15t',
+				projectUrl: 'https://api.example.com/inth',
 				snapshot: MANIFEST_FIXTURE,
 			});
 			const response = await transport.init?.({ overrides: {}, user: null });
@@ -2001,14 +1998,14 @@ describe('createManifestTransport: local init resolution', () => {
 		const transport = createManifestTransport({
 			fetch: vi.fn() as unknown as typeof globalThis.fetch,
 			fetchGvl,
-			gvlRoute: '/api/c15t/init',
+			gvlRoute: '/api/inth/init',
 			inputs: {
 				country: 'DE',
 				gpc: true,
 				language: 'de-DE,de;q=0.9',
 				region: 'BE',
 			},
-			projectUrl: 'https://api.example.com/c15t',
+			projectUrl: 'https://api.example.com/inth',
 			snapshot: MANIFEST_FIXTURE,
 		});
 
@@ -2020,7 +2017,7 @@ describe('createManifestTransport: local init resolution', () => {
 			gvl: null,
 			gvlReference: {
 				language: 'de',
-				url: '/api/c15t/init?c15t-gvl=42&language=de',
+				url: '/api/inth/init?inth-gvl=42&language=de',
 				vendorListVersion: 42,
 			},
 			policyResolution: {
@@ -2053,7 +2050,7 @@ describe('createManifestTransport: local init resolution', () => {
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
 			fetchGvl: vi.fn().mockResolvedValue(REALISTIC_INIT_OUTPUT.gvl),
 			inputs: { country: 'DE', language: 'de', region: 'BE' },
-			projectUrl: 'https://api.example.com/c15t',
+			projectUrl: 'https://api.example.com/inth',
 			snapshot: {
 				...MANIFEST_FIXTURE,
 				iab: {
@@ -2080,13 +2077,13 @@ describe('createManifestTransport: local init resolution', () => {
 	test.each([
 		[
 			'the backend',
-			'https://api.example.com/c15t',
+			'https://api.example.com/inth',
 			'/api/additional-consent',
 			'https://api.example.com/api/additional-consent?providerIds=89',
 		],
 		[
 			'nothing absolute',
-			'/api/c15t',
+			'/api/inth',
 			'/api/additional-consent-local',
 			'/api/additional-consent-local?providerIds=89',
 		],
@@ -2125,7 +2122,7 @@ describe('createManifestTransport: local init resolution', () => {
 				fetch,
 				fetchGvl: vi.fn().mockResolvedValue(REALISTIC_INIT_OUTPUT.gvl),
 				inputs: { country: 'DE', language: 'de', region: 'BE' },
-				projectUrl: 'https://api.example.com/c15t',
+				projectUrl: 'https://api.example.com/inth',
 				snapshot,
 			}).init?.({ overrides: {}, user: null });
 
@@ -2178,7 +2175,7 @@ describe('createManifestTransport: local init resolution', () => {
 				language: 'de',
 				region: 'BE',
 			},
-			manifestUrl: 'https://api.example.com/c15t/manifest',
+			manifestUrl: 'https://api.example.com/inth/manifest',
 		});
 
 		await transport.init?.({ overrides: {}, user: null });
@@ -2215,11 +2212,11 @@ describe('createManifestTransport: local init resolution', () => {
 		expect(result).toEqual({ ok: true, subjectId: 'sub-1' });
 		expect(fetchSpy).toHaveBeenNthCalledWith(
 			1,
-			'https://api.example.com/c15t/manifest',
+			'https://api.example.com/inth/manifest',
 			expect.objectContaining({ method: 'GET' })
 		);
 		const [subjectsUrl, subjectsInit] = fetchSpy.mock.calls[1] ?? [];
-		expect(subjectsUrl).toBe('https://api.example.com/c15t/subjects');
+		expect(subjectsUrl).toBe('https://api.example.com/inth/subjects');
 		const body = JSON.parse((subjectsInit as RequestInit).body as string);
 		expect(body).toMatchObject({
 			country: 'DE',
@@ -2258,7 +2255,7 @@ describe('createManifestTransport: local init resolution', () => {
 				language: 'de',
 				region: 'BE',
 			},
-			projectUrl: 'https://api.example.com/c15t',
+			projectUrl: 'https://api.example.com/inth',
 			snapshot: MANIFEST_FIXTURE,
 		});
 
@@ -2315,7 +2312,7 @@ describe('createManifestTransport: local init resolution', () => {
 				language: 'en',
 				region: null,
 			},
-			projectUrl: 'https://api.example.com/c15t',
+			projectUrl: 'https://api.example.com/inth',
 			snapshot: packlessManifest as never,
 		});
 
@@ -2381,12 +2378,12 @@ describe('experiment query parameter', () => {
 		const [url, init] = fetchSpy.mock.calls[0] ?? [];
 		// The header's `<id>=<arm>` value, URI-encoded parts, as a parameter.
 		expect(queryOf(url).get('experiment')).toBe('banner%20shape=wall');
-		expect(init?.headers).not.toHaveProperty('x-c15t-experiment');
+		expect(init?.headers).not.toHaveProperty('x-inth-experiment');
 		kernel.dispose();
 	});
 });
 
-describe('x-c15t-version header (issue #916)', () => {
+describe('x-inth-version header (issue #916)', () => {
 	test('hosted init and save carry the client version', async () => {
 		const fetchSpy = vi.fn(
 			// oxlint-disable-next-line require-await -- Match the asynchronous fetch contract.
@@ -2421,9 +2418,9 @@ describe('x-c15t-version header (issue #916)', () => {
 		// Init carries it in the query string, so it stays a simple request.
 		expect(queryOf(initUrl).get('v')).toMatch(/^\d+\.\d+\.\d+/u);
 		expect(queryOf(initUrl).get('contract')).toBe('1');
-		expect(init.headers).not.toHaveProperty('x-c15t-version');
+		expect(init.headers).not.toHaveProperty('x-inth-version');
 		const saveHeaders = saveInit.headers as Record<string, string>;
-		expect(saveHeaders['x-c15t-version']).toMatch(/^\d+\.\d+\.\d+/u);
+		expect(saveHeaders['x-inth-version']).toMatch(/^\d+\.\d+\.\d+/u);
 	});
 
 	test('manifest fetch and save both carry the client version', async () => {
@@ -2466,14 +2463,14 @@ describe('x-c15t-version header (issue #916)', () => {
 
 		const manifestHeaders = ((manifestCall?.[1] as RequestInit)?.headers ??
 			{}) as Record<string, string>;
-		// The manifest/GVL hosts are c15t/tenant-controlled (IAB requires
+		// The manifest/GVL hosts are inth/tenant-controlled (IAB requires
 		// self-hosting the GVL), so version telemetry rides here too.
-		expect(manifestHeaders['x-c15t-version']).toMatch(/^\d+\.\d+\.\d+/u);
+		expect(manifestHeaders['x-inth-version']).toMatch(/^\d+\.\d+\.\d+/u);
 
 		expect(saveCall?.[1]).toBeDefined();
 		const saveInit = saveCall?.[1] as RequestInit;
 		const saveHeaders = saveInit.headers as Record<string, string>;
-		expect(saveHeaders['x-c15t-version']).toMatch(/^\d+\.\d+\.\d+/u);
+		expect(saveHeaders['x-inth-version']).toMatch(/^\d+\.\d+\.\d+/u);
 	});
 });
 
@@ -2493,7 +2490,7 @@ describe('hosted transport: initialData', () => {
 			headers: { 'sec-gpc': '1' },
 			initUrl: '/internal/consent/init',
 			initialData: Promise.resolve({ init: REALISTIC_INIT_OUTPUT }),
-			projectUrl: 'https://api.example.com/c15t',
+			projectUrl: 'https://api.example.com/inth',
 		});
 
 		const first = await transport.init?.({ overrides: {}, user: null });
@@ -2522,7 +2519,7 @@ describe('hosted transport: initialData', () => {
 			user: null,
 		});
 		const [saveURL, saveInit] = fetchSpy.mock.calls[0] ?? [];
-		expect(saveURL).toBe('https://api.example.com/c15t/subjects');
+		expect(saveURL).toBe('https://api.example.com/inth/subjects');
 		expect(JSON.parse((saveInit as RequestInit).body as string)).toMatchObject({
 			country: 'DE',
 			fingerprint: REALISTIC_INIT_OUTPUT.policyResolution.fingerprints.policy,
@@ -2550,7 +2547,7 @@ describe('hosted transport: initialData', () => {
 			const transport = createHostedTransport({
 				fetch: fetchSpy as unknown as typeof globalThis.fetch,
 				initialData,
-				projectUrl: 'https://api.example.com/c15t',
+				projectUrl: 'https://api.example.com/inth',
 			});
 			// oxlint-disable-next-line no-await-in-loop -- sequential cases keep the failing input readable.
 			await transport.init?.({ overrides: {}, user: null });
@@ -2580,8 +2577,8 @@ describe('hosted transport: GPC in decision assertions', () => {
 		const transport = createHostedTransport({
 			assertDecisionInputs: true,
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
-			initUrl: '/api/c15t/init',
-			projectUrl: 'https://api.example.com/c15t',
+			initUrl: '/api/inth/init',
+			projectUrl: 'https://api.example.com/inth',
 		});
 
 		await transport.init?.({ overrides: {}, user: null });
@@ -2622,8 +2619,8 @@ describe('hosted transport: init context', () => {
 			);
 		const transport = createHostedTransport({
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
-			initUrl: '/api/c15t/init',
-			projectUrl: 'https://api.example.com/c15t',
+			initUrl: '/api/inth/init',
+			projectUrl: 'https://api.example.com/inth',
 		});
 
 		const result = await transport.init?.({
@@ -2665,7 +2662,7 @@ describe('hosted transport: decisionInputs seed', () => {
 			},
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
 			initUrl: '/internal/consent/init',
-			projectUrl: 'https://api.example.com/c15t',
+			projectUrl: 'https://api.example.com/inth',
 		});
 
 		await transport.save?.({
@@ -2711,7 +2708,7 @@ describe('hosted transport: decisionInputs seed', () => {
 				region: null,
 			},
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
-			projectUrl: 'https://api.example.com/c15t',
+			projectUrl: 'https://api.example.com/inth',
 		});
 		await transport.save?.({
 			choice: { categories: {}, version: 3 },
@@ -2755,7 +2752,7 @@ describe('hosted transport: save waits for an in-flight init', () => {
 			assertDecisionInputs: true,
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
 			initUrl: '/internal/consent/init',
-			projectUrl: 'https://api.example.com/c15t',
+			projectUrl: 'https://api.example.com/inth',
 		});
 
 		const initPromise = transport.init?.({ overrides: {}, user: null });
@@ -2853,7 +2850,7 @@ describe('hosted transport: assertion state across overlapping inits', () => {
 			assertDecisionInputs: true,
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
 			initUrl: '/internal/consent/init',
-			projectUrl: 'https://api.example.com/c15t',
+			projectUrl: 'https://api.example.com/inth',
 		});
 
 		const first = transport.init?.({
@@ -2894,7 +2891,7 @@ describe('hosted transport: assertion state across overlapping inits', () => {
 			assertDecisionInputs: true,
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
 			initUrl: '/internal/consent/init',
-			projectUrl: 'https://api.example.com/c15t',
+			projectUrl: 'https://api.example.com/inth',
 		});
 
 		const initPromise = transport.init?.({ overrides: {}, user: null });
@@ -2976,7 +2973,7 @@ describe('hosted transport: re-init with different inputs', () => {
 			assertDecisionInputs: true,
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
 			initUrl: '/internal/consent/init',
-			projectUrl: 'https://api.example.com/c15t',
+			projectUrl: 'https://api.example.com/inth',
 		});
 		const first = transport.init?.({
 			overrides: { country: 'DE' },
@@ -3006,7 +3003,7 @@ describe('hosted transport: re-init with different inputs', () => {
 			assertDecisionInputs: true,
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
 			initUrl: '/internal/consent/init',
-			projectUrl: 'https://api.example.com/c15t',
+			projectUrl: 'https://api.example.com/inth',
 		});
 		const first = transport.init?.({
 			overrides: { country: 'DE' },
@@ -3049,7 +3046,7 @@ describe('hosted transport: removing an override', () => {
 			assertDecisionInputs: true,
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
 			initUrl: '/internal/consent/init',
-			projectUrl: 'https://api.example.com/c15t',
+			projectUrl: 'https://api.example.com/inth',
 		});
 		await transport.init?.({ overrides: { country: 'DE' }, user: null });
 		const reinit = transport.init?.({ overrides: {}, user: null });
@@ -3119,7 +3116,7 @@ describe('consent journey query parameters', () => {
 		const fetchSpy = respond();
 		const transport = createHostedTransport({
 			fetch: fetchSpy as unknown as typeof fetch,
-			projectUrl: 'https://api.example.com/c15t',
+			projectUrl: 'https://api.example.com/inth',
 		});
 		await transport.init({
 			journey: { id: JOURNEY_ID, scope: 'tab', storedChoice: true },
@@ -3127,7 +3124,7 @@ describe('consent journey query parameters', () => {
 			user: null,
 		});
 		const url = new URL(String(fetchSpy.mock.calls[0]?.[0]));
-		expect(url.pathname).toBe('/c15t/init');
+		expect(url.pathname).toBe('/inth/init');
 		expect(Object.fromEntries(url.searchParams)).toEqual({
 			contract: '1',
 			journey: JOURNEY_ID,
@@ -3149,11 +3146,11 @@ describe('consent journey query parameters', () => {
 		const fetchSpy = respond();
 		const transport = createHostedTransport({
 			fetch: fetchSpy as unknown as typeof fetch,
-			projectUrl: 'https://api.example.com/c15t',
+			projectUrl: 'https://api.example.com/inth',
 		});
 		await transport.init({ overrides: {}, user: null });
 		const url = String(fetchSpy.mock.calls[0]?.[0]);
-		expect(withoutQuery(url)).toBe('https://api.example.com/c15t/init');
+		expect(withoutQuery(url)).toBe('https://api.example.com/inth/init');
 		expect([...queryOf(url).keys()]).toEqual(['v', 'contract']);
 	});
 
@@ -3162,7 +3159,7 @@ describe('consent journey query parameters', () => {
 		const transport = createHostedTransport({
 			fetch: fetchSpy as unknown as typeof fetch,
 			initUrl: '/api/consent/init?site=shop',
-			projectUrl: 'https://api.example.com/c15t',
+			projectUrl: 'https://api.example.com/inth',
 		});
 		await transport.init({
 			journey: { id: JOURNEY_ID, scope: 'page', storedChoice: false },
@@ -3181,7 +3178,7 @@ describe('consent journey query parameters', () => {
 		const fetchSpy = respond();
 		const transport = createHostedTransport({
 			fetch: fetchSpy as unknown as typeof fetch,
-			projectUrl: 'https://api.example.com/c15t',
+			projectUrl: 'https://api.example.com/inth',
 		});
 		await transport.save({
 			...savePayload,
@@ -3189,13 +3186,13 @@ describe('consent journey query parameters', () => {
 		});
 		const [url, init] = fetchSpy.mock.calls[0] ?? [];
 		expect(url).toBe(
-			`https://api.example.com/c15t/subjects?journey=${JOURNEY_ID}&journeyScope=page`
+			`https://api.example.com/inth/subjects?journey=${JOURNEY_ID}&journeyScope=page`
 		);
 		expect(String(init?.body)).not.toContain(JOURNEY_ID);
 
 		await transport.save(savePayload);
 		expect(fetchSpy.mock.calls[1]?.[0]).toBe(
-			'https://api.example.com/c15t/subjects'
+			'https://api.example.com/inth/subjects'
 		);
 	});
 
@@ -3203,7 +3200,7 @@ describe('consent journey query parameters', () => {
 		const fetchSpy = respond();
 		const transport = createManifestTransport({
 			fetch: fetchSpy as unknown as typeof fetch,
-			projectUrl: 'https://api.example.com/c15t',
+			projectUrl: 'https://api.example.com/inth',
 			snapshot: MANIFEST_FIXTURE,
 		});
 		const journey = { id: JOURNEY_ID, scope: 'page' as const };
@@ -3215,7 +3212,7 @@ describe('consent journey query parameters', () => {
 		// No /init and no report named the id, so the save sends none.
 		await transport.save?.({ ...savePayload, journey });
 		expect(fetchSpy.mock.calls.at(-1)?.[0]).toBe(
-			'https://api.example.com/c15t/subjects'
+			'https://api.example.com/inth/subjects'
 		);
 	});
 
@@ -3223,7 +3220,7 @@ describe('consent journey query parameters', () => {
 		const fetchSpy = respond();
 		const transport = createManifestTransport({
 			fetch: fetchSpy as unknown as typeof fetch,
-			projectUrl: 'https://api.example.com/c15t',
+			projectUrl: 'https://api.example.com/inth',
 			report: { adapter: '@c15t/test', source: 'route' },
 			snapshot: MANIFEST_FIXTURE,
 		});
@@ -3244,7 +3241,7 @@ describe('consent journey query parameters', () => {
 		const fetchSpy = respond();
 		const transport = createManifestTransport({
 			fetch: fetchSpy as unknown as typeof fetch,
-			projectUrl: 'https://api.example.com/c15t',
+			projectUrl: 'https://api.example.com/inth',
 			snapshot: MANIFEST_FIXTURE,
 		});
 		await transport.save?.({
@@ -3252,7 +3249,7 @@ describe('consent journey query parameters', () => {
 			journey: { id: JOURNEY_ID, scope: 'tab' },
 		});
 		expect(fetchSpy.mock.calls[0]?.[0]).toBe(
-			`https://api.example.com/c15t/subjects?journey=${JOURNEY_ID}&journeyScope=tab`
+			`https://api.example.com/inth/subjects?journey=${JOURNEY_ID}&journeyScope=tab`
 		);
 	});
 });

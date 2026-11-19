@@ -6,10 +6,15 @@ import type { DeferredCommitted, DeferredEngine } from '@inth/react/deferred';
 import {
 	ConsentBootData,
 	DeferredEngineHost,
+	importScriptServerStart,
+	read,
+	renderFor,
+	renderPlan,
+	settledState,
 } from '@inth/react/deferred/engine';
+import type { ScriptServerStartModule } from '@inth/react/deferred/engine';
 import { ConsentProvider } from '@inth/react/provider';
 import type { ConsentProviderOptions } from '@inth/react/provider';
-import type { WithProjectUrl } from '@inth/sdk/runtime/provider';
 /**
  * The engine side of `ConsentRoot`, loaded on demand by `./root`.
  *
@@ -23,14 +28,13 @@ import type { WithProjectUrl } from '@inth/sdk/runtime/provider';
  * forwards it to the React provider as `options.prefetch`. Kernel creation,
  * persistence, init, and module wiring live in `@inth/react`.
  */
+import { clientMode } from '@inth/sdk/runtime/client-mode';
+import type { WithProjectUrl } from '@inth/sdk/runtime/provider';
 import { preloadScriptLoaderWith } from '@inth/sdk/runtime/script-loader-preload';
-import type * as ScriptServerStart from '@inth/sdk/runtime/script-server-start';
 import { resolveStreamedInit } from '@inth/sdk/runtime/streamed-init';
-import * as React from 'react';
 import { Suspense, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import { createClientMode } from './client-mode';
 import type { ConsentConfig } from './config';
 import { readProjectUrlFromEnv } from './config';
 import { NEXT_CHUNKS } from './engine-chunks';
@@ -56,7 +60,7 @@ const warnMissingConfig = function warnMissingConfig(): void {
 	}
 	warnedMissingConfig = true;
 	console.warn(
-		'[c15t] ConsentRoot found no config. Export `defineConsentConfig()` as the default export of c15t.config.ts at the project root and wrap next.config.ts in `withConsentManifest()`, or pass `config`.'
+		'[inth] ConsentRoot found no config. Export `defineConsentConfig()` as the default export of inth.config.ts at the project root and wrap next.config.ts in `withConsentManifest()`, or pass `config`.'
 	);
 };
 
@@ -64,187 +68,25 @@ const warnMissingConfig = function warnMissingConfig(): void {
  * The transport for the config's mode, or for `options.mode`.
  *
  * @throws {Error} When the mode needs a backend URL and neither the config
- * nor `NEXT_PUBLIC_C15T_BACKEND_URL` (or `NEXT_PUBLIC_INTH_PROJECT_URL`)
+ * nor `NEXT_PUBLIC_INTH_PROJECT_URL` (or `NEXT_PUBLIC_C15T_BACKEND_URL`)
  * sets one.
  */
 const createMode = function createMode(
 	config: ConsentConfig | undefined,
 	options: ConsentClientOptions['options']
 ) {
-	// The config carries the backend URL, route prefix and `proxy`.
-	return createClientMode(
+	// With `proxy` the consent route forwards writes, so the browser sends
+	// everything to it, even for a `hosted()` with its own `projectUrl`.
+	return clientMode(
 		options?.mode ?? config?.mode,
-		config ?? { projectUrl: readProjectUrlFromEnv() }
-	);
-};
-
-type ScriptServerStartModule = typeof ScriptServerStart;
-
-/** A promise that keeps its result where React 18 reads it on a retry. */
-type Recorded<Value> = Promise<Value> & {
-	status?: 'fulfilled';
-	value?: Value;
-};
-
-/** `promise`, which must not reject, recording its result on itself. */
-const record = function record<Value>(
-	promise: Promise<Value>
-): Recorded<Value> {
-	const holder: { recorded?: Recorded<Value> } = {};
-	const recorded: Recorded<Value> = (async () => {
-		const value = await promise;
-		// Set by now: the await above yields.
-		if (holder.recorded) {
-			holder.recorded.status = 'fulfilled';
-			holder.recorded.value = value;
-		}
-		return value;
-	})();
-	holder.recorded = recorded;
-	return recorded;
-};
-
-const loadScriptServerStart = function loadScriptServerStart(): Recorded<
-	ScriptServerStartModule | undefined
-> {
-	return record(
-		(async () => {
-			try {
-				return await import('@inth/sdk/runtime/script-server-start');
-			} catch {
-				return undefined;
-			}
-		})()
-	);
-};
-
-let scriptServerStartModule:
-	| Recorded<ScriptServerStartModule | undefined>
-	| undefined;
-let retriedScriptServerStart:
-	| Recorded<ScriptServerStartModule | undefined>
-	| undefined;
-
-/**
- * Loaded on the server only, so no browser chunk requests it. A failed
- * import skips the server start and retries on the side for later renders.
- */
-const importScriptServerStart = function importScriptServerStart(): Recorded<
-	ScriptServerStartModule | undefined
-> {
-	const loaded = scriptServerStartModule;
-	if (loaded?.status === 'fulfilled' && !loaded.value) {
-		// Every render gets the failed load until the retry settles. On
-		// React 18 a render that waited for the load calls again, and a
-		// pending import there would suspend it again.
-		retriedScriptServerStart ??= loadScriptServerStart();
-		if (retriedScriptServerStart.status !== 'fulfilled') {
-			return loaded;
-		}
-		scriptServerStartModule = retriedScriptServerStart;
-		retriedScriptServerStart = undefined;
-	}
-	scriptServerStartModule ??= loadScriptServerStart();
-	return scriptServerStartModule;
-};
-
-const settledStates = new WeakMap<
-	Promise<ConsentState>,
-	Recorded<ConsentState | undefined>
->();
-
-/**
- * `state` with a rejection as `undefined`: the provider falls back to its
- * transport then, and the server start has nothing to start. One promise
- * per input, so `use` sees the same value on a retry.
- */
-const settledState = function settledState(
-	state: Promise<ConsentState>
-): Recorded<ConsentState | undefined> {
-	let settled = settledStates.get(state);
-	if (!settled) {
-		settled = record(
-			(async () => {
-				try {
-					return await state;
-				} catch {
-					return undefined;
+		config
+			? {
+					projectUrl: config.proxy ? config.routePrefix : config.projectUrl,
+					routePrefix: config.routePrefix,
 				}
-			})()
-		);
-		settledStates.set(state, settled);
-	}
-	return settled;
-};
-
-/** React 19's `use`, absent from the React 18 a Pages Router app may run. */
-const { use } = React as {
-	use?: <Value>(value: Promise<Value>) => Value;
-};
-
-/**
- * `use` where React has it. React 18 suspends on a thrown promise and
- * reads its recorded result on the retry.
- */
-const read = function read<Value>(promise: Recorded<Value>): Value {
-	if (use) {
-		// oxlint-disable-next-line react-hooks/rules-of-hooks -- `read` is `use` with a React 18 fallback, so it keeps `use`'s rules: render only, conditions allowed.
-		return use(promise);
-	}
-	if (promise.status === 'fulfilled') {
-		return promise.value as Value;
-	}
-	throw promise;
-};
-
-/**
- * One id and one `serverScriptStartPlan` per render, shared by the boot
- * data, the stored-choice check and the start script: each `serverStart`
- * runs once, the check and the start describe the same script, and the
- * page object their inline scripts write carries the id the boot data
- * names. Keyed by the provider options all three receive from the render.
- * The id needs no module: boot data that renders while the module loads
- * names the render its later start script writes, so a root that goes
- * before that script runs ends it (`endPageRender`).
- */
-const renders = new WeakMap<
-	object,
-	{
-		id: string;
-		plan?: ScriptServerStart.ServerScriptStartPlan;
-		state: unknown;
-	}
->();
-
-const renderFor = function renderFor(
-	options: ConsentProviderOptions,
-	state: ConsentState | undefined
-) {
-	let render = renders.get(options);
-	if (!render || render.state !== state) {
-		// As `newRenderId` in `@inth/sdk/runtime/script-server-start`.
-		render = { id: Math.random().toString(36).slice(2, 10), state };
-		renders.set(options, render);
-	}
-	return render;
-};
-
-const renderPlan = function renderPlan(
-	module: ScriptServerStartModule,
-	options: ConsentProviderOptions,
-	state: ConsentState | undefined
-): ScriptServerStart.ServerScriptStartPlan {
-	const render = renderFor(options, state);
-	render.plan ??= module.serverScriptStartPlan(
-		{
-			...(options as unknown as Parameters<
-				ScriptServerStartModule['serverScriptStartPlan']
-			>[0]),
-			prefetch: state,
-		},
-		render.id
+			: { projectUrl: readProjectUrlFromEnv() },
+		'@inth/nextjs/testing'
 	);
-	return render.plan;
 };
 
 /**
@@ -292,7 +134,7 @@ const ServerScriptStart = ({
 		// Runs a granted vendor's setup and inserts its tag before the page
 		// hydrates. The script loader adopts the tag.
 		<script
-			// oxlint-disable-next-line react/no-danger -- c15t's own code; serverScriptStart escapes `<` in every value.
+			// oxlint-disable-next-line react/no-danger -- Inth's own code; serverScriptStart escapes `<` in every value.
 			dangerouslySetInnerHTML={{ __html: code ?? '' }}
 			nonce={options.nonce}
 			suppressHydrationWarning
@@ -380,7 +222,7 @@ const CheckedBootData = ({
 
 /** The provider options and what renders after the page, from the props. */
 const useRootOptions = function useRootOptions(props: ConsentRootProps) {
-	// Read at render, not at module top level: `c15t.config.ts` imports
+	// Read at render, not at module top level: `inth.config.ts` imports
 	// `@inth/nextjs`, so the browser graph has a cycle through this module.
 	const config = props.config ?? userConfig;
 	if (

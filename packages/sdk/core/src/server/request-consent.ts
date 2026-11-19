@@ -9,7 +9,7 @@
  *
  * 1. **Request read.** Stored records from the consent cookie, and geo,
  *    language and GPC through the one shared extractor, so every adapter
- *    reads `x-c15t-gpc` before `sec-gpc` and leaves an absent signal
+ *    reads `x-inth-gpc` before `sec-gpc` and leaves an absent signal
  *    `undefined`.
  * 2. **Mode.** An inline manifest or a manifest URL resolves `/init`
  *    locally with {@link resolveConsentInit}; hosted mode asks a backend
@@ -58,6 +58,8 @@ import type { StorageConfig } from '../libs/cookie/types';
 import { experimentArmRef } from '../libs/experiment';
 import type { ExperimentState, ServerExperiment } from '../libs/experiment';
 import { failedResponseError } from '../libs/failed-response';
+import { readHeader, toHeaders } from '../libs/headers';
+import { isCleartextRemoteURL } from '../libs/identity-headers';
 import { createJourneyId } from '../libs/journey';
 import type { ConsentJourneyOption, JourneyState } from '../libs/journey';
 import {
@@ -72,8 +74,23 @@ import type {
 } from '../libs/manifest-cache-runtime';
 import { warnManifestFallback } from '../libs/manifest-fallback';
 import { resolveSessionReportProjectUrl } from '../libs/session-report';
+import {
+	resolveStorageKeys,
+	STORAGE_KEY,
+	storageKeyFamilies,
+} from '../libs/storage-keys';
+import { trimSlash } from '../libs/url';
+import {
+	INTH_VERSION_HEADER,
+	inthProtocolHeaders,
+	readProducerPolicyContract,
+} from '../libs/version-header';
 import { readStoredRecordsFromCookieHeader } from '../modules/persistence/hydrate';
-import { resolveStorageKeys } from '../modules/persistence/record-storage';
+import {
+	consentSinceEpoch,
+	readStoredClearEpochFromCookieHeader,
+	readStoredConsentRecordFromCookieHeader,
+} from '../modules/persistence/record-storage';
 import { fetchCachedAdTechProviders } from '../transports/ad-tech-provider-cache';
 import { deferInitGvl, deferInitGvlToRoute } from '../transports/gvl-reference';
 import {
@@ -82,15 +99,10 @@ import {
 } from '../transports/init-output';
 import { createOfflineTransport } from '../transports/offline';
 import type { OfflineTransportOptions } from '../transports/offline';
-import {
-	c15tProtocolHeaders,
-	readProducerPolicyContract,
-} from '../transports/version-header';
 import type { KernelConfig } from '../types';
 import {
 	CONSENT_PROXY_FORWARDING_HEADERS,
 	filterCookieHeader,
-	isCleartextRemoteURL,
 	stripIdentityForCleartext,
 } from './consent-proxy';
 import {
@@ -98,18 +110,19 @@ import {
 	resolveConsentInit,
 } from './consent-route';
 import type { ConsentRouteFetchGvl } from './consent-route';
-import { fetchCachedGvl } from './gvl-cache';
+import { fetchServerGvl } from './gvl-cache';
 import {
 	resolveRequestProjectUrl,
 	resolveRequestOrigin,
 } from './request-origin';
 import type { RequestHeaderSource } from './request-origin';
-
-/**
- * Where every adapter mounts its consent routes unless told otherwise. A
- * render treats URLs under it on its own origin as its own routes.
- */
-export const DEFAULT_CONSENT_ROUTE_PREFIX = '/api/c15t';
+import {
+	DEFAULT_CONSENT_ROUTE_PREFIX,
+	IN_PROCESS_ORIGIN,
+	keepAlive,
+	toPathFetch,
+	writeConsentInputHeaders,
+} from './shared';
 
 /**
  * Marks a hosted request a render sends to its own origin. If a page answers
@@ -117,7 +130,7 @@ export const DEFAULT_CONSENT_ROUTE_PREFIX = '/api/c15t';
  * the second render sees the marker and does not fetch its origin again, so
  * a self-fetch stops after one hop instead of recursing.
  */
-const RENDER_REQUEST_HEADER = 'x-c15t-render-request';
+const RENDER_REQUEST_HEADER = 'x-inth-render-request';
 
 /**
  * The state a server render hands the client: a `KernelConfig` without the
@@ -136,7 +149,6 @@ export interface ConsentRequestFacts {
 	 * its origin. Without it, the `host` header decides.
 	 */
 	url?: string | URL;
-	/** The request headers. */
 	headers?: RequestHeaderSource;
 	/**
 	 * The `Cookie` header, when the framework reads cookies apart from the
@@ -234,7 +246,7 @@ export interface ResolveRequestConsentOptions {
 	 * fetch its origin again, so a prefix that answers with a page cannot
 	 * loop.
 	 *
-	 * @default ['/api/c15t']
+	 * @default ['/api/inth']
 	 */
 	ownRoutes?: readonly string[];
 	/**
@@ -256,7 +268,7 @@ export interface ResolveRequestConsentOptions {
 	manifestFetchInit?: Omit<RequestInit, 'headers' | 'method'>;
 	/**
 	 * Consent request headers configured on the browser's own `/init`
-	 * (`x-c15t-country`, ...), applied to the hosted request so server and
+	 * (`x-inth-country`, ...), applied to the hosted request so server and
 	 * browser resolve one policy. Anything outside the consent request
 	 * headers is ignored.
 	 */
@@ -265,14 +277,16 @@ export interface ResolveRequestConsentOptions {
 	 * Extra request headers to forward upstream, such as a token a private
 	 * backend needs. The forwarding rule:
 	 *
-	 * - Always: the c15t protocol headers, the resolved country, region,
+	 * - Always: the Inth protocol headers, the resolved country, region,
 	 *   language and GPC signal, the `user-agent`, and the experiment arm
 	 *   while the visitor has no stored choice.
 	 * - Hosted mode, only over `https`, to a loopback host, or in-process:
 	 *   these headers and, when {@link trustForwardedHeaders} is set, the
 	 *   visitor IP as `x-forwarded-for`. A remote backend (not an in-process
-	 *   route) also gets the consent cookie ({@link storage}`.storageKey`),
-	 *   never the rest of the jar.
+	 *   route) also gets the consent cookie the render read
+	 *   ({@link storage}`.storageKey`, or c15t's under the default key when
+	 *   that one holds no valid record), never the pre-1.8 one or the rest
+	 *   of the jar.
 	 * - Manifest mode: nothing about the visitor. The manifest is public
 	 *   policy data; only these headers and {@link cookieNames} travel, and
 	 *   not over cleartext.
@@ -359,41 +373,6 @@ class RequestConsentError extends Error {
 	}
 }
 
-const readHeader = function readHeader(
-	headers: RequestHeaderSource | undefined,
-	name: string
-): string | undefined {
-	if (!headers) {
-		return undefined;
-	}
-	if (typeof (headers as Headers).get === 'function') {
-		return (headers as Headers).get(name) ?? undefined;
-	}
-	// Header names are case-insensitive, and a record keeps whatever casing
-	// the runtime or the client used.
-	const lower = name.toLowerCase();
-	const value = Object.entries(
-		headers as Record<string, string | string[] | undefined>
-	).find(([key]) => key.toLowerCase() === lower)?.[1];
-	return Array.isArray(value) ? value[0] : value;
-};
-
-const toHeaders = function toHeaders(
-	headers: RequestHeaderSource | undefined
-): Headers {
-	if (headers instanceof Headers) {
-		return headers;
-	}
-	const result = new Headers();
-	for (const [name, value] of Object.entries(headers ?? {})) {
-		const first = Array.isArray(value) ? value[0] : value;
-		if (first !== undefined) {
-			result.set(name, first);
-		}
-	}
-	return result;
-};
-
 /** `country`, `region` and `language` set on `overrides`, dropping the rest. */
 const configuredOverrides = function configuredOverrides(
 	overrides: ResolveRequestConsentOptions['overrides']
@@ -433,7 +412,6 @@ const readInputs = function readInputs(
  * from the consent cookie, and geo, language and GPC from the headers, with
  * no network work. A shared render reads none of it.
  *
- * @param options - The request facts, overrides, storage key and clock.
  * @returns The request-only state and the inputs it was derived from.
  * @example
  * ```ts
@@ -510,8 +488,6 @@ const resolveMode = function resolveMode(
  * The consent journey a render starts, or `undefined` for none. See
  * {@link ResolveRequestConsentOptions.journey}.
  *
- * @param options - The resolution options.
- * @param mode - How the policy is resolved.
  * @param base - The request-only state, for the stored choice.
  * @param read - The request facts, read only when a journey may start.
  * @returns The journey, with the site's hostname when known; `null` when
@@ -559,32 +535,8 @@ const startServerJourney = function startServerJourney(
 	return journey;
 };
 
-/** Swallows a promise's outcome, for work handed to the platform. */
-const settle = async function settle(task: Promise<unknown>): Promise<void> {
-	try {
-		await task;
-	} catch {
-		// The render already fell back; nothing waits on this result.
-	}
-};
-
-const keepAlive = function keepAlive(
-	waitUntil: ((task: Promise<void>) => void) | undefined,
-	task: Promise<unknown>
-): void {
-	const settled = settle(task);
-	try {
-		waitUntil?.(settled);
-	} catch {
-		// Registration is best effort; the work runs either way.
-	}
-};
-
 const isPath = (url: string): boolean =>
 	url.startsWith('/') && !url.startsWith('//');
-
-const trimSlash = (url: string): string =>
-	url.endsWith('/') ? url.slice(0, -1) : url;
 
 /** Whether `pathname` is `prefix` or below it, segment-aware. */
 const isBelow = function isBelow(pathname: string, prefix: string): boolean {
@@ -593,22 +545,6 @@ const isBelow = function isBelow(pathname: string, prefix: string): boolean {
 		normalized !== '' &&
 		(pathname === normalized || pathname.startsWith(`${normalized}/`))
 	);
-};
-
-/**
- * Origin an in-process path is placed on so the manifest cache can key it.
- * Never contacted; loopback so the cleartext rules treat it as local.
- */
-const IN_PROCESS_ORIGIN = 'http://localhost';
-
-/** Sends {@link IN_PROCESS_ORIGIN} URLs to an in-process fetch as paths. */
-const toPathFetch = function toPathFetch(
-	localFetch: ManifestFetch
-): ManifestFetch {
-	return (input, init) => {
-		const url = new URL(input instanceof Request ? input.url : input);
-		return localFetch(`${url.pathname}${url.search}`, init);
-	};
 };
 
 /** A resolved upstream target and the fetch that reaches it. */
@@ -622,27 +558,29 @@ interface Target {
 	sameOrigin: boolean;
 }
 
+/** What {@link fetchRequestInit} changes about a hosted `/init`. */
+interface InitRequestRules {
+	/** Whether a remote backend gets the visitor's consent cookie. */
+	sendConsentCookie?: boolean;
+	/**
+	 * Whether `/init` gets the request's own headers where they say more
+	 * than this package's: a version header the request carries, such as a
+	 * client's a proxy relays, in place of this package's, and the full
+	 * `Accept-Language`, so the backend can fall back to the visitor's next
+	 * language, in place of the primary one, unless an override sets the
+	 * language.
+	 */
+	relayRequest?: boolean;
+}
+
 /**
- * Resolves the server-side consent state for one request.
- *
- * Never throws and never rejects: an unresolvable URL, a target on the
- * app's own consent routes, a failed or slow upstream all return the
- * request-only state, and `onError` hears about it.
- *
- * @param options - The request facts and how to resolve the policy.
- * @returns The JSON-serializable state the client hydrates from.
- * @example
- * ```ts
- * const state = await resolveRequestConsent({
- *   adapter: '@c15t/example',
- *   projectUrl: 'https://consent.example.com',
- *   mode: 'manifest',
- *   request: { headers: request.headers, url: request.url },
- * });
- * ```
+ * {@link resolveRequestConsent}, telling `onHostedAnswer` what a hosted
+ * `/init` answered.
  */
-export const resolveRequestConsent = async function resolveRequestConsent(
-	options: ResolveRequestConsentOptions
+const resolveRequest = async function resolveRequest(
+	options: ResolveRequestConsentOptions,
+	onHostedAnswer?: (answer: RequestInitAnswer) => void,
+	{ relayRequest = false, sendConsentCookie = true }: InitRequestRules = {}
 ): Promise<RequestConsentState> {
 	const { inputs, state: base } = readRequestConsent(options);
 	const mode = resolveMode(options);
@@ -795,24 +733,6 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 		return named;
 	};
 
-	/** The resolved inputs as the canonical consent request headers. */
-	const inputHeaders = function inputHeaders(): Record<string, string> {
-		const headers: Record<string, string> = {};
-		if (inputs.country) {
-			headers['x-c15t-country'] = inputs.country;
-		}
-		if (inputs.region) {
-			headers['x-c15t-region'] = inputs.region;
-		}
-		if (inputs.language) {
-			headers['accept-language'] = inputs.language;
-		}
-		if (inputs.gpc !== undefined) {
-			headers['sec-gpc'] = inputs.gpc ? '1' : '0';
-		}
-		return headers;
-	};
-
 	const resolverInputs = (): ResolveInitFromManifestInputs => ({
 		country: inputs.country ?? null,
 		gpc: inputs.gpc,
@@ -901,9 +821,9 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 		return (language: string) =>
 			options.fetchGvl
 				? options.fetchGvl({ fetch: configuredFetch(), language, reference })
-				: fetchCachedGvl({
+				: fetchServerGvl({
 						fetch: options.fetch as ManifestFetch | undefined,
-						headers: c15tProtocolHeaders,
+						headers: inthProtocolHeaders,
 						label: options.adapter,
 						language,
 						url: reference.url,
@@ -931,7 +851,7 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 					const target = resolveTarget(providerReference.url);
 					return fetchCachedAdTechProviders({
 						fetch: target.fetch as typeof globalThis.fetch,
-						headers: c15tProtocolHeaders,
+						headers: inthProtocolHeaders,
 						reference: { ...providerReference, url: target.url },
 					});
 				},
@@ -968,9 +888,38 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 		};
 
 	/**
+	 * The consent cookie a remote `/init` gets: the one holding the record
+	 * the render read, under the configured key or c15t's, else the
+	 * configured one as it is. Never the pre-1.8 key's, which no version
+	 * sent, even when it is the configured key.
+	 */
+	const forwardedConsentCookie = function forwardedConsentCookie(
+		cookie: string
+	): string | undefined {
+		const keys = resolveStorageKeys(options.storage);
+		const now = base.now ?? Date.now();
+		const forwardable = storageKeyFamilies(keys)
+			.map((family) => family.consent)
+			.filter((key) => key !== STORAGE_KEY);
+		const selected = consentSinceEpoch(
+			readStoredConsentRecordFromCookieHeader(cookie, options.storage, now)
+				.selected,
+			readStoredClearEpochFromCookieHeader(cookie, options.storage, now)
+		)?.key;
+		const name =
+			selected !== undefined && forwardable.includes(selected)
+				? selected
+				: keys.consent;
+		return forwardable.includes(name)
+			? filterCookieHeader(cookie, [name])
+			: undefined;
+	};
+
+	/**
 	 * What identifies the visitor on a hosted `/init`, only over a secure
 	 * hop: caller-named headers, the consent cookie for a remote backend
-	 * (the app's own routes read none), and the trusted client IP.
+	 * (see {@link forwardedConsentCookie}; the app's own routes read none),
+	 * and the trusted client IP.
 	 */
 	const identityHeaders = function identityHeaders(
 		target: Target
@@ -979,15 +928,12 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 			return {};
 		}
 		const headers = namedHeaders();
-		const cookie = target.inProcess
-			? undefined
-			: (options.request.cookie ??
-				readHeader(options.request.headers, 'cookie'));
-		const consentCookie = cookie
-			? filterCookieHeader(cookie, [
-					resolveStorageKeys(options.storage).consent,
-				])
-			: undefined;
+		const cookie =
+			target.inProcess || !sendConsentCookie
+				? undefined
+				: (options.request.cookie ??
+					readHeader(options.request.headers, 'cookie'));
+		const consentCookie = cookie ? forwardedConsentCookie(cookie) : undefined;
 		if (consentCookie) {
 			headers.cookie = consentCookie;
 		}
@@ -1019,6 +965,39 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 		}
 	};
 
+	/**
+	 * Writes the resolved geo, language and GPC, with the request's full
+	 * `Accept-Language` in place of the primary language under
+	 * {@link InitRequestRules.relayRequest}.
+	 */
+	const writeInputHeaders = function writeInputHeaders(
+		headers: Record<string, string>
+	): void {
+		writeConsentInputHeaders(headers, inputs);
+		const acceptLanguage =
+			relayRequest && !options.overrides?.language
+				? readHeader(options.request.headers, 'accept-language')
+				: null;
+		if (acceptLanguage) {
+			headers['accept-language'] = acceptLanguage;
+		}
+	};
+
+	/**
+	 * The Inth protocol headers, with the request's own version header in
+	 * place of this package's under {@link InitRequestRules.relayRequest}.
+	 */
+	const protocolHeaders = function protocolHeaders(): Readonly<
+		Record<string, string>
+	> {
+		const requestVersion = relayRequest
+			? readHeader(options.request.headers, INTH_VERSION_HEADER)
+			: null;
+		return requestVersion
+			? { ...inthProtocolHeaders, [INTH_VERSION_HEADER]: requestVersion }
+			: inthProtocolHeaders;
+	};
+
 	const resolveFromHosted =
 		async function resolveFromHosted(): Promise<RequestConsentState> {
 			const initUrl =
@@ -1039,7 +1018,7 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 					(name) => name !== 'cookie' && name !== 'x-forwarded-for'
 				);
 			Object.assign(headers, identity);
-			Object.assign(headers, inputHeaders());
+			writeInputHeaders(headers);
 			for (const [name, value] of Object.entries(options.initHeaders ?? {})) {
 				const lower = name.toLowerCase();
 				if (
@@ -1052,7 +1031,7 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 				headers[CONSENT_EXPERIMENT_HEADER] = formatExperimentHeader(arm);
 			}
 			nameThePage(headers, target);
-			Object.assign(headers, c15tProtocolHeaders);
+			Object.assign(headers, protocolHeaders());
 			if (target.sameOrigin) {
 				headers[RENDER_REQUEST_HEADER] = '1';
 			}
@@ -1090,6 +1069,12 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 					error
 				);
 			}
+			onHostedAnswer?.({
+				init: payload,
+				requestHeaders: { ...headers },
+				responseHeaders: response.headers,
+				url: target.url,
+			});
 			// A reference makes the browser ask the same `/init` for the list;
 			// it cannot replay a caller's fetch, cookie or private headers.
 			const deferred =
@@ -1173,4 +1158,99 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 		);
 		return carry(base);
 	}
+};
+
+/**
+ * Resolves the server-side consent state for one request.
+ *
+ * Never throws and never rejects: an unresolvable URL, a target on the
+ * app's own consent routes, a failed or slow upstream all return the
+ * request-only state, and `onError` hears about it.
+ *
+ * @returns The JSON-serializable state the client hydrates from.
+ * @example
+ * ```ts
+ * const state = await resolveRequestConsent({
+ *   adapter: '@inth/example',
+ *   projectUrl: 'https://consent.example.com',
+ *   mode: 'manifest',
+ *   request: { headers: request.headers, url: request.url },
+ * });
+ * ```
+ */
+export const resolveRequestConsent = function resolveRequestConsent(
+	options: ResolveRequestConsentOptions
+): Promise<RequestConsentState> {
+	return resolveRequest(options);
+};
+
+/** What the backend's `/init` answered a hosted request, unmapped. */
+export interface RequestInitAnswer {
+	/** The response body. */
+	init: InitOutput;
+	/** The URL asked, or the path for an in-process route. */
+	url: string;
+	/** The headers sent upstream, after the forwarding rule. */
+	requestHeaders: Readonly<Record<string, string>>;
+	/** The response's headers: cache status, the producer's contract. */
+	responseHeaders: Headers;
+}
+
+/** Configuration for {@link fetchRequestInit}: the hosted subset. */
+export type FetchRequestInitOptions = Omit<
+	ResolveRequestConsentOptions,
+	| 'cache'
+	| 'cookieNames'
+	| 'fetchGvl'
+	| 'gvlRoute'
+	| 'manifest'
+	| 'manifestFetchInit'
+	| 'manifestUrl'
+	| 'mode'
+	| 'offline'
+	| 'seed'
+> & {
+	/**
+	 * Whether a remote backend gets the visitor's consent cookie, as
+	 * {@link ResolveRequestConsentOptions.forwardHeaders} describes.
+	 *
+	 * @default true
+	 */
+	sendConsentCookie?: boolean;
+};
+
+/**
+ * Asks the backend's `/init` for one request, as
+ * {@link resolveRequestConsent} does in hosted mode (the same target,
+ * forwarding and budget rules), and returns the answer as received rather
+ * than folded into a consent state. A version header the request carries,
+ * such as a client's a proxy relays, is sent in place of this package's,
+ * and so is the visitor's full `Accept-Language` in place of its primary
+ * language, unless `overrides.language` is set.
+ *
+ * Never throws: when nothing was fetched or the request failed, it returns
+ * `undefined` and `onError` hears why.
+ *
+ * @returns The answer, or `undefined`.
+ * @example
+ * ```ts
+ * const answer = await fetchRequestInit({
+ *   adapter: '@inth/react',
+ *   projectUrl: 'https://consent.example.com',
+ *   request: { headers: request.headers },
+ * });
+ * ```
+ */
+export const fetchRequestInit = async function fetchRequestInit(
+	options: FetchRequestInitOptions
+): Promise<RequestInitAnswer | undefined> {
+	let answer: RequestInitAnswer | undefined;
+	await resolveRequest(
+		{ ...options, mode: 'hosted' },
+		(received) => {
+			answer = received;
+		},
+		{ relayRequest: true, sendConsentCookie: options.sendConsentCookie }
+	);
+	return answer;
 };

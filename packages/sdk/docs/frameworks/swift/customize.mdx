@@ -1,6 +1,6 @@
 ---
 title: Customize
-description: Set the app identity, light and dark colors, radii, spacing, type, per-part slots, first-layer copy and provider attribution on c15t's native SwiftUI consent screens.
+description: Set the app identity, light and dark colors, radii, spacing, type, per-part slots, first-layer copy and provider attribution on Inth's native SwiftUI consent screens.
 group: frameworks
 ---
 
@@ -23,7 +23,7 @@ to the app's asset catalog, or use the name of an existing asset. The
 introduction should describe your app's actual purposes. This copy example
 assumes both measurement and marketing are in scope.
 
-Pass the theme to the `.c15tConsent` modifier from the [quickstart](/docs/frameworks/swift/quickstart):
+Pass the theme to the `.inth` modifier from the [quickstart](/docs/frameworks/swift/quickstart):
 
 <include src="../../shared/examples/native/core-swift/AppleInstallation/swift-themed-root.mdx" />
 
@@ -51,7 +51,7 @@ all keep the same `decision` fill and `textOnDecision` label treatment.
 | `branding` | `.inth`, `.c15t` or `.custom(name:markImageName:)` provider attribution. `.inth` is the default |
 | `showsBranding` | Visibility of the provider attribution |
 | `firstLayer` | `.page`, `.sheet` or `.prompt`: how the first choice is presented |
-| `appearance` | `.system` (default) or `.c15t`: where the stock colours come from |
+| `appearance` | `.system` (default) or `.paper`: where the stock colours come from |
 | `savePlacement` | `.top` (default) or `.bottom`: where Save sits in Privacy Settings |
 
 ## Place Save Settings
@@ -103,8 +103,8 @@ white text on it reaches the 5:1 contrast IAB TCF asks for.
 The accent colour is the `AccentColor` asset in your app's bundle, or the system
 blue when there is none.
 
-Names that have a web token match it: `primary` is `--c15t-primary`, and
-`radius.md` is `--c15t-radius-md`. A font size groups text styles: `sm` sizes
+Names that have a web token match it: `primary` is `--inth-primary`, and
+`radius.md` is `--inth-radius-md`. A font size groups text styles: `sm` sizes
 subheadline, footnote and captions, `base` sizes body and headline, and `lg`
 sizes the large title. Each style keeps its ratio to its group, and Dynamic
 Type still scales it. Spacing does not change a control's own padding, so tap
@@ -138,7 +138,7 @@ priority over both.
 | `com.inth.consent.headline` | First-layer headline |
 | `com.inth.consent.introduction` | First-layer introduction |
 | `com.inth.consent.firstLayer` | `page`, `sheet` or `prompt` |
-| `com.inth.consent.appearance` | `system` or `c15t` |
+| `com.inth.consent.appearance` | `system` or `paper` |
 | `com.inth.consent.savePlacement` | `top` or `bottom` |
 | `com.inth.consent.brandingProvider` | `inth` or `c15t` |
 | `com.inth.consent.branding` | Boolean controlling provider attribution |

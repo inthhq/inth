@@ -27,7 +27,7 @@ export interface PolicyActionContext {
  *
  * @example
  * ```html
- * <div c15t-policy-actions [actionGroups]="groups" [action]="button">
+ * <div inth-policy-actions [actionGroups]="groups" [action]="button">
  *   <a href="/privacy">Privacy</a>
  * </div>
  * <ng-template #button let-action let-primary="primary">…</ng-template>
@@ -46,7 +46,7 @@ export interface PolicyActionContext {
 		'[style]': 'footerStyle() ?? ""',
 	},
 	imports: [NgTemplateOutlet],
-	selector: 'div[c15t-policy-actions]',
+	selector: 'div[inth-policy-actions]',
 	template: `<ng-content />
 		@for (group of keyedGroups(); track group.key) {
 			<div

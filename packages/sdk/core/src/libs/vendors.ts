@@ -16,16 +16,15 @@ import { compareCanonical } from '@inth/sdk-schema/canonical-order';
 import type { Vendor } from '@inth/sdk-schema/types';
 
 import type { AllConsentNames } from '../consent/consent-types';
-import type { ConsentKernel, ResolvedVendor, VendorSource } from '../types';
+import type {
+	ConsentKernel,
+	ConsentSnapshot,
+	ResolvedVendor,
+	VendorSource,
+} from '../types';
 import type { HasCondition } from './has';
 import { extractConsentNamesFromCondition } from './has';
 import type { VendorDetails } from './script-loader/types';
-
-export {
-	listedVendors,
-	vendorRenders,
-	vendorsListedUnder,
-} from './vendor-listing';
 
 /** A script or network rule that names the vendor it belongs to. */
 export interface VendorOwner {
@@ -66,7 +65,7 @@ const SOURCE_RANK: Record<VendorSource, number> = {
 const VENDOR_ID_PATTERN = /^[a-z0-9][a-z0-9._-]{0,63}$/u;
 
 const invalidSlugWarning = (id: string): string =>
-	`[c15t] Vendor id "${id}" is not a lowercase slug of up to 64 characters (letters, digits, ".", "_" and "-"). It is ignored: anything it names is gated by its category only.`;
+	`[inth] Vendor id "${id}" is not a lowercase slug of up to 64 characters (letters, digits, ".", "_" and "-"). It is ignored: anything it names is gated by its category only.`;
 
 /** Whether a string is a slug the wire schema accepts. */
 export const isValidVendorId = function isValidVendorId(
@@ -262,7 +261,7 @@ const ownerCondition = function ownerCondition(
  * entry the owners of the slug would produce. `null` when nothing else
  * declares the vendor.
  */
-export const ownerFallback = function ownerFallback(
+const ownerFallback = function ownerFallback(
 	vendor: ResolvedVendor
 ): ResolvedVendor | null {
 	if (vendor.shadowed) {
@@ -490,7 +489,7 @@ export const resolveVendors = function resolveVendors(
 			continue;
 		}
 		input.onWarn?.(
-			`[c15t] Vendor "${id}" is referenced by a script or rule but has no declaration with a name and privacy policy URL. It gates loading but is hidden from the preference surface until declared in \`vendors\`.`
+			`[inth] Vendor "${id}" is referenced by a script or rule but has no declaration with a name and privacy policy URL. It gates loading but is hidden from the preference surface until declared in \`vendors\`.`
 		);
 	}
 
@@ -646,3 +645,13 @@ export const forgetOwnedVendors = function forgetOwnedVendors(
 		declareOwnedVendors(kernel, [], source);
 	}
 };
+
+/**
+ * Whether `snapshot` decides vendors one by one. Under the IAB model the
+ * vendor axis is inert: IAB vendor consent lives in the TC string, and
+ * the Inth vendor choice neither gates nor saves.
+ * @returns `true` outside the IAB model.
+ */
+export const vendorAxisActive = (
+	snapshot: Pick<ConsentSnapshot, 'model'>
+): boolean => snapshot.model !== 'iab';

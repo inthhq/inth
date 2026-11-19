@@ -23,3 +23,24 @@ export const isProductionBuild = function isProductionBuild(): boolean {
 		return false;
 	}
 };
+
+/**
+ * `console.warn` in development builds only.
+ *
+ * @param message - The warning, starting with `[inth]`.
+ * @param error - What failed, logged after the message when given.
+ * @internal
+ */
+export const warnInDevelopment = function warnInDevelopment(
+	message: string,
+	error?: unknown
+): void {
+	if (isProductionBuild()) {
+		return;
+	}
+	if (error === undefined) {
+		console.warn(message);
+	} else {
+		console.warn(message, error);
+	}
+};

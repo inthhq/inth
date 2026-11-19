@@ -33,10 +33,10 @@ import type {
 	RuntimeConsentConfig,
 	VueConsentKernelContext,
 } from './test-kernel';
-import { c15tVue } from './test-plugin';
+import { inthVue } from './test-plugin';
 
-type WindowWithC15t = Window & {
-	c15t?: {
+type WindowWithInth = Window & {
+	__inthDebug?: {
 		version: string;
 		pkg: string;
 		mode: string;
@@ -44,7 +44,7 @@ type WindowWithC15t = Window & {
 };
 
 const initFixture: InitOutput = {
-	branding: 'c15t',
+	branding: 'inth',
 	location: {
 		countryCode: 'DE',
 		regionCode: null,
@@ -107,7 +107,7 @@ const initFixture: InitOutput = {
 				},
 			},
 			cookieBanner: {
-				description: 'Pick how c15t may use cookies.',
+				description: 'Pick how Inth may use cookies.',
 				title: 'Cookie choices',
 			},
 			legalLinks: {
@@ -156,7 +156,7 @@ const mountRoot = async function mountRoot() {
 		global: {
 			plugins: [
 				[
-					c15tVue,
+					inthVue,
 					{
 						consentCategories: ['necessary', 'measurement', 'marketing'],
 						domain: 'consent.example',
@@ -185,7 +185,7 @@ const mountRootWithConsentProbe = async function mountRootWithConsentProbe() {
 		global: {
 			plugins: [
 				[
-					c15tVue,
+					inthVue,
 					{
 						consentCategories: ['necessary', 'measurement', 'marketing'],
 						domain: 'consent.example',
@@ -250,19 +250,19 @@ const renderRootToString = async function renderRootToString(
 };
 
 beforeEach(() => {
-	delete (window as WindowWithC15t).c15t;
+	delete (window as WindowWithInth).__inthDebug;
 	document.body.innerHTML = '';
 	window.localStorage.clear();
-	document.cookie = 'c15t=; max-age=0; path=/';
+	document.cookie = 'inth=; max-age=0; path=/';
 });
 
 afterEach(() => {
 	vi.unstubAllGlobals();
 	vi.restoreAllMocks();
-	delete (window as WindowWithC15t).c15t;
+	delete (window as WindowWithInth).__inthDebug;
 	document.body.innerHTML = '';
 	window.localStorage.clear();
-	document.cookie = 'c15t=; max-age=0; path=/';
+	document.cookie = 'inth=; max-age=0; path=/';
 });
 
 describe('@inth/vue kernel runtime', () => {
@@ -317,7 +317,7 @@ describe('@inth/vue kernel runtime', () => {
 		// localStorage kept the visitor's rejection; the render did not see
 		// it (no cookie reached the server, or the HTML came from a cache).
 		window.localStorage.setItem(
-			'c15t',
+			'inth',
 			JSON.stringify({
 				categories: { marketing: denial, measurement: denial },
 				version: 3,
@@ -363,7 +363,7 @@ describe('@inth/vue kernel runtime', () => {
 		// The cookie reached the server without a choice; localStorage holds
 		// a grant. The server's seed stands: only a newer denial would apply.
 		window.localStorage.setItem(
-			'c15t',
+			'inth',
 			JSON.stringify({
 				categories: {
 					marketing: {
@@ -440,17 +440,19 @@ describe('@inth/vue kernel runtime', () => {
 		expect(dispose).toHaveBeenCalledOnce();
 	});
 
-	test('installs window.c15t with Vue hosted identity', async () => {
+	test('installs window.__inthDebug with Vue hosted identity', async () => {
 		const { wrapper } = await mountRoot();
 
-		expect((window as WindowWithC15t).c15t).toMatchObject({
+		expect((window as WindowWithInth).__inthDebug).toMatchObject({
 			mode: 'hosted',
 			pkg: '@inth/vue',
 		});
-		expect(typeof (window as WindowWithC15t).c15t?.version).toBe('string');
+		expect(typeof (window as WindowWithInth).__inthDebug?.version).toBe(
+			'string'
+		);
 
 		wrapper.unmount();
-		expect((window as WindowWithC15t).c15t).toBeUndefined();
+		expect((window as WindowWithInth).__inthDebug).toBeUndefined();
 	});
 
 	test('renders the banner from kernel init state', async () => {
@@ -466,7 +468,7 @@ describe('@inth/vue kernel runtime', () => {
 
 	test('server-render retains an expired legacy receipt and asks for a new choice', async () => {
 		const { context, html } = await renderRootToString(
-			'c15t=c.necessary:1,c.measurement:1,c.marketing:1,i.sid:sub_111AEMh5qpiLmhEcbnqwrmsB7X,i.t:1234567890,i.y:all'
+			'inth=c.necessary:1,c.measurement:1,c.marketing:1,i.sid:sub_111AEMh5qpiLmhEcbnqwrmsB7X,i.t:1234567890,i.y:all'
 		);
 
 		try {
@@ -628,7 +630,7 @@ describe('@inth/vue kernel runtime', () => {
 		await Promise.resolve();
 
 		await vi.waitFor(() => {
-			expect(window.localStorage.getItem('c15t')).toBeTruthy();
+			expect(window.localStorage.getItem('inth')).toBeTruthy();
 		});
 		const stored = readStoredRecords(undefined, Date.now()).records;
 		expect(stored).toMatchObject({
@@ -640,7 +642,7 @@ describe('@inth/vue kernel runtime', () => {
 				version: 3,
 			},
 		});
-		expect(document.cookie).toContain('c15t=');
+		expect(document.cookie).toContain('inth=');
 
 		wrapper.unmount();
 	}, 15_000);
@@ -657,7 +659,7 @@ describe('@inth/vue kernel runtime', () => {
 		await Promise.resolve();
 
 		await vi.waitFor(() => {
-			expect(window.localStorage.getItem('c15t')).toBeTruthy();
+			expect(window.localStorage.getItem('inth')).toBeTruthy();
 		});
 		const stored = readStoredRecords(undefined, Date.now()).records;
 		expect(stored).toMatchObject({
@@ -669,7 +671,7 @@ describe('@inth/vue kernel runtime', () => {
 				version: 3,
 			},
 		});
-		expect(document.cookie).toContain('c15t=');
+		expect(document.cookie).toContain('inth=');
 
 		wrapper.unmount();
 	});
@@ -790,7 +792,7 @@ test('the experiment callbacks carry the arm on the impression and the choice', 
 	try {
 		await vi.waitFor(() => expect(shown).toHaveBeenCalledOnce());
 		expect(shown.mock.calls[0]?.[0]).toMatchObject({
-			experiment: { arm: 'bar', assignedBy: 'c15t', id: 'banner-shape' },
+			experiment: { arm: 'bar', assignedBy: 'inth', id: 'banner-shape' },
 			surface: 'banner',
 		});
 		await context.kernel.commands.save('all');
@@ -903,7 +905,7 @@ test('with `iab` set, mounts the shared CMP for a prefetched IAB reference and e
 
 describe('IAB is opt-in', () => {
 	const VUE_MESSAGE =
-		"c15t: this visitor's policy uses IAB TCF, but `iab` is not set. Pass `iab` to the c15t plugin, such as `app.use(c15tVue, { iab: {} })`, or remove the IAB model from your policy.";
+		"inth: this visitor's policy uses IAB TCF, but `iab` is not set. Pass `iab` to the Inth plugin, such as `app.use(inthVue, { iab: {} })`, or remove the IAB model from your policy.";
 
 	const iabPolicyResolution = writePolicyResolutionWire(
 		resolvePolicyRules({
@@ -993,7 +995,7 @@ describe('IAB is opt-in', () => {
 		const app = createSSRApp(ConsentRoot);
 
 		expect(() =>
-			app.use(c15tVue, { prefetch, projectUrl: 'https://consent.test' })
+			app.use(inthVue, { prefetch, projectUrl: 'https://consent.test' })
 		).toThrow(VUE_MESSAGE);
 	});
 

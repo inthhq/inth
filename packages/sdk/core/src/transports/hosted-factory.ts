@@ -17,7 +17,6 @@ import type { HostedModeFactory, HostedModeOptions } from './mode';
 /**
  * Builds a `hosted()` factory whose transports come from `build`.
  *
- * @param options - Hosted backend connection options.
  * @param build - Builds the transport from the factory's options.
  * @returns A hosted transport factory carrying its options.
  * @internal

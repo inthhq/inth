@@ -1,21 +1,17 @@
 'use client';
 
-import type * as C15tCoreTypes from '@inth/sdk/engine';
-/**
- * @packageDocumentation
- * Provides the IAB TCF 2.4 compliant cookie banner component.
- * Implements an accessible, pre-built banner following IAB requirements.
- */
+import type * as InthCoreTypes from '@inth/sdk/engine';
+import { resolveIABBannerCopy } from '@inth/sdk/iab/headless';
 import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-banner';
 import type { FC } from 'react';
 
 import { warmDialogChunk } from '~/chunk-warming';
-import { useHeadlessIABConsentUI } from '~/component-hooks/use-headless-iab-consent-ui';
 import { Box } from '~/components/shared/primitives/box';
-import { BrandingLink } from '~/components/shared/ui/branding';
+import { BrandingTag } from '~/components/shared/ui/branding';
 import * as Button from '~/components/shared/ui/button';
 import { useComponentConfig } from '~/hooks/use-component-config';
+import { useHeadlessIABConsentUI } from '~/hooks/use-headless-iab-consent-ui';
 import { useIABConsentManager } from '~/hooks/use-iab-manager';
 import { useUIConfig } from '~/ui-config-context';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
@@ -60,10 +56,16 @@ export interface IABConsentBannerProps {
 	primaryButton?: 'reject' | 'accept' | 'customize';
 
 	/**
+	 * Hides the "Secured by" tag.
+	 * @default false
+	 */
+	hideBranding?: boolean;
+
+	/**
 	 * Which consent models this banner responds to.
 	 * @default ['iab']
 	 */
-	models?: C15tCoreTypes.Model[];
+	models?: InthCoreTypes.Model[];
 
 	/**
 	 * Override the UI source identifier sent with consent API calls.
@@ -88,7 +90,7 @@ export interface IABConsentBannerProps {
  * ```tsx
  * <ConsentProvider
  *   options={{
- *     mode: hosted({ projectUrl: '/api/c15t' }),
+ *     mode: hosted({ projectUrl: '/api/inth' }),
  *     iab: { cmpId: 123, vendors: [1, 2, 10] },
  *   }}
  * >
@@ -105,6 +107,7 @@ export const IABConsentBanner: FC<IABConsentBannerProps> = ({
 	scrollLock: localScrollLock,
 	trapFocus: localTrapFocus,
 	primaryButton = 'customize',
+	hideBranding = false,
 	models,
 	uiSource,
 }) => {
@@ -121,7 +124,6 @@ export const IABConsentBanner: FC<IABConsentBannerProps> = ({
 	const { components } = useUIConfig();
 	const resolvedScrollLock = policyBanner.blocking;
 
-	// Merge local props with global theme context
 	const config = useComponentConfig({
 		disableAnimation: localDisableAnimation,
 		noStyle: localNoStyle,
@@ -129,22 +131,9 @@ export const IABConsentBanner: FC<IABConsentBannerProps> = ({
 		trapFocus: policyBanner.blocking,
 	});
 
-	// Handle button actions
-	const handleAcceptAll = async () => {
-		try {
-			await performBannerAction('accept');
-		} catch {
-			// Keep the banner available so a failed list load or save can be retried.
-		}
-	};
+	const handleAcceptAll = () => performBannerAction('accept');
 
-	const handleRejectAll = async () => {
-		try {
-			await performBannerAction('reject');
-		} catch {
-			// Keep the banner available so a failed list load or save can be retried.
-		}
-	};
+	const handleRejectAll = () => performBannerAction('reject');
 
 	const handleCustomize = () => {
 		void performBannerAction('customize');
@@ -162,17 +151,7 @@ export const IABConsentBanner: FC<IABConsentBannerProps> = ({
 		return null;
 	}
 
-	// Replace {partnerCount} placeholder in description
-	const descriptionText = iabT.banner.description.replace(
-		'{partnerCount}',
-		String(banner.vendorCount)
-	);
-
-	// Replace {count} placeholder in partners link
-	const partnersLinkText = iabT.banner.partnersLink.replace(
-		'{count}',
-		String(banner.vendorCount)
-	);
+	const bannerCopy = resolveIABBannerCopy(iabT, banner);
 
 	const scopeNotice = iabT.banner.scopeServiceSpecific;
 	const titleProps = mergeSlotProps(components?.['iab-banner']?.title, {
@@ -239,11 +218,9 @@ export const IABConsentBanner: FC<IABConsentBannerProps> = ({
 				baseClassName={styles.cardShell}
 				slotKey="iab-banner.cardShell"
 			>
-				<BrandingLink
-					hideBranding={false}
-					variant="banner-tag"
-					slotContext="iab-banner"
-					data-testid="iab-consent-banner-branding"
+				<BrandingTag
+					surface="iab-banner"
+					hideBranding={hideBranding}
 				/>
 				<IABConsentBannerCard aria-label={iabT.banner.title}>
 					{/* Header */}
@@ -254,7 +231,7 @@ export const IABConsentBanner: FC<IABConsentBannerProps> = ({
 					>
 						<h2 {...titleProps}>{iabT.banner.title}</h2>
 						<p {...descriptionProps}>
-							{descriptionText.split(partnersLinkText)[0]}
+							{bannerCopy.descriptionBefore}
 							<button
 								{...partnersLinkProps}
 								type="button"
@@ -269,21 +246,16 @@ export const IABConsentBanner: FC<IABConsentBannerProps> = ({
 									warmDialogChunk();
 								}}
 							>
-								{partnersLinkText}
+								{bannerCopy.partnersLink}
 							</button>
-							{descriptionText.split(partnersLinkText)[1]}
+							{bannerCopy.descriptionAfter}
 						</p>
 						<ul {...purposeListProps}>
 							{banner.displayItems.map((name, index) => (
 								<li key={index}>{name}</li>
 							))}
-							{banner.remainingCount > 0 && (
-								<li {...purposeMoreProps}>
-									{iabT.banner.andMore.replace(
-										'{count}',
-										String(banner.remainingCount)
-									)}
-								</li>
+							{bannerCopy.andMore && (
+								<li {...purposeMoreProps}>{bannerCopy.andMore}</li>
 							)}
 						</ul>
 						<p {...legitimateInterestNoticeProps}>

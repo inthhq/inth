@@ -8,13 +8,13 @@ import { useKernelSelector } from '~/kernel-selector';
  * Marks that `@inth/react/iab` has loaded. A registry symbol, so a copy of
  * this module in another chunk reads the same mark.
  */
-const IAB_PROVIDER_LOADED = Symbol.for('c15t.react.iab-provider');
+const IAB_PROVIDER_LOADED = Symbol.for('inth.react.iab-provider');
 
 /**
  * Callbacks waiting for `IABProvider` to load (`whenIABProviderLoads` in
  * `../deferred/boot`), under a registry symbol for the same reason.
  */
-const IAB_PROVIDER_WAITERS = Symbol.for('c15t.react.iab-provider-waiters');
+const IAB_PROVIDER_WAITERS = Symbol.for('inth.react.iab-provider-waiters');
 
 /**
  * Record that `IABProvider` is part of the app, and run what waited for
@@ -35,8 +35,6 @@ export const markIABProviderLoaded = function markIABProviderLoaded(): void {
 /**
  * The error the standard surfaces throw for an `iab` policy without
  * `<IABProvider>`.
- *
- * @returns A fresh {@link IABUnavailableError}.
  * @internal
  */
 export const missingIABProviderError =

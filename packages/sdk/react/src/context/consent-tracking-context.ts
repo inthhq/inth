@@ -33,7 +33,6 @@ export const ConsentTrackingContext = createContext<ConsentTrackingValue>({});
 /**
  * Hook to read the current consent tracking context.
  *
- * @returns The current {@link ConsentTrackingValue}
  * @public
  */
 export const useConsentTracking = () => useContext(ConsentTrackingContext);

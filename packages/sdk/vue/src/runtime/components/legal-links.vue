@@ -1,41 +1,31 @@
 <script setup lang="ts">
 import type { ConsentLegalLinkKey } from '@inth/sdk/schema/config';
+import { resolveLegalLinkEntries } from '@inth/sdk/ui/utils';
 
 import '@inth/sdk/ui/styles/components/legal-links.css';
 import { computed } from 'vue';
 
-import { useConsentConfig, useConsentInit } from '#c15t/composables';
+import { useConsentConfig } from '#inth/composables';
 
+import { useSurfaceTranslations } from '../composables/use-surface-translations';
 import ConsentLink from './link.vue';
-
-const ALL_LEGAL_LINKS: ConsentLegalLinkKey[] = [
-	'privacyPolicy',
-	'cookiePolicy',
-	'termsOfService',
-];
 
 const props = defineProps<{
 	context: 'banner' | 'dialog' | 'manager';
 	links: ConsentLegalLinkKey[];
 }>();
 
-const init = useConsentInit();
 const config = useConsentConfig();
+const translations = useSurfaceTranslations();
 
 // A link the config gives no `href` is skipped, as in the other SDKs.
-const resolvedLinks = computed(() =>
-	props.links.filter(
-		(link) =>
-			ALL_LEGAL_LINKS.includes(link) && !!config.value.legalLinks?.[link]?.href
+const entries = computed(() =>
+	resolveLegalLinkEntries(
+		config.value.legalLinks,
+		props.links,
+		translations.value?.legalLinks
 	)
 );
-
-const label = (link: ConsentLegalLinkKey): string | undefined =>
-	config.value.legalLinks?.[link]?.label ??
-	init.value?.translations?.translations?.legalLinks?.[link];
-
-const isLast = (index: number): boolean =>
-	index === resolvedLinks.value.length - 1;
 </script>
 
 <!--
@@ -46,18 +36,18 @@ const isLast = (index: number): boolean =>
 -->
 <template>
 	<span
-		v-if="resolvedLinks.length > 0"
+		v-if="entries.length > 0"
 		v-bind="config.components?.['legal-links']?.root"
 		data-testid="consent-legal-links"
 		>{{ ' '
 		}}<span
-			v-for="(link, index) in resolvedLinks"
-			:key="link"
+			v-for="entry in entries"
+			:key="entry.key"
 			><ConsentLink
 				:context="context"
-				:link="link"
-				>{{ label(link) }}{{ isLast(index) ? '' : ',' }}</ConsentLink
-			>{{ isLast(index) ? '' : ' ' }}</span
+				:link="entry.key"
+				>{{ entry.label }}{{ entry.separated ? ',' : '' }}</ConsentLink
+			>{{ entry.separated ? ' ' : '' }}</span
 		></span
 	>
 </template>

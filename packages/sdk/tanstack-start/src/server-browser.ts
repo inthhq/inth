@@ -8,7 +8,7 @@
  * `@inth/sdk/engine` stayed in the client module graph. Rolldown assigns chunks
  * from that graph, so every core module the provider shares with a lazy
  * chunk got a chunk of its own: about 3 KB gzip and 5 extra files on each
- * consent route, and 5 extra files on routes without c15t.
+ * consent route, and 5 extra files on routes without Inth.
  *
  * The helpers here keep the server entry's names, so client code that
  * survives the server-function transform still builds; calling one in the
@@ -27,7 +27,7 @@ export { consentLoaderOptions } from './libs/loader-options';
 
 const serverOnly = function serverOnly(name: string): Error {
 	return new Error(
-		`c15t: ${name}() from @inth/tanstack-start/server reads the request and runs on the server only. Call it inside a server function (createServerFn), a server route or request middleware.`
+		`inth: ${name}() from @inth/tanstack-start/server reads the request and runs on the server only. Call it inside a server function (createServerFn), a server route or request middleware.`
 	);
 };
 

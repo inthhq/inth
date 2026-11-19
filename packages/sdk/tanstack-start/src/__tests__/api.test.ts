@@ -24,7 +24,7 @@ const upstream = () =>
 	);
 
 const request = (path: string, init?: RequestInit) =>
-	new Request(`https://app.example.com/api/c15t/${path}`, init);
+	new Request(`https://app.example.com/api/inth/${path}`, init);
 
 describe('createConsentRoute', () => {
 	test('serves the deployment snapshot without fetching an upstream manifest', async () => {
@@ -108,7 +108,7 @@ describe('createConsentRoute', () => {
 			fetch: upstream(),
 			projectUrl: BACKEND,
 		});
-		const incoming = request('init', { headers: { 'x-c15t-country': 'US' } });
+		const incoming = request('init', { headers: { 'x-inth-country': 'US' } });
 		rememberConsentInputs(incoming, { country: 'DE', language: 'de' });
 		const body = await (await GET({ request: incoming })).json();
 		expect(body).toMatchObject({
@@ -137,7 +137,7 @@ describe('createConsentRoute', () => {
 		expect(response.status).toBe(201);
 		const headers = new Headers(fetch.mock.calls[0]?.[1]?.headers);
 		expect(fetch.mock.calls[0]?.[0]).toBe(`${BACKEND}/subjects`);
-		expect(headers.get('x-c15t-proxy')).toBe('@inth/tanstack-start');
+		expect(headers.get('x-inth-proxy')).toBe('@inth/tanstack-start');
 		expect(headers.get('x-forwarded-host')).toBe('public.example');
 	});
 

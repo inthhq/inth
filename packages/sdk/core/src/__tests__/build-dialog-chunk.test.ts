@@ -5,9 +5,9 @@ import {
 	createDialogChunkPlugin,
 } from '../build-dialog-chunk';
 
-const C15T = '/app/node_modules/@inth/';
+const INTH = '/app/node_modules/@inth/';
 /** Where `@inth/sdk` installs its parts. */
-const SDK = `${C15T}sdk/lib/`;
+const SDK = `${INTH}sdk/lib/`;
 const ENTRY = '/app/src/entry.js';
 const ROUTE = '/app/src/routes/gate.js';
 
@@ -25,9 +25,9 @@ const graph: Record<
 		code: `import { useConsent } from '@inth/react'; import { has } from '@inth/sdk/engine'; import '@inth/react/components/prompt'; useConsent(has);`,
 		dynamic: [ROUTE],
 		imports: [
-			`${C15T}react/dist/index.js`,
+			`${INTH}react/dist/index.js`,
 			`${SDK}core/dist/index.js`,
-			`${C15T}react/dist/components/prompt.js`,
+			`${INTH}react/dist/components/prompt.js`,
 		],
 	},
 	// An app route: loads with the page it renders.
@@ -35,22 +35,22 @@ const graph: Record<
 		code: `import { storageKeys } from '@inth/sdk/engine';`,
 		imports: [`${SDK}core/dist/index.js`],
 	},
-	[`${C15T}react/dist/index.js`]: {
+	[`${INTH}react/dist/index.js`]: {
 		code: `export { useConsent } from './hooks.js'; export { importDialog, importEngine, importLoader } from './shell.js';`,
-		imports: [`${C15T}react/dist/hooks.js`, `${C15T}react/dist/shell.js`],
+		imports: [`${INTH}react/dist/hooks.js`, `${INTH}react/dist/shell.js`],
 	},
-	[`${C15T}react/dist/hooks.js`]: {
+	[`${INTH}react/dist/hooks.js`]: {
 		code: 'export const useConsent = () => 1;',
 	},
-	[`${C15T}react/dist/shell.js`]: {
+	[`${INTH}react/dist/shell.js`]: {
 		code: `export const importDialog = () => import('./deferred/dialog.js'); export const importEngine = () => import('./deferred/client-engine.js'); export const importLoader = () => import('@inth/sdk/modules/script-loader');`,
 		dynamic: [
-			`${C15T}react/dist/deferred/dialog.js`,
-			`${C15T}react/dist/deferred/client-engine.js`,
+			`${INTH}react/dist/deferred/dialog.js`,
+			`${INTH}react/dist/deferred/client-engine.js`,
 			`${SDK}core/dist/modules/script-loader/index.js`,
 		],
 	},
-	[`${C15T}react/dist/components/prompt.js`]: {
+	[`${INTH}react/dist/components/prompt.js`]: {
 		code: `import '@inth/sdk/ui/styles/components/button.module.css';`,
 		imports: [`${SDK}ui/dist/styles/components/button.module.css`],
 	},
@@ -78,13 +78,13 @@ const graph: Record<
 	[`${SDK}core/dist/libs/storage-keys.js`]: {
 		code: 'export const storageKeys = 1;',
 	},
-	[`${C15T}react/dist/deferred/dialog.js`]: {
+	[`${INTH}react/dist/deferred/dialog.js`]: {
 		code: `export * as panel from '../components/panel/index.js';`,
-		imports: [`${C15T}react/dist/components/panel/index.js`],
+		imports: [`${INTH}react/dist/components/panel/index.js`],
 	},
-	[`${C15T}react/dist/components/panel/index.js`]: {
+	[`${INTH}react/dist/components/panel/index.js`]: {
 		code: `import { has, policyActions, vendors, evaluate, consentTypes, storageKeys } from '@inth/sdk/engine'; import { dom } from '@inth/sdk/ui/utils/dom'; import '@inth/sdk/ui/styles/components/panel.module.css'; import '@inth/sdk/ui/styles/components/button.module.css'; export const Panel = () => import('../panel-trigger/index.js');`,
-		dynamic: [`${C15T}react/dist/components/panel-trigger/index.js`],
+		dynamic: [`${INTH}react/dist/components/panel-trigger/index.js`],
 		imports: [
 			`${SDK}core/dist/index.js`,
 			`${SDK}ui/dist/utils/dom.js`,
@@ -93,20 +93,20 @@ const graph: Record<
 		],
 	},
 	// A lazy part of the dialog: loads after it.
-	[`${C15T}react/dist/components/panel-trigger/index.js`]: {
+	[`${INTH}react/dist/components/panel-trigger/index.js`]: {
 		code: `import { dom } from '@inth/sdk/ui/utils/dom'; import { drag } from './drag.js';`,
 		imports: [
 			`${SDK}ui/dist/utils/dom.js`,
-			`${C15T}react/dist/components/panel-trigger/drag.js`,
+			`${INTH}react/dist/components/panel-trigger/drag.js`,
 		],
 	},
-	[`${C15T}react/dist/components/panel-trigger/drag.js`]: {
+	[`${INTH}react/dist/components/panel-trigger/drag.js`]: {
 		code: 'export const drag = 1;',
 	},
 	[`${SDK}ui/dist/utils/dom.js`]: { code: 'export const dom = 1;' },
 	[`${SDK}ui/dist/styles/components/panel.module.css`]: { code: '' },
 	[`${SDK}ui/dist/styles/components/button.module.css`]: { code: '' },
-	[`${C15T}react/dist/deferred/client-engine.js`]: {
+	[`${INTH}react/dist/deferred/client-engine.js`]: {
 		code: `import { evaluate, vendors } from '@inth/sdk/engine';`,
 		imports: [`${SDK}core/dist/index.js`],
 	},
@@ -148,7 +148,7 @@ describe('createDialogChunkGroup', () => {
 			.map(
 				(id) =>
 					[
-						id.replace(SDK, '').replace(C15T, ''),
+						id.replace(SDK, '').replace(INTH, ''),
 						group.name(id, context),
 					] as const
 			)
@@ -159,20 +159,20 @@ describe('createDialogChunkGroup', () => {
 		const { 'core/dist/libs/storage-keys.js': routeShared, ...rest } = named;
 		// The route and the dialog both need it: a file of its own, which
 		// the route loads in full.
-		expect(routeShared).toMatch(/^c15t-dialog-[0-9a-z]+$/u);
+		expect(routeShared).toMatch(/^inth-dialog-[0-9a-z]+$/u);
 		// `policy-actions`: a barrel the page imports re-exports it, but
 		// nothing the page loads asks for it. `dom`: the trigger loads after
 		// the dialog, so it does not hold this back. `consent-types`: the
 		// script loader an accept starts needs it too.
 		expect(rest).toEqual({
-			'core/dist/libs/consent-types.js': 'c15t-dialog-tap',
-			'core/dist/libs/evaluate.js': 'c15t-dialog-engine',
-			'core/dist/libs/policy-actions.js': 'c15t-dialog',
-			'core/dist/libs/vendors.js': 'c15t-dialog-shared',
-			'react/dist/components/panel/index.js': 'c15t-dialog',
-			'react/dist/deferred/dialog.js': 'c15t-dialog',
-			'ui/dist/styles/components/panel.module.css': 'c15t-dialog-styles',
-			'ui/dist/utils/dom.js': 'c15t-dialog',
+			'core/dist/libs/consent-types.js': 'inth-dialog-tap',
+			'core/dist/libs/evaluate.js': 'inth-dialog-engine',
+			'core/dist/libs/policy-actions.js': 'inth-dialog',
+			'core/dist/libs/vendors.js': 'inth-dialog-shared',
+			'react/dist/components/panel/index.js': 'inth-dialog',
+			'react/dist/deferred/dialog.js': 'inth-dialog',
+			'ui/dist/styles/components/panel.module.css': 'inth-dialog-styles',
+			'ui/dist/utils/dom.js': 'inth-dialog',
 		});
 	});
 

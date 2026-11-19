@@ -4,16 +4,18 @@ import { describe, expect, expectTypeOf, it } from 'vitest';
 import { defineExperiment } from '../../index';
 import type { ExperimentArmName } from '../../index';
 import {
-	actionAppearanceFromTheme,
-	applyExperimentTheme,
 	experimentConfigError,
 	pickExperimentArm,
-	resolveExperimentPresentation,
-	resolveExperimentTheme,
 	seedExperiment,
 } from '../experiment';
 import type { ConsentExperiment } from '../experiment';
 import { validateExperiment } from '../experiment-engine';
+import {
+	actionAppearanceFromTheme,
+	applyExperimentTheme,
+	resolveExperimentPresentation,
+	resolveExperimentTheme,
+} from '../experiment-presentation';
 
 const choice = normalizePolicyRule({
 	id: 'choice',
@@ -79,7 +81,7 @@ describe('pickExperimentArm', () => {
 		).toEqual({
 			acknowledgedDiagnostics: false,
 			arm: 'bar',
-			assignedBy: 'c15t',
+			assignedBy: 'inth',
 			id: 'banner-shape',
 		});
 	});
@@ -143,7 +145,7 @@ describe('seedExperiment', () => {
 			initialExperiment: arm,
 		});
 	});
-	it('holds the prompt for c15t to pick', () => {
+	it('holds the prompt for inth to pick', () => {
 		expect(seedExperiment(experiment)).toEqual({
 			initialExperimentPending: true,
 		});
@@ -245,7 +247,7 @@ describe('validateExperiment', () => {
 			})
 		).toThrow(/"bar".*\n.*"floating"|"bar"/u);
 	});
-	it('rejects an unusable split when c15t would pick the arm', () => {
+	it('rejects an unusable split when inth would pick the arm', () => {
 		const zero = { ...experiment, split: { bar: 0, floating: 0 } };
 		expect(() => validateExperiment(zero, choice)).toThrow(
 			/finite positive weight/u

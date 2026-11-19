@@ -4,11 +4,11 @@
 
 The provider's `colorScheme` prop switches on the dark token set: `'dark'`
 always, `'system'` when the operating system prefers dark, `'light'` never. It
-toggles a `c15t-dark` class on `<html>`. Left unset, the provider copies a
-`dark` class on `<html>` into `c15t-dark`, so an app with its own dark mode
+toggles an `inth-dark` class on `<html>`. Left unset, the provider copies a
+`dark` class on `<html>` into `inth-dark`, so an app with its own dark mode
 toggle gets the dark tokens without the prop. Pass `null` if your app sets
-`c15t-dark` itself. Override dark values under `:root.dark` and
-`:root.c15t-dark` in your stylesheet. [Dark mode](/docs/customization/dark-mode)
+`inth-dark` itself. Override dark values under `:root.dark` and
+`:root.inth-dark` in your stylesheet. [Dark mode](/docs/customization/dark-mode)
 covers a dark first paint.
 
 ## Style one part with theme slots
@@ -123,8 +123,8 @@ follows the visitor's reduced motion setting.
 [Motion and animation](/docs/customization/motion) covers the duration and
 easing tokens.
 
-## Remove c15t's styles
+## Remove Inth's styles
 
 Set `noStyle` on one component or on the provider to render the same markup
-and behavior without c15t's classes. Style the `data-*` attributes and your
+and behavior without Inth's classes. Style the `data-*` attributes and your
 slot classes instead. For different markup, see the headless page.

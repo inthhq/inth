@@ -1,4 +1,7 @@
-import { resolveConsentPresentation } from '@inth/sdk-core';
+import {
+	actionAppearanceFromTheme,
+	resolveConsentPresentation,
+} from '@inth/sdk-core';
 import type {
 	ConsentSnapshot,
 	ConsentPresentation,
@@ -6,6 +9,8 @@ import type {
 	PresentationAction,
 	ResolvedConsentPresentation,
 } from '@inth/sdk-core';
+import { resolveActionAppearance } from '@inth/sdk-ui/theme';
+import type { Theme } from '@inth/sdk-ui/theme';
 
 import { classes } from '../generated/styles';
 import { cx, h } from './dom';
@@ -16,9 +21,11 @@ export const resolveActions = function resolveActions(
 	snapshot: ConsentSnapshot,
 	surface: 'prompt' | 'preferences',
 	presentation?: ConsentPresentation,
-	override?: PromptPresentation
+	override?: PromptPresentation,
+	theme?: Theme
 ): ResolvedConsentPresentation {
 	return resolveConsentPresentation({
+		actionAppearance: actionAppearanceFromTheme(theme),
 		override,
 		policy: snapshot.policyRule,
 		presentation,
@@ -28,7 +35,6 @@ export const resolveActions = function resolveActions(
 
 /** What {@link renderActionFooter} needs. */
 export interface ActionFooterParams {
-	/** The resolved actions. */
 	actions: ResolvedConsentPresentation;
 	/** Extra class on the footer root (the surface's `footer`). */
 	footerClassName: string;
@@ -50,14 +56,11 @@ export interface ActionFooterParams {
 	footerSlot: BrowserSlotKey;
 	/** Each button group's slot key. The IAB theme has none. */
 	groupSlot?: BrowserSlotKey;
+	/** The theme whose `consentActions` style the buttons. */
+	theme?: Theme;
 }
 
-/**
- * Render a surface's button footer.
- *
- * @param params - Actions, classes and handlers.
- * @returns The footer element.
- */
+/** Render a surface's button footer. */
 export const renderActionFooter = function renderActionFooter(
 	params: ActionFooterParams
 ): HTMLElement {
@@ -88,9 +91,11 @@ export const renderActionFooter = function renderActionFooter(
 			slot(groupElement, params.groupSlot);
 		}
 		for (const action of group) {
-			const variant = actions.primaryActions.includes(action)
-				? 'primary'
-				: 'neutral';
+			const { mode, variant } = resolveActionAppearance(
+				params.theme,
+				action,
+				actions.primaryActions.includes(action)
+			);
 			groupElement.append(
 				slot(
 					h(
@@ -98,7 +103,7 @@ export const renderActionFooter = function renderActionFooter(
 						{
 							class: noStyle ? '' : classes.button.button,
 							'data-action': action,
-							'data-mode': noStyle ? undefined : 'stroke',
+							'data-mode': noStyle ? undefined : mode,
 							'data-size': noStyle ? undefined : 'small',
 							'data-testid': params.buttonTestId(action),
 							'data-variant': noStyle ? undefined : variant,

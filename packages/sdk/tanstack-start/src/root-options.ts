@@ -58,14 +58,8 @@ export interface ConsentRootProps {
 	 */
 	clearOnRevocation?: ConsentProviderOptions['clearOnRevocation'];
 
-	/**
-	 * Script-loader options.
-	 */
 	scriptLoader?: UseScriptLoaderOptions;
 
-	/**
-	 * Network-blocker configuration.
-	 */
 	networkBlocker?: UseNetworkBlockerOptions | false;
 
 	/**

@@ -1,18 +1,18 @@
 ---
 title: IAB TCF
-description: Load the c15t IAB TCF build on a plain HTML page with one script tag, configure the CMP ID and vendors, and confirm TC strings from your own code.
+description: Load the Inth IAB TCF build on a plain HTML page with one script tag, configure the CMP ID and vendors, and confirm TC strings from your own code.
 group: frameworks
 ---
 
 ## Load the IAB build
 
-Load `c15t.iab.js` instead of `c15t.js` when your policy uses IAB TCF. It
+Load `inth.iab.js` instead of `inth.js` when your policy uses IAB TCF. It
 contains the CMP, the TC string encoder, the IAB banner and the purpose and
-vendor preference dialog. `c15t.js` and `c15t.headless.js` leave all of that out, so pages without an IAB policy stay
+vendor preference dialog. `inth.js` and `inth.headless.js` leave all of that out, so pages without an IAB policy stay
 smaller. The stock banner on those builds stands aside for a policy that
 uses the `iab` model, so a page that resolves one emits an `error` event and
-throws an `IABUnavailableError` (code `C15T_IAB_UNAVAILABLE`) as an uncaught
-error. So does `c15t.iab.js` with `iab: false`. Load `c15t.iab.js` for
+throws an `IABUnavailableError` (code `INTH_IAB_UNAVAILABLE`) as an uncaught
+error. So does `inth.iab.js` with `iab: false`. Load `inth.iab.js` for
 visitors whose policy uses IAB TCF, or remove the `iab` model from the
 policy.
 
@@ -20,8 +20,8 @@ policy.
 
 ```html
 <script>
-  window.c15t = window.c15t || [];
-  c15t.push(['config', {
+  window.inth = window.inth || [];
+  inth.push(['config', {
     iab: { cmpId: YOUR_CMP_ID, vendors: [1, 2, 755] },
     legalLinks: {
       privacyPolicy: { href: '/privacy' },
@@ -34,7 +34,7 @@ policy.
   }]);
 </script>
 <script
-  src="https://your-project.inth.app/c15t.iab.js"
+  src="https://your-project.inth.app/inth.iab.js"
   defer
 ></script>
 ```
@@ -45,27 +45,27 @@ CMP that wrote it, so never copy an ID from an example. A backend can supply
 `cmpId` and the vendor list instead. `vendors` limits the list to the vendors
 your site works with.
 
-Load only one c15t bundle. `c15t.iab.js` throws an error if `c15t.js`,
-`c15t.testing.js` or `c15t.headless.js` loaded first. When the resolved policy is not an IAB
+Load only one Inth bundle. `inth.iab.js` throws an error if `inth.js`,
+`inth.testing.js` or `inth.headless.js` loaded first. When the resolved policy is not an IAB
 policy, the IAB build shows the ordinary banner. If an IAB policy cannot load
 its vendor list, the banner shows an error and keeps its confirm buttons
 disabled.
 
 A [self-hosted backend](/docs/self-host/overview) serves this build at
-`/c15t.iab.js`. Set `script.config.iab` on the backend to supply CMP defaults.
+`/inth.iab.js`. Set `script.config.iab` on the backend to supply CMP defaults.
 
 ## Confirm IAB choices from your code
 
-`c15t.acceptAll()` and `c15t.rejectAll()` confirm through the CMP when the
+`inth.acceptAll()` and `inth.rejectAll()` confirm through the CMP when the
 policy is IAB. For individual choices, change the draft on the CMP handle and
-confirm it with `c15t.saveIAB()`:
+confirm it with `inth.saveIAB()`:
 
 {/* example: fragment */}
 
 ```html
 <script>
-  window.c15t = window.c15t || [];
-  c15t.push(['onInit', async (client) => {
+  window.inth = window.inth || [];
+  inth.push(['onInit', async (client) => {
     await client.ready();
     const cmp = client.runtime.iab;
     if (!cmp) return;
@@ -80,12 +80,14 @@ confirm it with `c15t.saveIAB()`:
 
 `ready()` waits for the policy. `cmp.whenReady()` waits for the vendor list and
 CMP setup, and rejects if setup fails. The handle also has
-`setPurposeLegitimateInterest`, `setVendorLegitimateInterest` and
-`setSpecialFeatureOptIn`. Each edits the draft; `saveIAB()` confirms it.
-`c15t.save({ ... })` with categories fails under an IAB policy, because it
+`setPurposeLegitimateInterest`, `setVendorLegitimateInterest`,
+`setPurposeObjection` (the purpose and every vendor using it on legitimate
+interest) and `setSpecialFeatureOptIn`. Each edits the draft; `saveIAB()`
+confirms it.
+`inth.save({ ... })` with categories fails under an IAB policy, because it
 cannot produce a TC string.
 
-The CMP installs `window.__tcfapi`. `c15t.dispose()` removes it.
+The CMP installs `window.__tcfapi`. `inth.dispose()` removes it.
 
 ## How the stock dialog groups choices
 
@@ -109,11 +111,11 @@ that wants the same grouping must set the related vendor choices itself.
 
 The IAB UI takes the same `ui.theme`, `ui.css` and `ui.shadow` options as the
 ordinary banner; see [customize](/docs/frameworks/html/customize). With
-`shadow: false` and your own stylesheet, load both `dist/c15t.css` and
-`dist/c15t.iab.css` from the package.
+`shadow: false` and your own stylesheet, load both `dist/inth.css` and
+`dist/inth.iab.css` from the package.
 
-The IAB banner always shows the c15t branding. `ui.dialog.hideBranding` hides
-it in the preference dialog. `ui.banner.title`, `description` and the button
+`ui.banner.hideBranding` hides the "Secured by" tag on the IAB banner, and
+`ui.dialog.hideBranding` hides it in the preference dialog. `ui.banner.title`, `description` and the button
 text options apply to the IAB banner too, and a description can include
 `{partnerCount}`. `ui.iab.loadErrorText`, `saveErrorText` and
 `moreVendorsText` change the loading error, save error and pagination copy.

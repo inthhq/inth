@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { grantedServerStart } from './__tests__/helpers';
 import { isolateHubSpotPage } from './__tests__/hubspot-page';
 import {
 	grantedMarketingConsents,
@@ -16,11 +17,12 @@ describe('HubSpot loader configuration', () => {
 	isolateHubSpotPage();
 
 	it('runs its consent controller in the browser before the remote loader', () => {
-		expect(hubspot({ portalId: 53 })).toMatchObject({
+		const script = hubspot({ portalId: 53 });
+		expect(script).toMatchObject({
 			callbackOnly: true,
 			observeConsentBeforeLoad: true,
-			serverStart: undefined,
 		});
+		expect(grantedServerStart(script)).toBeUndefined();
 	});
 	afterEach(() => {
 		for (const key of [

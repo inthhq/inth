@@ -15,7 +15,7 @@ import SwiftUI
 
 /// The app's consent prompt for one core, shared by every scene that shows it.
 ///
-/// The `c15tConsent` modifiers and ``ConsentRootViewController`` attach a scene to it. However
+/// The `inth` modifiers and ``ConsentRootViewController`` attach a scene to it. However
 /// many scenes attach, the prompt has one ``presenter``, so it opens at most once at a time,
 /// keeps its draft when a scene disconnects and reconnects, and is not shown again for a prompt
 /// the person already answered or dismissed. Only one attached scene draws it: the one that
@@ -404,7 +404,7 @@ public extension View {
     ///
     /// ```swift
     /// WindowGroup {
-    ///     ContentView().c15tConsent(
+    ///     ContentView().inth(
     ///         InthAppleConfiguration(backendURL: "https://your-project.inth.app"),
     ///         privacyPolicyURL: URL(string: "https://example.com/privacy")!
     ///     )
@@ -422,7 +422,7 @@ public extension View {
     ///   - trackingReprompt: `.yearly` asks again a year after the last answer, where Apple
     ///     allows it (the EU). See ``ConsentTrackingReprompt``.
     @MainActor
-    func c15tConsent(_ configuration: InthAppleConfiguration, privacyPolicyURL: URL, theme: ConsentTheme? = nil,
+    func inth(_ configuration: InthAppleConfiguration, privacyPolicyURL: URL, theme: ConsentTheme? = nil,
                      autoPresent: Bool = true, trackingRequest: ConsentTrackingRequest = .afterConsent,
                      trackingReprompt: ConsentTrackingReprompt = .never) -> some View {
         modifier(ConsentAttachment(resolve: { try? InthApple.install(configuration) }, privacyPolicyURL: privacyPolicyURL,
@@ -434,7 +434,7 @@ public extension View {
     /// IAB core from `InthApple.install(InthAppleConfiguration(backendURL:iab:))`. Behaves like the configuration form and
     /// attaches once a core is installed.
     @MainActor
-    func c15tConsent(privacyPolicyURL: URL, theme: ConsentTheme? = nil, autoPresent: Bool = true,
+    func inth(privacyPolicyURL: URL, theme: ConsentTheme? = nil, autoPresent: Bool = true,
                      trackingRequest: ConsentTrackingRequest = .afterConsent,
                      trackingReprompt: ConsentTrackingReprompt = .never) -> some View {
         modifier(ConsentAttachment(resolve: { Inth.current }, privacyPolicyURL: privacyPolicyURL,
@@ -507,7 +507,7 @@ private struct ConsentPromptHost: View {
     var body: some View {
         Group {
             if prompt.host == id {
-                Color.clear.c15tConsent(presenter: prompt.presenter, privacyPolicyURL: privacyPolicyURL, theme: theme,
+                Color.clear.inth(presenter: prompt.presenter, privacyPolicyURL: privacyPolicyURL, theme: theme,
                                         onNoticeFrameChange: onNoticeFrameChange)
             } else {
                 Color.clear
@@ -533,7 +533,7 @@ private struct ConsentPromptHost: View {
 /// The stock consent prompt and settings for a UIKit app, in one call.
 ///
 /// Make it the window's root and hand it your own root view controller. It installs the core
-/// the way the SwiftUI `c15tConsent` modifier does and keeps the prompt above your content.
+/// the way the SwiftUI `inth` modifier does and keeps the prompt above your content.
 /// Touches outside the notice card reach your views.
 ///
 /// ```swift

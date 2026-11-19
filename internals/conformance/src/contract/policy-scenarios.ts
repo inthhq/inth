@@ -1,7 +1,7 @@
 /**
- * Declarative inputs and observations for the forthcoming policy suite.
- * These are test descriptions, not a second runtime or wire schema. Drivers
- * translate them at the public adapter boundary after the kernel lands.
+ * Declarative inputs and observations for the policy suite. These are test
+ * descriptions, not a second runtime or wire schema. Drivers translate them
+ * at the public adapter boundary.
  */
 
 /** Optional categories in the supported legacy category universe. */
@@ -71,7 +71,7 @@ export type ScenarioPrompt =
 			reason: 'missing' | 'expired' | 'policy-changed';
 	  };
 
-/** Semantic events. The suite maps these to the finalized kernel event names. */
+/** Semantic events. The suite maps these to kernel event names through `POLICY_EVENT_NAMES`. */
 export type ScenarioEvent =
 	| 'choice-recorded'
 	| 'permissions-changed'

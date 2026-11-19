@@ -20,7 +20,7 @@ import java.net.URI
  * Talks to an Inth backend's `/init` and `/subjects`.
  *
  * Same endpoints, same headers, and the same request bodies as the hosted
- * transport in `@c15t/core`. It holds no state: it turns a
+ * transport in `@inth/sdk-core`. It holds no state: it turns a
  * [com.inth.core.spi.HttpClient] into the three commands the core delegates, and
  * leaves every decision to [InitMapper] and the kernel.
  *
@@ -47,12 +47,12 @@ class HostedTransport(
 		// extractor reads first, mirroring the web SDK.
 		// The override travels as the application header and wins on the backend;
 		// the plain `sec-gpc` carries the merged signal the core honors.
-		context.overrides.gpc?.let { headers["x-c15t-gpc"] = if (it) "1" else "0" }
+		context.overrides.gpc?.let { headers["x-inth-gpc"] = if (it) "1" else "0" }
 		if (context.gpc && context.overrides.gpc == null) {
 			headers["sec-gpc"] = "1"
 		}
-		context.overrides.country?.let { headers["x-c15t-country"] = it }
-		context.overrides.region?.let { headers["x-c15t-region"] = it }
+		context.overrides.country?.let { headers["x-inth-country"] = it }
+		context.overrides.region?.let { headers["x-inth-region"] = it }
 		context.overrides.language?.let { headers["accept-language"] = it }
 		// The declared vendor scope, on the request that asks for the list it scopes. The
 		// kernel prunes whatever comes back regardless -- this header saves bytes, it is

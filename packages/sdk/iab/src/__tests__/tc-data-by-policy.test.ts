@@ -4,7 +4,7 @@
  * TCF, only the base fields when it does not.
  */
 import { createConsentKernel } from '@inth/sdk-core';
-import type { ConsentKernel } from '@inth/sdk-core';
+import type { ConsentKernel, TCData, TCDataOutsideTCF } from '@inth/sdk-core';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
@@ -13,7 +13,6 @@ import { afterEach, beforeEach, expect, test } from 'vitest';
 
 import { createIAB } from '../index';
 import type { IABHandle } from '../index';
-import type { TCData, TCDataOutsideTCF } from '../tcf/iab-tcf-types';
 import { completeGVL } from './fixtures/gvl-sample';
 
 const NOW = () => Date.parse('2026-10-14T12:00:00Z');

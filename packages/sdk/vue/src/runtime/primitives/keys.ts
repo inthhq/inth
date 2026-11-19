@@ -4,7 +4,7 @@
 import type { InjectionKey, Ref } from 'vue';
 
 export const switchCheckedKey: InjectionKey<Ref<boolean>> = Symbol(
-	'c15t:switch-checked'
+	'inth:switch-checked'
 );
 
 export interface DialogContext {
@@ -13,14 +13,14 @@ export interface DialogContext {
 	close: () => void;
 }
 export const dialogContextKey: InjectionKey<DialogContext> =
-	Symbol('c15t:dialog');
+	Symbol('inth:dialog');
 
 export interface AccordionContext {
 	isOpen: (value: string) => boolean;
 	toggle: (value: string) => void;
 }
 export const accordionContextKey: InjectionKey<AccordionContext> =
-	Symbol('c15t:accordion');
+	Symbol('inth:accordion');
 
 export interface AccordionItemContext {
 	value: string;
@@ -28,4 +28,4 @@ export interface AccordionItemContext {
 	toggle: () => void;
 }
 export const accordionItemContextKey: InjectionKey<AccordionItemContext> =
-	Symbol('c15t:accordion-item');
+	Symbol('inth:accordion-item');

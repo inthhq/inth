@@ -1,6 +1,6 @@
 ---
 title: Translations
-description: Where c15t banner and dialog copy comes from in Next.js, how the server and browser pick the visitor's language, and how to override copy and switch languages from a Client Component.
+description: Where Inth banner and dialog copy comes from in Next.js, how the server and browser pick the visitor's language, and how to override copy and switch languages from a Client Component.
 group: frameworks
 ---
 
@@ -19,7 +19,7 @@ Code can override that copy in two places:
 [Copy and translations](/docs/customization/translations) lists the message
 keys and explains how code messages combine with the project's copy.
 
-## How c15t picks the language
+## How Inth picks the language
 
 In the [App Router](/docs/frameworks/next/app-router) and
 [Pages Router](/docs/frameworks/next/pages-router) setups, `resolveConsent`
@@ -46,11 +46,11 @@ Keep the messages in their own module:
 
 <include src="../../shared/examples/nextjs/i18n.mdx" />
 
-Import it in `c15t.config.ts` and pass it under `options`:
+Import it in `inth.config.ts` and pass it under `options`:
 
 {/* example: fragment */}
 
-```ts title="c15t.config.ts"
+```ts title="inth.config.ts"
 import { defineConsentConfig } from '@inth/nextjs';
 
 import { i18n } from './lib/consent-i18n';

@@ -26,20 +26,20 @@ import PackageDescription
 //
 // Environment switches, all optional:
 //
-//   C15T_SPM_INCLUDE_RN=1   Also build the React-linked target. Needs a host app that
+//   INTH_SPM_INCLUDE_RN=1   Also build the React-linked target. Needs a host app that
 //                           vends React's headers and the generated `NativeInthSpec`
 //                           protocol. Without it the product is the bridge layer only.
-//   C15T_CORE_PATH=<path>   Where packages/swift lives, when the checkout layout
+//   INTH_CORE_PATH=<path>   Where packages/swift lives, when the checkout layout
 //                           differs. Defaults to ../swift.
 // Remote version/URL resolution is not supported until the native source package
-// publishes both InthCore and InthApple. Use C15T_CORE_PATH for private source builds.
+// publishes both InthCore and InthApple. Use INTH_CORE_PATH for private source builds.
 let env = ProcessInfo.processInfo.environment
 
-let corePath = env["C15T_CORE_PATH"] ?? "../swift"
-let includeReact = env["C15T_SPM_INCLUDE_RN"] == "1"
+let corePath = env["INTH_CORE_PATH"] ?? "../swift"
+let includeReact = env["INTH_SPM_INCLUDE_RN"] == "1"
 
-if env["C15T_CORE_VERSION"] != nil || env["C15T_CORE_URL"] != nil {
-    fatalError("C15T_CORE_VERSION and C15T_CORE_URL are unsupported: no remote InthCore/InthApple source package is published. Unset them and use C15T_CORE_PATH for private source builds.")
+if env["INTH_CORE_VERSION"] != nil || env["INTH_CORE_URL"] != nil {
+    fatalError("INTH_CORE_VERSION and INTH_CORE_URL are unsupported: no remote InthCore/InthApple source package is published. Unset them and use INTH_CORE_PATH for private source builds.")
 }
 
 let coreDependency: [Package.Dependency] = [.package(name: "InthCore", path: corePath)]

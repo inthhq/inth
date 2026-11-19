@@ -1,5 +1,5 @@
 /**
- * `@inth/sdk/devtools` — the c15t DevTools panel for the script-tag
+ * `@inth/sdk/devtools` — the Inth DevTools panel for the script-tag
  * client, the way `@inth/react/devtools` mounts it for a React provider.
  *
  * The panel inspects consents, scripts, policy and events, and its
@@ -8,8 +8,8 @@
  *
  * @example
  * ```ts
- * import { hosted, init } from '@inth/sdk-browser';
- * import { mountDevTools } from '@inth/sdk-browser/devtools';
+ * import { hosted, init } from '@inth/sdk';
+ * import { mountDevTools } from '@inth/sdk/devtools';
  *
  * const client = init({
  *   mode: hosted({ projectUrl: 'https://your-instance.c15t.dev' }),
@@ -36,7 +36,6 @@ export type { BrowserDevToolsOptions } from './devtools-mount';
  * carries the DevTools button and the panel opens beside it; the panel's
  * own launcher returns while the trigger is hidden.
  *
- * @param client - The page's client.
  * @param options - Panel placement and initial state.
  * @returns The panel; call `destroy()` to remove it.
  */

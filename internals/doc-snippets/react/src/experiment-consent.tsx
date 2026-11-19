@@ -33,7 +33,7 @@ const callbacks = {
 			pushToDataLayer({
 				arm: experiment.arm,
 				consent_action: consentAction,
-				event: 'c15t_choice_recorded',
+				event: 'inth_choice_recorded',
 				experiment_id: experiment.id,
 			});
 		}
@@ -42,7 +42,7 @@ const callbacks = {
 		if (experiment) {
 			pushToDataLayer({
 				arm: experiment.arm,
-				event: 'c15t_surface_shown',
+				event: 'inth_surface_shown',
 				experiment_id: experiment.id,
 				surface,
 			});
@@ -55,7 +55,7 @@ export const Consent = ({
 	children,
 }: {
 	/**
-	 * The arm your flag provider resolved. Omit it to let c15t pick, or pass
+	 * The arm your flag provider resolved. Omit it to let Inth pick, or pass
 	 * `off` to leave this visitor out of the experiment.
 	 */
 	arm?: 'control' | 'wall' | 'off';

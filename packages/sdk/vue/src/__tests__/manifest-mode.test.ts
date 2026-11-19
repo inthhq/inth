@@ -16,8 +16,8 @@ import {
 	resolvesOnServer,
 } from '../runtime/nuxt-mode';
 
-type WindowWithC15t = Window & {
-	c15t?: {
+type WindowWithInth = Window & {
+	__inthDebug?: {
 		version: string;
 		pkg: string;
 		mode: string;
@@ -27,7 +27,7 @@ type WindowWithC15t = Window & {
 // oxlint-disable-next-line func-style -- Preserve declaration order, interface shape, and public compatibility.
 function createManifestFixture(): ConsentManifest {
 	return {
-		branding: 'c15t',
+		branding: 'inth',
 		policyPacks: [
 			createConsentManifestPolicyPack({
 				categories: ['measurement', 'marketing'],
@@ -82,7 +82,7 @@ afterEach(() => {
 	clearManifestCache();
 	vi.restoreAllMocks();
 	vi.unstubAllGlobals();
-	delete (window as WindowWithC15t).c15t;
+	delete (window as WindowWithInth).__inthDebug;
 });
 
 describe('manifest resolution in core', () => {
@@ -90,14 +90,14 @@ describe('manifest resolution in core', () => {
 		const init = resolveManifestInit({
 			headers: {
 				'accept-language': 'de-DE,de;q=0.8,en;q=0.7',
-				'x-c15t-country': 'DE',
-				'x-c15t-region': 'BE',
+				'x-inth-country': 'DE',
+				'x-inth-region': 'BE',
 			},
 			manifest: createManifestFixture(),
 		});
 
 		expect(init).toMatchObject({
-			branding: 'c15t',
+			branding: 'inth',
 			location: {
 				countryCode: 'DE',
 				regionCode: 'BE',
@@ -229,12 +229,12 @@ describe('plain Vue modes', () => {
 		// no backend URL.
 		expect(() => manifest()).toThrow('consentManifest() from @inth/vue/vite');
 		expect(() => selectedMode({})).toThrow(
-			'c15t: `projectUrl` is required. Add consentManifest() from @inth/vue/vite to vite.config.ts and set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL), or pass `projectUrl`.'
+			'inth: `projectUrl` is required. Add consentManifest() from @inth/vue/vite to vite.config.ts and set VITE_INTH_PROJECT_URL, or pass `projectUrl`.'
 		);
 	});
 
 	test('the plugin picks the hosted backend for a backend URL alone', () => {
-		expect(selectedMode({ projectUrl: '/api/c15t' }).kind).toBe('hosted');
+		expect(selectedMode({ projectUrl: '/api/inth' }).kind).toBe('hosted');
 	});
 
 	test('the plugin rejects a config without a backend', () => {
@@ -248,8 +248,8 @@ describe('Nuxt modes', () => {
 	test('manifest() is the default and gets the consent route', () => {
 		const manifestMode = { type: 'manifest' as const };
 		expect(readNuxtMode({})).toEqual({ type: 'manifest' });
-		expect(readNuxtRoutePrefix({})).toBe('/api/c15t');
-		expect(readNuxtRoutePrefix({ mode: manifestMode })).toBe('/api/c15t');
+		expect(readNuxtRoutePrefix({})).toBe('/api/inth');
+		expect(readNuxtRoutePrefix({ mode: manifestMode })).toBe('/api/inth');
 		expect(
 			readNuxtRoutePrefix({ mode: manifestMode, routePrefix: '/consent/' })
 		).toBe('/consent');
@@ -275,8 +275,8 @@ describe('Nuxt modes', () => {
 		const init = resolveManifestInit({
 			headers: {
 				'accept-language': 'de',
-				'x-c15t-country': 'DE',
-				'x-c15t-region': 'BE',
+				'x-inth-country': 'DE',
+				'x-inth-region': 'BE',
 			},
 			manifest: createManifestFixture(),
 		}) satisfies InitOutput;
@@ -353,7 +353,7 @@ describe('Nuxt modes', () => {
 				expect(context.snapshot.value.policyRule.id).toBe('eu-opt-in');
 			});
 			expect(fetchMock).not.toHaveBeenCalled();
-			expect((window as WindowWithC15t).c15t).toMatchObject({
+			expect((window as WindowWithInth).__inthDebug).toMatchObject({
 				mode: 'manifest',
 				pkg: '@inth/vue',
 			});

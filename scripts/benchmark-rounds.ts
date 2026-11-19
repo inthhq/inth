@@ -23,9 +23,6 @@ export type BenchmarkArm = 'base' | 'head';
  * consent gate's throttled visits take seconds each, so it uses two rounds
  * to keep each job near six minutes; the paired control visit in every
  * iteration already absorbs drift within a round.
- *
- * @param mode - Benchmark mode.
- * @returns Number of measurement rounds.
  */
 export const benchmarkRoundsForMode = (mode: string): number => {
 	if (mode === 'bundle' || mode === 'examples') {
@@ -53,7 +50,6 @@ export const roundOrder = function roundOrder(
  * keep at least the original sample count.
  *
  * @param total - Iterations a single-pass run would take.
- * @param rounds - Number of rounds.
  * @returns Iterations per round, as an environment value.
  */
 export const iterationsPerRound = function iterationsPerRound(
@@ -122,7 +118,6 @@ const poolMetadata = function poolMetadata(
  *
  * @param results - The same scenario's result from each round, in order.
  * @param label - Names the scenario in errors.
- * @returns The pooled result.
  * @throws {Error} When rounds disagree on the scenario or its metrics.
  */
 export const poolRoundResults = function poolRoundResults(

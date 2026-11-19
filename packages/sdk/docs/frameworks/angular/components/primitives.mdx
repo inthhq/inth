@@ -1,6 +1,6 @@
 ---
 title: Primitives
-description: Build your own accessible consent dialog in Angular with the headless c15tDialog, c15tSwitch, c15tTabs, c15tAccordion, c15tCollapsible and c15tPreferenceItem directives, and the focus trap, scroll lock and portal directives.
+description: Build your own accessible consent dialog in Angular with the headless inthDialog, inthSwitch, inthTabs, inthAccordion, inthCollapsible and inthPreferenceItem directives, and the focus trap, scroll lock and portal directives.
 group: frameworks
 ---
 
@@ -17,26 +17,26 @@ They are attribute directives on your own elements, so your markup, classes
 and Angular bindings stay yours. The parent directive holds the state as a
 `model()`, so `[(open)]`, `[(checked)]` and `[(value)]` work with signals.
 Import every directive you use from `@inth/angular/primitives` into the
-component's `imports`. Each class is named for its selector without the `c15t` prefix: `[c15tSwitch]` is
-`Switch`, and `[c15t-preference-item-content]` is `PreferenceItemContent`.
+component's `imports`. Each class is named for its selector without the `inth` prefix: `[inthSwitch]` is
+`Switch`, and `[inth-preference-item-content]` is `PreferenceItemContent`.
 
-The primitives' rules load with the stock `<c15t-consent-dialog>`. A page that
+The primitives' rules load with the stock `<inth-consent-dialog>`. A page that
 uses the primitives' stock classes without the stock dialog needs
 `@inth/angular/styles.css` in `angular.json` and `styles: false` in
-`provideC15t()`.
+`provideInth()`.
 
 ## Directives
 
 | Primitive | Directives | Root inputs |
 | --- | --- | --- |
-| Dialog | `[c15tDialog]` (exported as `c15tDialog`), `[c15tDialogBackdrop]`, `[c15tDialogPositioner]`, `[c15tDialogContent]`, `[c15tDialogTitle]`, `[c15tDialogDescription]`, `[c15tDialogClose]` | `open` (model, default `false`), `closeOnEscape` (`true`), `closeOnInteractOutside` (`true`), `trapFocus` (`true`), `preventScroll` (`false`), `lazyMount` (`false`), `unmountOnExit` (`false`) |
-| Switch | `[c15tSwitch]` on a `<button>` (exported as `c15tSwitch`), `[c15tSwitchControl]`, `[c15tSwitchThumb]`, `input[c15tSwitchHiddenInput]` | `checked` (model, default `false`), `disabled`, `type` (`'button'`) |
-| Tabs | `[c15tTabs]` (exported as `c15tTabs`), `[c15tTabsList]`, `[c15tTabsTrigger]`, `[c15tTabsContent]` (exported as `c15tTabsContent`) | `value` (model), `orientation` (`'horizontal'`), `loop` (`true`), `disabled` |
-| Accordion | `[c15tAccordion]`, `[c15tAccordionItem]`, `[c15tAccordionTrigger]`, `[c15tAccordionContent]` | `type` (`'single'` or `'multiple'`, required), `value` (model), `collapsible` (`false`) |
-| Collapsible | `[c15tCollapsible]`, `[c15tCollapsibleTrigger]`, `[c15tCollapsibleContent]`, `[c15tCollapsibleIndicator]` | `open` (model, default `false`), `disabled` |
-| PreferenceItem | `[c15tPreferenceItem]`, `[c15tPreferenceItemHeader]`, `[c15tPreferenceItemTrigger]`, `[c15tPreferenceItemLeading]`, `[c15tPreferenceItemTitle]`, `[c15tPreferenceItemMeta]`, `[c15tPreferenceItemAuxiliary]`, `[c15tPreferenceItemControl]`, `[c15t-preference-item-content]`, `ng-template[c15tPreferenceItemBody]` | `open` (model, default `false`), `disabled`, `noStyle` |
+| Dialog | `[inthDialog]` (exported as `inthDialog`), `[inthDialogBackdrop]`, `[inthDialogPositioner]`, `[inthDialogContent]`, `[inthDialogTitle]`, `[inthDialogDescription]`, `[inthDialogClose]` | `open` (model, default `false`), `closeOnEscape` (`true`), `closeOnInteractOutside` (`true`), `trapFocus` (`true`), `preventScroll` (`false`), `lazyMount` (`false`), `unmountOnExit` (`false`) |
+| Switch | `[inthSwitch]` on a `<button>` (exported as `inthSwitch`), `[inthSwitchControl]`, `[inthSwitchThumb]`, `input[inthSwitchHiddenInput]` | `checked` (model, default `false`), `disabled`, `type` (`'button'`) |
+| Tabs | `[inthTabs]` (exported as `inthTabs`), `[inthTabsList]`, `[inthTabsTrigger]`, `[inthTabsContent]` (exported as `inthTabsContent`) | `value` (model), `orientation` (`'horizontal'`), `loop` (`true`), `disabled` |
+| Accordion | `[inthAccordion]`, `[inthAccordionItem]`, `[inthAccordionTrigger]`, `[inthAccordionContent]` | `type` (`'single'` or `'multiple'`, required), `value` (model), `collapsible` (`false`) |
+| Collapsible | `[inthCollapsible]`, `[inthCollapsibleTrigger]`, `[inthCollapsibleContent]`, `[inthCollapsibleIndicator]` | `open` (model, default `false`), `disabled` |
+| PreferenceItem | `[inthPreferenceItem]`, `[inthPreferenceItemHeader]`, `[inthPreferenceItemTrigger]`, `[inthPreferenceItemLeading]`, `[inthPreferenceItemTitle]`, `[inthPreferenceItemMeta]`, `[inthPreferenceItemAuxiliary]`, `[inthPreferenceItemControl]`, `[inth-preference-item-content]`, `ng-template[inthPreferenceItemBody]` | `open` (model, default `false`), `disabled`, `noStyle` |
 
-`[c15tDialog]` goes on an `<ng-container>` or a wrapper element. Render its
+`[inthDialog]` goes on an `<ng-container>` or a wrapper element. Render its
 parts while `dialog.shouldRender()` is `true`: always with the defaults, from
 the first open with `lazyMount`, and only while open with `unmountOnExit`.
 It returns focus to the element that had it when the dialog closes. The
@@ -44,17 +44,17 @@ It returns focus to the element that had it when the dialog closes. The
 
 A tab panel stays in the DOM with `hidden` while its tab is not selected. To
 leave it out, wrap it in `@if (panel.selected())` with
-`#panel="c15tTabsContent"`. A preference item's content renders from the
+`#panel="inthTabsContent"`. A preference item's content renders from the
 first open and then stays. To create it only on first open, such as a long
-vendor list, put it in an `<ng-template c15tPreferenceItemBody>` child
+vendor list, put it in an `<ng-template inthPreferenceItemBody>` child
 (`PreferenceItemBody`); a plain `<ng-template>` is not rendered. Set
 `forceMount` to render the content while the item has never been opened.
 
 ## Use the switch with Angular forms
 
-`c15tSwitch` implements `ControlValueAccessor`, so it works with
+`inthSwitch` implements `ControlValueAccessor`, so it works with
 `[(ngModel)]`, `formControlName` and `[formControl]` as well as
-`[(checked)]`. `c15tSwitchHiddenInput` mirrors it in a visually hidden
+`[(checked)]`. `inthSwitchHiddenInput` mirrors it in a visually hidden
 checkbox, so a native `<form>` submits its value:
 
 <include src="../../../shared/examples/angular/switch-ngmodel.mdx" />
@@ -69,11 +69,11 @@ Three directives apply the same behavior to your own elements:
 
 | Directive | Use | Input |
 | --- | --- | --- |
-| `[c15tFocusTrap]` | `[c15tFocusTrap]="open()"` | `true`, `false`, or `{ enabled, initialFocus }`. A bare attribute is on. Keeps Tab inside the element while enabled. |
-| `[c15tScrollLock]` | `[c15tScrollLock]="open()"` | `boolean`. A bare attribute locks. Stops the page scrolling behind the element. |
-| `[c15tPortal]` | `c15tPortal` or `c15tPortal="#modals"` | An element or selector, default `<body>`. Moves the element there after the first browser render and removes it with its view. |
+| `[inthFocusTrap]` | `[inthFocusTrap]="open()"` | `true`, `false`, or `{ enabled, initialFocus }`. A bare attribute is on. Keeps Tab inside the element while enabled. |
+| `[inthScrollLock]` | `[inthScrollLock]="open()"` | `boolean`. A bare attribute locks. Stops the page scrolling behind the element. |
+| `[inthPortal]` | `inthPortal` or `inthPortal="#modals"` | An element or selector, default `<body>`. Moves the element there after the first browser render and removes it with its view. |
 
-All three do nothing on the server. `c15tPortal` leaves the element in place
+All three do nothing on the server. `inthPortal` leaves the element in place
 until the first browser render, so hydration finds the server's markup where
 it rendered it. The stock banner uses these three; the stock dialog uses the
 dialog primitives.

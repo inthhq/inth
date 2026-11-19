@@ -1,4 +1,4 @@
-import clientManifestSnapshot from '#c15t/client-manifest-snapshot';
+import clientManifestSnapshot from '#inth/client-manifest-snapshot';
 
 import type { NuxtMode } from './nuxt-mode';
 
@@ -12,9 +12,6 @@ import type { NuxtMode } from './nuxt-mode';
  * `/init`, never as an unknown location: that could apply another
  * region's rules.
  *
- * @param mode - The mode from `nuxt.config.ts`.
- * @param headers - Consent headers the server read from the request.
- * @returns The mode for `clientMode()`.
  * @internal
  */
 export const withClientData = function withClientData(

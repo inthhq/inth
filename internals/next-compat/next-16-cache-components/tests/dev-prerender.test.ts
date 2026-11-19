@@ -39,7 +39,7 @@ const waitForDevServer = async (
 		throw new Error(`next dev did not become ready\n${getLogs()}`);
 	}
 	try {
-		const response = await fetch(`${baseURL}/api/c15t/__compat/requests`, {
+		const response = await fetch(`${baseURL}/api/inth/__compat/requests`, {
 			signal: AbortSignal.timeout(5_000),
 		});
 		if (response.ok) {

@@ -8,7 +8,6 @@ import type { ConsentClient, ConsentClientOptions } from './types';
 
 /**
  * Create an IAB-capable browser client without starting it.
- * @param options - Transport, CMP, and presentation settings.
  * @returns The client, with one runtime shared by ordinary and IAB UI.
  */
 export const createConsentClient = (
@@ -28,7 +27,6 @@ export const createConsentClient = (
 
 /**
  * Create and start an IAB-capable browser client.
- * @param options - Transport, CMP, and presentation settings.
  * @returns The started client. CMP controls are on `client.runtime.iab`.
  */
 export const init = (

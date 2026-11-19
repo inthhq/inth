@@ -3,7 +3,7 @@
 import { useActiveUI, useSetActiveUI, useSnapshot } from '@inth/react';
 import { useEffect } from 'react';
 
-/** Page state the harness reads through `window.__c15tConsumerBench`. */
+/** Page state the harness reads through `window.__inthConsumerBench`. */
 export interface ConsumerProbeState {
 	activeUI: string;
 	hasStoredChoice: boolean;
@@ -16,7 +16,7 @@ export interface ConsumerProbeState {
 
 declare global {
 	interface Window {
-		__c15tConsumerBench?: ConsumerProbeState;
+		__inthConsumerBench?: ConsumerProbeState;
 	}
 }
 
@@ -26,12 +26,12 @@ export const getProbeState = function getProbeState():
 	if (typeof window === 'undefined') {
 		return undefined;
 	}
-	window.__c15tConsumerBench ??= {
+	window.__inthConsumerBench ??= {
 		activeUI: 'none',
 		hasStoredChoice: false,
 		onChoiceRecordedCount: 0,
 	};
-	return window.__c15tConsumerBench;
+	return window.__inthConsumerBench;
 };
 
 const isVisible = function isVisible(element: Element | null): boolean {

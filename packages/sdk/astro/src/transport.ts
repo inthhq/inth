@@ -19,11 +19,11 @@ import { createHostedTransport } from '@inth/sdk/engine';
 import { testingOptionsOf } from '@inth/sdk/modes';
 import { clientMode } from '@inth/sdk/runtime/client-mode';
 
-import type { C15tResolvedOptions } from './types';
+import type { InthResolvedOptions } from './types';
 
 /** The options a transport is built from. */
 type TransportOptions = Pick<
-	C15tResolvedOptions,
+	InthResolvedOptions,
 	'projectUrl' | 'mode' | 'routePrefix'
 >;
 
@@ -91,7 +91,6 @@ export const testingTransport: ResolveTransport = ({ mode }) =>
  * through `${routePrefix}/init`, and `manifest({ resolve: 'browser' })`
  * loads the browser resolver with `import()`.
  *
- * @param options - The resolved integration options.
  * @returns A transport factory for `createConsentKernel`.
  * @throws {Error} When the mode needs a backend URL and none is set.
  * @internal

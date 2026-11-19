@@ -31,7 +31,7 @@ const HomePage = () => {
 	return (
 		<main className="page">
 			<IabSurfaces cmpId={10} />
-			<h1>c15t × TanStack Start</h1>
+			<h1>Inth × TanStack Start</h1>
 			<a href="/consent-example">Consent example</a>
 			<p>
 				Consent management with the banner server-rendered into the first HTML

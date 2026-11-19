@@ -1,7 +1,7 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { baseConfig } from '@c15t/vitest-config/base';
+import { baseConfig } from '@inth/vitest-config/base';
 import { defineConfig, mergeConfig } from 'vitest/config';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -40,7 +40,7 @@ const isFilteredRun = cliArgs.some(
  * `scripts/check-coverage-ratchet.ts`, which names the files that broke the
  * floor instead of printing four aggregate percentages.
  */
-const runsRatchet = process.env.C15T_COVERAGE_RATCHET === '1';
+const runsRatchet = process.env.INTH_COVERAGE_RATCHET === '1';
 
 /** An explicit `--coverage` always instruments, even alongside a filter. */
 const wantsCoverage = cliArgs.some(

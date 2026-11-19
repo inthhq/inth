@@ -1,11 +1,12 @@
 {
-	"extends": "@c15t/typescript-config/base.json",
+	"extends": "@inth/typescript-config/base.json",
 	"compilerOptions": {
+		"lib": ["dom", "esnext"],
 		"moduleResolution": "bundler",
 		"paths": {
 			"#imports": ["./src/runtime/vue/stubs.ts"],
-			"#c15t/composables": ["./src/runtime/composables/index.ts"],
-			"@c15t/conformance": ["../../../internals/conformance/src/index.ts"]
+			"#inth/composables": ["./src/runtime/composables/index.ts"],
+			"@inth/conformance": ["../../../internals/conformance/src/index.ts"]
 		}
 	},
 	"include": [
@@ -13,7 +14,7 @@
 		"src/**/*.vue",
 		"src/**/*.d.ts",
 		"src/env.d.ts",
-		"src/c15t-aliases.d.ts"
+		"src/inth-aliases.d.ts"
 	],
 	"exclude": ["src/**/*.nuxt.ts", "src/runtime/plugin.nuxt.ts"]
 }

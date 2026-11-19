@@ -1,7 +1,7 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 
 /**
- * `consentManifest()` lets `c15tHandle` preload the on-demand script loader
+ * `consentManifest()` lets `inthHandle` preload the on-demand script loader
  * and network blocker chunks on the routes that configure them. The bench
  * has no backend to fetch a manifest from at build time (its fixture is
  * this app), so `onBuildError: 'runtime'` skips the fetch and the server
@@ -15,7 +15,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
  * from this directory, and a missing export becomes a rejection the
  * fallback below can handle.
  */
-const loadC15tPlugins = async function loadC15tPlugins(): Promise<unknown[]> {
+const loadInthPlugins = async function loadInthPlugins(): Promise<unknown[]> {
 	const specifier = ['@inth/svelte', 'vite'].join('/');
 	try {
 		const module = (await import(specifier)) as {
@@ -38,5 +38,5 @@ const loadC15tPlugins = async function loadC15tPlugins(): Promise<unknown[]> {
  * fail on a config Vite itself accepts.
  */
 export default {
-	plugins: [sveltekit(), ...(await loadC15tPlugins())],
+	plugins: [sveltekit(), ...(await loadInthPlugins())],
 };

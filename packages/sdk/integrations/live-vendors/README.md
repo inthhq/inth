@@ -78,7 +78,7 @@ logic is pure and unit-tested in `report.test.ts`.
 - `types.ts` — probe config, harness protocol, and report types
 - `vendors.ts` — per-vendor probe configs (shared by runner and harness)
 - `harness/entry.ts` — browser-side harness bundled by `Bun.build`, drives
-  the production `c15t` script loader inside the probed page
+  the production `inth` script loader inside the probed page
 - `runner.ts` — Playwright orchestration, phase assertions, JSON report
 - `report.ts` — pure report/issue helpers (unit-tested)
 - `manage-issues.ts` — GitHub issue sync used by the workflow
@@ -96,11 +96,11 @@ logic is pure and unit-tested in `report.test.ts`.
   These limits apply to provenance capture, not Chromium's script execution.
 - The runner needs `--tsconfig-override live-vendors/tsconfig.json` (already
   baked into the package scripts) because Bun otherwise applies the package
-  tsconfig's `c15t → dist-types` path mapping at runtime.
+  tsconfig's `inth → dist-types` path mapping at runtime.
 - That tsconfig maps `~/*` to `../../core/src/*`. `stub-contract.test.ts`
   reaches `src/e2e-test-utils.ts`, which imports the core script loader by
   relative path, so core's own `~/*` sources join this project's type program.
   The package tsconfig sidesteps this by excluding `e2e-test-utils.ts`
   outright; excluding it here would leave the meta-test untyped instead. Keep
   the mapping narrow — Bun reads these paths at runtime too, so adding a
-  `c15t` entry here would point the runner at `.d.ts` files.
+  `inth` entry here would point the runner at `.d.ts` files.

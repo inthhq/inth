@@ -15,7 +15,7 @@ const fixtureFiles = (directory: string) =>
 		.sort();
 
 it('keeps the native banner summary fixtures in step with the web function', () => {
-	const directory = mkdtempSync(join(tmpdir(), 'c15t-banner-summary-'));
+	const directory = mkdtempSync(join(tmpdir(), 'inth-banner-summary-'));
 	try {
 		const result = spawnSync(
 			'bun',

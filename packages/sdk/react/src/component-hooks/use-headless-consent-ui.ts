@@ -108,7 +108,7 @@ export const useHeadlessConsentUI = function useHeadlessConsentUI(
 		}
 		for (const diagnostic of [...banner.diagnostics, ...dialog.diagnostics]) {
 			console.warn(
-				`c15t presentation: ${diagnostic.message}`,
+				`inth presentation: ${diagnostic.message}`,
 				diagnostic.actions
 			);
 		}

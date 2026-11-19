@@ -1,6 +1,6 @@
 ---
 title: Vendor consent
-description: Let visitors allow a category such as marketing in a Next.js app and still turn off one vendor in it, with vendors in c15t.config.ts and useVendorAllowed.
+description: Let visitors allow a category such as marketing in a Next.js app and still turn off one vendor in it, with vendors in inth.config.ts and useVendorAllowed.
 group: frameworks
 ---
 
@@ -12,12 +12,12 @@ Declaring a vendor turns on vendor switches. Built-in `@inth/integrations`
 helpers then list their own vendor by name, so you only declare a vendor for a
 script of your own, or to replace a helper's name and privacy policy.
 
-Declare the vendors next to the scripts in `c15t.config.ts`, using the
+Declare the vendors next to the scripts in `inth.config.ts`, using the
 `vendor` slug each script already carries:
 
 {/* example: fragment */}
 
-```ts title="c15t.config.ts"
+```ts title="inth.config.ts"
 import { defineConsentConfig } from '@inth/nextjs';
 
 export default defineConsentConfig({

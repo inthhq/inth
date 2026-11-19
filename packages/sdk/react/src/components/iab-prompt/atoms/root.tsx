@@ -1,6 +1,7 @@
 'use client';
 
-import type * as C15tCoreTypes from '@inth/sdk/engine';
+import type * as InthCoreTypes from '@inth/sdk/engine';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-banner';
 import { forwardRef as createForwardRef, useMemo } from 'react';
 import type { CSSProperties, FC, HTMLAttributes, ReactNode } from 'react';
@@ -22,7 +23,7 @@ import {
 } from '../../shared/surface-styles';
 import { IABConsentBannerOverlay } from './overlay';
 
-const DEFAULT_MODELS: C15tCoreTypes.Model[] = ['iab'];
+const DEFAULT_MODELS: InthCoreTypes.Model[] = ['iab'];
 
 interface IABConsentBannerRootProps extends HTMLAttributes<HTMLDivElement> {
 	children: ReactNode;
@@ -34,7 +35,7 @@ interface IABConsentBannerRootProps extends HTMLAttributes<HTMLDivElement> {
 	 * Which consent models this banner responds to.
 	 * @default ['iab']
 	 */
-	models?: C15tCoreTypes.Model[];
+	models?: InthCoreTypes.Model[];
 	/**
 	 * Override the UI source identifier sent with consent API calls.
 	 * @default 'iab_banner'
@@ -67,7 +68,6 @@ const IABConsentBannerRootChildren = createForwardRef<
 		const model = useModel();
 		const translations = useTranslations();
 		const textDirection = useTextDirection(translations?.language ?? 'en');
-		// IAB banner shows when activeUI is 'banner' and the current model matches
 		const sheetsReady = useSurfaceSheetsReady(IAB_FIRST_PAINT_SHEETS, noStyle);
 		const shouldShowBanner =
 			sheetsReady &&
@@ -107,13 +107,14 @@ const IABConsentBannerRootChildren = createForwardRef<
 					data-position="bottom-left"
 					data-entry={lateEntry ? 'late' : undefined}
 					data-testid="iab-consent-banner-root"
-					data-c15t-streamed=""
+					{...{ [SURFACE_ROOT_ATTRIBUTE]: 'banner' }}
+					data-inth-streamed=""
 					dir={textDirection}
 					tabIndex={-1}
 				>
 					{children}
 					<span
-						data-c15t-stream-end=""
+						data-inth-stream-end=""
 						hidden
 					/>
 				</div>
@@ -175,7 +176,7 @@ interface IABConsentBannerRootChildrenProps extends HTMLAttributes<HTMLDivElemen
 	 * Which consent models this banner responds to.
 	 * @default ['iab']
 	 */
-	models?: C15tCoreTypes.Model[];
+	models?: InthCoreTypes.Model[];
 }
 
 IABConsentBannerRootChildren.displayName = 'IABConsentBannerRootChildren';

@@ -89,9 +89,6 @@ export interface RecordsBoundary {
 	noteRecordedSubject: (id: string | undefined) => void;
 }
 
-/**
- * Create the records boundary of one kernel.
- */
 export const createRecordsBoundary = function createRecordsBoundary({
 	runtime,
 	transport,
@@ -101,7 +98,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 	// Bumped by every `identify()` so a subject read started by an earlier
 	// identify cannot apply after a later one.
 	let identifyGeneration = 0;
-	// An ID c15t generated that no record carries yet. It lives in memory
+	// An ID Inth generated that no record carries yet. It lives in memory
 	// only and is gone on the next page load.
 	let provisionalSubjectId: string | null = null;
 
@@ -167,7 +164,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 				if (result.ok === false) {
 					emit({
 						command: 'loadSubjectRecord',
-						error: new Error('c15t: server record rejected by validation'),
+						error: new Error('inth: server record rejected by validation'),
 						type: 'command:error',
 					});
 				}

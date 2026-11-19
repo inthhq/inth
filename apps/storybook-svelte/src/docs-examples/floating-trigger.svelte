@@ -4,7 +4,7 @@
 </script>
 
 <!-- A floating button in the bottom-left corner that opens preferences.
-     Visitors can drag it to another corner; c15t remembers where. -->
+     Visitors can drag it to another corner; inth remembers where. -->
 <ConsentDialogTrigger
 	defaultPosition="bottom-left"
 	size="sm"

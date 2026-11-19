@@ -26,7 +26,7 @@ framework's equivalent. Dev servers load code differently and hide problems.
    `connect.facebook.net` or `youtube-nocookie.com`. You will filter by each.
 
 Before testing, list every place a vendor could load: `<script>` tags,
-framework analytics plugins, tag manager tags and embeds. c15t cannot hold
+framework analytics plugins, tag manager tags and embeds. Inth cannot hold
 back code it does not load. Remove duplicates first, or the results mean
 nothing.
 
@@ -36,7 +36,7 @@ nothing.
 | --- | --- |
 | Load the page | The banner appears under an opt-in policy. Filter Network by each vendor domain; opt-in vendors show no requests. |
 | Click Reject | The banner closes. Vendor domains still show no requests. |
-| Reload | No banner. Still no vendor requests. DevTools Application shows a `c15t` cookie. |
+| Reload | No banner. Still no vendor requests. DevTools Application shows an `inth` cookie. |
 | Open a new tab on the same site | Same result as the reload. |
 | Open preferences from your footer link | The dialog opens with the categories you rejected turned off. |
 | Allow one category and save | Only vendors in that category start loading. The others stay silent. |
@@ -56,7 +56,7 @@ Policies usually differ by region. Test at least:
 - A location that needs a choice, such as Germany or the United Kingdom.
 - A location without a prompt, such as a US state without a privacy law in
   your rules.
-- A request with no location headers at all. c15t applies your policy's
+- A request with no location headers at all. Inth applies your policy's
   fallback for unknown locations; make sure that fallback is what you want.
 
 Use a VPN, your host's geolocation preview, or the `country` option on your

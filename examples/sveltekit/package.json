@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/example-sveltekit",
+	"name": "@inth/example-sveltekit",
 	"private": true,
 	"type": "module",
 	"scripts": {

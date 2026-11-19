@@ -17,17 +17,17 @@ describe('init query parameters', () => {
 		// rename here silently drops the input for them.
 		expect(Object.fromEntries(INIT_PARAM_HEADERS)).toEqual({
 			contract: POLICY_CONTRACT_HEADER,
-			country: 'x-c15t-country',
+			country: 'x-inth-country',
 			experiment: CONSENT_EXPERIMENT_HEADER,
-			gpc: 'x-c15t-gpc',
-			region: 'x-c15t-region',
-			v: 'x-c15t-version',
+			gpc: 'x-inth-gpc',
+			region: 'x-inth-region',
+			v: 'x-inth-version',
 		});
 	});
 
 	it('writes every input in a fixed order and keeps a relative URL relative', () => {
 		expect(
-			appendInitParams('/api/c15t/init?site=shop#top', {
+			appendInitParams('/api/inth/init?site=shop#top', {
 				country: 'DE',
 				experiment: { arm: 'a=b', id: 'banner shape' },
 				gpc: false,
@@ -36,7 +36,7 @@ describe('init query parameters', () => {
 				version: '3.0.0',
 			})
 		).toBe(
-			'/api/c15t/init?site=shop&v=3.0.0&contract=1&country=DE&region=BE&gpc=0&experiment=banner%2520shape%3Da%253Db#top'
+			'/api/inth/init?site=shop&v=3.0.0&contract=1&country=DE&region=BE&gpc=0&experiment=banner%2520shape%3Da%253Db#top'
 		);
 	});
 
@@ -49,7 +49,7 @@ describe('init query parameters', () => {
 
 	it('replaces a parameter the URL already carries, so it appears once', () => {
 		// The names are generic; an app's own init route may already use one.
-		// c15t's value wins, and the app's other parameters keep their order
+		// Inth's value wins, and the app's other parameters keep their order
 		// and encoding.
 		const url = appendInitParams(
 			'/api/consent/init?country=US&site=a%20b&v=1&tag=x#top',
@@ -63,13 +63,13 @@ describe('init query parameters', () => {
 		expect(params.getAll('v')).toEqual(['3.0.0']);
 	});
 
-	it('leaves a parameter c15t does not send for the backend to read', () => {
+	it('leaves a parameter inth does not send for the backend to read', () => {
 		const url = appendInitParams('/api/consent/init?region=CA', {
 			country: 'US',
 		});
 		expect(url).toBe('/api/consent/init?region=CA&country=US');
 		expect(
-			applyInitParamsToHeaders(url, new Headers()).get('x-c15t-region')
+			applyInitParamsToHeaders(url, new Headers()).get('x-inth-region')
 		).toBe('CA');
 	});
 
@@ -90,12 +90,12 @@ describe('init query parameters', () => {
 		});
 		const headers = applyInitParamsToHeaders(url, new Headers());
 		expect(Object.fromEntries(headers)).toEqual({
-			'x-c15t-country': 'DE',
-			'x-c15t-experiment': 'banner%20shape=a%3Db',
-			'x-c15t-gpc': '1',
-			'x-c15t-policy-contract': '1',
-			'x-c15t-region': 'BE',
-			'x-c15t-version': '3.0.0',
+			'x-inth-country': 'DE',
+			'x-inth-experiment': 'banner%20shape=a%3Db',
+			'x-inth-gpc': '1',
+			'x-inth-policy-contract': '1',
+			'x-inth-region': 'BE',
+			'x-inth-version': '3.0.0',
 		});
 		expect(
 			parseExperimentHeader(headers.get(CONSENT_EXPERIMENT_HEADER))
@@ -107,27 +107,27 @@ describe('init query parameters', () => {
 			'/init?country=FR&contract=2',
 			new Headers({
 				'cf-ipcountry': 'US',
-				'x-c15t-country': 'DE',
-				'x-c15t-policy-contract': '1',
+				'x-inth-country': 'DE',
+				'x-inth-policy-contract': '1',
 			})
 		);
-		expect(headers.get('x-c15t-country')).toBe('FR');
-		expect(headers.get('x-c15t-policy-contract')).toBe('2');
+		expect(headers.get('x-inth-country')).toBe('FR');
+		expect(headers.get('x-inth-policy-contract')).toBe('2');
 		expect(headers.get('cf-ipcountry')).toBe('US');
 	});
 
 	it('reads no parameter from a fragment', () => {
 		const headers = applyInitParamsToHeaders(
 			'/init#frag?country=US',
-			new Headers({ 'x-c15t-country': 'DE' })
+			new Headers({ 'x-inth-country': 'DE' })
 		);
-		expect(headers.get('x-c15t-country')).toBe('DE');
+		expect(headers.get('x-inth-country')).toBe('DE');
 	});
 
 	it('falls back to the legacy headers when no parameter is sent', () => {
 		const original = new Headers({
-			'x-c15t-gpc': '1',
-			'x-c15t-version': '2.0.0',
+			'x-inth-gpc': '1',
+			'x-inth-version': '2.0.0',
 		});
 		const headers = applyInitParamsToHeaders(
 			new URL('https://c.example/init'),
@@ -142,8 +142,8 @@ describe('init query parameters', () => {
 			'/init?country=&gpc=yes',
 			new Headers({ 'sec-gpc': '1' })
 		);
-		expect(headers.has('x-c15t-country')).toBe(false);
+		expect(headers.has('x-inth-country')).toBe(false);
 		// A malformed override must not hide the browser's own signal.
-		expect(headers.has('x-c15t-gpc')).toBe(false);
+		expect(headers.has('x-inth-gpc')).toBe(false);
 	});
 });

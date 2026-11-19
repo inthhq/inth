@@ -9,10 +9,10 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import { inthProtocolHeaders } from '../../libs/version-header';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { hosted } from '../../transports/mode';
 import type { ProviderTransportFactory } from '../../transports/mode';
-import { c15tProtocolHeaders } from '../../transports/version-header';
 import { createConsentRuntime } from '../index';
 import type { ConsentRuntime, ConsentRuntimeOptions } from '../types';
 
@@ -59,17 +59,17 @@ const createRuntime = (options: RuntimeOverrides = {}) => {
 						// The path alone: the runtime adds its consent journey as a query.
 						String(input).split('?')[0]?.endsWith('/init')
 							? {
-									branding: 'c15t',
+									branding: 'inth',
 									location: { countryCode: 'US', regionCode: 'CA' },
 									policyResolution: writePolicyResolutionWire(policy),
 									translations: { language: 'en', translations },
 								}
 							: {},
-						{ headers: c15tProtocolHeaders }
+						{ headers: inthProtocolHeaders }
 					)
 				);
 			},
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		}),
 		prefetch: { initRetry: false },
 		...options,
@@ -138,7 +138,7 @@ test.each(['opt-out', 'none', 'changed-policy', 'offline-rejection'] as const)(
 		}
 		close(initial);
 		let savedChoice = initial.kernel.getSnapshot().explicitChoice;
-		let savedLocal = localStorage.getItem('c15t');
+		let savedLocal = localStorage.getItem('inth');
 		let savedCookie = document.cookie;
 
 		unavailable = true;
@@ -153,14 +153,14 @@ test.each(['opt-out', 'none', 'changed-policy', 'offline-rejection'] as const)(
 		if (recovery === 'offline-rejection') {
 			await outage.kernel.commands.save('none');
 			savedChoice = outage.kernel.getSnapshot().explicitChoice;
-			savedLocal = localStorage.getItem('c15t');
+			savedLocal = localStorage.getItem('inth');
 			savedCookie = document.cookie;
 		}
 		close(outage);
 		const outageChoice = outage.kernel.getSnapshot().explicitChoice;
 		expect(outageChoice?.categories.measurement?.value).toBe(false);
 		expect(outageChoice).toEqual(savedChoice);
-		expect(localStorage.getItem('c15t')).toBe(savedLocal);
+		expect(localStorage.getItem('inth')).toBe(savedLocal);
 		expect(document.cookie).toBe(savedCookie);
 
 		unavailable = false;
@@ -314,7 +314,7 @@ test.each([
 			value: true,
 		};
 		localStorage.setItem(
-			'c15t',
+			'inth',
 			JSON.stringify({
 				categories: { measurement: grant },
 				...(storedSubject && { subject: { subjectId: storedSubject } }),

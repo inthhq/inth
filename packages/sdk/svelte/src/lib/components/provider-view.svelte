@@ -27,8 +27,14 @@
 		ConsentProviderRuntime,
 		ConsentRuntime,
 	} from '@inth/sdk/runtime/provider';
-	import { setupColorScheme } from '@inth/sdk/ui/utils';
-	import { BROWSER } from 'esm-env';
+	import { iabSurfaceActions } from '@inth/sdk/surface-state';
+	import { warnOnUnappliedThemeTokens } from '@inth/sdk/ui/theme';
+	import {
+		prefersReducedMotion,
+		setupColorScheme,
+		subscribeReducedMotion,
+	} from '@inth/sdk/ui/utils';
+	import { BROWSER, DEV } from 'esm-env';
 	import type { Snippet } from 'svelte';
 	import { onDestroy, onMount, untrack } from 'svelte';
 
@@ -38,20 +44,18 @@
 	import { runtimeOptionsFor } from '../provider-options';
 	import type { ProviderOptionsInput } from '../provider-options';
 	import { startOnServer } from '../server-script-start';
-	import { warnOnUnappliedThemeTokens } from '../theme-warning';
 
 	interface ProviderViewProps {
 		children?: Snippet;
 		/** The provider's resolved options. */
 		options: ProviderOptionsInput;
-		/** The runtime to render. */
 		runtime: ConsentRuntime;
 		/**
 		 * The same runtime when the provider owns it: this component starts,
 		 * updates and disposes it. Absent for a borrowed runtime.
 		 */
 		owned?: ConsentProviderRuntime;
-		/** `<meta name="c15t-modulepreload">` content, or `''`. */
+		/** `<meta name="inth-modulepreload">` content, or `''`. */
 		preloadMarker: string;
 		/**
 		 * HTML rendered after the children: the boot data `ConsentRoot`
@@ -75,7 +79,7 @@
 	const boot = untrack(() => props.boot ?? '');
 	// When the visitor's consent already lets some `scripts` run, the
 	// server render starts them from the HTML, before hydration:
-	// `c15tHandle` adds a `<script>` for them at the end of `<body>`, and the
+	// `inthHandle` adds a `<script>` for them at the end of `<body>`, and the
 	// loader adopts the tags.
 	if (
 		ownsRuntime &&
@@ -249,16 +253,9 @@
 		// IAB surfaces in the first HTML. Until `@inth/sdk/iab` lands the lazy
 		// handle queues calls and replays them, so an early Accept still
 		// records consent; without any handle the actions are no-ops.
-		const readyHandle = iabHandle;
-		const noop = () => {
-			/* empty */
-		};
-		const noopAsync = async () => {
-			/* empty */
-		};
 		return {
 			...iab,
-			acceptAll: readyHandle?.acceptAll ?? noop,
+			...iabSurfaceActions(iabHandle),
 			config: {
 				cmpId: iab.cmpId,
 				enabled: iab.enabled,
@@ -266,20 +263,9 @@
 			isLoadingGVL: iab.enabled && !iab.gvl,
 			nonIABVendors: iab.customVendors,
 			preferenceCenterTab: iabTab,
-			rejectAll: readyHandle?.rejectAll ?? noop,
-			save: readyHandle?.save ?? noopAsync,
-			setAdTechProviderConsent: (providerId, value) =>
-				readyHandle?.setAdTechProviderConsent?.(providerId, value),
 			setPreferenceCenterTab(tab) {
 				iabTab = tab;
 			},
-			setPurposeConsent: readyHandle?.setPurposeConsent ?? noop,
-			setPurposeLegitimateInterest:
-				readyHandle?.setPurposeLegitimateInterest ?? noop,
-			setSpecialFeatureOptIn: readyHandle?.setSpecialFeatureOptIn ?? noop,
-			setVendorConsent: readyHandle?.setVendorConsent ?? noop,
-			setVendorLegitimateInterest:
-				readyHandle?.setVendorLegitimateInterest ?? noop,
 		};
 	};
 
@@ -374,20 +360,13 @@
 		}
 	});
 
-	let prefersReducedMotion = $state(false);
+	let reducedMotion = $state(false);
 
 	onMount(() => {
-		if (typeof window === 'undefined' || !window.matchMedia) {
-			return;
-		}
-		const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-		prefersReducedMotion = mediaQuery.matches;
-
-		const handler = (event: MediaQueryListEvent) => {
-			prefersReducedMotion = event.matches;
-		};
-		mediaQuery.addEventListener('change', handler);
-		return () => mediaQuery.removeEventListener('change', handler);
+		reducedMotion = prefersReducedMotion();
+		return subscribeReducedMotion((reduced) => {
+			reducedMotion = reduced;
+		});
 	});
 
 	// The arm's theme overrides ride on the host theme, so the injected
@@ -398,7 +377,13 @@
 
 	// Development only. Tokens need `generateThemeCSS` output in the page.
 	$effect(() => {
-		warnOnUnappliedThemeTokens(userTheme);
+		if (DEV) {
+			warnOnUnappliedThemeTokens(
+				userTheme,
+				document,
+				'Put the --inth-* variables, or the CSS from generateThemeCSS(theme), in your stylesheet and drop the tokens from `theme`. See https://c15t.com/docs/frameworks/sveltekit/quickstart'
+			);
+		}
 	});
 
 	setThemeContext({
@@ -406,7 +391,7 @@
 			return options.colorScheme;
 		},
 		get disableAnimation() {
-			return options.disableAnimation ?? prefersReducedMotion;
+			return options.disableAnimation ?? reducedMotion;
 		},
 		get legalLinks() {
 			return options.legalLinks;
@@ -435,14 +420,9 @@
 	});
 
 	// Unset mirrors a `dark` class on `<html>`, as in React and Vue. `null`
-	// leaves `c15t-dark` to the site, or to a host that owns the class, such
+	// leaves `inth-dark` to the site, or to a host that owns the class, such
 	// as the Astro page runtime behind a dialog island.
-	$effect(() => {
-		if (options.colorScheme === null) {
-			return;
-		}
-		return setupColorScheme(options.colorScheme);
-	});
+	$effect(() => setupColorScheme(options.colorScheme));
 
 	onDestroy(() => {
 		unsubscribe();
@@ -455,7 +435,7 @@
 <svelte:head>
 	{#if preloadMarker}
 		<meta
-			name="c15t-modulepreload"
+			name="inth-modulepreload"
 			content={preloadMarker}
 		/>
 	{/if}

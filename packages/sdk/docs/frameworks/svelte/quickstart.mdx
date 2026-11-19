@@ -1,6 +1,6 @@
 ---
 title: Quickstart
-description: Add a c15t cookie banner, preference dialog and consent-gated scripts to a Svelte 5 app built with Vite, using Inth as the consent backend.
+description: Add an Inth cookie banner, preference dialog and consent-gated scripts to a Svelte 5 app built with Vite, using Inth as the consent backend.
 group: frameworks
 ---
 
@@ -10,7 +10,7 @@ This guide is for a Svelte 5.20 or later app without SvelteKit, such as a Vite
 single-page app. The browser resolves consent after the page loads, so the
 banner appears after the first paint. For a banner in the server HTML, use
 SvelteKit; [choose your setup](/docs/concepts/choose-your-setup) compares the
-options. The `examples/svelte` app in the c15t repository is the finished
+options. The `examples/svelte` app in the Inth repository is the finished
 result.
 
 The guide uses [Inth](https://inth.com) for policies and consent records.
@@ -42,15 +42,15 @@ Add `consentManifest` to the plugins in `vite.config.ts`:
 
 <include src="../../shared/examples/svelte/vite-config.mdx" />
 
-Set `VITE_C15T_BACKEND_URL` to your project's backend URL, including any path
+Set `VITE_INTH_PROJECT_URL` to your project's backend URL, including any path
 prefix, in `.env` or your build environment:
 
 ```sh title=".env"
-VITE_C15T_BACKEND_URL=https://your-project.inth.app
+VITE_INTH_PROJECT_URL=https://your-project.inth.app
 ```
 
-If your app already sets `VITE_INTH_PROJECT_URL` for other Inth SDKs, that works
-too. When both are set, `VITE_C15T_BACKEND_URL` wins.
+The c15t name `VITE_C15T_BACKEND_URL` still works as a fallback. When both are
+set, `VITE_INTH_PROJECT_URL` wins.
 
 `consentManifest` hands the backend URL to `ConsentProvider`. No file is
 written into your project. Without the plugin, pass the URL as the
@@ -63,12 +63,12 @@ your JavaScript downloads, so the banner shows sooner.
 ## Mount the provider
 
 Render `ConsentProvider` around your app in `src/App.svelte`, with the
-vendor scripts c15t should load:
+vendor scripts Inth should load:
 
 <include src="../../shared/examples/svelte/app.mdx" />
 
 The `<main>` element stands in for your app's content. `hosted()` from
-`@inth/svelte` makes one `/init` request to `VITE_C15T_BACKEND_URL`, started
+`@inth/svelte` makes one `/init` request to `VITE_INTH_PROJECT_URL`, started
 early by the script in `index.html`. The backend picks the policy from the
 visitor's location and language and returns its current version. Consent choices go to the same
 backend. Vite writes the variable into the bundle at build time, so changing
@@ -76,7 +76,7 @@ it means a rebuild.
 
 PostHog waits for measurement permission. Replace `phc_your_project_key`
 with your PostHog project key. Remove any `<script>` tags or SDK imports that
-already load PostHog, so c15t is the only thing that loads it.
+already load PostHog, so Inth is the only thing that loads it.
 
 The provider starts consent when it mounts and stops it when it unmounts, so
 keep it at the root of the app.

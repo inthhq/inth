@@ -8,7 +8,9 @@ import { translations as enTranslations } from '@inth/sdk-translations/en';
 
 import {
 	isBuiltInMessageProfile,
-	validatePolicyI18nConfig,
+	primaryLanguage,
+	resolveActiveProfile,
+	resolveFallbackLanguage,
 } from './policy-i18n-validation';
 import type { PolicyRule } from './policy-rule';
 
@@ -74,21 +76,6 @@ const warnOnce = function warnOnce(
 
 	warnedKeys.add(key);
 	logger.warn(message, metadata);
-};
-
-const normalizeLanguage = function normalizeLanguage(
-	value: string | null | undefined
-): string | undefined {
-	if (!value) {
-		return undefined;
-	}
-
-	const normalized = value.split(',')[0]?.split(';')[0]?.trim().toLowerCase();
-	if (!normalized) {
-		return undefined;
-	}
-
-	return normalized.split('-')[0] ?? undefined;
 };
 
 const normalizeProfiles = function normalizeProfiles(params: {
@@ -166,36 +153,17 @@ const getSelectableLanguages = function getSelectableLanguages(input: {
 	return getProfileLanguages(input.profiles, input.profile);
 };
 
-const resolveFallbackLanguage = function resolveFallbackLanguage(input: {
-	profile?: I18nMessageProfile;
-}): string {
-	const configuredFallbackLanguage =
-		normalizeLanguage(input.profile?.fallbackLanguage) ?? 'en';
-	const profileLanguages = Object.keys(
-		input.profile?.translations ?? {}
-	).sort();
-
-	if (profileLanguages.includes(configuredFallbackLanguage)) {
-		return configuredFallbackLanguage;
-	}
-
-	if (profileLanguages.includes('en')) {
-		return 'en';
-	}
-
-	return profileLanguages[0] ?? configuredFallbackLanguage;
-};
-
-const resolveActiveProfile = function resolveActiveProfile(input: {
+/** {@link resolveActiveProfile}, warning once when the policy's profile is missing. */
+const resolveActiveProfileOrWarn = function resolveActiveProfileOrWarn(input: {
 	profiles: I18nMessageProfiles;
 	defaultProfile: string;
 	policyProfile?: string;
 	logger?: LoggerLike;
 }): string {
+	const profile = resolveActiveProfile(input);
 	const requestedProfile = input.policyProfile ?? input.defaultProfile;
-
-	if (input.profiles[requestedProfile]) {
-		return requestedProfile;
+	if (profile === requestedProfile) {
+		return profile;
 	}
 
 	if (input.policyProfile && !isBuiltInMessageProfile(input.policyProfile)) {
@@ -207,33 +175,6 @@ const resolveActiveProfile = function resolveActiveProfile(input: {
 	}
 
 	return input.defaultProfile;
-};
-
-export const listProfiles = function listProfiles(options: {
-	customTranslations?: Record<string, Partial<Translations>>;
-	i18n?: I18nOptions;
-}): string[] {
-	const profiles = normalizeProfiles({
-		customTranslations: options.customTranslations,
-		i18n: options.i18n,
-	});
-	return Object.keys(profiles).sort();
-};
-
-export const validateMessages = function validateMessages(options: {
-	customTranslations?: Record<string, Partial<Translations>>;
-	i18n?: I18nOptions;
-	policies?: PolicyRule[];
-}): {
-	profiles: string[];
-	errors: string[];
-	warnings: string[];
-} {
-	return validatePolicyI18nConfig({
-		customTranslations: options.customTranslations,
-		i18n: options.i18n,
-		policies: options.policies,
-	});
 };
 
 // oxlint-disable-next-line complexity -- Preserve established branch order and control flow.
@@ -250,7 +191,7 @@ export const getTranslationsData = function getTranslationsData(
 		logger: options?.logger,
 	});
 	const defaultProfile = options?.i18n?.defaultProfile ?? DEFAULT_PROFILE;
-	const profile = resolveActiveProfile({
+	const profile = resolveActiveProfileOrWarn({
 		defaultProfile,
 		logger: options?.logger,
 		policyProfile: options?.policyI18n?.messageProfile,
@@ -269,9 +210,9 @@ export const getTranslationsData = function getTranslationsData(
 			? resolveFallbackLanguage({ profile: profiles[profile] })
 			: 'en';
 
-	const policyLanguage = normalizeLanguage(options?.policyI18n?.language);
+	const policyLanguage = primaryLanguage(options?.policyI18n?.language);
 	const requestedBaseLanguage =
-		policyLanguage ?? normalizeLanguage(acceptLanguage);
+		policyLanguage ?? primaryLanguage(acceptLanguage);
 	if (
 		!options?.baseTranslations &&
 		requestedBaseLanguage &&
@@ -339,22 +280,4 @@ export const getTranslationsData = function getTranslationsData(
 		language,
 		translations: translations as CompleteTranslations,
 	};
-};
-
-export const getTranslations = function getTranslations(
-	acceptLanguage: string,
-	options: {
-		baseTranslations?: BaseTranslations;
-		customTranslations?: Record<string, Partial<Translations>>;
-		i18n?: I18nOptions;
-		policyI18n?: PolicyRule['i18n'];
-		logger?: LoggerLike;
-	}
-) {
-	return getTranslationsData(acceptLanguage, options.customTranslations, {
-		baseTranslations: options.baseTranslations,
-		i18n: options.i18n,
-		logger: options.logger,
-		policyI18n: options.policyI18n,
-	});
 };

@@ -10,7 +10,7 @@ import { gzipSync, gunzipSync } from 'node:zlib';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-	c15tProtocolHeaders,
+	inthProtocolHeaders,
 } from '@inth/sdk/engine';
 import type { GlobalVendorList } from '@inth/sdk/engine';
 import { createManifestTransport } from '@inth/sdk/transports/manifest';
@@ -19,7 +19,7 @@ import { chromium } from 'playwright';
 const [appRoot, label, output] = process.argv.slice(2);
 if (!appRoot || !label || !output) {
 	throw new Error(
-		'Pass repository root, revision label and output JSON. Build both apps first with C15T_BENCH_IAB=1.'
+		'Pass repository root, revision label and output JSON. Build both apps first with INTH_BENCH_IAB=1.'
 	);
 }
 const gvl = JSON.parse(
@@ -43,7 +43,7 @@ if (policy.status !== 'matched') {
 	throw new Error('Expected IAB policy');
 }
 const manifest = {
-	branding: 'c15t' as const,
+	branding: 'inth' as const,
 	cmpId: 28,
 	iab: { enabled: true, gvl: { url: 'http://127.0.0.1:4325/gvl' } },
 	policyPacks: [
@@ -75,7 +75,7 @@ const fixture = createServer((req, res) => {
 		res.end();
 		return;
 	}
-	for (const [key, value] of Object.entries(c15tProtocolHeaders)) {
+	for (const [key, value] of Object.entries(inthProtocolHeaders)) {
 		res.setHeader(key, value);
 	}
 	res.setHeader('content-type', 'application/json');
@@ -108,9 +108,9 @@ try {
 				cwd,
 				env: {
 					...process.env,
-					C15T_BENCH_MANIFEST_URL: 'http://127.0.0.1:4325/manifest',
 					HOST: '127.0.0.1',
-					NUXT_PUBLIC_C15T_BACKEND_URL: 'http://127.0.0.1:4325',
+					INTH_BENCH_MANIFEST_URL: 'http://127.0.0.1:4325/manifest',
+					NUXT_PUBLIC_INTH_PROJECT_URL: 'http://127.0.0.1:4325',
 					PORT: String(port),
 				},
 				stdio: ['ignore', 'ignore', 'inherit'],
@@ -226,7 +226,7 @@ try {
 							cache,
 							...sample,
 							resources: sample.resources.filter(
-								(r) => r.url.includes('c15t-gvl') || r.url.endsWith('/init')
+								(r) => r.url.includes('inth-gvl') || r.url.endsWith('/init')
 							),
 						});
 					}

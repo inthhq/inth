@@ -4,16 +4,16 @@
  * Serves every built fixture in `benchmarks/tailwind-matrix/{v3,v4}` and
  * checks, in Chromium, the contract the shared Tailwind docs page states:
  *
- * - c15t's component styles survive Tailwind's preflight: the banner card
+ * - Inth's component styles survive Tailwind's preflight: the banner card
  *   keeps its background and border, the header, footer and buttons keep
  *   their padding, and the lazily loaded dialog is styled too. On Tailwind 3
- *   this also proves the c15t rules were not purged.
- * - A utility passed to a c15t part wins over c15t's own rule for the same
+ *   this also proves the Inth rules were not purged.
+ * - A utility passed to an Inth part wins over Inth's own rule for the same
  *   property: a bare utility on Tailwind 4, an important one (`!p-[7px]`)
- *   on Tailwind 3. The fixtures put padding on the banner root, which c15t
+ *   on Tailwind 3. The fixtures put padding on the banner root, which Inth
  *   also sets, so the check fails if the utility loses.
  * - A `dark` class on `<html>` turns on Tailwind's `dark:` variant for that
- *   utility and, where the fixture says c15t follows it, c15t's dark tokens.
+ *   utility and, where the fixture says Inth follows it, Inth's dark tokens.
  *   The script tag's shadow root follows its own `colorScheme` option.
  *   This is checked on the early frame below and again once settled.
  * - Opening the dialog loads its stylesheet, which is styled too.
@@ -22,7 +22,7 @@
  *   at a time, in request order, only until the banner card is visible, so
  *   a page that renders its banner from a chunk gets that chunk and
  *   nothing after it. A deferred stylesheet whose text is still loading
- *   keeps its surface at opacity 0 (`data-c15t-pending`), so the release
+ *   keeps its surface at opacity 0 (`data-inth-pending`), so the release
  *   goes on until no sheet is pending. The reading is taken with the rest
  *   still held. Short of input or their 10 s fallback, the adapters start
  *   the engine at the window `load` event at the earliest, after every
@@ -33,11 +33,11 @@
  *   already carried the banner. A cell with nothing held proves nothing
  *   about the engine: all the banner needed came with it.
  *
- * Build first: `bun run compat:styles:build`.
+ * Build first: `pnpm sdk:compat:styles:build`.
  *
  * ```sh
- * bun run compat:styles:matrix
- * TAILWIND_MATRIX_VERSIONS=v3 TAILWIND_MATRIX_FIXTURES=vue,nuxt bun run compat:styles:matrix
+ * pnpm --dir scripts run compat:styles:matrix
+ * TAILWIND_MATRIX_VERSIONS=v3 TAILWIND_MATRIX_FIXTURES=vue,nuxt pnpm --dir scripts run compat:styles:matrix
  * ```
  */
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
@@ -70,13 +70,13 @@ type Version = (typeof VERSIONS)[number];
 const SLOT_PADDING = { dark: '11px', light: '7px' } as const;
 
 /**
- * `/init` for every fixture. Vue and Nuxt call `/api/c15t` on their own
+ * `/init` for every fixture. Vue and Nuxt call `/api/inth` on their own
  * origin; the others name the placeholder project URL, which has no
  * backend, so the verifier answers for it. There is no manifest: manifest
  * mode falls back to `/init`.
  */
 const initResponse: InitOutput = {
-	branding: 'c15t',
+	branding: 'inth',
 	location: { countryCode: 'DE', regionCode: null },
 	policyResolution: writePolicyResolutionWire(
 		resolvePolicyRules({
@@ -99,7 +99,7 @@ const initResponse: InitOutput = {
 const PROJECT_URL = 'https://your-project.inth.app';
 
 /** Where the fixtures' consent requests go: their own origin, or the placeholder project. */
-const BACKEND_ROUTES = ['**/api/c15t/**', `${PROJECT_URL}/**`];
+const BACKEND_ROUTES = ['**/api/inth/**', `${PROJECT_URL}/**`];
 
 const answerBackend = async function answerBackend(route: Route) {
 	const { pathname } = new URL(route.request().url());
@@ -209,13 +209,13 @@ const checkBanner = function checkBanner(
 	if (options.slots) {
 		expect(
 			root.padding === SLOT_PADDING.light,
-			`utility on the banner root lost to c15t: padding ${root.padding}, expected ${SLOT_PADDING.light}`
+			`utility on the banner root lost to Inth: padding ${root.padding}, expected ${SLOT_PADDING.light}`
 		);
 	}
 };
 
 /**
- * Puts `dark` on `<html>`, checks the `dark:` utility and c15t's dark
+ * Puts `dark` on `<html>`, checks the `dark:` utility and Inth's dark
  * tokens the page declares, and takes the class off again.
  */
 const checkDark = async function checkDark(
@@ -238,7 +238,7 @@ const checkDark = async function checkDark(
 	if (options.darkTokens) {
 		expect(
 			darkTitle.color !== lightTitle.color,
-			`c15t ignored the dark class: title color stayed ${darkTitle.color}`
+			`Inth ignored the dark class: title color stayed ${darkTitle.color}`
 		);
 	}
 	if (options.slots) {
@@ -252,9 +252,6 @@ const checkDark = async function checkDark(
 	});
 };
 
-/**
- * Checks one page and returns the failed expectations, empty on success.
- */
 const checkPage = async function checkPage(
 	page: Page,
 	url: string,
@@ -278,7 +275,7 @@ const checkPage = async function checkPage(
 	await page.goto(url, { waitUntil: 'commit' });
 
 	const card = byTestId(page, 'consent-banner-card');
-	const pendingSheet = page.locator('style[data-c15t-pending]');
+	const pendingSheet = page.locator('style[data-inth-pending]');
 	const deadline = Date.now() + 15_000;
 	let released = 0;
 	// oxlint-disable-next-line no-await-in-loop -- Polls the page between releases.

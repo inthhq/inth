@@ -1,6 +1,6 @@
 'use client';
 
-import { ConsentShell } from '@c15t/next-compat-shared/consent-shell';
+import { ConsentShell } from '@inth/next-compat-shared/consent-shell';
 import type { ReactNode } from 'react';
 
 import { COMPAT_STATIC_BACKEND_URL } from '../../../lib/backend-url';

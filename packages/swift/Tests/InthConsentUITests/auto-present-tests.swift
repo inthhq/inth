@@ -549,7 +549,7 @@ final class AutoPresentTests: XCTestCase {
         func send(_ request: HTTPRequest) async throws -> HTTPResponse {
             guard request.method == .get else { return HTTPResponse(status: 503) }
             let current = lock.withLock { body }
-            return HTTPResponse(status: 200, headers: ["x-c15t-policy-contract": "1"], body: Data(current.utf8))
+            return HTTPResponse(status: 200, headers: ["x-inth-policy-contract": "1"], body: Data(current.utf8))
         }
     }
 }

@@ -11,6 +11,7 @@ import { inlineStepsStart } from '#inline-start';
 import { RUNTIME_VALUE_KIND } from '../types';
 import type { ManifestStep, ResolvedManifest, RuntimeValue } from '../types';
 import { mapConsentState } from './consent-mapping';
+import { signalConsents } from './vendor-consent';
 
 type ManifestLifecycleCallback = Exclude<ScriptLifecycleCallback, 'onError'>;
 
@@ -70,7 +71,7 @@ const cloneStepValue = function cloneStepValue(value: unknown): unknown {
 	return value;
 };
 
-const isRecord = function isRecord(
+export const isRecord = function isRecord(
 	value: unknown
 ): value is Record<string, unknown> {
 	return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -617,34 +618,14 @@ const partitionConsentIds = function partitionConsentIds(
 	const allowedConsentIds: string[] = [];
 	const deniedConsentIds: string[] = [];
 
-	for (const [c15tCategory, consentIds] of Object.entries(mapping)) {
-		const isGranted = (consents as Record<string, boolean>)[c15tCategory];
+	for (const [inthCategory, consentIds] of Object.entries(mapping)) {
+		const isGranted = (consents as Record<string, boolean>)[inthCategory];
 		for (const consentId of consentIds) {
 			(isGranted ? allowedConsentIds : deniedConsentIds).push(consentId);
 		}
 	}
 
 	return { allowedConsentIds, deniedConsentIds };
-};
-
-/** Every category denied. What a vendor the subject turned off receives. */
-const ALL_DENIED: ConsentState = {
-	experience: false,
-	functionality: false,
-	marketing: false,
-	measurement: false,
-	necessary: true,
-};
-
-/**
- * The consent state a vendor's consent-mode signal should carry. A vendor
- * the subject turned off gets every optional category denied, whatever the
- * category state, so its own consent API cannot re-enable tracking.
- */
-const signalConsents = function signalConsents(
-	info: Pick<ScriptCallbackInfo, 'consents' | 'vendor'>
-): ConsentState {
-	return info.vendor?.granted === false ? ALL_DENIED : info.consents;
 };
 
 const getConsentSignalSteps = function getConsentSignalSteps(
@@ -689,7 +670,7 @@ const getConsentSignalSteps = function getConsentSignalSteps(
 			// RudderStack's consent() call carries the full allow/deny partition
 			// each time, so the default and update modes share one shape. The
 			// pre-load call is captured by the snippet queue and replayed by the
-			// SDK as its initial consent state. c15t is the CMP, so the provider
+			// SDK as its initial consent state. Inth is the CMP, so the provider
 			// is always 'custom'.
 			const partition = partitionConsentIds(
 				resolvedManifest.consentMapping,

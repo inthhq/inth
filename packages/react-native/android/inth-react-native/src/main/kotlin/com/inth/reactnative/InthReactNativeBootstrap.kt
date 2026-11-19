@@ -99,7 +99,7 @@ object InthReactNativeBootstrap {
 	}
 
 	/**
-	 * Report React Native as the host platform in `x-c15t-platform`.
+	 * Report React Native as the host platform in `x-inth-platform`.
 	 *
 	 * The core defaults to `android`, which is right for a Kotlin app. A core this binding
 	 * installs answers for a React Native app, so the backend attributes it to `rn`. An app

@@ -4,7 +4,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
 	description: 'Verifies @layer components works without any CSS framework',
-	title: 'No-TW + c15t CSS Test',
+	title: 'No-TW + inth CSS Test',
 };
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => (

@@ -2,8 +2,8 @@ import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
-import { provideC15t } from '@inth/angular';
-import type { C15tProviderOptions } from '@inth/angular';
+import { provideInth } from '@inth/angular';
+import type { InthProviderOptions } from '@inth/angular';
 import { expect, vi } from 'vitest';
 
 import { completeGVL } from '../../../../iab/src/__tests__/fixtures/gvl-sample';
@@ -20,25 +20,23 @@ export interface HarnessTest<ComponentType> {
 }
 
 /**
- * Boots `host` under `provideC15t()` in local mode with the opt-in test
+ * Boots `host` under `provideInth()` in local mode with the opt-in test
  * rule, every category and no animation, and waits for the first stable
  * render.
  *
- * @param host - The component to render.
  * @param options - Provider options merged over the defaults.
- * @returns The fixture and its loaders.
  */
 export const bootHarnessTest = async function bootHarnessTest<ComponentType>(
 	host: new () => ComponentType,
-	options: Partial<C15tProviderOptions> = {}
+	options: Partial<InthProviderOptions> = {}
 ): Promise<HarnessTest<ComponentType>> {
 	TestBed.configureTestingModule({
 		providers: [
-			provideC15t({
+			provideInth({
 				...testOptions(),
 				disableAnimation: true,
 				...options,
-			} as C15tProviderOptions),
+			} as InthProviderOptions),
 		],
 	});
 	const fixture = TestBed.createComponent(host);
@@ -62,7 +60,7 @@ export const resetHarnessTest = function resetHarnessTest(): void {
  * rule, and the sample Global Vendor List inline, so nothing is fetched.
  */
 export const iabTestOptions =
-	function iabTestOptions(): Partial<C15tProviderOptions> {
+	function iabTestOptions(): Partial<InthProviderOptions> {
 		return {
 			iab: { cmpId: 28, gvl: completeGVL },
 			mode: offlineMode([
@@ -73,7 +71,7 @@ export const iabTestOptions =
 					prompt: 'choice',
 				},
 			]),
-		} as Partial<C15tProviderOptions>;
+		} as Partial<InthProviderOptions>;
 	};
 
 /**
@@ -81,7 +79,6 @@ export const iabTestOptions =
  * such as the IAB module and vendor list loading.
  *
  * @param find - Looks the harness up, or returns `null`.
- * @returns The harness.
  */
 export const waitForHarness = async function waitForHarness<HarnessType>(
 	find: () => Promise<HarnessType | null>

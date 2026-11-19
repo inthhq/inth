@@ -19,8 +19,8 @@ interface ThemeContextValue {
 	setTheme: (theme: ThemeMode) => void;
 }
 
-const STORAGE_KEY = 'c15t-example-demo-theme';
-const TRANSITION_STYLE_ID = 'c15t-disable-transitions';
+const STORAGE_KEY = 'inth-example-demo-theme';
+const TRANSITION_STYLE_ID = 'inth-disable-transitions';
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 

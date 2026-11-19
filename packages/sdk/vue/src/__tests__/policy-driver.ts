@@ -1,4 +1,4 @@
-import { MINIMAL_GVL } from '@c15t/conformance';
+import { MINIMAL_GVL } from '@inth/conformance';
 import type {
 	ConsentKernel,
 	ConsentPresentation,
@@ -97,9 +97,9 @@ const POLICY_GVL = {
 	...MINIMAL_GVL,
 	vendors: { 755: { ...MINIMAL_GVL.vendors[755], id: 755 } },
 };
-const config = { storageKey: 'c15t-policy-conformance' };
+const config = { storageKey: 'inth-policy-conformance' };
 const keys = resolveStorageKeys(config);
-const legacyKey = keys.legacyConsent;
+const legacyKey = keys.legacy[0]?.consent;
 if (!legacyKey) {
 	throw new Error('Conformance storage requires a legacy key');
 }
@@ -209,7 +209,7 @@ const getDom = (kernel: ConsentKernel): PolicyDomEvidence => {
 		preferencesOpen: !!document.querySelector(
 			'[data-testid="consent-dialog-root"]'
 		),
-		rights: (preferences?.getAttribute('data-c15t-rights')?.split(' ') ??
+		rights: (preferences?.getAttribute('data-inth-rights')?.split(' ') ??
 			[]) as PolicyDomEvidence['rights'],
 	};
 };
@@ -275,7 +275,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 		// A clear's epoch outlives it and would void the next seed's records.
 		keys.epoch,
 		// A clear keeps the subject ID; the next scenario is a new visitor.
-		keys.subject,
+		`${config.storageKey}-sid`,
 	]) {
 		localStorage.removeItem(key);
 		document.cookie = `${key}=; Max-Age=0; Path=/`;
@@ -308,7 +308,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 			seedBytes(setup.storage.legacyLocalStorage)
 		);
 	}
-	localStorage.removeItem('c15t-iab-authority-v1');
+	localStorage.removeItem('inth-iab-authority-v1');
 	const baseline = { logs: logs(), storage: storageBytes() };
 	const consentMode: Record<string, string> = {};
 	const previousGtag = window.gtag;
@@ -324,7 +324,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 	const originalFetch = window.fetch;
 	window.fetch = Object.assign(
 		(input: RequestInfo | URL, init?: RequestInit) => {
-			if (String(input).includes('c15t-policy-probe.invalid')) {
+			if (String(input).includes('inth-policy-probe.invalid')) {
 				networkCompletions += 1;
 				return Promise.resolve(new Response('probe'));
 			}
@@ -360,9 +360,9 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 						{
 							attributes: { 'data-policy-script': 'true' },
 							category: 'marketing',
-							id: 'c15t-policy-script',
+							id: 'inth-policy-script',
 							textContent:
-								'window.dispatchEvent(new Event("c15t-policy-script-loaded"))',
+								'window.dispatchEvent(new Event("inth-policy-script-loaded"))',
 						},
 						gtag({
 							category: 'marketing',
@@ -377,7 +377,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 					kernel: current,
 					logBlockedRequests: false,
 					rules: [
-						{ category: 'marketing', domain: 'c15t-policy-probe.invalid' },
+						{ category: 'marketing', domain: 'inth-policy-probe.invalid' },
 					],
 				})
 			: undefined;
@@ -393,7 +393,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 	const countScript = () => {
 		scriptLoads += 1;
 	};
-	window.addEventListener('c15t-policy-script-loaded', countScript);
+	window.addEventListener('inth-policy-script-loaded', countScript);
 	const tree = (server = false) => {
 		const initialRecords = server
 			? readStoredRecordsFromCookieHeader(
@@ -481,7 +481,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 										h('iframe', {
 											'data-testid': 'policy-iframe',
 											sandbox: '',
-											src: 'about:blank#c15t-policy-probe',
+											src: 'about:blank#inth-policy-probe',
 											title: 'probe',
 										}),
 									placeholder: () =>
@@ -608,7 +608,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 			warn.mockRestore();
 			window.fetch = originalFetch;
 			window.gtag = previousGtag;
-			window.removeEventListener('c15t-policy-script-loaded', countScript);
+			window.removeEventListener('inth-policy-script-loaded', countScript);
 			if (previousGpc) {
 				Object.defineProperty(navigator, 'globalPrivacyControl', previousGpc);
 			} else {
@@ -781,7 +781,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 			await settle();
 			if (setup.probeGates) {
 				networkAttempts += 1;
-				await window.fetch('https://c15t-policy-probe.invalid/collect');
+				await window.fetch('https://inth-policy-probe.invalid/collect');
 			}
 		},
 		observe(): PolicyEvidence {

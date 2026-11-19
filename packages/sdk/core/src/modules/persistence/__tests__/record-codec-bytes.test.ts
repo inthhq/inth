@@ -5,8 +5,8 @@
  * that alters the byte count must be deliberate.
  *
  * Bytes are UTF-8 lengths of the value actually stored in
- * `document.cookie` after the real write path (`setCookie` for v2,
- * `writeStoredConsentEnvelope` for v3), without the `c15t=` name or
+ * `document.cookie` after the write path (the v2 fixture encoder for v2,
+ * `writeStoredConsentEnvelope` for v3), without the `inth=` name or
  * attributes. Neither path adds an outer URI encoding, so the stored
  * value equals the codec string; the tests assert that equality rather
  * than assume it. Fingerprints use 64-character SHA-256 hex, matching
@@ -14,14 +14,9 @@
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { encodeV2Cookie } from '../../../__tests__/fixtures/v2-cookie';
 import type { ChoiceBasis } from '../../../consent-record/types';
-import {
-	flatToString,
-	flattenObject,
-	getRawCookieValue,
-	setCookie,
-	shortenFlatKeys,
-} from '../../../libs/cookie';
+import { getRawCookieValue, setCookie } from '../../../libs/cookie';
 import { STORAGE_KEY_V2 } from '../../../libs/storage-keys';
 import { encodeClearEpoch } from '../clear';
 import type { StoredConsentEnvelope } from '../record-codec';
@@ -51,17 +46,13 @@ const bytes = function bytes(value: string): number {
 	return new TextEncoder().encode(value).length;
 };
 
-const v2Compact = function v2Compact(record: Record<string, unknown>): string {
-	return flatToString(shortenFlatKeys(flattenObject(record)));
-};
-
-/** Bytes of the value the browser actually holds after a v2 write. */
+/** Bytes of the value the browser actually holds for a v2 cookie. */
 const storedV2Bytes = function storedV2Bytes(
 	record: Record<string, unknown>
 ): number {
-	setCookie(STORAGE_KEY_V2, record);
+	setCookie(STORAGE_KEY_V2, encodeV2Cookie(record));
 	const stored = getRawCookieValue(STORAGE_KEY_V2);
-	expect(stored).toBe(v2Compact(record));
+	expect(stored).toBe(encodeV2Cookie(record));
 	return bytes(stored ?? '');
 };
 

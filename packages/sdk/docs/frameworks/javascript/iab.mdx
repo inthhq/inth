@@ -12,7 +12,7 @@ adds the CMP, the TC string encoder, the IAB banner and the purpose and vendor
 dialog. The plain entry leaves them out. Its stock banner stands aside for a
 policy that uses the `iab` model, so a client that resolves one emits an
 `error` event and throws an `IABUnavailableError` (code
-`C15T_IAB_UNAVAILABLE`) as an uncaught error. So does the IAB entry with
+`INTH_IAB_UNAVAILABLE`) as an uncaught error. So does the IAB entry with
 `iab: false`.
 
 ```ts title="src/main.ts"
@@ -48,8 +48,8 @@ banner. For your own stylesheet with `ui: { shadow: false }`, import both
 
 ## Attach the module to your kernel
 
-Without `@inth/sdk`, install `@inth/sdk/iab` with `c15t`. The following
-fragment assumes an existing kernel connected to Inth and an applicable IAB
+With your own kernel, import `createIAB` from `@inth/sdk/iab`, which ships in
+`@inth/sdk`. The following fragment assumes an existing kernel connected to Inth and an applicable IAB
 policy:
 
 ```ts
@@ -158,7 +158,7 @@ marked immutable because translations or publisher filtering can change
 without a new vendor-list version.
 
 Astro, Next.js and TanStack Start use a same-origin route when `routePrefix`
-names a mounted consent route. Astro mounts one at `/api/c15t` by
+names a mounted consent route. Astro mounts one at `/api/inth` by
 default. Without those options, Next.js and TanStack Start reference the public
 list URL from the manifest. Allow `'self'` in CSP `connect-src` for same-origin
 routes, or allow the public list origin for direct requests.

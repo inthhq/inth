@@ -5,16 +5,20 @@
  * Without a handle, every `+layout.server.ts`, `+page.server.ts` and route
  * handler would re-parse the same headers and the same cookie. This runs
  * that work once and publishes it, with the mode `loadConsent` resolves
- * with, on `event.locals.c15t`.
+ * with, on `event.locals.inth`.
  */
 import { building } from '$app/env';
-import type { StorageConfig } from '@inth/sdk/engine';
 import type { ConsentMode } from '@inth/sdk/modes';
 import type {
 	ConsentManifest,
 	ConsentRequestHeaderInputs,
 } from '@inth/sdk/schema/types';
-import { normalizeRoutePrefix, readRequestConsent } from '@inth/sdk/server';
+import {
+	normalizeRoutePrefix,
+	readRequestConsent,
+	resolveServerMode,
+	writeConsentInputHeaders,
+} from '@inth/sdk/server';
 import type { RequestEvent } from '@sveltejs/kit';
 
 import { injectModulePreloads } from './module-preload';
@@ -23,14 +27,12 @@ import {
 	loadServerScriptStart,
 } from './server-script-start';
 import { injectSurfaceStyles, nonceEarlyTapScript } from './surface-styles';
-import type { C15tLocals, ConsentRequestOptions, KitMode } from './types';
+import type { InthLocals, ConsentRequestOptions } from './types';
 
-/** Options for {@link c15tHandle}. */
-export interface C15tHandleOptions extends ConsentRequestOptions {
+export interface InthHandleOptions extends ConsentRequestOptions {
 	/**
-	 * The c15t backend. Defaults to the URL `consentManifest()` read from
-	 * `PUBLIC_C15T_BACKEND_URL` or `PUBLIC_INTH_PROJECT_URL`. Required
-	 * unless `mode` is `testing()`.
+	 * The Inth backend. Defaults to the URL `consentManifest()` read from
+	 * `PUBLIC_INTH_PROJECT_URL`. Required unless `mode` is `testing()`.
 	 */
 	projectUrl?: string;
 	/**
@@ -50,8 +52,8 @@ export interface C15tHandleOptions extends ConsentRequestOptions {
 	 */
 	mode?: ConsentMode;
 	/**
-	 * Where `createConsentRoute()` is mounted, such as `/api/c15t` for
-	 * `src/routes/api/c15t/[...path]/+server.ts`. The browser then resolves
+	 * Where `createConsentRoute()` is mounted, such as `/api/inth` for
+	 * `src/routes/api/inth/[...path]/+server.ts`. The browser then resolves
 	 * consent on pages the server did not, such as prerendered ones,
 	 * through the app's own route. Without it, the browser asks the
 	 * backend's `/init`. `/` is rejected: a catch-all route at the site
@@ -59,29 +61,19 @@ export interface C15tHandleOptions extends ConsentRequestOptions {
 	 */
 	routePrefix?: string;
 	/**
+	 * Send the browser's consent saves through the consent route at
+	 * `routePrefix`, so the browser talks only to this origin. The route
+	 * needs `createConsentRoute({ proxy: true })` to forward them to
+	 * `projectUrl`. Requires `routePrefix`.
+	 *
+	 * @default false
+	 */
+	proxy?: boolean;
+	/**
 	 * A manifest to resolve with instead of the one `consentManifest()`
 	 * downloaded.
 	 */
 	snapshot?: ConsentManifest;
-	/**
-	 * @deprecated c15t no longer sets a subject cookie, so the handle reads
-	 * nothing from this. Removed in v4.
-	 */
-	storage?: Pick<
-		StorageConfig,
-		'crossSubdomain' | 'defaultDomain' | 'defaultExpiryDays'
-	>;
-	/**
-	 * @deprecated c15t no longer sets a subject cookie, so the handle reads
-	 * nothing from this. Removed in v4. `loadConsent` takes its own
-	 * `trustForwardedHeaders` for a relative hosted backend.
-	 */
-	trustForwardedHeaders?: boolean;
-	/**
-	 * @deprecated c15t no longer sets a subject cookie, so this does
-	 * nothing. Removed in v4.
-	 */
-	subjectCookie?: boolean;
 }
 
 /**
@@ -93,7 +85,7 @@ export interface C15tHandleOptions extends ConsentRequestOptions {
  * Importing either one leaves the other version's apps with an unresolved
  * type, which `skipLibCheck` turns into a silent `any`.
  */
-export type C15tHandle = (input: {
+export type InthHandle = (input: {
 	event: RequestEvent;
 	resolve: (
 		event: RequestEvent,
@@ -108,12 +100,12 @@ export type C15tHandle = (input: {
 
 /**
  * Rewrites the resolved inputs back onto the request as the canonical
- * `x-c15t-*` / `sec-gpc` headers, so anything downstream that reads raw
+ * `x-inth-*` / `sec-gpc` headers, so anything downstream that reads raw
  * headers (a proxied backend call, a nested handle) sees one normalized
  * shape instead of whichever CDN header happened to carry it.
  *
  * Request headers are immutable in some runtimes. When the write is refused
- * the normalized values are still on `event.locals.c15t.inputs`, which is
+ * the normalized values are still on `event.locals.inth.inputs`, which is
  * what every helper in this package reads, so the request continues.
  */
 const normalizeRequestHeaders = function normalizeRequestHeaders(
@@ -121,61 +113,28 @@ const normalizeRequestHeaders = function normalizeRequestHeaders(
 	inputs: ConsentRequestHeaderInputs
 ): void {
 	try {
-		if (inputs.country) {
-			headers.set('x-c15t-country', inputs.country);
-		}
-		if (inputs.region) {
-			headers.set('x-c15t-region', inputs.region);
-		}
-		if (inputs.language) {
-			// The resolved language, not the browser's list: a downstream
-			// route re-reads `accept-language`, and an `options.language`
-			// override has to reach it too.
-			headers.set('accept-language', inputs.language);
-		}
-		if (inputs.gpc !== undefined) {
-			headers.set('sec-gpc', inputs.gpc ? '1' : '0');
-		}
+		// The resolved language, not the browser's list: a downstream route
+		// re-reads `accept-language`, and an `options.language` override has
+		// to reach it too.
+		writeConsentInputHeaders(headers, inputs);
 	} catch {
 		// Immutable headers — locals still carry the normalized inputs.
 	}
 };
 
 /**
- * The data a handle's options resolve the visitor with. A transport
- * factory, such as `manifest()` from `@inth/svelte`, carries its options
- * as data too; only that data reaches the browser.
- */
-const modeData = function modeData(options: C15tHandleOptions): KitMode {
-	const { mode } = options;
-	if (mode === undefined) {
-		return { type: 'manifest' };
-	}
-	if (typeof mode !== 'function') {
-		return mode;
-	}
-	if (!(mode as Partial<ConsentMode>).type) {
-		throw new TypeError(
-			'c15t: c15tHandle() takes manifest() or hosted() from @inth/svelte/kit, or testing() from @inth/svelte/testing. Pass a transport to <ConsentRoot mode> instead.'
-		);
-	}
-	const { kind: _kind, ...data } = mode as ConsentMode & { kind?: string };
-	return data as ConsentMode;
-};
-
-/**
- * Creates the c15t SvelteKit handle.
+ * Creates the Inth SvelteKit handle.
  *
  * Register it in `src/hooks.server.ts`, alone or composed with `sequence()`:
  *
  * ```ts
- * import { c15tHandle } from '@inth/svelte/kit';
+ * import { inthHandle } from '@inth/svelte/kit';
  * import { sequence } from '@sveltejs/kit/hooks';
  *
- * export const handle = sequence(c15tHandle(), myOtherHandle);
+ * export const handle = sequence(inthHandle(), myOtherHandle);
  * ```
  *
- * Type `event.locals.c15t` with one line in `src/app.d.ts`:
+ * Type `event.locals.inth` with one line in `src/app.d.ts`:
  *
  * ```ts
  * /// <reference types="@inth/svelte/kit/locals" />
@@ -183,22 +142,33 @@ const modeData = function modeData(options: C15tHandleOptions): KitMode {
  *
  * While SvelteKit prerenders, every page is shared between visitors: the
  * handle reads no cookie or geo header, and leaves no
- * stored consent, clock or privacy signal on `event.locals.c15t`.
+ * stored consent, clock or privacy signal on `event.locals.inth`.
  *
- * @param options - The mode, the consent route's prefix, a snapshot, the
- * cookie name and geo/language overrides.
- * @returns A `handle` hook that populates `event.locals.c15t`.
+ * @returns A `handle` hook that populates `event.locals.inth`.
  * @throws {TypeError} When `mode` is a transport with no data, which
- * cannot reach the browser, or `routePrefix` is `/` or not a path.
+ * cannot reach the browser, `routePrefix` is `/` or not a path, or `proxy`
+ * is set without `routePrefix`.
  */
-export const c15tHandle = function c15tHandle(
-	options: C15tHandleOptions = {}
-): C15tHandle {
-	const mode = modeData(options);
+export const inthHandle = function inthHandle(
+	options: InthHandleOptions = {}
+): InthHandle {
 	const routePrefix =
 		options.routePrefix === undefined
 			? undefined
 			: normalizeRoutePrefix('@inth/svelte', options.routePrefix);
+	// A `projectUrl` naming the route itself sends saves through it, which
+	// is what `proxy` does: the route forwards them to the build's backend.
+	const projectUrlIsRoute =
+		routePrefix !== undefined &&
+		options.projectUrl?.replace(/\/+$/u, '') === routePrefix;
+	const proxy = options.proxy || projectUrlIsRoute;
+	const projectUrl = projectUrlIsRoute ? undefined : options.projectUrl;
+	const { mode } = resolveServerMode({
+		adapter: '@inth/svelte',
+		mode: options.mode,
+		proxy,
+		routePrefix,
+	});
 	return async ({ event, resolve }) => {
 		const { headers } = event.request;
 		// A prerendered page is one HTML file for every visitor: no cookie or
@@ -220,12 +190,15 @@ export const c15tHandle = function c15tHandle(
 			normalizeRequestHeaders(headers, inputs);
 		}
 
-		const locals: C15tLocals = { config, inputs, mode };
-		if (options.projectUrl !== undefined) {
-			locals.projectUrl = options.projectUrl;
+		const locals: InthLocals = { config, inputs, mode };
+		if (projectUrl !== undefined) {
+			locals.projectUrl = projectUrl;
 		}
 		if (routePrefix !== undefined) {
 			locals.routePrefix = routePrefix;
+		}
+		if (proxy) {
+			locals.proxy = true;
 		}
 		if (options.snapshot !== undefined) {
 			locals.snapshot = options.snapshot;
@@ -236,7 +209,7 @@ export const c15tHandle = function c15tHandle(
 		if (building) {
 			locals.shared = true;
 		}
-		(event.locals as { c15t?: C15tLocals }).c15t = locals;
+		(event.locals as { inth?: InthLocals }).inth = locals;
 
 		// When the visitor's consent already lets some `scripts` run, the
 		// provider renders a start for them; it goes at the end of `<body>`,

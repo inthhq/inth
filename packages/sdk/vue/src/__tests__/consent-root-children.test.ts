@@ -15,7 +15,7 @@ import type { App, Component } from 'vue';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 
-import { c15tVue } from '../index';
+import { inthVue } from '../index';
 import NuxtConsentRoot from '../runtime/components/nuxt-root.vue';
 import ConsentRoot from '../runtime/components/root.vue';
 import { consentConfigKey } from '../runtime/composables/config';
@@ -34,7 +34,7 @@ import {
 } from '../runtime/utils/symbols';
 
 const initFixture: InitOutput = {
-	branding: 'c15t',
+	branding: 'inth',
 	location: { countryCode: 'DE', regionCode: null },
 	policyResolution: writePolicyResolutionWire(
 		resolvePolicyRules({
@@ -57,7 +57,7 @@ const initFixture: InitOutput = {
 		language: 'en',
 		translations: {
 			cookieBanner: {
-				description: 'Pick how c15t may use cookies.',
+				description: 'Pick how Inth may use cookies.',
 				title: 'Cookie choices',
 			},
 		},
@@ -133,7 +133,7 @@ describe.each([
 	test('renders wrapped children next to the banner', async () => {
 		const wrapper = mount(Root, {
 			attachTo: document.body,
-			global: { plugins: [[c15tVue, { ...config, mode }]] },
+			global: { plugins: [[inthVue, { ...config, mode }]] },
 			slots: { default: page },
 		});
 		try {

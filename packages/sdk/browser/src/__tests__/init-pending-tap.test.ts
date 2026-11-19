@@ -32,6 +32,7 @@ const snapshotWith = (
 				maxAgeMs: overrides.maxAgeMs ?? null,
 			},
 		},
+		policyRule: { prompt: 'choice' },
 		translations:
 			overrides.translations === undefined
 				? { language: 'en', translations: enTranslations }

@@ -18,7 +18,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { installGlobal } from '../global';
 import { createTestingGlobal as createGlobal } from '../testing-global';
-import type { TestingC15tGlobal as C15tGlobal } from '../testing-global';
+import type { TestingInthGlobal as InthGlobal } from '../testing-global';
 import type { ConsentClientOptions } from '../types';
 
 const template = readFileSync(
@@ -318,23 +318,23 @@ const options: ConsentClientOptions = {
 	ui: false,
 };
 
-const testWindow = window as Window & { c15t?: unknown; dataLayer?: unknown };
+const testWindow = window as Window & { inth?: unknown; dataLayer?: unknown };
 
-/** What the c15t script tag does when it runs, configured for this test. */
-const loadC15t = function loadC15t(
+/** What the Inth script tag does when it runs, configured for this test. */
+const loadInth = function loadInth(
 	pageOptions: ConsentClientOptions = options
-): C15tGlobal {
-	if (Array.isArray(testWindow.c15t)) {
-		testWindow.c15t.push(['config', pageOptions]);
+): InthGlobal {
+	if (Array.isArray(testWindow.inth)) {
+		testWindow.inth.push(['config', pageOptions]);
 	} else {
-		testWindow.c15t = [['config', pageOptions]];
+		testWindow.inth = [['config', pageOptions]];
 	}
 	const api = installGlobal(createGlobal({ pkg: '@inth/sdk/test' }));
 	api.init();
 	return api;
 };
 
-const inthUrl = 'https://acme.inth.app/c15t.js';
+const inthUrl = 'https://acme.inth.app/inth.js';
 const tagData = {
 	loadScript: true,
 	projectUrl: '',
@@ -353,8 +353,8 @@ const denied = {
 };
 
 afterEach(() => {
-	(testWindow.c15t as C15tGlobal | undefined)?.dispose?.();
-	testWindow.c15t = undefined;
+	(testWindow.inth as InthGlobal | undefined)?.dispose?.();
+	testWindow.inth = undefined;
 	testWindow.dataLayer = undefined;
 	vi.restoreAllMocks();
 	localStorage.clear();
@@ -365,9 +365,9 @@ afterEach(() => {
 });
 
 describe('GTM template', () => {
-	it('sets a denied default and waits for c15t', () => {
+	it('sets a denied default and waits for inth', () => {
 		const page = createPage(() => {
-			loadC15t();
+			loadInth();
 		});
 		page.run(tagData);
 
@@ -398,9 +398,9 @@ describe('GTM template', () => {
 		]);
 	});
 
-	it('loads c15t and sends its permissions once the policy resolves', async () => {
+	it('loads inth and sends its permissions once the policy resolves', async () => {
 		const page = createPage(() => {
-			loadC15t();
+			loadInth();
 		});
 		const result = page.run(tagData);
 
@@ -414,9 +414,9 @@ describe('GTM template', () => {
 	});
 
 	it('sends an update when the visitor accepts or rejects', async () => {
-		let api: C15tGlobal | undefined;
+		let api: InthGlobal | undefined;
 		const page = createPage(() => {
-			api = loadC15t();
+			api = loadInth();
 		});
 		page.run(tagData);
 		await vi.waitFor(() => {
@@ -448,9 +448,9 @@ describe('GTM template', () => {
 		// How many updates GTM had when each event arrived.
 		const updatesAtEvent: number[] = [];
 		const dataLayer: unknown[] = [];
-		let api: C15tGlobal | undefined;
+		let api: InthGlobal | undefined;
 		const page = createPage(() => {
-			api = loadC15t();
+			api = loadInth();
 		});
 		dataLayer.push = (...entries: unknown[]) => {
 			for (const entry of entries) {
@@ -471,8 +471,8 @@ describe('GTM template', () => {
 		});
 	});
 
-	it('uses c15t that the page already loaded', async () => {
-		loadC15t();
+	it('uses inth that the page already loaded', async () => {
+		loadInth();
 		const warn = vi.spyOn(console, 'warn');
 		const page = createPage();
 		const result = page.run({
@@ -490,12 +490,12 @@ describe('GTM template', () => {
 		});
 	});
 
-	it('queues for a page that loads c15t after the tag', async () => {
+	it('queues for a page that loads inth after the tag', async () => {
 		const page = createPage();
 		page.run({ ...tagData, loadScript: false });
 		expect(page.recorded.logs).toEqual([]);
 
-		loadC15t();
+		loadInth();
 		await vi.waitFor(() => {
 			expect(page.recorded.updates).toEqual([
 				{ ...denied, security_storage: 'granted' },
@@ -505,7 +505,7 @@ describe('GTM template', () => {
 
 	it('subscribes once when the tag fires twice', async () => {
 		const page = createPage(() => {
-			loadC15t();
+			loadInth();
 		});
 		page.run(tagData);
 		const second = page.run(tagData);
@@ -520,12 +520,13 @@ describe('GTM template', () => {
 	it('queues the backend URL only when it loads the script', () => {
 		const queued: unknown[] = [];
 		const page = createPage(() => {
-			queued.push(...(testWindow.c15t as unknown[]));
+			queued.push(...(testWindow.inth as unknown[]));
 		});
 		page.run({
 			...tagData,
 			projectUrl: 'https://acme.inth.app',
-			scriptUrl: 'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.js',
+			scriptUrl:
+				'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/inth.js',
 		});
 
 		expect(queued[0]).toEqual([
@@ -538,13 +539,13 @@ describe('GTM template', () => {
 		]);
 	});
 
-	it('asks c15t about the ticked categories only', async () => {
+	it('asks inth about the ticked categories only', async () => {
 		// The page sets no categories and registers no scripts, as on a site
-		// that loads c15t only through the tag.
+		// that loads Inth only through the tag.
 		const { consentCategories: _, ...pageOptions } = options;
-		let api: C15tGlobal | undefined;
+		let api: InthGlobal | undefined;
 		const page = createPage(() => {
-			api = loadC15t(pageOptions);
+			api = loadInth(pageOptions);
 		});
 		page.run({
 			...tagData,
@@ -576,7 +577,7 @@ describe('GTM template', () => {
 		const result = page.run(tagData);
 
 		expect(result.failure).toHaveBeenCalledOnce();
-		expect(page.recorded.logs).toEqual([`c15t: could not load ${inthUrl}`]);
+		expect(page.recorded.logs).toEqual([`inth: could not load ${inthUrl}`]);
 	});
 
 	it('tries again on a later firing after the script fails to load', async () => {
@@ -586,7 +587,7 @@ describe('GTM template', () => {
 			if (attempts === 1) {
 				throw new Error('network');
 			}
-			loadC15t();
+			loadInth();
 		});
 		const first = page.run(tagData);
 		const second = page.run(tagData);
@@ -609,47 +610,87 @@ describe('GTM template', () => {
 	});
 
 	it.each([
-		['https://acme.inth.app/c15t.js', true],
-		['https://acme.inth.app/c15t.headless.js', true],
-		['https://acme.inth.app/c15t.iab.js', true],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.js', true],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.offline.js', true],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.2.0/dist/c15t.local.js', true],
-		['https://example.com/c15t.js', false],
-		['https://acme.inth.app.example.com/c15t.js', false],
-		['https://inth.app/c15t.js', false],
-		['https://acme.inth.app/other.js', false],
-		['https://acme.inth.app/assets/c15t.js', false],
-		['http://acme.inth.app/c15t.js', false],
-		['https://acme.inth.app/c15t.js?v=1', false],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/other.js', false],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.gpp.js', false],
+		['https://acme.inth.app/inth.js', true],
+		['https://acme.inth.app/inth.headless.js', true],
+		['https://acme.inth.app/inth.iab.js', true],
 		[
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.devtools.js',
-			false,
-		],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/c15t.js', false],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/x/dist/c15t.js', false],
-		['https://acme.inth.app/c15t/c15t.js', false],
-		['https://acme.inth.app/c15t.gpp.js', false],
-		['https://acme.inth.app/c15t.offline.js', false],
-		['https://acme.inth.app/c15t.local.js', false],
-		[
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.2.0-canary.4/dist/c15t.headless.js',
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/inth.js',
 			true,
 		],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@latest/dist/c15t.js', false],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3/dist/c15t.js', false],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1/dist/c15t.js', false],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@^3.1.0/dist/c15t.js', false],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@~3.1.0/dist/c15t.js', false],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.x/dist/c15t.js', false],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0.1/dist/c15t.js', false],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0-/dist/c15t.js', false],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/inth.iab.js',
+			true,
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.2.0/lib/browser/dist/inth.local.js',
+			false,
+		],
+		['https://example.com/inth.js', false],
+		['https://acme.inth.app.example.com/inth.js', false],
+		['https://inth.app/inth.js', false],
+		['https://acme.inth.app/other.js', false],
+		['https://acme.inth.app/assets/inth.js', false],
+		['http://acme.inth.app/inth.js', false],
+		['https://acme.inth.app/inth.js?v=1', false],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/other.js',
+			false,
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/inth.gpp.js',
+			false,
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/inth.devtools.js',
+			false,
+		],
+		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/inth.js', false],
+		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/inth.js', false],
+		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/x/dist/inth.js', false],
+		['https://acme.inth.app/inth/inth.js', false],
+		['https://acme.inth.app/inth.gpp.js', false],
+		['https://acme.inth.app/inth.offline.js', false],
+		['https://acme.inth.app/inth.local.js', false],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.2.0-canary.4/lib/browser/dist/inth.headless.js',
+			true,
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@latest/lib/browser/dist/inth.js',
+			false,
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3/lib/browser/dist/inth.js',
+			false,
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1/lib/browser/dist/inth.js',
+			false,
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@^3.1.0/lib/browser/dist/inth.js',
+			false,
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@~3.1.0/lib/browser/dist/inth.js',
+			false,
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.x/lib/browser/dist/inth.js',
+			false,
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0.1/lib/browser/dist/inth.js',
+			false,
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0-/lib/browser/dist/inth.js',
+			false,
+		],
 	])('treats %s as allowed: %s', (scriptUrl, allowed) => {
 		const page = createPage();
-		// jsDelivr's hosted c15t.js needs a backend; see the cases below.
-		const projectUrl = scriptUrl.endsWith('/dist/c15t.js')
+		// jsDelivr's hosted inth.js needs a backend; see the cases below.
+		const projectUrl = scriptUrl.endsWith('/dist/inth.js')
 			? 'https://acme.inth.app'
 			: '';
 		const result = page.run({ ...tagData, projectUrl, scriptUrl });
@@ -660,19 +701,9 @@ describe('GTM template', () => {
 
 	it.each([
 		[
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.js',
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/inth.js',
 			'',
 			'needs a "Project URL"',
-		],
-		[
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.offline.js',
-			'https://acme.inth.app',
-			'uses no backend',
-		],
-		[
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.2.0/dist/c15t.local.js',
-			'https://acme.inth.app',
-			'uses no backend',
 		],
 	])('fails %s with Project URL "%s"', (scriptUrl, projectUrl, message) => {
 		const page = createPage();
@@ -681,14 +712,20 @@ describe('GTM template', () => {
 		expect(result.failure).toHaveBeenCalledOnce();
 		expect(page.recorded.injected).toEqual([]);
 		expect(page.recorded.logs.join('\n')).toContain(message);
-		expect(testWindow.c15t).toEqual([]);
+		expect(testWindow.inth).toEqual([]);
 	});
 
 	it.each([
-		['https://acme.inth.app/c15t.js', ''],
-		['https://acme.inth.app/c15t.js', 'https://other.inth.app'],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.headless.js', ''],
-		['https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.iab.js', ''],
+		['https://acme.inth.app/inth.js', ''],
+		['https://acme.inth.app/inth.js', 'https://other.inth.app'],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/inth.headless.js',
+			'',
+		],
+		[
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/inth.iab.js',
+			'',
+		],
 	])('loads %s with Project URL "%s"', (scriptUrl, projectUrl) => {
 		const page = createPage();
 		const result = page.run({ ...tagData, projectUrl, scriptUrl });
@@ -708,24 +745,25 @@ describe('GTM template', () => {
 		const pattern = new RegExp(validator ?? '(?!)', 'u');
 
 		for (const url of [
-			'https://acme.inth.app/c15t.js',
-			'https://acme.inth.app/c15t.iab.js',
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.offline.js',
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.2.0/dist/c15t.local.js',
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.headless.js',
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.2.0-canary.4/dist/c15t.js',
+			'https://acme.inth.app/inth.js',
+			'https://acme.inth.app/inth.iab.js',
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/inth.iab.js',
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/inth.headless.js',
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.2.0-canary.4/lib/browser/dist/inth.js',
 		]) {
 			expect(pattern.test(url)).toBe(true);
 		}
 		for (const url of [
-			'https://example.com/c15t.js',
-			'https://acme.inth.app.example.com/c15t.js',
-			'https://acme.inth.app/c15t.gpp.js',
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.devtools.js',
-			'https://acme.inth.app/c15t.offline.js',
-			'https://acme.inth.app/c15t.local.js',
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@latest/dist/c15t.js',
-			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1/dist/c15t.js',
+			'https://example.com/inth.js',
+			'https://acme.inth.app.example.com/inth.js',
+			'https://acme.inth.app/inth.gpp.js',
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/lib/browser/dist/inth.devtools.js',
+			'https://acme.inth.app/inth.offline.js',
+			'https://acme.inth.app/inth.local.js',
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.2.0/lib/browser/dist/inth.local.js',
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/inth.js',
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@latest/lib/browser/dist/inth.js',
+			'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1/lib/browser/dist/inth.js',
 		]) {
 			expect(pattern.test(url)).toBe(false);
 		}
@@ -812,4 +850,54 @@ describe('GTM template scenarios', () => {
 			`${setup}\n${code}`
 		)(mock, mockObject, runCode, assertApi, assertThat, {});
 	});
+});
+
+describe('Google consent mapping', () => {
+	// The Swift, Kotlin and React Native helpers are graded against this
+	// fixture, which is generated from @inth/integrations' default mapping.
+	const fixture = JSON.parse(
+		readFileSync(
+			join(
+				dirname(fileURLToPath(import.meta.url)),
+				'../../../../native-protocol/google-consent-mode/consent-mode-v2.json'
+			),
+			'utf8'
+		)
+	) as {
+		cases: {
+			consents: Record<string, boolean>;
+			expected: Record<string, 'granted' | 'denied'>;
+			id: string;
+		}[];
+	};
+	const literal = (name: string): unknown => {
+		const match = new RegExp(
+			`^const ${name} = (?<value>[\\s\\S]*?);$`,
+			'mu'
+		).exec(section('SANDBOXED_JS_FOR_WEB_TEMPLATE'));
+		if (!match?.groups?.value) {
+			throw new Error(`template.tpl has no ${name}`);
+		}
+		return compile([], `return ${match.groups.value};`)();
+	};
+
+	it.each(fixture.cases.map((testCase) => [testCase.id, testCase] as const))(
+		'matches the generated fixture for %s',
+		(_id, testCase) => {
+			const types = literal('CONSENT_TYPES') as string[];
+			const mapping = literal('CONSENT_MAPPING') as Record<string, string[]>;
+			const signal = Object.fromEntries(
+				Object.entries(mapping).flatMap(([category, consentTypes]) =>
+					consentTypes.map((type) => [
+						type,
+						testCase.consents[category] ? 'granted' : 'denied',
+					])
+				)
+			);
+			expect(types.toSorted()).toEqual(
+				Object.keys(testCase.expected).toSorted()
+			);
+			expect(signal).toEqual(testCase.expected);
+		}
+	);
 });

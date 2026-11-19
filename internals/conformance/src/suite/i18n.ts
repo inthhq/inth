@@ -87,8 +87,6 @@ export const runI18nConformance = function runI18nConformance(
 					api,
 					`${locale.code}: RTL locale propagates dir="rtl" to rendered tree`,
 					async () => {
-						// Driver mount is called first so stub frameworks (vue/solid) cascade
-						// to [todo] via DriverNotImplementedError before any DOM access.
 						const mounted = await driver.mount({
 							component: 'consent-banner',
 							locale: locale.code,

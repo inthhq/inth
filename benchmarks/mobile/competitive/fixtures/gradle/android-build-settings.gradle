@@ -6,7 +6,7 @@ gradle.projectsEvaluated {
    def app=rootProject.project(':app');def a=app.extensions.getByName('android');def release=a.buildTypes.getByName('release');def signing=release.signingConfig
    def result=[gradleVersion:gradle.gradleVersion,agpVersion:app.extensions.getByName('androidComponents').pluginVersion.toString(),javaVersion:System.getProperty('java.version'),applicationId:a.defaultConfig.applicationId + (a.defaultConfig.applicationIdSuffix ?: '') + (release.applicationIdSuffix ?: ''),minSdk:a.defaultConfig.minSdk.toString(),targetSdk:a.defaultConfig.targetSdk.toString(),compileSdk:a.compileSdk.toString(),buildTools:a.buildToolsVersion,ndkVersion:a.ndkVersion,minifyEnabled:release.minifyEnabled,shrinkResources:release.shrinkResources,hermesEnabled:app.findProperty('hermesEnabled'),newArchEnabled:app.findProperty('newArchEnabled'),architectures:app.findProperty('reactNativeArchitectures'),jniLegacyPackaging:a.packagingOptions.jniLibs.useLegacyPackaging,signingStoreFile:signing.storeFile.absolutePath,signingStoreSha256:MessageDigest.getInstance('SHA-256').digest(signing.storeFile.bytes).encodeHex().toString(),signingAlias:signing.keyAlias,projects:rootProject.allprojects.collect{[path:it.path,directory:it.projectDir.absolutePath]}]
    assert result.minifyEnabled && result.shrinkResources
-   def target=new File(System.getenv('C15T_SETTINGS_OUT'));target.parentFile.mkdirs();target.text=JsonOutput.prettyPrint(JsonOutput.toJson(result))+'\n'
+   def target=new File(System.getenv('INTH_SETTINGS_OUT'));target.parentFile.mkdirs();target.text=JsonOutput.prettyPrint(JsonOutput.toJson(result))+'\n'
   }
  }
 }

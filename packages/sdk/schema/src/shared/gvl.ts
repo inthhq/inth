@@ -142,7 +142,7 @@ export const globalVendorListSchema = /* @__PURE__ */ (() =>
  * `v.looseObject` adds.
  *
  * Unknown fields still pass through at runtime. The types name only the
- * fields c15t knows, so a misspelt field stays a type error and `in` checks
+ * fields Inth knows, so a misspelt field stays a type error and `in` checks
  * still tell a GVL vendor from a custom vendor. `v.record` index signatures
  * have a concrete value type and are kept.
  */

@@ -23,14 +23,14 @@ browser only.
 
 ## Inspect consent in Nuxt DevTools
 
-In development, the module adds a **c15t** tab to Nuxt DevTools, so you don't
+In development, the module adds a **Inth** tab to Nuxt DevTools, so you don't
 need to render `ConsentDevTools` to inspect consent. Open Nuxt DevTools with
-Shift + Option + D (Shift + Alt + D on Windows and Linux) and choose c15t. The
+Shift + Option + D (Shift + Alt + D on Windows and Linux) and choose Inth. The
 tab shows consent values, scripts, location, the resolved policy, IAB state,
 events and consent actions. It follows the DevTools light or dark theme.
 
 Nuxt enables its DevTools by default in development. Production builds don't
-register the tab, its `/__c15t_devtools__` page or the client plugin that
+register the tab, its `/__inth_devtools__` page or the client plugin that
 exposes the kernel to it. To turn the tab off in development, set
 `devtools: false`:
 
@@ -39,7 +39,7 @@ exposes the kernel to it. To turn the tab off in development, set
 ```ts title="nuxt.config.ts"
 export default defineNuxtConfig({
 	modules: ['@inth/nuxt'],
-	c15t: { devtools: false },
+	inth: { devtools: false },
 });
 ```
 

@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/next-compat-shared",
+	"name": "@inth/next-compat-shared",
 	"version": "0.0.0",
 	"private": true,
 	"description": "Shared fixture routes, probe, and Vitest suites for the @inth/nextjs compatibility matrix.",
@@ -24,7 +24,7 @@
 		"@inth/sdk": "workspace:*"
 	},
 	"devDependencies": {
-		"@c15t/typescript-config": "workspace:*",
+		"@inth/typescript-config": "workspace:*",
 		"@types/node": "25.5.0",
 		"@types/react": "19.2.17",
 		"@vitest/coverage-istanbul": "4.1.10",

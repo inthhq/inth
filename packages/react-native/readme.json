@@ -20,7 +20,6 @@
 	],
 	"docsLink": "https://c15t.com/docs/frameworks/react-native/quickstart",
 	"showCLIGeneration": false,
-	"showBanner": false,
 	"customSections": {
 		"Compatibility and updates": "For a new app, target RN 0.88 with React 19.3, or Expo 58, and verify native builds and consent journeys before shipping. Older matrix versions remain compatibility targets for existing apps; Inth compatibility does not extend upstream maintenance. The Expo plugin raises the iOS deployment target to at least 16.4 and preserves higher targets. Compatibility checks cover packed types, maintained source types, Codegen and Expo prebuild; they do not establish native runtime acceptance for every version. We review each stable RN and Expo release, announce removals, and raise compatibility floors in an Inth major release. See [compatibility and updates](https://c15t.com/docs/frameworks/react-native/platform-support).",
 		"Native setup before JavaScript": "Start with an Inth project and its authored policy. The reference apps use https://example-inth.inth.app/. Replace it with your own project URL. Configure the native launch hooks before optional SDK startup; `ConsentProvider` attaches to that engine, checks the protocol and presents the native consent prompt when one is owed. Pass `privacyPolicyUrl`, or `autoPresent={false}` to present it yourself. It does not bootstrap a JavaScript consent engine. Disable vendor automatic startup and keep gates current after withdrawal.",

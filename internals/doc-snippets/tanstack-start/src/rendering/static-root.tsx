@@ -16,7 +16,7 @@ import {
 import { scripts } from '../scripts';
 
 const projectUrl =
-	import.meta.env.VITE_C15T_BACKEND_URL ?? 'https://your-project.inth.app';
+	import.meta.env.VITE_INTH_PROJECT_URL ?? 'https://your-project.inth.app';
 
 // No loader: the HTML is built ahead of time, so the browser resolves
 // consent after it loads, from the backend URL consentManifest() read.

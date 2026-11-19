@@ -2,7 +2,7 @@ import { fileURLToPath } from 'node:url';
 
 import node from '@astrojs/node';
 import svelte from '@astrojs/svelte';
-import c15t, { hosted, manifest } from '@inth/astro';
+import inth, { hosted, manifest } from '@inth/astro';
 import { defineConfig } from 'astro/config';
 
 /**
@@ -10,13 +10,13 @@ import { defineConfig } from 'astro/config';
  *
  * Astro serializes the integration's options into a virtual module at build
  * time, so a page cannot pick its transport the way the Nuxt bench's route
- * plugin does. `C15T_BENCH_ASTRO_MODE` picks it instead, and the runner
+ * plugin does. `INTH_BENCH_ASTRO_MODE` picks it instead, and the runner
  * builds each variant into its own `outDir` and serves the arms that belong
  * to it:
  *
  * - `manifest` (default) — `/ssr-manifest`, `/ssr-deferred`, `/repeat-visitor`
  * - `hosted` — `/ssr`, the direct-init arm that pays the backend RTT
- * - `baseline` — `/baseline`, built with no c15t integration at all, which
+ * - `baseline` — `/baseline`, built with no Inth integration at all, which
  *   is the zero-consent floor `consentTax = bannerVisible − floor` subtracts
  * - `scripts` — `/scripts`, `/repeat-visitor-scripts`: manifest mode plus
  *   one measurement-gated script and a network-blocker rule, so the runner
@@ -36,8 +36,8 @@ import { defineConfig } from 'astro/config';
  * resolve consent, which would fetch the manifest, which would resolve
  * consent.
  */
-const benchMode = process.env.C15T_BENCH_ASTRO_MODE ?? 'manifest';
-const origin = process.env.C15T_BENCH_ORIGIN ?? 'http://127.0.0.1:4353';
+const benchMode = process.env.INTH_BENCH_ASTRO_MODE ?? 'manifest';
+const origin = process.env.INTH_BENCH_ORIGIN ?? 'http://127.0.0.1:4353';
 const projectUrl = `${origin}/api/bench-consent`;
 
 const consentCategories = [
@@ -83,10 +83,10 @@ if (benchMode === 'manifest' || benchMode === 'scripts') {
 			},
 		];
 	}
-	integrations.push(c15t(options));
+	integrations.push(inth(options));
 } else if (benchMode === 'gate') {
 	integrations.push(
-		c15t({
+		inth({
 			clientEntrypoint: fileURLToPath(
 				new URL('src/gate-client.ts', import.meta.url)
 			),
@@ -101,7 +101,7 @@ if (benchMode === 'manifest' || benchMode === 'scripts') {
 	);
 } else if (benchMode === 'hosted') {
 	integrations.push(
-		c15t({
+		inth({
 			consentCategories,
 			middleware: { skip: ['/api/bench-consent'] },
 			mode: hosted(),
@@ -113,6 +113,6 @@ if (benchMode === 'manifest' || benchMode === 'scripts') {
 export default defineConfig({
 	adapter: node({ mode: 'standalone' }),
 	integrations,
-	outDir: process.env.C15T_BENCH_OUT_DIR ?? './dist',
+	outDir: process.env.INTH_BENCH_OUT_DIR ?? './dist',
 	output: 'server',
 });

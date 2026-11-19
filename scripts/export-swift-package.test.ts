@@ -45,7 +45,7 @@ afterEach(() => {
 
 const fixture = (packageManifest = manifest) => {
 	const directory = realpathSync(
-		mkdtempSync(join(tmpdir(), 'c15t-swift-export-'))
+		mkdtempSync(join(tmpdir(), 'inth-swift-export-'))
 	);
 	directories.push(directory);
 	const cwd = join(directory, 'source');
@@ -75,7 +75,7 @@ const fixture = (packageManifest = manifest) => {
 		return git('rev-parse', 'HEAD');
 	};
 	write('LICENSE', 'Apache License\nVersion 2.0, January 2004\n');
-	write('NOTICE', 'c15t attribution\n');
+	write('NOTICE', 'inth attribution\n');
 	write(`${nativeRoot}/Package.swift`, packageManifest);
 	write(sourcePath, core);
 	write(
@@ -124,7 +124,7 @@ describe('Swift source distribution', () => {
 	it('preserves the committed root manifest for monorepo release validation', () => {
 		const repo = fixture();
 		const rootManifest = manifest
-			.replace('name: "InthCore",\n', 'name: "c15t",\n')
+			.replace('name: "InthCore",\n', 'name: "inth",\n')
 			.replace(
 				'.target(name: "InthCore")',
 				'.target(name: "InthCore", path: "packages/swift/Sources/InthCore")'
@@ -173,7 +173,7 @@ describe('Swift source distribution', () => {
 		repo.write(`${nativeRoot}/Resources/binary.dat`, Buffer.from([0, 255, 10]));
 		repo.write(
 			`${nativeRoot}/AGENTS.md`,
-			'# c15t for Swift: notes for coding agents\n'
+			'# inth for Swift: notes for coding agents\n'
 		);
 		repo.write('AGENTS.md', '# Monorepo contributor guide\n');
 		const sourceCommit = repo.commit();

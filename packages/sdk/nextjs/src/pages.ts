@@ -15,13 +15,13 @@
  * ```
  */
 
-import type { StorageConfig } from '@inth/sdk/engine';
+import type {
+	ConsentProxyRouteMethodHandlers,
+	ConsentRouteMethodHandlers,
+} from '@inth/sdk/server';
 import type { GetServerSideProps, GetServerSidePropsContext } from 'next';
 
-import type {
-	NextConsentProxyRouteHandlers,
-	NextConsentRouteOptions,
-} from './api';
+import type { NextRouteHandler, NextConsentRouteOptions } from './api';
 import { createConsentRoute } from './api';
 import type { ConsentConfig } from './config';
 import type {
@@ -71,9 +71,6 @@ export type PagesResolveConsentOptions = Omit<
  * Builds the `request` adapter the server helpers expect from a Node
  * request. Headers convert to Web `Headers`; cookies come from the `cookie`
  * header.
- *
- * @param req - `req` from `getServerSideProps` or an API route
- * @returns A `NextRequestContext` for `@inth/nextjs/server`
  */
 export const createPagesRequestContext = function createPagesRequestContext(
 	req: NodeRequestLike
@@ -92,8 +89,6 @@ export const createPagesRequestContext = function createPagesRequestContext(
  * {@link withConsentProps}, which calls this and makes the result
  * JSON-safe.
  *
- * @param options - The Node `req`, and the server helper options
- * @returns The visitor's `ConsentState`
  * @example
  * ```ts
  * const state = await resolveConsent({ req });
@@ -143,21 +138,21 @@ const toPagesApiHandler = function toPagesApiHandler(
 
 /**
  * One Pages Router API route for every consent path,
- * `pages/api/c15t/[...c15t].ts`: `GET /manifest` and `GET /init`, and 404
+ * `pages/api/inth/[...inth].ts`: `GET /manifest` and `GET /init`, and 404
  * for anything else unless `proxy` forwards it to the backend. The Pages
  * Router counterpart of `createConsentRoute`.
  *
  * Pages without `getServerSideProps` resolve consent in the browser, which
- * asks this route when `c15t.config.ts` sets `routePrefix: '/api/c15t'`.
- * With `proxy: true` here and in `c15t.config.ts`, browser saves come here
- * too. Everything defaults to `c15t.config.ts`.
+ * asks this route when `inth.config.ts` sets `routePrefix: '/api/inth'`.
+ * With `proxy: true` here and in `inth.config.ts`, browser saves come here
+ * too. Everything defaults to `inth.config.ts`.
  *
- * @param options - Overrides of `c15t.config.ts`, caching, and `proxy`.
+ * @param options - Overrides of `inth.config.ts`, caching, and `proxy`.
  * @param param - The catch-all parameter's name, from the file name.
  * @returns The API route's default export.
  * @example
  * ```ts
- * // pages/api/c15t/[...c15t].ts
+ * // pages/api/inth/[...inth].ts
  * import { createPagesConsentRoute } from '@inth/nextjs/pages';
  *
  * export default createPagesConsentRoute();
@@ -165,10 +160,10 @@ const toPagesApiHandler = function toPagesApiHandler(
  */
 export const createPagesConsentRoute = function createPagesConsentRoute(
 	options: NextConsentRouteOptions = {},
-	param = 'c15t'
+	param = 'inth'
 ): PagesApiHandler {
-	const handlers: Partial<NextConsentProxyRouteHandlers> &
-		Pick<NextConsentProxyRouteHandlers, 'GET'> = createConsentRoute(options);
+	const handlers: Partial<ConsentProxyRouteMethodHandlers<NextRouteHandler>> &
+		ConsentRouteMethodHandlers<NextRouteHandler> = createConsentRoute(options);
 	return toPagesApiHandler(
 		(request, req) => {
 			// `req.query` mixes the route parameter with the query string, so
@@ -182,8 +177,9 @@ export const createPagesConsentRoute = function createPagesConsentRoute(
 			// With `proxy`, writes go to the forwarding handlers; HEAD and any
 			// method without one read like GET.
 			const handler =
-				handlers[request.method as keyof NextConsentProxyRouteHandlers] ??
-				handlers.GET;
+				handlers[
+					request.method as keyof ConsentProxyRouteMethodHandlers<NextRouteHandler>
+				] ?? handlers.GET;
 			return handler(request, {
 				params: Promise.resolve({ [param]: segments }),
 			});
@@ -203,31 +199,11 @@ export interface ConsentPageProps {
 }
 
 /** Options for {@link withConsentProps}: `resolveConsent` without `req`. */
-export type WithConsentPropsOptions = Omit<
-	PagesResolveConsentOptions,
-	'req'
-> & {
-	/**
-	 * The client's `storageConfig`. `storageKey` names the consent cookie,
-	 * like `cookieName`, and wins over it. The other fields are deprecated:
-	 * c15t no longer sets a subject cookie, so nothing reads them. They are
-	 * removed in v4.
-	 */
-	storage?: Pick<
-		StorageConfig,
-		'crossSubdomain' | 'defaultDomain' | 'defaultExpiryDays' | 'storageKey'
-	>;
-
-	/**
-	 * @deprecated c15t no longer sets a subject cookie, so this does
-	 * nothing. Removed in v4.
-	 */
-	subjectCookie?: boolean;
-};
+export type WithConsentPropsOptions = Omit<PagesResolveConsentOptions, 'req'>;
 
 /**
  * `getServerSideProps` that resolves the visitor's consent from
- * `c15t.config.ts` and adds it to the page's props as `consent`, for
+ * `inth.config.ts` and adds it to the page's props as `consent`, for
  * `<ConsentRoot state={pageProps.consent}>` in `pages/_app.tsx`. The state
  * is JSON-safe, as Next.js requires of props.
  *
@@ -257,11 +233,9 @@ export const withConsentProps = function withConsentProps<
 	getServerSideProps?: GetServerSideProps<Props>,
 	options: WithConsentPropsOptions = {}
 ): GetServerSideProps<Props & ConsentPageProps> {
-	const { storage, subjectCookie: _subjectCookie, ...resolveOptions } = options;
-	const cookieName = storage?.storageKey ?? options.cookieName;
 	return async (context: GetServerSidePropsContext) => {
 		const [state, result] = await Promise.all([
-			resolveConsent({ ...resolveOptions, cookieName, req: context.req }),
+			resolveConsent({ ...options, req: context.req }),
 			getServerSideProps ? getServerSideProps(context) : { props: {} as Props },
 		]);
 		if (!('props' in result)) {

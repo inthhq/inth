@@ -5,7 +5,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	installHeadProbe,
@@ -41,9 +41,9 @@ describe('LiveIntent production core loader contract', () => {
 		const getItem = vi.spyOn(Storage.prototype, 'getItem');
 		const cookieWrite = vi.spyOn(document, 'cookie', 'set');
 		const scripts = [
-			liveIntentTag({ events: [conversion], tagId: 'c15t-tag' }),
+			liveIntentTag({ events: [conversion], tagId: 'inth-tag' }),
 		];
-		expect(loadScripts(scripts, deniedConsents)).toEqual([]);
+		expect(loadScripts(scripts, ALL_DENIED)).toEqual([]);
 		expect(updateScripts(scripts, grantedMeasurementConsents).loaded).toEqual(
 			[]
 		);
@@ -65,12 +65,12 @@ describe('LiveIntent production core loader contract', () => {
 		let atAppend: unknown;
 		installHeadProbe((node) => {
 			atAppend = window.liQ;
-			expect(node.src).toBe('https://b-code.liadm.com/c15t-tag.min.js');
+			expect(node.src).toBe('https://b-code.liadm.com/inth-tag.min.js');
 			expect(node.async).toBe(true);
 			expect(node.getAttribute('charset')).toBe('utf-8');
 		});
 		loadScripts(
-			[liveIntentTag({ events: [conversion, second], tagId: 'c15t-tag' })],
+			[liveIntentTag({ events: [conversion, second], tagId: 'inth-tag' })],
 			grantedMarketingConsents
 		);
 		expect(Array.isArray(atAppend)).toBe(true);
@@ -80,7 +80,7 @@ describe('LiveIntent production core loader contract', () => {
 
 	it('creates an empty event array when no initial events are configured', () => {
 		loadScripts(
-			[liveIntentTag({ tagId: 'c15t-tag' })],
+			[liveIntentTag({ tagId: 'inth-tag' })],
 			grantedMarketingConsents
 		);
 		expect(window.liQ).toEqual([]);
@@ -92,14 +92,14 @@ describe('LiveIntent production core loader contract', () => {
 		const queue: LiveIntentEvent[] = [prior];
 		window.liQ = queue;
 		const scripts = [
-			liveIntentTag({ events: [conversion], tagId: 'c15t-tag' }),
+			liveIntentTag({ events: [conversion], tagId: 'inth-tag' }),
 		];
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		expect(queue).toEqual([prior]);
 		updateScripts(scripts, grantedMarketingConsents);
 		expect(window.liQ).toBe(queue);
 		expect(queue).toEqual([prior, conversion]);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMarketingConsents);
 		expect(window.liQ).toBe(queue);
 		expect(queue).toEqual([prior, conversion]);
@@ -110,15 +110,15 @@ describe('LiveIntent production core loader contract', () => {
 		const runtime = { push };
 		window.liQ = runtime;
 		const scripts = [
-			liveIntentTag({ events: [conversion], tagId: 'c15t-tag' }),
+			liveIntentTag({ events: [conversion], tagId: 'inth-tag' }),
 		];
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		expect(push).not.toHaveBeenCalled();
 		updateScripts(scripts, grantedMarketingConsents);
 		expect(window.liQ).toBe(runtime);
 		expect(push).toHaveBeenCalledExactlyOnceWith(conversion);
 		expect(push.mock.contexts).toEqual([runtime]);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMarketingConsents);
 		expect(push).toHaveBeenCalledExactlyOnceWith(conversion);
 	});
@@ -128,7 +128,7 @@ describe('LiveIntent production core loader contract', () => {
 		(completion) => {
 			const append = vi.fn();
 			installHeadProbe(append);
-			const options = { events: [conversion], tagId: 'c15t-tag' };
+			const options = { events: [conversion], tagId: 'inth-tag' };
 			const scripts = [liveIntentTag(options)];
 			loadScripts(scripts, grantedMarketingConsents);
 			const element = document.querySelector('script');
@@ -137,7 +137,7 @@ describe('LiveIntent production core loader contract', () => {
 			if (completion === 'before revoke') {
 				element?.dispatchEvent(new Event('load'));
 			}
-			updateScripts(scripts, deniedConsents);
+			updateScripts(scripts, ALL_DENIED);
 			expect(element?.isConnected).toBe(true);
 			expect(window.liQ).toBe(queue);
 			expect(queue).toEqual([conversion]);
@@ -155,18 +155,18 @@ describe('LiveIntent production core loader contract', () => {
 	);
 
 	it('keeps vendor replacement globals and sends no invented withdrawal event', () => {
-		const options = { events: [conversion], tagId: 'c15t-tag' };
+		const options = { events: [conversion], tagId: 'inth-tag' };
 		const scripts = [liveIntentTag(options)];
 		loadScripts(scripts, grantedMarketingConsents);
 		const element = document.querySelector('script');
 		const runtime = { push: vi.fn() };
-		const config = { appId: 'c15t-tag' };
+		const config = { appId: 'inth-tag' };
 		window.liQ = runtime;
 		window.LI = config;
 		const hub: unknown[] = [];
 		const runtimeWindow: Window & { liQHub?: unknown[] } = window;
 		runtimeWindow.liQHub = hub;
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		element?.dispatchEvent(new Event('load'));
 		updateScripts([liveIntentTag(options)], grantedMarketingConsents);
 		expect(window.liQ).toBe(runtime);

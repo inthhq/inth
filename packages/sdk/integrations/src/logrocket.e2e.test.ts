@@ -5,7 +5,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMeasurementConsents,
 	installHeadProbe,
 	loadScripts,
@@ -39,7 +39,7 @@ describe('logRocket contract', () => {
 
 		const script = {
 			...logRocket({
-				appId: 'c15tfake/c15tfake',
+				appId: 'inthfake/inthfake',
 				initOptions: {
 					dom: {
 						inputSanitizer: true,
@@ -50,7 +50,7 @@ describe('logRocket contract', () => {
 			id: 'logrocket-contract',
 		};
 
-		loadScripts([script], deniedConsents);
+		loadScripts([script], ALL_DENIED);
 		expect(appendCount).toBe(0);
 
 		loadScripts([script], grantedMeasurementConsents);
@@ -58,20 +58,20 @@ describe('logRocket contract', () => {
 		expect(appendCount).toBe(1);
 		expect(crossoriginAttribute).toBe('anonymous');
 		expect(initBeforeLoad).toBe(false);
-		expect(init).toHaveBeenCalledWith('c15tfake/c15tfake', {
+		expect(init).toHaveBeenCalledWith('inthfake/inthfake', {
 			dom: {
 				inputSanitizer: true,
 			},
 		});
 		expect(
-			document.getElementById('c15t-script-logrocket-contract')
+			document.getElementById('inth-script-logrocket-contract')
 		).toBeInstanceOf(HTMLScriptElement);
 
-		const result = updateScripts([script], deniedConsents);
+		const result = updateScripts([script], ALL_DENIED);
 
 		expect(result.unloaded).toEqual(['logrocket-contract']);
 		expect(
-			document.getElementById('c15t-script-logrocket-contract')
+			document.getElementById('inth-script-logrocket-contract')
 		).toBeNull();
 	});
 });

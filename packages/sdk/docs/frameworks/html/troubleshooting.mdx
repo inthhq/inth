@@ -1,12 +1,12 @@
 ---
 title: Troubleshooting
-description: Fix a missing banner, vendor scripts that run before consent, script tag errors and blocked requests on a plain HTML site that uses the c15t script tag.
+description: Fix a missing banner, vendor scripts that run before consent, script tag errors and blocked requests on a plain HTML site that uses the Inth script tag.
 group: frameworks
 ---
 
 ## Inspect consent with DevTools
 
-Add the DevTools tag next to the c15t tag while you debug. The panel shows
+Add the DevTools tag next to the Inth tag while you debug. The panel shows
 consent state, gated scripts, the resolved policy and every event, and its
 Location tab tries the policy for another country. See
 [DevTools](/docs/frameworks/html/dev-tools) for the tag and its attributes.
@@ -31,12 +31,12 @@ endpoint.
   and your backend in `connect-src`; see
   [Content Security Policy](/docs/frameworks/html/content-security-policy).
 - **You already chose.** A stored choice hides the banner. Open a private
-  window, or clear the `c15t` cookie and localStorage key.
+  window, or clear the `inth` cookie and localStorage key.
 
 ## Why does a vendor script run before a choice?
 
 **Check.** Search the page source for the vendor's domain. The script tag only
-holds scripts that are `type="text/plain"` with a `data-c15t-category`. A
+holds scripts that are `type="text/plain"` with a `data-inth-category`. A
 second copy added by a theme setting, a plugin or a tag manager runs on its own
 terms.
 
@@ -55,10 +55,10 @@ design.
 
 ## Why does a gated script never run on a page with a nonce?
 
-**Check.** When the c15t tag has a `nonce` or `data-nonce`, c15t runs only gated
+**Check.** When the Inth tag has a `nonce` or `data-nonce`, Inth runs only gated
 `text/plain` tags that carry the same nonce. Open the console and look for a
-warning that c15t skipped a `data-c15t-category` script, and check the tag in
-the Elements panel for `data-c15t-activated="untrusted"`.
+warning that Inth skipped a `data-inth-category` script, and check the tag in
+the Elements panel for `data-inth-activated="untrusted"`.
 
 **Fix.** Add `nonce="RANDOM_PER_RESPONSE"`, with the value your server sends, to
 the tag, including tags your own code inserts later. See
@@ -69,58 +69,58 @@ the tag, including tags your own code inserts later. See
 **Check.** The console shows a CSP violation. A Content Security Policy whose
 `style-src` does not allow the stock UI's `<style>` element blocks it.
 
-**Fix.** Put the nonce from your `style-src` on the c15t tag, as `nonce` or
+**Fix.** Put the nonce from your `style-src` on the Inth tag, as `nonce` or
 `data-nonce`, or serve the stylesheet as a file as
 [Content Security Policy](/docs/frameworks/html/content-security-policy#allow-the-stock-uis-styles)
 describes.
 
 ## Why does the preferences link do nothing?
 
-**Check.** Confirm that the link's `href` ends in `#c15t-preferences` and that
-the page loads the c15t tag. With `c15t.headless.js` or `ui: { dialog: false }`, the link asks for
+**Check.** Confirm that the link's `href` ends in `#inth-preferences` and that
+the page loads the Inth tag. With `inth.headless.js` or `ui: { dialog: false }`, the link asks for
 the dialog but nothing renders it.
 
-**Fix.** Correct the `href` or add the c15t tag. With a headless setup, your
+**Fix.** Correct the `href` or add the Inth tag. With a headless setup, your
 page must render its own dialog, as [headless](/docs/frameworks/html/headless)
 shows.
 
-## Why does the console say "call c15t.init() first"?
+## Why does the console say "call inth.init() first"?
 
-**Check.** Something called a `window.c15t` method directly before the client
+**Check.** Something called a `window.inth` method directly before the client
 existed, for example from an inline script that ran before the tag, or on a
-page whose tag has `data-manual` before anything called `c15t.init()`.
+page whose tag has `data-manual` before anything called `inth.init()`.
 
-**Fix.** Queue the call with `c15t.push()`, move it into an `on('ready', ...)`
-listener, or wait for `c15t.ready()`. See
+**Fix.** Queue the call with `inth.push()`, move it into an `on('ready', ...)`
+listener, or wait for `inth.ready()`. See
 [which calls you can queue](/docs/frameworks/html/api#which-calls-you-can-queue).
 
 ## Why does the console say a queued call "was skipped"?
 
-**Check.** `c15t.push()` received a method it does not queue, such as `has`,
-`getSnapshot` or `dispose`, or a name c15t does not know. A queue cannot hand
-a value back, so c15t skips the call.
+**Check.** `inth.push()` received a method it does not queue, such as `has`,
+`getSnapshot` or `dispose`, or a name Inth does not know. A queue cannot hand
+a value back, so Inth skips the call.
 
-**Fix.** Call those methods inside `c15t.onInit()` or after `c15t.ready()`.
+**Fix.** Call those methods inside `inth.onInit()` or after `inth.ready()`.
 
 ## Why is my queued configuration ignored?
 
-**Check.** Look for an inline script that assigns `window.c15t = [...]`.
+**Check.** Look for an inline script that assigns `window.inth = [...]`.
 Assignment replaces calls other scripts queued before it.
 
-**Fix.** Use `window.c15t = window.c15t || []` followed by `c15t.push(...)`
+**Fix.** Use `window.inth = window.inth || []` followed by `inth.push(...)`
 everywhere.
 
 **Check.** Look for a `config` call made after the bundle ran. It does nothing.
 
 **Fix.** Run the `config` call before the tag, or pass the configuration to
-`c15t.init()` with `data-manual`.
+`inth.init()` with `data-manual`.
 
-## Why does the page throw "Load c15t.iab.js instead of c15t.js"?
+## Why does the page throw "Load inth.iab.js instead of inth.js"?
 
-**Check.** Two c15t bundles are on the page, including copies a plugin adds.
+**Check.** Two Inth bundles are on the page, including copies a plugin adds.
 
-**Fix.** Keep only `c15t.iab.js` for an IAB policy, and remove `c15t.js`,
-`c15t.testing.js` or `c15t.headless.js`.
+**Fix.** Keep only `inth.iab.js` for an IAB policy, and remove `inth.js`,
+`inth.testing.js` or `inth.headless.js`.
 
 ## Why did the banner change after a release?
 

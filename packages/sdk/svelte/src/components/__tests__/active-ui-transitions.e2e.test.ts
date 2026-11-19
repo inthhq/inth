@@ -57,7 +57,6 @@ describe('activeUI Transitions E2E Tests', () => {
 	test('customize transitions banner → dialog', async () => {
 		render(BannerDialogFixture, { options: defaultOptions });
 
-		// Wait for banner
 		await waitFor(() => {
 			const banner = document.querySelector(
 				'[data-testid="consent-banner-root"]'
@@ -65,13 +64,11 @@ describe('activeUI Transitions E2E Tests', () => {
 			expect(banner).toBeInTheDocument();
 		});
 
-		// Click customize
 		const customizeButton = getDefined(
 			document.querySelector('[data-testid="consent-banner-customize-button"]')
 		);
 		await fireEvent.click(customizeButton);
 
-		// Dialog should open
 		await waitFor(() => {
 			const dialog = document.querySelector(
 				'[data-testid="consent-dialog-root"]'
@@ -91,7 +88,6 @@ describe('activeUI Transitions E2E Tests', () => {
 	test('save from dialog hides all UI', async () => {
 		render(BannerDialogFixture, { options: defaultOptions });
 
-		// Wait for banner, then click customize
 		await waitFor(() => {
 			const btn = document.querySelector(
 				'[data-testid="consent-banner-customize-button"]'
@@ -103,7 +99,6 @@ describe('activeUI Transitions E2E Tests', () => {
 		);
 		await fireEvent.click(customizeButton);
 
-		// Wait for dialog
 		await waitFor(() => {
 			const dialog = document.querySelector(
 				'[data-testid="consent-dialog-root"]'
@@ -111,7 +106,6 @@ describe('activeUI Transitions E2E Tests', () => {
 			expect(dialog).toBeInTheDocument();
 		});
 
-		// Click save in dialog
 		const saveButton = getDefined(
 			document.querySelector(
 				'[data-testid="consent-widget-footer-save-button"]'
@@ -119,7 +113,6 @@ describe('activeUI Transitions E2E Tests', () => {
 		);
 		await fireEvent.click(saveButton);
 
-		// Both banner and dialog should be gone
 		await waitFor(() => {
 			const banner = document.querySelector(
 				'[data-testid="consent-banner-root"]'
@@ -146,7 +139,7 @@ describe('activeUI Transitions E2E Tests', () => {
 				necessary: true,
 			},
 		};
-		window.localStorage.setItem('c15t', JSON.stringify(consentData));
+		window.localStorage.setItem('inth', JSON.stringify(consentData));
 
 		render(BannerFixture, { options: defaultOptions });
 
@@ -163,7 +156,6 @@ describe('activeUI Transitions E2E Tests', () => {
 	test('trigger appears after consent, opens dialog on click', async () => {
 		render(FullFlowFixture, { options: defaultOptions, showWhen: 'always' });
 
-		// Wait for banner
 		await waitFor(() => {
 			const btn = document.querySelector(
 				'[data-testid="consent-banner-accept-button"]'
@@ -171,13 +163,11 @@ describe('activeUI Transitions E2E Tests', () => {
 			expect(btn).toBeInTheDocument();
 		});
 
-		// Accept all
 		const acceptButton = getDefined(
 			document.querySelector('[data-testid="consent-banner-accept-button"]')
 		);
 		await fireEvent.click(acceptButton);
 
-		// Banner should disappear
 		await waitFor(() => {
 			const banner = document.querySelector(
 				'[data-testid="consent-banner-root"]'
@@ -185,7 +175,6 @@ describe('activeUI Transitions E2E Tests', () => {
 			expect(banner).not.toBeInTheDocument();
 		});
 
-		// Trigger should appear
 		await waitFor(() => {
 			const trigger = document.querySelector(
 				'button[aria-label="Open privacy settings"]'
@@ -193,7 +182,6 @@ describe('activeUI Transitions E2E Tests', () => {
 			expect(trigger).toBeInTheDocument();
 		});
 
-		// Click trigger — dialog should open
 		const trigger = getDefined(
 			document.querySelector('button[aria-label="Open privacy settings"]')
 		);
@@ -210,7 +198,6 @@ describe('activeUI Transitions E2E Tests', () => {
 	test('full lifecycle: banner → customize → dialog → save → trigger → dialog', async () => {
 		render(FullFlowFixture, { options: defaultOptions, showWhen: 'always' });
 
-		// Step 1: Banner appears
 		await waitFor(() => {
 			const banner = document.querySelector(
 				'[data-testid="consent-banner-root"]'
@@ -218,7 +205,6 @@ describe('activeUI Transitions E2E Tests', () => {
 			expect(banner).toBeInTheDocument();
 		});
 
-		// Step 2: Click customize → transitions to dialog
 		const customizeButton = getDefined(
 			document.querySelector('[data-testid="consent-banner-customize-button"]')
 		);
@@ -231,7 +217,6 @@ describe('activeUI Transitions E2E Tests', () => {
 			expect(dialog).toBeInTheDocument();
 		});
 
-		// Step 3: Save from dialog → hides everything
 		const saveButton = getDefined(
 			document.querySelector(
 				'[data-testid="consent-widget-footer-save-button"]'
@@ -246,7 +231,6 @@ describe('activeUI Transitions E2E Tests', () => {
 			expect(dialog).not.toBeInTheDocument();
 		});
 
-		// Step 4: Trigger appears
 		await waitFor(() => {
 			const trigger = document.querySelector(
 				'button[aria-label="Open privacy settings"]'
@@ -254,7 +238,6 @@ describe('activeUI Transitions E2E Tests', () => {
 			expect(trigger).toBeInTheDocument();
 		});
 
-		// Step 5: Click trigger → dialog opens again
 		const trigger = getDefined(
 			document.querySelector('button[aria-label="Open privacy settings"]')
 		);

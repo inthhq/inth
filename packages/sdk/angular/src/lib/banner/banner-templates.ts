@@ -35,12 +35,12 @@ export interface BannerActionContext {
  *
  * @example
  * ```html
- * <c15t-consent-banner>
- *   <ng-template c15tConsentBannerTitle let-title>🍪 {{ title }}</ng-template>
- * </c15t-consent-banner>
+ * <inth-consent-banner>
+ *   <ng-template inthConsentBannerTitle let-title>🍪 {{ title }}</ng-template>
+ * </inth-consent-banner>
  * ```
  */
-@Directive({ selector: 'ng-template[c15tConsentBannerTitle]' })
+@Directive({ selector: 'ng-template[inthConsentBannerTitle]' })
 export class ConsentBannerTitle {
 	/** @internal */
 	readonly template = inject<TemplateRef<BannerCopyContext>>(TemplateRef);
@@ -59,14 +59,14 @@ export class ConsentBannerTitle {
  *
  * @example
  * ```html
- * <c15t-consent-banner>
- *   <ng-template c15tConsentBannerDescription>
+ * <inth-consent-banner>
+ *   <ng-template inthConsentBannerDescription>
  *     We use cookies. <a href="/cookies">Learn more</a>
  *   </ng-template>
- * </c15t-consent-banner>
+ * </inth-consent-banner>
  * ```
  */
-@Directive({ selector: 'ng-template[c15tConsentBannerDescription]' })
+@Directive({ selector: 'ng-template[inthConsentBannerDescription]' })
 export class ConsentBannerDescription {
 	/** @internal */
 	readonly template = inject<TemplateRef<BannerCopyContext>>(TemplateRef);
@@ -86,20 +86,20 @@ export class ConsentBannerDescription {
  *
  * @example
  * ```html
- * <c15t-consent-banner>
- *   <ng-template c15tConsentBannerAction let-action let-label="label" let-primary="primary">
+ * <inth-consent-banner>
+ *   <ng-template inthConsentBannerAction let-action let-label="label" let-primary="primary">
  *     <button
- *       c15t-consent-button
+ *       inth-consent-button
  *       [action]="action"
  *       [variant]="primary ? 'primary' : 'neutral'"
  *     >
  *       {{ label }}
  *     </button>
  *   </ng-template>
- * </c15t-consent-banner>
+ * </inth-consent-banner>
  * ```
  */
-@Directive({ selector: 'ng-template[c15tConsentBannerAction]' })
+@Directive({ selector: 'ng-template[inthConsentBannerAction]' })
 export class ConsentBannerAction {
 	/** @internal */
 	readonly template = inject<TemplateRef<BannerActionContext>>(TemplateRef);

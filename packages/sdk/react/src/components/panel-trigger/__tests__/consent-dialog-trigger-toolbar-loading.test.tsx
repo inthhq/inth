@@ -1,10 +1,10 @@
+import { publishDevToolsLauncher } from '@inth/sdk/ui/utils/devtools-launcher';
 import { useContext, useEffect } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { ComponentFixtureProvider } from '~/__tests__/component-fixture-provider';
 import { KernelContext } from '~/context';
-import { publishDevToolsLauncher } from '~/devtools-launcher';
 
 import { testing } from '../../../testing';
 import { ConsentDialogTrigger } from '../index';
@@ -51,11 +51,11 @@ describe('ConsentDialogTrigger toolbar loading', () => {
 		);
 		await vi.waitFor(() => {
 			expect(
-				document.querySelector('[data-c15t-trigger-action="devtools"]')
+				document.querySelector('[data-inth-trigger-action="devtools"]')
 			).toBeInTheDocument();
 		});
 		expect(
-			document.querySelector('[data-c15t-trigger-action="preferences"]')
+			document.querySelector('[data-inth-trigger-action="preferences"]')
 		).toBeInTheDocument();
 	});
 });

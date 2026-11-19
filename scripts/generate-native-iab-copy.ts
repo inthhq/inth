@@ -2,7 +2,7 @@
 
 /**
  * Generates the copy for the native iOS and Android consent UIs from
- * `@c15t/translations`, so mobile and web read the same strings.
+ * `@inth/sdk-translations`, so mobile and web read the same strings.
  *
  * Writes two tables: `IABCopy` / `IabCopy` for the IAB TCF screens, from
  * {@link IAB_COPY_KEYS}, and `ConsentCopy` for category mode, from
@@ -224,9 +224,7 @@ export const propertyName = function propertyName(keyPath: string): string {
 
 /** One generated table: its type, keys and output files. */
 export interface NativeCopyTable {
-	/** Swift type name. */
 	swiftType: string;
-	/** Kotlin type name. */
 	kotlinType: string;
 	/** Doc comment for the type, one line. */
 	summary: string;
@@ -253,7 +251,7 @@ export const IAB_TABLE: NativeCopyTable = {
 	kotlinType: 'IabCopy',
 	source: 'packages/sdk/translations/src/translations/*.ts (iab namespace).',
 	summary:
-		'IAB TCF consent UI copy from `@c15t/translations`, one value per language.',
+		'IAB TCF consent UI copy from `@inth/sdk-translations`, one value per language.',
 	swiftOutput: SWIFT_OUTPUT,
 	swiftType: 'IABCopy',
 };
@@ -268,7 +266,7 @@ export const CONSENT_TABLE: NativeCopyTable = {
 	source:
 		'packages/sdk/translations/src/translations/*.ts and native-app-labels.ts (native.*).',
 	summary:
-		'Category-mode consent UI copy from `@c15t/translations`, one value per language.',
+		'Category-mode consent UI copy from `@inth/sdk-translations`, one value per language.',
 	swiftOutput: CONSENT_SWIFT_OUTPUT,
 	swiftType: 'ConsentCopy',
 };
@@ -309,7 +307,6 @@ export const translationsWithNativeLabels = (): Record<string, unknown> =>
  * Reads one table's copy for every built-in language.
  *
  * @param translations - Language code to translation object.
- * @param table - The table whose keys to read.
  * @returns Languages sorted by code.
  * @throws {Error} When a language is missing a key or has an empty value.
  */
@@ -353,7 +350,6 @@ const hex = (codePoint: number, width: number) =>
 /**
  * Escapes a value as a Swift string literal.
  *
- * @param value - Raw string.
  * @returns A double-quoted Swift literal.
  */
 export const swiftString = function swiftString(value: string): string {
@@ -383,7 +379,6 @@ export const swiftString = function swiftString(value: string): string {
  * Escapes a value as a Kotlin string literal, including `$` so no value
  * becomes a string template.
  *
- * @param value - Raw string.
  * @returns A double-quoted Kotlin literal.
  */
 export const kotlinString = function kotlinString(value: string): string {
@@ -423,7 +418,6 @@ const identifier = (language: string) =>
  * Renders the Swift source.
  *
  * @param languages - Output of {@link collectNativeIabCopy}.
- * @returns Swift file contents.
  */
 export const renderSwift = function renderSwift(
 	languages: NativeIabCopyLanguage[],
@@ -437,7 +431,7 @@ export const renderSwift = function renderSwift(
 		'',
 		`/// ${table.summary}`,
 		`public struct ${type}: Sendable, Equatable {`,
-		'    /// Language code, lowercase, as in `@c15t/translations`.',
+		'    /// Language code, lowercase, as in `@inth/sdk-translations`.',
 		'    public let language: String',
 	];
 	for (const [name, keyPath] of table.keys) {
@@ -556,7 +550,6 @@ export const renderSwift = function renderSwift(
  * from {@link renderKotlinResource} on first use.
  *
  * @param languages - Output of {@link collectNativeIabCopy}.
- * @returns Kotlin file contents.
  */
 export const renderKotlin = function renderKotlin(
 	languages: NativeIabCopyLanguage[],
@@ -584,7 +577,7 @@ export const renderKotlin = function renderKotlin(
 		'',
 		`/** ${table.summary} */`,
 		`data class ${type}(`,
-		'    /** Language code, lowercase, as in `@c15t/translations`. */',
+		'    /** Language code, lowercase, as in `@inth/sdk-translations`. */',
 		'    val language: String,',
 	];
 	for (const [name, keyPath] of table.keys) {
@@ -736,7 +729,6 @@ export const renderKotlin = function renderKotlin(
  * language code and property name.
  *
  * @param languages - Output of {@link collectNativeIabCopy}.
- * @returns JSON file contents.
  */
 export const renderKotlinResource = function renderKotlinResource(
 	languages: NativeIabCopyLanguage[],

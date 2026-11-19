@@ -40,7 +40,7 @@ import type { NetworkBlockerRule } from './types';
  * still evaluated.
  * @internal
  */
-export const XHR_REQUEST = Symbol('c15t-xhr-request');
+export const XHR_REQUEST = Symbol('inth-xhr-request');
 
 /** @internal */
 export interface XhrStash {
@@ -196,6 +196,32 @@ export const releaseNetworkRequests =
 		return replayAll(hold?.queue.splice(0) ?? []);
 	};
 
+/**
+ * Whether `rule` covers a request: the rule's domain or a subdomain of it
+ * (case-insensitive), a pathname holding its `pathIncludes`, and one of its
+ * `methods`. A rule without `pathIncludes` or `methods` covers every path
+ * or method. The hold and the blocker decide with this one test.
+ *
+ * @internal
+ */
+export const ruleMatches = function ruleMatches(
+	rule: NetworkBlockerRule,
+	url: URL,
+	method: string
+): boolean {
+	const domain = rule.domain.trim().toLowerCase();
+	const host = url.hostname.toLowerCase();
+	const verb = method.toUpperCase();
+	return (
+		domain !== '' &&
+		(host === domain || host.endsWith(`.${domain}`)) &&
+		(typeof rule.pathIncludes !== 'string' ||
+			url.pathname.includes(rule.pathIncludes)) &&
+		(!rule.methods?.length ||
+			rule.methods.some((allowed) => allowed.toUpperCase() === verb))
+	);
+};
+
 /** What a request gets: sent, held, or blocked at once. */
 const SEND = 0;
 const HOLD = 1;
@@ -219,20 +245,10 @@ const matches = function matches(
 	} catch {
 		return SEND;
 	}
-	const host = url.hostname.toLowerCase();
-	const verb = method.toUpperCase();
 	let found = SEND;
 	for (const owner of hold.owners) {
 		for (const rule of owner.rules) {
-			const domain = rule.domain.trim().toLowerCase();
-			if (
-				domain &&
-				(host === domain || host.endsWith(`.${domain}`)) &&
-				(typeof rule.pathIncludes !== 'string' ||
-					url.pathname.includes(rule.pathIncludes)) &&
-				(!rule.methods?.length ||
-					rule.methods.some((allowed) => allowed.toUpperCase() === verb))
-			) {
+			if (ruleMatches(rule, url, method)) {
 				if (owner.failed) {
 					return BLOCK;
 				}
@@ -412,29 +428,4 @@ export const holdNetworkRequests = function holdNetworkRequests(
 	};
 	active = hold;
 	return joinHold(hold, rules);
-};
-
-/**
- * Stop holding for `rules` when no blocker will take over, as
- * {@link NetworkHold.block} does, for a caller that kept its rules rather
- * than its hold. Every caller that held with only these rules (matched by
- * reference) lets go; requests other callers' rules still match stay held.
- *
- * @param rules - The rules the caller held with.
- * @internal
- */
-export const blockHeldRequests = function blockHeldRequests(
-	rules: readonly NetworkBlockerRule[]
-): void {
-	const hold = active;
-	if (!hold) {
-		return;
-	}
-	const dropped = new Set(rules);
-	for (const owner of [...hold.owners]) {
-		if (owner.rules.every((rule) => dropped.has(rule))) {
-			hold.owners.delete(owner);
-		}
-	}
-	blockUnmatched(hold);
 };

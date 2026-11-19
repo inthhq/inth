@@ -62,7 +62,7 @@ and `XMLHttpRequest`. Dispose blockers in the reverse order you created them.
 | --- | --- | --- |
 | `rules` | required | The rules. |
 | `enabled` | `true` | `false` keeps the configuration but blocks nothing. |
-| `logBlockedRequests` | `true` | Log each blocked request with `console.warn`, as `[c15t] blocked POST https://… (rule: events)`. |
+| `logBlockedRequests` | `true` | Log each blocked request with `console.warn`, as `[inth] blocked POST https://… (rule: events)`. |
 | `onRequestBlocked` | none | Called with `{ method, url, rule }` for each blocked request. |
 
 ## What a blocked request sees
@@ -89,7 +89,7 @@ elements such as `<img>` and `<script>`, other frames, or service workers.
 ## Check it works
 
 1. Send a matching request before any choice. The console logs
-   `[c15t] blocked …` and the Network tab shows nothing.
+   `[inth] blocked …` and the Network tab shows nothing.
 2. Allow the category and send it again. It goes out.
 3. Withdraw the category with `reloadOnConsentRevoked: false`. The next
    request is blocked again.

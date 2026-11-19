@@ -1,7 +1,7 @@
 <script lang="ts">
 	/**
 	 * Consent gate page, after CookieBench's SvelteKit fixture
-	 * (`with-c15t-sveltekit/src/routes/+layout.svelte`): `ConsentRoot` with
+	 * (`with-inth-sveltekit/src/routes/+layout.svelte`): `ConsentRoot` with
 	 * the server-resolved state, the stock banner and dialog, and the gated
 	 * scripts passed as `scripts`.
 	 */
@@ -9,7 +9,7 @@
 		gateConsentCategories,
 		gatePageCSS,
 		gateScripts,
-	} from '@c15t/benchmarking/consent-gate-page';
+	} from '@inth/benchmarking/consent-gate-page';
 	import {
 		ConsentBanner,
 		ConsentDialog,

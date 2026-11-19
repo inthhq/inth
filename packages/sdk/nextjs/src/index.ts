@@ -2,7 +2,7 @@
  * `@inth/nextjs` Next.js adapter.
  *
  * Pattern:
- *   // c15t.config.ts, found by withConsentManifest in next.config.ts
+ *   // inth.config.ts, found by withConsentManifest in next.config.ts
  *   import { defineConsentConfig } from '@inth/nextjs';
  *   export default defineConsentConfig({ scripts: [...] });
  *

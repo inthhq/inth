@@ -39,7 +39,7 @@ it('terminates a running server', async () => {
 
 it('rejects a missing executable instead of waiting indefinitely', async () => {
 	await expect(
-		runCommand(['c15t-nonexistent-executable-fixture'])
+		runCommand(['inth-nonexistent-executable-fixture'])
 	).rejects.toThrow();
 });
 

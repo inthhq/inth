@@ -34,11 +34,11 @@ afterEach(() => {
 	selector: 'test-collapsible',
 	template: `
 		<div
-			c15tCollapsible
+			inthCollapsible
 			[(open)]="open"
 		>
-			<button c15tCollapsibleTrigger>More</button>
-			<div c15tCollapsibleContent>Body</div>
+			<button inthCollapsibleTrigger>More</button>
+			<div inthCollapsibleContent>Body</div>
 		</div>
 	`,
 })
@@ -46,7 +46,7 @@ class CollapsibleHost {
 	readonly open = signal(false);
 }
 
-describe('c15tCollapsible', () => {
+describe('inthCollapsible', () => {
 	test('keeps closed content inert and opens on click', async () => {
 		const { fixture, get } = await render(CollapsibleHost);
 		const content = get('[data-slot="collapsible-content"]');

@@ -43,9 +43,6 @@ export interface UseDevToolsLauncherReturn {
  *
  * SSR-safe: on the server nothing subscribes and nothing is claimed.
  *
- * @param kernel - Consent kernel shared with `<ConsentDevTools>`.
- * @param visible - Whether the trigger is on screen.
- * @returns The launcher state for this trigger.
  * @internal
  */
 export const useDevToolsLauncher = function useDevToolsLauncher(
@@ -58,7 +55,7 @@ export const useDevToolsLauncher = function useDevToolsLauncher(
 			? getDevToolsLauncherSnapshot(kernel)
 			: EMPTY_DEVTOOLS_LAUNCHER_SNAPSHOT
 	);
-	const claim = Symbol('c15t:devtools-launcher-claim');
+	const claim = Symbol('inth:devtools-launcher-claim');
 	const available = computed(() => snapshot.value.instance !== null);
 
 	if (isBrowser) {

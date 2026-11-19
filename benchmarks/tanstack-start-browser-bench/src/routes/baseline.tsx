@@ -1,5 +1,5 @@
 /**
- * Zero-consent baseline page (Start host): identical app shell, no c15t.
+ * Zero-consent baseline page (Start host): identical app shell, no Inth.
  * Measures the page floor so `consentTaxMs = bannerVisible − pageFloor`
  * can be derived. Probe stub mirrors the real probe's settle semantics.
  */

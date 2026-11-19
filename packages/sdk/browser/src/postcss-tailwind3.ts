@@ -1,7 +1,6 @@
 /**
- * Tailwind 3 PostCSS plugin for c15t stylesheets, re-exported from
- * `@inth/sdk/ui/postcss-tailwind3` so an app that installs `@inth/sdk` can list
- * `@inth/sdk/postcss-tailwind3` without installing `@inth/sdk/ui`.
+ * Tailwind 3 PostCSS plugin for Inth stylesheets: the plugin from
+ * `@inth/sdk/ui/postcss-tailwind3`, also listed as `@inth/sdk/postcss-tailwind3`.
  * See `@inth/sdk/ui/postcss-tailwind3` for what the plugin does. It must come
  * before `tailwindcss`.
  *

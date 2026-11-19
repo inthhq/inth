@@ -1,6 +1,6 @@
 <include src="../build-time-manifest.mdx" />
 
-Install `c15t` alongside `@inth/sdk` for the build plugin. Add it to
+The build plugin is `consentManifest()` from `@inth/sdk/build`. Add it to
 your existing Vite plugins:
 
 {/* example: fragment */}
@@ -16,8 +16,7 @@ export default {
 };
 ```
 
-Without `projectUrl`, the plugin reads `VITE_C15T_BACKEND_URL`, then
-`VITE_INTH_PROJECT_URL`. The plugin
+Without `projectUrl`, the plugin reads `VITE_INTH_PROJECT_URL`. The plugin
 fetches the policy during `vite build`, or in `vite dev` when the app first
 loads it, and serves it as `snapshot` from `@inth/sdk/generated`. A build fetches
 only when the app uses `manifest()`. In your browser entry point, pass

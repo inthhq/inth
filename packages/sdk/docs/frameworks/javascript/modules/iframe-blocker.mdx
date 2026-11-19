@@ -1,6 +1,6 @@
 ---
 title: Iframe blocker
-description: Hold YouTube videos, maps and other embeds in a JavaScript app until their consent category is allowed, with data-src iframes and the c15t iframe blocker in @inth/sdk, createConsentRuntime or your own kernel.
+description: Hold YouTube videos, maps and other embeds in a JavaScript app until their consent category is allowed, with data-src iframes and the Inth iframe blocker in @inth/sdk, createConsentRuntime or your own kernel.
 group: frameworks
 ---
 
@@ -23,7 +23,7 @@ and takes it away again when the visitor withdraws it. An iframe without
 | `data-src` | The embed's URL. Only `http:` and `https:` URLs load. Relative URLs resolve against the page. |
 | `data-category` | One category name. An unknown name logs a warning and keeps the iframe blocked. |
 | `data-vendor` | Optional vendor slug. The iframe also stays blocked while the visitor has turned that vendor off. |
-| `data-c15t-paused` | Set by c15t when it removed a `src` the iframe already had. |
+| `data-inth-paused` | Set by Inth when it removed a `src` the iframe already had. |
 
 Iframes without `data-category` or `data-vendor` are left alone. An iframe
 written with `src` and `data-category` starts loading before the blocker
@@ -45,7 +45,7 @@ YouTube video.
 
 ## Show a placeholder
 
-c15t draws nothing in place of a blocked iframe. Show your own message beside
+Inth draws nothing in place of a blocked iframe. Show your own message beside
 it and hide it once the iframe has a `src`:
 
 {/* example: fragment */}
@@ -63,7 +63,7 @@ visitor can allow the category.
 | `iframeBlocker` value | Effect |
 | --- | --- |
 | omitted or `{}` | Gate every iframe with `data-category` or `data-vendor`. |
-| `{ disableAutomaticBlocking: true }` | Do not scan or watch the page. c15t checks iframes only when you call `processIframes()`. See [check iframes on demand](#check-iframes-on-demand). |
+| `{ disableAutomaticBlocking: true }` | Do not scan or watch the page. Inth checks iframes only when you call `processIframes()`. See [check iframes on demand](#check-iframes-on-demand). |
 | `false` | No blocker. `data-src` iframes never load. |
 
 The categories of gated iframes are added to the categories the preference

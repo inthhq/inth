@@ -9,7 +9,7 @@ renders.
 | Prop | Type | Default | Behavior |
 | --- | --- | --- | --- |
 | `children` | `Snippet` | required | The visible label, such as "Privacy settings". |
-| `noStyle` | `boolean` | `true` | Unstyled by default so it matches your footer links. Set `false` for c15t's button style. |
+| `noStyle` | `boolean` | `true` | Unstyled by default so it matches your footer links. Set `false` for Inth's button style. |
 | `onclick` | `(event: MouseEvent) => void` | none | Runs before the dialog opens. Call `event.preventDefault()` to stop it opening. |
 | any button attribute | | | Passed to the `<button>`. |
 
@@ -36,5 +36,5 @@ than "Click here".
 ## Style the link
 
 The button carries `data-testid="consent-dialog-link"` and
-`data-c15t-rights` with the rights the policy grants, separated by spaces.
-Style it with your own class; with `noStyle` on, c15t adds no classes.
+`data-inth-rights` with the rights the policy grants, separated by spaces.
+Style it with your own class; with `noStyle` on, Inth adds no classes.

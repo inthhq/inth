@@ -58,7 +58,6 @@ export const singleModeToggle: PlayFunction = async ({ canvasElement }) => {
 		expect(secondContent).toHaveAttribute('data-state', 'closed');
 	});
 
-	// Click second trigger — it opens, first closes
 	await userEvent.click(getDefined(triggers[1]));
 	await waitFor(() => {
 		expect(firstItem).toHaveAttribute('data-state', 'closed');
@@ -96,7 +95,6 @@ export const multipleModeToggle: PlayFunction = async ({ canvasElement }) => {
 		expect(secondContent).toHaveAttribute('data-state', 'open');
 	});
 
-	// Close first — second stays open
 	await userEvent.click(getDefined(triggers[0]));
 	await waitFor(() => {
 		expect(firstItem).toHaveAttribute('data-state', 'closed');

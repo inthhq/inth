@@ -10,7 +10,7 @@ export interface IABConsentBannerHarnessFilters extends BaseHarnessFilters {
 }
 
 /**
- * Drives `<c15t-iab-consent-banner>`, the first layer of an IAB TCF CMP.
+ * Drives `<inth-iab-consent-banner>`, the first layer of an IAB TCF CMP.
  *
  * The banner renders into `<body>`, so find it with
  * `TestbedHarnessEnvironment.documentRootLoader(fixture)`. It renders once
@@ -38,12 +38,7 @@ export class IABConsentBannerHarness extends ComponentHarness {
 	/** Matches the banner's root, which is moved to `<body>`. */
 	static hostSelector = '[data-testid="iab-consent-banner-root"]';
 
-	/**
-	 * A predicate for a banner that matches `options`.
-	 *
-	 * @param options - Title and selector filters.
-	 * @returns A predicate to pass to a loader.
-	 */
+	/** A predicate for a banner that matches `options`. */
 	static with(
 		options: IABConsentBannerHarnessFilters = {}
 	): HarnessPredicate<IABConsentBannerHarness> {

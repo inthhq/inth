@@ -202,9 +202,9 @@ test.each([
 	[
 		'undecodable records',
 		() => {
-			document.cookie = 'c15t=not-a-record; path=/';
-			localStorage.setItem('c15t', '{"version":3,"categories":7}');
-			localStorage.setItem('c15t-vendors', 'garbage');
+			document.cookie = 'inth=not-a-record; path=/';
+			localStorage.setItem('inth', '{"version":3,"categories":7}');
+			localStorage.setItem('inth-vendors', 'garbage');
 		},
 	],
 ])('%s never turns a denial into a grant', async (_case, breakStorage) => {
@@ -329,7 +329,7 @@ test('reconciles on storage events for its own keys, focus and visibility', asyn
 	await other.kernel.commands.save('none');
 	await nextTask();
 	// Same-document writes raise no event; unrelated keys are ignored.
-	window.dispatchEvent(storageEvent('c15t'));
+	window.dispatchEvent(storageEvent('inth'));
 	window.dispatchEvent(storageEvent('unrelated'));
 	await nextTask();
 	expect(measurement(active)).toBe(true);
@@ -359,7 +359,7 @@ test('sync: false leaves reconciliation to explicit calls', async () => {
 	await start().kernel.commands.save('none');
 	await nextTask();
 
-	window.dispatchEvent(storageEvent('c15t'));
+	window.dispatchEvent(storageEvent('inth'));
 	window.dispatchEvent(new Event('focus'));
 	await nextTask();
 	expect(measurement(active)).toBe(true);
@@ -374,12 +374,12 @@ test('dispose removes the listeners and cancels a scheduled reconciliation', asy
 	await start().kernel.commands.save('none');
 	await nextTask();
 
-	window.dispatchEvent(storageEvent('c15t'));
+	window.dispatchEvent(storageEvent('inth'));
 	active.dispose();
 	await nextTask();
 	expect(measurement(active)).toBe(true);
 
-	window.dispatchEvent(storageEvent('c15t'));
+	window.dispatchEvent(storageEvent('inth'));
 	window.dispatchEvent(new Event('focus'));
 	await nextTask();
 	expect(measurement(active)).toBe(true);
@@ -450,7 +450,7 @@ test("reconciling keeps this runtime's newer queued category decision", async ()
 test('applies the subject a vendor record carries when the choice is unreadable', () => {
 	const active = start();
 	const now = Date.now();
-	document.cookie = 'c15t=not-a-record; path=/';
+	document.cookie = 'inth=not-a-record; path=/';
 	writeStoredVendorChoice(
 		{
 			confirmedAt: now - 1000,
@@ -903,12 +903,12 @@ test('a server read voids decisions from before the clear epoch', () => {
 		).categories,
 		version: 3,
 	});
-	const header = `c15t=${envelope}; c15t-epoch=${now - 1000}`;
+	const header = `inth=${envelope}; inth-epoch=${now - 1000}`;
 	expect(
 		readStoredRecordsFromCookieHeader(header, undefined, now).choice
 	).toBeNull();
 	expect(
-		readStoredRecordsFromCookieHeader(`c15t=${envelope}`, undefined, now).choice
+		readStoredRecordsFromCookieHeader(`inth=${envelope}`, undefined, now).choice
 	).not.toBeNull();
 });
 
@@ -920,8 +920,8 @@ test.each([
 	resolution = optOut;
 	await start().kernel.commands.save('none');
 	await nextTask();
-	document.cookie = `c15t-epoch=${epoch()}; path=/`;
-	localStorage.setItem('c15t-epoch', epoch());
+	document.cookie = `inth-epoch=${epoch()}; path=/`;
+	localStorage.setItem('inth-epoch', epoch());
 
 	expect(measurement(start())).toBe(false);
 });
@@ -974,11 +974,11 @@ test.each([
 		// Corrupt the epoch field of both projections.
 		const cookie = document.cookie
 			.split('; ')
-			.find((part) => part.startsWith('c15t='))
-			?.slice('c15t='.length);
-		document.cookie = `c15t=${cookie}&e=${badEpoch}; path=/`;
-		const json = JSON.parse(localStorage.getItem('c15t') ?? '{}');
-		localStorage.setItem('c15t', JSON.stringify({ ...json, epoch: badEpoch }));
+			.find((part) => part.startsWith('inth='))
+			?.slice('inth='.length);
+		document.cookie = `inth=${cookie}&e=${badEpoch}; path=/`;
+		const json = JSON.parse(localStorage.getItem('inth') ?? '{}');
+		localStorage.setItem('inth', JSON.stringify({ ...json, epoch: badEpoch }));
 
 		expect(measurement(start())).toBe(false);
 	}
@@ -990,7 +990,7 @@ test('an epoch ahead of a clock set back is kept, and the next clear keeps the m
 	const stale = createTransport();
 	await start({}, stale).kernel.commands.save('all');
 	await nextTask();
-	const cleared = JSON.parse(localStorage.getItem('c15t') ?? '{}');
+	const cleared = JSON.parse(localStorage.getItem('inth') ?? '{}');
 
 	vi.setSystemTime(T);
 	start().clearRecords();
@@ -1102,8 +1102,8 @@ test('a removed choice does not replace a server subject with an older vendor su
 		undefined,
 		now
 	);
-	localStorage.removeItem('c15t');
-	document.cookie = 'c15t=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+	localStorage.removeItem('inth');
+	document.cookie = 'inth=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
 
 	active.reconcileStorage();
 	expect(active.kernel.getSnapshot().explicitChoice).toBeNull();
@@ -1118,7 +1118,7 @@ test('reconciling prefers the newer localStorage copy when the cookie write was 
 	await nextTask();
 	const grantCookie = document.cookie
 		.split('; ')
-		.find((part) => part.startsWith('c15t='));
+		.find((part) => part.startsWith('inth='));
 
 	// Another runtime denies; its cookie write is lost, localStorage lands.
 	vi.setSystemTime(T + 1000);
@@ -1284,9 +1284,9 @@ test('a server-seeded runtime applies a newer denial that only reached localStor
 	};
 	// The cookie (what the server rendered with) still holds the grant; the
 	// newer denial reached only localStorage.
-	document.cookie = `c15t=${encodeStoredConsentEnvelopeCompact(grant)}; path=/`;
+	document.cookie = `inth=${encodeStoredConsentEnvelopeCompact(grant)}; path=/`;
 	localStorage.setItem(
-		'c15t',
+		'inth',
 		JSON.stringify({
 			categories: {
 				measurement: { basis, confirmedAt: T - 1000, value: false },
@@ -1317,9 +1317,9 @@ test('a server-seeded runtime applies a same-millisecond denial that only reache
 	};
 	// Two tabs decided in the same millisecond. The denial's cookie write was
 	// dropped, so the server rendered with the grant.
-	document.cookie = `c15t=${encodeStoredConsentEnvelopeCompact(grant)}; path=/`;
+	document.cookie = `inth=${encodeStoredConsentEnvelopeCompact(grant)}; path=/`;
 	localStorage.setItem(
-		'c15t',
+		'inth',
 		JSON.stringify({
 			categories: {
 				measurement: { basis, confirmedAt: T - 1000, value: false },
@@ -1352,7 +1352,7 @@ test('reconciling adopts a subject a server response set in the cookie alone', a
 
 	// Server-side consent restoration answers with a Set-Cookie carrying the
 	// same decisions and the subject the backend holds them under.
-	document.cookie = `c15t=${encodeStoredConsentEnvelopeCompact({
+	document.cookie = `inth=${encodeStoredConsentEnvelopeCompact({
 		categories: stored?.choice.categories ?? {},
 		subject: { subjectId: 'sub_restored' },
 		version: 3,

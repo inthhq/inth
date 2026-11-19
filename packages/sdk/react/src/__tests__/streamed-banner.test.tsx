@@ -27,7 +27,7 @@ const policyConfig = function policyConfig(
 	values: Parameters<typeof policyFixture>[0] = {}
 ): KernelConfig {
 	return {
-		initialBranding: 'c15t',
+		initialBranding: 'inth',
 		initialLocation: { countryCode: 'DE', regionCode: null },
 		initialOverrides: { country: 'DE', language: 'en' },
 		...policyFixture(values, {

@@ -18,16 +18,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildInlineCodeHashes } from '../csp';
 import {
-	buildLocalsTypes,
-	c15t,
+	LOCALS_TYPES,
+	inth,
 	createOwnEntryResolver,
 	inferUIAdapter,
 	resolveClientEntrypoint,
 	resolveOptions,
+	toClientOptions,
 } from '../integration';
 import { hosted as hostedMode, manifest as manifestMode } from '../mode';
 import { testing as testingMode } from '../testing';
-import type { C15tAstroOptions } from '../types';
+import type { InthAstroOptions } from '../types';
 
 interface SetupCalls {
 	addMiddleware: ReturnType<typeof vi.fn>;
@@ -45,7 +46,7 @@ beforeEach(() => {
 		'fetch',
 		vi.fn(() => Promise.reject(new Error('offline in tests')))
 	);
-	vi.stubEnv('C15T_ON_BUILD_ERROR', 'runtime');
+	vi.stubEnv('INTH_ON_BUILD_ERROR', 'runtime');
 });
 afterEach(() => {
 	vi.unstubAllGlobals();
@@ -55,7 +56,7 @@ afterEach(() => {
 const resolveOwnEntry = await createOwnEntryResolver();
 
 const INLINE_MANIFEST = await buildConsentManifestFromConfig({
-	branding: 'c15t',
+	branding: 'inth',
 	policyRules: [policyRulePresets.europeOptIn()],
 });
 
@@ -64,11 +65,11 @@ const specifier = (entry: string): string =>
 	JSON.stringify(resolveOwnEntry(entry));
 
 const runSetup = async function runSetup(
-	options: C15tAstroOptions,
+	options: InthAstroOptions,
 	config: Record<string, unknown> = {},
 	command: 'build' | 'dev' | 'preview' | 'sync' = 'build'
 ) {
-	const integration = c15t(options);
+	const integration = inth(options);
 	const calls: SetupCalls = {
 		addMiddleware: vi.fn(),
 		injectRoute: vi.fn(),
@@ -86,7 +87,7 @@ const runSetup = async function runSetup(
 	return { calls, integration };
 };
 
-/** The `virtual:c15t/engine` module setup serves to the build. */
+/** The `virtual:inth/engine` module setup serves to the build. */
 const engineSource = function engineSource(calls: SetupCalls): string {
 	const [config] = calls.updateConfig.mock.calls[0] as [
 		{
@@ -95,13 +96,13 @@ const engineSource = function engineSource(calls: SetupCalls): string {
 			};
 		},
 	];
-	const plugin = config.vite.plugins.find(({ name }) => name === 'c15t:engine');
-	return plugin?.load?.('\0virtual:c15t/engine') ?? '';
+	const plugin = config.vite.plugins.find(({ name }) => name === 'inth:engine');
+	return plugin?.load?.('\0virtual:inth/engine') ?? '';
 };
 
 /** Run setup, then return `astro:config:done` to call, the way Astro does. */
 const runDone = async function runDone(
-	options: C15tAstroOptions,
+	options: InthAstroOptions,
 	integrationNames: string[],
 	adapter?: { name: string },
 	command = 'build'
@@ -114,8 +115,8 @@ const runDone = async function runDone(
 	);
 	const logger = { error: vi.fn(), warn: vi.fn() };
 	const injectTypes = vi.fn();
-	const run = () =>
-		integration.hooks['astro:config:done']?.({
+	const run = async () =>
+		await integration.hooks['astro:config:done']?.({
 			config: { adapter, integrations },
 			injectTypes,
 			logger,
@@ -126,10 +127,10 @@ const runDone = async function runDone(
 };
 
 describe('createOwnEntryResolver', () => {
-	it('resolves an entry point to a file, for sites that cannot see @inth/astro', () => {
-		// Under pnpm, a site that installed `c15t` has no `@inth/astro` at its
-		// root, so Astro could not resolve the bare specifier from there.
-		const path = resolveOwnEntry('@inth/astro/middleware');
+	it('resolves a dependency entry point to a file, for sites that cannot see it', () => {
+		// Under pnpm, a site that installed `@inth/astro` has no `@inth/sdk` at
+		// its root, so Astro could not resolve the bare specifier from there.
+		const path = resolveOwnEntry('@inth/sdk/ui/styles.css');
 		expect(isAbsolute(path)).toBe(true);
 		expect(existsSync(path)).toBe(true);
 	});
@@ -138,6 +139,27 @@ describe('createOwnEntryResolver', () => {
 		expect(resolveOwnEntry('@inth/astro/not-an-entry')).toBe(
 			'@inth/astro/not-an-entry'
 		);
+	});
+});
+
+describe('toClientOptions', () => {
+	it("gives the browser core's copy of the mode", () => {
+		const projectUrl = 'https://consent.example.com';
+		const browserResolved = toClientOptions(
+			resolveOptions({
+				mode: manifestMode({ resolve: 'browser', snapshot: INLINE_MANIFEST }),
+				projectUrl,
+			})
+		);
+		// The browser resolves the policy itself, from the snapshot.
+		expect(browserResolved.mode).toMatchObject({ snapshot: INLINE_MANIFEST });
+		const serverResolved = toClientOptions(
+			resolveOptions({
+				mode: manifestMode({ snapshot: INLINE_MANIFEST }),
+				projectUrl,
+			})
+		);
+		expect(serverResolved.mode).toEqual({ type: 'manifest' });
 	});
 });
 
@@ -161,12 +183,12 @@ describe('resolveOptions', () => {
 				);
 				const update = calls.updateConfig.mock.calls[0]?.[0];
 				const [plugin] = update.vite.plugins;
-				const source = plugin.load('\0virtual:c15t/options', { ssr: true });
+				const source = plugin.load('\0virtual:inth/options', { ssr: true });
 				expect(source).toContain(JSON.stringify(INLINE_MANIFEST.revision));
 				expect(source).toContain('"schemaVersion":2');
 				for (const loadOptions of [undefined, { ssr: false }]) {
 					const clientSource = plugin.load(
-						'\0virtual:c15t/options',
+						'\0virtual:inth/options',
 						loadOptions
 					);
 					const clientOptions = JSON.parse(
@@ -174,7 +196,7 @@ describe('resolveOptions', () => {
 					);
 					expect(clientOptions.mode).toEqual({ type: 'manifest' });
 					expect(clientOptions.projectUrl).toBe('https://consent.example.com');
-					expect(clientOptions.routePrefix).toBe('/api/c15t');
+					expect(clientOptions.routePrefix).toBe('/api/inth');
 					expect(clientSource).not.toContain(INLINE_MANIFEST.revision);
 				}
 				expect(fetch).toHaveBeenCalledTimes(1);
@@ -193,7 +215,7 @@ describe('resolveOptions', () => {
 	])(
 		"onBuildError: 'fail' stops the build on $error",
 		async ({ response, error }) => {
-			vi.stubEnv('C15T_ON_BUILD_ERROR', '');
+			vi.stubEnv('INTH_ON_BUILD_ERROR', '');
 			vi.stubGlobal(
 				'fetch',
 				vi.fn(() => Promise.resolve(response()))
@@ -231,11 +253,11 @@ describe('resolveOptions', () => {
 		}
 	});
 
-	/** The server options `virtual:c15t/options` exports after setup. */
+	/** The server options `virtual:inth/options` exports after setup. */
 	const serverOptionsSource = (calls: SetupCalls): string => {
 		const [update] = calls.updateConfig.mock.calls[0] ?? [];
 		const [plugin] = update.vite.plugins;
-		return plugin.load('\0virtual:c15t/options', { ssr: true });
+		return plugin.load('\0virtual:inth/options', { ssr: true });
 	};
 
 	it('manifest() bundles a build snapshot by default', async () => {
@@ -257,8 +279,56 @@ describe('resolveOptions', () => {
 		expect(calls.logger.warn).not.toHaveBeenCalled();
 	});
 
+	it('bundles an absolute manifestUrl for a static site saving on its own origin', async () => {
+		const fetch = vi.fn<typeof globalThis.fetch>(() =>
+			Promise.resolve(Response.json(INLINE_MANIFEST))
+		);
+		vi.stubGlobal('fetch', fetch);
+		const { calls } = await runSetup({
+			mode: manifestMode({
+				manifestUrl: 'https://cdn.example.com/m.json',
+				resolve: 'browser',
+			}),
+			projectUrl: '',
+		});
+		expect(fetch).toHaveBeenCalledWith(
+			'https://cdn.example.com/m.json',
+			expect.anything()
+		);
+		expect(serverOptionsSource(calls)).toContain(
+			JSON.stringify(INLINE_MANIFEST.revision)
+		);
+	});
+
+	it('leaves a relative manifestUrl to the server instead of bundling the backend manifest', async () => {
+		const sitePolicy = await buildConsentManifestFromConfig({
+			branding: 'inth',
+			policyRules: [policyRulePresets.worldOptOutNoPrompt()],
+		});
+		expect(sitePolicy.revision).not.toBe(INLINE_MANIFEST.revision);
+		const fetch = vi.fn<typeof globalThis.fetch>((input) =>
+			Promise.resolve(
+				Response.json(
+					String(input) === 'https://consent.example.com/manifest'
+						? INLINE_MANIFEST
+						: sitePolicy
+				)
+			)
+		);
+		vi.stubGlobal('fetch', fetch);
+		const { calls } = await runSetup({
+			mode: manifestMode({ manifestUrl: '/consent-policy.json' }),
+			projectUrl: 'https://consent.example.com',
+		});
+
+		expect(fetch).not.toHaveBeenCalled();
+		const source = serverOptionsSource(calls);
+		expect(source).not.toContain(JSON.stringify(INLINE_MANIFEST.revision));
+		expect(source).toContain('"manifestUrl":"/consent-policy.json"');
+	});
+
 	it('astro dev warns and keeps going when the default fetch fails', async () => {
-		vi.stubEnv('C15T_ON_BUILD_ERROR', '');
+		vi.stubEnv('INTH_ON_BUILD_ERROR', '');
 		vi.stubGlobal(
 			'fetch',
 			vi.fn(() => Promise.resolve(new Response(null, { status: 503 })))
@@ -276,7 +346,7 @@ describe('resolveOptions', () => {
 	});
 
 	it('astro build warns and fetches at runtime when the default fetch fails', async () => {
-		vi.stubEnv('C15T_ON_BUILD_ERROR', '');
+		vi.stubEnv('INTH_ON_BUILD_ERROR', '');
 		vi.stubGlobal(
 			'fetch',
 			vi.fn(() => Promise.resolve(new Response(null, { status: 503 })))
@@ -292,7 +362,7 @@ describe('resolveOptions', () => {
 	});
 
 	it("astro build stops when the fetch fails with onBuildError: 'fail'", async () => {
-		vi.stubEnv('C15T_ON_BUILD_ERROR', '');
+		vi.stubEnv('INTH_ON_BUILD_ERROR', '');
 		vi.stubGlobal(
 			'fetch',
 			vi.fn(() => Promise.resolve(new Response(null, { status: 503 })))
@@ -304,17 +374,17 @@ describe('resolveOptions', () => {
 				projectUrl: 'https://consent.example.com',
 			})
 		).rejects.toThrow(
-			"@inth/astro: could not fetch the consent manifest from https://consent.example.com/manifest during the build (/manifest responded 503 ). Set `C15T_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
+			"@inth/astro: could not fetch the consent manifest from https://consent.example.com/manifest during the build (/manifest responded 503 ). Set `INTH_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
 		);
 	});
 
 	it.each([
 		['onBuildError', { onBuildError: 'runtime' }, ''],
-		['C15T_ON_BUILD_ERROR', { onBuildError: 'fail' }, 'runtime'],
+		['INTH_ON_BUILD_ERROR', { onBuildError: 'fail' }, 'runtime'],
 	] as const)(
 		'%s runtime lets astro build continue',
 		async (_name, settings, fromEnv) => {
-			vi.stubEnv('C15T_ON_BUILD_ERROR', fromEnv);
+			vi.stubEnv('INTH_ON_BUILD_ERROR', fromEnv);
 			const { calls } = await runSetup({
 				...settings,
 				mode: manifestMode(),
@@ -325,7 +395,7 @@ describe('resolveOptions', () => {
 	);
 
 	it("onBuildError: 'fail' stops astro dev", async () => {
-		vi.stubEnv('C15T_ON_BUILD_ERROR', '');
+		vi.stubEnv('INTH_ON_BUILD_ERROR', '');
 		await expect(
 			runSetup(
 				{
@@ -339,13 +409,13 @@ describe('resolveOptions', () => {
 		).rejects.toThrow('during dev (offline in tests)');
 	});
 
-	it('reads PUBLIC_C15T_BACKEND_URL when no projectUrl is set', async () => {
-		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://env.example.com');
+	it('reads PUBLIC_INTH_PROJECT_URL when no projectUrl is set', async () => {
+		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', 'https://env.example.com');
 		const fetch = vi.fn<typeof globalThis.fetch>(() =>
 			Promise.resolve(Response.json(INLINE_MANIFEST))
 		);
 		vi.stubGlobal('fetch', fetch);
-		// `c15t()` with no options is `manifest()` mode.
+		// `inth()` with no options is `manifest()` mode.
 		const { calls } = await runSetup({});
 		expect(fetch).toHaveBeenCalledWith(
 			'https://env.example.com/manifest',
@@ -358,11 +428,11 @@ describe('resolveOptions', () => {
 		expect(serverOptionsSource(calls)).toContain('"type":"manifest"');
 	});
 
-	it('reads PUBLIC_C15T_BACKEND_URL from .env in the project root', async () => {
-		const root = mkdtempSync(join(tmpdir(), 'c15t-astro-env-'));
+	it('reads PUBLIC_INTH_PROJECT_URL from .env in the project root', async () => {
+		const root = mkdtempSync(join(tmpdir(), 'inth-astro-env-'));
 		writeFileSync(
 			join(root, '.env'),
-			'PUBLIC_C15T_BACKEND_URL=https://dotenv.example.com\n'
+			'PUBLIC_INTH_PROJECT_URL=https://dotenv.example.com\n'
 		);
 		const { calls } = await runSetup(
 			{ mode: hostedMode() },
@@ -373,34 +443,34 @@ describe('resolveOptions', () => {
 		);
 	});
 
-	it('reads PUBLIC_INTH_PROJECT_URL when the c15t variable is unset', async () => {
-		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', undefined);
-		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', 'https://inth.example.com');
+	it('reads PUBLIC_C15T_BACKEND_URL when the Inth variable is unset', async () => {
+		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', undefined);
+		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://inth.example.com');
 		const { calls } = await runSetup({ mode: hostedMode() });
 		expect(serverOptionsSource(calls)).toContain(
 			'"projectUrl":"https://inth.example.com"'
 		);
 	});
 
-	it('prefers PUBLIC_C15T_BACKEND_URL in .env over PUBLIC_INTH_PROJECT_URL', async () => {
-		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', undefined);
-		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', 'https://inth.example.com');
-		const root = mkdtempSync(join(tmpdir(), 'c15t-astro-env-'));
+	it('prefers PUBLIC_INTH_PROJECT_URL in .env over PUBLIC_C15T_BACKEND_URL', async () => {
+		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', undefined);
+		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://inth.example.com');
+		const root = mkdtempSync(join(tmpdir(), 'inth-astro-env-'));
 		writeFileSync(
 			join(root, '.env'),
-			'PUBLIC_C15T_BACKEND_URL=https://c15t.example.com\n'
+			'PUBLIC_INTH_PROJECT_URL=https://inth.example.com\n'
 		);
 		const { calls } = await runSetup(
 			{ mode: hostedMode() },
 			{ root: pathToFileURL(`${root}/`) }
 		);
 		expect(serverOptionsSource(calls)).toContain(
-			'"projectUrl":"https://c15t.example.com"'
+			'"projectUrl":"https://inth.example.com"'
 		);
 	});
 
 	it('an explicit projectUrl beats both variables', async () => {
-		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://c15t.example.com');
+		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://inth.example.com');
 		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', 'https://inth.example.com');
 		const { calls } = await runSetup({
 			mode: hostedMode(),
@@ -435,7 +505,7 @@ describe('resolveOptions', () => {
 				projectUrl: 'https://consent.example.com',
 			},
 		],
-	] satisfies [string, C15tAstroOptions][])(
+	] satisfies [string, InthAstroOptions][])(
 		'fetches no build snapshot with %s',
 		async (_name, options) => {
 			const fetch = vi.fn<typeof globalThis.fetch>();
@@ -447,7 +517,7 @@ describe('resolveOptions', () => {
 	);
 
 	it("onBuildError: 'fail' still needs an absolute upstream URL", async () => {
-		vi.stubEnv('C15T_ON_BUILD_ERROR', '');
+		vi.stubEnv('INTH_ON_BUILD_ERROR', '');
 		await expect(
 			runSetup({
 				mode: manifestMode({ manifestUrl: '/m.json' }),
@@ -461,12 +531,12 @@ describe('resolveOptions', () => {
 		expect(resolveOptions({ mode: testingMode() }).ui).toBe('svelte');
 	});
 
-	it('defaults to manifest() and the /api/c15t route prefix', () => {
+	it('defaults to manifest() and the /api/inth route prefix', () => {
 		const resolved = resolveOptions({
 			projectUrl: 'https://consent.example.com',
 		});
 		expect(resolved.mode).toEqual({ type: 'manifest' });
-		expect(resolved.routePrefix).toBe('/api/c15t');
+		expect(resolved.routePrefix).toBe('/api/inth');
 	});
 
 	it('trims a routePrefix and drops it for false', () => {
@@ -478,13 +548,13 @@ describe('resolveOptions', () => {
 			resolveOptions({ mode: testingMode(), routePrefix: false })
 		).not.toHaveProperty('routePrefix');
 		expect(() =>
-			resolveOptions({ mode: testingMode(), routePrefix: 'api/c15t' })
-		).toThrowError(/must be a path that starts with "\/"/u);
+			resolveOptions({ mode: testingMode(), routePrefix: 'api/inth' })
+		).toThrowError(/must be a path that starts with '\/'/u);
 	});
 
 	it.each(['/', '//'])('rejects a routePrefix of %s', (routePrefix) => {
 		expect(() => resolveOptions({ mode: testingMode(), routePrefix })).toThrow(
-			"@inth/astro: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
+			"@inth/astro: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/inth'."
 		);
 	});
 
@@ -492,7 +562,7 @@ describe('resolveOptions', () => {
 		['the default route', {}],
 		['routePrefix: false', { routePrefix: false }],
 		['a route of its own', { routePrefix: '/consent' }],
-	] satisfies [string, C15tAstroOptions][])(
+	] satisfies [string, InthAstroOptions][])(
 		'rejects a snapshot with no backend to save consent to, with %s',
 		(_name, options) => {
 			// The injected route answers `GET` only, so a save posted to it
@@ -503,7 +573,7 @@ describe('resolveOptions', () => {
 					mode: manifestMode({ snapshot: INLINE_MANIFEST }),
 				})
 			).toThrowError(
-				/manifest\(\{ snapshot \}\) still needs a backend URL.*PUBLIC_C15T_BACKEND_URL/u
+				/manifest\(\{ snapshot \}\) still needs a backend URL.*PUBLIC_INTH_PROJECT_URL/u
 			);
 			expect(
 				resolveOptions({
@@ -526,14 +596,14 @@ describe('resolveOptions', () => {
 				],
 			})
 		).toThrowError(
-			/c15t\(\)\.scripts\[0\]\.onLoad is a function.*src\/c15t\.client\.ts/u
+			/inth\(\)\.scripts\[0\]\.onLoad is a function.*src\/inth\.client\.ts/u
 		);
 		expect(() =>
-			c15t({
+			inth({
 				mode: testingMode(),
 				networkBlocker: {
 					onRequestBlocked: () => undefined,
-				} as unknown as C15tAstroOptions['networkBlocker'],
+				} as unknown as InthAstroOptions['networkBlocker'],
 			})
 		).toThrowError(/networkBlocker\.onRequestBlocked is a function/u);
 	});
@@ -541,7 +611,7 @@ describe('resolveOptions', () => {
 	it('rejects a transport function as the mode', () => {
 		const transport = Object.assign(() => ({}), { kind: 'custom' });
 		expect(() =>
-			resolveOptions({ mode: transport as unknown as C15tAstroOptions['mode'] })
+			resolveOptions({ mode: transport as unknown as InthAstroOptions['mode'] })
 		).toThrowError(
 			/`mode` must be manifest\(\) or hosted\(\) from @inth\/astro, or testing\(\)/u
 		);
@@ -563,9 +633,9 @@ describe('resolveOptions', () => {
 
 	it('rejects a bare manifest() with nowhere to save consent', () => {
 		// The browser would post saves to the init route's own prefix,
-		// `/api/c15t/subjects`, where nothing answers.
+		// `/api/inth/subjects`, where nothing answers.
 		expect(() => resolveOptions({ mode: manifestMode() })).toThrowError(
-			/manifest\(\) needs a backend URL.*PUBLIC_C15T_BACKEND_URL \(or PUBLIC_INTH_PROJECT_URL\)/u
+			/manifest\(\) needs a backend URL.*Set PUBLIC_INTH_PROJECT_URL in \.env/u
 		);
 		expect(() => resolveOptions({ mode: hostedMode() })).toThrowError(
 			/hosted\(\) needs a backend URL/u
@@ -573,7 +643,7 @@ describe('resolveOptions', () => {
 	});
 
 	it('leaves reading the environment to the setup hook', () => {
-		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://consent.example.com');
+		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', 'https://consent.example.com');
 		try {
 			expect(() => resolveOptions({ mode: manifestMode() })).toThrowError(
 				/manifest\(\) needs a backend URL/u
@@ -584,7 +654,7 @@ describe('resolveOptions', () => {
 	});
 
 	it('keeps an empty projectUrl, which means this origin', () => {
-		vi.stubEnv('C15T_BACKEND_URL', 'https://consent.example.com');
+		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', 'https://consent.example.com');
 		try {
 			expect(
 				resolveOptions({
@@ -600,8 +670,8 @@ describe('resolveOptions', () => {
 	it('rejects an empty projectUrl with no manifest to fetch', () => {
 		// `''` saves on this origin, but `${projectUrl}/manifest` needs a real
 		// URL, and the environment's backend URL does not replace it.
-		vi.stubEnv('C15T_BACKEND_URL', 'https://consent.example.com');
-		vi.stubEnv('C15T_MANIFEST_URL', '');
+		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', 'https://consent.example.com');
+		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://consent.example.com');
 		try {
 			expect(() =>
 				resolveOptions({ mode: manifestMode(), projectUrl: '' })
@@ -621,7 +691,8 @@ describe('resolveOptions', () => {
 	});
 
 	it('does not take the manifest for an empty projectUrl from the environment', () => {
-		vi.stubEnv('C15T_MANIFEST_URL', 'https://consent.example.com/manifest');
+		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', 'https://consent.example.com');
+		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://consent.example.com');
 		try {
 			expect(() =>
 				resolveOptions({ mode: manifestMode(), projectUrl: '' })
@@ -708,8 +779,8 @@ describe('resolveOptions', () => {
 });
 
 describe('astro:config:setup', () => {
-	it("hands c15t's inline hashes to Astro's CSP when the site turned it on", async () => {
-		const options: C15tAstroOptions = { mode: testingMode() };
+	it("hands Inth's inline hashes to Astro's CSP when the site turned it on", async () => {
+		const options: InthAstroOptions = { mode: testingMode() };
 		const { calls } = await runSetup(options, { security: { csp: true } });
 		const hashes = await buildInlineCodeHashes(resolveOptions(options));
 		expect(calls.updateConfig).toHaveBeenCalledWith({
@@ -732,8 +803,8 @@ describe('astro:config:setup', () => {
 	});
 
 	it('hands the browser the policy hashes when a clientEntrypoint can add inline scripts', async () => {
-		const options: C15tAstroOptions = {
-			clientEntrypoint: 'site/c15t.client',
+		const options: InthAstroOptions = {
+			clientEntrypoint: 'site/inth.client',
 			mode: testingMode(),
 		};
 		const { calls } = await runSetup(options, {
@@ -746,7 +817,7 @@ describe('astro:config:setup', () => {
 				plugins: { load: (id: string) => string }[];
 			};
 		};
-		const loaded = update.vite.plugins[0]?.load('\0virtual:c15t/options');
+		const loaded = update.vite.plugins[0]?.load('\0virtual:inth/options');
 		const parsed = JSON.parse(
 			(loaded ?? '').replace(/^export default /u, '').replace(/;$/u, '')
 		);
@@ -763,7 +834,7 @@ describe('astro:config:setup', () => {
 	it('registers the middleware before user middleware', async () => {
 		const { calls } = await runSetup({
 			mode: hostedMode(),
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 		expect(calls.addMiddleware).toHaveBeenCalledWith({
 			entrypoint: resolveOwnEntry('@inth/astro/middleware'),
@@ -850,7 +921,7 @@ describe('astro:config:setup', () => {
 		const projectWithTailwind = function projectWithTailwind(
 			version: string
 		): URL {
-			const root = mkdtempSync(join(tmpdir(), 'c15t-astro-tw-'));
+			const root = mkdtempSync(join(tmpdir(), 'inth-astro-tw-'));
 			const tailwind = join(root, 'node_modules', 'tailwindcss');
 			mkdirSync(tailwind, { recursive: true });
 			writeFileSync(join(root, 'package.json'), '{"name":"site"}');
@@ -862,7 +933,7 @@ describe('astro:config:setup', () => {
 		};
 
 		it('links styles.css instead of inlining, so Tailwind builds it', async () => {
-			// Tailwind 3 unwraps c15t's layer in the stylesheets it builds;
+			// Tailwind 3 unwraps Inth's layer in the stylesheets it builds;
 			// inlined rules would stay layered and lose to its preflight.
 			const { calls } = await runSetup(
 				{ mode: testingMode(), ui: 'svelte' },
@@ -927,17 +998,17 @@ describe('astro:config:setup', () => {
 		const { calls } = await runSetup({ mode: testingMode() });
 		const [stage, code] = calls.injectScript.mock.calls[0] as [string, string];
 		expect(stage).toBe('page');
-		expect(code).toContain("import options from 'virtual:c15t/options'");
+		expect(code).toContain("import options from 'virtual:inth/options'");
 		expect(code).toContain(`from ${specifier('@inth/astro/client')}`);
 		expect(code).toContain(
-			"startDeferredClient(options, () => import('virtual:c15t/engine'));"
+			"startDeferredClient(options, () => import('virtual:inth/engine'));"
 		);
 		// The engine is not in the first load.
 		expect(code).not.toContain('boot(');
 		expect(code).not.toMatch(/^import[^;]*Transport/mu);
 	});
 
-	it('serves the engine as virtual:c15t/engine', async () => {
+	it('serves the engine as virtual:inth/engine', async () => {
 		const { calls } = await runSetup({ mode: testingMode() });
 		const engine = engineSource(calls);
 		expect(engine).toContain(`from ${specifier('@inth/astro/client')};`);
@@ -993,7 +1064,7 @@ describe('astro:config:setup', () => {
 			{ adapter: { name: '@astrojs/node' } },
 			'lazyTransport',
 		],
-	] satisfies [string, C15tAstroOptions, Record<string, unknown>, string][])(
+	] satisfies [string, InthAstroOptions, Record<string, unknown>, string][])(
 		'registers the one transport %s needs',
 		async (_name, options, config, transport) => {
 			const { calls } = await runSetup(options, config);
@@ -1087,7 +1158,7 @@ describe('astro:config:setup', () => {
 
 	it('keeps what a client entrypoint may configure in the engine', async () => {
 		const { calls } = await runSetup({
-			clientEntrypoint: 'site/c15t.client',
+			clientEntrypoint: 'site/inth.client',
 			mode: testingMode(),
 		});
 		const code = engineSource(calls);
@@ -1104,18 +1175,18 @@ describe('astro:config:setup', () => {
 
 	it('threads a client entrypoint into the boot script', async () => {
 		const { calls } = await runSetup({
-			clientEntrypoint: 'site/c15t.client',
+			clientEntrypoint: 'site/inth.client',
 			mode: testingMode(),
 		});
 		const [, code] = calls.injectScript.mock.calls[0] as [string, string];
-		expect(code).toContain('import clientOptions from "site/c15t.client"');
+		expect(code).toContain('import clientOptions from "site/inth.client"');
 		expect(code).toContain(
-			"startDeferredClient(options, () => import('virtual:c15t/engine'), clientOptions);"
+			"startDeferredClient(options, () => import('virtual:inth/engine'), clientOptions);"
 		);
 	});
 
 	it('resolves a relative client entrypoint from the project root', async () => {
-		const root = mkdtempSync(join(tmpdir(), 'c15t-astro-client-'));
+		const root = mkdtempSync(join(tmpdir(), 'inth-astro-client-'));
 		mkdirSync(join(root, 'src'));
 		writeFileSync(join(root, 'src', 'consent.ts'), 'export default {};');
 		const { calls } = await runSetup(
@@ -1136,15 +1207,15 @@ describe('astro:config:setup', () => {
 		);
 	});
 
-	it('finds src/c15t.client.ts on its own', async () => {
-		const root = mkdtempSync(join(tmpdir(), 'c15t-astro-client-'));
+	it('finds src/inth.client.ts on its own', async () => {
+		const root = mkdtempSync(join(tmpdir(), 'inth-astro-client-'));
 		mkdirSync(join(root, 'src'));
-		const file = join(root, 'src', 'c15t.client.ts');
+		const file = join(root, 'src', 'inth.client.ts');
 		writeFileSync(file, 'export default {};');
 		expect(
 			await resolveClientEntrypoint(undefined, pathToFileURL(`${root}/`))
 		).toBe(file);
-		const empty = mkdtempSync(join(tmpdir(), 'c15t-astro-client-'));
+		const empty = mkdtempSync(join(tmpdir(), 'inth-astro-client-'));
 		expect(
 			await resolveClientEntrypoint(undefined, pathToFileURL(`${empty}/`))
 		).toBeUndefined();
@@ -1152,20 +1223,20 @@ describe('astro:config:setup', () => {
 
 	it('keeps the client entrypoint path out of the browser options', async () => {
 		const { calls } = await runSetup({
-			clientEntrypoint: 'site/c15t.client',
+			clientEntrypoint: 'site/inth.client',
 			mode: testingMode(),
 		});
 		const [update] = calls.updateConfig.mock.calls[0] ?? [];
 		const [plugin] = update.vite.plugins;
-		const client = plugin.load('\0virtual:c15t/options', { ssr: false });
-		expect(client).not.toContain('site/c15t.client');
+		const client = plugin.load('\0virtual:inth/options', { ssr: false });
+		expect(client).not.toContain('site/inth.client');
 		for (const key of ['middleware', 'clientEntrypoint']) {
 			expect(client).not.toContain(`"${key}"`);
 		}
 		// The engine reads it to add the first-paint rules a page left out.
 		expect(client).toContain('"inlineStyles":true');
-		expect(plugin.load('\0virtual:c15t/options', { ssr: true })).toContain(
-			'"clientEntrypoint":"site/c15t.client"'
+		expect(plugin.load('\0virtual:inth/options', { ssr: true })).toContain(
+			'"clientEntrypoint":"site/inth.client"'
 		);
 	});
 
@@ -1208,8 +1279,8 @@ describe('astro:config:setup', () => {
 			},
 		];
 		const [plugin] = config.vite.plugins;
-		const resolved = plugin?.resolveId('virtual:c15t/options') as string;
-		expect(resolved).toBe('\0virtual:c15t/options');
+		const resolved = plugin?.resolveId('virtual:inth/options') as string;
+		expect(resolved).toBe('\0virtual:inth/options');
 
 		const loaded = plugin?.load(resolved) as string;
 		const parsed = JSON.parse(
@@ -1227,9 +1298,9 @@ describe('astro:config:setup', () => {
 			{ vite: { plugins: { name: string }[] } },
 		];
 		expect(vueConfig.vite.plugins.map((plugin) => plugin.name)).toEqual([
-			'c15t:options',
-			'c15t:engine',
-			'c15t:class-maps-without-css',
+			'inth:options',
+			'inth:engine',
+			'inth:class-maps-without-css',
 			'@inth/vue',
 		]);
 
@@ -1238,9 +1309,9 @@ describe('astro:config:setup', () => {
 			{ vite: { plugins: { name: string }[] } },
 		];
 		expect(svelteConfig.vite.plugins.map((plugin) => plugin.name)).toEqual([
-			'c15t:options',
-			'c15t:engine',
-			'c15t:class-maps-without-css',
+			'inth:options',
+			'inth:engine',
+			'inth:class-maps-without-css',
 		]);
 	});
 
@@ -1259,14 +1330,14 @@ describe('astro:config:setup', () => {
 	});
 
 	it('prerenders the route for browser resolution on a site with no adapter', async () => {
-		const options: C15tAstroOptions = {
+		const options: InthAstroOptions = {
 			mode: manifestMode({ resolve: 'browser' }),
 			projectUrl: 'https://consent.example.com',
 		};
 		const { calls } = await runSetup(options);
 		expect(calls.injectRoute).toHaveBeenCalledWith(
 			expect.objectContaining({
-				pattern: '/api/c15t/[...path]',
+				pattern: '/api/inth/[...path]',
 				prerender: true,
 			})
 		);
@@ -1279,7 +1350,7 @@ describe('astro:config:setup', () => {
 	});
 
 	it.each([
-		['hosted mode', { mode: hostedMode(), projectUrl: '/api/c15t' }],
+		['hosted mode', { mode: hostedMode(), projectUrl: '/api/inth' }],
 		['offline mode', { mode: testingMode() }],
 		[
 			'routePrefix: false',
@@ -1289,7 +1360,7 @@ describe('astro:config:setup', () => {
 				routePrefix: false,
 			},
 		],
-	] satisfies [string, C15tAstroOptions][])(
+	] satisfies [string, InthAstroOptions][])(
 		'injects no route with %s',
 		async (_name, options) => {
 			const { calls } = await runSetup(options);
@@ -1301,11 +1372,11 @@ describe('astro:config:setup', () => {
 describe('astro:config:done', () => {
 	/** Run setup for `command`, then done, the way Astro does. */
 	const runForCommand = (
-		options: C15tAstroOptions,
+		options: InthAstroOptions,
 		command: string,
 		adapter?: { name: string }
 	) => runDone(options, ['@astrojs/svelte'], adapter, command);
-	const MANIFEST: C15tAstroOptions = {
+	const MANIFEST: InthAstroOptions = {
 		mode: manifestMode(),
 		projectUrl: 'https://consent.example.com',
 	};
@@ -1313,7 +1384,7 @@ describe('astro:config:done', () => {
 	it('names the injected route when a build has no adapter', async () => {
 		const done = await runForCommand(MANIFEST, 'build');
 		await expect(done()).rejects.toThrowError(
-			/on-demand route at \/api\/c15t\/\[\.\.\.path\], which needs a server adapter.*hosted\(\) or manifest\(\{ resolve: 'browser' \}\)/u
+			/on-demand route at \/api\/inth\/\[\.\.\.path\], which needs a server adapter.*hosted\(\) or manifest\(\{ resolve: 'browser' \}\)/u
 		);
 	});
 
@@ -1325,17 +1396,16 @@ describe('astro:config:done', () => {
 		await expect(done()).resolves.toBeUndefined();
 	});
 
-	it('adds the App.Locals type for Astro.locals.c15t', async () => {
+	it('adds the App.Locals type for Astro.locals.inth', async () => {
 		const done = await runForCommand(MANIFEST, 'dev');
 		await done();
 		expect(done.injectTypes).toHaveBeenCalledWith({
 			content: expect.stringMatching(
-				/c15t: import\('(?:@inth\/astro|@inth\/astro)'\)\.C15tLocals;/u
+				/inth: import\('@inth\/astro'\)\.InthLocals;/u
 			),
 			filename: 'locals.d.ts',
 		});
-		const content = await buildLocalsTypes(undefined);
-		expect(content).toMatch(/^declare namespace App \{/u);
+		expect(LOCALS_TYPES).toMatch(/^declare namespace App \{/u);
 	});
 
 	it.each(['dev', 'sync'])(

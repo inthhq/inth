@@ -130,7 +130,6 @@ const hasNewerIdentity = function hasNewerIdentity(
  * @param oursYields - Whether the in-memory subject is a copy or generated.
  * @param identityYields - Whether the in-memory linked identity is only
  * storage's copy (see {@link SubjectProvenance}).
- * @returns The subject to write.
  */
 export const subjectToWrite = function subjectToWrite(
 	ours: ConsentSubject | null,
@@ -173,7 +172,6 @@ export const subjectToWrite = function subjectToWrite(
  * @param storedWinsTies - Whether storage changed since this runtime last
  * read or wrote it.
  * @param merge - The kernel's per-category merge.
- * @returns The choice to write, or `null` when nothing should be written.
  */
 export const choiceToWrite = function choiceToWrite(
 	ours: ExplicitChoice | null,
@@ -711,7 +709,6 @@ const applyVoided = function applyVoided(
  * at the top of this file. Only differences are returned, so an unchanged
  * read never touches the kernel or notifies anyone.
  *
- * @param snapshot - The kernel's current snapshot.
  * @param read - A storage read; omitted records were unreadable.
  * @param seen - Fingerprints from the previous read or write.
  * @param now - Read time, used as the evaluation time.
@@ -725,7 +722,6 @@ const applyVoided = function applyVoided(
  * missed.
  * @param provenance - Where the in-memory linked identity came from.
  * @param rules - The per-category merge and the clear-epoch rules.
- * @returns The records to hydrate and the fingerprints to keep.
  */
 export const selectReconciledRecords = function selectReconciledRecords(
 	snapshot: ConsentSnapshot,

@@ -4,7 +4,7 @@ import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
+import { resolveScriptUrl } from '../_shared/script-url';
 
 /**
  * Promptwatch vendor manifest.
@@ -44,13 +44,9 @@ export interface PromptwatchOptions {
 /**
  * Promptwatch analytics script for AI traffic and usage insights.
  *
- * @param options - Promptwatch integration options.
- * @param options.projectId - Promptwatch project id from your dashboard.
- * @param options.scriptUrl - Optional custom script URL override.
  * @remarks When `projectId` is missing or blank, the helper logs
  *   `promptwatch: missing or invalid projectId` with `console.error` and
  *   returns a script that never loads.
- * @returns The Promptwatch script configuration.
  */
 export const promptwatch = function promptwatch({
 	projectId,
@@ -65,10 +61,7 @@ export const promptwatch = function promptwatch({
 	}
 
 	const defaultScriptUrl = 'https://ingest.promptwatch.com/js/client.min.js';
-	const normalizedScriptUrl = resolveScriptUrl(
-		trimToUndefined(scriptUrl),
-		defaultScriptUrl
-	);
+	const normalizedScriptUrl = resolveScriptUrl(scriptUrl, defaultScriptUrl);
 
 	return resolveManifest(promptwatchManifest, {
 		projectId: normalizedProjectId,

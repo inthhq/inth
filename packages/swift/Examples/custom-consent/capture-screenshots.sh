@@ -9,18 +9,18 @@
 # Writes ios-<stock|custom>-<prompt|preferences|iab>-<light|dark>.png, 12 files, and fails if
 # one is missing.
 #
-# C15T_SCREENSHOT_OUT      output directory (default: a inth-custom-consent-screenshots folder in the temp directory)
-# C15T_SCREENSHOT_DEVICE   simulator name, created when missing (default: inth-custom-consent)
-# C15T_SCREENSHOT_SETTLE   seconds to wait after each launch (default: 6)
-# C15T_IOS_DEVICE          device type for a new simulator (default: iPhone 17 Pro)
-# C15T_IOS_RUNTIME         runtime identifier for a new simulator (default: newest iOS)
+# INTH_SCREENSHOT_OUT      output directory (default: a inth-custom-consent-screenshots folder in the temp directory)
+# INTH_SCREENSHOT_DEVICE   simulator name, created when missing (default: inth-custom-consent)
+# INTH_SCREENSHOT_SETTLE   seconds to wait after each launch (default: 6)
+# INTH_IOS_DEVICE          device type for a new simulator (default: iPhone 17 Pro)
+# INTH_IOS_RUNTIME         runtime identifier for a new simulator (default: newest iOS)
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-OUT="${1:-${C15T_SCREENSHOT_OUT:-${TMPDIR:-/tmp}/inth-custom-consent-screenshots}}"
+OUT="${1:-${INTH_SCREENSHOT_OUT:-${TMPDIR:-/tmp}/inth-custom-consent-screenshots}}"
 mkdir -p "${OUT}"
 OUT="$(cd "${OUT}" && pwd)"
-DEVICE_NAME="${C15T_SCREENSHOT_DEVICE:-inth-custom-consent}"
-SETTLE="${C15T_SCREENSHOT_SETTLE:-6}"
+DEVICE_NAME="${INTH_SCREENSHOT_DEVICE:-inth-custom-consent}"
+SETTLE="${INTH_SCREENSHOT_SETTLE:-6}"
 BUNDLE_ID=com.inth.examples.customconsent
 WORK="$(mktemp -d /tmp/inth-custom-consent.XXXXXX)"
 DEVICE=""
@@ -54,10 +54,10 @@ for runtime, devices in json.load(sys.stdin)["devices"].items():
             print(device["udid"]); raise SystemExit
 ' "${DEVICE_NAME}")"
 if [[ -z "${DEVICE}" ]]; then
-  DEVICE_TYPE="${C15T_IOS_DEVICE:-iPhone 17 Pro}"
+  DEVICE_TYPE="${INTH_IOS_DEVICE:-iPhone 17 Pro}"
   # Newest iOS runtime that runs this device type and that the selected Xcode's simulator
   # SDK supports. A runner can carry newer runtimes than its pinned Xcode.
-  RUNTIME="${C15T_IOS_RUNTIME:-$(xcrun simctl list runtimes -j | python3 -c '
+  RUNTIME="${INTH_IOS_RUNTIME:-$(xcrun simctl list runtimes -j | python3 -c '
 import json, sys
 version = lambda text: tuple(int(part) for part in text.split(".")[:2])
 sdk, device = version(sys.argv[1]), sys.argv[2]

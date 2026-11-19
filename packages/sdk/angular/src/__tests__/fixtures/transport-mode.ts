@@ -12,8 +12,7 @@ import { testing } from '../../../testing/src/testing-mode';
  * A transport factory that hands the provider `transport`, for tests that
  * stand in for the backend with a fake.
  *
- * @param transport - The fake transport.
- * @param kind - The kind `window.c15t.mode` reports.
+ * @param kind - The kind `window.__inthDebug.mode` reports.
  * @returns A factory for the provider's `mode`.
  */
 export const transportMode = function transportMode(
@@ -27,7 +26,6 @@ export const transportMode = function transportMode(
  * `testing()` resolving `policyRules`, for tests that need a policy the
  * recommended pack has no rule for, such as the opt-out notice.
  *
- * @param policyRules - The rules to resolve.
  * @returns A `testing()` mode.
  */
 export const offlineMode = function offlineMode(

@@ -169,9 +169,6 @@ declare global {
 
 /**
  * Reddit Pixel vendor manifest.
- *
- * Sets up Reddit's queue stub and optionally queues the standard page visit
- * event before the external bundle loads.
  */
 export const redditPixelManifest = {
 	...vendorManifestContract,
@@ -263,15 +260,6 @@ export interface RedditPixelOptions {
 	scriptUrl?: string;
 }
 
-/**
- * Merges optional init options with an explicit first-party cookie flag.
- *
- * @param initOptions - Optional Reddit Pixel init options.
- * @param disableFirstPartyCookies - Optional first-party cookie disable flag.
- * @returns Reddit Pixel init options, or `undefined` when no options are set.
- *
- * @internal
- */
 const getRedditPixelInitOptions = function getRedditPixelInitOptions({
 	initOptions,
 	disableFirstPartyCookies,
@@ -292,8 +280,6 @@ const getRedditPixelInitOptions = function getRedditPixelInitOptions({
 /**
  * Creates a Reddit Pixel script.
  *
- * @param options - The options for the Reddit Pixel script.
- * @returns The Reddit Pixel script configuration.
  * @remarks When `pixelId` is missing or blank, the
  *   helper logs `redditPixel: missing or invalid pixelId` with
  *   `console.error` and returns a script that never loads.
@@ -354,7 +340,6 @@ export const redditPixel = function redditPixel({
 /**
  * Tracks a Reddit Pixel event.
  *
- * @param eventName - Reddit standard event name or a custom event name.
  * @param metadata - Optional event metadata, including `conversionId` for
  * Pixel plus Conversions API deduplication.
  */

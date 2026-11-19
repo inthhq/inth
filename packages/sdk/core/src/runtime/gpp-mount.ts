@@ -24,7 +24,6 @@ export interface RuntimeGPPMountOptions {
 /**
  * Load and mount the GPP CMP API.
  *
- * @param options - See {@link RuntimeGPPMountOptions}.
  * @returns Removes `__gpp`, or stops a load still in flight from mounting.
  */
 export const mountRuntimeGPP = function mountRuntimeGPP({

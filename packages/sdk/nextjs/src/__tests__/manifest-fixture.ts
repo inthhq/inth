@@ -1,9 +1,8 @@
 import type { ConsentManifest } from '@inth/sdk/schema/types';
 import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
 
-/** Shared manifest fixture for the promoted Next.js adapter tests. */
 export const MANIFEST_FIXTURE = {
-	branding: 'c15t',
+	branding: 'inth',
 	policyPacks: [
 		createConsentManifestPolicyPack({
 			categories: ['measurement', 'marketing'],

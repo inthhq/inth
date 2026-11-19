@@ -1,5 +1,5 @@
 /**
- * The checked switch takes its track color from `--c15t-switch-track-active`.
+ * The checked switch takes its track color from `--inth-switch-track-active`.
  * When a theme or stylesheet changes the primary color and leaves that token
  * alone, the switch follows the primary color instead of staying the default
  * blue.
@@ -24,10 +24,10 @@ const checkedTrackColor = (): string => {
 	return getComputedStyle(track).backgroundColor;
 };
 
-/** `--c15t-primary` as the browser resolves it in the page, in `rgb()`. */
+/** `--inth-primary` as the browser resolves it in the page, in `rgb()`. */
 const resolvedPrimary = (): string => {
 	const probe = document.createElement('div');
-	probe.style.color = 'var(--c15t-primary)';
+	probe.style.color = 'var(--inth-primary)';
 	document.body.append(probe);
 	const { color } = getComputedStyle(probe);
 	probe.remove();
@@ -96,10 +96,10 @@ test('switchTrackActive overrides the primary color', async () => {
 	unmount();
 });
 
-test('a stylesheet that sets --c15t-primary paints the checked switch', async () => {
+test('a stylesheet that sets --inth-primary paints the checked switch', async () => {
 	const { unmount } = await render(
 		<>
-			<style>{`:root { --c15t-primary: ${PURPLE}; }`}</style>
+			<style>{`:root { --inth-primary: ${PURPLE}; }`}</style>
 			<Switch checked />
 		</>
 	);

@@ -59,12 +59,12 @@ const deferred = function deferred() {
 };
 
 // The server function's config, as `createConsentStateHandler({
-// routePrefix: '/api/c15t', proxy: true })` puts it on the state.
-const sameOrigin = { projectUrl: '/api/c15t', routePrefix: '/api/c15t' };
+// routePrefix: '/api/inth', proxy: true })` puts it on the state.
+const sameOrigin = { projectUrl: '/api/inth', routePrefix: '/api/inth' };
 
 const initResponse = () =>
 	Response.json({
-		branding: 'c15t',
+		branding: 'inth',
 		location: { countryCode: 'DE', regionCode: null },
 		translations: { language: 'en', translations: { common: {} } },
 	});
@@ -118,7 +118,7 @@ describe('ConsentRoot: streamed state', () => {
 			});
 			const [url, init] = fetchSpy.mock.calls[0] ?? [];
 			// The query carries the consent journey.
-			expect(String(url).split('?')[0]).toBe('/api/c15t/subjects');
+			expect(String(url).split('?')[0]).toBe('/api/inth/subjects');
 			const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
 			expect(body.policyId).toBe('react-test');
 		} finally {
@@ -150,7 +150,7 @@ describe('ConsentRoot: streamed state', () => {
 			await vi.waitFor(() => {
 				expect(fetchSpy).toHaveBeenCalled();
 			});
-			expect(String(fetchSpy.mock.calls[0]?.[0])).toContain('/api/c15t/init');
+			expect(String(fetchSpy.mock.calls[0]?.[0])).toContain('/api/inth/init');
 		} finally {
 			fetchSpy.mockRestore();
 		}

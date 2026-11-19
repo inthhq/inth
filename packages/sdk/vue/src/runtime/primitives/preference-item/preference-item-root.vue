@@ -24,8 +24,8 @@ const emit = defineEmits<{ 'update:open': [value: boolean] }>();
 
 const variants = preferenceItemVariants();
 const componentId = useId();
-const contentId = `c15t-preference-item-content-${componentId}`;
-const triggerId = `c15t-preference-item-trigger-${componentId}`;
+const contentId = `inth-preference-item-content-${componentId}`;
+const triggerId = `inth-preference-item-trigger-${componentId}`;
 
 const open = ref(props.open);
 watch(

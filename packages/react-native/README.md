@@ -10,8 +10,6 @@
 
 Native consent screens, saved privacy choices and SDK gates for React Native and Expo. SwiftUI renders iOS consent screens and Compose renders Android screens. Optional native SDKs can read permission before JavaScript starts.
 
-c15t is used by [2,100+ sites](https://www.wappalyzer.com/technologies/cookie-compliance/c15t/), including expo.dev, zed.dev, unkey.dev, mintlify.com, and sazabi.com.
-
 ## Key Features
 
 - Native consent prompts and a preference center that can be reopened from app settings
@@ -82,7 +80,7 @@ The first release includes native presenters, RN hooks and category commands, ap
 
 This package ships its documentation as Markdown, matched to the installed version. After you install it, point your coding agent at `node_modules/@inth/react-native/AGENTS.md`. It indexes every guide in `node_modules/@inth/react-native/docs/`.
 
-On the web, every page of the [c15t docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the c15t agent skills with `npx skills add c15t/skills`.
+On the web, every page of the [Inth docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the c15t agent skills with `npx skills add c15t/skills`.
 
 ## Support
 

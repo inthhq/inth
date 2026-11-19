@@ -24,8 +24,8 @@ interface BundleResult {
 const BASELINE_REF = 'origin/2.0.0';
 const BASELINE_ENTRY = '2.0.0-consent-surfaces';
 const CURRENT_ENTRY = 'current-consent-surfaces';
-const WORKTREE_DIR = resolve(tmpdir(), 'c15t-bundle-bench-2.0.0');
-const OUTPUT_ROOT = resolve(tmpdir(), 'c15t-bundle-bench-output');
+const WORKTREE_DIR = resolve(tmpdir(), 'inth-bundle-bench-2.0.0');
+const OUTPUT_ROOT = resolve(tmpdir(), 'inth-bundle-bench-output');
 const APP_DIR = process.cwd();
 const REPO_ROOT = resolve(APP_DIR, '..', '..');
 

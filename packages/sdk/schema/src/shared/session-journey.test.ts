@@ -7,9 +7,11 @@ import {
 	appendJourneyParams,
 	buildConsentSessionReport,
 	deriveJourneyPrompt,
+	isSpeculativeRequest,
 	journeyDomainFrom,
 	readJourneyParams,
 	readSessionJourney,
+	SPECULATION_HEADERS,
 } from './session-report';
 
 const ID = '3b241101-e2bb-4255-8caf-4136c566a962';
@@ -39,13 +41,13 @@ const unmatched = (status: 'failed' | 'no-match' | 'unconfigured') =>
 
 describe('journey query parameters', () => {
 	it('round-trips through a relative URL with an existing query', () => {
-		const url = appendJourneyParams('/api/c15t/init?lang=de', {
+		const url = appendJourneyParams('/api/inth/init?lang=de', {
 			id: ID,
 			scope: 'tab',
 			storedChoice: false,
 		});
 		expect(url).toBe(
-			`/api/c15t/init?lang=de&journey=${ID}&journeyScope=tab&stored=0`
+			`/api/inth/init?lang=de&journey=${ID}&journeyScope=tab&stored=0`
 		);
 		expect(readJourneyParams(url)).toEqual({
 			id: ID,
@@ -74,6 +76,12 @@ describe('journey query parameters', () => {
 			expect(readJourneyParams(`https://example.com/init${query}`)).toBeNull();
 		}
 		expect(readJourneyParams(undefined)).toBeNull();
+	});
+
+	it('reads no journey from a ? inside the fragment', () => {
+		expect(
+			readJourneyParams(`/p#x?journey=${ID}&journeyScope=page`)
+		).toBeNull();
 	});
 
 	it('replaces a journey the URL already carries', () => {
@@ -223,5 +231,29 @@ describe('session report journey', () => {
 			source: 'route',
 		});
 		expect(v.safeParse(consentSessionReportSchema, report).success).toBe(false);
+	});
+});
+
+describe('isSpeculativeRequest', () => {
+	it.each([
+		['sec-purpose', 'prefetch;prerender'],
+		['purpose', 'prefetch'],
+		['x-purpose', 'preview'],
+		['x-moz', 'prefetch'],
+		['next-router-prefetch', '1'],
+		['x-middleware-prefetch', '1'],
+	])('reads %s: %s', (name, value) => {
+		expect(isSpeculativeRequest(new Headers({ [name]: value }))).toBe(
+			value !== 'preview'
+		);
+	});
+
+	it('checks every header a server forwards for it', () => {
+		for (const name of SPECULATION_HEADERS) {
+			expect(isSpeculativeRequest(new Headers({ [name]: 'prefetch' }))).toBe(
+				true
+			);
+		}
+		expect(isSpeculativeRequest(new Headers())).toBe(false);
 	});
 });

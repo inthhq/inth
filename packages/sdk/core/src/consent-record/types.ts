@@ -131,10 +131,11 @@ export interface EvaluationPolicy {
 	/** How categories outside `scope` behave. */
 	scopeMode: 'strict' | 'permissive';
 	/**
-	 * Displayed categories required for a choice. Defaults to the policy
-	 * scope. Empty means a choice prompt only asks for an acknowledgement.
+	 * Displayed categories required for a choice, inside `scope`; the whole
+	 * scope unless declared categories narrow it. Empty means a choice
+	 * prompt only asks for an acknowledgement.
 	 */
-	choiceScope?: readonly OptionalConsentCategory[];
+	choiceScope: readonly OptionalConsentCategory[];
 	choice: RecordValidity;
 	notice: RecordValidity;
 	/**

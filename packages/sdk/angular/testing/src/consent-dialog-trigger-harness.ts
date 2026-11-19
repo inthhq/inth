@@ -8,14 +8,14 @@ export interface ConsentDialogTriggerHarnessFilters extends BaseHarnessFilters {
 }
 
 /**
- * Drives `<c15t-consent-dialog-trigger>`, the floating button that reopens
- * the consent dialog, and the trigger `<c15t-consent-dialog>` renders with
+ * Drives `<inth-consent-dialog-trigger>`, the floating button that reopens
+ * the consent dialog, and the trigger `<inth-consent-dialog>` renders with
  * `showTrigger`.
  *
  * The trigger renders into `<body>`, so find it with
  * `TestbedHarnessEnvironment.documentRootLoader(fixture)`. It exists only
  * while it shows: after a policy is resolved, and not while the dialog is
- * open. With `<c15t-consent-dev-tools>` mounted, the harness drives the
+ * open. With `<inth-consent-dev-tools>` mounted, the harness drives the
  * toolbar's preferences button.
  *
  * @example

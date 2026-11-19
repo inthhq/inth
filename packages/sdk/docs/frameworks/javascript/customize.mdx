@@ -31,11 +31,11 @@ and rounds the cards:
 
 <include src="../../shared/examples/javascript/theme.mdx" />
 
-`theme` takes the same token object as every c15t package; see
+`theme` takes the same token object as every Inth package; see
 [theme tokens](/docs/customization/tokens). The banner, the dialog and the
 trigger all read it. `ui.colorScheme` picks `'light'`, `'dark'` or
 `'system'`, the default, which follows the visitor's setting. `null` follows a
-`dark` or `c15t-dark` class on your page's `<html>` instead.
+`dark` or `inth-dark` class on your page's `<html>` instead.
 [Dark mode](/docs/customization/dark-mode) covers dark tokens in
 `ui.theme.dark`.
 
@@ -43,7 +43,7 @@ trigger all read it. `ui.colorScheme` picks `'light'`, `'dark'` or
 
 The UI renders in a shadow root with its own copy of the stylesheet, so your
 app's CSS does not reach it and its CSS does not reach your app. To target
-one part, pass CSS in `ui.css`. c15t adds it after the bundled stylesheet:
+one part, pass CSS in `ui.css`. Inth adds it after the bundled stylesheet:
 
 {/* example: fragment */}
 
@@ -61,7 +61,7 @@ UI in the browser's element panel to find one.
 To style parts with classes from your own stylesheet, such as a Tailwind or
 CSS Modules build, put the classes on parts with `ui.theme.slots` and link the
 stylesheet into the shadow root with `ui.stylesheetUrls`. Page CSS can also
-reach a part by its slot key with `[data-c15t-ui]::part(consentBannerCard)`.
+reach a part by its slot key with `[data-inth-ui]::part(consentBannerCard)`.
 [Class names and CSS-in-JS](/docs/customization/class-names) and
 [Tailwind CSS](/docs/customization/tailwind) show both, and
 [component parts](/docs/customization/slots) lists the slot keys.
@@ -69,7 +69,7 @@ reach a part by its slot key with `[data-c15t-ui]::part(consentBannerCard)`.
 ## Use your own stylesheet
 
 `ui: { shadow: false }` renders into the page, so your stylesheet applies.
-c15t still adds its own stylesheet. To load it from your bundle instead,
+Inth still adds its own stylesheet. To load it from your bundle instead,
 import it and turn the inline copy off:
 
 {/* example: fragment */}
@@ -90,7 +90,7 @@ plugin, Tailwind 3 drops the imported rules without an
 error and its preflight overrides the UI. A page that keeps the default shadow
 root needs none of this, because page CSS does not reach the UI.
 
-`ui: { shadow: false, noStyle: true }` renders markup with no c15t classes,
+`ui: { shadow: false, noStyle: true }` renders markup with no Inth classes,
 for a design written from scratch. Parts keep their `data-testid`. Your app's
 global rules reach the UI in either mode, so check buttons and headings after
 you switch.
@@ -150,7 +150,7 @@ replaces the translated link text.
 ## Add the floating trigger
 
 `ui: { trigger: true }` shows a corner button that opens the dialog while no
-other surface is open. Visitors can drag it to another corner, and c15t
+other surface is open. Visitors can drag it to another corner, and Inth
 remembers that corner. While the [DevTools panel](/docs/frameworks/javascript/dev-tools)
 is mounted, the trigger also carries a button that opens it.
 

@@ -6,7 +6,7 @@ import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	loadScripts,
@@ -18,13 +18,13 @@ import { rb2b } from './vendors/analytics/rb2b';
 describe('RB2B core loader consent contract', () => {
 	registerVendorContractCleanup();
 	it.each([
-		'https://ddwl4m2hdecbv.cloudfront.net/b/c15tfake/',
-		'https://s3-us-west-2.amazonaws.com/b2bjsstore/b/c15tfake/?file=loader.js',
-		'https://b2bjsstore.s3.us-west-2.amazonaws.com/b/c15tfake/#loader.js',
+		'https://ddwl4m2hdecbv.cloudfront.net/b/inthfake/',
+		'https://s3-us-west-2.amazonaws.com/b2bjsstore/b/inthfake/?file=loader.js',
+		'https://b2bjsstore.s3.us-west-2.amazonaws.com/b/inthfake/#loader.js',
 	])('blocks a directory URL despite marketing consent: %s', (scriptUrl) => {
 		vi.spyOn(console, 'error').mockImplementation(() => undefined);
 		loadScripts(
-			[rb2b({ accountKey: 'c15tfake', scriptUrl })],
+			[rb2b({ accountKey: 'inthfake', scriptUrl })],
 			grantedMarketingConsents
 		);
 		expect(document.querySelector('script')).toBeNull();
@@ -37,9 +37,9 @@ describe('RB2B core loader consent contract', () => {
 		loadScripts(
 			[
 				rb2b({
-					accountKey: 'c15tfake',
+					accountKey: 'inthfake',
 					scriptUrl:
-						'https://ddwl4m2hdecbv.cloudfront.net/b/OTHER/OTHER.js.gz?next=/b/c15tfake/',
+						'https://ddwl4m2hdecbv.cloudfront.net/b/OTHER/OTHER.js.gz?next=/b/inthfake/',
 				}),
 			],
 			grantedMarketingConsents
@@ -50,8 +50,8 @@ describe('RB2B core loader consent contract', () => {
 		expect(console.error).toHaveBeenCalledOnce();
 	});
 	it('creates no vendor globals, requests or storage before mapped consent', () => {
-		const scripts = [rb2b({ accountKey: 'c15tfake' })];
-		loadScripts(scripts, deniedConsents);
+		const scripts = [rb2b({ accountKey: 'inthfake' })];
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMeasurementConsents);
 		expect(document.querySelector('script')).toBeNull();
 		for (const key of ['reb2b']) {
@@ -61,17 +61,17 @@ describe('RB2B core loader consent contract', () => {
 		updateScripts(scripts, grantedMarketingConsents);
 		const element = document.querySelector('script');
 		expect(element?.src).toBe(
-			'https://ddwl4m2hdecbv.cloudfront.net/b/c15tfake/c15tfake.js.gz'
+			'https://ddwl4m2hdecbv.cloudfront.net/b/inthfake/inthfake.js.gz'
 		);
 		element?.dispatchEvent(new Event('load'));
 		updateScripts(scripts, grantedMarketingConsents);
 		expect(document.querySelectorAll('script')).toHaveLength(1);
 	});
 	it('retains one loader across in-flight revoke and regrant', () => {
-		const scripts = [rb2b({ accountKey: 'c15tfake' })];
+		const scripts = [rb2b({ accountKey: 'inthfake' })];
 		loadScripts(scripts, grantedMarketingConsents);
 		const old = document.querySelector('script');
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(old?.isConnected).toBe(true);
 		old?.dispatchEvent(new Event('load'));
 		expect(document.querySelector('script')).toBe(old);
@@ -87,10 +87,10 @@ describe('RB2B core loader consent contract', () => {
 describe('RB2B runtime client', () => {
 	registerVendorContractCleanup();
 	it('defines no pre-load stubs, because the account script ignores queued calls', () => {
-		const scripts = [rb2b({ accountKey: 'c15tfake' })];
+		const scripts = [rb2b({ accountKey: 'inthfake' })];
 		loadScripts(scripts, grantedMarketingConsents);
 		expect(document.querySelector('script')?.src).toBe(
-			'https://ddwl4m2hdecbv.cloudfront.net/b/c15tfake/c15tfake.js.gz'
+			'https://ddwl4m2hdecbv.cloudfront.net/b/inthfake/inthfake.js.gz'
 		);
 		expect('reb2b' in window).toBe(false);
 	});
@@ -101,12 +101,12 @@ describe('RB2B runtime client', () => {
 		const loader = createScriptLoader({
 			kernel,
 			onDebug: debug,
-			scripts: [rb2b({ accountKey: 'c15tfake' })],
+			scripts: [rb2b({ accountKey: 'inthfake' })],
 		});
 		try {
 			const original = document.querySelector('script');
 			expect(original?.src).toBe(
-				'https://ddwl4m2hdecbv.cloudfront.net/b/c15tfake/c15tfake.js.gz'
+				'https://ddwl4m2hdecbv.cloudfront.net/b/inthfake/inthfake.js.gz'
 			);
 			original?.dispatchEvent(new Event('load'));
 			const client = Object.freeze({ collect: vi.fn(), identify: vi.fn() });
@@ -139,7 +139,7 @@ describe('RB2B shared cleanup', () => {
 	describe('after the runtime loads', () => {
 		registerVendorContractCleanup();
 		it('clears the runtime client with shared vendor cleanup', () => {
-			loadScripts([rb2b({ accountKey: 'c15tfake' })], grantedMarketingConsents);
+			loadScripts([rb2b({ accountKey: 'inthfake' })], grantedMarketingConsents);
 			window.reb2b = Object.freeze({ collect: vi.fn(), identify: vi.fn() });
 			expect('reb2b' in window).toBe(true);
 		});

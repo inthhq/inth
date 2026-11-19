@@ -36,7 +36,7 @@ const custom = (
 		kind: 'custom' as const,
 	});
 
-/** A query pair c15t adds to `/init`. */
+/** A query pair Inth adds to `/init`. */
 const INIT_PAIR =
 	/^(?:v|contract|country|region|gpc|experiment|journey|journeyScope|stored)=/u;
 
@@ -88,7 +88,7 @@ const uiOptions: ConsentUIOptions = {
 const initResponse = (): Response =>
 	Response.json(
 		{
-			branding: 'c15t',
+			branding: 'inth',
 			location: { countryCode: 'DE', regionCode: null },
 			policyResolution: writePolicyResolutionWire(policyResolution),
 			translations: { language: 'en', translations },
@@ -146,7 +146,7 @@ describe.each(['hosted', 'testing'] as const)('%s browser entry', (mode) => {
 
 		expect(client.started).toBe(false);
 		expect(client.ui).toBeNull();
-		expect(document.querySelector('[data-c15t-ui]')).toBeNull();
+		expect(document.querySelector('[data-inth-ui]')).toBeNull();
 		expect(localStorage.length).toBe(0);
 		expect(document.cookie).toBe('');
 		expect(fetchSpy).not.toHaveBeenCalled();
@@ -172,7 +172,7 @@ describe.each(['hosted', 'testing'] as const)('%s browser entry', (mode) => {
 		for (const category of ['measurement', 'marketing']) {
 			const script = document.createElement('script');
 			script.type = 'text/plain';
-			script.dataset.c15tCategory = category;
+			script.dataset.inthCategory = category;
 			script.textContent = `window.${category} = true;`;
 			document.body.append(script);
 		}
@@ -191,10 +191,10 @@ describe.each(['hosted', 'testing'] as const)('%s browser entry', (mode) => {
 		);
 		client.start();
 		await client.ready();
-		expect(document.querySelector('[data-c15t-activated="true"]')).toBeNull();
+		expect(document.querySelector('[data-inth-activated="true"]')).toBeNull();
 
 		const link = document.createElement('a');
-		link.href = '#c15t-preferences';
+		link.href = '#inth-preferences';
 		document.body.append(link);
 		link.click();
 		expect(client.getSnapshot().activeUI).toBe('dialog');
@@ -213,17 +213,17 @@ describe.each(['hosted', 'testing'] as const)('%s browser entry', (mode) => {
 		await vi.waitFor(() =>
 			expect(
 				document.querySelectorAll(
-					'[data-c15t-category="measurement"][data-c15t-activated="true"]'
+					'[data-inth-category="measurement"][data-inth-activated="true"]'
 				)
 			).toHaveLength(1)
 		);
 		expect(
 			document.querySelector<HTMLScriptElement>(
-				'[data-c15t-category="marketing"]'
+				'[data-inth-category="marketing"]'
 			)?.type
 		).toBe('text/plain');
 		const reject = document.createElement('button');
-		reject.dataset.c15tAction = 'reject';
+		reject.dataset.inthAction = 'reject';
 		document.body.append(reject);
 		reject.click();
 		expect(client.has('measurement')).toBe(false);
@@ -366,7 +366,7 @@ describe('hosted browser entry', () => {
 			).toBeNull();
 			expect(fetchSpy).toHaveBeenCalledOnce();
 			await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(2));
-			expect(localStorage.getItem('c15t')).toContain('measurement');
+			expect(localStorage.getItem('inth')).toContain('measurement');
 			request.resolve(saveResponse());
 			await expect(saving).resolves.toMatchObject({ ok: true });
 			client.dispose();
@@ -498,7 +498,7 @@ describe('testing browser entry', () => {
 });
 
 const manifest = {
-	branding: 'c15t' as const,
+	branding: 'inth' as const,
 	revision: '1',
 	schemaVersion: 2 as const,
 };
@@ -528,7 +528,7 @@ describe('mode-specific JavaScript configuration', () => {
 				/@inth\/sdk\/hosted/u
 			);
 			expect(fetchSpy).not.toHaveBeenCalled();
-			expect(document.querySelector('[data-c15t-ui]')).toBeNull();
+			expect(document.querySelector('[data-inth-ui]')).toBeNull();
 		}
 	);
 
@@ -541,7 +541,7 @@ describe('mode-specific JavaScript configuration', () => {
 				/@inth\/sdk\/testing/u
 			);
 			expect(fetchSpy).not.toHaveBeenCalled();
-			expect(document.querySelector('[data-c15t-ui]')).toBeNull();
+			expect(document.querySelector('[data-inth-ui]')).toBeNull();
 		}
 	);
 });

@@ -10,6 +10,7 @@
 import { AD_TECH_PROVIDER_PURPOSES } from '@inth/sdk-schema/types';
 
 import type { KernelIABState } from '../types';
+import type { ResolvedIABCopy } from './consent-copy';
 
 type HeadlessIABStateInput = Pick<KernelIABState, 'gvl'> &
 	Partial<Pick<KernelIABState, 'customVendors' | 'adTechProviders'>> & {
@@ -202,5 +203,58 @@ export const resolveIABBannerSummary = function resolveIABBannerSummary(
 		isReady: true,
 		remainingCount: Math.max(0, items.length - maxItems),
 		vendorCount,
+	};
+};
+
+/** The banner copy with the partner counts filled in. */
+export interface IABBannerCopy {
+	/** Description text before the partners link. */
+	descriptionBefore: string;
+	/** The partners link text, with the vendor count. */
+	partnersLink: string;
+	/** Description text after the partners link. */
+	descriptionAfter: string;
+	/**
+	 * The "and N more" item after the listed purposes, or `undefined` when
+	 * every purpose is listed.
+	 */
+	andMore: string | undefined;
+}
+
+/**
+ * The banner description split around its partners link, with the counts
+ * filled in. The link sits inside the sentence, so the copy is split around
+ * it rather than concatenated: a translation is free to put it anywhere. A
+ * description that does not contain the link text keeps it whole, and the
+ * link follows it.
+ *
+ * @param iab - The IAB copy, from `resolveIABCopy`.
+ * @param summary - Counts from `resolveIABBannerSummary`.
+ * @param description - A description to use in place of the translated one.
+ *
+ * @example
+ * ```ts
+ * const copy = resolveIABBannerCopy(resolveIABCopy(t), summary);
+ * `${copy.descriptionBefore}[${copy.partnersLink}]${copy.descriptionAfter}`;
+ * ```
+ * @public
+ */
+export const resolveIABBannerCopy = function resolveIABBannerCopy(
+	iab: Pick<ResolvedIABCopy, 'banner'>,
+	summary: { vendorCount: number; remainingCount: number },
+	description: string = iab.banner.description
+): IABBannerCopy {
+	const vendorCount = String(summary.vendorCount);
+	const text = description.replace('{partnerCount}', vendorCount);
+	const partnersLink = iab.banner.partnersLink.replace('{count}', vendorCount);
+	const at = partnersLink ? text.indexOf(partnersLink) : -1;
+	return {
+		andMore:
+			summary.remainingCount > 0
+				? iab.banner.andMore.replace('{count}', String(summary.remainingCount))
+				: undefined,
+		descriptionAfter: at === -1 ? '' : text.slice(at + partnersLink.length),
+		descriptionBefore: at === -1 ? text : text.slice(0, at),
+		partnersLink,
 	};
 };

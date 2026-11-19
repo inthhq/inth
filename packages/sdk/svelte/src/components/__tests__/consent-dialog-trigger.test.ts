@@ -1,10 +1,3 @@
-/**
- * Tests for ConsentDialogTrigger component.
- *
- * Tests visibility logic (showWhen prop), keyboard interaction,
- * and aria attributes.
- */
-
 import { fireEvent, render, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -65,7 +58,6 @@ describe('ConsentDialogTrigger', () => {
 			expect(banner).not.toBeInTheDocument();
 		});
 
-		// Trigger should NOT appear even after consent
 		await new Promise<void>((resolve) => {
 			setTimeout(resolve, 300);
 		});
@@ -108,7 +100,6 @@ describe('ConsentDialogTrigger', () => {
 			showWhen: 'always',
 		});
 
-		// Banner is visible
 		await waitFor(() => {
 			const banner = document.querySelector(
 				'[data-testid="consent-banner-root"]'
@@ -142,7 +133,6 @@ describe('ConsentDialogTrigger', () => {
 		);
 		await fireEvent.click(acceptButton);
 
-		// Wait for trigger
 		await waitFor(() => {
 			const trigger = document.querySelector(
 				'button[aria-label="Open privacy settings"]'
@@ -150,13 +140,11 @@ describe('ConsentDialogTrigger', () => {
 			expect(trigger).toBeInTheDocument();
 		});
 
-		// Press Enter on trigger
 		const trigger = getDefined(
 			document.querySelector('button[aria-label="Open privacy settings"]')
 		);
 		await fireEvent.click(trigger, { detail: 0 });
 
-		// Dialog should open
 		await waitFor(() => {
 			expect(
 				document.querySelector('button[aria-label="Open privacy settings"]')
@@ -165,6 +153,49 @@ describe('ConsentDialogTrigger', () => {
 				'[data-testid="consent-dialog-root"]'
 			);
 			expect(dialog).toBeInTheDocument();
+		});
+	});
+
+	test('Enter after a drag still opens the dialog; the click ending the drag does not', async () => {
+		render(FullFlowFixture, {
+			options: defaultOptions,
+			showWhen: 'always',
+		});
+		await fireEvent.click(
+			await waitFor(() =>
+				getDefined(
+					document.querySelector('[data-testid="consent-banner-accept-button"]')
+				)
+			)
+		);
+		const trigger = await waitFor(() =>
+			getDefined(
+				document.querySelector<HTMLElement>(
+					'button[aria-label="Open privacy settings"]'
+				)
+			)
+		);
+
+		// jsdom has no PointerEvent; a MouseEvent carries the coordinates.
+		const pointer = (type: string, clientX: number) =>
+			fireEvent(
+				trigger,
+				new MouseEvent(type, { bubbles: true, button: 0, clientX })
+			);
+		await pointer('pointerdown', 0);
+		await pointer('pointermove', 40);
+		await pointer('pointerup', 40);
+		await fireEvent.click(trigger, { detail: 1 });
+		expect(
+			document.querySelector('[data-testid="consent-dialog-root"]')
+		).not.toBeInTheDocument();
+
+		// A keyboard press fires a click with `detail` 0 and no pointer first.
+		await fireEvent.click(trigger, { detail: 0 });
+		await waitFor(() => {
+			expect(
+				document.querySelector('[data-testid="consent-dialog-root"]')
+			).toBeInTheDocument();
 		});
 	});
 
@@ -193,6 +224,52 @@ describe('ConsentDialogTrigger', () => {
 			);
 			expect(trigger).toBeInTheDocument();
 			expect(trigger?.getAttribute('aria-label')).toBe('Open privacy settings');
+		});
+	});
+
+	test('showWhen="after-consent" waits until the banner is answered', async () => {
+		render(FullFlowFixture, {
+			options: defaultOptions,
+			showWhen: 'after-consent',
+		});
+
+		const acceptButton = await waitFor(() =>
+			getDefined(
+				document.querySelector('[data-testid="consent-banner-accept-button"]')
+			)
+		);
+		expect(
+			document.querySelector('[data-testid="consent-dialog-trigger"]')
+		).not.toBeInTheDocument();
+
+		await fireEvent.click(acceptButton);
+
+		await waitFor(() => {
+			expect(
+				document.querySelector('[data-testid="consent-dialog-trigger"]')
+			).toBeInTheDocument();
+		});
+	});
+
+	test('takes its accessible name from the trigger translations', async () => {
+		render(FullFlowFixture, {
+			options: {
+				...defaultOptions,
+				i18n: {
+					detectBrowserLanguage: false,
+					locale: 'en',
+					messages: { en: { trigger: { label: 'Privacy choices' } } },
+				},
+			},
+			showWhen: 'always',
+		});
+
+		await waitFor(() => {
+			expect(
+				document
+					.querySelector('[data-testid="consent-dialog-trigger"]')
+					?.getAttribute('aria-label')
+			).toBe('Privacy choices');
 		});
 	});
 });

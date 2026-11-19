@@ -1,12 +1,12 @@
 /**
- * `dist/c15t.testing.js`, the script tag for tests: the stock UI with a
+ * `dist/inth.testing.js`, the script tag for tests: the stock UI with a
  * policy resolved in the browser and no backend.
  *
- * The production files (`c15t.js`, `c15t.hosted.js` and the others) never
+ * The production files (`inth.js`, `inth.hosted.js` and the others) never
  * contain this transport or the policy pack. Load this file only in a
  * test page. Its policy comes from `data-policy` (preset names such as
- * `europeOptIn`), `c15t.init({ policy })`, `c15t.init({ mode:
- * c15t.testing({ policy }) })`, or the recommended pack, picked by the
+ * `europeOptIn`), `inth.init({ policy })`, `inth.init({ mode:
+ * inth.testing({ policy }) })`, or the recommended pack, picked by the
  * tag's `data-country` and `data-region`.
  */
 

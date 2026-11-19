@@ -16,7 +16,6 @@ interface LinkedInInsightsFunction {
 	(command: string, ...args: unknown[]): void;
 }
 
-// Extended Window interface to include LinkedIn Insight Tag specific properties.
 declare global {
 	interface Window {
 		lintrk: LinkedInInsightsFunction & { q?: unknown[][] };
@@ -32,9 +31,6 @@ declare global {
 
 /**
  * LinkedIn Insight Tag vendor manifest.
- *
- * Sets up the LinkedIn partner ID globals and loads the Insight Tag script
- * via structured startup steps.
  */
 export const linkedinInsightsManifest = {
 	...vendorManifestContract,
@@ -102,8 +98,6 @@ export interface LinkedInInsightsOptions {
 /**
  * LinkedIn Insight Tag script.
  *
- * @param options - The options for the LinkedIn Insight Tag script.
- * @returns The LinkedIn Insight Tag script configuration.
  * @remarks When `id` is missing or blank, the
  *   helper logs `linkedinInsights: missing or invalid id` with
  *   `console.error` and returns a script that never loads.

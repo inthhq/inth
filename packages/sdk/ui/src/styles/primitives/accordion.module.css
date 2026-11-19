@@ -12,77 +12,76 @@
 
 	.item {
 		position: relative;
-		padding: var(--accordion-padding, var(--c15t-space-md));
-		background-color: var(--accordion-background-color, var(--c15t-surface));
+		padding: var(--accordion-padding, var(--inth-space-md));
+		background-color: var(--accordion-background-color, var(--inth-surface));
 		box-shadow: inset 0 0 0 1px
-			var(--accordion-border-color, var(--c15t-border));
+			var(--accordion-border-color, var(--inth-border));
 		transition:
-			background-color var(--accordion-duration, var(--c15t-duration-normal))
-				var(--accordion-ease, var(--c15t-easing)),
-			box-shadow var(--accordion-duration, var(--c15t-duration-normal))
-				var(--accordion-ease, var(--c15t-easing));
-		border-radius: var(--accordion-radius, var(--c15t-radius-md));
+			background-color var(--accordion-duration, var(--inth-duration-normal))
+				var(--accordion-ease, var(--inth-easing)),
+			box-shadow var(--accordion-duration, var(--inth-duration-normal))
+				var(--accordion-ease, var(--inth-easing));
+		border-radius: var(--accordion-radius, var(--inth-radius-md));
 		overflow: visible;
 	}
 
-	:global(.c15t-dark) .item {
+	:global(.inth-dark) .item {
 		background-color: var(
 			--accordion-background-color-dark,
-			var(--c15t-surface)
+			var(--inth-surface)
 		);
 		box-shadow: inset 0 0 0 1px
-			var(--accordion-border-color-dark, var(--c15t-border));
+			var(--accordion-border-color-dark, var(--inth-border));
 	}
 
 	.item:is(:hover, [data-state='open']) {
 		background-color: var(
 			--accordion-background-hover,
-			var(--c15t-surface-hover)
+			var(--inth-surface-hover)
 		);
 		box-shadow: inset 0 0 0 1px
-			var(--accordion-border-color, var(--c15t-border));
+			var(--accordion-border-color, var(--inth-border));
 	}
 
-	:global(.c15t-dark) .item:is(:hover, [data-state='open']) {
+	:global(.inth-dark) .item:is(:hover, [data-state='open']) {
 		background-color: var(
 			--accordion-background-hover-dark,
-			var(--c15t-surface-hover)
+			var(--inth-surface-hover)
 		);
 		box-shadow: inset 0 0 0 1px
-			var(--accordion-border-color-dark, var(--c15t-border));
+			var(--accordion-border-color-dark, var(--inth-border));
 	}
 
-	/* Focus styles for item */
 	.item:focus-within:not(:has(.triggerInner:focus-visible)) {
 		background-color: var(
 			--accordion-background-hover,
-			var(--c15t-surface-hover)
+			var(--inth-surface-hover)
 		);
 		box-shadow: inset 0 0 0 1px
-			var(--accordion-border-color, var(--c15t-border));
+			var(--accordion-border-color, var(--inth-border));
 	}
 
-	:global(.c15t-dark)
+	:global(.inth-dark)
 		.item:focus-within:not(:has(.triggerInner:focus-visible)) {
 		background-color: var(
 			--accordion-background-hover-dark,
-			var(--c15t-surface-hover)
+			var(--inth-surface-hover)
 		);
 		box-shadow: inset 0 0 0 1px
-			var(--accordion-border-color-dark, var(--c15t-border));
+			var(--accordion-border-color-dark, var(--inth-border));
 	}
 
 	.item:has(.triggerInner:focus-visible) {
 		box-shadow: var(
 			--accordion-focus-shadow,
-			0 0 0 2px var(--accordion-focus-ring, var(--c15t-primary))
+			0 0 0 2px var(--accordion-focus-ring, var(--inth-primary))
 		);
 	}
 
-	:global(.c15t-dark) .item:has(.triggerInner:focus-visible) {
+	:global(.inth-dark) .item:has(.triggerInner:focus-visible) {
 		box-shadow: var(
 			--accordion-focus-shadow-dark,
-			0 0 0 2px var(--accordion-focus-ring-dark, var(--c15t-primary))
+			0 0 0 2px var(--accordion-focus-ring-dark, var(--inth-primary))
 		);
 	}
 
@@ -108,11 +107,11 @@
 		letter-spacing: -0.006em;
 		font-weight: 500;
 		text-align: left;
-		color: var(--accordion-text-color, var(--c15t-text));
+		color: var(--accordion-text-color, var(--inth-text));
 		border: 0;
 		background: none;
 		cursor: pointer;
-		border-radius: var(--accordion-radius, var(--c15t-radius-md));
+		border-radius: var(--accordion-radius, var(--inth-radius-md));
 		position: relative;
 		z-index: 1;
 		touch-action: manipulation;
@@ -122,8 +121,8 @@
 		margin-inline-start: auto;
 	}
 
-	:global(.c15t-dark) .triggerInner {
-		color: var(--accordion-text-color-dark, var(--c15t-text));
+	:global(.inth-dark) .triggerInner {
+		color: var(--accordion-text-color-dark, var(--inth-text));
 	}
 
 	.triggerInner:focus-visible {
@@ -133,12 +132,12 @@
 	.icon {
 		width: var(--accordion-icon-size, 1.25rem);
 		height: var(--accordion-icon-size, 1.25rem);
-		color: var(--accordion-icon-color, var(--c15t-text-muted));
+		color: var(--accordion-icon-color, var(--inth-text-muted));
 		flex-shrink: 0;
 	}
 
-	:global(.c15t-dark) .icon {
-		color: var(--accordion-icon-color-dark, var(--c15t-text-muted));
+	:global(.inth-dark) .icon {
+		color: var(--accordion-icon-color-dark, var(--inth-text-muted));
 	}
 
 	.arrowOpen,
@@ -146,34 +145,34 @@
 		display: block;
 		width: var(--accordion-icon-size, 1.25rem);
 		height: var(--accordion-icon-size, 1.25rem);
-		transition: color var(--accordion-duration, var(--c15t-duration-normal))
-			var(--accordion-ease, var(--c15t-easing));
+		transition: color var(--accordion-duration, var(--inth-duration-normal))
+			var(--accordion-ease, var(--inth-easing));
 		flex-shrink: 0;
 	}
 
 	.arrowOpen {
-		color: var(--accordion-arrow-color, var(--c15t-text-muted));
+		color: var(--accordion-arrow-color, var(--inth-text-muted));
 	}
 
-	:global(.c15t-dark) .arrowOpen {
-		color: var(--accordion-arrow-color-dark, var(--c15t-text-muted));
+	:global(.inth-dark) .arrowOpen {
+		color: var(--accordion-arrow-color-dark, var(--inth-text-muted));
 	}
 
 	.item:hover .arrowOpen {
-		color: var(--accordion-icon-color, var(--c15t-text-muted));
+		color: var(--accordion-icon-color, var(--inth-text-muted));
 	}
 
-	:global(.c15t-dark) .item:hover .arrowOpen {
-		color: var(--accordion-icon-color-dark, var(--c15t-text-muted));
+	:global(.inth-dark) .item:hover .arrowOpen {
+		color: var(--accordion-icon-color-dark, var(--inth-text-muted));
 	}
 
 	.arrowClose {
-		color: var(--accordion-icon-color, var(--c15t-text-muted));
+		color: var(--accordion-icon-color, var(--inth-text-muted));
 		display: none;
 	}
 
-	:global(.c15t-dark) .arrowClose {
-		color: var(--accordion-icon-color-dark, var(--c15t-text-muted));
+	:global(.inth-dark) .arrowClose {
+		color: var(--accordion-icon-color-dark, var(--inth-text-muted));
 	}
 
 	.item[data-state='open'] .arrowOpen {
@@ -189,8 +188,8 @@
 		grid-template-rows: 0fr;
 		overflow: hidden;
 		transition: grid-template-rows
-			var(--accordion-duration, var(--c15t-duration-normal))
-			var(--accordion-ease, var(--c15t-easing));
+			var(--accordion-duration, var(--inth-duration-normal))
+			var(--accordion-ease, var(--inth-easing));
 	}
 
 	.content[data-state='open'] {
@@ -210,17 +209,17 @@
 		font-size: 0.875rem;
 		line-height: 1.25rem;
 		letter-spacing: -0.006em;
-		color: var(--accordion-content-color, var(--c15t-text-muted));
+		color: var(--accordion-content-color, var(--inth-text-muted));
 		padding-top: 0.75rem;
 		opacity: 1;
 		transform: translateY(0);
 		transition:
 			opacity
-				calc(var(--accordion-duration, var(--c15t-duration-normal)) * 0.35)
-				var(--c15t-easing-out),
+				calc(var(--accordion-duration, var(--inth-duration-normal)) * 0.35)
+				var(--inth-easing-out),
 			transform
-				calc(var(--accordion-duration, var(--c15t-duration-normal)) * 0.35)
-				var(--c15t-easing-out);
+				calc(var(--accordion-duration, var(--inth-duration-normal)) * 0.35)
+				var(--inth-easing-out);
 		will-change: opacity, transform;
 	}
 
@@ -229,11 +228,10 @@
 		transform: translateY(-0.125rem);
 	}
 
-	:global(.c15t-dark) .contentInner {
-		color: var(--accordion-content-color-dark, var(--c15t-text-muted));
+	:global(.inth-dark) .contentInner {
+		color: var(--accordion-content-color-dark, var(--inth-text-muted));
 	}
 
-	/* Reduced motion preference */
 	@media (prefers-reduced-motion: reduce) {
 		.item,
 		.content,
@@ -247,11 +245,11 @@
 	/* Touch device hover reset - prevents "sticky" hover on tap */
 	@media (hover: none) {
 		.item:hover {
-			background-color: var(--accordion-background-color, var(--c15t-surface));
+			background-color: var(--accordion-background-color, var(--inth-surface));
 		}
 
 		.item:hover .arrowOpen {
-			color: var(--accordion-arrow-color, var(--c15t-text-muted));
+			color: var(--accordion-arrow-color, var(--inth-text-muted));
 		}
 	}
 }

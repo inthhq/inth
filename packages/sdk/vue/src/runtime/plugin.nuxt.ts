@@ -1,5 +1,10 @@
 import type { HydrationRecords } from '@inth/sdk/engine';
+import { PREFETCH_WINDOW_KEY } from '@inth/sdk/runtime/page-globals';
 import type { RequestConsentState } from '@inth/sdk/server';
+import {
+	buildColorSchemeScript,
+	setupColorScheme,
+} from '@inth/sdk/ui/utils/color-scheme';
 import { defu } from 'defu';
 import { computed, markRaw, shallowRef, toRaw, watch } from 'vue';
 
@@ -15,11 +20,7 @@ import {
 	useState as useNuxtState,
 } from '#imports';
 
-import {
-	applyColorScheme,
-	buildColorSchemeScript,
-	COLOR_SCHEME_SCRIPT_KEY,
-} from './color-scheme';
+import { COLOR_SCHEME_SCRIPT_KEY } from './color-scheme';
 import { loadConsentBanner } from './components/lazy-surfaces';
 import type { NuxtConsentBoot } from './deferred/boot';
 import type { NuxtEngineInput } from './deferred/engine';
@@ -34,7 +35,6 @@ import {
 } from './nuxt-mode';
 import type { NuxtConsentModeConfig } from './nuxt-mode';
 import { provideVueConsentContext } from './provide';
-import { fromRuntimeConfig } from './runtime-config';
 import type { NuxtConsentRequest } from './server-consent';
 import { isSharedNuxtRender } from './shared-render';
 import { TOKENS_STYLE_ID } from './tokens-style-id';
@@ -44,22 +44,22 @@ export { withClientData } from './client-data';
 
 /**
  * Development only: after the first init, warn when the `/init` request the
- * page's HTML started (see `server/init-prefetch.ts`) is still unused. The
- * app asked with other inputs than the server expected, so the page sent
- * two requests.
+ * page's HTML started (`runtime/server/init-prefetch.ts` in `@inth/nuxt`)
+ * is still unused. The app asked with other inputs than the server
+ * expected, so the page sent two requests.
  */
 const warnUnusedInitPrefetch = function warnUnusedInitPrefetch(
 	context: Pick<VueConsentKernelContext, 'kernel'>
 ): void {
 	const stop = context.kernel.events.on('command:init:completed', () => {
 		stop();
-		// The key core's prefetch script stores its requests under.
-		const pending = (window as { __c15tInitialDataPromises?: object })
-			.__c15tInitialDataPromises;
+		const pending = (window as unknown as Record<string, object | undefined>)[
+			PREFETCH_WINDOW_KEY
+		];
 		if (pending && Object.keys(pending).length > 0) {
 			// oxlint-disable-next-line no-console -- Development-only diagnostic.
 			console.warn(
-				"[c15t] This page's HTML started an /init request that the app did not use, so it sent its own. A client plugin probably changed c15t's config for this route: set `routeRules: { '<route>': { c15t: { initPrefetch: false } } }`."
+				"[inth] This page's HTML started an /init request that the app did not use, so it sent its own. A client plugin probably changed Inth's config for this route: set `routeRules: { '<route>': { inth: { initPrefetch: false } } }`."
 			);
 		}
 	});
@@ -71,9 +71,6 @@ const warnUnusedInitPrefetch = function warnUnusedInitPrefetch(
  * failed import renders the page without it; the script loader then starts
  * those entries after hydration.
  *
- * @param config - The merged c15t config.
- * @param state - The state the server resolved, with its clock.
- * @returns The head entry for the script.
  * @internal
  */
 export const serverScriptStartHead = async function serverScriptStartHead(
@@ -88,7 +85,7 @@ export const serverScriptStartHead = async function serverScriptStartHead(
 		const { serverScriptStart } =
 			await import('@inth/sdk/runtime/script-server-start');
 		code = serverScriptStart({
-			...(config as unknown as Parameters<typeof serverScriptStart>[0]),
+			...config,
 			prefetch: state,
 		});
 	} catch {
@@ -102,7 +99,7 @@ export const serverScriptStartHead = async function serverScriptStartHead(
 		key: string;
 		nonce?: string;
 		tagPosition: 'bodyClose';
-	} = { innerHTML: code, key: 'c15t-server-start', tagPosition: 'bodyClose' };
+	} = { innerHTML: code, key: 'inth-server-start', tagPosition: 'bodyClose' };
 	if (config.nonce) {
 		tag.nonce = config.nonce;
 	}
@@ -113,7 +110,7 @@ export const serverScriptStartHead = async function serverScriptStartHead(
  * Whether this plugin run is the server render. Nuxt replaces
  * `import.meta.server` at build time; elsewhere (unit tests) a missing
  * `window` decides.
- * @returns `true` on the server.
+ *
  * @internal
  */
 const rendersOnServer = function rendersOnServer(): boolean {
@@ -138,7 +135,7 @@ interface NuxtSSRModules {
 }
 
 /**
- * Server only: which c15t chunks the page's HTML preloads.
+ * Server only: which Inth chunks the page's HTML preloads.
  *
  * A deferred visitor's browser loads the engine, which brings the stock
  * banner, after the page's priority images (`deferred/shell.ts`): the
@@ -149,8 +146,6 @@ interface NuxtSSRModules {
  * which the module adds to the client manifest).
  *
  * @param nuxtApp - The Nuxt app; only a real server render has an SSR context.
- * @param deferred - Whether the browser defers the engine.
- * @param engineKey - The engine's client manifest key.
  */
 const markEnginePreload = function markEnginePreload(
 	nuxtApp: {
@@ -189,15 +184,15 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 	const runtimeConfig = useRuntimeConfig();
 	const config = computed(() => {
 		const merged = defu(
-			appConfig.c15t,
-			fromRuntimeConfig(runtimeConfig.public.c15t)
+			appConfig.inth,
+			runtimeConfig.public.inth
 		) as Partial<RuntimeConsentConfig>;
 		// `defu` skips `null`, so an app config `colorScheme: null` would fall
 		// back to the module options. Nitro replaces `null` in runtime config
 		// with `''` during the build, so a module option `colorScheme: null`
-		// arrives as `''`. Both leave `c15t-dark` to the site.
+		// arrives as `''`. Both leave `inth-dark` to the site.
 		if (
-			appConfig.c15t?.colorScheme === null ||
+			appConfig.inth?.colorScheme === null ||
 			(merged.colorScheme as string | null | undefined) === ''
 		) {
 			merged.colorScheme = null;
@@ -206,13 +201,13 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 	});
 	// `mode` and `routePrefix` come from `nuxt.config.ts` only: the build
 	// decided from them what the client bundle and the server routes hold.
-	const modeConfig = runtimeConfig.public.c15t as NuxtConsentModeConfig;
+	const modeConfig = runtimeConfig.public.inth as NuxtConsentModeConfig;
 	const mode = readNuxtMode(modeConfig);
 	const routePrefix = readNuxtRoutePrefix(modeConfig);
 	const serverResolves = resolvesOnServer(mode);
 	// Tokens go in the head from the plugin, so the server HTML carries them
 	// for the first paint and composed surfaces without ConsentRoot get
-	// them too. The color scheme script sets `c15t-dark` in `<head>`, before
+	// them too. The color scheme script sets `inth-dark` in `<head>`, before
 	// the server-rendered banner paints. Registered before the first await,
 	// while the Nuxt context is still current.
 	//
@@ -261,12 +256,12 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 	const releaseColorScheme =
 		typeof window === 'undefined'
 			? () => undefined
-			: applyColorScheme(config.value.colorScheme);
+			: setupColorScheme(config.value.colorScheme);
 	// HTML that is prerendered or cached is served to every visitor, so it
 	// must carry nobody's consent, location or request headers. The server
 	// decides once and the payload tells the browser, which then resolves
 	// the visitor itself, as on a first visit without a server render.
-	const sharedRender = useNuxtState('c15t:shared-render', () =>
+	const sharedRender = useNuxtState('inth:shared-render', () =>
 		isSharedNuxtRender({
 			eventContext:
 				typeof window === 'undefined' ? useRequestEvent()?.context : undefined,
@@ -275,7 +270,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 	);
 	const shared = sharedRender.value;
 	const requestHeaders = useNuxtState(
-		'c15t:request-headers',
+		'inth:request-headers',
 		(): Record<string, string> =>
 			shared
 				? {}
@@ -288,7 +283,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 	// reads the cookie itself only when the payload has none, in the engine
 	// (`deferred/engine.ts`).
 	const initialRecords = useNuxtState<HydrationRecords | undefined>(
-		'c15t:records',
+		'inth:records',
 		() => undefined
 	);
 
@@ -296,13 +291,13 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 	// payload carries the state to the browser. `import.meta.server` keeps
 	// the resolver, and the translations it bundles, out of the client build.
 	const prefetched = useNuxtState<RequestConsentState | undefined>(
-		'c15t:consent',
+		'inth:consent',
 		() => undefined
 	);
 	// The snapshot the server rendered with, when the browser may start from
 	// it and load the consent engine after the page (`deferred/shell.ts`).
 	const boot = useNuxtState<NuxtConsentBoot | undefined>(
-		'c15t:boot',
+		'inth:boot',
 		() => undefined
 	);
 	// Read before the first await, while the Nuxt context is current.
@@ -324,14 +319,24 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 		);
 		if (serverResolves) {
 			const { resolveNuxtConsent } = await import('./server-consent');
+			// The consent route's backend: a private `NUXT_INTH_PROJECT_URL`
+			// gives the server an address of its own.
+			const serverProjectUrl = (
+				runtimeConfig as { inth?: { projectUrl?: string } }
+			).inth?.projectUrl;
 			const state = await resolveNuxtConsent(
-				{ ...config.value, mode, routePrefix: routePrefix ?? false },
+				{
+					...config.value,
+					mode,
+					projectUrl: serverProjectUrl || config.value.projectUrl,
+					routePrefix: routePrefix ?? false,
+				},
 				request
 			);
 			// Only a resolved policy is worth the payload bytes; without one the
-			// browser runs init, and the records travel in `c15t:records`.
+			// browser runs init, and the records travel in `inth:records`.
 			if (state.initialPolicyResolution !== undefined) {
-				// The cookie's records and clock already travel in `c15t:records`;
+				// The cookie's records and clock already travel in `inth:records`;
 				// only a subject the backend named is new.
 				const { initialRecords: records, now: _now, ...rest } = state;
 				const subject = records?.subject;
@@ -389,8 +394,11 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 		// A visitor resolved for this request, who still has to choose and
 		// whose accept or reject the browser can record without the engine,
 		// starts from the server's snapshot; the engine loads after the page.
-		const { canDeferEngine, DEFERRED_ENGINE_MANIFEST_KEY } =
-			await import('./deferred/boot');
+		const [{ DEFERRED_ENGINE_MANIFEST_KEY }, { canDeferEngine }] =
+			await Promise.all([
+				import('./deferred/boot'),
+				import('@inth/sdk/server'),
+			]);
 		const snapshot = context.kernel.getSnapshot();
 		if (request && hasPrefetch && canDeferEngine(snapshot, config.value)) {
 			boot.value = markRaw({ s: snapshot });

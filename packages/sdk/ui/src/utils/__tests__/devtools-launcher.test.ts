@@ -2,6 +2,7 @@ import { createConsentKernel } from '@inth/sdk-core';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+	attachDevToolsLauncher,
 	claimDevToolsLauncher,
 	getDevToolsLauncherSnapshot,
 	measureDevToolsDock,
@@ -52,6 +53,26 @@ const fixedElement = function fixedElement(rect: {
 };
 
 describe('DevTools launcher slot', () => {
+	it('attaches a floating panel until it is destroyed, and never an embedded one', () => {
+		const kernel = createConsentKernel();
+		const destroy = vi.fn();
+		const floating = attachDevToolsLauncher(kernel, {
+			...createTarget(),
+			destroy,
+		});
+		expect(getDevToolsLauncherSnapshot(kernel).instance).toBe(floating);
+		floating.destroy();
+		expect(getDevToolsLauncherSnapshot(kernel).instance).toBeNull();
+		expect(destroy).toHaveBeenCalledOnce();
+
+		attachDevToolsLauncher(
+			kernel,
+			{ ...createTarget(), destroy },
+			{ embedded: true }
+		);
+		expect(getDevToolsLauncherSnapshot(kernel).instance).toBeNull();
+	});
+
 	it('gives the launcher to the first claim and undocks after the last release', () => {
 		const kernel = createConsentKernel();
 		const target = createTarget();

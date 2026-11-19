@@ -1,8 +1,19 @@
 import { applyExperimentTheme } from '@inth/sdk/engine';
 import { defaultConsentConfig } from '@inth/sdk/schema/config';
 import { applyThemeSlots } from '@inth/sdk/ui/utils';
+import {
+	prefersReducedMotion,
+	subscribeReducedMotion,
+} from '@inth/sdk/ui/utils/reduced-motion';
 import { defu } from 'defu';
-import { computed, inject, toValue } from 'vue';
+import {
+	computed,
+	getCurrentInstance,
+	inject,
+	onMounted,
+	ref,
+	toValue,
+} from 'vue';
 import type { ComputedRef } from 'vue';
 
 import type { ConsentConfig } from '../config';
@@ -14,6 +25,21 @@ import {
 
 export { consentConfigKey } from '../utils/symbols';
 
+// One page-wide listener. The value stays `false` until a component
+// mounts, so hydration renders what the server rendered.
+const reducedMotion = ref(false);
+let watchingReducedMotion = false;
+const watchReducedMotion = function watchReducedMotion(): void {
+	if (watchingReducedMotion) {
+		return;
+	}
+	watchingReducedMotion = true;
+	reducedMotion.value = prefersReducedMotion();
+	subscribeReducedMotion((reduced) => {
+		reducedMotion.value = reduced;
+	});
+};
+
 export const useConsentConfig =
 	function useConsentConfig(): ComputedRef<ConsentConfig> {
 		const injected = inject(consentConfigKey);
@@ -24,12 +50,19 @@ export const useConsentConfig =
 		// Its own computed, so a snapshot that keeps the assignment does not
 		// re-render every component that reads the config.
 		const assignment = computed(() => snapshot?.value.experiment);
+		if (getCurrentInstance()) {
+			onMounted(watchReducedMotion);
+		}
 
 		return computed(() => {
-			const config = defu(
-				toValue(injected),
-				defaultConsentConfig
-			) as ConsentConfig;
+			const host = toValue(injected);
+			const merged = defu(host, defaultConsentConfig) as ConsentConfig;
+			// Unset, `disableAnimation` follows the visitor's reduced motion
+			// setting, as in the other adapters.
+			const config =
+				host?.disableAnimation === undefined && reducedMotion.value
+					? { ...merged, disableAnimation: true }
+					: merged;
 			// The assigned arm's slots merge over the host's, the way
 			// `useResolvedTheme` merges its tokens. The definition matches
 			// `useExperimentDefinition`, which cannot be called from here.
@@ -45,8 +78,10 @@ export const useConsentConfig =
 				config.components,
 				'class'
 			);
-			return components === config.components
+			// The returned `theme` carries the arm's overrides too, so the
+			// buttons read the arm's `consentActions`.
+			return components === config.components && theme === config.theme
 				? config
-				: { ...config, components };
+				: { ...config, components, theme };
 		});
 	};

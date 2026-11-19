@@ -1,6 +1,6 @@
 ---
 title: Quickstart
-description: Add c15t to a server-rendered Nuxt app with the Nuxt module, Inth, consent-gated scripts and a preferences link.
+description: Add Inth to a server-rendered Nuxt app with the Nuxt module, Inth, consent-gated scripts and a preferences link.
 group: frameworks
 ---
 
@@ -27,7 +27,7 @@ The setup bundles your policy into the server at build time, the
 recommended production setup. Rebuild after changing policies, translations
 or vendors.
 
-## Install c15t
+## Install Inth
 
 <CommandTabs command="@inth/nuxt @inth/integrations" mode="install" />
 
@@ -39,23 +39,23 @@ Register the module in `nuxt.config.ts`:
 
 <include src="../../shared/examples/nuxt/nuxt-config.mdx" />
 
-Set `NUXT_PUBLIC_C15T_BACKEND_URL` to your project's backend URL, including
+Set `NUXT_PUBLIC_INTH_PROJECT_URL` to your project's backend URL, including
 any path prefix, in `.env` or wherever you build. The module reads it, so the
 config needs no `projectUrl`. The policy is fixed at build time: setting
-`NUXT_PUBLIC_C15T_BACKEND_URL` on a running server moves consent saves, not
+`NUXT_PUBLIC_INTH_PROJECT_URL` on a running server moves consent saves, not
 the policy, so build again to switch projects.
 
 ```sh title=".env"
-NUXT_PUBLIC_C15T_BACKEND_URL=https://your-project.inth.app
+NUXT_PUBLIC_INTH_PROJECT_URL=https://your-project.inth.app
 ```
 
-If your app already sets `NUXT_PUBLIC_INTH_PROJECT_URL` for other Inth SDKs, that works
-too. When both are set, `NUXT_PUBLIC_C15T_BACKEND_URL` wins.
+The c15t name `NUXT_PUBLIC_C15T_BACKEND_URL` still works as a fallback. When both are
+set, `NUXT_PUBLIC_INTH_PROJECT_URL` wins.
 
 The module's default mode, `manifest()`, fetches your project's public
 policy once, during `nuxt build` and when `nuxt dev` starts, and embeds it in
 the server bundle. It also adds one consent route to your Nuxt server,
-`/api/c15t/**`, which answers `/api/c15t/init` and `/api/c15t/manifest`. The
+`/api/inth/**`, which answers `/api/inth/init` and `/api/inth/manifest`. The
 server resolves each visitor from the bundled policy and the request's
 location and language headers, so rendering a page never waits on Inth. The
 browser bundle carries no policy and no resolver. Consent saves still go to
@@ -65,7 +65,7 @@ calling the backend on every request.
 <include src="../../shared/build-time-manifest-notes.mdx" />
 
 To apply policy edits without rebuilding, set
-`c15t: { mode: manifest({ source: 'runtime' }) }`, with `manifest` imported
+`inth: { mode: manifest({ source: 'runtime' }) }`, with `manifest` imported
 from `@inth/nuxt`. The server then fetches and caches the policy at runtime.
 [Rendering and deployment](/docs/frameworks/nuxt/rendering) covers the other
 modes.
@@ -99,7 +99,7 @@ Register PostHog in `app/app.config.ts`. It waits for measurement permission.
 Replace `phc_your_project_key` with your PostHog project key. PostHog
 defaults to its EU region; set `region: 'us'` for a US project.
 
-The module merges the `c15t` key of `app.config.ts` over its options in
+The module merges the `inth` key of `app.config.ts` over its options in
 `nuxt.config.ts`, then starts one script loader in the browser after
 hydration. Put options that contain functions, such as `scripts` and
 `callbacks`, in `app.config.ts`. Module options in `nuxt.config.ts`

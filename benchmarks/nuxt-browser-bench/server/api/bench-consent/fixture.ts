@@ -3,7 +3,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import {
 	buildBrowserBenchManifest,
 	loadBrowserBenchInit,
-} from '@c15t/benchmarking/policy-fixtures';
+} from '@inth/benchmarking/policy-fixtures';
 
 export type BenchConsentFixtureEndpoint = 'init' | 'manifest' | 'subjects';
 
@@ -13,17 +13,17 @@ export type BenchConsentFixtureCounts = Record<
 >;
 
 const globalWithBenchCounts = globalThis as typeof globalThis & {
-	__c15tNuxtBenchFixtureCounts?: BenchConsentFixtureCounts;
+	__inthNuxtBenchFixtureCounts?: BenchConsentFixtureCounts;
 };
 
 const getMutableBenchConsentFixtureCounts =
 	function getMutableBenchConsentFixtureCounts(): BenchConsentFixtureCounts {
-		globalWithBenchCounts.__c15tNuxtBenchFixtureCounts ??= {
+		globalWithBenchCounts.__inthNuxtBenchFixtureCounts ??= {
 			init: 0,
 			manifest: 0,
 			subjects: 0,
 		};
-		return globalWithBenchCounts.__c15tNuxtBenchFixtureCounts;
+		return globalWithBenchCounts.__inthNuxtBenchFixtureCounts;
 	};
 
 export const recordBenchConsentFixtureExecution =
@@ -32,7 +32,7 @@ export const recordBenchConsentFixtureExecution =
 	): void {
 		const counts = getMutableBenchConsentFixtureCounts();
 		counts[endpoint] += 1;
-		console.log(`[c15t-bench-fixture] ${endpoint} count=${counts[endpoint]}`);
+		console.log(`[inth-bench-fixture] ${endpoint} count=${counts[endpoint]}`);
 	};
 
 export const getBenchConsentFixtureCounts =
@@ -46,24 +46,24 @@ export type BenchConsentFixtureVersionHeaders = Record<
 >;
 
 const globalWithVersionHeaders = globalThis as typeof globalThis & {
-	__c15tNuxtBenchFixtureVersionHeaders?: BenchConsentFixtureVersionHeaders;
+	__inthNuxtBenchFixtureVersionHeaders?: BenchConsentFixtureVersionHeaders;
 };
 
 const getMutableBenchConsentFixtureVersionHeaders =
 	function getMutableBenchConsentFixtureVersionHeaders(): BenchConsentFixtureVersionHeaders {
-		globalWithVersionHeaders.__c15tNuxtBenchFixtureVersionHeaders ??= {
+		globalWithVersionHeaders.__inthNuxtBenchFixtureVersionHeaders ??= {
 			init: null,
 			manifest: null,
 			subjects: null,
 		};
-		return globalWithVersionHeaders.__c15tNuxtBenchFixtureVersionHeaders;
+		return globalWithVersionHeaders.__inthNuxtBenchFixtureVersionHeaders;
 	};
 
 /**
- * Records the `x-c15t-version` request header the fixture endpoint
+ * Records the `x-inth-version` request header the fixture endpoint
  * received. The @inth/nuxt Nitro manifest proxy (and the core transports)
- * send it on every c15t-bound request — the e2e suite asserts the value
- * observed upstream matches the built c15t version.
+ * send it on every inth-bound request — the e2e suite asserts the value
+ * observed upstream matches the built Inth version.
  */
 export const recordBenchConsentVersionHeader =
 	function recordBenchConsentVersionHeader(
@@ -133,7 +133,7 @@ export const benchConsentInitResponse = loadBrowserBenchInit(
 );
 
 /**
- * Sleep for `C15T_BENCH_BACKEND_LATENCY_MS`, modelling the consent backend's
+ * Sleep for `INTH_BENCH_BACKEND_LATENCY_MS`, modelling the consent backend's
  * round trip. Every fixture endpoint (init, manifest, subjects) calls it, so
  * server-side fetches pay it as well as browser ones. The runner always sets
  * the variable (200 ms by default); when it is unset the app runs outside a
@@ -141,7 +141,7 @@ export const benchConsentInitResponse = loadBrowserBenchInit(
  */
 export const applyBenchConsentLatency =
 	async function applyBenchConsentLatency() {
-		const latencyMs = Number(process.env.C15T_BENCH_BACKEND_LATENCY_MS ?? '0');
+		const latencyMs = Number(process.env.INTH_BENCH_BACKEND_LATENCY_MS ?? '0');
 		if (Number.isFinite(latencyMs) && latencyMs > 0) {
 			await sleep(latencyMs);
 		}

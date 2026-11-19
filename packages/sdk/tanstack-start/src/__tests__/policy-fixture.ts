@@ -55,6 +55,6 @@ export const policyFixture = (
 				}
 			: undefined,
 		now,
-		projectUrl: '/api/c15t',
+		projectUrl: '/api/inth',
 	};
 };

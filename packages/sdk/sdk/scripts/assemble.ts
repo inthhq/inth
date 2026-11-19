@@ -45,24 +45,19 @@ import {
 import { dirname, join, matchesGlob, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+	MERGED_ENTRIES,
+	PARTS,
+	toPublicSpecifier,
+	toPublicSubpath,
+} from '../../shared/sdk-parts.ts';
+import type { Part } from '../../shared/sdk-parts.ts';
+
 export const PACKAGE_ROOT = resolve(
 	dirname(fileURLToPath(import.meta.url)),
 	'..'
 );
 const SDK_ROOT = resolve(PACKAGE_ROOT, '..');
-
-/** Folders under `packages/sdk` that `@inth/sdk` publishes. */
-export const PARTS = [
-	'browser',
-	'core',
-	'dev-tools',
-	'iab',
-	'schema',
-	'translations',
-	'ui',
-] as const;
-
-export type Part = (typeof PARTS)[number];
 
 type ExportTarget = string | null | { [condition: string]: ExportTarget };
 
@@ -76,20 +71,6 @@ interface Manifest {
 	[key: string]: unknown;
 }
 
-const PRIVATE_SPECIFIER =
-	/@inth\/sdk-(?<part>browser|core|dev-tools|iab|schema|translations|ui)(?![\w-])(?<rest>(?:\/[\w.*-]+)*)/gu;
-
-/**
- * Entries two parts share, published as one module that re-exports both:
- * the public subpath, then each part's export key.
- */
-export const MERGED_ENTRIES: Record<string, readonly [Part, string][]> = {
-	'./devtools': [
-		['dev-tools', '.'],
-		['browser', './devtools'],
-	],
-};
-
 /**
  * Export keys that publish the same thing as another part's key, and so
  * are left out: the client's `testing()` is the engine's, under the same
@@ -98,35 +79,6 @@ export const MERGED_ENTRIES: Record<string, readonly [Part, string][]> = {
 const SAME_AS: readonly [Part, string, string][] = [
 	['browser', './testing', './testing'],
 ];
-
-/** Public subpath for a private package's export key. */
-export const toPublicSubpath = function toPublicSubpath(
-	part: Part,
-	key: string
-): string {
-	for (const [subpath, sources] of Object.entries(MERGED_ENTRIES)) {
-		if (sources.some(([p, k]) => p === part && k === key)) {
-			return subpath;
-		}
-	}
-	if (part === 'browser') {
-		return key === './iab' ? './iab-client' : key;
-	}
-	if (part === 'core') {
-		return key === '.' ? './engine' : key;
-	}
-	return key === '.' ? `./${part}` : `./${part}${key.slice(1)}`;
-};
-
-/** The public specifier for a private one, such as `@inth/sdk-core/x`. */
-export const toPublicSpecifier = function toPublicSpecifier(
-	text: string
-): string {
-	return text.replace(PRIVATE_SPECIFIER, (_match, part: Part, rest: string) => {
-		const subpath = toPublicSubpath(part, rest ? `.${rest}` : '.');
-		return subpath === '.' ? '@inth/sdk' : `@inth/sdk${subpath.slice(1)}`;
-	});
-};
 
 const toLibTarget = function toLibTarget(
 	part: Part,
@@ -306,7 +258,6 @@ export const listPartFiles = function listPartFiles(part: Part): string[] {
 
 const REWRITTEN = /\.(?:[cm]?js|[cm]?ts|tsx|jsx|css|json|map|vue|svelte)$/u;
 
-/** Copies one part into `lib/<part>` and rewrites its private names. */
 /** The file an export key points at for `types` or for `import`. */
 const exportFile = function exportFile(
 	part: Part,
@@ -378,6 +329,10 @@ const writeMergedEntries = function writeMergedEntries() {
 	}
 };
 
+/**
+ * Copies one part into `lib/<part>` and rewrites its private names.
+ * Returns the number of files copied.
+ */
 export const assemblePart = function assemblePart(part: Part): number {
 	const source = join(SDK_ROOT, part);
 	const target = join(PACKAGE_ROOT, 'lib', part);

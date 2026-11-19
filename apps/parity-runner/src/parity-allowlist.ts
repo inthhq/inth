@@ -57,7 +57,7 @@ export const PARITY_ALLOWLIST: readonly ParityAllowEntry[] = [
 		check: 'dom',
 		framework: 'astro',
 		reason:
-			"Astro's server-rendered banner carries the attributes its client boot reads — `data-c15t-visible` on the root, `data-c15t-action` on each button — and the `lang` the server resolved. Nothing else renders them because nothing else needs them.",
+			"Astro's server-rendered banner carries the attributes its client boot reads — `data-inth-visible` on the root, `data-inth-action` on each button — and the `lang` the server resolved. Nothing else renders them because nothing else needs them.",
 		slot: '*',
 		story: 'Core/Consent Banner/Default',
 	},
@@ -65,7 +65,7 @@ export const PARITY_ALLOWLIST: readonly ParityAllowEntry[] = [
 		check: 'dom',
 		framework: 'astro',
 		reason:
-			"Astro's server-rendered IAB banner carries the attributes its client boot reads — `data-c15t-visible` on the root — and the `lang` the server resolved, the same way the core banner does. Nothing else renders them because nothing else needs them.",
+			"Astro's server-rendered IAB banner carries the attributes its client boot reads — `data-inth-visible` on the root — and the `lang` the server resolved, the same way the core banner does. Nothing else renders them because nothing else needs them.",
 		slot: '*',
 		story: 'IAB/IAB Consent Banner/Default',
 	},
@@ -130,10 +130,6 @@ export interface ParityFinding {
 
 /**
  * Whether a finding is covered by an allowlist entry.
- *
- * @param finding - The difference the check found.
- * @param allowlist - The entries to test against.
- * @returns The matching entry, or undefined.
  */
 export const findAllowEntry = function findAllowEntry(
 	finding: ParityFinding,
@@ -162,10 +158,6 @@ export const findAllowEntry = function findAllowEntry(
  * one signal this check exists to give. A `'*'` entry is in scope whenever
  * any framework is.
  *
- * @param used - The entries that did match.
- * @param checks - The checks whose entries this run is responsible for.
- * @param frameworks - The frameworks this run enabled.
- * @param allowlist - The full allowlist.
  * @returns Entries that can be deleted.
  */
 export const unusedAllowlistEntries = function unusedAllowlistEntries(

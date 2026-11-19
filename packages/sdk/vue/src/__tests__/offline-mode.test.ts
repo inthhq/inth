@@ -6,7 +6,7 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, expect, test, vi } from 'vitest';
 
-import { c15tVue } from '../index';
+import { inthVue } from '../index';
 import ConsentManager from '../runtime/components/manager.vue';
 import { useConsentKernelContext } from '../runtime/composables';
 import { testing } from '../testing';
@@ -33,7 +33,7 @@ test('offline() gives the dialog its English title without a request', async () 
 			global: {
 				plugins: [
 					[
-						c15tVue,
+						inthVue,
 						{
 							disableAnimation: true,
 							mode: testing(),

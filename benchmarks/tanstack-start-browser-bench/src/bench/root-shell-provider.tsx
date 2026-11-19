@@ -7,7 +7,7 @@ import { getManifestConsentState } from './loaders';
 import { TanstackManifestBenchmarkProvider } from './provider';
 
 /**
- * Root-mounted variant (`C15T_BENCH_ROOT_PROVIDER=1`): the root route runs
+ * Root-mounted variant (`INTH_BENCH_ROOT_PROVIDER=1`): the root route runs
  * the manifest prefetch loader and wraps the outlet in `ConsentRoot`,
  * which is the pattern the adapter docs recommend. Start does not
  * code-split the root route, so the consent chunks join the entry graph

@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	installHeadProbe,
@@ -51,7 +51,7 @@ describe('gtag contract', () => {
 					id: 'gtag-contract',
 				},
 			],
-			deniedConsents
+			ALL_DENIED
 		);
 
 		const win = window as TestWindow;
@@ -87,7 +87,7 @@ describe('gtag contract', () => {
 
 		loadScripts(
 			[gtag({ category: 'measurement', id: 'G-DEFAULT' })],
-			deniedConsents
+			ALL_DENIED
 		);
 
 		expect(requests).toEqual([
@@ -122,7 +122,7 @@ describe('gtag loadMode after-consent', () => {
 			}),
 		];
 
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMarketingConsents);
 
 		const win = window as TestWindow;
@@ -141,7 +141,7 @@ describe('gtag loadMode after-consent', () => {
 			}),
 		];
 
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMeasurementConsents);
 		updateScripts(scripts, {
 			...grantedMeasurementConsents,
@@ -192,7 +192,7 @@ describe('gtag loadMode after-consent', () => {
 
 		loadScripts(scripts, grantedMeasurementConsents);
 		const element = document.head.querySelector('script');
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 
 		const win = window as TestWindow;
 		expect(element?.isConnected).toBe(true);

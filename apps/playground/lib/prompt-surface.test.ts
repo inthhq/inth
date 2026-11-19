@@ -59,7 +59,7 @@ describe('prompt surface params', () => {
 		expect(demoExperiment(EMPTY_SURFACE)).toBeUndefined();
 		const picked = demoExperiment({ ...EMPTY_SURFACE, experiment: true });
 		expect(picked?.id).toBe('banner-shape');
-		// c15t picks the arm when the URL names none.
+		// Inth picks the arm when the URL names none.
 		expect(picked).not.toHaveProperty('arm');
 		// `control` is the base presentation, so it is never listed in `arms`.
 		expect(Object.keys(picked?.arms ?? {})).toEqual(['bar']);

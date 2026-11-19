@@ -1,4 +1,4 @@
-// Type test for the options a Nuxt app passes to c15t. `check-types:nuxt`
+// Type test for the options a Nuxt app passes to Inth. `check-types`
 // checks it through the playground, where Nuxt applies the module's type
 // augmentations the same way it does in an application.
 import type { BlockedRequestInfo } from '@inth/sdk/modules/network-blocker';
@@ -31,7 +31,7 @@ export const moduleOptions: ModuleOptions = {
 
 // `app.config.ts` is bundled with the app, so it takes the callback.
 export const appConfig = defineAppConfig({
-	c15t: {
+	inth: {
 		iframeBlocker: false,
 		networkBlocker: {
 			onRequestBlocked: (info) => {
@@ -44,14 +44,14 @@ export const appConfig = defineAppConfig({
 });
 
 export const wrongAppConfig = defineAppConfig({
-	c15t: {
+	inth: {
 		// @ts-expect-error A nonce is a string.
 		nonce: 1,
 	},
 });
 
 export const readAppConfig = () => {
-	expectTypeOf(useAppConfig().c15t?.nonce).toEqualTypeOf<string | undefined>();
+	expectTypeOf(useAppConfig().inth?.nonce).toEqualTypeOf<string | undefined>();
 };
 
 // Storage options are JSON and reach the runtime from module options.
@@ -76,15 +76,15 @@ export const wrongRoutePrefix: ModuleOptions = {
 	routePrefix: true,
 };
 export const modeInAppConfig = defineAppConfig({
-	c15t: {
+	inth: {
 		// @ts-expect-error The build reads `mode` from nuxt.config.ts only.
 		mode: { type: 'manifest' },
 	},
 });
 
 export const unknownAppConfig = defineAppConfig({
-	c15t: {
-		// @ts-expect-error Unknown keys are not c15t options.
+	inth: {
+		// @ts-expect-error Unknown keys are not Inth options.
 		notAnOption: true,
 	},
 });
@@ -92,10 +92,10 @@ export const unknownAppConfig = defineAppConfig({
 // The early `/init` script for `ssr: false` pages: a module option, and a
 // route rule that turns it off for some routes.
 expectTypeOf<{ initPrefetch: false }>().toExtend<ModuleOptions>();
-expectTypeOf<NitroRouteConfig['c15t']>().toEqualTypeOf<
+expectTypeOf<NitroRouteConfig['inth']>().toEqualTypeOf<
 	{ initPrefetch?: boolean } | undefined
 >();
 export const wrongRouteRule: NitroRouteConfig = {
 	// @ts-expect-error The route rule takes a boolean.
-	c15t: { initPrefetch: 'no' },
+	inth: { initPrefetch: 'no' },
 };

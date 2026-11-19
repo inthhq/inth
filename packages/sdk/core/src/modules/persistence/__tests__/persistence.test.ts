@@ -1,15 +1,5 @@
 /**
  * @vitest-environment jsdom
- *
- * Tests for @inth/sdk/modules/persistence.
- *
- * Covers:
- * - Hydration from cookie / localStorage through the kernel boundary
- * - Writing only on explicit kernel events (choice, notice, vendors)
- * - skipHydration option
- * - clear() removes every record and resets the kernel, keeping the
- *   subject ID
- * - dispose stops further writes
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -21,12 +11,19 @@ import {
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../index';
 import {
+	C15T_STORAGE_KEY,
 	PENDING_SAVES_STORAGE_KEY,
 	STORAGE_KEY_V2,
 	SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 } from '../../../libs/storage-keys';
+import { readStoredRecordsFromCookieHeader } from '../hydrate';
 import { createPersistence } from '../index';
-import { clearStoredConsentRecords } from './record-writes';
+import type { StorageConfig } from '../index';
+import {
+	clearStoredConsentRecords,
+	writeStoredNoticeDismissal,
+	writeStoredVendorChoice,
+} from './record-writes';
 
 /**
  * Run the macrotask write scheduler without firing the kernel's expiry
@@ -43,8 +40,10 @@ beforeEach(() => {
 	clearStoredConsentRecords();
 	// A clear keeps its epoch and the subject ID; start every test without
 	// either.
-	document.cookie = `${STORAGE_KEY_V2}-epoch=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-	document.cookie = `${STORAGE_KEY_V2}-sid=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+	for (const key of [STORAGE_KEY_V2, C15T_STORAGE_KEY]) {
+		document.cookie = `${key}-epoch=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+	}
+	document.cookie = `${C15T_STORAGE_KEY}-sid=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
 });
 
 afterEach(() => {
@@ -355,6 +354,331 @@ describe('persistence: clear', () => {
 		]);
 		expect(cookieNames()).toEqual([`${STORAGE_KEY_V2}-epoch`]);
 		expect(kernel.getSnapshot().explicitChoice).toBeNull();
+	});
+});
+
+describe('persistence: records c15t stored', () => {
+	const C15T = { storageKey: C15T_STORAGE_KEY };
+
+	const saveUnder = async function saveUnder(
+		storageConfig: StorageConfig | undefined,
+		marketing: boolean
+	): Promise<void> {
+		const kernel = createConsentKernel({ now: NOW });
+		const handle = createPersistence({ kernel, storageConfig });
+		await kernel.commands.save({ marketing });
+		flushWrites();
+		handle.dispose();
+	};
+
+	const hydrated = function hydrated(storageConfig?: StorageConfig) {
+		const kernel = createConsentKernel({ now: NOW });
+		createPersistence({ kernel, storageConfig });
+		return kernel.getSnapshot();
+	};
+
+	const deleteCookieNamed = function deleteCookieNamed(name: string): void {
+		document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+	};
+
+	test('storageKey c15t writes and reads the c15t family', async () => {
+		await saveUnder(C15T, true);
+
+		expect(cookieNames()).toContain(C15T_STORAGE_KEY);
+		expect(cookieNames()).not.toContain(STORAGE_KEY_V2);
+		expect(localStorage.getItem(C15T_STORAGE_KEY)).not.toBeNull();
+		expect(localStorage.getItem(STORAGE_KEY_V2)).toBeNull();
+		expect(hydrated(C15T).effectivePermissions.marketing).toBe(true);
+	});
+
+	test.each([
+		['cookie', () => localStorage.removeItem(C15T_STORAGE_KEY)],
+		['localStorage copy', () => deleteCookieNamed(C15T_STORAGE_KEY)],
+	])(
+		'the default key reads a choice from the c15t %s, and leaves it as it was',
+		async (_name, keepOne) => {
+			await saveUnder(C15T, true);
+			keepOne();
+			const stored = [document.cookie, localStorage.getItem(C15T_STORAGE_KEY)];
+
+			expect(hydrated().effectivePermissions.marketing).toBe(true);
+			flushWrites();
+			expect([document.cookie, localStorage.getItem(C15T_STORAGE_KEY)]).toEqual(
+				stored
+			);
+		}
+	);
+
+	test('an Inth record wins over a c15t one', async () => {
+		await saveUnder(C15T, true);
+		await saveUnder(undefined, false);
+
+		expect(hydrated().effectivePermissions.marketing).toBe(false);
+		expect(hydrated(C15T).effectivePermissions.marketing).toBe(true);
+	});
+
+	test('a server seed from a newer c15t cookie yields to an Inth record only localStorage holds', async () => {
+		const inth = createConsentKernel({ now: NOW });
+		const inthHandle = createPersistence({ kernel: inth });
+		await inth.commands.save({ marketing: false, measurement: true });
+		flushWrites();
+		inthHandle.dispose();
+		// The Inth cookie write was dropped; its localStorage copy landed.
+		deleteCookieNamed(STORAGE_KEY_V2);
+		vi.setSystemTime(NOW + 1000);
+		const c15t = createConsentKernel({ now: NOW + 1000 });
+		const c15tHandle = createPersistence({
+			kernel: c15t,
+			storageConfig: C15T,
+		});
+		await c15t.commands.save({ marketing: true, measurement: false });
+		flushWrites();
+		c15tHandle.dispose();
+
+		const initialRecords = readStoredRecordsFromCookieHeader(
+			document.cookie,
+			undefined,
+			NOW + 1000
+		);
+		expect(initialRecords.choice?.categories.marketing?.value).toBe(true);
+		const kernel = createConsentKernel({ initialRecords, now: NOW + 1000 });
+		createPersistence({ kernel, skipHydration: true });
+
+		const { effectivePermissions } = kernel.getSnapshot();
+		expect(effectivePermissions.marketing).toBe(false);
+		expect(effectivePermissions.measurement).toBe(true);
+		expect(effectivePermissions).toEqual(hydrated().effectivePermissions);
+	});
+
+	test.each([
+		['Inth', undefined],
+		['c15t', C15T],
+	])(
+		'a server seed from %s records read before another tab cleared keeps none of them',
+		async (_name, storageConfig) => {
+			await saveUnder(storageConfig, true);
+			writeStoredVendorChoice(
+				{ confirmedAt: NOW, denied: ['meta-pixel'], version: 1 },
+				storageConfig,
+				NOW
+			);
+			writeStoredNoticeDismissal(
+				{ dismissedAt: NOW, fingerprint: 'notice', version: 1 },
+				storageConfig,
+				NOW
+			);
+			const initialRecords = readStoredRecordsFromCookieHeader(
+				document.cookie,
+				undefined,
+				NOW
+			);
+			expect(initialRecords).toMatchObject({
+				choice: { categories: { marketing: { value: true } } },
+				noticeDismissal: { dismissedAt: NOW },
+				vendorChoice: { denied: ['meta-pixel'] },
+			});
+			vi.setSystemTime(NOW + 1000);
+			const other = createConsentKernel({ now: NOW + 1000 });
+			createPersistence({ kernel: other }).clear();
+			flushWrites();
+
+			const kernel = createConsentKernel({ initialRecords, now: NOW + 1000 });
+			createPersistence({ kernel, skipHydration: true });
+			flushWrites();
+
+			expect(kernel.getSnapshot()).toMatchObject({
+				explicitChoice: null,
+				noticeDismissal: null,
+				vendorChoice: null,
+			});
+			expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+			expect(hydrated().explicitChoice).toBeNull();
+		}
+	);
+
+	const seededKinds = [
+		[
+			'choice',
+			'explicitChoice',
+			(storageConfig?: StorageConfig) => saveUnder(storageConfig, true),
+		],
+		[
+			'notice dismissal',
+			'noticeDismissal',
+			(storageConfig?: StorageConfig) =>
+				writeStoredNoticeDismissal(
+					{ dismissedAt: NOW, fingerprint: 'notice', version: 1 },
+					storageConfig,
+					NOW
+				),
+		],
+		[
+			'vendor denials',
+			'vendorChoice',
+			(storageConfig?: StorageConfig) =>
+				writeStoredVendorChoice(
+					{ confirmedAt: NOW, denied: ['meta-pixel'], version: 1 },
+					storageConfig,
+					NOW
+				),
+		],
+	] as const;
+
+	const serverSeed = function serverSeed() {
+		return readStoredRecordsFromCookieHeader(document.cookie, undefined, NOW);
+	};
+
+	/** Lets a c15t tab clear, then mounts on a seed read before the clear. */
+	const mountAfterC15tClear = function mountAfterC15tClear(
+		initialRecords: ReturnType<typeof serverSeed>
+	) {
+		vi.setSystemTime(NOW + 1000);
+		const c15tTab = createConsentKernel({ now: NOW + 1000 });
+		createPersistence({ kernel: c15tTab, storageConfig: C15T }).clear();
+		flushWrites();
+		expect(cookieNames()).toContain(`${C15T_STORAGE_KEY}-epoch`);
+
+		const kernel = createConsentKernel({ initialRecords, now: NOW + 1000 });
+		createPersistence({ kernel, skipHydration: true });
+		flushWrites();
+		return kernel.getSnapshot();
+	};
+
+	test.each(seededKinds)(
+		'a server seed from a c15t %s that a c15t tab cleared before mount keeps none of it',
+		async (_name, field, store) => {
+			await store(C15T);
+			const initialRecords = serverSeed();
+			expect(
+				initialRecords[field === 'explicitChoice' ? 'choice' : field]
+			).not.toBeNull();
+
+			expect(mountAfterC15tClear(initialRecords)[field]).toBeNull();
+		}
+	);
+
+	test('a server seed from a c15t grant a c15t tab cleared before mount yields to an Inth denial only localStorage holds', async () => {
+		vi.setSystemTime(NOW - 1000);
+		const inth = createConsentKernel({ now: NOW - 1000 });
+		const inthHandle = createPersistence({ kernel: inth });
+		await inth.commands.save({ marketing: false, measurement: true });
+		flushWrites();
+		inthHandle.dispose();
+		// The Inth cookie write was dropped; its localStorage copy landed.
+		deleteCookieNamed(STORAGE_KEY_V2);
+		vi.setSystemTime(NOW);
+		await saveUnder(C15T, true);
+		const initialRecords = serverSeed();
+		expect(initialRecords.choice?.categories.marketing?.value).toBe(true);
+
+		const { effectivePermissions } = mountAfterC15tClear(initialRecords);
+		expect(effectivePermissions.marketing).toBe(false);
+		expect(effectivePermissions.measurement).toBe(true);
+	});
+
+	test.each([
+		['', false],
+		[' that a c15t tab cleared before mount', true],
+	])(
+		'a server seed from a c15t notice dismissal%s yields to an Inth dismissal only localStorage holds',
+		(_name, cleared) => {
+			vi.setSystemTime(NOW - 1000);
+			writeStoredNoticeDismissal(
+				{ dismissedAt: NOW - 1000, fingerprint: 'inth-notice', version: 1 },
+				undefined,
+				NOW - 1000
+			);
+			// The Inth notice cookie write was dropped; localStorage took it.
+			for (const name of cookieNames().filter((cookie) =>
+				cookie.startsWith(`${STORAGE_KEY_V2}-notice`)
+			)) {
+				deleteCookieNamed(name);
+			}
+			vi.setSystemTime(NOW);
+			writeStoredNoticeDismissal(
+				{ dismissedAt: NOW, fingerprint: 'c15t-notice', version: 1 },
+				C15T,
+				NOW
+			);
+			const initialRecords = serverSeed();
+			expect(initialRecords.noticeDismissal?.fingerprint).toBe('c15t-notice');
+
+			const snapshot = cleared
+				? mountAfterC15tClear(initialRecords)
+				: (() => {
+						const kernel = createConsentKernel({ initialRecords, now: NOW });
+						createPersistence({ kernel, skipHydration: true });
+						return kernel.getSnapshot();
+					})();
+			expect(snapshot.noticeDismissal?.fingerprint).toBe('inth-notice');
+		}
+	);
+
+	test('a c15t clear before mount never voids a seeded Inth choice', async () => {
+		const first = createConsentKernel({ now: NOW });
+		const firstHandle = createPersistence({ kernel: first });
+		await first.commands.save({ marketing: false, measurement: true });
+		flushWrites();
+		firstHandle.dispose();
+		const initialRecords = serverSeed();
+		// An Inth tab grants after the server read. A stored grant never
+		// lands on a seed it did not void, so only a void seed would take it.
+		vi.setSystemTime(NOW + 500);
+		const other = createConsentKernel({ now: NOW + 500 });
+		const otherHandle = createPersistence({ kernel: other });
+		await other.commands.save({ marketing: true, measurement: true });
+		flushWrites();
+		otherHandle.dispose();
+
+		const { effectivePermissions } = mountAfterC15tClear(initialRecords);
+		expect(effectivePermissions.measurement).toBe(true);
+		expect(effectivePermissions.marketing).toBe(false);
+	});
+
+	test("a c15t tab's clear reaches an open page through its epoch alone", async () => {
+		await saveUnder(C15T, true);
+		localStorage.removeItem(C15T_STORAGE_KEY);
+		const kernel = createConsentKernel({ now: NOW });
+		const handle = createPersistence({ kernel });
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
+
+		vi.setSystemTime(NOW + 1000);
+		const c15tTab = createConsentKernel({ now: NOW + 1000 });
+		createPersistence({ kernel: c15tTab, storageConfig: C15T }).clear();
+		flushWrites();
+		window.dispatchEvent(
+			new StorageEvent('storage', { key: `${C15T_STORAGE_KEY}-epoch` })
+		);
+		await vi.advanceTimersByTimeAsync(0);
+		flushWrites();
+
+		expect(kernel.getSnapshot().explicitChoice).toBeNull();
+		handle.dispose();
+	});
+
+	test('a custom storageKey does not read c15t records', async () => {
+		await saveUnder(C15T, true);
+
+		expect(hydrated({ storageKey: 'shop' }).explicitChoice).toBeNull();
+	});
+
+	test('clear() leaves nothing of c15t to fall back to, even written back', async () => {
+		await saveUnder(C15T, true);
+		const written = localStorage.getItem(C15T_STORAGE_KEY);
+		const kernel = createConsentKernel({ now: NOW });
+		const handle = createPersistence({ kernel });
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
+
+		handle.clear();
+		flushWrites();
+
+		expect(localStorage.getItem(C15T_STORAGE_KEY)).toBeNull();
+		expect(cookieNames()).toEqual([`${STORAGE_KEY_V2}-epoch`]);
+		expect(hydrated().explicitChoice).toBeNull();
+		// A c15t page still open writes its record back: the clear epoch
+		// voids the decisions made before the clear.
+		localStorage.setItem(C15T_STORAGE_KEY, written ?? '');
+		expect(hydrated().explicitChoice).toBeNull();
 	});
 });
 

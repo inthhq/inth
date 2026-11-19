@@ -1,3 +1,5 @@
+import type { PolicyConsentCategory } from '@inth/sdk/schema/types';
+
 /**
  * High-level product area for a built-in script integration.
  *
@@ -12,19 +14,6 @@ export type IntegrationCategory =
 	| 'tag-manager';
 
 /**
- * Consent bucket that a built-in integration maps to by default.
- *
- * These values mirror c15t's consent categories without importing core types, so
- * the registry stays safe to consume from docs and CLI code.
- */
-export type IntegrationConsentCategory =
-	| 'necessary'
-	| 'functionality'
-	| 'experience'
-	| 'measurement'
-	| 'marketing';
-
-/**
  * Consent condition a built-in integration requires by default.
  *
  * Usually a single category. Vendors whose one script serves several purposes
@@ -32,7 +21,7 @@ export type IntegrationConsentCategory =
  * The shape mirrors `HasCondition` from `@inth/sdk/engine`.
  */
 export type IntegrationConsentCondition =
-	| IntegrationConsentCategory
+	| PolicyConsentCategory
 	| { readonly and: readonly IntegrationConsentCondition[] }
 	| { readonly or: readonly IntegrationConsentCondition[] }
 	| { readonly not: IntegrationConsentCondition };
@@ -300,7 +289,7 @@ export const builtInScriptIntegrations = [
 		hint: 'Personalized campaigns and customer messaging',
 		integrationCategory: 'email-and-sms',
 		key: 'insiderTag',
-		label: 'Insider',
+		label: 'Insider One',
 		packageSubpath: 'insider',
 		vendor: 'insider',
 	},
@@ -327,10 +316,10 @@ export const builtInScriptIntegrations = [
 	{
 		consentCategory: 'measurement',
 		docsSlug: 'google-tag',
-		hint: 'Google Analytics 4',
+		hint: 'Google Analytics 4 through gtag.js',
 		integrationCategory: 'analytics',
 		key: 'gtag',
-		label: 'Google Tag (gtag.js)',
+		label: 'Google Tag',
 		packageSubpath: 'google-tag',
 		vendor: 'gtag',
 	},
@@ -340,7 +329,7 @@ export const builtInScriptIntegrations = [
 		hint: 'Cookieless web analytics from Ahrefs',
 		integrationCategory: 'analytics',
 		key: 'ahrefsAnalytics',
-		label: 'Ahrefs Analytics',
+		label: 'Ahrefs Web Analytics',
 		packageSubpath: 'ahrefs-analytics',
 		vendor: 'ahrefs-analytics',
 	},
@@ -430,7 +419,7 @@ export const builtInScriptIntegrations = [
 		hint: 'Product analytics and funnels',
 		integrationCategory: 'analytics',
 		key: 'mixpanelAnalytics',
-		label: 'Mixpanel Analytics',
+		label: 'Mixpanel',
 		packageSubpath: 'mixpanel-analytics',
 		vendor: 'mixpanel-analytics',
 	},
@@ -490,7 +479,7 @@ export const builtInScriptIntegrations = [
 		hint: 'Self-hosted privacy analytics',
 		integrationCategory: 'analytics',
 		key: 'matomoAnalytics',
-		label: 'Matomo Analytics',
+		label: 'Matomo',
 		packageSubpath: 'matomo-analytics',
 		vendor: 'matomo-analytics',
 	},
@@ -520,7 +509,7 @@ export const builtInScriptIntegrations = [
 		hint: 'Privacy-friendly cookieless analytics',
 		integrationCategory: 'analytics',
 		key: 'pirsch',
-		label: 'Pirsch',
+		label: 'Pirsch Analytics',
 		packageSubpath: 'pirsch',
 		vendor: 'pirsch',
 	},
@@ -550,7 +539,7 @@ export const builtInScriptIntegrations = [
 		hint: 'Privacy-friendly web analytics',
 		integrationCategory: 'analytics',
 		key: 'rybbitAnalytics',
-		label: 'Rybbit Analytics',
+		label: 'Rybbit',
 		packageSubpath: 'rybbit-analytics',
 		vendor: 'rybbit-analytics',
 	},
@@ -580,7 +569,7 @@ export const builtInScriptIntegrations = [
 		hint: 'Open-source cookieless analytics',
 		integrationCategory: 'analytics',
 		key: 'umamiAnalytics',
-		label: 'Umami Analytics',
+		label: 'Umami',
 		packageSubpath: 'umami-analytics',
 		vendor: 'umami-analytics',
 	},
@@ -590,7 +579,7 @@ export const builtInScriptIntegrations = [
 		hint: 'Vercel web analytics',
 		integrationCategory: 'analytics',
 		key: 'vercelAnalytics',
-		label: 'Vercel Analytics',
+		label: 'Vercel Web Analytics',
 		packageSubpath: 'vercel-analytics',
 		vendor: 'vercel-analytics',
 	},
@@ -660,7 +649,7 @@ export const builtInScriptIntegrations = [
 		hint: 'ChatGPT Ads conversion measurement',
 		integrationCategory: 'ads-and-pixels',
 		key: 'openaiPixel',
-		label: 'OpenAI Pixel (ChatGPT Ads)',
+		label: 'OpenAI Pixel',
 		packageSubpath: 'openai-pixel',
 		vendor: 'openai-pixel',
 	},
@@ -707,10 +696,10 @@ export const builtInScriptIntegrations = [
 	{
 		consentCategory: 'marketing',
 		docsSlug: 'microsoft-uet',
-		hint: 'Bing Ads tracking',
+		hint: 'Microsoft UET (Bing Ads) tracking',
 		integrationCategory: 'ads-and-pixels',
 		key: 'microsoftUet',
-		label: 'Microsoft UET',
+		label: 'Microsoft Advertising',
 		packageSubpath: 'microsoft-uet',
 		vendor: 'microsoft-uet',
 	},
@@ -720,7 +709,7 @@ export const builtInScriptIntegrations = [
 		hint: 'Snapchat ads tracking',
 		integrationCategory: 'ads-and-pixels',
 		key: 'snapchatPixel',
-		label: 'Snapchat Pixel',
+		label: 'Snap Pixel',
 		packageSubpath: 'snapchat-pixel',
 		vendor: 'snapchat-pixel',
 	},
@@ -730,7 +719,7 @@ export const builtInScriptIntegrations = [
 		hint: 'X/Twitter conversion tracking',
 		integrationCategory: 'ads-and-pixels',
 		key: 'xPixel',
-		label: 'X (Twitter) Pixel',
+		label: 'X Pixel',
 		packageSubpath: 'x-pixel',
 		vendor: 'x-pixel',
 	},
@@ -826,30 +815,19 @@ export const builtInScriptIntegrations = [
 	},
 ] as const satisfies readonly IntegrationRegistryEntry[];
 
-/**
- * Concrete registry entry type inferred from `builtInScriptIntegrations`.
- */
 export type BuiltInScriptIntegration =
 	(typeof builtInScriptIntegrations)[number];
 
-/**
- * Union of stable keys for built-in integrations.
- */
 export type BuiltInScriptIntegrationKey = BuiltInScriptIntegration['key'];
 
-/**
- * Union of public package subpaths for built-in integrations.
- */
 export type BuiltInScriptIntegrationSubpath =
 	BuiltInScriptIntegration['packageSubpath'];
 
 /**
  * Looks up a built-in integration by its registry key.
  *
- * @param key - Stable integration key.
- * @returns The matching built-in integration entry.
- * @throws {Error}("Unknown built-in script integration: <key>")` when the key is
- * not present. Catch this when accepting untrusted or user-provided keys.
+ * @throws {Error} `Unknown built-in script integration: <key>` when the key
+ * is not present. Catch this when accepting untrusted or user-provided keys.
  *
  * @example
  * ```ts
@@ -875,7 +853,6 @@ export const getBuiltInScriptIntegration = function getBuiltInScriptIntegration(
  * Finds a built-in integration by its public package subpath.
  *
  * @param subpath - Kebab-case subpath such as `google-tag`.
- * @returns The matching integration, or `undefined` when no entry matches.
  *
  * @example
  * ```ts
@@ -898,7 +875,6 @@ export const getBuiltInScriptIntegrationBySubpath =
  * Use this to connect a resolved manifest/script id back to registry metadata.
  *
  * @param vendor - Vendor id emitted as `Script.id`.
- * @returns The matching integration, or `undefined` when no entry matches.
  *
  * @example
  * ```ts

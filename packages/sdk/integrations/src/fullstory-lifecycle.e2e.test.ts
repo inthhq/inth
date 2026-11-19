@@ -3,7 +3,7 @@ import { createConsentKernel } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { deniedConsents } from './e2e-test-utils';
+import { ALL_DENIED } from './e2e-test-utils';
 import { fullStory } from './vendors/analytics/fullstory';
 import type {
 	FullStoryApi,
@@ -11,7 +11,7 @@ import type {
 	FullStoryOptions,
 } from './vendors/analytics/fullstory';
 
-const granted = { ...deniedConsents, measurement: true };
+const granted = { ...ALL_DENIED, measurement: true };
 const disposals: (() => void)[] = [];
 const originalFetch = window.fetch;
 const mount = (
@@ -20,7 +20,7 @@ const mount = (
 	script = fullStory(options)
 ) => {
 	const kernel = createConsentKernel();
-	void kernel.commands.save(consent ? granted : deniedConsents);
+	void kernel.commands.save(consent ? granted : ALL_DENIED);
 	const events: string[] = [];
 	const loader = createScriptLoader({
 		kernel,
@@ -574,7 +574,7 @@ describe('FullStory retained recorder', () => {
 			if (action === 'dispose') {
 				first.loader.dispose();
 			} else {
-				void first.kernel.commands.save(deniedConsents);
+				void first.kernel.commands.save(ALL_DENIED);
 			}
 			expect(model.capturing()).toBe(false);
 			expect(window.FS).toBe(external);
@@ -642,10 +642,10 @@ describe('FullStory retained recorder', () => {
 	);
 	it('keeps pending withdrawal off and restarts once after regrant', () => {
 		const owner = mount({ orgId: 'pending-withdrawal' });
-		void owner.kernel.commands.save(deniedConsents);
+		void owner.kernel.commands.save(ALL_DENIED);
 		const model = recorder();
 		expect(model.capturing()).toBe(false);
-		void owner.kernel.commands.save(deniedConsents);
+		void owner.kernel.commands.save(ALL_DENIED);
 		void owner.kernel.commands.save(granted);
 		void owner.kernel.commands.save(granted);
 		expect(model.dispatch.mock.calls.map(([name]) => name)).toEqual([
@@ -980,7 +980,7 @@ describe('FullStory effective regional configuration', () => {
 		expect(element.src).toBe(explicit.scriptUrl);
 		expect(window._fs_host).toBe(explicit.host);
 		expect(window._fs_script).toBe(explicit.script);
-		void owner.kernel.commands.save(deniedConsents);
+		void owner.kernel.commands.save(ALL_DENIED);
 		element.dispatchEvent(new Event('load'));
 		void owner.kernel.commands.save(granted);
 		owner.loader.dispose();

@@ -82,7 +82,7 @@ export interface ConsentConfig
 	/** Receives kernel events only when the corresponding change occurs. */
 	callbacks?: ConsentRuntimeOptions['callbacks'];
 	/**
-	 * Turn on IAB TCF. Set it, even to `{}`, and c15t mounts its CMP
+	 * Turn on IAB TCF. Set it, even to `{}`, and Inth mounts its CMP
 	 * (`__tcfapi`) and shows the IAB banner while the visitor's policy uses
 	 * the `iab` model. Left unset, `false`, or `{ enabled: false }`, IAB
 	 * stays off and the IAB code never loads; an `iab` policy whose vendor
@@ -105,14 +105,14 @@ export interface ConsentConfig
 	 */
 	iab?: RuntimeIABOptions;
 	/**
-	 * Light or dark for the banner and dialogs, through the `c15t-dark`
+	 * Light or dark for the banner and dialogs, through the `inth-dark`
 	 * class on `<html>`.
 	 *
 	 * `'light'` and `'dark'` force a scheme. `'system'` follows
 	 * `prefers-color-scheme` and keeps following it as the visitor changes
-	 * it. Left unset, `c15t-dark` mirrors a `dark` class on `<html>`, so a
+	 * it. Left unset, `inth-dark` mirrors a `dark` class on `<html>`, so a
 	 * site theme switch that toggles `dark` also switches the consent UI.
-	 * `null` leaves `c15t-dark` to the site.
+	 * `null` leaves `inth-dark` to the site.
 	 *
 	 * Nuxt sets the class for `'dark'` and `'system'` from an inline script
 	 * in the server HTML, so the first paint is already dark.
@@ -120,7 +120,7 @@ export interface ConsentConfig
 	colorScheme?: UIOptions['colorScheme'];
 	/**
 	 * Design tokens, including `dark` colors, written as CSS custom
-	 * properties into the same `<style id="c15t-css-vars">` element as
+	 * properties into the same `<style id="inth-css-vars">` element as
 	 * `tokens`. Where both set a variable, `theme` wins. `theme.slots`
 	 * style the same parts as `components`, which win where both set the
 	 * same attribute.

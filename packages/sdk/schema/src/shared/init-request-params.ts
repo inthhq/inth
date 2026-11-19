@@ -4,7 +4,7 @@
  * A browser on another origin can send `/init` as a CORS simple request,
  * with no `OPTIONS` preflight, only while every request header is
  * CORS-safelisted. The protocol version, the policy contract, the init
- * overrides and the experiment arm used to travel on `x-c15t-*` headers,
+ * overrides and the experiment arm used to travel on `x-inth-*` headers,
  * which cost every first visit an extra round trip before the banner could
  * show. They now travel in the query string, next to the journey
  * parameters.
@@ -15,49 +15,49 @@
  * {@link applyInitParamsToHeaders} folds the parameters onto their header
  * names, so the code that reads those headers needs no second path.
  *
- * The names are short and unprefixed (`/init?v=3.0.0&country=GB`), so c15t
- * reserves them on an init URL. When c15t sends a parameter, its value
+ * The names are short and unprefixed (`/init?v=3.0.0&country=GB`), so Inth
+ * reserves them on an init URL. When Inth sends a parameter, its value
  * replaces any the URL already carried under that name, and the name
- * appears once. A parameter c15t does not send passes through, and a
+ * appears once. A parameter Inth does not send passes through, and a
  * backend reads it as that input.
  */
 
 import { POLICY_CONTRACT_HEADER } from './policy-contract';
-import { appendSearchParams } from './search-params';
+import { appendSearchParams, readSearchParams } from './search-params';
 import {
 	CONSENT_EXPERIMENT_HEADER,
 	formatExperimentHeader,
 } from './session-report';
 import type { SessionExperiment } from './session-report';
 
-/** Client package version, as the `x-c15t-version` header carried it. */
+/** Client package version, as the `x-inth-version` header carried it. */
 export const INIT_VERSION_PARAM = 'v';
 
-/** Policy wire contract the client reads (`x-c15t-policy-contract`). */
+/** Policy wire contract the client reads (`x-inth-policy-contract`). */
 export const INIT_POLICY_CONTRACT_PARAM = 'contract';
 
-/** Country override, an ISO 3166-1 alpha-2 code (`x-c15t-country`). */
+/** Country override, an ISO 3166-1 alpha-2 code (`x-inth-country`). */
 export const INIT_COUNTRY_PARAM = 'country';
 
-/** Region override, an ISO 3166-2 subdivision code (`x-c15t-region`). */
+/** Region override, an ISO 3166-2 subdivision code (`x-inth-region`). */
 export const INIT_REGION_PARAM = 'region';
 
-/** GPC override, `1` or `0` (`x-c15t-gpc`). Any other value is ignored. */
+/** GPC override, `1` or `0` (`x-inth-gpc`). Any other value is ignored. */
 export const INIT_GPC_PARAM = 'gpc';
 
 /**
  * Banner-experiment arm as `<id>=<arm>`, both parts URI-encoded
- * (`x-c15t-experiment`). Sent only while the visitor has no stored choice.
+ * (`x-inth-experiment`). Sent only while the visitor has no stored choice.
  */
 export const INIT_EXPERIMENT_PARAM = 'experiment';
 
 /** Each init query parameter and the legacy header it replaces. */
 export const INIT_PARAM_HEADERS: readonly (readonly [string, string])[] = [
-	[INIT_VERSION_PARAM, 'x-c15t-version'],
+	[INIT_VERSION_PARAM, 'x-inth-version'],
 	[INIT_POLICY_CONTRACT_PARAM, POLICY_CONTRACT_HEADER],
-	[INIT_COUNTRY_PARAM, 'x-c15t-country'],
-	[INIT_REGION_PARAM, 'x-c15t-region'],
-	[INIT_GPC_PARAM, 'x-c15t-gpc'],
+	[INIT_COUNTRY_PARAM, 'x-inth-country'],
+	[INIT_REGION_PARAM, 'x-inth-region'],
+	[INIT_GPC_PARAM, 'x-inth-gpc'],
 	[INIT_EXPERIMENT_PARAM, CONSENT_EXPERIMENT_HEADER],
 ];
 
@@ -85,7 +85,6 @@ export interface InitRequestParams {
  *
  * @param url - The init URL, absolute or relative, or `''` for just the query.
  * @param params - The inputs. Absent fields are left out.
- * @returns The URL with the parameters.
  */
 export const appendInitParams = function appendInitParams(
 	url: string,
@@ -116,22 +115,6 @@ export const appendInitParams = function appendInitParams(
 	return appendSearchParams(url, search);
 };
 
-const toSearchParams = function toSearchParams(
-	source: string | URL
-): URLSearchParams {
-	if (source instanceof URL) {
-		return source.searchParams;
-	}
-	// A `?` inside a fragment is not a query.
-	const fragment = source.indexOf('#');
-	const base = fragment === -1 ? source : source.slice(0, fragment);
-	const query = base.indexOf('?');
-	if (query === -1) {
-		return new URLSearchParams();
-	}
-	return new URLSearchParams(base.slice(query + 1));
-};
-
 /**
  * The request headers with the init query parameters folded onto their
  * legacy header names.
@@ -149,7 +132,7 @@ export const applyInitParamsToHeaders = function applyInitParamsToHeaders(
 	url: string | URL,
 	headers: Headers
 ): Headers {
-	const params = toSearchParams(url);
+	const params = readSearchParams(url);
 	const merged = new Headers(headers);
 	for (const [param, header] of INIT_PARAM_HEADERS) {
 		const value = params.get(param);

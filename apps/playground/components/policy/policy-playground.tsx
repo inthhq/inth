@@ -81,7 +81,7 @@ import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 
 /** Keeps playground records apart from the consent the main demo stores. */
-const STORAGE_CONFIG = { storageKey: 'c15t-policy-playground' } as const;
+const STORAGE_CONFIG = { storageKey: 'inth-policy-playground' } as const;
 
 const MODEL_OPTIONS: { value: PolicyRuleModel; label: string; hint: string }[] =
 	[
@@ -1304,7 +1304,7 @@ export const PolicyPlayground = () => {
 			<div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-10 sm:px-6 lg:px-8">
 				<header className="border-border/80 space-y-3 border-b pb-8">
 					<p className="label-pixel text-muted-foreground">
-						c15t demo / policy playground
+						inth demo / policy playground
 					</p>
 					<h1 className="text-3xl font-semibold tracking-[-0.04em]">
 						Policy rules, resolved live
@@ -1592,7 +1592,7 @@ export const PolicyPlayground = () => {
 												ariaLabel="Playground privacy controls"
 												defaultPosition="bottom-right"
 												persistPosition={false}
-												showWhen="after-prompt"
+												showWhen="after-consent"
 												actions={[
 													{
 														icon: 'settings',

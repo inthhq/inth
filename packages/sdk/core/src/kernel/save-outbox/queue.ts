@@ -20,6 +20,8 @@
  * development: the save already reported its first failure.
  */
 
+import type { CONSENT_MODELS } from '@inth/sdk-schema/types';
+
 import type { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
 import type {
 	isPlainRecord,
@@ -27,20 +29,20 @@ import type {
 } from '../../consent-record/validation';
 import { isExperimentAssignment } from '../../libs/experiment-record';
 import type { generateSubjectId } from '../../libs/generate-subject-id';
+import type { warnInDevelopment } from '../../libs/is-production';
 import type {
 	isConsentSaveRejection,
 	isSubjectConflict,
 } from '../../transports/save-rejection';
 import type { ConsentSubject, KernelTransport, SavePayload } from '../../types';
 import type { KernelRuntime } from '../runtime';
-import type { OutboxTransaction, SaveOutboxStore } from './store';
+import type { OutboxTransaction, pendingSave, SaveOutboxStore } from './store';
 import type {
 	PendingSaveEntry,
 	supersededBy,
 	withoutSuperseded,
 	withSubjectId,
 } from './supersession';
-import type { warnInDevelopment } from './warn';
 
 /**
  * The first-load functions the queue calls. The outbox passes them in
@@ -57,6 +59,9 @@ export interface QueueTools {
 	isPlainRecord: typeof isPlainRecord;
 	isSubjectConflict: typeof isSubjectConflict;
 	optionalCategories: typeof OPTIONAL_CONSENT_CATEGORIES;
+	/** The schema's `CONSENT_MODELS`. */
+	consentModels: typeof CONSENT_MODELS;
+	pendingSave: typeof pendingSave;
 	supersededBy: typeof supersededBy;
 	validateExplicitChoice: typeof validateExplicitChoice;
 	warnInDevelopment: typeof warnInDevelopment;
@@ -86,6 +91,7 @@ const createStoredLists = function createStoredLists(
 	onExpired: (count: number) => void
 ) {
 	const {
+		consentModels,
 		isPlainRecord,
 		optionalCategories,
 		supersededBy,
@@ -218,10 +224,7 @@ const createStoredLists = function createStoredLists(
 
 		const validModel =
 			value.model === null ||
-			value.model === 'opt-in' ||
-			value.model === 'opt-out' ||
-			value.model === 'iab' ||
-			value.model === 'none';
+			(consentModels as readonly unknown[]).includes(value.model);
 		const validUiSource =
 			value.uiSource === null ||
 			value.uiSource === 'none' ||
@@ -457,6 +460,7 @@ export const createQueueWorker = function createQueueWorker({
 		generateSubjectId,
 		isConsentSaveRejection,
 		isSubjectConflict,
+		pendingSave,
 		supersededBy,
 		warnInDevelopment,
 		withoutSuperseded,
@@ -470,7 +474,7 @@ export const createQueueWorker = function createQueueWorker({
 	const reportDropped = function reportDropped(error: unknown): void {
 		emit({ command: 'save', error, type: 'command:error' });
 		warnInDevelopment(
-			'[c15t] A queued consent save was dropped and will not be resent. The choice is kept in this browser only.',
+			'[inth] A queued consent save was dropped and will not be resent. The choice is kept in this browser only.',
 			error
 		);
 	};
@@ -484,7 +488,7 @@ export const createQueueWorker = function createQueueWorker({
 		const saves =
 			count === 1 ? 'a queued consent save' : `${count} queued consent saves`;
 		const error = new Error(
-			`c15t save outbox: dropped ${saves} that waited more than 7 days without reaching the backend`
+			`inth save outbox: dropped ${saves} that waited more than 7 days without reaching the backend`
 		);
 		queueMicrotask(() => {
 			reportDropped(error);
@@ -518,7 +522,7 @@ export const createQueueWorker = function createQueueWorker({
 			}
 			const now = Date.now();
 			const pending = readPendingSaves(tx, now);
-			pending.push({ attempts: 0, payload, queuedAt: now });
+			pending.push(pendingSave(payload, now));
 			return tx.write('saves', normalizePendingSaves(pending, now))
 				? 'queued'
 				: 'unstored';
@@ -794,7 +798,7 @@ export const createQueueWorker = function createQueueWorker({
 		} else if (removed) {
 			reportDropped(
 				new Error(
-					`c15t save outbox: dropped a queued consent save after ${MAX_REPLAY_ATTEMPTS} failed attempts`,
+					`inth save outbox: dropped a queued consent save after ${MAX_REPLAY_ATTEMPTS} failed attempts`,
 					{ cause: failure }
 				)
 			);
@@ -846,8 +850,8 @@ export const createQueueWorker = function createQueueWorker({
 		if (kept > 0) {
 			warnInDevelopment(
 				kept === 1
-					? '[c15t] Resending a queued consent save failed. It stays queued and is resent on the next init or when the browser comes back online.'
-					: `[c15t] Resending ${kept} queued consent saves failed. They stay queued and are resent on the next init or when the browser comes back online.`,
+					? '[inth] Resending a queued consent save failed. It stays queued and is resent on the next init or when the browser comes back online.'
+					: `[inth] Resending ${kept} queued consent saves failed. They stay queued and are resent on the next init or when the browser comes back online.`,
 				lastError
 			);
 		}

@@ -17,18 +17,18 @@ const fa = (at: number, text: string): string =>
 
 /** Check one fresh-install probe, refused unless `granted`, against the given Firebase log. */
 const check = (log: string[], granted = false) => {
-	const out = mkdtempSync(join(tmpdir(), 'c15t-firebase-log-'));
+	const out = mkdtempSync(join(tmpdir(), 'inth-firebase-log-'));
 	try {
 		writeFileSync(
 			join(out, 'vendor-steps.jsonl'),
-			`${JSON.stringify({ granted, probe: 'c15t_probe_1', step: 'vendor-1-fresh-install' })}\n`
+			`${JSON.stringify({ granted, probe: 'inth_probe_1', step: 'vendor-1-fresh-install' })}\n`
 		);
 		writeFileSync(
 			join(out, 'vendor-probes.json'),
 			JSON.stringify([
 				{
 					finishedAt: start * 1000 + 28,
-					name: 'c15t_probe_1',
+					name: 'inth_probe_1',
 					startedAt: start * 1000,
 				},
 			])
@@ -88,7 +88,7 @@ describe('verify-vendor-firebase.py', () => {
 				fa(start + 0.001, 'Setting app measurement enabled (FE): true'),
 				fa(
 					start + 0.015,
-					'Logging event: origin=app,name=c15t_probe_1,params=Bundle[{ga_event_origin(_o)=app}]'
+					'Logging event: origin=app,name=inth_probe_1,params=Bundle[{ga_event_origin(_o)=app}]'
 				),
 			],
 			true

@@ -12,18 +12,18 @@ test('empty hidden stream markers normalize while visible or substantive content
 	const complete = await captureDomSnapshot(page, 'body');
 	await page.setContent(
 		fixture(
-			'<span data-c15t-stream-end="" hidden></span>',
-			'data-c15t-streamed=""'
+			'<span data-inth-stream-end="" hidden></span>',
+			'data-inth-streamed=""'
 		)
 	);
 	expect(await captureDomSnapshot(page, 'body')).toBe(complete);
 	for (const marker of [
-		'<span data-c15t-stream-end=""></span>',
-		'<span data-c15t-stream-end="" hidden>Important content</span>',
-		'<span data-c15t-stream-end="" hidden role="status"></span>',
+		'<span data-inth-stream-end=""></span>',
+		'<span data-inth-stream-end="" hidden>Important content</span>',
+		'<span data-inth-stream-end="" hidden role="status"></span>',
 	]) {
 		// oxlint-disable-next-line no-await-in-loop -- Each replacement uses the same page.
-		await page.setContent(fixture(marker, 'data-c15t-streamed=""'));
+		await page.setContent(fixture(marker, 'data-inth-streamed=""'));
 		// oxlint-disable-next-line no-await-in-loop -- Compare before replacing the fixture again.
 		expect(await captureDomSnapshot(page, 'body')).not.toBe(complete);
 	}
@@ -41,9 +41,9 @@ test('Angular selector markers normalize only on an Angular page and only when e
 	// Components select by dash-case attributes, directives by camelCase
 	// ones, which the DOM lowercases.
 	for (const marker of [
-		'c15t-consent-button=""',
-		'c15t-close-icon=""',
-		'c15tconsentdialoglink=""',
+		'inth-consent-button=""',
+		'inth-close-icon=""',
+		'inthconsentdialoglink=""',
 	]) {
 		// oxlint-disable-next-line no-await-in-loop -- Each replacement uses the same page.
 		await page.setContent(`${angularRoot}${button(marker)}`);
@@ -52,18 +52,18 @@ test('Angular selector markers normalize only on an Angular page and only when e
 	}
 
 	// Outside Angular, the same attributes are real markup.
-	for (const marker of ['c15t-consent-button=""', 'c15tconsentdialoglink=""']) {
+	for (const marker of ['inth-consent-button=""', 'inthconsentdialoglink=""']) {
 		// oxlint-disable-next-line no-await-in-loop -- Each replacement uses the same page.
 		await page.setContent(button(marker));
 		// oxlint-disable-next-line no-await-in-loop -- Compare before replacing the fixture again.
 		expect(await captureDomSnapshot(page, 'body')).not.toBe(plain);
 	}
-	// A value, or a name outside the c15t selectors, is never a marker.
+	// A value, or a name outside the Inth selectors, is never a marker.
 	for (const attributes of [
-		'c15t-consent-button="accept"',
-		'c15tconsentdialoglink="open"',
+		'inth-consent-button="accept"',
+		'inthconsentdialoglink="open"',
 		'action="accept"',
-		'data-c15t-action=""',
+		'data-inth-action=""',
 	]) {
 		// oxlint-disable-next-line no-await-in-loop -- Each replacement uses the same page.
 		await page.setContent(`${angularRoot}${button(attributes)}`);
@@ -151,10 +151,7 @@ test('branding content wrappers and hidden icon metadata preserve rendered geome
 	await page.setContent(
 		fixture(
 			content
-				.replace(
-					'<svg ',
-					'<svg class="c15t-icon" aria-labelledby="icon-label" '
-				)
+				.replace('<svg ', '<svg aria-labelledby="icon-label" ')
 				.replace('<path ', '<title id="icon-label">Logo</title><path ')
 		)
 	);

@@ -1,6 +1,6 @@
 ---
 title: Troubleshooting
-description: Fix a missing c15t banner, a NullInjectorError, unstyled components, ignored theme colors, hydration mismatches and vendors that load before consent in an Angular app.
+description: Fix a missing Inth banner, a NullInjectorError, unstyled components, ignored theme colors, hydration mismatches and vendors that load before consent in an Angular app.
 group: frameworks
 ---
 
@@ -22,21 +22,21 @@ In the Network panel, find the `/init` request.
    wrong. While the request fails, optional categories stay denied and no
    banner shows.
 4. **The component is not imported.** Angular reports
-   `'c15t-consent-banner' is not a known element` at build time. Add
+   `'inth-consent-banner' is not a known element` at build time. Add
    `ConsentBanner` to the component's `imports`.
 5. **The policy uses the IAB model without the `iab` option.** The console
-   shows an `IABUnavailableError`. Set `iab` in `provideC15t()` and render
-   `<c15t-iab-consent-banner>`; see [IAB TCF](./iab).
+   shows an `IABUnavailableError`. Set `iab` in `provideInth()` and render
+   `<inth-iab-consent-banner>`; see [IAB TCF](./iab).
 
 ## NullInjectorError: No provider for ConsentManager
 
 **Check.** A component, directive or `injectEventDispatcher()` call ran in an
-injector without `provideC15t()` above it.
+injector without `provideInth()` above it.
 
-**Fix.** Add `provideC15t()` to the `providers` of your `ApplicationConfig`.
-If you provide it in a lazy route's `providers`, every c15t component must
+**Fix.** Add `provideInth()` to the `providers` of your `ApplicationConfig`.
+If you provide it in a lazy route's `providers`, every Inth component must
 render inside that route, not in the root component. With server rendering,
-keep `provideC15t()` in `app.config.ts`, which `app.config.server.ts` merges,
+keep `provideInth()` in `app.config.ts`, which `app.config.server.ts` merges,
 so the server and the browser both have it.
 
 **Check.** If the provider is there, check that the app resolves one copy of
@@ -53,8 +53,8 @@ Colors, radius, typography and other tokens in `theme` are not turned into
 CSS in the browser, and in development `ConsentTheme` logs a warning about
 it.
 
-**Fix.** Set the `--c15t-*` variables on `:root` in a global stylesheet, or
-render `generateThemeCSS()` output as `<style id="c15t-theme">`. The
+**Fix.** Set the `--inth-*` variables on `:root` in a global stylesheet, or
+render `generateThemeCSS()` output as `<style id="inth-theme">`. The
 [customize page](./customize) shows both.
 
 **Check.** If you set the variables in a component's `styles`, Angular scopes
@@ -71,19 +71,19 @@ uses `:root:root`, so it beats your own `:root` rule.
 ## A slot class has no effect
 
 **Check.** The class is defined in a component's `styles`. Angular's emulated
-encapsulation adds an attribute selector to it, and c15t's elements do not
+encapsulation adds an attribute selector to it, and Inth's elements do not
 carry your component's attribute.
 
 **Fix.** Define slot classes in a global stylesheet.
 
 ## The dialog or banner has no styles
 
-**Check.** Look in `<head>` for `<style data-c15t-styles>` elements, and in
+**Check.** Look in `<head>` for `<style data-inth-styles>` elements, and in
 the console for a Content Security Policy error.
 
 **Fix.**
 
-- No c15t `<style>` element: `provideC15t()` sets `styles: false` or
+- No Inth `<style>` element: `provideInth()` sets `styles: false` or
   `noStyle`. With `styles: false`, add `@inth/angular/styles.css` to the
   `styles` array in `angular.json`.
 - The console reports a blocked inline style: set `ngCspNonce` on your root
@@ -96,11 +96,11 @@ the console for a Content Security Policy error.
 ## The server HTML and the browser disagree
 
 **Check.** With server rendering, the console shows an Angular hydration
-error (`NG0500` and similar) near a c15t component, or the banner flashes
+error (`NG0500` and similar) near an Inth component, or the banner flashes
 after load.
 
 **Fix.** Check that `provideClientHydration()` is in `app.config.ts` and
-`provideC15tServer()` in `app.config.server.ts`. The browser reads the
+`provideInthServer()` in `app.config.server.ts`. The browser reads the
 server's state through `TransferState`, so both renders start from the same
 consent. A route rendered with `RenderMode.Prerender` is shared by every
 visitor and carries no visitor's consent; render consent pages with
@@ -121,5 +121,5 @@ category.
 **Check.** When a save withdraws a category that was granted, the runtime
 reloads the page so code that already ran is gone. This is expected.
 
-**Fix.** Set `reloadOnConsentRevoked: false` in `provideC15t()` only if every
+**Fix.** Set `reloadOnConsentRevoked: false` in `provideInth()` only if every
 registered vendor stops itself through its consent API.

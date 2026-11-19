@@ -48,6 +48,7 @@ import {
 	saveConsentSurface,
 	showConsentSurface,
 } from '@inth/sdk/surface-actions';
+import { THEME_STYLE_ELEMENT_ID } from '@inth/sdk/ui/theme';
 import { setupColorScheme } from '@inth/sdk/ui/utils/color-scheme';
 import { setupFocusTrap, setupScrollLock } from '@inth/sdk/ui/utils/dom';
 import { isLateEntry } from '@inth/sdk/ui/utils/late-entry';
@@ -91,7 +92,7 @@ import type {
 } from './client-types';
 import { assertIABAvailable, isIABUnavailable } from './libs/iab-unavailable';
 import type { ResolveTransport } from './transport';
-import type { C15tClientOptionsExtension, C15tResolvedOptions } from './types';
+import type { InthClientOptionsExtension, InthResolvedOptions } from './types';
 import type { ConsentDialogHandle, ConsentDialogKind } from './ui/adapter';
 
 /**
@@ -101,7 +102,7 @@ import type { ConsentDialogHandle, ConsentDialogKind } from './ui/adapter';
  *
  * @internal
  */
-export const EVENTS_KEY = Symbol.for('c15t.astro.events');
+export const EVENTS_KEY = Symbol.for('inth.astro.events');
 
 /**
  * Removes the page-swap listeners `boot()` installed, if any.
@@ -119,7 +120,7 @@ let detachPageSwapListeners: () => void = NO_PAGE_SWAP_LISTENERS;
  * The boot payload the server rendered.
  *
  * The components write it as a JSON data block. A page that sets
- * `window.__c15tAstroConfig` itself, with `buildConfigScript()`, still
+ * `window.__inthAstroConfig` itself, with `buildConfigScript()`, still
  * wins, as before the data block existed.
  *
  * @returns The payload, or an empty config when the page has none.
@@ -130,7 +131,7 @@ const readInlinedConfig = function readInlinedConfig(): KernelConfig {
 		return assigned;
 	}
 	const block = document.querySelector(
-		'script[type="application/json"][data-c15t-config]'
+		'script[type="application/json"][data-inth-config]'
 	);
 	if (!block?.textContent) {
 		return {};
@@ -154,17 +155,17 @@ const readInlinedConfig = function readInlinedConfig(): KernelConfig {
 let pageNonce: string | undefined;
 
 /**
- * The elements c15t renders with the page's nonce, and the gated tags it
- * activates with it. Nothing else on an incoming page is c15t's to change.
+ * The elements Inth renders with the page's nonce, and the gated tags it
+ * activates with it. Nothing else on an incoming page is Inth's to change.
  */
 const NONCE_BEARING_SELECTOR = [
-	'script[data-c15t-config]',
-	'script[data-c15t-boot]',
-	'script[data-c15t-inline]',
-	'style#c15t-theme',
-	'style[data-c15t-styles="c15t-first-paint"]',
-	'style[data-c15t-styles="c15t-iab-first-paint"]',
-	'script[data-c15t-category]',
+	'script[data-inth-config]',
+	'script[data-inth-boot]',
+	'script[data-inth-inline]',
+	`style#${THEME_STYLE_ELEMENT_ID}`,
+	'style[data-inth-styles="inth-first-paint"]',
+	'style[data-inth-styles="inth-iab-first-paint"]',
+	'script[data-inth-category]',
 ].join(', ');
 
 /**
@@ -172,18 +173,18 @@ const NONCE_BEARING_SELECTOR = [
  *
  * With a nonce generated per request, the next page arrives with a new
  * nonce while the browser keeps enforcing the first response's policy.
- * Its c15t styles and scripts would be blocked, and its gated tags would
+ * Its Inth styles and scripts would be blocked, and its gated tags would
  * fail the nonce check in {@link activateGatedScripts}. The server issued
- * both nonces, so c15t's own elements and the gated tags carrying the
+ * both nonces, so Inth's own elements and the gated tags carrying the
  * incoming one are given the live one.
  *
  * The incoming nonce is read from the page's config scripts, which an
  * HTML-injection hole on that page could also write. A planted config
- * script ahead of c15t's would otherwise name the attacker's nonce, and
+ * script ahead of Inth's would otherwise name the attacker's nonce, and
  * the attacker's own elements would be handed the live one. So every config
- * script on the page has to agree, and only c15t's elements and gated tags
+ * script on the page has to agree, and only Inth's elements and gated tags
  * are rewritten: an arbitrary `<script nonce>` never is. A page whose only
- * config script is planted, because c15t rendered none, is not covered.
+ * config script is planted, because Inth rendered none, is not covered.
  *
  * @param incoming - The parsed next page from `astro:before-swap`.
  */
@@ -194,7 +195,7 @@ const adoptPageNonce = function adoptPageNonce(incoming: Document): void {
 	const nonces = new Set(configScripts(incoming).map(nonceOf));
 	if (nonces.size > 1) {
 		console.warn(
-			'@inth/astro: the next page has config scripts with different CSP nonces, so c15t did not move it onto the live nonce. Look for markup injected into that page.'
+			'@inth/astro: the next page has config scripts with different CSP nonces, so Inth did not move it onto the live nonce. Look for markup injected into that page.'
 		);
 		return;
 	}
@@ -217,7 +218,7 @@ const adoptPageNonce = function adoptPageNonce(incoming: Document): void {
 /**
  * Apply the configured colour scheme, replacing any previous application.
  *
- * `setupColorScheme` is what toggles `c15t-dark` on `<html>` — the
+ * `setupColorScheme` is what toggles `inth-dark` on `<html>` — the
  * stylesheet has no `prefers-color-scheme` block, so nothing is dark until
  * something sets that class. The inline `<head>` script gets the first
  * paint right; this keeps it right afterwards, following the system
@@ -230,11 +231,9 @@ const adoptPageNonce = function adoptPageNonce(incoming: Document): void {
  *
  * `'none'` drops any previous listener and stops there: the site owns the
  * class, so whatever it has put on `<html>` stays.
- *
- * @param colorScheme - The resolved colour scheme.
  */
 const applyColorScheme = function applyColorScheme(
-	colorScheme: C15tResolvedOptions['colorScheme']
+	colorScheme: InthResolvedOptions['colorScheme']
 ): void {
 	const browserWindow = getWindow();
 	if (!browserWindow) {
@@ -243,20 +242,6 @@ const applyColorScheme = function applyColorScheme(
 	browserWindow[COLOR_SCHEME_KEY]?.();
 	browserWindow[COLOR_SCHEME_KEY] = undefined;
 	if (colorScheme === 'none') {
-		return;
-	}
-
-	// `setupColorScheme` reaches for `matchMedia` whichever scheme it is
-	// given, and a few embedded webviews do not have it. The boot is the
-	// page's only entry point, so a throw here would take consent with it:
-	// set the class by hand instead. `system` falls back to light, and it
-	// has to say so — leaving the class alone would keep whatever a previous
-	// scheme or a swapped-in dark shell had put there.
-	if (typeof browserWindow.matchMedia !== 'function') {
-		document.documentElement.classList.toggle(
-			'c15t-dark',
-			colorScheme === 'dark'
-		);
 		return;
 	}
 
@@ -291,10 +276,8 @@ const dialogAdoption = new WeakMap<
  * A page whose server did not inline a resolution boots with the init still
  * in flight, so a synchronous read of the snapshot would report "no policy"
  * for a policy that arrives a moment later. Waiting here lets `openDialog()`
- * calls made on page load (a `#c15t-preferences` link, a storybook, a host
+ * calls made on page load (a `#inth-preferences` link, a storybook, a host
  * script) decide against the settled answer instead of the pending one.
- *
- * @param kernel - The runtime's kernel.
  */
 const whenPolicySettled = function whenPolicySettled(
 	kernel: ConsentKernel
@@ -320,15 +303,13 @@ const whenPolicySettled = function whenPolicySettled(
  * With nothing to manage the controls stay hidden: before a rule resolves,
  * and under a `none` rule that owes no rights. They appear on their own once
  * a later init supplies a rule that does.
- *
- * @param snapshot - The current kernel snapshot.
  */
 export const syncSurfaceVisibility = function syncSurfaceVisibility(
 	snapshot: ConsentSnapshot
 ): void {
 	const owesUi = hasConsentPreferences(snapshot);
 	for (const control of document.querySelectorAll<HTMLElement>(
-		'[data-c15t-surface="trigger"]'
+		'[data-inth-surface="trigger"]'
 	)) {
 		control.hidden = !owesUi;
 	}
@@ -344,8 +325,6 @@ export const syncSurfaceVisibility = function syncSurfaceVisibility(
  * the entering class is present, so `disableAnimation` still turns it off.
  * A banner the server resolved as blocking (`data-blocking="true"`) also
  * locks scroll and traps focus in its card while it is shown.
- *
- * @param snapshot - The current kernel snapshot.
  */
 export const syncBannerVisibility = function syncBannerVisibility(
 	snapshot: ConsentSnapshot
@@ -371,7 +350,7 @@ export const syncBannerVisibility = function syncBannerVisibility(
 		reveal(banner);
 	}
 	banner.hidden = !shouldShow;
-	banner.setAttribute('data-c15t-visible', shouldShow ? 'true' : 'false');
+	banner.setAttribute('data-inth-visible', shouldShow ? 'true' : 'false');
 
 	const blocking = shouldShow && banner.dataset.blocking === 'true';
 	for (const overlay of document.querySelectorAll<HTMLElement>(
@@ -426,7 +405,7 @@ const notRegistered = function notRegistered(option: string): never {
 /**
  * The runtime modules the page mounts. Data clearing loads on demand;
  * persistence and the iframe blocker load with the engine. The engine
- * module (`virtual:c15t/engine`) registers the script loader, the network blocker and a `consentSource`
+ * module (`virtual:inth/engine`) registers the script loader, the network blocker and a `consentSource`
  * connection for a site that can configure them, and the IAB mount
  * through {@link registerIAB} for a site that sets `iab`.
  */
@@ -532,9 +511,9 @@ const samePermissions = (left: Permissions, right: Permissions): boolean =>
  * from what it last heard, with that as its `previous`.
  */
 const committedCallbacks = function committedCallbacks(
-	callbacks: C15tClientOptionsExtension['callbacks'],
+	callbacks: InthClientOptionsExtension['callbacks'],
 	committed: DeferredCommitted
-): C15tClientOptionsExtension['callbacks'] {
+): InthClientOptionsExtension['callbacks'] {
 	const onPermissionsChanged = callbacks?.onPermissionsChanged;
 	if (!onPermissionsChanged) {
 		return callbacks;
@@ -577,18 +556,17 @@ const engineConfig = function engineConfig(
 };
 
 /** Marks the first-paint `<style>` the components inline. */
-const FIRST_PAINT_SELECTOR = 'style[data-c15t-styles="c15t-first-paint"]';
+const FIRST_PAINT_SELECTOR = 'style[data-inth-styles="inth-first-paint"]';
 
 /**
  * Add the first-paint rules a page left out. The server inlines them only
  * where the banner may show, so on a returning visitor's page the dialog,
  * which builds on their tokens and button rules, brings them along.
  *
- * @param options - The resolved options.
  * @param nonce - The page's CSP nonce.
  */
 const ensureFirstPaintStyles = async function ensureFirstPaintStyles(
-	options: C15tResolvedOptions,
+	options: InthResolvedOptions,
 	nonce: string | undefined
 ): Promise<void> {
 	if (!options.inlineStyles || document.querySelector(FIRST_PAINT_SELECTOR)) {
@@ -600,7 +578,7 @@ const ensureFirstPaintStyles = async function ensureFirstPaintStyles(
 		return;
 	}
 	const style = document.createElement('style');
-	style.setAttribute('data-c15t-styles', INLINE_STYLES_ID);
+	style.setAttribute('data-inth-styles', INLINE_STYLES_ID);
 	if (nonce) {
 		style.nonce = nonce;
 	}
@@ -609,8 +587,8 @@ const ensureFirstPaintStyles = async function ensureFirstPaintStyles(
 };
 
 const createClient = function createClient(
-	options: C15tResolvedOptions,
-	extension: C15tClientOptionsExtension = {},
+	options: InthResolvedOptions,
+	extension: InthClientOptionsExtension = {},
 	committed?: DeferredCommitted
 ): AstroEngineClient {
 	pageNonce = readPageNonce();
@@ -1050,9 +1028,6 @@ const runPromptRender = async function runPromptRender(
  * hosted or manifest mode, or a server render whose init failed — and the
  * IAB banner also when there was no vendor list yet. Each renderer is its
  * own chunk, so a page that never needs one never downloads it.
- *
- * @param client - The page's consent client.
- * @param snapshot - The current kernel snapshot.
  */
 const ensurePromptRendered = function ensurePromptRendered(
 	client: AstroConsentClient,
@@ -1114,12 +1089,11 @@ const attach = function attach(client: AstroConsentClient): void {
  * @param extension - Non-serializable additions from `clientEntrypoint`.
  * @param handoff - From the shell: takes over its place on `window`, with
  * any choice it recorded.
- * @returns The page-level consent client.
  * @throws {Error} Outside the browser.
  */
 export const boot = function boot(
-	options: C15tResolvedOptions,
-	extension: C15tClientOptionsExtension = {},
+	options: InthResolvedOptions,
+	extension: InthClientOptionsExtension = {},
 	handoff?: EngineHandoff
 ): AstroEngineClient {
 	const browserWindow = getWindow();
@@ -1171,7 +1145,7 @@ export const boot = function boot(
 	// The ClientRouter replaces the document without re-evaluating modules,
 	// so the runtime survives but its DOM does not. Re-attach to the new
 	// markup instead of rebuilding consent state. The swap also replaces the
-	// `<html>` attributes, taking `c15t-dark` with them, so the colour
+	// `<html>` attributes, taking `inth-dark` with them, so the colour
 	// scheme is applied again against the new document.
 	const onAfterSwap = function onAfterSwap(): void {
 		applyColorScheme(options.colorScheme);

@@ -1,6 +1,6 @@
 ---
 title: Headless
-description: Build your own consent banner and preference form in Nuxt with the auto-imported c15t composables instead of ConsentRoot.
+description: Build your own consent banner and preference form in Nuxt with the auto-imported Inth composables instead of ConsentRoot.
 group: frameworks
 ---
 
@@ -22,7 +22,7 @@ form while it is `'manager'`. The module auto-imports the composables.
 <include src="../../shared/examples/nuxt/headless-prompt.mdx" />
 
 `useConsentSave()` records Accept all or Reject all. Recording a choice
-satisfies the prompt, so c15t sets `activeUI` to `null` and the banner closes.
+satisfies the prompt, so Inth sets `activeUI` to `null` and the banner closes.
 `useConsentDraft()` holds the preference form. `displayedCategories` lists the
 categories the policy lets the visitor choose, `values` holds each switch, and
 `save()` records them. Preferences stay open after a save, so close them

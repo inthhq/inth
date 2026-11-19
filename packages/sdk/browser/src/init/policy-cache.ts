@@ -19,7 +19,7 @@ import type { KernelOverrides } from '@inth/sdk-core';
 import type { PrefetchedInitialData } from '@inth/sdk-core/runtime/deferred-snapshot';
 
 /** localStorage key of the cache. */
-export const POLICY_CACHE_KEY = 'c15t-init-policy';
+export const POLICY_CACHE_KEY = 'inth-init-policy';
 
 /** Entries older than this are ignored. */
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -46,10 +46,6 @@ const keyOf = (projectUrl: string, overrides?: KernelOverrides): string =>
 /**
  * The cached response for this backend and overrides, shaped as a
  * prefetch result `snapshotFromPrefetchedInit` reads, or `undefined`.
- *
- * @param projectUrl - The backend URL the page uses.
- * @param overrides - The page's overrides.
- * @returns The cached response, or `undefined`.
  */
 export const readPolicyCache = function readPolicyCache(
 	projectUrl: string,
@@ -74,13 +70,7 @@ export const readPolicyCache = function readPolicyCache(
 	return undefined;
 };
 
-/**
- * Keep the policy fields of an `/init` response.
- *
- * @param projectUrl - The backend URL the page uses.
- * @param overrides - The page's overrides.
- * @param data - The response.
- */
+/** Keep the policy fields of an `/init` response. */
 export const writePolicyCache = function writePolicyCache(
 	projectUrl: string,
 	overrides: KernelOverrides | undefined,

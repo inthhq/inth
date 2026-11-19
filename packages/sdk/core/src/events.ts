@@ -5,7 +5,7 @@ import type { ConsentSnapshot } from './types';
 
 /** Flat event metadata accepted by the shared dispatcher. */
 export type EventProperties = Record<string, string | number | boolean>;
-/** Runtime inputs: the host owns event names, c15t owns delivery eligibility. */
+/** Runtime inputs: the host owns event names, Inth owns delivery eligibility. */
 export interface EventDispatcherOptions {
 	scripts: readonly Script[];
 	getSnapshot: () => ConsentSnapshot;
@@ -134,7 +134,7 @@ const dispatcher = (options: DispatcherInputs) => {
 					switch (vendor) {
 						case 'google-tag-manager':
 							call(
-								[script.attributes?.['data-c15t-layer'] ?? 'dataLayer', 'push'],
+								[script.attributes?.['data-inth-layer'] ?? 'dataLayer', 'push'],
 								[{ ...props, event }]
 							);
 							break;

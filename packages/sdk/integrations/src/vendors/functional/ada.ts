@@ -150,12 +150,11 @@ const startMessaging = (settings: AdaOptions): void => {
  * Once every registration is gone and `stop()` has run, a later registration
  * can restart the reused interface with different settings.
  *
- * @param options - AI Agent handle and optional Ada regional settings.
  * @returns A callback-only script gated on functionality consent.
  * @remarks A missing or blank `handle` logs `ada: missing or invalid handle`
  * with `console.error` and returns a script that never loads. `stop()` does
  * not erase the visitor's stored conversation. An import already in progress
- * cannot be cancelled, so keep c15t's reload-on-revocation behavior enabled.
+ * cannot be cancelled, so keep Inth's reload-on-revocation behavior enabled.
  * @example
  * ada({ handle: 'YOUR_ADA_HANDLE' });
  * @see https://docs.ada.cx/messaging/web/getting-started

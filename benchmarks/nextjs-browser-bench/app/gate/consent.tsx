@@ -4,7 +4,7 @@ import {
 	gateConsentCategories,
 	gateScripts,
 	updateGateBridge,
-} from '@c15t/benchmarking/consent-gate-page';
+} from '@inth/benchmarking/consent-gate-page';
 import {
 	ConsentBanner,
 	ConsentDialog,
@@ -32,7 +32,7 @@ const GateBridge = () => {
 };
 
 /**
- * CookieBench's Next.js fixture (`with-c15t-nextjs/app/consent.tsx`): one
+ * CookieBench's Next.js fixture (`with-inth-nextjs/app/consent.tsx`): one
  * `ConsentRoot` with the quickstart config, the stock banner and dialog,
  * and a probe that loads the gated scripts.
  */

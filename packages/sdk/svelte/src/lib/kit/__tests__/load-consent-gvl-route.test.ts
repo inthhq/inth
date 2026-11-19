@@ -8,7 +8,7 @@ import type { ConsentManifest } from '@inth/sdk/schema/types';
 import { clearManifestCache } from '@inth/sdk/server';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { c15tHandle } from '../handle';
+import { inthHandle } from '../handle';
 import { manifest } from '../index';
 import { loadConsent } from '../load-consent';
 import { createEvent } from './event';
@@ -45,15 +45,15 @@ describe('loadConsent', () => {
 			'fetch',
 			vi.fn<typeof globalThis.fetch>(() => Promise.resolve(Response.json(GVL)))
 		);
-		const event = createEvent({ headers: { 'x-c15t-country': 'DE' } });
-		await c15tHandle({
+		const event = createEvent({ headers: { 'x-inth-country': 'DE' } });
+		await inthHandle({
 			mode: manifest({ snapshot: IAB_MANIFEST }),
 			projectUrl: 'https://consent.example.com',
-			routePrefix: '/api/c15t',
+			routePrefix: '/api/inth',
 		})({ event, resolve: () => Promise.resolve(new Response()) });
 		const { consent } = await loadConsent(event);
 		expect(consent.prefetch.initialIab?.gvlReference?.url).toMatch(
-			/^\/api\/c15t\/init\?c15t-gvl=42/u
+			/^\/api\/inth\/init\?inth-gvl=42/u
 		);
 	});
 });

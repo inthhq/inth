@@ -1,6 +1,6 @@
 ---
 title: Client-side initialization
-description: Initialize c15t in the browser in a Next.js app with hosted() mode, without server prefetch, a consent route or API handlers.
+description: Initialize Inth in the browser in a Next.js app with hosted() mode, without server prefetch, a consent route or API handlers.
 group: frameworks
 ---
 
@@ -30,17 +30,17 @@ with its own URL.
 
 <CommandTabs command="@inth/nextjs @inth/integrations" mode="install" />
 
-Set `NEXT_PUBLIC_C15T_BACKEND_URL` to your project's backend URL, including
+Set `NEXT_PUBLIC_INTH_PROJECT_URL` to your project's backend URL, including
 any path prefix, in `.env.local` and in your host's build settings:
 
 ```sh title=".env.local"
-NEXT_PUBLIC_C15T_BACKEND_URL=https://your-project.inth.app
+NEXT_PUBLIC_INTH_PROJECT_URL=https://your-project.inth.app
 ```
 
-If your app already sets `NEXT_PUBLIC_INTH_PROJECT_URL` for other Inth SDKs, that works
-too. When both are set, `NEXT_PUBLIC_C15T_BACKEND_URL` wins.
+The c15t name `NEXT_PUBLIC_C15T_BACKEND_URL` still works as a fallback. When both are
+set, `NEXT_PUBLIC_INTH_PROJECT_URL` wins.
 
-Create `c15t.config.ts` at the project root with `mode: hosted()`:
+Create `inth.config.ts` at the project root with `mode: hosted()`:
 
 <include src="../../shared/examples/nextjs/client-side-config.mdx" />
 
@@ -49,7 +49,7 @@ Create `c15t.config.ts` at the project root with `mode: hosted()`:
 [quickstart](/docs/frameworks/next/quickstart#add-the-consent-config) shows.
 The file is bundled into the browser, so it must hold no secrets.
 
-Wrap `next.config.ts` in `withConsentManifest`, which finds `c15t.config.ts`:
+Wrap `next.config.ts` in `withConsentManifest`, which finds `inth.config.ts`:
 
 <include src="../../shared/examples/nextjs/next-config.mdx" />
 
@@ -74,7 +74,7 @@ mounted across client navigation.
 
 ## Optional same-origin requests
 
-With `routePrefix` and `proxy: true` in `c15t.config.ts` and a consent route
+With `routePrefix` and `proxy: true` in `inth.config.ts` and a consent route
 that forwards saves, the browser sends every consent request to your own
 origin, which saves it a separate connection to the backend's domain. It
 needs a Next.js server. See

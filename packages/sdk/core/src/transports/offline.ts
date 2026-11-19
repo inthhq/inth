@@ -36,6 +36,7 @@ import type {
 	SavePayload,
 	SaveResult,
 } from '../types';
+import { DEFAULT_BRANDING } from '../types';
 import type { TransportInitResponse } from './init-output';
 import type { ProviderTransportFactory } from './mode';
 
@@ -86,7 +87,7 @@ export interface OfflineTransportOptions {
 	detectedLanguage?: string;
 
 	/**
-	 * Brand identifier. Defaults to 'c15t'.
+	 * Brand identifier. Defaults to {@link DEFAULT_BRANDING}.
 	 */
 	branding?: KernelBranding;
 
@@ -175,7 +176,7 @@ export const createOfflineTranslationSelector =
  * Build an offline transport. The returned object is plain — no
  * listeners, no caches, no state. Safe to create per request.
  *
- * In development builds its first `save` warns once per page that c15t
+ * In development builds its first `save` warns once per page that Inth
  * keeps no server-side record of consent, unless `acknowledgeNoRecords` is
  * set. A custom transport that uses only its `init` and saves elsewhere
  * never warns.
@@ -184,7 +185,7 @@ export const createOfflineTransport = function createOfflineTransport(
 	options: OfflineTransportOptions = {}
 ): OfflineKernelTransport {
 	const defaultLanguage = options.defaultLanguage ?? 'en';
-	const branding: KernelBranding = options.branding ?? 'c15t';
+	const branding: KernelBranding = options.branding ?? DEFAULT_BRANDING;
 	const iabEnabled = options.iabEnabled === true;
 	const translations = normalizeTranslations(
 		options.translations,

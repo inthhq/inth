@@ -330,9 +330,9 @@ const readObservations = (page: Page) =>
 		() =>
 			(
 				window as unknown as {
-					__c15tGate: { observations: GateObservations };
+					__inthGate: { observations: GateObservations };
 				}
-			).__c15tGate.observations
+			).__inthGate.observations
 	);
 
 /** A fresh browser context at CookieBench's mobile profile. */
@@ -399,9 +399,9 @@ const visit = async function visit(
 				(categories) => {
 					const observations = (
 						window as unknown as {
-							__c15tGate?: { observations: GateObservations };
+							__inthGate?: { observations: GateObservations };
 						}
-					).__c15tGate?.observations;
+					).__inthGate?.observations;
 					return Boolean(
 						observations?.heroComplete &&
 						observations.lcpElementId === 'primary-content' &&
@@ -424,9 +424,9 @@ const visit = async function visit(
 				(needsBanner) => {
 					const observations = (
 						window as unknown as {
-							__c15tGate?: { observations: GateObservations };
+							__inthGate?: { observations: GateObservations };
 						}
-					).__c15tGate?.observations;
+					).__inthGate?.observations;
 					return Boolean(
 						observations?.heroComplete &&
 						observations.lcpElementId === 'primary-content' &&
@@ -448,9 +448,9 @@ const visit = async function visit(
 			() =>
 				(
 					window as unknown as {
-						__c15tGate?: { observations: GateObservations };
+						__inthGate?: { observations: GateObservations };
 					}
-				).__c15tGate?.observations.visibleAt !== undefined,
+				).__inthGate?.observations.visibleAt !== undefined,
 			undefined,
 			{ polling: 50, timeout: 45_000 }
 		);
@@ -460,9 +460,9 @@ const visit = async function visit(
 			({ target, action }) =>
 				(
 					window as unknown as {
-						__c15tGate: { arm: (selector: string, action: string) => void };
+						__inthGate: { arm: (selector: string, action: string) => void };
 					}
-				).__c15tGate.arm(target, action),
+				).__inthGate.arm(target, action),
 			{ action: kind, target: selector }
 		);
 		await page
@@ -473,9 +473,9 @@ const visit = async function visit(
 			({ action, scripts }) => {
 				const observations = (
 					window as unknown as {
-						__c15tGate?: { observations: GateObservations };
+						__inthGate?: { observations: GateObservations };
 					}
-				).__c15tGate?.observations;
+				).__inthGate?.observations;
 				if (!observations) {
 					return false;
 				}
@@ -523,7 +523,7 @@ const prime = async function prime(
 /** How many times a run replays a change of mind before counting requests. */
 const CHANGED_MIND_REPLAYS = 3;
 
-/** How long a visit lets c15t finish writing storage after it settles. */
+/** How long a visit lets Inth finish writing storage after it settles. */
 const STORAGE_SETTLE_MS = 1000;
 
 /** Waits until the gate bridge reports `consent` and at least `scripts` ran. */
@@ -550,7 +550,7 @@ const consented = (
 
 /**
  * The storage of a visitor who accepted on the banner and came back once,
- * at the mobile profile. The return visit matters: c15t may record what it
+ * at the mobile profile. The return visit matters: Inth may record what it
  * learns there, and a measured visit then starts as a third visit would.
  * Throttled because what a page records can depend on how long its chunks
  * take: unthrottled, a dynamic import can finish before the scripts it
@@ -583,7 +583,7 @@ const acceptedStorage = async function acceptedStorage(
 /**
  * The storage of a visitor who changes their mind: from `accepted`, one
  * more visit, where they open Privacy settings and tap Reject in the
- * dialog, as a real visitor would. Whatever c15t recorded while the
+ * dialog, as a real visitor would. Whatever Inth recorded while the
  * accepting visitor's scripts ran stays as that visit left it.
  */
 const changedMindStorage = async function changedMindStorage(
@@ -629,7 +629,7 @@ const changedMindStorage = async function changedMindStorage(
 /**
  * Reports each request for a gated script on one visit with
  * `storageState` to `onRequest` as it starts, until the page has loaded and
- * c15t has had time to load its engine (`STORAGE_SETTLE_MS * 3` after the
+ * Inth has had time to load its engine (`STORAGE_SETTLE_MS * 3` after the
  * page is ready). A request that starts later, such as one behind a later
  * import, is not counted. Reporting as it happens keeps a request seen on
  * an attempt that then fails.
@@ -880,12 +880,12 @@ export const runConsentGate = async function runConsentGate(
 		return;
 	}
 	const iterations = readNumber(
-		['C15T_BENCH_ITERATIONS', 'BENCH_ITERATIONS'],
+		['INTH_BENCH_ITERATIONS', 'BENCH_ITERATIONS'],
 		12
 	);
 	// Every round primes the server and browser with one unthrottled visit
 	// (see `prime`), so throttled warm-up iterations are opt-in.
-	const warmups = readNumber(['C15T_BENCH_GATE_WARMUP_ITERATIONS'], 0);
+	const warmups = readNumber(['INTH_BENCH_GATE_WARMUP_ITERATIONS'], 0);
 	const outputDir = process.env.BENCH_OUTPUT_DIR ?? `.benchmarks/${GATE_SUITE}`;
 	process.env[BENCH_BACKEND_LATENCY_ENV] = `${backendLatencyMs}`;
 	const samples: GateIterationSample[] = [];

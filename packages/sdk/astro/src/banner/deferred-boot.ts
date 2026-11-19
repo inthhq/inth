@@ -7,14 +7,13 @@
  */
 
 import type { ConsentSnapshot, KernelConfig } from '@inth/sdk/engine';
-import { isIABConfigured } from '@inth/sdk/runtime';
-import { planInstantCommit } from '@inth/sdk/surface-actions/instant-commit';
+import { canDeferEngine as canDeferCoreEngine } from '@inth/sdk/server';
 
-import { declaresVendor, isRunnableNow } from '../browser/deferred-scripts';
-import type { C15tLocals, C15tResolvedOptions } from '../types';
+import { declaresVendor } from '../browser/deferred-scripts';
+import type { InthLocals, InthResolvedOptions } from '../types';
 
 type DeferOptions = Pick<
-	C15tResolvedOptions,
+	InthResolvedOptions,
 	'experiment' | 'gpp' | 'iab' | 'networkBlocker' | 'scripts' | 'vendors'
 >;
 
@@ -30,47 +29,6 @@ const declaresVendors = function declaresVendors(
 	);
 };
 
-/** Whether an option needs the engine as the page loads. */
-const optionNeedsEngine = function optionNeedsEngine(
-	options: DeferOptions
-): boolean {
-	return Boolean(
-		isIABConfigured(options.iab) ||
-		options.experiment ||
-		options.gpp ||
-		(options.networkBlocker && options.networkBlocker.enabled !== false)
-	);
-};
-
-/** Whether the snapshot is something other than an open choice banner. */
-const notAChoiceBanner = function notAChoiceBanner(
-	snapshot: ConsentSnapshot
-): boolean {
-	return Boolean(
-		snapshot.activeUI !== 'banner' ||
-		snapshot.model === 'iab' ||
-		snapshot.experiment ||
-		snapshot.experimentPending
-	);
-};
-
-/**
- * Whether an optional category the site uses is allowed. The site's
- * categories are the configured and discovered ones: a permissive scope
- * grants the ones outside the policy, which gate nothing here.
- */
-const grantsOptional = function grantsOptional(
-	snapshot: ConsentSnapshot
-): boolean {
-	const permissions = snapshot.effectivePermissions as Record<
-		string,
-		boolean | undefined
-	>;
-	return (snapshot.consentCategories ?? Object.keys(permissions)).some(
-		(category) => category !== 'necessary' && permissions[category]
-	);
-};
-
 /**
  * Whether the browser may answer this visitor from the server's snapshot
  * and load the engine after the page: the banner asks for a choice, an
@@ -82,15 +40,13 @@ const grantsOptional = function grantsOptional(
  * browser adds what only it knows, such as the `clientEntrypoint` options.
  *
  * Vendors are checked on the options and the config as well as the
- * snapshot: the server's snapshot leaves out the vendors `c15t()` declares,
+ * snapshot: the server's snapshot leaves out the vendors `inth()` declares,
  * which the browser runtime merges in, and a bulk choice also decides
  * every declared vendor, which only the kernel records.
  *
  * @param snapshot - The snapshot the server rendered with.
- * @param options - The resolved integration options.
  * @param blocking - Whether the banner renders as a blocking dialog.
  * @param now - The clock. Defaults to `Date.now()`.
- * @returns `true` when the engine may wait.
  * @internal
  */
 export const canDeferEngine = function canDeferEngine(
@@ -100,25 +56,15 @@ export const canDeferEngine = function canDeferEngine(
 	now: number = Date.now(),
 	config: Pick<KernelConfig, 'initialVendors'> = {}
 ): boolean {
-	if (
-		blocking ||
-		declaresVendors(options, config) ||
-		optionNeedsEngine(options) ||
-		notAChoiceBanner(snapshot) ||
-		grantsOptional(snapshot) ||
-		options.scripts?.some((script) => isRunnableNow(script, snapshot))
-	) {
-		return false;
-	}
-	return (['all', 'none'] as const).every(
-		(choice) =>
-			planInstantCommit({
-				actionAt: now,
-				choice,
-				now,
-				snapshot,
-				subjectId: 'boot-check',
-			}) !== null
+	return (
+		!blocking &&
+		!declaresVendors(options, config) &&
+		// Astro's server starts no script: every script waits for the engine.
+		canDeferCoreEngine(
+			snapshot,
+			{ ...options, scriptLoader: { serverStart: false } },
+			now
+		)
 	);
 };
 
@@ -146,13 +92,13 @@ export const buildConsentBootJSON = function buildConsentBootJSON(
  * banner (see {@link canDeferEngine}); a prerendered page's snapshot is the
  * one a first-time visitor gets, so it never waits.
  *
- * @param locals - `Astro.locals.c15t`.
+ * @param locals - `Astro.locals.inth`.
  * @returns JSON safe to place inside a `<script>` element.
  * @internal
  */
 export const buildLocalsBootJSON = function buildLocalsBootJSON(
 	locals: Pick<
-		C15tLocals,
+		InthLocals,
 		'config' | 'options' | 'prerendered' | 'shouldShowBanner' | 'snapshot'
 	>
 ): string {

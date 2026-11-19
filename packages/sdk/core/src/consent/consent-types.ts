@@ -2,6 +2,12 @@
  * @packageDocumentation
  * Provides types and constants for managing GDPR-compliant consent categories and their configurations.
  */
+import type { ResolvedPolicyRule } from '@inth/sdk-schema/types';
+
+import type {
+	ConsentCategory,
+	OptionalConsentCategory,
+} from '../consent-record/types';
 
 /**
  * Defines all possible consent categories that can be managed within the application.
@@ -36,12 +42,7 @@
  *
  * @public
  */
-export type AllConsentNames =
-	| 'experience'
-	| 'functionality'
-	| 'marketing'
-	| 'measurement'
-	| 'necessary';
+export type AllConsentNames = ConsentCategory;
 
 /**
  * Defines the configuration structure for each consent type.
@@ -116,7 +117,6 @@ export interface ConsentType {
 	/** GDPR category identifier (1-5) */
 	gdprType: number;
 
-	/** The consent category name */
 	name: AllConsentNames;
 }
 
@@ -193,18 +193,18 @@ export const consentTypes: ConsentType[] = [
 	{
 		defaultValue: false,
 		description:
-			'These trackers help us to measure traffic and analyze your behavior to improve our service.',
-		display: false,
-		gdprType: 4,
-		name: 'measurement',
-	},
-	{
-		defaultValue: false,
-		description:
 			'These trackers help us to improve the quality of your user experience and enable interactions with external content, networks, and platforms.',
 		display: false,
 		gdprType: 3,
 		name: 'experience',
+	},
+	{
+		defaultValue: false,
+		description:
+			'These trackers help us to measure traffic and analyze your behavior to improve our service.',
+		display: false,
+		gdprType: 4,
+		name: 'measurement',
 	},
 	{
 		defaultValue: false,
@@ -220,8 +220,7 @@ export const consentTypes: ConsentType[] = [
  * Runtime array of all valid consent names.
  *
  * @remarks
- * This array is automatically derived from {@link consentTypes} to ensure
- * runtime validation stays in sync with the {@link AllConsentNames} type definition.
+ * The categories in display order, the order of {@link consentTypes}.
  * Use this for validation logic where you need to check if a string is a valid consent name.
  *
  * @example
@@ -238,15 +237,26 @@ export const consentTypes: ConsentType[] = [
  * @see {@link consentTypes} for the full consent configurations
  * @public
  */
-// A literal, not `consentTypes.map(...)`, so code that only needs the
-// names does not carry the descriptions. A test keeps the two in step.
+// A literal, not `consentTypes.map(...)` or `CONSENT_CATEGORIES`, so code
+// that only needs the names carries neither the descriptions nor an import
+// that splits a chunk. A test keeps the three in step.
 export const allConsentNames: AllConsentNames[] = [
 	'necessary',
 	'functionality',
-	'measurement',
 	'experience',
+	'measurement',
 	'marketing',
 ];
+
+/** The permissions before any choice: `necessary` granted, the rest denied. */
+export const DENIED_CONSENTS: Readonly<Record<ConsentCategory, boolean>> =
+	Object.freeze({
+		experience: false,
+		functionality: false,
+		marketing: false,
+		measurement: false,
+		necessary: true,
+	});
 
 /**
  * The categories a preference surface lists: `necessary` plus the scope, in
@@ -267,65 +277,16 @@ export const displayedCategories = function displayedCategories(
 };
 
 /**
- * Information about the consent granted
+ * A category's value before any choice: on under opt-out and `none`, which
+ * allow it, else on when the rule preselects it.
  */
-export interface ConsentInfo {
-	/**
-	 * The epoch timestamp of when the consent was recorded
-	 * @example 1761911048
-	 */
-	time: number;
-
-	/**
-	 * The client-generated subject ID in sub_xxx format
-	 *
-	 * @remarks
-	 * This is the primary identifier for the device/browser.
-	 * Generated client-side using generateSubjectId(). Stored with the
-	 * consent records once the visitor's first save writes them.
-	 * New in v2.0 - replaces the server-generated consentId.
-	 *
-	 * @example 'sub_2VZxR7YmNpKq3WfLs8TgHd'
-	 */
-	subjectId?: string;
-
-	/**
-	 * @deprecated Use subjectId instead. The id field stored the server-generated
-	 * consentId which is no longer used in v2.0.
-	 *
-	 * @remarks
-	 * This field is kept for migration purposes. If present without subjectId,
-	 * it indicates old storage format that should trigger re-consent.
-	 */
-	id?: string;
-
-	/**
-	 * The external user ID linked to this subject
-	 *
-	 * @remarks
-	 * Set via identifyUser() to link a subject (device) to an authenticated user.
-	 * This is the user's ID from your auth system (e.g., Clerk, Auth0, etc.)
-	 *
-	 * @example 'user_123abc'
-	 */
-	externalId?: string;
-
-	/**
-	 * Material fingerprint of the active policy when this consent was accepted.
-	 *
-	 * @remarks
-	 * Used client-side to detect when consent should be refreshed because the
-	 * active policy changed in a way that affects consent semantics.
-	 */
-	materialPolicyFingerprint?: string;
-
-	/**
-	 * The identity provider that provided the external ID
-	 *
-	 * @remarks
-	 * Used to identify which auth system the externalId came from.
-	 *
-	 * @example 'clerk', 'auth0', 'firebase'
-	 */
-	identityProvider?: string;
-}
+export const policyDefault = function policyDefault(
+	rule: Pick<ResolvedPolicyRule, 'model' | 'preselectedCategories'>,
+	category: OptionalConsentCategory
+): boolean {
+	return (
+		rule.model === 'opt-out' ||
+		rule.model === 'none' ||
+		rule.preselectedCategories.includes(category)
+	);
+};

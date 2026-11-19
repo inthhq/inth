@@ -3,6 +3,7 @@ import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { SetGlobalPathStep, VendorManifest } from '../../types';
+import { booleanDataAttribute } from '../_shared/attributes';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { createScriptReuse } from '../_shared/reuse-script';
 import { trimToUndefined } from '../_shared/script-url';
@@ -63,7 +64,7 @@ const releaseIntegrity: Readonly<
  * The URL and integrity of a Databuddy CDN file. Without `version` it is
  * Databuddy's unversioned file, which changes with each release, so it
  * loads without integrity. An `override` URL wins and loads without
- * integrity too, since c15t cannot know its bytes.
+ * integrity too, since Inth cannot know its bytes.
  */
 const resolveCdnScript = function resolveCdnScript(
 	file: DatabuddyFile,
@@ -250,7 +251,7 @@ export interface DatabuddyConsentOptions {
 	scriptUrl?: string;
 
 	/**
-	 * When c15t should load the Databuddy script.
+	 * When Inth should load the Databuddy script.
 	 *
 	 * - `after-consent`: wait for measurement consent before loading Databuddy.
 	 * - `always`: load immediately and switch Databuddy's disabled flag from
@@ -285,7 +286,7 @@ export interface DatabuddyConsentOptions {
 
 	/**
 	 * Databuddy config object to seed when consent is granted at load time.
-	 * c15t sets its `disabled` key from consent. The default carries the
+	 * Inth sets its `disabled` key from consent. The default carries the
 	 * client ID and API URL, for when Databuddy cannot read them from its
 	 * script tag.
 	 * @default { apiUrl, clientId, disabled: false }
@@ -294,7 +295,7 @@ export interface DatabuddyConsentOptions {
 
 	/**
 	 * Databuddy config object to seed when consent is denied at load time,
-	 * and to set on a refusal. Used only with `loadMode: 'always'`. c15t sets
+	 * and to set on a refusal. Used only with `loadMode: 'always'`. Inth sets
 	 * its `disabled` key from consent.
 	 * @default { apiUrl, clientId, disabled: true }
 	 */
@@ -370,16 +371,6 @@ export interface DatabuddyReplayOptions {
 	scriptUrl?: string;
 }
 
-/**
- * Maps a feature switch to its `data-*` attribute value. `undefined` drops
- * the attribute from the script.
- */
-const featureAttribute = function featureAttribute(
-	enabled: boolean | undefined
-): string | undefined {
-	return enabled === undefined ? undefined : String(enabled);
-};
-
 interface ReplaySettings {
 	apiUrl: string;
 	clientId: string;
@@ -414,11 +405,11 @@ const createReplayLoader = function createReplayLoader(
 			}
 			element.setAttribute('data-api-url', settings.apiUrl);
 			element.setAttribute('data-client-id', settings.clientId);
-			const maskText = featureAttribute(settings.maskText);
+			const maskText = booleanDataAttribute(settings.maskText);
 			if (maskText !== undefined) {
 				element.setAttribute('data-mask-text', maskText);
 			}
-			const recordIframes = featureAttribute(settings.recordIframes);
+			const recordIframes = booleanDataAttribute(settings.recordIframes);
 			if (recordIframes !== undefined) {
 				element.setAttribute('data-record-iframes', recordIframes);
 			}
@@ -465,10 +456,10 @@ const createDatabuddyScript = function createDatabuddyScript(
 			disabled: false,
 		},
 		scriptUrl: loader.src,
-		trackErrors: featureAttribute(features.errors),
-		trackInteractions: featureAttribute(features.interactions),
-		trackOutgoingLinks: featureAttribute(features.outgoingLinks),
-		trackWebVitals: featureAttribute(features.webVitals),
+		trackErrors: booleanDataAttribute(features.errors),
+		trackInteractions: booleanDataAttribute(features.interactions),
+		trackOutgoingLinks: booleanDataAttribute(features.outgoingLinks),
+		trackWebVitals: booleanDataAttribute(features.webVitals),
 	});
 	// The hash goes on here, not through the manifest, so the exported
 	// manifest resolves with the same config as before `version` existed.
@@ -539,8 +530,6 @@ const reuseDatabuddyReplay = createScriptReuse<DatabuddyConsentOptions>();
  * and the same flag keeps the tracker from sending until measurement is
  * granted. `replay.js` still waits for consent.
  *
- * @param options - Configuration for the Databuddy consent script
- * @returns The Databuddy script configuration object for c15t's script loader
  * @remarks When `clientId` is missing or blank, the
  *   helper logs `databuddy: missing or invalid clientId` with
  *   `console.error` and returns a script that never loads.

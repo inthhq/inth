@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	installHeadProbe,
@@ -42,7 +42,7 @@ describe('clearbit contract', () => {
 			id: 'clearbit-contract',
 		};
 
-		loadScripts([script], deniedConsents);
+		loadScripts([script], ALL_DENIED);
 		expect(appendCount).toBe(0);
 
 		loadScripts([script], grantedMeasurementConsents);

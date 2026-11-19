@@ -14,7 +14,7 @@ export type TokensCSSOptions = Pick<ConsentConfig, 'colorScheme' | 'theme'>;
 export { TOKENS_STYLE_ID };
 
 /**
- * The stock dark palette under the `.dark` and `.c15t-dark` selectors.
+ * The stock dark palette under the `.dark` and `.inth-dark` selectors.
  *
  * React and Svelte get it from `@inth/sdk/ui/styles.css`. The Vue components
  * import per-component stylesheets that carry no tokens, so it ships here,
@@ -29,10 +29,10 @@ const DEFAULT_DARK_CSS = generateDefaultThemeCSS({ dark: defaultDarkColors });
  *
  * The Nuxt module and the Vue plugin add this to the page themselves. A
  * plain Vue app that renders on the server can put it in the server HTML,
- * in a `<style id="c15t-css-vars">` element, so the first paint is styled
+ * in a `<style id="inth-css-vars">` element, so the first paint is styled
  * before the app hydrates.
  *
- * The stock dark palette always comes with it, under the `.c15t-dark` and
+ * The stock dark palette always comes with it, under the `.inth-dark` and
  * `.dark` selectors, as in the React and Svelte stylesheet. With a `theme`
  * or a `colorScheme`, the CSS also carries the theme's tokens and the dark
  * tokens: under the same selectors, in a `prefers-color-scheme: dark` media
@@ -41,7 +41,6 @@ const DEFAULT_DARK_CSS = generateDefaultThemeCSS({ dark: defaultDarkColors });
  *
  * @param tokens - Token values from the consent config. Omitted keys keep
  * their defaults.
- * @param options - The config's `theme` and `colorScheme`.
  * @returns CSS rules for `:root` and `:host`.
  *
  * @example
@@ -49,10 +48,10 @@ const DEFAULT_DARK_CSS = generateDefaultThemeCSS({ dark: defaultDarkColors });
  * import { generateTokensCSS } from '@inth/vue/vue-plugin';
  *
  * const css = generateTokensCSS(
- * 	{ 'c15t-primary': '#2f6f4e' },
+ * 	{ 'inth-primary': '#2f6f4e' },
  * 	{ colorScheme: 'system', theme: { dark: { primary: '#7fd1a8' } } }
  * );
- * const head = `<style id="c15t-css-vars">${css}</style>`;
+ * const head = `<style id="inth-css-vars">${css}</style>`;
  * ```
  */
 export const generateTokensCSS = function generateTokensCSS(

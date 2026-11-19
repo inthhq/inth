@@ -4,7 +4,7 @@
  */
 export const GET = () =>
 	Response.json({
-		branding: 'c15t',
+		branding: 'inth',
 		gvl: null,
 		jurisdiction: 'GDPR',
 		location: { countryCode: 'DE', regionCode: null },

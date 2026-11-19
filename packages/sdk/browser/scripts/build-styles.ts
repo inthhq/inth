@@ -5,7 +5,7 @@
  * drop it into a shadow root, and it needs the hashed class names without
  * importing the CSS-module JS (whose `import './x.css'` side effect would
  * make the bundler emit a separate stylesheet). Reading both from the
- * published `dist/` of `@inth/sdk-ui` keeps this package's DOM in lockstep
+ * built `dist/` of `@inth/sdk-ui` keeps this package's DOM in lockstep
  * with the React, Svelte and Vue surfaces: same classes, same tokens.
  * Rules only other frameworks' surfaces can match are dropped, and so are
  * comments and formatting whitespace (`prune-stylesheet.ts`).
@@ -117,7 +117,7 @@ const main = async function main(): Promise<void> {
 			rendered
 		)
 	);
-	// The init script (`c15t.js`) renders only the banner before the engine
+	// The init script (`inth.js`) renders only the banner before the engine
 	// loads, so it carries only the tokens and the button and banner rules:
 	// `@inth/sdk-ui`'s per-surface sheets, each an exact subset of the full
 	// sheet above. The engine swaps in the full sheet when it takes over.
@@ -153,7 +153,7 @@ const main = async function main(): Promise<void> {
 		`${banner}\n// The banner's share of styles.ts, for the init script (rslib.config.ts swaps it in).\nexport const stylesheet: string = ${JSON.stringify(bannerStylesheet)};\n\nexport const classes = ${JSON.stringify(bannerClasses, null, '\t')} as unknown as typeof import('./styles').classes;\n`
 	);
 	// What the init script's root still lacks for the dialog it opens from
-	// `c15t.dialog.js` before the engine: the dialog and preference-widget
+	// `inth.dialog.js` before the engine: the dialog and preference-widget
 	// rules (`@inth/sdk-ui`'s dialog sheet) and the branding and legal-link rules
 	// the banner sheet drops for the dialog. No rule repeats one of the
 	// banner sheet's, so inserted after it no override changes order.
@@ -173,7 +173,7 @@ const main = async function main(): Promise<void> {
 	);
 	await writeFile(
 		join(outputDir, 'dialog-styles.ts'),
-		`${banner}\n// The dialog's rules the banner's share of styles.ts lacks, for c15t.dialog.js.\nexport const stylesheet: string = ${JSON.stringify(dialogStylesheet)};\n`
+		`${banner}\n// The dialog's rules the banner's share of styles.ts lacks, for inth.dialog.js.\nexport const stylesheet: string = ${JSON.stringify(dialogStylesheet)};\n`
 	);
 	await writeFile(
 		join(outputDir, 'iab-styles.ts'),

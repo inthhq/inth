@@ -3,14 +3,14 @@
  *
  * For sites that render their own banner: subscribe to the client, call
  * `acceptAll()` / `rejectAll()` / `save()`, or mark page elements with
- * `data-c15t-action` and let the client wire them.
+ * `data-inth-action` and let the client wire them.
  *
  * @example
  * ```ts
- * import { init } from '@inth/sdk-browser/headless';
+ * import { init } from '@inth/sdk/headless';
  *
- * const c15t = init({ projectUrl: 'https://your-project.inth.app' });
- * c15t.on('ui', (surface) => banner.hidden = surface !== 'banner');
+ * const inth = init({ projectUrl: 'https://your-project.inth.app' });
+ * inth.on('ui', (surface) => banner.hidden = surface !== 'banner');
  * ```
  */
 
@@ -21,24 +21,14 @@ import type { ConsentClient, ConsentClientOptions } from './types';
 
 const PKG = '@inth/sdk/headless';
 
-/**
- * Create the page's client without starting it. `mountUI()` throws.
- *
- * @param options - Client options.
- * @returns The client.
- */
+/** Create the page's client without starting it. `mountUI()` throws. */
 export const createConsentClient = function createConsentClient(
 	options: WithProjectUrl<ConsentClientOptions>
 ): ConsentClient {
 	return createClient({ ...options, ui: false }, { pkg: PKG });
 };
 
-/**
- * Create and start the page's client with no UI.
- *
- * @param options - Client options.
- * @returns The started client.
- */
+/** Create and start the page's client with no UI. */
 export const init = function init(
 	options: WithProjectUrl<ConsentClientOptions>
 ): ConsentClient {

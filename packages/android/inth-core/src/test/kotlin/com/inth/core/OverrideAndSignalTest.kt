@@ -38,7 +38,7 @@ import kotlin.test.assertTrue
  *
  * `packages/native-protocol/CONTRACT.md` first described a `test` override and an `msa` signal, and
  * its Corrections section retires both. The expectations here come from
- * `KernelOverrides` and `KernelPrivacySignals` in `@c15t/core`, which is the
+ * `KernelOverrides` and `KernelPrivacySignals` in `@inth/sdk-core`, which is the
  * authority. `OverrideAndSignalTests.swift` and
  * `protocol/__tests__/protocol.test.ts` pin the same cases, so the three cores
  * cannot drift apart silently.
@@ -139,7 +139,7 @@ class OverrideAndSignalTest {
 		storeAlphaDirectiveEnvelope(backend)
 
 		val kernel = testKernel(
-			config = NativeConfig(backendUrl = "https://test.c15t.app", detectedGpc = true),
+			config = NativeConfig(backendUrl = "https://test.inth.app", detectedGpc = true),
 			store = InthStore(backend),
 		)
 		kernel.bootstrap()
@@ -259,7 +259,7 @@ class OverrideAndSignalTest {
 			),
 		)
 		val kernel = testKernel(
-			config = NativeConfig(backendUrl = "https://test.c15t.app", overrides = KernelOverrides(language = "en")),
+			config = NativeConfig(backendUrl = "https://test.inth.app", overrides = KernelOverrides(language = "en")),
 			store = InthStore(InMemoryKeyValueStore()),
 			transport = transport,
 		)
@@ -283,7 +283,7 @@ class OverrideAndSignalTest {
 		)
 		val kernel = testKernel(
 			config = NativeConfig(
-				backendUrl = "https://test.c15t.app",
+				backendUrl = "https://test.inth.app",
 				overrides = KernelOverrides(gpc = false),
 				detectedGpc = true,
 			),
@@ -308,7 +308,7 @@ class OverrideAndSignalTest {
 		val transport = RecordingTransport().respondInit(initSuccess(body = initBody(policySnapshotToken = null)))
 		val kernel = testKernel(
 			config = NativeConfig(
-				backendUrl = "https://test.c15t.app",
+				backendUrl = "https://test.inth.app",
 				overrides = KernelOverrides(language = "en", gpc = true),
 			),
 			store = InthStore(InMemoryKeyValueStore()),
@@ -321,7 +321,7 @@ class OverrideAndSignalTest {
 		assertNull(payload.policySnapshotToken, "this init served no token")
 		assertEquals(true, payload.decisionInputs?.gpc, "the write names the GPC input it was decided under")
 
-		val body = SaveBodyBuilder.build(payload, "test.c15t.app")
+		val body = SaveBodyBuilder.build(payload, "test.inth.app")
 		assertFalse("policySnapshotToken" in body.keys)
 		assertEquals(true, body.booleanOf("gpc"), "a tokenless write asserts its decision inputs, and gpc is one of them")
 		assertEquals("us-ca", body.stringOf("policyId"))
@@ -332,7 +332,7 @@ class OverrideAndSignalTest {
 		val transport = RecordingTransport().respondInit(initSuccess())
 		val kernel = testKernel(
 			config = NativeConfig(
-				backendUrl = "https://test.c15t.app",
+				backendUrl = "https://test.inth.app",
 				overrides = KernelOverrides(language = "en", gpc = true),
 			),
 			store = InthStore(InMemoryKeyValueStore()),
@@ -344,7 +344,7 @@ class OverrideAndSignalTest {
 		val payload = assertNotNull(transport.saveRequests.lastOrNull()).payload
 		assertEquals(true, payload.decisionInputs?.gpc, "the queued payload keeps its inputs whatever the wire does")
 
-		val body = SaveBodyBuilder.build(payload, "test.c15t.app")
+		val body = SaveBodyBuilder.build(payload, "test.inth.app")
 		assertEquals("snap-1", body.stringOf("policySnapshotToken"))
 		assertFalse("gpc" in body.keys, "the token is the stronger claim, so the flat assertion stays off the wire")
 	}
@@ -357,7 +357,7 @@ class OverrideAndSignalTest {
 			.respondSave(SaveOutcome.Unavailable("offline"))
 		val kernel = testKernel(
 			config = NativeConfig(
-				backendUrl = "https://test.c15t.app",
+				backendUrl = "https://test.inth.app",
 				overrides = KernelOverrides(language = "en", gpc = true),
 			),
 			store = store,
@@ -415,7 +415,7 @@ class OverrideAndSignalTest {
 
 	@Test
 	fun `an unset override is not compared which is why null has to mean absent`() {
-		// `@c15t/core` treats an undefined override as "not pinned". The React Native
+		// `@inth/sdk-core` treats an undefined override as "not pinned". The React Native
 		// protocol spells the same thing as an explicit null, so the boundary has to
 		// map null to absent before this comparison, or every remembered decision looks
 		// stale because null never equals a real country.
@@ -537,7 +537,7 @@ class OverrideAndSignalTest {
 	)
 
 	/**
-	 * Mirror of `decisionInputsMatchOverrides` in `@c15t/core`.
+	 * Mirror of `decisionInputsMatchOverrides` in `@inth/sdk-core`.
 	 *
 	 * The kernel owns the rule and the native cores do not run it, so this feeds the
 	 * rule the values this core actually recorded and shows it reaches a different

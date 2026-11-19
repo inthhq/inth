@@ -22,9 +22,9 @@
 		"For React or Vue dialogs, install `@astrojs/react react react-dom` or `@astrojs/vue vue` instead of Svelte. `@astrojs/node` is the server adapter in the example below. Use your host's adapter instead, or leave it out for static output."
 	],
 	"usage": [
-		"Set `PUBLIC_C15T_BACKEND_URL` to your Inth backend URL in `.env`",
-		"Register your UI framework, then `c15t()`, in `astro.config.mjs`",
-		"```js\n// astro.config.mjs\nimport node from '@astrojs/node'\nimport svelte from '@astrojs/svelte'\nimport { defineConfig } from 'astro/config'\nimport c15t from '@inth/astro'\n\nexport default defineConfig({\n  adapter: node({ mode: 'standalone' }),\n  integrations: [svelte(), c15t()],\n  output: 'server',\n})\n```",
+		"Set `PUBLIC_INTH_PROJECT_URL` to your Inth backend URL in `.env`",
+		"Register your UI framework, then `inth()`, in `astro.config.mjs`",
+		"```js\n// astro.config.mjs\nimport node from '@astrojs/node'\nimport svelte from '@astrojs/svelte'\nimport { defineConfig } from 'astro/config'\nimport inth from '@inth/astro'\n\nexport default defineConfig({\n  adapter: node({ mode: 'standalone' }),\n  integrations: [svelte(), inth()],\n  output: 'server',\n})\n```",
 		"Add `ConsentScript` to `<head>`, and `ConsentBanner`, `ConsentDialog`, and `ConsentDialogLink` to your layout, from `@inth/astro/components`",
 		"For static output, the full layout, and island options, see the [Astro quickstart](https://c15t.com/docs/frameworks/astro/quickstart)"
 	],

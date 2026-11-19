@@ -52,7 +52,7 @@ final class AdditionalConsentTests: XCTestCase {
             let entry = try XCTUnwrap(store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode)?.pendingSaves?.first)
             XCTAssertEqual(InthJSON.parse(entry.body)?["addtlConsent"]?.stringValue, row.expected)
             XCTAssertEqual(http.recordedSaveRequests.first?.body, entry.body)
-            if let path = ProcessInfo.processInfo.environment["C15T_AC_SAVE_EVIDENCE_DIR"] {
+            if let path = ProcessInfo.processInfo.environment["INTH_AC_SAVE_EVIDENCE_DIR"] {
                 try FileManager.default.createDirectory(atPath: path, withIntermediateDirectories: true)
                 try entry.body.write(to: URL(fileURLWithPath: path).appendingPathComponent("swift-" + row.id + ".json"))
             }

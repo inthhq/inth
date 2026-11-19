@@ -11,13 +11,13 @@ test('normalizes without checking', () => {
 	const config = defineConsentConfig({
 		journey: 'session' as never,
 		projectUrl: 'https://consent.example.com',
-		routePrefix: '/api/c15t/',
+		routePrefix: '/api/inth/',
 	});
 
 	expect(config).toEqual({
 		journey: 'session',
 		projectUrl: 'https://consent.example.com',
-		routePrefix: '/api/c15t',
+		routePrefix: '/api/inth',
 	});
 	expect(Object.isFrozen(config)).toBe(true);
 });

@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMeasurementConsents,
 	installHeadProbe,
 	loadScripts,
@@ -38,14 +38,14 @@ describe('OneDollarStats loader contract', () => {
 				hostname: 'docs.example.com',
 			}),
 		];
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		expect(appended).toBeUndefined();
 
 		updateScripts(scripts, grantedMeasurementConsents);
 		expect(appended).toBeDefined();
 		expect(appended?.isConnected).toBe(true);
 
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(appended?.isConnected).toBe(false);
 	});
 });

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@analogjs/storybook-angular';
-import { linkOpensDialog } from '@c15t/conformance/play/consent-dialog-link';
 import { ConsentButton, ConsentDialogLink } from '@inth/angular';
 import { ConsentDialog } from '@inth/angular/consent-dialog';
+import { linkOpensDialog } from '@inth/conformance/play/consent-dialog-link';
 
 import {
 	consentApplication,
@@ -34,12 +34,12 @@ export const Default: Story = {
 			<div style="padding: 2rem;">
 				<button
 					type="button"
-					c15t-consent-button
-					c15tConsentDialogLink
+					inth-consent-button
+					inthConsentDialogLink
 					[action]="'customize'"
 					[noStyle]="false"
 				>Privacy preferences</button>
-				<c15t-consent-dialog />
+				<inth-consent-dialog />
 			</div>
 		`,
 	}),

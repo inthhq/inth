@@ -30,14 +30,14 @@ beforeEach(() => {
 describe('activateGatedScripts', () => {
 	it('leaves a script inert without consent', () => {
 		document.body.innerHTML =
-			'<script type="text/plain" data-c15t-category="measurement">1</script>';
+			'<script type="text/plain" data-inth-category="measurement">1</script>';
 		expect(activateGatedScripts(snapshot({}))).toBe(0);
 		expect(document.querySelector('script[type="text/plain"]')).not.toBeNull();
 	});
 
 	it('activates it once consent arrives', () => {
 		document.body.innerHTML =
-			'<script type="text/plain" data-c15t-category="measurement" data-vendor="ga">1</script>';
+			'<script type="text/plain" data-inth-category="measurement" data-vendor="ga">1</script>';
 		expect(activateGatedScripts(snapshot({ measurement: true }))).toBe(1);
 
 		const activated = document.querySelector<HTMLScriptElement>(
@@ -45,7 +45,7 @@ describe('activateGatedScripts', () => {
 		);
 		expect(activated).not.toBeNull();
 		expect(activated?.type).not.toBe('text/plain');
-		// Non-c15t data attributes survive the swap.
+		// Non-inth data attributes survive the swap.
 		expect(activated?.dataset.vendor).toBe('ga');
 	});
 
@@ -57,8 +57,8 @@ describe('activateGatedScripts', () => {
 		it('skips an injected tag without the nonce', () => {
 			const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 			document.body.innerHTML = [
-				'<script type="text/plain" data-c15t-category="measurement">injected</script>',
-				'<script type="text/plain" data-c15t-category="measurement" nonce="other">forged</script>',
+				'<script type="text/plain" data-inth-category="measurement">injected</script>',
+				'<script type="text/plain" data-inth-category="measurement" nonce="other">forged</script>',
 			].join('');
 
 			expect(
@@ -80,7 +80,7 @@ describe('activateGatedScripts', () => {
 
 		it('activates a tag carrying the nonce, with the nonce', () => {
 			document.body.innerHTML =
-				'<script type="text/plain" data-c15t-category="measurement" nonce="page">1</script>';
+				'<script type="text/plain" data-inth-category="measurement" nonce="page">1</script>';
 
 			expect(
 				activateGatedScripts(snapshot({ measurement: true }), document, 'page')
@@ -95,7 +95,7 @@ describe('activateGatedScripts', () => {
 
 	it('preserves src and loading attributes', () => {
 		document.body.innerHTML =
-			'<script type="text/plain" data-c15t-category="marketing" src="https://cdn.example.com/p.js" async defer></script>';
+			'<script type="text/plain" data-inth-category="marketing" src="https://cdn.example.com/p.js" async defer></script>';
 		activateGatedScripts(snapshot({ marketing: true }));
 
 		const activated = document.querySelector<HTMLScriptElement>(
@@ -109,7 +109,7 @@ describe('activateGatedScripts', () => {
 
 	it('activates each script only once', () => {
 		document.body.innerHTML =
-			'<script type="text/plain" data-c15t-category="measurement">1</script>';
+			'<script type="text/plain" data-inth-category="measurement">1</script>';
 		const granted = snapshot({ measurement: true });
 		expect(activateGatedScripts(granted)).toBe(1);
 		expect(activateGatedScripts(granted)).toBe(0);
@@ -124,7 +124,7 @@ describe('activateGatedScripts', () => {
 	it('warns once about a misspelled category instead of staying silent', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 		document.body.innerHTML =
-			'<script type="text/plain" data-c15t-category="analytics">1</script>';
+			'<script type="text/plain" data-inth-category="analytics">1</script>';
 
 		expect(activateGatedScripts(snapshot({ measurement: true }))).toBe(0);
 		expect(warn).toHaveBeenCalledOnce();

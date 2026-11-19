@@ -14,7 +14,8 @@
 
 import * as v from 'valibot';
 
-/** Schema for one Google ad tech provider. */
+import { DEFAULT_GVL_ENDPOINT } from './constants';
+
 export const adTechProviderSchema = v.object({
 	/** Google ATP ID. */
 	id: v.pipe(v.number(), v.safeInteger(), v.minValue(1)),
@@ -40,7 +41,7 @@ export const AD_TECH_PROVIDER_PURPOSES = [1, 3, 4] as const;
  * Default provider list endpoint. It serves Google's provider CSV as JSON,
  * filtered by `?providerIds=1,2,3`.
  */
-export const AD_TECH_PROVIDERS_URL = 'https://gvl.inth.app/additional-consent';
+export const AD_TECH_PROVIDERS_URL = `${DEFAULT_GVL_ENDPOINT}/additional-consent`;
 
 /**
  * Shape of a Google Additional Consent v2 string, such as `2~89.486~dv.2572`:
@@ -55,7 +56,7 @@ export const ADDITIONAL_CONSENT_V2_PATTERN =
  * Above it the whole list is requested and narrowed after parsing, so a long
  * configuration costs bytes rather than a failed request.
  */
-export const MAX_AD_TECH_PROVIDER_QUERY_IDS = 500;
+const MAX_AD_TECH_PROVIDER_QUERY_IDS = 500;
 
 /**
  * How long a provider list request may take before it is aborted. The list
@@ -93,12 +94,7 @@ export const adTechProviderFetchSignal = function adTechProviderFetchSignal():
 	return controller.signal;
 };
 
-/**
- * Distinct positive integer IDs, ascending.
- *
- * @param ids - Configured provider IDs.
- * @returns The usable IDs, deduplicated and sorted.
- */
+/** Distinct positive integer IDs, ascending. */
 export const normalizeAdTechProviderIds = function normalizeAdTechProviderIds(
 	ids: readonly number[]
 ): number[] {
@@ -111,7 +107,6 @@ export const normalizeAdTechProviderIds = function normalizeAdTechProviderIds(
  * The request URL for a set of providers. Joined by hand because an endpoint
  * may be relative, which `URL` rejects without a base.
  *
- * @param url - The provider list endpoint.
  * @param ids - Normalized provider IDs.
  * @returns The endpoint with the `providerIds` filter, when it fits.
  */

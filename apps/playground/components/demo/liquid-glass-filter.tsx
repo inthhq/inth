@@ -11,7 +11,7 @@ import { useEffect, useMemo } from 'react';
  * pixels untouched. Displacement ramps up inside an edge band of a rounded
  * rectangle (signed-distance field), so the backdrop bends near the card
  * edges like glass. The map drives an SVG feDisplacementMap referenced from
- * `backdrop-filter: url(#c15t-liquid-glass)` — Chromium only; other engines
+ * `backdrop-filter: url(#inth-liquid-glass)` — Chromium only; other engines
  * keep the plain frosted-blur fallback.
  */
 
@@ -126,7 +126,7 @@ export const LiquidGlassFilter = () => {
 		>
 			<title>Liquid glass refraction filter</title>
 			<filter
-				id="c15t-liquid-glass"
+				id="inth-liquid-glass"
 				x="0"
 				y="0"
 				width="100%"

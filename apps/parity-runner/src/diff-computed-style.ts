@@ -7,7 +7,7 @@
  * not a single wrapper — so matched roots that carry a `data-testid` are
  * captured too. The capture runs inside the page (Playwright `evaluate`)
  * because `getComputedStyle` is a browser API; the diff itself runs
- * Node-side via `diffComputedStyleMap` from `@c15t/conformance`.
+ * Node-side via `diffComputedStyleMap` from `@inth/conformance`.
  * Pass `*` as `elementSelector` to compare all descendants by DOM order.
  *
  * Values are canonicalised before they leave this module, because each
@@ -19,12 +19,12 @@
  * disagree on spelling while meaning the same thing. See
  * {@link normalizeCssValue} for what is folded away.
  *
- * The property list is duplicated here (and in `@c15t/conformance`'s
+ * The property list is duplicated here (and in `@inth/conformance`'s
  * `computed-style.ts`) because Playwright can't import ESM into page context.
  * Keep these in sync.
  */
 
-import type { ComputedStyleSnapshot } from '@c15t/conformance';
+import type { ComputedStyleSnapshot } from '@inth/conformance';
 import type { Page } from '@playwright/test';
 
 const DEFAULT_PROPS = [
@@ -110,6 +110,19 @@ const roundMilliseconds = function roundMilliseconds(seconds: number): number {
 	return Math.round(seconds * 1e9) / 1e6;
 };
 
+const rewriteCssText = function rewriteCssText(text: string): string {
+	return text
+		.replace(CSS_MODULES_SCOPED_NAME, '$<localName>')
+		.replace(
+			SECONDS_LITERAL,
+			(_match, seconds: string) => `${roundMilliseconds(Number(seconds))}ms`
+		)
+		.replace(BARE_DECIMAL, '$<before>0.$<digit>')
+		.replace(TRAILING_ZEROS, (_match, whole: string, fraction?: string) =>
+			fraction ? `${whole}.${fraction}` : whole
+		);
+};
+
 /**
  * Canonicalises one computed CSS value so two spellings of the same value
  * compare equal.
@@ -132,28 +145,12 @@ const roundMilliseconds = function roundMilliseconds(seconds: number): number {
  * Anything else is left alone. Two values that still differ after this differ
  * for a reason the gate should report.
  *
- * @param value - A computed property or custom property value.
- * @returns The canonical spelling of that value.
- *
  * @example
  * ```ts
  * normalizeCssValue('_enter_t5rx4_1 80ms cubic-bezier(.4, 0, .2, 1)');
  * // 'enter 80ms cubic-bezier(0.4, 0, 0.2, 1)'
  * ```
  */
-const rewriteCssText = function rewriteCssText(text: string): string {
-	return text
-		.replace(CSS_MODULES_SCOPED_NAME, '$<localName>')
-		.replace(
-			SECONDS_LITERAL,
-			(_match, seconds: string) => `${roundMilliseconds(Number(seconds))}ms`
-		)
-		.replace(BARE_DECIMAL, '$<before>0.$<digit>')
-		.replace(TRAILING_ZEROS, (_match, whole: string, fraction?: string) =>
-			fraction ? `${whole}.${fraction}` : whole
-		);
-};
-
 export const normalizeCssValue = function normalizeCssValue(
 	value: string
 ): string {
@@ -172,7 +169,6 @@ export const normalizeCssValue = function normalizeCssValue(
  * leaving the element ids and property names untouched.
  *
  * @param snapshots - The map `captureComputedStyleMap` collected in the page.
- * @returns The same map with canonical values.
  */
 export const normalizeComputedStyleMap = function normalizeComputedStyleMap<
 	MapType extends Record<string, ComputedStyleSnapshot>,

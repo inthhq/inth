@@ -20,9 +20,6 @@ import type {
  *
  * Same lifecycle as `createConsentRuntime`; only the modules differ.
  *
- * @param options - The runtime configuration.
- * @param modules - The module factories to mount.
- * @returns The runtime handle.
  * @throws {Error} When `mode` is not a transport factory.
  *
  * @example

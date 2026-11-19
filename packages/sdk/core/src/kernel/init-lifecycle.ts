@@ -30,6 +30,7 @@ import { deepMergeTranslations } from '@inth/sdk-translations';
 
 import type { RecordIssue } from '../consent-record/validation';
 import { ownScriptRegistry } from '../libs/freeze-data';
+import { hasGlobalPrivacyControlSignal } from '../libs/global-privacy-control';
 import { isProductionBuild } from '../libs/is-production';
 import { resolveVendors, withoutManifestVendors } from '../libs/vendors';
 import { applyTranslationOverrides } from '../translations';
@@ -134,21 +135,8 @@ const warnInitFailure = function warnInitFailure(
 	const cause = (error as { message?: unknown } | null)?.message;
 	const detail = typeof cause === 'string' && cause ? `\n${cause}` : '';
 	console.warn(
-		`[c15t] Backend/manifest init failed. The consent banner is withheld and optional categories stay denied. ${retryMessage}${detail}`
+		`[inth] Backend/manifest init failed. The consent banner is withheld and optional categories stay denied. ${retryMessage}${detail}`
 	);
-};
-
-const detectBrowserGpc = function detectBrowserGpc(): boolean {
-	if (typeof navigator === 'undefined') {
-		return false;
-	}
-	try {
-		const value = (navigator as Navigator & { globalPrivacyControl?: unknown })
-			.globalPrivacyControl;
-		return value === true;
-	} catch {
-		return false;
-	}
 };
 
 const hasDocumentListeners = function hasDocumentListeners(): boolean {
@@ -275,7 +263,6 @@ const foldInitResponse = function foldInitResponse(
 			? (response.policySnapshotToken ?? null)
 			: null;
 
-	// IAB passthrough: fold gvl / customVendors / cmpId into the iab slice.
 	let nextIab: KernelIABState | null | undefined;
 	if (
 		response.gvlReference !== undefined ||
@@ -518,7 +505,7 @@ export const createInitLifecycle = function createInitLifecycle({
 		timerStopped = false;
 		if (!started) {
 			started = true;
-			if (detectBrowserGpc()) {
+			if (hasGlobalPrivacyControlSignal()) {
 				commit({ privacyDetected: true });
 			}
 		}
@@ -598,7 +585,7 @@ export const createInitLifecycle = function createInitLifecycle({
 			if (generation !== initGeneration) {
 				return complete(
 					superseded(
-						new Error('c15t: init attempt superseded by a newer init()')
+						new Error('inth: init attempt superseded by a newer init()')
 					)
 				);
 			}
@@ -620,7 +607,7 @@ export const createInitLifecycle = function createInitLifecycle({
 			);
 			if (folded.recordIssues && !isProductionBuild()) {
 				console.warn(
-					'[c15t] Ignored invalid server records on init.',
+					'[inth] Ignored invalid server records on init.',
 					folded.recordIssues
 				);
 			}

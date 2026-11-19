@@ -13,8 +13,6 @@ import type { ProviderTransportFactory } from './mode';
  * Wraps a caller-supplied transport as a provider transport factory.
  *
  * @deprecated For `@inth/react-native` only; see the module comment.
- * @param transport - Canonical kernel transport.
- * @returns A custom provider transport factory.
  * @example
  * ```ts
  * import { custom } from '@inth/sdk-core/transports';
@@ -35,7 +33,7 @@ export const custom = function custom(
 ): ProviderTransportFactory {
 	if ('setConsent' in transport) {
 		throw new TypeError(
-			'c15t: custom() requires a KernelTransport with save(), not endpoint handlers'
+			'inth: custom() requires a KernelTransport with save(), not endpoint handlers'
 		);
 	}
 	return Object.assign(() => transport, { kind: 'custom' as const });

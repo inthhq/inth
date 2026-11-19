@@ -48,13 +48,9 @@ export interface NextRequestContext {
 	 */
 	cookies: () => Awaitable<{ toString: () => string }>;
 
-	/**
-	 * Returns the request headers as a Web `Headers` instance.
-	 */
 	headers: () => Awaitable<Headers>;
 }
 
-/** The request facts the core resolver needs. */
 interface NextRequestFacts {
 	headers: Headers;
 	cookie: string;
@@ -106,7 +102,7 @@ export interface ConsentRequestOptions {
 	/** Request clock reused for record validation and hydration. */
 	now?: number;
 	/**
-	 * Cookie name holding persisted consent. Defaults to `c15t`, the
+	 * Cookie name holding persisted consent. Defaults to `inth`, the
 	 * persistence module's storage key. Set this only if you customized
 	 * `storageConfig.storageKey` client-side; it must match.
 	 */
@@ -245,13 +241,13 @@ const reportPrefetchError = function reportPrefetchError(
 	}
 	const message = error instanceof Error ? error.message : String(error);
 	console.warn(
-		`[c15t] resolveConsent: request to ${url ?? 'the backend'} failed (${message}); rendering with the request-only state and letting the client retry.`
+		`[inth] resolveConsent: request to ${url ?? 'the backend'} failed (${message}); rendering with the request-only state and letting the client retry.`
 	);
 };
 
 /**
  * Resolve the visitor's consent state for the current request, from
- * `c15t.config.ts`.
+ * `inth.config.ts`.
  *
  * 1. Reads the consent cookie, geo headers, language, and GPC from the
  *    request.
@@ -295,30 +291,27 @@ export const resolveConsent = async function resolveConsent(
 	const facts = options.request
 		? await readRequestContext(options.request)
 		: await readAppRouterRequest();
-	const { routePrefix } = source;
 	return (await resolveRequestConsent({
+		...source.server.consent,
 		adapter: '@inth/nextjs',
 		experiment: options.experiment,
 		fetch: options.fetch,
 		forwardHeaders: options.forwardHeaders,
-		gvlRoute: routePrefix ? `${routePrefix}/init` : undefined,
-		initHeaders: source.initHeaders,
 		journey: options.journey ?? source.config?.journey,
-		manifest: source.snapshot,
 		// The manifest route's Data Cache hint, so a render and the route
 		// share the Next.js Data Cache as well as the process cache.
 		manifestFetchInit: { next: createManifestFetchInit().next } as Omit<
 			RequestInit,
 			'headers' | 'method'
 		>,
-		manifestUrl: source.manifestUrl,
-		mode: source.mode,
 		now: options.now,
 		onError: (error, url) => reportPrefetchError(options, error, url),
 		overrides: { country: options.country, language: options.language },
-		// The app's own consent route: the render never fetches it.
-		ownRoutes: routePrefix ? [routePrefix] : [],
-		projectUrl: source.projectUrl,
+		// Next.js mounts no consent route unless the config names one, and an
+		// app often rewrites `/api/inth` to its backend, so only an explicit
+		// prefix is guarded. The loop guard still stops a render that reaches
+		// itself.
+		ownRoutes: source.routePrefix ? [source.routePrefix] : [],
 		request: facts,
 		storage: options.cookieName
 			? { storageKey: options.cookieName }

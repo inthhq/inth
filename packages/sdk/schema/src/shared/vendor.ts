@@ -29,7 +29,6 @@ export type VendorCategoryCondition =
 
 const categoryNameSchema = v.picklist(POLICY_CONSENT_CATEGORIES);
 
-/** Recursive schema for {@link VendorCategoryCondition}. */
 export const vendorCategoryConditionSchema: v.GenericSchema<VendorCategoryCondition> =
 	v.lazy(() =>
 		v.union([
@@ -79,7 +78,6 @@ export const vendorSchema = v.object({
 	 * subject cannot switch off.
 	 */
 	disabled: v.optional(v.boolean()),
-	/** Vendor homepage. */
 	homepageUrl: v.optional(v.pipe(v.string(), v.url())),
 	id: vendorIdSchema,
 	/** Registered legal entity, when it differs from the display name. */

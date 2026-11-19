@@ -1,7 +1,7 @@
 {
 	"name": "@inth/astro",
 	"version": "3.2.0-canary.0",
-	"description": "Astro cookie consent banner for c15t, with server-rendered markup, preference center islands and geo-aware middleware.",
+	"description": "Astro cookie consent banner for Inth, with server-rendered markup, preference center islands and geo-aware middleware.",
 	"keywords": [
 		"astro",
 		"astro-cookie-consent",
@@ -32,14 +32,14 @@
 		"typescript",
 		"vue"
 	],
-	"homepage": "https://c15t.com/docs/frameworks/astro/quickstart",
+	"homepage": "https://inth.com",
 	"bugs": {
-		"url": "https://github.com/c15t/c15t/issues"
+		"url": "https://github.com/inthhq/inth/issues"
 	},
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/c15t/c15t.git",
+		"url": "git+https://github.com/inthhq/inth.git",
 		"directory": "packages/sdk/astro"
 	},
 	"files": [
@@ -174,9 +174,9 @@
 		"@astrojs/react": "^6.0.6",
 		"@astrojs/svelte": "^9.0.1",
 		"@babel/parser": "7.28.5",
-		"@c15t/conformance": "workspace:*",
-		"@c15t/typescript-config": "workspace:*",
-		"@c15t/vitest-config": "workspace:*",
+		"@inth/conformance": "workspace:*",
+		"@inth/typescript-config": "workspace:*",
+		"@inth/vitest-config": "workspace:*",
 		"@rslib/core": "0.23.2",
 		"@types/node": "25.5.0",
 		"@types/react": "19.2.17",

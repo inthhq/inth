@@ -1,4 +1,4 @@
-import { ChildBeacon } from '@c15t/next-compat-shared/network-beacons';
+import { ChildBeacon } from '@inth/next-compat-shared/network-beacons';
 
 const NetworkBlockerPage = () => (
 	<>

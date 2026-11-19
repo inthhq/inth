@@ -72,7 +72,7 @@ afterEach(() => {
 	localStorage.clear();
 	clearCookies();
 	document.body.replaceChildren();
-	document.head.querySelector('#c15t-styles')?.remove();
+	document.head.querySelector('#inth-styles')?.remove();
 });
 
 describe('mountConsentUI', () => {
@@ -95,7 +95,7 @@ describe('mountConsentUI', () => {
 		client.kernel.set.experiment({
 			acknowledgedDiagnostics: false,
 			arm: 'bar',
-			assignedBy: 'c15t',
+			assignedBy: 'inth',
 			id: 'banner-shape',
 		});
 		expect(query(root, 'consent-banner-root').dataset.variant).toBe('bar');
@@ -128,7 +128,7 @@ describe('mountConsentUI', () => {
 		client.kernel.set.experiment({
 			acknowledgedDiagnostics: false,
 			arm: 'branded',
-			assignedBy: 'c15t',
+			assignedBy: 'inth',
 			id: 'card-class',
 		});
 		expect(query(root, 'consent-banner-card').classList).toContain('arm-card');
@@ -171,7 +171,7 @@ describe('mountConsentUI', () => {
 			client.kernel.set.experiment({
 				acknowledgedDiagnostics: false,
 				arm,
-				assignedBy: 'c15t',
+				assignedBy: 'inth',
 				id: 'trigger-icon',
 			});
 		assign('branded');
@@ -199,7 +199,7 @@ describe('mountConsentUI', () => {
 		client.kernel.set.experiment({
 			acknowledgedDiagnostics: false,
 			arm: 'bold',
-			assignedBy: 'c15t',
+			assignedBy: 'inth',
 			id: 'button-style',
 		});
 		expect(root.querySelector('style')?.textContent).toContain('#123456');
@@ -265,6 +265,23 @@ describe('mountConsentUI', () => {
 		expect(document.body.style.overflow).toBe('hidden');
 	});
 
+	it('styles the action buttons from theme.consentActions', async () => {
+		const { root } = await mount({
+			theme: {
+				consentActions: {
+					accept: { mode: 'filled' },
+					primary: { mode: 'ghost' },
+				},
+			},
+		});
+		const button = (action: string) =>
+			query(root, `consent-banner-${action}-button`);
+		expect(button('accept').dataset.mode).toBe('filled');
+		expect(button('customize').dataset.mode).toBe('ghost');
+		expect(button('customize').dataset.variant).toBe('primary');
+		expect(button('reject').dataset.mode).toBe('stroke');
+	});
+
 	it('keeps the default corner for right-to-left text', async () => {
 		const { root } = await mount(
 			{},
@@ -293,14 +310,14 @@ describe('mountConsentUI', () => {
 			'button { color: blue; }'
 		);
 		client.dispose();
-		expect(document.querySelector('[data-c15t-ui] style')).toBeNull();
+		expect(document.querySelector('[data-inth-ui] style')).toBeNull();
 	});
 	it('renders the banner inside a shadow root with the shared DOM contract', async () => {
 		const { root, handle } = await mount({ styles: true });
 
 		expect(handle.host.shadowRoot).toBe(root);
 		expect(root.querySelector('style')?.textContent).toContain(
-			'.c15t-theme-root'
+			'.inth-theme-root'
 		);
 		const banner = query(root, 'consent-banner-root');
 		expect(banner.getAttribute('dir')).toBe('ltr');
@@ -318,9 +335,10 @@ describe('mountConsentUI', () => {
 				'data-variant'
 			)
 		).toBe('primary');
+		// No branding from the backend: the tag links to inth.com.
 		expect(
 			query(root, 'consent-banner-branding').getAttribute('href')
-		).toContain('c15t.com');
+		).toContain('inth.com');
 		expect(
 			root.querySelector('[data-testid="consent-dialog-root"]')
 		).toBeNull();
@@ -499,7 +517,7 @@ describe('mountConsentUI', () => {
 			client.kernel.set.experiment({
 				acknowledgedDiagnostics: false,
 				arm: 'bar',
-				assignedBy: 'c15t',
+				assignedBy: 'inth',
 				id: 'banner-shape',
 			});
 
@@ -667,8 +685,8 @@ describe('mountConsentUI', () => {
 		expect(rows).toEqual([
 			'necessary',
 			'functionality',
-			'measurement',
 			'experience',
+			'measurement',
 			'marketing',
 		]);
 	});
@@ -744,8 +762,22 @@ describe('mountConsentUI', () => {
 		expect(link.textContent).toBe('Privacy Policy');
 	});
 
-	it('shows the trigger once nothing else is open', async () => {
+	it('shows the trigger beside the banner, and hides it over the dialog', async () => {
 		const { root, client } = await mount({ trigger: true });
+
+		const trigger = query(root, 'consent-dialog-trigger');
+		expect(client.getSnapshot().activeUI).toBe('banner');
+		expect(trigger.hidden).toBe(false);
+
+		trigger.click();
+		expect(client.getSnapshot().activeUI).toBe('dialog');
+		expect(trigger.hidden).toBe(true);
+	});
+
+	it('waits for the answer with after-consent', async () => {
+		const { root, client } = await mount({
+			trigger: { showWhen: 'after-consent' },
+		});
 
 		const trigger = query(root, 'consent-dialog-trigger');
 		expect(trigger.hidden).toBe(true);
@@ -753,8 +785,28 @@ describe('mountConsentUI', () => {
 		await client.acceptAll();
 
 		expect(trigger.hidden).toBe(false);
-		trigger.click();
-		expect(client.getSnapshot().activeUI).toBe('dialog');
+	});
+
+	it('hides the trigger under a policy that leaves nothing to manage', async () => {
+		const { root } = await mount({ trigger: true }, { policy: ['worldNone'] });
+
+		expect(query(root, 'consent-dialog-trigger').hidden).toBe(true);
+	});
+
+	it('names the trigger from the trigger translations', async () => {
+		const { root } = await mount(
+			{ trigger: true },
+			{
+				i18n: {
+					locale: 'en',
+					messages: { en: { trigger: { label: 'Cookie settings' } } },
+				},
+			}
+		);
+
+		expect(
+			query(root, 'consent-dialog-trigger').getAttribute('aria-label')
+		).toBe('Cookie settings');
 	});
 
 	it('renders into the light DOM with a stylesheet owned by the mount', async () => {
@@ -782,7 +834,7 @@ describe('mountConsentUI', () => {
 		const { root, handle } = await mount({ colorScheme: 'dark' });
 
 		expect(
-			root.querySelector('.c15t-host')?.classList.contains('c15t-dark')
+			root.querySelector('.inth-host')?.classList.contains('inth-dark')
 		).toBe(true);
 		expect(handle.host.style.colorScheme).toBe('dark');
 	});
@@ -801,17 +853,17 @@ describe('mountConsentUI', () => {
 		try {
 			const { root, handle } = await mount({ colorScheme: null });
 			const dark = () =>
-				root.querySelector('.c15t-host')?.classList.contains('c15t-dark') &&
-				handle.host.classList.contains('c15t-dark');
+				root.querySelector('.inth-host')?.classList.contains('inth-dark') &&
+				handle.host.classList.contains('inth-dark');
 			expect(dark()).toBe(false);
 
 			// The site's own class, either spelling, reaches the shadow root.
 			html.classList.add('dark');
 			await vi.waitFor(() => expect(dark()).toBe(true));
-			html.classList.replace('dark', 'c15t-dark');
+			html.classList.replace('dark', 'inth-dark');
 			await Promise.resolve();
 			expect(dark()).toBe(true);
-			html.classList.remove('c15t-dark');
+			html.classList.remove('inth-dark');
 			await vi.waitFor(() => expect(dark()).toBe(false));
 			expect(html.classList.length).toBe(0);
 		} finally {
@@ -825,7 +877,7 @@ describe('mountConsentUI', () => {
 
 		handle.destroy();
 
-		expect(document.querySelector('[data-c15t-ui]')).toBeNull();
+		expect(document.querySelector('[data-inth-ui]')).toBeNull();
 	});
 
 	describe('theme.slots', () => {

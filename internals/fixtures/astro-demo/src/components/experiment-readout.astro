@@ -1,7 +1,7 @@
 ---
 /**
  * Demo-only banner-experiment panel. It stays hidden unless the build runs
- * with `C15T_EXPERIMENT=1`, which puts the banner-shape experiment in the
+ * with `INTH_EXPERIMENT=1`, which puts the banner-shape experiment in the
  * showcase config. Lists the arm this request runs and each
  * `window.dataLayer` event pushed under it by `src/experiment-client.ts`.
  */
@@ -30,7 +30,7 @@
 
 	// Dispatched by `src/experiment-client.ts` after each push. Not imported
 	// from there, which would bundle the client entrypoint into this page.
-	const EXPERIMENT_EVENT = 'c15t-example:experiment';
+	const EXPERIMENT_EVENT = 'inth-example:experiment';
 	type DataLayerEntry = Record<string, unknown>;
 
 	class ExperimentReadout extends HTMLElement {
@@ -82,7 +82,7 @@
 		};
 
 		connectedCallback() {
-			// c15t boots from a module script, which can run after this one.
+			// Inth boots from a module script, which can run after this one.
 			document.addEventListener('DOMContentLoaded', this.connect, {
 				once: true,
 			});

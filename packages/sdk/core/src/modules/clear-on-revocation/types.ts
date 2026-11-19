@@ -1,6 +1,6 @@
 import type { OptionalConsentCategory } from '../../consent-record/types';
+import type { cookieDomainsOf } from '../../libs/cookie/domain-utils';
 import type { StorageConfig } from '../../libs/cookie/types';
-import type { resolveStorageKeys } from '../../libs/storage-keys';
 import type { ConsentKernel } from '../../types';
 import type { getEffectiveGateState } from '../has';
 
@@ -52,13 +52,15 @@ export interface ClearOnRevocationHandle {
  * @internal
  */
 export interface ClearOnRevocationTools {
-	/** `getEffectiveGateState`. */
+	/** `cookieDomainsOf`: the domains a cookie may be scoped to. */
+	cookieDomainsOf: typeof cookieDomainsOf;
 	gateState: typeof getEffectiveGateState;
-	/** Shared persistence key map, including auxiliary records. */
-	resolveStorageKeys: typeof resolveStorageKeys;
 	optionalConsentCategories: readonly OptionalConsentCategory[];
-	/** c15t's own keys besides the configurable consent key. */
-	protectedStorageKeys: readonly string[];
-	/** The default consent storage key. */
-	storageKey: string;
+	/** `ownedStorageKeys`: the names cleanup never deletes. */
+	ownedStorageKeys: (config?: StorageConfig) => string[];
+	/**
+	 * The sessionStorage names cleanup never deletes. Inth keeps no consent
+	 * record there, only a `journey: 'tab'` journey id.
+	 */
+	ownedSessionStorageKeys: readonly string[];
 }

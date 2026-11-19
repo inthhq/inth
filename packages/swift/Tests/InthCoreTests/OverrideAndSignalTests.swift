@@ -8,7 +8,7 @@ import XCTest
 ///
 /// `packages/native-protocol/CONTRACT.md` first described a `test` override and an `msa` signal, and
 /// its Corrections section retires both. The expectations here come from
-/// `KernelOverrides` and `KernelPrivacySignals` in `@c15t/core`, which is the
+/// `KernelOverrides` and `KernelPrivacySignals` in `@inth/sdk-core`, which is the
 /// authority, not from a local opinion about what looked reasonable.
 final class OverrideAndSignalTests: XCTestCase {
     /// A stored snapshot as a mutable object, so a test can splice one retired key
@@ -253,7 +253,7 @@ final class OverrideAndSignalTests: XCTestCase {
 
     // MARK: - Staleness
 
-    /// Mirror of `decisionInputsMatchOverrides` in `@c15t/core`.
+    /// Mirror of `decisionInputsMatchOverrides` in `@inth/sdk-core`.
     ///
     /// The kernel owns the rule and the native cores do not run it, so the test
     /// feeds it the values this core actually recorded and shows the rule reaches a

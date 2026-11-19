@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	buildConsentManifestFromConfig,
 	policyRulePresets,
-} from '../packages/sdk/schema/dist/index.js';
+} from '../packages/sdk/schema/src/index.ts';
 import { exportMobilePolicy } from './export-mobile-policy';
 
 const now = Date.parse('2026-10-29T00:00:00Z');

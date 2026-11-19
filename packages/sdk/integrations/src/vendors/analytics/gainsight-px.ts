@@ -28,7 +28,7 @@ export interface GainsightPxConfig {
 	htmlSanitization?: boolean;
 	/** Allowed domains for content referenced by engagements. */
 	htmlSanitizationAllowedDomains?: string[];
-	/** c15t owns this switch and enables it only after mapped consent. */
+	/** Inth owns this switch and enables it only after mapped consent. */
 	enableTag?: never;
 	/** Other JSON-serializable SDK configuration values documented by PX. */
 	[key: string]: GainsightPxValue | undefined;
@@ -69,9 +69,9 @@ export type GainsightPxOptions = GainsightPxBaseOptions &
 	GainsightPxIdentityOptions;
 
 // Keep the installed key across server startup and PX replacing its stub.
-const productKeyGlobal = '__c15tGainsightPxProductKey';
+const productKeyGlobal = '__inthGainsightPxProductKey';
 // PX may replace its stub and discard its queue before client hydration.
-const setupGlobal = '__c15tGainsightPxSetup';
+const setupGlobal = '__inthGainsightPxSetup';
 
 /** PX's official snippet queue, created only after mapped consent. */
 export const gainsightPxManifest = {
@@ -175,12 +175,12 @@ const clearPendingGainsightPx = (): void => {
 		)
 	) {
 		Reflect.deleteProperty(window, 'aptrinsic');
-		Reflect.deleteProperty(window, '__c15tGainsightPxProductKey');
+		Reflect.deleteProperty(window, '__inthGainsightPxProductKey');
 	}
 };
 
 // Match clearPendingGainsightPx without serializing instrumented or bundled code.
-const clearPendingGainsightPxSource = `(function(){if(typeof window==='undefined')return;var px=window.aptrinsic;if(typeof px==='function'&&Array.isArray(px.q)&&px.__sdkBundleStarted!==true){Reflect.deleteProperty(window,'aptrinsic');Reflect.deleteProperty(window,'__c15tGainsightPxProductKey')}})();`;
+const clearPendingGainsightPxSource = `(function(){if(typeof window==='undefined')return;var px=window.aptrinsic;if(typeof px==='function'&&Array.isArray(px.q)&&px.__sdkBundleStarted!==true){Reflect.deleteProperty(window,'aptrinsic');Reflect.deleteProperty(window,'__inthGainsightPxProductKey')}})();`;
 
 const assertProductKey = (productKey: string): void => {
 	if (typeof window === 'undefined') {
@@ -191,7 +191,7 @@ const assertProductKey = (productKey: string): void => {
 	if (!hasStartedGainsightPx()) {
 		return;
 	}
-	// c15t's bootstrap always records its product key, including server starts.
+	// Inth's bootstrap always records its product key, including server starts.
 	if (typeof previous !== 'string') {
 		throw new Error(
 			'gainsightPx: another Gainsight PX installation is already running. Remove the other PX snippet and reload the page.'
@@ -223,7 +223,7 @@ const assertStartupConfig = (config: GainsightPxConfig | undefined): void => {
 
 const unadoptedServerElement = (): HTMLScriptElement | undefined => {
 	const scope: object = globalThis;
-	const started = '__c15tStarted' in scope ? scope.__c15tStarted : undefined;
+	const started = '__inthStarted' in scope ? scope.__inthStarted : undefined;
 	if (typeof started !== 'object' || started === null) {
 		return;
 	}
@@ -231,16 +231,16 @@ const unadoptedServerElement = (): HTMLScriptElement | undefined => {
 	const element = Object.values(started).find(
 		(candidate): candidate is HTMLScriptElement =>
 			candidate instanceof HTMLScriptElement &&
-			'__c15tScript' in candidate &&
-			candidate.__c15tScript === 'gainsight-px'
+			'__inthScript' in candidate &&
+			candidate.__inthScript === 'gainsight-px'
 	);
 	if (
 		!element ||
-		('__c15tAdopted' in element && element.__c15tAdopted) ||
+		('__inthAdopted' in element && element.__inthAdopted) ||
 		!(
 			element.isConnected ||
-			('__c15tInsert' in element && element.__c15tInsert) ||
-			('__c15tHeld' in element && element.__c15tHeld)
+			('__inthInsert' in element && element.__inthInsert) ||
+			('__inthHeld' in element && element.__inthHeld)
 		)
 	) {
 		return;

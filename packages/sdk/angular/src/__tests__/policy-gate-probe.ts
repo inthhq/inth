@@ -12,19 +12,19 @@ import {
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentGate, ConsentGatePlaceholder],
-	selector: 'c15t-policy-gate-probe',
+	selector: 'inth-policy-gate-probe',
 	template: `
-		<c15t-consent-gate category="marketing">
-			<ng-template c15tConsentGatePlaceholder>
+		<inth-consent-gate category="marketing">
+			<ng-template inthConsentGatePlaceholder>
 				<div data-testid="policy-iframe-placeholder">Blocked frame</div>
 			</ng-template>
 			<iframe
 				title="probe"
 				sandbox=""
-				src="about:blank#c15t-policy-probe"
+				src="about:blank#inth-policy-probe"
 				data-testid="policy-iframe"
 			></iframe>
-		</c15t-consent-gate>
+		</inth-consent-gate>
 	`,
 })
 export class PolicyGateProbe {}

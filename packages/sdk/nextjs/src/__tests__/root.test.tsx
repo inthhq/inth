@@ -1,12 +1,3 @@
-/**
- * Tests for ConsentRoot — the client component that creates a kernel
- * from the server-resolved state and wraps children in ConsentProvider.
- *
- * Invariants verified:
- * - State is respected (initial consents, initial overrides).
- * - Kernel is per-mount (two mounts → two kernels).
- * - Selector hooks work downstream.
- */
 import { useConsent, useOverrides } from '@inth/react';
 import { describe, expect, test } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -72,9 +63,6 @@ describe('ConsentRoot: kernel is per-mount', () => {
 			);
 		};
 
-		// Two separate ConsentRoot mounts with different state values.
-		// Each must produce its own kernel; mutating one shouldn't affect
-		// the other.
 		const screen = await render(
 			<div>
 				<ConsentRoot

@@ -7,7 +7,7 @@ import { expect, it } from 'vitest';
 import { browserInstallations } from './install-browsers';
 
 it('finds nested installed versions rather than manifest ranges, independently for each checkout', () => {
-	const root = mkdtempSync(join(tmpdir(), 'c15t-browsers-'));
+	const root = mkdtempSync(join(tmpdir(), 'inth-browsers-'));
 	const json = (path: string, value: unknown) => {
 		mkdirSync(dirname(path), { recursive: true });
 		writeFileSync(path, JSON.stringify(value));

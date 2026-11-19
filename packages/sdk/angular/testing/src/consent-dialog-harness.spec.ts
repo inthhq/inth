@@ -14,7 +14,7 @@ import { ConsentDialogHarness } from './consent-dialog-harness';
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentDialog],
 	selector: 'test-dialog-host',
-	template: '<c15t-consent-dialog />',
+	template: '<inth-consent-dialog />',
 })
 class DialogHost {}
 

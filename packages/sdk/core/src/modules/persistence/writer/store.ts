@@ -1,5 +1,5 @@
 /**
- * Storage writes for every c15t record: the v3 envelope, the notice
+ * Storage writes for every Inth record: the v3 envelope, the notice
  * dismissal and the vendor denials. The reads that pair with them are in
  * `../record-storage.ts`; clearing them all is first-load code, in
  * `../clear.ts`.
@@ -10,7 +10,7 @@
  *
  * @internal
  */
-import type { CookieOptions, CookieWriteReport } from '../../../libs/cookie';
+import type { CookieWriteReport } from '../../../libs/cookie';
 import type {
 	DecodeResult,
 	StorageIssue,
@@ -28,13 +28,11 @@ import {
 	encodeVendorChoice,
 	encodeVendorChoiceCompact,
 } from './encode';
-import type { PersistenceTools } from './types';
+import type { RecordStoreTools } from './types';
 
 export interface WriteStoredConsentOptions {
 	/** Current time. Rejects envelopes carrying future timestamps. */
 	now: number;
-	/** Cookie attributes; defaults derive from `config`. */
-	cookie?: CookieOptions;
 	config?: StorageConfig;
 }
 
@@ -54,7 +52,6 @@ export type WriteStoredConsentResult =
 	| { ok: true; written: WriteReport; envelope: StoredConsentEnvelope }
 	| { ok: false; issues: StorageIssue[] };
 
-/** Report of one auxiliary write. */
 export type AuxiliaryWriteReport = WriteReport;
 
 /** The record writes, bound to the first-load functions they call. */
@@ -87,8 +84,7 @@ export interface RecordStore {
 	writeStoredNoticeDismissal: (
 		record: StoredNoticeDismissal,
 		config: StorageConfig | undefined,
-		now: number,
-		cookie?: CookieOptions
+		now: number
 	) => DecodeResult<StoredNoticeDismissal> & {
 		written?: AuxiliaryWriteReport;
 	};
@@ -99,13 +95,9 @@ export interface RecordStore {
 	writeStoredVendorChoice: (
 		record: StoredVendorChoice,
 		config: StorageConfig | undefined,
-		now: number,
-		cookie?: CookieOptions
+		now: number
 	) => DecodeResult<StoredVendorChoice> & { written?: AuxiliaryWriteReport };
-	clearStoredVendorChoice: (
-		config?: StorageConfig,
-		cookie?: CookieOptions
-	) => void;
+	clearStoredVendorChoice: (config?: StorageConfig) => void;
 }
 
 const hasLocalStorage = function hasLocalStorage(): boolean {
@@ -125,18 +117,6 @@ const writeLocalStorageText = function writeLocalStorageText(
 		console.warn('Failed to save consent to localStorage:', error);
 	}
 	return false;
-};
-
-const removeLocalStorageKey = function removeLocalStorageKey(
-	key: string
-): void {
-	try {
-		if (hasLocalStorage()) {
-			window.localStorage.removeItem(key);
-		}
-	} catch (error) {
-		console.warn('Failed to remove consent from localStorage:', error);
-	}
 };
 
 /**
@@ -159,37 +139,28 @@ const cookieText = function cookieText(encode: () => string): string | null {
 /** A cookie write that did not run: the record has no cookie text. */
 const NO_COOKIE_TEXT: CookieWriteReport = { attempted: false, verified: false };
 
-/**
- * Bind the record writes to the first-load functions they call.
- *
- * @param tools - Storage keys, validators, cookie reads and writes.
- * @returns The record writes.
- */
+/** Bind the record writes to the first-load functions they call. */
 export const createRecordStore = function createRecordStore(
-	tools: PersistenceTools
+	tools: RecordStoreTools
 ): RecordStore {
-	/** Write a cookie, unless the record has no cookie text. */
 	const writeCookieText = function writeCookieText(
 		key: string,
 		text: string | null,
-		config: StorageConfig | undefined,
-		cookie?: CookieOptions
+		config: StorageConfig | undefined
 	): CookieWriteReport {
 		return text === null
 			? NO_COOKIE_TEXT
-			: tools.writeCookie(key, text, cookie, config);
+			: tools.writeCookie(key, text, config);
 	};
 
-	/** Write one record's localStorage copy and cookie projection. */
 	const writeBoth = function writeBoth(
 		key: string,
 		local: string,
 		compact: string | null,
-		config: StorageConfig | undefined,
-		cookie?: CookieOptions
+		config: StorageConfig | undefined
 	): AuxiliaryWriteReport {
 		const localStorageWritten = writeLocalStorageText(key, local);
-		const cookieDetail = writeCookieText(key, compact, config, cookie);
+		const cookieDetail = writeCookieText(key, compact, config);
 		return {
 			cookie: cookieDetail.attempted && cookieDetail.verified,
 			cookieDetail,
@@ -199,18 +170,16 @@ export const createRecordStore = function createRecordStore(
 
 	const removeBoth = function removeBoth(
 		key: string,
-		config: StorageConfig | undefined,
-		cookie?: CookieOptions
+		config: StorageConfig | undefined
 	): void {
-		removeLocalStorageKey(key);
-		tools.deleteCookie(key, cookie, config);
+		tools.removeLocal(key);
+		tools.deleteCookie(key, config);
 	};
 
 	const clearStoredVendorChoice: RecordStore['clearStoredVendorChoice'] = (
-		config,
-		cookie
+		config
 	) => {
-		removeBoth(tools.keys(config).vendors, config, cookie);
+		removeBoth(tools.keys(config).vendors, config);
 	};
 
 	return {
@@ -228,18 +197,17 @@ export const createRecordStore = function createRecordStore(
 			const cookieDetail = writeCookieText(
 				keys.consent,
 				cookieText(() => encodeStoredConsentEnvelopeCompact(validated.record)),
-				options.config,
-				options.cookie
+				options.config
 			);
 			if (!cookieDetail.attempted && cookieDetail.error !== undefined) {
 				console.warn('Failed to save consent to cookie:', cookieDetail.error);
 			}
 			const cookieWritten = cookieDetail.attempted && cookieDetail.verified;
 			if (cookieWritten) {
-				removeLocalStorageKey(keys.cookieMiss);
+				tools.removeLocal(keys.cookieMiss);
 				// The local copy is now older than the cookie.
 				if (!localStorageWritten) {
-					removeLocalStorageKey(keys.consent);
+					tools.removeLocal(keys.consent);
 				}
 			} else if (localStorageWritten) {
 				writeLocalStorageText(
@@ -258,7 +226,7 @@ export const createRecordStore = function createRecordStore(
 				},
 			};
 		},
-		writeStoredNoticeDismissal(record, config, now, cookie) {
+		writeStoredNoticeDismissal(record, config, now) {
 			const validated = tools.decodeNotice(record, now);
 			if (validated.ok === false) {
 				return validated;
@@ -269,8 +237,7 @@ export const createRecordStore = function createRecordStore(
 				key,
 				encodeNoticeDismissal(validated.record),
 				cookieText(() => encodeNoticeDismissalCompact(validated.record)),
-				config,
-				cookie
+				config
 			);
 			// Keep the original cookie readable by older runtimes. The companion is
 			// usable only with the same acknowledgement, never as a record on its own.
@@ -279,18 +246,17 @@ export const createRecordStore = function createRecordStore(
 				const subjectDetail = writeCookieText(
 					keys.noticeSubject,
 					cookieText(() => encodeNoticeSubjectCompact(validated.record)),
-					config,
-					cookie
+					config
 				);
 				subjectWritten = subjectDetail.attempted && subjectDetail.verified;
 			} else {
-				tools.deleteCookie(keys.noticeSubject, cookie, config);
+				tools.deleteCookie(keys.noticeSubject, config);
 				subjectWritten = tools.rawCookie(keys.noticeSubject) === null;
 			}
 			if (written.cookie && subjectWritten) {
-				removeLocalStorageKey(keys.noticeCookieMiss);
+				tools.removeLocal(keys.noticeCookieMiss);
 				if (!written.localStorage) {
-					removeLocalStorageKey(key);
+					tools.removeLocal(key);
 				}
 			} else if (written.localStorage) {
 				writeLocalStorageText(
@@ -303,7 +269,7 @@ export const createRecordStore = function createRecordStore(
 			}
 			return { ...validated, written };
 		},
-		writeStoredVendorChoice(record, config, now, cookie) {
+		writeStoredVendorChoice(record, config, now) {
 			const validated = tools.decodeVendors(record, now);
 			if (validated.ok === false) {
 				return validated;
@@ -314,8 +280,7 @@ export const createRecordStore = function createRecordStore(
 					tools.keys(config).vendors,
 					encodeVendorChoice(validated.record),
 					cookieText(() => encodeVendorChoiceCompact(validated.record)),
-					config,
-					cookie
+					config
 				),
 			};
 		},

@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { c15tVersionHeaders } from '../../transports/version-header';
+import { inthVersionHeaders } from '../../libs/version-header';
 import {
 	forwardConsentRequest,
 	isConsentProxyPathAllowed,
@@ -53,7 +53,7 @@ const forward = function forward(
 		options,
 		path,
 		projectUrl: init.projectUrl ?? BACKEND,
-		request: new Request(`https://shop.example/api/c15t/${path}?q=1`, {
+		request: new Request(`https://shop.example/api/inth/${path}?q=1`, {
 			body: init.body,
 			headers: init.headers,
 			method: init.method ?? 'GET',
@@ -120,10 +120,10 @@ describe('forwardConsentRequest', () => {
 		expect(await new Response(calls[0]?.init.body as BodyInit).text()).toBe(
 			'{"a":1}'
 		);
-		expect(calls[0]?.init.headers.get('x-c15t-proxy')).toBe(
+		expect(calls[0]?.init.headers.get('x-inth-proxy')).toBe(
 			'@c15t/test-adapter'
 		);
-		for (const [name, value] of Object.entries(c15tVersionHeaders)) {
+		for (const [name, value] of Object.entries(inthVersionHeaders)) {
 			expect(calls[0]?.init.headers.get(name)).toBe(value);
 		}
 	});
@@ -308,7 +308,7 @@ describe('forwardConsentRequest upstream failures', () => {
 			options,
 			path: 'subjects',
 			projectUrl: BACKEND,
-			request: new Request('https://shop.example/api/c15t/subjects', {
+			request: new Request('https://shop.example/api/inth/subjects', {
 				method: 'POST',
 			}),
 		});

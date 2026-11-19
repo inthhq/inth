@@ -1,6 +1,6 @@
 import { getContext, setContext } from 'svelte';
 
-const DIALOG_ROOT_CONTEXT_KEY = Symbol('c15t-svelte-dialog-root');
+const DIALOG_ROOT_CONTEXT_KEY = Symbol('inth-svelte-dialog-root');
 
 export interface DialogRootContextValue {
 	readonly closeOnEscape: boolean;

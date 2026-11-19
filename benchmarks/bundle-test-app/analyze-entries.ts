@@ -3,9 +3,9 @@ import { readdir } from 'node:fs/promises';
 import { basename, dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { bundleEntryBudgets } from '@c15t/benchmarking/budgets';
-import { BENCHMARK_SCHEMA_VERSION } from '@c15t/benchmarking/schema';
-import type { BenchmarkResult, MetricBudget } from '@c15t/benchmarking/schema';
+import { bundleEntryBudgets } from '@inth/benchmarking/budgets';
+import { BENCHMARK_SCHEMA_VERSION } from '@inth/benchmarking/schema';
+import type { BenchmarkResult, MetricBudget } from '@inth/benchmarking/schema';
 import {
 	getEnvironment,
 	safeBaseSha,
@@ -13,7 +13,7 @@ import {
 	safeGitDirty,
 	summarizeMetric,
 	writeJson,
-} from '@c15t/benchmarking/utils';
+} from '@inth/benchmarking/utils';
 import { build } from 'esbuild';
 
 import { measureEntryOutputs } from './measure-assets';
@@ -194,7 +194,7 @@ const toBenchmarkResult = function toBenchmarkResult(
 			'lazy* counts every deferred chunk esbuild emits; reachableLazy* counts only the chunks the entry can load through import().',
 			'gzipSize and rawSize count only JavaScript chunks reachable from the entry.',
 		],
-		package: '@c15t/next-bundle-bench',
+		package: '@inth/next-bundle-bench',
 		runtime: 'esbuild',
 		scenario: measurement.name,
 		schemaVersion: BENCHMARK_SCHEMA_VERSION,

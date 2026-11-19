@@ -208,7 +208,7 @@ describe('region extraction', () => {
 	test('omits lines that end in a docs:hide comment', () => {
 		const hidden = [
 			'// #region docs:config',
-			'c15t({',
+			'inth({',
 			'\tmode: hosted({ projectUrl }),',
 			'\tdebug: true, // docs:hide',
 			'});',
@@ -219,7 +219,7 @@ describe('region extraction', () => {
 			'// #endregion docs:config',
 		].join('\n');
 		expect(extractRegion(hidden, 'config', 'x.tsx')).toBe(
-			'c15t({\n\tmode: hosted({ projectUrl }),\n});\n<Banner />'
+			'inth({\n\tmode: hosted({ projectUrl }),\n});\n<Banner />'
 		);
 	});
 
@@ -237,7 +237,7 @@ describe('region extraction', () => {
 	test('omits hide blocks, while a region inside one still publishes', () => {
 		const block = [
 			'// #region docs:config',
-			'c15t({',
+			'inth({',
 			"\tui: 'svelte',",
 			'\t// #hide docs',
 			'\t// #region docs:vendors',
@@ -251,7 +251,7 @@ describe('region extraction', () => {
 			'// #endregion docs:config',
 		].join('\n');
 		expect(extractRegion(block, 'config', 'x.mjs')).toBe(
-			"c15t({\n\tui: 'svelte',\n});"
+			"inth({\n\tui: 'svelte',\n});"
 		);
 		expect(extractRegion(block, 'vendors', 'x.mjs')).toBe('vendors: [],');
 	});
@@ -286,7 +286,7 @@ describe('region extraction', () => {
 });
 
 describe('hand-written docs examples', () => {
-	test('counts code fences that import c15t, including indented tabs', () => {
+	test('counts code fences that import inth, including indented tabs', () => {
 		const page = [
 			'```tsx title="app/layout.tsx"',
 			"import { ConsentRoot } from '@inth/nextjs';",

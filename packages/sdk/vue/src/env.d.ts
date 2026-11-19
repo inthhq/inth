@@ -1,4 +1,4 @@
-import './c15t-aliases';
+import './inth-aliases';
 import './schema';
 
 declare module '*.vue' {

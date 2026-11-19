@@ -1,43 +1,43 @@
 ---
 title: Tailwind CSS
-description: Use c15t's styles with Tailwind CSS 4 or 3 in every framework, put utilities on c15t component parts, and use Tailwind's dark variant with c15t.
+description: Use Inth's styles with Tailwind CSS 4 or 3 in every framework, put utilities on Inth component parts, and use Tailwind's dark variant with Inth.
 group: customization
 ---
 
-## How c15t's styles meet Tailwind
+## How Inth's styles meet Tailwind
 
-c15t's component rules live in the CSS cascade layer `components`. Each c15t
+Inth's component rules live in the CSS cascade layer `components`. Each Inth
 stylesheet starts with Tailwind CSS 4's layer order,
 `@layer properties, theme, base, components, utilities;`, and cascade layers
-rank by the order they are first named. On Tailwind 4, c15t's rules stay above
+rank by the order they are first named. On Tailwind 4, Inth's rules stay above
 Tailwind's preflight in `base` and below your utilities in `utilities`,
-whichever stylesheet loads first. A plain utility such as `p-2` on a c15t part
+whichever stylesheet loads first. A plain utility such as `p-2` on an Inth part
 wins without `!important`.
 
 Tailwind CSS 3 has no cascade layers. It treats `@layer components` as its own
 directive and fails the build on a stylesheet that uses it without a matching
-`@tailwind components`. c15t's Tailwind 3 PostCSS plugin removes the layer
-wrappers from c15t's stylesheets before Tailwind 3 runs. c15t's rules then
-win by specificity, as they did in c15t v2, so a utility on a c15t part needs
+`@tailwind components`. Inth's Tailwind 3 PostCSS plugin removes the layer
+wrappers from Inth's stylesheets before Tailwind 3 runs. Inth's rules then
+win by specificity, as they did in c15t v2, so a utility on an Inth part needs
 Tailwind's important modifier, such as `!p-2`. The plugin cannot reach the
-`<style>` elements c15t renders itself, so on Tailwind 3 you turn those off
+`<style>` elements Inth renders itself, so on Tailwind 3 you turn those off
 with `styles: false` and import the stylesheet instead. The Astro integration
 does this for you when it finds Tailwind 3.
 
 The setups below come from fixtures that CI builds for each framework and
 checks in Chromium. The Next.js snippets come from the Next.js 16 Turbopack
 fixture. The Next.js 15 and webpack fixtures use the same files. The check
-confirms that c15t's banner and dialog keep their styles under Tailwind's
+confirms that Inth's banner and dialog keep their styles under Tailwind's
 preflight, that a padding utility on the banner root
-beats c15t's own padding, and that the `dark:` variant applies. The fixtures run
+beats Inth's own padding, and that the `dark:` variant applies. The fixtures run
 without a backend, so they use `testing()` mode or a local `projectUrl`. Keep the
 `mode` or `projectUrl` from your quickstart.
 
 ## Set up Tailwind CSS 4
 
-Install Tailwind's plugin for your build tool and add it to the build. c15t
+Install Tailwind's plugin for your build tool and add it to the build. Inth
 loads its own styles in every framework, so your CSS entry holds only
-Tailwind. Do not import c15t's stylesheet next to Tailwind 4: the stock
+Tailwind. Do not import Inth's stylesheet next to Tailwind 4: the stock
 components already render the same rules, and the import would hold back the
 first paint.
 
@@ -73,7 +73,7 @@ first paint.
 
   <Tab value="Nuxt">
     Add `@tailwindcss/vite` under `vite.plugins` and list your CSS entry in
-    `css`. The Vue components load c15t's styles themselves:
+    `css`. The Vue components load Inth's styles themselves:
 
     <include src="../shared/examples/tailwind-v4/nuxt/nuxt-config.mdx" />
 
@@ -94,7 +94,7 @@ first paint.
   </Tab>
 
   <Tab value="Astro">
-    c15t inlines the banner's rules into each page and links the dialog's
+    Inth inlines the banner's rules into each page and links the dialog's
     when it opens, so the CSS entry holds only Tailwind. Add
     `@tailwindcss/vite` under `vite.plugins`:
 
@@ -122,32 +122,32 @@ first paint.
   </Tab>
 
   <Tab value="HTML">
-    The script tag renders its UI in a shadow root with its own copy of c15t's
+    The script tag renders its UI in a shadow root with its own copy of Inth's
     stylesheet. Build your Tailwind CSS as usual and link it from the page:
 
     <include src="../shared/examples/tailwind-v4/html/tailwind-css.mdx" />
 
-    To put utilities on c15t's parts, link the same build into the shadow root
+    To put utilities on Inth's parts, link the same build into the shadow root
     with `ui.stylesheetUrls`, as in
-    [put utilities on c15t parts](#put-utilities-on-c15t-parts).
+    [put utilities on Inth parts](#put-utilities-on-inth-parts).
   </Tab>
 
   <Tab value="JavaScript">
     `init()` from `@inth/sdk` renders into a shadow root, the same way as
     the script tag. Build Tailwind as usual for your page. To put utilities on
-    c15t's parts, pass the URL of your built stylesheet in
+    Inth's parts, pass the URL of your built stylesheet in
     `ui.stylesheetUrls`, as in
-    [put utilities on c15t parts](#put-utilities-on-c15t-parts).
+    [put utilities on Inth parts](#put-utilities-on-inth-parts).
   </Tab>
 </Tabs>
 
 ## Set up Tailwind CSS 3
 
-Tailwind 3's preflight is unlayered, so it beats the layered rules c15t
+Tailwind 3's preflight is unlayered, so it beats the layered rules Inth
 renders itself and strips the banner's padding and borders. On Tailwind 3,
-turn those rules off with `styles: false` and import c15t's `styles.css`
+turn those rules off with `styles: false` and import Inth's `styles.css`
 through a PostCSS plugin. The Astro integration needs only the plugin: it
-detects Tailwind 3 and links `@inth/astro/styles.css` itself. Every c15t
+detects Tailwind 3 and links `@inth/astro/styles.css` itself. Every Inth
 package that ships a stylesheet exports the plugin as
 `<package>/postcss-tailwind3`, so use the one from the package you installed:
 
@@ -160,36 +160,36 @@ They are the same plugin.
 
 Make four changes:
 
-1. Set `styles: false` where you configure c15t: `options` in Next.js
-   `c15t.config.ts`, `options` on `ConsentRoot` in TanStack Start, `options`
+1. Set `styles: false` where you configure Inth: `options` in Next.js
+   `inth.config.ts`, `options` on `ConsentRoot` in TanStack Start, `options`
    on `ConsentProvider` in React, and `styles={false}` on `ConsentProvider` in
    Svelte or `ConsentRoot` in SvelteKit.
    Vue, Nuxt and Astro need no change.
 2. Add the plugin to your PostCSS plugins, before `tailwindcss`. Write the plugins as an object, as the examples below do.
    PostCSS runs them in the order of the keys. Next.js also accepts an array
    of plugin names, but Vite's PostCSS loader rejects that form.
-3. Import c15t's stylesheet above the `@tailwind` directives, whatever your
+3. Import Inth's stylesheet above the `@tailwind` directives, whatever your
    build tool. Vue, Nuxt and Astro skip this step. Vite drops an `@import`
    that follows another rule, with the warning
    `@import must precede all other statements`, and the banner renders
    unstyled. Next.js 16 with Turbopack fails the build.
 4. Set `darkMode: 'class'` so Tailwind's `dark:` variant follows the same
-   `dark` class c15t reads.
+   `dark` class Inth reads.
 
 The plugin also processes the stylesheets the Vue and Nuxt components import,
 and the one the Astro integration adds on a Tailwind 3 site. Without it,
 Tailwind 3 stops
 the build with "`@layer components` is used but no matching
-`@tailwind components` directive is present", or purges c15t's rules, because
-c15t's class names never appear in your source.
+`@tailwind components` directive is present", or purges Inth's rules, because
+Inth's class names never appear in your source.
 
-Tailwind 3 has no cascade layers, so c15t's selectors outrank a single utility
-class. Add the important modifier to utilities you pass to c15t parts:
+Tailwind 3 has no cascade layers, so Inth's selectors outrank a single utility
+class. Add the important modifier to utilities you pass to Inth parts:
 `!bg-red-500`, `hover:!bg-red-500`. A bare `bg-red-500` has no effect. Theme
 tokens work the same on Tailwind 3 and 4.
 
 Create React App ignores PostCSS config files, so Tailwind 3 cannot run the
-plugin and the build fails on c15t's stylesheet. Add the plugin before
+plugin and the build fails on Inth's stylesheet. Add the plugin before
 `tailwindcss` through CRACO, eject, or move the app to Vite.
 
 <Tabs items={['Next.js', 'TanStack Start', 'React', 'Nuxt', 'Vue', 'Astro', 'Svelte', 'SvelteKit', 'HTML', 'JavaScript']}>
@@ -247,7 +247,7 @@ plugin and the build fails on c15t's stylesheet. Add the plugin before
 
     <include src="../shared/examples/tailwind-v3/nuxt/tailwind-config.mdx" />
 
-    The Vue components load c15t's styles themselves, and the plugin processes
+    The Vue components load Inth's styles themselves, and the plugin processes
     them too, so the CSS entry holds only the directives:
 
     <include src="../shared/examples/tailwind-v3/nuxt/tailwind-css.mdx" />
@@ -276,7 +276,7 @@ plugin and the build fails on c15t's stylesheet. Add the plugin before
     When the integration finds Tailwind 3 in the project, it adds
     `@inth/astro/styles.css` to every page through Astro's CSS pipeline
     instead of inlining the banner's rules, so the plugin processes it. You
-    do not set `styles: false` or import c15t's stylesheet, and the CSS
+    do not set `styles: false` or import Inth's stylesheet, and the CSS
     entry holds only the directives. The first paint still waits for that
     stylesheet:
 
@@ -312,8 +312,8 @@ plugin and the build fails on c15t's stylesheet. Add the plugin before
   </Tab>
 
   <Tab value="HTML">
-    In the default shadow root, c15t's stylesheet never meets Tailwind, so the
-    page's Tailwind 3 setup needs nothing from c15t:
+    In the default shadow root, Inth's stylesheet never meets Tailwind, so the
+    page's Tailwind 3 setup needs nothing from Inth:
 
     <include src="../shared/examples/tailwind-v3/html/tailwind-css.mdx" />
 
@@ -322,19 +322,19 @@ plugin and the build fails on c15t's stylesheet. Add the plugin before
   </Tab>
 
   <Tab value="JavaScript">
-    `init()` renders into a shadow root by default, where c15t's stylesheet
-    never meets Tailwind. To render the UI in the page and build c15t's rules
+    `init()` renders into a shadow root by default, where Inth's stylesheet
+    never meets Tailwind. To render the UI in the page and build Inth's rules
     into your Tailwind CSS, see
     [render the UI in the light DOM](#render-the-ui-in-the-light-dom).
   </Tab>
 </Tabs>
 
-## Put utilities on c15t parts
+## Put utilities on Inth parts
 
 Pass utilities to a component part through your framework's part API. The
-fixtures put padding on the banner root, which c15t also pads, with a different
+fixtures put padding on the banner root, which Inth also pads, with a different
 value in dark mode. On Tailwind 4 a plain utility wins. On Tailwind 3, add `!`,
-as in `!p-[7px] dark:!p-[11px]`, because c15t's unlayered rules outrank a plain
+as in `!p-[7px] dark:!p-[11px]`, because Inth's unlayered rules outrank a plain
 utility. [Component parts](/docs/customization/slots) lists the parts each
 framework exposes.
 
@@ -359,14 +359,14 @@ Tailwind only generates classes it finds in the files its `content` globs or
 
   <Tab value="Nuxt">
     Tailwind scans `app/`, not `nuxt.config.ts`, so put part classes in
-    `app/app.config.ts` under the `c15t` key. The module merges it with the
-    `c15t` options in `nuxt.config.ts`. Vue takes `class`, not `className`:
+    `app/app.config.ts` under the `inth` key. The module merges it with the
+    `inth` options in `nuxt.config.ts`. Vue takes `class`, not `className`:
 
     <include src="../shared/examples/tailwind-v4/nuxt/slot.mdx" />
   </Tab>
 
   <Tab value="Vue">
-    Add the classes to `components` in the `c15tVue` options. Vue takes
+    Add the classes to `components` in the `inthVue` options. Vue takes
     `class`, not `className`:
 
     <include src="../shared/examples/tailwind-v4/vue/slot.mdx" />
@@ -423,10 +423,10 @@ Tailwind only generates classes it finds in the files its `content` globs or
 
 The fixtures make Tailwind's `dark:` variant follow a `dark` class on `<html>`:
 `@custom-variant dark (&:where(.dark, .dark *));` on Tailwind 4 and
-`darkMode: 'class'` on Tailwind 3. c15t's stylesheet reads the same class, and
+`darkMode: 'class'` on Tailwind 3. Inth's stylesheet reads the same class, and
 in React, Next.js, TanStack Start, Vue, Nuxt, Svelte and SvelteKit an unset
-`colorScheme` also copies it into `c15t-dark`. One toggle then switches your
-utilities and c15t's dark tokens together.
+`colorScheme` also copies it into `inth-dark`. One toggle then switches your
+utilities and Inth's dark tokens together.
 
 Astro and the script tag follow the system setting by default. [Dark mode](/docs/customization/dark-mode) covers each
 case.
@@ -434,22 +434,22 @@ case.
 ## Render the UI in the light DOM
 
 The script tag and `init()` render into a shadow root, so your page's CSS does
-not reach c15t and c15t's CSS does not reach your page. To style the UI with
+not reach Inth and Inth's CSS does not reach your page. To style the UI with
 your page's Tailwind build directly, render it in the page with
 `data-shadow="false"` or `ui: { shadow: false }`.
 
-On Tailwind 4, that is the whole change. c15t still injects its layered
+On Tailwind 4, that is the whole change. Inth still injects its layered
 stylesheet, and the layer order keeps it above preflight:
 
 <include src="../shared/examples/tailwind-v4/html/script-tag-light-dom.mdx" />
 
 On Tailwind 3, keep the default shadow root. Tailwind 3's preflight is
-unlayered, so in the page it beats c15t's layered rules whatever their
+unlayered, so in the page it beats Inth's layered rules whatever their
 specificity and removes the button padding and card borders. Linking
-`c15t.css` from the page does not help, because nothing removes its layers.
+`inth.css` from the page does not help, because nothing removes its layers.
 
 To render in the light DOM anyway, turn the injected sheet off with
-`styles: false`, and build c15t's rules into your Tailwind CSS with the plugin
+`styles: false`, and build Inth's rules into your Tailwind CSS with the plugin
 instead:
 
 <include src="../shared/examples/tailwind-v3/html/script-tag-light-dom.mdx" />
@@ -470,8 +470,8 @@ buttons and headings after the switch.
 1. Build the app and open it in a private window. The banner has its card
    background, border and button padding, so preflight did not reset it.
 2. Inspect the part you gave a utility. In the Styles panel, your utility is
-   applied and c15t's rule for the same property is struck out.
+   applied and Inth's rule for the same property is struck out.
 3. Add the `dark` class to `<html>`. Your `dark:` utility applies and, where
-   c15t follows the class, the banner switches to dark colors.
+   Inth follows the class, the banner switches to dark colors.
 4. Open the preference dialog. Its rules come from a separate stylesheet in
    most frameworks, so check that it is styled too.

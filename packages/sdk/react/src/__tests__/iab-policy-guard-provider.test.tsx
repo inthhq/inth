@@ -3,7 +3,7 @@
  * surfaces, as the IAB guide shows. Nothing throws and the IAB banner
  * renders. `iab-policy-guard.test.tsx` covers the app without it.
  */
-import { MINIMAL_GVL } from '@c15t/conformance';
+import { MINIMAL_GVL } from '@inth/conformance';
 import type { GlobalVendorList } from '@inth/sdk/engine';
 import { deferInitGvl } from '@inth/sdk/engine';
 import { writePolicyResolutionWire } from '@inth/sdk/schema/types';

@@ -1,5 +1,5 @@
 /**
- * The consent engine `provideC15t()` creates when it is not handed one:
+ * The consent engine `provideInth()` creates when it is not handed one:
  * the kernel and every module it mounts.
  *
  * @packageDocumentation
@@ -15,15 +15,12 @@ import {
 } from '@inth/sdk/runtime/on-demand';
 import {
 	createConsentProviderRuntime,
-	defaultTranslationConfig,
 	watchRevocationReload,
 } from '@inth/sdk/runtime/provider';
 import type {
 	ConsentProviderRuntime,
 	ConsentProviderRuntimeOptions,
 } from '@inth/sdk/runtime/provider';
-
-import { DEFAULT_TRANSLATIONS_KEY } from './translation-defaults';
 
 /**
  * Creates the runtime the provider owns.
@@ -33,14 +30,11 @@ import { DEFAULT_TRANSLATIONS_KEY } from './translation-defaults';
  * disposes it with the application.
  *
  * @param options - `runtimeOptionsFor` the provider's options.
- * @returns The runtime.
  * @internal
  */
 export const createOwnedRuntime = function createOwnedRuntime(
 	options: ConsentProviderRuntimeOptions
 ): ConsentProviderRuntime {
-	(globalThis as Record<symbol, unknown>)[DEFAULT_TRANSLATIONS_KEY] =
-		defaultTranslationConfig;
 	return createConsentProviderRuntime(options, {
 		// The script loader, network blocker, data clearing and a
 		// `consentSource` connection load on demand, each only when

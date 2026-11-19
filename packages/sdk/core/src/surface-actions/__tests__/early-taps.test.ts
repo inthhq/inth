@@ -13,19 +13,21 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import {
+	EARLY_TAP_HOLD_PRESSES_KEY,
+	EARLY_TAP_STYLE_ID,
+	EARLY_TAPS_WINDOW_KEY,
+} from '../../libs/page-globals';
+import type { EarlyConsentTapQueue } from '../../libs/page-globals';
+import { inthProtocolHeaders } from '../../libs/version-header';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { createConsentRuntime } from '../../runtime/index';
 import type { ConsentRuntime } from '../../runtime/types';
 import { hosted } from '../../transports/mode';
-import { c15tProtocolHeaders } from '../../transports/version-header';
 import {
 	EARLY_CONSENT_TAP_SCRIPT,
-	EARLY_TAP_HOLD_PRESSES_KEY,
 	EARLY_TAP_OPT_OUT,
-	EARLY_TAP_STYLE_ID,
-	EARLY_TAPS_WINDOW_KEY,
 } from '../early-tap-script';
-import type { EarlyConsentTapQueue } from '../early-tap-script';
 import { replayEarlyConsentTaps } from '../early-taps';
 
 let policy = matchedResolution(optInRule());
@@ -110,17 +112,17 @@ const createRuntime = () => {
 					Response.json(
 						path.endsWith('/init')
 							? {
-									branding: 'c15t',
+									branding: 'inth',
 									location: { countryCode: 'DE', regionCode: null },
 									policyResolution: writePolicyResolutionWire(policy),
 									translations: { language: 'en', translations },
 								}
 							: {},
-						{ headers: c15tProtocolHeaders }
+						{ headers: inthProtocolHeaders }
 					)
 				);
 			},
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		}),
 		prefetch: { initRetry: false },
 	});
@@ -301,7 +303,7 @@ describe('replayEarlyConsentTaps', () => {
 			expect(snapshot.activeUI).toBe('none');
 			// Persistence writes after the commit.
 			await vi.waitFor(() =>
-				expect(JSON.parse(localStorage.getItem('c15t') ?? '{}')).toMatchObject({
+				expect(JSON.parse(localStorage.getItem('inth') ?? '{}')).toMatchObject({
 					categories: { marketing: { value: granted } },
 				})
 			);

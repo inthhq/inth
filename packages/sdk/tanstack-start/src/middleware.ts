@@ -1,6 +1,6 @@
-import type { StorageConfig } from '@inth/sdk/engine';
 import { extractConsentRequestInputs } from '@inth/sdk/schema/types';
 import type { ConsentRequestHeaderInputs as ConsentRequestInputs } from '@inth/sdk/schema/types';
+import { writeConsentInputHeaders } from '@inth/sdk/server';
 import { createMiddleware } from '@tanstack/react-start';
 
 import {
@@ -31,7 +31,7 @@ export interface ConsentRequestMiddlewareOptions {
 	language?: string;
 
 	/**
-	 * Write the normalized `x-c15t-country`, `x-c15t-region`, and `sec-gpc`
+	 * Write the normalized `x-inth-country`, `x-inth-region`, and `sec-gpc`
 	 * headers back onto the incoming request so every downstream reader
 	 * (server routes, server functions, `resolveConsent`) sees one
 	 * canonical set regardless of which CDN populated them.
@@ -39,27 +39,6 @@ export interface ConsentRequestMiddlewareOptions {
 	 * @default true
 	 */
 	normalizeHeaders?: boolean;
-
-	/**
-	 * @deprecated c15t no longer sets a subject cookie, so the middleware
-	 * reads nothing from this. Removed in v4.
-	 */
-	storage?: Pick<
-		StorageConfig,
-		'crossSubdomain' | 'defaultDomain' | 'defaultExpiryDays' | 'storageKey'
-	>;
-
-	/**
-	 * @deprecated c15t no longer sets a subject cookie, so the middleware
-	 * reads nothing from this. Removed in v4.
-	 */
-	trustForwardedHeaders?: boolean;
-
-	/**
-	 * @deprecated c15t no longer sets a subject cookie, so this does
-	 * nothing. Removed in v4.
-	 */
-	subjectCookie?: boolean;
 }
 
 /** Request context contributed by {@link consentRequestMiddleware}. */
@@ -74,18 +53,7 @@ const writeNormalizedHeaders = function writeNormalizedHeaders(
 	language: string | undefined
 ): void {
 	try {
-		if (language) {
-			headers.set('accept-language', language);
-		}
-		if (inputs.country) {
-			headers.set('x-c15t-country', inputs.country);
-		}
-		if (inputs.region) {
-			headers.set('x-c15t-region', inputs.region);
-		}
-		if (inputs.gpc !== undefined) {
-			headers.set('sec-gpc', inputs.gpc ? '1' : '0');
-		}
+		writeConsentInputHeaders(headers, { ...inputs, language });
 	} catch {
 		// Some runtimes hand middleware an immutable Request. The inputs are
 		// also remembered per request (see `rememberConsentInputs`), which is
@@ -206,7 +174,7 @@ const keepVisitorRenderPrivate = function keepVisitorRenderPrivate<
  *
  * It reads the CDN geo headers (Cloudflare, Vercel, CloudFront, generic
  * proxies), `accept-language`, and `sec-gpc` through the shared extractor,
- * rewrites them onto the canonical `x-c15t-country`, `x-c15t-region`, and
+ * rewrites them onto the canonical `x-inth-country`, `x-inth-region`, and
  * `sec-gpc` request headers, and exposes the same values as
  * `context.consent` for server routes and server functions.
  *
@@ -231,7 +199,7 @@ const keepVisitorRenderPrivate = function keepVisitorRenderPrivate<
  *
  * @example
  * ```ts
- * export const Route = createFileRoute('/api/c15t/$')({
+ * export const Route = createFileRoute('/api/inth/$')({
  *   server: {
  *     middleware: [consentRequestMiddleware()],
  *     handlers: createConsentRoute(),
@@ -250,7 +218,6 @@ const keepVisitorRenderPrivate = function keepVisitorRenderPrivate<
  *   .handler(createConsentStateHandler());
  * ```
  *
- * @param options - Overrides and header-normalization behavior.
  * @returns A TanStack Start request middleware.
  */
 export const consentRequestMiddleware = function consentRequestMiddleware(

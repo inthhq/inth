@@ -73,7 +73,7 @@ class RealVendorSdkTest {
 		scenario?.close()
 		probes = 0 // Each launch has its own model and probe count.
 		scenario = ActivityScenario.launch(Intent(context, ConsentDemoActivity::class.java)
-			.putExtra("C15T_FIXTURE_SCENARIO", name).putExtra("C15T_FIXTURE_RESET", reset).apply(vendorExtras))
+			.putExtra("INTH_FIXTURE_SCENARIO", name).putExtra("INTH_FIXTURE_RESET", reset).apply(vendorExtras))
 	}
 
 	private fun waitFor(id: String, timeout: Long = 15_000): SemanticsNodeInteraction {

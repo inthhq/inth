@@ -7,21 +7,21 @@ import type {
 import { evaluateCategoryGate } from '@inth/sdk-core/surface-actions/plain-scripts';
 
 /** Attribute that names the category an inert `<script>` waits on. */
-export const CATEGORY_ATTRIBUTE = 'data-c15t-category';
+export const CATEGORY_ATTRIBUTE = 'data-inth-category';
 
 /**
  * Attribute that names the vendor an inert `<script>` belongs to. The tag
  * runs once its category is allowed and the visitor has not turned that
  * vendor off. Only read alongside {@link CATEGORY_ATTRIBUTE}.
  */
-export const VENDOR_ATTRIBUTE = 'data-c15t-vendor';
+export const VENDOR_ATTRIBUTE = 'data-inth-vendor';
 
 /**
  * Set once a gated script has been activated (`true`), rejected for an
  * unknown category (`invalid`), or refused for lacking the page nonce
  * (`untrusted`).
  */
-export const ACTIVATED_ATTRIBUTE = 'data-c15t-activated';
+export const ACTIVATED_ATTRIBUTE = 'data-inth-activated';
 
 /**
  * Whether an inert tag may be activated under the configured nonce.
@@ -143,7 +143,7 @@ const trackPendingScript = (script: HTMLScriptElement): PendingScript => {
 
 /**
  * The categories the page's tags offer: those of the inert `elements`, and
- * of tags that already ran. The init script (`c15t.js`) may have started
+ * of tags that already ran. The init script (`inth.js`) may have started
  * some before the client that scans.
  */
 const offeredCategories = function offeredCategories(
@@ -186,8 +186,6 @@ interface GatedScriptActivatorOptions {
  * Own activation ordering without retaining a client outside its lifecycle.
  *
  * @param getSnapshot - Read current consent before each activation.
- * @param options - Scan root, discovery callbacks and the page nonce.
- * @returns A scanner and its disposal function.
  * @internal
  */
 export const createGatedScriptActivator = function createGatedScriptActivator(
@@ -306,9 +304,9 @@ const standaloneActivators = new WeakMap<
 >();
 
 /**
- * Run inert `<script type="text/plain" data-c15t-category="…">` tags whose
+ * Run inert `<script type="text/plain" data-inth-category="…">` tags whose
  * categories the snapshot grants. A tag that also carries
- * `data-c15t-vendor="…"` waits until that vendor is allowed as well. Non-async scripts run in document order,
+ * `data-inth-vendor="…"` waits until that vendor is allowed as well. Non-async scripts run in document order,
  * waiting for each external script to load or fail before continuing.
  *
  * Call again when consent changes so waiting scripts use the latest snapshot.
@@ -318,7 +316,6 @@ const standaloneActivators = new WeakMap<
  * Pass the page's CSP nonce on a page whose policy uses `'strict-dynamic'`:
  * tags without it are then skipped, so injected markup cannot run.
  *
- * @param snapshot - The kernel snapshot.
  * @param root - Where to look. Defaults to the document.
  * @param options - `nonce` limits activation to tags carrying it. The root
  * remembers the last nonce passed: a call with a different nonce replaces

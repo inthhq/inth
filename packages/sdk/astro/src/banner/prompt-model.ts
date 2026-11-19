@@ -9,8 +9,12 @@
  */
 
 import {
+	actionAppearanceFromTheme,
 	defaultTranslationConfig,
+	resolveActionLabels,
 	resolveConsentPresentation,
+	resolvePreferenceControlLabels,
+	resolvePromptCopy,
 } from '@inth/sdk/engine';
 import type {
 	ConsentPresentation,
@@ -18,12 +22,10 @@ import type {
 	LegalLinks,
 } from '@inth/sdk/engine';
 import type { Translations } from '@inth/sdk/translations';
-import type {
-	AllThemeKeys,
-	ConsentActionStyle,
-	Theme,
-} from '@inth/sdk/ui/theme';
-import { getTextDirection } from '@inth/sdk/ui/utils';
+import { resolveActionAppearance } from '@inth/sdk/ui/theme';
+import type { AllThemeKeys, Theme } from '@inth/sdk/ui/theme';
+import { getTextDirection, resolveLegalLinkEntries } from '@inth/sdk/ui/utils';
+import type { LegalLinkEntry } from '@inth/sdk/ui/utils';
 
 import type { PromptClassNames } from './class-names';
 import { resolveSlotBinding } from './theme-slots';
@@ -51,7 +53,7 @@ export interface PromptProps {
 	disableAnimation?: boolean;
 	/** Extra class on the banner root. */
 	class?: string;
-	/** Drop the "Secured by c15t" tag. */
+	/** Drop the "Secured by" tag. */
 	hideBranding?: boolean;
 	/** Which legal links to render inline. `null` renders none. */
 	legalLinks?: (keyof LegalLinks)[] | null;
@@ -71,13 +73,6 @@ export interface PromptModelInput {
 	disableAnimation?: boolean;
 	/** The stylesheet class names the markup uses. */
 	classNames: PromptClassNames;
-}
-
-/** One inline legal link. */
-export interface PromptLegalLink {
-	key: keyof LegalLinks;
-	href: string | undefined;
-	label: string;
 }
 
 /** One banner button. */
@@ -112,7 +107,7 @@ export interface PromptModel {
 		description: string;
 		securedBy: string;
 	};
-	legalLinks: PromptLegalLink[];
+	legalLinks: LegalLinkEntry[];
 	rights: { right: string; label: string }[];
 	actionGroups: PromptAction[][];
 	classes: {
@@ -160,83 +155,47 @@ export const joinClasses = function joinClasses(
 type TranslationBundle = Partial<Translations>;
 
 /**
- * Button and rights labels, props first, then the bundle, then English.
+ * Button and rights labels: props first, then core's copy order.
  *
  * @param bundle - The snapshot's translations.
- * @param fallback - The English translations.
- * @param props - The component props.
  * @returns Labels keyed by action and by right.
  */
 const resolveLabels = function resolveLabels(
-	bundle: TranslationBundle,
-	fallback: TranslationBundle,
+	bundle: TranslationBundle | undefined,
 	props: PromptProps
 ): { actions: Record<string, string>; rights: Record<string, string> } {
+	const actions = resolveActionLabels(bundle);
 	return {
 		actions: {
-			accept: firstOf(
-				props.acceptButtonText,
-				bundle.common?.acceptAll,
-				fallback.common?.acceptAll
-			),
-			customize: firstOf(
-				props.customizeButtonText,
-				bundle.common?.customize,
-				fallback.common?.customize
-			),
-			// Acknowledgement leaves category choices and permissions unchanged.
-			dismiss: firstOf(
-				props.dismissButtonText,
-				bundle.common?.acknowledge,
-				bundle.common?.dismiss,
-				fallback.common?.acknowledge
-			),
-			reject: firstOf(
-				props.rejectButtonText,
-				bundle.common?.rejectAll,
-				fallback.common?.rejectAll
-			),
+			...actions,
+			accept: props.acceptButtonText ?? actions.accept,
+			customize: props.customizeButtonText ?? actions.customize,
+			dismiss: props.dismissButtonText ?? actions.dismiss,
+			reject: props.rejectButtonText ?? actions.reject,
 		},
-		rights: {
-			'opt-out': firstOf(bundle.rights?.optOut, fallback.rights?.optOut),
-			preferences: firstOf(
-				bundle.rights?.preferences,
-				fallback.rights?.preferences
-			),
-		},
+		rights: resolvePreferenceControlLabels(bundle),
 	};
 };
 
 /**
- * Heading and body copy. A notice prompt explains and points at the
- * opt-out; it never asks, so it has copy of its own.
+ * Heading and body copy: props first, then core's copy order. A notice
+ * prompt explains and points at the opt-out, so it has copy of its own.
  *
  * @param bundle - The snapshot's translations.
  * @param fallback - The English translations.
- * @param props - The component props.
- * @param notice - Whether the policy prompts with a notice.
- * @returns The banner copy.
+ * @param snapshot - The snapshot, for its policy prompt.
  */
 const resolveCopy = function resolveCopy(
-	bundle: TranslationBundle,
+	bundle: TranslationBundle | undefined,
 	fallback: TranslationBundle,
 	props: PromptProps,
-	notice: boolean
+	snapshot: ConsentSnapshot
 ): PromptModel['copy'] {
-	const banner = bundle.cookieBanner;
-	const english = fallback.cookieBanner;
+	const copy = resolvePromptCopy(bundle, snapshot.policyRule.prompt);
 	return {
-		description: notice
-			? firstOf(
-					props.description,
-					banner?.noticeDescription,
-					english?.noticeDescription
-				)
-			: firstOf(props.description, banner?.description, english?.description),
-		securedBy: firstOf(bundle.common?.securedBy, fallback.common?.securedBy),
-		title: notice
-			? firstOf(props.title, banner?.noticeTitle, english?.noticeTitle)
-			: firstOf(props.title, banner?.title, english?.title),
+		description: props.description ?? copy.description,
+		securedBy: firstOf(bundle?.common?.securedBy, fallback.common?.securedBy),
+		title: props.title ?? copy.title,
 	};
 };
 
@@ -263,8 +222,6 @@ const PROMPT_SLOTS = {
  * apply.
  *
  * @param classNames - The stylesheet class maps.
- * @param props - The component props.
- * @param theme - The integration's `theme`.
  * @param disableAnimation - Leave out the entering classes, which mark the
  * mount. The stylesheet fades the banner in only when the client also
  * marks a late reveal with `data-entry="late"`.
@@ -322,45 +279,9 @@ const resolveClasses = function resolveClasses(
 };
 
 /**
- * The button treatment for one action, in the order the React banner
- * resolves it: the action's own `theme.consentActions` key, then `primary`
- * for a primary action, then `default`, then stroke with the primary or
- * neutral variant. Mode and variant each come from the first layer that
- * sets them.
- *
- * @param action - The consent action.
- * @param primary - Whether the policy marks the action primary.
- * @param consentActions - The theme's `consentActions`.
- * @returns The resolved mode and variant.
- */
-const resolveConsentActionStyle = function resolveConsentActionStyle(
-	action: string,
-	primary: boolean,
-	consentActions: Theme['consentActions']
-): Required<ConsentActionStyle> {
-	// `save` has no theme key; the other actions each have their own.
-	const themed =
-		action === 'save'
-			? undefined
-			: consentActions?.[action as keyof NonNullable<Theme['consentActions']>];
-	const layers: (ConsentActionStyle | undefined)[] = [
-		themed,
-		primary ? consentActions?.primary : undefined,
-		consentActions?.default,
-	];
-	return {
-		mode: layers.find((layer) => layer?.mode)?.mode ?? 'stroke',
-		variant:
-			layers.find((layer) => layer?.variant)?.variant ??
-			(primary ? 'primary' : 'neutral'),
-	};
-};
-
-/**
  * Resolve the banner's copy, actions, layout and class names.
  *
  * @param input - The snapshot, the component props and the site options.
- * @returns The banner model.
  */
 export const resolvePromptModel = function resolvePromptModel(
 	input: PromptModelInput
@@ -368,14 +289,16 @@ export const resolvePromptModel = function resolvePromptModel(
 	const { snapshot, props } = input;
 	const fallback = defaultTranslationConfig.translations
 		.en as TranslationBundle;
-	const bundle = (snapshot.translations?.translations ??
-		fallback) as TranslationBundle;
-	const labels = resolveLabels(bundle, fallback, props);
+	const bundle = snapshot.translations?.translations as
+		| TranslationBundle
+		| undefined;
+	const labels = resolveLabels(bundle, props);
 	const textDirection = getTextDirection(snapshot.translations?.language);
 
 	// Same policy-driven action resolution the Svelte and React banners use,
 	// so an opt-out or IAB policy produces the same buttons in the same order.
 	const presentation = resolveConsentPresentation({
+		actionAppearance: actionAppearanceFromTheme(input.theme),
 		policy: snapshot.policyRule,
 		presentation: input.presentation,
 		surface: 'prompt',
@@ -392,17 +315,6 @@ export const resolvePromptModel = function resolvePromptModel(
 
 	const { position } = presentation;
 
-	// A notice offers no customize, so the resolver's default primary drops
-	// out. When dismiss is the only button it is the primary one, as in the
-	// React and Svelte banners.
-	const orderedActions = actionGroups.flat();
-	const primaries =
-		primaryActions.length === 0 &&
-		orderedActions.length === 1 &&
-		orderedActions[0] === 'dismiss'
-			? orderedActions
-			: primaryActions;
-
 	const classesAndStyles = resolveClasses(
 		input.classNames,
 		props,
@@ -412,14 +324,10 @@ export const resolvePromptModel = function resolvePromptModel(
 	return {
 		actionGroups: actionGroups.map((group) =>
 			group.map((action) => {
-				const primary = primaries.includes(action);
+				const primary = primaryActions.includes(action);
 				const style = props.noStyle
 					? undefined
-					: resolveConsentActionStyle(
-							action,
-							primary,
-							input.theme?.consentActions
-						);
+					: resolveActionAppearance(input.theme, action, primary);
 				const slot = resolveSlotBinding(
 					input.theme,
 					primary ? 'buttonPrimary' : 'buttonSecondary',
@@ -438,28 +346,14 @@ export const resolvePromptModel = function resolvePromptModel(
 		),
 		blocking,
 		...classesAndStyles,
-		copy: resolveCopy(
-			bundle,
-			fallback,
-			props,
-			snapshot.policyRule.prompt === 'notice'
-		),
+		copy: resolveCopy(bundle, fallback, props, snapshot),
 		direction,
 		language: snapshot.translations?.language,
-		legalLinks: (props.legalLinks ?? [])
-			.filter((key) => input.legalLinks?.[key])
-			.map((key) => ({
-				href: input.legalLinks?.[key]?.href,
-				key,
-				// A link without its own label takes the translated name
-				// for its type, as the React, Vue and Svelte banners do.
-				label: firstOf(
-					input.legalLinks?.[key]?.label,
-					bundle.legalLinks?.[key],
-					fallback.legalLinks?.[key],
-					key
-				),
-			})),
+		legalLinks: resolveLegalLinkEntries(
+			input.legalLinks,
+			props.legalLinks,
+			bundle?.legalLinks
+		),
 		model: snapshot.policyRule.model,
 		position,
 		prompt:

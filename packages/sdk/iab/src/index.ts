@@ -1,5 +1,5 @@
 /**
- * `@inth/sdk/iab` — IAB TCF 2.4 module for the c15t consent kernel.
+ * `@inth/sdk/iab` — IAB TCF 2.4 module for the Inth consent kernel.
  *
  * Consumes the `@inth/sdk/engine` kernel and provides CMP-compliant IAB TCF
  * functionality:
@@ -8,16 +8,12 @@
  * - Fetches the Global Vendor List (GVL) with HTTP cache + in-flight
  *   deduplication. Respects `gvl: null` on the `/init` response
  *   (server-side non-IAB region opt-out).
- * - Encodes TCF 2.4 strings via lazy-loaded `@iabtechlabtcf/core` so
- *   the 50KB encoder only loads when `save()` is actually called.
+ * - Encodes and decodes TCF 2.4 strings via lazy-loaded
+ *   `@iabtechlabtcf/core`, so the 50KB codec loads only when a TC string
+ *   is encoded or decoded.
  * - Persists vendor/purpose/LI/special-feature consent through
  *   `kernel.set.iab()`, preserving the framework-neutral kernel
  *   contract.
- *
- * Same public shape as v2's `@inth/sdk/iab` but adapted to consume the
- * kernel rather than the Zustand store. Re-uses every pure utility
- * from v2: GVL fetcher, TC string encoder, purpose mapper, CMP API
- * (`createCMPApi`), stub installer (`initializeIABStub`).
  */
 
 import type {
@@ -31,32 +27,32 @@ import type {
 	KernelIABAuthority,
 	KernelIABState,
 	NonIABVendor,
+	PublisherRestriction,
 } from '@inth/sdk-core';
 import {
-	c15tProtocolParams,
+	applyPublisherRestrictionsToGVL,
+	inthProtocolParams,
+	introducedLegitimateInterest,
 	registerIABControls,
 } from '@inth/sdk-core/iab-support';
-import { appendInitParams } from '@inth/sdk-schema/types';
+import {
+	AD_TECH_PROVIDER_PURPOSES,
+	appendInitParams,
+	IAB_STORAGE_KEYS,
+	permittedLegitimateInterestPurposes,
+} from '@inth/sdk-schema/types';
 
 import {
-	AUTHORITY_KEY,
 	checkAuthority,
 	clearAuthorityReceipt,
 	createAuthorityReceipt,
 	readAuthorityReceipt,
+	hasOwnReceipt,
 	readAuthorityReceiptText,
 	storeAuthority,
 	validateAuthority,
 } from './authority';
-import {
-	applyPublisherRestrictionsToGVL,
-	introducedLegitimateInterest,
-	permittedLegitimateInterestPurposes,
-} from './headless/effective-vendor-list';
-import {
-	AD_TECH_PROVIDER_PURPOSES,
-	fetchAdTechProviders,
-} from './tcf/additional-consent';
+import { fetchAdTechProviders } from './tcf/additional-consent';
 import {
 	clearStoredTCString,
 	createCMPApi,
@@ -65,7 +61,6 @@ import {
 import { CMP_VERSION_NUMBER } from './tcf/cmp-defaults';
 import { assertValidCmpId, createCmpIdError, isValidCmpId } from './tcf/cmp-id';
 import { clearGVLCache, fetchGVL, narrowGVLToVendors } from './tcf/fetch-gvl';
-import type { PublisherRestriction } from './tcf/iab-tcf-types';
 import { getTCFCore } from './tcf/lazy-load';
 import {
 	copyPublisherRestrictionInput,
@@ -73,19 +68,14 @@ import {
 	validatePublisherRestrictions,
 } from './tcf/publisher-restrictions';
 import {
-	C15T_TO_IAB_PURPOSE_MAP,
-	c15tConsentsToIabPurposes,
-	iabPurposesToC15tConsents,
+	INTH_TO_IAB_PURPOSE_MAP,
+	inthConsentsToIabPurposes,
+	iabPurposesToInthConsents,
 } from './tcf/purpose-mapping';
 import { destroyIABStub as destroyStub, initializeIABStub } from './tcf/stub';
 import { generateTCString, resolveIsServiceSpecific } from './tcf/tc-string';
 
-/**
- * Public option surface for `createIAB`. Mirrors v2's `IABUserConfig`
- * but threads the kernel through.
- */
 export interface CreateIABOptions {
-	/** The consent kernel to bind to. */
 	kernel: ConsentKernel;
 	/**
 	 * CMP ID assigned by IAB Europe at CMP registration. An integer from 2 to
@@ -98,7 +88,7 @@ export interface CreateIABOptions {
 	 * major of the `@inth/sdk/iab` package version.
 	 */
 	cmpVersion?: number;
-	/** Filter GVL to a specific vendor allowlist (optional). */
+	/** Filter GVL to a specific vendor allowlist. */
 	vendors?: number[];
 	/** Non-IAB vendors declared by the publisher. */
 	customVendors?: NonIABVendor[];
@@ -113,7 +103,7 @@ export interface CreateIABOptions {
 	/** Publisher country code (ISO 3166-1 alpha-2). Default: 'US'. */
 	publisherCountryCode?: string;
 	/**
-	 * Ignored: c15t always encodes IsServiceSpecific=1.
+	 * Ignored: Inth always encodes IsServiceSpecific=1.
 	 *
 	 * @deprecated TCF requires IsServiceSpecific=1. Group-specific scope is
 	 * also encoded as 1. Passing `false` logs a warning once and has no
@@ -122,7 +112,7 @@ export interface CreateIABOptions {
 	isServiceSpecific?: boolean;
 	/**
 	 * Publisher restrictions encoded into every TC string this CMP saves and
-	 * applied when c15t gates IAB scripts. Checked against the vendor list
+	 * applied when Inth gates IAB scripts. Checked against the vendor list
 	 * once it loads: an unsupported restriction rejects `whenReady()`,
 	 * `generateTCString()` and `save()` with a `PublisherRestrictionError`.
 	 * `whenReady()` does not retry it. With an explicit `gvl` it lasts for the
@@ -170,17 +160,15 @@ export interface IABProviderConfig extends IABUserConfig {
 /**
  * Enables IAB TCF support for a framework consent provider.
  *
- * @param config - CMP and vendor configuration for the IAB runtime.
- * @returns Provider configuration with the IAB addon enabled.
  * @throws {Error} When `cmpId` is present but is not a registered CMP ID. An
  * absent `cmpId` is allowed: a hosted backend can supply it from `/init`.
  *
  * @example
  * ```tsx
- * import { iab } from '@inth/sdk-iab';
+ * import { iab } from '@inth/sdk/iab';
  *
  * <ConsentProvider options={{
- *   mode: hosted({ projectUrl: '/api/c15t' }),
+ *   mode: hosted({ projectUrl: '/api/inth' }),
  *   iab: iab({ cmpId: 28, vendors: [1, 2, 755] }),
  * }}>
  *   {children}
@@ -190,8 +178,6 @@ export interface IABProviderConfig extends IABUserConfig {
 const createIABProviderConfig = function createIABProviderConfig(
 	config: IABUserConfig
 ): IABProviderConfig {
-	// An absent cmpId is legitimate: a hosted backend returns it from /init.
-	// A present-but-unusable one is never legitimate.
 	if (config.cmpId !== undefined && !isValidCmpId(config.cmpId)) {
 		throw createCmpIdError(config.cmpId);
 	}
@@ -203,19 +189,15 @@ const createIABProviderConfig = function createIABProviderConfig(
 
 export { createIABProviderConfig as iab };
 export { initializeIABStub, destroyIABStub } from './tcf/stub';
-export type { PublisherRestriction } from './tcf/iab-tcf-types';
+export { CONSENT_ONLY_PURPOSES } from '@inth/sdk-schema/types';
 export {
-	CONSENT_ONLY_PURPOSES,
 	PUBLISHER_RESTRICTION_TYPES,
 	PublisherRestrictionError,
 	validatePublisherRestrictions,
 } from './tcf/publisher-restrictions';
 export type { PublisherRestrictionContext } from './tcf/publisher-restrictions';
 
-/**
- * Handle returned by `createIAB`. Provides imperative control over the
- * CMP state and a `dispose` method for teardown.
- */
+/** Handle returned by `createIAB`. */
 export interface IABHandle {
 	/** Wait for GVL loading and CMP setup. Rejects if setup could not complete. */
 	whenReady: () => Promise<void>;
@@ -223,17 +205,31 @@ export interface IABHandle {
 	dispose: () => void;
 	/** The underlying CMP API instance (for advanced consumers). */
 	readonly cmpApi: CMPApi | null;
-	/** Set consent for a specific IAB vendor by ID. */
+	/** Set consent for a registered or custom vendor by ID. */
 	setVendorConsent: (vendorId: string | number, value: boolean) => void;
-	/** Set legitimate interest for a specific IAB vendor. */
+	/**
+	 * Set legitimate interest for a registered or custom vendor. Granting it
+	 * is ignored for a custom vendor that declares no purpose TCF allows on
+	 * legitimate interest.
+	 */
 	setVendorLegitimateInterest: (
 		vendorId: string | number,
 		value: boolean
 	) => void;
 	/** Set consent for a specific IAB purpose (1–11). */
 	setPurposeConsent: (purposeId: number, value: boolean) => void;
-	/** Set legitimate interest for a specific IAB purpose. */
+	/**
+	 * Set legitimate interest for an IAB purpose. Granting it is ignored for
+	 * purposes 1 and 3 to 6, which TCF allows only with consent.
+	 */
 	setPurposeLegitimateInterest: (purposeId: number, value: boolean) => void;
+	/**
+	 * Object to legitimate interest for an IAB purpose (`true`), or withdraw
+	 * the objection (`false`). Sets the purpose signal and the signal of
+	 * every vendor that uses legitimate interest for it after publisher
+	 * restrictions, custom vendors included.
+	 */
+	setPurposeObjection: (purposeId: number, objected: boolean) => void;
 	/** Opt in/out of a special feature (1 = geo, 2 = device ID). */
 	setSpecialFeatureOptIn: (featureId: number, value: boolean) => void;
 	/**
@@ -249,7 +245,10 @@ export interface IABHandle {
 	 * remain denied. Call `save()` to encode and persist the choice.
 	 */
 	acceptAll: () => void;
-	/** Flip every vendor + purpose consent to false. */
+	/**
+	 * Turn off every vendor, purpose, legitimate-interest, special-feature and
+	 * ad tech provider signal. Call `save()` to encode and persist the choice.
+	 */
 	rejectAll: () => void;
 	/**
 	 * Encode the current state as a TCF 2.4 string and commit to the
@@ -290,17 +289,14 @@ const distinctCustomVendors = function distinctCustomVendors(
 		if (!reportedCollisions.has(key)) {
 			reportedCollisions.add(key);
 			console.error(
-				`[c15t] Custom vendor "${vendor.name}" (id ${id}) is ignored: the Global Vendor List has a registered vendor with id ${id}. Give each custom vendor an id no registered vendor uses, such as a string.`
+				`[inth] Custom vendor "${vendor.name}" (id ${id}) is ignored: the Global Vendor List has a registered vendor with id ${id}. Give each custom vendor an id no registered vendor uses, such as a string.`
 			);
 		}
 		return false;
 	});
 };
 
-/**
- * Internal helper — synchronously seed the IAB snapshot with baseline
- * state so selectors have something to read immediately on mount.
- */
+/** Seeds the IAB snapshot synchronously so selectors have state on mount. */
 const seedInitialIAB = function seedInitialIAB(
 	kernel: ConsentKernel,
 	options: CreateIABOptions,
@@ -330,10 +326,6 @@ const seedInitialIAB = function seedInitialIAB(
 	});
 };
 
-/**
- * Pull the current IAB slice from the kernel snapshot, returning a
- * default-populated object when the slice hasn't been initialized yet.
- */
 const readIAB = function readIAB(kernel: ConsentKernel) {
 	return (
 		kernel.getSnapshot().iab ?? {
@@ -558,7 +550,7 @@ const grantsDeniedCategory = function grantsDeniedCategory(
 			return false;
 		}
 		const purposes =
-			C15T_TO_IAB_PURPOSE_MAP[category as keyof typeof C15T_TO_IAB_PURPOSE_MAP];
+			INTH_TO_IAB_PURPOSE_MAP[category as keyof typeof INTH_TO_IAB_PURPOSE_MAP];
 		const granted = (purpose: number) =>
 			authority.purposeConsents[purpose] === true;
 		return decision.confirmedAt > authority.confirmedAt
@@ -590,7 +582,7 @@ const withoutDeniedPurposes = function withoutDeniedPurposes(
 			continue;
 		}
 		const purposes =
-			C15T_TO_IAB_PURPOSE_MAP[category as keyof typeof C15T_TO_IAB_PURPOSE_MAP];
+			INTH_TO_IAB_PURPOSE_MAP[category as keyof typeof INTH_TO_IAB_PURPOSE_MAP];
 		for (const purpose of purposes ?? []) {
 			next[purpose] = false;
 		}
@@ -720,7 +712,6 @@ const settleTie = function settleTie(
 	return grantsBeyond(held, receipt) ? 'withdraw' : 'store';
 };
 
-/** Whether a stored receipt ties with the held authority. */
 const isTie = function isTie(
 	receipt: KernelIABAuthority | null,
 	held: KernelIABAuthority | null,
@@ -784,7 +775,7 @@ const referenceEndpoint = (
 		return requested?.url;
 	}
 	return appendInitParams(requested.url, {
-		...c15tProtocolParams,
+		...inthProtocolParams,
 		country: requested.context?.country ?? undefined,
 		gpc: requested.context?.gpc,
 		region: requested.context?.region ?? undefined,
@@ -952,12 +943,10 @@ export const createIAB = function createIAB(
 			return preloaded;
 		}
 
-		// Ask for the scope the publisher declared on both paths. The reference
-		// path used to fetch unfiltered and narrow afterwards, which meant every
-		// publisher with a server-resolved reference pulled the whole list: the
-		// live GVL is 857KB uncompressed, against 41KB for a three-vendor scope.
-		// An endpoint that ignores the filter still ends up narrowed below, so the
-		// filter is an optimisation and never a behaviour change.
+		// Ask for the declared vendor scope on the reference path too: the live
+		// GVL is 857KB uncompressed, against 41KB for a three-vendor scope. An
+		// endpoint that ignores the filter is still narrowed below, so the
+		// filter only saves bytes.
 		const list = await fetchGVL(vendors?.length ? vendors : undefined, {
 			endpoint: referenceEndpoint(requested) ?? gvlUrl,
 			format: requested?.format,
@@ -1018,7 +1007,7 @@ export const createIAB = function createIAB(
 			} catch (error) {
 				adTechProviderRequest = null;
 				console.warn(
-					'[c15t] Additional Consent is off: the ad tech provider list did not load.',
+					'[inth] Additional Consent is off: the ad tech provider list did not load.',
 					error
 				);
 				return null;
@@ -1357,8 +1346,14 @@ export const createIAB = function createIAB(
 		if (
 			options.persistence === false ||
 			!held ||
-			(event.key !== AUTHORITY_KEY && event.key !== null)
+			(event.key !== IAB_STORAGE_KEYS.authority &&
+				event.key !== IAB_STORAGE_KEYS.c15tAuthority &&
+				event.key !== null)
 		) {
+			return;
+		}
+		if (event.key === IAB_STORAGE_KEYS.c15tAuthority && hasOwnReceipt()) {
+			// c15t's receipt only stands in while Inth has none.
 			return;
 		}
 		const snapshot = kernel.getSnapshot();
@@ -1373,14 +1368,12 @@ export const createIAB = function createIAB(
 	if (typeof window !== 'undefined') {
 		window.addEventListener('storage', onReceiptStored);
 	}
-	/** The TC string to publish: the held one unless suppressed. */
 	const publishedTcString = function publishedTcString(): string {
 		const authority = kernel.getSnapshot().iab?.authority;
 		return authority && authority !== suppressedAuthority
 			? authority.tcString
 			: '';
 	};
-	/** Record a published list and run a reload that waited for it. */
 	const markListPublished = (generation: number): void => {
 		publishedListGeneration = generation;
 		if (reloadAfterList) {
@@ -1460,10 +1453,6 @@ export const createIAB = function createIAB(
 		}
 		return refreshed;
 	};
-	/**
-	 * The kernel update that withdraws the retained authority, or installs
-	 * `refreshed` in its place. Empty when neither applies.
-	 */
 	const retainedAuthorityPatch = (
 		withdrawn: boolean,
 		refreshed: KernelIABAuthority | null
@@ -1473,10 +1462,6 @@ export const createIAB = function createIAB(
 		}
 		return refreshed ? { authority: refreshed } : {};
 	};
-	/**
-	 * The kernel update that publishes a list, withdrawing authority if
-	 * needed, or installing `refreshed` in place of the retained one.
-	 */
 	const publishListPatch = (
 		gvl: GlobalVendorList,
 		adTechProviders: AdTechProvider[] | null,
@@ -1502,7 +1487,6 @@ export const createIAB = function createIAB(
 		}
 		return update;
 	};
-	/** Whether the retained authority is withdrawn for the new list. */
 	const retainedWithdrawn = (
 		retained: KernelIABAuthority | null | undefined,
 		valid: boolean
@@ -1587,13 +1571,15 @@ export const createIAB = function createIAB(
 				kernel.set.iab({ authority: null, tcString: '' });
 			}
 			// Nor may vendors keep reading the string a stored receipt names,
-			// which no authority in memory stands for yet at startup.
-			const stored = readAuthorityReceipt() as { tcString?: unknown } | null;
-			if (
-				options.persistence !== false &&
-				typeof stored?.tcString === 'string'
-			) {
-				clearStoredTCString(stored.tcString);
+			// which no authority in memory stands for yet at startup. Reading
+			// can copy c15t's receipt, so it waits for persistence too.
+			if (options.persistence !== false) {
+				const stored = readAuthorityReceipt() as {
+					tcString?: unknown;
+				} | null;
+				if (typeof stored?.tcString === 'string') {
+					clearStoredTCString(stored.tcString);
+				}
 			}
 			throw error;
 		}
@@ -1658,44 +1644,40 @@ export const createIAB = function createIAB(
 				withdrawn,
 				retainedCheck.restrictionsChanged
 			);
-			try {
-				cmpApi ??= createCMPApi({
-					cmpId,
-					cmpVersion,
-					gdprApplies: policyUsesIAB(kernel.getSnapshot()),
-					// The AC string confirmed with the published TC string.
-					getAddtlConsent: (tcString) => {
-						const authority = kernel.getSnapshot().iab?.authority;
-						return authority?.tcString === tcString
-							? authority.addtlConsent
-							: undefined;
-					},
-					gvl,
-				});
-				const current = kernel.getSnapshot();
-				if (existingApi && current === beforeUpdate) {
-					// Changed snapshots already publish through the kernel subscription.
-					existingApi.updateConsent(
-						readIAB(kernel).authority?.tcString ?? '',
-						undefined,
-						policyUsesIAB(current)
-					);
-				} else if (!existingApi && publishedTcString()) {
-					// A handle mounted on a kernel that already holds authority, such
-					// as a remount: the list's notification ran before this API
-					// existed, so it would otherwise report no consent at all.
-					cmpApi.updateConsent(
-						publishedTcString(),
-						undefined,
-						policyUsesIAB(current)
-					);
-				}
-				cmpApi.setDisplayStatus(cmpDisplayStatus(current));
-				if (mayHydrate) {
-					void restoreAuthority();
-				}
-			} catch {
-				// Kernel metadata remains available if installing the CMP API fails.
+			cmpApi ??= createCMPApi({
+				cmpId,
+				cmpVersion,
+				gdprApplies: policyUsesIAB(kernel.getSnapshot()),
+				// The AC string confirmed with the published TC string.
+				getAddtlConsent: (tcString) => {
+					const authority = kernel.getSnapshot().iab?.authority;
+					return authority?.tcString === tcString
+						? authority.addtlConsent
+						: undefined;
+				},
+				gvl,
+			});
+			const current = kernel.getSnapshot();
+			if (existingApi && current === beforeUpdate) {
+				// Changed snapshots already publish through the kernel subscription.
+				existingApi.updateConsent(
+					readIAB(kernel).authority?.tcString ?? '',
+					undefined,
+					policyUsesIAB(current)
+				);
+			} else if (!existingApi && publishedTcString()) {
+				// A handle mounted on a kernel that already holds authority, such
+				// as a remount: the list's notification ran before this API
+				// existed, so it would otherwise report no consent at all.
+				cmpApi.updateConsent(
+					publishedTcString(),
+					undefined,
+					policyUsesIAB(current)
+				);
+			}
+			cmpApi.setDisplayStatus(cmpDisplayStatus(current));
+			if (mayHydrate) {
+				void restoreAuthority();
 			}
 		} catch (error) {
 			if (generation === listGeneration) {
@@ -1817,8 +1799,6 @@ export const createIAB = function createIAB(
 		notify();
 	};
 
-	// Keep the CMP API state in sync with snapshot changes. v2 calls
-	// `cmpApi.updateConsent(tcString)` on save — we mirror that here.
 	/** Close the banner opened for changed restrictions, after this notification. */
 	const closeRestrictionPrompt = (): void => {
 		openedForRestrictions = false;
@@ -2051,7 +2031,6 @@ export const createIAB = function createIAB(
 				'createIAB: cannot generate TC string — GVL not loaded yet.'
 			);
 		}
-		// Lazy-load @iabtechlabtcf/core only when we actually encode.
 		const consentData = buildTCFConsentData();
 		await getTCFCore();
 		const tcString = await generateTCString(consentData, iab.gvl, {
@@ -2197,7 +2176,7 @@ export const createIAB = function createIAB(
 			) {
 				return;
 			}
-			const consents = iabPurposesToC15tConsents(
+			const consents = iabPurposesToInthConsents(
 				consentData.purposeConsents,
 				consentBasisPurposes(
 					snapshot.iab.gvl,
@@ -2286,6 +2265,38 @@ export const createIAB = function createIAB(
 				purposeLegitimateInterests: { ...current, [id]: value },
 			});
 		},
+		setPurposeObjection(id, objected) {
+			const value = !objected;
+			const iab = readIAB(kernel);
+			if (value && permittedLegitimateInterestPurposes([id]).length === 0) {
+				return;
+			}
+			const liVendors = [
+				...Object.values(
+					iab.gvl
+						? applyPublisherRestrictionsToGVL(iab.gvl, publisherRestrictions)
+								.vendors
+						: {}
+				).filter((vendor) => vendor.legIntPurposes?.includes(id)),
+				...iab.customVendors.filter((vendor) =>
+					permittedLegitimateInterestPurposes(vendor.legIntPurposes).includes(
+						id
+					)
+				),
+			];
+			kernel.set.iab({
+				purposeLegitimateInterests: {
+					...iab.purposeLegitimateInterests,
+					[id]: value,
+				},
+				vendorLegitimateInterests: {
+					...iab.vendorLegitimateInterests,
+					...Object.fromEntries(
+						liVendors.map((vendor) => [String(vendor.id), value])
+					),
+				},
+			});
+		},
 		setSpecialFeatureOptIn(id, value) {
 			const current = readIAB(kernel).specialFeatureOptIns;
 			if (current[id] === value) {
@@ -2328,7 +2339,12 @@ export const createIAB = function createIAB(
 	return handle;
 };
 
-export type { CMPApi, GlobalVendorList, NonIABVendor } from '@inth/sdk-core';
+export type {
+	CMPApi,
+	GlobalVendorList,
+	NonIABVendor,
+	PublisherRestriction,
+} from '@inth/sdk-core';
 export {
 	type HeadlessIABBannerAction,
 	type HeadlessIABBannerState,
@@ -2350,15 +2366,14 @@ export {
 	type ProcessedStack,
 	type ProcessedVendor,
 	processGVLForDialog,
-	resolveIABBannerSummary,
 } from './headless';
 /**
  * Convenience re-exports so consumers writing custom IAB flows don't
  * need to thread through `@inth/sdk/iab`'s internal subpaths.
  */
 export {
-	c15tConsentsToIabPurposes,
+	inthConsentsToIabPurposes,
 	clearGVLCache,
 	fetchGVL,
-	iabPurposesToC15tConsents,
+	iabPurposesToInthConsents,
 };

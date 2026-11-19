@@ -107,12 +107,12 @@ describe('readServerHtmlStream', () => {
 		const { port } = server.address() as AddressInfo;
 
 		const capture = await readServerHtmlStream(`http://127.0.0.1:${port}/`, {
-			cookie: toCookieHeader([{ name: 'c15t', value: 'saved' }]),
+			cookie: toCookieHeader([{ name: 'inth', value: 'saved' }]),
 		});
 		const analysis = analyzeServerHtmlStream(capture.chunks, markers);
 
 		expect(capture.status).toBe(200);
-		expect(seenCookie).toBe('c15t=saved');
+		expect(seenCookie).toBe('inth=saved');
 		expect(seenEncoding).toBe('identity');
 		expect(analysis.chunkCount).toBeGreaterThanOrEqual(2);
 		expect(analysis.bannerInFirstChunk).toBe(false);

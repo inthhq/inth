@@ -2,7 +2,7 @@
 import {
 	gatePageCSS,
 	gatePageHTML,
-} from '@c15t/benchmarking/consent-gate-page';
+} from '@inth/benchmarking/consent-gate-page';
 
 /** Consent gate page: CookieBench's article under `ConsentRoot`. */
 const GatePage = () => (

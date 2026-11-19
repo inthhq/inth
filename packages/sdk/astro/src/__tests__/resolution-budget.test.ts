@@ -1,20 +1,17 @@
+import { clearManifestCache } from '@inth/sdk/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { resolveOptions } from '../integration';
 import { hosted as hostedMode } from '../mode';
-import {
-	clearManifestCache,
-	DEFAULT_RESOLVE_TIMEOUT_MS,
-	resolveConsentContext,
-} from '../server';
-import type { C15tAstroOptions } from '../types';
+import { DEFAULT_RESOLVE_TIMEOUT_MS, resolveConsentContext } from '../server';
+import type { InthAstroOptions } from '../types';
 import { testWire } from './policy-fixture';
 
 const BACKEND = 'https://consent.example.com';
 
 const initResponse = (): Response =>
 	Response.json({
-		branding: 'c15t',
+		branding: 'inth',
 		location: { countryCode: null, regionCode: null },
 		policyResolution: testWire(),
 		translations: { language: 'en', translations: {} },
@@ -45,11 +42,11 @@ const heldFetch = function heldFetch(respond: () => Response) {
 };
 
 const resolveContext = (
-	astroOptions: C15tAstroOptions,
+	astroOptions: InthAstroOptions,
 	extra: Partial<Parameters<typeof resolveConsentContext>[0]> = {}
 ) =>
 	resolveConsentContext({
-		headers: new Headers({ 'x-c15t-country': 'DE' }),
+		headers: new Headers({ 'x-inth-country': 'DE' }),
 		options: resolveOptions(astroOptions),
 		url: 'https://site.example.com/',
 		...extra,
@@ -76,18 +73,18 @@ describe('server resolution budget', () => {
 		await vi.advanceTimersByTimeAsync(DEFAULT_RESOLVE_TIMEOUT_MS - 1);
 		expect(settled).toBe(false);
 		await vi.advanceTimersByTimeAsync(1);
-		const c15t = await pending;
+		const inth = await pending;
 
 		expect(DEFAULT_RESOLVE_TIMEOUT_MS).toBe(500);
-		expect(c15t.hasPolicy).toBe(false);
-		expect(c15t.shouldShowBanner).toBe(false);
-		expect(c15t.config.initialPolicyPending).toBe(true);
+		expect(inth.hasPolicy).toBe(false);
+		expect(inth.shouldShowBanner).toBe(false);
+		expect(inth.config.initialPolicyPending).toBe(true);
 	});
 
 	it('lets a per-call timeoutMs override the integration option', async () => {
 		const backend = heldFetch(initResponse);
 		const started = Date.now();
-		const c15t = await resolveContext(
+		const inth = await resolveContext(
 			{
 				middleware: { timeoutMs: false },
 				mode: hostedMode(),
@@ -97,15 +94,15 @@ describe('server resolution budget', () => {
 		);
 
 		expect(Date.now() - started).toBeLessThan(1000);
-		expect(c15t.hasPolicy).toBe(false);
+		expect(inth.hasPolicy).toBe(false);
 	});
 
 	it('does not delay offline mode', async () => {
-		const c15t = await resolveContext({
+		const inth = await resolveContext({
 			middleware: { timeoutMs: 0 },
 			mode: { type: 'testing' },
 		});
 
-		expect(c15t.hasPolicy).toBe(true);
+		expect(inth.hasPolicy).toBe(true);
 	});
 });

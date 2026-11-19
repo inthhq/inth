@@ -3,10 +3,10 @@ import ConsentDevTools from './components/consent-dev-tools.svelte';
 /** Compatible short name for {@link ConsentDevTools}. */
 const DevTools = ConsentDevTools;
 
-/** Backward-compatible name for {@link ConsentDevTools}. */
-const C15TDevTools = ConsentDevTools;
+/** Another name for {@link ConsentDevTools}. */
+const InthDevTools = ConsentDevTools;
 
-export { C15TDevTools, ConsentDevTools, DevTools };
+export { InthDevTools, ConsentDevTools, DevTools };
 export default ConsentDevTools;
 
 export type {
@@ -16,7 +16,7 @@ export type {
 	DevToolsTab,
 } from '@inth/sdk/devtools';
 export type {
-	C15TDevToolsProps,
+	InthDevToolsProps,
 	ConsentDevToolsProps,
 	DevToolsProps,
 } from './devtools-options';

@@ -117,7 +117,7 @@ const createFixture = function createFixture(
 				: []),
 			...(consentCount > SUPPORTED_CONSENT_CATEGORIES.length
 				? [
-						`c15t currently exposes ${SUPPORTED_CONSENT_CATEGORIES.length} built-in consent categories, so larger fixtures scale through translations and script volume rather than additional category names.`,
+						`inth currently exposes ${SUPPORTED_CONSENT_CATEGORIES.length} built-in consent categories, so larger fixtures scale through translations and script volume rather than additional category names.`,
 					]
 				: []),
 		],

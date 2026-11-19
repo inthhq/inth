@@ -5,7 +5,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMeasurementConsents,
 	installHeadProbe,
 	loadScripts,
@@ -23,7 +23,7 @@ describe('adobeAnalytics contract', () => {
 
 		installHeadProbe((node) => {
 			if (
-				!node.src.startsWith('https://assets.adobedtm.com/c15tfake/c15tfake')
+				!node.src.startsWith('https://assets.adobedtm.com/inthfake/inthfake')
 			) {
 				return;
 			}
@@ -37,12 +37,12 @@ describe('adobeAnalytics contract', () => {
 		const script = {
 			...adobeAnalytics({
 				scriptUrl:
-					'https://assets.adobedtm.com/c15tfake/c15tfake/launch-c15tfake.min.js',
+					'https://assets.adobedtm.com/inthfake/inthfake/launch-inthfake.min.js',
 			}),
 			id: 'adobe-analytics-contract',
 		};
 
-		loadScripts([script], deniedConsents);
+		loadScripts([script], ALL_DENIED);
 		expect(appendCount).toBe(0);
 		expect(window.adobeDataLayer).toBeUndefined();
 
@@ -72,7 +72,7 @@ describe('adobeAnalytics contract', () => {
 					...adobeAnalytics({
 						async: false,
 						scriptUrl:
-							'https://assets.adobedtm.com/c15tfake/c15tfake/launch-sync.min.js',
+							'https://assets.adobedtm.com/inthfake/inthfake/launch-sync.min.js',
 					}),
 					id: 'adobe-analytics-sync-contract',
 				},
@@ -95,7 +95,7 @@ describe('adobeAnalytics contract', () => {
 		loadScripts(
 			[
 				adobeAnalytics({
-					scriptUrl: 'http://assets.adobedtm.com/c15tfake/launch.min.js',
+					scriptUrl: 'http://assets.adobedtm.com/inthfake/launch.min.js',
 				}),
 			],
 			grantedMeasurementConsents

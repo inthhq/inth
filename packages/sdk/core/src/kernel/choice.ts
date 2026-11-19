@@ -21,12 +21,14 @@ import {
 	ADDITIONAL_CONSENT_V2_PATTERN,
 } from '@inth/sdk-schema/types';
 
-import { recordCategoryPatch } from '../consent-record/record';
+import { EMPTY_CHOICE, recordCategoryPatch } from '../consent-record/record';
 import type { AllConsentNames } from '../consent/consent-types';
 import { generateSubjectId } from '../libs/generate-subject-id';
 import { extractConsentNamesFromCondition, has } from '../libs/has';
 import type { HasCondition } from '../libs/has';
-import type { PresentedSelection } from '../policy';
+import { vendorAxisActive } from '../libs/vendors';
+import { toggleableVendorIds } from '../modules/vendor-denial';
+import type { PresentedSelection } from '../policy-choice';
 import type {
 	ConsentSnapshot,
 	ConsentState,
@@ -46,7 +48,6 @@ import {
 	applyNoticeAcknowledgement,
 	buildSavePayload,
 	choiceAcknowledgement,
-	EMPTY_CHOICE,
 	resolveSaveSelection,
 	saveAttribution,
 	saveSubject,
@@ -86,26 +87,12 @@ const isVendorGrantMap = function isVendorGrantMap(
 	);
 };
 
-/** Ids a save may toggle: declared and not `disabled`. */
-const toggleableVendorIds = function toggleableVendorIds(
-	snapshot: ConsentSnapshot
-): ReadonlySet<string> {
-	const ids = new Set<string>();
-	for (const vendor of snapshot.vendors?.declared ?? []) {
-		if (vendor.disabled !== true) {
-			ids.add(vendor.id);
-		}
-	}
-	return ids;
-};
-
 /** Whether a narrowed bulk action names every category the visitor decides. */
 const coversChoiceScope = function coversChoiceScope(
 	snapshot: ConsentSnapshot,
 	categories: readonly AllConsentNames[]
 ): boolean {
-	const scope =
-		snapshot.evaluationPolicy.choiceScope ?? snapshot.policyRule.scope;
+	const scope = snapshot.evaluationPolicy.choiceScope;
 	// An empty scope is vacuously covered by `every`, and the visitor decides
 	// nothing in it, so a narrowed action there is not the full clear.
 	return (
@@ -292,7 +279,7 @@ const resolveVendorSelection = function resolveVendorSelection(
 	categories?: readonly AllConsentNames[]
 ): VendorChoice | null {
 	const current = snapshot.vendorChoice;
-	if (snapshot.model === 'iab') {
+	if (!vendorAxisActive(snapshot)) {
 		return current;
 	}
 	const bulk = input === 'all' || input === 'none';
@@ -347,7 +334,7 @@ const vendorChoicePayload = function vendorChoicePayload(
 	previous: ConsentSnapshot['vendorChoice']
 ): SavePayload['vendorChoice'] {
 	const declared = snapshot.vendors?.declared ?? [];
-	if (snapshot.model === 'iab' || snapshot.vendorChoice === null) {
+	if (!vendorAxisActive(snapshot) || snapshot.vendorChoice === null) {
 		return undefined;
 	}
 	const denied = new Set(snapshot.vendorChoice.denied);

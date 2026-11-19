@@ -3,11 +3,11 @@
 	"extends": ["//"],
 	"tasks": {
 		"build": {
-			"env": ["PUBLIC_C15T_BACKEND_URL"]
+			"env": ["PUBLIC_INTH_PROJECT_URL"]
 		},
 		"check-types": {
 			"dependsOn": ["^build"],
-			"env": ["PUBLIC_C15T_BACKEND_URL"]
+			"env": ["PUBLIC_INTH_PROJECT_URL"]
 		}
 	}
 }

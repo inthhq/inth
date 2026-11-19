@@ -92,17 +92,17 @@ export const helperParityCases = {
 			persistAfterConsentRevoked: undefined,
 			src: undefined,
 		},
-		script: ada({ handle: 'c15t-live-probe-placeholder' }),
+		script: ada({ handle: 'inth-live-probe-placeholder' }),
 	},
 	adobeAnalytics: {
 		expected: {
 			alwaysLoad: undefined,
 			persistAfterConsentRevoked: undefined,
-			src: 'https://assets.adobedtm.com/c15tfake/c15tfake/launch-c15tfake.min.js',
+			src: 'https://assets.adobedtm.com/inthfake/inthfake/launch-inthfake.min.js',
 		},
 		script: adobeAnalytics({
 			scriptUrl:
-				'https://assets.adobedtm.com/c15tfake/c15tfake/launch-c15tfake.min.js',
+				'https://assets.adobedtm.com/inthfake/inthfake/launch-inthfake.min.js',
 		}),
 	},
 	adobeTarget: {
@@ -117,9 +117,9 @@ export const helperParityCases = {
 		expected: {
 			alwaysLoad: undefined,
 			persistAfterConsentRevoked: true,
-			src: 'https://s.adroll.com/j/c15tfake/roundtrip.js',
+			src: 'https://s.adroll.com/j/inthfake/roundtrip.js',
 		},
-		script: adrollPixel({ advertiserId: 'c15tfake', pixelId: 'c15tfake' }),
+		script: adrollPixel({ advertiserId: 'inthfake', pixelId: 'inthfake' }),
 	},
 	ahrefsAnalytics: {
 		expected: {
@@ -157,17 +157,17 @@ export const helperParityCases = {
 		expected: {
 			alwaysLoad: undefined,
 			persistAfterConsentRevoked: true,
-			src: 'https://cdn.attn.tv/c15tfake/dtag.js',
+			src: 'https://cdn.attn.tv/inthfake/dtag.js',
 		},
-		script: attentiveTag({ siteSlug: 'c15tfake' }),
+		script: attentiveTag({ siteSlug: 'inthfake' }),
 	},
 	clay: {
 		expected: {
 			alwaysLoad: undefined,
 			persistAfterConsentRevoked: true,
-			src: 'https://static.claydar.com/init.v1.js?id=c15tfake',
+			src: 'https://static.claydar.com/init.v1.js?id=inthfake',
 		},
-		script: clay({ siteId: 'c15tfake' }),
+		script: clay({ siteId: 'inthfake' }),
 	},
 	clearbit: {
 		expected: {
@@ -228,7 +228,7 @@ export const helperParityCases = {
 			persistAfterConsentRevoked: true,
 			src: 'https://handshake.default.com/index.js',
 		},
-		script: defaultComPixel({ publicKey: 'c15tfake' }),
+		script: defaultComPixel({ publicKey: 'inthfake' }),
 	},
 	dynamicYield: {
 		expected: {
@@ -380,7 +380,7 @@ export const helperParityCases = {
 			persistAfterConsentRevoked: undefined,
 			src: 'https://cdn.logrocket.io/LogRocket.min.js',
 		},
-		script: logRocket({ appId: 'c15tfake/c15tfake' }),
+		script: logRocket({ appId: 'inthfake/inthfake' }),
 	},
 	luckyOrange: {
 		expected: {
@@ -533,9 +533,9 @@ export const helperParityCases = {
 		expected: {
 			alwaysLoad: undefined,
 			persistAfterConsentRevoked: true,
-			src: 'https://ddwl4m2hdecbv.cloudfront.net/b/c15tfake/c15tfake.js.gz',
+			src: 'https://ddwl4m2hdecbv.cloudfront.net/b/inthfake/inthfake.js.gz',
 		},
-		script: rb2b({ accountKey: 'c15tfake' }),
+		script: rb2b({ accountKey: 'inthfake' }),
 	},
 	redditPixel: {
 		expected: {
@@ -552,7 +552,7 @@ export const helperParityCases = {
 			src: 'https://cdn.rudderlabs.com/v3/modern/rsa.min.js',
 		},
 		script: rudderstack({
-			dataPlaneUrl: 'https://c15t-live-probe.invalid',
+			dataPlaneUrl: 'https://inth-live-probe.invalid',
 
 			writeKey: 'abc123xyz456',
 		}),
@@ -604,8 +604,8 @@ export const helperParityCases = {
 			src: 'https://js.adsrvr.org/up_loader.3.0.0.js',
 		},
 		script: theTradeDeskPixel({
-			advertiserId: 'c15tfake',
-			pixelIds: ['c15tfake'],
+			advertiserId: 'inthfake',
+			pixelIds: ['inthfake'],
 		}),
 	},
 	tiktokPixel: {
@@ -652,9 +652,9 @@ export const helperParityCases = {
 		expected: {
 			alwaysLoad: undefined,
 			persistAfterConsentRevoked: undefined,
-			src: 'https://wisepops.net/loader.js?v=3&h=c15tfake',
+			src: 'https://wisepops.net/loader.js?v=3&h=inthfake',
 		},
-		script: wisepops({ siteId: 'c15tfake' }),
+		script: wisepops({ siteId: 'inthfake' }),
 	},
 	xPixel: {
 		expected: {

@@ -3,18 +3,18 @@ import { execFileSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { runConsentGate } from '@c15t/benchmarking/consent-gate';
+import { runConsentGate } from '@inth/benchmarking/consent-gate';
 import {
 	GATE_STATE_GLOBAL,
 	gateConsentCategories,
 	gatePageCSS,
 	gatePageHTML,
 	gateScripts,
-} from '@c15t/benchmarking/consent-gate-page';
+} from '@inth/benchmarking/consent-gate-page';
 
 /**
  * Script-tag consent gate. CookieBench's script fixture loads
- * `@inth/sdk`'s `c15t.js` with `data-manual` and calls `c15t.init` in
+ * `@inth/sdk`'s `inth.js` with `data-manual` and calls `inth.init` in
  * hosted mode from a module script; this page does the same, served by the
  * gate proxy with the checkout's own `packages/sdk/browser/dist` and the gate's
  * fixture backend. The bridge below is `updateGateBridge` from
@@ -36,7 +36,7 @@ execFileSync(
 	{ cwd: root, stdio: 'inherit' }
 );
 
-const head = `<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>c15t consent gate</title><style>${gatePageCSS}</style>`;
+const head = `<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>inth consent gate</title><style>${gatePageCSS}</style>`;
 
 const bridge = `const global = ${JSON.stringify(GATE_STATE_GLOBAL)};
 const bridge = (window[global] ??= { allowedCategories: [], consent: 'unset', scripts: [] });
@@ -58,8 +58,8 @@ const update = (snapshot) => {
 	document.documentElement.dataset.consentReady = String(bridge.ready);
 };`;
 
-const gatePage = `<!doctype html><html lang="en"><head>${head}</head><body><div id="content">${gatePageHTML}</div><a href="#c15t-preferences" data-testid="consent-dialog-link">Privacy settings</a><script src="/__gate/browser/c15t.js" data-manual></script><script type="module">${bridge}
-const client = window.c15t.init(${JSON.stringify({
+const gatePage = `<!doctype html><html lang="en"><head>${head}</head><body><div id="content">${gatePageHTML}</div><a href="#inth-preferences" data-testid="consent-dialog-link">Privacy settings</a><script src="/__gate/browser/inth.js" data-manual></script><script type="module">${bridge}
+const client = window.inth.init(${JSON.stringify({
 	consentCategories: gateConsentCategories,
 	mode: 'hosted',
 	projectUrl: '/__gate/api',
@@ -79,12 +79,12 @@ try {
 		},
 		framework: 'script-tag',
 		notes: [
-			"@inth/sdk c15t.js with data-manual and c15t.init in hosted mode, as CookieBench's script fixture loads it.",
+			"@inth/sdk inth.js with data-manual and inth.init in hosted mode, as CookieBench's script fixture loads it.",
 		],
-		packageName: '@c15t/script-lifecycle-bench',
+		packageName: '@inth/script-lifecycle-bench',
 		pages: { '/gate': gatePage, '/gate/control': controlPage },
 		paths: { control: '/gate/control', gate: '/gate' },
-		proxyPort: Number(process.env.C15T_GATE_PORT ?? '4437'),
+		proxyPort: Number(process.env.INTH_GATE_PORT ?? '4437'),
 		target: 'script-tag',
 	});
 } catch (error) {

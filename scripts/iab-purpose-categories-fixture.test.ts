@@ -1,8 +1,8 @@
 /**
- * Native derives c15t categories from an IAB TCF decision with the web's
+ * Native derives Inth categories from an IAB TCF decision with the web's
  * function, not a second one. `packages/native-protocol/iab/purpose-categories.json`
  * holds the shared cases, custom (non-IAB) vendors included; this runs them
- * against `iabPurposesToC15tConsents`. `IABPurposeCategoriesTests` in
+ * against `iabPurposesToInthConsents`. `IABPurposeCategoriesTests` in
  * `packages/swift/Tests/InthCoreTests` and `IabPurposeCategoriesTest` in
  * `packages/android/inth-core` run the same cases against Swift and Kotlin.
  */
@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, test } from 'vitest';
 
-import { iabPurposesToC15tConsents } from '../packages/sdk/iab/src/tcf/purpose-mapping';
+import { iabPurposesToInthConsents } from '../packages/sdk/iab/src/tcf/purpose-mapping';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 
@@ -51,7 +51,7 @@ describe('IAB purpose categories fixture: native derives what the web does', () 
 		const purposeConsents = Object.fromEntries(
 			fixtureCase.purposeConsents.map((id) => [id, true])
 		);
-		const { necessary, ...categories } = iabPurposesToC15tConsents(
+		const { necessary, ...categories } = iabPurposesToInthConsents(
 			purposeConsents,
 			basisOf(fixtureCase)
 		);
@@ -65,7 +65,7 @@ describe('IAB purpose categories fixture: native derives what the web does', () 
 				const purposeConsents = Object.fromEntries(
 					fixtureCase.purposeConsents.map((id) => [id, true])
 				);
-				const without = iabPurposesToC15tConsents(
+				const without = iabPurposesToInthConsents(
 					purposeConsents,
 					basisOf({ ...fixtureCase, customVendors: {} })
 				);

@@ -1,14 +1,14 @@
 /**
- * The init script (`c15t.js`): the part of the script tag that runs before
+ * The init script (`inth.js`): the part of the script tag that runs before
  * the page's largest image has loaded.
  *
- * It installs a stand-in `window.c15t`, starts `/init`, renders the stock
+ * It installs a stand-in `window.inth`, starts `/init`, renders the stock
  * banner from the answer, records an accept or reject tapped on it, and
  * starts the scripts a stored or new choice allows. A Customize tap on its
- * banner opens the stock preference dialog from `c15t.dialog.js` without
- * the engine. Then it loads the engine (`c15t.hosted.js`) after the page's
+ * banner opens the stock preference dialog from `inth.dialog.js` without
+ * the engine. Then it loads the engine (`inth.hosted.js`) after the page's
  * priority images, at the first input, once a tapped choice is stored or
- * the dialog is on screen, or after {@link ENGINE_TIMEOUT_MS}, and hands it
+ * the dialog is on screen, or after `ENGINE_TIMEOUT_MS`, and hands it
  * everything through the boot object (`./boot.ts`).
  *
  * It runs nothing early it cannot run the way the engine would: any option
@@ -42,17 +42,19 @@ import {
 	isRunnableNow,
 	startPlainScripts,
 } from '@inth/sdk-core/surface-actions/plain-scripts';
+import { prefersReducedMotion } from '@inth/sdk-ui/utils/reduced-motion';
 
 import { mergeClientOptions, readPageOptions } from '../auto-init';
+import { dropRejection } from '../drop-rejection';
 import { activateGatedScripts } from '../gated-scripts';
 import { stylesheet } from '../generated/styles';
-import type { C15tGlobalBase, QueuedCall } from '../global-base';
+import type { InthGlobalBase, QueuedCall } from '../global-base';
+import { GLOBAL_NAME } from '../global-name';
 import { hasDecided } from '../has-decided';
 import { ACTION_ATTRIBUTE, PREFERENCES_HASH } from '../page-actions';
 import type { ConsentClient, ScriptTagClientOptions } from '../types';
 import { createBanner } from '../ui/banner';
 import type { BannerSurface } from '../ui/banner';
-import { prefersReducedMotion } from '../ui/dom';
 import { shareLocks } from '../ui/locks';
 import { createUIRoot } from '../ui/root';
 import { version } from '../version';
@@ -69,6 +71,8 @@ import type { DialogFile } from './dialog-file';
 import type { EarlyDialog, EarlyDialogHost } from './early-dialog';
 import { supportsEarlyStart } from './eligibility';
 import { hostedMarker, readHostedMarker } from './hosted-marker';
+import { partSrc } from './part-src';
+import type { InitFile } from './part-src';
 import {
 	clearPendingTap,
 	readPendingTap,
@@ -79,18 +83,13 @@ import { readPolicyCache, writePolicyCache } from './policy-cache';
 import { scheduleEngine } from './schedule';
 
 /**
- * The files `c15t.js` loads. The backend's `/c15t.js` sets each one's URL
- * on a global (`__c15tHostedSrc`, `__c15tCommitSrc`, `__c15tRecordsSrc`,
- * `__c15tDialogSrc`); a tag can set `data-hosted-src` and so on. Without
- * either, the file sits next to `c15t.js`, at the same version.
- */
-type InitFile = 'hosted' | 'commit' | 'records' | 'dialog';
-
-/**
  * How long the engine waits for the init script's `/init` answer, and the
- * init script for `c15t.commit.js`, `c15t.records.js` or `c15t.dialog.js`.
+ * init script for `inth.commit.js`, `inth.records.js` or `inth.dialog.js`.
  */
 const INIT_WAIT_MS = 3000;
+
+/** The waits before each retry of a failed `inth.hosted.js`. */
+const ENGINE_RETRY_MS = [1000, 2000];
 
 /** Calls that act on consent or the UI. They load the engine at once. */
 const ACTIONS = [
@@ -116,7 +115,7 @@ const ASYNC = new Set<string>([
 	'identify',
 ]);
 
-/** `data-c15t-action` values, as the engine's client routes them. */
+/** `data-inth-action` values, as the engine's client routes them. */
 const PAGE_ACTIONS: Record<string, string> = {
 	accept: 'acceptAll',
 	banner: 'showBanner',
@@ -127,7 +126,7 @@ const PAGE_ACTIONS: Record<string, string> = {
 };
 
 const notReady = (): Error =>
-	new Error('@inth/sdk: call c15t.init() first, or wait for c15t.ready().');
+	new Error('@inth/sdk: call inth.init() first, or wait for inth.ready().');
 
 /** A queued call whose result the caller waits for (see `runQueued`). */
 type SettledCall = QueuedCall & {
@@ -150,7 +149,7 @@ const announce = function announce(
 		}
 	} catch (error) {
 		// oxlint-disable-next-line no-console -- A page callback failed.
-		console.error('[c15t] A consent callback threw.', error);
+		console.error('[inth] A consent callback threw.', error);
 	}
 };
 
@@ -180,19 +179,18 @@ const supportsEarlyBanner = function supportsEarlyBanner(
 };
 
 /**
- * Run the init script for `script`: install the stand-in `window.c15t`,
+ * Run the init script for `script`: install the stand-in `window.inth`,
  * start `/init` unless the page inits itself, and schedule the engine.
  *
- * @param script - The init script's tag.
- * @returns The stand-in, or `null` when `window.c15t` is already an API.
+ * @returns The stand-in, or `null` when `window.inth` is already an API.
  * @internal
  */
 // oxlint-disable-next-line max-lines-per-function, max-statements -- One lifecycle: stand in, start, hand over.
 export const runInitScript = function runInitScript(
 	script: HTMLScriptElement | null
-): C15tGlobalBase | null {
+): InthGlobalBase | null {
 	const target = window as unknown as Record<string, unknown>;
-	const existing = target.c15t;
+	const existing = target[GLOBAL_NAME];
 	if (existing && !Array.isArray(existing)) {
 		// The engine or another init script is installed already.
 		return null;
@@ -200,19 +198,23 @@ export const runInitScript = function runInitScript(
 	const queued = (existing ?? []) as unknown[];
 	const { manual, options: scriptOptions } = readPageOptions(script);
 
-	let api: C15tGlobalBase | null = null;
+	let api: InthGlobalBase | null = null;
 	let options: ScriptTagClientOptions | null = null;
 	let snapshot: ConsentSnapshot | null = null;
 	let lastInit: PrefetchedInitialData | undefined;
 	let banner: BannerSurface | null = null;
-	/** The dialog opened before the engine, from `c15t.dialog.js`. */
+	/** The dialog opened before the engine, from `inth.dialog.js`. */
 	let dialog: EarlyDialog | null = null;
 	let dialogLoading = false;
 	/** What the dialog closes back to before the engine. */
 	let beforeDialog: ConsentSnapshot['activeUI'] = 'banner';
 	let engineRequested = false;
+	/** Set once `inth.hosted.js` failed on every try. */
+	let engineError: Error | null = null;
 	let ahead: { clearEpoch: boolean; subjectId: string } | undefined;
 	let persist: (() => void) | null = null;
+	/** Shows the banner again for a tap only the engine could record. */
+	let revertTap: (() => void) | null = null;
 	const parts: { commit?: InitCommitPart; records?: InitRecordsPart } = {};
 	const partLoads: Partial<Record<InitFile, Promise<unknown>>> = {};
 	const configs: ScriptTagClientOptions[] = [];
@@ -271,23 +273,8 @@ export const runInitScript = function runInitScript(
 		version,
 	};
 
-	/**
-	 * The URL of `file`: the backend's global, the tag's `data-<file>-src`,
-	 * or the file next to `c15t.js`.
-	 */
-	const fileSrc = function fileSrc(file: InitFile): string | null {
-		const configured =
-			target[`__c15t${file[0]?.toUpperCase()}${file.slice(1)}Src`] ??
-			script?.getAttribute(`data-${file}-src`);
-		if (typeof configured === 'string' && configured) {
-			return configured;
-		}
-		const own = script?.getAttribute('src');
-		return own
-			? new URL(`c15t.${file}.js?v=${version}`, new URL(own, location.href))
-					.href
-			: null;
-	};
+	const fileSrc = (file: InitFile): string | null =>
+		partSrc(file, script, script?.getAttribute('src'));
 
 	const appendScript = function appendScript(src: string): HTMLScriptElement {
 		const element = document.createElement('script');
@@ -300,6 +287,18 @@ export const runInitScript = function runInitScript(
 		return element;
 	};
 
+	/** The engine is not coming: reject what waits for it, and what asks later. */
+	const giveUp = function giveUp(message: string): void {
+		engineError = new Error(message);
+		// oxlint-disable-next-line no-console -- The engine is not coming.
+		console.error(message);
+		revertTap?.();
+		revertTap = null;
+		for (const call of boot.calls.splice(0) as SettledCall[]) {
+			call.settle?.(engineError, true);
+		}
+	};
+
 	const loadEngine = function loadEngine(): void {
 		if (engineRequested || api || boot.disposed) {
 			return;
@@ -307,17 +306,48 @@ export const runInitScript = function runInitScript(
 		engineRequested = true;
 		const src = fileSrc('hosted');
 		if (!src) {
-			// oxlint-disable-next-line no-console -- Authoring-time diagnostic.
-			console.error(
-				'@inth/sdk: c15t.js cannot tell where c15t.hosted.js is. Load c15t.js from a URL, or set data-hosted-src.'
+			giveUp(
+				'@inth/sdk: inth.js cannot tell where inth.hosted.js is. Load inth.js from a URL, or set data-hosted-src.'
 			);
 			return;
 		}
-		appendScript(src);
+		let tries = 0;
+		const request = () => {
+			const element = appendScript(src);
+			element.addEventListener('error', () => {
+				element.remove();
+				if (api) {
+					return;
+				}
+				if (boot.disposed) {
+					// A later `init()` requests it again.
+					engineRequested = false;
+					return;
+				}
+				const wait = ENGINE_RETRY_MS[tries];
+				tries += 1;
+				if (wait !== undefined) {
+					// The same URL: the browser fetches it again unless the
+					// failure came with cache headers, as a missing file's may.
+					setTimeout(() => {
+						if (boot.disposed) {
+							engineRequested = false;
+						} else if (!api) {
+							request();
+						}
+					}, wait);
+					return;
+				}
+				giveUp(
+					`@inth/sdk: inth.hosted.js failed to load ${tries} times, from ${src}.`
+				);
+			});
+		};
+		request();
 	};
 
 	/**
-	 * Fetch `c15t.commit.js`, `c15t.records.js` or `c15t.dialog.js`, once.
+	 * Fetch `inth.commit.js`, `inth.records.js` or `inth.dialog.js`, once.
 	 * Settles when it has run, failed, or after {@link INIT_WAIT_MS}; `parts`
 	 * or the dialog global holds what it provided.
 	 */
@@ -340,7 +370,11 @@ export const runInitScript = function runInitScript(
 	};
 
 	const queue = function queue(call: SettledCall): void {
-		boot.calls.push(call);
+		if (engineError) {
+			call.settle?.(engineError, true);
+		} else {
+			boot.calls.push(call);
+		}
 	};
 
 	/**
@@ -417,7 +451,7 @@ export const runInitScript = function runInitScript(
 
 	/**
 	 * Start what `next` allows: the page's plain `scripts` and its inert
-	 * `data-c15t-category` tags. A non-plain script that may run needs the
+	 * `data-inth-category` tags. A non-plain script that may run needs the
 	 * engine's loader, which then loads at once.
 	 */
 	const startScripts = function startScripts(next: ConsentSnapshot): void {
@@ -486,7 +520,7 @@ export const runInitScript = function runInitScript(
 		const commit: InitCommit = { queued: null, snapshot: plan.snapshot };
 		boot.commit = commit;
 		// Kept until the choice is stored, so a visitor who leaves before
-		// `c15t.commit.js` arrives still has it recorded on the next page.
+		// `inth.commit.js` arrives still has it recorded on the next page.
 		writePendingTap(choice, plan.previous, actionAt);
 		setSnapshot(plan.snapshot);
 		startScripts(plan.snapshot);
@@ -499,7 +533,7 @@ export const runInitScript = function runInitScript(
 		// oxlint-disable-next-line promise/avoid-new -- Settled by the write below.
 		return new Promise<SaveResult>((resolve) => {
 			// The record is written in a task after the tap, once
-			// `c15t.commit.js` has run, so the tap's own task only hides the
+			// `inth.commit.js` has run, so the tap's own task only hides the
 			// banner and starts the scripts. An engine that takes over sooner
 			// flushes it first, or records the tap itself without the file.
 			persist = () => {
@@ -516,7 +550,15 @@ export const runInitScript = function runInitScript(
 								subjectId: plan.subjectId,
 							});
 				if (!(module && early)) {
-					// The engine records it instead.
+					// The engine records it instead. If it never loads, the
+					// banner asks again; the pending tap still covers a visitor
+					// who leaves.
+					revertTap = () => {
+						if (boot.commit === commit) {
+							boot.commit = null;
+							setSnapshot(plan.previous);
+						}
+					};
 					queue([method, ...args]);
 					loadEngine();
 					resolve({ ok: false });
@@ -571,7 +613,7 @@ export const runInitScript = function runInitScript(
 	};
 
 	/**
-	 * Fetch `c15t.dialog.js`, once. Settles with what it published, or
+	 * Fetch `inth.dialog.js`, once. Settles with what it published, or
 	 * `undefined` when it failed, came from another release, or took longer
 	 * than {@link INIT_WAIT_MS}.
 	 */
@@ -627,9 +669,9 @@ export const runInitScript = function runInitScript(
 			options: current,
 			presentation: () => api?.client?.presentation ?? current.presentation,
 			save: saveFromDialog,
-			// `window.c15t`, this stand-in: once the engine has taken over, it
+			// `window.inth`, this stand-in: once the engine has taken over, it
 			// forwards every call there.
-			standIn: target.c15t as EarlyDialogHost['standIn'],
+			standIn: target[GLOBAL_NAME] as EarlyDialogHost['standIn'],
 			ui,
 		});
 		beforeDialog = shown.activeUI;
@@ -645,7 +687,7 @@ export const runInitScript = function runInitScript(
 	};
 
 	/**
-	 * Opens the preference dialog: from `c15t.dialog.js` before the engine
+	 * Opens the preference dialog: from `inth.dialog.js` before the engine
 	 * when it can, else through the engine, which then loads at once, as it
 	 * does when the file fails to load.
 	 */
@@ -773,7 +815,7 @@ export const runInitScript = function runInitScript(
 		};
 		// oxlint-disable-next-line promise/prefer-await-to-then -- Not in an async function.
 		void pending.then(markAnswered, markAnswered);
-		// A returning visitor: `c15t.records.js`, the record reader, loads at
+		// A returning visitor: `inth.records.js`, the record reader, loads at
 		// once. The choice they stored, evaluated against the policy the last
 		// `/init` sent, starts its scripts as soon as it has run, unless
 		// `/init` answered first. Settles `false` when it did not run.
@@ -885,22 +927,24 @@ export const runInitScript = function runInitScript(
 		}
 		event.preventDefault();
 		if (action === 'acceptAll' || action === 'rejectAll') {
-			void tap(action === 'acceptAll' ? 'all' : 'none');
+			dropRejection(tap(action === 'acceptAll' ? 'all' : 'none'));
 		} else if (action === 'openDialog') {
 			void openDialog();
 		} else {
-			void act(action, []);
+			dropRejection(act(action, []));
 		}
 	};
 	document.addEventListener('click', onPageClick);
 	cleanups.push(() => document.removeEventListener('click', onPageClick));
 
+	/** With `failable`, rejects when the engine fails to load. */
 	const withClient = function withClient<Result>(
-		run: (client: ConsentClient) => Result
+		run: (client: ConsentClient) => Result,
+		failable = false
 	): Promise<Result> {
 		// oxlint-disable-next-line promise/avoid-new -- Settled from the engine's onInit.
 		return new Promise((resolve, reject) => {
-			queue([
+			const call: SettledCall = [
 				'onInit',
 				(client: ConsentClient) => {
 					try {
@@ -909,7 +953,15 @@ export const runInitScript = function runInitScript(
 						reject(error);
 					}
 				},
-			]);
+			];
+			if (failable) {
+				call.settle = (error, failed) => {
+					if (failed) {
+						reject(error);
+					}
+				};
+			}
+			queue(call);
 		});
 	};
 
@@ -950,7 +1002,19 @@ export const runInitScript = function runInitScript(
 			if (api) {
 				return api.dispose();
 			}
-			boot.calls.length = 0;
+			persist = null;
+			revertTap = null;
+			const disposed = new Error(
+				'@inth/sdk: dispose() ran before inth.hosted.js loaded.'
+			);
+			for (const call of boot.calls.splice(0) as SettledCall[]) {
+				call.settle?.(disposed, true);
+			}
+			if (engineError) {
+				// Given up: a later `init()` gets three new tries.
+				engineError = null;
+				engineRequested = false;
+			}
 			banner?.destroy();
 			banner = null;
 			dialog?.surface.destroy();
@@ -1000,7 +1064,7 @@ export const runInitScript = function runInitScript(
 		isVendorAllowed(vendorId: string) {
 			if (!api) {
 				throw new Error(
-					'@inth/sdk: isVendorAllowed() needs c15t.hosted.js. Call it from c15t.onInit().'
+					'@inth/sdk: isVendorAllowed() needs inth.hosted.js. Call it from inth.onInit().'
 				);
 			}
 			return api.isVendorAllowed(vendorId);
@@ -1039,7 +1103,7 @@ export const runInitScript = function runInitScript(
 			};
 		},
 		pkg: '@inth/sdk',
-		provideGPP(module: Parameters<C15tGlobalBase['provideGPP']>[0]) {
+		provideGPP(module: Parameters<InthGlobalBase['provideGPP']>[0]) {
 			if (api) {
 				return api.provideGPP(module);
 			}
@@ -1060,7 +1124,8 @@ export const runInitScript = function runInitScript(
 			}
 			return calls.length;
 		},
-		ready: () => (api ? api.ready() : withClient((client) => client.ready())),
+		ready: () =>
+			api ? api.ready() : withClient((client) => client.ready(), true),
 		rejectAll: () => tap('none'),
 		subscribe(listener: (next: ConsentSnapshot) => void) {
 			if (api) {
@@ -1088,7 +1153,7 @@ export const runInitScript = function runInitScript(
 			act(method, args);
 	}
 	Object.assign(standIn, { closeDialog, openDialog });
-	target.c15t = standIn;
+	target[GLOBAL_NAME] = standIn;
 
 	// Calls queued on the array before this tag, in order.
 	for (const call of queued) {
@@ -1098,7 +1163,7 @@ export const runInitScript = function runInitScript(
 		begin();
 	}
 	/**
-	 * The action an input lands on: a `data-c15t-action` button, or a stock
+	 * The action an input lands on: a `data-inth-action` button, or a stock
 	 * button in the init script's UI. `onUI` is whether it lands in that UI.
 	 */
 	const pressed = function pressed(event: Event): {
@@ -1122,7 +1187,7 @@ export const runInitScript = function runInitScript(
 
 	/**
 	 * A press fetches what its tap needs, so it has usually run by the time
-	 * the click lands: `c15t.dialog.js` for Customize, `c15t.commit.js` for
+	 * the click lands: `inth.dialog.js` for Customize, `inth.commit.js` for
 	 * anything else in the init script's UI.
 	 */
 	const onPress = function onPress(event: Event): void {
@@ -1144,10 +1209,10 @@ export const runInitScript = function runInitScript(
 	/**
 	 * A press on an accept or reject the init script will record itself, or
 	 * on a Customize it will open the dialog for, on the stock banner or a
-	 * `data-c15t-action` button. The engine (`c15t.hosted.js`) then starts
+	 * `data-inth-action` button. The engine (`inth.hosted.js`) then starts
 	 * once the choice is stored or the dialog is on screen instead of with
-	 * the press, so the gated scripts the tap starts, `c15t.commit.js` and
-	 * `c15t.dialog.js` do not share the connection with it. Any other press
+	 * the press, so the gated scripts the tap starts, `inth.commit.js` and
+	 * `inth.dialog.js` do not share the connection with it. Any other press
 	 * loads the engine at once.
 	 */
 	const holdsEngine = function holdsEngine(event: Event): boolean {
@@ -1161,5 +1226,5 @@ export const runInitScript = function runInitScript(
 		);
 	};
 	cleanups.push(scheduleEngine(loadEngine, holdsEngine));
-	return standIn as unknown as C15tGlobalBase;
+	return standIn as unknown as InthGlobalBase;
 };

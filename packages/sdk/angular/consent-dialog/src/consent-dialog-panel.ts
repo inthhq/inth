@@ -12,15 +12,11 @@ import {
 	ConsentStyles,
 	ConsentTheme,
 	Portal,
-	resolveComponentStyles,
 	SURFACE_SCOPES,
-	toStyleAttribute,
 	ɵBranding as Branding,
 	ɵInlineLegalLinks as InlineLegalLinks,
 	ɵNoStyleScope as NoStyleScope,
-	ɵresolvedTranslations as resolvedTranslations,
 	ɵresolveNoStyle as resolveNoStyle,
-	ɵselectLegalLinks as selectLegalLinks,
 	ɵshouldShowBranding as shouldShowBranding,
 	ɵSURFACE_CLOSED as SURFACE_CLOSED,
 } from '@inth/angular';
@@ -36,7 +32,12 @@ import { resolveConsentPresentation } from '@inth/sdk/surface-state';
 import { isDialogDismissKey } from '@inth/sdk/ui/primitives';
 import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 import type { ClassNameStyle } from '@inth/sdk/ui/theme';
-import { getTextDirection } from '@inth/sdk/ui/utils';
+import {
+	getTextDirection,
+	resolveLegalLinkEntries,
+	resolveStyles,
+	toStyleAttributeValue,
+} from '@inth/sdk/ui/utils';
 
 import { DEFAULT_DIALOG_MODELS } from './dialog-options';
 import type {
@@ -47,7 +48,7 @@ import type {
 
 /**
  * The consent dialog's body, without the deferred loading. The package
- * root's `<c15t-consent-dialog>` imports this component on first use; the
+ * root's `<inth-consent-dialog>` imports this component on first use; the
  * inputs are the same.
  *
  * @internal
@@ -77,19 +78,19 @@ import type {
 			},
 		},
 	],
-	selector: 'c15t-consent-dialog-panel',
+	selector: 'inth-consent-dialog-panel',
 	// The floating trigger is an entry point of its own, loaded only for a
 	// dialog that renders it. A parent that owns `open` opens the dialog
 	// from it, and it hides while that dialog is open.
 	template: `@if (triggerOptions(); as trigger) {
 			@if (!(controlled() && open())) {
 				@defer (on immediate) {
-					<c15t-consent-dialog-trigger
+					<inth-consent-dialog-trigger
 						[defaultPosition]="trigger.defaultPosition ?? 'bottom-right'"
 						[persistPosition]="trigger.persistPosition ?? true"
 						[showWhen]="trigger.showWhen ?? 'always'"
 						[size]="trigger.size ?? 'md'"
-						[label]="trigger.label ?? 'Open privacy settings'"
+						[label]="trigger.label"
 						[noStyle]="trigger.noStyle ?? resolvedNoStyle()"
 						[rootClass]="trigger.rootClass"
 						(triggerClick)="openFromTrigger($event)"
@@ -98,8 +99,8 @@ import type {
 			}
 		}
 		<ng-container
-			c15tDialog
-			#dialog="c15tDialog"
+			inthDialog
+			#dialog="inthDialog"
 			[open]="isOpen()"
 			(openChange)="closeWhenDismissed($event)"
 			[closeOnInteractOutside]="false"
@@ -111,12 +112,12 @@ import type {
 		>
 			@if (dialog.shouldRender()) {
 				<div
-					c15tPortal
+					inthPortal
 					style="display: contents;"
 				>
 					@if (preferences().blocking) {
 						<div
-							c15tDialogBackdrop
+							inthDialogBackdrop
 							[class]="overlayStyle().className || ''"
 							[attr.style]="styleOf(overlayStyle())"
 							[attr.data-disable-animation]="disableMotion() ? '' : null"
@@ -126,17 +127,18 @@ import type {
 					<!-- data-disable-animation stops the data-state keyframes the
 					     stylesheet runs on the overlay and positioner. -->
 					<div
-						c15tDialogPositioner
+						inthDialogPositioner
 						[class]="positionerClass()"
 						[attr.data-disable-animation]="disableMotion() ? '' : null"
 					>
 						<div
-							c15tDialogContent
+							inthDialogContent
 							[class]="contentClass()"
 							[attr.style]="styleOf(rootStyle())"
 							[attr.dir]="textDirection()"
 							[attr.data-blocking]="preferences().blocking ? 'true' : null"
 							data-testid="consent-dialog-root"
+							data-inth-surface="dialog"
 							(keydown)="requestCloseOnEscape($event)"
 						>
 							<div
@@ -168,7 +170,7 @@ import type {
 										{{ translations().consentManagerDialog.description }}
 										@if (hasLegalLinks()) {
 											<span
-												c15t-inline-legal-links
+												inth-inline-legal-links
 												[links]="legalLinks()"
 												[testIdPrefix]="'consent-dialog-legal-link'"
 											></span>
@@ -181,7 +183,7 @@ import type {
 									[attr.style]="styleOf(contentStyle())"
 									data-testid="consent-dialog-content"
 								>
-									<!-- The widget's root, not <c15t-consent-widget>: the
+									<!-- The widget's root, not <inth-consent-widget>: the
 									     dialog's stylesheet lays it out as a direct child. -->
 									@if (hasConsentUi()) {
 										<div
@@ -193,11 +195,9 @@ import type {
 								</div>
 								@if (showBranding()) {
 									<a
-										c15t-branding
+										inth-branding
 										[noStyle]="resolvedNoStyle()"
-										[variant]="'dialog-tag'"
-										[themeKey]="'consentDialogTag'"
-										data-testid="consent-dialog-branding"
+										[surface]="'dialog'"
 									></a>
 								}
 							</div>
@@ -227,12 +227,12 @@ export class ConsentDialogPanel {
 	 * `disableAnimation`, which follows `prefers-reduced-motion`.
 	 */
 	readonly disableAnimation = input<boolean | undefined>(undefined);
-	/** Hide the "Secured by c15t" attribution. */
+	/** Hide the "Secured by" attribution. */
 	readonly hideBranding = input(false);
 	/** Which of the provider's legal links follow the description. */
 	readonly legalLinks = input<ConsentDialogLegalLinks | undefined>(undefined);
 	/**
-	 * Render a `<c15t-consent-dialog-trigger>` with the dialog. Pass an
+	 * Render a `<inth-consent-dialog-trigger>` with the dialog. Pass an
 	 * object to set the trigger's inputs.
 	 */
 	readonly showTrigger = input<boolean | ConsentDialogTriggerOptions>(false);
@@ -242,14 +242,14 @@ export class ConsentDialogPanel {
 	readonly rootClass = input<string | undefined>(undefined);
 
 	/** @internal */
-	protected readonly translations = resolvedTranslations(this.#consent);
+	protected readonly translations = this.#consent.copy;
 	/** @internal */
 	protected readonly hasConsentUi = computed(() =>
 		this.#consent.hasConsentUi()
 	);
 	/** @internal */
 	protected readonly textDirection = computed(() =>
-		getTextDirection(this.#consent.translationConfig().defaultLanguage)
+		getTextDirection(this.#consent.translations()?.language)
 	);
 	/** @internal */
 	protected readonly resolvedNoStyle = resolveNoStyle(this.noStyle);
@@ -310,7 +310,8 @@ export class ConsentDialogPanel {
 	/** @internal */
 	protected readonly hasLegalLinks = computed(
 		() =>
-			selectLegalLinks(this.#consent.legalLinks(), this.legalLinks()).length > 0
+			resolveLegalLinkEntries(this.#consent.legalLinks(), this.legalLinks())
+				.length > 0
 	);
 	/** @internal */
 	protected readonly showBranding = computed(() =>
@@ -320,7 +321,7 @@ export class ConsentDialogPanel {
 	/** @internal */
 	protected readonly rootStyle = computed(() => {
 		const noStyle = this.resolvedNoStyle();
-		return resolveComponentStyles(
+		return resolveStyles(
 			'consentDialog',
 			this.#theme.theme(),
 			{ className: this.rootClass(), noStyle },
@@ -396,7 +397,7 @@ export class ConsentDialogPanel {
 
 	/** @internal */
 	protected styleOf(style: ClassNameStyle): string | null {
-		return toStyleAttribute(style.style) ?? null;
+		return toStyleAttributeValue(style.style) ?? null;
 	}
 
 	/**
@@ -410,14 +411,6 @@ export class ConsentDialogPanel {
 		}
 	}
 
-	/**
-	 * With `open` set, Escape is a close request: `openChange` emits
-	 * `false`, so `[(open)]` hears it even when the consent state already
-	 * left the dialog, and the consent manager closes the surface. The
-	 * dialog itself stays until the parent sets `open` to `false`.
-	 *
-	 * @internal
-	 */
 	/**
 	 * An action in the dialog closed the surface: a parent that owns `open`
 	 * hears it, so the next render does not open the dialog again.
@@ -438,11 +431,11 @@ export class ConsentDialogPanel {
 	}
 
 	#slot(
-		key: Parameters<typeof resolveComponentStyles>[0],
+		key: Parameters<typeof resolveStyles>[0],
 		baseClassName: string | undefined
 	): ClassNameStyle {
 		const noStyle = this.resolvedNoStyle();
-		return resolveComponentStyles(
+		return resolveStyles(
 			key,
 			this.#theme.theme(),
 			{ baseClassName, noStyle },

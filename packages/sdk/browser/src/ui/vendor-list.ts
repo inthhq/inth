@@ -9,13 +9,6 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 const PLUS = 'M5 12h14M12 5v14';
 const MINUS = 'M5 12h14';
 
-const DEFAULT_COPY: VendorListTranslations = {
-	disabledByCategory: 'Turn on this category to choose vendors.',
-	privacyPolicy: 'Privacy policy',
-	switchLabel: 'Allow {vendor}',
-	title: 'Vendors ({count})',
-};
-
 const {
 	preferenceItem: itemStyles,
 	switch: switchStyles,
@@ -45,8 +38,8 @@ export interface VendorListParams {
 	category: AllConsentNames;
 	/** The vendors listed under it, in declared order. */
 	vendors: readonly ResolvedVendor[];
-	/** Translated copy; missing keys fall back to English. */
-	copy: Partial<VendorListTranslations> | undefined;
+	/** Translated copy, from `resolveVendorListCopy`. */
+	copy: VendorListTranslations;
 	/** Ship the DOM without class names. */
 	noStyle: boolean;
 	/** Marks the switches as `toggle` parts, like the category switches. */
@@ -188,7 +181,6 @@ const buildDetails = function buildDetails(params: {
  * carries a switch that stages a grant in the widget's draft. A `disabled`
  * vendor is listed without a switch, since the kernel ignores grants for it.
  *
- * @param params - The category, its vendors and the widget's callbacks.
  * @returns The list, or `null` when the category has no vendor to list.
  */
 // oxlint-disable-next-line max-lines-per-function -- One card's markup and its patching belong together.
@@ -199,7 +191,7 @@ export const createVendorList = function createVendorList(
 	if (vendors.length === 0) {
 		return null;
 	}
-	const copy = { ...DEFAULT_COPY, ...params.copy };
+	const { copy } = params;
 	const style = (name: keyof typeof listStyles): string =>
 		noStyle ? '' : (listStyles[name] ?? '');
 	const hint = h(
@@ -240,9 +232,9 @@ export const createVendorList = function createVendorList(
 		const hasDetails = Boolean(vendor.description || vendor.privacyPolicyUrl);
 		const key = `${category}:${vendor.id}`;
 		const ids = {
-			content: `c15t-vendor-${category}-${index}-content`,
-			label: `c15t-vendor-${category}-${vendor.id}`,
-			trigger: `c15t-vendor-${category}-${index}-trigger`,
+			content: `inth-vendor-${category}-${index}-content`,
+			label: `inth-vendor-${category}-${vendor.id}`,
+			trigger: `inth-vendor-${category}-${index}-trigger`,
 		};
 		const { icon, path } = buildIcon();
 		const trigger = h(

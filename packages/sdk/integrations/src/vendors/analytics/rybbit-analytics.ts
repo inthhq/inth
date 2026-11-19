@@ -89,18 +89,6 @@ export interface RybbitAnalyticsOptions {
 	scriptUrl?: string;
 }
 
-/**
- * Resolves the Rybbit Analytics script URL.
- *
- * Uses `options.scriptUrl` when provided, falls back to
- * `options.analyticsHost` joined with `script.js`, and defaults to
- * `https://app.rybbit.io/api/script.js`.
- *
- * @param options - Rybbit Analytics options.
- * @returns The resolved script URL.
- *
- * @internal
- */
 const getRybbitScriptUrl = function getRybbitScriptUrl(
 	options: RybbitAnalyticsOptions
 ): string {
@@ -118,8 +106,6 @@ const getRybbitScriptUrl = function getRybbitScriptUrl(
 /**
  * Creates a Rybbit Analytics script.
  *
- * @param options - The options for the Rybbit Analytics script.
- * @returns The Rybbit Analytics script.
  * @remarks When `siteId` is missing or blank, the helper logs
  *   `rybbitAnalytics: missing or invalid siteId` with `console.error` and
  *   returns a script that never loads.

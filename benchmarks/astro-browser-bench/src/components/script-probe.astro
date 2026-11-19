@@ -17,7 +17,7 @@ const { returning } = Astro.props;
 ---
 
 <span
-	data-c15t-bench-script-probe
+	data-inth-bench-script-probe
 	data-returning={returning ? 'true' : 'false'}
 	hidden
 ></span>
@@ -26,7 +26,7 @@ const { returning } = Astro.props;
 	import type { AstroBenchScriptState } from '../lib/bench-state';
 
 	const state: AstroBenchScriptState = {};
-	window.__c15tAstroBenchScripts = state;
+	window.__inthAstroBenchScripts = state;
 
 	document.addEventListener(
 		'click',
@@ -57,7 +57,7 @@ const { returning } = Astro.props;
 
 	const returning =
 		document
-			.querySelector('[data-c15t-bench-script-probe]')
+			.querySelector('[data-inth-bench-script-probe]')
 			?.getAttribute('data-returning') === 'true';
 	if (returning) {
 		void sendGatedRequest();

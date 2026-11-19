@@ -13,7 +13,7 @@ import '@inth/sdk/ui/styles/components/iab-consent-dialog.css';
  */
 import { ref } from 'vue';
 
-import { useConsentConfig, useIabTranslations } from '#c15t/composables';
+import { useConsentConfig, useIabTranslations } from '#inth/composables';
 
 import {
 	PreferenceItemContent,

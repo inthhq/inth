@@ -1,11 +1,11 @@
 {/* Generated from internals/doc-snippets/angular/src/app/consent/consent-callbacks.ts (docs:consent-callbacks) by scripts/sync-example-docs.ts. Edit the source file. */}
 
 ```ts title="src/app/consent/consent-callbacks.ts"
-import type { C15tCallbacks } from '@inth/angular';
+import type { InthCallbacks } from '@inth/angular';
 
-// Pass as `callbacks` to provideC15t() in app.config.ts.
-export const callbacks: C15tCallbacks = {
-	// Runs just before c15t reloads the page after a withdrawal.
+// Pass as `callbacks` to provideInth() in app.config.ts.
+export const callbacks: InthCallbacks = {
+	// Runs just before Inth reloads the page after a withdrawal.
 	onBeforeConsentRevocationReload: ({ preferences }) => {
 		console.info('Reloading with', preferences);
 	},
@@ -17,7 +17,7 @@ export const callbacks: C15tCallbacks = {
 	// A failed command, such as an /init request that could not reach the
 	// backend.
 	onError: ({ error }) => {
-		console.warn('c15t error', error);
+		console.warn('inth error', error);
 	},
 	// Any change to what may run, whatever caused it.
 	onPermissionsChanged: ({ snapshot, previous }) => {

@@ -21,7 +21,7 @@
  *
  * @internal
  */
-export const QUIET_BANNER_CONTEXT_KEY = 'c15tQuietBanner';
+export const QUIET_BANNER_CONTEXT_KEY = 'inthQuietBanner';
 
 const MODULE_PRELOAD = /<link\b[^>]*\brel="modulepreload"[^>]*>/gu;
 const HREF = /\bhref="(?<href>[^"]*)"/u;
@@ -29,11 +29,9 @@ const HREF = /\bhref="(?<href>[^"]*)"/u;
 /**
  * Adds `fetchpriority="low"` to the `modulepreload` links of `files`.
  *
- * @param head - Rendered head HTML.
  * @param files - The banner's files, relative to the build assets
  * directory, as `bannerOnlyFiles` names them. A link matches when its URL
  * ends with one under any base or CDN prefix.
- * @returns `head` with those links lowered.
  * @internal
  */
 export const lowerBannerPreloads = function lowerBannerPreloads(
@@ -57,10 +55,6 @@ export const lowerBannerPreloads = function lowerBannerPreloads(
  * The page's head parts with the banner's preloads lowered, when the plugin
  * marked the render as showing no banner; otherwise `head` unchanged.
  *
- * @param head - Rendered head HTML parts.
- * @param files - The banner's files (`bannerOnlyFiles`).
- * @param context - The request's H3 event context.
- * @returns The head parts to render.
  * @internal
  */
 export const quietBannerHead = function quietBannerHead(

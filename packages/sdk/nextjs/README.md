@@ -39,8 +39,8 @@ Then add the prebuilt stylesheet to your app-level CSS entry point:
 
 ## Usage
 
-1. Set `NEXT_PUBLIC_C15T_BACKEND_URL` to your Inth backend URL in `.env`
-2. Wrap `next.config.ts` in `withConsentManifest`, which downloads your policy at build time and finds `c15t.config.ts`
+1. Set `NEXT_PUBLIC_INTH_PROJECT_URL` to your Inth backend URL in `.env`
+2. Wrap `next.config.ts` in `withConsentManifest`, which downloads your policy at build time and finds `inth.config.ts`
 
 ```ts
 // next.config.ts
@@ -52,10 +52,10 @@ const nextConfig = {} satisfies NextConfig
 export default withConsentManifest(nextConfig)
 ```
 
-3. Export the config from `c15t.config.ts` at the project root
+3. Export the config from `inth.config.ts` at the project root
 
 ```ts
-// c15t.config.ts
+// inth.config.ts
 import { defineConsentConfig } from '@inth/nextjs'
 
 export default defineConsentConfig({})
@@ -97,7 +97,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
 ## Hosting
 
-c15t needs somewhere to keep policies and consent records. Pick one:
+Inth needs somewhere to keep policies and consent records. Pick one:
 
 - **Hosted on [Inth](https://inth.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=%40inth%2Fnextjs)**: Inth runs the backend for you. You get policy storage, consent records, audit history, and a dashboard, with no database or server to run. Sign-up is free.
 - **Self-hosted**: Run [`@c15t/backend`](https://www.npmjs.com/package/@c15t/backend) on your own server with PostgreSQL, MySQL, or SQLite. You own migrations, backups, and uptime. See the [self-hosting guide](https://c15t.com/docs/self-host/quickstart).
@@ -113,7 +113,7 @@ See the [documentation](https://c15t.com/docs/frameworks/next/quickstart) for gu
 
 This package ships its documentation as Markdown, matched to the installed version. After you install it, point your coding agent at `node_modules/@inth/nextjs/AGENTS.md`. It indexes every guide in `node_modules/@inth/nextjs/docs/`.
 
-On the web, every page of the [c15t docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the c15t agent skills with `npx skills add c15t/skills`.
+On the web, every page of the [Inth docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the c15t agent skills with `npx skills add c15t/skills`.
 
 ## Support
 

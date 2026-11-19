@@ -14,7 +14,7 @@ struct ConsentDemoContent: View {
     private var fixtureAppearance: ColorScheme? {
         #if DEBUG
         let env = ProcessInfo.processInfo.environment
-        if env["C15T_FIXTURE_SCENARIO"] != nil, env["C15T_FIXTURE_APPEARANCE"] == "dark" { return .dark }
+        if env["INTH_FIXTURE_SCENARIO"] != nil, env["INTH_FIXTURE_APPEARANCE"] == "dark" { return .dark }
         #endif
         return nil
     }
@@ -49,11 +49,11 @@ final class DemoSession: ObservableObject {
     @Published private(set) var reviewReconnect = false
     @Published private(set) var consentUIEnabled = true
 
-    /// Debug builds only: `C15T_DEMO_DRY_RUN=1` drops consent records and lets the
+    /// Debug builds only: `INTH_DEMO_DRY_RUN=1` drops consent records and lets the
     /// project URL be any https host. A release build refuses dryRun.
     nonisolated static var dryRun: Bool {
         #if DEBUG
-        return ProcessInfo.processInfo.environment["C15T_DEMO_DRY_RUN"] == "1"
+        return ProcessInfo.processInfo.environment["INTH_DEMO_DRY_RUN"] == "1"
         #else
         return false
         #endif
@@ -68,17 +68,17 @@ final class DemoSession: ObservableObject {
         let dryRun = Self.dryRun
         do {
             let core: ConsentCore
-            if let scenario = localScenario ?? env["C15T_FIXTURE_SCENARIO"] {
+            if let scenario = localScenario ?? env["INTH_FIXTURE_SCENARIO"] {
                 #if DEBUG
                 fixture = true
                 let folder = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("prototype-" + scenario)
-                if env["C15T_FIXTURE_RESET"] == "1" { try await Task.detached { if FileManager.default.fileExists(atPath: folder.path) { try FileManager.default.removeItem(at: folder) } }.value }
+                if env["INTH_FIXTURE_RESET"] == "1" { try await Task.detached { if FileManager.default.fileExists(atPath: folder.path) { try FileManager.default.removeItem(at: folder) } }.value }
                 let fault = await Task.detached { FaultStore(base: FileStore(directory: folder)) }.value
                 let mode = scenario.contains("iab") ? "iab" : scenario.contains("notice") ? "notice" : "category"
                 guard let resource = Bundle.main.url(forResource: mode + "-init", withExtension: "json") else { throw DemoError.missingFixture }
                 let fixtureData = try await Task.detached { try Data(contentsOf: resource) }.value
-                let http = FixtureHTTP(body: fixtureData, offline: scenario == "fresh-offline-none" || env["C15T_FIXTURE_OFFLINE"] == "1")
-                let backend = env["C15T_FIXTURE_BACKEND"].flatMap(URL.init(string:))
+                let http = FixtureHTTP(body: fixtureData, offline: scenario == "fresh-offline-none" || env["INTH_FIXTURE_OFFLINE"] == "1")
+                let backend = env["INTH_FIXTURE_BACKEND"].flatMap(URL.init(string:))
                 if let backend {
                     guard ["localhost", "127.0.0.1"].contains(backend.host ?? "") else { throw DemoError.missingFixture }
                     reportURL = URL(string: "/e2e/state", relativeTo: backend)?.absoluteURL
@@ -95,7 +95,7 @@ final class DemoSession: ObservableObject {
                 self.store = fault
                 self.transport = http
                 self.policyURL = URL(string: "https://example.test/privacy")
-                fault.failNext = env["C15T_FIXTURE_FAIL_NEXT_WRITE"] == "1"
+                fault.failNext = env["INTH_FIXTURE_FAIL_NEXT_WRITE"] == "1"
                 // Real vendor SDKs start only when run-vendor-e2e.sh passes its capture server.
                 if let vendors = VendorSDKHarness.fromEnvironment() {
                     vendors.start(core: core)
@@ -237,7 +237,7 @@ struct DemoRoot: View {
         if let prompt = session.prompt, let policyURL = session.policyURL {
             // Review inspection holds the prompt back with the opt-out until the reviewer asks for it.
             HostState(session: session, prompt: prompt)
-                .c15tConsent(privacyPolicyURL: policyURL, theme: consentTheme, autoPresent: session.consentUIEnabled)
+                .inth(privacyPolicyURL: policyURL, theme: consentTheme, autoPresent: session.consentUIEnabled)
         } else {
             NavigationStack {
                 Form {
@@ -375,16 +375,16 @@ extension DemoRoot {
     var consentTheme: ConsentTheme? {
         #if DEBUG
         let env = ProcessInfo.processInfo.environment
-        if env["C15T_FIXTURE_SCENARIO"] != nil {
-            var theme = env["C15T_FIXTURE_THEME"] == "brand" ? PantryBrand.theme : ConsentTheme.c15t
+        if env["INTH_FIXTURE_SCENARIO"] != nil {
+            var theme = env["INTH_FIXTURE_THEME"] == "brand" ? PantryBrand.theme : ConsentTheme.default
             // The journeys check the paper page and its footer Save. `stock` runs one on the theme
             // a normal launch gets.
-            if env["C15T_FIXTURE_THEME"] != "stock" {
-                theme.appearance = .c15t
+            if env["INTH_FIXTURE_THEME"] != "stock" {
+                theme.appearance = .paper
                 theme.savePlacement = .bottom
             }
-            if let layout = env["C15T_FIXTURE_FIRST_LAYER"].flatMap(ConsentTheme.FirstLayer.init(rawValue:)) { theme.firstLayer = layout }
-            switch env["C15T_FIXTURE_BRANDING"] {
+            if let layout = env["INTH_FIXTURE_FIRST_LAYER"].flatMap(ConsentTheme.FirstLayer.init(rawValue:)) { theme.firstLayer = layout }
+            switch env["INTH_FIXTURE_BRANDING"] {
             case "c15t": theme.branding = .c15t
             case "inth": theme.branding = .inth
             case "custom": theme.branding = .custom(name: "Pantry", markImageName: "ConsentDemoMark")
@@ -392,7 +392,7 @@ extension DemoRoot {
             case "hidden": theme.showsBranding = false
             default: break
             }
-            switch env["C15T_FIXTURE_IDENTITY"] {
+            switch env["INTH_FIXTURE_IDENTITY"] {
             // A mark that does not exist in the catalogue exercises the drawn initial tile.
             case "generic": theme.brand = ConsentTheme.Brand(markImageName: "ConsentDemoMissingMark")
             case "hidden": theme.brand = .hidden
@@ -476,7 +476,7 @@ final class FixtureHTTP: HTTPTransport, @unchecked Sendable {
     init(body: Data, offline: Bool) { self.body = body; self.disconnected = offline }
     func send(_ request: HTTPRequest) async throws -> HTTPResponse {
         if request.method == .get {
-            return offline ? HTTPResponse(status: 503) : HTTPResponse(status: 200, headers: ["x-c15t-policy-contract": "1"], body: body)
+            return offline ? HTTPResponse(status: 503) : HTTPResponse(status: 200, headers: ["x-inth-policy-contract": "1"], body: body)
         }
         if let data = request.body {
             let folder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]

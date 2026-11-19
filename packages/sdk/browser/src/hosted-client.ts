@@ -1,7 +1,7 @@
 import type { ProviderTransportFactory } from '@inth/sdk-core';
 import { hosted } from '@inth/sdk-core/transports';
 
-import { createConsentClientWith } from './client-base';
+import { createConsentClientWith, hostedMode } from './client-base';
 import type { CreateConsentClientContext } from './client-base';
 import { readHostedMarker } from './init/hosted-marker';
 import type {
@@ -10,22 +10,10 @@ import type {
 	ScriptTagClientOptions,
 } from './types';
 
-const defaultHostedFactory = function defaultHostedFactory(
-	projectUrl: string | undefined
-): ProviderTransportFactory {
-	if (!projectUrl) {
-		throw new Error(
-			'@inth/sdk/hosted: `projectUrl` is required (data-project-url on the script tag).'
-		);
-	}
-	return hosted({ projectUrl });
-};
-
 /**
  * Create a hosted client with no manifest mode selection.
  *
  * @param options - Hosted options, including a backend URL or hosted factory.
- * @param context - Entry-point wiring.
  * @returns The client, not started.
  * @throws {Error} For another mode, manifest inputs, or no backend.
  * @internal
@@ -52,7 +40,7 @@ export const createHostedConsentClient = function createHostedConsentClient(
 	) {
 		throw new Error('@inth/sdk/hosted: only hosted mode is supported.');
 	}
-	// `c15t.hosted()` called on the init script's stand-in.
+	// `inth.hosted()` called on the init script's stand-in.
 	const marked = readHostedMarker(mode);
 	let factory: ProviderTransportFactory;
 	if (marked) {
@@ -60,7 +48,7 @@ export const createHostedConsentClient = function createHostedConsentClient(
 	} else if (typeof mode === 'function') {
 		factory = mode;
 	} else {
-		factory = defaultHostedFactory(options.projectUrl);
+		({ factory } = hostedMode(options.projectUrl, '@inth/sdk/hosted'));
 	}
 	return createConsentClientWith(options, { factory, name: 'hosted' }, context);
 };

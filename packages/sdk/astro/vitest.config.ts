@@ -1,7 +1,7 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { baseConfig } from '@c15t/vitest-config/base';
+import { baseConfig } from '@inth/vitest-config/base';
 // Compiles the Vue dialog island and the `@inth/vue` components it renders,
 // so a test can mount the real surface.
 import vue from '@vitejs/plugin-vue';
@@ -13,7 +13,7 @@ import { privateSdkNames } from '../shared/private-sdk-names';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const VIRTUAL_ID = 'virtual:c15t/options';
+const VIRTUAL_ID = 'virtual:inth/options';
 const RESOLVED_VIRTUAL_ID = `\0${VIRTUAL_ID}`;
 
 /**
@@ -28,11 +28,11 @@ const virtualOptionsPlugin = {
 		return `export default ${JSON.stringify({
 			colorScheme: 'system',
 			mode: { type: 'offline' },
-			routePrefix: '/api/c15t',
+			routePrefix: '/api/inth',
 			ui: 'svelte',
 		})};`;
 	},
-	name: 'c15t:test-options',
+	name: 'inth:test-options',
 	resolveId(id: string) {
 		return id === VIRTUAL_ID ? RESOLVED_VIRTUAL_ID : undefined;
 	},

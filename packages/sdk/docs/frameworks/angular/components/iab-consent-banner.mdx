@@ -1,20 +1,20 @@
 ---
 title: IABConsentBanner
-description: Show the IAB TCF 2.4 first-layer banner to visitors under an IAB policy in an Angular app with c15t-iab-consent-banner, its inputs and behavior.
+description: Show the IAB TCF 2.4 first-layer banner to visitors under an IAB policy in an Angular app with inth-iab-consent-banner, its inputs and behavior.
 group: frameworks
 ---
 
 ## Show the TCF banner
 
-`<c15t-iab-consent-banner>` is the first layer of the IAB TCF consent flow. It
+`<inth-iab-consent-banner>` is the first layer of the IAB TCF consent flow. It
 lists the purposes, special features and number of vendors from the Global
 Vendor List, and offers Accept all, Reject all and Customize. It renders only
 for visitors whose resolved policy uses the `iab` model, so render it next to
-the standard `<c15t-consent-banner>`, which covers everyone else:
+the standard `<inth-consent-banner>`, which covers everyone else:
 
 <include src="../../../shared/examples/angular/iab-surfaces.mdx" />
 
-Turn IAB on with the `iab` option of `provideC15t()` first; [IAB TCF](../iab)
+Turn IAB on with the `iab` option of `provideInth()` first; [IAB TCF](../iab)
 covers the CMP ID, the vendor list and the provider options.
 
 ## Inputs
@@ -24,14 +24,14 @@ covers the CMP ID, the vendor list and the provider options.
 | `primaryButton` | `'accept'`, `'reject'` or `'customize'` | `'customize'` | Which button gets the primary style. |
 | `hideBranding` | `boolean` | `false` | Hides the "Secured by" tag. |
 | `models` | `Model[]` | `['iab']` | Policy models the banner renders for. |
-| `noStyle` | `boolean` | provider's `noStyle` | Drops c15t's classes. |
+| `noStyle` | `boolean` | provider's `noStyle` | Drops Inth's classes. |
 | `disableAnimation` | `boolean` | provider's value | Shows and hides without a transition. |
 | `scrollLock`, `trapFocus` | `boolean` | provider's value | Lock page scroll or trap focus while the banner shows. The policy's presentation can still make it blocking. |
 | `rootClass` | `string` | none | Extra class on the root element. |
 
 The banner has no text inputs. Its copy comes from the IAB translations, in
-the visitor's language. `getIABTranslations()` from `@inth/angular/iab` returns
-the same copy for a custom IAB banner.
+the visitor's language. `resolveIABCopy(consent.copy())` from
+`@inth/angular/iab` returns the same copy for a custom IAB banner.
 
 ## Behavior
 
@@ -42,7 +42,7 @@ the same copy for a custom IAB banner.
   only if nothing could be recorded, such as when the vendor list failed to
   load, so the visitor can try again. A failed backend request never reopens
   it.
-- Customize opens `<c15t-iab-consent-dialog>` on the purposes tab, so render
+- Customize opens `<inth-iab-consent-dialog>` on the purposes tab, so render
   it too. The partners link in the description opens it on the vendors tab.
 - The `__tcfapi` function is available once the TCF add-on loads, whether or
   not the banner is showing, so vendor scripts can read the TC String.
@@ -55,7 +55,7 @@ is an `h2`, and every control is a native `<button>`.
 
 ## Style the banner
 
-`<c15t-iab-consent-banner>` adds its own rules to `<head>`, including the
+`<inth-iab-consent-banner>` adds its own rules to `<head>`, including the
 first-paint rules it needs before its elements render. With `styles: false`,
 add `@inth/angular/iab/styles.css` after `@inth/angular/styles.css` in
 `angular.json`. It reads the `iabConsentBanner`, `iabConsentBannerCard`,

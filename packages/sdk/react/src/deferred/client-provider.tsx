@@ -34,6 +34,7 @@ import {
 	startPrefetchedInit,
 } from '@inth/sdk/runtime/deferred-boot';
 import type { DeferredSnapshotOptions } from '@inth/sdk/runtime/deferred-snapshot';
+import { storageFor } from '@inth/sdk/runtime/storage-for';
 import type { ReactNode } from 'react';
 import { Suspense, useState } from 'react';
 
@@ -47,7 +48,7 @@ import type {
 	ConsentProviderProps,
 	OwnedRuntimeProviderProps,
 } from '../provider';
-import { canDeferEngine, rootNeedsEngine } from './boot';
+import { awaitsChoice, rootNeedsEngine } from './boot';
 import type * as ClientEngine from './client-engine';
 import type { DeferredCommitConfig } from './committed';
 import type { DeferredKernelHandle } from './deferred-kernel';
@@ -76,17 +77,6 @@ const needsEngine = function needsEngine(
 	);
 };
 
-const storageKeyOf = function storageKeyOf(
-	options: ConsentProviderOptions
-): string | undefined {
-	const { persistence } = options;
-	return (
-		(typeof persistence === 'object'
-			? persistence.storageConfig?.storageKey
-			: undefined) ?? options.storageConfig?.storageKey
-	);
-};
-
 /**
  * What a banner accept or reject before the engine is recorded with (see
  * `commit.ts`), or `undefined` when the engine has to record it.
@@ -101,10 +91,7 @@ const commitConfig = function commitConfig(
 	return {
 		callbacks: options.callbacks,
 		nonce: options.nonce,
-		storageConfig:
-			(typeof persistence === 'object'
-				? persistence.storageConfig
-				: undefined) ?? options.storageConfig,
+		storageConfig: storageFor(options),
 	};
 };
 
@@ -189,7 +176,7 @@ const plan = function plan(
 	}
 	const request = {
 		journey: options.journey,
-		storageKey: storageKeyOf(options),
+		storageKey: storageFor(options)?.storageKey,
 	};
 	let prefetched: ReturnType<typeof startPrefetchedInit>;
 	if (mode) {
@@ -210,7 +197,8 @@ const plan = function plan(
 	}
 	const persisted = options.persistence !== false;
 	const now =
-		!prefetched || (persisted && hasStoredConsent(storageKeyOf(options)));
+		!prefetched ||
+		(persisted && hasStoredConsent(storageFor(options)?.storageKey));
 	let openRead = (): void => undefined;
 	const readOpened = new Promise<void>((resolve) => {
 		openRead = resolve;
@@ -281,7 +269,7 @@ const plan = function plan(
 					// banner this state does not show.
 					removeStaticBanner();
 				}
-				if (!(snapshot && canDeferEngine(snapshot))) {
+				if (!(snapshot && awaitsChoice(snapshot))) {
 					start();
 					return;
 				}
@@ -316,10 +304,6 @@ const plan = function plan(
 export const createConsentProvider = function createConsentProvider(
 	importEngine: () => Promise<EngineModule> = () => import('./client-engine')
 ): (props: ConsentProviderProps) => ReactNode {
-	/**
-	 * Starts loading the engine once per page, retrying a failed import as
-	 * `recordOnce` does.
-	 */
 	const loadEngine = recordOnce(importEngine);
 
 	const EngineProvider = (props: ConsentProviderProps): ReactNode => {

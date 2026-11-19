@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/css-layer-preview",
+	"name": "@inth/css-layer-preview",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -9,7 +9,7 @@
 		"start": "next start --port 3120"
 	},
 	"dependencies": {
-		"@c15t/benchmarking": "workspace:*",
+		"@inth/benchmarking": "workspace:*",
 		"@inth/react": "workspace:*",
 		"@inth/sdk": "workspace:*",
 		"next": "15.5.16",

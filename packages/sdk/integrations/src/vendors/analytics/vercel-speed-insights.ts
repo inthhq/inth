@@ -63,7 +63,7 @@ export const vercelSpeedInsightsManifest = {
 				'data-endpoint': '{{endpoint}}',
 				'data-sample-rate': '{{sampleRate}}',
 
-				'data-sdkn': 'c15t',
+				'data-sdkn': 'inth',
 			},
 
 			defer: true,
@@ -138,8 +138,6 @@ const getSampleRateAttribute = function getSampleRateAttribute(
  *
  * @see https://vercel.com/docs/speed-insights
  *
- * @param options - The options for the Vercel Speed Insights script.
- * @returns The Vercel Speed Insights script.
  * @throws {TypeError} When `sampleRate` is not a number from 0 to 1.
  * @remarks The collector keeps measuring after its script element is
  * removed, so the helper also registers a `beforeSend` callback that drops

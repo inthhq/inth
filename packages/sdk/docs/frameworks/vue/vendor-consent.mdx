@@ -1,6 +1,6 @@
 ---
 title: Vendor consent
-description: Let visitors allow a category such as marketing in a Vue app and still turn off one vendor in it, with the vendors option on the c15tVue plugin and useConsentDraft.
+description: Let visitors allow a category such as marketing in a Vue app and still turn off one vendor in it, with the vendors option on the inthVue plugin and useConsentDraft.
 group: frameworks
 ---
 
@@ -37,7 +37,7 @@ Then pass them to the plugin in `src/main.ts`:
 ```ts title="src/main.ts (partial)"
 import { scripts, vendors } from './scripts';
 
-createApp(App).use(c15tVue, { mode: hosted(), scripts, vendors }).mount('#app');
+createApp(App).use(inthVue, { mode: hosted(), scripts, vendors }).mount('#app');
 ```
 
 <import src="../../shared/scripts/vendor-consent.mdx#fields" />

@@ -1,9 +1,3 @@
-/**
- * IAB __tcfapi E2E Tests
- *
- * Browser-based tests for complete CMP API compliance.
- */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
@@ -40,7 +34,6 @@ describe('__tcfapi E2E Tests', () => {
 
 			await waitForElement('[data-testid="iab-consent-banner-card"]');
 
-			// Wait for CMP to be ready
 			await waitForCMP();
 
 			const pingData = await getCMPPingData();

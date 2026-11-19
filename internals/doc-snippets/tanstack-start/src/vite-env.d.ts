@@ -2,5 +2,5 @@
 
 interface ImportMetaEnv {
 	/** Your consent backend URL. Defaults to the placeholder in `__root.tsx`. */
-	readonly VITE_C15T_BACKEND_URL?: string;
+	readonly VITE_INTH_PROJECT_URL?: string;
 }

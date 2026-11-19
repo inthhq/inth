@@ -95,7 +95,7 @@ continues to compile its vendored sources.
 For private testing, a teammate with GitHub read access can install directly
 from `inthhq/c15t-private` at a branch or commit that contains the root
 manifest. Normal GitHub authentication controls access to the package source.
-The public release workflow still admits only `c15t/Inth`; this setup does not
+The public release workflow still admits only `inthhq/inth`; this setup does not
 enable automated private releases or claim that the mobile acceptance gates
 have passed. Keep public publication disabled while private testing continues.
 
@@ -106,16 +106,16 @@ verifier requires signatures, checksums, public SCM metadata, source and API
 documentation artifacts for all three modules before upload. Central's
 `USER_MANAGED` upload validates the bundle before an explicit publish request.
 
-Create the `mobile-release` GitHub environment in `c15t/Inth`. Configure its
+Create the `mobile-release` GitHub environment in `inthhq/inth`. Configure its
 reviewers and branch restrictions to match the team's release policy. Set:
 
 | Kind | Name | Value |
 | --- | --- | --- |
-| Variable | `C15T_NATIVE_PUBLISH` | Leave unset until native acceptance passes; then `true` |
-| Secret | `C15T_CENTRAL_USERNAME` | Central publisher token username |
-| Secret | `C15T_CENTRAL_TOKEN` | Central publisher token password |
-| Secret | `C15T_MAVEN_SIGNING_KEY` | ASCII-armored private signing key |
-| Secret | `C15T_MAVEN_SIGNING_PASSWORD` | Signing key passphrase |
+| Variable | `INTH_NATIVE_PUBLISH` | Leave unset until native acceptance passes; then `true` |
+| Secret | `INTH_CENTRAL_USERNAME` | Central publisher token username |
+| Secret | `INTH_CENTRAL_TOKEN` | Central publisher token password |
+| Secret | `INTH_MAVEN_SIGNING_KEY` | ASCII-armored private signing key |
+| Secret | `INTH_MAVEN_SIGNING_PASSWORD` | Signing key passphrase |
 
 Keep credentials in the secure account or CI setup. Do not put them in notes,
 Gradle properties, app configuration or chat. Setup requires repository access,
@@ -125,7 +125,7 @@ cannot establish those permissions.
 ## Run the workflow
 
 `.github/workflows/release-mobile.yml` runs on every push to
-`canary` or `main` in `c15t/Inth`. It requires CI, uses the `mobile-release`
+`canary` or `main` in `inthhq/inth`. It requires CI, uses the `mobile-release`
 environment, and opens a version PR on `tegami/version-mobile-<branch>` when
 notes are pending. Merging that version PR attempts the release. Publication
 fails before upload unless the native release flag and destination credentials
@@ -201,14 +201,14 @@ locked version and source digest. Once it matches, later source edits can procee
 without rebuilding the completed SDK. A conflicting published tag stops the
 release and must never be replaced.
 If a pending SDK's source has changed on the branch, rerun a workflow whose
-checkout still matches the lock with `gh run rerun RUN_ID --repo c15t/Inth`.
+checkout still matches the lock with `gh run rerun RUN_ID --repo inthhq/inth`.
 GitHub permits reruns for 30 days. A stale version PR can also merge after a
 native fix, leaving no matching workflow run at all. In either case, recover
 from the version PR's original head commit:
 
 ```sh
-gh pr view VERSION_PR --repo c15t/Inth --json headRefOid --jq .headRefOid
-gh workflow run release-mobile.yml --repo c15t/Inth --ref canary \
+gh pr view VERSION_PR --repo inthhq/inth --json headRefOid --jq .headRefOid
+gh workflow run release-mobile.yml --repo inthhq/inth --ref canary \
   -f source_commit=FULL_VERSION_PR_HEAD_SHA \
   -f previous_run_id=RUN_WITH_ORIGINAL_CENTRAL_STATE
 ```
@@ -289,7 +289,7 @@ native workflow. Its manifest already declares public access, but `private: true
 passes. Keep that flag until the release is approved.
 
 For the first release, establish npm ownership of the package and configure a
-GitHub Actions trusted publisher for owner `c15t`, repository `c15t`, workflow
+GitHub Actions trusted publisher for owner `inthhq`, repository `inth`, workflow
 `release.yml`. Do not add an npm token to the workflow. First-package ownership
 and trusted publishing setup may require a maintainer's npm account. The public
 registry returns 404 before package bootstrap; that does not prove ownership

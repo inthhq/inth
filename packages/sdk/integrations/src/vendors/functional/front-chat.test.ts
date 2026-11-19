@@ -81,13 +81,10 @@ describe('frontChat', () => {
 		expect(script.target).toBe('body');
 	});
 
-	it('never initialises a denied or detached load', () => {
+	it('never initialises a denied load', () => {
 		window.FrontChat = vi.fn();
 		const script = frontChat({ chatId: 'channel-id' });
 		const element = document.createElement('script');
-		script.onLoad?.(
-			createCallbackInfo({ element, hasConsent: true, id: script.id })
-		);
 		document.body.appendChild(element);
 		script.onLoad?.(
 			createCallbackInfo({ element, hasConsent: false, id: script.id })

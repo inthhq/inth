@@ -1,6 +1,6 @@
 ---
 title: Components
-description: Every c15t component a Next.js app imports from @inth/nextjs, what each renders, which ones are Client Components, and where to start.
+description: Every Inth component a Next.js app imports from @inth/nextjs, what each renders, which ones are Client Components, and where to start.
 group: frameworks
 ---
 
@@ -36,7 +36,7 @@ renders them in the root layout, a Server Component:
 
 <include src="../../shared/examples/nextjs/quickstart-layout.mdx" />
 
-`ConsentRoot` reads `c15t.config.ts`, so the layout passes it only the
+`ConsentRoot` reads `inth.config.ts`, so the layout passes it only the
 `state` from `resolveConsent`. The
 [Pages Router guide](/docs/frameworks/next/pages-router) renders the same
 components in `pages/_app.tsx`. Add `ConsentWidget`, `ConsentDialogTrigger` or
@@ -47,7 +47,7 @@ components in `pages/_app.tsx`. Add `ConsentWidget`, `ConsentDialogTrigger` or
 In the App Router, the `'use client'` boundary decides what you can pass as a
 prop:
 
-- **`ConsentRoot`** reads `c15t.config.ts` in the browser, so a Server
+- **`ConsentRoot`** reads `inth.config.ts` in the browser, so a Server
   Component passes it only `state`. The `state` from `resolveConsent`, or its
   promise, is plain data and can cross. Put functions such as callbacks in
   the config, not in props from a Server Component.

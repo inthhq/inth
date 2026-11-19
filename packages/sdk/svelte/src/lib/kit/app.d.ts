@@ -1,5 +1,5 @@
 /**
- * Ambient `App.Locals` augmentation for apps that install `c15tHandle`.
+ * Ambient `App.Locals` augmentation for apps that install `inthHandle`.
  *
  * Reference it once from `src/app.d.ts`:
  *
@@ -10,24 +10,24 @@
  * Prefer the explicit form if you already own an `App.Locals` block:
  *
  * ```ts
- * import type { C15tLocals } from '@inth/svelte/kit';
+ * import type { InthLocals } from '@inth/svelte/kit';
  *
  * declare global {
  *   namespace App {
  *     interface Locals {
- *       c15t: C15tLocals;
+ *       inth: InthLocals;
  *     }
  *   }
  * }
  * ```
  */
-import type { C15tLocals } from './types';
+import type { InthLocals } from './types';
 
 declare global {
 	namespace App {
 		interface Locals {
-			/** Consent context resolved once per request by `c15tHandle`. */
-			c15t: C15tLocals;
+			/** Consent context resolved once per request by `inthHandle`. */
+			inth: InthLocals;
 		}
 	}
 }

@@ -23,7 +23,6 @@ import type { Browser, Response } from 'playwright';
 
 import { getBuiltInScriptIntegrationByVendor } from '../src/registry';
 import { evaluateDeniedConsentProbe } from './denied-consent';
-import { forEachSequential } from './for-each-sequential';
 import {
 	captureBrowserLoaderBody,
 	captureStreamLoaderBody,
@@ -65,14 +64,14 @@ const PAGE_HTML = `<!doctype html>
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<title>c15t live vendor probe</title>
+		<title>inth live vendor probe</title>
 		<script type="module" src="/harness.js"></script>
 	</head>
 	<body></body>
 </html>`;
 
 interface ProbeWindow {
-	__c15tLiveVendorProbe?: LiveVendorProbeHarness;
+	__inthLiveVendorProbe?: LiveVendorProbeHarness;
 }
 
 interface CliOptions {
@@ -84,7 +83,6 @@ interface CliOptions {
  * Parses runner CLI arguments.
  *
  * @param argv - Arguments after the script path (`--vendor id`, `--report path`).
- * @returns The parsed vendor filter and report path.
  * @throws {Error} when `--vendor`/`--report` is missing its value or an
  * unknown argument is passed.
  */
@@ -120,7 +118,6 @@ const parseArgs = function parseArgs(argv: string[]): CliOptions {
 /**
  * Bundles the browser-side harness with `Bun.build`.
  *
- * @returns The bundled harness JavaScript served to the probe page.
  * @throws {Error} with the collected build logs when bundling fails.
  */
 const buildHarnessBundle =
@@ -271,7 +268,7 @@ const probeDeniedConsentEgress = async function probeDeniedConsentEgress(
 		const outcome = await page.evaluate<LiveProbeLoadOutcome, string>(
 			(vendor) => {
 				const harness = (globalThis as unknown as ProbeWindow)
-					.__c15tLiveVendorProbe;
+					.__inthLiveVendorProbe;
 				if (!harness) {
 					throw new Error('harness missing');
 				}
@@ -299,7 +296,7 @@ const probeDeniedConsentEgress = async function probeDeniedConsentEgress(
 
 		const storage = await page.evaluate<LiveStorageSnapshot>(() => {
 			const harness = (globalThis as unknown as ProbeWindow)
-				.__c15tLiveVendorProbe;
+				.__inthLiveVendorProbe;
 			if (!harness) {
 				throw new Error('harness missing');
 			}
@@ -381,7 +378,7 @@ const probeVendorAttempt = async function probeVendorAttempt(
 		await page.goto(baseUrl, { waitUntil: 'load' });
 
 		const hasHarness = await page.evaluate(() =>
-			Boolean((globalThis as unknown as ProbeWindow).__c15tLiveVendorProbe)
+			Boolean((globalThis as unknown as ProbeWindow).__inthLiveVendorProbe)
 		);
 		if (!hasHarness) {
 			throw new Error('probe harness did not initialize in the page');
@@ -400,7 +397,7 @@ const probeVendorAttempt = async function probeVendorAttempt(
 			const deniedOutcome = await page.evaluate<LiveProbeLoadOutcome, string>(
 				(vendor) => {
 					const harness = (globalThis as unknown as ProbeWindow)
-						.__c15tLiveVendorProbe;
+						.__inthLiveVendorProbe;
 					if (!harness) {
 						throw new Error('harness missing');
 					}
@@ -454,7 +451,7 @@ const probeVendorAttempt = async function probeVendorAttempt(
 		const grantedOutcome = await page.evaluate<LiveProbeLoadOutcome, string>(
 			(vendor) => {
 				const harness = (globalThis as unknown as ProbeWindow)
-					.__c15tLiveVendorProbe;
+					.__inthLiveVendorProbe;
 				if (!harness) {
 					throw new Error('harness missing');
 				}
@@ -553,7 +550,7 @@ const probeVendorAttempt = async function probeVendorAttempt(
 				runtime = await page.evaluate<LiveProbeCheckResult, string>(
 					(vendor) => {
 						const harness = (globalThis as unknown as ProbeWindow)
-							.__c15tLiveVendorProbe;
+							.__inthLiveVendorProbe;
 						if (!harness) {
 							throw new Error('harness missing');
 						}
@@ -581,7 +578,7 @@ const probeVendorAttempt = async function probeVendorAttempt(
 					(vendor) =>
 						(
 							globalThis as unknown as ProbeWindow
-						).__c15tLiveVendorProbe?.version(vendor),
+						).__inthLiveVendorProbe?.version(vendor),
 					config.vendor
 				)
 			: undefined;
@@ -799,16 +796,15 @@ const main = async function main(): Promise<void> {
 	const results: LiveVendorResult[] = [];
 
 	try {
-		await forEachSequential(configs, {
-			run: async (config) => {
-				const result =
-					config.tier === 'skip'
-						? buildSkippedResult(config)
-						: await probeVendor(browser, baseUrl, config);
-				results.push(result);
-				console.log(summarizeResult(result));
-			},
-		});
+		for (const config of configs) {
+			const result =
+				config.tier === 'skip'
+					? buildSkippedResult(config)
+					: // oxlint-disable-next-line no-await-in-loop -- One browser page probes one vendor at a time.
+						await probeVendor(browser, baseUrl, config);
+			results.push(result);
+			console.log(summarizeResult(result));
+		}
 	} finally {
 		await browser.close();
 		server.stop(true);

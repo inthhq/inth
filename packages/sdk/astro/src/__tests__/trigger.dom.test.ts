@@ -1,10 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-	DEFERRED_ENGINE_TIMEOUT_MS,
-	scheduleDeferredEngine,
-	takeEarlyTaps,
-} from '../browser/trigger';
+import { ENGINE_TIMEOUT_MS } from '../../../core/src/libs/page-globals';
+import { scheduleDeferredEngine, takeEarlyTaps } from '../browser/trigger';
 
 let hero: HTMLImageElement;
 
@@ -13,7 +10,7 @@ beforeEach(() => {
 		<img fetchpriority="high" src="/hero.png" alt="">
 		<div data-testid="consent-banner-overlay" tabindex="-1"></div>
 		<div data-testid="consent-banner-root">
-			<button data-c15t-action="accept" type="button">Accept</button>
+			<button data-inth-action="accept" type="button">Accept</button>
 		</div>
 		<p id="outside" tabindex="-1">Article</p>
 	`;
@@ -23,7 +20,7 @@ beforeEach(() => {
 
 afterEach(() => {
 	vi.useRealTimers();
-	Reflect.deleteProperty(window, '__c15tEarlyTaps');
+	Reflect.deleteProperty(window, '__inthEarlyTaps');
 });
 
 describe('scheduleDeferredEngine', () => {
@@ -41,7 +38,7 @@ describe('scheduleDeferredEngine', () => {
 		const onPress = vi.fn();
 		scheduleDeferredEngine(start, onPress);
 		document
-			.querySelector('[data-c15t-action="accept"]')
+			.querySelector('[data-inth-action="accept"]')
 			?.dispatchEvent(new Event('pointerdown', { bubbles: true }));
 		expect(onPress).toHaveBeenCalledWith('accept');
 		expect(start).not.toHaveBeenCalled();
@@ -64,7 +61,7 @@ describe('scheduleDeferredEngine', () => {
 
 		const timed = vi.fn();
 		scheduleDeferredEngine(timed, vi.fn());
-		vi.advanceTimersByTime(DEFERRED_ENGINE_TIMEOUT_MS);
+		vi.advanceTimersByTime(ENGINE_TIMEOUT_MS);
 		expect(timed).toHaveBeenCalledOnce();
 	});
 
@@ -89,7 +86,7 @@ describe('takeEarlyTaps', () => {
 	it('stops the inline script and empties its queue', () => {
 		const stop = vi.fn();
 		const taps = [{ action: 'accept', at: 1 }];
-		(window as unknown as Record<string, unknown>).__c15tEarlyTaps = {
+		(window as unknown as Record<string, unknown>).__inthEarlyTaps = {
 			stop,
 			taps,
 		};

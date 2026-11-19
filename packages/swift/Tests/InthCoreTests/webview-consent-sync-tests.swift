@@ -218,7 +218,7 @@ final class WebViewConsentSyncTests: XCTestCase {
         XCTAssertFalse(group.join(b.script, core: core), "a second member must not add the handler again")
         XCTAssertEqual(token(in: try XCTUnwrap(first.installed.first)), token(in: try XCTUnwrap(second.installed.first)))
         let key = try XCTUnwrap(match(#"\],"[0-9a-f]{32}","([0-9a-f]{32})","#, in: try XCTUnwrap(first.installed.first)))
-        XCTAssertTrue(b.script.isPreferencesRequest(#"{"type":"c15t:open-preferences","key":"\#(key)"}"#))
+        XCTAssertTrue(b.script.isPreferencesRequest(#"{"type":"inth:open-preferences","key":"\#(key)"}"#))
         XCTAssertFalse(group.leave())
         XCTAssertTrue(group.leave(), "the last member removes the channel")
         XCTAssertNil(group.secrets)

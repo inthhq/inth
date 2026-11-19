@@ -19,7 +19,7 @@ import org.junit.runner.RunWith
  * What only a real WebView can show: the document-start script reaches a listed origin's
  * main frame before the page's own script, and an unlisted origin gets nothing.
  *
- * The JVM tests in `:inth-core` cover the payload; `@c15t/core` and `@c15t/browser` run
+ * The JVM tests in `:inth-core` cover the payload; `@inth/sdk-core` and `@inth/sdk-browser` run
  * the same script in a browser against web Inth.
  */
 @RunWith(AndroidJUnit4::class)
@@ -29,7 +29,7 @@ class DeviceWebViewConsentTest {
 	/** What the page's first inline script saw, as JSON, before any other page code ran. */
 	private val page = """
 		<!doctype html><html><head><script>
-		var api = window.__c15tNativeConsent;
+		var api = window.__inthNativeConsent;
 		window.seenAtStart = api ? JSON.stringify(api.getState()) : 'none';
 		</script></head><body></body></html>
 	""".trimIndent()

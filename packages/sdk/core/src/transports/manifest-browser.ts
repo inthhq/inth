@@ -20,8 +20,10 @@ import type {
 	ResolveInitFromManifestInputs,
 } from '@inth/sdk-schema/types';
 
+import { readGlobalPrivacyControl } from '../libs/global-privacy-control';
 import { createUnreportedJourneys } from '../libs/journey';
 import { warnManifestFallback } from '../libs/manifest-fallback';
+import { trimSlash } from '../libs/url';
 import type {
 	ManifestModeBaseOptions,
 	ManifestModeInputs,
@@ -38,6 +40,7 @@ import {
 } from './manifest-browser-packs';
 import type * as RemoteModule from './manifest-browser-remote';
 import type * as ResolveModule from './manifest-browser-resolve';
+import { projectUrlOfManifest } from './manifest-url';
 import type {
 	ProviderTransportContext,
 	ProviderTransportFactory,
@@ -83,41 +86,6 @@ export type BrowserManifestModeFactory = ProviderTransportFactory &
 	};
 
 export type { OtherLanguage } from './manifest-browser-resolve';
-
-const trimSlash = function trimSlash(url: string): string {
-	return url.endsWith('/') ? url.slice(0, -1) : url;
-};
-
-const deriveProjectUrl = function deriveProjectUrl(
-	options: BrowserManifestOptions
-): string | undefined {
-	if (options.projectUrl !== undefined) {
-		return trimSlash(options.projectUrl);
-	}
-	if (!options.manifestUrl) {
-		return undefined;
-	}
-	const withoutQuery =
-		options.manifestUrl.split(/[?#]/u)[0] ?? options.manifestUrl;
-	const trimmed = trimSlash(withoutQuery);
-	if (!trimmed.endsWith('/manifest')) {
-		return undefined;
-	}
-	try {
-		// Parse relative URLs too, without mistaking a host named "manifest"
-		// for the endpoint. The base is only used to inspect the pathname.
-		const parsed = new URL(trimmed, 'https://c15t.invalid');
-		if (
-			!['http:', 'https:'].includes(parsed.protocol) ||
-			!parsed.pathname.endsWith('/manifest')
-		) {
-			return undefined;
-		}
-	} catch {
-		return undefined;
-	}
-	return trimmed.slice(0, -'/manifest'.length);
-};
 
 /**
  * Whether the inputs lack a location this manifest needs: no country, or no
@@ -182,21 +150,6 @@ const asksInit = function asksInit(
 	);
 };
 
-const readGlobalPrivacyControl = function readGlobalPrivacyControl():
-	| boolean
-	| undefined {
-	if (typeof navigator === 'undefined') {
-		return undefined;
-	}
-	try {
-		const value = (navigator as Navigator & { globalPrivacyControl?: unknown })
-			.globalPrivacyControl;
-		return typeof value === 'boolean' ? value : undefined;
-	} catch {
-		return undefined;
-	}
-};
-
 const mergeInputs = function mergeInputs(
 	base: ManifestModeInputs | undefined,
 	geo: ManifestModeInputs | undefined,
@@ -237,7 +190,10 @@ interface ManifestSource {
 const createManifestSource = function createManifestSource(
 	options: BrowserManifestOptions
 ): ManifestSource {
-	const projectUrl = deriveProjectUrl(options);
+	const projectUrl =
+		options.projectUrl === undefined
+			? projectUrlOfManifest(options.manifestUrl)
+			: trimSlash(options.projectUrl);
 	// Without a snapshot or a `manifestUrl`, read the backend's own
 	// `/manifest`. A build that could not fetch the snapshot passes
 	// `snapshot: undefined`, and the page still gets its policy.
@@ -248,12 +204,12 @@ const createManifestSource = function createManifestSource(
 			: `${projectUrl}/manifest`);
 	if (!(options.snapshot || manifestUrl)) {
 		throw new Error(
-			'c15t: manifest() needs `snapshot`, `manifestUrl` or `projectUrl`.'
+			'inth: manifest() needs `snapshot`, `manifestUrl` or `projectUrl`.'
 		);
 	}
 	if (projectUrl === undefined) {
 		throw new Error(
-			'c15t: manifest() needs `projectUrl` unless `manifestUrl` ends in `/manifest`. Pass the consent API URL, or an empty string for this origin.'
+			'inth: manifest() needs `projectUrl` unless `manifestUrl` ends in `/manifest`. Pass the consent API URL, or an empty string for this origin.'
 		);
 	}
 	const getFetch = (): typeof globalThis.fetch =>
@@ -457,9 +413,7 @@ const transportFrom = function transportFrom(
  * the runtime: its US sections need the visitor's country, and an answer
  * for an unknown location reports none.
  *
- * @param options - Manifest source and backend.
  * @param context - The provider's transport context, for `gppEnabled`.
- * @returns A kernel transport.
  * @throws {Error} When none of `snapshot`, `manifestUrl` and `projectUrl`
  * is given, or a backend can't be derived and `projectUrl` is omitted.
  */
@@ -471,6 +425,45 @@ export const createBrowserManifestTransport =
 		return transportFrom(options, createManifestSource(options), context);
 	};
 
+/** What a build integration downloaded, as `@inth/sdk/generated` exports it. */
+export interface BuildOutput {
+	projectUrl?: string;
+	snapshot?: ConsentManifest;
+}
+
+/**
+ * Fill the options the page left out from the build: the backend URL that
+ * saves go to, and the snapshot unless the page passed one, a
+ * `manifestUrl`, or `source: 'runtime'`.
+ *
+ * @param options - The page's options.
+ * @param build - What the build downloaded.
+ * @returns The options `manifest()` resolves with.
+ * @internal
+ */
+export const withBuildDefaults = function withBuildDefaults(
+	options: BrowserManifestOptions,
+	build: BuildOutput
+): BrowserManifestOptions {
+	const settings: BrowserManifestOptions = { ...options };
+	// Saves go to the build's backend even when `manifestUrl` names where
+	// the policy comes from, such as a CDN.
+	if (build.projectUrl !== undefined && settings.projectUrl === undefined) {
+		settings.projectUrl = build.projectUrl;
+	}
+	if (settings.manifestUrl !== undefined) {
+		return settings;
+	}
+	if (
+		build.snapshot &&
+		settings.snapshot === undefined &&
+		settings.source !== 'runtime'
+	) {
+		(settings as { snapshot?: ConsentManifest }).snapshot = build.snapshot;
+	}
+	return settings;
+};
+
 /**
  * Resolve init in the browser from the backend's consent manifest.
  *
@@ -479,7 +472,6 @@ export const createBrowserManifestTransport =
  * has no `resolve` option. Server-framework packages take the data
  * `manifest()` from `@inth/sdk/modes` instead.
  *
- * @param options - Manifest source and backend.
  * @returns A transport factory for `mode`, carrying its options. Each call
  * builds a transport of its own over one shared manifest.
  * @throws {Error} When none of `snapshot`, `manifestUrl` and `projectUrl`

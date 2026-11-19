@@ -95,8 +95,8 @@ let baseline = new Set<string>();
 
 const vendorGlobals = function vendorGlobals(): string[] {
 	return Object.getOwnPropertyNames(getTestGlobal()).filter(
-		// `__c15t*` globals are c15t's own (the runner, debug listeners).
-		(name) => !(baseline.has(name) || name.startsWith('__c15t'))
+		// `__inth*` globals are Inth's own (the runner, debug listeners).
+		(name) => !(baseline.has(name) || name.startsWith('__inth'))
 	);
 };
 
@@ -201,7 +201,7 @@ describe('inlineStepsStart', () => {
 		// A global left here would join the next test's baseline and escape
 		// its resets.
 		resetPage();
-		delete (getTestGlobal() as Record<string, unknown>).__c15tRunSteps;
+		delete (getTestGlobal() as Record<string, unknown>).__inthRunSteps;
 	});
 
 	it('compares the vendors that have an inline form', () => {
@@ -533,7 +533,7 @@ describe('inlineStepsStart', () => {
 
 	it('normalizes literal call arguments once before starting inline', () => {
 		const toJSON = vi.fn(() => ({
-			kind: 'c15t.runtime-value',
+			kind: 'inth.runtime-value',
 			value: 'date',
 		}));
 		const args = [
@@ -558,7 +558,7 @@ describe('inlineStepsStart', () => {
 			'1970-01-01T00:00:00.000Z',
 			{ text: '</script>\u2028\u2029' },
 			[null, null, 0],
-			{ kind: 'c15t.runtime-value', value: 'date' }
+			{ kind: 'inth.runtime-value', value: 'date' }
 		);
 		expect(toJSON).toHaveBeenCalledTimes(1);
 		expect(args[0]).toBeInstanceOf(Date);

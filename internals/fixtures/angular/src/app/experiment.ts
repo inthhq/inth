@@ -5,14 +5,14 @@
 import { PlatformLocation } from '@angular/common';
 import { Injectable, inject, signal } from '@angular/core';
 import type { Provider } from '@angular/core';
-import { C15T_OPTIONS } from '@inth/angular';
-import type { C15tCallbacks, C15tProviderOptions } from '@inth/angular';
+import { INTH_OPTIONS } from '@inth/angular';
+import type { InthCallbacks, InthProviderOptions } from '@inth/angular';
 
-type ConsentExperiment = NonNullable<C15tProviderOptions['experiment']>;
+type ConsentExperiment = NonNullable<InthProviderOptions['experiment']>;
 
 /** One experiment event the page lists. */
 export interface ExperimentLogEntry {
-	name: 'c15t_surface_shown' | 'c15t_choice_recorded';
+	name: 'inth_surface_shown' | 'inth_choice_recorded';
 	arm: string;
 	/** The surface shown, or the consent action recorded. */
 	detail: string;
@@ -43,7 +43,7 @@ export class ExperimentLog {
 	 * Provider callbacks that log each impression and choice made under an
 	 * arm, and push them to `window.dataLayer` for GTM.
 	 */
-	readonly callbacks: C15tCallbacks = {
+	readonly callbacks: InthCallbacks = {
 		onChoiceRecorded: ({ consentAction, experiment }) => {
 			if (!experiment) {
 				return;
@@ -51,13 +51,13 @@ export class ExperimentLog {
 			pushToDataLayer({
 				arm: experiment.arm,
 				consent_action: consentAction,
-				event: 'c15t_choice_recorded',
+				event: 'inth_choice_recorded',
 				experiment_id: experiment.id,
 			});
 			this.#add({
 				arm: experiment.arm,
 				detail: consentAction,
-				name: 'c15t_choice_recorded',
+				name: 'inth_choice_recorded',
 			});
 		},
 		onSurfaceShown: ({ experiment, surface }) => {
@@ -66,14 +66,14 @@ export class ExperimentLog {
 			}
 			pushToDataLayer({
 				arm: experiment.arm,
-				event: 'c15t_surface_shown',
+				event: 'inth_surface_shown',
 				experiment_id: experiment.id,
 				surface,
 			});
 			this.#add({
 				arm: experiment.arm,
 				detail: surface,
-				name: 'c15t_surface_shown',
+				name: 'inth_surface_shown',
 			});
 		},
 	};
@@ -86,7 +86,7 @@ export class ExperimentLog {
 /**
  * The banner-shape experiment, or `undefined` when the URL did not ask for
  * one. `control` is the default banner; `wall` blocks the page until the
- * visitor chooses. `?experiment=1` lets c15t pick the arm; `&arm=wall` sets
+ * visitor chooses. `?experiment=1` lets Inth pick the arm; `&arm=wall` sets
  * it the way a flag provider would.
  */
 export const experimentFromSearch = function experimentFromSearch(
@@ -104,22 +104,22 @@ export const experimentFromSearch = function experimentFromSearch(
 	if (arm === null) {
 		return experiment;
 	}
-	// From your flag provider. Omit it to let c15t pick.
+	// From your flag provider. Omit it to let Inth pick.
 	return { ...experiment, arm: arm === 'wall' ? 'wall' : 'control' };
 };
 
 /**
  * Adds the experiment and its callbacks to the options given to
- * `provideC15t()` when the URL asks for it. Put it after `provideC15t()`.
+ * `provideInth()` when the URL asks for it. Put it after `provideInth()`.
  * An app with one experiment passes `experiment` and `callbacks` to
- * `provideC15t()` directly.
+ * `provideInth()` directly.
  */
 export const provideExperimentFromURL = function provideExperimentFromURL(
-	base: C15tProviderOptions
+	base: InthProviderOptions
 ): Provider {
 	return {
-		provide: C15T_OPTIONS,
-		useFactory: (): C15tProviderOptions => {
+		provide: INTH_OPTIONS,
+		useFactory: (): InthProviderOptions => {
 			const experiment = experimentFromSearch(inject(PlatformLocation).search);
 			return experiment
 				? { ...base, callbacks: inject(ExperimentLog).callbacks, experiment }

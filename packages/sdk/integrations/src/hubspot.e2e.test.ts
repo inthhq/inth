@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { isolateHubSpotPage } from './__tests__/hubspot-page';
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	loadScripts,
@@ -32,7 +32,7 @@ describe('HubSpot core loader consent contract', () => {
 
 	it('creates no vendor globals, requests or storage before mapped consent', () => {
 		const scripts = [hubspot({ portalId: '53' })];
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMeasurementConsents);
 		expect(document.querySelector('script')).toBeNull();
 		for (const key of [
@@ -57,7 +57,7 @@ describe('HubSpot core loader consent contract', () => {
 		const scripts = [hubspot({ portalId: '53' })];
 		loadScripts(scripts, grantedMarketingConsents);
 		const old = document.querySelector('script');
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(old?.isConnected).toBe(true);
 		old?.dispatchEvent(new Event('load'));
 		expect(document.querySelector('script')).toBe(old);

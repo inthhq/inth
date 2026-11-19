@@ -1,11 +1,11 @@
-# Flips one category switch in Inth preferences. Set C15T_CATEGORY to the
+# Flips one category switch in Inth preferences. Set INTH_CATEGORY to the
 # category name, such as measurement or marketing. Run open-preferences.yaml
 # first, and save-preferences.yaml to record the change.
 #
 #   - runFlow:
 #       file: ../node_modules/@inth/react-native/maestro/toggle-category.yaml
 #       env:
-#         C15T_CATEGORY: measurement
+#         INTH_CATEGORY: measurement
 # Maestro needs an appId in every flow file; the calling flow's appId is used.
 appId: ${APP_ID}
 ---
@@ -13,18 +13,18 @@ appId: ${APP_ID}
 # did before, so look down first and then up.
 - scrollUntilVisible:
     element:
-      id: 'inth.prefs.category.${C15T_CATEGORY}.switch'
+      id: 'inth.prefs.category.${INTH_CATEGORY}.switch'
     direction: DOWN
     timeout: 10000
     optional: true
 - runFlow:
     when:
       notVisible:
-        id: 'inth.prefs.category.${C15T_CATEGORY}.switch'
+        id: 'inth.prefs.category.${INTH_CATEGORY}.switch'
     commands:
       - scrollUntilVisible:
           element:
-            id: 'inth.prefs.category.${C15T_CATEGORY}.switch'
+            id: 'inth.prefs.category.${INTH_CATEGORY}.switch'
           direction: UP
 - tapOn:
-    id: 'inth.prefs.category.${C15T_CATEGORY}.switch'
+    id: 'inth.prefs.category.${INTH_CATEGORY}.switch'

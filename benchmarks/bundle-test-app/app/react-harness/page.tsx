@@ -14,7 +14,7 @@
  * module reconciles DOM in <10 µs. Check the &quot;Loaded scripts&quot; panel
  * below for live confirmation.
  */
-import { benchPolicy } from '@c15t/benchmarking/bench-policy';
+import { benchPolicy } from '@inth/benchmarking/bench-policy';
 import {
 	ConsentBanner,
 	ConsentDialog,
@@ -110,7 +110,7 @@ const ReactHarnessPage = () => (
 					padding: '2rem',
 				}}
 			>
-				<h1 style={{ marginTop: 0 }}>c15t live test harness</h1>
+				<h1 style={{ marginTop: 0 }}>inth live test harness</h1>
 				<p style={{ color: '#555', lineHeight: 1.5 }}>
 					Check/uncheck a category to stage your choice. Click{' '}
 					<strong>Save</strong> to commit to the kernel — only then do scripts

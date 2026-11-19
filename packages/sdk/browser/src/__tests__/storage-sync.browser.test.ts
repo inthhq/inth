@@ -2,7 +2,7 @@
  * Two real Chromium pages of one origin share cookies and localStorage.
  * A choice made in one must reach the other without a reload.
  */
-import { clearBrowserConsentStorage } from '@c15t/conformance/suite';
+import { clearBrowserConsentStorage } from '@inth/conformance/suite';
 import { afterEach, expect, it } from 'vitest';
 
 // The fixture page imports the client. Importing it here makes Vite
@@ -14,13 +14,13 @@ import type { StorageSyncPage } from './fixtures/storage-sync-page';
 const opened: Window[] = [];
 
 const openPage = async (): Promise<StorageSyncPage> => {
-	const tab = window.open('/__c15t-test__/storage-sync', '_blank');
+	const tab = window.open('/__inth-test__/storage-sync', '_blank');
 	if (!tab) {
 		throw new Error('The browser blocked the second page');
 	}
 	opened.push(tab);
 	const read = () =>
-		(tab as Window & { c15tStorageSync?: StorageSyncPage }).c15tStorageSync;
+		(tab as Window & { inthStorageSync?: StorageSyncPage }).inthStorageSync;
 	await expect.poll(read, { timeout: 10_000 }).toBeDefined();
 	const page = read() as StorageSyncPage;
 	await page.ready;

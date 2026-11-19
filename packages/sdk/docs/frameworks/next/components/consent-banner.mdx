@@ -13,7 +13,7 @@ from the [Pages Router](/docs/frameworks/next/pages-router) setup:
 <include src="../../../shared/examples/nextjs/quickstart-layout.mdx" />
 
 The layout is a Server Component. `@inth/nextjs` gives it client references to
-`ConsentRoot` and `ConsentBanner`, and `ConsentRoot` reads `c15t.config.ts`
+`ConsentRoot` and `ConsentBanner`, and `ConsentRoot` reads `inth.config.ts`
 itself, so the layout passes only `state`. Function props, such as
 `renderAction`, need a `'use client'` file.
 
@@ -108,7 +108,7 @@ const theme = {
 } as const;
 ```
 
-Pass `theme` through `options` in `c15t.config.ts`.
+Pass `theme` through `options` in `inth.config.ts`.
 Per-action theme overrides such as `consentActions.dismiss` take precedence
 over this primary style. See [Customize](/docs/frameworks/next/customize) for
 tokens and slots, and [Policies](/docs/concepts/policies) for the rule IDs and

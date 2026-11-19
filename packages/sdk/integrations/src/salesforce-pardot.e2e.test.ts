@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
 	clearAllScripts,
-	deniedConsents,
+	ALL_DENIED,
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
@@ -14,8 +14,8 @@ import {
 import { pardotTracking } from './vendors/analytics/salesforce-pardot';
 
 const GLOBALS = ['piAId', 'piCId', 'piHostname', 'piDomain', 'pdt'];
-const granted = { ...deniedConsents, marketing: true };
-const unrelated = { ...deniedConsents, measurement: true };
+const granted = { ...ALL_DENIED, marketing: true };
+const unrelated = { ...ALL_DENIED, measurement: true };
 const getLoader = (): HTMLScriptElement => {
 	const loader = document.querySelector<HTMLScriptElement>('script[src]');
 	if (!loader) {
@@ -75,7 +75,7 @@ describe('Salesforce Account Engagement consent loader', () => {
 		const session = { ...sessionStorage };
 		const cookieWrite = vi.spyOn(document, 'cookie', 'set');
 		const storageWrite = vi.spyOn(Storage.prototype, 'setItem');
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, unrelated);
 		expect(document.querySelector('script[src]')).toBeNull();
 		for (const name of GLOBALS) {
@@ -93,7 +93,7 @@ describe('Salesforce Account Engagement consent loader', () => {
 		expect(first.src).toBe('https://pi.pardot.com/pdt.js?aid=123456');
 		updateScripts(scripts, granted);
 		expect(getLoader()).toBe(first);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(first.isConnected).toBe(true);
 		updateScripts(scripts, granted);
 		expect(getLoader()).toBe(first);
@@ -110,7 +110,7 @@ describe('Salesforce Account Engagement consent loader', () => {
 		];
 		loadScripts(scripts, granted);
 		expect(document.querySelector('script[src]')).toBeNull();
-		updateScripts(scripts, { ...deniedConsents, experience: true });
+		updateScripts(scripts, { ...ALL_DENIED, experience: true });
 		expect(getLoader()).toBeDefined();
 	});
 });
@@ -142,7 +142,7 @@ describe('Pardot consent API contract', () => {
 		getLoader().dispatchEvent(new Event('load'));
 		updateScripts(scripts, granted);
 		expect(pdt.mock.calls).toEqual([['setOptIn', true], ['sendPageView']]);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(pdt.mock.calls.at(-1)).toEqual(['revokeConsent']);
 		expect(pdt.mock.calls).not.toContainEqual(['clearTrackingCookies']);
 		updateScripts(scripts, granted);
@@ -163,7 +163,7 @@ describe('Pardot consent API contract', () => {
 		];
 		loadScripts(scripts, granted);
 		const first = getLoader();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		const pdt = vi.fn();
 		window.pdt = pdt;
 		first.dispatchEvent(new Event('load'));
@@ -180,7 +180,7 @@ describe('Pardot consent API contract', () => {
 				});
 			loadScripts([create()], granted);
 			const element = getLoader();
-			updateScripts([create()], deniedConsents);
+			updateScripts([create()], ALL_DENIED);
 			const pdt = vi.fn();
 			window.pdt = pdt;
 			if (loadedWhileDenied) {
@@ -258,7 +258,7 @@ describe('Pardot consent API contract', () => {
 				getLoader().dispatchEvent(new Event('load'));
 				expect(document.scripts).toHaveLength(1);
 				expect(pdt.mock.calls).toEqual([['setOptIn', true], ['sendPageView']]);
-				void kernel.commands.save(deniedConsents);
+				void kernel.commands.save(ALL_DENIED);
 				void kernel.commands.save(granted);
 				expect(pdt.mock.calls).toEqual([
 					['setOptIn', true],
@@ -309,7 +309,7 @@ describe('Pardot consent API contract', () => {
 				expect(pageView).toHaveBeenCalledTimes(1);
 				window.pdt?.('sendPageView');
 				expect(pageView).toHaveBeenCalledTimes(2);
-				void kernel.commands.save(deniedConsents);
+				void kernel.commands.save(ALL_DENIED);
 				void kernel.commands.save(granted);
 				expect(pageView).toHaveBeenCalledTimes(3);
 			} finally {
@@ -334,7 +334,7 @@ describe('Pardot consent API contract', () => {
 		loadScripts([create()], granted);
 		expect(pageView).toHaveBeenCalledTimes(1);
 		const dispatcher = window.pdt;
-		updateScripts([create()], deniedConsents);
+		updateScripts([create()], ALL_DENIED);
 		updateScripts([create()], granted);
 		expect(pageView).toHaveBeenCalledTimes(2);
 		expect(runSdk).toHaveBeenCalledTimes(1);
@@ -372,7 +372,7 @@ describe('Pardot consent API contract', () => {
 			const queuedCallback = vi.fn();
 			window.pdt?.(queuedCallback);
 			if (withdrawn) {
-				updateScripts([recreate()], deniedConsents);
+				updateScripts([recreate()], ALL_DENIED);
 			}
 			const expectedViews = withdrawn ? 0 : 1;
 			executeSdk(staleFirst ? stale : current, pageView);
@@ -380,7 +380,7 @@ describe('Pardot consent API contract', () => {
 			executeSdk(staleFirst ? current : stale, pageView);
 			expect(pageView).toHaveBeenCalledTimes(expectedViews);
 			expect(queuedCallback).toHaveBeenCalledTimes(1);
-			updateScripts([recreate()], deniedConsents);
+			updateScripts([recreate()], ALL_DENIED);
 			updateScripts([recreate()], granted);
 			expect(pageView).toHaveBeenCalledTimes(expectedViews + 1);
 		}
@@ -389,7 +389,7 @@ describe('Pardot consent API contract', () => {
 		const scripts = [
 			pardotTracking({ mode: 'classic', piAId: '123456', piCId: '654321' }),
 		];
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		expect(window.piHostname).toBeUndefined();
 		updateScripts(scripts, granted);
 		expect(getLoader().src).toBe('https://pi.pardot.com/pd.js');

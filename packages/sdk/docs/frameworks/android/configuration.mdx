@@ -149,7 +149,7 @@ initializers. Configure each optional SDK's startup separately.
 | `maxPendingSaves` | Durable delivery queue limit, up to 20. |
 | `platform` | The app type the backend records for each request. Defaults to `android`. |
 
-`platform` labels requests in the `x-c15t-platform` header, as
+`platform` labels requests in the `x-inth-platform` header, as
 `<platform>-><sdkVersion>`. Keep the default `android` in a Kotlin or Java app.
 In a React Native app that installs the engine itself, with `AUTO_BOOTSTRAP`
 off, set `platform = InthProtocol.PLATFORM_REACT_NATIVE` (`rn`). A React Native

@@ -4,7 +4,11 @@ import { describe, expect, test } from 'vitest';
 import {
 	applyPublisherRestrictionsToGVL,
 	countIABPartners,
+	formatVendorMaxAge,
+	mapCustomVendor,
+	mapGvlVendor,
 	processGVLForDialog,
+	resolveIABBannerCopy,
 	resolveIABBannerSummary,
 	resolveIABDialogDisplayModel,
 } from '../headless';
@@ -134,6 +138,43 @@ describe('@inth/sdk/iab headless dialog data', () => {
 			statisticsPurpose?.vendors.find((vendor) => vendor.id === 755)
 				?.usesLegitimateInterest
 		).toBe(false);
+	});
+});
+
+describe('@inth/sdk/iab headless vendor rows', () => {
+	test('a custom vendor row carries its data categories and permitted LI only', () => {
+		const row = mapCustomVendor({
+			...customVendor,
+			dataCategories: [1, 3],
+			legIntPurposes: [1, 9],
+		});
+		expect(row.dataDeclaration).toEqual([1, 3]);
+		expect(row.legIntPurposes).toEqual([9]);
+		expect(mapCustomVendor(customVendor, 1).usesLegitimateInterest).toBe(false);
+	});
+
+	test('a GVL vendor row reads data categories from dataDeclaration', () => {
+		const [id, vendor] = Object.entries(completeGVL.vendors)[0] ?? [];
+		if (!(id && vendor)) {
+			throw new Error('fixture has no vendor');
+		}
+		const row = mapGvlVendor(
+			id,
+			{ ...vendor, dataDeclaration: [4] } as never,
+			'en'
+		);
+		expect(row.id).toBe(Number(id));
+		expect(row.dataDeclaration).toEqual([4]);
+	});
+
+	test('max age rounds days up and appends the refresh note', () => {
+		const copy = { maxAge: 'Max Age: {days}d', maxAgeRefreshes: '(refreshes)' };
+		expect(formatVendorMaxAge(129_600, false, copy)).toBe('Max Age: 2d');
+		expect(formatVendorMaxAge(3600, true, copy)).toBe(
+			'Max Age: 1d (refreshes)'
+		);
+		expect(formatVendorMaxAge(0, false, copy)).toBe('Max Age: 0d');
+		expect(formatVendorMaxAge(null, true, copy)).toBeNull();
 	});
 });
 
@@ -480,5 +521,42 @@ describe('@inth/sdk/iab headless vendor counts with Google ad tech providers', (
 
 		expect(summary.isReady).toBe(true);
 		expect(summary.vendorCount).toBe(100 + 1 + 2);
+	});
+});
+
+describe('resolveIABBannerCopy', () => {
+	const banner = {
+		andMore: 'and {count} more',
+		description: 'We and our {partnerCount} partners process data.',
+		partnersLink: '{count} partners',
+	};
+
+	test('splits the description around the partners link', () => {
+		expect(
+			resolveIABBannerCopy({ banner } as never, {
+				remainingCount: 2,
+				vendorCount: 12,
+			})
+		).toEqual({
+			andMore: 'and 2 more',
+			descriptionAfter: ' process data.',
+			descriptionBefore: 'We and our ',
+			partnersLink: '12 partners',
+		});
+	});
+
+	test('keeps a description without the link whole, and lists everything', () => {
+		expect(
+			resolveIABBannerCopy(
+				{ banner } as never,
+				{ remainingCount: 0, vendorCount: 3 },
+				'Custom text.'
+			)
+		).toEqual({
+			andMore: undefined,
+			descriptionAfter: '',
+			descriptionBefore: 'Custom text.',
+			partnersLink: '3 partners',
+		});
 	});
 });

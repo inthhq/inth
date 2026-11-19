@@ -19,7 +19,7 @@ export interface ConsentRootProps extends ConsentClientOptions {
 	state?: ConsentState | Promise<ConsentState>;
 
 	/**
-	 * The config to use instead of `c15t.config.ts`. Only for a root the
+	 * The config to use instead of `inth.config.ts`. Only for a root the
 	 * file can't reach, such as one in a test or a package: a Server
 	 * Component can't pass it, because it may hold functions.
 	 */

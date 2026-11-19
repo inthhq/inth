@@ -41,8 +41,8 @@ const tracedEvent = (
 	const event = Object.assign(
 		createEvent({
 			...input,
-			route: { id: '/api/c15t/[...path]', params: { path } },
-			url: `https://shop.example/api/c15t/${path}`,
+			route: { id: '/api/inth/[...path]', params: { path } },
+			url: `https://shop.example/api/inth/${path}`,
 		}),
 		{ tracing }
 	);
@@ -74,7 +74,7 @@ describe('SvelteKit consent tracing recipe', () => {
 			expect(response.status).toBe(expected.status);
 			expect([...response.headers]).toEqual([...expected.headers]);
 			expect(await response.json()).toEqual(await expected.json());
-			expect(span.setAttribute).toHaveBeenCalledWith('c15t.operation', 'init');
+			expect(span.setAttribute).toHaveBeenCalledWith('inth.operation', 'init');
 			expect(span.setAttribute).toHaveBeenCalledWith(
 				'http.response.status_code',
 				200
@@ -101,7 +101,7 @@ describe('SvelteKit consent tracing recipe', () => {
 			expect(response.status).toBe(200);
 			expect(await response.json()).toEqual(MANIFEST_FIXTURE);
 			expect(span.setAttribute).toHaveBeenCalledWith(
-				'c15t.operation',
+				'inth.operation',
 				'manifest'
 			);
 			expect(span.setAttribute).toHaveBeenCalledWith(
@@ -142,7 +142,7 @@ describe('SvelteKit consent tracing recipe', () => {
 			expect(response.bodyUsed).toBe(false);
 			expect(await response.text()).toBe('upstream body');
 			expect(span.setAttribute).toHaveBeenCalledTimes(2);
-			expect(span.setAttribute).toHaveBeenCalledWith('c15t.operation', 'proxy');
+			expect(span.setAttribute).toHaveBeenCalledWith('inth.operation', 'proxy');
 			expect(span.setAttribute).toHaveBeenCalledWith(
 				'http.response.status_code',
 				status

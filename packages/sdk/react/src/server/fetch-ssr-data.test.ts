@@ -26,7 +26,7 @@ describe('fetchSSRData', () => {
 
 	it('returns SSR metadata with cache-hit diagnostics and request duration', async () => {
 		const initResponse = {
-			branding: 'c15t',
+			branding: 'inth',
 			location: { countryCode: 'US', regionCode: 'CA' },
 			translations: { language: 'en', translations: {} },
 		};
@@ -47,7 +47,7 @@ describe('fetchSSRData', () => {
 
 		const result = await fetchSSRData({
 			headers: createRequestHeaders(),
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 
 		expect(result?.init).toEqual(initResponse);
@@ -59,7 +59,7 @@ describe('fetchSSRData', () => {
 			country: 'US',
 			gpc: false,
 			language: null,
-			projectUrl: 'https://example.com/api/c15t',
+			projectUrl: 'https://example.com/api/inth',
 			region: null,
 		});
 		expect(typeof result?.metadata?.requestDurationMs).toBe('number');
@@ -68,7 +68,7 @@ describe('fetchSSRData', () => {
 
 	it('returns cache metadata for non-hit responses', async () => {
 		const initResponse = {
-			branding: 'c15t',
+			branding: 'inth',
 			location: { countryCode: 'DE', regionCode: null },
 			translations: { language: 'de', translations: {} },
 		};
@@ -88,13 +88,39 @@ describe('fetchSSRData', () => {
 
 		const result = await fetchSSRData({
 			headers: createRequestHeaders(),
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 
 		expect(result?.metadata?.cache).toEqual({
 			detail: 'x-vercel-cache=MISS',
 			isHit: false,
 		});
+	});
+
+	it('sends the SDK version and policy contract, and returns the producer contract', async () => {
+		const fetchMock = vi.fn().mockResolvedValue(
+			new Response(JSON.stringify({ categories: [], gvl: null }), {
+				headers: { 'x-inth-policy-contract': '2' },
+				status: 200,
+			})
+		);
+		vi.stubGlobal('fetch', fetchMock);
+
+		const result = await fetchSSRData({
+			headers: createRequestHeaders(),
+			projectUrl: 'https://consent.example.com/api/inth',
+		});
+
+		const sent = fetchMock.mock.calls[0]?.[1]?.headers as Record<
+			string,
+			string
+		>;
+		expect(fetchMock.mock.calls[0]?.[0]).toBe(
+			'https://consent.example.com/api/inth/init'
+		);
+		expect(sent['x-inth-version']).toBe(version);
+		expect(sent['x-inth-policy-contract']).toMatch(/^\d+$/u);
+		expect(result?.producerPolicyContract).toBe('2');
 	});
 
 	it.each([undefined, '3.0.0-proxy'])(
@@ -107,24 +133,86 @@ describe('fetchSSRData', () => {
 
 			const requestHeaders = createRequestHeaders();
 			if (incomingVersion !== undefined) {
-				requestHeaders.set('x-c15t-version', incomingVersion);
+				requestHeaders.set('x-inth-version', incomingVersion);
 			}
 
 			await fetchSSRData({
 				headers: requestHeaders,
-				projectUrl: 'https://consent.example.com/api/c15t',
+				projectUrl: 'https://consent.example.com/api/inth',
 			});
 
 			expect(fetchMock).toHaveBeenCalledWith(
-				'https://consent.example.com/api/c15t/init',
+				'https://consent.example.com/api/inth/init',
 				expect.objectContaining({
 					headers: expect.objectContaining({
-						'x-c15t-version': incomingVersion ?? version,
+						'x-inth-version': incomingVersion ?? version,
 					}),
 				})
 			);
 		}
 	);
+
+	it('forwards the prefetch markers, so the backend can tell a prefetch from a view', async () => {
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValue(createResponse({ categories: [], gvl: null }));
+		vi.stubGlobal('fetch', fetchMock);
+		const headers = createRequestHeaders();
+		headers.set('sec-purpose', 'prefetch');
+
+		await fetchSSRData({
+			headers,
+			projectUrl: 'https://consent.example.com/api/inth',
+		});
+
+		const sent = fetchMock.mock.calls[0]?.[1]?.headers as Record<
+			string,
+			string
+		>;
+		expect(sent['sec-purpose']).toBe('prefetch');
+		expect(sent['x-inth-country']).toBe('US');
+	});
+
+	it("sends the visitor's full Accept-Language, unless an override sets the language", async () => {
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValue(createResponse({ categories: [], gvl: null }));
+		vi.stubGlobal('fetch', fetchMock);
+		const headers = createRequestHeaders();
+		headers.set('accept-language', 'es,fr;q=0.9');
+		const projectUrl = 'https://consent.example.com/api/inth';
+
+		await fetchSSRData({ headers, projectUrl });
+		await fetchSSRData({ headers, overrides: { language: 'de' }, projectUrl });
+
+		const sent = fetchMock.mock.calls.map(
+			(call) =>
+				(call[1]?.headers as Record<string, string> | undefined)?.[
+					'accept-language'
+				]
+		);
+		expect(sent).toEqual(['es,fr;q=0.9', 'de']);
+	});
+
+	it('sends no cookie to a remote https backend', async () => {
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValue(createResponse({ categories: [], gvl: null }));
+		vi.stubGlobal('fetch', fetchMock);
+		const headers = createRequestHeaders();
+		headers.set('cookie', 'inth=v%3D3; c15t=v%3D3; session=secret');
+
+		await fetchSSRData({
+			headers,
+			projectUrl: 'https://consent.example.com/api/inth',
+		});
+
+		const sent = fetchMock.mock.calls[0]?.[1]?.headers as Record<
+			string,
+			string
+		>;
+		expect(sent).not.toHaveProperty('cookie');
+	});
 
 	it('resolves a relative projectUrl against host, not a forged x-forwarded-host', async () => {
 		const fetchMock = vi
@@ -135,10 +223,10 @@ describe('fetchSSRData', () => {
 		headers.set('x-forwarded-host', 'attacker.example');
 		headers.set('x-forwarded-proto', 'http');
 
-		await fetchSSRData({ headers, projectUrl: '/api/c15t' });
+		await fetchSSRData({ headers, projectUrl: '/api/inth' });
 
 		expect(fetchMock).toHaveBeenCalledWith(
-			'https://example.com/api/c15t/init',
+			'https://example.com/api/inth/init',
 			expect.any(Object)
 		);
 		const sent = fetchMock.mock.calls[0]?.[1]?.headers as Record<
@@ -159,10 +247,10 @@ describe('fetchSSRData', () => {
 			'x-forwarded-host': 'example.com',
 		});
 
-		await fetchSSRData({ headers, projectUrl: '/api/c15t' });
+		await fetchSSRData({ headers, projectUrl: '/api/inth' });
 
 		expect(fetchMock).toHaveBeenCalledWith(
-			'https://example.com/api/c15t/init',
+			'https://example.com/api/inth/init',
 			expect.any(Object)
 		);
 		const sent = fetchMock.mock.calls[0]?.[1]?.headers as Record<
@@ -196,11 +284,11 @@ describe('fetchSSRData', () => {
 		await Promise.all([
 			fetchSSRData({
 				headers,
-				projectUrl: 'https://consent.example.com/api/c15t',
+				projectUrl: 'https://consent.example.com/api/inth',
 			}),
 			fetchSSRData({
 				headers,
-				projectUrl: 'https://consent.example.com/api/c15t',
+				projectUrl: 'https://consent.example.com/api/inth',
 			}),
 		]);
 
@@ -217,7 +305,7 @@ describe('fetchSSRData', () => {
 
 		const result = await fetchSSRData({
 			headers,
-			projectUrl: 'https://consent.example.com/api/c15t',
+			projectUrl: 'https://consent.example.com/api/inth',
 		});
 
 		expect(result).toMatchObject({
@@ -233,7 +321,7 @@ describe('fetchSSRData', () => {
 				country: 'US',
 				gpc: false,
 				language: null,
-				projectUrl: 'https://consent.example.com/api/c15t',
+				projectUrl: 'https://consent.example.com/api/inth',
 				region: null,
 			},
 			requestDurationMs: expect.any(Number),
@@ -264,14 +352,14 @@ describe('fetchSSRData', () => {
 				language: 'de',
 				region: 'BE',
 			},
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 		});
 
 		expect(result?.metadata?.requestContext).toEqual({
 			country: 'DE',
 			gpc: true,
 			language: 'de',
-			projectUrl: 'https://example.com/api/c15t',
+			projectUrl: 'https://example.com/api/inth',
 			region: 'BE',
 		});
 	});
@@ -287,7 +375,7 @@ describe('fetchSSRData', () => {
 
 		const result = await fetchSSRData({
 			headers,
-			projectUrl: 'https://consent.example.com/api/c15t',
+			projectUrl: 'https://consent.example.com/api/inth',
 		});
 
 		expect(result).toBeUndefined();

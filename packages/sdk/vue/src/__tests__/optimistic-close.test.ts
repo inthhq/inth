@@ -69,7 +69,7 @@ const translations: TranslationsResponse = {
 };
 
 const init: InitOutput = {
-	branding: 'c15t',
+	branding: 'inth',
 	location: { countryCode: 'DE', regionCode: null },
 	policyResolution: writePolicyResolutionWire(
 		resolvePolicyRules({
@@ -115,7 +115,7 @@ for (const action of ['accept', 'reject', 'save'] as const) {
 				if (!String(input).split('?')[0]?.endsWith('/subjects')) {
 					return Promise.resolve(Response.json({}));
 				}
-				storedAtSave = localStorage.getItem('c15t');
+				storedAtSave = localStorage.getItem('inth');
 				return outcome === 'pending'
 					? Promise.withResolvers<Response>().promise
 					: Promise.reject(new Error('offline'));

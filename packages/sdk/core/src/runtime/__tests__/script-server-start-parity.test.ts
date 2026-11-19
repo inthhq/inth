@@ -30,8 +30,8 @@ type RuntimeOverrides = Partial<
 >;
 
 type SignalWindow = Window & {
-	__c15tLoaderRan?: boolean;
-	__c15tStarted?: unknown;
+	__inthLoaderRan?: boolean;
+	__inthStarted?: unknown;
 	__signals?: boolean[];
 };
 
@@ -185,8 +185,8 @@ const resetPage = function resetPage(): void {
 	}
 	document.head.innerHTML = '';
 	const page = window as SignalWindow;
-	delete page.__c15tLoaderRan;
-	delete page.__c15tStarted;
+	delete page.__inthLoaderRan;
+	delete page.__inthStarted;
 	delete page.__signals;
 };
 

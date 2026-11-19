@@ -16,7 +16,7 @@ disappearing from a README.
 bun run bench:mobile              # measure, print the table, store results/latest.json
 bun run bench:mobile --check      # same, plus exit non-zero on a missed budget
 bun run --cwd benchmarks/mobile bench:quick   # short sampling, for iterating
-bun turbo run test --filter=@c15t/mobile-bench  # the vitest suite
+bun turbo run test --filter=@inth/mobile-bench  # the vitest suite
 ```
 
 `--check` is the only mode that can fail. Without it the run prints numbers and

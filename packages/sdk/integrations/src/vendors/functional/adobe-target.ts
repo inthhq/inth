@@ -175,7 +175,6 @@ const createAtJsScript = function createAtJsScript(
 				signalAtJsConsent(false);
 			}
 		},
-		serverStart: undefined,
 	};
 };
 
@@ -296,13 +295,9 @@ const createWebSdkScript = function createWebSdkScript(
 			signal(false);
 		},
 		onLoad(info) {
-			if (!info.element?.isConnected) {
-				return;
-			}
 			loaded = true;
 			signal(info.hasConsent);
 		},
-		serverStart: undefined,
 	};
 };
 
@@ -324,7 +319,6 @@ const isSupportedWebSdkVersion = (version: string): boolean => {
  * uses a dedicated installation of window.alloy and Adobe 1.0 setConsent.
  * Keep reloadOnConsentRevoked enabled to stop existing offers and handlers.
  *
- * @param options - Deployment path, public configuration and consent category.
  * @returns A consent-gated script, or an inactive script for invalid options.
  * @remarks Web SDK requires an exact stable version of 2.21.0 or later.
  * Blank required values and unsupported versions log an error and skip loading.

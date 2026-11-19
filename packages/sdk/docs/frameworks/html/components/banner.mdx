@@ -1,12 +1,12 @@
 ---
 title: Banner
-description: The stock consent banner the c15t script tag shows on a plain HTML site, with its options, layouts, policy-driven buttons, keyboard behavior and data-testid styling hooks.
+description: The stock consent banner the Inth script tag shows on a plain HTML site, with its options, layouts, policy-driven buttons, keyboard behavior and data-testid styling hooks.
 group: frameworks
 ---
 
 ## What the banner shows
 
-The banner is the first prompt a visitor sees. `c15t.js` renders it when the
+The banner is the first prompt a visitor sees. `inth.js` renders it when the
 resolved policy asks for a choice or a notice and the visitor has not answered
 it yet. A returning visitor with a valid choice, and a visitor whose policy
 needs no prompt, sees no banner.
@@ -34,7 +34,7 @@ notice. It grants nothing. [How consent works](/docs/concepts/how-consent-works#
 explains the difference.
 
 `presentation.prompt` can reorder buttons, group them or make one primary.
-When your layout drops a button the policy requires, c15t puts it back, and it
+When your layout drops a button the policy requires, Inth puts it back, and it
 keeps accept and reject equally prominent where the policy says so.
 
 ## Change the text
@@ -46,8 +46,8 @@ Queue a `config` call before the tag and set the banner options under
 
 ```html
 <script>
-  window.c15t = window.c15t || [];
-  c15t.push(['config', {
+  window.inth = window.inth || [];
+  inth.push(['config', {
     ui: {
       banner: {
         title: 'Cookies on this site',
@@ -72,8 +72,8 @@ the visitor's language, use [translations](/docs/frameworks/html/translations).
 
 ```html
 <script>
-  window.c15t = window.c15t || [];
-  c15t.push(['config', {
+  window.inth = window.inth || [];
+  inth.push(['config', {
     presentation: {
       prompt: { variant: 'bar', position: 'bottom', direction: 'row' },
     },
@@ -108,7 +108,7 @@ Add the link URLs to the tag. The banner and the dialog both show them:
 
 ```html
 <script
-  src="https://your-project.inth.app/c15t.js"
+  src="https://your-project.inth.app/inth.js"
   data-privacy-policy-url="/privacy"
   data-cookie-policy-url="/cookies"
   defer
@@ -123,7 +123,7 @@ in a new tab unless its `target` says otherwise.
 
 - A non-blocking banner is a `role="region"` landmark named by its title.
   Focus stays where it was, and the page remains usable.
-- A blocking banner is a modal `role="dialog"`. c15t moves focus into it,
+- A blocking banner is a modal `role="dialog"`. Inth moves focus into it,
   keeps Tab inside it and stops the page scrolling until the visitor answers.
 - The banner sets `lang` and `dir` from the resolved language, so screen
   readers use the right voice and right-to-left text lays out correctly.

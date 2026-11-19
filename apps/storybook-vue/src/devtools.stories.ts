@@ -3,8 +3,8 @@ import {
 	devToolsPresentation,
 	devToolsScripts,
 	getDevToolsCategories,
-} from '@c15t/conformance/fixtures/devtools';
-import { devToolsFlow, devToolsReady } from '@c15t/conformance/play/devtools';
+} from '@inth/conformance/fixtures/devtools';
+import { devToolsFlow, devToolsReady } from '@inth/conformance/play/devtools';
 import type { HydrationRecords, HydrationResult } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
@@ -74,7 +74,7 @@ export const Default: Story = {
 							{
 								headers: {
 									'content-type': 'application/json',
-									'x-c15t-policy-contract': '1',
+									'x-inth-policy-contract': '1',
 								},
 							}
 						)

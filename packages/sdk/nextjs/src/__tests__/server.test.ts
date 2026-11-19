@@ -69,7 +69,7 @@ describe('resolveConsent: no backend URL', () => {
 	test('returns the cookie and header state without fetching', async () => {
 		const fetchSpy = vi.fn();
 		vi.stubGlobal('fetch', fetchSpy);
-		headerStore.set('cookie', 'c15t=c.necessary:1,c.marketing:1,i.t:1');
+		headerStore.set('cookie', 'inth=c.necessary:1,c.marketing:1,i.t:1');
 		headerStore.set('x-vercel-ip-country', 'DE');
 
 		const state = await resolveConsent({ fetch: fetchSpy });
@@ -97,7 +97,7 @@ describe('resolveConsent: cookies', () => {
 		// re-rendered into the first HTML (the re-prompt zombie).
 		headerStore.set(
 			'cookie',
-			'c15t=c.necessary:1,c.marketing:1,c.measurement:0,i.t:1234567890'
+			'inth=c.necessary:1,c.marketing:1,c.measurement:0,i.t:1234567890'
 		);
 		const config = await resolveConsent();
 		expect(config.initialRecords?.choice?.version).toBe(3);
@@ -108,7 +108,7 @@ describe('resolveConsent: cookies', () => {
 	});
 
 	test('ignores malformed cookie values', async () => {
-		headerStore.set('cookie', 'c15t=not-a-consent-payload');
+		headerStore.set('cookie', 'inth=not-a-consent-payload');
 		const config = await resolveConsent();
 		expect(config.initialRecords?.choice).toBeNull();
 		expect(Object.hasOwn(config, 'initialHasConsented')).toBe(false);
@@ -210,7 +210,7 @@ describe('resolveConsent: fluid-compute safety', () => {
 			choice,
 			version: 3,
 		});
-		return `c15t=${encodeURIComponent(raw)}`;
+		return `inth=${encodeURIComponent(raw)}`;
 	};
 
 	/** A request context of its own, not the shared mutable stores above. */
@@ -250,7 +250,7 @@ describe('resolveConsent: fluid-compute safety', () => {
 									),
 									translations: { language: 'en', translations: {} },
 								}),
-								{ headers: { 'x-c15t-policy-contract': '1' } }
+								{ headers: { 'x-inth-policy-contract': '1' } }
 							)
 						);
 					});
@@ -316,7 +316,7 @@ describe('resolveConsent: manifest session reports', () => {
 		const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
 		expect(url).toBe('https://consent.example.com/sessions');
 		const headers = init.headers as Record<string, string>;
-		expect(headers['x-c15t-client-ip']).toBe('203.0.113.42');
+		expect(headers['x-inth-client-ip']).toBe('203.0.113.42');
 		expect(headers['user-agent']).toBe('Mozilla/5.0');
 		expect(headers).not.toHaveProperty('cookie');
 		expect(JSON.parse(init.body as string)).toMatchObject({

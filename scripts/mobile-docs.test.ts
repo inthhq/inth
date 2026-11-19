@@ -162,7 +162,7 @@ test('mobile setup examples come from checked source and survive Markdown conver
 
 test('mobile comparison claims say what ships today, not what is coming', () => {
 	const pages = [
-		'packages/sdk/docs/shared/comparisons/mobile-c15t.mdx',
+		'packages/sdk/docs/shared/comparisons/mobile-inth.mdx',
 		'packages/sdk/docs/comparisons/didomi.mdx',
 		'packages/sdk/docs/comparisons/onetrust.mdx',
 		'packages/sdk/docs/comparisons/usercentrics.mdx',
@@ -189,7 +189,7 @@ test('mobile comparison claims say what ships today, not what is coming', () => 
 /**
  * Pages on the private repository: the repository itself and any pull request or
  * issue in the `inthhq` organisation. The Maven package host
- * (`maven.pkg.github.com/inthhq/c15t-private`) is a dependency source, not a page,
+ * (`maven.pkg.github.com/inthhq/inth`) is a dependency source, not a page,
  * so a host label before `github.com` does not count.
  */
 const PRIVATE_REPO_PAGE =
@@ -201,7 +201,7 @@ test('docs never link to the private repository, which c15t.com readers cannot o
 	).toBe(true);
 	expect(PRIVATE_REPO_PAGE.test('github.com/inthhq/other/issues/2')).toBe(true);
 	expect(
-		PRIVATE_REPO_PAGE.test('https://maven.pkg.github.com/inthhq/c15t-private')
+		PRIVATE_REPO_PAGE.test('https://maven.pkg.github.com/inthhq/inth')
 	).toBe(false);
 	const files = await fg('docs/**/*.{md,mdx}', { cwd: root });
 	expect(files.length).toBeGreaterThan(0);

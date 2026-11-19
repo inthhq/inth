@@ -9,7 +9,7 @@ import com.inth.core.transport.InthProtocol
  *
  * Pure data: nothing here runs at construction, and no field changes consent
  * semantics on its own. The backend identifies the project by URL, the same way
- * the hosted transport in `@c15t/core` assumes, so there is no key in this type.
+ * the hosted transport in `@inth/sdk-core` assumes, so there is no key in this type.
  *
  * @property backendUrl The project URL from the Inth dashboard, such as
  * `https://your-project.inth.app`. `InthAndroid.install` checks it with [InthProjectUrl].
@@ -26,7 +26,7 @@ import com.inth.core.transport.InthProtocol
  *
  * Web puts that option to three uses: filtering the GVL request, narrowing the list the
  * module holds through `narrowGVLToVendors`, and clearing a summary that had counted the
- * wider list. The first one reaches this core as the `x-c15t-vendors` request header, the
+ * wider list. The first one reaches this core as the `x-inth-vendors` request header, the
  * second is what [com.inth.core.ConsentCore] does with this field on every path a list
  * arrives by, and the third has no native equivalent yet because this build holds one
  * list and reports it whole.
@@ -53,7 +53,7 @@ import com.inth.core.transport.InthProtocol
  *   lives: a WebView's `isGlobalPrivacyControlEnabled`, an equivalent Android check, or the React
  *   Native layer. `null` means "no signal", which is not the same answer as `false`. An app
  *   override on [overrides] wins over this.
- * @property platform The host that built this core, sent as `x-c15t-platform: <platform>-><sdkVersion>`.
+ * @property platform The host that built this core, sent as `x-inth-platform: <platform>-><sdkVersion>`.
  *   [InthProtocol.PLATFORM_ANDROID] for a Kotlin or Java app, and the React Native binding sets
  *   [InthProtocol.PLATFORM_REACT_NATIVE]. `null` sends no platform header.
  * @property extraHeaders Extra request headers, for a deployment that needs its own auth or tenant

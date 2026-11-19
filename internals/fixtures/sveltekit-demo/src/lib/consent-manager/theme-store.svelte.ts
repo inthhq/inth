@@ -8,7 +8,7 @@ const createThemePresetStore = function createThemePresetStore() {
 	let mounted = $state(false);
 
 	if (browser) {
-		const saved = localStorage.getItem('c15t-theme-preset') as ThemePresetName;
+		const saved = localStorage.getItem('inth-theme-preset') as ThemePresetName;
 		if (saved && themePresets[saved] !== undefined) {
 			preset = saved;
 		}
@@ -25,7 +25,7 @@ const createThemePresetStore = function createThemePresetStore() {
 		setPreset(name: ThemePresetName) {
 			preset = name;
 			if (browser) {
-				localStorage.setItem('c15t-theme-preset', name);
+				localStorage.setItem('inth-theme-preset', name);
 			}
 		},
 		get theme() {

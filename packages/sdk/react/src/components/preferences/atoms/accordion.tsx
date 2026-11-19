@@ -1,3 +1,4 @@
+import { consentTypes, resolveCategoryTitle } from '@inth/sdk/engine';
 import type { AllConsentNames, ConsentType } from '@inth/sdk/engine';
 import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
 import {
@@ -20,46 +21,6 @@ import { useExplicitChoice, useRestrictions } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
 
 import { ConsentWidgetVendorList } from './vendor-list';
-
-/** Stock metadata for each category the preference surface can list. */
-const DEFAULT_CONSENT_TYPES: readonly ConsentType[] = [
-	{
-		defaultValue: true,
-		description: 'Required for basic site functionality',
-		disabled: true,
-		display: true,
-		gdprType: 1,
-		name: 'necessary',
-	},
-	{
-		defaultValue: false,
-		description: 'Enables enhanced features',
-		display: true,
-		gdprType: 2,
-		name: 'functionality',
-	},
-	{
-		defaultValue: false,
-		description: 'Analytics and performance measurement',
-		display: true,
-		gdprType: 4,
-		name: 'measurement',
-	},
-	{
-		defaultValue: false,
-		description: 'Improves your experience',
-		display: true,
-		gdprType: 3,
-		name: 'experience',
-	},
-	{
-		defaultValue: false,
-		description: 'Advertising and marketing',
-		display: true,
-		gdprType: 5,
-		name: 'marketing',
-	},
-];
 
 interface ConsentWidgetAccordionContextValue {
 	noStyle?: boolean;
@@ -179,12 +140,6 @@ const ConsentWidgetAccordion = ({
 const OpenIcon = LucideIcon({ iconPath: <path d="M5 12h14M12 5v14" /> });
 const CloseIcon = LucideIcon({ iconPath: <path d="M5 12h14" /> });
 
-const formatConsentName = function formatConsentName(name: AllConsentNames) {
-	return name
-		.replace(/_/gu, ' ')
-		.replace(/\b\w/gu, (c: string) => c.toUpperCase());
-};
-
 interface ConsentWidgetAccordionRowProps {
 	consent: ConsentType;
 	title: string;
@@ -270,7 +225,7 @@ const ConsentWidgetAccordionRow = ({
 						aria-label={title}
 						checked={checked}
 						aria-describedby={
-							restricted ? `c15t-restriction-${consent.name}` : undefined
+							restricted ? `inth-restriction-${consent.name}` : undefined
 						}
 						onCheckedChange={(value) => draft.set(consent.name, value)}
 						disabled={consent.disabled}
@@ -283,7 +238,7 @@ const ConsentWidgetAccordionRow = ({
 				<output
 					className={noStyle ? undefined : accordionStyles.restriction}
 					data-testid={`consent-widget-restriction-${consent.name}`}
-					id={`c15t-restriction-${consent.name}`}
+					id={`inth-restriction-${consent.name}`}
 				>
 					Your saved choice is restricted by the current privacy settings.
 				</output>
@@ -329,11 +284,11 @@ const ConsentWidgetAccordionItems = () => {
 	};
 	const { noStyle, onToggleItem, openValues } =
 		useConsentWidgetAccordionContext();
-	const { consentTypes } = useTranslations();
+	const translations = useTranslations();
 	const consents = useMemo(
 		() =>
 			displayedCategories.flatMap((name) =>
-				DEFAULT_CONSENT_TYPES.filter((type) => type.name === name)
+				consentTypes.filter((type) => type.name === name)
 			),
 		[displayedCategories]
 	);
@@ -343,15 +298,14 @@ const ConsentWidgetAccordionItems = () => {
 			key={consent.name}
 			consent={consent}
 			description={
-				consentTypes[consent.name]?.description ?? consent.description
+				translations.consentTypes[consent.name]?.description ??
+				consent.description
 			}
 			noStyle={noStyle}
 			onToggleItem={onToggleItem}
 			open={openValues.includes(consent.name)}
 			restricted={isRestricted(consent.name)}
-			title={
-				consentTypes[consent.name]?.title ?? formatConsentName(consent.name)
-			}
+			title={resolveCategoryTitle(translations, consent.name)}
 		/>
 	));
 };

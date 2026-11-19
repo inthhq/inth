@@ -1,16 +1,5 @@
-/**
- * Mock Consent State for IAB React Component Tests
- *
- * Provides mock IAB state objects for testing React components.
- *
- * @packageDocumentation
- */
-
 import type { GlobalVendorList } from '@inth/sdk/engine';
 
-/**
- * Mock GVL for React component testing
- */
 export const mockGVL: GlobalVendorList = {
 	features: {
 		1: {
@@ -244,9 +233,6 @@ export const mockGVL: GlobalVendorList = {
 	},
 };
 
-/**
- * Mock IAB state for testing components
- */
 export const createMockIABState = function createMockIABState(
 	overrides?: Partial<{
 		gvl: GlobalVendorList | null;
@@ -305,6 +291,7 @@ export const createMockIABState = function createMockIABState(
 		// Actions
 		setPurposeConsent: () => {},
 		setPurposeLegitimateInterest: () => {},
+		setPurposeObjection: () => {},
 		setSpecialFeatureOptIn: () => {},
 		setVendorConsent: () => {},
 		setVendorLegitimateInterest: () => {},
@@ -320,9 +307,6 @@ export const createMockIABState = function createMockIABState(
 	};
 };
 
-/**
- * Mock IAB state with all consents accepted
- */
 export const createMockIABStateAllAccepted =
 	function createMockIABStateAllAccepted() {
 		return createMockIABState({
@@ -364,9 +348,6 @@ export const createMockIABStateAllAccepted =
 		});
 	};
 
-/**
- * Mock IAB state with loading GVL
- */
 export const createMockIABStateLoading = function createMockIABStateLoading() {
 	return createMockIABState({
 		gvl: null,
@@ -374,9 +355,6 @@ export const createMockIABStateLoading = function createMockIABStateLoading() {
 	});
 };
 
-/**
- * Mock IAB state with LI objections
- */
 export const createMockIABStateWithLIObjections =
 	function createMockIABStateWithLIObjections() {
 		return createMockIABState({
@@ -421,9 +399,6 @@ export const mockCustomVendor = {
 	usesCookies: true,
 };
 
-/**
- * Mock IAB state with custom vendors
- */
 export const createMockIABStateWithCustomVendors =
 	function createMockIABStateWithCustomVendors() {
 		return {

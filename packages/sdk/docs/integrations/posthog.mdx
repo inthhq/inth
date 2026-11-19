@@ -1,20 +1,20 @@
 ---
 title: PostHog
-description: Connect PostHog to c15t permissions on the web, Swift, Kotlin, React Native and Expo, with startup, capture and withdrawal handling.
-seoTitle: PostHog consent for web and mobile with c15t
-seoDescription: Gate PostHog capture with c15t permissions in web and mobile apps. Configure startup, opt-in, withdrawal and reset using your analytics SDK.
+description: Connect PostHog to Inth permissions on the web, Swift, Kotlin, React Native and Expo, with startup, capture and withdrawal handling.
+seoTitle: PostHog consent for web and mobile with Inth
+seoDescription: Gate PostHog capture with Inth permissions in web and mobile apps. Configure startup, opt-in, withdrawal and reset using your analytics SDK.
 icon: posthog
 group: integrations
 ---
 
-Connect PostHog capture to c15t permission on [the web](#web) or in
+Connect PostHog capture to Inth permission on [the web](#web) or in
 [Swift, Android, React Native and Expo apps](#mobile). Web setup uses
-`@inth/integrations/posthog`. Mobile helpers ship inside the existing c15t
+`@inth/integrations/posthog`. Mobile helpers ship inside the existing Inth
 platform packages and connect your app's configured PostHog client.
 
 ## Web
 
-By default, the c15t `posthog` helper loads PostHog's `array.js` on every page,
+By default, the Inth `posthog` helper loads PostHog's `array.js` on every page,
 before the visitor chooses. While `measurement` has no consent, the helper calls
 `opt_out_capturing()`. This is also true before the visitor chooses. While
 `measurement` has consent, the helper calls `opt_in_capturing()`. The default
@@ -76,7 +76,7 @@ framework plugin or array snippet that also does, or follow
 | `'disabled'` | Never | None. The helper returns an empty callback-only script |
 
 With `'after-consent'`, a refusal can arrive while `array.js` is still
-downloading. The download keeps going after c15t removes the script, so c15t
+downloading. The download keeps going after Inth removes the script, so Inth
 also clears PostHog's queued init. When `array.js` runs, it starts nothing, sends
 no events and writes no cookies. If the visitor allows measurement again before
 `array.js` runs, PostHog starts on the same page. If `array.js` has already
@@ -186,7 +186,7 @@ Pass the current measurement permission from your framework, for example
 If your app already initializes `posthog-js`, keep that setup and register a
 callback-only script instead of the helper. Initialize the SDK with
 `opt_out_capturing_by_default: true` and `cookieless_mode: 'never'` so it
-captures nothing before c15t reports a permission. Import the types from your
+captures nothing before Inth reports a permission. Import the types from your
 framework package, here `@inth/react`, or from `@inth/sdk/engine` in plain
 JavaScript:
 
@@ -216,7 +216,7 @@ export function posthogConsent(instance: PostHogConsentApi): Script {
 ```
 
 Add `posthogConsent(posthog)` to the `scripts` you register, passing your
-initialized SDK instance. `callbackOnly` means c15t inserts no script element.
+initialized SDK instance. `callbackOnly` means Inth inserts no script element.
 `alwaysLoad` makes `onBeforeLoad` run on the first page load even while
 measurement is denied, so the SDK is told to opt out. `onConsentChange` runs on
 every later change. This does not delay the SDK import or its first request.
@@ -255,12 +255,12 @@ and none of the modules you turned off, such as `surveys.js` or
 ## Mobile
 
 Use the bundled PostHog helper to keep event capture in sync with a native
-c15t category. It opts the configured client in when permission is granted,
+Inth category. It opts the configured client in when permission is granted,
 and out while permission is pending, denied or the integration is closed.
 
 The helper ships inside `InthApple`, `inth-android` and
 `@inth/react-native/integrations`. Your app installs and configures PostHog
-separately. There is no additional c15t integration package.
+separately. There is no additional Inth integration package.
 
 ### Before you start
 
@@ -273,7 +273,7 @@ another optional category that covers the events you collect.
 Install PostHog using its [iOS](https://posthog.com/docs/libraries/ios),
 [Android](https://posthog.com/docs/libraries/android) or
 [React Native](https://posthog.com/docs/libraries/react-native) guide. This
-page connects the same configured client your app uses for capture. c15t's
+page connects the same configured client your app uses for capture. Inth's
 mobile packages remain a private prerelease; see
 [mobile availability](/docs/guides/mobile-status) for access.
 
@@ -286,7 +286,7 @@ vendor permission, an advertising integration or Apple ATT authorization.
 
 For capture disabled by default, use `optOut = true` in native PostHog
 configuration or `defaultOptIn: false` in React Native. Persisted earlier
-opt-ins can override defaults, so reconcile current c15t authority on every
+opt-ins can override defaults, so reconcile current Inth authority on every
 launch before relying on capture permission.
 
 Opt-out controls event capture. It does not establish that PostHog makes no
@@ -297,7 +297,7 @@ do not turn remote configuration off.
 
 If your app requires no PostHog traffic before permission, defer constructing
 or setting up its client until the current native category grants it. Keep a
-c15t gate alive to perform that first setup when permission changes. Once the
+Inth gate alive to perform that first setup when permission changes. Once the
 client exists, connect the helper below to manage capture and withdrawal.
 Implement and test that deferred-start path in the app; the helper accepts
 an already configured client and does not construct it for you.
@@ -306,8 +306,8 @@ For native SDKs, put the first setup behind a
 [native startup gate](/docs/frameworks/react-native/native-behaviour). React
 hooks cannot prevent a native SDK that has already initialized. For Expo,
 install PostHog using its Expo instructions and rebuild the app's native
-binary. c15t does not add the vendor module or its configuration, and Expo Go
-does not load c15t's native engine.
+binary. Inth does not add the vendor module or its configuration, and Expo Go
+does not load Inth's native engine.
 
 ### Connect a Swift app
 
@@ -315,7 +315,7 @@ Create `PostHogOwner.swift` in your app target:
 
 <include src="../shared/examples/native/core-swift/AppleInstallation/swift-posthog-binding.mdx" />
 
-After your app has installed c15t and configured PostHog, construct the owner
+After your app has installed Inth and configured PostHog, construct the owner
 with the client's supported APIs. Retain `posthogOwner` on the app's service
 owner:
 
@@ -456,14 +456,14 @@ The command does not create a PostHog client or start capture. Its next step
 tells you to wrap the app in `PostHogProvider`. A provider that receives the
 project token creates its own client when it mounts, with capture on unless
 its `options` set `defaultOptIn: false`. Build the client yourself from the
-same variables instead, with capture off, so c15t controls the one client
+same variables instead, with capture off, so Inth controls the one client
 your app uses:
 
 <include src="../shared/examples/expo/expo-posthog-client.mdx" />
 
 The client throws when the two variables are missing, so a build without
 them fails at launch instead of sending nowhere. It opts out as soon as it is
-built, because an opt-in that PostHog stored before your app used c15t
+built, because an opt-in that PostHog stored before your app used Inth
 overrides `defaultOptIn: false`. It also turns off remote
 feature flags and surveys, because both can call PostHog before anyone has
 consented. If your app uses flags or surveys, remove those two options
@@ -473,7 +473,7 @@ Then give that client to the provider:
 
 <include src="../shared/examples/expo/expo-posthog-root.mdx" />
 
-Connect the same `posthog` instance to c15t as shown in
+Connect the same `posthog` instance to Inth as shown in
 [Connect React Native or Expo](#connect-react-native-or-expo). Leave session
 replay off until you have scoped and tested it, even if the command installed
 the replay plugin. The provider's `autocapture={false}` keeps screen and
@@ -482,7 +482,7 @@ uploads run on your build machine and send no data from users' devices.
 
 ### Reapply permission after reset
 
-PostHog's own reset can change its capture settings while c15t's saved choice
+PostHog's own reset can change its capture settings while Inth's saved choice
 stays unchanged. After the reset completes, use `syncAfterReset()` on the
 Swift owner, `sync()` on the Kotlin helper or
 `await posthogConsent.sync()` in React Native. This reapplies current native
@@ -490,7 +490,7 @@ permission without recording another consent choice.
 
 For final service teardown, use the Swift owner's `stop()`, Kotlin's
 `close()` or `await posthogConsent.disconnect()` in React Native. These
-detach c15t observation and request opt-out. Keep their lifetime attached to
+detach Inth observation and request opt-out. Keep their lifetime attached to
 the service, rather than a short-lived settings screen.
 
 Opt-out does not delete historical events. Previously queued native events

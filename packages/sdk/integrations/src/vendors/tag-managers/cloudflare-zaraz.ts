@@ -1,4 +1,7 @@
 import type { AllConsentNames, ConsentState, Script } from '@inth/sdk/engine';
+import { POLICY_CONSENT_CATEGORIES } from '@inth/sdk/schema/types';
+
+import { signalConsents } from '../../engine/vendor-consent';
 
 /** The Zaraz Consent API methods used by the bridge. */
 export interface ZarazConsentApi {
@@ -10,7 +13,7 @@ export interface ZarazConsentApi {
 }
 
 export interface CloudflareZarazOptions {
-	/** Map c15t categories to purpose IDs from the Zaraz dashboard. */
+	/** Map Inth categories to purpose IDs from the Zaraz dashboard. */
 	purposes: Partial<Record<AllConsentNames, readonly string[]>>;
 	/** Hide the currently visible Zaraz modal. Disable auto-display in Zaraz too. @default true */
 	hideBuiltInModal?: boolean;
@@ -25,23 +28,8 @@ export interface CloudflareZarazOptions {
 	onError?: (error: unknown) => void;
 }
 
-const consentCategories: readonly AllConsentNames[] = [
-	'necessary',
-	'functionality',
-	'experience',
-	'measurement',
-	'marketing',
-];
 const readyEvent = 'zarazConsentAPIReady';
 const vendorId = 'cloudflare-zaraz';
-/** What a visitor who turned the Zaraz vendor off grants: nothing optional. */
-const ALL_DENIED: ConsentState = {
-	experience: false,
-	functionality: false,
-	marketing: false,
-	measurement: false,
-	necessary: true,
-};
 
 const isConsentApi = (api: unknown): api is ZarazConsentApi =>
 	typeof api === 'object' &&
@@ -67,15 +55,14 @@ const getConsentApi = (): ZarazConsentApi | undefined => {
 };
 
 /**
- * Synchronize c15t effective permissions with externally loaded Zaraz tools.
+ * Synchronize Inth effective permissions with externally loaded Zaraz tools.
  * Does not load Zaraz or configure tools. Unmapped Zaraz purposes are denied.
  * The script's vendor slug is `cloudflare-zaraz`; while a visitor has that
  * vendor turned off, every purpose mapped to an optional category is denied.
  * Disable automatic pageviews and send the first Pageview from onReady to avoid
  * running tools with a stale Zaraz consent cookie before synchronization.
  *
- * @param options - Purpose mapping and synchronization callbacks.
- * @returns A callback-only script for the existing c15t script loader.
+ * @returns A callback-only script for the existing Inth script loader.
  * @throws {Error} If the mapping is empty, contains blank IDs, or maps an ID twice.
  * @example
  * ```ts
@@ -84,7 +71,7 @@ const getConsentApi = (): ZarazConsentApi | undefined => {
  */
 export const cloudflareZaraz = (options: CloudflareZarazOptions): Script => {
 	const mappings = new Map<string, AllConsentNames>();
-	for (const category of consentCategories) {
+	for (const category of POLICY_CONSENT_CATEGORIES) {
 		for (const purpose of options.purposes[category] ?? []) {
 			if (!purpose.trim() || purpose !== purpose.trim()) {
 				throw new Error(
@@ -98,7 +85,7 @@ export const cloudflareZaraz = (options: CloudflareZarazOptions): Script => {
 		}
 	}
 	if (mappings.size === 0) {
-		throw new Error('Map at least one Zaraz purpose to a c15t category.');
+		throw new Error('Map at least one Zaraz purpose to an Inth category.');
 	}
 
 	let latest: ConsentState | undefined;
@@ -164,9 +151,7 @@ export const cloudflareZaraz = (options: CloudflareZarazOptions): Script => {
 		return true;
 	};
 	const update: NonNullable<Script['onConsentChange']> = (info) => {
-		// A visitor who turned this vendor off gets every optional category
-		// denied, whatever the category state.
-		latest = info.vendor?.granted === false ? ALL_DENIED : info.consents;
+		latest = signalConsents(info);
 		if (typeof document === 'undefined') {
 			return;
 		}

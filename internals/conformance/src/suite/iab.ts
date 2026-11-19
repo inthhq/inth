@@ -12,6 +12,8 @@
  * component support throw `DriverNotImplementedError` and fail.
  */
 
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk-core/runtime/page-globals';
+
 import { TEST_IDS } from '../contract/test-ids';
 import type { TestDriver } from '../driver';
 import { MINIMAL_GVL } from '../fixtures/gvl';
@@ -180,6 +182,7 @@ export const runIabUiConformance = function runIabUiConformance(
 						TEST_IDS.iabConsentBanner.root
 					);
 					api.expect(root).not.toBeNull();
+					api.expect(root?.getAttribute(SURFACE_ROOT_ATTRIBUTE)).toBe('banner');
 
 					const customize = queryByTestId(
 						mounted.root,
@@ -231,8 +234,13 @@ export const runIabUiConformance = function runIabUiConformance(
 							null
 					);
 					api
-						.expect(queryByTestId(mounted.root, TEST_IDS.iabConsentDialog.root))
-						.not.toBeNull();
+						.expect(
+							queryByTestId(
+								mounted.root,
+								TEST_IDS.iabConsentDialog.root
+							)?.getAttribute(SURFACE_ROOT_ATTRIBUTE)
+						)
+						.toBe('dialog');
 				} finally {
 					await mounted.unmount();
 				}

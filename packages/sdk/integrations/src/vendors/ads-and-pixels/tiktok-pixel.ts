@@ -25,7 +25,6 @@ interface TikTokPixelFunction {
 	holdConsent: (...args: unknown[]) => void;
 }
 
-// Extended Window interface to include TikTok Pixel-specific properties
 declare global {
 	interface Window {
 		ttq: TikTokPixelFunction;
@@ -83,7 +82,7 @@ export const tiktokPixelManifest = {
 	category: 'marketing',
 	install: [
 		// Mirror the bookkeeping `ttq.load(pixelId)` does in TikTok's base code.
-		// c15t appends events.js itself, so it records the pixel directly
+		// Inth appends events.js itself, so it records the pixel directly
 		// instead of calling `load`, which would insert a second loader.
 		{
 			ifGlobalIsQueue: true,
@@ -189,8 +188,6 @@ export interface TikTokPixelOptions {
  * Creates a Tiktok Pixel script.
  * This script is persistent after consent is revoked because it has built-in functionality to opt into and out of tracking based on consent, which allows us to not need to load the script again when consent is revoked.
  *
- * @param options - The options for the TikTok Pixel script
- * @returns The TikTok Pixel script configuration
  * @remarks When `pixelId` is missing or blank, the
  *   helper logs `tiktokPixel: missing or invalid pixelId` with
  *   `console.error` and returns a script that never loads.

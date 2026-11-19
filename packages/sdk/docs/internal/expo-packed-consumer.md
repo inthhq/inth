@@ -39,31 +39,31 @@ are exact because `expo install` picks the newest patch at run time, which the
 three-day release-age gate in `bunfig.toml` can refuse. The helper also
 copies the bare fixture's vendor code that the E2E host imports.
 `internals/fixtures/expo-dev/scripts/vendor-e2e.sh` does all of this when
-`C15T_EXPO_CELL` is set.
+`INTH_EXPO_CELL` is set.
 
 In that consumer directory:
 
 ```sh
 bun install --ignore-scripts
-C15T_LOCAL_PODS=false EXPO_PUBLIC_C15T_FAKE_NATIVE=false \
+INTH_LOCAL_PODS=false EXPO_PUBLIC_INTH_FAKE_NATIVE=false \
   bun x expo prebuild --platform android --clean --no-install
 ```
 
-`C15T_LOCAL_PODS=false` disables the fixture's separate local Apple-core override.
+`INTH_LOCAL_PODS=false` disables the fixture's separate local Apple-core override.
 The packed SDK carries the shared Swift core, Apple installer and SwiftUI
 presenter sources. Build the generated iOS workspace to verify CocoaPods
 compilation; record runtime acceptance separately.
 
 The shipped plugin accepts `androidMavenRepository`. It has no default
 repository. The fixture explicitly selects the private pilot GitHub Packages
-URL, or the `C15T_MAVEN_URL` environment override at prebuild time:
+URL, or the `INTH_MAVEN_URL` environment override at prebuild time:
 
 ```ts
 androidMavenRepository: {
-  url: 'https://maven.pkg.github.com/inthhq/c15t-private',
+  url: 'https://maven.pkg.github.com/inthhq/inth',
   credentials: {
-    usernameEnvironmentVariable: 'C15T_MAVEN_USERNAME',
-    passwordEnvironmentVariable: 'C15T_MAVEN_TOKEN',
+    usernameEnvironmentVariable: 'INTH_MAVEN_USERNAME',
+    passwordEnvironmentVariable: 'INTH_MAVEN_TOKEN',
   },
 }
 ```
@@ -86,7 +86,7 @@ must configure the equivalent settings-owned block themselves. The bare RN
 fixture uses the same exclusive repository contract. Neither fixture substitutes
 a native source project.
 
-For local staging, pass `C15T_MAVEN_URL=file:///absolute/path/maven-staging` to
+For local staging, pass `INTH_MAVEN_URL=file:///absolute/path/maven-staging` to
 both prebuild and Gradle. Prebuild records the explicit URL, so changing the
 environment later requires another prebuild. Run the real host check from the
 consumer directory, without any React Native directory or Codegen override:
@@ -139,7 +139,7 @@ The fixture supplies two internal-distribution profiles:
 
 Both profiles select the real native runtime and disable the local Apple pod
 override. Configure a reachable test backend as
-`EXPO_PUBLIC_C15T_BACKEND_URL` in each EAS environment. The fixture defaults to
+`EXPO_PUBLIC_INTH_PROJECT_URL` in each EAS environment. The fixture defaults to
 `https://example-inth.inth.app/`; use an authorized test project for delivery. Configure Maven read access and
 signing credentials through the secure `inth-com` account/CI flow. Keep tokens,
 keys, provisioning profiles and certificates out of the tarball and app config.

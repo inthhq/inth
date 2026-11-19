@@ -3,18 +3,18 @@ import {
 	IAB_FIXTURE_CMP_VERSION,
 	MINIMAL_GVL,
 	runConformanceSuite,
-} from '@c15t/conformance';
+} from '@inth/conformance';
 import type {
 	MountableComponent,
 	MountOptions,
 	MountResult,
 	SuiteApi,
 	TestDriver,
-} from '@c15t/conformance';
+} from '@inth/conformance';
 import type {
 	CreatePolicySession,
 	ProbePolicyContract,
-} from '@c15t/conformance/contract/policy-driver';
+} from '@inth/conformance/contract/policy-driver';
 import { ConsentDialog, ConsentWidget, ConsentBanner } from '@inth/react';
 import type { ConsentProviderOptions } from '@inth/react';
 import { KernelContext } from '@inth/react/context';

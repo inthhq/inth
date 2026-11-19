@@ -23,7 +23,7 @@ export const traceConsent =
 				operation = 'manifest';
 			}
 		}
-		span.setAttribute('c15t.operation', operation);
+		span.setAttribute('inth.operation', operation);
 
 		const response = await handler(event);
 		span.setAttribute('http.response.status_code', response.status);

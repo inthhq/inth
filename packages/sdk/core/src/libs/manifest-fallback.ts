@@ -13,7 +13,6 @@ const warned = new Set<string>();
  * backend's `/init` because the manifest could not be read.
  *
  * @param source - The manifest URL, or another name for where it was read.
- * @param cause - Why the read failed.
  * @internal
  */
 export const warnManifestFallback = function warnManifestFallback(
@@ -26,6 +25,6 @@ export const warnManifestFallback = function warnManifestFallback(
 	warned.add(source);
 	const reason = cause instanceof Error ? cause.message : String(cause);
 	console.warn(
-		`c15t: could not read the consent manifest from ${source} (${reason}). Consent resolves from the backend's /init until it can.`
+		`inth: could not read the consent manifest from ${source} (${reason}). Consent resolves from the backend's /init until it can.`
 	);
 };

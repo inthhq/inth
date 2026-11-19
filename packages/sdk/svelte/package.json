@@ -1,7 +1,7 @@
 {
 	"name": "@inth/svelte",
 	"version": "3.2.0-canary.0",
-	"description": "Svelte cookie consent banner for Svelte and SvelteKit, with a consent dialog and preference center. The Svelte package for c15t.",
+	"description": "Svelte cookie consent banner for Svelte and SvelteKit, with a consent dialog and preference center. The Svelte package for Inth.",
 	"keywords": [
 		"banner",
 		"ccpa",
@@ -30,14 +30,14 @@
 		"user-consent",
 		"web-privacy"
 	],
-	"homepage": "https://c15t.com/docs/frameworks/svelte/quickstart",
+	"homepage": "https://inth.com",
 	"bugs": {
-		"url": "https://github.com/c15t/c15t/issues"
+		"url": "https://github.com/inthhq/inth/issues"
 	},
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/c15t/c15t.git",
+		"url": "git+https://github.com/inthhq/inth.git",
 		"directory": "packages/sdk/svelte"
 	},
 	"files": [
@@ -74,9 +74,6 @@
 			],
 			"kit/locals": [
 				"./dist/kit/app.d.ts"
-			],
-			"server": [
-				"./dist/server/index.d.ts"
 			],
 			"vite": [
 				"./dist/vite.d.ts"
@@ -126,11 +123,6 @@
 		},
 		"./kit/locals": {
 			"types": "./dist/kit/app.d.ts"
-		},
-		"./server": {
-			"types": "./dist/server/index.d.ts",
-			"import": "./dist/server/index.js",
-			"default": "./dist/server/index.js"
 		},
 		"./vite": {
 			"types": "./dist/vite.d.ts",
@@ -186,9 +178,9 @@
 		"esm-env": "1.2.2"
 	},
 	"devDependencies": {
-		"@c15t/conformance": "workspace:*",
-		"@c15t/typescript-config": "workspace:*",
-		"@c15t/vitest-config": "workspace:*",
+		"@inth/conformance": "workspace:*",
+		"@inth/typescript-config": "workspace:*",
+		"@inth/vitest-config": "workspace:*",
 		"@sveltejs/kit": "^2.63.0",
 		"@sveltejs/package": "^2.3.7",
 		"@sveltejs/vite-plugin-svelte": "^5.0.3",

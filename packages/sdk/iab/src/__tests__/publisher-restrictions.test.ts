@@ -3,10 +3,10 @@
  */
 
 import { TCString } from '@iabtechlabtcf/core';
+import type { TCData } from '@inth/sdk-core';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { clearStoredTCString, createCMPApi } from '../tcf/cmp-api';
-import type { TCData } from '../tcf/iab-tcf-types';
 import {
 	PublisherRestrictionError,
 	sameListedRestrictions,

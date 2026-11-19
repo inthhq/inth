@@ -269,7 +269,7 @@ test('canonicalizeStyleValue replaces animation-name with placeholder', () => {
 	expect(canonicalizeStyleValue('animation-name', '_enter_7n8gw_1')).toBe(
 		'<anim>'
 	);
-	expect(canonicalizeStyleValue('animation-name', 'c15t-ui-enter-oqaf_')).toBe(
+	expect(canonicalizeStyleValue('animation-name', 'inth-ui-enter-oqaf_')).toBe(
 		'<anim>'
 	);
 });
@@ -281,7 +281,7 @@ test('canonicalizeStyleValue strips animation name from shorthand, keeps timing'
 	);
 	const svelte = canonicalizeStyleValue(
 		'animation',
-		'c15t-ui-enter-oqaf_ 80ms cubic-bezier(0.4, 0, 0.2, 1)'
+		'inth-ui-enter-oqaf_ 80ms cubic-bezier(0.4, 0, 0.2, 1)'
 	);
 	expect(react).toBe(svelte);
 	expect(react).toBe('<anim> 80ms cubic-bezier(0.4, 0, 0.2, 1)');
@@ -294,7 +294,7 @@ test('canonicalizeStyleValue applies animation normalization to custom propertie
 	);
 	const svelte = canonicalizeStyleValue(
 		'--consent-widget-entry-animation',
-		'c15t-ui-enter-oqaf_ 80ms cubic-bezier(0.4, 0, 0.2, 1)'
+		'inth-ui-enter-oqaf_ 80ms cubic-bezier(0.4, 0, 0.2, 1)'
 	);
 	expect(react).toBe(svelte);
 });
@@ -327,7 +327,7 @@ test('diffComputedStyle ignores animation-name hash drift across bundlers', () =
 	const b = {
 		customProperties: {
 			'--consent-widget-entry-animation':
-				'c15t-ui-enter-oqaf_ 80ms cubic-bezier(0.4, 0, 0.2, 1)',
+				'inth-ui-enter-oqaf_ 80ms cubic-bezier(0.4, 0, 0.2, 1)',
 		},
 		properties: {},
 	};

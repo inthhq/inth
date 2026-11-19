@@ -11,7 +11,7 @@ import { ExperimentReadout } from './experiment-readout';
 
 /**
  * Stands in for a flag provider: `?arm=wall`, `?arm=control` or `?arm=off`
- * set the arm, and no `arm` lets c15t pick one.
+ * set the arm, and no `arm` lets Inth pick one.
  */
 const armFromSearch = (search: string) => {
 	const arm = new URLSearchParams(search).get('arm');

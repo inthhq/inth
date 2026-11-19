@@ -2,7 +2,7 @@
 /**
  * Policy wire payload and synchronous resolution benchmark.
  *
- * For each fixed policy fixture (see `@c15t/benchmarking/policy-fixtures`)
+ * For each fixed policy fixture (see `@inth/benchmarking/policy-fixtures`)
  * this records what the installed source emits and how long the
  * synchronous paths take:
  *
@@ -21,21 +21,21 @@
 import { join } from 'node:path';
 import { brotliCompressSync, gzipSync } from 'node:zlib';
 
-import { policyRuntimeBudgetsForFixture } from '@c15t/benchmarking/budgets';
+import { policyRuntimeBudgetsForFixture } from '@inth/benchmarking/budgets';
 import {
 	createSyncPolicyResolution,
 	matchedPolicyId,
 	policyBenchFixtures,
 	policyBenchFixtureNames,
 	resolvePolicyBenchPack,
-} from '@c15t/benchmarking/policy-fixtures';
-import type { PolicyBenchFixture } from '@c15t/benchmarking/policy-fixtures';
-import { BENCHMARK_SCHEMA_VERSION } from '@c15t/benchmarking/schema';
-import type { BenchmarkResult } from '@c15t/benchmarking/schema';
+} from '@inth/benchmarking/policy-fixtures';
+import type { PolicyBenchFixture } from '@inth/benchmarking/policy-fixtures';
+import { BENCHMARK_SCHEMA_VERSION } from '@inth/benchmarking/schema';
+import type { BenchmarkResult } from '@inth/benchmarking/schema';
 import {
 	benchSelectionFromEnv,
 	isBenchSelected,
-} from '@c15t/benchmarking/selection';
+} from '@inth/benchmarking/selection';
 import {
 	benchmarkCount,
 	getEnvironment,
@@ -46,7 +46,7 @@ import {
 	safeGitDirty,
 	summarizeMetric,
 	writeJson,
-} from '@c15t/benchmarking/utils';
+} from '@inth/benchmarking/utils';
 import {
 	createConsentKernel,
 	mapInitOutputToInitResponse,
@@ -63,11 +63,11 @@ import type {
 import { enTranslations } from '@inth/sdk/translations';
 
 const ITERATIONS = benchmarkCount(
-	process.env.C15T_CORE_BENCH_ITERATIONS ?? process.env.BENCH_ITERATIONS,
+	process.env.INTH_CORE_BENCH_ITERATIONS ?? process.env.BENCH_ITERATIONS,
 	500
 );
 const WARMUP = benchmarkCount(
-	process.env.C15T_CORE_BENCH_WARMUP_ITERATIONS ??
+	process.env.INTH_CORE_BENCH_WARMUP_ITERATIONS ??
 		process.env.BENCH_WARMUP_ITERATIONS,
 	50
 );
@@ -291,7 +291,7 @@ const runFixture = async function runFixture(
 			'resolvePolicyUs uses the installed synchronous resolver; resolveInitUs and kernelInitUs cover manifest init resolution and kernel prompt derivation.',
 			`Sync resolver: ${syncResolution.resolver}; contract family: ${resolved.family}.`,
 		],
-		package: '@c15t/core-benchmarks',
+		package: '@inth/core-benchmarks',
 		runtime: process.versions.bun ? 'bun' : 'node',
 		scenario: fixture.name,
 		schemaVersion: BENCHMARK_SCHEMA_VERSION,

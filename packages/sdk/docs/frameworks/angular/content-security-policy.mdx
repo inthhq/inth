@@ -1,6 +1,6 @@
 ---
 title: Content Security Policy
-description: Write a Content Security Policy for an Angular app using c15t, with the hosts to allow, Angular's CSP_NONCE and ngCspNonce, the nonce option of provideC15t and what c15t injects.
+description: Write a Content Security Policy for an Angular app using Inth, with the hosts to allow, Angular's CSP_NONCE and ngCspNonce, the nonce option of provideInth and what Inth injects.
 group: frameworks
 ---
 
@@ -10,8 +10,8 @@ The policy comes from a `Content-Security-Policy` header, or a
 `<meta http-equiv="Content-Security-Policy">` tag in `index.html`. A
 browser-only Angular app served as static files cannot put a fresh nonce in
 each response, so allow each vendor's script host in `script-src`, and set
-`styles: false` in `provideC15t()` with `@inth/angular/styles.css` in the
-`styles` array of `angular.json`. `'self'` then covers c15t's stylesheet.
+`styles: false` in `provideInth()` with `@inth/angular/styles.css` in the
+`styles` array of `angular.json`. `'self'` then covers Inth's stylesheet.
 
 A server-rendered app can create a nonce per response. Angular reads it from
 the `ngCspNonce` attribute on your root element, or from the `CSP_NONCE`
@@ -20,19 +20,19 @@ token, and stamps it on the `<style>` elements Angular itself adds. Angular's
 policy against `ng build` output, not `ng serve`, which adds its own scripts
 and styles.
 
-## What c15t adds to the page
+## What Inth adds to the page
 
-A Content Security Policy has to allow each thing c15t or your vendors put on
+A Content Security Policy has to allow each thing Inth or your vendors put on
 the page:
 
-| c15t does | Directive | Allow |
+| Inth does | Directive | Allow |
 | --- | --- | --- |
-| Requests the policy from `/init` and saves choices to `/subjects` | `connect-src` | Your backend's origin. `'self'` covers a same-origin route such as `/api/c15t`. |
+| Requests the policy from `/init` and saves choices to `/subjects` | `connect-src` | Your backend's origin. `'self'` covers a same-origin route such as `/api/inth`. |
 | Adds a `<script>` element for each allowed entry in `scripts` | `script-src` | Each vendor's script host, or the provider's `nonce`. |
 | Lets vendor scripts load more scripts, pixels and requests | `script-src`, `img-src`, `connect-src` | The hosts each vendor documents. |
-| Sets `src` on gated iframes, or creates `<c15t-consent-gate>` content | `frame-src` | Each embed's host, such as `https://www.youtube-nocookie.com`. |
+| Sets `src` on gated iframes, or creates `<inth-consent-gate>` content | `frame-src` | Each embed's host, such as `https://www.youtube-nocookie.com`. |
 | Adds its rules to `<head>` as `<style>` elements | `style-src` | The nonce. With `styles: false` and the imported stylesheet, `'self'`. |
-| Writes theme slot `style` objects, and the trigger's position while it is dragged, as `style` attributes | `style-src-attr` | `'unsafe-inline'`, if you use slot `style` objects or a draggable `<c15t-consent-dialog-trigger>`. Without it the browser refuses those attributes; slot class names and the stock look are unaffected. |
+| Writes theme slot `style` objects, and the trigger's position while it is dragged, as `style` attributes | `style-src-attr` | `'unsafe-inline'`, if you use slot `style` objects or a draggable `<inth-consent-dialog-trigger>`. Without it the browser refuses those attributes; slot class names and the stock look are unaffected. |
 | With server rendering, adds a script that starts allowed `scripts` and one that holds early taps on the banner | `script-src` | The nonce. |
 | Fetches the Global Vendor List under an IAB policy | `connect-src` | The vendor list host the policy names, when it is not your own origin. |
 
@@ -40,12 +40,12 @@ The dev tools panel attaches a stylesheet to its shadow root. Keep the panel
 out of production builds, as [its page](./components/dev-tools) describes,
 and a production policy does not need to allow it.
 
-## Pass the nonce to c15t
+## Pass the nonce to Inth
 
-c15t's `<style>` and `<script>` elements use the `nonce` option of
-`provideC15t()`, and fall back to Angular's `CSP_NONCE`. An app that already
+Inth's `<style>` and `<script>` elements use the `nonce` option of
+`provideInth()`, and fall back to Angular's `CSP_NONCE`. An app that already
 sets `ngCspNonce` on its root element needs no more setup. If the nonce comes
-from somewhere else, provide `CSP_NONCE` yourself, and Angular and c15t both
+from somewhere else, provide `CSP_NONCE` yourself, and Angular and Inth both
 use it:
 
 <include src="../../shared/examples/angular/csp-nonce.mdx" />
@@ -54,7 +54,7 @@ The script loader then sets that nonce on every `<script>` it adds, for both
 `src` and inline `textContent` scripts. A `nonce` on one `scripts` entry wins
 for that script.
 
-The nonce covers only the elements c15t creates. A script that a vendor's
+The nonce covers only the elements Inth creates. A script that a vendor's
 script loads by itself does not get it; allow that host in `script-src`, or
 add `'strict-dynamic'` so scripts loaded by a trusted script are trusted too.
 With `'strict-dynamic'`, browsers ignore host allowlists in `script-src`, so
@@ -66,7 +66,7 @@ Enforce the policy, not report-only, and open the console with site data
 cleared:
 
 1. The banner renders with its styles, and no `Refused to` message mentions a
-   c15t element, a `<style data-c15t-styles>` element or
+   Inth element, a `<style data-inth-styles>` element or
    `@inth/angular/styles.css`. Open the preference dialog and check again.
 2. Allow a category. Its vendor scripts load, and none are refused. A refused
    script from a vendor's own host means that host is missing from

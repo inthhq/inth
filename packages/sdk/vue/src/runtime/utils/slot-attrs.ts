@@ -17,9 +17,6 @@ interface SlotPart {
  * way the other adapters treat a `theme.slots` entry with `noStyle`. The
  * flag itself is never bound, so it does not reach the DOM.
  *
- * @param part - The part from `config.components`.
- * @param stock - The classes the stock UI gives the element.
- * @returns Attributes for `v-bind`.
  * @internal
  *
  * @example

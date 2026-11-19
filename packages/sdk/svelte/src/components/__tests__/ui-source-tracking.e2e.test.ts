@@ -67,7 +67,7 @@ describe('UI Source Tracking E2E Tests', () => {
 			await fireEvent.click(acceptButton);
 
 			await waitFor(() => {
-				const stored = window.localStorage.getItem('c15t');
+				const stored = window.localStorage.getItem('inth');
 				expect(stored).toBeTruthy();
 				const consent = readStoredRecords(undefined, Date.now()).records.choice;
 				expect(consent?.version).toBe(3);
@@ -137,7 +137,6 @@ describe('UI Source Tracking E2E Tests', () => {
 		test('should transition from banner to dialog and save from dialog', async () => {
 			render(BannerDialogFixture, { options: defaultOptions });
 
-			// Wait for banner
 			await waitFor(() => {
 				const banner = document.querySelector(
 					'[data-testid="consent-banner-root"]'
@@ -145,7 +144,6 @@ describe('UI Source Tracking E2E Tests', () => {
 				expect(banner).toBeInTheDocument();
 			});
 
-			// Click customize to open dialog
 			const customizeButton = getDefined(
 				document.querySelector(
 					'[data-testid="consent-banner-customize-button"]'
@@ -153,7 +151,6 @@ describe('UI Source Tracking E2E Tests', () => {
 			);
 			await fireEvent.click(customizeButton);
 
-			// Wait for dialog
 			await waitFor(() => {
 				const dialog = document.querySelector(
 					'[data-testid="consent-dialog-root"]'
@@ -161,7 +158,6 @@ describe('UI Source Tracking E2E Tests', () => {
 				expect(dialog).toBeInTheDocument();
 			});
 
-			// Save from dialog
 			const saveButton = getDefined(
 				document.querySelector(
 					'[data-testid="consent-widget-footer-save-button"]'
@@ -169,9 +165,8 @@ describe('UI Source Tracking E2E Tests', () => {
 			);
 			await fireEvent.click(saveButton);
 
-			// Verify consent was saved
 			await waitFor(() => {
-				const stored = window.localStorage.getItem('c15t');
+				const stored = window.localStorage.getItem('inth');
 				expect(stored).toBeTruthy();
 				const consent = readStoredRecords(undefined, Date.now()).records.choice;
 				expect(consent?.categories).toBeTruthy();

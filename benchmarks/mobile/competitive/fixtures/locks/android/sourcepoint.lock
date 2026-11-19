@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "@c15t/fixture-expo-dev",
+      "name": "@inth/fixture-expo-dev",
       "dependencies": {
         "@sourcepoint/react-native-cmp": "1.0.13",
         "expo": "57.0.22",

@@ -1,6 +1,6 @@
 ---
 title: Customize
-description: Load the c15t stylesheet yourself in Next.js when you need to, and change colors, radius, button roles, component parts, dark mode and banner shape with ConsentTheme and ConsentRoot options.
+description: Load the Inth stylesheet yourself in Next.js when you need to, and change colors, radius, button roles, component parts, dark mode and banner shape with ConsentTheme and ConsentRoot options.
 group: frameworks
 ---
 
@@ -12,23 +12,23 @@ the same components imported from `@inth/nextjs`.
 
 ## Load the stylesheet yourself
 
-A Next.js app imports no c15t stylesheet. `ConsentBanner`, `ConsentDialog`
+A Next.js app imports no Inth stylesheet. `ConsentBanner`, `ConsentDialog`
 and the other stock components render the rules they use as `<style>`
 elements, in the server HTML for a server-rendered banner.
 
-Import the stylesheet yourself with Tailwind CSS 3, to put c15t's rules in a
+Import the stylesheet yourself with Tailwind CSS 3, to put Inth's rules in a
 named cascade layer. Set `styles: false` under `options` in
-`c15t.config.ts`, so the components add no second copy:
+`inth.config.ts`, so the components add no second copy:
 
 {/* example: fragment */}
 
-```ts title="c15t.config.ts"
+```ts title="inth.config.ts"
 import { defineConsentConfig } from '@inth/nextjs';
 
 export default defineConsentConfig({ options: { styles: false } });
 ```
 
-Then import c15t once from the global stylesheet that `app/layout.tsx` or
+Then import Inth once from the global stylesheet that `app/layout.tsx` or
 `pages/_app.tsx` loads:
 
 {/* example: fragment */}
@@ -55,7 +55,7 @@ routes under `app/branded`:
 
 To theme the whole site, render `<ConsentTheme theme={brandTheme} />` in your
 root layout, before `ConsentRoot`. View the page source to check that
-the `<style id="c15t-theme">` element is in the server HTML. In the Pages
+the `<style id="inth-theme">` element is in the server HTML. In the Pages
 Router, render `ConsentTheme` in `pages/_document.tsx`, which runs only on the
 server.
 
@@ -67,7 +67,7 @@ server.
 
 `ConsentTheme` renders tokens only. Components read `consentActions` in the
 browser, so pass a theme that contains them through `options` in
-`c15t.config.ts`:
+`inth.config.ts`:
 
 {/* example: fragment */}
 
@@ -82,7 +82,7 @@ export const actionTheme = defineTheme({
 
 {/* example: fragment */}
 
-```ts title="c15t.config.ts"
+```ts title="inth.config.ts"
 import { defineConsentConfig } from '@inth/nextjs';
 
 import { actionTheme } from './lib/theme';

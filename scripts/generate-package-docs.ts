@@ -42,13 +42,13 @@ export interface PackageDocsConfig {
 	outDir: string;
 	summary: string;
 	include: string[];
-	/** Replaces leadtype's generic SKILL.md with c15t guidance. */
+	/** Replaces leadtype's generic SKILL.md with Inth guidance. */
 	skill: PackageSkill;
 	/**
 	 * Also writes the skill to `skills/<name>/`, with its own copy of `docs/`.
 	 * Expo's `skills:sync` links only that layout, and an agent resolves a
 	 * link from a linked skill lexically, so the skill cannot point to
-	 * `../../docs`. Only packages without c15t dependencies use it: Expo also
+	 * `../../docs`. Only packages without Inth dependencies use it: Expo also
 	 * links skills from transitive dependencies.
 	 */
 	skillDirectory?: boolean;
@@ -264,7 +264,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 				'the site is plain HTML, a CMS, a page builder or a static site generator, a bundled app without a UI framework, or code that uses the headless engine and `createConsentRuntime`',
 		},
 		summary:
-			'c15t for plain HTML sites from one script tag, and for bundled JavaScript apps with the stock UI: data attributes, the window.c15t API, customization, script and iframe gating, IAB and integrations.',
+			'Inth for plain HTML sites from one script tag, and for bundled JavaScript apps with the stock UI: data attributes, the window.inth API, customization, script and iframe gating, IAB and integrations.',
 	},
 ];
 

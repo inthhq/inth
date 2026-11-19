@@ -1,9 +1,3 @@
-/**
- * @packageDocumentation
- * Provides the core components for building consent banners.
- * Implements accessible, customizable components following GDPR requirements.
- */
-
 import type { PolicyRight } from '@inth/sdk/schema/types';
 import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 import styles from '@inth/sdk/ui/styles/components/consent-banner';
@@ -49,8 +43,6 @@ export type ConsentBannerRight = Exclude<PolicyRight, 'disclosure'>;
  * Title component for the consent banner.
  *
  * @remarks
- * Provides the main heading for the consent notice.
- * Implements proper heading semantics and supports theming.
  * Renders an `h2`. With `asChild`, the child element, such as an `h1`,
  * takes its place and receives the title's class and attributes.
  *
@@ -94,8 +86,6 @@ ConsentBannerTitle.displayName = CONSENT_BANNER_TITLE_NAME;
  * Description component for the consent banner.
  *
  * @remarks
- * Provides explanatory text about cookie usage and privacy policies.
- * Supports rich text content and proper accessibility attributes.
  * Can include legal links inline with the description.
  *
  * @example
@@ -164,10 +154,6 @@ ConsentBannerDescription.displayName = CONSENT_BANNER_DESCRIPTION_NAME;
 /**
  * Footer component for the consent banner.
  *
- * @remarks
- * Contains action buttons and additional information.
- * Implements proper layout and spacing for action items.
- *
  * @example
  * ```tsx
  * <ConsentBannerFooter>
@@ -206,10 +192,6 @@ ConsentBannerFooter.displayName = CONSENT_BANNER_FOOTER_NAME;
 
 /**
  * Card component for the consent banner.
- *
- * @remarks
- * Provides the main container for the consent notice.
- * Implements proper elevation and layout structure.
  *
  * @example
  * ```tsx
@@ -260,7 +242,6 @@ ConsentBannerCard.displayName = CONSENT_BANNER_CARD_NAME;
  *
  * @remarks
  * Contains the title and description sections.
- * Implements proper spacing and layout for header content.
  */
 const ConsentBannerHeader = createForwardRef<
 	HTMLDivElement,
@@ -284,7 +265,6 @@ ConsentBannerHeader.displayName = CONSENT_BANNER_HEADER_NAME;
  *
  * @remarks
  * Groups related buttons or controls in the footer.
- * Implements proper spacing and alignment for button groups.
  */
 const ConsentBannerFooterSubGroup = createForwardRef<
 	HTMLDivElement,
@@ -305,10 +285,6 @@ ConsentBannerFooterSubGroup.displayName = CONSENT_BANNER_FOOTER_SUB_GROUP_NAME;
 
 /**
  * Button to reject all non-essential cookies.
- *
- * @remarks
- * Implements the reject action for consent preferences.
- * Provides proper accessibility attributes and keyboard interaction.
  *
  * @example
  * ```tsx
@@ -343,7 +319,6 @@ ConsentBannerRejectButton.displayName = CONSENT_BANNER_REJECT_BUTTON_NAME;
  *
  * @remarks
  * Opens the detailed consent management interface.
- * Implements proper focus management and keyboard interaction.
  */
 const ConsentBannerCustomizeButton = createForwardRef<
 	HTMLButtonElement,
@@ -367,11 +342,6 @@ ConsentBannerCustomizeButton.displayName = CONSENT_BANNER_CUSTOMIZE_BUTTON_NAME;
 
 /**
  * Button to accept all cookies.
- *
- * @remarks
- * Implements the accept action for consent preferences.
- * Provides proper accessibility attributes and keyboard interaction.
- * Supports theming and style customization.
  *
  * @example
  * ```tsx
@@ -471,7 +441,7 @@ export interface ConsentBannerRightLinkProps extends Omit<
  * `rightLink` class and the `banner.rightLink` slot so the primary action
  * beside it keeps the emphasis. The label comes from the `rights`
  * translations and children override it. Carries `data-action="right"`,
- * `data-right`, and `data-c15t-rights` for styling hooks. With `asChild`
+ * `data-right`, and `data-inth-rights` for styling hooks. With `asChild`
  * the child element, such as a link to a dedicated opt-out page, receives
  * the same class, attributes, and click handling.
  *
@@ -517,7 +487,7 @@ const ConsentBannerRightLink = createForwardRef<
 				{...mergedProps}
 				data-action="right"
 				data-right={right}
-				data-c15t-rights={policy.rights.join(' ')}
+				data-inth-rights={policy.rights.join(' ')}
 				data-testid={`consent-banner-right-link-${right}`}
 				onClick={handleClick}
 				{...props}

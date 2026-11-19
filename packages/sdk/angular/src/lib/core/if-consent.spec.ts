@@ -5,7 +5,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { testOptions } from '../../__tests__/test-local';
 import { ConsentManager } from './consent-manager';
 import { IfConsent } from './if-consent';
-import { provideC15t } from './provide-c15t';
+import { provideInth } from './provide-inth';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -13,14 +13,14 @@ import { provideC15t } from './provide-c15t';
 	selector: 'test-host',
 	template: `
 		<p
-			*c15tIfConsent="'measurement'; else denied"
+			*inthIfConsent="'measurement'; else denied"
 			data-testid="granted"
 		>
 			granted
 		</p>
 		<ng-template #denied><p data-testid="denied">denied</p></ng-template>
 		<p
-			*c15tIfConsent="{ and: ['measurement', 'marketing'] }"
+			*inthIfConsent="{ and: ['measurement', 'marketing'] }"
 			data-testid="both"
 		>
 			both
@@ -34,7 +34,7 @@ class Host {}
 	imports: [IfConsent],
 	selector: 'test-context-host',
 	template: `<p
-		*c15tIfConsent="condition(); let shown"
+		*inthIfConsent="condition(); let shown"
 		data-testid="shown"
 	>
 		{{ shown }}
@@ -49,9 +49,9 @@ afterEach(() => {
 	document.body.replaceChildren();
 });
 
-describe('*c15tIfConsent', () => {
+describe('*inthIfConsent', () => {
 	test('renders the else template until consent, then the content', async () => {
-		TestBed.configureTestingModule({ providers: [provideC15t(testOptions())] });
+		TestBed.configureTestingModule({ providers: [provideInth(testOptions())] });
 		const fixture = TestBed.createComponent(Host);
 		const consent = TestBed.inject(ConsentManager);
 		await fixture.whenStable();
@@ -75,7 +75,7 @@ describe('*c15tIfConsent', () => {
 	});
 
 	test('updates the context when a new condition keeps the same branch', async () => {
-		TestBed.configureTestingModule({ providers: [provideC15t(testOptions())] });
+		TestBed.configureTestingModule({ providers: [provideInth(testOptions())] });
 		const fixture = TestBed.createComponent(ContextHost);
 		const consent = TestBed.inject(ConsentManager);
 		await vi.waitFor(() => {

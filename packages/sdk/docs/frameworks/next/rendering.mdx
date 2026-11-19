@@ -89,7 +89,7 @@ The inline script takes `options.nonce`; see
 [Content Security Policy](/docs/frameworks/next/content-security-policy).
 
 To start every `scripts` entry after hydration instead, set
-`scriptLoader: { serverStart: false }` in `c15t.config.ts` or pass
+`scriptLoader: { serverStart: false }` in `inth.config.ts` or pass
 `scriptLoader={{ serverStart: false }}` to `ConsentRoot`. `ConsentRoot` then
 renders no inline script.
 
@@ -141,10 +141,10 @@ consent for those pages in the browser:
 
 Without `state`, `ConsentRoot` resolves the visitor's consent after
 hydration. The page can be static, use `export const revalidate` for ISR, or
-use `'use cache'`. Set `routePrefix: '/api/c15t'` in `c15t.config.ts` and
+use `'use cache'`. Set `routePrefix: '/api/inth'` in `inth.config.ts` and
 mount the consent route from the
 [App Router guide](/docs/frameworks/next/app-router#initialize-in-the-browser).
-The browser then asks `/api/c15t/init`, which resolves the bundled policy on
+The browser then asks `/api/inth/init`, which resolves the bundled policy on
 your server with the browser request's location headers. Without
 `routePrefix`, the browser asks `${projectUrl}/init`.
 
@@ -152,7 +152,7 @@ For a whole app of static pages, use this as the only root layout. To mix
 static pages with server-rendered ones, give each kind its own root layout in
 a route group, such as `app/(site)/layout.tsx` with the streamed layout and
 `app/(static)/layout.tsx` with this one. Moving between two root layouts loads
-the whole page. The visitor's choice survives because c15t stores it in a cookie and
+the whole page. The visitor's choice survives because Inth stores it in a cookie and
 localStorage.
 
 To resolve the policy in the browser itself, set
@@ -194,7 +194,7 @@ everyone.
 ## Choose how the server gets the policy
 
 The rendering path decides when consent resolves. The `mode` in
-`c15t.config.ts` decides where the policy comes from.
+`inth.config.ts` decides where the policy comes from.
 
 | Source | Config | Use it when |
 | --- | --- | --- |
@@ -221,43 +221,43 @@ lists what each mode does on the server and in the browser, and
 ## Get the visitor's location
 
 Location-based policies need trusted location headers from your host, such as
-`x-vercel-ip-country` or `cf-ipcountry`. Without them, c15t applies your
+`x-vercel-ip-country` or `cf-ipcountry`. Without them, Inth applies your
 unknown-location rule. Some hosts pass those headers to `proxy.ts` but strip
-them before Server Components run. Add `c15tProxy` from `@inth/nextjs/proxy` in
+them before Server Components run. Add `inthProxy` from `@inth/nextjs/proxy` in
 that case, as [Forward geography headers](/docs/frameworks/next/geography-headers)
 shows. A static export has no server and cannot read location headers.
 
 ## Keep browser requests on your origin
 
-`proxy: true` in `c15t.config.ts`, with a consent route that forwards saves,
-sends the browser's saves through `/api/c15t` instead of the backend's domain.
+`proxy: true` in `inth.config.ts`, with a consent route that forwards saves,
+sends the browser's saves through `/api/inth` instead of the backend's domain.
 It is optional, saves the browser a separate connection, and changes nothing
 about when consent resolves. It needs a Next.js server. See
 [Optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin).
 
 ## Use a src directory
 
-With `src/`, keep `c15t.config.ts` at the project root, next to
+With `src/`, keep `inth.config.ts` at the project root, next to
 `next.config.ts`: `withConsentManifest` looks for it there and nowhere else.
 Put `proxy.ts` under `src/` next to `src/app` or `src/pages`, as Next.js
 requires.
 
 ## Edge runtime
 
-No c15t example or compatibility test runs on the Edge runtime. What is known:
+No Inth example or compatibility test runs on the Edge runtime. What is known:
 
 - `@inth/nextjs/pages` takes the Node.js `req` and `res` from `getServerSideProps`
   and `pages/api` routes, so it needs the Node.js runtime.
 - The App Router examples and tests run `resolveConsent` and the route handlers
   from `@inth/nextjs/api` on the default Node.js runtime.
 
-Keep the default runtime for layouts, pages and route handlers that use c15t.
+Keep the default runtime for layouts, pages and route handlers that use Inth.
 If you set `export const runtime = 'edge'` on them, test the result yourself.
 
 ## Keep server and browser state aligned
 
 Pass the `resolveConsent` result to `ConsentRoot` unchanged. Both read the
-same `c15t.config.ts`, so they agree on the mode and the journey. The result
+same `inth.config.ts`, so they agree on the mode and the journey. The result
 carries the
 resolved policy, the stored records and the evaluation time. Replacing it with a
 browser preset, or turning allowed categories into saved choices during
@@ -289,7 +289,7 @@ A banner in the server HTML shows before the page's JavaScript runs. On a slow
 phone that gap can last seconds. The stock `ConsentBanner` puts a small inline
 script in front of its buttons that holds an Accept all, Reject all, notice
 dismiss or Customize tap made in that gap. Accept, reject and dismiss hide the
-banner at once. When the banner hydrates and the runtime has started, c15t
+banner at once. When the banner hydrates and the runtime has started, Inth
 records the choice with the time of the tap, saves it and loads the scripts it
 allows; Customize opens the dialog.
 

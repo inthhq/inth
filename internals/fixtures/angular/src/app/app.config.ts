@@ -8,17 +8,17 @@ import {
 	withEventReplay,
 } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { hosted, provideC15t } from '@inth/angular';
-import type { C15tProviderOptions } from '@inth/angular';
+import { hosted, provideInth } from '@inth/angular';
+import type { InthProviderOptions } from '@inth/angular';
 
 import { scripts } from '../scripts';
 import { routes } from './app.routes';
 import { provideExperimentFromURL } from './experiment';
 
-const consent: C15tProviderOptions = {
+const consent: InthProviderOptions = {
 	mode: hosted(),
 	// The consent route `server.ts` mounts.
-	projectUrl: '/api/c15t',
+	projectUrl: '/api/inth',
 	scripts,
 };
 
@@ -28,7 +28,7 @@ export const appConfig: ApplicationConfig = {
 		provideZonelessChangeDetection(),
 		provideRouter(routes),
 		provideClientHydration(withEventReplay()),
-		provideC15t(consent),
+		provideInth(consent),
 		// Demo only: `?experiment=1` runs the banner-shape experiment.
 		provideExperimentFromURL(consent),
 	],

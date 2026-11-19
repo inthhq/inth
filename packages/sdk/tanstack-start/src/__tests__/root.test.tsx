@@ -111,7 +111,7 @@ describe('ConsentRoot: kernel is per-mount', () => {
 describe('ConsentRoot: transport selection', () => {
 	const initResponse = () =>
 		Response.json({
-			branding: 'c15t',
+			branding: 'inth',
 			location: { countryCode: 'DE', regionCode: null },
 			translations: { language: 'en', translations: { common: {} } },
 		});
@@ -154,7 +154,7 @@ describe('ConsentRoot: transport selection', () => {
 					state={{
 						mode: { type: 'manifest' },
 						projectUrl: 'https://consent.example.com',
-						routePrefix: '/api/c15t/',
+						routePrefix: '/api/inth/',
 					}}
 					persistence={false}
 				>
@@ -166,7 +166,7 @@ describe('ConsentRoot: transport selection', () => {
 				expect(fetchSpy).toHaveBeenCalled();
 			});
 			expect(String(fetchSpy.mock.calls[0]?.[0]).split('?')[0]).toBe(
-				'/api/c15t/init'
+				'/api/inth/init'
 			);
 		} finally {
 			fetchSpy.mockRestore();
@@ -176,7 +176,7 @@ describe('ConsentRoot: transport selection', () => {
 	test('a same-origin projectUrl without routePrefix calls its /init directly', async () => {
 		const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
 			Response.json({
-				branding: 'c15t',
+				branding: 'inth',
 				location: { countryCode: 'DE', regionCode: null },
 				translations: { language: 'en', translations: { common: {} } },
 			})
@@ -185,7 +185,7 @@ describe('ConsentRoot: transport selection', () => {
 		try {
 			await render(
 				<ConsentRoot
-					state={{ projectUrl: '/api/c15t' }}
+					state={{ projectUrl: '/api/inth' }}
 					persistence={false}
 				>
 					<span>ready</span>
@@ -197,7 +197,7 @@ describe('ConsentRoot: transport selection', () => {
 			});
 			// The query carries the consent journey.
 			expect(String(fetchSpy.mock.calls[0]?.[0]).split('?')[0]).toBe(
-				'/api/c15t/init'
+				'/api/inth/init'
 			);
 		} finally {
 			fetchSpy.mockRestore();

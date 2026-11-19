@@ -9,13 +9,13 @@ import type { ConsentManifest } from '@inth/sdk/schema/types';
 import { manifest as browserManifest } from '@inth/sdk/transports/manifest-browser';
 import { describe, expect, test } from 'vitest';
 
+import { withBuildDefaults } from '../../../core/src/transports/manifest-browser';
 import { manifest } from '../modes';
 import { testing } from '../testing';
-import { withBuildDefaults } from '../transports/manifest';
 import { selectedMode } from '../transports/select-mode';
 
 const built: ConsentManifest = {
-	branding: 'c15t',
+	branding: 'inth',
 	revision: 'built',
 	schemaVersion: 2,
 };
@@ -36,12 +36,12 @@ describe('manifest() from @inth/react', () => {
 		expect(
 			withBuildDefaults({ source: 'runtime' }, build).snapshot
 		).toBeUndefined();
-		expect(withBuildDefaults({ manifestUrl: '/c15t/manifest' }, build)).toEqual(
-			{ manifestUrl: '/c15t/manifest', projectUrl: 'https://built.example' }
+		expect(withBuildDefaults({ manifestUrl: '/inth/manifest' }, build)).toEqual(
+			{ manifestUrl: '/inth/manifest', projectUrl: 'https://built.example' }
 		);
 		expect(
-			withBuildDefaults({ projectUrl: '/api/c15t' }, build).projectUrl
-		).toBe('/api/c15t');
+			withBuildDefaults({ projectUrl: '/api/inth' }, build).projectUrl
+		).toBe('/api/inth');
 	});
 
 	test("saves to the build's backend when manifestUrl names a CDN", () => {
@@ -58,11 +58,11 @@ describe('manifest() from @inth/react', () => {
 	});
 
 	test('carries the resolved options as data', () => {
-		const mode = manifest({ projectUrl: '/api/c15t', snapshot: built });
+		const mode = manifest({ projectUrl: '/api/inth', snapshot: built });
 
 		expect(mode.kind).toBe('manifest');
 		expect(mode.snapshot).toBe(built);
-		expect(mode.projectUrl).toBe('/api/c15t');
+		expect(mode.projectUrl).toBe('/api/inth');
 	});
 
 	test('needs a source when the build set none', () => {
@@ -72,18 +72,18 @@ describe('manifest() from @inth/react', () => {
 
 describe('the mode a provider selects', () => {
 	test('is the hosted backend when only projectUrl is set', () => {
-		const mode = selectedMode({ projectUrl: '/api/c15t' });
+		const mode = selectedMode({ projectUrl: '/api/inth' });
 
 		expect(mode?.kind).toBe('hosted');
-		expect(mode && readHostedMode(mode)).toEqual({ projectUrl: '/api/c15t' });
+		expect(mode && readHostedMode(mode)).toEqual({ projectUrl: '/api/inth' });
 		// Each render gets the same factory for the same URL.
-		expect(selectedMode({ projectUrl: '/api/c15t' })).toBe(mode);
+		expect(selectedMode({ projectUrl: '/api/inth' })).toBe(mode);
 	});
 
 	test('is the testing transport over projectUrl', () => {
 		const testingMode = testing();
 
-		expect(selectedMode({ mode: testingMode, projectUrl: '/api/c15t' })).toBe(
+		expect(selectedMode({ mode: testingMode, projectUrl: '/api/inth' })).toBe(
 			testingMode.transport
 		);
 	});

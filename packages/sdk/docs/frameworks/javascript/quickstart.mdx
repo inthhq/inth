@@ -1,6 +1,6 @@
 ---
 title: Quickstart
-description: Add the stock c15t banner, preferences and script gating to a JavaScript app built with Vite or another bundler, with no UI framework, using @inth/sdk.
+description: Add the stock Inth banner, preferences and script gating to a JavaScript app built with Vite or another bundler, with no UI framework, using @inth/sdk.
 group: frameworks
 ---
 
@@ -32,15 +32,15 @@ Add `consentManifest` to `vite.config.ts`:
 
 <include src="../../shared/examples/javascript/vite-config.mdx" />
 
-The plugin reads `VITE_C15T_BACKEND_URL`. Set it to your project's backend URL,
+The plugin reads `VITE_INTH_PROJECT_URL`. Set it to your project's backend URL,
 including any path prefix, in `.env` or wherever you build:
 
 ```sh title=".env"
-VITE_C15T_BACKEND_URL=https://your-project.inth.app
+VITE_INTH_PROJECT_URL=https://your-project.inth.app
 ```
 
-If your app already sets `VITE_INTH_PROJECT_URL` for other Inth SDKs, that works
-too. When both are set, `VITE_C15T_BACKEND_URL` wins.
+The c15t name `VITE_C15T_BACKEND_URL` still works as a fallback. When both are
+set, `VITE_INTH_PROJECT_URL` wins.
 
 `consentManifest` downloads your project's public policy from `/manifest`
 during `vite build`, or in `vite dev` when the app first loads it, and serves
@@ -51,7 +51,7 @@ from `@inth/sdk/generated`. No file is written into your project.
 
 <include src="../../shared/vite-build-manifest.mdx" />
 
-## Start c15t
+## Start Inth
 
 Call `init()` once, in your browser entry point:
 
@@ -63,7 +63,7 @@ what `consentManifest` downloaded. Consent choices go to that backend, and so
 does an `/init` request when the policy depends on the visitor's country or
 region and `overrides` does not supply it. That request returns the backend's
 current policy, which can be newer than the snapshot. Vite reads
-`VITE_C15T_BACKEND_URL` at build time, so set it before you build, not when
+`VITE_INTH_PROJECT_URL` at build time, so set it before you build, not when
 you serve the files.
 
 To apply policy edits without rebuilding, pass `hosted()` from
@@ -77,7 +77,7 @@ events to PostHog's EU cloud; for a US project, add `region: 'us'`.
 
 Include the measurement category in your Inth policy. Remove any other loader
 for PostHog, such as a snippet in `index.html`, so it loads once and only
-through c15t. Add other vendors to the same list, each with the category it
+through Inth. Add other vendors to the same list, each with the category it
 needs; the [integration guides](/docs/integrations/overview) give the helper
 for each one.
 
@@ -99,11 +99,11 @@ The client sets `src` only while that category is allowed:
 <include src="../../shared/examples/javascript/embed.mdx" />
 
 Visitors need a way to change their choice after the banner closes. The
-client opens the preference dialog from any link to `#c15t-preferences`:
+client opens the preference dialog from any link to `#inth-preferences`:
 
 <include src="../../shared/examples/javascript/preferences-link.mdx" />
 
-A button with `data-c15t-action="customize"` opens it too, without code.
+A button with `data-inth-action="customize"` opens it too, without code.
 
 ## Change the look
 
@@ -112,7 +112,7 @@ already has. This example turns the buttons purple and rounds the cards:
 
 <include src="../../shared/examples/javascript/theme.mdx" />
 
-`theme` takes the same tokens as every c15t package; see
+`theme` takes the same tokens as every Inth package; see
 [theme tokens](/docs/customization/tokens). `presentation.prompt` changes the
 banner's shape and position, `ui.css` adds CSS inside the shadow root, and
 `i18n` changes the copy. [Customize](/docs/frameworks/javascript/customize)

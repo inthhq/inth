@@ -64,8 +64,8 @@ export const GrantedContent: Story = {
 					<div
 						data-testid="parity-consent-gate-content"
 						style={{
-							background: 'var(--c15t-surface)',
-							border: '1px solid var(--c15t-border)',
+							background: 'var(--inth-surface)',
+							border: '1px solid var(--inth-border)',
 							borderRadius: '1rem',
 							padding: '1.25rem',
 						}}

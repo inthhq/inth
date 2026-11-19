@@ -24,14 +24,14 @@ import {
  *
  * @example
  * ```html
- * <div c15tPortal class="banner">…</div>
- * <div c15tPortal="#overlays">…</div>
+ * <div inthPortal class="banner">…</div>
+ * <div inthPortal="#overlays">…</div>
  * ```
  */
-@Directive({ selector: '[c15tPortal]' })
+@Directive({ selector: '[inthPortal]' })
 export class Portal {
 	/** The target element or a selector for it. A bare attribute means `<body>`. */
-	readonly c15tPortal = input<HTMLElement | string>('');
+	readonly inthPortal = input<HTMLElement | string>('');
 
 	constructor() {
 		if (!isPlatformBrowser(inject(PLATFORM_ID))) {
@@ -48,7 +48,7 @@ export class Portal {
 			if (!rendered()) {
 				return;
 			}
-			const target = this.c15tPortal();
+			const target = this.inthPortal();
 			let element: HTMLElement | null = null;
 			if (typeof target !== 'string') {
 				element = target;
@@ -60,7 +60,7 @@ export class Portal {
 			if (!element) {
 				if (isDevMode()) {
 					console.warn(
-						`[c15t/portal] Target element not found: ${String(target)}`
+						`[inth/portal] Target element not found: ${String(target)}`
 					);
 				}
 				return;

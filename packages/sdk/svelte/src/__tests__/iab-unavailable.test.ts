@@ -6,7 +6,7 @@
  * an `IABUnavailableError` from its render instead. `iab-unavailable.ssr.test.ts`
  * covers the server render.
  */
-import { MINIMAL_GVL } from '@c15t/conformance/fixtures/gvl';
+import { MINIMAL_GVL } from '@inth/conformance/fixtures/gvl';
 import { deferInitGvl, IAB_UNAVAILABLE_ERROR_CODE } from '@inth/sdk/engine';
 import type { GlobalVendorList } from '@inth/sdk/engine';
 import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
@@ -21,7 +21,7 @@ import { policyFixture } from './policy-fixture';
 
 const GVL = MINIMAL_GVL as unknown as GlobalVendorList;
 const MESSAGE =
-	"c15t: this visitor's policy uses IAB TCF, but `iab` is not set. Set `iab` on <ConsentProvider> and render <IABConsentBanner>, or remove the IAB model from your policy.";
+	"inth: this visitor's policy uses IAB TCF, but `iab` is not set. Set `iab` on <ConsentProvider> and render <IABConsentBanner>, or remove the IAB model from your policy.";
 
 const iabPolicy = () =>
 	policyFixture({}, { categories: ['marketing'], model: 'iab' }) as ReturnType<

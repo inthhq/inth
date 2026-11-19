@@ -1,9 +1,10 @@
 'use client';
 
-import type * as C15tCoreTypes from '@inth/sdk/engine';
+import type * as InthCoreTypes from '@inth/sdk/engine';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { onDialogDismiss } from '@inth/sdk/ui/primitives/dialog';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { FC, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -23,9 +24,10 @@ import {
 	SurfaceStyles,
 	useSurfaceSheetsReady,
 } from '../../shared/surface-styles';
+import { useExitTransition } from '../use-exit-transition';
 import { IABConsentDialogOverlay } from './overlay';
 
-const DEFAULT_MODELS: C15tCoreTypes.Model[] = ['iab'];
+const DEFAULT_MODELS: InthCoreTypes.Model[] = ['iab'];
 
 interface IABConsentDialogRootProps {
 	children: ReactNode;
@@ -41,7 +43,7 @@ interface IABConsentDialogRootProps {
 	 * Which consent models this dialog responds to.
 	 * @default ['iab']
 	 */
-	models?: C15tCoreTypes.Model[];
+	models?: InthCoreTypes.Model[];
 	/**
 	 * Override the UI source identifier sent with consent API calls.
 	 * @default 'iab_dialog'
@@ -69,25 +71,24 @@ const IABConsentDialogRoot: FC<IABConsentDialogRootProps> = ({
 }) => {
 	const {
 		activeUI,
-		translationConfig,
+		language,
 		iab: iabState,
 		policyDialog,
 		model,
 	} = useIABConsentManager({ preferences: { scrollLock, trapFocus } });
 	const setActiveUI = useSetActiveUI();
 	const { components } = useUIConfig();
-	const textDirection = useTextDirection(translationConfig.defaultLanguage);
+	const textDirection = useTextDirection(language);
 
 	const isMounted = useIsHydrated();
-	const [isVisible, setIsVisible] = useState(false);
 
-	// IABConsentDialog only opens when the consent model matches
 	const sheetsReady = useSurfaceSheetsReady(IAB_DIALOG_SHEETS, noStyle);
 	const isOpen =
 		sheetsReady &&
 		model !== null &&
 		models.includes(model) &&
 		(open ?? activeUI === 'dialog');
+	const isVisible = useExitTransition(isOpen, disableAnimation);
 	const resolvedScrollLock = policyDialog.blocking;
 
 	const contextValue = useMemo(
@@ -100,7 +101,6 @@ const IABConsentDialogRoot: FC<IABConsentDialogRootProps> = ({
 		[disableAnimation, noStyle, resolvedScrollLock]
 	);
 
-	// Scroll lock
 	useScrollLock(Boolean(isOpen && resolvedScrollLock));
 
 	useEffect(() => {
@@ -110,22 +110,6 @@ const IABConsentDialogRoot: FC<IABConsentDialogRootProps> = ({
 
 		return onDialogDismiss(document.documentElement, () => setActiveUI('none'));
 	}, [isOpen, setActiveUI]);
-
-	// Visibility animation
-	useEffect(() => {
-		if (isOpen) {
-			const frame = requestAnimationFrame(() => setIsVisible(true));
-			return () => cancelAnimationFrame(frame);
-		}
-		if (disableAnimation) {
-			const frame = requestAnimationFrame(() => setIsVisible(false));
-			return () => cancelAnimationFrame(frame);
-		}
-		const timer = setTimeout(() => {
-			setIsVisible(false);
-		}, 150);
-		return () => clearTimeout(timer);
-	}, [isOpen, disableAnimation]);
 
 	const themedStyle = mergeSlotProps(components?.['iab-dialog']?.root, {
 		baseClassName: cn(
@@ -143,7 +127,6 @@ const IABConsentDialogRoot: FC<IABConsentDialogRootProps> = ({
 		[uiSource]
 	);
 
-	// Don't render if not mounted or IAB is disabled
 	if (!isMounted || !iabState?.config.enabled) {
 		return null;
 	}
@@ -163,6 +146,7 @@ const IABConsentDialogRoot: FC<IABConsentDialogRootProps> = ({
 				<div
 					{...themedStyle}
 					data-testid="iab-consent-dialog-root"
+					{...{ [SURFACE_ROOT_ATTRIBUTE]: 'dialog' }}
 					dir={textDirection}
 				>
 					{children}

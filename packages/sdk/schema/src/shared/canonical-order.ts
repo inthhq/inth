@@ -2,7 +2,7 @@
  * String ordering for canonical sets and fingerprint keys.
  *
  * `String.prototype.localeCompare` gives the order every canonical set in
- * c15t has used so far, so it is the order stored fingerprints depend on.
+ * Inth has used so far, so it is the order stored fingerprints depend on.
  * Its first call in a page initialises the ICU collator, which costs a few
  * milliseconds on the main thread before the banner can show. Every string
  * these sets hold is printable ASCII, and for printable ASCII the root
@@ -68,8 +68,6 @@ const collate = function collate(left: string, right: string): number {
  * Compares two strings in the order `localeCompare` gives under the root
  * collation, without a collator when both are printable ASCII.
  *
- * @param left - First string.
- * @param right - Second string.
  * @returns Negative when `left` sorts first, positive when `right` does,
  * zero when they are equal.
  * @example

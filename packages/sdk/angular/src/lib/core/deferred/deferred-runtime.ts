@@ -2,7 +2,7 @@
  * The runtime `ConsentManager` renders in the browser before the consent
  * engine has loaded.
  *
- * `provideC15tServer()` and the server render put the banner, its
+ * `provideInthServer()` and the server render put the banner, its
  * first-paint styles and the boot (`boot.ts`) in the HTML. The browser's
  * first-load chunk holds only this: a runtime over a stand-in kernel
  * (`stand-in.ts`) that reads the snapshot the server rendered with, so the
@@ -36,32 +36,31 @@ import type {
 	ConsentProviderRuntime,
 	ConsentRuntimeUpdate,
 } from '@inth/sdk/runtime/provider';
+import { createStandInKernel } from '@inth/sdk/runtime/stand-in-kernel';
+import { storageFor } from '@inth/sdk/runtime/storage-for';
+import type * as CommitModule from '@inth/sdk/surface-actions/early-commit';
+import type {
+	CompleteCommitInput,
+	CompleteCommitResult,
+	DeferredCommitted,
+} from '@inth/sdk/surface-actions/early-commit';
 import {
 	generateSubjectId,
 	hasStoredClearEpoch,
+	pendingIsInert,
 	planInstantCommit,
 } from '@inth/sdk/surface-actions/instant-commit';
 import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
 import { startPlainScripts } from '@inth/sdk/surface-actions/plain-scripts';
-import {
-	clearStoredRecordsFor,
-	storageFor,
-} from '@inth/sdk/surface-actions/stored-records';
+import { clearStoredRecordsFor } from '@inth/sdk/surface-actions/stored-records';
 import {
 	allConsentNames,
 	hasGlobalPrivacyControlSignal,
 	pendingBootSnapshot,
 } from '@inth/sdk/surface-state';
 
-import type { C15tResolvedOptions } from '../options';
+import type { InthResolvedOptions } from '../options';
 import type { ConsentBoot } from './boot';
-import type * as CommitModule from './commit';
-import type {
-	CompleteCommitInput,
-	CompleteCommitResult,
-	DeferredCommitted,
-} from './commit';
-import { createStandInKernel, pendingIsInert } from './stand-in';
 import { DIALOG_ROOT, scheduleDeferredEngine, whenIdle } from './trigger';
 
 /** The engine as the deferred runtime takes it over. @internal */
@@ -83,8 +82,7 @@ export interface DeferredRuntimeOptions {
 	/** The boot the server rendered the page with. */
 	boot: ConsentBoot;
 	/** The provider's current options. */
-	options: () => C15tResolvedOptions;
-	/** Loads the engine chunk. */
+	options: () => InthResolvedOptions;
 	loadEngine: () => Promise<EngineFactory>;
 	/** Completes a commit; loads `commit.ts` by default. A test seam. */
 	completeCommit?: (
@@ -132,7 +130,7 @@ const DIALOG_SHOWN_MS = 3000;
 let commitModule: Promise<typeof CommitModule> | undefined;
 /** Loads the commit chunk once; a failed load is retried next time. */
 const loadCommitModule = async (): Promise<typeof CommitModule> => {
-	commitModule ??= import('./commit');
+	commitModule ??= import('@inth/sdk/surface-actions/early-commit');
 	try {
 		return await commitModule;
 	} catch (error) {
@@ -176,8 +174,6 @@ const displayedCategoriesOf = (
  * Creates the deferred runtime. Render it like the engine's runtime: the
  * provider calls `start()` once mounted.
  *
- * @param options - The boot, the provider's options and the engine loader.
- * @returns The runtime the consent manager renders.
  * @internal
  */
 // oxlint-disable-next-line max-lines-per-function, max-statements -- One runtime, its tap routing and its engine handover.
@@ -243,7 +239,6 @@ export const createDeferredRuntime = function createDeferredRuntime(
 	/** The load in flight. A failed one clears, so the next request retries. */
 	let loading: Promise<ConsentProviderRuntime | undefined> | undefined;
 
-	/** One attempt: import, build, start and attach the engine. */
 	const buildEngine = async (): Promise<ConsentProviderRuntime | undefined> => {
 		const create = await options.loadEngine();
 		// A commit started while the chunk loaded: the engine starts from it.
@@ -289,7 +284,7 @@ export const createDeferredRuntime = function createDeferredRuntime(
 		try {
 			return await buildEngine();
 		} catch (error) {
-			console.error('[c15t] The consent engine failed to load.', error);
+			console.error('[inth] The consent engine failed to load.', error);
 			if (handle.attached()) {
 				// It failed after it took over; the page runs on it.
 				return engine?.runtime;
@@ -307,7 +302,6 @@ export const createDeferredRuntime = function createDeferredRuntime(
 		}
 	};
 
-	/** Loads and attaches the engine, or joins the load in flight. */
 	const loadEngine = (): Promise<ConsentProviderRuntime | undefined> => {
 		if (engine) {
 			return Promise.resolve(engine.runtime);

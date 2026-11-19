@@ -4,20 +4,20 @@
  * auto-imported components and composables.
  */
 export default defineNuxtConfig({
+	compatibilityDate: '2026-07-04',
 	// oxlint-disable-next-line sort-keys -- Each docs region stays contiguous.
-	c15t: {
+	inth: {
 		projectUrl: 'https://your-project.inth.app',
-		// #region docs:color-scheme title="nuxt.config.ts (c15t options)"
+		// #region docs:color-scheme title="nuxt.config.ts (Inth options)"
 		// Follow the visitor's system setting, with a dark primary of our own.
 		colorScheme: 'system',
 		theme: { dark: { primary: '#7fd1a8' } },
 		// #endregion docs:color-scheme
-		// #region docs:iab-opt-in title="nuxt.config.ts (c15t options)"
+		// #region docs:iab-opt-in title="nuxt.config.ts (Inth options)"
 		// Turns IAB TCF on. The CMP ID and vendor list come from `/init`.
 		iab: {},
 		// #endregion docs:iab-opt-in
 	},
-	compatibilityDate: '2026-07-04',
 	modules: ['@inth/nuxt'],
 	typescript: { strict: true },
 });

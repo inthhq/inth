@@ -8,7 +8,6 @@
  * @packageDocumentation
  */
 
-// GVL types are defined in @inth/sdk/schema — re-export for internal consumers
 import type { GlobalVendorList } from '@inth/sdk-schema/types';
 
 export type {
@@ -33,13 +32,11 @@ export interface TCFConsentData {
 	/** Per-purpose consent state (keyed by purpose ID 1-11) */
 	purposeConsents: Record<number, boolean>;
 
-	/** Per-purpose legitimate interest state */
 	purposeLegitimateInterests: Record<number, boolean>;
 
 	/** Per-vendor consent state (keyed by vendor ID) */
 	vendorConsents: Record<string, boolean>;
 
-	/** Per-vendor legitimate interest state */
 	vendorLegitimateInterests: Record<string, boolean>;
 
 	/** Special feature opt-ins (keyed by special feature ID 1-2) */
@@ -53,7 +50,6 @@ export interface TCFConsentData {
 	 */
 	vendorsDisclosed: Record<number, boolean>;
 
-	/** Publisher restrictions (optional) */
 	publisherRestrictions?: PublisherRestriction[];
 }
 
@@ -127,28 +123,22 @@ export interface PingData {
 	/** True if using a registered CMP */
 	gdprApplies: boolean | undefined;
 
-	/** CMP loading status */
 	cmpLoaded: boolean;
 
-	/** CMP status string */
 	cmpStatus: CMPStatus;
 
 	/** Display status of CMP UI */
 	displayStatus: DisplayStatus;
 
-	/** TCF API version */
 	apiVersion: string;
 
-	/** CMP version */
 	cmpVersion: string;
 
 	/** CMP ID registered with IAB */
 	cmpId: number;
 
-	/** GVL version loaded */
 	gvlVersion: number;
 
-	/** TCF policy version */
 	tcfPolicyVersion: number;
 }
 
@@ -158,7 +148,6 @@ export interface PingData {
  * @public
  */
 export interface TCData {
-	/** TC String */
 	tcString: string;
 
 	/**
@@ -173,7 +162,6 @@ export interface TCData {
 	/** CMP ID registered with IAB */
 	cmpId?: number;
 
-	/** CMP version */
 	cmpVersion?: number;
 
 	/**
@@ -185,10 +173,8 @@ export interface TCData {
 	/** Listener ID if from addEventListener */
 	listenerId?: number;
 
-	/** Event status */
 	eventStatus?: EventStatus;
 
-	/** CMP status */
 	cmpStatus: CMPStatus;
 
 	/** Always `true`: TCF requires IsServiceSpecific=1. */
@@ -203,13 +189,11 @@ export interface TCData {
 	/** Purpose one treatment (0 = no special treatment, 1 = consent not given) */
 	purposeOneTreatment: boolean;
 
-	/** Purpose consents */
 	purpose: {
 		consents: Record<number, boolean>;
 		legitimateInterests: Record<number, boolean>;
 	};
 
-	/** Vendor consents */
 	vendor: {
 		consents: Record<number, boolean>;
 		legitimateInterests: Record<number, boolean>;
@@ -223,7 +207,6 @@ export interface TCData {
 	/** Special feature opt-ins */
 	specialFeatureOptins: Record<number, boolean>;
 
-	/** Publisher data */
 	publisher: {
 		consents: Record<number, boolean>;
 		legitimateInterests: Record<number, boolean>;
@@ -256,13 +239,10 @@ export interface TCDataOutsideTCF {
 	/** CMP ID registered with IAB */
 	cmpId: number;
 
-	/** CMP version */
 	cmpVersion: number;
 
-	/** CMP status */
 	cmpStatus: CMPStatus;
 
-	/** Event status */
 	eventStatus?: EventStatus;
 
 	/** Listener ID if from addEventListener */
@@ -316,89 +296,3 @@ declare global {
 		__tcfapi?: TCFApi;
 	}
 }
-
-/**
- * IAB TCF Purpose IDs.
- *
- * @public
- */
-export const IAB_PURPOSES = {
-	/** Create profiles for personalised advertising */
-	CREATE_AD_PROFILE: 3,
-	/** Create profiles to personalise content */
-	CREATE_CONTENT_PROFILE: 5,
-	/** Understand audiences through statistics or combinations of data */
-	MARKET_RESEARCH: 9,
-	/** Measure advertising performance */
-	MEASURE_AD_PERFORMANCE: 7,
-	/** Measure content performance */
-	MEASURE_CONTENT_PERFORMANCE: 8,
-	/** Develop and improve services */
-	PRODUCT_DEVELOPMENT: 10,
-	/** Use limited data to select advertising */
-	SELECT_BASIC_ADS: 2,
-	/** Use limited data to select content */
-	SELECT_BASIC_CONTENT: 11,
-	/** Use profiles to select personalised advertising */
-	SELECT_PERSONALISED_ADS: 4,
-	/** Use profiles to select personalised content */
-	SELECT_PERSONALISED_CONTENT: 6,
-	/** Store and/or access information on a device */
-	STORE_ACCESS_INFO: 1,
-} as const;
-
-/**
- * IAB TCF Special Feature IDs.
- *
- * @public
- */
-export const IAB_SPECIAL_FEATURES = {
-	/** Identify devices based on information actively requested */
-	DEVICE_SCANNING: 2,
-	/** Use precise geolocation data */
-	PRECISE_GEOLOCATION: 1,
-} as const;
-
-/**
- * IAB TCF Feature IDs.
- *
- * @public
- */
-export const IAB_FEATURES = {
-	/** Identify devices based on information transmitted automatically */
-	IDENTIFY_DEVICES: 3,
-	/** Link different devices */
-	LINK_DEVICES: 2,
-	/** Match and combine data from other data sources */
-	MATCH_COMBINE_DATA: 1,
-} as const;
-
-/**
- * IAB TCF Data Category IDs.
- *
- * @public
- */
-export const IAB_DATA_CATEGORIES = {
-	/** Authentication-derived identifiers */
-	AUTH_IDENTIFIERS: 5,
-	/** Browsing and interaction data */
-	BROWSING_DATA: 6,
-	/** Device characteristics */
-	DEVICE_CHARACTERISTICS: 2,
-	/** Device identifiers */
-	DEVICE_IDENTIFIERS: 3,
-	/** IP addresses */
-	IP_ADDRESSES: 1,
-	/** Non-precise location data */
-	NON_PRECISE_LOCATION: 8,
-	/** Precise location data */
-	PRECISE_LOCATION: 9,
-	/** Privacy choices */
-	PRIVACY_CHOICES: 11,
-	/** Probabilistic identifiers */
-	PROBABILISTIC_IDENTIFIERS: 4,
-	/** Users' profiles */
-	USER_PROFILES: 10,
-	/** User-provided data */
-	USER_PROVIDED_DATA: 7,
-} as const;

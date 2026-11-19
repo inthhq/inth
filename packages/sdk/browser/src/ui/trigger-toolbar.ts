@@ -1,3 +1,5 @@
+import type { TriggerTranslations } from '@inth/sdk-core';
+import { nextToolbarItem, toolbarOrder } from '@inth/sdk-ui/utils';
 import type { CornerPosition } from '@inth/sdk-ui/utils';
 
 import { classes } from '../generated/styles';
@@ -26,13 +28,12 @@ const createDevToolsIcon = function createDevToolsIcon(): SVGSVGElement {
 
 /** What {@link createTriggerToolbar} needs. */
 export interface TriggerToolbarParams {
-	/** Accessible name of the preferences item. */
-	ariaLabel: string;
+	/** Accessible names of the preferences item, the toolbar and DevTools. */
+	labels: TriggerTranslations;
 	/** Icon of the preferences item. */
 	icon: SVGSVGElement;
 	/** Ship the DOM without class names. */
 	noStyle: boolean;
-	/** Item size. */
 	size: 'sm' | 'md' | 'lg';
 	/** Runs on a click or key press on an item; `false` cancels it. */
 	shouldActivate: (event: MouseEvent) => boolean;
@@ -52,6 +53,8 @@ export interface TriggerToolbar {
 	setOpen: (isOpen: boolean) => void;
 	/** Swap the preferences item's icon, for example after a branding change. */
 	setIcon: (icon: SVGSVGElement) => void;
+	/** Rename the items and the toolbar, for example after a language change. */
+	setLabels: (labels: TriggerTranslations) => void;
 }
 
 /**
@@ -60,8 +63,6 @@ export interface TriggerToolbar {
  * attributes and ARIA as the React `ConsentDialogTrigger` toolbar. The
  * caller owns drag, position classes and visibility.
  *
- * @param params - Labels, icon and handlers.
- * @returns The toolbar.
  * @internal
  */
 export const createTriggerToolbar = function createTriggerToolbar(
@@ -81,8 +82,8 @@ export const createTriggerToolbar = function createTriggerToolbar(
 			{
 				'aria-label': label,
 				class: noStyle ? '' : `${styles.toolbarItem} ${styles[params.size]}`,
-				'data-c15t-trigger-action': action,
-				'data-c15t-trigger-item': action,
+				'data-inth-trigger-action': action,
+				'data-inth-trigger-item': action,
 				onclick: (event: Event) => {
 					if (params.shouldActivate(event as MouseEvent)) {
 						onSelect();
@@ -100,23 +101,24 @@ export const createTriggerToolbar = function createTriggerToolbar(
 
 	const preferences = item(
 		'preferences',
-		params.ariaLabel,
+		params.labels.label,
 		params.icon,
 		params.onPreferences
 	);
 	const devtools = item(
 		'devtools',
-		'c15t DevTools',
+		params.labels.devToolsLabel,
 		createDevToolsIcon(),
 		params.onDevTools
 	);
+	const buttons = { devtools, preferences };
 	devtools.setAttribute('aria-expanded', 'false');
 
 	const element = h('div', {
-		'aria-label': 'Privacy controls',
+		'aria-label': params.labels.toolbarLabel,
 		'aria-orientation': 'horizontal',
-		'data-c15t-trigger': 'true',
-		'data-c15t-trigger-toolbar': 'true',
+		'data-inth-trigger': 'true',
+		'data-inth-trigger-toolbar': 'true',
 		dir: 'ltr',
 		role: 'toolbar',
 		tabindex: -1,
@@ -137,18 +139,11 @@ export const createTriggerToolbar = function createTriggerToolbar(
 	}
 	focusItem(preferences);
 	element.addEventListener('keydown', (event) => {
-		const items = [...element.children] as HTMLButtonElement[];
-		const index = items.indexOf(active);
-		let next: HTMLButtonElement | undefined;
-		if (event.key === 'Home') {
-			[next] = items;
-		} else if (event.key === 'End') {
-			next = items.at(-1);
-		} else if (event.key === 'ArrowRight') {
-			next = items[(index + 1) % items.length];
-		} else if (event.key === 'ArrowLeft') {
-			next = items[(index - 1 + items.length) % items.length];
-		}
+		const next = nextToolbarItem(
+			[...element.children] as HTMLButtonElement[],
+			active,
+			event.key
+		);
 		if (next) {
 			event.preventDefault();
 			next.focus();
@@ -158,17 +153,18 @@ export const createTriggerToolbar = function createTriggerToolbar(
 	return {
 		element,
 		setCorner(corner) {
-			// Preferences sits in the corner; DevTools, a development aid,
-			// sits farthest from it.
-			const order = corner.endsWith('left')
-				? [preferences, devtools]
-				: [devtools, preferences];
+			const order = toolbarOrder(corner).map((kind) => buttons[kind]);
 			if (element.firstElementChild !== order[0]) {
 				element.append(...order);
 			}
 		},
 		setIcon(icon) {
 			preferences.firstElementChild?.replaceChildren(icon);
+		},
+		setLabels(labels) {
+			preferences.setAttribute('aria-label', labels.label);
+			devtools.setAttribute('aria-label', labels.devToolsLabel);
+			element.setAttribute('aria-label', labels.toolbarLabel);
 		},
 		setOpen(isOpen) {
 			devtools.setAttribute('aria-expanded', String(isOpen));

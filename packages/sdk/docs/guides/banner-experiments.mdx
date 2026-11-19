@@ -41,7 +41,7 @@ const armFromFlag = (value: string | undefined): BannerArm | undefined =>
 	value === 'control' || value === 'wall' ? value : undefined;
 ```
 
-Omit `arm` to let c15t pick, and set `split` to weight the arms:
+Omit `arm` to let Inth pick, and set `split` to weight the arms:
 
 ```ts
 experiment: { ...bannerExperiment, split: { control: 60, wall: 40 } }
@@ -52,15 +52,15 @@ experiment: { ...bannerExperiment, split: { control: 60, wall: 40 } }
 | `id` | Stable experiment name, recorded with every choice |
 | `arms` | What each arm changes, merged over `presentation`. `control` is your `presentation` and is not listed |
 | `arm` | The arm your flag resolved: `control` or a key of `arms` |
-| `split` | Relative weights when c15t picks the arm; default equal. Keys are `control` and the arms |
+| `split` | Relative weights when Inth picks the arm; default equal. Keys are `control` and the arms |
 | `acknowledgeDiagnostics` | Run an arm that trips a presentation diagnostic and record that you reviewed it |
 
-c15t merges the arm over `presentation`, exposes it as `snapshot.experiment`,
+Inth merges the arm over `presentation`, exposes it as `snapshot.experiment`,
 sends it with `/init`, and records it on the choices of visitors the banner
 showed it to, so you can compare opt-in rate and time to decision per arm.
 
 The same option exists in `@inth/nextjs` (`ConsentRoot` `options`), `@inth/vue`,
-`@inth/svelte`, the `c15t()` Astro integration from `@inth/astro`, and
+`@inth/svelte`, the `inth()` Astro integration from `@inth/astro`, and
 `@inth/sdk`. On a server-rendered page in Next.js, TanStack Start or
 SvelteKit, pass it to `resolveConsent` instead, which counts the arm and hands
 it to the client; see [Vercel Flags SDK](#vercel-flags-sdk).
@@ -76,14 +76,14 @@ category. Under a rule with `scopeMode: 'permissive'`, the banner asks only
 about the categories your site declares through `consentCategories`,
 `scripts` or `vendors`. With none declared, it asks about none: accepting or rejecting records a notice
 acknowledgement instead of a choice, `onChoiceRecorded` never fires, and the
-experiment counts impressions without choices. Outside production, c15t logs
+experiment counts impressions without choices. Outside production, Inth logs
 a warning the first time the banner shows an arm in that state.
 
 ### Astro
 
 The Astro banner is server-rendered HTML that the browser only shows or
 hides, so the arm is resolved on the server. To pick it per request, set
-`middleware: false` in `c15t()` and compose the consent middleware yourself
+`middleware: false` in `inth()` and compose the consent middleware yourself
 with `experimentArm`, where `bannerExperimentFlag` stands for your flag lookup:
 
 {/* example: fragment */}
@@ -97,9 +97,9 @@ export const onRequest = consentMiddleware({
 ```
 
 Return `undefined` to run no experiment for that request. A fixed
-`experiment.arm` in `c15t()` puts every visitor in one arm, which only
+`experiment.arm` in `inth()` puts every visitor in one arm, which only
 suits a staged rollout. Prerendered routes render once for every visitor, so
-they get no per-request arm. `c15t()` throws at config time when
+they get no per-request arm. `inth()` throws at config time when
 `experiment` has neither.
 
 ### Vary the theme
@@ -147,7 +147,7 @@ presentation: an arm that fills accept and outlines reject trips
 
 ## Resolve the arm with a flag provider
 
-Resolve the arm wherever your flags live and pass its name as `arm`. c15t
+Resolve the arm wherever your flags live and pass its name as `arm`. Inth
 records `assignedBy: 'host'` and never re-assigns a visitor you assigned.
 
 ### Vercel Flags SDK
@@ -186,12 +186,12 @@ from [send the events to your own analytics](#send-the-events-to-your-own-analyt
 in `options`. The layout awaits consent inside `<Suspense>`, as in
 [render the banner in the server HTML](/docs/frameworks/next/app-router#render-the-banner-in-the-server-html),
 so the banner is in the server HTML already showing the visitor's arm.
-`resolveConsent` in `@inth/tanstack-start/server` and `@inth/svelte/server`
-takes the same `experiment`.
+`resolveConsent` in `@inth/tanstack-start/server` and `loadConsent`
+in `@inth/svelte/kit` take the same `experiment`.
 
 If you pass `resolveConsent()` to `ConsentRoot` without awaiting it (the
 streaming layout), the client mounts before the state arrives. Pass the
-same experiment to the client options as well; c15t warns in development
+same experiment to the client options as well; Inth warns in development
 when the streamed state carries an experiment the client did not get.
 
 ### PostHog
@@ -250,10 +250,10 @@ An `arm` that is not `control` or a key of `arms` logs an error and runs no
 experiment for that visitor; the page still renders. Treat that as a flag
 misconfiguration.
 
-## Let c15t assign the arm
+## Let Inth assign the arm
 
-Omit `arm` and c15t picks one by `split` (equal by default) when the page
-starts, before `/init`, and records `assignedBy: 'c15t'`. A visitor who
+Omit `arm` and Inth picks one by `split` (equal by default) when the page
+starts, before `/init`, and records `assignedBy: 'inth'`. A visitor who
 already saw an arm keeps it.
 
 The banner waits until the arm is picked, so the visitor never sees the base
@@ -263,12 +263,13 @@ assignment chunk. If the chunk fails to load, the base banner shows and no
 experiment runs. To keep the banner in the server HTML, resolve the arm on
 the server and pass it as `arm`.
 
-Once the banner has shown the arm, c15t stores `{ id, arm }` under
-`c15t-experiment-v1` in localStorage (a cookie when localStorage is
-unavailable), so the visitor keeps seeing the banner they saw. Nothing is
-stored for a visitor who is never prompted, and nothing is stored for a
-host-resolved arm: your flag provider decides that one on every visit. The
-record holds no identifier. It exists only to keep the consent banner
+Once the banner has shown the arm, Inth stores `{ id, arm }` under
+`inth-experiment-v1` in localStorage (a cookie when localStorage is
+unavailable), so the visitor keeps seeing the banner they saw. An arm a c15t
+build stored under `c15t-experiment-v1` is kept and moved to the Inth key.
+Nothing is stored for a visitor who is never prompted, and nothing is stored
+for a host-resolved arm: your flag provider decides that one on every visit.
+The record holds no identifier. It exists only to keep the consent banner
 consistent, so treat it like the consent record itself when you describe
 your storage.
 
@@ -315,11 +316,11 @@ Each arm is resolved under the visitor's policy the same way `presentation`
 is. An arm that trips a diagnostic, for example
 `equivalent-prominence-overridden` because it makes accept primary while
 reject stays neutral, is not shown under that policy: those visitors see the
-base presentation, are not counted in the experiment, and c15t logs the
-diagnostics. Set `acknowledgeDiagnostics: true` to run the arm anyway. c15t
+base presentation, are not counted in the experiment, and Inth logs the
+diagnostics. Set `acknowledgeDiagnostics: true` to run the arm anyway. Inth
 then logs the diagnostics as a warning once per policy and records
 `acknowledgedDiagnostics: true` with the arm on every choice. You own the
-legal review of that arm; c15t records that you made it.
+legal review of that arm; Inth records that you made it.
 
 The check runs in the browser once the policy is known, so catch a rejected
 arm before you deploy with `validateExperiment` in a test. `euPolicy` and
@@ -402,7 +403,7 @@ your analytics without a backend query.
 ## Measure the results
 
 An opt-in rate needs two counts per arm: how many visitors the banner was
-owed to, and how many of them accepted. c15t sends both to the backend on
+owed to, and how many of them accepted. Inth sends both to the backend on
 its own; you do not wire anything up.
 
 - **Visitors owed the banner.** While a visitor has no stored choice, every
@@ -411,7 +412,7 @@ its own; you do not wire anything up.
   `experiment: { id, arm }`. In manifest mode, the server render or the
   init route puts it on the report it sends to `POST /sessions`. A visitor
   who already chose is not shown the banner, so is not counted. A
-  server-to-server caller can send the `x-c15t-experiment` header instead.
+  server-to-server caller can send the `x-inth-experiment` header instead.
 - **Choices.** Every choice saved through `POST /subjects` carries the arm
   in `metadata.experiment`, as above.
 
@@ -419,9 +420,9 @@ On a server-rendered page the server calls `/init`, not the browser, so the
 server has to know the arm. Pass the experiment to `resolveConsent`, as in
 [Vercel Flags SDK](#vercel-flags-sdk): it sends only `{ id, arm }` to the
 backend and hands the full experiment to the client in its state.
-`resolveConsent` takes `experiment` in `@inth/nextjs/server`,
-`@inth/tanstack-start/server` and `@inth/svelte/server`; Astro and Nuxt pass
-the arm they rendered on their own. When c15t picks the arm in the browser,
+`resolveConsent` takes `experiment` in `@inth/nextjs/server` and
+`@inth/tanstack-start/server`, as `loadConsent` does in `@inth/svelte/kit`;
+Astro and Nuxt pass the arm they rendered on their own. When Inth picks the arm in the browser,
 the browser's own `/init` carries it, so a server-rendered page that skips
 the client `/init` has no count for built-in assignment. Resolve the arm with
 a flag on those pages.
@@ -445,8 +446,8 @@ sessions.
 The `onSurfaceShown` and `onChoiceRecorded` callbacks carry the same
 `experiment` object, so a few lines forward them to any tool. The
 [React example](#vary-presentation-not-policy) pushes both to
-`window.dataLayer` for Google Tag Manager, as `c15t_surface_shown` with the
-surface and `c15t_choice_recorded` with the consent action. To send them to
+`window.dataLayer` for Google Tag Manager, as `inth_surface_shown` with the
+surface and `inth_choice_recorded` with the consent action. To send them to
 PostHog instead, call `posthog.capture()` with the same fields in the
 callbacks. The callbacks run for every impression and choice; check
 `experiment` first, because it is `undefined` for visitors outside the test.
@@ -479,8 +480,8 @@ The self-hosted backend copies `experiment.id`, `experiment.arm` and
 choices per arm without a JSON query. It needs an API key.
 
 ```bash
-curl 'https://app.example.com/api/c15t/experiments/banner-shape/summary?from=2026-09-01&to=2026-09-30' \
-  -H "Authorization: Bearer $C15T_API_KEY"
+curl 'https://app.example.com/api/inth/experiments/banner-shape/summary?from=2026-09-01&to=2026-09-30' \
+  -H "Authorization: Bearer $INTH_API_KEY"
 ```
 
 ```json
@@ -538,12 +539,12 @@ makes the same call. Create the client with an API key; `from` and `to` also
 take a `Date`:
 
 ```ts
-const c15t = createC15tClient({
-	baseUrl: 'https://app.example.com/api/c15t',
+const inth = createInthClient({
+	baseUrl: 'https://app.example.com/api/inth',
 	apiKey,
 });
 
-const result = await c15t.experiments.summary('banner-shape', {
+const result = await inth.experiments.summary('banner-shape', {
 	from: '2026-09-01',
 	to: '2026-09-30',
 });
@@ -564,11 +565,11 @@ page shows `assignedBy: host`. Run each command in the example's directory.
 | Example | Start | Open |
 | --- | --- | --- |
 | Next.js | `bun run dev` | `/experiment`, with the arm from a stand-in flag: `?arm=wall`, `?arm=off` to leave the test, `control` otherwise |
-| TanStack Start | `C15T_EXPERIMENT=1 bun run dev` | `/consent-example?experiment=1`, then add `&arm=wall` |
+| TanStack Start | `INTH_EXPERIMENT=1 bun run dev` | `/consent-example?experiment=1`, then add `&arm=wall` |
 | React | `bun run dev` | `/experiment.html`, then add `?arm=wall` |
-| Nuxt | `C15T_NUXT_EXPERIMENT=1 bun run dev`; add `C15T_NUXT_EXPERIMENT_ARM=wall` for the wall arm | `/consent-example` |
+| Nuxt | `INTH_NUXT_EXPERIMENT=1 bun run dev`; add `INTH_NUXT_EXPERIMENT_ARM=wall` for the wall arm | `/consent-example` |
 | Vue | `bun run dev` | `/?experiment=1`, then add `&arm=wall` |
-| Astro | `C15T_EXPERIMENT=1 bun run dev` | `/consent-example?experiment=1` runs `control`, as Astro has no built-in assignment; add `&arm=wall` |
+| Astro | `INTH_EXPERIMENT=1 bun run dev` | `/consent-example?experiment=1` runs `control`, as Astro has no built-in assignment; add `&arm=wall` |
 | Svelte | `bun run dev` | `/?experiment=1`, then add `&arm=wall` |
 | SvelteKit | `bun run dev` | `/experiment-example?experiment=1`, then add `&arm=wall` |
 | HTML script tag | `bun run dev` | `/?experiment=1`, then add `&arm=wall` |

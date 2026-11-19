@@ -1,5 +1,5 @@
 /**
- * The init script (`c15t.js`) from source, in jsdom: what its stand-in
+ * The init script (`inth.js`) from source, in jsdom: what its stand-in
  * does with a tap whose save the outbox cannot keep, and with `dispose()`
  * before the engine arrives. The built files run in Chromium in
  * `init-script.browser.test.ts`.
@@ -17,26 +17,28 @@ import {
 import { enTranslations } from '@inth/sdk-translations';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PREFETCH_WINDOW_KEY } from '../../../core/src/libs/prefetch/window-key';
+import {
+	ENGINE_TIMEOUT_MS,
+	PREFETCH_WINDOW_KEY,
+} from '../../../core/src/libs/page-globals';
 import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
 import { autoInit, createGlobal, installGlobal } from '../global';
-import type { C15tGlobalBase } from '../global-base';
+import type { InthGlobalBase } from '../global-base';
 import { releaseBoot } from '../init/adopt';
 import type { InitBoot } from '../init/boot';
 import { runInitScript } from '../init/run';
-import { ENGINE_TIMEOUT_MS } from '../init/schedule';
 import { version } from '../version';
 
-const OWN_SRC = 'https://cdn.example/npm/@inth/sdk/lib/browser/dist/c15t.js';
+const OWN_SRC = 'https://cdn.example/npm/@inth/sdk/lib/browser/dist/inth.js';
 const BACKEND_URL = 'https://consent.example';
 
-type StandIn = C15tGlobalBase & { __c15tBoot: InitBoot };
+type StandIn = InthGlobalBase & { __inthBoot: InitBoot };
 
 const target = window as unknown as Record<string, unknown>;
 
 /** The `/init` answer: an opt-in policy for measurement and marketing. */
 const initBody = () => ({
-	branding: 'c15t',
+	branding: 'inth',
 	location: { countryCode: 'DE', regionCode: null },
 	policyResolution: writePolicyResolutionWire(
 		resolvePolicyRules({
@@ -66,9 +68,9 @@ const tag = () => {
 	return script;
 };
 
-/** Runs the init script over `queued`, the page's `window.c15t` array. */
+/** Runs the init script over `queued`, the page's `window.inth` array. */
 const start = (queued: unknown[] = []): StandIn => {
-	target.c15t = queued;
+	target.inth = queued;
 	return runInitScript(tag()) as unknown as StandIn;
 };
 
@@ -79,7 +81,7 @@ const loaded = (file: string) =>
 
 const banner = () =>
 	document
-		.querySelector('[data-c15t-ui]')
+		.querySelector('[data-inth-ui]')
 		?.shadowRoot?.querySelector('[data-testid="consent-banner-root"]') ?? null;
 
 const settle = () =>
@@ -95,16 +97,16 @@ const showBanner = async () => {
 	});
 };
 
-/** Hands the init script `c15t.commit.js`, as the file does when it runs. */
+/** Hands the init script `inth.commit.js`, as the file does when it runs. */
 const provideCommit = (standIn: StandIn) => {
-	standIn.__c15tBoot.provide({
+	standIn.__inthBoot.provide({
 		name: 'commit',
 		planEarlyCommit,
 		storeEarlyCommit,
 		version,
 	});
 	document.head
-		.querySelector('script[src*="c15t.commit.js"]')
+		.querySelector('script[src*="inth.commit.js"]')
 		?.dispatchEvent(new Event('load'));
 };
 
@@ -130,13 +132,13 @@ const queuedSaves = (): unknown[] =>
 	JSON.parse(localStorage.getItem(PENDING_SAVES_STORAGE_KEY) ?? '[]');
 
 const storedChoice = () =>
-	JSON.parse(localStorage.getItem('c15t') ?? 'null') as {
+	JSON.parse(localStorage.getItem('inth') ?? 'null') as {
 		categories?: Record<string, { value: boolean }>;
 	} | null;
 
 /** The calls the init script queued for the engine, without the page's config. */
 const queuedForEngine = (standIn: StandIn) =>
-	standIn.__c15tBoot.calls.filter(([method]) => method !== 'config');
+	standIn.__inthBoot.calls.filter(([method]) => method !== 'config');
 
 beforeEach(() => {
 	// The init script runs while the page is still parsing: the engine
@@ -171,7 +173,7 @@ afterEach(() => {
 	vi.restoreAllMocks();
 	vi.unstubAllGlobals();
 	releaseBoot();
-	delete target.c15t;
+	delete target.inth;
 	Reflect.deleteProperty(target, PREFETCH_WINDOW_KEY);
 	localStorage.clear();
 	for (const cookie of document.cookie.split(';')) {
@@ -198,7 +200,7 @@ describe('the banner before the engine', () => {
 		const shownAt = standIn.getSnapshot().surfaceShownAt.banner;
 		expect(shownAt).toBe(impression.shownAt);
 		// The engine starts from the stamp instead of stamping its own.
-		expect(standIn.__c15tBoot.prefetch?.config.initialSurfaceShownAt).toEqual({
+		expect(standIn.__inthBoot.prefetch?.config.initialSurfaceShownAt).toEqual({
 			banner: shownAt,
 			dialog: null,
 		});
@@ -237,7 +239,7 @@ describe('a tap recorded before the engine', () => {
 			['config', { callbacks: { onChoiceRecorded, onPermissionsChanged } }],
 		]);
 		await showBanner();
-		expect(loaded('c15t.hosted.js')).toEqual([]);
+		expect(loaded('inth.hosted.js')).toEqual([]);
 
 		const saved = standIn.acceptAll() as Promise<SaveResult>;
 		provideCommit(standIn);
@@ -253,7 +255,7 @@ describe('a tap recorded before the engine', () => {
 		});
 		// Nothing for the engine to record again.
 		expect(queuedForEngine(standIn)).toEqual([]);
-		expect(loaded('c15t.hosted.js')).toHaveLength(1);
+		expect(loaded('inth.hosted.js')).toHaveLength(1);
 	});
 
 	it.each([
@@ -283,7 +285,7 @@ describe('a tap recorded before the engine', () => {
 			expect(queuedForEngine(standIn)).toEqual([[method]]);
 			expect(onChoiceRecorded).not.toHaveBeenCalled();
 			expect(onPermissionsChanged).not.toHaveBeenCalled();
-			expect(loaded('c15t.hosted.js')).toHaveLength(1);
+			expect(loaded('inth.hosted.js')).toHaveLength(1);
 		}
 	);
 });
@@ -291,14 +293,14 @@ describe('a tap recorded before the engine', () => {
 describe('options the stand-in cannot serve', () => {
 	it('loads the engine at once for a network blocker, unless it is turned off', () => {
 		const blocking = start([['config', { networkBlocker: { rules: [] } }]]);
-		expect(loaded('c15t.hosted.js')).toHaveLength(1);
+		expect(loaded('inth.hosted.js')).toHaveLength(1);
 		blocking.dispose();
 		document.head.replaceChildren();
 
 		const off = start([
 			['config', { networkBlocker: { enabled: false, rules: [] } }],
 		]);
-		expect(loaded('c15t.hosted.js')).toEqual([]);
+		expect(loaded('inth.hosted.js')).toEqual([]);
 		off.dispose();
 	});
 });
@@ -307,7 +309,7 @@ describe('dispose() before the engine', () => {
 	it('loads the engine at the first input until then', () => {
 		start();
 		window.dispatchEvent(new Event('pointerdown'));
-		expect(loaded('c15t.hosted.js')).toHaveLength(1);
+		expect(loaded('inth.hosted.js')).toHaveLength(1);
 	});
 
 	it('stops input, scrolling and the timer from loading the engine', () => {
@@ -320,8 +322,8 @@ describe('dispose() before the engine', () => {
 		window.dispatchEvent(new Event('scroll'));
 		vi.advanceTimersByTime(ENGINE_TIMEOUT_MS + 1);
 
-		expect(loaded('c15t.hosted.js')).toEqual([]);
-		expect(standIn.__c15tBoot.disposed).toBe(true);
+		expect(loaded('inth.hosted.js')).toEqual([]);
+		expect(standIn.__inthBoot.disposed).toBe(true);
 	});
 
 	it('reads nothing from a /init answer that lands after it', async () => {
@@ -332,22 +334,22 @@ describe('dispose() before the engine', () => {
 		await settle();
 
 		expect(banner()).toBeNull();
-		expect(document.querySelector('[data-c15t-ui]')).toBeNull();
+		expect(document.querySelector('[data-inth-ui]')).toBeNull();
 		expect(() => standIn.getSnapshot()).toThrow(/init/u);
-		expect(standIn.__c15tBoot.prefetch).toBeNull();
-		expect(loaded('c15t.hosted.js')).toEqual([]);
+		expect(standIn.__inthBoot.prefetch).toBeNull();
+		expect(loaded('inth.hosted.js')).toEqual([]);
 	});
 
 	it('loads the engine for a later init(), which starts from the queued call', () => {
 		const standIn = start();
 		standIn.dispose();
-		expect(loaded('c15t.hosted.js')).toEqual([]);
+		expect(loaded('inth.hosted.js')).toEqual([]);
 
 		standIn.init();
 
-		expect(loaded('c15t.hosted.js')).toHaveLength(1);
-		expect(standIn.__c15tBoot.calls).toEqual([['init']]);
-		expect(standIn.__c15tBoot.disposed).toBe(false);
+		expect(loaded('inth.hosted.js')).toHaveLength(1);
+		expect(standIn.__inthBoot.calls).toEqual([['init']]);
+		expect(standIn.__inthBoot.disposed).toBe(false);
 	});
 
 	it('leaves an engine that still arrives without a client', async () => {
@@ -359,13 +361,13 @@ describe('dispose() before the engine', () => {
 		expect(autoInit(api)).toBeNull();
 		answerInit.reject();
 		await vi.waitFor(() => {
-			expect(target.c15t).toBe(api);
+			expect(target.inth).toBe(api);
 		});
 		await settle();
 
 		expect(api.client).toBeNull();
 		expect(banner()).toBeNull();
-		expect(standIn.__c15tBoot.disposed).toBe(true);
+		expect(standIn.__inthBoot.disposed).toBe(true);
 		api.dispose();
 	});
 });

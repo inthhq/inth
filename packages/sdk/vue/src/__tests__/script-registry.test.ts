@@ -3,7 +3,7 @@
  * runtime: an integration `/init` lists loads from the registry's URL with
  * its hash.
  */
-import { C15T_POLICY_CONTRACT_HEADER } from '@inth/sdk/engine';
+import { INTH_POLICY_CONTRACT_HEADER } from '@inth/sdk/engine';
 import type { Script } from '@inth/sdk/engine';
 import {
 	resolvePolicyRules,
@@ -13,7 +13,7 @@ import { translations } from '@inth/sdk/translations/en';
 import { afterEach, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h } from 'vue';
 
-import { c15tVue } from '../index';
+import { inthVue } from '../index';
 
 const VENDOR_SRC = 'https://cdn.vendor.example/vendor.js';
 const REGISTRY_SRC = 'https://acme.inth.app/scripts/vendor@0123456789abcdef.js';
@@ -30,7 +30,7 @@ const vendor: Script = {
 
 /** The `/init` answer, listing the registry's copy of `vendor`. */
 const init = {
-	branding: 'c15t',
+	branding: 'inth',
 	location: { countryCode: 'US', regionCode: null },
 	policyResolution: writePolicyResolutionWire(
 		resolvePolicyRules({
@@ -69,7 +69,7 @@ const loadedTag = async (experimentalScriptRegistry?: boolean) => {
 		vi.fn(() =>
 			Promise.resolve(
 				new Response(JSON.stringify(init), {
-					headers: { [C15T_POLICY_CONTRACT_HEADER]: '1' },
+					headers: { [INTH_POLICY_CONTRACT_HEADER]: '1' },
 				})
 			)
 		)
@@ -77,7 +77,7 @@ const loadedTag = async (experimentalScriptRegistry?: boolean) => {
 	const container = document.createElement('div');
 	document.body.append(container);
 	const app = createApp(defineComponent({ setup: () => () => h('main') }));
-	app.use(c15tVue, {
+	app.use(inthVue, {
 		experimentalScriptRegistry,
 		projectUrl: 'https://consent.example.test',
 		scripts: [vendor],

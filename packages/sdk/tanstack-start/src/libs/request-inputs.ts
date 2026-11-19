@@ -8,7 +8,6 @@ import type { ConsentRequestHeaderInputs as ConsentRequestInputs } from '@inth/s
  */
 const inputsByRequest = new WeakMap<Request, ConsentRequestInputs>();
 
-/** Records the inputs the middleware resolved for `request`. */
 export const rememberConsentInputs = function rememberConsentInputs(
 	request: Request,
 	inputs: ConsentRequestInputs
@@ -16,14 +15,12 @@ export const rememberConsentInputs = function rememberConsentInputs(
 	inputsByRequest.set(request, inputs);
 };
 
-/** Reads the inputs the middleware recorded for `request`, if any. */
 export const readConsentInputs = function readConsentInputs(
 	request: Request
 ): ConsentRequestInputs | undefined {
 	return inputsByRequest.get(request);
 };
 
-/** Requests the consent route served. */
 const consentRouteRequests = new WeakSet<Request>();
 
 /**
@@ -37,7 +34,6 @@ export const rememberConsentRouteRequest = function rememberConsentRouteRequest(
 	consentRouteRequests.add(request);
 };
 
-/** Whether the consent route served `request`. */
 export const servedByConsentRoute = function servedByConsentRoute(
 	request: Request
 ): boolean {
@@ -57,7 +53,6 @@ export const rememberVisitorRender = function rememberVisitorRender(
 	visitorRenders.add(request);
 };
 
-/** Whether a render on `request` read the visitor's cookies. */
 export const renderedForVisitor = function renderedForVisitor(
 	request: Request
 ): boolean {

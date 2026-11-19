@@ -18,6 +18,7 @@ import type {
 	ConsentPresentation,
 	ConsentSnapshot,
 } from '@inth/sdk/engine';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import type { Theme } from '@inth/sdk/ui/theme';
 
 import type { IABPromptClassNames } from '../banner/class-names';
@@ -76,7 +77,7 @@ const renderButton = function renderButton(
 		{
 			class: button.className,
 			'data-action': button.action,
-			'data-c15t-action': button.action,
+			'data-inth-action': button.action,
 			...extra,
 			'data-mode': button.mode,
 			'data-size': props.noStyle ? undefined : 'small',
@@ -113,9 +114,9 @@ const renderHeader = function renderHeader(model: IABPromptModel): HTMLElement {
 					'button',
 					{
 						class: model.classes.partnersLink,
-						'data-c15t-action': 'customize',
-						'data-c15t-dialog': 'iab',
-						'data-c15t-tab': 'vendors',
+						'data-inth-action': 'customize',
+						'data-inth-dialog': 'iab',
+						'data-inth-tab': 'vendors',
 						'data-testid': 'iab-consent-banner-partners-link',
 						type: 'button',
 					},
@@ -186,7 +187,7 @@ export const buildIABPrompt = function buildIABPrompt(
 				{ class: model.classes.actionGroup, 'data-direction': 'row' },
 				[
 					renderButton(model, props, model.customizeButton, {
-						'data-c15t-dialog': 'iab',
+						'data-inth-dialog': 'iab',
 					}),
 				]
 			),
@@ -204,16 +205,17 @@ export const buildIABPrompt = function buildIABPrompt(
 		},
 		[renderHeader(model), footer]
 	);
-	const branding = renderBrandingTag({
-		hide: props.hideBranding,
-		noStyle: props.noStyle,
-		securedBy: model.copy.securedBy,
-		snapshot,
-		styles: slot.classNames.branding,
-		testId: 'iab-consent-banner-branding',
-		theme,
-		themeSlot: 'iabConsentBannerTag',
-	});
+	const branding = renderBrandingTag(
+		{
+			branding: snapshot.branding,
+			hide: props.hideBranding,
+			noStyle: props.noStyle,
+			styles: slot.classNames.branding,
+			surface: 'iab-banner',
+			theme,
+		},
+		model.copy.securedBy
+	);
 	const root = element(
 		'div',
 		{
@@ -221,6 +223,7 @@ export const buildIABPrompt = function buildIABPrompt(
 			'data-blocking': model.blocking ? 'true' : undefined,
 			'data-position': model.position,
 			'data-testid': 'iab-consent-banner-root',
+			[SURFACE_ROOT_ATTRIBUTE]: 'banner',
 			'data-variant': model.variant,
 			dir: model.textDirection,
 			lang: model.language,
@@ -251,7 +254,6 @@ export const buildIABPrompt = function buildIABPrompt(
 /**
  * Render the IAB banner into the spot `<IABConsentBanner />` left for it.
  *
- * @param snapshot - The current snapshot.
  * @param options - The site options the banner reads.
  * @returns `true` when a banner was inserted. `false` when there is no
  * spot, or the snapshot's policy or vendor list does not call for one yet.

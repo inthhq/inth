@@ -177,7 +177,7 @@ describe('per-surface sheets', async () => {
 		for (const [index, name] of names.entries()) {
 			const sheet = name === 'tokens' ? tokens : surfaces[name];
 
-			expect(sheet?.id).toBe(`c15t-${name}`);
+			expect(sheet?.id).toBe(`inth-${name}`);
 			expect(deferred[index]?.id).toBe(sheet?.id);
 			expect(deferred[index]?.css).toBe('');
 			expect(loaded[index]).toBe(sheet?.css);
@@ -214,7 +214,7 @@ describe('per-surface sheets', async () => {
 
 	test('tokens holds the default theme tokens of first-paint', () => {
 		const themeTokens = variableDeclarations(firstPaint.css).filter(
-			(declaration) => declaration.includes('.c15t-theme-root')
+			(declaration) => declaration.includes('.inth-theme-root')
 		);
 
 		expect(themeTokens.length).toBeGreaterThan(0);

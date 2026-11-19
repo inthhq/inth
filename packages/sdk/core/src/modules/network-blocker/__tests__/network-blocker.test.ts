@@ -288,7 +288,6 @@ describe('network-blocker: dispose', () => {
 			rules: [{ category: 'marketing', domain: 'example.com' }],
 		});
 
-		// The patched fetch replaces the original reference.
 		expect(window.fetch).not.toBe(originalRef);
 
 		blocker.dispose();

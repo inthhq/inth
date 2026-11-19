@@ -10,10 +10,10 @@ import { clay } from './clay';
 describe('clay', () => {
 	setupScriptHelperTest();
 	it('matches registry metadata and the official loader URL', () => {
-		expectScriptMatchesIntegration('clay', clay({ siteId: 'c15tfake' }), {
+		expectScriptMatchesIntegration('clay', clay({ siteId: 'inthfake' }), {
 			alwaysLoad: undefined,
 			persistAfterConsentRevoked: true,
-			src: 'https://static.claydar.com/init.v1.js?id=c15tfake',
+			src: 'https://static.claydar.com/init.v1.js?id=inthfake',
 		});
 	});
 	it('skips invalid required IDs', () => {
@@ -28,12 +28,12 @@ describe('clay', () => {
 	it('uses custom URLs and falls back for blank overrides', () => {
 		expect(
 			clay({
-				...{ siteId: 'c15tfake' },
+				...{ siteId: 'inthfake' },
 				scriptUrl: 'https://cdn.example.com/vendor.js',
 			}).src
 		).toBe('https://cdn.example.com/vendor.js');
-		expect(clay({ ...{ siteId: 'c15tfake' }, scriptUrl: '   ' }).src).toBe(
-			'https://static.claydar.com/init.v1.js?id=c15tfake'
+		expect(clay({ ...{ siteId: 'inthfake' }, scriptUrl: '   ' }).src).toBe(
+			'https://static.claydar.com/init.v1.js?id=inthfake'
 		);
 	});
 });

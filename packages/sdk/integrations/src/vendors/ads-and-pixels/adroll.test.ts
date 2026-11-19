@@ -12,18 +12,18 @@ describe('adrollPixel', () => {
 	it('matches registry metadata and the official loader URL', () => {
 		expectScriptMatchesIntegration(
 			'adrollPixel',
-			adrollPixel({ advertiserId: 'c15tfake', pixelId: 'c15tfake' }),
+			adrollPixel({ advertiserId: 'inthfake', pixelId: 'inthfake' }),
 			{
 				alwaysLoad: undefined,
 				persistAfterConsentRevoked: true,
-				src: 'https://s.adroll.com/j/c15tfake/roundtrip.js',
+				src: 'https://s.adroll.com/j/inthfake/roundtrip.js',
 			}
 		);
 	});
 	it('skips invalid required IDs', () => {
 		for (const id of ['', ' ', undefined, null, {}]) {
 			expectSkippedScript(
-				() => adrollPixel({ advertiserId: id as string, pixelId: 'c15tfake' }),
+				() => adrollPixel({ advertiserId: id as string, pixelId: 'inthfake' }),
 				{ category: 'marketing', id: 'adroll' },
 				'adrollPixel: missing or invalid advertiserId'
 			);
@@ -32,15 +32,15 @@ describe('adrollPixel', () => {
 	it('uses custom URLs and falls back for blank overrides', () => {
 		expect(
 			adrollPixel({
-				...{ advertiserId: 'c15tfake', pixelId: 'c15tfake' },
+				...{ advertiserId: 'inthfake', pixelId: 'inthfake' },
 				scriptUrl: 'https://cdn.example.com/vendor.js',
 			}).src
 		).toBe('https://cdn.example.com/vendor.js');
 		expect(
 			adrollPixel({
-				...{ advertiserId: 'c15tfake', pixelId: 'c15tfake' },
+				...{ advertiserId: 'inthfake', pixelId: 'inthfake' },
 				scriptUrl: '   ',
 			}).src
-		).toBe('https://s.adroll.com/j/c15tfake/roundtrip.js');
+		).toBe('https://s.adroll.com/j/inthfake/roundtrip.js');
 	});
 });

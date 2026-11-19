@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@analogjs/storybook-angular';
+import { ConsentWidget } from '@inth/angular/consent-widget';
 import {
 	expandedCategories,
 	expandedVendors,
-} from '@c15t/conformance/play/consent-widget';
-import { ConsentWidget } from '@inth/angular/consent-widget';
+} from '@inth/conformance/play/consent-widget';
 
 import {
 	storybookVendors,
@@ -17,7 +17,7 @@ import {
 
 const template = `
 	<div style="width: 32rem;">
-		<c15t-consent-widget />
+		<inth-consent-widget />
 	</div>
 `;
 

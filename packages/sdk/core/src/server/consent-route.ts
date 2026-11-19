@@ -11,7 +11,7 @@
  * - `GET …/init` resolves the visitor's init from that manifest (geo,
  *   language, GPC), negotiates the policy contract, attaches the Global
  *   Vendor List for IAB policies and reports the session to the backend.
- *   The same route serves versioned vendor-list requests (`?c15t-gvl=`).
+ *   The same route serves versioned vendor-list requests (`?inth-gvl=`).
  * - With `proxy` on, every other allowlisted path is forwarded to the
  *   backend through {@link forwardConsentRequest}.
  *
@@ -34,6 +34,7 @@ import {
 	parsePolicyContractHeader,
 	POLICY_CONTRACT_HEADER,
 	POLICY_CONTRACT_VERSION,
+	primaryLanguage,
 	readJourneyParams,
 	readPolicyResolutionWire,
 	writePolicyResolutionWire,
@@ -50,6 +51,7 @@ import type {
 	SessionJourney,
 } from '@inth/sdk-schema/types';
 
+import { markResponsePrivate } from '../libs/identity-headers';
 import {
 	fetchCachedManifest,
 	getManifestAge,
@@ -65,6 +67,10 @@ import type {
 import { warnManifestFallback } from '../libs/manifest-fallback';
 import { reportConsentSession } from '../libs/session-report';
 import {
+	inthProtocolHeaders,
+	readProducerPolicyContract,
+} from '../libs/version-header';
+import {
 	fetchCachedAdTechProviders,
 	loadManifestAdTechProviders,
 } from '../transports/ad-tech-provider-cache';
@@ -79,10 +85,6 @@ import {
 	resolveManifestInit,
 } from '../transports/manifest-cache';
 import {
-	c15tProtocolHeaders,
-	readProducerPolicyContract,
-} from '../transports/version-header';
-import {
 	CONSENT_PROXY_FORWARDING_HEADERS,
 	filterCookieHeader,
 	forwardConsentRequest,
@@ -93,11 +95,23 @@ import type {
 	ConsentProxyForwarding,
 	ConsentProxyOptions,
 } from './consent-proxy';
-import { fetchCachedGvl } from './gvl-cache';
+import { fetchServerGvl } from './gvl-cache';
 import {
 	resolveRequestProjectUrl,
 	resolveRequestOrigin,
 } from './request-origin';
+import {
+	mountOf,
+	readUpstreams,
+	relativeLoop,
+	requestLoop,
+} from './route-loop';
+import {
+	IN_PROCESS_ORIGIN,
+	keepAlive,
+	toPathFetch,
+	trimPathSlashes,
+} from './shared';
 
 /**
  * Request header a server render sets on its call to the init route: the
@@ -105,20 +119,12 @@ import {
  * (manifest, vendor list, `/init` fallback) before failing. Values above
  * ten seconds are capped; anything that is not a whole number is ignored.
  */
-export const CONSENT_ROUTE_TIMEOUT_HEADER = 'x-c15t-timeout-ms';
+export const CONSENT_ROUTE_TIMEOUT_HEADER = 'x-inth-timeout-ms';
 
 /** Longest request-supplied budget honoured, in milliseconds. */
 const MAX_ROUTE_TIMEOUT_MS = 10_000;
 
 const INIT_CACHE_CONTROL = 'private, no-store';
-
-/**
- * Origin a `/`-relative URL is placed on when the adapter can answer its
- * own routes in-process. It is never contacted: requests to it go to
- * {@link ConsentRouteRequestContext.localFetch} as a path. Loopback, so the
- * cleartext rules treat the in-process hop as local.
- */
-const IN_PROCESS_ORIGIN = 'http://localhost';
 
 /** A conservative BCP 47 shape: primary subtag plus up to two subtags. */
 const LANGUAGE_TAG = /^[a-z]{2,3}(?:-[a-z0-9]{2,8}){0,2}$/u;
@@ -143,7 +149,7 @@ export type ConsentRouteFetchGvl = (input: {
 export interface ConsentRouteHandlerOptions {
 	/**
 	 * Package name of the adapter, such as `@inth/nextjs`. Prefixes errors,
-	 * names the adapter in session reports, and is sent as `x-c15t-proxy`.
+	 * names the adapter in session reports, and is sent as `x-inth-proxy`.
 	 */
 	adapter: string;
 	/**
@@ -191,6 +197,15 @@ export interface ConsentRouteHandlerOptions {
 	 * adapter shares.
 	 */
 	cache?: ManifestCache;
+	/**
+	 * The path the route is mounted at, such as `/api/inth`, when the
+	 * adapter knows it before a request. A relative `projectUrl` or
+	 * `manifestUrl` on or beneath it then fails at setup. Without it, a
+	 * request that carries {@link ConsentRouteRequestContext.path} tells the
+	 * route where it is mounted. Either way, an upstream URL that leads
+	 * back into the route fails the request with a 500.
+	 */
+	routePrefix?: string;
 }
 
 /** What the adapter knows about one request that a `Request` does not carry. */
@@ -297,7 +312,7 @@ export interface ResolveConsentInitOptions {
 		reference: ConsentManifestAdditionalConsent
 	) => Promise<AdTechProvider[] | undefined>;
 	/**
-	 * The client's `x-c15t-policy-contract` header, if it sent one. A value
+	 * The client's `x-inth-policy-contract` header, if it sent one. A value
 	 * other than the supported version fails the resolution.
 	 */
 	clientContract?: string | null;
@@ -397,7 +412,7 @@ export const resolveConsentInit = async function resolveConsentInit(
 	);
 	if (options.loadGvl && isIabMatch(manifest, payload)) {
 		payload.gvl = await options.loadGvl(
-			payload.translations.language.split('-')[0] || 'en'
+			primaryLanguage(payload.translations.language) ?? 'en'
 		);
 	}
 	const adTechProviders = await providers;
@@ -443,42 +458,6 @@ export const readWaitUntil = function readWaitUntil(
 				(waitUntil as (task: Promise<unknown>) => void).call(holder, task);
 			}
 		: undefined;
-};
-
-/** Swallows a promise's outcome, for work handed to the platform. */
-const settle = async function settle(task: Promise<unknown>): Promise<void> {
-	try {
-		await task;
-	} catch {
-		// The next request retries; the platform only keeps this one alive.
-	}
-};
-
-/** Hands work to the platform; registration is best effort. */
-const keepAlive = function keepAlive(
-	waitUntil: ((task: Promise<void>) => void) | undefined,
-	task: Promise<unknown>
-): void {
-	if (!waitUntil) {
-		return;
-	}
-	try {
-		waitUntil(settle(task));
-	} catch {
-		// The work runs either way; it is only unregistered.
-	}
-};
-
-const trimPathSlashes = function trimPathSlashes(value: string): string {
-	let start = 0;
-	let end = value.length;
-	while (end > 0 && value[end - 1] === '/') {
-		end -= 1;
-	}
-	while (start < end && value[start] === '/') {
-		start += 1;
-	}
-	return value.slice(start, end);
 };
 
 const lastSegment = function lastSegment(pathname: string): string {
@@ -553,16 +532,6 @@ interface ResolvedTarget {
 	inProcess?: true;
 }
 
-/** Sends {@link IN_PROCESS_ORIGIN} URLs to `localFetch` as paths. */
-const toPathFetch = function toPathFetch(
-	localFetch: ManifestFetch
-): ManifestFetch {
-	return (input, init) => {
-		const url = new URL(input instanceof Request ? input.url : input);
-		return localFetch(`${url.pathname}${url.search}`, init);
-	};
-};
-
 /**
  * The hop chain for a proxied request when the adapter supplies none.
  * Without `trustForwardedHeaders` the forwarding headers are
@@ -576,7 +545,6 @@ const toPathFetch = function toPathFetch(
  * the socket passes its address as `peer`: the client without trusted
  * headers, else the last hop, appended to the trusted chain.
  *
- * @param request - The incoming request.
  * @param trustForwardedHeaders - Believe `x-forwarded-*` headers.
  * @param peer - The socket's remote address, when the adapter has one.
  * @returns The forwarding the proxy sends on.
@@ -621,6 +589,8 @@ export const readRequestForwarding = function readRequestForwarding(
 
 const notFound = () => Response.json({ error: 'Not found' }, { status: 404 });
 
+const READ_METHODS: ReadonlySet<string> = new Set(['GET', 'HEAD']);
+
 /**
  * The country, region and GPC overrides a browser's `/init` carries as
  * query parameters, leaving out any it did not send.
@@ -652,10 +622,12 @@ const queryOverrides = function queryOverrides(
  * request budget that runs out.
  * @throws {Error} From the handler, when neither `projectUrl` nor
  * `manifestUrl` is set, or one cannot be resolved.
+ * @throws {TypeError} When a relative `projectUrl` or `manifestUrl` is on
+ * or beneath `routePrefix`.
  * @example
  * ```ts
  * const handle = createConsentRouteHandler({
- *   adapter: '@c15t/example',
+ *   adapter: '@inth/example',
  *   projectUrl: 'https://consent.example.com',
  * });
  * export const GET = (request: Request) => handle(request, { route: 'init' });
@@ -665,6 +637,13 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 	options: ConsentRouteHandlerOptions
 ): ConsentRouteHandler {
 	const { adapter } = options;
+	const upstreams = readUpstreams(options);
+	if (options.routePrefix !== undefined) {
+		const loop = relativeLoop(upstreams, options.routePrefix);
+		if (loop) {
+			throw new TypeError(`${adapter}: ${loop}`);
+		}
+	}
 	const proxy = resolveConsentProxyOptions(options.proxy);
 	const extraForwardHeaders =
 		typeof options.proxy === 'object'
@@ -818,9 +797,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 			// The in-process cache is partitioned by these credentials; a shared
 			// cache in front of this route is keyed by URL only, so it must not
 			// reuse a credentialed manifest for the next visitor.
-			headers.set('cache-control', 'private, no-store');
-			headers.delete('etag');
-			headers.delete('last-modified');
+			markResponsePrivate(headers);
 			return new Response(JSON.stringify(cached.manifest), { headers });
 		}
 		// Downstream caches count the remaining lifetime, not a fresh TTL.
@@ -844,9 +821,9 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 			}
 			const fill = options.fetchGvl
 				? options.fetchGvl({ fetch: configuredFetch(), language, reference })
-				: fetchCachedGvl({
+				: fetchServerGvl({
 						fetch: options.fetch,
-						headers: c15tProtocolHeaders,
+						headers: inthProtocolHeaders,
 						label: adapter,
 						language,
 						url: reference.url,
@@ -885,7 +862,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 			const fill = fetchCachedAdTechProviders({
 				...(target.inProcess && { cache: inProcessProviderCache }),
 				fetch: (target.fetch ?? configuredFetch()) as typeof globalThis.fetch,
-				headers: c15tProtocolHeaders,
+				headers: inthProtocolHeaders,
 				reference: { ...reference, url: target.url },
 			});
 			if (budget.budgetMs === undefined) {
@@ -929,13 +906,13 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		if (budget.expired()) {
 			throw new ManifestUnavailableError(
 				'timeout',
-				`c15t: consent resolution did not finish within ${budget.budgetMs} ms.`,
+				`inth: consent resolution did not finish within ${budget.budgetMs} ms.`,
 				{ cause }
 			);
 		}
 		warnManifestFallback(manifestUrl, cause);
 		const backend = resolveBackend(request, context, options.projectUrl);
-		const forward: Record<string, string> = { ...c15tProtocolHeaders };
+		const forward: Record<string, string> = { ...inthProtocolHeaders };
 		for (const name of CONSENT_REQUEST_HEADER_NAMES) {
 			const value = request.headers.get(name);
 			if (value) {
@@ -1061,7 +1038,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 					...context.inputs,
 					// Inputs an adapter resolved from the request headers miss the
 					// overrides a browser sends in the query string; those win,
-					// as the `x-c15t-*` override headers did.
+					// as the `x-inth-*` override headers did.
 					...queryOverrides(url),
 					language: context.inputs.language ?? 'en',
 				}
@@ -1097,7 +1074,15 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		path: string
 	): Promise<Response> {
 		if (!proxy) {
-			return Promise.resolve(notFound());
+			// Without the proxy the route only reads.
+			return Promise.resolve(
+				READ_METHODS.has(request.method.toUpperCase())
+					? notFound()
+					: new Response(null, {
+							headers: { allow: 'GET, HEAD' },
+							status: 405,
+						})
+			);
 		}
 		if (!options.projectUrl) {
 			throw new Error(`${adapter}: pass projectUrl to use proxy.`);
@@ -1127,8 +1112,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 				: trimPathSlashes(context.path);
 		let { route } = context;
 		if (route === undefined) {
-			const method = request.method.toUpperCase();
-			const readable = method === 'GET' || method === 'HEAD';
+			const readable = READ_METHODS.has(request.method.toUpperCase());
 			if (readable && path === 'manifest') {
 				route = 'manifest';
 			} else if (
@@ -1150,7 +1134,38 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		}
 	};
 
+	/**
+	 * Why this request's upstream would lead back into the route, or
+	 * `undefined`.
+	 */
+	const loopFor = function loopFor(
+		request: Request,
+		context: ConsentRouteRequestContext
+	): string | undefined {
+		if (upstreams.length === 0) {
+			return undefined;
+		}
+		const mount =
+			options.routePrefix ??
+			(context.path === undefined
+				? undefined
+				: mountOf(new URL(request.url).pathname, context.path));
+		if (mount === undefined) {
+			return undefined;
+		}
+		// The site's origin as the route sees it, forwarded headers included
+		// when it trusts them.
+		const site = context.forwarding
+			? context.forwarding()
+			: readRequestForwarding(request, trustForwardedHeaders);
+		return requestLoop(upstreams, mount, site);
+	};
+
 	return async (request, context = {}) => {
+		const loop = loopFor(request, context);
+		if (loop) {
+			return Response.json({ error: `${adapter}: ${loop}` }, { status: 500 });
+		}
 		const work = dispatch(request, context);
 		const { waitUntil } = context;
 		if (!waitUntil) {

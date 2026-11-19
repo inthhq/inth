@@ -16,10 +16,11 @@
 
 import { POLICY_CONTRACT_VERSION } from '@inth/sdk-schema/types';
 
-import { PREFETCH_WINDOW_KEY } from './prefetch/window-key';
+import { PREFETCH_WINDOW_KEY } from './page-globals';
+import { STORED_NAMES_CHECK } from './storage-keys';
 
 /** Attribute on the element that wraps the static banner. @internal */
-export const STATIC_BANNER_ATTR = 'data-c15t-static-banner';
+export const STATIC_BANNER_ATTR = 'data-inth-static-banner';
 
 /** What the reveal script compares the `/init` answer with. @internal */
 export interface StaticBannerKey {
@@ -79,24 +80,23 @@ export const staticBannerCopyHash = function staticBannerCopyHash(
  * Must directly follow the banner's wrapper element.
  *
  * @param key - What the rendered banner shows.
- * @param stored - Cookie and localStorage names that hold a choice or a
- * notice dismissal (`storedAnswerKeys`).
+ * @param stored - Names that hold a choice or a notice dismissal
+ * (`storedChoiceNames`).
  * @returns Script source, without the `<script>` tag.
  * @internal
  */
 export const buildStaticBannerScript = function buildStaticBannerScript(
 	key: StaticBannerKey,
-	stored: { cookies: readonly string[]; local: readonly string[] }
+	stored: readonly string[]
 ): string {
 	const config = JSON.stringify({
 		b: key.branding,
 		c: key.copy,
 		f: key.policy,
-		k: stored.cookies,
+		k: stored,
 		l: key.language,
-		s: stored.local,
 		v: POLICY_CONTRACT_VERSION,
 		x: COPY_PATHS,
 	});
-	return `(function(w,d,p){var e=d.currentScript,b=e&&e.previousElementSibling,m,k,o;function x(){b&&b.parentNode&&b.parentNode.removeChild(b)}function s(){var f=false;try{f=d.cookie.split('; ').some(function(c){return p.k.some(function(n){return c.indexOf(n+'=')===0&&c.length>n.length+1})})}catch(r){}if(!f)try{f=p.s.some(function(n){return w.localStorage.getItem(n)!==null})}catch(r){}return f}function h(t){var v=p.x.map(function(a){var g=t&&t[a[0]],y=g&&g[a[1]];return typeof y==='string'?y:''}).join('\\n'),n=2166136261,i;for(i=0;i<v.length;i++)n=Math.imul(n^v.charCodeAt(i),16777619)>>>0;return n}if(!b||!b.hasAttribute('${STATIC_BANNER_ATTR}'))return;if(s())return x();m=w['${PREFETCH_WINDOW_KEY}'];for(k in m)if(o){o=0;break}else o=m[k];if(!o)return x();o.promise.then(function(r){var i=r&&r.init,q=i&&i.policyResolution,t=i&&i.translations,v=r&&r.producerPolicyContract;if(b.parentNode&&(v==null||Number(v)===p.v)&&q&&q.status==='matched'&&q.fingerprints&&q.fingerprints.policy===p.f&&t&&t.language===p.l&&(i.branding||null)===p.b&&!i.gvl&&!i.gvlReference&&!(i.vendors&&i.vendors.length)&&!(i.customVendors&&i.customVendors.length)&&h(t.translations)===p.c&&!s())b.hidden=false;else x()},x)})(window,document,${config})`;
+	return `(function(w,d,p){var e=d.currentScript,b=e&&e.previousElementSibling,m,k,o,H=${STORED_NAMES_CHECK};function x(){b&&b.parentNode&&b.parentNode.removeChild(b)}function s(){return H(p.k)}function h(t){var v=p.x.map(function(a){var g=t&&t[a[0]],y=g&&g[a[1]];return typeof y==='string'?y:''}).join('\\n'),n=2166136261,i;for(i=0;i<v.length;i++)n=Math.imul(n^v.charCodeAt(i),16777619)>>>0;return n}if(!b||!b.hasAttribute('${STATIC_BANNER_ATTR}'))return;if(s())return x();m=w['${PREFETCH_WINDOW_KEY}'];for(k in m)if(o){o=0;break}else o=m[k];if(!o)return x();o.promise.then(function(r){var i=r&&r.init,q=i&&i.policyResolution,t=i&&i.translations,v=r&&r.producerPolicyContract;if(b.parentNode&&(v==null||Number(v)===p.v)&&q&&q.status==='matched'&&q.fingerprints&&q.fingerprints.policy===p.f&&t&&t.language===p.l&&(i.branding||null)===p.b&&!i.gvl&&!i.gvlReference&&!(i.vendors&&i.vendors.length)&&!(i.customVendors&&i.customVendors.length)&&h(t.translations)===p.c&&!s())b.hidden=false;else x()},x)})(window,document,${config})`;
 };

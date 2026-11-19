@@ -4,7 +4,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	loadScripts,
@@ -22,9 +22,9 @@ describe('The Trade Desk core loader consent contract', () => {
 	});
 	it('creates no vendor globals, requests or storage before mapped consent', () => {
 		const scripts = [
-			theTradeDeskPixel({ advertiserId: 'c15tfake', pixelIds: ['c15tfake'] }),
+			theTradeDeskPixel({ advertiserId: 'inthfake', pixelIds: ['inthfake'] }),
 		];
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMeasurementConsents);
 		expect(document.querySelector('script')).toBeNull();
 		for (const key of [
@@ -45,11 +45,11 @@ describe('The Trade Desk core loader consent contract', () => {
 	});
 	it('retains one loader across in-flight revoke and regrant', () => {
 		const scripts = [
-			theTradeDeskPixel({ advertiserId: 'c15tfake', pixelIds: ['c15tfake'] }),
+			theTradeDeskPixel({ advertiserId: 'inthfake', pixelIds: ['inthfake'] }),
 		];
 		loadScripts(scripts, grantedMarketingConsents);
 		const old = document.querySelector('script');
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(old?.isConnected).toBe(true);
 		old?.dispatchEvent(new Event('load'));
 		expect(document.querySelector('script')).toBe(old);
@@ -96,7 +96,7 @@ describe('Trade Desk SDK queue contract', () => {
 				},
 			],
 		]);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMarketingConsents);
 		expect(window.ttdConversionEventsLayer).toHaveLength(2);
 	});

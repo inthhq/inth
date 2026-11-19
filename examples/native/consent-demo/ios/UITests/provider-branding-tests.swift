@@ -63,7 +63,7 @@ extension ConsentJourneyTests {
         let beside = mark.frame.minX >= customize.frame.maxX || mark.frame.maxX <= customize.frame.minX
         if inline {
             XCTAssertFalse(beside, "This configuration must retain the full inline attribution")
-        } else if let expected = ProcessInfo.processInfo.environment["C15T_EXPECT_SIDE_BRANDING"] {
+        } else if let expected = ProcessInfo.processInfo.environment["INTH_EXPECT_SIDE_BRANDING"] {
             XCTAssertEqual(beside, expected == "1", "Unexpected attribution placement")
         }
         if beside {
@@ -130,7 +130,7 @@ extension ConsentJourneyTests {
     }
 
     func test27AttributionStaysExclusiveAcrossLiveDisplayTransitions() throws {
-        guard let targets = ProcessInfo.processInfo.environment["C15T_LIVE_DISPLAY_TRANSITIONS"] else {
+        guard let targets = ProcessInfo.processInfo.environment["INTH_LIVE_DISPLAY_TRANSITIONS"] else {
             throw XCTSkip("Requires two fold/unfold transitions through the device's supported controls.")
         }
         let widths = targets.split(separator: ",").compactMap { Double($0) }

@@ -8,9 +8,14 @@
  */
 
 import type { ConsentSnapshot } from '@inth/sdk/engine';
+import {
+	ENDED_RENDERS_KEY,
+	ENDED_RENDERS_LIMIT,
+	PAGE_RENDER_KEY,
+} from '@inth/sdk/runtime/page-globals';
 
 /** Attribute on the `<script type="application/json">` element. @internal */
-export const CONSENT_BOOT_ATTRIBUTE = 'data-c15t-boot';
+export const CONSENT_BOOT_ATTRIBUTE = 'data-inth-boot';
 
 /** What the server leaves. @internal */
 export interface ConsentBoot {
@@ -53,7 +58,7 @@ export const readConsentBoot = function readConsentBoot(
 
 /**
  * What a server render's inline scripts leave for its deferred root
- * (`PAGE_RENDER_KEY` in `@inth/sdk/runtime/script-server-start`, copied).
+ * (`PAGE_RENDER_KEY` in `@inth/sdk/runtime/page-globals`).
  * @internal
  */
 export interface PageRender {
@@ -80,7 +85,7 @@ export interface PageRender {
 export const pageRender = function pageRender(
 	renderId: string | undefined = readConsentBoot()?.i
 ): PageRender | undefined {
-	const render = (globalThis as Record<string, unknown>).__c15tRender as
+	const render = (globalThis as Record<string, unknown>)[PAGE_RENDER_KEY] as
 		| PageRender
 		| undefined;
 	const id = render?.id;
@@ -88,18 +93,8 @@ export const pageRender = function pageRender(
 };
 
 /**
- * How many ended render ids the page keeps (`ENDED_RENDERS_LIMIT` in
- * `@inth/sdk/runtime/script-server-start`, copied). An evicted id would
- * let that render's late start run, so the bound is far above the renders
- * one page sees; it only stops a page that never reloads from growing the
- * list without end. Each id is a short string.
- */
-const ENDED_RENDERS_LIMIT = 1000;
-
-/**
  * Ends this document's render for its inline scripts. It records the id
- * among the ended renders (`ENDED_RENDERS_KEY` in
- * `@inth/sdk/runtime/script-server-start`), which a newer render's page
+ * among the ended renders ({@link ENDED_RENDERS_KEY}), which a newer render's page
  * object never replaces, so a start script of this render that streams in
  * later installs nothing. It also renames the page object, so a server
  * start still waiting to run, or to insert a script after the page's
@@ -117,50 +112,18 @@ export const endPageRender = function endPageRender(
 		return;
 	}
 	const page = globalThis as Record<string, unknown>;
-	const recorded = page.__c15tEndedRenders;
+	const recorded = page[ENDED_RENDERS_KEY];
 	const ended = Array.isArray(recorded) ? (recorded as unknown[]) : [];
 	if (!ended.includes(id)) {
 		ended.push(id);
 		ended.splice(0, Math.max(0, ended.length - ENDED_RENDERS_LIMIT));
 	}
-	page.__c15tEndedRenders = ended;
+	page[ENDED_RENDERS_KEY] = ended;
 	// Only this render's own page object: a newer render's stays as it is.
 	const render = pageRender(id);
 	if (render) {
 		render.id = `${render.id}:ended`;
 	}
-};
-
-/**
- * Whether a visitor in this state loses nothing when the engine loads
- * late: the banner asks them to choose and no optional category the page
- * uses may run. Until they tap, nothing the engine does is visible or
- * allowed. The page's categories are the configured and discovered ones
- * when there are any; a category outside the policy's scope counts as
- * allowed, so a page that names none defers only when nothing is.
- *
- * @param snapshot - The snapshot the visitor's page renders from.
- * @returns `true` when the engine can wait.
- * @internal
- */
-export const canDeferEngine = function canDeferEngine(
-	snapshot: ConsentSnapshot
-): boolean {
-	return (
-		snapshot.activeUI === 'banner' &&
-		snapshot.model !== 'iab' &&
-		!snapshot.externalPermissions &&
-		!snapshot.experimentPending &&
-		!snapshot.experiment &&
-		(snapshot.consentCategories ?? Object.keys(snapshot.effectivePermissions))
-			.filter((category) => category !== 'necessary')
-			.every(
-				(category) =>
-					!snapshot.effectivePermissions[
-						category as keyof typeof snapshot.effectivePermissions
-					]
-			)
-	);
 };
 
 /**
@@ -212,30 +175,6 @@ export const storedChoiceCurrent = function storedChoiceCurrent(
 	} catch {
 		return false;
 	}
-};
-
-/**
- * Whether a root can start the plain scripts this visitor's stored choice
- * allows without its engine, and let the engine wait for the page's
- * priority images: a returning visitor who chose
- * ({@link canDeferEngineAfterChoice}), and whose browser holds nothing
- * newer than what the server read ({@link storedChoiceCurrent}). When the
- * browser's records differ, a GPC signal the server did not see, a newer
- * stored denial, or an expired decision, the engine applies them when it
- * loads and the app's callbacks hear the change, so it loads at once.
- *
- * @param snapshot - The snapshot the visitor's page renders from.
- * @returns `true` when the root starts the scripts itself.
- * @internal
- */
-export const startsScriptsWithoutEngine = function startsScriptsWithoutEngine(
-	snapshot: ConsentSnapshot
-): boolean {
-	return (
-		!canDeferEngine(snapshot) &&
-		canDeferEngineAfterChoice(snapshot) &&
-		storedChoiceCurrent()
-	);
 };
 
 /** Longest delay `setTimeout` takes before it fires at once. */
@@ -326,7 +265,6 @@ export interface LiveRootInputs {
 	options?: object;
 }
 
-/** `value` without the `display`-only fields. */
 const withoutDisplay = (
 	value: Readonly<Record<string, unknown>> | undefined,
 	display: readonly string[]
@@ -340,24 +278,6 @@ const withoutDisplay = (
 	return kept;
 };
 
-/**
- * A key for a root's live options: every root prop and option except the
- * display-only ones ({@link DISPLAY_ONLY_ROOT_PROPS},
- * {@link DISPLAY_ONLY_OPTIONS}), with `state` by identity. A deferred
- * shell given a different key than at mount (`live` on
- * `DeferredConsentShell`) loads the engine at once. Every value is
- * serialized with sorted keys; a callback counts only by being there, so
- * an inline callback rebuilt each render keeps the key while adding or
- * removing one changes it (the shell reads the latest callbacks at a tap).
- * A `callbackOnly` predicate counts by identity, as the loader remounts a
- * script given a new one.
- * A value that cannot be serialized gives a new key each time, which loads
- * the engine.
- *
- * @param root - The root's merged props.
- * @returns The key.
- * @internal
- */
 /**
  * An id per object or function, so a new or removed `state`, or a new
  * `callbackOnly` predicate, changes the key.
@@ -380,6 +300,23 @@ const identityOf = (value: unknown): unknown => {
 	return id;
 };
 
+/**
+ * A key for a root's live options: every root prop and option except the
+ * display-only ones ({@link DISPLAY_ONLY_ROOT_PROPS},
+ * {@link DISPLAY_ONLY_OPTIONS}), with `state` by identity. A deferred
+ * shell given a different key than at mount (`live` on
+ * `DeferredConsentShell`) loads the engine at once. Every value is
+ * serialized with sorted keys; a callback counts only by being there, so
+ * an inline callback rebuilt each render keeps the key while adding or
+ * removing one changes it (the shell reads the latest callbacks at a tap).
+ * A `callbackOnly` predicate counts by identity, as the loader remounts a
+ * script given a new one.
+ * A value that cannot be serialized gives a new key each time, which loads
+ * the engine.
+ *
+ * @param root - The root's merged props.
+ * @internal
+ */
 export const liveRootKey = function liveRootKey(root: LiveRootInputs): string {
 	const { options, state, ...rest } = root as LiveRootInputs &
 		Record<string, unknown>;
@@ -419,7 +356,10 @@ export const liveRootKey = function liveRootKey(root: LiveRootInputs): string {
 };
 
 // The rule lives in core, where the server's stored-choice check reads it.
-export { rootNeedsEngine } from '@inth/sdk/surface-actions/plain-scripts';
+export {
+	awaitsChoice,
+	rootNeedsEngine,
+} from '@inth/sdk/surface-actions/plain-scripts';
 export type { RootEngineInputs } from '@inth/sdk/surface-actions/plain-scripts';
 
 /**
@@ -434,7 +374,7 @@ export type { RootEngineInputs } from '@inth/sdk/surface-actions/plain-scripts';
 export const iabProviderLoaded = function iabProviderLoaded(): boolean {
 	return (
 		(globalThis as Record<symbol, unknown>)[
-			Symbol.for('c15t.react.iab-provider')
+			Symbol.for('inth.react.iab-provider')
 		] === true
 	);
 };
@@ -455,31 +395,6 @@ export const whenIABProviderLoads = function whenIABProviderLoads(
 		return;
 	}
 	const host = globalThis as Record<symbol, (() => void)[] | undefined>;
-	const key = Symbol.for('c15t.react.iab-provider-waiters');
+	const key = Symbol.for('inth.react.iab-provider-waiters');
 	host[key] = [...(host[key] ?? []), run];
-};
-
-/**
- * Whether a root's engine starts downloading as soon as its chunk runs,
- * ahead of hydration: the app loaded `IABProvider`, which the shell cannot
- * serve ({@link iabProviderLoaded}), or the page's boot data names a
- * visitor the engine must serve at once.
- *
- * @param root - Where the page's boot data is.
- * @returns `true` when the engine loads at once.
- * @internal
- */
-export const engineNeededAtLoad = function engineNeededAtLoad(
-	root: ParentNode = document
-): boolean {
-	if (iabProviderLoaded()) {
-		return true;
-	}
-	const boot = readConsentBoot(root);
-	const snapshot = boot && (boot.r ?? boot.s);
-	return Boolean(
-		snapshot &&
-		!canDeferEngine(snapshot) &&
-		!startsScriptsWithoutEngine(snapshot)
-	);
 };

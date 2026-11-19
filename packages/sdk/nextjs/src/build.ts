@@ -4,32 +4,30 @@ import { basename, join, relative, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import {
-	GENERATED_MODULE_IDS,
+	DEFERRED_SHEET_SPECIFIERS,
+	GENERATED_MODULE_ID,
 	readBuildEnv,
+	readBuildEnvEntry,
 	writeManifestCacheModule,
 } from '@inth/sdk/build';
-import type { ManifestBuildOptions, ManifestCacheFiles } from '@inth/sdk/build';
+import type {
+	BuildEnvSource,
+	ManifestBuildOptions,
+	ManifestCacheFiles,
+} from '@inth/sdk/build';
 import type { NextConfig } from 'next';
 import {
 	PHASE_DEVELOPMENT_SERVER,
 	PHASE_PRODUCTION_BUILD,
 } from 'next/constants.js';
 
+import { BACKEND_URL_ENV } from './config';
 import type { ConsentConfig } from './config';
 
 export type {
 	ManifestBuildErrorMode,
 	ManifestBuildOptions,
 } from '@inth/sdk/build';
-
-/** Variable the build reads the backend URL from, like `defineConsentConfig`. */
-const BACKEND_URL_ENV = 'NEXT_PUBLIC_C15T_BACKEND_URL';
-
-/**
- * The Inth project URL, shared with other Inth SDKs. Read when
- * {@link BACKEND_URL_ENV} is unset.
- */
-const INTH_URL_ENV = 'NEXT_PUBLIC_INTH_PROJECT_URL';
 
 /** A Next.js configuration object or synchronous/asynchronous factory. */
 export type ConsentNextConfig =
@@ -40,25 +38,21 @@ export type ConsentNextConfig =
 	  ) => NextConfig | Promise<NextConfig>);
 
 /**
- * The specifiers aliased to the written snapshot: the one the server
- * helpers import, and `@inth/nextjs/generated` (or `@inth/sdk/generated`)
- * for app code. The
- * packages' own modules there export `undefined`.
+ * The specifiers aliased to the written snapshot: `@inth/sdk/generated`,
+ * which the server helpers import, and `@inth/nextjs/generated` for app
+ * code. The packages' own modules there export `undefined`.
  */
-const GENERATED_SPECIFIERS = [
-	'@inth/nextjs/generated-manifest',
-	...GENERATED_MODULE_IDS,
-];
+const GENERATED_SPECIFIERS = ['@inth/nextjs/generated', GENERATED_MODULE_ID];
 
-/** The specifier the package imports the app's `c15t.config.ts` through. */
+/** The specifier the package imports the app's `inth.config.ts` through. */
 const USER_CONFIG_SPECIFIER = '@inth/nextjs/user-config';
 
 /** Config files looked up at the project root, in this order. */
 const USER_CONFIG_FILES = [
-	'c15t.config.ts',
-	'c15t.config.mts',
-	'c15t.config.js',
-	'c15t.config.mjs',
+	'inth.config.ts',
+	'inth.config.mts',
+	'inth.config.js',
+	'inth.config.mjs',
 ];
 
 /**
@@ -70,25 +64,6 @@ const USER_CONFIG_FILES = [
 const GENERATED_IMPORTERS = ['@inth/sdk', '@inth/nextjs'];
 
 type WebpackConfigFunction = NonNullable<NextConfig['webpack']>;
-
-/**
- * The sheets server-rendered surfaces put in the HTML: `tokens`, `button`,
- * `banner`, `trigger` and `consent-gate` (the banner, the IAB banner, the
- * trigger and the ConsentGate), and `first-paint`, which earlier
- * `@inth/react` releases rendered for the IAB banner. A server-rendered page already
- * holds their text in `<style>` elements, so browser bundles get each
- * sheet's `-deferred` module, with the same `id` and a `load()` that fetches
- * the text only when a surface renders first in the browser.
- */
-const SERVER_RENDERED_SHEETS = [
-	'first-paint',
-	'tokens',
-	'button',
-	'banner',
-	'trigger',
-	'consent-gate',
-] as const;
-const SHEETS_PREFIX = '@inth/sdk/ui/styles/sheets/';
 
 interface SheetFiles {
 	/** The sheet's specifier, as `@inth/react` imports it. */
@@ -113,8 +88,9 @@ const resolveSheetFiles = function resolveSheetFiles(): SheetFiles[] {
 	} catch {
 		return [];
 	}
-	return SERVER_RENDERED_SHEETS.flatMap((name) => {
-		const specifier = `${SHEETS_PREFIX}${name}`;
+	// A server-rendered page already holds these sheets in `<style>`
+	// elements, so browser bundles get each one's `-deferred` module.
+	return DEFERRED_SHEET_SPECIFIERS.flatMap((specifier) => {
 		try {
 			return [
 				{
@@ -129,7 +105,7 @@ const resolveSheetFiles = function resolveSheetFiles(): SheetFiles[] {
 	});
 };
 
-/** The app's `c15t.config.*` at the project root, or `undefined`. */
+/** The app's `inth.config.*` at the project root, or `undefined`. */
 const findUserConfig = function findUserConfig(
 	root: string
 ): string | undefined {
@@ -154,7 +130,6 @@ type TranspileConfig = (options: {
 	nextConfigPath: string;
 }) => Promise<unknown>;
 
-/** Evaluates a config file and returns its exports. */
 const importConfigFile = async function importConfigFile(
 	file: string,
 	root: string
@@ -178,7 +153,7 @@ const importConfigFile = async function importConfigFile(
 };
 
 /**
- * The default export of the app's `c15t.config.*`, evaluated with the loader
+ * The default export of the app's `inth.config.*`, evaluated with the loader
  * Next.js uses for `next.config.ts`, so the build sees the same `mode` and
  * `projectUrl` as the bundles.
  *
@@ -226,62 +201,22 @@ const loadUserConfig = async function loadUserConfig(
 };
 
 /**
- * Why the config's mode needs no build-time manifest, as Nuxt and Astro
- * decide: `hosted()` and `testing()` have none to fetch, a `snapshot` is
- * already one, and `manifest({ source: 'runtime' })` always fetches at
- * runtime. `undefined` when the build should fetch it, as for the default
- * `manifest()`.
- */
-const modeSkipReason = function modeSkipReason(
-	config: ConsentConfig | undefined
-): string | undefined {
-	const mode = config?.mode;
-	if (mode?.type === 'testing') {
-		return 'c15t.config.ts sets testing(), which needs no backend';
-	}
-	if (mode?.type === 'hosted') {
-		return 'c15t.config.ts sets hosted(), which asks the backend for each visitor';
-	}
-	if (mode?.snapshot) {
-		return 'c15t.config.ts passes manifest({ snapshot })';
-	}
-	if (mode?.source === 'runtime') {
-		return "c15t.config.ts sets manifest({ source: 'runtime' })";
-	}
-	// The server fetches an absolute manifestUrl at runtime and ignores a
-	// build snapshot. A `/` path is the browser's, so it still needs one.
-	const url = mode?.manifestUrl;
-	if (url !== undefined && (!url.startsWith('/') || url.startsWith('//'))) {
-		return 'c15t.config.ts passes an absolute manifest({ manifestUrl })';
-	}
-	return undefined;
-};
-
-/**
- * `NEXT_PUBLIC_INTH_PROJECT_URL` when `NEXT_PUBLIC_C15T_BACKEND_URL` is
- * unset, copied to `NEXT_PUBLIC_C15T_BACKEND_URL` in the process
- * environment. `c15t.config.ts`, evaluated next, reads the c15t name, and
- * the caller also adds it to the config's `env`, so bundles inline one
- * value and the browser gets no second read.
+ * The URL from the c15t name of {@link BACKEND_URL_ENV} when only that is
+ * set, copied to the Inth name in the process environment.
+ * `inth.config.ts`, evaluated next, reads the Inth name, and the caller also
+ * adds it to the config's `env`, so bundles inline it under that name.
  *
- * @returns The Inth URL that was copied, or `undefined`.
+ * @returns The URL that was copied, or `undefined`.
  */
-const exposeInthProjectURL = function exposeInthProjectURL(
-	root: string,
-	phase: string
+const exposeLegacyProjectUrl = function exposeLegacyProjectUrl(
+	envSource: BuildEnvSource
 ): string | undefined {
-	const envOptions = {
-		mode: phase === PHASE_PRODUCTION_BUILD ? 'production' : 'development',
-		root,
-	};
-	if (readBuildEnv([BACKEND_URL_ENV], envOptions)) {
+	const found = readBuildEnvEntry([BACKEND_URL_ENV], envSource);
+	if (!found || found.name === BACKEND_URL_ENV) {
 		return undefined;
 	}
-	const inth = readBuildEnv([INTH_URL_ENV], envOptions);
-	if (inth) {
-		process.env[BACKEND_URL_ENV] = inth;
-	}
-	return inth;
+	process.env[BACKEND_URL_ENV] = found.value;
+	return found.value;
 };
 
 /** A project-relative `./` path, the form Turbopack resolves alias targets in. */
@@ -292,9 +227,9 @@ const fromProject = function fromProject(file: string): string {
 
 /**
  * Points {@link GENERATED_SPECIFIERS} at the written modules and
- * {@link USER_CONFIG_SPECIFIER} at the app's `c15t.config.ts` in both
+ * {@link USER_CONFIG_SPECIFIER} at the app's `inth.config.ts` in both
  * bundlers, keeping any aliases and `webpack` function already set, and
- * transpiles the c15t packages so Pages Router server bundles see the
+ * transpiles the Inth packages so Pages Router server bundles see the
  * aliases. Packages the app lists in `serverExternalPackages` stay
  * external.
  *
@@ -369,20 +304,20 @@ const withConsentAliases = function withConsentAliases(
 };
 
 /**
- * Finds the app's `c15t.config.ts` and fetches the deployment's consent
+ * Finds the app's `inth.config.ts` and fetches the deployment's consent
  * manifest before Next.js builds or starts dev.
  *
- * `c15t.config.ts` (or `.mts`, `.js`, `.mjs`) at the project root is
+ * `inth.config.ts` (or `.mts`, `.js`, `.mjs`) at the project root is
  * aliased into server and browser bundles, so `ConsentRoot`,
  * `resolveConsent()`, `createConsentRoute()` and the Pages Router helpers
  * read it without the app importing it. Its default export must be a
  * `defineConsentConfig()` result. Browser bundles include it, so it must
  * hold no secrets.
  *
- * The manifest is written to `node_modules/.cache/c15t/manifest.js` and
+ * The manifest is written to `node_modules/.cache/inth/manifest.js` and
  * handed to the server helpers. `resolveConsent` and the consent route handlers read
  * it by default. Server code that needs it reads `snapshot` from
- * `@inth/sdk/generated` (or `@inth/sdk/generated`). Nothing is written into the
+ * `@inth/nextjs/generated` (or `@inth/sdk/generated`). Nothing is written into the
  * app's source tree. Production server startup never fetches or rewrites the
  * snapshot.
  *
@@ -395,11 +330,13 @@ const withConsentAliases = function withConsentAliases(
  * `undefined`, so the server fetches the policy at runtime and asks the
  * backend's `/init` while the manifest is unavailable. A missing backend
  * URL counts as a failed fetch. Set `onBuildError: 'fail'`, or
- * `C15T_ON_BUILD_ERROR=fail`, to stop the build instead. The fetch is skipped
+ * `INTH_ON_BUILD_ERROR=fail`, to stop the build instead. The fetch is skipped
  * for a `projectUrl` that is not absolute http(s), for `output: 'export'`,
- * which has no server, and when `c15t.config.ts` sets a mode that reads no
- * build-time manifest: `hosted()`, `testing()`, `manifest({ snapshot })` or
- * `manifest({ source: 'runtime' })`. The wrapper evaluates the file with the
+ * which has no server, and when `inth.config.ts` sets a mode that reads no
+ * build-time manifest (`needsBuildSnapshot` in `@inth/sdk/server`):
+ * `hosted()`, `testing()`, `manifest({ snapshot })`,
+ * `manifest({ source: 'runtime' })` or an absolute
+ * `manifest({ manifestUrl })`. The wrapper evaluates the file with the
  * loader Next.js uses for `next.config.ts` to read its `mode` and
  * `projectUrl`.
  *
@@ -409,31 +346,29 @@ const withConsentAliases = function withConsentAliases(
  * package listed in `serverExternalPackages` stays external and does not
  * see the aliases: it reads no config and fetches the manifest at runtime.
  *
- * When `NEXT_PUBLIC_C15T_BACKEND_URL` is unset, the wrapper reads
- * `NEXT_PUBLIC_INTH_PROJECT_URL` instead and sets
- * `NEXT_PUBLIC_C15T_BACKEND_URL` to it, in the environment and in the
- * config's `env`, so every reader of the c15t name sees the same URL.
+ * When `NEXT_PUBLIC_INTH_PROJECT_URL` is unset, the wrapper reads
+ * `NEXT_PUBLIC_C15T_BACKEND_URL` instead and sets
+ * `NEXT_PUBLIC_INTH_PROJECT_URL` to it, in the environment and in the
+ * config's `env`, so every reader of the Inth name sees the same URL.
  *
  * @param config - Existing Next.js configuration, preserved as given apart
  * from the alias and `env`, which gains the Inth variable.
  * @param options - Backend URL and `onBuildError`. `projectUrl` defaults to
- * the one in `c15t.config.ts`, then `NEXT_PUBLIC_C15T_BACKEND_URL`, then
- * `NEXT_PUBLIC_INTH_PROJECT_URL`, from the environment or a `.env` file,
- * and the build appends `/manifest`.
+ * the one in `inth.config.ts`, then `NEXT_PUBLIC_INTH_PROJECT_URL`, from
+ * the environment or a `.env` file, and the build appends `/manifest`.
  * @returns An asynchronous Next.js configuration factory.
- * @throws {Error} When the fetch fails in `'fail'` mode, the default for
- * `next build`, the snapshot cannot be written, or `defineConsentConfig`
- * rejects `c15t.config.ts`.
+ * @throws {Error} When the fetch fails in `'fail'` mode, the snapshot cannot be written, or `defineConsentConfig`
+ * rejects `inth.config.ts`.
  * @example
  * ```ts
  * import { withConsentManifest } from '@inth/nextjs/build';
  *
- * // Reads NEXT_PUBLIC_C15T_BACKEND_URL, like defineConsentConfig.
+ * // Reads NEXT_PUBLIC_INTH_PROJECT_URL, like defineConsentConfig.
  * export default withConsentManifest({});
  * ```
  *
  * ```ts
- * // c15t.config.ts
+ * // inth.config.ts
  * import { defineConsentConfig } from '@inth/nextjs';
  *
  * export default defineConsentConfig({});
@@ -449,13 +384,17 @@ export const withConsentManifest =
 	) => Promise<NextConfig>) =>
 	async (phase, context) => {
 		const root = process.cwd();
-		const inthURL = exposeInthProjectURL(root, phase);
+		const envSource = {
+			mode: phase === PHASE_PRODUCTION_BUILD ? 'production' : 'development',
+			root,
+		};
+		const legacyURL = exposeLegacyProjectUrl(envSource);
 		const given =
 			typeof config === 'function' ? await config(phase, context) : config;
 		const resolved: NextConfig =
-			inthURL === undefined
+			legacyURL === undefined
 				? given
-				: { ...given, env: { ...given.env, [BACKEND_URL_ENV]: inthURL } };
+				: { ...given, env: { ...given.env, [BACKEND_URL_ENV]: legacyURL } };
 		if (
 			phase !== PHASE_PRODUCTION_BUILD &&
 			phase !== PHASE_DEVELOPMENT_SERVER
@@ -472,21 +411,18 @@ export const withConsentManifest =
 				projectUrl:
 					options.projectUrl ??
 					userConfig?.projectUrl ??
-					readBuildEnv([BACKEND_URL_ENV, INTH_URL_ENV], {
-						mode:
-							phase === PHASE_PRODUCTION_BUILD ? 'production' : 'development',
-						root,
-					}),
+					readBuildEnv([BACKEND_URL_ENV], envSource),
 			},
 			{
 				command: phase === PHASE_PRODUCTION_BUILD ? 'build' : 'dev',
-				envNames: [BACKEND_URL_ENV, INTH_URL_ENV],
+				envNames: [BACKEND_URL_ENV],
 				importSource: '@inth/nextjs/static',
 				label: '@inth/nextjs/build',
+				mode: userConfig?.mode,
 				skipReason:
 					resolved.output === 'export'
 						? "a static export (`output: 'export'`) has no server to use it"
-						: modeSkipReason(userConfig),
+						: undefined,
 			}
 		);
 		return withConsentAliases(resolved, files, userConfigFile);

@@ -793,7 +793,7 @@ these are the spec duties it would miss. Ordered by how much they matter.
    publisher's declaration beside it: `NativeConfig.vendors` (`NativeConfig.kt:61`) and
    `CoreConfig.vendors` (`ConsentCore.swift:57`), where `null`/`nil` and an empty list all read as
    no scope declared. Web's `iab.vendors` does three jobs and mobile now does two of them. The
-   request goes out with `x-c15t-vendors` (`InthProtocol.kt:48`, `Transports.swift:53`): deduped,
+   request goes out with `x-inth-vendors` (`InthProtocol.kt:48`, `Transports.swift:53`): deduped,
    ascending, comma-separated, and absent above the same 500 that `MAX_GVL_QUERY_VENDOR_IDS` uses.
    The held list is pruned on every path it arrives by — `ConsentCore.kt:253` and `:1077`,
    `ConsentCore.swift:1076` and `:1490` — which is what makes it a read-path rule rather than a
@@ -817,8 +817,8 @@ these are the spec duties it would miss. Ordered by how much they matter.
     `TCData` reported over `__tcfapi` disagree with the TC String on web.
 11. **`reset()` does not yet clear a bus**, and iOS Keychain persistence across uninstall means a
     naive reset leaves a live signal behind (section 6, point 3 and 4).
-12. **The GVL proxy question transfers.** inth/Inth operates `gvl.inth.app`
-    (`packages/sdk/iab/src/tcf/constants.ts:25` `GVL_ENDPOINT`). A mobile SDK pointed at a proxy we run
+12. **The GVL proxy question transfers.** Inth operates `gvl.inth.app`
+    (`DEFAULT_GVL_ENDPOINT` in `packages/sdk/schema/src/shared/constants.ts`). A mobile SDK pointed at a proxy we run
     inherits the same staleness and availability duties, and S2's caching rules above are
     the only licence for using an archived version offline.
 

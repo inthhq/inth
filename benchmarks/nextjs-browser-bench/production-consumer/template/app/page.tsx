@@ -8,7 +8,7 @@ const HomePage = () => (
 		<p className="lede">
 			This route stands in for a marketing home page: a heading, a few
 			paragraphs, and navigation. The consent banner, its custom theme, and the
-			deferred preference dialog come from the packed c15t artifacts.
+			deferred preference dialog come from the packed inth artifacts.
 		</p>
 		<section className="cards">
 			<article>

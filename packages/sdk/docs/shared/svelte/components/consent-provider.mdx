@@ -17,8 +17,8 @@ same props, except that `state` replaces `mode` and `prefetch`.
 | `presentation` | `ConsentPresentation` | the policy's defaults | Banner and dialog shape, position, button layout and blocking for every component. Updates after mount. |
 | `legalLinks` | `LegalLinks` | none | Privacy policy, cookie policy and terms links shown in the banner and dialog. Updates after mount. |
 | `i18n` | `Partial<I18nConfig>` | bundled English | Copy overrides per language. They win key by key over the backend's copy for the same language; see [translations](../translations). Read once. |
-| `colorScheme` | `'light'`, `'dark'`, `'system'` or `null` | none | Toggles the `c15t-dark` class on `<html>`. `null` or unset leaves `<html>` alone. Updates after mount. |
-| `noStyle` | `boolean` | `false` | Renders every component without c15t's classes. A component's own `noStyle` wins. |
+| `colorScheme` | `'light'`, `'dark'`, `'system'` or `null` | none | Toggles the `inth-dark` class on `<html>`. `null` or unset leaves `<html>` alone. Updates after mount. |
+| `noStyle` | `boolean` | `false` | Renders every component without Inth's classes. A component's own `noStyle` wins. |
 | `disableAnimation` | `boolean` | follows `prefers-reduced-motion` | Turns off enter and exit transitions. |
 | `scrollLock`, `trapFocus` | `boolean` | from `presentation` | Defaults for the banner and dialog. `blocking` on a component sets both. |
 | `preloadDialog` | `'idle'` or `'intent'` | `'idle'` | When `ConsentDialog` starts loading before its first open. See [ConsentDialog](./consent-dialog). |
@@ -29,7 +29,7 @@ same props, except that `state` replaces `mode` and `prefetch`.
 | `reloadOnConsentRevoked` | `boolean` | `true` | Reloads the page after a save withdraws a category or vendor that was granted. |
 | `overrides` | `{ country?, region?, language?, gpc? }` | none | Forces the location, language or Global Privacy Control signal the policy resolves for. A change after mount resolves the policy again. |
 | `user` | `User` | none | Identity sent with the policy request and every saved choice, so the choice is linked to your user ID. A different user after mount is identified with the backend; the user you mount with is not identified separately. |
-| `storageConfig` | `StorageConfig` | cookie and key `c15t` | Names and lifetime of the stored choice. Read once. On SvelteKit, pass the same name as `cookieName` to the server helpers. |
+| `storageConfig` | `StorageConfig` | cookie and key `inth` | Names and lifetime of the stored choice. Read once. On SvelteKit, pass the same name as `cookieName` to the server helpers. |
 | `persistence` | `boolean` or options | `true` | `false` keeps choices in memory only. Read once. |
 | `clearOnRevocation` | `ClearOnRevocationConfig` | off | Deletes first-party cookies and storage entries when their category is withdrawn. Loads on demand. See [clearing data on revocation](../clear-on-revocation). Read once. |
 | `experimentalScriptRegistry` | `boolean` | `false` | Experimental. Loads `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. Read once. |
@@ -81,10 +81,10 @@ as `theme` and `noStyle` still apply per provider.
 
 Open the page in a private window with DevTools open:
 
-1. The banner appears once the policy resolves. `window.c15t` in the console
+1. The banner appears once the policy resolves. `window.__inthDebug` in the console
    shows `pkg: '@inth/svelte'`.
 2. The Network panel shows the request your mode makes: none for
    `manifest()` with a bundled snapshot, one `/init` for `hosted()`, and
    none when the page came with a server-resolved state.
 3. A component that calls `getConsentManager()` renders without the
-   `c15t: no v3 consent context` error.
+   `inth: no v3 consent context` error.

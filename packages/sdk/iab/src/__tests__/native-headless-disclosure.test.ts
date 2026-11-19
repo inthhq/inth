@@ -12,8 +12,8 @@
  * - `conflicts`: vendor signals the restrictions rule out, which the native
  *   headless commit refuses.
  *
- * Swift (`IABHeadlessDisclosureTests`, `C15tPayloadTests`) and Kotlin
- * (`IabHeadlessDisclosureTest`, `C15tPayloadTest`) assert the same values from
+ * Swift (`IABHeadlessDisclosureTests`, `InthPayloadTests`) and Kotlin
+ * (`IabHeadlessDisclosureTest`, `InthPayloadTest`) assert the same values from
  * the native model, the stock save path and the bridge's headless commit, so
  * web, iOS and Android cannot drift apart without one suite failing.
  *
@@ -27,7 +27,7 @@ import type { GlobalVendorList, PublisherRestriction } from '@inth/sdk-core';
 import { resolveIABBannerSummary } from '@inth/sdk-core';
 import { describe, expect, test } from 'vitest';
 
-import { applyPublisherRestrictionsToGVL } from '../headless/effective-vendor-list';
+import { applyPublisherRestrictionsToGVL } from '../headless';
 import { additionalConsentFor } from '../tcf/additional-consent';
 import { generateTCString } from '../tcf/tc-string';
 

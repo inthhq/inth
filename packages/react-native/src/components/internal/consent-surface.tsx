@@ -245,7 +245,7 @@ export const ConsentSurfaceBody = ({
  * pads `0` sideways and leans on `.content`'s `padding: 0 24 24` for the inset.
  * Above the actions it keeps 24, and that 24 is the number to be careful with: the
  * actions are the *manager's* footer, so `manager.module.css` owns it, and
- * `--consent-manager-footer-padding` is `var(--c15t-space-lg) 0 0 0` -- 24 above,
+ * `--consent-manager-footer-padding` is `var(--inth-space-lg) 0 0 0` -- 24 above,
  * nothing below, the 24 under them being `.content`'s own bottom padding. The 16
  * in `panel.module.css` (`--consent-dialog-footer-padding-y`) is the frame's rule
  * for a footer the dialog never renders, and reading it instead of the manager's

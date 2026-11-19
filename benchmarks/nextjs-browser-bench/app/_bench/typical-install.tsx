@@ -25,7 +25,7 @@ import './with-consent.css';
  * Three common vendors through `@inth/integrations`, as the Next.js scripts
  * guide registers them. Google tag always loads and signals Consent Mode;
  * Meta and TikTok wait for marketing consent. Each points at a local
- * stand-in so the bench measures when c15t starts them, not a CDN.
+ * stand-in so the bench measures when Inth starts them, not a CDN.
  */
 const scripts = [
 	gtag({

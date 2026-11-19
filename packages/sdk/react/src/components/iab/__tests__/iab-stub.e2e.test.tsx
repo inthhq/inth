@@ -1,9 +1,3 @@
-/**
- * IAB Stub E2E Tests
- *
- * Browser-based tests for IAB stub and queue behavior.
- */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
@@ -90,7 +84,6 @@ describe('IAB Stub E2E Tests', () => {
 				);
 			});
 
-			// Should return false for non-existent listener
 			expect(result).toBe(false);
 		});
 	});

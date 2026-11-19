@@ -10,7 +10,7 @@
  *
  * @example
  * ```html
- * <svg c15t-close-icon aria-hidden="true" width="16" height="16"></svg>
+ * <svg inth-close-icon aria-hidden="true" width="16" height="16"></svg>
  * ```
  *
  * @packageDocumentation
@@ -31,7 +31,7 @@ const STROKE_HOST = {
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	host: STROKE_HOST,
-	selector: 'svg[c15t-chevron-down-icon]',
+	selector: 'svg[inth-chevron-down-icon]',
 	template: `@if (expanded()) {
 			<svg:path d="M19 15l-7-7-7 7" />
 		} @else {
@@ -47,7 +47,7 @@ export class ChevronDownIcon {
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	host: STROKE_HOST,
-	selector: 'svg[c15t-chevron-right-icon]',
+	selector: 'svg[inth-chevron-right-icon]',
 	template: `@if (expanded()) {
 			<svg:path d="M19 9l-7 7-7-7" />
 		} @else {
@@ -63,7 +63,7 @@ export class ChevronRightIcon {
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	host: STROKE_HOST,
-	selector: 'svg[c15t-close-icon]',
+	selector: 'svg[inth-close-icon]',
 	template: `<svg:line
 			x1="18"
 			y1="6"
@@ -83,7 +83,7 @@ export class CloseIcon {}
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	host: STROKE_HOST,
-	selector: 'svg[c15t-external-link-icon]',
+	selector: 'svg[inth-external-link-icon]',
 	template: `<svg:path
 			d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
 		/>
@@ -101,7 +101,7 @@ export class ExternalLinkIcon {}
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	host: STROKE_HOST,
-	selector: 'svg[c15t-globe-icon]',
+	selector: 'svg[inth-globe-icon]',
 	template: `<svg:circle
 			cx="12"
 			cy="12"
@@ -123,7 +123,7 @@ export class GlobeIcon {}
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	host: STROKE_HOST,
-	selector: 'svg[c15t-info-icon]',
+	selector: 'svg[inth-info-icon]',
 	template: `<svg:circle
 			cx="12"
 			cy="12"
@@ -148,7 +148,7 @@ export class InfoIcon {}
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	host: STROKE_HOST,
-	selector: 'svg[c15t-layers-icon]',
+	selector: 'svg[inth-layers-icon]',
 	template: `<svg:path d="M12 2L2 7l10 5 10-5-10-5z" />
 		<svg:path d="M2 17l10 5 10-5" />
 		<svg:path d="M2 12l10 5 10-5" />`,
@@ -159,7 +159,7 @@ export class LayersIcon {}
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	host: STROKE_HOST,
-	selector: 'svg[c15t-legitimate-interest-icon]',
+	selector: 'svg[inth-legitimate-interest-icon]',
 	template: `<svg:path
 		d="M12 3v18M3 12h18M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"
 	/>`,
@@ -170,7 +170,7 @@ export class LegitimateInterestIcon {}
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	host: STROKE_HOST,
-	selector: 'svg[c15t-lock-icon]',
+	selector: 'svg[inth-lock-icon]',
 	template: `<svg:rect
 			x="3"
 			y="11"
@@ -187,7 +187,7 @@ export class LockIcon {}
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	host: STROKE_HOST,
-	selector: 'svg[c15t-search-icon]',
+	selector: 'svg[inth-search-icon]',
 	template: `<svg:circle
 			cx="11"
 			cy="11"
@@ -206,7 +206,7 @@ export class SearchIcon {}
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	host: STROKE_HOST,
-	selector: 'svg[c15t-share-icon]',
+	selector: 'svg[inth-share-icon]',
 	template: `<svg:circle
 			cx="18"
 			cy="5"

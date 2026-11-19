@@ -8,7 +8,7 @@
  * acknowledged commit with no network.
  */
 
-import { median } from '@c15t/benchmarking/utils';
+import { median } from '@inth/benchmarking/utils';
 import { createConsentClient } from '@inth/react-native';
 
 import { ensureReactGlobalForDist } from '../support/ensure-react-global';

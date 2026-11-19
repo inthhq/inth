@@ -12,7 +12,7 @@ export const normalizeExternalPermissions = (
 		necessary: true,
 	});
 
-/** External decisions are volatile authority, never c15t choice receipts. */
+/** External decisions are volatile authority, never Inth choice receipts. */
 export const evaluateExternalPermissions = (
 	permissions: Readonly<ConsentState>
 ) => ({

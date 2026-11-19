@@ -374,7 +374,7 @@ describe('policy playground helpers', () => {
 			"import { testing } from '@inth/react/testing';"
 		);
 		expect(withToolbar).toContain(
-			'    <ConsentDialogTriggerToolbar showWhen="after-prompt" />\n'
+			'    <ConsentDialogTriggerToolbar showWhen="after-consent" />\n'
 		);
 	});
 });

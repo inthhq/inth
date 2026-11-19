@@ -1,30 +1,32 @@
+import userConfig from '@inth/nextjs/user-config';
 import {
 	projectUrl as generatedProjectUrl,
 	snapshot as generatedSnapshot,
-} from '@inth/nextjs/generated-manifest';
-import userConfig from '@inth/nextjs/user-config';
+} from '@inth/sdk/generated';
 /**
  * Where the server helpers resolve consent from, read from
- * `c15t.config.ts` and the build-time snapshot.
+ * `inth.config.ts` and the build-time snapshot.
  *
  * @internal
  */
-import type { ManifestMode } from '@inth/sdk/modes';
+import type { ConsentMode, ManifestMode } from '@inth/sdk/modes';
 import type { ConsentManifest } from '@inth/sdk/schema/types';
+import { resolveServerMode } from '@inth/sdk/server';
+import type { ServerMode } from '@inth/sdk/server';
 
 import type { ConsentConfig } from './config';
 import { checkRoutePrefix, readProjectUrlFromEnv } from './config';
 
-/** Options every server helper takes to override `c15t.config.ts`. */
+/** Options every server helper takes to override `inth.config.ts`. */
 export interface ConsentSourceOptions {
 	/**
-	 * The config to use instead of `c15t.config.ts`.
+	 * The config to use instead of `inth.config.ts`.
 	 */
 	config?: ConsentConfig;
 
 	/**
 	 * Backend base URL. Defaults to the config's, then
-	 * `NEXT_PUBLIC_C15T_BACKEND_URL`, then `NEXT_PUBLIC_INTH_PROJECT_URL`.
+	 * `NEXT_PUBLIC_INTH_PROJECT_URL` (or `NEXT_PUBLIC_C15T_BACKEND_URL`).
 	 */
 	projectUrl?: string;
 
@@ -46,23 +48,15 @@ export interface ConsentSourceOptions {
 /** What the server resolves from. */
 export interface ConsentSource {
 	config: ConsentConfig | undefined;
-	projectUrl: string | undefined;
-	mode: 'hosted' | 'manifest' | undefined;
-	manifestUrl: string | undefined;
-	snapshot: ConsentManifest | undefined;
-	/** Hosted mode's `/init` headers. */
-	initHeaders: Record<string, string> | undefined;
 	routePrefix: string | undefined;
+	/** The mode as the render, the consent route and the browser read it. */
+	server: ServerMode;
 }
-
-const isPath = (url: string | undefined): url is string =>
-	url !== undefined && url.startsWith('/') && !url.startsWith('//');
 
 /**
  * The config's route prefix, checked as `defineConsentConfig` checks it: a
  * config passed straight to a helper skips that function.
  *
- * @param config - The config the helper reads.
  * @returns The prefix without a trailing slash, or `undefined`.
  * @throws {TypeError} When the prefix is `/`, or neither a `/`-relative
  * path nor an absolute `http(s)` URL.
@@ -78,96 +72,58 @@ export const readConfigRoutePrefix = function readConfigRoutePrefix(
 	return checkRoutePrefix(routePrefix);
 };
 
-/** The backend URL: explicit, then the config's, the env's, the build's. */
-const resolveProjectUrl = function resolveProjectUrl(
+/**
+ * The config's mode, unless the helper names a manifest itself: an explicit
+ * `manifestUrl` or `snapshot` resolves from the manifest whatever the mode.
+ */
+const modeFor = function modeFor(
 	options: ConsentSourceOptions,
 	config: ConsentConfig | undefined
-): string | undefined {
-	return (
-		options.projectUrl ??
-		config?.projectUrl ??
-		readProjectUrlFromEnv() ??
-		generatedProjectUrl
-	);
-};
-
-/** Where `manifest()` (or an explicit manifest source) resolves from. */
-const resolveManifestSource = function resolveManifestSource(
-	options: ConsentSourceOptions,
-	mode: ManifestMode | undefined,
-	projectUrl: string | undefined
-): Pick<ConsentSource, 'manifestUrl' | 'mode' | 'snapshot'> {
-	const manifestMode = mode;
-	// A `/`-relative manifestUrl is the browser's, usually the app's route.
-	const modeURL = isPath(manifestMode?.manifestUrl)
-		? undefined
-		: manifestMode?.manifestUrl;
-	const manifestUrl = options.manifestUrl ?? modeURL;
-	const buildSnapshot =
-		manifestUrl === undefined && manifestMode?.source !== 'runtime'
-			? generatedSnapshot
-			: undefined;
-	const snapshot = options.snapshot ?? manifestMode?.snapshot ?? buildSnapshot;
-	const resolvable =
-		snapshot !== undefined ||
-		manifestUrl !== undefined ||
-		projectUrl !== undefined;
-	return {
-		manifestUrl,
-		mode: resolvable ? 'manifest' : undefined,
-		snapshot,
-	};
+): ConsentMode | undefined {
+	const mode = config?.mode;
+	if (options.manifestUrl === undefined && options.snapshot === undefined) {
+		return mode;
+	}
+	const {
+		resolve: _resolve,
+		source: _source,
+		...base
+	}: ManifestMode = mode?.type === 'manifest' ? mode : { type: 'manifest' };
+	const forced: ManifestMode = { ...base };
+	if (options.manifestUrl !== undefined) {
+		forced.manifestUrl = options.manifestUrl;
+	}
+	if (options.snapshot !== undefined) {
+		forced.snapshot = options.snapshot;
+	}
+	return forced;
 };
 
 /**
- * The config, mode and manifest source for a server helper call.
+ * The config, mode and manifest source for a server helper call, by the
+ * rule `resolveServerMode` in `@inth/sdk/server` applies in every adapter.
+ * The backend URL is the option's, then the config's, then
+ * `NEXT_PUBLIC_INTH_PROJECT_URL` (or `NEXT_PUBLIC_C15T_BACKEND_URL`), then
+ * the one the build read.
  *
- * - `manifest()` resolves from the snapshot, unless the mode
- *   says `source: 'runtime'` or names an absolute `manifestUrl`, which the
- *   server then fetches. A `/`-relative `manifestUrl` is the browser's,
- *   usually the app's own route, so the server reads
- *   `${projectUrl}/manifest` instead.
- * - No mode means `manifest()`.
- * - `hosted()` asks the hosted backend's `${projectUrl}/init`.
- * - `testing()` resolves nothing on the server; the browser does.
- *
- * @param options - Explicit overrides of the config.
- * @returns Where to resolve from.
  * @internal
  */
 export const resolveConsentSource = function resolveConsentSource(
 	options: ConsentSourceOptions = {}
 ): ConsentSource {
 	const config = options.config ?? userConfig;
-	const mode = config?.mode;
 	const routePrefix = readConfigRoutePrefix(config);
-	const projectUrl = resolveProjectUrl(options, config);
-	const forcedManifest =
-		options.manifestUrl !== undefined || options.snapshot !== undefined;
-	const none = {
-		config,
-		initHeaders: undefined,
-		manifestUrl: undefined,
+	const server = resolveServerMode({
+		adapter: '@inth/nextjs',
+		buildSnapshot: generatedSnapshot,
+		mode: modeFor(options, config),
+		projectUrl:
+			options.projectUrl ??
+			config?.projectUrl ??
+			readProjectUrlFromEnv() ??
+			generatedProjectUrl,
 		routePrefix,
-		snapshot: undefined,
-	};
-	if (mode?.type === 'testing' && !forcedManifest) {
-		return { ...none, mode: undefined, projectUrl: undefined };
-	}
-	if (mode?.type === 'hosted' && !forcedManifest) {
-		return {
-			...none,
-			mode: projectUrl === undefined ? undefined : 'hosted',
-			projectUrl,
-		};
-	}
-	return {
-		...none,
-		...resolveManifestSource(
-			options,
-			mode?.type === 'manifest' ? mode : undefined,
-			projectUrl
-		),
-		projectUrl,
-	};
+		serverResolvesBrowserMode: true,
+	});
+	return { config, routePrefix, server };
 };

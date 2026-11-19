@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import type { PresentationAction } from '@inth/sdk/engine';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { saveConsentSurface } from '@inth/sdk/surface-actions';
-import dialogStyles from '@inth/sdk/ui/styles/components/consent-dialog';
 
 import '@inth/sdk/ui/styles/components/consent-dialog.css';
+import dialogStyles from '@inth/sdk/ui/styles/components/consent-dialog';
 import { getTextDirection } from '@inth/sdk/ui/utils';
 import { computed, nextTick, onUnmounted, provide, ref, watch } from 'vue';
 import type { HTMLAttributes } from 'vue';
@@ -80,7 +81,7 @@ const refreshOverlayFallback = async function refreshOverlayFallback() {
 	}
 
 	overlayFallbackStyle.value = {
-		backgroundColor: 'var(--c15t-overlay, hsla(0, 0%, 0%, 0.5))',
+		backgroundColor: 'var(--inth-overlay, hsla(0, 0%, 0%, 0.5))',
 		inset: '0',
 		position: 'fixed',
 		zIndex: '999998',
@@ -211,6 +212,7 @@ provide(consentWidgetManagerKey, { draft: draftState, onAction });
 					"
 					:data-blocking="surface.blocking ? 'true' : undefined"
 					data-testid="consent-dialog-root"
+					:[SURFACE_ROOT_ATTRIBUTE]="'dialog'"
 					:dir="textDirection"
 					aria-labelledby="consent-dialog-title"
 					aria-describedby="consent-dialog-description"
@@ -260,7 +262,7 @@ provide(consentWidgetManagerKey, { draft: draftState, onAction });
 						</div>
 						<ConsentTag
 							v-if="!(config.dialogHideBranding ?? config.hideBranding)"
-							context="dialog"
+							surface="dialog"
 						/>
 					</div>
 				</DialogContent>

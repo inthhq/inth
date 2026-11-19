@@ -8,7 +8,7 @@ import { defineConsentConfig, hosted } from '@inth/nextjs';
  * `'use client'` module into a Server Component yields a client reference,
  * not the value, which silently breaks the server helpers.
  */
-export const COMPAT_BACKEND_URL = '/api/c15t';
+export const COMPAT_BACKEND_URL = '/api/inth';
 
 /**
  * Where each app mounts the consent route from `@inth/nextjs/api` (or
@@ -27,7 +27,7 @@ export const COMPAT_MANIFEST_URL = `${COMPAT_ROUTE_PREFIX}/manifest`;
  *
  * @remarks
  * No cell wraps its `next.config.ts` in `withConsentManifest`, so nothing
- * finds a `c15t.config.ts`; every helper and root gets its config passed
+ * finds a `inth.config.ts`; every helper and root gets its config passed
  * explicitly.
  */
 export const COMPAT_HOSTED_CONFIG = defineConsentConfig({

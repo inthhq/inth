@@ -1,36 +1,36 @@
 ---
 title: Troubleshooting
-description: Fix common c15t problems on Astro sites, from build errors about adapters and UI integrations to a missing banner, scripts that run too early, unstyled dialogs and saves that fail.
+description: Fix common Inth problems on Astro sites, from build errors about adapters and UI integrations to a missing banner, scripts that run too early, unstyled dialogs and saves that fail.
 group: frameworks
 ---
 
 ## The build says manifest() needs a server adapter
 
 **Check.** The error reads `manifest() resolves each visitor on the server
-and injects an on-demand route at /api/c15t/[...path]`. `manifest()` is the
+and injects an on-demand route at /api/inth/[...path]`. `manifest()` is the
 default mode, and `astro build` stops when no adapter can serve its route.
 Look for an adapter and server output in `astro.config.mjs`.
 
 **Fix.** Add your host's adapter and use server output. For a static site,
-set `c15t({ mode: hosted() })` or `c15t({ mode: manifest({ resolve: 'browser' }) })`.
+set `inth({ mode: hosted() })` or `inth({ mode: manifest({ resolve: 'browser' }) })`.
 See [Rendering and deployment](/docs/frameworks/astro/rendering).
 
 ## The config fails with "is a function"
 
-**Check.** A serialized `c15t()` option holds a function. The error names it,
-such as `c15t().scripts[0].onLoad`. A vendor helper from
+**Check.** A serialized `inth()` option holds a function. The error names it,
+such as `inth().scripts[0].onLoad`. A vendor helper from
 `@inth/integrations`, such as `posthog()`, returns a script with callbacks.
 
-**Fix.** Move the option to the default export of `src/c15t.client.ts`. See
+**Fix.** Move the option to the default export of `src/inth.client.ts`. See
 [`clientEntrypoint`](/docs/frameworks/astro/integration#cliententrypoint).
 
 ## The build says `ui` needs an Astro integration
 
 **Check.** The preference dialog is an island in the framework that the `ui`
 option names. Look in `astro.config.mjs` for that framework's Astro
-integration, listed before `c15t()`.
+integration, listed before `inth()`.
 
-**Fix.** Install the integration and list it before `c15t()`. For
+**Fix.** Install the integration and list it before `inth()`. For
 `ui: 'svelte'`, install `@astrojs/svelte` and `svelte`. For `'react'`, install
 `@astrojs/react`, `react` and `react-dom`. For `'vue'`, install `@astrojs/vue`
 and `vue`. A site that only shows a notice and never opens the dialog can set
@@ -45,7 +45,7 @@ load, so visitors do not download Svelte as well.
 
 ## Consent requests go to the wrong backend
 
-**Check.** Look at `PUBLIC_C15T_BACKEND_URL` and `PUBLIC_INTH_PROJECT_URL` in
+**Check.** Look at `PUBLIC_INTH_PROJECT_URL` in
 `.env`, `.env.local` and the
 build environment, and at any `projectUrl` in `astro.config.mjs`. One is still the placeholder
 `https://your-project.inth.app`, the demo project, or a URL from another
@@ -72,20 +72,20 @@ part in parentheses names the cause:
 - `/manifest responded 404`, or another status: the URL is not your project's
   backend. The placeholder `https://your-project.inth.app` returns 404.
 - `/manifest returned an invalid consent manifest`: the URL answers, but not
-  with a c15t manifest.
+  with an Inth manifest.
 
-A relative or empty URL, such as `/api/c15t`, skips the fetch. With
+A relative or empty URL, such as `/api/inth`, skips the fetch. With
 `onBuildError: 'fail'`, it stops the build with `build-time manifests require
 an absolute upstream URL`.
 
 A missing backend URL counts as a failed download: `astro build` stops with
 `no backend URL is set`, and `astro dev` warns.
 
-**Fix.** Set `PUBLIC_C15T_BACKEND_URL` (or `PUBLIC_INTH_PROJECT_URL`), or
-`projectUrl` on `c15t()`, to your
+**Fix.** Set `PUBLIC_INTH_PROJECT_URL`, or
+`projectUrl` on `inth()`, to your
 Inth project's absolute backend URL, and make sure the machine that builds
 can reach it. To deploy while the backend is down, build with
-`C15T_ON_BUILD_ERROR=runtime`, or set `onBuildError: 'runtime'`. To never
+`INTH_ON_BUILD_ERROR=runtime`, or set `onBuildError: 'runtime'`. To never
 fetch at build time, set `mode: manifest({ source: 'runtime' })`. Either way,
 the server fetches the policy at runtime.
 
@@ -101,11 +101,11 @@ npm run build -- --timings
 After a successful build, find `@inth/astro` in the report's `Integrations`
 section. Read the `astro:config:setup` duration in its row. In `manifest()`
 mode with build-time fetching, this includes the manifest download and other
-c15t setup work. It does not time the request separately. Compare it with the
+Inth setup work. It does not time the request separately. Compare it with the
 report's `Vite plugins` and `Page rendering` sections to locate the build delay.
 
 Astro omits the `Integrations` section when integration hooks take less than
-1% of the build, and shows at most eight integrations. A missing c15t row
+1% of the build, and shows at most eight integrations. A missing Inth row
 does not mean the integration failed to run. If the build fails before the
 report prints, use the
 [manifest-fetch error guidance](/docs/frameworks/astro/troubleshooting#astro-build-or-astro-dev-cant-fetch-the-manifest).
@@ -118,22 +118,22 @@ before choosing `manifest({ source: 'runtime' })`, which skips the build-time
 download and loads the policy at runtime instead. `onBuildError: 'runtime'`
 still attempts the download before falling back.
 
-## A component says `Astro.locals.c15t` is missing
+## A component says `Astro.locals.inth` is missing
 
 **Check.** `ConsentBanner` and `IABConsentBanner` read the consent context that
 the integration's middleware sets. Confirm that:
 
-- `c15t()` is in the `integrations` list of `astro.config.mjs`.
+- `inth()` is in the `integrations` list of `astro.config.mjs`.
 - The integration does not set `middleware: false`.
 - The route is not listed in `middleware.skip`.
 
-**Fix.** Add `c15t()` to `integrations`, remove `middleware: false`, or take
+**Fix.** Add `inth()` to `integrations`, remove `middleware: false`, or take
 the route out of `middleware.skip`.
 
 ## Why is there no banner?
 
 **Check.** In DevTools Network, find the browser's `/init` request. Its
-response, or `Astro.locals.c15t.snapshot.policyRule`, shows which policy
+response, or `Astro.locals.inth.snapshot.policyRule`, shows which policy
 matched.
 
 **Fix.** Work through these causes in order:
@@ -152,8 +152,8 @@ matched.
 
 On server output, the location comes from your host's headers, such as
 `cf-ipcountry` on Cloudflare or `x-vercel-ip-country` on Vercel. To test a
-region locally, send `x-c15t-country` with the request. Only your own edge may
-set `x-c15t-*` headers in production, because they override the host's.
+region locally, send `x-inth-country` with the request. Only your own edge may
+set `x-inth-*` headers in production, because they override the host's.
 
 ## The browser's `/init` request fails with a CORS error
 
@@ -183,9 +183,9 @@ reach it, so the policy ships with the build. Or raise the budget with
 browser saves consent there, so `astro.config` refuses to load without one.
 `hosted()` fails the same way with `hosted() needs a backend URL`.
 
-**Fix.** Set `PUBLIC_C15T_BACKEND_URL` (or `PUBLIC_INTH_PROJECT_URL`) in
+**Fix.** Set `PUBLIC_INTH_PROJECT_URL` in
 `.env`, or pass
-`c15t({ projectUrl: 'https://your-project.inth.app' })` with your project's
+`inth({ projectUrl: 'https://your-project.inth.app' })` with your project's
 URL in place of the placeholder. A `manifest({ snapshot })` still needs one:
 the snapshot replaces the manifest download, but the consent route answers
 `GET` only, so saves go to the backend.
@@ -210,15 +210,15 @@ layout that imports `consent-dialog-trigger.astro` fails to resolve it.
 | `buildManifest: true` | `onBuildError: 'fail'` |
 | `ConsentDialogTrigger` from `consent-dialog-trigger.astro` | `ConsentDialogLink` from `@inth/astro/components` |
 | `hosted({ domain })` | The top-level `projectUrl` |
-| The `@inth/astro/api/init` and `@inth/astro/api/manifest` entries, and route handlers from `@inth/astro/api` | `routePrefix`, and `createConsentRouteHandlers` and the manifest cache helpers from `@inth/astro/server` |
-| `resolveTransportFactory`, `custom`, and the `C15tModeDescriptor`, `C15tHostedDescriptor`, `C15tManifestDescriptor`, `C15tOfflineDescriptor` and `C15tEndpointOptions` types | `ConsentMode` from `@inth/astro` |
-| `/// <reference types="@inth/astro/middleware" />` in `src/env.d.ts` | Nothing. The integration adds the `Astro.locals.c15t` type. |
+| The `@inth/astro/api/init` and `@inth/astro/api/manifest` entries, and route handlers from `@inth/astro/api` | `routePrefix`, and `createConsentRouteHandlers` from `@inth/astro/server`. The manifest cache helpers are in `@inth/sdk/server` |
+| `resolveTransportFactory`, `custom`, and the `InthModeDescriptor`, `InthHostedDescriptor`, `InthManifestDescriptor`, `InthOfflineDescriptor` and `InthEndpointOptions` types | `ConsentMode` from `@inth/astro` |
+| `/// <reference types="@inth/astro/middleware" />` in `src/env.d.ts` | Nothing. The integration adds the `Astro.locals.inth` type. |
 
 ## A vendor loads before the visitor chooses
 
 **Check.** Search your layout and any tag manager for the vendor's own snippet.
 
-**Fix.** Remove it, so only c15t loads the vendor.
+**Fix.** Remove it, so only Inth loads the vendor.
 
 **Check.** Look at the vendor's inline script. It needs `type="text/plain"` and
 `is:inline`.
@@ -236,23 +236,23 @@ from the start.
 
 ## A gated inline script never runs
 
-**Check.** Open the console. c15t logs a warning for a `data-c15t-category`
+**Check.** Open the console. Inth logs a warning for a `data-inth-category`
 value that is not a category name, and leaves that script inert.
 
 **Fix.** Set the attribute to one category, such as `measurement`.
 
-**Check.** Under a nonce-based Content Security Policy, c15t also skips a gated
+**Check.** Under a nonce-based Content Security Policy, Inth also skips a gated
 tag that lacks the page's nonce. The console shows a warning about a script
-without the page's CSP nonce, and the tag has `data-c15t-activated="untrusted"`
+without the page's CSP nonce, and the tag has `data-inth-activated="untrusted"`
 in the Elements panel.
 
-**Fix.** Add `nonce={Astro.locals.c15t?.nonce}` to the tag and reload. c15t
+**Fix.** Add `nonce={Astro.locals.inth?.nonce}` to the tag and reload. Inth
 never retries a tag it marked `untrusted`. See
 [put the nonce on your gated scripts](/docs/frameworks/astro/content-security-policy#put-the-nonce-on-your-gated-scripts).
 
 ## The preference dialog opens without styles
 
-**Check.** Look for `styles: false` in your c15t setup. With it, c15t inlines
+**Check.** Look for `styles: false` in your Inth setup. With it, Inth inlines
 no rules and links no stylesheet when the dialog opens. Without it, check the
 Network panel for a failed request to the dialog's stylesheet, and the
 console for a Content Security Policy error.
@@ -263,9 +263,9 @@ the Svelte dialog, from your global stylesheet. See
 
 ## The banner loses its padding with Tailwind CSS
 
-**Check.** Tailwind's preflight in the `base` layer is overriding c15t's
+**Check.** Tailwind's preflight in the `base` layer is overriding Inth's
 `components` layer. This happens when your own stylesheet names its layers
-before c15t's rules do.
+before Inth's rules do.
 
 **Fix.** Put `components` after `base` in your first `@layer` statement, or set
 `styles: false` and import `@inth/astro/styles.css` after your layer order
@@ -277,7 +277,7 @@ statement.
 color scheme is set before first paint.
 
 **Fix.** Keep `ConsentScript` in `<head>`. If your site has its own theme
-switch, set `colorScheme: 'none'` and toggle `c15t-dark` on `<html>` yourself,
+switch, set `colorScheme: 'none'` and toggle `inth-dark` on `<html>` yourself,
 including after `ClientRouter` navigation. See
 [set light or dark mode](/docs/frameworks/astro/customize#set-light-or-dark-mode).
 
@@ -311,7 +311,7 @@ from a component that adds it only while the category is allowed. See
 ## My own island is out of step with the banner, or turns dark mode off
 
 **Check.** Your island created its own consent runtime, or its adapter is
-managing the `c15t-dark` class. Look at the options the island passes to its
+managing the `inth-dark` class. Look at the options the island passes to its
 adapter.
 
 **Fix.** Pass `getConsentClient()?.runtime` to the adapter as `runtime`, set
@@ -321,10 +321,10 @@ See
 
 ## The console reports a Content Security Policy violation
 
-**Check.** c15t renders inline scripts and a theme `<style>`. Find out whether
+**Check.** Inth renders inline scripts and a theme `<style>`. Find out whether
 your site uses a nonce policy or Astro's `security.csp`.
 
-**Fix.** Under a nonce policy, set `Astro.locals.c15t.nonce` from your own
+**Fix.** Under a nonce policy, set `Astro.locals.inth.nonce` from your own
 middleware so they carry the nonce. Under Astro's `security.csp`, the
 integration adds their hashes for you. A `ConsentBannerDeferred` island stays
 blocked under a nonce policy, because Astro's island loader carries no nonce.

@@ -75,7 +75,7 @@ coverage.json
 i18n.cache
 .test-apps/
 .benchmarks/
-.c15t-state.json
+.inth-state.json
 apps/bundle-bench-react/.bundle-bench-dist/
 live-vendors-report.json
 __pycache__/
@@ -117,3 +117,7 @@ packages/react-native/skills/
 !/examples/vue/.env
 !/internals/svelte-compat/*/.env
 !.env.*.example
+
+# Vitest browser-mode failure output
+__screenshots__/
+.vitest-attachments/

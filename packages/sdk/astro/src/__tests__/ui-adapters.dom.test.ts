@@ -11,7 +11,7 @@ import { createConsentRuntime } from '@inth/sdk/runtime';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { C15tResolvedOptions } from '../types';
+import type { InthResolvedOptions } from '../types';
 import { registerDialogSurface } from '../ui/adapter';
 import type { ConsentDialogKind } from '../ui/adapter';
 import { reactDialogAdapter } from '../ui/react';
@@ -26,7 +26,7 @@ const OPTIONS = {
 	endpoints: { enabled: false, initPath: '/i', manifestPath: '/m' },
 	mode: { type: 'hosted', url: 'https://consent.example.test' },
 	ui: 'react',
-} as unknown as C15tResolvedOptions;
+} as unknown as InthResolvedOptions;
 
 const runtimes: ConsentRuntime[] = [];
 const hosts: HTMLElement[] = [];

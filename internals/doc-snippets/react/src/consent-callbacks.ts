@@ -12,7 +12,7 @@ export const callbacks = {
 	},
 	// A consent command failed, such as a save the backend rejected.
 	onError: ({ error }) => {
-		console.error('c15t', error);
+		console.error('inth', error);
 	},
 	// Permissions changed for any reason: a choice, an expired choice, a new
 	// policy or a privacy signal.

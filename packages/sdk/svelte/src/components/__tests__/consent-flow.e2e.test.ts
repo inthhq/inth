@@ -126,7 +126,7 @@ describe('Consent Flow E2E Tests', () => {
 			await fireEvent.click(acceptButton);
 
 			await waitFor(() => {
-				const stored = window.localStorage.getItem('c15t');
+				const stored = window.localStorage.getItem('inth');
 				expect(stored).toBeTruthy();
 				const consent = readStoredRecords(undefined, Date.now()).records.choice;
 				expect(consent?.categories.marketing?.value).toBe(true);
@@ -150,7 +150,7 @@ describe('Consent Flow E2E Tests', () => {
 			await fireEvent.click(rejectButton);
 
 			await waitFor(() => {
-				const stored = window.localStorage.getItem('c15t');
+				const stored = window.localStorage.getItem('inth');
 				expect(stored).toBeTruthy();
 				const consent = readStoredRecords(undefined, Date.now()).records.choice;
 				expect(consent?.version).toBe(3);
@@ -175,7 +175,7 @@ describe('Consent Flow E2E Tests', () => {
 					necessary: true,
 				},
 			};
-			window.localStorage.setItem('c15t', JSON.stringify(consentData));
+			window.localStorage.setItem('inth', JSON.stringify(consentData));
 
 			render(BannerFixture, { options: defaultOptions });
 
@@ -248,7 +248,6 @@ describe('Consent Flow E2E Tests', () => {
 		test('should complete full consent flow: banner -> customize -> save', async () => {
 			render(BannerDialogFixture, { options: defaultOptions });
 
-			// Step 1: Banner should appear
 			await waitFor(() => {
 				const banner = document.querySelector(
 					'[data-testid="consent-banner-root"]'
@@ -256,7 +255,6 @@ describe('Consent Flow E2E Tests', () => {
 				expect(banner).toBeInTheDocument();
 			});
 
-			// Step 2: Click customize
 			const customizeButton = getDefined(
 				document.querySelector(
 					'[data-testid="consent-banner-customize-button"]'
@@ -264,7 +262,6 @@ describe('Consent Flow E2E Tests', () => {
 			);
 			await fireEvent.click(customizeButton);
 
-			// Step 3: Dialog should open
 			await waitFor(() => {
 				const dialog = document.querySelector(
 					'[data-testid="consent-dialog-root"]'
@@ -272,13 +269,11 @@ describe('Consent Flow E2E Tests', () => {
 				expect(dialog).toBeInTheDocument();
 			});
 
-			// Step 4: Toggle a consent category
 			const marketingSwitch = document.querySelector(
 				'[data-testid="consent-widget-switch-marketing"]'
 			);
 			await fireEvent.click(getDefined(marketingSwitch));
 
-			// Step 5: Save preferences
 			const saveButton = getDefined(
 				document.querySelector(
 					'[data-testid="consent-widget-footer-save-button"]'
@@ -286,9 +281,8 @@ describe('Consent Flow E2E Tests', () => {
 			);
 			await fireEvent.click(saveButton);
 
-			// Step 6: Verify consent was saved
 			await waitFor(() => {
-				const stored = window.localStorage.getItem('c15t');
+				const stored = window.localStorage.getItem('inth');
 				expect(stored).toBeTruthy();
 				const consent = readStoredRecords(undefined, Date.now()).records.choice;
 				expect(consent?.categories.marketing?.value).toBe(true);

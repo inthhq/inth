@@ -1,6 +1,6 @@
 'use client';
 
-import type { PolicyBenchFixtureName } from '@c15t/benchmarking/policy-fixtures';
+import type { PolicyBenchFixtureName } from '@inth/benchmarking/policy-fixtures';
 import { useSaveConsents, useSetActiveUI } from '@inth/react';
 
 import { PolicyBenchmarkProvider } from './policy-provider';

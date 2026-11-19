@@ -19,7 +19,7 @@ import {
 	vendoredCorePlan,
 } from './sync-vendored-core';
 
-const scratchRoot = mkdtempSync(join(tmpdir(), 'c15t-vendored-core-'));
+const scratchRoot = mkdtempSync(join(tmpdir(), 'inth-vendored-core-'));
 afterAll(() => {
 	rmSync(scratchRoot, { force: true, recursive: true });
 });

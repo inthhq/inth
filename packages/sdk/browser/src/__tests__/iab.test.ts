@@ -303,11 +303,19 @@ describe('IAB browser entry', () => {
 			'These means of processing can be used solely in pursuit of one or several purposes'
 		);
 	});
+	it('puts the partners link inside the description, once', async () => {
+		const client = await start();
+		const link = query(client, 'iab-consent-banner-partners-link');
+		const description = link.parentElement;
+		expect(description?.tagName).toBe('P');
+		const text = description?.textContent ?? '';
+		expect(text.split(link.textContent ?? '').length).toBe(2);
+	});
 	it('opens the vendors tab from the partner disclosure and shows policy URLs', async () => {
 		const client = await start();
 		query(client, 'iab-consent-banner-partners-link').click();
 		const panel =
-			client.ui?.root.querySelector<HTMLElement>('#c15t-iab-vendors');
+			client.ui?.root.querySelector<HTMLElement>('#inth-iab-vendors');
 		expect(panel?.hidden).toBe(false);
 		expect(query(client, 'iab-vendor-755').querySelector('a')?.href).toBe(
 			'https://policies.google.com/privacy'
@@ -361,12 +369,12 @@ describe('IAB browser entry', () => {
 		const client = await start();
 		client.openDialog();
 		const tab = client.ui?.root.querySelector<HTMLButtonElement>(
-			'#c15t-iab-purposes-tab'
+			'#inth-iab-purposes-tab'
 		);
 		tab?.dispatchEvent(
 			new KeyboardEvent('keydown', { bubbles: true, key: 'ArrowRight' })
 		);
-		const vendorsTab = client.ui?.root.querySelector('#c15t-iab-vendors-tab');
+		const vendorsTab = client.ui?.root.querySelector('#inth-iab-vendors-tab');
 		expect(vendorsTab?.getAttribute('aria-selected')).toBe('true');
 		const search = client.ui?.root.querySelector<HTMLInputElement>(
 			'input[type="search"]'
@@ -378,7 +386,7 @@ describe('IAB browser entry', () => {
 		search.dispatchEvent(new Event('input'));
 		expect(
 			client.ui?.root.querySelectorAll(
-				'[data-c15t-iab-disclosure][data-testid^="iab-vendor-"]'
+				'[data-inth-iab-disclosure][data-testid^="iab-vendor-"]'
 			).length
 		).toBe(1);
 		query(client, 'iab-vendor-10-li').click();

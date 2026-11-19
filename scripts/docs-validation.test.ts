@@ -66,7 +66,7 @@ test('documented @inth imports exist in their package export maps', async () => 
 	for (const file of files) {
 		const content = readFileSync(resolve(docsRoot, file), 'utf8');
 		const imports = content.matchAll(
-			/(?:from\s+|import\s*\(?)["'](?<specifier>(?:@inth\/[a-z-]+|c15t)(?:\/[^"']*)?)["']/gu
+			/(?:from\s+|import\s*\(?)["'](?<specifier>(?:@inth\/[a-z-]+|inth)(?:\/[^"']*)?)["']/gu
 		);
 		for (const match of imports) {
 			const name = match.groups?.specifier?.split('?')[0] ?? '';

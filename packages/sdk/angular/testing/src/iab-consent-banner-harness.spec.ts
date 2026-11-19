@@ -17,7 +17,7 @@ import { IABConsentDialogHarness } from './iab-consent-dialog-harness';
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [IABConsentBanner, IABConsentDialog],
 	selector: 'test-iab-banner-host',
-	template: '<c15t-iab-consent-banner /><c15t-iab-consent-dialog />',
+	template: '<inth-iab-consent-banner /><inth-iab-consent-dialog />',
 })
 class IABBannerHost {}
 

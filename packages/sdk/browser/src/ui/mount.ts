@@ -1,6 +1,7 @@
 import { applyExperimentTheme } from '@inth/sdk-core';
 import { generateThemeCSS } from '@inth/sdk-ui/theme';
 import type { Theme } from '@inth/sdk-ui/theme';
+import { prefersReducedMotion } from '@inth/sdk-ui/utils/reduced-motion';
 
 import { stylesheet } from '../generated/styles';
 import { takeInitUI } from '../init/adopt';
@@ -12,7 +13,7 @@ import type {
 } from '../types';
 import { createBanner } from './banner';
 import { createDialog } from './dialog-surface';
-import { h, prefersReducedMotion } from './dom';
+import { h } from './dom';
 import { applyColorScheme, createStyle, createUIRoot } from './root';
 import type { UIRoot } from './root';
 import { createSlotApplier } from './slots';
@@ -164,13 +165,11 @@ const mountRoot = function mountRoot(
  * it yourself.
  *
  * Every part named in `theme.slots` carries its slot key as a CSS part, so
- * page CSS reaches it through `[data-c15t-ui]::part(consentBannerCard)`
+ * page CSS reaches it through `[data-inth-ui]::part(consentBannerCard)`
  * even inside the shadow root. A slot's classes need their rules in the
  * same root: in the page with `shadow: false`, or through `stylesheetUrls`
  * or `css` in shadow mode.
  *
- * @param client - The client to render.
- * @param options - Where and how to mount.
  * @returns A handle that re-renders or tears down.
  * @throws {Error} When `container` is a selector that matches nothing.
  *

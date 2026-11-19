@@ -57,11 +57,9 @@ export interface FrontChatOptions {
 /**
  * Creates a Front Chat script gated on functionality consent.
  *
- * Keep c15t's default reload-on-revocation behaviour enabled to stop an
+ * Keep Inth's default reload-on-revocation behaviour enabled to stop an
  * already-running widget. Removing its loader cannot unload the SDK.
  *
- * @param options - Front channel and launcher configuration.
- * @returns The Front Chat script configuration.
  * @remarks When `chatId` is missing or blank, the helper logs
  *   `frontChat: missing or invalid chatId` with `console.error` and returns
  *   a script that never loads. Copy the public ID from the Front channel's
@@ -79,10 +77,7 @@ export const frontChat = function frontChat(options: FrontChatOptions): Script {
 		});
 	}
 
-	const scriptSrc = resolveScriptUrl(
-		trimToUndefined(options.scriptSrc),
-		FRONT_CHAT_SCRIPT_SRC
-	);
+	const scriptSrc = resolveScriptUrl(options.scriptSrc, FRONT_CHAT_SCRIPT_SRC);
 	const nonce = trimToUndefined(options.nonce);
 	const initOptions: Record<string, unknown> = {
 		chatId,
@@ -100,15 +95,14 @@ export const frontChat = function frontChat(options: FrontChatOptions): Script {
 		...script,
 		nonce,
 		onLoad(info) {
-			// Consent is captured when core inserts the loader. Its element can
-			// be removed while downloading; ignore that detached load event.
-			if (!info.hasConsent || !info.element?.isConnected) {
+			// Consent is captured when core inserts the loader.
+			if (!info.hasConsent) {
 				return;
 			}
 
 			// Core can also supply the nonce from provider configuration. Front
 			// needs the same nonce in init for its dynamically generated scripts.
-			const loadedNonce = info.element.nonce;
+			const loadedNonce = info.element?.nonce;
 			const resolved = loadedNonce
 				? resolveManifest(frontChatManifest, {
 						initOptions: { ...initOptions, nonce: loadedNonce },
@@ -129,7 +123,6 @@ export const frontChat = function frontChat(options: FrontChatOptions): Script {
  * navigation.
  * Safe to call during SSR or before the SDK loads.
  *
- * @returns Nothing.
  * @example
  * shutdownFrontChat();
  * @see https://dev.frontapp.com/docs/chat-sdk-reference

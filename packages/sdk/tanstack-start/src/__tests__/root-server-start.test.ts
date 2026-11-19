@@ -28,7 +28,7 @@ const optOutState = () =>
 	resolveConsent({
 		mode: manifest(),
 		// A relative backend is the app's own route: no session report.
-		projectUrl: '/api/c15t',
+		projectUrl: '/api/inth',
 		request: new Request('https://app.example.com/'),
 		snapshot: manifestOf([optOutRule({ prompt: 'none' })]),
 	});
@@ -50,16 +50,12 @@ const render = async (
 };
 
 /**
- * `html` without the boot data a deferred root reads: the snapshot and
- * the engine-preload script after it, which carry no start script.
- */
-/**
  * The HTML without the boot data a deferred root reads, its empty preload
  * slot, and the stored-choice check, which starts nothing itself.
  */
 const withoutBootData = (html: string): string =>
 	html.replace(
-		/<script(?: nonce="[^"]*")?>(?:\(function\(\)\{var g=window\.__c15tRender;[^]*?\}\)\(\))?<\/script><script data-c15t-boot[^>]*>[^<]*<\/script><script[^>]*>[^<]*<\/script>/u,
+		/<script(?: nonce="[^"]*")?>(?:\(function\(\)\{var g=window\.__inthRender;[^]*?\}\)\(\))?<\/script><script data-inth-boot[^>]*>[^<]*<\/script><script[^>]*>[^<]*<\/script>/u,
 		''
 	);
 
@@ -148,7 +144,7 @@ test('renders no start script when the app turns the server start off', async ()
 	const html = await new Response(stream).text();
 
 	expect(html).toContain('<main id="page">Page</main>');
-	expect(html).toContain('data-c15t-boot');
+	expect(html).toContain('data-inth-boot');
 	expect(withoutBootData(html)).not.toContain('<script');
 });
 
@@ -265,7 +261,7 @@ test('leaves the boot data, and an empty script for the engine preload, for a vi
 	const html = await render(await optOutState());
 
 	const boot =
-		/<script data-c15t-boot[^>]*>(?<json>[^<]*)<\/script>(?<preload><script[^>]*>[^<]*<\/script>)/u.exec(
+		/<script data-inth-boot[^>]*>(?<json>[^<]*)<\/script>(?<preload><script[^>]*>[^<]*<\/script>)/u.exec(
 			html
 		);
 	expect(
@@ -374,7 +370,7 @@ test('a render whose start module loads late names the start script’s render i
 		const html = await new Response(stream).text();
 
 		expect(html).toContain(JSON.stringify(pixel.src));
-		const boot = /<script data-c15t-boot[^>]*>(?<data>[^<]*)<\/script>/u.exec(
+		const boot = /<script data-inth-boot[^>]*>(?<data>[^<]*)<\/script>/u.exec(
 			html
 		)?.groups?.data;
 		const parsed: unknown = JSON.parse(boot ?? '{}');
@@ -396,7 +392,7 @@ test('starts an integration from the registry source the manifest lists with exp
 	const listedState = () =>
 		resolveConsent({
 			mode: manifest(),
-			projectUrl: '/api/c15t',
+			projectUrl: '/api/inth',
 			request: new Request('https://app.example.com/'),
 			snapshot: {
 				...manifestOf([optOutRule({ prompt: 'none' })]),

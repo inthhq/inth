@@ -1,6 +1,6 @@
 /**
- * The two-stage script tag in Chromium, on the built files: `c15t.js` (the
- * init script) and `c15t.hosted.js` (the engine), against a test backend
+ * The two-stage script tag in Chromium, on the built files: `inth.js` (the
+ * init script) and `inth.hosted.js` (the engine), against a test backend
  * (`fixtures/init-script-server.ts`).
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 type PageWindow = Window & {
 	__heard: string[];
 	__ran: string[];
-	c15t: Record<string, unknown> & {
+	inth: Record<string, unknown> & {
 		client: { getSnapshot: () => { explicitChoice: unknown } } | null;
 		getSnapshot: () => { activeUI: string; explicitChoice: unknown };
 		on: (event: string, listener: (payload: unknown) => void) => () => void;
@@ -45,7 +45,7 @@ const open = async function open(
 			value === true ? '' : String(value),
 		])
 	);
-	frame.src = `/__c15t-init__/page?${params}`;
+	frame.src = `/__inth-init__/page?${params}`;
 	frame.style.width = '800px';
 	frame.style.height = '600px';
 	frames.push(frame);
@@ -55,7 +55,7 @@ const open = async function open(
 			.poll(() => {
 				const doc = frame.contentDocument;
 				return Boolean(
-					doc?.URL.includes('/__c15t-init__/page') &&
+					doc?.URL.includes('/__inth-init__/page') &&
 					doc.readyState !== 'loading'
 				);
 			})
@@ -70,7 +70,7 @@ const open = async function open(
 
 const bannerOf = (win: PageWindow): HTMLElement | null =>
 	win.document
-		.querySelector('[data-c15t-ui]')
+		.querySelector('[data-inth-ui]')
 		?.shadowRoot?.querySelector<HTMLElement>(
 			'[data-testid="consent-banner-root"]'
 		) ?? null;
@@ -81,20 +81,24 @@ const buttonOf = (win: PageWindow, action: string): HTMLButtonElement | null =>
 	) ?? null;
 
 const setInitDelay = async (ms: number): Promise<void> => {
-	await fetch(`/__c15t-init__/init-delay?ms=${ms}`);
+	await fetch(`/__inth-init__/init-delay?ms=${ms}`);
 };
 
 const initsSoFar = async (): Promise<number> =>
-	(await (await fetch('/__c15t-init__/inits')).json()) as number;
+	(await (await fetch('/__inth-init__/inits')).json()) as number;
 
 const savesSoFar = async (): Promise<number> =>
-	(await (await fetch('/__c15t-init__/saves')).json()) as number;
+	(await (await fetch('/__inth-init__/saves')).json()) as number;
+
+const hostedRequestsSoFar = async (): Promise<number> =>
+	(await (await fetch('/__inth-init__/hosted-requests')).json()) as number;
 
 beforeEach(async () => {
 	clearStorage();
 	await setInitDelay(0);
 	await savesSoFar();
 	await initsSoFar();
+	await hostedRequestsSoFar();
 });
 
 afterEach(() => {
@@ -104,20 +108,20 @@ afterEach(() => {
 	clearStorage();
 });
 
-describe('c15t.js before the engine', () => {
+describe('inth.js before the engine', () => {
 	it('shows the banner from /init without loading the engine', async () => {
 		const win = await open({ 'hosted-delay': 4000 });
 
 		await expect.poll(() => bannerOf(win), { timeout: 3000 }).not.toBeNull();
 		expect(bannerOf(win)?.textContent).toContain('Backend title');
 		// The stand-in is installed and no engine has run.
-		expect(win.c15t.__c15tBoot).toBeDefined();
-		expect(win.c15t.client).toBeNull();
-		expect(win.c15t.getSnapshot().activeUI).toBe('banner');
+		expect(win.inth.__inthBoot).toBeDefined();
+		expect(win.inth.client).toBeNull();
+		expect(win.inth.getSnapshot().activeUI).toBe('banner');
 		// The banner's sheet is in the shadow root (the full one replaces it
 		// later; see the handoff test).
 		const style = win.document
-			.querySelector('[data-c15t-ui]')
+			.querySelector('[data-inth-ui]')
 			?.shadowRoot?.querySelector('style');
 		expect(style?.textContent?.length ?? 0).toBeGreaterThan(1000);
 	});
@@ -129,18 +133,18 @@ describe('c15t.js before the engine', () => {
 		buttonOf(win, 'accept')?.click();
 
 		// In the tap's task: the stand-in holds the choice and the banner goes.
-		expect(win.c15t.getSnapshot().explicitChoice).not.toBeNull();
+		expect(win.inth.getSnapshot().explicitChoice).not.toBeNull();
 		await expect
 			.poll(() => win.__ran.toSorted())
 			.toEqual(['marketing', 'measurement']);
 		// Stored before the engine.
-		await expect.poll(() => win.localStorage.getItem('c15t')).not.toBeNull();
+		await expect.poll(() => win.localStorage.getItem('inth')).not.toBeNull();
 		await expect.poll(() => bannerOf(win)).toBeNull();
 
 		// The engine takes over from the stored record and records nothing
 		// again: one save, no second banner, each script ran once.
-		await expect.poll(() => win.c15t.client, { timeout: 5000 }).not.toBeNull();
-		expect(win.c15t.client?.getSnapshot().explicitChoice).not.toBeNull();
+		await expect.poll(() => win.inth.client, { timeout: 5000 }).not.toBeNull();
+		expect(win.inth.client?.getSnapshot().explicitChoice).not.toBeNull();
 		await expect.poll(savesSoFar, { timeout: 5000 }).toBe(1);
 		await new Promise((resolve) => {
 			setTimeout(resolve, 300);
@@ -152,15 +156,15 @@ describe('c15t.js before the engine', () => {
 
 	it('starts a plain script once across the handoff, with one /init and one save', async () => {
 		const win = await open({ 'hosted-delay': 1500, manual: true });
-		const init = win.c15t.init as (options: {
+		const init = win.inth.init as (options: {
 			scripts: { category: string; id: string; src: string }[];
-		}) => PageWindow['c15t'];
+		}) => PageWindow['inth'];
 		init({
 			scripts: [
 				{
 					category: 'measurement',
 					id: 'plain',
-					src: '/__c15t-init__/gated.js?name=plain',
+					src: '/__inth-init__/gated.js?name=plain',
 				},
 			],
 		});
@@ -168,7 +172,7 @@ describe('c15t.js before the engine', () => {
 		buttonOf(win, 'accept')?.click();
 		await expect.poll(() => win.__ran).toContain('plain');
 
-		await expect.poll(() => win.c15t.client, { timeout: 5000 }).not.toBeNull();
+		await expect.poll(() => win.inth.client, { timeout: 5000 }).not.toBeNull();
 		await expect.poll(savesSoFar, { timeout: 5000 }).toBe(1);
 		await new Promise((resolve) => {
 			setTimeout(resolve, 300);
@@ -182,16 +186,16 @@ describe('c15t.js before the engine', () => {
 	it('hands the banner to the engine without a second banner or entry', async () => {
 		const win = await open({ 'hosted-delay': 800 });
 		await expect.poll(() => bannerOf(win)).not.toBeNull();
-		const host = win.document.querySelector('[data-c15t-ui]');
+		const host = win.document.querySelector('[data-inth-ui]');
 		const style = host?.shadowRoot?.querySelector('style');
 		const bannerSheet = style?.textContent?.length ?? 0;
 
-		await expect.poll(() => win.c15t.client, { timeout: 5000 }).not.toBeNull();
-		await (win.c15t.ready as () => Promise<unknown>)();
+		await expect.poll(() => win.inth.client, { timeout: 5000 }).not.toBeNull();
+		await (win.inth.ready as () => Promise<unknown>)();
 
 		// Same host and style element; the full sheet replaced the banner's.
-		expect(win.document.querySelectorAll('[data-c15t-ui]')).toHaveLength(1);
-		expect(win.document.querySelector('[data-c15t-ui]')).toBe(host);
+		expect(win.document.querySelectorAll('[data-inth-ui]')).toHaveLength(1);
+		expect(win.document.querySelector('[data-inth-ui]')).toBe(host);
 		expect(host?.shadowRoot?.querySelectorAll('style')).toHaveLength(1);
 		expect(style?.textContent?.length ?? 0).toBeGreaterThan(bannerSheet);
 		const banners = host?.shadowRoot?.querySelectorAll(
@@ -204,7 +208,7 @@ describe('c15t.js before the engine', () => {
 		// The engine's buttons work.
 		buttonOf(win, 'reject')?.click();
 		await expect
-			.poll(() => win.c15t.getSnapshot().explicitChoice)
+			.poll(() => win.inth.getSnapshot().explicitChoice)
 			.not.toBeNull();
 		await expect.poll(savesSoFar, { timeout: 5000 }).toBe(1);
 		expect(win.__ran).toEqual([]);
@@ -213,24 +217,24 @@ describe('c15t.js before the engine', () => {
 	it('replays calls made before the engine, in order', async () => {
 		const win = await open({ 'hosted-delay': 1000, manual: true, queue: true });
 		// The page inits itself, then calls the API before the engine.
-		const init = win.c15t.init as (
+		const init = win.inth.init as (
 			options: Record<string, never>
-		) => PageWindow['c15t'];
+		) => PageWindow['inth'];
 		const client = init({});
 		client.on('ready', () => win.__heard.push('ready'));
-		win.c15t.openDialog();
-		expect(win.c15t.client).toBeNull();
+		win.inth.openDialog();
+		expect(win.inth.client).toBeNull();
 
-		await expect.poll(() => win.c15t.client, { timeout: 5000 }).not.toBeNull();
+		await expect.poll(() => win.inth.client, { timeout: 5000 }).not.toBeNull();
 		await expect.poll(() => win.__heard).toEqual(['queued ready', 'ready']);
 		await expect
 			.poll(() =>
 				win.document
-					.querySelector('[data-c15t-ui]')
+					.querySelector('[data-inth-ui]')
 					?.shadowRoot?.querySelector('[data-testid="consent-dialog-root"]')
 			)
 			.not.toBeNull();
-		expect(win.c15t.getSnapshot().activeUI).toBe('dialog');
+		expect(win.inth.getSnapshot().activeUI).toBe('dialog');
 	});
 
 	it('opens the dialog for a page action clicked before the engine', async () => {
@@ -240,7 +244,7 @@ describe('c15t.js before the engine', () => {
 		win.document.querySelector<HTMLButtonElement>('#page-customize')?.click();
 
 		await expect
-			.poll(() => win.c15t.client?.getSnapshot(), { timeout: 5000 })
+			.poll(() => win.inth.client?.getSnapshot(), { timeout: 5000 })
 			.toMatchObject({ activeUI: 'dialog' });
 	});
 
@@ -249,12 +253,12 @@ describe('c15t.js before the engine', () => {
 		// and the policy.
 		const first = await open({ 'hosted-delay': 200 });
 		await expect
-			.poll(() => first.c15t.client, { timeout: 5000 })
+			.poll(() => first.inth.client, { timeout: 5000 })
 			.not.toBeNull();
 		await expect.poll(() => buttonOf(first, 'accept')).not.toBeNull();
 		buttonOf(first, 'accept')?.click();
 		await expect.poll(savesSoFar, { timeout: 5000 }).toBe(1);
-		expect(first.localStorage.getItem('c15t-init-policy')).not.toBeNull();
+		expect(first.localStorage.getItem('inth-init-policy')).not.toBeNull();
 
 		// Second visit: /init and the engine both take seconds.
 		await setInitDelay(4000);
@@ -264,7 +268,7 @@ describe('c15t.js before the engine', () => {
 			.poll(() => second.__ran.toSorted(), { timeout: 2000 })
 			.toEqual(['marketing', 'measurement']);
 		expect(performance.now() - started).toBeLessThan(3000);
-		expect(second.c15t.client).toBeNull();
+		expect(second.inth.client).toBeNull();
 		expect(bannerOf(second)).toBeNull();
 	});
 
@@ -272,23 +276,138 @@ describe('c15t.js before the engine', () => {
 		const win = await open({ 'hosted-delay': 600 });
 		await expect.poll(() => bannerOf(win)).not.toBeNull();
 
-		(win.c15t.dispose as () => void)();
+		(win.inth.dispose as () => void)();
 		expect(bannerOf(win)).toBeNull();
 
 		// The engine, already on its way, installs itself and leaves the
 		// page alone.
 		await expect
-			.poll(() => win.c15t.__c15tBoot, { timeout: 5000 })
+			.poll(() => win.inth.__inthBoot, { timeout: 5000 })
 			.toBeUndefined();
 		await new Promise((resolve) => {
 			setTimeout(resolve, 300);
 		});
-		expect(win.c15t.client).toBeNull();
+		expect(win.inth.client).toBeNull();
 		expect(bannerOf(win)).toBeNull();
 
-		(win.c15t.init as () => unknown)();
-		await expect.poll(() => win.c15t.client).not.toBeNull();
+		(win.inth.init as () => unknown)();
+		await expect.poll(() => win.inth.client).not.toBeNull();
 		await expect.poll(() => bannerOf(win), { timeout: 5000 }).not.toBeNull();
+	});
+});
+
+describe('inth.hosted.js failing to load', () => {
+	it('loads the engine on the second try, and runs the queued calls', async () => {
+		const win = await open({ 'hosted-fail': 1, queue: true });
+
+		await expect.poll(() => win.inth.client, { timeout: 5000 }).not.toBeNull();
+		await expect.poll(() => win.__heard).toEqual(['queued ready']);
+		expect(await hostedRequestsSoFar()).toBe(2);
+		// The failed tag went with its failure.
+		expect(
+			win.document.querySelectorAll('script[src*="inth.hosted.js"]')
+		).toHaveLength(1);
+	});
+
+	it('gives up after three tries with one error, and rejects what waits for the engine', async () => {
+		const win = await open({ 'hosted-fail': 3 });
+		const errors: unknown[][] = [];
+		win.console.error = (...args: unknown[]) => {
+			errors.push(args);
+		};
+		const ready = (win.inth.ready as () => Promise<unknown>)();
+		const dismissed = (win.inth.dismissNotice as () => Promise<unknown>)();
+		const failure = {
+			message: expect.stringContaining('inth.hosted.js failed to load 3 times'),
+		};
+
+		await expect(ready).rejects.toMatchObject(failure);
+		await expect(dismissed).rejects.toMatchObject(failure);
+		expect(errors).toHaveLength(1);
+		expect(String(errors[0]?.[0])).toContain('inth.hosted.js');
+		// A call after that fails at once.
+		await expect(
+			(win.inth.ready as () => Promise<unknown>)()
+		).rejects.toMatchObject(failure);
+		// No fourth try, even with the longest retry wait gone by.
+		await new Promise((resolve) => {
+			setTimeout(resolve, 2500);
+		});
+		expect(await hostedRequestsSoFar()).toBe(3);
+		expect(errors).toHaveLength(1);
+		expect(win.inth.client).toBeNull();
+	}, 15_000);
+
+	it('after giving up, its own controls fail quietly and init() after dispose() tries again', async () => {
+		const win = await open({ 'hosted-fail': 3 });
+		win.console.error = () => undefined;
+		const unhandled: unknown[] = [];
+		win.addEventListener('unhandledrejection', (event) => {
+			unhandled.push(event.reason);
+		});
+		await expect(
+			(win.inth.ready as () => Promise<unknown>)()
+		).rejects.toBeInstanceOf(win.Error);
+
+		const control = win.document.createElement('button');
+		control.dataset.inthAction = 'dismiss';
+		win.document.body.append(control);
+		control.click();
+		await new Promise((resolve) => {
+			setTimeout(resolve, 100);
+		});
+		expect(unhandled).toEqual([]);
+
+		(win.inth.dispose as () => void)();
+		(win.inth.init as () => unknown)();
+		await expect.poll(() => win.inth.client, { timeout: 5000 }).not.toBeNull();
+		expect(await hostedRequestsSoFar()).toBe(4);
+	}, 15_000);
+
+	it('shows the banner again when neither inth.commit.js nor the engine records a tap', async () => {
+		const win = await open({ commit: 'fail', 'hosted-fail': 3 });
+		win.console.error = () => undefined;
+		await expect.poll(() => buttonOf(win, 'accept')).not.toBeNull();
+
+		buttonOf(win, 'accept')?.click();
+		await expect.poll(() => bannerOf(win)).toBeNull();
+
+		await expect
+			.poll(() => buttonOf(win, 'accept'), { timeout: 8000 })
+			.not.toBeNull();
+		expect(await hostedRequestsSoFar()).toBe(3);
+	}, 15_000);
+
+	it('rejects what waits for the engine when dispose() runs first', async () => {
+		const win = await open({ 'hosted-delay': 5000 });
+		const ready = (win.inth.ready as () => Promise<unknown>)();
+
+		(win.inth.dispose as () => void)();
+
+		await expect(ready).rejects.toMatchObject({
+			message: expect.stringContaining('dispose() ran before inth.hosted.js'),
+		});
+	});
+
+	it('stops retrying after dispose(), and init() loads the engine again', async () => {
+		const win = await open({ 'hosted-fail': 1 });
+		await expect
+			.poll(() =>
+				win.performance
+					.getEntriesByType('resource')
+					.some(({ name }) => name.includes('inth.hosted.js'))
+			)
+			.toBe(true);
+
+		(win.inth.dispose as () => void)();
+		await new Promise((resolve) => {
+			setTimeout(resolve, 1500);
+		});
+		expect(await hostedRequestsSoFar()).toBe(1);
+
+		(win.inth.init as () => unknown)();
+		await expect.poll(() => win.inth.client, { timeout: 5000 }).not.toBeNull();
+		expect(await hostedRequestsSoFar()).toBe(1);
 	});
 });
 
@@ -305,25 +424,25 @@ describe('the engine after a banner press', () => {
 		button?.click();
 	};
 
-	it('starts the scripts and c15t.commit.js before the engine on an accept', async () => {
+	it('starts the scripts and inth.commit.js before the engine on an accept', async () => {
 		// The priority image holds the engine back until the press.
 		const win = await open({ hero: 10_000 }, { parsed: true });
 		await expect.poll(() => buttonOf(win, 'accept')).not.toBeNull();
-		expect(added(win, 'c15t.hosted.js')).toBe(false);
+		expect(added(win, 'inth.hosted.js')).toBe(false);
 
 		press(win, 'accept');
 
-		expect(added(win, 'c15t.commit.js')).toBe(true);
-		expect(added(win, 'c15t.hosted.js')).toBe(false);
+		expect(added(win, 'inth.commit.js')).toBe(true);
+		expect(added(win, 'inth.hosted.js')).toBe(false);
 		await expect
 			.poll(() => win.__ran.toSorted())
 			.toEqual(['marketing', 'measurement']);
 		// Once the choice is stored, the engine loads.
-		await expect.poll(() => added(win, 'c15t.hosted.js')).toBe(true);
-		expect(win.localStorage.getItem('c15t')).not.toBeNull();
+		await expect.poll(() => added(win, 'inth.hosted.js')).toBe(true);
+		expect(win.localStorage.getItem('inth')).not.toBeNull();
 	});
 
-	it('fetches c15t.dialog.js, not the engine, with the press on Customize', async () => {
+	it('fetches inth.dialog.js, not the engine, with the press on Customize', async () => {
 		const win = await open({ hero: 10_000 }, { parsed: true });
 		await expect.poll(() => buttonOf(win, 'customize')).not.toBeNull();
 
@@ -331,9 +450,9 @@ describe('the engine after a banner press', () => {
 			new win.PointerEvent('pointerdown', { bubbles: true, composed: true })
 		);
 
-		expect(added(win, 'c15t.dialog.js')).toBe(true);
-		expect(added(win, 'c15t.commit.js')).toBe(false);
-		expect(added(win, 'c15t.hosted.js')).toBe(false);
+		expect(added(win, 'inth.dialog.js')).toBe(true);
+		expect(added(win, 'inth.commit.js')).toBe(false);
+		expect(added(win, 'inth.hosted.js')).toBe(false);
 	});
 
 	it('loads the engine with any other press', async () => {
@@ -344,56 +463,56 @@ describe('the engine after a banner press', () => {
 			.querySelector('p')
 			?.dispatchEvent(new win.PointerEvent('pointerdown', { bubbles: true }));
 
-		expect(added(win, 'c15t.hosted.js')).toBe(true);
-		expect(added(win, 'c15t.dialog.js')).toBe(false);
+		expect(added(win, 'inth.hosted.js')).toBe(true);
+		expect(added(win, 'inth.dialog.js')).toBe(false);
 	});
 });
 
-describe('c15t.commit.js and c15t.records.js', () => {
+describe('inth.commit.js and inth.records.js', () => {
 	const wait = (ms: number) =>
 		new Promise((resolve) => {
 			setTimeout(resolve, ms);
 		});
 
-	it('stores a tap in the next task when a press already fetched c15t.commit.js', async () => {
+	it('stores a tap in the next task when a press already fetched inth.commit.js', async () => {
 		const win = await open({ 'hosted-delay': 4000 });
 		await expect.poll(() => buttonOf(win, 'accept')).not.toBeNull();
 		// Not fetched before the visitor presses the banner.
 		const fetchedCommit = () =>
 			win.performance
 				.getEntriesByType('resource')
-				.some(({ name }) => name.includes('c15t.commit.js'));
+				.some(({ name }) => name.includes('inth.commit.js'));
 		expect(fetchedCommit()).toBe(false);
 
 		win.document
-			.querySelector('[data-c15t-ui]')
+			.querySelector('[data-inth-ui]')
 			?.dispatchEvent(new win.PointerEvent('pointerdown', { bubbles: true }));
 		await expect.poll(fetchedCommit).toBe(true);
 		await wait(100);
 		buttonOf(win, 'accept')?.click();
 
 		// The tap's task: the choice, the scripts and the marker.
-		expect(win.c15t.getSnapshot().explicitChoice).not.toBeNull();
-		expect(win.localStorage.getItem('c15t-pending-tap')).not.toBeNull();
+		expect(win.inth.getSnapshot().explicitChoice).not.toBeNull();
+		expect(win.localStorage.getItem('inth-pending-tap')).not.toBeNull();
 		await wait(50);
 		// The next task: the record is stored and the marker gone.
-		expect(win.localStorage.getItem('c15t')).not.toBeNull();
-		expect(win.localStorage.getItem('c15t-pending-tap')).toBeNull();
+		expect(win.localStorage.getItem('inth')).not.toBeNull();
+		expect(win.localStorage.getItem('inth-pending-tap')).toBeNull();
 		await expect
 			.poll(() => win.__ran.toSorted())
 			.toEqual(['marketing', 'measurement']);
 	});
 
-	it('records a tap on the next page when the visitor left before c15t.commit.js arrived', async () => {
+	it('records a tap on the next page when the visitor left before inth.commit.js arrived', async () => {
 		const first = await open({ commit: 5000, 'hosted-delay': 10_000 });
 		await expect.poll(() => buttonOf(first, 'accept')).not.toBeNull();
 		buttonOf(first, 'accept')?.click();
 		await expect
 			.poll(() => first.__ran.toSorted())
 			.toEqual(['marketing', 'measurement']);
-		expect(first.localStorage.getItem('c15t')).toBeNull();
+		expect(first.localStorage.getItem('inth')).toBeNull();
 		const marker = JSON.parse(
-			first.localStorage.getItem('c15t-pending-tap') ?? 'null'
+			first.localStorage.getItem('inth-pending-tap') ?? 'null'
 		) as { c: string } | null;
 		expect(marker?.c).toBe('all');
 		// The visitor leaves: nothing was stored or sent.
@@ -403,13 +522,13 @@ describe('c15t.commit.js and c15t.records.js', () => {
 		const second = await open({ 'hosted-delay': 200 });
 		// The engine records the tap once, from the marker.
 		await expect
-			.poll(() => second.c15t.client?.getSnapshot().explicitChoice, {
+			.poll(() => second.inth.client?.getSnapshot().explicitChoice, {
 				timeout: 5000,
 			})
 			.toBeTruthy();
 		await expect.poll(savesSoFar, { timeout: 5000 }).toBe(1);
-		expect(second.localStorage.getItem('c15t')).not.toBeNull();
-		expect(second.localStorage.getItem('c15t-pending-tap')).toBeNull();
+		expect(second.localStorage.getItem('inth')).not.toBeNull();
+		expect(second.localStorage.getItem('inth-pending-tap')).toBeNull();
 		await expect.poll(() => bannerOf(second)).toBeNull();
 		await expect
 			.poll(() => second.__ran.toSorted())
@@ -418,21 +537,21 @@ describe('c15t.commit.js and c15t.records.js', () => {
 		expect(await savesSoFar()).toBe(0);
 	});
 
-	it('hands the tap to the engine, which records it once, when c15t.commit.js fails', async () => {
+	it('hands the tap to the engine, which records it once, when inth.commit.js fails', async () => {
 		const win = await open({ commit: 'fail', 'hosted-delay': 500 });
 		await expect.poll(() => buttonOf(win, 'accept')).not.toBeNull();
 		buttonOf(win, 'accept')?.click();
-		expect(win.c15t.getSnapshot().explicitChoice).not.toBeNull();
+		expect(win.inth.getSnapshot().explicitChoice).not.toBeNull();
 
-		await expect.poll(() => win.c15t.client, { timeout: 5000 }).not.toBeNull();
+		await expect.poll(() => win.inth.client, { timeout: 5000 }).not.toBeNull();
 		await expect
-			.poll(() => win.c15t.client?.getSnapshot().explicitChoice, {
+			.poll(() => win.inth.client?.getSnapshot().explicitChoice, {
 				timeout: 5000,
 			})
 			.toBeTruthy();
 		await expect.poll(savesSoFar, { timeout: 5000 }).toBe(1);
 		await expect
-			.poll(() => win.localStorage.getItem('c15t-pending-tap'))
+			.poll(() => win.localStorage.getItem('inth-pending-tap'))
 			.toBeNull();
 		await wait(300);
 		expect(await savesSoFar()).toBe(0);
@@ -443,7 +562,7 @@ describe('c15t.commit.js and c15t.records.js', () => {
 	it('hands the tap to the engine, which records it once, when the outbox cannot keep its save', async () => {
 		const win = await open({ 'hosted-delay': 800, manual: true });
 		const recorded: unknown[] = [];
-		const init = win.c15t.init as (options: unknown) => unknown;
+		const init = win.inth.init as (options: unknown) => unknown;
 		init({
 			callbacks: {
 				onChoiceRecorded: (event: unknown) => recorded.push(event),
@@ -457,7 +576,7 @@ describe('c15t.commit.js and c15t.records.js', () => {
 			key: string,
 			value: string
 		) {
-			if (key === 'c15t-v3-pending-consent-saves:v1') {
+			if (key === 'inth-pending-consent-saves:v1') {
 				throw new win.DOMException(
 					'The quota has been exceeded.',
 					'QuotaExceededError'
@@ -467,29 +586,29 @@ describe('c15t.commit.js and c15t.records.js', () => {
 		};
 
 		buttonOf(win, 'accept')?.click();
-		expect(win.c15t.getSnapshot().explicitChoice).not.toBeNull();
-		await expect.poll(() => win.localStorage.getItem('c15t')).not.toBeNull();
+		expect(win.inth.getSnapshot().explicitChoice).not.toBeNull();
+		await expect.poll(() => win.localStorage.getItem('inth')).not.toBeNull();
 		expect(
-			win.localStorage.getItem('c15t-v3-pending-consent-saves:v1')
+			win.localStorage.getItem('inth-pending-consent-saves:v1')
 		).toBeNull();
 		await expect.poll(() => bannerOf(win)).toBeNull();
 
 		// The engine records the tap itself: one save, announced once.
-		await expect.poll(() => win.c15t.client, { timeout: 5000 }).not.toBeNull();
+		await expect.poll(() => win.inth.client, { timeout: 5000 }).not.toBeNull();
 		await expect.poll(savesSoFar, { timeout: 5000 }).toBe(1);
 		await expect.poll(() => recorded).toHaveLength(1);
 		await wait(300);
 		expect(await savesSoFar()).toBe(0);
 		expect(recorded).toHaveLength(1);
-		expect(win.c15t.client?.getSnapshot().explicitChoice).not.toBeNull();
+		expect(win.inth.client?.getSnapshot().explicitChoice).not.toBeNull();
 		expect(win.__ran.toSorted()).toEqual(['marketing', 'measurement']);
 		expect(bannerOf(win)).toBeNull();
 	});
 
-	it('leaves a returning visitor to the engine when c15t.records.js fails', async () => {
+	it('leaves a returning visitor to the engine when inth.records.js fails', async () => {
 		const first = await open({ 'hosted-delay': 200 });
 		await expect
-			.poll(() => first.c15t.client, { timeout: 5000 })
+			.poll(() => first.inth.client, { timeout: 5000 })
 			.not.toBeNull();
 		await expect.poll(() => buttonOf(first, 'accept')).not.toBeNull();
 		buttonOf(first, 'accept')?.click();
@@ -499,14 +618,14 @@ describe('c15t.commit.js and c15t.records.js', () => {
 		expect(
 			first.performance
 				.getEntriesByType('resource')
-				.some(({ name }) => name.includes('c15t.records.js'))
+				.some(({ name }) => name.includes('inth.records.js'))
 		).toBe(false);
 
 		const second = await open({ 'hosted-delay': 300, records: 'fail' });
 		await expect
-			.poll(() => second.c15t.client, { timeout: 5000 })
+			.poll(() => second.inth.client, { timeout: 5000 })
 			.not.toBeNull();
-		expect(second.c15t.client?.getSnapshot().explicitChoice).not.toBeNull();
+		expect(second.inth.client?.getSnapshot().explicitChoice).not.toBeNull();
 		await expect
 			.poll(() => second.__ran.toSorted())
 			.toEqual(['marketing', 'measurement']);
@@ -515,9 +634,9 @@ describe('c15t.commit.js and c15t.records.js', () => {
 	});
 });
 
-describe('c15t.dialog.js', () => {
+describe('inth.dialog.js', () => {
 	const shadowOf = (win: PageWindow): ShadowRoot | null =>
-		win.document.querySelector('[data-c15t-ui]')?.shadowRoot ?? null;
+		win.document.querySelector('[data-inth-ui]')?.shadowRoot ?? null;
 
 	const dialogOf = (win: PageWindow): HTMLElement | null =>
 		shadowOf(win)?.querySelector<HTMLElement>(
@@ -567,8 +686,8 @@ describe('c15t.dialog.js', () => {
 		customize(win);
 
 		await expect.poll(() => dialogOf(win)).not.toBeNull();
-		expect(win.c15t.client).toBeNull();
-		expect(win.c15t.getSnapshot().activeUI).toBe('dialog');
+		expect(win.inth.client).toBeNull();
+		expect(win.inth.getSnapshot().activeUI).toBe('dialog');
 		expect(dialogOf(win)?.textContent).toContain('Analytics');
 		// The banner leaves as the dialog opens, as the engine's does.
 		await expect.poll(() => bannerOf(win)).toBeNull();
@@ -579,14 +698,14 @@ describe('c15t.dialog.js', () => {
 		).toBe('fixed');
 
 		// Then the engine, which takes the same dialog over.
-		await expect.poll(() => added(win, 'c15t.hosted.js')).toBe(true);
+		await expect.poll(() => added(win, 'inth.hosted.js')).toBe(true);
 		const early = dialogOf(win);
-		await expect.poll(() => win.c15t.client, { timeout: 5000 }).not.toBeNull();
-		await (win.c15t.ready as () => Promise<unknown>)();
+		await expect.poll(() => win.inth.client, { timeout: 5000 }).not.toBeNull();
+		await (win.inth.ready as () => Promise<unknown>)();
 		await new Promise((resolve) => {
 			setTimeout(resolve, 300);
 		});
-		expect(win.c15t.client?.getSnapshot()).toMatchObject({
+		expect(win.inth.client?.getSnapshot()).toMatchObject({
 			activeUI: 'dialog',
 		});
 		expect(
@@ -600,7 +719,7 @@ describe('c15t.dialog.js', () => {
 			new win.KeyboardEvent('keydown', { bubbles: true, key: 'Escape' })
 		);
 		await expect
-			.poll(() => win.c15t.client?.getSnapshot().activeUI)
+			.poll(() => win.inth.client?.getSnapshot().activeUI)
 			.toBe('banner');
 	});
 
@@ -612,8 +731,8 @@ describe('c15t.dialog.js', () => {
 		measurementSwitch(win)?.click();
 		expect(measurementSwitch(win)?.getAttribute('aria-checked')).toBe('true');
 
-		await expect.poll(() => win.c15t.client, { timeout: 5000 }).not.toBeNull();
-		await (win.c15t.ready as () => Promise<unknown>)();
+		await expect.poll(() => win.inth.client, { timeout: 5000 }).not.toBeNull();
+		await (win.inth.ready as () => Promise<unknown>)();
 		await new Promise((resolve) => {
 			setTimeout(resolve, 300);
 		});
@@ -636,10 +755,10 @@ describe('c15t.dialog.js', () => {
 			new win.KeyboardEvent('keydown', { bubbles: true, key: 'Escape' })
 		);
 
-		expect(win.c15t.getSnapshot().activeUI).toBe('banner');
+		expect(win.inth.getSnapshot().activeUI).toBe('banner');
 		await expect.poll(() => buttonOf(win, 'accept')).not.toBeNull();
 		await expect.poll(() => dialogOf(win)).toBeNull();
-		expect(win.c15t.client).toBeNull();
+		expect(win.inth.client).toBeNull();
 	});
 
 	it('records a save of categories before the engine, once', async () => {
@@ -648,7 +767,7 @@ describe('c15t.dialog.js', () => {
 		customize(win);
 		await expect.poll(() => dialogOf(win)).not.toBeNull();
 		// The commit file loads once the dialog is on screen.
-		await expect.poll(() => added(win, 'c15t.commit.js')).toBe(true);
+		await expect.poll(() => added(win, 'inth.commit.js')).toBe(true);
 		await new Promise((resolve) => {
 			setTimeout(resolve, 200);
 		});
@@ -656,19 +775,19 @@ describe('c15t.dialog.js', () => {
 		saveMeasurement(win);
 
 		// In the tap's task: the choice, its script, and the dialog closes.
-		expect(win.c15t.client).toBeNull();
-		expect(win.c15t.getSnapshot()).toMatchObject({
+		expect(win.inth.client).toBeNull();
+		expect(win.inth.getSnapshot()).toMatchObject({
 			activeUI: 'none',
 			effectivePermissions: { marketing: false, measurement: true },
 		});
 		await expect.poll(() => win.__ran).toEqual(['measurement']);
 		await expect.poll(() => dialogOf(win)).toBeNull();
-		await expect.poll(() => win.localStorage.getItem('c15t')).not.toBeNull();
+		await expect.poll(() => win.localStorage.getItem('inth')).not.toBeNull();
 
 		// The engine sends the queued save: one save, the same choice.
-		await expect.poll(() => win.c15t.client, { timeout: 5000 }).not.toBeNull();
+		await expect.poll(() => win.inth.client, { timeout: 5000 }).not.toBeNull();
 		await expect.poll(savesSoFar, { timeout: 5000 }).toBe(1);
-		expect(win.c15t.client?.getSnapshot().effectivePermissions).toMatchObject({
+		expect(win.inth.client?.getSnapshot().effectivePermissions).toMatchObject({
 			marketing: false,
 			measurement: true,
 		});
@@ -679,7 +798,7 @@ describe('c15t.dialog.js', () => {
 		expect(win.__ran).toEqual(['measurement']);
 		expect(bannerOf(win)).toBeNull();
 		// The engine still offers both categories, measurement on.
-		win.c15t.openDialog();
+		win.inth.openDialog();
 		await expect.poll(() => measurementSwitch(win)).not.toBeNull();
 		expect(measurementSwitch(win)?.getAttribute('aria-checked')).toBe('true');
 		expect(
@@ -697,9 +816,9 @@ describe('c15t.dialog.js', () => {
 
 		saveMeasurement(win);
 
-		await expect.poll(() => win.c15t.client, { timeout: 5000 }).not.toBeNull();
+		await expect.poll(() => win.inth.client, { timeout: 5000 }).not.toBeNull();
 		await expect
-			.poll(() => win.c15t.client?.getSnapshot().effectivePermissions, {
+			.poll(() => win.inth.client?.getSnapshot().effectivePermissions, {
 				timeout: 5000,
 			})
 			.toMatchObject({ marketing: false, measurement: true });
@@ -713,7 +832,7 @@ describe('c15t.dialog.js', () => {
 	});
 
 	for (const dialog of ['fail', 'stale'] as const) {
-		it(`loads the engine instead when c15t.dialog.js ${dialog === 'fail' ? 'fails' : 'is from another release'}`, async () => {
+		it(`loads the engine instead when inth.dialog.js ${dialog === 'fail' ? 'fails' : 'is from another release'}`, async () => {
 			const win = await open(
 				{ dialog, hero: 10_000, 'hosted-delay': 800 },
 				{ parsed: true }
@@ -723,14 +842,14 @@ describe('c15t.dialog.js', () => {
 			customize(win);
 
 			// No dialog before the engine; the tap goes to the engine.
-			await expect.poll(() => added(win, 'c15t.hosted.js')).toBe(true);
-			expect(win.c15t.client).toBeNull();
+			await expect.poll(() => added(win, 'inth.hosted.js')).toBe(true);
+			expect(win.inth.client).toBeNull();
 			expect(dialogOf(win)).toBeNull();
 			await expect
-				.poll(() => win.c15t.client, { timeout: 5000 })
+				.poll(() => win.inth.client, { timeout: 5000 })
 				.not.toBeNull();
 			await expect
-				.poll(() => win.c15t.client?.getSnapshot().activeUI, {
+				.poll(() => win.inth.client?.getSnapshot().activeUI, {
 					timeout: 5000,
 				})
 				.toBe('dialog');

@@ -63,7 +63,7 @@ private struct StockRoot: View {
     var body: some View {
         Dashboard(core: core, openSettings: { ConsentPrompt.current?.presentPreferences() })
             // No App Tracking Transparency alert: it would cover the screen being captured.
-            .c15tConsent(privacyPolicyURL: privacyPolicyURL, autoPresent: screen == .prompt, trackingRequest: .manual)
+            .inth(privacyPolicyURL: privacyPolicyURL, autoPresent: screen == .prompt, trackingRequest: .manual)
             .task {
                 guard screen != .prompt else { return }
                 // Settings open on the loaded policy, not on a placeholder.
@@ -154,7 +154,7 @@ enum FixtureBackend {
         let body: Data
         func send(_ request: HTTPRequest) async throws -> HTTPResponse {
             request.method == .get
-                ? HTTPResponse(status: 200, headers: ["x-c15t-policy-contract": "1"], body: body)
+                ? HTTPResponse(status: 200, headers: ["x-inth-policy-contract": "1"], body: body)
                 : HTTPResponse(status: 503)
         }
     }

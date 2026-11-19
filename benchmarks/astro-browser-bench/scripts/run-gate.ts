@@ -5,7 +5,7 @@
  * Astro bakes the integration's options in at build time, and its boot
  * script runs on every page of a build that has the integration, so the gate
  * page and its no-CMP control come from two builds: `gate` (`dist-gate`) and
- * `baseline` (`dist-gate-baseline`, no c15t at all). Each runs its own server,
+ * `baseline` (`dist-gate-baseline`, no Inth at all). Each runs its own server,
  * and a small path router in front of them gives the gate proxy one upstream:
  * `/gate/control` goes to the baseline server, everything else to the gate
  * server.
@@ -26,18 +26,18 @@ import { fileURLToPath } from 'node:url';
 import {
 	runConsentGate,
 	spawnGateServer,
-} from '@c15t/benchmarking/consent-gate';
-import type { GateServer } from '@c15t/benchmarking/consent-gate';
+} from '@inth/benchmarking/consent-gate';
+import type { GateServer } from '@inth/benchmarking/consent-gate';
 
 const HOST = '127.0.0.1';
 const appDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const repoRoot = resolve(appDir, '..', '..');
-const port = Number(process.env.C15T_GATE_SERVER_PORT ?? '4334');
+const port = Number(process.env.INTH_GATE_SERVER_PORT ?? '4334');
 // Off the 433x range the other benches' gate servers default to.
 const gatePort = port + 10;
 const controlPort = port + 20;
 const gateOrigin = `http://${HOST}:${gatePort}`;
-const stampFile = 'c15t-gate-build.json';
+const stampFile = 'inth-gate-build.json';
 
 const builds = {
 	baseline: { mode: 'baseline', outDir: 'dist-gate-baseline' },
@@ -146,10 +146,10 @@ const ensureBuild = async function ensureBuild(
 			cwd: appDir,
 			env: {
 				...process.env,
-				C15T_BENCH_ASTRO_MODE: mode,
+				INTH_BENCH_ASTRO_MODE: mode,
 				// The gate build's server fetches its manifest from itself.
-				C15T_BENCH_ORIGIN: gateOrigin,
-				C15T_BENCH_OUT_DIR: `./${outDir}`,
+				INTH_BENCH_ORIGIN: gateOrigin,
+				INTH_BENCH_OUT_DIR: `./${outDir}`,
 			},
 			stdio: ['ignore', 'pipe', 'pipe'],
 		});
@@ -182,8 +182,8 @@ const startAstro = function startAstro(
 		command: ['node', join(builds[build].outDir, 'server', 'entry.mjs')],
 		cwd: appDir,
 		env: {
-			C15T_BENCH_BACKEND_LATENCY_MS: `${backendLatencyMs}`,
 			HOST,
+			INTH_BENCH_BACKEND_LATENCY_MS: `${backendLatencyMs}`,
 			PORT: `${serverPort}`,
 		},
 		origin: `http://${HOST}:${serverPort}`,
@@ -236,9 +236,9 @@ try {
 		notes: [
 			"@inth/astro in manifest mode with a runtime manifest from the fixture backend; server-rendered banner and dialog, gated scripts from a clientEntrypoint, as CookieBench's Astro fixture. The control page is a build without the integration.",
 		],
-		packageName: '@c15t/astro-browser-bench',
+		packageName: '@inth/astro-browser-bench',
 		paths: { control: '/gate/control', gate: '/gate' },
-		proxyPort: Number(process.env.C15T_GATE_PORT ?? '4434'),
+		proxyPort: Number(process.env.INTH_GATE_PORT ?? '4434'),
 		startServer: async (backendLatencyMs) => {
 			const gate = await startAstro('gate', gatePort, backendLatencyMs);
 			const control = await startAstro(

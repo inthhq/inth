@@ -38,7 +38,7 @@ export default defineDocsConfig({
 	llms: {
 		sections: [
 			{
-				body: "These docs describe c15t v3. Find your app's row in Choose your setup, then follow that framework guide from start to finish; it names the files to create and the backend URL to use. A visible banner does not prove anything: check that vendor requests wait for consent, that rejection survives a reload, and that preferences can be reopened.",
+				body: "These docs describe Inth v3. Find your app's row in Choose your setup, then follow that framework guide from start to finish; it names the files to create and the backend URL to use. A visible banner does not prove anything: check that vendor requests wait for consent, that rejection survives a reload, and that preferences can be reopened.",
 				heading: 'Using these docs',
 				type: 'markdown',
 			},
@@ -73,14 +73,14 @@ export default defineDocsConfig({
 				type: 'links',
 			},
 			{
-				heading: 'Compare c15t',
+				heading: 'Compare Inth',
 				links: [
 					{
 						urlPath: '/docs/comparisons',
 					},
 					{
 						title:
-							'c15t vs CookieConsent v3, the vanilla-cookieconsent package',
+							'Inth vs CookieConsent v3, the vanilla-cookieconsent package',
 						urlPath: '/docs/comparisons/cookieconsent-v3',
 					},
 					{
@@ -755,7 +755,7 @@ export default defineDocsConfig({
 							title: 'Components',
 						},
 						{
-							pages: ['provide-c15t', 'services', 'callbacks'],
+							pages: ['provide-inth', 'services', 'callbacks'],
 							slug: 'consent-api',
 							title: 'Consent API',
 						},
@@ -1229,7 +1229,7 @@ export default defineDocsConfig({
 		docs: 'https://c15t.com/docs',
 		homepage: 'https://c15t.com',
 		kind: 'library',
-		name: 'c15t',
+		name: 'Inth',
 		repository: 'https://github.com/c15t/c15t',
 		tagline:
 			'Consent management for React, Next.js, Vue, Nuxt, Svelte, SvelteKit, Astro, TanStack Start and JavaScript.',

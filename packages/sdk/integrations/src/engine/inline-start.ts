@@ -23,7 +23,7 @@ const inlineJSON = function inlineJSON(value: unknown): string {
 };
 
 /** The global name of the shared runner the prelude defines. */
-const RUNNER = '__c15tRunSteps';
+const RUNNER = '__inthRunSteps';
 
 /**
  * `executeStep` for every step type except constructGlobal, which only runs

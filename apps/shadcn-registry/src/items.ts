@@ -5,20 +5,20 @@
  */
 
 /**
- * The c15t range every item installs. Raise it when an item starts using a
+ * The Inth range every item installs. Raise it when an item starts using a
  * hook or prop that older releases don't have.
  */
-export const c15tRange = '^3.2.0';
+export const inthRange = '^3.2.0';
 
 export const frameworks = ['next', 'react', 'tanstack-start'] as const;
 export type Framework = (typeof frameworks)[number];
 
 /**
- * The c15t entry point each framework's UI items import. The Next.js and
+ * The Inth entry point each framework's UI items import. The Next.js and
  * TanStack Start entries re-export the React one, so the build only
  * rewrites import paths.
  */
-export const c15tEntryByFramework = {
+export const inthEntryByFramework = {
 	next: '@inth/nextjs',
 	react: '@inth/react',
 	'tanstack-start': '@inth/tanstack-start',
@@ -98,7 +98,7 @@ export const uiItems: UiItem[] = [
 	},
 	{
 		description:
-			'The "Secured by c15t" tag on the banner, dialog and sheet, and the mark on the dialog trigger.',
+			'The "Secured by" tag on the banner, dialog and sheet, and the mark on the dialog trigger.',
 		files: [component('consent-branding.tsx')],
 		name: 'consent-branding',
 		title: 'Consent branding',
@@ -147,19 +147,19 @@ export const uiItems: UiItem[] = [
 export const setupItems: SetupItem[] = [
 	{
 		description:
-			'Adds c15t.config.ts and a ConsentManager that renders the banner, the dialog and its trigger in the root layout.',
+			'Adds inth.config.ts and a ConsentManager that renders the banner, the dialog and its trigger in the root layout.',
 		docs: [
 			'Wrap next.config.ts with withConsentManifest from @inth/nextjs/build, then render <ConsentManager> around {children} in app/layout.tsx.',
-			'NEXT_PUBLIC_C15T_BACKEND_URL points at a demo project. Replace it with your Inth or self-hosted backend URL.',
+			'NEXT_PUBLIC_INTH_PROJECT_URL points at a demo project. Replace it with your Inth or self-hosted backend URL.',
 			'The components build on the headless hooks: https://c15t.com/docs/frameworks/next/headless',
 		].join('\n'),
 		envVars: {
-			NEXT_PUBLIC_C15T_BACKEND_URL: 'https://example-inth.inth.app',
+			NEXT_PUBLIC_INTH_PROJECT_URL: 'https://example-inth.inth.app',
 		},
 		files: [
 			{
-				source: 'c15t.config.ts',
-				target: '~/c15t.config.ts',
+				source: 'inth.config.ts',
+				target: '~/inth.config.ts',
 				type: 'registry:file',
 			},
 			component('consent-manager.tsx'),
@@ -173,11 +173,11 @@ export const setupItems: SetupItem[] = [
 			'Adds a ConsentManager that sets up ConsentProvider and renders the banner, the dialog and its trigger.',
 		docs: [
 			'Add consentManifest() from @inth/sdk/build to vite.config.ts, then wrap your app in <ConsentManager>.',
-			'VITE_C15T_BACKEND_URL points at a demo project. Replace it with your Inth or self-hosted backend URL.',
+			'VITE_INTH_PROJECT_URL points at a demo project. Replace it with your Inth or self-hosted backend URL.',
 			'The components build on the headless hooks: https://c15t.com/docs/frameworks/react/headless',
 		].join('\n'),
 		envVars: {
-			VITE_C15T_BACKEND_URL: 'https://example-inth.inth.app',
+			VITE_INTH_PROJECT_URL: 'https://example-inth.inth.app',
 		},
 		files: [component('consent-manager.tsx')],
 		framework: 'react',
@@ -190,11 +190,11 @@ export const setupItems: SetupItem[] = [
 		docs: [
 			'Add consentManifest() from @inth/tanstack-start/build to vite.config.ts, before tanstackStart().',
 			'In src/routes/__root.tsx, spread consentLoaderOptions from @inth/tanstack-start/server into createRootRoute, load { consent: await getConsentState() }, and render <ConsentManager state={consent}><Outlet /></ConsentManager> from the root component.',
-			'VITE_C15T_BACKEND_URL points at a demo project. Replace it with your Inth or self-hosted backend URL.',
+			'VITE_INTH_PROJECT_URL points at a demo project. Replace it with your Inth or self-hosted backend URL.',
 			'The components build on the headless hooks: https://c15t.com/docs/frameworks/tanstack-start/headless',
 		].join('\n'),
 		envVars: {
-			VITE_C15T_BACKEND_URL: 'https://example-inth.inth.app',
+			VITE_INTH_PROJECT_URL: 'https://example-inth.inth.app',
 		},
 		files: [component('consent-manager.tsx')],
 		framework: 'tanstack-start',

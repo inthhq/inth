@@ -1,10 +1,10 @@
-# Performance Baseline — c15t v2.0.0 (v3 target source-of-truth)
+# Performance Baseline — Inth v2.0.0 (v3 target source-of-truth)
 
 > Last updated: 2026-04-24
 > Environment: Apple M1 Pro, Bun 1.3.6, Node 24.14.0, Next.js 16.2.1, React 19.2.4
 > Purpose: lock v2 numbers so v3 CI gates enforce guaranteed-improvement deltas.
 
-The v3 rewrite (`c15t/v3`, `@inth/react/v3`, `@inth/nextjs/v3`) must meet the **target** column for every metric below before the v3.0 stable gate. v3 CI fails any regression against these baselines.
+The v3 rewrite (`inth/v3`, `@inth/react/v3`, `@inth/nextjs/v3`) must meet the **target** column for every metric below before the v3.0 stable gate. v3 CI fails any regression against these baselines.
 
 ---
 
@@ -41,8 +41,8 @@ v3-only metrics (no v2 equivalent): `subscribe` 0.54 µs, `identify` 1.00 µs.
 
 | Entry | v2 | v3 | Δ | Target |
 |---|---:|---:|---:|---:|
-| `c15t` main entry | 33.1 KB | n/a (v2 unchanged) | — | — |
-| `c15t/v3` (kernel + transport + hosted factory) | n/a | **2.3 KB** | — | < 8 KB |
+| `inth` main entry | 33.1 KB | n/a (v2 unchanged) | — | — |
+| `inth/v3` (kernel + transport + hosted factory) | n/a | **2.3 KB** | — | < 8 KB |
 
 v3 subpath export produces a separate chunk. Growth from 1.3 KB → 2.3 KB is the pluggable transport interface + `createHostedTransport()` factory + snapshot fields for jurisdiction/showConsentBanner/init-response handling. Still **28%** of the 8 KB ceiling.
 
@@ -99,7 +99,7 @@ Invariants met:
 | `@inth/react` — full package | 251.28 KB | (unchanged) | — |
 | `@inth/react/v3` — adapter only | n/a | **933 bytes** | — |
 
-The v3 adapter (Provider + 12 hooks + context + type re-exports) ships as 933 bytes gzipped. A consumer importing only from `@inth/react/v3` ships the kernel (1.3 KB) + adapter (0.93 KB) = **~2.2 KB gzip** of c15t code.
+The v3 adapter (Provider + 12 hooks + context + type re-exports) ships as 933 bytes gzipped. A consumer importing only from `@inth/react/v3` ships the kernel (1.3 KB) + adapter (0.93 KB) = **~2.2 KB gzip** of Inth code.
 
 ---
 
@@ -137,7 +137,7 @@ No unawaited Promise through props. No module-level cache — each request gets 
 | `@inth/nextjs/v3/server` — SSR helper | n/a | **476 bytes** | — |
 | **Total v3 Next.js adapter code** | — | **863 bytes** | — |
 
-A Next.js app using only the v3 path ships kernel (1.3 KB) + react adapter (0.93 KB) + nextjs adapter (0.86 KB) = **~3.1 KB gzip** of c15t code — vs v2's `/nextjs-basic` route add of **37.71 KB**. Per-route measurements once the Track 5 bundle-test-app variants land will confirm the end-to-end delta.
+A Next.js app using only the v3 path ships kernel (1.3 KB) + react adapter (0.93 KB) + nextjs adapter (0.86 KB) = **~3.1 KB gzip** of Inth code — vs v2's `/nextjs-basic` route add of **37.71 KB**. Per-route measurements once the Track 5 bundle-test-app variants land will confirm the end-to-end delta.
 
 ### End-to-end flow (updated — server prefetch + client auto-init)
 
@@ -152,7 +152,7 @@ import { ConsentRoot } from '@inth/nextjs/v3';
 export default async function RootLayout({ children }) {
   const state = await resolveConsent();
   return (
-    <ConsentRoot state={state} projectUrl="/api/c15t">
+    <ConsentRoot state={state} projectUrl="/api/inth">
       {children}
     </ConsentRoot>
   );
@@ -165,9 +165,9 @@ import { resolveConsent } from '@inth/nextjs/v3/server';
 import { ConsentRoot } from '@inth/nextjs/v3';
 
 export default async function RootLayout({ children }) {
-  const state = await resolveConsent({ projectUrl: '/api/c15t' });
+  const state = await resolveConsent({ projectUrl: '/api/inth' });
   return (
-    <ConsentRoot state={state} projectUrl="/api/c15t">
+    <ConsentRoot state={state} projectUrl="/api/inth">
       {children}
     </ConsentRoot>
   );
@@ -290,7 +290,7 @@ The /v3-react-full route in `benchmarks/bundle-test-app` exercises the full v3 s
 
 | Route | v2 /react-full | v3 /v3-react-full | Δ |
 |---|---:|---:|---:|
-| c15t addition | **47.76 KB** | **15.88 KB** | **−66.7%** |
+| Inth addition | **47.76 KB** | **15.88 KB** | **−66.7%** |
 
 The remaining ~16 KB in v3 covers: kernel + offline transport + script-loader + network-blocker + iframe-blocker + persistence + React adapter hooks + the page's own component code. v3 has no IAB in this route; adding `@inth/sdk/iab/v3` would bring the total to ~17.5 KB eager + 50 KB lazy TCF core.
 
@@ -298,11 +298,11 @@ The remaining ~16 KB in v3 covers: kernel + offline transport + script-loader + 
 
 | Module | v3 gzip | Target | Status |
 |---|---:|---:|---:|
-| `c15t/v3` kernel + transports + rich init + offline | **4.0 KB** | ≤ 6 KB | ✅ |
-| `c15t/v3/modules/script-loader` | **2.5 KB** | ≤ 4 KB | ✅ |
-| `c15t/v3/modules/network-blocker` | **1.5 KB** | ≤ 2 KB | ✅ |
-| `c15t/v3/modules/iframe-blocker` | **1.0 KB** | ≤ 1 KB | ✅ |
-| `c15t/v3/modules/persistence` | **0.69 KB** | ≤ 2 KB | ✅ |
+| `inth/v3` kernel + transports + rich init + offline | **4.0 KB** | ≤ 6 KB | ✅ |
+| `inth/v3/modules/script-loader` | **2.5 KB** | ≤ 4 KB | ✅ |
+| `inth/v3/modules/network-blocker` | **1.5 KB** | ≤ 2 KB | ✅ |
+| `inth/v3/modules/iframe-blocker` | **1.0 KB** | ≤ 1 KB | ✅ |
+| `inth/v3/modules/persistence` | **0.69 KB** | ≤ 2 KB | ✅ |
 | `@inth/sdk/iab/v3` adapter | **1.6 KB** | — | ✅ |
 | **Full non-IAB stack** | **~9.7 KB** | ≤ 18 KB | ✅ |
 | **Full IAB-enabled stack** (+ IAB adapter, lazy TCF core on demand) | **~11.3 KB eager + 50 KB lazy** | ≤ 45 KB eager | ✅ |
@@ -311,7 +311,7 @@ The remaining ~16 KB in v3 covers: kernel + offline transport + script-loader + 
 
 ## v3 Vue Adapter — Shape Validator (2026-04-24, Track 5)
 
-`@inth/vue/v3` exists to prove the `c15t/v3` kernel contract is genuinely framework-neutral. The Vue adapter uses `provide`/`inject` + `shallowRef` + `onScopeDispose` — no React primitives borrowed. The same invariants that hold in React must hold here, otherwise the kernel shape has React-shaped assumptions baked in.
+`@inth/vue/v3` exists to prove the `inth/v3` kernel contract is genuinely framework-neutral. The Vue adapter uses `provide`/`inject` + `shallowRef` + `onScopeDispose` — no React primitives borrowed. The same invariants that hold in React must hold here, otherwise the kernel shape has React-shaped assumptions baked in.
 
 ### Composables
 
@@ -341,7 +341,7 @@ All invariants that hold for React also hold for Vue, with zero adapter-side wor
 
 - `packages/sdk/vue/src/v3/__tests__/composables.test.ts` — **10/10 pass** (5 selector basics, 2 re-render invariants, 1 missing-provider error, 2 action-composable flows).
 
-### What this proves for `c15t/v3`
+### What this proves for `inth/v3`
 
 Release gate cleared: **the kernel contract is framework-neutral in practice, not just in theory.** Two independent adapters (`@inth/react/v3` on `useSyncExternalStore`, `@inth/vue/v3` on `shallowRef`/`watch`) drive the same kernel with:
 
@@ -349,7 +349,7 @@ Release gate cleared: **the kernel contract is framework-neutral in practice, no
 2. Identical invariants (zero unrelated re-renders, no-op short-circuit, stale-free values, reference-stable actions).
 3. Zero cross-contamination — no Vue types in core, no React types leaked into Vue.
 
-The kernel is ready to promote from `c15t/v3` experimental to stable at v3.0 as soon as the React and Next.js adapters ship.
+The kernel is ready to promote from `inth/v3` experimental to stable at v3.0 as soon as the React and Next.js adapters ship.
 
 ---
 
@@ -361,13 +361,13 @@ Measured by building `benchmarks/bundle-test-app` and inspecting chunks. Run via
 
 | Package | v2.0.0 gzip | v3 target (−30%) |
 |---|---:|---:|
-| `c15t` (core) | **181.74 kB** | ≤ 127.22 kB |
+| `inth` (core) | **181.74 kB** | ≤ 127.22 kB |
 | `@inth/react` | **251.28 kB** | ≤ 175.90 kB |
 | `@inth/nextjs` | **109.20 kB** | ≤ 76.44 kB |
 
 ### First-load JS per route (Next.js 16 App Router)
 
-| Route | v2.0.0 c15t addition | v3 target (−30%) |
+| Route | v2.0.0 Inth addition | v3 target (−30%) |
 |---|---:|---:|
 | `/core-only` | **24.72 kB** | ≤ 17.30 kB |
 | `/react-headless` | **29.18 kB** | ≤ 20.43 kB |
@@ -376,13 +376,13 @@ Measured by building `benchmarks/bundle-test-app` and inspecting chunks. Run via
 | `/nextjs-ssr` | **38.08 kB** | ≤ 26.66 kB |
 | `/react-full` | **45.36 kB** | ≤ 31.75 kB |
 
-Shared baseline (Next.js + React runtime): 188.46 kB. Not attributed to c15t; not gated.
+Shared baseline (Next.js + React runtime): 188.46 kB. Not attributed to Inth; not gated.
 
 ---
 
 ## Microbenchmarks (p95, microseconds)
 
-Measured by `bun run bench` in `benchmarks/core-benchmarks`. 25 iterations per fixture. Fixtures defined in `@c15t/benchmarking` vary on consent category count, script count, and translation locale count.
+Measured by `bun run bench` in `benchmarks/core-benchmarks`. 25 iterations per fixture. Fixtures defined in `@inth/benchmarking` vary on consent category count, script count, and translation locale count.
 
 ### `configureConsentManager` — kernel config assembly
 
@@ -490,7 +490,7 @@ These metrics do not exist in `benchmarks/core-benchmarks` today. They are requi
 These three are captured as failing-test repros in the v3 suite (Tasks #3–#5). The v3 kernel must make them pass.
 
 1. **Silent runtime-cache reuse**: `packages/sdk/core/src/runtime/index.ts:65-92` keys on 8 fields, ignores 15 more (callbacks, overrides, scripts, iab, user, namespace, networkBlocker, consentCategories, offlinePolicy, ...). React adapter patches this at `packages/sdk/react/src/providers/consent-manager-provider.tsx:137-198`. On Vercel Fluid Compute this leaks consent across concurrent requests.
-2. **Stale-closure `has()` under React Compiler**: `packages/sdk/react/src/hooks/use-consent-manager.ts:52-84` rebuilds `has()`/`hasConsented()`/`getDisplayedConsents()` manually. Links to c15t issue #604.
+2. **Stale-closure `has()` under React Compiler**: `packages/sdk/react/src/hooks/use-consent-manager.ts:52-84` rebuilds `has()`/`hasConsented()`/`getDisplayedConsents()` manually. Links to Inth issue #604.
 3. **Lifecycle coupling in store construction**: `packages/sdk/core/src/store/index.ts:608-645` writes `window[namespace]`, initializes iframe + network blockers, replays `onConsentSet`, calls `identifyUser`, calls `initConsentManager` — all at store construction. No way to get a store without these effects.
 
 ---
@@ -507,7 +507,7 @@ cd benchmarks/bundle-test-app && bun run build && bun run analyze:md
 
 ## v3 CI Gate Enforcement
 
-Gates enforced only on v3 code paths (`c15t/v3`, `@inth/react/v3`, `@inth/nextjs/v3`); v2 stays on its current behavior.
+Gates enforced only on v3 code paths (`inth/v3`, `@inth/react/v3`, `@inth/nextjs/v3`); v2 stays on its current behavior.
 
 - Bundle (per-package gzip and per-route addition): fail if v3 exceeds v2 by more than −30% target allows.
 - Microbench p95: fail if v3 `createConsentKernel` exceeds 10 µs p95 on any fixture.

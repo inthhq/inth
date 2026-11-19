@@ -1,6 +1,6 @@
 ---
 title: Composables
-description: Every c15t composable the Nuxt module auto-imports, grouped by task, with the difference between a permission and a recorded choice.
+description: Every Inth composable the Nuxt module auto-imports, grouped by task, with the difference between a permission and a recorded choice.
 group: frameworks
 ---
 
@@ -19,13 +19,13 @@ and for vendor scripts use the `scripts` option in `app.config.ts`. See
 
 A few composables are not auto-imported, among them `useHasConsentPolicy()`,
 `useHasConsentUi()`, `useHasConsentPreferences()` and `useIabTranslations()`.
-Import them from `#c15t/composables`, the alias the module registers for its
+Import them from `#inth/composables`, the alias the module registers for its
 composables:
 
 {/* example: fragment */}
 
 ```ts
-import { useHasConsentPreferences } from '#c15t/composables';
+import { useHasConsentPreferences } from '#inth/composables';
 ```
 
 <import src="../../shared/vue/composables.mdx#rules" />

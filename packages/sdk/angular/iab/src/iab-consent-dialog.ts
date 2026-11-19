@@ -43,7 +43,7 @@ import { IAB_DIALOG_SHEETS } from './iab-dialog-sheets';
  */
 export const IAB_CONSENT_DIALOG_BODY = new InjectionToken<
 	() => Promise<Type<IABConsentDialogBody>>
->('C15T_IAB_CONSENT_DIALOG_BODY', {
+>('INTH_IAB_CONSENT_DIALOG_BODY', {
 	factory: () => async () =>
 		(await import('./iab-consent-dialog-body')).IABConsentDialogBody,
 });
@@ -67,8 +67,8 @@ export type IABPreferenceTab = 'purposes' | 'vendors';
  *
  * @example
  * ```html
- * <c15t-iab-consent-banner />
- * <c15t-iab-consent-dialog />
+ * <inth-iab-consent-banner />
+ * <inth-iab-consent-dialog />
  * ```
  */
 @Component({
@@ -78,7 +78,7 @@ export type IABPreferenceTab = 'purposes' | 'vendors';
 	host: { ngSkipHydration: 'true', style: 'display: contents' },
 	// Its parts resolve `noStyle` through this surface.
 	providers: [NoStyleScope],
-	selector: 'c15t-iab-consent-dialog',
+	selector: 'inth-iab-consent-dialog',
 	template: '<ng-container #body />',
 })
 export class IABConsentDialog {

@@ -223,7 +223,6 @@ export const openaiPixelManifest = {
 /**
  * Creates a consent-aware ChatGPT Ads Measurement Pixel script.
  *
- * @param options - Pixel ID, debug logging, and optional SDK URL.
  * @returns A script gated on marketing consent, with SDK consent updates.
  * @remarks When `pixelId` is missing or blank, the
  *   helper logs `openaiPixel: missing or invalid pixelId` with
@@ -267,10 +266,8 @@ export const openaiPixel = function openaiPixel({
  * Sends a conversion to every initialized OpenAI pixel.
  *
  * Calls before the queue exists are dropped. Once loaded, the SDK applies
- * c15t's consent signal. Use `window.oaiq('measureSingle', ...)` to target one pixel.
+ * Inth's consent signal. Use `window.oaiq('measureSingle', ...)` to target one pixel.
  *
- * @param args - Event name, matching data, and event options.
- * @returns Nothing.
  * @example
  * ```ts
  * openaiPixelEvent('order_created', {

@@ -5,7 +5,7 @@ import type { ConsentJourneyOption } from '../journey';
 export interface PrefetchOptions {
 	/**
 	 * Backend URL used for fetching `/init`.
-	 * Accepts absolute URLs or same-origin paths like `/api/c15t`.
+	 * Accepts absolute URLs or same-origin paths like `/api/inth`.
 	 */
 	projectUrl: string;
 
@@ -32,7 +32,7 @@ export interface PrefetchOptions {
 
 	/**
 	 * The app's banner `experiment`, so the early request carries the arm
-	 * the banner will run. The request picks it as c15t does: the arm this
+	 * the banner will run. The request picks it as Inth does: the arm this
 	 * browser saw before, otherwise a weighted pick over `split`. The
 	 * runtime then runs that arm. Only `id`, the arm names, `split` and a
 	 * fixed `arm` are read.
@@ -47,7 +47,7 @@ export interface PrefetchOptions {
 	/**
 	 * The consent storage key, used to tell whether a choice is stored.
 	 *
-	 * @default 'c15t'
+	 * @default 'inth'
 	 */
 	storageKey?: string;
 }

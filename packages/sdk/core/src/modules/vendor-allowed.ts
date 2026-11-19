@@ -11,10 +11,10 @@
  * @packageDocumentation
  */
 
-import type { ConsentState } from '../consent/compliance';
 import { has } from '../libs/has';
 import { isProductionBuild } from '../libs/is-production';
-import type { ConsentSnapshot } from '../types';
+import { vendorAxisActive } from '../libs/vendors';
+import type { ConsentState, ConsentSnapshot } from '../types';
 import { isVendorDenied } from './vendor-denial';
 
 /** Undeclared vendor ids already warned about, so each warns once. */
@@ -28,7 +28,7 @@ const warnUndeclaredVendor = function warnUndeclaredVendor(
 	}
 	warnedUndeclaredVendors.add(vendorId);
 	console.warn(
-		`[c15t] Vendor "${vendorId}" is not declared, so it reads as not allowed. Add { id: '${vendorId}', category: ... } to the vendors option, or put vendor: '${vendorId}' on the script that loads it.`
+		`[inth] Vendor "${vendorId}" is not declared, so it reads as not allowed. Add { id: '${vendorId}', category: ... } to the vendors option, or put vendor: '${vendorId}' on the script that loads it.`
 	);
 };
 
@@ -36,7 +36,6 @@ const warnUndeclaredVendor = function warnUndeclaredVendor(
  * The rule `isVendorAllowed` applies: declared, not turned off outside
  * IAB, and its category condition holds under `permissions`.
  *
- * @param snapshot - Immutable kernel snapshot.
  * @param vendorId - Vendor id as declared.
  * @param permissions - Reads the category permissions to check against;
  * only called for a declared vendor that is not turned off.
@@ -57,7 +56,7 @@ export const vendorAllowedUnder = function vendorAllowedUnder(
 		}
 		return false;
 	}
-	if (snapshot.model !== 'iab' && isVendorDenied(snapshot, vendorId)) {
+	if (vendorAxisActive(snapshot) && isVendorDenied(snapshot, vendorId)) {
 		return false;
 	}
 	try {
@@ -72,7 +71,6 @@ export const vendorAllowedUnder = function vendorAllowedUnder(
  * permissions the snapshot already holds, with no re-evaluation. The
  * answer `isVendorAllowed(snapshot, vendorId, snapshot.evaluatedAt)` gives.
  *
- * @param snapshot - Immutable kernel snapshot.
  * @param vendorId - Vendor id as declared.
  * @returns `true` when the vendor is declared and allowed in `snapshot`.
  * @internal

@@ -2,11 +2,11 @@ import { afterEach, expect, it, vi } from 'vitest';
 
 import { installGlobal } from '../global';
 import { createTestingGlobal as createGlobal } from '../testing-global';
-import type { TestingC15tGlobal as C15tGlobal } from '../testing-global';
+import type { TestingInthGlobal as InthGlobal } from '../testing-global';
 import type { ConsentClientOptions } from '../types';
 
-const testWindow = window as Window & { c15t?: unknown };
-let api: C15tGlobal | undefined;
+const testWindow = window as Window & { inth?: unknown };
+let api: InthGlobal | undefined;
 
 const seedAnalytics = (): void => {
 	document.cookie = 'analytics-id=visitor; Path=/';
@@ -23,7 +23,7 @@ const expectAnalyticsCleared = (): void => {
 afterEach(() => {
 	api?.dispose();
 	api = undefined;
-	testWindow.c15t = undefined;
+	testWindow.inth = undefined;
 	localStorage.clear();
 	sessionStorage.clear();
 	for (const entry of document.cookie.split(';')) {
@@ -60,7 +60,7 @@ it.each(['direct init', 'queued config'])(
 			ui: false,
 		};
 		if (configuration === 'queued config') {
-			testWindow.c15t = [['config', options]];
+			testWindow.inth = [['config', options]];
 		}
 		api = installGlobal(createGlobal({}));
 		seedAnalytics();

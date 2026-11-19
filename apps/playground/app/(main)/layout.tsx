@@ -16,8 +16,8 @@ import { ThemeProvider } from '../../components/theme-provider';
 
 export const metadata = {
 	description:
-		'Interactive demo of c15t consent management: policy scenarios, IAB TCF, theming, and i18n.',
-	title: 'c15t Demo',
+		'Interactive demo of Inth consent management: policy scenarios, IAB TCF, theming, and i18n.',
+	title: 'Inth Demo',
 };
 
 const RootLayout = ({

@@ -12,6 +12,7 @@
  * yet, so a site with a banner in every layout does not need this
  * explicitly — but `<head>` is where the colour-scheme script belongs.
  */
+import { THEME_STYLE_ELEMENT_ID } from '@inth/sdk/ui/theme';
 import { applyExperimentTheme } from '@inth/sdk/engine';
 import {
 	buildColorSchemeScript,
@@ -22,18 +23,18 @@ import {
 } from '@inth/astro/server';
 import ComponentStyles from './component-styles.astro';
 
-const { c15t } = Astro.locals;
-const shouldEmit = c15t !== undefined && markConfigEmitted(Astro.locals);
+const { inth } = Astro.locals;
+const shouldEmit = inth !== undefined && markConfigEmitted(Astro.locals);
 const colorSchemeScript = shouldEmit
-	? buildColorSchemeScript(c15t.options.colorScheme)
+	? buildColorSchemeScript(inth.options.colorScheme)
 	: '';
 // An arm's theme overrides ride on the host theme, like its presentation.
 const themeCSS = shouldEmit
 	? buildThemeCSS(
 			applyExperimentTheme(
-				c15t.options.theme,
-				c15t.options.experiment,
-				c15t.snapshot.experiment
+				inth.options.theme,
+				inth.options.experiment,
+				inth.snapshot.experiment
 			)
 		)
 	: '';
@@ -43,8 +44,8 @@ const themeCSS = shouldEmit
 	colorSchemeScript && (
 		<script
 			is:inline
-			data-c15t-inline
-			nonce={c15t?.nonce}
+			data-inth-inline
+			nonce={inth?.nonce}
 			set:html={colorSchemeScript}
 		/>
 	)
@@ -56,8 +57,8 @@ const themeCSS = shouldEmit
 	themeCSS && (
 		<style
 			is:inline
-			id="c15t-theme"
-			nonce={c15t?.nonce}
+			id={THEME_STYLE_ELEMENT_ID}
+			nonce={inth?.nonce}
 			set:html={themeCSS}
 		/>
 	)
@@ -68,9 +69,9 @@ const themeCSS = shouldEmit
 		<script
 			is:inline
 			type="application/json"
-			data-c15t-config
-			nonce={c15t.nonce}
-			set:html={buildConfigJSON(c15t.config)}
+			data-inth-config
+			nonce={inth.nonce}
+			set:html={buildConfigJSON(inth.config)}
 		/>
 	)
 }
@@ -80,9 +81,9 @@ const themeCSS = shouldEmit
 		<script
 			is:inline
 			type="application/json"
-			data-c15t-boot
-			nonce={c15t.nonce}
-			set:html={buildLocalsBootJSON(c15t)}
+			data-inth-boot
+			nonce={inth.nonce}
+			set:html={buildLocalsBootJSON(inth)}
 		/>
 	)
 }

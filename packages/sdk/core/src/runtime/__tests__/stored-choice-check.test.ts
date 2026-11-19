@@ -14,10 +14,10 @@ import {
 	optInRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
+import { PAGE_RENDER_KEY } from '../../libs/page-globals';
 import type { Script } from '../../libs/script-loader/types';
 import { encodeStoredConsentEnvelopeJson } from '../../modules/persistence/writer/encode';
 import {
-	PAGE_RENDER_KEY,
 	serverScriptStartPlan,
 	storedChoiceCheckScript,
 } from '../script-server-start';
@@ -84,7 +84,7 @@ describe('storedChoiceCheckScript', () => {
 			throw new Error('the fixture grants marketing');
 		}
 		localStorage.setItem(
-			'c15t',
+			'inth',
 			encodeStoredConsentEnvelopeJson({
 				categories: {
 					marketing: {
@@ -114,7 +114,7 @@ describe('storedChoiceCheckScript', () => {
 			throw new Error('the fixture decides marketing');
 		}
 		localStorage.setItem(
-			'c15t',
+			'inth',
 			encodeStoredConsentEnvelopeJson({
 				categories: {
 					marketing: {

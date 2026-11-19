@@ -35,7 +35,7 @@ export const minimalTheme: Theme = {
 	slots: {
 		buttonPrimary: {
 			style: {
-				borderRadius: 'var(--c15t-radius-sm)',
+				borderRadius: 'var(--inth-radius-sm)',
 				boxShadow: 'none',
 				fontWeight: 500,
 			},
@@ -43,23 +43,23 @@ export const minimalTheme: Theme = {
 		buttonSecondary: {
 			style: {
 				backgroundColor: 'transparent',
-				border: '1px solid var(--c15t-border)',
-				borderRadius: 'var(--c15t-radius-sm)',
+				border: '1px solid var(--inth-border)',
+				borderRadius: 'var(--inth-radius-sm)',
 				boxShadow: 'none',
-				color: 'var(--c15t-text-muted)',
+				color: 'var(--inth-text-muted)',
 				fontWeight: 500,
 			},
 		},
 		consentBannerCard: {
 			style: {
-				border: '1px solid var(--c15t-border)',
-				boxShadow: 'var(--c15t-shadow-sm)',
+				border: '1px solid var(--inth-border)',
+				boxShadow: 'var(--inth-shadow-sm)',
 			},
 		},
 		consentDialogCard: {
 			style: {
-				border: '1px solid var(--c15t-border)',
-				boxShadow: 'var(--c15t-shadow-lg)',
+				border: '1px solid var(--inth-border)',
+				boxShadow: 'var(--inth-shadow-lg)',
 				width: 800,
 			},
 		},
@@ -169,10 +169,10 @@ export const fullTheme: Theme = {
 	slots: {
 		buttonPrimary: {
 			style: {
-				backgroundColor: 'var(--c15t-primary)',
+				backgroundColor: 'var(--inth-primary)',
 				border: '1px solid transparent',
 				borderRadius: '0.375rem',
-				color: 'var(--c15t-text-on-primary)',
+				color: 'var(--inth-text-on-primary)',
 				cursor: 'pointer',
 				fontSize: '0.875rem',
 				fontWeight: 500,
@@ -184,10 +184,10 @@ export const fullTheme: Theme = {
 		},
 		buttonSecondary: {
 			style: {
-				backgroundColor: 'var(--c15t-surface)',
-				border: '1px solid var(--c15t-border)',
+				backgroundColor: 'var(--inth-surface)',
+				border: '1px solid var(--inth-border)',
 				borderRadius: '0.375rem',
-				color: 'var(--c15t-text)',
+				color: 'var(--inth-text)',
 				cursor: 'pointer',
 				fontSize: '0.875rem',
 				fontWeight: 500,
@@ -213,12 +213,12 @@ export const fullTheme: Theme = {
 		consentBannerCard: {
 			style: {
 				alignItems: 'center',
-				backgroundColor: 'var(--c15t-surface-hover)',
+				backgroundColor: 'var(--inth-surface-hover)',
 				borderBottom: 'none',
 				borderLeft: 'none',
 				borderRadius: '0',
 				borderRight: 'none',
-				borderTop: '1px solid var(--c15t-border)',
+				borderTop: '1px solid var(--inth-border)',
 				boxShadow: '0 -2px 4px -1px rgba(0, 0, 0, 0.06)',
 				display: 'flex',
 				flexDirection: 'row',
@@ -232,7 +232,7 @@ export const fullTheme: Theme = {
 		consentBannerFooter: {
 			style: {
 				alignItems: 'stretch',
-				borderLeft: '1px solid var(--c15t-border)',
+				borderLeft: '1px solid var(--inth-border)',
 				borderTop: 'none',
 				display: 'flex',
 				flexDirection: 'column',
@@ -259,7 +259,7 @@ export const fullTheme: Theme = {
 		},
 		consentDialogCard: {
 			style: {
-				border: '1px solid var(--c15t-border)',
+				border: '1px solid var(--inth-border)',
 				borderRadius: '0.5rem',
 				boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
 			},

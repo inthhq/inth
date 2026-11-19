@@ -5,23 +5,23 @@
  * primitives, the tabbed and collapsible parts, the ConsentGate
  * placeholder. The vanilla banner, dialog and trigger render a
  * fixed set of class maps, so a rule that needs a class outside them only
- * costs bytes in `c15t.js` and selector matching in the shadow root.
+ * costs bytes in `inth.js` and selector matching in the shadow root.
  *
- * Only `@inth/sdk-ui`'s hashed CSS-module classes (`c15t-ui-<name>-<hash>`) decide
+ * Only `@inth/sdk-ui`'s hashed CSS-module classes (`inth-ui-<name>-<hash>`) decide
  * anything. A selector keeps its rule unless it requires one of those classes
  * and no class map this package renders contains it. Classes inside `:not()`
- * never make a selector unmatchable, and plain classes such as `c15t-dark` or
- * `c15t-theme-root` are assumed present. `:root`/`:host` token blocks and
+ * never make a selector unmatchable, and plain classes such as `inth-dark` or
+ * `inth-theme-root` are assumed present. `:root`/`:host` token blocks and
  * `@keyframes` are kept. A component custom property goes only when every
  * rule that read it went, such as the tabs and ConsentGate variables; the
- * `--c15t-*` theme tokens always stay.
+ * `--inth-*` theme tokens always stay.
  */
 
 import { parse } from 'postcss';
 import type { AtRule, Root } from 'postcss';
 
 /** Class names `@inth/sdk-ui` generates for its CSS modules. */
-const HASHED_CLASS = /^c15t-ui-[\w-]+-[\w-]{5}$/u;
+const HASHED_CLASS = /^inth-ui-[\w-]+-[\w-]{5}$/u;
 
 const NEGATION = /:not\((?:[^()]|\([^()]*\))*\)/gu;
 
@@ -30,13 +30,12 @@ const CLASS_NAME = /\.(?<name>-?[_a-zA-Z][\w-]*)/gu;
 const VAR_REFERENCE = /var\(\s*(?<name>--[\w-]+)/gu;
 
 /** Theme tokens: public, so never dropped. */
-const THEME_TOKEN = /^--c15t-/u;
+const THEME_TOKEN = /^--inth-/u;
 
 /**
  * Every class name a set of class maps can put on an element.
  *
  * @param maps - Class maps, nested in any shape, with space-separated values.
- * @returns The class names.
  */
 export const collectClassNames = function collectClassNames(
 	maps: unknown
@@ -65,7 +64,6 @@ export const collectClassNames = function collectClassNames(
  * Whether a selector can match an element built from `rendered` classes.
  *
  * @param selector - One complex selector (no top-level commas).
- * @param rendered - Class names the surfaces render.
  * @returns `false` only when the selector requires an unrendered ui class.
  */
 const canMatch = function canMatch(
@@ -85,9 +83,6 @@ const canMatch = function canMatch(
 /**
  * The custom properties a stylesheet reads: those a property or an at-rule
  * names in `var()`, and the ones their definitions name in turn.
- *
- * @param root - The parsed stylesheet.
- * @returns The custom property names.
  */
 const readCustomProperties = function readCustomProperties(
 	root: Root
@@ -127,8 +122,6 @@ const readCustomProperties = function readCustomProperties(
 /**
  * Keep only the rules a surface built from `rendered` classes can match.
  *
- * @param css - The stylesheet.
- * @param rendered - Class names the surfaces render.
  * @param canRender - Further drops selectors the surfaces cannot match,
  * such as an attribute value they never set.
  * @returns The pruned stylesheet, with the input's formatting.
@@ -188,11 +181,8 @@ export const pruneStylesheet = function pruneStylesheet(
  * `@inth/sdk-ui` ships a readable sheet: a comment above each section (one
  * names `@inth/sdk-ui/postcss-tailwind3` so Tailwind 3's build error shows the
  * fix) and line breaks between blocks. In the shadow root they only add
- * bytes to `c15t.js`. Selectors, at-rule params and declaration values
+ * bytes to `inth.js`. Selectors, at-rule params and declaration values
  * are left as written, so every rule still means the same thing.
- *
- * @param css - The stylesheet.
- * @returns The stylesheet without comments or formatting whitespace.
  */
 export const compactStylesheet = function compactStylesheet(
 	css: string

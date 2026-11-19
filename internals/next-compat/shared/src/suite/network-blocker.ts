@@ -10,7 +10,7 @@ const EARLY = ['child', 'child-xhr', 'module', 'sibling'];
 
 declare global {
 	interface Window {
-		__c15tCompat?: CompatProbeState;
+		__inthCompat?: CompatProbeState;
 	}
 }
 
@@ -69,8 +69,8 @@ export const defineNetworkBlockerSuite = function defineNetworkBlockerSuite(
 			await page.goto(`${baseURL}${ROUTE}`, { waitUntil: 'domcontentloaded' });
 			await page.waitForFunction(
 				() =>
-					window.__c15tCompat?.hasPolicy &&
-					!window.__c15tCompat.policyProvisional,
+					window.__inthCompat?.hasPolicy &&
+					!window.__inthCompat.policyProvisional,
 				undefined,
 				{ timeout: 30_000 }
 			);
@@ -87,7 +87,7 @@ export const defineNetworkBlockerSuite = function defineNetworkBlockerSuite(
 				const { page } = await visit(context);
 				await page.getByTestId(`consent-banner-${choice}-button`).click();
 				// The choice is stored after the kernel records it.
-				await page.waitForFunction(() => document.cookie.includes('c15t='));
+				await page.waitForFunction(() => document.cookie.includes('inth='));
 				return await context.storageState();
 			} finally {
 				await context.close();

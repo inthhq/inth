@@ -39,7 +39,7 @@ const queryTestId = function queryTestId(testId: string) {
 
 const queryToolbarAction = function queryToolbarAction(kind: string) {
 	return document.querySelector<HTMLButtonElement>(
-		`[role="toolbar"] [data-c15t-trigger-action="${kind}"]`
+		`[role="toolbar"] [data-inth-trigger-action="${kind}"]`
 	);
 };
 
@@ -88,7 +88,7 @@ describe('consent surfaces without a resolved policy', () => {
 			</ComponentFixtureProvider>
 		);
 
-		// The app-owned action proves the tree rendered; the c15t item is absent.
+		// The app-owned action proves the tree rendered; the Inth item is absent.
 		await vi.waitFor(() => {
 			expect(queryToolbarAction('custom')).toBeInTheDocument();
 		});

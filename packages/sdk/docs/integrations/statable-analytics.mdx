@@ -1,18 +1,18 @@
 ---
 title: Statable
-description: Load Statable analytics after measurement consent with the c15t statableAnalytics helper, configure its ingestion endpoint, and verify requests and browser storage.
-seoTitle: Statable cookie consent with c15t
+description: Load Statable analytics after measurement consent with the Inth statableAnalytics helper, configure its ingestion endpoint, and verify requests and browser storage.
+seoTitle: Statable cookie consent with Inth
 seoDescription: Keep the Statable tracker off your page until measurement consent. Configure the site ID, check browser storage, and stop tracking on consent withdrawal.
 icon: chart-line
 group: integrations
 ---
 
-Statable describes its web analytics as cookieless. The c15t
+Statable describes its web analytics as cookieless. The Inth
 `statableAnalytics` helper still waits until the `measurement` category is
 allowed before it loads Statable's tracker, so no request reaches Statable
 before then.
 
-Statable has no stop API. When the visitor withdraws, c15t reloads the page by
+Statable has no stop API. When the visitor withdraws, Inth reloads the page by
 default, and the reload stops the running tracker.
 
 ## Configure Statable
@@ -24,7 +24,7 @@ plan bundles tracking inside a widget with a different loader, which this
 helper doesn't support.
 
 Delete any existing Statable script tag or tag manager copy, so it can't load
-outside c15t.
+outside Inth.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
@@ -36,7 +36,7 @@ outside c15t.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `siteId` | Required | Positive integer as a string or number. Trimmed. If it's missing, blank, fractional, negative, non-decimal or above the safe integer limit, c15t logs an error and never loads the tracker. |
+| `siteId` | Required | Positive integer as a string or number. Trimmed. If it's missing, blank, fractional, negative, non-decimal or above the safe integer limit, Inth logs an error and never loads the tracker. |
 | `scriptUrl` | `https://statable.com/js/{siteId}/s.js` | Loader URL override. Each `{siteId}` is replaced with the site ID. A blank value uses the default. |
 | `trackingApi` | Loader origin plus `/api/event` | Full ingestion endpoint, set as the `data-tracking-api` attribute. The tracker posts to this URL as you give it. A blank value leaves the attribute off, so Statable uses its default. |
 
@@ -59,7 +59,7 @@ site ID in its path and in the `data-id` attribute. It doesn't create
 after it loads, and it doesn't replay events sent before then. Check the
 measurement permission and wait for that function before you send an event.
 
-The helper calls no Statable consent or stop API. On withdrawal, c15t removes
+The helper calls no Statable consent or stop API. On withdrawal, Inth removes
 the loader element, but the tracker's listeners and timers keep running until
 the page unloads. Keep `reloadOnConsentRevoked` enabled. If you turn it off,
 tracking continues on the current page.

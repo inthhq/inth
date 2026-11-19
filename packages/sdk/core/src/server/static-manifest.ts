@@ -1,7 +1,7 @@
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 
 import { failedResponseError } from '../libs/failed-response';
-import { c15tProtocolHeaders } from '../transports/version-header';
+import { inthProtocolHeaders } from '../libs/version-header';
 
 /** Names that parse but cannot be bound with `export const`. */
 const RESERVED_EXPORT_NAMES = new Set([
@@ -64,9 +64,7 @@ export interface StaticManifestModuleOptions {
 }
 
 /** Fetches a manifest for build-time code generation.
- * @param options - Manifest URL and optional fetch implementation.
  * @param label - Framework name used in errors.
- * @returns The backend manifest.
  * @throws {Error} When fetch is unavailable or the response is not a valid manifest.
  */
 export const loadStaticManifest = async (
@@ -78,7 +76,7 @@ export const loadStaticManifest = async (
 		throw new Error(`${label}: no fetch available.`);
 	}
 	const response = await fetchImpl(options.manifestUrl, {
-		headers: { accept: 'application/json', ...c15tProtocolHeaders },
+		headers: { accept: 'application/json', ...inthProtocolHeaders },
 		method: 'GET',
 	});
 	if (!response.ok) {
@@ -100,13 +98,11 @@ export const loadStaticManifest = async (
 
 /**
  * Validates the identifiers a generated manifest module uses.
- * @param options - Requested export name and type import source.
- * @param defaults - Framework import source and error label.
  * @returns The export name and import source to write.
  * @throws {Error} When either identifier is invalid.
  * @internal
  */
-export const resolveStaticManifestModuleNames = (
+const resolveStaticManifestModuleNames = (
 	options: Pick<StaticManifestModuleOptions, 'exportName' | 'importSource'>,
 	defaults: { importSource: string; label: string }
 ): { exportName: string; importSource: string } => {
@@ -132,12 +128,11 @@ export const resolveStaticManifestModuleNames = (
  * Renders a generated manifest module. Without a manifest, the export is
  * `undefined` with the same `ConsentManifest` type, so imports still compile
  * and the server fetches the manifest at runtime.
- * @param names - Validated export name and type import source.
  * @param manifest - The snapshot, or `undefined` when the build has none.
  * @returns TypeScript source for the module.
  * @internal
  */
-export const renderStaticManifestModule = (
+const renderStaticManifestModule = (
 	names: { exportName: string; importSource: string },
 	manifest: ConsentManifest | undefined
 ): string =>
@@ -156,8 +151,6 @@ export const renderStaticManifestModule = (
 	].join('\n');
 
 /** Generates a typed module with validated export and import names.
- * @param options - Manifest fetch options and generated identifiers.
- * @param defaults - Framework import source and error label.
  * @returns TypeScript source containing the manifest.
  * @throws {Error} When a generated identifier is invalid or the fetch fails.
  */
@@ -169,3 +162,35 @@ export const createStaticManifestModule = async (
 	const manifest = await loadStaticManifest(options, defaults.label);
 	return renderStaticManifestModule(names, manifest);
 };
+
+/** What a framework's `/static` entry exports for build-time manifests. */
+export interface StaticManifestEntry {
+	/** Fetches the manifest used by static builds. */
+	loadStaticManifest: (
+		options: Pick<StaticManifestModuleOptions, 'manifestUrl' | 'fetch'>
+	) => Promise<ConsentManifest>;
+	/** Generates a typed manifest module for a static build. */
+	createStaticManifestModule: (
+		options: StaticManifestModuleOptions
+	) => Promise<string>;
+}
+
+/**
+ * The build-time manifest helpers of a framework's `/static` entry, which
+ * names itself in errors and as the generated module's type import.
+ *
+ * @param entry - The entry's specifier, such as `@inth/nextjs/static`.
+ * @returns `loadStaticManifest` and `createStaticManifestModule`.
+ * @example
+ * ```ts
+ * export const { createStaticManifestModule, loadStaticManifest } =
+ *   createStaticManifestEntry('@inth/nextjs/static');
+ * ```
+ */
+export const createStaticManifestEntry = (
+	entry: string
+): StaticManifestEntry => ({
+	createStaticManifestModule: (options) =>
+		createStaticManifestModule(options, { importSource: entry, label: entry }),
+	loadStaticManifest: (options) => loadStaticManifest(options, entry),
+});

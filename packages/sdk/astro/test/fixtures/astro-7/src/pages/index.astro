@@ -5,7 +5,7 @@ import ConsentScript from '@inth/astro/components/consent-script.astro';
 import IABConsentBanner from '@inth/astro/components/iab-consent-banner.astro';
 import IABConsentDialog from '@inth/astro/components/iab-consent-dialog.astro';
 
-const iab = Astro.locals.c15t?.snapshot.model === 'iab';
+const iab = Astro.locals.inth?.snapshot.model === 'iab';
 ---
 <html lang="en">
 	<head><meta charset="utf-8" /><title>Fixture</title><ConsentScript /></head>

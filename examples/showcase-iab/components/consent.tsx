@@ -11,11 +11,11 @@ import type { ReactNode } from 'react';
 
 import { brandTheme } from '@/lib/consent-theme';
 
-// The backend is your Inth project: set NEXT_PUBLIC_C15T_BACKEND_URL in
+// The backend is your Inth project: set NEXT_PUBLIC_INTH_PROJECT_URL in
 // .env.local. The policy comes from its consent manifest.
 const config = {
 	projectUrl:
-		process.env.NEXT_PUBLIC_C15T_BACKEND_URL ?? 'https://your-project.inth.app',
+		process.env.NEXT_PUBLIC_INTH_PROJECT_URL ?? 'https://your-project.inth.app',
 };
 
 // A demonstration CMP ID, the same one c15t's own IAB demos use. Every TC
@@ -24,9 +24,9 @@ const config = {
 const CMP_ID = 160;
 
 // A three-vendor list served from public/vendor-list.json so the demo runs
-// offline. Its vendors are made up. In production, remove `gvlUrl`: c15t then
+// offline. Its vendors are made up. In production, remove `gvlUrl`: Inth then
 // loads the official Global Vendor List, either through your backend with
-// `hosted()` or from c15t's GVL endpoint, filtered to the vendors you work
+// `hosted()` or from Inth's GVL endpoint, filtered to the vendors you work
 // with through the `vendors` prop.
 const GVL_URL = '/vendor-list.json';
 

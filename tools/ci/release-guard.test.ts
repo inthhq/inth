@@ -15,7 +15,7 @@ test("each product finds what it would publish", () => {
   expect(releaseNames(root, "sdk")).toContain("@inth/sdk");
   expect(releaseNames(root, "sdk")).toContain("@inth/nuxt");
   expect(releaseNames(root, "sdk")).not.toContain("@inth/sdk-core");
-  expect(releaseNames(root, "sdk")).not.toContain("@c15t/build-shared");
+  expect(releaseNames(root, "sdk")).not.toContain("@inth/build-shared");
   expect(releaseNames(root, "react-native")).toEqual(["@inth/react-native"]);
   expect(releaseNames(root, "android")).toEqual(["com.inth"]);
   expect(releaseNames(root, "swift")).toContain("InthCore");

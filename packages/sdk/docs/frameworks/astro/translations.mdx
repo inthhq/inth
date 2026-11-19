@@ -1,12 +1,12 @@
 ---
 title: Translations
-description: Set the language and wording of the c15t banner and preference dialog on an Astro site with the integration's i18n option, from Accept-Language negotiation to per-language message overrides and banner props.
+description: Set the language and wording of the Inth banner and preference dialog on an Astro site with the integration's i18n option, from Accept-Language negotiation to per-language message overrides and banner props.
 group: frameworks
 ---
 
 ## How the language is chosen
 
-On a server-rendered page, the c15t middleware picks the language for each
+On a server-rendered page, the Inth middleware picks the language for each
 request, in this order:
 
 1. `i18n.locale`, when you set it.
@@ -23,7 +23,7 @@ On a static or prerendered page there is no request at build time. The HTML
 starts in `i18n.locale` or English, and the browser switches to the language
 its `/init` answer returns.
 
-c15t ships messages for Arabic, Bangla, Bulgarian, Chinese, Croatian, Czech,
+Inth ships messages for Arabic, Bangla, Bulgarian, Chinese, Croatian, Czech,
 Danish, Dutch, English, Estonian, Finnish, French, German, Greek, Gujarati,
 Haitian Creole, Hebrew, Hindi, Hungarian, Icelandic, Indonesian, Irish,
 Italian, Japanese, Kannada, Korean, Latvian, Lithuanian, Luxembourgish, Malay,
@@ -38,7 +38,7 @@ Set `i18n.messages` in the integration options, keyed by language:
 {/* example: fragment */}
 
 ```js title="astro.config.mjs (partial)"
-c15t({
+inth({
 	i18n: {
 		messages: {
 			en: {
@@ -64,16 +64,16 @@ in `common`. In hosted and manifest mode the base is the copy your backend
 sends, including wording edited in your Inth project, and your messages win
 for the keys they set. With `testing()` the base is the stock wording.
 
-c15t looks up messages for the exact language first, then for its primary
+Inth looks up messages for the exact language first, then for its primary
 language, so a visitor resolved to `de-AT` gets your `de` messages when there
 is no `de-AT` entry. Override every language you support. A language you
 leave out keeps the backend's or the stock wording.
 
-A key only overrides the backend when your text differs from c15t's built-in
+A key only overrides the backend when your text differs from Inth's built-in
 wording for that language. So passing the stock bundles from
 `@inth/astro/translations/all` to enable languages keeps backend edits visible,
 while a key you actually reworded stays pinned in code. Core bundles only
-English; for other languages, import `@inth/astro/translations/all` so c15t can
+English; for other languages, import `@inth/astro/translations/all` so Inth can
 recognize its stock wording.
 
 The options are serialized into the page, so messages are plain strings.
@@ -102,7 +102,7 @@ asks for:
 {/* example: fragment */}
 
 ```js title="astro.config.mjs (partial)"
-c15t({ i18n: { locale: 'de' } });
+inth({ i18n: { locale: 'de' } });
 ```
 
 Set `i18n.detectLanguage: false` instead to ignore `Accept-Language` and use

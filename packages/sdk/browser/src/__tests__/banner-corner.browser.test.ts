@@ -5,7 +5,7 @@
  * logical flex alignment would flip it to the right. This measures where
  * the card lands instead of reading `data-position`.
  */
-import { clearBrowserConsentStorage } from '@c15t/conformance/suite';
+import { clearBrowserConsentStorage } from '@inth/conformance/suite';
 import { afterEach, describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 

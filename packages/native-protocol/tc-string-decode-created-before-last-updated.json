@@ -304,8 +304,8 @@
 	},
 	"kind": "tc-string",
 	"notes": [
-		"Population decode-coverage: this model reaches past what @c15t/iab writes, so expects.encode is false and only the decode half is graded. An encoder that cannot produce this input is not wrong.",
-		"Both timestamps are 36 bits of tenths of a second, so they survive to the decisecond and not below it; a confirmation time with a sub-de-second remainder is the one thing in a core segment that cannot round-trip exactly, which is why the fixture clock is a whole number of deciseconds. @c15t/iab always writes both fields from the same truncated day, so a decoder that assumes created equals lastUpdated passes every parity vector and fails this one.",
+		"Population decode-coverage: this model reaches past what @inth/sdk-iab writes, so expects.encode is false and only the decode half is graded. An encoder that cannot produce this input is not wrong.",
+		"Both timestamps are 36 bits of tenths of a second, so they survive to the decisecond and not below it; a confirmation time with a sub-de-second remainder is the one thing in a core segment that cannot round-trip exactly, which is why the fixture clock is a whole number of deciseconds. @inth/sdk-iab always writes both fields from the same truncated day, so a decoder that assumes created equals lastUpdated passes every parity vector and fails this one.",
 		"vendorListVersion (142) and policyVersion (5) are read out of input.vendorList, not out of the model: with a vendor list attached the reference's getters ignore anything written onto those two fields, which is why input.model omits them."
 	],
 	"oracle": {

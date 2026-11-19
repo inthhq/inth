@@ -4,7 +4,7 @@ import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
+import { resolveScriptUrl } from '../_shared/script-url';
 
 const getDefaultClearbitScriptUrl = function getDefaultClearbitScriptUrl(
 	publishableKey: string
@@ -18,8 +18,6 @@ const getDefaultClearbitScriptUrl = function getDefaultClearbitScriptUrl(
  * Loads Clearbit's visitor and company enrichment tag from the account-keyed
  * `tags.js` endpoint. Clearbit enrichment can identify visitors and companies,
  * so the default consent category is `marketing` rather than `measurement`.
- * The GitHub issue left the category open between measurement and marketing;
- * c15t treats enrichment and intent profiling as marketing-sensitive.
  */
 export const clearbitManifest = {
 	...vendorManifestContract,
@@ -61,9 +59,6 @@ export interface ClearbitOptions {
  *
  * @see https://help.clearbit.com/hc/en-us/articles/4420022080783 — installing the Clearbit tag
  *
- * @param options - The options for the Clearbit script.
- * @returns The Clearbit script.
- *
  * @remarks
  * When `publishableKey` is missing or blank, the helper logs
  * `clearbit: missing or invalid publishableKey` with `console.error` and
@@ -94,7 +89,7 @@ export const clearbit = function clearbit(options: ClearbitOptions): Script {
 
 	return resolveManifest(clearbitManifest, {
 		scriptUrl: resolveScriptUrl(
-			trimToUndefined(options.scriptUrl),
+			options.scriptUrl,
 			getDefaultClearbitScriptUrl(publishableKey)
 		),
 	});

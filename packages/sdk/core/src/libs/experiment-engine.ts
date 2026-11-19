@@ -8,17 +8,14 @@
  */
 import type { ResolvedPolicyRule } from '@inth/sdk-schema/types';
 
+import { experimentConfigError } from './experiment';
+import type { ConsentExperiment, ExperimentArmTheme } from './experiment';
 import {
 	actionAppearanceFromTheme,
-	experimentConfigError,
 	resolveExperimentPresentation,
 	resolveExperimentTheme,
-} from './experiment';
-import type {
-	ActionAppearance,
-	ConsentExperiment,
-	ExperimentArmTheme,
-} from './experiment';
+} from './experiment-presentation';
+import type { ActionAppearance } from './experiment-presentation';
 import { resolveConsentPresentation } from './policy-actions';
 import type {
 	ConsentPresentation,
@@ -50,7 +47,6 @@ export interface ValidateExperimentOptions {
  * Resolve every arm under `policy` and collect presentation diagnostics,
  * without deciding whether they are acceptable.
  *
- * @param experiment - The experiment definition.
  * @param policy - The resolved policy rule the arms will render under.
  * @param options - Base presentation and appearance tokens.
  * @returns Diagnostics keyed by arm name. Empty when every arm is clean.
@@ -95,7 +91,7 @@ export const collectExperimentDiagnostics =
 	};
 
 const label = function label(experiment: ConsentExperiment): string {
-	return `c15t experiment "${experiment.id}"`;
+	return `inth experiment "${experiment.id}"`;
 };
 
 /**
@@ -125,11 +121,10 @@ export const describeRejectedArms = function describeRejectedArms(
  * An arm that trips a diagnostic (a forbidden action, unequal prominence for
  * equivalent actions, an invalid variant or position) is a misconfiguration
  * unless the host set `acknowledgeDiagnostics`. The host owns that review;
- * c15t records the acknowledgement with the arm. The runtime does not call
+ * Inth records the acknowledgement with the arm. The runtime does not call
  * this: it runs the base presentation instead of an arm the visitor's policy
  * rejects. Use it in a test to fail a build on a misconfigured experiment.
  *
- * @param experiment - The experiment definition.
  * @param policy - The resolved policy rule the arms will render under.
  * @param options - Base presentation and appearance tokens.
  * @returns Diagnostics keyed by arm name. Empty when every arm is clean.

@@ -96,36 +96,6 @@ const deriveScriptUrlFromApiHost = function deriveScriptUrlFromApiHost(
 	return `${normalized}/static/array.js`;
 };
 
-/**
- * Resolves the PostHog host profile from helper options.
- *
- * Precedence is:
- * 1. Explicit `options.apiHost`, `options.uiHost`, and `options.scriptUrl`.
- * 2. Region inferred from an explicit `apiHost` via `regionFromHost` and
- *    `REGION_HOSTS`.
- * 3. `REGION_HOSTS[options.region ?? 'eu']` defaults.
- *
- * `options` is a `PosthogConsentOptions` object with optional string host
- * fields; the returned `PosthogHostProfile` always contains string `apiHost`,
- * `uiHost`, and `scriptUrl` values. `apiHost` and `uiHost` are always
- * normalized with `normalizeHost`. `undefined` values select defaults; `null`
- * is not supported by the option types and should not be passed.
- *
- * For custom `apiHost` values that do not match known PostHog Cloud regions,
- * `uiHost` uses an explicitly selected region when present and otherwise
- * defaults to the normalized `apiHost`. When `scriptUrl` is omitted, an explicit
- * `apiHost` derives it with `deriveScriptUrlFromApiHost`; otherwise the
- * selected region default script URL is used.
- *
- * @example
- * `{ region: 'us' }` resolves US API, UI, and bootstrap script hosts.
- * @example
- * `{ apiHost: 'https://us.i.posthog.com/' }` normalizes the API host and
- * derives the US bootstrap script URL.
- * @example
- * `{ apiHost: 'https://events.example.com' }` resolves UI to the same custom
- * host and script URL to `https://events.example.com/static/array.js`.
- */
 const resolvePosthogHosts = function resolvePosthogHosts(
 	options: PosthogConsentOptions
 ): PosthogHostProfile {
@@ -343,7 +313,7 @@ export interface PosthogConsentOptions {
 	scriptUrl?: string;
 
 	/**
-	 * How c15t should load the PostHog script.
+	 * How Inth should load the PostHog script.
 	 *
 	 * - `always`: load immediately and synchronize consent through PostHog APIs.
 	 * - `after-consent`: wait for measurement consent before loading PostHog.
@@ -465,14 +435,14 @@ const resolveFeatureInitOptions = function resolveFeatureInitOptions(
 };
 
 /**
- * Creates a c15t PostHog script helper.
+ * Creates an Inth PostHog script helper.
  *
  * The `posthog()` helper uses `region` to resolve the PostHog API, UI, and
  * bootstrap script hosts. By default, `loadMode: 'always'` loads PostHog
  * immediately and syncs consent with `posthog.opt_in_capturing()` or
  * `posthog.opt_out_capturing()`.
  *
- * With `loadMode: 'after-consent'`, the script is consent-gated and c15t calls
+ * With `loadMode: 'after-consent'`, the script is consent-gated and Inth calls
  * `posthog.opt_in_capturing()` or `posthog.opt_out_capturing()` after load
  * based on the user's measurement consent. With `loadMode: 'disabled'`, no
  * PostHog script is loaded and no `posthog.opt_in_capturing()` or
@@ -487,9 +457,6 @@ const resolveFeatureInitOptions = function resolveFeatureInitOptions(
  * consent UI keeps working. `loadMode: 'disabled'` skips this check.
  *
  * @see https://posthog.com/docs/libraries/js#opt-in-capturing
- *
- * @param options - Optional configuration for the PostHog consent script
- * @returns The Posthog script
  */
 export const posthog = function posthog(
 	options: PosthogConsentOptions

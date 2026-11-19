@@ -49,7 +49,7 @@ const { preload = false, legalLinks, disableAnimation } = Astro.props;
 <ComponentStyles />
 
 <div
-	data-c15t-dialog-host="preferences"
+	data-inth-dialog-host="preferences"
 	data-disable-animation={disableAnimation === undefined
 		? undefined
 		: String(disableAnimation)}
@@ -69,7 +69,7 @@ const { preload = false, legalLinks, disableAnimation } = Astro.props;
 	// which framework `ui` selected, and naming all of them would make every
 	// build resolve every framework. It registers the one surface from the
 	// page script it injects.
-	const host = document.querySelector('[data-c15t-dialog-host="preferences"]');
+	const host = document.querySelector('[data-inth-dialog-host="preferences"]');
 
 	if (host?.getAttribute('data-preload') === 'true') {
 		const schedule = () => {
@@ -83,8 +83,8 @@ const { preload = false, legalLinks, disableAnimation } = Astro.props;
 	}
 
 	// A page can ask for the dialog before the runtime has booted (a link
-	// with `#c15t-preferences`, say); replaying it here keeps that working.
-	if (window.location.hash === '#c15t-preferences' && getConsentClient()) {
+	// with `#inth-preferences`, say); replaying it here keeps that working.
+	if (window.location.hash === '#inth-preferences' && getConsentClient()) {
 		void openDialog('preferences');
 	}
 </script>

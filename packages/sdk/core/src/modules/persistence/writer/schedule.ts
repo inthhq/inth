@@ -12,8 +12,6 @@
  * with the same delay run in the order they were set, so the recorded
  * choice is stored before its request leaves. A longer delay would break
  * that ordering.
- *
- * Pure: takes a `write` callback, returns `{ schedule, flush, cancel }`.
  */
 export interface WriteScheduler {
 	/** Request a write in a later macrotask. Idempotent within a tick. */
@@ -27,10 +25,6 @@ export interface WriteScheduler {
 	cancel: () => void;
 }
 
-/**
- * Build a scheduler that coalesces multiple `schedule()` calls into one
- * deferred `write()` call.
- */
 export const createWriteScheduler = function createWriteScheduler(
 	write: () => void
 ): WriteScheduler {

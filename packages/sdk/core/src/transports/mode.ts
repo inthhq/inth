@@ -42,7 +42,7 @@ export interface ProviderTransportContext {
 	translationsFor?: (language: string) => KernelTranslations | undefined;
 }
 
-/** Transport kind exposed through `window.c15t.mode`. */
+/** Transport kind exposed through `window.__inthDebug.mode`. */
 export type ProviderTransportKind =
 	| 'hosted'
 	| 'manifest'
@@ -56,10 +56,7 @@ export type ProviderTransportKind =
  * A provider builds one from its options: the hosted transport for
  * `projectUrl`, or the one its `mode` carries (`manifest()`, `testing()`).
  * `kind` lets adapters report the selected transport through
- * `window.c15t.mode` without importing every transport implementation.
- *
- * @param context - Provider values needed to create the transport.
- * @returns A transport for the consent kernel.
+ * `window.__inthDebug.mode` without importing every transport implementation.
  */
 export interface ProviderTransportFactory {
 	(context: ProviderTransportContext): KernelTransport;
@@ -68,7 +65,7 @@ export interface ProviderTransportFactory {
 
 /** Options for {@link hosted}. */
 export interface HostedModeOptions {
-	/** Backend URL. Can be relative (`/api/c15t`) or absolute. */
+	/** Backend URL. Can be relative (`/api/inth`) or absolute. */
 	projectUrl: string;
 	/** Domain sent when consent is saved. */
 	domain?: string;
@@ -124,13 +121,12 @@ export type HostedModeFactory = ProviderTransportFactory &
  * `projectUrl`. Apps set `projectUrl` on the provider; adapters and tests
  * that need the hosted transport's other options call this.
  *
- * @param options - Hosted backend connection options.
  * @returns A hosted provider transport factory carrying its options.
  * @example
  * ```ts
  * import { hosted } from '@inth/sdk-core/transports';
  *
- * const mode = hosted({ projectUrl: '/api/c15t' });
+ * const mode = hosted({ projectUrl: '/api/inth' });
  *
  * // Resolve init from a same-origin route, save to the backend. Saves
  * // assert the decision because `initUrl` is set.

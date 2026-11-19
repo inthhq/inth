@@ -8,7 +8,7 @@ const projectDir = dirname(fileURLToPath(import.meta.url));
 const monorepoRoot = resolve(projectDir, '../..');
 
 const transpilePackages = [
-	'@c15t/benchmarking',
+	'@inth/benchmarking',
 	'@inth/sdk',
 	'@inth/react',
 	'@inth/nextjs',

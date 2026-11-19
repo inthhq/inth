@@ -14,7 +14,7 @@ final class ThemeTests: XCTestCase {
     }
 
     func testInfoPlistValuesOverrideOnlyWhatTheyName() {
-        let theme = ConsentTheme.c15t.applying(infoDictionary: [
+        let theme = ConsentTheme.default.applying(infoDictionary: [
             ConsentTheme.InfoPlistKey.primary: "#00CCBC,#7FE6DC",
             ConsentTheme.InfoPlistKey.brandName: "Deliveroo",
             ConsentTheme.InfoPlistKey.brandMark: "ConsentMark",
@@ -24,10 +24,10 @@ final class ThemeTests: XCTestCase {
             ConsentTheme.InfoPlistKey.branding: false,
         ])
         XCTAssertEqual(theme.colors.primary, ConsentThemeColor(light: 0x00CCBC, dark: 0x7FE6DC))
-        XCTAssertEqual(theme.colors.decision, ConsentTheme.Colors.c15t.decision)
+        XCTAssertEqual(theme.colors.decision, ConsentTheme.Colors.default.decision)
         XCTAssertEqual(theme.brand, ConsentTheme.Brand(name: "Deliveroo", markImageName: "ConsentMark"))
         XCTAssertEqual(theme.copy.headline, "Mmmm, cookies.")
-        XCTAssertEqual(theme.copy.introduction, ConsentTheme.Copy.c15t.introduction)
+        XCTAssertEqual(theme.copy.introduction, ConsentTheme.Copy.default.introduction)
         XCTAssertEqual(theme.typography.headlineFont, .rounded)
         XCTAssertEqual(theme.radius.md, 8)
         XCTAssertFalse(theme.showsBranding)
@@ -45,7 +45,7 @@ final class ThemeTests: XCTestCase {
     }
 
     func testInfoPlistReadsSpacingTypeAndSlots() {
-        let theme = ConsentTheme.c15t.applying(infoDictionary: [
+        let theme = ConsentTheme.default.applying(infoDictionary: [
             ConsentTheme.InfoPlistKey.radiusSm: 2,
             ConsentTheme.InfoPlistKey.radiusLg: "28",
             ConsentTheme.InfoPlistKey.spaceMd: 20,
@@ -87,7 +87,7 @@ final class ThemeTests: XCTestCase {
     }
 
     func testStringCornerRadiusAndBrandingSpellings() {
-        let theme = ConsentTheme.c15t.applying(infoDictionary: [
+        let theme = ConsentTheme.default.applying(infoDictionary: [
             ConsentTheme.InfoPlistKey.radiusMd: "6",
             ConsentTheme.InfoPlistKey.branding: "NO",
         ])
@@ -117,22 +117,22 @@ final class ThemeTests: XCTestCase {
     }
 
     func testSavePlacementComesFromInfoPlist() {
-        XCTAssertEqual(ConsentTheme.c15t.savePlacement, .top)
-        let theme = ConsentTheme.c15t.applying(infoDictionary: [ConsentTheme.InfoPlistKey.savePlacement: " Bottom "])
+        XCTAssertEqual(ConsentTheme.default.savePlacement, .top)
+        let theme = ConsentTheme.default.applying(infoDictionary: [ConsentTheme.InfoPlistKey.savePlacement: " Bottom "])
         XCTAssertEqual(theme.savePlacement, .bottom)
         // An unreadable value keeps what the theme had.
         XCTAssertEqual(theme.applying(infoDictionary: [ConsentTheme.InfoPlistKey.savePlacement: "left"]), theme)
     }
 
     func testFirstLayerAndAppearanceComeFromInfoPlist() {
-        XCTAssertEqual(ConsentTheme.c15t.firstLayer, .page)
-        XCTAssertEqual(ConsentTheme.c15t.appearance, .system)
-        let theme = ConsentTheme.c15t.applying(infoDictionary: [
+        XCTAssertEqual(ConsentTheme.default.firstLayer, .page)
+        XCTAssertEqual(ConsentTheme.default.appearance, .system)
+        let theme = ConsentTheme.default.applying(infoDictionary: [
             ConsentTheme.InfoPlistKey.firstLayer: " Sheet ",
-            ConsentTheme.InfoPlistKey.appearance: "C15T",
+            ConsentTheme.InfoPlistKey.appearance: "PAPER",
         ])
         XCTAssertEqual(theme.firstLayer, .sheet)
-        XCTAssertEqual(theme.appearance, .c15t)
+        XCTAssertEqual(theme.appearance, .paper)
         // An unreadable value keeps what the theme had.
         let kept = theme.applying(infoDictionary: [
             ConsentTheme.InfoPlistKey.firstLayer: "drawer",
@@ -156,7 +156,7 @@ final class ThemeTests: XCTestCase {
     // TCF-CHECK: P11
     func testCardDecisionsKeepFiveToOneOnAHostPalette() {
         // Mid-grey text passes on a page's solid decision fill but not on a card's tint of the surface.
-        var colours = ConsentTheme.Colors.c15t
+        var colours = ConsentTheme.Colors.default
         colours.text = ConsentThemeColor(light: 0x6B6B6B, dark: 0x8A8A8A)
         colours.surface = ConsentThemeColor(light: 0xFFFFFF, dark: 0x1C1C1E)
         for prompt in [true, false] {
@@ -169,7 +169,7 @@ final class ThemeTests: XCTestCase {
             let stock = ConsentTheme(firstLayer: prompt ? .prompt : .sheet).withSystemAppearance(tint: ConsentThemeColor(light: 0x007AFF))
             XCTAssertEqual(stock.cardDecisionLabel(prompt: prompt), stock.colors.text)
             // A mid-grey tint leaves neither black nor white at 5:1, so the fill moves too.
-            var grey = ConsentTheme.Colors.c15t
+            var grey = ConsentTheme.Colors.default
             grey.surface = ConsentThemeColor(light: 0x848484); grey.text = ConsentThemeColor(light: 0x000000); grey.primary = ConsentThemeColor(light: 0x333333)
             let mid = ConsentTheme(colors: grey, firstLayer: prompt ? .prompt : .sheet)
             let midLabel = mid.cardDecisionLabel(prompt: prompt), midFill = mid.cardDecisionFill(prompt: prompt)
@@ -180,7 +180,7 @@ final class ThemeTests: XCTestCase {
 
     func testSystemAppearanceLeavesHostColoursAndOtherAppearancesAlone() {
         let accent = ConsentThemeColor(light: 0x007AFF)
-        let paper = ConsentTheme(appearance: .c15t)
+        let paper = ConsentTheme(appearance: .paper)
         XCTAssertEqual(paper.withSystemAppearance(tint: accent), paper)
         // A sheet or a prompt sits over the app, so it takes the system colours whatever the appearance.
         for layout in [ConsentTheme.FirstLayer.sheet, .prompt] {
@@ -188,7 +188,7 @@ final class ThemeTests: XCTestCase {
             XCTAssertEqual(card.colors.surface, ConsentThemeColor(light: 0xFFFFFF, dark: 0x1C1C1E))
             XCTAssertGreaterThanOrEqual(ConsentTheme.contrastRatio(card.colors.primary.light, card.colors.surface.light), 4.5)
         }
-        var colours = ConsentTheme.Colors.c15t
+        var colours = ConsentTheme.Colors.default
         colours.primary = ConsentThemeColor(light: 0x00796B)
         let host = ConsentTheme(colors: colours, appearance: .system)
         XCTAssertEqual(host.withSystemAppearance(tint: accent), host)
@@ -234,7 +234,7 @@ final class ThemeTests: XCTestCase {
     }
 
     func testCustomProviderNeverKeepsAnUnrelatedLogo() {
-        let theme = ConsentTheme.c15t.applying(infoDictionary: [
+        let theme = ConsentTheme.default.applying(infoDictionary: [
             ConsentTheme.InfoPlistKey.brandingName: "Example",
             ConsentTheme.InfoPlistKey.brandingMark: "ExampleLogo",
         ])
@@ -244,7 +244,7 @@ final class ThemeTests: XCTestCase {
         ]).branding, .custom(name: "Example"))
         XCTAssertEqual(theme.applying(infoDictionary: [ConsentTheme.InfoPlistKey.brandingMark: "NewLogo"]).branding,
             .custom(name: "Example", markImageName: "NewLogo"))
-        XCTAssertEqual(ConsentTheme.c15t.applying(infoDictionary: [ConsentTheme.InfoPlistKey.brandingMark: "OrphanLogo"]), .c15t)
+        XCTAssertEqual(ConsentTheme.default.applying(infoDictionary: [ConsentTheme.InfoPlistKey.brandingMark: "OrphanLogo"]), .default)
         XCTAssertEqual(theme.applying(infoDictionary: [ConsentTheme.InfoPlistKey.branding: false]).branding, theme.branding)
         XCTAssertFalse(theme.applying(infoDictionary: [ConsentTheme.InfoPlistKey.branding: false]).showsBranding)
     }
@@ -284,7 +284,7 @@ final class ContrastTests: XCTestCase {
     /// decision labels are held to IAB's 5:1 for the first layer's primary actions.
     // TCF-CHECK: P11
     func testStockSmallTextReachesFourPointFiveToOne() {
-        let colors = ConsentTheme.Colors.c15t
+        let colors = ConsentTheme.Colors.default
         for dark in [false, true] {
             func value(_ color: ConsentThemeColor) -> UInt32 { dark ? color.dark : color.light }
             let tagFill = composite(value(colors.primary), alpha: 0.14, over: value(colors.surface))
@@ -320,8 +320,8 @@ final class DecisionContrastGuardTests: XCTestCase {
         XCTAssertLessThan(host.decisionContrast, 5)
         var reports: [String] = []
         let guarded = host.withReadableDecisions { reports.append($0) }
-        XCTAssertEqual(guarded.colors.decision, ConsentTheme.Colors.c15t.decision)
-        XCTAssertEqual(guarded.colors.textOnDecision, ConsentTheme.Colors.c15t.textOnDecision)
+        XCTAssertEqual(guarded.colors.decision, ConsentTheme.Colors.default.decision)
+        XCTAssertEqual(guarded.colors.textOnDecision, ConsentTheme.Colors.default.textOnDecision)
         XCTAssertGreaterThanOrEqual(guarded.decisionContrast, 5)
         // Only the decision colours change.
         XCTAssertEqual(guarded.colors.primary, host.colors.primary)
@@ -332,38 +332,38 @@ final class DecisionContrastGuardTests: XCTestCase {
 
     // TCF-CHECK: P11
     func testInfoPlistDecisionOverridesAreGuardedToo() {
-        let theme = ConsentTheme.c15t.applying(infoDictionary: [
+        let theme = ConsentTheme.default.applying(infoDictionary: [
             ConsentTheme.InfoPlistKey.decision: "#777777",
             ConsentTheme.InfoPlistKey.textOnDecision: "#888888",
         ])
         XCTAssertEqual(theme.colors.decision, ConsentThemeColor(light: 0x777777))
         let guarded = theme.withReadableDecisions { _ in }
-        XCTAssertEqual(guarded.colors.decision, ConsentTheme.Colors.c15t.decision)
-        XCTAssertEqual(guarded.colors.textOnDecision, ConsentTheme.Colors.c15t.textOnDecision)
+        XCTAssertEqual(guarded.colors.decision, ConsentTheme.Colors.default.decision)
+        XCTAssertEqual(guarded.colors.textOnDecision, ConsentTheme.Colors.default.textOnDecision)
     }
 
     // TCF-CHECK: P11
     func testPrimaryButtonSlotColoursAreGuardedToo() {
-        var host = ConsentTheme.c15t
+        var host = ConsentTheme.default
         host.slots[.buttonPrimary] = .init(color: ConsentThemeColor(light: 0xFFFFFF), backgroundColor: ConsentThemeColor(light: 0xBBBBBB),
             borderRadius: 4)
         XCTAssertLessThan(host.decisionContrast, 5)
         let guarded = host.withReadableDecisions { _ in }
-        XCTAssertEqual(guarded.decisionFill, ConsentTheme.Colors.c15t.decision)
-        XCTAssertEqual(guarded.decisionLabel, ConsentTheme.Colors.c15t.textOnDecision)
+        XCTAssertEqual(guarded.decisionFill, ConsentTheme.Colors.default.decision)
+        XCTAssertEqual(guarded.decisionLabel, ConsentTheme.Colors.default.textOnDecision)
         // The slot keeps what is not a colour.
         XCTAssertEqual(guarded.slots[.buttonPrimary]?.borderRadius, 4)
     }
 
     // TCF-CHECK: P11
     func testReadableHostDecisionColoursAreKept() {
-        var host = ConsentTheme.c15t
+        var host = ConsentTheme.default
         // The demo's brand theme: teal decisions at 5.3:1 light and 7:1 dark.
         host.colors.decision = ConsentThemeColor(light: 0x00796B, dark: 0x4FD1C0)
         host.colors.textOnDecision = ConsentThemeColor(light: 0xFFFFFF, dark: 0x06302A)
         var reports = 0
         XCTAssertEqual(host.withReadableDecisions { _ in reports += 1 }, host)
-        XCTAssertEqual(ConsentTheme.c15t.withReadableDecisions { _ in reports += 1 }, .c15t)
+        XCTAssertEqual(ConsentTheme.default.withReadableDecisions { _ in reports += 1 }, .default)
         XCTAssertEqual(reports, 0)
     }
 
@@ -395,20 +395,20 @@ final class BalancedTextTests: XCTestCase {
 
 final class IdentityTests: XCTestCase {
     func testBrandDefaultsCanBeCustomizedAndHidden() {
-        XCTAssertFalse(ConsentTheme.c15t.brand.isHidden)
-        XCTAssertNil(ConsentTheme.c15t.brand.name)
-        XCTAssertNil(ConsentTheme.c15t.brand.markImageName)
+        XCTAssertFalse(ConsentTheme.default.brand.isHidden)
+        XCTAssertNil(ConsentTheme.default.brand.name)
+        XCTAssertNil(ConsentTheme.default.brand.markImageName)
         XCTAssertTrue(ConsentTheme.Brand.hidden.isHidden)
-        let hidden = ConsentTheme.c15t.applying(infoDictionary: [ConsentTheme.InfoPlistKey.brand: false])
+        let hidden = ConsentTheme.default.applying(infoDictionary: [ConsentTheme.InfoPlistKey.brand: false])
         XCTAssertTrue(hidden.brand.isHidden)
         XCTAssertEqual(hidden.applying(infoDictionary: [ConsentTheme.InfoPlistKey.brand: "yes"]).brand.isHidden, false)
         XCTAssertEqual(hidden.applying(infoDictionary: [ConsentTheme.InfoPlistKey.brand: "maybe"]).brand.isHidden, true)
-        let named = ConsentTheme.c15t.applying(infoDictionary: [ConsentTheme.InfoPlistKey.brandName: "Pantry"])
+        let named = ConsentTheme.default.applying(infoDictionary: [ConsentTheme.InfoPlistKey.brandName: "Pantry"])
         XCTAssertEqual(named.brand, ConsentTheme.Brand(name: "Pantry"))
     }
 
     func testStockThemeUsesTheSystemTypeface() {
-        XCTAssertEqual(ConsentTheme.c15t.typography.headlineFont, .sansSerif)
+        XCTAssertEqual(ConsentTheme.default.typography.headlineFont, .sansSerif)
         XCTAssertEqual(ConsentTheme().typography.headlineFont, .sansSerif)
     }
 }
@@ -420,13 +420,13 @@ import UIKit
 final class ThemeColorCacheTests: XCTestCase {
     /// SwiftUI skips a view whose inputs compare equal, so every read of a theme colour must be.
     func testRepeatedReadsReturnTheSameColour() {
-        let primary = ConsentTheme.Colors.c15t.primary
+        let primary = ConsentTheme.Colors.default.primary
         XCTAssertEqual(primary.color, primary.color)
         XCTAssertEqual(primary.color, ConsentThemeColor(light: primary.light, dark: primary.dark).color)
         XCTAssertTrue(primary.uiColor() === primary.uiColor())
         XCTAssertTrue(primary.uiColor(alpha: 0.5) === primary.uiColor(alpha: 0.5))
         XCTAssertFalse(primary.uiColor(alpha: 0.5) === primary.uiColor())
-        XCTAssertFalse(primary.uiColor() === ConsentTheme.Colors.c15t.text.uiColor())
+        XCTAssertFalse(primary.uiColor() === ConsentTheme.Colors.default.text.uiColor())
     }
 
     func testCachedColoursStillFollowTheAppearance() {
@@ -455,7 +455,7 @@ final class TypeScaleTests: XCTestCase {
         // The font comes back already scaled for the current text size; scaling it again throws.
         let themed = ConsentTheme(typography: .init(fontSize: .init(sm: 20))).uiFont(.subheadline)
         XCTAssertEqual(themed.pointSize, UIFontMetrics(forTextStyle: .subheadline).scaledValue(for: 20), accuracy: 0.5)
-        let stock = ConsentTheme.c15t.uiFont(.subheadline)
+        let stock = ConsentTheme.default.uiFont(.subheadline)
         XCTAssertEqual(stock.pointSize, UIFont.preferredFont(forTextStyle: .subheadline).pointSize, accuracy: 0.5)
         // A family the app does not bundle falls back to the system face rather than nothing.
         XCTAssertEqual(ConsentTheme(typography: .init(fontFamily: "NotBundled-Regular")).uiFont(.subheadline).pointSize,

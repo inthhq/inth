@@ -472,7 +472,7 @@ const PolicyActionsDemoContent = ({
 							Test the new compound helpers against live policy resolution. This
 							page suppresses the stock provider-mounted banner/dialog so you
 							can compare the default helper, stock-button overrides, and fully
-							custom DOM with base c15t translations.
+							custom DOM with base inth translations.
 						</p>
 					</div>
 
@@ -609,7 +609,7 @@ const PolicyActionsDemoContent = ({
 							<CardHeader>
 								<CardTitle>Default helper rendering</CardTitle>
 								<CardDescription>
-									`PolicyActions` owns the footer/groups and renders stock c15t
+									`PolicyActions` owns the footer/groups and renders stock inth
 									button compounds with built-in translations.
 								</CardDescription>
 							</CardHeader>
@@ -625,7 +625,7 @@ const PolicyActionsDemoContent = ({
 					>
 						<Card className="border-slate-200/70 bg-white/80 shadow-lg backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
 							<CardHeader>
-								<CardTitle>Custom mapping with stock c15t buttons</CardTitle>
+								<CardTitle>Custom mapping with stock Inth buttons</CardTitle>
 								<CardDescription>
 									This path keeps built-in consent behavior and copy while
 									letting you intercept the mapping seam with `renderAction`.
@@ -643,7 +643,7 @@ const PolicyActionsDemoContent = ({
 					>
 						<Card className="border-slate-200/70 bg-white/80 shadow-lg backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
 							<CardHeader>
-								<CardTitle>Custom DOM with base c15t translations</CardTitle>
+								<CardTitle>Custom DOM with base Inth translations</CardTitle>
 								<CardDescription>
 									This is the advanced path. `renderAction` returns local app
 									buttons, while `useTranslations()` and headless action

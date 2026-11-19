@@ -36,7 +36,7 @@ describe('scriptLoader.sources with integrations', () => {
 	registerVendorContractCleanup();
 
 	afterEach(() => {
-		delete (window as { c15t?: unknown }).c15t;
+		delete (window as { __inthDebug?: unknown }).__inthDebug;
 	});
 
 	it('loads PostHog from its source with integrity, after its setup ran', () => {

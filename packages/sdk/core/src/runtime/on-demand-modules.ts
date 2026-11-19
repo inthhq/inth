@@ -45,7 +45,7 @@ import type { ConsentRuntimeModules } from './types';
 /**
  * The module factories {@link onDemandRuntimeModules} names. Spread them
  * into a provider's modules with the ones it imports statically
- * (persistence, `window.c15t`, the revocation reload) and its iframe
+ * (persistence, `window.__inthDebug`, the revocation reload) and its iframe
  * blocker.
  */
 export type OnDemandRuntimeModules = Pick<

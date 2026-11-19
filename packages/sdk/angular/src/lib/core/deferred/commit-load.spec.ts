@@ -7,7 +7,7 @@ import { createDeferredRuntime } from './deferred-runtime';
 // Its own file: the commit module must not have loaded in an earlier test.
 let loads = 0;
 // oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is what happens when this chunk fails to load; nothing else can make a dynamic import reject. The factory fails the first load and returns the real module after that.
-vi.mock('./commit', async (importActual) => {
+vi.mock('@inth/sdk/surface-actions/early-commit', async (importActual) => {
 	loads += 1;
 	if (loads === 1) {
 		throw new Error('chunk failed');

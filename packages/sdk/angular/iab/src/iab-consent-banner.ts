@@ -13,10 +13,8 @@ import {
 	ConsentTheme,
 	FocusTrap,
 	Portal,
-	resolveComponentStyles,
 	ScrollLock,
 	SURFACE_SCOPES,
-	toStyleAttribute,
 	ɵbannerVisibility as bannerVisibility,
 	ɵBranding as Branding,
 	ɵNoStyleScope as NoStyleScope,
@@ -26,15 +24,22 @@ import {
 } from '@inth/angular';
 import type { Model } from '@inth/sdk/engine';
 import { resolveIABBannerSummary } from '@inth/sdk/iab-support';
+import { resolveIABBannerCopy } from '@inth/sdk/iab/headless';
 import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
-import { resolveConsentPresentation } from '@inth/sdk/surface-state';
+import {
+	resolveConsentPresentation,
+	resolveIABCopy,
+} from '@inth/sdk/surface-state';
 import buttonStyles from '@inth/sdk/ui/styles/components/button';
 import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-banner';
-import { getTextDirection } from '@inth/sdk/ui/utils';
+import {
+	getTextDirection,
+	resolveStyles,
+	toStyleAttributeValue,
+} from '@inth/sdk/ui/utils';
 
 import { IAB_FIRST_PAINT_SHEETS } from './iab-first-paint-sheets';
-import { getIABTranslations } from './iab-translations';
 
 type IABBannerSummary = ReturnType<typeof resolveIABBannerSummary>;
 
@@ -46,17 +51,17 @@ export type IABBannerButton = 'reject' | 'accept' | 'customize';
  *
  * It lists the purposes and the partner count from the Global Vendor List,
  * and offers Accept all, Reject all and Customize. Customize opens
- * `<c15t-iab-consent-dialog>` on the purposes tab; the partners link opens
+ * `<inth-iab-consent-dialog>` on the purposes tab; the partners link opens
  * it on the vendors tab.
  *
  * Renders when the provider has `iab` configured, the resolved policy uses
  * the `iab` model and the banner is the active surface. Put it next to
- * `<c15t-iab-consent-dialog>` once, near the root of the app.
+ * `<inth-iab-consent-dialog>` once, near the root of the app.
  *
  * @example
  * ```html
- * <c15t-iab-consent-banner />
- * <c15t-iab-consent-dialog />
+ * <inth-iab-consent-banner />
+ * <inth-iab-consent-dialog />
  * ```
  */
 @Component({
@@ -65,14 +70,14 @@ export type IABBannerButton = 'reject' | 'accept' | 'customize';
 	imports: [Branding, FocusTrap, Overlay, Portal, ScrollLock],
 	// Its parts resolve `noStyle` through this surface.
 	providers: [NoStyleScope],
-	selector: 'c15t-iab-consent-banner',
+	selector: 'inth-iab-consent-banner',
 	template: `
 		@if (visibility.shouldRender() && summary().isReady) {
 			@let iabT = translations();
-			<div c15tPortal>
+			<div inthPortal>
 				@if (presentation().blocking) {
 					<div
-						c15t-overlay
+						inth-overlay
 						[styles]="styles"
 						[variant]="'iab-banner'"
 						[entering]="!resolvedDisableAnimation()"
@@ -91,18 +96,17 @@ export type IABBannerButton = 'reject' | 'accept' | 'customize';
 							: null
 					"
 					data-testid="iab-consent-banner-root"
-					data-c15t-streamed=""
+					data-inth-surface="banner"
+					data-inth-streamed=""
 					tabindex="-1"
-					[c15tScrollLock]="presentation().blocking"
+					[inthScrollLock]="presentation().blocking"
 				>
 					<div [class]="cls(styles.cardShell)">
 						@if (showBranding()) {
 							<a
-								c15t-branding
+								inth-branding
 								[noStyle]="resolvedNoStyle()"
-								[variant]="'banner-tag'"
-								[themeKey]="'iabConsentBannerTag'"
-								data-testid="iab-consent-banner-branding"
+								surface="iab-banner"
 							></a>
 						}
 						<div
@@ -112,7 +116,7 @@ export type IABBannerButton = 'reject' | 'accept' | 'customize';
 							[attr.role]="presentation().blocking ? 'dialog' : 'region'"
 							[attr.aria-modal]="presentation().blocking ? 'true' : null"
 							[attr.aria-label]="iabT.banner.title"
-							[c15tFocusTrap]="presentation().blocking"
+							[inthFocusTrap]="presentation().blocking"
 						>
 							<div
 								[class]="headerStyle().className || ''"
@@ -121,28 +125,23 @@ export type IABBannerButton = 'reject' | 'accept' | 'customize';
 							>
 								<h2 [class]="cls(styles.title)">{{ iabT.banner.title }}</h2>
 								<p [class]="cls(styles.description)">
-									{{ descriptionParts()[0]
+									{{ bannerCopy().descriptionBefore
 									}}<button
 										type="button"
 										[class]="cls(styles.partnersLink)"
 										data-testid="iab-consent-banner-partners-link"
 										(click)="openVendors()"
 									>
-										{{ partnersLinkText() }}</button
-									>{{ descriptionParts()[1] ?? '' }}
+										{{ bannerCopy().partnersLink }}</button
+									>{{ bannerCopy().descriptionAfter }}
 								</p>
 								<ul [class]="cls(styles.purposeList)">
 									@for (name of summary().displayItems; track name) {
 										<li>{{ name }}</li>
 									}
-									@if (summary().remainingCount > 0) {
+									@if (bannerCopy().andMore; as andMore) {
 										<li [class]="cls(styles.purposeMore)">
-											{{
-												iabT.banner.andMore.replace(
-													'{count}',
-													'' + summary().remainingCount
-												)
-											}}
+											{{ andMore }}
 										</li>
 									}
 								</ul>
@@ -210,7 +209,7 @@ export type IABBannerButton = 'reject' | 'accept' | 'customize';
 					</div>
 					<!-- The end of the banner's markup; see the stock banner. -->
 					<span
-						data-c15t-stream-end=""
+						data-inth-stream-end=""
 						hidden
 					></span>
 				</div>
@@ -277,11 +276,11 @@ export class IABConsentBanner {
 	readonly #iab = this.#consent.iab;
 	/** @internal */
 	protected readonly translations = computed(() =>
-		getIABTranslations(this.#consent.translationConfig())
+		resolveIABCopy(this.#consent.copy())
 	);
 	/** @internal */
 	protected readonly textDirection = computed(() =>
-		getTextDirection(this.#consent.translationConfig().defaultLanguage)
+		getTextDirection(this.#consent.translations()?.language)
 	);
 	readonly #shouldShow = computed(
 		() =>
@@ -302,7 +301,7 @@ export class IABConsentBanner {
 	);
 
 	readonly #rootStyle = computed(() =>
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentBanner',
 			this.#theme.theme(),
 			{
@@ -315,7 +314,7 @@ export class IABConsentBanner {
 	);
 	/** @internal */
 	protected readonly rootStyle = computed(() =>
-		toStyleAttribute(this.#rootStyle().style)
+		toStyleAttributeValue(this.#rootStyle().style)
 	);
 	/** @internal */
 	protected readonly surfaceClass = computed(() => {
@@ -330,7 +329,7 @@ export class IABConsentBanner {
 	});
 	/** @internal */
 	protected readonly cardStyle = computed(() =>
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentBannerCard',
 			this.#theme.theme(),
 			{ baseClassName: styles.card, noStyle: this.resolvedNoStyle() },
@@ -339,7 +338,7 @@ export class IABConsentBanner {
 	);
 	/** @internal */
 	protected readonly headerStyle = computed(() =>
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentBannerHeader',
 			this.#theme.theme(),
 			{ baseClassName: styles.header, noStyle: this.resolvedNoStyle() },
@@ -348,7 +347,7 @@ export class IABConsentBanner {
 	);
 	/** @internal */
 	protected readonly footerStyle = computed(() =>
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentBannerFooter',
 			this.#theme.theme(),
 			{
@@ -360,20 +359,8 @@ export class IABConsentBanner {
 	);
 
 	/** @internal */
-	protected readonly partnersLinkText = computed(() =>
-		(this.translations().banner.partnersLink ?? '').replace(
-			'{count}',
-			String(this.summary().vendorCount)
-		)
-	);
-	/** The description, split around the partners link. @internal */
-	protected readonly descriptionParts = computed(() =>
-		this.translations()
-			.banner.description.replace(
-				'{partnerCount}',
-				String(this.summary().vendorCount)
-			)
-			.split(this.partnersLinkText())
+	protected readonly bannerCopy = computed(() =>
+		resolveIABBannerCopy(this.translations(), this.summary())
 	);
 
 	constructor() {
@@ -389,8 +376,8 @@ export class IABConsentBanner {
 	}
 
 	/** @internal */
-	protected toStyle(style: Parameters<typeof toStyleAttribute>[0]) {
-		return toStyleAttribute(style) ?? null;
+	protected toStyle(style: Parameters<typeof toStyleAttributeValue>[0]) {
+		return toStyleAttributeValue(style) ?? null;
 	}
 
 	/** @internal */
@@ -444,10 +431,6 @@ export class IABConsentBanner {
 		if (!state) {
 			return;
 		}
-		try {
-			await saveIABConsentSurface(this.#consent.kernel(), () => state.save());
-		} catch {
-			// Keep the prompt available so a later action can retry the failed load/save.
-		}
+		await saveIABConsentSurface(this.#consent.kernel(), () => state.save());
 	}
 }

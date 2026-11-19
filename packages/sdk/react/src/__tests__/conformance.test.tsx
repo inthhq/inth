@@ -3,20 +3,14 @@ import {
 	IAB_FIXTURE_CMP_VERSION,
 	MINIMAL_GVL,
 	runConformanceSuite,
-} from '@c15t/conformance';
-/**
- * React conformance entry point.
- *
- * This driver targets the kernel adapter: `ConsentProvider` plus the
- * useSyncExternalStore-backed selector hooks.
- */
+} from '@inth/conformance';
 import type {
 	MountableComponent,
 	MountOptions,
 	MountResult,
 	SuiteApi,
 	TestDriver,
-} from '@c15t/conformance';
+} from '@inth/conformance';
 import type {
 	AllConsentNames,
 	ConsentKernel,

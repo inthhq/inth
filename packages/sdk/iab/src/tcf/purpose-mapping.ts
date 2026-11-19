@@ -1,7 +1,5 @@
 /**
- * IAB Purpose to c15t Consent Mapping
- *
- * Maps IAB TCF purposes (1-11) to c15t's consent categories.
+ * Maps IAB TCF purposes (1-11) to Inth's consent categories.
  *
  * @packageDocumentation
  */
@@ -9,43 +7,11 @@
 import type { AllConsentNames } from '@inth/sdk-core';
 
 /**
- * Maps IAB TCF purpose IDs to c15t consent categories.
- *
- * IAB TCF 2.4 defines 11 purposes:
- * - Purpose 1: Store and/or access information on a device -> `necessary`
- * - Purpose 2: Use limited data to select advertising -> `marketing`
- * - Purpose 3: Create profiles for personalised advertising -> `marketing`
- * - Purpose 4: Use profiles to select personalised advertising -> `marketing`
- * - Purpose 5: Create profiles to personalise content -> `experience`
- * - Purpose 6: Use profiles to select personalised content -> `experience`
- * - Purpose 7: Measure advertising performance -> `measurement`
- * - Purpose 8: Measure content performance -> `measurement`
- * - Purpose 9: Understand audiences through statistics -> `measurement`
- * - Purpose 10: Develop and improve services -> `functionality`
- * - Purpose 11: Use limited data to select content -> `functionality`
+ * Maps Inth consent categories to IAB TCF purpose IDs.
  *
  * @public
  */
-export const IAB_PURPOSE_TO_C15T_MAP: Record<number, AllConsentNames> = {
-	1: 'necessary',
-	10: 'functionality',
-	11: 'functionality',
-	2: 'marketing',
-	3: 'marketing',
-	4: 'marketing',
-	5: 'experience',
-	6: 'experience',
-	7: 'measurement',
-	8: 'measurement',
-	9: 'measurement',
-};
-
-/**
- * Maps c15t consent categories to IAB TCF purpose IDs.
- *
- * @public
- */
-export const C15T_TO_IAB_PURPOSE_MAP: Record<AllConsentNames, number[]> = {
+export const INTH_TO_IAB_PURPOSE_MAP: Record<AllConsentNames, number[]> = {
 	experience: [5, 6],
 	functionality: [10, 11],
 	marketing: [2, 3, 4],
@@ -54,56 +20,11 @@ export const C15T_TO_IAB_PURPOSE_MAP: Record<AllConsentNames, number[]> = {
 };
 
 /**
- * Converts an IAB purpose ID to a c15t consent category.
- *
- * @param purposeId - IAB purpose ID (1-11)
- * @returns The corresponding c15t consent category, or null if invalid
+ * Converts Inth consent state to IAB purpose consents, keyed by purpose ID.
  *
  * @example
  * ```typescript
- * iabPurposeToC15t(1); // 'necessary'
- * iabPurposeToC15t(2); // 'marketing'
- * iabPurposeToC15t(7); // 'measurement'
- * iabPurposeToC15t(99); // null
- * ```
- *
- * @public
- */
-export const iabPurposeToC15t = function iabPurposeToC15t(
-	purposeId: number
-): AllConsentNames | null {
-	return IAB_PURPOSE_TO_C15T_MAP[purposeId] ?? null;
-};
-
-/**
- * Converts a c15t consent category to IAB purpose IDs.
- *
- * @param category - c15t consent category
- * @returns Array of corresponding IAB purpose IDs
- *
- * @example
- * ```typescript
- * c15tToIabPurposes('marketing'); // [2, 3, 4]
- * c15tToIabPurposes('measurement'); // [7, 8, 9]
- * ```
- *
- * @public
- */
-export const c15tToIabPurposes = function c15tToIabPurposes(
-	category: AllConsentNames
-): number[] {
-	return C15T_TO_IAB_PURPOSE_MAP[category] ?? [];
-};
-
-/**
- * Converts c15t consent state to IAB purpose consents.
- *
- * @param consents - c15t consent state object
- * @returns IAB purpose consent state (keyed by purpose ID 1-11)
- *
- * @example
- * ```typescript
- * const c15tConsents = {
+ * const inthConsents = {
  *   necessary: true,
  *   marketing: false,
  *   experience: true,
@@ -111,7 +32,7 @@ export const c15tToIabPurposes = function c15tToIabPurposes(
  *   functionality: false,
  * };
  *
- * const purposeConsents = c15tConsentsToIabPurposes(c15tConsents);
+ * const purposeConsents = inthConsentsToIabPurposes(inthConsents);
  * // {
  * //   1: true,  // necessary
  * //   2: false, 3: false, 4: false,  // marketing
@@ -123,13 +44,13 @@ export const c15tToIabPurposes = function c15tToIabPurposes(
  *
  * @public
  */
-export const c15tConsentsToIabPurposes = function c15tConsentsToIabPurposes(
+export const inthConsentsToIabPurposes = function inthConsentsToIabPurposes(
 	consents: Record<AllConsentNames, boolean>
 ): Record<number, boolean> {
 	const purposeConsents: Record<number, boolean> = {};
 
 	for (const [category, value] of Object.entries(consents)) {
-		const purposes = C15T_TO_IAB_PURPOSE_MAP[category as AllConsentNames];
+		const purposes = INTH_TO_IAB_PURPOSE_MAP[category as AllConsentNames];
 		if (purposes) {
 			for (const purposeId of purposes) {
 				purposeConsents[purposeId] = value;
@@ -141,19 +62,17 @@ export const c15tConsentsToIabPurposes = function c15tConsentsToIabPurposes(
 };
 
 /**
- * Converts IAB purpose consents to c15t consent state.
+ * Converts IAB purpose consents to Inth consent state.
  *
- * When multiple IAB purposes map to the same c15t category,
+ * When multiple IAB purposes map to the same Inth category,
  * the category is considered consented only if ALL its purposes are consented.
  *
- * @param purposeConsents - IAB purpose consent state
  * @param consentPurposes - Purposes some vendor processes on consent once
  * publisher restrictions apply. When given, a category is decided by its
  * purposes in this set: the visitor has no consent to give for the others,
  * and their legitimate interest is enforced per vendor by the IAB gate. A
  * category with none of its purposes in the set falls back to all of them,
  * so legitimate interest alone never grants a category.
- * @returns c15t consent state object
  *
  * @example
  * ```typescript
@@ -165,7 +84,7 @@ export const c15tConsentsToIabPurposes = function c15tConsentsToIabPurposes(
  *   10: true, 11: true,
  * };
  *
- * const c15tConsents = iabPurposesToC15tConsents(purposeConsents);
+ * const inthConsents = iabPurposesToInthConsents(purposeConsents);
  * // {
  * //   necessary: true,
  * //   marketing: false,  // not all marketing purposes consented
@@ -177,11 +96,11 @@ export const c15tConsentsToIabPurposes = function c15tConsentsToIabPurposes(
  *
  * @public
  */
-export const iabPurposesToC15tConsents = function iabPurposesToC15tConsents(
+export const iabPurposesToInthConsents = function iabPurposesToInthConsents(
 	purposeConsents: Record<number, boolean>,
 	consentPurposes?: ReadonlySet<number>
 ): Record<AllConsentNames, boolean> {
-	const c15tConsents: Record<AllConsentNames, boolean> = {
+	const inthConsents: Record<AllConsentNames, boolean> = {
 		experience: false,
 		functionality: false,
 		marketing: false,
@@ -189,73 +108,18 @@ export const iabPurposesToC15tConsents = function iabPurposesToC15tConsents(
 		necessary: true,
 	};
 
-	for (const [category, purposes] of Object.entries(C15T_TO_IAB_PURPOSE_MAP)) {
+	for (const [category, purposes] of Object.entries(INTH_TO_IAB_PURPOSE_MAP)) {
 		if (category === 'necessary') {
 			continue;
 		}
-		// Category is consented if ALL its deciding purposes are consented
 		const deciding = consentPurposes
 			? purposes.filter((purposeId) => consentPurposes.has(purposeId))
 			: [];
 		const allConsented = (deciding.length ? deciding : purposes).every(
 			(purposeId) => purposeConsents[purposeId] === true
 		);
-		c15tConsents[category as AllConsentNames] = allConsented;
+		inthConsents[category as AllConsentNames] = allConsented;
 	}
 
-	return c15tConsents;
-};
-
-/**
- * Gets the IAB purpose IDs required by a vendor based on their GVL entry.
- *
- * @param vendorPurposes - Array of purpose IDs from vendor's GVL entry
- * @param vendorLegIntPurposes - Array of legitimate interest purpose IDs
- * @returns Object with purpose arrays categorized by legal basis
- *
- * @public
- */
-export const categorizeVendorPurposes = function categorizeVendorPurposes(
-	vendorPurposes: number[],
-	vendorLegIntPurposes: number[] = []
-): {
-	consentRequired: number[];
-	legitInterest: number[];
-	all: number[];
-} {
-	return {
-		all: [...new Set([...vendorPurposes, ...vendorLegIntPurposes])],
-		consentRequired: vendorPurposes,
-		legitInterest: vendorLegIntPurposes,
-	};
-};
-
-/**
- * Checks if a vendor has consent for all their required purposes.
- *
- * @param vendorPurposes - Purpose IDs the vendor requires consent for
- * @param vendorLegIntPurposes - Purpose IDs claimed under legitimate interest
- * @param purposeConsents - Current purpose consent state
- * @param purposeLegitInterests - Current purpose legitimate interest state
- * @returns True if all required consents/interests are granted
- *
- * @public
- */
-export const vendorHasRequiredConsents = function vendorHasRequiredConsents(
-	vendorPurposes: number[],
-	vendorLegIntPurposes: number[],
-	purposeConsents: Record<number, boolean>,
-	purposeLegitInterests: Record<number, boolean>
-): boolean {
-	// Check consent purposes
-	const hasAllConsents = vendorPurposes.every(
-		(purposeId) => purposeConsents[purposeId] === true
-	);
-
-	// Check legitimate interest purposes
-	const hasAllLegitInterests = vendorLegIntPurposes.every(
-		(purposeId) => purposeLegitInterests[purposeId] === true
-	);
-
-	return hasAllConsents && hasAllLegitInterests;
+	return inthConsents;
 };

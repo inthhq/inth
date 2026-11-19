@@ -8,7 +8,7 @@
  * `packages/sdk/ui/src/theme/utils.ts`, and the rules that pick which token paints
  * which part come from the CSS modules that actually draw a banner, a dialog, a
  * button and a switch. The link between the two is `themeCSSVariableResolvers`,
- * the table that turns a `var(--c15t-space-md)` in a stylesheet into a theme
+ * the table that turns a `var(--inth-space-md)` in a stylesheet into a theme
  * token, so this file follows the same indirection a browser does instead of
  * guessing at a naming convention.
  *
@@ -194,7 +194,7 @@ const objectLiteral = function objectLiteral(
 };
 
 /**
- * Which theme token each `--c15t-*` CSS variable reads.
+ * Which theme token each `--inth-*` CSS variable reads.
  *
  * Read from `themeCSSVariableResolvers`, the same table the web build
  * serialises, so a token renamed there is a name this test cannot resolve
@@ -304,9 +304,9 @@ const themeValue = function themeValue(
 };
 
 /**
- * What a suffix of `--c15t-*` is worth, straight out of the web theme.
+ * What a suffix of `--inth-*` is worth, straight out of the web theme.
  *
- * @param suffix - The variable name with the `--c15t-` prefix removed.
+ * @param suffix - The variable name with the `--inth-` prefix removed.
  * @param dark - Read the dark palette for a colour token.
  */
 const tokenBySuffix = function tokenBySuffix(
@@ -315,7 +315,7 @@ const tokenBySuffix = function tokenBySuffix(
 ): string {
 	const path = VARS.get(suffix);
 	if (path === undefined) {
-		throw new Error(`No web theme token behind --c15t-${suffix}`);
+		throw new Error(`No web theme token behind --inth-${suffix}`);
 	}
 	return themeValue(path, dark);
 };
@@ -325,12 +325,12 @@ const VAR_REFERENCE = /^var\((?<reference>--[\w-]+)\)$/u;
 /**
  * What a CSS variable is worth, following `var()` hops the way a browser does.
  *
- * A `--c15t-*` variable is the theme itself. Anything else, such as
+ * A `--inth-*` variable is the theme itself. Anything else, such as
  * `--button-font-size`, is a local alias declared in the same stylesheet, which
  * is followed first and then resolved the same way.
  *
  * @param source - The stylesheet the variable is used in.
- * @param name - The variable, with or without the `--c15t-` prefix.
+ * @param name - The variable, with or without the `--inth-` prefix.
  * @param dark - Read the dark palette for a colour token.
  */
 const webToken = function webToken(
@@ -338,9 +338,9 @@ const webToken = function webToken(
 	name: string,
 	dark = false
 ): string {
-	const variable = name.startsWith('--') ? name : `--c15t-${name}`;
-	if (variable.startsWith('--c15t-')) {
-		return tokenBySuffix(variable.slice('--c15t-'.length), dark);
+	const variable = name.startsWith('--') ? name : `--inth-${name}`;
+	if (variable.startsWith('--inth-')) {
+		return tokenBySuffix(variable.slice('--inth-'.length), dark);
 	}
 
 	const declared = declarationsIn(source).get(variable);

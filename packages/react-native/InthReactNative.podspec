@@ -8,7 +8,7 @@ package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 # This spec used to declare `s.dependency "InthCore"`. That resolved here only because the
 # example Podfiles write `pod "InthCore", :path => "../packages/swift"`; CocoaPods cannot
 # attach a path to a `s.dependency`, and nothing publishes the pod, so an app installed from
-# npm had no source for the kernel and `pod install` failed there. `C15T_CORE_POD_VERSION`
+# npm had no source for the kernel and `pod install` failed there. `INTH_CORE_POD_VERSION`
 # left with it: there is no published version to pin.
 #
 # One target rather than two, because a second podspec in this package would still ask the host
@@ -27,8 +27,8 @@ Pod::Spec.new do |s|
   # that installs from npm gets `node_modules/@c15t/LICENSE.md`, a path that exists in
   # nobody's tree, and Apache-2.0 asks that the text travel with the software.
   s.license      = { :type => "Apache-2.0", :file => "LICENSE.md" }
-  s.authors      = { "c15t" => "https://c15t.com" }
-  s.source       = { :git => "https://github.com/c15t/c15t.git", :tag => "react-native@#{s.version}" }
+  s.authors      = { "Inth" => "https://inth.com" }
+  s.source       = { :git => "https://github.com/inthhq/inth.git", :tag => "react-native@#{s.version}" }
 
   # The TurboModule, the ObjC export shim, the startup constructor, the React-free wire layer
   # underneath them, and the consent kernel they are built on. One line on purpose:
@@ -39,7 +39,7 @@ Pod::Spec.new do |s|
   # same four keys with the same values as the bundle below, so the copy compiled into this
   # target is described by it.
   # `inth.nativeUI` false in Podfile.properties.json (the Expo plugin's `nativeUI: false`
-  # writes it), or C15T_NATIVE_UI=0 for `pod install`, builds without the stock SwiftUI
+  # writes it), or INTH_NATIVE_UI=0 for `pod install`, builds without the stock SwiftUI
   # consent screens. The presenter methods then reject with INTH_NATIVE_UI_EXCLUDED.
   #
   # A bare app has no Podfile.properties.json, so the file is read only when it exists. The
@@ -51,7 +51,7 @@ Pod::Spec.new do |s|
   rescue ::StandardError
     {}
   end
-  native_ui_setting = ENV["C15T_NATIVE_UI"] || podfile_properties["inth.nativeUI"]
+  native_ui_setting = ENV["INTH_NATIVE_UI"] || podfile_properties["inth.nativeUI"]
   native_ui = !%w[0 false no].include?(native_ui_setting.to_s.strip.downcase)
 
   # Every glob stays literal on these lines: `scripts/react-native-autolink.ts` reads them

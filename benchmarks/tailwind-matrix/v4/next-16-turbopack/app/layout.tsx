@@ -5,7 +5,7 @@ import './globals.css';
 import { Consent } from './consent';
 
 export const metadata: Metadata = {
-	title: 'c15t + Tailwind 4: Next.js 16 (Turbopack)',
+	title: 'inth + Tailwind 4: Next.js 16 (Turbopack)',
 };
 
 const RootLayout = ({ children }: { children: ReactNode }) => (

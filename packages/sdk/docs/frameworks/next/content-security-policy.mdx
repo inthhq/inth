@@ -15,13 +15,13 @@ same value on the request as `x-nonce`. See the
 [Next.js CSP guide](https://nextjs.org/docs/app/guides/content-security-policy)
 for the header-generating proxy.
 
-If you also run [`c15tProxy`](/docs/frameworks/next/geography-headers), set
+If you also run [`inthProxy`](/docs/frameworks/next/geography-headers), set
 both `x-nonce` and the generated `Content-Security-Policy` header on
 `request.headers` before calling it, and set the policy on the returned
 response as well. Next.js reads the nonce for its own bootstrap and page
 scripts from the request-side policy header, so forwarding only `x-nonce`
 leaves the framework scripts without a nonce and the browser blocks hydration.
-`c15tProxy` copies the incoming request headers into the forwarded request, so
+`inthProxy` copies the incoming request headers into the forwarded request, so
 both headers travel with the geography headers.
 
 Then read the header in the root layout and pass it to `ConsentRoot` as
@@ -80,13 +80,13 @@ created. Each full page load gets the fresh nonce from its own request.
 
 ## What the nonce applies to
 
-c15t stamps a nonce on these DOM nodes:
+Inth stamps a nonce on these DOM nodes:
 
 - Every `<script>` element the script loader creates for a `scripts` entry,
   both `src` and inline `textContent` scripts, gets `options.nonce`. A `nonce`
   set on an individual `scripts` entry takes precedence for that element.
 - The `<style>` elements that the banner, dialog and other stock components
-  render with c15t's rules get `options.nonce`. With a nonce set, they render
+  render with Inth's rules get `options.nonce`. With a nonce set, they render
   next to each component instead of moving into `<head>`, because React drops
   the nonce of a style it moves.
 - The inline `<script>` that a server-rendered `ConsentBanner` puts before its
@@ -109,8 +109,8 @@ c15t stamps a nonce on these DOM nodes:
   can allow it. If the policy blocks it, the engine loads when `ConsentRoot`'s
   first-load chunk runs. See
   [Performance](/docs/frameworks/next/optimization#start-returning-visitors-scripts-sooner).
-- The `<style id="c15t-theme">` element that `ConsentTheme` renders with the
-  theme's `--c15t-*` custom properties gets its `nonce` prop. Pass it the same
+- The `<style id="inth-theme">` element that `ConsentTheme` renders with the
+  theme's `--inth-*` custom properties gets its `nonce` prop. Pass it the same
   request nonce: `<ConsentTheme theme={theme} nonce={nonce} />`.
 
 It does not apply to anything else:
@@ -149,9 +149,9 @@ connect-src 'self' https://<your-backend-host> https://<your-manifest-host>;
 ```
 
 Use the endpoint host supplied by your Inth project or your self-hosted backend.
-With `proxy: true` and `routePrefix: '/api/c15t'`, as
+With `proxy: true` and `routePrefix: '/api/inth'`, as
 [Optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin)
-shows, the browser sends every consent request to `/api/c15t` and `'self'`
+shows, the browser sends every consent request to `/api/inth` and `'self'`
 covers them; the Next.js server connects to the backend outside the browser's
 CSP.
 
@@ -164,16 +164,16 @@ in Next.js and is not subject to the browser's CSP.
 
 Load a page with the policy enforced, not in report-only mode, and open the
 browser console. The banner should render with its theme colors and no CSP
-violation should mention `c15t-theme`. Grant a category that gates one of your
+violation should mention `inth-theme`. Grant a category that gates one of your
 `scripts` entries, then check:
 
 - The injected `<script>` element carries the request's nonce. Browsers hide
   the value from `getAttribute('nonce')`; read the element's `nonce` property
   in the console or inspect it in the Elements panel.
-- The `<style id="c15t-theme">` element carries the same nonce and the
-  `--c15t-*` variables are applied to the banner.
+- The `<style id="inth-theme">` element carries the same nonce and the
+  `--inth-*` variables are applied to the banner.
 - No `Refused to load the script` or `Refused to apply inline style` errors
-  mention a c15t element. A refused vendor dependency points to a missing
+  mention an Inth element. A refused vendor dependency points to a missing
   `'strict-dynamic'` or vendor host.
 - The consent submission to `/subjects` succeeds. A `connect-src` violation
   here means the backend origin is missing.

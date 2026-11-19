@@ -2,11 +2,11 @@ import type { ProviderTransportFactory } from '@inth/sdk/engine';
 import type { HostedMode } from '@inth/sdk/modes';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
 import type { ConsentTesting } from '@inth/sdk/testing';
+import { setupColorScheme } from '@inth/sdk/ui/utils/color-scheme';
 // oxlint-disable oxc/no-barrel-file -- Public framework entry point intentionally re-exports the supported API.
 import { getCurrentInstance } from 'vue';
 import type { App, Plugin } from 'vue';
 
-import { applyColorScheme } from './runtime/color-scheme';
 import { consentConfigKey } from './runtime/composables/config';
 import {
 	createVueConsentKernelContext,
@@ -56,32 +56,31 @@ export {
 } from './runtime/theme-tokens';
 
 /**
- * The consent config the {@link c15tVue} plugin takes, without where the
+ * The consent config the {@link inthVue} plugin takes, without where the
  * policy comes from: the browser modules it starts on mount (`scripts`,
  * `networkBlocker`, `iframeBlocker`, `gpp`, `storageConfig`, `nonce`), the
  * UI options and callbacks.
  */
-export type C15tVuePluginConfig = Omit<
+export type InthVuePluginConfig = Omit<
 	Partial<RuntimeConsentConfig>,
 	'projectUrl' | 'timeoutMs'
 >;
 
 /**
- * Options accepted by the {@link c15tVue} plugin: a `mode`, or a `runtime`
- * the host owns, plus the {@link C15tVuePluginConfig}.
+ * Options accepted by the {@link inthVue} plugin: a `mode`, or a `runtime`
+ * the host owns, plus the {@link InthVuePluginConfig}.
  */
-export type C15tVuePluginOptions = C15tVuePluginConfig &
+export type InthVuePluginOptions = InthVuePluginConfig &
 	(
 		| {
 				/**
 				 * Backend URL. Setting it is how the app talks to the hosted
 				 * backend. Defaults to the URL `consentManifest()` from
-				 * `@inth/vue/vite` read from `VITE_C15T_BACKEND_URL` or
-				 * `VITE_INTH_PROJECT_URL`.
+				 * `@inth/vue/vite` read from `VITE_INTH_PROJECT_URL`.
 				 *
 				 * @example
 				 * ```ts
-				 * app.use(c15tVue, { projectUrl: '/api/c15t' });
+				 * app.use(inthVue, { projectUrl: '/api/inth' });
 				 * ```
 				 */
 				projectUrl?: string;
@@ -99,9 +98,9 @@ export type C15tVuePluginOptions = C15tVuePluginConfig &
 				 *
 				 * @example
 				 * ```ts
-				 * import { c15tVue, manifest } from '@inth/vue/vue-plugin';
+				 * import { inthVue, manifest } from '@inth/vue/vue-plugin';
 				 *
-				 * app.use(c15tVue, { mode: manifest() });
+				 * app.use(inthVue, { mode: manifest() });
 				 * ```
 				 */
 				mode?: ProviderTransportFactory | HostedMode | ConsentTesting;
@@ -123,9 +122,9 @@ export type C15tVuePluginOptions = C15tVuePluginConfig &
 				 * @example
 				 * ```ts
 				 * import { createApp } from 'vue';
-				 * import { c15tVue } from '@inth/vue/vue-plugin';
+				 * import { inthVue } from '@inth/vue/vue-plugin';
 				 *
-				 * createApp(Dialog).use(c15tVue, { runtime }).mount(target);
+				 * createApp(Dialog).use(inthVue, { runtime }).mount(target);
 				 * ```
 				 */
 				runtime: ConsentRuntime;
@@ -133,19 +132,19 @@ export type C15tVuePluginOptions = C15tVuePluginConfig &
 	);
 
 /**
- * The c15t Vue plugin. One consent runtime per app, shared with every
+ * The Inth Vue plugin. One consent runtime per app, shared with every
  * component through `provide`/`inject`; it starts once the root mounts.
  *
  * @example
  * ```ts
- * import { c15tVue, manifest } from '@inth/vue/vue-plugin';
+ * import { inthVue, manifest } from '@inth/vue/vue-plugin';
  * import { createApp } from 'vue';
  *
- * createApp(App).use(c15tVue, { projectUrl: '/api/c15t' }).mount('#app');
+ * createApp(App).use(inthVue, { projectUrl: '/api/inth' }).mount('#app');
  * ```
  */
-export const c15tVue: Plugin<[C15tVuePluginOptions]> = {
-	install(app: App, options: C15tVuePluginOptions) {
+export const inthVue: Plugin<[InthVuePluginOptions]> = {
+	install(app: App, options: InthVuePluginOptions) {
 		app.provide(consentConfigKey, options);
 
 		const { projectUrl, mode: chosen, runtime, ...rest } = options;
@@ -153,19 +152,18 @@ export const c15tVue: Plugin<[C15tVuePluginOptions]> = {
 		const mode = runtime
 			? undefined
 			: selectedMode({ mode: chosen, projectUrl });
-		// One runtime per app, shared through `provide`/`inject`.
 		const context = createVueConsentKernelContext({ config, mode, runtime });
 		provideVueConsentContext(app, context);
 		// Tokens and the color scheme apply from install, before the first
 		// render, so every surface is styled whether or not a ConsentRoot
 		// mounts. A borrowed runtime's host renders its own theme and owns
-		// the `c15t-dark` class.
+		// the `inth-dark` class.
 		const removeTokensStyle = runtime
 			? () => undefined
 			: mountTokensStyle(config);
 		const releaseColorScheme = runtime
 			? () => undefined
-			: applyColorScheme(config.colorScheme);
+			: setupColorScheme(config.colorScheme);
 		app.mixin({
 			mounted() {
 				// The app may hydrate server markup, so the runtime starts once

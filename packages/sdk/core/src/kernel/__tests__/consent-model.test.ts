@@ -73,7 +73,7 @@ const fixtureResolution = function fixtureResolution(
 /** Read a raw shared fixture the way a server would read the cookie. */
 const recordsFor = function recordsFor(id: PolicyRecordId): HydrationRecords {
 	return readStoredRecordsFromCookieHeader(
-		`c15t=${POLICY_RECORDS[id].raw}`,
+		`inth=${POLICY_RECORDS[id].raw}`,
 		undefined,
 		POLICY_NOW
 	);
@@ -635,7 +635,7 @@ describe('policy resolution outcomes', () => {
 		await kernel.commands.init();
 		const snap = kernel.getSnapshot();
 		expect(snap.resolution).toEqual({ policy: null, status: 'no-match' });
-		expect(snap.policyRule.id).toBe('c15t_safe_fallback');
+		expect(snap.policyRule.id).toBe('inth_safe_fallback');
 		expect(snap.policySnapshotToken).toBeNull();
 		expect(snap).not.toHaveProperty('policyDecision');
 		expect(snap.iab?.enabled).toBe(false);

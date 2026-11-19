@@ -1,10 +1,14 @@
 <script lang="ts">
 	import { countIABPartners } from '@inth/sdk/iab/headless';
+	import type {
+		HeadlessIABVendorId as VendorId,
+		IABLegitimateInterestState,
+		ProcessedStack,
+	} from '@inth/sdk/iab/headless';
+	import type { ResolvedIABCopy } from '@inth/sdk/surface-state';
 	import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 	import switchStyles from '@inth/sdk/ui/styles/components/switch';
 
-	import type { IABTranslations } from '../iab-translations';
-	import type { ProcessedStack, VendorId } from '../iab-types';
 	import { PreferenceItem, Switch } from '../primitives';
 	import IABPurposeItem from './iab-purpose-item.svelte';
 	import ChevronRightIcon from './icons/chevron-right-icon.svelte';
@@ -18,10 +22,9 @@
 		vendorConsents,
 		onVendorToggle,
 		onVendorClick,
-		vendorLegitimateInterests = {},
+		legitimateInterests,
 		onVendorLegitimateInterestToggle,
-		purposeLegitimateInterests = {},
-		onPurposeLegitimateInterestToggle,
+		onPurposeObjection,
 		noStyle = false,
 		iabT,
 	}: {
@@ -36,18 +39,16 @@
 		vendorConsents: Record<string, boolean>;
 		onVendorToggle: (vendorId: VendorId, value: boolean) => void;
 		onVendorClick: (vendorId: VendorId) => void;
-		vendorLegitimateInterests?: Record<string, boolean>;
+		/** Draft and vendor list the legitimate interest controls read. */
+		legitimateInterests?: IABLegitimateInterestState;
 		onVendorLegitimateInterestToggle?: (
 			vendorId: VendorId,
 			value: boolean
 		) => void;
-		purposeLegitimateInterests?: Record<number, boolean>;
-		onPurposeLegitimateInterestToggle?: (
-			purposeId: number,
-			value: boolean
-		) => void;
+		/** Object to a purpose's legitimate interest, or withdraw the objection. */
+		onPurposeObjection?: (purposeId: number, objected: boolean) => void;
 		noStyle?: boolean;
-		iabT: IABTranslations;
+		iabT: ResolvedIABCopy;
 	} = $props();
 
 	let isExpanded = $state(false);
@@ -58,7 +59,7 @@
 	// rows keep their consent switch and the stack covers them too.
 	const consentPurposes = $derived(
 		stack.purposes.filter(
-			(p) => p.hasConsentBasis !== false || !onPurposeLegitimateInterestToggle
+			(p) => p.hasConsentBasis !== false || !onPurposeObjection
 		)
 	);
 	const allEnabled = $derived(
@@ -147,10 +148,9 @@
 					{vendorConsents}
 					{onVendorToggle}
 					{onVendorClick}
-					{vendorLegitimateInterests}
+					{legitimateInterests}
 					{onVendorLegitimateInterestToggle}
-					{purposeLegitimateInterests}
-					{onPurposeLegitimateInterestToggle}
+					{onPurposeObjection}
 					{noStyle}
 					{iabT}
 				/>

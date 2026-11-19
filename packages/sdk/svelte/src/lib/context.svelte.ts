@@ -3,7 +3,6 @@ import {
 	applyExperimentAssignment,
 	applyExperimentTheme,
 	consentTypes as defaultConsentTypes,
-	deniedVendorIds,
 	has as evaluateHas,
 	resolveConsentPresentation,
 	vendorsListedUnder,
@@ -24,7 +23,6 @@ import type {
 	KernelIABState,
 	Model,
 	ResolvedVendor,
-	TranslationConfig,
 } from '@inth/sdk/engine';
 import type { createPreferenceDraft } from '@inth/sdk/preference-draft';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
@@ -35,15 +33,16 @@ import {
 	saveConsentSurface,
 	showConsentSurface,
 } from '@inth/sdk/surface-actions';
+import { resolveSurfaceTranslations } from '@inth/sdk/surface-state';
+import type { CompleteTranslations } from '@inth/sdk/translations';
 import type { Theme, UIOptions } from '@inth/sdk/ui/theme';
 import { getContext, setContext } from 'svelte';
 
 import type { DialogPreload } from './dialog-warming';
-import { registeredDefaultTranslations } from './translation-defaults';
 import type { ConsentManagerOptions } from './types';
 
-const CONSENT_CONTEXT_KEY = Symbol('c15t-v3-consent');
-const THEME_CONTEXT_KEY = Symbol('c15t-v3-theme');
+const CONSENT_CONTEXT_KEY = Symbol('inth-v3-consent');
+const THEME_CONTEXT_KEY = Symbol('inth-v3-theme');
 
 export type SaveType = 'all' | 'custom' | 'necessary';
 
@@ -63,6 +62,8 @@ export interface SvelteIABState extends KernelIABState {
 	) => void;
 	setPurposeConsent: (purposeId: number, value: boolean) => void;
 	setPurposeLegitimateInterest: (purposeId: number, value: boolean) => void;
+	/** Object to a purpose's legitimate interest, for it and its vendors. */
+	setPurposeObjection: (purposeId: number, objected: boolean) => void;
 	setSpecialFeatureOptIn: (featureId: number, value: boolean) => void;
 	/** Set consent for a Google ad tech provider (Additional Consent). */
 	setAdTechProviderConsent: (providerId: number, value: boolean) => void;
@@ -119,7 +120,7 @@ export interface ConsentManagerState extends Pick<
 	| 'vendorChoice'
 > {
 	activeUI: ActiveUI;
-	branding: NonNullable<ConsentSnapshot['branding']>;
+	branding: ConsentSnapshot['branding'];
 
 	selectedConsents: Partial<ConsentState>;
 	selectedConsentTypes: Partial<ConsentState>;
@@ -138,7 +139,7 @@ export interface ConsentManagerState extends Pick<
 	manager: null;
 	model: Model;
 	/**
-	 * Whether a policy rule is resolved for this visitor. Every c15t consent
+	 * Whether a policy rule is resolved for this visitor. Every Inth consent
 	 * surface renders nothing until one is: an unconfigured, failed, or
 	 * unmatched resolution leaves nothing to consent to, and the surfaces
 	 * appear on their own once a later init supplies a rule.
@@ -151,17 +152,20 @@ export interface ConsentManagerState extends Pick<
 	 * the permissions it grants apply. `false` until a rule is resolved.
 	 */
 	hasConsentUi: boolean;
-	/** Whether c15t or an external CMP offers a preferences control. */
+	/** Whether Inth or an external CMP offers a preferences control. */
 	hasConsentPreferences: boolean;
 	legalLinks: ConsentManagerOptions['legalLinks'];
-	translationConfig: TranslationConfig;
+	/**
+	 * The copy the surfaces render: the active language bundle with English
+	 * filling every key it leaves out.
+	 */
+	copy: CompleteTranslations;
 	getDisplayedConsents: () => ConsentType[];
 	/**
 	 * The vendors listed under one category: presentable, naming that
 	 * category, without a negation. Empty under an `iab` policy, where the
 	 * TC string decides and vendor rows are not shown.
 	 *
-	 * @param category - The category row being rendered.
 	 * @returns The vendors to list, in declared order.
 	 */
 	getDisplayedVendors: (category: AllConsentNames) => ResolvedVendor[];
@@ -229,7 +233,6 @@ export interface ThemeContextValue {
 export interface ConsentControllerOptions {
 	/** The runtime's one clear sequence. */
 	clearRecords: () => void;
-	/** The runtime's language switch. */
 	setLanguage: (code: string) => void;
 	getSnapshot: () => ConsentSnapshot;
 	getDraft: () => ConsentDraftState;
@@ -244,34 +247,6 @@ export interface ConsentControllerOptions {
 	/** See {@link ConsentContextValue.runtime}. */
 	runtime: ConsentRuntime;
 }
-
-/** Before any engine registered the defaults: no languages yet. */
-const NO_DEFAULTS: TranslationConfig = {
-	defaultLanguage: 'en',
-	disableAutoLanguageSwitch: false,
-	translations: {},
-};
-
-const toTranslationConfig = function toTranslationConfig(
-	snapshot: ConsentSnapshot
-): TranslationConfig {
-	// The English defaults join once an engine has registered them; before
-	// `ConsentRoot`'s engine loads, the snapshot's bundle is complete.
-	const defaults = registeredDefaultTranslations() ?? NO_DEFAULTS;
-	const resolved = snapshot.translations;
-	if (!resolved) {
-		return defaults;
-	}
-
-	return {
-		...defaults,
-		defaultLanguage: resolved.language,
-		translations: {
-			...defaults.translations,
-			[resolved.language]: resolved.translations,
-		},
-	};
-};
 
 const toActiveUI = function toActiveUI(ui: KernelActiveUI): ActiveUI {
 	return (ui ?? 'none') as ActiveUI;
@@ -304,7 +279,7 @@ const createConsentState = function createConsentState(
 			return toActiveUI(getSnapshotLocal().activeUI);
 		},
 		get branding() {
-			return getSnapshotLocal().branding ?? 'c15t';
+			return getSnapshotLocal().branding;
 		},
 		// The draft's displayed categories: `necessary` plus the choice scope.
 		get consentCategories(): AllConsentNames[] {
@@ -330,25 +305,15 @@ const createConsentState = function createConsentState(
 				getSnapshotLocal().experiment
 			);
 		},
-		// -- Controller-owned state (computed from snapshot + provider options) --
-
 		get consentTypes() {
 			return displayedConsentTypes(controller.consentCategories);
 		},
 
-		// -- Methods --------------------------------------------------------------
 		getDisplayedConsents() {
 			return displayedConsentTypes(controller.consentCategories);
 		},
 		getDisplayedVendors(category: AllConsentNames) {
-			const snapshot = getSnapshotLocal();
-			return snapshot.model === 'iab'
-				? []
-				: vendorsListedUnder(
-						snapshot.vendors?.declared ?? [],
-						category,
-						deniedVendorIds(snapshot)
-					);
+			return vendorsListedUnder(getSnapshotLocal(), category);
 		},
 		has(condition: HasCondition<AllConsentNames>) {
 			const snapshot = getSnapshotLocal();
@@ -358,8 +323,6 @@ const createConsentState = function createConsentState(
 			);
 		},
 		isVendorAllowed(vendorId: string) {
-			// At the snapshot's own clock, as before: core's
-			// `isVendorAllowed(snapshot, vendorId, snapshot.evaluatedAt)`.
 			return isSnapshotVendorAllowed(getSnapshotLocal(), vendorId);
 		},
 		dismissNotice() {
@@ -392,7 +355,6 @@ const createConsentState = function createConsentState(
 			return hasConsentUI(getSnapshotLocal());
 		},
 
-		// -- Snapshot passthrough (was previously served by a Proxy) -------------
 		get explicitChoice() {
 			return getSnapshotLocal().explicitChoice;
 		},
@@ -496,8 +458,8 @@ const createConsentState = function createConsentState(
 			);
 		},
 
-		get translationConfig() {
-			return toTranslationConfig(getSnapshotLocal());
+		get copy() {
+			return resolveSurfaceTranslations(getSnapshotLocal());
 		},
 		get translations() {
 			return getSnapshotLocal().translations;
@@ -517,11 +479,8 @@ const createConsentState = function createConsentState(
 };
 
 /**
- * Provide the consent context.
- *
  * @param getKernel - The kernel the provider renders now. It changes when
  * the runtime's `enabled` toggles.
- * @param options - The provider's state and runtime verbs.
  */
 export const setConsentContext = function setConsentContext(
 	getKernel: () => ConsentKernel,
@@ -554,7 +513,7 @@ export const getConsentContext =
 		);
 		if (!context) {
 			throw new Error(
-				'c15t: no v3 consent context. Wrap your app with <ConsentProvider options={...}> from @inth/svelte.'
+				'inth: no v3 consent context. Wrap your app with <ConsentProvider options={...}> from @inth/svelte.'
 			);
 		}
 		return context;

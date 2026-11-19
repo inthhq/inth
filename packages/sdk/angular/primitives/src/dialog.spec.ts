@@ -37,15 +37,15 @@ afterEach(() => {
 			Open
 		</button>
 		<ng-container
-			c15tDialog
-			#dialog="c15tDialog"
+			inthDialog
+			#dialog="inthDialog"
 			[(open)]="open"
 			[unmountOnExit]="true"
 		>
 			@if (dialog.shouldRender()) {
-				<div c15tDialogContent>
-					<h2 c15tDialogTitle>Title</h2>
-					<button c15tDialogClose>Close</button>
+				<div inthDialogContent>
+					<h2 inthDialogTitle>Title</h2>
+					<button inthDialogClose>Close</button>
 				</div>
 			}
 		</ng-container>
@@ -61,17 +61,17 @@ class DialogHost {
 	selector: 'test-open-dialog',
 	template: `
 		<ng-container
-			c15tDialog
-			#dialog="c15tDialog"
+			inthDialog
+			#dialog="inthDialog"
 			[(open)]="open"
 			[unmountOnExit]="true"
 		>
 			@if (dialog.shouldRender()) {
-				<div c15tDialogContent>
-					<h2 c15tDialogTitle>Title</h2>
+				<div inthDialogContent>
+					<h2 inthDialogTitle>Title</h2>
 					<button
 						type="button"
-						c15tDialogClose
+						inthDialogClose
 					>
 						Close
 					</button>
@@ -84,7 +84,7 @@ class OpenDialogHost {
 	readonly open = signal(true);
 }
 
-describe('c15tDialog', () => {
+describe('inthDialog', () => {
 	test('labels the content, closes on Escape and restores focus', async () => {
 		const { fixture, get, root } = await render(DialogHost);
 		expect(root.querySelector('[role="dialog"]')).toBeNull();
@@ -118,7 +118,7 @@ describe('c15tDialog', () => {
 		await fixture.whenStable();
 		expect(get('[role="dialog"]').contains(document.activeElement)).toBe(true);
 
-		get('[c15tDialogClose]').click();
+		get('[inthDialogClose]').click();
 		await fixture.whenStable();
 		expect(fixture.componentInstance.open()).toBe(false);
 		expect(document.activeElement).toBe(outside);

@@ -2,7 +2,7 @@
  * `@inth/svelte/vite` — build-time help for Svelte and SvelteKit apps.
  *
  * {@link consentManifest} serves the consent manifest the build downloads.
- * In a SvelteKit build it also lets `c15tHandle` preload the on-demand
+ * In a SvelteKit build it also lets `inthHandle` preload the on-demand
  * chunk that holds the script loader and the network blocker, on the pages
  * that configure `scripts` or blocker rules, so it arrives with the app's
  * code instead of one round trip after it.
@@ -10,7 +10,12 @@
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { createConsentManifestPlugin } from '@inth/sdk/build';
+import {
+	CORE_CHUNK_MODULES,
+	CORE_FIRST_LOAD_MODULES,
+	coreModulePattern,
+	createConsentManifestPlugin,
+} from '@inth/sdk/build';
 import type {
 	ConsentManifestPlugin,
 	ConsentManifestPluginOptions,
@@ -50,7 +55,6 @@ export interface ServerGeneratedPlugin {
  * lets Vite resolve that import to the build's virtual module, as it does
  * in `vite build`.
  *
- * @returns The Vite plugin.
  * @internal
  */
 export const createServerGeneratedPlugin =
@@ -72,7 +76,7 @@ export const createServerGeneratedPlugin =
 					keepCore(environment.resolve?.external);
 				}
 			},
-			name: 'c15t:svelte-server-generated',
+			name: 'inth:svelte-server-generated',
 		};
 	};
 
@@ -80,8 +84,10 @@ export const createServerGeneratedPlugin =
 const CHUNK_MODULES: Readonly<Record<PreloadChunkName, RegExp>> = {
 	engine:
 		/[\\/](?:@inth[\\/]svelte|packages[\\/](?:sdk[\\/])?svelte)[\\/](?:dist|src[\\/]lib)[\\/]deferred[\\/]engine\.[cm]?[jt]s$/u,
-	'loader-and-blocker':
-		/[\\/](?:@inth[\\/]sdk[\\/]lib[\\/]core|packages[\\/]sdk[\\/]sdk[\\/]lib[\\/]core|packages[\\/](?:sdk[\\/])?core)[\\/](?:dist|src)[\\/]modules[\\/]loader-and-blocker\.[cm]?[jt]s$/u,
+	'loader-and-blocker': new RegExp(
+		`[\\\\/](?:@inth[\\\\/]sdk[\\\\/]lib|packages[\\\\/]sdk[\\\\/]sdk[\\\\/]lib|packages(?:[\\\\/]sdk)?)[\\\\/]${coreModulePattern([CORE_CHUNK_MODULES.loaderAndBlocker])}`,
+		'u'
+	),
 };
 
 const CHUNK_NAMES = Object.keys(CHUNK_MODULES) as PreloadChunkName[];
@@ -128,10 +134,8 @@ export interface ModulePreloadPlugin {
  * Each on-demand chunk's URL in a client build, or `''` for one the build
  * put in an entry chunk (the page loads it anyway) or left out.
  *
- * @param bundle - The client build's output.
  * @param base - Where the client output is served from (`paths.assets`,
  * else `paths.base`).
- * @returns The URL per chunk name.
  * @internal
  */
 export const resolveChunkHrefs = function resolveChunkHrefs(
@@ -178,7 +182,6 @@ const listScripts = async function listScripts(
  *
  * @param serverDirectory - SvelteKit's server output.
  * @param hrefs - The URL per chunk name; `''` drops the link.
- * @returns The files changed.
  * @internal
  */
 export const writeChunkHrefs = async function writeChunkHrefs(
@@ -204,13 +207,13 @@ export const writeChunkHrefs = async function writeChunkHrefs(
 };
 
 /**
- * Vite plugin that tells `c15tHandle` where the client build put the
+ * Vite plugin that tells `inthHandle` where the client build put the
  * chunk that holds the script loader and the network blocker.
  *
  * SvelteKit builds the server first, so the server cannot know client
  * chunk names. After the client build writes its chunks, this plugin
  * writes their URLs into the server output, before SvelteKit prerenders
- * and before an adapter copies it. `c15tHandle` then adds a
+ * and before an adapter copies it. `inthHandle` then adds a
  * `<link rel="modulepreload">` for that chunk to every page whose provider
  * has non-empty `scripts` or blocker rules. Pages without either get no
  * link and never fetch the chunk.
@@ -219,7 +222,6 @@ export const writeChunkHrefs = async function writeChunkHrefs(
  * the plugin does nothing: there is no server render to put a link in.
  * {@link consentManifest} includes it.
  *
- * @returns The Vite plugin.
  * @internal
  */
 export const createModulePreloadPlugin =
@@ -245,7 +247,7 @@ export const createModulePreloadPlugin =
 				)?.options;
 				kit = options?.kit ?? options;
 			},
-			name: 'c15t:module-preload',
+			name: 'inth:module-preload',
 			async writeBundle(_options, bundle) {
 				// SvelteKit 3 builds every environment with one plugin instance;
 				// SvelteKit 2 starts a separate client build.
@@ -276,12 +278,17 @@ export const createModulePreloadPlugin =
  * and `experiment-presentation`, so `vendors`, `experiment`, `modules/has`
  * and the record evaluator stay with the engine.
  *
+ * The English copy joins them: the surfaces resolve their text against
+ * it, and the engine starts from it.
+ *
  * Vite's preload helper joins them: the first load's dynamic imports use
  * it, and it rode in this chunk before through `experiment`. On its own
  * it costs the page one more request.
  */
-const FIRST_LOAD_SHARED =
-	/^\0vite[\\/]preload-helper\.js$|[\\/]node_modules[\\/]@inth[\\/]sdk[\\/]lib[\\/](?:core[\\/]dist[\\/](?:libs[\\/](?:has|experiment-presentation|vendor-listing|policy-actions|is-production|storage-keys|generate-subject-id)|consent[\\/]consent-types|modules[\\/]vendor-(?:allowed|denial)|consent-record[\\/]types|surface-actions[\\/]instant-commit|derive-surface)|ui[\\/]dist[\\/]utils[\\/]text-direction)\.js$/u;
+const FIRST_LOAD_SHARED = new RegExp(
+	`^\\0vite[\\\\/]preload-helper\\.js$|[\\\\/]node_modules[\\\\/]@inth[\\\\/]sdk[\\\\/]lib[\\\\/](?:${coreModulePattern(CORE_FIRST_LOAD_MODULES)}|(?:translations[\\\\/]dist[\\\\/]translations[\\\\/]en|ui[\\\\/]dist[\\\\/]utils[\\\\/]text-direction)\\.js$)`,
+	'u'
+);
 
 /** The slice of Rolldown's output options {@link FirstLoadChunkPlugin} edits. */
 interface OutputOptionsLike {
@@ -310,7 +317,7 @@ interface OutputHookContext {
 	meta: { rolldownVersion?: string; watchMode: boolean };
 }
 
-/** The plugin that puts c15t's shared first-load modules in one chunk. */
+/** The plugin that puts Inth's shared first-load modules in one chunk. */
 export interface FirstLoadChunkPlugin {
 	apply: 'build';
 	name: string;
@@ -321,14 +328,14 @@ export interface FirstLoadChunkPlugin {
 }
 
 /**
- * Puts the small c15t modules that `ConsentRoot`'s first-load code shares
+ * Puts the small Inth modules that `ConsentRoot`'s first-load code shares
  * with the consent engine into one chunk, in the browser build of a Vite
  * that bundles with Rolldown (Vite 8).
  *
  * Rolldown gives each set of modules that the same chunks import a chunk
  * of its own. The engine, the commit path and the dialog each share a
  * different few of those modules with the page, so without this the page
- * fetches about a dozen c15t files of a few hundred bytes, each with its
+ * fetches about a dozen Inth files of a few hundred bytes, each with its
  * own request and headers. Every module in the group already loads with a
  * page that renders `ConsentRoot`, so the page loads no more code, and the
  * on-demand chunks import from the merged one. Rollup (Vite 7 and earlier)
@@ -339,14 +346,13 @@ export interface FirstLoadChunkPlugin {
  *
  * {@link consentManifest} includes it.
  *
- * @returns The Vite plugin.
  * @internal
  */
 export const createFirstLoadChunkPlugin =
 	function createFirstLoadChunkPlugin(): FirstLoadChunkPlugin {
 		return {
 			apply: 'build',
-			name: 'c15t:first-load-chunk',
+			name: 'inth:first-load-chunk',
 			outputOptions(options) {
 				const { codeSplitting } = options;
 				if (
@@ -367,8 +373,8 @@ export const createFirstLoadChunkPlugin =
 						groups: [
 							...(settings.groups ?? []),
 							{
-								debugName: 'c15t',
-								name: 'c15t',
+								debugName: 'inth',
+								name: 'inth',
 								test: FIRST_LOAD_SHARED,
 							},
 						],
@@ -380,9 +386,9 @@ export const createFirstLoadChunkPlugin =
 
 /**
  * Serves the deployment's consent manifest and backend URL as the virtual
- * module `@inth/sdk/generated` (also `@inth/sdk/generated`). Import `snapshot`
- * from it; no file is written into the app. `vite build` fetches the
- * manifest only when the bundle reads `snapshot`: a Svelte app that uses
+ * module `@inth/sdk/generated`. Import `snapshot` from it; no file is
+ * written into the app. `vite build` fetches the manifest only when the
+ * bundle reads `snapshot`: a Svelte app that uses
  * `hosted()` or `local()` never depends on the backend at build time.
  *
  * In a SvelteKit app (the `sveltekit()` plugin is present), the snapshot
@@ -390,33 +396,30 @@ export const createFirstLoadChunkPlugin =
  * `undefined`. A Svelte single-page app receives it in the browser.
  * `projectUrl` is public and reaches both.
  *
- * `projectUrl` defaults to `PUBLIC_C15T_BACKEND_URL` (SvelteKit), then
- * `VITE_C15T_BACKEND_URL`, then the Inth variables `PUBLIC_INTH_PROJECT_URL`
- * and `VITE_INTH_PROJECT_URL`, including `.env` files. When
- * `VITE_C15T_BACKEND_URL` is unset, the plugin sets
- * `import.meta.env.VITE_C15T_BACKEND_URL` to the URL it used, so app code
+ * `projectUrl` defaults to `PUBLIC_INTH_PROJECT_URL` (SvelteKit), then
+ * `VITE_INTH_PROJECT_URL`, including `.env` files. When
+ * `VITE_INTH_PROJECT_URL` is unset, the plugin sets
+ * `import.meta.env.VITE_INTH_PROJECT_URL` to the URL it used, so app code
  * reads the same value. A missing URL or a failed fetch warns, and
  * `snapshot` is `undefined`, so the policy is read at runtime, from the
  * backend's `/init` while the manifest is unavailable. Set
- * `onBuildError: 'fail'` or `C15T_ON_BUILD_ERROR=fail` to stop the build
- * instead. In a Svelte
- * single-page app whose policy depends on the visitor's location, the
- * build warns and suggests `hosted()`. With `manifest({ manifestUrl })` or
+ * `onBuildError: 'fail'` or `INTH_ON_BUILD_ERROR=fail` to stop the build
+ * instead. In a Svelte single-page app whose policy depends on the
+ * visitor's location, the build warns and suggests `hosted()`. With `manifest({ manifestUrl })` or
  * `manifest({ source: 'runtime' })`, pass `source: 'runtime'` here too, so
  * the build never fetches a snapshot the app would discard.
  *
  * In a SvelteKit build it also writes the URL of the on-demand chunk that
  * holds the script loader and the network blocker into the server output,
- * so `c15tHandle` adds a `<link rel="modulepreload">` for it to every page
+ * so `inthHandle` adds a `<link rel="modulepreload">` for it to every page
  * whose provider has `scripts` or blocker rules. With Vite 8 it puts the
- * small modules c15t's first-load code shares with the consent engine into
+ * small modules Inth's first-load code shares with the consent engine into
  * one chunk ({@link createFirstLoadChunkPlugin}).
  *
  * @param options - Backend URL, `onBuildError` and `source`. Appends
  * `/manifest`.
  * @returns The Vite plugins, for `plugins`.
- * @throws {Error} When the fetch fails in `'fail'` mode, the default for
- * `vite build`.
+ * @throws {Error} When the fetch fails in `'fail'` mode.
  * @example
  * ```ts
  * // vite.config.ts
@@ -437,13 +440,9 @@ export const consentManifest = (
 	createConsentManifestPlugin(options, {
 		// A Svelte single-page app only: SvelteKit resolves on the server.
 		adviseHostedForLocation: true,
-		envNames: [
-			'PUBLIC_C15T_BACKEND_URL',
-			'VITE_C15T_BACKEND_URL',
-			'PUBLIC_INTH_PROJECT_URL',
-			'VITE_INTH_PROJECT_URL',
-		],
+		envNames: ['PUBLIC_INTH_PROJECT_URL', 'VITE_INTH_PROJECT_URL'],
 		label: '@inth/svelte/vite',
+		packages: ['@inth/svelte'],
 		serverRendered: (config) =>
 			config.plugins?.some((plugin) => plugin.name === SVELTEKIT_PLUGIN) ??
 			false,

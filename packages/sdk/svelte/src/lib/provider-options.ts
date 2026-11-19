@@ -52,8 +52,6 @@ const mergeDefinedOptions = function mergeDefinedOptions(
  * A provider's options: its top-level props over `options`, without the
  * props that are not options.
  *
- * @param props - The provider's props.
- * @returns The merged options.
  * @internal
  */
 export const resolveProviderOptions = function resolveProviderOptions(
@@ -73,8 +71,6 @@ export const resolveProviderOptions = function resolveProviderOptions(
  * The options a provider hands the runtime: its own, with the lazy IAB
  * and GPP loaders and the package name.
  *
- * @param options - The provider's options.
- * @returns The runtime options.
  * @internal
  */
 export const runtimeOptionsFor = function runtimeOptionsFor(

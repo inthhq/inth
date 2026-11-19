@@ -1,28 +1,28 @@
 ---
 title: Dark mode
-description: Switch c15t's banner and dialog to dark colors with colorScheme, set your own dark tokens, follow your site's theme switch, and paint dark on the first frame in every framework.
+description: Switch Inth's banner and dialog to dark colors with colorScheme, set your own dark tokens, follow your site's theme switch, and paint dark on the first frame in every framework.
 group: customization
 ---
 
-## How c15t turns dark
+## How Inth turns dark
 
-c15t's stylesheet switches every `--c15t-*` color token to its dark value when
-`<html>` has a `dark` or a `c15t-dark` class. The `colorScheme` option decides
-whether c15t sets `c15t-dark` itself:
+Inth's stylesheet switches every `--inth-*` color token to its dark value when
+`<html>` has a `dark` or an `inth-dark` class. The `colorScheme` option decides
+whether Inth sets `inth-dark` itself:
 
-| `colorScheme` | What c15t does with `c15t-dark` |
+| `colorScheme` | What Inth does with `inth-dark` |
 | --- | --- |
 | `'light'` | Removes it once |
 | `'dark'` | Adds it once |
 | `'system'` | Follows `prefers-color-scheme`, including changes while the page is open |
-| Unset | Copies your `dark` class into `c15t-dark` and follows it as it changes |
+| Unset | Copies your `dark` class into `inth-dark` and follows it as it changes |
 | `null` | Leaves it alone. Your site sets it |
 
 Astro also accepts `'none'`, which means the same as `null`.
 
-`'light'` only removes `c15t-dark`. If your site puts `dark` on `<html>`, the
+`'light'` only removes `inth-dark`. If your site puts `dark` on `<html>`, the
 stylesheet still switches the tokens to dark. Pick one class convention for
-your site and let c15t follow it.
+your site and let Inth follow it.
 
 ## Defaults in each framework
 
@@ -30,15 +30,15 @@ your site and let c15t follow it.
 | --- | --- | --- |
 | Next.js, TanStack Start | `options.colorScheme` on `ConsentRoot`, and `colorScheme` on `ConsentTheme` | Unset: copies `dark` |
 | React | `colorScheme` in the `ConsentProvider` options, and on `ConsentTheme` | Unset: copies `dark` |
-| Nuxt | `colorScheme` under the `c15t` key in `nuxt.config.ts`, or in `app/app.config.ts` | Unset: copies `dark` |
-| Vue | `colorScheme` in the `c15tVue` options | Unset: copies `dark` |
-| Astro | `colorScheme` in the `c15t()` integration options | `'system'` |
+| Nuxt | `colorScheme` under the `inth` key in `nuxt.config.ts`, or in `app/app.config.ts` | Unset: copies `dark` |
+| Vue | `colorScheme` in the `inthVue` options | Unset: copies `dark` |
+| Astro | `colorScheme` in the `inth()` integration options | `'system'` |
 | Svelte, SvelteKit | `colorScheme` on `ConsentProvider` (Svelte) or `ConsentRoot` (SvelteKit) | Unset: copies `dark` |
 | HTML | `data-color-scheme` on the script tag: `light`, `dark`, `system` or `none` | `system` |
 | JavaScript | `ui.colorScheme` in `init()` | `'system'` |
 
 React, Vue and Svelte apps usually already have a theme switch that toggles a
-`dark` class, such as next-themes. Copying that class keeps c15t in step with
+`dark` class, such as next-themes. Copying that class keeps Inth in step with
 the site without extra code.
 
 Astro and the script tag default to `'system'` because neither can rely on a
@@ -49,30 +49,30 @@ HTML page has no convention either. A site that has one opts in with `null`.
 
 ### Set colorScheme null in Nuxt
 
-In Nuxt, set `colorScheme: null` under the `c15t` key in `nuxt.config.ts` or
+In Nuxt, set `colorScheme: null` under the `inth` key in `nuxt.config.ts` or
 in `app/app.config.ts`. Nuxt drops a `null` in inline module options, such as
 `modules: [['@inth/vue', { colorScheme: null }]]`, before the module reads it,
-so c15t would copy your `dark` class as if `colorScheme` were unset.
+so Inth would copy your `dark` class as if `colorScheme` were unset.
 
 ## Follow your site's theme switch
 
 In React, Next.js, TanStack Start, Vue, Nuxt, Svelte and SvelteKit, leave
-`colorScheme` unset and toggle `dark` on `<html>`. c15t watches the class and switches with
+`colorScheme` unset and toggle `dark` on `<html>`. Inth watches the class and switches with
 it. Include the class in the server HTML when your site renders dark, so the
 first paint matches.
 
-In Astro, set `colorScheme: 'none'` and toggle `c15t-dark` together with your
+In Astro, set `colorScheme: 'none'` and toggle `inth-dark` together with your
 own class. A `ClientRouter` navigation replaces the attributes of `<html>`, so
 set the class again on `astro:after-swap` if your theme script does not.
 
 With the script tag, add `data-color-scheme="none"`. With `init()`, pass
 `ui: { colorScheme: null }`. The UI is then dark while `<html>` has `dark` or
-`c15t-dark`, and follows the class as it changes. The UI renders in a shadow
-root that the page's class cannot reach, so c15t copies the class onto the
+`inth-dark`, and follows the class as it changes. The UI renders in a shadow
+root that the page's class cannot reach, so Inth copies the class onto the
 shadow host.
 
-If your site sets `c15t-dark` itself in React, Next.js, TanStack Start, Vue,
-Nuxt, Svelte or SvelteKit, pass `colorScheme: null` so c15t leaves it alone.
+If your site sets `inth-dark` itself in React, Next.js, TanStack Start, Vue,
+Nuxt, Svelte or SvelteKit, pass `colorScheme: null` so Inth leaves it alone.
 
 ## Set your own dark colors
 
@@ -96,14 +96,14 @@ Where the theme goes depends on the framework:
   `@inth/react/utils`, or `@inth/react/utils` if you installed the scoped
   package. It writes the same CSS as `ConsentTheme`.
 - **Vue, Nuxt.** Pass it as `theme` in the plugin or module options. It goes
-  into the `<style id="c15t-css-vars">` element with `tokens`.
+  into the `<style id="inth-css-vars">` element with `tokens`.
 - **Astro.** Pass it as `theme` in the integration options.
 - **SvelteKit, Svelte.** Pass it to `generateThemeCSS(theme, colorScheme)` from
   `@inth/svelte` on the server.
 - **HTML, JavaScript.** Pass it as `ui.theme`.
 
 This Nuxt example follows the system setting and uses its own dark primary
-color. Every other dark token keeps c15t's default:
+color. Every other dark token keeps Inth's default:
 
 <include src="../shared/examples/nuxt/color-scheme.mdx" />
 
@@ -113,15 +113,15 @@ To set dark values in plain CSS instead, write them for both classes:
 
 ```css
 :root.dark,
-:root.c15t-dark {
-  --c15t-primary: #7fd1a8;
-  --c15t-surface: #1b1f1d;
+:root.inth-dark {
+  --inth-primary: #7fd1a8;
+  --inth-surface: #1b1f1d;
 }
 ```
 
 A generated theme, such as the output of `ConsentTheme` or
 `generateThemeCSS`, writes its dark values on `:root:root.dark` and
-`:root:root.c15t-dark`. Those selectors outrank the rule above. If you use both,
+`:root:root.inth-dark`. Those selectors outrank the rule above. If you use both,
 put dark values in the theme, or repeat `:root` in your own selectors.
 
 ## Paint dark on the first frame
@@ -133,12 +133,12 @@ depends on where the banner first renders:
 | --- | --- |
 | Next.js, TanStack Start | Render `<ConsentTheme theme={theme} colorScheme="system" />` on the server, with the same value as `options.colorScheme`. `'dark'` writes dark tokens as the default and `'system'` adds a `prefers-color-scheme` media query, so the server HTML is dark before hydration. With `colorScheme` unset, put your `dark` class in the server HTML. |
 | React | Render `<ConsentTheme colorScheme="system" />` next to the provider, with the same value as the provider's `colorScheme`. Its CSS makes the tokens dark from the first frame, before the provider sets the class. In a server-rendered React app, render it on the server. |
-| Nuxt | For `'dark'` and `'system'`, the module adds an inline script to `<head>` that sets `c15t-dark` before the server-rendered banner paints. It carries the module's `nonce`. With `colorScheme` unset, put your `dark` class in the server HTML. |
+| Nuxt | For `'dark'` and `'system'`, the module adds an inline script to `<head>` that sets `inth-dark` before the server-rendered banner paints. It carries the module's `nonce`. With `colorScheme` unset, put your `dark` class in the server HTML. |
 | Vue | The plugin applies `colorScheme` and writes the tokens when you install it, before the first render. |
-| Astro | `ConsentScript` in `<head>` sets the class from an inline script before the banner paints, and c15t sets it again after each `ClientRouter` navigation. Keep `ConsentScript` in your layout's `<head>`. |
+| Astro | `ConsentScript` in `<head>` sets the class from an inline script before the banner paints, and Inth sets it again after each `ClientRouter` navigation. Keep `ConsentScript` in your layout's `<head>`. |
 | Svelte | The provider sets the class as it mounts. With `colorScheme` unset, the stylesheet reads your `dark` class directly, so the tokens are dark from the first frame. |
 | SvelteKit | Pass the scheme to `generateThemeCSS(theme, 'system')` in your server load, so the CSS in `<svelte:head>` already has the media query. With `colorScheme` unset, put your `dark` class in the server HTML. |
-| HTML, JavaScript | c15t applies the scheme when it mounts the UI, before any surface renders. |
+| HTML, JavaScript | Inth applies the scheme when it mounts the UI, before any surface renders. |
 
 [Theme tokens](/docs/customization/tokens) lists every color token, and your
 framework's customize page shows where its theme goes.

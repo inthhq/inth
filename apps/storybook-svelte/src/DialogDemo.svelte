@@ -36,16 +36,16 @@
 >
 	<Dialog.Portal>
 		<Dialog.Backdrop
-			style="background:var(--c15t-overlay);border:0;cursor:default;inset:0;position:fixed;"
+			style="background:var(--inth-overlay);border:0;cursor:default;inset:0;position:fixed;"
 		/>
 		<Dialog.Positioner>
 			<Dialog.Content
-				style="background:var(--c15t-surface);border:1px solid var(--c15t-border);border-radius:var(--c15t-radius-lg);box-shadow:var(--c15t-shadow-lg);color:var(--c15t-text);display:grid;gap:1rem;left:50%;max-width:32rem;padding:1.5rem;position:fixed;top:50%;transform:translate(-50%, -50%);width:calc(100vw - 2rem);z-index:1;"
+				style="background:var(--inth-surface);border:1px solid var(--inth-border);border-radius:var(--inth-radius-lg);box-shadow:var(--inth-shadow-lg);color:var(--inth-text);display:grid;gap:1rem;left:50%;max-width:32rem;padding:1.5rem;position:fixed;top:50%;transform:translate(-50%, -50%);width:calc(100vw - 2rem);z-index:1;"
 			>
 				<Dialog.Title style="font-size:1.5rem;margin:0;">
 					{consentManagerDialog.title}
 				</Dialog.Title>
-				<Dialog.Description style="color:var(--c15t-text-muted);margin:0;">
+				<Dialog.Description style="color:var(--inth-text-muted);margin:0;">
 					{consentManagerDialog.description}
 				</Dialog.Description>
 				<div
@@ -53,7 +53,7 @@
 				>
 					<div>
 						<div style="font-weight:600;">{consentTypes.measurement.title}</div>
-						<div style="color:var(--c15t-text-muted);font-size:0.925rem;">
+						<div style="color:var(--inth-text-muted);font-size:0.925rem;">
 							{consentTypes.measurement.description}
 						</div>
 					</div>

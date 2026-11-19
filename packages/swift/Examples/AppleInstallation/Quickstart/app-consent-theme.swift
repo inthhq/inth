@@ -5,7 +5,7 @@ import SwiftUI
 
 enum AppConsentTheme {
     static var value: ConsentTheme {
-        var theme = ConsentTheme.c15t
+        var theme = ConsentTheme.default
         theme.brand = .init(name: "My app", markImageName: "AppPrivacyMark")
         theme.copy = .init(
             headline: "Your privacy choices",
@@ -28,7 +28,7 @@ enum AppConsentTheme {
 private func brandedConsentRoot(configuration: InthAppleConfiguration, privacyPolicyURL: URL) -> some View {
     // #region docs:swift-themed-root title="MyApp.swift"
     ContentView()
-        .c15tConsent(
+        .inth(
             configuration,
             privacyPolicyURL: privacyPolicyURL,
             theme: AppConsentTheme.value

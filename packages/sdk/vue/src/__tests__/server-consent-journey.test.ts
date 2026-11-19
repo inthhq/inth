@@ -11,7 +11,7 @@ const backend = () =>
 		Promise.resolve(
 			Response.json(
 				{ translations: { language: 'en', translations: {} } },
-				{ headers: { 'x-c15t-policy-contract': '1' } }
+				{ headers: { 'x-inth-policy-contract': '1' } }
 			)
 		)
 	);

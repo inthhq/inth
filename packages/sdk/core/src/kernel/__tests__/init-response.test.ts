@@ -160,7 +160,7 @@ describe('init folds the response', () => {
 		const gvlReference = {
 			language: 'en',
 			summary: { items: ['Storage'], vendorCount: 2 },
-			url: '/api/c15t/init?c15t-gvl=1',
+			url: '/api/inth/init?inth-gvl=1',
 			vendorListVersion: 1,
 		};
 		const snapshot = await initWith({
@@ -194,7 +194,7 @@ describe('init folds the response', () => {
 		});
 		expect(snapshot.explicitChoice).toBeNull();
 		expect(warn).toHaveBeenCalledWith(
-			'[c15t] Ignored invalid server records on init.',
+			'[inth] Ignored invalid server records on init.',
 			[expect.objectContaining({ code: 'future-timestamp' })]
 		);
 	});

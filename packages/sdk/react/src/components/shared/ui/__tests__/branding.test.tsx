@@ -10,7 +10,7 @@ import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentDialogFooter } from '~/components/panel/atoms/card';
 
 import { testing } from '../../../../testing';
-import { BrandingCompactLogo, BrandingLink } from '../branding';
+import { BrandingTag } from '../branding';
 
 type ConsentManagerState = ConsentStateFixture;
 
@@ -19,7 +19,7 @@ const createMockState = function createMockState(
 ): ConsentManagerState {
 	return {
 		activeUI: 'dialog',
-		branding: 'c15t',
+		branding: 'inth',
 		consentCategories: [
 			'necessary',
 			'functionality',
@@ -112,21 +112,19 @@ const renderWithConsentState = async function renderWithConsentState(
 	await render(createConsentTree(...args));
 };
 
-describe('BrandingLink', () => {
+const tagLink = (testId = 'consent-banner-branding') =>
+	document.querySelector(
+		`[data-testid="${testId}"]`
+	) as HTMLAnchorElement | null;
+
+describe('BrandingTag', () => {
 	test('maps deprecated consent branding to the INTH tag treatment', async () => {
-		await renderWithConsentState(
-			<BrandingLink
-				hideBranding={false}
-				variant="banner-tag"
-				data-testid="branding-link"
-			/>,
-			{ branding: 'consent' }
-		);
+		await renderWithConsentState(<BrandingTag surface="banner" />, {
+			branding: 'consent',
+		});
 
 		await vi.waitFor(() => {
-			const link = document.querySelector(
-				'[data-testid="branding-link"]'
-			) as HTMLAnchorElement | null;
+			const link = tagLink();
 			expect(link).toBeInTheDocument();
 			expect(link).toHaveAttribute('data-branding', 'inth');
 			expect(link).toHaveAttribute('data-variant', 'banner-tag');
@@ -134,34 +132,56 @@ describe('BrandingLink', () => {
 		});
 	});
 
-	test('renders the branding copy from translations and preserves LTR wordmark', async () => {
+	test('shows the c15t mark and links c15t.com for c15t branding', async () => {
+		await renderWithConsentState(<BrandingTag surface="banner" />, {
+			branding: 'c15t',
+		});
+
+		await vi.waitFor(() => {
+			const link = tagLink();
+			expect(link).toHaveAttribute('data-branding', 'c15t');
+			expect(link?.href).toContain('c15t.com');
+			expect(link).not.toHaveAttribute('target');
+			expect(link?.querySelector('[dir="ltr"]')).toHaveTextContent('c15t');
+		});
+	});
+
+	test('renders nothing when the backend sends branding none', async () => {
 		await renderWithConsentState(
-			<BrandingLink
-				hideBranding={false}
-				variant="banner-tag"
-				data-testid="branding-link"
-			/>,
-			{
-				translationConfig: {
-					defaultLanguage: 'he',
-					translations: {
-						...defaultTranslationConfig.translations,
-						he: {
-							...defaultTranslationConfig.translations.en,
-							common: {
-								...defaultTranslationConfig.translations.en.common,
-								securedBy: 'מאובטח על ידי',
-							},
-						},
-					},
-				},
-			}
+			<>
+				<BrandingTag surface="banner" />
+				<span data-testid="rendered" />
+			</>,
+			{ branding: 'none' }
 		);
 
 		await vi.waitFor(() => {
-			const link = document.querySelector(
-				'[data-testid="branding-link"]'
-			) as HTMLAnchorElement | null;
+			expect(
+				document.querySelector('[data-testid="rendered"]')
+			).toBeInTheDocument();
+		});
+		expect(tagLink()).not.toBeInTheDocument();
+	});
+
+	test('renders the branding copy from translations and preserves LTR wordmark', async () => {
+		await renderWithConsentState(<BrandingTag surface="banner" />, {
+			translationConfig: {
+				defaultLanguage: 'he',
+				translations: {
+					...defaultTranslationConfig.translations,
+					he: {
+						...defaultTranslationConfig.translations.en,
+						common: {
+							...defaultTranslationConfig.translations.en.common,
+							securedBy: 'מאובטח על ידי',
+						},
+					},
+				},
+			},
+		});
+
+		await vi.waitFor(() => {
+			const link = tagLink();
 			expect(link).toBeInTheDocument();
 			expect(link).not.toHaveAttribute('dir');
 			expect(link).toHaveTextContent('מאובטח על ידי');
@@ -175,9 +195,7 @@ describe('BrandingLink', () => {
 		});
 
 		await vi.waitFor(() => {
-			const link = document.querySelector(
-				'[data-testid="consent-dialog-branding"]'
-			);
+			const link = tagLink('consent-dialog-branding');
 			expect(link).toBeInTheDocument();
 			expect(link).toHaveAttribute('data-branding', 'inth');
 			expect(link).toHaveAttribute('data-variant', 'dialog-tag');
@@ -186,12 +204,7 @@ describe('BrandingLink', () => {
 
 	test('applies theme slot styles to branding tags', async () => {
 		await renderWithConsentState(
-			<BrandingLink
-				hideBranding={false}
-				variant="banner-tag"
-				slotContext="banner"
-				data-testid="branding-link"
-			/>,
+			<BrandingTag surface="banner" />,
 			{},
 			{
 				components: {
@@ -205,53 +218,21 @@ describe('BrandingLink', () => {
 		);
 
 		await vi.waitFor(() => {
-			const link = document.querySelector(
-				'[data-testid="branding-link"]'
-			) as HTMLAnchorElement | null;
-			expect(link).toBeInTheDocument();
-			expect(link?.className).toContain('branding-theme-marker');
+			expect(tagLink()?.className).toContain('branding-theme-marker');
 		});
 	});
 
-	test('wraps the INTH full logo in the shared LTR wordmark container', async () => {
-		await renderWithConsentState(
-			<BrandingLink
-				hideBranding={false}
-				variant="banner-tag"
-				data-testid="branding-link"
-			/>,
-			{ branding: 'inth' }
-		);
+	test('shows the INTH mark when the snapshot names no branding', async () => {
+		await renderWithConsentState(<BrandingTag surface="banner" />, {
+			branding: undefined,
+		});
 
 		await vi.waitFor(() => {
-			const link = document.querySelector(
-				'[data-testid="branding-link"]'
-			) as HTMLAnchorElement | null;
+			const link = tagLink();
 			const wordmark = link?.querySelector('[dir="ltr"]');
-			expect(wordmark).toBeInTheDocument();
+			expect(link).toHaveAttribute('data-branding', 'inth');
 			expect(wordmark?.querySelector('svg')).toBeInTheDocument();
-		});
-	});
-
-	test('wraps the c15t full logo mark in the shared wordmark container', async () => {
-		await renderWithConsentState(
-			<BrandingLink
-				hideBranding={false}
-				variant="banner-tag"
-				data-testid="branding-link"
-			/>
-		);
-
-		await vi.waitFor(() => {
-			const link = document.querySelector(
-				'[data-testid="branding-link"]'
-			) as HTMLAnchorElement | null;
-			const wordmark = link?.querySelector('[dir="ltr"]');
-			const mark = wordmark?.querySelector('[class*="brandingC15TMark"]');
-			expect(wordmark).toBeInTheDocument();
-			expect(mark).toBeInTheDocument();
-			expect(mark?.querySelector('svg')).toBeInTheDocument();
-			expect(wordmark).toHaveTextContent('c15t');
+			expect(wordmark?.querySelector('[id]')).toBeNull();
 		});
 	});
 
@@ -261,67 +242,32 @@ describe('BrandingLink', () => {
 		// mismatch and leave the server value in place, so the referral
 		// parameter has to wait for hydration.
 		const markup = renderToString(
-			createConsentTree(
-				<BrandingLink
-					hideBranding={false}
-					variant="banner-tag"
-					data-testid="branding-link"
-				/>
-			)
+			createConsentTree(<BrandingTag surface="banner" />)
 		);
-		expect(markup).toContain('href="https://c15t.com"');
+		expect(markup).toContain('href="https://inth.com"');
 		expect(markup).not.toContain('?ref=');
 
-		await renderWithConsentState(
-			<BrandingLink
-				hideBranding={false}
-				variant="banner-tag"
-				data-testid="branding-link"
-			/>
-		);
+		await renderWithConsentState(<BrandingTag surface="banner" />);
 
 		await vi.waitFor(() => {
-			const link = document.querySelector('[data-testid="branding-link"]');
-			expect(link).toHaveAttribute(
+			expect(tagLink()).toHaveAttribute(
 				'href',
-				`https://c15t.com?ref=${window.location.hostname}`
+				`https://inth.com?ref=${window.location.hostname}`
 			);
 		});
 	});
 
 	test('hides branding when disabled', async () => {
 		await renderWithConsentState(
-			<BrandingLink
+			<BrandingTag
+				surface="banner"
 				hideBranding
-				variant="banner-tag"
-				data-testid="branding-link"
 			/>,
 			{ branding: 'inth' }
 		);
 
 		await vi.waitFor(() => {
-			expect(
-				document.querySelector('[data-testid="branding-link"]')
-			).not.toBeInTheDocument();
-		});
-	});
-});
-
-describe('BrandingCompactLogo', () => {
-	test('renders the INTH compact mark for the deprecated consent alias', async () => {
-		render(
-			<BrandingCompactLogo
-				branding="consent"
-				data-testid="branding-icon"
-			/>
-		);
-
-		await vi.waitFor(() => {
-			const title = document.querySelector(
-				'[data-testid="branding-icon"] title'
-			);
-			expect(title).toBeInTheDocument();
-			expect(title?.textContent).toBe('INTH');
+			expect(tagLink()).not.toBeInTheDocument();
 		});
 	});
 });

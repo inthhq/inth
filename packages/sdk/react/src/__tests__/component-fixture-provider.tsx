@@ -47,7 +47,7 @@ export const ComponentFixtureProvider = ({
 }) => {
 	// Each fixture gets its own records unless the test names a storage
 	// key, and reconciles only when the test configures persistence.
-	const storageKey = `c15t-fixture-${FILE_PREFIX}-${useId().replace(/[^a-z0-9]/giu, '')}`;
+	const storageKey = `inth-fixture-${FILE_PREFIX}-${useId().replace(/[^a-z0-9]/giu, '')}`;
 	const content = (
 		<>
 			<OpenFixtureSurface mode={options.initialUI} />

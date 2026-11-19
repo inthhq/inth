@@ -1,12 +1,4 @@
 import { readStoredRecords } from '@inth/sdk/modules/persistence';
-/**
- * E2E Test Setup for IAB TCF 2.4 Components
- *
- * Provides utilities for browser-based E2E testing of IAB components.
- * Uses MSW (Mock Service Worker) for network-level mocking.
- *
- * @packageDocumentation
- */
 import { vi } from 'vitest';
 
 import { DEFAULT_KEY_STORAGE } from '~/__tests__/component-fixture-provider';
@@ -23,9 +15,6 @@ export type TcfApiTestFunction = (
 	parameter?: unknown
 ) => void;
 
-/**
- * Creates a mock localStorage with full implementation
- */
 export const createMockLocalStorage = function createMockLocalStorage() {
 	let store: Record<string, string> = {};
 	return {
@@ -52,10 +41,8 @@ export const createMockLocalStorage = function createMockLocalStorage() {
  * Note: GVL mocking is handled via config.iab.gvl, not window mocking.
  */
 export const clearConsentState = function clearConsentState() {
-	// Clear localStorage
 	window.localStorage.clear();
 
-	// Clear all cookies
 	const cookies = document.cookie.split(';');
 	for (const cookie of cookies) {
 		const name = cookie.split('=')[0]?.trim();
@@ -65,19 +52,14 @@ export const clearConsentState = function clearConsentState() {
 		}
 	}
 
-	// Reset __tcfapi to fresh state
 	if (typeof window !== 'undefined') {
 		delete (window as { __tcfapi?: unknown }).__tcfapi;
 		delete (window as { __tcfapiQueue?: unknown[] }).__tcfapiQueue;
 	}
 
-	// Clear window-level mock GVL state between tests
-	delete (window as unknown as { __c15t_mock_gvl?: unknown }).__c15t_mock_gvl;
+	delete (window as unknown as { __inth_mock_gvl?: unknown }).__inth_mock_gvl;
 };
 
-/**
- * Waits for __tcfapi to be ready
- */
 export const waitForCMP = function waitForCMP(timeout = 5000): Promise<void> {
 	return vi.waitFor(
 		() => {
@@ -102,9 +84,6 @@ export const waitForCMP = function waitForCMP(timeout = 5000): Promise<void> {
 	);
 };
 
-/**
- * Helper to call __tcfapi as Promise
- */
 export const tcfApiPromise = function tcfApiPromise<T>(
 	command: string,
 	version = 2,
@@ -131,9 +110,6 @@ export const tcfApiPromise = function tcfApiPromise<T>(
 	});
 };
 
-/**
- * Gets ping data from CMP
- */
 export const getCMPPingData = function getCMPPingData(): Promise<{
 	gdprApplies: boolean;
 	cmpLoaded: boolean;
@@ -148,9 +124,6 @@ export const getCMPPingData = function getCMPPingData(): Promise<{
 	return tcfApiPromise('ping', 2);
 };
 
-/**
- * Gets TC data from CMP
- */
 export const getCMPTCData = function getCMPTCData(): Promise<{
 	tcString: string;
 	gdprApplies: boolean;
@@ -207,9 +180,6 @@ export const addCMPEventListener = function addCMPEventListener(): Promise<{
 	});
 };
 
-/**
- * Removes event listener by ID
- */
 export const removeCMPEventListener = function removeCMPEventListener(
 	listenerId: number
 ): Promise<boolean> {
@@ -240,9 +210,6 @@ export const defaultProviderIABOptions: ConsentProviderOptions = {
 	storageConfig: DEFAULT_KEY_STORAGE,
 };
 
-/**
- * Asserts that TC String contains LI objection for a vendor
- */
 export const assertTCStringHasLIObjection =
 	async function assertTCStringHasLIObjection(vendorId: number) {
 		const tcData = await getCMPTCData();
@@ -254,9 +221,6 @@ export const assertTCStringHasLIObjection =
 		}
 	};
 
-/**
- * Asserts that TC String contains consent for a purpose
- */
 export const assertTCStringHasConsent = async function assertTCStringHasConsent(
 	purposeId: number
 ) {
@@ -269,9 +233,6 @@ export const assertTCStringHasConsent = async function assertTCStringHasConsent(
 	}
 };
 
-/**
- * Waits for an element to appear in the DOM
- */
 export const waitForElement = function waitForElement(
 	selector: string,
 	timeout = 2000
@@ -288,9 +249,6 @@ export const waitForElement = function waitForElement(
 	);
 };
 
-/**
- * Waits for an element to be removed from the DOM
- */
 export const waitForElementRemoved = function waitForElementRemoved(
 	selector: string,
 	timeout = 2000
@@ -306,22 +264,13 @@ export const waitForElementRemoved = function waitForElementRemoved(
 	);
 };
 
-/**
- * Gets consent from localStorage
- */
 export const getStoredConsent = function getStoredConsent() {
 	const { records } = readStoredRecords(undefined, Date.now());
 	return records.choice ? records : null;
 };
 
-/**
- * Gets TC string from localStorage
- */
 export const getStoredTCString = function getStoredTCString(): string | null {
 	return window.localStorage.getItem('euconsent-v2');
 };
 
-/**
- * Export the mock GVL for use in tests
- */
 export { mockGVL };

@@ -15,8 +15,8 @@ import { ConsentManager } from './consent-manager';
 export interface IfConsentContext {
 	/** The condition, as `let-condition`. */
 	$implicit: HasCondition<AllConsentNames>;
-	/** The condition, as `*c15tIfConsent="…; as condition"`. */
-	c15tIfConsent: HasCondition<AllConsentNames>;
+	/** The condition, as `*inthIfConsent="…; as condition"`. */
+	inthIfConsent: HasCondition<AllConsentNames>;
 }
 
 /**
@@ -30,37 +30,37 @@ export interface IfConsentContext {
  *
  * @example
  * ```html
- * <iframe *c15tIfConsent="'marketing'; else blocked" src="https://example.com/embed"></iframe>
+ * <iframe *inthIfConsent="'marketing'; else blocked" src="https://example.com/embed"></iframe>
  * <ng-template #blocked>Accept marketing cookies to see this video.</ng-template>
  *
- * <app-chat *c15tIfConsent="{ and: ['functionality', 'experience'] }" />
+ * <app-chat *inthIfConsent="{ and: ['functionality', 'experience'] }" />
  * ```
  */
-@Directive({ selector: '[c15tIfConsent]' })
+@Directive({ selector: '[inthIfConsent]' })
 export class IfConsent {
 	readonly #consent = inject(ConsentManager);
 	readonly #template = inject<TemplateRef<IfConsentContext>>(TemplateRef);
 	readonly #container = inject(ViewContainerRef);
 
 	/** The consent condition. */
-	readonly c15tIfConsent = input.required<HasCondition<AllConsentNames>>();
+	readonly inthIfConsent = input.required<HasCondition<AllConsentNames>>();
 
 	/** Rendered while the condition does not hold. */
-	readonly c15tIfConsentElse = input<TemplateRef<unknown> | null>(null);
+	readonly inthIfConsentElse = input<TemplateRef<unknown> | null>(null);
 
 	#shown: TemplateRef<unknown> | null | undefined;
 	#view: EmbeddedViewRef<IfConsentContext> | undefined;
 
 	constructor() {
 		effect(() => {
-			const condition = this.c15tIfConsent();
+			const condition = this.inthIfConsent();
 			const granted = this.#consent.has(condition);
-			const next = granted ? this.#template : this.c15tIfConsentElse();
+			const next = granted ? this.#template : this.inthIfConsentElse();
 			if (next === this.#shown) {
 				// Same branch, new condition: the content reads the new one.
 				if (this.#view && this.#view.context.$implicit !== condition) {
 					this.#view.context.$implicit = condition;
-					this.#view.context.c15tIfConsent = condition;
+					this.#view.context.inthIfConsent = condition;
 					this.#view.markForCheck();
 				}
 				return;
@@ -71,7 +71,7 @@ export class IfConsent {
 			if (next === this.#template) {
 				this.#view = this.#container.createEmbeddedView(this.#template, {
 					$implicit: condition,
-					c15tIfConsent: condition,
+					inthIfConsent: condition,
 				});
 			} else if (next) {
 				this.#container.createEmbeddedView(next);
@@ -81,10 +81,6 @@ export class IfConsent {
 
 	/**
 	 * Narrows the template context for the type checker.
-	 *
-	 * @param _directive - The directive.
-	 * @param context - The template context.
-	 * @returns `true`.
 	 */
 	static ngTemplateContextGuard(
 		_directive: IfConsent,

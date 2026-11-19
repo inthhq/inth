@@ -148,7 +148,7 @@ class GppFixtureTest {
 
 /**
  * `packages/native-protocol/gpp/policy-rights-cases.json`: how a matched rule's `rights` read. The
- * expected answers are `readPolicyResolutionWire`'s in `@c15t/schema`, and `GPPTests.swift`
+ * expected answers are `readPolicyResolutionWire`'s in `@inth/sdk-schema`, and `GPPTests.swift`
  * runs the same cases through `PolicyWireReader`, so both cores hand `GppResolver` the same
  * rights for the same `/init` body, or both refuse it.
  */
@@ -210,7 +210,7 @@ class GppCoreTest {
 
 	/**
 	 * An opt-out rule served with the location the backend resolved. The served location
-	 * wins over the app's override once `/init` answers, as in `@c15t/core`, so a test of a
+	 * wins over the app's override once `/init` answers, as in `@inth/sdk-core`, so a test of a
 	 * US visitor has to be served a US location: `GPPTests.swift` once served Germany and
 	 * got no section, correctly.
 	 */

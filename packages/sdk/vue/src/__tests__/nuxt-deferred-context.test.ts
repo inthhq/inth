@@ -12,6 +12,8 @@ import {
 	writePolicyResolutionWire,
 } from '@inth/sdk/schema/types';
 import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
+import type { CompleteCommitInput } from '@inth/sdk/surface-actions/early-commit';
+import { completeCommit } from '@inth/sdk/surface-actions/early-commit';
 import { translations } from '@inth/sdk/translations/en';
 import { mount } from '@vue/test-utils';
 import { afterEach, describe, expect, test, vi } from 'vitest';
@@ -23,8 +25,6 @@ import { useEventDispatcher } from '../runtime/composables/event-dispatcher';
 import type { EventDispatcher } from '../runtime/composables/event-dispatcher';
 import { useConsentLanguage } from '../runtime/composables/language';
 import { useScriptLoader } from '../runtime/composables/script-loader';
-import type { CompleteCommitInput } from '../runtime/deferred/commit';
-import { completeCommit } from '../runtime/deferred/commit';
 import { createDeferredContext } from '../runtime/deferred/shell';
 import type { DeferredEngineFactory } from '../runtime/deferred/shell';
 import type {
@@ -39,7 +39,7 @@ import {
 import { createVueConsentKernelContext } from './test-kernel';
 
 const init: InitOutput = {
-	branding: 'c15t',
+	branding: 'inth',
 	location: { countryCode: 'GB', regionCode: null },
 	policyResolution: writePolicyResolutionWire(
 		resolvePolicyRules({
@@ -195,7 +195,7 @@ const createHarness = (
 		// Routes taps only: nothing else wakes the engine in these tests.
 		schedule: (_requestEngine, route) => {
 			const queue = (window as unknown as Record<string, { n?: () => void }>)
-				.__c15tEarlyTaps;
+				.__inthEarlyTaps;
 			if (queue) {
 				queue.n = route;
 			}
@@ -229,8 +229,8 @@ afterEach(() => {
 			document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
 		}
 	}
-	Reflect.deleteProperty(window, '__c15tEarlyTaps');
-	Reflect.deleteProperty(window, '__c15tStarted');
+	Reflect.deleteProperty(window, '__inthEarlyTaps');
+	Reflect.deleteProperty(window, '__inthStarted');
 	document.head.innerHTML = '';
 	document.body.innerHTML = '';
 });
@@ -275,13 +275,13 @@ test('an accept tapped before the engine commits in the tap’s own task', async
 	expect(document.querySelector('script[src="/m.js"]')).not.toBeNull();
 	expect(document.querySelector('script[src="/k.js"]')).not.toBeNull();
 	// The banner stays hidden by the context, not the replayable script.
-	expect(document.getElementById('c15t-early-commit')).not.toBeNull();
+	expect(document.getElementById('inth-early-commit')).not.toBeNull();
 	expect(harness.completeCommit).not.toHaveBeenCalled();
 	expect(harness.loadEngine).not.toHaveBeenCalled();
 
 	await settle();
 	expect(harness.completeCommit).toHaveBeenCalledOnce();
-	expect(localStorage.getItem('c15t')).not.toBeNull();
+	expect(localStorage.getItem('inth')).not.toBeNull();
 	// The engine is asked for once the record is stored.
 	expect(harness.loadEngine).toHaveBeenCalledOnce();
 	expect(harness.backend.saves).toEqual([]);
@@ -339,7 +339,7 @@ test('a save the outbox cannot keep goes to the engine, which records it once', 
 	);
 	// The record is stored, nothing is queued, and nothing is announced:
 	// the engine records the tap.
-	expect(JSON.parse(localStorage.getItem('c15t') ?? 'null')).toMatchObject({
+	expect(JSON.parse(localStorage.getItem('inth') ?? 'null')).toMatchObject({
 		categories: { marketing: { value: true } },
 	});
 	expect(localStorage.getItem(PENDING_SAVES_STORAGE_KEY)).toBeNull();
@@ -380,7 +380,7 @@ test('a tap recorded before the context started is committed when it starts', as
 	await settle();
 	expect(harness.completeCommit).toHaveBeenCalledOnce();
 	expect(
-		(window as unknown as Record<string, { taps?: unknown[] }>).__c15tEarlyTaps
+		(window as unknown as Record<string, { taps?: unknown[] }>).__inthEarlyTaps
 			?.taps ?? []
 	).toEqual([]);
 });
@@ -392,7 +392,7 @@ test('Customize opens the dialog from the stand-in, and its save commits at once
 	context.start();
 	tap('customize');
 	expect(context.activeUI.value).toBe('manager');
-	expect(document.getElementById('c15t-early-commit')).not.toBeNull();
+	expect(document.getElementById('inth-early-commit')).not.toBeNull();
 	expect(harness.loadEngine).not.toHaveBeenCalled();
 
 	// The stock dialog saves through the provided kernel.
@@ -406,7 +406,7 @@ test('Customize opens the dialog from the stand-in, and its save commits at once
 	});
 	expect(context.activeUI.value).toBeNull();
 	await expect(saved).resolves.toMatchObject({ ok: true });
-	expect(localStorage.getItem('c15t')).not.toBeNull();
+	expect(localStorage.getItem('inth')).not.toBeNull();
 });
 
 test('a language set before the engine loads is applied once it attaches', async () => {
@@ -545,8 +545,12 @@ describe('useScriptLoader before the engine', () => {
 		expect(document.querySelector('script[src="/late.js"]')).toBeNull();
 
 		tap('accept');
-		// Same task: the registered plain script starts with the choice.
-		expect(document.querySelector('script[src="/late.js"]')).not.toBeNull();
+		// Same task: the registered plain script starts with the choice,
+		// marked as started early, so a server start leaves it to its owners
+		// instead of taking it over.
+		const late = document.querySelector('script[src="/late.js"]');
+		expect(late).not.toBeNull();
+		expect((late as { __inthEarly?: boolean } | null)?.__inthEarly).toBe(true);
 		await settle();
 		harness.releaseEngine();
 		await vi.waitFor(() => expect(harness.engine()).toBeDefined());
@@ -734,4 +738,28 @@ describe('useScriptLoader before the engine', () => {
 		expect(harness.loadEngine).toHaveBeenCalledOnce();
 		wrapper.unmount();
 	});
+});
+
+test('a command waiting for an engine that fails to load rejects, and the next one loads it again', async () => {
+	const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+	const harness = createHarness();
+	harness.loadEngine.mockRejectedValueOnce(
+		new Error('The engine chunk failed.')
+	);
+	harness.releaseEngine();
+	harness.context.start();
+
+	// A vendor choice only the engine records.
+	const first = harness.context.kernel.commands.save('all', {
+		vendors: {},
+	} as never);
+	await expect(first).rejects.toThrow('The engine chunk failed.');
+	expect(harness.context.snapshot.value.activeUI).toBe('banner');
+
+	const second = harness.context.kernel.commands.save('all', {
+		vendors: {},
+	} as never);
+	await expect(second).resolves.toMatchObject({ ok: true });
+	expect(harness.loadEngine).toHaveBeenCalledTimes(2);
+	logged.mockRestore();
 });

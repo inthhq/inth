@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from '@analogjs/storybook-angular';
+import { ConsentBanner } from '@inth/angular';
+import { ConsentDialog } from '@inth/angular/consent-dialog';
 import {
 	bannerAcceptViaKeyboard,
 	bannerContract,
 	bannerFocusManagement,
 	bannerToDialogFlow,
-} from '@c15t/conformance/play/consent-banner';
-import { ConsentBanner } from '@inth/angular';
-import { ConsentDialog } from '@inth/angular/consent-dialog';
+} from '@inth/conformance/play/consent-banner';
 import type { PromptPosition, PromptVariant } from '@inth/sdk/engine';
 
 import { storybookMode, storybookPolicy } from '../../storybook-consent-policy';
@@ -56,14 +56,14 @@ const meta = {
 		},
 		props: args,
 		template: `
-			<c15t-consent-banner
+			<inth-consent-banner
 				[trapFocus]="trapFocus"
 				[variant]="variant"
 				[position]="position"
 				[blocking]="blocking"
 			/>
 			@if (includeDialog || notice) {
-				<c15t-consent-dialog />
+				<inth-consent-dialog />
 			}
 		`,
 	}),

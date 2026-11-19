@@ -10,7 +10,7 @@
 # "Open in Inth Bare?" and waits for a tap. This machine cannot answer it. `simctl io`
 # offers enumerate, poll, recordVideo, screenshot and screenConfig, and there is no
 # Simulator.app in the Xcode bundle to click in, so there is no finger to give it. Every
-# verb therefore goes in as the `C15T_DEMO_LINK` launch variable, which
+# verb therefore goes in as the `INTH_DEMO_LINK` launch variable, which
 # `ios/InthBare/AppDelegate.swift` puts into the launch options as a URL, so
 # `Linking.getInitialURL()` returns it and the verb table runs unchanged. One link per
 # cold start, which also means every step survives process death on its own.
@@ -118,7 +118,7 @@ python -c 'import PIL' 2>/dev/null ||
 
 curl -fsS -m 10 -o /dev/null "${BACKEND_URL}/init" ||
 	die "the consent backend is not answering at ${BACKEND_URL}. Start it with:
-      DATABASE_URL='postgres://postgres:c15t@localhost:5432/inth' \\
+      DATABASE_URL='postgres://postgres:inth@localhost:5432/inth' \\
         bun run --cwd apps/playground dev:localhost
     Without it the core retries quietly and no prompt ever renders, which looks
     exactly like a banner that never ships."
@@ -273,7 +273,7 @@ deliver() {
 	sleep 1
 
 	if [[ -n "${link}" ]]; then
-		SIMCTL_CHILD_C15T_DEMO_LINK="${link}" sim launch \
+		SIMCTL_CHILD_INTH_DEMO_LINK="${link}" sim launch \
 			--terminate-running-process "${SIM_UDID}" "${BUNDLE_ID}" >/dev/null
 	else
 		sim launch --terminate-running-process "${SIM_UDID}" "${BUNDLE_ID}" >/dev/null

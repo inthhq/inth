@@ -6,12 +6,12 @@ import {
   type ConsentState,
 } from "@inth/tanstack-start/server"
 
-import { ConsentBanner } from "@/components/c15t/consent-banner"
-import { ConsentDialog } from "@/components/c15t/consent-dialog"
-import { ConsentDialogTrigger } from "@/components/c15t/consent-dialog-trigger"
+import { ConsentBanner } from "@/components/inth/consent-banner"
+import { ConsentDialog } from "@/components/inth/consent-dialog"
+import { ConsentDialogTrigger } from "@/components/inth/consent-dialog-trigger"
 
 // Call from the root route's loader. Start's compiler finds server code by
-// this call site, which is why it lives in your project and not in c15t.
+// this call site, which is why it lives in your project and not in Inth.
 export const getConsentState = createServerFn({ method: "GET" }).handler(
   createConsentStateHandler()
 )
@@ -28,7 +28,7 @@ export function ConsentManager({
       {children}
       <ConsentBanner />
       <ConsentDialog />
-      <ConsentDialogTrigger showWhen="after-prompt" />
+      <ConsentDialogTrigger showWhen="after-consent" />
     </ConsentRoot>
   )
 }

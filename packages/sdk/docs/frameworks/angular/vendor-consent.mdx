@@ -1,6 +1,6 @@
 ---
 title: Vendor consent
-description: Let visitors allow a category such as marketing in an Angular app and still turn off one vendor in it, with the vendors option of provideC15t and ConsentManager.
+description: Let visitors allow a category such as marketing in an Angular app and still turn off one vendor in it, with the vendors option of provideInth and ConsentManager.
 group: frameworks
 ---
 
@@ -17,12 +17,12 @@ already carries:
 
 <include src="../../shared/examples/angular/vendors.mdx" />
 
-Then pass them to `provideC15t()` in `src/app/app.config.ts`:
+Then pass them to `provideInth()` in `src/app/app.config.ts`:
 
 {/* example: fragment */}
 
 ```ts title="src/app/app.config.ts (partial)"
-provideC15t({ mode, scripts, vendors });
+provideInth({ mode, scripts, vendors });
 ```
 
 A new array passed to `ConsentManager.updateOptions({ vendors })` replaces the
@@ -32,14 +32,14 @@ declared vendors.
 
 <import src="../../shared/scripts/vendor-consent.mdx#targets" />
 
-`<c15t-consent-gate>` takes a `vendor` input as well as `category`, and waits
-for both: `<c15t-consent-gate category="marketing" vendor="x-pixel">`. For an
+`<inth-consent-gate>` takes a `vendor` input as well as `category`, and waits
+for both: `<inth-consent-gate category="marketing" vendor="x-pixel">`. For an
 iframe you do not render, add `data-vendor` and use the iframe blocker; see
 [embeds](/docs/frameworks/angular/embeds).
 
 ## What the preference dialog shows
 
-`<c15t-consent-dialog>` and `<c15t-consent-widget>` list each declared vendor
+`<inth-consent-dialog>` and `<inth-consent-widget>` list each declared vendor
 under its category, with its own switch.
 
 <import src="../../shared/scripts/vendor-consent.mdx#dialog" />

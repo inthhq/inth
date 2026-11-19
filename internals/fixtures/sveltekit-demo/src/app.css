@@ -1,4 +1,4 @@
-@layer theme, base, components, c15t, utilities;
+@layer theme, base, components, inth, utilities;
 @import 'tailwindcss';
 
 :root {

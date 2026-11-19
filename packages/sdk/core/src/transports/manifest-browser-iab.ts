@@ -5,6 +5,7 @@
  *
  * @internal
  */
+import { primaryLanguage } from '@inth/sdk-schema/types';
 import type { ConsentManifest, InitOutput } from '@inth/sdk-schema/types';
 
 import {
@@ -19,7 +20,6 @@ import { fetchCachedGvl } from './gvl-cache';
  *
  * @param output - The init output, changed in place.
  * @param manifest - The manifest it resolved from.
- * @param fetchImpl - Fetch implementation for the vendor list request.
  * @internal
  */
 export const attachVendorList = async function attachVendorList(
@@ -27,7 +27,7 @@ export const attachVendorList = async function attachVendorList(
 	manifest: ConsentManifest,
 	fetchImpl: typeof globalThis.fetch
 ): Promise<void> {
-	// No c15t headers: a plain GET stays a CORS simple request, so a provider
+	// No Inth headers: a plain GET stays a CORS simple request, so a provider
 	// list on another origin needs no preflight.
 	const providers = loadManifestAdTechProviders(manifest, output, (reference) =>
 		fetchCachedAdTechProviders({ fetch: fetchImpl, reference })
@@ -37,12 +37,12 @@ export const attachVendorList = async function attachVendorList(
 		output.policyResolution?.status === 'matched' &&
 		output.policyResolution.policy.model === 'iab'
 	) {
-		// No c15t headers: a plain GET stays a CORS simple request, so the
+		// No Inth headers: a plain GET stays a CORS simple request, so the
 		// vendor list host needs no preflight.
 		output.gvl = await fetchCachedGvl({
 			fetch: fetchImpl,
-			label: 'c15t manifest transport',
-			language: output.translations.language.split('-')[0] || 'en',
+			label: 'inth manifest transport',
+			language: primaryLanguage(output.translations.language) ?? 'en',
 			url: manifest.iab.gvl.url,
 		});
 	}

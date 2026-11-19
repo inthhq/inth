@@ -73,9 +73,6 @@ const getCompiledManifest = function getCompiledManifest(
 
 /**
  * Compiles a `VendorManifest` + config into a `Script` object.
- *
- * This compatibility wrapper preserves the existing public resolver API while
- * delegating to the new compile and runtime conversion phases internally.
  */
 export const resolveManifest = function resolveManifest(
 	manifest: VendorManifest,

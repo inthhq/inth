@@ -1,6 +1,6 @@
 import { getContext, setContext } from 'svelte';
 
-const PREFERENCE_ITEM_CONTEXT_KEY = Symbol('c15t-svelte-preference-item');
+const PREFERENCE_ITEM_CONTEXT_KEY = Symbol('inth-svelte-preference-item');
 
 export interface PreferenceItemContextValue {
 	readonly contentId: string;

@@ -85,7 +85,7 @@ describe('packed public exports', () => {
 
 	test('no fixture code discovers a kernel through a global', () => {
 		const offenders = files.filter((file) =>
-			/c15tKernel|window\.c15t\b|globalThis\.c15t\b/u.test(
+			/inthKernel|window\.inth\b|globalThis\.inth\b/u.test(
 				readFileSync(file, 'utf8')
 			)
 		);

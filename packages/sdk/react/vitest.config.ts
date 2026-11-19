@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 
-import { baseConfig } from '@c15t/vitest-config/base';
+import { baseConfig } from '@inth/vitest-config/base';
 import react from '@vitejs/plugin-react';
 import { playwright } from '@vitest/browser-playwright';
 import { defineConfig, mergeConfig } from 'vitest/config';
@@ -107,12 +107,28 @@ export default mergeConfig(
 					resolve(__dirname, '../core/src/runtime/deferred-boot.ts'),
 				],
 				[
+					'@inth/sdk/runtime/stand-in-kernel',
+					resolve(__dirname, '../core/src/runtime/stand-in-kernel.ts'),
+				],
+				[
+					'@inth/sdk/runtime/storage-for',
+					resolve(__dirname, '../core/src/libs/storage-for.ts'),
+				],
+				[
 					'@inth/sdk/runtime/deferred-snapshot',
 					resolve(__dirname, '../core/src/runtime/deferred-snapshot.ts'),
 				],
 				[
 					'@inth/sdk/transports/hosted-factory',
 					resolve(__dirname, '../core/src/transports/hosted-factory.ts'),
+				],
+				[
+					'@inth/sdk/runtime/script-server-start',
+					resolve(__dirname, '../core/src/runtime/script-server-start.ts'),
+				],
+				[
+					'@inth/sdk/runtime/page-globals',
+					resolve(__dirname, '../core/src/libs/page-globals.ts'),
 				],
 				[
 					'@inth/sdk/runtime',

@@ -1,7 +1,7 @@
 import {
 	switchIndependentOfTrigger,
 	triggerExpandsContent,
-} from '@c15t/conformance/play/preference-item';
+} from '@inth/conformance/play/preference-item';
 import { PreferenceItem, Switch } from '@inth/react/primitives';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type React from 'react';
@@ -24,8 +24,8 @@ type Story = StoryObj<typeof meta>;
 const { consentTypes } = enTranslations;
 
 const cardStyle: React.CSSProperties = {
-	border: '1px solid var(--c15t-border)',
-	borderRadius: 'var(--c15t-radius-md)',
+	border: '1px solid var(--inth-border)',
+	borderRadius: 'var(--inth-radius-md)',
 	padding: '1rem',
 	width: '32rem',
 };

@@ -17,8 +17,7 @@ import type {
  * a granted category becomes denied. Draft edits do not trigger cleanup.
  * Browser storage failures are ignored so consent changes can still complete.
  *
- * @param options - Kernel, category targets, and persistence configuration.
- * @param tools - Consent evaluation and c15t's storage keys.
+ * @param tools - Consent evaluation and Inth's storage keys.
  * @returns A subscription handle. Disposing does not clear data.
  * @internal
  */
@@ -34,23 +33,12 @@ export const createClearOnRevocationWith = (
 		};
 	}
 	const { kernel, config, storageConfig } = options;
-	const { gateState, storageKey } = tools;
+	const { gateState } = tools;
 	const protectedKeys = new Set([
-		...tools.protectedStorageKeys,
-		// Keep the optional IAB addon's receipts without importing its runtime.
-		'c15t-iab-authority-v1',
-		'euconsent-v2',
+		...tools.ownedStorageKeys(),
+		...tools.ownedStorageKeys(storageConfig),
 	]);
-	for (const key of [storageKey, storageConfig?.storageKey || storageKey]) {
-		for (const resolved of Object.values(
-			tools.resolveStorageKeys({ storageKey: key })
-		)) {
-			if (resolved) {
-				protectedKeys.add(resolved);
-			}
-		}
-		protectedKeys.add(`${key}-privacy`);
-	}
+	const protectedSessionKeys = new Set(tools.ownedSessionStorageKeys);
 	const previous = new Map<OptionalConsentCategory, boolean>();
 	const reconcile = (): void => {
 		const snapshot = kernel.getSnapshot();
@@ -69,7 +57,12 @@ export const createClearOnRevocationWith = (
 			const wasGranted = previous.get(category);
 			previous.set(category, granted);
 			if (!granted && wasGranted !== false) {
-				clearTargets(targets, protectedKeys);
+				clearTargets(
+					targets,
+					protectedKeys,
+					protectedSessionKeys,
+					tools.cookieDomainsOf
+				);
 			}
 		}
 	};

@@ -1,5 +1,5 @@
 /**
- * Resolves a relative backend URL (`/api/c15t`) to an absolute one on the
+ * Resolves a relative backend URL (`/api/inth`) to an absolute one on the
  * server, without letting the visitor choose the host.
  *
  * `x-forwarded-host`, `x-forwarded-proto`, `x-forwarded-ssl` and `forwarded`
@@ -11,6 +11,9 @@
  */
 
 import { parseForwarded } from '@inth/sdk-schema/types';
+
+import { readHeader } from '../libs/headers';
+import { trimSlash } from '../libs/url';
 
 /** Request headers as a Web `Headers` object or a Node header record. */
 export type RequestHeaderSource =
@@ -50,25 +53,6 @@ export interface ResolveRequestOriginOptions {
 const ABSOLUTE_HTTP_URL = /^https?:\/\//iu;
 const UNSAFE_HOST_CHARACTER = /[\s/\\?#@]/u;
 const IPV4_LITERAL = /^\d{1,3}(?:\.\d{1,3}){3}$/u;
-
-const readHeader = function readHeader(
-	headers: RequestHeaderSource | undefined,
-	name: string
-): string | undefined {
-	if (!headers) {
-		return undefined;
-	}
-	if (typeof (headers as Headers).get === 'function') {
-		return (headers as Headers).get(name) ?? undefined;
-	}
-	// Header names are case-insensitive, and a record keeps whatever casing
-	// the runtime or the client used.
-	const lower = name.toLowerCase();
-	const value = Object.entries(
-		headers as Record<string, string | string[] | undefined>
-	).find(([key]) => key.toLowerCase() === lower)?.[1];
-	return Array.isArray(value) ? value[0] : value;
-};
 
 /** First entry of a comma-separated proxy chain, trimmed. */
 const firstListValue = function firstListValue(
@@ -234,10 +218,6 @@ export const resolveRequestOrigin = function resolveRequestOrigin(
 	return toOrigin(defaultProtocolForHost(host), host);
 };
 
-const trimTrailingSlash = function trimTrailingSlash(value: string): string {
-	return value.endsWith('/') ? value.slice(0, -1) : value;
-};
-
 /**
  * Resolves a configured backend or manifest URL for a server-side request.
  *
@@ -253,8 +233,8 @@ const trimTrailingSlash = function trimTrailingSlash(value: string): string {
  * ```ts
  * import { resolveRequestProjectUrl } from '@inth/sdk-core/server';
  *
- * resolveRequestProjectUrl('/api/c15t', { requestUrl: request.url });
- * // 'https://app.example.com/api/c15t'
+ * resolveRequestProjectUrl('/api/inth', { requestUrl: request.url });
+ * // 'https://app.example.com/api/inth'
  * ```
  */
 export const resolveRequestProjectUrl = function resolveRequestProjectUrl(
@@ -263,7 +243,7 @@ export const resolveRequestProjectUrl = function resolveRequestProjectUrl(
 ): string | null {
 	try {
 		if (ABSOLUTE_HTTP_URL.test(projectUrl)) {
-			return trimTrailingSlash(new URL(projectUrl).toString());
+			return trimSlash(new URL(projectUrl).toString());
 		}
 		if (!projectUrl.startsWith('/') || projectUrl.startsWith('//')) {
 			return null;
@@ -276,7 +256,7 @@ export const resolveRequestProjectUrl = function resolveRequestProjectUrl(
 		if (resolved.origin !== origin) {
 			return null;
 		}
-		return trimTrailingSlash(resolved.toString());
+		return trimSlash(resolved.toString());
 	} catch {
 		return null;
 	}

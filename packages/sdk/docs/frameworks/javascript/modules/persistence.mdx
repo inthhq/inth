@@ -1,6 +1,6 @@
 ---
 title: Persistence
-description: How c15t stores consent choices in a JavaScript app, with the storage key, cookie domain and lifetime options, multi-tab sync, reconcile and clear, and createPersistence for your own kernel.
+description: How Inth stores consent choices in a JavaScript app, with the storage key, cookie domain and lifetime options, multi-tab sync, reconcile and clear, and createPersistence for your own kernel.
 group: frameworks
 ---
 
@@ -13,9 +13,9 @@ choice survives reloads and later visits without a backend request.
 
 | Stored item | Name, with the default key |
 | --- | --- |
-| Category choice | `c15t` cookie and localStorage key |
-| Notice acknowledgement | `c15t-notice` |
-| Vendor choice | `c15t-vendors` |
+| Category choice | `inth` cookie and localStorage key |
+| Notice acknowledgement | `inth-notice` |
+| Vendor choice | `inth-vendors` |
 | Saves waiting to reach the backend | a separate localStorage queue |
 
 The cookie is readable by your server, so a server-rendered page can see the
@@ -27,7 +27,7 @@ Every visitor gets a subject ID (`sub_…`) when the module starts. It is in
 `snapshot.subject.subjectId` from the first snapshot after the runtime
 starts.
 
-- Until the visitor acts, the ID lives in memory only. c15t stores no
+- Until the visitor acts, the ID lives in memory only. Inth stores no
   identifier and no consent record before a choice, so a reload before the
   first save starts with a new ID.
 - The first save, whether a choice, a vendor decision or a notice
@@ -44,8 +44,8 @@ starts.
   unloads before the write code loads, they keep the old ID.
 
 c15t 3.2 stored the ID in a `c15t-sid` cookie and localStorage key on the
-first page load, before any choice. c15t now removes that copy when the
-module starts. It keeps the copy's ID only for a visitor whose stored
+first page load, before any choice, or in `<storageKey>-sid` with a custom
+`storageKey`. Inth removes that copy when the module starts. It keeps the copy's ID only for a visitor whose stored
 records carry none, such as a notice acknowledgement an older version
 stored: those records take the ID, and the copy goes once they are
 written.
@@ -66,7 +66,7 @@ when something needs it. Until it has loaded:
   this can add the time it takes to fetch the chunk.
 - If the chunk fails to load, the save keeps waiting rather than count as
   stored. Its request does not leave, and a revocation reload does not run
-  while storage still holds the old choice. c15t tries the chunk again after
+  while storage still holds the old choice. Inth tries the chunk again after
   1, 4 and 16 seconds, and at every later save, focus or tab change.
 - `reconcile()` returns `false` and runs when the chunk lands.
 
@@ -88,9 +88,9 @@ visitor acts, and `pagehide` runs any write still waiting.
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `storageKey` | `'c15t'` | The cookie and localStorage name. Other records use it as a prefix. |
+| `storageKey` | `'inth'` | The cookie and localStorage name. Other records use it as a prefix. |
 | `crossSubdomain` | `false` | Set the cookie on the root domain, so `www.example.com` and `shop.example.com` share it. |
-| `defaultDomain` | current host | An explicit cookie domain, such as `'.example.com'`. Wins over `crossSubdomain`. |
+| `defaultDomain` | current host | An explicit cookie domain, such as `'.example.com'`. Ignored when `crossSubdomain` is set. |
 | `defaultExpiryDays` | `365` | Cookie lifetime in days. The policy's own validity still decides when a choice expires. |
 
 Use the same `storageConfig` on every site that shares the cookie. Pass it to
@@ -100,6 +100,27 @@ Use the same `storageConfig` on every site that shares the cookie. Pass it to
 
 ```ts
 storageConfig: { crossSubdomain: true },
+```
+
+### Choices made with c15t
+
+Under the default key, Inth also reads the records c15t stores under
+`c15t`. A visitor who chose on a c15t page of the same site, or of a
+sibling subdomain that shares the cookie domain, is not asked again.
+
+- Inth writes only under `inth`. When both exist, the `inth` record wins.
+- Reading a c15t record never changes it, so c15t pages on the same site
+  keep working. `clear()` removes the c15t records too, so a cleared
+  choice does not come back from them.
+- A custom `storageKey` reads no c15t records.
+
+To share choices both ways with a c15t site, use c15t's key. Inth then
+reads and writes the same records c15t does:
+
+{/* example: fragment */}
+
+```ts
+storageConfig: { storageKey: 'c15t', crossSubdomain: true },
 ```
 
 ## Keep open tabs in step
@@ -137,7 +158,7 @@ returns:
 | --- | --- |
 | `hydrate()` | Read storage again. Returns whether any record was found. |
 | `reconcile()` | Merge records another tab or runtime stored. Returns whether anything changed. |
-| `clear()` | Delete every c15t record and reset the kernel's records. The subject ID stays in memory. |
+| `clear()` | Delete every Inth record and reset the kernel's records. The subject ID stays in memory. |
 | `dispose()` | Stop writing and remove the tab listeners. Stored records stay. |
 
 `skipHydration: true` skips the first read, for a kernel a server already
@@ -146,8 +167,8 @@ seeded with the visitor's records.
 ## Check it works
 
 1. Load the page and open DevTools, Application. The banner shows, and no
-   c15t cookie or localStorage entry exists yet.
-2. Accept all. A `c15t` cookie and a `c15t` localStorage entry exist.
+   Inth cookie or localStorage entry exists yet.
+2. Accept all. An `inth` cookie and an `inth` localStorage entry exist.
 3. Reload. The banner stays closed.
 4. Open a second tab, reject all there and switch back. The first tab now
    shows the rejection.

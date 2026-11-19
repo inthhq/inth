@@ -13,12 +13,12 @@ import type { ConsentManifest } from '@inth/sdk-schema/types';
 import { build } from 'esbuild';
 import { describe, expect, it } from 'vitest';
 
+import { withBuildDefaults } from '../../../core/src/transports/manifest-browser';
 import { createConsentClient, hosted, manifest } from '../index';
 import { testing } from '../testing';
-import { withBuildDefaults } from '../transports/manifest';
 
 const builtManifest: ConsentManifest = {
-	branding: 'c15t',
+	branding: 'inth',
 	revision: 'built',
 	schemaVersion: 2,
 };
@@ -46,7 +46,7 @@ describe('init() from @inth/sdk', () => {
 				options as unknown as Parameters<typeof createConsentClient>[0]
 			)
 		).toThrow(
-			'@inth/sdk: `projectUrl` is required. Set it to your Inth project URL, or use `mode: testing()` from @inth/sdk/testing in tests.'
+			'@inth/sdk: `projectUrl` is required. Set it to your Inth project URL (data-project-url on a script tag), or use testing() from @inth/sdk/testing in tests.'
 		);
 	});
 
@@ -82,9 +82,9 @@ describe('manifest() from @inth/sdk', () => {
 			withBuildDefaults({ source: 'runtime' }, buildOutput).snapshot
 		).toBeUndefined();
 		expect(
-			withBuildDefaults({ manifestUrl: '/api/c15t/manifest' }, buildOutput)
+			withBuildDefaults({ manifestUrl: '/api/inth/manifest' }, buildOutput)
 		).toEqual({
-			manifestUrl: '/api/c15t/manifest',
+			manifestUrl: '/api/inth/manifest',
 			projectUrl: 'https://built.example',
 		});
 		expect(

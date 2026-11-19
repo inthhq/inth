@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/tanstack-start-browser-bench",
+	"name": "@inth/tanstack-start-browser-bench",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -8,12 +8,12 @@
 		"bench:gate": "BENCH_OUTPUT_DIR=../../.benchmarks/head/consent-gate tsx scripts/run-gate.ts",
 		"bench:nightly": "BENCH_OUTPUT_DIR=../../.benchmarks/nightly/browser-runtime/tanstack-start tsx scripts/run-bench.ts",
 		"build": "vite build",
-		"build:root": "C15T_BENCH_ROOT_PROVIDER=1 vite build --outDir dist-root",
+		"build:root": "INTH_BENCH_ROOT_PROVIDER=1 vite build --outDir dist-root",
 		"dev": "vite dev --port 4314",
 		"start": "node scripts/serve.mjs"
 	},
 	"dependencies": {
-		"@c15t/benchmarking": "workspace:*",
+		"@inth/benchmarking": "workspace:*",
 		"@inth/sdk": "workspace:*",
 		"@inth/tanstack-start": "workspace:*",
 		"@tanstack/react-router": "1.170.44",
