@@ -288,6 +288,8 @@ describe('serverScriptStart', () => {
 		).toEqual(['https://cdn.plain.example/plain.js']);
 	});
 
+	// A control: it passes without the registry too, and guards that a
+	// pending list holds no script the registry does not manage.
 	test('starts a plain script while the registry list is pending', () => {
 		run(
 			serverScriptStart({

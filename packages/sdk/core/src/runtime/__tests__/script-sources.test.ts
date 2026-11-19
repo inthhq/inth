@@ -1592,6 +1592,8 @@ describe('experimentalScriptRegistry files', () => {
 		expect(fetched(insertLogger())).toEqual(pinnedLogger);
 	});
 
+	// A control, as are the next two: they pass without the pin too, and
+	// guard that it stays off unless a list names files.
 	test('patches nothing when init fails', async () => {
 		let fail: (error: Error) => void = () => undefined;
 		begin({
@@ -1809,6 +1811,9 @@ describe('experimentalScriptRegistry refuseIfSet', () => {
 		unset.runtime.dispose();
 	});
 
+	// Controls, as are the next two: they pass without refuseIfSet too, and
+	// guard that an unset option, one on the prototype, or the page's own
+	// source does not refuse a script.
 	test.each([
 		['undefined', undefined],
 		['null', null],

@@ -405,6 +405,8 @@ test('loads nothing for a null entry, and runs the loader’s own failure path',
 	});
 });
 
+// A control: it passes without the pin too, and guards that the pin leaves
+// an unlisted URL alone.
 test('leaves a URL the list does not name alone, such as a loggerURL override', async () => {
 	await open();
 	await page.evaluate(
@@ -438,6 +440,7 @@ test('runs the pinned logger under the recommended CSP', async () => {
 	expect(sent(LOGGER_URL)).toBe(0);
 });
 
+// A control: the CSP does this without the pin, as the docs promise.
 test('refuses a loggerURL override the list does not name, under the recommended CSP', async () => {
 	await open(CSP);
 	await page.evaluate(
@@ -505,6 +508,8 @@ test('starts LogRocket only once the list arrives, with its logger pinned', asyn
 	expect(sent(LOADER_URL) + sent(LOGGER_URL)).toBe(0);
 });
 
+// A control: it passes without the registry too, and failed on the
+// version of this pin that held scripts while init was pending.
 test('runs scripts the registry does not manage in order, without waiting for init', async () => {
 	await open();
 	// Init never answers: the list stays pending.

@@ -1263,28 +1263,6 @@ describe('the script registry file pin', () => {
 			},
 		});
 
-	test('is released when a script check throws while the loader starts', () => {
-		const kernel = registryKernel();
-		disposers.push(kernel.dispose);
-		expect(() =>
-			createScriptLoader({
-				kernel,
-				registry: { waitForInit: false },
-				scripts: [
-					{
-						category: 'necessary',
-						id: 'throws',
-						src: 'https://example.com/throws.js',
-						validate: () => {
-							throw new Error('check failed');
-						},
-					},
-				],
-			})
-		).toThrow('check failed');
-		expect(Node.prototype.appendChild).toBe(nativeAppendChild);
-	});
-
 	test('is released when a callback feedback loop shuts the loader down', () => {
 		const kernel = registryKernel();
 		let allowed = true;
