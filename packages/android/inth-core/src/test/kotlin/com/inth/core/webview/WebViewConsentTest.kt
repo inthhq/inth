@@ -22,7 +22,7 @@ import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * The Kotlin half of "WebView consent" in `packages/native-protocol/CONTRACT.md`. The scripts
- * themselves run in a browser in `@c15t/core` and `@c15t/browser` tests.
+ * themselves run in a browser in `@inth/sdk-core` and `@inth/sdk-browser` tests.
  */
 class WebViewConsentTest {
 	private fun root(path: String) = generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }

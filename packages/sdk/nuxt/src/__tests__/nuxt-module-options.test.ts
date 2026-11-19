@@ -418,7 +418,7 @@ describe('the build snapshot in manifest() mode', () => {
 	});
 
 	describe('NUXT_PUBLIC_C15T_BACKEND_URL', () => {
-		const C15T = 'https://c15t.example.com';
+		const C15T = 'https://inth.example.com';
 		const INTH = 'https://inth.example.com';
 		/** The scopes the server's legacy project URL plugin applies. */
 		const legacyScopes = async (nuxt: Nuxt) => {

@@ -304,7 +304,7 @@
 	},
 	"kind": "tc-string",
 	"notes": [
-		"Population parity: every non-default field here is one @c15t/iab writes, so expects.encode is true and a native encoder has to reproduce tcString byte for byte.",
+		"Population parity: every non-default field here is one @inth/sdk-iab writes, so expects.encode is true and a native encoder has to reproduce tcString byte for byte.",
 		"Diff this against tc-string-parity-policy-version-4: the only difference in the whole string is inside the 6 bits that carry policyVersion, which makes the pair a cheap end-to-end check that a port reads the field from the vendor list.",
 		"vendorListVersion (142) and policyVersion (5) are read out of input.vendorList, not out of the model: with a vendor list attached the reference's getters ignore anything written onto those two fields, which is why input.model omits them."
 	],

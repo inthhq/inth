@@ -27,7 +27,7 @@ export interface ResolvedBundleManifest {
 /**
  * Which kind of build this prebuild feeds.
  *
- * `C15T_MANIFEST_BUILD` wins. Otherwise only `expo run:*` counts as debug, and
+ * `INTH_MANIFEST_BUILD` wins. Otherwise only `expo run:*` counts as debug, and
  * only with no `--release` and with no variant or configuration, or one whose
  * name says debug (`Debug`, `demoDebug`). Any other name, such as `Production`,
  * is release. So is everything that is not `expo run:*`, including a bare
@@ -38,7 +38,7 @@ export const manifestBuild = function manifestBuild(
 	argv: readonly string[],
 	env: Readonly<Record<string, string | undefined>>
 ): ManifestBuild {
-	const declared = env.C15T_MANIFEST_BUILD?.trim().toLowerCase();
+	const declared = env.INTH_MANIFEST_BUILD?.trim().toLowerCase();
 	if (declared === 'release' || declared === 'debug') {
 		return declared;
 	}
@@ -148,7 +148,7 @@ export const fetchBundledManifest = function fetchBundledManifest(
 					new InthPluginError(
 						`c15t mobile-manifest could not fetch the manifest for this ${build} build. ` +
 							'Connect the build to the network, set bundleManifest.allowStaleManifest ' +
-							'to reuse the last fetched copy, or set C15T_MANIFEST_BUILD=debug for a debug build.'
+							'to reuse the last fetched copy, or set INTH_MANIFEST_BUILD=debug for a debug build.'
 					)
 				);
 			}

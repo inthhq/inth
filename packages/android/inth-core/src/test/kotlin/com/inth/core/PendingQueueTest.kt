@@ -189,23 +189,23 @@ class PendingQueueTest {
 		val http = RecordingHttpClient { responseFor(it) }
 		val kernel = testKernel(
 			store = InthStore(InMemoryKeyValueStore()),
-			transport = HostedTransport(http, NativeConfig(backendUrl = "https://test.c15t.app/")),
+			transport = HostedTransport(http, NativeConfig(backendUrl = "https://test.inth.app/")),
 		)
 		kernel.bootstrap()
 		kernel.save(CommitIntent.All)
 
-		val init = http.requests.first { it.url == "https://test.c15t.app/init" }
+		val init = http.requests.first { it.url == "https://test.inth.app/init" }
 		// The version is unprefixed, as on web and Swift; the host platform has its own header.
 		assertEquals(InthProtocol.DEFAULT_SDK_VERSION, init.headers[InthProtocol.VERSION_HEADER])
 		assertEquals("android->${InthProtocol.DEFAULT_SDK_VERSION}", init.headers[InthProtocol.PLATFORM_HEADER])
 		assertEquals("1", init.headers[InthProtocol.POLICY_CONTRACT_HEADER])
 
-		val save = http.requests.first { it.url == "https://test.c15t.app/subjects" }
+		val save = http.requests.first { it.url == "https://test.inth.app/subjects" }
 		assertEquals("1", save.headers[InthProtocol.POLICY_CONTRACT_HEADER])
 		assertEquals("android->${InthProtocol.DEFAULT_SDK_VERSION}", save.headers[InthProtocol.PLATFORM_HEADER])
 		val body = json.parseToJsonElement(requireNotNull(save.body)).jsonObject
 		assertEquals("cookie_banner", body["type"]?.jsonPrimitive?.content)
-		assertEquals("test.c15t.app", body["domain"]?.jsonPrimitive?.content, "domain falls back to the host")
+		assertEquals("test.inth.app", body["domain"]?.jsonPrimitive?.content, "domain falls back to the host")
 		assertEquals("all", body["consentAction"]?.jsonPrimitive?.content)
 		assertEquals("opt-in", body["model"]?.jsonPrimitive?.content)
 		assertEquals("snap-1", body["policySnapshotToken"]?.jsonPrimitive?.content)
@@ -235,7 +235,7 @@ class PendingQueueTest {
 				store = InthStore(InMemoryKeyValueStore()),
 				transport = HostedTransport(
 					http,
-					NativeConfig(backendUrl = "https://test.c15t.app", sdkVersion = "9.9.9", platform = platform),
+					NativeConfig(backendUrl = "https://test.inth.app", sdkVersion = "9.9.9", platform = platform),
 				),
 			)
 			kernel.bootstrap()

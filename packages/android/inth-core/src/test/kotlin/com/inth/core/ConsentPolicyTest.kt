@@ -20,7 +20,7 @@ class ConsentPolicyTest {
 	private val policy = ConsentPolicy.fromJson(buildJsonObject { put("rules", fixture.getValue("rules")) }.toString())
 
 	private fun boot(policy: ConsentPolicy = this.policy, store: InthStore = InthStore(InMemoryKeyValueStore()), overrides: KernelOverrides = KernelOverrides()) =
-		testKernel(NativeConfig("https://test.c15t.app", policy = policy, consentCategories = ConsentCategory.entries, overrides = overrides), store, FixedClock(), InthTransport.NONE)
+		testKernel(NativeConfig("https://test.inth.app", policy = policy, consentCategories = ConsentCategory.entries, overrides = overrides), store, FixedClock(), InthTransport.NONE)
 			.also { it.bootstrap() }
 
 	@Test fun `rules normalize exactly as the backend normalizer does`() {
@@ -74,7 +74,7 @@ class ConsentPolicyTest {
 	@Test fun `an in-code policy with a backend URL skips init and delivers the save`() {
 		val transport = RecordingTransport().respondSave(SaveOutcome.Delivered)
 		val core = testKernel(
-			NativeConfig("https://test.c15t.app", policy = policy, consentCategories = ConsentCategory.entries),
+			NativeConfig("https://test.inth.app", policy = policy, consentCategories = ConsentCategory.entries),
 			InthStore(InMemoryKeyValueStore()), FixedClock(), transport,
 		).also { it.bootstrap() }
 		assertFalse(core.snapshot().policyPending)
@@ -88,7 +88,7 @@ class ConsentPolicyTest {
 	@Test fun `a refused in-code policy is reported, not started as a quiet deny-all`() {
 		val errors = mutableListOf<String>()
 		val core = testKernel(
-			NativeConfig("https://test.c15t.app", policyError = "Policy 'x': a partial category scope needs a scopeMode"),
+			NativeConfig("https://test.inth.app", policyError = "Policy 'x': a partial category scope needs a scopeMode"),
 			InthStore(InMemoryKeyValueStore()), FixedClock(), InthTransport.NONE, logger = { errors += it.code },
 		).also { it.bootstrap() }
 		assertTrue(core.snapshot().policyPending)
@@ -103,7 +103,7 @@ class ConsentPolicyTest {
 		assertTrue(first.save(CommitIntent.All).ok)
 		assertTrue(first.isAllowed(ConsentCategory.MEASUREMENT))
 		val refused = testKernel(
-			NativeConfig("https://test.c15t.app", policyError = "Policy 'x': a partial category scope needs a scopeMode", consentCategories = ConsentCategory.entries),
+			NativeConfig("https://test.inth.app", policyError = "Policy 'x': a partial category scope needs a scopeMode", consentCategories = ConsentCategory.entries),
 			store, FixedClock(), InthTransport.NONE,
 		).also { it.bootstrap() }
 		assertTrue(refused.snapshot().policyPending)
@@ -115,7 +115,7 @@ class ConsentPolicyTest {
 	@Test fun `a refused in-code policy is reported again after reset`() {
 		val errors = mutableListOf<String>()
 		val core = testKernel(
-			NativeConfig("https://test.c15t.app", policyError = "Policy 'x': a partial category scope needs a scopeMode"),
+			NativeConfig("https://test.inth.app", policyError = "Policy 'x': a partial category scope needs a scopeMode"),
 			InthStore(InMemoryKeyValueStore()), FixedClock(), InthTransport.NONE, logger = { errors += it.code },
 		).also { it.bootstrap() }
 		core.reset()

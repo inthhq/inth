@@ -240,7 +240,7 @@ class SubjectIdentityTest {
 		store: InthStore,
 		transport: InthTransport = InthTransport.NONE,
 	): ConsentCore = ConsentCore(
-		config = NativeConfig(backendUrl = "https://test.c15t.app"),
+		config = NativeConfig(backendUrl = "https://test.inth.app"),
 		store = store,
 		clock = FixedClock(),
 		transport = transport,

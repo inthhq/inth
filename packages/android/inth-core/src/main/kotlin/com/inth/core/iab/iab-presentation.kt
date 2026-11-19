@@ -187,7 +187,7 @@ data class IabBannerSummary(
     }
 }
 
-/** `AD_TECH_PROVIDER_PURPOSES` in `@c15t/schema`: Accept All grants these for providers. */
+/** `AD_TECH_PROVIDER_PURPOSES` in `@inth/sdk-schema`: Accept All grants these for providers. */
 internal val adTechProviderPurposeIds = setOf(1, 3, 4)
 
 internal fun GlobalVendorList.activeVendors(): List<GvlVendorEntry> =

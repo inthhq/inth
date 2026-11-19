@@ -21,13 +21,13 @@ import java.io.File
  * and UiAutomation inject above the accessibility input filter and reach the app as plain taps.
  * Run with `am instrument --no-restart`, so the app keeps its state between steps, and the probe
  * connects with [UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES] so TalkBack keeps running
- * while it looks. Without `-e C15T_TALKBACK 1` the test skips.
+ * while it looks. Without `-e INTH_TALKBACK 1` the test skips.
  */
 @RunWith(AndroidJUnit4::class)
 class TalkBackJourneyTest {
     @Test fun recordFocus() {
         val arguments = InstrumentationRegistry.getArguments()
-        Assume.assumeTrue("TalkBack is not on for this run", arguments.getString("C15T_TALKBACK") == "1")
+        Assume.assumeTrue("TalkBack is not on for this run", arguments.getString("INTH_TALKBACK") == "1")
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val flags = UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES
         Configurator.getInstance().uiAutomationFlags = flags

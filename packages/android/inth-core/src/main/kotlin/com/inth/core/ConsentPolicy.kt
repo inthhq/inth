@@ -86,7 +86,7 @@ data class PolicyRule(
  * `NativeConfig.backendUrl`, or are dropped under `dryRun`.
  *
  * Rules are checked with the backend's authoring rules (`inspectPolicyRules` in
- * `@c15t/schema`), plus three in-code limits: no `iab` model, a rule for an unknown
+ * `@inth/sdk-schema`), plus three in-code limits: no `iab` model, a rule for an unknown
  * location, and a validity of at least one millisecond.
  *
  * @throws IllegalArgumentException when the policy breaks any of those rules.
@@ -185,7 +185,7 @@ class ConsentPolicy(val rules: List<PolicyRule>) {
 
 		private fun millis(days: Double?): Long = Math.round((days ?: DEFAULT_VALIDITY_DAYS) * DAY_MS)
 
-		/** The authoring rules `inspectPolicyRules` in `@c15t/schema` checks, plus the in-code limits. */
+		/** The authoring rules `inspectPolicyRules` in `@inth/sdk-schema` checks, plus the in-code limits. */
 		private fun validate(rule: PolicyRule) {
 			val label = "Policy '${rule.id}'"
 			require(rule.id.isNotBlank()) { "ConsentPolicy rule ids must not be blank" }
@@ -240,7 +240,7 @@ class ConsentPolicy(val rules: List<PolicyRule>) {
 			if (match.isDefault) put("isDefault", true)
 		}
 
-		/** The canonical rule `normalizePolicyRule` in `@c15t/schema` produces, as a matched wire. */
+		/** The canonical rule `normalizePolicyRule` in `@inth/sdk-schema` produces, as a matched wire. */
 		internal fun normalize(rule: PolicyRule): JsonObject {
 			val (allowed, equivalent, required) = when (rule.prompt) {
 				PolicyPrompt.CHOICE -> Triple(
@@ -284,7 +284,7 @@ class ConsentPolicy(val rules: List<PolicyRule>) {
 
 		/**
 		 * The inputs `policyFingerprintInput`, `choicePromptFingerprintInput` and
-		 * `noticePromptFingerprintInput` in `@c15t/schema` hash. The choice prompt hashes
+		 * `noticePromptFingerprintInput` in `@inth/sdk-schema` hash. The choice prompt hashes
 		 * only the choice validity and the notice prompt only the notice validity, so a
 		 * change to one never asks again for the other.
 		 */
@@ -352,7 +352,7 @@ class ConsentPolicy(val rules: List<PolicyRule>) {
 
 /**
  * Reads one rule in the backend's JSON shape, refusing every field and value
- * `inspectPolicyRules` in `@c15t/schema` refuses rather than guessing.
+ * `inspectPolicyRules` in `@inth/sdk-schema` refuses rather than guessing.
  */
 private class JsonRuleReader(element: JsonElement, index: Int) {
 	private val value = element as? JsonObject ?: fail("Policy at index $index must be an object")

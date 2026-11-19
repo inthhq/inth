@@ -4,7 +4,7 @@ import XCTest
 @_spi(InthInternal) @testable import InthCore
 
 /// The Swift half of "WebView consent" in `packages/native-protocol/CONTRACT.md`. The scripts
-/// themselves run in a browser in the `@c15t/core` and `@c15t/browser` tests.
+/// themselves run in a browser in the `@inth/sdk-core` and `@inth/sdk-browser` tests.
 final class WebViewConsentTests: XCTestCase {
     static let protocolDirectory = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()

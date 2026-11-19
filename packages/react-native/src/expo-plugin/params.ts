@@ -170,7 +170,7 @@ export interface InthPluginProps {
 	 * Runs `c15t mobile-manifest` from the app's `@c15t/cli` dev dependency. If
 	 * the fetch fails, a release build fails and a debug build warns and
 	 * continues. Only `expo run:*` without a release variant counts as debug;
-	 * set `C15T_MANIFEST_BUILD` to `release` or `debug` to say so explicitly.
+	 * set `INTH_MANIFEST_BUILD` to `release` or `debug` to say so explicitly.
 	 * Replaces `policyResource`.
 	 */
 	bundleManifest?:

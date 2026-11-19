@@ -12,14 +12,14 @@
 		"tailwind",
 		"ui"
 	],
-	"homepage": "https://c15t.com",
+	"homepage": "https://inth.com",
 	"bugs": {
-		"url": "https://github.com/c15t/c15t/issues"
+		"url": "https://github.com/inthhq/inth/issues"
 	},
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/c15t/c15t.git",
+		"url": "git+https://github.com/inthhq/inth.git",
 		"directory": "packages/sdk/ui"
 	},
 	"files": [

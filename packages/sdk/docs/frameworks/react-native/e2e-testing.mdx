@@ -33,13 +33,13 @@ appId: com.example.app
 `appId: ${APP_ID}` because Maestro needs an `appId` in every file, but you do
 not set `APP_ID`: a subflow runs in the app of the flow that calls it.
 
-To accept instead, pass `C15T_CHOICE`:
+To accept instead, pass `INTH_CHOICE`:
 
 ```yaml title=".maestro/home.yaml"
 - runFlow:
     file: ../node_modules/@inth/react-native/maestro/dismiss-if-shown.yaml
     env:
-      C15T_CHOICE: accept-all
+      INTH_CHOICE: accept-all
 ```
 
 Rejecting is the safer default for most suites: optional SDKs stay off, so the
@@ -52,13 +52,13 @@ All flows are in `node_modules/@inth/react-native/maestro/`.
 
 | Flow | What it does | Variables |
 | --- | --- | --- |
-| `dismiss-if-shown.yaml` | Answers the prompt or notice if one appears within the timeout, then continues | `C15T_CHOICE` (`reject-all` or `accept-all`), `C15T_TIMEOUT` (default 10000 ms) |
-| `accept-all.yaml` | Waits for the first-layer prompt and taps Accept all. Fails if it does not appear | `C15T_TIMEOUT` (default 15000 ms) |
-| `reject-all.yaml` | Waits for the first-layer prompt and taps Reject all. Fails if it does not appear | `C15T_TIMEOUT` |
-| `open-preferences.yaml` | Taps Customize on the prompt or Privacy settings on the notice, then waits for preferences | `C15T_TIMEOUT` |
-| `toggle-category.yaml` | Flips one category switch in preferences | `C15T_CATEGORY`, such as `measurement` or `marketing` |
-| `save-preferences.yaml` | Taps Save in category or IAB preferences and waits for them to close | `C15T_TIMEOUT` |
-| `close-preferences.yaml` | Leaves preferences without saving and confirms Discard if asked | `C15T_TIMEOUT` |
+| `dismiss-if-shown.yaml` | Answers the prompt or notice if one appears within the timeout, then continues | `INTH_CHOICE` (`reject-all` or `accept-all`), `INTH_TIMEOUT` (default 10000 ms) |
+| `accept-all.yaml` | Waits for the first-layer prompt and taps Accept all. Fails if it does not appear | `INTH_TIMEOUT` (default 15000 ms) |
+| `reject-all.yaml` | Waits for the first-layer prompt and taps Reject all. Fails if it does not appear | `INTH_TIMEOUT` |
+| `open-preferences.yaml` | Taps Customize on the prompt or Privacy settings on the notice, then waits for preferences | `INTH_TIMEOUT` |
+| `toggle-category.yaml` | Flips one category switch in preferences | `INTH_CATEGORY`, such as `measurement` or `marketing` |
+| `save-preferences.yaml` | Taps Save in category or IAB preferences and waits for them to close | `INTH_TIMEOUT` |
+| `close-preferences.yaml` | Leaves preferences without saving and confirms Discard if asked | `INTH_TIMEOUT` |
 
 Set variables with `env` on `runFlow`. Each flow keeps its default when you
 leave a variable out.
@@ -75,7 +75,7 @@ appId: com.example.app
 - runFlow:
     file: ../node_modules/@inth/react-native/maestro/toggle-category.yaml
     env:
-      C15T_CATEGORY: measurement
+      INTH_CATEGORY: measurement
 - runFlow: ../node_modules/@inth/react-native/maestro/save-preferences.yaml
 ```
 
@@ -98,7 +98,7 @@ preferences, then reuse the flows:
 - runFlow:
     file: ../node_modules/@inth/react-native/maestro/toggle-category.yaml
     env:
-      C15T_CATEGORY: marketing
+      INTH_CATEGORY: marketing
 - runFlow: ../node_modules/@inth/react-native/maestro/save-preferences.yaml
 ```
 

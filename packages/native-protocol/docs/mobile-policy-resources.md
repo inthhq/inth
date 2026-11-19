@@ -18,7 +18,7 @@ Build the shared schema, then run the exporter from the repository root. Choose
 an expiry that your policy owner approves and rebuild before it expires.
 
 ```sh
-bun turbo run build --filter=@c15t/schema
+bun turbo run build --filter=@inth/sdk-schema
 bunx tsx scripts/export-mobile-policy.ts \
   --endpoint https://your-project.inth.app \
   --expires-at 2026-11-05T00:00:00Z \

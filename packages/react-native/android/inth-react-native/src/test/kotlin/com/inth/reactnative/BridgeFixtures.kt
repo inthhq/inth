@@ -50,7 +50,7 @@ internal class MemoryStore(
  */
 internal fun bridgeKernel(
 	store: InthStore,
-	config: NativeConfig = NativeConfig(backendUrl = "https://test.c15t.app"),
+	config: NativeConfig = NativeConfig(backendUrl = "https://test.inth.app"),
 ): ConsentCore = ConsentCore(
 	config = config,
 	store = store,

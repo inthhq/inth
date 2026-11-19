@@ -57,7 +57,7 @@ frame quietly never gets merged.
 JDK 17 and an Android SDK are required. `local.properties` holds `sdk.dir` and is gitignored;
 `ANDROID_HOME` works too. The standalone build pins AGP 9.2.1. A host owns its
 AGP/Kotlin versions; AGP 8 hosts apply their Kotlin Android plugin, while AGP 9
-uses built-in Kotlin unless the host opts out. Set `C15T_MAVEN_URL` and the
+uses built-in Kotlin unless the host opts out. Set `INTH_MAVEN_URL` and the
 repository credentials before running these commands. Its settings route
 `com.inth` exclusively to that repository. Host apps must configure their own
 `exclusiveContent` block, as described in

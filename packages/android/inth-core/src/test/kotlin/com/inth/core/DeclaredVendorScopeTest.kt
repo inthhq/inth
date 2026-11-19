@@ -186,7 +186,7 @@ class DeclaredVendorScopeTest {
 		val coldTransport = RecordingTransport()
 		val coldStore = InthStore(backend)
 		val cold = testKernel(
-			config = NativeConfig(backendUrl = "https://test.c15t.app", vendors = scope),
+			config = NativeConfig(backendUrl = "https://test.inth.app", vendors = scope),
 			store = coldStore,
 			transport = coldTransport,
 		)
@@ -206,7 +206,7 @@ class DeclaredVendorScopeTest {
 		// The repair is stored, not just remembered: the next launch of the same build hydrates a
 		// document that already says what the device discloses.
 		val relaunched = testKernel(
-			config = NativeConfig(backendUrl = "https://test.c15t.app", vendors = scope),
+			config = NativeConfig(backendUrl = "https://test.inth.app", vendors = scope),
 			store = InthStore(backend),
 			transport = RecordingTransport(),
 		)
@@ -246,7 +246,7 @@ class DeclaredVendorScopeTest {
 		)
 
 		val kernel = testKernel(
-			config = NativeConfig(backendUrl = "https://test.c15t.app", vendors = scope),
+			config = NativeConfig(backendUrl = "https://test.inth.app", vendors = scope),
 			store = InthStore(backend),
 			transport = RecordingTransport(),
 		)
@@ -292,7 +292,7 @@ class DeclaredVendorScopeTest {
 		scope: List<Int>?,
 		store: InthStore = InthStore(InMemoryKeyValueStore()),
 	): ConsentCore = testKernel(
-		config = NativeConfig(backendUrl = "https://test.c15t.app", vendors = scope),
+		config = NativeConfig(backendUrl = "https://test.inth.app", vendors = scope),
 		store = store,
 		transport = RecordingTransport().respondInit(
 			initSuccess(body = initBody(policyId = "de-tcf", model = "\"iab\"", gvl = fixture.served.toString())),

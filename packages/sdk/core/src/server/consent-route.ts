@@ -627,7 +627,7 @@ const queryOverrides = function queryOverrides(
  * @example
  * ```ts
  * const handle = createConsentRouteHandler({
- *   adapter: '@c15t/example',
+ *   adapter: '@inth/example',
  *   projectUrl: 'https://consent.example.com',
  * });
  * export const GET = (request: Request) => handle(request, { route: 'init' });

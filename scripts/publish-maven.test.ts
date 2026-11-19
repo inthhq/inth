@@ -150,10 +150,10 @@ beforeAll(() => {
 				`<project xmlns="http://maven.apache.org/POM/4.0.0">
 <modelVersion>4.0.0</modelVersion><groupId>com.inth</groupId>
 <artifactId>${artifact}</artifactId><version>${version}</version><packaging>${extension}</packaging>
-<name>${artifact}</name><description>Consent SDK</description><url>https://c15t.com</url>
+<name>${artifact}</name><description>Consent SDK</description><url>https://inth.com</url>
 <licenses><license><name>Apache 2.0</name><url>https://www.apache.org/licenses/LICENSE-2.0.txt</url></license></licenses>
 <developers><developer><name>inth</name></developer></developers>
-<scm><url>https://github.com/c15t/c15t</url><connection>scm:git:https://github.com/c15t/c15t.git</connection></scm>
+<scm><url>https://github.com/inthhq/inth</url><connection>scm:git:https://github.com/inthhq/inth.git</connection></scm>
 <dependencies><dependency><groupId>com.inth</groupId><artifactId>inth-core</artifactId><version>${version}</version></dependency></dependencies>
 </project>`,
 			],
@@ -261,10 +261,7 @@ test.each(['0', '1'])(
 			const original = readFileSync(pom, 'utf8');
 			writeFileSync(
 				pom,
-				original.replaceAll(
-					'github.com/c15t/c15t',
-					'github.com/inthhq/c15t-private'
-				)
+				original.replaceAll('github.com/inthhq/inth', 'github.com/c15t/c15t')
 			);
 			seal(pom);
 			expect(() => verifyMavenRepository({ repository, version })).toThrow(

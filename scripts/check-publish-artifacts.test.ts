@@ -656,7 +656,7 @@ describe('vendored native sources', () => {
 				.join('\n');
 
 			expect(spec).not.toMatch(/s\.dependency\s+"InthCore"/u);
-			expect(spec).not.toMatch(/C15T_CORE_POD_VERSION/u);
+			expect(spec).not.toMatch(/INTH_CORE_POD_VERSION/u);
 			expect(spec).toMatch(/vendor\/InthCore\/\*\*\/\*\.swift/u);
 			expect(
 				scanPackedVendoredSources(reactNativeDir, new Set(packedPaths))

@@ -7,10 +7,10 @@ import type { ExpoConfig } from 'expo/config';
 const consent: InthPluginProps = {
 	androidMavenRepository: {
 		credentials: {
-			passwordEnvironmentVariable: 'C15T_MAVEN_TOKEN',
-			usernameEnvironmentVariable: 'C15T_MAVEN_USERNAME',
+			passwordEnvironmentVariable: 'INTH_MAVEN_TOKEN',
+			usernameEnvironmentVariable: 'INTH_MAVEN_USERNAME',
 		},
-		url: 'https://maven.pkg.github.com/inthhq/c15t-private',
+		url: 'https://maven.pkg.github.com/inthhq/inth',
 	},
 	consentCategories: ['necessary', 'measurement', 'marketing'],
 	policyResource: './inth-policy.json',

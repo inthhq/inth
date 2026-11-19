@@ -1171,7 +1171,7 @@ const resolveRequest = async function resolveRequest(
  * @example
  * ```ts
  * const state = await resolveRequestConsent({
- *   adapter: '@c15t/example',
+ *   adapter: '@inth/example',
  *   projectUrl: 'https://consent.example.com',
  *   mode: 'manifest',
  *   request: { headers: request.headers, url: request.url },

@@ -144,7 +144,7 @@ if (providers.gradleProperty("inth.appE2e").orNull == "true") {
 // Babel embeds these values. Gradle otherwise reuses a bundle built without
 // the observer when switching between a normal Release build and app E2E.
 tasks.matching { it.name == "createBundleReleaseJsAndAssets" }.configureEach {
-    ["C15T_APP_E2E", "C15T_FAKE_NATIVE", "C15T_BACKEND_URL", "C15T_SAMPLE_INTERVAL_MS", "C15T_E2E_URL", "C15T_E2E_MIXPANEL_URL", "C15T_APP_E2E_SCENARIO"].each { name ->
+    ["INTH_APP_E2E", "INTH_FAKE_NATIVE", "INTH_PROJECT_URL", "INTH_SAMPLE_INTERVAL_MS", "INTH_E2E_URL", "INTH_E2E_MIXPANEL_URL", "INTH_APP_E2E_SCENARIO"].each { name ->
         inputs.property(name, providers.environmentVariable(name).getOrElse(""))
     }
 }

@@ -173,7 +173,7 @@ class InthPayloadTest {
 		val kernel = bridgeKernel(
 			InthStore(MemoryStore()),
 			config = NativeConfig(
-				backendUrl = "https://test.c15t.app",
+				backendUrl = "https://test.inth.app",
 				overrides = KernelOverrides(gpc = true),
 				detectedGpc = false,
 			),
@@ -420,7 +420,7 @@ class InthPayloadTest {
 		val now = headless.getValue("now").jsonPrimitive.content.toLong()
 		val configuration = Json.decodeFromJsonElement(IabConfiguration.serializer(), headless.getValue("configuration"))
 		return com.inth.core.ConsentCore(
-			config = NativeConfig(backendUrl = "https://test.c15t.app", iab = configuration),
+			config = NativeConfig(backendUrl = "https://test.inth.app", iab = configuration),
 			store = InthStore(MemoryStore()),
 			clock = { now },
 			transport = transport,

@@ -26,7 +26,7 @@ yes | "${sdkmanager}" --licenses > /dev/null || true
 log="${RUNNER_TEMP:-/tmp}/sdkmanager.log"
 # The image already carries platform 37 and build-tools 37.0.0; add the pinned
 # NDK and the emulator pieces.
-image="${C15T_ANDROID_IMAGE:-system-images;android-36;google_apis;x86_64}"
+image="${INTH_ANDROID_IMAGE:-system-images;android-36;google_apis;x86_64}"
 image_dir="${sdk}/${image//;//}"
 # Each job downloads the emulator afresh, and a download sometimes arrives
 # corrupt ("Error on ZipFile unknown archive"). sdkmanager can report that as a

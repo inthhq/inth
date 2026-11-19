@@ -10,7 +10,7 @@
 # "Open in Inth Bare?" and waits for a tap. This machine cannot answer it. `simctl io`
 # offers enumerate, poll, recordVideo, screenshot and screenConfig, and there is no
 # Simulator.app in the Xcode bundle to click in, so there is no finger to give it. Every
-# verb therefore goes in as the `C15T_DEMO_LINK` launch variable, which
+# verb therefore goes in as the `INTH_DEMO_LINK` launch variable, which
 # `ios/InthBare/AppDelegate.swift` puts into the launch options as a URL, so
 # `Linking.getInitialURL()` returns it and the verb table runs unchanged. One link per
 # cold start, which also means every step survives process death on its own.
@@ -273,7 +273,7 @@ deliver() {
 	sleep 1
 
 	if [[ -n "${link}" ]]; then
-		SIMCTL_CHILD_C15T_DEMO_LINK="${link}" sim launch \
+		SIMCTL_CHILD_INTH_DEMO_LINK="${link}" sim launch \
 			--terminate-running-process "${SIM_UDID}" "${BUNDLE_ID}" >/dev/null
 	else
 		sim launch --terminate-running-process "${SIM_UDID}" "${BUNDLE_ID}" >/dev/null

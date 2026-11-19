@@ -53,7 +53,7 @@ class ConsentScreenshotTest {
 
     private fun open(mode: String, ui: String, tag: String, then: () -> Unit) {
         val intent = Intent(instrumentation.targetContext, ConsentDemoActivity::class.java)
-            .putExtra("C15T_FIXTURE_SCENARIO", "screenshots-$mode").putExtra("C15T_FIXTURE_RESET", true).putExtra("C15T_FIXTURE_UI", ui)
+            .putExtra("INTH_FIXTURE_SCENARIO", "screenshots-$mode").putExtra("INTH_FIXTURE_RESET", true).putExtra("INTH_FIXTURE_UI", ui)
         ActivityScenario.launch<ConsentDemoActivity>(intent).use { waitFor(tag); then() }
     }
 

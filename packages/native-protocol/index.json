@@ -371,308 +371,308 @@
 			"sha256": "df81e1bc6508cd9b29ebd89bbba696e6ee86298264d47696ccb11006758ebb1b"
 		},
 		{
-			"bytes": 8934,
+			"bytes": 8942,
 			"file": "tc-string-parity-nothing-set.json",
 			"id": "tc-string-parity-nothing-set",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "63529f7a604eafefd5d634cd6ea43c8ae52351cefe444aca0d0be5eb75a909fa"
+			"sha256": "182c5a39e978a3d708d32f05a2a357ba9532ce498584d6864f5913d98f0f7b7c"
 		},
 		{
-			"bytes": 8694,
+			"bytes": 8698,
 			"file": "tc-string-parity-purposes-full.json",
 			"id": "tc-string-parity-purposes-full",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "72fca45074618f8b69f0feb55ceae1deeae71ffba5da9786ca66c6973442a6df"
+			"sha256": "09b3ecff18a3ea1d2bb90296ec32a22257276b144cbfcfe3feac25d516a85d1e"
 		},
 		{
-			"bytes": 8864,
+			"bytes": 8868,
 			"file": "tc-string-parity-li-and-special-features.json",
 			"id": "tc-string-parity-li-and-special-features",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "5982ce26d1eaca0b2c83a55f72b9dac8b492212206899d14b96d8457b80dbc2b"
+			"sha256": "e94ab10c84ed556171af79e9c298c84bcfd5268d28308957576f24dee023b361"
 		},
 		{
-			"bytes": 8601,
+			"bytes": 8605,
 			"file": "tc-string-parity-vendor-consents-empty.json",
 			"id": "tc-string-parity-vendor-consents-empty",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "ecadaa340de6c5720d456bd71fde2ab4ae8d43d954808b06286e3f1ed62f1637"
+			"sha256": "409b9e896c0d9a4637bf56ed5f824d10c4705bbf23231d378db0cb5dc7ef9dcb"
 		},
 		{
-			"bytes": 8623,
+			"bytes": 8627,
 			"file": "tc-string-parity-vendor-consents-single.json",
 			"id": "tc-string-parity-vendor-consents-single",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "975b2cfbddc5effe8d7d71ee79d5a169aec96bf8bd1ae5e6eb82e68ed46392b7"
+			"sha256": "d708866cf96afe2512649e24427d9517b045f443e234ee37335587def1127dba"
 		},
 		{
-			"bytes": 8642,
+			"bytes": 8646,
 			"file": "tc-string-parity-vendor-consents-bitfield.json",
 			"id": "tc-string-parity-vendor-consents-bitfield",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "b3272b5ff86ad8ba8f13e39f086d030cf4786077f2fa22a662745302e22d71b6"
+			"sha256": "da7c26c436a4717826ef4f8565f7aeec91d284082651fc018ef18e57f7997373"
 		},
 		{
-			"bytes": 8671,
+			"bytes": 8675,
 			"file": "tc-string-parity-vendor-consents-range.json",
 			"id": "tc-string-parity-vendor-consents-range",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "64165ab340da7acd304a15e05d1a603a2bba182e35d2664a4529259145a82597"
+			"sha256": "dcfff7ddadc85e90c6a387a3034dc4bf4f3bfb02905089ace40d4b3cb095f61a"
 		},
 		{
-			"bytes": 8594,
+			"bytes": 8598,
 			"file": "tc-string-parity-single-vendor-id-45.json",
 			"id": "tc-string-parity-single-vendor-id-45",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "d151af8a4c5fbef162d3fa2f80012d94327408fe9eec1bfd83efa0142b716206"
+			"sha256": "b9d78ca30497cee17d0788b07defb1e2f6319f52d13fa5b0be723ca809669491"
 		},
 		{
-			"bytes": 8569,
+			"bytes": 8573,
 			"file": "tc-string-parity-single-vendor-id-46.json",
 			"id": "tc-string-parity-single-vendor-id-46",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "611400e72a16dfa128efde039ed19efad78d6ce8b433bebacf203e499d1e8716"
+			"sha256": "97183d6af54cc080dd9c00970ec4c51dd4eed900b4e3d2116e3716f7e79ea28c"
 		},
 		{
-			"bytes": 8657,
+			"bytes": 8661,
 			"file": "tc-string-parity-vendor-consents-sparse-range.json",
 			"id": "tc-string-parity-vendor-consents-sparse-range",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "80058ce338cb1743d138459efe73c32d0e6d46bf937313b0660197db9d1f19c7"
+			"sha256": "b39e5d18f24d26a84c69eacbdfa594537c281eb057782de4740e343142dbf446"
 		},
 		{
-			"bytes": 12743,
+			"bytes": 12747,
 			"file": "tc-string-parity-vendors-disclosed-long-bitfield.json",
 			"id": "tc-string-parity-vendors-disclosed-long-bitfield",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "29d4a5c2bec0f86b708825de2678dd6f5d258808b2f03fbd22a9e54e659453b3"
+			"sha256": "2958613c957f76c319ed4a08b98b2ff7e02bb2b01b2745479d5ae45a6382eb1e"
 		},
 		{
-			"bytes": 9582,
+			"bytes": 9586,
 			"file": "tc-string-parity-pruned-signals.json",
 			"id": "tc-string-parity-pruned-signals",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "bd4d72d26ac0d4b3fe266151f48d80d371be88393aaceb979dfed0f399621667"
+			"sha256": "04c3461066cc61e85cb6625458e195779dc56d8a1b05323ab3e7f8c29f7fa393"
 		},
 		{
-			"bytes": 8588,
+			"bytes": 8592,
 			"file": "tc-string-parity-policy-version-4.json",
 			"id": "tc-string-parity-policy-version-4",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "a140249f4e26d3d30f74c002e327982ad835ae1c25f417503cda4e16fb5860de"
+			"sha256": "bd77334e986fc8ea17add3c97aadd2928d201c19c9bcaadd86fdb647c0e9ef4e"
 		},
 		{
-			"bytes": 8598,
+			"bytes": 8602,
 			"file": "tc-string-parity-policy-version-5.json",
 			"id": "tc-string-parity-policy-version-5",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "866de555af21a093b3403a12e81aeaf21e97d9803388ed9ec1b0820039e8abe3"
+			"sha256": "1ef0603dc66efc29c0399dc5df4030e3dbd38983076f4563ac9956cbd0be18ff"
 		},
 		{
-			"bytes": 8705,
+			"bytes": 8709,
 			"file": "tc-string-parity-vendor-list-version-max.json",
 			"id": "tc-string-parity-vendor-list-version-max",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "7432a237726a77a39110ee7a1576e68928fcf4682606bd34f1bf658f505c01e0"
+			"sha256": "2ac44c41657570734e4d0039189a655f7d4c1106619691ba61d42c508e2aff10"
 		},
 		{
-			"bytes": 8994,
+			"bytes": 8998,
 			"file": "tc-string-parity-service-specific-false.json",
 			"id": "tc-string-parity-service-specific-false",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "172818e0fa4cfe9bf9ce979fec2fa8f2307d45b30212a62312b5a684dadf7b10"
+			"sha256": "2ceafb600a50e45d57c6ecd56426c9dbf6e84dd9ab29c8dcf33d30d2d45d5192"
 		},
 		{
-			"bytes": 8867,
+			"bytes": 8871,
 			"file": "tc-string-parity-consent-language-from-vendor-list.json",
 			"id": "tc-string-parity-consent-language-from-vendor-list",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "c9964bf4b1079402f272be53ced54e03ca3401d463e7658b0ba138eb02c2e397"
+			"sha256": "66c7bbdf56d62d006fb27963c7efbe368e90af4a7b550857d65a8335b8ad2060"
 		},
 		{
-			"bytes": 8808,
+			"bytes": 8816,
 			"file": "tc-string-decode-purpose-one-treatment-service-specific.json",
 			"id": "tc-string-decode-purpose-one-treatment-service-specific",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "fd44a5eb69b7510aa8a8876a48bda784943d9d65abb2203f9026289740ef5815"
+			"sha256": "a28e25ce2a76222a12cfe6f94074da930e5568541dc9e2ffc1b372de2eaa0fe8"
 		},
 		{
-			"bytes": 9119,
+			"bytes": 9123,
 			"file": "tc-string-decode-purpose-one-treatment-global.json",
 			"id": "tc-string-decode-purpose-one-treatment-global",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "83016550f28e7ec3961d8a0c2ff6a1c26e5c6aef66ad067ed790b3f423bc2a2a"
+			"sha256": "3c78d700ec0061c16cf723d320a6070100985b40a1b0a0a6aa65a4f643956b5f"
 		},
 		{
-			"bytes": 9210,
+			"bytes": 9214,
 			"file": "tc-string-decode-non-standard-texts-and-oob.json",
 			"id": "tc-string-decode-non-standard-texts-and-oob",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "0550161589de2bf729607bc51e2d17acbac1ea953a8220c4d31a871f4b0f4e4f"
+			"sha256": "3e0bcf862a575ed50b61dee8a7cbb200588d4779a6fe2eab5a34fcc1411a14cb"
 		},
 		{
-			"bytes": 10950,
+			"bytes": 10954,
 			"file": "tc-string-decode-restrictions-mixed-single-and-range.json",
 			"id": "tc-string-decode-restrictions-mixed-single-and-range",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "284eefd5b0b9551171e3c81379376648c57c450928f6182f5bd364407ca83565"
+			"sha256": "541f6c7e6aaece89c10a7514edd273accae8f8741502127ac9b0e3951b7a73c3"
 		},
 		{
-			"bytes": 9676,
+			"bytes": 9680,
 			"file": "tc-string-decode-restrictions-three-types.json",
 			"id": "tc-string-decode-restrictions-three-types",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "7897a36c3f253c879cdd45c904219b7eb75f05b925de0b40f04075dedb7a87ce"
+			"sha256": "f23edd36b29c818bc1fc0e57d442eff63a52c7607d842ce15a6cf0d9e7b0be97"
 		},
 		{
-			"bytes": 8928,
+			"bytes": 8932,
 			"file": "tc-string-decode-restrictions-empty-tail.json",
 			"id": "tc-string-decode-restrictions-empty-tail",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "173ac4858b88fb82ede38588a9e069d1ac9c3e6b0ff01c16eb57580e9ad915c3"
+			"sha256": "0b1a01534c85a6c3f07f56d128da05772c451dbe6d73cdefdcbc26cca53a870e"
 		},
 		{
-			"bytes": 9240,
+			"bytes": 9244,
 			"file": "tc-string-decode-wide-custom-purposes.json",
 			"id": "tc-string-decode-wide-custom-purposes",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "7c60804f0e00eae0f6076811b49b946c6d3547ca35dc9fa20550af46110b53d9"
+			"sha256": "f3782ad9365385064a99a629d2028ce64ebbe4fae23745bebcac728895933653"
 		},
 		{
-			"bytes": 9350,
+			"bytes": 9354,
 			"file": "tc-string-decode-vendors-allowed-segment.json",
 			"id": "tc-string-decode-vendors-allowed-segment",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "97adabdd4fbe549d125486b70337b55b90ebc38ae70ca86a314b4efa38d18eab"
+			"sha256": "7e05e9b51caefef0a2216463825039f9cd7e0c46a1fd78ec214efe2ba9f47665"
 		},
 		{
-			"bytes": 8869,
+			"bytes": 8873,
 			"file": "tc-string-decode-vendor-li-wide.json",
 			"id": "tc-string-decode-vendor-li-wide",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "75e8d25270cbf6a66e404404ef301b1f0a09b8b4b7bd4013d1b68814c3739bdc"
+			"sha256": "9c5061df43759de6cc2a18dbac422c9f0b99e5422962f0b8c9c5626780bafa99"
 		},
 		{
-			"bytes": 8877,
+			"bytes": 8885,
 			"file": "tc-string-decode-created-before-last-updated.json",
 			"id": "tc-string-decode-created-before-last-updated",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "37c31980d63fdd43897a45fe30b3d67c24553376c30566595dc74b41b3e07f18"
+			"sha256": "af3419066a673928aee1814fba65a0395e7f4e8c9d3ee7aed6cf9a50609bca39"
 		},
 		{
-			"bytes": 9728,
+			"bytes": 9732,
 			"file": "tc-string-parity-deleted-vendor-consent.json",
 			"id": "tc-string-parity-deleted-vendor-consent",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "43d2af328aec11a7f5f354de3e8bf9639573e9c1de157f084d0f066ff67e358e"
+			"sha256": "10ff73035e3a80d7bccff08e5d4320029a606b920b31695dadacdee985195346"
 		},
 		{
-			"bytes": 10899,
+			"bytes": 10903,
 			"file": "tc-string-decode-deleted-vendor-three-vectors.json",
 			"id": "tc-string-decode-deleted-vendor-three-vectors",
 			"kind": "tc-string",
 			"protocolVersion": 1,
-			"sha256": "65ee3b653d2b4a57d0624423e651646a8c7f50e897bffe0305ff6dad4a8350eb"
+			"sha256": "f8bf31e6c98daaa78791a3eb14d67e34c295f63309feaf301ad6d0d1362c8d1f"
 		},
 		{
-			"bytes": 51425,
+			"bytes": 51429,
 			"file": "vendor-list-scope-32-vendors.json",
 			"id": "vendor-list-scope-32-vendors",
 			"kind": "vendor-list-scope",
 			"protocolVersion": 1,
-			"sha256": "c6fa1f4097190d2e0c5cbfde6a4b95da990425b5762106a0bf4336e21164e23b"
+			"sha256": "3e12e9588b8e5d5280c417db26bbe62e0297cee73ace67eade38e9105032207c"
 		},
 		{
-			"bytes": 64501,
+			"bytes": 64505,
 			"file": "vendor-list-scope-empty.json",
 			"id": "vendor-list-scope-empty",
 			"kind": "vendor-list-scope",
 			"protocolVersion": 1,
-			"sha256": "e66a6f8bc8ac1a944f11c85eab65a696b7988aa17d767141ace7823c7cc3d8b6"
+			"sha256": "4e8aee604db65f0537e45544d57f50c4de0d8c0febf6cd184c3baa69e0dd8fa0"
 		},
 		{
-			"bytes": 64511,
+			"bytes": 64515,
 			"file": "vendor-list-scope-absent.json",
 			"id": "vendor-list-scope-absent",
 			"kind": "vendor-list-scope",
 			"protocolVersion": 1,
-			"sha256": "68c98a7de39ad836eae11c286f50977d58e9add9ee56c5378ed293313afcea01"
+			"sha256": "be8fd6a9cf642749e414d21ff34d6ed269c65534e48a5fca67bdcdd629186311"
 		},
 		{
-			"bytes": 32218,
+			"bytes": 32222,
 			"file": "vendor-list-scope-unknown-id.json",
 			"id": "vendor-list-scope-unknown-id",
 			"kind": "vendor-list-scope",
 			"protocolVersion": 1,
-			"sha256": "31aa3fbc5132cb8cfaf1aafa42d36ea95a9cc7a8a14ce59b7f63facd8e85119a"
+			"sha256": "5f266a3e172ea0d550318917de707b491af0d6b0eb67e5737fe66a0ff6ea98b7"
 		},
 		{
-			"bytes": 69382,
+			"bytes": 69386,
 			"file": "vendor-list-scope-wider-than-list.json",
 			"id": "vendor-list-scope-wider-than-list",
 			"kind": "vendor-list-scope",
 			"protocolVersion": 1,
-			"sha256": "fd2bd7cb9a8948b62f2c0c3ed684a3806a266d577f87e7964a5b029ef5ea1e88"
+			"sha256": "3b34cb6bc9972140a53199f12f61f3e18193434c8af4119656e280bc365e6377"
 		},
 		{
-			"bytes": 66476,
+			"bytes": 66480,
 			"file": "vendor-list-scope-above-query-cap.json",
 			"id": "vendor-list-scope-above-query-cap",
 			"kind": "vendor-list-scope",
 			"protocolVersion": 1,
-			"sha256": "6366e4a8f812c9053cac06252b4e13a9fb017b59522f7ee868d1cd26b4922049"
+			"sha256": "6ab6f7350ed20e190050370132f5ed65cd4860854545fd8df51c4cdf25be783f"
 		},
 		{
-			"bytes": 32349,
+			"bytes": 32353,
 			"file": "vendor-list-scope-key-not-body-id.json",
 			"id": "vendor-list-scope-key-not-body-id",
 			"kind": "vendor-list-scope",
 			"protocolVersion": 1,
-			"sha256": "d8ebfe39ab0e3a4964a0eca72501d779eb15f60658ecd34e12932839dd050515"
+			"sha256": "37394373e0bbb18ccf9c278c55cda752552273f7643dd730a74f2ebe2bf2a36f"
 		},
 		{
-			"bytes": 35096,
+			"bytes": 35100,
 			"file": "vendor-list-scope-siblings-preserved.json",
 			"id": "vendor-list-scope-siblings-preserved",
 			"kind": "vendor-list-scope",
 			"protocolVersion": 1,
-			"sha256": "dbff99a1f076eb49601400e47a753441fb16e5245566d622f5a413488ec680b8"
+			"sha256": "304265a3f45b4d749b48c578d637b8dcea83648f26288321b235bfb26c1f9c0b"
 		},
 		{
-			"bytes": 32967,
+			"bytes": 32971,
 			"file": "vendor-list-scope-versions-preserved.json",
 			"id": "vendor-list-scope-versions-preserved",
 			"kind": "vendor-list-scope",
 			"protocolVersion": 1,
-			"sha256": "14c3fccf198efccfbee743484948c468eeae8afbb88b178d293809587bf09f97"
+			"sha256": "b2a23e59fdcaa5ecca09d492d48608c1e500c8b09f510ae01653272e39a172e8"
 		}
 	],
 	"generatedBy": "packages/react-native/scripts/generate-protocol-fixtures.ts",

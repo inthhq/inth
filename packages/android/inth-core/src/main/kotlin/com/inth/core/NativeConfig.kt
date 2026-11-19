@@ -9,7 +9,7 @@ import com.inth.core.transport.InthProtocol
  *
  * Pure data: nothing here runs at construction, and no field changes consent
  * semantics on its own. The backend identifies the project by URL, the same way
- * the hosted transport in `@c15t/core` assumes, so there is no key in this type.
+ * the hosted transport in `@inth/sdk-core` assumes, so there is no key in this type.
  *
  * @property backendUrl The project URL from the Inth dashboard, such as
  * `https://your-project.inth.app`. `InthAndroid.install` checks it with [InthProjectUrl].

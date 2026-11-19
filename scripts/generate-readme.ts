@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 
 const DEFAULT_SUPPORT_SECTIONS = [
 	'Join our [Discord community](https://c15t.link/discord)',
-	'Open an issue on our [GitHub repository](https://github.com/c15t/c15t/issues)',
+	'Open an issue on our [GitHub repository](https://github.com/inthhq/inth/issues)',
 	'Visit [inth.com](https://inth.com) and use the chat widget',
 	'Contact our support team via email [support@inth.com](mailto:support@inth.com)',
 ];
@@ -20,7 +20,7 @@ const DEFAULT_CONTRIBUTING_SECTIONS = [
 
 const DEFAULT_SECURITY_SECTION = `## Security
 
-Do not open a public issue for a security vulnerability. Report it privately through [GitHub's vulnerability reporting](https://github.com/c15t/c15t/security/advisories/new). We examine every valid report.
+Do not open a public issue for a security vulnerability. Report it privately through [GitHub's vulnerability reporting](https://github.com/inthhq/inth/security/advisories/new). We examine every valid report.
 
 - Do not share the vulnerability in public forums, issues, or pull requests
 - Give the steps to reproduce it and the versions it affects
@@ -190,23 +190,18 @@ ${[
 			]),
 	renderThemeAwareBadge({
 		alt: 'Stars',
-		href: 'https://github.com/c15t/c15t',
-		src: 'https://shieldcn.dev/github/c15t/c15t/stars.svg?variant=outline',
+		href: 'https://github.com/inthhq/inth',
+		src: 'https://shieldcn.dev/github/inthhq/inth/stars.svg?variant=outline',
 	}),
 	renderThemeAwareBadge({
 		alt: 'License',
-		href: 'https://github.com/c15t/c15t/blob/main/LICENSE.md',
-		src: 'https://shieldcn.dev/github/c15t/c15t/license.svg?variant=outline',
+		href: 'https://github.com/inthhq/inth/blob/main/LICENSE',
+		src: 'https://shieldcn.dev/github/inthhq/inth/license.svg?variant=outline',
 	}),
 	renderThemeAwareBadge({
 		alt: 'Discord',
 		href: 'https://c15t.link/discord',
 		src: 'https://shieldcn.dev/discord/1312171102268690493.svg?variant=outline',
-	}),
-	renderThemeAwareBadge({
-		alt: 'Skills',
-		href: 'https://skills.sh/c15t/skills/c15t',
-		src: 'https://shieldcn.dev/skills/c15t/skills/c15t.svg?variant=outline',
 	}),
 	renderThemeAwareBadge({
 		alt: 'Made by Inth',
@@ -363,7 +358,7 @@ On the web, every page of the [Inth docs](https://c15t.com/docs) has a Markdown 
 
 	const licenseBlock = `## License
 
-[Apache License 2.0](https://github.com/c15t/c15t/blob/main/LICENSE.md)
+[Apache License 2.0](https://github.com/inthhq/inth/blob/main/LICENSE)
 
 ---
 

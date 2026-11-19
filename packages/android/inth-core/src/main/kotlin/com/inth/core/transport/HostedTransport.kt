@@ -20,7 +20,7 @@ import java.net.URI
  * Talks to an Inth backend's `/init` and `/subjects`.
  *
  * Same endpoints, same headers, and the same request bodies as the hosted
- * transport in `@c15t/core`. It holds no state: it turns a
+ * transport in `@inth/sdk-core`. It holds no state: it turns a
  * [com.inth.core.spi.HttpClient] into the three commands the core delegates, and
  * leaves every decision to [InitMapper] and the kernel.
  *

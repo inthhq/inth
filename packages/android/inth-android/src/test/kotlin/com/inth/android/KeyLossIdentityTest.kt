@@ -120,7 +120,7 @@ class KeyLossIdentityTest {
 	}
 
 	private fun kernel(store: InthStore): ConsentCore = ConsentCore(
-		config = NativeConfig(backendUrl = "https://test.c15t.app"),
+		config = NativeConfig(backendUrl = "https://test.inth.app"),
 		store = store,
 		// Inline execution keeps hydration inside bootstrap(), so one launch reads as
 		// one synchronous block and the assertions cannot race a background thread.

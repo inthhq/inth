@@ -6,7 +6,7 @@ import com.inth.core.model.ConsentCategory
 /**
  * A Google Consent Mode v2 consent type and the Inth category that grants it.
  *
- * The mapping is the web's (`@c15t/integrations`). `GoogleConsentModeTest` checks
+ * The mapping is the web's (`@inth/integrations`). `GoogleConsentModeTest` checks
  * it against `packages/native-protocol/google-consent-mode/consent-mode-v2.json`, which is
  * generated from the web module, so a change on the web fails here until this
  * copy follows.

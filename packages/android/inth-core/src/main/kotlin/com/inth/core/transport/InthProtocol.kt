@@ -1,7 +1,7 @@
 package com.inth.core.transport
 
 /**
- * Header contract shared with `@c15t/core`.
+ * Header contract shared with `@inth/sdk-core`.
  *
  * See `packages/sdk/core/src/libs/version-header.ts`. `x-inth-version` is
  * telemetry only. `x-inth-policy-contract` is the capability declaration: a
@@ -47,7 +47,7 @@ object InthProtocol {
 	 */
 	const val MAX_VENDOR_SCOPE_HEADER_IDS = 500
 
-	/** Must stay equal to `POLICY_CONTRACT_VERSION` in `@c15t/schema`. */
+	/** Must stay equal to `POLICY_CONTRACT_VERSION` in `@inth/sdk-schema`. */
 	const val POLICY_CONTRACT_VERSION = 1
 
 	/**
@@ -65,7 +65,7 @@ object InthProtocol {
 	/** Platform tag for the Android side of `@inth/react-native`. */
 	const val PLATFORM_REACT_NATIVE = "rn"
 
-	/** Default SDK version, kept in step with the `@c15t/core` alpha line. */
+	/** Default SDK version, kept in step with the `@inth/sdk-core` alpha line. */
 	const val DEFAULT_SDK_VERSION = "3.0.0-alpha.1"
 
 	/**
@@ -120,7 +120,7 @@ object InthProtocol {
  * What the producer said about the policy contract it speaks.
  *
  * The three cases are not interchangeable, so they stay three cases:
- * `@c15t/core` reads the same distinction as `number | null | undefined`.
+ * `@inth/sdk-core` reads the same distinction as `number | null | undefined`.
  * A producer that claims a contract this client cannot even parse is worse than
  * one that claims none, and both differ from a producer that predates the header.
  */

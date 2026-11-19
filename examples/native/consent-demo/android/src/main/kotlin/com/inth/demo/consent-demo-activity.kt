@@ -59,16 +59,16 @@ class ConsentDemoActivity : ComponentActivity() {
                         if (model.customUi) { LedgerConsent(core, model.policyUrl, ledger); return@Box }
                         val theme = if (model.fixtureTheme == "brand") PantryBrand.theme else null
                         val providerTheme = when (model.fixtureBranding) {
-                            "c15t" -> (theme ?: ConsentTheme.c15t).copy(branding = ConsentTheme.Branding.C15t)
-                            "inth" -> (theme ?: ConsentTheme.c15t).copy(branding = ConsentTheme.Branding.Inth)
-                            "custom" -> (theme ?: ConsentTheme.c15t).copy(branding = ConsentTheme.Branding.Custom("Pantry", R.drawable.consent_demo_mark))
-                            "hidden" -> (theme ?: ConsentTheme.c15t).copy(showsBranding = false)
+                            "c15t" -> (theme ?: ConsentTheme.default).copy(branding = ConsentTheme.Branding.C15t)
+                            "inth" -> (theme ?: ConsentTheme.default).copy(branding = ConsentTheme.Branding.Inth)
+                            "custom" -> (theme ?: ConsentTheme.default).copy(branding = ConsentTheme.Branding.Custom("Pantry", R.drawable.consent_demo_mark))
+                            "hidden" -> (theme ?: ConsentTheme.default).copy(showsBranding = false)
                             else -> theme
                         }
                         val identityTheme = when (model.fixtureIdentity) {
                             // A mark resource that cannot draw exercises the initial tile.
-                            "generic" -> (providerTheme ?: ConsentTheme.c15t).copy(brand = ConsentTheme.Brand(markResId = 0))
-                            "hidden" -> (providerTheme ?: ConsentTheme.c15t).copy(brand = ConsentTheme.Brand.Hidden)
+                            "generic" -> (providerTheme ?: ConsentTheme.default).copy(brand = ConsentTheme.Brand(markResId = 0))
+                            "hidden" -> (providerTheme ?: ConsentTheme.default).copy(brand = ConsentTheme.Brand.Hidden)
                             else -> providerTheme
                         }
                         InthConsent(model.policyUrl, theme = remember(identityTheme) { demoLayout(identityTheme) }, core = core)
@@ -80,29 +80,29 @@ class ConsentDemoActivity : ComponentActivity() {
 
     /**
      * Debug builds can try each first-layer layout, appearance and Save position in any mode without a rebuild:
-     * `adb shell am start -n <package>/com.inth.demo.ConsentDemoActivity --es C15T_DEMO_FIRST_LAYER sheet --es C15T_DEMO_APPEARANCE system --es C15T_DEMO_SAVE_PLACEMENT top`.
+     * `adb shell am start -n <package>/com.inth.demo.ConsentDemoActivity --es INTH_DEMO_FIRST_LAYER sheet --es INTH_DEMO_APPEARANCE system --es INTH_DEMO_SAVE_PLACEMENT top`.
      */
     private fun demoLayout(theme: ConsentTheme?): ConsentTheme? = demoName(demoOptions(fixtureLayout(theme)))
 
     /** The journeys check the paper page and its footer Save. `stock` runs one on the theme a normal launch gets. */
     private fun fixtureLayout(theme: ConsentTheme?): ConsentTheme? {
-        if (!BuildConfig.DEBUG || intent?.getStringExtra("C15T_FIXTURE_SCENARIO") == null) return theme
-        if (intent?.getStringExtra("C15T_FIXTURE_THEME") == "stock") return theme
-        return (theme ?: ConsentTheme.c15t).copy(appearance = ConsentTheme.Appearance.C15t, savePlacement = ConsentTheme.SavePlacement.Bottom)
+        if (!BuildConfig.DEBUG || intent?.getStringExtra("INTH_FIXTURE_SCENARIO") == null) return theme
+        if (intent?.getStringExtra("INTH_FIXTURE_THEME") == "stock") return theme
+        return (theme ?: ConsentTheme.default).copy(appearance = ConsentTheme.Appearance.Paper, savePlacement = ConsentTheme.SavePlacement.Bottom)
     }
 
     /** Outside the Debug fixtures the demo names itself above the headline, as a real app would. */
     private fun demoName(theme: ConsentTheme?): ConsentTheme? {
-        if (BuildConfig.DEBUG && intent?.getStringExtra("C15T_FIXTURE_SCENARIO") != null) return theme
+        if (BuildConfig.DEBUG && intent?.getStringExtra("INTH_FIXTURE_SCENARIO") != null) return theme
         val base = theme ?: ConsentTheme.resolve(this)
         return if (base.brand.name == null) base.copy(brand = base.brand.copy(name = "Inth Demo")) else base
     }
 
     private fun demoOptions(theme: ConsentTheme?): ConsentTheme? {
         if (!BuildConfig.DEBUG) return theme
-        val layout = intent?.getStringExtra("C15T_DEMO_FIRST_LAYER")?.trim()?.let { value -> ConsentTheme.FirstLayer.entries.firstOrNull { it.name.equals(value, ignoreCase = true) } }
-        val appearance = intent?.getStringExtra("C15T_DEMO_APPEARANCE")?.trim()?.let { value -> ConsentTheme.Appearance.entries.firstOrNull { it.name.equals(value, ignoreCase = true) } }
-        val placement = intent?.getStringExtra("C15T_DEMO_SAVE_PLACEMENT")?.trim()?.let { value -> ConsentTheme.SavePlacement.entries.firstOrNull { it.name.equals(value, ignoreCase = true) } }
+        val layout = intent?.getStringExtra("INTH_DEMO_FIRST_LAYER")?.trim()?.let { value -> ConsentTheme.FirstLayer.entries.firstOrNull { it.name.equals(value, ignoreCase = true) } }
+        val appearance = intent?.getStringExtra("INTH_DEMO_APPEARANCE")?.trim()?.let { value -> ConsentTheme.Appearance.entries.firstOrNull { it.name.equals(value, ignoreCase = true) } }
+        val placement = intent?.getStringExtra("INTH_DEMO_SAVE_PLACEMENT")?.trim()?.let { value -> ConsentTheme.SavePlacement.entries.firstOrNull { it.name.equals(value, ignoreCase = true) } }
         if (layout == null && appearance == null && placement == null) return theme
         val base = theme ?: ConsentTheme.resolve(this)
         return base.copy(firstLayer = layout ?: base.firstLayer, appearance = appearance ?: base.appearance, savePlacement = placement ?: base.savePlacement)
@@ -148,7 +148,7 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
     internal fun start(intent: Intent? = null, backend: String? = null, privacy: String? = null, review: TcfReviewProfile? = null, inspectBeforeConsent: Boolean = false) {
         if (started) return
         val context = getApplication<Application>()
-        val scenario = if (BuildConfig.DEBUG) intent?.getStringExtra("C15T_FIXTURE_SCENARIO") else null
+        val scenario = if (BuildConfig.DEBUG) intent?.getStringExtra("INTH_FIXTURE_SCENARIO") else null
         val profile = try {
             review ?: if (scenario == null && backend == null && privacy == null) TcfReviewProfile.restore(reviewPreferences().all) else null
         } catch (error: IllegalArgumentException) {
@@ -159,10 +159,10 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
         val hostedBackend = profile?.backend ?: backend
         val hostedPrivacy = profile?.privacy ?: privacy
         if (scenario != null) {
-            fixtureTheme = intent?.getStringExtra("C15T_FIXTURE_THEME")
-            fixtureBranding = intent?.getStringExtra("C15T_FIXTURE_BRANDING")
-            fixtureIdentity = intent?.getStringExtra("C15T_FIXTURE_IDENTITY")
-            if (intent?.getStringExtra("C15T_FIXTURE_UI") == "custom") customUi = true
+            fixtureTheme = intent?.getStringExtra("INTH_FIXTURE_THEME")
+            fixtureBranding = intent?.getStringExtra("INTH_FIXTURE_BRANDING")
+            fixtureIdentity = intent?.getStringExtra("INTH_FIXTURE_IDENTITY")
+            if (intent?.getStringExtra("INTH_FIXTURE_UI") == "custom") customUi = true
         }
         if (scenario == null && (hostedBackend.isNullOrBlank() || hostedPrivacy.isNullOrBlank())) return
         if (scenario == null) {
@@ -178,12 +178,12 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
                     if (scenario != null) {
                         fixture = true
                         val prefs = context.getSharedPreferences("prototype-$scenario", 0)
-                        if (intent?.getBooleanExtra("C15T_FIXTURE_RESET", false) == true) prefs.edit().clear().commit()
+                        if (intent?.getBooleanExtra("INTH_FIXTURE_RESET", false) == true) prefs.edit().clear().commit()
                         val store = FaultPreferences(prefs)
                         val mode = if (scenario.contains("iab")) "iab" else if (scenario.contains("notice")) "notice" else "category"
                         val peer = FixtureHttp(context.assets.open("$mode-init.json").bufferedReader().use { it.readText() }, context.filesDir,
-                            scenario == "fresh-offline-none" || intent?.getBooleanExtra("C15T_FIXTURE_OFFLINE", false) == true)
-                        val backend = intent?.getStringExtra("C15T_FIXTURE_BACKEND")
+                            scenario == "fresh-offline-none" || intent?.getBooleanExtra("INTH_FIXTURE_OFFLINE", false) == true)
+                        val backend = intent?.getStringExtra("INTH_FIXTURE_BACKEND")
                         if (backend != null) {
                             val uri = URI(backend)
                             require(uri.host in listOf("localhost", "127.0.0.1"))
@@ -197,7 +197,7 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
                         kernel.bootstrap()
                         fault = store; http = peer
                         policyUrl = "https://example.test/privacy"
-                        store.failNext.set(intent?.getBooleanExtra("C15T_FIXTURE_FAIL_NEXT_WRITE",false) == true)
+                        store.failNext.set(intent?.getBooleanExtra("INTH_FIXTURE_FAIL_NEXT_WRITE",false) == true)
                         val vendors = VendorSdkRequest(
                             intent?.getStringExtra(VendorSdkRequest.CAPTURE_EXTRA),
                             intent?.getBooleanExtra(VendorSdkRequest.FIREBASE_EXTRA, false) == true,
@@ -339,7 +339,7 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
             }
             listOf("category", "notice", "iab").forEach { mode ->
                 Button(onClick = {
-                    model.start(Intent().putExtra("C15T_FIXTURE_SCENARIO", "demo-$mode"))
+                    model.start(Intent().putExtra("INTH_FIXTURE_SCENARIO", "demo-$mode"))
                 }, modifier = Modifier.testTag("demo.mode.$mode")) {
                     Text(if (mode == "iab") "IAB TCF and Additional Consent" else mode.replaceFirstChar { it.uppercase() })
                 }

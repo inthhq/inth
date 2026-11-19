@@ -110,7 +110,7 @@ final class SwiftUIJourneyTests: XCTestCase {
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
-        if let directory = ProcessInfo.processInfo.environment["C15T_SWIFTUI_CAPTURE_DIR"] {
+        if let directory = ProcessInfo.processInfo.environment["INTH_SWIFTUI_CAPTURE_DIR"] {
             try? screenshot.pngRepresentation.write(to: URL(fileURLWithPath: directory).appendingPathComponent(name + ".png"))
         }
     }

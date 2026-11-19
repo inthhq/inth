@@ -1,5 +1,5 @@
 {
-	"description": "A service-specific string that declares purpose one treatment, a field @c15t/iab never writes and a vendor reads as \"the publisher told me the user needs no purpose-one consent\".",
+	"description": "A service-specific string that declares purpose one treatment, a field @inth/sdk-iab never writes and a vendor reads as \"the publisher told me the user needs no purpose-one consent\".",
 	"expected": {
 		"decode": {
 			"fields": {
@@ -304,7 +304,7 @@
 	},
 	"kind": "tc-string",
 	"notes": [
-		"Population decode-coverage: this model reaches past what @c15t/iab writes, so expects.encode is false and only the decode half is graded. An encoder that cannot produce this input is not wrong.",
+		"Population decode-coverage: this model reaches past what @inth/sdk-iab writes, so expects.encode is false and only the decode half is graded. An encoder that cannot produce this input is not wrong.",
 		"purposeOneTreatment is one bit sitting between a 24-bit purpose field and a 12-bit language field, and it changes what a vendor does with purpose one consent. A decoder that never lands on it still decodes everything around it correctly, which is exactly the hole this population exists to close.",
 		"vendorListVersion (142) and policyVersion (5) are read out of input.vendorList, not out of the model: with a vendor list attached the reference's getters ignore anything written onto those two fields, which is why input.model omits them."
 	],

@@ -304,7 +304,7 @@
 	},
 	"kind": "tc-string",
 	"notes": [
-		"Population decode-coverage: this model reaches past what @c15t/iab writes, so expects.encode is false and only the decode half is graded. An encoder that cannot produce this input is not wrong.",
+		"Population decode-coverage: this model reaches past what @inth/sdk-iab writes, so expects.encode is false and only the decode half is graded. An encoder that cannot produce this input is not wrong.",
 		"The two vendor vectors are adjacent and independent, and each picks its own encoding, so this string can carry a range followed by a bitfield or the other way round. A decoder that reads the encoding type once per string rather than once per vector survives one of them and corrupts the other.",
 		"vendorListVersion (142) and policyVersion (5) are read out of input.vendorList, not out of the model: with a vendor list attached the reference's getters ignore anything written onto those two fields, which is why input.model omits them."
 	],

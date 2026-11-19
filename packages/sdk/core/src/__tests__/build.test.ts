@@ -520,22 +520,22 @@ describe('@inth/sdk/generated in Vite', () => {
 
 		test('VITE_C15T_BACKEND_URL alone gives the backend URL and sets VITE_INTH_PROJECT_URL', async () => {
 			const env: Record<string, unknown> = {
-				VITE_C15T_BACKEND_URL: 'https://c15t.example.com',
+				VITE_C15T_BACKEND_URL: 'https://inth.example.com',
 			};
 			const { fetch, source } = await resolveProjectUrl(env);
 			expect(source).toContain(
-				'export const projectUrl = "https://c15t.example.com";'
+				'export const projectUrl = "https://inth.example.com";'
 			);
-			expect(env.VITE_INTH_PROJECT_URL).toBe('https://c15t.example.com');
+			expect(env.VITE_INTH_PROJECT_URL).toBe('https://inth.example.com');
 			expect(fetch).toHaveBeenCalledWith(
-				'https://c15t.example.com/manifest',
+				'https://inth.example.com/manifest',
 				expect.any(Object)
 			);
 		});
 
 		test('wins over VITE_C15T_BACKEND_URL when both are set', async () => {
 			const { source } = await resolveProjectUrl({
-				VITE_C15T_BACKEND_URL: 'https://c15t.example.com',
+				VITE_C15T_BACKEND_URL: 'https://inth.example.com',
 				VITE_INTH_PROJECT_URL: 'https://inth.example.com',
 			});
 			expect(source).toContain(
@@ -545,7 +545,7 @@ describe('@inth/sdk/generated in Vite', () => {
 
 		test('an explicit projectUrl beats both variables', async () => {
 			const env: Record<string, unknown> = {
-				VITE_C15T_BACKEND_URL: 'https://c15t.example.com',
+				VITE_C15T_BACKEND_URL: 'https://inth.example.com',
 				VITE_INTH_PROJECT_URL: 'https://inth.example.com',
 			};
 			const { source } = await resolveProjectUrl(env, {
@@ -1460,10 +1460,10 @@ describe('build snapshot validation', () => {
 
 describe('readBuildEnv', () => {
 	test('reads the c15t name when the Inth name is unset', () => {
-		vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', 'https://c15t.example.com');
+		vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', 'https://inth.example.com');
 		expect(readBuildEnvEntry(['NEXT_PUBLIC_INTH_PROJECT_URL'])).toEqual({
 			name: 'NEXT_PUBLIC_C15T_BACKEND_URL',
-			value: 'https://c15t.example.com',
+			value: 'https://inth.example.com',
 		});
 	});
 
@@ -1473,14 +1473,14 @@ describe('readBuildEnv', () => {
 			join(root, '.env'),
 			'NEXT_PUBLIC_INTH_PROJECT_URL=https://inth.example.com\n'
 		);
-		vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', 'https://c15t.example.com');
+		vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', 'https://inth.example.com');
 		expect(readBuildEnv(['NEXT_PUBLIC_INTH_PROJECT_URL'], { root })).toBe(
 			'https://inth.example.com'
 		);
 	});
 
 	test('reads every Inth name before any c15t name', () => {
-		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://c15t.example.com');
+		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://inth.example.com');
 		vi.stubEnv('VITE_INTH_PROJECT_URL', 'https://inth.example.com');
 		expect(
 			readBuildEnv(['PUBLIC_INTH_PROJECT_URL', 'VITE_INTH_PROJECT_URL'])
@@ -1491,10 +1491,10 @@ describe('readBuildEnv', () => {
 		const root = await createRoot();
 		await writeFile(
 			join(root, '.env'),
-			'NEXT_PUBLIC_INTH_PROJECT_URL=\nNEXT_PUBLIC_C15T_BACKEND_URL=https://c15t.example.com\n'
+			'NEXT_PUBLIC_INTH_PROJECT_URL=\nNEXT_PUBLIC_C15T_BACKEND_URL=https://inth.example.com\n'
 		);
 		expect(readBuildEnv(['NEXT_PUBLIC_INTH_PROJECT_URL'], { root })).toBe(
-			'https://c15t.example.com'
+			'https://inth.example.com'
 		);
 	});
 });

@@ -304,7 +304,7 @@
 	},
 	"kind": "tc-string",
 	"notes": [
-		"Population parity: every non-default field here is one @c15t/iab writes, so expects.encode is true and a native encoder has to reproduce tcString byte for byte.",
+		"Population parity: every non-default field here is one @inth/sdk-iab writes, so expects.encode is true and a native encoder has to reproduce tcString byte for byte.",
 		"specialFeatureOptins is a 12-bit field and sits before purposeConsents in the core segment, so an off-by-one against the 24-bit purpose field shows up here and nowhere else.",
 		"purposeLegitimateInterests loses 1, 3-6: the reference's pre-encoder refuses legitimate interest for purposes 1, 3, 4, 5 and 6, so a decoder never sees them. A port that encodes them anyway writes a string the reference will read back differently.",
 		"vendorListVersion (142) and policyVersion (5) are read out of input.vendorList, not out of the model: with a vendor list attached the reference's getters ignore anything written onto those two fields, which is why input.model omits them."

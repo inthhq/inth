@@ -18,7 +18,7 @@
  * bun run --cwd packages/react-native scripts/generate-branding-mark.ts
  * ```
  *
- * Point it at a specific browser with `C15T_CHROME_PATH` when the Playwright
+ * Point it at a specific browser with `INTH_CHROME_PATH` when the Playwright
  * cache is somewhere unusual.
  */
 
@@ -234,12 +234,12 @@ const executableIn = function executableIn(
  * green build ship a badge with no glyph in it.
  */
 const findChromium = function findChromium(): string {
-	const override = process.env.C15T_CHROME_PATH;
+	const override = process.env.INTH_CHROME_PATH;
 
 	if (override !== undefined && override !== '') {
 		if (!isFile(override)) {
 			throw new Error(
-				`generate-branding-mark: C15T_CHROME_PATH points at ${override}, which is not a readable file.`
+				`generate-branding-mark: INTH_CHROME_PATH points at ${override}, which is not a readable file.`
 			);
 		}
 
@@ -275,7 +275,7 @@ const findChromium = function findChromium(): string {
 	}
 
 	throw new Error(
-		'generate-branding-mark: no Chromium found. Run `bunx playwright install chromium`, or set C15T_CHROME_PATH to a browser binary. Refusing to write the module with a blank mark.'
+		'generate-branding-mark: no Chromium found. Run `bunx playwright install chromium`, or set INTH_CHROME_PATH to a browser binary. Refusing to write the module with a blank mark.'
 	);
 };
 

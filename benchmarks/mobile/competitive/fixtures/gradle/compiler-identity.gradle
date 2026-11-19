@@ -15,7 +15,7 @@ gradle.projectsEvaluated {
     [name: configuration.name, components: configuration.incoming.resolutionResult.allComponents.collect { it.moduleVersion?.toString() }.findAll { it != null }.sort()]
    }
    def result = [kotlinPluginSources: sources, compilerConfigurations: compilerConfigurations]
-   new File(System.getenv('C15T_COMPILER_IDENTITY_OUT')).text = JsonOutput.prettyPrint(JsonOutput.toJson(result))
+   new File(System.getenv('INTH_COMPILER_IDENTITY_OUT')).text = JsonOutput.prettyPrint(JsonOutput.toJson(result))
   }
  }
 }

@@ -19,7 +19,7 @@ import org.junit.runner.RunWith
  * What only a real WebView can show: the document-start script reaches a listed origin's
  * main frame before the page's own script, and an unlisted origin gets nothing.
  *
- * The JVM tests in `:inth-core` cover the payload; `@c15t/core` and `@c15t/browser` run
+ * The JVM tests in `:inth-core` cover the payload; `@inth/sdk-core` and `@inth/sdk-browser` run
  * the same script in a browser against web Inth.
  */
 @RunWith(AndroidJUnit4::class)

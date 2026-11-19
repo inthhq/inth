@@ -314,7 +314,7 @@ final class PresenterTests: XCTestCase {
         XCTFail("Native commit did not settle")
     }
 
-    /// Category mode speaks the policy's language, from `@c15t/translations`, not English literals.
+    /// Category mode speaks the policy's language, from `@inth/sdk-translations`, not English literals.
     @MainActor func testCategoryCopyFollowsThePolicyLanguage() async throws {
         let core = try await boot(InMemoryStore(), language: "de")
         let presenter = ConsentPresenter(core: core)

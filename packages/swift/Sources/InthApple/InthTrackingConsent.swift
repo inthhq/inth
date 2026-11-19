@@ -11,8 +11,8 @@ import Foundation
 /// It does not decide whether a vendor may read the advertising identifier: purpose 1, that
 /// vendor's consent and the ATT answer do.
 ///
-/// The purpose half is the web derivation, not a second one: `C15T_TO_IAB_PURPOSE_MAP.marketing`
-/// and `iabPurposesToC15tConsents` in `packages/sdk/iab/src/tcf/purpose-mapping.ts`, with the purposes
+/// The purpose half is the web derivation, not a second one: `INTH_TO_IAB_PURPOSE_MAP.marketing`
+/// and `iabPurposesToInthConsents` in `packages/sdk/iab/src/tcf/purpose-mapping.ts`, with the purposes
 /// some vendor processes on consent deciding, as `consentBasisPurposes` in
 /// `packages/sdk/iab/src/index.ts` passes them: registered vendors, custom (non-IAB) vendors and listed
 /// ad tech providers (``IABPurposeCategories``). `packages/native-protocol/att/iab-marketing.json` runs the
@@ -67,7 +67,7 @@ public enum InthTrackingConsent {
     }
 
     /// The purpose half: whether the TC String grants `marketing` the way
-    /// `iabPurposesToC15tConsents` does.
+    /// `iabPurposesToInthConsents` does.
     public static func iabMarketingPurposesConsented(_ input: IABInput) -> Bool {
         input.decidingPurposes.isSubset(of: input.purposeConsents)
     }

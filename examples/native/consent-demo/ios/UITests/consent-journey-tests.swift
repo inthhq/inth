@@ -6,12 +6,12 @@ final class ConsentJourneyTests: XCTestCase {
     override func tearDown() { if testRun?.hasSucceeded == false { print(app.debugDescription) } }
     func launch(_ scenario: String = "fresh-online", fail: Bool = false, reset: Bool = true, offline: Bool = false, backend: String? = nil, appearance: String? = nil, theme: String? = nil, branding: String? = nil, identity: String? = nil, arguments: [String] = []) {
         app = XCUIApplication()
-        app.launchEnvironment = ["C15T_FIXTURE_SCENARIO": scenario, "C15T_FIXTURE_RESET": reset ? "1" : "0", "C15T_FIXTURE_FAIL_NEXT_WRITE": fail ? "1" : "0", "C15T_FIXTURE_OFFLINE": offline ? "1" : "0"]
-        if let backend { app.launchEnvironment["C15T_FIXTURE_BACKEND"] = backend }
-        if let appearance { app.launchEnvironment["C15T_FIXTURE_APPEARANCE"] = appearance }
-        if let theme { app.launchEnvironment["C15T_FIXTURE_THEME"] = theme }
-        if let branding { app.launchEnvironment["C15T_FIXTURE_BRANDING"] = branding }
-        if let identity { app.launchEnvironment["C15T_FIXTURE_IDENTITY"] = identity }
+        app.launchEnvironment = ["INTH_FIXTURE_SCENARIO": scenario, "INTH_FIXTURE_RESET": reset ? "1" : "0", "INTH_FIXTURE_FAIL_NEXT_WRITE": fail ? "1" : "0", "INTH_FIXTURE_OFFLINE": offline ? "1" : "0"]
+        if let backend { app.launchEnvironment["INTH_FIXTURE_BACKEND"] = backend }
+        if let appearance { app.launchEnvironment["INTH_FIXTURE_APPEARANCE"] = appearance }
+        if let theme { app.launchEnvironment["INTH_FIXTURE_THEME"] = theme }
+        if let branding { app.launchEnvironment["INTH_FIXTURE_BRANDING"] = branding }
+        if let identity { app.launchEnvironment["INTH_FIXTURE_IDENTITY"] = identity }
         app.launchArguments = arguments
         app.launch()
     }
@@ -22,7 +22,7 @@ final class ConsentJourneyTests: XCTestCase {
         attachment.lifetime = .keepAlways
         add(attachment)
         // A copy outside the result bundle, so the evidence does not depend on xcodebuild finalising it.
-        if let dir = ProcessInfo.processInfo.environment["C15T_CAPTURE_DIR"] {
+        if let dir = ProcessInfo.processInfo.environment["INTH_CAPTURE_DIR"] {
             try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
             try? screenshot.pngRepresentation.write(to: URL(fileURLWithPath: dir).appendingPathComponent(name + ".png"))
         }
@@ -83,7 +83,7 @@ final class ConsentJourneyTests: XCTestCase {
     }
     func test00LocalIabModeStartsFromTheSetupScreen() {
         app = XCUIApplication()
-        app.launchEnvironment = ["C15T_FIXTURE_RESET": "1"]
+        app.launchEnvironment = ["INTH_FIXTURE_RESET": "1"]
         app.launch()
         let mode = button("demo.mode.iab")
         reveal(mode)
@@ -100,7 +100,7 @@ final class ConsentJourneyTests: XCTestCase {
     func test21HostedSetupInstallsProtectedStorage() {
         app = XCUIApplication()
         // dryRun in this Debug build accepts a host outside Inth and sends no record.
-        app.launchEnvironment = ["C15T_DEMO_DRY_RUN": "1"]
+        app.launchEnvironment = ["INTH_DEMO_DRY_RUN": "1"]
         app.launch()
         let backend = app.textFields["Inth project URL"]
         XCTAssertTrue(backend.waitForExistence(timeout: 5))
@@ -292,7 +292,7 @@ final class ConsentJourneyTests: XCTestCase {
     func test33SheetAndPromptKeepTheirCardAndThePartnersRoute() {
         for layout in ["sheet", "prompt"] {
             app = XCUIApplication()
-            app.launchEnvironment = ["C15T_FIXTURE_SCENARIO": "fresh-online-iab", "C15T_FIXTURE_RESET": "1", "C15T_FIXTURE_THEME": "stock", "C15T_FIXTURE_FIRST_LAYER": layout]
+            app.launchEnvironment = ["INTH_FIXTURE_SCENARIO": "fresh-online-iab", "INTH_FIXTURE_RESET": "1", "INTH_FIXTURE_THEME": "stock", "INTH_FIXTURE_FIRST_LAYER": layout]
             app.launch()
             let reject = button("inth.first-layer.reject-all"), accept = button("inth.first-layer.accept-all")
             XCTAssertTrue(reject.waitForExistence(timeout: 10), layout)
@@ -586,14 +586,14 @@ final class ConsentJourneyTests: XCTestCase {
             for child in node.children { walk(child, depth: depth + 1) }
         }
         walk(snapshot, depth: 0)
-        guard let dir = ProcessInfo.processInfo.environment["C15T_CAPTURE_DIR"], let data = try? JSONSerialization.data(withJSONObject: rows, options: [.prettyPrinted]) else { return }
+        guard let dir = ProcessInfo.processInfo.environment["INTH_CAPTURE_DIR"], let data = try? JSONSerialization.data(withJSONObject: rows, options: [.prettyPrinted]) else { return }
         try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
         try? data.write(to: URL(fileURLWithPath: dir).appendingPathComponent("ax-" + name + ".json"))
     }
     /// Xcode's accessibility audit over the current screen. Every finding is printed and written beside the
     /// captures. The findings the accessibility review traced to the OS rather than the product are
     /// recognised by their geometry (see `documentedAuditFalsePositive`) and tolerated; anything else fails.
-    /// `C15T_AUDIT_STRICT=1` in the runner's environment fails on the documented ones too.
+    /// `INTH_AUDIT_STRICT=1` in the runner's environment fails on the documented ones too.
     ///
     /// Contrast runs first, in a call of its own; the other categories then run together as they always did.
     /// The contrast category samples the pixels inside each text's frame, and two other categories move the
@@ -609,7 +609,7 @@ final class ConsentJourneyTests: XCTestCase {
     func audit(_ name: String, keepingState: Bool = false) {
         capture(name); dumpAccessibility(name)
         guard #available(iOS 17.0, *) else { return }
-        let strict = ProcessInfo.processInfo.environment["C15T_AUDIT_STRICT"] == "1"
+        let strict = ProcessInfo.processInfo.environment["INTH_AUDIT_STRICT"] == "1"
         var issues: [String] = [], unexplained: [String] = []
         let rest: XCUIAccessibilityAuditType = keepingState ? .all.subtracting([.contrast, .dynamicType]) : .all.subtracting(.contrast)
         for types in [[.contrast], rest] as [XCUIAccessibilityAuditType] {
@@ -626,7 +626,7 @@ final class ConsentJourneyTests: XCTestCase {
         }
         print("ax-audit \(name) issues=\(issues.count) unexplained=\(unexplained.count)")
         for issue in issues { print("ax-audit \(name) \(issue)") }
-        if let dir = ProcessInfo.processInfo.environment["C15T_CAPTURE_DIR"] {
+        if let dir = ProcessInfo.processInfo.environment["INTH_CAPTURE_DIR"] {
             try? issues.joined(separator: "\n").write(to: URL(fileURLWithPath: dir).appendingPathComponent("audit-" + name + ".txt"), atomically: true, encoding: .utf8)
         }
         XCTAssertTrue(unexplained.isEmpty, "accessibility audit \(name): \(unexplained.joined(separator: "; "))")
@@ -794,12 +794,12 @@ final class ConsentJourneyTests: XCTestCase {
         if retry.exists { retry.tap() } else { print("ax-audit ax-ax5-save-error activated the retry during the audit") }
         XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
     }
-    /// Drives VoiceOver itself when the simulator has it on (C15T_VOICEOVER=1 in the runner's
+    /// Drives VoiceOver itself when the simulator has it on (INTH_VOICEOVER=1 in the runner's
     /// environment): a single tap moves the cursor, a right flick steps through the reading order,
     /// a double tap activates. The cursor is captured after every step; the caption panel, when
     /// on, prints the spoken text inside the capture.
     func test16VoiceOverReadingOrderAndFocusAfterFailure() throws {
-        guard ProcessInfo.processInfo.environment["C15T_VOICEOVER"] == "1" else { throw XCTSkip("VoiceOver is not on for this run") }
+        guard ProcessInfo.processInfo.environment["INTH_VOICEOVER"] == "1" else { throw XCTSkip("VoiceOver is not on for this run") }
         continueAfterFailure = true
         launch(fail: true)
         // VoiceOver's own first-run gestures sheet sits over the app on a fresh simulator; its OK is
@@ -829,12 +829,12 @@ final class ConsentJourneyTests: XCTestCase {
     }
     /// VoiceOver on the failure row alone: where the cursor goes when the save is refused, what a finger
     /// on the word Try again meets after the cursor has been moved away from it, and that a double tap
-    /// there retries. Captures only; the cursor is read on the host. C15T_VOICEOVER_AX5=1 runs it at the
+    /// there retries. Captures only; the cursor is read on the host. INTH_VOICEOVER_AX5=1 runs it at the
     /// largest accessibility size, where the row sits in the page and Customize is reached by flicking.
     func test19VoiceOverFailureRowTouch() throws {
-        guard ProcessInfo.processInfo.environment["C15T_VOICEOVER"] == "1" else { throw XCTSkip("VoiceOver is not on for this run") }
+        guard ProcessInfo.processInfo.environment["INTH_VOICEOVER"] == "1" else { throw XCTSkip("VoiceOver is not on for this run") }
         continueAfterFailure = true
-        let ax5 = ProcessInfo.processInfo.environment["C15T_VOICEOVER_AX5"] == "1"
+        let ax5 = ProcessInfo.processInfo.environment["INTH_VOICEOVER_AX5"] == "1"
         launch(fail: true, arguments: ax5 ? Self.ax5 : [])
         let sheetOK = XCUIApplication(bundleIdentifier: "com.apple.springboard").buttons["OK"]
         if sheetOK.waitForExistence(timeout: 3) { sheetOK.tap(); usleep(600_000); sheetOK.doubleTap(); sleep(1) }
@@ -861,7 +861,7 @@ final class ConsentJourneyTests: XCTestCase {
     /// VoiceOver on the IAB preferences: arrival after Customize, then the partner page the introduction
     /// opens, where the platform's own push decides the landing. Captures only; the cursor is read on the host.
     func test18VoiceOverIabPreferencesAndPushedPage() throws {
-        guard ProcessInfo.processInfo.environment["C15T_VOICEOVER"] == "1" else { throw XCTSkip("VoiceOver is not on for this run") }
+        guard ProcessInfo.processInfo.environment["INTH_VOICEOVER"] == "1" else { throw XCTSkip("VoiceOver is not on for this run") }
         continueAfterFailure = true
         launch("fresh-online-iab")
         let sheetOK = XCUIApplication(bundleIdentifier: "com.apple.springboard").buttons["OK"]
@@ -883,10 +883,10 @@ final class ConsentJourneyTests: XCTestCase {
     /// partners" row after each, and capturing the screen when a contrast finding names an element, so the
     /// finding can be measured against pixels. Exploratory, like test17.
     func test20IabPreferencesContrastAuditIsolation() throws {
-        guard ProcessInfo.processInfo.environment["C15T_AUDIT_EXPLORATORY"] == "1" else { throw XCTSkip("exploratory audit isolation; set C15T_AUDIT_EXPLORATORY=1") }
+        guard ProcessInfo.processInfo.environment["INTH_AUDIT_EXPLORATORY"] == "1" else { throw XCTSkip("exploratory audit isolation; set INTH_AUDIT_EXPLORATORY=1") }
         continueAfterFailure = true
         guard #available(iOS 17.0, *) else { return }
-        let rounds = Int(ProcessInfo.processInfo.environment["C15T_AUDIT_ROUNDS"] ?? "") ?? 2
+        let rounds = Int(ProcessInfo.processInfo.environment["INTH_AUDIT_ROUNDS"] ?? "") ?? 2
         func frames(_ tag: String) {
             let partners = app.staticTexts["IAB partners"].firstMatch
             let row = button("inth.iab.partners")
@@ -927,7 +927,7 @@ final class ConsentJourneyTests: XCTestCase {
     /// Isolates the first-layer hit-region finding, which Xcode's audit reports without naming the node:
     /// the same audit with the provider attribution hidden, the brand hidden, and both.
     func test17FirstLayerHitRegionAuditIsolation() throws {
-        guard ProcessInfo.processInfo.environment["C15T_AUDIT_EXPLORATORY"] == "1" else { throw XCTSkip("exploratory audit isolation; set C15T_AUDIT_EXPLORATORY=1") }
+        guard ProcessInfo.processInfo.environment["INTH_AUDIT_EXPLORATORY"] == "1" else { throw XCTSkip("exploratory audit isolation; set INTH_AUDIT_EXPLORATORY=1") }
         continueAfterFailure = true
         guard #available(iOS 17.0, *) else { return }
         for (name, branding, identity) in [("stock", nil, nil), ("no-branding", "hidden", nil), ("no-identity", nil, "hidden"), ("neither", "hidden", "hidden")] as [(String, String?, String?)] {
@@ -951,7 +951,7 @@ final class ProtocolReceiptTests: XCTestCase {
     @MainActor func testRealControlsDeliverNativeReceipts() async throws {
         guard (try? await report()) != nil else { throw XCTSkip("Start the reviewed e2e-backend.py on port 3000") }
         continueAfterFailure = false
-        app.launchEnvironment = ["C15T_FIXTURE_SCENARIO": "protocol-backend", "C15T_FIXTURE_RESET": "1", "C15T_FIXTURE_BACKEND": "http://localhost:3000/api/self-host"]
+        app.launchEnvironment = ["INTH_FIXTURE_SCENARIO": "protocol-backend", "INTH_FIXTURE_RESET": "1", "INTH_FIXTURE_BACKEND": "http://localhost:3000/api/self-host"]
         app.launch()
         let reject = app.buttons["inth.first-layer.reject-all"]
         XCTAssertTrue(reject.waitForExistence(timeout: 15)); reject.tap()
@@ -979,7 +979,7 @@ final class ProtocolReceiptTests: XCTestCase {
         let attachment = XCTAttachment(data: try JSONSerialization.data(withJSONObject: captured, options: [.prettyPrinted, .sortedKeys]), uniformTypeIdentifier: "public.json")
         attachment.name = "native-swift-protocol-receipt"; attachment.lifetime = .keepAlways; add(attachment)
         app.terminate()
-        app.launchEnvironment["C15T_FIXTURE_RESET"] = "0"
+        app.launchEnvironment["INTH_FIXTURE_RESET"] = "0"
         app.launch()
         XCTAssertTrue(app.buttons["fixture.open-preferences"].waitForExistence(timeout: 10))
         XCTAssertFalse(app.buttons["inth.first-layer.accept-all"].exists)

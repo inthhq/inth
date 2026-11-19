@@ -7,7 +7,7 @@ import Security
 ///
 /// Consent state only: no subject id, no policy token, no location. The shape is
 /// "WebView consent" in `packages/native-protocol/CONTRACT.md`, and `webViewConsentSource()` in
-/// `@c15t/core` reads it.
+/// `@inth/sdk-core` reads it.
 public struct WebViewConsentState: Sendable, Equatable {
     /// `true` once stored consent hydrated and a policy resolved.
     public let ready: Bool

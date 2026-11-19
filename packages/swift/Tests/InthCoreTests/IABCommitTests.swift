@@ -323,7 +323,7 @@ final class IABCommitTests: XCTestCase {
             await core.waitUntilIdle()
             XCTAssertEqual(http.recordedSaveRequests.first?.body, entry.body)
             XCTAssertEqual(core.pendingSaveCount(), 1)
-            if let path = ProcessInfo.processInfo.environment["C15T_IAB_SAVE_EVIDENCE_DIR"] {
+            if let path = ProcessInfo.processInfo.environment["INTH_IAB_SAVE_EVIDENCE_DIR"] {
                 try FileManager.default.createDirectory(atPath: path, withIntermediateDirectories: true)
                 try entry.body.write(
                     to: URL(fileURLWithPath: path).appendingPathComponent("swift-\(row.id).json"))

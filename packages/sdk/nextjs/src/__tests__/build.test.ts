@@ -315,7 +315,7 @@ describe('Next.js build-time manifest', () => {
 	});
 
 	describe('NEXT_PUBLIC_C15T_BACKEND_URL', () => {
-		const C15T = 'https://c15t.example.com';
+		const C15T = 'https://inth.example.com';
 		const INTH = 'https://inth.example.com';
 		const build = (options: Parameters<typeof withConsentManifest>[1]) =>
 			withConsentManifest({ env: { OTHER: '1' } }, options)(

@@ -380,7 +380,7 @@ export const CONSENT_FIRST_LAYERS = ['page', 'sheet', 'prompt'] as const;
 export type ConsentFirstLayer = (typeof CONSENT_FIRST_LAYERS)[number];
 
 /** The stock palettes of the native presenter. */
-export const CONSENT_APPEARANCES = ['c15t', 'system'] as const;
+export const CONSENT_APPEARANCES = ['paper', 'system'] as const;
 
 /** One of {@link CONSENT_APPEARANCES}. */
 export type ConsentAppearance = (typeof CONSENT_APPEARANCES)[number];

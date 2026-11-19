@@ -5,7 +5,7 @@ import Foundation
 ///
 /// A port of `packages/sdk/iab/src/gpp/encoder.ts`, and a function-for-function mirror of
 /// `core-android`'s `GppEncoder.kt`. `packages/native-protocol/gpp/cases.json` holds the strings
-/// both cores and the web encoder must produce, and the `@c15t/iab` test
+/// both cores and the web encoder must produce, and the `@inth/sdk-iab` test
 /// `native-gpp-fixtures.test.ts` decodes every one with the IAB reference library.
 public enum GPPEncoder {
     /// Section ID of the GPP header.

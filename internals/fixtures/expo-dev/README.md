@@ -97,12 +97,12 @@ them back from `app.config.ts`, and the plugin is idempotent.
 
 The autolinked `InthReactNative` pod compiles the generated Swift core and Apple
 services. Do not add a separate `InthCore` pod to this app. The checkout-only
-`C15T_LOCAL_PODS` flag now controls Android source substitution only.
+`INTH_LOCAL_PODS` flag now controls Android source substitution only.
 
 For Android, `app.config.ts` explicitly passes `androidMavenRepository` to the
-shipped plugin. The fixture selects `https://maven.pkg.github.com/inthhq/c15t-private`
-unless `C15T_MAVEN_URL` supplies a staging URL at prebuild time. HTTPS credentials
-come from `C15T_MAVEN_USERNAME` and `C15T_MAVEN_TOKEN` when Gradle runs. No fixture
+shipped plugin. The fixture selects `https://maven.pkg.github.com/inthhq/inth`
+unless `INTH_MAVEN_URL` supplies a staging URL at prebuild time. HTTPS credentials
+come from `INTH_MAVEN_USERNAME` and `INTH_MAVEN_TOKEN` when Gradle runs. No fixture
 plugin adds a Maven repository. See the maintained
 [packed consumer guide](../../../packages/sdk/docs/internal/expo-packed-consumer.md) for the
 options, exclusive routing and clean external-consumer checks.
@@ -117,7 +117,7 @@ Native Firebase needs on iOS. The placeholder Firebase project is in `vendors/`,
 and `firebase.json` keeps collection and every consent type off until Inth
 grants them. Normal builds link the SDKs and never start them.
 
-An E2E build (`EXPO_PUBLIC_C15T_APP_E2E=1`) renders `src/e2e/vendor-journey-app.tsx`
+An E2E build (`EXPO_PUBLIC_INTH_APP_E2E=1`) renders `src/e2e/vendor-journey-app.tsx`
 instead of the shell. It starts the SDKs with the bare fixture's code in
 `react-native-bare/src/vendors`, imported unchanged, so both apps prove the same
 helpers. `metro-vendor-sources.js` lets Metro read those files and resolves their
@@ -134,13 +134,13 @@ iOS, and bundles the exported policy as `inth-e2e-policy.json` on both.
 ```sh
 bash scripts/vendor-e2e.sh ios
 bash scripts/vendor-e2e.sh android
-C15T_EXPO_CELL=expo-55 bash scripts/vendor-e2e.sh ios
-C15T_EXPO_CELL=expo-57 bash scripts/vendor-e2e.sh android
+INTH_EXPO_CELL=expo-55 bash scripts/vendor-e2e.sh ios
+INTH_EXPO_CELL=expo-57 bash scripts/vendor-e2e.sh android
 ```
 
 The runner builds a Release app with the bundle inside the binary and the bare
 fixture's loopback backend and capture server. It creates its own Simulator or
-AVD and deletes it after the run. Without `C15T_EXPO_CELL` it builds this fixture in place.
+AVD and deletes it after the run. Without `INTH_EXPO_CELL` it builds this fixture in place.
 With `expo-55`, `expo-56` or `expo-57` it packs `@inth/react-native` and uses
 `scripts/prepare-packed-consumer.py --cell` to make a consumer outside the
 checkout. That consumer takes Expo, React Native, React and the other Expo packages
@@ -225,7 +225,7 @@ client from stored state.
 It is a fixture, not a second implementation. Fake mode proves the JavaScript side and
 nothing about Swift, Kotlin, Keychain, AndroidKeyStore, or Codegen, and the app prints a
 red strip across the top while it is active so a result cannot be misread. The real core
-is the default; `EXPO_PUBLIC_C15T_FAKE_NATIVE=true` forces the fake.
+is the default; `EXPO_PUBLIC_INTH_FAKE_NATIVE=true` forces the fake.
 
 ## Persistence and cold-start checklist
 

@@ -150,8 +150,8 @@ require(text('m:version') == sys.argv[3], 'version')
 require((text('m:packaging') or 'jar') == sys.argv[4], 'packaging')
 for field in ['m:name', 'm:description', 'm:url', 'm:licenses/m:license/m:name', 'm:licenses/m:license/m:url', 'm:developers/m:developer/m:name']:
     require(text(field), field)
-require(text('m:scm/m:url') == 'https://github.com/c15t/c15t', 'scm url')
-require(text('m:scm/m:connection') == 'scm:git:https://github.com/c15t/c15t.git', 'scm connection')
+require(text('m:scm/m:url') == 'https://github.com/inthhq/inth', 'scm url')
+require(text('m:scm/m:connection') == 'scm:git:https://github.com/inthhq/inth.git', 'scm connection')
 for dependency in p.findall('m:dependencies/m:dependency', ns):
     if dependency.findtext('m:groupId', namespaces=ns) == 'com.inth':
         require(dependency.findtext('m:version', namespaces=ns) == sys.argv[3], 'dependency version')
@@ -286,8 +286,8 @@ export const stageMavenRelease = function stageMavenRelease({
 			cwd,
 			env: {
 				...process.env,
-				C15T_MAVEN_CENTRAL: 'true',
-				C15T_MAVEN_PUBLISH: 'false',
+				INTH_MAVEN_CENTRAL: 'true',
+				INTH_MAVEN_PUBLISH: 'false',
 			},
 			stdio: 'inherit',
 		}
@@ -430,12 +430,12 @@ const centralCredentials = function centralCredentials(
 	options: MavenDeploymentOptions
 ) {
 	const credentials = options.credentials ?? {
-		token: process.env.C15T_CENTRAL_TOKEN ?? '',
-		username: process.env.C15T_CENTRAL_USERNAME ?? '',
+		token: process.env.INTH_CENTRAL_TOKEN ?? '',
+		username: process.env.INTH_CENTRAL_USERNAME ?? '',
 	};
 	if (!credentials.username || !credentials.token) {
 		throw new Error(
-			'Set C15T_CENTRAL_USERNAME and C15T_CENTRAL_TOKEN securely.'
+			'Set INTH_CENTRAL_USERNAME and INTH_CENTRAL_TOKEN securely.'
 		);
 	}
 	return credentials;

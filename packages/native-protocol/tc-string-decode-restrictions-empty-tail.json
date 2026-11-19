@@ -304,7 +304,7 @@
 	},
 	"kind": "tc-string",
 	"notes": [
-		"Population decode-coverage: this model reaches past what @c15t/iab writes, so expects.encode is false and only the decode half is graded. An encoder that cannot produce this input is not wrong.",
+		"Population decode-coverage: this model reaches past what @inth/sdk-iab writes, so expects.encode is false and only the decode half is graded. An encoder that cannot produce this input is not wrong.",
 		"There is no terminator word after the publisher restrictions in a v2 core string: an empty list is a 12-bit zero count and then the segment ends, mid-word. A port carrying a v1 habit of reading a sentinel will run off the end of the core segment here, and the padding bits after it are zero, which makes the mistake look like a valid extra entry rather than an overrun.",
 		"vendorListVersion (142) and policyVersion (5) are read out of input.vendorList, not out of the model: with a vendor list attached the reference's getters ignore anything written onto those two fields, which is why input.model omits them."
 	],

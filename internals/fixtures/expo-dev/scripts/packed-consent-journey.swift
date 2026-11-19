@@ -23,7 +23,7 @@ final class PackedConsentJourney: XCTestCase {
   }
   private func launch() {
     app.terminate()
-    app.launchEnvironment = ["DYLD_INSERT_LIBRARIES": ProcessInfo.processInfo.environment["C15T_PACKED_FAULT"]!, "C15T_PACKED_NATIVE_PROOF": ProcessInfo.processInfo.environment["C15T_PACKED_NATIVE_PROOF"] ?? "0"]
+    app.launchEnvironment = ["DYLD_INSERT_LIBRARIES": ProcessInfo.processInfo.environment["INTH_PACKED_FAULT"]!, "INTH_PACKED_NATIVE_PROOF": ProcessInfo.processInfo.environment["INTH_PACKED_NATIVE_PROOF"] ?? "0"]
     app.launch()
   }
   func testColdOfflinePackedRelease() throws {

@@ -273,7 +273,7 @@ describe('TanStack Start backend URL variables', () => {
 			await rm(root, { force: true, recursive: true });
 		}
 	};
-	const C15T = 'https://c15t.example.com';
+	const C15T = 'https://inth.example.com';
 	const INTH = 'https://inth.example.com';
 
 	test('VITE_C15T_BACKEND_URL alone gives the backend URL as VITE_INTH_PROJECT_URL', async () => {

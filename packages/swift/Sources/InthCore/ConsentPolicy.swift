@@ -128,7 +128,7 @@ public struct ConsentPolicyError: Error, Equatable, CustomStringConvertible {
 /// country and region. Records are still delivered to the backend.
 ///
 /// Rules are checked with the backend's authoring rules (`inspectPolicyRules` in
-/// `@c15t/schema`), plus three in-code limits: no `iab` model, a rule for an unknown
+/// `@inth/sdk-schema`), plus three in-code limits: no `iab` model, a rule for an unknown
 /// location, and a validity of at least one millisecond.
 public struct ConsentPolicy: Sendable, Equatable {
     public let rules: [PolicyRule]
@@ -234,7 +234,7 @@ public struct ConsentPolicy: Sendable, Equatable {
         return declared.isEmpty ? optionalNames(OptionalConsentCategory.ordered) : declared
     }
 
-    /// The authoring rules `inspectPolicyRules` in `@c15t/schema` checks, plus the no-backend limits.
+    /// The authoring rules `inspectPolicyRules` in `@inth/sdk-schema` checks, plus the no-backend limits.
     private static func validate(_ rule: PolicyRule) throws {
         let label = "Policy '\(rule.id)'"
         func require(_ condition: Bool, _ message: @autoclosure () -> String) throws {
@@ -299,7 +299,7 @@ public struct ConsentPolicy: Sendable, Equatable {
         return .object(fields)
     }
 
-    /// The canonical rule `normalizePolicyRule` in `@c15t/schema` produces.
+    /// The canonical rule `normalizePolicyRule` in `@inth/sdk-schema` produces.
     static func normalize(_ rule: PolicyRule) -> JSONValue {
         let allowed: [String]
         let equivalent: [[String]]
@@ -353,7 +353,7 @@ public struct ConsentPolicy: Sendable, Equatable {
     }
 
     /// The inputs `policyFingerprintInput`, `choicePromptFingerprintInput` and
-    /// `noticePromptFingerprintInput` in `@c15t/schema` hash. The choice prompt hashes
+    /// `noticePromptFingerprintInput` in `@inth/sdk-schema` hash. The choice prompt hashes
     /// only the choice validity and the notice prompt only the notice validity, so a
     /// change to one never asks again for the other.
     static func fingerprintInputs(_ rule: PolicyRule) -> [String: JSONValue] {
@@ -420,7 +420,7 @@ public struct ConsentPolicy: Sendable, Equatable {
 }
 
 /// Reads one rule in the backend's JSON shape, refusing every field and value
-/// `inspectPolicyRules` in `@c15t/schema` refuses rather than guessing.
+/// `inspectPolicyRules` in `@inth/sdk-schema` refuses rather than guessing.
 private struct JSONRuleReader {
     private static let ruleKeys: Set<String> = [
         "id", "match", "model", "prompt", "categories", "scopeMode", "preselectedCategories",

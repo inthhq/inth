@@ -683,7 +683,7 @@ final class ConsentCoreTests: XCTestCase {
         XCTAssertFalse(relaunched.isAllowed(.marketing))
     }
 
-    /// Two rules an IAB policy cannot be, both straight out of `@c15t/schema`:
+    /// Two rules an IAB policy cannot be, both straight out of `@inth/sdk-schema`:
     /// `POLICY_MODEL_PROMPTS` gives `iab` the single prompt `choice`, and
     /// `collectScopeErrors` refuses `preselectedCategories` beside it -- the resolver
     /// answers an empty set for `iab`, so a rule carrying one was never resolved by it.
@@ -761,7 +761,7 @@ final class ConsentCoreTests: XCTestCase {
     }
 
     /// A notice rule belongs to an opt-out policy: `POLICY_MODEL_PROMPTS` in
-    /// `@c15t/schema` allows `notice` only for `opt-out`, and a rule that asks for
+    /// `@inth/sdk-schema` allows `notice` only for `opt-out`, and a rule that asks for
     /// the pair the schema forbids is a wire to refuse, not a fixture to keep.
     func testDismissNoticeClearsThePromptWithoutGrantingAnything() async {
         http.initResponse = Fixture.initResponse(policyResolution: Fixture.matchedResolution(

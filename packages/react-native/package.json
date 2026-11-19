@@ -22,14 +22,14 @@
 		"react-native",
 		"typescript"
 	],
-	"homepage": "https://c15t.com/",
+	"homepage": "https://inth.com",
 	"bugs": {
-		"url": "https://github.com/c15t/c15t/issues"
+		"url": "https://github.com/inthhq/inth/issues"
 	},
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/c15t/c15t.git",
+		"url": "git+https://github.com/inthhq/inth.git",
 		"directory": "packages/react-native"
 	},
 	"files": [
@@ -111,7 +111,7 @@
 		"lint": "oxlint -c ../../oxlint.sdk.config.ts ./src",
 		"prepack": "pnpm run build:docs && bun -e \"await Bun.write('LICENSE.md', Bun.file('../../LICENSE')); await Bun.write('NOTICE', Bun.file('../../NOTICE'));\" && bun ../../scripts/sync-vendored-core.ts && bun ../../scripts/sync-vendored-apple.ts && bun ../../scripts/verify-package-artifacts.ts",
 		"test": "vitest run --passWithNoTests",
-		"test:coverage": "C15T_COVERAGE_RATCHET=1 vitest run --passWithNoTests && bun scripts/check-coverage-ratchet.ts",
+		"test:coverage": "INTH_COVERAGE_RATCHET=1 vitest run --passWithNoTests && bun scripts/check-coverage-ratchet.ts",
 		"test:watch": "vitest"
 	},
 	"devDependencies": {

@@ -318,7 +318,7 @@ class KernelTest {
 			)
 		)
 		val kernel = testKernel(
-			config = NativeConfig(backendUrl = "https://test.c15t.app", detectedGpc = true),
+			config = NativeConfig(backendUrl = "https://test.inth.app", detectedGpc = true),
 			store = InthStore(InMemoryKeyValueStore()),
 			transport = transport,
 		)

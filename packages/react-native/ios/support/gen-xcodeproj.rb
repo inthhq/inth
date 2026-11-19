@@ -17,7 +17,7 @@ require 'fileutils'
 # The React-linked sources under ReactNative/ are deliberately absent. They import
 # React and the `NativeInthSpec` protocol that Codegen generates into the host app's
 # ReactCodegen pod, so they compile only inside an app build, via the podspec or
-# Package.swift's C15T_SPM_INCLUDE_RN path.
+# Package.swift's INTH_SPM_INCLUDE_RN path.
 
 project_path = 'InthReactNative.xcodeproj'
 FileUtils.rm_rf(project_path)

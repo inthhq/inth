@@ -36,11 +36,11 @@ data class VendorSdkRequest(val captureBase: String?, val firebase: Boolean, val
 	val requested: Boolean get() = captureBase != null || firebase || posthogLive != null
 
 	companion object {
-		const val CAPTURE_EXTRA = "C15T_VENDOR_CAPTURE"
-		const val FIREBASE_EXTRA = "C15T_VENDOR_FIREBASE"
-		const val POSTHOG_LIVE_HOST_EXTRA = "C15T_VENDOR_POSTHOG_LIVE_HOST"
-		const val POSTHOG_LIVE_KEY_EXTRA = "C15T_VENDOR_POSTHOG_LIVE_KEY"
-		const val POSTHOG_LIVE_RUN_ID_EXTRA = "C15T_VENDOR_POSTHOG_LIVE_RUN_ID"
+		const val CAPTURE_EXTRA = "INTH_VENDOR_CAPTURE"
+		const val FIREBASE_EXTRA = "INTH_VENDOR_FIREBASE"
+		const val POSTHOG_LIVE_HOST_EXTRA = "INTH_VENDOR_POSTHOG_LIVE_HOST"
+		const val POSTHOG_LIVE_KEY_EXTRA = "INTH_VENDOR_POSTHOG_LIVE_KEY"
+		const val POSTHOG_LIVE_RUN_ID_EXTRA = "INTH_VENDOR_POSTHOG_LIVE_RUN_ID"
 	}
 }
 

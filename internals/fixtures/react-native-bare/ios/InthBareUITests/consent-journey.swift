@@ -11,7 +11,7 @@ final class ConsentJourney: XCTestCase {
   private func report() throws -> [String: Any] {
     let done = expectation(description: "Native snapshot observer")
     var response: Data?
-    URLSession.shared.dataTask(with: URL(string: (ProcessInfo.processInfo.environment["C15T_E2E_URL"] ?? "http://localhost:3000") + "/e2e/state")!) { data, _, _ in
+    URLSession.shared.dataTask(with: URL(string: (ProcessInfo.processInfo.environment["INTH_E2E_URL"] ?? "http://localhost:3000") + "/e2e/state")!) { data, _, _ in
       response = data
       done.fulfill()
     }.resume()
@@ -48,7 +48,7 @@ final class ConsentJourney: XCTestCase {
   private let trafficVendors = ["posthog", "mixpanel", "amplitude", "sentry"]
 
   private func endpoint(_ path: String) -> URL {
-    URL(string: (ProcessInfo.processInfo.environment["C15T_E2E_URL"] ?? "http://localhost:3000") + path)!
+    URL(string: (ProcessInfo.processInfo.environment["INTH_E2E_URL"] ?? "http://localhost:3000") + path)!
   }
 
   private func fetchJSON(_ path: String, body: [String: Any]? = nil) throws -> [String: Any] {
@@ -186,7 +186,7 @@ final class ConsentJourney: XCTestCase {
 
   private func launch(reset: Bool = false) {
     app.terminate()
-    app.launchEnvironment = reset ? ["C15T_DEMO_LINK": "inth-demo://reset"] : [:]
+    app.launchEnvironment = reset ? ["INTH_DEMO_LINK": "inth-demo://reset"] : [:]
     // Firebase debug logging is the evidence for Firebase, which cannot be redirected.
     app.launchArguments = ["-FIRDebugEnabled", "-FIRAnalyticsDebugEnabled"]
     app.launch()
@@ -232,7 +232,7 @@ final class ConsentJourney: XCTestCase {
 
   private func network(_ online: Bool) throws {
     let done = expectation(description: "Fixture backend availability")
-    var request = URLRequest(url: URL(string: (ProcessInfo.processInfo.environment["C15T_E2E_URL"] ?? "http://localhost:3000") + "/e2e/network")!)
+    var request = URLRequest(url: URL(string: (ProcessInfo.processInfo.environment["INTH_E2E_URL"] ?? "http://localhost:3000") + "/e2e/network")!)
     request.httpMethod = "POST"
     request.httpBody = try JSONSerialization.data(withJSONObject: ["online": online])
     URLSession.shared.dataTask(with: request) { _, _, _ in done.fulfill() }.resume()
@@ -252,7 +252,7 @@ final class ConsentJourney: XCTestCase {
 
   private func setControl(_ body: [String: Any]) throws {
     let done = expectation(description: "Fixture clock and declaration")
-    var request = URLRequest(url: URL(string: ProcessInfo.processInfo.environment["C15T_E2E_URL"]! + "/e2e/control")!)
+    var request = URLRequest(url: URL(string: ProcessInfo.processInfo.environment["INTH_E2E_URL"]! + "/e2e/control")!)
     request.httpMethod = "POST"
     request.httpBody = try JSONSerialization.data(withJSONObject: body)
     URLSession.shared.dataTask(with: request) { _, response, _ in
@@ -346,7 +346,7 @@ final class ConsentJourney: XCTestCase {
   }
 
   func testConsentJourney() throws {
-    if ProcessInfo.processInfo.environment["C15T_APP_E2E_SCENARIO"] == "expiry" { try expiryJourney(); return }
+    if ProcessInfo.processInfo.environment["INTH_APP_E2E_SCENARIO"] == "expiry" { try expiryJourney(); return }
     try network(false)
     launch()
     try fresh()
@@ -471,7 +471,7 @@ final class ConsentJourney: XCTestCase {
   }
 
   private func nativeIabWhileJSIsBlocked() throws {
-    var request = URLRequest(url: URL(string: (ProcessInfo.processInfo.environment["C15T_E2E_URL"] ?? "http://localhost:3000") + "/e2e/scenario")!)
+    var request = URLRequest(url: URL(string: (ProcessInfo.processInfo.environment["INTH_E2E_URL"] ?? "http://localhost:3000") + "/e2e/scenario")!)
     request.httpMethod = "POST"; request.httpBody = Data("{}".utf8)
     let prepared = expectation(description: "IAB policy prepared")
     URLSession.shared.dataTask(with: request) { _, _, _ in prepared.fulfill() }.resume()
@@ -551,7 +551,7 @@ final class ConsentJourney: XCTestCase {
 
   private func nativeNoticePassesHostTouches() throws {
     let done = expectation(description: "Notice policy")
-    var request = URLRequest(url: URL(string: (ProcessInfo.processInfo.environment["C15T_E2E_URL"] ?? "http://localhost:3000") + "/e2e/scenario")!)
+    var request = URLRequest(url: URL(string: (ProcessInfo.processInfo.environment["INTH_E2E_URL"] ?? "http://localhost:3000") + "/e2e/scenario")!)
     request.httpMethod = "POST"; request.httpBody = Data("{\"kind\":\"notice\"}".utf8)
     URLSession.shared.dataTask(with: request) { _, _, _ in done.fulfill() }.resume()
     wait(for: [done], timeout: 5)

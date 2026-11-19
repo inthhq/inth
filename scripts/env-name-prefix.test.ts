@@ -16,8 +16,6 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const allowedBothPrefixes: Record<string, string> = {
 	ON_BUILD_ERROR:
 		'build-time manifest code reads C15T_ON_BUILD_ERROR after INTH_ON_BUILD_ERROR',
-	TO_IAB_PURPOSE_MAP:
-		'TypeScript export; the Swift and Kotlin comments that name it are synced from packages/swift and packages/android',
 };
 
 /**

@@ -62,23 +62,23 @@ const EXAMPLE_INTH_BACKEND = 'https://example-inth.inth.app/';
 
 export const config: FixtureConfig = {
 	e2e: {
-		enabled: process.env.EXPO_PUBLIC_C15T_APP_E2E === '1',
+		enabled: process.env.EXPO_PUBLIC_INTH_APP_E2E === '1',
 		endpoint: text(
-			process.env.EXPO_PUBLIC_C15T_E2E_URL,
+			process.env.EXPO_PUBLIC_INTH_E2E_URL,
 			'http://localhost:3000'
 		),
 		mixpanelEndpoint: text(
-			process.env.EXPO_PUBLIC_C15T_E2E_MIXPANEL_URL,
-			text(process.env.EXPO_PUBLIC_C15T_E2E_URL, 'http://localhost:3000')
+			process.env.EXPO_PUBLIC_INTH_E2E_MIXPANEL_URL,
+			text(process.env.EXPO_PUBLIC_INTH_E2E_URL, 'http://localhost:3000')
 		),
 	},
-	forceFakeNative: readFlag(process.env.EXPO_PUBLIC_C15T_FAKE_NATIVE) ?? false,
+	forceFakeNative: readFlag(process.env.EXPO_PUBLIC_INTH_FAKE_NATIVE) ?? false,
 	projectUrl: text(
 		process.env.EXPO_PUBLIC_INTH_PROJECT_URL,
 		EXAMPLE_INTH_BACKEND
 	),
 	sampleIntervalMs: asNumber(
-		process.env.EXPO_PUBLIC_C15T_SAMPLE_INTERVAL_MS,
+		process.env.EXPO_PUBLIC_INTH_SAMPLE_INTERVAL_MS,
 		1000
 	),
 };

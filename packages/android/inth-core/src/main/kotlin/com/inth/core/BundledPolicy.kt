@@ -82,7 +82,7 @@ object BundledPolicy {
 		Selection(authority, mapped, gvl?.get("fetchedAt")?.jsonPrimitive?.longOrNull?.takeIf { it in 0..authority.issuedAt }, atp?.get("fetchedAt")?.jsonPrimitive?.longOrNull?.takeIf { it in 0..authority.issuedAt })
 	} catch (_: Exception) { null }
 
-	/** What `matchPolicyRules` in `@c15t/schema` answers for a location. */
+	/** What `matchPolicyRules` in `@inth/sdk-schema` answers for a location. */
 	internal sealed interface MatchOutcome {
 		data class Matched(val index: Int, val matchedBy: String) : MatchOutcome
 

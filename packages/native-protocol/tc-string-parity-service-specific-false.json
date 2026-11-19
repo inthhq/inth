@@ -300,7 +300,7 @@
 	},
 	"kind": "tc-string",
 	"notes": [
-		"Population parity: every non-default field here is one @c15t/iab writes, so expects.encode is true and a native encoder has to reproduce tcString byte for byte.",
+		"Population parity: every non-default field here is one @inth/sdk-iab writes, so expects.encode is true and a native encoder has to reproduce tcString byte for byte.",
 		"The publisherTC segment only follows a service-specific string, so this vector has no publisher section at all and every publisher field decodes to zero rather than to an empty stored choice. That difference is load bearing: it is the difference between \"the user never saw a publisher purpose\" and \"the user declined it\".",
 		"the string carries no publisherTC segment, so every publisherConsents, publisherLegitimateInterests, numCustomPurposes and publisherCustom* field reads back at its zero rather than being absent. A decoder must not treat that zero as a stored empty choice, and an encoder must know the segment is conditional.",
 		"vendorListVersion (142) and policyVersion (5) are read out of input.vendorList, not out of the model: with a vendor list attached the reference's getters ignore anything written onto those two fields, which is why input.model omits them."

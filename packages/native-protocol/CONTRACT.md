@@ -52,7 +52,7 @@ own:
                     Kotlin test marked `// TCF-CHECK: <id>`;
                     scripts/tcf-policy-checks.test.ts fails otherwise. IAB UI
                     copy comes from `iab.app` and `iab.banner` in
-                    @c15t/translations through the generated IABCopy /
+                    @inth/sdk-translations through the generated IABCopy /
                     IabCopy tables, and category-mode copy through the
                     generated ConsentCopy table, in the policy's language
                     (`bun run generate:native-iab-copy`).
@@ -91,12 +91,12 @@ same way, and `docs/internal/evaluator-parity.md` measured that identity cell by
 cell. `necessary` is granted and is not the rule's to take: the web evaluator
 seeds `permissions` with `necessary: true` and never revisits it, and its GPC
 check refuses a mapping that names `necessary`. The prompt is `choice` and
-nothing else -- `POLICY_MODEL_PROMPTS` in `@c15t/schema` allows `iab` exactly
-that one, and `assertPromptForModel` in `@c15t/core` agrees -- so a notice is
+nothing else -- `POLICY_MODEL_PROMPTS` in `@inth/sdk-schema` allows `iab` exactly
+that one, and `assertPromptForModel` in `@inth/sdk-core` agrees -- so a notice is
 never what an IAB rule settles on: the rule owes a disclosure it can name from
 the served list and a choice that has to be made, and dismissing a banner grants
 nothing. A rule that carries `preselectedCategories` beside `iab` is refused
-outright, because `resolvePreselected` in `@c15t/schema` answers an empty set for
+outright, because `resolvePreselected` in `@inth/sdk-schema` answers an empty set for
 that model and a preselection would display a permission with no receipt behind
 it, and the rights a rule must declare come from `requiredPolicyRights` in the
 same file, which asks `iab` for disclosure and preferences and for no standing
@@ -148,7 +148,7 @@ Rules that hold everywhere
 
 1. Native owns consent state. There is no second consent kernel in JavaScript.
    The React Native layer renders native state and forwards user actions. It may
-   import `@c15t/core` for types and pure selectors, never for state ownership.
+   import `@inth/sdk-core` for types and pure selectors, never for state ownership.
 2. The consent cores (`InthCore`, `InthApple`, `inth-core`, `inth-android`) must not
    import React Native, Expo, UIKit, SwiftUI, or Android UI classes. Native screens
    live in the optional `InthConsentUI` and `inth-consent-ui` modules, and React
@@ -156,7 +156,7 @@ Rules that hold everywhere
 3. The Kotlin core logic must run on a plain JVM with no Android dependency.
    Storage, clock, and HTTP go through interfaces the Android layer implements.
    Same rule for Swift: no UIKit, and no Keychain outside the store conformances.
-4. Both native cores must produce the same request bodies as `@c15t/core` for
+4. Both native cores must produce the same request bodies as `@inth/sdk-core` for
    the same inputs. The fixtures in `packages/native-protocol/` decide this. If a fixture
    disagrees, the TypeScript kernel is right until the contract says otherwise.
 5. Unknown wire values fail closed. A native core that cannot parse a policy
@@ -257,8 +257,8 @@ a notice/acknowledge/purpose triple. `subject` is keyed `subjectId`, not `id`.
 The declaration is `ConsentSnapshot` in `packages/react-native/src/protocol/snapshot.ts`,
 which says plainly that it is the shape on the wire and that the JavaScript layer never
 derives it. It takes all four types from `src/protocol/vocabulary.ts`, a copy that keeps
-`@c15t/core` out of a phone app; `vocabulary.type-test.ts` fails the type check when the
-copy and `@c15t/core` disagree. The fixtures are
+`@inth/sdk-core` out of a phone app; `vocabulary.type-test.ts` fails the type check when the
+copy and `@inth/sdk-core` disagree. The fixtures are
 generated from the TypeScript kernel, so where a native model and a fixture disagree
 about a key name, the fixture is right.
 
@@ -327,7 +327,7 @@ bridge from carrying an error on a `snapshot` event at all. It fails on the
 observers: an error write that is not a mutation would still be a publication, so
 every repeated error would wake every subscriber for nothing, and "exactly one
 event per committed change" would need an exception per error path. It also is
-not what the kernel does -- `@c15t/core` folds a refused `/init` into a committed
+not what the kernel does -- `@inth/sdk-core` folds a refused `/init` into a committed
 patch like any other.
 
 Two things this rule deliberately does not decide. Whether a re-served response
@@ -627,7 +627,7 @@ the plain `requestTrackingAuthorization()` shows no button.
 
 Under an IAB TCF policy, marketing is `granted` for this sequence only while the
 Inth category is granted and the committed TC String grants `marketing` by the
-web derivation (`C15T_TO_IAB_PURPOSE_MAP.marketing`, decided by the purposes some
+web derivation (`INTH_TO_IAB_PURPOSE_MAP.marketing`, decided by the purposes some
 registered or custom vendor asks consent for) to at least one consented
 registered or custom vendor that asks consent for a deciding purpose, or a
 consented ad tech provider. Otherwise it is a refusal.
@@ -1046,7 +1046,7 @@ Every request carries these headers:
     x-inth-platform:           apple-><InthApple.version> for a Swift app, android-><sdkVersion>
                                for a Kotlin app, rn-><version> for a core either React Native
                                binding configures
-    x-inth-policy-contract:    <POLICY_CONTRACT_VERSION from @c15t/schema>
+    x-inth-policy-contract:    <POLICY_CONTRACT_VERSION from @inth/sdk-schema>
 
 Both cores send the unprefixed semantic version, matching the web header format.
 Each reports its host separately in `x-inth-platform`. Hosted gateways can reject
@@ -1415,7 +1415,7 @@ headlessUnsupported: [], customVendors: []`, so JavaScript offers no edit it
 cannot commit. `BRIDGE_PAYLOADS` types the `iab` object with these keys, so both
 bridges' tests check them.
 
-`inth.nativeUI` false (`Podfile.properties.json` or `C15T_NATIVE_UI=0` for the pod,
+`inth.nativeUI` false (`Podfile.properties.json` or `INTH_NATIVE_UI=0` for the pod,
 `gradle.properties` for Android) builds the bridge without the stock screens: the
 pod drops `vendor/InthConsentUI` and `InthConsentHost.swift` and compiles with
 `INTH_NO_NATIVE_UI`; Android compiles `src/withoutNativeUi` instead of
@@ -1903,25 +1903,25 @@ Theme keys
 
 The `theme` prop writes the native theme keys, `com.inth.consent.*`, that
 `ConsentTheme.InfoPlistKey` in `consent-theme.swift` and `ConsentTheme.Meta` in
-`consent-theme.kt` read. Its field names follow the web `Theme` in `@c15t/ui`,
+`consent-theme.kt` read. Its field names follow the web `Theme` in `@inth/sdk-ui`,
 and so do the native token names. The prop is the `ConsentThemeOptions` type
 `createConsentTheme` takes, so one object themes both renderers. The plugin
 maps it in `src/expo-plugin/theme.ts`:
 
     theme field              web token                 iOS / Android key suffix
-    colors.primary           --c15t-primary            primary / PRIMARY
-    colors.textOnPrimary     --c15t-text-on-primary    textOnPrimary / TEXT_ON_PRIMARY
-    colors.surface           --c15t-surface            surface / SURFACE
-    colors.text              --c15t-text               text / TEXT
-    colors.textMuted         --c15t-text-muted         textMuted / TEXT_MUTED
+    colors.primary           --inth-primary            primary / PRIMARY
+    colors.textOnPrimary     --inth-text-on-primary    textOnPrimary / TEXT_ON_PRIMARY
+    colors.surface           --inth-surface            surface / SURFACE
+    colors.text              --inth-text               text / TEXT
+    colors.textMuted         --inth-text-muted         textMuted / TEXT_MUTED
     colors.canvas            (none)                    canvas / CANVAS
     colors.surfaceMuted      (none)                    surfaceMuted / SURFACE_MUTED
     colors.decision          (none)                    decision / DECISION
     colors.textOnDecision    (none)                    textOnDecision / TEXT_ON_DECISION
-    radius.sm, .md, .lg      --c15t-radius-*           radiusSm.. / RADIUS_SM..
-    spacing.xs .. .xl        --c15t-space-*            spaceXs.. / SPACE_XS..
-    typography.fontSize.*    --c15t-font-size-*        fontSizeSm.. / FONT_SIZE_SM..
-    typography.fontFamily    --c15t-font-family        fontFamily / FONT_FAMILY
+    radius.sm, .md, .lg      --inth-radius-*           radiusSm.. / RADIUS_SM..
+    spacing.xs .. .xl        --inth-space-*            spaceXs.. / SPACE_XS..
+    typography.fontSize.*    --inth-font-size-*        fontSizeSm.. / FONT_SIZE_SM..
+    typography.fontFamily    --inth-font-family        fontFamily / FONT_FAMILY
     typography.headlineFont  (none)                    headlineFont / HEADLINE_FONT
     slots.<slot>.<field>     web slots                 <slot>.<field> / <SLOT>_<FIELD>
     brand.name, brand.mark   (none)                    brandName, brandMark / BRAND_NAME, BRAND_MARK
@@ -2084,7 +2084,7 @@ the contract moved, not the kernel.
 - Overrides are `KernelOverrides`: `country`, `region`, `language`, and `gpc`.
   There is no `test` override. Publisher test mode is a client option, not an
   override, and it never reaches the save body. The `gpc` override is load
-  bearing: `decisionInputsMatchOverrides` in `@c15t/core` compares it against the
+  bearing: `decisionInputsMatchOverrides` in `@inth/sdk-core` compares it against the
   decision inputs remembered from the last init, and a save whose inputs no
   longer match is rejected as stale. A native core that drops `gpc` cannot
   produce a valid save body.
@@ -2109,7 +2109,7 @@ the contract moved, not the kernel.
 Evaluator parity
 ----------------
 
-Rule 4 says the native cores must produce what `@c15t/core` produces. Where the
+Rule 4 says the native cores must produce what `@inth/sdk-core` produces. Where the
 TS evaluator has a rule the kernels have never been run against, that gap is now
 written down with its measurement: the web answer table and the three kernel
 divergences it found live in
@@ -2195,7 +2195,7 @@ start their choices off, legitimate interest included, as the web's preference
 centre does.
 
 Their purposes count toward the consent basis that decides a category, as
-`consentBasisPurposes` passes them to `iabPurposesToC15tConsents`:
+`consentBasisPurposes` passes them to `iabPurposesToInthConsents`:
 `IABPurposeCategories` and `iabPurposeCategories()` on both cores, and the ATT
 gate above. `packages/native-protocol/iab/purpose-categories.json` and
 `packages/native-protocol/att/iab-marketing.json` hold the shared cases; the web's
@@ -2235,7 +2235,7 @@ they do not mix.
   `policyResource` or `bundleManifest`, and `InthAppleConfiguration` lets the
   manifest win. Both cores normalize rules exactly as
   `normalizePolicyRule` does and match them as `resolvePolicyRules` does;
-  `packages/native-protocol/local-policy/parity.json`, generated from `@c15t/schema`,
+  `packages/native-protocol/local-policy/parity.json`, generated from `@inth/sdk-schema`,
   holds the shared cases: a matrix of every `PolicyRule` field against every
   kind of value, sorted by the backend's own `inspectPolicyRules` into
   policies all three validators (Expo prebuild and both cores) must refuse and
@@ -2470,7 +2470,7 @@ checks that a GPP string in the snapshot appears in the injected payload.
 
 ### Web side
 
-`webViewConsentSource()` in `@c15t/core` returns an `ExternalConsentSource`
+`webViewConsentSource()` in `@inth/sdk-core` returns an `ExternalConsentSource`
 when it finds the injected object with its locks (non-writable,
 non-configurable, frozen, version 1), and `undefined` everywhere else. A site
 passes it as `consentSource`, so it opts in explicitly. Under a consent source

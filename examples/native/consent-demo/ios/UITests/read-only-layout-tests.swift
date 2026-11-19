@@ -21,7 +21,7 @@ final class ReadOnlyLayoutTests: XCTestCase {
 
     private func checkCategory(_ category: String, title: [String], status: String, accessibility: Bool, scenario: String = "fresh-online") throws {
         app = XCUIApplication()
-        app.launchEnvironment = ["C15T_FIXTURE_SCENARIO": scenario, "C15T_FIXTURE_RESET": "1"]
+        app.launchEnvironment = ["INTH_FIXTURE_SCENARIO": scenario, "INTH_FIXTURE_RESET": "1"]
         app.launchArguments = ["-UIPreferredContentSizeCategoryName", accessibility ? "UICTContentSizeCategoryAccessibilityXXXL" : "UICTContentSizeCategoryL"]
         app.launch()
         let customize = app.buttons[scenario == "gpc-on" ? "fixture.open-preferences" : "inth.first-layer.customize"]

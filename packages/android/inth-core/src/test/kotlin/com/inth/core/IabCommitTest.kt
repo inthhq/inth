@@ -264,7 +264,7 @@ class IabCommitTest {
 			val client = RecordingHttpClient { HttpResponse(503, emptyMap(), "{}") }
 			HostedTransport(client, config.copy(domain = "changed.example")).save(entry)
 			assertEquals(frozen, client.requests.single().body)
-			System.getenv("C15T_IAB_SAVE_EVIDENCE_DIR")?.let { path ->
+			System.getenv("INTH_IAB_SAVE_EVIDENCE_DIR")?.let { path ->
 				File(path).mkdirs()
 				File(path, "kotlin-${row.id}.json").writeText(frozen)
 			}

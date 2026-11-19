@@ -48,7 +48,7 @@ import type { GVLVendor, GlobalVendorList } from '../../sdk/schema/src/types';
 export const VENDOR_LIST_SCOPE_ORACLE = {
 	function: 'narrowGVLToVendors',
 	module: 'packages/sdk/iab/src/tcf/fetch-gvl.ts',
-	package: '@c15t/iab',
+	package: '@inth/sdk-iab',
 } as const;
 
 /**

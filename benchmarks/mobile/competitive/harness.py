@@ -80,12 +80,12 @@ def selected_profiles(cfg):
 
 def environment(cfg):
     result = os.environ.copy()
-    result.update(CI='1', EXPO_PUBLIC_C15T_FAKE_NATIVE='false', C15T_LOCAL_PODS='false')
+    result.update(CI='1', EXPO_PUBLIC_INTH_FAKE_NATIVE='false', INTH_LOCAL_PODS='false')
     for key, var in [('androidSdk', 'ANDROID_HOME'), ('javaHome', 'JAVA_HOME'), ('gradleHome', 'GRADLE_USER_HOME'), ('deviceRoot', 'ANDROID_AVD_HOME')]:
         if cfg.get(key):
             result[var] = cfg[key]
     if cfg.get('maven'):
-        result['C15T_MAVEN_URL'] = Path(cfg['maven']).as_uri()
+        result['INTH_MAVEN_URL'] = Path(cfg['maven']).as_uri()
     return result
 
 
@@ -261,7 +261,7 @@ def prepare(cfg, platform, vendor, runtime=False, profile=None):
         wrapper.write_text(re.sub(r'gradle-[\d.]+-(bin|all)\.zip', 'gradle-9.3.1-bin.zip', wrapper.read_text()))
         build = gradle / 'build.gradle'
         if vendor == 'c15t':
-            build.write_text(build.read_text() + "\nallprojects { repositories { exclusiveContent { forRepository { maven { url = uri(System.getenv('C15T_MAVEN_URL')) } }; filter { includeGroup('com.c15t') } } } }\n")
+            build.write_text(build.read_text() + "\nallprojects { repositories { exclusiveContent { forRepository { maven { url = uri(System.getenv('INTH_MAVEN_URL')) } }; filter { includeGroup('com.c15t') } } } }\n")
         if vendor == 'onetrust':
             with (gradle / 'app/proguard-rules.pro').open('a') as stream:
                 stream.write('\n' + (HERE / 'fixtures/onetrust.pro').read_text())
@@ -456,7 +456,7 @@ def build(cfg, profile, vendor, runtime=False):
     write(output / 'build-start.json', {'profile': profile, 'vendor': vendor, 'inputs': validate_inputs(cfg), 'hostInputsSha256': digest(host_inputs(host)),
                                       'installedInputsSha256': installed_hash})
     if platform == 'android':
-        extra = {'C15T_RESOLVED_OUT': str(output / 'dependencies.json'), 'C15T_SETTINGS_OUT': str(output / 'settings.json'), 'C15T_COMPILER_IDENTITY_OUT': str(output / 'compiler.json')}
+        extra = {'INTH_RESOLVED_OUT': str(output / 'dependencies.json'), 'INTH_SETTINGS_OUT': str(output / 'settings.json'), 'INTH_COMPILER_IDENTITY_OUT': str(output / 'compiler.json')}
         args = ['sh', 'android/gradlew', '-p', 'android', '--no-daemon', '--max-workers=3', '-PreactNativeArchitectures=arm64-v8a', '-Pandroid.enableMinifyInReleaseBuilds=true', '-Pandroid.enableShrinkResourcesInReleaseBuilds=true', ':app:assembleRelease', 'c15tEvidenceResolvedArtifacts', 'c15tEvidenceBuildSettings', ':app:c15tCompilerIdentity']
         for name in ('android-resolved-artifacts.gradle', 'android-build-settings.gradle', 'compiler-identity.gradle'):
             args += ['-I', str(HERE / 'fixtures/gradle' / name)]

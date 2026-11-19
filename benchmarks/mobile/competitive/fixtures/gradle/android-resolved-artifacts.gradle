@@ -9,7 +9,7 @@ gradle.projectsEvaluated {
     def file = artifact.file
     [coordinate: artifact.id.componentIdentifier.toString(), file: file.absolutePath, size: file.length(), sha256: MessageDigest.getInstance('SHA-256').digest(file.bytes).encodeHex().toString()]
    }.sort { a,b -> a.coordinate <=> b.coordinate ?: a.file <=> b.file }
-   def target = new File(System.getenv('C15T_RESOLVED_OUT'))
+   def target = new File(System.getenv('INTH_RESOLVED_OUT'))
    target.parentFile.mkdirs()
    target.text = JsonOutput.prettyPrint(JsonOutput.toJson(artifacts)) + '\n'
   }

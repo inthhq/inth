@@ -31,12 +31,12 @@ describe('applyLegacyProjectUrl', () => {
 			runtimeConfig,
 			{
 				NUXT_C15T_BACKEND_URL: 'https://private.example.com',
-				NUXT_PUBLIC_C15T_BACKEND_URL: 'https://c15t.example.com',
+				NUXT_PUBLIC_C15T_BACKEND_URL: 'https://inth.example.com',
 			},
 			VARIABLES
 		);
 		expect(runtimeConfig.public.inth.projectUrl).toBe(
-			'https://c15t.example.com'
+			'https://inth.example.com'
 		);
 		expect(runtimeConfig.inth.projectUrl).toBe('https://private.example.com');
 	});
@@ -46,7 +46,7 @@ describe('applyLegacyProjectUrl', () => {
 		applyLegacyProjectUrl(
 			runtimeConfig,
 			{
-				NUXT_PUBLIC_C15T_BACKEND_URL: 'https://c15t.example.com',
+				NUXT_PUBLIC_C15T_BACKEND_URL: 'https://inth.example.com',
 				NUXT_PUBLIC_INTH_PROJECT_URL: 'https://inth.example.com',
 			},
 			VARIABLES
@@ -72,7 +72,7 @@ describe('applyLegacyProjectUrl', () => {
 		const runtimeConfig = config();
 		applyLegacyProjectUrl(
 			runtimeConfig,
-			{ NUXT_PUBLIC_C15T_BACKEND_URL: 'https://c15t.example.com' },
+			{ NUXT_PUBLIC_C15T_BACKEND_URL: 'https://inth.example.com' },
 			VARIABLES.slice(1)
 		);
 		expect(runtimeConfig.public.inth.projectUrl).toBe(

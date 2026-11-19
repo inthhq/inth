@@ -336,7 +336,7 @@
 	},
 	"kind": "tc-string",
 	"notes": [
-		"Population decode-coverage: this model reaches past what @c15t/iab writes, so expects.encode is false and only the decode half is graded. An encoder that cannot produce this input is not wrong.",
+		"Population decode-coverage: this model reaches past what @inth/sdk-iab writes, so expects.encode is false and only the decode half is graded. An encoder that cannot produce this input is not wrong.",
 		"numRestrictions is a 12-bit count in front of a variable-length body, so the only way to know the core segment has ended is to have consumed exactly that many bodies. Three bodies under three purposes is the minimum case that catches a decoder that reads one and stops, or reads to the end of the segment.",
 		"The three restriction types are the whole wire vocabulary -- 0 not allowed, 1 require consent, 2 require legitimate interest -- and each one survives only if input.vendorList declares the purpose flexibly in the right direction, so a decoder has to read all three and an encoder has no business deciding which ones to keep.",
 		"vendorListVersion (142) and policyVersion (5) are read out of input.vendorList, not out of the model: with a vendor list attached the reference's getters ignore anything written onto those two fields, which is why input.model omits them."

@@ -76,7 +76,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
   // A headless run cannot answer the "Open in Inth Bare?" confirmation that iOS raises
   // before it hands an incoming `inth-demo://` open to the app, and a CI machine has no
-  // finger for it. The same link therefore also arrives as the `C15T_DEMO_LINK` variable,
+  // finger for it. The same link therefore also arrives as the `INTH_DEMO_LINK` variable,
   // which `simctl launch` passes through from its `SIMCTL_CHILD_` prefixed names.
   //
   // It enters as a launch URL rather than as a second channel, so JavaScript cannot tell
@@ -88,7 +88,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var options = launchOptions ?? [:]
 
     if options[.url] == nil,
-       let link = ProcessInfo.processInfo.environment["C15T_DEMO_LINK"],
+       let link = ProcessInfo.processInfo.environment["INTH_DEMO_LINK"],
        let url = URL(string: link) {
       options[.url] = url
     }

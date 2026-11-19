@@ -1,5 +1,5 @@
 {
-	"description": "How each core reads a matched rule's rights from /init. Expected answers come from readPolicyResolutionWire in @c15t/schema; packages/sdk/iab/src/__tests__/native-gpp-fixtures.test.ts checks them on every run, GppTest.kt runs them through StrictPolicyReader, and GPPTests.swift through PolicyWireReader. Every rule is the California opt-out wire from evaluation-us-ccpa-opt-out.json with its model, prompt, actions and rights changed.",
+	"description": "How each core reads a matched rule's rights from /init. Expected answers come from readPolicyResolutionWire in @inth/sdk-schema; packages/sdk/iab/src/__tests__/native-gpp-fixtures.test.ts checks them on every run, GppTest.kt runs them through StrictPolicyReader, and GPPTests.swift through PolicyWireReader. Every rule is the California opt-out wire from evaluation-us-ccpa-opt-out.json with its model, prompt, actions and rights changed.",
 	"cases": [
 		{
 			"id": "opt-out-required-rights",

@@ -38,7 +38,7 @@ const NOW = 1_780_000_000_000;
 /** The URL a render fetched, without the consent journey it adds as a query. */
 const target = (input: unknown): string => String(input).split('?')[0] ?? '';
 const CONSENTED = `inth=c.necessary:1,c.marketing:1,i.t:${NOW - 1000}`;
-const C15T_CONSENTED = CONSENTED.replace('inth=', 'c15t=');
+const INTH_CONSENTED = CONSENTED.replace('inth=', 'c15t=');
 const DISMISSED = `inth-notice=v=1&t=${NOW - 1000}&f=${'a'.repeat(64)}`;
 
 const MANIFEST = {
@@ -575,17 +575,17 @@ describe('forwarding', () => {
 	});
 
 	test.each([
-		['only a c15t choice', `session=secret; ${C15T_CONSENTED}`, C15T_CONSENTED],
-		['both choices', `${C15T_CONSENTED}; ${CONSENTED}`, CONSENTED],
+		['only a c15t choice', `session=secret; ${INTH_CONSENTED}`, INTH_CONSENTED],
+		['both choices', `${INTH_CONSENTED}; ${CONSENTED}`, CONSENTED],
 		[
 			'an empty Inth cookie and a c15t choice',
-			`inth=; ${C15T_CONSENTED}`,
-			C15T_CONSENTED,
+			`inth=; ${INTH_CONSENTED}`,
+			INTH_CONSENTED,
 		],
 		[
 			'a malformed Inth cookie and a c15t choice',
-			`inth=v=3&broken; ${C15T_CONSENTED}`,
-			C15T_CONSENTED,
+			`inth=v=3&broken; ${INTH_CONSENTED}`,
+			INTH_CONSENTED,
 		],
 		[
 			'only a pre-1.8 choice',
@@ -594,12 +594,12 @@ describe('forwarding', () => {
 		],
 		[
 			'only a c15t choice from before c15t cleared',
-			`${C15T_CONSENTED}; c15t-epoch=${NOW - 500}`,
+			`${INTH_CONSENTED}; c15t-epoch=${NOW - 500}`,
 			null,
 		],
 		[
 			'a malformed Inth cookie and a c15t choice from before the clear',
-			`inth=v=3&broken; ${C15T_CONSENTED}; inth-epoch=${NOW - 500}`,
+			`inth=v=3&broken; ${INTH_CONSENTED}; inth-epoch=${NOW - 500}`,
 			'inth=v=3&broken',
 		],
 	])(

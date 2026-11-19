@@ -507,7 +507,7 @@ const isTimeoutError = (error: unknown): boolean =>
  * @example
  * ```ts
  * return forwardConsentRequest({
- *   adapter: '@c15t/example',
+ *   adapter: '@inth/example',
  *   projectUrl: 'https://consent.example.com',
  *   forwarding: { host: url.host, proto: 'https' },
  *   options: resolveConsentProxyOptions(true)!,

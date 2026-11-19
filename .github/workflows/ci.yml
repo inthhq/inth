@@ -547,7 +547,7 @@ jobs:
       - uses: ./.github/actions/setup-sdk
       - name: Test and assemble the React Native Android binding
         env:
-          C15T_MAVEN_URL: file://${{ github.workspace }}/packages/android/build/maven-staging
+          INTH_MAVEN_URL: file://${{ github.workspace }}/packages/android/build/maven-staging
         working-directory: packages/react-native/android
         run: ./gradlew :inth-react-native:testDebugUnitTest :inth-react-native:assembleRelease --console=plain
       - name: Save Android reports

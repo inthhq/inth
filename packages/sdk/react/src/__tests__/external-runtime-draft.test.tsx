@@ -25,7 +25,7 @@ const createRuntime = function createRuntime(): ConsentRuntime {
 		],
 		mode: testing(),
 		persistence: false,
-		pkg: '@c15t/react-external-draft-test',
+		pkg: '@inth/react-external-draft-test',
 		prefetch: policyFixture({ experience: false, measurement: false }),
 	});
 };

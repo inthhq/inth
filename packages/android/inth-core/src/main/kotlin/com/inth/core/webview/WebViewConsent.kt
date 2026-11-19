@@ -14,7 +14,7 @@ import java.security.SecureRandom
  *
  * Consent state only: no subject id, no policy token, no location. The shape is
  * "WebView consent" in `packages/native-protocol/CONTRACT.md`, and `webViewConsentSource()` in
- * `@c15t/core` reads it.
+ * `@inth/sdk-core` reads it.
  */
 data class WebViewConsentState(
 	/** `true` once stored consent hydrated and a policy resolved. */

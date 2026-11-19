@@ -113,7 +113,7 @@ class ResetTest {
 		val store = InthStore(InMemoryKeyValueStore())
 		val kernel = testKernel(
 			config = NativeConfig(
-				backendUrl = "https://test.c15t.app",
+				backendUrl = "https://test.inth.app",
 				consentCategories = listOf(ConsentCategory.MEASUREMENT),
 				overrides = KernelOverrides(country = "DE", language = "de"),
 			),

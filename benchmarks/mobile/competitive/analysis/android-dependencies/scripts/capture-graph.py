@@ -35,7 +35,7 @@ for name in args.vendors:
         else:
             shutil.copytree(source / 'node_modules', host / 'node_modules', symlinks=True)
     env = dict(os.environ, CMP_GRAPH_OUT=str(args.out / 'graphs' / f'{name}.json'),
-               C15T_LOCAL_PODS='false', EXPO_PUBLIC_C15T_FAKE_NATIVE='false')
+               INTH_LOCAL_PODS='false', EXPO_PUBLIC_INTH_FAKE_NATIVE='false')
     if 'JAVA_HOME' not in env:
         env['JAVA_HOME'] = subprocess.check_output(['/usr/libexec/java_home', '-v17'], text=True).strip()
     command = ['sh', 'android/gradlew', '-p', 'android', '--no-daemon', '--max-workers=3',

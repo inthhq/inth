@@ -307,7 +307,7 @@ describe('Svelte backend URL variables', () => {
 			await rm(root, { force: true, recursive: true });
 		}
 	};
-	const C15T = 'https://c15t.example.com';
+	const C15T = 'https://inth.example.com';
 	const INTH = 'https://inth.example.com';
 
 	test('PUBLIC_INTH_PROJECT_URL alone gives the backend URL', async () => {

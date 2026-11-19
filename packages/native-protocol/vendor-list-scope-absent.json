@@ -2875,7 +2875,7 @@
 	"oracle": {
 		"function": "narrowGVLToVendors",
 		"module": "packages/sdk/iab/src/tcf/fetch-gvl.ts",
-		"package": "@c15t/iab"
+		"package": "@inth/sdk-iab"
 	},
 	"protocolVersion": 1,
 	"shape": "scope-absent"

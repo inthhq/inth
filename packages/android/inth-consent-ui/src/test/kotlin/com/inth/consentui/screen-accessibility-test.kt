@@ -95,7 +95,7 @@ class ScreenAccessibilityTest {
      * Accept all and Reject all need 5:1, the IAB TCF floor for the first layer's primary actions.
      */
     private fun assertStockSmallTextContrast(dark: Boolean) {
-        val colors = ConsentTheme.Colors.c15t
+        val colors = ConsentTheme.Colors.default
         fun argb(color: ConsentThemeColor) = (if (dark) color.dark else color.light) or 0xFF000000.toInt()
         val tagFill = ColorUtils.compositeColors(ColorUtils.setAlphaComponent(argb(colors.primary), Math.round(255 * 0.14f)), argb(colors.surface))
         val pairs = listOf(
@@ -263,7 +263,7 @@ class ScreenAccessibilityTest {
         } finally { RuntimeEnvironment.setFontScale(1f); Dispatchers.resetMain() }
     }
 
-    /** Category mode speaks the policy's language, from `@c15t/translations`, not English literals. */
+    /** Category mode speaks the policy's language, from `@inth/sdk-translations`, not English literals. */
     @Test fun categoryLabelsFollowThePolicyLanguage() {
         Dispatchers.setMain(Dispatchers.Unconfined)
         try {
@@ -300,7 +300,7 @@ class ScreenAccessibilityTest {
 
     private fun assertOffSwitchContrast() {
         lateinit var scheme: ColorScheme
-        compose.setContent { scheme = ConsentTheme.c15t.colorScheme() }
+        compose.setContent { scheme = ConsentTheme.default.colorScheme() }
         compose.waitForIdle()
         // Material 3's off thumb and track border use Outline; its off track uses
         // SurfaceContainerHighest. Card rows use SurfaceContainer.
@@ -310,7 +310,7 @@ class ScreenAccessibilityTest {
         }
     }
 
-    private fun show(store: DecisionStore, theme: ConsentTheme = ConsentTheme.c15t, language: String? = null): ConsentPresenter {
+    private fun show(store: DecisionStore, theme: ConsentTheme = ConsentTheme.default, language: String? = null): ConsentPresenter {
         val fixture = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
             .map { File(it, "examples/native/consent-demo/fixtures/category-init.json") }.first { it.exists() }.readText()
         val config = NativeConfig("https://fixture.invalid", overrides = KernelOverrides(language = language))

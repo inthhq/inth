@@ -445,16 +445,16 @@ describe('resolveOptions', () => {
 
 	it('reads PUBLIC_C15T_BACKEND_URL when the Inth variable is unset', async () => {
 		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', undefined);
-		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://c15t.example.com');
+		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://inth.example.com');
 		const { calls } = await runSetup({ mode: hostedMode() });
 		expect(serverOptionsSource(calls)).toContain(
-			'"projectUrl":"https://c15t.example.com"'
+			'"projectUrl":"https://inth.example.com"'
 		);
 	});
 
 	it('prefers PUBLIC_INTH_PROJECT_URL in .env over PUBLIC_C15T_BACKEND_URL', async () => {
 		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', undefined);
-		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://c15t.example.com');
+		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://inth.example.com');
 		const root = mkdtempSync(join(tmpdir(), 'inth-astro-env-'));
 		writeFileSync(
 			join(root, '.env'),
@@ -470,7 +470,7 @@ describe('resolveOptions', () => {
 	});
 
 	it('an explicit projectUrl beats both variables', async () => {
-		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://c15t.example.com');
+		vi.stubEnv('PUBLIC_C15T_BACKEND_URL', 'https://inth.example.com');
 		vi.stubEnv('PUBLIC_INTH_PROJECT_URL', 'https://inth.example.com');
 		const { calls } = await runSetup({
 			mode: hostedMode(),

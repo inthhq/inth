@@ -1,5 +1,5 @@
 # Waits for the Inth first-layer prompt and taps Reject all.
-# Fails if the prompt does not appear within C15T_TIMEOUT milliseconds
+# Fails if the prompt does not appear within INTH_TIMEOUT milliseconds
 # (default 15000). Use dismiss-if-shown.yaml when the prompt is optional.
 #
 #   - runFlow: ../node_modules/@inth/react-native/maestro/reject-all.yaml
@@ -12,7 +12,7 @@ appId: ${APP_ID}
 - extendedWaitUntil:
     visible:
       id: 'inth.first-layer.title'
-    timeout: ${C15T_TIMEOUT || 15000}
+    timeout: ${INTH_TIMEOUT || 15000}
 - scrollUntilVisible:
     element:
       id: 'inth.first-layer.reject-all'
@@ -22,4 +22,4 @@ appId: ${APP_ID}
 - extendedWaitUntil:
     notVisible:
       id: 'inth.first-layer'
-    timeout: ${C15T_TIMEOUT || 15000}
+    timeout: ${INTH_TIMEOUT || 15000}

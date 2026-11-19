@@ -17,8 +17,8 @@ dependencyResolutionManagement {
                     url = uri(providers.gradleProperty('inth.repository').get())
                     if (url.scheme == 'https') {
                         credentials {
-                            username = System.getenv('C15T_MAVEN_USERNAME')
-                            password = System.getenv('C15T_MAVEN_TOKEN')
+                            username = System.getenv('INTH_MAVEN_USERNAME')
+                            password = System.getenv('INTH_MAVEN_TOKEN')
                         }
                     }
                 }

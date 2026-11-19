@@ -466,7 +466,7 @@ describe('theme prop', () => {
 		[
 			'an unknown appearance',
 			{ appearance: 'dark' },
-			/theme\.appearance must be one of "c15t", "system"/u,
+			/theme\.appearance must be one of "paper", "system"/u,
 		],
 		[
 			'an unknown save placement',

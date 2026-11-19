@@ -4,7 +4,7 @@ import XCTest
 /// Real PostHog, Mixpanel and Sentry Replay traffic follows the Inth measurement decision.
 ///
 /// Runs only under `run-vendor-e2e.sh`, which starts `scripts/vendor_capture.py` and passes
-/// its base URL as `C15T_VENDOR_BASE`. The app points every SDK at that server; this test
+/// its base URL as `INTH_VENDOR_BASE`. The app points every SDK at that server; this test
 /// reads what arrived from `/captured`. Firebase cannot be redirected, so the runner checks
 /// its debug log against the step markers this test writes to the unified log
 /// (`scripts/vendor-firebase-log.py`).
@@ -21,8 +21,8 @@ final class VendorSDKTests: XCTestCase {
 
     override func setUpWithError() throws {
         continueAfterFailure = false
-        guard let raw = ProcessInfo.processInfo.environment["C15T_VENDOR_BASE"], let url = URL(string: raw) else {
-            throw XCTSkip("Set C15T_VENDOR_BASE with run-vendor-e2e.sh to run the real vendor SDK journey.")
+        guard let raw = ProcessInfo.processInfo.environment["INTH_VENDOR_BASE"], let url = URL(string: raw) else {
+            throw XCTSkip("Set INTH_VENDOR_BASE with run-vendor-e2e.sh to run the real vendor SDK journey.")
         }
         base = url
     }
@@ -34,7 +34,7 @@ final class VendorSDKTests: XCTestCase {
         attachment.name = "vendor-steps.json"
         attachment.lifetime = .keepAlways
         add(attachment)
-        if let dir = ProcessInfo.processInfo.environment["C15T_CAPTURE_DIR"] {
+        if let dir = ProcessInfo.processInfo.environment["INTH_CAPTURE_DIR"] {
             try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
             try? data.write(to: URL(fileURLWithPath: dir).appendingPathComponent("vendor-steps.json"))
         }
@@ -90,9 +90,9 @@ final class VendorSDKTests: XCTestCase {
     func launch(reset: Bool) {
         app = XCUIApplication()
         app.launchEnvironment = [
-            "C15T_FIXTURE_SCENARIO": "vendor-sdks",
-            "C15T_FIXTURE_RESET": reset ? "1" : "0",
-            "C15T_VENDOR_BASE": base.absoluteString,
+            "INTH_FIXTURE_SCENARIO": "vendor-sdks",
+            "INTH_FIXTURE_RESET": reset ? "1" : "0",
+            "INTH_VENDOR_BASE": base.absoluteString,
         ]
         // Debug mode logs collection changes and each event; verbose adds the consent values.
         // scripts/vendor-firebase-log.py reads them against this test's step markers.

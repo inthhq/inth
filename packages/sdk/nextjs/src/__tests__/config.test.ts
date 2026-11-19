@@ -46,11 +46,11 @@ describe('defineConsentConfig', () => {
 
 	test('reads NEXT_PUBLIC_C15T_BACKEND_URL when the Inth name is unset', () => {
 		vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', '');
-		vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', 'https://c15t.example.com');
+		vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', 'https://inth.example.com');
 
-		expect(defineConsentConfig().projectUrl).toBe('https://c15t.example.com');
+		expect(defineConsentConfig().projectUrl).toBe('https://inth.example.com');
 		expect(resolveConsentSource().server.route.projectUrl).toBe(
-			'https://c15t.example.com'
+			'https://inth.example.com'
 		);
 
 		vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', 'https://inth.example.com');

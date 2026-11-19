@@ -9,21 +9,21 @@ if (!output) {
 await writeFile(
 	output,
 	await exportMobilePolicy({
-		endpoint: `${process.env.C15T_E2E_BINDING ?? 'http://localhost:3108'}/api/self-host`,
+		endpoint: `${process.env.INTH_E2E_BINDING ?? 'http://localhost:3108'}/api/self-host`,
 		expiresAt:
-			process.env.C15T_APP_E2E_SCENARIO === 'expiry'
+			process.env.INTH_APP_E2E_SCENARIO === 'expiry'
 				? 1793232001000
 				: Date.now() + 86400000,
 		fetch: (input, init) =>
 			fetch(
 				String(input).replace(
-					process.env.C15T_E2E_BINDING ?? 'http://localhost:3108',
-					process.env.C15T_E2E_FETCH ?? 'http://localhost:3108'
+					process.env.INTH_E2E_BINDING ?? 'http://localhost:3108',
+					process.env.INTH_E2E_FETCH ?? 'http://localhost:3108'
 				),
 				init
 			),
 		now:
-			process.env.C15T_APP_E2E_SCENARIO === 'expiry'
+			process.env.INTH_APP_E2E_SCENARIO === 'expiry'
 				? 1793232000000
 				: undefined,
 		testOnlyAllowLoopback: true,

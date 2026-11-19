@@ -3,19 +3,19 @@
  *
  * The Swift and Kotlin cores are new TC String encoders and decoders with no
  * maintained native SDK to adopt, so the oracle is the reference JavaScript
- * implementation, `@iabtechlabtcf/core`, at the exact version `@c15t/iab` already
+ * implementation, `@iabtechlabtcf/core`, at the exact version `@inth/sdk-iab` already
  * ships. Nothing in this file is a hand-written idea of what a TC String looks
  * like: every `expected` is a byte string this package produced and read back.
  *
  * Two populations, recorded inside each fixture as `population` and `expects`, so a
  * runner branches on the data rather than on the fixture id:
  *
- * - `parity` -- a model built from exactly the fields `@c15t/iab` populates
+ * - `parity` -- a model built from exactly the fields `@inth/sdk-iab` populates
  *   (`packages/sdk/iab/src/tcf/tc-string.ts`), with its defaults. A native encoder must
  *   reproduce these byte for byte AND read them back. Byte equality here is the whole
  *   point: two encoders that agree on the input but disagree on one bit produce
  *   strings that vendors read as different consent.
- * - `decode-coverage` -- a model that reaches past what `@c15t/iab` ever writes:
+ * - `decode-coverage` -- a model that reaches past what `@inth/sdk-iab` ever writes:
  *   publisher restrictions, `purposeOneTreatment`, `useNonStandardTexts`, vendor and
  *   custom-purpose ids wide enough that no range encoding is trivial. A native
  *   decoder must read these correctly; its encoder is explicitly not graded on them,
@@ -749,8 +749,8 @@ const fidelityNotes = function fidelityNotes(
 // -- Defaults ---------------------------------------------------------------
 
 /** The CMP identity Inth writes. 28 is the registered example id its docs use. */
-const C15T_CMP_ID = 28;
-const C15T_CMP_VERSION = 1;
+const INTH_CMP_ID = 28;
+const INTH_CMP_VERSION = 1;
 
 /**
  * A model with Inth's defaults in it.
@@ -765,8 +765,8 @@ const inthModel = function inthModel(
 	overrides: Partial<TcStringModel>
 ): TcStringModel {
 	return {
-		cmpId: C15T_CMP_ID,
-		cmpVersion: C15T_CMP_VERSION,
+		cmpId: INTH_CMP_ID,
+		cmpVersion: INTH_CMP_VERSION,
 		consentLanguage: 'EN',
 		consentScreen: 1,
 		created: inthTimestamp(now),
@@ -879,7 +879,7 @@ interface CaseSpec {
 	/**
 	 * Which reading of the frozen clock each timestamp carries. `day` is Inth's
 	 * day floor, `clock` is the clock itself. Both default to `day` because that is
-	 * what @c15t/iab writes; a vector that wants the two fields to differ asks for
+	 * what @inth/sdk-iab writes; a vector that wants the two fields to differ asks for
 	 * them here rather than hard-coding a millisecond value that would only be right
 	 * for one clock.
 	 */
@@ -893,13 +893,13 @@ interface CaseSpec {
 
 /**
  * The shared note on who wrote the model, so a runner reading one file knows whether
- * the input is something `@c15t/iab` can emit or something only the reference can.
+ * the input is something `@inth/sdk-iab` can emit or something only the reference can.
  */
 const POPULATION_NOTES: Record<TcStringPopulation, string> = {
 	'decode-coverage':
-		'Population decode-coverage: this model reaches past what @c15t/iab writes, so expects.encode is false and only the decode half is graded. An encoder that cannot produce this input is not wrong.',
+		'Population decode-coverage: this model reaches past what @inth/sdk-iab writes, so expects.encode is false and only the decode half is graded. An encoder that cannot produce this input is not wrong.',
 	parity:
-		'Population parity: every non-default field here is one @c15t/iab writes, so expects.encode is true and a native encoder has to reproduce tcString byte for byte.',
+		'Population parity: every non-default field here is one @inth/sdk-iab writes, so expects.encode is true and a native encoder has to reproduce tcString byte for byte.',
 };
 
 /**
@@ -958,7 +958,7 @@ const assertParitySurface = function assertParitySurface(
 	}
 	if (untouched.length > 0) {
 		throw new Error(
-			`${id} is marked population=parity but leaves ${untouched.join(', ')} outside what @c15t/iab writes. Either move those to a decode-coverage vector or drop them here; a parity byte string neither native core can reach from an Inth install certifies an encoder nobody has to build.`
+			`${id} is marked population=parity but leaves ${untouched.join(', ')} outside what @inth/sdk-iab writes. Either move those to a decode-coverage vector or drop them here; a parity byte string neither native core can reach from an Inth install certifies an encoder nobody has to build.`
 		);
 	}
 };
@@ -1063,7 +1063,7 @@ const CASE_SPECS: readonly CaseSpec[] = [
 		model: {},
 		notes: [
 			'The empty vector is not absent: vendorConsents, vendorLegitimateInterests and vendorsDisclosed each still write a 16-bit maxId of 0 and an encoding-type bit, and a decoder that reads "no bits left" as "field missing" rather than "no ids" will disagree with the reference about whether consent was recorded.',
-			'created and lastUpdated are the UTC day floor of input.now, not input.now, because @c15t/iab truncates the confirmation time before it reaches the model. Reproducing this string from input.now is wrong by hours.',
+			'created and lastUpdated are the UTC day floor of input.now, not input.now, because @inth/sdk-iab truncates the confirmation time before it reaches the model. Reproducing this string from input.now is wrong by hours.',
 		],
 		population: 'parity',
 	},
@@ -1247,7 +1247,7 @@ const CASE_SPECS: readonly CaseSpec[] = [
 	// -- population: decode-coverage ----------------------------------------
 	{
 		description:
-			'A service-specific string that declares purpose one treatment, a field @c15t/iab never writes and a vendor reads as "the publisher told me the user needs no purpose-one consent".',
+			'A service-specific string that declares purpose one treatment, a field @inth/sdk-iab never writes and a vendor reads as "the publisher told me the user needs no purpose-one consent".',
 		id: 'tc-string-decode-purpose-one-treatment-service-specific',
 		model: {
 			purposeConsents: [2, 3, 4],
@@ -1410,7 +1410,7 @@ const CASE_SPECS: readonly CaseSpec[] = [
 		id: 'tc-string-decode-created-before-last-updated',
 		model: { purposeConsents: [1, 7], vendorConsents: [1] },
 		notes: [
-			'Both timestamps are 36 bits of tenths of a second, so they survive to the decisecond and not below it; a confirmation time with a sub-de-second remainder is the one thing in a core segment that cannot round-trip exactly, which is why the fixture clock is a whole number of deciseconds. @c15t/iab always writes both fields from the same truncated day, so a decoder that assumes created equals lastUpdated passes every parity vector and fails this one.',
+			'Both timestamps are 36 bits of tenths of a second, so they survive to the decisecond and not below it; a confirmation time with a sub-de-second remainder is the one thing in a core segment that cannot round-trip exactly, which is why the fixture clock is a whole number of deciseconds. @inth/sdk-iab always writes both fields from the same truncated day, so a decoder that assumes created equals lastUpdated passes every parity vector and fails this one.',
 		],
 		population: 'decode-coverage',
 		timestamps: { created: 'day', lastUpdated: 'clock' },

@@ -55,8 +55,8 @@ Keychain service.
 The local demonstration injects a sample transport through the SDK's internal
 API. An app does not do this: it passes its project URL, as the hosted path does.
 
-For hosted consent, set `C15T_BACKEND_URL` to the project URL from your Inth
-dashboard, such as `https://your-project.inth.app`, and `C15T_PRIVACY_POLICY_URL` to your app's HTTPS privacy policy in the app
+For hosted consent, set `INTH_PROJECT_URL` to the project URL from your Inth
+dashboard, such as `https://your-project.inth.app`, and `INTH_PRIVACY_POLICY_URL` to your app's HTTPS privacy policy in the app
 target's build settings. Configure the backend policy before running. The
 installer uses a separate hosted Keychain service. Invalid configuration fails
 visibly and keeps measurement off. No credentials belong in this sample.

@@ -22,7 +22,7 @@ const createRuntime = function createRuntime(
 			'marketing',
 		],
 		mode: testing(),
-		pkg: '@c15t/react-external-test',
+		pkg: '@inth/react-external-test',
 		prefetch: policyFixture({ measurement: false }),
 	});
 };

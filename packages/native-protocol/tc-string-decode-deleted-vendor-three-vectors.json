@@ -307,7 +307,7 @@
 	},
 	"kind": "tc-string",
 	"notes": [
-		"Population decode-coverage: this model reaches past what @c15t/iab writes, so expects.encode is false and only the decode half is graded. An encoder that cannot produce this input is not wrong.",
+		"Population decode-coverage: this model reaches past what @inth/sdk-iab writes, so expects.encode is false and only the decode half is graded. An encoder that cannot produce this input is not wrong.",
 		"Vendor 46 is not withdrawn and keeps its legitimate-interest bit everywhere, so the only difference between 46 and 300 as this string is written is the deleted date on the vendor entry.",
 		"vendorConsents loses 300, 700 to withdrawal, not to an undeclared purpose: those entries carry deletedDate, GVL.mapVendors leaves them out of gvl.vendors (the id is still in gvl.vendorIds and the entry still survives in gvl.fullVendorList), and SemanticPreEncoder unsets a positive signal for any vendor the GVL does not hand back. The ids stay declared in input.vendorList.vendors and stay valid as numbers, so a port that keeps withdrawn vendors in its vendor table and never reads deletedDate encodes bits the reference erases.",
 		"vendorLegitimateInterests loses 300, 700 to withdrawal, not to an undeclared purpose: those entries carry deletedDate, GVL.mapVendors leaves them out of gvl.vendors (the id is still in gvl.vendorIds and the entry still survives in gvl.fullVendorList), and SemanticPreEncoder unsets a positive signal for any vendor the GVL does not hand back. The ids stay declared in input.vendorList.vendors and stay valid as numbers, so a port that keeps withdrawn vendors in its vendor table and never reads deletedDate encodes bits the reference erases.",

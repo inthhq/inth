@@ -233,7 +233,7 @@ private const val BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghij
  * acknowledgement, and most tests are about the optional categories themselves.
  */
 val TEST_CONFIG = NativeConfig(
-	backendUrl = "https://test.c15t.app",
+	backendUrl = "https://test.inth.app",
 	consentCategories = ConsentCategory.entries.toList(),
 )
 

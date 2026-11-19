@@ -45,8 +45,8 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  C15T_ANDROID_IMAGE: system-images;android-36;google_apis;x86_64
-  C15T_ANDROID_ARCH: x86_64
+  INTH_ANDROID_IMAGE: system-images;android-36;google_apis;x86_64
+  INTH_ANDROID_ARCH: x86_64
 
 jobs:
   native:
@@ -164,8 +164,8 @@ jobs:
         # fixture's SDK. Expo 56 gets the packed type, Codegen and prebuild checks.
         cell: [fixture, expo-55, expo-57]
     env:
-      C15T_EXPO_CELL: ${{ matrix.cell != 'fixture' && matrix.cell || '' }}
-      C15T_APP_E2E_OUT: ${{ github.workspace }}/.ci-reports/expo-vendor-e2e/${{ matrix.cell }}-android
+      INTH_EXPO_CELL: ${{ matrix.cell != 'fixture' && matrix.cell || '' }}
+      INTH_APP_E2E_OUT: ${{ github.workspace }}/.ci-reports/expo-vendor-e2e/${{ matrix.cell }}-android
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:

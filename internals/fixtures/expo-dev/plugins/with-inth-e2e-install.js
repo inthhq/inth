@@ -105,7 +105,7 @@ const withInthE2EInstall = (
 ) => {
 	if (!policy) {
 		throw new Error(
-			'An App E2E build needs C15T_E2E_POLICY, the policy resource exported for its backend. scripts/vendor-e2e.sh sets it.'
+			'An App E2E build needs INTH_E2E_POLICY, the policy resource exported for its backend. scripts/vendor-e2e.sh sets it.'
 		);
 	}
 	const policySource = (projectRoot) => path.resolve(projectRoot, policy);

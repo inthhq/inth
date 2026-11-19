@@ -109,21 +109,21 @@ private final class ConsentColorCache: @unchecked Sendable {
 /// passed to the root modifier takes precedence over both.
 public struct ConsentTheme: Equatable, Sendable {
     /// Semantic colours. Components never use a raw value outside this set. A name that has a web
-    /// token is that token's name: `primary` is `--c15t-primary`, `textMuted` is `--c15t-text-muted`.
+    /// token is that token's name: `primary` is `--inth-primary`, `textMuted` is `--inth-text-muted`.
     public struct Colors: Equatable, Sendable {
         /// Page background behind every consent screen. No web token.
         public var canvas: ConsentThemeColor
-        /// Cards and list rows that sit on the canvas. Web: `--c15t-surface`.
+        /// Cards and list rows that sit on the canvas. Web: `--inth-surface`.
         public var surface: ConsentThemeColor
         /// A quieter surface for subordinate content such as the partner purposes list. No web token.
         public var surfaceMuted: ConsentThemeColor
-        /// Primary text. Web: `--c15t-text`.
+        /// Primary text. Web: `--inth-text`.
         public var text: ConsentThemeColor
-        /// Supporting text and section labels. Web: `--c15t-text-muted`.
+        /// Supporting text and section labels. Web: `--inth-text-muted`.
         public var textMuted: ConsentThemeColor
-        /// Links, switches, the Save button, and the brand eyebrow. Web: `--c15t-primary`.
+        /// Links, switches, the Save button, and the brand eyebrow. Web: `--inth-primary`.
         public var primary: ConsentThemeColor
-        /// Text on `primary`. Web: `--c15t-text-on-primary`.
+        /// Text on `primary`. Web: `--inth-text-on-primary`.
         public var textOnPrimary: ConsentThemeColor
         /// Fill of the two decision buttons. Accept all and Reject all always share it. No web token.
         public var decision: ConsentThemeColor
@@ -150,7 +150,7 @@ public struct ConsentTheme: Equatable, Sendable {
         var statusTagText: ConsentThemeColor { primary.blended(toward: text, fraction: 0.3) }
 
         /// Warm paper, ink decisions, and the c15t blue for links and switches.
-        public static let c15t = Colors(
+        public static let `default` = Colors(
             canvas: ConsentThemeColor(light: 0xF8F4EE, dark: 0x171411),
             surface: ConsentThemeColor(light: 0xFFFFFF, dark: 0x211D18),
             surfaceMuted: ConsentThemeColor(light: 0xEFE9DF, dark: 0x2B2620),
@@ -162,11 +162,11 @@ public struct ConsentTheme: Equatable, Sendable {
             textOnDecision: ConsentThemeColor(light: 0xF8F4EE, dark: 0x171411))
     }
 
-    /// Corner radii in points, named after `--c15t-radius-*`.
+    /// Corner radii in points, named after `--inth-radius-*`.
     public struct Radius: Equatable, Sendable {
         /// Status callouts. `nil` follows `md` minus 2.
         public var sm: CGFloat?
-        /// Buttons and cards. Web: `--c15t-radius-md`.
+        /// Buttons and cards. Web: `--inth-radius-md`.
         public var md: CGFloat
         /// The notice card and the discard confirmation. `nil` follows `md` plus 6.
         public var lg: CGFloat?
@@ -181,7 +181,7 @@ public struct ConsentTheme: Equatable, Sendable {
         var resolvedLg: CGFloat { lg ?? md + 6 }
     }
 
-    /// Spacing scale in points, named after `--c15t-space-*`. Page gutters, stack gaps and
+    /// Spacing scale in points, named after `--inth-space-*`. Page gutters, stack gaps and
     /// section padding read it; a control's own inset stays fixed so its tap target keeps its size.
     public struct Spacing: Equatable, Sendable {
         public var xs: CGFloat
@@ -201,7 +201,7 @@ public struct ConsentTheme: Equatable, Sendable {
 
     /// Type settings, named after the web `typography` tokens.
     public struct Typography: Equatable, Sendable {
-        /// Sizes in points at the default Dynamic Type size, named after `--c15t-font-size-*`.
+        /// Sizes in points at the default Dynamic Type size, named after `--inth-font-size-*`.
         /// `nil` keeps the platform text style. Every text role in a group scales with its token,
         /// so the hierarchy inside the group holds, and Dynamic Type still applies on top.
         public struct FontSize: Equatable, Sendable {
@@ -220,7 +220,7 @@ public struct ConsentTheme: Equatable, Sendable {
         }
 
         /// PostScript name of a font the app bundles, for every text role except the headline.
-        /// `nil` is the system face. Web: `--c15t-font-family`.
+        /// `nil` is the system face. Web: `--inth-font-family`.
         public var fontFamily: String?
         /// Typeface of the first-layer headline. No web token.
         public var headlineFont: HeadlineFont
@@ -362,14 +362,14 @@ public struct ConsentTheme: Equatable, Sendable {
     /// always take the `system` colours.
     public enum Appearance: String, CaseIterable, Sendable {
         /// Warm paper and ink.
-        case c15t
+        case paper
         /// The platform's own backgrounds and text colours with the app's accent colour, and a
         /// centred first-layer page. The default.
         case system
     }
 
     /// First-layer copy a host may replace. Decision labels are not here on purpose. A `nil` field
-    /// shows the stock copy from `@c15t/translations` in the policy's language; a host string is
+    /// shows the stock copy from `@inth/sdk-translations` in the policy's language; a host string is
     /// shown as given in every language.
     public struct Copy: Equatable, Sendable {
         /// The headline. Keep it short: it is set in display type.
@@ -383,7 +383,7 @@ public struct ConsentTheme: Equatable, Sendable {
         }
 
         /// The stock copy, translated.
-        public static let c15t = Copy()
+        public static let `default` = Copy()
     }
 
     public var colors: Colors
@@ -405,9 +405,9 @@ public struct ConsentTheme: Equatable, Sendable {
     /// Position of Save Settings in Privacy Settings.
     public var savePlacement: SavePlacement
 
-    public init(colors: Colors = .c15t, radius: Radius = Radius(), spacing: Spacing = Spacing(),
+    public init(colors: Colors = .default, radius: Radius = Radius(), spacing: Spacing = Spacing(),
         typography: Typography = Typography(), slots: [Slot: SlotStyle] = [:],
-        brand: Brand = Brand(), copy: Copy = .c15t, showsBranding: Bool = true, branding: Branding = .inth,
+        brand: Brand = Brand(), copy: Copy = .default, showsBranding: Bool = true, branding: Branding = .inth,
         firstLayer: FirstLayer = .page, appearance: Appearance = .system,
         savePlacement: SavePlacement = .top) {
         self.colors = colors
@@ -428,10 +428,10 @@ public struct ConsentTheme: Equatable, Sendable {
     func slot(_ slot: Slot) -> SlotStyle { slots[slot] ?? SlotStyle() }
 
     /// The stock theme: the system appearance, with Save Settings in the navigation bar.
-    public static let c15t = ConsentTheme()
+    public static let `default` = ConsentTheme()
 
     /// The theme hosts that present without passing one get. Set it once at launch.
-    @MainActor public static var current = ConsentTheme.c15t
+    @MainActor public static var current = ConsentTheme.default
 
     /// `Info.plist` keys. Each colour is `#RRGGBB` or `#RRGGBB,#RRGGBB` (light, dark). Each
     /// size is a number of points.
@@ -618,7 +618,7 @@ public struct ConsentTheme: Equatable, Sendable {
     /// colours a host has set, is returned unchanged.
     /// - Parameter tint: The app's accent colour as light and dark sRGB values.
     func withSystemAppearance(tint: ConsentThemeColor) -> ConsentTheme {
-        guard appearance == .system || firstLayer != .page, colors == .c15t else { return self }
+        guard appearance == .system || firstLayer != .page, colors == .default else { return self }
         var theme = self
         let decision = ConsentThemeColor(
             light: Self.adjusted(tint.light, against: 0xFFFFFF, ratio: minimumDecisionContrast, lighten: false),
@@ -690,8 +690,8 @@ public struct ConsentTheme: Equatable, Sendable {
         let ratio = decisionContrast
         guard ratio < Self.minimumDecisionContrast else { return self }
         var theme = self
-        theme.colors.decision = Colors.c15t.decision
-        theme.colors.textOnDecision = Colors.c15t.textOnDecision
+        theme.colors.decision = Colors.default.decision
+        theme.colors.textOnDecision = Colors.default.textOnDecision
         theme.slots[.buttonPrimary]?.color = nil
         theme.slots[.buttonPrimary]?.backgroundColor = nil
         report(String(format: "Inth: decision colours reach %.2f:1, under the 5:1 IAB TCF minimum. Using the stock decision colours.", ratio))
@@ -859,7 +859,7 @@ struct ConsentCopyKey: EnvironmentKey {
 }
 
 struct ConsentThemeKey: EnvironmentKey {
-    static let defaultValue = ConsentTheme.c15t
+    static let defaultValue = ConsentTheme.default
 }
 
 extension EnvironmentValues {

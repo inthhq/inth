@@ -40,7 +40,7 @@ const isFilteredRun = cliArgs.some(
  * `scripts/check-coverage-ratchet.ts`, which names the files that broke the
  * floor instead of printing four aggregate percentages.
  */
-const runsRatchet = process.env.C15T_COVERAGE_RATCHET === '1';
+const runsRatchet = process.env.INTH_COVERAGE_RATCHET === '1';
 
 /** An explicit `--coverage` always instruments, even alongside a filter. */
 const wantsCoverage = cliArgs.some(

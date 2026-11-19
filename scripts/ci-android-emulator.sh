@@ -8,12 +8,12 @@
 set -euo pipefail
 
 : "${ANDROID_HOME:?ANDROID_HOME must point at the Android SDK}"
-IMAGE="${C15T_ANDROID_IMAGE:-system-images;android-36;google_apis;x86_64}"
-AVD_NAME="${C15T_AVD_NAME:-inth-ci}"
-PORT="${C15T_EMULATOR_PORT:-5554}"
+IMAGE="${INTH_ANDROID_IMAGE:-system-images;android-36;google_apis;x86_64}"
+AVD_NAME="${INTH_AVD_NAME:-inth-ci}"
+PORT="${INTH_EMULATOR_PORT:-5554}"
 SERIAL="emulator-${PORT}"
 ADB="${ANDROID_HOME}/platform-tools/adb"
-LOG_DIR="${C15T_EMULATOR_LOG_DIR:-${RUNNER_TEMP:-/tmp}/android-emulator}"
+LOG_DIR="${INTH_EMULATOR_LOG_DIR:-${RUNNER_TEMP:-/tmp}/android-emulator}"
 
 case "${1:-}" in
 start)

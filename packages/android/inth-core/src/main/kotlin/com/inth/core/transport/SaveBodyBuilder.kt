@@ -70,7 +70,7 @@ object SaveBodyBuilder {
         }
 		// The decision assertion goes on flat, not nested, and only when nothing
 		// else already binds the write to a policy revision. `buildDecisionAssertion`
-		// in `@c15t/core` returns nothing whenever a `policySnapshotToken` is
+		// in `@inth/sdk-core` returns nothing whenever a `policySnapshotToken` is
 		// present, because the token is the stronger claim.
 		for ((field, value) in decisionAssertion(payload)) {
 			put(field, value)
@@ -90,7 +90,7 @@ object SaveBodyBuilder {
 		preferences["necessary"] = true
 		val choice = payload.choice ?: return preferences
 		for (category in PREFERENCE_ORDER) {
-			// Insertion order follows OPTIONAL_CONSENT_CATEGORIES in @c15t/core.
+			// Insertion order follows OPTIONAL_CONSENT_CATEGORIES in @inth/sdk-core.
 			val wire = category.wireName
 			if (choice.consents.containsKey(wire)) {
 				preferences[wire] = choice.consents.getValue(wire)

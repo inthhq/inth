@@ -251,7 +251,7 @@ export const IAB_TABLE: NativeCopyTable = {
 	kotlinType: 'IabCopy',
 	source: 'packages/sdk/translations/src/translations/*.ts (iab namespace).',
 	summary:
-		'IAB TCF consent UI copy from `@c15t/translations`, one value per language.',
+		'IAB TCF consent UI copy from `@inth/sdk-translations`, one value per language.',
 	swiftOutput: SWIFT_OUTPUT,
 	swiftType: 'IABCopy',
 };
@@ -266,7 +266,7 @@ export const CONSENT_TABLE: NativeCopyTable = {
 	source:
 		'packages/sdk/translations/src/translations/*.ts and native-app-labels.ts (native.*).',
 	summary:
-		'Category-mode consent UI copy from `@c15t/translations`, one value per language.',
+		'Category-mode consent UI copy from `@inth/sdk-translations`, one value per language.',
 	swiftOutput: CONSENT_SWIFT_OUTPUT,
 	swiftType: 'ConsentCopy',
 };
@@ -431,7 +431,7 @@ export const renderSwift = function renderSwift(
 		'',
 		`/// ${table.summary}`,
 		`public struct ${type}: Sendable, Equatable {`,
-		'    /// Language code, lowercase, as in `@c15t/translations`.',
+		'    /// Language code, lowercase, as in `@inth/sdk-translations`.',
 		'    public let language: String',
 	];
 	for (const [name, keyPath] of table.keys) {
@@ -577,7 +577,7 @@ export const renderKotlin = function renderKotlin(
 		'',
 		`/** ${table.summary} */`,
 		`data class ${type}(`,
-		'    /** Language code, lowercase, as in `@c15t/translations`. */',
+		'    /** Language code, lowercase, as in `@inth/sdk-translations`. */',
 		'    val language: String,',
 	];
 	for (const [name, keyPath] of table.keys) {

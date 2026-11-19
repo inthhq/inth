@@ -11,7 +11,7 @@ import UIKit
 
 /// Debug-only wiring of the real PostHog, Mixpanel, Sentry Replay and Firebase SDKs.
 ///
-/// It exists for `run-vendor-e2e.sh`: a launch that sets `C15T_VENDOR_BASE` to the
+/// It exists for `run-vendor-e2e.sh`: a launch that sets `INTH_VENDOR_BASE` to the
 /// local capture server gets every SDK configured in its denied state, bound to the
 /// Inth Swift helpers, and a probe button that sends one event through each SDK.
 /// Without that variable the demo links the SDKs but never starts them.
@@ -21,7 +21,7 @@ final class VendorSDKHarness {
 
     /// Returns a harness when the launch asks for one. Only a loopback HTTP base is accepted.
     static func fromEnvironment() -> VendorSDKHarness? {
-        guard let raw = ProcessInfo.processInfo.environment["C15T_VENDOR_BASE"],
+        guard let raw = ProcessInfo.processInfo.environment["INTH_VENDOR_BASE"],
               let base = URL(string: raw), base.scheme == "http",
               let host = base.host, ["localhost", "127.0.0.1"].contains(host), let port = base.port
         else { return nil }

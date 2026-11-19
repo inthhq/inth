@@ -304,7 +304,7 @@
 	},
 	"kind": "tc-string",
 	"notes": [
-		"Population decode-coverage: this model reaches past what @c15t/iab writes, so expects.encode is false and only the decode half is graded. An encoder that cannot produce this input is not wrong.",
+		"Population decode-coverage: this model reaches past what @inth/sdk-iab writes, so expects.encode is false and only the decode half is graded. An encoder that cannot produce this input is not wrong.",
 		"This is the one place in a v2 string where a field width comes from another field in the same segment: numCustomPurposes is 6 bits so the ceiling is 63, and both custom vectors are that wide. A decoder that hard-codes 24 here reads the tail of the publisher section at the wrong offset and still finds plausible-looking values.",
 		"numCustomPurposes above 40 also means the two custom vectors no longer fit in the same 64-bit word as their header, so a word-aligned reader has to cross a word boundary mid-field.",
 		"only the numCustomPurposes count (50) survives: the reference never encodes customPurposes declarations, so custom purpose names and descriptions are out of scope for both ports even though the bits for the opt-ins are present.",

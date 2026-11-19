@@ -1,5 +1,5 @@
 {
-	"description": "Whether the ATT sequence treats an IAB TCF choice as granting marketing. `vendors` maps each registered vendor to its purposes on consent after publisher restrictions, and `customVendors` each custom (non-IAB) vendor to its purposes; the consent basis is their union, plus 1, 3 and 4 when ad tech providers are listed. `purposes` is the web half, `iabPurposesToC15tConsents(purposeConsents, basis).marketing`. `marketing` also needs a consented registered or custom vendor that asks consent for a deciding marketing purpose, or a consented ad tech provider.",
+	"description": "Whether the ATT sequence treats an IAB TCF choice as granting marketing. `vendors` maps each registered vendor to its purposes on consent after publisher restrictions, and `customVendors` each custom (non-IAB) vendor to its purposes; the consent basis is their union, plus 1, 3 and 4 when ad tech providers are listed. `purposes` is the web half, `iabPurposesToInthConsents(purposeConsents, basis).marketing`. `marketing` also needs a consented registered or custom vendor that asks consent for a deciding marketing purpose, or a consented ad tech provider.",
 	"cases": [
 		{
 			"name": "accept all with a list that never asks for purpose 2",
