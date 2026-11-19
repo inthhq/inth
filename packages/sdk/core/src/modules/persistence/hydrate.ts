@@ -12,17 +12,14 @@
 import type { ConsentSubject } from '../../consent-record/types';
 import type { InternalKernel } from '../../kernel/internals';
 import type { HydrationRecords } from '../../types';
-import {
-	choiceSinceEpoch,
-	noticeSinceEpoch,
-	vendorChoiceSinceEpoch,
-} from './epoch';
+import { noticeSinceEpoch, vendorChoiceSinceEpoch } from './epoch';
 import type {
 	StoredIabMetadata,
 	StoredNoticeDismissal,
 	StoredVendorChoice,
 } from './record-codec';
 import {
+	consentSinceEpoch,
 	readStoredClearEpoch,
 	readStoredClearEpochFromCookieHeader,
 	readStoredConsentRecord,
@@ -97,23 +94,6 @@ const kernelNoticeDismissal = function kernelNoticeDismissal(
 };
 
 /**
- * The selected envelope as the clear in force leaves it. An envelope with
- * nothing left since the clear is a cleared one (the caller passes no
- * choice). One written before the clear in force, by a writer that missed
- * it, keeps only its later decisions: its subject and IAB metadata belong
- * to the cleared history and are void.
- */
-const envelopeSinceEpoch = function envelopeSinceEpoch(
-	selected: StoredConsentSelection['selected'],
-	writtenUnderEpoch: boolean
-): StoredConsentSelection['selected'] {
-	if (!selected || writtenUnderEpoch) {
-		return selected;
-	}
-	return { ...selected, iab: null, subject: null };
-};
-
-/**
  * The record that carries the subject among the surviving records: the
  * envelope, else the vendor record, else the notice record.
  */
@@ -158,18 +138,9 @@ const composeRecords = function composeRecords(
 	clearEpoch: number,
 	now: number
 ): StoredRecords {
-	const envelopeEpoch = selection.selected?.epoch ?? 0;
-	const epoch = Math.max(clearEpoch, envelopeEpoch);
-	// An envelope written under the epoch in force came from a runtime that
-	// had seen that clear, so its decisions in the clearing millisecond count.
-	const choice = choiceSinceEpoch(
-		selection.selected?.choice ?? null,
-		epoch,
-		envelopeEpoch === epoch
-	);
-	const selected = choice
-		? envelopeSinceEpoch(selection.selected, envelopeEpoch === epoch)
-		: null;
+	const epoch = Math.max(clearEpoch, selection.selected?.epoch ?? 0);
+	const selected = consentSinceEpoch(selection.selected, clearEpoch);
+	const choice = selected?.choice ?? null;
 	const vendorRecord = vendorChoiceSinceEpoch(
 		vendors?.ok ? vendors.record : null,
 		epoch

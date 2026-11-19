@@ -68,7 +68,8 @@ export interface ResolvedStorageKeys extends StorageKeyFamily {
 	 * back to them only while the configured family holds no valid one.
 	 * Nothing writes them. `clear()` removes them with the configured
 	 * family, and the configured family's clear epoch voids decisions in
-	 * any written back later. Their `epoch` is never read.
+	 * any written back later. A legacy family's own `epoch`, which the
+	 * runtime that writes it keeps, voids that family's records alone.
 	 */
 	legacy: StorageKeyFamily[];
 }

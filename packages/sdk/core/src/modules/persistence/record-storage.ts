@@ -53,7 +53,11 @@ import {
 	storageKeyFamilies,
 } from '../../libs/storage-keys';
 import type { StorageKeyFamily } from '../../libs/storage-keys';
-import { choiceSinceEpoch } from './epoch';
+import {
+	choiceSinceEpoch,
+	noticeSinceEpoch,
+	vendorChoiceSinceEpoch,
+} from './epoch';
 import {
 	decodeClearEpoch,
 	decodeComponent,
@@ -681,6 +685,129 @@ export const selectStoredConsent = function selectStoredConsent(
 	};
 };
 
+// ---------------------------------------------------------------------------
+// Clear epoch: the time of the last clear, kept by the clear itself
+// ---------------------------------------------------------------------------
+
+const newerEpoch = function newerEpoch(
+	result: DecodeResult<number> | null,
+	current: number
+): number {
+	return result?.ok && result.record > current ? result.record : current;
+};
+
+const readRawEpoch = function readRawEpoch(
+	text: string | null | undefined,
+	now: number
+): DecodeResult<number> | null {
+	const trimmed = text?.trim();
+	return trimmed ? decodeClearEpoch(trimmed, now) : null;
+};
+
+/**
+ * Reads one family's clear epoch: the newer of the cookie and localStorage
+ * copies, or `0` when neither holds a valid one. An unreadable or invalid
+ * copy counts as `0`, which voids nothing, so a failed read never turns a
+ * stored denial into a grant.
+ */
+const readEpochOf = function readEpochOf(
+	family: Pick<StorageKeyFamily, 'epoch'>,
+	now: number,
+	onUnavailable?: () => void
+): number {
+	const fromCookie = readRawEpoch(
+		getRawCookieValue(family.epoch, onUnavailable),
+		now
+	);
+	const fromLocal = readRawEpoch(
+		readLocalStorageText(family.epoch, onUnavailable),
+		now
+	);
+	return newerEpoch(fromLocal, newerEpoch(fromCookie, 0));
+};
+
+const readEpochOfFromCookieHeader = function readEpochOfFromCookieHeader(
+	cookieHeader: string | undefined,
+	family: Pick<StorageKeyFamily, 'epoch'>,
+	now: number
+): number {
+	return newerEpoch(
+		readRawEpoch(readCookieValueFromHeader(cookieHeader, family.epoch), now),
+		0
+	);
+};
+
+/** Reads the configured family's clear epoch (see `readEpochOf`). */
+export const readStoredClearEpoch = function readStoredClearEpoch(
+	config: StorageConfig | undefined,
+	now: number,
+	onUnavailable?: () => void
+): number {
+	return readEpochOf(resolveStorageKeys(config), now, onUnavailable);
+};
+
+export const readStoredClearEpochFromCookieHeader =
+	function readStoredClearEpochFromCookieHeader(
+		cookieHeader: string | undefined,
+		config: StorageConfig | undefined,
+		now: number
+	): number {
+		return readEpochOfFromCookieHeader(
+			cookieHeader,
+			resolveStorageKeys(config),
+			now
+		);
+	};
+
+/**
+ * `record` as a clear leaves it, or `null` when no decision in it survives.
+ * The later of `clearEpoch` and the epoch the record was written under is
+ * in force: decisions before it are void, one in the clearing millisecond
+ * counts only when the record was written under it, and a record written
+ * before it loses its subject and IAB metadata with the cleared history.
+ */
+export const consentSinceEpoch = function consentSinceEpoch(
+	record: DecodedStoredConsent | null,
+	clearEpoch: number
+): DecodedStoredConsent | null {
+	if (!record) {
+		return null;
+	}
+	const epoch = Math.max(clearEpoch, record.epoch);
+	const writtenUnder = record.epoch === epoch;
+	const choice = choiceSinceEpoch(record.choice, epoch, writtenUnder);
+	if (!choice) {
+		return null;
+	}
+	if (writtenUnder) {
+		return choice === record.choice ? record : { ...record, choice };
+	}
+	return { ...record, choice, iab: null, subject: null };
+};
+
+/**
+ * `selection` with a legacy family's record cut to that family's own clear
+ * epoch (`c15t-epoch` for c15t's), which the runtime writing that family
+ * keeps. The configured family's epoch applies to every family afterwards
+ * (see `composeRecords`); a legacy family's only to its own records, so it
+ * never voids a configured-family one.
+ */
+const withLegacyEpoch = function withLegacyEpoch(
+	selection: StoredConsentSelection,
+	config: StorageConfig | undefined,
+	epochOf: (family: StorageKeyFamily) => number
+): StoredConsentSelection {
+	const { selected } = selection;
+	const family =
+		selected &&
+		resolveStorageKeys(config).legacy.find(
+			(legacy) => legacy.consent === selected.key
+		);
+	return family
+		? { ...selection, selected: consentSinceEpoch(selected, epochOf(family)) }
+		: selection;
+};
+
 /**
  * Browser read of the cookie and localStorage under the configured key,
  * then under each legacy family. The cookie wins, with newer denials from
@@ -707,13 +834,17 @@ export const readStoredConsentRecord = function readStoredConsentRecord(
 			family.cookieMiss,
 		])
 	);
-	return selectStoredConsent(
-		readRawStoredConsentCandidates(config, onUnavailable),
-		now,
-		(key) => {
-			const miss = readLocalStorageText(misses.get(key) ?? '');
-			return miss !== null && miss === (getRawCookieValue(key) ?? '');
-		}
+	return withLegacyEpoch(
+		selectStoredConsent(
+			readRawStoredConsentCandidates(config, onUnavailable),
+			now,
+			(key) => {
+				const miss = readLocalStorageText(misses.get(key) ?? '');
+				return miss !== null && miss === (getRawCookieValue(key) ?? '');
+			}
+		),
+		config,
+		(family) => readEpochOf(family, now)
 	);
 };
 
@@ -727,9 +858,13 @@ export const readStoredConsentRecordFromCookieHeader =
 		config: StorageConfig | undefined,
 		now: number
 	): StoredConsentSelection {
-		return selectStoredConsent(
-			readRawStoredConsentCandidatesFromCookieHeader(cookieHeader, config),
-			now
+		return withLegacyEpoch(
+			selectStoredConsent(
+				readRawStoredConsentCandidatesFromCookieHeader(cookieHeader, config),
+				now
+			),
+			config,
+			(family) => readEpochOfFromCookieHeader(cookieHeader, family, now)
 		);
 	};
 
@@ -741,17 +876,23 @@ export type FamilyRead<RecordType> =
 /**
  * The first valid result of `read` across the families `config` reads,
  * configured family first; else the first stored but invalid one, so a
- * caller can report it; else `null`.
+ * caller can report it; else `null`. `read` gets a legacy family's own
+ * clear epoch from `epochOf` (see {@link withLegacyEpoch}), and `0` for
+ * the configured family, whose epoch the caller applies.
  */
 const firstValidAcrossFamilies = function firstValidAcrossFamilies<RecordType>(
 	config: StorageConfig | undefined,
-	read: (family: StorageKeyFamily) => DecodeResult<RecordType> | null
+	epochOf: (family: StorageKeyFamily) => number,
+	read: (
+		family: StorageKeyFamily,
+		legacyEpoch: number
+	) => DecodeResult<RecordType> | null
 ): FamilyRead<RecordType> {
 	let first: DecodeResult<RecordType> | null = null;
 	for (const [index, family] of storageKeyFamilies(
 		resolveStorageKeys(config)
 	).entries()) {
-		const result = read(family);
+		const result = read(family, index === 0 ? 0 : epochOf(family));
 		if (result?.ok) {
 			return index === 0 ? result : { ...result, legacy: true };
 		}
@@ -837,6 +978,14 @@ const noticeWithSubjectCookie = function noticeWithSubjectCookie(
 	return notice;
 };
 
+/** The read, or `null` when it holds a dismissal made before `epoch`. */
+const noticeSince = function noticeSince(
+	read: DecodeResult<StoredNoticeDismissal> | null,
+	epoch: number
+): DecodeResult<StoredNoticeDismissal> | null {
+	return read?.ok && !noticeSinceEpoch(read.record, epoch) ? null : read;
+};
+
 /**
  * Reads one family's notice dismissal from its cookie projection and its
  * localStorage copy. When both are valid the newer dismissal wins, the
@@ -899,8 +1048,11 @@ export const readStoredNoticeDismissal = function readStoredNoticeDismissal(
 	now: number,
 	onUnavailable?: () => void
 ): FamilyRead<StoredNoticeDismissal> {
-	return firstValidAcrossFamilies(config, (keys) =>
-		readNoticeDismissalOf(keys, now, onUnavailable)
+	return firstValidAcrossFamilies(
+		config,
+		(family) => readEpochOf(family, now),
+		(keys, legacyEpoch) =>
+			noticeSince(readNoticeDismissalOf(keys, now, onUnavailable), legacyEpoch)
 	);
 };
 
@@ -910,72 +1062,35 @@ export const readStoredNoticeDismissalFromCookieHeader =
 		config: StorageConfig | undefined,
 		now: number
 	): FamilyRead<StoredNoticeDismissal> {
-		return firstValidAcrossFamilies(config, (keys) =>
-			noticeWithSubjectCookie(
-				readCompactCookie(
-					readCookieValueFromHeader(cookieHeader, keys.notice),
-					(text) => decodeNoticeDismissalCompact(text, now)
-				),
-				readCookieValueFromHeader(cookieHeader, keys.noticeSubject),
-				now
-			)
+		return firstValidAcrossFamilies(
+			config,
+			(family) => readEpochOfFromCookieHeader(cookieHeader, family, now),
+			(keys, legacyEpoch) =>
+				noticeSince(
+					noticeWithSubjectCookie(
+						readCompactCookie(
+							readCookieValueFromHeader(cookieHeader, keys.notice),
+							(text) => decodeNoticeDismissalCompact(text, now)
+						),
+						readCookieValueFromHeader(cookieHeader, keys.noticeSubject),
+						now
+					),
+					legacyEpoch
+				)
 		);
 	};
 
 // ---------------------------------------------------------------------------
-// Clear epoch: the time of the last clear, kept by the clear itself
+// Auxiliary records: vendor denials
 // ---------------------------------------------------------------------------
 
-const newerEpoch = function newerEpoch(
-	result: DecodeResult<number> | null,
-	current: number
-): number {
-	return result?.ok && result.record > current ? result.record : current;
+/** The read, or `null` when it holds a list confirmed before `epoch`. */
+const vendorsSince = function vendorsSince(
+	read: DecodeResult<StoredVendorChoice> | null,
+	epoch: number
+): DecodeResult<StoredVendorChoice> | null {
+	return read?.ok && !vendorChoiceSinceEpoch(read.record, epoch) ? null : read;
 };
-
-const readRawEpoch = function readRawEpoch(
-	text: string | null | undefined,
-	now: number
-): DecodeResult<number> | null {
-	const trimmed = text?.trim();
-	return trimmed ? decodeClearEpoch(trimmed, now) : null;
-};
-
-/**
- * Reads the clear epoch: the newer of the cookie and localStorage copies,
- * or `0` when neither holds a valid one. An unreadable or invalid copy
- * counts as `0`, which voids nothing, so a failed read never turns a
- * stored denial into a grant.
- */
-export const readStoredClearEpoch = function readStoredClearEpoch(
-	config: StorageConfig | undefined,
-	now: number,
-	onUnavailable?: () => void
-): number {
-	const keys = resolveStorageKeys(config);
-	const fromCookie = readRawEpoch(
-		getRawCookieValue(keys.epoch, onUnavailable),
-		now
-	);
-	const fromLocal = readRawEpoch(
-		readLocalStorageText(keys.epoch, onUnavailable),
-		now
-	);
-	return newerEpoch(fromLocal, newerEpoch(fromCookie, 0));
-};
-
-export const readStoredClearEpochFromCookieHeader =
-	function readStoredClearEpochFromCookieHeader(
-		cookieHeader: string | undefined,
-		config: StorageConfig | undefined,
-		now: number
-	): number {
-		const keys = resolveStorageKeys(config);
-		return newerEpoch(
-			readRawEpoch(readCookieValueFromHeader(cookieHeader, keys.epoch), now),
-			0
-		);
-	};
 
 /**
  * Reads the vendor denial list from both projections. The two can
@@ -992,7 +1107,8 @@ export const readStoredClearEpochFromCookieHeader =
  * recorded after the clear. `epoch` defaults to the stored clear epoch; a
  * caller that also knows the consent envelope's epoch passes the later of
  * the two. A legacy family is read only while the families before it hold
- * no valid list. `null` when nothing is stored.
+ * no valid list, and is cut to its own epoch too. `null` when nothing is
+ * stored.
  */
 export const readStoredVendorChoice = function readStoredVendorChoice(
 	config: StorageConfig | undefined,
@@ -1000,38 +1116,41 @@ export const readStoredVendorChoice = function readStoredVendorChoice(
 	onUnavailable?: () => void,
 	epoch: number = readStoredClearEpoch(config, now)
 ): FamilyRead<StoredVendorChoice> {
-	const sinceEpoch = (
-		read: DecodeResult<StoredVendorChoice> | null
-	): DecodeResult<StoredVendorChoice> | null =>
-		read?.ok && read.record.confirmedAt < epoch ? null : read;
-	return firstValidAcrossFamilies(config, (keys) => {
-		const fromCookie = sinceEpoch(
-			readCompactCookie(
-				getRawCookieValue(keys.vendors, onUnavailable),
-				(text) => decodeVendorChoiceCompact(text, now)
-			)
-		);
-		const fromLocal = sinceEpoch(
-			readLocalJson(
-				keys.vendors,
-				(value) => decodeVendorChoice(value, now),
-				onUnavailable
-			)
-		);
-		if (fromCookie?.ok && fromLocal?.ok) {
-			if (fromLocal.record.confirmedAt < fromCookie.record.confirmedAt) {
+	return firstValidAcrossFamilies(
+		config,
+		(family) => readEpochOf(family, now),
+		(keys, legacyEpoch) => {
+			const familyEpoch = Math.max(epoch, legacyEpoch);
+			const fromCookie = vendorsSince(
+				readCompactCookie(
+					getRawCookieValue(keys.vendors, onUnavailable),
+					(text) => decodeVendorChoiceCompact(text, now)
+				),
+				familyEpoch
+			);
+			const fromLocal = vendorsSince(
+				readLocalJson(
+					keys.vendors,
+					(value) => decodeVendorChoice(value, now),
+					onUnavailable
+				),
+				familyEpoch
+			);
+			if (fromCookie?.ok && fromLocal?.ok) {
+				if (fromLocal.record.confirmedAt < fromCookie.record.confirmedAt) {
+					return fromCookie;
+				}
+				const denied = [
+					...new Set([...fromCookie.record.denied, ...fromLocal.record.denied]),
+				].sort();
+				return { ok: true, record: { ...fromLocal.record, denied } };
+			}
+			if (fromCookie?.ok) {
 				return fromCookie;
 			}
-			const denied = [
-				...new Set([...fromCookie.record.denied, ...fromLocal.record.denied]),
-			].sort();
-			return { ok: true, record: { ...fromLocal.record, denied } };
+			return fromLocal ?? fromCookie;
 		}
-		if (fromCookie?.ok) {
-			return fromCookie;
-		}
-		return fromLocal ?? fromCookie;
-	});
+	);
 };
 
 export const readStoredVendorChoiceFromCookieHeader =
@@ -1040,10 +1159,16 @@ export const readStoredVendorChoiceFromCookieHeader =
 		config: StorageConfig | undefined,
 		now: number
 	): FamilyRead<StoredVendorChoice> {
-		return firstValidAcrossFamilies(config, (keys) =>
-			readCompactCookie(
-				readCookieValueFromHeader(cookieHeader, keys.vendors),
-				(text) => decodeVendorChoiceCompact(text, now)
-			)
+		return firstValidAcrossFamilies(
+			config,
+			(family) => readEpochOfFromCookieHeader(cookieHeader, family, now),
+			(keys, legacyEpoch) =>
+				vendorsSince(
+					readCompactCookie(
+						readCookieValueFromHeader(cookieHeader, keys.vendors),
+						(text) => decodeVendorChoiceCompact(text, now)
+					),
+					legacyEpoch
+				)
 		);
 	};
