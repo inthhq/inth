@@ -42,12 +42,16 @@ describe('<inth-consent-dialog [(open)]>', () => {
 		});
 		const fixture = TestBed.createComponent(ControlledDialog);
 		const consent = TestBed.inject(ConsentManager);
-		await vi.waitFor(async () => {
-			await fixture.whenStable();
-			expect(
-				document.querySelector('[data-testid="consent-dialog-root"]')
-			).not.toBeNull();
-		});
+		await vi.waitFor(
+			async () => {
+				await fixture.whenStable();
+				expect(
+					document.querySelector('[data-testid="consent-dialog-root"]')
+				).not.toBeNull();
+				// The first test in the file waits for the dialog chunk's cold import.
+			},
+			{ timeout: 5000 }
+		);
 		// The parent opened it, so the consent state never moved to it.
 		consent.setActiveUI('none');
 		await fixture.whenStable();
