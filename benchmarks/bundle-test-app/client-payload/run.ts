@@ -64,6 +64,7 @@ import type {
 	PayloadResult,
 	RouteResult,
 } from './report';
+import { isSaveRequest } from './save-request';
 
 const HOST = '127.0.0.1';
 const ROUTES = ['/', '/docs'];
@@ -372,8 +373,9 @@ const collectRoute = async function collectRoute(
 	armDir: string,
 	baseURL: string,
 	route: string,
-	hasConsent: boolean
+	library: Library
 ): Promise<RouteResult> {
+	const hasConsent = library !== 'none';
 	// Each phase lists what it loaded beyond that visit's earlier phases; one
 	// asset can belong to both interaction phases.
 	const seen = new Set<string>();
@@ -421,8 +423,8 @@ const collectRoute = async function collectRoute(
 			// every chunk the save path loads has arrived.
 			const saved = page.waitForResponse(
 				(response) =>
-					response.request().method() === 'POST' &&
-					new URL(response.url()).pathname.endsWith('/v1/consent/records'),
+					library !== 'none' &&
+					isSaveRequest(library, response.request().method(), response.url()),
 				{ timeout: 15_000 }
 			);
 			await page.getByTestId('consent-banner-accept-button').first().click();
@@ -496,7 +498,7 @@ const main = async function main() {
 							armDir,
 							`http://${HOST}:${port}`,
 							route,
-							definition.library !== 'none'
+							definition.library
 						)
 					);
 				}
