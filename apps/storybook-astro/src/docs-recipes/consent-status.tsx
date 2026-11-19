@@ -1,6 +1,6 @@
 // #region docs:react-island title="src/components/consent-status.tsx"
 import { getConsentClient, openDialog } from '@inth/astro/client';
-import { ConsentProvider, useConsent } from '@inth/react';
+import { InthProvider, useConsent } from '@inth/react';
 import { useEffect, useState } from 'react';
 
 const MeasurementStatus = () => {
@@ -47,12 +47,12 @@ const ConsentStatus = () => {
 	}
 	return (
 		// `colorScheme: null` leaves dark mode to the integration.
-		<ConsentProvider
+		<InthProvider
 			options={{ colorScheme: null }}
 			runtime={runtime}
 		>
 			<MeasurementStatus />
-		</ConsentProvider>
+		</InthProvider>
 	);
 };
 

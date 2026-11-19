@@ -18,7 +18,7 @@ provider's `mode`:
 With a backend, edit wording in your Inth project first, so it changes without
 a deploy. Code can override that copy in two places:
 
-- `i18n` in the `ConsentProvider` options changes a message everywhere it
+- `i18n` in the `InthProvider` options changes a message everywhere it
   appears.
 - Text props on `ConsentBanner` change one banner.
 
@@ -52,7 +52,7 @@ Pass them to the provider in the file that renders it, such as
 {/* example: fragment */}
 
 ```tsx title="src/consent.tsx"
-<ConsentProvider options={{ mode, scripts, i18n }}>
+<InthProvider options={{ mode, scripts, i18n }}>
 ```
 
 For the visitor's language, your messages replace the backend's copy key by
@@ -89,7 +89,7 @@ switcher:
 
 Setting the language without calling `init()` changes nothing on screen. Your
 `i18n` messages for the new language apply on top of the copy that arrives.
-Render the switcher anywhere inside `ConsentProvider`.
+Render the switcher anywhere inside `InthProvider`.
 
 Switching needs a backend. In `testing()` mode the copy stays in the
 `i18n.locale` language.

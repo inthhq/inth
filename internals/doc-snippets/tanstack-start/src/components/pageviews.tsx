@@ -3,7 +3,7 @@ import { useEventDispatcher } from '@inth/tanstack-start';
 import { useLocation } from '@tanstack/react-router';
 import { useEffect } from 'react';
 
-/** Render once inside `ConsentRoot`, such as in the root route. */
+/** Render once inside `InthProvider`, such as in the root route. */
 export const Pageviews = () => {
 	const events = useEventDispatcher({ pageviews: ['posthog'] });
 	// The path with its query string, so search and filter changes count.

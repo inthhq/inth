@@ -5,7 +5,7 @@
 	import { page } from '$app/state';
 	import { getEventDispatcher } from '@inth/svelte';
 
-	// Render inside ConsentProvider in the root +layout.svelte.
+	// Render inside InthProvider in the root +layout.svelte.
 	const events = getEventDispatcher({ pageviews: ['posthog'] });
 
 	$effect(() => {

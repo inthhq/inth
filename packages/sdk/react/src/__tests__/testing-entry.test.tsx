@@ -6,7 +6,7 @@
 import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ConsentBanner, ConsentProvider, useConsent } from '../index';
+import { ConsentBanner, InthProvider, useConsent } from '../index';
 import { testing } from '../testing';
 
 const Marketing = () => (
@@ -21,7 +21,7 @@ afterEach(() => {
 test('shows the opt-in banner for an EEA country and records the choice without a request', async () => {
 	const fetchSpy = vi.spyOn(globalThis, 'fetch');
 	const screen = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				consentCategories: ['marketing'],
 				mode: testing(),
@@ -31,7 +31,7 @@ test('shows the opt-in banner for an EEA country and records the choice without 
 		>
 			<Marketing />
 			<ConsentBanner />
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 	await screen.getByTestId('consent-banner-accept-button').click();
@@ -44,7 +44,7 @@ test('shows the opt-in banner for an EEA country and records the choice without 
 
 test('shows no banner for a country without a privacy rule', async () => {
 	const screen = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: testing(),
 				overrides: { country: 'JP' },
@@ -53,7 +53,7 @@ test('shows no banner for a country without a privacy rule', async () => {
 		>
 			<Marketing />
 			<ConsentBanner />
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 	await expect

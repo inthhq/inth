@@ -1,5 +1,5 @@
 /**
- * `ConsentProvider` on a client-rendered page in a browser that sends the
+ * `InthProvider` on a client-rendered page in a browser that sends the
  * Global Privacy Control signal: the stand-in reads the `/v1/consent/init` answer
  * under the signal, as the engine does. Under a policy the signal answers
  * for, it shows no banner and leaves the visitor to the engine, where it
@@ -25,7 +25,7 @@ const engineAsked = new Promise<void>((resolve) => {
 	engineRequested = resolve;
 });
 
-const ConsentProvider = createConsentProvider(async () => {
+const InthProvider = createConsentProvider(async () => {
 	engineRequested();
 	await engineHeld;
 	return import('../client-engine');
@@ -129,7 +129,7 @@ afterEach(() => {
 
 test('the stand-in reads the browser signal, and shows no banner the signal answers', async () => {
 	const screen = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				consentCategories: ['necessary', 'measurement', 'marketing'],
 				journey: false,
@@ -138,7 +138,7 @@ test('the stand-in reads the browser signal, and shows no banner the signal answ
 		>
 			<Probe />
 			<ConsentBanner />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	const probe = screen.getByTestId('probe');
 	// Before `/v1/consent/init` answers: the pending state already carries the signal.

@@ -63,7 +63,7 @@ traffic, such as your CDN or load balancer, to delete incoming
 of its own.
 
 Stripping the headers also turns off the `country` and `region` props of
-`ConsentRoot` when the server resolves the policy. In the browser, those
+`InthProvider` when the server resolves the policy. In the browser, those
 props reach the `/api/inth/v1/consent/init` route as the `country`, `region`
 and `gpc` query parameters, which the route reads like the `x-inth-*`
 headers. Stripping headers does not remove them: have the edge drop those
@@ -83,7 +83,7 @@ with your host's origin protection.
 
 Use one of these while you build, never in production:
 
-- Render `<ConsentRoot country="DE" />`, or pass `region` too. Inth resolves
+- Render `<InthProvider country="DE" />`, or pass `region` too. Inth resolves
   the policy again for that location. When the server resolves the policy,
   this only works while nothing strips the `x-inth-*` headers.
 - Send the override header yourself, for example

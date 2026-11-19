@@ -12,7 +12,7 @@ wording there first, so it changes without a deploy.
 
 Code can override that copy in two places:
 
-- `options.i18n` on `ConsentRoot` changes a message everywhere it appears.
+- `options.i18n` on `InthProvider` changes a message everywhere it appears.
 - Text props on `ConsentBanner` change one banner.
 
 [Copy and translations](/docs/customization/translations) lists the message
@@ -57,16 +57,16 @@ import { i18n } from './lib/consent-i18n';
 export default defineConsentConfig({ options: { i18n } });
 ```
 
-`ConsentRoot` reads the config in the browser and on the server, so the
+`InthProvider` reads the config in the browser and on the server, so the
 layout keeps passing only `state`. Keep your `scripts` and other options in
 the same call.
 
-`ConsentRoot` renders on the server too, so your messages are already in the
+`InthProvider` renders on the server too, so your messages are already in the
 server HTML.
 
 For the visitor's language, your messages replace the project's copy key by
 key. Keys you leave out keep the project's wording, and messages for other
-languages are not applied. `ConsentRoot` reads `i18n` once, when it mounts. In
+languages are not applied. `InthProvider` reads `i18n` once, when it mounts. In
 development it logs a warning if `i18n` changes later.
 
 `i18n.locale` sets the language of the copy when no backend or server state

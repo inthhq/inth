@@ -9,7 +9,7 @@ import {
  *
  * Drives the shared `runConformanceSuite` against real Svelte renders:
  * - `mount` boots a fixture that wraps the requested component in
- *   `ConsentProvider` (provider takes a `children` snippet, so
+ *   `InthProvider` (provider takes a `children` snippet, so
  *   each component variant needs a dispatching fixture).
  * - `getStore` projects the provider's live kernel snapshot into the
  *   v2-compatible shape asserted by the shared suite.

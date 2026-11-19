@@ -12,7 +12,7 @@ import { render } from 'vitest-browser-react';
 
 import { ConsentGate, Frame } from '~/components/consent-gate';
 import * as reactEntry from '~/index';
-import { ConsentProvider } from '~/provider';
+import { InthProvider } from '~/provider';
 
 import { testing } from '../../../testing';
 
@@ -32,7 +32,7 @@ const gateApp = function gateApp(
 	});
 	const fingerprints = createPolicyRuleFingerprints(policy);
 	return (
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: testing(),
 				persistence: false,
@@ -71,7 +71,7 @@ const gateApp = function gateApp(
 			}}
 		>
 			{ui}
-		</ConsentProvider>
+		</InthProvider>
 	);
 };
 

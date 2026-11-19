@@ -1,5 +1,5 @@
 // #region docs:class-names-vanilla-extract title="src/consent-components.css.ts"
-import type { ConsentProviderOptions } from '@inth/react';
+import type { InthProviderOptions } from '@inth/react';
 import { style } from '@vanilla-extract/css';
 
 const card = style({
@@ -7,8 +7,8 @@ const card = style({
 	borderRadius: 4,
 });
 
-/** Pass as `components` in your ConsentProvider options. */
-export const components: ConsentProviderOptions['components'] = {
+/** Pass as `components` in your InthProvider options. */
+export const components: InthProviderOptions['components'] = {
 	banner: {
 		card: { className: card },
 	},

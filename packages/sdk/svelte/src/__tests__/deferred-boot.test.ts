@@ -1,5 +1,5 @@
 /**
- * The boot data `ConsentRoot` leaves for the browser, and the rule for when
+ * The boot data `InthProvider` leaves for the browser, and the rule for when
  * the engine may wait.
  */
 import { defaultTranslationConfig } from '@inth/sdk/engine';

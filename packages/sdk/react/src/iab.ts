@@ -8,17 +8,17 @@
  *
  * @example
  * ```tsx
- * import { ConsentProvider, hosted } from '@inth/react';
+ * import { InthProvider, hosted } from '@inth/react';
  * import { IABProvider, IABConsentBanner, IABConsentDialog } from '@inth/react/iab';
  *
- * <ConsentProvider
+ * <InthProvider
  *   options={{ mode: hosted({ projectUrl: '/api/inth' }) }}
  * >
  *   <IABProvider cmpId={28}>
  *     <IABConsentBanner />
  *     <IABConsentDialog />
  *   </IABProvider>
- * </ConsentProvider>
+ * </InthProvider>
  * ```
  *
  * @packageDocumentation

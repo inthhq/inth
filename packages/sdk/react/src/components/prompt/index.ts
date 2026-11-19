@@ -48,7 +48,7 @@ export interface ConsentBannerCompoundComponent extends FC<ConsentBannerProps> {
  *
  * @remarks
  * Start with the pre-built component and its existing configuration surface.
- * For most customization, use `ConsentProvider` options, theme tokens,
+ * For most customization, use `InthProvider` options, theme tokens,
  * slots, and `theme.consentActions` before reaching for compound composition.
  *
  * @example
@@ -60,7 +60,7 @@ export interface ConsentBannerCompoundComponent extends FC<ConsentBannerProps> {
  * @example
  * Preferred customization via provider `i18n`, theme tokens, and components:
  * ```tsx
- * <ConsentProvider
+ * <InthProvider
  *   options={{
  *     mode: hosted({ projectUrl: '/api/inth' }),
  *     i18n: {
@@ -86,7 +86,7 @@ export interface ConsentBannerCompoundComponent extends FC<ConsentBannerProps> {
  *   }}
  * >
  *   <ConsentBanner primaryButton="accept" />
- * </ConsentProvider>
+ * </InthProvider>
  * ```
  *
  * @example

@@ -16,7 +16,7 @@ const nuxtFiles = (options: BoilerplateOptions): Record<string, string> => {
 	const files: Record<string, string> = {
 		...envFile(BACKEND_URL_ENV.nuxt, options),
 		'app/app.vue': `<template>
-	<ConsentRoot />
+	<InthProvider />
 	<NuxtPage />
 	<footer>
 		<ConsentDialogLink>Privacy settings</ConsentDialogLink>
@@ -47,11 +47,11 @@ const vueFiles = (options: BoilerplateOptions): Record<string, string> => {
 	return {
 		...envFile(BACKEND_URL_ENV.vite, options),
 		'src/App.vue': `<script setup lang="ts">
-import { ConsentDialogLink, ConsentRoot } from '@inth/vue/vue-plugin';
+import { ConsentDialogLink, InthProvider } from '@inth/vue/vue-plugin';
 </script>
 
 <template>
-	<ConsentRoot />
+	<InthProvider />
 	<main>
 		<h1>c15t with Vue</h1>
 		<p>${options.scripts.includes('posthog') ? 'PostHog loads after you allow measurement.' : 'Your app goes here.'}</p>
@@ -105,8 +105,8 @@ export const generateVueBoilerplate = (
 		files: nuxt ? nuxtFiles(options) : vueFiles(options),
 		instructions: [
 			nuxt
-				? 'The @inth/nuxt module registers ConsentRoot and ConsentDialogLink and adds a consent route at /api/c15t. Keep any other modules when you merge nuxt.config.ts.'
-				: 'src/App.vue shows where ConsentRoot and ConsentDialogLink go. Move them into your own root component if you keep it.',
+				? 'The @inth/nuxt module registers InthProvider and ConsentDialogLink and adds a consent route at /api/c15t. Keep any other modules when you merge nuxt.config.ts.'
+				: 'src/App.vue shows where InthProvider and ConsentDialogLink go. Move them into your own root component if you keep it.',
 			...vendorInstruction(options, nuxt ? 'app/app.config.ts' : 'src/main.ts'),
 			...offlineInstruction(options),
 		],

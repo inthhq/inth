@@ -9,11 +9,11 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentRoot,
+	InthProvider,
 	useScriptLoader,
 	useSnapshot,
 } from '@inth/nextjs';
-import type { ConsentRootProps } from '@inth/nextjs';
+import type { InthProviderProps } from '@inth/nextjs';
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 
@@ -33,7 +33,7 @@ const GateBridge = () => {
 
 /**
  * CookieBench's Next.js fixture (`with-inth-nextjs/app/consent.tsx`): one
- * `ConsentRoot` with the quickstart config, the stock banner and dialog,
+ * `InthProvider` with the quickstart config, the stock banner and dialog,
  * and a probe that loads the gated scripts.
  */
 export const GateConsent = ({
@@ -41,9 +41,9 @@ export const GateConsent = ({
 	state,
 }: {
 	children: ReactNode;
-	state: ConsentRootProps['state'];
+	state: InthProviderProps['state'];
 }) => (
-	<ConsentRoot
+	<InthProvider
 		config={typicalInstallConfig}
 		options={{ consentCategories: [...gateConsentCategories] }}
 		state={state}
@@ -54,5 +54,5 @@ export const GateConsent = ({
 		<ConsentDialog />
 		{/* The gate reopens the choice here to replay a change of mind. */}
 		<ConsentDialogLink>Privacy settings</ConsentDialogLink>
-	</ConsentRoot>
+	</InthProvider>
 );

@@ -277,7 +277,7 @@ export function generateScriptsImport(selectedScripts: string[]): string {
 }
 
 /**
- * Generates the scripts configuration array for `ConsentProvider` options.
+ * Generates the scripts configuration array for `InthProvider` options.
  *
  * @param selectedScripts - Array of script names to configure
  * @returns The scripts configuration string, or empty string if no scripts

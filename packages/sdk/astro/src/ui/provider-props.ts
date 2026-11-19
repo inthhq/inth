@@ -56,7 +56,7 @@ export interface DialogPresentationOptions {
 	theme?: InthResolvedOptions['theme'];
 }
 
-/** Props handed to `ConsentProvider` by the Svelte dialog surface. */
+/** Props handed to `InthProvider` by the Svelte dialog surface. */
 export interface DialogProviderProps {
 	/** The page-level runtime. The provider borrows it, it does not own it. */
 	runtime: ConsentRuntime;

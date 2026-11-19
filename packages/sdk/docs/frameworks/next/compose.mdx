@@ -1,6 +1,6 @@
 ---
 title: Compose your own banner
-description: Build a Next.js consent banner as a Client Component from the ConsentBanner parts in @inth/nextjs, with your own markup and buttons, rendered inside ConsentRoot.
+description: Build a Next.js consent banner as a Client Component from the ConsentBanner parts in @inth/nextjs, with your own markup and buttons, rendered inside InthProvider.
 group: frameworks
 ---
 
@@ -23,14 +23,14 @@ for that button:
 <include src="../../shared/examples/nextjs/compose-banner.mdx" />
 
 `@inth/nextjs` re-exports every `@inth/react` component, so `ConsentBanner` and
-its parts come from the same import as `ConsentRoot`. The file starts with
+its parts come from the same import as `InthProvider`. The file starts with
 `'use client'` because a Server Component can neither read a property of a
 client component, such as `ConsentBanner.Root`, nor pass a function, such as
 `renderAction`.
 
 The parts read the provider inside
-[ConsentRoot](/docs/frameworks/next/components/consent-root). Import
-`CookieBanner` in the layout that renders `ConsentRoot`, from the
+[InthProvider](/docs/frameworks/next/components/inth-provider). Import
+`CookieBanner` in the layout that renders `InthProvider`, from the
 [quickstart](/docs/frameworks/next/quickstart#resolve-consent-in-the-root-layout)
 or your router guide, and render it in place of `ConsentBanner`, next to
 `ConsentDialog`. `CookieBanner` is a client component, so a Server Component
@@ -39,14 +39,14 @@ layout can render it:
 {/* example: fragment */}
 
 ```tsx title="app/layout.tsx (partial)"
-<ConsentRoot state={resolveConsent()}>
+<InthProvider state={resolveConsent()}>
 	{children}
 	<CookieBanner />
 	<ConsentDialog />
 	<footer>
 		<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 	</footer>
-</ConsentRoot>;
+</InthProvider>;
 ```
 
 The Pages Router renders the same components in `pages/_app.tsx`, so the
@@ -75,7 +75,7 @@ every part and its slots.
 <import src="../../shared/react/compose.mdx#theming" />
 
 [Customize](/docs/frameworks/next/customize) shows where to set tokens with
-`ConsentTheme`, and slots and `consentActions` through `ConsentRoot`'s
+`ConsentTheme`, and slots and `consentActions` through `InthProvider`'s
 `options`.
 
 <import src="../../shared/react/compose.mdx#verify" />

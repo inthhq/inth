@@ -4,10 +4,10 @@ import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
 import {
-	ComponentFixtureProvider as ConsentProvider,
+	ComponentFixtureProvider as InthProvider,
 	DEFAULT_KEY_STORAGE,
 } from '~/__tests__/component-fixture-provider';
-import type { ComponentFixtureOptions as ConsentProviderOptions } from '~/__tests__/component-fixture-provider';
+import type { ComponentFixtureOptions as InthProviderOptions } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentDialog } from '~/components/panel';
 import { ConsentWidget } from '~/components/preferences';
@@ -45,7 +45,7 @@ Object.defineProperty(window, 'localStorage', {
 	value: localStorageMock,
 });
 
-const defaultOptions: ConsentProviderOptions = {
+const defaultOptions: InthProviderOptions = {
 	consentCategories: [
 		'necessary',
 		'functionality',
@@ -87,9 +87,9 @@ describe('UI Source Tracking E2E Tests', () => {
 	describe('Banner uiSource', () => {
 		test('should render banner and save consent via accept button', async () => {
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -121,9 +121,9 @@ describe('UI Source Tracking E2E Tests', () => {
 
 		test('should render banner with custom uiSource prop', async () => {
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentBanner uiSource="custom_banner" />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -141,9 +141,9 @@ describe('UI Source Tracking E2E Tests', () => {
 	describe('Dialog uiSource', () => {
 		test('should render dialog and save consent via accept button', async () => {
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentDialog open={true} />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -174,12 +174,12 @@ describe('UI Source Tracking E2E Tests', () => {
 
 		test('should render dialog with custom uiSource prop', async () => {
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentDialog
 						open={true}
 						uiSource="custom_dialog"
 					/>
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -197,9 +197,9 @@ describe('UI Source Tracking E2E Tests', () => {
 	describe('Widget uiSource', () => {
 		test('should render widget with default uiSource', async () => {
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentWidget />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -217,10 +217,10 @@ describe('UI Source Tracking E2E Tests', () => {
 	describe('Banner to Dialog flow preserves correct uiSource', () => {
 		test('should transition from banner to dialog and save from dialog', async () => {
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentBanner />
 					<ConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(

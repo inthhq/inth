@@ -96,7 +96,7 @@ export const adaptNuxtGeneration = (
       merge[target] = { type: "keep" };
       if (target.endsWith("app.vue")) {
         generation.instructions.push(
-          `Integrate c15t into ${target}: keep your existing app content and providers. Add <ConsentRoot /> and a <ConsentDialogLink>Privacy settings</ConsentDialogLink> where users can open their preferences.`
+          `Integrate c15t into ${target}: keep your existing app content and providers. Add <InthProvider /> and a <ConsentDialogLink>Privacy settings</ConsentDialogLink> where users can open their preferences.`
         );
       } else if (target.endsWith("app.config.ts")) {
         generation.instructions.push(

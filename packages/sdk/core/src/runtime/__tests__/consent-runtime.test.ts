@@ -138,13 +138,13 @@ describe('createRuntimeKernel', () => {
 
 	test.each([
 		[undefined, '@inth/sdk/engine createConsentRuntime()'],
-		['@inth/react', '@inth/react ConsentProvider'],
-		['@inth/svelte', '@inth/svelte ConsentProvider'],
+		['@inth/react', '@inth/react InthProvider'],
+		['@inth/svelte', '@inth/svelte InthProvider'],
 		['@inth/vue', '@inth/vue the inthVue plugin'],
 		['@inth/sdk', '@inth/sdk init()'],
 		['@inth/sdk/hosted', '@inth/sdk/hosted init()'],
-		['@inth/nextjs', '@inth/nextjs ConsentRoot'],
-		['@inth/tanstack-start', '@inth/tanstack-start ConsentRoot'],
+		['@inth/nextjs', '@inth/nextjs InthProvider'],
+		['@inth/tanstack-start', '@inth/tanstack-start InthProvider'],
 	])('the missing-backend error from %s names %s', (pkg, owner) => {
 		expect(() => createRuntimeKernel({ pkg })).toThrowError(
 			`${owner}: \`projectUrl\` is required.`

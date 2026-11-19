@@ -1,10 +1,10 @@
 /**
- * In the browser, a hosted `ConsentProvider` with nothing prefetched sends
+ * In the browser, a hosted `InthProvider` with nothing prefetched sends
  * `/v1/consent/init` from its first render. A server render must not: the request
  * belongs to the visitor's browser, and a server has no runtime to apply
  * the answer to.
  */
-import { ConsentProvider } from '@inth/react/provider';
+import { InthProvider } from '@inth/react/provider';
 import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
 import { expect, test, vi } from 'vitest';
@@ -14,7 +14,7 @@ test('a server render of a hosted provider sends no /v1/consent/init', () => {
 	vi.stubGlobal('fetch', fetch);
 	const html = renderToString(
 		createElement(
-			ConsentProvider,
+			InthProvider,
 			{
 				options: {
 					projectUrl: 'https://consent.example/api/inth',

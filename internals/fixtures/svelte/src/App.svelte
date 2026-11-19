@@ -3,7 +3,7 @@
 		ConsentBanner,
 		ConsentDialog,
 		ConsentDialogLink,
-		ConsentProvider,
+		InthProvider,
 		hosted,
 	} from '@inth/svelte';
 
@@ -17,7 +17,7 @@
 	};
 </script>
 
-<ConsentProvider
+<InthProvider
 	{...backend}
 	{scripts}
 >
@@ -27,4 +27,4 @@
 	</footer>
 	<ConsentBanner />
 	<ConsentDialog />
-</ConsentProvider>
+</InthProvider>

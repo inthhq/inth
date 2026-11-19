@@ -3,7 +3,7 @@
  * automatically.
  *
  * `withConsentManifest` aliases this specifier to `<root>/inth.config.ts`
- * in Turbopack and webpack, for server and browser bundles. `ConsentRoot`,
+ * in Turbopack and webpack, for server and browser bundles. `InthProvider`,
  * `resolveConsent()`, `createConsentRoute()` and the Pages Router helpers
  * import it from inside the package, so the app never imports its own
  * config. Without the wrapper or the file, this stub stands in and exports

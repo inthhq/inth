@@ -5,8 +5,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
-import type { ComponentFixtureOptions as ConsentProviderOptions } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
+import type { ComponentFixtureOptions as InthProviderOptions } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { KernelContext } from '~/context';
 
@@ -158,7 +158,7 @@ globalThis.fetch = vi.fn(() =>
 	)
 ) as typeof fetch;
 
-const defaultIABOptions: ConsentProviderOptions = {
+const defaultIABOptions: InthProviderOptions = {
 	iab: {
 		cmpId: 160,
 		cmpVersion: 1,
@@ -184,9 +184,9 @@ describe('IAB preference item interactions', () => {
 	// TCF policy check 14: Features always carry the standard explanation and no control.
 	test('lists vendor features with the standard Features text and no switch', async () => {
 		render(
-			<ConsentProvider options={defaultIABOptions}>
+			<InthProvider options={defaultIABOptions}>
 				<IABConsentDialog open />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		const vendorsTab = await vi.waitFor(
@@ -242,9 +242,9 @@ describe('IAB preference item interactions', () => {
 	});
 	test('should keep vendor details collapsed until expanded and allow consent toggle separately', async () => {
 		render(
-			<ConsentProvider options={defaultIABOptions}>
+			<InthProvider options={defaultIABOptions}>
 				<IABConsentDialog open />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		const vendorsTab = await vi.waitFor(
@@ -311,7 +311,7 @@ describe('IAB preference item interactions', () => {
 	// Regression: the refresh note was hardcoded English.
 	test('shows the max age with the translated refresh note', async () => {
 		render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					...defaultIABOptions,
 					i18n: {
@@ -329,7 +329,7 @@ describe('IAB preference item interactions', () => {
 				}}
 			>
 				<IABConsentDialog open />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		const vendorsTab = await vi.waitFor(
@@ -371,9 +371,9 @@ describe('IAB preference item interactions', () => {
 
 	test('links each vendor to the privacy policy its GVL entry declares', async () => {
 		render(
-			<ConsentProvider options={defaultIABOptions}>
+			<InthProvider options={defaultIABOptions}>
 				<IABConsentDialog open />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		const vendorsTab = await vi.waitFor(() =>
 			getDefined(
@@ -431,14 +431,14 @@ describe('IAB preference item interactions', () => {
 			},
 		};
 		render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					...defaultIABOptions,
 					iab: { ...defaultIABOptions.iab, gvl },
 				}}
 			>
 				<IABConsentDialog open />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		const vendorsTab = await vi.waitFor(() =>
 			getDefined(
@@ -501,14 +501,14 @@ describe('IAB vendors tab with publisher restrictions', () => {
 		'vendor 755 objection control %s',
 		async (_name, publisherRestrictions, objectable) => {
 			render(
-				<ConsentProvider
+				<InthProvider
 					options={{
 						...defaultIABOptions,
 						iab: { ...defaultIABOptions.iab, publisherRestrictions },
 					}}
 				>
 					<IABConsentDialog open />
-				</ConsentProvider>
+				</InthProvider>
 			);
 			// Vendor 755 declares only consent purposes. Requiring legitimate
 			// interest for purpose 7 gives the visitor a right to object.
@@ -563,7 +563,7 @@ describe('IAB purposes tab with publisher restrictions', () => {
 		// Vendors 1 and 10 declare purpose 7 for legitimate interest; the
 		// restriction moves vendor 755 there too, so no vendor uses consent.
 		render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					...defaultIABOptions,
 					iab: {
@@ -576,7 +576,7 @@ describe('IAB purposes tab with publisher restrictions', () => {
 			>
 				<KernelProbe />
 				<IABConsentDialog open />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		// Purpose 7 sits in stack 1 with purpose 2. Stack content mounts when
 		// the stack first opens.
@@ -648,7 +648,7 @@ describe('IAB stack switch without an objection handler', () => {
 	test('reflects and sets consent for purposes with no consent basis', async () => {
 		const onToggle = vi.fn();
 		render(
-			<ConsentProvider options={defaultIABOptions}>
+			<InthProvider options={defaultIABOptions}>
 				<StackItem
 					consents={{}}
 					onToggle={onToggle}
@@ -671,7 +671,7 @@ describe('IAB stack switch without an objection handler', () => {
 					}}
 					vendorConsents={{}}
 				/>
-			</ConsentProvider>
+			</InthProvider>
 		);
 		// With no objection control to fall back on, the rows keep their
 		// consent switch, so the stack switch must cover them too.
@@ -714,7 +714,7 @@ describe('IAB vendors tab with Google ad tech providers', () => {
 		) as typeof fetch;
 		try {
 			render(
-				<ConsentProvider
+				<InthProvider
 					options={{
 						...defaultIABOptions,
 						iab: {
@@ -727,7 +727,7 @@ describe('IAB vendors tab with Google ad tech providers', () => {
 					}}
 				>
 					<IABConsentDialog open />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			const vendorsTab = await vi.waitFor(

@@ -27,7 +27,7 @@ const flush = async function flush() {
 	await tick();
 };
 
-describe('ConsentProvider option identity', () => {
+describe('InthProvider option identity', () => {
 	beforeEach(() => {
 		window.localStorage.clear();
 	});

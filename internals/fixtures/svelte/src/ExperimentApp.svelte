@@ -7,7 +7,7 @@
 		ConsentBanner,
 		ConsentDialog,
 		ConsentDialogLink,
-		ConsentProvider,
+		InthProvider,
 		hosted,
 	} from '@inth/svelte';
 
@@ -28,7 +28,7 @@
 	const experiment = experimentFromSearch(location.search);
 </script>
 
-<ConsentProvider
+<InthProvider
 	callbacks={experimentCallbacks}
 	{experiment}
 	{...backend}
@@ -40,4 +40,4 @@
 	</footer>
 	<ConsentBanner />
 	<ConsentDialog />
-</ConsentProvider>
+</InthProvider>

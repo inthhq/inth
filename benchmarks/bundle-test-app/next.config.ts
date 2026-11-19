@@ -15,7 +15,7 @@ const repositoryRoot = resolve(projectDir, '../..');
  * fixture imports a thin adapter and this overwrites it with the variant
  * the installed package exports. The tracked adapter is the `current`
  * copy so type-checking works without a build. Drop `legacy/` once every
- * measured base ships `ConsentRoot`.
+ * measured base ships `InthProvider`.
  */
 const selectConsentApi = function selectConsentApi(): void {
 	// Read the workspace package directly: `@inth/nextjs` resolves to it on
@@ -26,7 +26,7 @@ const selectConsentApi = function selectConsentApi(): void {
 		'packages/sdk/nextjs/dist-types/index.d.ts'
 	);
 	const variant =
-		existsSync(types) && readFileSync(types, 'utf8').includes('ConsentRoot')
+		existsSync(types) && readFileSync(types, 'utf8').includes('InthProvider')
 			? 'current'
 			: 'legacy';
 	const adapters = join(projectDir, 'app/nextjs-ssr/consent-api');

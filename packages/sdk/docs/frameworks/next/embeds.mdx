@@ -1,6 +1,6 @@
 ---
 title: Embeds
-description: Keep YouTube videos, maps and other iframes out of a Next.js page until their consent category is allowed, with ConsentGate or the iframe blocker in ConsentRoot.
+description: Keep YouTube videos, maps and other iframes out of a Next.js page until their consent category is allowed, with ConsentGate or the iframe blocker in InthProvider.
 group: frameworks
 ---
 
@@ -21,7 +21,7 @@ Wrap the iframe in `ConsentGate` in a Client Component:
 <include src="../../shared/examples/nextjs/video-embed.mdx" />
 
 Import `VideoEmbed` into any page or Server Component under the layout that
-mounts `ConsentRoot`; only this file needs `'use client'`. The iframe stays out
+mounts `InthProvider`; only this file needs `'use client'`. The iframe stays out
 of the page until the visitor allows measurement, and a placeholder with a
 button that opens the preference dialog takes its place.
 
@@ -35,7 +35,7 @@ default, awaited and Pages Router layouts, the placeholder and its props.
 
 ## Gate an iframe with the iframe blocker
 
-`ConsentRoot` runs the iframe blocker in the browser by default. Give an
+`InthProvider` runs the iframe blocker in the browser by default. Give an
 iframe `data-src` instead of `src`, and a `data-category`:
 
 {/* example: fragment */}
@@ -56,7 +56,7 @@ vendor ID to also block the iframe while the visitor has turned that vendor
 off.
 
 To turn the blocker off, pass `options={{ iframeBlocker: false }}` to
-`ConsentRoot`.
+`InthProvider`.
 
 ## Verify the embeds
 

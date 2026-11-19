@@ -7,7 +7,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 
 import { completeGVL } from '../../../../../iab/src/__tests__/fixtures/gvl-sample';
 import { testing } from '../../../testing';
@@ -29,7 +29,7 @@ const providerOnlyPurpose = {
 describe('PurposeItem with Google ad tech providers', () => {
 	test('leaves stock classes off the provider rows under noStyle', async () => {
 		const screen = await render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: testing(),
 					noStyle: true,
@@ -43,7 +43,7 @@ describe('PurposeItem with Google ad tech providers', () => {
 					onVendorToggle={vi.fn()}
 					onVendorClick={vi.fn()}
 				/>
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		await userEvent.click(screen.getByText('Create profiles'));
@@ -65,7 +65,7 @@ describe('PurposeItem with Google ad tech providers', () => {
 
 	test('counts and lists providers as partners of a purpose no vendor declares', async () => {
 		const screen = await render(
-			<ConsentProvider options={{ mode: testing() }}>
+			<InthProvider options={{ mode: testing() }}>
 				<PurposeItem
 					purpose={providerOnlyPurpose}
 					isEnabled={false}
@@ -74,7 +74,7 @@ describe('PurposeItem with Google ad tech providers', () => {
 					onVendorToggle={vi.fn()}
 					onVendorClick={vi.fn()}
 				/>
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		await expect.element(screen.getByText('2 partners')).toBeInTheDocument();
@@ -121,7 +121,7 @@ describe('PurposeItem objection controls', () => {
 		const onPurposeObjection = vi.fn();
 		const onVendorLegitimateInterestToggle = vi.fn();
 		const screen = await render(
-			<ConsentProvider options={{ mode: testing() }}>
+			<InthProvider options={{ mode: testing() }}>
 				<PurposeItem
 					purpose={{
 						description: '',
@@ -140,7 +140,7 @@ describe('PurposeItem objection controls', () => {
 					onPurposeObjection={onPurposeObjection}
 					onVendorLegitimateInterestToggle={onVendorLegitimateInterestToggle}
 				/>
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		await userEvent.click(screen.getByText('Measure advertising performance'));

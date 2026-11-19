@@ -4,7 +4,7 @@
 <script lang="ts">
 	import { getEventDispatcher } from '@inth/svelte';
 
-	// Render inside ConsentProvider, passing your router's current path.
+	// Render inside InthProvider, passing your router's current path.
 	const { path }: { path: string } = $props();
 	const events = getEventDispatcher({ pageviews: ['posthog'] });
 

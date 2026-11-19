@@ -214,7 +214,7 @@ const getDom = (kernel: ConsentKernel): PolicyDomEvidence => {
 
 /** Shares policy exercises while each adapter supplies its real root component and server reader. */
 export const createFrameworkPolicyDriver = ({
-	Root: ConsentRoot,
+	Root: InthProvider,
 	readInitialConfig,
 }: {
 	Root: FrameworkRoot;
@@ -437,7 +437,7 @@ export const createFrameworkPolicyDriver = ({
 				? serverConfig?.initialRecords
 				: readStoredRecords(config, setup.clock.now()).records;
 			return (
-				<ConsentRoot
+				<InthProvider
 					persistence={false}
 					state={{
 						initialIab:
@@ -510,7 +510,7 @@ export const createFrameworkPolicyDriver = ({
 							/>
 						</ConsentGate>
 					) : null}
-				</ConsentRoot>
+				</InthProvider>
 			);
 		};
 		const mount = async (hydrate = false) => {

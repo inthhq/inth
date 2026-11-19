@@ -38,12 +38,12 @@ export default defineNuxtConfig({
 })
 ```
 
-2. Add `ConsentRoot` and a link that opens the preference dialog to `app.vue`
+2. Add `InthProvider` and a link that opens the preference dialog to `app.vue`
 
 ```vue
 <!-- app/app.vue -->
 <template>
-  <ConsentRoot />
+  <InthProvider />
   <NuxtPage />
   <footer>
     <ConsentDialogLink>Privacy settings</ConsentDialogLink>

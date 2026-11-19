@@ -2,7 +2,7 @@ import { userEvent } from '@vitest/browser/context';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { IABConsentDialog } from '~/components/iab-panel';
 
 import {
@@ -19,9 +19,9 @@ describe('IAB Preference Center E2E Tests', () => {
 
 	test('should switch between purposes and vendors tabs', async () => {
 		render(
-			<ConsentProvider options={defaultProviderIABOptions}>
+			<InthProvider options={defaultProviderIABOptions}>
 				<IABConsentDialog open />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		await waitForElement('[data-testid="iab-consent-dialog-root"]');
@@ -47,9 +47,9 @@ describe('IAB Preference Center E2E Tests', () => {
 	describe('Accessibility', () => {
 		test('should have proper ARIA attributes', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentDialog open />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			const dialog = await waitForElement(

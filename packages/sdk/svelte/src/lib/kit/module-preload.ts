@@ -16,7 +16,7 @@ import { SAFE_NONCE } from '@inth/sdk/server';
 
 /**
  * The on-demand chunks a page can preload: the one that holds the script
- * loader and the network blocker, and `ConsentRoot`'s consent engine.
+ * loader and the network blocker, and `InthProvider`'s consent engine.
  */
 export type PreloadChunkName = 'engine' | 'loader-and-blocker';
 

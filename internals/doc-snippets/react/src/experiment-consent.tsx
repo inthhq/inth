@@ -3,9 +3,9 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentProvider,
+	InthProvider,
 } from '@inth/react';
-import type { ConsentProviderCallbacks } from '@inth/react';
+import type { InthProviderCallbacks } from '@inth/react';
 import { defineExperiment } from '@inth/react/engine';
 import type { ReactNode } from 'react';
 
@@ -48,7 +48,7 @@ const callbacks = {
 			});
 		}
 	},
-} satisfies ConsentProviderCallbacks;
+} satisfies InthProviderCallbacks;
 
 export const Consent = ({
 	arm,
@@ -61,7 +61,7 @@ export const Consent = ({
 	arm?: 'control' | 'wall' | 'off';
 	children: ReactNode;
 }) => (
-	<ConsentProvider
+	<InthProvider
 		options={{
 			callbacks,
 			experiment: arm === 'off' ? undefined : { ...bannerExperiment, arm },
@@ -75,6 +75,6 @@ export const Consent = ({
 		<footer>
 			<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 		</footer>
-	</ConsentProvider>
+	</InthProvider>
 );
 // #endregion docs:experiment-consent

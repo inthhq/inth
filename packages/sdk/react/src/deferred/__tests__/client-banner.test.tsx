@@ -8,7 +8,7 @@ import { createRoot } from 'react-dom/client';
 import { expect, test, vi } from 'vitest';
 
 import { policyFixture } from '../../__tests__/policy-fixture';
-import { ConsentProvider as EngineProvider } from '../../provider';
+import { InthProvider as EngineProvider } from '../../provider';
 import { testing } from '../../testing';
 import { ConsentBanner } from '../client-banner';
 

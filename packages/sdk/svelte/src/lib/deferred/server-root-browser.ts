@@ -1,5 +1,5 @@
 /**
- * `#server-root` in the browser build. `ConsentRoot` calls
+ * `#server-root` in the browser build. The SvelteKit `InthProvider` calls
  * `createServerRoot` only while it renders on the server, so the browser
  * gets this stand-in instead of the module that imports the engine (see
  * `server-root.ts`).

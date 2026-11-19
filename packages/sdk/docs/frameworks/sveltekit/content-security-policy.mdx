@@ -87,7 +87,7 @@ browser use the provider's `nonce`, or inherit the nonce from an existing
 Inth style or a page script. Your `style-src` must allow that nonce.
 
 For a prerendered page, or when your policy does not allow those nonces, set
-`styles={false}` on `ConsentRoot` and import
+`styles={false}` on `InthProvider` and import
 `@inth/svelte/styles.css` in your root layout. With IAB TCF, also import
 `@inth/svelte/iab/styles.css` after it. `'self'` covers those stylesheets.
 

@@ -13,7 +13,7 @@ afterEach(() => {
 	setGenerated({});
 });
 
-describe('the transport a ConsentProvider selects', () => {
+describe('the transport an InthProvider selects', () => {
 	test("is the hosted backend at the build's URL with no options", () => {
 		setGenerated({ projectUrl: 'https://consent.example.com' });
 		expect({ ...selectedMode({}) }).toMatchObject({

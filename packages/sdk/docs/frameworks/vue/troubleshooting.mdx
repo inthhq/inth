@@ -50,7 +50,7 @@ with `manifest({ source: 'runtime' })`, the `/v1/consent/manifest` request.
    `initFallback: false` and no `inputs` or `geoUrl`, every visitor gets the
    policy your project assigns when the location is unknown. Switch to
    `hosted()`, or check that rule and rebuild.
-3. **`ConsentRoot` is inside a route that unmounts.** Put it in the root
+3. **`InthProvider` is inside a route that unmounts.** Put it in the root
    component.
 4. **The backend did not answer.** With `hosted()`, `/v1/consent/init` must return
    200; with a runtime manifest, `/v1/consent/manifest` must. A CORS error means your site's origin is missing from the
@@ -68,7 +68,7 @@ but the plugin has no `iab` option, or has `iab: false` or
 `iab: { enabled: false }`. The standard banner does not handle the IAB model,
 so Inth throws rather than leave the visitor with no consent UI.
 `app.use()` throws when the policy arrives with `prefetch`; otherwise the
-error is uncaught once the policy resolves, and `ConsentRoot` renders
+error is uncaught once the policy resolves, and `InthProvider` renders
 nothing.
 
 **Fix.** If the site uses IAB TCF, pass `iab` to the plugin, such as
@@ -120,6 +120,7 @@ a stable release, with no alias.
 | Vue plugin options `projectUrl`, `manifest`, `manifestSnapshot`, `manifestUrl`, `customFetch`, `domain` | `mode`, a factory from `@inth/vue/vue-plugin` that takes them |
 | The default `inthVue` export of `@inth/vue/vite` | `consentManifest` from `@inth/vue/vite`. The Vue app plugin keeps the name `inthVue`. |
 | `@inth/vue/consent-root`, `@inth/vue/consent-widget` | Named exports from `@inth/vue/vue-plugin` |
+| `ConsentRoot`, `runtime/components/consent-root.vue` | `InthProvider`, `runtime/components/inth-provider.vue` |
 | `ConsentPreferencesLink`, `runtime/components/consent-preferences-link.vue` | `ConsentDialogLink`, `consent-dialog-link.vue` |
 | `ConsentFrame` | `ConsentGate` |
 | `hosted({ url })` | `hosted({ projectUrl })`, or `VITE_INTH_PROJECT_URL` |

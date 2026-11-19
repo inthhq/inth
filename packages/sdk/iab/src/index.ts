@@ -166,12 +166,12 @@ export interface IABProviderConfig extends IABUserConfig {
  * ```tsx
  * import { iab } from '@inth/sdk/iab';
  *
- * <ConsentProvider options={{
+ * <InthProvider options={{
  *   mode: hosted({ projectUrl: '/api/inth' }),
  *   iab: iab({ cmpId: 28, vendors: [1, 2, 755] }),
  * }}>
  *   {children}
- * </ConsentProvider>
+ * </InthProvider>
  * ```
  */
 const createIABProviderConfig = function createIABProviderConfig(

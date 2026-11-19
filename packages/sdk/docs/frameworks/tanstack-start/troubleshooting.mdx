@@ -71,7 +71,7 @@ transport from `@inth/react`, cannot be serialized. `hosted()` from
 `@inth/tanstack-start` is plain data and can be returned.
 
 **Fix.** Return only the consent state from the server function. Import
-`scripts` in the root route module and pass them to `ConsentRoot` there.
+`scripts` in the root route module and pass them to `InthProvider` there.
 
 ## The same-origin setup never renders the banner on the server
 
@@ -99,7 +99,7 @@ host overwrites `x-forwarded-for`, set `trustForwardedHeaders: true` on
 
 ## The browser calls /api/inth/v1/consent/init and gets a 404
 
-**Check.** `ConsentRoot` calls `/api/inth/v1/consent/init` only when the state carries
+**Check.** `InthProvider` calls `/api/inth/v1/consent/init` only when the state carries
 `routePrefix: '/api/inth'`, from `createConsentStateHandler`. Confirm that the
 app mounts the consent route at `src/routes/api/inth/$.ts`.
 
@@ -108,9 +108,9 @@ app mounts the consent route at `src/routes/api/inth/$.ts`.
 or remove `routePrefix`, so the browser calls your backend directly. Earlier
 alphas sent init to `/api/inth/v1/consent/init` by default; now there is no default.
 
-## ConsentRoot throws that it needs a backend URL
+## InthProvider throws that it needs a backend URL
 
-**Check.** The page throws one of these errors from `ConsentRoot`:
+**Check.** The page throws one of these errors from `InthProvider`:
 
 - ``inth: manifest() needs a backend URL. Set `projectUrl` in your config.``
 - ``inth: hosted() needs a backend URL. Set `projectUrl` on the mode or in your config.``
@@ -128,7 +128,7 @@ the root throws. To run without a backend, pass `mode: testing()` to
 **Check.** Search route `head()` definitions, your root component and any tag
 manager for the vendor's script or SDK initializer.
 
-**Fix.** Remove every loader except the one in `ConsentRoot`'s `scripts`. Inth
+**Fix.** Remove every loader except the one in `InthProvider`'s `scripts`. Inth
 only gates scripts registered with it.
 [Scripts and embeds](/docs/frameworks/tanstack-start/scripts) covers the
 options.
@@ -139,7 +139,7 @@ options.
 
 ## Inspect the active policy
 
-Render this component inside `ConsentRoot`. It reads state and records no
+Render this component inside `InthProvider`. It reads state and records no
 choice:
 
 {/* example: fragment */}
@@ -174,7 +174,7 @@ component after you finish.
 ## Names from an earlier alpha are missing
 
 **Check.** TypeScript or the build reports a missing export or option, such as
-`createConsentServerRoute`, `DEFAULT_INIT_ROUTE` or `ConsentRoot`'s
+`createConsentServerRoute`, `DEFAULT_INIT_ROUTE` or `InthProvider`'s
 `projectUrl` prop. The v3 alphas removed names that never shipped in a stable
 release, with no alias.
 
@@ -182,13 +182,16 @@ release, with no alias.
 
 | Removed | Use instead |
 | --- | --- |
-| `ConsentRoot`'s `projectUrl` and `routePrefix` props | `createConsentStateHandler({ routePrefix })`. The state carries the backend URL, the mode and the route prefix. |
-| `ConsentRoot`'s `initRoute` prop, and `DEFAULT_INIT_ROUTE` | `createConsentStateHandler({ routePrefix: '/api/inth' })`. There is no default route any more. |
+| `ConsentRoot` and `ConsentRootProps` | `InthProvider` and `InthProviderProps` |
+| `ConsentProvider` from `@inth/tanstack-start` | `InthProvider` from `@inth/react`, for a runtime you manage yourself |
+| `ConsentProviderOptions`, `ConsentProviderCallbacks` and `ConsentProviderPrefetch` | `InthProviderOptions`, `InthProviderCallbacks` and `InthProviderPrefetch` |
+| `InthProvider`'s `projectUrl` and `routePrefix` props | `createConsentStateHandler({ routePrefix })`. The state carries the backend URL, the mode and the route prefix. |
+| `InthProvider`'s `initRoute` prop, and `DEFAULT_INIT_ROUTE` | `createConsentStateHandler({ routePrefix: '/api/inth' })`. There is no default route any more. |
 | `createConsentServerRoute`, and its `manifestGET`, `initGET` and `proxyHandler` | `createConsentRoute()`, which returns `GET`, plus the write methods with `proxy` |
 | `createConsentStateHandler({ projectUrl, manifest })` | `createConsentStateHandler()`, which reads both from `consentManifest()`, or `{ snapshot }` |
 | `manifestUrl` on the state handler | `mode: manifest({ manifestUrl })` |
 | `ConsentManifestOptions`, `resolveStrictestDefaultInit` | `ResolveConsentOptions`; `resolveUnknownLocationInit` |
-| Falling back to local mode when no backend URL is set | `ConsentRoot` throws. Pass `mode: testing()` to run without a backend. |
+| Falling back to local mode when no backend URL is set | `InthProvider` throws. Pass `mode: testing()` to run without a backend. |
 | `hosted`, `offline` and `manifest` from `@inth/tanstack-start` as transports | They are data for `createConsentStateHandler({ mode })` now. |
 
 The renames shared by every framework:

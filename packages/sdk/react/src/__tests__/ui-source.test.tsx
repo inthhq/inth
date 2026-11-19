@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { expect, test, vi } from 'vitest';
 
 import { ConsentWidget } from '../components/preferences';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 
 const resolution = resolvePolicyRules({
 	countryCode: null,
@@ -27,7 +27,7 @@ const mount = function mount(children: React.ReactNode) {
 	document.body.append(container);
 	const view = createRoot(container);
 	view.render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				enabled: true,
 				mode: Object.assign(() => ({ save }), { kind: 'custom' as const }),
@@ -36,7 +36,7 @@ const mount = function mount(children: React.ReactNode) {
 			}}
 		>
 			{children}
-		</ConsentProvider>
+		</InthProvider>
 	);
 	return {
 		payload: () => save.mock.calls[0]?.[0] as SavePayload | undefined,

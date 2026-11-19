@@ -4,7 +4,7 @@ import type { ComponentProps } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentBanner } from '~/components/prompt';
 import { useActiveUI } from '~/hooks';
@@ -18,10 +18,10 @@ const ActiveUIProbe = () => (
 const renderBanner = function renderBanner(
 	rule: Partial<PolicyRule>,
 	props: ComponentProps<typeof ConsentBanner> = {},
-	themeOptions: Partial<ComponentProps<typeof ConsentProvider>['options']> = {}
+	themeOptions: Partial<ComponentProps<typeof InthProvider>['options']> = {}
 ) {
 	return render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: testing(),
 				persistence: false,
@@ -34,7 +34,7 @@ const renderBanner = function renderBanner(
 		>
 			<ActiveUIProbe />
 			<ConsentBanner {...props} />
-		</ConsentProvider>
+		</InthProvider>
 	);
 };
 

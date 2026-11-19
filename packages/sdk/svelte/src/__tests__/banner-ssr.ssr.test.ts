@@ -14,7 +14,7 @@ import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
 import { render } from 'svelte/server';
 import { describe, expect, test } from 'vitest';
 
-import ConsentProvider from '../lib/components/consent-provider.svelte';
+import InthProvider from '../lib/components/inth-provider.svelte';
 import { testing } from '../lib/testing';
 import type { ConsentManagerOptions } from '../lib/types';
 import BannerFixture from './fixtures/banner-fixture.svelte';
@@ -278,7 +278,7 @@ describe('consent banner SSR', () => {
 	});
 
 	test('the provider alone renders no banner', () => {
-		const html = render(ConsentProvider, {
+		const html = render(InthProvider, {
 			props: {
 				options: buildOptions({ initialPolicyResolution: BANNER_POLICY }),
 			},

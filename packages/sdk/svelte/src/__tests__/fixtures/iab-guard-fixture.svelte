@@ -1,6 +1,6 @@
 <script lang="ts">
-	import ConsentProvider from '../../lib/components/consent-provider.svelte';
 	import IABConsentBanner from '../../lib/components/iab-prompt.svelte';
+	import InthProvider from '../../lib/components/inth-provider.svelte';
 	import ConsentBanner from '../../lib/components/prompt.svelte';
 	import type { ConsentManagerOptions } from '../../lib/types';
 
@@ -14,8 +14,8 @@
 </script>
 
 <svelte:boundary onerror={onError}>
-	<ConsentProvider {options}>
+	<InthProvider {options}>
 		<ConsentBanner />
 		<IABConsentBanner />
-	</ConsentProvider>
+	</InthProvider>
 </svelte:boundary>

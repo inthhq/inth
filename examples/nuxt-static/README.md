@@ -9,7 +9,7 @@ visitor allows measurement.
   `mode: manifest({ resolve: 'browser' })` and `routePrefix: false`, since a
   static host has no server for the consent route.
 - `app/app.config.ts` loads PostHog once the visitor allows measurement.
-- `app/app.vue` mounts `ConsentRoot` and a Privacy settings link.
+- `app/app.vue` mounts `InthProvider` and a Privacy settings link.
 
 ## Run it
 

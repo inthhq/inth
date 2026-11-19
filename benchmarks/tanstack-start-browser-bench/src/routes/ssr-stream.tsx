@@ -21,7 +21,7 @@ const SSRStreamPage = () => {
 };
 
 /**
- * The streamed setup `ConsentRoot` documents: the loader returns the
+ * The streamed setup `InthProvider` documents: the loader returns the
  * consent state unawaited, so the response starts without waiting for the
  * backend and the router streams the state in after the shell. The server
  * HTML has no banner; it shows once the state reaches the hydrated root.

@@ -5,7 +5,7 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDraftProvider,
-	ConsentProvider,
+	InthProvider,
 	ConsentWidget,
 	useConsentDraft,
 	useEffectivePermissions,
@@ -58,7 +58,7 @@ const TestComponent = () => {
 	);
 };
 const ReactFullPage = () => (
-	<ConsentProvider
+	<InthProvider
 		options={{
 			mode: benchPolicy({
 				policy: [
@@ -82,7 +82,7 @@ const ReactFullPage = () => (
 			<ConsentDialog />
 			<ConsentWidget />
 		</ConsentDraftProvider>
-	</ConsentProvider>
+	</InthProvider>
 );
 
 export default ReactFullPage;

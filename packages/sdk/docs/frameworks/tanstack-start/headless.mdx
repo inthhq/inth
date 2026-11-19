@@ -1,6 +1,6 @@
 ---
 title: Headless
-description: Build your own consent banner or embed gate markup in a TanStack Start app with the @inth/tanstack-start/headless hooks inside ConsentRoot.
+description: Build your own consent banner or embed gate markup in a TanStack Start app with the @inth/tanstack-start/headless hooks inside InthProvider.
 group: frameworks
 ---
 
@@ -11,8 +11,8 @@ group: frameworks
 ## Render your own banner
 
 `@inth/tanstack-start/headless` re-exports the headless hooks from
-`@inth/react/headless`. They read the runtime from `ConsentRoot`. Render your
-component inside `ConsentRoot` in place of `ConsentBanner`, and keep
+`@inth/react/headless`. They read the runtime from `InthProvider`. Render your
+component inside `InthProvider` in place of `ConsentBanner`, and keep
 `ConsentDialog` and a preferences link:
 
 {/* example: fragment */}
@@ -93,7 +93,7 @@ consent UI.
 
 <include src="../../shared/examples/tanstack-start/headless-consent-gate.mdx" />
 
-Render `VideoGate` inside `ConsentRoot` around the embed, such as a YouTube
+Render `VideoGate` inside `InthProvider` around the embed, such as a YouTube
 `iframe`.
 
 <import src="../../shared/react/headless.mdx#consent-gate-api" />

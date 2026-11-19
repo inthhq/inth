@@ -16,8 +16,8 @@ import type { Component } from 'vue';
 import { createSSRApp } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 
-import NuxtConsentRoot from '../runtime/components/nuxt-root.vue';
-import ConsentRoot from '../runtime/components/root.vue';
+import InthProvider from '../runtime/components/inth-provider.vue';
+import NuxtInthProvider from '../runtime/components/nuxt-inth-provider.vue';
 import { consentConfigKey } from '../runtime/composables/config';
 import {
 	symbolActiveUI,
@@ -111,8 +111,8 @@ afterEach(() => {
 });
 
 describe.each([
-	['ConsentRoot', ConsentRoot],
-	['Nuxt ConsentRoot', NuxtConsentRoot],
+	['Vue InthProvider', InthProvider],
+	['Nuxt InthProvider', NuxtInthProvider],
 ] as [string, Component][])('%s', (_name, Root) => {
 	test('renders the banner and, after mount, the lazy dialog trigger', async () => {
 		const wrapper = mount(Root, {
@@ -128,7 +128,7 @@ describe.each([
 	});
 });
 
-describe('Nuxt ConsentRoot on the server', () => {
+describe('Nuxt InthProvider on the server', () => {
 	test('renders the lazy banner into the HTML and no trigger', async () => {
 		const runtimeConfig: RuntimeConsentConfig = {
 			...config,
@@ -139,7 +139,7 @@ describe('Nuxt ConsentRoot on the server', () => {
 			prefetch: initFixture,
 		});
 		try {
-			const app = createSSRApp(NuxtConsentRoot);
+			const app = createSSRApp(NuxtInthProvider);
 			app.provide(consentConfigKey, runtimeConfig);
 			app.provide(symbolKernelContext, context);
 			app.provide(symbolKernel, context.kernel);

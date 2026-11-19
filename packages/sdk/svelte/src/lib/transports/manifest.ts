@@ -29,20 +29,21 @@ export type ManifestModeOptions = BrowserManifestOptions;
  * first time a visitor resolves to it.
  *
  * Use it in a Svelte single-page app. In SvelteKit, set the mode on
- * `inthHandle()` and render `ConsentRoot` instead.
+ * `inthHandle()` and render `InthProvider` from `@inth/svelte/kit`
+ * instead.
  *
  * @param options - Overrides for the snapshot, backend and location.
- * @returns A transport factory for `ConsentProvider`'s `mode`.
+ * @returns A transport factory for `InthProvider`'s `mode`.
  * @throws {Error} When there is no snapshot, `manifestUrl` or `projectUrl`.
  * @example
  * ```svelte
  * <script lang="ts">
- *   import { ConsentBanner, ConsentProvider, manifest } from '@inth/svelte';
+ *   import { ConsentBanner, InthProvider, manifest } from '@inth/svelte';
  * </script>
  *
- * <ConsentProvider mode={manifest()}>
+ * <InthProvider mode={manifest()}>
  *   <ConsentBanner />
- * </ConsentProvider>
+ * </InthProvider>
  * ```
  */
 export const manifest = function manifest(

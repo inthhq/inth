@@ -22,7 +22,7 @@ for that button:
 
 <include src="../../shared/examples/storybook-react/compose-banner.mdx" />
 
-The parts read the nearest `ConsentProvider`. In the `src/consent.tsx` file
+The parts read the nearest `InthProvider`. In the `src/consent.tsx` file
 from the [quickstart](/docs/frameworks/react/quickstart), import
 `CookieBanner` from `./cookie-banner` and render it in place of
 `ConsentBanner`, next to `ConsentDialog`:
@@ -30,14 +30,14 @@ from the [quickstart](/docs/frameworks/react/quickstart), import
 {/* example: fragment */}
 
 ```tsx title="src/consent.tsx (partial)"
-<ConsentProvider options={{ mode, scripts }}>
+<InthProvider options={{ mode, scripts }}>
 	{children}
 	<CookieBanner />
 	<ConsentDialog />
 	<footer>
 		<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 	</footer>
-</ConsentProvider>;
+</InthProvider>;
 ```
 
 <import src="../../shared/react/compose.mdx#how-it-works" />

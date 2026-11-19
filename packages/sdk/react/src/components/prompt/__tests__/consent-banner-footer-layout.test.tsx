@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { page } from 'vitest/browser';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentBanner } from '~/components/prompt';
 
@@ -17,7 +17,7 @@ import { testing } from '../../../testing';
 
 const renderBanner = async function renderBanner() {
 	await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: testing(),
 				persistence: false,
@@ -25,7 +25,7 @@ const renderBanner = async function renderBanner() {
 			}}
 		>
 			<ConsentBanner disableAnimation />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await vi.waitFor(() => {
 		expect(

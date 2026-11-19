@@ -1,6 +1,6 @@
 <script lang="ts">
 	import ConsentGate from '../../lib/components/consent-gate.svelte';
-	import ConsentProvider from '../../lib/components/consent-provider.svelte';
+	import InthProvider from '../../lib/components/inth-provider.svelte';
 	import ConsentDialog from '../../lib/components/panel.svelte';
 	import ConsentBanner from '../../lib/components/prompt.svelte';
 	import type { ConsentManagerOptions } from '../../lib/types';
@@ -8,11 +8,11 @@
 	let { options }: { options: ConsentManagerOptions } = $props();
 </script>
 
-<ConsentProvider {options}>
+<InthProvider {options}>
 	<ConsentBanner legalLinks={['privacyPolicy']} />
 	<ConsentDialog
 		legalLinks={['privacyPolicy']}
 		open
 	/>
 	<ConsentGate category="marketing" />
-</ConsentProvider>
+</InthProvider>

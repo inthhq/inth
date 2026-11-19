@@ -368,7 +368,7 @@ describe('policy playground helpers', () => {
 			toolbar: true,
 		});
 		expect(withToolbar).toContain(
-			"import { ConsentBanner, ConsentDialog, ConsentDialogTriggerToolbar, ConsentProvider } from '@inth/react';"
+			"import { ConsentBanner, ConsentDialog, ConsentDialogTriggerToolbar, InthProvider } from '@inth/react';"
 		);
 		expect(withToolbar).toContain(
 			"import { testing } from '@inth/react/testing';"

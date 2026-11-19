@@ -3,7 +3,7 @@
 import { benchPolicy } from '@inth/benchmarking/bench-policy';
 import { ConsentBanner } from '@inth/react/consent-banner';
 import { useActiveUI } from '@inth/react/hooks';
-import { ConsentProvider } from '@inth/react/provider';
+import { InthProvider } from '@inth/react/provider';
 import { useEffect, useRef } from 'react';
 
 import { getBenchState, observeBannerVisibility } from './state';
@@ -40,7 +40,7 @@ const Probe = () => {
 };
 
 export const BannerVisibilityBenchmark = () => (
-	<ConsentProvider
+	<InthProvider
 		options={{
 			mode: benchPolicy({ policy: [BENCHMARK_POLICY] }),
 			persistence: false,
@@ -56,5 +56,5 @@ export const BannerVisibilityBenchmark = () => (
 			<h1>Banner visibility benchmark</h1>
 		</main>
 		<ConsentBanner disableAnimation />
-	</ConsentProvider>
+	</InthProvider>
 );

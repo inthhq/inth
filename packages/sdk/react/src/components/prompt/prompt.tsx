@@ -147,7 +147,7 @@ export interface ConsentBannerProps {
 	 * ```
 	 *
 	 * @remarks
-	 * You must set the legal links in the ConsentProvider options.
+	 * You must set the legal links in the InthProvider options.
 	 */
 	legalLinks?: InlineLegalLinksProps['links'];
 

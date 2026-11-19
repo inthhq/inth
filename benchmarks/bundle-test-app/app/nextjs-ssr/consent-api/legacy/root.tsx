@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Adapter over the pre-`ConsentRoot` API. `next.config.ts` copies it to
+ * Adapter over the pre-`InthProvider` API. `next.config.ts` copies it to
  * `../root.tsx` on a base revision that still ships `ConsentBoundary`;
  * `tsconfig.json` excludes the variant directories so neither side has to
  * type-check the other's imports.

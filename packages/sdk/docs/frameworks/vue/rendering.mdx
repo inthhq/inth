@@ -74,7 +74,7 @@ unknown location, which could be another region's. `vite build` warns when
 it bundles such a policy and suggests `hosted()`, because the bundled policy
 then saves no request. To resolve in the browser instead:
 
-- Pass `country` and `region` props to `ConsentRoot` when the page already
+- Pass `country` and `region` props to `InthProvider` when the page already
   knows the location, for example from a value your edge server injected.
 - Pass `inputs: { country, region }` to `manifest()` for the same purpose,
   set once when the plugin installs.

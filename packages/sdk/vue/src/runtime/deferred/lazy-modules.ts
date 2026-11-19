@@ -1,6 +1,6 @@
 /**
  * Which server-rendered Inth modules a deferred visitor's HTML should not
- * preload: the stock banner's components below `ConsentRoot`, which
+ * preload: the stock banner's components below `InthProvider`, which
  * hydrate only once the consent engine loads.
  *
  * @packageDocumentation
@@ -21,7 +21,7 @@ const CONSENT_COMPONENT_MODULE =
  * with the app, so its chunk keeps its preload.
  */
 const GLOBAL_COMPONENT_MODULE =
-	/\/(?:nuxt-root|preferences|consent-gate|consent-dialog-link|panel-trigger)\.vue$/u;
+	/\/(?:nuxt-inth-provider|preferences|consent-gate|consent-dialog-link|panel-trigger)\.vue$/u;
 
 /**
  * Whether a server-rendered module is one of the stock banner's components,

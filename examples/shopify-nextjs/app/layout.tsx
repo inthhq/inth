@@ -3,7 +3,7 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentRoot,
+	InthProvider,
 } from '@inth/nextjs';
 import { resolveConsent } from '@inth/nextjs/server';
 import { connection } from 'next/server';
@@ -36,7 +36,7 @@ const RootLayout = async ({ children }: { children: ReactNode }) => {
 				/>
 			</head>
 			<body>
-				<ConsentRoot state={resolveConsent()}>
+				<InthProvider state={resolveConsent()}>
 					<ShopifyConsentSync />
 					<StoreProviders cart={getCart()}>
 						<SiteHeader />
@@ -50,7 +50,7 @@ const RootLayout = async ({ children }: { children: ReactNode }) => {
 					<footer className="site-footer">
 						<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 					</footer>
-				</ConsentRoot>
+				</InthProvider>
 			</body>
 		</html>
 	);

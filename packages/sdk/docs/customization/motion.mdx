@@ -55,18 +55,18 @@ surface where your framework allows:
 
 | Framework | For every surface | For one surface |
 | --- | --- | --- |
-| Next.js, TanStack Start | `options.disableAnimation` in Next.js `inth.config.ts`, or on `ConsentRoot` | `disableAnimation` prop on `ConsentBanner`, `ConsentDialog`, `IABConsentBanner`, `IABConsentDialog` |
-| React | `disableAnimation` in the `ConsentProvider` options | The same component props |
+| Next.js, TanStack Start | `options.disableAnimation` in Next.js `inth.config.ts`, or on `InthProvider` | `disableAnimation` prop on `ConsentBanner`, `ConsentDialog`, `IABConsentBanner`, `IABConsentDialog` |
+| React | `disableAnimation` in the `InthProvider` options | The same component props |
 | Nuxt | `disableAnimation` in the `inth` module options | `disableAnimation` prop on `consent-banner.vue`, `consent-manager.vue` and the IAB banner and dialog, when you render them yourself |
 | Vue | `disableAnimation` in the `inthVue` options | The same component props |
 | Astro | `disableAnimation` in the `inth()` integration options | `disableAnimation` prop on `ConsentBanner`, `ConsentDialog`, `IABConsentBanner`, `IABConsentDialog` |
-| Svelte, SvelteKit | `disableAnimation` on `ConsentProvider` (Svelte) or `ConsentRoot` (SvelteKit) | `disableAnimation` prop on `ConsentBanner`, `ConsentDialog`, `IABConsentBanner`, `IABConsentDialog` |
+| Svelte, SvelteKit | `disableAnimation` on `InthProvider`, from `@inth/svelte` or `@inth/svelte/kit` | `disableAnimation` prop on `ConsentBanner`, `ConsentDialog`, `IABConsentBanner`, `IABConsentDialog` |
 | HTML | `data-disable-animation` on the script tag, or `ui.disableAnimation` in `config` | `ui.banner.disableAnimation`, `ui.dialog.disableAnimation` |
 | JavaScript | `ui.disableAnimation` in `init()` | `ui.banner.disableAnimation`, `ui.dialog.disableAnimation` |
 
 A value on one surface wins over the value for every surface.
 
-Vue's `ConsentRoot` renders the banner and dialog without props, so in Vue and
+Vue's `InthProvider` renders the banner and dialog without props, so in Vue and
 Nuxt a per-surface value only applies when you render the surface components
 yourself.
 

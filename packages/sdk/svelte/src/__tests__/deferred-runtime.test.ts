@@ -12,7 +12,7 @@ import { afterEach, expect, test, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
 
 import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
-import type { ConsentRootBoot } from '../lib/deferred/boot';
+import type { RootBoot } from '../lib/deferred/boot';
 import { createRootEngine } from '../lib/deferred/engine';
 import { createDeferredRuntime } from '../lib/deferred/runtime';
 import type { EngineFactory } from '../lib/deferred/runtime';
@@ -85,7 +85,7 @@ const createHarness = (input: {
 	const runtimeOptions = () => runtimeOptionsFor({ ...providerOptions, mode });
 	const server = createOwnedRuntime(runtimeOptions());
 	// As the server leaves it: plain data.
-	const boot: ConsentRootBoot = {
+	const boot: RootBoot = {
 		d: 1,
 		s: JSON.parse(JSON.stringify(server.kernel.getSnapshot())),
 	};

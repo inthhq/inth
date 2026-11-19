@@ -16,14 +16,14 @@ import { HydrationSnapshotContext, KernelContext } from './context';
 /**
  * Reads the kernel from the nearest provider.
  *
- * @throws {Error} When called outside a `ConsentProvider`.
+ * @throws {Error} When called outside an `InthProvider`.
  * @internal
  */
 export const useKernel = function useKernel(): ConsentKernel {
 	const kernel = useContext(KernelContext);
 	if (!kernel) {
 		throw new Error(
-			'inth: no kernel in context. Wrap your app with <ConsentProvider options={...}> from @inth/react.'
+			'inth: no kernel in context. Wrap your app with <InthProvider options={...}> from @inth/react.'
 		);
 	}
 	return kernel;

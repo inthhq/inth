@@ -17,11 +17,11 @@ import {
 	inthDevtoolsPlugin,
 	DevTools,
 } from '../devtools';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { testing } from '../testing';
 
 const Provider = ({ children }: { children: ReactNode }) => (
-	<ConsentProvider
+	<InthProvider
 		options={{
 			enabled: false,
 			mode: testing(),
@@ -29,7 +29,7 @@ const Provider = ({ children }: { children: ReactNode }) => (
 		}}
 	>
 		{children}
-	</ConsentProvider>
+	</InthProvider>
 );
 
 /** The panel roots, which live inside each host's shadow root. */
@@ -57,7 +57,7 @@ describe('v3 React DevTools adapter', () => {
 		async (embedded) => {
 			const storageKey = `react-devtools-scope-${embedded}`;
 			const tree = (measurement: boolean) => (
-				<ConsentProvider
+				<InthProvider
 					options={{
 						consentCategories: [
 							'necessary',
@@ -75,7 +75,7 @@ describe('v3 React DevTools adapter', () => {
 					) : (
 						<ConsentDevTools defaultOpen />
 					)}
-				</ConsentProvider>
+				</InthProvider>
 			);
 			const view = await render(tree(false));
 			try {
@@ -181,7 +181,7 @@ describe('v3 React DevTools adapter', () => {
 		async (embedded) => {
 			const storageKey = `react-devtools-clear-${embedded}`;
 			const view = await render(
-				<ConsentProvider
+				<InthProvider
 					options={{
 						consentCategories: ['measurement', 'marketing'],
 						mode: testing(),
@@ -197,7 +197,7 @@ describe('v3 React DevTools adapter', () => {
 							defaultTab="policy"
 						/>
 					)}
-				</ConsentProvider>
+				</InthProvider>
 			);
 			try {
 				await vi.waitFor(() =>
@@ -572,7 +572,7 @@ describe('v3 React DevTools adapter', () => {
 
 	test('rejects an enabled adapter outside the v3 provider', async () => {
 		await expect(render(<ConsentDevTools />)).rejects.toThrow(
-			'DevTools must be rendered inside <ConsentProvider>'
+			'DevTools must be rendered inside <InthProvider>'
 		);
 	});
 

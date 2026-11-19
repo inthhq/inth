@@ -1,19 +1,19 @@
 ---
 title: ConsentBanner
-description: Render the pre-built ConsentBanner inside a Next.js ConsentRoot and configure its variants, per-policy buttons and compound parts.
+description: Render the pre-built ConsentBanner inside a Next.js InthProvider and configure its variants, per-policy buttons and compound parts.
 group: frameworks
 ---
 
-## Render the banner inside `ConsentRoot`
+## Render the banner inside `InthProvider`
 
-Render one `ConsentBanner` inside `ConsentRoot`, in the root layout from your
+Render one `ConsentBanner` inside `InthProvider`, in the root layout from your
 [App Router](/docs/frameworks/next/app-router) setup or in `pages/_app.tsx`
 from the [Pages Router](/docs/frameworks/next/pages-router) setup:
 
 <include src="../../../shared/examples/nextjs/quickstart-layout.mdx" />
 
 The layout is a Server Component. `@inth/nextjs` gives it client references to
-`ConsentRoot` and `ConsentBanner`, and `ConsentRoot` reads `inth.config.ts`
+`InthProvider` and `ConsentBanner`, and `InthProvider` reads `inth.config.ts`
 itself, so the layout passes only `state`. Function props, such as
 `renderAction`, need a `'use client'` file.
 

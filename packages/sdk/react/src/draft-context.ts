@@ -29,7 +29,7 @@ export const REFUSED: SaveResult = { ok: false };
 export const useDraftKernel = function useDraftKernel(): ConsentKernel {
 	const kernel = useContext(KernelContext);
 	if (!kernel) {
-		throw new Error('Consent drafts require a ConsentProvider.');
+		throw new Error('Consent drafts require an InthProvider.');
 	}
 	return kernel;
 };

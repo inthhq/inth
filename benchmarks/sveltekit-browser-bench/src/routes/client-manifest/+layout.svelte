@@ -2,7 +2,7 @@
 	import BenchShell from '$lib/bench-shell.svelte';
 	import { createBrowserManifestTransport } from '$lib/client-manifest-transport';
 	import { benchConsentCategories } from '$lib/fixture';
-	import { ConsentProvider } from '@inth/svelte';
+	import { InthProvider } from '@inth/svelte';
 
 	/** A transport factory that hands the provider `transport`. */
 	const customMode = <Transport>(transport: Transport) =>
@@ -11,7 +11,7 @@
 	let { children } = $props();
 </script>
 
-<ConsentProvider
+<InthProvider
 	options={{
 		mode: customMode(createBrowserManifestTransport()),
 		consentCategories: [...benchConsentCategories],
@@ -22,4 +22,4 @@
 	<BenchShell scenario="client-manifest">
 		{@render children()}
 	</BenchShell>
-</ConsentProvider>
+</InthProvider>

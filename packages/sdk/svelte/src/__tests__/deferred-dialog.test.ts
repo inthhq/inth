@@ -89,7 +89,7 @@ describe('ConsentDialog first load', () => {
 		'components/prompt.svelte',
 		'components/panel-link.svelte',
 		'components/panel-trigger.svelte',
-		'components/consent-provider.svelte',
+		'components/inth-provider.svelte',
 	])('%s does not statically reach the dialog', (entry) => {
 		const reachable = reachableFrom(resolve(LIB, entry));
 

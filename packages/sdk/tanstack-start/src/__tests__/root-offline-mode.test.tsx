@@ -1,5 +1,5 @@
 /**
- * ConsentRoot runs the mode the state carries.
+ * InthProvider runs the mode the state carries.
  *
  * `testing()` from the server function resolves the recommended rules in the
  * browser, with no backend. That the offline code stays out of the root's
@@ -10,7 +10,7 @@ import { useActiveUI, useModel } from '@inth/react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ConsentRoot } from '../root';
+import { InthProvider } from '../root';
 import { testing } from '../testing';
 
 const PolicyStatus = () => {
@@ -23,12 +23,12 @@ const PolicyStatus = () => {
 	);
 };
 
-describe('ConsentRoot offline mode', () => {
+describe('InthProvider offline mode', () => {
 	test('offline() in the state resolves the recommended rules locally', async () => {
 		const fetchSpy = vi.spyOn(globalThis, 'fetch');
 		try {
 			const { getByTestId } = await render(
-				<ConsentRoot
+				<InthProvider
 					persistence={false}
 					state={{
 						initialOverrides: { country: 'DE' },
@@ -36,7 +36,7 @@ describe('ConsentRoot offline mode', () => {
 					}}
 				>
 					<PolicyStatus />
-				</ConsentRoot>
+				</InthProvider>
 			);
 
 			await expect
@@ -55,12 +55,12 @@ describe('ConsentRoot offline mode', () => {
 		try {
 			await expect(
 				render(
-					<ConsentRoot
+					<InthProvider
 						persistence={false}
 						state={{}}
 					>
 						<PolicyStatus />
-					</ConsentRoot>
+					</InthProvider>
 				)
 			).rejects.toThrow('`projectUrl` is required');
 		} finally {

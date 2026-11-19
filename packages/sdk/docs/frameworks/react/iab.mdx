@@ -1,6 +1,6 @@
 ---
 title: IAB TCF
-description: Mount the IAB TCF banner and dialog inside a React ConsentProvider and configure the CMP ID, policy and vendor data.
+description: Mount the IAB TCF banner and dialog inside a React InthProvider and configure the CMP ID, policy and vendor data.
 group: frameworks
 ---
 
@@ -9,7 +9,7 @@ group: frameworks
 <import src="../../shared/react/iab/overview.mdx#prepare" />
 
 Import the components from `@inth/react/iab` and render them inside your
-existing `ConsentProvider` from `@inth/react`.
+existing `InthProvider` from `@inth/react`.
 
 The IAB banner and dialog render their own styles by default. Leave the
 provider's `styles` option enabled and render the components without a CSS
@@ -33,7 +33,7 @@ stylesheets:
 import '@inth/react/styles.css';
 import '@inth/react/iab/styles.css';
 
-// In the ConsentProvider options:
+// In the InthProvider options:
 styles: false,
 ```
 

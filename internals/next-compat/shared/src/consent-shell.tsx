@@ -3,11 +3,11 @@
 import {
 	ConsentBanner,
 	ConsentDialog,
-	ConsentRoot,
+	InthProvider,
 	defineConsentConfig,
 	hosted,
 } from '@inth/nextjs';
-import type { ConsentConfig, ConsentRootProps } from '@inth/nextjs';
+import type { ConsentConfig, InthProviderProps } from '@inth/nextjs';
 import { manifest as browserManifest } from '@inth/sdk/transports/manifest-browser';
 import { useMemo } from 'react';
 import type { ReactNode } from 'react';
@@ -33,7 +33,7 @@ export interface ConsentShellProps {
 	 * Server-resolved consent state from `resolveConsent()`. Omitted on
 	 * routes that init in the browser.
 	 */
-	state?: ConsentRootProps['state'];
+	state?: InthProviderProps['state'];
 	projectUrl?: string;
 	/**
 	 * `hosted` calls the backend `/init`; `manifest` resolves init in the
@@ -44,7 +44,7 @@ export interface ConsentShellProps {
 	transport?: 'hosted' | 'manifest' | 'manifest-geo' | 'static';
 	/** Required with `transport="static"`. */
 	manifest?: CompatManifest;
-	networkBlocker?: ConsentRootProps['networkBlocker'];
+	networkBlocker?: InthProviderProps['networkBlocker'];
 	/** CSP nonce for automatic component styles in the nonce test routes. */
 	nonce?: string;
 	/**
@@ -110,7 +110,7 @@ const createConfig = function createConfig(
  * @remarks
  * Kept identical across routers and Next.js versions so a failing cell
  * points at the framework combination, not at fixture drift. Mirrors the
- * v3 pattern: one `ConsentRoot`, hosted mode against `projectUrl` by
+ * v3 pattern: one `InthProvider`, hosted mode against `projectUrl` by
  * default, and the server state (when any) passed as a plain prop. No cell
  * has a `inth.config.ts`, so the shell passes `config` itself.
  */
@@ -135,7 +135,7 @@ export const ConsentShell = ({
 	);
 
 	return (
-		<ConsentRoot
+		<InthProvider
 			config={config}
 			networkBlocker={networkBlocker}
 			state={state ?? {}}
@@ -175,6 +175,6 @@ export const ConsentShell = ({
 				<h1>next-compat: {scenario}</h1>
 				{children}
 			</main>
-		</ConsentRoot>
+		</InthProvider>
 	);
 };

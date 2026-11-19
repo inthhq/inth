@@ -79,7 +79,7 @@ imported from a Client Component, in a module that imports `@inth/nextjs/generat
 `@inth/nextjs/generated` only works in server code: Server Components, route
 handlers, `getServerSideProps` and API routes. Most apps never import it.
 `resolveConsent` and the consent route read the snapshot themselves, and
-`ConsentRoot` receives the resolved state.
+`InthProvider` receives the resolved state.
 
 ## Why is `snapshot` undefined?
 
@@ -121,12 +121,12 @@ Check the Next.js server and browser requests after following the
    including submissions. Direct requests to the backend are expected without
    it.
 
-## Why does ConsentRoot warn that it found no config?
+## Why does InthProvider warn that it found no config?
 
 **Check.** The browser console shows this warning outside production:
 
 ```txt
-[inth] ConsentRoot found no config. Export `defineConsentConfig()` as the default export of inth.config.ts at the project root and wrap next.config.ts in `withConsentManifest()`, or pass `config`.
+[inth] InthProvider found no config. Export `defineConsentConfig()` as the default export of inth.config.ts at the project root and wrap next.config.ts in `withConsentManifest()`, or pass `config`.
 ```
 
 **Fix.** `withConsentManifest` finds `inth.config.ts`, `.mts`, `.js` or
@@ -139,16 +139,16 @@ else. A config in `src/` is not found. Check that:
   only a named one.
 - You restarted `next dev` after adding the file.
 
-Without a config, `ConsentRoot` reads `NEXT_PUBLIC_INTH_PROJECT_URL`, which
+Without a config, `InthProvider` reads `NEXT_PUBLIC_INTH_PROJECT_URL`, which
 `withConsentManifest` sets from `NEXT_PUBLIC_C15T_BACKEND_URL` when only that
 is set, uses
 `manifest()` and runs no `scripts`. With no backend URL either, it throws; see
 the next section.
 
-## Why does ConsentRoot throw that it needs a backend URL?
+## Why does InthProvider throw that it needs a backend URL?
 
 **Check.** The page, or `next build` while it prerenders the page, throws one
-of these errors from `ConsentRoot`:
+of these errors from `InthProvider`:
 
 - ``@inth/nextjs: manifest() needs a backend URL. Set NEXT_PUBLIC_INTH_PROJECT_URL, or `projectUrl` in inth.config.ts.``
 - ``@inth/nextjs: hosted() needs a backend URL. Set NEXT_PUBLIC_INTH_PROJECT_URL, or `projectUrl` in inth.config.ts.``
@@ -156,7 +156,7 @@ of these errors from `ConsentRoot`:
 A production build prints only the first sentence, such as
 `@inth/nextjs: manifest() needs a backend URL.`
 
-`ConsentRoot` found no `inth.config.ts`, or got a `config` prop without a
+`InthProvider` found no `inth.config.ts`, or got a `config` prop without a
 backend URL, and `NEXT_PUBLIC_INTH_PROJECT_URL` was not set when Next.js
 compiled the page.
 
@@ -164,14 +164,14 @@ compiled the page.
 `next dev` run, and check that `withConsentManifest` finds `inth.config.ts`
 (see the previous section). Earlier alphas fell back to local mode here;
 now the root throws. To run without a backend, set `mode: testing()` in
-`inth.config.ts`, or pass `options={{ mode: testing() }}` to `ConsentRoot`.
+`inth.config.ts`, or pass `options={{ mode: testing() }}` to `InthProvider`.
 
-## Why does ConsentRoot warn that a transport ships in the first-load bundle?
+## Why does InthProvider warn that a transport ships in the first-load bundle?
 
 **Check.** The browser console shows a warning such as:
 
 ```txt
-[inth] ConsentRoot `mode` is the hosted() transport itself, so its code ships in the first-load bundle. Use hosted() from @inth/nextjs instead: it is plain data, and the root loads the code only when it runs.
+[inth] InthProvider `mode` is the hosted() transport itself, so its code ships in the first-load bundle. Use hosted() from @inth/nextjs instead: it is plain data, and the root loads the code only when it runs.
 ```
 
 **Fix.** `options.mode` received `hosted()`, `testing()` or `manifest()` from
@@ -240,7 +240,7 @@ layout. `resolveConsent` reads the visitor's cookies and headers, so that
 layout can't be.
 
 **Fix.** Move those pages into their own route group with the browser layout,
-which renders `ConsentRoot` without `state`. See
+which renders `InthProvider` without `state`. See
 [Keep pages static with `ensureStatic`](/docs/frameworks/next/rendering#keep-pages-static-with-ensurestatic).
 `'shell'` and `'prefetch'` work with the server layouts.
 

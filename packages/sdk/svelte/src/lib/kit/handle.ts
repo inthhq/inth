@@ -36,7 +36,7 @@ export interface InthHandleOptions extends ConsentRequestOptions {
 	 */
 	projectUrl?: string;
 	/**
-	 * How the visitor is resolved. Plain data; `ConsentRoot` loads the code
+	 * How the visitor is resolved. Plain data; `InthProvider` loads the code
 	 * it needs in the browser only when it runs.
 	 *
 	 * - Omitted, or `manifest()` from `@inth/svelte/kit`: resolve from the

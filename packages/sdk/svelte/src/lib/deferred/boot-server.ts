@@ -1,7 +1,7 @@
 /**
- * Server side of `ConsentRoot`'s deferred engine: whether the browser may
- * render this visitor from the server's snapshot and load the consent
- * engine after the page, and the boot data that carries the snapshot.
+ * Server side of the SvelteKit `InthProvider`'s deferred engine: whether the
+ * browser may render this visitor from the server's snapshot and load the
+ * consent engine after the page, and the boot data that carries the snapshot.
  * Only the server render reaches it.
  *
  * @packageDocumentation
@@ -17,11 +17,11 @@ import type { Translations } from '@inth/sdk/translations';
 
 import type { ProviderOptionsInput } from '../provider-options';
 import { bootMarkup } from './boot';
-import type { ConsentRootBoot } from './boot';
+import type { RootBoot } from './boot';
 
 /**
  * The snapshot's copy with every key the English defaults have, so the
- * browser's surfaces read a complete bundle before `ConsentRoot`'s engine
+ * browser's surfaces read a complete bundle before `InthProvider`'s engine
  * loads. An English bundle comes back unchanged. The IAB copy is left
  * out: the IAB surfaces fill it from English themselves.
  *
@@ -46,7 +46,7 @@ export const withCompleteTranslations = function withCompleteTranslations(
 	};
 };
 
-/** What the server render of `ConsentRoot` leaves for the browser. */
+/** What the server render of `InthProvider` leaves for the browser. */
 export interface ServerBoot {
 	/** The markup to render after the root's children. */
 	html: string;
@@ -55,7 +55,7 @@ export interface ServerBoot {
 }
 
 /**
- * The boot data for a server render of `ConsentRoot`.
+ * The boot data for a server render of `InthProvider`.
  *
  * @param runtime - The server's runtime, not started.
  * @param options - The root's options, with its `prefetch`.
@@ -67,7 +67,7 @@ export const planServerBoot = function planServerBoot(
 ): ServerBoot {
 	const snapshot = runtime.kernel.getServerSnapshot();
 	const defer = canDeferEngine(snapshot, options);
-	const boot: ConsentRootBoot = { s: withCompleteTranslations(snapshot) };
+	const boot: RootBoot = { s: withCompleteTranslations(snapshot) };
 	if (defer) {
 		boot.d = 1;
 	}

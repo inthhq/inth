@@ -50,7 +50,7 @@ const config = {
 				/**
 				 * Static consent mount per build (see app/consent-mount.vue).
 				 * Baseline builds get an empty stub so they never reference
-				 * `@inth/nuxt`; full builds get a static `<ConsentRoot />` —
+				 * `@inth/nuxt`; full builds get a static `<InthProvider />` —
 				 * dynamic-by-name global resolution costs +82ms banner-visible
 				 * on client-manifest (mobile + 200ms).
 				 */

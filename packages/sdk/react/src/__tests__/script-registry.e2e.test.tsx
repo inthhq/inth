@@ -1,5 +1,5 @@
 /**
- * `experimentalScriptRegistry` on `ConsentProvider` reaches the core
+ * `experimentalScriptRegistry` on `InthProvider` reaches the core
  * runtime: an integration init lists loads from the registry's URL, and the
  * browser runs it only when its bytes match the hash.
  */
@@ -7,7 +7,7 @@ import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { commands } from 'vitest/browser';
 
-import { ConsentProvider } from '../index';
+import { InthProvider } from '../index';
 import {
 	integrationScript,
 	listing,
@@ -28,7 +28,7 @@ test('loads an integration from the registry, and the browser runs the copy that
 	await commands.serveScript(vendorSrc, "window.__registryCopy = 'vendor';");
 	const onLoad = vi.fn();
 	const screen = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				experimentalScriptRegistry: true,
 				mode: listing({
@@ -39,7 +39,7 @@ test('loads an integration from the registry, and the browser runs the copy that
 			}}
 		>
 			app
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 	await vi.waitFor(() => expect(onLoad).toHaveBeenCalled());
@@ -58,7 +58,7 @@ test('does not run a registry copy whose bytes changed, and does not fall back t
 	await commands.serveScript(vendorSrc, "window.__registryCopy = 'vendor';");
 	const onError = vi.fn();
 	const screen = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				experimentalScriptRegistry: true,
 				mode: listing({
@@ -69,7 +69,7 @@ test('does not run a registry copy whose bytes changed, and does not fall back t
 			}}
 		>
 			app
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 	await vi.waitFor(() => expect(onError).toHaveBeenCalled());
@@ -84,7 +84,7 @@ test('loads the vendor URL without the option, though init lists the script', as
 	await commands.serveScript(vendorSrc, "window.__registryCopy = 'vendor';");
 	const onLoad = vi.fn();
 	const screen = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: listing({
 					vendor: { integrity: await sha384(body), src: registrySrc },
@@ -94,7 +94,7 @@ test('loads the vendor URL without the option, though init lists the script', as
 			}}
 		>
 			app
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 	await vi.waitFor(() => expect(onLoad).toHaveBeenCalled());

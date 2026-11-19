@@ -3,7 +3,7 @@
 	import {
 		ConsentDialog,
 		ConsentDialogLink,
-		ConsentProvider,
+		InthProvider,
 		hosted,
 	} from '@inth/svelte';
 
@@ -15,7 +15,7 @@
 	const projectUrl = 'https://your-project.inth.app';
 </script>
 
-<ConsentProvider
+<InthProvider
 	{projectUrl}
 	{scripts}
 >
@@ -25,5 +25,5 @@
 	</footer>
 	<CustomConsentBanner />
 	<ConsentDialog />
-</ConsentProvider>
+</InthProvider>
 <!-- #endregion docs:headless-layout -->

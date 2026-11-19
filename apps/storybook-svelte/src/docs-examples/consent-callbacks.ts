@@ -1,8 +1,8 @@
 // #region docs:consent-callbacks title="src/lib/consent-callbacks.ts"
-import type { ConsentProviderCallbacks } from '@inth/svelte';
+import type { InthProviderCallbacks } from '@inth/svelte';
 
-// Pass as `callbacks={callbacks}` on ConsentProvider.
-export const callbacks: ConsentProviderCallbacks = {
+// Pass as `callbacks={callbacks}` on InthProvider.
+export const callbacks: InthProviderCallbacks = {
 	// Runs just before Inth reloads the page after a withdrawal.
 	onBeforeConsentRevocationReload: ({ preferences }) => {
 		console.info('Reloading with', preferences);

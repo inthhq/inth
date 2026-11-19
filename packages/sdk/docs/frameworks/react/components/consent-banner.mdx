@@ -4,9 +4,9 @@ description: Render the Inth consent banner in a React app, choose its variant a
 group: frameworks
 ---
 
-## Render the banner inside `ConsentProvider`
+## Render the banner inside `InthProvider`
 
-Render `ConsentBanner` once inside `ConsentProvider`, next to `ConsentDialog`.
+Render `ConsentBanner` once inside `InthProvider`, next to `ConsentDialog`.
 The [quickstart](/docs/frameworks/react/quickstart) mounts both in
 `src/consent.tsx`:
 
@@ -81,7 +81,7 @@ export function RegionalBanner() {
 }
 ```
 
-Render `RegionalBanner` inside `ConsentProvider`. The layout controls the
+Render `RegionalBanner` inside `InthProvider`. The layout controls the
 action groups; the opt-out preferences button still appears on a notice.
 Required actions omitted from a layout are restored. Accept and Reject
 keep equivalent default prominence.
@@ -96,7 +96,7 @@ const theme = {
 } as const;
 ```
 
-Pass `theme` in `ConsentProvider` options. Per-action theme overrides such
+Pass `theme` in `InthProvider` options. Per-action theme overrides such
 as `consentActions.dismiss` take precedence over this primary style.
 See [customize](/docs/frameworks/react/customize) for tokens and slots, and
 [policies](/docs/concepts/policies) for the rule IDs and coverage.

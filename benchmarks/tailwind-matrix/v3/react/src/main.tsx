@@ -1,4 +1,4 @@
-import { ConsentBanner, ConsentDialog, ConsentProvider } from '@inth/react';
+import { ConsentBanner, ConsentDialog, InthProvider } from '@inth/react';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -26,7 +26,7 @@ if (!root) {
 
 createRoot(root).render(
 	<StrictMode>
-		<ConsentProvider options={{ ...options, persistence: false }}>
+		<InthProvider options={{ ...options, persistence: false }}>
 			<p
 				className="bg-emerald-600 text-white"
 				data-testid="tailwind-probe"
@@ -35,6 +35,6 @@ createRoot(root).render(
 			</p>
 			<ConsentBanner />
 			<ConsentDialog />
-		</ConsentProvider>
+		</InthProvider>
 	</StrictMode>
 );

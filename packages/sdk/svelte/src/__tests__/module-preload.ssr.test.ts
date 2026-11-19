@@ -8,7 +8,7 @@
 import { render } from 'svelte/server';
 import { describe, expect, test } from 'vitest';
 
-import ConsentProvider from '../lib/components/consent-provider.svelte';
+import InthProvider from '../lib/components/inth-provider.svelte';
 import { injectModulePreloads } from '../lib/kit/module-preload';
 import { testing } from '../lib/testing';
 import type { ConsentManagerOptions } from '../lib/types';
@@ -33,7 +33,7 @@ const BLOCKER = {
 const renderPage = function renderPage(
 	options: Partial<ConsentManagerOptions>
 ): string {
-	const { head } = render(ConsentProvider, {
+	const { head } = render(InthProvider, {
 		props: {
 			options: {
 				mode: testing(),

@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
-import type { ComponentFixtureOptions as ConsentProviderOptions } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
+import type { ComponentFixtureOptions as InthProviderOptions } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { IABConsentDialog } from '~/components/iab-panel';
 import { IABConsentBanner } from '~/components/iab-prompt';
@@ -35,7 +35,7 @@ Object.defineProperty(window, 'localStorage', {
 	value: localStorageMock,
 });
 
-const optInOptions: ConsentProviderOptions = {
+const optInOptions: InthProviderOptions = {
 	consentCategories: [
 		'necessary',
 		'functionality',
@@ -76,9 +76,9 @@ describe('models Prop E2E Tests', () => {
 	describe('Opt-in mode (default)', () => {
 		test('ConsentBanner renders in opt-in mode (default models includes opt-in)', async () => {
 			render(
-				<ConsentProvider options={optInOptions}>
+				<InthProvider options={optInOptions}>
 					<ConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -94,9 +94,9 @@ describe('models Prop E2E Tests', () => {
 
 		test('IABConsentBanner does NOT render in opt-in mode (default models is iab)', async () => {
 			render(
-				<ConsentProvider options={optInOptions}>
+				<InthProvider options={optInOptions}>
 					<IABConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			// Wait long enough to confirm it doesn't appear
@@ -112,9 +112,9 @@ describe('models Prop E2E Tests', () => {
 
 		test('ConsentDialog renders in opt-in mode when open', async () => {
 			render(
-				<ConsentProvider options={optInOptions}>
+				<InthProvider options={optInOptions}>
 					<ConsentDialog open={true} />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -130,9 +130,9 @@ describe('models Prop E2E Tests', () => {
 
 		test('IABConsentDialog does NOT render in opt-in mode', async () => {
 			render(
-				<ConsentProvider options={optInOptions}>
+				<InthProvider options={optInOptions}>
 					<IABConsentDialog open={true} />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await new Promise((resolve) => {
@@ -149,10 +149,10 @@ describe('models Prop E2E Tests', () => {
 	describe('IAB mode', () => {
 		test('IABConsentBanner renders when model is iab', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -168,9 +168,9 @@ describe('models Prop E2E Tests', () => {
 
 		test('ConsentBanner does NOT render when model is iab', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<ConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await new Promise((resolve) => {
@@ -187,9 +187,9 @@ describe('models Prop E2E Tests', () => {
 	describe('Custom models prop', () => {
 		test('ConsentBanner with models=[opt-in] renders in opt-in mode', async () => {
 			render(
-				<ConsentProvider options={optInOptions}>
+				<InthProvider options={optInOptions}>
 					<ConsentBanner models={['opt-in']} />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -205,9 +205,9 @@ describe('models Prop E2E Tests', () => {
 
 		test('ConsentBanner with models=[iab] does NOT render in opt-in mode', async () => {
 			render(
-				<ConsentProvider options={optInOptions}>
+				<InthProvider options={optInOptions}>
 					<ConsentBanner models={['iab']} />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await new Promise((resolve) => {
@@ -222,10 +222,10 @@ describe('models Prop E2E Tests', () => {
 
 		test('only matching component renders when both are present', async () => {
 			render(
-				<ConsentProvider options={optInOptions}>
+				<InthProvider options={optInOptions}>
 					<ConsentBanner />
 					<IABConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(

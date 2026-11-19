@@ -52,7 +52,7 @@ export const readPrefetchedInitialData =
  * server, so the banner still resolves as early as possible. Point
  * `projectUrl` at the base the root's init request goes to: the
  * `routePrefix` the state carries when it has one, such as `/api/inth`,
- * otherwise the backend URL. `ConsentRoot` looks the response up by that
+ * otherwise the backend URL. `InthProvider` looks the response up by that
  * base and hands it to the provider as its first init.
  *
  * @returns A fragment with a `scripts` array to spread into `head()`.

@@ -118,6 +118,7 @@
 		},
 		"./kit": {
 			"types": "./dist/kit/index.d.ts",
+			"browser": "./dist/kit/browser.js",
 			"import": "./dist/kit/index.js",
 			"default": "./dist/kit/index.js"
 		},

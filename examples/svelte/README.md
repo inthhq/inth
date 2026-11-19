@@ -8,7 +8,7 @@ measurement.
 
 - `vite.config.ts` adds `consentManifest`, which hands the backend URL to
   the app.
-- `src/App.svelte` mounts `ConsentProvider` in `hosted()` mode, with
+- `src/App.svelte` mounts `InthProvider` in `hosted()` mode, with
   PostHog, the banner, dialog and link.
 
 ## Run it

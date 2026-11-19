@@ -14,7 +14,7 @@ try {
 	await runConsentGate({
 		framework: 'nextjs',
 		notes: [
-			"ConsentRoot with an unawaited resolveConsent() over the typical-install config (manifest mode, local backend), as CookieBench's Next.js fixture sets it up.",
+			"InthProvider with an unawaited resolveConsent() over the typical-install config (manifest mode, local backend), as CookieBench's Next.js fixture sets it up.",
 		],
 		packageName: '@inth/nextjs-browser-bench',
 		paths: { control: '/gate/control', gate: '/gate' },

@@ -4,7 +4,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import {
-	ConsentProvider,
+	InthProvider,
 	useConsent,
 	useConsents,
 	useExplicitChoice,
@@ -17,7 +17,7 @@ import { policyFixture } from './policy-fixture';
 
 const withProvider = function withProvider(options = {}) {
 	const Wrapper = ({ children }: { children: ReactNode }) => (
-		<ConsentProvider
+		<InthProvider
 			options={{
 				// A permissive policy offers only what the site declares.
 				consentCategories: [
@@ -33,7 +33,7 @@ const withProvider = function withProvider(options = {}) {
 			}}
 		>
 			{children}
-		</ConsentProvider>
+		</InthProvider>
 	);
 	return { Wrapper };
 };
@@ -376,7 +376,7 @@ describe('v3 react: network blocker lifecycle', () => {
 		try {
 			const view = await render(
 				<StrictMode>
-					<ConsentProvider
+					<InthProvider
 						options={{
 							mode: testing(),
 							networkBlocker: {
@@ -387,7 +387,7 @@ describe('v3 react: network blocker lifecycle', () => {
 						}}
 					>
 						<div>mounted</div>
-					</ConsentProvider>
+					</InthProvider>
 				</StrictMode>
 			);
 
@@ -413,7 +413,7 @@ describe('v3 react: network blocker lifecycle', () => {
 
 		try {
 			const { rerender } = await render(
-				<ConsentProvider
+				<InthProvider
 					options={{
 						mode: testing(),
 						networkBlocker: {
@@ -424,7 +424,7 @@ describe('v3 react: network blocker lifecycle', () => {
 					}}
 				>
 					<div>mounted</div>
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(() => {
@@ -438,7 +438,7 @@ describe('v3 react: network blocker lifecycle', () => {
 			);
 
 			await rerender(
-				<ConsentProvider
+				<InthProvider
 					options={{
 						mode: testing(),
 						networkBlocker: {
@@ -449,7 +449,7 @@ describe('v3 react: network blocker lifecycle', () => {
 					}}
 				>
 					<div>mounted</div>
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			// Sent right after the commit, before the runtime's update module
@@ -469,7 +469,7 @@ describe('v3 react: network blocker lifecycle', () => {
 
 		try {
 			await render(
-				<ConsentProvider
+				<InthProvider
 					options={{
 						mode: testing(),
 						networkBlocker: {
@@ -481,7 +481,7 @@ describe('v3 react: network blocker lifecycle', () => {
 					}}
 				>
 					<div>mounted</div>
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			expect((await window.fetch('https://example.com/x')).status).toBe(200);

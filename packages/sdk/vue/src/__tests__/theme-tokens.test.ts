@@ -74,7 +74,7 @@ describe('generateTokensCSS', () => {
 });
 
 describe('the Vue plugin applies tokens', () => {
-	test('before the app mounts, with no ConsentRoot', () => {
+	test('before the app mounts, with no InthProvider', () => {
 		vi.stubGlobal(
 			'fetch',
 			vi.fn(() => Promise.resolve(new Response('{}', { status: 503 })))

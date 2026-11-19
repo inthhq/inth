@@ -101,9 +101,9 @@
 			"types": "./dist/types/inth-angular-consent-gate.d.ts",
 			"default": "./dist/fesm2022/inth-angular-consent-gate.mjs"
 		},
-		"./consent-root": {
-			"types": "./dist/types/inth-angular-consent-root.d.ts",
-			"default": "./dist/fesm2022/inth-angular-consent-root.mjs"
+		"./provider": {
+			"types": "./dist/types/inth-angular-provider.d.ts",
+			"default": "./dist/fesm2022/inth-angular-provider.mjs"
 		},
 		"./consent-widget": {
 			"types": "./dist/types/inth-angular-consent-widget.d.ts",

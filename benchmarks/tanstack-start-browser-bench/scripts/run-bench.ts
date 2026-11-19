@@ -681,7 +681,7 @@ const writeScenarioResult = function writeScenarioResult(
 			coverage,
 			...(rootProviderMode
 				? [
-						'Root-mounted provider variant: `ConsentRoot` and the manifest prefetch loader live in `__root.tsx`, and `/manifest-ssr` renders only the page shell.',
+						'Root-mounted provider variant: `InthProvider` and the manifest prefetch loader live in `__root.tsx`, and `/manifest-ssr` renders only the page shell.',
 					]
 				: []),
 			`Visit: ${input.visit}. Cold state: ${input.coldState.setup}.`,

@@ -1,6 +1,6 @@
 ---
 title: Quickstart
-description: Bundle your Inth policy into a SvelteKit server at build time, resolve consent in the root layout load so the banner is in the server HTML, then hydrate ConsentRoot with consent-gated scripts and a preferences link.
+description: Bundle your Inth policy into a SvelteKit server at build time, resolve consent in the root layout load so the banner is in the server HTML, then hydrate InthProvider with consent-gated scripts and a preferences link.
 group: frameworks
 ---
 
@@ -99,7 +99,7 @@ Export `loadConsent` as the root layout's server load:
 
 `loadConsent` resolves the visitor's policy from the bundled snapshot with
 the inputs `inthHandle` read, and returns `{ consent }`, a plain,
-serializable object for `ConsentRoot`. Rendering a page makes no policy
+serializable object for `InthProvider`. Rendering a page makes no policy
 request to the backend. `loadConsent` never throws. If resolution takes
 longer than 500 ms, it returns the stored choice without a policy, and the
 browser resolves the policy after hydration.
@@ -110,11 +110,11 @@ visitor. It reads SvelteKit's `building` flag itself.
 [Prerender some pages](/docs/frameworks/sveltekit/rendering#prerender-some-pages)
 covers how the browser resolves consent there.
 
-## Render ConsentRoot in the root layout
+## Render InthProvider in the root layout
 
 <include src="../../shared/examples/sveltekit/layout.mdx" />
 
-Pass `data.consent` through unchanged. `ConsentRoot` starts from it, so the
+Pass `data.consent` through unchanged. `InthProvider` starts from it, so the
 server and the browser render the same banner and the browser makes no second
 request for the policy. A page the server resolved ships no resolver, policy
 rules or snapshot to the browser.
@@ -132,7 +132,7 @@ preferences. Put it where visitors look for privacy settings, such as the
 footer. There is no stylesheet to import: the components bring their own
 rules, and the server hook writes the banner's into the HTML.
 
-Keep `ConsentRoot` in the root layout so it stays mounted across client-side
+Keep `InthProvider` in the root layout so it stays mounted across client-side
 navigation.
 
 ## Verify consent

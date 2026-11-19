@@ -4,7 +4,7 @@
 import type {
 	AllConsentNames,
 	ClearOnRevocationConfig,
-	ConsentProviderOptions,
+	InthProviderOptions,
 	PolicyRule,
 } from '../index';
 import { policyRulePresets } from '../index';
@@ -24,7 +24,7 @@ void policyRules;
 	clearOnRevocation,
 	consentCategories,
 	projectUrl: '/api/inth',
-}) satisfies ConsentProviderOptions;
+}) satisfies InthProviderOptions;
 
 // @ts-expect-error Only Inth's categories are category names.
 const unknownCategory: AllConsentNames = 'advertising';

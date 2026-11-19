@@ -5,7 +5,7 @@ import type { IabPreferenceTab } from './iabSelection';
 import { useConsentKernelContext } from './kernel';
 
 /**
- * One tab per kernel. `ConsentRoot` mounts the banner and the dialog one at a
+ * One tab per kernel. `InthProvider` mounts the banner and the dialog one at a
  * time, so the tab outlives both; plain Vue's `useState` stand-in drops its
  * state once no component uses it.
  */

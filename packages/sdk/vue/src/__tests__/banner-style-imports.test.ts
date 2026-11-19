@@ -99,11 +99,13 @@ describe('root style imports', () => {
 		// stylesheet in the entry's static graph also becomes a
 		// render-blocking <link>, because the entry has no other way to
 		// bring it to the browser.
-		expect(staticStylesheets(join(componentsDir, 'nuxt-root.vue'))).toEqual([]);
+		expect(
+			staticStylesheets(join(componentsDir, 'nuxt-inth-provider.vue'))
+		).toEqual([]);
 	});
 
 	test('neither root imports the dialog trigger statically: it renders only after mount', () => {
-		for (const root of ['root.vue', 'nuxt-root.vue']) {
+		for (const root of ['inth-provider.vue', 'nuxt-inth-provider.vue']) {
 			expect(staticStylesheets(join(componentsDir, root)), root).not.toContain(
 				'@inth/sdk/ui/styles/components/consent-dialog-trigger.css'
 			);

@@ -1,5 +1,5 @@
 /**
- * The browser build of `#engine-now`: no engine, so `ConsentRoot` loads it
+ * The browser build of `#engine-now`: no engine, so `InthProvider` loads it
  * with `import()` after the page (see `./engine-now`).
  *
  * @internal

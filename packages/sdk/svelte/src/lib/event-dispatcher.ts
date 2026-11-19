@@ -8,7 +8,7 @@ import { getConsentContext } from './context.svelte';
 
 /**
  * Get the app's event dispatcher. Call it while a component initialises,
- * inside `<ConsentProvider>`.
+ * inside `<InthProvider>`.
  *
  * It delivers to the provider's `scripts`, plus any you pass, and checks
  * consent when it sends, so a revoked category stops the next event. Every
@@ -18,7 +18,7 @@ import { getConsentContext } from './context.svelte';
  * @param options - Extra `scripts`, SPA `pageviews` integrations and
  * injectable `globals`. Pass a getter to read reactive values on each call.
  * @returns A dispatcher with `track` and `pageview`.
- * @throws {Error} When no `<ConsentProvider>` is above the component.
+ * @throws {Error} When no `<InthProvider>` is above the component.
  * @example
  * ```svelte
  * <script lang="ts">

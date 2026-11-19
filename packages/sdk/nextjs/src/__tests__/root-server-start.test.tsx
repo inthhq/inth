@@ -14,8 +14,8 @@ import {
 	optInRule,
 } from '../../../core/src/__tests__/fixtures/kernel-fixtures';
 import { deferConsent } from '../defer';
-import { ConsentRoot } from '../root';
-import type { ConsentRootProps } from '../root';
+import { InthProvider } from '../root';
+import type { InthProviderProps } from '../root';
 import { transportMode } from './fixtures/transport-mode';
 
 const pixel: Script = {
@@ -41,17 +41,17 @@ const grantedState = () => {
 };
 
 const render = async (
-	state: ConsentRootProps['state'] = grantedState(),
+	state: InthProviderProps['state'] = grantedState(),
 	onError?: (error: unknown) => void
 ): Promise<string> => {
 	const stream = await renderToReadableStream(
-		<ConsentRoot
+		<InthProvider
 			options={{ mode: transportMode({ init: () => Promise.resolve({}) }) }}
 			scripts={[pixel]}
 			state={state}
 		>
 			<main id="page">Page</main>
-		</ConsentRoot>,
+		</InthProvider>,
 		{ onError }
 	);
 	await stream.allReady;
@@ -87,12 +87,12 @@ test('renders no inline script without a state', async () => {
 	// A static or cached page has no state. An empty inline script there
 	// would still need a CSP nonce.
 	const stream = await renderToReadableStream(
-		<ConsentRoot
+		<InthProvider
 			options={{ mode: transportMode({ init: () => Promise.resolve({}) }) }}
 			scripts={[pixel]}
 		>
 			<main id="page">Page</main>
-		</ConsentRoot>
+		</InthProvider>
 	);
 	await stream.allReady;
 	const html = await new Response(stream).text();
@@ -104,14 +104,14 @@ test('renders no inline script without a state', async () => {
 test('renders no inline script when the app turns the server start off', async () => {
 	await render();
 	const stream = await renderToReadableStream(
-		<ConsentRoot
+		<InthProvider
 			options={{ mode: transportMode({ init: () => Promise.resolve({}) }) }}
 			scriptLoader={{ serverStart: false }}
 			scripts={[pixel]}
 			state={grantedState()}
 		>
 			<main id="page">Page</main>
-		</ConsentRoot>
+		</InthProvider>
 	);
 	await stream.allReady;
 	const html = await new Response(stream).text();
@@ -145,7 +145,7 @@ test('renders the empty script the browser hydrates when the start module fails 
 		throw new Error('chunk missing');
 	});
 	try {
-		const { ConsentRoot: FreshRoot } = await import('../root');
+		const { InthProvider: FreshRoot } = await import('../root');
 		const onError = vi.fn();
 		const stream = await renderToReadableStream(
 			<FreshRoot
@@ -186,7 +186,7 @@ test('a render whose start module loads late names the start script’s render i
 		return importOriginal();
 	});
 	try {
-		const { ConsentRoot: FreshRoot } = await import('../root');
+		const { InthProvider: FreshRoot } = await import('../root');
 		const stream = await renderToReadableStream(
 			<FreshRoot
 				options={{ mode: transportMode({ init: () => Promise.resolve({}) }) }}
@@ -223,7 +223,7 @@ test('a render whose start module loads late names the start script’s render i
  * still renders it, retrying on the thrown promise as React 18's does;
  * React 18.3.1's own renderer is checked outside CI.
  */
-const importRootWithoutUse = async (): Promise<typeof ConsentRoot> => {
+const importRootWithoutUse = async (): Promise<typeof InthProvider> => {
 	vi.resetModules();
 	// oxlint-disable-next-line anti-slop/no-module-mocking -- The repo installs only React 19; React 18 is React without `use`.
 	vi.doMock('react', async (importOriginal) => {
@@ -231,7 +231,7 @@ const importRootWithoutUse = async (): Promise<typeof ConsentRoot> => {
 		const react18 = { ...actual, use: undefined };
 		return { ...react18, default: react18 };
 	});
-	return (await import('../root')).ConsentRoot;
+	return (await import('../root')).InthProvider;
 };
 
 test('renders the server start on React 18, which has no `use`', async () => {
@@ -350,8 +350,8 @@ test('a deferred consent island keeps the server start script', async () => {
 	await render();
 	const Island = deferConsent(() =>
 		Promise.resolve({
-			default: ({ state }: { state: ConsentRootProps['state'] }) => (
-				<ConsentRoot
+			default: ({ state }: { state: InthProviderProps['state'] }) => (
+				<InthProvider
 					options={{ mode: transportMode({ init: () => Promise.resolve({}) }) }}
 					scripts={[pixel]}
 					state={state}
@@ -379,13 +379,13 @@ test('runs each serverStart once per render', async () => {
 	await render();
 	const serverStart = vi.fn(() => ({ code: '' }));
 	const stream = await renderToReadableStream(
-		<ConsentRoot
+		<InthProvider
 			options={{ mode: transportMode({ init: () => Promise.resolve({}) }) }}
 			scripts={[{ ...pixel, serverStart }]}
 			state={grantedState()}
 		>
 			<main id="page">Page</main>
-		</ConsentRoot>
+		</InthProvider>
 	);
 	await stream.allReady;
 	const html = await new Response(stream).text();
@@ -397,7 +397,7 @@ test('starts an integration from the registry source the state lists with experi
 	const registrySrc = 'https://acme.inth.app/scripts/pixel@0123456789abcdef.js';
 	const renderListed = async (experimentalScriptRegistry?: boolean) => {
 		const stream = await renderToReadableStream(
-			<ConsentRoot
+			<InthProvider
 				options={{
 					experimentalScriptRegistry,
 					mode: transportMode({ init: () => Promise.resolve({}) }),
@@ -413,7 +413,7 @@ test('starts an integration from the registry source the state lists with experi
 				}}
 			>
 				<main id="page">Page</main>
-			</ConsentRoot>
+			</InthProvider>
 		);
 		await stream.allReady;
 		return new Response(stream).text();

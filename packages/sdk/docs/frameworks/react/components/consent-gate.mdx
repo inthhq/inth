@@ -9,7 +9,7 @@ group: frameworks
 `ConsentGate` mounts its children only while the effective permission for one
 consent category is granted, and shows a placeholder otherwise. Wrap any
 iframe or third-party widget that would set cookies or contact a vendor on
-load. Render it anywhere inside the `ConsentProvider` from your
+load. Render it anywhere inside the `InthProvider` from your
 [quickstart](../quickstart), which also mounts the `ConsentDialog` the
 placeholder button opens.
 
@@ -32,7 +32,7 @@ export function ProductVideo() {
 ```
 
 `marketing` must be in your policy scope. If you set a non-empty
-`options.consentCategories` list on `ConsentProvider`, include `marketing`
+`options.consentCategories` list on `InthProvider`, include `marketing`
 there too so the preference center can display and save it. `ConsentGate` does
 not add categories to that list.
 

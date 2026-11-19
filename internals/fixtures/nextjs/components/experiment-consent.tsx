@@ -4,10 +4,10 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentRoot,
+	InthProvider,
 	useExperiment,
 } from '@inth/nextjs';
-import type { ConsentRootProps } from '@inth/nextjs';
+import type { InthProviderProps } from '@inth/nextjs';
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
@@ -63,7 +63,7 @@ export const ExperimentConsent = ({
 	state,
 }: {
 	children: ReactNode;
-	state: ConsentRootProps['state'];
+	state: InthProviderProps['state'];
 }) => {
 	const [events, setEvents] = useState<ExperimentLogEntry[]>([]);
 	const callbacks = useMemo(
@@ -75,7 +75,7 @@ export const ExperimentConsent = ({
 	);
 
 	return (
-		<ConsentRoot
+		<InthProvider
 			state={state}
 			config={consentConfig}
 			scripts={scripts}
@@ -88,6 +88,6 @@ export const ExperimentConsent = ({
 			<footer>
 				<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 			</footer>
-		</ConsentRoot>
+		</InthProvider>
 	);
 };

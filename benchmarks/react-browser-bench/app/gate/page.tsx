@@ -12,7 +12,7 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentProvider,
+	InthProvider,
 	hosted,
 	useScriptLoader,
 	useSnapshot,
@@ -33,10 +33,10 @@ const GateBridge = () => {
 
 /**
  * Consent gate page: CookieBench's article with the stock banner and dialog
- * on a client-rendered `ConsentProvider`, as an ordinary React app sets it up.
+ * on a client-rendered `InthProvider`, as an ordinary React app sets it up.
  */
 const GatePage = () => (
-	<ConsentProvider
+	<InthProvider
 		options={{
 			consentCategories: [...gateConsentCategories],
 			mode: hosted(),
@@ -50,7 +50,7 @@ const GatePage = () => (
 		<ConsentDialog />
 		{/* The gate reopens the choice here to replay a change of mind. */}
 		<ConsentDialogLink>Privacy settings</ConsentDialogLink>
-	</ConsentProvider>
+	</InthProvider>
 );
 
 export default GatePage;

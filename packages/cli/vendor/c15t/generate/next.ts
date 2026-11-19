@@ -43,7 +43,7 @@ const components = `import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentRoot,
+	InthProvider,
 } from '@inth/nextjs';`;
 
 const appLayout = `${components}
@@ -56,14 +56,14 @@ const RootLayout = ({ children }: { children: ReactNode }) => (
 	<html lang="en">
 		<body>
 			{/* Not awaited: the page renders while consent resolves. */}
-			<ConsentRoot state={resolveConsent()}>
+			<InthProvider state={resolveConsent()}>
 				{children}
 				<ConsentBanner />
 				<ConsentDialog />
 				<footer>
 					<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 				</footer>
-			</ConsentRoot>
+			</InthProvider>
 		</body>
 	</html>
 );
@@ -79,14 +79,14 @@ import '@/styles/globals.css';
 
 const App = ({ Component, pageProps }: AppProps<ConsentPageProps>) => (
 	// Pages without getServerSideProps resolve consent in the browser.
-	<ConsentRoot state={pageProps.consent}>
+	<InthProvider state={pageProps.consent}>
 		<Component {...pageProps} />
 		<ConsentBanner />
 		<ConsentDialog />
 		<footer>
 			<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 		</footer>
-	</ConsentRoot>
+	</InthProvider>
 );
 
 export default App;

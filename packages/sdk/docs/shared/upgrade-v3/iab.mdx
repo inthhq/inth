@@ -1,8 +1,8 @@
 ## Move IAB setup to `IABProvider`
 
 React, Next.js and TanStack Start no longer take an `iab` provider option.
-Render `IABProvider` from `@inth/react/iab` inside `ConsentProvider` or
-`ConsentRoot`, around the IAB components. Its props are the options you passed
+Render `IABProvider` from `@inth/react/iab` inside `InthProvider`,
+around the IAB components. Its props are the options you passed
 to `iab()`, such as `cmpId`, `vendors`, `customVendors` and the new
 `publisherRestrictions`.
 

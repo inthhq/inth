@@ -155,7 +155,7 @@ export const inthVue: Plugin<[InthVuePluginOptions]> = {
 		const context = createVueConsentKernelContext({ config, mode, runtime });
 		provideVueConsentContext(app, context);
 		// Tokens and the color scheme apply from install, before the first
-		// render, so every surface is styled whether or not a ConsentRoot
+		// render, so every surface is styled whether or not an InthProvider
 		// mounts. A borrowed runtime's host renders its own theme and owns
 		// the `inth-dark` class.
 		const removeTokensStyle = runtime

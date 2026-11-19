@@ -9,4 +9,4 @@
 // itself, so a server render is unchanged. `@inth/react/provider` always
 // keeps the engine in the page's first-load JavaScript. See `imports` in
 // package.json.
-export { ConsentProvider } from '#consent-provider';
+export { InthProvider } from '#consent-provider';

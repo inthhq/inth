@@ -7,16 +7,16 @@
  * fixture's `projectUrl` prop goes into `config`, where the current root
  * reads it.
  */
-import { ConsentRoot } from '@inth/nextjs';
-import type { ConsentRootProps } from '@inth/nextjs';
+import { InthProvider } from '@inth/nextjs';
+import type { InthProviderProps } from '@inth/nextjs';
 
-export type RootState = ConsentRootProps['state'];
+export type RootState = InthProviderProps['state'];
 
 export const Root = ({
 	projectUrl,
 	...rest
-}: ConsentRootProps & { projectUrl: string }) => (
-	<ConsentRoot
+}: InthProviderProps & { projectUrl: string }) => (
+	<InthProvider
 		config={{ projectUrl }}
 		{...rest}
 	/>

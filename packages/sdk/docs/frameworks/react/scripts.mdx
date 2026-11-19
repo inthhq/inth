@@ -1,12 +1,12 @@
 ---
 title: Scripts
-description: Load vendor scripts by consent category in a React app with ConsentProvider, and clear stored data or reload the page when a visitor withdraws consent.
+description: Load vendor scripts by consent category in a React app with InthProvider, and clear stored data or reload the page when a visitor withdraws consent.
 group: frameworks
 ---
 
 ## Register vendor scripts
 
-Pass vendor loaders to `ConsentProvider` through `options.scripts`. The
+Pass vendor loaders to `InthProvider` through `options.scripts`. The
 provider loads each script when its category is allowed and removes it when
 the category is denied. The [quickstart](/docs/frameworks/react/quickstart)
 registers PostHog this way in `src/consent.tsx`:
@@ -36,8 +36,8 @@ covers a vendor without one.
 ## When the script loader downloads
 
 The script loader is a separate chunk, downloaded only when `scripts` is not
-empty. `ConsentProvider` loads it when it mounts. The Next.js and TanStack
-Start `ConsentRoot` start the download earlier, during their first render,
+empty. `InthProvider` loads it when it mounts. The Next.js and TanStack
+Start `InthProvider` start the download earlier, during their first render,
 when the visitor's consent already lets a script run.
 
 ## Embeds and other requests

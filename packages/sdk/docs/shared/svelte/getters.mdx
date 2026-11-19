@@ -4,7 +4,7 @@
 
 Svelte has no consent hooks or stores. `@inth/svelte` exports context getters
 instead. Call one at the top level of a component's `<script>`, inside
-`ConsentProvider`, and read its properties in markup or in `$derived`.
+`InthProvider`, and read its properties in markup or in `$derived`.
 The properties read the provider's `$state`, so the component updates when
 consent changes.
 

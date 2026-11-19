@@ -1,5 +1,5 @@
 /**
- * `ConsentRoot` inlines a script that starts the vendor tags a visitor's
+ * `InthProvider` inlines a script that starts the vendor tags a visitor's
  * consent already allows, after the page content so it doesn't hold back
  * first paint. Prerendered HTML goes to every visitor, so it never starts
  * one.
@@ -11,8 +11,8 @@ import { renderToReadableStream } from 'react-dom/server';
 import { afterEach, expect, test, vi } from 'vitest';
 
 import { optOutRule } from '../../../core/src/__tests__/fixtures/kernel-fixtures';
-import { ConsentRoot } from '../root';
-import type { ConsentRootProps } from '../root';
+import { InthProvider } from '../root';
+import type { InthProviderProps } from '../root';
 import { resolveConsent } from '../server';
 import { manifestOf } from './manifest-fixture';
 
@@ -34,12 +34,12 @@ const optOutState = () =>
 	});
 
 const render = async (
-	state: ConsentRootProps['state'],
+	state: InthProviderProps['state'],
 	onError?: (error: unknown) => void
 ): Promise<string> => {
 	const stream = await renderToReadableStream(
 		createElement(
-			ConsentRoot,
+			InthProvider,
 			{ scripts: [pixel], state },
 			createElement('main', { id: 'page' }, 'Page')
 		),
@@ -131,7 +131,7 @@ test('renders no start script when the app turns the server start off', async ()
 	await render(await optOutState());
 	const stream = await renderToReadableStream(
 		createElement(
-			ConsentRoot,
+			InthProvider,
 			{
 				scriptLoader: { serverStart: false },
 				scripts: [pixel],
@@ -167,7 +167,7 @@ test('renders without a server start when the state promise rejects', async () =
  * still renders it, retrying on the thrown promise as React 18's does;
  * React 18.3.1's own renderer is checked outside CI.
  */
-const importRootWithoutUse = async (): Promise<typeof ConsentRoot> => {
+const importRootWithoutUse = async (): Promise<typeof InthProvider> => {
 	vi.resetModules();
 	// oxlint-disable-next-line anti-slop/no-module-mocking -- The repo installs only React 19; React 18 is React without `use`.
 	vi.doMock('react', async (importOriginal) => {
@@ -175,7 +175,7 @@ const importRootWithoutUse = async (): Promise<typeof ConsentRoot> => {
 		const react18 = { ...actual, use: undefined };
 		return { ...react18, default: react18 };
 	});
-	return (await import('../root')).ConsentRoot;
+	return (await import('../root')).InthProvider;
 };
 
 test('starts the scripts from a streamed state on React 18, which has no `use`', async () => {
@@ -270,14 +270,14 @@ test('leaves the boot data, and an empty script for the engine preload, for a vi
 	expect(boot?.groups?.preload).toBe('<script></script>');
 });
 
-/** Server-renders `ConsentRoot` with `props`, after a first render. */
+/** Server-renders `InthProvider` with `props`, after a first render. */
 const renderWith = async (
-	props: Partial<ConsentRootProps>
+	props: Partial<InthProviderProps>
 ): Promise<string> => {
 	await render(await optOutState());
 	const stream = await renderToReadableStream(
 		createElement(
-			ConsentRoot,
+			InthProvider,
 			{ state: await optOutState(), ...props },
 			createElement('main', { id: 'page' }, 'Page')
 		)
@@ -292,7 +292,7 @@ test('a visitor whose root lets the engine wait gets the stored-choice check', a
 	expect(await renderWith({ scripts: [pixel] })).toContain(CHECK);
 });
 
-test.each<[string, Partial<ConsentRootProps>]>([
+test.each<[string, Partial<InthProviderProps>]>([
 	['an enabled network blocker', { networkBlocker: { rules: [] } }],
 	[
 		'persistence: false, with a plain script',
@@ -318,7 +318,7 @@ test.each<[string, Partial<ConsentRootProps>]>([
 	'a root that needs the engine at once (%s) gets no stored-choice check',
 	async (_case, props) => {
 		// Without the check the browser starts the engine's download as
-		// `ConsentRoot`'s chunk runs, before React reaches the root.
+		// `InthProvider`'s chunk runs, before React reaches the root.
 		expect(await renderWith(props)).not.toContain(CHECK);
 	}
 );
@@ -330,7 +330,7 @@ test('runs each serverStart once per render', async () => {
 	const serverStart = vi.fn(() => ({ code: '' }));
 	const stream = await renderToReadableStream(
 		createElement(
-			ConsentRoot,
+			InthProvider,
 			{ scripts: [{ ...pixel, serverStart }], state: await optOutState() },
 			createElement('main', { id: 'page' }, 'Page')
 		)
@@ -357,7 +357,7 @@ test('a render whose start module loads late names the start script’s render i
 		return importOriginal();
 	});
 	try {
-		const { ConsentRoot: FreshRoot } = await import('../root');
+		const { InthProvider: FreshRoot } = await import('../root');
 		const stream = await renderToReadableStream(
 			createElement(
 				FreshRoot,
@@ -406,7 +406,7 @@ test('starts an integration from the registry source the manifest lists with exp
 	const renderListed = async (experimentalScriptRegistry?: boolean) => {
 		const stream = await renderToReadableStream(
 			createElement(
-				ConsentRoot,
+				InthProvider,
 				{
 					options: { experimentalScriptRegistry },
 					scripts: [{ ...pixel, integration: 'pixel' }],

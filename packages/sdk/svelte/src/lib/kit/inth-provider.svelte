@@ -5,15 +5,16 @@
 
 	```svelte
 	<script lang="ts">
-		import { ConsentBanner, ConsentRoot } from '@inth/svelte';
+		import { ConsentBanner } from '@inth/svelte';
+		import { InthProvider } from '@inth/svelte/kit';
 
 		let { children, data } = $props();
 	</script>
 
-	<ConsentRoot state={data.consent}>
+	<InthProvider state={data.consent}>
 		{@render children()}
 		<ConsentBanner />
-	</ConsentRoot>
+	</InthProvider>
 	```
 
 	The state names the mode `inthHandle()` was given, as data. The root
@@ -41,6 +42,7 @@
 	// A stand-in in the browser build: see `../deferred/server-root.ts`.
 	import { createServerRoot } from '#server-root';
 
+	import ProviderView from '../components/provider-view.svelte';
 	import { readConsentBoot } from '../deferred/boot';
 	import { createDeferredRuntime } from '../deferred/runtime';
 	import type { EngineFactory } from '../deferred/runtime';
@@ -50,10 +52,9 @@
 		runtimeOptionsFor,
 	} from '../provider-options';
 	import type { ProviderOptionsInput } from '../provider-options';
-	import type { ConsentManagerOptions, ConsentRootState } from '../types';
-	import ProviderView from './provider-view.svelte';
+	import type { ConsentManagerOptions, InthProviderState } from '../types';
 
-	type ConsentRootProps = Omit<ConsentManagerOptions, 'mode' | 'prefetch'> & {
+	type InthProviderProps = Omit<ConsentManagerOptions, 'mode' | 'prefetch'> & {
 		children?: Snippet;
 		/**
 		 * A transport of your own, instead of the mode `inthHandle()` was given. Read once, when the
@@ -61,13 +62,13 @@
 		 */
 		mode?: ProviderTransportFactory;
 		/** `data.consent`, from `loadConsent` in `+layout.server.ts`. */
-		state: ConsentRootState;
+		state: InthProviderState;
 	};
 
-	let props: ConsentRootProps = $props();
+	let props: InthProviderProps = $props();
 
-	// The transport is built once, when the root mounts, like
-	// `ConsentProvider`'s `mode`. In the browser the engine builds it.
+	// The transport is built once, when the root mounts, like `mode` on
+	// `InthProvider` from `@inth/svelte`. In the browser the engine builds it.
 	let transport = $state.raw<ProviderTransportFactory | undefined>();
 	const options = $derived.by((): ProviderOptionsInput => {
 		const { mode: _mode, state, ...rest } = props;

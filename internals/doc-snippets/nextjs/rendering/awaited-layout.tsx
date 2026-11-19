@@ -3,7 +3,7 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentRoot,
+	InthProvider,
 } from '@inth/nextjs';
 import { resolveConsent } from '@inth/nextjs/server';
 import { Suspense } from 'react';
@@ -15,14 +15,14 @@ const ResolvedConsent = async ({ children }: { children: ReactNode }) => {
 	const state = await resolveConsent();
 
 	return (
-		<ConsentRoot state={state}>
+		<InthProvider state={state}>
 			{children}
 			<ConsentBanner />
 			<ConsentDialog />
 			<footer>
 				<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 			</footer>
-		</ConsentRoot>
+		</InthProvider>
 	);
 };
 

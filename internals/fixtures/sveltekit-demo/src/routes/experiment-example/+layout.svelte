@@ -10,8 +10,8 @@
 		ConsentBanner,
 		ConsentDialog,
 		ConsentDialogLink,
-		ConsentRoot,
 	} from '@inth/svelte';
+	import { InthProvider } from '@inth/svelte/kit';
 
 	import { scripts } from '#lib/example-scripts.js';
 	import {
@@ -25,7 +25,7 @@
 	const experiment = experimentFromSearch(page.url.searchParams);
 </script>
 
-<ConsentRoot
+<InthProvider
 	callbacks={experiment ? experimentCallbacks : undefined}
 	{experiment}
 	state={data.consent}
@@ -37,4 +37,4 @@
 	</footer>
 	<ConsentBanner />
 	<ConsentDialog />
-</ConsentRoot>
+</InthProvider>

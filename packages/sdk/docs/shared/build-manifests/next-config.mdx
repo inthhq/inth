@@ -21,7 +21,7 @@ load, the build warns and fetches as for `manifest()`.
 
 The wrapper also finds `inth.config.ts` (or `.mts`, `.js`, `.mjs`) at the
 project root, next to `next.config.ts`, and points `@inth/nextjs/generated` at the
-cache, in Turbopack and webpack. `ConsentRoot`, `resolveConsent` and the
+cache, in Turbopack and webpack. `InthProvider`, `resolveConsent` and the
 consent route read both without an import. Server code that needs the
 snapshot itself imports `snapshot` from `@inth/nextjs/generated`. Only server
 bundles get the snapshot: in a browser bundle,

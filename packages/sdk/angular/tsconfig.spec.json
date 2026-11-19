@@ -8,7 +8,7 @@
 		"consent-dialog/src",
 		"consent-dialog-trigger/src",
 		"consent-gate/src",
-		"consent-root/src",
+		"provider/src",
 		"consent-widget/src",
 		"devtools/src",
 		"iab/src",

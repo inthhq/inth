@@ -2,9 +2,9 @@
 	import type { ConsentKernel } from '@inth/sdk/engine';
 	import { untrack } from 'svelte';
 
-	import ConsentProvider from '../../lib/components/consent-provider.svelte';
 	import IabConsentDialog from '../../lib/components/iab-panel.svelte';
 	import IabConsentBanner from '../../lib/components/iab-prompt.svelte';
+	import InthProvider from '../../lib/components/inth-provider.svelte';
 	import ConsentDialog from '../../lib/components/panel.svelte';
 	import ConsentWidget from '../../lib/components/preferences.svelte';
 	import ConsentBanner from '../../lib/components/prompt.svelte';
@@ -32,7 +32,7 @@
 	} = $props();
 </script>
 
-<ConsentProvider {options}>
+<InthProvider {options}>
 	<ConformanceKernelCapture
 		{onKernel}
 		{onManager}
@@ -49,4 +49,4 @@
 	{:else if component === 'iab-consent-dialog'}
 		<IabConsentDialog open />
 	{/if}
-</ConsentProvider>
+</InthProvider>

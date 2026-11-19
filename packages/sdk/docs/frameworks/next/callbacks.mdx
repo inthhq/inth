@@ -25,12 +25,12 @@ import { callbacks } from './lib/consent-callbacks';
 export default defineConsentConfig({ options: { callbacks } });
 ```
 
-`ConsentRoot` reads the config in the App Router layout and in the
+`InthProvider` reads the config in the App Router layout and in the
 [Pages Router](/docs/frameworks/next/pages-router) `_app.tsx` alike, so the
 same file covers both routers. Keep your existing `scripts` and other options
 in the same call.
 
-`ConsentRoot` subscribes the callbacks after it mounts in the browser. Server
+`InthProvider` subscribes the callbacks after it mounts in the browser. Server
 rendering never calls them. The provider calls the latest `callbacks` object
 it received, so a new object on a later render takes effect without a
 remount.
@@ -44,7 +44,7 @@ remount.
 | `onError` | A consent command fails in the browser, such as a failed `/init` request or a save the backend rejects. | `error`, a message string |
 | `onBeforeConsentRevocationReload` | A save withdrew a granted category or vendor, right before Inth reloads the page. | `preferences`, the permissions after the save |
 
-The type for the whole object is `ConsentProviderCallbacks` from `@inth/nextjs`.
+The type for the whole object is `InthProviderCallbacks` from `@inth/nextjs`.
 Callbacks run after Inth updates its state, so `snapshot` and hooks such as
 `useConsent()` already hold the new values.
 
@@ -104,7 +104,7 @@ A choice that expires, a new policy and a privacy signal change permissions
 without a visitor action, so they do not reload the page.
 
 To handle revocation yourself, set `reloadOnConsentRevoked: false` in
-`options` on `ConsentRoot`. Code the visitor turned off then keeps running
+`options` on `InthProvider`. Code the visitor turned off then keeps running
 until the next full page load, and `onBeforeConsentRevocationReload` never
 runs.
 

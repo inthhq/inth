@@ -69,8 +69,7 @@ export { default as ConsentButton } from './components/action-button.svelte';
 export { default as ConsentDialog } from './components/deferred-panel.svelte';
 export { default as ConsentDialogLink } from './components/panel-link.svelte';
 export { default as ConsentDialogTrigger } from './components/panel-trigger.svelte';
-export { default as ConsentProvider } from './components/consent-provider.svelte';
-export { default as ConsentRoot } from './components/consent-root.svelte';
+export { default as InthProvider } from './components/inth-provider.svelte';
 export { default as ConsentWidget } from './components/preferences.svelte';
 export { default as ConsentGate } from './components/consent-gate.svelte';
 export { default as IABConsentBanner } from './components/iab-prompt.svelte';
@@ -101,8 +100,7 @@ export {
 } from './primitives';
 export type {
 	ConsentManagerOptions,
-	ConsentProviderCallbacks,
-	ConsentRootState,
+	InthProviderCallbacks,
 	ProviderIABOptions,
 	SvelteUIOptions,
 	UseNetworkBlockerOptions,

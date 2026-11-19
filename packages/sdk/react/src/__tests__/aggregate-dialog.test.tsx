@@ -4,7 +4,7 @@ import { expect, test, vi } from 'vitest';
 import { ConsentDialog } from '../aggregate-components';
 import { ConsentBanner } from '../components/prompt';
 import { useSetActiveUI } from '../hooks';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
@@ -30,7 +30,7 @@ test('reveals a cold aggregate dialog as soon as its module is ready', async () 
 	try {
 		// Deliberately avoid act(): it bypasses React's Suspense retry throttle.
 		root.render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: testing(),
 					persistence: false,
@@ -40,7 +40,7 @@ test('reveals a cold aggregate dialog as soon as its module is ready', async () 
 				<ConsentBanner disableAnimation />
 				<ConsentDialog disableAnimation />
 				<Controls />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		await vi.waitFor(() =>
 			expect(

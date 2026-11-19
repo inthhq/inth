@@ -4,7 +4,7 @@ import { render } from 'vitest-browser-react';
 
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { useSaveConsents } from '~/hooks';
-import { ConsentProvider } from '~/provider';
+import { InthProvider } from '~/provider';
 
 import { testing } from '../../../testing';
 import { ConsentGate } from '../consent-gate';
@@ -32,7 +32,7 @@ const Save = ({ category }: { category: 'marketing' | 'measurement' }) => {
 test('a ConsentGate re-renders only when its own category changes', async () => {
 	let commits = 0;
 	const { getByTestId } = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: testing(),
 				persistence: false,
@@ -54,7 +54,7 @@ test('a ConsentGate re-renders only when its own category changes', async () => 
 			</Profiler>
 			<Save category="measurement" />
 			<Save category="marketing" />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await expect.element(getByTestId('blocked')).toBeInTheDocument();
 	await settle();

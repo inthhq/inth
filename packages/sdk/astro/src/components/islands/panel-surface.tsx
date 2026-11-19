@@ -7,7 +7,7 @@
  *
  * The provider renders against the page's runtime rather than building one
  * of its own: Astro islands cannot see each other's context, so the kernel
- * has to be owned outside the component tree. `<ConsentProvider runtime>`
+ * has to be owned outside the component tree. `<InthProvider runtime>`
  * borrows it and leaves `start()`/`dispose()` to the owner.
  *
  * `<ConsentDraftProvider>` is what makes Save work. `useConsentDraft()`
@@ -16,11 +16,7 @@
  * copy: the switch would flip, and the save would commit nothing.
  */
 
-import {
-	ConsentDialog,
-	ConsentDraftProvider,
-	ConsentProvider,
-} from '@inth/react';
+import { ConsentDialog, ConsentDraftProvider, InthProvider } from '@inth/react';
 import type { LegalLinks } from '@inth/sdk/engine';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
 import { useEffect, useState } from 'react';
@@ -100,7 +96,7 @@ const ConsentDialogSurface = ({
 	tab,
 	legalLinks,
 }: ConsentDialogSurfaceProps) => (
-	<ConsentProvider
+	<InthProvider
 		runtime={runtime}
 		options={options}
 	>
@@ -111,7 +107,7 @@ const ConsentDialogSurface = ({
 				<ConsentDialog legalLinks={legalLinks} />
 			</ConsentDraftProvider>
 		)}
-	</ConsentProvider>
+	</InthProvider>
 );
 
 export default ConsentDialogSurface;

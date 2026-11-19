@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
-import type { ComponentFixtureOptions as ConsentProviderOptions } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
+import type { ComponentFixtureOptions as InthProviderOptions } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 
 import { testing } from '../../../testing';
@@ -220,7 +220,7 @@ globalThis.fetch = vi.fn(() =>
 	)
 ) as typeof fetch;
 
-const defaultIABOptions: ConsentProviderOptions = {
+const defaultIABOptions: InthProviderOptions = {
 	iab: {
 		cmpId: 160,
 		cmpVersion: 1,
@@ -245,9 +245,9 @@ describe('IAB preference item interactions', () => {
 
 	test('should keep purpose details collapsed until expanded', async () => {
 		await render(
-			<ConsentProvider options={defaultIABOptions}>
+			<InthProvider options={defaultIABOptions}>
 				<IABConsentDialog open />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		const purposeTrigger = await vi.waitFor(

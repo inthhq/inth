@@ -1,6 +1,6 @@
 ---
 title: ConsentGate
-description: Consent-gate an iframe in Next.js with ConsentGate inside ConsentRoot; with server prefetch the server HTML carries the placeholder for a denied category, and a granted embed mounts after hydration.
+description: Consent-gate an iframe in Next.js with ConsentGate inside InthProvider; with server prefetch the server HTML carries the placeholder for a denied category, and a granted embed mounts after hydration.
 group: frameworks
 ---
 
@@ -10,7 +10,7 @@ group: frameworks
 consent category is granted, and shows a placeholder otherwise. Wrap any
 iframe or third-party widget that would set cookies or contact a vendor on
 load. It is a Client Component; render it from any route under the layout
-that mounts the `ConsentRoot` from your
+that mounts the `InthProvider` from your
 [App Router](/docs/frameworks/next/app-router) or
 [Pages Router](/docs/frameworks/next/pages-router) setup, which also mounts
 the `ConsentDialog` the placeholder button opens.
@@ -60,7 +60,7 @@ With the
 the server decides from the resolved rule and the request cookie whether the
 category is allowed. Pages Router works the same way when `getServerSideProps`
 awaits `resolveConsent` from `@inth/nextjs/pages` and passes the result
-through `state` to `ConsentRoot`, as in the
+through `state` to `InthProvider`, as in the
 [Pages Router guide](../pages-router). A denied category gets the placeholder
 in the server HTML. A granted category gets an empty wrapper, and the embed
 mounts once hydration completes. With the awaited layout the page streams

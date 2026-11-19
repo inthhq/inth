@@ -24,8 +24,8 @@ export default defineConsentConfig({
 ```
 
 `clearOnRevocation` is a top-level option, not inside `options`. Keep your
-`scripts` in the same call. A `clearOnRevocation` prop on `ConsentRoot` wins
-over the config's. It is read once, when `ConsentRoot` mounts; remount it to
+`scripts` in the same call. A `clearOnRevocation` prop on `InthProvider` wins
+over the config's. It is read once, when `InthProvider` mounts; remount it to
 change the list.
 
 <import src="../../shared/scripts/clear-on-revocation.mdx#targets" />

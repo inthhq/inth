@@ -69,7 +69,7 @@ runtime exists:
 
 Three details matter:
 
-- **Borrow the runtime.** With `runtime`, `ConsentProvider` neither starts nor
+- **Borrow the runtime.** With `runtime`, `InthProvider` neither starts nor
   disposes the runtime. The page owns it.
 - **Pass `colorScheme: null`.** Without it, the adapter manages the
   `inth-dark` class itself and can undo the integration's `colorScheme`.
@@ -88,9 +88,9 @@ The Vue and Svelte adapters take the page runtime the same way:
 
 | Framework | Pass the runtime to | With |
 | --- | --- | --- |
-| React | `ConsentProvider` from `@inth/react` | `runtime={runtime}` and `options={{ colorScheme: null }}` |
+| React | `InthProvider` from `@inth/react` | `runtime={runtime}` and `options={{ colorScheme: null }}` |
 | Vue | `app.use(inthVue, …)`, with `inthVue` from `@inth/vue/vue-plugin` | `{ runtime, colorScheme: null }` |
-| Svelte | `ConsentProvider` from `@inth/svelte` | `runtime={runtime}` and `options={{ colorScheme: null }}` |
+| Svelte | `InthProvider` from `@inth/svelte` | `runtime={runtime}` and `options={{ colorScheme: null }}` |
 
 For Vue, an island's app is set up in the `appEntrypoint` module of
 `@astrojs/vue`. Install the plugin there, and only when `getConsentClient()`

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentDialog } from '~/components/panel';
 import { ConsentDialogLink } from '~/components/panel-link';
@@ -20,7 +20,7 @@ describe('ConsentDialogLink', () => {
 		'exposes the rights of the %s policy on preferences controls',
 		async (model) => {
 			render(
-				<ConsentProvider
+				<InthProvider
 					options={{
 						mode: testing(),
 						prefetch: policyFixture({}, { model }),
@@ -28,7 +28,7 @@ describe('ConsentDialogLink', () => {
 				>
 					<ConsentDialogLink>Preferences</ConsentDialogLink>
 					<ConsentDialogTrigger />
-				</ConsentProvider>
+				</InthProvider>
 			);
 			await vi.waitFor(() => {
 				for (const testId of [
@@ -50,10 +50,10 @@ describe('ConsentDialogLink', () => {
 
 	test('renders custom text and opens the dialog when clicked', async () => {
 		render(
-			<ConsentProvider options={{ mode: testing() }}>
+			<InthProvider options={{ mode: testing() }}>
 				<ConsentDialog />
 				<ConsentDialogLink>Your privacy settings</ConsentDialogLink>
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		await vi.waitFor(
@@ -86,7 +86,7 @@ describe('ConsentDialogLink', () => {
 
 	test('supports asChild for anchor-based footer links', async () => {
 		render(
-			<ConsentProvider options={{ mode: testing() }}>
+			<InthProvider options={{ mode: testing() }}>
 				<ConsentDialog />
 				<ConsentDialogLink asChild>
 					<a
@@ -96,7 +96,7 @@ describe('ConsentDialogLink', () => {
 						Manage Preferences
 					</a>
 				</ConsentDialogLink>
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		await vi.waitFor(

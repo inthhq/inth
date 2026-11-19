@@ -30,7 +30,7 @@ import { manifest } from '@inth/react';
 const mode = manifest();
 ```
 
-Keep passing `mode` to `ConsentProvider`. The browser resolves the snapshot
+Keep passing `mode` to `InthProvider`. The browser resolves the snapshot
 without `/manifest` when it has the geography the policy needs, or the policy
 does not depend on geography. Supply known country and region through `inputs`
 or overrides to keep regional resolution on the snapshot.
@@ -41,7 +41,7 @@ When the build has no snapshot, as in `vite dev` after a failed fetch,
 
 When the required country or region is missing, the transport calls backend
 `/init` and uses its resolved policy and translations. That response can use
-newer backend policy than the build snapshot. `ConsentProvider` sends that
+newer backend policy than the build snapshot. `InthProvider` sends that
 request while it first renders, before the page mounts, unless the visitor has
 a stored choice.
 

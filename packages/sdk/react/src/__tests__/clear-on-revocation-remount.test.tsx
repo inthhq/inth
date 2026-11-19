@@ -15,7 +15,7 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentProvider,
+	InthProvider,
 	useConsent,
 } from '../index';
 import { testing } from '../testing';
@@ -42,7 +42,7 @@ const Permission = () => {
 };
 
 const App = ({ onLoad }: { onLoad: () => void }) => (
-	<ConsentProvider
+	<InthProvider
 		options={{
 			clearOnRevocation: {
 				measurement: { cookies: [consentKey], localStorage: [consentKey] },
@@ -63,7 +63,7 @@ const App = ({ onLoad }: { onLoad: () => void }) => (
 		<ConsentBanner />
 		<ConsentDialog disableAnimation />
 		<ConsentDialogLink>Privacy settings</ConsentDialogLink>
-	</ConsentProvider>
+	</InthProvider>
 );
 
 const clearStorage = () => {

@@ -13,8 +13,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
-import type { ComponentFixtureOptions as ConsentProviderOptions } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
+import type { ComponentFixtureOptions as InthProviderOptions } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { mockGVL } from '~/components/iab/__tests__/fixtures/mock-consent-state';
 
@@ -26,7 +26,7 @@ const FALLBACK_TEXT =
 const CONTROLS =
 	'[role="switch"], [role="checkbox"], input, [data-disabled], [disabled]';
 
-const optionsFor = (gvl: GlobalVendorList): ConsentProviderOptions => ({
+const optionsFor = (gvl: GlobalVendorList): InthProviderOptions => ({
 	iab: { cmpId: 160, cmpVersion: 1, gvl },
 	mode: testing(),
 	prefetch: policyFixture(undefined, {
@@ -40,9 +40,9 @@ const optionsFor = (gvl: GlobalVendorList): ConsentProviderOptions => ({
 
 const renderDialog = async (options = optionsFor(mockGVL)) => {
 	await render(
-		<ConsentProvider options={options}>
+		<InthProvider options={options}>
 			<IABConsentDialog open />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	return vi.waitFor(
 		() => {

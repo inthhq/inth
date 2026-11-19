@@ -6,7 +6,7 @@ import { devToolsFlow, devToolsReady } from '@inth/conformance/play/devtools';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { DevTools } from '../../../packages/sdk/react/src/devtools';
-import { ConsentProvider } from '../../../packages/sdk/react/src/index';
+import { InthProvider } from '../../../packages/sdk/react/src/index';
 
 const meta = {
 	component: DevTools,
@@ -20,12 +20,12 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
 	play: devToolsReady,
 	render: () => (
-		<ConsentProvider options={devToolsProviderOptions}>
+		<InthProvider options={devToolsProviderOptions}>
 			<DevTools
 				defaultOpen
 				getConsentCategories={getDevToolsCategories}
 			/>
-		</ConsentProvider>
+		</InthProvider>
 	),
 };
 

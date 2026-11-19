@@ -1,4 +1,4 @@
-import type { ConsentProviderOptions } from '@inth/nextjs';
+import type { InthProviderOptions } from '@inth/nextjs';
 // Inth bundles only English. These two imports add its built-in German and
 // French copy, so the banner and dialog can switch to them. The browser
 // doesn't download the other languages.
@@ -6,7 +6,7 @@ import '@inth/nextjs/translations/de';
 import '@inth/nextjs/translations/fr';
 
 type ConsentMessages = NonNullable<
-	NonNullable<ConsentProviderOptions['i18n']>['messages']
+	NonNullable<InthProviderOptions['i18n']>['messages']
 >;
 
 // One line per language in Northwind's own voice. Every key left out keeps

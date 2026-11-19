@@ -12,7 +12,7 @@ Google Ad Manager and other ad tech read US privacy signals from it.
 
 ## Turn on GPP
 
-Render `ConsentGPP` inside `ConsentRoot`, in the root layout from the
+Render `ConsentGPP` inside `InthProvider`, in the root layout from the
 [App Router](/docs/frameworks/next/app-router) guide or in `pages/_app.tsx`
 from the [Pages Router](/docs/frameworks/next/pages-router) guide.
 
@@ -21,12 +21,12 @@ from the [Pages Router](/docs/frameworks/next/pages-router) guide.
 ```tsx title="app/layout.tsx (partial)"
 import { ConsentGPP } from '@inth/react/gpp';
 
-<ConsentRoot state={resolveConsent()}>
+<InthProvider state={resolveConsent()}>
 	<ConsentGPP />
 	{children}
 	<ConsentBanner />
 	<ConsentDialog />
-</ConsentRoot>;
+</InthProvider>;
 ```
 
 `ConsentGPP` renders nothing. `__gpp` exists only in the browser: the

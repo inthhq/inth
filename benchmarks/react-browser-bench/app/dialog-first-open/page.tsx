@@ -3,12 +3,12 @@
 import {
 	ConsentBanner,
 	ConsentDialog,
-	ConsentProvider,
+	InthProvider,
 	hosted,
 	useActiveUI,
 	useSetActiveUI,
 } from '@inth/react';
-import type { ConsentProviderOptions, WithProjectUrl } from '@inth/react';
+import type { InthProviderOptions, WithProjectUrl } from '@inth/react';
 import { useEffect, useRef } from 'react';
 
 const Controls = () => {
@@ -31,18 +31,18 @@ const Controls = () => {
 	);
 };
 
-const options: WithProjectUrl<ConsentProviderOptions> = {
+const options: WithProjectUrl<InthProviderOptions> = {
 	consentCategories: ['necessary', 'measurement', 'marketing'],
 	mode: hosted(),
 	projectUrl: '/api/bench-consent',
 };
 
 const DialogFirstOpenPage = () => (
-	<ConsentProvider options={options}>
+	<InthProvider options={options}>
 		<ConsentBanner />
 		<ConsentDialog />
 		<Controls />
-	</ConsentProvider>
+	</InthProvider>
 );
 
 export default DialogFirstOpenPage;

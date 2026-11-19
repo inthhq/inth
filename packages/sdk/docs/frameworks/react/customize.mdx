@@ -30,14 +30,14 @@ the other stock components render the rules they use as `<style>` elements.
 Import the stylesheet yourself with Tailwind CSS 3, to put Inth's rules in a
 named cascade layer. Set `styles: false` in the provider
 options, so the components add no second copy, and import the stylesheet once
-in the module that renders `ConsentProvider`:
+in the module that renders `InthProvider`:
 
 {/* example: fragment */}
 
 ```tsx title="src/consent.tsx (partial)"
 import '@inth/react/styles.css';
 
-// In the ConsentProvider options:
+// In the InthProvider options:
 styles: false,
 ```
 
@@ -81,7 +81,7 @@ A single-page app has no server render, so pick one of two ways:
   ```
 
   In `src/consent.tsx`, render `<ConsentTheme theme={theme} />` from
-  `@inth/react` just before `<ConsentProvider>`.
+  `@inth/react` just before `<InthProvider>`.
 
 In a server-rendered app, such as React Router framework mode, render
 `ConsentTheme` in the root component so the `<style>` element is part of the
@@ -102,7 +102,7 @@ through the provider's `theme` option:
 {/* example: fragment */}
 
 ```tsx title="src/consent.tsx"
-<ConsentProvider
+<InthProvider
   options={{
     mode,
     scripts,

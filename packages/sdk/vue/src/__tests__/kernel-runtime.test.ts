@@ -16,7 +16,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { createSSRApp, defineComponent } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 
-import ConsentRoot from '../runtime/components/root.vue';
+import InthProvider from '../runtime/components/inth-provider.vue';
 import { consentConfigKey } from '../runtime/composables/config';
 import { useHasConsent as getConsentedCategories } from '../runtime/composables/consent';
 import type { ConsentConfig } from '../runtime/config';
@@ -161,7 +161,7 @@ const createFetchMock = function createFetchMock() {
 const mountRoot = async function mountRoot() {
 	const { fetchMock, subjectBodies } = createFetchMock();
 	vi.stubGlobal('fetch', fetchMock);
-	const wrapper = mount(ConsentRoot, {
+	const wrapper = mount(InthProvider, {
 		global: {
 			plugins: [
 				[
@@ -183,12 +183,12 @@ const mountRootWithConsentProbe = async function mountRootWithConsentProbe() {
 	const { fetchMock, subjectBodies } = createFetchMock();
 	vi.stubGlobal('fetch', fetchMock);
 	const Probe = defineComponent({
-		components: { ConsentRoot },
+		components: { InthProvider },
 		setup() {
 			return { hasConsent: getConsentedCategories() };
 		},
 		template:
-			'<ConsentRoot /><div data-testid="granted-categories">{{ hasConsent.join(",") }}</div>',
+			'<InthProvider /><div data-testid="granted-categories">{{ hasConsent.join(",") }}</div>',
 	});
 	const wrapper = mount(Probe, {
 		global: {
@@ -244,7 +244,7 @@ const renderRootToString = async function renderRootToString(
 	});
 
 	try {
-		const app = createSSRApp(ConsentRoot);
+		const app = createSSRApp(InthProvider);
 		provideContext(app, context, config);
 		const ssrContext: { teleports?: Record<string, string> } = {};
 		const appHtml = await renderToString(app, ssrContext);
@@ -992,7 +992,7 @@ describe('IAB is opt-in', () => {
 
 	test('the plugin throws the same error from `app.use`', async () => {
 		const prefetch = await createIABInit();
-		const app = createSSRApp(ConsentRoot);
+		const app = createSSRApp(InthProvider);
 
 		expect(() =>
 			app.use(inthVue, { prefetch, projectUrl: 'https://consent.test' })
@@ -1010,7 +1010,7 @@ describe('IAB is opt-in', () => {
 			prefetch: await createIABInit(),
 		});
 		try {
-			const app = createSSRApp(ConsentRoot);
+			const app = createSSRApp(InthProvider);
 			provideContext(app, context, config);
 			const ssrContext: { teleports?: Record<string, string> } = {};
 			const html = [
@@ -1035,7 +1035,7 @@ describe('IAB is opt-in', () => {
 			config,
 			onIABUnavailable: (error) => errors.push(error),
 		});
-		const wrapper = mount(ConsentRoot, {
+		const wrapper = mount(InthProvider, {
 			global: {
 				provide: {
 					[consentConfigKey as symbol]: config,

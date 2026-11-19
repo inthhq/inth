@@ -8,7 +8,7 @@ visitor's location.
 
 - `vite.config.ts` adds `consentManifest`, which hands the backend URL to
   the app through `@inth/react/generated`.
-- `src/consent.tsx` mounts `ConsentProvider` in `hosted()` mode, with
+- `src/consent.tsx` mounts `InthProvider` in `hosted()` mode, with
   PostHog, the banner and the dialog.
 - `src/main.tsx` wraps the app in `Consent`.
 

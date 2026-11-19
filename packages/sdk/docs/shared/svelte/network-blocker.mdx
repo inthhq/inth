@@ -23,10 +23,10 @@ Pass it to the provider:
 
 ```svelte
 <!-- Svelte: src/App.svelte -->
-<ConsentProvider mode={manifest()} {scripts} {networkBlocker}>
+<InthProvider mode={manifest()} {scripts} {networkBlocker}>
 
 <!-- SvelteKit: src/routes/+layout.svelte -->
-<ConsentRoot state={data.consent} {scripts} {networkBlocker}>
+<InthProvider state={data.consent} {scripts} {networkBlocker}>
 ```
 
 The provider reads `networkBlocker` once, when it is created. Remount the

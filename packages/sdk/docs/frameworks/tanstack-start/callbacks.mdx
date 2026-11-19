@@ -1,22 +1,22 @@
 ---
 title: Callbacks
-description: Run code in a TanStack Start app when a visitor records a consent choice, when permissions change, when a request fails and before the revocation reload, from ConsentRoot in the root route.
+description: Run code in a TanStack Start app when a visitor records a consent choice, when permissions change, when a request fails and before the revocation reload, from InthProvider in the root route.
 group: frameworks
 ---
 
-## Pass callbacks to ConsentRoot
+## Pass callbacks to InthProvider
 
 Keep the callbacks in their own module:
 
 <include src="../../shared/examples/tanstack-start/callbacks.mdx" />
 
 Import it in `src/routes/__root.tsx` and pass it under `options` on
-`ConsentRoot`:
+`InthProvider`:
 
 {/* example: fragment */}
 
 ```tsx title="src/routes/__root.tsx"
-<ConsentRoot
+<InthProvider
   state={consent}
   scripts={scripts}
   options={{ callbacks }}
@@ -28,7 +28,7 @@ each side imports the module itself. Do not return callbacks from the root
 loader or a server function. Loader data is serialized for the browser, and
 functions cannot be serialized, so it should carry only the consent state.
 
-`ConsentRoot` subscribes the callbacks after it mounts in the browser. Server
+`InthProvider` subscribes the callbacks after it mounts in the browser. Server
 rendering never calls them. The provider calls the latest `callbacks` object
 it received, so a new object on a later render takes effect without a
 remount.
@@ -42,7 +42,7 @@ remount.
 | `onError` | A consent command fails in the browser, such as a failed `/init` request or a save the backend rejects. | `error`, a message string |
 | `onBeforeConsentRevocationReload` | A save withdrew a granted category or vendor, right before Inth reloads the page. | `preferences`, the permissions after the save |
 
-The type for the whole object is `ConsentProviderCallbacks` from
+The type for the whole object is `InthProviderCallbacks` from
 `@inth/tanstack-start`. Callbacks run after Inth updates its state, so
 `snapshot` and hooks such as `useConsent()` already hold the new values.
 
@@ -89,7 +89,7 @@ A choice that expires, a new policy and a privacy signal change permissions
 without a visitor action, so they do not reload the page.
 
 To handle revocation yourself, set `reloadOnConsentRevoked: false` in
-`options` on `ConsentRoot`. Code the visitor turned off then keeps running
+`options` on `InthProvider`. Code the visitor turned off then keeps running
 until the next full page load, and `onBeforeConsentRevocationReload` never
 runs.
 

@@ -7,9 +7,9 @@
  * @internal
  */
 export const GLOBAL_COMPONENTS = [
-	// Global so runtime resolution (<component :is="'ConsentRoot'">) works
-	// too: ConsentRoot is the documented mount-anywhere entry.
-	['ConsentRoot', 'nuxt-root'],
+	// Global so runtime resolution (<component :is="'InthProvider'">) works
+	// too: InthProvider is the documented mount-anywhere entry.
+	['InthProvider', 'nuxt-inth-provider'],
 	// Inline consent widget for settings and privacy pages, with the same DOM
 	// contract as @inth/react and @inth/svelte ConsentWidget.
 	['ConsentWidget', 'preferences'],

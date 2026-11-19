@@ -10,7 +10,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { defineConsentConfig } from '../config';
-import { ConsentRoot } from '../root';
+import { InthProvider } from '../root';
 import { testing } from '../testing';
 import { MANIFEST_FIXTURE } from './manifest-fixture';
 import { policyFixture } from './policy-fixture';
@@ -46,7 +46,7 @@ beforeEach(() => {
 	localStorage.clear();
 });
 
-describe('ConsentRoot: projectUrl triggers auto-init', () => {
+describe('InthProvider: projectUrl triggers auto-init', () => {
 	test('root reports Next.js adapter identity on window.__inthDebug', async () => {
 		const fetchSpy = vi.fn().mockResolvedValue(
 			new Response(JSON.stringify({ policyResolution: POLICY_RESOLUTION }), {
@@ -60,13 +60,13 @@ describe('ConsentRoot: projectUrl triggers auto-init', () => {
 
 		try {
 			const { unmount } = await render(
-				<ConsentRoot
+				<InthProvider
 					state={{}}
 					config={{ projectUrl: '/api/inth' }}
 					persistence={false}
 				>
 					<div data-testid="probe">ready</div>
-				</ConsentRoot>
+				</InthProvider>
 			);
 
 			await vi.waitFor(() => {
@@ -113,13 +113,13 @@ describe('ConsentRoot: projectUrl triggers auto-init', () => {
 
 		try {
 			const { getByTestId } = await render(
-				<ConsentRoot
+				<InthProvider
 					state={{}}
 					config={{ projectUrl: 'http://bench.example.com/api/inth' }}
 					persistence={false}
 				>
 					<Probe />
-				</ConsentRoot>
+				</InthProvider>
 			);
 
 			// After the init roundtrip completes, policy-derived state updates.
@@ -144,13 +144,13 @@ describe('ConsentRoot: projectUrl triggers auto-init', () => {
 
 		try {
 			const { getByTestId } = await render(
-				<ConsentRoot
+				<InthProvider
 					config={{ mode: testing() }}
 					state={{}}
 					persistence={false}
 				>
 					<Probe />
-				</ConsentRoot>
+				</InthProvider>
 			);
 
 			await expect.element(getByTestId('probe')).toHaveTextContent('false');
@@ -176,13 +176,13 @@ describe('ConsentRoot: projectUrl triggers auto-init', () => {
 
 		try {
 			const { getByTestId } = await render(
-				<ConsentRoot
+				<InthProvider
 					state={{}}
 					config={{ projectUrl: 'http://bench.example.com/api/inth' }}
 					options={{ enabled: false }}
 				>
 					<Probe />
-				</ConsentRoot>
+				</InthProvider>
 			);
 
 			await expect.element(getByTestId('probe')).toHaveTextContent('true|none');
@@ -196,7 +196,7 @@ describe('ConsentRoot: projectUrl triggers auto-init', () => {
 	});
 });
 
-describe('ConsentRoot: resolved state reaches first paint', () => {
+describe('InthProvider: resolved state reaches first paint', () => {
 	test('prepared policy renders without a duplicate browser init', async () => {
 		let resolveInit: (value: unknown) => void = () => undefined;
 		const fetchSpy = vi.fn(
@@ -226,13 +226,13 @@ describe('ConsentRoot: resolved state reaches first paint', () => {
 
 		try {
 			const { getByTestId } = await render(
-				<ConsentRoot
+				<InthProvider
 					state={state}
 					config={{ projectUrl: 'http://bench.example.com/api/inth' }}
 					persistence={false}
 				>
 					<Probe />
-				</ConsentRoot>
+				</InthProvider>
 			);
 
 			// First paint carries the prefetched values.
@@ -255,7 +255,7 @@ describe('ConsentRoot: resolved state reaches first paint', () => {
 	});
 });
 
-describe('ConsentRoot: config picks the transport', () => {
+describe('InthProvider: config picks the transport', () => {
 	const jsonResponse = (body: unknown) =>
 		new Response(JSON.stringify(body), {
 			headers: { 'content-type': 'application/json' },
@@ -325,7 +325,7 @@ describe('ConsentRoot: config picks the transport', () => {
 
 			try {
 				const { getByTestId } = await render(
-					<ConsentRoot
+					<InthProvider
 						state={{}}
 						config={defineConsentConfig({
 							mode,
@@ -347,7 +347,7 @@ describe('ConsentRoot: config picks the transport', () => {
 						persistence={false}
 					>
 						<PolicyProbe />
-					</ConsentRoot>
+					</InthProvider>
 				);
 
 				await expect
@@ -407,7 +407,7 @@ describe('ConsentRoot: config picks the transport', () => {
 
 		try {
 			const { getByTestId } = await render(
-				<ConsentRoot
+				<InthProvider
 					state={{ initialOverrides: { country: 'DE' } }}
 					config={defineConsentConfig({
 						mode: manifest({ resolve: 'browser' }),
@@ -417,7 +417,7 @@ describe('ConsentRoot: config picks the transport', () => {
 					persistence={false}
 				>
 					<PolicyProbe />
-				</ConsentRoot>
+				</InthProvider>
 			);
 
 			await expect
@@ -456,7 +456,7 @@ describe('ConsentRoot: config picks the transport', () => {
 
 		try {
 			const { getByTestId } = await render(
-				<ConsentRoot
+				<InthProvider
 					state={{ initialOverrides: { country: 'US' } }}
 					config={defineConsentConfig({
 						mode: manifest({ resolve: 'browser' }),
@@ -466,7 +466,7 @@ describe('ConsentRoot: config picks the transport', () => {
 					persistence={false}
 				>
 					<PolicyProbe />
-				</ConsentRoot>
+				</InthProvider>
 			);
 
 			await expect
@@ -497,7 +497,7 @@ describe('ConsentRoot: config picks the transport', () => {
 
 		try {
 			const { getByTestId } = await render(
-				<ConsentRoot
+				<InthProvider
 					state={{}}
 					config={defineConsentConfig({
 						projectUrl: 'https://consent.example.com',
@@ -505,7 +505,7 @@ describe('ConsentRoot: config picks the transport', () => {
 					persistence={false}
 				>
 					<PolicyProbe />
-				</ConsentRoot>
+				</InthProvider>
 			);
 
 			await expect
@@ -541,7 +541,7 @@ describe('ConsentRoot: config picks the transport', () => {
 		globalThis.fetch = fetchSpy as unknown as typeof globalThis.fetch;
 		try {
 			const { getByTestId } = await render(
-				<ConsentRoot
+				<InthProvider
 					state={{}}
 					config={defineConsentConfig({
 						journey: false,
@@ -550,7 +550,7 @@ describe('ConsentRoot: config picks the transport', () => {
 					persistence={false}
 				>
 					<PolicyProbe />
-				</ConsentRoot>
+				</InthProvider>
 			);
 			await expect
 				.element(getByTestId('probe'))
@@ -584,7 +584,7 @@ describe('ConsentRoot: config picks the transport', () => {
 		globalThis.fetch = fetchSpy as unknown as typeof globalThis.fetch;
 		try {
 			const { getByTestId } = await render(
-				<ConsentRoot
+				<InthProvider
 					state={{
 						...policyFixture({}, { id: 'gdpr' }),
 						journey: null,
@@ -595,7 +595,7 @@ describe('ConsentRoot: config picks the transport', () => {
 					persistence={false}
 				>
 					<PolicyProbe />
-				</ConsentRoot>
+				</InthProvider>
 			);
 			await getByTestId('save').click();
 			await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalled());
@@ -620,7 +620,7 @@ describe('ConsentRoot: config picks the transport', () => {
 
 		try {
 			const { getByTestId } = await render(
-				<ConsentRoot
+				<InthProvider
 					state={{}}
 					config={defineConsentConfig({
 						projectUrl: 'https://consent.example.com',
@@ -632,7 +632,7 @@ describe('ConsentRoot: config picks the transport', () => {
 					persistence={false}
 				>
 					<PolicyProbe />
-				</ConsentRoot>
+				</InthProvider>
 			);
 
 			await expect

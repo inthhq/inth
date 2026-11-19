@@ -1,5 +1,6 @@
 /**
- * How `ConsentProvider` and `ConsentRoot` read their props: top-level
+ * How the two `InthProvider` components, from `@inth/svelte` and
+ * `@inth/svelte/kit`, read their props: top-level
  * options merged over `options`, and the runtime options they hand core.
  *
  * @packageDocumentation

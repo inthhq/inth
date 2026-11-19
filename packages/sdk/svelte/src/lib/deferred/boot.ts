@@ -1,5 +1,5 @@
 /**
- * The boot data a server-rendered `ConsentRoot` leaves in the HTML, and the
+ * The boot data the SvelteKit `InthProvider` leaves in the server HTML, and the
  * browser side that reads it back. The writer is in `boot-server.ts`, so
  * the first-load chunk carries only the reader.
  *
@@ -13,7 +13,7 @@ import type { ConsentExperiment, ConsentSnapshot } from '@inth/sdk/engine';
 export const CONSENT_BOOT_ATTRIBUTE = 'data-inth-boot';
 
 /** What the server leaves. Short keys: it travels in every page. @internal */
-export interface ConsentRootBoot {
+export interface RootBoot {
 	/** The snapshot the server rendered the page from. */
 	s: ConsentSnapshot;
 	/** `1` when the engine may wait for the page (see `boot-server.ts`). */
@@ -29,7 +29,7 @@ export interface ConsentRootBoot {
 
 /** A boot read from the page, with the markup to hydrate it with. @internal */
 export interface ReadBoot {
-	boot: ConsentRootBoot;
+	boot: RootBoot;
 	/** The element's markup, as the server rendered it. */
 	html: string;
 }
@@ -69,7 +69,7 @@ export const readConsentBoot = function readConsentBoot(
 	}
 	taken.add(element);
 	try {
-		const boot = JSON.parse(text) as ConsentRootBoot;
+		const boot = JSON.parse(text) as RootBoot;
 		if (!boot?.s) {
 			return null;
 		}

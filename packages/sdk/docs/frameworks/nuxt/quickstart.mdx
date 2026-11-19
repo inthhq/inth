@@ -71,18 +71,18 @@ modes.
 
 ## Mount the consent UI
 
-Add `ConsentRoot` and a preferences link to `app.vue`:
+Add `InthProvider` and a preferences link to `app.vue`:
 
 <include src="../../shared/examples/nuxt/root.mdx" />
 
-`ConsentRoot` renders the banner when the visitor's policy asks for one and
+`InthProvider` renders the banner when the visitor's policy asks for one and
 loads the preference dialog when it opens. `ConsentDialogLink` renders a
 button that reopens preferences, labelled with the dialog's title in the
 visitor's language: Privacy Settings in English. It renders nothing until the
 policy offers preferences.
 
 The module registers these components and the consent composables, so you
-write no imports and no `app.use()`. Keep `ConsentRoot` in `app.vue`, outside
+write no imports and no `app.use()`. Keep `InthProvider` in `app.vue`, outside
 `<NuxtPage />`, so it stays mounted across navigation. The components bring
 their own styles.
 

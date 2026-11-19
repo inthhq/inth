@@ -19,7 +19,7 @@ import { render } from 'vitest-browser-react';
 
 import { KernelContext } from '../context';
 import { watchGatedIframes } from '../module-hooks/iframe-blocker';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { policyFixture } from './policy-fixture';
 
 const blockerModule = vi.hoisted(() => {
@@ -60,7 +60,7 @@ const renderProvider = async (
 ): Promise<ConsentKernel> => {
 	kernel = null;
 	await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: Object.assign(
 					() => ({ save: () => Promise.resolve({ ok: true }) }),
@@ -71,7 +71,7 @@ const renderProvider = async (
 			}}
 		>
 			<Capture />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await vi.waitFor(() => expect(kernel).not.toBeNull());
 	return kernel as unknown as ConsentKernel;

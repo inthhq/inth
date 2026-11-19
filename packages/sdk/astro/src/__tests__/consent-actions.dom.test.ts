@@ -1,4 +1,4 @@
-import { ConsentBanner, ConsentProvider } from '@inth/react';
+import { ConsentBanner, InthProvider } from '@inth/react';
 import type { ConsentPresentation } from '@inth/sdk/engine';
 import type { PolicyRule } from '@inth/sdk/schema/types';
 import type { Theme } from '@inth/sdk/ui/theme';
@@ -103,7 +103,7 @@ const renderReactBanner = async function renderReactBanner(
 	await act(async () => {
 		root?.render(
 			createElement(
-				ConsentProvider,
+				InthProvider,
 				{ options, runtime: booted.runtime },
 				createElement(ConsentBanner)
 			)

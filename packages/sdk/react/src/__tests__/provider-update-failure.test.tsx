@@ -7,7 +7,7 @@ import type * as ProviderRuntimeModule from '@inth/sdk/runtime/provider';
 import { expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
@@ -37,7 +37,7 @@ test('an update that rejects is not an unhandled rejection', async () => {
 		const testingMode = testing();
 		const prefetch = policyFixture();
 		const provider = (externalId: string) => (
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: testingMode,
 					persistence: false,
@@ -46,7 +46,7 @@ test('an update that rejects is not an unhandled rejection', async () => {
 				}}
 			>
 				<span>child</span>
-			</ConsentProvider>
+			</InthProvider>
 		);
 		const screen = await render(provider('user_1'));
 		await screen.rerender(provider('user_2'));

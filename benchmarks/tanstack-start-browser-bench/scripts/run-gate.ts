@@ -14,7 +14,7 @@ try {
 	await runConsentGate({
 		framework: 'tanstack-start',
 		notes: [
-			"ConsentRoot with server-resolved state from the route loader (the ssr arm's per-request /init), stock banner and dialog, after CookieBench's TanStack Start fixture.",
+			"InthProvider with server-resolved state from the route loader (the ssr arm's per-request /init), stock banner and dialog, after CookieBench's TanStack Start fixture.",
 		],
 		packageName: '@inth/tanstack-start-browser-bench',
 		paths: { control: '/gate-control', gate: '/gate' },

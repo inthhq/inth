@@ -19,7 +19,7 @@ the whole setup.
 
 | What | Details |
 | --- | --- |
-| Components | `ConsentRoot`, `ConsentWidget`, `ConsentDialogLink`, `ConsentDialogTrigger` and `ConsentGate`, all global. See [components](/docs/frameworks/nuxt/components). |
+| Components | `InthProvider`, `ConsentWidget`, `ConsentDialogLink`, `ConsentDialogTrigger` and `ConsentGate`, all global. See [components](/docs/frameworks/nuxt/components). |
 | Composables | Every composable `@inth/vue/vue-plugin` exports, auto-imported. See [composables](/docs/frameworks/nuxt/composables). |
 | A Nuxt plugin | Creates the consent runtime for each request on the server and once in the browser, resolves the visitor's policy during server rendering, and writes the `tokens` option into the page head. |
 | A server route | In `manifest()` mode, the default, one catch-all at `${routePrefix}/**` that answers `GET /api/inth/v1/consent/init` and `GET /api/inth/v1/consent/manifest`. `routePrefix: false`, `hosted()` and `testing()` add none. |

@@ -5,7 +5,7 @@
  * via `next/headers`) and hands the facts to `resolveRequestConsent` from
  * `@inth/sdk/server`, which owns the request read, the policy prefetch, the
  * forwarding rule, the budget and the merge. A Server Component passes the
- * result as a plain prop to the client `ConsentRoot`, which creates one
+ * result as a plain prop to the client `InthProvider`, which creates one
  * kernel per mount so concurrent requests do not share runtime state.
  *
  * This file imports `next/headers` and must only be called in a Server
@@ -193,7 +193,7 @@ export interface ResolveConsentOptions
 
 	/**
 	 * The consent journey scope this render reports. Defaults to the
-	 * config's `journey`; `ConsentRoot` must use the same value.
+	 * config's `journey`; `InthProvider` must use the same value.
 	 */
 	journey?: ConsentJourneyOption;
 	/**
@@ -201,7 +201,7 @@ export interface ResolveConsentOptions
 	 * feature flag. While the visitor has no stored choice, the server's
 	 * `/v1/consent/init` carries the arm, or its session report does in manifest mode,
 	 * so the backend counts the visitors each arm's banner was owed to. The
-	 * returned state carries the experiment to `ConsentRoot`, so the client
+	 * returned state carries the experiment to `InthProvider`, so the client
 	 * needs no `experiment` option of its own.
 	 *
 	 * @example
@@ -264,7 +264,7 @@ const reportPrefetchError = function reportPrefetchError(
  * answer within `timeoutMs` (500 ms by default), or points under the
  * config's `routePrefix` (the app's own route, never fetched), the
  * request-only state is returned too: no consent UI is rendered on the
- * server, optional categories stay denied, and `ConsentRoot` resolves the
+ * server, optional categories stay denied, and `InthProvider` resolves the
  * policy on mount. The failure reaches `onError` when provided, and is
  * otherwise logged outside production.
  *
@@ -273,15 +273,15 @@ const reportPrefetchError = function reportPrefetchError(
  *
  * @param options - Overrides of the config, fetch options, and how to read
  * the request
- * @returns The visitor's JSON-serializable state for `ConsentRoot`
+ * @returns The visitor's JSON-serializable state for `InthProvider`
  * @example
  * ```tsx
- * import { ConsentRoot } from '@inth/nextjs';
+ * import { InthProvider } from '@inth/nextjs';
  * import { resolveConsent } from '@inth/nextjs/server';
  *
  * // In a Server Component. Not awaited: the page renders while consent
  * // resolves.
- * <ConsentRoot state={resolveConsent()}>{children}</ConsentRoot>;
+ * <InthProvider state={resolveConsent()}>{children}</InthProvider>;
  * ```
  */
 export const resolveConsent = async function resolveConsent(

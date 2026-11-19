@@ -5,11 +5,11 @@ on. Every page and component in `app/` is a Vapor component
 (`<script setup vapor>`). The Inth components stay on the virtual DOM and
 render inside them through Nuxt's Vapor interop:
 
-- `app/app.vue` mounts `ConsentRoot` and `ConsentDialogLink`.
+- `app/app.vue` mounts `InthProvider` and `ConsentDialogLink`.
 - `app/components/VideoEmbed.vue` passes its default and `placeholder` slots
   to `ConsentGate`.
 - `app/components/ConsentPrompt.vue` is a headless banner built on the
-  composables, used on `/headless` in place of `ConsentRoot`.
+  composables, used on `/headless` in place of `InthProvider`.
 - `app/pages/privacy.vue` renders `ConsentWidget`.
 
 Vapor needs Vue 3.6, which is a release candidate, so this example pins

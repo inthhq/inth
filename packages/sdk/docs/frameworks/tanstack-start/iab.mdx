@@ -1,6 +1,6 @@
 ---
 title: IAB TCF
-description: Show the IAB TCF banner and dialog in a TanStack Start app for visitors whose policy uses the IAB model, with @inth/react/iab inside ConsentRoot.
+description: Show the IAB TCF banner and dialog in a TanStack Start app for visitors whose policy uses the IAB model, with @inth/react/iab inside InthProvider.
 group: frameworks
 ---
 
@@ -19,7 +19,7 @@ other visitor, and the policy manifest carries the vendor list reference.
 ## Render the IAB banner and dialog
 
 The stock `ConsentBanner` and `ConsentDialog` stay closed under the `iab`
-model. Render the IAB components inside `ConsentRoot`, next to them:
+model. Render the IAB components inside `InthProvider`, next to them:
 
 <include src="../../shared/examples/tanstack-start/iab-consent.mdx" />
 
@@ -28,7 +28,7 @@ Render `<IABConsent cmpId={YOUR_CMP_ID} />` in the root route, next to
 visitors whose policy uses the IAB model.
 
 The IAB banner and dialog render their own styles by default. Leave
-`ConsentRoot`'s `styles` option enabled. The banner's styles render in the
+`InthProvider`'s `styles` option enabled. The banner's styles render in the
 server HTML, and the dialog loads its rules when opened.
 
 <import src="../../shared/react/iab/overview.mdx#configure" />
@@ -38,7 +38,7 @@ server HTML, and the dialog loads its rules when opened.
 With Tailwind CSS 3, or when you want to put Inth in a named cascade layer,
 link the base stylesheet and then the IAB stylesheet in the root route's
 `head()`. The IAB stylesheet holds the IAB rules and uses the base
-stylesheet's tokens. Set `styles: false` in `ConsentRoot`'s `options` so the
+stylesheet's tokens. Set `styles: false` in `InthProvider`'s `options` so the
 components use those stylesheets:
 
 {/* example: fragment */}
@@ -51,7 +51,7 @@ import iabCss from '@inth/tanstack-start/iab/styles.css?url';
 { href: consentCss, rel: 'stylesheet' },
 { href: iabCss, rel: 'stylesheet' },
 
-// On ConsentRoot:
+// On InthProvider:
 options={{ styles: false }}
 ```
 

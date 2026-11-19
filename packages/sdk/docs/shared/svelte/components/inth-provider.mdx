@@ -1,16 +1,16 @@
-{/* Shared by the Svelte ConsentProvider and SvelteKit ConsentRoot pages, after each page's mount section. */}
+{/* Shared by the Svelte and SvelteKit InthProvider pages, after each page's mount section. */}
 
 ## Props
 
 Pass each option as a top-level prop, or group them in `options`. When both
 set the same option, the top-level prop wins. The `ConsentManagerOptions` type
-from `@inth/svelte` lists every option. SvelteKit's `ConsentRoot` takes the
-same props, except that `state` replaces `mode` and `prefetch`.
+from `@inth/svelte` lists every option. `InthProvider` from `@inth/svelte/kit`
+takes the same props, except that `state` replaces `mode` and `prefetch`.
 
 | Prop | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `mode` | `manifest()` or `hosted()` from `@inth/svelte`, or `testing()` from `@inth/svelte/testing` | `hosted()` | Where policies come from and where choices are saved. Read once; remount the provider to change it. `ConsentRoot` builds it from `state`, or takes a transport factory as `mode`. |
-| `prefetch` | `ConsentState` | none | Server-resolved state, such as the result of `resolveConsent`. With a resolved policy in it, the first render already knows whether to show the banner, and the browser skips its own policy request. `ConsentRoot` passes it from `state`. Read once. |
+| `mode` | `manifest()` or `hosted()` from `@inth/svelte`, or `testing()` from `@inth/svelte/testing` | `hosted()` | Where policies come from and where choices are saved. Read once; remount the provider to change it. `InthProvider` builds it from `state`, or takes a transport factory as `mode`. |
+| `prefetch` | `ConsentState` | none | Server-resolved state, such as the result of `resolveConsent`. With a resolved policy in it, the first render already knows whether to show the banner, and the browser skips its own policy request. `InthProvider` passes it from `state`. Read once. |
 | `scripts` | `Script[]` | none | Vendor scripts that load when their category is allowed. Updates after mount: new scripts go to the loader. See [scripts](../scripts). |
 | `consentCategories` | `AllConsentNames[]` | the policy's categories | Categories the preference UI offers, within the policy's scope. Updates after mount. |
 | `theme` | `Theme` | none | Slot classes and `consentActions` button styles. Design tokens in it are not applied in the browser. Updates after mount. |
@@ -25,7 +25,7 @@ same props, except that `state` replaces `mode` and `prefetch`.
 | `networkBlocker` | options or `false` | off | Holds `fetch` and XHR requests to listed domains until their category is allowed. Updates after mount: new rules and `enabled` apply, and `false` removes the blocker. The blocker loads on demand. See [network blocker](../network-blocker). |
 | `iframeBlocker` | `{ disableAutomaticBlocking?: boolean }` or `false` | on | Gates iframes that carry `data-category`. Updates after mount: `false` removes the blocker and a new `disableAutomaticBlocking` rebuilds it. See [embeds](../embeds). |
 | `iab` | `ProviderIABOptions` or `false` | off | IAB TCF settings. Read once. See [IAB TCF](../iab). |
-| `callbacks` | `ConsentProviderCallbacks` | none | `onChoiceRecorded`, `onPermissionsChanged`, `onError` and `onBeforeConsentRevocationReload`. The latest functions are called. See [callbacks](../callbacks). |
+| `callbacks` | `InthProviderCallbacks` | none | `onChoiceRecorded`, `onPermissionsChanged`, `onError` and `onBeforeConsentRevocationReload`. The latest functions are called. See [callbacks](../callbacks). |
 | `reloadOnConsentRevoked` | `boolean` | `true` | Reloads the page after a save withdraws a category or vendor that was granted. |
 | `overrides` | `{ country?, region?, language?, gpc? }` | none | Forces the location, language or Global Privacy Control signal the policy resolves for. A change after mount resolves the policy again. |
 | `user` | `User` | none | Identity sent with the policy request and every saved choice, so the choice is linked to your user ID. A different user after mount is identified with the backend; the user you mount with is not identified separately. |

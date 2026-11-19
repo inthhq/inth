@@ -1,5 +1,5 @@
 /**
- * ConsentRoot starts loading the script loader before the page hydrates
+ * InthProvider starts loading the script loader before the page hydrates
  * when the visitor's consent already lets a configured script run.
  *
  * The provider loads the script loader from its mount effect, after the
@@ -14,7 +14,7 @@ import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { ConsentRoot } from '../root';
+import { InthProvider } from '../root';
 import type { ConsentState } from '../server';
 import { policyFixture } from './policy-fixture';
 
@@ -72,19 +72,19 @@ const renderUncommitted = (
 	document.body.append(container);
 	root = createRoot(container);
 	root.render(
-		<ConsentRoot
+		<InthProvider
 			persistence={false}
 			scripts={scripts}
 			state={state}
 		>
 			<Hold />
-		</ConsentRoot>
+		</InthProvider>
 	);
 };
 
 // Order matters: the module evaluates once per file, so the cases that
 // must not load it run first.
-describe('ConsentRoot: script loader before hydration', () => {
+describe('InthProvider: script loader before hydration', () => {
 	test.each([
 		['a first visit', () => policyFixture()],
 		[
@@ -124,13 +124,13 @@ describe('ConsentRoot: script loader before hydration', () => {
 		document.body.append(container);
 		root = createRoot(container);
 		root.render(
-			<ConsentRoot
+			<InthProvider
 				persistence={false}
 				scripts={scripts}
 				state={policyFixture({ marketing: true })}
 			>
 				<div />
-			</ConsentRoot>
+			</InthProvider>
 		);
 		// One mount from the module the root's import already loaded.
 		await vi.waitFor(() => expect(loads.created).toBe(1));

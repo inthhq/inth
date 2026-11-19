@@ -38,7 +38,7 @@ If you use the prebuilt IAB TCF UI, also import `@inth/react/iab/styles.css`. It
 
 ## Usage
 
-1. Wrap your app in `ConsentProvider` with the backend URL from your Inth project
+1. Wrap your app in `InthProvider` with the backend URL from your Inth project
 2. Render `ConsentBanner`, `ConsentDialog` and `ConsentDialogLink` inside the provider, and mount it once for the life of the app
 
 ```tsx
@@ -47,7 +47,7 @@ import {
   ConsentBanner,
   ConsentDialog,
   ConsentDialogLink,
-  ConsentProvider,
+  InthProvider,
   hosted,
 } from '@inth/react'
 import type { ReactNode } from 'react'
@@ -55,12 +55,12 @@ import type { ReactNode } from 'react'
 const mode = hosted({ projectUrl: 'https://your-project.inth.app' })
 
 export const Consent = ({ children }: { children: ReactNode }) => (
-  <ConsentProvider options={{ mode }}>
+  <InthProvider options={{ mode }}>
     {children}
     <ConsentBanner />
     <ConsentDialog />
     <ConsentDialogLink>Privacy settings</ConsentDialogLink>
-  </ConsentProvider>
+  </InthProvider>
 )
 ```
 

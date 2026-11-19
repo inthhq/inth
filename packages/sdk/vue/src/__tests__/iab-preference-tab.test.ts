@@ -16,7 +16,7 @@ import type { Component } from 'vue';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { createIAB } from '../../../iab/src/index';
-import ConsentRoot from '../runtime/components/root.vue';
+import InthProvider from '../runtime/components/inth-provider.vue';
 import { consentConfigKey } from '../runtime/composables/config';
 import type { ConsentConfig } from '../runtime/config';
 import {
@@ -83,9 +83,9 @@ const mountSurfaces = async (activeUI: 'banner' | 'dialog') => {
 	const container = document.createElement('div');
 	document.body.append(container);
 	onTestFinished(() => container.remove());
-	// `ConsentRoot` mounts one surface at a time, so the banner unmounts
+	// `InthProvider` mounts one surface at a time, so the banner unmounts
 	// before the dialog mounts.
-	const app = createApp(ConsentRoot as Component);
+	const app = createApp(InthProvider as Component);
 	app.provide(consentConfigKey, config);
 	app.provide(symbolKernelContext, context);
 	app.provide(symbolKernel, context.kernel);

@@ -57,7 +57,7 @@ import { ConsentDialogLink } from '../components/panel-link';
 import { ConsentDialogTrigger } from '../components/panel-trigger';
 import { ConsentBanner } from '../components/prompt';
 import { KernelContext } from '../context';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { consentMarkup } from './consent-markup';
 import { transportMode } from './fixtures/transport-mode';
 
@@ -404,7 +404,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 				)
 			: readStoredRecords(config, setup.clock.now()).records;
 		return (
-			<ConsentProvider
+			<InthProvider
 				options={{
 					callbacks: {
 						onChoiceRecorded: (payload) =>
@@ -475,7 +475,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 						/>
 					</ConsentGate>
 				) : null}
-			</ConsentProvider>
+			</InthProvider>
 		);
 	};
 	const mount = async (hydrate = false) => {

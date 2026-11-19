@@ -1,5 +1,5 @@
 /**
- * `ConsentProvider` on a client-rendered page whose HTML started no `/v1/consent/init`
+ * `InthProvider` on a client-rendered page whose HTML started no `/v1/consent/init`
  * (no `consentManifest()`): the provider sends the request itself as it
  * first renders, the banner shows from its answer before the engine's
  * module arrives, and the engine takes the same answer. Its own file: the
@@ -25,7 +25,7 @@ const engineHeld = new Promise<void>((resolve) => {
 	releaseEngine = resolve;
 });
 
-const ConsentProvider = createConsentProvider(async () => {
+const InthProvider = createConsentProvider(async () => {
 	await engineHeld;
 	return import('../client-engine');
 });
@@ -58,7 +58,7 @@ afterEach(() => {
 test('sends /init itself and shows the banner before the engine; the engine reuses the answer', async () => {
 	expect(Reflect.has(window, PREFETCH_WINDOW_KEY)).toBe(false);
 	const screen = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				consentCategories: ['necessary', 'measurement', 'marketing'],
 				journey: false,
@@ -66,7 +66,7 @@ test('sends /init itself and shows the banner before the engine; the engine reus
 			}}
 		>
 			<ConsentBanner />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	// With the engine's module still held.
 	await expect

@@ -41,7 +41,7 @@ leading `--`. [Theme tokens](/docs/customization/tokens) lists every token.
 The inthVue plugin adds every token, including the defaults you did not set,
 to `document.head` in a `<style id="inth-css-vars">` element when you install
 it, before the first render. Every Inth component gets them, with or without
-`ConsentRoot`. A `:root` rule in your stylesheet can lose to that element
+`InthProvider`. A `:root` rule in your stylesheet can lose to that element
 depending on stylesheet order, so set token values through the `tokens`
 option. `defineTheme` from `@inth/vue/vue-plugin` only types a theme object; it
 does not apply anything.
@@ -111,7 +111,7 @@ message keys and writing labels.
 
 | Option | What it does |
 | --- | --- |
-| `showTrigger` | Renders the floating [`ConsentDialogTrigger`](/docs/frameworks/vue/components/consent-dialog-trigger) from `ConsentRoot`. |
+| `showTrigger` | Renders the floating [`ConsentDialogTrigger`](/docs/frameworks/vue/components/consent-dialog-trigger) from `InthProvider`. |
 | `triggerDefaultPosition`, `triggerSize`, `triggerIcon`, `triggerShowWhen` | Place and style that trigger. |
 | `hideBranding`, `bannerHideBranding`, `dialogHideBranding` | Hide the "Secured by" tag. |
 | `disableAnimation` | Turns off banner and dialog animations. See [motion and animation](/docs/customization/motion). |

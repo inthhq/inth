@@ -11,12 +11,12 @@ import {
 	settledState,
 } from '@inth/react/deferred/engine';
 import type { ScriptServerStartModule } from '@inth/react/deferred/engine';
-import { ConsentProvider } from '@inth/react/provider';
-import type { ConsentProviderOptions } from '@inth/react/provider';
+import { InthProvider as ReactProvider } from '@inth/react/provider';
+import type { InthProviderOptions } from '@inth/react/provider';
 /**
- * The engine side of `ConsentRoot`, loaded on demand by `./root`.
+ * The engine side of `InthProvider`, loaded on demand by `./root`.
  *
- * `EagerConsentRoot` is the whole root: the React provider around the page,
+ * `EagerRoot` is the whole root: the React provider around the page,
  * then the boot data and the scripts the server starts. The server always
  * renders it. `DeferredEngineRoot` is what the browser loads into a
  * deferred root: the provider and the same elements after the page, with
@@ -52,7 +52,7 @@ import type { ReactNode } from 'react';
 
 import { readPrefetchedInitialData } from './libs/prefetch-head';
 import { isPending, startsFromHTML } from './root-options';
-import type { ConsentRootProps } from './root-options';
+import type { InthProviderProps } from './root-options';
 import type { ConsentState } from './server';
 
 // The stock surfaces a deferred root renders come from this chunk, so
@@ -185,7 +185,7 @@ const resolveMode = function resolveMode(
 const ServerScriptStart = ({
 	options,
 }: {
-	options: ConsentProviderOptions;
+	options: InthProviderOptions;
 }): ReactNode => {
 	const { prefetch } = options;
 	const state = isPending(prefetch as ConsentState | Promise<ConsentState>)
@@ -240,7 +240,7 @@ const CheckedBootData = ({
 	options,
 	serverStart,
 }: {
-	options: ConsentProviderOptions;
+	options: InthProviderOptions;
 	/** Whether the render emits the server start, and so has its plan. */
 	serverStart: boolean;
 }): ReactNode => {
@@ -285,14 +285,14 @@ const useRootOptions = function useRootOptions({
 	networkBlocker,
 	persistence,
 	options,
-}: ConsentRootProps) {
+}: InthProviderProps) {
 	// Initial-only, like the provider's own `mode`.
 	const [mode, setMode] = useState(() =>
 		resolveMode(state, options?.mode, options?.overrides)
 	);
 	void setMode;
 
-	const providerOptions: ConsentProviderOptions = {
+	const providerOptions: InthProviderOptions = {
 		...options,
 		__debugPkg: '@inth/tanstack-start',
 		// A returning visitor's state often lets a script run. Start the
@@ -336,7 +336,7 @@ const AfterPage = ({
 	serverStart,
 }: {
 	bootData: boolean;
-	options: ConsentProviderOptions;
+	options: InthProviderOptions;
 	serverStart: boolean;
 }) => (
 	<>
@@ -363,12 +363,12 @@ const AfterPage = ({
  *
  * @internal
  */
-export const EagerConsentRoot = (props: ConsentRootProps) => {
+export const EagerRoot = (props: InthProviderProps) => {
 	const { bootData, providerOptions, serverStart } = useRootOptions(props);
 	return (
 		// `resolveMode` threw already when there is no backend.
-		<ConsentProvider
-			options={providerOptions as WithProjectUrl<ConsentProviderOptions>}
+		<ReactProvider
+			options={providerOptions as WithProjectUrl<InthProviderOptions>}
 		>
 			{props.children}
 			<Suspense fallback={null}>
@@ -378,7 +378,7 @@ export const EagerConsentRoot = (props: ConsentRootProps) => {
 					serverStart={serverStart}
 				/>
 			</Suspense>
-		</ConsentProvider>
+		</ReactProvider>
 	);
 };
 
@@ -389,7 +389,7 @@ export const EagerConsentRoot = (props: ConsentRootProps) => {
  * @internal
  */
 export const DeferredEngineRoot = (
-	props: ConsentRootProps & {
+	props: InthProviderProps & {
 		attach: (engine: DeferredEngine) => void;
 		/** A banner choice the root recorded before this loaded. */
 		committed?: DeferredCommitted;

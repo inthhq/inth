@@ -1,10 +1,10 @@
 <!-- #region docs:app -->
 <script setup lang="ts">
-import { ConsentDialogLink, ConsentRoot } from '@inth/vue/vue-plugin';
+import { ConsentDialogLink, InthProvider } from '@inth/vue/vue-plugin';
 </script>
 
 <template>
-	<ConsentRoot />
+	<InthProvider />
 	<main>
 		<h1>Inth with Vue</h1>
 		<p>PostHog loads after you allow measurement.</p>

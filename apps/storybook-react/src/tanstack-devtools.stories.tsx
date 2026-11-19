@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { inthDevtools } from '../../../packages/sdk/react/src/devtools';
-import { ConsentProvider } from '../../../packages/sdk/react/src/index';
+import { InthProvider } from '../../../packages/sdk/react/src/index';
 
 const plugins = [
 	inthDevtools({
@@ -20,7 +20,7 @@ const plugins = [
 const TanStackExample = () => {
 	const [mounted, setMounted] = useState(true);
 	return (
-		<ConsentProvider options={devToolsProviderOptions}>
+		<InthProvider options={devToolsProviderOptions}>
 			<button
 				onClick={() => setMounted((value) => !value)}
 				type="button"
@@ -33,7 +33,7 @@ const TanStackExample = () => {
 					plugins={plugins}
 				/>
 			) : null}
-		</ConsentProvider>
+		</InthProvider>
 	);
 };
 

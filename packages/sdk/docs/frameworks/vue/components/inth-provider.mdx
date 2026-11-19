@@ -1,30 +1,30 @@
 ---
-title: ConsentRoot
-description: Mount the Inth banner, preference dialog and floating trigger in a Vue app with one ConsentRoot component from @inth/vue/vue-plugin.
+title: InthProvider
+description: Mount the Inth banner, preference dialog and floating trigger in a Vue app with one InthProvider component from @inth/vue/vue-plugin.
 group: frameworks
 ---
 
-## Render `ConsentRoot` in your root component
+## Render `InthProvider` in your root component
 
-Render `ConsentRoot` once in your root component, next to your page content.
+Render `InthProvider` once in your root component, next to your page content.
 Import it from `@inth/vue/vue-plugin`:
 
 <include src="../../../shared/examples/vue/app.mdx" />
 
-`ConsentRoot` reads the consent runtime that
+`InthProvider` reads the consent runtime that
 [the inthVue plugin](/docs/frameworks/vue/plugin) creates in `src/main.ts`.
 Keep it in the root component so it stays mounted when the route changes.
 It brings its own styles.
 
-`ConsentRoot` is not a provider. The inthVue plugin already gives every
-component the consent runtime, so nothing needs to sit inside it. Render
-`<ConsentRoot />` next to your page content as shown above. If you wrap your
+The inthVue plugin already gives every component the consent runtime, so
+nothing needs to sit inside `InthProvider`. Render
+`<InthProvider />` next to your page content as shown above. If you wrap your
 content in it instead, the content still renders after the banner, dialog
 and trigger, but wrapping adds nothing.
 
-## What ConsentRoot renders
+## What InthProvider renders
 
-`ConsentRoot` picks the surfaces for the visitor's policy and the current
+`InthProvider` picks the surfaces for the visitor's policy and the current
 `activeUI`:
 
 | Policy | `activeUI` is `'banner'` | `activeUI` is `'manager'` |
@@ -38,13 +38,13 @@ when the `showTrigger` option is `true`.
 Nothing renders until the visitor's policy has resolved. The dialog and the
 IAB surfaces load as separate chunks. The IAB surfaces replace the standard
 ones only when the `iab` option is set and the policy uses the `iab` model. After the page's `load` event,
-`ConsentRoot` prefetches the dialog chunk in an idle moment, so the first
+`InthProvider` prefetches the dialog chunk in an idle moment, so the first
 Customize click does not wait for the network. The dialog unmounts when it
 closes.
 
 ## Theme tokens
 
-`ConsentRoot` does not apply theme tokens. The inthVue plugin adds every
+`InthProvider` does not apply theme tokens. The inthVue plugin adds every
 token from the `tokens` option, including the defaults you did not set, to
 `document.head` in a `<style id="inth-css-vars">` element when you install
 it, before the first render. Set token values through the `tokens` option
@@ -66,16 +66,16 @@ Bind `language` to your site's language switcher:
 {/* example: fragment */}
 
 ```vue
-<ConsentRoot :language="locale" />
+<InthProvider :language="locale" />
 ```
 
 ## Compose the surfaces yourself
 
-`ConsentRoot` is the same as rendering `ConsentBanner`, `ConsentManager` and
+`InthProvider` is the same as rendering `ConsentBanner`, `ConsentManager` and
 the IAB components with the right conditions. To place or configure them
-yourself, render them in place of `ConsentRoot`, as in
+yourself, render them in place of `InthProvider`, as in
 [ConsentBanner](/docs/frameworks/vue/components/consent-banner#import-the-banner-into-your-root-component). Do not
-render `ConsentRoot` next to them, or the visitor sees two banners.
+render `InthProvider` next to them, or the visitor sees two banners.
 
 ## Verify
 
@@ -88,8 +88,8 @@ reload, and confirm the banner stays closed.
 ## Next steps
 
 - [inthVue plugin](/docs/frameworks/vue/plugin) lists the options
-  `ConsentRoot` reads.
+  `InthProvider` reads.
 - [Customize](/docs/frameworks/vue/customize) changes tokens, layout and
   slots.
-- [Headless](/docs/frameworks/vue/headless) replaces `ConsentRoot` with your
+- [Headless](/docs/frameworks/vue/headless) replaces `InthProvider` with your
   own markup.

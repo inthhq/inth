@@ -12,7 +12,7 @@ reopens the dialog.
   server.
 - `src/routes/__root.tsx` resolves consent in a server function from that
   policy and the request's location, language and Global Privacy Control
-  headers, then mounts `ConsentRoot` with the banner and dialog. It also
+  headers, then mounts `InthProvider` with the banner and dialog. It also
   registers PostHog.
 
 ## Run it

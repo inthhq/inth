@@ -1,10 +1,10 @@
 /**
- * A deferred `ConsentRoot` whose engine chunk fails to download once loads
+ * A deferred `InthProvider` whose engine chunk fails to download once loads
  * it again a second later. The root loads its engine once per page, and the
  * browser setup already did: this test imports a fresh copy of the root.
  */
 import { ServerBootData } from '@inth/react/deferred/engine';
-import { ConsentProvider } from '@inth/react/provider';
+import { InthProvider as ReactProvider } from '@inth/react/provider';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
@@ -29,7 +29,7 @@ test('a deferred root loads its engine a second after one failed import', async 
 	// A query makes Vite evaluate the module again, with its own engine
 	// loader.
 	const fresh = '../root?engine-retry';
-	const { ConsentRoot, engineChunk } = (await import(
+	const { InthProvider, engineChunk } = (await import(
 		// oxlint-disable-next-line no-inline-comments -- Vite reads it here.
 		/* @vite-ignore */ fresh
 	)) as typeof RootModule;
@@ -50,7 +50,7 @@ test('a deferred root loads its engine a second after one failed import', async 
 	} as ConsentState;
 	const boot = document.createElement('div');
 	boot.innerHTML = renderToString(
-		<ConsentProvider
+		<ReactProvider
 			options={{
 				consentCategories: [...consentCategories],
 				mode,
@@ -58,7 +58,7 @@ test('a deferred root loads its engine a second after one failed import', async 
 			}}
 		>
 			<ServerBootData renderId="test-render" />
-		</ConsentProvider>
+		</ReactProvider>
 	);
 	const bootScript = boot.querySelector('script[data-inth-boot]');
 	if (!bootScript) {
@@ -71,13 +71,13 @@ test('a deferred root loads its engine a second after one failed import', async 
 	try {
 		await act(() => {
 			root.render(
-				<ConsentRoot
+				<InthProvider
 					options={{ consentCategories: [...consentCategories], mode }}
 					persistence
 					state={state}
 				>
 					<main />
-				</ConsentRoot>
+				</InthProvider>
 			);
 		});
 		// The engine marks its arrival by rendering the boot data's slot.

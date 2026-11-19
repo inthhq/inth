@@ -1,11 +1,8 @@
 'use client';
 
 import { benchPolicy } from '@inth/benchmarking/bench-policy';
-import {
-	ConsentBanner,
-	ConsentProvider,
-	useEffectivePermissions,
-} from '@inth/nextjs';
+import { ConsentBanner, useEffectivePermissions } from '@inth/nextjs';
+import { InthProvider } from '@inth/react';
 // The provider takes a transport; `offline` from `@inth/nextjs` is data.
 
 const BasicState = () => {
@@ -13,7 +10,7 @@ const BasicState = () => {
 	return <pre>{JSON.stringify(consents, null, 2)}</pre>;
 };
 const NextjsBasicPage = () => (
-	<ConsentProvider
+	<InthProvider
 		options={{
 			mode: benchPolicy({
 				policy: [
@@ -32,7 +29,7 @@ const NextjsBasicPage = () => (
 			<BasicState />
 		</main>
 		<ConsentBanner />
-	</ConsentProvider>
+	</InthProvider>
 );
 
 export default NextjsBasicPage;

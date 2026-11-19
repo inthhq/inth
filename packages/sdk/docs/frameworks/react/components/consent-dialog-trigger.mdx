@@ -1,19 +1,19 @@
 ---
 title: ConsentDialogTrigger
-description: Add the Inth ConsentDialogTrigger floating button or toolbar inside a React ConsentProvider so visitors can reopen the preference center after the first prompt.
+description: Add the Inth ConsentDialogTrigger floating button or toolbar inside a React InthProvider so visitors can reopen the preference center after the first prompt.
 group: frameworks
 ---
 
-## Add the trigger inside ConsentProvider
+## Add the trigger inside InthProvider
 
-`ConsentDialogTrigger` is a draggable floating button that opens the preference center. Place it once inside `ConsentProvider`, next to the banner and dialog from the [quickstart](/docs/frameworks/react/quickstart), so visitors can revisit their choices without a footer link.
+`ConsentDialogTrigger` is a draggable floating button that opens the preference center. Place it once inside `InthProvider`, next to the banner and dialog from the [quickstart](/docs/frameworks/react/quickstart), so visitors can revisit their choices without a footer link.
 
 {/* example: fragment */}
 
 ```tsx title="src/consent.tsx"
 import { ConsentDialogTrigger } from '@inth/react';
 
-// Inside the ConsentProvider from your quickstart, next to the dialog:
+// Inside the InthProvider from your quickstart, next to the dialog:
 <ConsentDialogTrigger showWhen="after-consent" />;
 ```
 
@@ -101,7 +101,7 @@ The toolbar follows the standard precedence: bundled styles, then provider slots
 {/* example: fragment */}
 
 ```tsx
-<ConsentProvider
+<InthProvider
 	options={{
 		mode,
 		components: {
@@ -125,7 +125,7 @@ The toolbar follows the standard precedence: bundled styles, then provider slots
 			},
 		]}
 	/>
-</ConsentProvider>;
+</InthProvider>;
 ```
 
 The toolbar slot keys are `trigger.toolbar`, `trigger.toolbarItem`, and `trigger.toolbarIcon`. With `noStyle`, style the current position and interaction state through `data-corner`, `data-dragging`, and `data-snapping` on the toolbar element.

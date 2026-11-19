@@ -1,5 +1,5 @@
 /**
- * ConsentRoot's early script loader decision runs during render. Whatever
+ * InthProvider's early script loader decision runs during render. Whatever
  * the browser has stored, it writes no storage and requests none of
  * persistence's write code before the page commits.
  *
@@ -11,7 +11,7 @@ import type { Root } from 'react-dom/client';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/encode';
-import { ConsentRoot } from '../root';
+import { InthProvider } from '../root';
 import { testing } from '../testing';
 import type { ConsentState } from '../types';
 import { policyFixture } from './policy-fixture';
@@ -133,7 +133,7 @@ const cases: [string, () => ConsentState][] = [
 	],
 ];
 
-describe('ConsentRoot: the early script loader decision writes nothing', () => {
+describe('InthProvider: the early script loader decision writes nothing', () => {
 	test.each(cases)('with %s', async (_, arrange) => {
 		const state = arrange();
 		const writes: string[] = [];
@@ -152,7 +152,7 @@ describe('ConsentRoot: the early script loader decision writes nothing', () => {
 		document.body.append(container);
 		root = createRoot(container);
 		root.render(
-			<ConsentRoot
+			<InthProvider
 				config={OFFLINE_CONFIG}
 				scripts={[
 					{
@@ -164,7 +164,7 @@ describe('ConsentRoot: the early script loader decision writes nothing', () => {
 				state={Promise.resolve(state)}
 			>
 				<Hold />
-			</ConsentRoot>
+			</InthProvider>
 		);
 		await vi.waitFor(() => expect(held).toBe(true));
 		for (let turn = 0; turn < 10; turn += 1) {

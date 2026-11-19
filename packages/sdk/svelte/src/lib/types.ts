@@ -54,7 +54,7 @@ export type UseNetworkBlockerOptions = RuntimeNetworkBlockerOptions;
 export type UsePersistenceOptions = RuntimePersistenceOptions;
 
 /**
- * Options accepted by `<ConsentProvider>`.
+ * Options accepted by `<InthProvider>`.
  *
  * Everything except the fields below is the framework-agnostic
  * {@link ConsentRuntimeOptions} contract, forwarded untouched to
@@ -92,9 +92,9 @@ export interface ConsentManagerOptions
 	 *
 	 * @example
 	 * ```svelte
-	 * <ConsentProvider projectUrl="/api/inth">
+	 * <InthProvider projectUrl="/api/inth">
 	 *   {@render children()}
-	 * </ConsentProvider>
+	 * </InthProvider>
 	 * ```
 	 */
 	projectUrl?: string;
@@ -129,9 +129,9 @@ export interface ConsentManagerOptions
 	 *
 	 * @example
 	 * ```svelte
-	 * <ConsentProvider projectUrl="/api/inth" gpp={{ usApproach: 'national' }}>
+	 * <InthProvider projectUrl="/api/inth" gpp={{ usApproach: 'national' }}>
 	 *   {@render children()}
-	 * </ConsentProvider>
+	 * </InthProvider>
 	 * ```
 	 */
 	gpp?: RuntimeGPPOptions | boolean;
@@ -178,16 +178,16 @@ export interface ConsentManagerOptions
 export type SvelteUIOptions = UIOptions;
 
 /** Public policy lifecycle callbacks. */
-export type ConsentProviderCallbacks = NonNullable<
+export type InthProviderCallbacks = NonNullable<
 	ConsentRuntimeOptions['callbacks']
 >;
 
 /**
  * What `loadConsent` from `@inth/svelte/kit` returns as `consent`, for
- * `<ConsentRoot state>`. Every field is serializable, so a SvelteKit
+ * `<InthProvider state>`. Every field is serializable, so a SvelteKit
  * `load` can return it.
  */
-export interface ConsentRootState {
+export interface InthProviderState {
 	/**
 	 * How `inthHandle()` resolves the visitor, as data: `manifest()`,
 	 * `hosted()` or `testing()`.

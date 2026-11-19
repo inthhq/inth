@@ -1,5 +1,5 @@
 /**
- * Wrapping the app in `ConsentRoot`, the way a React provider wraps it,
+ * Wrapping the app in `InthProvider`, the way a React provider wraps it,
  * keeps the app: the root renders its default slot next to the consent
  * surfaces, in the browser and in the server HTML, and hydrates it.
  */
@@ -16,8 +16,8 @@ import { createSSRApp, h } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 
 import { inthVue } from '../index';
-import NuxtConsentRoot from '../runtime/components/nuxt-root.vue';
-import ConsentRoot from '../runtime/components/root.vue';
+import InthProvider from '../runtime/components/inth-provider.vue';
+import NuxtInthProvider from '../runtime/components/nuxt-inth-provider.vue';
 import { consentConfigKey } from '../runtime/composables/config';
 import type {
 	RuntimeConsentConfig,
@@ -127,8 +127,8 @@ afterEach(() => {
 });
 
 describe.each([
-	['ConsentRoot', ConsentRoot],
-	['Nuxt ConsentRoot', NuxtConsentRoot],
+	['Vue InthProvider', InthProvider],
+	['Nuxt InthProvider', NuxtInthProvider],
 ] as [string, Component][])('%s', (_name, Root) => {
 	test('renders wrapped children next to the banner', async () => {
 		const wrapper = mount(Root, {
@@ -146,10 +146,10 @@ describe.each([
 	});
 });
 
-describe('Nuxt ConsentRoot wrapping the app', () => {
+describe('Nuxt InthProvider wrapping the app', () => {
 	test('server-renders the children and hydrates them without mismatches', async () => {
 		const runtimeConfig: RuntimeConsentConfig = config;
-		const App = () => h(NuxtConsentRoot, null, { default: page });
+		const App = () => h(NuxtInthProvider, null, { default: page });
 
 		const serverContext = createVueConsentKernelContext({
 			config: runtimeConfig,

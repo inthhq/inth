@@ -7,7 +7,7 @@ import type { ReactComponentSlots } from './slots';
  *
  * @remarks
  * Extends the framework-agnostic {@link UIOptions} with per-component slot
- * overrides. `ConsentProvider` picks its theme-related options from here.
+ * overrides. `InthProvider` picks its theme-related options from here.
  *
  * @public
  */

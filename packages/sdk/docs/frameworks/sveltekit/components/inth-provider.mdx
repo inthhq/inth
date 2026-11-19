@@ -1,13 +1,13 @@
 ---
-title: ConsentRoot
-description: Mount ConsentRoot in a SvelteKit root layout with the state loadConsent returns, so the banner is in the first HTML, with every prop and its default.
+title: InthProvider
+description: Mount InthProvider in a SvelteKit root layout with the state loadConsent returns, so the banner is in the first HTML, with every prop and its default.
 group: frameworks
 ---
 
-## Mount ConsentRoot in the root layout
+## Mount InthProvider in the root layout
 
 Export `loadConsent` as the root layout's server load, then pass its
-`consent` to `ConsentRoot` as `state`:
+`consent` to `InthProvider` from `@inth/svelte/kit` as `state`:
 
 <include src="../../../shared/examples/sveltekit/layout-server.mdx" />
 
@@ -15,19 +15,19 @@ Export `loadConsent` as the root layout's server load, then pass its
 
 Pass `data.consent` through unchanged. It holds the visitor's
 server-resolved consent, the mode `inthHandle()` was given, the backend URL
-and the consent route's prefix. `ConsentRoot` renders `ConsentProvider` from
-it, on the server and in the browser, so both render the same banner and the
+and the consent route's prefix. `InthProvider` starts consent from it, on
+the server and in the browser, so both render the same banner and the
 browser makes no second policy request. The [quickstart](../quickstart)
 explains `inthHandle` and `loadConsent`.
 
-`ConsentRoot` turns the mode into a transport that loads each policy path
+`InthProvider` turns the mode into a transport that loads each policy path
 only when it runs. A page the server resolved ships a small transport that
 saves choices, and no resolver, policy rules, snapshot or other languages.
 The code to resolve the policy again in the browser, such as after a
 language change or on a prerendered page, loads when it is needed.
 
 To use a transport of your own, pass your transport factory as
-`ConsentRoot`'s `mode` prop. `inthHandle()` takes only data modes.
+`InthProvider`'s `mode` prop. `inthHandle()` takes only data modes.
 
 Keep the provider in the root `+layout.svelte`. A layout stays mounted across
 client-side navigation, so the runtime, the loaded scripts and the dialog
@@ -38,4 +38,4 @@ Create `scripts` and `callbacks` in the layout component, not in
 `+layout.server.ts`. They hold functions, which a server load cannot send to
 the browser.
 
-<include src="../../../shared/svelte/components/consent-provider.mdx" />
+<include src="../../../shared/svelte/components/inth-provider.mdx" />

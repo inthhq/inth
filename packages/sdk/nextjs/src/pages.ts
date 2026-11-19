@@ -204,7 +204,7 @@ export type WithConsentPropsOptions = Omit<PagesResolveConsentOptions, 'req'>;
 /**
  * `getServerSideProps` that resolves the visitor's consent from
  * `inth.config.ts` and adds it to the page's props as `consent`, for
- * `<ConsentRoot state={pageProps.consent}>` in `pages/_app.tsx`. The state
+ * `<InthProvider state={pageProps.consent}>` in `pages/_app.tsx`. The state
  * is JSON-safe, as Next.js requires of props.
  *
  * Wraps the page's own `getServerSideProps` when given: consent resolves

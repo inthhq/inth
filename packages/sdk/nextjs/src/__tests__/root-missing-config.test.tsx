@@ -1,6 +1,6 @@
 /**
  * Without `inth.config.ts` (no alias, so the package stub exports
- * `undefined`) and without a `config` prop, `ConsentRoot` warns once
+ * `undefined`) and without a `config` prop, `InthProvider` warns once
  * outside production, and throws when nothing gives it a backend URL
  * instead of running a mode the app never chose.
  */
@@ -8,7 +8,7 @@ import { renderToString } from 'react-dom/server';
 import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ConsentRoot } from '../root';
+import { InthProvider } from '../root';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
@@ -17,15 +17,15 @@ afterEach(() => {
 	vi.unstubAllGlobals();
 });
 
-const renderRoot = (props: Partial<Parameters<typeof ConsentRoot>[0]> = {}) =>
+const renderRoot = (props: Partial<Parameters<typeof InthProvider>[0]> = {}) =>
 	render(
-		<ConsentRoot
+		<InthProvider
 			state={policyFixture()}
 			persistence={false}
 			{...props}
 		>
 			<div>root</div>
-		</ConsentRoot>
+		</InthProvider>
 	);
 
 test('stays quiet with a config prop', async () => {
@@ -59,21 +59,21 @@ test('throws with no config and no NEXT_PUBLIC_INTH_PROJECT_URL', () => {
 	// The server render, as `next build` prerenders the layout.
 	expect(() =>
 		renderToString(
-			<ConsentRoot state={policyFixture()}>
+			<InthProvider state={policyFixture()}>
 				<div>root</div>
-			</ConsentRoot>
+			</InthProvider>
 		)
 	).toThrow('`projectUrl` is required');
 });
 
 test('renders testing() without a backend URL', () => {
 	const html = renderToString(
-		<ConsentRoot
+		<InthProvider
 			config={{ mode: testing() }}
 			state={policyFixture()}
 		>
 			<div>offline root</div>
-		</ConsentRoot>
+		</InthProvider>
 	);
 	expect(html).toContain('offline root');
 });

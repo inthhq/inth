@@ -2,14 +2,14 @@ import { useConsent, useOverrides } from '@inth/react';
 import { describe, expect, test } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ConsentRoot } from '../root';
+import { InthProvider } from '../root';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 /** These tests are not about the backend; testing() needs none. */
 const OFFLINE_CONFIG = { mode: testing() };
 
-describe('ConsentRoot: state is honored', () => {
+describe('InthProvider: state is honored', () => {
 	test('initial consents from state reach useConsent', async () => {
 		const MarketingStatus = () => {
 			const allowed = useConsent('marketing');
@@ -17,13 +17,13 @@ describe('ConsentRoot: state is honored', () => {
 		};
 
 		const { getByTestId } = await render(
-			<ConsentRoot
+			<InthProvider
 				config={OFFLINE_CONFIG}
 				state={policyFixture({ marketing: true, measurement: true })}
 				persistence={false}
 			>
 				<MarketingStatus />
-			</ConsentRoot>
+			</InthProvider>
 		);
 
 		await expect.element(getByTestId('status')).toHaveTextContent('true');
@@ -40,19 +40,19 @@ describe('ConsentRoot: state is honored', () => {
 		};
 
 		const { getByTestId } = await render(
-			<ConsentRoot
+			<InthProvider
 				config={OFFLINE_CONFIG}
 				state={{ initialOverrides: { country: 'DE', language: 'de' } }}
 			>
 				<CountryLabel />
-			</ConsentRoot>
+			</InthProvider>
 		);
 
 		await expect.element(getByTestId('country')).toHaveTextContent('DE/de');
 	});
 });
 
-describe('ConsentRoot: kernel is per-mount', () => {
+describe('InthProvider: kernel is per-mount', () => {
 	test('two roots receive independent kernels', async () => {
 		const MarketingStatus = ({ label }: { label: string }) => {
 			const allowed = useConsent('marketing');
@@ -65,20 +65,20 @@ describe('ConsentRoot: kernel is per-mount', () => {
 
 		const screen = await render(
 			<div>
-				<ConsentRoot
+				<InthProvider
 					config={OFFLINE_CONFIG}
 					state={policyFixture({ marketing: true })}
 					persistence={false}
 				>
 					<MarketingStatus label="a" />
-				</ConsentRoot>
-				<ConsentRoot
+				</InthProvider>
+				<InthProvider
 					config={OFFLINE_CONFIG}
 					state={policyFixture({ marketing: false })}
 					persistence={false}
 				>
 					<MarketingStatus label="b" />
-				</ConsentRoot>
+				</InthProvider>
 			</div>
 		);
 

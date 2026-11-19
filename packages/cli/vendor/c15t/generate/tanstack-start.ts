@@ -28,7 +28,7 @@ const root = (options: BoilerplateOptions): string => {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentRoot,${offline ? '\n\toffline,' : ''}
+	InthProvider,${offline ? '\n\toffline,' : ''}
 } from '@inth/tanstack-start';`,
 		`import {
 	consentLoaderOptions,
@@ -49,14 +49,14 @@ const RootComponent = () => {
 				<HeadContent />
 			</head>
 			<body>
-				${openingTag('ConsentRoot', ['state={consent}', ...(scripts ? ['scripts={scripts}'] : [])], '\t\t\t\t')}
+				${openingTag('InthProvider', ['state={consent}', ...(scripts ? ['scripts={scripts}'] : [])], '\t\t\t\t')}
 					<Outlet />
 					<ConsentBanner />
 					<ConsentDialog />
 					<footer>
 						<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 					</footer>
-				</ConsentRoot>
+				</InthProvider>
 				<Scripts />
 			</body>
 		</html>
@@ -79,7 +79,7 @@ export const Route = createRootRoute({
 
 /**
  * Generate the TanStack Start quickstart: `vite.config.ts` and the root
- * route, which resolves consent in its loader and renders `ConsentRoot`.
+ * route, which resolves consent in its loader and renders `InthProvider`.
  * @param options Mode and vendor selections.
  * @returns Files relative to the project root.
  */

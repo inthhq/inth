@@ -11,7 +11,7 @@ import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { afterEach, expect, test, vi } from 'vitest';
 
-import { ConsentRoot } from '../root';
+import { InthProvider } from '../root';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
@@ -58,14 +58,14 @@ test('a stored choice that denies an alwaysLoad script still loads it during ren
 	document.body.append(container);
 	root = createRoot(container);
 	root.render(
-		<ConsentRoot
+		<InthProvider
 			config={OFFLINE_CONFIG}
 			persistence={false}
 			scripts={scripts}
 			state={Promise.resolve(policyFixture({ marketing: false }))}
 		>
 			<Hold />
-		</ConsentRoot>
+		</InthProvider>
 	);
 	// Wait for the whole load, so it does not outlive the test.
 	await vi.waitFor(() => expect(loads.loaded).toBe(1));

@@ -17,7 +17,7 @@ declare global {
 export interface NetworkBlockerSuiteOptions {
 	/**
 	 * `true` when the bundler evaluates client component modules as soon as
-	 * the route's chunk loads (webpack), before `ConsentRoot` renders. The
+	 * the route's chunk loads (webpack), before `InthProvider` renders. The
 	 * request `network-beacons.tsx` sends at module evaluation is then out of
 	 * the blocker's reach, as the network blocker docs state. Turbopack
 	 * evaluates the module while rendering the first element that uses it,

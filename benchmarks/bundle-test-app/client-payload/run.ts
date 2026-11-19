@@ -9,8 +9,8 @@
  * - baseline: no consent library.
  * - v2: `@inth/nextjs` 2.x, the v2 Next.js quickstart (client provider).
  * - v3: `@inth/nextjs`, the v3 App Router guide (server `resolveConsent` in
- *   Suspense, `ConsentRoot`, automatic component styles).
- * - v3-react: `@inth/react` umbrella `ConsentProvider`, as the Inth docs
+ *   Suspense, `InthProvider`, automatic component styles).
+ * - v3-react: `@inth/react` umbrella `InthProvider`, as the Inth docs
  *   site uses it.
  * - v3-split: the same tree as v3-react through split `@inth/react/*` entries.
  *

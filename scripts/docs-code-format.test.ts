@@ -11,20 +11,20 @@ describe('formatDocsCode', () => {
 	test('keeps a JSX tag that fits on one line', async () => {
 		const code = [
 			'export const Consent = () => (',
-			'  <ConsentRoot',
+			'  <InthProvider',
 			'    state={state}',
 			'    config={config}',
 			'  >',
 			'    {children}',
-			'  </ConsentRoot>',
+			'  </InthProvider>',
 			');',
 		].join('\n');
 		expect(await formatDocsCode('tsx', code)).toBe(
 			[
 				'export const Consent = () => (',
-				'\t<ConsentRoot state={state} config={config}>',
+				'\t<InthProvider state={state} config={config}>',
 				'\t\t{children}',
-				'\t</ConsentRoot>',
+				'\t</InthProvider>',
 				');',
 			].join('\n')
 		);
@@ -43,7 +43,7 @@ describe('formatDocsCode', () => {
 
 	test('returns null for fragments and unhandled languages', async () => {
 		expect(
-			await formatDocsCode('tsx', '<ConsentRoot state={state}>')
+			await formatDocsCode('tsx', '<InthProvider state={state}>')
 		).toBeNull();
 		expect(await formatDocsCode('css', 'a{color:red}')).toBeNull();
 	});
@@ -67,7 +67,7 @@ describe('formatMdxFences', () => {
 			'  ```',
 			'',
 			'```tsx',
-			'<ConsentRoot state={state}>',
+			'<InthProvider state={state}>',
 			'```',
 			'',
 		].join('\n');

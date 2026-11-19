@@ -3,7 +3,7 @@ import type { ComponentProps } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import type { ConsentStateFixture } from '~/__tests__/consent-state-fixture';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentBanner } from '~/components/prompt';
@@ -66,13 +66,13 @@ const renderBanner = function renderBanner(
 	props: ComponentProps<typeof ConsentBanner>,
 	stateOverrides: Partial<ConsentManagerState> = {},
 	componentOverrides: ComponentProps<
-		typeof ConsentProvider
+		typeof InthProvider
 	>['options']['components'] = {}
 ) {
 	const state = createMockState(stateOverrides);
 
 	return render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				components: {
 					button: {
@@ -104,7 +104,7 @@ const renderBanner = function renderBanner(
 			}}
 		>
 			<ConsentBanner {...props} />
-		</ConsentProvider>
+		</InthProvider>
 	);
 };
 

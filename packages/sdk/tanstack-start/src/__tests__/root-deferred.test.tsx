@@ -1,9 +1,9 @@
 import { useScriptLoader } from '@inth/react';
 import { ServerBootData } from '@inth/react/deferred/engine';
 import { useSaveConsents, useSnapshot } from '@inth/react/hooks';
-import { ConsentProvider } from '@inth/react/provider';
+import { InthProvider as ReactProvider } from '@inth/react/provider';
 /**
- * In the browser, `ConsentRoot` reads the snapshot the server left in the
+ * In the browser, `InthProvider` reads the snapshot the server left in the
  * page and decides when its engine loads: after the page's priority images
  * for a visitor the banner asks to choose, or a returning visitor whose
  * stored choice is current; at once for one it must serve.
@@ -26,8 +26,8 @@ import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/encode';
-import { ConsentRoot } from '../root';
-import type { ConsentRootProps } from '../root';
+import { InthProvider } from '../root';
+import type { InthProviderProps } from '../root';
 import type { ConsentState } from '../server';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
@@ -70,7 +70,7 @@ const RENDER_ID = 'test-render';
 const leaveBootData = (state: ConsentState): void => {
 	const holder = document.createElement('div');
 	holder.innerHTML = renderToString(
-		<ConsentProvider
+		<ReactProvider
 			options={{
 				consentCategories: [...consentCategories],
 				mode,
@@ -78,7 +78,7 @@ const leaveBootData = (state: ConsentState): void => {
 			}}
 		>
 			<ServerBootData renderId={RENDER_ID} />
-		</ConsentProvider>
+		</ReactProvider>
 	);
 	const boot = holder.querySelector('script[data-inth-boot]');
 	if (!boot) {
@@ -134,7 +134,7 @@ const runStoredChoiceCheck = (state: ConsentState): void => {
 const pixelStarted = (src = PIXEL): boolean =>
 	document.querySelector(`script[src$="${src}"]`) !== null;
 
-/** A plain marketing script passed to `ConsentRoot` itself. */
+/** A plain marketing script passed to `InthProvider` itself. */
 const ROOT_PIXEL = '/never-served/root-pixel.js';
 const rootPixel: Script = {
 	category: 'marketing',
@@ -157,7 +157,7 @@ const Probe = () => {
 const mount = async (
 	state: ConsentState,
 	callbacks?: Callbacks,
-	props: Partial<ConsentRootProps> = {}
+	props: Partial<InthProviderProps> = {}
 ) => {
 	// Persistence on, as an app has it: the engine reads the browser's
 	// stored records when it loads.
@@ -167,7 +167,7 @@ const mount = async (
 	await act(() => {
 		root = createRoot(container);
 		root.render(
-			<ConsentRoot
+			<InthProvider
 				options={{
 					callbacks,
 					consentCategories: [...consentCategories],
@@ -178,7 +178,7 @@ const mount = async (
 				{...props}
 			>
 				<Probe />
-			</ConsentRoot>
+			</InthProvider>
 		);
 	});
 	cleanups.push(() => {
@@ -187,12 +187,12 @@ const mount = async (
 	});
 	/** Renders the root again with `next` props, as a navigation would. */
 	const rerender = async (
-		next: Partial<ConsentRootProps>,
+		next: Partial<InthProviderProps>,
 		extra?: ReactNode
 	) => {
 		await act(() => {
 			root?.render(
-				<ConsentRoot
+				<InthProvider
 					options={{
 						callbacks,
 						consentCategories: [...consentCategories],
@@ -204,7 +204,7 @@ const mount = async (
 				>
 					<Probe />
 					{extra}
-				</ConsentRoot>
+				</InthProvider>
 			);
 		});
 	};
@@ -394,7 +394,7 @@ test('a returning visitor who denied a script that observes consent before it lo
 				observeConsentBeforeLoad: true,
 				onConsentChange,
 			},
-		] as ConsentRootProps['scripts'],
+		] as InthProviderProps['scripts'],
 	});
 	await settle();
 	// The hero is still loading: only an engine started at once is in.
@@ -482,7 +482,7 @@ test.each<[keyof Script, boolean]>([
 					...serverStarted,
 					[field]: field.startsWith('on') ? () => undefined : true,
 				},
-			] as ConsentRootProps['scripts'],
+			] as InthProviderProps['scripts'],
 		});
 		await settle();
 		// The hero is still loading: only an engine started at once is in.
@@ -503,7 +503,7 @@ test('a root script the server started lets the engine wait for the hero', async
 	expect(page.engineIn()).toBe(false);
 });
 
-test.each<[string, Partial<ConsentRootProps>]>([
+test.each<[string, Partial<InthProviderProps>]>([
 	['a permitted root script is added', { scripts: rootScripts }],
 	['a network blocker is enabled', { networkBlocker: { rules: [] } }],
 ])(
@@ -526,24 +526,24 @@ test.each<[string, Partial<ConsentRootProps>]>([
 
 /** A plain root script and a root that passes a fresh inline callback. */
 const liveRoot = (
-	extra: Partial<ConsentRootProps> = {}
-): Partial<ConsentRootProps> => ({
+	extra: Partial<InthProviderProps> = {}
+): Partial<InthProviderProps> => ({
 	options: {
 		callbacks: { onPermissionsChanged: () => undefined },
 		consentCategories: [...consentCategories],
 		mode,
 	},
-	scripts: [{ ...rootPixel }] as ConsentRootProps['scripts'],
+	scripts: [{ ...rootPixel }] as InthProviderProps['scripts'],
 	...extra,
 });
 
-test.each<[string, Partial<ConsentRootProps>]>([
+test.each<[string, Partial<InthProviderProps>]>([
 	[
 		'onLoad is added to a root script',
 		{
 			scripts: [
 				{ ...rootPixel, onLoad: () => undefined },
-			] as ConsentRootProps['scripts'],
+			] as InthProviderProps['scripts'],
 		},
 	],
 	[
@@ -600,7 +600,7 @@ test.each<[string, (state: ConsentState) => ConsentState | undefined]>([
 		await settle();
 		expect(page.engineIn()).toBe(false);
 		// A client navigation hands the root another server state.
-		await page.rerender({ state: swap(state) as ConsentRootProps['state'] });
+		await page.rerender({ state: swap(state) as InthProviderProps['state'] });
 		await settle();
 		expect(page.engineIn()).toBe(true);
 	}
@@ -639,7 +639,7 @@ test('a navigation to a denial that mounts a hook script starts nothing and load
 	watcher.observe(document, { childList: true, subtree: true });
 	cleanups.push(() => watcher.disconnect());
 	await page.rerender(
-		{ state: denied as ConsentRootProps['state'] },
+		{ state: denied as InthProviderProps['state'] },
 		<RouteScripts
 			scripts={[
 				{
@@ -725,13 +725,13 @@ const mountWrapped = async (
 		root = createRoot(container);
 		root.render(
 			wrap(
-				<ConsentRoot
+				<InthProvider
 					options={{ consentCategories: [...consentCategories], mode }}
 					persistence
 					state={state}
 				>
 					<Probe />
-				</ConsentRoot>
+				</InthProvider>
 			)
 		);
 	});
@@ -1023,7 +1023,7 @@ test('a server start still waiting for the hero inserts nothing once a navigatio
 	await page.rerender(
 		{
 			scripts: [serverStarted],
-			state: denied as ConsentRootProps['state'],
+			state: denied as InthProviderProps['state'],
 		},
 		<OnCommit run={() => hero.dispatchEvent(new Event('load'))} />
 	);
@@ -1064,14 +1064,14 @@ test('under StrictMode, a root script a hook also passes stays when the hook dro
 		root = createRoot(container);
 		root.render(
 			<StrictMode>
-				<ConsentRoot
+				<InthProvider
 					options={{ consentCategories: [...consentCategories], mode }}
 					persistence
-					scripts={[shared] as ConsentRootProps['scripts']}
+					scripts={[shared] as InthProviderProps['scripts']}
 					state={state}
 				>
 					<RouteHook />
-				</ConsentRoot>
+				</InthProvider>
 			</StrictMode>
 		);
 	});

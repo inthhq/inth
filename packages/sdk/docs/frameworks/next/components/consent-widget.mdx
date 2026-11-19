@@ -1,6 +1,6 @@
 ---
 title: ConsentWidget
-description: Render ConsentWidget on a Next.js privacy page inside ConsentRoot as an inline preference center, server-rendered when the route resolves consent.
+description: Render ConsentWidget on a Next.js privacy page inside InthProvider as an inline preference center, server-rendered when the route resolves consent.
 group: frameworks
 ---
 
@@ -11,7 +11,7 @@ a modal: the category switches and the Reject All, Accept All and Save Settings
 actions, without a title, backdrop or portal. Use it on a privacy or
 settings route where the visitor expects the controls to be part of the
 content. It is a Client Component; render it from any route under the
-layout that mounts the `ConsentRoot` from your
+layout that mounts the `InthProvider` from your
 [App Router](/docs/frameworks/next/app-router) or
 [Pages Router](/docs/frameworks/next/pages-router) setup. Keep
 `ConsentDialog` mounted in that root as well so the banner's Customize
@@ -45,7 +45,7 @@ export function CookiePreferences() {
 ```
 
 The page stays a Server Component; only the widget file needs
-`'use client'`. When `ConsentRoot` receives an awaited `resolveConsent`
+`'use client'`. When `InthProvider` receives an awaited `resolveConsent`
 result, from the
 [awaited App Router layout](/docs/frameworks/next/app-router#render-the-banner-in-the-server-html)
 or a Pages Router page with `getServerSideProps`, the widget is part of the

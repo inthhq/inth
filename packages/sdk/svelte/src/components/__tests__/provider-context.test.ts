@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import ContextConsumerFixture from '../../__tests__/fixtures/context-consumer-fixture.svelte';
 import { testing } from '../../lib/testing';
 
-describe('ConsentProvider Context Values', () => {
+describe('InthProvider Context Values', () => {
 	beforeEach(() => {
 		window.localStorage.clear();
 		const cookies = document.cookie.split(';');

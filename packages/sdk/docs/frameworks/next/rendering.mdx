@@ -19,7 +19,7 @@ policy changes require a rebuild.
 | App Router with a Next.js server | Root layout starts `resolveConsent` and streams the result | Yes, in a later chunk, before hydration. The page renders without waiting. | [Stream consent](/docs/frameworks/next/app-router#start-consent-resolution-in-the-root-layout) |
 | App Router, the page must arrive with its banner | Root layout awaits `resolveConsent` inside `Suspense` | Yes. The page waits for consent. | [Await consent](/docs/frameworks/next/app-router#render-the-banner-in-the-server-html) |
 | App Router with `cacheComponents: true` | Either layout above. Never await in the layout itself. | Yes, with either layout | [Cache Components](#use-cache-components) |
-| Static, ISR or `'use cache'` pages | Browser, `ConsentRoot` without `state` | No | [Static, ISR and cached pages](#render-static-isr-and-cached-pages) |
+| Static, ISR or `'use cache'` pages | Browser, `InthProvider` without `state` | No | [Static, ISR and cached pages](#render-static-isr-and-cached-pages) |
 | Routes that set `ensureStatic` | `'shell'` or `'prefetch'`: either App Router layout. `'navigation'`: browser, without `state` | Same as the layout you use | [Keep pages static with `ensureStatic`](#keep-pages-static-with-ensurestatic) |
 | Pages Router with `getServerSideProps` | `withConsentProps` from `@inth/nextjs/pages` | Yes | [Pages Router](/docs/frameworks/next/pages-router#resolve-consent-in-getserversideprops) |
 | Pages Router pages without `getServerSideProps` | Browser, through the same `_app.tsx` and the consent API route | No | [Pages Router](/docs/frameworks/next/pages-router#mount-one-root-for-every-page) |
@@ -45,7 +45,7 @@ root layout. They differ in what waits for it.
 | Streamed, the default | The page renders at once. The banner follows in a later chunk of the same response and shows before hydration. Allowed `scripts` entries start before hydration. The dialog and embeds wait for the browser to apply the result. | The banner is a separate streamed reveal, which React can hold for up to 300 ms after an earlier one. |
 | Awaited inside `Suspense` | The banner is in the server HTML and does not change after hydration. | The page content streams after consent resolves, in a later chunk of the same response. |
 
-The streamed layout passes the pending promise to `ConsentRoot`, so a slow or
+The streamed layout passes the pending promise to `InthProvider`, so a slow or
 failed manifest request never holds the page. Start with it.
 
 The awaited layout moves the page inside the consent boundary. With runtime
@@ -68,12 +68,12 @@ the response starts only after consent resolves.
 
 When the state from `resolveConsent` shows that the visitor's consent already
 allows some `scripts` entries, through a stored choice or a policy that asks for
-none, `ConsentRoot` renders an inline script after your page content. After
+none, `InthProvider` renders an inline script after your page content. After
 first paint, it runs those entries' setup and inserts their tags, so they start
 loading before the page hydrates. Entries with `alwaysLoad` start this way
 whatever the visitor chose. The script loader adopts those tags instead of
 inserting its own. Both App Router layouts do this, including the streamed one,
-and so does the Pages Router `ConsentRoot` on React 18 or 19.
+and so does the Pages Router `InthProvider` on React 18 or 19.
 
 The vendor helpers from `@inth/integrations` start this way, except Cloudflare
 Zaraz and Sentry. Those two helpers, and `scripts` entries you write yourself,
@@ -90,7 +90,7 @@ The inline script takes `options.nonce`; see
 
 To start every `scripts` entry after hydration instead, set
 `scriptLoader: { serverStart: false }` in `inth.config.ts` or pass
-`scriptLoader={{ serverStart: false }}` to `ConsentRoot`. `ConsentRoot` then
+`scriptLoader={{ serverStart: false }}` to `InthProvider`. `InthProvider` then
 renders no inline script.
 
 ## Use Cache Components
@@ -139,7 +139,7 @@ consent for those pages in the browser:
 
 <include src="../../shared/examples/nextjs/browser-layout.mdx" />
 
-Without `state`, `ConsentRoot` resolves the visitor's consent after
+Without `state`, `InthProvider` resolves the visitor's consent after
 hydration. The page can be static, use `export const revalidate` for ISR, or
 use `'use cache'`. Set `routePrefix: '/api/inth'` in `inth.config.ts` and
 mount the consent route from the
@@ -256,13 +256,13 @@ If you set `export const runtime = 'edge'` on them, test the result yourself.
 
 ## Keep server and browser state aligned
 
-Pass the `resolveConsent` result to `ConsentRoot` unchanged. Both read the
+Pass the `resolveConsent` result to `InthProvider` unchanged. Both read the
 same `inth.config.ts`, so they agree on the mode and the journey. The result
 carries the
 resolved policy, the stored records and the evaluation time. Replacing it with a
 browser preset, or turning allowed categories into saved choices during
 hydration, can change the first render's permissions or prompt. Keep one
-`ConsentRoot` mounted across client navigation.
+`InthProvider` mounted across client navigation.
 
 With server state, `ConsentGate` renders the placeholder for a denied category
 in the server HTML. A granted category gets an empty wrapper, and the embed
@@ -293,7 +293,7 @@ banner at once. When the banner hydrates and the runtime has started, Inth
 records the choice with the time of the tap, saves it and loads the scripts it
 allows; Customize opens the dialog.
 
-While `ConsentRoot` waits to load its consent engine, the banner cannot hydrate.
+While `InthProvider` waits to load its consent engine, the banner cannot hydrate.
 In that time the script also keeps presses on those buttons (`pointerdown`,
 `pointerup`, `mousedown`, `mouseup`, `touchstart` and `touchend`) from reaching
 listeners on the page, as it does for the `click`. React would otherwise try to

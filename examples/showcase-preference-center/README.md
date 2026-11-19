@@ -19,7 +19,7 @@ Marketing.
   and `ConsentWidget.RejectButton` record the choice.
 - `components/cookie-banner.tsx` is the stock banner built from its parts so
   Customize can open the page instead of the dialog.
-- `components/consent.tsx` sets up `ConsentRoot` with the scripts, vendors,
+- `components/consent.tsx` sets up `InthProvider` with the scripts, vendors,
   category copy and theme from `lib/`.
 
 ## Run it

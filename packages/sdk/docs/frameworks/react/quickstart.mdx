@@ -53,7 +53,7 @@ VITE_INTH_PROJECT_URL=https://your-project.inth.app
 The c15t name `VITE_C15T_BACKEND_URL` still works as a fallback. When both are
 set, `VITE_INTH_PROJECT_URL` wins.
 
-`ConsentProvider` needs the URL as its `projectUrl` option, read from
+`InthProvider` needs the URL as its `projectUrl` option, read from
 `import.meta.env.VITE_INTH_PROJECT_URL` in the next step.
 
 The plugin also adds a small script to `index.html` that sends `/init` while
@@ -63,7 +63,7 @@ covers when to turn it off.
 
 ## Mount the provider
 
-Create `src/consent.tsx`. `ConsentProvider` creates the consent runtime and
+Create `src/consent.tsx`. `InthProvider` creates the consent runtime and
 loads the scripts. `ConsentBanner` and `ConsentDialog` render when the policy
 asks for them, and `ConsentDialogLink` keeps preferences reachable after the
 banner closes.
@@ -142,7 +142,7 @@ full release checklist.
 - [Scripts and embeds](/docs/frameworks/react/scripts) for more vendors, network
   blocking and data cleanup.
 - [Customize](/docs/frameworks/react/customize) for colors, fonts, layout and copy.
-- [Components](/docs/frameworks/react/components/consent-provider) for
+- [Components](/docs/frameworks/react/components/inth-provider) for
   every provider option and component prop.
 - The runnable app in `examples/react` of the
   [Inth repository](https://github.com/c15t/c15t) contains this setup.

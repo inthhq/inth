@@ -1,11 +1,12 @@
 ---
 title: Components
-description: Props and behavior of every @inth/svelte component in a SvelteKit app, from ConsentRoot and ConsentBanner to ConsentGate and DevTools.
+description: Props and behavior of every @inth/svelte component in a SvelteKit app, from InthProvider and ConsentBanner to ConsentGate and DevTools.
 group: frameworks
 ---
 
-[`ConsentRoot`](./components/consent-root) renders `ConsentProvider` from
-the state `loadConsent` returned, so the banner is in the server HTML. Mount
+[`InthProvider`](./components/inth-provider) from `@inth/svelte/kit`
+starts consent from the state `loadConsent` returned, so the banner is in
+the server HTML. Mount
 it once, in the root `+layout.svelte`; every other component renders inside
 it.
 

@@ -57,13 +57,13 @@ afterEach(() => {
 
 test('the engine renders after one failed import of its chunk', async () => {
 	const importEngine = failingOnce();
-	const ConsentProvider = createConsentProvider(importEngine);
+	const InthProvider = createConsentProvider(importEngine);
 
 	const screen = await render(
 		<Boundary>
-			<ConsentProvider options={{ mode: testing() }}>
+			<InthProvider options={{ mode: testing() }}>
 				<p data-testid="page">page</p>
-			</ConsentProvider>
+			</InthProvider>
 		</Boundary>
 	);
 
@@ -80,13 +80,13 @@ test('an engine import that keeps failing stops after three tries and shows the 
 				setTimeout(() => reject(new TypeError('Failed to fetch chunk')), 50);
 			})
 	);
-	const ConsentProvider = createConsentProvider(importEngine);
+	const InthProvider = createConsentProvider(importEngine);
 
 	const screen = await render(
 		<Boundary>
-			<ConsentProvider options={{ mode: testing() }}>
+			<InthProvider options={{ mode: testing() }}>
 				<p data-testid="page">page</p>
-			</ConsentProvider>
+			</InthProvider>
 		</Boundary>
 	);
 
@@ -125,11 +125,11 @@ test('a deferred root loads its engine after one failed import of its chunk', as
 		},
 	};
 	const importEngine = failingOnce();
-	const ConsentProvider = createConsentProvider(importEngine);
+	const InthProvider = createConsentProvider(importEngine);
 
 	const screen = await render(
 		<Boundary>
-			<ConsentProvider
+			<InthProvider
 				options={{
 					consentCategories: ['necessary', 'measurement', 'marketing'],
 					journey: false,
@@ -138,7 +138,7 @@ test('a deferred root loads its engine after one failed import of its chunk', as
 			>
 				<p data-testid="page">page</p>
 				<ConsentBanner />
-			</ConsentProvider>
+			</InthProvider>
 		</Boundary>
 	);
 	const accept = screen.getByTestId('consent-banner-accept-button');
@@ -188,7 +188,7 @@ test('a save on a deferred root rejects when its engine chunk fails to load', as
 	const importEngine = vi.fn<() => Promise<typeof ClientEngine>>(() =>
 		Promise.reject(failure)
 	);
-	const ConsentProvider = createConsentProvider(importEngine);
+	const InthProvider = createConsentProvider(importEngine);
 	let saved: Promise<unknown> | undefined;
 	const Saver = () => {
 		const save = useSaveConsents();
@@ -207,7 +207,7 @@ test('a save on a deferred root rejects when its engine chunk fails to load', as
 
 	const screen = await render(
 		<Boundary>
-			<ConsentProvider
+			<InthProvider
 				options={{
 					consentCategories: ['necessary', 'measurement', 'marketing'],
 					journey: false,
@@ -217,7 +217,7 @@ test('a save on a deferred root rejects when its engine chunk fails to load', as
 				}}
 			>
 				<Saver />
-			</ConsentProvider>
+			</InthProvider>
 		</Boundary>
 	);
 	await screen.getByTestId('save').click();

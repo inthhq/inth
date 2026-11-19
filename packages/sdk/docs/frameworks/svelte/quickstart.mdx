@@ -49,7 +49,7 @@ VITE_INTH_PROJECT_URL=https://your-project.inth.app
 The c15t name `VITE_C15T_BACKEND_URL` still works as a fallback. When both are
 set, `VITE_INTH_PROJECT_URL` wins.
 
-`consentManifest` hands the backend URL to `ConsentProvider`. No file is
+`consentManifest` hands the backend URL to `InthProvider`. No file is
 written into your project. Without the plugin, pass the URL as the
 provider's `projectUrl` prop.
 
@@ -59,7 +59,7 @@ your JavaScript downloads, so the banner shows sooner.
 
 ## Mount the provider
 
-Render `ConsentProvider` around your app in `src/App.svelte`, with the
+Render `InthProvider` around your app in `src/App.svelte`, with the
 vendor scripts Inth should load:
 
 <include src="../../shared/examples/svelte/app.mdx" />
@@ -127,7 +127,7 @@ production builds. With no arguments it uses the recommended rules; pass
 ```svelte
 import { testing } from '@inth/svelte/testing';
 
-<ConsentProvider mode={testing()}>
+<InthProvider mode={testing()}>
 ```
 
 [Consent modes](/docs/concepts/modes#testing) lists what each country
@@ -165,10 +165,10 @@ visitors the browser resolves this way. Swap the mode in `src/App.svelte`:
 
 ```svelte title="src/App.svelte (partial)"
 <script lang="ts">
-	import { ConsentProvider, manifest } from '@inth/svelte';
+	import { InthProvider, manifest } from '@inth/svelte';
 </script>
 
-<ConsentProvider mode={manifest()} {scripts}>
+<InthProvider mode={manifest()} {scripts}>
 ```
 
 The bundle carries the policy and English copy. A visitor who resolves to

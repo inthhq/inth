@@ -25,9 +25,9 @@
 		"If you use the prebuilt IAB TCF UI, also import `@inth/react/iab/styles.css`. It is published separately so apps without IAB do not ship those styles."
 	],
 	"usage": [
-		"Wrap your app in `ConsentProvider` with the backend URL from your Inth project",
+		"Wrap your app in `InthProvider` with the backend URL from your Inth project",
 		"Render `ConsentBanner`, `ConsentDialog` and `ConsentDialogLink` inside the provider, and mount it once for the life of the app",
-		"```tsx\n// src/consent.tsx\nimport {\n  ConsentBanner,\n  ConsentDialog,\n  ConsentDialogLink,\n  ConsentProvider,\n  hosted,\n} from '@inth/react'\nimport type { ReactNode } from 'react'\n\nconst mode = hosted({ projectUrl: 'https://your-project.inth.app' })\n\nexport const Consent = ({ children }: { children: ReactNode }) => (\n  <ConsentProvider options={{ mode }}>\n    {children}\n    <ConsentBanner />\n    <ConsentDialog />\n    <ConsentDialogLink>Privacy settings</ConsentDialogLink>\n  </ConsentProvider>\n)\n```",
+		"```tsx\n// src/consent.tsx\nimport {\n  ConsentBanner,\n  ConsentDialog,\n  ConsentDialogLink,\n  InthProvider,\n  hosted,\n} from '@inth/react'\nimport type { ReactNode } from 'react'\n\nconst mode = hosted({ projectUrl: 'https://your-project.inth.app' })\n\nexport const Consent = ({ children }: { children: ReactNode }) => (\n  <InthProvider options={{ mode }}>\n    {children}\n    <ConsentBanner />\n    <ConsentDialog />\n    <ConsentDialogLink>Privacy settings</ConsentDialogLink>\n  </InthProvider>\n)\n```",
 		"For the full setup, see the [React quickstart](https://c15t.com/docs/frameworks/react/quickstart)"
 	],
 	"docsLink": "https://c15t.com/docs/frameworks/react/quickstart",
