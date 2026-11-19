@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -53,7 +56,7 @@ describe('findBoundaries', () => {
 
 	it('reports every boundary a chunk carries', () => {
 		const chunk = [
-			'throw new Error("createManifestTransport: either `manifest` or `manifestUrl` is required.")',
+			'throw new TypeError("Unsupported pack field")',
 			'{id:"quebec_opt_in"}',
 			'{title:"Wir respektieren deine Privatsph\\xE4re."}',
 			'window.__tcfapi=function(){}',
@@ -74,5 +77,33 @@ describe('findBoundaries', () => {
 		for (const marker of Object.values(STATIC_MARKERS).flat()) {
 			expect(marker).toMatch(/^[ -~]+$/u);
 		}
+	});
+});
+
+/** A file of the built `@inth/sdk`, as an example's bundler reads it. */
+const built = (path: string): string =>
+	readFileSync(
+		fileURLToPath(
+			new URL(`../node_modules/@inth/sdk/lib/${path}`, import.meta.url)
+		),
+		'utf8'
+	);
+
+describe('the browser manifest resolver', () => {
+	const markers = markerTableFor(manifest);
+
+	it('counts the module that defines resolveInitFromManifest', () => {
+		const resolver = built('schema/dist/shared/consent-manifest.js');
+		expect(resolver).toContain('resolveInitFromManifest');
+		expect(findBoundaries(resolver, markers)).toContain('resolverBytes');
+	});
+
+	it('is what manifest() loads on demand, not its first-load module', () => {
+		expect(built('core/dist/transports/manifest-browser-resolve.js')).toMatch(
+			/\bresolveInitFromManifest\b/u
+		);
+		expect(
+			findBoundaries(built('core/dist/transports/manifest-browser.js'), markers)
+		).not.toContain('resolverBytes');
 	});
 });
