@@ -8,11 +8,12 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { ConsentSaveRejectedError, createConsentKernel } from '../../index';
-import type { KernelConfig } from '../../types';
+import type { KernelConfig, SavePayload } from '../../types';
 import { clearKernelRecords } from '../clear-records';
 import { createKernel } from '../index';
 import { createBrowserOutboxStore } from '../save-outbox';
 import type { BrowserOutboxEnvironment } from '../save-outbox/store';
+import { withStoredIdempotencyKey } from '../save-outbox/stored-key';
 
 // The stored format is part of the interface: spelled out, not imported.
 const SAVES_KEY = 'inth-pending-consent-saves:v1';
@@ -192,7 +193,14 @@ describe('browser outbox store', () => {
 
 		await kernel.commands.init();
 		await vi.waitFor(() => {
-			expect(save).toHaveBeenCalledWith(legacyEntry.payload, { replay: true });
+			// The key the save would get had it never moved.
+			expect(save).toHaveBeenCalledWith(
+				withStoredIdempotencyKey(
+					legacyEntry.payload as SavePayload,
+					legacyEntry.queuedAt
+				),
+				{ replay: true }
+			);
 		});
 		await vi.waitFor(() => {
 			expect(storage.getItem(SAVES_KEY)).toBeNull();
@@ -309,8 +317,8 @@ describe('browser outbox store', () => {
 			expect(storage.getItem(SAVES_KEY)).toBeNull();
 		});
 		expect(save.mock.calls.map(([payload]) => payload)).toEqual([
-			other.payload,
-			newer.payload,
+			{ ...other.payload, idempotencyKey: expect.any(String) },
+			{ ...newer.payload, idempotencyKey: expect.any(String) },
 		]);
 		expect(storage.getItem(C15T_SAVES_KEY)).toBeNull();
 		kernel.dispose();
