@@ -103,6 +103,10 @@ Handle unfamiliar error codes as failures. New codes may be added without changi
 
 JSON mode does not imply approval or make commands read-only. `switch` and `link` change local defaults, and `logout` revokes the selected session. `org create` creates a server-side organization. The `api` command supports GET, POST, PUT, PATCH, and DELETE.
 
+## Legal document hashes
+
+`inth document hash <path|-> --json` returns `data.hash`, the hash Inth uses to identify a published version of a legal document, with `data.bytes` and `data.path`, which is null for stdin. The hash covers the exact bytes with no line-ending, whitespace or encoding normalization, so hash the file as published. It needs no sign-in, never prompts and sends nothing from the document. A missing or non-regular file fails with `usage_error`.
+
 ## Feedback
 
 Use `inth feedback --help --json` to discover report fields. Follow the user's permission to send feedback to the Inth team. Report unexpected Inth failures, misleading documentation, missing capabilities, or workarounds once per distinct issue. Include expected and actual behavior and the failed request ID when available. Exclude routine validation errors, credentials, personal data, customer payloads, and full transcripts.

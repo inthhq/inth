@@ -236,6 +236,10 @@ The first `--yes` lets npx obtain the installer; installation still prompts unle
 
 The official installer's telemetry attributes c15t installs to [c15t on skills.sh](https://www.skills.sh/c15t/skills/c15t), subject to its telemetry settings and leaderboard processing. `DO_NOT_TRACK` and `DISABLE_TELEMETRY` pass through unchanged. The installer environment omits `INTH_TOKEN`, including case variants. Inth's own telemetry follows `inth telemetry` preferences and records the command outcome, `skills_source` as `catalog`, `c15t/skills`, or `other`, and `skills_operation` as `browse`, `add`, or `list`. These measure command outcomes, not verified per-skill installs: the upstream installer can exit successfully after a cancelled prompt or partial installation.
 
+## Legal document hashes
+
+`inth document hash <path|->` prints the `sha256:` hash Inth uses to identify a published version of a privacy policy or terms of service. See [Hash a legal document](https://github.com/inthhq/inth/blob/main/docs/cli/documents.mdx).
+
 ## Inth MCP
 
 Configure Inth's OAuth MCP server in fx, Codex, Claude Code, Cursor, VS Code, OpenCode, and other MCP clients:

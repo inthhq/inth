@@ -3,6 +3,8 @@ import { c15tOptionTakesValue, parseC15tArguments } from "./c15t.ts";
 import type { C15tOptions } from "./c15t.ts";
 import { CliError } from "./cli-error.ts";
 import { COMMAND_METADATA, OPTION_METADATA } from "./command-metadata.ts";
+import { parseDocumentArguments } from "./document.ts";
+import type { DocumentHashArguments } from "./document.ts";
 import { parseMobileArguments } from "./mobile.ts";
 import type { MobileSetupArguments } from "./mobile.ts";
 import type { CodemodOptions } from "./native/c15t-codemods/command.ts";
@@ -40,6 +42,7 @@ export interface CliArguments {
   c15tCodemods?: CodemodOptions;
   // Set for `inth mobile setup`, which runs without sign-in.
   mobile?: MobileSetupArguments;
+  document?: DocumentHashArguments;
 }
 
 const validateCommandOptions = (result: CliArguments): void => {
@@ -470,6 +473,14 @@ const parseSubcommand = (
   if (arg === "mobile") {
     result.command = "mobile";
     result.mobile = parseMobileArguments(result, [
+      ...leadingOptions(result),
+      ...rest,
+    ]);
+    return true;
+  }
+  if (arg === "document") {
+    result.command = "document";
+    result.document = parseDocumentArguments(result, [
       ...leadingOptions(result),
       ...rest,
     ]);
