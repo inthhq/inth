@@ -80,9 +80,8 @@ export type KernelBranding = 'c15t' | 'consent' | 'inth' | 'none';
 export { DEFAULT_BRANDING } from '@inth/sdk-schema/types';
 
 /**
- * Who runs the backend that served `/v1/consent/init`: Inth's hosted platform or a
- * site's own `@c15t/backend`. Reported, not verified, and independent of
- * branding.
+ * Who runs the backend that served `/v1/consent/init`, as the backend reports
+ * it. Not verified, and independent of branding.
  */
 export type KernelHosting = 'inth' | 'self-hosted';
 

@@ -1,12 +1,12 @@
 ---
 title: Inth vs CookieFirst
-description: Choose Inth for native web framework coverage and a backend you can run. Compare CookieFirst's React support, service choices, scans and cookie-policy tools.
+description: Choose Inth for native web framework coverage and a managed backend. Compare CookieFirst's React support, service choices, scans and cookie-policy tools.
 group: reference
 ---
 
 ## Own consent across your web application
 
-Inth is the stronger fit when your team wants native consent components across web frameworks and control of the backend. You can change the interface and engine with the product that uses them.
+Inth is the stronger fit when your team wants native consent components across web frameworks. You can change the interface and engine with the product that uses them.
 
 CookieFirst combines hosted consent, scans and cookie-policy tools. Its React package and public API also support custom application flows.
 
@@ -20,7 +20,7 @@ CookieFirst combines hosted consent, scans and cookie-policy tools. Its React pa
 | Build a custom interface | Themes, component parts and headless APIs | Public consent API and a stealth mode without the supplied banner |
 | Let visitors choose services | Category and individual vendor state | Category or service consent, under the configured policy |
 | Control vendor code | Declared rules for scripts, requests and embeds | Third-party script settings and Autoblock |
-| Choose the record service | Inth hosts the backend and stores records in its database | Hosted consent logs and plan-dependent audit trails |
+| Keep consent records | Inth hosts the backend and stores records in its database | Hosted consent logs and plan-dependent audit trails |
 | Discover cookies | **No automatic scanner in the packages** | Cookie scans |
 | Generate a cookie policy | **Not included** | Cookie-policy generator |
 | Handle withdrawal | Page reload by default, with optional cleanup | API clears consent, records the change and reloads the page |
@@ -33,7 +33,7 @@ CookieFirst supports more than a standard banner. Its API exposes accepted categ
 
 Its service methods follow the selected policy. Under a category policy, a service action applies to the relevant category. Check that setting before you compare individual choices.
 
-Inth combines [native framework components](/docs/frameworks), [vendor state](/docs/frameworks/react/vendor-consent) and a managed backend. Your team can change the system from the interface through to record storage.
+Inth combines [native framework components](/docs/frameworks), [vendor state](/docs/frameworks/react/vendor-consent) and a managed backend. Your team can change the system from the interface through to the engine.
 
 That combination is the reason to choose Inth when consent is part of the product's code and release process.
 
@@ -41,7 +41,7 @@ That combination is the reason to choose Inth when consent is part of the produc
 
 CookieFirst can fit when scans, cookie-policy updates and managed banner settings are the main needs. Its developer tools can extend that setup.
 
-Choose Inth when you need broader native web coverage and backend ownership. Use [headless APIs](/docs/frameworks/react/headless) for product-specific markup and Inth when you want managed backend operation.
+Choose Inth when you need broader native web coverage and managed consent records. Use [headless APIs](/docs/frameworks/react/headless) for product-specific markup.
 
 Both products need checks for consent changes and vendor behaviour. A reload can stop active code. It cannot remove every trace of data already sent or stored.
 
@@ -54,7 +54,7 @@ Both products need checks for consent changes and vendor behaviour. A reload can
 
 Some integrations load with denied signals. Withdrawal normally reloads the page, and optional cleanup cannot remove all vendor data.
 
-Include setup, backend costs and any separate scan or legal services in your comparison.
+Include setup, your Inth plan and any separate scan or legal services in your comparison.
 
 ## Test a service choice through to its record
 

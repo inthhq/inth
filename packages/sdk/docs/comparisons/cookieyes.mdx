@@ -6,7 +6,7 @@ group: reference
 
 ## Choose Inth for one consent system across your applications
 
-Inth is the stronger fit when your products span multiple web frameworks and need individual vendor choices alongside category consent. Your team can use native components, own the interface and choose where policy and records live.
+Inth is the stronger fit when your products span multiple web frameworks and need individual vendor choices alongside category consent. Your team can use native components and own the interface.
 
 CookieYes offers both a hosted service and open-source SDKs. Its SDKs include React components, Next.js server support, headless primitives and a JavaScript core. Both tools offer these features.
 
@@ -20,7 +20,6 @@ CookieYes offers both a hosted service and open-source SDKs. Its SDKs include Re
 | Build your own interface | Themes, component parts and headless APIs | SDK themes, parts, hooks and headless primitives. Hosted banner customisation too |
 | Resolve consent on the server | Next.js streamed, awaited and browser paths | Next.js SDK documents server-rendered consent UI |
 | Control vendor activity | Category and individual vendor rules for registered scripts, requests and embeds | SDK category gates and configured network rules. Hosted script controls |
-| Store records on your server | Supplied backend with policy and record services | SDK sends records to an endpoint that you build and operate |
 | Use managed records | Inth hosts the backend and stores records in its database | Hosted consent log with CSV export |
 | Find cookies automatically | **Not included in the Inth packages** | Hosted website scanner |
 | Generate legal policies | **Not included** | Hosted privacy and cookie policy generators |
@@ -37,13 +36,11 @@ CookieYes also offers reactive state and category controls. Its reviewed network
 
 This distinction matters when two services serve the same purpose but a visitor wants only one of them. Test that case in both tools.
 
-## Choose a backend without building the record service first
+## Keep records without building a record service
 
 Inth supplies the backend as well as the client, and runs it for you.
 
 CookieYes's self-hosted SDK guide describes record delivery, retries and a sample receiver. Your team supplies durable storage and operates that endpoint.
-
-Both approaches can keep records under your control. Inth gives you a supplied policy and record service for this path.
 
 CookieYes's hosted service offers managed logs instead. Its [consent guide](https://www.cookieyes.com/documentation/cookieyes-for-gdpr-cookie-compliance/) documents exports, scans and policy tools. Compare that service separately from its SDK.
 
