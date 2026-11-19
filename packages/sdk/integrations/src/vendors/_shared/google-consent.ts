@@ -1,12 +1,5 @@
 import type { ManifestStep } from '../../types';
 
-declare global {
-	interface Window {
-		dataLayer: unknown[];
-		gtag: (...args: unknown[]) => void;
-	}
-}
-
 /**
  * The gtag.js snippet: a `{{dataLayer}}` queue and a `{{gtag}}` function
  * that pushes onto it, each defined only when the page has none. A

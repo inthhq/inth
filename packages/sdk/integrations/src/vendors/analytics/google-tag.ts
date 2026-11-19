@@ -10,6 +10,13 @@ import {
 } from '../_shared/google-consent';
 import { readId, skipMissingId } from '../_shared/required-id';
 
+declare global {
+	interface Window {
+		dataLayer: unknown[];
+		gtag: (...args: unknown[]) => void;
+	}
+}
+
 /**
  * Google Tag (gtag.js) vendor manifest.
  *

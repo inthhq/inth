@@ -19,8 +19,6 @@ import { EARLY_TAPS_WINDOW_KEY } from '../../libs/page-globals';
 import type { EarlyConsentTapQueue } from '../../libs/page-globals';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { readStoredRecords } from '../../modules/persistence/hydrate';
-import { EARLY_TAPS_WINDOW_KEY } from '../../libs/page-globals';
-import type { EarlyConsentTapQueue } from '../../libs/page-globals';
 import { createStandInKernel } from '../../runtime/stand-in-kernel';
 import type { KernelConfig, KernelEvent, SavePayload } from '../../types';
 import {

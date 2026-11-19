@@ -58,8 +58,7 @@
 		// launcher instead.
 		const devTools = attachDevToolsLauncher(
 			options.kernel,
-			untrack(() => createDevTools(options)),
-			{ embedded: options.embedded }
+			untrack(() => createDevTools(options))
 		);
 
 		return () => devTools.destroy();
