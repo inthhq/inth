@@ -11,7 +11,7 @@ import Foundation
 /// It does not decide whether a vendor may read the advertising identifier: purpose 1, that
 /// vendor's consent and the ATT answer do.
 ///
-/// The purpose half is the web derivation, not a second one: `INTH_TO_IAB_PURPOSE_MAP.marketing`
+/// The purpose half is the web derivation, not a second one: `CONSENT_TO_IAB_PURPOSE_MAP.marketing`
 /// and `iabPurposesToInthConsents` in `packages/sdk/iab/src/tcf/purpose-mapping.ts`, with the purposes
 /// some vendor processes on consent deciding, as `consentBasisPurposes` in
 /// `packages/sdk/iab/src/index.ts` passes them: registered vendors, custom (non-IAB) vendors and listed

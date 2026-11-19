@@ -119,14 +119,14 @@ public struct IABCustomVendor: Sendable, Codable, Equatable {
 }
 
 /// The Inth categories an IAB TCF decision grants, by the web's derivation:
-/// `iabPurposesToInthConsents` and `INTH_TO_IAB_PURPOSE_MAP` in
+/// `iabPurposesToInthConsents` and `CONSENT_TO_IAB_PURPOSE_MAP` in
 /// `packages/sdk/iab/src/tcf/purpose-mapping.ts`, with the purposes some vendor processes on consent
 /// deciding, as `consentBasisPurposes` in `packages/sdk/iab/src/index.ts` passes them. Registered
 /// vendors after publisher restrictions, custom vendors and listed ad tech providers all count
 /// toward that basis. `packages/native-protocol/iab/purpose-categories.json` runs the same cases on web,
 /// Swift and Kotlin.
 public enum IABPurposeCategories {
-    /// `INTH_TO_IAB_PURPOSE_MAP` without `necessary`, which is always granted.
+    /// `CONSENT_TO_IAB_PURPOSE_MAP` without `necessary`, which is always granted.
     public static let purposes: [OptionalConsentCategory: [Int]] = [
         .experience: [5, 6], .functionality: [10, 11], .marketing: [2, 3, 4], .measurement: [7, 8, 9],
     ]
