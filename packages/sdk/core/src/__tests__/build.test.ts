@@ -1200,6 +1200,14 @@ describe('build-time manifest policy', () => {
 		).rejects.toThrow('backend unavailable');
 	});
 
+	test('names C15T_ON_BUILD_ERROR when its value is unknown', async () => {
+		vi.stubEnv('C15T_ON_BUILD_ERROR', 'warn');
+		const { error } = await write();
+		expect(error?.message).toContain(
+			"C15T_ON_BUILD_ERROR must be 'runtime' or 'fail'"
+		);
+	});
+
 	test('rejects an unknown INTH_ON_BUILD_ERROR or onBuildError', async () => {
 		vi.stubEnv('INTH_ON_BUILD_ERROR', 'warn');
 		const fromEnv = await write();
@@ -1524,6 +1532,17 @@ describe('readBuildEnv expansion', () => {
 			`BASE=https://api.example\nPUBLIC_INTH_PROJECT_URL=${value}\n`
 		);
 		expect(readBuildEnv(['PUBLIC_INTH_PROJECT_URL'], { root })).toBe(expected);
+	});
+
+	test('an Inth name that expands to nothing falls through to the c15t name', async () => {
+		const root = await createRoot();
+		await writeFile(
+			join(root, '.env'),
+			`PUBLIC_INTH_PROJECT_URL=${ref('UNSET_BASE')}\nPUBLIC_C15T_BACKEND_URL=https://c15t.example\n`
+		);
+		expect(readBuildEnv(['PUBLIC_INTH_PROJECT_URL'], { root })).toBe(
+			'https://c15t.example'
+		);
 	});
 
 	test('reads a reference from the process environment first', async () => {

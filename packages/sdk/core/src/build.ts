@@ -255,11 +255,10 @@ export const readBuildEnvEntry = (
 						: expand(found, depth + 1);
 				}
 			);
-		for (const values of files) {
-			if (values[name]) {
-				const value = expand(values[name], 0);
-				return value ? { name, value } : undefined;
-			}
+		const raw = files.find((values) => values[name])?.[name];
+		const value = raw === undefined ? '' : expand(raw, 0);
+		if (value) {
+			return { name, value };
 		}
 	}
 	return undefined;
@@ -296,14 +295,14 @@ const resolveManifestBuildErrorMode = (
 	label: string,
 	source: BuildEnvSource = {}
 ): { explicit: boolean; mode: ManifestBuildErrorMode } => {
-	const fromEnv = readBuildEnv([MANIFEST_BUILD_ERROR_ENV], source);
+	const fromEnv = readBuildEnvEntry([MANIFEST_BUILD_ERROR_ENV], source);
 	if (fromEnv) {
-		if (!isBuildErrorMode(fromEnv)) {
+		if (!isBuildErrorMode(fromEnv.value)) {
 			throw new Error(
-				`${label}: ${MANIFEST_BUILD_ERROR_ENV} must be 'runtime' or 'fail', received ${JSON.stringify(fromEnv)}.`
+				`${label}: ${fromEnv.name} must be 'runtime' or 'fail', received ${JSON.stringify(fromEnv.value)}.`
 			);
 		}
-		return { explicit: true, mode: fromEnv };
+		return { explicit: true, mode: fromEnv.value };
 	}
 	if (onBuildError !== undefined) {
 		if (!isBuildErrorMode(onBuildError)) {
