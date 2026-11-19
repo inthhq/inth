@@ -561,7 +561,7 @@ const run = async function run(baseline: boolean) {
 		// `--cold-manifest` reach the server without a rebuild.
 		const manifestBase =
 			process.env.INTH_BENCH_MANIFEST_URL ??
-			`${BASE_URL}/api/bench-consent/manifest`;
+			`${BASE_URL}/api/bench-consent/v1/consent/manifest`;
 		const manifestUrl = env.INTH_BENCH_COLD_MANIFEST_TOKEN
 			? `${manifestBase}${manifestBase.includes('?') ? '&' : '?'}cold=${encodeURIComponent(env.INTH_BENCH_COLD_MANIFEST_TOKEN)}`
 			: manifestBase;

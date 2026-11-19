@@ -1,5 +1,5 @@
 /**
- * `POST /api/inth/subjects`.
+ * `POST /api/inth/v1/consent/records`.
  *
  * `createConsentRoute()` without `proxy` serves init and manifest only —
  * saving consent is a backend write, so the manifest arms post to the same
@@ -22,8 +22,8 @@ export const POST: RequestHandler = async ({ request }) => {
 	};
 	return json(
 		{
-			ok: true,
-			subjectId: body.subjectId ?? 'benchmark-subject',
+			recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+			subjectId: body.subjectId,
 		},
 		{ headers: { 'cache-control': 'no-store' } }
 	);

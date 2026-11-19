@@ -274,7 +274,7 @@ describe('Next.js request isolation', () => {
 			const resolve = (cookie: string) =>
 				resolveNextConsent({
 					fetch: upstream.fetch,
-					manifestUrl: `${BACKEND_URL}/manifest`,
+					manifestUrl: `${BACKEND_URL}/v1/consent/manifest`,
 					projectUrl: BACKEND_URL,
 					request: nextRequest(cookie),
 					// Isolation, not the render budget, is under test here.

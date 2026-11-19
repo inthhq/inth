@@ -40,45 +40,6 @@ export const getBenchConsentFixtureCounts =
 		return { ...getMutableBenchConsentFixtureCounts() };
 	};
 
-export type BenchConsentFixtureVersionHeaders = Record<
-	BenchConsentFixtureEndpoint,
-	string | null
->;
-
-const globalWithVersionHeaders = globalThis as typeof globalThis & {
-	__inthNuxtBenchFixtureVersionHeaders?: BenchConsentFixtureVersionHeaders;
-};
-
-const getMutableBenchConsentFixtureVersionHeaders =
-	function getMutableBenchConsentFixtureVersionHeaders(): BenchConsentFixtureVersionHeaders {
-		globalWithVersionHeaders.__inthNuxtBenchFixtureVersionHeaders ??= {
-			init: null,
-			manifest: null,
-			subjects: null,
-		};
-		return globalWithVersionHeaders.__inthNuxtBenchFixtureVersionHeaders;
-	};
-
-/**
- * Records the `x-inth-version` request header the fixture endpoint
- * received. The @inth/nuxt Nitro manifest proxy (and the core transports)
- * send it on every inth-bound request — the e2e suite asserts the value
- * observed upstream matches the built Inth version.
- */
-export const recordBenchConsentVersionHeader =
-	function recordBenchConsentVersionHeader(
-		endpoint: BenchConsentFixtureEndpoint,
-		value: string | null | undefined
-	): void {
-		const versions = getMutableBenchConsentFixtureVersionHeaders();
-		versions[endpoint] = value ?? null;
-	};
-
-export const getBenchConsentFixtureVersionHeaders =
-	function getBenchConsentFixtureVersionHeaders(): BenchConsentFixtureVersionHeaders {
-		return { ...getMutableBenchConsentFixtureVersionHeaders() };
-	};
-
 export const resetBenchConsentFixtureCounts =
 	function resetBenchConsentFixtureCounts(): BenchConsentFixtureCounts {
 		const counts = getMutableBenchConsentFixtureCounts();

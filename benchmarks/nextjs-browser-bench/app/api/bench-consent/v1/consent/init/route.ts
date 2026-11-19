@@ -4,7 +4,7 @@ import {
 	applyBenchConsentLatency,
 	benchConsentInitResponse,
 	recordBenchConsentFixtureExecution,
-} from '../fixture';
+} from '../../../fixture';
 
 export const GET = async function GET() {
 	recordBenchConsentFixtureExecution('init');

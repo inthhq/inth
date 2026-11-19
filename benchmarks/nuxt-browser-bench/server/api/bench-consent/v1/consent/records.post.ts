@@ -1,7 +1,7 @@
 import {
 	applyBenchConsentLatency,
 	recordBenchConsentFixtureExecution,
-} from './fixture';
+} from '../../fixture';
 
 export default defineEventHandler(async (event) => {
 	recordBenchConsentFixtureExecution('subjects');
@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
 	const body = await readBody<{ subjectId?: string }>(event);
 	setHeader(event, 'cache-control', 'no-store');
 	return {
-		ok: true,
-		subjectId: body.subjectId ?? 'benchmark-subject',
+		recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+		subjectId: body.subjectId,
 	};
 });

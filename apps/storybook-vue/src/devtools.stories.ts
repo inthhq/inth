@@ -65,17 +65,23 @@ export const Default: Story = {
 			};
 			const context = createVueConsentKernelContext({
 				config,
-				mode: storybookMode(((input: RequestInfo | URL) =>
+				mode: storybookMode(((input: RequestInfo | URL, request?: RequestInit) =>
 					Promise.resolve(
 						new Response(
 							JSON.stringify(
-								String(input).endsWith('/subjects') ? { ok: true } : init
+								String(input).includes('/v1/consent/records')
+									? {
+											recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+											subjectId: (
+												JSON.parse(String(request?.body)) as {
+													subjectId: string;
+												}
+											).subjectId,
+										}
+									: init
 							),
 							{
-								headers: {
-									'content-type': 'application/json',
-									'x-inth-policy-contract': '1',
-								},
+								headers: { 'content-type': 'application/json' },
 							}
 						)
 					)) as typeof fetch),

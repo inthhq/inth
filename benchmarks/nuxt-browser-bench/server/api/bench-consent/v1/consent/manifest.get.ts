@@ -2,15 +2,10 @@ import {
 	applyBenchConsentLatency,
 	benchConsentManifestResponse,
 	recordBenchConsentFixtureExecution,
-	recordBenchConsentVersionHeader,
-} from './fixture';
+} from '../../fixture';
 
 export default defineEventHandler(async (event) => {
 	recordBenchConsentFixtureExecution('manifest');
-	recordBenchConsentVersionHeader(
-		'manifest',
-		getRequestHeader(event, 'x-inth-version')
-	);
 	await applyBenchConsentLatency();
 
 	setHeader(

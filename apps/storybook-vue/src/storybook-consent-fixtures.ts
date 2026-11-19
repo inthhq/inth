@@ -74,26 +74,27 @@ export const storybookIABInit: InitOutput = {
 
 const storybookFetch = function storybookFetch(): typeof fetch {
 	return ((input: RequestInfo | URL, request?: RequestInit) => {
-		const url = String(input);
-		if (url.endsWith('/init')) {
+		const { pathname } = new URL(String(input), 'http://storybook.test');
+		if (pathname.endsWith('/v1/consent/init')) {
 			return new Response(JSON.stringify(storybookInit), {
 				headers: {
 					'content-type': 'application/json',
-					'x-inth-policy-contract': '1',
 				},
 				status: 200,
 			});
 		}
-		if (url.endsWith('/subjects')) {
+		if (pathname.endsWith('/v1/consent/records')) {
 			const body = JSON.parse(String(request?.body ?? '{}')) as {
 				subjectId?: string;
 			};
 			return new Response(
-				JSON.stringify({ ok: true, subjectId: body.subjectId }),
+				JSON.stringify({
+					recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+					subjectId: body.subjectId,
+				}),
 				{
 					headers: {
 						'content-type': 'application/json',
-						'x-inth-policy-contract': '1',
 					},
 					status: 200,
 				}

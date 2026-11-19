@@ -19,11 +19,8 @@ export const POST: RequestHandler = async ({ request }) => {
 			: undefined;
 	return json(
 		{
-			ok: true,
-			subjectId:
-				typeof subjectId === 'string' && subjectId
-					? subjectId
-					: 'benchmark-subject',
+			recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+			subjectId: typeof subjectId === 'string' ? subjectId : undefined,
 		},
 		{ headers: { 'cache-control': 'no-store' } }
 	);

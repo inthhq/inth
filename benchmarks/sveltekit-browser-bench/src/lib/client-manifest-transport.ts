@@ -11,12 +11,12 @@
  * the catalogue and the manifest all load lazily and in parallel with
  * hydration, so the import cost is not serialized behind it.
  */
-import { createHostedTransport } from '@inth/sdk/engine';
+import { createV1HostedTransport } from '@inth/sdk/engine';
 import type { KernelTransport } from '@inth/sdk/engine';
 import type { ConsentManifest } from '@inth/sdk/schema/types';
 
 const BACKEND_URL = '/api/bench-consent';
-const MANIFEST_URL = '/api/bench-consent/manifest';
+const MANIFEST_URL = '/api/bench-consent/v1/consent/manifest';
 
 type Settled<Value> =
 	| { ok: true; value: Value }
@@ -53,7 +53,7 @@ const fetchManifest = async function fetchManifest(): Promise<ConsentManifest> {
  */
 export const createBrowserManifestTransport =
 	function createBrowserManifestTransport(): KernelTransport {
-		const hostedTransport = createHostedTransport({ projectUrl: BACKEND_URL });
+		const hostedTransport = createV1HostedTransport({ projectUrl: BACKEND_URL });
 		let manifestTransport: KernelTransport | undefined;
 
 		// Started eagerly so the resolver, the catalogue and the manifest
@@ -90,11 +90,6 @@ export const createBrowserManifestTransport =
 				});
 				return (await manifestTransport.init?.(context)) ?? {};
 			},
-			async save(payload) {
-				return (
-					(await manifestTransport?.save?.(payload)) ??
-					(await hostedTransport.save?.(payload)) ?? { ok: true }
-				);
-			},
+			save: (payload) => hostedTransport.save(payload),
 		};
 	};

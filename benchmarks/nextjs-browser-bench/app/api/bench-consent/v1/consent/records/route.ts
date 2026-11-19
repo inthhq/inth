@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import {
 	applyBenchConsentLatency,
 	recordBenchConsentFixtureExecution,
-} from '../fixture';
+} from '../../../fixture';
 
 export const POST = async function POST(request: Request) {
 	recordBenchConsentFixtureExecution('subjects');
@@ -11,8 +11,8 @@ export const POST = async function POST(request: Request) {
 	const body = await request.json();
 	return NextResponse.json(
 		{
-			ok: true,
-			subjectId: body.subjectId ?? 'benchmark-subject',
+			recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+			subjectId: body.subjectId,
 		},
 		{
 			headers: {

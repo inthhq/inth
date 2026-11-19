@@ -23,7 +23,7 @@ const hostedHandle = inthHandle({
 
 const manifestHandle = inthHandle({
 	mode: manifest({
-		manifestUrl: '/api/bench-consent/manifest',
+		manifestUrl: '/api/bench-consent/v1/consent/manifest',
 		source: 'runtime',
 	}),
 	projectUrl: '/api/bench-consent',

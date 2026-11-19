@@ -28,12 +28,17 @@ import type { ConsentRuntime } from '../types';
 const CATEGORIES = ['necessary', 'measurement', 'marketing'] as const;
 const policy: PolicyResolution = matchedResolution(optInRule());
 const runtimes: ConsentRuntime[] = [];
-let records: Record<string, unknown>[] = [];
+interface SentRecord {
+	answer: { categories: Record<string, { confirmedAt: number }> };
+	givenAt: number;
+	subjectId: string;
+}
+let records: SentRecord[] = [];
 
 const backend: typeof globalThis.fetch = (input, init) => {
 	const { pathname } = new URL(String(input));
 	if (pathname === '/v1/consent/records') {
-		records.push(JSON.parse(String(init?.body)));
+		records.push(JSON.parse(String(init?.body)) as SentRecord);
 		return Promise.resolve(Response.json(recordAnswer(init)));
 	}
 	return Promise.resolve(
@@ -129,11 +134,6 @@ test('a visitor with only c15t storage is not asked again, and saves under the U
 	expect(next.kernel.getSnapshot().activeUI).toBe('none');
 });
 
-interface SentRecord {
-	answer: { categories: Record<string, { confirmedAt: number }> };
-	givenAt: number;
-}
-
 test('a device clock that moved back dates the next save after the last one sent', async () => {
 	const sentAt = 1_800_000_000_000;
 	vi.useFakeTimers({ toFake: ['Date'] });
@@ -144,9 +144,9 @@ test('a device clock that moved back dates the next save after the last one sent
 	vi.setSystemTime(sentAt - 3_600_000);
 	await page.kernel.commands.save({ marketing: false, measurement: true });
 
-	const withdrawal = records.at(-1) as SentRecord;
-	expect(withdrawal.givenAt).toBe(sentAt + 1);
-	expect(withdrawal.answer.categories.marketing?.confirmedAt).toBe(sentAt + 1);
+	const withdrawal = records.at(-1);
+	expect(withdrawal?.givenAt).toBe(sentAt + 1);
+	expect(withdrawal?.answer.categories.marketing?.confirmedAt).toBe(sentAt + 1);
 });
 
 test('the next page reads the last givenAt sent from storage', async () => {
@@ -161,5 +161,5 @@ test('the next page reads the last givenAt sent from storage', async () => {
 	const next = await load();
 	await next.kernel.commands.save({ marketing: false, measurement: true });
 
-	expect((records.at(-1) as SentRecord).givenAt).toBe(sentAt + 1);
+	expect(records.at(-1)?.givenAt).toBe(sentAt + 1);
 });

@@ -1,5 +1,5 @@
 // oxlint-disable no-await-in-loop -- Close each context and finish its failure artifacts before the next test.
-import { readFileSync, mkdirSync } from 'node:fs';
+import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -284,15 +284,6 @@ const verifyNoZombie = async function verifyNoZombie(browser, app) {
 	console.log(`✓ ${app.label}: no re-prompt / no zombie`);
 };
 
-const readInthVersion = function readInthVersion() {
-	const packageJson = JSON.parse(
-		readFileSync(
-			new URL('../../../../packages/sdk/core/package.json', import.meta.url)
-		)
-	);
-	return packageJson.version;
-};
-
 const fetchJsonResponse = async function fetchJsonResponse(
 	app,
 	url,
@@ -328,9 +319,9 @@ const hasMarketingCategory = function hasMarketingCategory(init) {
 const verifyNuxtNitroRoutes = async function verifyNuxtNitroRoutes(app) {
 	const base = `http://127.0.0.1:${app.port}`;
 
-	// --- /api/inth/manifest: cached proxy of the upstream manifest ---
+	// --- /api/inth/v1/consent/manifest: cached proxy of the upstream manifest ---
 	const { response: manifestResponse, body: manifest } =
-		await fetchJsonResponse(app, `${base}/api/inth/manifest`);
+		await fetchJsonResponse(app, `${base}/api/inth/v1/consent/manifest`);
 	assertEqual(
 		manifest.schemaVersion,
 		2,
@@ -379,7 +370,7 @@ const verifyNuxtNitroRoutes = async function verifyNuxtNitroRoutes(app) {
 		'"nuxt-browser-bench-manifest"',
 		`${app.label}: nitro manifest etag passthrough`
 	);
-	const conditional = await fetch(`${base}/api/inth/manifest`, {
+	const conditional = await fetch(`${base}/api/inth/v1/consent/manifest`, {
 		headers: { 'if-none-match': etag },
 	});
 	assertEqual(
@@ -388,13 +379,13 @@ const verifyNuxtNitroRoutes = async function verifyNuxtNitroRoutes(app) {
 		`${app.label}: nitro manifest if-none-match status`
 	);
 	console.log(
-		`✓ ${app.label}: Nitro /api/inth/manifest proxies the manifest (schema fields, cache headers, 304)`
+		`✓ ${app.label}: Nitro /api/inth/v1/consent/manifest proxies the manifest (schema fields, cache headers, 304)`
 	);
 
-	// --- /api/inth/init: manifest-resolved init, geo/GPC/language aware ---
+	// --- /api/inth/v1/consent/init: manifest-resolved init, geo/GPC/language aware ---
 	const { body: init, response: initResponse } = await fetchJsonResponse(
 		app,
-		`${base}/api/inth/init`,
+		`${base}/api/inth/v1/consent/init`,
 		{
 			'accept-language': 'en;q=0.2, de-DE;q=0.9',
 			'cf-ipcountry': 'US',
@@ -468,24 +459,7 @@ const verifyNuxtNitroRoutes = async function verifyNuxtNitroRoutes(app) {
 		`${app.label}: nitro init language override`
 	);
 	console.log(
-		`✓ ${app.label}: Nitro /api/inth/init resolves init from the manifest (geo/GPC/language aware)`
-	);
-
-	// --- x-inth-version on the proxy's upstream manifest fetch ---
-	// The Nitro handlers fetch the upstream manifest (the bench fixture)
-	// with `inthVersionHeaders`; the fixture records what it received.
-	const { body: versionHeaders } = await fetchJsonResponse(
-		app,
-		`${base}/api/bench-consent/version-headers`
-	);
-	const expectedVersion = readInthVersion();
-	assertEqual(
-		versionHeaders.manifest,
-		expectedVersion,
-		`${app.label}: upstream manifest fetch x-inth-version`
-	);
-	console.log(
-		`✓ ${app.label}: upstream manifest fetch carries x-inth-version=${expectedVersion}`
+		`✓ ${app.label}: Nitro /api/inth/v1/consent/init resolves init from the manifest (geo/GPC/language aware)`
 	);
 };
 
