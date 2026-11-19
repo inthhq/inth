@@ -454,36 +454,51 @@ export const mountPersistence = function mountPersistence(
 	};
 
 	/**
-	 * Which of the records `held` under the configured family the seed can't
-	 * have come from: the cookies, read as the server read them, hold that
-	 * kind only under a legacy family, or not at all. A seed the configured
-	 * family's cookie no longer holds came from a legacy cookie a clear has
-	 * since removed, since a clear of the configured family voids it through
-	 * the epoch.
+	 * How the seed weighs against the records `held` under the configured
+	 * family, from the cookies as the server read them:
+	 * - `outranks`: the cookie holds that kind only under a legacy family,
+	 *   so the configured family's record wins.
+	 * - `epochs`: the clear epoch that voids a seeded record. The legacy
+	 *   clear epoch counts unless the configured family still holds that
+	 *   kind in its cookie, since a seed no cookie holds any more may be a
+	 *   legacy family's that a legacy clear removed.
 	 */
-	const outranksSeedFamily = function outranksSeedFamily(
-		held: { choice: boolean; vendors: boolean },
+	const weighSeed = function weighSeed(
+		held: { choice: boolean; notice: boolean; vendors: boolean },
+		epoch: number,
 		at: number
-	): { choice: boolean; vendors: boolean } {
+	) {
 		const header = readCookieHeader();
-		if (header === null) {
-			return { choice: false, vendors: false };
-		}
-		const choice = readStoredConsentRecordFromCookieHeader(
-			header,
-			storageConfig,
-			at
-		).selected;
-		const vendors = readStoredVendorChoiceFromCookieHeader(
-			header,
-			storageConfig,
-			at
+		const choice =
+			header === null
+				? undefined
+				: readStoredConsentRecordFromCookieHeader(header, storageConfig, at)
+						.selected;
+		const vendors =
+			header === null
+				? undefined
+				: readStoredVendorChoiceFromCookieHeader(header, storageConfig, at);
+		const gone = {
+			choice: header !== null && !choice,
+			notice: false,
+			vendors: header !== null && !vendors,
+		};
+		const legacyEpoch = Math.max(
+			epoch,
+			readLegacyClearEpoch(storageConfig, at)
 		);
+		const epochOf = (kind: keyof typeof held) =>
+			held[kind] && !gone[kind] ? epoch : legacyEpoch;
 		return {
-			choice:
-				held.choice &&
-				(!choice || choice.source === 'legacy-cookie'),
-			vendors: held.vendors && (!vendors || vendors.legacy === true),
+			epochs: {
+				choice: epochOf('choice'),
+				notice: epochOf('notice'),
+				vendors: epochOf('vendors'),
+			},
+			outranks: {
+				choice: held.choice && choice?.source === 'legacy-cookie',
+				vendors: held.vendors && vendors?.legacy === true,
+			},
 		};
 	};
 
@@ -525,14 +540,11 @@ export const mountPersistence = function mountPersistence(
 			const records = withQueued(read.records);
 			const snapshot = kernel.getSnapshot();
 			const held = configuredFamilyHolds(read, at);
-			const outranks = outranksSeedFamily(held, at);
-			const legacyEpoch = readLegacyClearEpoch(storageConfig, at);
-			const epochOf = (kind: keyof typeof held) =>
-				held[kind] ? read.epoch : Math.max(read.epoch, legacyEpoch);
+			const { epochs, outranks } = weighSeed(held, read.epoch, at);
 			const patch: HydrationRecords = {};
 			const choice = choiceSinceEpoch(
 				snapshot.explicitChoice,
-				epochOf('choice'),
+				epochs.choice,
 				true
 			);
 			const seeded = choice?.categories ?? {};
@@ -550,10 +562,7 @@ export const mountPersistence = function mountPersistence(
 					version: 3,
 				};
 			}
-			const notice = noticeSinceEpoch(
-				snapshot.noticeDismissal,
-				epochOf('notice')
-			);
+			const notice = noticeSinceEpoch(snapshot.noticeDismissal, epochs.notice);
 			if (notice !== snapshot.noticeDismissal) {
 				patch.noticeDismissal =
 					records.noticeDismissal === undefined
@@ -562,7 +571,7 @@ export const mountPersistence = function mountPersistence(
 			}
 			const vendors = vendorChoiceSinceEpoch(
 				snapshot.vendorChoice,
-				epochOf('vendors')
+				epochs.vendors
 			);
 			const { vendorChoice } = records;
 			if (vendors !== snapshot.vendorChoice) {
