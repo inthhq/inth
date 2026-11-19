@@ -783,7 +783,16 @@ const createSession = function createSession<EngineModule>(
 				// starts once this settles.
 				void (async () => {
 					try {
-						await handle.kernel.commands.save(choice, { actionAt, uiSource });
+						const saved = await handle.kernel.commands.save(choice, {
+							actionAt,
+							uiSource,
+						});
+						// Issues mean the engine refused the input and stored
+						// nothing; a refusal from the backend comes after the
+						// local record.
+						if (saved?.ok === false && saved.issues) {
+							throw new Error('The engine did not record the choice.');
+						}
 						claimTaps(true);
 					} catch {
 						handle.commit(before, []);
