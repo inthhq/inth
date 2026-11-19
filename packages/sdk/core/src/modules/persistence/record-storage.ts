@@ -733,6 +733,11 @@ export const readStoredConsentRecordFromCookieHeader =
 		);
 	};
 
+/** A record read across families; `legacy` when a legacy family held it. */
+export type FamilyRead<RecordType> =
+	| (DecodeResult<RecordType> & { legacy?: true })
+	| null;
+
 /**
  * The first valid result of `read` across the families `config` reads,
  * configured family first; else the first stored but invalid one, so a
@@ -741,12 +746,14 @@ export const readStoredConsentRecordFromCookieHeader =
 const firstValidAcrossFamilies = function firstValidAcrossFamilies<RecordType>(
 	config: StorageConfig | undefined,
 	read: (family: StorageKeyFamily) => DecodeResult<RecordType> | null
-): DecodeResult<RecordType> | null {
+): FamilyRead<RecordType> {
 	let first: DecodeResult<RecordType> | null = null;
-	for (const family of storageKeyFamilies(resolveStorageKeys(config))) {
+	for (const [index, family] of storageKeyFamilies(
+		resolveStorageKeys(config)
+	).entries()) {
 		const result = read(family);
 		if (result?.ok) {
-			return result;
+			return index === 0 ? result : { ...result, legacy: true };
 		}
 		first ??= result;
 	}
@@ -891,7 +898,7 @@ export const readStoredNoticeDismissal = function readStoredNoticeDismissal(
 	config: StorageConfig | undefined,
 	now: number,
 	onUnavailable?: () => void
-): DecodeResult<StoredNoticeDismissal> | null {
+): FamilyRead<StoredNoticeDismissal> {
 	return firstValidAcrossFamilies(config, (keys) =>
 		readNoticeDismissalOf(keys, now, onUnavailable)
 	);
@@ -902,7 +909,7 @@ export const readStoredNoticeDismissalFromCookieHeader =
 		cookieHeader: string | undefined,
 		config: StorageConfig | undefined,
 		now: number
-	): DecodeResult<StoredNoticeDismissal> | null {
+	): FamilyRead<StoredNoticeDismissal> {
 		return firstValidAcrossFamilies(config, (keys) =>
 			noticeWithSubjectCookie(
 				readCompactCookie(
@@ -992,7 +999,7 @@ export const readStoredVendorChoice = function readStoredVendorChoice(
 	now: number,
 	onUnavailable?: () => void,
 	epoch: number = readStoredClearEpoch(config, now)
-): DecodeResult<StoredVendorChoice> | null {
+): FamilyRead<StoredVendorChoice> {
 	const sinceEpoch = (
 		read: DecodeResult<StoredVendorChoice> | null
 	): DecodeResult<StoredVendorChoice> | null =>
@@ -1032,7 +1039,7 @@ export const readStoredVendorChoiceFromCookieHeader =
 		cookieHeader: string | undefined,
 		config: StorageConfig | undefined,
 		now: number
-	): DecodeResult<StoredVendorChoice> | null {
+	): FamilyRead<StoredVendorChoice> {
 		return firstValidAcrossFamilies(config, (keys) =>
 			readCompactCookie(
 				readCookieValueFromHeader(cookieHeader, keys.vendors),

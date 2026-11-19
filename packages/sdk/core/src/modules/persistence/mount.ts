@@ -30,6 +30,8 @@ import type { StoredRecords } from './hydrate';
 import {
 	isNewerDenial,
 	readStoredConsentRecordFromCookieHeader,
+	readStoredVendorChoice,
+	readStoredVendorChoiceFromCookieHeader,
 } from './record-storage';
 import { persistenceTools } from './tools';
 import type { PersistenceHandle, PersistenceOptions } from './types';
@@ -423,6 +425,42 @@ export const mountPersistence = function mountPersistence(
 	};
 
 	/**
+	 * Which of `read`'s records the browser found under the configured family
+	 * while the cookies, read as the server read them, hold only a legacy
+	 * family's.
+	 */
+	const outranksSeedFamily = function outranksSeedFamily(
+		read: StoredRecords,
+		at: number
+	): { choice: boolean; vendors: boolean } {
+		const header = readCookieHeader();
+		if (header === null) {
+			return { choice: false, vendors: false };
+		}
+		const vendors = readStoredVendorChoice(
+			storageConfig,
+			at,
+			undefined,
+			read.epoch
+		);
+		return {
+			choice:
+				read.candidates.some(
+					(candidate) =>
+						candidate.status === 'valid' &&
+						!candidate.source.startsWith('legacy')
+				) &&
+				readStoredConsentRecordFromCookieHeader(header, storageConfig, at)
+					.selected?.source === 'legacy-cookie',
+			vendors:
+				vendors?.ok === true &&
+				!vendors.legacy &&
+				readStoredVendorChoiceFromCookieHeader(header, storageConfig, at)
+					?.legacy === true,
+		};
+	};
+
+	/**
 	 * A server prefetch seeds the kernel from the cookie alone, and the seed
 	 * stays authoritative (`skipHydration`). But a browser can drop a cookie
 	 * write while localStorage takes it, so a newer record may exist only
@@ -442,25 +480,6 @@ export const mountPersistence = function mountPersistence(
 	 * grant left out here stays out until another runtime writes storage.
 	 * Returns the subject the stored records carry, `null` for none.
 	 */
-	/**
-	 * Whether `read` found a configured-family record while the cookies,
-	 * read as the server read them, hold only a legacy family's.
-	 */
-	const outranksSeedFamily = function outranksSeedFamily(
-		read: StoredRecords
-	): boolean {
-		const header = readCookieHeader();
-		return (
-			header !== null &&
-			read.candidates.some(
-				(candidate) =>
-					candidate.status === 'valid' && !candidate.source.startsWith('legacy')
-			) &&
-			readStoredConsentRecordFromCookieHeader(header, storageConfig, now())
-				.selected?.source === 'legacy-cookie'
-		);
-	};
-
 	const applyNewerStoredRecords =
 		function applyNewerStoredRecords(): ConsentSubject | null {
 			const at = now();
@@ -468,13 +487,14 @@ export const mountPersistence = function mountPersistence(
 			baseline = [read, false];
 			const records = withQueued(read.records);
 			const snapshot = kernel.getSnapshot();
+			const outranks = outranksSeedFamily(read, at);
 			const patch: HydrationRecords = {};
 			const seeded = snapshot.explicitChoice?.categories ?? {};
 			const denials = Object.entries(records.choice?.categories ?? {}).filter(
 				([category, decision]) =>
 					isNewerDenial(decision, seeded[category as keyof typeof seeded])
 			);
-			if (records.choice && outranksSeedFamily(read)) {
+			if (records.choice && outranks.choice) {
 				patch.choice = records.choice;
 			} else if (denials.length > 0) {
 				patch.choice = {
@@ -485,7 +505,8 @@ export const mountPersistence = function mountPersistence(
 			const { vendorChoice } = records;
 			if (
 				vendorChoice &&
-				vendorChoice.confirmedAt > (snapshot.vendorChoice?.confirmedAt ?? -1)
+				(outranks.vendors ||
+					vendorChoice.confirmedAt > (snapshot.vendorChoice?.confirmedAt ?? -1))
 			) {
 				patch.vendorChoice = vendorChoice;
 			}

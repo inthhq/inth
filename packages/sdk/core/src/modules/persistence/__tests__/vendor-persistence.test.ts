@@ -340,6 +340,47 @@ describe('vendor persistence', () => {
 		}
 	});
 
+	it('a seed from a newer c15t vendor cookie yields to an older Inth list only localStorage holds', () => {
+		writeStoredVendorChoice(
+			{ confirmedAt: NOW - 1000, denied: ['meta-pixel'], version: 1 },
+			undefined,
+			NOW
+		);
+		// The Inth cookie write was dropped; its localStorage copy landed.
+		document.cookie = `inth-vendors=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+		writeStoredVendorChoice(
+			{ confirmedAt: NOW - 1, denied: [], version: 1 },
+			{ storageKey: 'c15t' },
+			NOW
+		);
+		const { state } = readRequestConsent({
+			adapter: '@c15t/test',
+			now: NOW,
+			request: { cookie: document.cookie, headers: new Headers() },
+		});
+		expect(state.initialRecords?.vendorChoice?.denied).toEqual([]);
+		const kernel = createConsentKernel({
+			initialPolicyResolution: matchedResolution(
+				optInRule({ categories: ['marketing'] })
+			),
+			initialRecords: state.initialRecords,
+			initialVendors: vendors,
+			now: NOW,
+		});
+		const persistence = createPersistence({
+			kernel,
+			now: () => NOW,
+			skipHydration: true,
+		});
+
+		expect(kernel.getSnapshot().vendorChoice?.denied).toEqual(['meta-pixel']);
+		expect(readStoredVendorChoice(undefined, NOW)).toMatchObject({
+			record: { denied: ['meta-pixel'] },
+		});
+		persistence.dispose();
+		kernel.dispose();
+	});
+
 	it('clear() removes the stored record and the in-memory denials', async () => {
 		const kernel = createKernel();
 		const persistence = createPersistence({ kernel, now: () => NOW });

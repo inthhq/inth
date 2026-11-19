@@ -886,6 +886,41 @@ describe('serverScriptStart', () => {
 				expect(document.head.querySelector('script')).toBeNull();
 			});
 
+			test('does nothing for an older Inth vendor denial only localStorage holds, under the c15t cookie the server read', () => {
+				// The client's reader takes the configured family whatever the
+				// timestamps, so it applies the denial over the server's list.
+				const { choice } = choiceRecords(
+					{ marketing: true },
+					{ confirmedAt: CONFIRMED_AT }
+				);
+				// oxlint-disable-next-line unicorn/no-document-cookie -- Stores the record under test.
+				document.cookie = `inth=${encodeStoredConsentEnvelopeCompact({
+					categories: choice?.categories ?? {},
+					version: 3,
+				})}; path=/`;
+				// oxlint-disable-next-line unicorn/no-document-cookie -- Stores the record under test.
+				document.cookie = `c15t-vendors=v=1&t=${CONFIRMED_AT}&d=; path=/`;
+				localStorage.setItem(
+					'inth-vendors',
+					JSON.stringify({
+						confirmedAt: CONFIRMED_AT - 1,
+						denied: ['pixel'],
+						version: 1,
+					})
+				);
+				const prefetch = prefetchFor({ marketing: true });
+
+				startPixel({
+					...prefetch,
+					initialRecords: {
+						...prefetch.initialRecords,
+						vendorChoice: { confirmedAt: CONFIRMED_AT, denied: [], version: 1 },
+					},
+				});
+
+				expect(document.head.querySelector('script')).toBeNull();
+			});
+
 			test('does nothing for c15t vendor denials while Inth stores none', () => {
 				const { choice } = choiceRecords(
 					{ marketing: true },
