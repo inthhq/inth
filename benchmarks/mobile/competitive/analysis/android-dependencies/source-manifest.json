@@ -25,7 +25,7 @@
 		{
 			"path": "scripts/capture-graph.py",
 			"bytes": 3189,
-			"sha256": "c4fd96e2c3cb04f06483d91bd1b6419fc26791c79df46739a011155a08514720"
+			"sha256": "ef8cab42bd872f1118e1d72c4daab457ce9f8c9fe9d8fedbd3c14e673641a6c8"
 		},
 		{
 			"path": "scripts/resource-analysis.py",
