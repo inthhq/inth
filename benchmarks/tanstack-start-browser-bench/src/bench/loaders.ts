@@ -44,7 +44,7 @@ const fetchDirectInit = async function fetchDirectInit(
 	}
 
 	const response = await fetch(
-		new URL(`${BENCH_BACKEND_URL}/init`, request.url),
+		new URL(`${BENCH_BACKEND_URL}/v1/consent/init`, request.url),
 		{ cache: 'no-store', headers, method: 'GET' }
 	);
 	if (!response.ok) {
@@ -78,7 +78,7 @@ export const getDirectInitConsentState = createServerFn({
  * the fixture manifest (with the cold token when set), the same source URL
  * the `/api/inth/$` mounts use, so the loader and the routes share one
  * in-process cache entry. The Next arm reaches the same cache by fetching
- * its own `/api/inth/manifest` route over HTTP; Start's prefetch refuses
+ * its own `/api/inth/v1/consent/manifest` route over HTTP; Start's prefetch refuses
  * self-fetches, so it reads the cache directly instead.
  */
 export const getManifestConsentState = createServerFn({

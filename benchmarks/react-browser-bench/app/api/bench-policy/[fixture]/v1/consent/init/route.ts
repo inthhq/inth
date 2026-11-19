@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 
-import { applyBenchBackendLatency } from '../../../bench-latency';
+import { applyBenchBackendLatency } from '../../../../../bench-latency';
 import {
 	isPolicyBenchFixtureName,
 	resolvePolicyBenchInit,
-} from '../../manifests';
+} from '../../../../manifests';
 
 /**
- * Deterministic `/init` for one fixed policy fixture. The payload is what
+ * Deterministic `/v1/consent/init` for one fixed policy fixture. The payload is what
  * the installed schema package resolves from the fixture's manifest, so
  * the wire bytes and the prompt the client derives come from source, not
  * from a hand-written JSON literal.

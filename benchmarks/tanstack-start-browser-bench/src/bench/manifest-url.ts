@@ -9,7 +9,7 @@ export const getBenchManifestUrl = function getBenchManifestUrl(): string {
 	const token = (globalThis as { process?: { env?: Record<string, string> } })
 		.process?.env?.INTH_BENCH_COLD_MANIFEST_TOKEN;
 	const base =
-		process.env.INTH_BENCH_MANIFEST_URL ?? `${BENCH_BACKEND_URL}/manifest`;
+		process.env.INTH_BENCH_MANIFEST_URL ?? `${BENCH_BACKEND_URL}/v1/consent/manifest`;
 	if (!token) {
 		return base;
 	}

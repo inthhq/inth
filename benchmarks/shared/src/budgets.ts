@@ -212,7 +212,7 @@ const BROWSER_MANIFEST_ENTRIES = new Set(['browser-full', 'browser-headless']);
 
 /**
  * Google Additional Consent (#1478) added a heading and a notice for the ad
- * tech provider section to every built-in language. `createManifestTransport`
+ * tech provider section to every built-in language. The manifest transport
  * bundles every language on first load, so the copy lands in that entry's
  * initial JavaScript: 3,579 bytes gzip, measured as the change between the
  * PR's commits before and after the translations. Entries that load

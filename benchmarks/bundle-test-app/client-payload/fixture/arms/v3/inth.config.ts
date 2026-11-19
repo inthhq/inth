@@ -6,7 +6,7 @@ import { defineConsentConfig, manifest } from '@inth/nextjs';
  * and the client wrapper pass this config explicitly.
  */
 export default defineConsentConfig({
-	// The browser resolves from `/mock-backend/manifest` when it re-inits.
+	// The browser resolves from `/mock-backend/v1/consent/manifest` when it re-inits.
 	mode: manifest({ resolve: 'browser' }),
 	projectUrl: '/mock-backend',
 });

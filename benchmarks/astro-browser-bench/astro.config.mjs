@@ -60,7 +60,7 @@ if (benchMode === 'manifest' || benchMode === 'scripts') {
 		// The backend is this app, which isn't running during the build, and
 		// the benchmark measures the runtime manifest path.
 		mode: manifest({
-			manifestUrl: `${projectUrl}/manifest`,
+			manifestUrl: `${projectUrl}/v1/consent/manifest`,
 			source: 'runtime',
 		}),
 		projectUrl,
@@ -93,7 +93,7 @@ if (benchMode === 'manifest' || benchMode === 'scripts') {
 			consentCategories: ['necessary', 'measurement', 'marketing'],
 			middleware: { skip: ['/api/bench-consent'] },
 			mode: manifest({
-				manifestUrl: `${projectUrl}/manifest`,
+				manifestUrl: `${projectUrl}/v1/consent/manifest`,
 				source: 'runtime',
 			}),
 			projectUrl,

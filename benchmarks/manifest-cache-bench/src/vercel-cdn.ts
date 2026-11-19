@@ -1,5 +1,5 @@
 /**
- * In-process simulator for a Vercel-style CDN fronting an Inth `/manifest`
+ * In-process simulator for a Vercel-style CDN fronting an Inth `/v1/consent/manifest`
  * origin. No real sockets: `fetch`-compatible, driven by a caller-supplied
  * simulated clock so the CDN and `fetchCachedManifest` agree on "now" while
  * only real network round trips (edge/origin RTT) cost real wall-clock time.
@@ -161,7 +161,7 @@ const readHeader = function readHeader(
 type OriginResult = { body: string; etag: string } | { errorStatus: number };
 
 /**
- * Creates a simulated Vercel CDN in front of a fixed-fixture `/manifest`
+ * Creates a simulated Vercel CDN in front of a fixed-fixture `/v1/consent/manifest`
  * origin. Every field is process-local; nothing here opens a real socket.
  *
  * @param options - Clock, RTTs, and the origin's advertised cache policy.

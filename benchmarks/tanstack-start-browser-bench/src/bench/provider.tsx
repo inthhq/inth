@@ -124,7 +124,7 @@ export const TanstackManifestClientBenchmarkProvider = ({
 	const transport = useMemo(
 		() =>
 			createV1ManifestTransport({
-				manifestUrl: '/api/inth/manifest',
+				manifestUrl: '/api/inth/v1/consent/manifest',
 				projectUrl: BENCH_BACKEND_URL,
 			}),
 		[]
@@ -145,7 +145,7 @@ export const TanstackManifestClientBenchmarkProvider = ({
 /**
  * `ssr` arm: the loader already carries the init response and the backend
  * URL, so the root renders the banner into the first HTML. Without
- * `routePrefix`, any client refresh calls the backend's `/init` directly,
+ * `routePrefix`, any client refresh calls the backend's `/v1/consent/init` directly,
  * matching the Next arm.
  */
 export const TanstackPrefetchedBenchmarkProvider = ({

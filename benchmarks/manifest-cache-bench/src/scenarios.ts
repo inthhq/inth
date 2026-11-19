@@ -15,7 +15,7 @@ import type { FetchCachedManifestOptions } from '@inth/sdk/server';
 import { createSimulatedClock, createVercelCdn } from './vercel-cdn';
 import type { VercelCdn, VercelCdnCounters } from './vercel-cdn';
 
-const SOURCE_URL = 'https://consent.example.com/manifest';
+const SOURCE_URL = 'https://consent.example.com/v1/consent/manifest';
 /**
  * A request that waited on the simulated edge (25 ms RTT) or origin counts
  * as a stall; anything served from the in-process cache takes well under

@@ -255,7 +255,7 @@ const observePage = function observePage(
 		if (pathname.endsWith('/init')) {
 			observation.initRequests += 1;
 		}
-		if (pathname.endsWith('/subjects')) {
+		if (pathname.endsWith('/v1/consent/records')) {
 			observation.subjectRequests += 1;
 		}
 	};

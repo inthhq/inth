@@ -30,7 +30,7 @@ const DocsPage = () => (
 
 const state = await resolveConsent({
   projectUrl: 'https://consent.example.com',
-  manifestUrl: 'https://consent.example.com/manifest',
+  manifestUrl: 'https://consent.example.com/v1/consent/manifest',
 });`}</code>
 		</pre>
 		<p>
