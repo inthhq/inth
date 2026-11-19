@@ -68,7 +68,7 @@ export const readGeoInputs = function readGeoInputs(
 /**
  * Ask a same-origin route for the visitor's `{ country, region }`.
  *
- * @returns The location, or `undefined` when the route fails; the `/init`
+ * @returns The location, or `undefined` when the route fails; the `/v1/consent/init`
  * fallback still answers then.
  * @internal
  */

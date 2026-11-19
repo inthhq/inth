@@ -9,7 +9,7 @@ same props, except that `state` replaces `mode` and `prefetch`.
 
 | Prop | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `mode` | `manifest()` or `hosted()` from `@inth/svelte`, or `testing()` from `@inth/svelte/testing` | `hosted()` | Where policies come from and where choices are saved. Read once; remount the provider to change it. `ConsentRoot` builds it from `state`, or takes a `custom()` transport as `mode`. |
+| `mode` | `manifest()` or `hosted()` from `@inth/svelte`, or `testing()` from `@inth/svelte/testing` | `hosted()` | Where policies come from and where choices are saved. Read once; remount the provider to change it. `ConsentRoot` builds it from `state`, or takes a transport factory as `mode`. |
 | `prefetch` | `ConsentState` | none | Server-resolved state, such as the result of `resolveConsent`. With a resolved policy in it, the first render already knows whether to show the banner, and the browser skips its own policy request. `ConsentRoot` passes it from `state`. Read once. |
 | `scripts` | `Script[]` | none | Vendor scripts that load when their category is allowed. Updates after mount: new scripts go to the loader. See [scripts](../scripts). |
 | `consentCategories` | `AllConsentNames[]` | the policy's categories | Categories the preference UI offers, within the policy's scope. Updates after mount. |

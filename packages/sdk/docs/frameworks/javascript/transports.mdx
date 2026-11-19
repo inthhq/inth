@@ -32,7 +32,7 @@ Each setup takes the transport in a slightly different form:
 | `@inth/sdk` | `init({ projectUrl, mode })`. `mode` is optional: `manifest()` or `hosted()` from `@inth/sdk`, or `testing()` from `@inth/sdk/testing`. |
 | `createConsentRuntime` | `projectUrl`, and an optional `mode` from the same entries. |
 | Script tag | `data-project-url`, and `data-mode="hosted"` or `"manifest"` on the headless and IAB scripts. Tests load `inth.testing.js`. |
-| `createConsentKernel` | `transport`, the transport object itself, such as `createHostedTransport({ projectUrl })`. |
+| `createConsentKernel` | `transport`, the transport object itself, such as `createV1HostedTransport({ projectUrl })`. |
 
 A factory is created once. To switch transports, dispose the client or
 runtime and create a new one.
@@ -58,24 +58,24 @@ Inth backend's `/v1/consent/init` for each visitor and saves to its `/v1/consent
 <include src="../../shared/examples/javascript/runtime.mdx" />
 
 `hosted()` takes no options; it uses the `projectUrl` you pass. For a kernel you
-create yourself, `createHostedTransport({ projectUrl })` from
+create yourself, `createV1HostedTransport({ projectUrl })` from
 `@inth/sdk/transports` takes these options:
 
 | Option | What it does |
 | --- | --- |
-| `projectUrl` | The backend URL. Relative URLs such as `/api/inth` work behind a proxy. |
+| `projectUrl` | Your Inth project URL. Relative URLs such as `/api/inth` work behind a same-origin consent route. |
 | `headers` | Request headers to forward on `/v1/consent/init`: `accept-language`, the geo headers and `sec-gpc`. Meant for server code forwarding a visitor's request. |
 | `fetch` | A `fetch` implementation, for tests or unusual runtimes. |
-| `domain` | The domain recorded with each save. Defaults to the page's host. |
+| `property` | The host name or app ID recorded with each save. Defaults to the page's host name. |
 | `initUrl` | Send `/v1/consent/init` somewhere else, such as a same-origin route, while saves still go to `projectUrl`. Saves then assert the policy they were made against. |
-| `assertDecisionInputs` | Send the resolved policy inputs with each save, so the backend can reject a save made against a stale policy. Defaults to `true` when `initUrl` is set. |
+| `assertDecisionInputs` | Send the resolved policy inputs with each save, so the backend can reject a save made against a stale policy. Defaults to `false`; `hosted()` turns it on when `initUrl` is set. |
 
 Add your app's origin to the Inth project's trusted origins, or the browser
 blocks consent saves with a CORS error.
 
-A cross-origin `/v1/consent/init` is a CORS simple request: the client version, policy
-contract, overrides and experiment arm go in the query string, and the request
-carries no cookies, so the browser sends it without an `OPTIONS` preflight.
+A cross-origin `/v1/consent/init` is a CORS simple request: the overrides and
+experiment arm go in the query string, and the request carries no cookies, so
+the browser sends it without an `OPTIONS` preflight.
 Saves still go out with cookies and still need the trusted origin.
 
 ## Manifest
@@ -125,8 +125,8 @@ banner. The script-tag build counts GPP as on, because `inth.gpp.js` can load
 after `init()`; pass `gpp: false` to `inth.init()` to resolve in the browser on
 pages that do not load it.
 
-`createManifestTransport` from `@inth/sdk/transports/manifest` is for server code
-only. It bundles every language. Browser code uses `manifest()`, or
+`createV1ManifestTransport` from `@inth/sdk/transports/manifest` is for server
+code only. It bundles every language. Browser code uses `manifest()`, or
 `createBrowserManifestTransport` from `@inth/sdk/transports/manifest-browser`.
 
 ### Bundle the manifest during Vite builds

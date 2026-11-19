@@ -1,6 +1,6 @@
 /**
  * `ConsentProvider` for client-rendered pages: the page renders before the
- * consent engine, the stock banner renders from the prefetched `/init`, a
+ * consent engine, the stock banner renders from the prefetched `/v1/consent/init`, a
  * tap hides it at once and the engine applies the choice, and a returning
  * visitor gets the engine straight away.
  */
@@ -259,7 +259,7 @@ test('Accept hides the banner at once, and the engine applies it', async () => {
 		document.querySelector('[data-testid="consent-banner-root"]')
 	).toBeNull();
 	await vi.waitFor(() => expect(stored()).toBe(true), { timeout: 5000 });
-	// The engine took the same prefetched answer: no `/init` of its own.
+	// The engine took the same prefetched answer: no `/v1/consent/init` of its own.
 	expect(initRequests()).toEqual([]);
 });
 

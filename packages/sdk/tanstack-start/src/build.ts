@@ -27,7 +27,7 @@ export type {
  *
  * The fetch waits at most 10 seconds. When it fails, `vite build` and
  * `vite dev` log a warning and serve `snapshot: undefined`, so the server
- * fetches the policy at runtime and asks the backend's `/init` while the
+ * fetches the policy at runtime and asks the backend's `/v1/consent/init` while the
  * manifest is unavailable. Set `onBuildError: 'fail'`, or
  * `INTH_ON_BUILD_ERROR=fail`, to stop the build instead. The fetch is skipped
  * for a `projectUrl` that is not absolute http(s), and with
@@ -39,7 +39,7 @@ export type {
  * second copy inside a JavaScript chunk.
  *
  * @param options - Backend URL, `onBuildError` and `source`. The build
- * appends `/manifest`.
+ * appends `/v1/consent/manifest`.
  * @returns A Vite plugin to place before the TanStack Start plugin.
  * @throws {Error} When the fetch fails in `'fail'` mode, the default for
  * `vite build`.

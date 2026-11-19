@@ -1,4 +1,3 @@
-import { INTH_POLICY_CONTRACT_HEADER } from '@inth/sdk/engine';
 import type { ExternalConsentSource } from '@inth/sdk/runtime';
 import {
 	normalizePolicyRule,
@@ -70,14 +69,14 @@ vi.mock('#imports', async () => {
 		},
 		useHead: () => undefined,
 		// Nitro's in-process fetch on the event answers the app's own routes:
-		// the backend's manifest in manifest mode, its `/init` otherwise.
+		// the backend's manifest in manifest mode, its `/v1/consent/init` otherwise.
 		useRequestEvent: () => ({
 			context: {},
 			fetch: (input: string, init?: RequestInit) => {
 				const headers = Object.fromEntries(new Headers(init?.headers));
 				nuxt.fetchHeaders.push(headers);
 				// `/v1` reads no contract header: the path names the contract.
-				expect(headers).not.toHaveProperty(INTH_POLICY_CONTRACT_HEADER);
+				expect(headers).not.toHaveProperty('x-inth-policy-contract');
 				nuxt.requests += 1;
 				const body = input.split('?')[0]?.endsWith('/v1/consent/manifest')
 					? nuxt.manifestDocument
@@ -446,11 +445,7 @@ test('an `ssr: false` route asks for the policy before the app mounts', async ()
 		vi.fn((input: RequestInfo | URL) => {
 			// The path alone: the runtime adds its consent journey as a query.
 			requests.push(String(input).split('?')[0] ?? '');
-			return Promise.resolve(
-				new Response(JSON.stringify(response), {
-					headers: { [INTH_POLICY_CONTRACT_HEADER]: '1' },
-				})
-			);
+			return Promise.resolve(new Response(JSON.stringify(response)));
 		})
 	);
 	const { default: plugin } = await vi.importActual<{
@@ -470,7 +465,7 @@ test('an `ssr: false` route asks for the policy before the app mounts', async ()
 		runWithContext: (run) => run(),
 		vueApp: app,
 	});
-	// `/init` is on its way before the app mounts, and nothing waits for mount.
+	// `/v1/consent/init` is on its way before the app mounts, and nothing waits for mount.
 	await vi.waitFor(() =>
 		expect(requests.some((url) => url.endsWith('/v1/consent/init'))).toBe(true)
 	);

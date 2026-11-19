@@ -26,7 +26,6 @@ export type {
 	ConsentKernel,
 	ConsentSnapshot,
 	ConsentState,
-	HostedTransportOptions,
 	InitContext,
 	InitResponse,
 	InitResult,

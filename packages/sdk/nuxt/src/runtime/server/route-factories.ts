@@ -2,8 +2,8 @@ import type { ConsentManifest } from '@inth/sdk/schema/types';
 /**
  * The Nitro consent route for `manifest()` mode: one h3 handler, mounted at
  * `${routePrefix}/**`, around the consent route handler in
- * `@inth/sdk/server`. Core owns the `/manifest` and `/init` behaviour for
- * every adapter (including the fallback to the backend's own `/init` and
+ * `@inth/sdk/server`. Core owns the `/v1/consent/manifest` and `/v1/consent/init` behaviour for
+ * every adapter (including the fallback to the backend's own `/v1/consent/init` and
  * the render budget the SSR plugin sends in `x-inth-timeout-ms`). This
  * module only converts between h3 and the Web `Request`/`Response`, reads
  * the Inth runtime config, sends relative backend URLs through Nitro's

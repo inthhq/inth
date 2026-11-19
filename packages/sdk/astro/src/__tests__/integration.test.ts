@@ -705,7 +705,7 @@ describe('resolveOptions', () => {
 	});
 
 	it('rejects a manifestUrl with nowhere to save consent', () => {
-		// The injected routes serve init and manifest; `POST /subjects` is
+		// The injected routes serve init and manifest; `POST /v1/consent/records` is
 		// the backend's, so a `manifestUrl` without one would 404 on save.
 		expect(() =>
 			resolveOptions({ mode: manifestMode({ manifestUrl: '/m.json' }) })

@@ -3,9 +3,9 @@ import { createFileRoute } from '@tanstack/react-router';
 import {
 	applyBenchConsentLatency,
 	recordBenchConsentFixtureExecution,
-} from '../../../bench/fixture';
+} from '../../../../../bench/fixture';
 
-export const Route = createFileRoute('/api/bench-consent/subjects')({
+export const Route = createFileRoute('/api/bench-consent/v1/consent/records')({
 	server: {
 		handlers: {
 			POST: async ({ request }) => {
@@ -21,7 +21,7 @@ export const Route = createFileRoute('/api/bench-consent/subjects')({
 						: 'benchmark-subject';
 				return Response.json(
 					{
-						ok: true,
+						recordId: '019a0000-0000-7000-8000-000000000002',
 						subjectId,
 					},
 					{

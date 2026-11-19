@@ -3,7 +3,7 @@
 
 	import {
 		createConsentKernel,
-		createHostedTransport,
+		createV1HostedTransport,
 	} from '../../../../../../packages/sdk/core/src';
 	import type {
 		ConsentKernel,
@@ -17,7 +17,7 @@
 
 	onMount(() => {
 		kernel = createConsentKernel({
-			transport: createHostedTransport({
+			transport: createV1HostedTransport({
 				projectUrl: '/api/bench-consent',
 			}),
 		});

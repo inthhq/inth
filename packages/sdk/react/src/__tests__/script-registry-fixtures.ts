@@ -3,7 +3,8 @@
  * with the `serveScript` browser command from `vitest.config.ts`.
  */
 import type { Script } from '@inth/sdk/modules/script-loader';
-import { custom } from '@inth/sdk/transports';
+
+import { transportMode } from './fixtures/transport-mode';
 
 declare module 'vitest/browser' {
 	interface BrowserCommands {
@@ -57,7 +58,7 @@ export const integrationScript = (
 
 /** A mode whose init answers with the registry's sources. */
 export const listing = (sources: Record<string, unknown>) =>
-	custom({
+	transportMode({
 		init: () => Promise.resolve({ scriptRegistry: { sources } }) as never,
 		save: () => Promise.resolve({ ok: true }),
 	});

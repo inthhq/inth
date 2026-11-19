@@ -1,6 +1,6 @@
 /**
  * The init script's pieces that decide what the engine does next: the
- * marker for a tap that was never stored, and whether `/init` sent enough
+ * marker for a tap that was never stored, and whether `/v1/consent/init` sent enough
  * copy for the init script's banner.
  */
 import type { ConsentSnapshot } from '@inth/sdk-core';

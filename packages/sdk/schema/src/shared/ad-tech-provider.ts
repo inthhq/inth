@@ -60,7 +60,7 @@ const MAX_AD_TECH_PROVIDER_QUERY_IDS = 500;
 
 /**
  * How long a provider list request may take before it is aborted. The list
- * only supplements the TC String, so a stalled endpoint must not hold `/init`
+ * only supplements the TC String, so a stalled endpoint must not hold `/v1/consent/init`
  * or a consent save open: an aborted request takes the same path as a failed
  * one.
  */

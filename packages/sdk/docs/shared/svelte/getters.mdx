@@ -181,7 +181,7 @@ call it and does not update.
 | Export | Purpose |
 | --- | --- |
 | `manifest()` | The `mode` that resolves the policy in the browser from the manifest `consentManifest()` downloaded. |
-| `hosted({ projectUrl })` | The `mode` that asks an Inth or self-hosted backend's `/init` for every visitor. |
+| `hosted({ projectUrl })` | The `mode` that asks your Inth project's `/v1/consent/init` for every visitor. |
 | `testing({ policy })` | The `mode` that resolves policies in the browser with no backend. Not recommended for production environments. |
 | `createConsentRuntime(options)` | Creates a runtime to share between providers, through their `runtime` prop. |
 | `resolveConsentPresentation(input)` | Resolves the banner or dialog shape and actions a policy asks for, as `getHeadlessConsent()` does. |

@@ -1058,7 +1058,7 @@ describe('consent journey', () => {
 	});
 
 	test('the vendor list reference the browser follows carries no journey', async () => {
-		// The browser fetches the deferred list from this `/init`; with the
+		// The browser fetches the deferred list from this `/v1/consent/init`; with the
 		// journey on it, the backend would count the visit twice.
 		const fetch = upstream(MANIFEST, {
 			...(INIT as object),

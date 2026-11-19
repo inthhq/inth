@@ -114,7 +114,7 @@ export const createPackageCheck = function createPackageCheck(): (
  *
  * Nuxt adds a `<link rel="prefetch">` for every chunk the entry imports
  * dynamically. Each download that finishes queues a task on the main
- * thread, so on a page whose `/init` answer arrives while they land, the
+ * thread, so on a page whose `/v1/consent/init` answer arrives while they land, the
  * banner waits behind them. Chunks another part of the app also reaches
  * keep their hint.
  *
@@ -219,7 +219,7 @@ const BANNER_SOURCE = '/dist/runtime/components/prompt.vue';
  * renders it; elsewhere (an `ssr: false` shell, a prerendered page, a
  * visitor whose banner the browser opens later) the browser would find it
  * only after the entry runs, and the banner would wait for it after
- * `/init`. Listed among the entry's imports in the manifest, the chunk and
+ * `/v1/consent/init`. Listed among the entry's imports in the manifest, the chunk and
  * its imports get a `modulepreload` link in every page's HTML, as when the
  * banner was part of the entry. The browser still loads the chunk with a
  * dynamic import, which brings its stylesheets.

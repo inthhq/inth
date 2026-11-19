@@ -354,7 +354,7 @@ export const initResponseToKernelConfig = function initResponseToKernelConfig(
  * const response = kernelConfigToInitResponse(config);
  * const transport = response
  * 	? { init: async () => response }
- * 	: createHostedTransport({ projectUrl });
+ * 	: createV1HostedTransport({ projectUrl });
  * ```
  */
 // oxlint-disable-next-line complexity -- One check per init-derived config field keeps the inverse of the merge visible.

@@ -31,7 +31,7 @@ export interface StaticBannerRenderer {
 	/** The banner's stylesheets, in cascade order. */
 	STATIC_BANNER_SHEETS: readonly StaticBannerSheet[];
 	/**
-	 * The stock banner's markup for an `/init` answer, or `undefined` when
+	 * The stock banner's markup for a `/v1/consent/init` answer, or `undefined` when
 	 * that answer shows no choice banner the static one can stand in for.
 	 */
 	renderStaticBanner: (init: InitOutput) => string | undefined;
@@ -228,7 +228,7 @@ export interface StaticBanner {
 /**
  * Renders the stock banner for the first policy pack in the manifest that
  * shows a choice banner, in `language`, hidden, followed by the script that
- * shows it when the page's `/init` answers with the same policy.
+ * shows it when the page's `/v1/consent/init` answers with the same policy.
  *
  * @param renderer - `@inth/react/static-banner`.
  * @param options - Language to render, and the consent storage key.

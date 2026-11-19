@@ -107,7 +107,7 @@ choice, so don't treat a `true` permission as a recorded grant. See
 | `loadScripts`, `unloadScripts`, `updateScripts`, `isScriptLoaded`, `getLoadedScriptIds` | Removed. Pass `scripts` to `createConsentRuntime()`, which mounts the loader on `start()`. To run a loader yourself, `createScriptLoader({ kernel, scripts })` from `@inth/sdk/modules/script-loader` returns `updateScripts(next)`, `getLoadedScriptIds()` and `dispose()`. Use `getLoadedScriptIds().includes(id)` for `isScriptLoaded(id)`. |
 | `createIframeBlocker` | `@inth/sdk/modules/iframe-blocker` |
 | `getEffectivePolicy`, `filterConsentCategoriesByPolicy` and the other policy helpers | `resolveConsentPresentation()` from `@inth/sdk/engine` and the helpers in `@inth/sdk/surface-actions` |
-| `C15tClient`, `OfflineClient`, `CustomClient`, `API_ENDPOINTS` | Transports: `hosted()`, `local()` and `custom()` from `@inth/sdk/engine` |
+| `C15tClient`, `OfflineClient`, `CustomClient`, `API_ENDPOINTS` | Modes: `hosted()` and `manifest()` from `@inth/sdk`, or `testing()` from `@inth/sdk/testing` |
 | `policyPackPresets` | `policyRulePresets` |
 | `configureConsentManager`, `createConsentManagerStore`, `clearConsentRuntimeCache` | Removed |
 

@@ -2,7 +2,7 @@
  * The init script (`inth.js`): the part of the script tag that runs before
  * the page's largest image has loaded.
  *
- * It installs a stand-in `window.inth`, starts `/init`, renders the stock
+ * It installs a stand-in `window.inth`, starts `/v1/consent/init`, renders the stock
  * banner from the answer, records an accept or reject tapped on it, and
  * starts the scripts a stored or new choice allows. A Customize tap on its
  * banner opens the stock preference dialog from `inth.dialog.js` without
@@ -83,7 +83,7 @@ import { readPolicyCache, writePolicyCache } from './policy-cache';
 import { scheduleEngine } from './schedule';
 
 /**
- * How long the engine waits for the init script's `/init` answer, and the
+ * How long the engine waits for the init script's `/v1/consent/init` answer, and the
  * init script for `inth.commit.js`, `inth.records.js` or `inth.dialog.js`.
  */
 const INIT_WAIT_MS = 3000;
@@ -180,7 +180,7 @@ const supportsEarlyBanner = function supportsEarlyBanner(
 
 /**
  * Run the init script for `script`: install the stand-in `window.inth`,
- * start `/init` unless the page inits itself, and schedule the engine.
+ * start `/v1/consent/init` unless the page inits itself, and schedule the engine.
  *
  * @returns The stand-in, or `null` when `window.inth` is already an API.
  * @internal
@@ -221,7 +221,7 @@ export const runInitScript = function runInitScript(
 	const listeners = new Set<(next: ConsentSnapshot) => void>();
 	const cleanups: (() => void)[] = [];
 
-	/** Keep the last `/init` policy once the visitor has a choice. */
+	/** Keep the last `/v1/consent/init` policy once the visitor has a choice. */
 	const cachePolicy = function cachePolicy(): void {
 		const projectUrl =
 			options?.projectUrl ?? readHostedMarker(options?.mode)?.projectUrl;
@@ -767,7 +767,7 @@ export const runInitScript = function runInitScript(
 		showSurface(next, 'banner');
 	};
 
-	/** Start `/init` and everything that follows from its answer. */
+	/** Start `/v1/consent/init` and everything that follows from its answer. */
 	const begin = function begin(initOptions?: ScriptTagClientOptions): void {
 		if (options) {
 			return;
@@ -817,8 +817,8 @@ export const runInitScript = function runInitScript(
 		void pending.then(markAnswered, markAnswered);
 		// A returning visitor: `inth.records.js`, the record reader, loads at
 		// once. The choice they stored, evaluated against the policy the last
-		// `/init` sent, starts its scripts as soon as it has run, unless
-		// `/init` answered first. Settles `false` when it did not run.
+		// `/v1/consent/init` sent, starts its scripts as soon as it has run, unless
+		// `/v1/consent/init` answered first. Settles `false` when it did not run.
 		const records = stored
 			? // oxlint-disable-next-line promise/prefer-await-to-then -- Not in an async function.
 				loadPart('records').then(() => {
@@ -1026,7 +1026,7 @@ export const runInitScript = function runInitScript(
 			snapshot = null;
 			// No later input, image load or timer loads the engine, and an
 			// engine already on its way installs itself without initialising
-			// (`autoInit`). A `/init` answer still in flight renders nothing.
+			// (`autoInit`). A `/v1/consent/init` answer still in flight renders nothing.
 			boot.disposed = true;
 			for (const cleanup of cleanups.splice(0)) {
 				cleanup();

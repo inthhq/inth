@@ -4,12 +4,12 @@
  * its hash.
  */
 import type { Script } from '@inth/sdk/engine';
-import { custom } from '@inth/sdk/transports';
 import { render } from '@testing-library/svelte';
 import { afterEach, expect, test, vi } from 'vitest';
 
 import ConsentProvider from '../lib/components/consent-provider.svelte';
 import type { ConsentManagerOptions } from '../lib/types';
+import { transportMode } from './fixtures/transport-mode';
 
 const VENDOR_SRC = 'https://cdn.vendor.example/vendor.js';
 const REGISTRY_SRC = 'https://acme.inth.app/scripts/vendor@0123456789abcdef.js';
@@ -25,7 +25,7 @@ const vendor: Script = {
 };
 
 /** A mode whose init lists the registry's copy of `vendor`. */
-const listing = custom({
+const listing = transportMode({
 	init: () =>
 		Promise.resolve({
 			scriptRegistry: {

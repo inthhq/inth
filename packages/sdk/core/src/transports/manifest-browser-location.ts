@@ -84,7 +84,7 @@ export const locationFreeOutcome = function locationFreeOutcome(
 	try {
 		locations = representativeLocations(manifest);
 	} catch {
-		// Malformed matchers: the resolver fails them too, so ask `/init`.
+		// Malformed matchers: the resolver fails them too, so ask `/v1/consent/init`.
 	}
 	for (const location of locations) {
 		const resolution = resolvePolicyResolutionFromManifest(manifest, location);

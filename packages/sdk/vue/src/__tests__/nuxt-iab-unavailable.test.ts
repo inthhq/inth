@@ -7,10 +7,7 @@
  * error page, and shows the same error page when the browser resolves the
  * policy itself.
  */
-import {
-	INTH_POLICY_CONTRACT_HEADER,
-	IAB_UNAVAILABLE_ERROR_CODE,
-} from '@inth/sdk/engine';
+import { IAB_UNAVAILABLE_ERROR_CODE } from '@inth/sdk/engine';
 import type { InitOutput } from '@inth/sdk/schema/types';
 import {
 	resolvePolicyRules,
@@ -100,7 +97,6 @@ const stubBackend = () =>
 				new Response(JSON.stringify(iabInit), {
 					headers: {
 						'content-type': 'application/json',
-						[INTH_POLICY_CONTRACT_HEADER]: '1',
 					},
 				})
 			)
@@ -154,7 +150,7 @@ test('the server render with `iab: {}` does not throw', async () => {
 test('a page the browser resolves shows the error page', async () => {
 	stubBackend();
 
-	// `ssr: false`: no server state, so the browser asks `/init` itself.
+	// `ssr: false`: no server state, so the browser asks `/v1/consent/init` itself.
 	const consoleError = vi
 		.spyOn(console, 'error')
 		.mockImplementation(() => undefined);

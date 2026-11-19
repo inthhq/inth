@@ -73,7 +73,7 @@ export const provideInth = function provideInth(
 		// A page with no server render to hydrate whose app hands over the
 		// visitor's state (`prefetch`) renders the surfaces from it on the
 		// first render: bootstrap waits for the engine's chunk, which builds
-		// that state. Without `prefetch` the policy needs `/init` anyway.
+		// that state. Without `prefetch` the policy needs `/v1/consent/init` anyway.
 		provideAppInitializer(async () => {
 			if (!isPlatformBrowser(inject(PLATFORM_ID))) {
 				return;

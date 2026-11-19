@@ -87,7 +87,7 @@ export const testingTransport: ResolveTransport = ({ mode }) =>
  *
  * The server resolved the visitor, so the page ships only the record
  * transport that saves consent; the init path loads when the page inits
- * again, with the `/init` request sent alongside it. `manifest()` re-inits
+ * again, with the `/v1/consent/init` request sent alongside it. `manifest()` re-inits
  * through `${routePrefix}/v1/consent/init`, and `manifest({ resolve: 'browser' })`
  * loads the browser resolver with `import()`.
  *

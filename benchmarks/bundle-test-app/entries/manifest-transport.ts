@@ -1,2 +1,2 @@
 /** Manifest transport entry. */
-export { createManifestTransport } from '@inth/sdk/transports/manifest';
+export { createV1ManifestTransport } from '@inth/sdk/transports/manifest';

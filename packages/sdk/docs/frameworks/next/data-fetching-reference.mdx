@@ -495,8 +495,8 @@ policy a fallback rule before you bundle it.
 
 A generated manifest contains public policy, not a visitor's choice. The
 helpers do not mount a provider, persist choices or send consent to the
-backend. You wire them into a custom transport passed as `options.mode`, and
-publishing new policy needs a rebuild. The
+backend. You call them from your own code, and publishing new policy needs a
+rebuild. The
 [static export guide](/docs/frameworks/next/static-export) uses backend `/v1/consent/init`
 instead, which needs none of this. Never bake a build machine's location or
 cookies into a shared static page.

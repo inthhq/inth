@@ -82,7 +82,6 @@ location the browser does not know.
 - When the server resolves consent before the page loads, the browser never
   sees that request. Make it fail on the server instead, for example by
   pointing the backend URL at an unreachable address for one run.
-- With a custom transport, make its `init` fail.
 
 No banner appears, and vendors that wait for consent send no requests. Skip this
 check only if the page makes no initialization request at all, such as a

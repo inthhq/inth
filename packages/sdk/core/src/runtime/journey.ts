@@ -123,7 +123,7 @@ export const createJourneyController = function createJourneyController(
 
 	const create = function create(kernel: ConsentKernel): void {
 		// A server render's id first, then one an early request of this page
-		// already sent (React's early `/init`, the inline prefetch script).
+		// already sent (React's early `/v1/consent/init`, the inline prefetch script).
 		const fromServer = serverId !== null;
 		const opened = openJourney({
 			adopted: serverId ?? readEarlyJourney()?.id,
@@ -265,7 +265,7 @@ export const createJourneyController = function createJourneyController(
 /**
  * Wrap a transport so each `init` context carries the journey and each save
  * carries it as it leaves. Methods are read from `transport` on every call,
- * so a host that swaps one in place (React's early `/init`) still reaches
+ * so a host that swaps one in place (React's early `/v1/consent/init`) still reaches
  * the swapped method. Methods the transport lacks stay absent.
  *
  * @internal
@@ -279,7 +279,7 @@ export const withJourney = function withJourney(
 		wrapped.init = (ctx) => {
 			// Read when the request is built, not now: a streamed prefetch can
 			// hand over the server's journey while this init waits for it, and
-			// the `/init` it falls back to must carry the id the save will.
+			// the `/v1/consent/init` it falls back to must carry the id the save will.
 			const next = { ...ctx };
 			Object.defineProperty(next, 'journey', {
 				configurable: true,

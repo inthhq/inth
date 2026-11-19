@@ -1,6 +1,6 @@
 /**
- * A consent backend for the examples: `/manifest`, `/init`, `/subjects`
- * and the script-tag build at `/inth.js`.
+ * A consent backend for the examples: the `/v1` consent routes and the
+ * script-tag build at `/inth.js`.
  *
  * The manifest comes from the measured checkout's own
  * `buildBrowserBenchManifest()`, so its schema and the example's runtime
@@ -19,7 +19,7 @@ export interface FixtureBackend {
 	url: string;
 	manifest: unknown;
 	init: unknown;
-	/** Requests per endpoint since the last reset, keyed `GET /init`. */
+	/** Requests per endpoint since the last reset, keyed `GET /v1/consent/init`. */
 	counts: () => Record<string, number>;
 	reset: () => void;
 	close: () => Promise<void>;
@@ -42,6 +42,9 @@ interface PolicyFixturesModule {
  * is configured for the origin the page asked for.
  */
 export const PUBLIC_ORIGIN_HEADER = 'x-examples-payload-origin';
+
+const FIXTURE_SUBJECT_ID = '019a0000-0000-7000-8000-000000000001';
+const FIXTURE_RECORD_ID = '019a0000-0000-7000-8000-000000000002';
 
 /**
  * The configuration `@c15t/backend` puts in front of the full script-tag
@@ -160,8 +163,8 @@ export const startFixtureBackend = async function startFixtureBackend(
 			response.end();
 			return;
 		}
-		const key = path.startsWith('/subjects/')
-			? `${method} /subjects/:id`
+		const key = path.startsWith('/v1/subjects/')
+			? `${method} /v1/subjects/:id/link`
 			: `${method} ${path}`;
 		counts[key] = (counts[key] ?? 0) + 1;
 		if (method === 'GET' && /\.(?:js|css)$/u.test(path)) {
@@ -171,32 +174,31 @@ export const startFixtureBackend = async function startFixtureBackend(
 		if (options.latencyMs > 0) {
 			await sleep(options.latencyMs);
 		}
-		if (path === '/manifest' && method === 'GET') {
+		if (path === '/v1/consent/manifest' && method === 'GET') {
 			json(request, response, 200, manifest, 'public, max-age=60');
 			return;
 		}
-		if (path === '/init') {
+		if (path === '/v1/consent/init') {
 			json(request, response, 200, init);
 			return;
 		}
-		if (path === '/subjects' && method === 'POST') {
+		if (path === '/v1/consent/records' && method === 'POST') {
 			const body = (JSON.parse((await readBody(request)) || '{}') ?? {}) as {
 				subjectId?: string;
 			};
+			// A `sub_` ID is answered with the subject's UUID, as the backend does.
 			json(request, response, 200, {
-				ok: true,
-				subjectId: body.subjectId ?? 'examples-payload-subject',
+				recordId: FIXTURE_RECORD_ID,
+				subjectId:
+					body.subjectId && !body.subjectId.startsWith('sub_')
+						? body.subjectId
+						: FIXTURE_SUBJECT_ID,
 			});
 			return;
 		}
-		if (path.startsWith('/subjects/')) {
-			// No stored record: a fresh visitor.
-			if (method === 'GET') {
-				json(request, response, 404, { error: 'not found' });
-				return;
-			}
+		if (path.startsWith('/v1/subjects/') && method === 'POST') {
 			await readBody(request);
-			json(request, response, 200, { ok: true });
+			json(request, response, 200, {});
 			return;
 		}
 		json(request, response, 404, { error: `no fixture for ${key}` });

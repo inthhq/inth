@@ -23,13 +23,13 @@ export interface SSRInitRequestMetadata {
 	/**
 	 * The consent journey the early request carried, or `null` for none.
 	 * Absent when the producer does not say; a runtime whose journey differs
-	 * sends its own `/init` instead.
+	 * sends its own `/v1/consent/init` instead.
 	 */
 	journey?: KernelJourney | null;
 	/**
 	 * The experiment arm the early request carried, or `null` for none.
 	 * Absent when the producer does not say; a runtime whose arm differs
-	 * sends its own `/init` instead.
+	 * sends its own `/v1/consent/init` instead.
 	 */
 	experiment?: InitContext['experiment'] | null;
 	requestDurationMs?: number;

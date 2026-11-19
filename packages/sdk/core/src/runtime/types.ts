@@ -122,7 +122,7 @@ export type RuntimePersistenceOptions = Omit<PersistenceOptions, 'kernel'>;
  * IAB TCF configuration accepted by {@link ConsentRuntimeOptions}.
  *
  * Every field is optional: a hosted backend can supply `cmpId`,
- * `customVendors` and the GVL through `/init`, so the runtime falls back to
+ * `customVendors` and the GVL through `/v1/consent/init`, so the runtime falls back to
  * the kernel snapshot for anything omitted here. Pass `false` to disable.
  */
 export type RuntimeIABOptions =
@@ -442,7 +442,7 @@ export interface ConsentRuntimeOptions {
 	 * - Omitted, or `hosted()` from `@inth/sdk/engine`: ask `${projectUrl}/v1/consent/init`.
 	 * - `manifest()` from `@inth/sdk/transports/manifest-browser`: resolve
 	 *   from the backend's consent manifest in the browser, falling back to
-	 *   `/init` with a warning when the manifest is unavailable.
+	 *   `/v1/consent/init` with a warning when the manifest is unavailable.
 	 * - `testing()` from `@inth/sdk/testing`: resolve a policy with no
 	 *   backend, for tests. It throws in production builds.
 	 *
@@ -489,7 +489,7 @@ export interface ConsentRuntimeOptions {
 	 * Server-prefetched kernel configuration, for SSR without a flash. An
 	 * `experiment` the server resolved runs instead of the `experiment`
 	 * option. With a resolved policy, `start()` adopts it instead of sending
-	 * the `/init` request. The provider runtime also accepts a promise.
+	 * the `/v1/consent/init` request. The provider runtime also accepts a promise.
 	 */
 	prefetch?: RuntimePrefetch;
 	/** Host presentation, separate from policy semantics. */
@@ -501,7 +501,7 @@ export interface ConsentRuntimeOptions {
 	 */
 	experiment?: ConsentExperiment;
 	/**
-	 * Random journey id that links each page load's `/init` to the save that
+	 * Random journey id that links each page load's `/v1/consent/init` to the save that
 	 * follows: `'page'` (memory), `'tab'` (`sessionStorage` while a prompt is
 	 * due) or `false`. Initial-only.
 	 *
@@ -532,7 +532,7 @@ export interface ConsentRuntimeOptions {
 	 * Each vendor sits inside a category. A subject can grant the category
 	 * and still turn one vendor off; scripts, network rules and iframes that
 	 * name the vendor through `vendor` / `data-vendor` then stay blocked.
-	 * Declarations merge with vendors the backend returns from `/init` and
+	 * Declarations merge with vendors the backend returns from `/v1/consent/init` and
 	 * with slugs found on scripts and rules. Presentation declared here wins
 	 * over the backend's. Unrelated to `iab.vendors` and `iab.customVendors`,
 	 * which speak the TCF vocabulary and only matter under an `iab` policy.
@@ -707,7 +707,7 @@ export interface ConsentRuntime {
 	 * Idempotent, and a no-op when there is no `document` — call it
 	 * unconditionally from a mount hook. Calling it before the first render
 	 * is fine when there is no server-rendered markup to hydrate (a client-
-	 * only app): the `/init` request then overlaps the mount instead of
+	 * only app): the `/v1/consent/init` request then overlaps the mount instead of
 	 * waiting for it, and nothing blocks the render. With server markup,
 	 * call it after hydration so the first client render matches the server.
 	 */

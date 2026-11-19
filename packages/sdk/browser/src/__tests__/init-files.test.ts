@@ -28,7 +28,7 @@ const loaded = (file: string) =>
 const target = window as unknown as Record<string, unknown>;
 
 beforeEach(() => {
-	// `/init` never answers: only what happens before it matters here.
+	// `/v1/consent/init` never answers: only what happens before it matters here.
 	vi.stubGlobal(
 		'fetch',
 		vi.fn(

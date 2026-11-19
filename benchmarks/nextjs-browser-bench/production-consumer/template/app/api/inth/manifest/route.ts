@@ -9,8 +9,8 @@ import { after } from 'next/server';
 export const GET = (request: Request) => {
 	const token = new URL(request.url).searchParams.get('cold');
 	const upstream = token
-		? `/api/bench-consent/manifest?cold=${encodeURIComponent(token)}`
-		: '/api/bench-consent/manifest';
+		? `/api/bench-consent/v1/consent/manifest?cold=${encodeURIComponent(token)}`
+		: '/api/bench-consent/v1/consent/manifest';
 	return createConsentRoute({
 		manifestUrl: upstream,
 		onBackgroundRevalidate: (refresh) => after(() => refresh),

@@ -20,8 +20,8 @@ export interface NuxtConsentModeConfig {
 	 * - Omitted, or `manifest()` from `@inth/vue`: resolve from the
 	 *   backend's consent manifest, which the build downloads. When it is
 	 *   unavailable, the server and the consent route ask the backend's
-	 *   `/init` and log a warning.
-	 * - `hosted()` from `@inth/vue`: ask the backend's `/init` for every
+	 *   `/v1/consent/init` and log a warning.
+	 * - `hosted()` from `@inth/vue`: ask the backend's `/v1/consent/init` for every
 	 *   visitor.
 	 * - `testing()` from `@inth/vue/testing`: the browser resolves a policy
 	 *   with no network, for tests. Needs no `projectUrl`, and throws in
@@ -49,7 +49,7 @@ const trimTrailingSlashes = function trimTrailingSlashes(path: string): string {
 /** The hosted backend, with the headers the server forwards. @internal */
 export interface NuxtHostedMode {
 	type: 'hosted';
-	/** Consent headers forwarded to `/init`. */
+	/** Consent headers forwarded to `/v1/consent/init`. */
 	headers?: Record<string, string>;
 }
 

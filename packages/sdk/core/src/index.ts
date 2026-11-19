@@ -55,10 +55,6 @@ export {
 	registerIABControls,
 	subscribeIABControls,
 } from './modules/iab-controls';
-export {
-	generateSubjectId,
-	isValidSubjectId,
-} from './libs/generate-subject-id';
 export type {
 	InthWindowDebug,
 	WindowDebugHandle,
@@ -75,8 +71,6 @@ export type {
 	GvlCache,
 } from './transports/gvl-cache';
 export { clearGvlCache, fetchCachedGvl } from './transports/gvl-cache';
-export type { HostedTransportOptions } from './transports/hosted';
-export { createHostedTransport } from './transports/hosted';
 export type {
 	InthApiErrorCode,
 	InthApiErrorDetail,
@@ -88,12 +82,6 @@ export type {
 } from './transports/v1/hosted';
 export { createV1HostedTransport } from './transports/v1/hosted';
 export { InthApiSaveRejectedError } from './transports/v1/save-rejected';
-export type {
-	HostedRecordTransport,
-	HostedRecordTransportOptions,
-} from './transports/hosted-records';
-export { createHostedRecordTransport } from './transports/hosted-records';
-export type { HostedInitRequest } from './transports/hosted-init-request';
 export {
 	ConsentSaveRejectedError,
 	isConsentSaveRejection,
@@ -123,14 +111,6 @@ export type {
 } from './modes';
 export { hosted } from './modes';
 export type { ConsentTesting } from './transports/testing';
-export { buildSubjectPostBody } from './transports/subject-body';
-export {
-	INTH_POLICY_CONTRACT_HEADER,
-	INTH_VERSION_HEADER,
-	inthProtocolHeaders,
-	inthProtocolParams,
-	inthVersionHeaders,
-} from './libs/version-header';
 export type {
 	AdTechProvider,
 	ConfirmedCoverage,

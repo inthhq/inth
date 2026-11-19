@@ -153,7 +153,7 @@ export const detectJourneyOption = function detectJourneyOption(
 
 /**
  * Window property holding the journey an early request (React's early
- * `/init`, the inline prefetch script) sent, for the runtime to continue.
+ * `/v1/consent/init`, the inline prefetch script) sent, for the runtime to continue.
  */
 export const JOURNEY_WINDOW_KEY = '__inthJourney';
 
@@ -257,7 +257,7 @@ export const hasStoredConsentRecord = function hasStoredConsentRecord(
 export const createUnreportedJourneys = function createUnreportedJourneys() {
 	const ids = new Set<string>();
 	return {
-		/** An init carried this journey in a request (an `/init` or a report). */
+		/** An init carried this journey in a request (a `/v1/consent/init` or a report). */
 		reported(journey: Pick<KernelJourney, 'id'> | undefined): void {
 			if (journey) {
 				ids.delete(journey.id);

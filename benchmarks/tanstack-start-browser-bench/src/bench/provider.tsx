@@ -2,7 +2,7 @@
 // the dependency graph used by baseline comparisons.
 import { IABProvider, IABConsentBanner } from '@inth/react/iab';
 import { hosted } from '@inth/sdk/engine';
-import { createManifestTransport } from '@inth/sdk/transports/manifest';
+import { createV1ManifestTransport } from '@inth/sdk/transports/manifest';
 import {
 	ConsentBanner,
 	ConsentDialog,
@@ -123,7 +123,7 @@ export const TanstackManifestClientBenchmarkProvider = ({
 }) => {
 	const transport = useMemo(
 		() =>
-			createManifestTransport({
+			createV1ManifestTransport({
 				manifestUrl: '/api/inth/manifest',
 				projectUrl: BENCH_BACKEND_URL,
 			}),

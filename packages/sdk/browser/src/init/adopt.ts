@@ -15,7 +15,7 @@ import { readHostedMarker } from './hosted-marker';
 
 let adopted: InitBoot | null = null;
 
-/** Whether the client was given the init script's `/init` answer. */
+/** Whether the client was given the init script's `/v1/consent/init` answer. */
 let startedFromInit = false;
 
 const dropInitUI = function dropInitUI(boot: InitBoot): void {
@@ -89,9 +89,9 @@ export const adoptedBoot = function adoptedBoot(): InitBoot | null {
 };
 
 /**
- * `options` with the `/init` answer the init script read as `prefetch`,
+ * `options` with the `/v1/consent/init` answer the init script read as `prefetch`,
  * when they send the same request: the engine then starts with the policy
- * and sends no `/init` of its own. Evaluated now, after any choice the
+ * and sends no `/v1/consent/init` of its own. Evaluated now, after any choice the
  * init script stored.
  *
  * @internal

@@ -1,5 +1,5 @@
 /**
- * The init script's copy: the `/init` answer's translations, with no
+ * The init script's copy: the `/v1/consent/init` answer's translations, with no
  * bundled fallback.
  *
  * The engine's banner fills keys the answer lacks with bundled English

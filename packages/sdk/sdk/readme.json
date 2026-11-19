@@ -3,7 +3,7 @@
 	"description": "The consent engine, the vanilla JavaScript client, the script-tag builds, UI styles, translations and IAB TCF support. Framework packages such as `@inth/react` and `@inth/vue` build on it. Install it directly for a site without a UI framework, or to load the script-tag build from a CDN.",
 	"prerequisites": [
 		"Node.js 20.19 or later for a bundled app",
-		"An [Inth project](https://inth.com) (free sign-up), a [self-hosted backend](https://c15t.com/docs/self-host/quickstart), or local mode for development and tests"
+		"An [Inth project](https://inth.com) (free sign-up), or `testing()` for development and tests"
 	],
 	"usage": [
 		"Start the client with the project URL from your Inth project",

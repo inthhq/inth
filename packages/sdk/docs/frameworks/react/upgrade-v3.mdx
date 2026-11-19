@@ -71,7 +71,7 @@ a transport as `mode`:
 | --- | --- |
 | `mode: 'hosted'` with `backendURL` | `mode: hosted({ backendURL })` |
 | `mode: 'offline'` with `offlinePolicy` | `mode: local({ policyRules })` |
-| `mode: 'custom'` with `endpointHandlers` | `mode: custom(transport)`, where `transport` implements the v3 transport interface. `endpointHandlers` throws. |
+| `mode: 'custom'` with `endpointHandlers` | No equivalent. Point the provider at your Inth project, which records each choice. `endpointHandlers` throws. |
 
 {/* example: fragment */}
 
@@ -97,7 +97,7 @@ Keep your backend URL. An existing hosted URL such as
 `https://your-project.c15t.dev` keeps working with v3 clients. New Inth
 projects use URLs such as `https://your-project.inth.app`. The
 [React quickstart](/docs/frameworks/react/quickstart) shows the full provider,
-and [data fetching](/docs/concepts/data-fetching) covers custom transports.
+and [data fetching](/docs/concepts/data-fetching) covers what each mode sends.
 
 The quickstart keeps `hosted()` and adds `consentManifest()` from
 `@inth/react/build` to `vite.config.ts`. `hosted()` then reads the backend URL from

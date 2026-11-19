@@ -1,6 +1,6 @@
 /**
  * `offline()` from the plugin entry resolves the policy in the browser with
- * no backend. Its init names the location it resolved for, as `/init` does,
+ * no backend. Its init names the location it resolved for, as `/v1/consent/init` does,
  * so the dialog, which waits for the init's display data, has its copy.
  */
 import { flushPromises, mount } from '@vue/test-utils';

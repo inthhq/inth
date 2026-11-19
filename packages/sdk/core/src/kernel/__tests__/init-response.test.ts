@@ -1,5 +1,5 @@
 /**
- * How `init()` folds a complete `/init` response into the snapshot, seen
+ * How `init()` folds a complete `/v1/consent/init` response into the snapshot, seen
  * through the kernel interface.
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';

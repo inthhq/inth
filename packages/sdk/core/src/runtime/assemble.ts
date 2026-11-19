@@ -73,7 +73,7 @@ export interface AssembledRuntime {
  *
  * Records a server read from the request cookie are the seed: persistence
  * then applies only newer stored denials over them. A prefetch that names
- * nothing but a subject (an `/init` answer's `subjectId`) read no records,
+ * nothing but a subject (a `/v1/consent/init` answer's `subjectId`) read no records,
  * so storage hydrates the kernel as it would without a prefetch.
  */
 const isRecordSeed = function isRecordSeed(

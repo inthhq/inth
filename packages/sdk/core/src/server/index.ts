@@ -2,12 +2,12 @@
  * `@inth/sdk/server` — server-only helpers shared by host framework layers.
  *
  * Nothing here touches the DOM or the kernel. The consent route handler
- * (`createConsentRouteHandler`) answers `/manifest` and `/init` for every
+ * (`createConsentRouteHandler`) answers `/v1/consent/manifest` and `/v1/consent/init` for every
  * host integration (Next.js, Nuxt, SvelteKit, Astro, TanStack Start), and
  * `resolveRequestConsent` / `readRequestConsent` resolve the consent state a
  * server render hands the client, `fetchRequestInit` returns a hosted
- * `/init` answer as received, and `fetchCachedManifest` is the one
- * process cache for the backend's manifest. Resolving `/init` from a
+ * `/v1/consent/init` answer as received, and `fetchCachedManifest` is the one
+ * process cache for the backend's manifest. Resolving `/v1/consent/init` from a
  * manifest, which imports every translation, is at
  * `@inth/sdk/transports/manifest-cache`.
  *

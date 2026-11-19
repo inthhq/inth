@@ -3,7 +3,7 @@
  * assert which policy it was made against.
  *
  * Shared by the hosted and manifest transports. A backend that resolves
- * `/init` itself normally signs the decision into `policySnapshotToken`;
+ * `/v1/consent/init` itself normally signs the decision into `policySnapshotToken`;
  * manifest resolution never issues a token, so these inputs are the only
  * evidence the backend has to reject a save made against a stale policy.
  */

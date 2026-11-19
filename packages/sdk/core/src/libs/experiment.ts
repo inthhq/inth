@@ -4,7 +4,7 @@
  * The host's own `presentation` is the `control` arm. Every other arm is a
  * {@link ConsentPresentation} fragment merged over it. The host passes the
  * arm its feature-flag provider resolved, or a `split` for Inth to pick
- * one. The arm goes out with `/init` and is recorded on the choices of
+ * one. The arm goes out with `/v1/consent/init` and is recorded on the choices of
  * visitors the banner showed it to, so a dashboard can compare opt-in
  * rates per arm. Arms vary presentation and theme tokens only; policy
  * semantics and copy are untouched.
@@ -189,7 +189,7 @@ export interface ExperimentAssignment {
 
 /**
  * An experiment with the arm a server resolved for one request, for a server
- * helper such as `resolveConsent`. The helper counts the arm through `/init`
+ * helper such as `resolveConsent`. The helper counts the arm through `/v1/consent/init`
  * and returns the whole experiment in its state, so the client runs the
  * same definition and arm without configuring it again.
  */
@@ -218,7 +218,7 @@ export const hostExperiment = function hostExperiment(
 };
 
 /**
- * The `{ id, arm }` a server sends with `/init`: the arm alone, never the
+ * The `{ id, arm }` a server sends with `/v1/consent/init`: the arm alone, never the
  * presentation each arm carries.
  */
 export const experimentArmRef = function experimentArmRef(
@@ -332,7 +332,7 @@ export const pickExperimentArm = function pickExperimentArm(
 };
 
 /**
- * The arm Inth starts from: the one this page's early `/init` picked, else
+ * The arm Inth starts from: the one this page's early `/v1/consent/init` picked, else
  * the one this browser stored. Either only when it is an arm of
  * `experiment`.
  */
@@ -449,8 +449,8 @@ export interface StartExperimentOptions {
  * Run the experiment on a started runtime. Call it after hydration and
  * before `init()`.
  *
- * When Inth picks the arm, it does so here, synchronously, so the `/init`
- * that follows already carries it. An arm this page's early `/init` sent
+ * When Inth picks the arm, it does so here, synchronously, so the `/v1/consent/init`
+ * that follows already carries it. An arm this page's early `/v1/consent/init` sent
  * wins, so the banner runs the arm that request counted. Then the controller loads as its own
  * chunk, checks the arm against the visitor's policy and releases the held
  * prompt. A site pays for the controller only when it runs an experiment.

@@ -1,6 +1,6 @@
 /**
  * In the browser, a hosted `ConsentProvider` with nothing prefetched sends
- * `/init` from its first render. A server render must not: the request
+ * `/v1/consent/init` from its first render. A server render must not: the request
  * belongs to the visitor's browser, and a server has no runtime to apply
  * the answer to.
  */

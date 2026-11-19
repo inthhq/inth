@@ -59,7 +59,7 @@ export const loadConsentBanner = () => import('./prompt.vue');
 export const LazyConsentBanner = defineAsyncComponent({
 	// The root renders the banner component on every page (it decides its
 	// own visibility), so the chunk starts loading with the app's first
-	// render, not after `/init`.
+	// render, not after `/v1/consent/init`.
 	loader: loadConsentBanner,
 	// Outside Nuxt's root `<Suspense>`: the app mounts and hydrates without
 	// waiting for the banner chunk and its stylesheets. Server-rendered

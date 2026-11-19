@@ -2,7 +2,7 @@
  * `@inth/sdk/transports/offline` — pure client-side transport.
  *
  * Synthesizes an `InitResponse` from local policy rules + translations.
- * No network. Same response shape as `createHostedTransport`, so
+ * No network. Same response shape as `createV1HostedTransport`, so
  * consumers can swap transports without touching the kernel or adapter.
  *
  * Policy comes from `policyRules`, or the recommended pack when the caller

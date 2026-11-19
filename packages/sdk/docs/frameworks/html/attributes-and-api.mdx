@@ -15,8 +15,7 @@ group: frameworks
 
 ## Script files
 
-`@inth/sdk` publishes browser bundles. Inth and a self-hosted Inth
-backend serve `inth.js`, `inth.headless.js` and `inth.iab.js` from the
+`@inth/sdk` publishes browser bundles. Inth projects serve `inth.js`, `inth.headless.js` and `inth.iab.js` from the
 backend's URL, such as `https://your-project.inth.app/inth.js`, with the
 backend URL already configured. Headless and IAB routes also inline the
 policy manifest. Load a file from
@@ -176,7 +175,7 @@ the call queue, `data-manual` and the page hooks described below.
 
 | Attribute | What it does |
 | --- | --- |
-| `data-project-url` | Your Inth or self-hosted backend URL. Selects hosted mode. |
+| `data-project-url` | Your Inth project URL. Selects hosted mode. |
 | `data-mode` | Optional `hosted`. Headless and IAB also accept `manifest`; without it, they pick `manifest` when a manifest URL is set and `hosted` otherwise. Headless and IAB ignore unknown values; `inth.js` rejects them. |
 | `data-manifest-url` | Where headless or IAB fetches the policy manifest in manifest mode. See [choose a mode](#choose-a-mode). |
 | `data-policy` | `inth.testing.js` only. Comma-separated policy presets, such as `europeOptIn,usPrivacyStatesOptOut,worldNone`. Any name exported by `policyRulePresets` works; an unknown name throws. Without it, the recommended rules. [Policies](/docs/concepts/policies) describes the presets. |

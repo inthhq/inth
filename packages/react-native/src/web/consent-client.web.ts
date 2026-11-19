@@ -28,7 +28,7 @@ import type {
 } from '@inth/sdk/engine';
 import { createConsentRuntime } from '@inth/sdk/runtime';
 import type { ConsentRuntime, ConsentRuntimeOptions } from '@inth/sdk/runtime';
-import { createV1HostedTransport, custom, hosted } from '@inth/sdk/transports';
+import { createV1HostedTransport, hosted } from '@inth/sdk/transports';
 
 import { normalizeProjectUrl } from '../expo-plugin/project-url';
 import { denyAllSnapshot } from '../lib/deny-all-snapshot';
@@ -129,7 +129,7 @@ interface ClientState {
 }
 
 /**
- * The transport for `dryRun`: the project's real `/init`, and nothing sent.
+ * The transport for `dryRun`: the project's real init, and nothing sent.
  *
  * Native dry runs drop each consent record instead of queueing it, and
  * identity calls change local state only. The hosted transport is kept for
@@ -152,7 +152,7 @@ const dryRunMode = function dryRunMode(
 		save: (payload) =>
 			Promise.resolve({ ok: true, subjectId: payload.subjectId }),
 	};
-	return custom(dropping);
+	return Object.assign(() => dropping, { kind: 'custom' as const });
 };
 
 /** The resolution as the snapshot carries it: the kernel's, without the rule. */

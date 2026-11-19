@@ -2,7 +2,7 @@
  * Errors for a backend response that is not ok.
  *
  * A backend that refuses a request usually says why in a JSON body:
- * `{ message, code }`, or Inth's own `{ message, cause: { code, reason } }`.
+ * `{ message, code }`, or `{ message, cause: { code } }`.
  * These helpers read that body so the error says what the backend said,
  * not only the status. Over HTTP/2 `statusText` is empty, so without the
  * body an error reads `responded 429 ` and nothing more.
@@ -17,18 +17,12 @@ const BODY_TIMEOUT_MS = 2000;
 /** Longest backend message an error carries. */
 const MAX_MESSAGE_LENGTH = 500;
 
-/**
- * What a failed response's body said, when it said anything readable.
- *
- * @internal
- */
-export interface FailedResponseDetail {
+/** What a failed response's body said, when it said anything readable. */
+interface FailedResponseDetail {
 	/** `cause.code`, else the top-level `code`. */
 	code?: string;
 	/** The top-level `message`, cut to a bounded length. */
 	message?: string;
-	/** `cause.reason`. */
-	reason?: string;
 }
 
 /**
@@ -102,10 +96,9 @@ const readText = async function readText(response: Response): Promise<string> {
  * that is not JSON, or JSON without these fields, yields `{}`.
  *
  * @param response - The response that is not ok. Its body is consumed.
- * @returns The backend's message, code and reason, where present.
- * @internal
+ * @returns The backend's message and code, where present.
  */
-export const readFailedResponse = async function readFailedResponse(
+const readFailedResponse = async function readFailedResponse(
 	response: Response
 ): Promise<FailedResponseDetail> {
 	let parsed: unknown;
@@ -118,7 +111,7 @@ export const readFailedResponse = async function readFailedResponse(
 		return {};
 	}
 	const body = parsed as {
-		cause?: { code?: unknown; reason?: unknown } | null;
+		cause?: { code?: unknown } | null;
 		code?: unknown;
 		message?: unknown;
 	};
@@ -138,10 +131,6 @@ export const readFailedResponse = async function readFailedResponse(
 				? `${message.slice(0, MAX_MESSAGE_LENGTH - 1)}…`
 				: message;
 	}
-	const reason = readNonEmptyString(cause?.reason);
-	if (reason) {
-		detail.reason = reason;
-	}
 	return detail;
 };
 
@@ -151,11 +140,10 @@ export const readFailedResponse = async function readFailedResponse(
  * status text as before.
  *
  * @param prefix - Names the caller and route, such as
- * `inth hosted transport: /init`.
+ * `inth manifest: /v1/consent/manifest`.
  * @param detail - What {@link readFailedResponse} read from its body.
- * @internal
  */
-export const describeFailedResponse = function describeFailedResponse(
+const describeFailedResponse = function describeFailedResponse(
 	prefix: string,
 	response: Response,
 	detail: FailedResponseDetail
@@ -172,16 +160,16 @@ export const describeFailedResponse = function describeFailedResponse(
  * backend's message and code.
  *
  * @param prefix - Names the caller and route, such as
- * `inth hosted transport: /init`.
+ * `inth manifest: /v1/consent/manifest`.
  * @param response - The response that is not ok. Its body is consumed.
  * @returns An `Error` carrying `status`, and `code` when the body had one.
  * @example
  * ```ts
  * if (!response.ok) {
- *   throw await failedResponseError('inth hosted transport: /init', response);
+ *   throw await failedResponseError('inth manifest: /v1/consent/manifest', response);
  * }
- * // Inth hosted transport: /init responded 402: Your plan is out of
- * // consent sessions. (CONSENT_SESSIONS_EXHAUSTED)
+ * // inth manifest: /v1/consent/manifest responded 429: Slow down.
+ * // (rate_limited)
  * ```
  * @internal
  */

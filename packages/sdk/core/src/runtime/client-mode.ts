@@ -12,7 +12,7 @@ import { isProductionBuild } from '../libs/is-production';
  * - `hosted()` and `manifest()` (the default) resolved on the server
  *   statically include only the hosted record transport and the
  *   init-request builder. A re-init loads the hosted transport with
- *   `import()` and sends its first `/init` alongside the chunk request.
+ *   `import()` and sends its first `/v1/consent/init` alongside the chunk request.
  * - `manifest({ resolve: 'browser' })` loads the browser resolver with
  *   `import()`, starting when the transport is built, alongside the
  *   manifest request.
@@ -62,7 +62,7 @@ export interface ClientModeOptions {
 	 * An init response already requested, such as by an inline prefetch
 	 * script that ran before hydration. A server-resolved `manifest()` or
 	 * the hosted backend answers its first init with it instead of sending
-	 * `/init`.
+	 * `/v1/consent/init`.
 	 */
 	initialData?: Promise<SSRInitialData | undefined>;
 }
@@ -233,14 +233,14 @@ export interface LazyHostedOptions {
 	kind?: ProviderTransportKind;
 	/**
 	 * An init response already requested. The first init reads it and sends
-	 * no `/init` of its own.
+	 * no `/v1/consent/init` of its own.
 	 */
 	initialData?: Promise<SSRInitialData | undefined>;
 }
 
 /**
  * Sends the first init request while the hosted transport's chunk loads,
- * so the chunk and `/init` travel in the same round trip. The request is
+ * so the chunk and `/v1/consent/init` travel in the same round trip. The request is
  * the one the loaded transport builds. Skipped on the server, without
  * `fetch`, with init headers (the loaded transport filters them), and when
  * an inline prefetch script already requested init, which the loaded
@@ -275,7 +275,7 @@ const startEarlyInit = function startEarlyInit(
  * Hosted transport for a client root. Saves and the other record requests
  * go out at once through the record transport; the init path loads on the
  * first init, which a root with server-resolved state only runs when the
- * provider re-initializes. That first init's `/init` request goes out
+ * provider re-initializes. That first init's `/v1/consent/init` request goes out
  * alongside the chunk request, and the loaded transport reads its response.
  *
  * With `assertDecisionInputs`, a save that carries no decision inputs of its
@@ -505,7 +505,7 @@ let warnedImplementation = false;
  * none, the root uses manifest mode, the default of every server
  * framework: the server resolves from the manifest and a browser re-init
  * goes through the consent route, which falls back to the backend's
- * `/init` when the manifest is unavailable. A transport factory is
+ * `/v1/consent/init` when the manifest is unavailable. A transport factory is
  * returned unchanged; in development it warns once, because its code is
  * now in the client bundle.
  *

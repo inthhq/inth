@@ -181,7 +181,7 @@ const readCatchAllPath = async function readCatchAllPath(
 
 /**
  * Build the handlers for one catch-all consent route,
- * `app/api/inth/[...inth]/route.ts`. `GET` serves `/manifest` and `/init`;
+ * `app/api/inth/[...inth]/route.ts`. `GET` serves `/v1/consent/manifest` and `/v1/consent/init`;
  * every other path answers 404 unless `proxy` forwards it to the backend.
  *
  * Set `routePrefix: '/api/inth'` in `inth.config.ts` so a browser that

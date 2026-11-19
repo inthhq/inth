@@ -36,7 +36,7 @@ import type {
 export const manifest = function manifest(
 	options: BrowserManifestOptions = {}
 ): BrowserManifestModeFactory {
-	// `ConsentProvider` may send the first `/init` during its first render
+	// `ConsentProvider` may send the first `/v1/consent/init` during its first render
 	// when the snapshot can't answer for an unknown location.
 	return withEarlyInit(
 		browserManifest(

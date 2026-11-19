@@ -168,8 +168,8 @@ page after a save turns off something that was allowed. It returns a
 disposer.
 
 `createConsentKernel(config)` takes a `transport`, not a transport factory.
-Use `createHostedTransport({ projectUrl })` or `createOfflineTransport()`
-from `@inth/sdk/engine`, or your own object with `init` and `save`. Other useful config
+Use `createV1HostedTransport({ projectUrl })` or `createOfflineTransport()`
+from `@inth/sdk/transports`. Other useful config
 fields:
 
 | Field | What it does |

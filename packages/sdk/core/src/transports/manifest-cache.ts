@@ -1,5 +1,5 @@
 /**
- * Resolve `/init` locally from the backend's consent manifest, for server
+ * Resolve `/v1/consent/init` locally from the backend's consent manifest, for server
  * adapters that render from a cached manifest (Nuxt, TanStack Start).
  *
  * The manifest itself is read through the one process cache,
@@ -88,7 +88,7 @@ export type ResolveManifestInitOptions =
 /**
  * Resolves a `GET /v1/consent/init` response locally from a manifest.
  *
- * Mirrors what the backend's `/init` returns, minus a `policySnapshotToken`:
+ * Mirrors what the backend's `/v1/consent/init` returns, minus a `policySnapshotToken`:
  * pair it with `hosted({ assertDecisionInputs: true })` on the client so saves
  * stay bound to the decision they were made against.
  *

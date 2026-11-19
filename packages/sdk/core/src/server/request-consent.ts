@@ -11,9 +11,9 @@
  *    language and GPC through the one shared extractor, so every adapter
  *    reads `x-inth-gpc` before `sec-gpc` and leaves an absent signal
  *    `undefined`.
- * 2. **Mode.** An inline manifest or a manifest URL resolves `/init`
+ * 2. **Mode.** An inline manifest or a manifest URL resolves `/v1/consent/init`
  *    locally with {@link resolveConsentInit}; hosted mode asks a backend
- *    `/init`; offline mode resolves bundled policy rules.
+ *    `/v1/consent/init`; offline mode resolves bundled policy rules.
  * 3. **Target.** A relative URL resolves against the request with the one
  *    trust rule in `request-origin.ts`. A render never fetches the app's own
  *    consent routes over the network (the self-route guard); an adapter
@@ -256,7 +256,7 @@ export interface ResolveRequestConsentOptions {
 	 */
 	manifestFetchInit?: Omit<RequestInit, 'headers' | 'method'>;
 	/**
-	 * Consent request headers configured on the browser's own `/init`
+	 * Consent request headers configured on the browser's own `/v1/consent/init`
 	 * (`x-inth-country`, ...), applied to the hosted request so server and
 	 * browser resolve one policy. Anything outside the consent request
 	 * headers is ignored.
@@ -281,7 +281,7 @@ export interface ResolveRequestConsentOptions {
 	forwardHeaders?: readonly string[];
 	/**
 	 * Manifest mode: cookies to send with the manifest request, for a
-	 * backend that gates `/manifest` on one. None by default.
+	 * backend that gates `/v1/consent/manifest` on one. None by default.
 	 */
 	cookieNames?: readonly string[];
 	/**
@@ -317,7 +317,7 @@ export interface ResolveRequestConsentOptions {
 	journey?: ConsentJourneyOption;
 	/**
 	 * The banner experiment with this request's arm. While the visitor has
-	 * no stored choice, the hosted `/init` or the session report carries the
+	 * no stored choice, the hosted `/v1/consent/init` or the session report carries the
 	 * arm. The state carries the experiment either way, except in a shared
 	 * render.
 	 */
@@ -555,7 +555,7 @@ interface InitRequestRules {
 
 /**
  * {@link resolveRequestConsent}, telling `onHostedAnswer` what a hosted
- * `/init` answered.
+ * `/v1/consent/init` answered.
  */
 const resolveRequest = async function resolveRequest(
 	options: ResolveRequestConsentOptions,
@@ -746,7 +746,7 @@ const resolveRequest = async function resolveRequest(
 
 	/** The manifest through the process cache, and what was sent for it. */
 	// The manifest URL the last read failed on: only that failure falls
-	// back to `/init`, not a missing or misconfigured source.
+	// back to `/v1/consent/init`, not a missing or misconfigured source.
 	let manifestSource: string | undefined;
 	let unavailableManifest: string | undefined;
 	const loadManifest = async function loadManifest(): Promise<{
@@ -889,7 +889,7 @@ const resolveRequest = async function resolveRequest(
 	};
 
 	/**
-	 * A network `/init` names the page's origin, as the browser's own would,
+	 * A network `/v1/consent/init` names the page's origin, as the browser's own would,
 	 * so the backend's session report gets the journey's domain. An Origin
 	 * the request already sets is kept, and an in-process route reads the
 	 * host from the request itself.
@@ -969,7 +969,7 @@ const resolveRequest = async function resolveRequest(
 			}
 			const init: RequestInit = { cache: 'no-store', headers, method: 'GET' };
 			if (left !== undefined) {
-				// `/init` answers one visitor and is never cached, so a request the
+				// `/v1/consent/init` answers one visitor and is never cached, so a request the
 				// render gave up on has nothing left to deliver. An in-process
 				// route reads the abort as "the render went away" and leaves the
 				// session report to the browser's own init.
@@ -978,7 +978,7 @@ const resolveRequest = async function resolveRequest(
 			let response: Response;
 			let payload: InitOutput;
 			try {
-				// The backend's own session report for this `/init` then carries
+				// The backend's own session report for this `/v1/consent/init` then carries
 				// the journey. The deferred list below keeps the plain URL.
 				response = await target.fetch(
 					journey ? appendJourneyParams(target.url, journey) : target.url,
@@ -1001,7 +1001,7 @@ const resolveRequest = async function resolveRequest(
 				responseHeaders: response.headers,
 				url: target.url,
 			});
-			// A reference makes the browser ask the same `/init` for the list;
+			// A reference makes the browser ask the same `/v1/consent/init` for the list;
 			// it cannot replay a caller's fetch, cookie or private headers.
 			const deferred =
 				options.fetch || identifying
@@ -1026,7 +1026,7 @@ const resolveRequest = async function resolveRequest(
 		};
 
 	/**
-	 * Manifest mode, falling back to the backend's `/init` with a warning
+	 * Manifest mode, falling back to the backend's `/v1/consent/init` with a warning
 	 * when the manifest could not be read and time is left. A missing or
 	 * misconfigured source stays an error.
 	 */
@@ -1110,7 +1110,7 @@ export const resolveRequestConsent = function resolveRequestConsent(
 	return resolveRequest(options);
 };
 
-/** What the backend's `/init` answered a hosted request, unmapped. */
+/** What the backend's `/v1/consent/init` answered a hosted request, unmapped. */
 export interface RequestInitAnswer {
 	/** The response body. */
 	init: InitOutput;
@@ -1138,7 +1138,7 @@ export type FetchRequestInitOptions = Omit<
 >;
 
 /**
- * Asks the backend's `/init` for one request, as
+ * Asks the backend's `/v1/consent/init` for one request, as
  * {@link resolveRequestConsent} does in hosted mode (the same target,
  * forwarding and budget rules), and returns the answer as received rather
  * than folded into a consent state. The visitor's full `Accept-Language` is

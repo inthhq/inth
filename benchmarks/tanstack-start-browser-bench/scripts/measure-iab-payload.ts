@@ -14,7 +14,7 @@ import {
 	resolvePolicyRules,
 } from '@inth/sdk/engine';
 import type { GlobalVendorList } from '@inth/sdk/engine';
-import { createManifestTransport } from '@inth/sdk/transports/manifest';
+import { createV1ManifestTransport } from '@inth/sdk/transports/manifest';
 import { chromium } from 'playwright';
 
 const [source, output] = process.argv.slice(2);
@@ -35,9 +35,10 @@ const resolution = resolvePolicyRules({
 if (resolution.status !== 'matched') {
 	throw new Error('Expected IAB policy');
 }
-const transport = createManifestTransport({
+const transport = createV1ManifestTransport({
 	fetchGvl: () => Promise.resolve(gvl),
 	inputs: { country: 'DE', language: 'en' },
+	projectUrl: 'https://bench.invalid',
 	snapshot: {
 		branding: 'inth',
 		cmpId: 28,

@@ -1,2 +1,2 @@
 /** Kernel with the hosted transport. */
-export { createConsentKernel, createHostedTransport } from '@inth/sdk/engine';
+export { createConsentKernel, createV1HostedTransport } from '@inth/sdk/engine';

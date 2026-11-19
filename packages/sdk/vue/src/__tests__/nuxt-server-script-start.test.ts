@@ -4,7 +4,6 @@
  * hydrates. Nothing starts while the policy asks the visitor to choose, or
  * from HTML shared by every visitor.
  */
-import { INTH_POLICY_CONTRACT_HEADER } from '@inth/sdk/engine';
 import type { Script } from '@inth/sdk/engine';
 import type { InitOutput, PolicyRule } from '@inth/sdk/schema/types';
 import {
@@ -121,13 +120,7 @@ const renderStartScripts = async function renderStartScripts(
 	vi.stubGlobal('document', undefined);
 	vi.stubGlobal(
 		'fetch',
-		vi.fn(() =>
-			Promise.resolve(
-				new Response(JSON.stringify(nuxt.response), {
-					headers: { [INTH_POLICY_CONTRACT_HEADER]: '1' },
-				})
-			)
-		)
+		vi.fn(() => Promise.resolve(new Response(JSON.stringify(nuxt.response))))
 	);
 	try {
 		await plugin({

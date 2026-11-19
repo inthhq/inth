@@ -1,5 +1,5 @@
 /**
- * `GET /api/bench-consent/manifest` — the fixture backend's manifest.
+ * `GET /api/bench-consent/v1/consent/manifest` — the fixture backend's manifest.
  *
  * CDN-cacheable and geo-independent, with an ETag so the shipped manifest
  * proxy can revalidate rather than refetch.
@@ -10,7 +10,7 @@ import {
 	applyBenchConsentLatency,
 	benchConsentManifestResponse,
 	recordBenchConsentFixtureExecution,
-} from '../../../lib/fixture';
+} from '../../../../../lib/fixture';
 
 const MANIFEST_ETAG = '"astro-browser-bench-manifest"';
 

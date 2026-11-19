@@ -595,7 +595,7 @@ describe('init route', () => {
 			status: 'matched',
 		});
 		// Init resolves in-process: the backend sees the manifest request and
-		// the session report, never `/init`.
+		// the session report, never `/v1/consent/init`.
 		expect(calledURLs(fetch).sort()).toEqual([
 			`${BACKEND}/v1/consent/manifest`,
 			`${BACKEND}/v1/consent/sessions`,
@@ -1469,7 +1469,7 @@ describe('proxy', () => {
 			path: 'v1/consent/init',
 		});
 		// Init resolves in-process: the backend sees the manifest request and
-		// the session report, never `/init`.
+		// the session report, never `/v1/consent/init`.
 		expect(calledURLs(fetch).sort()).toEqual([
 			`${BACKEND}/v1/consent/manifest`,
 			`${BACKEND}/v1/consent/sessions`,

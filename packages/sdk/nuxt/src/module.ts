@@ -400,7 +400,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 				// exists so `NUXT_INTH_PROJECT_URL` can give the route an
 				// address of its own.
 				projectUrl: '',
-				// The `/init` script reads it: with `ssr: false` for the whole
+				// The `/v1/consent/init` script reads it: with `ssr: false` for the whole
 				// app, every page is a shell.
 				ssr: nuxt.options.ssr !== false,
 			}
@@ -545,7 +545,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 						'\t\t/** Inth options for the routes this rule matches. */',
 						'\t\tinth?: {',
 						'\t\t\t/**',
-						'\t\t\t * `false` writes no early `/init` script into the HTML of an',
+						'\t\t\t * `false` writes no early `/v1/consent/init` script into the HTML of an',
 						'\t\t\t * `ssr: false` route.',
 						'\t\t\t */',
 						'\t\t\tinitPrefetch?: boolean;',
@@ -581,7 +581,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 			resolver.resolve('./runtime/server/legacy-project-url.nuxt')
 		);
 		if (initPrefetch !== false) {
-			// Starts `/init` from the HTML of `ssr: false` pages, before the
+			// Starts `/v1/consent/init` from the HTML of `ssr: false` pages, before the
 			// app's JavaScript loads.
 			addServerPlugin(resolver.resolve('./runtime/server/init-prefetch.nuxt'));
 			// The plugin reads `app.config.ts` through this virtual, not
@@ -590,7 +590,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 			// passes the files to Nitro, whose own `useAppConfig` reads them.
 			// Without Nitro auto-imports, `app.config.ts` cannot load on the
 			// server (its `defineAppConfig` is an auto-import), so the plugin
-			// gets no config and leaves `/init` to the browser.
+			// gets no config and leaves `/v1/consent/init` to the browser.
 			nuxt.hook('nitro:config', (nitroConfig) => {
 				let source =
 					"export { useAppConfig as useServerAppConfig } from 'nitropack/runtime';";

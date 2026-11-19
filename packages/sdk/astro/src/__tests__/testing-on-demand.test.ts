@@ -43,7 +43,7 @@ const SRC = resolve(dirname(fileURLToPath(import.meta.url)), '..');
  * path into a bundle.
  */
 const INIT_ONLY = new Set([
-	'createHostedTransport',
+	'createV1HostedTransport',
 	'createOfflineTransport',
 	'createTestingMode',
 	'hosted',

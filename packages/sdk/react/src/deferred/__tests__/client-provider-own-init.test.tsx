@@ -1,5 +1,5 @@
 /**
- * `ConsentProvider` on a client-rendered page whose HTML started no `/init`
+ * `ConsentProvider` on a client-rendered page whose HTML started no `/v1/consent/init`
  * (no `consentManifest()`): the provider sends the request itself as it
  * first renders, the banner shows from its answer before the engine's
  * module arrives, and the engine takes the same answer. Its own file: the
@@ -85,6 +85,6 @@ test('sends /init itself and shows the banner before the engine; the engine reus
 			).toBe(true),
 		{ timeout: 5000 }
 	);
-	// The engine took the same answer: no second `/init`.
+	// The engine took the same answer: no second `/v1/consent/init`.
 	expect(initRequests()).toHaveLength(1);
 });

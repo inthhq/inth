@@ -1,6 +1,6 @@
 'use client';
 
-import { createConsentKernel, createHostedTransport } from '@inth/sdk/engine';
+import { createConsentKernel, createV1HostedTransport } from '@inth/sdk/engine';
 import type { ConsentKernel } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import type {
@@ -278,7 +278,7 @@ export const ScriptLifecycleProvider = ({
 					'marketing',
 					'measurement',
 				],
-				transport: createHostedTransport({
+				transport: createV1HostedTransport({
 					projectUrl: '/api/bench-consent',
 				}),
 			});

@@ -23,8 +23,8 @@ const CLIENT_ENTRIES = [
 	'kernel/index.ts',
 	'policy.ts',
 	'runtime/index.ts',
-	'transports/hosted.ts',
 	'transports/init-output.ts',
+	'transports/v1/hosted.ts',
 ];
 
 /** Schema exports that resolve, validate or hash an authored pack. */

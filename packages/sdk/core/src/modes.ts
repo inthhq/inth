@@ -4,10 +4,10 @@
  * A provider's optional `mode` picks how the visitor's policy is resolved:
  *
  * - `manifest()` reads the backend's consent manifest, and falls back to
- *   the backend's `/init` with a warning when the manifest is unavailable.
+ *   the backend's `/v1/consent/init` with a warning when the manifest is unavailable.
  *   The default in server-framework packages (Next.js, TanStack Start,
  *   Nuxt, SvelteKit, Angular SSR, Astro).
- * - `hosted()` asks the backend's `/init` for every visitor. The default
+ * - `hosted()` asks the backend's `/v1/consent/init` for every visitor. The default
  *   in client-only packages.
  * - `testing()` from a package's `/testing` entry resolves a policy with
  *   no backend, for tests.
@@ -94,7 +94,7 @@ export type ManifestModeOptions = ManifestModeBaseOptions &
 /** Resolve init from the backend's consent manifest. */
 export type ManifestMode = { type: 'manifest' } & ManifestModeOptions;
 
-/** Ask the hosted backend's `/init` for every visitor. */
+/** Ask the hosted backend's `/v1/consent/init` for every visitor. */
 export interface HostedMode {
 	type: 'hosted';
 }
@@ -151,7 +151,7 @@ export type ConsentMode = ManifestMode | HostedMode | TestingMode;
 export type ConsentModeType = ConsentMode['type'];
 
 /**
- * Ask the hosted backend's `/init` for every visitor, at the provider's
+ * Ask the hosted backend's `/v1/consent/init` for every visitor, at the provider's
  * `projectUrl`. The default in client-only packages; a server-framework
  * package uses it instead of its default, the manifest.
  *
@@ -170,8 +170,8 @@ export const hosted = function hosted(): HostedMode {
 /**
  * Resolve init from the backend's consent manifest. The default mode in
  * every server-framework package. When the manifest is unavailable (the
- * build could not fetch it, the backend has no `/manifest`, or the read
- * fails at runtime), init falls back to the backend's `/init` with a
+ * build could not fetch it, the backend has no `/v1/consent/manifest`, or the read
+ * fails at runtime), init falls back to the backend's `/v1/consent/init` with a
  * warning.
  *
  * @param options - Where the manifest comes from and where init resolves.

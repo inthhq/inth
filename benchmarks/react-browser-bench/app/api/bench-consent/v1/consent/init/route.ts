@@ -1,7 +1,7 @@
 import { loadBrowserBenchInit } from '@inth/benchmarking/policy-fixtures';
 import { NextResponse } from 'next/server';
 
-import { applyBenchBackendLatency } from '../../bench-latency';
+import { applyBenchBackendLatency } from '../../../../bench-latency';
 
 const response = loadBrowserBenchInit();
 

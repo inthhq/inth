@@ -82,9 +82,9 @@ export const createBrowserManifestTransport =
 					resources = undefined;
 					throw loaded.error;
 				}
-				const [{ createManifestTransport }, { baseTranslations }, manifest] =
+				const [{ createV1ManifestTransport }, { baseTranslations }, manifest] =
 					loaded.value;
-				manifestTransport ??= createManifestTransport({
+				manifestTransport ??= createV1ManifestTransport({
 					baseTranslations,
 					manifestUrl: MANIFEST_URL,
 					projectUrl: BACKEND_URL,

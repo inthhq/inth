@@ -357,7 +357,7 @@ describe('dispose() before the engine', () => {
 		standIn.dispose();
 
 		const api = installGlobal(createGlobal({ pkg: '@inth/sdk' }));
-		// Waits for the init script's `/init` to settle, as the engine does.
+		// Waits for the init script's `/v1/consent/init` to settle, as the engine does.
 		expect(autoInit(api)).toBeNull();
 		answerInit.reject();
 		await vi.waitFor(() => {

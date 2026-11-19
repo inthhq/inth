@@ -27,7 +27,7 @@
  *
  * Every render guards the app's own consent route (`routePrefix`, else the
  * default `/api/inth`) against a fetch of itself, and points deferred
- * vendor lists at the route's `/init` when there is one.
+ * vendor lists at the route's `/v1/consent/init` when there is one.
  */
 import { recommendedPolicyRules } from '@inth/sdk-schema/types';
 import type { ConsentManifest, PolicyRule } from '@inth/sdk-schema/types';

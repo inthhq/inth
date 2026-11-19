@@ -31,7 +31,8 @@ fun interface SubjectEntropy {
 /**
  * Generates the Inth subject id.
  *
- * Byte-for-byte the same as `generateSubjectId` in `@inth/sdk-core`, so the backend sees
+ * Byte-for-byte the same as `generateSubjectId` in
+ * `packages/react-native/scripts/native-wire.ts`, so the backend sees
  * one id format no matter which SDK wrote it. The wire format is not cosmetic:
  * `POST /subjects` validates `subjectId` against `subjectIdSchema` in
  * `@inth/sdk-schema`, which answers anything else with `INPUT_VALIDATION_FAILED`, and a

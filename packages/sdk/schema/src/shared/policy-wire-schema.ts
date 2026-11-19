@@ -1,7 +1,7 @@
 /**
  * Valibot mirrors of the v3 policy wire contract.
  *
- * Backends validate and document `/init` with these. Clients use the plain
+ * Backends validate and document `/v1/consent/init` with these. Clients use the plain
  * reader in `policy-resolution-wire.ts` so `@inth/sdk/schema/types` stays free of the
  * valibot runtime. A test keeps the two in agreement.
  */
@@ -171,7 +171,7 @@ const policyResolutionVariantSchema = v.variant('status', [
 ]);
 
 /**
- * `policyResolution` as emitted by `/init` and manifests.
+ * `policyResolution` as emitted by `/v1/consent/init` and manifests.
  *
  * Rejects inherited fields, unknown fields, unknown enum values, semantic
  * invariant violations and a `policyId` that differs from `policy.id`, the

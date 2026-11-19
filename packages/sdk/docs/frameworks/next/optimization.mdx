@@ -75,7 +75,7 @@ without it.
 The app server still connects to the backend, and each save takes an extra
 hop through your server. Measure your deployment to check the effect on
 latency. Vendor scripts, pixels and iframes keep their own URLs; only Inth
-requests move. The same setup works with a self-hosted c15t backend.
+requests move.
 
 Set `routePrefix` and `proxy: true` in the config, and keep `projectUrl`
 absolute:

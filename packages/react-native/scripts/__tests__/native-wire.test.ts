@@ -1,8 +1,8 @@
 /**
  * Subject ids pinned byte for byte.
  *
- * These cases are the shared contract between this function and the two native
- * cores: `packages/android` and `packages/swift` assert the same inputs and
+ * These cases are the shared contract between the fixture generator and the two
+ * native cores: `packages/android` and `packages/swift` assert the same inputs and
  * the same strings in their own suites. The backend decides with `subjectIdSchema`
  * in `@inth/sdk/schema`, so an encoder change that moves these outputs would have to be
  * made in all three places at once, and this test is what makes changing only one of
@@ -18,7 +18,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { generateSubjectId } from '../generate-subject-id';
+import { generateSubjectId, isValidSubjectId } from '../native-wire';
 
 /**
  * The random half as bytes. `generateSubjectId` fills all 20 bytes from the CSPRNG
@@ -116,4 +116,16 @@ describe('generateSubjectId cross-language vectors', () => {
 			expect(generateSubjectId()).toBe(id);
 		}
 	);
+});
+
+describe('isValidSubjectId', () => {
+	it('accepts a sub_ id in base58 and nothing else', () => {
+		expect(isValidSubjectId('sub_2VZxR7YmNpKq3WfLs8TgHd')).toBe(true);
+		expect(isValidSubjectId('sub_')).toBe(false);
+		expect(isValidSubjectId('cns_2VZxR7YmNpKq3WfLs8TgHd')).toBe(false);
+		expect(isValidSubjectId('sub_0OIl')).toBe(false);
+		expect(isValidSubjectId('019c1c38-a400-7fbc-9cf3-23928bf7d9d5')).toBe(
+			false
+		);
+	});
 });

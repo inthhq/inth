@@ -63,7 +63,7 @@ const save = async (payload: SavePayload) => {
 	}
 	if (taken().includes(payload.subjectId)) {
 		throw new ConsentSaveRejectedError({
-			code: 'SUBJECT_CONFLICT',
+			code: 'subject_conflict',
 			message: `subjectId "${payload.subjectId}" already belongs to another tenant`,
 			status: 409,
 		});

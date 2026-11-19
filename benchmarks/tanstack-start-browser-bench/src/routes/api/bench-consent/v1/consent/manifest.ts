@@ -4,9 +4,9 @@ import {
 	applyBenchConsentLatency,
 	benchConsentManifestResponse,
 	recordBenchConsentFixtureExecution,
-} from '../../../bench/fixture';
+} from '../../../../../bench/fixture';
 
-export const Route = createFileRoute('/api/bench-consent/manifest')({
+export const Route = createFileRoute('/api/bench-consent/v1/consent/manifest')({
 	server: {
 		handlers: {
 			GET: async () => {

@@ -56,7 +56,7 @@ describe('client boundary', () => {
 			expect(dynamicImports(source)).not.toContain(
 				'@inth/sdk/transports/manifest-browser'
 			);
-			expect(source).not.toMatch(/\bcreateHostedTransport\b/u);
+			expect(source).not.toMatch(/\bcreateV1HostedTransport\b/u);
 			expect(source).not.toContain('manifest transport:');
 		}
 	});

@@ -422,7 +422,7 @@ const collectRoute = async function collectRoute(
 			const saved = page.waitForResponse(
 				(response) =>
 					response.request().method() === 'POST' &&
-					new URL(response.url()).pathname.endsWith('/subjects'),
+					new URL(response.url()).pathname.endsWith('/v1/consent/records'),
 				{ timeout: 15_000 }
 			);
 			await page.getByTestId('consent-banner-accept-button').first().click();

@@ -19,7 +19,7 @@ export interface WindowDebugOptions {
 	mode: WindowDebugMode;
 	/**
 	 * Reads who runs the backend, from the kernel snapshot. Called on each
-	 * read of `window.__inthDebug.hosting`, because `/init` answers after install.
+	 * read of `window.__inthDebug.hosting`, because `/v1/consent/init` answers after install.
 	 */
 	getHosting?: () => KernelHosting | null;
 }
@@ -49,7 +49,7 @@ export interface InthWindowDebug {
 	/** The resolved transport kind. */
 	readonly mode: WindowDebugMode;
 	/**
-	 * Who runs the backend, as `/init` reported it: `'inth'` or
+	 * Who runs the backend, as `/v1/consent/init` reported it: `'inth'` or
 	 * `'self-hosted'`. `null` until init resolves, and for transports or
 	 * backends that do not report it. Not verified.
 	 */

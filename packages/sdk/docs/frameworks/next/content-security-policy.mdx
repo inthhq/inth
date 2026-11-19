@@ -148,7 +148,7 @@ absolute URL on a different host such as a CDN:
 connect-src 'self' https://<your-backend-host> https://<your-manifest-host>;
 ```
 
-Use the endpoint host supplied by your Inth project or your self-hosted backend.
+Use the endpoint host supplied by your Inth project.
 With `proxy: true` and `routePrefix: '/api/inth'`, as
 [Optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin)
 shows, the browser sends every consent request to `/api/inth` and `'self'`

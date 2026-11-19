@@ -197,10 +197,10 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	 *
 	 * - Omitted, or `manifest()` from `@inth/tanstack-start`: resolve here
 	 *   from the policy snapshot the build downloaded, or the backend's
-	 *   manifest. When it is unavailable, ask the backend's `/init` and log
+	 *   manifest. When it is unavailable, ask the backend's `/v1/consent/init` and log
 	 *   a warning. `manifest({ resolve: 'browser' })` leaves it to the
 	 *   browser.
-	 * - `hosted()`: ask the hosted backend's `/init` at `projectUrl`.
+	 * - `hosted()`: ask the hosted backend's `/v1/consent/init` at `projectUrl`.
 	 * - `testing()` from `@inth/tanstack-start/testing`: the server
 	 *   resolves nothing and the browser resolves a policy with no
 	 *   network; its transport throws in production builds.

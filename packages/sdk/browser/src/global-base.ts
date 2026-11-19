@@ -67,7 +67,7 @@ export interface GlobalApiBase {
 	/** Transport kind, once initialised. */
 	readonly mode: string | null;
 	/**
-	 * Who runs the backend, `'inth'` or `'self-hosted'`, once `/init` has
+	 * Who runs the backend, `'inth'` or `'self-hosted'`, once `/v1/consent/init` has
 	 * reported it. `null` before then and for backends that do not say.
 	 */
 	readonly hosting: KernelHosting | null;
@@ -158,7 +158,7 @@ export interface GlobalApiBase {
 	dispose: () => void;
 }
 
-/** Takeovers of an init script's stand-in still waiting on its `/init`. */
+/** Takeovers of an init script's stand-in still waiting on its `/v1/consent/init`. */
 const takeovers = new WeakMap<GlobalApiBase, Promise<void>>();
 
 type GlobalWindow = Window & {
@@ -380,7 +380,7 @@ export const installGlobal = function installGlobal<Api extends GlobalApiBase>(
 	const boot = readBoot();
 	if (boot) {
 		// The init script's stand-in: take over its calls, banner and choice,
-		// once it has read its `/init` answer for this client to start from.
+		// once it has read its `/v1/consent/init` answer for this client to start from.
 		const takeOver = (): void => {
 			target[GLOBAL_NAME] = api;
 			adoptBoot(boot);

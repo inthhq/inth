@@ -1,5 +1,5 @@
 /**
- * `GET /api/bench-consent/init` — the fixture backend's direct init.
+ * `GET /api/bench-consent/v1/consent/init` — the fixture backend's direct init.
  *
  * The hosted arm's middleware calls this on the request path, so the
  * injected latency lands in the page's TTFB.
@@ -10,7 +10,7 @@ import {
 	applyBenchConsentLatency,
 	benchConsentInitResponse,
 	recordBenchConsentFixtureExecution,
-} from '../../../lib/fixture';
+} from '../../../../../lib/fixture';
 
 export const prerender = false;
 

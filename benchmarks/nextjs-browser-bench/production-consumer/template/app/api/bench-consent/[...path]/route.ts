@@ -45,7 +45,7 @@ export const dynamic = 'force-dynamic';
 
 export const GET = async (_request: Request, context: RouteContext) => {
 	const endpoint = (await context.params).path.join('/');
-	if (endpoint === 'manifest') {
+	if (endpoint === 'v1/consent/manifest') {
 		counts().manifest += 1;
 		await applyLatency();
 		return Response.json(manifest, {
@@ -55,7 +55,7 @@ export const GET = async (_request: Request, context: RouteContext) => {
 			},
 		});
 	}
-	if (endpoint === 'init') {
+	if (endpoint === 'v1/consent/init') {
 		counts().init += 1;
 		await applyLatency();
 		return Response.json(init, { headers: { 'cache-control': 'no-store' } });
@@ -70,18 +70,21 @@ export const GET = async (_request: Request, context: RouteContext) => {
 
 export const POST = async (request: Request, context: RouteContext) => {
 	const endpoint = (await context.params).path.join('/');
-	if (endpoint === 'subjects') {
+	if (endpoint === 'v1/consent/records') {
 		counts().subjects += 1;
 		await applyLatency();
 		const body = (await request.json().catch(() => ({}))) as {
 			subjectId?: string;
 		};
 		return Response.json(
-			{ ok: true, subjectId: body.subjectId ?? 'benchmark-subject' },
+			{
+				recordId: '019a0000-0000-7000-8000-000000000002',
+				subjectId: body.subjectId ?? 'benchmark-subject',
+			},
 			{ headers: { 'cache-control': 'no-store' } }
 		);
 	}
-	if (endpoint === 'sessions') {
+	if (endpoint === 'v1/consent/sessions') {
 		counts().sessions += 1;
 		await applyLatency();
 		return new Response(null, { status: 204 });

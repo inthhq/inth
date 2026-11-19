@@ -18,7 +18,8 @@ import {
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { ConsentSaveRejectedError, isConsentSaveRejection } from '../../index';
 import { buildDecisionAssertion } from '../../transports/decision-inputs';
-import { createHostedTransport } from '../../transports/hosted';
+import { RECORD, SUBJECT } from '../../transports/v1/__tests__/fixtures';
+import { createV1HostedTransport } from '../../transports/v1/hosted';
 import type {
 	KernelConfig,
 	KernelTransport,
@@ -760,12 +761,14 @@ describe('save outbox: online retry', () => {
 			bodies.push(JSON.parse(String(init?.body)));
 			return bodies.length === 1
 				? Promise.reject(new TypeError('Failed to fetch'))
-				: Promise.resolve(Response.json({ ok: true, subjectId: 'sub_fixed' }));
+				: Promise.resolve(
+						Response.json({ recordId: RECORD, subjectId: SUBJECT })
+					);
 		});
 		const kernel = kernelOn({
 			initialPolicyResolution: matchedResolution(optInRule()),
 			initialRecords: { subject: { subjectId: 'sub_fixed' } },
-			transport: createHostedTransport({
+			transport: createV1HostedTransport({
 				fetch: fetchSpy,
 				projectUrl: 'https://backend.test',
 			}),
@@ -941,7 +944,7 @@ describe('save outbox: subject reassignment', () => {
 		// new id is the only way their choice is ever recorded.
 		const saveSpy = vi
 			.fn()
-			.mockRejectedValueOnce(refused('SUBJECT_CONFLICT'))
+			.mockRejectedValueOnce(refused('subject_conflict'))
 			.mockImplementation(accepted);
 		const kernel = kernelOn({ transport: { save: saveSpy } });
 		const errors: unknown[] = [];
@@ -977,7 +980,7 @@ describe('save outbox: subject reassignment', () => {
 	});
 
 	test('a backend that refuses every subject id costs one resend, not a loop', async () => {
-		const saveSpy = vi.fn().mockRejectedValue(refused('SUBJECT_CONFLICT'));
+		const saveSpy = vi.fn().mockRejectedValue(refused('subject_conflict'));
 		const kernel = kernelOn({ transport: { save: saveSpy } });
 		const errors: unknown[] = [];
 		kernel.events.on('command:error', ({ error }) => {
@@ -999,7 +1002,7 @@ describe('save outbox: subject reassignment', () => {
 		const saveSpy = vi
 			.fn()
 			.mockRejectedValueOnce(new Error('save offline'))
-			.mockRejectedValueOnce(refused('SUBJECT_CONFLICT'))
+			.mockRejectedValueOnce(refused('subject_conflict'))
 			.mockImplementation(accepted);
 		const kernel = kernelOn({
 			transport: { init: vi.fn().mockResolvedValue({}), save: saveSpy },
@@ -1037,7 +1040,7 @@ describe('save outbox: subject reassignment', () => {
 		const saveSpy = vi
 			.fn()
 			.mockRejectedValueOnce(new Error('save offline'))
-			.mockRejectedValue(refused('SUBJECT_CONFLICT'));
+			.mockRejectedValue(refused('subject_conflict'));
 		const kernel = kernelOn({
 			transport: { init: vi.fn().mockResolvedValue({}), save: saveSpy },
 		});
@@ -1053,7 +1056,7 @@ describe('save outbox: subject reassignment', () => {
 			expect(replayed).toHaveLength(1);
 		});
 
-		expect(replayed).toEqual([{ ok: false, rejected: 'SUBJECT_CONFLICT' }]);
+		expect(replayed).toEqual([{ ok: false, rejected: 'subject_conflict' }]);
 		expect(kernel.getSnapshot().subject?.subjectId).toBe('sub_someone_else');
 		expect(saveSpy).toHaveBeenCalledTimes(2);
 		expect(await queued()).toEqual([]);
@@ -1066,7 +1069,7 @@ describe('save outbox: subject reassignment', () => {
 		const saveSpy = vi
 			.fn()
 			.mockRejectedValueOnce(new Error('save offline'))
-			.mockRejectedValueOnce(refused('SUBJECT_CONFLICT'))
+			.mockRejectedValueOnce(refused('subject_conflict'))
 			.mockImplementation(accepted);
 		const kernel = kernelOn({ transport: { save: saveSpy } });
 
@@ -1095,7 +1098,7 @@ describe('save outbox: subject reassignment', () => {
 			.fn()
 			.mockRejectedValueOnce(new Error('save offline'))
 			.mockRejectedValueOnce(new Error('save offline'))
-			.mockRejectedValueOnce(refused('SUBJECT_CONFLICT'))
+			.mockRejectedValueOnce(refused('subject_conflict'))
 			.mockImplementation(accepted);
 		const kernel = kernelOn({
 			transport: { init: vi.fn().mockResolvedValue({}), save: saveSpy },
@@ -1127,7 +1130,7 @@ describe('save outbox: subject reassignment', () => {
 		// Returning null here would drop a choice the kernel knows how to save.
 		const saveSpy = vi.fn(({ subjectId }: { subjectId: string }) =>
 			subjectId === 'sub_taken'
-				? Promise.reject(refused('SUBJECT_CONFLICT'))
+				? Promise.reject(refused('subject_conflict'))
 				: accepted({ subjectId })
 		);
 		const kernel = kernelOn({
@@ -1154,7 +1157,7 @@ describe('save outbox: subject reassignment', () => {
 		// to the subject they reset away from.
 		const saveSpy = vi.fn(({ subjectId }: { subjectId: string }) =>
 			subjectId === 'sub_taken'
-				? Promise.reject(refused('SUBJECT_CONFLICT'))
+				? Promise.reject(refused('subject_conflict'))
 				: accepted({ subjectId })
 		);
 		const kernel = kernelOn({
@@ -1184,7 +1187,7 @@ describe('save outbox: subject reassignment', () => {
 		// reassignment says belongs to the current subject.
 		const conflictUnlessMoved = vi.fn(({ subjectId }: { subjectId: string }) =>
 			subjectId === 'sub_s1'
-				? Promise.reject(refused('SUBJECT_CONFLICT'))
+				? Promise.reject(refused('subject_conflict'))
 				: accepted({ subjectId })
 		);
 		const tabA = kernelOn({
@@ -1247,7 +1250,7 @@ describe('save outbox: subject reassignment', () => {
 				gate = new Promise((resolve) => {
 					openGate = resolve;
 				});
-				return Promise.reject(refused('SUBJECT_CONFLICT'));
+				return Promise.reject(refused('subject_conflict'));
 			});
 		const kernel = kernelOn(
 			{
@@ -1287,7 +1290,7 @@ describe('save outbox: subject reassignment', () => {
 		vi.useFakeTimers({ now: start, toFake: ['Date'] });
 		const conflictUnlessMoved = vi.fn(({ subjectId }: { subjectId: string }) =>
 			subjectId === 'sub_old'
-				? Promise.reject(refused('SUBJECT_CONFLICT'))
+				? Promise.reject(refused('subject_conflict'))
 				: accepted({ subjectId })
 		);
 		const first = kernelOn({
@@ -1356,7 +1359,7 @@ describe('save outbox: subject reassignment', () => {
 					return accepted({ subjectId });
 				}
 				conflictSeen = true;
-				return Promise.reject(refused('SUBJECT_CONFLICT'));
+				return Promise.reject(refused('subject_conflict'));
 			});
 		const kernel = kernelOn(
 			{
@@ -1395,7 +1398,7 @@ describe('save outbox: subject reassignment', () => {
 		// subject the backend holds no consent for.
 		const saveSpy = vi.fn(({ subjectId }: { subjectId: string }) =>
 			subjectId === 'sub_shared_tab'
-				? Promise.reject(refused('SUBJECT_CONFLICT'))
+				? Promise.reject(refused('subject_conflict'))
 				: accepted({ subjectId })
 		);
 		const tabA = kernelOn({

@@ -861,7 +861,7 @@ class ConsentCore @InthInternalApi constructor(
 		var policy: EvaluationPolicy?
 		// The surface the subject acted on, read before the commit rewrites it.
 		// `uiSource` records where the decision was made, so a save that clears the
-		// prompt must not report "no surface": `buildSubjectPostBody` in `@inth/sdk-core`
+		// prompt must not report "no surface": `buildSubjectPostBody` in the fixture generator
 		// reads the pre-commit `activeUI` for the same reason.
 		var surfaceAtAction: ActiveUI? = null
 		var action: ConsentAction

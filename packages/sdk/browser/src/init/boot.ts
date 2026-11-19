@@ -138,9 +138,9 @@ export interface InitBoot {
 	/** The choice the init script recorded, if any. */
 	commit: InitCommit | null;
 	/**
-	 * The `/init` answer the init script read, as a runtime `prefetch`, and
+	 * The `/v1/consent/init` answer the init script read, as a runtime `prefetch`, and
 	 * the request it answered. The engine starts from it instead of sending
-	 * `/init` again when its own options send the same request.
+	 * `/v1/consent/init` again when its own options send the same request.
 	 */
 	prefetch: {
 		projectUrl: string;
@@ -155,7 +155,7 @@ export interface InitBoot {
 	 */
 	disposed: boolean;
 	/**
-	 * Settles once the init script has read its `/init` answer, or gave up
+	 * Settles once the init script has read its `/v1/consent/init` answer, or gave up
 	 * waiting. The engine takes over after it, so it starts from that
 	 * answer. `null` when no request is in flight.
 	 */

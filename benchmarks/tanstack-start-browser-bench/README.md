@@ -16,7 +16,7 @@ provider" below.
 | `baseline` | `/baseline` | Page floor: identical shell, no consent code. |
 | `client` | `/client` | `ConsentProvider` with `hosted({ projectUrl: '/api/bench-consent' })`, `ssr: false`, so the provider mounts and runs init in the browser. |
 | `manifest-client` | `/manifest-client` | `custom(createManifestTransport(...))` reading the same-origin `/api/inth/manifest` route, `ssr: false`. |
-| `ssr` | `/ssr` | Loader fetches `/api/bench-consent/init` server-side on every request and folds it in with `mergeInitIntoConsentState`; `ConsentRoot` without `routePrefix`. Direct-init semantics, matching the Next `ssr` arm. |
+| `ssr` | `/ssr` | Loader fetches `/api/bench-consent/v1/consent/init` server-side on every request and folds it in with `mergeInitIntoConsentState`; `ConsentRoot` without `routePrefix`. Direct-init semantics, matching the Next `ssr` arm. |
 | `ssr-stream` | `/ssr-stream` | The streamed setup `ConsentRoot` documents: the same direct-init loader, returned unawaited (`loader: () => ({ consent: getDirectInitConsentState() })`), so the router streams the state in after the shell. The server HTML has no banner; it shows once the state reaches the hydrated root. Start only. |
 | `manifest-ssr` | `/manifest-ssr` | Loader runs `createConsentStateHandler({ projectUrl, mode: manifest({ manifestUrl }), routePrefix: '/api/inth' })` through the in-process manifest cache; `ConsentRoot` reads the route prefix from the state. Saves post to the fixture directly. |
 | `manifest-ssr-proxy` | `/manifest-ssr-proxy` | Same prefetch, but the state points `ConsentRoot` at `/api/inth-proxy` for init and saves, a second `createConsentRoute({ proxy: true })` mount, so the accept click's `POST /subjects` takes one hop through the Start server. Start only. |
@@ -74,7 +74,7 @@ which writes `.benchmarks/compare/frameworks.md` and `frameworks.json`.
   component and only the consent state is client-side. Start's `ssr: false`
   renders the whole route in the browser, so its first HTML carries no `<main>`.
   The banner path is client-only in both.
-- **`ssr` on the server.** Both arms call `/api/bench-consent/init` on every
+- **`ssr` on the server.** Both arms call `/api/bench-consent/v1/consent/init` on every
   request. Start uses a hand-written loader for this because the package
   helper always goes through the manifest cache; see `src/bench/loaders.ts`.
 - **`manifest-ssr` on the server.** Next's `resolveConsent` fetches

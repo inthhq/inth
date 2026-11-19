@@ -144,7 +144,7 @@ The other v2 modes map to transports:
 | v2 option | v3 option |
 | --- | --- |
 | `mode: 'offline'` with `offlinePolicy` | `mode: local({ policyRules })` |
-| `mode: 'custom'` with `endpointHandlers` | `mode: custom(transport)`, where `transport` implements the v3 transport interface. `endpointHandlers` throws. |
+| `mode: 'custom'` with `endpointHandlers` | No equivalent. Point the provider at your Inth project, which records each choice. `endpointHandlers` throws. |
 
 The codemod leaves v2's offline and custom modes as they are, with a
 `TODO(c15t v3)` comment. Move `offlinePolicy.policyPacks` to

@@ -185,7 +185,7 @@
 			"default": "./lib/core/dist/transports/hosted-factory.js"
 		},
 		"./transports/manifest": {
-			"types": "./lib/core/dist-types/transports/manifest.d.ts",
+			"types": "./lib/core/dist-types/transports/v1/manifest.d.ts",
 			"import": "./lib/core/dist/transport-manifest.js",
 			"default": "./lib/core/dist/transport-manifest.js"
 		},
@@ -203,11 +203,6 @@
 			"types": "./lib/core/dist-types/transports/manifest-cache.d.ts",
 			"import": "./lib/core/dist/transport-manifest-cache.js",
 			"default": "./lib/core/dist/transport-manifest-cache.js"
-		},
-		"./libs/generate-subject-id": {
-			"types": "./lib/core/dist-types/libs/generate-subject-id.d.ts",
-			"import": "./lib/core/dist/generate-subject-id.js",
-			"default": "./lib/core/dist/generate-subject-id.js"
 		},
 		"./modules/clear-on-revocation": {
 			"types": "./lib/core/dist-types/modules/clear-on-revocation/index.d.ts",

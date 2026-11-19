@@ -1,7 +1,7 @@
 | Removed | Use instead |
 | --- | --- |
 | `hosted({ url })` | `hosted({ backendURL })`, or the framework's backend URL variable |
-| `createManifestTransport({ manifest })` | `createManifestTransport({ snapshot })` |
+| `createManifestTransport({ manifest })` | `createV1ManifestTransport({ projectUrl, snapshot })` from `@inth/sdk/transports/manifest` |
 | `assertDecisionInputs` defaulting to `false` on `hosted()` | It now defaults to `true` whenever `initURL` is set. Pass `false` to turn it off. |
 | `hostedModes` from `c15t/runtime/provider` | `readHostedMode(mode)` |
 | `buildManifest: true` in Astro and Nuxt | `onBuildError: 'fail'`, the default for production builds. `buildManifest: false` is `manifest({ source: 'runtime' })`. |

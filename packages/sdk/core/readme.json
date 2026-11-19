@@ -11,7 +11,7 @@
 	],
 	"prerequisites": [
 		"Node.js 20.19 or later",
-		"An [Inth project](https://inth.com) (free sign-up), a [self-hosted backend](https://c15t.com/docs/self-host/quickstart), or local mode for development and tests"
+		"An [Inth project](https://inth.com) (free sign-up), or `testing()` for development and tests"
 	],
 	"manualInstallation": ["", "```bash\npnpm add @inth/sdk-core\n```"],
 	"usage": [
@@ -27,7 +27,7 @@
 	"githubLink": "https://github.com/c15t/c15t",
 	"showCLIGeneration": false,
 	"customSections": {
-		"Related Packages": "- [@inth/sdk](https://www.npmjs.com/package/@inth/sdk): this engine with a stock banner and preference dialog for plain JavaScript and script-tag sites\n- [@inth/integrations](https://www.npmjs.com/package/@inth/integrations): consent-aware analytics, tag manager, pixel, and widget loaders\n- [@c15t/backend](https://www.npmjs.com/package/@c15t/backend): the self-hosted consent backend"
+		"Related Packages": "- [@inth/sdk](https://www.npmjs.com/package/@inth/sdk): this engine with a stock banner and preference dialog for plain JavaScript and script-tag sites\n- [@inth/integrations](https://www.npmjs.com/package/@inth/integrations): consent-aware analytics, tag manager, pixel, and widget loaders"
 	},
 	"showHosting": true
 }

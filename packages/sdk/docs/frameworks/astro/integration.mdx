@@ -43,7 +43,7 @@ The backend URL is public configuration, not a secret.
 
 ## `projectUrl`
 
-Your Inth or self-hosted backend. The browser saves consent there with
+Your Inth project URL. The browser saves consent there with
 `POST /v1/consent/records`, `hosted()` asks its `/v1/consent/init`, and `manifest()` reads
 `${projectUrl}/v1/consent/manifest`. It defaults to `PUBLIC_INTH_PROJECT_URL`, read from the environment or a `.env` file in the
 project root when `astro.config.mjs` loads.

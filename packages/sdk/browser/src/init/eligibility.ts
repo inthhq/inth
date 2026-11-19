@@ -1,5 +1,5 @@
 /**
- * Which pages the init script starts `/init` for, shared with the engine,
+ * Which pages the init script starts `/v1/consent/init` for, shared with the engine,
  * which takes the init script's answer only for the same options.
  *
  * @packageDocumentation
@@ -30,7 +30,7 @@ const isPlainHostedMode = function isPlainHostedMode(
 };
 
 /**
- * Whether the options leave the first `/init` request, the snapshot and a
+ * Whether the options leave the first `/v1/consent/init` request, the snapshot and a
  * banner save as the init script computes them.
  */
 export const supportsEarlyStart = function supportsEarlyStart(

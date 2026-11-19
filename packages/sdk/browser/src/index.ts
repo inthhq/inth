@@ -2,7 +2,7 @@
  * `@inth/sdk` — consent for sites without a build step.
  *
  * Most sites load `dist/inth.js` from a CDN and never import this module.
- * This ES module asks the backend's `/init` by default; `mode: manifest()`
+ * This ES module asks the backend's `/v1/consent/init` by default; `mode: manifest()`
  * resolves from the consent manifest instead, and is left out of the
  * bundle when the page does not import it. Tests pass `testing()` from
  * `@inth/sdk/testing`. The headless subset lives at

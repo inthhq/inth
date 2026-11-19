@@ -7,7 +7,7 @@
  * JavaScript. Every other build imports the banner itself.
  *
  * Under a client-rendered root (`deferred/client-provider.tsx`) the code
- * loads with the code that reads the `/init` answer, or, while the page's
+ * loads with the code that reads the `/v1/consent/init` answer, or, while the page's
  * static banner stands in, once the state shows the banner. Until then the page's static banner, when `consentManifest()`
  * put one in `index.html`, stands in for it, and it takes that banner's
  * place when it renders. Under any other provider the code loads at first

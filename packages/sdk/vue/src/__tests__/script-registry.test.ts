@@ -1,9 +1,8 @@
 /**
  * `experimentalScriptRegistry` in the plugin's config reaches the core
- * runtime: an integration `/init` lists loads from the registry's URL with
+ * runtime: an integration `/v1/consent/init` lists loads from the registry's URL with
  * its hash.
  */
-import { INTH_POLICY_CONTRACT_HEADER } from '@inth/sdk/engine';
 import type { Script } from '@inth/sdk/engine';
 import {
 	resolvePolicyRules,
@@ -66,13 +65,7 @@ afterEach(() => {
 const loadedTag = async (experimentalScriptRegistry?: boolean) => {
 	vi.stubGlobal(
 		'fetch',
-		vi.fn(() =>
-			Promise.resolve(
-				new Response(JSON.stringify(init), {
-					headers: { [INTH_POLICY_CONTRACT_HEADER]: '1' },
-				})
-			)
-		)
+		vi.fn(() => Promise.resolve(new Response(JSON.stringify(init))))
 	);
 	const container = document.createElement('div');
 	document.body.append(container);

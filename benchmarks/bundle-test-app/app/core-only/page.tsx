@@ -1,6 +1,6 @@
 'use client';
 
-import { createConsentKernel, createHostedTransport } from '@inth/sdk/engine';
+import { createConsentKernel, createV1HostedTransport } from '@inth/sdk/engine';
 import { useMemo } from 'react';
 
 /**
@@ -13,7 +13,9 @@ const CoreOnlyPage = () => {
 	const kernel = useMemo(
 		() =>
 			createConsentKernel({
-				transport: createHostedTransport({ projectUrl: '/api/bench-consent' }),
+				transport: createV1HostedTransport({
+					projectUrl: '/api/bench-consent',
+				}),
 			}),
 		[]
 	);

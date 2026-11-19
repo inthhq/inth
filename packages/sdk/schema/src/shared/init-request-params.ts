@@ -1,40 +1,30 @@
 /**
- * Query parameters that carry the `GET /init` request inputs.
+ * Query parameters that carry the `GET /v1/consent/init` request inputs.
  *
- * A browser on another origin can send `/init` as a CORS simple request,
- * with no `OPTIONS` preflight, only while every request header is
- * CORS-safelisted. The protocol version, the policy contract, the init
- * overrides and the experiment arm used to travel on `x-inth-*` headers,
- * which cost every first visit an extra round trip before the banner could
- * show. They now travel in the query string, next to the journey
- * parameters.
+ * A browser on another origin can send init as a CORS simple request, with
+ * no `OPTIONS` preflight, only while every request header is
+ * CORS-safelisted. So the init overrides and the experiment arm travel in
+ * the query string, next to the journey parameters, not on `x-inth-*`
+ * headers.
  *
- * Each parameter replaces one legacy request header with the same value and
- * meaning. A backend reads the parameter first and falls back to the header,
- * so clients that still send headers keep working.
+ * Each parameter has the same value and meaning as one `x-inth-*` request
+ * header, which a server caller may still send.
  * {@link applyInitParamsToHeaders} folds the parameters onto their header
  * names, so the code that reads those headers needs no second path.
  *
- * The names are short and unprefixed (`/init?v=3.0.0&country=GB`), so Inth
+ * The names are short and unprefixed (`?country=GB&gpc=1`), so Inth
  * reserves them on an init URL. When Inth sends a parameter, its value
  * replaces any the URL already carried under that name, and the name
  * appears once. A parameter Inth does not send passes through, and a
  * backend reads it as that input.
  */
 
-import { POLICY_CONTRACT_HEADER } from './policy-contract';
 import { appendSearchParams, readSearchParams } from './search-params';
 import {
 	CONSENT_EXPERIMENT_HEADER,
 	formatExperimentHeader,
 } from './session-report';
 import type { SessionExperiment } from './session-report';
-
-/** Client package version, as the `x-inth-version` header carried it. */
-export const INIT_VERSION_PARAM = 'v';
-
-/** Policy wire contract the client reads (`x-inth-policy-contract`). */
-export const INIT_POLICY_CONTRACT_PARAM = 'contract';
 
 /** Country override, an ISO 3166-1 alpha-2 code (`x-inth-country`). */
 export const INIT_COUNTRY_PARAM = 'country';
@@ -51,22 +41,16 @@ export const INIT_GPC_PARAM = 'gpc';
  */
 export const INIT_EXPERIMENT_PARAM = 'experiment';
 
-/** Each init query parameter and the legacy header it replaces. */
+/** Each init query parameter and the header with the same meaning. */
 export const INIT_PARAM_HEADERS: readonly (readonly [string, string])[] = [
-	[INIT_VERSION_PARAM, 'x-inth-version'],
-	[INIT_POLICY_CONTRACT_PARAM, POLICY_CONTRACT_HEADER],
 	[INIT_COUNTRY_PARAM, 'x-inth-country'],
 	[INIT_REGION_PARAM, 'x-inth-region'],
 	[INIT_GPC_PARAM, 'x-inth-gpc'],
 	[INIT_EXPERIMENT_PARAM, CONSENT_EXPERIMENT_HEADER],
 ];
 
-/** The `GET /init` inputs that travel in the query string. */
+/** The init inputs that travel in the query string. */
 export interface InitRequestParams {
-	/** Client package version. */
-	version?: string;
-	/** Policy wire contract the client reads. */
-	policyContract?: number;
 	/** Country override. */
 	country?: string;
 	/** Region override. */
@@ -78,7 +62,7 @@ export interface InitRequestParams {
 }
 
 /**
- * Append the init inputs to a `GET /init` URL.
+ * Append the init inputs to an init URL.
  *
  * Parameters are written in a fixed order, so two callers with the same
  * inputs build the same URL and a cache keyed on it sees one entry.
@@ -91,12 +75,6 @@ export const appendInitParams = function appendInitParams(
 	params: InitRequestParams
 ): string {
 	const search = new URLSearchParams();
-	if (params.version) {
-		search.set(INIT_VERSION_PARAM, params.version);
-	}
-	if (params.policyContract !== undefined) {
-		search.set(INIT_POLICY_CONTRACT_PARAM, String(params.policyContract));
-	}
 	if (params.country) {
 		search.set(INIT_COUNTRY_PARAM, params.country);
 	}
@@ -116,8 +94,8 @@ export const appendInitParams = function appendInitParams(
 };
 
 /**
- * The request headers with the init query parameters folded onto their
- * legacy header names.
+ * The request headers with the init query parameters folded onto the
+ * header names of the same meaning.
  *
  * A parameter wins over a header with the same meaning: a client that sends
  * the parameter is newer than any header a proxy might add. An empty

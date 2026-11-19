@@ -48,7 +48,7 @@ const saveSubject = async function saveSubject(
 			? (body as { subjectId?: unknown }).subjectId
 			: undefined;
 	response.set('cache-control', 'no-store').json({
-		ok: true,
+		recordId: '019a0000-0000-7000-8000-000000000002',
 		subjectId:
 			typeof subjectId === 'string' && subjectId
 				? subjectId
@@ -75,14 +75,18 @@ const settle = async function settle(
 	}
 };
 
-benchBackend.get('/manifest', (request, response, next) => {
+benchBackend.get('/v1/consent/manifest', (request, response, next) => {
 	void settle(serveManifest, request, response, next);
 });
-benchBackend.post('/subjects', express.json(), (request, response, next) => {
-	void settle(saveSubject, request, response, next);
-});
+benchBackend.post(
+	'/v1/consent/records',
+	express.json(),
+	(request, response, next) => {
+		void settle(saveSubject, request, response, next);
+	}
+);
 
 // The consent route reports each init it resolves; nothing waits on it.
-benchBackend.post('/sessions', (_request, response) => {
+benchBackend.post('/v1/consent/sessions', (_request, response) => {
 	response.status(204).end();
 });

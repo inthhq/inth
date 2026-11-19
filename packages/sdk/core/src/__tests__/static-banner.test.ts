@@ -28,7 +28,7 @@ const EAGER_CSS = '.banner{color:rebeccapurple}';
 /**
  * An app root with stand-ins for the installed `@inth/react` and `@inth/sdk/ui`:
  * the stock banner's root module imports the banner sheet, and
- * `@inth/react/static-banner` renders the title from the `/init` answer it
+ * `@inth/react/static-banner` renders the title from the `/v1/consent/init` answer it
  * is given.
  */
 const createApp = async (): Promise<string> => {

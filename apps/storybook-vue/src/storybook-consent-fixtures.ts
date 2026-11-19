@@ -144,9 +144,9 @@ export const storybookMode = (
 	fetch: typeof globalThis.fetch = storybookFetch()
 ) =>
 	hosted({
-		domain: 'consent.example',
 		fetch,
 		projectUrl: 'https://consent.example',
+		property: 'consent.example',
 	});
 
 export const provideStorybookConsentContext =

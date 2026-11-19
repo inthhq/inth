@@ -6,7 +6,7 @@
  * It is organised by concept:
  *
  * - `init-lifecycle.ts` — start, `init()` attempts, retry and fencing, the
- *                         `/init` fold, the deadline timer, and the one
+ *                         `/v1/consent/init` fold, the deadline timer, and the one
  *                         visibility and one online listener.
  * - `choice.ts`         — `save()`, `dismissNotice()` and drafts; hands each
  *                         recorded action to the save outbox.

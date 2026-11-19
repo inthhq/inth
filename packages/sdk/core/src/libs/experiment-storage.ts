@@ -40,7 +40,7 @@ const parseStored = function parseStored(
 };
 
 /**
- * Window property holding the arm an early `/init` request (the inline
+ * Window property holding the arm an early `/v1/consent/init` request (the inline
  * prefetch script) picked, so the runtime runs the arm that request sent.
  */
 export const EXPERIMENT_WINDOW_KEY = '__inthExperiment';

@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  *
- * The consent journey a browser runtime sends: which id its `/init` and
+ * The consent journey a browser runtime sends: which id its `/v1/consent/init` and
  * saves carry, and where (if anywhere) the id is kept between pages.
  */
 import {

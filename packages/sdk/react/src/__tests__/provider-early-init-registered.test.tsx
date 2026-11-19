@@ -1,6 +1,6 @@
 /**
  * A mode registered in `earlyInitModes` (as `manifest()` from
- * `@inth/sdk` registers) gets the same render-time `/init` as
+ * `@inth/sdk` registers) gets the same render-time `/v1/consent/init` as
  * `hosted()`, but only when it says its first `init()` would ask the
  * backend and the visitor has no stored choice. These tests stand in for
  * `manifest()` with a mode built the way it is: one hosted transport per

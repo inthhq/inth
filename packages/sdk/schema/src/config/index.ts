@@ -426,7 +426,7 @@ export interface ConsentConfig<T = Record<string, unknown>> {
 	 * does not restrict optional categories. `necessary` is always included.
 	 */
 	consentCategories?: ConsentCategory[];
-	/** Overrides parsed request headers for `/init` (custom SSR, tests). */
+	/** Overrides parsed request headers for `/v1/consent/init` (custom SSR, tests). */
 	location?: {
 		countryCode?: string | null;
 		regionCode?: string | null;

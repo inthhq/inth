@@ -15,8 +15,8 @@ import {
 	matchedResolution,
 	optInRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type { Script } from '../../libs/script-loader/types';
-import { custom } from '../../transports/custom';
 import { manifest as browserManifest } from '../../transports/manifest-browser';
 import { hosted } from '../../transports/mode';
 import type { ProviderTransportFactory } from '../../transports/mode';
@@ -35,7 +35,7 @@ import type {
 const REGISTRY_SRC = 'https://acme.example/scripts/vendor@0123456789abcdef.js';
 const REGISTRY_INTEGRITY = 'sha384-registry';
 
-const mode = custom({
+const mode = transportMode({
 	init: () => Promise.resolve({}),
 	save: () => Promise.resolve({ ok: true }),
 });
@@ -515,7 +515,7 @@ describe('experimentalScriptRegistry', () => {
 
 	/** A mode whose init answers `answer`, carrying `scriptRegistry`. */
 	const initMode = (answer: () => Promise<Record<string, unknown>>) =>
-		custom({
+		transportMode({
 			init: answer as never,
 			save: () => Promise.resolve({ ok: true }),
 		});

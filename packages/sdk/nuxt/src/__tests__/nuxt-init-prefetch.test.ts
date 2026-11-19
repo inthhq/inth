@@ -1,9 +1,8 @@
 /**
- * The `/init` script the Nitro plugin writes into `ssr: false` pages, from
+ * The `/v1/consent/init` script the Nitro plugin writes into `ssr: false` pages, from
  * the server's `render:html` hook through the browser: the HTML starts the
  * request and the Nuxt plugin's runtime adopts it.
  */
-import { INTH_POLICY_CONTRACT_HEADER } from '@inth/sdk/engine';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
@@ -131,10 +130,7 @@ const initResponse: InitOutput = {
 	}),
 	translations: { language: 'en', translations },
 };
-const respond = () =>
-	new Response(JSON.stringify(initResponse), {
-		headers: { [INTH_POLICY_CONTRACT_HEADER]: '1' },
-	});
+const respond = () => new Response(JSON.stringify(initResponse));
 
 /** Run the Nuxt plugin as on an `ssr: false` page, and mount the banner. */
 const startApp = async function startApp(): Promise<App> {
