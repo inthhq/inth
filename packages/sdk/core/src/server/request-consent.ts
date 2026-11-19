@@ -74,13 +74,14 @@ import type {
 } from '../libs/manifest-cache-runtime';
 import { warnManifestFallback } from '../libs/manifest-fallback';
 import { resolveSessionReportProjectUrl } from '../libs/session-report';
-import { resolveStorageKeys, storageKeyFamilies } from '../libs/storage-keys';
+import { resolveStorageKeys, STORAGE_KEY } from '../libs/storage-keys';
 import { trimSlash } from '../libs/url';
 import {
 	inthProtocolHeaders,
 	readProducerPolicyContract,
 } from '../libs/version-header';
 import { readStoredRecordsFromCookieHeader } from '../modules/persistence/hydrate';
+import { readStoredConsentRecordFromCookieHeader } from '../modules/persistence/record-storage';
 import { fetchCachedAdTechProviders } from '../transports/ad-tech-provider-cache';
 import { deferInitGvl, deferInitGvlToRoute } from '../transports/gvl-reference';
 import {
@@ -273,9 +274,10 @@ export interface ResolveRequestConsentOptions {
 	 * - Hosted mode, only over `https`, to a loopback host, or in-process:
 	 *   these headers and, when {@link trustForwardedHeaders} is set, the
 	 *   visitor IP as `x-forwarded-for`. A remote backend (not an in-process
-	 *   route) also gets the consent cookie ({@link storage}`.storageKey`,
-	 *   or c15t's under the default key when that one is missing), never
-	 *   the rest of the jar.
+	 *   route) also gets the consent cookie the render read
+	 *   ({@link storage}`.storageKey`, or c15t's under the default key when
+	 *   that one holds no valid record), never the pre-1.8 one or the rest
+	 *   of the jar.
 	 * - Manifest mode: nothing about the visitor. The manifest is public
 	 *   policy data; only these headers and {@link cookieNames} travel, and
 	 *   not over cleartext.
@@ -862,10 +864,37 @@ const resolveRequest = async function resolveRequest(
 		};
 
 	/**
+	 * The consent cookie a remote `/init` gets: the one the render's reader
+	 * picked, under the configured key or c15t's, else the configured one as
+	 * it is. Never the pre-1.8 key's, which no version sent.
+	 */
+	const forwardedConsentCookie = function forwardedConsentCookie(
+		cookie: string
+	): string | undefined {
+		const keys = resolveStorageKeys(options.storage);
+		const forwardable = [
+			keys.consent,
+			...keys.legacy
+				.map((family) => family.consent)
+				.filter((key) => key !== STORAGE_KEY),
+		];
+		const selected = readStoredConsentRecordFromCookieHeader(
+			cookie,
+			options.storage,
+			base.now ?? Date.now()
+		).selected?.key;
+		return filterCookieHeader(cookie, [
+			selected !== undefined && forwardable.includes(selected)
+				? selected
+				: keys.consent,
+		]);
+	};
+
+	/**
 	 * What identifies the visitor on a hosted `/init`, only over a secure
 	 * hop: caller-named headers, the consent cookie for a remote backend
-	 * (the configured family's, else the first legacy family's; the app's
-	 * own routes read none), and the trusted client IP.
+	 * (see {@link forwardedConsentCookie}; the app's own routes read none),
+	 * and the trusted client IP.
 	 */
 	const identityHeaders = function identityHeaders(
 		target: Target
@@ -879,11 +908,7 @@ const resolveRequest = async function resolveRequest(
 				? undefined
 				: (options.request.cookie ??
 					readHeader(options.request.headers, 'cookie'));
-		const consentCookie = cookie
-			? storageKeyFamilies(resolveStorageKeys(options.storage))
-					.map((family) => filterCookieHeader(cookie, [family.consent]))
-					.find(Boolean)
-			: undefined;
+		const consentCookie = cookie ? forwardedConsentCookie(cookie) : undefined;
 		if (consentCookie) {
 			headers.cookie = consentCookie;
 		}

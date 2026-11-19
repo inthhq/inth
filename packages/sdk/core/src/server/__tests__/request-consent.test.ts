@@ -577,6 +577,21 @@ describe('forwarding', () => {
 	test.each([
 		['only a c15t choice', `session=secret; ${C15T_CONSENTED}`, C15T_CONSENTED],
 		['both choices', `${C15T_CONSENTED}; ${CONSENTED}`, CONSENTED],
+		[
+			'an empty Inth cookie and a c15t choice',
+			`inth=; ${C15T_CONSENTED}`,
+			C15T_CONSENTED,
+		],
+		[
+			'a malformed Inth cookie and a c15t choice',
+			`inth=v=3&broken; ${C15T_CONSENTED}`,
+			C15T_CONSENTED,
+		],
+		[
+			'only a pre-1.8 choice',
+			CONSENTED.replace('inth=', 'privacy-consent-storage='),
+			null,
+		],
 	])(
 		'hosted /init gets the consent cookie the reader picks, with %s',
 		async (_name, cookie, sent) => {
