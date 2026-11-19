@@ -3,7 +3,11 @@
  * Low-level cookie operations.
  */
 
-import { resolveCookieDomain } from './domain-utils';
+import {
+	cookieDomainsOf,
+	getRootDomain,
+	resolveCookieDomain,
+} from './domain-utils';
 import { readCookieValueFromHeader } from './read-header';
 import type { StorageConfig } from './types';
 
@@ -154,5 +158,32 @@ export const deleteCookie = function deleteCookie(
 		document.cookie = parts.join('; ');
 	} catch (error) {
 		console.warn(`Failed to delete cookie "${name}":`, error);
+	}
+};
+
+/**
+ * Expires `name` host-only and at every parent domain of the page's host,
+ * and at `config.defaultDomain`, at path `/`: for a cookie another store
+ * or an earlier configuration may have scoped anywhere this page reads it.
+ * Writes nothing when the page is sent no such cookie.
+ *
+ * @internal
+ */
+export const deleteCookieInEveryScope = function deleteCookieInEveryScope(
+	name: string,
+	config?: StorageConfig
+): void {
+	if (getRawCookieValue(name) === null) {
+		return;
+	}
+	// `''` is host-only.
+	const domains = new Set([
+		'',
+		getRootDomain(),
+		...cookieDomainsOf(window.location.hostname),
+		config?.defaultDomain ?? '',
+	]);
+	for (const domain of domains) {
+		deleteCookie(name, { defaultDomain: domain });
 	}
 };

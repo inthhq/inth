@@ -7,8 +7,7 @@
  * @internal
  */
 import type { StorageConfig } from './cookie';
-import { deleteCookie, getRawCookieValue, getRootDomain } from './cookie';
-import { cookieDomainsOf } from './cookie/domain-utils';
+import { deleteCookieInEveryScope, getRawCookieValue } from './cookie';
 import { localStorageOf } from './local-storage';
 import { C15T_STORAGE_KEY, STORAGE_KEY_V2 } from './storage-keys';
 
@@ -89,18 +88,7 @@ export const removeLegacySubjectId = function removeLegacySubjectId(
 	} catch {
 		// Blocked storage holds nothing to remove.
 	}
-	if (getRawCookieValue(key) === null) {
-		return;
-	}
-	// `''` is host-only. The scopes are expired whatever the current
-	// configuration says, since the copy may predate it.
-	const domains = new Set([
-		'',
-		getRootDomain(),
-		...cookieDomainsOf(window.location.hostname),
-		config?.defaultDomain ?? '',
-	]);
-	for (const domain of domains) {
-		deleteCookie(key, { defaultDomain: domain });
-	}
+	// Whatever the current configuration says, since the copy may predate
+	// it.
+	deleteCookieInEveryScope(key, config);
 };

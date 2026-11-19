@@ -44,7 +44,7 @@ const plant = function plant(key = 'c15t-sid'): void {
 };
 
 afterEach(() => {
-	for (const key of ['c15t-sid', 'custom-sid', 'inth-epoch']) {
+	for (const key of ['c15t', 'c15t-sid', 'custom-sid', 'inth-epoch']) {
 		for (const scope of SCOPES) {
 			document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/${scope}`;
 		}
@@ -106,6 +106,23 @@ test('clear() removes every scope a copy written after startup used', () => {
 	expect(localStorage.getItem('c15t-sid')).toBeNull();
 	handle.dispose();
 });
+
+test.each(SCOPES.slice(1))(
+	'clear() under a host-only configuration removes a c15t record cookie scoped %s',
+	(scope) => {
+		const at = Date.now() - 1000;
+		document.cookie = `c15t=c.necessary:1,c.marketing:1,i.t:${at}; path=/${scope}`;
+		const { handle, kernel } = boot();
+		expect(
+			kernel.getSnapshot().explicitChoice?.categories.marketing?.value
+		).toBe(true);
+
+		handle.clear();
+
+		expect(sidCookies('c15t')).toEqual([]);
+		handle.dispose();
+	}
+);
 
 // Records an older version wrote carry no ID. 3.2 gave such a visitor the
 // ID in `c15t-sid`; dropping it would give them a new ID on every load

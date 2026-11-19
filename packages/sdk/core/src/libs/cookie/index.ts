@@ -3,6 +3,7 @@ export { getRootDomain, resolveCookieDomain } from './domain-utils';
 export { expandFlatKeys } from './key-mapping';
 export {
 	deleteCookie,
+	deleteCookieInEveryScope,
 	getRawCookieValue,
 	setCookie,
 	writeCookie,

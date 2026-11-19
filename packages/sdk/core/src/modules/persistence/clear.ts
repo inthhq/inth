@@ -11,7 +11,11 @@
  */
 import { IAB_STORAGE_KEYS } from '@inth/sdk-schema/types';
 
-import { deleteCookie, writeCookie } from '../../libs/cookie';
+import {
+	deleteCookie,
+	deleteCookieInEveryScope,
+	writeCookie,
+} from '../../libs/cookie';
 import { removeLegacySubjectId } from '../../libs/legacy-subject-id';
 import {
 	storageKeyFamilies,
@@ -36,8 +40,9 @@ const removeLocalStorageKey = function removeLocalStorageKey(
  * the explicit choice, the notice dismissal and the vendor denials with
  * their cookie projections and the `<key>-privacy` record an alpha may
  * have left; then the `<key>-sid` subject ID c15t 3.2 stored before any
- * choice, and the IAB records. Cookie deletion uses the same domain
- * handling as writes so a cross-subdomain cookie is actually removed.
+ * choice, and the IAB records. The configured family's cookies are
+ * deleted with the same domain handling as writes, so a cross-subdomain
+ * cookie is actually removed; a legacy family's at every scope.
  *
  * Queued backend replays and subject reassignments are the kernel's save
  * outbox: the kernel drops them on the `records:cleared` event that follows
@@ -51,25 +56,28 @@ export const clearStoredConsentRecords = function clearStoredConsentRecords(
 	if (typeof document === 'undefined') {
 		return;
 	}
-	const families = storageKeyFamilies(resolveStorageKeys(config));
-	const both = families.flatMap((family) => [
-		family.consent,
-		family.notice,
-		family.noticeSubject,
-		family.privacy,
-		family.vendors,
-	]);
-	for (const key of [
-		...both,
-		...families.flatMap((family) => [
-			family.cookieMiss,
-			family.noticeCookieMiss,
-		]),
-	]) {
-		removeLocalStorageKey(key);
-	}
-	for (const key of both) {
-		deleteCookie(key, config);
+	for (const [index, family] of storageKeyFamilies(
+		resolveStorageKeys(config)
+	).entries()) {
+		const both = [
+			family.consent,
+			family.notice,
+			family.noticeSubject,
+			family.privacy,
+			family.vendors,
+		];
+		for (const key of [...both, family.cookieMiss, family.noticeCookieMiss]) {
+			removeLocalStorageKey(key);
+		}
+		for (const key of both) {
+			// The readers take a legacy family's cookie at any scope this
+			// page is sent, such as c15t's with `crossSubdomain`.
+			if (index === 0) {
+				deleteCookie(key, config);
+			} else {
+				deleteCookieInEveryScope(key, config);
+			}
+		}
 	}
 	removeLegacySubjectId(config);
 	// Addon bytes must be removed even when the addon is not mounted.
