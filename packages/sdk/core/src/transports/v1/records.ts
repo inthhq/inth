@@ -88,7 +88,9 @@ const readLink = function readLink(
 	}
 	if (
 		link.stored === false &&
-		(link.reason === 'unverified' || link.reason === 'invalid_token')
+		(link.reason === 'unverified' ||
+			link.reason === 'invalid_token' ||
+			link.reason === 'refused')
 	) {
 		return { reason: link.reason, stored: false };
 	}

@@ -5,6 +5,10 @@ import type {
 	operations,
 } from '../../../../vendor/backend-openapi/openapi.generated';
 import type { ConsentManifest } from '../../../shared/consent-manifest';
+import type {
+	ScriptRegistryWire,
+	ScriptSourceWire,
+} from '../../../shared/script-sources';
 import type { v1ErrorBodySchema } from '../common';
 import type {
 	v1ConsentCheckOutputSchema,
@@ -71,6 +75,14 @@ type DocumentErrorBody = Omit<DocumentError, 'error'> & {
 	error: Omit<DocumentError['error'], 'code'> & { code: string };
 };
 
+type WithoutRegistry<T> = Omit<T, 'scriptRegistry'>;
+
+/**
+ * Init and the manifest carry the same registry. It is compared once, by its
+ * list variant, because the document's is a union and the SDK's is not.
+ */
+type DocumentRegistry = components['schemas']['ScriptRegistry'];
+
 type Found =
 	| WireDiff<
 			Out<typeof v1ConsentInitQuerySchema>,
@@ -78,11 +90,45 @@ type Found =
 			'init query'
 	  >
 	| WireDiff<
-			Out<typeof v1ConsentInitOutputSchema>,
-			Ok<'getV1ConsentInit'>,
+			WithoutRegistry<Out<typeof v1ConsentInitOutputSchema>>,
+			WithoutRegistry<Ok<'getV1ConsentInit'>>,
 			'init answer'
 	  >
-	| WireDiff<ConsentManifest, Ok<'getV1ConsentManifest'>, 'manifest answer'>
+	| WireDiff<
+			WithoutRegistry<ConsentManifest>,
+			WithoutRegistry<Ok<'getV1ConsentManifest'>>,
+			'manifest answer'
+	  >
+	| WireDiff<
+			NonNullable<Out<typeof v1ConsentInitOutputSchema>['scriptRegistry']>,
+			ScriptRegistryWire,
+			'init registry in SDK'
+	  >
+	| WireDiff<
+			NonNullable<ConsentManifest['scriptRegistry']>,
+			ScriptRegistryWire,
+			'manifest registry in SDK'
+	  >
+	| WireDiff<
+			NonNullable<Ok<'getV1ConsentInit'>['scriptRegistry']>,
+			DocumentRegistry,
+			'init registry in document'
+	  >
+	| WireDiff<
+			NonNullable<Ok<'getV1ConsentManifest'>['scriptRegistry']>,
+			DocumentRegistry,
+			'manifest registry in document'
+	  >
+	| WireDiff<
+			ScriptRegistryWire,
+			Exclude<DocumentRegistry, { unavailable: true }>,
+			'registry list'
+	  >
+	| WireDiff<
+			ScriptSourceWire,
+			components['schemas']['ScriptRegistrySource'],
+			'registry source'
+	  >
 	| WireDiff<
 			Out<typeof v1ConsentRecordQuerySchema>,
 			Query<'postV1ConsentRecords'>,
@@ -172,11 +218,12 @@ type Found =
  * backend to fix.
  */
 type DocumentGaps =
-	// Clarification 19 says the document describes `scriptRegistry`, but the
-	// backend does not answer it on `/v1` yet and the document leaves it out.
-	// The SDK reads it when present.
-	| 'init answer.scriptRegistry: only in SDK'
-	| 'manifest answer.scriptRegistry: only in SDK'
+	// The SDK reads `sources` and nothing else from the registry. It loads no
+	// runtime `files`, does not refuse a loader for `refuseIfSet`, and reads
+	// `{ unavailable: true }` as a registry that lists no script.
+	| 'registry list.files: only in document'
+	| 'registry list.sources: optional in SDK, required in document'
+	| 'registry source.refuseIfSet: only in document'
 	// The manifest type is shared with the 3.x routes, whose producer may
 	// name a tenant. `/v1` names none, and the SDK does not send it on.
 	| 'manifest answer.tenantId: only in SDK'

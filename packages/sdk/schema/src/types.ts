@@ -64,7 +64,7 @@ export type {
 	V1ConsentRecordOutput,
 	V1ConsentSessionJourney,
 	V1ConsentSessionReport,
-	V1CurrentDocument,
+	V1Document,
 	V1DocumentAcceptanceItem,
 	V1DocumentAcceptancesInput,
 	V1DocumentAcceptancesOutput,
@@ -75,7 +75,6 @@ export type {
 	V1DocumentType,
 	V1ErrorBody,
 	V1ErrorCode,
-	V1PublishedDocument,
 	V1RecordedAcceptance,
 	V1SubjectLinkInput,
 	V1SubjectLinkOutput,
@@ -83,6 +82,7 @@ export type {
 	V1ValidationDetails,
 } from './api/v1';
 export {
+	V1_DOCUMENT_HASH_PATTERN,
 	V1_DOCUMENT_TYPE_PATTERN,
 	V1_MAX_ACCEPTANCES,
 	V1_PROPERTY_MAX_LENGTH,

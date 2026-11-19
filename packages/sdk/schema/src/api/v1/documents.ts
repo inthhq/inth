@@ -1,6 +1,6 @@
 /**
  * `/v1/documents/*` schemas: publish a legal document version, read the
- * version in force with a proof token, and record acceptances.
+ * version in force, and record acceptances of a release by its hash.
  *
  * A document hash is the SHA-256 of the exact bytes of the published file,
  * in lowercase hex, prefixed `sha256:`.
@@ -20,7 +20,11 @@ import {
 	v1PropertySchema,
 	v1SubjectIdSchema,
 } from './common';
-import { V1_DOCUMENT_TYPE_PATTERN, V1_MAX_ACCEPTANCES } from './constants';
+import {
+	V1_DOCUMENT_HASH_PATTERN,
+	V1_DOCUMENT_TYPE_PATTERN,
+	V1_MAX_ACCEPTANCES,
+} from './constants';
 
 export const v1DocumentTypeSchema = v.pipe(
 	v.string(),
@@ -32,7 +36,7 @@ export const v1DocumentTypeSchema = v.pipe(
 export const v1DocumentHashSchema = v.pipe(
 	v.string(),
 	v.regex(
-		/^sha256:[\da-f]{64}$/u,
+		V1_DOCUMENT_HASH_PATTERN,
 		'Hash must be sha256: and 64 lowercase hex digits'
 	),
 	v.description(
@@ -64,14 +68,10 @@ const isCalendarDay = function isCalendarDay(value: string): boolean {
  * An ISO 8601 date and time with a zone, on a day the calendar has:
  * `v.isoTimestamp()` alone takes June 31.
  */
-const timestampSchema = v.pipe(
+const effectiveDateSchema = v.pipe(
 	v.string(),
 	v.isoTimestamp(),
-	v.check(isCalendarDay, 'Timestamp must be on a day of the calendar')
-);
-
-const effectiveDateSchema = v.pipe(
-	timestampSchema,
+	v.check(isCalendarDay, 'Timestamp must be on a day of the calendar'),
 	v.description('ISO 8601 date and time the version takes effect.'),
 	v.examples(['2026-11-18T00:00:00.000Z'])
 );
@@ -105,10 +105,11 @@ export const v1DocumentPublishInputSchema = v.object({
 	version: versionSchema,
 });
 
-export const v1PublishedDocumentSchema = v.object({
+/** A release, as the publish and current-version answers carry it. */
+export const v1DocumentSchema = v.object({
 	effectiveDate: effectiveDateSchema,
 	hash: v1DocumentHashSchema,
-	id: v.string(),
+	id: v.pipe(v.string(), v.uuid()),
 	isCurrent: v.boolean(),
 	requiresAcceptance: v.boolean(),
 	type: v1DocumentTypeSchema,
@@ -116,37 +117,28 @@ export const v1PublishedDocumentSchema = v.object({
 });
 
 export const v1DocumentPublishOutputSchema = v.object({
-	document: v1PublishedDocumentSchema,
+	document: v1DocumentSchema,
 });
 
 // ---------------------------------------------------------------------------
 // GET /v1/documents/:type/current
 // ---------------------------------------------------------------------------
 
-export const v1CurrentDocumentSchema = v.object({
-	effectiveDate: effectiveDateSchema,
-	hash: v1DocumentHashSchema,
-	requiresAcceptance: v.boolean(),
-	type: v1DocumentTypeSchema,
-	version: versionSchema,
-});
-
-/**
- * The version in force, and a signed proof token that pins the type,
- * version and hash that were shown. Send the token back with an acceptance.
- */
+/** The release in force. Its `type` and `hash` name it in an acceptance. */
 export const v1DocumentCurrentOutputSchema = v.object({
-	document: v1CurrentDocumentSchema,
-	proofToken: v.pipe(v.string(), v.minLength(1)),
-	proofTokenExpiresAt: timestampSchema,
+	document: v1DocumentSchema,
 });
 
 // ---------------------------------------------------------------------------
 // POST /v1/documents/acceptances
 // ---------------------------------------------------------------------------
 
+/**
+ * One release accepted. The project must have published it; it need not be
+ * the one in force.
+ */
 export const v1DocumentAcceptanceItemSchema = v.object({
-	proofToken: v.pipe(v.string(), v.minLength(1)),
+	hash: v1DocumentHashSchema,
 	type: v1DocumentTypeSchema,
 });
 
@@ -207,13 +199,10 @@ export type V1DocumentParams = v.InferOutput<typeof v1DocumentParamsSchema>;
 export type V1DocumentPublishInput = v.InferInput<
 	typeof v1DocumentPublishInputSchema
 >;
-export type V1PublishedDocument = v.InferOutput<
-	typeof v1PublishedDocumentSchema
->;
+export type V1Document = v.InferOutput<typeof v1DocumentSchema>;
 export type V1DocumentPublishOutput = v.InferOutput<
 	typeof v1DocumentPublishOutputSchema
 >;
-export type V1CurrentDocument = v.InferOutput<typeof v1CurrentDocumentSchema>;
 export type V1DocumentCurrentOutput = v.InferOutput<
 	typeof v1DocumentCurrentOutputSchema
 >;

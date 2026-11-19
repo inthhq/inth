@@ -1,17 +1,18 @@
 /**
  * A client for legal documents on the `/v1` routes, with no UI.
  *
- * - {@link DocumentsClient.getCurrent} reads the version of a document type
- *   in force, with the proof token that pins the type, version and hash the
- *   person was shown.
+ * - {@link DocumentsClient.getCurrent} reads the release of a document type
+ *   in force.
  * - {@link DocumentsClient.recordAcceptances} records one or more
- *   acceptances with those proof tokens. All are recorded, or none.
+ *   acceptances, each naming a release by its type and hash. All are
+ *   recorded, or none.
  *
  * An acceptance carries an idempotency key: make one per user action with
  * `createIdempotencyKey()` and send the same key on every retry of it, so
  * the backend records the action once.
  */
 import {
+	V1_DOCUMENT_HASH_PATTERN,
 	V1_DOCUMENT_TYPE_PATTERN,
 	V1_MAX_ACCEPTANCES,
 	V1_UUID_PATTERN,
@@ -58,7 +59,10 @@ export interface DocumentsClientOptions {
 
 /** What {@link DocumentsClient.recordAcceptances} takes. */
 export interface RecordAcceptancesInput {
-	/** The documents accepted, each with the proof token it was shown with. */
+	/**
+	 * The releases accepted, by the `type` and `hash` that `getCurrent` gave.
+	 * A release that is no longer in force can still be accepted.
+	 */
 	acceptances: readonly V1DocumentAcceptanceItem[];
 	/** The device subject. At least one of `subjectId` and `externalId`. */
 	subjectId?: string;
@@ -92,15 +96,14 @@ export interface RecordAcceptancesInput {
 /** The documents client. */
 export interface DocumentsClient {
 	/**
-	 * Read the version of `type` in force, with its proof token. Throws an
-	 * `ApiError` with code `not_found` when the type has no current
-	 * version.
+	 * Read the release of `type` in force. Throws an `ApiError` with code
+	 * `not_found` when the type has no current version.
 	 */
 	getCurrent: (type: string) => Promise<V1DocumentCurrentOutput>;
 	/**
 	 * Record acceptances. Resolves with the canonical subject ID and what
-	 * was recorded; throws an `ApiError` (for example
-	 * `document_proof_expired`) when nothing was.
+	 * was recorded; throws an `ApiError` (for example `document_unknown`,
+	 * for a release the project never published) when nothing was.
 	 */
 	recordAcceptances: (
 		input: RecordAcceptancesInput
@@ -124,14 +127,13 @@ const readCurrent = function readCurrent(
 	if (
 		isRecord(body) &&
 		isRecord(body.document) &&
+		typeof body.document.id === 'string' &&
 		typeof body.document.type === 'string' &&
 		typeof body.document.version === 'string' &&
 		typeof body.document.hash === 'string' &&
 		typeof body.document.effectiveDate === 'string' &&
 		typeof body.document.requiresAcceptance === 'boolean' &&
-		typeof body.proofToken === 'string' &&
-		body.proofToken &&
-		typeof body.proofTokenExpiresAt === 'string'
+		typeof body.document.isCurrent === 'boolean'
 	) {
 		return body as unknown as V1DocumentCurrentOutput;
 	}
@@ -166,8 +168,8 @@ const readAcceptances = function readAcceptances(
  * @param input - What the caller passed.
  * @returns The body of `POST /v1/documents/acceptances`.
  * @throws {TypeError} When there are no acceptances or too many, no
- * lowercase UUID idempotency key, no subject ID or external ID, or a document type or the
- * property is malformed.
+ * lowercase UUID idempotency key, no subject ID or external ID, or a document
+ * type, hash or the property is malformed.
  */
 const buildAcceptancesBody = function buildAcceptancesBody(
 	input: RecordAcceptancesInput
@@ -188,14 +190,16 @@ const buildAcceptancesBody = function buildAcceptancesBody(
 	if (!(input.subjectId || input.externalId)) {
 		throw new TypeError(`${LABEL}: pass a subjectId or an externalId.`);
 	}
-	for (const { type } of input.acceptances) {
+	for (const { hash, type } of input.acceptances) {
 		assertDocumentType(type);
+		if (!V1_DOCUMENT_HASH_PATTERN.test(hash)) {
+			throw new TypeError(
+				`${LABEL}: "${hash}" is not a document hash. Pass the hash getCurrent gave.`
+			);
+		}
 	}
 	const body: V1DocumentAcceptancesInput = {
-		acceptances: input.acceptances.map(({ proofToken, type }) => ({
-			proofToken,
-			type,
-		})),
+		acceptances: input.acceptances.map(({ hash, type }) => ({ hash, type })),
 		acceptedAt: input.acceptedAt ?? Date.now(),
 		idempotencyKey: input.idempotencyKey,
 	};
@@ -241,7 +245,7 @@ const buildAcceptancesBody = function buildAcceptancesBody(
  * // Show terms.document, then on accept:
  * const key = createIdempotencyKey();
  * await documents.recordAcceptances({
- *   acceptances: [{ type: 'terms_us', proofToken: terms.proofToken }],
+ *   acceptances: [{ type: 'terms_us', hash: terms.document.hash }],
  *   idempotencyKey: key,
  *   subjectId,
  * });

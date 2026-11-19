@@ -6,6 +6,7 @@
 
 export {
 	type V1ErrorCode,
+	V1_DOCUMENT_HASH_PATTERN,
 	V1_DOCUMENT_TYPE_PATTERN,
 	V1_ERROR_CODES,
 	V1_LEGACY_SUBJECT_ID_PATTERN,
@@ -63,7 +64,7 @@ export {
 } from './consent';
 
 export {
-	type V1CurrentDocument,
+	type V1Document,
 	type V1DocumentAcceptanceItem,
 	type V1DocumentAcceptancesInput,
 	type V1DocumentAcceptancesOutput,
@@ -72,9 +73,7 @@ export {
 	type V1DocumentPublishInput,
 	type V1DocumentPublishOutput,
 	type V1DocumentType,
-	type V1PublishedDocument,
 	type V1RecordedAcceptance,
-	v1CurrentDocumentSchema,
 	v1DocumentAcceptanceItemSchema,
 	v1DocumentAcceptancesInputSchema,
 	v1DocumentAcceptancesOutputSchema,
@@ -83,8 +82,8 @@ export {
 	v1DocumentParamsSchema,
 	v1DocumentPublishInputSchema,
 	v1DocumentPublishOutputSchema,
+	v1DocumentSchema,
 	v1DocumentTypeSchema,
-	v1PublishedDocumentSchema,
 	v1RecordedAcceptanceSchema,
 } from './documents';
 
