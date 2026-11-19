@@ -70,7 +70,6 @@ const ReactManifestClientPage = () => {
 	const transport = useMemo(
 		() =>
 			createV1ManifestTransport({
-				manifestUrl: '/api/inth/v1/consent/manifest',
 				projectUrl: '/api/bench-consent',
 			}),
 		[]
