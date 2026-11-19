@@ -60,7 +60,7 @@ rebuild it.
 ## `astro build` or `astro dev` can't fetch the manifest
 
 **Check.** In `manifest()` mode the integration downloads
-`${projectUrl}/manifest`, or your `manifestUrl`, when `astro build` or
+`${projectUrl}/v1/consent/manifest`, or your `manifestUrl`, when `astro build` or
 `astro dev` starts, and waits at most 10 seconds. When the download fails,
 `astro build` stops with an error that starts with `@inth/astro: could not
 fetch the consent manifest from <url> during the build`. `astro dev` logs the
@@ -69,9 +69,9 @@ part in parentheses names the cause:
 
 - `fetch failed` with a network error, or `no response within 10 seconds`:
   the build machine can't reach the backend.
-- `/manifest responded 404`, or another status: the URL is not your project's
+- `/v1/consent/manifest responded 404`, or another status: the URL is not your project's
   backend. The placeholder `https://your-project.inth.app` returns 404.
-- `/manifest returned an invalid consent manifest`: the URL answers, but not
+- `/v1/consent/manifest returned an invalid consent manifest`: the URL answers, but not
   with an Inth manifest.
 
 A relative or empty URL, such as `/api/inth`, skips the fetch. With
@@ -111,7 +111,7 @@ report prints, use the
 [manifest-fetch error guidance](/docs/frameworks/astro/troubleshooting#astro-build-or-astro-dev-cant-fetch-the-manifest).
 
 **Fix.** If `astro:config:setup` takes a long time in `manifest()` mode, check
-how long the build machine takes to reach `${projectUrl}/manifest`, or your
+how long the build machine takes to reach `${projectUrl}/v1/consent/manifest`, or your
 `manifestUrl`. The download can wait up to 10 seconds. See
 [build-time manifests](/docs/frameworks/astro/rendering#bundle-the-manifest-during-builds)
 before choosing `manifest({ source: 'runtime' })`, which skips the build-time
@@ -132,7 +132,7 @@ the route out of `middleware.skip`.
 
 ## Why is there no banner?
 
-**Check.** In DevTools Network, find the browser's `/init` request. Its
+**Check.** In DevTools Network, find the browser's `/v1/consent/init` request. Its
 response, or `Astro.locals.inth.snapshot.policyRule`, shows which policy
 matched.
 
@@ -144,18 +144,18 @@ matched.
    one you set up for visitors in the United States, shows no banner.
    [Policies](/docs/concepts/policies#why-the-banner-may-be-absent) explains
    each case.
-3. **The policy did not resolve.** If the browser's `/init` request failed or
+3. **The policy did not resolve.** If the browser's `/v1/consent/init` request failed or
    was blocked, no banner or `ConsentDialogLink` appears and optional
    categories stay denied.
 4. **The page shares its HTML.** On a static or prerendered page, the banner
-   appears after the `/init` request returns, not in the first HTML.
+   appears after the `/v1/consent/init` request returns, not in the first HTML.
 
 On server output, the location comes from your host's headers, such as
 `cf-ipcountry` on Cloudflare or `x-vercel-ip-country` on Vercel. To test a
 region locally, send `x-inth-country` with the request. Only your own edge may
 set `x-inth-*` headers in production, because they override the host's.
 
-## The browser's `/init` request fails with a CORS error
+## The browser's `/v1/consent/init` request fails with a CORS error
 
 **Check.** With `hosted()`, the browser calls your backend directly, so the
 backend must trust the site's origin. A preview deployment has its own origin.
@@ -179,7 +179,7 @@ reach it, so the policy ships with the build. Or raise the budget with
 
 ## The config fails with "manifest() needs a backend URL"
 
-**Check.** The server reads the policy from `${projectUrl}/manifest`, and the
+**Check.** The server reads the policy from `${projectUrl}/v1/consent/manifest`, and the
 browser saves consent there, so `astro.config` refuses to load without one.
 `hosted()` fails the same way with `hosted() needs a backend URL`.
 
