@@ -272,12 +272,6 @@ export const afterPriorityImages = function afterPriorityImages(
 			}
 		} else if (images.length > 0 || document.readyState === 'complete') {
 			finish();
-		} else if (document.readyState === 'loading') {
-			const parsed = (): void => {
-				document.removeEventListener('DOMContentLoaded', parsed);
-				check();
-			};
-			listen(document, 'DOMContentLoaded', parsed);
 		} else {
 			listen(window, 'load', finish);
 		}
@@ -286,6 +280,12 @@ export const afterPriorityImages = function afterPriorityImages(
 		const timer = setTimeout(finish, timeoutMs);
 		cleanups.push(() => clearTimeout(timer));
 	}
-	check();
+	// While the document still parses, a priority image later in the HTML
+	// isn't in the DOM yet, so the scan waits for the parse to finish.
+	if (document.readyState === 'loading') {
+		listen(document, 'DOMContentLoaded', check);
+	} else {
+		check();
+	}
 	return cleanup;
 };
