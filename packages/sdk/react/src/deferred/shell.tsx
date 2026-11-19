@@ -776,8 +776,9 @@ const createSession = function createSession<EngineModule>(
 			} else if (instant) {
 				// The stand-in shows the choice, but nothing stored it: the
 				// engine records it (`routing` keeps this path closed). When the
-				// engine can't load either, the visitor is asked again.
-				// Not awaited: the engine starts once this settles.
+				// engine can't load either, the visitor is asked again; scripts
+				// the tap already started keep running. Not awaited: the engine
+				// starts once this settles.
 				void (async () => {
 					try {
 						await handle.kernel.commands.save(choice, { actionAt, uiSource });
