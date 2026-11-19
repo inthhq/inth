@@ -76,6 +76,19 @@ describe('logRocket', () => {
 		expect(script.integrationOptions?.initOptions).toEqual({});
 	});
 
+	it('shows the registry the asyncScriptUrl the loader reads, a blank one as unset', () => {
+		expect(
+			logRocket({ appId: 'c15tfake/c15tfake', asyncScriptUrl: '  ' })
+				.integrationOptions?.asyncScriptUrl
+		).toBeUndefined();
+		expect(
+			logRocket({
+				appId: 'c15tfake/c15tfake',
+				asyncScriptUrl: ' https://lr.example/logger.js ',
+			}).integrationOptions?.asyncScriptUrl
+		).toBe('https://lr.example/logger.js');
+	});
+
 	it('honors a custom loader URL', () => {
 		const script = logRocket({
 			appId: 'inthfake/inthfake',

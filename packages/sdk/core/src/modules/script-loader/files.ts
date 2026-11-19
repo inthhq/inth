@@ -1,42 +1,21 @@
 /**
- * Pins the files a vendor's loader downloads while it runs, such as
- * LogRocket's logger, by the script registry's `files` list.
+ * Pins the files a loader downloads while it runs, by the script registry's
+ * `files` list. Today that is LogRocket's logger.
  *
  * The registry moves an integration's own script to a hash URL the browser
- * checks, but that loader then inserts more script elements of its own,
- * straight from the vendor. While a pin is installed, every script element
- * whose URL the list names is pointed at the registry's copy with its
- * integrity before the browser fetches it:
+ * checks, but LogRocket's loader then inserts a script of its own, straight
+ * from the vendor. Once a list that names files has arrived, a script
+ * element whose URL the list names is pointed at the registry's copy, with
+ * its integrity, just before the browser fetches it: as the element is
+ * inserted into the page, or as a connected element gets its first `src`.
+ * A URL the list maps to `null` is pointed at a file that never runs, so
+ * the element fires `error` and the loader's own failure path runs.
  *
- * - `script.src = url`, `setAttribute('src')`, `setAttributeNS(null, 'src')`
- *   and `setAttributeNode` are routed as they happen.
- * - Inserting a node (`appendChild`, `insertBefore`, `append`, `before`,
- *   `replaceWith`, `insertAdjacentElement`, `Range.insertNode` and the rest)
- *   routes every script in it that is not connected yet, shadow roots
- *   included, so a script parsed from a fragment is caught too. A held or
- *   refused script stays inert wherever it moves.
- *
- * A URL the list maps to `null` never loads: the element gets a type the
- * browser does not run, and an `error` event, so the loader's own failure
- * path runs. A URL the list does not name is left alone.
- *
- * While the list is pending, a cross-origin script would leave before the
- * pin knows whether it is listed, so it is held instead: it gets a type the
- * browser does not run until the list arrives, then its own type back,
- * pointed at the registry when the list names it, and is inserted again in
- * place so the browser runs it. Same-origin scripts, such as a bundler's
- * chunks, are never held.
- *
- * Several script loaders can pin at once. Each joins the one install with
- * its own list; the prototypes are restored once the last one leaves.
- *
- * Code the pin cannot see loads files without it: `document.write`, `eval`,
- * `import()`, workers, iframes, script elements from another realm, shadow
- * roots made before the pin, `attributes.setNamedItem`, SVG
- * scripts, and any URL a page override hands the loader that the list does
- * not name.
- * Only a Content Security Policy that allows the registry, and not the
- * vendor, closes those.
+ * A URL the list does not name is left alone, and nothing is held or
+ * delayed: integrations wait for the list before they mount
+ * (`sources.ts`), so the pin is in place before their loaders run. Code
+ * the pin cannot see loads files without it; only a Content Security
+ * Policy that allows the registry, and not the vendor, closes that.
  */
 import { pinAllows } from './sources';
 
@@ -57,9 +36,7 @@ export type RegistryFiles = Readonly<Record<string, RegistryFile | null>>;
 
 /** One script loader's share of the pin. */
 export interface FilePin {
-	/** The list arrived: route by `files` from now on. */
-	list: (files: RegistryFiles) => void;
-	/** Leave the pin; the last one out restores the prototypes. */
+	/** Leave the pin; the last one out takes the patches off. */
 	dispose: () => void;
 }
 
@@ -89,787 +66,318 @@ export const normalizeFileUrl = function normalizeFileUrl(
 	}
 };
 
-/** A type no browser runs, so a held or refused element stays inert. */
-const HELD_TYPE = 'inth/held';
-
-interface Owner {
-	/** `null` while the list is pending. */
-	files: RegistryFiles | null;
-}
-
-/** The DOM functions the pin calls itself, from before it patched them. */
-interface Dom {
-	getAttribute: Element['getAttribute'];
-	insertBefore: Node['insertBefore'];
-	removeAttribute: Element['removeAttribute'];
-	setAttribute: Element['setAttribute'];
-}
-
-interface Install {
-	dom: Dom;
-	/** Elements held while a list is pending, in the order they came. */
-	held: Set<HTMLScriptElement>;
-	owners: Set<Owner>;
-	restore: () => void;
-}
-
-/** What an element the pin pointed at the registry had before. */
-interface Pinned {
-	crossorigin: string | null;
-	file: RegistryFile;
-	/** The integrity it left on the element. */
-	integrity: string;
-	/** Whether that integrity is the registry's, set by the pin. */
-	ownIntegrity: boolean;
-	url: string;
-}
-
-let active: Install | null = null;
-
-/** Each held or refused element's own `type`, to give back. */
-const ownTypes = new WeakMap<HTMLScriptElement, string | null>();
-/** Elements the list refused. They never load. */
-const refused = new WeakSet<HTMLScriptElement>();
-/** Refused elements whose `error` event has been sent. */
-const failed = new WeakSet<HTMLScriptElement>();
-const pinned = new WeakMap<HTMLScriptElement, Pinned>();
-/** Shadow roots by host, closed ones included, made while installed. */
-const shadowRoots = new WeakMap<Element, ShadowRoot>();
 /**
- * Whether any shadow root was made while installed. Until one is, a sweep
- * does not look for hosts, which costs a walk over every inserted element.
+ * Where a refused file points: an empty script under a hash it does not
+ * have. The browser asks no server for it, refuses it and fires `error`;
+ * a CSP without `data:` blocks it, with the same `error`.
  */
-let madeShadowRoot = false;
-
-type Decision =
-	| { readonly kind: 'pass' | 'hold' | 'refuse' }
-	| { readonly kind: 'pin'; readonly file: RegistryFile };
-
-const PASS: Decision = { kind: 'pass' };
-const HOLD: Decision = { kind: 'hold' };
-const REFUSE: Decision = { kind: 'refuse' };
-
-const isCrossOrigin = (key: string): boolean => {
-	try {
-		return new URL(key).origin !== globalThis.location?.origin;
-	} catch {
-		return true;
-	}
+const REFUSED: RegistryFile = {
+	integrity:
+		'sha384-yV4YBBnXjEy7Ehxk1n24pq1i7Qs3OB3jMcxv/WAESNNp7rzxfk7jZbXyDzmhtUXE',
+	src: 'data:text/javascript,',
 };
 
-/**
- * What every owner's list says about one URL. A refusal in any list wins.
- * Otherwise a cross-origin URL waits while any list is pending, since that
- * list may refuse it or name another copy; then the first list that names
- * it pins it.
- */
-const decide = function decide(install: Install, key: string | null): Decision {
-	if (key === null) {
-		return PASS;
-	}
-	let pending = false;
-	let file: RegistryFile | undefined;
-	for (const owner of install.owners) {
-		if (owner.files === null) {
-			pending = true;
-		} else if (Object.hasOwn(owner.files, key)) {
-			const listed = owner.files[key];
-			if (!listed) {
-				return REFUSE;
+/** Each loader's list, in the order the loaders joined. */
+const lists = new Set<{ readonly files: RegistryFiles }>();
+
+/** What the lists say together, by URL; `null` while none names a file. */
+let pins: Map<string, RegistryFile> | null = null;
+
+/** A refusal in any list wins; otherwise the first list to name a URL. */
+const merge = function merge(): void {
+	const next = new Map<string, RegistryFile>();
+	for (const { files } of lists) {
+		for (const [url, file] of Object.entries(files)) {
+			if (!file) {
+				next.set(url, REFUSED);
+			} else if (!next.has(url)) {
+				next.set(url, file);
 			}
-			file ??= listed;
 		}
 	}
-	if (pending && isCrossOrigin(key)) {
-		return HOLD;
-	}
-	return file ? { file, kind: 'pin' } : PASS;
+	pins = next.size > 0 ? next : null;
 };
 
-const keepType = function keepType(
-	install: Install,
-	element: HTMLScriptElement
-): void {
-	if (!ownTypes.has(element)) {
-		const type = install.dom.getAttribute.call(element, 'type');
-		// A clone of a held element copies the held type, not its own.
-		ownTypes.set(element, type === HELD_TYPE ? null : type);
-	}
-	install.dom.setAttribute.call(element, 'type', HELD_TYPE);
-};
+const attribute = (element: Element, name: string): string | null =>
+	Element.prototype.getAttribute.call(element, name);
 
 /**
- * Keep a held or refused element inert as it is inserted. A loader may set
- * `type` after `src`; that value is the one it gets back.
+ * Set or remove an attribute. The pin's own `setAttribute` wrapper passes
+ * these through: they are never a connected script's first `src`.
  */
-const enforceType = function enforceType(
-	dom: Dom,
-	element: HTMLScriptElement
+const writeAttribute = function writeAttribute(
+	element: Element,
+	name: string,
+	value: string | null
 ): void {
-	const type = dom.getAttribute.call(element, 'type');
-	if (type !== HELD_TYPE) {
-		ownTypes.set(element, type);
-		dom.setAttribute.call(element, 'type', HELD_TYPE);
-	}
-};
-
-const restoreType = function restoreType(
-	dom: Dom,
-	element: HTMLScriptElement
-): void {
-	if (!ownTypes.has(element)) {
-		return;
-	}
-	const type = ownTypes.get(element) ?? null;
-	ownTypes.delete(element);
-	// The page set another type while the element was held: it keeps that.
-	if (dom.getAttribute.call(element, 'type') !== HELD_TYPE) {
-		return;
-	}
-	if (type === null) {
-		dom.removeAttribute.call(element, 'type');
+	if (value === null) {
+		Element.prototype.removeAttribute.call(element, name);
 	} else {
-		dom.setAttribute.call(element, 'type', type);
+		Element.prototype.setAttribute.call(element, name, value);
 	}
-};
-
-/** Send a refused element's `error`, once, as a failed fetch would. */
-const failLater = function failLater(element: HTMLScriptElement): void {
-	if (failed.has(element)) {
-		return;
-	}
-	failed.add(element);
-	setTimeout(() => {
-		element.dispatchEvent(new Event('error'));
-	}, 0);
 };
 
 /**
- * Give back the element's own `crossorigin`, unless the page changed the
- * pin's `anonymous` since: its own later value stays.
+ * Point `element` at the registry's copy of `value` when the lists name
+ * it, and return the URL it gets instead; otherwise return `value`, so a
+ * Trusted Types URL stays one. A page-set integrity stays, as a
+ * `scriptLoader.sources` entry treats it: the element moves only when that
+ * pin allows the registry's bytes. A refusal moves it whatever it pins.
  */
-const restoreCrossorigin = function restoreCrossorigin(
-	dom: Dom,
-	element: HTMLScriptElement,
-	record: Pinned
-): void {
-	if (dom.getAttribute.call(element, 'crossorigin') !== 'anonymous') {
-		return;
-	}
-	if (record.crossorigin === null) {
-		dom.removeAttribute.call(element, 'crossorigin');
-	} else {
-		dom.setAttribute.call(element, 'crossorigin', record.crossorigin);
-	}
-};
-
-/** Put back what the pin set on an element the page points elsewhere. */
-const unpin = function unpin(dom: Dom, element: HTMLScriptElement): void {
-	const record = pinned.get(element);
-	if (!record) {
-		return;
-	}
-	pinned.delete(element);
-	if (
-		record.ownIntegrity &&
-		dom.getAttribute.call(element, 'integrity') === record.integrity
-	) {
-		dom.removeAttribute.call(element, 'integrity');
-	}
-	restoreCrossorigin(dom, element, record);
-};
-
-/**
- * Point an element at the registry's copy. A page-set integrity stays, as
- * a `scriptLoader.sources` entry treats it: the element moves only when
- * the pin allows the registry's bytes, and keeps the vendor URL, pinned,
- * otherwise.
- */
-const pin = function pin(
-	install: Install,
-	element: HTMLScriptElement,
-	file: RegistryFile,
-	value: unknown
-): unknown {
-	const { dom } = install;
-	const own = dom.getAttribute.call(element, 'integrity');
-	const ownIntegrity = !own?.trim();
-	if (!ownIntegrity && !pinAllows(own as string, file.integrity)) {
+const route = function route(element: Element, value: unknown): unknown {
+	const file = pins?.get(
+		normalizeFileUrl(value, element.baseURI || undefined) ?? ''
+	);
+	if (!file) {
 		return value;
 	}
-	pinned.set(element, {
-		crossorigin: dom.getAttribute.call(element, 'crossorigin'),
-		file,
-		integrity: ownIntegrity ? file.integrity : (own as string),
-		ownIntegrity,
-		url: String(value),
-	});
-	if (ownIntegrity) {
-		dom.setAttribute.call(element, 'integrity', file.integrity);
+	const own = attribute(element, 'integrity');
+	if (file === REFUSED || !own?.trim()) {
+		writeAttribute(element, 'integrity', file.integrity);
+	} else if (!pinAllows(own, file.integrity)) {
+		return value;
 	}
-	dom.setAttribute.call(element, 'crossorigin', 'anonymous');
+	writeAttribute(element, 'crossorigin', 'anonymous');
 	return file.src;
 };
 
-/**
- * Apply the list to an element about to get `value` as its `src`, and
- * return what it gets instead: the registry's URL, or `value` itself, so a
- * Trusted Types URL stays one.
- */
-const route = function route(
-	install: Install,
-	element: HTMLScriptElement,
-	value: unknown
-): unknown {
-	// A held element is decided when the list arrives, by the URL it has
-	// then. A refused one that has been inserted stays refused: it sent its
-	// `error`. Either stays inert if the page gave it a type since. One not
-	// inserted yet is decided again by its new URL.
-	if (install.held.has(element) || failed.has(element)) {
-		enforceType(install.dom, element);
-		return value;
-	}
-	if (refused.has(element)) {
-		refused.delete(element);
-		restoreType(install.dom, element);
-	}
-	unpin(install.dom, element);
-	const decision = decide(
-		install,
-		normalizeFileUrl(value, element.baseURI || undefined)
-	);
-	if (decision.kind === 'pin') {
-		return pin(install, element, decision.file, value);
-	}
-	if (decision.kind === 'hold') {
-		keepType(install, element);
-		install.held.add(element);
-	} else if (decision.kind === 'refuse') {
-		keepType(install, element);
-		refused.add(element);
-		if (element.isConnected) {
-			failLater(element);
-		}
-	}
-	return value;
-};
-
-/**
- * Check a pinned element again as it is inserted: the page may have set
- * its own integrity after its `src`. One the registry's bytes do not match
- * goes back to the vendor URL under the page's pin.
- *
- * @returns `false` when the element no longer points at the registry, so
- * it is routed afresh.
- */
-const recheck = function recheck(
-	dom: Dom,
-	element: HTMLScriptElement
-): boolean {
-	const record = pinned.get(element);
-	if (!record || dom.getAttribute.call(element, 'src') !== record.file.src) {
-		unpin(dom, element);
-		return false;
-	}
-	const own = dom.getAttribute.call(element, 'integrity');
-	if (own === record.integrity) {
-		return true;
-	}
-	if (!own?.trim()) {
-		dom.setAttribute.call(element, 'integrity', record.file.integrity);
-		pinned.set(element, {
-			...record,
-			integrity: record.file.integrity,
-			ownIntegrity: true,
-		});
-	} else if (pinAllows(own, record.file.integrity)) {
-		pinned.set(element, { ...record, integrity: own, ownIntegrity: false });
-	} else {
-		pinned.delete(element);
-		dom.setAttribute.call(element, 'src', record.url);
-		restoreCrossorigin(dom, element, record);
-		return true;
-	}
-	dom.setAttribute.call(element, 'crossorigin', 'anonymous');
-	return true;
-};
+/** What a sweep changed on one element, to put back if the insert fails. */
+interface Swept {
+	crossorigin: string | null;
+	element: HTMLScriptElement;
+	integrity: string | null;
+	src: string;
+}
 
 const isTree = (node: unknown): node is Element | DocumentFragment =>
 	node instanceof Element ||
 	(typeof DocumentFragment !== 'undefined' && node instanceof DocumentFragment);
 
-const shadowRootOf = (element: Element): ShadowRoot | null =>
-	element.shadowRoot ?? shadowRoots.get(element) ?? null;
-
-/** The scripts in `node`, in the shadow roots inside it too. */
-const scriptsIn = function scriptsIn(node: unknown): HTMLScriptElement[] {
-	if (node instanceof HTMLScriptElement) {
-		return [node];
-	}
-	if (!isTree(node)) {
-		return [];
-	}
-	if (!madeShadowRoot) {
-		return Array.from(node.querySelectorAll('script'));
-	}
-	// Shadow-including tree order, the order the browser runs inserted
-	// scripts in: a host's shadow root before its children. A stack, not
-	// recursion, so a deep tree cannot overflow it.
-	const found: HTMLScriptElement[] = [];
-	const stack: (Element | DocumentFragment)[] = [node];
-	while (stack.length > 0) {
-		const next = stack.pop() as Element | DocumentFragment;
-		if (next instanceof HTMLScriptElement) {
-			found.push(next);
-		}
-		const { children } = next;
-		for (let index = children.length - 1; index >= 0; index -= 1) {
-			stack.push(children[index] as Element);
-		}
-		const root = next instanceof Element ? shadowRootOf(next) : null;
-		if (root) {
-			stack.push(root);
-		}
-	}
-	return found;
-};
-
-/** Whether a decision still points at the copy an element was pinned to. */
-const keepsPin = (decision: Decision, file: RegistryFile): boolean =>
-	decision.kind === 'pin' &&
-	decision.file.src === file.src &&
-	decision.file.integrity === file.integrity;
-
-/**
- * Route each script in `node` that inserting it may run.
- *
- * @returns The refused scripts, to fail once the insertion succeeds.
- */
-const sweep = function sweep(
-	install: Install,
-	node: unknown
-): HTMLScriptElement[] {
-	const refusals: HTMLScriptElement[] = [];
-	// A connected script has run, waits on its own `src`, or is held or
-	// refused with a type the pin keeps on it: moving it runs nothing new.
-	if (node instanceof Node && node.isConnected) {
-		return refusals;
-	}
-	const { dom } = install;
-	for (const element of scriptsIn(node)) {
-		if (install.held.has(element)) {
-			enforceType(dom, element);
-			// Held scripts run again in the order they were inserted, as the
-			// browser runs scripts with `async = false`.
-			install.held.delete(element);
-			install.held.add(element);
-			continue;
-		}
-		if (failed.has(element)) {
-			enforceType(dom, element);
-			continue;
-		}
-		// A list that joined or arrived since the element got its URL may
-		// decide it otherwise.
-		const record = pinned.get(element);
-		if (
-			record &&
-			dom.getAttribute.call(element, 'src') === record.file.src &&
-			!keepsPin(
-				decide(
-					install,
-					normalizeFileUrl(record.url, element.baseURI || undefined)
-				),
-				record.file
-			)
-		) {
-			unpin(dom, element);
-			dom.setAttribute.call(element, 'src', record.url);
-		}
-		if (pinned.has(element) && recheck(dom, element)) {
-			continue;
-		}
-		const src = dom.getAttribute.call(element, 'src');
-		if (src !== null) {
-			const next = route(install, element, src);
-			if (next !== src) {
-				dom.setAttribute.call(element, 'src', next as string);
-			}
-		} else if (refused.has(element)) {
-			// The page took the refused URL off: it is an inline script now.
-			refused.delete(element);
-			restoreType(dom, element);
-		}
-		if (refused.has(element)) {
-			refusals.push(element);
-		}
-	}
-	return refusals;
-};
-
-/** Insert a connected element again in place, so the browser runs it. */
-const reinsert = function reinsert(dom: Dom, element: HTMLScriptElement): void {
-	const parent = element.parentNode;
-	if (element.isConnected && parent) {
-		dom.insertBefore.call(parent, element, element.nextSibling);
-	}
-};
-
-/** Decide every held element again; run those the list lets go. */
-const releaseHeld = function releaseHeld(install: Install): void {
-	const { dom } = install;
-	const elements = [...install.held];
-	install.held.clear();
-	for (const element of elements) {
-		restoreType(dom, element);
-		// The install now in place decides: a script released before this one
-		// can run page code that installs a new pin.
-		const router = active;
-		const src = dom.getAttribute.call(element, 'src');
-		if (src !== null && router) {
-			const next = route(router, element, src);
-			if (next !== src) {
-				dom.setAttribute.call(element, 'src', next as string);
-			}
-		}
-		if (!(router?.held.has(element) || refused.has(element))) {
-			reinsert(dom, element);
-		}
-	}
-};
-
-/** After an owner listed or left: release what no list holds now. */
-const settle = function settle(install: Install): void {
-	const needed = [...install.owners].some(
-		(owner) => owner.files === null || Object.keys(owner.files).length > 0
-	);
-	if (!needed && active === install) {
-		// No list names a file, or every loader left. A held element was never
-		// listed, so it goes as it came.
-		// Restore first: a released script can run page code at once, and a
-		// pin installed then must wrap the native methods, not ours.
-		active = null;
-		install.restore();
-		releaseHeld(install);
+/** Route each script that inserting `node` into the page runs. */
+const sweep = function sweep(node: unknown, swept: Swept[]): void {
+	// A connected script has run, or waits on its own `src`: moving it runs
+	// nothing new.
+	if (!isTree(node) || node.isConnected) {
 		return;
 	}
-	releaseHeld(install);
+	const scripts =
+		node instanceof HTMLScriptElement
+			? [node]
+			: node.querySelectorAll('script');
+	for (const element of scripts) {
+		const src = attribute(element, 'src');
+		if (src === null) {
+			continue;
+		}
+		const before: Swept = {
+			crossorigin: attribute(element, 'crossorigin'),
+			element,
+			integrity: attribute(element, 'integrity'),
+			src,
+		};
+		const next = route(element, src);
+		if (next !== src) {
+			writeAttribute(element, 'src', String(next));
+			swept.push(before);
+		}
+	}
 };
 
-type Method = (this: unknown, ...args: unknown[]) => unknown;
+/** Whether giving `element` a `src` makes the browser fetch it now. */
+const fetchesNow = (element: unknown): element is HTMLScriptElement =>
+	pins !== null &&
+	element instanceof HTMLScriptElement &&
+	element.isConnected &&
+	attribute(element, 'src') === null;
 
-/** A namespace argument the DOM reads as no namespace. */
-const isNoNamespace = (namespace: unknown): boolean =>
-	namespace === null || namespace === undefined || namespace === '';
+/** One prototype member the pin wraps. */
+interface Patch {
+	/** Whether ours is in the member's chain, on top or under another. */
+	inChain: boolean;
+	put: () => void;
+	/** Take ours off; `false` when another wrapper sits on top of it. */
+	take: () => boolean;
+}
+
+/** Made on the first install and kept, so a later install reuses them. */
+const patches: Patch[] = [];
+
+type Method = (this: unknown, ...args: unknown[]) => unknown;
 
 /** A prototype the pin patches: a DOM node's, or `Range`'s. */
 type Patchable = Node | Range;
 
-/** Patch the DOM entry points. Returns the install; `restore` undoes it. */
-const installPatches = function installPatches(): Install {
-	const restores: (() => void)[] = [];
-	const elementProto = Element.prototype;
-	const dom: Dom = {
-		getAttribute: elementProto.getAttribute,
-		insertBefore: Node.prototype.insertBefore,
-		removeAttribute: elementProto.removeAttribute,
-		setAttribute: elementProto.setAttribute,
-	};
-	const install: Install = {
-		dom,
-		held: new Set(),
-		owners: new Set(),
-		restore() {
-			for (const undo of restores.splice(0).reverse()) {
-				undo();
-			}
+/**
+ * Wrap `proto[name]`. The wrapper calls whatever the member was when ours
+ * was last put on, so taking ours off and putting it back never drops a
+ * wrapper another library added in between.
+ */
+const wrapMember = function wrapMember(
+	proto: Patchable | undefined,
+	name: string,
+	wrap: (original: () => Method) => Method
+): void {
+	const target = proto as unknown as Record<string, unknown> | undefined;
+	if (!target || typeof target[name] !== 'function') {
+		return;
+	}
+	let original = target[name] as Method;
+	const wrapped = wrap(() => original);
+	patches.push({
+		inChain: false,
+		put() {
+			original = target[name] as Method;
+			target[name] = wrapped;
 		},
-	};
-
-	const patch = function patch(
-		proto: Patchable | undefined,
-		name: string,
-		wrap: (original: Method) => Method
-	): void {
-		const target = proto as unknown as Record<string, unknown> | undefined;
-		const original = target?.[name];
-		if (!target || typeof original !== 'function') {
-			return;
-		}
-		const wrapped = wrap(original as Method);
-		target[name] = wrapped;
-		restores.push(() => {
-			// A wrapper installed on top keeps ours in its chain; ours is then
-			// a pass-through, because `active` no longer points here.
-			if (target[name] === wrapped) {
-				target[name] = original;
+		take() {
+			if (target[name] !== wrapped) {
+				return false;
 			}
-		});
-	};
-	const routeArgument =
-		(index: number, matches: (args: unknown[]) => boolean) =>
-		(original: Method): Method =>
-			function routed(this: unknown, ...args: unknown[]) {
-				if (
-					active === install &&
-					this instanceof HTMLScriptElement &&
-					args.length > index &&
-					matches(args)
-				) {
-					args[index] = route(install, this, args[index]);
-				}
-				return original.apply(this, args);
-			};
+			target[name] = original;
+			return true;
+		},
+	});
+};
 
-	const srcProto = HTMLScriptElement.prototype;
-	const srcDescriptor = Object.getOwnPropertyDescriptor(srcProto, 'src');
-	const ownSet = srcDescriptor?.set;
-	if (srcDescriptor?.configurable && ownSet) {
+/** Sweep the nodes an insertion adds, when it adds them to the page. */
+const insertion =
+	(pick: (args: unknown[]) => unknown[]) =>
+	(original: () => Method): Method =>
+		function inserted(this: unknown, ...args: unknown[]) {
+			const anchor =
+				typeof Range !== 'undefined' && this instanceof Range
+					? this.startContainer
+					: this;
+			// A node inserted into a detached tree is swept when that tree
+			// joins the page.
+			if (!(pins && anchor instanceof Node && anchor.isConnected)) {
+				return original().apply(this, args);
+			}
+			const swept: Swept[] = [];
+			for (const node of pick(args)) {
+				sweep(node, swept);
+			}
+			try {
+				return original().apply(this, args);
+			} catch (error) {
+				// Nothing was inserted: the elements go back as they were.
+				for (const { crossorigin, element, integrity, src } of swept) {
+					writeAttribute(element, 'src', src);
+					writeAttribute(element, 'integrity', integrity);
+					writeAttribute(element, 'crossorigin', crossorigin);
+				}
+				throw error;
+			}
+		};
+
+const createPatches = function createPatches(): void {
+	const scriptProto = HTMLScriptElement.prototype;
+	const descriptor = Object.getOwnPropertyDescriptor(scriptProto, 'src');
+	const ownSet = descriptor?.set;
+	if (descriptor?.configurable && ownSet) {
 		const set = function set(this: HTMLScriptElement, value: unknown) {
-			ownSet.call(
-				this,
-				active === install && this instanceof HTMLScriptElement
-					? route(install, this, value)
-					: value
-			);
+			ownSet.call(this, fetchesNow(this) ? route(this, value) : value);
 		};
-		Object.defineProperty(srcProto, 'src', {
-			...srcDescriptor,
-			get: srcDescriptor.get,
-			set,
-		});
-		restores.push(() => {
-			if (Object.getOwnPropertyDescriptor(srcProto, 'src')?.set === set) {
-				Object.defineProperty(srcProto, 'src', srcDescriptor);
-			}
+		patches.push({
+			inChain: false,
+			put() {
+				Object.defineProperty(scriptProto, 'src', {
+					...descriptor,
+					get: descriptor.get,
+					set,
+				});
+			},
+			take() {
+				if (Object.getOwnPropertyDescriptor(scriptProto, 'src')?.set !== set) {
+					return false;
+				}
+				Object.defineProperty(scriptProto, 'src', descriptor);
+				return true;
+			},
 		});
 	}
-	patch(
+	const elementProto = Element.prototype;
+	wrapMember(
 		elementProto,
 		'setAttribute',
-		routeArgument(1, ([name]) => String(name).toLowerCase() === 'src')
-	);
-	patch(
-		elementProto,
-		'setAttributeNS',
-		routeArgument(
-			2,
-			([namespace, name]) => isNoNamespace(namespace) && name === 'src'
-		)
-	);
-	const routeNode = (original: Method): Method =>
-		function routedNode(this: unknown, ...args: unknown[]) {
-			const [attribute] = args;
-			if (
-				active === install &&
-				this instanceof HTMLScriptElement &&
-				attribute instanceof Attr &&
-				attribute.namespaceURI === null &&
-				attribute.localName === 'src'
-			) {
-				const next = route(install, this, attribute.value);
-				if (next !== attribute.value) {
-					attribute.value = String(next);
+		(original) =>
+			function routed(this: unknown, ...args: unknown[]) {
+				if (fetchesNow(this) && String(args[0]).toLowerCase() === 'src') {
+					args[1] = route(this, args[1]);
 				}
-			}
-			return original.apply(this, args);
-		};
-	patch(elementProto, 'setAttributeNode', routeNode);
-	patch(elementProto, 'setAttributeNodeNS', routeNode);
-
-	// A held or refused script has not started, so the browser checks it
-	// again when it moves, gets text or gets a `src`. It keeps the type the
-	// browser does not run; a type the page sets meanwhile is the one it
-	// gets back.
-	const keepsInert = (element: unknown): element is HTMLScriptElement =>
-		active === install &&
-		element instanceof HTMLScriptElement &&
-		(install.held.has(element) || refused.has(element));
-	const isType = (name: unknown): boolean =>
-		String(name).toLowerCase() === 'type';
-	const isPlainType = (namespace: unknown, name: unknown): boolean =>
-		isNoNamespace(namespace) && name === 'type';
-	const guardType =
-		(
-			matches: (args: unknown[]) => boolean,
-			value: (args: unknown[]) => string | null
-		) =>
-		(original: Method): Method =>
-			function guarded(this: unknown, ...args: unknown[]) {
-				if (keepsInert(this) && matches(args)) {
-					ownTypes.set(this, value(args));
-					return undefined;
-				}
-				return original.apply(this, args);
-			};
-	patch(
-		elementProto,
-		'setAttribute',
-		guardType(
-			([name]) => isType(name),
-			([, value]) => String(value)
-		)
-	);
-	patch(
-		elementProto,
-		'removeAttribute',
-		guardType(
-			([name]) => isType(name),
-			() => null
-		)
-	);
-	patch(
-		elementProto,
-		'setAttributeNS',
-		guardType(
-			([namespace, name]) => isPlainType(namespace, name),
-			([, , value]) => String(value)
-		)
-	);
-	patch(
-		elementProto,
-		'removeAttributeNS',
-		guardType(
-			([namespace, name]) => isPlainType(namespace, name),
-			() => null
-		)
-	);
-	patch(
-		elementProto,
-		'toggleAttribute',
-		(original: Method): Method =>
-			function toggled(this: unknown, ...args: unknown[]) {
-				const [name, force] = args;
-				if (!(keepsInert(this) && isType(name))) {
-					return original.apply(this, args);
-				}
-				const own = ownTypes.get(this) ?? null;
-				const next = force === undefined ? own === null : Boolean(force);
-				ownTypes.set(this, next ? (own ?? '') : null);
-				return next;
+				return original().apply(this, args);
 			}
 	);
-	const typeDescriptor = Object.getOwnPropertyDescriptor(srcProto, 'type');
-	const ownTypeSet = typeDescriptor?.set;
-	if (typeDescriptor?.configurable && ownTypeSet) {
-		const setType = function setType(this: HTMLScriptElement, value: unknown) {
-			if (keepsInert(this)) {
-				ownTypes.set(this, String(value));
-				return;
-			}
-			ownTypeSet.call(this, value);
-		};
-		Object.defineProperty(srcProto, 'type', {
-			...typeDescriptor,
-			get: typeDescriptor.get,
-			set: setType,
-		});
-		restores.push(() => {
-			if (Object.getOwnPropertyDescriptor(srcProto, 'type')?.set === setType) {
-				Object.defineProperty(srcProto, 'type', typeDescriptor);
-			}
-		});
-	}
-	// A closed shadow root is out of reach from its host, and a script in a
-	// detached one is swept when its host joins the page.
-	patch(
-		elementProto,
-		'attachShadow',
-		(original: Method): Method =>
-			function attached(this: unknown, ...args: unknown[]) {
-				const root = original.apply(this, args);
-				if (this instanceof Element && root instanceof ShadowRoot) {
-					shadowRoots.set(this, root);
-					madeShadowRoot = true;
-				}
-				return root;
-			}
-	);
-
-	/** Sweep the nodes an insertion adds, when it adds them to the page. */
-	const insertion =
-		(pick: (args: unknown[]) => unknown[]) =>
-		(original: Method): Method =>
-			function inserted(this: unknown, ...args: unknown[]) {
-				const anchor =
-					typeof Range !== 'undefined' && this instanceof Range
-						? this.startContainer
-						: this;
-				// A node inserted into a detached tree is swept when that tree
-				// joins the page.
-				if (
-					!(active === install && anchor instanceof Node && anchor.isConnected)
-				) {
-					return original.apply(this, args);
-				}
-				const refusals = pick(args).flatMap((node) => sweep(install, node));
-				const result = original.apply(this, args);
-				// Only an insertion that happened fails what it refused.
-				for (const element of refusals) {
-					failLater(element);
-				}
-				return result;
-			};
 	const first = (args: unknown[]) => args.slice(0, 1);
 	const all = (args: unknown[]) => args;
 	for (const name of ['appendChild', 'insertBefore', 'replaceChild']) {
-		patch(Node.prototype, name, insertion(first));
+		wrapMember(Node.prototype, name, insertion(first));
 	}
-	for (const proto of [
-		elementProto,
-		// A shadow root is a fragment, and a script inserted into a connected
-		// one runs.
+	// A shadow root is a fragment, and a script inserted into a connected
+	// one runs.
+	const fragmentProto =
 		typeof DocumentFragment === 'undefined'
 			? undefined
-			: DocumentFragment.prototype,
-	]) {
+			: DocumentFragment.prototype;
+	for (const proto of [elementProto, fragmentProto]) {
 		for (const name of ['append', 'prepend', 'replaceChildren']) {
-			patch(proto, name, insertion(all));
+			wrapMember(proto, name, insertion(all));
 		}
 	}
-	for (const proto of [
-		elementProto,
-		typeof CharacterData === 'undefined' ? undefined : CharacterData.prototype,
-	]) {
+	const characterProto =
+		typeof CharacterData === 'undefined' ? undefined : CharacterData.prototype;
+	for (const proto of [elementProto, characterProto]) {
 		for (const name of ['after', 'before', 'replaceWith']) {
-			patch(proto, name, insertion(all));
+			wrapMember(proto, name, insertion(all));
 		}
 	}
-	patch(
+	wrapMember(
 		elementProto,
 		'insertAdjacentElement',
 		insertion((args) => args.slice(1, 2))
 	);
 	if (typeof Range !== 'undefined') {
-		patch(Range.prototype, 'insertNode', insertion(first));
-		// `surroundContents` empties the new parent before it inserts it, so
-		// only the parent itself, or its shadow root, joins the page.
-		patch(
-			Range.prototype,
-			'surroundContents',
-			insertion(([parent]) => {
-				if (parent instanceof HTMLScriptElement) {
-					return [parent];
-				}
-				const root = parent instanceof Element ? shadowRootOf(parent) : null;
-				return root ? [root] : [];
-			})
-		);
+		for (const name of ['insertNode', 'surroundContents']) {
+			wrapMember(Range.prototype, name, insertion(first));
+		}
 	}
-	return install;
+};
+
+const install = function install(): void {
+	if (patches.length === 0) {
+		createPatches();
+	}
+	for (const patch of patches) {
+		if (!patch.inChain) {
+			patch.put();
+			patch.inChain = true;
+		}
+	}
 };
 
 /**
- * Join the pin with one script loader's list, installing it first if no
- * loader pinned yet. A no-op outside the browser.
+ * Take the patches off. One another library wrapped since stays in its
+ * chain as a pass-through, since `pins` is `null`, and the next install
+ * reuses it instead of adding another layer.
+ */
+const uninstall = function uninstall(): void {
+	for (const patch of patches) {
+		if (patch.inChain && patch.take()) {
+			patch.inChain = false;
+		}
+	}
+};
+
+/**
+ * Join the pin with one script loader's list, installing it if no loader
+ * pinned yet. A no-op outside the browser.
  *
- * @param files - The registry's files, or `null` while its list is pending:
- * cross-origin scripts are then held until {@link FilePin.list} gives it.
+ * @param files - The registry's files.
  * @returns This loader's share, or `null` outside the browser.
  * @internal
  */
 export const pinRegistryFiles = function pinRegistryFiles(
-	files: RegistryFiles | null
+	files: RegistryFiles
 ): FilePin | null {
 	if (
 		typeof document === 'undefined' ||
@@ -877,23 +385,19 @@ export const pinRegistryFiles = function pinRegistryFiles(
 	) {
 		return null;
 	}
-	active ??= installPatches();
-	const install = active;
-	const owner: Owner = { files };
-	install.owners.add(owner);
-	if (files !== null) {
-		settle(install);
+	const list = { files };
+	lists.add(list);
+	merge();
+	if (pins) {
+		install();
 	}
 	return {
 		dispose() {
-			if (install.owners.delete(owner)) {
-				settle(install);
-			}
-		},
-		list(next) {
-			if (owner.files === null && install.owners.has(owner)) {
-				owner.files = next;
-				settle(install);
+			if (lists.delete(list)) {
+				merge();
+				if (!pins) {
+					uninstall();
+				}
 			}
 		},
 	};

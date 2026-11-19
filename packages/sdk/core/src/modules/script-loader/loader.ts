@@ -123,11 +123,11 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		? readRegistry(kernel.getSnapshot())
 		: { status: 'failed' };
 	let stopWaiting: (() => void) | undefined;
-	// The registry's files pin what loaders download while they run. It goes
-	// on just before this loader first mounts: while the list is pending, so
-	// nothing leaves before the pin knows whether it is listed, and when the
-	// list names files. A list without files takes it off, and so does any
-	// way the loader shuts down.
+	// The registry's files pin what LogRocket's loader downloads while it
+	// runs. The pin goes on once a list that names files is here: when a
+	// prefetch carried it, before this loader first mounts, and otherwise
+	// before the scripts that waited for it mount. Nothing waits for it, and
+	// it comes off however the loader shuts down.
 	let filePin: FilePin | null | undefined;
 	let pinReleased = false;
 	const releasePin = (): void => {
@@ -136,22 +136,16 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		filePin = undefined;
 	};
 	const pinFiles = (state: ScriptRegistryState): void => {
-		if (!options.registry || pinReleased) {
+		if (
+			!options.registry ||
+			pinReleased ||
+			filePin !== undefined ||
+			state.status !== 'listed' ||
+			Object.keys(state.files ?? {}).length === 0
+		) {
 			return;
 		}
-		if (state.status === 'pending') {
-			filePin ??= pinRegistryFiles(null);
-			return;
-		}
-		const files = state.status === 'listed' ? (state.files ?? {}) : {};
-		if (Object.keys(files).length === 0) {
-			filePin?.dispose();
-			filePin = undefined;
-		} else if (filePin) {
-			filePin.list(files);
-		} else {
-			filePin = pinRegistryFiles(files);
-		}
+		filePin = pinRegistryFiles(state.files ?? {});
 	};
 	const withSources = createScriptSourceResolver(
 		options.sources,
@@ -618,9 +612,6 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 				);
 			}
 		}
-		// Only now: an element this loader mounted while the list was pending
-		// is held, and has been taken off the page above. Releasing the pin
-		// first would run it from its vendor URL.
 		releasePin();
 		loadedElements.clear();
 		retainedElements.clear();

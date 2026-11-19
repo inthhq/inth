@@ -22,8 +22,8 @@ export interface ScriptFilesPage {
 	/** The script loader's `onDebug` errors, by message. */
 	errors: string[];
 	/**
-	 * Start a runtime whose init waits for {@link ScriptFilesPage.answer},
-	 * so the list is pending.
+	 * Start LogRocket on a runtime whose init waits for
+	 * {@link ScriptFilesPage.answer}, so the list is pending.
 	 */
 	startPending: () => void;
 	/** Answer the pending init with `registry`. */
@@ -72,6 +72,8 @@ window.__scriptFiles = {
 		runtime.start();
 	},
 	startPending() {
+		// Consent management on, so the runtime asks init; `necessary`, so
+		// LogRocket needs no choice to load.
 		const runtime = createConsentRuntime({
 			experimentalScriptRegistry: true,
 			mode: custom({
@@ -82,15 +84,7 @@ window.__scriptFiles = {
 					}) as never,
 			}),
 			persistence: false,
-			// An integration, so the runtime mounts its script loader.
-			scripts: [
-				{
-					category: 'necessary',
-					id: 'placeholder',
-					integration: 'placeholder',
-					src: 'https://gateway.inth.test/scripts/placeholder.js',
-				},
-			],
+			scripts: [{ ...logRocket({ appId: APP_ID }), category: 'necessary' }],
 		});
 		runtimes.push(runtime);
 		runtime.start();

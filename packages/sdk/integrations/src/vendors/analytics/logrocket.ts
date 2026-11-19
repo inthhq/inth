@@ -179,8 +179,9 @@ export const logRocket = function logRocket(options: LogRocketOptions): Script {
 			DEFAULT_LOGROCKET_SCRIPT_URL
 		),
 	});
-	// `initOptions.sdkServer` and `enterpriseServer` move where the loader
-	// downloads its logger, so the script registry reads them.
-	script.integrationOptions = { ...options, initOptions };
+	// `asyncScriptUrl`, `initOptions.sdkServer` and `enterpriseServer` move
+	// where the loader downloads its logger, so the script registry reads
+	// them, as the loader does: a blank `asyncScriptUrl` is unset.
+	script.integrationOptions = { ...options, asyncScriptUrl, initOptions };
 	return script;
 };

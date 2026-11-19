@@ -1,15 +1,17 @@
 /** @vitest-environment node */
 /**
- * The script registry's `files` in real Chromium, with LogRocket's real
- * loader and the logger it downloads while it runs, served from a fake
- * gateway. jsdom fetches and checks nothing, so only a browser shows that
- * the logger loads from the gateway under its hash, and that other bytes,
- * a `null` entry, or a URL the list does not name behave as documented.
+ * The script registry's `files` in real Chromium, with a loader and the
+ * logger it downloads while it runs, served from a fake gateway. jsdom
+ * fetches and checks nothing, so only a browser shows that the logger
+ * loads from the gateway under its hash, and that other bytes, a `null`
+ * entry, or a URL the list does not name behave as documented.
  *
- * The files are LogRocket's, so they are not kept in the repository: the
- * test downloads them from LogRocket's CDN, or reads them from the
- * directory `INTH_LOGROCKET_FILES` names (`LogRocket.min.js` and
- * `logger-1.min.js`) to run offline. Their hashes are computed here, so
+ * By default the loader and logger are small stand-ins that load the way
+ * LogRocket's do, so the required run needs no network. LogRocket's files
+ * are its own and are not kept in the repository. To run the same cases
+ * against them, set `INTH_LOGROCKET_LIVE=1` to download them from
+ * LogRocket's CDN, or `INTH_LOGROCKET_FILES` to a directory holding
+ * `LogRocket.min.js` and `logger-1.min.js`. Hashes are computed here, so
  * the test does not depend on which release the CDN serves.
  */
 import { createHash } from 'node:crypto';
@@ -55,13 +57,51 @@ const LOGGER_URL = 'https://cdn.logrocket.io/logger-1.min.js';
 const OVERRIDE_URL = 'https://cdn.logrocket.io/logger-2.min.js';
 /** The CSP the docs recommend: the gateway and the site, no vendor host. */
 const CSP = `script-src 'self' ${GATEWAY}; worker-src blob:`;
+/** A library on another origin, and an app script on the site that needs it. */
+const LIBRARY_URL = 'https://cdn.library.inth.test/lib.js';
+const LIBRARY = `window.library = true; (window.ran ||= []).push('lib');`;
+const APP = `(window.ran ||= []).push(window.library ? 'app' : 'app without lib');`;
 
 const sri = (bytes: Buffer) =>
 	`sha384-${createHash('sha384').update(bytes).digest('base64')}`;
 const short = (bytes: Buffer) =>
 	createHash('sha256').update(bytes).digest('hex').slice(0, 16);
 
+/** Whether the cases run against LogRocket's own files. */
+const LIVE =
+	process.env.INTH_LOGROCKET_LIVE === '1' ||
+	Boolean(process.env.INTH_LOGROCKET_FILES);
+
+/**
+ * Stand-ins for LogRocket's loader and logger. The loader defines
+ * `window.LogRocket`, inserts the logger from `__SDKCONFIG__.loggerURL`,
+ * `_lrAsyncScript` or `logger-1.min.js`, and logs LogRocket's own message
+ * when the logger does not load. The logger starts sending a session.
+ */
+const STAND_INS = new Map([
+	[
+		'https://cdn.logrocket.io/LogRocket.min.js',
+		`(() => {
+	window.LogRocket = { init() {} };
+	const script = document.createElement('script');
+	script.async = true;
+	script.src = (window.__SDKCONFIG__ && window.__SDKCONFIG__.loggerURL) ||
+		window._lrAsyncScript || 'https://cdn.logrocket.io/logger-1.min.js';
+	script.onerror = () => console.error('LogRocket: script could not load');
+	document.head.appendChild(script);
+})();`,
+	],
+	[
+		'https://cdn.logrocket.io/logger-1.min.js',
+		`window._LRLogger = function () {};
+fetch('https://r.logrocket.inth.test/i', { method: 'POST', mode: 'no-cors' });`,
+	],
+]);
+
 const vendorFile = async function vendorFile(url: string): Promise<Buffer> {
+	if (!LIVE) {
+		return Buffer.from(STAND_INS.get(url) ?? '');
+	}
 	const directory = process.env.INTH_LOGROCKET_FILES;
 	if (directory) {
 		return readFile(resolve(directory, new URL(url).pathname.slice(1)));
@@ -139,6 +179,12 @@ const open = async function open(csp?: string): Promise<void> {
 	const html = `<!doctype html><html><head><script src="/bundle.js"></script></head><body></body></html>`;
 	await context.route(`${SITE}/**`, (route) => {
 		const { pathname } = new URL(route.request().url());
+		if (pathname === '/app.js') {
+			return route.fulfill({
+				body: APP,
+				contentType: 'application/javascript',
+			});
+		}
 		if (pathname === '/bundle.js') {
 			return route.fulfill({
 				body: bundle,
@@ -167,13 +213,12 @@ beforeAll(async () => {
 		logger,
 	]);
 	loaderAtGateway = `${GATEWAY}/scripts/logrocket@${short(loader)}.js`;
-	loggerAtGateway = `${GATEWAY}/scripts/logrocket-logger@${short(logger)}.js`;
-	tamperedAtGateway = `${GATEWAY}/tampered/logrocket-logger@${short(logger)}.js`;
+	loggerAtGateway = `${GATEWAY}/scripts/logrocket/logger@${short(logger)}.js`;
+	tamperedAtGateway = `${GATEWAY}/tampered/logrocket/logger@${short(logger)}.js`;
 	gatewayFiles = new Map([
 		[loaderAtGateway, loader],
 		[loggerAtGateway, logger],
 		[tamperedAtGateway, tampered],
-		[`${GATEWAY}/scripts/placeholder.js`, Buffer.from('')],
 	]);
 
 	const result = await build({
@@ -228,6 +273,9 @@ beforeAll(async () => {
 const vendorBody = (url: string): Buffer | undefined => {
 	if (url === LOADER_URL) {
 		return loader;
+	}
+	if (url === LIBRARY_URL) {
+		return Buffer.from(LIBRARY);
 	}
 	return url === LOGGER_URL || url === OVERRIDE_URL ? logger : undefined;
 };
@@ -348,10 +396,10 @@ test('loads nothing for a null entry, and runs the loader’s own failure path',
 	expect(sent(LOGGER_URL) + sent(loggerAtGateway)).toBe(0);
 	expect(await page.evaluate(() => typeof window._LRLogger)).toBe('undefined');
 	expect((await scriptTags()).at(-1)).toEqual({
-		crossorigin: null,
-		integrity: null,
-		src: LOGGER_URL,
-		type: 'inth/held',
+		crossorigin: 'anonymous',
+		integrity: expect.stringMatching(/^sha384-/u),
+		src: 'data:text/javascript,',
+		type: null,
 	});
 });
 
@@ -439,27 +487,36 @@ test('loads nothing, from the gateway or the vendor, when initOptions sets a ref
 	).toEqual({ logRocket: 'undefined', logger: 'undefined' });
 });
 
-test('holds a logger the page inserts while the list is pending, then loads it from the gateway', async () => {
+test('starts LogRocket only once the list arrives, with its logger pinned', async () => {
 	await open();
 	await page.evaluate(() => window.__scriptFiles.startPending());
-	await page.evaluate((url) => {
-		const script = document.createElement('script');
-		script.src = url;
-		script.addEventListener('load', () => {
-			document.documentElement.dataset.early = 'loaded';
-		});
-		document.head.append(script);
-	}, LOGGER_URL);
 	await page.waitForTimeout(300);
-	expect(sent(LOGGER_URL) + sent(loggerAtGateway)).toBe(0);
+	expect(requested.filter((url) => !url.startsWith(SITE))).toEqual([]);
 
 	await page.evaluate(
 		(list) => window.__scriptFiles.answer(list),
 		registry({ integrity: sri(logger), src: loggerAtGateway })
 	);
-	await expect
-		.poll(() => page.evaluate(() => document.documentElement.dataset.early))
-		.toBe('loaded');
+	await loggerRan();
+	expect(loaded(loaderAtGateway)).toBe(1);
 	expect(loaded(loggerAtGateway)).toBe(1);
-	expect(sent(LOGGER_URL)).toBe(0);
+	expect(sent(LOADER_URL) + sent(LOGGER_URL)).toBe(0);
+});
+
+test('runs scripts the registry does not manage in order, without waiting for init', async () => {
+	await open();
+	// Init never answers: the list stays pending.
+	await page.evaluate(() => window.__scriptFiles.startPending());
+	await page.evaluate((library) => {
+		for (const src of [library, '/app.js']) {
+			const script = document.createElement('script');
+			script.async = false;
+			script.src = src;
+			document.head.append(script);
+		}
+	}, LIBRARY_URL);
+
+	await expect
+		.poll(() => page.evaluate(() => (window as { ran?: string[] }).ran))
+		.toEqual(['lib', 'app']);
 });

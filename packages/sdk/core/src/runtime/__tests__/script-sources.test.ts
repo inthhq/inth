@@ -1554,7 +1554,7 @@ describe('experimentalScriptRegistry files', () => {
 		expect(fetched(loaded[0] as HTMLScriptElement)).toEqual(pinnedLogger);
 	});
 
-	test('holds a cross-origin script the page inserts while init is pending, then pins it', async () => {
+	test('holds nothing and patches nothing while init is pending, then pins once the list arrives', async () => {
 		let answer: (response: Record<string, unknown>) => void = () => undefined;
 		begin({
 			experimentalScriptRegistry: true,
@@ -1562,26 +1562,6 @@ describe('experimentalScriptRegistry files', () => {
 				init: () =>
 					new Promise((resolve) => {
 						answer = resolve;
-					}) as never,
-			}),
-			persistence: false,
-			scripts: [integration()],
-		});
-		const early = insertLogger();
-		expect(early.getAttribute('type')).toBe('inth/held');
-
-		answer({ scriptRegistry: registry });
-		await vi.waitFor(() => expect(fetched(early)).toEqual(pinnedLogger));
-	});
-
-	test('takes a script it mounted while init is pending off the page before it releases the hold', () => {
-		const runtime = begin({
-			experimentalScriptRegistry: true,
-			mode: custom({
-				// oxlint-disable-next-line promise/avoid-new -- Never settles.
-				init: () =>
-					new Promise(() => {
-						// Init never answers.
 					}) as never,
 			}),
 			persistence: false,
@@ -1595,26 +1575,24 @@ describe('experimentalScriptRegistry files', () => {
 				},
 			],
 		});
-		const widget = document.getElementById(
-			'c15t-script-widget'
-		) as HTMLScriptElement;
-		expect(widget.getAttribute('type')).toBe('inth/held');
-		const observer = new MutationObserver(() => undefined);
-		observer.observe(document, { childList: true, subtree: true });
-
-		runtime.dispose();
-		// Released while still on the page, it would be inserted again in
-		// place and run from its vendor URL.
-		const added = observer
-			.takeRecords()
-			.flatMap((record) => [...record.addedNodes]);
-		observer.disconnect();
-		expect(added).not.toContain(widget);
-		expect(widget.isConnected).toBe(false);
 		expect(Node.prototype.appendChild).toBe(nativeAppendChild);
+		expect(fetched(element('widget') as HTMLScriptElement)).toEqual({
+			crossorigin: null,
+			integrity: null,
+			src: 'https://cdn.other.example/widget.js',
+			type: null,
+		});
+		// Inserted before the list is here, it goes as it came.
+		expect(fetched(insertLogger()).src).toBe(LOGGER_SRC);
+
+		answer({ scriptRegistry: registry });
+		await vi.waitFor(() =>
+			expect(Node.prototype.appendChild).not.toBe(nativeAppendChild)
+		);
+		expect(fetched(insertLogger())).toEqual(pinnedLogger);
 	});
 
-	test('releases what it held, unchanged, when init fails', async () => {
+	test('patches nothing when init fails', async () => {
 		let fail: (error: Error) => void = () => undefined;
 		begin({
 			experimentalScriptRegistry: true,
@@ -1627,12 +1605,12 @@ describe('experimentalScriptRegistry files', () => {
 			persistence: false,
 			scripts: [integration()],
 		});
-		const early = insertLogger();
-		expect(early.getAttribute('type')).toBe('inth/held');
 
 		fail(new Error('offline'));
-		await vi.waitFor(() => expect(early.hasAttribute('type')).toBe(false));
-		expect(early.getAttribute('src')).toBe(LOGGER_SRC);
+		await vi.waitFor(() =>
+			expect(fetchAttributes('vendor').src).toBe(VENDOR_SRC)
+		);
+		expect(Node.prototype.appendChild).toBe(nativeAppendChild);
 	});
 
 	test("routes a script the SDK itself creates, and keeps the loader's pin", () => {

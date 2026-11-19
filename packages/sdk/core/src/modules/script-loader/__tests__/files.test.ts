@@ -1,33 +1,34 @@
 /**
  * @vitest-environment jsdom
  *
- * The script registry's `files` pin the scripts a vendor's loader inserts
- * while it runs. jsdom fetches nothing, so these read what the browser
- * would fetch: each element's `src`, `integrity` and `type`. The real
- * browser test is `script-files.e2e.test.ts` in `@inth/integrations`.
+ * The script registry's `files` pin the scripts LogRocket's loader
+ * inserts while it runs. jsdom fetches nothing, so these read what the
+ * browser would fetch: each element's `src`, `integrity` and
+ * `crossorigin`. The real browser test is `script-files.e2e.test.ts` in
+ * `@inth/integrations`.
  */
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test } from 'vitest';
 
 import { normalizeFileUrl, pinRegistryFiles } from '../files';
 import type { FilePin, RegistryFiles } from '../files';
 import { parseRegistryFiles } from '../registry';
 
 const LOGGER = 'https://cdn.vendor.example/logger-1.min.js';
-const HELD = 'https://cdn.vendor.example/held.js';
+const BLOCKED = 'https://cdn.vendor.example/blocked.js';
 const HASH_SRC =
-	'https://acme.inth.app/scripts/vendor-logger@0123456789abcdef.js';
+	'https://acme.inth.app/scripts/vendor/logger@0123456789abcdef.js';
 const HASH =
 	'sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8wC';
 const OTHER_HASH =
 	'sha384-ZZZuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8wC';
 
 const files: RegistryFiles = {
-	[HELD]: null,
+	[BLOCKED]: null,
 	[LOGGER]: { integrity: HASH, src: HASH_SRC },
 };
 
 const pins: FilePin[] = [];
-const join = (list: RegistryFiles | null): FilePin => {
+const join = (list: RegistryFiles): FilePin => {
 	const pin = pinRegistryFiles(list);
 	if (!pin) {
 		throw new Error('Expected a pin in a document.');
@@ -36,12 +37,11 @@ const join = (list: RegistryFiles | null): FilePin => {
 	return pin;
 };
 
-/** What the browser reads to fetch and run `element`. */
+/** What the browser reads to fetch `element`. */
 const fetched = (element: HTMLScriptElement) => ({
 	crossorigin: element.getAttribute('crossorigin'),
 	integrity: element.getAttribute('integrity'),
 	src: element.getAttribute('src'),
-	type: element.getAttribute('type'),
 });
 
 /** A loader inserting a script the way most do. */
@@ -60,24 +60,20 @@ const parsed = (src: string) =>
 		.createContextualFragment(`<script src="${src}"></script>`)
 		.firstElementChild as HTMLScriptElement;
 
-const PINNED = {
+const PINNED = { crossorigin: 'anonymous', integrity: HASH, src: HASH_SRC };
+
+/** An empty script under a hash it does not have: it fails, unfetched. */
+const REFUSED = {
 	crossorigin: 'anonymous',
-	integrity: HASH,
-	src: HASH_SRC,
-	type: null,
+	integrity: expect.stringMatching(/^sha384-/u),
+	src: 'data:text/javascript,',
 };
 
 const untouched = (src: string) => ({
 	crossorigin: null,
 	integrity: null,
 	src,
-	type: null,
 });
-
-const tick = (ms = 10) =>
-	new Promise((resolve) => {
-		setTimeout(resolve, ms);
-	});
 
 afterEach(() => {
 	for (const pin of pins.splice(0)) {
@@ -108,7 +104,7 @@ describe('parseRegistryFiles', () => {
 		expect(
 			parseRegistryFiles({
 				[`${LOGGER}#frag`]: { integrity: HASH, keyId: 'later', src: HASH_SRC },
-				[HELD]: null,
+				[BLOCKED]: null,
 				'https://cdn.vendor.example/http.js': {
 					integrity: HASH,
 					src: 'http://acme.inth.app/x.js',
@@ -120,7 +116,7 @@ describe('parseRegistryFiles', () => {
 				'relative/key.js': { integrity: HASH, src: HASH_SRC },
 			})
 		).toEqual({
-			[HELD]: null,
+			[BLOCKED]: null,
 			[LOGGER]: { integrity: HASH, src: HASH_SRC },
 			'https://cdn.vendor.example/http.js': null,
 			'https://cdn.vendor.example/nohash.js': null,
@@ -160,21 +156,25 @@ describe('pinRegistryFiles', () => {
 				element.setAttributeNS(null, 'src', LOGGER),
 		],
 		[
-			'setAttributeNode',
+			'its attribute node',
 			(element: HTMLScriptElement) => {
 				const attribute = document.createAttribute('src');
 				attribute.value = LOGGER;
 				element.setAttributeNode(attribute);
 			},
 		],
-	])('points a listed file set with %s at the registry', (_case, set) => {
-		join(files);
-		const element = document.createElement('script');
-		set(element);
-		document.head.appendChild(element);
+	])(
+		'points a listed file set with %s at the registry as it is inserted',
+		(_case, set) => {
+			join(files);
+			const element = document.createElement('script');
+			set(element);
+			expect(element.getAttribute('src')).toBe(LOGGER);
+			document.head.appendChild(element);
 
-		expect(fetched(element)).toEqual(PINNED);
-	});
+			expect(fetched(element)).toEqual(PINNED);
+		}
+	);
 
 	test.each([
 		['appendChild', (s: HTMLScriptElement) => document.head.appendChild(s)],
@@ -220,6 +220,14 @@ describe('pinRegistryFiles', () => {
 				range.insertNode(s);
 			},
 		],
+		[
+			'a connected shadow root',
+			(s: HTMLScriptElement) => {
+				const host = document.createElement('div');
+				document.body.append(host);
+				host.attachShadow({ mode: 'open' }).append(s);
+			},
+		],
 	])(
 		'points a parsed listed file at the registry as %s inserts it',
 		(_case, place) => {
@@ -231,41 +239,17 @@ describe('pinRegistryFiles', () => {
 		}
 	);
 
-	test('points a listed file at the registry as a connected shadow root takes it', () => {
+	test('points a connected script at the registry as it gets its first src', () => {
 		join(files);
-		const host = document.createElement('div');
-		document.body.append(host);
-		const element = parsed(LOGGER);
-		host.attachShadow({ mode: 'open' }).append(element);
+		const bySetter = document.createElement('script');
+		document.head.append(bySetter);
+		bySetter.src = LOGGER;
+		const byAttribute = document.createElement('script');
+		document.head.append(byAttribute);
+		byAttribute.setAttribute('src', LOGGER);
 
-		expect(fetched(element)).toEqual(PINNED);
-	});
-
-	test('routes a pinned element again when the page changes its src behind the setters', () => {
-		/** Change `src` through its attribute node, which no setter sees. */
-		const setBehind = (script: HTMLScriptElement, url: string) => {
-			const attribute = script.getAttributeNode('src');
-			if (!attribute) {
-				throw new Error('Expected a src attribute.');
-			}
-			attribute.value = url;
-		};
-
-		join(files);
-		const element = document.createElement('script');
-		element.src = 'https://cdn.vendor.example/other.js';
-		setBehind(element, LOGGER);
-		document.head.appendChild(element);
-		expect(fetched(element)).toEqual(PINNED);
-
-		const repointed = document.createElement('script');
-		repointed.src = LOGGER;
-		setBehind(repointed, HELD);
-		document.head.appendChild(repointed);
-		expect(fetched(repointed)).toEqual({
-			...untouched(HELD),
-			type: 'inth/held',
-		});
+		expect(fetched(bySetter)).toEqual(PINNED);
+		expect(fetched(byAttribute)).toEqual(PINNED);
 	});
 
 	test('matches a relative URL against the page and ignores the fragment, but not the query', () => {
@@ -296,7 +280,6 @@ describe('pinRegistryFiles', () => {
 		join(files);
 
 		// jsdom reflects no `integrity` property, so these set the attribute.
-		// A pin that allows the registry's bytes moves, and stays on it.
 		const allowed = insert(LOGGER, (element) => {
 			element.setAttribute('integrity', `${OTHER_HASH} ${HASH}`);
 		});
@@ -305,433 +288,59 @@ describe('pinRegistryFiles', () => {
 			integrity: `${OTHER_HASH} ${HASH}`,
 		});
 
-		const before = document.createElement('script');
-		before.setAttribute('integrity', OTHER_HASH);
-		before.src = LOGGER;
-		document.head.appendChild(before);
-		expect(fetched(before)).toEqual({
-			...untouched(LOGGER),
-			integrity: OTHER_HASH,
-		});
-
-		// Set after the src, as the loader's own mount does.
-		const after = insert(LOGGER, (element) => {
+		// Set after the src, as a loader's own mount does: the element is
+		// decided as it is inserted, so this pin counts too.
+		const other = insert(LOGGER, (element) => {
 			element.setAttribute('integrity', OTHER_HASH);
 		});
-		expect(fetched(after)).toEqual({
+		expect(fetched(other)).toEqual({
 			...untouched(LOGGER),
 			integrity: OTHER_HASH,
 		});
 	});
 
-	test('routes scripts in shadow roots when their host joins the page', () => {
+	test('points a null entry at a file that fails unfetched, whatever the page pins', () => {
 		join(files);
-		const open = document.createElement('div');
-		open.attachShadow({ mode: 'open' }).append(parsed(LOGGER));
-		const closed = document.createElement('div');
-		const closedRoot = closed.attachShadow({ mode: 'closed' });
-		closedRoot.append(parsed(HELD));
-		const wrapper = document.createElement('section');
-		wrapper.append(closed);
-		document.body.append(open, wrapper);
 
+		expect(fetched(insert(BLOCKED))).toEqual(REFUSED);
 		expect(
-			fetched(open.shadowRoot?.querySelector('script') as HTMLScriptElement)
-		).toEqual(PINNED);
-		expect(
-			(closedRoot.querySelector('script') as HTMLScriptElement).getAttribute(
-				'type'
+			fetched(
+				insert(BLOCKED, (element) => {
+					element.setAttribute('integrity', HASH);
+				})
 			)
-		).toBe('inth/held');
+		).toEqual(REFUSED);
 	});
 
-	test('decides a detached element again at insertion, by the lists then', () => {
+	test('puts an element back as it was when its insertion throws', () => {
 		join(files);
-		const refusedLater = document.createElement('script');
-		refusedLater.src = LOGGER;
-		const heldLater = document.createElement('script');
-		heldLater.src = LOGGER;
-
-		const refusing = join({ [LOGGER]: null });
-		document.head.append(refusedLater);
-		expect(fetched(refusedLater)).toEqual({
-			...untouched(LOGGER),
-			type: 'inth/held',
-		});
-		refusing.dispose();
-
-		const waiting = join(null);
-		document.head.append(heldLater);
-		expect(fetched(heldLater)).toEqual({
-			...untouched(LOGGER),
-			type: 'inth/held',
-		});
-		waiting.list(files);
-		expect(fetched(heldLater)).toEqual(PINNED);
-	});
-
-	test('takes back what it set when the page points the element elsewhere', () => {
-		join(files);
-		const other = 'https://cdn.vendor.example/other.js';
 		const element = document.createElement('script');
 		element.src = LOGGER;
-		element.src = other;
-		document.head.appendChild(element);
+		const stranger = document.createElement('div');
 
-		expect(fetched(element)).toEqual(untouched(other));
+		expect(() => document.head.replaceChild(element, stranger)).toThrow();
+		expect(fetched(element)).toEqual(untouched(LOGGER));
 	});
 
-	test('reads an undefined namespace as none, as the DOM does', () => {
-		join(files);
-		const element = document.createElement('script');
-		element.setAttributeNS(undefined as unknown as null, 'src', LOGGER);
-		document.head.append(element);
-		expect(fetched(element)).toEqual(PINNED);
-
-		const refusedElement = insert(HELD);
-		refusedElement.removeAttributeNS(undefined as unknown as null, 'type');
-		expect(refusedElement.getAttribute('type')).toBe('inth/held');
-	});
-
-	test('keeps a crossorigin the page set after the pin when it points the element elsewhere', () => {
-		join(files);
-		const other = 'https://cdn.vendor.example/other.js';
-		const element = document.createElement('script');
-		element.src = LOGGER;
-		element.setAttribute('crossorigin', 'use-credentials');
-		element.src = other;
-		document.head.appendChild(element);
-
-		expect(fetched(element)).toEqual({
-			...untouched(other),
-			crossorigin: 'use-credentials',
+	test('combines lists: a refusal in any wins, then the first to name a URL', () => {
+		const first = join(files);
+		const second = join({
+			[LOGGER]: null,
+			'https://cdn.vendor.example/second.js': {
+				integrity: OTHER_HASH,
+				src: HASH_SRC,
+			},
 		});
-	});
-
-	describe('a null entry', () => {
-		test('loads nothing and fires error, so the loader sees a failed load', async () => {
-			join(files);
-			const onerror = vi.fn();
-			const listener = vi.fn();
-			const element = insert(HELD, (script) => {
-				script.onerror = onerror;
-				script.addEventListener('error', listener);
-			});
-
-			// The browser does not run a script of a type it does not know.
-			expect(fetched(element)).toEqual({
-				...untouched(HELD),
-				type: 'inth/held',
-			});
-			await vi.waitFor(() => expect(onerror).toHaveBeenCalledOnce());
-			expect(listener).toHaveBeenCalledOnce();
+		expect(fetched(insert(LOGGER))).toEqual(REFUSED);
+		expect(fetched(insert('https://cdn.vendor.example/second.js'))).toEqual({
+			...PINNED,
+			integrity: OTHER_HASH,
 		});
 
-		test('stays inert when the loader sets type after src, and fails once when moved', async () => {
-			join(files);
-			const onerror = vi.fn();
-			const element = insert(HELD, (script) => {
-				script.type = 'text/javascript';
-				script.onerror = onerror;
-			});
-			document.body.appendChild(element);
-
-			expect(element.getAttribute('type')).toBe('inth/held');
-			await tick();
-			expect(onerror).toHaveBeenCalledOnce();
-		});
-
-		test('fires no error for an element never inserted', async () => {
-			join(files);
-			const onerror = vi.fn();
-			const element = document.createElement('script');
-			element.onerror = onerror;
-			element.src = HELD;
-
-			await tick();
-			expect(onerror).not.toHaveBeenCalled();
-		});
-
-		test('lets an element not inserted yet move to a URL the list does not name', async () => {
-			join(files);
-			const onerror = vi.fn();
-			const fallback = 'https://cdn.other.example/fallback.js';
-			const element = insert(HELD, (script) => {
-				script.type = 'module';
-				script.onerror = onerror;
-				script.src = fallback;
-			});
-
-			expect(fetched(element)).toEqual({
-				...untouched(fallback),
-				type: 'module',
-			});
-			await tick();
-			expect(onerror).not.toHaveBeenCalled();
-		});
-
-		test('stays inert when the page resets its type, then moves it or sets its src', () => {
-			join(files);
-			const moved = insert(HELD);
-			moved.type = 'text/javascript';
-			document.body.append(moved);
-			expect(moved.getAttribute('type')).toBe('inth/held');
-
-			const repointed = insert(HELD);
-			repointed.removeAttribute('type');
-			repointed.src = 'https://cdn.other.example/fallback.js';
-			expect(repointed.getAttribute('type')).toBe('inth/held');
-		});
-
-		test('keeps its inert type through every way the page sets one', () => {
-			join(files);
-			const element = insert(HELD);
-			element.removeAttribute('type');
-			element.type = 'text/javascript';
-			element.setAttributeNS(null, 'type', 'module');
-			element.toggleAttribute('type');
-			element.setAttribute('TYPE', 'module');
-			// Text would make the browser check a script that has not started.
-			element.text = '1';
-			expect(element.getAttribute('type')).toBe('inth/held');
-		});
-
-		test('gives a held script the last type the page set while it was held', () => {
-			const pin = join(null);
-			const element = insert(LOGGER);
-			element.type = 'text/javascript';
-			element.removeAttribute('type');
-			element.setAttribute('type', 'module');
-			expect(element.getAttribute('type')).toBe('inth/held');
-
-			pin.list(files);
-			expect(fetched(element)).toEqual({ ...PINNED, type: 'module' });
-		});
-
-		test('lets an element go as an inline script when the page takes the refused URL off before inserting it', async () => {
-			join(files);
-			const onerror = vi.fn();
-			const element = document.createElement('script');
-			element.onerror = onerror;
-			element.src = HELD;
-			element.removeAttribute('src');
-			element.text = 'void 0';
-			document.head.append(element);
-
-			expect(element.hasAttribute('type')).toBe(false);
-			await tick();
-			expect(onerror).not.toHaveBeenCalled();
-		});
-
-		test('fails nothing when the insertion throws, and decides the element again next time', async () => {
-			join(files);
-			const onerror = vi.fn();
-			const element = document.createElement('script');
-			element.onerror = onerror;
-			element.src = HELD;
-			const stranger = document.createElement('div');
-			expect(() => document.head.replaceChild(element, stranger)).toThrow();
-
-			const fallback = 'https://cdn.other.example/fallback.js';
-			element.src = fallback;
-			document.head.append(element);
-			expect(fetched(element)).toEqual(untouched(fallback));
-			await tick();
-			expect(onerror).not.toHaveBeenCalled();
-		});
-
-		test('fails nothing that surroundContents drops from the new parent', async () => {
-			join(files);
-			const onerror = vi.fn();
-			const dropped = document.createElement('script');
-			dropped.onerror = onerror;
-			dropped.src = HELD;
-			const parent = document.createElement('div');
-			parent.append(dropped);
-			document.body.append(document.createTextNode('text'));
-			const range = document.createRange();
-			range.selectNodeContents(document.body);
-			range.surroundContents(parent);
-
-			expect(dropped.isConnected).toBe(false);
-			await tick();
-			expect(onerror).not.toHaveBeenCalled();
-		});
-
-		test('keeps an inserted element refused when its src changes', async () => {
-			join(files);
-			const onerror = vi.fn();
-			const element = insert(HELD, (script) => {
-				script.onerror = onerror;
-			});
-			element.src = 'https://cdn.other.example/fallback.js';
-
-			expect(element.getAttribute('type')).toBe('inth/held');
-			await tick();
-			expect(onerror).toHaveBeenCalledOnce();
-		});
-	});
-
-	describe('while the list is pending', () => {
-		test('holds a cross-origin script, then points it at the registry and inserts it again', async () => {
-			const pin = join(null);
-			const element = insert(LOGGER, (script) => {
-				script.type = 'module';
-			});
-			expect(element.getAttribute('type')).toBe('inth/held');
-
-			const added: Node[] = [];
-			new MutationObserver((records) => {
-				added.push(...records.flatMap((record) => [...record.addedNodes]));
-			}).observe(document.head, { childList: true });
-			pin.list(files);
-
-			expect(fetched(element)).toEqual({ ...PINNED, type: 'module' });
-			await vi.waitFor(() => expect(added).toContain(element));
-		});
-
-		test('keeps a held script inert when the page resets its type and moves it', () => {
-			const pin = join(null);
-			const element = insert(LOGGER);
-			element.removeAttribute('type');
-			document.body.append(element);
-			expect(element.getAttribute('type')).toBe('inth/held');
-
-			pin.list(files);
-			expect(fetched(element)).toEqual(PINNED);
-		});
-
-		test('runs held scripts again in the order the page inserted them', async () => {
-			const pin = join(null);
-			const consumer = document.createElement('script');
-			consumer.src = 'https://cdn.other.example/consumer.js';
-			const dependency = document.createElement('script');
-			dependency.src = 'https://cdn.other.example/dependency.js';
-			document.head.append(dependency);
-			document.head.append(consumer);
-
-			const added: Node[] = [];
-			new MutationObserver((records) => {
-				added.push(...records.flatMap((record) => [...record.addedNodes]));
-			}).observe(document.head, { childList: true });
-			pin.list(files);
-
-			await vi.waitFor(() => expect(added).toEqual([dependency, consumer]));
-		});
-
-		test("runs held scripts again in shadow-including tree order, a host's shadow root first", async () => {
-			const pin = join(null);
-			const host = document.createElement('div');
-			const root = host.attachShadow({ mode: 'open' });
-			root.append(parsed('https://cdn.other.example/shadow.js'));
-			host.append(parsed('https://cdn.other.example/light.js'));
-			document.body.append(host);
-
-			const added: string[] = [];
-			const observer = new MutationObserver((records) => {
-				for (const record of records) {
-					for (const node of record.addedNodes) {
-						added.push((node as HTMLScriptElement).src);
-					}
-				}
-			});
-			observer.observe(host, { childList: true });
-			observer.observe(root, { childList: true });
-			pin.list(files);
-
-			await vi.waitFor(() =>
-				expect(added).toEqual([
-					'https://cdn.other.example/shadow.js',
-					'https://cdn.other.example/light.js',
-				])
-			);
-			observer.disconnect();
-		});
-
-		test('runs a clone of a held script once the list arrives', () => {
-			const pin = join(null);
-			const original = insert(LOGGER);
-			const clone = original.cloneNode() as HTMLScriptElement;
-			document.head.append(clone);
-			pin.list(files);
-
-			expect(fetched(clone)).toEqual(PINNED);
-		});
-
-		test('lets a held script go as it came when the list does not name it', () => {
-			const pin = join(null);
-			const other = 'https://cdn.other.example/widget.js';
-			const element = insert(other);
-			pin.list(files);
-
-			expect(fetched(element)).toEqual(untouched(other));
-		});
-
-		test('refuses a held script the list maps to null', async () => {
-			const pin = join(null);
-			const onerror = vi.fn();
-			const element = insert(HELD, (script) => {
-				script.onerror = onerror;
-			});
-			pin.list(files);
-
-			expect(element.getAttribute('type')).toBe('inth/held');
-			await vi.waitFor(() => expect(onerror).toHaveBeenCalledOnce());
-		});
-
-		test('never holds a same-origin script, such as a bundler chunk', () => {
-			join(null);
-			const chunk = new URL('/_next/static/chunk.js', location.href).href;
-
-			expect(fetched(insert(chunk))).toEqual(untouched(chunk));
-		});
-
-		test('releases what it held, unchanged, when the list names no files or the loader leaves', () => {
-			const listed = join(null);
-			const first = insert(LOGGER);
-			listed.list({});
-			expect(fetched(first)).toEqual(untouched(LOGGER));
-
-			const leaving = join(null);
-			const second = insert(LOGGER);
-			leaving.dispose();
-			expect(fetched(second)).toEqual(untouched(LOGGER));
-		});
-
-		test('keeps holding while another loader still waits for its list', () => {
-			const waiting = join(null);
-			const listed = join(null);
-			const element = insert('https://cdn.other.example/widget.js');
-			listed.list(files);
-			expect(element.getAttribute('type')).toBe('inth/held');
-
-			waiting.list({});
-			expect(element.hasAttribute('type')).toBe(false);
-		});
-
-		test('holds a file one list names while another list is pending, and the later refusal wins', async () => {
-			join(files);
-			const waiting = join(null);
-			const onerror = vi.fn();
-			const element = insert(LOGGER, (script) => {
-				script.onerror = onerror;
-			});
-			expect(fetched(element)).toEqual({
-				...untouched(LOGGER),
-				type: 'inth/held',
-			});
-
-			waiting.list({ [LOGGER]: null });
-			expect(element.getAttribute('type')).toBe('inth/held');
-			await vi.waitFor(() => expect(onerror).toHaveBeenCalledOnce());
-		});
-
-		test('refuses at once a file a resolved list maps to null, while another is pending', () => {
-			join(files);
-			join(null);
-
-			expect(insert(HELD).getAttribute('type')).toBe('inth/held');
-		});
+		second.dispose();
+		expect(fetched(insert(LOGGER))).toEqual(PINNED);
+		first.dispose();
+		expect(fetched(insert(LOGGER))).toEqual(untouched(LOGGER));
 	});
 
 	test('restores every patched prototype once the last loader leaves', () => {
@@ -752,7 +361,6 @@ describe('pinRegistryFiles', () => {
 		first.dispose();
 		expect(Node.prototype.appendChild).not.toBe(natives.appendChild);
 		second.dispose();
-
 		expect({
 			append: Element.prototype.append,
 			appendChild: Node.prototype.appendChild,
@@ -762,26 +370,35 @@ describe('pinRegistryFiles', () => {
 		expect(
 			Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, 'src')?.set
 		).toBe(srcSetter);
-		expect(fetched(insert(LOGGER))).toEqual(untouched(LOGGER));
 	});
 
-	test('passes through when a wrapper on top keeps it in the chain after it left', () => {
+	test('adds no layer per install when another library wraps a method on top', () => {
 		const native = Node.prototype.appendChild;
-		const pin = join(files);
-		const ours = Node.prototype.appendChild;
-		const theirs = function theirs<T extends Node>(this: Node, node: T) {
-			return ours.call(this, node) as T;
+		join(files).dispose();
+		join(files);
+		const below = Node.prototype.appendChild;
+		const library = function library<T extends Node>(this: Node, node: T): T {
+			return below.call(this, node) as T;
 		};
-		Node.prototype.appendChild = theirs;
+		Node.prototype.appendChild = library;
 		try {
-			pin.dispose();
-			expect(Node.prototype.appendChild).toBe(theirs);
-
-			const element = parsed(LOGGER);
-			document.head.appendChild(element);
-			expect(fetched(element)).toEqual(untouched(LOGGER));
+			for (let cycle = 0; cycle < 3; cycle += 1) {
+				pins.splice(0).forEach((pin) => {
+					pin.dispose();
+				});
+				// Ours stays under the library's, a pass-through without a list.
+				expect(fetched(insert(LOGGER))).toEqual(untouched(LOGGER));
+				join(files);
+				expect(Node.prototype.appendChild).toBe(library);
+				expect(fetched(insert(LOGGER))).toEqual(PINNED);
+			}
 		} finally {
-			Node.prototype.appendChild = native;
+			// The library unwraps itself, as it found the method.
+			Node.prototype.appendChild = below;
 		}
+		pins.splice(0).forEach((pin) => {
+			pin.dispose();
+		});
+		expect(Node.prototype.appendChild).toBe(native);
 	});
 });

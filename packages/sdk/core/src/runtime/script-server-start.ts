@@ -339,18 +339,6 @@ const serverStartCandidates = function serverStartCandidates(
 				scriptRegistry: prefetch?.initialScriptRegistry ?? null,
 			})
 		: undefined;
-	// A script started from the HTML runs before the loader pins the files
-	// loaders download (`files.ts`), so its loader would fetch them from the
-	// vendor. While the list may name files, because init has not resolved
-	// or it names some, every script waits for the loader.
-	if (
-		registry &&
-		(registry.status === 'pending' ||
-			(registry.status === 'listed' &&
-				Object.keys(registry.files ?? {}).length > 0))
-	) {
-		return [];
-	}
 	const { scripts } = createScriptSourceResolver(
 		options.scriptLoader?.sources,
 		registry ? () => registry : undefined
@@ -361,7 +349,17 @@ const serverStartCandidates = function serverStartCandidates(
 	) {
 		return [];
 	}
+	// An integration started from the HTML runs before the loader pins the
+	// files its loader downloads (`files.ts`), so it would fetch them from
+	// the vendor: while the list names files, integrations wait for the
+	// loader. Scripts the registry does not manage still start.
+	const pinsFiles =
+		registry?.status === 'listed' &&
+		Object.keys(registry.files ?? {}).length > 0;
 	return scripts.filter((script) => {
+		if (pinsFiles && script.integration) {
+			return false;
+		}
 		try {
 			return !isCallbackOnly(script);
 		} catch {

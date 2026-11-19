@@ -128,24 +128,24 @@ another list. Scripts you write yourself are not affected.
 
 ### Files a loader downloads
 
-Many vendor scripts are small loaders that download more code while they run.
-LogRocket's `LogRocket.min.js`, for example, inserts
+Some vendor scripts are small loaders that download more code while they run.
+Today the registry pins one such file: LogRocket's `LogRocket.min.js` inserts
 `https://cdn.logrocket.io/logger-1.min.js`, about 780 KB. `sources` pins only
-the loader. `scriptRegistry.files` pins the files the loader downloads, keyed by
-the exact absolute URL the loader requests:
+the loader. `scriptRegistry.files` pins the file it downloads, keyed by the
+exact absolute URL the loader requests:
 
 ```json
 {
   "scriptRegistry": {
     "sources": {
       "logrocket": {
-        "src": "https://acme.inth.app/scripts/logrocket@0123456789abcdef.js",
+        "src": "https://acme.inth.app/scripts/logrocket@0123456789abcdef.js?logger=fedcba9876543210",
         "integrity": "sha384-…"
       }
     },
     "files": {
       "https://cdn.logrocket.io/logger-1.min.js": {
-        "src": "https://acme.inth.app/scripts/logrocket-logger@fedcba9876543210.js",
+        "src": "https://acme.inth.app/scripts/logrocket/logger@fedcba9876543210.js",
         "integrity": "sha384-…"
       }
     }
@@ -153,84 +153,85 @@ the exact absolute URL the loader requests:
 }
 ```
 
-When a script element on the page gets a URL that `files` lists, c15t changes
-it before the browser fetches it:
+Once a list that names files has arrived, c15t changes a script element whose
+URL `files` lists just before the browser fetches it:
 
 - With an entry, the element loads from the entry's `src` with its `integrity`
   and `crossorigin="anonymous"`. The browser refuses bytes that do not match,
   and c15t does not try the vendor's URL. An element with its own `integrity`
   keeps it, and loads from the registry only when the entry lists that hash.
-- With `null`, or an entry with no https `src` or no hash, the element loads
-  nothing, from either URL. It gets an `error` event, so the loader's own
-  failure handling runs.
+- With `null`, or an entry with no https `src` or no hash, the element points at
+  an empty `data:` script under a hash it does not have. The browser fetches
+  nothing from either URL and fires `error`, so the loader's own failure
+  handling runs.
 - A URL that `files` does not list is not changed.
 
 c15t matches URLs after it resolves a relative URL against the page and drops
 the fragment. Everything else must match exactly. The query string is part of
 the URL, so `logger-1.min.js?v=2` does not match `logger-1.min.js`.
 
-c15t catches a URL set with `script.src`, `setAttribute`, `setAttributeNS` or
-`setAttributeNode`. It also catches a script element in a node that the page
-inserts with `appendChild`, `insertBefore`, `append`, `before`,
-`replaceWith`, `insertAdjacentElement`, `Range.insertNode` or a similar
-method, including one in a shadow root inside that node. Scripts that c15t
-creates go through the same check. To do this, the
-script loader patches those DOM methods when the list names files. On
-`dispose()`, it puts the original methods back.
+c15t checks a script element as a page method inserts it, or the node holding
+it: `appendChild`, `insertBefore`, `append`, `before`, `replaceWith`,
+`insertAdjacentElement`, `Range.insertNode` or a similar method. It also
+checks a script already on the page as it gets its first `src` through
+`script.src` or `setAttribute`. Scripts that c15t creates go through the same
+check. To do this, the script loader patches those DOM methods once the list
+names files, and puts them back on `dispose()`.
 
-Until init answers, c15t does not know which URLs `files` lists. Integrations
-wait for init as described above. Other script elements with a URL on another
-origin wait too: c15t holds each one until the list arrives. Then it loads the
-element from the registry, refuses it, or lets it load unchanged. A script on
-the page's own origin, such as a bundler chunk, never waits. When the list
-names no files, or init fails, c15t lets the held elements load unchanged and
-removes its patches. `dispose()` before init answers does the same, so a held
-script that stays on the page, such as one with `persistAfterDispose`, loads
-from its own URL. A refused script keeps its vendor URL with a type the browser
-does not run; after `dispose()`, code that changes that type can still start
-it. While a prefetched list names files, or init has not
-answered, a server start leaves every script for the loader to start.
+Nothing waits for the list. Integrations wait for init as described above, so
+LogRocket's loader starts only after the pin is in place. Every other script
+loads as it would without c15t. A script that a list names, but that some other
+code inserts before init answers, loads from its own URL. When the list names no
+files, or init fails, c15t patches nothing. When a prefetched list names files,
+a server start leaves integrations for the loader to start.
 
 #### What `files` does not cover
 
 `files` sees only script elements that this realm's DOM methods insert after
-the script loader starts. These load code without c15t seeing it:
+the list arrives. These load code without c15t seeing it:
 
+- A listed file that other code inserts before init answers.
 - `document.write` of a script tag.
 - `eval` or `new Function` on code a loader fetched itself.
-- `import()`.
+- `import()`, and static `import` statements inside a module script, the
+  pinned one included.
 - Workers, including `importScripts` in a worker.
 - Iframes, including `srcdoc` frames, and a script element made with another
   frame's DOM methods.
-- A script in a shadow root made before the script loader starts, or declared
-  in HTML.
-- A `src` set with `script.attributes.setNamedItem`, and a `<script>` inside
-  an inline SVG.
-- A file on your own origin that the list names, while init has not answered,
-  since c15t never holds same-origin scripts.
+- Code that kept its own reference to a DOM method, such as
+  `const append = Node.prototype.appendChild`, before the pin went on.
+- A script inside a shadow root of a node the page inserts. A script the page
+  inserts into a shadow root that is already on the page is checked.
+- A `src` that a script already on the page gets through `setAttributeNS`,
+  `setAttributeNode` or `attributes.setNamedItem`, and a `<script>` inside an
+  inline SVG.
 - A script tag in your HTML, or one that a deferred root or the script-tag build
   starts before the script loader runs.
-- A URL that a page override gives the loader and that the list does not name.
-  Examples are LogRocket's `window.__SDKCONFIG__.loggerURL`, `sdkServer` and
-  `_lrAsyncScript` (the `asyncScriptUrl` option).
+- A URL that a page override gives the loader and that the list does not name,
+  such as LogRocket's `window.__SDKCONFIG__.loggerURL`, or `window._lrAsyncScript`
+  set by your own code.
 
 Pages that enforce Trusted Types for scripts are not supported yet: c15t writes
-the registry's URL as a plain string.
+script URLs as plain strings.
 
 #### Options that move a loader's downloads
 
 Some integration options tell a loader to download its code from another
-server, which `files` cannot pin. LogRocket's `initOptions.sdkServer` and
-`initOptions.enterpriseServer` are two. For such a loader, the registry's
-`sources` entry lists those options in `refuseIfSet`, as dotted paths into the
-integration's options:
+server, which `files` cannot pin. For LogRocket these are `asyncScriptUrl`,
+`initOptions.sdkServer` and `initOptions.enterpriseServer`. For such a loader,
+the registry's `sources` entry lists those options in `refuseIfSet`, as dotted
+paths into the integration's options:
 
 ```json
 {
   "logrocket": {
-    "src": "https://acme.inth.app/scripts/logrocket@0123456789abcdef.js",
+    "src": "https://acme.inth.app/scripts/logrocket@0123456789abcdef.js?logger=fedcba9876543210",
     "integrity": "sha384-…",
-    "refuseIfSet": ["initOptions.sdkServer", "initOptions.enterpriseServer"]
+    "refuseIfSet": [
+      "asyncScriptUrl",
+      "initOptions.sdkServer",
+      "initOptions.enterpriseServer"
+    ]
   }
 }
 ```

@@ -250,10 +250,11 @@ describe('serverScriptStart', () => {
 		).toBeUndefined();
 	});
 
-	test('leaves every script to the client when the prefetched list names files', () => {
-		// The loader pins the files a vendor's loader downloads only once it
-		// runs, so a script started from the HTML would fetch them unpinned.
-		expect(
+	test('leaves integrations to the client when the prefetched list names files, and starts the rest', () => {
+		// The loader pins the files an integration's loader downloads only
+		// once it runs, so an integration started from the HTML would fetch
+		// them unpinned. A script the registry does not manage is not held.
+		run(
 			serverScriptStart({
 				experimentalScriptRegistry: true,
 				mode,
@@ -263,7 +264,7 @@ describe('serverScriptStart', () => {
 						files: {
 							'https://cdn.pixel.example/runtime.js': {
 								integrity: 'sha384-registry',
-								src: 'https://acme.inth.app/scripts/pixel-runtime@0123456789abcdef.js',
+								src: 'https://acme.inth.app/scripts/pixel/runtime@0123456789abcdef.js',
 							},
 						},
 						sources: {
@@ -276,29 +277,21 @@ describe('serverScriptStart', () => {
 				},
 				scripts: [
 					{ ...pixel, integration: 'pixel' },
-					{ ...pixel, id: 'plain' },
+					{ ...pixel, id: 'plain', src: 'https://cdn.plain.example/plain.js' },
 				],
 			})
-		).toBeUndefined();
-	});
-
-	test('leaves a plain script to the client while the registry list is pending', () => {
+		);
 		expect(
-			serverScriptStart({
-				experimentalScriptRegistry: true,
-				mode,
-				prefetch: {
-					...prefetchFor({ marketing: true }),
-					initialPolicyPending: true,
-				},
-				scripts: [pixel],
-			})
-		).toBeUndefined();
+			Array.from(document.head.querySelectorAll('script'), (script) =>
+				script.getAttribute('src')
+			)
+		).toEqual(['https://cdn.plain.example/plain.js']);
 	});
 
-	test('starts a plain script while the list is pending with the registry off', () => {
+	test('starts a plain script while the registry list is pending', () => {
 		run(
 			serverScriptStart({
+				experimentalScriptRegistry: true,
 				mode,
 				prefetch: {
 					...prefetchFor({ marketing: true }),
