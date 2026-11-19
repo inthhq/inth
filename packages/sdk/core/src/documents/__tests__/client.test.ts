@@ -87,6 +87,13 @@ describe('getCurrent: GET /v1/documents/:type/current', () => {
 				}),
 		],
 		[
+			'a document whose id is not a UUID',
+			() =>
+				json(200, {
+					document: { ...CURRENT.document, id: 'not-a-uuid' },
+				}),
+		],
+		[
 			'a document without isCurrent',
 			() =>
 				json(200, {
@@ -292,6 +299,22 @@ describe('recordAcceptances: POST /v1/documents/acceptances', () => {
 			'a malformed type',
 			{
 				acceptances: [{ hash: HASH, type: 'Terms' }],
+				idempotencyKey: KEY,
+				subjectId: SUBJECT,
+			},
+		],
+		[
+			'a hash that is a list holding a valid hash',
+			{
+				acceptances: [{ hash: [HASH] as unknown as string, type: 'terms_us' }],
+				idempotencyKey: KEY,
+				subjectId: SUBJECT,
+			},
+		],
+		[
+			'a type that is a list holding a valid type',
+			{
+				acceptances: [{ hash: HASH, type: ['terms_us'] as unknown as string }],
 				idempotencyKey: KEY,
 				subjectId: SUBJECT,
 			},

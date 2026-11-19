@@ -7,7 +7,7 @@ import type {
 import type { ConsentManifest } from '../../../shared/consent-manifest';
 import type {
 	ScriptRegistryWire,
-	ScriptSourceWire,
+	ScriptSourcesWire,
 } from '../../../shared/script-sources';
 import type { v1ErrorBodySchema } from '../common';
 import type {
@@ -77,6 +77,11 @@ type DocumentErrorBody = Omit<DocumentError, 'error'> & {
 
 type WithoutRegistry<T> = Omit<T, 'scriptRegistry'>;
 
+/** Only whether `scriptRegistry` is optional. Its value is compared apart. */
+type RegistryField<T extends { scriptRegistry?: unknown }> = {
+	[K in keyof Pick<T, 'scriptRegistry'>]: true;
+};
+
 /**
  * Init and the manifest carry the same registry. It is compared once, by its
  * list variant, because the document's is a union and the SDK's is not.
@@ -97,6 +102,16 @@ type Found =
 	| WireDiff<
 			WithoutRegistry<ConsentManifest>,
 			WithoutRegistry<Ok<'getV1ConsentManifest'>>,
+			'manifest answer'
+	  >
+	| WireDiff<
+			RegistryField<Out<typeof v1ConsentInitOutputSchema>>,
+			RegistryField<Ok<'getV1ConsentInit'>>,
+			'init answer'
+	  >
+	| WireDiff<
+			RegistryField<ConsentManifest>,
+			RegistryField<Ok<'getV1ConsentManifest'>>,
 			'manifest answer'
 	  >
 	| WireDiff<
@@ -125,9 +140,9 @@ type Found =
 			'registry list'
 	  >
 	| WireDiff<
-			ScriptSourceWire,
-			components['schemas']['ScriptRegistrySource'],
-			'registry source'
+			ScriptSourcesWire,
+			Exclude<DocumentRegistry, { unavailable: true }>['sources'],
+			'registry sources'
 	  >
 	| WireDiff<
 			Out<typeof v1ConsentRecordQuerySchema>,
@@ -223,7 +238,7 @@ type DocumentGaps =
 	// `{ unavailable: true }` as a registry that lists no script.
 	| 'registry list.files: only in document'
 	| 'registry list.sources: optional in SDK, required in document'
-	| 'registry source.refuseIfSet: only in document'
+	| 'registry sources.*.refuseIfSet: only in document'
 	// The manifest type is shared with the 3.x routes, whose producer may
 	// name a tenant. `/v1` names none, and the SDK does not send it on.
 	| 'manifest answer.tenantId: only in SDK'

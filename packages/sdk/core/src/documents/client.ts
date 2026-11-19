@@ -114,7 +114,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 	typeof value === 'object' && value !== null;
 
 const assertDocumentType = function assertDocumentType(type: string): void {
-	if (!V1_DOCUMENT_TYPE_PATTERN.test(type)) {
+	if (typeof type !== 'string' || !V1_DOCUMENT_TYPE_PATTERN.test(type)) {
 		throw new TypeError(
 			`${LABEL}: "${type}" is not a document type. Use lowercase letters, digits and underscores, starting with a letter.`
 		);
@@ -128,6 +128,7 @@ const readCurrent = function readCurrent(
 		isRecord(body) &&
 		isRecord(body.document) &&
 		typeof body.document.id === 'string' &&
+		V1_UUID_PATTERN.test(body.document.id) &&
 		typeof body.document.type === 'string' &&
 		typeof body.document.version === 'string' &&
 		typeof body.document.hash === 'string' &&
@@ -182,7 +183,10 @@ const buildAcceptancesBody = function buildAcceptancesBody(
 			`${LABEL}: pass 1 to ${V1_MAX_ACCEPTANCES} acceptances.`
 		);
 	}
-	if (!V1_UUID_PATTERN.test(input.idempotencyKey)) {
+	if (
+		typeof input.idempotencyKey !== 'string' ||
+		!V1_UUID_PATTERN.test(input.idempotencyKey)
+	) {
 		throw new TypeError(
 			`${LABEL}: pass an idempotencyKey from createIdempotencyKey().`
 		);
@@ -192,7 +196,7 @@ const buildAcceptancesBody = function buildAcceptancesBody(
 	}
 	for (const { hash, type } of input.acceptances) {
 		assertDocumentType(type);
-		if (!V1_DOCUMENT_HASH_PATTERN.test(hash)) {
+		if (typeof hash !== 'string' || !V1_DOCUMENT_HASH_PATTERN.test(hash)) {
 			throw new TypeError(
 				`${LABEL}: "${hash}" is not a document hash. Pass the hash getCurrent gave.`
 			);
