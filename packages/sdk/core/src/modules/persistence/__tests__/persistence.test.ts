@@ -578,6 +578,27 @@ describe('persistence: records c15t stored', () => {
 		expect(effectivePermissions.marketing).toBe(false);
 	});
 
+	test("a c15t tab's clear reaches an open page through its epoch alone", async () => {
+		await saveUnder(C15T, true);
+		localStorage.removeItem(C15T_STORAGE_KEY);
+		const kernel = createConsentKernel({ now: NOW });
+		const handle = createPersistence({ kernel });
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
+
+		vi.setSystemTime(NOW + 1000);
+		const c15tTab = createConsentKernel({ now: NOW + 1000 });
+		createPersistence({ kernel: c15tTab, storageConfig: C15T }).clear();
+		flushWrites();
+		window.dispatchEvent(
+			new StorageEvent('storage', { key: `${C15T_STORAGE_KEY}-epoch` })
+		);
+		await vi.advanceTimersByTimeAsync(0);
+		flushWrites();
+
+		expect(kernel.getSnapshot().explicitChoice).toBeNull();
+		handle.dispose();
+	});
+
 	test('a custom storageKey does not read c15t records', async () => {
 		await saveUnder(C15T, true);
 

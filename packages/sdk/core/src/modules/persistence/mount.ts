@@ -901,8 +901,8 @@ export const mountPersistence = function mountPersistence(
 					family.consent,
 					family.notice,
 					family.vendors,
+					family.epoch,
 				]),
-				keys.epoch,
 				// Another page called `localStorage.clear()`.
 				null,
 			]);
