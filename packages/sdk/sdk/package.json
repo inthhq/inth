@@ -99,6 +99,11 @@
 			"import": "./lib/browser/dist/postcss-tailwind3.js",
 			"default": "./lib/browser/dist/postcss-tailwind3.js"
 		},
+		"./prefetch": {
+			"types": "./lib/browser/dist-types/prefetch.d.ts",
+			"import": "./lib/browser/dist/prefetch.js",
+			"default": "./lib/browser/dist/prefetch.js"
+		},
 		"./engine": {
 			"types": "./lib/core/dist-types/index.d.ts",
 			"import": "./lib/core/dist/index.js",
