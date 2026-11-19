@@ -191,7 +191,9 @@ const keepType = function keepType(
 	element: HTMLScriptElement
 ): void {
 	if (!ownTypes.has(element)) {
-		ownTypes.set(element, install.dom.getAttribute.call(element, 'type'));
+		const type = install.dom.getAttribute.call(element, 'type');
+		// A clone of a held element copies the held type, not its own.
+		ownTypes.set(element, type === HELD_TYPE ? null : type);
 	}
 	install.dom.setAttribute.call(element, 'type', HELD_TYPE);
 };

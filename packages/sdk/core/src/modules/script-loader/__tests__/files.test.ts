@@ -648,6 +648,16 @@ describe('pinRegistryFiles', () => {
 			observer.disconnect();
 		});
 
+		test('runs a clone of a held script once the list arrives', () => {
+			const pin = join(null);
+			const original = insert(LOGGER);
+			const clone = original.cloneNode() as HTMLScriptElement;
+			document.head.append(clone);
+			pin.list(files);
+
+			expect(fetched(clone)).toEqual(PINNED);
+		});
+
 		test('lets a held script go as it came when the list does not name it', () => {
 			const pin = join(null);
 			const other = 'https://cdn.other.example/widget.js';

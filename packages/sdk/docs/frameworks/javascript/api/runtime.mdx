@@ -186,7 +186,9 @@ the page's own origin, such as a bundler chunk, never waits. When the list
 names no files, or init fails, c15t lets the held elements load unchanged and
 removes its patches. `dispose()` before init answers does the same, so a held
 script that stays on the page, such as one with `persistAfterDispose`, loads
-from its own URL. While a prefetched list names files, or init has not
+from its own URL. A refused script keeps its vendor URL with a type the browser
+does not run; after `dispose()`, code that changes that type can still start
+it. While a prefetched list names files, or init has not
 answered, a server start leaves every script for the loader to start.
 
 #### What `files` does not cover
