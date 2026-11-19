@@ -7,10 +7,31 @@ import {
 	grantedMeasurementConsentState,
 	setupScriptHelperTest,
 } from '../../__tests__/helpers';
-import { databuddy } from './databuddy';
+import { resolveManifest } from '../../resolve';
+import { databuddy, databuddyManifest } from './databuddy';
+
+/** The `databuddy.js` hash of release 2026-10-30.1, checked against cdn.databuddy.cc. */
+const PINNED_INTEGRITY =
+	'sha384-xXKfqQUu53gQi7i1OUzZ1t/rlpkyILPqMsDxO4MQH70gAX/yiDVUj1JogQaW0M2s';
 
 describe('databuddy', () => {
 	setupScriptHelperTest();
+
+	it('resolves the exported manifest from the same config as before version', () => {
+		const script = resolveManifest(databuddyManifest, {
+			apiUrl: 'https://basket.databuddy.cc',
+			clientId: 'db_123',
+			configWhenGranted: { clientId: 'db_123', disabled: false },
+			scriptUrl: 'https://cdn.databuddy.cc/databuddy.js',
+			trackErrors: undefined,
+			trackInteractions: undefined,
+			trackOutgoingLinks: undefined,
+			trackWebVitals: undefined,
+		});
+
+		expect(script.src).toBe('https://cdn.databuddy.cc/databuddy.js');
+		expect(script.attributes).not.toHaveProperty('integrity');
+	});
 
 	it('waits for measurement consent by default', () => {
 		const script = databuddy({ clientId: 'db_123' });
@@ -209,6 +230,50 @@ describe('databuddy', () => {
 			(globalRef.databuddy as { options: { disabled: boolean } }).options
 				.disabled
 		).toEqual(false);
+	});
+
+	it('loads the unversioned file without integrity by default', () => {
+		const script = databuddy({ clientId: 'db_123' });
+
+		expect(script.src).toBe('https://cdn.databuddy.cc/databuddy.js');
+		expect(script.attributes).not.toHaveProperty('integrity');
+	});
+
+	it('reads a blank version as unset', () => {
+		const script = databuddy({ clientId: 'db_123', version: '  ' });
+
+		expect(script.src).toBe('https://cdn.databuddy.cc/databuddy.js');
+		expect(script.attributes).not.toHaveProperty('integrity');
+	});
+
+	it('pins a release it knows with its integrity', () => {
+		const script = databuddy({ clientId: 'db_123', version: '2026-10-30.1' });
+
+		expect(script.src).toBe(
+			'https://cdn.databuddy.cc/databuddy.2026-10-30.1.js'
+		);
+		expect(script.attributes?.integrity).toBe(PINNED_INTEGRITY);
+		expect(script.attributes?.crossorigin).toBe('anonymous');
+	});
+
+	it('pins another release without integrity', () => {
+		const script = databuddy({ clientId: 'db_123', version: ' 2026-11-14.1 ' });
+
+		expect(script.src).toBe(
+			'https://cdn.databuddy.cc/databuddy.2026-11-14.1.js'
+		);
+		expect(script.attributes).not.toHaveProperty('integrity');
+	});
+
+	it('loads a scriptUrl over version, without integrity', () => {
+		const script = databuddy({
+			clientId: 'db_123',
+			scriptUrl: 'https://proxy.example/databuddy.js',
+			version: '2026-10-30.1',
+		});
+
+		expect(script.src).toBe('https://proxy.example/databuddy.js');
+		expect(script.attributes).not.toHaveProperty('integrity');
 	});
 
 	it('disposes replay during server rendering', () => {

@@ -5,7 +5,7 @@ import { vendorManifestContract } from '../../types';
 import type { SetGlobalPathStep, VendorManifest } from '../../types';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { createScriptReuse } from '../_shared/reuse-script';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { trimToUndefined } from '../_shared/script-url';
 
 declare global {
 	interface Window {
@@ -38,6 +38,52 @@ declare global {
 		};
 	}
 }
+
+const cdnBaseUrl = 'https://cdn.databuddy.cc';
+
+type DatabuddyFile = 'databuddy' | 'replay';
+
+/**
+ * SRI hashes of the Databuddy releases whose files are known, by version.
+ * Databuddy publishes no hashes, so a pinned release not listed here loads
+ * without one.
+ */
+const releaseIntegrity: Readonly<
+	Record<string, Readonly<Record<DatabuddyFile, string>>>
+> = {
+	'2026-10-30.1': {
+		databuddy:
+			'sha384-xXKfqQUu53gQi7i1OUzZ1t/rlpkyILPqMsDxO4MQH70gAX/yiDVUj1JogQaW0M2s',
+		replay:
+			'sha384-naub2msIlvDqEZRXGKjjR1CEOa9ZNszRcSgfitF8vO2qgKGlygxmOkxzH/puniCl',
+	},
+};
+
+/**
+ * The URL and integrity of a Databuddy CDN file. Without `version` it is
+ * Databuddy's unversioned file, which changes with each release, so it
+ * loads without integrity. An `override` URL wins and loads without
+ * integrity too, since c15t cannot know its bytes.
+ */
+const resolveCdnScript = function resolveCdnScript(
+	file: DatabuddyFile,
+	version: string | undefined,
+	override: string | undefined
+): { integrity: string | undefined; src: string } {
+	const src = trimToUndefined(override);
+	if (src !== undefined) {
+		return { integrity: undefined, src };
+	}
+	if (version === undefined) {
+		return { integrity: undefined, src: `${cdnBaseUrl}/${file}.js` };
+	}
+	return {
+		integrity: Object.hasOwn(releaseIntegrity, version)
+			? releaseIntegrity[version]?.[file]
+			: undefined,
+		src: `${cdnBaseUrl}/${file}.${version}.js`,
+	};
+};
 
 const disableTracker = {
 	path: ['databuddy', 'options', 'disabled'],
@@ -183,7 +229,22 @@ export interface DatabuddyConsentOptions {
 	apiUrl?: string;
 
 	/**
-	 * The Databuddy script URL.
+	 * Pins a Databuddy release, such as `'2026-10-30.1'`, for both
+	 * `databuddy.js` and `replay.js`: they load from
+	 * `https://cdn.databuddy.cc/databuddy.<version>.js` and
+	 * `https://cdn.databuddy.cc/replay.<version>.js`. A release this
+	 * package knows the hashes of loads with subresource integrity; another
+	 * loads without it. Unset loads Databuddy's unversioned files. The Inth
+	 * script registry can pin `databuddy.js` for you, but not `replay.js`.
+	 * When the registry lists Databuddy, a pin without integrity yields to
+	 * the registry's `databuddy.js`.
+	 * @default undefined
+	 */
+	version?: string;
+
+	/**
+	 * The Databuddy script URL. Overrides `version` and loads without
+	 * subresource integrity.
 	 * @default 'https://cdn.databuddy.cc/databuddy.js'
 	 */
 	scriptUrl?: string;
@@ -302,7 +363,8 @@ export interface DatabuddyReplayOptions {
 	recordIframes?: boolean;
 
 	/**
-	 * The Databuddy replay script URL.
+	 * The Databuddy replay script URL. Overrides `version` and loads without
+	 * subresource integrity.
 	 * @default 'https://cdn.databuddy.cc/replay.js'
 	 */
 	scriptUrl?: string;
@@ -321,6 +383,7 @@ const featureAttribute = function featureAttribute(
 interface ReplaySettings {
 	apiUrl: string;
 	clientId: string;
+	integrity: string | undefined;
 	maskText: boolean | undefined;
 	recordIframes: boolean | undefined;
 	scriptUrl: string;
@@ -346,6 +409,9 @@ const createReplayLoader = function createReplayLoader(
 			element.async = true;
 			element.src = settings.scriptUrl;
 			element.setAttribute('crossorigin', 'anonymous');
+			if (settings.integrity) {
+				element.setAttribute('integrity', settings.integrity);
+			}
 			element.setAttribute('data-api-url', settings.apiUrl);
 			element.setAttribute('data-client-id', settings.clientId);
 			const maskText = featureAttribute(settings.maskText);
@@ -382,8 +448,10 @@ const createDatabuddyScript = function createDatabuddyScript(
 		options.loadMode === 'always'
 			? databuddyAlwaysLoadManifest
 			: databuddyManifest;
+	const version = trimToUndefined(options.version);
+	const loader = resolveCdnScript('databuddy', version, options.scriptUrl);
 
-	const script = resolveManifest(manifest, {
+	const resolved = resolveManifest(manifest, {
 		apiUrl,
 		clientId,
 		configWhenDenied: options.configWhenDenied ?? {
@@ -396,29 +464,37 @@ const createDatabuddyScript = function createDatabuddyScript(
 			clientId,
 			disabled: false,
 		},
-		scriptUrl: resolveScriptUrl(
-			options.scriptUrl,
-			'https://cdn.databuddy.cc/databuddy.js'
-		),
+		scriptUrl: loader.src,
 		trackErrors: featureAttribute(features.errors),
 		trackInteractions: featureAttribute(features.interactions),
 		trackOutgoingLinks: featureAttribute(features.outgoingLinks),
 		trackWebVitals: featureAttribute(features.webVitals),
 	});
+	// The hash goes on here, not through the manifest, so the exported
+	// manifest resolves with the same config as before `version` existed.
+	const script: Script = loader.integrity
+		? {
+				...resolved,
+				attributes: { ...resolved.attributes, integrity: loader.integrity },
+			}
+		: resolved;
 	if (!options.replay) {
 		return script;
 	}
 
 	const replayOptions = options.replay === true ? {} : options.replay;
+	const replayScript = resolveCdnScript(
+		'replay',
+		version,
+		replayOptions.scriptUrl
+	);
 	const replay = createReplayLoader({
 		apiUrl,
 		clientId,
+		integrity: replayScript.integrity,
 		maskText: replayOptions.maskText,
 		recordIframes: replayOptions.recordIframes,
-		scriptUrl: resolveScriptUrl(
-			replayOptions.scriptUrl,
-			'https://cdn.databuddy.cc/replay.js'
-		),
+		scriptUrl: replayScript.src,
 	});
 
 	return {
