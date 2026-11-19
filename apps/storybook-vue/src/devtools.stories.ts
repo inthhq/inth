@@ -65,7 +65,10 @@ export const Default: Story = {
 			};
 			const context = createVueConsentKernelContext({
 				config,
-				mode: storybookMode(((input: RequestInfo | URL, request?: RequestInit) =>
+				mode: storybookMode(((
+					input: RequestInfo | URL,
+					request?: RequestInit
+				) =>
 					Promise.resolve(
 						new Response(
 							JSON.stringify(

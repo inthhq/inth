@@ -246,7 +246,9 @@ const receiptsUntil = function receiptsUntil(
 	givenAt: number
 ): ExplicitChoice {
 	const entries = Object.entries(choice.categories);
-	if (entries.every(([, receipt]) => !receipt || receipt.confirmedAt <= givenAt)) {
+	if (
+		entries.every(([, receipt]) => !receipt || receipt.confirmedAt <= givenAt)
+	) {
 		return choice;
 	}
 	return {
@@ -280,7 +282,10 @@ export const buildSavePayload = function buildSavePayload(
 	const confirmedCategories: Partial<Record<OptionalConsentCategory, boolean>> =
 		{};
 	for (const [category, decision] of Object.entries(input.choice.categories)) {
-		if (decision && input.confirmed.includes(category as OptionalConsentCategory)) {
+		if (
+			decision &&
+			input.confirmed.includes(category as OptionalConsentCategory)
+		) {
 			confirmedCategories[category as OptionalConsentCategory] = decision.value;
 		}
 	}

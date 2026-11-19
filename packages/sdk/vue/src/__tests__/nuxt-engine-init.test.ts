@@ -35,11 +35,10 @@ test("a hosted() page's browser init sends the server's consent headers in the q
 
 	await vi.waitFor(() => expect(fetch).toHaveBeenCalled());
 	const [url, init] = fetch.mock.calls[0] ?? [];
-	expect([...new Headers(init?.headers).keys()].toSorted()).toEqual([
-		'accept',
-	]);
+	expect([...new Headers(init?.headers).keys()].toSorted()).toEqual(['accept']);
 	expect(init?.credentials).toBe('same-origin');
-	expect(Object.fromEntries(new URL(String(url)).searchParams)).toMatchObject(
-		{ country: 'DE', region: 'BY' }
-	);
+	expect(Object.fromEntries(new URL(String(url)).searchParams)).toMatchObject({
+		country: 'DE',
+		region: 'BY',
+	});
 });

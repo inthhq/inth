@@ -168,9 +168,9 @@ describe('prefetch utilities', () => {
 		delete (window as Window & { __inthInitialDataPromises?: unknown })
 			.__inthInitialDataPromises;
 		void primePrefetchedInitialData(options);
-		const inits = (
-			fetch.mock.calls as unknown as [string, RequestInit][]
-		).map(([, init]) => init.credentials);
+		const inits = (fetch.mock.calls as unknown as [string, RequestInit][]).map(
+			([, init]) => init.credentials
+		);
 		expect(inits).toEqual(['same-origin', 'same-origin']);
 	});
 

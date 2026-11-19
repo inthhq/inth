@@ -179,7 +179,11 @@ export const createSaveOutbox = function createSaveOutbox({
 	let datedSubject = getSnapshot().subject?.subjectId;
 	runtime.subscribe((snapshot) => {
 		const next = snapshot.subject?.subjectId;
-		if (datedSubject !== undefined && next !== undefined && next !== datedSubject) {
+		if (
+			datedSubject !== undefined &&
+			next !== undefined &&
+			next !== datedSubject
+		) {
 			dates.move(datedSubject, next);
 		}
 		datedSubject = next;

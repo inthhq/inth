@@ -227,8 +227,7 @@ test('a save refused for a clock that ran ahead does not hold later saves in the
 	const page = await load();
 	// The backend refuses a givenAt more than ten minutes past its clock.
 	recordsAnswer = (init) =>
-		(JSON.parse(String(init?.body)) as SentRecord).givenAt >
-		realNow + 600_000
+		(JSON.parse(String(init?.body)) as SentRecord).givenAt > realNow + 600_000
 			? Promise.resolve(v1Error(400, 'invalid_request'))
 			: answerRecord(init);
 

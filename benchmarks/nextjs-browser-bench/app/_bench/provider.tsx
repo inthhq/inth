@@ -174,7 +174,10 @@ export const NextjsManifestBenchmarkProvider = ({
 	<ConsentRoot
 		config={{
 			// The browser resolves from the same-origin manifest route.
-			mode: manifest({ manifestUrl: '/api/inth/v1/consent/manifest', resolve: 'browser' }),
+			mode: manifest({
+				manifestUrl: '/api/inth/v1/consent/manifest',
+				resolve: 'browser',
+			}),
 			projectUrl: '/api/bench-consent',
 		}}
 		state={state}
