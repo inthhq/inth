@@ -119,7 +119,7 @@ const renderConsentExample = function renderConsentExample(
 	if (design === 'headless') {
 		// Swap the stock tag for the headless build and the page's own bar.
 		html = html
-			.replace(/<script\s+src="[^"]*\/inth\.js"[\s\S]*?<\/script>/u, '')
+			.replace(/<script\s+src="[^"]*\/c15t\.js"[\s\S]*?<\/script>/u, '')
 			.replace(
 				'</body>',
 				`${published('headless-bar.html', 'headless-bar')}</body>`
@@ -130,7 +130,7 @@ const renderConsentExample = function renderConsentExample(
 	html = html
 		.replace(
 			new RegExp(
-				`src="${backendPlaceholder.replaceAll('.', '\\.')}/(inth(?:\\.headless|\\.iab)?\\.js)"`,
+				`src="${backendPlaceholder.replaceAll('.', '\\.')}/(c15t(?:\\.headless|\\.iab)?\\.js)"`,
 				'gu'
 			),
 			`src="/$1" data-project-url="${projectUrl}"`

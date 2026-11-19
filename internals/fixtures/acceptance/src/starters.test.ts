@@ -46,7 +46,7 @@ const hostedScript = async function hostedScript(): Promise<string> {
 // `c15t.hosted.js`, `c15t.commit.js`, `c15t.records.js` and
 // `c15t.dialog.js`, with or without the hash query the backend adds.
 const scriptPartURL = new RegExp(
-	`^${placeholderProjectUrl.replaceAll('.', '\\.')}/inth\\.(?:hosted|commit|records|dialog)\\.js(?:\\?.*)?$`,
+	`^${placeholderProjectUrl.replaceAll('.', '\\.')}/c15t\\.(?:hosted|commit|records|dialog)\\.js(?:\\?.*)?$`,
 	'u'
 );
 
