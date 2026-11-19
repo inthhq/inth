@@ -39,3 +39,16 @@ Create `scripts` and `callbacks` in the layout component, not in
 the browser.
 
 <include src="../../../shared/svelte/components/inth-provider.mdx" />
+
+### Props only this component takes
+
+| Prop | Type | Default | Behavior |
+| --- | --- | --- | --- |
+| `state` | `InthProviderState` from `@inth/svelte/kit` | required | `data.consent` from `loadConsent` in `+layout.server.ts`: the visitor's server-resolved consent, the mode `inthHandle()` was given, the backend URL and the consent route's prefix. Read once, when the component mounts. |
+| `mode` | a transport factory | the mode in `state` | A transport of your own, in place of the mode `inthHandle()` was given. Read once, when the component mounts. |
+| `children` | `Snippet` | none | Your app. |
+
+This component creates, starts and disposes of its own consent runtime, so it
+takes no `runtime`. To share one runtime across component trees, render
+`InthProvider` from `@inth/svelte` and pass it a runtime from
+`createConsentRuntime()` as `runtime`.

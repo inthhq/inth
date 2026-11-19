@@ -6,8 +6,10 @@ group: frameworks
 
 ## Component reference
 
-`@inth/nextjs` exports `InthProvider` and re-exports every component and hook from
-`@inth/react`, so a Next.js app needs one import path. Every component except
+`@inth/nextjs` exports its own `InthProvider`, `ConsentBanner` and
+`ConsentDialog`, and re-exports every other component and hook from
+`@inth/react`, so a Next.js app needs one import path. The `InthProvider` from
+`@inth/react`, for a runtime you manage yourself, is at `@inth/nextjs/react`. Every component except
 `ConsentTheme` ships with `'use client'`. You can still render them from a
 Server Component, as long as every prop you pass is serializable.
 
@@ -25,7 +27,7 @@ Server Component, as long as every prop you pass is serializable.
 
 Render every component except `ConsentTheme` inside `InthProvider`, because
 they read the runtime `InthProvider` creates. It already renders the
-`InthProvider` from `@inth/react`, so do not mount both.
+`InthProvider` from `@inth/nextjs/react`, so do not mount both.
 
 ## Start with InthProvider, the banner and the dialog
 

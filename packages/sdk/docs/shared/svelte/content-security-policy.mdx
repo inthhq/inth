@@ -27,10 +27,10 @@ the provider:
 {/* example: fragment */}
 
 ```svelte
-<!-- Svelte: src/App.svelte -->
+<!-- Svelte: src/App.svelte, with InthProvider from @inth/svelte -->
 <InthProvider mode={manifest()} {scripts} nonce={cspNonce}>
 
-<!-- SvelteKit: src/routes/+layout.svelte -->
+<!-- SvelteKit: src/routes/+layout.svelte, with InthProvider from @inth/svelte/kit -->
 <InthProvider state={data.consent} {scripts} nonce={cspNonce}>
 ```
 

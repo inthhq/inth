@@ -5,7 +5,7 @@ import type {
 	UseScriptLoaderOptions,
 } from '@inth/react/module-hooks';
 import type {
-	InthProviderOptions,
+	InthProviderOptions as ReactProviderOptions,
 	InthProviderPrefetch,
 } from '@inth/react/provider';
 import type { Vendor } from '@inth/sdk/engine';
@@ -43,7 +43,7 @@ export interface ConsentClientOptions {
 	 * policy resolution and when consent is later revoked.
 	 * Initial-only: remount InthProvider to replace the cleanup configuration.
 	 */
-	clearOnRevocation?: InthProviderOptions['clearOnRevocation'];
+	clearOnRevocation?: ReactProviderOptions['clearOnRevocation'];
 
 	scriptLoader?: UseScriptLoaderOptions;
 
@@ -59,21 +59,28 @@ export interface ConsentClientOptions {
 	 * config's `mode`: `manifest()`, `hosted()` or `testing()`, or a
 	 * transport factory.
 	 */
-	options?: Omit<
-		InthProviderOptions,
-		| 'projectUrl'
-		| 'mode'
-		| 'clearOnRevocation'
-		| 'networkBlocker'
-		| 'persistence'
-		| 'prefetch'
-		| 'scriptLoader'
-		| 'scripts'
-		| 'vendors'
-		| '__debugPkg'
-		| '__preloadScriptLoader'
-		| '__resolveStreamedInit'
-	> & {
-		mode?: ConsentMode | ProviderTransportFactory;
-	};
+	options?: InthProviderOptions;
 }
+
+/**
+ * The `options` of `InthProvider` and `defineConsentConfig`: the options of
+ * the `InthProvider` from `@inth/nextjs/react`, less the ones the root and
+ * the config take on their own.
+ */
+export type InthProviderOptions = Omit<
+	ReactProviderOptions,
+	| 'projectUrl'
+	| 'mode'
+	| 'clearOnRevocation'
+	| 'networkBlocker'
+	| 'persistence'
+	| 'prefetch'
+	| 'scriptLoader'
+	| 'scripts'
+	| 'vendors'
+	| '__debugPkg'
+	| '__preloadScriptLoader'
+	| '__resolveStreamedInit'
+> & {
+	mode?: ConsentMode | ProviderTransportFactory;
+};

@@ -14,7 +14,7 @@ import {
 } from '@inth/react/deferred/engine';
 import type { ScriptServerStartModule } from '@inth/react/deferred/engine';
 import { InthProvider as ReactProvider } from '@inth/react/provider';
-import type { InthProviderOptions } from '@inth/react/provider';
+import type { InthProviderOptions as ReactProviderOptions } from '@inth/react/provider';
 /**
  * The engine side of `InthProvider`, loaded on demand by `./root`.
  *
@@ -108,7 +108,7 @@ const createMode = function createMode(
 const ServerScriptStart = ({
 	options,
 }: {
-	options: InthProviderOptions;
+	options: ReactProviderOptions;
 }): ReactNode => {
 	if (typeof document !== 'undefined') {
 		// Hydrates the server's start script without running or replacing it.
@@ -175,7 +175,7 @@ const CheckedBootData = ({
 	options,
 	serverStart,
 }: {
-	options: InthProviderOptions;
+	options: ReactProviderOptions;
 	/** Whether the render emits the server start, and so has its plan. */
 	serverStart: boolean;
 }): ReactNode => {
@@ -252,7 +252,7 @@ const useRootOptions = function useRootOptions(props: InthProviderProps) {
 	const [mode, setMode] = useState(() => createMode(config, options));
 	void setMode;
 
-	const providerOptions: InthProviderOptions = {
+	const providerOptions: ReactProviderOptions = {
 		...options,
 		__debugPkg: '@inth/nextjs',
 		// A returning visitor's state often lets a script run. Start the
@@ -294,7 +294,7 @@ const AfterPage = ({
 	options,
 	serverStart,
 }: {
-	options: InthProviderOptions;
+	options: ReactProviderOptions;
 	serverStart: boolean;
 }) => (
 	<>
@@ -328,7 +328,7 @@ export const EagerRoot = (props: InthProviderProps) => {
 	return (
 		// `createMode` threw already when there is no backend.
 		<ReactProvider
-			options={providerOptions as WithProjectUrl<InthProviderOptions>}
+			options={providerOptions as WithProjectUrl<ReactProviderOptions>}
 		>
 			{children}
 			<Suspense fallback={null}>

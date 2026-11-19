@@ -15,7 +15,11 @@ export {
 	InthProvider,
 } from './client-components';
 export type { InthProviderProps } from './root';
-export type { ConsentClientOptions, ConsentState } from './types';
+export type {
+	ConsentClientOptions,
+	ConsentState,
+	InthProviderOptions,
+} from './types';
 export type { ConsentConfig } from './config';
 export { defineConsentConfig } from './config';
 export type {

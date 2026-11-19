@@ -17,7 +17,11 @@ and other props:
 
 {/* example: fragment */}
 
-```svelte title="src/routes/+layout.svelte"
+```svelte title="src/routes/+layout.svelte (partial)"
+<script lang="ts">
+	import { InthProvider } from '@inth/svelte/kit';
+</script>
+
 <InthProvider state={data.consent} {scripts} gpp>
 ```
 

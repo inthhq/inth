@@ -217,3 +217,71 @@ it('gives the base copy of a fixture the older form of an API the head introduce
 		rmSync(root, { force: true, recursive: true });
 	}
 });
+
+it('gives a base from before InthProvider the old root names', () => {
+	const root = mkdtempSync(join(tmpdir(), 'inth-overlay-root-'));
+	try {
+		const fixtures: Record<string, [string, string]> = {
+			'benchmarks/kit/+layout.svelte': [
+				"<script>\n\timport { InthProvider } from '@inth/svelte/kit';\n</script>\n<InthProvider state={data.consent} />",
+				"<script>\n\timport { ConsentRoot as InthProvider } from '@inth/svelte';\n</script>\n<InthProvider state={data.consent} />",
+			],
+			'benchmarks/next/provider.tsx': [
+				[
+					"import { ConsentBanner, InthProvider } from '@inth/nextjs';",
+					"import type { InthProviderProps } from '@inth/nextjs';",
+					"import { InthProvider as ReactProvider } from '@inth/nextjs/react';",
+					"import type { InthProviderOptions as ReactProviderOptions } from '@inth/nextjs/react';",
+					'export const x = <InthProvider state={s}><ReactProvider /></InthProvider>;',
+				].join('\n'),
+				[
+					"import { ConsentBanner } from '@inth/nextjs';",
+					"import { ConsentRoot as InthProvider } from '@inth/nextjs';",
+					"import type { ConsentRootProps as InthProviderProps } from '@inth/nextjs';",
+					"import { ConsentProvider as ReactProvider } from '@inth/nextjs';",
+					"import type { ConsentProviderOptions as ReactProviderOptions } from '@inth/nextjs';",
+					'export const x = <InthProvider state={s}><ReactProvider /></InthProvider>;',
+				].join('\n'),
+			],
+			'benchmarks/nuxt/consent-mount.vue': [
+				'<template>\n\t<InthProvider />\n</template>',
+				'<template>\n\t<ConsentRoot />\n</template>',
+			],
+			'benchmarks/react/entry.ts': [
+				"export { InthProvider, ConsentBanner } from '@inth/react';",
+				"export { ConsentBanner } from '@inth/react';\nexport { ConsentProvider as InthProvider } from '@inth/react';",
+			],
+		};
+		const make = (arm: string, withRename: boolean) => {
+			const cwd = join(root, arm);
+			for (const [file, [head]] of Object.entries(fixtures)) {
+				mkdirSync(dirname(join(cwd, file)), { recursive: true });
+				writeFileSync(join(cwd, file), head);
+			}
+			if (withRename) {
+				const marker = join(cwd, 'packages/sdk/nextjs/src/react.ts');
+				mkdirSync(dirname(marker), { recursive: true });
+				writeFileSync(marker, "export * from '@inth/react';");
+			}
+			execFileSync('git', ['init', '--quiet'], { cwd });
+			execFileSync('git', ['add', '.'], { cwd });
+			return cwd;
+		};
+		const head = make('head', true);
+
+		const base = make('base', false);
+		replaceBenchmarkFixtures(head, base);
+		for (const [file, [, old]] of Object.entries(fixtures)) {
+			expect(readFileSync(join(base, file), 'utf8')).toBe(old);
+		}
+
+		// A base that already names its root InthProvider keeps the head's files.
+		const newer = make('newer', true);
+		replaceBenchmarkFixtures(head, newer);
+		for (const [file, [current]] of Object.entries(fixtures)) {
+			expect(readFileSync(join(newer, file), 'utf8')).toBe(current);
+		}
+	} finally {
+		rmSync(root, { force: true, recursive: true });
+	}
+});

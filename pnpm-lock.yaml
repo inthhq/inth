@@ -984,9 +984,6 @@ importers:
       '@inth/nextjs':
         specifier: workspace:*
         version: link:../../packages/sdk/nextjs
-      '@inth/react':
-        specifier: workspace:*
-        version: link:../../packages/sdk/react
       '@inth/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk/sdk
@@ -1582,9 +1579,6 @@ importers:
       '@inth/benchmarking':
         specifier: workspace:*
         version: link:../shared
-      '@inth/react':
-        specifier: workspace:*
-        version: link:../../packages/sdk/react
       '@inth/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk/sdk

@@ -11,11 +11,14 @@ import type { ConsentDialogTriggerOptions } from '@inth/angular/consent-dialog';
  * The dialog's body stays out of the first load: it loads when the dialog
  * opens, or earlier in idle time or on
  * hover or focus of the banner's Customize button. Use the two components
- * on their own to pass each its own inputs or templates.
+ * on their own to pass each its own inputs or templates. Content placed
+ * inside the tag renders after the two surfaces.
  *
  * @example
  * ```html
- * <inth-provider [legalLinks]="['privacyPolicy']" />
+ * <inth-provider [legalLinks]="['privacyPolicy']">
+ *   <router-outlet />
+ * </inth-provider>
  * ```
  */
 @Component({
@@ -34,7 +37,8 @@ import type { ConsentDialogTriggerOptions } from '@inth/angular/consent-dialog';
 			[hideBranding]="hideBranding()"
 			[legalLinks]="legalLinks()"
 			[showTrigger]="showTrigger()"
-		/>`,
+		/>
+		<ng-content />`,
 })
 export class InthProvider {
 	/** Drop the stock classes. Defaults to `provideInth()`'s `noStyle`. */

@@ -26,3 +26,58 @@ page loads, so the banner appears after the first paint. Optional categories
 stay denied until then.
 
 <include src="../../../shared/svelte/components/inth-provider.mdx" />
+
+### Props only this component takes
+
+| Prop | Type | Default | Behavior |
+| --- | --- | --- | --- |
+| `mode` | `manifest()` or `hosted()` from `@inth/svelte`, or `testing()` from `@inth/svelte/testing` | `hosted()` | Where policies come from and where choices are saved. Read once; remount the provider to change it. |
+| `prefetch` | `ConsentState` | none | Server-resolved state, such as the result of `resolveConsent`. With a resolved policy in it, the first render already knows whether to show the banner, and the browser skips its own policy request. Read once. |
+| `runtime` | `ConsentRuntime` | none | A runtime you created with `createConsentRuntime()`. See [share one runtime](#share-one-runtime). |
+| `options` | `ConsentManagerOptions` | none | The same options as one object. When both set the same option, the top-level prop wins. |
+| `children` | `Snippet` | none | Your app. The provider renders no markup of its own. |
+
+Tests pass `testing({ policy })` from `@inth/svelte/testing` as `mode` to
+resolve a policy with no backend.
+
+## What the provider does when it mounts
+
+The provider creates the consent runtime while the component initializes, on
+the server and in the browser. Creating it has no side effects, so the server
+can render the banner from `prefetch`. In the browser, `onMount` starts the
+runtime:
+
+1. It reads the stored choice from the cookie and local storage.
+2. It starts the script loader, the iframe blocker and, if configured, the
+   network blocker and the IAB TCF add-on.
+3. It resolves the policy with its `mode`, unless `prefetch` already holds
+   one.
+
+When the provider unmounts, it stops all of them. Keep one provider at the root of the app, so it stays mounted across
+navigation and every component can reach it.
+
+With `networkBlocker`, matching requests are held from the moment the provider
+is created in the browser, before its children run their own code, until the
+blocker decides them.
+
+## Share one runtime
+
+Pass `runtime` when two component trees that cannot share Svelte context need
+the same consent state. Create it with `createConsentRuntime()` from
+`@inth/svelte`, pass it to each provider, and call `runtime.start()` and
+`runtime.dispose()` yourself. A provider never starts or disposes a runtime it
+did not create. Options that build the runtime, such as `mode`, `scripts` and
+`callbacks`, come from your `createConsentRuntime()` call; display options such
+as `theme` and `noStyle` still apply per provider.
+
+## Verify the provider
+
+Open the page in a private window with DevTools open:
+
+1. The banner appears once the policy resolves. `window.__inthDebug` in the console
+   shows `pkg: '@inth/svelte'`.
+2. The Network panel shows the request your mode makes: none for
+   `manifest()` with a bundled snapshot, one `/init` for `hosted()`, and
+   none when the page came with a server-resolved state.
+3. A component that calls `getConsentManager()` renders without the
+   `inth: no v3 consent context` error.

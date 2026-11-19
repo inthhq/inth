@@ -8,12 +8,15 @@ group: frameworks
 
 `<inth-provider>` renders `<inth-consent-banner>` and
 `<inth-consent-dialog>` together. Import `InthProvider` and put it in
-your root component instead of the two:
+your root component instead of the two. Leave it empty, or wrap your app in
+it; wrapped content renders after the banner and dialog:
 
 {/* example: fragment */}
 
 ```html
-<inth-provider [legalLinks]="['privacyPolicy', 'cookiePolicy']" />
+<inth-provider [legalLinks]="['privacyPolicy', 'cookiePolicy']">
+  <router-outlet />
+</inth-provider>
 ```
 
 `provideInth()` in your application config owns the consent state;
@@ -26,11 +29,11 @@ and loads on demand, as described on
 
 | Input | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `legalLinks` | array of `LegalLinks` keys, or `null` | every configured link | Which of the provider's legal links both surfaces show. |
+| `legalLinks` | array of `LegalLinks` keys, or `null` | every link set in `provideInth()` | Which of the legal links from `provideInth()` both surfaces show. |
 | `hideBranding` | `boolean` | `false` | Hides the "Secured by" tag on both surfaces. |
 | `showTrigger` | `boolean` or `ConsentDialogTriggerOptions` | `false` | Renders a floating `<inth-consent-dialog-trigger>` with the dialog. |
-| `noStyle` | `boolean` | provider's `noStyle` | Drops Inth's classes on both surfaces. |
-| `disableAnimation` | `boolean` | provider's value | Turns off transitions on both surfaces. |
+| `noStyle` | `boolean` | `noStyle` from `provideInth()` | Drops Inth's classes on both surfaces. |
+| `disableAnimation` | `boolean` | the value from `provideInth()` | Turns off transitions on both surfaces. |
 
 To pass the banner its own inputs, such as `variant` or text, or to use its
 `ng-template` slots, render `<inth-consent-banner>` and
