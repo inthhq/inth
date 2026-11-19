@@ -213,6 +213,8 @@ export const runInitScript = function runInitScript(
 	let engineError: Error | null = null;
 	let ahead: { clearEpoch: boolean; subjectId: string } | undefined;
 	let persist: (() => void) | null = null;
+	/** Shows the banner again for a tap only the engine could record. */
+	let revertTap: (() => void) | null = null;
 	const parts: { commit?: InitCommitPart; records?: InitRecordsPart } = {};
 	const partLoads: Partial<Record<InitFile, Promise<unknown>>> = {};
 	const configs: ScriptTagClientOptions[] = [];
@@ -290,6 +292,8 @@ export const runInitScript = function runInitScript(
 		engineError = new Error(message);
 		// oxlint-disable-next-line no-console -- The engine is not coming.
 		console.error(message);
+		revertTap?.();
+		revertTap = null;
 		for (const call of boot.calls.splice(0) as SettledCall[]) {
 			call.settle?.(engineError, true);
 		}
@@ -546,7 +550,15 @@ export const runInitScript = function runInitScript(
 								subjectId: plan.subjectId,
 							});
 				if (!(module && early)) {
-					// The engine records it instead.
+					// The engine records it instead. If it never loads, the
+					// banner asks again; the pending tap still covers a visitor
+					// who leaves.
+					revertTap = () => {
+						if (boot.commit === commit) {
+							boot.commit = null;
+							setSnapshot(plan.previous);
+						}
+					};
 					queue([method, ...args]);
 					loadEngine();
 					resolve({ ok: false });
@@ -990,6 +1002,8 @@ export const runInitScript = function runInitScript(
 			if (api) {
 				return api.dispose();
 			}
+			persist = null;
+			revertTap = null;
 			const disposed = new Error(
 				'@inth/sdk: dispose() ran before inth.hosted.js loaded.'
 			);

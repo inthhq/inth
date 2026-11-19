@@ -364,6 +364,20 @@ describe('inth.hosted.js failing to load', () => {
 		expect(await hostedRequestsSoFar()).toBe(4);
 	}, 15_000);
 
+	it('shows the banner again when neither inth.commit.js nor the engine records a tap', async () => {
+		const win = await open({ commit: 'fail', 'hosted-fail': 3 });
+		win.console.error = () => undefined;
+		await expect.poll(() => buttonOf(win, 'accept')).not.toBeNull();
+
+		buttonOf(win, 'accept')?.click();
+		await expect.poll(() => bannerOf(win)).toBeNull();
+
+		await expect
+			.poll(() => buttonOf(win, 'accept'), { timeout: 8000 })
+			.not.toBeNull();
+		expect(await hostedRequestsSoFar()).toBe(3);
+	}, 15_000);
+
 	it('rejects what waits for the engine when dispose() runs first', async () => {
 		const win = await open({ 'hosted-delay': 5000 });
 		const ready = (win.inth.ready as () => Promise<unknown>)();
