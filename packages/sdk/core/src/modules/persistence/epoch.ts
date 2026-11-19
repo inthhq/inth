@@ -18,6 +18,9 @@
  *
  * A legacy family that another runtime writes, such as c15t's, keeps its
  * own epoch under its own key, which voids that family's records alone.
+ * A server seed of a kind the browser holds no configured-family record
+ * of may come from a legacy family, so the latest legacy epoch voids it
+ * too (`applyNewerStoredRecords`).
  *
  * Ties: a category decision in the clearing millisecond counts only when
  * its writer had seen the clear (see {@link choiceSinceEpoch}). One

@@ -1007,6 +1007,8 @@ describe('serverScriptStart', () => {
 
 		test.each([
 			['a newer clear epoch', `inth-epoch=${CONFIRMED_AT + 1}`],
+			// The server read c15t's cookie, which a c15t tab then cleared.
+			['a newer c15t clear epoch', `c15t-epoch=${CONFIRMED_AT + 1}`],
 			[
 				'a newer, URI-encoded vendor choice',
 				`inth-vendors=${encodeURIComponent(`v=1&t=${CONFIRMED_AT + 1}&d=pixel`)}`,

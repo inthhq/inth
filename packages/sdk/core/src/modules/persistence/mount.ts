@@ -34,7 +34,9 @@ import {
 import type { StoredRecords } from './hydrate';
 import {
 	isNewerDenial,
+	readLegacyClearEpoch,
 	readStoredConsentRecordFromCookieHeader,
+	readStoredNoticeDismissal,
 	readStoredVendorChoice,
 	readStoredVendorChoiceFromCookieHeader,
 } from './record-storage';
@@ -429,19 +431,12 @@ export const mountPersistence = function mountPersistence(
 			: records;
 	};
 
-	/**
-	 * Which of `read`'s records the browser found under the configured family
-	 * while the cookies, read as the server read them, hold only a legacy
-	 * family's.
-	 */
-	const outranksSeedFamily = function outranksSeedFamily(
+	/** Which kinds of record the browser holds under the configured family. */
+	const configuredFamilyHolds = function configuredFamilyHolds(
 		read: StoredRecords,
 		at: number
-	): { choice: boolean; vendors: boolean } {
-		const header = readCookieHeader();
-		if (header === null) {
-			return { choice: false, vendors: false };
-		}
+	): { choice: boolean; notice: boolean; vendors: boolean } {
+		const notice = readStoredNoticeDismissal(storageConfig, at);
 		const vendors = readStoredVendorChoice(
 			storageConfig,
 			at,
@@ -449,17 +444,34 @@ export const mountPersistence = function mountPersistence(
 			read.epoch
 		);
 		return {
+			choice: read.candidates.some(
+				(candidate) =>
+					candidate.status === 'valid' && !candidate.source.startsWith('legacy')
+			),
+			notice: notice?.ok === true && !notice.legacy,
+			vendors: vendors?.ok === true && !vendors.legacy,
+		};
+	};
+
+	/**
+	 * Which of the records `held` under the configured family the cookies,
+	 * read as the server read them, hold only under a legacy family.
+	 */
+	const outranksSeedFamily = function outranksSeedFamily(
+		held: { choice: boolean; vendors: boolean },
+		at: number
+	): { choice: boolean; vendors: boolean } {
+		const header = readCookieHeader();
+		if (header === null) {
+			return { choice: false, vendors: false };
+		}
+		return {
 			choice:
-				read.candidates.some(
-					(candidate) =>
-						candidate.status === 'valid' &&
-						!candidate.source.startsWith('legacy')
-				) &&
+				held.choice &&
 				readStoredConsentRecordFromCookieHeader(header, storageConfig, at)
 					.selected?.source === 'legacy-cookie',
 			vendors:
-				vendors?.ok === true &&
-				!vendors.legacy &&
+				held.vendors &&
 				readStoredVendorChoiceFromCookieHeader(header, storageConfig, at)
 					?.legacy === true,
 		};
@@ -483,7 +495,11 @@ export const mountPersistence = function mountPersistence(
 	 * clear epoch then voids the seeded records from before it, as it voids
 	 * stored ones, and a record it voids yields to what storage holds. A
 	 * seeded decision from the clearing millisecond is kept: the seed does
-	 * not say whether its writer had seen the clear.
+	 * not say whether its writer had seen the clear. A seeded record of a
+	 * kind the browser holds no configured-family copy of may have come
+	 * from a legacy family's cookie, so the latest legacy clear epoch
+	 * (`c15t-epoch`) voids it too; it never voids one the configured family
+	 * still holds.
 	 *
 	 * The read also becomes what the writer starts from: the kernel's
 	 * records stay the seed's, and storage is what it was read as here.
@@ -498,11 +514,15 @@ export const mountPersistence = function mountPersistence(
 			baseline = [read, false];
 			const records = withQueued(read.records);
 			const snapshot = kernel.getSnapshot();
-			const outranks = outranksSeedFamily(read, at);
+			const held = configuredFamilyHolds(read, at);
+			const outranks = outranksSeedFamily(held, at);
+			const legacyEpoch = readLegacyClearEpoch(storageConfig, at);
+			const epochOf = (kind: keyof typeof held) =>
+				held[kind] ? read.epoch : Math.max(read.epoch, legacyEpoch);
 			const patch: HydrationRecords = {};
 			const choice = choiceSinceEpoch(
 				snapshot.explicitChoice,
-				read.epoch,
+				epochOf('choice'),
 				true
 			);
 			const seeded = choice?.categories ?? {};
@@ -520,14 +540,20 @@ export const mountPersistence = function mountPersistence(
 					version: 3,
 				};
 			}
-			const notice = noticeSinceEpoch(snapshot.noticeDismissal, read.epoch);
+			const notice = noticeSinceEpoch(
+				snapshot.noticeDismissal,
+				epochOf('notice')
+			);
 			if (notice !== snapshot.noticeDismissal) {
 				patch.noticeDismissal =
 					records.noticeDismissal === undefined
 						? notice
 						: records.noticeDismissal;
 			}
-			const vendors = vendorChoiceSinceEpoch(snapshot.vendorChoice, read.epoch);
+			const vendors = vendorChoiceSinceEpoch(
+				snapshot.vendorChoice,
+				epochOf('vendors')
+			);
 			const { vendorChoice } = records;
 			if (vendors !== snapshot.vendorChoice) {
 				patch.vendorChoice =

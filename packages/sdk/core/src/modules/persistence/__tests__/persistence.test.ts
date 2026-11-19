@@ -40,7 +40,9 @@ beforeEach(() => {
 	clearStoredConsentRecords();
 	// A clear keeps its epoch and the subject ID; start every test without
 	// either.
-	document.cookie = `${STORAGE_KEY_V2}-epoch=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+	for (const key of [STORAGE_KEY_V2, C15T_STORAGE_KEY]) {
+		document.cookie = `${key}-epoch=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+	}
 	document.cookie = `${C15T_STORAGE_KEY}-sid=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
 });
 
@@ -493,6 +495,88 @@ describe('persistence: records c15t stored', () => {
 			expect(hydrated().explicitChoice).toBeNull();
 		}
 	);
+
+	const seededKinds = [
+		[
+			'choice',
+			'explicitChoice',
+			(storageConfig?: StorageConfig) => saveUnder(storageConfig, true),
+		],
+		[
+			'notice dismissal',
+			'noticeDismissal',
+			(storageConfig?: StorageConfig) =>
+				writeStoredNoticeDismissal(
+					{ dismissedAt: NOW, fingerprint: 'notice', version: 1 },
+					storageConfig,
+					NOW
+				),
+		],
+		[
+			'vendor denials',
+			'vendorChoice',
+			(storageConfig?: StorageConfig) =>
+				writeStoredVendorChoice(
+					{ confirmedAt: NOW, denied: ['meta-pixel'], version: 1 },
+					storageConfig,
+					NOW
+				),
+		],
+	] as const;
+
+	const serverSeed = function serverSeed() {
+		return readStoredRecordsFromCookieHeader(document.cookie, undefined, NOW);
+	};
+
+	/** Lets a c15t tab clear, then mounts on a seed read before the clear. */
+	const mountAfterC15tClear = function mountAfterC15tClear(
+		initialRecords: ReturnType<typeof serverSeed>
+	) {
+		vi.setSystemTime(NOW + 1000);
+		const c15tTab = createConsentKernel({ now: NOW + 1000 });
+		createPersistence({ kernel: c15tTab, storageConfig: C15T }).clear();
+		flushWrites();
+		expect(cookieNames()).toContain(`${C15T_STORAGE_KEY}-epoch`);
+
+		const kernel = createConsentKernel({ initialRecords, now: NOW + 1000 });
+		createPersistence({ kernel, skipHydration: true });
+		flushWrites();
+		return kernel.getSnapshot();
+	};
+
+	test.each(seededKinds)(
+		'a server seed from a c15t %s that a c15t tab cleared before mount keeps none of it',
+		async (_name, field, store) => {
+			await store(C15T);
+			const initialRecords = serverSeed();
+			expect(
+				initialRecords[field === 'explicitChoice' ? 'choice' : field]
+			).not.toBeNull();
+
+			expect(mountAfterC15tClear(initialRecords)[field]).toBeNull();
+		}
+	);
+
+	test('a c15t clear before mount never voids a seeded Inth choice', async () => {
+		const first = createConsentKernel({ now: NOW });
+		const firstHandle = createPersistence({ kernel: first });
+		await first.commands.save({ marketing: false, measurement: true });
+		flushWrites();
+		firstHandle.dispose();
+		const initialRecords = serverSeed();
+		// An Inth tab grants after the server read. A stored grant never
+		// lands on a seed it did not void, so only a void seed would take it.
+		vi.setSystemTime(NOW + 500);
+		const other = createConsentKernel({ now: NOW + 500 });
+		const otherHandle = createPersistence({ kernel: other });
+		await other.commands.save({ marketing: true, measurement: true });
+		flushWrites();
+		otherHandle.dispose();
+
+		const { effectivePermissions } = mountAfterC15tClear(initialRecords);
+		expect(effectivePermissions.measurement).toBe(true);
+		expect(effectivePermissions.marketing).toBe(false);
+	});
 
 	test('a custom storageKey does not read c15t records', async () => {
 		await saveUnder(C15T, true);

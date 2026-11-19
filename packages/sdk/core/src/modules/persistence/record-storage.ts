@@ -746,6 +746,19 @@ export const readStoredClearEpoch = function readStoredClearEpoch(
 	return readEpochOf(resolveStorageKeys(config), now, onUnavailable);
 };
 
+/** The latest clear epoch any legacy family keeps, `0` for none. */
+export const readLegacyClearEpoch = function readLegacyClearEpoch(
+	config: StorageConfig | undefined,
+	now: number
+): number {
+	return Math.max(
+		0,
+		...resolveStorageKeys(config).legacy.map((family) =>
+			readEpochOf(family, now)
+		)
+	);
+};
+
 export const readStoredClearEpochFromCookieHeader =
 	function readStoredClearEpochFromCookieHeader(
 		cookieHeader: string | undefined,
