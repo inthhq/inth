@@ -74,7 +74,11 @@ import type {
 } from '../libs/manifest-cache-runtime';
 import { warnManifestFallback } from '../libs/manifest-fallback';
 import { resolveSessionReportProjectUrl } from '../libs/session-report';
-import { resolveStorageKeys, STORAGE_KEY } from '../libs/storage-keys';
+import {
+	resolveStorageKeys,
+	STORAGE_KEY,
+	storageKeyFamilies,
+} from '../libs/storage-keys';
 import { trimSlash } from '../libs/url';
 import {
 	INTH_VERSION_HEADER,
@@ -82,7 +86,11 @@ import {
 	readProducerPolicyContract,
 } from '../libs/version-header';
 import { readStoredRecordsFromCookieHeader } from '../modules/persistence/hydrate';
-import { readStoredConsentRecordFromCookieHeader } from '../modules/persistence/record-storage';
+import {
+	consentSinceEpoch,
+	readStoredClearEpochFromCookieHeader,
+	readStoredConsentRecordFromCookieHeader,
+} from '../modules/persistence/record-storage';
 import { fetchCachedAdTechProviders } from '../transports/ad-tech-provider-cache';
 import { deferInitGvl, deferInitGvlToRoute } from '../transports/gvl-reference';
 import {
@@ -879,30 +887,31 @@ const resolveRequest = async function resolveRequest(
 		};
 
 	/**
-	 * The consent cookie a remote `/init` gets: the one the render's reader
-	 * picked, under the configured key or c15t's, else the configured one as
-	 * it is. Never the pre-1.8 key's, which no version sent.
+	 * The consent cookie a remote `/init` gets: the one holding the record
+	 * the render read, under the configured key or c15t's, else the
+	 * configured one as it is. Never the pre-1.8 key's, which no version
+	 * sent, even when it is the configured key.
 	 */
 	const forwardedConsentCookie = function forwardedConsentCookie(
 		cookie: string
 	): string | undefined {
 		const keys = resolveStorageKeys(options.storage);
-		const forwardable = [
-			keys.consent,
-			...keys.legacy
-				.map((family) => family.consent)
-				.filter((key) => key !== STORAGE_KEY),
-		];
-		const selected = readStoredConsentRecordFromCookieHeader(
-			cookie,
-			options.storage,
-			base.now ?? Date.now()
-		).selected?.key;
-		return filterCookieHeader(cookie, [
+		const now = base.now ?? Date.now();
+		const forwardable = storageKeyFamilies(keys)
+			.map((family) => family.consent)
+			.filter((key) => key !== STORAGE_KEY);
+		const selected = consentSinceEpoch(
+			readStoredConsentRecordFromCookieHeader(cookie, options.storage, now)
+				.selected,
+			readStoredClearEpochFromCookieHeader(cookie, options.storage, now)
+		)?.key;
+		const name =
 			selected !== undefined && forwardable.includes(selected)
 				? selected
-				: keys.consent,
-		]);
+				: keys.consent;
+		return forwardable.includes(name)
+			? filterCookieHeader(cookie, [name])
+			: undefined;
 	};
 
 	/**

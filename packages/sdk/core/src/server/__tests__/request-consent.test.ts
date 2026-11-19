@@ -592,6 +592,16 @@ describe('forwarding', () => {
 			CONSENTED.replace('inth=', 'privacy-consent-storage='),
 			null,
 		],
+		[
+			'only a c15t choice from before c15t cleared',
+			`${C15T_CONSENTED}; c15t-epoch=${NOW - 500}`,
+			null,
+		],
+		[
+			'a malformed Inth cookie and a c15t choice from before the clear',
+			`inth=v=3&broken; ${C15T_CONSENTED}; inth-epoch=${NOW - 500}`,
+			'inth=v=3&broken',
+		],
 	])(
 		'hosted /init gets the consent cookie the reader picks, with %s',
 		async (_name, cookie, sent) => {
@@ -600,6 +610,19 @@ describe('forwarding', () => {
 			expect(sentHeaders(fetch, '/init').get('cookie')).toBe(sent);
 		}
 	);
+
+	test('hosted /init never gets the pre-1.8 cookie, even as the configured key', async () => {
+		const fetch = upstream();
+		await render({
+			fetch,
+			headers: {
+				cookie: CONSENTED.replace('inth=', 'privacy-consent-storage='),
+			},
+			projectUrl: BACKEND,
+			storage: { storageKey: 'privacy-consent-storage' },
+		});
+		expect(sentHeaders(fetch, '/init').get('cookie')).toBeNull();
+	});
 
 	test('named headers travel; cookies and hop-chain headers cannot be named', async () => {
 		const fetch = upstream();
