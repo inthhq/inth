@@ -387,7 +387,7 @@ describe('prefetch utilities', () => {
 
 		it('a tab journey continues the id in sessionStorage', () => {
 			const id = '3b241101-e2bb-4255-8caf-4136c566a962';
-			sessionStorage.setItem('inth-journey-v1', id);
+			sessionStorage.setItem('c15t-journey-v1', id);
 			const fetch = respond();
 			vi.stubGlobal('fetch', fetch);
 			window.eval(
@@ -398,7 +398,7 @@ describe('prefetch utilities', () => {
 
 		it('with no journey option, continues a tab journey this tab holds', () => {
 			const id = '3b241101-e2bb-4255-8caf-4136c566a962';
-			sessionStorage.setItem('inth-journey-v1', id);
+			sessionStorage.setItem('c15t-journey-v1', id);
 			const fetch = respond();
 			vi.stubGlobal('fetch', fetch);
 			window.eval(buildPrefetchScript({ projectUrl: '/api/inth' }));
@@ -415,7 +415,7 @@ describe('prefetch utilities', () => {
 
 		it('an explicit page journey ignores a tab id in sessionStorage', () => {
 			sessionStorage.setItem(
-				'inth-journey-v1',
+				'c15t-journey-v1',
 				'3b241101-e2bb-4255-8caf-4136c566a962'
 			);
 			const fetch = respond();

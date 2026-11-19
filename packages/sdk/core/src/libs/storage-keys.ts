@@ -30,7 +30,7 @@ export const EXPERIMENT_STORAGE_KEY = 'c15t-experiment-v1';
  * The consent journey id a `journey: 'tab'` runtime keeps in
  * `sessionStorage` while a prompt is due. Removed once a choice is recorded.
  */
-export const JOURNEY_STORAGE_KEY = 'inth-journey-v1';
+export const JOURNEY_STORAGE_KEY = 'c15t-journey-v1';
 
 /**
  * The keys one consent storage key derives. Notice dismissals, vendor

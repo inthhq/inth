@@ -174,14 +174,14 @@ describe('web storage cleanup', () => {
 	});
 
 	test("keeps a 'tab' journey's id in sessionStorage", () => {
-		sessionStorage.setItem('inth-journey-v1', 'journey');
+		sessionStorage.setItem('c15t-journey-v1', 'journey');
 		sessionStorage.setItem('inth-tracking', 'tracking');
 		attach(
 			{ measurement: { sessionStorage: ['inth*'] } },
 			createConsentKernel(),
 			'custom'
 		);
-		expect(sessionStorage.getItem('inth-journey-v1')).toBe('journey');
+		expect(sessionStorage.getItem('c15t-journey-v1')).toBe('journey');
 		expect(sessionStorage.getItem('inth-tracking')).toBeNull();
 	});
 
