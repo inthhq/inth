@@ -985,7 +985,7 @@ const resolveRequest = async function resolveRequest(
 					init
 				);
 				if (!response.ok) {
-					throw await failedResponseError('/init', response);
+					throw await failedResponseError(V1_ROUTES.init, response);
 				}
 				payload = (await response.json()) as InitOutput;
 			} catch (error) {

@@ -169,7 +169,7 @@ can follow them.
 | `version` | The `@inth/sdk` version. |
 | `pkg` | `@inth/sdk`, `@inth/sdk/testing`, `@inth/sdk/headless` or `@inth/sdk/iab-client`, by bundle. `inth.testing.js` reports `@inth/sdk/testing`. |
 | `mode` | `hosted`, `manifest`, `testing` or `custom` once started, else `null`. A transport factory passed as `mode` reports `custom`, except `hosted()` and `manifest()`. |
-| `hosting` | `'inth'` or `'self-hosted'` once `/init` reports who runs the backend, else `null`. Stays `null` with `inth.testing.js` and with backends older than the field. |
+| `hosting` | `'inth'` or `'self-hosted'` once `/v1/consent/init` reports who runs the backend, else `null`. Stays `null` with `inth.testing.js` and with backends older than the field. |
 | `client` | The started client, or `null`. It has the same methods plus `kernel`, `runtime`, `options`, `consentCategories`, `ui` and `setOverrides()`. |
 | `devtools` | The DevTools panel once `inth.devtools.js` mounted it, else `null`. |
 | `hosted`, `manifest` | Transport factories. `inth.js` exports only `hosted`. Headless and IAB export both, for calls such as `inth.init({ mode: inth.manifest({ … }) })` with `data-manual`. |

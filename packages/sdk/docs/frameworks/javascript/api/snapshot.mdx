@@ -72,8 +72,8 @@ is the strict fallback.
 | --- | --- | --- |
 | `activeUI` | `'banner' \| 'dialog' \| 'none' \| null` | The surface to render. Derived from the prompt, and changed by `set.activeUI`. |
 | `translations` | `{ language, translations } \| null` | The copy for the resolved language. |
-| `branding` | `'inth' \| 'c15t' \| 'consent' \| 'none'` | The brand for the "Secured by" tag. `'inth'` until `/init` or the transport names one. `'none'` hides the tag. |
-| `hosting` | `'inth' \| 'self-hosted' \| null` | Who runs the backend, as `/init` reported it. Separate from `branding`. `null` before init, for `testing()`, which does not send it, and for backends older than the field. Not verified. |
+| `branding` | `'inth' \| 'c15t' \| 'consent' \| 'none'` | The brand for the "Secured by" tag. `'inth'` until `/v1/consent/init` or the transport names one. `'none'` hides the tag. |
+| `hosting` | `'inth' \| 'self-hosted' \| null` | Who runs the backend, as `/v1/consent/init` reported it. Separate from `branding`. `null` before init, for `testing()`, which does not send it, and for backends older than the field. Not verified. |
 
 ## Context and bookkeeping
 

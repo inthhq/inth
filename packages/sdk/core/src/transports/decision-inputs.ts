@@ -97,7 +97,7 @@ export const rememberDecisionInputs = function rememberDecisionInputs(
  * Only asserted when the payload carries no signed snapshot token and init
  * resolved a policy pack or explicitly found no match. Partial inputs (country/language without
  * policyId/fingerprint, e.g. a manifest with no packs configured) are
- * rejected by the backend as incomplete (`422 STALE_POLICY`).
+ * rejected by the backend as incomplete.
  */
 export const buildDecisionAssertion = function buildDecisionAssertion(
 	payload: SavePayload,
