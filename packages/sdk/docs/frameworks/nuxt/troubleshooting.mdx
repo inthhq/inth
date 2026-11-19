@@ -110,7 +110,7 @@ part in parentheses names the cause:
 - `fetch failed` with a network error, or `no response within 10 seconds`:
   the build machine can't reach the backend.
 
-- `/v1/consent/manifest responded 404 Not Found`, or another status: the URL doesn't
+- `/v1/consent/manifest responded 404: Not Found (not_found)`, or another status: the URL doesn't
   point at your project's backend, or the backend is down.
 
 - `returned an invalid consent manifest`: the URL answers, but not with an Inth

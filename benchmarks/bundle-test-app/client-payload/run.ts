@@ -27,7 +27,9 @@
  *     --render <client-payload.json>   # print the Markdown for a saved run
  *
  * `--v3 workspace` packs the current checkout; build it first with
- * `bun turbo run build --filter=inth...`.
+ * `bun turbo run build --filter=inth...`. Tarballs and npm versions given to
+ * `--v3` must save on `POST /v1/consent/records`: an older build posts
+ * `/subjects`, and its accept phase times out.
  */
 import { spawn, spawnSync } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';

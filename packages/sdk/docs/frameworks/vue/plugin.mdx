@@ -111,5 +111,5 @@ mode, not the plugin:
 Open the app with the Network tab open. `hosted()` requests the backend's
 `/init`. `manifest()` with a bundled snapshot makes no policy request unless
 the policy needs a location the browser doesn't have, and
-`manifest({ source: 'runtime' })` requests `${projectUrl}/manifest`. In
+`manifest({ source: 'runtime' })` requests `${projectUrl}/v1/consent/manifest`. In
 the Application panel, an `inth` cookie appears after you accept or reject.

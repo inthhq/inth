@@ -37,7 +37,7 @@ or overrides to keep regional resolution on the snapshot.
 
 When the build has no snapshot, as in `vite dev` after a failed fetch,
 `snapshot` is `undefined`, and the browser fetches
-`${projectUrl}/manifest` instead.
+`${projectUrl}/v1/consent/manifest` instead.
 
 When the required country or region is missing, the transport calls backend
 `/init` and uses its resolved policy and translations. That response can use

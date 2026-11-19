@@ -173,7 +173,7 @@ export default defineNuxtConfig({
 });
 ```
 
-By default the server fetches `${projectUrl}/manifest`. Set
+By default the server fetches `${projectUrl}/v1/consent/manifest`. Set
 `manifest({ manifestUrl })` to fetch from another URL. The consent route and
 the server render share the cache. The first render after a cold start waits
 for the fetch, up to `timeoutMs`.
