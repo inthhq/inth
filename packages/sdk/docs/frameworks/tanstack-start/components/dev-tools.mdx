@@ -8,7 +8,7 @@ group: frameworks
 
 ## Render DevTools inside `InthProvider` in development
 
-Render `DevTools` from `@inth/react/devtools` inside `InthProvider`, and load it
+Render `DevTools` from `@inth/tanstack-start/devtools` inside `InthProvider`, and load it
 only in development builds with Vite's `import.meta.env.DEV`:
 
 {/* example: fragment */}
@@ -18,7 +18,7 @@ import { lazy, Suspense } from 'react';
 
 const DevTools = import.meta.env.DEV
 	? lazy(() =>
-			import('@inth/react/devtools').then(({ DevTools }) => ({
+			import('@inth/tanstack-start/devtools').then(({ DevTools }) => ({
 				default: DevTools,
 			}))
 		)

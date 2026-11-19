@@ -159,15 +159,24 @@ const FRAMEWORK_ROOT_NAMES = {
 };
 
 /**
- * Where each module's root names lived before every web package named its
- * root `InthProvider`: the module to import from and the old name of each.
+ * Where a head import comes from on an older base: the module to import
+ * from, the old name of each renamed export, and whether the head's module
+ * is missing there, so its other names move with them.
  */
-const ROOT_IMPORTS: Record<
-	string,
-	{ module: string; names: Record<string, string> }
-> = {
+interface ImportFallback {
+	module: string;
+	names: Record<string, string>;
+	moduleMissing?: boolean;
+}
+
+/** Each module's root names before every web package named its root `InthProvider`. */
+const ROOT_RENAME_IMPORTS: Record<string, ImportFallback> = {
 	'@inth/nextjs': { module: '@inth/nextjs', names: FRAMEWORK_ROOT_NAMES },
-	'@inth/nextjs/react': { module: '@inth/nextjs', names: REACT_ROOT_NAMES },
+	'@inth/nextjs/react': {
+		module: '@inth/nextjs',
+		moduleMissing: true,
+		names: REACT_ROOT_NAMES,
+	},
 	'@inth/react': { module: '@inth/react', names: REACT_ROOT_NAMES },
 	'@inth/react/provider': {
 		module: '@inth/react/provider',
@@ -193,12 +202,30 @@ const ROOT_IMPORTS: Record<
 	},
 	'@inth/tanstack-start/react': {
 		module: '@inth/tanstack-start',
+		moduleMissing: true,
 		names: REACT_ROOT_NAMES,
 	},
 	'@inth/vue': { module: '@inth/vue', names: { InthProvider: 'ConsentRoot' } },
 	'@inth/vue/vue-plugin': {
 		module: '@inth/vue/vue-plugin',
 		names: { InthProvider: 'ConsentRoot' },
+	},
+};
+
+/**
+ * A base that has `InthProvider` but not the `/react` entries: React's
+ * provider, under the same names, is only at `@inth/react` there.
+ */
+const REACT_ENTRY_IMPORTS: Record<string, ImportFallback> = {
+	'@inth/nextjs/react': {
+		module: '@inth/react',
+		moduleMissing: true,
+		names: {},
+	},
+	'@inth/tanstack-start/react': {
+		module: '@inth/react',
+		moduleMissing: true,
+		names: {},
 	},
 };
 
@@ -216,11 +243,15 @@ interface ModuleStatement {
 }
 
 /**
- * Imports and re-exports of a root name, aliased to the name the base
- * exports, so the code that uses them stays as the head wrote it. Names the
- * base still exports from the same module stay in the original statement.
+ * Imports and re-exports of a renamed name, aliased to the name the base
+ * exports, so the code that uses them stays as the head wrote it. Other
+ * names stay in the original statement, or move with them when the head's
+ * module is missing on the base.
  */
-const aliasRootImports = function aliasRootImports(source: string): string {
+const aliasImports = function aliasImports(
+	source: string,
+	fallbacks: Record<string, ImportFallback>
+): string {
 	return source.replace(MODULE_STATEMENT, (statement: string, ...rest) => {
 		const {
 			keyword,
@@ -229,7 +260,7 @@ const aliasRootImports = function aliasRootImports(source: string): string {
 			quote,
 			typeOnly = '',
 		} = rest.at(-1) as ModuleStatement;
-		const target = ROOT_IMPORTS[module];
+		const target = fallbacks[module];
 		if (!target) {
 			return statement;
 		}
@@ -252,14 +283,15 @@ const aliasRootImports = function aliasRootImports(source: string): string {
 				moved.push(`${typePrefix}${old} as ${alias ?? name}`);
 			}
 		}
-		if (moved.length === 0) {
+		if (moved.length === 0 && !target.moduleMissing) {
 			return statement;
 		}
 		const write = (specifiers: string[], from: string) =>
 			`${keyword}${typeOnly} { ${specifiers.join(', ')} } from ${quote}${from}${quote};`;
+		const keptModule = target.moduleMissing ? target.module : module;
 		return [
-			...(kept.length > 0 ? [write(kept, module)] : []),
-			write(moved, target.module),
+			...(kept.length > 0 ? [write(kept, keptModule)] : []),
+			...(moved.length > 0 ? [write(moved, target.module)] : []),
 		].join('\n');
 	});
 };
@@ -267,15 +299,22 @@ const aliasRootImports = function aliasRootImports(source: string): string {
 /**
  * A base from before `InthProvider` gets the head's fixtures with their root
  * imports aliased to the old names, and Nuxt's global component under its
- * old tag. The head introduced `@inth/nextjs/react` with the rename.
+ * old tag. A base with `InthProvider` but no `/react` entries takes React's
+ * provider from `@inth/react`.
  */
 const applyRootNameFallback = function applyRootNameFallback(
 	base: string,
 	files: string[]
 ) {
-	if (existsSync(join(base, 'packages/sdk/nextjs/src/react.ts'))) {
+	const reactProvider = join(base, 'packages/sdk/react/src/provider.tsx');
+	const rootRenamed =
+		existsSync(reactProvider) &&
+		readFileSync(reactProvider, 'utf8').includes('export const InthProvider');
+	const reactEntry = existsSync(join(base, 'packages/sdk/nextjs/src/react.ts'));
+	if (rootRenamed && reactEntry) {
 		return;
 	}
+	const fallbacks = rootRenamed ? REACT_ENTRY_IMPORTS : ROOT_RENAME_IMPORTS;
 	for (const file of files) {
 		if (!/\.(?:[cm]?[jt]sx?|svelte|vue)$/u.test(file)) {
 			continue;
@@ -285,8 +324,9 @@ const applyRootNameFallback = function applyRootNameFallback(
 			continue;
 		}
 		const source = readFileSync(path, 'utf8');
-		let updated = aliasRootImports(source);
+		let updated = aliasImports(source, fallbacks);
 		if (
+			!rootRenamed &&
 			file.endsWith('.vue') &&
 			!/\bInthProvider\b[^\n]*\bfrom\b/u.test(updated)
 		) {

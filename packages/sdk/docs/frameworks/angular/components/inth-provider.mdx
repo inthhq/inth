@@ -9,7 +9,8 @@ group: frameworks
 `<inth-provider>` renders `<inth-consent-banner>` and
 `<inth-consent-dialog>` together. Import `InthProvider` and put it in
 your root component instead of the two. Leave it empty, or wrap your app in
-it; wrapped content renders after the banner and dialog:
+it; wrapped content renders after the banner and dialog. The tag has
+`display: contents`, so it adds no box to your layout:
 
 {/* example: fragment */}
 

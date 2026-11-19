@@ -72,7 +72,7 @@ so it can hold `scripts` but must hold no secrets.
 | Option | Default | Behavior |
 | --- | --- | --- |
 | `projectUrl` | `NEXT_PUBLIC_INTH_PROJECT_URL` | Backend base URL. Choices post to `${projectUrl}/v1/consent/records`. |
-| `mode` | `manifest()` | `manifest()`, `hosted()` or `testing()` from `@inth/nextjs`. See [consent modes](/docs/concepts/modes). |
+| `mode` | `manifest()` | `manifest()` or `hosted()` from `@inth/nextjs`, or `testing()` from `@inth/nextjs/testing`. See [consent modes](/docs/concepts/modes). |
 | `routePrefix` | none | Where you mount the [consent route](#initialize-in-the-browser). Set it only when some pages resolve consent in the browser. |
 | `proxy` | `false` | Send browser saves through the consent route too. See [optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin). |
 | `journey` | `'page'` | The consent journey scope. |

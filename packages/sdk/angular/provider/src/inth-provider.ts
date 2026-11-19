@@ -23,6 +23,9 @@ import type { ConsentDialogTriggerOptions } from '@inth/angular/consent-dialog';
  */
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
+	// Wrapped around an app, the tag adds no box, so a flex or grid root
+	// lays out the app's elements as before.
+	host: { style: 'display: contents' },
 	imports: [ConsentBanner, ConsentDialog],
 	selector: 'inth-provider',
 	template: `<inth-consent-banner
