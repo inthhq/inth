@@ -147,20 +147,33 @@ const isCrossOrigin = (key: string): boolean => {
 	}
 };
 
+/**
+ * What every owner's list says about one URL. A refusal in any list wins.
+ * Otherwise a cross-origin URL waits while any list is pending, since that
+ * list may refuse it or name another copy; then the first list that names
+ * it pins it.
+ */
 const decide = function decide(install: Install, key: string | null): Decision {
 	if (key === null) {
 		return PASS;
 	}
 	let pending = false;
+	let file: RegistryFile | undefined;
 	for (const owner of install.owners) {
 		if (owner.files === null) {
 			pending = true;
 		} else if (Object.hasOwn(owner.files, key)) {
-			const file = owner.files[key];
-			return file ? { file, kind: 'pin' } : REFUSE;
+			const listed = owner.files[key];
+			if (!listed) {
+				return REFUSE;
+			}
+			file ??= listed;
 		}
 	}
-	return pending && isCrossOrigin(key) ? HOLD : PASS;
+	if (pending && isCrossOrigin(key)) {
+		return HOLD;
+	}
+	return file ? { file, kind: 'pin' } : PASS;
 };
 
 const keepType = function keepType(
@@ -219,6 +232,25 @@ const failLater = function failLater(element: HTMLScriptElement): void {
 	}, 0);
 };
 
+/**
+ * Give back the element's own `crossorigin`, unless the page changed the
+ * pin's `anonymous` since: its own later value stays.
+ */
+const restoreCrossorigin = function restoreCrossorigin(
+	dom: Dom,
+	element: HTMLScriptElement,
+	record: Pinned
+): void {
+	if (dom.getAttribute.call(element, 'crossorigin') !== 'anonymous') {
+		return;
+	}
+	if (record.crossorigin === null) {
+		dom.removeAttribute.call(element, 'crossorigin');
+	} else {
+		dom.setAttribute.call(element, 'crossorigin', record.crossorigin);
+	}
+};
+
 /** Put back what the pin set on an element the page points elsewhere. */
 const unpin = function unpin(dom: Dom, element: HTMLScriptElement): void {
 	const record = pinned.get(element);
@@ -232,11 +264,7 @@ const unpin = function unpin(dom: Dom, element: HTMLScriptElement): void {
 	) {
 		dom.removeAttribute.call(element, 'integrity');
 	}
-	if (record.crossorigin === null) {
-		dom.removeAttribute.call(element, 'crossorigin');
-	} else {
-		dom.setAttribute.call(element, 'crossorigin', record.crossorigin);
-	}
+	restoreCrossorigin(dom, element, record);
 };
 
 /**
@@ -282,9 +310,14 @@ const route = function route(
 	value: unknown
 ): unknown {
 	// A held element is decided when the list arrives, by the URL it has
-	// then; a refused one stays refused.
-	if (install.held.has(element) || refused.has(element)) {
+	// then. A refused one that has been inserted stays refused: it sent its
+	// `error`. One not inserted yet is decided again by its new URL.
+	if (install.held.has(element) || failed.has(element)) {
 		return value;
+	}
+	if (refused.has(element)) {
+		refused.delete(element);
+		restoreType(install.dom, element);
 	}
 	unpin(install.dom, element);
 	const decision = decide(
@@ -340,11 +373,7 @@ const recheck = function recheck(
 	} else {
 		pinned.delete(element);
 		dom.setAttribute.call(element, 'src', record.url);
-		if (record.crossorigin === null) {
-			dom.removeAttribute.call(element, 'crossorigin');
-		} else {
-			dom.setAttribute.call(element, 'crossorigin', record.crossorigin);
-		}
+		restoreCrossorigin(dom, element, record);
 		return true;
 	}
 	dom.setAttribute.call(element, 'crossorigin', 'anonymous');

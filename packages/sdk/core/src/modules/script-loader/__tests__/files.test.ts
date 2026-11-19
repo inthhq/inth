@@ -335,6 +335,21 @@ describe('pinRegistryFiles', () => {
 		expect(fetched(element)).toEqual(untouched(other));
 	});
 
+	test('keeps a crossorigin the page set after the pin when it points the element elsewhere', () => {
+		join(files);
+		const other = 'https://cdn.vendor.example/other.js';
+		const element = document.createElement('script');
+		element.src = LOGGER;
+		element.setAttribute('crossorigin', 'use-credentials');
+		element.src = other;
+		document.head.appendChild(element);
+
+		expect(fetched(element)).toEqual({
+			...untouched(other),
+			crossorigin: 'use-credentials',
+		});
+	});
+
 	describe('a null entry', () => {
 		test('loads nothing and fires error, so the loader sees a failed load', async () => {
 			join(files);
@@ -377,6 +392,37 @@ describe('pinRegistryFiles', () => {
 
 			await tick();
 			expect(onerror).not.toHaveBeenCalled();
+		});
+
+		test('lets an element not inserted yet move to a URL the list does not name', async () => {
+			join(files);
+			const onerror = vi.fn();
+			const fallback = 'https://cdn.other.example/fallback.js';
+			const element = insert(HELD, (script) => {
+				script.type = 'module';
+				script.onerror = onerror;
+				script.src = fallback;
+			});
+
+			expect(fetched(element)).toEqual({
+				...untouched(fallback),
+				type: 'module',
+			});
+			await tick();
+			expect(onerror).not.toHaveBeenCalled();
+		});
+
+		test('keeps an inserted element refused when its src changes', async () => {
+			join(files);
+			const onerror = vi.fn();
+			const element = insert(HELD, (script) => {
+				script.onerror = onerror;
+			});
+			element.src = 'https://cdn.other.example/fallback.js';
+
+			expect(element.getAttribute('type')).toBe('inth/held');
+			await tick();
+			expect(onerror).toHaveBeenCalledOnce();
 		});
 	});
 
@@ -447,6 +493,30 @@ describe('pinRegistryFiles', () => {
 
 			waiting.list({});
 			expect(element.hasAttribute('type')).toBe(false);
+		});
+
+		test('holds a file one list names while another list is pending, and the later refusal wins', async () => {
+			join(files);
+			const waiting = join(null);
+			const onerror = vi.fn();
+			const element = insert(LOGGER, (script) => {
+				script.onerror = onerror;
+			});
+			expect(fetched(element)).toEqual({
+				...untouched(LOGGER),
+				type: 'inth/held',
+			});
+
+			waiting.list({ [LOGGER]: null });
+			expect(element.getAttribute('type')).toBe('inth/held');
+			await vi.waitFor(() => expect(onerror).toHaveBeenCalledOnce());
+		});
+
+		test('refuses at once a file a resolved list maps to null, while another is pending', () => {
+			join(files);
+			join(null);
+
+			expect(insert(HELD).getAttribute('type')).toBe('inth/held');
 		});
 	});
 

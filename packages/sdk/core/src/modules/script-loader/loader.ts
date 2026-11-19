@@ -124,12 +124,19 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		: { status: 'failed' };
 	let stopWaiting: (() => void) | undefined;
 	// The registry's files pin what loaders download while they run. It goes
-	// on before this loader mounts anything: while the list is pending, so
+	// on just before this loader first mounts: while the list is pending, so
 	// nothing leaves before the pin knows whether it is listed, and when the
-	// list names files. A list without files takes it off.
+	// list names files. A list without files takes it off, and so does any
+	// way the loader shuts down.
 	let filePin: FilePin | null | undefined;
+	let pinReleased = false;
+	const releasePin = (): void => {
+		pinReleased = true;
+		filePin?.dispose();
+		filePin = undefined;
+	};
 	const pinFiles = (state: ScriptRegistryState): void => {
-		if (!options.registry) {
+		if (!options.registry || pinReleased) {
 			return;
 		}
 		if (state.status === 'pending') {
@@ -146,7 +153,6 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			filePin = pinRegistryFiles(files);
 		}
 	};
-	pinFiles(registryState);
 	const withSources = createScriptSourceResolver(
 		options.sources,
 		options.registry ? () => registryState : undefined
@@ -597,6 +603,8 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		cleaningUp = false;
 		diagnostics?.dispose();
 		diagnostics = undefined;
+		stopWaiting?.();
+		releasePin();
 		for (const [scriptId, element] of new Map([
 			...retainedElements,
 			...loadedElements,
@@ -757,8 +765,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	});
 	const handle: ScriptLoaderHandle = {
 		dispose() {
-			filePin?.dispose();
-			filePin = undefined;
+			releasePin();
 			if (disposed) {
 				return;
 			}
@@ -816,6 +823,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		};
 	}
 	try {
+		pinFiles(registryState);
 		// Observe initial mounts too, including synchronous inline execution.
 		reconcileRequested = true;
 		forceReconcile = true;
