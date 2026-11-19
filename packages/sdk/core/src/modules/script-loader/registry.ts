@@ -1,9 +1,12 @@
-import type { ScriptSource } from '../../libs/script-loader/types';
 import type { ConsentSnapshot } from '../../types';
 import { normalizeFileUrl } from './files';
 import type { RegistryFile, RegistryFiles } from './files';
 import { sriHashes } from './sources';
-import type { RegistrySources, ScriptRegistryState } from './sources';
+import type {
+	RegistrySource,
+	RegistrySources,
+	ScriptRegistryState,
+} from './sources';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
 	typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -25,24 +28,44 @@ const isHttpsURL = (value: string): boolean => {
 };
 
 /**
+ * An entry's `refuseIfSet`: the paths, none when it is absent, or `null`
+ * when it is anything but a list of non-empty strings, which makes the
+ * entry one the loader cannot use.
+ */
+const parseRefuseIfSet = (value: unknown): string[] | null => {
+	if (value === undefined || value === null) {
+		return [];
+	}
+	return Array.isArray(value) &&
+		value.every((path) => typeof path === 'string' && path !== '')
+		? [...(value as string[])]
+		: null;
+};
+
+/**
  * One entry of the list, or `null` for one the loader cannot use: no
- * https `src`, no integrity hash, or attributes that are not strings or
- * `null`. Fields it does not know are ignored, so a later backend can add
+ * https `src`, no integrity hash, attributes that are not strings or
+ * `null`, or a `refuseIfSet` that is not a list of paths. Fields it does not know are ignored, so a later backend can add
  * them.
  */
-const parseEntry = (entry: unknown): ScriptSource | null => {
+const parseEntry = (entry: unknown): RegistrySource | null => {
 	if (!isRecord(entry)) {
 		return null;
 	}
-	const { attributes, integrity, src } = entry;
+	const { attributes, integrity, refuseIfSet, src } = entry;
 	if (
 		!(typeof src === 'string' && isHttpsURL(src)) ||
 		!(typeof integrity === 'string' && hasSriHash(integrity))
 	) {
 		return null;
 	}
+	const paths = parseRefuseIfSet(refuseIfSet);
+	if (paths === null) {
+		return null;
+	}
+	const refuse = paths.length > 0 ? { refuseIfSet: paths } : {};
 	if (attributes === undefined || attributes === null) {
-		return { integrity, src };
+		return { integrity, src, ...refuse };
 	}
 	if (
 		!(
@@ -61,6 +84,7 @@ const parseEntry = (entry: unknown): ScriptSource | null => {
 		>,
 		integrity,
 		src,
+		...refuse,
 	};
 };
 

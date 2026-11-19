@@ -167,7 +167,7 @@ export const logRocket = function logRocket(options: LogRocketOptions): Script {
 		} satisfies VendorManifest;
 	}
 
-	return resolveManifest(manifest, {
+	const script = resolveManifest(manifest, {
 		appId,
 		asyncScriptUrl,
 		initOptions: options.initOptions ?? {},
@@ -176,4 +176,8 @@ export const logRocket = function logRocket(options: LogRocketOptions): Script {
 			DEFAULT_LOGROCKET_SCRIPT_URL
 		),
 	});
+	// `initOptions.sdkServer` and `enterpriseServer` move where the loader
+	// downloads its logger, so the script registry reads them.
+	script.integrationOptions = { ...options };
+	return script;
 };

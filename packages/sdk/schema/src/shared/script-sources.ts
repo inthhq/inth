@@ -16,6 +16,14 @@ export interface ScriptSourceWire {
 	 * does not set itself, and `null` removes it.
 	 */
 	attributes?: Record<string, string | null>;
+	/**
+	 * Dotted paths into the integration's own options, such as
+	 * `initOptions.sdkServer`. When the options set any of them, the script
+	 * does not load, from the registry or the vendor: with that option its
+	 * loader downloads code from a server the registry cannot pin. A value
+	 * of `undefined`, `null`, `''`, `false` or `0` is unset.
+	 */
+	refuseIfSet?: string[];
 }
 
 /**

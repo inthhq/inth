@@ -15,6 +15,7 @@ const scriptSources = {
 		attributes: { 'data-api': 'https://vendor.example/api', 'data-key': null },
 		integrity: 'sha384-abc',
 		keyId: 'inth-2027-01',
+		refuseIfSet: ['initOptions.sdkServer'],
 		src: 'https://acme.inth.app/scripts/vendor@0123456789abcdef.js',
 	},
 };

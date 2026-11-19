@@ -104,6 +104,8 @@ export const LOADER_FIELDS = [
 	'iabSpecialFeatures',
 	// The script registry may move it to another URL first, or hold it.
 	'integration',
+	// The script registry may refuse it by these.
+	'integrationOptions',
 	'observeConsentBeforeLoad',
 	'onBeforeLoad',
 	'onConsentChange',

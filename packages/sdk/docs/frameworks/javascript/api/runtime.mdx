@@ -206,6 +206,32 @@ the script loader starts. These load code without c15t seeing it:
 Pages that enforce Trusted Types for scripts are not supported yet: c15t writes
 the registry's URL as a plain string.
 
+#### Options that move a loader's downloads
+
+Some integration options tell a loader to download its code from another
+server, which `files` cannot pin. LogRocket's `initOptions.sdkServer` and
+`initOptions.enterpriseServer` are two. For such a loader, the registry's
+`sources` entry lists those options in `refuseIfSet`, as dotted paths into the
+integration's options:
+
+```json
+{
+  "logrocket": {
+    "src": "https://acme.inth.app/scripts/logrocket@0123456789abcdef.js",
+    "integrity": "sha384-…",
+    "refuseIfSet": ["initOptions.sdkServer", "initOptions.enterpriseServer"]
+  }
+}
+```
+
+When your options set any listed path, the script loads nothing: not from the
+registry, and not from the vendor's URL. `onDebug` reports an `error` that names
+the path. c15t reads an option as the loader does: `undefined`, `null`, `''`,
+`false` and `0` count as unset. A script that carries no options to check also
+loads nothing. A `refuseIfSet` that is not a list of paths makes the entry one
+c15t cannot use. To load such a script with that option, give it your own
+`scriptLoader.sources` entry, which wins over the list.
+
 Only a Content Security Policy closes these gaps. Allow the registry and your
 own origin, and no vendor host:
 

@@ -5,11 +5,20 @@ import type { RegistryFiles } from './files';
 export type ScriptSources = Readonly<Record<string, ScriptSource>>;
 
 /**
+ * One script's source as the script registry lists it. `refuseIfSet`
+ * names paths into the integration's options that keep the script from
+ * loading at all.
+ */
+export interface RegistrySource extends ScriptSource {
+	readonly refuseIfSet?: readonly string[];
+}
+
+/**
  * Sources the script registry lists, by script `id`. `null` marks a script
  * the registry lists without a source it can vouch for: it does not load,
  * and never from its own URL either.
  */
-export type RegistrySources = Readonly<Record<string, ScriptSource | null>>;
+export type RegistrySources = Readonly<Record<string, RegistrySource | null>>;
 
 /**
  * Where the registry's list stands, as the loader reads it:
@@ -35,10 +44,53 @@ export interface HeldScript {
 	 * names the script with an entry Inth cannot check: no https `src`, no
 	 * integrity hash, or attributes that are not strings or `null`;
 	 * `unparsable` when a `scriptLoader.sources` entry gives an integrity
-	 * with no hash a browser can parse, so the browser would check nothing.
+	 * with no hash a browser can parse, so the browser would check nothing;
+	 * `option` when the entry's `refuseIfSet` names a path the script's
+	 * integration options set, or the script carries no options to check.
 	 */
-	reason: 'refused' | 'unparsable' | 'waiting';
+	reason: 'option' | 'refused' | 'unparsable' | 'waiting';
+	/** For `option`, the path its options set. */
+	path?: string;
 }
+
+/**
+ * Whether `options` set `path`, read as a loader reads an option: a value
+ * of `undefined`, `null`, `''`, `false`, `0` or `NaN` is unset. Only own
+ * properties count.
+ */
+const setsOption = (options: unknown, path: string): boolean => {
+	let value = options;
+	for (const key of path.split('.')) {
+		if (
+			!(value && (typeof value === 'object' || typeof value === 'function')) ||
+			!Object.hasOwn(value, key)
+		) {
+			return false;
+		}
+		value = (value as Record<string, unknown>)[key];
+	}
+	return Boolean(value);
+};
+
+/**
+ * The first `refuseIfSet` path a script's options set. A script that
+ * carries no options cannot be checked, so the first path refuses it.
+ *
+ * @internal
+ */
+export const refusedOption = (
+	script: Pick<Script, 'integrationOptions'>,
+	paths: readonly string[] | undefined
+): string | undefined => {
+	if (!paths?.length) {
+		return undefined;
+	}
+	const options = script.integrationOptions;
+	if (!options) {
+		return paths[0];
+	}
+	return paths.find((path) => setsOption(options, path));
+};
 
 /** A script list with each script's source applied. */
 export interface ResolvedScripts {
@@ -252,10 +304,15 @@ export const createScriptSourceResolver = function createScriptSourceResolver(
 				state.status === 'listed' && Object.hasOwn(state.sources, script.id)
 					? state.sources[script.id]
 					: undefined;
+			const path = entry ? refusedOption(script, entry.refuseIfSet) : undefined;
 			if (entry === null) {
 				resolved.held.push({ reason: 'refused', script });
-			} else {
+			} else if (path === undefined) {
 				resolved.scripts.push(entry ? applyOnce(script, entry) : script);
+			} else {
+				// With that option the loader downloads code from a server the
+				// registry cannot pin, so neither URL may load it.
+				resolved.held.push({ path, reason: 'option', script });
 			}
 		}
 		return resolved;

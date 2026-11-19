@@ -112,7 +112,13 @@ let logRocketId: string;
 const registry = (file: unknown) => ({
 	files: { [LOGGER_URL]: file },
 	sources: {
-		[logRocketId]: { integrity: sri(loader), src: loaderAtGateway },
+		[logRocketId]: {
+			integrity: sri(loader),
+			// As the gateway sends it for LogRocket: with either option the
+			// loader downloads its logger from that server instead.
+			refuseIfSet: ['initOptions.sdkServer', 'initOptions.enterpriseServer'],
+			src: loaderAtGateway,
+		},
 	},
 });
 
@@ -401,6 +407,36 @@ test('refuses a loggerURL override the list does not name, under the recommended
 	).toBe(true);
 	expect(loaded(OVERRIDE_URL)).toBe(0);
 	expect(await page.evaluate(() => typeof window._LRLogger)).toBe('undefined');
+});
+
+test('loads nothing, from the gateway or the vendor, when initOptions sets a refuseIfSet path', async () => {
+	await open();
+	await page.evaluate(
+		(list) =>
+			window.__scriptFiles.start(list, {
+				sdkServer: 'https://lr-sdk.inth.test',
+			}),
+		registry({ integrity: sri(logger), src: loggerAtGateway })
+	);
+
+	await expect
+		.poll(() => page.evaluate(() => window.__scriptFiles.errors))
+		.toEqual([expect.stringContaining('initOptions.sdkServer')]);
+	await page.waitForTimeout(300);
+	expect(
+		requested.filter(
+			(url) =>
+				url.startsWith(GATEWAY) ||
+				url.startsWith('https://cdn.logrocket.io/') ||
+				url.startsWith('https://lr-sdk.inth.test/')
+		)
+	).toEqual([]);
+	expect(
+		await page.evaluate(() => ({
+			logRocket: typeof window.LogRocket,
+			logger: typeof window._LRLogger,
+		}))
+	).toEqual({ logRocket: 'undefined', logger: 'undefined' });
 });
 
 test('holds a logger the page inserts while the list is pending, then loads it from the gateway', async () => {

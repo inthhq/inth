@@ -1687,3 +1687,174 @@ describe('experimentalScriptRegistry files', () => {
 		expect(Node.prototype.appendChild).toBe(nativeAppendChild);
 	});
 });
+
+describe('experimentalScriptRegistry refuseIfSet', () => {
+	const VENDOR_SRC = 'https://cdn.vendor.example/vendor.js';
+	const HASH_SRC = 'https://acme.inth.app/scripts/vendor@0123456789abcdef.js';
+	const HASH_INTEGRITY =
+		'sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8wC';
+	const PATHS = ['initOptions.sdkServer', 'initOptions.enterpriseServer'];
+
+	/** Start with a prefetched list, so the list applies at once. */
+	const startListed = (
+		script: Partial<Script>,
+		entry: Record<string, unknown> = {
+			integrity: HASH_INTEGRITY,
+			refuseIfSet: PATHS,
+			src: HASH_SRC,
+		}
+	) => {
+		const onDebug = vi.fn();
+		const runtime = createConsentRuntime({
+			experimentalScriptRegistry: true,
+			mode,
+			persistence: false,
+			prefetch: {
+				initialPolicyPending: false,
+				initialScriptRegistry: { sources: { vendor: entry as never } },
+			},
+			scriptLoader: { onDebug },
+			scripts: [
+				{
+					anonymizeId: false,
+					category: 'necessary',
+					id: 'vendor',
+					integration: 'vendor',
+					src: VENDOR_SRC,
+					...script,
+				},
+			],
+		});
+		runtime.start();
+		const refusal = () =>
+			onDebug.mock.calls
+				.map(
+					([event]) =>
+						event as { action: string; data?: unknown; message: string }
+				)
+				.find((event) => event.action === 'error');
+		return { refusal, runtime };
+	};
+
+	test.each([
+		['a URL', 'https://lr.example.com'],
+		['any string', 'x'],
+		['true', true],
+		['a number', 1],
+		['an object', {}],
+		['an array', []],
+	])(
+		'loads nothing when the options set a listed path to %s',
+		(_case, value) => {
+			const { refusal, runtime } = startListed({
+				integrationOptions: { initOptions: { enterpriseServer: value } },
+			});
+
+			expect(element('vendor')).toBeNull();
+			expect(refusal()).toMatchObject({
+				data: { refuseIfSet: 'initOptions.enterpriseServer' },
+				message: expect.stringContaining(
+					'its options set initOptions.enterpriseServer'
+				),
+			});
+			runtime.dispose();
+		}
+	);
+
+	test.each([
+		['undefined', undefined],
+		['null', null],
+		["''", ''],
+		['false', false],
+		['0', 0],
+	])('loads from the registry when a listed path is %s', (_case, value) => {
+		const { refusal, runtime } = startListed({
+			integrationOptions: {
+				initOptions: { enterpriseServer: value, sdkServer: value },
+			},
+		});
+
+		expect(fetchAttributes('vendor').src).toBe(HASH_SRC);
+		expect(refusal()).toBeUndefined();
+		runtime.dispose();
+	});
+
+	test('reads a path through own properties only, and a missing step as unset', () => {
+		const inherited = Object.create({ sdkServer: 'https://lr.example.com' });
+		const { runtime } = startListed({
+			integrationOptions: { initOptions: inherited, other: { sdkServer: 'x' } },
+		});
+
+		expect(fetchAttributes('vendor').src).toBe(HASH_SRC);
+		runtime.dispose();
+	});
+
+	test('loads nothing when the script carries no options to check', () => {
+		const { refusal, runtime } = startListed({});
+
+		expect(element('vendor')).toBeNull();
+		expect(refusal()?.message).toContain('carries no integrationOptions');
+		runtime.dispose();
+	});
+
+	test('loads nothing for an entry whose refuseIfSet is not a list of paths', () => {
+		const { refusal, runtime } = startListed(
+			{ integrationOptions: {} },
+			{
+				integrity: HASH_INTEGRITY,
+				refuseIfSet: 'initOptions.sdkServer',
+				src: HASH_SRC,
+			}
+		);
+
+		expect(element('vendor')).toBeNull();
+		expect(refusal()?.message).toContain('holds vendor back');
+		runtime.dispose();
+	});
+
+	test("lets the page's own scriptLoader.sources entry win, as it does over the rest of the list", () => {
+		const runtime = createConsentRuntime({
+			experimentalScriptRegistry: true,
+			mode,
+			persistence: false,
+			prefetch: {
+				initialPolicyPending: false,
+				initialScriptRegistry: {
+					sources: {
+						vendor: {
+							integrity: HASH_INTEGRITY,
+							refuseIfSet: PATHS,
+							src: HASH_SRC,
+						},
+					},
+				},
+			},
+			scriptLoader: {
+				sources: {
+					vendor: {
+						integrity: HASH_INTEGRITY,
+						src: 'https://site.example/vendor.js',
+					},
+				},
+			},
+			scripts: [
+				{
+					anonymizeId: false,
+					category: 'necessary',
+					id: 'vendor',
+					integration: 'vendor',
+					integrationOptions: {
+						initOptions: { sdkServer: 'https://lr.example.com' },
+					},
+					src: VENDOR_SRC,
+				},
+			],
+		});
+		runtime.start();
+
+		expect(fetchAttributes('vendor').src).toBe(
+			'https://site.example/vendor.js'
+		);
+		runtime.dispose();
+	});
+});

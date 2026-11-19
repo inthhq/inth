@@ -18,7 +18,9 @@ export interface ScriptFilesPage {
 	 * Load LogRocket by a registry list a resolved prefetch carries, with
 	 * consent management off so it loads at once.
 	 */
-	start: (registry: unknown) => void;
+	start: (registry: unknown, initOptions?: Record<string, unknown>) => void;
+	/** The script loader's `onDebug` errors, by message. */
+	errors: string[];
 	/**
 	 * Start a runtime whose init waits for {@link ScriptFilesPage.answer},
 	 * so the list is pending.
@@ -45,8 +47,9 @@ window.__scriptFiles = {
 			runtime.dispose();
 		}
 	},
+	errors: [],
 	logRocketId: logRocket({ appId: APP_ID }).id,
-	start(registry) {
+	start(registry, initOptions) {
 		const runtime = createConsentRuntime({
 			enabled: false,
 			experimentalScriptRegistry: true,
@@ -56,7 +59,14 @@ window.__scriptFiles = {
 				initialPolicyPending: false,
 				initialScriptRegistry: registry as never,
 			},
-			scripts: [logRocket({ appId: APP_ID })],
+			scriptLoader: {
+				onDebug: (event) => {
+					if (event.action === 'error') {
+						window.__scriptFiles.errors.push(event.message);
+					}
+				},
+			},
+			scripts: [logRocket({ appId: APP_ID, initOptions })],
 		});
 		runtimes.push(runtime);
 		runtime.start();
