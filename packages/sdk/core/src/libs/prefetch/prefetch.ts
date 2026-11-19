@@ -34,7 +34,7 @@ import {
 import {
 	buildRequestContextParams,
 	buildRequestContextSentHeaders,
-	DEFAULT_INIT_CREDENTIALS,
+	browserInitCredentials,
 } from '../request-context-headers';
 import {
 	C15T_EXPERIMENT_STORAGE_KEY,
@@ -116,7 +116,7 @@ const buildPrefetchConfig = function buildPrefetchConfig(
 	}
 
 	const url = `${requestContext.projectUrl}${V1_ROUTES.init}${buildInitQuery(options.overrides)}`;
-	const credentials = requestContext.credentials ?? DEFAULT_INIT_CREDENTIALS;
+	const credentials = browserInitCredentials(requestContext.credentials);
 	// CORS-safelisted only. A detected GPC signal is not sent: browsers
 	// refuse `Sec-GPC` from scripts and send their own; it stays in the
 	// cache key and the request context.
@@ -316,7 +316,7 @@ export const buildPrefetchScript = function buildPrefetchScript(
 	options: PrefetchOptions
 ): string {
 	const payload = {
-		credentials: options.credentials ?? DEFAULT_INIT_CREDENTIALS,
+		credentials: browserInitCredentials(options.credentials),
 		experiment: options.experiment
 			? scriptExperiment(options.experiment)
 			: null,

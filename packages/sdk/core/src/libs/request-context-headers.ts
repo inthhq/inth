@@ -14,6 +14,21 @@ import type { Overrides } from '../options/overrides';
 export const DEFAULT_INIT_CREDENTIALS: RequestCredentials = 'same-origin';
 
 /**
+ * The credentials mode of a browser's init: `omit` when asked, else
+ * {@link DEFAULT_INIT_CREDENTIALS}. Never `include`: a cross-origin backend
+ * that answers `Access-Control-Allow-Origin: *` refuses a request that
+ * carries cookies.
+ *
+ * @param credentials - The mode the caller asked for.
+ * @returns The mode to send.
+ */
+export const browserInitCredentials = function browserInitCredentials(
+	credentials: RequestCredentials | undefined
+): RequestCredentials {
+	return credentials === 'omit' ? 'omit' : DEFAULT_INIT_CREDENTIALS;
+};
+
+/**
  * The caller's init overrides in their request-header form.
  *
  * A browser's `GET /v1/consent/init` does not send most of these: country, region and

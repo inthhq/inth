@@ -27,6 +27,7 @@ await import('../../../kernel/save-outbox/queue');
 afterEach(() => {
 	vi.useRealTimers();
 	vi.restoreAllMocks();
+	vi.unstubAllGlobals();
 });
 
 const INIT_OUTPUT = {
@@ -129,6 +130,33 @@ describe('init: GET /v1/consent/init', () => {
 			'x-inth-gpc': '1',
 			'x-inth-region': 'BY',
 		});
+	});
+
+	test('in a browser, sends no custom header and no cookies; header inputs go in the query', async () => {
+		vi.stubGlobal('document', {});
+		const { calls, fetch } = stubFetch(() => json(200, INIT_OUTPUT));
+		const transport = createV1HostedTransport({
+			credentials: 'include',
+			fetch,
+			headers: {
+				'Accept-Language': 'de',
+				'cf-ipcountry': 'FR',
+				'x-inth-gpc': '1',
+				'x-inth-region': 'BY',
+			},
+			projectUrl: PROJECT_URL,
+		});
+
+		await transport.init({ overrides: {}, user: null });
+
+		expect(calls[0]?.headers).toEqual({
+			accept: 'application/json',
+			'accept-language': 'de',
+		});
+		expect(calls[0]?.init.credentials).toBe('same-origin');
+		expect(
+			Object.fromEntries(new URL(calls[0]?.url ?? '').searchParams)
+		).toMatchObject({ country: 'FR', gpc: '1', region: 'BY' });
 	});
 
 	test('maps the answer as the current policy contract', async () => {

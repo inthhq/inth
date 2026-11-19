@@ -2,9 +2,11 @@ import {
 	appendInitParams,
 	appendJourneyParams,
 	applyInitParamsToHeaders,
+	extractConsentRequestInputs,
 } from '@inth/sdk-schema/types';
 
 import {
+	browserInitCredentials,
 	buildRequestContextHeaders,
 	buildRequestContextParams,
 	buildRequestContextSentHeaders,
@@ -19,6 +21,14 @@ export interface V1InitRequest {
 	requestHeaders: Record<string, string>;
 	init: RequestInit & { headers: Record<string, string> };
 }
+
+const definedEntries = function definedEntries<Value extends object>(
+	value: Value | undefined
+): Partial<Value> {
+	return Object.fromEntries(
+		Object.entries(value ?? {}).filter(([, entry]) => entry !== undefined)
+	) as Partial<Value>;
+};
 
 /**
  * Build the `GET /v1/consent/init` request.
@@ -37,11 +47,20 @@ export const createV1InitRequest = function createV1InitRequest(options: {
 	experiment?: InitContext['experiment'];
 	journey?: InitContext['journey'];
 }): V1InitRequest {
+	const inBrowser = typeof document !== 'undefined';
+	// A browser's init is a plain GET, so no custom header leaves it: the
+	// caller's header inputs travel as overrides, in the query.
+	const overrides = inBrowser
+		? {
+				...extractConsentRequestInputs(options.headers ?? {}),
+				...definedEntries(options.overrides),
+			}
+		: options.overrides;
 	const base =
 		options.initUrl ??
 		`${trimTrailingSlash(options.projectUrl)}${V1_ROUTES.init}`;
 	const params = appendInitParams(base, {
-		...buildRequestContextParams(options.overrides),
+		...buildRequestContextParams(overrides),
 		experiment: options.experiment,
 	});
 	const url = options.journey
@@ -62,14 +81,13 @@ export const createV1InitRequest = function createV1InitRequest(options: {
 	);
 	return {
 		init: {
-			credentials: options.credentials ?? DEFAULT_INIT_CREDENTIALS,
-			// No custom headers: init must stay a CORS simple request, or a
-			// browser sends a preflight before the banner can show. The
-			// overrides go in the query; Accept-Language is safelisted.
+			credentials: inBrowser
+				? browserInitCredentials(options.credentials)
+				: (options.credentials ?? DEFAULT_INIT_CREDENTIALS),
 			headers: {
 				accept: 'application/json',
-				...options.headers,
-				...buildRequestContextSentHeaders(options.overrides),
+				...(!inBrowser && options.headers),
+				...buildRequestContextSentHeaders(overrides),
 			},
 			method: 'GET',
 		},

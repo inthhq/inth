@@ -156,6 +156,24 @@ describe('prefetch utilities', () => {
 		expect(runtime?.[1].credentials).toBe('same-origin');
 	});
 
+	it('sends no cookies when the caller asks for `include`', () => {
+		const fetch = vi.fn(() => Promise.resolve(new Response('{}')));
+		vi.stubGlobal('fetch', fetch);
+		const options = {
+			credentials: 'include' as const,
+			journey: false as const,
+			projectUrl: 'https://consent.example.com',
+		};
+		window.eval(buildPrefetchScript(options));
+		delete (window as Window & { __inthInitialDataPromises?: unknown })
+			.__inthInitialDataPromises;
+		void primePrefetchedInitialData(options);
+		const inits = (
+			fetch.mock.calls as unknown as [string, RequestInit][]
+		).map(([, init]) => init.credentials);
+		expect(inits).toEqual(['same-origin', 'same-origin']);
+	});
+
 	it('still starts the request after a server bundle rewrites `typeof window`', () => {
 		const fetch = vi.fn(() => Promise.resolve(new Response('{}')));
 		vi.stubGlobal('fetch', fetch);
