@@ -4,8 +4,8 @@
 	"private": true,
 	"description": "Translations for Inth in 53 languages. Typed i18n strings for Inth banners, dialogs and preference centers.",
 	"keywords": [
-		"inth",
 		"i18n",
+		"inth",
 		"localization",
 		"translations",
 		"typescript"

@@ -308,10 +308,10 @@
 		"@types/google.maps": "3.65.3"
 	},
 	"devDependencies": {
+		"@iabtechlabtcf/core": "^1.5.22",
 		"@inth/conformance": "workspace:*",
 		"@inth/typescript-config": "workspace:*",
 		"@inth/vitest-config": "workspace:*",
-		"@iabtechlabtcf/core": "^1.5.22",
 		"@rsbuild/plugin-react": "1.4.6",
 		"@rslib/core": "0.23.2",
 		"@types/node": "25.5.0",

@@ -146,10 +146,7 @@ Then point saves at the route:
 ```ts title="src/hooks.server.ts"
 import { inthHandle } from '@inth/svelte/kit';
 
-export const handle = inthHandle({
-	proxy: true,
-	routePrefix: '/api/inth',
-});
+export const handle = inthHandle({ proxy: true, routePrefix: '/api/inth' });
 ```
 
 The browser then saves to `/api/inth`, and the route forwards to the handle's

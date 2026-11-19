@@ -1,3 +1,4 @@
+import { css as emotionCss, flush } from '@emotion/css';
 /**
  * Which outside styles reach a stock UI part, in each mount mode.
  *
@@ -7,7 +8,6 @@
  * to win over the part's own `@layer components` styles.
  */
 import { clearBrowserConsentStorage } from '@inth/conformance/suite';
-import { css as emotionCss, flush } from '@emotion/css';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import type { ConsentClient, ConsentUIOptions } from '../types';

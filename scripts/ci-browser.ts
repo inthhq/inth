@@ -45,7 +45,7 @@ const parity = async function parity() {
 		'run',
 		'build',
 		'--concurrency=2',
-		...targets.map((target) => `--filter=@c15t/storybook-${target}`),
+		...targets.map((target) => `--filter=@inth/storybook-${target}`),
 	]);
 	const servers: Awaited<ReturnType<typeof startStaticServer>>[] = [];
 	const env: NodeJS.ProcessEnv = {

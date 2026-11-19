@@ -5,7 +5,6 @@
 	"description": "Script-tag build of Inth for Webflow, WordPress, Framer, Squarespace and plain HTML. One script tag, script blocking and an optional IAB TCF build.",
 	"keywords": [
 		"banner",
-		"inth",
 		"cmp",
 		"consent",
 		"consent-banner",
@@ -20,6 +19,7 @@
 		"global-privacy-control",
 		"headless",
 		"iab-tcf",
+		"inth",
 		"javascript",
 		"no-build",
 		"privacy",
@@ -146,10 +146,10 @@
 		"@inth/sdk-ui": "workspace:*"
 	},
 	"devDependencies": {
+		"@emotion/css": "11.13.5",
 		"@inth/conformance": "workspace:*",
 		"@inth/typescript-config": "workspace:*",
 		"@inth/vitest-config": "workspace:*",
-		"@emotion/css": "11.13.5",
 		"@rslib/core": "0.23.2",
 		"@types/node": "25.5.0",
 		"@vitest/browser-playwright": "4.1.10",

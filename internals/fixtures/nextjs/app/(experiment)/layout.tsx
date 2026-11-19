@@ -2,8 +2,8 @@ import { resolveConsent } from '@inth/nextjs/server';
 import { Suspense } from 'react';
 import type { ReactNode } from 'react';
 
-import consentConfig from '@/inth.config';
 import { ExperimentConsent } from '@/components/experiment-consent';
+import consentConfig from '@/inth.config';
 import { bannerExperiment } from '@/lib/experiment';
 import { bannerExperimentFlag } from '@/lib/flags';
 

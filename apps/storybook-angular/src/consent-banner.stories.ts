@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from '@analogjs/storybook-angular';
+import { ConsentBanner } from '@inth/angular';
+import { ConsentDialog } from '@inth/angular/consent-dialog';
 import {
 	bannerAcceptViaKeyboard,
 	bannerContract,
 	bannerFocusManagement,
 	bannerToDialogFlow,
 } from '@inth/conformance/play/consent-banner';
-import { ConsentBanner } from '@inth/angular';
-import { ConsentDialog } from '@inth/angular/consent-dialog';
 import type { PromptPosition, PromptVariant } from '@inth/sdk/engine';
 
 import { storybookMode, storybookPolicy } from '../../storybook-consent-policy';

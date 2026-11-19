@@ -15,8 +15,8 @@
 		"@angular/core": "22.2.5",
 		"@angular/forms": "22.2.5",
 		"@angular/platform-browser": "22.2.5",
-		"@inth/conformance": "workspace:*",
 		"@inth/angular": "workspace:*",
+		"@inth/conformance": "workspace:*",
 		"@inth/sdk": "workspace:*",
 		"rxjs": "7.8.2",
 		"tslib": "^2.8.1"

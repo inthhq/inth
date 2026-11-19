@@ -8,8 +8,8 @@ import {
 	withEventReplay,
 } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { gateConsentCategories } from '@inth/benchmarking/consent-gate-page';
 import { hosted, provideInth } from '@inth/angular';
+import { gateConsentCategories } from '@inth/benchmarking/consent-gate-page';
 
 import { scripts } from '../scripts';
 import { routes } from './app.routes';

@@ -4,12 +4,12 @@ import { onDemandRuntimeModules } from '@inth/sdk/runtime/on-demand';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
 
-import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
 import {
 	EARLY_TAP_ROOT,
 	EARLY_TAP_STYLE_ID,
 	EARLY_TAPS_WINDOW_KEY,
 } from '../../../core/src/libs/page-globals';
+import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
 import { startDeferredClient } from '../browser/shell';
 import type { EngineModule } from '../browser/shell';
 import {

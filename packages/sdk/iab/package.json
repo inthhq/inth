@@ -71,10 +71,10 @@
 		"@inth/sdk-schema": "workspace:*"
 	},
 	"devDependencies": {
+		"@iabgpp/cmpapi": "3.2.0",
 		"@inth/conformance": "workspace:*",
 		"@inth/typescript-config": "workspace:*",
 		"@inth/vitest-config": "workspace:*",
-		"@iabgpp/cmpapi": "3.2.0",
 		"@rslib/core": "0.23.2",
 		"@types/node": "25.5.0",
 		"@vitest/coverage-istanbul": "4.1.10",

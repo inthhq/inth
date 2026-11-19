@@ -1,8 +1,8 @@
 import { resolveConsent } from '@inth/nextjs/server';
 import type { ReactNode } from 'react';
 
-import consentConfig from '@/inth.config';
 import { Consent } from '@/components/consent';
+import consentConfig from '@/inth.config';
 
 import '@/styles/globals.css';
 

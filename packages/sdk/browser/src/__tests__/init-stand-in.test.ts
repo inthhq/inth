@@ -17,11 +17,11 @@ import {
 import { enTranslations } from '@inth/sdk-translations';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
 import {
 	ENGINE_TIMEOUT_MS,
 	PREFETCH_WINDOW_KEY,
 } from '../../../core/src/libs/page-globals';
+import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
 import { autoInit, createGlobal, installGlobal } from '../global';
 import type { InthGlobalBase } from '../global-base';
 import { releaseBoot } from '../init/adopt';

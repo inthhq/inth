@@ -17,11 +17,11 @@ import {
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
 
-import { PENDING_SAVES_STORAGE_KEY } from '../../../../core/src/libs/storage-keys';
 import {
 	EARLY_TAP_STYLE_ID,
 	EARLY_TAPS_WINDOW_KEY,
 } from '../../../../core/src/libs/page-globals';
+import { PENDING_SAVES_STORAGE_KEY } from '../../../../core/src/libs/storage-keys';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { policyFixture } from '../../__tests__/policy-fixture';
 import {

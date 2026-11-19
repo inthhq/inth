@@ -7,8 +7,8 @@ import type { ReactNode } from 'react';
 import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import init from '../../../../core/src/runtime/__tests__/fixtures/hosted-init-gb.json' with { type: 'json' };
 import { PREFETCH_WINDOW_KEY } from '../../../../core/src/libs/page-globals';
+import init from '../../../../core/src/runtime/__tests__/fixtures/hosted-init-gb.json' with { type: 'json' };
 import { ConsentBanner } from '../../components/prompt';
 import { useSaveConsents } from '../../hooks';
 import { testing } from '../../testing';

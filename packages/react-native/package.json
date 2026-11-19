@@ -117,10 +117,10 @@
 	"devDependencies": {
 		"@babel/core": "7.29.7",
 		"@babel/parser": "7.28.5",
-		"@inth/typescript-config": "workspace:*",
-		"@inth/vitest-config": "workspace:*",
 		"@iabtechlabtcf/core": "1.5.22",
 		"@inth/sdk": "workspace:*",
+		"@inth/typescript-config": "workspace:*",
+		"@inth/vitest-config": "workspace:*",
 		"@react-native/codegen": "0.87.1",
 		"@rsbuild/plugin-react": "1.4.6",
 		"@rslib/core": "0.23.2",
