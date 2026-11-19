@@ -218,7 +218,7 @@ it('records a /v1 body once per idempotency key, as the backend does', async () 
 		});
 		expect(malformed.status).toBe(400);
 
-		// transport/cases.json forbids the retired x-c15t- headers on every route.
+		// transport/cases.json forbids the x-c15t- headers and the version header /v1 retired.
 		const retired = await fetch(`${url}/api/self-host/v1/consent/records`, {
 			body: JSON.stringify({
 				...body,
@@ -233,7 +233,7 @@ it('records a /v1 body once per idempotency key, as the backend does', async () 
 		});
 		expect(retired.status).toBe(400);
 		const init = await fetch(`${url}/api/self-host/v1/consent/init`, {
-			headers: { 'x-c15t-version': '1', ...PLATFORM },
+			headers: { 'x-inth-version': '1', ...PLATFORM },
 		});
 		expect(init.status).toBe(400);
 		// It also names the platform header every request carries.
