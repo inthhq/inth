@@ -46,12 +46,12 @@ export const scripts = [
 | `replay` | `false` | `true` or an object loads `replay.js` while measurement is allowed. See [record sessions](#record-sessions). |
 | `replay.maskText` | Unset, Databuddy masks text | Sets `data-mask-text` on `replay.js`. `false` records page text. |
 | `replay.recordIframes` | Unset, Databuddy turns it off | Sets `data-record-iframes` on `replay.js`. |
-| `replay.scriptUrl` | `https://cdn.databuddy.cc/replay.2026-10-30.1.js` | Replay script URL override. Wins over `version`. A blank value falls back to the default. A custom URL loads without subresource integrity. |
+| `replay.scriptUrl` | `https://cdn.databuddy.cc/replay.js` | Replay script URL override. Wins over `version`. A blank value falls back to the default. A custom URL loads without subresource integrity. |
 | `configWhenGranted` | `{ apiUrl, clientId, disabled: false }` | Object set as `window.databuddyConfig` before the script loads with measurement allowed, and on each grant. c15t sets its `disabled` key from consent. |
 | `configWhenDenied` | `{ apiUrl, clientId, disabled: true }` | With `loadMode: 'always'` only. Object set as `window.databuddyConfig` before the script loads without measurement permission, and on each refusal. c15t sets its `disabled` key from consent. |
 | `apiUrl` | `https://basket.databuddy.cc` | Collection endpoint, set as `data-api-url`. |
-| `version` | `'2026-10-30.1'` | Databuddy release to load from the CDN, for both `databuddy.js` and `replay.js`. Only the default version loads with subresource integrity. |
-| `scriptUrl` | `https://cdn.databuddy.cc/databuddy.2026-10-30.1.js` | Loader URL override. Wins over `version`. A blank value falls back to the default. A custom URL loads without subresource integrity. |
+| `version` | Unset | Pins a Databuddy release, such as `'2026-10-30.1'`, for both `databuddy.js` and `replay.js`. See [pin a release](#pin-a-release). |
+| `scriptUrl` | `https://cdn.databuddy.cc/databuddy.js` | Loader URL override. Wins over `version`. A blank value falls back to the default. A custom URL loads without subresource integrity. |
 
 ## Turn off features you do not use
 
@@ -144,21 +144,19 @@ Do not also add `replay.js` to the page as a plain `<script>` tag. Outside
 c15t, it starts recording on the visitor's first click, scroll or key press,
 and uploads that recording even if the visitor has not chosen.
 
-## Pinned script files
+## Pin a release
 
-By default the helper loads date-versioned copies of `databuddy.js` and
-`replay.js`, each with an `integrity` attribute. The browser checks the file
-against that hash and does not run a file that has changed on the CDN. A new
-release of this package moves the pin to newer Databuddy files.
+By default the helper loads Databuddy's unversioned `databuddy.js` and
+`replay.js`, which change with each Databuddy release. With the Inth script
+registry, the registry keeps the versions and serves the one it holds, so you
+don't need to pin in code.
 
-To load another Databuddy release, pass its `version`, such as
-`version: '2026-10-01.1'`. The package has no hash for other versions, so those
-files load without an `integrity` attribute. A custom `scriptUrl` or
-`replay.scriptUrl` also loads without one.
-
-The Inth script registry keeps a script's version history by the URL it
-resolves to. A project that pins `version` keeps its own history and gets
-the release it names, not the latest file.
+To pin in code instead, pass `version`, such as `version: '2026-10-30.1'`. Both
+files then load from `https://cdn.databuddy.cc/<file>.<version>.js`. For a
+release this package knows, including `2026-10-30.1`, each file gets an
+`integrity` attribute, and the browser does not run a file that changed on the
+CDN. Other releases load without one. A custom `scriptUrl` or
+`replay.scriptUrl` wins over `version` and loads without integrity.
 
 ## Verify Databuddy
 
@@ -167,8 +165,7 @@ the release it names, not the latest file.
    Application shows no `did` key in localStorage.
 2. Click Reject, then reload. There are still no Databuddy requests.
 3. Open Privacy settings and allow measurement. Without a reload,
-   `databuddy.js` loads from `cdn.databuddy.cc` with your `data-client-id` and
-   an `integrity` attribute, and
+   `databuddy.js` loads from `cdn.databuddy.cc` with your `data-client-id`, and
    requests reach your `apiUrl`. With `replay` on, `replay.js` loads too. Move
    the pointer or scroll, and a `POST` to `/replay` follows within a few
    seconds.

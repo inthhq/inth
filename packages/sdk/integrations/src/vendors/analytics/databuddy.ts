@@ -41,35 +41,46 @@ declare global {
 
 const cdnBaseUrl = 'https://cdn.databuddy.cc';
 
-/** The Databuddy release the helper loads unless `version` names another. */
-const defaultVersion = '2026-10-30.1';
+type DatabuddyFile = 'databuddy' | 'replay';
 
 /**
- * The SRI hashes of the default release's files. Databuddy publishes no
- * hashes, so a release other than the default loads without one.
+ * SRI hashes of the Databuddy releases whose files are known, by version.
+ * Databuddy publishes no hashes, so a pinned release not listed here loads
+ * without one.
  */
-const defaultIntegrity = {
-	databuddy:
-		'sha384-xXKfqQUu53gQi7i1OUzZ1t/rlpkyILPqMsDxO4MQH70gAX/yiDVUj1JogQaW0M2s',
-	replay:
-		'sha384-naub2msIlvDqEZRXGKjjR1CEOa9ZNszRcSgfitF8vO2qgKGlygxmOkxzH/puniCl',
-} as const;
+const releaseIntegrity: Readonly<
+	Record<string, Readonly<Record<DatabuddyFile, string>>>
+> = {
+	'2026-10-30.1': {
+		databuddy:
+			'sha384-xXKfqQUu53gQi7i1OUzZ1t/rlpkyILPqMsDxO4MQH70gAX/yiDVUj1JogQaW0M2s',
+		replay:
+			'sha384-naub2msIlvDqEZRXGKjjR1CEOa9ZNszRcSgfitF8vO2qgKGlygxmOkxzH/puniCl',
+	},
+};
 
 /**
- * The URL and integrity of a Databuddy CDN file at `version`. An `override`
- * URL wins and loads without integrity, since c15t cannot know its bytes.
+ * The URL and integrity of a Databuddy CDN file. Without `version` it is
+ * Databuddy's unversioned file, which changes with each release, so it
+ * loads without integrity. An `override` URL wins and loads without
+ * integrity too, since c15t cannot know its bytes.
  */
 const resolveCdnScript = function resolveCdnScript(
-	file: keyof typeof defaultIntegrity,
-	version: string,
+	file: DatabuddyFile,
+	version: string | undefined,
 	override: string | undefined
 ): { integrity: string | undefined; src: string } {
 	const src = trimToUndefined(override);
 	if (src !== undefined) {
 		return { integrity: undefined, src };
 	}
+	if (version === undefined) {
+		return { integrity: undefined, src: `${cdnBaseUrl}/${file}.js` };
+	}
 	return {
-		integrity: version === defaultVersion ? defaultIntegrity[file] : undefined,
+		integrity: Object.hasOwn(releaseIntegrity, version)
+			? releaseIntegrity[version]?.[file]
+			: undefined,
 		src: `${cdnBaseUrl}/${file}.${version}.js`,
 	};
 };
@@ -219,18 +230,20 @@ export interface DatabuddyConsentOptions {
 	apiUrl?: string;
 
 	/**
-	 * Databuddy tracker release to load from the CDN, such as
-	 * `'2026-10-30.1'`. It names both `databuddy.js` and `replay.js`. The
-	 * default version loads with subresource integrity; another version loads
-	 * without it.
-	 * @default '2026-10-30.1'
+	 * Pins a Databuddy release, such as `'2026-10-30.1'`, for both
+	 * `databuddy.js` and `replay.js`: they load from
+	 * `https://cdn.databuddy.cc/databuddy.<version>.js`. A release this
+	 * package knows the hashes of loads with subresource integrity; another
+	 * loads without it. Unset loads Databuddy's unversioned files, and the
+	 * Inth script registry can pin their versions for you.
+	 * @default undefined
 	 */
 	version?: string;
 
 	/**
 	 * The Databuddy script URL. Overrides `version` and loads without
 	 * subresource integrity.
-	 * @default 'https://cdn.databuddy.cc/databuddy.2026-10-30.1.js'
+	 * @default 'https://cdn.databuddy.cc/databuddy.js'
 	 */
 	scriptUrl?: string;
 
@@ -350,7 +363,7 @@ export interface DatabuddyReplayOptions {
 	/**
 	 * The Databuddy replay script URL. Overrides `version` and loads without
 	 * subresource integrity.
-	 * @default 'https://cdn.databuddy.cc/replay.2026-10-30.1.js'
+	 * @default 'https://cdn.databuddy.cc/replay.js'
 	 */
 	scriptUrl?: string;
 }
@@ -433,7 +446,7 @@ const createDatabuddyScript = function createDatabuddyScript(
 		options.loadMode === 'always'
 			? databuddyAlwaysLoadManifest
 			: databuddyManifest;
-	const version = trimToUndefined(options.version) ?? defaultVersion;
+	const version = trimToUndefined(options.version);
 	const loader = resolveCdnScript('databuddy', version, options.scriptUrl);
 
 	const script = resolveManifest(manifest, {

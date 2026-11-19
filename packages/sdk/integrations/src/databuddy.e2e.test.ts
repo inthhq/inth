@@ -350,8 +350,13 @@ describe('databuddy contract', () => {
 
 	it.each([
 		[
-			'the pinned release with its integrity by default',
+			'the unversioned file without integrity by default',
 			{},
+			{ integrity: null, src: 'https://cdn.databuddy.cc/replay.js' },
+		],
+		[
+			'a known pinned release with its integrity',
+			{ version: '2026-10-30.1' },
 			{
 				integrity:
 					'sha384-naub2msIlvDqEZRXGKjjR1CEOa9ZNszRcSgfitF8vO2qgKGlygxmOkxzH/puniCl',
@@ -359,7 +364,7 @@ describe('databuddy contract', () => {
 			},
 		],
 		[
-			'the release version names, without integrity',
+			'another pinned release, without integrity',
 			{ version: '2026-11-14.1' },
 			{
 				integrity: null,
@@ -370,7 +375,7 @@ describe('databuddy contract', () => {
 			'replay.scriptUrl over version, without integrity',
 			{
 				replay: { scriptUrl: 'https://cdn.databuddy.cc/replay.custom.js' },
-				version: '2026-11-14.1',
+				version: '2026-10-30.1',
 			},
 			{ integrity: null, src: 'https://cdn.databuddy.cc/replay.custom.js' },
 		],

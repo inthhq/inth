@@ -9,13 +9,9 @@ import {
 } from '../../__tests__/helpers';
 import { databuddy } from './databuddy';
 
-/** The 3.2.2 pin's hashes, checked against cdn.databuddy.cc. */
-const DEFAULT_INTEGRITY = {
-	databuddy:
-		'sha384-xXKfqQUu53gQi7i1OUzZ1t/rlpkyILPqMsDxO4MQH70gAX/yiDVUj1JogQaW0M2s',
-	replay:
-		'sha384-naub2msIlvDqEZRXGKjjR1CEOa9ZNszRcSgfitF8vO2qgKGlygxmOkxzH/puniCl',
-};
+/** The hashes of release 2026-10-30.1, checked against cdn.databuddy.cc. */
+const PINNED_INTEGRITY =
+	'sha384-xXKfqQUu53gQi7i1OUzZ1t/rlpkyILPqMsDxO4MQH70gAX/yiDVUj1JogQaW0M2s';
 
 describe('databuddy', () => {
 	setupScriptHelperTest();
@@ -25,9 +21,7 @@ describe('databuddy', () => {
 
 		expect(script.alwaysLoad).toBeUndefined();
 		expect(script.category).toBe('measurement');
-		expect(script.src).toBe(
-			'https://cdn.databuddy.cc/databuddy.2026-10-30.1.js'
-		);
+		expect(script.src).toBe('https://cdn.databuddy.cc/databuddy.js');
 	});
 
 	it('seeds the client ID, API URL and disabled flag when no configs are passed', () => {
@@ -113,7 +107,6 @@ describe('databuddy', () => {
 			'data-track-interactions': 'false',
 			'data-track-outgoing-links': 'true',
 			'data-track-web-vitals': 'false',
-			integrity: DEFAULT_INTEGRITY.databuddy,
 		});
 	});
 
@@ -138,14 +131,11 @@ describe('databuddy', () => {
 		});
 
 		expect(script.alwaysLoad).toBe(true);
-		expect(script.src).toBe(
-			'https://cdn.databuddy.cc/databuddy.2026-10-30.1.js'
-		);
+		expect(script.src).toBe('https://cdn.databuddy.cc/databuddy.js');
 		expect(script.attributes).toEqual({
 			crossorigin: 'anonymous',
 			'data-api-url': 'https://basket.databuddy.cc',
 			'data-client-id': 'db_123',
-			integrity: DEFAULT_INTEGRITY.databuddy,
 		});
 
 		script.onBeforeLoad?.(
@@ -225,17 +215,31 @@ describe('databuddy', () => {
 		).toEqual(false);
 	});
 
-	it('loads the pinned release with its integrity by default', () => {
+	it('loads the unversioned file without integrity by default', () => {
 		const script = databuddy({ clientId: 'db_123' });
+
+		expect(script.src).toBe('https://cdn.databuddy.cc/databuddy.js');
+		expect(script.attributes).not.toHaveProperty('integrity');
+	});
+
+	it('reads a blank version as unset', () => {
+		const script = databuddy({ clientId: 'db_123', version: '  ' });
+
+		expect(script.src).toBe('https://cdn.databuddy.cc/databuddy.js');
+		expect(script.attributes).not.toHaveProperty('integrity');
+	});
+
+	it('pins a release it knows with its integrity', () => {
+		const script = databuddy({ clientId: 'db_123', version: '2026-10-30.1' });
 
 		expect(script.src).toBe(
 			'https://cdn.databuddy.cc/databuddy.2026-10-30.1.js'
 		);
-		expect(script.attributes?.integrity).toBe(DEFAULT_INTEGRITY.databuddy);
+		expect(script.attributes?.integrity).toBe(PINNED_INTEGRITY);
 		expect(script.attributes?.crossorigin).toBe('anonymous');
 	});
 
-	it('loads the release `version` names, without integrity', () => {
+	it('pins another release without integrity', () => {
 		const script = databuddy({ clientId: 'db_123', version: ' 2026-11-14.1 ' });
 
 		expect(script.src).toBe(
@@ -244,26 +248,11 @@ describe('databuddy', () => {
 		expect(script.attributes).not.toHaveProperty('integrity');
 	});
 
-	it.each(['2026-10-30.1', '  '])(
-		'loads the pinned release with its integrity for version %j',
-		(version) => {
-			const script = databuddy({ clientId: 'db_123', version });
-
-			expect({
-				integrity: script.attributes?.integrity,
-				src: script.src,
-			}).toEqual({
-				integrity: DEFAULT_INTEGRITY.databuddy,
-				src: 'https://cdn.databuddy.cc/databuddy.2026-10-30.1.js',
-			});
-		}
-	);
-
 	it('loads a scriptUrl over version, without integrity', () => {
 		const script = databuddy({
 			clientId: 'db_123',
 			scriptUrl: 'https://proxy.example/databuddy.js',
-			version: '2026-11-14.1',
+			version: '2026-10-30.1',
 		});
 
 		expect(script.src).toBe('https://proxy.example/databuddy.js');
