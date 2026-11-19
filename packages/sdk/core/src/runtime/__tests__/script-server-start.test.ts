@@ -250,6 +250,68 @@ describe('serverScriptStart', () => {
 		).toBeUndefined();
 	});
 
+	test('leaves every script to the client when the prefetched list names files', () => {
+		// The loader pins the files a vendor's loader downloads only once it
+		// runs, so a script started from the HTML would fetch them unpinned.
+		expect(
+			serverScriptStart({
+				experimentalScriptRegistry: true,
+				mode,
+				prefetch: {
+					...prefetchFor({ marketing: true }),
+					initialScriptRegistry: {
+						files: {
+							'https://cdn.pixel.example/runtime.js': {
+								integrity: 'sha384-registry',
+								src: 'https://acme.inth.app/scripts/pixel-runtime@0123456789abcdef.js',
+							},
+						},
+						sources: {
+							pixel: {
+								integrity: 'sha384-registry',
+								src: 'https://acme.inth.app/scripts/pixel@0123456789abcdef.js',
+							},
+						},
+					},
+				},
+				scripts: [
+					{ ...pixel, integration: 'pixel' },
+					{ ...pixel, id: 'plain' },
+				],
+			})
+		).toBeUndefined();
+	});
+
+	test('leaves a plain script to the client while the registry list is pending', () => {
+		expect(
+			serverScriptStart({
+				experimentalScriptRegistry: true,
+				mode,
+				prefetch: {
+					...prefetchFor({ marketing: true }),
+					initialPolicyPending: true,
+				},
+				scripts: [pixel],
+			})
+		).toBeUndefined();
+	});
+
+	test('starts a plain script while the list is pending with the registry off', () => {
+		run(
+			serverScriptStart({
+				mode,
+				prefetch: {
+					...prefetchFor({ marketing: true }),
+					initialPolicyPending: true,
+				},
+				scripts: [pixel],
+			})
+		);
+		expect(document.head.querySelector('script')?.getAttribute('src')).toBe(
+			pixel.src
+		);
+	});
+
 	test('starts an integration from its own URL when the prefetch carries no registry list', () => {
 		run(
 			serverScriptStart({

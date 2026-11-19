@@ -25,12 +25,35 @@ export interface ScriptSourceWire {
 export type ScriptSourcesWire = Record<string, ScriptSourceWire | null>;
 
 /**
+ * Where a script registry serves one file a vendor's loader downloads
+ * while it runs, such as LogRocket's logger.
+ */
+export interface ScriptFileWire {
+	/** The file's URL at the registry. */
+	src: string;
+	/** Its SRI hash, such as `sha384-…`. */
+	integrity: string;
+}
+
+/**
+ * A script registry's files by the exact absolute vendor URL a loader
+ * requests. An entry of `null` means the registry holds or rejects that
+ * file, so it does not load, and never from the vendor URL either.
+ */
+export type ScriptFilesWire = Record<string, ScriptFileWire | null>;
+
+/**
  * What the Inth script registry tells Inth, on a manifest or `/v1/consent/init`.
  * Fields Inth does not know are ignored, so a later backend can add them.
  */
 export interface ScriptRegistryWire {
 	/** Where the registry serves each script, by script `id`. */
 	sources?: ScriptSourcesWire;
+	/**
+	 * Files loaders download at run time, keyed by the exact absolute vendor
+	 * URL the loader requests.
+	 */
+	files?: ScriptFilesWire;
 }
 
 /**

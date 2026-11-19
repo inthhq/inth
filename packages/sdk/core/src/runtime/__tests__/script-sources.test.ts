@@ -1456,3 +1456,234 @@ describe('experimentalScriptRegistry', () => {
 		runtime.dispose();
 	});
 });
+
+describe('experimentalScriptRegistry files', () => {
+	const VENDOR_SRC = 'https://cdn.vendor.example/vendor.js';
+	const HASH_SRC = 'https://acme.inth.app/scripts/vendor@0123456789abcdef.js';
+	const LOGGER_SRC = 'https://cdn.vendor.example/logger-1.min.js';
+	const LOGGER_HASH_SRC =
+		'https://acme.inth.app/scripts/vendor-logger@0123456789abcdef.js';
+	const HASH_INTEGRITY =
+		'sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8wC';
+	const LOGGER_INTEGRITY =
+		'sha384-ZZZuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8wC';
+
+	const registry = {
+		files: {
+			[LOGGER_SRC]: { integrity: LOGGER_INTEGRITY, src: LOGGER_HASH_SRC },
+		},
+		sources: { vendor: { integrity: HASH_INTEGRITY, src: HASH_SRC } },
+	};
+
+	/** The logger tag, as the vendor's loader would insert it. */
+	const insertLogger = () => {
+		const tag = document.createElement('script');
+		tag.src = LOGGER_SRC;
+		document.head.appendChild(tag);
+		return tag;
+	};
+
+	const pinnedLogger = {
+		crossorigin: 'anonymous',
+		integrity: LOGGER_INTEGRITY,
+		src: LOGGER_HASH_SRC,
+		type: null,
+	};
+
+	const fetched = (tag: HTMLScriptElement) => ({
+		crossorigin: tag.getAttribute('crossorigin'),
+		integrity: tag.getAttribute('integrity'),
+		src: tag.getAttribute('src'),
+		type: tag.getAttribute('type'),
+	});
+
+	/**
+	 * A registry integration whose setup stands in for its loader: jsdom
+	 * runs no fetched script, so the setup inserts the logger, as the loader
+	 * would once it runs.
+	 */
+	const loaderScript = (loaded: HTMLScriptElement[]): Script => ({
+		anonymizeId: false,
+		category: 'necessary',
+		id: 'vendor',
+		integration: 'vendor',
+		onBeforeLoad: () => {
+			loaded.push(insertLogger());
+		},
+		src: VENDOR_SRC,
+	});
+
+	const integration = (): Script => ({
+		anonymizeId: false,
+		category: 'necessary',
+		id: 'vendor',
+		integration: 'vendor',
+		src: VENDOR_SRC,
+	});
+
+	const nativeAppendChild = Node.prototype.appendChild;
+	const runtimes: { dispose: () => void }[] = [];
+	/** Start a runtime the test's cleanup disposes, even when it fails. */
+	const begin = (options: Parameters<typeof createConsentRuntime>[0]) => {
+		const runtime = createConsentRuntime(options);
+		runtimes.push(runtime);
+		runtime.start();
+		return runtime;
+	};
+
+	afterEach(() => {
+		for (const runtime of runtimes.splice(0)) {
+			runtime.dispose();
+		}
+		expect(Node.prototype.appendChild).toBe(nativeAppendChild);
+	});
+
+	test("pins a file the integration's loader inserts, by the list init carries", async () => {
+		const loaded: HTMLScriptElement[] = [];
+		begin({
+			experimentalScriptRegistry: true,
+			mode: custom({
+				init: () => Promise.resolve({ scriptRegistry: registry }) as never,
+			}),
+			persistence: false,
+			scripts: [loaderScript(loaded)],
+		});
+
+		await vi.waitFor(() => expect(loaded).toHaveLength(1));
+		expect(fetchAttributes('vendor').src).toBe(HASH_SRC);
+		expect(fetched(loaded[0] as HTMLScriptElement)).toEqual(pinnedLogger);
+	});
+
+	test('holds a cross-origin script the page inserts while init is pending, then pins it', async () => {
+		let answer: (response: Record<string, unknown>) => void = () => undefined;
+		begin({
+			experimentalScriptRegistry: true,
+			mode: custom({
+				init: () =>
+					new Promise((resolve) => {
+						answer = resolve;
+					}) as never,
+			}),
+			persistence: false,
+			scripts: [integration()],
+		});
+		const early = insertLogger();
+		expect(early.getAttribute('type')).toBe('inth/held');
+
+		answer({ scriptRegistry: registry });
+		await vi.waitFor(() => expect(fetched(early)).toEqual(pinnedLogger));
+	});
+
+	test('releases what it held, unchanged, when init fails', async () => {
+		let fail: (error: Error) => void = () => undefined;
+		begin({
+			experimentalScriptRegistry: true,
+			mode: custom({
+				init: () =>
+					new Promise((_resolve, reject) => {
+						fail = reject;
+					}) as never,
+			}),
+			persistence: false,
+			scripts: [integration()],
+		});
+		const early = insertLogger();
+		expect(early.getAttribute('type')).toBe('inth/held');
+
+		fail(new Error('offline'));
+		await vi.waitFor(() => expect(early.hasAttribute('type')).toBe(false));
+		expect(early.getAttribute('src')).toBe(LOGGER_SRC);
+	});
+
+	test("routes a script the SDK itself creates, and keeps the loader's pin", () => {
+		begin({
+			enabled: false,
+			experimentalScriptRegistry: true,
+			mode,
+			persistence: false,
+			prefetch: {
+				initialPolicyPending: false,
+				initialScriptRegistry: registry,
+			},
+			scripts: [
+				{
+					anonymizeId: false,
+					category: 'necessary',
+					id: 'logger',
+					src: LOGGER_SRC,
+				},
+				{
+					anonymizeId: false,
+					attributes: { integrity: HASH_INTEGRITY },
+					category: 'necessary',
+					id: 'pinned',
+					src: `${LOGGER_SRC}#pinned`,
+				},
+			],
+		});
+
+		expect(fetched(element('logger') as HTMLScriptElement)).toEqual(
+			pinnedLogger
+		);
+		// Its own pin lists other bytes, so it keeps the vendor URL.
+		expect(fetched(element('pinned') as HTMLScriptElement)).toEqual({
+			crossorigin: null,
+			integrity: HASH_INTEGRITY,
+			src: `${LOGGER_SRC}#pinned`,
+			type: null,
+		});
+	});
+
+	test('does not patch the DOM when the list names no files', async () => {
+		begin({
+			experimentalScriptRegistry: true,
+			mode: custom({
+				init: () =>
+					Promise.resolve({
+						scriptRegistry: { sources: registry.sources },
+					}) as never,
+			}),
+			persistence: false,
+			scripts: [integration()],
+		});
+
+		await vi.waitFor(() =>
+			expect(fetchAttributes('vendor').src).toBe(HASH_SRC)
+		);
+		expect(Node.prototype.appendChild).toBe(nativeAppendChild);
+	});
+
+	test('leaves the DOM alone with the registry off, even when init lists files', async () => {
+		begin({
+			mode: custom({
+				init: () => Promise.resolve({ scriptRegistry: registry }) as never,
+			}),
+			persistence: false,
+			scripts: [integration()],
+		});
+
+		await vi.waitFor(() =>
+			expect(fetchAttributes('vendor').src).toBe(VENDOR_SRC)
+		);
+		expect(Node.prototype.appendChild).toBe(nativeAppendChild);
+		expect(fetched(insertLogger()).src).toBe(LOGGER_SRC);
+	});
+
+	test('restores the DOM when the runtime is disposed', () => {
+		const runtime = begin({
+			enabled: false,
+			experimentalScriptRegistry: true,
+			mode,
+			persistence: false,
+			prefetch: {
+				initialPolicyPending: false,
+				initialScriptRegistry: registry,
+			},
+			scripts: [integration()],
+		});
+		expect(Node.prototype.appendChild).not.toBe(nativeAppendChild);
+
+		runtime.dispose();
+		expect(Node.prototype.appendChild).toBe(nativeAppendChild);
+	});
+});

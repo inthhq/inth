@@ -45,7 +45,7 @@ Only `mode` is required.
 | `vendors` | `Vendor[]` | none | Vendors offered for vendor-level consent outside IAB. |
 | `nonce` | `string` | none | CSP nonce the script loader puts on every `<script>` it creates. A script's own `nonce` wins. |
 | `scriptLoader` | `{ onDebug?, sources? }` | none | `onDebug` receives every script loader lifecycle event. `sources` loads a script from another URL, keyed by script `id`, such as a vetted copy on your own host: `{ posthog: { src, integrity, attributes? } }`. Only the URL changes; an integration's setup, attributes and callbacks still run. `integrity` also sets `crossorigin="anonymous"`; an `integrity` with no hash a browser can parse keeps the script from loading, because the browser would run it unchecked. `attributes` sets `data-*` attributes on the tag that the script does not set itself, and removes those set to `null`. A script with its own `integrity` keeps it, and keeps its own URL when the entry lists a different hash. Fields Inth does not know are ignored. Read when the script loader starts. |
-| `experimentalScriptRegistry` | `boolean` | `false` | Experimental. Load `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. See [Inth script registry](#inth-script-registry-experimental). Read when the runtime starts. Every framework package takes it in the same options. |
+| `experimentalScriptRegistry` | `boolean` | `false` | Experimental. Load `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks, and the files their loaders download from the registry's `files`. See [Inth script registry](#inth-script-registry-experimental). Read when the runtime starts. Every framework package takes it in the same options. |
 | `iab` | IAB options or `false` | none | CMP settings. Needs `createIAB`. |
 | `createIAB` | `createIAB` from `@inth/sdk/iab` | none | The IAB module factory. Without it, `iab` is ignored. |
 | `consentSource` | `{ getPermissions, subscribe, openPreferences }` | none | Take consent from another authority. Inth then shows no banner or dialog, stores nothing and mounts no IAB CMP. Pass `webViewConsentSource()` to follow an Inth mobile app when the page runs in its WebView; see [consent in WebViews](/docs/guides/mobile-webview). Read once. |
@@ -125,6 +125,107 @@ with an entry can start from its own URL there before the engine loads.
 The list's hashes come from the same backend that serves the files. They stop a
 copy that changed after the registry recorded it, but not a backend that sends
 another list. Scripts you write yourself are not affected.
+
+### Files a loader downloads
+
+Many vendor scripts are small loaders that download more code while they run.
+LogRocket's `LogRocket.min.js`, for example, inserts
+`https://cdn.logrocket.io/logger-1.min.js`, about 780 KB. `sources` pins only
+the loader. `scriptRegistry.files` pins the files the loader downloads, keyed by
+the exact absolute URL the loader requests:
+
+```json
+{
+  "scriptRegistry": {
+    "sources": {
+      "logrocket": {
+        "src": "https://acme.inth.app/scripts/logrocket@0123456789abcdef.js",
+        "integrity": "sha384-…"
+      }
+    },
+    "files": {
+      "https://cdn.logrocket.io/logger-1.min.js": {
+        "src": "https://acme.inth.app/scripts/logrocket-logger@fedcba9876543210.js",
+        "integrity": "sha384-…"
+      }
+    }
+  }
+}
+```
+
+When a script element on the page gets a URL that `files` lists, c15t changes
+it before the browser fetches it:
+
+- With an entry, the element loads from the entry's `src` with its `integrity`
+  and `crossorigin="anonymous"`. The browser refuses bytes that do not match,
+  and c15t does not try the vendor's URL. An element with its own `integrity`
+  keeps it, and loads from the registry only when the entry lists that hash.
+- With `null`, or an entry with no https `src` or no hash, the element loads
+  nothing, from either URL. It gets an `error` event, so the loader's own
+  failure handling runs.
+- A URL that `files` does not list is not changed.
+
+c15t matches URLs after it resolves a relative URL against the page and drops
+the fragment. Everything else must match exactly. The query string is part of
+the URL, so `logger-1.min.js?v=2` does not match `logger-1.min.js`.
+
+c15t catches a URL set with `script.src`, `setAttribute`, `setAttributeNS` or
+`setAttributeNode`. It also catches a script element in a node that the page
+inserts with `appendChild`, `insertBefore`, `append`, `before`,
+`replaceWith`, `insertAdjacentElement`, `Range.insertNode` or a similar
+method. Scripts that c15t creates go through the same check. To do this, the
+script loader patches those DOM methods when the list names files. On
+`dispose()`, it puts the original methods back.
+
+Until init answers, c15t does not know which URLs `files` lists. Integrations
+wait for init as described above. Other script elements with a URL on another
+origin wait too: c15t holds each one until the list arrives. Then it loads the
+element from the registry, refuses it, or lets it load unchanged. A script on
+the page's own origin, such as a bundler chunk, never waits. When the list
+names no files, or init fails, c15t lets the held elements load unchanged and
+removes its patches. While a prefetched list names files, or init has not
+answered, a server start leaves every script for the loader to start.
+
+#### What `files` does not cover
+
+`files` sees only script elements that this realm's DOM methods insert after
+the script loader starts. These load code without c15t seeing it:
+
+- `document.write` of a script tag.
+- `eval` or `new Function` on code a loader fetched itself.
+- `import()`.
+- Workers, including `importScripts` in a worker.
+- Iframes, including `srcdoc` frames, and a script element made with another
+  frame's DOM methods.
+- A script tag in your HTML, or one that a deferred root or the script-tag build
+  starts before the script loader runs.
+- A URL that a page override gives the loader and that the list does not name.
+  Examples are LogRocket's `window.__SDKCONFIG__.loggerURL`, `sdkServer` and
+  `_lrAsyncScript` (the `asyncScriptUrl` option).
+
+Pages that enforce Trusted Types for scripts are not supported yet: c15t writes
+the registry's URL as a plain string.
+
+Only a Content Security Policy closes these gaps. Allow the registry and your
+own origin, and no vendor host:
+
+```http
+Content-Security-Policy: script-src 'self' https://acme.inth.app; worker-src blob:
+```
+
+- `script-src` lists only the gateway and your own origin. When a vendor host
+  is not on the list, the browser blocks every unpinned request to it,
+  whichever API makes it.
+- Do not add `'strict-dynamic'`. It lets a trusted script load any script, and
+  the browser then ignores the host list.
+- Do not add `'unsafe-eval'`, which lets code a loader fetched run through
+  `eval`.
+- `worker-src blob:` lets a loader start a worker from code it already has, as
+  LogRocket does. It does not allow worker files from a vendor host.
+
+If you add a `'nonce-…'` for inline scripts, keep vendor code out of them. An
+inline script with a nonce can `import()` a module from any URL, because the
+browser gives the nonce to the import as well.
 
 ## What start and dispose do
 

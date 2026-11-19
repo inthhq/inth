@@ -52,6 +52,34 @@ describe('scriptRegistry', () => {
 		);
 	});
 
+	test('a manifest keeps the files loaders download, and init carries them, entries unchecked', () => {
+		const withFiles = {
+			...scriptRegistry,
+			files: {
+				// c15t checks each entry when a loader asks for the file.
+				'https://cdn.vendor.example/broken.js': { src: 'http://broken' },
+				'https://cdn.vendor.example/held.js': null,
+				'https://cdn.vendor.example/logger.js': {
+					integrity: 'sha384-def',
+					src: 'https://acme.inth.app/scripts/vendor-logger@0123456789abcdef.js',
+				},
+			},
+		};
+		const parsed = parseConsentManifest({
+			...manifest,
+			scriptRegistry: withFiles,
+		});
+
+		expect(parsed.scriptRegistry).toEqual(withFiles);
+		expect(resolveInitFromManifest(parsed, {}).scriptRegistry).toEqual(
+			withFiles
+		);
+		expect(
+			v.parse(initOutputSchema, { ...initOutput, scriptRegistry: withFiles })
+				.scriptRegistry
+		).toEqual(withFiles);
+	});
+
 	test('keeps fields it does not know, for a later backend', () => {
 		const later = { ...scriptRegistry, scripts: [{ id: 'posthog' }] };
 		expect(

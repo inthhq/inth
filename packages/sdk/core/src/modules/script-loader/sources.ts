@@ -1,4 +1,5 @@
 import type { Script, ScriptSource } from '../../libs/script-loader/types';
+import type { RegistryFiles } from './files';
 
 /** Script sources by script `id`, as `scriptLoader.sources` takes them. */
 export type ScriptSources = Readonly<Record<string, ScriptSource>>;
@@ -19,7 +20,12 @@ export type RegistrySources = Readonly<Record<string, ScriptSource | null>>;
 export type ScriptRegistryState =
 	| { readonly status: 'pending' }
 	| { readonly status: 'failed' }
-	| { readonly status: 'listed'; readonly sources: RegistrySources };
+	| {
+			readonly status: 'listed';
+			readonly sources: RegistrySources;
+			/** The files loaders download, by normalised vendor URL. */
+			readonly files?: RegistryFiles;
+	  };
 
 /** A script the loader does not mount yet, or at all. */
 export interface HeldScript {
@@ -73,8 +79,10 @@ export const sriHashes = (metadata: string): string[] =>
  * describes. Browsers compare only the pin's hashes of its strongest
  * algorithm, so `sha512-a sha384-b` rejects bytes whose only listed hash
  * is `sha384-b`.
+ *
+ * @internal
  */
-const pinAllows = (pinned: string, integrity: string): boolean => {
+export const pinAllows = (pinned: string, integrity: string): boolean => {
 	const pins = sriHashes(pinned);
 	const strongest = Math.max(0, ...pins.map(sriStrength));
 	const hashes = new Set(sriHashes(integrity));

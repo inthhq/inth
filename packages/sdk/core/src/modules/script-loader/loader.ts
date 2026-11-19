@@ -10,6 +10,8 @@ import { createDebugEmitter } from './debug';
 import { registerScriptDiagnostics } from './diagnostics';
 import type { ScriptDiagnostic, ScriptDiagnosticStatus } from './diagnostics';
 import { buildReconcilePass, hasScriptConsent } from './eligibility';
+import { pinRegistryFiles } from './files';
+import type { FilePin } from './files';
 import {
 	flushPendingMounts,
 	mountScript,
@@ -104,6 +106,30 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		? readRegistry(kernel.getSnapshot())
 		: { status: 'failed' };
 	let stopWaiting: (() => void) | undefined;
+	// The registry's files pin what loaders download while they run. It goes
+	// on before this loader mounts anything: while the list is pending, so
+	// nothing leaves before the pin knows whether it is listed, and when the
+	// list names files. A list without files takes it off.
+	let filePin: FilePin | null | undefined;
+	const pinFiles = (state: ScriptRegistryState): void => {
+		if (!options.registry) {
+			return;
+		}
+		if (state.status === 'pending') {
+			filePin ??= pinRegistryFiles(null);
+			return;
+		}
+		const files = state.status === 'listed' ? (state.files ?? {}) : {};
+		if (Object.keys(files).length === 0) {
+			filePin?.dispose();
+			filePin = undefined;
+		} else if (filePin) {
+			filePin.list(files);
+		} else {
+			filePin = pinRegistryFiles(files);
+		}
+	};
+	pinFiles(registryState);
 	const withSources = createScriptSourceResolver(
 		options.sources,
 		options.registry ? () => registryState : undefined
@@ -716,6 +742,8 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	});
 	const handle: ScriptLoaderHandle = {
 		dispose() {
+			filePin?.dispose();
+			filePin = undefined;
 			if (disposed) {
 				return;
 			}
@@ -743,6 +771,8 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			}
 			registryState = state;
 			stopWaiting?.();
+			// Before the waiting scripts mount, so their loaders find it.
+			pinFiles(state);
 			if (disposed || (held.length === 0 && !staged)) {
 				return;
 			}

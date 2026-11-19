@@ -1,5 +1,7 @@
 import type { ScriptSource } from '../../libs/script-loader/types';
 import type { ConsentSnapshot } from '../../types';
+import { normalizeFileUrl } from './files';
+import type { RegistryFile, RegistryFiles } from './files';
 import { sriHashes } from './sources';
 import type { RegistrySources, ScriptRegistryState } from './sources';
 
@@ -83,11 +85,59 @@ export const parseRegistrySources = function parseRegistrySources(
 	);
 };
 
+/** One file entry, or `null` for one with no https `src` or no hash. */
+const parseFile = (entry: unknown): RegistryFile | null => {
+	if (!isRecord(entry)) {
+		return null;
+	}
+	const { integrity, src } = entry;
+	return typeof src === 'string' &&
+		isHttpsURL(src) &&
+		typeof integrity === 'string' &&
+		hasSriHash(integrity)
+		? { integrity, src }
+		: null;
+};
+
+/**
+ * Check the registry's files as init carries them:
+ * `{ "<absolute vendor URL>": { "src", "integrity" } | null }`.
+ *
+ * Each key is normalised as a script's URL is when it is looked up (see
+ * `normalizeFileUrl`): its fragment is dropped, its query string kept. A
+ * key that is not an absolute http(s) URL is skipped. When two keys name
+ * the same URL and either refuses it, the file is refused.
+ *
+ * @param files - The unchecked files.
+ * @returns The files by normalised URL, with `null` for an entry the pin
+ * cannot use, or `null` when `files` is not an object.
+ * @internal
+ */
+export const parseRegistryFiles = function parseRegistryFiles(
+	files: unknown
+): RegistryFiles | null {
+	if (!isRecord(files)) {
+		return null;
+	}
+	const parsed = new Map<string, RegistryFile | null>();
+	for (const [url, entry] of Object.entries(files)) {
+		const key = normalizeFileUrl(url);
+		if (key !== null) {
+			const file = parseFile(entry);
+			parsed.set(
+				key,
+				parsed.has(key) && parsed.get(key) === null ? null : file
+			);
+		}
+	}
+	return Object.fromEntries(parsed);
+};
+
 /**
  * Where the registry's list stands in a snapshot. It is `pending` while
  * init has not resolved yet, even with a list a prefetch carried. Once it
- * has, the list is the one init carried, or `failed` when init carried
- * none or failed. A failed init
+ * has, the list is the one init carried, `sources` and `files` both, or
+ * `failed` when init carried neither or failed. A failed init
  * leaves the policy pending, so its resolution tells it apart.
  *
  * @param snapshot - The kernel's snapshot, or the same fields of a
@@ -109,5 +159,9 @@ export const readScriptRegistry = function readScriptRegistry(snapshot: {
 			: { status: 'pending' };
 	}
 	const sources = parseRegistrySources(snapshot.scriptRegistry?.sources);
-	return sources ? { sources, status: 'listed' } : { status: 'failed' };
+	const files = parseRegistryFiles(snapshot.scriptRegistry?.files);
+	if (!(sources || files)) {
+		return { status: 'failed' };
+	}
+	return { files: files ?? {}, sources: sources ?? {}, status: 'listed' };
 };

@@ -329,21 +329,31 @@ const serverStartCandidates = function serverStartCandidates(
 	failedPredicates: Set<Script>
 ): Script[] {
 	// With the registry on, scripts start from the sources the prefetched
-	// init carries, as the loader would load them. Without a resolved
-	// prefetch, an integration the list may name waits for the loader.
+	// init carries, as the loader would load them.
 	const { prefetch } = options;
+	const registry = options.experimentalScriptRegistry
+		? readScriptRegistry({
+				policyPending:
+					prefetch?.initialPolicyPending ?? !prefetch?.initialPolicyResolution,
+				resolution: prefetch?.initialPolicyResolution,
+				scriptRegistry: prefetch?.initialScriptRegistry ?? null,
+			})
+		: undefined;
+	// A script started from the HTML runs before the loader pins the files
+	// loaders download (`files.ts`), so its loader would fetch them from the
+	// vendor. While the list may name files, because init has not resolved
+	// or it names some, every script waits for the loader.
+	if (
+		registry &&
+		(registry.status === 'pending' ||
+			(registry.status === 'listed' &&
+				Object.keys(registry.files ?? {}).length > 0))
+	) {
+		return [];
+	}
 	const { scripts } = createScriptSourceResolver(
 		options.scriptLoader?.sources,
-		options.experimentalScriptRegistry
-			? () =>
-					readScriptRegistry({
-						policyPending:
-							prefetch?.initialPolicyPending ??
-							!prefetch?.initialPolicyResolution,
-						resolution: prefetch?.initialPolicyResolution,
-						scriptRegistry: prefetch?.initialScriptRegistry ?? null,
-					})
-			: undefined
+		registry ? () => registry : undefined
 	)(options.scripts ?? []);
 	if (
 		options.scriptLoader?.serverStart === false ||
