@@ -37,6 +37,7 @@ import type {
 	getEffectiveGateState,
 	has,
 } from '../has';
+import type { RegistryMemory } from './remembered';
 import type { ScriptSources } from './sources';
 
 export type { Script, ScriptCallbackInfo };
@@ -143,6 +144,12 @@ export interface ScriptLoaderOptions {
 		 * reads only the list a prefetch carried, and never waits.
 		 */
 		waitForInit: boolean;
+		/**
+		 * The last list this browser received from the backend. A runtime
+		 * that asks `/init` keeps it in step with each answer and loads by
+		 * it when init fails.
+		 */
+		memory?: RegistryMemory;
 	};
 	/**
 	 * When true, also dispatch debug events to the page's script debug

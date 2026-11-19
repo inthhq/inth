@@ -112,13 +112,46 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		);
 		declareOwners(kernel, scripts, ownerSource);
 	};
+	const memory = options.registry?.waitForInit
+		? options.registry.memory
+		: undefined;
 	// Read once init resolves; a later init's list does not move scripts.
-	const readRegistry = (snapshot: ConsentSnapshot): ScriptRegistryState =>
-		readScriptRegistry(
+	// When init fails, the last list this browser received from the
+	// backend stands in for it, read as a fresh one is.
+	const readRegistry = (snapshot: ConsentSnapshot): ScriptRegistryState => {
+		const state = readScriptRegistry(
 			options.registry?.waitForInit
 				? snapshot
 				: { ...snapshot, policyPending: false }
 		);
+		const remembered =
+			state.status === 'failed' && snapshot.resolution?.status === 'failed'
+				? memory?.read()
+				: undefined;
+		return remembered === undefined
+			? state
+			: readScriptRegistry({
+					policyPending: false,
+					scriptRegistry: remembered as ConsentSnapshot['scriptRegistry'],
+				});
+	};
+	// Each answer replaces the remembered list, a list-less one with none,
+	// so turning the registry off takes effect.
+	let remembered: unknown = Symbol('nothing remembered yet');
+	const remember = (snapshot: ConsentSnapshot): void => {
+		// A failed init leaves the policy pending, so this is an answer.
+		if (
+			!memory ||
+			snapshot.policyPending ||
+			snapshot.scriptRegistry === remembered
+		) {
+			return;
+		}
+		remembered = snapshot.scriptRegistry;
+		memory.write(snapshot.scriptRegistry);
+	};
+	remember(kernel.getSnapshot());
+	const stopRemembering = memory ? kernel.subscribe(remember) : undefined;
 	let registryState: ScriptRegistryState = options.registry
 		? readRegistry(kernel.getSnapshot())
 		: { status: 'failed' };
@@ -598,6 +631,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		diagnostics?.dispose();
 		diagnostics = undefined;
 		stopWaiting?.();
+		stopRemembering?.();
 		for (const [scriptId, element] of new Map([
 			...retainedElements,
 			...loadedElements,

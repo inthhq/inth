@@ -13,6 +13,8 @@ import type {
 import { logRocket } from '../vendors/analytics/logrocket';
 
 const APP_ID = 'inth-test/script-files';
+/** The backend the runtimes ask, so the browser remembers its list. */
+const BACKEND = 'https://backend.inth.test';
 
 /** A mode whose init answers as `init` does, standing in for the backend. */
 const initMode = (init: () => Promise<unknown>): ProviderTransportFactory =>
@@ -41,6 +43,8 @@ export interface ScriptFilesPage {
 	startPending: () => void;
 	/** Answer the pending init with `registry`. */
 	answer: (registry: unknown) => void;
+	/** Start LogRocket on a runtime whose every init fails. */
+	startFailing: () => void;
 	dispose: () => void;
 }
 
@@ -84,6 +88,19 @@ window.__scriptFiles = {
 		runtimes.push(runtime);
 		runtime.start();
 	},
+	startFailing() {
+		const runtime = createConsentRuntime({
+			experimentalScriptRegistry: true,
+			mode: custom({
+				init: () => Promise.reject(new TypeError('Failed to fetch')),
+			}),
+			persistence: false,
+			projectUrl: BACKEND,
+			scripts: [{ ...logRocket({ appId: APP_ID }), category: 'necessary' }],
+		});
+		runtimes.push(runtime);
+		runtime.start();
+	},
 	startPending() {
 		// Consent management on, so the runtime asks init; `necessary`, so
 		// LogRocket needs no choice to load.
@@ -97,6 +114,7 @@ window.__scriptFiles = {
 					})
 			),
 			persistence: false,
+			projectUrl: BACKEND,
 			scripts: [{ ...logRocket({ appId: APP_ID }), category: 'necessary' }],
 		});
 		runtimes.push(runtime);

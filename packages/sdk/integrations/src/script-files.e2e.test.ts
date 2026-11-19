@@ -616,4 +616,63 @@ test("keeps a library's src setter that went on between two pins", async () => {
 			};
 		})
 	).toEqual({ kept: true, sawLogger: true });
+
+/** Answer one init with `list`, so the browser remembers it, then load the page again. */
+const rememberThenReload = async function rememberThenReload(
+	list: unknown
+): Promise<void> {
+	await open();
+	await page.evaluate(() => window.__scriptFiles.startPending());
+	await page.evaluate((answer) => window.__scriptFiles.answer(answer), list);
+	await expect
+		.poll(() =>
+			page.evaluate(() =>
+				Object.keys(localStorage).some((key) =>
+					key.startsWith('c15t-script-registry:')
+				)
+			)
+		)
+		.toBe(true);
+	await page.goto(`${SITE}/`);
+	loadedScripts = [];
+	requested = [];
+};
+
+test('loads by the list the browser remembers when init fails', async () => {
+	await rememberThenReload(
+		registry({ integrity: sri(logger), src: loggerAtGateway })
+	);
+	await page.evaluate(() => window.__scriptFiles.startFailing());
+
+	await loggerRan();
+	expect(loaded(loaderAtGateway)).toBe(1);
+	expect(loaded(loggerAtGateway)).toBe(1);
+	expect(sent(LOADER_URL) + sent(LOGGER_URL)).toBe(0);
+});
+
+test('loads from the vendor when init fails and the browser remembers no list', async () => {
+	await open();
+	await page.evaluate(() => window.__scriptFiles.startFailing());
+
+	await loggerRan();
+	expect(loaded(LOADER_URL)).toBe(1);
+	expect(loaded(LOGGER_URL)).toBe(1);
+	expect(requested.filter((url) => url.startsWith(GATEWAY))).toEqual([]);
+});
+
+test('loads nothing for a script the remembered list blocks, when init fails', async () => {
+	await rememberThenReload({
+		...registry(null),
+		sources: { [logRocketId]: null },
+	});
+	await page.evaluate(() => window.__scriptFiles.startFailing());
+
+	await page.waitForTimeout(500);
+	expect(
+		requested.filter(
+			(url) =>
+				url.startsWith(GATEWAY) || url.startsWith('https://cdn.logrocket.io/')
+		)
+	).toEqual([]);
+	expect(await page.evaluate(() => typeof window.LogRocket)).toBe('undefined');
 });

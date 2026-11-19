@@ -519,6 +519,12 @@ describe('experimentalScriptRegistry', () => {
 		});
 
 	const necessaryOther: Script = { ...otherScript, category: 'necessary' };
+	/** The backend the runtimes below ask, so the browser remembers its list. */
+	const BACKEND = 'https://acme.inth.app';
+	const MEMORY_KEY = 'c15t-script-registry:v1:';
+	afterEach(() => {
+		localStorage.clear();
+	});
 
 	const listed = (scriptSources: Record<string, unknown>) =>
 		initMode(() =>
@@ -777,13 +783,14 @@ describe('experimentalScriptRegistry', () => {
 		runtime.dispose();
 	});
 
-	test("loads from the vendor URL when init fails, over a pending prefetch's list", async () => {
+	test("loads from the vendor URL when init fails and the browser remembers no list, over a pending prefetch's list", async () => {
 		const runtime = startWith({
 			mode: initMode(() => Promise.reject(new TypeError('offline'))),
 			prefetch: {
 				initialPolicyPending: true,
 				initialScriptRegistry: { sources: { vendor: null } },
 			},
+			projectUrl: BACKEND,
 			scripts: [integrationScript()],
 		});
 
@@ -791,6 +798,131 @@ describe('experimentalScriptRegistry', () => {
 			expect(fetchAttributes('vendor').src).toBe(VENDOR_SRC)
 		);
 		runtime.dispose();
+	});
+
+	describe('when init fails, the list the browser remembers', () => {
+		const answering = (scriptRegistry: unknown, projectUrl = BACKEND) =>
+			startWith({
+				mode: initMode(() => Promise.resolve({ scriptRegistry })),
+				projectUrl,
+				scripts: [integrationScript()],
+			});
+		const failing = (projectUrl = BACKEND) =>
+			startWith({
+				mode: initMode(() => Promise.reject(new TypeError('offline'))),
+				projectUrl,
+				scripts: [integrationScript()],
+			});
+		/** What the browser remembers for `projectUrl`. */
+		const stored = (projectUrl = BACKEND) => {
+			const raw = localStorage.getItem(
+				`${MEMORY_KEY}${new URL(projectUrl).href}`
+			);
+			return raw ? (JSON.parse(raw) as { registry: unknown }).registry : null;
+		};
+		/** Answer once with `scriptRegistry`, so the browser remembers it. */
+		const remember = async (
+			scriptRegistry: Record<string, unknown> | undefined,
+			projectUrl = BACKEND
+		) => {
+			const runtime = answering(scriptRegistry, projectUrl);
+			await vi.waitFor(() =>
+				expect(stored(projectUrl)).toEqual(scriptRegistry ?? null)
+			);
+			runtime.dispose();
+			document.head.innerHTML = '';
+		};
+
+		test('loads a script from the source it lists', async () => {
+			await remember({
+				sources: { vendor: { integrity: HASH_INTEGRITY, src: HASH_SRC } },
+			});
+			const runtime = failing();
+
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor')).toMatchObject({
+					integrity: HASH_INTEGRITY,
+					src: HASH_SRC,
+				})
+			);
+			runtime.dispose();
+		});
+
+		test('loads nothing for a script it blocked, or one whose options it refuses', async () => {
+			await remember({
+				sources: {
+					vendor: {
+						integrity: HASH_INTEGRITY,
+						refuseIfSet: ['initOptions.server'],
+						src: HASH_SRC,
+					},
+				},
+			});
+			const refused = startWith({
+				mode: initMode(() => Promise.reject(new TypeError('offline'))),
+				projectUrl: BACKEND,
+				scripts: [
+					integrationScript({
+						integrationOptions: { initOptions: { server: 'https://x' } },
+					}),
+				],
+			});
+			await new Promise((resolve) => {
+				setTimeout(resolve, 50);
+			});
+			expect(srcs()).toEqual([]);
+			refused.dispose();
+
+			await remember({ sources: { vendor: null } });
+			const blocked = failing();
+			await new Promise((resolve) => {
+				setTimeout(resolve, 50);
+			});
+			expect(srcs()).toEqual([]);
+			blocked.dispose();
+		});
+
+		test("is one backend's alone", async () => {
+			await remember(
+				{ sources: { vendor: { integrity: HASH_INTEGRITY, src: HASH_SRC } } },
+				'https://other.inth.app'
+			);
+			const runtime = failing();
+
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor').src).toBe(VENDOR_SRC)
+			);
+			runtime.dispose();
+		});
+
+		test('is forgotten when init answers without a list', async () => {
+			await remember({
+				sources: { vendor: { integrity: HASH_INTEGRITY, src: HASH_SRC } },
+			});
+			await remember(undefined);
+			const runtime = failing();
+
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor').src).toBe(VENDOR_SRC)
+			);
+			runtime.dispose();
+		});
+
+		test('is no list when storage throws, and nothing else breaks', async () => {
+			await remember({
+				sources: { vendor: { integrity: HASH_INTEGRITY, src: HASH_SRC } },
+			});
+			vi.spyOn(window, 'localStorage', 'get').mockImplementation(() => {
+				throw new DOMException('blocked', 'SecurityError');
+			});
+			const runtime = failing();
+
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor').src).toBe(VENDOR_SRC)
+			);
+			runtime.dispose();
+			vi.restoreAllMocks();
+		});
 	});
 
 	test('loads by the list a manifest carries', async () => {
@@ -871,7 +1003,7 @@ describe('experimentalScriptRegistry', () => {
 		runtime.dispose();
 	});
 
-	test("settles on the first failed init, so a retry's list does not move a loaded script", async () => {
+	test("settles on the first failed init, so a retry's list does not move a loaded script, but is remembered", async () => {
 		let calls = 0;
 		const runtime = startWith({
 			mode: initMode(() => {
@@ -880,6 +1012,7 @@ describe('experimentalScriptRegistry', () => {
 					? Promise.reject(new TypeError('offline'))
 					: Promise.resolve({ scriptRegistry: { sources: { vendor: null } } });
 			}),
+			projectUrl: BACKEND,
 			scripts: [integrationScript()],
 		});
 
@@ -894,6 +1027,12 @@ describe('experimentalScriptRegistry', () => {
 			{ timeout: 3000 }
 		);
 		expect(srcs()).toEqual([VENDOR_SRC]);
+		await vi.waitFor(() =>
+			expect(
+				JSON.parse(localStorage.getItem(`${MEMORY_KEY}${BACKEND}/`) ?? 'null')
+					?.registry
+			).toEqual({ sources: { vendor: null } })
+		);
 		runtime.dispose();
 	});
 
