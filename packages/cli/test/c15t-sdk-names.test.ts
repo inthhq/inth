@@ -123,4 +123,27 @@ describe("the code inth c15t setup generates", () => {
       expect(missing).toEqual([]);
     }
   );
+
+  // The script tag template loads `c15t.js`, which reads c15t's own names.
+  it.each(boilerplateFrameworks.filter((framework) => framework !== "html"))(
+    "writes no file, path, key or link the SDK does not read for %s",
+    (framework) => {
+      const template = generateBoilerplateTemplate({
+        backendURL: "https://your-project.inth.app",
+        framework,
+        mode: "hosted",
+        scripts: ["posthog"],
+      });
+      const written = [
+        ...Object.entries(template.files).map(
+          ([file, content]) => `${file}\n${content}`
+        ),
+        ...template.instructions,
+        JSON.stringify(template.merge ?? {}),
+      ].join("\n");
+      expect(written).not.toMatch(
+        /c15t\.(?:config|client)|\[\.\.\.c15t\]|\/api\/c15t|c15t:\s*\{|c15t-preferences|data-c15t-/u
+      );
+    }
+  );
 });

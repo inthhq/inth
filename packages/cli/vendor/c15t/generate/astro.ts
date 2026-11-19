@@ -113,7 +113,7 @@ ${scriptsProperty(options.scripts, '\t')}} satisfies InthClientOptionsExtension;
 		instructions: [
 			'Use src/layouts/base.astro as the layout of every page, or move ConsentScript into your own layout head and the banner, dialog and link into its body.',
 			server
-				? 'Server output resolves each visitor on the server and adds a consent route at /api/c15t. Keep your adapter if the project already has one.'
+				? 'Server output resolves each visitor on the server and adds a consent route at /api/inth. Keep your adapter if the project already has one.'
 				: 'Static output asks your backend for each visitor’s policy from the browser, so it needs no adapter.',
 			...vendorInstruction(options, 'src/inth.client.ts'),
 			...offlineInstruction(options),

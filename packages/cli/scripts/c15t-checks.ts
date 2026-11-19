@@ -635,7 +635,7 @@ const verifyNextEntryExtensions = async (
             : [
                 `${root}pages/_app.${extension}`,
                 `${root}pages/index.${extension}`,
-                `${root}pages/api/c15t/[...c15t].${extension}`,
+                `${root}pages/api/inth/[...inth].${extension}`,
               ];
         for (const name of names) {
           await mkdir(path.dirname(path.join(directory, name)), {
@@ -756,7 +756,7 @@ const verifyNextPageExtensions = async (
             )
           );
         }
-        const api = `${route}/api/c15t/[...c15t].page.${script}`;
+        const api = `${route}/api/inth/[...inth].page.${script}`;
         assert.ok(names.includes(api), names.join(", "));
         assert.equal(
           await readFile(path.join(directory, "next.config.mjs"), "utf-8"),
@@ -764,7 +764,7 @@ const verifyNextPageExtensions = async (
         );
         assert.ok(!names.includes(`${route}/_app.tsx`));
         assert.ok(!names.includes(`${route}/index.tsx`));
-        assert.ok(!names.includes(`${route}/api/c15t/[...c15t].ts`));
+        assert.ok(!names.includes(`${route}/api/inth/[...inth].ts`));
         assert.doesNotMatch(
           result.stdout + result.stderr,
           /private-custom-page/u
@@ -827,7 +827,7 @@ const verifyNextPageExtensions = async (
     const names = [
       `pages/_app.${extension}`,
       `pages/index.${extension}`,
-      `pages/api/c15t/[...c15t].${script}`,
+      `pages/api/inth/[...inth].${script}`,
     ];
     for (const flag of ["--dry-run", "--yes", "--yes"]) {
       const result = run(test, [...args, flag], directory);

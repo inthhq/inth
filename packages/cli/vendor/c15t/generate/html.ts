@@ -1,4 +1,4 @@
-import { htmlPage, PREFERENCES_LINK } from './javascript.ts';
+import { htmlPage, preferencesLink } from './javascript.ts';
 import type { BoilerplateOptions, BoilerplateTemplate } from './types.ts';
 
 const escapeAttribute = (value: string): string =>
@@ -7,6 +7,9 @@ const escapeAttribute = (value: string): string =>
 		.replaceAll('"', '&quot;')
 		.replaceAll('<', '&lt;')
 		.replaceAll('>', '&gt;');
+
+/** The hash `c15t.js` opens the preference dialog for. */
+const PREFERENCES_HASH = '#c15t-preferences';
 
 /**
  * The script tag that loads `c15t.js` from the backend.
@@ -69,7 +72,12 @@ export const generateHtmlBoilerplate = (
 	return {
 		dependencies: [],
 		files: {
-			'index.html': htmlPage('c15t with a script tag', `${indented}\n`, ''),
+			'index.html': htmlPage(
+				'c15t with a script tag',
+				`${indented}\n`,
+				'',
+				preferencesLink(PREFERENCES_HASH)
+			),
 		},
 		instructions: [
 			'To hold another vendor script until consent, change its tag to type="text/plain" and add data-c15t-category, such as data-c15t-category="measurement".',
@@ -86,8 +94,8 @@ export const generateHtmlBoilerplate = (
 					{ before: '</head>', content: tag, marker: '/c15t.js' },
 					{
 						before: '</body>',
-						content: PREFERENCES_LINK,
-						marker: '#c15t-preferences',
+						content: preferencesLink(PREFERENCES_HASH),
+						marker: PREFERENCES_HASH,
 					},
 				],
 				type: 'insert',

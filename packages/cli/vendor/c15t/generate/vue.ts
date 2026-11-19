@@ -105,7 +105,7 @@ export const generateVueBoilerplate = (
 		files: nuxt ? nuxtFiles(options) : vueFiles(options),
 		instructions: [
 			nuxt
-				? 'The @inth/nuxt module registers ConsentRoot and ConsentDialogLink and adds a consent route at /api/c15t. Keep any other modules when you merge nuxt.config.ts.'
+				? 'The @inth/nuxt module registers ConsentRoot and ConsentDialogLink and adds a consent route at /api/inth. Keep any other modules when you merge nuxt.config.ts.'
 				: 'src/App.vue shows where ConsentRoot and ConsentDialogLink go. Move them into your own root component if you keep it.',
 			...vendorInstruction(options, nuxt ? 'app/app.config.ts' : 'src/main.ts'),
 			...offlineInstruction(options),

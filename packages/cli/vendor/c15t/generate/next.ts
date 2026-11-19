@@ -28,7 +28,7 @@ const consentConfig = (
 ): string => {
 	const offline = options.mode === 'offline';
 	const body = `${offline ? '\tmode: offline(),\n' : ''}${
-		routePrefix ? "\troutePrefix: '/api/c15t',\n" : ''
+		routePrefix ? "\troutePrefix: '/api/inth',\n" : ''
 	}${scriptsProperty(options.scripts, '\t')}`;
 	return `${sortImports([
 		...scriptImports(options.scripts),
@@ -134,7 +134,7 @@ export const generateNextBoilerplate = (
 	if (pages) {
 		files['pages/_app.tsx'] = pagesApp;
 		if (route) {
-			files['pages/api/c15t/[...c15t].ts'] = pagesRoute;
+			files['pages/api/inth/[...inth].ts'] = pagesRoute;
 		}
 		files['pages/index.tsx'] = pagesIndex;
 	} else {
