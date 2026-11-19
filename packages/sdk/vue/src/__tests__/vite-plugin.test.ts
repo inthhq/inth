@@ -160,13 +160,13 @@ describe('consentManifest()', () => {
 	});
 
 	it('groups the consent modules into one chunk in a single-page app build', () => {
-		const { build } = consentManifest().config.call(
+		const { build: buildOptions } = consentManifest().config.call(
 			{ meta: { rolldownVersion: '1.2.0' } },
 			{},
 			{ isSsrBuild: false }
 		);
 
-		expect(build?.rolldownOptions.output.codeSplitting.groups).toEqual([
+		expect(buildOptions?.rolldownOptions.output.codeSplitting.groups).toEqual([
 			CONSENT_CHUNK_GROUP,
 		]);
 	});

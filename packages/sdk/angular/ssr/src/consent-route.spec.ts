@@ -40,10 +40,8 @@ describe('createConsentRoute', () => {
 			projectUrl: BACKEND,
 			snapshot: MANIFEST_FIXTURE,
 		});
-		const manifest = await route.fetch(
-			new Request(`${SITE}/api/inth/manifest`)
-		);
-		expect(await manifest?.json()).toEqual(MANIFEST_FIXTURE);
+		const served = await route.fetch(new Request(`${SITE}/api/inth/manifest`));
+		expect(await served?.json()).toEqual(MANIFEST_FIXTURE);
 
 		const init = await route.fetch(
 			new Request(`${SITE}/api/inth/init`, {
@@ -264,8 +262,8 @@ describe('createConsentRoute', () => {
 			const { port } = server.address() as AddressInfo;
 			const base = `http://127.0.0.1:${port}`;
 
-			const manifest = await globalThis.fetch(`${base}/api/inth/manifest`);
-			expect(await manifest.json()).toEqual(MANIFEST_FIXTURE);
+			const served = await globalThis.fetch(`${base}/api/inth/manifest`);
+			expect(await served.json()).toEqual(MANIFEST_FIXTURE);
 
 			const page = await globalThis.fetch(`${base}/about?x=/api/inth`);
 			expect(page.status).toBe(404);

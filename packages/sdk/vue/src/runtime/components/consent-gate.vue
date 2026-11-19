@@ -68,12 +68,12 @@ const title = computed(() => {
 	}
 	return consentGate.title.replace('{category}', categoryTitle.value);
 });
-const actionLabel = computed(() => {
-	return translations.value.consentGate.actionButton.replace(
+const actionLabel = computed(() =>
+	translations.value.consentGate.actionButton.replace(
 		'{category}',
 		categoryTitle.value
-	);
-});
+	)
+);
 
 const openPreferences = function openPreferences() {
 	activeUI.value = 'manager';

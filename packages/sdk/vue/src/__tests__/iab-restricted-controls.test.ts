@@ -102,6 +102,12 @@ describe('Vue controls under a legitimate-interest restriction', () => {
 			global,
 			props: {
 				isEnabled: false,
+				// The visitor had objected; the only control lifts the objection.
+				legitimateInterests: {
+					gvl: null,
+					purposeLegitimateInterests: { 7: false },
+					vendorLegitimateInterests: { 755: false },
+				},
 				purpose: {
 					description: '',
 					hasConsentBasis: false,
@@ -111,12 +117,6 @@ describe('Vue controls under a legitimate-interest restriction', () => {
 					vendors: [
 						{ id: 755, name: 'Vendor 755', usesLegitimateInterest: true },
 					],
-				},
-				// The visitor had objected; the only control lifts the objection.
-				legitimateInterests: {
-					gvl: null,
-					purposeLegitimateInterests: { 7: false },
-					vendorLegitimateInterests: { 755: false },
 				},
 				vendorConsents: {},
 			},
@@ -149,14 +149,14 @@ describe('Vue controls under a legitimate-interest restriction', () => {
 		const wrapper = mount(IabVendorList, {
 			global,
 			props: {
-				purposes: [],
-				selectedVendorId: null,
-				vendorConsents: {},
 				legitimateInterests: {
 					gvl: null,
 					purposeLegitimateInterests: {},
 					vendorLegitimateInterests: { 755: false },
 				},
+				purposes: [],
+				selectedVendorId: null,
+				vendorConsents: {},
 				vendorData: restricted,
 			},
 		});
@@ -192,6 +192,7 @@ describe('Vue controls under a legitimate-interest restriction', () => {
 		});
 		await wrapper.get('[id^="inth-preference-item-trigger-"]').trigger('click');
 		for (const toggle of wrapper.findAll('button[aria-expanded="false"]')) {
+			// oxlint-disable-next-line no-await-in-loop -- each row expands after the one before re-renders
 			await toggle.trigger('click');
 		}
 		const pressed = wrapper

@@ -10,8 +10,6 @@
 
 import type { ConsentSnapshot } from '@inth/sdk/engine';
 
-import type { RuntimeConsentConfig } from '../kernel';
-
 /**
  * Key of the engine chunk in the client manifest the module adds at build
  * time (`preloadDeferredEngine` in `prefetch.ts`). A server render that

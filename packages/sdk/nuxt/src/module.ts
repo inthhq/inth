@@ -9,7 +9,6 @@ import {
 	readBuildEnvEntry,
 } from '@inth/sdk/build';
 import type { BuildEnvSource } from '@inth/sdk/build';
-import type { ConsentMode } from '@inth/sdk/modes';
 import { isIABConfigured } from '@inth/sdk/runtime';
 import { defaultConsentConfig } from '@inth/sdk/schema/config';
 import type { ConsentManifest } from '@inth/sdk/schema/types';
