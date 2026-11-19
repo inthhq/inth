@@ -137,7 +137,7 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertFalse(button("inth.first-layer.accept-all").exists)
         XCTAssertEqual(app.staticTexts["fixture.state.explicit-choice"].label, "recorded")
     }
-    /// The demo hosts the one-line `.inthConsent` modifier, so this is the default auto-present path.
+    /// The demo hosts the one-line `.inth` modifier, so this is the default auto-present path.
     func test22AutoPresentedPromptStaysClosedAfterAnAnswerAndAForeground() {
         launch()
         XCTAssertTrue(button("inth.first-layer.reject-all").waitForExistence(timeout: 10), "an owed prompt presents by itself")

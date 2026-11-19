@@ -20,7 +20,7 @@ public protocol ConsentHostCanvas: AnyObject {
 ///
 /// The prompt decides. ``configure(core:autoPresent:privacyPolicyURL:)`` attaches this driver to it
 /// with the runtime's `autoPresent`, and from then on the prompt opens an owed prompt by itself,
-/// once per owed prompt, exactly as it does under `inthConsent`. The driver only puts what the
+/// once per owed prompt, exactly as it does under `inth`. The driver only puts what the
 /// prompt opened on the ``ConsentHostCanvas`` and reports it: ``onPresented`` once a session is on
 /// screen, ``onUnavailable`` while an owed prompt has no window to show on yet, and one
 /// ``onOutcome`` per session, sent once its cover has animated away. An owed prompt that cannot

@@ -237,7 +237,7 @@ struct DemoRoot: View {
         if let prompt = session.prompt, let policyURL = session.policyURL {
             // Review inspection holds the prompt back with the opt-out until the reviewer asks for it.
             HostState(session: session, prompt: prompt)
-                .inthConsent(privacyPolicyURL: policyURL, theme: consentTheme, autoPresent: session.consentUIEnabled)
+                .inth(privacyPolicyURL: policyURL, theme: consentTheme, autoPresent: session.consentUIEnabled)
         } else {
             NavigationStack {
                 Form {

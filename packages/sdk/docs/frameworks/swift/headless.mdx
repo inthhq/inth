@@ -12,7 +12,7 @@ colour and motion are yours. The stock screens run on the same blocks.
 Link `InthCore`, `InthApple` and `InthConsentUI`. Install with
 `InthApple.install(_:)` during launch, using the same `InthAppleConfiguration`
 as the [quickstart](/docs/frameworks/swift/quickstart), and leave out its
-`.inthConsent` modifier. Your app owns the layout, the privacy-policy link and
+`.inth` modifier. Your app owns the layout, the privacy-policy link and
 a standing Privacy settings action.
 
 ## Gate content on a permission
@@ -258,7 +258,7 @@ delivery separately. A network failure does not reverse a stored withdrawal.
 
 Open `packages/swift/Examples/swiftui-consent` using its README, add
 `--headless` to the scheme's Run arguments, and launch it. This mode creates
-no `ConsentPresenter` and mounts no `.inthConsent` modifier. Its
+no `ConsentPresenter` and mounts no `.inth` modifier. Its
 `Sources/headless-preferences.swift` contains the complete form behind the
 snippets above, including readiness, restrictions, retry and reload handling.
 

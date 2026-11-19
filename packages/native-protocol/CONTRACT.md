@@ -422,8 +422,8 @@ The stock UI presents an owed prompt by itself. It is on by default on every
 platform, and each one offers the same opt-out:
 
     React Native   <ConsentProvider privacyPolicyURL="https://...">     autoPresent={false}
-    SwiftUI        view.inthConsent(configuration, privacyPolicyURL:)  autoPresent: false
-                   view.inthConsent(privacyPolicyURL:)                 (core already installed)
+    SwiftUI        view.inth(configuration, privacyPolicyURL:)  autoPresent: false
+                   view.inth(privacyPolicyURL:)                 (core already installed)
     UIKit          ConsentRootViewController(root:configuration:privacyPolicyURL:)
     Compose        InthConsent(privacyPolicyUrl = "https://...")       autoPresent = false
     Activity       activity.attachConsent("https://...")               autoPresent = false
@@ -595,7 +595,7 @@ follow the prompt, such as Apple's tracking request, attaches there. On iOS the
 React Native outcome is sent once the cover has finished animating away.
 
 The stock prompt sequences ATT through `trackingRequest` (`afterConsent` by
-default, `beforeConsent`, `manual`) on `<ConsentProvider>`, `.inthConsent(...)`
+default, `beforeConsent`, `manual`) on `<ConsentProvider>`, `.inth(...)`
 and `ConsentRootViewController`. It asks only when
 `NSUserTrackingUsageDescription` is present, marketing is not refused (a stored
 choice, or a `gpc` or `explicit-denial` restriction on marketing), the app is

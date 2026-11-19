@@ -602,7 +602,7 @@ describe("inth mobile setup in a mobile project", () => {
       "consentCategories = listOf(ConsentCategory.NECESSARY, ConsentCategory.MEASUREMENT),"
     );
     expect(steps).toContain(
-      `.inthConsent(\n        InthAppleConfiguration(\n            backendURL: "https://a.inth.app",`
+      `.inth(\n        InthAppleConfiguration(\n            backendURL: "https://a.inth.app",`
     );
     expect(steps).toContain(`privacyPolicyURL: URL(string: "${PRIVACY_URL}")!`);
     expect(steps).toContain("ConsentRootViewController(");

@@ -44,7 +44,7 @@ private struct ConsentRoot: View {
         // #region docs:swiftui-presenter title="Sources/swiftui-consent-app.swift"
         if let presenter = consent.presenter, let configuration {
             ConsentDashboard(consent: consent, configuration: configuration)
-                .inthConsent(presenter: presenter, privacyPolicyURL: configuration.privacyPolicyURL)
+                .inth(presenter: presenter, privacyPolicyURL: configuration.privacyPolicyURL)
         } else {
             ConsentDashboard(consent: consent, configuration: configuration)
         }

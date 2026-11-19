@@ -63,7 +63,7 @@ private struct StockRoot: View {
     var body: some View {
         Dashboard(core: core, openSettings: { ConsentPrompt.current?.presentPreferences() })
             // No App Tracking Transparency alert: it would cover the screen being captured.
-            .inthConsent(privacyPolicyURL: privacyPolicyURL, autoPresent: screen == .prompt, trackingRequest: .manual)
+            .inth(privacyPolicyURL: privacyPolicyURL, autoPresent: screen == .prompt, trackingRequest: .manual)
             .task {
                 guard screen != .prompt else { return }
                 // Settings open on the loaded policy, not on a placeholder.

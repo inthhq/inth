@@ -28,7 +28,7 @@ enum AppConsentTheme {
 private func brandedConsentRoot(configuration: InthAppleConfiguration, privacyPolicyURL: URL) -> some View {
     // #region docs:swift-themed-root title="MyApp.swift"
     ContentView()
-        .inthConsent(
+        .inth(
             configuration,
             privacyPolicyURL: privacyPolicyURL,
             theme: AppConsentTheme.value

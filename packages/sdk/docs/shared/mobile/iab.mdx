@@ -144,7 +144,7 @@ the prompt has closed, and only if the person granted marketing. Someone who
 refused marketing never sees it.
 
 Set the order with `trackingRequest` on `<ConsentProvider>` in React Native, or
-on `.inthConsent(...)` and `ConsentRootViewController` in Swift:
+on `.inth(...)` and `ConsentRootViewController` in Swift:
 
 | Value | What happens |
 | --- | --- |
@@ -207,7 +207,7 @@ How it behaves:
   controls, and Apple's alert is not one of them.
 - It is in force from the first render of `<ConsentProvider>`, before your own
   components' effects run. In Swift, a `presentPrompt()` call made before the
-  `.inthConsent` scene has attached, for example from a view's `onAppear`, waits
+  `.inth` scene has attached, for example from a view's `onAppear`, waits
   for that scene and follows its order.
 - If the provider unmounts while your app's own `presentConsentPrompt()` call
   waits, that call opens the prompt without Apple's alert.
@@ -242,7 +242,7 @@ in the Expo plugin) is the optional rich-text copy for that sheet.
 In the European Union Apple lets an app show its alert again one year after the
 person's previous answer, whichever way it went. It is off by default. Turn it
 on with `trackingReprompt` on `<ConsentProvider>` in React Native, or
-`trackingReprompt:` on `.inthConsent(...)` and `ConsentRootViewController` in
+`trackingReprompt:` on `.inth(...)` and `ConsentRootViewController` in
 Swift:
 
 | Value | What happens |
