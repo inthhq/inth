@@ -231,7 +231,7 @@ const verifyScaffold = async (
   const { data } = envelope.parse(JSON.parse(scaffold.stdout));
   assert.deepEqual(data.created, [
     ".env",
-    "c15t.config.ts",
+    "inth.config.ts",
     "next.config.ts",
     "app/layout.tsx",
   ]);
@@ -296,13 +296,13 @@ const verifyScaffold = async (
   assert.deepEqual(entries.toSorted(), [
     ".env",
     "app",
-    "c15t.config.ts",
+    "inth.config.ts",
     "next.config.ts",
     "package.json",
     "pnpm-lock.yaml",
   ]);
   await writeFile(
-    path.join(directory, "c15t.config.ts"),
+    path.join(directory, "inth.config.ts"),
     "// Custom consent configuration\n"
   );
   const conflict = run(

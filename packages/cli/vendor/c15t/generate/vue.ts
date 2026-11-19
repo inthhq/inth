@@ -24,7 +24,7 @@ const nuxtFiles = (options: BoilerplateOptions): Record<string, string> => {
 </template>
 `,
 		'nuxt.config.ts': `${offline ? "import { offline } from '@inth/nuxt';\n\n" : ''}export default defineNuxtConfig({
-${offline ? '\tc15t: { mode: offline() },\n' : ''}	compatibilityDate: '2026-07-04',
+${offline ? '\tinth: { mode: offline() },\n' : ''}	compatibilityDate: '2026-07-04',
 	modules: ['@inth/nuxt'],
 });
 `,
@@ -33,7 +33,7 @@ ${offline ? '\tc15t: { mode: offline() },\n' : ''}	compatibilityDate: '2026-07-0
 		files['app/app.config.ts'] = `${sortImports(scriptImports(options.scripts))}
 
 export default defineAppConfig({
-	c15t: {
+	inth: {
 ${scriptsProperty(options.scripts, '\t\t')}	},
 });
 `;
@@ -63,14 +63,14 @@ import { ConsentDialogLink, ConsentRoot } from '@inth/vue/vue-plugin';
 `,
 		'src/main.ts': `${sortImports([
 			...scriptImports(options.scripts),
-			`import { c15tVue, ${mode} } from '@inth/vue/vue-plugin';`,
+			`import { inthVue, ${mode} } from '@inth/vue/vue-plugin';`,
 			"import { createApp } from 'vue';",
 		])}
 
 import App from './App.vue';
 
 createApp(App)
-	.use(c15tVue, {
+	.use(inthVue, {
 		mode: ${mode}(),
 ${scriptsProperty(options.scripts, '\t\t')}	})
 	.mount('#app');

@@ -78,7 +78,7 @@ ${server ? "\toutput: 'server',\n" : ''}});
 /**
  * Generate the Astro quickstart for server output (`astro`, resolved per
  * request) or static output (`astro-static`, `hosted()`): `astro.config.mjs`,
- * `src/layouts/base.astro` and, with vendors, `src/c15t.client.ts`.
+ * `src/layouts/base.astro` and, with vendors, `src/inth.client.ts`.
  * @param options Output, mode and vendor selections.
  * @returns Files relative to the project root.
  */
@@ -92,13 +92,13 @@ export const generateAstroBoilerplate = (
 		'src/layouts/base.astro': layout,
 	};
 	if (options.scripts.length) {
-		files['src/c15t.client.ts'] = `${sortImports([
+		files['src/inth.client.ts'] = `${sortImports([
 			...scriptImports(options.scripts),
-			"import type { C15tClientOptionsExtension } from '@inth/astro';",
+			"import type { InthClientOptionsExtension } from '@inth/astro';",
 		])}
 
 export default {
-${scriptsProperty(options.scripts, '\t')}} satisfies C15tClientOptionsExtension;
+${scriptsProperty(options.scripts, '\t')}} satisfies InthClientOptionsExtension;
 `;
 	}
 	return {
@@ -115,7 +115,7 @@ ${scriptsProperty(options.scripts, '\t')}} satisfies C15tClientOptionsExtension;
 			server
 				? 'Server output resolves each visitor on the server and adds a consent route at /api/c15t. Keep your adapter if the project already has one.'
 				: 'Static output asks your backend for each visitor’s policy from the browser, so it needs no adapter.',
-			...vendorInstruction(options, 'src/c15t.client.ts'),
+			...vendorInstruction(options, 'src/inth.client.ts'),
 			...offlineInstruction(options),
 		],
 		merge: {},

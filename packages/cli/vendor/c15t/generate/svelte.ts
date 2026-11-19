@@ -117,9 +117,9 @@ declare global {
 
 export {};
 `,
-		'src/hooks.server.ts': `import { c15tHandle${offline ? ', offline' : ''} } from '@inth/svelte/kit';
+		'src/hooks.server.ts': `import { inthHandle${offline ? ', offline' : ''} } from '@inth/svelte/kit';
 
-export const handle = c15tHandle(${offline ? '{ mode: offline() }' : ''});
+export const handle = inthHandle(${offline ? '{ mode: offline() }' : ''});
 `,
 		'src/routes/+layout.server.ts':
 			"export { loadConsent as load } from '@inth/svelte/kit';\n",
