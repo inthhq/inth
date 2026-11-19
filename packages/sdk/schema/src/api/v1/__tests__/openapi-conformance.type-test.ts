@@ -228,14 +228,14 @@ type Found =
 	| WireDiff<V1ErrorCode, DocumentError['error']['code'], 'error codes'>;
 
 /**
- * Where the backend's document disagrees with the wire contract, or the
- * contract does not settle the field. Each entry is one field for the
- * backend to fix.
+ * Where the SDK and the backend's document differ and both stay as they are
+ * for now. Each entry says which side has to change.
  */
 type DocumentGaps =
-	// The SDK reads `sources` and nothing else from the registry. It loads no
-	// runtime `files`, does not refuse a loader for `refuseIfSet`, and reads
-	// `{ unavailable: true }` as a registry that lists no script.
+	// For the SDK to add. It reads `sources` and nothing else from the
+	// registry: it loads no runtime `files` and does not refuse a loader for
+	// `refuseIfSet`. With `{ unavailable: true }` it has no list, so every
+	// script loads from its own URL.
 	| 'registry list.files: only in document'
 	| 'registry list.sources: optional in SDK, required in document'
 	| 'registry sources.*.refuseIfSet: only in document'

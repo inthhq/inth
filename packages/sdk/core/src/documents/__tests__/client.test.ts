@@ -94,6 +94,13 @@ describe('getCurrent: GET /v1/documents/:type/current', () => {
 				}),
 		],
 		[
+			'a document whose hash is not sha256 hex',
+			() =>
+				json(200, {
+					document: { ...CURRENT.document, hash: 'sha256:abc' },
+				}),
+		],
+		[
 			'a document without isCurrent',
 			() =>
 				json(200, {
@@ -290,7 +297,12 @@ describe('recordAcceptances: POST /v1/documents/acceptances', () => {
 		[
 			'a hash that is not sha256 hex',
 			{
-				acceptances: [{ hash: HASH.toUpperCase(), type: 'terms_us' }],
+				acceptances: [
+					{
+						hash: `sha256:${HASH.slice(7).toUpperCase()}`,
+						type: 'terms_us',
+					},
+				],
 				idempotencyKey: KEY,
 				subjectId: SUBJECT,
 			},
