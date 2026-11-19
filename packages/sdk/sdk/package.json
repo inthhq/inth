@@ -274,6 +274,11 @@
 			"import": "./lib/core/dist/runtime/deferred-snapshot.js",
 			"default": "./lib/core/dist/runtime/deferred-snapshot.js"
 		},
+		"./runtime/documents": {
+			"types": "./lib/core/dist-types/runtime/documents.d.ts",
+			"import": "./lib/core/dist/runtime/documents.js",
+			"default": "./lib/core/dist/runtime/documents.js"
+		},
 		"./runtime/page-globals": {
 			"types": "./lib/core/dist-types/libs/page-globals.d.ts",
 			"import": "./lib/core/dist/libs/page-globals.js",

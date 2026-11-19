@@ -47,6 +47,7 @@ These docs describe Inth v3. Find your app's row in Choose your setup, then foll
 - [IAB GPP](./frameworks/svelte/gpp.md): Expose the IAB Global Privacy Platform API (__gpp) from a Svelte app with the provider's gpp option, so ad tech can read US state opt-outs and the TCF EU consent string.
 - [Headless](./frameworks/svelte/headless.md): Replace the Inth banner or preference dialog with your own Svelte markup while the provider keeps policy, storage and script loading.
 - [IAB TCF](./frameworks/svelte/iab.md): Turn on the IAB TCF 2.4 banner and preference center in a Svelte app with IABConsentBanner, IABConsentDialog and the provider's iab option.
+- [Legal documents](./frameworks/svelte/legal-documents.md): Check whether a visitor accepted the current terms of service or privacy policy, and record their acceptance, with getDocuments from @inth/svelte.
 - [Network blocker](./frameworks/svelte/network-blocker.md): Hold fetch and XMLHttpRequest calls to tracking domains in a Svelte app until their consent category is allowed, with the provider's networkBlocker option.
 - [Quickstart](./frameworks/svelte/quickstart.md): Add an Inth cookie banner, preference dialog and consent-gated scripts to a Svelte 5 app built with Vite, using Inth as the consent backend.
 - [Scripts](./frameworks/svelte/scripts.md): Load vendor scripts, iframes and network requests in a Svelte app only after the visitor allows their consent category, and stop them when consent is withdrawn.

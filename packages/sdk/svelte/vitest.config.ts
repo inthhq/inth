@@ -100,6 +100,10 @@ const workspaceAliases = [
 		replacement: resolve(__dirname, '../core/src/runtime/stand-in-kernel.ts'),
 	},
 	{
+		find: '@inth/sdk/runtime/documents',
+		replacement: resolve(__dirname, '../core/src/runtime/documents.ts'),
+	},
+	{
 		find: '@inth/sdk/runtime/storage-for',
 		replacement: resolve(__dirname, '../core/src/libs/storage-for.ts'),
 	},

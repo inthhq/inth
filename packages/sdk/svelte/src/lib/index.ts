@@ -83,6 +83,12 @@ export {
 	type HeadlessConsentSurfaceState,
 	type SvelteIABState,
 } from './context.svelte';
+export { getDocuments } from './documents';
+export type {
+	AcceptDocumentsOptions,
+	DocumentCheck,
+	RuntimeDocuments,
+} from '@inth/sdk/runtime/documents';
 export {
 	getEventDispatcher,
 	type EventDispatcher,

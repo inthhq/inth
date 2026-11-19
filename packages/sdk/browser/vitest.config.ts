@@ -255,6 +255,13 @@ export default mergeConfig(
 								),
 							},
 							{
+								find: '@inth/sdk-core/runtime/documents',
+								replacement: resolve(
+									__dirname,
+									'../core/src/runtime/documents.ts'
+								),
+							},
+							{
 								find: '@inth/sdk-core/runtime/deferred-snapshot',
 								replacement: resolve(
 									__dirname,

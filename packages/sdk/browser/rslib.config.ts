@@ -128,6 +128,10 @@ const scriptTagLib = function scriptTagLib(name: string, entry: string) {
 						/^\.\/create-runtime$/u,
 						'./create-runtime-static'
 					),
+					new rspack.NormalModuleReplacementPlugin(
+						/^@inth\/sdk-core\/runtime\/documents$/u,
+						fileURLToPath(new URL('./src/documents-script.ts', import.meta.url))
+					),
 					dialogModule(name),
 					// `inth.dialog.js` locks scrolling and traps focus with the
 					// functions of the bundle that loaded it (`ui/locks-shared.ts`).

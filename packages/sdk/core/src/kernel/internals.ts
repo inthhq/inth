@@ -54,6 +54,12 @@ export interface InternalKernel extends ConsentKernel {
 	 * notice acknowledgement that carries it clears the mark.
 	 */
 	markProvisionalSubject: (id: string | null) => void;
+	/**
+	 * Move the records from subject `from` to `to`, the canonical ID the
+	 * backend answered with, as a consent save's answer does. Does nothing
+	 * once the subject is no longer `from`.
+	 */
+	adoptSubject: (from: string, to: string) => Promise<void>;
 	/** The ID {@link markProvisionalSubject} marked, `null` for none. */
 	getProvisionalSubject: () => string | null;
 	/**

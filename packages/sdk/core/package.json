@@ -230,6 +230,11 @@
 			"import": "./dist/runtime/deferred-snapshot.js",
 			"default": "./dist/runtime/deferred-snapshot.js"
 		},
+		"./runtime/documents": {
+			"types": "./dist-types/runtime/documents.d.ts",
+			"import": "./dist/runtime/documents.js",
+			"default": "./dist/runtime/documents.js"
+		},
 		"./runtime/page-globals": {
 			"types": "./dist-types/libs/page-globals.d.ts",
 			"import": "./dist/libs/page-globals.js",

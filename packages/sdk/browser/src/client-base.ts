@@ -26,6 +26,7 @@ import type {
 	GPPModuleLoader,
 	RuntimeGPPOptions,
 } from '@inth/sdk-core/runtime';
+import { createRuntimeDocuments } from '@inth/sdk-core/runtime/documents';
 import {
 	saveConsentSurface,
 	saveIABConsentSurface,
@@ -497,6 +498,7 @@ export const createConsentClientWith = function createConsentClientWith(
 			disposers.length = 0;
 			runtime.dispose();
 		},
+		documents: createRuntimeDocuments(() => runtime),
 		getDeclaredVendors() {
 			const snapshot = kernel.getSnapshot();
 			return snapshot.model === 'iab'

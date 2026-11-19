@@ -115,6 +115,10 @@ export default mergeConfig(
 					resolve(__dirname, '../core/src/libs/storage-for.ts'),
 				],
 				[
+					'@inth/sdk/runtime/documents',
+					resolve(__dirname, '../core/src/runtime/documents.ts'),
+				],
+				[
 					'@inth/sdk/runtime/deferred-snapshot',
 					resolve(__dirname, '../core/src/runtime/deferred-snapshot.ts'),
 				],

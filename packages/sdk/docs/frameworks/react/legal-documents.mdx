@@ -1,0 +1,90 @@
+---
+title: Legal documents
+description: Check whether a visitor accepted the current terms of service or privacy policy, and record their acceptance, with useDocuments from @inth/react.
+group: frameworks
+---
+
+## Check and accept on a sign-up page
+
+`useDocuments()` returns `check` and `accept`. They use the backend, subject
+ID and property of the nearest `InthProvider`, so call the hook in a
+component inside it.
+
+```tsx title="src/sign-up-form.tsx"
+import { useDocuments } from '@inth/react';
+import type { DocumentCheck } from '@inth/react';
+import { useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
+
+export function SignUpForm() {
+	const { check, accept } = useDocuments();
+	const [terms, setTerms] = useState<DocumentCheck | null>(null);
+
+	useEffect(() => {
+		void check('terms_us').then(setTerms);
+	}, [check]);
+
+	const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+		if (terms && !terms.accepted) {
+			await accept({ type: 'terms_us', hash: terms.document.hash });
+		}
+		// Create the account.
+	};
+
+	return (
+		<form onSubmit={onSubmit}>
+			{terms && !terms.accepted ? (
+				<label>
+					<input type="checkbox" required /> I accept the{' '}
+					<a href="/terms">terms of service</a> (version{' '}
+					{terms.document.version})
+				</label>
+			) : null}
+			<button type="submit">Sign up</button>
+		</form>
+	);
+}
+```
+
+## What `check` and `accept` do
+
+`check(type)` reads the release of `type` in force from
+`GET /v1/documents/{type}/current` and resolves with `{ document, accepted }`.
+`document` carries the `version`, `hash`, `effectiveDate` and
+`requiresAcceptance` of that release. `accepted` is `true` when this browser
+accepted the same release, or accepted an earlier release of the type and the
+current one has `requiresAcceptance: false`. A type with no release in force
+rejects with an `InthApiError` whose `code` is `not_found`.
+
+`accept(documents, options?)` takes one `{ type, hash }` or an array of them,
+with the `hash` that `check` gave. It sends one
+`POST /v1/documents/acceptances` for the visitor's subject ID, with the
+property the consent records use, and resolves with what the backend
+recorded. If the visitor has no subject ID yet, `accept` makes one and keeps
+it, so their consent and acceptances share a subject. On failure it rejects
+with an `InthApiError` and retries nothing. To retry, pass the same key:
+
+```ts
+const idempotencyKey = crypto.randomUUID();
+await accept({ type: 'terms_us', hash }, { idempotencyKey });
+```
+
+An app that knows who the person is can pass `externalId` and
+`identityProvider` with an `identityToken` your server signed.
+
+The backend has no route that tells a browser what it accepted, so this
+browser stores each acceptance it recorded (type, hash, version and
+`acceptedAt`) in `localStorage` under `inth-document-acceptances:v1`. Another
+browser, or this one after its storage is cleared, reports `accepted: false`
+until the visitor accepts again. Where storage is blocked, `check` reports
+`accepted: false` and `accept` still records.
+
+## Record from your server when you know the person
+
+A browser acceptance belongs to the device. When your server knows who the
+person is, for example after sign-up, record the acceptance from the server
+with the project's secret key and the person's `externalId` instead.
+
+The code behind `check` and `accept` loads the first time you call one of
+them, so a page that never calls them does not download it.

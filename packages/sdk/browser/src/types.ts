@@ -32,6 +32,7 @@ import type {
 	ConsentRuntimeOptions,
 	RuntimeNetworkBlockerOptions,
 } from '@inth/sdk-core/runtime';
+import type { RuntimeDocuments } from '@inth/sdk-core/runtime/documents';
 import type { ConsentTesting } from '@inth/sdk-core/testing';
 import type { ConsentDialogTriggerVisibility } from '@inth/sdk-schema/config';
 import type { ConsentManifest } from '@inth/sdk-schema/types';
@@ -548,6 +549,13 @@ export interface ConsentClient {
 	setOverrides: (overrides: KernelOverrides) => void;
 	/** Associate the consent record with an external identity. */
 	identify: (user: KernelUser) => Promise<void>;
+	/**
+	 * Legal documents for this visitor: `check(type)` reads the release in
+	 * force and whether this browser accepted it, and `accept(documents)`
+	 * records an acceptance. Their code loads on the first call. In the
+	 * script-tag files, which cannot load code on demand, both reject.
+	 */
+	readonly documents: RuntimeDocuments;
 	/**
 	 * Listen for a client event.
 	 *

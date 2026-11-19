@@ -49,6 +49,7 @@ These docs describe Inth v3. Find your app's row in Choose your setup, then foll
 - [Headless](./docs/frameworks/next/headless.md): Build a custom consent banner or embed gate in Next.js with the @inth/nextjs/headless hooks inside your existing InthProvider.
 - [Hooks](./docs/frameworks/next/hooks.md): Gate features and save consent choices in Next.js Client Components with the focused hooks exported from @inth/nextjs.
 - [IAB TCF](./docs/frameworks/next/iab.md): Mount the IAB TCF banner and dialog inside a Next.js InthProvider and configure the CMP ID, policy and vendor data.
+- [Legal documents](./docs/frameworks/next/legal-documents.md): Check whether a visitor accepted the current terms of service or privacy policy, and record their acceptance, with useDocuments from @inth/nextjs.
 - [Network blocker](./docs/frameworks/next/network-blocker.md): Hold fetch and XMLHttpRequest calls in a Next.js app until their consent category is allowed, with networkBlocker rules in inth.config.ts.
 - [Performance](./docs/frameworks/next/optimization.md): Bundle policy at build time to avoid manifest fetch latency, use runtime caching when policies must refresh without a rebuild, and optionally keep browser consent requests on your origin.
 - [Pages Router](./docs/frameworks/next/pages-router.md): Set up Inth in the Next.js Pages Router with Inth, a build-time policy manifest, getServerSideProps and consent-gated scripts.

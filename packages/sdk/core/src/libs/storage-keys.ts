@@ -36,6 +36,13 @@ export const C15T_SUBJECT_REASSIGNMENTS_STORAGE_KEY =
 	'c15t-v3-subject-reassignments:v1';
 
 /**
+ * The legal documents this browser accepted, by type: the hash, version
+ * and `acceptedAt` the backend recorded for the latest acceptance of each.
+ * The backend has no route that tells a browser what it accepted.
+ */
+export const DOCUMENT_ACCEPTANCES_STORAGE_KEY = 'inth-document-acceptances:v1';
+
+/**
  * The banner-experiment arm this browser was shown, as `{ id, variant }`.
  * Written only once the banner has rendered that arm.
  */

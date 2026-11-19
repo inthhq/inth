@@ -19,6 +19,7 @@ import { getRsdoctorPlugins } from '../shared/rslib-utils';
  * language it needs.
  */
 const selfContainedEntries = {
+	'runtime/lazy-documents': './src/runtime/lazy-documents.ts',
 	'runtime/lazy-hosted': './src/runtime/lazy-hosted.ts',
 	'runtime/lazy-manifest-browser': './src/runtime/lazy-manifest-browser.ts',
 	'runtime/lazy-offline': './src/runtime/lazy-offline.ts',

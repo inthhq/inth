@@ -496,6 +496,8 @@ const reactRuntimeModules = function reactRuntimeModules(
  * with `false`, `local()` rejects a policy pack that uses `model: 'iab'`
  * and no banner shows. The context keeps its other members, live getters
  * included, through its prototype.
+ * The wrapper carries the mode's data, as `@inth/sdk/runtime/documents`
+ * reads its backend from it.
  *
  * One wrapper per mode: `update()` loads its comparison when any option is
  * a new value, so a fresh wrapper on every render would load it for every
@@ -572,7 +574,7 @@ const withTreeIAB = function withTreeIAB(
 					mode(
 						Object.create(context, { iabEnabled: { value: undefined } })
 					))()),
-			{ kind: mode.kind }
+			mode
 		);
 		treeIABModes.set(mode, wrapped);
 	}

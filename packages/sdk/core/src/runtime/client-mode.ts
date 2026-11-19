@@ -322,7 +322,10 @@ export const lazyHosted = function lazyHosted(
 				}
 			);
 		},
-		{ kind: options.kind ?? ('hosted' as const) }
+		{
+			kind: options.kind ?? ('hosted' as const),
+			projectUrl: options.projectUrl,
+		}
 	);
 };
 
@@ -491,6 +494,7 @@ export const lazyBrowserManifest = function lazyBrowserManifest(
 				}
 			);
 		},
+		options,
 		{ kind: 'manifest' as const }
 	);
 };

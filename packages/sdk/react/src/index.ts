@@ -112,6 +112,11 @@ export type {
 	ExternalRuntimeProviderProps,
 	OwnedRuntimeProviderProps,
 } from './provider';
+export type {
+	AcceptDocumentsOptions,
+	DocumentCheck,
+	RuntimeDocuments,
+} from '@inth/sdk/runtime/documents';
 export type { ConsentThemeProps } from './consent-theme';
 export type { Theme } from './types/theme';
 export type { ConsentBannerCompoundComponent } from './components/prompt';
@@ -137,6 +142,7 @@ export * from './index-parts/consent-dialog-link';
 export * from './index-parts/consent-dialog-trigger';
 export * from './index-parts/consent-gate';
 export * from './index-parts/frame';
+export * from './index-parts/documents';
 export * from './index-parts/draft';
 export * from './index-parts/event-dispatcher';
 export * from './index-parts/translations';

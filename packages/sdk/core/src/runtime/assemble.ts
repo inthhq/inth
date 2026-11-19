@@ -223,6 +223,7 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 			}
 		},
 		kernel,
+		mode,
 		processIframes() {
 			iframeBlocker?.processAllIframes();
 		},

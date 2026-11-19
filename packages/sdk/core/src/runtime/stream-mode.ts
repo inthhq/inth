@@ -87,7 +87,9 @@ export const createStreamedMode = function createStreamedMode(
 			},
 		};
 	};
-	return Object.assign(factory, { kind: mode.kind });
+	// The mode's data too: `kind`, and the backend that
+	// `@inth/sdk/runtime/documents` reads.
+	return Object.assign(factory, mode);
 };
 
 /**

@@ -82,7 +82,11 @@ describe('clientMode()', () => {
 				projectUrl: 'https://backend.example',
 				routePrefix: '/api/inth',
 			}),
-		}).toEqual({ kind: 'manifest', type: 'manifest' });
+		}).toEqual({
+			kind: 'manifest',
+			projectUrl: 'https://backend.example',
+			type: 'manifest',
+		});
 	});
 
 	test('hosted() asks the backend /v1/consent/init', async () => {
@@ -101,8 +105,9 @@ describe('clientMode()', () => {
 	});
 
 	test('carries the mode data', () => {
-		expect({ ...clientMode(manifest(), { projectUrl: '' }) }).toEqual({
+		expect({ ...clientMode(manifest(), { projectUrl: '/api/inth' }) }).toEqual({
 			kind: 'manifest',
+			projectUrl: '/api/inth',
 			type: 'manifest',
 		});
 		expect(

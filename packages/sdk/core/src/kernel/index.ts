@@ -154,6 +154,7 @@ export const createKernel = function createKernel(
 
 	return {
 		adoptInit: lifecycle.adopt,
+		adoptSubject: outbox.adoptSubject,
 		commands: {
 			dismissNotice: choice.dismissNotice,
 			identify: records.identify,

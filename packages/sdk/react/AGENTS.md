@@ -42,6 +42,7 @@ These docs describe Inth v3. Find your app's row in Choose your setup, then foll
 - [Headless](./docs/frameworks/react/headless.md): Build a custom consent banner or embed gate in React with the @inth/react/headless hooks inside your InthProvider.
 - [Hooks](./docs/frameworks/react/hooks.md): Gate features and save consent choices in React components with the focused hooks exported from @inth/react.
 - [IAB TCF](./docs/frameworks/react/iab.md): Mount the IAB TCF banner and dialog inside a React InthProvider and configure the CMP ID, policy and vendor data.
+- [Legal documents](./docs/frameworks/react/legal-documents.md): Check whether a visitor accepted the current terms of service or privacy policy, and record their acceptance, with useDocuments from @inth/react.
 - [Network blocker](./docs/frameworks/react/network-blocker.md): Hold fetch and XMLHttpRequest calls in a React app until their consent category is allowed, with networkBlocker rules in the InthProvider options.
 - [Quickstart](./docs/frameworks/react/quickstart.md): Add a consent banner, preferences dialog and consent-gated scripts to a React single-page app built with Vite, using Inth as the consent backend.
 - [Rendering and deployment](./docs/frameworks/react/rendering.md): How Inth resolves consent in client-rendered React apps, React Router framework mode, Remix and other server-rendered React apps without an Inth adapter.
