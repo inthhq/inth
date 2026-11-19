@@ -6,7 +6,6 @@ import type {
 
 import { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
 import type { ExplicitChoice } from '../../consent-record/types';
-import { createIdempotencyKey } from '../../libs/subject-uuid';
 import type { SavePayload } from '../../types';
 import type { DecisionAssertion } from '../decision-inputs';
 
@@ -91,6 +90,13 @@ export const buildV1ConsentRecordBody = function buildV1ConsentRecordBody(
 	payload: SavePayload,
 	property: string
 ): V1ConsentRecordBody {
+	if (!payload.idempotencyKey) {
+		// A key made here would differ on every retry, so the backend would
+		// record each retry as a new choice.
+		throw new TypeError(
+			'Inth transport: a save needs an idempotencyKey. Make one with createIdempotencyKey() when the visitor acts, and send it unchanged on every retry.'
+		);
+	}
 	const answer = buildV1Answer(payload.choice);
 	const confirmed = OPTIONAL_CONSENT_CATEGORIES.filter(
 		(category) =>
@@ -110,7 +116,7 @@ export const buildV1ConsentRecordBody = function buildV1ConsentRecordBody(
 		confirmed,
 		consentAction: payload.consentAction,
 		givenAt,
-		idempotencyKey: payload.idempotencyKey ?? createIdempotencyKey(),
+		idempotencyKey: payload.idempotencyKey,
 		property,
 		subjectId: payload.subjectId,
 	};

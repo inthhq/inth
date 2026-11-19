@@ -14,7 +14,6 @@ import {
 } from '../../save-rejection';
 import { InthApiError, isInthApiError } from '../error';
 import { createV1RecordTransport } from '../records';
-import { isUuidV7 } from '../routes';
 import { InthApiSaveRejectedError } from '../save-rejected';
 import {
 	ACTION_AT,
@@ -38,6 +37,15 @@ const transportWith = (fetch: typeof globalThis.fetch, property?: string) =>
 	});
 
 describe('save: POST /v1/consent/records', () => {
+	test('refuses a save without an idempotency key, and sends nothing', async () => {
+		const { calls, fetch } = stubFetch(() => json(200, {}));
+
+		await expect(
+			transportWith(fetch).save(savePayload({ idempotencyKey: undefined }))
+		).rejects.toThrow(/createIdempotencyKey\(\)/u);
+		expect(calls).toHaveLength(0);
+	});
+
 	test('sends the complete answer, the confirmed categories and the key', async () => {
 		const { calls, fetch } = stubFetch(() =>
 			json(200, { recordId: RECORD, subjectId: SUBJECT })
@@ -192,16 +200,6 @@ describe('save: POST /v1/consent/records', () => {
 			grants: { 'vendor-a': true },
 			version: 1,
 		});
-	});
-
-	test('a payload without a key gets one', async () => {
-		const { calls, fetch } = stubFetch(() =>
-			json(200, { recordId: RECORD, subjectId: SUBJECT })
-		);
-
-		await transportWith(fetch).save(savePayload({ idempotencyKey: undefined }));
-
-		expect(isUuidV7(String(bodyAt(calls, 0).idempotencyKey))).toBe(true);
 	});
 
 	test('sends the property without a trailing dot', async () => {
