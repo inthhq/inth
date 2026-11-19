@@ -104,7 +104,7 @@ describe('init: GET /v1/consent/init', () => {
 		});
 	});
 
-	test('a server caller forwards the init headers under their /v1 names', async () => {
+	test('a server caller forwards only the init headers', async () => {
 		const { calls, fetch } = stubFetch(() => json(200, INIT_OUTPUT));
 		const transport = createV1HostedTransport({
 			fetch,
@@ -112,8 +112,8 @@ describe('init: GET /v1/consent/init', () => {
 				'Accept-Language': 'de',
 				'cf-ipcountry': 'FR',
 				cookie: 'session=1',
-				'x-c15t-country': 'DE',
-				'x-c15t-gpc': '1',
+				'x-inth-country': 'DE',
+				'x-inth-gpc': '1',
 				'x-inth-region': 'BY',
 			},
 			projectUrl: PROJECT_URL,

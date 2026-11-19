@@ -38,12 +38,7 @@ import type { TransportInitResponse } from '../init-output';
 import { readApiError } from './error';
 import { createV1RecordTransport } from './records';
 import type { V1RecordTransport, V1RecordTransportOptions } from './records';
-import {
-	resolveV1Fetch,
-	toV1Headers,
-	trimTrailingSlash,
-	V1_ROUTES,
-} from './routes';
+import { resolveV1Fetch, trimTrailingSlash, V1_ROUTES } from './routes';
 import {
 	reportV1ConsentSession,
 	sendsV1ConsentSessionReport,
@@ -78,7 +73,7 @@ export interface V1ManifestTransportOptions extends V1RecordTransportOptions {
 	manifestUrl?: string;
 	/** The manifest itself. When set, nothing is fetched for it. */
 	snapshot?: ConsentManifest;
-	/** Request headers for the manifest fetch, sent under their `/v1` names. */
+	/** Request headers for the manifest fetch. */
 	headers?: Record<string, string>;
 	/** Decision inputs from the visitor's request: geo, language, GPC. */
 	inputs?: ResolveInitFromManifestInputs;
@@ -168,10 +163,7 @@ export const createV1ManifestTransport = function createV1ManifestTransport(
 		async function fetchManifest(): Promise<ConsentManifest> {
 			const response = await fetchImpl(manifestUrl, {
 				credentials: options.credentials,
-				headers: toV1Headers({
-					accept: 'application/json',
-					...options.headers,
-				}),
+				headers: { accept: 'application/json', ...options.headers },
 				method: 'GET',
 			});
 			if (!response.ok) {

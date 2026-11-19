@@ -70,23 +70,6 @@ describe('GET /v1/consent/manifest', () => {
 		expect(first.location).toEqual({ countryCode: 'DE', regionCode: null });
 	});
 
-	test('sends caller headers under their /v1 names', async () => {
-		const { calls, fetch } = stubFetch(() => json(200, MANIFEST));
-		const transport = createV1ManifestTransport({
-			fetch,
-			headers: { 'x-c15t-country': 'DE', 'x-tenant': 'acme' },
-			projectUrl: PROJECT_URL,
-		});
-
-		await transport.init({ overrides: { country: 'DE' }, user: null });
-
-		expect(calls[0]?.headers).toEqual({
-			accept: 'application/json',
-			'x-inth-country': 'DE',
-			'x-tenant': 'acme',
-		});
-	});
-
 	test('a failed fetch throws the code and request ID, and the next init fetches again', async () => {
 		const { calls, fetch } = stubFetch(
 			() => v1Error(503, 'server_error', 'req_manifest'),

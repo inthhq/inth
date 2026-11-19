@@ -5,6 +5,7 @@
  */
 import {
 	buildConsentSessionReport,
+	CONSENT_EXPERIMENT_HEADER,
 	INIT_EXPERIMENT_PARAM,
 	parseExperimentHeader,
 	readSessionJourney,
@@ -20,12 +21,7 @@ import {
 	resolveSessionReportProjectUrl,
 } from '../../libs/session-report';
 import type { SessionReportHeaders } from '../../libs/session-report';
-import {
-	toProperty,
-	toV1Headers,
-	V1_EXPERIMENT_HEADER,
-	V1_ROUTES,
-} from './routes';
+import { toProperty, V1_ROUTES } from './routes';
 
 /** How long a report may take before it is abandoned. */
 const REPORT_TIMEOUT_MS = 3000;
@@ -83,7 +79,7 @@ const readExperiment = function readExperiment(
 	headers: SessionReportHeaders | undefined,
 	url: string | URL | undefined
 ): string | undefined {
-	const header = readHeader(headers, V1_EXPERIMENT_HEADER);
+	const header = readHeader(headers, CONSENT_EXPERIMENT_HEADER);
 	if (header || url === undefined) {
 		return header;
 	}
@@ -175,7 +171,7 @@ export const reportV1ConsentSession = function reportV1ConsentSession(
 				body: JSON.stringify(body),
 				headers: {
 					'content-type': 'application/json',
-					...toV1Headers(forwardSessionReportHeaders(options.headers)),
+					...forwardSessionReportHeaders(options.headers),
 				},
 				method: 'POST',
 				signal:
