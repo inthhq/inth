@@ -81,6 +81,7 @@ export {
 	type ConsentRequestHeaderInputs,
 	consentInputsToOverrides,
 	extractConsentRequestInputs,
+	getRegionFromHeaders,
 	GPC_HEADERS,
 	parseGlobalPrivacyControl,
 	REGION_HEADERS,

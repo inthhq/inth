@@ -1,11 +1,36 @@
 import { describe, expect, it } from 'vitest';
 
+import { getRegionFromHeaders } from '../index';
 import {
 	consentInputsToOverrides,
 	extractConsentRequestInputs,
 	parseGlobalPrivacyControl,
 	CONSENT_REQUEST_HEADER_NAMES,
 } from './geo-headers';
+
+describe('getRegionFromHeaders, kept for backend call sites', () => {
+	it('reads x-c15t-country and x-c15t-region', () => {
+		expect(
+			getRegionFromHeaders({
+				'x-c15t-country': 'DE',
+				'x-c15t-region': 'BE',
+			})
+		).toEqual({ country: 'DE', region: 'BE' });
+	});
+
+	it('prioritizes x-c15t-country over cf-ipcountry', () => {
+		expect(
+			getRegionFromHeaders({ 'cf-ipcountry': 'FR', 'x-c15t-country': 'DE' })
+		).toEqual({ country: 'DE' });
+		expect(getRegionFromHeaders({ 'cf-ipcountry': 'FR' })).toEqual({
+			country: 'FR',
+		});
+	});
+
+	it('returns an empty object when no geo headers are present', () => {
+		expect(getRegionFromHeaders({})).toEqual({});
+	});
+});
 
 describe('extractConsentRequestInputs', () => {
 	it('x-c15t-* overrides always beat infrastructure headers', () => {

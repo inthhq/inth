@@ -130,6 +130,26 @@ export const extractConsentRequestInputs = function extractConsentRequestInputs(
 };
 
 /**
+ * Resolves country and region from common geo IP headers.
+ *
+ * @deprecated Use {@link extractConsentRequestInputs}: same precedence,
+ * plus language and GPC. Kept for the backend's existing call sites.
+ */
+export const getRegionFromHeaders = function getRegionFromHeaders(
+	headers: Record<string, string | undefined>
+): {
+	region?: string;
+	country?: string;
+} {
+	const country = pickHeader(headers, COUNTRY_HEADERS);
+	const region = pickHeader(headers, REGION_HEADERS);
+	return {
+		...(country && { country }),
+		...(region && { region }),
+	};
+};
+
+/**
  * Inputs → kernel-overrides record, dropping absent fields. Shared by the
  * server helpers that seed `KernelConfig.initialOverrides`.
  */
