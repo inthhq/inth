@@ -480,7 +480,7 @@ describe('prefetch utilities', () => {
 		const early = () =>
 			(window as Window & { __inthExperiment?: unknown }).__inthExperiment;
 		const storeArm = (arm: string, id = 'banner-shape') =>
-			localStorage.setItem('inth-experiment-v1', JSON.stringify({ arm, id }));
+			localStorage.setItem('c15t-experiment-v1', JSON.stringify({ arm, id }));
 		const resolved = async (projectUrl: string) =>
 			(await primePrefetchedInitialData({ projectUrl }))?.metadata?.experiment;
 
@@ -498,7 +498,7 @@ describe('prefetch utilities', () => {
 		});
 
 		it('reads the arm from the cookie when localStorage has none', () => {
-			document.cookie = `inth-experiment-v1=${encodeURIComponent(
+			document.cookie = `c15t-experiment-v1=${encodeURIComponent(
 				JSON.stringify({ arm: 'bar', id: 'banner-shape' })
 			)}; path=/`;
 			try {
@@ -509,7 +509,7 @@ describe('prefetch utilities', () => {
 				);
 				expect(sentArm(fetch)?.arm).toBe('bar');
 			} finally {
-				document.cookie = 'inth-experiment-v1=; max-age=0; path=/';
+				document.cookie = 'c15t-experiment-v1=; max-age=0; path=/';
 			}
 		});
 

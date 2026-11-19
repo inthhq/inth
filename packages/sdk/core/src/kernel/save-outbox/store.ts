@@ -27,7 +27,7 @@ import type { PendingSaveEntry } from './supersession';
  * the storage keys, so tabs on builds that store under other keys still
  * take turns.
  */
-const OUTBOX_LOCK_NAME = 'inth-v3-pending-consent-saves:v1';
+const OUTBOX_LOCK_NAME = 'c15t-v3-pending-consent-saves:v1';
 
 /** The lists a store keeps. */
 export type OutboxSlot = 'saves' | 'reassignments';
@@ -141,8 +141,8 @@ const SLOT_KEYS: Record<OutboxSlot, string> = {
 
 /**
  * The outbox store every tab of an origin shares: JSON arrays in
- * localStorage under `inth-v3-pending-consent-saves:v1` and
- * `inth-v3-subject-reassignments:v1`, the keys earlier releases wrote, so
+ * localStorage under `c15t-v3-pending-consent-saves:v1` and
+ * `c15t-v3-subject-reassignments:v1`, the keys earlier releases wrote, so
  * saves a visitor queued before an upgrade still replay.
  *
  * Every transaction holds one Web Lock, so two tabs cannot overwrite each

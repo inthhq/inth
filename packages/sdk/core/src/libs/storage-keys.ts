@@ -10,7 +10,7 @@ export const STORAGE_KEY = 'privacy-consent-storage';
 export const C15T_STORAGE_KEY = 'c15t';
 
 /** Failed v3 consent saves waiting for a backend replay. */
-export const PENDING_SAVES_STORAGE_KEY = 'inth-v3-pending-consent-saves:v1';
+export const PENDING_SAVES_STORAGE_KEY = 'c15t-v3-pending-consent-saves:v1';
 
 /**
  * Subject ids the backend refused as another tenant's, each with the id this
@@ -18,13 +18,13 @@ export const PENDING_SAVES_STORAGE_KEY = 'inth-v3-pending-consent-saves:v1';
  * queued saves.
  */
 export const SUBJECT_REASSIGNMENTS_STORAGE_KEY =
-	'inth-v3-subject-reassignments:v1';
+	'c15t-v3-subject-reassignments:v1';
 
 /**
  * The banner-experiment arm this browser was shown, as `{ id, variant }`.
  * Written only once the banner has rendered that arm.
  */
-export const EXPERIMENT_STORAGE_KEY = 'inth-experiment-v1';
+export const EXPERIMENT_STORAGE_KEY = 'c15t-experiment-v1';
 
 /**
  * The consent journey id a `journey: 'tab'` runtime keeps in
