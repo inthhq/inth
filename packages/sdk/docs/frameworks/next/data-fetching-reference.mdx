@@ -348,6 +348,12 @@ catch-all route, such as `app/api/inth/[...inth]/route.ts`. `GET` answers
 forwards the other consent paths to the backend. Everything defaults to
 `inth.config.ts` and the snapshot `withConsentManifest` downloaded.
 
+An app that mounts one file per route instead of a catch-all must move them
+under `v1/consent/`, or the browser's requests answer 404:
+`app/api/inth/init/route.ts` becomes `app/api/inth/v1/consent/init/route.ts`,
+and `app/api/inth/manifest/route.ts` becomes
+`app/api/inth/v1/consent/manifest/route.ts`. A catch-all route needs no change.
+
 | Option | Default | Behavior |
 | --- | --- | --- |
 | `config` | `inth.config.ts` | The config to use instead of the file. |

@@ -158,11 +158,17 @@ reads the snapshot, backend URL and mode `inthHandle()` stored on
 `event.locals.inth`, so you set them once, on the handle. Options you pass to
 the route win.
 
+An app that mounts one `+server.ts` per route instead of a catch-all must move
+them under `v1/consent/`, or the browser's requests answer 404:
+`src/routes/api/inth/init/+server.ts` becomes
+`src/routes/api/inth/v1/consent/init/+server.ts`, and the same for `manifest`.
+A catch-all route needs no change.
+
 <include src="../../shared/examples/sveltekit/route-handlers.mdx" />
 
 | Returned | Serves |
 | --- | --- |
-| `GET` | `init` below the rest parameter: the visitor's resolved policy, like the backend's `/v1/consent/init`, with `Cache-Control: private, no-store`. Under an IAB policy it also serves the Global Vendor List. `manifest`: the manifest, with the backend's `Cache-Control` and `ETag`, answering `If-None-Match` with `304`. Any other path is forwarded with `proxy` on and answers `404` without it. |
+| `GET` | `v1/consent/init` below the rest parameter: the visitor's resolved policy, like the backend's `/v1/consent/init`, with `Cache-Control: private, no-store`. Under an IAB policy it also serves the Global Vendor List. `v1/consent/manifest`: the manifest, with the backend's `Cache-Control` and `ETag`, answering `If-None-Match` with `304`. Any other path is forwarded with `proxy` on and answers `404` without it. |
 
 With `proxy` on, it also returns `POST`, `PATCH`, `PUT`, `DELETE` and
 `OPTIONS`, which forward writes to the backend.
