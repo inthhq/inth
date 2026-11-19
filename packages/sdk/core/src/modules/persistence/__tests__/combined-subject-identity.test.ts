@@ -509,7 +509,7 @@ test.each(
 		);
 		expect(stored.choice).toBeNull();
 		expect(stored.noticeDismissal).toBeNull();
-		expect(stored.records?.subject ?? null).toBeNull();
+		expect(stored.subject ?? null).toBeNull();
 		expect(storedSid(storageConfig)).toEqual({ cookie: null, local: null });
 		expect(everythingStored()).not.toContain('account-1');
 		expect(everythingStored()).not.toContain(subjectId);

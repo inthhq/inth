@@ -120,7 +120,7 @@ describe('resolveSurfaceTranslations', () => {
 			cookieBanner: { title: 'Hallo' },
 		};
 		const t = resolveSurfaceTranslations({
-			translations: { language: 'de', translations: bundle },
+			translations: { translations: bundle },
 		});
 		expect(t.cookieBanner.title).toBe('Hallo');
 		expect(t.cookieBanner.description).toBe(en.cookieBanner.description);
@@ -131,7 +131,7 @@ describe('resolveSurfaceTranslations', () => {
 		);
 		expect(
 			resolveSurfaceTranslations({
-				translations: { language: 'de', translations: bundle },
+				translations: { translations: bundle },
 			})
 		).toBe(t);
 	});

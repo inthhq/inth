@@ -36,6 +36,8 @@ test('the server transport sends no save to a manifest asset', async () => {
 		},
 		manifestUrl: 'https://cdn.example.com/policy.json',
 	});
-	await expect(transport.identify({ id: 'user-1' }, 'sub_1')).rejects.toThrow();
+	await expect(
+		transport.identify({ externalId: 'user-1' }, 'sub_1')
+	).rejects.toThrow();
 	expect(requests.some((url) => url.includes('policy.json/'))).toBe(false);
 });

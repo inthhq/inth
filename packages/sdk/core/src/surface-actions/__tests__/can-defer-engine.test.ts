@@ -12,6 +12,7 @@ import {
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { createKernel } from '../../kernel/index';
 import { createMemoryOutboxStore } from '../../kernel/save-outbox/store';
+import type { Script } from '../../libs/script-loader/types';
 import type { ConsentSnapshot } from '../../types';
 import { canDeferEngine } from '../defer-engine';
 import { awaitsChoice } from '../plain-scripts';
@@ -59,12 +60,12 @@ describe('canDeferEngine', () => {
 
 	test('a necessary script waits unless the server starts it', () => {
 		const snapshot = asking();
-		const started = {
+		const started: Script = {
 			category: 'necessary',
 			id: 'started',
-			serverStart: true,
+			serverStart: () => undefined,
 			src: '/n.js',
-		} as const;
+		};
 		expect(canDeferEngine(snapshot, { scripts: [started] }, NOW)).toBe(true);
 		expect(
 			canDeferEngine(
@@ -76,7 +77,7 @@ describe('canDeferEngine', () => {
 		expect(
 			canDeferEngine(
 				snapshot,
-				{ scripts: [{ ...started, serverStart: false }] },
+				{ scripts: [{ ...started, serverStart: undefined }] },
 				NOW
 			)
 		).toBe(false);

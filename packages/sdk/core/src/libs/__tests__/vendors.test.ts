@@ -25,7 +25,7 @@ const meta = {
 
 /** The vendors listed under a category for a snapshot declaring these. */
 const listedUnder = (
-	declared: ResolvedVendor[],
+	declared: readonly ResolvedVendor[],
 	category: AllConsentNames,
 	denied?: string[]
 ) =>

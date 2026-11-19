@@ -45,6 +45,7 @@ const createIABHandle = function createIABHandle(): ConsentRuntimeIABHandle {
 		save: vi.fn().mockResolvedValue(undefined),
 		setPurposeConsent: vi.fn(),
 		setPurposeLegitimateInterest: vi.fn(),
+		setPurposeObjection: vi.fn(),
 		setSpecialFeatureOptIn: vi.fn(),
 		setVendorConsent: vi.fn(),
 		setVendorLegitimateInterest: vi.fn(),
