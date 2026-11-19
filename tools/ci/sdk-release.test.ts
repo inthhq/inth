@@ -25,7 +25,12 @@ test("the SDK release versions the @inth packages in packages/sdk and nothing el
       .map(({ manifest }) => manifest.name)
       .toSorted()
   );
-  for (const name of ["@inth/cli", "@inth/react-native", "inth"]) {
+  for (const name of [
+    "@inth/build-shared",
+    "@inth/cli",
+    "@inth/react-native",
+    "inth",
+  ]) {
     expect(members, name).not.toContain(name);
   }
 });

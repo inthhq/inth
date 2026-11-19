@@ -4,7 +4,7 @@
 
 The SDK packages share one version. A prerelease goes to the dist-tag its version names, so `0.0.0-alpha.0` goes to `alpha`, and each package's `publishConfig.tag` must say the same. Users install with the tag, such as `npm install @inth/react@alpha`.
 
-The private `@inth/sdk-*` packages never publish. `@inth/sdk` copies their built files into `lib/`. They still take every version bump, because each build writes its version into the code `@inth/sdk` ships. The SDK sends that version to the backend in the `x-c15t-version` header and the `v` parameter.
+The private `@inth/sdk-*` packages never publish. `@inth/sdk` copies their built files into `lib/`. They still take every version bump, because each build writes its version into the code `@inth/sdk` ships. The SDK sends that version to the backend in the `x-inth-version` header and the `v` parameter.
 
 ## Rehearse a publish
 

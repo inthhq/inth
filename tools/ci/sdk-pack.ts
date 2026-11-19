@@ -110,8 +110,12 @@ export const settingProblems = (manifest: Manifest, source = manifest) => {
     ...(manifest.publishConfig?.access === "public"
       ? []
       : ['publishConfig.access is not "public"']),
-    // npm refuses a publish with provenance from another repository.
-    ...(manifest.repository?.url === `https://github.com/${sdkRepo}.git`
+    // npm refuses a publish with provenance from another repository. npm
+    // itself writes the git+https form.
+    ...([
+      `https://github.com/${sdkRepo}.git`,
+      `git+https://github.com/${sdkRepo}.git`,
+    ].includes(manifest.repository?.url ?? "")
       ? []
       : [`repository.url does not name https://github.com/${sdkRepo}.git`]),
     ...(manifest.publishConfig?.tag === tag

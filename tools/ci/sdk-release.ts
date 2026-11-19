@@ -13,6 +13,8 @@ import type { TegamiPlugin } from "tegami";
 import { createCli } from "tegami/cli";
 import { github } from "tegami/plugins/github";
 
+import { isPrivateSdkName } from "../../packages/sdk/shared/sdk-parts.ts";
+
 type Dependencies = Record<string, string>;
 
 /** The repository that publishes the SDK, as GitHub and npm name it. */
@@ -39,14 +41,22 @@ export interface Manifest {
 export const readManifest = (dir: string): Manifest =>
   JSON.parse(readFileSync(path.join(dir, "package.json"), "utf-8"));
 
-/** Every package the SDK release versions, as directory and manifest. */
+/**
+ * Every package the SDK release versions, as directory and manifest: the
+ * public @inth packages and the private parts @inth/sdk ships. Other private
+ * packages, such as @inth/build-shared, keep their own version.
+ */
 export const sdkPackages = (root: string) => {
   const directory = path.join(root, "packages/sdk");
   return readdirSync(directory, { withFileTypes: true })
     .map((entry) => path.join(directory, entry.name))
     .filter((dir) => existsSync(path.join(dir, "package.json")))
     .map((dir) => ({ dir, manifest: readManifest(dir) }))
-    .filter(({ manifest }) => manifest.name.startsWith("@inth/"));
+    .filter(({ manifest }) =>
+      manifest.private
+        ? isPrivateSdkName(manifest.name)
+        : manifest.name.startsWith("@inth/")
+    );
 };
 
 // Tegami rewrites every workspace package.json with two spaces. The SDK

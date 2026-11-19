@@ -150,6 +150,15 @@ test("a wildcard export must match a packed file", () => {
   ]);
 });
 
+test("repository.url may take the git+https form npm writes", () => {
+  expect(
+    settingProblems({
+      ...source,
+      repository: { url: "git+https://github.com/inthhq/inth.git" },
+    })
+  ).toEqual([]);
+});
+
 test("a stable version must not keep a prerelease dist-tag", () => {
   expect(settingProblems({ ...source, version: "1.0.0" })).toEqual([
     'publishConfig.tag is set, but 1.0.0 publishes to "latest"',
