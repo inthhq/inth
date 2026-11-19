@@ -244,7 +244,7 @@ final class ThemeTests: XCTestCase {
         ]).branding, .custom(name: "Example"))
         XCTAssertEqual(theme.applying(infoDictionary: [ConsentTheme.InfoPlistKey.brandingMark: "NewLogo"]).branding,
             .custom(name: "Example", markImageName: "NewLogo"))
-        XCTAssertEqual(ConsentTheme.default.applying(infoDictionary: [ConsentTheme.InfoPlistKey.brandingMark: "OrphanLogo"]), .c15t)
+        XCTAssertEqual(ConsentTheme.default.applying(infoDictionary: [ConsentTheme.InfoPlistKey.brandingMark: "OrphanLogo"]), .default)
         XCTAssertEqual(theme.applying(infoDictionary: [ConsentTheme.InfoPlistKey.branding: false]).branding, theme.branding)
         XCTAssertFalse(theme.applying(infoDictionary: [ConsentTheme.InfoPlistKey.branding: false]).showsBranding)
     }
