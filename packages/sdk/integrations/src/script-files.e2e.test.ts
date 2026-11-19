@@ -658,6 +658,8 @@ test('loads by the list the browser remembers when init fails', async () => {
 	expect(sent(LOADER_URL) + sent(LOGGER_URL)).toBe(0);
 });
 
+// A control: it passes without the remembered list too, and guards that a
+// browser that remembers nothing loads from the vendor, as before.
 test('loads from the vendor when init fails and the browser remembers no list', async () => {
 	await open();
 	await page.evaluate(() => window.__scriptFiles.startFailing());

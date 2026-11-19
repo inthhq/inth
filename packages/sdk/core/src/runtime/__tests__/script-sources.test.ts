@@ -791,6 +791,8 @@ describe('experimentalScriptRegistry', () => {
 		runtime.dispose();
 	});
 
+	// A control: it passes without the remembered list too, and guards that a
+	// browser that remembers nothing still loads from the vendor.
 	test("loads from the vendor URL when init fails and the browser remembers no list, over a pending prefetch's list", async () => {
 		const runtime = startWith({
 			mode: initMode(() => Promise.reject(new TypeError('offline'))),
@@ -953,6 +955,7 @@ describe('experimentalScriptRegistry', () => {
 			runtime.dispose();
 		});
 
+		// A control, like the one above: nothing remembered, nothing changes.
 		test('leaves the vendor URL when the backend could not read the registry and none is remembered', async () => {
 			const runtime = answering({ unavailable: true });
 
