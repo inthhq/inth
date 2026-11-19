@@ -10,8 +10,9 @@
  * semantics and copy are untouched.
  *
  * This module holds the types and the seed. Merging an arm over the host
- * presentation lives in `experiment-presentation` (re-exported here), so a
- * first paint carries the merge without the seed. Assignment and
+ * presentation, and `actionAppearanceFromTheme`, live in
+ * `experiment-presentation`, so a first paint carries them without this
+ * module and the assignment loader it holds. Assignment and
  * validation live in `experiment-assignment` and `experiment-engine`,
  * loaded on demand.
  */
@@ -224,40 +225,6 @@ export const experimentArmRef = function experimentArmRef(
 	experiment: ServerExperiment
 ): { id: string; arm: string } {
 	return { arm: experiment.arm, id: experiment.id };
-};
-
-/** Appearance per action, as `resolveConsentPresentation` consumes it. */
-export type ActionAppearance = Partial<
-	Record<PresentationAction, ExperimentActionStyle>
->;
-
-/**
- * Derive per-action appearance from `theme.consentActions`, the way the
- * framework adapters do before resolving a surface. `default` is spread
- * under each action. Returns `undefined` when no action is styled, so the
- * prominence check falls back to the policy's own defaults.
- *
- * @param theme - A theme carrying `consentActions`, or nothing.
- * @returns Appearance keyed by action, or `undefined`.
- */
-export const actionAppearanceFromTheme = function actionAppearanceFromTheme(
-	theme: Pick<ExperimentArmTheme, 'consentActions'> | undefined
-): ActionAppearance | undefined {
-	const styles = theme?.consentActions;
-	if (
-		!styles?.accept &&
-		!styles?.reject &&
-		!styles?.customize &&
-		!styles?.dismiss
-	) {
-		return undefined;
-	}
-	return {
-		accept: { ...styles.default, ...styles.accept },
-		customize: { ...styles.default, ...styles.customize },
-		dismiss: { ...styles.default, ...styles.dismiss },
-		reject: { ...styles.default, ...styles.reject },
-	};
 };
 
 /**

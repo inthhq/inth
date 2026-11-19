@@ -62,6 +62,14 @@ const HOSTED_BUNDLES = new Set([
 	'inth.records',
 ]);
 
+/** Hosted script builds the init script runs before the engine. */
+const INIT_BUNDLES = new Set([
+	'inth',
+	'inth.commit',
+	'inth.dialog',
+	'inth.records',
+]);
+
 /** Script builds that run hosted or manifest mode: no testing transport. */
 const PRODUCTION_BUNDLES = new Set(['inth.headless', 'inth.iab', 'inth.gpp']);
 
@@ -142,7 +150,9 @@ const scriptTagLib = function scriptTagLib(name: string, entry: string) {
 						}
 					),
 					...(IAB_BUNDLES.has(name) ? [] : [iabBundleBoundary()]),
-					...(HOSTED_BUNDLES.has(name) ? [modeBundleBoundary('hosted')] : []),
+					...(HOSTED_BUNDLES.has(name)
+						? [modeBundleBoundary(INIT_BUNDLES.has(name) ? 'init' : 'hosted')]
+						: []),
 					// The init script renders only the banner: it carries the
 					// banner's share of the stylesheet and class names, and no
 					// copy of its own (`src/init/copy.ts`,

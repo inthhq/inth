@@ -26,11 +26,21 @@ const TESTING_EXCLUSIONS = [
 	...COMMON_EXCLUSIONS,
 	/\/(?:packages\/(?:sdk\/)?core|@inth\/sdk-core)\/(?:src|dist)\/transports\/(?:hosted[^/]*|mode)\.[jt]s(?:$|[?|])/u,
 ];
+/**
+ * The files the init script runs before the engine: hosted, and without
+ * the experiment controller. `libs/experiment.ts` holds its `import()`,
+ * which a one-file script build keeps even when nothing calls it.
+ */
+const INIT_EXCLUSIONS = [
+	...HOSTED_EXCLUSIONS,
+	/\/(?:packages\/(?:sdk\/)?core|@inth\/sdk-core)\/(?:src|dist)\/libs\/experiment(?:-assignment|-engine)?\.[jt]s(?:$|[?|])/u,
+];
 
-type BoundaryMode = 'hosted' | 'production' | 'testing';
+type BoundaryMode = 'hosted' | 'init' | 'production' | 'testing';
 
 const EXCLUSIONS: Record<BoundaryMode, RegExp[]> = {
 	hosted: HOSTED_EXCLUSIONS,
+	init: INIT_EXCLUSIONS,
 	production: TESTING_ONLY,
 	testing: TESTING_EXCLUSIONS,
 };

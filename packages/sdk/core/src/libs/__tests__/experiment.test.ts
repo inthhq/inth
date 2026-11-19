@@ -4,7 +4,6 @@ import { describe, expect, expectTypeOf, it } from 'vitest';
 import { defineExperiment } from '../../index';
 import type { ExperimentArmName } from '../../index';
 import {
-	actionAppearanceFromTheme,
 	experimentConfigError,
 	pickExperimentArm,
 	seedExperiment,
@@ -12,6 +11,7 @@ import {
 import type { ConsentExperiment } from '../experiment';
 import { validateExperiment } from '../experiment-engine';
 import {
+	actionAppearanceFromTheme,
 	applyExperimentTheme,
 	resolveExperimentPresentation,
 	resolveExperimentTheme,

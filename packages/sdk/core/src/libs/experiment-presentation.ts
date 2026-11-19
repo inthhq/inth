@@ -1,20 +1,23 @@
 /**
- * Merging an experiment arm over the host presentation and theme.
+ * Merging an experiment arm over the host presentation and theme, and the
+ * per-action appearance every surface derives from its theme.
  *
- * Split from `./experiment` so the code a page needs to render (the merge)
- * does not share a module with assignment and storage, which the consent
- * engine alone runs. A bundler places whole modules, so before the split a
+ * Split from `./experiment` so the code a page needs to render does not
+ * share a module with assignment and storage, which the consent engine
+ * alone runs. A bundler places whole modules, so before the split a
  * banner's first-load chunk carried the experiment loader too.
- * `./experiment` re-exports everything here.
  */
 import type {
 	ConsentExperiment,
+	ExperimentActionStyle,
 	ExperimentArm,
+	ExperimentArmTheme,
 	ExperimentAssignment,
 } from './experiment';
 import type {
 	ConsentPresentation,
 	PreferencesPresentation,
+	PresentationAction,
 	PromptPresentation,
 } from './policy-actions';
 
@@ -177,4 +180,38 @@ export const applyExperimentTheme = function applyExperimentTheme<
 		return base;
 	}
 	return resolveExperimentTheme(base, experiment, assignment);
+};
+
+/** Appearance per action, as `resolveConsentPresentation` consumes it. */
+export type ActionAppearance = Partial<
+	Record<PresentationAction, ExperimentActionStyle>
+>;
+
+/**
+ * Derive per-action appearance from `theme.consentActions`, the way the
+ * framework adapters do before resolving a surface. `default` is spread
+ * under each action. Returns `undefined` when no action is styled, so the
+ * prominence check falls back to the policy's own defaults.
+ *
+ * @param theme - A theme carrying `consentActions`, or nothing.
+ * @returns Appearance keyed by action, or `undefined`.
+ */
+export const actionAppearanceFromTheme = function actionAppearanceFromTheme(
+	theme: Pick<ExperimentArmTheme, 'consentActions'> | undefined
+): ActionAppearance | undefined {
+	const styles = theme?.consentActions;
+	if (
+		!styles?.accept &&
+		!styles?.reject &&
+		!styles?.customize &&
+		!styles?.dismiss
+	) {
+		return undefined;
+	}
+	return {
+		accept: { ...styles.default, ...styles.accept },
+		customize: { ...styles.default, ...styles.customize },
+		dismiss: { ...styles.default, ...styles.dismiss },
+		reject: { ...styles.default, ...styles.reject },
+	};
 };

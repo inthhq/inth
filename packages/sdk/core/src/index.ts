@@ -304,18 +304,18 @@ export {
 	resolveConsentPresentation,
 } from './libs/policy-actions';
 export {
-	actionAppearanceFromTheme,
 	defineExperiment,
 	hostExperiment,
 	seedExperiment,
 } from './libs/experiment';
 export {
+	actionAppearanceFromTheme,
 	applyExperimentAssignment,
 	applyExperimentTheme,
 	resolveExperimentTheme,
 } from './libs/experiment-presentation';
+export type { ActionAppearance } from './libs/experiment-presentation';
 export type {
-	ActionAppearance,
 	ConsentExperiment,
 	ExperimentActionStyle,
 	ExperimentArm,
