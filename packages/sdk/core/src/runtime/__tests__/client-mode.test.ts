@@ -172,6 +172,7 @@ describe('clientMode()', () => {
 			confirmed: { actionAt: 1, categories: {} },
 			consents: { necessary: true },
 			decisionInputs: { fingerprint: 'f', policyId: 'p' },
+			idempotencyKey: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1d',
 			subjectId: 'sub_1',
 		} as unknown as SavePayload);
 
@@ -220,6 +221,7 @@ describe('lazyHosted()', () => {
 			choice: { categories: {}, version: 3 },
 			confirmed: { actionAt: 1, categories: {} },
 			consents: { necessary: true },
+			idempotencyKey: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1d',
 			subjectId: 'sub_1',
 		} as unknown as SavePayload);
 

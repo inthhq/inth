@@ -41,6 +41,7 @@ const payload: SavePayload = {
 		necessary: true,
 	},
 	givenAt: 1_700_000_000_000,
+	idempotencyKey: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1d',
 	model: 'opt-in',
 	overrides: {},
 	policySnapshotToken: null,

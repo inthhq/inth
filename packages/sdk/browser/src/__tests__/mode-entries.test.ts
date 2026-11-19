@@ -274,7 +274,7 @@ describe('hosted browser entry', () => {
 		expect(client.has('measurement')).toBe(false);
 	});
 
-	it('preserves the hosted factory fetch, init URL and allowed headers', async () => {
+	it('preserves the hosted factory fetch and init URL, and sends header inputs in the query', async () => {
 		const globalFetch = vi.fn<typeof fetch>();
 		vi.stubGlobal('fetch', globalFetch);
 		const fetchSpy = vi.fn<typeof fetch>((input) =>
@@ -307,10 +307,14 @@ describe('hosted browser entry', () => {
 			'/consent/v1/consent/init',
 			`${projectUrl}/api/v1/consent/records`,
 		]);
-		const headers = new Headers(fetchSpy.mock.calls[0]?.[1]?.headers);
-		expect(headers.get('accept-language')).toBe('de');
-		expect(headers.get('cf-ipcountry')).toBe('DE');
-		expect(headers.has('authorization')).toBe(false);
+		const [initInput, init] = fetchSpy.mock.calls[0] ?? [];
+		expect([...new Headers(init?.headers)].toSorted()).toEqual([
+			['accept', 'application/json'],
+			['accept-language', 'de'],
+		]);
+		expect(
+			new URL(String(initInput), projectUrl).searchParams.get('country')
+		).toBe('DE');
 		expect(globalFetch).not.toHaveBeenCalled();
 	});
 
