@@ -173,7 +173,9 @@ release you pinned. Pin with the registry instead, or pin `2026-10-30.1`.
 2. Click Reject, then reload. There are still no Databuddy requests.
 3. Open Privacy settings and allow measurement. Without a reload,
    `databuddy.js` loads from `cdn.databuddy.cc` with your `data-client-id`, and
-   requests reach your `apiUrl`. With `replay` on, `replay.js` loads too. Move
+   requests reach your `apiUrl`. With `version` set, the file is
+   `databuddy.<version>.js`, with an `integrity` attribute for `2026-10-30.1`.
+   With `replay` on, `replay.js` loads too. Move
    the pointer or scroll, and a `POST` to `/replay` follows within a few
    seconds.
 4. Turn measurement off again and save. c15t reloads the page, and the new
