@@ -153,12 +153,12 @@ exact absolute URL the loader requests:
 }
 ```
 
-Once a list that names files has arrived, c15t changes a script element whose
+Once a list that names files has arrived, Inth changes a script element whose
 URL `files` lists just before the browser fetches it:
 
 - With an entry, the element loads from the entry's `src` with its `integrity`
   and `crossorigin="anonymous"`. The browser refuses bytes that do not match,
-  and c15t does not try the vendor's URL. An element with its own `integrity`
+  and Inth does not try the vendor's URL. An element with its own `integrity`
   keeps it, and loads from the registry only when the entry lists that hash.
 - With `null`, or an entry with no https `src` or no hash, the element points at
   an empty `data:` script under a hash it does not have. The browser fetches
@@ -166,15 +166,15 @@ URL `files` lists just before the browser fetches it:
   handling runs.
 - A URL that `files` does not list is not changed.
 
-c15t matches URLs after it resolves a relative URL against the page and drops
+Inth matches URLs after it resolves a relative URL against the page and drops
 the fragment. Everything else must match exactly. The query string is part of
 the URL, so `logger-1.min.js?v=2` does not match `logger-1.min.js`.
 
-c15t checks a script element as a page method inserts it, or the node holding
+Inth checks a script element as a page method inserts it, or the node holding
 it: `appendChild`, `insertBefore`, `append`, `before`, `replaceWith`,
 `insertAdjacentElement`, `Range.insertNode` or a similar method. It also
 checks a script already on the page as it gets its first `src` through
-`script.src` or `setAttribute`. Scripts that c15t creates go through the same
+`script.src` or `setAttribute`. Scripts that Inth creates go through the same
 check. To do this, the script loader patches those DOM methods once the list
 names files. On `dispose()` it puts back each method it is still the outermost
 wrapper of. Under a wrapper another library added later, its own stays in that
@@ -182,15 +182,15 @@ library's chain and does nothing until a list names files again.
 
 Nothing waits for the list. Integrations wait for init as described above, so
 LogRocket's loader starts only after the pin is in place. Every other script
-loads as it would without c15t. A script that a list names, but that some other
+loads as it would without Inth. A script that a list names, but that some other
 code inserts before init answers, loads from its own URL. When the list names no
-files, or init fails, c15t patches nothing. When a prefetched list names files,
+files, or init fails, Inth patches nothing. When a prefetched list names files,
 a server start leaves integrations for the loader to start.
 
 #### What `files` does not cover
 
 `files` sees only script elements that this realm's DOM methods insert after
-the list arrives. These load code without c15t seeing it:
+the list arrives. These load code without Inth seeing it:
 
 - A listed file that other code inserts before init answers.
 - `document.write` of a script tag.
@@ -215,7 +215,7 @@ the list arrives. These load code without c15t seeing it:
   such as LogRocket's `window.__SDKCONFIG__.loggerURL`, or `window._lrAsyncScript`
   set by your own code.
 
-Pages that enforce Trusted Types for scripts are not supported yet: c15t writes
+Pages that enforce Trusted Types for scripts are not supported yet: Inth writes
 script URLs as plain strings.
 
 #### Options that move a loader's downloads
@@ -242,13 +242,13 @@ paths into the integration's options:
 
 When your options set any listed path, the script loads nothing: not from the
 registry, and not from the vendor's URL. `onDebug` reports an `error` that names
-the path. c15t reads an option as the loader does: `undefined`, `null`, `''`,
+the path. Inth reads an option as the loader does: `undefined`, `null`, `''`,
 `false` and `0` count as unset, and so does a blank `asyncScriptUrl`. For
 LogRocket that means a page that moves the logger with `asyncScriptUrl`, or sets
 `sdkServer` or `enterpriseServer`, gets no LogRocket at all while the registry
 is on: the loader would fetch a file the list does not name. A script that
 carries no options to check also loads nothing. A `refuseIfSet` that is not a list of paths makes the entry one
-c15t cannot use. To load such a script with that option, give it your own
+Inth cannot use. To load such a script with that option, give it your own
 `scriptLoader.sources` entry, which wins over the list.
 
 Only a Content Security Policy closes these gaps in your page, for files on a
