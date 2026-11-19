@@ -286,16 +286,15 @@ export const createSaveOutbox = function createSaveOutbox({
 		});
 	};
 
-	/** `transport.save`, settling the date the save carries. */
+	/** Sends `payload` through `send`, settling the date it carries. */
 	const sendDated = async function sendDated(
-		save: NonNullable<KernelTransport['save']>,
 		payload: SavePayload,
-		options?: Parameters<NonNullable<KernelTransport['save']>>[1]
+		send: () => Promise<SaveResult>
 	): Promise<SaveResult> {
 		const at = payload.givenAt ?? payload.confirmed.actionAt;
 		let accepted = false;
 		try {
-			const result = await save(payload, options);
+			const result = await send();
 			accepted = result.ok;
 			return result;
 		} finally {
@@ -311,7 +310,7 @@ export const createSaveOutbox = function createSaveOutbox({
 		// A replay is no longer the page that made the save: it carries no
 		// consent journey, so a backend never links it to this page load.
 		const resend: NonNullable<KernelTransport['save']> = (payload) =>
-			sendDated(save, payload, { replay: true });
+			sendDated(payload, () => save(payload, { replay: true }));
 		if (await (await loadWorker())?.replay(resend)) {
 			retryWhenOnline();
 		}
@@ -472,7 +471,7 @@ export const createSaveOutbox = function createSaveOutbox({
 				await discard(payload);
 				return { confirmed, ok: false };
 			}
-			const result = await sendDated(save, sending);
+			const result = await sendDated(sending, () => save(sending));
 			const remaining = currentPayload();
 			if (!remaining) {
 				await discard(payload);
