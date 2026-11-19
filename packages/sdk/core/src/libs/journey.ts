@@ -70,22 +70,16 @@ export const sessionStorageOf = (): JourneyStorage | null =>
 	typeof window === 'undefined' ? null : window.sessionStorage;
 
 /**
- * The tab's journey id, or `null`. An id only c15t's key holds moves to
- * Inth's. May throw, as blocked storage does.
+ * The tab's journey id, or `null`: Inth's, else the one a c15t page of this
+ * tab left. Reading writes nothing. May throw, as blocked storage does.
  */
 const readTabJourneyId = function readTabJourneyId(
 	store: JourneyStorage
 ): string | null {
-	const id = parseJourneyId(store.getItem(JOURNEY_STORAGE_KEY));
-	if (id) {
-		return id;
-	}
-	const c15t = parseJourneyId(store.getItem(C15T_JOURNEY_STORAGE_KEY));
-	if (c15t) {
-		store.setItem(JOURNEY_STORAGE_KEY, c15t);
-		store.removeItem(C15T_JOURNEY_STORAGE_KEY);
-	}
-	return c15t;
+	return (
+		parseJourneyId(store.getItem(JOURNEY_STORAGE_KEY)) ??
+		parseJourneyId(store.getItem(C15T_JOURNEY_STORAGE_KEY))
+	);
 };
 
 /** A journey that was opened, and whether an earlier page started it. */

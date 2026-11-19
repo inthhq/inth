@@ -4,14 +4,9 @@
  * the arm; written by the experiment controller once the banner has shown
  * it. Holds `{ id, arm }` and nothing that identifies the visitor.
  */
-import {
-	deleteCookie,
-	deleteCookieInEveryScope,
-	getRawCookieValue,
-	setCookie,
-} from './cookie';
+import { deleteCookie, getRawCookieValue, setCookie } from './cookie';
 import type { StorageConfig } from './cookie';
-import { localStorageOf, removeLocalStorageKey } from './local-storage';
+import { localStorageOf } from './local-storage';
 import {
 	C15T_EXPERIMENT_STORAGE_KEY,
 	EXPERIMENT_STORAGE_KEY,
@@ -144,9 +139,11 @@ const readArmUnder = function readArmUnder(
 /**
  * Read the stored arm, from localStorage first and the cookie fallback
  * second, then from c15t's key the same way. An arm only c15t's key holds
- * moves to Inth's. Never throws; unreadable storage reads as no record.
+ * is copied to Inth's and left for c15t pages on the same site, so both
+ * keep showing the visitor one arm. Never throws; unreadable storage reads
+ * as no record.
  *
- * @param storageConfig - Cookie domain and path for a moved arm.
+ * @param storageConfig - Cookie domain and path for a copied arm.
  */
 export const readStoredExperimentArm = function readStoredExperimentArm(
 	storageConfig?: StorageConfig
@@ -158,8 +155,6 @@ export const readStoredExperimentArm = function readStoredExperimentArm(
 	const c15t = readArmUnder(C15T_EXPERIMENT_STORAGE_KEY);
 	if (c15t) {
 		writeStoredExperimentArm(c15t, storageConfig);
-		removeLocalStorageKey(C15T_EXPERIMENT_STORAGE_KEY);
-		deleteCookieInEveryScope(C15T_EXPERIMENT_STORAGE_KEY, storageConfig);
 	}
 	return c15t;
 };

@@ -278,14 +278,13 @@ describe("journey: 'tab'", () => {
 		expect(sessionStorage.getItem(JOURNEY_STORAGE_KEY)).toBeNull();
 	});
 
-	test("continues an id only c15t's key holds, moved to Inth's key", async () => {
+	test("continues an id only c15t's key holds", async () => {
 		const id = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
 		sessionStorage.setItem(C15T_JOURNEY_STORAGE_KEY, id);
 
 		const runtime = await load({ journey: 'tab' });
 		expect(init()[0]?.journey?.id).toBe(id);
-		expect(sessionStorage.getItem(JOURNEY_STORAGE_KEY)).toBe(id);
-		expect(sessionStorage.getItem(C15T_JOURNEY_STORAGE_KEY)).toBeNull();
+		expect(sessionStorage.getItem(C15T_JOURNEY_STORAGE_KEY)).toBe(id);
 		await runtime.kernel.commands.save('none');
 		expect(saves()[0]?.journey).toEqual({ id, scope: 'tab' });
 	});

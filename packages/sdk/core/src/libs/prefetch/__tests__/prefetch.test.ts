@@ -421,13 +421,13 @@ describe('prefetch utilities', () => {
 			vi.stubGlobal('fetch', fetch);
 			window.eval(buildPrefetchScript({ projectUrl: '/api/inth' }));
 			expect(sent(fetch)).toEqual({ id, scope: 'tab', storedChoice: false });
-			// The script's twin continues it too, and moves it to Inth's key.
+			// The script's twin continues it too, and leaves c15t's key alone.
 			delete (window as Window & { __inthJourney?: unknown }).__inthJourney;
 			void primePrefetchedInitialData({ projectUrl: '/api/other' });
 			expect(readJourneyParams(String(fetch.mock.calls[1]?.[0]))?.id).toBe(id);
-			expect(sessionStorage.getItem('inth-journey-v1')).toBe(id);
-			expect(sessionStorage.getItem('c15t-journey-v1')).toBeNull();
+			expect(sessionStorage.getItem('c15t-journey-v1')).toBe(id);
 
+			sessionStorage.setItem('inth-journey-v1', id);
 			sessionStorage.setItem('c15t-journey-v1', other);
 			delete (window as Window & { __inthJourney?: unknown }).__inthJourney;
 			window.eval(buildPrefetchScript({ projectUrl: '/api/third' }));

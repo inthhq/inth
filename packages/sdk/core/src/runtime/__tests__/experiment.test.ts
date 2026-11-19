@@ -117,7 +117,7 @@ describe('runtime experiments', () => {
 		second.runtime.dispose();
 	});
 
-	test("runs an arm only c15t's key holds and moves it to Inth's", async () => {
+	test("runs an arm only c15t's key holds, copies it to Inth's and leaves c15t's", async () => {
 		const stored = JSON.stringify({ arm: 'bar', id: 'banner-shape' });
 		localStorage.setItem(C15T_EXPERIMENT_STORAGE_KEY, stored);
 		document.cookie = `${C15T_EXPERIMENT_STORAGE_KEY}=${encodeURIComponent(stored)}; path=/`;
@@ -126,8 +126,9 @@ describe('runtime experiments', () => {
 		await settled(runtime);
 		expect(runtime.kernel.getSnapshot().experiment?.arm).toBe('bar');
 		expect(localStorage.getItem(EXPERIMENT_STORAGE_KEY)).toBe(stored);
-		expect(localStorage.getItem(C15T_EXPERIMENT_STORAGE_KEY)).toBeNull();
-		expect(document.cookie).not.toContain(`${C15T_EXPERIMENT_STORAGE_KEY}=`);
+		// A c15t page on the same site keeps showing the visitor this arm.
+		expect(localStorage.getItem(C15T_EXPERIMENT_STORAGE_KEY)).toBe(stored);
+		expect(document.cookie).toContain(`${C15T_EXPERIMENT_STORAGE_KEY}=`);
 		runtime.dispose();
 	});
 
