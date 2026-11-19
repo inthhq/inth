@@ -60,7 +60,7 @@ const ANDROID_READER_PATHS = [
 ];
 
 /** The prefix every key in this contract carries. */
-const INTH_KEY_PREFIX = 'com.inth.';
+const NATIVE_KEY_PREFIX = 'com.inth.';
 
 /**
  * The plugin parameters that make it write every key it owns.
@@ -153,7 +153,9 @@ const writtenKeys = async function writtenKeys(): Promise<{
 		// Filtered by prefix only: a key written as a literal somewhere off the
 		// tables is exactly what the reader check exists to catch, so the tables
 		// must not be allowed to filter it out of view here.
-		return Object.keys(plist).filter((key) => key.startsWith(INTH_KEY_PREFIX));
+		return Object.keys(plist).filter((key) =>
+			key.startsWith(NATIVE_KEY_PREFIX)
+		);
 	};
 	// An in-code policy does not mix with a bundled manifest, so no single
 	// configuration writes every key.
@@ -178,7 +180,7 @@ const writtenKeys = async function writtenKeys(): Promise<{
 		);
 		return (application['meta-data'] ?? [])
 			.map((entry) => entry.$['android:name'] ?? '')
-			.filter((name) => name.startsWith(INTH_KEY_PREFIX));
+			.filter((name) => name.startsWith(NATIVE_KEY_PREFIX));
 	};
 	const android = [
 		...new Set([

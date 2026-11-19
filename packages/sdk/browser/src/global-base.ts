@@ -59,7 +59,7 @@ export type QueuedCall = [method: string, ...args: unknown[]];
  * it everything proxies to the page's client. `version`, `pkg`, `mode` and
  * `hosting` keep the shape `@inth/sdk/engine` installs for devtools.
  */
-export interface InthGlobalBase {
+export interface GlobalApiBase {
 	/** Package version. */
 	readonly version: string;
 	/** Package name. */
@@ -159,10 +159,10 @@ export interface InthGlobalBase {
 }
 
 /** Takeovers of an init script's stand-in still waiting on its `/init`. */
-const takeovers = new WeakMap<InthGlobalBase, Promise<void>>();
+const takeovers = new WeakMap<GlobalApiBase, Promise<void>>();
 
 type GlobalWindow = Window & {
-	[GLOBAL_NAME]?: InthGlobalBase | QueuedCall[] | unknown;
+	[GLOBAL_NAME]?: GlobalApiBase | QueuedCall[] | unknown;
 };
 
 /** Queued methods that configure or observe the client, run in place. */
@@ -219,7 +219,7 @@ const reportQueuedFailure = function reportQueuedFailure(
  * promise instead of letting it stop the calls behind it.
  */
 const runQueued = async function runQueued(
-	api: InthGlobalBase,
+	api: GlobalApiBase,
 	call: QueuedCall
 ): Promise<void> {
 	const [method, ...args] = call;
@@ -256,7 +256,7 @@ interface ActionChain {
  * batch before it settles, so actions from separate `push()` calls keep
  * their order.
  */
-const actionChains = new WeakMap<InthGlobalBase, ActionChain>();
+const actionChains = new WeakMap<GlobalApiBase, ActionChain>();
 
 /**
  * Reserve the next place in the API's action chain for a batch of consent
@@ -269,7 +269,7 @@ const actionChains = new WeakMap<InthGlobalBase, ActionChain>();
  * @returns A function that releases the batch.
  */
 const reserveActions = function reserveActions(
-	api: InthGlobalBase,
+	api: GlobalApiBase,
 	actions: readonly QueuedCall[]
 ): () => void {
 	let chain = actionChains.get(api);
@@ -311,7 +311,7 @@ const reserveActions = function reserveActions(
  * runs against a disposed client or the one a later `init()` creates.
  * Batches pushed afterwards start a new chain.
  */
-const cancelActions = function cancelActions(api: InthGlobalBase): void {
+const cancelActions = function cancelActions(api: GlobalApiBase): void {
 	const chain = actionChains.get(api);
 	if (chain) {
 		chain.cancelled = true;
@@ -328,7 +328,7 @@ const cancelActions = function cancelActions(api: InthGlobalBase): void {
  * call that throws is reported and the rest still run.
  */
 const replayQueue = function replayQueue(
-	api: InthGlobalBase,
+	api: GlobalApiBase,
 	queue: readonly unknown[]
 ): void {
 	const actions: QueuedCall[] = [];
@@ -369,7 +369,7 @@ const replayQueue = function replayQueue(
  * on the array that was there before the script loaded. See `replayQueue`
  * for when each kind of call runs.
  */
-export const installGlobal = function installGlobal<Api extends InthGlobalBase>(
+export const installGlobal = function installGlobal<Api extends GlobalApiBase>(
 	api: Api
 ): Api {
 	if (typeof window === 'undefined') {
@@ -431,7 +431,7 @@ export const createGlobalWith = function createGlobalWith(
 	readOptions: (
 		script: Element | null
 	) => ScriptTagClientOptions = readScriptOptions
-): InthGlobalBase {
+): GlobalApiBase {
 	// `currentScript` points at this bundle only while it is executing.
 	// Manual init may run in another script or an event callback later.
 	// Loaded by the init script, the options are on the init script's tag.
@@ -475,7 +475,7 @@ export const createGlobalWith = function createGlobalWith(
 		return client;
 	};
 
-	const api: InthGlobalBase = {
+	const api: GlobalApiBase = {
 		acceptAll: () => require().acceptAll(),
 		get client() {
 			return client;
@@ -614,7 +614,7 @@ export const createGlobalWith = function createGlobalWith(
  * @returns The client, or `null` when the page asked to init itself.
  */
 export const autoInit = function autoInit(
-	api: InthGlobalBase
+	api: GlobalApiBase
 ): ConsentClient | null {
 	if (typeof document === 'undefined') {
 		return null;

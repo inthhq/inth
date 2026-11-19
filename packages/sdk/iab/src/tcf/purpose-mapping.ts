@@ -11,7 +11,7 @@ import type { AllConsentNames } from '@inth/sdk-core';
  *
  * @public
  */
-export const INTH_TO_IAB_PURPOSE_MAP: Record<AllConsentNames, number[]> = {
+export const CONSENT_TO_IAB_PURPOSE_MAP: Record<AllConsentNames, number[]> = {
 	experience: [5, 6],
 	functionality: [10, 11],
 	marketing: [2, 3, 4],
@@ -24,7 +24,7 @@ export const INTH_TO_IAB_PURPOSE_MAP: Record<AllConsentNames, number[]> = {
  *
  * @example
  * ```typescript
- * const inthConsents = {
+ * const consents = {
  *   necessary: true,
  *   marketing: false,
  *   experience: true,
@@ -32,7 +32,7 @@ export const INTH_TO_IAB_PURPOSE_MAP: Record<AllConsentNames, number[]> = {
  *   functionality: false,
  * };
  *
- * const purposeConsents = inthConsentsToIabPurposes(inthConsents);
+ * const purposeConsents = inthConsentsToIabPurposes(consents);
  * // {
  * //   1: true,  // necessary
  * //   2: false, 3: false, 4: false,  // marketing
@@ -50,7 +50,7 @@ export const inthConsentsToIabPurposes = function inthConsentsToIabPurposes(
 	const purposeConsents: Record<number, boolean> = {};
 
 	for (const [category, value] of Object.entries(consents)) {
-		const purposes = INTH_TO_IAB_PURPOSE_MAP[category as AllConsentNames];
+		const purposes = CONSENT_TO_IAB_PURPOSE_MAP[category as AllConsentNames];
 		if (purposes) {
 			for (const purposeId of purposes) {
 				purposeConsents[purposeId] = value;
@@ -84,7 +84,7 @@ export const inthConsentsToIabPurposes = function inthConsentsToIabPurposes(
  *   10: true, 11: true,
  * };
  *
- * const inthConsents = iabPurposesToInthConsents(purposeConsents);
+ * const consents = iabPurposesToInthConsents(purposeConsents);
  * // {
  * //   necessary: true,
  * //   marketing: false,  // not all marketing purposes consented
@@ -100,7 +100,7 @@ export const iabPurposesToInthConsents = function iabPurposesToInthConsents(
 	purposeConsents: Record<number, boolean>,
 	consentPurposes?: ReadonlySet<number>
 ): Record<AllConsentNames, boolean> {
-	const inthConsents: Record<AllConsentNames, boolean> = {
+	const consents: Record<AllConsentNames, boolean> = {
 		experience: false,
 		functionality: false,
 		marketing: false,
@@ -108,7 +108,9 @@ export const iabPurposesToInthConsents = function iabPurposesToInthConsents(
 		necessary: true,
 	};
 
-	for (const [category, purposes] of Object.entries(INTH_TO_IAB_PURPOSE_MAP)) {
+	for (const [category, purposes] of Object.entries(
+		CONSENT_TO_IAB_PURPOSE_MAP
+	)) {
 		if (category === 'necessary') {
 			continue;
 		}
@@ -118,8 +120,8 @@ export const iabPurposesToInthConsents = function iabPurposesToInthConsents(
 		const allConsented = (deciding.length ? deciding : purposes).every(
 			(purposeId) => purposeConsents[purposeId] === true
 		);
-		inthConsents[category as AllConsentNames] = allConsented;
+		consents[category as AllConsentNames] = allConsented;
 	}
 
-	return inthConsents;
+	return consents;
 };

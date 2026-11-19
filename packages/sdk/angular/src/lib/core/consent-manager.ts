@@ -62,7 +62,7 @@ import {
 import type { CompleteTranslations } from '@inth/sdk/translations';
 import type { Theme } from '@inth/sdk/ui/theme';
 
-import { INTH_BOOT, restoreBoot } from './deferred/boot';
+import { BOOT_STATE_KEY, restoreBoot } from './deferred/boot';
 import type { ConsentBoot } from './deferred/boot';
 import { createDeferredRuntime } from './deferred/deferred-runtime';
 import type {
@@ -73,7 +73,7 @@ import type * as EngineModule from './deferred/engine';
 import { isIABConfigured } from './iab-loader';
 import { INTH_OPTIONS, runtimeOptionsFor } from './options';
 import type { InthResolvedOptions, InthSharedOptions } from './options';
-import { INTH_SERVER_STATE, INTH_SERVER_STATE_GATE } from './server-state';
+import { SERVER_STATE_KEY, SERVER_STATE_GATE } from './server-state';
 
 /**
  * Loads the consent engine's chunk. Provide another to test a failed load.
@@ -361,7 +361,7 @@ export class ConsentManager {
 		// server before the render, read back in the browser, so both start
 		// from it. A `prefetch` the app passed wins.
 		const transferState = inject(TransferState);
-		const serverState = transferState.get(INTH_SERVER_STATE, null);
+		const serverState = transferState.get(SERVER_STATE_KEY, null);
 		// Scripts the loader adds carry Angular's `CSP_NONCE` unless the app
 		// set `nonce` itself, as the injected `<style>` elements do.
 		const cspNonce = inject(CSP_NONCE, { optional: true });
@@ -756,14 +756,14 @@ export class ConsentManager {
 		const importEngine = inject(CONSENT_ENGINE_MODULE);
 		const gate = this.#browser
 			? null
-			: inject(INTH_SERVER_STATE_GATE, { optional: true });
+			: inject(SERVER_STATE_GATE, { optional: true });
 		const loadEngine = async (): Promise<EngineFactory> => {
 			const engine = await importEngine();
 			if (gate) {
 				// Built before `provideInthServer()` set the request's state:
 				// the engine starts from it once it is there.
 				await gate.ready;
-				const serverState = transferState.get(INTH_SERVER_STATE, null);
+				const serverState = transferState.get(SERVER_STATE_KEY, null);
 				if (serverState && read().prefetch === undefined) {
 					this.#options.update((current) => ({
 						...current,
@@ -777,7 +777,9 @@ export class ConsentManager {
 				updateOptions: (next) => next,
 			});
 		};
-		const stored = this.#browser ? transferState.get(INTH_BOOT, null) : null;
+		const stored = this.#browser
+			? transferState.get(BOOT_STATE_KEY, null)
+			: null;
 		const boot: ConsentBoot = stored
 			? restoreBoot(stored, options.prefetch?.initialIab?.gvl)
 			: {
@@ -821,7 +823,7 @@ export class ConsentManager {
 			const { planServerBoot } = await import('./deferred/boot-server');
 			// The options the engine started from, with the request's state.
 			transferState.set(
-				INTH_BOOT,
+				BOOT_STATE_KEY,
 				planServerBoot(runtime, untracked(this.#options))
 			);
 		});

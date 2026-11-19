@@ -24,8 +24,7 @@ const openPage = async (query = ''): Promise<SubjectConflictPage> => {
 	}
 	opened.push(tab);
 	const read = () =>
-		(tab as Window & { inthSubjectConflict?: SubjectConflictPage })
-			.inthSubjectConflict;
+		(tab as Window & { subjectConflict?: SubjectConflictPage }).subjectConflict;
 	await expect.poll(read, { timeout: 10_000 }).toBeDefined();
 	const page = read() as SubjectConflictPage;
 	await page.ready;

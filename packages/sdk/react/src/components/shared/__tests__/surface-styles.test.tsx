@@ -18,7 +18,7 @@ import { testing } from '../../../testing';
  * expect no styles run first.
  */
 
-const inthStyles = () =>
+const hoistedStyles = () =>
 	[
 		...document.head.querySelectorAll<HTMLStyleElement>(
 			'style[data-precedence="inth"]'
@@ -41,7 +41,7 @@ describe('surface styles', () => {
 			.element(screen.getByTestId('consent-banner-root'))
 			.toBeInTheDocument();
 
-		expect(inthStyles()).toEqual([]);
+		expect(hoistedStyles()).toEqual([]);
 		await screen.unmount();
 	});
 
@@ -55,7 +55,7 @@ describe('surface styles', () => {
 			.element(screen.getByTestId('consent-banner-root'))
 			.toBeInTheDocument();
 
-		expect(inthStyles()).toEqual([]);
+		expect(hoistedStyles()).toEqual([]);
 		await screen.unmount();
 	});
 
@@ -111,7 +111,11 @@ describe('surface styles', () => {
 			.element(banner.getByTestId('consent-banner-root'))
 			.toBeInTheDocument();
 
-		expect(inthStyles()).toEqual(['inth-tokens', 'inth-button', 'inth-banner']);
+		expect(hoistedStyles()).toEqual([
+			'inth-tokens',
+			'inth-button',
+			'inth-banner',
+		]);
 		await banner.unmount();
 
 		// The app's own token rules win wherever the hoisted sheet lands:
@@ -140,7 +144,7 @@ describe('surface styles', () => {
 			.element(dialog.getByTestId('consent-dialog-root'))
 			.toBeInTheDocument();
 
-		expect(inthStyles()).toEqual([
+		expect(hoistedStyles()).toEqual([
 			'inth-tokens',
 			'inth-button',
 			'inth-banner',

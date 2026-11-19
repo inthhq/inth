@@ -86,10 +86,10 @@ it('removes the retired keys from a native project that was not regenerated', as
 		);
 	}
 	applyAndroidManifest(resolveParams({ projectUrl }), manifest);
-	const inthEntries = (application['meta-data'] ?? [])
+	const entries = (application['meta-data'] ?? [])
 		.filter((item) => item.$['android:name'].startsWith('com.inth.'))
 		.map((item) => [item.$['android:name'], item.$['android:value']]);
-	expect(inthEntries).toStrictEqual([['com.inth.BACKEND_URL', projectUrl]]);
+	expect(entries).toStrictEqual([['com.inth.BACKEND_URL', projectUrl]]);
 });
 
 it('writes the dryRun flag on both platforms only while it is on', async () => {

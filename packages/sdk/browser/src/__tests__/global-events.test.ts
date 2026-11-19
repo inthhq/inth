@@ -7,7 +7,7 @@ import {
 	createTestingGlobal as createGlobal,
 	createTestingConsentClient as createConsentClient,
 } from '../testing-global';
-import type { TestingInthGlobal as InthGlobal } from '../testing-global';
+import type { TestingGlobalApi as GlobalApi } from '../testing-global';
 import type { ConsentClient, ConsentClientOptions } from '../types';
 
 const testWindow = window as Window & { inth?: unknown };
@@ -38,7 +38,7 @@ const persistGrant = async (): Promise<void> => {
 	client.dispose();
 };
 
-const install = (): InthGlobal =>
+const install = (): GlobalApi =>
 	installGlobal(createGlobal({ pkg: '@inth/sdk/test' }));
 
 const trackObservers = (): void => {
@@ -58,7 +58,7 @@ const trackObservers = (): void => {
 };
 
 afterEach(() => {
-	(testWindow.inth as InthGlobal | undefined)?.dispose?.();
+	(testWindow.inth as GlobalApi | undefined)?.dispose?.();
 	testWindow.inth = undefined;
 	for (const client of clients.splice(0)) {
 		client.dispose();

@@ -11,7 +11,7 @@ import { ANDROID_META, IOS_PLIST_KEY } from '../constants';
 import { InthPluginError } from '../errors';
 import { applyInfoPlist } from '../ios';
 import { resolveParams } from '../params';
-import type { InthPolicyRule } from '../params';
+import type { InCodePolicyRule } from '../params';
 import {
 	androidPolicyRulesDestination,
 	POLICY_RULES_NAME,
@@ -21,7 +21,7 @@ import { FIXTURE_DIR, WITH_POLICY, IN_CODE_POLICY } from './helpers';
 
 const BACKEND = 'https://acme.inth.app';
 
-const fallback: InthPolicyRule = {
+const fallback: InCodePolicyRule = {
 	id: 'everywhere',
 	match: { fallback: true, isDefault: true },
 	model: 'opt-in',
@@ -37,7 +37,7 @@ const parity = JSON.parse(
 		'utf8'
 	)
 ) as {
-	rules: InthPolicyRule[];
+	rules: InCodePolicyRule[];
 	invalid: { name: string; rules: unknown }[];
 	accepted: { name: string; rules: unknown[] }[];
 };

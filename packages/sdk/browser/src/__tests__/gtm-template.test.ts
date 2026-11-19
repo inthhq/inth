@@ -18,7 +18,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { installGlobal } from '../global';
 import { createTestingGlobal as createGlobal } from '../testing-global';
-import type { TestingInthGlobal as InthGlobal } from '../testing-global';
+import type { TestingGlobalApi as GlobalApi } from '../testing-global';
 import type { ConsentClientOptions } from '../types';
 
 const template = readFileSync(
@@ -323,7 +323,7 @@ const testWindow = window as Window & { inth?: unknown; dataLayer?: unknown };
 /** What the Inth script tag does when it runs, configured for this test. */
 const loadInth = function loadInth(
 	pageOptions: ConsentClientOptions = options
-): InthGlobal {
+): GlobalApi {
 	if (Array.isArray(testWindow.inth)) {
 		testWindow.inth.push(['config', pageOptions]);
 	} else {
@@ -334,11 +334,11 @@ const loadInth = function loadInth(
 	return api;
 };
 
-const inthUrl = 'https://acme.inth.app/inth.js';
+const tagScriptUrl = 'https://acme.inth.app/inth.js';
 const tagData = {
 	loadScript: true,
 	projectUrl: '',
-	scriptUrl: inthUrl,
+	scriptUrl: tagScriptUrl,
 	waitForUpdate: '500',
 };
 
@@ -353,7 +353,7 @@ const denied = {
 };
 
 afterEach(() => {
-	(testWindow.inth as InthGlobal | undefined)?.dispose?.();
+	(testWindow.inth as GlobalApi | undefined)?.dispose?.();
 	testWindow.inth = undefined;
 	testWindow.dataLayer = undefined;
 	vi.restoreAllMocks();
@@ -404,7 +404,7 @@ describe('GTM template', () => {
 		});
 		const result = page.run(tagData);
 
-		expect(page.recorded.injected).toEqual([inthUrl]);
+		expect(page.recorded.injected).toEqual([tagScriptUrl]);
 		expect(result.success).toHaveBeenCalledOnce();
 		await vi.waitFor(() => {
 			expect(page.recorded.updates).toEqual([
@@ -414,7 +414,7 @@ describe('GTM template', () => {
 	});
 
 	it('sends an update when the visitor accepts or rejects', async () => {
-		let api: InthGlobal | undefined;
+		let api: GlobalApi | undefined;
 		const page = createPage(() => {
 			api = loadInth();
 		});
@@ -448,7 +448,7 @@ describe('GTM template', () => {
 		// How many updates GTM had when each event arrived.
 		const updatesAtEvent: number[] = [];
 		const dataLayer: unknown[] = [];
-		let api: InthGlobal | undefined;
+		let api: GlobalApi | undefined;
 		const page = createPage(() => {
 			api = loadInth();
 		});
@@ -543,7 +543,7 @@ describe('GTM template', () => {
 		// The page sets no categories and registers no scripts, as on a site
 		// that loads Inth only through the tag.
 		const { consentCategories: _, ...pageOptions } = options;
-		let api: InthGlobal | undefined;
+		let api: GlobalApi | undefined;
 		const page = createPage(() => {
 			api = loadInth(pageOptions);
 		});
@@ -577,7 +577,9 @@ describe('GTM template', () => {
 		const result = page.run(tagData);
 
 		expect(result.failure).toHaveBeenCalledOnce();
-		expect(page.recorded.logs).toEqual([`inth: could not load ${inthUrl}`]);
+		expect(page.recorded.logs).toEqual([
+			`inth: could not load ${tagScriptUrl}`,
+		]);
 	});
 
 	it('tries again on a later firing after the script fails to load', async () => {
@@ -594,7 +596,7 @@ describe('GTM template', () => {
 
 		expect(first.failure).toHaveBeenCalledOnce();
 		expect(second.success).toHaveBeenCalledOnce();
-		expect(page.recorded.injected).toEqual([inthUrl, inthUrl]);
+		expect(page.recorded.injected).toEqual([tagScriptUrl, tagScriptUrl]);
 		await vi.waitFor(() => {
 			expect(page.recorded.updates).toHaveLength(1);
 		});
@@ -605,7 +607,7 @@ describe('GTM template', () => {
 		page.run(tagData);
 		const second = page.run(tagData);
 
-		expect(page.recorded.injected).toEqual([inthUrl]);
+		expect(page.recorded.injected).toEqual([tagScriptUrl]);
 		expect(second.success).toHaveBeenCalledOnce();
 	});
 

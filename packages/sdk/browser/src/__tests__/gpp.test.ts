@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { installGlobal } from '../global';
 import { mountGPP } from '../gpp';
 import { createTestingGlobal as createGlobal } from '../testing-global';
-import type { TestingInthGlobal as InthGlobal } from '../testing-global';
+import type { TestingGlobalApi as GlobalApi } from '../testing-global';
 import type { ConsentClient, ScriptTagClientOptions } from '../types';
 import { init } from './fixtures/factory-init';
 
@@ -35,12 +35,12 @@ const loadAddon = async function loadAddon(): Promise<void> {
 };
 
 /** Install the main tag over whatever the page queued. */
-const loadTag = function loadTag(): InthGlobal {
+const loadTag = function loadTag(): GlobalApi {
 	return installGlobal(createGlobal({ pkg: '@inth/sdk/test' }));
 };
 
 afterEach(() => {
-	(testWindow.inth as InthGlobal | undefined)?.dispose?.();
+	(testWindow.inth as GlobalApi | undefined)?.dispose?.();
 	testWindow.inth = undefined;
 	for (const client of clients.splice(0)) {
 		client.dispose();

@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { installGlobal } from '../global';
 import { createTestingGlobal as createGlobal } from '../testing-global';
-import type { TestingInthGlobal as InthGlobal } from '../testing-global';
+import type { TestingGlobalApi as GlobalApi } from '../testing-global';
 import type { ConsentClientOptions } from '../types';
 
 const testWindow = window as Window & { inth?: unknown };
@@ -25,7 +25,7 @@ const options: ConsentClientOptions = {
 };
 
 /** Install over whatever the page queued, then init the way the tag does. */
-const loadTag = function loadTag(queue: unknown[]): InthGlobal {
+const loadTag = function loadTag(queue: unknown[]): GlobalApi {
 	testWindow.inth = queue;
 	const api = installGlobal(createGlobal({ pkg: '@inth/sdk/test' }));
 	api.init();
@@ -33,7 +33,7 @@ const loadTag = function loadTag(queue: unknown[]): InthGlobal {
 };
 
 afterEach(() => {
-	(testWindow.inth as InthGlobal | undefined)?.dispose?.();
+	(testWindow.inth as GlobalApi | undefined)?.dispose?.();
 	testWindow.inth = undefined;
 	vi.restoreAllMocks();
 	localStorage.clear();

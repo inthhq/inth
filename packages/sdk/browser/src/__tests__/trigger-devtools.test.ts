@@ -6,7 +6,7 @@ import type { DevToolsInstance } from '@inth/sdk-dev-tools';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { mountDevTools } from '../devtools';
-import type { InthGlobalBase } from '../global-base';
+import type { GlobalApiBase } from '../global-base';
 import { createTestingConsentClient as createConsentClient } from '../testing-global';
 import type {
 	ConsentClient,
@@ -71,7 +71,7 @@ afterEach(() => {
 	for (const panel of panels.splice(0)) {
 		panel.destroy();
 	}
-	(testWindow.inth as InthGlobalBase | undefined)?.dispose?.();
+	(testWindow.inth as GlobalApiBase | undefined)?.dispose?.();
 	testWindow.inth = undefined;
 	for (const client of clients.splice(0)) {
 		client.dispose();
@@ -197,7 +197,7 @@ describe('inth.devtools.js', () => {
 					: (['cdn-devtools', 'cdn-testing'] as const);
 			await loadTag(first);
 			await loadTag(second);
-			const api = testWindow.inth as InthGlobalBase;
+			const api = testWindow.inth as GlobalApiBase;
 			const client = api.client as ConsentClient;
 			await client.ready();
 

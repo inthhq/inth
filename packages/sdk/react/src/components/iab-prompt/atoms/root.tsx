@@ -1,6 +1,6 @@
 'use client';
 
-import type * as InthCoreTypes from '@inth/sdk/engine';
+import type * as CoreTypes from '@inth/sdk/engine';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-banner';
 import { forwardRef as createForwardRef, useMemo } from 'react';
@@ -23,7 +23,7 @@ import {
 } from '../../shared/surface-styles';
 import { IABConsentBannerOverlay } from './overlay';
 
-const DEFAULT_MODELS: InthCoreTypes.Model[] = ['iab'];
+const DEFAULT_MODELS: CoreTypes.Model[] = ['iab'];
 
 interface IABConsentBannerRootProps extends HTMLAttributes<HTMLDivElement> {
 	children: ReactNode;
@@ -35,7 +35,7 @@ interface IABConsentBannerRootProps extends HTMLAttributes<HTMLDivElement> {
 	 * Which consent models this banner responds to.
 	 * @default ['iab']
 	 */
-	models?: InthCoreTypes.Model[];
+	models?: CoreTypes.Model[];
 	/**
 	 * Override the UI source identifier sent with consent API calls.
 	 * @default 'iab_banner'
@@ -176,7 +176,7 @@ interface IABConsentBannerRootChildrenProps extends HTMLAttributes<HTMLDivElemen
 	 * Which consent models this banner responds to.
 	 * @default ['iab']
 	 */
-	models?: InthCoreTypes.Model[];
+	models?: CoreTypes.Model[];
 }
 
 IABConsentBannerRootChildren.displayName = 'IABConsentBannerRootChildren';

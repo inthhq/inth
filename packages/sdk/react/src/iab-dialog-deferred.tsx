@@ -13,7 +13,7 @@
  * @packageDocumentation
  */
 
-import type * as InthCoreTypes from '@inth/sdk/engine';
+import type * as CoreTypes from '@inth/sdk/engine';
 import { useEffect, useState } from 'react';
 import type { ComponentType } from 'react';
 
@@ -34,7 +34,7 @@ import { createDeferredModule } from './utils/deferred-module';
 type AnyComponent = ComponentType<Record<string, unknown>>;
 
 /** Matches the default of the dialog's own `models` prop. */
-const DEFAULT_MODELS: readonly InthCoreTypes.Model[] = ['iab'];
+const DEFAULT_MODELS: readonly CoreTypes.Model[] = ['iab'];
 
 // Vite derives the chunk name from this path; keep it neutral so URL filters
 // do not block the UI.

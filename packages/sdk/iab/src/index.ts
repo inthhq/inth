@@ -68,7 +68,7 @@ import {
 	validatePublisherRestrictions,
 } from './tcf/publisher-restrictions';
 import {
-	INTH_TO_IAB_PURPOSE_MAP,
+	CONSENT_TO_IAB_PURPOSE_MAP,
 	inthConsentsToIabPurposes,
 	iabPurposesToInthConsents,
 } from './tcf/purpose-mapping';
@@ -550,7 +550,9 @@ const grantsDeniedCategory = function grantsDeniedCategory(
 			return false;
 		}
 		const purposes =
-			INTH_TO_IAB_PURPOSE_MAP[category as keyof typeof INTH_TO_IAB_PURPOSE_MAP];
+			CONSENT_TO_IAB_PURPOSE_MAP[
+				category as keyof typeof CONSENT_TO_IAB_PURPOSE_MAP
+			];
 		const granted = (purpose: number) =>
 			authority.purposeConsents[purpose] === true;
 		return decision.confirmedAt > authority.confirmedAt
@@ -582,7 +584,9 @@ const withoutDeniedPurposes = function withoutDeniedPurposes(
 			continue;
 		}
 		const purposes =
-			INTH_TO_IAB_PURPOSE_MAP[category as keyof typeof INTH_TO_IAB_PURPOSE_MAP];
+			CONSENT_TO_IAB_PURPOSE_MAP[
+				category as keyof typeof CONSENT_TO_IAB_PURPOSE_MAP
+			];
 		for (const purpose of purposes ?? []) {
 			next[purpose] = false;
 		}

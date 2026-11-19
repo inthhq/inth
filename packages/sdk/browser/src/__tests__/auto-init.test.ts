@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readPageOptions, readScriptOptions } from '../auto-init';
 import { autoInit, installGlobal } from '../global';
 import { createTestingGlobal as createGlobal } from '../testing-global';
-import type { TestingInthGlobal as InthGlobal } from '../testing-global';
+import type { TestingGlobalApi as GlobalApi } from '../testing-global';
 
 /** A transport factory that hands the client `transport`. */
 const custom = (
@@ -40,7 +40,7 @@ const scriptWith = function scriptWith(
 };
 
 afterEach(() => {
-	(testWindow.inth as InthGlobal | undefined)?.dispose?.();
+	(testWindow.inth as GlobalApi | undefined)?.dispose?.();
 	testWindow.inth = undefined;
 	localStorage.clear();
 	clearCookies();

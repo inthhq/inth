@@ -45,4 +45,4 @@ const page: UICSPPage = {
 	ready: client.ready(),
 	violations,
 };
-Object.assign(window, { inthUICSP: page });
+Object.assign(window, { uiCSP: page });

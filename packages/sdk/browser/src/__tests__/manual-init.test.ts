@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
 
 import { autoInit, createGlobal, installGlobal } from '../global';
-import type { InthGlobal } from '../global';
+import type { GlobalApi } from '../global';
 import type { ConsentClientOptions } from '../types';
 
 type TestWindow = Window & {
@@ -22,7 +22,7 @@ const scriptWith = function scriptWith(
 };
 
 const installManual = function installManual(): {
-	api: InthGlobal;
+	api: GlobalApi;
 	currentScript: MockInstance<() => Document['currentScript']>;
 	script: HTMLScriptElement;
 } {
@@ -46,7 +46,7 @@ const installManual = function installManual(): {
 };
 
 afterEach(() => {
-	(testWindow.inth as InthGlobal | undefined)?.dispose?.();
+	(testWindow.inth as GlobalApi | undefined)?.dispose?.();
 	testWindow.inth = undefined;
 	vi.restoreAllMocks();
 	localStorage.clear();

@@ -12,10 +12,10 @@ import type { RuntimePrefetch } from '@inth/sdk/runtime';
  *
  * @internal
  */
-export const INTH_SERVER_STATE = makeStateKey<RuntimePrefetch>('inth');
+export const SERVER_STATE_KEY = makeStateKey<RuntimePrefetch>('inth');
 
 /**
- * Opens once `provideInthServer()` has set {@link INTH_SERVER_STATE} for
+ * Opens once `provideInthServer()` has set {@link SERVER_STATE_KEY} for
  * the request, or found it has nothing to set.
  *
  * Angular runs every app initializer before it awaits any, so another
@@ -44,6 +44,6 @@ export class ServerStateGate {
  *
  * @internal
  */
-export const INTH_SERVER_STATE_GATE = new InjectionToken<ServerStateGate>(
+export const SERVER_STATE_GATE = new InjectionToken<ServerStateGate>(
 	'INTH_SERVER_STATE_GATE'
 );

@@ -1,6 +1,6 @@
 'use client';
 
-import type * as InthCoreTypes from '@inth/sdk/engine';
+import type * as CoreTypes from '@inth/sdk/engine';
 import { resolveIABBannerCopy } from '@inth/sdk/iab/headless';
 import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-banner';
@@ -65,7 +65,7 @@ export interface IABConsentBannerProps {
 	 * Which consent models this banner responds to.
 	 * @default ['iab']
 	 */
-	models?: InthCoreTypes.Model[];
+	models?: CoreTypes.Model[];
 
 	/**
 	 * Override the UI source identifier sent with consent API calls.

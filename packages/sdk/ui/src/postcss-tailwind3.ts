@@ -4,7 +4,7 @@
  * `@inth/sdk` ships under `lib/<part>/dist/`. Vite may append a query such as
  * `?transform-only` to the file name.
  */
-const INTH_INSTALLED_STYLESHEET_PATH =
+const INSTALLED_STYLESHEET_PATH =
 	/(?:^|[\\/])node_modules[\\/]@inth[\\/](?!cli[\\/])[^\\/]+(?:[\\/]lib[\\/][^\\/]+)?[\\/]dist[\\/](?:[^\\/]+[\\/])*[^\\/]+\.css(?:\?[^\\/]*)?$/u;
 
 /**
@@ -110,7 +110,7 @@ export interface PostcssTailwind3PluginCreator {
 export const isInthUiStylesheetPath = function isInthUiStylesheetPath(
 	filePath: string
 ): boolean {
-	if (INTH_INSTALLED_STYLESHEET_PATH.test(filePath)) {
+	if (INSTALLED_STYLESHEET_PATH.test(filePath)) {
 		return true;
 	}
 	const directory = WORKSPACE_STYLESHEET_PATH.exec(filePath)?.groups?.directory;

@@ -1,6 +1,6 @@
 'use client';
 
-import type * as InthCoreTypes from '@inth/sdk/engine';
+import type * as CoreTypes from '@inth/sdk/engine';
 import type { FC } from 'react';
 
 import type { ConsentDialogTriggerProps } from '~/components/panel-trigger';
@@ -106,7 +106,7 @@ export interface ConsentDialogProps {
 	 * Which consent models this dialog responds to.
 	 * @default ['opt-in', 'opt-out', 'none']
 	 */
-	models?: InthCoreTypes.Model[];
+	models?: CoreTypes.Model[];
 
 	/**
 	 * Override the UI source identifier sent with consent API calls.

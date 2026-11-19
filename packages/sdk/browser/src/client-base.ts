@@ -85,7 +85,7 @@ export interface CreateConsentClientContext {
 	mountUI?: ConsentUIMounter;
 	/**
 	 * The launcher slot the prebuilt UI's trigger reads. Only the
-	 * script-tag global uses it; see `InthGlobalBase.publishDevToolsLauncher`.
+	 * script-tag global uses it; see `GlobalApiBase.publishDevToolsLauncher`.
 	 */
 	publishDevToolsLauncher?: PublishDevToolsLauncher;
 	/** Package name reported on `window.inth`. */

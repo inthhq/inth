@@ -627,7 +627,7 @@ the plain `requestTrackingAuthorization()` shows no button.
 
 Under an IAB TCF policy, marketing is `granted` for this sequence only while the
 Inth category is granted and the committed TC String grants `marketing` by the
-web derivation (`INTH_TO_IAB_PURPOSE_MAP.marketing`, decided by the purposes some
+web derivation (`CONSENT_TO_IAB_PURPOSE_MAP.marketing`, decided by the purposes some
 registered or custom vendor asks consent for) to at least one consented
 registered or custom vendor that asks consent for a deciding purpose, or a
 consented ad tech provider. Otherwise it is a refusal.

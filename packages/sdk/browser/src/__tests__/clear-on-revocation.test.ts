@@ -2,11 +2,11 @@ import { afterEach, expect, it, vi } from 'vitest';
 
 import { installGlobal } from '../global';
 import { createTestingGlobal as createGlobal } from '../testing-global';
-import type { TestingInthGlobal as InthGlobal } from '../testing-global';
+import type { TestingGlobalApi as GlobalApi } from '../testing-global';
 import type { ConsentClientOptions } from '../types';
 
 const testWindow = window as Window & { inth?: unknown };
-let api: InthGlobal | undefined;
+let api: GlobalApi | undefined;
 
 const seedAnalytics = (): void => {
 	document.cookie = 'analytics-id=visitor; Path=/';

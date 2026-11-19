@@ -18,12 +18,12 @@ import {
 	initializeGPPStub,
 } from '@inth/sdk-iab/gpp';
 
-import type { InthGlobal, QueuedCall } from '../global';
+import type { GlobalApi, QueuedCall } from '../global';
 import { GLOBAL_NAME } from '../global-name';
 import type { ConsentClient } from '../types';
 
 type GlobalWindow = Window & {
-	[GLOBAL_NAME]?: InthGlobal | QueuedCall[];
+	[GLOBAL_NAME]?: GlobalApi | QueuedCall[];
 };
 
 initializeGPPStub();

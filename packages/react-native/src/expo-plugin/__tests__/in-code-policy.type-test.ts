@@ -9,7 +9,7 @@
 import type { PolicyRule } from '@inth/sdk/engine';
 import { expectTypeOf } from 'vitest';
 
-import type { InthPolicyRule } from '../params';
+import type { InCodePolicyRule } from '../params';
 
 type Mutable<Type> = {
 	-readonly [Key in keyof Type]: Type[Key] extends readonly (infer Item)[]
@@ -19,5 +19,5 @@ type Mutable<Type> = {
 			: Type[Key];
 };
 
-expectTypeOf<Mutable<InthPolicyRule>>().toExtend<PolicyRule>();
-expectTypeOf<keyof InthPolicyRule>().toExtend<keyof PolicyRule>();
+expectTypeOf<Mutable<InCodePolicyRule>>().toExtend<PolicyRule>();
+expectTypeOf<keyof InCodePolicyRule>().toExtend<keyof PolicyRule>();

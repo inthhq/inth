@@ -19,7 +19,7 @@ import type { DevToolsPosition, DevToolsTab } from '@inth/sdk-dev-tools';
 
 import { createBrowserDevTools } from '../devtools-mount';
 import type { BrowserDevToolsOptions } from '../devtools-mount';
-import type { InthGlobal, QueuedCall } from '../global';
+import type { GlobalApi, QueuedCall } from '../global';
 import { GLOBAL_NAME } from '../global-name';
 import type { ConsentClient } from '../types';
 
@@ -61,7 +61,7 @@ const readOptions = function readOptions(
 };
 
 type GlobalWindow = Window & {
-	[GLOBAL_NAME]?: InthGlobal | QueuedCall[];
+	[GLOBAL_NAME]?: GlobalApi | QueuedCall[];
 };
 
 const options = readOptions(document.currentScript);

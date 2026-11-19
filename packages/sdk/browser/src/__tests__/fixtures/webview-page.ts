@@ -50,4 +50,4 @@ const page: WebViewPage = {
 	posted,
 	ready: client.ready(),
 };
-Object.assign(window, { inthWebView: page });
+Object.assign(window, { webView: page });
