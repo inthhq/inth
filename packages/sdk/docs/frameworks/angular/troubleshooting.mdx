@@ -123,3 +123,12 @@ reloads the page so code that already ran is gone. This is expected.
 
 **Fix.** Set `reloadOnConsentRevoked: false` in `provideInth()` only if every
 registered vendor stops itself through its consent API.
+
+## Names from an earlier alpha are missing
+
+**Check.** Angular reports `'inth-consent-root' is not a known element`, or the
+import from `@inth/angular/consent-root` fails. The v3 alphas renamed it with
+no alias.
+
+**Fix.** Import `InthProvider` from `@inth/angular/provider` and render
+`<inth-provider>`. Its inputs are unchanged.

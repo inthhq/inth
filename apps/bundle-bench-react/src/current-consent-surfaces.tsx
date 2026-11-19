@@ -3,13 +3,13 @@ import { createElement } from 'react';
 import {
 	ConsentBanner,
 	ConsentDialog,
-	ConsentProvider,
+	InthProvider,
 } from '../../../packages/sdk/react/src/index';
 import { testing } from '../../../packages/sdk/react/src/testing';
 import { benchmarkConsentOptions } from './fixtures';
 
 export const CurrentConsentSurfaces = () => (
-	<ConsentProvider
+	<InthProvider
 		options={{
 			...benchmarkConsentOptions,
 			mode: testing({
@@ -26,7 +26,7 @@ export const CurrentConsentSurfaces = () => (
 	>
 		<ConsentBanner />
 		<ConsentDialog />
-	</ConsentProvider>
+	</InthProvider>
 );
 
 export default createElement(CurrentConsentSurfaces);

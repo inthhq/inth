@@ -7,7 +7,7 @@ const activeUI = useConsentActiveUI();
 
 <template>
 	<ConsentPrompt v-if="route.meta.headlessConsent" />
-	<ConsentRoot v-else />
+	<InthProvider v-else />
 	<NuxtPage />
 	<footer class="consent-example">
 		<button

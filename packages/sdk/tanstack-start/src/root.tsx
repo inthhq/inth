@@ -6,7 +6,7 @@
  * The consent engine (kernel, persistence, provider runtime) is not in the
  * first-load chunk: `./root-engine` holds it and loads with `import()`.
  *
- * - The server renders the whole root (`EagerConsentRoot`): the banner, its
+ * - The server renders the whole root (`EagerRoot`): the banner, its
  *   styles and the scripts the server starts are in the first HTML, plus
  *   the snapshots the page rendered from.
  * - The browser renders the page at once, with Inth's hooks reading those
@@ -44,9 +44,9 @@ import type {
 import { engineNow } from '#engine-now';
 
 import type * as RootEngine from './root-engine';
-import type { ConsentRootProps } from './root-options';
+import type { InthProviderProps } from './root-options';
 
-export type { ConsentRootProps } from './root-options';
+export type { InthProviderProps } from './root-options';
 
 type EngineModule = typeof RootEngine;
 
@@ -71,13 +71,13 @@ const loadEngine = (): Recorded<EngineModule> => {
 };
 
 /**
- * Loads `ConsentRoot`'s engine now. A root that must render its engine at
+ * Loads `InthProvider`'s engine now. A root that must render its engine at
  * once (a client-only render, or one the shell cannot stand in for) then
  * renders without suspending. Tests use it before a synchronous render.
  *
  * @internal
  */
-export const preloadConsentRoot = (): Promise<EngineModule> => loadEngine();
+export const preloadRoot = (): Promise<EngineModule> => loadEngine();
 
 if (typeof document === 'undefined') {
 	// A server render finds it loaded instead of suspending the page.
@@ -101,7 +101,7 @@ if (typeof document === 'undefined') {
  * to record it: persistence off, or a consent source.
  */
 const commitConfig = function commitConfig(
-	props: ConsentRootProps
+	props: InthProviderProps
 ): DeferredCommitConfig | undefined {
 	const { options, persistence, scriptLoader, scripts } = props;
 	if (persistence === false || options?.consentSource) {
@@ -130,7 +130,7 @@ type Plan =
 
 /** How the browser renders this root, decided at its first render. */
 const planRoot = function planRoot(
-	props: ConsentRootProps,
+	props: InthProviderProps,
 	// `useConsentBootPlan` gives the boot data only to the mount that
 	// hydrates the server's HTML: a remount after a client-side navigation
 	// gets `null` and takes the eager engine.
@@ -168,11 +168,11 @@ const planRoot = function planRoot(
 	};
 };
 
-const ClientConsentRoot = (props: ConsentRootProps) => {
+const ClientRoot = (props: InthProviderProps) => {
 	const plan = useConsentBootPlan((boot) => planRoot(props, boot));
 	if (plan.kind === 'eager') {
-		const { EagerConsentRoot } = read(loadEngine());
-		return <EagerConsentRoot {...props} />;
+		const { EagerRoot } = read(loadEngine());
+		return <EagerRoot {...props} />;
 	}
 	return (
 		<DeferredConsentShell
@@ -209,14 +209,14 @@ const ClientConsentRoot = (props: ConsentRootProps) => {
  * @example
  * ```tsx
  * // src/routes/__root.tsx
- * import { ConsentRoot } from '@inth/tanstack-start';
+ * import { InthProvider } from '@inth/tanstack-start';
  *
  * function RootComponent() {
  *   const { consent } = Route.useLoaderData();
  *   return (
- *     <ConsentRoot state={consent}>
+ *     <InthProvider state={consent}>
  *       <Outlet />
- *     </ConsentRoot>
+ *     </InthProvider>
  *   );
  * }
  * ```
@@ -234,10 +234,10 @@ const ClientConsentRoot = (props: ConsentRootProps) => {
  * @throws {Error} When the mode needs a backend URL and neither the state
  * nor `consentManifest()` provides one.
  */
-export const ConsentRoot = (props: ConsentRootProps) => {
+export const InthProvider = (props: InthProviderProps) => {
 	if (typeof document === 'undefined') {
-		const { EagerConsentRoot } = read(loadEngine());
-		return <EagerConsentRoot {...props} />;
+		const { EagerRoot } = read(loadEngine());
+		return <EagerRoot {...props} />;
 	}
-	return <ClientConsentRoot {...props} />;
+	return <ClientRoot {...props} />;
 };

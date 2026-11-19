@@ -2,7 +2,7 @@ import { createConsentRuntime } from '@inth/sdk/runtime';
 import { createRoot } from 'react-dom/client';
 import { expect, test, vi } from 'vitest';
 
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
@@ -18,12 +18,12 @@ test('retains an external-runtime child and its draft after the IAB bridge loads
 	try {
 		// act() can resolve the old Suspense boundary before committing its fallback.
 		root.render(
-			<ConsentProvider runtime={runtime}>
+			<InthProvider runtime={runtime}>
 				<input
 					aria-label="Draft"
 					defaultValue="initial"
 				/>
-			</ConsentProvider>
+			</InthProvider>
 		);
 		await vi.waitFor(
 			() => expect(container.querySelector('input')).not.toBeNull(),

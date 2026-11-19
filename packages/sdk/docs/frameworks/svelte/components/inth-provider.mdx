@@ -1,12 +1,12 @@
 ---
-title: ConsentProvider
-description: Mount ConsentProvider at the root of a Svelte app to start Inth, with every prop, its default, and which options update after mount.
+title: InthProvider
+description: Mount InthProvider at the root of a Svelte app to start Inth, with every prop, its default, and which options update after mount.
 group: frameworks
 ---
 
 ## Mount the provider
 
-Render `ConsentProvider` once, around your whole app, in the component
+Render `InthProvider` once, around your whole app, in the component
 you pass to `mount()`:
 
 <include src="../../../shared/examples/svelte/app.mdx" />
@@ -25,4 +25,4 @@ In a Svelte app without SvelteKit the browser resolves the policy after the
 page loads, so the banner appears after the first paint. Optional categories
 stay denied until then.
 
-<include src="../../../shared/svelte/components/consent-provider.mdx" />
+<include src="../../../shared/svelte/components/inth-provider.mdx" />

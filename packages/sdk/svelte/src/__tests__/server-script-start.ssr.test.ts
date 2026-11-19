@@ -14,7 +14,7 @@ import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { render } from 'svelte/server';
 import { afterEach, beforeAll, expect, test } from 'vitest';
 
-import ConsentProvider from '../lib/components/consent-provider.svelte';
+import InthProvider from '../lib/components/inth-provider.svelte';
 import { setRequestEvent } from '../lib/kit/__tests__/app-server';
 import { createEvent } from '../lib/kit/__tests__/event';
 import {
@@ -55,7 +55,7 @@ const renderPage = function renderPage({
 	const event = createEvent();
 	const inject = createServerStartInjector(event.locals);
 	setRequestEvent(event);
-	const { body, head } = render(ConsentProvider, {
+	const { body, head } = render(InthProvider, {
 		props: {
 			options: {
 				mode: testing(),

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { CornerPosition } from '@inth/sdk/ui/utils';
 
-	import ConsentProvider from '../../lib/components/consent-provider.svelte';
+	import InthProvider from '../../lib/components/inth-provider.svelte';
 	import ConsentDialogTrigger from '../../lib/components/panel-trigger.svelte';
 	import ConsentDevToolsComponent from '../../lib/devtools';
 	import { testOffline } from '../test-offline';
@@ -19,7 +19,7 @@
 	} = $props();
 </script>
 
-<ConsentProvider options={{ mode: testOffline() }}>
+<InthProvider options={{ mode: testOffline() }}>
 	{#if devTools}
 		<ConsentDevToolsComponent />
 	{/if}
@@ -30,4 +30,4 @@
 			persistPosition={false}
 		/>
 	{/if}
-</ConsentProvider>
+</InthProvider>

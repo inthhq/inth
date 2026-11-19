@@ -254,13 +254,13 @@ write(
 	`import '@inth/react/styles.css';
 import '@inth/react/iab/styles.css';
 import { createRoot } from 'react-dom/client';
-import { ConsentBanner, ConsentDialog, ConsentProvider } from '@inth/react';
+import { ConsentBanner, ConsentDialog, InthProvider } from '@inth/react';
 
 createRoot(document.getElementById('root')!).render(
-	<ConsentProvider options={{ projectUrl: 'https://example.inth.app' }}>
+	<InthProvider options={{ projectUrl: 'https://example.inth.app' }}>
 		<ConsentBanner />
 		<ConsentDialog />
-	</ConsentProvider>
+	</InthProvider>
 );
 `
 );
@@ -298,13 +298,13 @@ write(
 write(
 	'svelte/App.svelte',
 	`<script>
-	import { ConsentBanner, ConsentDialog, ConsentProvider } from '@inth/svelte';
+	import { ConsentBanner, ConsentDialog, InthProvider } from '@inth/svelte';
 </script>
 
-<ConsentProvider options={{ projectUrl: 'https://example.inth.app' }}>
+<InthProvider options={{ projectUrl: 'https://example.inth.app' }}>
 	<ConsentBanner />
 	<ConsentDialog />
-</ConsentProvider>
+</InthProvider>
 `
 );
 write(
@@ -390,7 +390,7 @@ import ConsentBanner from '@inth/nuxt/components/consent-banner';
 </script>
 
 <template>
-	<ConsentRoot />
+	<InthProvider />
 	<ConsentBanner v-if="false" />
 	<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 </template>
@@ -509,7 +509,7 @@ import { createRoot } from 'react-dom/client';
 import {
 	ConsentBanner,
 	ConsentDialog,
-	ConsentProvider,
+	InthProvider,
 	hosted,
 	type Vendor,
 } from '@inth/react';
@@ -524,7 +524,7 @@ export const experiment = defineExperiment({
 });
 
 createRoot(document.getElementById('root')!).render(
-	<ConsentProvider
+	<InthProvider
 		options={{
 			mode: hosted(),
 			projectUrl: projectUrl ?? 'https://example.inth.app',
@@ -534,7 +534,7 @@ createRoot(document.getElementById('root')!).render(
 		<ConsentGPP />
 		<ConsentBanner />
 		<ConsentDialog />
-	</ConsentProvider>
+	</InthProvider>
 );
 `
 );

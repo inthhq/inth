@@ -14,7 +14,7 @@ import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { ConsentRoot } from '../root';
+import { InthProvider } from '../root';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
@@ -69,7 +69,7 @@ const renderUncommitted = (scripts: Script[]): void => {
 	document.body.append(container);
 	root = createRoot(container);
 	root.render(
-		<ConsentRoot
+		<InthProvider
 			config={OFFLINE_CONFIG}
 			options={{ consentSource }}
 			persistence={false}
@@ -77,13 +77,13 @@ const renderUncommitted = (scripts: Script[]): void => {
 			state={Promise.resolve(policyFixture({ marketing: true }))}
 		>
 			<Hold />
-		</ConsentRoot>
+		</InthProvider>
 	);
 };
 
 // Order matters: the module evaluates once per file, so the case that must
 // not load it runs first.
-describe('ConsentRoot with a consent source: script loader before hydration', () => {
+describe('InthProvider with a consent source: script loader before hydration', () => {
 	test('a stored grant does not load it', async () => {
 		renderUncommitted([pixel]);
 		await vi.waitFor(() => expect(held).toBe(true));

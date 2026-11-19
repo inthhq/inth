@@ -9,7 +9,7 @@
  *
  * @internal
  */
-export { ConsentRoot } from './root';
+export { InthProvider } from './root';
 export {
 	DeferredConsentBanner as ConsentBanner,
 	DeferredConsentDialog as ConsentDialog,

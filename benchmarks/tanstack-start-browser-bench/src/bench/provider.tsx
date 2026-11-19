@@ -1,3 +1,4 @@
+import { InthProvider as ReactProvider } from '@inth/react';
 // Vite resolves this through the adapter's own React dependency, preserving
 // the dependency graph used by baseline comparisons.
 import { IABProvider, IABConsentBanner } from '@inth/react/iab';
@@ -6,13 +7,12 @@ import { createV1ManifestTransport } from '@inth/sdk/transports/manifest';
 import {
 	ConsentBanner,
 	ConsentDialog,
-	ConsentProvider,
-	ConsentRoot,
+	InthProvider,
 } from '@inth/tanstack-start';
 import type {
-	ConsentProviderOptions,
+	InthProviderOptions,
 	WithProjectUrl,
-	ConsentRootProps,
+	InthProviderProps,
 } from '@inth/tanstack-start';
 import type { ConsentState } from '@inth/tanstack-start/server';
 import { useMemo } from 'react';
@@ -34,11 +34,11 @@ const consentCategories = [
 	'experience',
 	'measurement',
 	'marketing',
-] satisfies NonNullable<ConsentProviderOptions['consentCategories']>;
+] satisfies NonNullable<InthProviderOptions['consentCategories']>;
 
 const createOptions = function createOptions(
 	scenario: TanstackBenchScenario
-): WithProjectUrl<ConsentProviderOptions> {
+): WithProjectUrl<InthProviderOptions> {
 	return {
 		callbacks: {
 			onChoiceRecorded() {
@@ -71,7 +71,7 @@ const createOptions = function createOptions(
 
 const createRootOptions = function createRootOptions(
 	scenario: TanstackBenchScenario
-): ConsentRootProps['options'] {
+): InthProviderProps['options'] {
 	const { mode, ...options } = createOptions(scenario);
 	void mode;
 	return options;
@@ -105,9 +105,9 @@ export const TanstackClientBenchmarkProvider = ({
 	children: ReactNode;
 	scenario: TanstackBenchScenario;
 }) => (
-	<ConsentProvider options={createOptions(scenario)}>
+	<ReactProvider options={createOptions(scenario)}>
 		<BenchmarkContents scenario={scenario}>{children}</BenchmarkContents>
-	</ConsentProvider>
+	</ReactProvider>
 );
 
 /**
@@ -131,14 +131,14 @@ export const TanstackManifestClientBenchmarkProvider = ({
 	);
 
 	return (
-		<ConsentProvider
+		<ReactProvider
 			options={{
 				...createOptions(scenario),
 				mode: customMode(transport),
 			}}
 		>
 			<BenchmarkContents scenario={scenario}>{children}</BenchmarkContents>
-		</ConsentProvider>
+		</ReactProvider>
 	);
 };
 
@@ -154,15 +154,15 @@ export const TanstackPrefetchedBenchmarkProvider = ({
 	scenario,
 }: {
 	children: ReactNode;
-	state: ConsentRootProps['state'];
+	state: InthProviderProps['state'];
 	scenario: TanstackBenchScenario;
 }) => (
-	<ConsentRoot
+	<InthProvider
 		state={state}
 		options={createRootOptions(scenario)}
 	>
 		<BenchmarkContents scenario={scenario}>{children}</BenchmarkContents>
-	</ConsentRoot>
+	</InthProvider>
 );
 
 /**
@@ -184,10 +184,10 @@ export const TanstackManifestBenchmarkProvider = ({
 	routePrefix?: string;
 	scenario: TanstackBenchScenario;
 }) => (
-	<ConsentRoot
+	<InthProvider
 		state={{ ...state, projectUrl, routePrefix }}
 		options={createRootOptions(scenario)}
 	>
 		<BenchmarkContents scenario={scenario}>{children}</BenchmarkContents>
-	</ConsentRoot>
+	</InthProvider>
 );

@@ -3,8 +3,8 @@ import type { ReactNode } from 'react';
 
 import { mockGVL } from '../../../packages/sdk/react/src/components/iab/__tests__/fixtures/mock-consent-state';
 import { IABProvider } from '../../../packages/sdk/react/src/iab';
-import { ConsentProvider } from '../../../packages/sdk/react/src/index';
-import type { ConsentProviderOptions } from '../../../packages/sdk/react/src/index';
+import { InthProvider } from '../../../packages/sdk/react/src/index';
+import type { InthProviderOptions } from '../../../packages/sdk/react/src/index';
 import {
 	seedStorybookChoice,
 	storybookIABPolicy,
@@ -19,7 +19,7 @@ type ConsentRecord = Record<string, boolean>;
 
 interface StorybookProviderProps {
 	children: ReactNode;
-	options?: Partial<ConsentProviderOptions>;
+	options?: Partial<InthProviderOptions>;
 	storedConsent?: ConsentRecord;
 	tcString?: string | null;
 }
@@ -54,7 +54,7 @@ export const seedTCString = function seedTCString(tcString: string | null) {
 	window.localStorage.setItem('euconsent-v2', tcString);
 };
 
-export const defaultConsentOptions: ConsentProviderOptions = {
+export const defaultConsentOptions: InthProviderOptions = {
 	mode: storybookMode([storybookPolicy]),
 	presentation: storybookPresentation,
 };
@@ -67,11 +67,11 @@ export const defaultConsentOptions: ConsentProviderOptions = {
  * Stories that bring their own `mode` (a notice rule, IAB) must not receive
  * it: it would override their rule with the default choice policy.
  */
-const defaultPrefetch: ConsentProviderOptions['prefetch'] = {
+const defaultPrefetch: InthProviderOptions['prefetch'] = {
 	initialPolicyResolution: storybookPolicyResolution,
 };
 
-export const editableConsentOptions: Partial<ConsentProviderOptions> = {
+export const editableConsentOptions: Partial<InthProviderOptions> = {
 	consentCategories: [
 		'necessary',
 		'functionality',
@@ -89,7 +89,7 @@ export const editableStoredConsent: ConsentRecord = {
 	necessary: true,
 };
 
-export const defaultIABOptions: ConsentProviderOptions = {
+export const defaultIABOptions: InthProviderOptions = {
 	...defaultConsentOptions,
 	// The provider cannot see the IABProvider below it.
 	mode: storybookMode([storybookIABPolicy], { iab: true }),
@@ -121,9 +121,7 @@ export const StorybookConsentProvider = ({
 		(merged.mode === defaultConsentOptions.mode ? defaultPrefetch : undefined);
 
 	return (
-		<ConsentProvider options={{ ...merged, prefetch }}>
-			{children}
-		</ConsentProvider>
+		<InthProvider options={{ ...merged, prefetch }}>{children}</InthProvider>
 	);
 };
 
@@ -147,7 +145,7 @@ export const StorybookIABProvider = ({
 	void setInitialized;
 
 	return (
-		<ConsentProvider
+		<InthProvider
 			options={{
 				...defaultIABOptions,
 				...options,
@@ -160,6 +158,6 @@ export const StorybookIABProvider = ({
 			>
 				{children}
 			</IABProvider>
-		</ConsentProvider>
+		</InthProvider>
 	);
 };

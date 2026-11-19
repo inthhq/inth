@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ConsentBanner, ConsentDialog, ConsentProvider } from '@inth/svelte';
+	import { ConsentBanner, ConsentDialog, InthProvider } from '@inth/svelte';
 
 	import '../app.css';
 
@@ -8,7 +8,7 @@
 	const projectUrl = 'https://your-project.inth.app';
 </script>
 
-<ConsentProvider
+<InthProvider
 	{projectUrl}
 	persistence={false}
 >
@@ -17,4 +17,4 @@
 	<ConsentBanner class="p-[7px] dark:p-[11px]" />
 	<!-- #endregion docs:slot -->
 	<ConsentDialog />
-</ConsentProvider>
+</InthProvider>

@@ -7,7 +7,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import type { Component, ComponentPublicInstance } from 'vue';
 import { defineComponent, h, nextTick, ref } from 'vue';
 
-import NuxtConsentRoot from '../runtime/components/nuxt-root.vue';
+import NuxtInthProvider from '../runtime/components/nuxt-inth-provider.vue';
 import { consentConfigKey } from '../runtime/composables/config';
 import { useConsentLanguage } from '../runtime/composables/language';
 import type { ConsentConfig } from '../runtime/config';
@@ -154,11 +154,11 @@ describe('changing the consent language', () => {
 		expect(transport.init).not.toHaveBeenCalled();
 	});
 
-	test('the Nuxt ConsentRoot language prop loads that language', async () => {
+	test('the Nuxt InthProvider language prop loads that language', async () => {
 		const current = ref('fr');
 		const { context, transport } = await renderWith(
 			defineComponent({
-				setup: () => () => h(NuxtConsentRoot, { language: current.value }),
+				setup: () => () => h(NuxtInthProvider, { language: current.value }),
 			})
 		);
 		start(context);
@@ -177,10 +177,10 @@ describe('changing the consent language', () => {
 		expect(context.snapshot.value.translations?.language).toBe('de');
 	});
 
-	test('a ConsentRoot prop equal to the prefetched override runs no init', async () => {
+	test('an InthProvider prop equal to the prefetched override runs no init', async () => {
 		const { context, transport } = await renderWith(
 			defineComponent({
-				setup: () => () => h(NuxtConsentRoot, { language: 'en' }),
+				setup: () => () => h(NuxtInthProvider, { language: 'en' }),
 			}),
 			{ country: 'DE', language: 'en' }
 		);
@@ -194,10 +194,10 @@ describe('changing the consent language', () => {
 		});
 	});
 
-	test('a ConsentRoot prop that differs from the prefetch runs one init', async () => {
+	test('an InthProvider prop that differs from the prefetch runs one init', async () => {
 		const { context, transport } = await renderWith(
 			defineComponent({
-				setup: () => () => h(NuxtConsentRoot, { language: 'fr' }),
+				setup: () => () => h(NuxtInthProvider, { language: 'fr' }),
 			}),
 			{ country: 'DE', language: 'en' }
 		);

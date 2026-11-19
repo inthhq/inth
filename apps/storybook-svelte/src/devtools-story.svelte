@@ -3,14 +3,14 @@
 		devToolsProviderOptions,
 		getDevToolsCategories,
 	} from '@inth/conformance/fixtures/devtools';
-	import { ConsentProvider } from '@inth/svelte';
+	import { InthProvider } from '@inth/svelte';
 
 	import { DevTools } from '../../../packages/sdk/svelte/src/lib/devtools';
 </script>
 
-<ConsentProvider options={devToolsProviderOptions}>
+<InthProvider options={devToolsProviderOptions}>
 	<DevTools
 		defaultOpen
 		getConsentCategories={getDevToolsCategories}
 	/>
-</ConsentProvider>
+</InthProvider>

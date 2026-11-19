@@ -14,14 +14,14 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../../core/src/__tests__/fixtures/kernel-fixtures';
-import { ConsentRoot } from '../root';
-import type { ConsentRootProps } from '../root';
+import { InthProvider } from '../root';
+import type { InthProviderProps } from '../root';
 import { resolveConsent } from '../server';
 import { manifestOf } from './manifest-fixture';
 
 const render = async (
 	rule: ReturnType<typeof optInRule>,
-	props: Partial<ConsentRootProps> = {}
+	props: Partial<InthProviderProps> = {}
 ): Promise<string> => {
 	const state = await resolveConsent({
 		mode: manifest(),
@@ -32,7 +32,7 @@ const render = async (
 	});
 	const stream = await renderToReadableStream(
 		createElement(
-			ConsentRoot,
+			InthProvider,
 			{ ...props, state },
 			createElement('main', { id: 'page' }, 'Page')
 		)

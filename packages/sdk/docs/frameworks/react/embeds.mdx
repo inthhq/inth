@@ -1,6 +1,6 @@
 ---
 title: Embeds
-description: Keep YouTube videos, maps and other iframes out of a React page until their consent category is allowed, with ConsentGate or the iframe blocker in ConsentProvider.
+description: Keep YouTube videos, maps and other iframes out of a React page until their consent category is allowed, with ConsentGate or the iframe blocker in InthProvider.
 group: frameworks
 ---
 
@@ -16,7 +16,7 @@ the embed's host receives no request before consent.
 
 ## Gate an embed with ConsentGate
 
-Wrap the iframe in `ConsentGate` anywhere inside `ConsentProvider`:
+Wrap the iframe in `ConsentGate` anywhere inside `InthProvider`:
 
 <include src="../../shared/examples/react/video-embed.mdx" />
 
@@ -33,7 +33,7 @@ built-in placeholder and every prop.
 
 ## Gate an iframe with the iframe blocker
 
-`ConsentProvider` runs the iframe blocker by default. Give an iframe
+`InthProvider` runs the iframe blocker by default. Give an iframe
 `data-src` instead of `src`, and a `data-category`:
 
 {/* example: fragment */}

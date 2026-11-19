@@ -1,12 +1,12 @@
 <script lang="ts">
 	import BenchShell from '$lib/bench-shell.svelte';
 	import { benchConsentCategories } from '$lib/fixture';
-	import { ConsentRoot } from '@inth/svelte';
+	import { InthProvider } from '@inth/svelte/kit';
 
 	let { children, data } = $props();
 </script>
 
-<ConsentRoot
+<InthProvider
 	state={data.consent}
 	consentCategories={[...benchConsentCategories]}
 	disableAnimation={true}
@@ -15,4 +15,4 @@
 	<BenchShell scenario="ssr-manifest">
 		{@render children()}
 	</BenchShell>
-</ConsentRoot>
+</InthProvider>

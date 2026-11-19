@@ -4,7 +4,7 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentProvider,
+	InthProvider,
 } from '@inth/react';
 import type { ReactNode } from 'react';
 
@@ -21,13 +21,13 @@ const options = {
 };
 
 export const Consent = ({ children }: { children: ReactNode }) => (
-	<ConsentProvider options={options}>
+	<InthProvider options={options}>
 		{children}
 		<ConsentBanner />
 		<ConsentDialog />
 		<footer>
 			<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 		</footer>
-	</ConsentProvider>
+	</InthProvider>
 );
 // #endregion docs:consent

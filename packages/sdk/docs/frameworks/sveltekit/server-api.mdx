@@ -44,7 +44,7 @@ headers either: the page goes to every visitor.
 
 | Option | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `mode` | `ConsentMode` | `manifest()` | How `loadConsent` resolves the visitor. `manifest()`, `hosted()` or `testing()` from `@inth/svelte/kit`. A transport factory throws; pass it to `ConsentRoot`'s `mode` prop instead. |
+| `mode` | `ConsentMode` | `manifest()` | How `loadConsent` resolves the visitor. `manifest()`, `hosted()` or `testing()` from `@inth/svelte/kit`. A transport factory throws; pass it to `InthProvider`'s `mode` prop instead. |
 | `routePrefix` | `string` | none | Where `createConsentRoute()` is mounted, such as `/api/inth`. The browser then resolves consent on pages the server did not, through that route. Without it, the browser asks the backend's `/v1/consent/init`. `'/'` throws ``@inth/svelte: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/inth'.`` when the hook is created. |
 | `projectUrl` | `string` | the URL `consentManifest()` read | The backend. Consent saves go here, unless `proxy` is on. |
 | `proxy` | `boolean` | `false` | Sends the browser's consent saves to the route at `routePrefix`, which forwards them to `projectUrl` with `createConsentRoute({ proxy: true })`. Throws without `routePrefix`. See [save consent through your own origin](./rendering#save-consent-through-your-own-origin). |
@@ -71,7 +71,7 @@ your own handles through `sequence()` from `@sveltejs/kit/hooks`. Type
 ## loadConsent
 
 `loadConsent(event, options?)` returns `Promise<{ consent }>`. Export it as
-the root layout's `load`, and pass `data.consent` to `ConsentRoot` as
+the root layout's `load`, and pass `data.consent` to `InthProvider` as
 `state`:
 
 <include src="../../shared/examples/sveltekit/layout-server.mdx" />
@@ -89,7 +89,7 @@ Privacy Control, then resolves the policy with the handle's `mode`:
 
 `consent` holds the resolved state, the mode as data, the backend URL and the
 handle's `routePrefix`. It is plain, serializable data; pass it to
-`ConsentRoot` unchanged.
+`InthProvider` unchanged.
 
 While SvelteKit prerenders, `loadConsent` reads its `building` flag and
 returns no stored consent, clock, GPC signal or policy, and makes no backend
@@ -110,7 +110,7 @@ export const load = (event) => loadConsent(event, { timeoutMs: 1000 });
 | Option | Type | Default | Behavior |
 | --- | --- | --- | --- |
 | `timeoutMs` | `number` or `false` | `500` | Longest wait for the backend or the manifest, in milliseconds. `false` or `Infinity` waits as long as it takes; any other value that is not a finite, non-negative number uses the default. |
-| `experiment` | `ServerExperiment` | none | The banner experiment with this request's arm. While the visitor has no stored choice, the backend counts the arm; the state carries the experiment to `ConsentRoot`. |
+| `experiment` | `ServerExperiment` | none | The banner experiment with this request's arm. While the visitor has no stored choice, the backend counts the arm; the state carries the experiment to `InthProvider`. |
 | `onBackgroundRevalidate` | `(promise, event) => void` | platform hook when available | Keeps session reports and unfinished requests alive after the response. `event.platform.context.waitUntil` takes precedence; this callback is the fallback. See [keep background work alive](./rendering#keep-background-work-alive-after-the-response). |
 | `cookieName` | `string` | the handle's, or `inth` | The consent cookie. Match the provider's `storageConfig.storageKey`. |
 | `country`, `region`, `language` | `string` | from the handle or headers | Forces one input for this call. |
@@ -302,7 +302,7 @@ that holds the script loader and the network blocker, which `inthHandle`
 preloads.
 
 With Vite 8, which bundles with Rolldown, the plugin also puts the small Inth
-modules that `ConsentRoot`'s first load shares with the consent engine into
+modules that `InthProvider`'s first load shares with the consent engine into
 one chunk named `inth`. Rolldown would otherwise give each of them a file of
 its own, about a dozen requests of a few hundred bytes each. The page loads
 the same code in fewer files. The plugin leaves the chunks alone when your

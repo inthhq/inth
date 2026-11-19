@@ -52,7 +52,7 @@ export interface CommonInlineStoreOptions {
 	/**
 	 * Event callbacks for consent actions.
 	 *
-	 * @see https://c15t.com/docs/frameworks/react/components/consent-provider
+	 * @see https://c15t.com/docs/frameworks/react/components/inth-provider
 	 * @see {@link Callbacks} for available options
 	 */
 	callbacks?: Callbacks;
@@ -75,7 +75,7 @@ export interface CommonInlineStoreOptions {
 	 *
 	 * A per-script `nonce` still takes precedence over this value.
 	 *
-	 * @see https://c15t.com/docs/frameworks/react/components/consent-provider
+	 * @see https://c15t.com/docs/frameworks/react/components/inth-provider
 	 */
 	nonce?: string;
 

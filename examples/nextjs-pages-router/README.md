@@ -16,7 +16,7 @@ no `/init` request. PostHog loads only after the visitor allows measurement.
 - `pages/api/inth/[...inth].ts` serves the bundled policy at
   `/api/inth/manifest` and resolves `/api/inth/init` from it, for pages that
   resolve consent in the browser.
-- `pages/_app.tsx` renders `ConsentRoot` with the state a page resolved on the
+- `pages/_app.tsx` renders `InthProvider` with the state a page resolved on the
   server, plus the banner, the dialog and a Privacy settings link.
 - `pages/index.tsx` resolves consent with `withConsentProps()`.
 

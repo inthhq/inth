@@ -3,7 +3,7 @@ import type { ComponentProps, ReactNode } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import type { ConsentStateFixture } from '~/__tests__/consent-state-fixture';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentBanner } from '~/components/prompt';
@@ -70,11 +70,9 @@ const PolicyTestProvider = ({
 }: {
 	children: ReactNode;
 	state: ConsentManagerState;
-	providerOverrides?: Partial<
-		ComponentProps<typeof ConsentProvider>['options']
-	>;
+	providerOverrides?: Partial<ComponentProps<typeof InthProvider>['options']>;
 }) => (
-	<ConsentProvider
+	<InthProvider
 		options={{
 			components: providerOverrides?.components,
 			mode: testing(),
@@ -101,14 +99,14 @@ const PolicyTestProvider = ({
 		}}
 	>
 		{children}
-	</ConsentProvider>
+	</InthProvider>
 );
 const renderPolicyActions = async function renderPolicyActions(
 	stateOverrides: Partial<ConsentManagerState> = {},
 	renderAction?: ComponentProps<
 		typeof ConsentBanner.PolicyActions
 	>['renderAction'],
-	providerOverrides?: Partial<ComponentProps<typeof ConsentProvider>['options']>
+	providerOverrides?: Partial<ComponentProps<typeof InthProvider>['options']>
 ) {
 	const state = createMockState(stateOverrides);
 

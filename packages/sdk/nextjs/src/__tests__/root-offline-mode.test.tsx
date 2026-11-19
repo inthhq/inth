@@ -1,5 +1,5 @@
 /**
- * ConsentRoot loads offline mode on demand.
+ * InthProvider loads offline mode on demand.
  *
  * `offline()` carries the recommended policy-rule pack. A root with a
  * backend URL never runs it, so the module must not load with the root;
@@ -12,13 +12,13 @@ import { useActiveUI, useModel } from '@inth/react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ConsentRoot } from '../root';
+import { InthProvider } from '../root';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const offlineModule = vi.hoisted(() => ({ loads: 0 }));
 
-// oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is whether ConsentRoot evaluates this module at all. The factory only counts loads and returns the real module.
+// oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is whether InthProvider evaluates this module at all. The factory only counts loads and returns the real module.
 vi.mock('../../../core/src/runtime/lazy-offline', async (importOriginal) => {
 	offlineModule.loads += 1;
 	return await importOriginal();
@@ -34,16 +34,16 @@ const PolicyStatus = () => {
 	);
 };
 
-describe('ConsentRoot offline mode', () => {
+describe('InthProvider offline mode', () => {
 	test('a root with a backend URL does not load offline mode', async () => {
 		const { getByTestId } = await render(
-			<ConsentRoot
+			<InthProvider
 				config={{ projectUrl: '/api/inth' }}
 				persistence={false}
 				state={policyFixture()}
 			>
 				<PolicyStatus />
-			</ConsentRoot>
+			</InthProvider>
 		);
 
 		await expect
@@ -54,13 +54,13 @@ describe('ConsentRoot offline mode', () => {
 
 	test('a testing() root resolves the recommended rules', async () => {
 		const { getByTestId } = await render(
-			<ConsentRoot
+			<InthProvider
 				config={{ mode: testing() }}
 				persistence={false}
 				state={{ initialOverrides: { country: 'DE' } }}
 			>
 				<PolicyStatus />
-			</ConsentRoot>
+			</InthProvider>
 		);
 
 		await expect

@@ -22,7 +22,7 @@ import {
 } from '../../__tests__/streamed-ssr-harness';
 import type { StreamedPage } from '../../__tests__/streamed-ssr-harness';
 import { useSaveConsents, useSnapshot } from '../../hooks';
-import { ConsentProvider } from '../../index';
+import { InthProvider } from '../../index';
 import { useScriptLoader } from '../../module-hooks/script-loader';
 import {
 	awaitsChoice,
@@ -87,7 +87,7 @@ const ServerPage = ({ prefetch }: { prefetch: unknown }) => (
 	<html lang="en">
 		<head />
 		<body>
-			<ConsentProvider
+			<InthProvider
 				options={{
 					consentCategories,
 					mode,
@@ -105,7 +105,7 @@ const ServerPage = ({ prefetch }: { prefetch: unknown }) => (
 						storedChoiceCheck="/* the server's stored-choice check */"
 					/>
 				</Suspense>
-			</ConsentProvider>
+			</InthProvider>
 		</body>
 	</html>
 );

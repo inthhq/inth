@@ -27,7 +27,7 @@ are drawn with CSS and nothing contacts an ad network.
 
 ## Files that matter
 
-- [`components/consent.tsx`](components/consent.tsx) mounts `ConsentRoot`
+- [`components/consent.tsx`](components/consent.tsx) mounts `InthProvider`
   with an IAB policy, then `IABProvider`, `IABConsentBanner` and
   `IABConsentDialog`, and `ConsentGPP`.
 - [`lib/use-tcf-data.ts`](lib/use-tcf-data.ts) listens to `__tcfapi` and

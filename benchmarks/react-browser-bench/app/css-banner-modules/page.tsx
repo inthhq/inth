@@ -3,8 +3,8 @@
 import { hosted } from '@inth/react';
 import type { WithProjectUrl } from '@inth/react';
 import { ConsentBanner } from '@inth/react/consent-banner';
-import { ConsentProvider } from '@inth/react/provider';
-import type { ConsentProviderOptions } from '@inth/react/provider';
+import { InthProvider } from '@inth/react/provider';
+import type { InthProviderOptions } from '@inth/react/provider';
 
 import { ReactBenchmarkProbe } from '../_bench/probe';
 import { getBenchState } from '../_bench/state';
@@ -16,10 +16,10 @@ const consentCategories = [
 	'experience',
 	'measurement',
 	'marketing',
-] satisfies NonNullable<ConsentProviderOptions['consentCategories']>;
+] satisfies NonNullable<InthProviderOptions['consentCategories']>;
 
 const CssBannerModulesPage = () => {
-	const options: WithProjectUrl<ConsentProviderOptions> = {
+	const options: WithProjectUrl<InthProviderOptions> = {
 		callbacks: {
 			onChoiceRecorded() {
 				const state = getBenchState(scenario);
@@ -45,13 +45,13 @@ const CssBannerModulesPage = () => {
 	};
 
 	return (
-		<ConsentProvider options={options}>
+		<InthProvider options={options}>
 			<ReactBenchmarkProbe scenario={scenario} />
 			<main style={{ fontFamily: 'system-ui', padding: '2rem' }}>
 				<h1>React Banner + CSS Modules Benchmark</h1>
 			</main>
 			<ConsentBanner disableAnimation />
-		</ConsentProvider>
+		</InthProvider>
 	);
 };
 

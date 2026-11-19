@@ -1,6 +1,6 @@
 ---
 title: IAB TCF
-description: Mount the IAB TCF banner and dialog inside a Next.js ConsentRoot and configure the CMP ID, policy and vendor data.
+description: Mount the IAB TCF banner and dialog inside a Next.js InthProvider and configure the CMP ID, policy and vendor data.
 group: frameworks
 ---
 
@@ -10,12 +10,12 @@ group: frameworks
 
 Next.js uses the React IAB components. There is no `@inth/nextjs/iab` JavaScript
 entry point, so import the components from `@inth/react/iab` and render this
-Client Component inside the `ConsentRoot` from your
+Client Component inside the `InthProvider` from your
 [App Router](/docs/frameworks/next/app-router) or
 [Pages Router](/docs/frameworks/next/pages-router) setup.
 
 The IAB banner and dialog render their own styles by default. Leave
-`ConsentRoot`'s `styles` option enabled. The banner's styles render in the
+`InthProvider`'s `styles` option enabled. The banner's styles render in the
 server HTML, and the dialog loads its rules when opened.
 
 <include src="../../shared/examples/nextjs/iab-consent.mdx" />
@@ -27,7 +27,7 @@ server HTML, and the dialog loads its rules when opened.
 With Tailwind CSS 3, or when you want to put Inth in a named cascade layer,
 import `@inth/nextjs/styles.css` and then `@inth/nextjs/iab/styles.css` at your global
 stylesheet entry. The IAB stylesheet holds the IAB rules and uses the base
-stylesheet's tokens. Set `styles: false` in `ConsentRoot`'s `options` so the
+stylesheet's tokens. Set `styles: false` in `InthProvider`'s `options` so the
 components use those stylesheets:
 
 {/* example: fragment */}

@@ -14,7 +14,7 @@ import { IABConsentBanner } from '../components/iab-prompt';
 import { ConsentDialog } from '../components/panel';
 import { ConsentBanner } from '../components/prompt';
 import { IABProvider } from '../iab-context';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
@@ -41,7 +41,7 @@ describe('an `iab` policy with <IABProvider>', () => {
 				)
 			);
 			await render(
-				<ConsentProvider
+				<InthProvider
 					options={{
 						disableAnimation: true,
 						mode: transportMode({ init }),
@@ -60,7 +60,7 @@ describe('an `iab` policy with <IABProvider>', () => {
 					<IABProvider cmpId={28}>
 						<IABConsentBanner />
 					</IABProvider>
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(() => {

@@ -6,7 +6,7 @@ group: frameworks
 
 ## Turn on the trigger in `nuxt.config.ts`
 
-Turn the trigger on with `showTrigger` in the module options. `ConsentRoot`
+Turn the trigger on with `showTrigger` in the module options. `InthProvider`
 then renders it. The trigger options are plain data, so they can go in
 `nuxt.config.ts`:
 
@@ -19,7 +19,7 @@ export default defineNuxtConfig({
 ```
 
 The module also registers `ConsentDialogTrigger` globally. When you compose
-the surfaces without `ConsentRoot`, render it yourself:
+the surfaces without `InthProvider`, render it yourself:
 
 <include src="../../../shared/examples/nuxt/consent-surfaces.mdx" />
 

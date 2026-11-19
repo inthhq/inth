@@ -33,17 +33,17 @@ banner stays in the same corner.
 
 ## Follow your site's language
 
-Bind the `language` prop of `ConsentRoot` to your site's current language.
-When the prop changes, `ConsentRoot` stores the language and resolves the
+Bind the `language` prop of `InthProvider` to your site's current language.
+When the prop changes, `InthProvider` stores the language and resolves the
 policy again, which fetches the text in that language:
 
 {/* example: fragment */}
 
 ```vue
-<ConsentRoot :language="locale" />
+<InthProvider :language="locale" />
 ```
 
-Without `ConsentRoot`, assign the language to `useConsentLanguage()`. A new
+Without `InthProvider`, assign the language to `useConsentLanguage()`. A new
 language runs init again, which fetches the banner and dialog text in that
 language. Assigning the current language does nothing:
 

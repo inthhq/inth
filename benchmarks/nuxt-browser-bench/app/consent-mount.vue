@@ -1,8 +1,8 @@
 <!--
-	Full-build consent mount: a *static* `<ConsentRoot />` so Nuxt resolves it
+	Full-build consent mount: a *static* `<InthProvider />` so Nuxt resolves it
 	via auto-import (direct import, banner chunk on the entry path).
 
-	Do not resolve dynamically (`<component :is="'ConsentRoot'">` + global
+	Do not resolve dynamically (`<component :is="'InthProvider'">` + global
 	registration): Nuxt lazy-loads global components, which puts the chunk
 	fetch on the banner's critical path. Measured on client-manifest at
 	mobile + 200ms: +82ms banner-visible vs static (fully exposed there
@@ -14,5 +14,5 @@
 	so they never reference @inth/nuxt.
 -->
 <template>
-	<ConsentRoot />
+	<InthProvider />
 </template>

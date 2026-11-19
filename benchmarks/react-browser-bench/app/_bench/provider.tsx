@@ -3,10 +3,10 @@
 import {
 	ConsentBanner,
 	ConsentDialog,
-	ConsentProvider,
+	InthProvider,
 	hosted,
 } from '@inth/react';
-import type { ConsentProviderOptions, WithProjectUrl } from '@inth/react';
+import type { InthProviderOptions, WithProjectUrl } from '@inth/react';
 import type { ReactNode } from 'react';
 
 import { ReactBenchmarkProbe } from './probe';
@@ -14,7 +14,7 @@ import { getBenchState } from './state';
 import type { ReactBenchScenario } from './state';
 
 // Keep this fixture compatible with revisions before automatic styles.
-type BenchmarkProviderOptions = WithProjectUrl<ConsentProviderOptions> & {
+type BenchmarkProviderOptions = WithProjectUrl<InthProviderOptions> & {
 	styles?: boolean;
 };
 
@@ -24,9 +24,9 @@ const consentCategories = [
 	'experience',
 	'measurement',
 	'marketing',
-] satisfies NonNullable<ConsentProviderOptions['consentCategories']>;
+] satisfies NonNullable<InthProviderOptions['consentCategories']>;
 
-const benchTheme: NonNullable<ConsentProviderOptions['theme']> = {
+const benchTheme: NonNullable<InthProviderOptions['theme']> = {
 	motion: {
 		duration: {
 			fast: '1ms',
@@ -47,7 +47,7 @@ export const ReactBenchmarkProvider = ({
 	/** Set false for experiments that import their CSS explicitly. */
 	styles?: BenchmarkProviderOptions['styles'];
 	/** Defaults to the 1ms motion override only. */
-	theme?: ConsentProviderOptions['theme'];
+	theme?: InthProviderOptions['theme'];
 }) => {
 	const options: BenchmarkProviderOptions = {
 		callbacks: {
@@ -72,11 +72,11 @@ export const ReactBenchmarkProvider = ({
 	};
 
 	return (
-		<ConsentProvider options={options}>
+		<InthProvider options={options}>
 			<ReactBenchmarkProbe scenario={scenario} />
 			<ConsentBanner disableAnimation />
 			<ConsentDialog disableAnimation />
 			{children}
-		</ConsentProvider>
+		</InthProvider>
 	);
 };

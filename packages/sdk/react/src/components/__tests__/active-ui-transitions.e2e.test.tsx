@@ -3,10 +3,10 @@ import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
 import {
-	ComponentFixtureProvider as ConsentProvider,
+	ComponentFixtureProvider as InthProvider,
 	DEFAULT_KEY_STORAGE,
 } from '~/__tests__/component-fixture-provider';
-import type { ComponentFixtureOptions as ConsentProviderOptions } from '~/__tests__/component-fixture-provider';
+import type { ComponentFixtureOptions as InthProviderOptions } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentDialog } from '~/components/panel';
 import {
@@ -47,7 +47,7 @@ Object.defineProperty(window, 'localStorage', {
 	value: localStorageMock,
 });
 
-const defaultOptions: ConsentProviderOptions = {
+const defaultOptions: InthProviderOptions = {
 	consentCategories: [
 		'necessary',
 		'functionality',
@@ -113,9 +113,9 @@ describe('activeUI Transitions E2E Tests', () => {
 
 	test('banner shows on first visit (activeUI becomes banner)', async () => {
 		render(
-			<ConsentProvider options={defaultOptions}>
+			<InthProvider options={defaultOptions}>
 				<ConsentBanner />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		await vi.waitFor(
@@ -131,10 +131,10 @@ describe('activeUI Transitions E2E Tests', () => {
 
 	test('customize transitions banner → dialog', async () => {
 		render(
-			<ConsentProvider options={defaultOptions}>
+			<InthProvider options={defaultOptions}>
 				<ConsentBanner />
 				<ConsentDialog />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		await vi.waitFor(
@@ -170,10 +170,10 @@ describe('activeUI Transitions E2E Tests', () => {
 
 	test('save from dialog hides all UI', async () => {
 		render(
-			<ConsentProvider options={defaultOptions}>
+			<InthProvider options={defaultOptions}>
 				<ConsentBanner />
 				<ConsentDialog />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		await vi.waitFor(
@@ -227,9 +227,9 @@ describe('activeUI Transitions E2E Tests', () => {
 		);
 
 		render(
-			<ConsentProvider options={defaultOptions}>
+			<InthProvider options={defaultOptions}>
 				<ConsentBanner />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		// Wait long enough to confirm banner doesn't appear
@@ -245,11 +245,11 @@ describe('activeUI Transitions E2E Tests', () => {
 
 	test('trigger appears after consent, opens dialog on click', async () => {
 		render(
-			<ConsentProvider options={defaultOptions}>
+			<InthProvider options={defaultOptions}>
 				<ConsentBanner />
 				<ConsentDialog />
 				<ConsentDialogTrigger showWhen="always" />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		await vi.waitFor(
@@ -319,7 +319,7 @@ describe('activeUI Transitions E2E Tests', () => {
 			const openSupport = vi.fn();
 
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentBanner />
 					<ConsentDialog />
 					<ConsentDialogTriggerToolbar
@@ -342,7 +342,7 @@ describe('activeUI Transitions E2E Tests', () => {
 							},
 						]}
 					/>
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -423,11 +423,11 @@ describe('activeUI Transitions E2E Tests', () => {
 
 	test('full lifecycle: banner → customize → dialog → save → trigger → dialog', async () => {
 		render(
-			<ConsentProvider options={defaultOptions}>
+			<InthProvider options={defaultOptions}>
 				<ConsentBanner />
 				<ConsentDialog />
 				<ConsentDialogTrigger showWhen="always" />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		await vi.waitFor(

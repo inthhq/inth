@@ -6,7 +6,7 @@ import { ConsentWidget } from '@inth/react/components/consent-widget';
 import { ConsentBanner } from '@inth/react/consent-banner';
 import { ConsentDraftProvider } from '@inth/react/draft';
 import { useActiveUI, useSetActiveUI } from '@inth/react/hooks';
-import { ConsentProvider } from '@inth/react/provider';
+import { InthProvider } from '@inth/react/provider';
 import buttonStyles from '@inth/sdk/ui/styles/components/button';
 import { useEffect } from 'react';
 
@@ -128,7 +128,7 @@ export const CssLayerScenarioRenderer = ({
 	environmentLabel: string;
 	surface: CssLayerSurface | 'widget';
 }) => (
-	<ConsentProvider
+	<InthProvider
 		options={{
 			components: COMPONENTS,
 			legalLinks: {
@@ -211,5 +211,5 @@ export const CssLayerScenarioRenderer = ({
 			</main>
 			<Surface surface={surface} />
 		</ConsentDraftProvider>
-	</ConsentProvider>
+	</InthProvider>
 );

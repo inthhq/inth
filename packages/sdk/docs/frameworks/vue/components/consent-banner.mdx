@@ -6,17 +6,17 @@ group: frameworks
 
 ## Import the banner into your root component
 
-`ConsentRoot` already renders `ConsentBanner`. Import the banner yourself
+`InthProvider` already renders `ConsentBanner`. Import the banner yourself
 only when you compose the surfaces, for example to set its variant in the
-template or to render it without `ConsentRoot`. Import it from
+template or to render it without `InthProvider`. Import it from
 `@inth/vue/vue-plugin`:
 
 <include src="../../../shared/examples/vue/consent-surfaces.mdx" />
 
-Render this component in your root component in place of `ConsentRoot`.
+Render this component in your root component in place of `InthProvider`.
 Render `ConsentManager` with it, or Customize opens nothing. A statically
-imported `ConsentManager` is part of your main bundle, while `ConsentRoot`
-loads the dialog as a separate chunk. Unlike `ConsentRoot`, these components
+imported `ConsentManager` is part of your main bundle, while `InthProvider`
+loads the dialog as a separate chunk. Unlike `InthProvider`, these components
 do not switch to the IAB surfaces under an IAB policy. The inthVue plugin
 still adds the `tokens` option to the page.
 

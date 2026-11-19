@@ -1,10 +1,10 @@
 import { runFrameworkConformance } from '../../../react/src/__tests__/framework-conformance';
-import { ConsentRoot } from '../root';
+import { InthProvider } from '../root';
 import { createPolicySession, probePolicyContract } from './policy-driver';
 import { policyFixture } from './policy-fixture';
 
 runFrameworkConformance({
-	Root: ConsentRoot,
+	Root: InthProvider,
 	createPolicySession,
 	framework: 'tanstack-start',
 	policyFixture,

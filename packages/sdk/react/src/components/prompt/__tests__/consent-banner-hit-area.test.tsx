@@ -9,7 +9,7 @@ import type { ComponentProps, ReactNode } from 'react';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentBanner } from '~/components/prompt';
 
@@ -17,7 +17,7 @@ import { testing } from '../../../testing';
 
 const mount = (children: ReactNode) =>
 	render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: testing(),
 				persistence: false,
@@ -32,7 +32,7 @@ const mount = (children: ReactNode) =>
 				Page
 			</button>
 			{children}
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 const mountBanner = (props: ComponentProps<typeof ConsentBanner> = {}) =>

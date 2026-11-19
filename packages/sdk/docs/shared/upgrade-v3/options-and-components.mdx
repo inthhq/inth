@@ -3,8 +3,8 @@
 | v2 | v3 |
 | --- | --- |
 | `translations` | `i18n` |
-| `backendURL`, `mode: 'hosted'` | `mode: hosted({ backendURL })` from `@inth/react` on `ConsentProvider`. Next.js `ConsentRoot`: `NEXT_PUBLIC_INTH_PROJECT_URL` and `inth.config.ts`. |
-| `ssrData` (Next.js) | `ConsentRoot` with `state` from `resolveConsent()` |
+| `backendURL`, `mode: 'hosted'` | `mode: hosted({ backendURL })` from `@inth/react` on the React `InthProvider`. Next.js `InthProvider`: `NEXT_PUBLIC_INTH_PROJECT_URL` and `inth.config.ts`. |
+| `ssrData` (Next.js) | `InthProvider` with `state` from `resolveConsent()` |
 | `iframeBlockerConfig` | `iframeBlocker`, or `false` to turn it off |
 | `Frame`, `FrameRoot`, `FrameTitle`, `FrameButton`, `FrameProps` | `ConsentGate` and its parts. The `Frame` names still work as deprecated aliases and log a one-time warning outside production. |
 | `frame` translations, such as `frame.title` | `consentGate`, such as `consentGate.title`. Copy under `frame` still applies and logs a warning outside production. |

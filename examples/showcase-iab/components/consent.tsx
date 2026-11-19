@@ -1,6 +1,6 @@
 'use client';
 
-import { ConsentRoot } from '@inth/nextjs';
+import { InthProvider } from '@inth/nextjs';
 import { ConsentGPP } from '@inth/react/gpp';
 import {
 	IABConsentBanner,
@@ -31,7 +31,7 @@ const CMP_ID = 160;
 const GVL_URL = '/vendor-list.json';
 
 export const Consent = ({ children }: { children: ReactNode }) => (
-	<ConsentRoot
+	<InthProvider
 		config={config}
 		state={{}}
 		options={{ theme: brandTheme }}
@@ -48,5 +48,5 @@ export const Consent = ({ children }: { children: ReactNode }) => (
 		    tech that reads window.__gpp instead of window.__tcfapi. */}
 		<ConsentGPP />
 		{children}
-	</ConsentRoot>
+	</InthProvider>
 );

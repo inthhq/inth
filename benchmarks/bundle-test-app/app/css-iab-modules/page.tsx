@@ -2,10 +2,10 @@
 
 import { benchPolicy } from '@inth/benchmarking/bench-policy';
 import { IABConsentDialog } from '@inth/react/iab';
-import { ConsentProvider } from '@inth/react/provider';
+import { InthProvider } from '@inth/react/provider';
 
 const CssIabModulesPage = () => (
-	<ConsentProvider
+	<InthProvider
 		options={{
 			mode: benchPolicy({
 				policy: [
@@ -23,7 +23,7 @@ const CssIabModulesPage = () => (
 			<h1>React IAB + CSS Modules Benchmark</h1>
 		</main>
 		<IABConsentDialog />
-	</ConsentProvider>
+	</InthProvider>
 );
 
 export default CssIabModulesPage;

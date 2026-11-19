@@ -4,7 +4,7 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogTrigger,
-	ConsentProvider,
+	InthProvider,
 	hosted,
 } from '@inth/react';
 import {
@@ -66,7 +66,7 @@ const resolveGeoOverrides = function resolveGeoOverrides(
 /**
  * Client-side consent wrapper for the demo's App Router pages.
  *
- * Renders `ConsentProvider` from `@inth/react` in hosted mode, with the
+ * Renders `InthProvider` from `@inth/react` in hosted mode, with the
  * standard banner, dialog and trigger plus the IAB banner and dialog. The
  * visitor's country and region come from the `country` and `region` query
  * parameters, so the demo can switch jurisdiction without a geo lookup.
@@ -195,7 +195,7 @@ export const ConsentManager = ({ children }: ConsentManagerProps) => {
 	}
 
 	return (
-		<ConsentProvider
+		<InthProvider
 			options={{
 				consentCategories: [
 					'necessary',
@@ -241,6 +241,6 @@ export const ConsentManager = ({ children }: ConsentManagerProps) => {
 				</>
 			) : null}
 			{children}
-		</ConsentProvider>
+		</InthProvider>
 	);
 };

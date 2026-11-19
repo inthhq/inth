@@ -1,6 +1,6 @@
 'use client';
 
-import { ConsentBanner, ConsentDialog, ConsentRoot } from '@inth/nextjs';
+import { ConsentBanner, ConsentDialog, InthProvider } from '@inth/nextjs';
 import type { ReactNode } from 'react';
 
 import { callbacks } from '@/lib/consent-callbacks';
@@ -15,7 +15,7 @@ const config = {
 };
 
 export const Consent = ({ children }: { children: ReactNode }) => (
-	<ConsentRoot
+	<InthProvider
 		config={config}
 		state={{}}
 		options={{
@@ -32,5 +32,5 @@ export const Consent = ({ children }: { children: ReactNode }) => (
 		{children}
 		<ConsentBanner />
 		<ConsentDialog />
-	</ConsentRoot>
+	</InthProvider>
 );

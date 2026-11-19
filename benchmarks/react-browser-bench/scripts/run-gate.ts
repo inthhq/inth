@@ -14,7 +14,7 @@ try {
 	await runConsentGate({
 		framework: 'react',
 		notes: [
-			'Client-rendered ConsentProvider in a Next.js app router page; the banner renders after hydration.',
+			'Client-rendered InthProvider in a Next.js app router page; the banner renders after hydration.',
 		],
 		packageName: '@inth/react-browser-bench',
 		paths: { control: '/gate/control', gate: '/gate' },

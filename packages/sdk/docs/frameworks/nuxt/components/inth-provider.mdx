@@ -1,33 +1,33 @@
 ---
-title: ConsentRoot
-description: Mount the Inth banner, preference dialog and floating trigger in Nuxt with the globally registered ConsentRoot, rendered on the server.
+title: InthProvider
+description: Mount the Inth banner, preference dialog and floating trigger in Nuxt with the globally registered InthProvider, rendered on the server.
 group: frameworks
 ---
 
-## Render `ConsentRoot` in `app.vue`
+## Render `InthProvider` in `app.vue`
 
-The Nuxt module registers `ConsentRoot` globally, so you render it without an
+The Nuxt module registers `InthProvider` globally, so you render it without an
 import. Put it in `app.vue`, next to `<NuxtPage />`:
 
 <include src="../../../shared/examples/nuxt/root.mdx" />
 
-`ConsentRoot` reads the consent runtime the module creates. Keep it in
+`InthProvider` reads the consent runtime the module creates. Keep it in
 `app.vue` so it stays mounted when the route changes. It brings its own
 styles.
 
-`ConsentRoot` is not a provider. The module's plugin already gives every
-component the consent runtime, so nothing needs to sit inside it. Render
-`<ConsentRoot />` next to `<NuxtPage />` as shown above. If you wrap the app
+The module's plugin already gives every component the consent runtime, so
+nothing needs to sit inside `InthProvider`. Render
+`<InthProvider />` next to `<NuxtPage />` as shown above. If you wrap the app
 in it instead, the page still renders after the banner, dialog and trigger,
 but wrapping adds nothing.
 
-Always mount the Nuxt `ConsentRoot`, not the Vue one from
+Always mount the Nuxt `InthProvider`, not the Vue one from
 `@inth/vue/vue-plugin`. The Nuxt component renders the banner on the
 server.
 
-## What ConsentRoot renders
+## What InthProvider renders
 
-`ConsentRoot` picks the surfaces for the visitor's policy:
+`InthProvider` picks the surfaces for the visitor's policy:
 
 | Policy | Banner | Preferences |
 | --- | --- | --- |
@@ -45,7 +45,7 @@ cached routes the banner appears after the browser resolves the policy. See
 
 The IAB surfaces replace the standard ones only when the module's `iab`
 option is set and the policy uses the `iab` model. The dialog and the IAB
-surfaces load as separate chunks. `ConsentRoot`
+surfaces load as separate chunks. `InthProvider`
 prefetches the dialog chunk after the page's `load` event, mounts the dialog
 the first time preferences open, and keeps it mounted after that so its close
 animation runs.
@@ -61,7 +61,7 @@ renders itself. The trigger chunk loads after the page mounts, and only when
 
 ## Theme tokens
 
-The Nuxt module's plugin, not `ConsentRoot`, writes the `tokens` option
+The Nuxt module's plugin, not `InthProvider`, writes the `tokens` option
 into a `<style id="inth-css-vars">` tag in the page head, on every page and
 with the module's `nonce`. During server rendering and prerendering the tag is
 in the first HTML. See
@@ -76,16 +76,16 @@ in the first HTML. See
 | `language` | `string` | The browser language | Overrides the language and resolves the policy again, which fetches the banner and dialog text in that language. |
 
 Use `country` and `region` to preview another region's policy while you
-build, such as `<ConsentRoot country="DE" />`. Bind `language` to your site's
+build, such as `<InthProvider country="DE" />`. Bind `language` to your site's
 current language. See [translations](/docs/frameworks/nuxt/translations).
 
 ## Compose the surfaces yourself
 
-`ConsentRoot` is the same as rendering the banner, dialog and trigger with the
+`InthProvider` is the same as rendering the banner, dialog and trigger with the
 right conditions. To place them yourself, render them in place of
-`ConsentRoot`, as in
-[ConsentBanner](/docs/frameworks/nuxt/components/consent-banner#import-the-banner-in-place-of-consentroot). Do not
-render `ConsentRoot` next to them, or the visitor sees two banners.
+`InthProvider`, as in
+[ConsentBanner](/docs/frameworks/nuxt/components/consent-banner#import-the-banner-in-place-of-inthprovider). Do not
+render `InthProvider` next to them, or the visitor sees two banners.
 
 ## Verify
 
@@ -96,9 +96,9 @@ Reject, reload, and confirm the banner stays closed.
 
 ## Next steps
 
-- [Nuxt module](/docs/frameworks/nuxt/module) lists the options `ConsentRoot`
+- [Nuxt module](/docs/frameworks/nuxt/module) lists the options `InthProvider`
   reads.
 - [Customize](/docs/frameworks/nuxt/customize) changes tokens, layout and
   slots.
-- [Headless](/docs/frameworks/nuxt/headless) replaces `ConsentRoot` with your
+- [Headless](/docs/frameworks/nuxt/headless) replaces `InthProvider` with your
   own markup.

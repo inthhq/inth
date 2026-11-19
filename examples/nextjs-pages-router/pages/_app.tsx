@@ -3,7 +3,7 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentRoot,
+	InthProvider,
 } from '@inth/nextjs';
 import type { ConsentPageProps } from '@inth/nextjs/pages';
 import type { AppProps } from 'next/app';
@@ -12,14 +12,14 @@ import '@/styles/globals.css';
 
 const App = ({ Component, pageProps }: AppProps<ConsentPageProps>) => (
 	// Pages without getServerSideProps resolve consent in the browser.
-	<ConsentRoot state={pageProps.consent}>
+	<InthProvider state={pageProps.consent}>
 		<Component {...pageProps} />
 		<ConsentBanner />
 		<ConsentDialog />
 		<footer>
 			<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 		</footer>
-	</ConsentRoot>
+	</InthProvider>
 );
 
 export default App;

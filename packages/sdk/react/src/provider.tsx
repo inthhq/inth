@@ -98,7 +98,7 @@ import type { V3UIConfigValue } from './ui-config-context';
 declare const process: { env: { NODE_ENV?: string } };
 
 /** Events emitted by the mounted provider without snapshot-derived consent aliases. */
-export type ConsentProviderCallbacks = Pick<
+export type InthProviderCallbacks = Pick<
 	Callbacks,
 	| 'onChoiceRecorded'
 	| 'onPermissionsChanged'
@@ -112,14 +112,14 @@ export type ConsentProviderCallbacks = Pick<
  * `options.experiment`, and a `journey` it started is the one the provider
  * continues.
  */
-export type ConsentProviderPrefetch = Omit<
+export type InthProviderPrefetch = Omit<
 	KernelConfig,
 	'initialDraft' | 'transport'
 > &
 	ExperimentState &
 	JourneyState;
 
-export interface ConsentProviderOptions
+export interface InthProviderOptions
 	extends
 		ConsentControlOptions,
 		Pick<
@@ -168,7 +168,7 @@ export interface ConsentProviderOptions
 	 * server-rendered HTML, or with the surface's own code in the browser.
 	 * No Inth stylesheet `<link>` then holds back the page's first paint.
 	 * React 19 moves them into `<head>` and renders each once. They carry
-	 * {@link ConsentProviderOptions.nonce}.
+	 * {@link InthProviderOptions.nonce}.
 	 *
 	 * Set `false` when the app imports `styles.css` itself, for example to
 	 * run it through Tailwind CSS 3 or to put it in a named cascade layer.
@@ -184,9 +184,9 @@ export interface ConsentProviderOptions
 	 *
 	 * @example
 	 * ```tsx
-	 * <ConsentProvider options={{ projectUrl: '/api/inth' }}>
+	 * <InthProvider options={{ projectUrl: '/api/inth' }}>
 	 *   {children}
-	 * </ConsentProvider>
+	 * </InthProvider>
 	 * ```
 	 */
 	projectUrl?: string;
@@ -209,11 +209,11 @@ export interface ConsentProviderOptions
 	 * ```tsx
 	 * import { testing } from '@inth/react/testing';
 	 *
-	 * <ConsentProvider
+	 * <InthProvider
 	 *   options={{ overrides: { country: 'DE' }, mode: testing() }}
 	 * >
 	 *   {children}
-	 * </ConsentProvider>
+	 * </InthProvider>
 	 * ```
 	 */
 	mode?: ProviderTransportFactory | HostedMode | ConsentTesting;
@@ -253,13 +253,13 @@ export interface ConsentProviderOptions
 	 * // app/layout.tsx — stays synchronous, so the shell prerenders.
 	 * const config = resolveConsent({ projectUrl });
 	 * return (
-	 *   <ConsentProvider options={{ projectUrl, prefetch: config }}>
+	 *   <InthProvider options={{ projectUrl, prefetch: config }}>
 	 *     {children}
-	 *   </ConsentProvider>
+	 *   </InthProvider>
 	 * );
 	 * ```
 	 */
-	prefetch?: ConsentProviderPrefetch | Promise<ConsentProviderPrefetch>;
+	prefetch?: InthProviderPrefetch | Promise<InthProviderPrefetch>;
 	/**
 	 * Whether `ConsentBanner` renders on the server once a `prefetch`
 	 * promise resolves, so it arrives in the streamed response before the
@@ -271,7 +271,7 @@ export interface ConsentProviderOptions
 	 * @default true
 	 */
 	streamBanner?: boolean;
-	callbacks?: ConsentProviderCallbacks;
+	callbacks?: InthProviderCallbacks;
 	/**
 	 * Remove configured browser data when its consent permission is revoked.
 	 * Initial-only: remount the provider to replace its cleanup configuration.
@@ -349,7 +349,7 @@ export interface ConsentProviderOptions
 	 * `@inth/sdk/runtime/streamed-init`. Without it the provider loads that
 	 * code once `prefetch` is a promise, so an app that never streams one
 	 * doesn't download it. A framework root whose state is usually streamed
-	 * (`ConsentRoot`) passes it, so the state applies as soon as it arrives
+	 * (`InthProvider`) passes it, so the state applies as soon as it arrives
 	 * instead of after one more request. Read once, at mount.
 	 * @internal
 	 */
@@ -360,7 +360,7 @@ export interface ConsentProviderOptions
 	 * the script loader's download during the first render when consent
 	 * already lets a script run, instead of from the mount effect. A
 	 * framework root whose state usually holds a returning visitor's choice
-	 * (`ConsentRoot`) passes it; without it the provider ships none of that
+	 * (`InthProvider`) passes it; without it the provider ships none of that
 	 * decision. Read once, at mount.
 	 * @internal
 	 */
@@ -378,10 +378,10 @@ export interface ConsentProviderOptions
  * is unchanged.
  */
 export type ExternalRuntimeProviderOptions = Omit<
-	ConsentProviderOptions,
+	InthProviderOptions,
 	'callbacks' | 'mode' | 'vendors'
 > & {
-	mode?: ConsentProviderOptions['mode'];
+	mode?: InthProviderOptions['mode'];
 	/**
 	 * Not accepted here: the runtime owner declares vendors through
 	 * `createConsentRuntime({ vendors })`, and the kernel carries them.
@@ -398,7 +398,7 @@ export type ExternalRuntimeProviderOptions = Omit<
 /** The provider builds and owns its own kernel. */
 export interface OwnedRuntimeProviderProps {
 	/** Requires `projectUrl` unless `mode` is `testing()` or `enabled` is `false`. */
-	options: WithProjectUrl<ConsentProviderOptions>;
+	options: WithProjectUrl<InthProviderOptions>;
 	children: ReactNode;
 	runtime?: undefined;
 }
@@ -408,7 +408,7 @@ export interface ExternalRuntimeProviderProps {
 	children: ReactNode;
 	runtime: ConsentRuntime;
 }
-export type ConsentProviderProps =
+export type InthProviderProps =
 	| OwnedRuntimeProviderProps
 	| ExternalRuntimeProviderProps;
 
@@ -463,7 +463,7 @@ const loadScriptLoader = async () =>
  * during the first render when consent already lets a script run.
  */
 const reactRuntimeModules = function reactRuntimeModules(
-	options: ConsentProviderOptions
+	options: InthProviderOptions
 ): ConsentRuntimeModules {
 	const resolveStreamedInit = options.__resolveStreamedInit;
 	return {
@@ -580,7 +580,7 @@ const withTreeIAB = function withTreeIAB(
 };
 
 const toRuntimeOptions = function toRuntimeOptions(
-	options: ConsentProviderOptions
+	options: InthProviderOptions
 ): ConsentProviderRuntimeOptions {
 	const mode = selectedMode(options);
 	return {
@@ -599,7 +599,7 @@ const toRuntimeOptions = function toRuntimeOptions(
  * hydration here.
  */
 const hasStoredChoice = function hasStoredChoice(
-	options: ConsentProviderOptions
+	options: InthProviderOptions
 ): boolean {
 	const { persistence } = options;
 	if (persistence === false || options.consentSource) {
@@ -640,7 +640,7 @@ const earlyInitKey = function earlyInitKey(
  * before mount.
  */
 const earlySend = function earlySend(
-	options: ConsentProviderOptions,
+	options: InthProviderOptions,
 	snapshot: Pick<ConsentSnapshot, 'overrides' | 'policyPending'>,
 	clientRender: boolean
 ): { source: EarlySource; storedChoice: boolean } | undefined {
@@ -688,7 +688,7 @@ const earlySend = function earlySend(
 interface OwnedRuntimeEntry {
 	readonly runtime: ConsentProviderRuntime;
 	/** Hand the runtime new options; it applies only what changed. */
-	apply: (options: ConsentProviderOptions) => void;
+	apply: (options: InthProviderOptions) => void;
 	/**
 	 * Start the runtime for a commit that kept it. Returns the cleanup for
 	 * that mount, or `null` when the runtime was disposed before any commit
@@ -751,7 +751,7 @@ let entrySequence = 0;
  * answer for an unknown location) and the visitor has no stored choice.
  */
 const createOwnedRuntimeEntry = function createOwnedRuntimeEntry(
-	initialOptions: ConsentProviderOptions,
+	initialOptions: InthProviderOptions,
 	clientRender: boolean
 ): OwnedRuntimeEntry {
 	const { networkBlocker } = initialOptions;
@@ -908,7 +908,7 @@ const createRuntimeHolder = function createRuntimeHolder() {
 	let entry: OwnedRuntimeEntry | null = null;
 	return {
 		get(
-			options: ConsentProviderOptions,
+			options: InthProviderOptions,
 			clientRender: boolean
 		): OwnedRuntimeEntry {
 			entry ??= createOwnedRuntimeEntry(options, clientRender);
@@ -928,7 +928,7 @@ const subscribeNothing = (): (() => void) => () => undefined;
  * the provider renders a borrowed runtime.
  */
 const useOwnedRuntime = function useOwnedRuntime(
-	options: ConsentProviderOptions | undefined
+	options: InthProviderOptions | undefined
 ): { entry: OwnedRuntimeEntry; rebuild: () => void } | undefined {
 	// oxlint-disable-next-line react/hook-use-state -- Created once, during the first render.
 	const [holder] = useState(createRuntimeHolder);
@@ -961,7 +961,7 @@ const OwnedRuntimeLifecycle = ({
 	rebuild,
 }: {
 	entry: OwnedRuntimeEntry;
-	options: ConsentProviderOptions;
+	options: InthProviderOptions;
 	rebuild: () => void;
 }) => {
 	// Before paint, so an `enabled` change never shows a frame of the
@@ -1012,15 +1012,15 @@ const isPromiseLike = function isPromiseLike(
  * const runtime = createConsentRuntime({ projectUrl: '/api/inth' });
  * runtime.start();
  *
- * <ConsentProvider runtime={runtime} options={{ theme }}>
+ * <InthProvider runtime={runtime} options={{ theme }}>
  *   <ConsentDialog />
- * </ConsentProvider>
+ * </InthProvider>
  * ```
  */
 // oxlint-disable-next-line complexity -- Provider selects owned or borrowed lifecycle and renders its contexts.
-export const ConsentProvider = (props: ConsentProviderProps) => {
+export const InthProvider = (props: InthProviderProps) => {
 	const { children } = props;
-	const options = (props.options ?? {}) as ConsentProviderOptions;
+	const options = (props.options ?? {}) as InthProviderOptions;
 	// Read at mount: moving between a borrowed and a provider-built runtime
 	// needs a remount. A borrowed runtime follows the prop.
 	// oxlint-disable-next-line react/hook-use-state -- Read once, at mount.
@@ -1088,7 +1088,7 @@ export const ConsentProvider = (props: ConsentProviderProps) => {
 			return;
 		}
 		console.warn(
-			'inth ConsentProvider: `options.callbacks` is ignored when you pass `runtime`. Pass them to createConsentRuntime({ callbacks }) instead.'
+			'inth InthProvider: `options.callbacks` is ignored when you pass `runtime`. Pass them to createConsentRuntime({ callbacks }) instead.'
 		);
 	}, [hasBorrowedCallbacks]);
 

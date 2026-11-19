@@ -1,4 +1,4 @@
-import type { ConsentProviderOptions } from '@inth/nextjs';
+import type { InthProviderOptions } from '@inth/nextjs';
 
 // Keys you leave out keep the copy from your Inth project.
 export const i18n = {
@@ -12,4 +12,4 @@ export const i18n = {
 			cookieBanner: { title: 'Cookies on this site' },
 		},
 	},
-} satisfies ConsentProviderOptions['i18n'];
+} satisfies InthProviderOptions['i18n'];

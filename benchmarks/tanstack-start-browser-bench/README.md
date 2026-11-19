@@ -14,12 +14,12 @@ provider" below.
 | Scenario | Route | What it measures |
 | --- | --- | --- |
 | `baseline` | `/baseline` | Page floor: identical shell, no consent code. |
-| `client` | `/client` | `ConsentProvider` with `hosted({ projectUrl: '/api/bench-consent' })`, `ssr: false`, so the provider mounts and runs init in the browser. |
+| `client` | `/client` | The `InthProvider` from `@inth/tanstack-start/react` with `hosted({ projectUrl: '/api/bench-consent' })`, `ssr: false`, so the provider mounts and runs init in the browser. |
 | `manifest-client` | `/manifest-client` | A provider with `createV1ManifestTransport(...)` as its transport, reading the same-origin `/api/inth/v1/consent/manifest` route, `ssr: false`. |
-| `ssr` | `/ssr` | Loader fetches `/api/bench-consent/v1/consent/init` server-side on every request and folds it in with `mergeInitIntoConsentState`; `ConsentRoot` without `routePrefix`. Direct-init semantics, matching the Next `ssr` arm. |
-| `ssr-stream` | `/ssr-stream` | The streamed setup `ConsentRoot` documents: the same direct-init loader, returned unawaited (`loader: () => ({ consent: getDirectInitConsentState() })`), so the router streams the state in after the shell. The server HTML has no banner; it shows once the state reaches the hydrated root. Start only. |
-| `manifest-ssr` | `/manifest-ssr` | Loader runs `createConsentStateHandler({ projectUrl, mode: manifest({ manifestUrl }), routePrefix: '/api/inth' })` through the in-process manifest cache; `ConsentRoot` reads the route prefix from the state. Saves post to the fixture directly. |
-| `manifest-ssr-proxy` | `/manifest-ssr-proxy` | Same prefetch, but the state points `ConsentRoot` at `/api/inth-proxy` for init and saves, a second `createConsentRoute({ proxy: true })` mount, so the accept click's `POST /v1/consent/records` takes one hop through the Start server. Start only. |
+| `ssr` | `/ssr` | Loader fetches `/api/bench-consent/v1/consent/init` server-side on every request and folds it in with `mergeInitIntoConsentState`; `InthProvider` without `routePrefix`. Direct-init semantics, matching the Next `ssr` arm. |
+| `ssr-stream` | `/ssr-stream` | The streamed setup `InthProvider` documents: the same direct-init loader, returned unawaited (`loader: () => ({ consent: getDirectInitConsentState() })`), so the router streams the state in after the shell. The server HTML has no banner; it shows once the state reaches the hydrated root. Start only. |
+| `manifest-ssr` | `/manifest-ssr` | Loader runs `createConsentStateHandler({ projectUrl, mode: manifest({ manifestUrl }), routePrefix: '/api/inth' })` through the in-process manifest cache; `InthProvider` reads the route prefix from the state. Saves post to the fixture directly. |
+| `manifest-ssr-proxy` | `/manifest-ssr-proxy` | Same prefetch, but the state points `InthProvider` at `/api/inth-proxy` for init and saves, a second `createConsentRoute({ proxy: true })` mount, so the accept click's `POST /v1/consent/records` takes one hop through the Start server. Start only. |
 | `repeat-visitor` | derived | After each measured `client` iteration a second browser context loads `/client` and the runner measures the Open Preferences click, exactly as the Next runner does. Note that neither runner preseeds the consent cookie for this arm. |
 | `manifest-ssr-root` | `/manifest-ssr` in the `dist-root/` build | `--root-provider` only. Same route and metrics as `manifest-ssr`, but the provider and the manifest prefetch loader live in `__root.tsx` and the route renders only the page shell. Built with `INTH_BENCH_ROOT_PROVIDER=1` (`bun run build:root`). |
 
@@ -207,7 +207,7 @@ bun run bench:frameworks
 **Hypothesis.** The bench mounts the consent provider inside each scenario
 route, which Start code-splits, so the provider's chunks are fetched after
 the route component chunk executes. The documented app pattern mounts
-`ConsentRoot` in `__root.tsx`, which Start does not code-split, so in a
+`InthProvider` in `__root.tsx`, which Start does not code-split, so in a
 real app those chunks should be part of the preloaded entry graph and the
 mobile gap should shrink.
 

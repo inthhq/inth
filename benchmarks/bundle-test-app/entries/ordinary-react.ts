@@ -6,7 +6,7 @@
 export {
 	ConsentBanner,
 	ConsentDialog,
-	ConsentProvider,
+	InthProvider,
 	hosted,
 	useConsent,
 	useSaveConsents,

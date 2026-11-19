@@ -155,7 +155,7 @@ describe('resolveConsent wiring', () => {
 				fetch: off,
 				request: requestOf({}),
 			});
-			// The state tells ConsentRoot this page has no journey.
+			// The state tells InthProvider this page has no journey.
 			expect(state.journey).toBeNull();
 			expect(String(off.mock.calls[0]?.[0])).toBe(
 				'https://consent.example.com/v1/consent/init'

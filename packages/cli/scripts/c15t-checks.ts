@@ -988,7 +988,7 @@ const verifyNuxtConfigComments = async (
       if (flag === "--yes") {
         assert.match(
           await readFile(path.join(directory, entry), "utf-8"),
-          /<ConsentRoot \/>/u
+          /<InthProvider \/>/u
         );
       }
     }
@@ -1101,13 +1101,14 @@ const verifyNuxtLayouts = async (
         assert.ok(
           data.plan?.instructions.some(
             (instruction) =>
-              instruction.includes(entry) && instruction.includes("ConsentRoot")
+              instruction.includes(entry) &&
+              instruction.includes("InthProvider")
           )
         );
       } else if (flag === "--yes") {
         assert.match(
           await readFile(path.join(directory, entry), "utf-8"),
-          /<ConsentRoot \/>/u
+          /<InthProvider \/>/u
         );
       }
       assert.doesNotMatch(result.stdout + result.stderr, /private-nuxt-page/u);

@@ -3,7 +3,7 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentRoot,
+	InthProvider,
 } from '@inth/nextjs';
 import { resolveConsent } from '@inth/nextjs/server';
 import type { ReactNode } from 'react';
@@ -14,14 +14,14 @@ const RootLayout = ({ children }: { children: ReactNode }) => (
 	<html lang="en">
 		<body>
 			{/* Not awaited: the page renders while consent resolves. */}
-			<ConsentRoot state={resolveConsent()}>
+			<InthProvider state={resolveConsent()}>
 				{children}
 				<ConsentBanner />
 				<ConsentDialog />
 				<footer>
 					<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 				</footer>
-			</ConsentRoot>
+			</InthProvider>
 		</body>
 	</html>
 );

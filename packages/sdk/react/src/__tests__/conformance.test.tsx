@@ -30,15 +30,15 @@ import { ConsentDialog } from '~/components/panel';
 import { ConsentWidget } from '~/components/preferences';
 import { KernelContext } from '~/context';
 import { IABProvider, IABConsentBanner, IABConsentDialog } from '~/iab';
-import { ConsentBanner, ConsentProvider } from '~/index';
-import type { ConsentProviderOptions } from '~/index';
+import { ConsentBanner, InthProvider } from '~/index';
+import type { InthProviderOptions } from '~/index';
 
 import { testing } from '../testing';
 import { transportMode } from './fixtures/transport-mode';
 import { createPolicySession, probePolicyContract } from './policy-driver';
 import { policyFixture } from './policy-fixture';
 
-type ProviderOptions = ConsentProviderOptions & {
+type ProviderOptions = InthProviderOptions & {
 	i18n?: {
 		locale?: string;
 		messages?: Record<string, Partial<TranslationsResponse>>;
@@ -193,7 +193,7 @@ const activeUIForComponent = function activeUIForComponent(
 	}
 };
 
-const buildProviderOptions = (opts: MountOptions): ConsentProviderOptions => {
+const buildProviderOptions = (opts: MountOptions): InthProviderOptions => {
 	const provided = (opts.providerOptions ?? {}) as ProviderOptions;
 	const state = opts.initialState as
 		| { consents?: Record<string, boolean> }
@@ -369,7 +369,7 @@ const ClientSettled = ({ onSettled }: { onSettled: () => void }) => {
 
 const renderTree = function renderTree(
 	opts: MountOptions,
-	options: ConsentProviderOptions,
+	options: InthProviderOptions,
 	onKernel: (kernel: ConsentKernel) => void,
 	onSettled?: () => void
 ) {
@@ -380,7 +380,7 @@ const renderTree = function renderTree(
 		/>
 	);
 	return (
-		<ConsentProvider options={options}>
+		<InthProvider options={options}>
 			{onSettled ? <ClientSettled onSettled={onSettled} /> : null}
 			{isIabComponent(opts.component) ? (
 				<IABProvider
@@ -393,7 +393,7 @@ const renderTree = function renderTree(
 			) : (
 				content
 			)}
-		</ConsentProvider>
+		</InthProvider>
 	);
 };
 

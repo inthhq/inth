@@ -1,12 +1,12 @@
 ---
-title: ConsentProvider
-description: Mount ConsentProvider in a React app and configure its backend, scripts, storage, blocking and presentation options.
+title: InthProvider
+description: Mount InthProvider in a React app and configure its backend, scripts, storage, blocking and presentation options.
 group: frameworks
 ---
 
 ## Mount one provider
 
-`ConsentProvider` creates the consent runtime, loads the policy, stores the
+`InthProvider` creates the consent runtime, loads the policy, stores the
 visitor's choice and loads consent-gated scripts. Render one provider at the
 root of your app and put the banner, dialog and a preferences link inside it.
 The [quickstart](/docs/frameworks/react/quickstart) does this in
@@ -21,7 +21,7 @@ Set it to the backend URL from your Inth project. To
 resolve a bundled policy in the browser instead, pass `manifest()` from
 `@inth/react`; see
 [rendering](/docs/frameworks/react/rendering#bundle-the-policy-at-build-time).
-The Next.js and TanStack Start adapters export `ConsentRoot` instead, which wraps
+The Next.js and TanStack Start adapters export `InthProvider` instead, which wraps
 this provider and passes it server-resolved state.
 
 ## Provider options

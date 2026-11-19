@@ -1,5 +1,5 @@
 /**
- * `ConsentRoot` props merge over `inth.config.ts` per option: an `options`
+ * `InthProvider` props merge over `inth.config.ts` per option: an `options`
  * prop replaces only the keys it names, and `options.callbacks` replaces
  * only the callbacks it names. Passing `options={{ nonce }}` must not drop
  * the config's callbacks, translations or mode.
@@ -8,7 +8,7 @@ import { ConsentBanner } from '@inth/react';
 import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ConsentRoot } from '../root';
+import { InthProvider } from '../root';
 import { policyFixture } from './policy-fixture';
 
 const configured = vi.hoisted(() => ({
@@ -17,7 +17,7 @@ const configured = vi.hoisted(() => ({
 	shown: vi.fn(),
 }));
 
-// oxlint-disable-next-line anti-slop/no-module-mocking -- In an app build, the bundler alias `withConsentManifest` sets swaps this module for the app's inth.config.ts. The mock is that alias; ConsentRoot is real.
+// oxlint-disable-next-line anti-slop/no-module-mocking -- In an app build, the bundler alias `withConsentManifest` sets swaps this module for the app's inth.config.ts. The mock is that alias; InthProvider is real.
 vi.mock('@inth/nextjs/user-config', () => ({
 	default: {
 		options: {
@@ -47,7 +47,7 @@ afterEach(() => {
 test("an options prop keeps the config's other options and callbacks", async () => {
 	const recorded = vi.fn();
 	const screen = await render(
-		<ConsentRoot
+		<InthProvider
 			state={policyFixture()}
 			persistence={false}
 			options={{
@@ -56,7 +56,7 @@ test("an options prop keeps the config's other options and callbacks", async () 
 			}}
 		>
 			<ConsentBanner />
-		</ConsentRoot>
+		</InthProvider>
 	);
 
 	// The config's translations and callbacks survive the prop.

@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * `ConsentProvider` for client-rendered apps, whose consent engine loads
+ * `InthProvider` for client-rendered apps, whose consent engine loads
  * after the page's priority images when the visitor still has to choose.
  *
  * The page renders at once, under a stand-in kernel (`deferred-kernel.ts`).
@@ -44,8 +44,8 @@ import {
 } from '../components/prompt/static-banner-shell';
 import { useIsHydrated } from '../hooks/use-is-hydrated';
 import type {
-	ConsentProviderOptions,
-	ConsentProviderProps,
+	InthProviderOptions,
+	InthProviderProps,
 	OwnedRuntimeProviderProps,
 } from '../provider';
 import { awaitsChoice, rootNeedsEngine } from './boot';
@@ -65,7 +65,7 @@ type EngineModule = typeof ClientEngine;
  * page may do before they choose.
  */
 const needsEngine = function needsEngine(
-	options: ConsentProviderOptions
+	options: InthProviderOptions
 ): boolean {
 	return Boolean(
 		rootNeedsEngine({ networkBlocker: options.networkBlocker, options }) ||
@@ -82,7 +82,7 @@ const needsEngine = function needsEngine(
  * `commit.ts`), or `undefined` when the engine has to record it.
  */
 const commitConfig = function commitConfig(
-	options: ConsentProviderOptions
+	options: InthProviderOptions
 ): DeferredCommitConfig | undefined {
 	const { persistence } = options;
 	if (persistence === false || options.consentSource) {
@@ -142,7 +142,7 @@ const followStaticBanner = function followStaticBanner(
  * engine. Read once, at mount.
  */
 const plan = function plan(
-	props: ConsentProviderProps,
+	props: InthProviderProps,
 	clientRender: boolean
 ): DeferredPlan | undefined {
 	if (props.runtime || !props.options) {
@@ -294,7 +294,7 @@ const plan = function plan(
 };
 
 /**
- * Builds `ConsentProvider` around the engine import it loads.
+ * Builds `InthProvider` around the engine import it loads.
  *
  * @param importEngine - Imports the engine's module. Defaults to
  * `import('./client-engine')`, which keeps it out of the first-load chunk.
@@ -303,15 +303,15 @@ const plan = function plan(
  */
 export const createConsentProvider = function createConsentProvider(
 	importEngine: () => Promise<EngineModule> = () => import('./client-engine')
-): (props: ConsentProviderProps) => ReactNode {
+): (props: InthProviderProps) => ReactNode {
 	const loadEngine = recordOnce(importEngine);
 
-	const EngineProvider = (props: ConsentProviderProps): ReactNode => {
+	const EngineProvider = (props: InthProviderProps): ReactNode => {
 		const loaded = read(loadEngine());
-		return <loaded.ConsentProvider {...props} />;
+		return <loaded.InthProvider {...props} />;
 	};
 
-	const Provider = (props: ConsentProviderProps): ReactNode => {
+	const Provider = (props: InthProviderProps): ReactNode => {
 		const clientRender = useIsHydrated();
 		// oxlint-disable-next-line react/hook-use-state -- Read once, at mount.
 		const [deferred] = useState(() => plan(props, clientRender));
@@ -361,7 +361,7 @@ export const createConsentProvider = function createConsentProvider(
  * engine loads at once. Every other setup renders once the engine has
  * loaded.
  *
- * See `ConsentProvider` in `@inth/react/provider` for the options. That
+ * See `InthProvider` in `@inth/react/provider` for the options. That
  * entry loads the engine with the page.
  */
-export const ConsentProvider = createConsentProvider();
+export const InthProvider = createConsentProvider();

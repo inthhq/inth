@@ -1,6 +1,6 @@
 ---
 title: Callbacks
-description: Run code in a React app when a visitor records a consent choice, when permissions change, when a request fails and before the revocation reload, with the ConsentProvider callbacks option.
+description: Run code in a React app when a visitor records a consent choice, when permissions change, when a request fails and before the revocation reload, with the InthProvider callbacks option.
 group: frameworks
 ---
 
@@ -10,14 +10,14 @@ Keep the callbacks in their own module:
 
 <include src="../../shared/examples/react/callbacks.mdx" />
 
-Pass them in the `ConsentProvider` options, in the file that renders the
+Pass them in the `InthProvider` options, in the file that renders the
 provider, such as `src/consent.tsx` from the
 [quickstart](/docs/frameworks/react/quickstart):
 
 {/* example: fragment */}
 
 ```tsx title="src/consent.tsx"
-<ConsentProvider options={{ mode, scripts, callbacks }}>
+<InthProvider options={{ mode, scripts, callbacks }}>
 ```
 
 The provider subscribes the callbacks after it mounts, so they run in the
@@ -26,7 +26,7 @@ provider calls the latest `callbacks` object it received, so a new object on
 a later render takes effect without a remount. Defining the object at module
 level, as above, keeps it the same across renders.
 
-When you pass your own `runtime` to `ConsentProvider`, the provider does not
+When you pass your own `runtime` to `InthProvider`, the provider does not
 wire `callbacks` or `reloadOnConsentRevoked` from its options. Pass them to
 `createConsentRuntime` instead.
 
@@ -39,7 +39,7 @@ wire `callbacks` or `reloadOnConsentRevoked` from its options. Pass them to
 | `onError` | A consent command fails, such as a failed `/init` request or a save the backend rejects. | `error`, a message string |
 | `onBeforeConsentRevocationReload` | A save withdrew a granted category or vendor, right before Inth reloads the page. | `preferences`, the permissions after the save |
 
-The type for the whole object is `ConsentProviderCallbacks` from `@inth/react`.
+The type for the whole object is `InthProviderCallbacks` from `@inth/react`.
 Callbacks run after Inth updates its state, so `snapshot` and hooks such as
 `useConsent()` already hold the new values.
 

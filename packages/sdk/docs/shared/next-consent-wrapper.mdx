@@ -20,12 +20,12 @@ PostHog waits for measurement consent here. `cookieless_mode: 'never'` disables
 cookieless capture after rejection. Remove any existing PostHog loader,
 including `next/script` and tag-manager entries, so the integration loads once.
 
-`withConsentManifest` in `next.config.ts` finds the file, and `ConsentRoot`
+`withConsentManifest` in `next.config.ts` finds the file, and `InthProvider`
 reads its `scripts` in the browser, so a Server Component layout renders
-`ConsentRoot` without passing them. The file is bundled into the browser as
+`InthProvider` without passing them. The file is bundled into the browser as
 well as the server, so it must hold no secrets.
 
 `scripts`, `vendors`, `clearOnRevocation`, `networkBlocker`, `persistence`,
-`scriptLoader` and `options` can also be passed to `ConsentRoot` as props,
+`scriptLoader` and `options` can also be passed to `InthProvider` as props,
 which win over the config. Functions can't cross from a Server Component to a
 Client Component, so pass them as props only from a `'use client'` file.

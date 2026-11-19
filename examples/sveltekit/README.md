@@ -12,7 +12,7 @@ allows measurement.
 - `src/hooks.server.ts` reads the request's consent context once with
   `inthHandle`.
 - `src/routes/+layout.server.ts` resolves consent with `loadConsent`.
-- `src/routes/+layout.svelte` renders `ConsentRoot` with PostHog, the banner,
+- `src/routes/+layout.svelte` renders `InthProvider` with PostHog, the banner,
   dialog and link.
 - `src/app.d.ts` types `event.locals.inth`.
 

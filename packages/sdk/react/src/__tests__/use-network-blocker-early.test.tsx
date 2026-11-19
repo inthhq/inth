@@ -10,7 +10,7 @@ import { render } from 'vitest-browser-react';
 
 import { useNetworkBlocker } from '../index';
 import { UNCOMMITTED_HOLD_MS } from '../module-hooks/network-hold';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
@@ -76,7 +76,7 @@ const renderWithBeacons = (
 			: policyFixture({ measurement });
 	const view = render(
 		wrap(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: testing(),
 					persistence: false,
@@ -93,7 +93,7 @@ const renderWithBeacons = (
 						statuses={statuses}
 					/>
 				</HookBlocker>
-			</ConsentProvider>
+			</InthProvider>
 		)
 	);
 	return { statuses, view };
@@ -158,7 +158,7 @@ test('a retry after suspending does not leave the first render holding', async (
 	};
 
 	await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: testing(),
 				persistence: false,
@@ -170,7 +170,7 @@ test('a retry after suspending does not leave the first render holding', async (
 					<SuspendsOnce />
 				</HookBlocker>
 			</Suspense>
-		</ConsentProvider>
+		</InthProvider>
 	);
 	resume();
 	const late = window.fetch(`${TRACKER}?when=late`);
@@ -203,14 +203,14 @@ test('a render React discards ends its hold on its own', async () => {
 
 	await expect(
 		render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: testing(),
 					persistence: false,
 				}}
 			>
 				<ThrowsAfterHook />
-			</ConsentProvider>
+			</InthProvider>
 		)
 	).rejects.toThrow('render failed before commit');
 
@@ -245,7 +245,7 @@ test('a disabled provider blocker leaves the hook holding its requests', async (
 	// in: the hook's requests would go out through its pass-through patch.
 	const statuses: Promise<number>[] = [];
 	render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: testing(),
 				networkBlocker: { enabled: false, rules },
@@ -259,7 +259,7 @@ test('a disabled provider blocker leaves the hook holding its requests', async (
 					statuses={statuses}
 				/>
 			</HookBlocker>
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await vi.waitFor(() => expect(statuses).toHaveLength(1));
 
@@ -278,7 +278,7 @@ test('unmounting the hook before its blocker loads fails its held requests close
 	// The hook's chunk is cached by now, so unmount in the same task as the
 	// commit: the blocker's import cannot resolve before the cleanup runs.
 	const view = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: testing(),
 				persistence: false,
@@ -291,7 +291,7 @@ test('unmounting the hook before its blocker loads fails its held requests close
 					statuses={statuses}
 				/>
 			</HookBlocker>
-		</ConsentProvider>
+		</InthProvider>
 	);
 	view.unmount();
 

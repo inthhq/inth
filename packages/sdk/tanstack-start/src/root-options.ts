@@ -3,9 +3,9 @@ import type {
 	UsePersistenceOptions,
 	UseScriptLoaderOptions,
 } from '@inth/react/module-hooks';
-import type { ConsentProviderOptions } from '@inth/react/provider';
+import type { InthProviderOptions } from '@inth/react/provider';
 /**
- * `ConsentRoot`'s props and the checks on its state, shared by the
+ * `InthProvider`'s props and the checks on its state, shared by the
  * first-load shell (`./root`) and the engine it loads (`./root-engine`).
  *
  * @internal
@@ -17,7 +17,7 @@ import type { ReactNode } from 'react';
 
 import type { ConsentState } from './server';
 
-export interface ConsentRootProps {
+export interface InthProviderProps {
 	/**
 	 * The visitor's consent state produced server-side by `resolveConsent()`
 	 * (or `createConsentStateHandler()`) from `@inth/tanstack-start/server`,
@@ -54,9 +54,9 @@ export interface ConsentRootProps {
 	/**
 	 * Remove configured browser data for initially denied categories after policy
 	 * resolution and when consent is later revoked.
-	 * Initial-only: remount ConsentRoot to replace the cleanup configuration.
+	 * Initial-only: remount InthProvider to replace the cleanup configuration.
 	 */
-	clearOnRevocation?: ConsentProviderOptions['clearOnRevocation'];
+	clearOnRevocation?: InthProviderOptions['clearOnRevocation'];
 
 	scriptLoader?: UseScriptLoaderOptions;
 
@@ -71,7 +71,7 @@ export interface ConsentRootProps {
 	 * Additional React provider options.
 	 */
 	options?: Omit<
-		ConsentProviderOptions,
+		InthProviderOptions,
 		| 'projectUrl'
 		| 'mode'
 		| 'clearOnRevocation'

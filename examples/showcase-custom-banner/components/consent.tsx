@@ -1,6 +1,6 @@
 'use client';
 
-import { ConsentRoot } from '@inth/nextjs';
+import { InthProvider } from '@inth/nextjs';
 import type { ConsentPresentation } from '@inth/nextjs';
 import type { ReactNode } from 'react';
 
@@ -25,7 +25,7 @@ const presentation: ConsentPresentation = { prompt: { variant: 'wall' } };
  * hooks.
  */
 export const Consent = ({ children }: { children: ReactNode }) => (
-	<ConsentRoot
+	<InthProvider
 		config={config}
 		state={{}}
 		scripts={scripts}
@@ -33,5 +33,5 @@ export const Consent = ({ children }: { children: ReactNode }) => (
 	>
 		{children}
 		<ConsentDialog />
-	</ConsentRoot>
+	</InthProvider>
 );

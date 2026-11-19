@@ -1,12 +1,12 @@
 /**
- * `ConsentRoot` turns the mode in the state `loadConsent` returned into a
+ * `InthProvider` turns the mode in the state `loadConsent` returned into a
  * transport, or takes one through `mode`.
  */
 import { render } from '@testing-library/svelte';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
-import ConsentRoot from '../../lib/components/consent-root.svelte';
+import InthProvider from '../../lib/kit/inth-provider.svelte';
 
 const mockFetch = vi.fn();
 window.fetch = mockFetch;
@@ -19,7 +19,7 @@ const initResponse = () =>
 		status: 200,
 	});
 
-describe('ConsentRoot', () => {
+describe('InthProvider', () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 		mockFetch.mockImplementation(() => Promise.resolve(initResponse()));
@@ -30,7 +30,7 @@ describe('ConsentRoot', () => {
 	});
 
 	test('re-inits a manifest() page through the consent route', async () => {
-		const result = render(ConsentRoot, {
+		const result = render(InthProvider, {
 			state: {
 				mode: { type: 'manifest' },
 				prefetch: {},
@@ -49,7 +49,7 @@ describe('ConsentRoot', () => {
 	});
 
 	test("asks the backend's init for a hosted() page", async () => {
-		const result = render(ConsentRoot, {
+		const result = render(InthProvider, {
 			state: {
 				mode: { type: 'hosted' },
 				prefetch: {},
@@ -68,7 +68,7 @@ describe('ConsentRoot', () => {
 
 	test('uses the transport passed as mode', async () => {
 		const init = vi.fn(() => Promise.resolve({}));
-		const result = render(ConsentRoot, {
+		const result = render(InthProvider, {
 			mode: transportMode({ init }),
 			state: { mode: { type: 'manifest' }, prefetch: {} },
 		});

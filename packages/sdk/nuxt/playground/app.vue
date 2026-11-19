@@ -41,7 +41,7 @@ const openBanner = function openBanner() {
 		</NuxtLink>
 	</nav>
 
-	<ConsentRoot
+	<InthProvider
 		:country="country"
 		:region="region"
 	/>

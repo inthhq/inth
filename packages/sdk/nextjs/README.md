@@ -61,7 +61,7 @@ import { defineConsentConfig } from '@inth/nextjs'
 export default defineConsentConfig({})
 ```
 
-4. Render `ConsentRoot` with `ConsentBanner` and `ConsentDialog` in the root layout, and pass it `resolveConsent()`
+4. Render `InthProvider` with `ConsentBanner` and `ConsentDialog` in the root layout, and pass it `resolveConsent()`
 
 ```tsx
 // app/layout.tsx
@@ -69,7 +69,7 @@ import {
   ConsentBanner,
   ConsentDialog,
   ConsentDialogLink,
-  ConsentRoot,
+  InthProvider,
 } from '@inth/nextjs'
 import { resolveConsent } from '@inth/nextjs/server'
 import type { ReactNode } from 'react'
@@ -81,12 +81,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body>
         {/* Not awaited: the page renders while consent resolves. */}
-        <ConsentRoot state={resolveConsent()}>
+        <InthProvider state={resolveConsent()}>
           {children}
           <ConsentBanner />
           <ConsentDialog />
           <ConsentDialogLink>Privacy settings</ConsentDialogLink>
-        </ConsentRoot>
+        </InthProvider>
       </body>
     </html>
   )

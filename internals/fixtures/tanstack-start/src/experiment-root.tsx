@@ -2,7 +2,7 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentRoot,
+	InthProvider,
 } from '@inth/tanstack-start';
 import {
 	consentLoaderOptions,
@@ -16,7 +16,7 @@ import {
  * `?experiment=1` runs the experiment and lets Inth pick the arm in the
  * browser. `&arm=wall` is the arm a flag provider would resolve: the server
  * passes it to `resolveConsent({ experiment })`, which counts it through
- * `/init` and returns the experiment in the state, so `ConsentRoot` needs no
+ * `/init` and returns the experiment in the state, so `InthProvider` needs no
  * `experiment` option for it.
  */
 import {
@@ -91,7 +91,7 @@ const RootComponent = () => {
 				<HeadContent />
 			</head>
 			<body>
-				<ConsentRoot
+				<InthProvider
 					state={consent}
 					options={options}
 					scripts={scripts}
@@ -104,7 +104,7 @@ const RootComponent = () => {
 					<footer>
 						<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 					</footer>
-				</ConsentRoot>
+				</InthProvider>
 				<Scripts />
 			</body>
 		</html>

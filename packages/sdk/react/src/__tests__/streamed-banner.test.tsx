@@ -10,8 +10,8 @@ import type { PolicyRule } from '@inth/sdk/schema/types';
 import { StrictMode, act } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
-import { ConsentBanner, ConsentProvider } from '../index';
-import type { ConsentProviderOptions } from '../index';
+import { ConsentBanner, InthProvider } from '../index';
+import type { InthProviderOptions } from '../index';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 import {
@@ -49,19 +49,19 @@ const transportSave = vi.fn(() => Promise.resolve({ ok: true as const }));
 
 type Prefetch = KernelConfig | Promise<KernelConfig>;
 
-const NO_OPTIONS: Partial<ConsentProviderOptions> = {};
+const NO_OPTIONS: Partial<InthProviderOptions> = {};
 
 const Page = ({
 	prefetch,
 	options = NO_OPTIONS,
 }: {
 	prefetch: Prefetch;
-	options?: Partial<ConsentProviderOptions>;
+	options?: Partial<InthProviderOptions>;
 }) => (
 	<html lang="en">
 		<head />
 		<body>
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: transportMode({ init: transportInit, save: transportSave }),
 					persistence: false,
@@ -71,7 +71,7 @@ const Page = ({
 			>
 				<main>content</main>
 				<ConsentBanner />
-			</ConsentProvider>
+			</InthProvider>
 		</body>
 	</html>
 );
@@ -117,7 +117,7 @@ afterEach(() => {
  */
 const streamThenHydrate = async function streamThenHydrate(
 	config: KernelConfig,
-	options: Partial<ConsentProviderOptions> = {}
+	options: Partial<InthProviderOptions> = {}
 ) {
 	const server = deferred<KernelConfig>();
 	page = await streamPage(

@@ -1,6 +1,6 @@
 ---
 title: Content Security Policy
-description: Run Inth in a TanStack Start app under a Content Security Policy, pass the router's per-request nonce to ConsentRoot, and allow the consent backend and vendor hosts.
+description: Run Inth in a TanStack Start app under a Content Security Policy, pass the router's per-request nonce to InthProvider, and allow the consent backend and vendor hosts.
 group: frameworks
 ---
 
@@ -15,7 +15,7 @@ allow them:
 | The Inth stylesheet, only if you link it yourself with `styles: false` | `style-src 'self'` |
 | The `<style id="inth-theme">` element, if you render `ConsentTheme` | `style-src` with the request nonce |
 | `<script>` elements the script loader creates for `scripts` entries, both `src` and inline | `script-src` with the request nonce, or each vendor's host |
-| The inline `<script>` that `ConsentRoot` renders when the visitor's consent or `alwaysLoad` already lets some vendor helper entries in `scripts` run | `script-src` with the request nonce |
+| The inline `<script>` that `InthProvider` renders when the visitor's consent or `alwaysLoad` already lets some vendor helper entries in `scripts` run | `script-src` with the request nonce |
 | The inline `consentPrefetchHead` script, on prerendered pages that use it | `script-src` with its hash |
 | Browser requests to `/api/inth/*`, when you mount the consent route | `connect-src 'self'` |
 | Browser requests to your backend's `/v1/consent/init` and `/v1/consent/records` | `connect-src` with the backend origin |
@@ -83,7 +83,7 @@ export const getRouter = function getRouter() {
 };
 ```
 
-**3. Pass the router's nonce to ConsentRoot.** In the root component from the
+**3. Pass the router's nonce to InthProvider.** In the root component from the
 [quickstart](/docs/frameworks/tanstack-start/quickstart#resolve-consent-in-the-root-route),
 read the nonce with `useRouter` from `@tanstack/react-router` and pass it as
 `options.nonce`:
@@ -93,7 +93,7 @@ read the nonce with `useRouter` from `@tanstack/react-router` and pass it as
 ```tsx title="src/routes/__root.tsx (partial)"
 const nonce = useRouter().options.ssr?.nonce;
 
-<ConsentRoot
+<InthProvider
   state={consent}
   options={{ nonce }}
   scripts={scripts}
@@ -103,12 +103,12 @@ const nonce = useRouter().options.ssr?.nonce;
 If you render `ConsentTheme`, pass it the same value:
 `<ConsentTheme theme={theme} nonce={nonce} />`.
 
-`ConsentRoot` reads `options.nonce` when it mounts, and the script loader
+`InthProvider` reads `options.nonce` when it mounts, and the script loader
 stamps it on every `<script>` it creates. A `nonce` on a single `scripts` entry
 takes precedence for that element.
 
 When the visitor's consent or `alwaysLoad` already lets some vendor helper
-entries in `scripts` run, `ConsentRoot` also renders an inline `<script>` with
+entries in `scripts` run, `InthProvider` also renders an inline `<script>` with
 `options.nonce`. It runs those entries' setup and inserts their tags before the
 page hydrates, with the same nonce or the entry's own. Its content changes with
 each visitor's consent, so a hash can't allow it. If the policy blocks it, the

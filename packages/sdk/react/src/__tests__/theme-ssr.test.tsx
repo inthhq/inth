@@ -7,7 +7,7 @@ import { afterEach, assert, beforeEach, expect, test, vi } from 'vitest';
 import { cdp } from 'vitest/browser';
 
 import { ConsentBanner } from '../components/prompt';
-import { ConsentProvider, ConsentTheme } from '../index';
+import { InthProvider, ConsentTheme } from '../index';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
@@ -21,7 +21,7 @@ afterEach(() => {
 
 test('the provider renders no theme stylesheet of its own', () => {
 	const html = renderToString(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: testing(),
 				persistence: false,
@@ -29,7 +29,7 @@ test('the provider renders no theme stylesheet of its own', () => {
 			}}
 		>
 			<div />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	const host = document.createElement('div');
 	host.innerHTML = html;
@@ -54,9 +54,9 @@ test('renders custom theme CSS before the banner and preserves it through hydrat
 				theme={options.theme}
 				nonce={options.nonce}
 			/>
-			<ConsentProvider options={options}>
+			<InthProvider options={options}>
 				<ConsentBanner />
-			</ConsentProvider>
+			</InthProvider>
 		</>
 	);
 	const host = document.createElement('div');
@@ -99,11 +99,11 @@ test('renders custom theme CSS before the banner and preserves it through hydrat
 						theme={{ colors: { primary: '#800080' } }}
 						nonce={options.nonce}
 					/>
-					<ConsentProvider
+					<InthProvider
 						options={{ ...options, theme: { colors: { primary: '#800080' } } }}
 					>
 						<ConsentBanner />
-					</ConsentProvider>
+					</InthProvider>
 				</>
 			);
 		});
@@ -154,9 +154,9 @@ test.each([
 					theme={options.theme}
 					colorScheme={colorScheme}
 				/>
-				<ConsentProvider options={options}>
+				<InthProvider options={options}>
 					<ConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			</>
 		);
 		const host = document.createElement('div');
@@ -211,9 +211,9 @@ test.each([
 							theme={options.theme}
 							colorScheme="light"
 						/>
-						<ConsentProvider options={{ ...options, colorScheme: 'light' }}>
+						<InthProvider options={{ ...options, colorScheme: 'light' }}>
 							<ConsentBanner />
-						</ConsentProvider>
+						</InthProvider>
 					</>
 				);
 			});
@@ -235,7 +235,7 @@ test.each(['</style>', '</StYlE>', '</style >'])(
 		const app = (
 			<>
 				<ConsentTheme theme={{ typography: { fontFamily } }} />
-				<ConsentProvider
+				<InthProvider
 					options={{
 						mode: testing(),
 						persistence: false,
@@ -243,7 +243,7 @@ test.each(['</style>', '</StYlE>', '</style >'])(
 					}}
 				>
 					<div data-testid="themed-child" />
-				</ConsentProvider>
+				</InthProvider>
 			</>
 		);
 		const host = document.createElement('div');

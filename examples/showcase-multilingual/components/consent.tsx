@@ -3,7 +3,7 @@
 import {
 	ConsentBanner,
 	ConsentDialog,
-	ConsentRoot,
+	InthProvider,
 	useSetLanguage,
 } from '@inth/nextjs';
 import { useEffect } from 'react';
@@ -21,7 +21,7 @@ const config = {
 };
 
 /**
- * Keeps Inth's language on the route's locale. `ConsentRoot` reads `i18n`
+ * Keeps Inth's language on the route's locale. `InthProvider` reads `i18n`
  * once, so a client-side move from /en to /de goes through
  * `useSetLanguage`, which switches the copy and resolves the policy again.
  */
@@ -40,7 +40,7 @@ export const Consent = ({
 	children: ReactNode;
 	locale: Locale;
 }) => (
-	<ConsentRoot
+	<InthProvider
 		config={config}
 		state={{}}
 		options={{
@@ -54,5 +54,5 @@ export const Consent = ({
 		{children}
 		<ConsentBanner />
 		<ConsentDialog />
-	</ConsentRoot>
+	</InthProvider>
 );

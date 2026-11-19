@@ -1,6 +1,6 @@
 /**
- * `ConsentRoot`'s runtime in the browser before the consent engine has
- * loaded.
+ * The SvelteKit `InthProvider`'s runtime in the browser before the consent
+ * engine has loaded.
  *
  * A server render already put the banner, its first-paint styles and the
  * boot data (`boot.ts`) in the HTML. The browser's first-load chunk holds
@@ -19,7 +19,8 @@
  * the save without recording it again.
  *
  * The same design as `@inth/vue`'s Nuxt module (`runtime/deferred/
- * shell.ts`), shaped as the runtime `ConsentProvider` renders.
+ * shell.ts`), shaped as the runtime `InthProvider` from
+ * `@inth/svelte` renders.
  *
  * @packageDocumentation
  * @internal
@@ -55,7 +56,7 @@ import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
 import { startPlainScripts } from '@inth/sdk/surface-actions/plain-scripts';
 
 import type { ProviderOptionsInput } from '../provider-options';
-import type { ConsentRootBoot } from './boot';
+import type { RootBoot } from './boot';
 import { DIALOG_ROOT, scheduleDeferredEngine, whenIdle } from './trigger';
 
 /** The engine as the deferred runtime takes it over. @internal */
@@ -75,7 +76,7 @@ export type EngineFactory = (
 /** @internal */
 export interface DeferredRuntimeOptions {
 	/** The boot the server rendered the page with. */
-	boot: ConsentRootBoot;
+	boot: RootBoot;
 	/** The root's current options. */
 	options: () => ProviderOptionsInput;
 	loadEngine: () => Promise<EngineFactory>;
@@ -87,7 +88,7 @@ export interface DeferredRuntimeOptions {
 	schedule?: typeof scheduleDeferredEngine;
 }
 
-/** The runtime `ConsentRoot` renders, and whether the engine is in. @internal */
+/** The runtime `InthProvider` renders, and whether the engine is in. @internal */
 export interface DeferredRuntime extends ConsentProviderRuntime {
 	/** Resolves with the engine once it has attached, `undefined` if it failed. */
 	readonly ready: Promise<ConsentProviderRuntime | undefined>;

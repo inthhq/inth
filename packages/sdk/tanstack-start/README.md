@@ -58,7 +58,7 @@ export default defineConfig({
 });
 ```
 
-3. Resolve the consent state in the root route loader with `createConsentStateHandler()` in a server function, and pass it to `ConsentRoot`
+3. Resolve the consent state in the root route loader with `createConsentStateHandler()` in a server function, and pass it to `InthProvider`
 
 ```tsx
 // src/routes/__root.tsx
@@ -68,7 +68,7 @@ import {
   ConsentBanner,
   ConsentDialog,
   ConsentDialogLink,
-  ConsentRoot,
+  InthProvider,
 } from '@inth/tanstack-start';
 import {
   consentLoaderOptions,
@@ -88,12 +88,12 @@ export const Route = createRootRoute({
 function RootComponent() {
   const { consent } = Route.useLoaderData();
   return (
-    <ConsentRoot state={consent}>
+    <InthProvider state={consent}>
       <Outlet />
       <ConsentBanner />
       <ConsentDialog />
       <ConsentDialogLink>Privacy settings</ConsentDialogLink>
-    </ConsentRoot>
+    </InthProvider>
   );
 }
 ```

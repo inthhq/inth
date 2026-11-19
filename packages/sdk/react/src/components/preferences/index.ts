@@ -70,7 +70,7 @@ export interface ConsentWidgetCompoundComponent extends FC<ConsentWidgetProps> {
  * @example
  * Preferred stock customization with component slots:
  * ```tsx
- * <ConsentProvider
+ * <InthProvider
  *   options={{
  *     mode: hosted({ projectUrl: '/api/inth' }),
  *     components: {
@@ -84,7 +84,7 @@ export interface ConsentWidgetCompoundComponent extends FC<ConsentWidgetProps> {
  *   }}
  * >
  *   <ConsentWidget hideBranding />
- * </ConsentProvider>
+ * </InthProvider>
  * ```
  *
  * @example

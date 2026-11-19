@@ -15,9 +15,9 @@
  *
  * @example
  * ```tsx
- * import { ConsentProvider, manifest } from '@inth/react';
+ * import { InthProvider, manifest } from '@inth/react';
  *
- * <ConsentProvider options={{ mode: manifest() }}>{children}</ConsentProvider>;
+ * <InthProvider options={{ mode: manifest() }}>{children}</InthProvider>;
  * ```
  */
 export { manifest } from './transports/manifest';

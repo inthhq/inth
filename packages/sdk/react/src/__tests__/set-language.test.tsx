@@ -15,8 +15,8 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { KernelContext } from '../context';
-import { ConsentProvider, useSetLanguage } from '../index';
-import type { ConsentProviderOptions } from '../provider';
+import { InthProvider, useSetLanguage } from '../index';
+import type { InthProviderOptions } from '../provider';
 import { testing } from '../testing';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
@@ -42,12 +42,12 @@ const Capture = () => {
 };
 
 const renderProvider = async function renderProvider(
-	options: Omit<ConsentProviderOptions, 'persistence'>
+	options: Omit<InthProviderOptions, 'persistence'>
 ) {
 	const screen = await render(
-		<ConsentProvider options={{ ...options, persistence: false }}>
+		<InthProvider options={{ ...options, persistence: false }}>
 			<Capture />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await vi.waitFor(() =>
 		expect(kernel.getSnapshot().policyPending).toBe(false)
@@ -115,7 +115,7 @@ describe('useSetLanguage', () => {
 			})
 		);
 		await render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					enabled: false,
 					mode: transportMode({ init }),
@@ -123,7 +123,7 @@ describe('useSetLanguage', () => {
 				}}
 			>
 				<Capture />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		await vi.waitFor(() => expect(kernel).toBeDefined());
 

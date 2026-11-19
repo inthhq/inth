@@ -42,7 +42,7 @@ To send events to your own PostHog and X projects, replace
 - `app/api/inth/v1/consent/manifest/route.ts` passes that config to
   `createConsentRoute` and serves the cached public manifest for both
   routers.
-- `components/consent.tsx` is the client wrapper: `ConsentRoot`, scripts,
+- `components/consent.tsx` is the client wrapper: `InthProvider`, scripts,
   banner, dialog and the Privacy settings link. Layouts pass it only `state`.
 - Each App Router route group has its own root layout:
   - `app/(streamed)/layout.tsx` starts `resolveConsent` without awaiting it,

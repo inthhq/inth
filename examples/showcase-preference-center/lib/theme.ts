@@ -1,7 +1,7 @@
 import { defineTheme } from '@inth/nextjs';
 
 // No 'use client': the root layout renders these tokens on the server with
-// ConsentTheme, and the consent wrapper passes the same theme to ConsentRoot
+// ConsentTheme, and the consent wrapper passes the same theme to InthProvider
 // so the action buttons pick up `consentActions`.
 export const northwindTheme = defineTheme({
 	colors: {

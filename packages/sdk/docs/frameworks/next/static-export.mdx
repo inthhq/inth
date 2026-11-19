@@ -42,11 +42,11 @@ Add your `scripts` to the same config, as the
 There is no Inth stylesheet to import. The components render their own rules
 as `<style>` elements, so no stylesheet request holds back the first paint.
 With Tailwind CSS 3, import `@inth/nextjs/styles.css` yourself and set
-`styles: false` in `ConsentRoot`'s `options`, as
+`styles: false` in `InthProvider`'s `options`, as
 [Customize](/docs/frameworks/next/customize#load-the-stylesheet-yourself)
 shows.
 
-In the App Router, render `ConsentRoot` without `state` in the root layout:
+In the App Router, render `InthProvider` without `state` in the root layout:
 
 <include src="../../shared/examples/nextjs/browser-layout.mdx" />
 
@@ -55,7 +55,7 @@ have no `getServerSideProps`, so `pageProps.consent` is undefined:
 
 <include src="../../shared/examples/nextjs-pages-router/pages-app.mdx" />
 
-Without server state, `ConsentRoot` initializes in the browser. Backend
+Without server state, `InthProvider` initializes in the browser. Backend
 `/v1/consent/init` reads the visitor's location from its own request, so location-based
 policies depend on the backend host's geography headers, not on your static
 host.

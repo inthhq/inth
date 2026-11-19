@@ -61,7 +61,7 @@ export interface UseScriptLoaderOptions {
 	onDebug?: (event: ScriptLoaderDebugEvent) => void;
 	/**
 	 * Set `false` to start every `scripts` entry after hydration. By default
-	 * `ConsentRoot` in `@inth/nextjs` and `@inth/tanstack-start` starts the
+	 * `InthProvider` in `@inth/nextjs` and `@inth/tanstack-start` starts the
 	 * entries the visitor's consent already allows from the server HTML,
 	 * before the page hydrates.
 	 *

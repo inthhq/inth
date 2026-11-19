@@ -1,5 +1,5 @@
 <template>
-	<ConsentRoot />
+	<InthProvider />
 	<NuxtPage />
 	<footer>
 		<ConsentDialogLink>Privacy settings</ConsentDialogLink>

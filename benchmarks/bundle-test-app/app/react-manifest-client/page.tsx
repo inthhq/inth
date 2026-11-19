@@ -4,7 +4,7 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDraftProvider,
-	ConsentProvider,
+	InthProvider,
 	ConsentWidget,
 } from '@inth/react';
 import type { Script } from '@inth/sdk/modules/script-loader';
@@ -76,7 +76,7 @@ const ReactManifestClientPage = () => {
 	);
 
 	return (
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: customMode(transport),
 				networkBlocker: {
@@ -119,7 +119,7 @@ const ReactManifestClientPage = () => {
 				<ConsentDialog />
 				<ConsentWidget />
 			</ConsentDraftProvider>
-		</ConsentProvider>
+		</InthProvider>
 	);
 };
 

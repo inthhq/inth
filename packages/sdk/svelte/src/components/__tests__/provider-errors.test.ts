@@ -7,7 +7,7 @@ import { testOffline } from '../../__tests__/test-offline';
 const mockFetch = vi.fn();
 window.fetch = mockFetch;
 
-describe('ConsentProvider Error Handling', () => {
+describe('InthProvider Error Handling', () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 

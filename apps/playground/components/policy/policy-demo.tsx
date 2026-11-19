@@ -3,7 +3,7 @@
 import {
 	ConsentBanner,
 	ConsentDialog,
-	ConsentProvider,
+	InthProvider,
 	hosted,
 	useInit,
 	useSetActiveUI,
@@ -710,7 +710,7 @@ export const PolicyDemo = () => {
 					</div>
 				</header>
 
-				<ConsentProvider
+				<InthProvider
 					key={providerKey}
 					options={
 						demoMode === 'hosted'
@@ -901,7 +901,7 @@ export const PolicyDemo = () => {
 						<IABConsentDialog />
 					</IABProvider>
 					<ConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			</div>
 		</main>
 	);

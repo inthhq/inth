@@ -1,12 +1,12 @@
 ---
 title: Network blocker
-description: Hold fetch and XMLHttpRequest calls in a TanStack Start app until their consent category is allowed, with networkBlocker rules on ConsentRoot.
+description: Hold fetch and XMLHttpRequest calls in a TanStack Start app until their consent category is allowed, with networkBlocker rules on InthProvider.
 group: frameworks
 ---
 
 ## Add rules
 
-Pass `networkBlocker` rules to `ConsentRoot` to stop `fetch` and
+Pass `networkBlocker` rules to `InthProvider` to stop `fetch` and
 `XMLHttpRequest` calls to a domain until its category is allowed. Use it as a
 backstop for beacons an SDK sends itself. Load vendor SDKs through
 [`scripts`](/docs/frameworks/tanstack-start/scripts) first, so they do not run
@@ -31,7 +31,7 @@ const networkBlocker = {
 	],
 };
 
-<ConsentRoot
+<InthProvider
 	state={consent}
 	scripts={scripts}
 	networkBlocker={networkBlocker}

@@ -1,5 +1,5 @@
 /**
- * `ConsentProvider` for client-rendered pages with a mode other than
+ * `InthProvider` for client-rendered pages with a mode other than
  * `hosted()`, as a browser build resolves it: the engine loads with the
  * page, and the stock surfaces under the provider find its kernel. Its own
  * file: the provider loads its engine once per page.
@@ -14,7 +14,7 @@ import { ConsentDialog } from '../../aggregate-components';
 import { ConsentDialogTrigger } from '../../components/panel-trigger';
 import { createConsentProvider } from '../client-provider';
 
-const ConsentProvider = createConsentProvider();
+const InthProvider = createConsentProvider();
 
 const rule = policyRulePresets.europeOptIn();
 
@@ -24,7 +24,7 @@ afterEach(() => {
 
 const renderTrigger = (prefetch?: ReturnType<typeof policyFixture>) =>
 	render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: offlineMode([rule]),
 				prefetch,
@@ -32,7 +32,7 @@ const renderTrigger = (prefetch?: ReturnType<typeof policyFixture>) =>
 		>
 			<ConsentDialogTrigger />
 			<ConsentDialog />
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 test('offline(): the trigger renders under the provider and opens the dialog', async () => {

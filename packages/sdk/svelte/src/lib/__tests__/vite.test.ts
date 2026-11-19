@@ -369,7 +369,7 @@ describe('consentManifest first-load chunk', () => {
 	const groupsOf = (options: unknown): Group[] =>
 		(options as { codeSplitting: { groups: Group[] } }).codeSplitting.groups;
 
-	test("groups the modules ConsentRoot's first load shares with the engine", () => {
+	test("groups the modules InthProvider's first load shares with the engine", () => {
 		const options = plugin().outputOptions.call(ROLLDOWN, {
 			codeSplitting: { groups: [{ name: 'app', test: /x/u }] },
 		});

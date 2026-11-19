@@ -16,8 +16,8 @@ import {
 	useResolvedPresentation,
 	useResolvedTheme,
 } from '../hooks';
-import { ConsentProvider } from '../provider';
-import type { ConsentProviderOptions } from '../provider';
+import { InthProvider } from '../provider';
+import type { InthProviderOptions } from '../provider';
 import { transportMode } from './fixtures/transport-mode';
 
 const resolution = resolvePolicyRules({
@@ -35,7 +35,7 @@ const resolution = resolvePolicyRules({
 	],
 });
 
-const experiment: NonNullable<ConsentProviderOptions['experiment']> = {
+const experiment: NonNullable<InthProviderOptions['experiment']> = {
 	arms: {
 		bar: { prompt: { variant: 'bar' } },
 		floating: { prompt: { variant: 'floating' } },
@@ -85,7 +85,7 @@ const readText = (testId: string) =>
 	document.querySelector(`[data-testid="${testId}"]`)?.textContent;
 
 const mount = function mount(
-	options: Partial<ConsentProviderOptions>,
+	options: Partial<InthProviderOptions>,
 	children: React.ReactNode
 ) {
 	const save = vi.fn().mockResolvedValue({ ok: true });
@@ -93,7 +93,7 @@ const mount = function mount(
 	document.body.append(container);
 	const view = createRoot(container);
 	view.render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				consentCategories: ['marketing', 'measurement'],
 				enabled: true,
@@ -104,7 +104,7 @@ const mount = function mount(
 			}}
 		>
 			{children}
-		</ConsentProvider>
+		</InthProvider>
 	);
 	return {
 		payload: () => save.mock.calls[0]?.[0] as SavePayload | undefined,
@@ -200,7 +200,7 @@ test('a server-resolved experiment in the state runs without a client option', a
 
 test('the server-resolved arm wins over a client built-in split', () => {
 	const html = renderToString(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				enabled: true,
 				experiment,
@@ -216,7 +216,7 @@ test('the server-resolved arm wins over a client built-in split', () => {
 		>
 			<PresentationProbe />
 			<ConsentBanner />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	// Known on the server, so the banner renders the arm straight away.
 	expect(html).toContain('consent-banner-root');
@@ -368,7 +368,7 @@ const mountDraftWithLateArm = function mountDraftWithLateArm() {
 	document.body.append(container);
 	const view = createRoot(container);
 	view.render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				experiment: {
 					arms: {
@@ -380,7 +380,7 @@ const mountDraftWithLateArm = function mountDraftWithLateArm() {
 			runtime={runtime}
 		>
 			<DraftProbe />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	return {
 		assign() {
@@ -433,7 +433,7 @@ test('the experiment is read once: a changed option keeps the mounted arm', asyn
 	const view = createRoot(container);
 	const render = (arms: NonNullable<typeof experiment>['arms']) =>
 		view.render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					enabled: true,
 					experiment: { arm: 'bar', arms, id: 'banner-shape' },
@@ -443,7 +443,7 @@ test('the experiment is read once: a changed option keeps the mounted arm', asyn
 				}}
 			>
 				<PresentationProbe />
-			</ConsentProvider>
+			</InthProvider>
 		);
 	const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 	try {
@@ -465,7 +465,7 @@ test('a provider enabled after mount builds its controller then', async () => {
 	const view = createRoot(container);
 	const render = (enabled: boolean) =>
 		view.render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					enabled,
 					experiment,
@@ -478,7 +478,7 @@ test('a provider enabled after mount builds its controller then', async () => {
 				}}
 			>
 				<Probe />
-			</ConsentProvider>
+			</InthProvider>
 		);
 	try {
 		render(false);
@@ -505,7 +505,7 @@ test('a disabled provider builds no experiment controller', async () => {
 	const view = createRoot(container, { onUncaughtError });
 	try {
 		view.render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					enabled: false,
 					// A disabled provider runs no experiment, whatever its arms.
@@ -522,7 +522,7 @@ test('a disabled provider builds no experiment controller', async () => {
 				}}
 			>
 				<Probe />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		await vi.waitFor(() =>
 			expect(
@@ -559,7 +559,7 @@ test('a server render whose policy rejects the arm does not throw', () => {
 	let html = '';
 	expect(() => {
 		html = renderToString(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					enabled: true,
 					experiment: {
@@ -575,7 +575,7 @@ test('a server render whose policy rejects the arm does not throw', () => {
 				}}
 			>
 				<ConsentBanner />
-			</ConsentProvider>
+			</InthProvider>
 		);
 	}).not.toThrow();
 	expect(html).toContain('consent-banner-root');
@@ -583,7 +583,7 @@ test('a server render whose policy rejects the arm does not throw', () => {
 
 test('built-in assignment keeps the banner out of the server render', () => {
 	const html = renderToString(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				enabled: true,
 				experiment,
@@ -595,7 +595,7 @@ test('built-in assignment keeps the banner out of the server render', () => {
 			}}
 		>
 			<ConsentBanner />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	// The arm is picked in the browser; rendering the base banner here would
 	// show the visitor one banner and then swap it for another.

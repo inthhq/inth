@@ -12,7 +12,7 @@ wording there first, so it changes without a deploy.
 
 Code can override that copy in two places:
 
-- `options.i18n` on `ConsentRoot` changes a message everywhere it appears.
+- `options.i18n` on `InthProvider` changes a message everywhere it appears.
 - Text props on `ConsentBanner` change one banner.
 
 [Copy and translations](/docs/customization/translations) lists the message
@@ -53,12 +53,12 @@ Keep the messages in their own module:
 <include src="../../shared/examples/tanstack-start/i18n.mdx" />
 
 Import it in `src/routes/__root.tsx` and pass it under `options` on
-`ConsentRoot`:
+`InthProvider`:
 
 {/* example: fragment */}
 
 ```tsx title="src/routes/__root.tsx"
-<ConsentRoot
+<InthProvider
   state={consent}
   scripts={scripts}
   options={{ i18n }}
@@ -73,7 +73,7 @@ carry only the consent state.
 
 For the visitor's language, your messages replace the project's copy key by
 key. Keys you leave out keep the project's wording, and messages for other
-languages are not applied. `ConsentRoot` reads `i18n` once, when it mounts. In
+languages are not applied. `InthProvider` reads `i18n` once, when it mounts. In
 development it logs a warning if `i18n` changes later.
 
 `i18n.locale` sets the language of the copy when no backend or server state
@@ -104,7 +104,7 @@ switcher:
 
 Setting the language without calling `init()` changes nothing on screen. Your
 `i18n` messages for the new language apply on top of the copy that arrives.
-Render the switcher anywhere inside `ConsentRoot`.
+Render the switcher anywhere inside `InthProvider`.
 
 If your site changes language through its own i18n library, run the same two
 calls when its locale changes. To make the server HTML match too, pass the

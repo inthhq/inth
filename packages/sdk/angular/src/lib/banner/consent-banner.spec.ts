@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { ConsentRoot } from '../../../consent-root/src/consent-root';
+import { InthProvider } from '../../../provider/src/inth-provider';
 import { testOptions } from '../../__tests__/test-local';
 import { ConsentManager } from '../core/consent-manager';
 import { provideInth } from '../core/provide-inth';
@@ -63,9 +63,9 @@ class CustomBannerHost {}
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [ConsentRoot],
+	imports: [InthProvider],
 	selector: 'test-root-host',
-	template: '<inth-consent-root [hideBranding]="true" />',
+	template: '<inth-provider [hideBranding]="true" />',
 })
 class RootHost {}
 
@@ -135,7 +135,7 @@ describe('<inth-consent-banner> templates', () => {
 	});
 });
 
-describe('<inth-consent-root>', () => {
+describe('<inth-provider>', () => {
 	test('renders the banner and opens the dialog from Customize', async () => {
 		const { byTestId, fixture } = await boot(RootHost);
 		expect(byTestId('consent-banner-root')).not.toBeNull();

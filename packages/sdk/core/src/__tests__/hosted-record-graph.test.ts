@@ -1,7 +1,7 @@
 /// <reference types="node" />
 /**
  * The record transport ships to every Next.js page that renders
- * `ConsentRoot`, because saves go through it. Init never runs on those pages
+ * `InthProvider`, because saves go through it. Init never runs on those pages
  * when the server resolved the visitor's state, so a static import of the
  * init path would put its bytes back into every first load.
  */

@@ -1,5 +1,5 @@
 /**
- * When `ConsentRoot` makes the provider download the runtime's update
+ * When `InthProvider` makes the provider download the runtime's update
  * module. The root renders again whenever its parent does; with the same
  * props, that rerender should load nothing. Its own file, because a module
  * loads once per test file.
@@ -7,7 +7,7 @@
 import { expect, test } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ConsentRoot } from '../root';
+import { InthProvider } from '../root';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
@@ -25,13 +25,13 @@ test('a rerender with the same props loads no update module', async () => {
 	performance.clearResourceTimings();
 	const state = policyFixture({});
 	const root = () => (
-		<ConsentRoot
+		<InthProvider
 			config={OFFLINE_CONFIG}
 			persistence={false}
 			state={state}
 		>
 			<div>root rendered</div>
-		</ConsentRoot>
+		</InthProvider>
 	);
 	const screen = await render(root());
 	await screen.rerender(root());

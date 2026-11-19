@@ -1,6 +1,6 @@
 /**
- * Tests for ConsentRoot, the client component that creates a kernel
- * from loader-produced state and wraps children in ConsentProvider.
+ * Tests for InthProvider, the client component that creates a kernel
+ * from loader-produced state and wraps children in InthProvider.
  *
  * Invariants verified:
  * - State is respected (initial consents, initial overrides).
@@ -24,11 +24,11 @@ import { render } from 'vitest-browser-react';
 // while the file loads.
 import '@inth/sdk/modules/clear-on-revocation';
 
-import { ConsentRoot } from '../root';
+import { InthProvider } from '../root';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
-describe('ConsentRoot: state is honored', () => {
+describe('InthProvider: state is honored', () => {
 	test('initial consents from state reach useConsent', async () => {
 		const MarketingStatus = () => {
 			const allowed = useConsent('marketing');
@@ -36,14 +36,14 @@ describe('ConsentRoot: state is honored', () => {
 		};
 
 		const { getByTestId } = await render(
-			<ConsentRoot
+			<InthProvider
 				state={{
 					...policyFixture({ marketing: true, measurement: true }),
 				}}
 				persistence={false}
 			>
 				<MarketingStatus />
-			</ConsentRoot>
+			</InthProvider>
 		);
 
 		await expect.element(getByTestId('status')).toHaveTextContent('true');
@@ -60,7 +60,7 @@ describe('ConsentRoot: state is honored', () => {
 		};
 
 		const { getByTestId } = await render(
-			<ConsentRoot
+			<InthProvider
 				state={{
 					initialOverrides: { country: 'DE', language: 'de' },
 					mode: testing(),
@@ -68,14 +68,14 @@ describe('ConsentRoot: state is honored', () => {
 				persistence={false}
 			>
 				<CountryLabel />
-			</ConsentRoot>
+			</InthProvider>
 		);
 
 		await expect.element(getByTestId('country')).toHaveTextContent('DE/de');
 	});
 });
 
-describe('ConsentRoot: kernel is per-mount', () => {
+describe('InthProvider: kernel is per-mount', () => {
 	test('two roots do not share consent state', async () => {
 		const Status = ({ id }: { id: string }) => {
 			const allowed = useConsent('marketing');
@@ -84,22 +84,22 @@ describe('ConsentRoot: kernel is per-mount', () => {
 
 		const { getByTestId } = await render(
 			<>
-				<ConsentRoot
+				<InthProvider
 					state={{
 						...policyFixture({ marketing: true }),
 					}}
 					persistence={false}
 				>
 					<Status id="first" />
-				</ConsentRoot>
-				<ConsentRoot
+				</InthProvider>
+				<InthProvider
 					state={{
 						...policyFixture({ marketing: false }),
 					}}
 					persistence={false}
 				>
 					<Status id="second" />
-				</ConsentRoot>
+				</InthProvider>
 			</>
 		);
 
@@ -108,7 +108,7 @@ describe('ConsentRoot: kernel is per-mount', () => {
 	});
 });
 
-describe('ConsentRoot: transport selection', () => {
+describe('InthProvider: transport selection', () => {
 	const initResponse = () =>
 		Response.json({
 			branding: 'inth',
@@ -123,12 +123,12 @@ describe('ConsentRoot: transport selection', () => {
 
 		try {
 			await render(
-				<ConsentRoot
+				<InthProvider
 					state={{ projectUrl: 'https://consent.example.com' }}
 					persistence={false}
 				>
 					<span>ready</span>
-				</ConsentRoot>
+				</InthProvider>
 			);
 
 			await vi.waitFor(() => {
@@ -150,7 +150,7 @@ describe('ConsentRoot: transport selection', () => {
 
 		try {
 			await render(
-				<ConsentRoot
+				<InthProvider
 					state={{
 						mode: { type: 'manifest' },
 						projectUrl: 'https://consent.example.com',
@@ -159,7 +159,7 @@ describe('ConsentRoot: transport selection', () => {
 					persistence={false}
 				>
 					<span>ready</span>
-				</ConsentRoot>
+				</InthProvider>
 			);
 
 			await vi.waitFor(() => {
@@ -184,12 +184,12 @@ describe('ConsentRoot: transport selection', () => {
 
 		try {
 			await render(
-				<ConsentRoot
+				<InthProvider
 					state={{ projectUrl: '/api/inth' }}
 					persistence={false}
 				>
 					<span>ready</span>
-				</ConsentRoot>
+				</InthProvider>
 			);
 
 			await vi.waitFor(() => {
@@ -208,7 +208,7 @@ describe('ConsentRoot: transport selection', () => {
 test('forwards clearOnRevocation and removes denied category storage', async () => {
 	localStorage.setItem('analytics:visitor', 'visitor');
 	const screen = await render(
-		<ConsentRoot
+		<InthProvider
 			state={policyFixture({ measurement: false })}
 			persistence={false}
 			clearOnRevocation={{
@@ -216,7 +216,7 @@ test('forwards clearOnRevocation and removes denied category storage', async () 
 			}}
 		>
 			<div>cleanup configured</div>
-		</ConsentRoot>
+		</InthProvider>
 	);
 	await vi.waitFor(() =>
 		expect(localStorage.getItem('analytics:visitor')).toBeNull()
@@ -235,7 +235,7 @@ test('forwards vendors so the preference center lists them and gates their scrip
 		);
 	};
 	const { getByTestId } = await render(
-		<ConsentRoot
+		<InthProvider
 			state={policyFixture({ marketing: true })}
 			persistence={false}
 			vendors={[
@@ -248,14 +248,14 @@ test('forwards vendors so the preference center lists them and gates their scrip
 			]}
 		>
 			<Probe />
-		</ConsentRoot>
+		</InthProvider>
 	);
 	await expect
 		.element(getByTestId('probe'))
 		.toHaveTextContent('{"allowed":true,"ids":["meta-pixel"]}');
 });
 
-test('ConsentGPP mounts __gpp inside ConsentRoot, and unmount removes it', async () => {
+test('ConsentGPP mounts __gpp inside InthProvider, and unmount removes it', async () => {
 	type GPPPing = (
 		command: 'ping',
 		callback: (data: { cmpStatus: string }) => void
@@ -268,13 +268,13 @@ test('ConsentGPP mounts __gpp inside ConsentRoot, and unmount removes it', async
 		return status;
 	};
 	const screen = await render(
-		<ConsentRoot
+		<InthProvider
 			state={policyFixture()}
 			persistence={false}
 		>
 			<ConsentGPP />
 			<div>gpp configured</div>
-		</ConsentRoot>
+		</InthProvider>
 	);
 	await vi.waitFor(() => expect(cmpStatus()).toBe('loaded'), {
 		timeout: 5000,

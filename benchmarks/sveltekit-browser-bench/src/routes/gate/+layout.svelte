@@ -1,7 +1,7 @@
 <script lang="ts">
 	/**
 	 * Consent gate page, after CookieBench's SvelteKit fixture
-	 * (`with-inth-sveltekit/src/routes/+layout.svelte`): `ConsentRoot` with
+	 * (`with-inth-sveltekit/src/routes/+layout.svelte`): `InthProvider` with
 	 * the server-resolved state, the stock banner and dialog, and the gated
 	 * scripts passed as `scripts`.
 	 */
@@ -14,8 +14,8 @@
 		ConsentBanner,
 		ConsentDialog,
 		ConsentDialogLink,
-		ConsentRoot,
 	} from '@inth/svelte';
+	import { InthProvider } from '@inth/svelte/kit';
 
 	import GateBridge from './gate-bridge.svelte';
 
@@ -27,7 +27,7 @@
 	<title>Field notes</title>
 	{@html `<style>${gatePageCSS}</style>`}
 </svelte:head>
-<ConsentRoot
+<InthProvider
 	state={data.consent}
 	consentCategories={[...gateConsentCategories]}
 	{scripts}
@@ -38,4 +38,4 @@
 	<ConsentDialog />
 	<!-- The gate reopens the choice here to replay a change of mind. -->
 	<ConsentDialogLink>Privacy settings</ConsentDialogLink>
-</ConsentRoot>
+</InthProvider>

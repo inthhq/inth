@@ -18,7 +18,7 @@ These docs describe Inth v3. Find your app's row in Choose your setup, then foll
 - [How consent works](./docs/concepts/how-consent-works.md): What Inth decides on each page load, the difference between a permission and a recorded choice, and what happens when a visitor saves.
 - [Customize the interface](./docs/customization/overview.md): Change Inth's consent banner and dialog one step at a time, from a prop to your own markup, and find where each step lives in your framework.
 - [Verify consent](./docs/guides/verify-consent.md): Check in a production build that vendor requests wait for consent, rejection survives a reload, preferences reopen and privacy signals apply.
-- [Upgrade a Next.js app from v2](./docs/frameworks/next/upgrade-v3.md): Upgrade a Next.js app from c15t v2 (@c15t/nextjs) to Inth v3 (@inth/nextjs). Covers packages, ConsentRoot or ConsentProvider, the useConsentManager codemod, callbacks, policies, styles, IAB and stored consent.
+- [Upgrade a Next.js app from v2](./docs/frameworks/next/upgrade-v3.md): Upgrade a Next.js app from c15t v2 (@c15t/nextjs) to Inth v3 (@inth/nextjs). Covers packages, InthProvider, the useConsentManager codemod, callbacks, policies, styles, IAB and stored consent.
 
 ## More documentation
 
@@ -31,34 +31,34 @@ These docs describe Inth v3. Find your app's row in Choose your setup, then foll
 - [Clear on revocation](./docs/frameworks/next/clear-on-revocation.md): Delete the first-party cookies and Web Storage keys a consent category owns in a Next.js app when that category is denied, with clearOnRevocation in inth.config.ts.
 - [Client-side initialization](./docs/frameworks/next/client-side.md): Initialize Inth in the browser in a Next.js app with hosted() mode, without server prefetch, a consent route or API handlers.
 - [Components](./docs/frameworks/next/components.md): Every Inth component a Next.js app imports from @inth/nextjs, what each renders, which ones are Client Components, and where to start.
-- [ConsentBanner](./docs/frameworks/next/components/consent-banner.md): Render the pre-built ConsentBanner inside a Next.js ConsentRoot and configure its variants, per-policy buttons and compound parts.
-- [ConsentDialog](./docs/frameworks/next/components/consent-dialog.md): Mount ConsentDialog as a Client Component inside a Next.js ConsentRoot to open the preference center from the banner, links and triggers.
-- [ConsentDialogLink](./docs/frameworks/next/components/consent-dialog-link.md): Open the preference center from a Next.js footer with ConsentDialogLink, a Client Component that renders an unstyled button inside ConsentRoot.
-- [ConsentDialogTrigger](./docs/frameworks/next/components/consent-dialog-trigger.md): Add the floating ConsentDialogTrigger button or toolbar to a Next.js ConsentRoot so visitors can reopen the preference center.
-- [ConsentGate](./docs/frameworks/next/components/consent-gate.md): Consent-gate an iframe in Next.js with ConsentGate inside ConsentRoot; with server prefetch the server HTML carries the placeholder for a denied category, and a granted embed mounts after hydration.
-- [ConsentRoot](./docs/frameworks/next/components/consent-root.md): Render the Next.js ConsentRoot once from a Server Component layout, pass it the server-resolved state, and see how it reads inth.config.ts and picks the consent mode.
-- [ConsentWidget](./docs/frameworks/next/components/consent-widget.md): Render ConsentWidget on a Next.js privacy page inside ConsentRoot as an inline preference center, server-rendered when the route resolves consent.
-- [DevTools](./docs/frameworks/next/components/dev-tools.md): Load the Inth DevTools panel only in Next.js development builds to inspect consent state, scripts, policy and events inside ConsentRoot.
-- [Compose your own banner](./docs/frameworks/next/compose.md): Build a Next.js consent banner as a Client Component from the ConsentBanner parts in @inth/nextjs, with your own markup and buttons, rendered inside ConsentRoot.
-- [Content Security Policy](./docs/frameworks/next/content-security-policy.md): Pass a per-request CSP nonce to ConsentRoot in Next.js and allow the consent backend in connect-src.
-- [Customize](./docs/frameworks/next/customize.md): Load the Inth stylesheet yourself in Next.js when you need to, and change colors, radius, button roles, component parts, dark mode and banner shape with ConsentTheme and ConsentRoot options.
+- [ConsentBanner](./docs/frameworks/next/components/consent-banner.md): Render the pre-built ConsentBanner inside a Next.js InthProvider and configure its variants, per-policy buttons and compound parts.
+- [ConsentDialog](./docs/frameworks/next/components/consent-dialog.md): Mount ConsentDialog as a Client Component inside a Next.js InthProvider to open the preference center from the banner, links and triggers.
+- [ConsentDialogLink](./docs/frameworks/next/components/consent-dialog-link.md): Open the preference center from a Next.js footer with ConsentDialogLink, a Client Component that renders an unstyled button inside InthProvider.
+- [ConsentDialogTrigger](./docs/frameworks/next/components/consent-dialog-trigger.md): Add the floating ConsentDialogTrigger button or toolbar to a Next.js InthProvider so visitors can reopen the preference center.
+- [ConsentGate](./docs/frameworks/next/components/consent-gate.md): Consent-gate an iframe in Next.js with ConsentGate inside InthProvider; with server prefetch the server HTML carries the placeholder for a denied category, and a granted embed mounts after hydration.
+- [ConsentWidget](./docs/frameworks/next/components/consent-widget.md): Render ConsentWidget on a Next.js privacy page inside InthProvider as an inline preference center, server-rendered when the route resolves consent.
+- [DevTools](./docs/frameworks/next/components/dev-tools.md): Load the Inth DevTools panel only in Next.js development builds to inspect consent state, scripts, policy and events inside InthProvider.
+- [InthProvider](./docs/frameworks/next/components/inth-provider.md): Render the Next.js InthProvider once from a Server Component layout, pass it the server-resolved state, and see how it reads inth.config.ts and picks the consent mode.
+- [Compose your own banner](./docs/frameworks/next/compose.md): Build a Next.js consent banner as a Client Component from the ConsentBanner parts in @inth/nextjs, with your own markup and buttons, rendered inside InthProvider.
+- [Content Security Policy](./docs/frameworks/next/content-security-policy.md): Pass a per-request CSP nonce to InthProvider in Next.js and allow the consent backend in connect-src.
+- [Customize](./docs/frameworks/next/customize.md): Load the Inth stylesheet yourself in Next.js when you need to, and change colors, radius, button roles, component parts, dark mode and banner shape with ConsentTheme and InthProvider options.
 - [Data fetching reference](./docs/frameworks/next/data-fetching-reference.md): Reference for the Next.js inth.config.ts options, modes, resolveConsent, withConsentProps, the consent route, manifest resolution, request geography and local configuration.
-- [Embeds](./docs/frameworks/next/embeds.md): Keep YouTube videos, maps and other iframes out of a Next.js page until their consent category is allowed, with ConsentGate or the iframe blocker in ConsentRoot.
+- [Embeds](./docs/frameworks/next/embeds.md): Keep YouTube videos, maps and other iframes out of a Next.js page until their consent category is allowed, with ConsentGate or the iframe blocker in InthProvider.
 - [Geography headers](./docs/frameworks/next/geography-headers.md): Use inthProxy in Next.js proxy.ts or middleware.ts so Server Components and Route Handlers receive the visitor's country and region.
 - [IAB GPP](./docs/frameworks/next/gpp.md): Add the IAB Global Privacy Platform API (__gpp) to a Next.js app with ConsentGPP from @inth/react/gpp, so ad tech can read US state opt-outs and the TCF EU consent string.
-- [Headless](./docs/frameworks/next/headless.md): Build a custom consent banner or embed gate in Next.js with the @inth/nextjs/headless hooks inside your existing ConsentRoot.
+- [Headless](./docs/frameworks/next/headless.md): Build a custom consent banner or embed gate in Next.js with the @inth/nextjs/headless hooks inside your existing InthProvider.
 - [Hooks](./docs/frameworks/next/hooks.md): Gate features and save consent choices in Next.js Client Components with the focused hooks exported from @inth/nextjs.
-- [IAB TCF](./docs/frameworks/next/iab.md): Mount the IAB TCF banner and dialog inside a Next.js ConsentRoot and configure the CMP ID, policy and vendor data.
+- [IAB TCF](./docs/frameworks/next/iab.md): Mount the IAB TCF banner and dialog inside a Next.js InthProvider and configure the CMP ID, policy and vendor data.
 - [Network blocker](./docs/frameworks/next/network-blocker.md): Hold fetch and XMLHttpRequest calls in a Next.js app until their consent category is allowed, with networkBlocker rules in inth.config.ts.
 - [Performance](./docs/frameworks/next/optimization.md): Bundle policy at build time to avoid manifest fetch latency, use runtime caching when policies must refresh without a rebuild, and optionally keep browser consent requests on your origin.
 - [Pages Router](./docs/frameworks/next/pages-router.md): Set up Inth in the Next.js Pages Router with Inth, a build-time policy manifest, getServerSideProps and consent-gated scripts.
 - [Quickstart](./docs/frameworks/next/quickstart.md): Add Inth consent management to a Next.js App Router app with Inth, a build-time policy manifest and consent-gated scripts, then check it works. Links to the Pages Router and static export guides.
 - [Rendering and deployment](./docs/frameworks/next/rendering.md): Choose how Next.js resolves consent for your router, rendering mode and hosting, from streamed App Router layouts to static export, ISR, Cache Components and ensureStatic.
-- [Scripts](./docs/frameworks/next/scripts.md): Register vendor scripts in a Next.js ConsentRoot, check how each vendor loads, let visitors turn off one vendor, clear stored data after revocation and replace @next/third-parties.
+- [Scripts](./docs/frameworks/next/scripts.md): Register vendor scripts in a Next.js InthProvider, check how each vendor loads, let visitors turn off one vendor, clear stored data after revocation and replace @next/third-parties.
 - [Static export](./docs/frameworks/next/static-export.md): Add Inth to a Next.js site built with output export, where the browser resolves consent through Inth without request helpers or API routes.
 - [Translations](./docs/frameworks/next/translations.md): Where Inth banner and dialog copy comes from in Next.js, how the server and browser pick the visitor's language, and how to override copy and switch languages from a Client Component.
 - [Troubleshooting](./docs/frameworks/next/troubleshooting.md): Diagnose failed Inth consent prefetch and build-time manifest downloads in Next.js, verify manifest requests, and fix a missing inth.config.ts, config errors, unknown server location and prerendering errors.
-- [Upgrade from v2](./docs/frameworks/next/upgrade-v3.md): Upgrade a Next.js app from c15t v2 (@c15t/nextjs) to Inth v3 (@inth/nextjs). Covers packages, ConsentRoot or ConsentProvider, the useConsentManager codemod, callbacks, policies, styles, IAB and stored consent.
+- [Upgrade from v2](./docs/frameworks/next/upgrade-v3.md): Upgrade a Next.js app from c15t v2 (@c15t/nextjs) to Inth v3 (@inth/nextjs). Covers packages, InthProvider, the useConsentManager codemod, callbacks, policies, styles, IAB and stored consent.
 - [Vendor consent](./docs/frameworks/next/vendor-consent.md): Let visitors allow a category such as marketing in a Next.js app and still turn off one vendor in it, with vendors in inth.config.ts and useVendorAllowed.
 
 ## Concepts

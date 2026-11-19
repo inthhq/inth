@@ -7,7 +7,7 @@ import { render } from 'vitest-browser-react';
 
 import { ConsentBanner } from '../components/prompt';
 import { KernelContext } from '../context';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { testing } from '../testing';
 import { useUIConfig } from '../ui-config-context';
 import { offlineMode, transportMode } from './fixtures/transport-mode';
@@ -27,7 +27,7 @@ afterEach(() => vi.restoreAllMocks());
 
 test('offline rules resolve after mount and expose canonical state', async () => {
 	const screen = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: offlineMode([
 					{
@@ -42,7 +42,7 @@ test('offline rules resolve after mount and expose canonical state', async () =>
 		>
 			<Capture />
 			<ConsentBanner />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await expect
 		.element(screen.getByTestId('consent-banner-accept-button'))
@@ -55,7 +55,7 @@ test('offline rules resolve after mount and expose canonical state', async () =>
 
 test('offline mode without rules resolves the recommended pack: strict opt-in for an unknown location', async () => {
 	await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: testing(),
 				persistence: false,
@@ -63,7 +63,7 @@ test('offline mode without rules resolves the recommended pack: strict opt-in fo
 		>
 			<Capture />
 			<ConsentBanner />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	expect(kernel.getSnapshot().resolution.status).toBe('matched');
 	expect(kernel.getSnapshot().policyRule.id).toBe('europe_opt_in');
@@ -73,14 +73,14 @@ test('offline mode without rules resolves the recommended pack: strict opt-in fo
 
 test('exposes only the window.__inthDebug debug object, not the kernel', async () => {
 	const screen = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: testing(),
 				persistence: false,
 			}}
 		>
 			<ConsentBanner />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await expect
 		.element(screen.getByTestId('consent-banner-accept-button'))
@@ -97,7 +97,7 @@ test('exposes only the window.__inthDebug debug object, not the kernel', async (
 test('failed initialization keeps the first layer hidden and reports the error', async () => {
 	const onError = vi.fn();
 	await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				callbacks: { onError },
 				mode: transportMode({
@@ -108,7 +108,7 @@ test('failed initialization keeps the first layer hidden and reports the error',
 		>
 			<Capture />
 			<ConsentBanner />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await vi.waitFor(() => expect(onError).toHaveBeenCalled());
 	expect(
@@ -131,7 +131,7 @@ test('keeps the kernel across rerenders and synchronizes identity and geographic
 	);
 	const mode = transportMode({ init });
 	const screen = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode,
 				overrides: { country: 'DE' },
@@ -141,11 +141,11 @@ test('keeps the kernel across rerenders and synchronizes identity and geographic
 			}}
 		>
 			<Capture />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	const first = kernel;
 	await screen.rerender(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode,
 				overrides: { country: 'FR' },
@@ -155,7 +155,7 @@ test('keeps the kernel across rerenders and synchronizes identity and geographic
 			}}
 		>
 			<Capture />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	expect(kernel).toBe(first);
 	expect(kernel.getSnapshot().overrides.country).toBe('FR');
@@ -175,7 +175,7 @@ test('a prefetch still marked pending is not adopted: the provider asks /v1/cons
 		})
 	);
 	await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: transportMode({ init }),
 				persistence: false,
@@ -183,7 +183,7 @@ test('a prefetch still marked pending is not adopted: the provider asks /v1/cons
 			}}
 		>
 			<Capture />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await vi.waitFor(() => expect(init).toHaveBeenCalledTimes(1));
 	await vi.waitFor(() =>
@@ -193,7 +193,7 @@ test('a prefetch still marked pending is not adopted: the provider asks /v1/cons
 
 test('an offline IAB policy resolves: IAB renders in the tree, so the transport does not reject it', async () => {
 	await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: testing({ iab: true }),
 				overrides: { country: 'DE' },
@@ -201,7 +201,7 @@ test('an offline IAB policy resolves: IAB renders in the tree, so the transport 
 			}}
 		>
 			<Capture />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await vi.waitFor(() =>
 		expect(kernel.getSnapshot().policyPending).toBe(false)
@@ -211,7 +211,7 @@ test('an offline IAB policy resolves: IAB renders in the tree, so the transport 
 
 test('disposes the kernel on unmount', async () => {
 	const screen = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: testing(),
 				persistence: false,
@@ -219,7 +219,7 @@ test('disposes the kernel on unmount', async () => {
 			}}
 		>
 			<Capture />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	const dispose = vi.spyOn(kernel, 'dispose');
 	await screen.unmount();
@@ -230,7 +230,7 @@ test('disabled mode loads scripts without initializing or recording choice', asy
 	const init = vi.fn();
 	const onBeforeLoad = vi.fn();
 	await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				enabled: false,
 				mode: transportMode({ init }),
@@ -247,7 +247,7 @@ test('disabled mode loads scripts without initializing or recording choice', asy
 		>
 			<Capture />
 			<ConsentBanner />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await vi.waitFor(() => expect(onBeforeLoad).toHaveBeenCalledOnce());
 	expect(init).not.toHaveBeenCalled();
@@ -268,7 +268,7 @@ test.each([false, true])(
 		const mode = transportMode({ init: vi.fn() });
 		const prefetch = policyFixture({ marketing: true });
 		const provider = () => (
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode,
 					persistence: false,
@@ -289,7 +289,7 @@ test.each([false, true])(
 				}}
 			>
 				<Capture />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		try {
 			const screen = await render(provider());
@@ -323,10 +323,10 @@ test('toggling disabled mode grants scripts and restores the existing choice', a
 		],
 	};
 	const provider = (enabled: boolean) => (
-		<ConsentProvider options={{ ...options, enabled }}>
+		<InthProvider options={{ ...options, enabled }}>
 			<Capture />
 			<ConsentBanner />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	const screen = await render(provider(true));
 	const choice = kernel.getSnapshot().explicitChoice;
@@ -358,9 +358,9 @@ test('late initialization cannot revoke disabled permissions', async () => {
 	);
 	const mode = transportMode({ init });
 	const provider = (enabled: boolean) => (
-		<ConsentProvider options={{ enabled, mode, persistence: false }}>
+		<InthProvider options={{ enabled, mode, persistence: false }}>
 			<Capture />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	const screen = await render(provider(true));
 	await vi.waitFor(() => expect(init).toHaveBeenCalledOnce());
@@ -377,7 +377,7 @@ test('late initialization cannot revoke disabled permissions', async () => {
 
 test('prepared receipts remain authoritative when persistence is disabled', async () => {
 	await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: testing(),
 				persistence: false,
@@ -385,7 +385,7 @@ test('prepared receipts remain authoritative when persistence is disabled', asyn
 			}}
 		>
 			<Capture />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	expect(kernel.getSnapshot().explicitChoice?.categories.marketing?.value).toBe(
 		true
@@ -398,7 +398,7 @@ test('separates explicit actions from effective permission changes', async () =>
 	const onPermissionsChanged = vi.fn();
 	const save = vi.fn(() => Promise.resolve({ ok: true }));
 	await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				callbacks: { onChoiceRecorded, onPermissionsChanged },
 				mode: transportMode({ save }),
@@ -407,7 +407,7 @@ test('separates explicit actions from effective permission changes', async () =>
 			}}
 		>
 			<Capture />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	expect(onChoiceRecorded).not.toHaveBeenCalled();
 	await kernel.commands.save({ marketing: true });
@@ -423,7 +423,7 @@ test('onSurfaceShown fires for a prefetched banner without init and for an opene
 	const onSurfaceShown = vi.fn();
 	const init = vi.fn(() => Promise.resolve({}));
 	await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				callbacks: { onSurfaceShown },
 				mode: transportMode({ init }),
@@ -433,7 +433,7 @@ test('onSurfaceShown fires for a prefetched banner without init and for an opene
 		>
 			<Capture />
 			<ConsentBanner />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	// The prepared branch hydrates and marks the kernel live; no init runs.
 	await vi.waitFor(() => expect(onSurfaceShown).toHaveBeenCalledTimes(1));
@@ -462,7 +462,7 @@ test('onSurfaceShown fires once init resolves the policy', async () => {
 		})
 	);
 	await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				callbacks: { onSurfaceShown },
 				mode: transportMode({ init }),
@@ -471,7 +471,7 @@ test('onSurfaceShown fires once init resolves the policy', async () => {
 		>
 			<Capture />
 			<ConsentBanner />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await vi.waitFor(() => expect(onSurfaceShown).toHaveBeenCalledTimes(1));
 	expect(init).toHaveBeenCalledTimes(1);
@@ -486,7 +486,7 @@ test('uses current callback props without replacing the kernel', async () => {
 	const testingMode = testing();
 	const prefetch = policyFixture();
 	const screen = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				callbacks: { onChoiceRecorded: first },
 				consentCategories: ['marketing'],
@@ -496,10 +496,10 @@ test('uses current callback props without replacing the kernel', async () => {
 			}}
 		>
 			<Capture />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await screen.rerender(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				callbacks: { onChoiceRecorded: second },
 				consentCategories: ['marketing'],
@@ -509,7 +509,7 @@ test('uses current callback props without replacing the kernel', async () => {
 			}}
 		>
 			<Capture />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await kernel.commands.save('none');
 	expect(first).not.toHaveBeenCalled();
@@ -523,7 +523,7 @@ test('passes host presentation through UI context', async () => {
 		</output>
 	);
 	const screen = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: testing(),
 				persistence: false,
@@ -532,7 +532,7 @@ test('passes host presentation through UI context', async () => {
 			}}
 		>
 			<Probe />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await expect
 		.element(screen.getByTestId('presentation'))
@@ -541,7 +541,7 @@ test('passes host presentation through UI context', async () => {
 
 test('merges selected i18n messages with English defaults', async () => {
 	await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				i18n: {
 					locale: 'en',
@@ -553,7 +553,7 @@ test('merges selected i18n messages with English defaults', async () => {
 			}}
 		>
 			<Capture />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	expect(
 		kernel.getSnapshot().translations?.translations.cookieBanner.title
@@ -579,7 +579,7 @@ test('an app i18n override survives hosted init translations for the same langua
 		})
 	);
 	await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				i18n: { messages: { en: { cookieBanner: { title: 'App title' } } } },
 				mode: transportMode({ init }),
@@ -587,7 +587,7 @@ test('an app i18n override survives hosted init translations for the same langua
 			}}
 		>
 			<Capture />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await vi.waitFor(() => expect(init).toHaveBeenCalled());
 	await vi.waitFor(() =>
@@ -604,7 +604,7 @@ test('StrictMode remount keeps persistence subscriptions active', async () => {
 	const key = 'react-strict-persistence';
 	const screen = await render(
 		<StrictMode>
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: testing(),
 					prefetch: policyFixture(),
@@ -612,7 +612,7 @@ test('StrictMode remount keeps persistence subscriptions active', async () => {
 				}}
 			>
 				<Capture />
-			</ConsentProvider>
+			</InthProvider>
 		</StrictMode>
 	);
 	await kernel.commands.save({ marketing: true });
@@ -652,7 +652,7 @@ test.each(['header', 'browser'] as const)(
 		try {
 			const screen = await render(
 				<StrictMode>
-					<ConsentProvider
+					<InthProvider
 						options={{
 							callbacks: { onChoiceRecorded },
 							mode: transportMode({ init, save }),
@@ -661,7 +661,7 @@ test.each(['header', 'browser'] as const)(
 						}}
 					>
 						<Capture />
-					</ConsentProvider>
+					</InthProvider>
 				</StrictMode>
 			);
 			await vi.waitFor(() =>
@@ -697,12 +697,10 @@ test('an empty provider can prerender without reading the clock', async () => {
 	try {
 		expect(
 			renderToString(
-				<ConsentProvider
-					options={{ mode: transportMode({}), persistence: false }}
-				>
+				<InthProvider options={{ mode: transportMode({}), persistence: false }}>
 					<span>Static shell</span>
 					<ConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			)
 		).toContain('Static shell');
 	} finally {
@@ -719,7 +717,7 @@ test('clears configured storage on revocation after stopping scripts', async () 
 		}
 	});
 	const screen = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				clearOnRevocation: {
 					marketing: { localStorage: ['cleanup:ready'] },
@@ -740,7 +738,7 @@ test('clears configured storage on revocation after stopping scripts', async () 
 			}}
 		>
 			<Capture />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await vi.waitFor(() => expect(onBeforeLoad).toHaveBeenCalled());
 	await vi.waitFor(() =>
@@ -761,7 +759,7 @@ test('clears configured storage on revocation after stopping scripts', async () 
 test('disabled providers leave configured browser data alone', async () => {
 	localStorage.setItem('analytics:visitor', 'keep');
 	const screen = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				clearOnRevocation: {
 					measurement: { localStorage: ['analytics:visitor'] },
@@ -772,7 +770,7 @@ test('disabled providers leave configured browser data alone', async () => {
 			}}
 		>
 			<Capture />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	expect(localStorage.getItem('analytics:visitor')).toBe('keep');
 	screen.unmount();
@@ -789,7 +787,7 @@ test('storage is read once: a new storage key warns and records stay where they 
 	};
 	const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 	const provider = (storageKey: string) => (
-		<ConsentProvider
+		<InthProvider
 			options={{
 				clearOnRevocation,
 				consentCategories: ['measurement'],
@@ -799,7 +797,7 @@ test('storage is read once: a new storage key warns and records stay where they 
 			}}
 		>
 			<Capture />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	const screen = await render(provider(firstKey));
 	// A new options object with the same storage is not a change.
@@ -852,9 +850,9 @@ test('starts cleanup when an initially disabled provider with scripts is enabled
 		],
 	};
 	const provider = (enabled: boolean) => (
-		<ConsentProvider options={{ ...options, enabled }}>
+		<InthProvider options={{ ...options, enabled }}>
 			<Capture />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	localStorage.setItem('cleanup:ready', 'pending');
 	localStorage.setItem('analytics:visitor', 'visitor');

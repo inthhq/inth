@@ -38,10 +38,10 @@ test('the split dialog and widget entries load nothing until they are needed', a
 		const { ConsentDialog } = await import('../panel');
 		await import('../preferences');
 		const { ConsentBanner } = await import('../prompt');
-		const { ConsentProvider } = await import('../provider');
+		const { InthProvider } = await import('../provider');
 
 		root.render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: testing(),
 					persistence: false,
@@ -50,7 +50,7 @@ test('the split dialog and widget entries load nothing until they are needed', a
 			>
 				<ConsentBanner disableAnimation />
 				<ConsentDialog disableAnimation />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		const customize = await vi.waitFor(() => {
 			const button = document.querySelector<HTMLButtonElement>(

@@ -1,4 +1,4 @@
-import { ConsentRoot as NextConsentRoot } from '@inth/nextjs';
+import { InthProvider as NextInthProvider } from '@inth/nextjs';
 import type { ConsentState as NextConsentState } from '@inth/nextjs';
 import { resolveConsent as resolveNextConsent } from '@inth/nextjs/server';
 import type { ConsentSnapshot } from '@inth/sdk/engine';
@@ -14,7 +14,7 @@ import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
 import type { ConsentManifest } from '@inth/sdk/schema/types';
 import { clearManifestCache } from '@inth/sdk/server';
 import { createOfflineTransport } from '@inth/sdk/transports';
-import { ConsentRoot as TanStackConsentRoot } from '@inth/tanstack-start';
+import { InthProvider as TanStackInthProvider } from '@inth/tanstack-start';
 import { resolveConsent as resolveTanStackConsent } from '@inth/tanstack-start/server';
 import type { ConsentState as TanStackConsentState } from '@inth/tanstack-start/server';
 import { act } from 'react';
@@ -178,20 +178,20 @@ const VisitorRoot = ({
 	children: ReactNode;
 }) =>
 	visitor.adapter === 'next' ? (
-		<NextConsentRoot
+		<NextInthProvider
 			config={{ projectUrl: BACKEND_URL }}
 			persistence={false}
 			state={visitor.state}
 		>
 			{children}
-		</NextConsentRoot>
+		</NextInthProvider>
 	) : (
-		<TanStackConsentRoot
+		<TanStackInthProvider
 			persistence={false}
 			state={visitor.state}
 		>
 			{children}
-		</TanStackConsentRoot>
+		</TanStackInthProvider>
 	);
 
 /** What the server render and a client mount grant for one state. */

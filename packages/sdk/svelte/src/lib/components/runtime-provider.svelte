@@ -1,7 +1,7 @@
 <!--
 	@component
-	`ConsentProvider` for a runtime its owner created, started and will
-	dispose, without the code that creates one. `ConsentProvider` imports
+	`InthProvider` for a runtime its owner created, started and will
+	dispose, without the code that creates one. `InthProvider` imports
 	the consent engine to build a runtime when it is given none, so a
 	surface loaded on demand that always hands one in, such as the Astro
 	integration's dialog island, downloads the engine with it. This renders

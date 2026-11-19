@@ -2,7 +2,7 @@ import { expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { registerDialogChunkWarmer } from '~/chunk-warming';
 import { ConsentDialogLink } from '~/components/panel-link';
@@ -35,9 +35,9 @@ test('the stock banner Customize button warms the deferred dialog on focus', asy
 	const unregister = registerDialogChunkWarmer(warmer);
 	try {
 		await render(
-			<ConsentProvider options={options}>
+			<InthProvider options={options}>
 				<ConsentBanner disableAnimation />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		await vi.waitFor(() => button('consent-banner-customize-button'));
 		expect(warmer).not.toHaveBeenCalled();
@@ -57,14 +57,14 @@ test('dialog openers still run consumer focus and pointer handlers', async () =>
 	const onPointerEnter = vi.fn();
 	const onFocus = vi.fn();
 	await render(
-		<ConsentProvider options={options}>
+		<InthProvider options={options}>
 			<ConsentDialogLink
 				onFocus={onFocus}
 				onPointerEnter={onPointerEnter}
 			>
 				Privacy settings
 			</ConsentDialogLink>
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await vi.waitFor(() => button('consent-dialog-link'));
 
@@ -81,14 +81,14 @@ test('slot focus and pointer handlers still run on consent buttons', async () =>
 	const slot = { onFocus: vi.fn(), onPointerEnter: vi.fn() };
 	try {
 		await render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					...options,
 					components: { button: { primary: slot, secondary: slot } },
 				}}
 			>
 				<ConsentBanner disableAnimation />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		await vi.waitFor(() => button('consent-banner-customize-button'));
 
@@ -114,11 +114,9 @@ test('the trigger runs trigger.root slot focus and pointer handlers', async () =
 	const root = { onFocus: vi.fn(), onPointerEnter: vi.fn() };
 	try {
 		await render(
-			<ConsentProvider
-				options={{ ...options, components: { trigger: { root } } }}
-			>
+			<InthProvider options={{ ...options, components: { trigger: { root } } }}>
 				<ConsentDialogTrigger showWhen="always" />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		await vi.waitFor(() => button('consent-dialog-trigger'));
 

@@ -10,14 +10,14 @@
  * re-export (`@inth/sdk/ui/utils/dom` re-exporting `setupColorScheme`) was
  * enough to split every shared module into its own file.
  *
- * `ConsentRoot` loads its engine with `import()`: the first-load files
+ * `InthProvider` loads its engine with `import()`: the first-load files
  * hold the deferred shell, the banner's tap path and the boot-data reader.
  * The engine chunk brings the code that applies a streamed state with it,
  * so a streamed banner doesn't wait for one more request after the engine.
  * Both routes here mount a deferred root, so the small modules the shell
  * shares with the engine, the commit path and the other route each get a
  * file of their own: 11 files, about 21 KB after Brotli. An app whose
- * routes all use `ConsentRoot` loads 9.
+ * routes all use `InthProvider` loads 9.
  */
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -37,11 +37,12 @@ const fixture: Record<string, string> = {
 	entry:
 		"globalThis.routes = [() => import('fixture:root-route'), () => import('fixture:provider-route')];",
 	'provider-route': `import { createElement as h } from 'react';
-import { ConsentBanner, ConsentDialog, ConsentProvider } from '@inth/tanstack-start';
-export default () => h(ConsentProvider, { options: { projectUrl: '/api/inth' } }, h(ConsentBanner), h(ConsentDialog));`,
+import { ConsentBanner, ConsentDialog } from '@inth/tanstack-start';
+import { InthProvider } from '@inth/react';
+export default () => h(InthProvider, { options: { projectUrl: '/api/inth' } }, h(ConsentBanner), h(ConsentDialog));`,
 	'root-route': `import { createElement as h } from 'react';
-import { ConsentBanner, ConsentDialog, ConsentRoot } from '@inth/tanstack-start';
-export default () => h(ConsentRoot, { state: { projectUrl: '/api/inth' } }, h(ConsentBanner), h(ConsentDialog));`,
+import { ConsentBanner, ConsentDialog, InthProvider } from '@inth/tanstack-start';
+export default () => h(InthProvider, { state: { projectUrl: '/api/inth' } }, h(ConsentBanner), h(ConsentDialog));`,
 };
 
 interface FirstLoad {
@@ -154,7 +155,7 @@ const routeFirstLoad = async function routeFirstLoad(
 const streamedInitModule = /core\/dist\/runtime\/streamed-init\.js$/u;
 
 /**
- * Code `ConsentRoot` loads with `import()` only when the browser runs init:
+ * Code `InthProvider` loads with `import()` only when the browser runs init:
  * the full hosted transport, offline mode with its policy pack, and both
  * manifest resolvers.
  */

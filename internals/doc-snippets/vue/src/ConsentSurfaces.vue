@@ -8,7 +8,7 @@ import {
 </script>
 
 <template>
-	<!-- Render these in place of ConsentRoot, not next to it. -->
+	<!-- Render these in place of InthProvider, not next to it. -->
 	<ConsentBanner
 		variant="bar"
 		position="bottom"

@@ -2,7 +2,7 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentRoot,
+	InthProvider,
 } from '@inth/tanstack-start';
 import {
 	consentLoaderOptions,
@@ -39,7 +39,7 @@ const RootComponent = () => {
 				<HeadContent />
 			</head>
 			<body>
-				<ConsentRoot
+				<InthProvider
 					state={consent}
 					scripts={scripts}
 				>
@@ -49,7 +49,7 @@ const RootComponent = () => {
 					<footer>
 						<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 					</footer>
-				</ConsentRoot>
+				</InthProvider>
 				<Scripts />
 			</body>
 		</html>
@@ -66,6 +66,6 @@ export const Route = createRootRoute({
 		],
 	}),
 	// Not awaited: the page streams without waiting for consent, and
-	// ConsentRoot accepts the pending promise.
+	// InthProvider accepts the pending promise.
 	loader: () => ({ consent: getConsentState() }),
 });

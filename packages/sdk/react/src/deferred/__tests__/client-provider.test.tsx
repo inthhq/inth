@@ -1,5 +1,5 @@
 /**
- * `ConsentProvider` for client-rendered pages: the page renders before the
+ * `InthProvider` for client-rendered pages: the page renders before the
  * consent engine, the stock banner renders from the prefetched `/v1/consent/init`, a
  * tap hides it at once and the engine applies the choice, and a returning
  * visitor gets the engine straight away.
@@ -36,7 +36,7 @@ const engineGate = (() => {
 	};
 })();
 
-const ConsentProvider = createConsentProvider(async () => {
+const InthProvider = createConsentProvider(async () => {
 	await engineGate.wait();
 	return import('../client-engine');
 });
@@ -109,7 +109,7 @@ const stored = () =>
 	localStorage.getItem('inth') !== null;
 
 const renderPage = (
-	callbacks?: Parameters<typeof ConsentProvider>[0] extends {
+	callbacks?: Parameters<typeof InthProvider>[0] extends {
 		options?: infer O;
 	}
 		? O extends { callbacks?: infer C }
@@ -118,7 +118,7 @@ const renderPage = (
 		: never
 ) =>
 	render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				callbacks,
 				consentCategories: [...consentCategories],
@@ -128,7 +128,7 @@ const renderPage = (
 		>
 			<Probe />
 			<ConsentBanner />
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 beforeEach(() => {
@@ -209,7 +209,7 @@ test('a network blocker turned off leaves the engine deferred', async () => {
 	// Held: an eager root could not render its page at all.
 	engineGate.hold();
 	const screen = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				consentCategories: [...consentCategories],
 				journey: false,
@@ -219,7 +219,7 @@ test('a network blocker turned off leaves the engine deferred', async () => {
 		>
 			<Probe />
 			<ConsentBanner />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	const probe = screen.getByTestId('probe');
 	await expect.element(probe).toHaveAttribute('data-active-ui', 'none');

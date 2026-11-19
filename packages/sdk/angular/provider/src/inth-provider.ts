@@ -15,13 +15,13 @@ import type { ConsentDialogTriggerOptions } from '@inth/angular/consent-dialog';
  *
  * @example
  * ```html
- * <inth-consent-root [legalLinks]="['privacyPolicy']" />
+ * <inth-provider [legalLinks]="['privacyPolicy']" />
  * ```
  */
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentBanner, ConsentDialog],
-	selector: 'inth-consent-root',
+	selector: 'inth-provider',
 	template: `<inth-consent-banner
 			[noStyle]="noStyle()"
 			[disableAnimation]="disableAnimation()"
@@ -36,14 +36,14 @@ import type { ConsentDialogTriggerOptions } from '@inth/angular/consent-dialog';
 			[showTrigger]="showTrigger()"
 		/>`,
 })
-export class ConsentRoot {
-	/** Drop the stock classes. Defaults to the provider's `noStyle`. */
+export class InthProvider {
+	/** Drop the stock classes. Defaults to `provideInth()`'s `noStyle`. */
 	readonly noStyle = input<boolean | undefined>(undefined);
-	/** Skip enter and exit motion. Defaults to the provider's setting. */
+	/** Skip enter and exit motion. Defaults to `provideInth()`'s setting. */
 	readonly disableAnimation = input<boolean | undefined>(undefined);
 	/** Hide the "Secured by" attribution on both surfaces. */
 	readonly hideBranding = input(false);
-	/** Which of the provider's legal links both surfaces show. */
+	/** Which of the legal links from `provideInth()` both surfaces show. */
 	readonly legalLinks = input<LegalLinkSelection | undefined>(undefined);
 	/**
 	 * Render an `<inth-consent-dialog-trigger>` with the dialog. Pass an

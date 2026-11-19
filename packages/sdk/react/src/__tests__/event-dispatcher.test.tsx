@@ -4,7 +4,7 @@ import { expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import {
-	ConsentProvider,
+	InthProvider,
 	useConsent,
 	useEventDispatcher,
 	useSaveConsents,
@@ -58,7 +58,7 @@ test('useEventDispatcher keeps one dispatcher and pageview history through conse
 		);
 	};
 	const App = ({ enabled, path }: { enabled: boolean; path: string }) => (
-		<ConsentProvider
+		<InthProvider
 			options={{
 				consentCategories: ['measurement'],
 				enabled,
@@ -69,7 +69,7 @@ test('useEventDispatcher keeps one dispatcher and pageview history through conse
 			}}
 		>
 			<Page path={path} />
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 	const screen = await render(

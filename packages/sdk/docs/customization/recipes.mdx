@@ -38,7 +38,7 @@ right.
 <Tabs items={['React', 'Vue', 'Astro', 'Svelte']}>
   <Tab value="React">
     Render `CookieBanner` in place of `ConsentBanner`, inside your
-    `ConsentProvider` and next to `ConsentDialog`.
+    `InthProvider` and next to `ConsentDialog`.
 
     <include src="../shared/examples/storybook-react/bottom-bar.mdx" />
   </Tab>
@@ -46,7 +46,7 @@ right.
   <Tab value="Vue">
     Render `CookieBanner` and `ConsentManager` from
     `@inth/vue/runtime/components/consent-manager.vue` in place of
-    `ConsentRoot`. To keep `ConsentRoot`, set `presentation.prompt` in the
+    `InthProvider`. To keep it, set `presentation.prompt` in the
     `inthVue` options instead, as in [customize](/docs/frameworks/vue/customize).
 
     <include src="../shared/examples/storybook-vue/bottom-bar.mdx" />
@@ -61,7 +61,7 @@ right.
 
   <Tab value="Svelte">
     Render `CookieBanner` in place of `ConsentBanner`, inside
-    `ConsentProvider` and next to `ConsentDialog`.
+    `InthProvider` and next to `ConsentDialog`.
 
     <include src="../shared/examples/storybook-svelte/bottom-bar.mdx" />
   </Tab>
@@ -92,7 +92,7 @@ slot styles, so pass the same object there for the filled buttons:
 {/* example: fragment */}
 
 ```tsx
-<ConsentProvider options={{ mode, theme: brandTheme }}>
+<InthProvider options={{ mode, theme: brandTheme }}>
 ```
 
 The preferences dialog reads the same tokens:
@@ -133,7 +133,7 @@ requires.
 <Tabs items={['React', 'Vue', 'Svelte']}>
   <Tab value="React">
     `ConsentBanner.PolicyActions` renders the policy's buttons, so a required
-    Reject button stays. Render `CookieBanner` inside your `ConsentProvider`,
+    Reject button stays. Render `CookieBanner` inside your `InthProvider`,
     next to `ConsentDialog`.
 
     <include src="../shared/examples/storybook-react/slim-bar.mdx" />
@@ -141,13 +141,13 @@ requires.
 
   <Tab value="Vue">
     Spread `slimBar` into the options you pass to `app.use(inthVue, ...)`.
-    `ConsentRoot` then renders the slim bar.
+    `InthProvider` then renders the slim bar.
 
     <include src="../shared/examples/storybook-vue/slim-bar.mdx" />
   </Tab>
 
   <Tab value="Svelte">
-    Spread `slimBar` into the props you pass to `ConsentProvider`.
+    Spread `slimBar` into the props you pass to `InthProvider`.
     Svelte scopes component styles, so the classes live in a global
     stylesheet.
 
@@ -178,7 +178,7 @@ a choice is recorded only when the visitor clicks.
   <Tab value="Vue">
     The composables from `@inth/vue/vue-plugin` give the policy's actions and
     the active surface. Render `CookieBar` and `ConsentManager` in place of
-    `ConsentRoot`. Preferences sets `activeUI` to `'manager'`, which opens
+    `InthProvider`. Preferences sets `activeUI` to `'manager'`, which opens
     `ConsentManager`.
 
     <include src="../shared/examples/storybook-vue/headless-bar.mdx" />
@@ -187,7 +187,7 @@ a choice is recorded only when the visitor clicks.
   <Tab value="Svelte">
     `getHeadlessConsent()` returns the banner state and `performAction`.
     Render `CookieBar` in place of `ConsentBanner`, inside
-    `ConsentProvider`, and keep `ConsentDialog`, which Preferences
+    `InthProvider`, and keep `ConsentDialog`, which Preferences
     opens.
 
     <include src="../shared/examples/storybook-svelte/headless-bar.mdx" />

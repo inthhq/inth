@@ -13,7 +13,7 @@ import {
 } from '~/components/panel-trigger';
 import { ConsentWidget } from '~/components/preferences';
 import { ConsentBanner } from '~/components/prompt';
-import { ConsentProvider } from '~/provider';
+import { InthProvider } from '~/provider';
 
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { testing } from '../../testing';
@@ -110,14 +110,14 @@ describe('consent surfaces without a resolved policy', () => {
 		// The plain provider: the fixture provider would substitute a matched
 		// prefetch, and this test needs the kernel to start without a policy.
 		render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: transportMode({ init: () => pending }),
 					persistence: false,
 				}}
 			>
 				<Surfaces />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		await vi.waitFor(() => {

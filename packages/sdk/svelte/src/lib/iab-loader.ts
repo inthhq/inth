@@ -1,7 +1,7 @@
 /**
  * The package's lazy IAB factory.
  *
- * `<ConsentProvider>` is imported by every app, IAB or not, so it
+ * `<InthProvider>` is imported by every app, IAB or not, so it
  * cannot import `@inth/sdk/iab` statically — that put the CMP API and the
  * `__tcfapi` bridge in the layout chunk of apps that never turn IAB on
  * (3.3 KB gzipped on the SvelteKit bench, with the TC-string encoder

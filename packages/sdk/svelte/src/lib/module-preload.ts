@@ -31,10 +31,10 @@ interface ModulePreloadOptions {
  *
  * Mirrors the runtime's own rule: the script loader mounts whenever
  * `scripts` is non-empty, the network blocker only while consent
- * management is enabled. Either one loads the shared chunk. `ConsentRoot`
- * adds its engine for a visitor the engine must serve at once.
+ * management is enabled. Either one loads the shared chunk. The SvelteKit
+ * `InthProvider` adds its engine for a visitor the engine must serve at once.
  *
- * @param extra - `engine: true` to preload `ConsentRoot`'s engine.
+ * @param extra - `engine: true` to preload the SvelteKit `InthProvider`'s engine.
  * @internal
  */
 export const modulePreloadMarker = function modulePreloadMarker(

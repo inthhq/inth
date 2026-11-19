@@ -13,9 +13,9 @@ after the visitor allows measurement.
   policy to `node_modules/.cache/inth/` during `next build` and `next dev`,
   and finds `inth.config.ts`.
 - `inth.config.ts` loads PostHog after the visitor allows measurement.
-  `ConsentRoot` and `resolveConsent` read it without importing it.
+  `InthProvider` and `resolveConsent` read it without importing it.
 - `app/layout.tsx` starts `resolveConsent()` without awaiting it and renders
-  `ConsentRoot`, the banner, the dialog and a Privacy settings link.
+  `InthProvider`, the banner, the dialog and a Privacy settings link.
 
 ## Run
 

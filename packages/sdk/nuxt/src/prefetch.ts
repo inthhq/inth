@@ -208,7 +208,7 @@ const preloadWithEntry = function preloadWithEntry(
 	}
 };
 
-/** The banner the Nuxt root loads as its own chunk (see `nuxt-root.vue`). */
+/** The banner the Nuxt root loads as its own chunk (see `nuxt-inth-provider.vue`). */
 const BANNER_SOURCE = '/dist/runtime/components/prompt.vue';
 
 /**

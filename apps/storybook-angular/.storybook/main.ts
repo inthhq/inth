@@ -77,7 +77,7 @@ const config: StorybookConfig = {
 						replacement: workspace('packages/sdk/angular/src/public-api.ts'),
 					},
 					{
-						find: /^@inth\/angular\/(?<entry>consent-dialog|consent-dialog-trigger|consent-gate|consent-root|consent-widget|devtools|iab|primitives)$/u,
+						find: /^@inth\/angular\/(?<entry>consent-dialog|consent-dialog-trigger|consent-gate|consent-widget|devtools|iab|primitives|provider)$/u,
 						replacement: workspace('packages/sdk/angular/$1/src/public-api.ts'),
 					},
 				],

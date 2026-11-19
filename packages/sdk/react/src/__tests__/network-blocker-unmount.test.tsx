@@ -19,7 +19,7 @@ import { useEffect } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
@@ -79,7 +79,7 @@ test('unmounting before the blocker loads fails held requests closed', async () 
 	});
 	const requests: Promise<Response>[] = [];
 	const view = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: testing(),
 				networkBlocker: { logBlockedRequests: false, rules },
@@ -89,7 +89,7 @@ test('unmounting before the blocker loads fails held requests closed', async () 
 			}}
 		>
 			<Beacon requests={requests} />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await vi.waitFor(() => expect(requests).toHaveLength(1));
 	await flush();

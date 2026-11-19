@@ -1,5 +1,5 @@
 /**
- * `experimentalScriptRegistry` on the deferred `ConsentProvider`, the one
+ * `experimentalScriptRegistry` on the deferred `InthProvider`, the one
  * a browser build of `@inth/react` exports, reaches the engine it loads.
  * Its own file: the provider loads its engine once per page.
  */
@@ -15,7 +15,7 @@ import {
 } from '../../__tests__/script-registry-fixtures';
 import { createConsentProvider } from '../client-provider';
 
-const ConsentProvider = createConsentProvider(() => import('../client-engine'));
+const InthProvider = createConsentProvider(() => import('../client-engine'));
 
 test('loads an integration from the registry source init lists', async () => {
 	const { body, registrySrc, run, vendorSrc } = registryFixture();
@@ -23,7 +23,7 @@ test('loads an integration from the registry source init lists', async () => {
 	await commands.serveScript(vendorSrc, "window.__registryCopy = 'vendor';");
 	const onLoad = vi.fn();
 	const screen = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				experimentalScriptRegistry: true,
 				mode: listing({
@@ -34,7 +34,7 @@ test('loads an integration from the registry source init lists', async () => {
 			}}
 		>
 			app
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 	await vi.waitFor(() => expect(onLoad).toHaveBeenCalled(), { timeout: 5000 });

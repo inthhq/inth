@@ -16,7 +16,7 @@ Import every component except `ConsentDevTools` by name from
 
 | Component | What it renders |
 | --- | --- |
-| [`ConsentRoot`](/docs/frameworks/vue/components/consent-root) | The banner and, once opened, the preference dialog. Switches to the IAB surfaces under an IAB policy when `iab` is set. |
+| [`InthProvider`](/docs/frameworks/vue/components/inth-provider) | The banner and, once opened, the preference dialog. Switches to the IAB surfaces under an IAB policy when `iab` is set. |
 | [`ConsentBanner`](/docs/frameworks/vue/components/consent-banner) | The first-layer banner on its own. |
 | [`ConsentManager`](/docs/frameworks/vue/components/consent-manager) | The preference dialog on its own. |
 | [`ConsentWidget`](/docs/frameworks/vue/components/consent-widget) | Category switches and save actions inline, for a privacy page. |
@@ -38,10 +38,10 @@ The components ship as `.vue` files. Keep
 `vite.config.ts`: it keeps them out of Vite's dependency pre-bundling, which
 cannot compile them.
 
-## ConsentRoot or the parts
+## InthProvider or the parts
 
-`ConsentRoot` renders `ConsentBanner` and `ConsentManager`, or the IAB
-components when `iab` is set, for the visitor's policy. Mount `ConsentRoot`, or mount the parts,
+`InthProvider` renders `ConsentBanner` and `ConsentManager`, or the IAB
+components when `iab` is set, for the visitor's policy. Mount `InthProvider`, or mount the parts,
 never both, or the visitor sees two banners. Use the parts when you need a
 different variant per route or want to place the surfaces yourself.
 

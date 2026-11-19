@@ -4,10 +4,10 @@ import type { PolicyBenchFixtureName } from '@inth/benchmarking/policy-fixtures'
 import {
 	ConsentBanner,
 	ConsentDialog,
-	ConsentProvider,
+	InthProvider,
 	hosted,
 } from '@inth/react';
-import type { ConsentProviderOptions, WithProjectUrl } from '@inth/react';
+import type { InthProviderOptions, WithProjectUrl } from '@inth/react';
 import { createConsentKernel, createV1HostedTransport } from '@inth/sdk/engine';
 import type { InitResponse } from '@inth/sdk/engine';
 import { createPersistence } from '@inth/sdk/modules/persistence';
@@ -31,7 +31,7 @@ const consentCategories = [
 	'experience',
 	'measurement',
 	'marketing',
-] satisfies NonNullable<ConsentProviderOptions['consentCategories']>;
+] satisfies NonNullable<InthProviderOptions['consentCategories']>;
 
 /**
  * Count storage writes while a callback runs. Wraps `localStorage.setItem`
@@ -182,7 +182,7 @@ export const PolicyBenchmarkProvider = ({
 		}
 	}, [projectUrl, fixture, scenario]);
 
-	const options: WithProjectUrl<ConsentProviderOptions> = {
+	const options: WithProjectUrl<InthProviderOptions> = {
 		callbacks: {
 			onChoiceRecorded() {
 				const state = getPolicyBenchState(scenario, fixture);
@@ -212,7 +212,7 @@ export const PolicyBenchmarkProvider = ({
 	};
 
 	return (
-		<ConsentProvider options={options}>
+		<InthProvider options={options}>
 			<PolicyBenchmarkProbe
 				fixture={fixture}
 				scenario={scenario}
@@ -220,6 +220,6 @@ export const PolicyBenchmarkProvider = ({
 			<ConsentBanner disableAnimation />
 			<ConsentDialog disableAnimation />
 			{children}
-		</ConsentProvider>
+		</InthProvider>
 	);
 };

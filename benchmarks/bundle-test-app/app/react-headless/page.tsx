@@ -6,7 +6,7 @@ import {
 	useEffectivePermissions,
 	useSaveConsents,
 } from '@inth/react/hooks';
-import { ConsentProvider } from '@inth/react/provider';
+import { InthProvider } from '@inth/react/provider';
 
 const TestComponent = () => {
 	const consents = useEffectivePermissions();
@@ -39,7 +39,7 @@ const TestComponent = () => {
 	);
 };
 const ReactHeadlessPage = () => (
-	<ConsentProvider
+	<InthProvider
 		options={{
 			mode: benchPolicy({
 				policy: [
@@ -58,7 +58,7 @@ const ReactHeadlessPage = () => (
 			<p>This route measures the tree-shaken headless React runtime.</p>
 			<TestComponent />
 		</main>
-	</ConsentProvider>
+	</InthProvider>
 );
 
 export default ReactHeadlessPage;

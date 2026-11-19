@@ -8,7 +8,7 @@
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ConsentProvider, ConsentTheme } from '../index';
+import { InthProvider, ConsentTheme } from '../index';
 import { testing } from '../testing';
 
 // Raw source text, inlined by Vite so the scan works in browser-mode vitest.
@@ -24,7 +24,7 @@ const rawSources = import.meta.glob(
 	{ eager: true, import: 'default', query: '?raw' }
 ) as Record<string, string>;
 
-describe('ConsentProvider theme tokens', () => {
+describe('InthProvider theme tokens', () => {
 	test('no client module imports the theme generator', () => {
 		expect(Object.keys(rawSources)).toContain('../provider.tsx');
 		const offending = Object.entries(rawSources)
@@ -40,14 +40,14 @@ describe('ConsentProvider theme tokens', () => {
 
 	test('the provider injects no theme style', async () => {
 		const { unmount } = await render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: testing(),
 					persistence: false,
 				}}
 			>
 				<div data-testid="themed-child" />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		expect(document.getElementById('inth-theme')).toBeNull();
 		unmount();
@@ -57,7 +57,7 @@ describe('ConsentProvider theme tokens', () => {
 		const { unmount } = await render(
 			<>
 				<ConsentTheme nonce="csp-nonce" />
-				<ConsentProvider
+				<InthProvider
 					options={{
 						enabled: false,
 						mode: testing(),
@@ -73,7 +73,7 @@ describe('ConsentProvider theme tokens', () => {
 					}}
 				>
 					<div />
-				</ConsentProvider>
+				</InthProvider>
 			</>
 		);
 		await vi.waitFor(() => {
@@ -92,7 +92,7 @@ describe('ConsentProvider theme tokens', () => {
 		const { unmount } = await render(
 			<>
 				<ConsentTheme theme={theme} />
-				<ConsentProvider
+				<InthProvider
 					options={{
 						mode: testing(),
 						persistence: false,
@@ -100,7 +100,7 @@ describe('ConsentProvider theme tokens', () => {
 					}}
 				>
 					<div />
-				</ConsentProvider>
+				</InthProvider>
 			</>
 		);
 		await vi.waitFor(() => {
@@ -117,7 +117,7 @@ describe('ConsentProvider theme tokens', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 		try {
 			const { unmount } = await render(
-				<ConsentProvider
+				<InthProvider
 					options={{
 						mode: testing(),
 						persistence: false,
@@ -125,7 +125,7 @@ describe('ConsentProvider theme tokens', () => {
 					}}
 				>
 					<div />
-				</ConsentProvider>
+				</InthProvider>
 			);
 			await vi.waitFor(() => {
 				expect(warn).toHaveBeenCalledWith(

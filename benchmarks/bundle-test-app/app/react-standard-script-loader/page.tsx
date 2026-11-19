@@ -10,7 +10,7 @@ import {
 	useExplicitChoice,
 	useSaveConsents,
 } from '@inth/react/hooks';
-import { ConsentProvider } from '@inth/react/provider';
+import { InthProvider } from '@inth/react/provider';
 import type { AllConsentNames } from '@inth/sdk/engine';
 import type { Script } from '@inth/sdk/modules/script-loader';
 
@@ -85,7 +85,7 @@ const TestComponent = () => {
 	);
 };
 const ReactStandardScriptLoaderPage = () => (
-	<ConsentProvider
+	<InthProvider
 		options={{
 			mode: benchPolicy({
 				policy: [
@@ -113,7 +113,7 @@ const ReactStandardScriptLoaderPage = () => (
 			<ConsentDialog />
 			<ConsentWidget />
 		</ConsentDraftProvider>
-	</ConsentProvider>
+	</InthProvider>
 );
 
 export default ReactStandardScriptLoaderPage;

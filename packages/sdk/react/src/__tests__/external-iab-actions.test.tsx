@@ -14,7 +14,7 @@ import { KernelContext } from '../context';
 import { ExternalIABProvider } from '../external-iab-context';
 import { useIAB } from '../iab-context';
 import type { ReactIABState } from '../iab-context';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
@@ -81,9 +81,9 @@ test.each(['acceptAll', 'rejectAll', 'save'] as const)(
 			}
 		};
 		const screen = await render(
-			<ConsentProvider runtime={runtime}>
+			<InthProvider runtime={runtime}>
 				<Probe onReady={onReady} />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		try {
 			expect(requested).toBe(true);
@@ -108,9 +108,9 @@ test('propagates save errors and runs ready actions', async () => {
 		iab = value;
 	};
 	const screen = await render(
-		<ConsentProvider runtime={runtime}>
+		<InthProvider runtime={runtime}>
 			<Probe onReady={onReady} />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	try {
 		if (!iab) {
@@ -191,9 +191,9 @@ test('keeps pending actions through StrictMode effect replay', async () => {
 	};
 	const screen = await render(
 		<StrictMode>
-			<ConsentProvider runtime={runtime}>
+			<InthProvider runtime={runtime}>
 				<Probe onReady={onReady} />
-			</ConsentProvider>
+			</InthProvider>
 		</StrictMode>
 	);
 	try {
@@ -273,7 +273,7 @@ test('a useIAB result kept across a borrowed-runtime switch cannot act on either
 	let retained: ReactIABState | null = null;
 	let duringCommit: Promise<void> | undefined;
 	const tree = (runtime: ConsentRuntime) => (
-		<ConsentProvider runtime={runtime}>
+		<InthProvider runtime={runtime}>
 			<SwitchProbe
 				onState={(iab) => {
 					latest = iab;
@@ -285,7 +285,7 @@ test('a useIAB result kept across a borrowed-runtime switch cannot act on either
 					duringCommit = retained?.save();
 				}}
 			/>
-		</ConsentProvider>
+		</InthProvider>
 	);
 	const screen = await render(tree(first.runtime));
 	try {

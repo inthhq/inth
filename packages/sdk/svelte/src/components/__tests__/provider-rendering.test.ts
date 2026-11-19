@@ -5,7 +5,7 @@ import BannerFixture from '../../__tests__/fixtures/banner-fixture.svelte';
 import ProviderOnlyFixture from '../../__tests__/fixtures/provider-only-fixture.svelte';
 import { testOffline } from '../../__tests__/test-offline';
 
-describe('ConsentProvider Rendering Behavior', () => {
+describe('InthProvider Rendering Behavior', () => {
 	beforeEach(() => {});
 
 	test('should render children immediately without blocking', () => {

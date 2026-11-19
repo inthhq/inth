@@ -2,10 +2,10 @@
 
 import { benchPolicy } from '@inth/benchmarking/bench-policy';
 import { ConsentBanner } from '@inth/react/consent-banner';
-import { ConsentProvider } from '@inth/react/provider';
+import { InthProvider } from '@inth/react/provider';
 
 const CssBannerModulesPage = () => (
-	<ConsentProvider
+	<InthProvider
 		options={{
 			mode: benchPolicy({
 				policy: [
@@ -23,7 +23,7 @@ const CssBannerModulesPage = () => (
 			<h1>React Banner + CSS Modules Benchmark</h1>
 		</main>
 		<ConsentBanner />
-	</ConsentProvider>
+	</InthProvider>
 );
 
 export default CssBannerModulesPage;

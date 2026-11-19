@@ -1,4 +1,4 @@
-import type { ConsentProviderCallbacks } from '@inth/nextjs';
+import type { InthProviderCallbacks } from '@inth/nextjs';
 import { defineExperiment } from '@inth/nextjs/engine';
 
 /** `control` is the default banner; the `wall` arm blocks the page. */
@@ -34,4 +34,4 @@ export const experimentCallbacks = {
 			});
 		}
 	},
-} satisfies ConsentProviderCallbacks;
+} satisfies InthProviderCallbacks;

@@ -3,18 +3,18 @@
 import {
 	ConsentBanner,
 	ConsentDialog,
-	ConsentProvider,
+	InthProvider,
 	hosted,
 } from '@inth/react';
-import type { ConsentProviderOptions } from '@inth/react';
+import type { InthProviderOptions } from '@inth/react';
 import type { ReactNode } from 'react';
 
 import { ConsumerProbe, getProbeState } from './probe';
 
-type ConsentState = NonNullable<ConsentProviderOptions['prefetch']>;
+type ConsentState = NonNullable<InthProviderOptions['prefetch']>;
 
 /** A full custom theme, including a dark variant, like a branded site. */
-const theme: NonNullable<ConsentProviderOptions['theme']> = {
+const theme: NonNullable<InthProviderOptions['theme']> = {
 	colors: {
 		border: '#E0E0E0',
 		primary: 'hsl(172 72.2% 48%)',
@@ -45,7 +45,7 @@ const consentCategories = [
 	'experience',
 	'measurement',
 	'marketing',
-] satisfies NonNullable<ConsentProviderOptions['consentCategories']>;
+] satisfies NonNullable<InthProviderOptions['consentCategories']>;
 
 export const ConsentManager = ({
 	children,
@@ -54,7 +54,7 @@ export const ConsentManager = ({
 	children: ReactNode;
 	state: ConsentState;
 }) => (
-	<ConsentProvider
+	<InthProvider
 		options={{
 			callbacks: {
 				onChoiceRecorded() {
@@ -75,5 +75,5 @@ export const ConsentManager = ({
 		{children}
 		<ConsentBanner />
 		<ConsentDialog />
-	</ConsentProvider>
+	</InthProvider>
 );

@@ -12,7 +12,7 @@ import { render } from 'vitest-browser-react';
 import { page } from 'vitest/browser';
 
 import { ConsentDialog } from '../aggregate-components';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
@@ -48,7 +48,7 @@ test.each([
 	await page.viewport(375, 600);
 
 	const screen = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				consentCategories: ['necessary', 'measurement', 'marketing'],
 				mode: testing(),
@@ -69,7 +69,7 @@ test.each([
 				disableAnimation
 				open
 			/>
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 	await screen

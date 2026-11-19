@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import type { ComponentFixtureOptions } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentDialog } from '~/components/panel';
@@ -20,7 +20,7 @@ const renderComposed = function renderComposed(
 	components?: ComponentFixtureOptions['components']
 ) {
 	return render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				components,
 				mode: testing(),
@@ -29,7 +29,7 @@ const renderComposed = function renderComposed(
 			}}
 		>
 			{children}
-		</ConsentProvider>
+		</InthProvider>
 	);
 };
 
@@ -248,7 +248,7 @@ describe('composed ConsentBanner', () => {
 describe('composed ConsentDialog', () => {
 	test('HeaderTitle with asChild renders the child element in place of the h2', async () => {
 		await render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					initialUI: 'dialog',
 					mode: testing(),
@@ -265,7 +265,7 @@ describe('composed ConsentDialog', () => {
 						</ConsentDialog.Header>
 					</ConsentDialog.Card>
 				</ConsentDialog.Root>
-			</ConsentProvider>
+			</InthProvider>
 		);
 		await waitForTestId('consent-dialog-title');
 		const title = query('consent-dialog-title');

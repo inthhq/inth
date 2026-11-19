@@ -28,15 +28,15 @@ import type {
  * @throws {Error} When no snapshot, manifest URL or backend URL is known.
  * @example
  * ```tsx
- * import { ConsentProvider, manifest } from '@inth/react';
+ * import { InthProvider, manifest } from '@inth/react';
  *
- * <ConsentProvider options={{ mode: manifest() }}>{children}</ConsentProvider>;
+ * <InthProvider options={{ mode: manifest() }}>{children}</InthProvider>;
  * ```
  */
 export const manifest = function manifest(
 	options: BrowserManifestOptions = {}
 ): BrowserManifestModeFactory {
-	// `ConsentProvider` may send the first `/v1/consent/init` during its first render
+	// `InthProvider` may send the first `/v1/consent/init` during its first render
 	// when the snapshot can't answer for an unknown location.
 	return withEarlyInit(
 		browserManifest(

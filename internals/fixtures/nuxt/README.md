@@ -1,7 +1,7 @@
 # Inth × Nuxt example
 
 Inth Nuxt integration through the `@inth/nuxt` module. The consent setup is a module entry in a Nuxt layer under
-`config/`, `ConsentRoot` and `ConsentDialogLink` in `app/app.vue`, and
+`config/`, `InthProvider` and `ConsentDialogLink` in `app/app.vue`, and
 `scripts` in `app/app.config.ts`. Without a backend URL the demo falls back to a
 self-hosted `@c15t/backend` mounted at `/api/self-host`
 (`server/api/self-host/[...all].ts`), so it also runs from a single origin.

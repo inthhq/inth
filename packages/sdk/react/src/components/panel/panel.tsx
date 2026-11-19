@@ -27,7 +27,7 @@ const LazyConsentDialogTrigger = createDeferredModule(
 export interface ConsentDialogProps {
 	/**
 	 * Theme configuration override (deprecated)
-	 * @deprecated Theme should be set on the ConsentProvider
+	 * @deprecated Theme should be set on the InthProvider
 	 */
 	theme?: never;
 
@@ -79,7 +79,7 @@ export interface ConsentDialogProps {
 	 * ```
 	 *
 	 * @remarks
-	 * You must set the legal links in the ConsentProvider options.
+	 * You must set the legal links in the InthProvider options.
 	 */
 	legalLinks?: InlineLegalLinksProps['links'];
 

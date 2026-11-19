@@ -24,11 +24,11 @@
 	],
 	"usage": [
 		"Add `consentManifest()` from `@inth/svelte/vite` to `vite.config.ts`. It downloads your policy from `VITE_INTH_PROJECT_URL` (SvelteKit: `PUBLIC_INTH_PROJECT_URL`)",
-		"Wrap your app with `ConsentProvider` in `manifest()` mode",
+		"Wrap your app with `InthProvider` in `manifest()` mode",
 		"Add `ConsentBanner` and `ConsentDialog` near the root",
-		"In SvelteKit, render `ConsentRoot` with the state `loadConsent` from `@inth/svelte/kit` returns; see the [SvelteKit quickstart](https://c15t.com/docs/frameworks/sveltekit/quickstart)",
+		"In SvelteKit, render `InthProvider` from `@inth/svelte/kit` with the state its `loadConsent` returns; see the [SvelteKit quickstart](https://c15t.com/docs/frameworks/sveltekit/quickstart)",
 		"For the full setup, see the [Svelte quickstart docs](https://c15t.com/docs/frameworks/svelte/quickstart)",
-		"```svelte\n<!-- src/App.svelte -->\n<script lang=\"ts\">\n  import {\n    ConsentBanner,\n    ConsentDialog,\n    ConsentDialogLink,\n    ConsentProvider,\n    manifest,\n  } from '@inth/svelte';\n</script>\n\n<ConsentProvider mode={manifest()}>\n  <main>Your app goes here.</main>\n  <ConsentBanner />\n  <ConsentDialog />\n  <ConsentDialogLink>Privacy settings</ConsentDialogLink>\n</ConsentProvider>\n```"
+		"```svelte\n<!-- src/App.svelte -->\n<script lang=\"ts\">\n  import {\n    ConsentBanner,\n    ConsentDialog,\n    ConsentDialogLink,\n    InthProvider,\n    manifest,\n  } from '@inth/svelte';\n</script>\n\n<InthProvider mode={manifest()}>\n  <main>Your app goes here.</main>\n  <ConsentBanner />\n  <ConsentDialog />\n  <ConsentDialogLink>Privacy settings</ConsentDialogLink>\n</InthProvider>\n```"
 	],
 	"docsLink": "https://c15t.com/docs/frameworks/svelte/quickstart",
 	"quickStartLink": "https://c15t.com/docs/frameworks/svelte/quickstart",

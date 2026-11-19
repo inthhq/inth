@@ -6,7 +6,7 @@ useHead({
 </script>
 
 <template>
-	<ConsentRoot />
+	<InthProvider />
 	<SiteHeader />
 	<NuxtPage />
 	<SiteFooter />

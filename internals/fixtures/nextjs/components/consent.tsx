@@ -4,9 +4,9 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentRoot,
+	InthProvider,
 } from '@inth/nextjs';
-import type { ConsentRootProps } from '@inth/nextjs';
+import type { InthProviderProps } from '@inth/nextjs';
 import type { ReactNode } from 'react';
 
 import consentConfig from '@/inth.config';
@@ -14,11 +14,11 @@ import { scripts } from '@/lib/scripts';
 
 interface ConsentProps {
 	children: ReactNode;
-	state: ConsentRootProps['state'];
+	state: InthProviderProps['state'];
 }
 
 export const Consent = ({ children, state }: ConsentProps) => (
-	<ConsentRoot
+	<InthProvider
 		state={state}
 		config={consentConfig}
 		scripts={scripts}
@@ -29,5 +29,5 @@ export const Consent = ({ children, state }: ConsentProps) => (
 		<footer>
 			<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 		</footer>
-	</ConsentRoot>
+	</InthProvider>
 );

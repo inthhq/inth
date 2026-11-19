@@ -5,7 +5,7 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentProvider,
+	InthProvider,
 	useConsent,
 	useExplicitChoice,
 } from '../index';
@@ -35,7 +35,7 @@ test('the preset quickstart records rejection, restores it, and reopens preferen
 	clearStorage();
 	const onChoiceRecorded = vi.fn();
 	const app = (
-		<ConsentProvider
+		<InthProvider
 			options={{
 				callbacks: { onChoiceRecorded },
 				consentCategories: ['marketing'],
@@ -48,7 +48,7 @@ test('the preset quickstart records rejection, restores it, and reopens preferen
 			<footer>
 				<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 			</footer>
-		</ConsentProvider>
+		</InthProvider>
 	);
 	const first = await render(app);
 	await expect

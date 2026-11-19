@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ConsentBanner, ConsentDialog, ConsentProvider } from '@inth/svelte';
+	import { ConsentBanner, ConsentDialog, InthProvider } from '@inth/svelte';
 
 	import '../app.css';
 
@@ -9,7 +9,7 @@
 </script>
 
 <!-- Tailwind 3 builds Inth's stylesheet from app.css. -->
-<ConsentProvider
+<InthProvider
 	{projectUrl}
 	persistence={false}
 	styles={false}
@@ -19,4 +19,4 @@
 	<ConsentBanner class="!p-[7px] dark:!p-[11px]" />
 	<!-- #endregion docs:slot -->
 	<ConsentDialog />
-</ConsentProvider>
+</InthProvider>

@@ -55,7 +55,7 @@ If you already have a proxy, call `inthProxy(request)` where you would
 otherwise return `NextResponse.next()`, and set any response headers or
 cookies on the returned response.
 
-`config.matcher` must cover every page that renders `ConsentRoot`,
+`config.matcher` must cover every page that renders `InthProvider`,
 because `resolveConsent` and the awaited helpers run during those page
 requests. It must also cover `/api/inth/:path*` if you serve the optional consent
 route and want it to resolve policy with the visitor's location. The
@@ -123,7 +123,7 @@ cookie, read it where you call `resolveConsent` and pass it as the
 `country` override:
 
 ```tsx title="app/layout.tsx (partial)"
-import { ConsentRoot } from '@inth/nextjs';
+import { InthProvider } from '@inth/nextjs';
 import { resolveConsent } from '@inth/nextjs/server';
 import { cookies } from 'next/headers';
 
@@ -133,7 +133,7 @@ async function resolveVisitorConsent() {
 }
 
 // Inside the existing synchronous root layout:
-<ConsentRoot state={resolveVisitorConsent()}>{children}</ConsentRoot>;
+<InthProvider state={resolveVisitorConsent()}>{children}</InthProvider>;
 ```
 
 This replaces the `resolveConsent` call in the root layout from the

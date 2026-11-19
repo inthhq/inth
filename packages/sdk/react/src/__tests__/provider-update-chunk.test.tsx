@@ -7,7 +7,7 @@
 import { expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
@@ -24,11 +24,11 @@ test('a rerender with the same option values loads no update module', async () =
 	const prefetch = policyFixture();
 	const first = { externalId: 'user_1' };
 	const provider = (user: { externalId: string }) => (
-		<ConsentProvider
+		<InthProvider
 			options={{ mode: testingMode, persistence: false, prefetch, user }}
 		>
 			<span>child</span>
-		</ConsentProvider>
+		</InthProvider>
 	);
 	const screen = await render(provider(first));
 	await screen.rerender(provider(first));

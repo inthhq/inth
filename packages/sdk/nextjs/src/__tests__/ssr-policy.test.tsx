@@ -16,7 +16,7 @@ import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/encode';
-import { ConsentRoot } from '../root';
+import { InthProvider } from '../root';
 import { resolveConsent } from '../server';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
@@ -87,7 +87,7 @@ const hydrate = async (config: KernelConfig) => {
 		snapshot = value;
 	});
 	const app = (
-		<ConsentRoot
+		<InthProvider
 			state={JSON.parse(JSON.stringify(config))}
 			persistence={{ storageConfig: { storageKey } }}
 			options={{ disableAnimation: true, mode: transportMode({ init }) }}
@@ -96,7 +96,7 @@ const hydrate = async (config: KernelConfig) => {
 			<ConsentDialog />
 			<ConsentDialogTrigger />
 			<Probe />
-		</ConsentRoot>
+		</InthProvider>
 	);
 	container = document.createElement('div');
 	document.body.append(container);
@@ -340,13 +340,13 @@ describe('Next.js request policy and RSC hydration', () => {
 				snapshot = value;
 			});
 			root.render(
-				<ConsentRoot
+				<InthProvider
 					state={{}}
 					config={{ mode: hosted(), projectUrl: '/api/next-prefetch-test' }}
 					persistence={false}
 				>
 					<Probe />
-				</ConsentRoot>
+				</InthProvider>
 			);
 			await vi.waitFor(() =>
 				expect(snapshot?.resolution.status).toBe('matched')

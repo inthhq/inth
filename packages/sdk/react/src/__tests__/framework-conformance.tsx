@@ -16,7 +16,7 @@ import type {
 	ProbePolicyContract,
 } from '@inth/conformance/contract/policy-driver';
 import { ConsentDialog, ConsentWidget, ConsentBanner } from '@inth/react';
-import type { ConsentProviderOptions } from '@inth/react';
+import type { InthProviderOptions } from '@inth/react';
 import { KernelContext } from '@inth/react/context';
 import {
 	IABProvider,
@@ -46,7 +46,7 @@ import type { policyFixture as PolicyFixture } from './policy-fixture';
 
 /** Runs the same assertions against each framework's own boundary. */
 export const runFrameworkConformance = ({
-	Root: ConsentRoot,
+	Root: InthProvider,
 	framework,
 	policyFixture,
 	createPolicySession,
@@ -58,7 +58,7 @@ export const runFrameworkConformance = ({
 	createPolicySession: CreatePolicySession;
 	probePolicyContract: ProbePolicyContract;
 }) => {
-	type ProviderOptions = ConsentProviderOptions & {
+	type ProviderOptions = InthProviderOptions & {
 		i18n?: {
 			locale?: string;
 			messages?: Record<string, Partial<TranslationsResponse>>;
@@ -213,7 +213,7 @@ export const runFrameworkConformance = ({
 		}
 	};
 
-	const buildProviderOptions = (opts: MountOptions): ConsentProviderOptions => {
+	const buildProviderOptions = (opts: MountOptions): InthProviderOptions => {
 		const provided = (opts.providerOptions ?? {}) as ProviderOptions;
 		const state = opts.initialState as
 			| { consents?: Record<string, boolean> }
@@ -392,7 +392,7 @@ export const runFrameworkConformance = ({
 
 	const renderTree = function renderTree(
 		opts: MountOptions,
-		options: ConsentProviderOptions,
+		options: InthProviderOptions,
 		onKernel: (kernel: ConsentKernel) => void,
 		onSettled?: () => void
 	) {
@@ -403,7 +403,7 @@ export const runFrameworkConformance = ({
 			/>
 		);
 		return (
-			<ConsentRoot
+			<InthProvider
 				state={options.prefetch ?? {}}
 				options={options}
 				persistence={options.persistence}
@@ -420,7 +420,7 @@ export const runFrameworkConformance = ({
 				) : (
 					content
 				)}
-			</ConsentRoot>
+			</InthProvider>
 		);
 	};
 

@@ -4,7 +4,7 @@ import type { ComponentProps } from 'react';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentBanner } from '~/components/prompt';
 
@@ -16,7 +16,7 @@ const renderBanner = function renderBanner(
 	options: {
 		language?: string;
 		presentation?: ComponentProps<
-			typeof ConsentProvider
+			typeof InthProvider
 		>['options']['presentation'];
 	} = {}
 ) {
@@ -25,7 +25,7 @@ const renderBanner = function renderBanner(
 		...rule,
 	});
 	return render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: testing(),
 				persistence: false,
@@ -45,7 +45,7 @@ const renderBanner = function renderBanner(
 				disableAnimation
 				{...props}
 			/>
-		</ConsentProvider>
+		</InthProvider>
 	);
 };
 

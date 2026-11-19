@@ -39,15 +39,15 @@ corner.
 
 ## Follow your site's language
 
-Bind the `language` prop of the Nuxt `ConsentRoot` to your site's current
+Bind the `language` prop of the Nuxt `InthProvider` to your site's current
 language, for example from `@nuxtjs/i18n`. When the prop changes,
-`ConsentRoot` stores the language and resolves the policy again, which
+`InthProvider` stores the language and resolves the policy again, which
 fetches the text in that language:
 
 {/* example: fragment */}
 
 ```vue
-<ConsentRoot :language="locale" />
+<InthProvider :language="locale" />
 ```
 
 From your own language switcher, assign the language to

@@ -1,5 +1,5 @@
 /**
- * `ConsentRoot` hydrates the server's HTML without the consent engine:
+ * `InthProvider` hydrates the server's HTML without the consent engine:
  * the server leaves the snapshot it rendered with, the browser renders
  * from it, and a banner tap before the engine loads is recorded in the
  * tap's own task.
@@ -15,7 +15,7 @@ import {
 	vi,
 } from 'vitest';
 
-import ConsentRootFixture from './fixtures/consent-root-fixture.svelte';
+import KitProviderFixture from './fixtures/kit-provider-fixture.svelte';
 import { policyFixture } from './policy-fixture';
 import { closeSsrWorker, renderRootSsr, warmSsrWorker } from './server-render';
 
@@ -47,7 +47,7 @@ const hydrateFromServer = async (
 		boot: JSON.parse(target.querySelector(BOOT)?.textContent ?? 'null'),
 		head,
 	};
-	mounted = hydrate(ConsentRootFixture, {
+	mounted = hydrate(KitProviderFixture, {
 		props: props as never,
 		recover: false,
 		target,
@@ -87,7 +87,7 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
-describe('ConsentRoot deferred engine', () => {
+describe('InthProvider deferred engine', () => {
 	test('hydrates the server HTML from the boot data, without the engine', async () => {
 		const warn = vi.spyOn(console, 'warn');
 		const server = await hydrateFromServer({

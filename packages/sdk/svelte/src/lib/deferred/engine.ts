@@ -1,7 +1,7 @@
 /**
- * `ConsentRoot`'s consent engine in the browser: the runtime it renders
- * once loaded. The deferred runtime (`runtime.ts`) loads this chunk after
- * the page for a visitor who still has to choose, and at once for every
+ * The SvelteKit `InthProvider`'s consent engine in the browser: the runtime it
+ * renders once loaded. The deferred runtime (`runtime.ts`) loads this chunk
+ * after the page for a visitor who still has to choose, and at once for every
  * other visitor, whose server render preloads it.
  *
  * @packageDocumentation
@@ -18,16 +18,16 @@ import type {
 import type { DeferredCommitted } from '@inth/sdk/surface-actions/early-commit';
 
 import { createOwnedRuntime } from '../owned-runtime';
-import type { ConsentRootState } from '../types';
+import type { InthProviderState } from '../types';
 
 export { preloadSavePath } from '@inth/sdk/runtime/save-preload';
 
-/** What `ConsentRoot` read before it loaded the engine. @internal */
+/** What `InthProvider` read before it loaded the engine. @internal */
 export interface RootEngineInput {
 	/** `runtimeOptionsFor` the root's options; `prefetch` is the state's. */
 	options: Omit<ConsentProviderRuntimeOptions, 'mode'>;
 	/** `data.consent`, from `loadConsent`. */
-	state: ConsentRootState;
+	state: InthProviderState;
 	/** The root's own transport, when it was given one. */
 	mode?: ProviderTransportFactory;
 	/** A choice the deferred runtime recorded before the engine loaded. */

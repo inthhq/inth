@@ -9,8 +9,8 @@
  * arrives in the same download as the surface. Same component and props as
  * `ConsentDialog`.
  *
- * `ConsentRuntimeProvider` is `ConsentProvider` for a runtime the surface
- * is handed, without the code `ConsentProvider` carries to create one.
+ * `ConsentRuntimeProvider` is `InthProvider` for a runtime the surface
+ * is handed, without the code `InthProvider` carries to create one.
  *
  * @packageDocumentation
  */

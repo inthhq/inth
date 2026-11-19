@@ -6,7 +6,7 @@ import { test, expect, vi } from 'vitest';
 
 import { ConsentDialog } from '../components/panel';
 import { KernelContext } from '../context';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 
 for (const scenario of ['notice', 'scoped', 'necessary-only'] as const) {
 	for (const action of ['accept', 'reject', 'save'] as const) {
@@ -46,7 +46,7 @@ for (const scenario of ['notice', 'scoped', 'necessary-only'] as const) {
 			document.body.append(container);
 			const root = createRoot(container);
 			root.render(
-				<ConsentProvider
+				<InthProvider
 					options={{
 						consentCategories:
 							scenario === 'notice'
@@ -60,7 +60,7 @@ for (const scenario of ['notice', 'scoped', 'necessary-only'] as const) {
 				>
 					<Capture />
 					<ConsentDialog disableAnimation />
-				</ConsentProvider>
+				</InthProvider>
 			);
 			try {
 				await vi.waitFor(() =>

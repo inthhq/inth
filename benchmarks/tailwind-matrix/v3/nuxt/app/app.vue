@@ -5,5 +5,5 @@
 	>
 		Tailwind utilities are active on this page.
 	</p>
-	<ConsentRoot />
+	<InthProvider />
 </template>

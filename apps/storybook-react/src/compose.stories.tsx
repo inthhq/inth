@@ -3,7 +3,7 @@ import {
 	recipeRejects,
 } from '@inth/conformance/play/docs-recipes';
 import { ConsentDialog } from '@inth/react';
-import type { ConsentProviderOptions } from '@inth/react';
+import type { InthProviderOptions } from '@inth/react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
@@ -23,7 +23,7 @@ import {
 const ComposedBanner = ({
 	options = editableConsentOptions,
 }: {
-	options?: Partial<ConsentProviderOptions>;
+	options?: Partial<InthProviderOptions>;
 }) => (
 	<StorybookConsentProvider options={options}>
 		<RecipePage>
@@ -69,7 +69,7 @@ const customizeOpensDialog: Story['play'] = async () => {
 	).toBeInTheDocument();
 };
 
-const noticeOptions: Partial<ConsentProviderOptions> = {
+const noticeOptions: Partial<InthProviderOptions> = {
 	...editableConsentOptions,
 	mode: storybookMode([
 		{

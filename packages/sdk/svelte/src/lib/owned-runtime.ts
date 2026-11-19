@@ -1,7 +1,7 @@
 /**
  * The consent engine a provider creates for itself: the kernel and every
- * module it mounts. `ConsentProvider` imports it statically.
- * `ConsentRoot` imports it on the server and, in the browser, through
+ * module it mounts. `InthProvider` from `@inth/svelte` imports it
+ * statically. The one from `@inth/svelte/kit` imports it on the server and, in the browser, through
  * `deferred/engine.ts` once it needs the engine, so its first-load chunk
  * does without it.
  *

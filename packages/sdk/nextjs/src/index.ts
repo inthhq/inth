@@ -7,17 +7,17 @@
  *   export default defineConsentConfig({ scripts: [...] });
  *
  *   // app/layout.tsx (Server Component)
- *   import { ConsentBanner, ConsentRoot } from '@inth/nextjs';
+ *   import { ConsentBanner, InthProvider } from '@inth/nextjs';
  *   import { resolveConsent } from '@inth/nextjs/server';
  *
  *   export default function RootLayout({ children }) {
  *     return (
  *       <html>
  *         <body>
- *           <ConsentRoot state={resolveConsent()}>
+ *           <InthProvider state={resolveConsent()}>
  *             {children}
  *             <ConsentBanner />
- *           </ConsentRoot>
+ *           </InthProvider>
  *         </body>
  *       </html>
  *     );
@@ -40,8 +40,8 @@ export {
 	DeferredConsentBanner as ConsentBanner,
 	DeferredConsentDialog as ConsentDialog,
 } from '@inth/react/deferred';
-export type { ConsentRootProps } from './root';
-export { ConsentRoot } from './root';
+export type { InthProviderProps } from './root';
+export { InthProvider } from './root';
 export type { ConsentClientOptions, ConsentState } from './types';
 export type { ConsentConfig } from './config';
 export { defineConsentConfig } from './config';

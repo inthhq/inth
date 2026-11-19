@@ -17,7 +17,7 @@ import { expect, test } from 'vitest';
 import { optInRule } from '../../../core/src/__tests__/fixtures/kernel-fixtures';
 import { consentRequestMiddleware } from '../middleware';
 import type { ConsentRequestContext } from '../middleware';
-import { ConsentRoot } from '../root';
+import { InthProvider } from '../root';
 import { createConsentStateHandler } from '../server';
 import type { ConsentState } from '../server';
 import { manifestOf } from './manifest-fixture';
@@ -99,7 +99,7 @@ test('passes a server function result through', async () => {
 	expect(request.headers.get('x-inth-country')).toBe('DE');
 });
 
-test('renders ConsentRoot from a server function that lists it', async () => {
+test('renders InthProvider from a server function that lists it', async () => {
 	const request = new Request('https://app.example.com/', {
 		headers: { 'cf-ipcountry': 'DE' },
 	});
@@ -122,7 +122,7 @@ test('renders ConsentRoot from a server function that lists it', async () => {
 
 	const stream = await renderToReadableStream(
 		createElement(
-			ConsentRoot,
+			InthProvider,
 			{ state: outcome.result as ConsentState },
 			createElement('main', { id: 'page' }, 'Page')
 		)

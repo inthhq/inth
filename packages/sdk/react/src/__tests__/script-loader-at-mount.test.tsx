@@ -1,10 +1,10 @@
 /**
- * A plain `ConsentProvider` loads the script loader from its mount effect,
+ * A plain `InthProvider` loads the script loader from its mount effect,
  * not during its first render, and ships none of the code that decides an
  * earlier load.
  *
  * Starting the download during render is opt-in: the Next.js and TanStack
- * Start `ConsentRoot` pass `__preloadScriptLoader`, whose decision reads
+ * Start `InthProvider` pass `__preloadScriptLoader`, whose decision reads
  * the stream fold, stored records and GPC. Every app that renders the
  * provider ships its static module graph, so one value import of that
  * module would put those bytes into every React first load.
@@ -15,7 +15,7 @@ import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { ConsentProvider } from '../index';
+import { InthProvider } from '../index';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
@@ -172,7 +172,7 @@ afterEach(() => {
 	held = false;
 });
 
-describe('ConsentProvider: script loader at mount', () => {
+describe('InthProvider: script loader at mount', () => {
 	test('its static graph reaches the provider runtime but not the preload decision', () => {
 		const graph = staticGraph(['../index.ts', '../provider.tsx']);
 		expect(graph).toContain(`${CORE_SOURCE}runtime/provider-runtime.ts`);
@@ -188,7 +188,7 @@ describe('ConsentProvider: script loader at mount', () => {
 		document.body.append(container);
 		root = createRoot(container);
 		root.render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode,
 					persistence: false,
@@ -197,7 +197,7 @@ describe('ConsentProvider: script loader at mount', () => {
 				}}
 			>
 				<Hold />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		await vi.waitFor(() => expect(held).toBe(true));
 		for (let turn = 0; turn < 10; turn += 1) {
@@ -214,7 +214,7 @@ describe('ConsentProvider: script loader at mount', () => {
 		document.body.append(container);
 		root = createRoot(container);
 		root.render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode,
 					persistence: false,
@@ -223,7 +223,7 @@ describe('ConsentProvider: script loader at mount', () => {
 				}}
 			>
 				<div />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		await vi.waitFor(() => expect(loads.created).toBe(1));
 		expect(loads.evaluated).toBe(1);

@@ -2,7 +2,7 @@
  * `defineConsentConfig` — the app's consent setup, declared once in
  * `inth.config.ts` at the project root.
  *
- * `withConsentManifest` finds that file and hands it to `ConsentRoot`,
+ * `withConsentManifest` finds that file and hands it to `InthProvider`,
  * `resolveConsent`, `createConsentRoute` and the Pages Router helpers, so
  * the app never imports its own config. The module has no `next` or React
  * runtime imports, so the same config is safe on the server and in the
@@ -50,7 +50,7 @@ export const readProjectUrlFromEnv = function readProjectUrlFromEnv():
 
 /**
  * The consent setup of a Next.js app: where the backend is, how the
- * visitor's policy is resolved, and the browser options `ConsentRoot`
+ * visitor's policy is resolved, and the browser options `InthProvider`
  * reads.
  *
  * `inth.config.ts` is bundled into the browser as well as the server, so
@@ -118,7 +118,7 @@ export interface ConsentConfig extends ConsentClientOptions {
 
 	/**
 	 * The consent journey scope, read by both `resolveConsent` and
-	 * `ConsentRoot` so they agree.
+	 * `InthProvider` so they agree.
 	 */
 	journey?: ConsentJourneyOption;
 }
@@ -218,7 +218,7 @@ const assertConsentConfig = function assertConsentConfig(
 /**
  * Declare the app's consent setup in `inth.config.ts` at the project root.
  * `withConsentManifest` in `next.config.ts` finds the file, so
- * `ConsentRoot`, `resolveConsent()`, `createConsentRoute()` and the Pages
+ * `InthProvider`, `resolveConsent()`, `createConsentRoute()` and the Pages
  * Router helpers read it without the app importing it.
  *
  * The file is bundled into the browser too, so it can hold functions (such

@@ -31,7 +31,7 @@ Nothing opens on top of it.
   `ConsentDraftProvider` and `useConsentDraft()` hold the switches until the
   visitor saves. `useFocusTrap` keeps focus inside, and the page behind gets
   `inert` and stops scrolling.
-- **`components/consent.tsx`** mounts `ConsentRoot` with the PostHog script
+- **`components/consent.tsx`** mounts `InthProvider` with the PostHog script
   and `presentation: { prompt: { variant: 'wall' } }`, which makes the first
   step blocking. Inth won't block a notice, so a notice policy gets the same
   modal without the backdrop.

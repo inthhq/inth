@@ -2,7 +2,7 @@ import type { KernelOverrides } from '@inth/sdk/engine';
 
 import type { VueConsentKernelContext } from './kernel';
 
-/** The `ConsentRoot` props that map onto kernel overrides. */
+/** The `InthProvider` props that map onto kernel overrides. */
 export type RootOverrideProps = Pick<
 	KernelOverrides,
 	'country' | 'language' | 'region'
@@ -11,7 +11,7 @@ export type RootOverrideProps = Pick<
 const ROOT_OVERRIDE_KEYS = ['country', 'language', 'region'] as const;
 
 /**
- * Apply `ConsentRoot`'s `country`, `language` and `region` props to the
+ * Apply `InthProvider`'s `country`, `language` and `region` props to the
  * runtime's overrides, and ask for the policy again only when that changes
  * what the kernel would ask for.
  *

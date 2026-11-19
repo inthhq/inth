@@ -13,7 +13,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { page } from 'vitest/browser';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentWidget } from '~/components/preferences';
 import { useConsent, useVendorAllowed, useVendorChoice } from '~/hooks';
@@ -92,7 +92,7 @@ const renderWidget = (
 	values: Partial<Record<'marketing' | 'measurement', boolean>> = {}
 ) =>
 	render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				consentCategories: [...CATEGORIES],
 				mode: testing(),
@@ -108,7 +108,7 @@ const renderWidget = (
 		>
 			<ConsentWidget />
 			<Probe />
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 describe('consent widget vendor rows', () => {
@@ -387,7 +387,7 @@ describe('vendor switches are opt-in', () => {
 
 	const renderWithHelper = (vendors?: Vendor[], savedDenial = false) =>
 		render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					consentCategories: [...CATEGORIES],
 					mode: testing(),
@@ -407,7 +407,7 @@ describe('vendor switches are opt-in', () => {
 			>
 				<ConsentWidget />
 				{savedDenial ? <SavedHelperDenial /> : null}
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 	test('a helper alone shows its category without a vendor switch', async () => {

@@ -101,7 +101,7 @@ export const IABProvider = ({ children, ...options }: IABProviderProps) => {
 	const kernel = useContext(KernelContext);
 	if (!kernel) {
 		throw new Error(
-			'IABProvider: no kernel in context. Wrap with <ConsentProvider options={...}> first.'
+			'IABProvider: no kernel in context. Wrap with <InthProvider options={...}> first.'
 		);
 	}
 
@@ -270,7 +270,7 @@ export const useIAB = function useIAB(): ReactIABState | null {
 	const iabContext = useContext(IABContext);
 	if (!kernel) {
 		throw new Error(
-			'useIAB must be used within <ConsentProvider options={...}> from @inth/react'
+			'useIAB must be used within <InthProvider options={...}> from @inth/react'
 		);
 	}
 

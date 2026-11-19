@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ConsentRoot } from '@inth/vue/vue-plugin';
+import { InthProvider } from '@inth/vue/vue-plugin';
 </script>
 
 <template>
@@ -9,5 +9,5 @@ import { ConsentRoot } from '@inth/vue/vue-plugin';
 	>
 		Tailwind utilities are active on this page.
 	</p>
-	<ConsentRoot />
+	<InthProvider />
 </template>

@@ -2,7 +2,7 @@ import { userEvent } from '@vitest/browser/context';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { IABConsentDialog } from '~/components/iab-panel';
 import { IABConsentBanner } from '~/components/iab-prompt';
 
@@ -32,10 +32,10 @@ describe('IAB Events E2E Tests', () => {
 	describe('Event Status Values', () => {
 		test('should emit "tcloaded" with the saved TC string for a returning visitor', async () => {
 			const firstVisit = await render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 			const acceptButton = await waitForElement(
 				'[data-testid="iab-consent-banner-accept-button"]'
@@ -52,10 +52,10 @@ describe('IAB Events E2E Tests', () => {
 			delete (window as { __tcfapi?: unknown }).__tcfapi;
 
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 			await waitForCMP();
 
@@ -74,10 +74,10 @@ describe('IAB Events E2E Tests', () => {
 			const events: string[] = [];
 
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await waitForElement('[data-testid="iab-consent-banner-card"]');
@@ -108,10 +108,10 @@ describe('IAB Events E2E Tests', () => {
 			const events: string[] = [];
 
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await waitForElement('[data-testid="iab-consent-banner-card"]');
@@ -148,10 +148,10 @@ describe('IAB Events E2E Tests', () => {
 		test('ad tags see the banner, then the choice, and never tcloaded', async () => {
 			const events: { eventStatus?: string; tcString: string }[] = [];
 			await render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 			// An ad tag registers as soon as `__tcfapi` exists, stub or not.
 			const tcfapi = await vi.waitFor(() =>
@@ -197,10 +197,10 @@ describe('IAB Events E2E Tests', () => {
 	describe('Event Listener Lifecycle', () => {
 		test('should invoke listener immediately on registration', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await waitForElement('[data-testid="iab-consent-banner-card"]');
@@ -229,10 +229,10 @@ describe('IAB Events E2E Tests', () => {
 
 		test('should assign unique listenerIds', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await waitForElement('[data-testid="iab-consent-banner-card"]');
@@ -253,10 +253,10 @@ describe('IAB Events E2E Tests', () => {
 
 		test('should stop notifying after removeEventListener', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 			await waitForCMP();
 			const tcfapi = (window as { __tcfapi?: TcfApiTestFunction }).__tcfapi;
@@ -291,10 +291,10 @@ describe('IAB Events E2E Tests', () => {
 
 		test('multiple listeners should all receive updates', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await waitForElement('[data-testid="iab-consent-banner-card"]');
@@ -339,10 +339,10 @@ describe('IAB Events E2E Tests', () => {
 	describe('Event Data Completeness', () => {
 		test('each event should include complete TCData', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await waitForElement('[data-testid="iab-consent-banner-card"]');
@@ -374,10 +374,10 @@ describe('IAB Events E2E Tests', () => {
 
 		test('listenerId in callback should match assigned ID', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await waitForElement('[data-testid="iab-consent-banner-card"]');

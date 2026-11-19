@@ -15,7 +15,7 @@ These docs describe Inth v3. Find your app's row in Choose your setup, then foll
 - [How consent works](./docs/concepts/how-consent-works.md): What Inth decides on each page load, the difference between a permission and a recorded choice, and what happens when a visitor saves.
 - [Customize the interface](./docs/customization/overview.md): Change Inth's consent banner and dialog one step at a time, from a prop to your own markup, and find where each step lives in your framework.
 - [Verify consent](./docs/guides/verify-consent.md): Check in a production build that vendor requests wait for consent, rejection survives a reload, preferences reopen and privacy signals apply.
-- [Upgrade a React app from v2](./docs/frameworks/react/upgrade-v3.md): Upgrade a React app from c15t v2 (@c15t/react) to Inth v3 (@inth/react). Covers packages, ConsentProvider and transports, the useConsentManager codemod, callbacks, policies, styles, IAB and stored consent.
+- [Upgrade a React app from v2](./docs/frameworks/react/upgrade-v3.md): Upgrade a React app from c15t v2 (@c15t/react) to Inth v3 (@inth/react). Covers packages, InthProvider and transports, the useConsentManager codemod, callbacks, policies, styles, IAB and stored consent.
 
 ## More documentation
 
@@ -23,33 +23,33 @@ These docs describe Inth v3. Find your app's row in Choose your setup, then foll
 
 ## Frameworks
 
-- [Callbacks](./docs/frameworks/react/callbacks.md): Run code in a React app when a visitor records a consent choice, when permissions change, when a request fails and before the revocation reload, with the ConsentProvider callbacks option.
-- [Clear on revocation](./docs/frameworks/react/clear-on-revocation.md): Delete the first-party cookies and Web Storage keys a consent category owns in a React app when that category is denied, with the clearOnRevocation option on ConsentProvider.
+- [Callbacks](./docs/frameworks/react/callbacks.md): Run code in a React app when a visitor records a consent choice, when permissions change, when a request fails and before the revocation reload, with the InthProvider callbacks option.
+- [Clear on revocation](./docs/frameworks/react/clear-on-revocation.md): Delete the first-party cookies and Web Storage keys a consent category owns in a React app when that category is denied, with the clearOnRevocation option on InthProvider.
 - [Components](./docs/frameworks/react/components.md): Every Inth component a React app imports from @inth/react, what each renders, where each one mounts, and which to start with.
 - [ConsentBanner](./docs/frameworks/react/components/consent-banner.md): Render the Inth consent banner in a React app, choose its variant and position, and compose its parts.
 - [ConsentDialog](./docs/frameworks/react/components/consent-dialog.md): Open the Inth preference center as a modal ConsentDialog in a React app, wire its triggers and control blocking, focus and policy gating.
 - [ConsentDialogLink](./docs/frameworks/react/components/consent-dialog-link.md): Add a ConsentDialogLink to a React footer so visitors reopen the Inth preference center from your own text link, with asChild and rights data.
-- [ConsentDialogTrigger](./docs/frameworks/react/components/consent-dialog-trigger.md): Add the Inth ConsentDialogTrigger floating button or toolbar inside a React ConsentProvider so visitors can reopen the preference center after the first prompt.
+- [ConsentDialogTrigger](./docs/frameworks/react/components/consent-dialog-trigger.md): Add the Inth ConsentDialogTrigger floating button or toolbar inside a React InthProvider so visitors can reopen the preference center after the first prompt.
 - [ConsentGate](./docs/frameworks/react/components/consent-gate.md): Gate a YouTube or map iframe behind consent with ConsentGate in React, showing a placeholder that opens the preference center until the category is allowed.
-- [ConsentProvider](./docs/frameworks/react/components/consent-provider.md): Mount ConsentProvider in a React app and configure its backend, scripts, storage, blocking and presentation options.
 - [ConsentWidget](./docs/frameworks/react/components/consent-widget.md): Embed the Inth preference center inline with ConsentWidget on a React privacy page, with draft toggles that record a choice only on Save.
 - [DevTools](./docs/frameworks/react/components/dev-tools.md): Inspect consent state, location, loaded scripts and consent events in a React app during development with the Inth DevTools panel.
+- [InthProvider](./docs/frameworks/react/components/inth-provider.md): Mount InthProvider in a React app and configure its backend, scripts, storage, blocking and presentation options.
 - [Compose your own banner](./docs/frameworks/react/compose.md): Build a React consent banner from the ConsentBanner parts in @inth/react, with your own markup and buttons, while the policy still decides which actions appear.
-- [Content Security Policy](./docs/frameworks/react/content-security-policy.md): Run Inth in a React app under a Content Security Policy, allow the consent backend and vendor hosts, and pass a nonce to ConsentProvider and ConsentTheme.
+- [Content Security Policy](./docs/frameworks/react/content-security-policy.md): Run Inth in a React app under a Content Security Policy, allow the consent backend and vendor hosts, and pass a nonce to InthProvider and ConsentTheme.
 - [Customize](./docs/frameworks/react/customize.md): Change the colors, fonts, layout, button styles and copy of the Inth banner and dialog in a React app with theme tokens, provider options and slots, and load the stylesheet yourself when you need to.
-- [Embeds](./docs/frameworks/react/embeds.md): Keep YouTube videos, maps and other iframes out of a React page until their consent category is allowed, with ConsentGate or the iframe blocker in ConsentProvider.
+- [Embeds](./docs/frameworks/react/embeds.md): Keep YouTube videos, maps and other iframes out of a React page until their consent category is allowed, with ConsentGate or the iframe blocker in InthProvider.
 - [IAB GPP](./docs/frameworks/react/gpp.md): Add the IAB Global Privacy Platform API (__gpp) to a React app with ConsentGPP from @inth/react/gpp, so ad tech can read US state opt-outs and the TCF EU consent string.
-- [Headless](./docs/frameworks/react/headless.md): Build a custom consent banner or embed gate in React with the @inth/react/headless hooks inside your ConsentProvider.
+- [Headless](./docs/frameworks/react/headless.md): Build a custom consent banner or embed gate in React with the @inth/react/headless hooks inside your InthProvider.
 - [Hooks](./docs/frameworks/react/hooks.md): Gate features and save consent choices in React components with the focused hooks exported from @inth/react.
-- [IAB TCF](./docs/frameworks/react/iab.md): Mount the IAB TCF banner and dialog inside a React ConsentProvider and configure the CMP ID, policy and vendor data.
-- [Network blocker](./docs/frameworks/react/network-blocker.md): Hold fetch and XMLHttpRequest calls in a React app until their consent category is allowed, with networkBlocker rules in the ConsentProvider options.
+- [IAB TCF](./docs/frameworks/react/iab.md): Mount the IAB TCF banner and dialog inside a React InthProvider and configure the CMP ID, policy and vendor data.
+- [Network blocker](./docs/frameworks/react/network-blocker.md): Hold fetch and XMLHttpRequest calls in a React app until their consent category is allowed, with networkBlocker rules in the InthProvider options.
 - [Quickstart](./docs/frameworks/react/quickstart.md): Add a consent banner, preferences dialog and consent-gated scripts to a React single-page app built with Vite, using Inth as the consent backend.
 - [Rendering and deployment](./docs/frameworks/react/rendering.md): How Inth resolves consent in client-rendered React apps, React Router framework mode, Remix and other server-rendered React apps without an Inth adapter.
-- [Scripts](./docs/frameworks/react/scripts.md): Load vendor scripts by consent category in a React app with ConsentProvider, and clear stored data or reload the page when a visitor withdraws consent.
+- [Scripts](./docs/frameworks/react/scripts.md): Load vendor scripts by consent category in a React app with InthProvider, and clear stored data or reload the page when a visitor withdraws consent.
 - [Translations](./docs/frameworks/react/translations.md): Where Inth banner and dialog copy comes from in a React app, how the browser picks the visitor's language, and how to override copy and switch languages with the provider's i18n option and hooks.
 - [Troubleshooting](./docs/frameworks/react/troubleshooting.md): Fix a missing banner, early vendor requests, unstyled components and theme warnings in a React app that uses @inth/react.
-- [Upgrade from v2](./docs/frameworks/react/upgrade-v3.md): Upgrade a React app from c15t v2 (@c15t/react) to Inth v3 (@inth/react). Covers packages, ConsentProvider and transports, the useConsentManager codemod, callbacks, policies, styles, IAB and stored consent.
-- [Vendor consent](./docs/frameworks/react/vendor-consent.md): Let visitors allow a category such as marketing in a React app and still turn off one vendor in it, with the vendors option on ConsentProvider and useVendorAllowed.
+- [Upgrade from v2](./docs/frameworks/react/upgrade-v3.md): Upgrade a React app from c15t v2 (@c15t/react) to Inth v3 (@inth/react). Covers packages, InthProvider and transports, the useConsentManager codemod, callbacks, policies, styles, IAB and stored consent.
+- [Vendor consent](./docs/frameworks/react/vendor-consent.md): Let visitors allow a category such as marketing in a React app and still turn off one vendor in it, with the vendors option on InthProvider and useVendorAllowed.
 
 ## Concepts
 

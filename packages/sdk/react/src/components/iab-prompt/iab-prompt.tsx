@@ -88,14 +88,14 @@ export interface IABConsentBannerProps {
  *
  * @example
  * ```tsx
- * <ConsentProvider
+ * <InthProvider
  *   options={{
  *     mode: hosted({ projectUrl: '/api/inth' }),
  *     iab: { cmpId: 123, vendors: [1, 2, 10] },
  *   }}
  * >
  *   <IABConsentBanner />
- * </ConsentProvider>
+ * </InthProvider>
  * ```
  *
  * @public

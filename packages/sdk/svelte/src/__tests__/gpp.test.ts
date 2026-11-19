@@ -62,7 +62,7 @@ afterEach(() => {
 	delete gppWindow.__gpp;
 });
 
-describe('ConsentProvider gpp option', () => {
+describe('InthProvider gpp option', () => {
 	test('installs __gpp with the given options and removes it on unmount', async () => {
 		const app = mountProvider({ gpp: { cmpId: 42 } });
 

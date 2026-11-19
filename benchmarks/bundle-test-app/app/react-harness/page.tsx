@@ -19,7 +19,7 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDraftProvider,
-	ConsentProvider,
+	InthProvider,
 	ConsentWidget,
 } from '@inth/react';
 import type { Script } from '@inth/sdk/modules/script-loader';
@@ -78,7 +78,7 @@ const DEMO_SCRIPTS: Script[] = [
 ];
 
 const ReactHarnessPage = () => (
-	<ConsentProvider
+	<InthProvider
 		options={{
 			mode: benchPolicy({
 				policy: [
@@ -130,7 +130,7 @@ const ReactHarnessPage = () => (
 			<ConsentDialog />
 			<ConsentWidget />
 		</ConsentDraftProvider>
-	</ConsentProvider>
+	</InthProvider>
 );
 
 export default ReactHarnessPage;

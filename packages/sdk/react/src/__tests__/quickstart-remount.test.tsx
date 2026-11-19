@@ -14,7 +14,7 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentProvider,
+	InthProvider,
 	useConsent,
 	useExplicitChoice,
 } from '../index';
@@ -56,7 +56,7 @@ test('the quickstart remounted before its rejection is stored restores the rejec
 	clearStorage();
 	const onChoiceRecorded = vi.fn();
 	const app = (
-		<ConsentProvider
+		<InthProvider
 			options={{
 				callbacks: { onChoiceRecorded },
 				consentCategories: ['marketing'],
@@ -69,7 +69,7 @@ test('the quickstart remounted before its rejection is stored restores the rejec
 			<footer>
 				<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 			</footer>
-		</ConsentProvider>
+		</InthProvider>
 	);
 	const first = await render(app);
 	await first.getByTestId('consent-banner-reject-button').click();

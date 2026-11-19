@@ -10,7 +10,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { page } from 'vitest/browser';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { KernelContext, ProviderServicesContext } from '~/context';
 import { useDeclaredVendors, useVendorAllowed } from '~/hooks';
@@ -58,7 +58,7 @@ describe('provider vendor options', () => {
 		const Host = () => {
 			const [vendors, setVendors] = useState<Vendor[]>([]);
 			return (
-				<ConsentProvider
+				<InthProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
 						mode: testing(),
@@ -78,7 +78,7 @@ describe('provider vendor options', () => {
 						declare
 					</button>
 					<Probe />
-				</ConsentProvider>
+				</InthProvider>
 			);
 		};
 		render(<Host />);
@@ -95,7 +95,7 @@ describe('provider vendor options', () => {
 		const Host = () => {
 			const [vendors, setVendors] = useState<Vendor[]>([META]);
 			return (
-				<ConsentProvider
+				<InthProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
 						mode: testing(),
@@ -115,7 +115,7 @@ describe('provider vendor options', () => {
 						remove
 					</button>
 					<Probe />
-				</ConsentProvider>
+				</InthProvider>
 			);
 		};
 		render(<Host />);
@@ -132,7 +132,7 @@ describe('provider vendor options', () => {
 		const Host = () => {
 			const [vendors, setVendors] = useState<Vendor[]>([META]);
 			return (
-				<ConsentProvider
+				<InthProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
 						mode: testing(),
@@ -160,7 +160,7 @@ describe('provider vendor options', () => {
 						remove
 					</button>
 					<Probe />
-				</ConsentProvider>
+				</InthProvider>
 			);
 		};
 		render(<Host />);
@@ -179,7 +179,7 @@ describe('provider vendor options', () => {
 		const Host = () => {
 			const [scripts, setScripts] = useState<Script[]>([]);
 			return (
-				<ConsentProvider
+				<InthProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
 						mode: testing(),
@@ -208,7 +208,7 @@ describe('provider vendor options', () => {
 						add
 					</button>
 					<Probe />
-				</ConsentProvider>
+				</InthProvider>
 			);
 		};
 		render(<Host />);
@@ -231,7 +231,7 @@ describe('provider vendor options', () => {
 		const Host = () => {
 			const [scripts, setScripts] = useState<Script[]>([pixel]);
 			return (
-				<ConsentProvider
+				<InthProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
 						mode: testing(),
@@ -251,7 +251,7 @@ describe('provider vendor options', () => {
 						remove
 					</button>
 					<Probe />
-				</ConsentProvider>
+				</InthProvider>
 			);
 		};
 		render(<Host />);
@@ -275,7 +275,7 @@ describe('provider vendor options', () => {
 				{ ...META, name: 'Meta (config)' },
 			]);
 			return (
-				<ConsentProvider
+				<InthProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
 						mode: testing(),
@@ -306,7 +306,7 @@ describe('provider vendor options', () => {
 						remove
 					</button>
 					<Probe />
-				</ConsentProvider>
+				</InthProvider>
 			);
 		};
 		render(<Host />);
@@ -328,7 +328,7 @@ describe('provider vendor options', () => {
 		const Host = () => {
 			const [scripts, setScripts] = useState<Script[]>([]);
 			return (
-				<ConsentProvider
+				<InthProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
 						mode: testing(),
@@ -360,7 +360,7 @@ describe('provider vendor options', () => {
 						add
 					</button>
 					<Probe />
-				</ConsentProvider>
+				</InthProvider>
 			);
 		};
 		render(<Host />);
@@ -389,7 +389,7 @@ describe('provider vendor options', () => {
 		const Host = () => {
 			const [scripts, setScripts] = useState<Script[]>([pixel]);
 			return (
-				<ConsentProvider
+				<InthProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
 						mode: testing(),
@@ -412,7 +412,7 @@ describe('provider vendor options', () => {
 						remove
 					</button>
 					<Probe />
-				</ConsentProvider>
+				</InthProvider>
 			);
 		};
 		render(<Host />);
@@ -445,7 +445,7 @@ describe('provider vendor options', () => {
 				{ ...META, name: 'Meta (config)' },
 			]);
 			return (
-				<ConsentProvider
+				<InthProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
 						mode: testing(),
@@ -483,7 +483,7 @@ describe('provider vendor options', () => {
 						remove config
 					</button>
 					<Probe />
-				</ConsentProvider>
+				</InthProvider>
 			);
 		};
 		render(<Host />);
@@ -521,7 +521,7 @@ describe('provider vendor options', () => {
 		const Host = () => {
 			const [vendors, setVendors] = useState<Vendor[]>([]);
 			return (
-				<ConsentProvider
+				<InthProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
 						mode: testing(),
@@ -539,7 +539,7 @@ describe('provider vendor options', () => {
 						declare
 					</button>
 					<Probe />
-				</ConsentProvider>
+				</InthProvider>
 			);
 		};
 		render(<Host />);
@@ -572,7 +572,7 @@ describe('provider vendor options', () => {
 		const Host = () => {
 			const [vendors, setVendors] = useState<Vendor[]>([META]);
 			return (
-				<ConsentProvider
+				<InthProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
 						mode: testing(),
@@ -590,7 +590,7 @@ describe('provider vendor options', () => {
 						remove
 					</button>
 					<Probe />
-				</ConsentProvider>
+				</InthProvider>
 			);
 		};
 		render(<Host />);
@@ -638,7 +638,7 @@ describe('provider vendor options', () => {
 			);
 		};
 		render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					consentCategories: ['necessary', 'marketing'],
 					mode: testing(),
@@ -659,7 +659,7 @@ describe('provider vendor options', () => {
 			>
 				<Clear />
 				<Probe />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		const denied = () =>
 			document.querySelector('[data-testid="denied"]')?.textContent;
@@ -706,7 +706,7 @@ describe('provider vendor options', () => {
 		const Host = () => {
 			const [vendors, setVendors] = useState<Vendor[]>([]);
 			return (
-				<ConsentProvider
+				<InthProvider
 					options={{
 						consentCategories: ['necessary', 'marketing', 'measurement'],
 						mode: testing(),
@@ -733,7 +733,7 @@ describe('provider vendor options', () => {
 						declare
 					</button>
 					<CategoryProbe />
-				</ConsentProvider>
+				</InthProvider>
 			);
 		};
 		const read = () =>
@@ -762,7 +762,7 @@ describe('provider vendor options', () => {
 		const Host = () => {
 			const [vendors, setVendors] = useState<Vendor[]>([META]);
 			return (
-				<ConsentProvider
+				<InthProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
 						mode: testing(),
@@ -789,7 +789,7 @@ describe('provider vendor options', () => {
 						remove
 					</button>
 					<Probe />
-				</ConsentProvider>
+				</InthProvider>
 			);
 		};
 		render(<Host />);
@@ -815,7 +815,7 @@ describe('provider vendor options', () => {
 			return <output data-testid="typo">{String(allowed)}</output>;
 		};
 		render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					consentCategories: ['necessary', 'marketing'],
 					mode: testing(),
@@ -826,7 +826,7 @@ describe('provider vendor options', () => {
 			>
 				<Typo />
 				<Probe />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		await vi.waitFor(() => {
 			expect(readProbe()?.meta).toBe(true);
@@ -846,7 +846,7 @@ describe('provider vendor options', () => {
 			{ categories: ['marketing'], id: 'disabled-vendor' }
 		);
 		render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					consentCategories: ['necessary', 'marketing'],
 					mode: testing(),
@@ -866,7 +866,7 @@ describe('provider vendor options', () => {
 				}}
 			>
 				<Probe />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		await vi.waitFor(() => {
 			expect(readProbe()?.meta).toBe(true);

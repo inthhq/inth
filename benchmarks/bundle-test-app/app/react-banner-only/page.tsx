@@ -2,10 +2,10 @@
 
 import { benchPolicy } from '@inth/benchmarking/bench-policy';
 import { ConsentBanner } from '@inth/react/components/consent-banner';
-import { ConsentProvider } from '@inth/react/provider';
+import { InthProvider } from '@inth/react/provider';
 
 const ReactBannerOnlyPage = () => (
-	<ConsentProvider
+	<InthProvider
 		options={{
 			mode: benchPolicy({
 				policy: [
@@ -24,7 +24,7 @@ const ReactBannerOnlyPage = () => (
 			<p>This route isolates the consent banner component.</p>
 		</main>
 		<ConsentBanner />
-	</ConsentProvider>
+	</InthProvider>
 );
 
 export default ReactBannerOnlyPage;

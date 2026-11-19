@@ -1,6 +1,6 @@
 ---
 title: Vendor consent
-description: Let visitors allow a category such as marketing in a React app and still turn off one vendor in it, with the vendors option on ConsentProvider and useVendorAllowed.
+description: Let visitors allow a category such as marketing in a React app and still turn off one vendor in it, with the vendors option on InthProvider and useVendorAllowed.
 group: frameworks
 ---
 
@@ -37,7 +37,7 @@ Then add them to the provider options in `src/consent.tsx`:
 ```tsx title="src/consent.tsx (partial)"
 import { scripts, vendors } from './scripts';
 
-<ConsentProvider options={{ mode, scripts, vendors }}>
+<InthProvider options={{ mode, scripts, vendors }}>
 ```
 
 `vendors` is a live option, like `scripts`: passing a new list replaces the

@@ -6,7 +6,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 
 /**
- * Render once inside `ConsentRoot` in the root layout, wrapped in
+ * Render once inside `InthProvider` in the root layout, wrapped in
  * `<Suspense>` because it reads `useSearchParams()`.
  */
 export const Pageviews = () => {

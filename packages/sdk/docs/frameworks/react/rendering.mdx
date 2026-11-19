@@ -99,7 +99,7 @@ React Router framework mode, Remix and similar frameworks have no Inth adapter.
 Use the quickstart's `Consent` component and render it in your root component,
 around the outlet. In React Router framework mode that is `app/root.tsx`.
 
-`ConsentProvider` renders on the server without touching browser APIs, and the
+`InthProvider` renders on the server without touching browser APIs, and the
 browser takes over after hydration:
 
 - The server HTML contains your page but no banner and no consent state.
@@ -149,7 +149,7 @@ Know its limits before you add it:
 
 ### Render the banner in the server HTML
 
-Inth has no framework-neutral helper for this. `ConsentProvider` accepts a
+Inth has no framework-neutral helper for this. `InthProvider` accepts a
 server-resolved `prefetch` state, but the Next.js and TanStack Start adapters
 build that state from the request's cookie, headers and a cached policy
 manifest. Building it by hand ties your app to internal shapes. If the banner

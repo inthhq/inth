@@ -21,7 +21,7 @@ sends to the browser.
 | SPA mode, `ssr = false` | The browser | See [use SPA mode](#use-spa-mode). |
 
 Every path uses the same root layout: `loadConsent` as the server load and
-`ConsentRoot` with `state={data.consent}`. The quickstart's code is the
+`InthProvider` with `state={data.consent}`. The quickstart's code is the
 `examples/sveltekit` app in the Inth repository.
 [Data fetching](/docs/concepts/data-fetching) compares `/init`, the manifest
 and browser resolution in general.
@@ -250,7 +250,7 @@ first visit's page holds only the banner's rules and the theme tokens, not the
 trigger's, `ConsentGate`'s or the dialog's. The
 browser's JavaScript does not carry those rules again: the components find
 them in the page. Without the handle, the components load the rules in the
-browser and stay hidden until they arrive, unless `ConsentRoot` sets
+browser and stay hidden until they arrive, unless `InthProvider` sets
 `styles={false}` and the app imports `@inth/svelte/styles.css`.
 
 When the visitor's consent already allows some `scripts` entries, through a
@@ -264,11 +264,11 @@ prerendered page starts nothing.
 
 The vendor helpers from `@inth/integrations` start this way, except Cloudflare
 Zaraz and Sentry. Those two helpers, and `scripts` entries you write yourself,
-start after hydration. A `ConsentProvider` given a `runtime` starts nothing
-from the HTML: its scripts start after hydration.
+start after hydration. An `InthProvider` from `@inth/svelte` given a
+`runtime` starts nothing from the HTML: its scripts start after hydration.
 
 To start every `scripts` entry after hydration instead, pass
-`scriptLoader={{ serverStart: false }}` to `ConsentRoot`.
+`scriptLoader={{ serverStart: false }}` to `InthProvider`.
 
 Type `event.locals.inth` in `src/app.d.ts`:
 
@@ -344,28 +344,28 @@ URL, and the backend must allow your site's origin.
 
 With `export const ssr = false` in the root `+layout.ts` and a server
 adapter, the quickstart works unchanged. The root layout's server load still
-runs for each navigation, so `ConsentRoot` starts from a resolved policy.
-There is no server HTML to start from, so `ConsentRoot` renders its children
+runs for each navigation, so `InthProvider` starts from a resolved policy.
+There is no server HTML to start from, so `InthProvider` renders its children
 once the consent engine has loaded, and the banner appears with them.
 
 With a static SPA fallback page and no server, no server load runs. Delete
-`+layout.server.ts` and the Inth handle, and render `ConsentProvider` with a
-browser mode in `+layout.svelte`:
+`+layout.server.ts` and the Inth handle, and render `InthProvider` from
+`@inth/svelte` with a browser mode in `+layout.svelte`:
 
 {/* example: fragment */}
 
 ```svelte title="src/routes/+layout.svelte (partial)"
 <script lang="ts">
-	import { ConsentProvider, hosted } from '@inth/svelte';
+	import { InthProvider, hosted } from '@inth/svelte';
 	import { PUBLIC_INTH_PROJECT_URL } from '$env/static/public';
 </script>
 
-<ConsentProvider projectUrl={PUBLIC_INTH_PROJECT_URL} mode={hosted()} {scripts}>
+<InthProvider projectUrl={PUBLIC_INTH_PROJECT_URL} mode={hosted()} {scripts}>
 ```
 
-The browser resolves consent through the backend's `/init`.
-`ConsentProvider` takes the same props as `ConsentRoot`, with `mode` in place
-of `state`.
+The browser resolves consent through the backend's `/init`. It takes the
+same props as `InthProvider` from `@inth/svelte/kit`, with `mode` in place of
+`state`.
 
 ## Taps before hydration
 
@@ -386,7 +386,7 @@ for a nonce-based policy.
 ## When the consent engine loads
 
 For a visitor the server render asks to choose, the browser's first load
-holds no consent engine. The server render of `ConsentRoot` leaves the consent
+holds no consent engine. The server render of `InthProvider` leaves the consent
 state it rendered with in the HTML, after the page's content. The browser
 hydrates from it, so `getConsentKernel()`, `getSnapshot()` and the other
 getters return it at once. The engine loads at the first of these:
@@ -417,8 +417,9 @@ prompt or a privacy signal, IAB, an experiment, a `consentSource`, `gpp`, a
 that may run now and does not start from the HTML. Prerendered pages load it
 as the page starts too, since their HTML is no one visitor's.
 
-`ConsentProvider` loads its engine with the page, as before. Use `ConsentRoot`
-in a SvelteKit root layout to get the deferred start.
+`InthProvider` from `@inth/svelte` loads its engine with the page, as
+before. Use `InthProvider` from `@inth/svelte/kit` in a SvelteKit root layout
+to get the deferred start.
 
 ## Resolve consent in other server code
 
