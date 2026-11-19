@@ -171,6 +171,8 @@ const adoptedAt = (
 	return typeof at === 'number' ? at : 0;
 };
 
+// c15t's default family: a c15t site on another `storageKey` clears under
+// that key's epoch, which this doesn't read.
 const C15T_EPOCH_KEY = resolveStorageKeys({
 	storageKey: C15T_STORAGE_KEY,
 }).epoch;
@@ -253,7 +255,10 @@ export const createBrowserOutboxStore = function createBrowserOutboxStore(
 					if (!Array.isArray(value) || !value.some(isAdopted)) {
 						return value;
 					}
-					// A c15t tab can still clear after its entries moved here.
+					// A c15t tab can still clear after its entries moved here. A
+					// save queued in the clear's millisecond goes too: unlike a
+					// seeded record, which only shows a decision, it would send
+					// one.
 					const epoch = c15tClearEpoch(storage);
 					const live = value.filter(
 						(entry) => !(isAdopted(entry) && adoptedAt(entry, slot) <= epoch)

@@ -509,6 +509,23 @@ export const mountPersistence = function mountPersistence(
 	};
 
 	/**
+	 * The patch for one seeded record, or `null` to keep it: a record the
+	 * clear epoch voided yields to what storage holds, and a kept one to a
+	 * stored record that `wins`.
+	 */
+	const seededRecordPatch = function seededRecordPatch<T>(
+		seeded: T | null,
+		kept: T | null,
+		stored: T | null | undefined,
+		wins: boolean
+	): { value: T | null } | null {
+		if (kept !== seeded) {
+			return { value: stored === undefined ? kept : stored };
+		}
+		return stored && wins ? { value: stored } : null;
+	};
+
+	/**
 	 * A server prefetch seeds the kernel from the cookie alone, and the seed
 	 * stays authoritative (`skipHydration`). But a browser can drop a cookie
 	 * write while localStorage takes it, so a newer record may exist only
@@ -538,23 +555,6 @@ export const mountPersistence = function mountPersistence(
 	 * grant left out here stays out until another runtime writes storage.
 	 * Returns the subject the stored records carry, `null` for none.
 	 */
-	/**
-	 * The patch for one seeded record, or `null` to keep it: a record the
-	 * clear epoch voided yields to what storage holds, and a kept one to a
-	 * stored record that `wins`.
-	 */
-	const seededRecordPatch = function seededRecordPatch<T>(
-		seeded: T | null,
-		kept: T | null,
-		stored: T | null | undefined,
-		wins: boolean
-	): { value: T | null } | null {
-		if (kept !== seeded) {
-			return { value: stored === undefined ? kept : stored };
-		}
-		return stored && wins ? { value: stored } : null;
-	};
-
 	const applyNewerStoredRecords =
 		function applyNewerStoredRecords(): ConsentSubject | null {
 			const at = now();

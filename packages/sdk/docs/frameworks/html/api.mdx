@@ -82,7 +82,7 @@ removed, layers queued `config` calls and its own options on top, starts the
 client and returns it. Called on `inth.js` before `inth.hosted.js` has
 loaded, it returns a stand-in with the client's methods instead, and
 `inth.onInit()` hands you the client once it exists; see
-[how inth.js loads inth.hosted.js](/docs/frameworks/html/attributes-and-api#how-c15tjs-loads-c15thostedjs).
+[how inth.js loads inth.hosted.js](/docs/frameworks/html/attributes-and-api#how-inthjs-loads-inthhostedjs).
 A second call returns the same client. Until `init()`,
 queued actions and `subscribe` wait, and direct calls to methods that read or
 change consent throw `call inth.init() first`.

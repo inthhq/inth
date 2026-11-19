@@ -101,6 +101,13 @@ tap, so it starts from that answer and the stored choice instead of sending
 banner on screen without showing it again and sends the save to the backend
 once.
 
+If `inth.hosted.js` fails to load, `inth.js` tries again after 1 second and
+again after 2. After the third failure it logs one error, and `inth.ready()`
+and every other call that returns a promise reject, now and later. Calls
+that return nothing, and listeners, never run. `inth.dispose()` before the
+engine arrives rejects the calls still waiting the same way, and a later
+`inth.init()` tries the engine three more times.
+
 `inth.js` leaves the banner to the engine, which then loads at once, when the
 page sets options it cannot apply the way the engine would: a `theme`, `css`,
 `stylesheetUrls`, `i18n` messages, a `container`, `data-shadow="false"`, or
