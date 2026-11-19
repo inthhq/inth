@@ -138,7 +138,6 @@ export const databuddyManifest = {
 				'data-track-interactions': '{{trackInteractions}}',
 				'data-track-outgoing-links': '{{trackOutgoingLinks}}',
 				'data-track-web-vitals': '{{trackWebVitals}}',
-				integrity: '{{integrity}}',
 			},
 
 			src: '{{scriptUrl}}',
@@ -232,12 +231,13 @@ export interface DatabuddyConsentOptions {
 	/**
 	 * Pins a Databuddy release, such as `'2026-10-30.1'`, for both
 	 * `databuddy.js` and `replay.js`: they load from
-	 * `https://cdn.databuddy.cc/databuddy.<version>.js`. A release this
+	 * `https://cdn.databuddy.cc/databuddy.<version>.js` and
+	 * `https://cdn.databuddy.cc/replay.<version>.js`. A release this
 	 * package knows the hashes of loads with subresource integrity; another
 	 * loads without it. Unset loads Databuddy's unversioned files. The Inth
 	 * script registry can pin `databuddy.js` for you, but not `replay.js`.
-	 * With the registry on, a pin without integrity yields to the registry's
-	 * `databuddy.js`.
+	 * When the registry lists Databuddy, a pin without integrity yields to
+	 * the registry's `databuddy.js`.
 	 * @default undefined
 	 */
 	version?: string;
@@ -451,7 +451,7 @@ const createDatabuddyScript = function createDatabuddyScript(
 	const version = trimToUndefined(options.version);
 	const loader = resolveCdnScript('databuddy', version, options.scriptUrl);
 
-	const script = resolveManifest(manifest, {
+	const resolved = resolveManifest(manifest, {
 		apiUrl,
 		clientId,
 		configWhenDenied: options.configWhenDenied ?? {
@@ -464,13 +464,20 @@ const createDatabuddyScript = function createDatabuddyScript(
 			clientId,
 			disabled: false,
 		},
-		integrity: loader.integrity,
 		scriptUrl: loader.src,
 		trackErrors: featureAttribute(features.errors),
 		trackInteractions: featureAttribute(features.interactions),
 		trackOutgoingLinks: featureAttribute(features.outgoingLinks),
 		trackWebVitals: featureAttribute(features.webVitals),
 	});
+	// The hash goes on here, not through the manifest, so the exported
+	// manifest resolves with the same config as before `version` existed.
+	const script: Script = loader.integrity
+		? {
+				...resolved,
+				attributes: { ...resolved.attributes, integrity: loader.integrity },
+			}
+		: resolved;
 	if (!options.replay) {
 		return script;
 	}

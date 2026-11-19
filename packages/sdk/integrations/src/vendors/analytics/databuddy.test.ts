@@ -7,7 +7,8 @@ import {
 	grantedMeasurementConsentState,
 	setupScriptHelperTest,
 } from '../../__tests__/helpers';
-import { databuddy } from './databuddy';
+import { resolveManifest } from '../../resolve';
+import { databuddy, databuddyManifest } from './databuddy';
 
 /** The `databuddy.js` hash of release 2026-10-30.1, checked against cdn.databuddy.cc. */
 const PINNED_INTEGRITY =
@@ -15,6 +16,22 @@ const PINNED_INTEGRITY =
 
 describe('databuddy', () => {
 	setupScriptHelperTest();
+
+	it('resolves the exported manifest from the same config as before version', () => {
+		const script = resolveManifest(databuddyManifest, {
+			apiUrl: 'https://basket.databuddy.cc',
+			clientId: 'db_123',
+			configWhenGranted: { clientId: 'db_123', disabled: false },
+			scriptUrl: 'https://cdn.databuddy.cc/databuddy.js',
+			trackErrors: undefined,
+			trackInteractions: undefined,
+			trackOutgoingLinks: undefined,
+			trackWebVitals: undefined,
+		});
+
+		expect(script.src).toBe('https://cdn.databuddy.cc/databuddy.js');
+		expect(script.attributes).not.toHaveProperty('integrity');
+	});
 
 	it('waits for measurement consent by default', () => {
 		const script = databuddy({ clientId: 'db_123' });
