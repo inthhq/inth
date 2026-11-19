@@ -275,51 +275,57 @@ describe('createConsentRoute with inthHandle', () => {
 		expect(eventFetch).not.toHaveBeenCalled();
 	});
 
-	test('the proxy setup forwards saves to the build backend, not to itself', async () => {
-		// The handle points the browser at the route; the route forwards
-		// upstream.
-		setGenerated({ projectUrl: BACKEND });
-		const fetch = upstream();
-		const eventFetch = vi.fn<typeof globalThis.fetch>();
-		const handle = inthHandle({ proxy: true, routePrefix: '/api/inth' });
-		const { GET, POST } = createConsentRoute({ fetch, proxy: true });
+	test.each([
+		['proxy: true', { proxy: true }],
+		["a projectUrl naming the route's own prefix", { projectUrl: '/api/inth' }],
+	])(
+		'the proxy setup forwards saves to the build backend, not to itself, with %s',
+		async (_name, setup) => {
+			// The handle points the browser at the route; the route forwards
+			// upstream.
+			setGenerated({ projectUrl: BACKEND });
+			const fetch = upstream();
+			const eventFetch = vi.fn<typeof globalThis.fetch>();
+			const handle = inthHandle({ ...setup, routePrefix: '/api/inth' });
+			const { GET, POST } = createConsentRoute({ fetch, proxy: true });
 
-		const page = createEvent({ url: 'https://shop.example/' });
-		const { consent } = await handle({
-			event: page,
-			resolve: async (event) =>
-				Response.json(await loadConsent(event, { fetch })),
-		}).then((response) => response.json());
-		expect(consent).toMatchObject({
-			projectUrl: '/api/inth',
-			routePrefix: '/api/inth',
-		});
+			const page = createEvent({ url: 'https://shop.example/' });
+			const { consent } = await handle({
+				event: page,
+				resolve: async (event) =>
+					Response.json(await loadConsent(event, { fetch })),
+			}).then((response) => response.json());
+			expect(consent).toMatchObject({
+				projectUrl: '/api/inth',
+				routePrefix: '/api/inth',
+			});
 
-		const save = await throughHandle(
-			handle,
-			POST,
-			restEvent('subjects', {
-				body: '{}',
-				clientAddress: '203.0.113.7',
-				fetch: eventFetch,
-				method: 'POST',
-			})
-		);
-		expect(save.status).toBe(201);
-		const init = await throughHandle(
-			handle,
-			GET,
-			restEvent('init', {
-				fetch: eventFetch,
-				headers: { 'x-vercel-ip-country': 'DE' },
-			})
-		);
-		expect(await init.json()).toMatchObject({
-			policyResolution: { policyId: 'eu-opt-in', status: 'matched' },
-		});
-		expect(eventFetch).not.toHaveBeenCalled();
-		expect(fetch.mock.calls.map(([url]) => String(url))).toEqual(
-			expect.arrayContaining([`${BACKEND}/subjects`, `${BACKEND}/manifest`])
-		);
-	});
+			const save = await throughHandle(
+				handle,
+				POST,
+				restEvent('subjects', {
+					body: '{}',
+					clientAddress: '203.0.113.7',
+					fetch: eventFetch,
+					method: 'POST',
+				})
+			);
+			expect(save.status).toBe(201);
+			const init = await throughHandle(
+				handle,
+				GET,
+				restEvent('init', {
+					fetch: eventFetch,
+					headers: { 'x-vercel-ip-country': 'DE' },
+				})
+			);
+			expect(await init.json()).toMatchObject({
+				policyResolution: { policyId: 'eu-opt-in', status: 'matched' },
+			});
+			expect(eventFetch).not.toHaveBeenCalled();
+			expect(fetch.mock.calls.map(([url]) => String(url))).toEqual(
+				expect.arrayContaining([`${BACKEND}/subjects`, `${BACKEND}/manifest`])
+			);
+		}
+	);
 });

@@ -156,10 +156,17 @@ export const inthHandle = function inthHandle(
 		options.routePrefix === undefined
 			? undefined
 			: normalizeRoutePrefix('@inth/svelte', options.routePrefix);
+	// A `projectUrl` naming the route itself sends saves through it, which
+	// is what `proxy` does: the route forwards them to the build's backend.
+	const projectUrlIsRoute =
+		routePrefix !== undefined &&
+		options.projectUrl?.replace(/\/+$/u, '') === routePrefix;
+	const proxy = options.proxy || projectUrlIsRoute;
+	const projectUrl = projectUrlIsRoute ? undefined : options.projectUrl;
 	const { mode } = resolveServerMode({
 		adapter: '@inth/svelte',
 		mode: options.mode,
-		proxy: options.proxy,
+		proxy,
 		routePrefix,
 	});
 	return async ({ event, resolve }) => {
@@ -184,13 +191,13 @@ export const inthHandle = function inthHandle(
 		}
 
 		const locals: InthLocals = { config, inputs, mode };
-		if (options.projectUrl !== undefined) {
-			locals.projectUrl = options.projectUrl;
+		if (projectUrl !== undefined) {
+			locals.projectUrl = projectUrl;
 		}
 		if (routePrefix !== undefined) {
 			locals.routePrefix = routePrefix;
 		}
-		if (options.proxy) {
+		if (proxy) {
 			locals.proxy = true;
 		}
 		if (options.snapshot !== undefined) {
