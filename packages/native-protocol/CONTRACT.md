@@ -1253,7 +1253,7 @@ the producer refuses must read exactly like a first launch, records and all.
 
 The encoding is pinned by a table of eight vectors -- twelve random bytes, a wall
 clock reading, and the id -- asserted identically in three places:
-`packages/sdk/core/src/libs/__tests__/generate-subject-id.vectors.test.ts`,
+`packages/react-native/scripts/__tests__/native-wire.test.ts`,
 `packages/android/.../SubjectIdGeneratorTest.kt`, and
 `packages/swift/Tests/InthCoreTests/SubjectIdTests.swift`. The clock column is
 the reading the generator is pinned to, not the offset it encodes; the epoch is
