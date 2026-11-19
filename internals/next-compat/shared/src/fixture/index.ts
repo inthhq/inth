@@ -185,14 +185,17 @@ export const handleInit = function handleInit(request: Request): Response {
 	return Response.json(buildInitResponse(countryCode), { headers: NO_STORE });
 };
 
-export const handleSubjects = async function handleSubjects(
+export const handleRecords = async function handleRecords(
 	request: Request
 ): Promise<Response> {
 	const body = (await request.json().catch(() => ({}))) as {
 		subjectId?: string;
 	};
 	return Response.json(
-		{ ok: true, subjectId: body.subjectId ?? 'next-compat-subject' },
+		{
+			recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+			subjectId: body.subjectId ?? '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+		},
 		{ headers: NO_STORE }
 	);
 };
@@ -226,20 +229,17 @@ export const handleFixtureRequest = function handleFixtureRequest(
 	segments: string[]
 ): Promise<Response> | Response {
 	const path = segments.join('/');
-	if (path === 'init' && request.method === 'GET') {
+	if (path === 'v1/consent/init' && request.method === 'GET') {
 		return handleInit(request);
 	}
-	if (path === 'manifest' && request.method === 'GET') {
+	if (path === 'v1/consent/manifest' && request.method === 'GET') {
 		return handleManifest(request);
 	}
-	if (path === 'subjects' && request.method === 'POST') {
-		return handleSubjects(request);
+	if (path === 'v1/consent/records' && request.method === 'POST') {
+		return handleRecords(request);
 	}
-	if (segments[0] === 'subjects' && request.method === 'GET') {
-		return Response.json(
-			{ consents: null, subjectId: segments[1] ?? null },
-			{ headers: NO_STORE }
-		);
+	if (path === 'v1/consent/sessions' && request.method === 'POST') {
+		return new Response(null, { headers: NO_STORE, status: 204 });
 	}
 	if (path === '__compat/requests') {
 		return handleDiagnostics(request);

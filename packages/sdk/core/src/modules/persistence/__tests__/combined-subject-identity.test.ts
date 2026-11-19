@@ -220,7 +220,7 @@ test.each(
 		const sent: (string | undefined)[] = [];
 		const first = boot({ scope: 'necessary-only', sent, storageConfig });
 		const startup = subjectIdOf(first.kernel);
-		expect(startup).toMatch(/^sub_/u);
+		expect(startup).toMatch(/^[\da-f]{8}-[\da-f]{4}-7/u);
 		expect(first.kernel.getSnapshot().explicitChoice).toBeNull();
 		expect(first.kernel.getSnapshot().noticeDismissal).toBeNull();
 		expect(first.kernel.getSnapshot().activeUI).toBe('banner');
@@ -453,7 +453,7 @@ test.each(
 
 		// Nothing stored the ID, so the next page load starts a new one.
 		const { kernel } = boot({ scope: 'necessary-only', storageConfig });
-		expect(subjectIdOf(kernel)).toMatch(/^sub_/u);
+		expect(subjectIdOf(kernel)).toMatch(/^[\da-f]{8}-[\da-f]{4}-7/u);
 		expect(subjectIdOf(kernel)).not.toBe(CANONICAL);
 		expect(kernel.getSnapshot().noticeDismissal).toBeNull();
 		expect(kernel.getSnapshot().explicitChoice).toBeNull();
@@ -516,7 +516,7 @@ test.each(
 		first.handle.dispose();
 
 		const { kernel } = boot({ storageConfig });
-		expect(subjectIdOf(kernel)).toMatch(/^sub_/u);
+		expect(subjectIdOf(kernel)).toMatch(/^[\da-f]{8}-[\da-f]{4}-7/u);
 		expect(subjectIdOf(kernel)).not.toBe(subjectId);
 		expect(kernel.getSnapshot().subject?.externalId).toBeUndefined();
 		expect(kernel.getSnapshot().explicitChoice).toBeNull();
@@ -548,7 +548,7 @@ test.each(
 		first.kernel.set.subjectId(next);
 		await vi.advanceTimersByTimeAsync(0);
 		const replaced = subjectIdOf(first.kernel) as string;
-		expect(replaced).toMatch(/^sub_/u);
+		expect(replaced).toMatch(next ?? /^[\da-f]{8}-[\da-f]{4}-7/u);
 		expect([startup, CANONICAL]).not.toContain(replaced);
 		expect(replaced).toBe(next ?? replaced);
 		expect(storedSid(storageConfig)).toEqual({ cookie: null, local: null });

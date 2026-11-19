@@ -10,7 +10,10 @@ import {
 import { createConsentKernel } from '../../../index';
 import { getRawCookieValue } from '../../../libs/cookie';
 import { legacySubjectIdKey } from '../../../libs/legacy-subject-id';
-import { resolveStorageKeys } from '../../../libs/storage-keys';
+import {
+	GIVEN_AT_STORAGE_KEY,
+	resolveStorageKeys,
+} from '../../../libs/storage-keys';
 import { readRequestConsent } from '../../../server/request-consent';
 import type { HydrationRecords, KernelVendorsState } from '../../../types';
 import { createClearOnRevocation } from '../../clear-on-revocation';
@@ -87,7 +90,9 @@ test.each(['all', 'none'] as const)(
 		// the subject ID, so the next page load starts a new one.
 		const cleared = createConsentKernel({ consentCategories: ['necessary'] });
 		const clearedHandle = createPersistence({ kernel: cleared });
-		expect(cleared.getSnapshot().subject?.subjectId).toMatch(/^sub_/u);
+		expect(cleared.getSnapshot().subject?.subjectId).toMatch(
+			/^[\da-f]{8}-[\da-f]{4}-7/u
+		);
 		expect(cleared.getSnapshot().subject?.subjectId).not.toBe('canonical');
 		expect(cleared.getSnapshot().noticeDismissal).toBeNull();
 		clearedHandle.dispose();
@@ -153,7 +158,9 @@ test('a response arriving after another handle clears does not restore the visit
 	const reader = createPersistence({ kernel: restored });
 	// The acknowledgement stays cleared, and no record stores the server's
 	// name for the ID, so the next page load starts a new one.
-	expect(restored.getSnapshot().subject?.subjectId).toMatch(/^sub_/u);
+	expect(restored.getSnapshot().subject?.subjectId).toMatch(
+		/^[\da-f]{8}-[\da-f]{4}-7/u
+	);
 	expect(restored.getSnapshot().subject?.subjectId).not.toBe('canonical');
 	expect(restored.getSnapshot().noticeDismissal).toBeNull();
 	reader.dispose();
@@ -1176,8 +1183,9 @@ test.each([
 		// starts a new one, with no linked account.
 		const kept = other === 'a consent record with the same subject';
 		const reloadedSubject = reloaded.getSnapshot().subject;
-		expect(reloadedSubject?.subjectId).toMatch(/^sub_/u);
-		expect(reloadedSubject?.subjectId === 'sub_a').toBe(kept);
+		expect(reloadedSubject?.subjectId).toMatch(
+			kept ? /^sub_a$/u : /^[\da-f]{8}-[\da-f]{4}-7/u
+		);
 		expect(reloadedSubject?.externalId).toBe(
 			kept ? linked.externalId : undefined
 		);
@@ -1516,7 +1524,9 @@ test.each([
 		const { subject: before } = tab.getSnapshot();
 		expect(before?.externalId).toBe('account-c');
 		// The receipt is the only record: no acknowledgement, no vendors.
-		expect(Object.keys(localStorage)).toEqual([keys.consent]);
+		expect(Object.keys(localStorage).sort()).toEqual(
+			[GIVEN_AT_STORAGE_KEY, keys.consent].sort()
+		);
 
 		localStorage.removeItem(keys.consent);
 		document.cookie = `${keys.consent}=; max-age=0; path=/`;
@@ -1527,7 +1537,9 @@ test.each([
 		expect(tab.getSnapshot().explicitChoice).toBeNull();
 		const reloaded = identityTab({ ...options }, []);
 		createPersistence({ kernel: reloaded }).dispose();
-		expect(reloaded.getSnapshot().subject?.subjectId).toMatch(/^sub_/u);
+		expect(reloaded.getSnapshot().subject?.subjectId).toMatch(
+			/^[\da-f]{8}-[\da-f]{4}-7/u
+		);
 		expect(reloaded.getSnapshot().subject?.subjectId).not.toBe(
 			before?.subjectId
 		);

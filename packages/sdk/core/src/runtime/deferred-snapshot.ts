@@ -13,14 +13,11 @@
  * @internal
  */
 
-import {
-	POLICY_CONTRACT_VERSION,
-	readPolicyResolutionWire,
-} from '@inth/sdk-schema/types';
+import { readPolicyResolutionWire } from '@inth/sdk-schema/types';
 import type { InitOutput, PolicyResolutionWire } from '@inth/sdk-schema/types';
 
 import { buildInitialSnapshot } from '../kernel/snapshot';
-import type { PrefetchedInitialData } from '../libs/prefetch/prefetch';
+import type { SSRInitialData } from '../options/ssr';
 import type {
 	ConsentSnapshot,
 	HydrationRecords,
@@ -28,6 +25,7 @@ import type {
 	KernelOverrides,
 } from '../types';
 
+export type { SSRInitialData } from '../options/ssr';
 // The light half, which a first-load chunk takes on its own.
 export {
 	findPrefetchedInit,
@@ -36,7 +34,6 @@ export {
 	primeInitRequest,
 	startPrefetchedInit,
 } from './deferred-boot';
-export type { PrefetchedInitialData } from '../libs/prefetch/prefetch';
 
 /** The provider options a deferred snapshot depends on. @internal */
 export interface DeferredSnapshotOptions {
@@ -88,22 +85,13 @@ export const pendingSnapshot = function pendingSnapshot(
 };
 
 /**
- * Whether the stand-in can read this `/init` answer. An IAB or vendor
- * response, or a contract this client does not speak, leaves the decision
- * to the engine.
+ * Whether the stand-in can read this init answer. An IAB or vendor
+ * response leaves the decision to the engine.
  */
 const isReadableInit = function isReadableInit(
-	payload: Partial<InitOutput> | undefined,
-	declared: PrefetchedInitialData['producerPolicyContract'] | undefined
+	payload: Partial<InitOutput> | undefined
 ): payload is Partial<InitOutput> & Pick<InitOutput, 'policyResolution'> {
 	if (!payload?.policyResolution) {
-		return false;
-	}
-	if (
-		declared !== undefined &&
-		declared !== null &&
-		Number(declared) !== POLICY_CONTRACT_VERSION
-	) {
 		return false;
 	}
 	return !(
@@ -143,16 +131,16 @@ const overridesFromInit = function overridesFromInit(
  * @param overrides - The overrides the request was sent with.
  * @param now - Evaluation clock. Defaults to `Date.now()`.
  * @returns The configuration, or `undefined` for a response only the
- * engine can read: IAB or vendor data, an unknown contract, or none.
+ * engine can read: IAB or vendor data, or none.
  * @internal
  */
 export const configFromPrefetchedInit = function configFromPrefetchedInit(
-	prefetched: PrefetchedInitialData | undefined,
+	prefetched: SSRInitialData | undefined,
 	overrides?: KernelOverrides,
 	now: number = Date.now()
 ): KernelConfig | undefined {
 	const payload = prefetched?.init as Partial<InitOutput> | undefined;
-	if (!isReadableInit(payload, prefetched?.producerPolicyContract)) {
+	if (!isReadableInit(payload)) {
 		return undefined;
 	}
 	try {
@@ -186,7 +174,7 @@ export const configFromPrefetchedInit = function configFromPrefetchedInit(
  * @internal
  */
 export const snapshotFromPrefetchedInit = function snapshotFromPrefetchedInit(
-	prefetched: PrefetchedInitialData | undefined,
+	prefetched: SSRInitialData | undefined,
 	options: DeferredSnapshotOptions,
 	now: number = Date.now()
 ): ConsentSnapshot | undefined {

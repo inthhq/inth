@@ -204,7 +204,7 @@ describe('provideInthServer', () => {
 			.fn<typeof globalThis.fetch>()
 			.mockImplementation((input) =>
 				Promise.resolve(
-					String(input).endsWith('/manifest')
+					String(input).endsWith('/v1/consent/manifest')
 						? Response.json(MANIFEST_FIXTURE)
 						: Response.json({}, { status: 404 })
 				)
@@ -220,7 +220,7 @@ describe('provideInthServer', () => {
 		const html = await render({ projectUrl: '/api/inth' }, { route }, request);
 
 		expect(String(upstream.mock.calls[0]?.[0])).toBe(
-			`${SITE}/api/inth-upstream/manifest`
+			`${SITE}/api/inth-upstream/v1/consent/manifest`
 		);
 		expect(transferred(html)?.initialPolicyResolution).toMatchObject({
 			policyId: 'eu-opt-in',
@@ -233,7 +233,7 @@ describe('provideInthServer', () => {
 			.fn<typeof globalThis.fetch>()
 			.mockImplementation((input) =>
 				Promise.resolve(
-					String(input).endsWith('/manifest')
+					String(input).endsWith('/v1/consent/manifest')
 						? Response.json(MANIFEST_FIXTURE)
 						: Response.json({}, { status: 404 })
 				)
@@ -258,7 +258,7 @@ describe('provideInthServer', () => {
 		);
 
 		expect(String(upstream.mock.calls[0]?.[0])).toBe(
-			`${SITE}/api/inth-upstream/manifest`
+			`${SITE}/api/inth-upstream/v1/consent/manifest`
 		);
 		expect(transferred(html)?.initialPolicyResolution).toMatchObject({
 			policyId: 'eu-opt-in',

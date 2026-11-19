@@ -47,10 +47,7 @@ import { failedResponseError } from '../libs/failed-response';
 import { consumePrefetchedInitialData } from '../libs/prefetch/prefetch';
 import { DEFAULT_INIT_CREDENTIALS } from '../libs/request-context-headers';
 import { trimSlash } from '../libs/url';
-import {
-	parsePolicyContract,
-	readProducerPolicyContract,
-} from '../libs/version-header';
+import { readProducerPolicyContract } from '../libs/version-header';
 import type { SSRInitialData } from '../options/ssr';
 import type { KernelOverrides, InitContext } from '../types';
 import {
@@ -330,11 +327,7 @@ export const createHostedTransport = function createHostedTransport(
 					gpcFromHeaders(headers)
 				);
 			}
-			return mapInitOutputToInitResponse(prefetched.init, headers, {
-				producerContract: parsePolicyContract(
-					prefetched.producerPolicyContract
-				),
-			});
+			return mapInitOutputToInitResponse(prefetched.init, headers);
 		}
 		const response = await fetchImpl(request.url, request.init);
 

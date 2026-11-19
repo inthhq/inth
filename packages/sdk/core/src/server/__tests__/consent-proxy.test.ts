@@ -1,6 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { inthVersionHeaders } from '../../libs/version-header';
 import {
 	forwardConsentRequest,
 	isConsentProxyPathAllowed,
@@ -75,7 +74,7 @@ describe('resolveConsentProxyOptions', () => {
 			timeoutMs: 500,
 		});
 		expect(options?.paths).toEqual(
-			expect.arrayContaining(['subjects/*', 'export'])
+			expect.arrayContaining(['v1/subjects/*/link', 'export'])
 		);
 		expect(options?.forwardHeaders).toContain('x-tenant');
 		expect(options?.forwardHeaders).toContain('user-agent');
@@ -103,7 +102,7 @@ describe('isConsentProxyPathAllowed', () => {
 
 describe('forwardConsentRequest', () => {
 	test('forwards method, path, query and body, and names the adapter', async () => {
-		const { calls, response } = forward('subjects', {
+		const { calls, response } = forward('v1/consent/records', {
 			body: '{"a":1}',
 			headers: { 'content-type': 'application/json' },
 			method: 'POST',
@@ -113,7 +112,7 @@ describe('forwardConsentRequest', () => {
 		const answer = await response;
 		expect(answer.status).toBe(201);
 		expect(await answer.json()).toEqual({ id: 'sub_1' });
-		expect(calls[0]?.url).toBe(`${BACKEND}/subjects?q=1`);
+		expect(calls[0]?.url).toBe(`${BACKEND}/v1/consent/records?q=1`);
 		expect(calls[0]?.init.method).toBe('POST');
 		expect(calls[0]?.init.redirect).toBe('manual');
 		expect(calls[0]?.init.signal).toBeInstanceOf(AbortSignal);
@@ -123,20 +122,21 @@ describe('forwardConsentRequest', () => {
 		expect(calls[0]?.init.headers.get('x-inth-proxy')).toBe(
 			'@c15t/test-adapter'
 		);
-		for (const [name, value] of Object.entries(inthVersionHeaders)) {
-			expect(calls[0]?.init.headers.get(name)).toBe(value);
-		}
+		// `/v1` reads no version header.
+		expect(calls[0]?.init.headers.has('x-inth-version')).toBe(false);
 	});
 
 	test('answers 404 for a disallowed path without calling upstream', async () => {
-		const { calls, response } = forward('subjects/%2e%2e', { method: 'POST' });
+		const { calls, response } = forward('v1/consent/%2e%2e', {
+			method: 'POST',
+		});
 
 		expect((await response).status).toBe(404);
 		expect(calls).toHaveLength(0);
 	});
 
 	test('takes the hop chain from the adapter, never from the browser', async () => {
-		const { calls, response } = forward('subjects', {
+		const { calls, response } = forward('v1/consent/records', {
 			forwarding: { for: '203.0.113.7', host: 'shop.example', proto: 'https' },
 			headers: {
 				forwarded: 'for=198.51.100.1',
@@ -155,7 +155,7 @@ describe('forwardConsentRequest', () => {
 	});
 
 	test('forwards the allowlist and drops everything else', async () => {
-		const { calls, response } = forward('subjects', {
+		const { calls, response } = forward('v1/consent/records', {
 			headers: {
 				authorization: 'Bearer secret',
 				cookie: 'session=abc',
@@ -176,7 +176,7 @@ describe('forwardConsentRequest', () => {
 	});
 
 	test('forwards the page origin with its fetch site', async () => {
-		const { calls, response } = forward('subjects', {
+		const { calls, response } = forward('v1/consent/records', {
 			body: '{}',
 			headers: {
 				origin: 'https://other.example',
@@ -193,7 +193,7 @@ describe('forwardConsentRequest', () => {
 	});
 
 	test('scopes cookies to cookieNames and marks the response no-store', async () => {
-		const { calls, response } = forward('subjects', {
+		const { calls, response } = forward('v1/consent/records', {
 			headers: { cookie: 'session=abc; tenant=acme' },
 			proxy: { cookieNames: ['tenant'] },
 			respond: () =>
@@ -209,7 +209,7 @@ describe('forwardConsentRequest', () => {
 	});
 
 	test('sends only public headers to a remote http backend', async () => {
-		const { calls, response } = forward('subjects', {
+		const { calls, response } = forward('v1/consent/records', {
 			headers: {
 				cookie: 'tenant=acme',
 				'user-agent': 'Mozilla/5.0',
@@ -232,11 +232,11 @@ describe('forwardConsentRequest', () => {
 			host: 'shop.example',
 			proto: 'https',
 		};
-		const remote = forward('subjects', {
+		const remote = forward('v1/consent/records', {
 			forwarding,
 			projectUrl: 'http://consent.example.com',
 		});
-		const loopback = forward('subjects', {
+		const loopback = forward('v1/consent/records', {
 			forwarding,
 			projectUrl: 'http://localhost:8787',
 		});
@@ -252,7 +252,7 @@ describe('forwardConsentRequest', () => {
 	});
 
 	test('still sends named cookies to a loopback http backend', async () => {
-		const { calls, response } = forward('subjects', {
+		const { calls, response } = forward('v1/consent/records', {
 			headers: { cookie: 'tenant=acme' },
 			projectUrl: 'http://localhost:8787',
 			proxy: { cookieNames: ['tenant'] },
@@ -263,7 +263,7 @@ describe('forwardConsentRequest', () => {
 	});
 
 	test('shapes the response headers for the browser', async () => {
-		const { response } = forward('subjects', {
+		const { response } = forward('v1/consent/records', {
 			respond: () => {
 				const headers = new Headers({
 					'access-control-allow-origin': '*',
@@ -306,9 +306,9 @@ describe('forwardConsentRequest upstream failures', () => {
 				.mockRejectedValue(error) as unknown as typeof globalThis.fetch,
 			forwarding: FORWARDING,
 			options,
-			path: 'subjects',
+			path: 'v1/consent/records',
 			projectUrl: BACKEND,
-			request: new Request('https://shop.example/api/inth/subjects', {
+			request: new Request('https://shop.example/api/inth/v1/consent/records', {
 				method: 'POST',
 			}),
 		});
@@ -345,18 +345,21 @@ describe('stripIdentityForCleartext', () => {
 		expect(
 			stripIdentityForCleartext(
 				{ cookie: 'a=1', 'user-agent': 'UA', 'x-api-key': 'k' },
-				'http://consent.example.com/manifest'
+				'http://consent.example.com/v1/consent/manifest'
 			)
 		).toEqual({ 'user-agent': 'UA' });
 	});
 
 	test('leaves https and loopback targets alone', () => {
 		const headers = { cookie: 'a=1' };
-		expect(stripIdentityForCleartext(headers, `${BACKEND}/manifest`)).toBe(
-			headers
-		);
 		expect(
-			stripIdentityForCleartext(headers, 'http://127.0.0.1:8787/manifest')
+			stripIdentityForCleartext(headers, `${BACKEND}/v1/consent/manifest`)
+		).toBe(headers);
+		expect(
+			stripIdentityForCleartext(
+				headers,
+				'http://127.0.0.1:8787/v1/consent/manifest'
+			)
 		).toBe(headers);
 	});
 });

@@ -48,16 +48,16 @@ at a time, and `options.callbacks` one callback at a time, so
 `options.mode` when you pass one. It loads only that mode's code:
 
 - `manifest()`: with `state`, the browser applies it and needs no request.
-  Without `state`, or to re-init, it asks `${routePrefix}/init` when the
-  config sets `routePrefix`, else `${projectUrl}/init`.
+  Without `state`, or to re-init, it asks `${routePrefix}/v1/consent/init` when the
+  config sets `routePrefix`, else `${projectUrl}/v1/consent/init`.
 - `manifest({ resolve: 'browser' })`: the browser loads the resolver on first
-  use and fetches `${routePrefix}/manifest`, else `${projectUrl}/manifest`.
-- `hosted()`: the browser calls `${projectUrl}/init` when it needs a policy.
+  use and fetches `${routePrefix}/v1/consent/manifest`, else `${projectUrl}/v1/consent/manifest`.
+- `hosted()`: the browser calls `${projectUrl}/v1/consent/init` when it needs a policy.
 - `testing()`: the browser resolves bundled rules. Choices stay in the
   browser and nothing is recorded. Not recommended for production
   environments.
 
-Choices post to `${projectUrl}/subjects` in every mode but `testing()`. With
+Choices post to `${projectUrl}/v1/consent/records` in every mode but `testing()`. With
 no backend URL anywhere, `ConsentRoot` throws
 ``@inth/nextjs: manifest() needs a backend URL. Set NEXT_PUBLIC_INTH_PROJECT_URL, or `projectUrl` in inth.config.ts.``
 instead of running a mode you did not choose. See

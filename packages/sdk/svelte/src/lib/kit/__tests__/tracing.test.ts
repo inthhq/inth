@@ -54,12 +54,12 @@ const proxyRoute = (fetch: typeof globalThis.fetch) =>
 
 describe('SvelteKit consent tracing recipe', () => {
 	test.each([
-		['GET', 'init'],
+		['GET', 'v1/consent/init'],
 		['GET', ''],
-		['GET', 'init/'],
-		['HEAD', 'init'],
+		['GET', 'v1/consent/init/'],
+		['HEAD', 'v1/consent/init'],
 		['HEAD', ''],
-		['HEAD', 'init/'],
+		['HEAD', 'v1/consent/init/'],
 	])(
 		'records %s %s as init without changing the resolved policy or cache headers',
 		async (method, path) => {
@@ -85,10 +85,10 @@ describe('SvelteKit consent tracing recipe', () => {
 	);
 
 	test.each([
-		['GET', 'manifest'],
-		['GET', 'manifest/'],
-		['HEAD', 'manifest'],
-		['HEAD', 'manifest/'],
+		['GET', 'v1/consent/manifest'],
+		['GET', 'v1/consent/manifest/'],
+		['HEAD', 'v1/consent/manifest'],
+		['HEAD', 'v1/consent/manifest/'],
 	])(
 		'records %s %s and preserves the manifest response',
 		async (method, path) => {
@@ -128,7 +128,7 @@ describe('SvelteKit consent tracing recipe', () => {
 				})
 			);
 			const { POST } = proxyRoute(fetch);
-			const { event, span } = tracedEvent('subjects/sub_private', {
+			const { event, span } = tracedEvent('v1/subjects/sub_private/link', {
 				body: '{"private":"body"}',
 				headers: { cookie: 'private=secret' },
 				method: 'POST',
@@ -172,7 +172,7 @@ describe('SvelteKit consent tracing recipe', () => {
 		async ({ error, message, status }) => {
 			const fetch = vi.fn<typeof globalThis.fetch>().mockRejectedValue(error);
 			const { POST } = proxyRoute(fetch);
-			const { event, span } = tracedEvent('subjects', {
+			const { event, span } = tracedEvent('v1/consent/records', {
 				body: '{}',
 				method: 'POST',
 			});
@@ -191,7 +191,7 @@ describe('SvelteKit consent tracing recipe', () => {
 		}
 	);
 
-	test.each(['init', 'subjects'])(
+	test.each(['v1/consent/init', 'v1/consent/records'])(
 		'keeps %s working without recording when tracing is disabled',
 		async (path) => {
 			const fetch = vi
@@ -203,7 +203,7 @@ describe('SvelteKit consent tracing recipe', () => {
 				proxy: true,
 				snapshot: MANIFEST_FIXTURE,
 			});
-			const init = path === 'init';
+			const init = path === 'v1/consent/init';
 			const { event, span } = tracedEvent(
 				path,
 				init ? {} : { body: '{}', method: 'POST' },
@@ -225,7 +225,7 @@ describe('SvelteKit consent tracing recipe', () => {
 		const handler: RequestHandler = () => {
 			throw error;
 		};
-		const { event, span } = tracedEvent('init');
+		const { event, span } = tracedEvent('v1/consent/init');
 
 		await expect(traceConsent(handler)(event)).rejects.toBe(error);
 		expect(span.setAttribute).not.toHaveBeenCalledWith(

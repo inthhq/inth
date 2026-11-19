@@ -64,11 +64,17 @@ const buildMetadata = function buildMetadata(
 	return Object.keys(metadata).length > 0 ? metadata : undefined;
 };
 
+/** The vendor choice, dated `givenAt` when this action confirmed it. */
 const buildVendorChoice = function buildVendorChoice(
-	vendorChoice: NonNullable<SavePayload['vendorChoice']>
+	vendorChoice: NonNullable<SavePayload['vendorChoice']>,
+	actionAt: number,
+	givenAt: number
 ): VendorChoiceWire {
 	return {
-		confirmedAt: vendorChoice.confirmedAt,
+		confirmedAt:
+			vendorChoice.confirmedAt === actionAt
+				? givenAt
+				: vendorChoice.confirmedAt,
 		grants: { ...vendorChoice.grants },
 		version: 1,
 	};
@@ -91,12 +97,19 @@ export const buildV1ConsentRecordBody = function buildV1ConsentRecordBody(
 			Object.hasOwn(payload.confirmed.categories, category) &&
 			answer.categories[category] !== undefined
 	);
+	const givenAt = payload.givenAt ?? payload.confirmed.actionAt;
+	for (const category of confirmed) {
+		const receipt = answer.categories[category];
+		if (receipt) {
+			receipt.confirmedAt = givenAt;
+		}
+	}
 	const { user } = payload;
 	const body: V1ConsentRecordBody = {
 		answer,
 		confirmed,
 		consentAction: payload.consentAction,
-		givenAt: payload.confirmed.actionAt,
+		givenAt,
 		idempotencyKey: payload.idempotencyKey ?? createIdempotencyKey(),
 		property,
 		subjectId: payload.subjectId,
@@ -126,7 +139,11 @@ export const buildV1ConsentRecordBody = function buildV1ConsentRecordBody(
 		}
 	}
 	if (payload.vendorChoice !== undefined) {
-		body.vendorChoice = buildVendorChoice(payload.vendorChoice);
+		body.vendorChoice = buildVendorChoice(
+			payload.vendorChoice,
+			payload.confirmed.actionAt,
+			givenAt
+		);
 	}
 	const metadata = buildMetadata(payload);
 	if (metadata) {

@@ -19,7 +19,7 @@ export const COMPAT_ROUTE_PREFIX = '/api/consent';
 /**
  * Same-origin manifest route under {@link COMPAT_ROUTE_PREFIX}.
  */
-export const COMPAT_MANIFEST_URL = `${COMPAT_ROUTE_PREFIX}/manifest`;
+export const COMPAT_MANIFEST_URL = `${COMPAT_ROUTE_PREFIX}/v1/consent/manifest`;
 
 /**
  * Hosted mode against the stub: the server helpers and the browser call
@@ -38,7 +38,7 @@ export const COMPAT_HOSTED_CONFIG = defineConsentConfig({
 /**
  * Manifest mode with the app's consent route: the server resolves init from
  * the backend `/manifest`, and the browser re-inits through
- * `${COMPAT_ROUTE_PREFIX}/init`, which resolves the cached manifest with the
+ * `${COMPAT_ROUTE_PREFIX}/v1/consent/init`, which resolves the cached manifest with the
  * request's geo headers. The route files read the same config.
  */
 export const COMPAT_CONSENT_CONFIG = defineConsentConfig({

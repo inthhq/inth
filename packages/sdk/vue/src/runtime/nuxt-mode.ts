@@ -32,7 +32,7 @@ export interface NuxtConsentModeConfig {
 	mode?: ConsentMode;
 	/**
 	 * Path of the one consent route the module adds in `manifest()` mode. It
-	 * answers `${routePrefix}/init` and `${routePrefix}/manifest`. `false`
+	 * answers `${routePrefix}/v1/consent/init` and `${routePrefix}/v1/consent/manifest`. `false`
 	 * adds no route: the server render resolves from the manifest itself,
 	 * and the browser asks the backend. `/` is rejected when the module
 	 * sets up: a catch-all route at the site root would catch every page.

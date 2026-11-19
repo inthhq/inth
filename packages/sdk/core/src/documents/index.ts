@@ -10,4 +10,4 @@ export type {
 	RecordAcceptancesInput,
 } from './client';
 export { createIdempotencyKey } from '../libs/subject-uuid';
-export { ApiError, isApiError } from '../transports/v1/error';
+export { InthApiError, isInthApiError } from '../transports/v1/error';

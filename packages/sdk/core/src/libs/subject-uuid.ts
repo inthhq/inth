@@ -4,8 +4,6 @@
  * @packageDocumentation
  */
 
-import { V1_UUID_V7_PATTERN } from '@inth/sdk-schema/types';
-
 const toHex = (byte: number): string => byte.toString(16).padStart(2, '0');
 
 /**
@@ -27,17 +25,6 @@ export const generateUuidV7 = function generateUuidV7(): string {
 	bytes[8] = ((bytes[8] ?? 0) % 64) + 0x80;
 	const hex = Array.from(bytes, toHex).join('');
 	return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-};
-
-/**
- * Whether `id` has the layout of a `/v1` subject ID. The timestamp is not
- * judged.
- *
- * @param id - The string to check.
- * @returns `true` for a lowercase UUIDv7.
- */
-export const isUuidV7 = function isUuidV7(id: string): boolean {
-	return V1_UUID_V7_PATTERN.test(id);
 };
 
 /**

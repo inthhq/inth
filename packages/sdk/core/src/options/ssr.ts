@@ -43,8 +43,6 @@ export interface SSRInitRequestMetadata {
  * Init data fetched on the server and handed to the client provider.
  */
 export interface SSRInitialData {
-	/** Policy contract declared by the init producer. */
-	producerPolicyContract?: string | null;
 	init: InitOutput | undefined;
 	gvl?: GlobalVendorList | null;
 	metadata?: SSRInitRequestMetadata;

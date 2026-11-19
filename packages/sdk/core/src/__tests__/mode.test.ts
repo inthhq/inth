@@ -12,6 +12,7 @@ import type { ManifestModeOptions } from '../modes';
 import { readHostedMode } from '../transports/hosted-modes';
 import { hosted } from '../transports/mode';
 import type { ProviderTransportContext } from '../transports/mode';
+import { recordAnswer } from '../transports/v1/__tests__/fixtures';
 import { matchedResolution, optInRule } from './fixtures/kernel-fixtures';
 
 const context: ProviderTransportContext = {
@@ -53,7 +54,7 @@ describe('hosted()', () => {
 	test('reports its kind and builds a transport for the backend URL', async () => {
 		const fetchSpy = vi
 			.fn()
-			.mockResolvedValue(new Response(JSON.stringify({ ok: true })));
+			.mockResolvedValue(new Response(JSON.stringify(recordAnswer(undefined))));
 		const mode = hosted({
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
 			projectUrl: '/api/inth/',
@@ -61,7 +62,7 @@ describe('hosted()', () => {
 
 		expect(mode.kind).toBe('hosted');
 		await mode(context).save?.(payload);
-		expect(fetchSpy.mock.calls[0]?.[0]).toBe('/api/inth/subjects');
+		expect(fetchSpy.mock.calls[0]?.[0]).toBe('/api/inth/v1/consent/records');
 	});
 
 	test('forwards initUrl and assertDecisionInputs to the hosted transport', async () => {
@@ -88,9 +89,9 @@ describe('hosted()', () => {
 				Promise.resolve(
 					new Response(
 						JSON.stringify(
-							String(input).startsWith('/api/consent/init?')
+							String(input).split('?')[0] === '/api/consent/v1/consent/init'
 								? init
-								: { ok: true }
+								: recordAnswer(undefined)
 						)
 					)
 				)
@@ -98,7 +99,7 @@ describe('hosted()', () => {
 		const mode = hosted({
 			assertDecisionInputs: true,
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
-			initUrl: '/api/consent/init',
+			initUrl: '/api/consent/v1/consent/init',
 			projectUrl: 'https://backend.example',
 		});
 		const transport = mode(context);
@@ -108,7 +109,10 @@ describe('hosted()', () => {
 
 		expect(
 			fetchSpy.mock.calls.map(([url]) => String(url).split('?')[0])
-		).toEqual(['/api/consent/init', 'https://backend.example/subjects']);
+		).toEqual([
+			'/api/consent/v1/consent/init',
+			'https://backend.example/v1/consent/records',
+		]);
 		const body = JSON.parse(String(fetchSpy.mock.calls[1]?.[1]?.body));
 		expect(body).toMatchObject({
 			country: 'DE',
@@ -150,7 +154,7 @@ describe('hosted()', () => {
 
 	test('asserts decision inputs when initUrl is set, unless told not to', async () => {
 		const fetchSpy = vi.fn(() =>
-			Promise.resolve(new Response(JSON.stringify({ ok: true })))
+			Promise.resolve(new Response(JSON.stringify(recordAnswer(undefined))))
 		);
 		const save = async (options: Partial<Parameters<typeof hosted>[0]>) => {
 			fetchSpy.mockClear();
@@ -167,9 +171,14 @@ describe('hosted()', () => {
 		};
 
 		expect(await save({})).toBe('saved');
-		expect(await save({ initUrl: '/api/inth/init' })).toBe('refused');
+		expect(await save({ initUrl: '/api/inth/v1/consent/init' })).toBe(
+			'refused'
+		);
 		expect(
-			await save({ assertDecisionInputs: false, initUrl: '/api/inth/init' })
+			await save({
+				assertDecisionInputs: false,
+				initUrl: '/api/inth/v1/consent/init',
+			})
 		).toBe('saved');
 		expect(await save({ assertDecisionInputs: true })).toBe('refused');
 	});
@@ -209,7 +218,7 @@ describe('hosted()', () => {
 			string,
 			RequestInit & { headers: Record<string, string> },
 		][]) {
-			expect(url.split('?')[0]).toBe('https://old.example/init');
+			expect(url.split('?')[0]).toBe('https://old.example/v1/consent/init');
 			expect(init.headers['accept-language']).toBe('de');
 		}
 	});

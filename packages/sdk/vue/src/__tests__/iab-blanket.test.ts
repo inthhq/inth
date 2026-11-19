@@ -96,7 +96,7 @@ const init: InitOutput = {
 const acceptSave = ((_input: RequestInfo | URL, request?: RequestInit) =>
 	Promise.resolve(
 		Response.json({
-			ok: true,
+			recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
 			subjectId: (
 				JSON.parse(String(request?.body ?? '{}')) as {
 					subjectId?: string;

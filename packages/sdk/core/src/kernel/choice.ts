@@ -23,9 +23,9 @@ import {
 
 import { EMPTY_CHOICE, recordCategoryPatch } from '../consent-record/record';
 import type { AllConsentNames } from '../consent/consent-types';
-import { generateSubjectId } from '../libs/generate-subject-id';
 import { extractConsentNamesFromCondition, has } from '../libs/has';
 import type { HasCondition } from '../libs/has';
+import { generateUuidV7 } from '../libs/subject-uuid';
 import { vendorAxisActive } from '../libs/vendors';
 import { toggleableVendorIds } from '../modules/vendor-denial';
 import type { PresentedSelection } from '../policy-choice';
@@ -618,7 +618,7 @@ const createBoundDraft = function createBoundDraft<Values>(
 export interface ChoiceRecorderOptions {
 	runtime: KernelRuntime;
 	/** Takes each recorded action from here on. */
-	outbox: Pick<SaveOutbox, 'send'>;
+	outbox: Pick<SaveOutbox, 'dateSave' | 'send'>;
 	/** Draft values staged by config. */
 	initialDraft: PresentedSelection | null;
 }
@@ -811,7 +811,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				return result;
 			}
 
-			const subjectId = before.subject?.subjectId ?? generateSubjectId();
+			const subjectId = before.subject?.subjectId ?? generateUuidV7();
 			const subject = saveSubject(before, subjectId);
 			draft.set(null);
 			const patch: SnapshotPatch = {
@@ -875,6 +875,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				choice: recorded.choice,
 				confirmed: recorded.confirmed,
 				consentAction,
+				date: (time) => outbox.dateSave(subjectId, time),
 				subject,
 				subjectId,
 				timing: decisionTiming,

@@ -227,7 +227,7 @@ describe('the build snapshot in manifest() mode', () => {
 				{ dev }
 			);
 			expect(fetch).toHaveBeenCalledWith(
-				'https://consent.example.com/manifest',
+				'https://consent.example.com/v1/consent/manifest',
 				expect.anything()
 			);
 			expect(await importManifestSnapshot(nuxt)).toEqual(snapshot);
@@ -314,7 +314,7 @@ describe('the build snapshot in manifest() mode', () => {
 				unreachable()
 			)
 		).rejects.toThrow(
-			"@inth/nuxt: could not fetch the consent manifest from https://consent.example.com/manifest during the build (getaddrinfo ENOTFOUND). Set `INTH_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
+			"@inth/nuxt: could not fetch the consent manifest from https://consent.example.com/v1/consent/manifest during the build (getaddrinfo ENOTFOUND). Set `INTH_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
 		);
 	});
 
@@ -404,7 +404,7 @@ describe('the build snapshot in manifest() mode', () => {
 			const fetch = snapshotResponse(snapshot);
 			const nuxt = await setUpModule({}, fetch);
 			expect(fetch).toHaveBeenCalledWith(
-				'https://env.example.com/manifest',
+				'https://env.example.com/v1/consent/manifest',
 				expect.anything()
 			);
 			expect(await importManifestSnapshot(nuxt)).toEqual(snapshot);
@@ -459,7 +459,10 @@ describe('the build snapshot in manifest() mode', () => {
 				{},
 				{ NUXT_PUBLIC_C15T_BACKEND_URL: C15T }
 			);
-			expect(fetch).toHaveBeenCalledWith(`${C15T}/manifest`, expect.anything());
+			expect(fetch).toHaveBeenCalledWith(
+				`${C15T}/v1/consent/manifest`,
+				expect.anything()
+			);
 			expect(projectUrl).toBe(C15T);
 			expect(await legacyScopes(nuxt)).toEqual(['public', 'server']);
 		});
@@ -472,7 +475,10 @@ describe('the build snapshot in manifest() mode', () => {
 					NUXT_PUBLIC_INTH_PROJECT_URL: INTH,
 				}
 			);
-			expect(fetch).toHaveBeenCalledWith(`${INTH}/manifest`, expect.anything());
+			expect(fetch).toHaveBeenCalledWith(
+				`${INTH}/v1/consent/manifest`,
+				expect.anything()
+			);
 			expect(projectUrl).toBe(INTH);
 			expect(await legacyScopes(nuxt)).toEqual(['server']);
 		});
@@ -486,7 +492,7 @@ describe('the build snapshot in manifest() mode', () => {
 				}
 			);
 			expect(fetch).toHaveBeenCalledWith(
-				'https://option.example.com/manifest',
+				'https://option.example.com/v1/consent/manifest',
 				expect.anything()
 			);
 			expect(projectUrl).toBe('https://option.example.com');

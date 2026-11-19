@@ -100,7 +100,7 @@ export interface InthMiddlewareOptions {
 export interface InthAstroOptions {
 	/**
 	 * Your Inth backend: the browser saves consent there with
-	 * `POST /subjects`, `manifest()` reads `${projectUrl}/manifest`, and
+	 * `POST /v1/consent/records`, `manifest()` reads `${projectUrl}/v1/consent/manifest`, and
 	 * `hosted()` asks its `/init`. Required unless `mode` is `testing()`.
 	 *
 	 * Defaults to `PUBLIC_INTH_PROJECT_URL`, read from the environment or a
@@ -125,7 +125,7 @@ export interface InthAstroOptions {
 	mode?: ConsentMode;
 	/**
 	 * Path of the route the integration injects for `manifest()` mode, which
-	 * answers `${routePrefix}/init` and `${routePrefix}/manifest`. A page
+	 * answers `${routePrefix}/v1/consent/init` and `${routePrefix}/v1/consent/manifest`. A page
 	 * whose consent changes after it loads asks it again. `false` injects
 	 * nothing, and the browser then asks the backend's `/init` instead; it
 	 * never calls a route of your own at that path.
@@ -133,7 +133,7 @@ export interface InthAstroOptions {
 	 * The route renders on demand, so `astro build` needs a server adapter.
 	 * A static site uses `hosted()`, or
 	 * `manifest({ resolve: 'browser' })`, which prerenders only
-	 * `${routePrefix}/manifest`. `/` is rejected: a catch-all route at the
+	 * `${routePrefix}/v1/consent/manifest`. `/` is rejected: a catch-all route at the
 	 * site root would catch every page.
 	 *
 	 * @default '/api/inth'

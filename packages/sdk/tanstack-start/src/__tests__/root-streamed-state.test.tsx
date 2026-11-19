@@ -118,7 +118,7 @@ describe('ConsentRoot: streamed state', () => {
 			});
 			const [url, init] = fetchSpy.mock.calls[0] ?? [];
 			// The query carries the consent journey.
-			expect(String(url).split('?')[0]).toBe('/api/inth/subjects');
+			expect(String(url).split('?')[0]).toBe('/api/inth/v1/consent/records');
 			const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
 			expect(body.policyId).toBe('react-test');
 		} finally {
@@ -150,7 +150,9 @@ describe('ConsentRoot: streamed state', () => {
 			await vi.waitFor(() => {
 				expect(fetchSpy).toHaveBeenCalled();
 			});
-			expect(String(fetchSpy.mock.calls[0]?.[0])).toContain('/api/inth/init');
+			expect(String(fetchSpy.mock.calls[0]?.[0])).toContain(
+				'/api/inth/v1/consent/init'
+			);
 		} finally {
 			fetchSpy.mockRestore();
 		}

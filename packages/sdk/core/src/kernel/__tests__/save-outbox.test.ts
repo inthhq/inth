@@ -955,7 +955,7 @@ describe('save outbox: subject reassignment', () => {
 		const refusedId = saveSpy.mock.calls[0]?.[0].subjectId as string;
 		const retried = saveSpy.mock.calls[1]?.[0];
 		expect(retried.subjectId).not.toBe(refusedId);
-		expect(retried.subjectId).toMatch(/^sub_/u);
+		expect(retried.subjectId).toMatch(/^[\da-f]{8}-[\da-f]{4}-7/u);
 		expect(retried.subject.subjectId).toBe(retried.subjectId);
 		// The same act, only under the new id.
 		expect({ ...retried, subject: null, subjectId: null }).toEqual({
@@ -1650,7 +1650,15 @@ describe('save outbox: independent partial saves', () => {
 			await first;
 			await kernel.commands.init();
 			await vi.waitFor(() => expect(send).toHaveBeenCalledTimes(3));
-			expect(send.mock.calls[2]?.[0]).toEqual(send.mock.calls[0]?.[0]);
+			const original = send.mock.calls[0]?.[0] as SavePayload;
+			// The queued save moved with the visitor to the id the backend named.
+			const subjectId =
+				mapping === 'canonical-subject' ? 'canonical' : original.subjectId;
+			expect(send.mock.calls[2]?.[0]).toEqual({
+				...original,
+				subject: { ...original.subject, subjectId },
+				subjectId,
+			});
 			expect(
 				kernel.getSnapshot().explicitChoice?.categories.marketing?.value
 			).toBe(true);

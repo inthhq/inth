@@ -755,7 +755,7 @@ describe('kernel transport: save flows consents to backend', () => {
 		expect(result.subjectId).toBe('sub-1');
 		expect(saveSpy).toHaveBeenCalledTimes(1);
 		const payload = saveSpy.mock.calls[0]?.[0];
-		expect(payload?.subjectId).toMatch(/^sub_/u);
+		expect(payload?.subjectId).toMatch(/^[\da-f]{8}-[\da-f]{4}-7/u);
 		expect(payload?.consents.marketing).toBe(true);
 	});
 
@@ -769,7 +769,7 @@ describe('kernel transport: save flows consents to backend', () => {
 		await kernel.commands.save({ marketing: false });
 		const second = kernel.getSnapshot().subject?.subjectId ?? null;
 
-		expect(first).toMatch(/^sub_/u);
+		expect(first).toMatch(/^[\da-f]{8}-[\da-f]{4}-7/u);
 		expect(second).toBe(first);
 		expect(saveSpy.mock.calls[0]?.[0].subjectId).toBe(first);
 		expect(saveSpy.mock.calls[1]?.[0].subjectId).toBe(first);

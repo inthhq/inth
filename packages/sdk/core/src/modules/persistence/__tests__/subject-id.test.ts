@@ -92,7 +92,7 @@ test('a first visit gets a subject ID at startup and stores nothing', () => {
 	const { kernel } = boot();
 	const snapshot = kernel.getSnapshot();
 
-	expect(subjectIdOf(kernel)).toMatch(/^sub_/u);
+	expect(subjectIdOf(kernel)).toMatch(/^[\da-f]{8}-[\da-f]{4}-7/u);
 	expect(snapshot.explicitChoice).toBeNull();
 	expect(snapshot.activeUI).toBe('banner');
 	expect(storedSid()).toEqual({ cookie: null, local: null });
@@ -106,7 +106,7 @@ test('a reload before any save starts with a new ID', () => {
 	first.handle.dispose();
 
 	const { kernel, handle } = boot();
-	expect(subjectIdOf(kernel)).toMatch(/^sub_/u);
+	expect(subjectIdOf(kernel)).toMatch(/^[\da-f]{8}-[\da-f]{4}-7/u);
 	expect(subjectIdOf(kernel)).not.toBe(subjectId);
 	expect(kernel.getSnapshot().activeUI).toBe('banner');
 	expect(handle.hydrate()).toBe(false);
@@ -144,7 +144,7 @@ test.each([
 
 		const { kernel } = boot();
 
-		expect(subjectIdOf(kernel)).toMatch(/^sub_/u);
+		expect(subjectIdOf(kernel)).toMatch(/^[\da-f]{8}-[\da-f]{4}-7/u);
 		expect(subjectIdOf(kernel)).not.toBe('sub_legacy');
 		expect(storedSid()).toEqual({ cookie: null, local: null });
 	}
@@ -192,7 +192,7 @@ test('removing the ID starts a new one and stores nothing', () => {
 	kernel.set.subjectId(null);
 
 	const next = subjectIdOf(kernel);
-	expect(next).toMatch(/^sub_/u);
+	expect(next).toMatch(/^[\da-f]{8}-[\da-f]{4}-7/u);
 	expect(next).not.toBe(subjectId);
 	expect(storedKeys()).toEqual({ cookies: [], local: [] });
 });

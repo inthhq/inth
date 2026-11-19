@@ -39,7 +39,7 @@ To send events to your own PostHog and X projects, replace
   consent in the browser. `next.config.ts` has no `withConsentManifest`, so
   the server reads the manifest at runtime and each file that needs the
   config imports it.
-- `app/api/inth/manifest/route.ts` passes that config to
+- `app/api/inth/v1/consent/manifest/route.ts` passes that config to
   `createConsentRoute` and serves the cached public manifest for both
   routers.
 - `components/consent.tsx` is the client wrapper: `ConsentRoot`, scripts,

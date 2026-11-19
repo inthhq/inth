@@ -43,9 +43,9 @@ export const createVueConsentKernelContext =
 			mode:
 				options.mode ??
 				hosted({
-					domain,
 					fetch: customFetch,
 					projectUrl: projectUrl ?? '/api/inth',
+					property: domain,
 				}),
 		});
 	};

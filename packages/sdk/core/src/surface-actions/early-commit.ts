@@ -37,10 +37,11 @@ import {
 	saveSubject,
 } from '../kernel/save-plan';
 import { deleteCookie, getRawCookieValue, writeCookie } from '../libs/cookie';
-import { generateSubjectId } from '../libs/generate-subject-id';
+import { readStoredGivenAt } from '../libs/given-at';
 import { removeLocalStorageKey } from '../libs/local-storage';
 import { storageFor } from '../libs/storage-for';
 import { resolveStorageKeys } from '../libs/storage-keys';
+import { generateUuidV7 } from '../libs/subject-uuid';
 import {
 	decodeNoticeDismissal,
 	decodeVendorChoice,
@@ -165,7 +166,7 @@ export const planEarlyCommit = function planEarlyCommit(
 		actionAt
 	);
 	const subjectId =
-		before.subject?.subjectId ?? input.subjectId ?? generateSubjectId();
+		before.subject?.subjectId ?? input.subjectId ?? generateUuidV7();
 	const subject = saveSubject(before, subjectId);
 	const patch: SnapshotPatch = {
 		explicitChoice: recorded.choice,
@@ -202,6 +203,7 @@ export const planEarlyCommit = function planEarlyCommit(
 			choice: recorded.choice,
 			confirmed: recorded.confirmed,
 			consentAction: selection.consentAction,
+			date: (time) => Math.max(time, readStoredGivenAt(subjectId) + 1),
 			subject,
 			subjectId,
 			timing,

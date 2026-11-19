@@ -73,7 +73,6 @@ test('subject-only prefetch preserves browser receipts without a prepared record
 		config,
 		now,
 		prefetch,
-		producerContract: 1,
 	});
 	context.start();
 	const { dispose } = context;

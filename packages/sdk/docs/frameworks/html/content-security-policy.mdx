@@ -15,12 +15,12 @@ when they are allowed. Each needs a directive:
 | `script-src` | The host that serves `inth.js`, such as `https://your-project.inth.app`. Add `https://cdn.jsdelivr.net` for `inth.gpp.js`, `inth.devtools.js`, or a bundle you load from the CDN. | The Inth bundle. |
 | `script-src` | A nonce or hash for each inline script | Your queued `config` and `on` calls, and inline gated snippets. |
 | `script-src` | Each vendor's script origin | Gated `<script src>` tags and `scripts` entries. |
-| `connect-src` | Your backend's origin, such as `https://your-project.inth.app` | `/init`, `/subjects`, and `/manifest` in manifest mode. |
+| `connect-src` | Your backend's origin, such as `https://your-project.inth.app` | `/v1/consent/init`, `/v1/consent/records`, and `/v1/consent/manifest` in manifest mode. |
 | `style-src` | The same nonce as the Inth tag, or the host you serve `inth.css` from | The stock UI's `<style>` element, or the stylesheet file. |
 | `frame-src` | Each embed's origin, such as `https://www.youtube-nocookie.com` | Gated iframes. |
 | `img-src`, `connect-src` | Each vendor's collection endpoints | What the vendor scripts send once they run. |
 
-A missing `connect-src` entry is the most common failure. The `/init`
+A missing `connect-src` entry is the most common failure. The `/v1/consent/init`
 request fails with a CSP error in the console, no policy resolves, and no
 banner shows.
 
@@ -111,7 +111,7 @@ mode, so the backend's origin in `connect-src` covers it. It adds
 
 1. Send your policy as `Content-Security-Policy-Report-Only` first, and open
    the page with the console open.
-2. The console shows no CSP violation for the Inth tag, `/init` or the
+2. The console shows no CSP violation for the Inth tag, `/v1/consent/init` or the
    banner's styles. The banner renders styled.
 3. Allow each category. Each vendor's script and requests load without a
    violation.

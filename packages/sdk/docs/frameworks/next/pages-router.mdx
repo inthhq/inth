@@ -77,8 +77,8 @@ Create one catch-all API route under `routePrefix`:
 
 <include src="../../shared/examples/nextjs-pages-router/pages-consent-route.mdx" />
 
-It answers `GET /api/inth/init` and `GET /api/inth/manifest` from the bundled
-snapshot. With runtime fetching, it fetches `${projectUrl}/manifest` and
+It answers `GET /api/inth/v1/consent/init` and `GET /api/inth/v1/consent/manifest` from the bundled
+snapshot. With runtime fetching, it fetches `${projectUrl}/v1/consent/manifest` and
 caches the public policy. Any other path under `/api/inth` returns 404, and
 methods other than `GET` and `HEAD` get `405`. The file must be named
 `[...inth].ts`; for another name, pass the parameter as the second argument,
@@ -100,7 +100,7 @@ server from `pageProps.consent`:
 
 A page with `withConsentProps` supplies `consent`. On any other page,
 including static and `getStaticProps` pages, `consent` is undefined, and the
-browser asks `/api/inth/init` after hydration. That route resolves the
+browser asks `/api/inth/v1/consent/init` after hydration. That route resolves the
 bundled policy with the browser request's location headers.
 
 ## Resolve consent in getServerSideProps
@@ -113,7 +113,7 @@ Export `withConsentProps()` from `@inth/nextjs/pages` as the page's
 It resolves the visitor's consent from `inth.config.ts` and adds it to the
 page's props as `consent`, with `undefined` fields removed, as Next.js
 requires. The page renders the banner in the server HTML, and the browser
-applies the same state without an `/init` request.
+applies the same state without an `/v1/consent/init` request.
 
 A page with its own `getServerSideProps` passes it in:
 
@@ -147,8 +147,8 @@ Set `mode: hosted()` in `inth.config.ts` and remove `routePrefix` and
 `pages/api/inth/[...inth].ts`. Keep `withConsentManifest`, which finds the
 config. With `hosted()` it downloads no manifest, so `next build` does not
 contact the backend. `_app.tsx` and the pages stay the same. `withConsentProps` and the browser now call
-`${projectUrl}/init`, and consent choices still go to
-`${projectUrl}/subjects`. For a browser-only setup with no server work, follow
+`${projectUrl}/v1/consent/init`, and consent choices still go to
+`${projectUrl}/v1/consent/records`. For a browser-only setup with no server work, follow
 [client-side initialization](/docs/frameworks/next/client-side).
 
 Keeping browser saves on your origin with
@@ -170,9 +170,9 @@ open.
 4. Navigate to another page with a Next.js `Link` and reopen
    **Privacy settings**. The choice is still selected.
 5. Open a static page directly. It shows the same choice, resolved in the
-   browser through `/api/inth/init`.
+   browser through `/api/inth/v1/consent/init`.
 
-Pages with `withConsentProps` make no `/init` request, and choices post to
-`${projectUrl}/subjects`. [Script loading](/docs/frameworks/next/scripts)
+Pages with `withConsentProps` make no `/v1/consent/init` request, and choices post to
+`${projectUrl}/v1/consent/records`. [Script loading](/docs/frameworks/next/scripts)
 explains each vendor's loading and revocation behavior, and
 [the consent checks](/docs/guides/verify-consent) cover the release checklist.

@@ -6,7 +6,7 @@
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { isUuidV7 } from '../../libs/subject-uuid';
+import { isUuidV7 } from '../../transports/v1/routes';
 import type { SavePayload } from '../../types';
 import { createKernel } from '../index';
 import { createMemoryOutboxStore } from '../save-outbox';

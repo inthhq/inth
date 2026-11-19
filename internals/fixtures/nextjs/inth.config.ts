@@ -11,7 +11,7 @@ export default defineConsentConfig({
 	projectUrl: 'https://your-project.inth.app',
 	...testBackend('projectUrl'),
 	// Pages that pass no state resolve consent in the browser from the
-	// manifest route, `app/api/inth/manifest/route.ts`.
+	// manifest route, `app/api/inth/v1/consent/manifest/route.ts`.
 	mode: manifest({ resolve: 'browser' }),
 	routePrefix: '/api/inth',
 });

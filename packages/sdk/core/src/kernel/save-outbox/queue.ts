@@ -28,8 +28,8 @@ import type {
 	validateExplicitChoice,
 } from '../../consent-record/validation';
 import { isExperimentAssignment } from '../../libs/experiment-record';
-import type { generateSubjectId } from '../../libs/generate-subject-id';
 import type { warnInDevelopment } from '../../libs/is-production';
+import type { generateUuidV7 } from '../../libs/subject-uuid';
 import type {
 	isConsentSaveRejection,
 	isSubjectConflict,
@@ -56,7 +56,7 @@ import type {
  * @internal
  */
 export interface QueueTools {
-	generateSubjectId: typeof generateSubjectId;
+	generateUuidV7: typeof generateUuidV7;
 	isConsentSaveRejection: typeof isConsentSaveRejection;
 	isPlainRecord: typeof isPlainRecord;
 	isSubjectConflict: typeof isSubjectConflict;
@@ -450,8 +450,11 @@ export interface QueueWorker {
 	enqueue: (current: () => SavePayload | null) => Promise<EnqueueResult>;
 	/** Drop `payload` and the queued saves it superseded. */
 	discard: (payload: SavePayload) => Promise<void>;
-	/** Move the visitor off a subject id the backend refused. */
-	reassignSubject: (from: string) => Promise<string | null>;
+	/**
+	 * Move the visitor off a subject id: to a new one when the backend
+	 * refused it, or to the canonical one it answered for a `sub_` id.
+	 */
+	reassignSubject: (from: string, to?: string) => Promise<string | null>;
 	/** Replay every queued entry; resolves to whether any is left. */
 	replay: (save: NonNullable<KernelTransport['save']>) => Promise<boolean>;
 }
@@ -468,7 +471,7 @@ export const createQueueWorker = function createQueueWorker({
 }: QueueWorkerOptions): QueueWorker {
 	const { batch, commit, emit, getSnapshot } = runtime;
 	const {
-		generateSubjectId,
+		generateUuidV7,
 		isConsentSaveRejection,
 		isSubjectConflict,
 		pendingSave,
@@ -664,7 +667,8 @@ export const createQueueWorker = function createQueueWorker({
 	 * now.
 	 */
 	const reassignSubject = async function reassignSubject(
-		from: string
+		from: string,
+		proposed?: string
 	): Promise<string | null> {
 		const generation = runtime.getGeneration();
 		const cached = reassignedSubjects.get(from);
@@ -684,7 +688,11 @@ export const createQueueWorker = function createQueueWorker({
 		};
 		let claim = earlier;
 		if (claim === undefined) {
-			claim = claimReassignment(from, generateSubjectId(), unchanged());
+			claim = claimReassignment(
+				from,
+				proposed ?? generateUuidV7(),
+				unchanged()
+			);
 			reassignedSubjects.set(from, { claim, generation });
 		}
 		const to = await claim;
@@ -721,6 +729,26 @@ export const createQueueWorker = function createQueueWorker({
 	// -- Replay ----------------------------------------------------------------
 
 	/**
+	 * A `sub_` id a replay was answered with its UUID for: the visitor and
+	 * every save still queued under it move to the UUID, so it is not sent
+	 * again. Not on the second attempt after a reassignment (`moved` is
+	 * `null` there).
+	 */
+	const followCanonicalSubject = async function followCanonicalSubject(
+		from: string,
+		canonical: string | undefined,
+		moved: Map<string, string> | null
+	): Promise<void> {
+		if (!moved || canonical === undefined || canonical === from) {
+			return;
+		}
+		const to = await reassignSubject(from, canonical);
+		if (to !== null) {
+			moved.set(from, to);
+		}
+	};
+
+	/**
 	 * Replay one entry. Returns `null` when another kernel already replayed
 	 * or dropped it, otherwise the replay outcome. A save the backend refused
 	 * for good (a `ConsentSaveRejectedError`) leaves the queue at once
@@ -755,9 +783,11 @@ export const createQueueWorker = function createQueueWorker({
 		let outcome: ReplayOutcome = 'retry';
 		let rejected: string | undefined;
 		let failure: unknown;
+		let canonical: string | undefined;
 		try {
-			const { ok } = await save(entry.payload);
-			outcome = ok ? 'saved' : 'retry';
+			const result = await save(entry.payload);
+			outcome = result.ok ? 'saved' : 'retry';
+			canonical = result.subjectId;
 		} catch (error) {
 			failure = error;
 			if (moved && isSubjectConflict(error)) {
@@ -815,6 +845,11 @@ export const createQueueWorker = function createQueueWorker({
 			);
 		}
 		const { subjectId } = entry.payload;
+		await followCanonicalSubject(
+			subjectId,
+			outcome === 'saved' ? canonical : undefined,
+			moved
+		);
 		return {
 			error: failure,
 			event:

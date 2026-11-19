@@ -16,11 +16,11 @@ import { createHostedGlobal } from '../hosted-global';
 import { createTestingGlobal } from '../testing-global';
 import type { ConsentClientOptions } from '../types';
 
-/** A query pair Inth adds to `/init`. */
+/** A query pair Inth adds to `/v1/consent/init`. */
 const INIT_PAIR =
 	/^(?:v|contract|country|region|gpc|experiment|journey|journeyScope|stored)=/u;
 
-/** A request URL without the parameters a client adds to `/init`. */
+/** A request URL without the parameters a client adds to `/v1/consent/init`. */
 const pathOf = (url: unknown): string => {
 	const text = String(url);
 	const [base = '', query] = text.split('?');
@@ -192,7 +192,12 @@ describe.each(entries)('$mode browser global', ({ create, mode }) => {
 
 	it('auto-initializes the CDN entry and saves the first choice synchronously', async () => {
 		const fetchSpy = vi.fn<typeof fetch>(() =>
-			Promise.resolve(Response.json({ subjectId: 'sub_browser_mode' }))
+			Promise.resolve(
+				Response.json({
+					recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+					subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+				})
+			)
 		);
 		vi.stubGlobal('fetch', fetchSpy);
 		const loaded = vi.fn();
@@ -236,7 +241,12 @@ describe.each(entries)('$mode browser global', ({ create, mode }) => {
 			}))
 		).toEqual(
 			mode === 'hosted'
-				? [{ method: 'POST', url: 'https://consent.example.test/subjects' }]
+				? [
+						{
+							method: 'POST',
+							url: 'https://consent.example.test/v1/consent/records',
+						},
+					]
 				: []
 		);
 	});
@@ -419,7 +429,11 @@ describe('default CDN entry', () => {
 			{ manifest: { branding: 'inth', revision: '1', schemaVersion: 2 } },
 			/manifest inputs/u,
 		],
-		['manifest URL', { manifestUrl: '/manifest' }, /manifest inputs/u],
+		[
+			'manifest URL',
+			{ manifestUrl: '/v1/consent/manifest' },
+			/manifest inputs/u,
+		],
 	])('rejects %s before starting', async (_name, options, error) => {
 		const fetchSpy = vi.fn<typeof fetch>();
 		vi.stubGlobal('fetch', fetchSpy);

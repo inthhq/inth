@@ -28,7 +28,7 @@ const vendor: Script = {
 	src: VENDOR_SRC,
 };
 
-/** The `/init` answer, listing the registry's copy of `vendor`. */
+/** The `/v1/consent/init` answer, listing the registry's copy of `vendor`. */
 const init = {
 	branding: 'inth',
 	location: { countryCode: 'US', regionCode: null },

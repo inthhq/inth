@@ -138,7 +138,7 @@ const toPagesApiHandler = function toPagesApiHandler(
 
 /**
  * One Pages Router API route for every consent path,
- * `pages/api/inth/[...inth].ts`: `GET /manifest` and `GET /init`, and 404
+ * `pages/api/inth/[...inth].ts`: `GET /v1/consent/manifest` and `GET /v1/consent/init`, and 404
  * for anything else unless `proxy` forwards it to the backend. The Pages
  * Router counterpart of `createConsentRoute`.
  *

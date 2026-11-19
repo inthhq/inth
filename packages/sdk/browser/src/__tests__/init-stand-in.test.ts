@@ -36,7 +36,7 @@ type StandIn = GlobalApiBase & { __inthBoot: InitBoot };
 
 const target = window as unknown as Record<string, unknown>;
 
-/** The `/init` answer: an opt-in policy for measurement and marketing. */
+/** The `/v1/consent/init` answer: an opt-in policy for measurement and marketing. */
 const initBody = () => ({
 	branding: 'inth',
 	location: { countryCode: 'DE', regionCode: null },
@@ -55,7 +55,7 @@ const initBody = () => ({
 	translations: { language: 'en', translations: enTranslations },
 });
 
-/** Settles the `/init` request the init script started. */
+/** Settles the `/v1/consent/init` request the init script started. */
 let answerInit: {
 	resolve: (body: unknown) => void;
 	reject: () => void;
@@ -89,7 +89,7 @@ const settle = () =>
 		setTimeout(resolve, 10);
 	});
 
-/** Answers `/init` and waits for the init script's banner. */
+/** Answers `/v1/consent/init` and waits for the init script's banner. */
 const showBanner = async () => {
 	answerInit.resolve(initBody());
 	await vi.waitFor(() => {
@@ -149,7 +149,7 @@ beforeEach(() => {
 		vi.fn(
 			(input: RequestInfo | URL) =>
 				new Promise((resolve, reject) => {
-					if (!String(input).startsWith(`${BACKEND_URL}/init`)) {
+					if (!String(input).startsWith(`${BACKEND_URL}/v1/consent/init`)) {
 						reject(new Error(`unexpected request: ${String(input)}`));
 						return;
 					}

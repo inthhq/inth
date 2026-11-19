@@ -227,6 +227,11 @@ export interface SavePayloadInput {
 	uiSource: SaveUISource;
 	/** `timeToDecisionMs` and `experiment` from {@link saveAttribution}. */
 	timing: Pick<SavePayload, 'experiment' | 'timeToDecisionMs'>;
+	/**
+	 * Dates the save: the later of `time` and one millisecond after the
+	 * latest `givenAt` sent for the subject.
+	 */
+	date: (time: number) => number;
 }
 
 /**
@@ -246,10 +251,15 @@ export const buildSavePayload = function buildSavePayload(
 	// caller mutating its input object cannot change the queued payload.
 	const confirmedCategories: Partial<Record<OptionalConsentCategory, boolean>> =
 		{};
-	for (const category of input.confirmed) {
-		const decision = input.choice.categories[category];
-		if (decision) {
-			confirmedCategories[category] = decision.value;
+	let latestReceipt = input.actionAt;
+	for (const [category, decision] of Object.entries(input.choice.categories)) {
+		if (!decision) {
+			continue;
+		}
+		if (input.confirmed.includes(category as OptionalConsentCategory)) {
+			confirmedCategories[category as OptionalConsentCategory] = decision.value;
+		} else {
+			latestReceipt = Math.max(latestReceipt, decision.confirmedAt);
 		}
 	}
 	return {
@@ -258,7 +268,7 @@ export const buildSavePayload = function buildSavePayload(
 		consentAction: input.consentAction,
 		consents: after.effectivePermissions,
 		...saveDecisionInputs(after),
-		givenAt: input.actionAt,
+		givenAt: input.date(latestReceipt),
 		idempotencyKey: createIdempotencyKey(),
 		model: after.model,
 		overrides: after.overrides,

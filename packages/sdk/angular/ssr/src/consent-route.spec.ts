@@ -22,7 +22,7 @@ const upstream = () =>
 		.fn<typeof globalThis.fetch>()
 		.mockImplementation((input) =>
 			Promise.resolve(
-				String(input).endsWith('/manifest')
+				String(input).endsWith('/v1/consent/manifest')
 					? Response.json(MANIFEST_FIXTURE)
 					: Response.json({ ok: true }, { status: 201 })
 			)
@@ -40,11 +40,13 @@ describe('createConsentRoute', () => {
 			projectUrl: BACKEND,
 			snapshot: MANIFEST_FIXTURE,
 		});
-		const served = await route.fetch(new Request(`${SITE}/api/inth/manifest`));
+		const served = await route.fetch(
+			new Request(`${SITE}/api/inth/v1/consent/manifest`)
+		);
 		expect(await served?.json()).toEqual(MANIFEST_FIXTURE);
 
 		const init = await route.fetch(
-			new Request(`${SITE}/api/inth/init`, {
+			new Request(`${SITE}/api/inth/v1/consent/init`, {
 				headers: { 'x-vercel-ip-country': 'DE' },
 			})
 		);
@@ -53,7 +55,9 @@ describe('createConsentRoute', () => {
 		});
 
 		expect(await route.fetch(new Request(`${SITE}/`))).toBeNull();
-		expect(await route.fetch(new Request(`${SITE}/api/inthx/init`))).toBeNull();
+		expect(
+			await route.fetch(new Request(`${SITE}/api/inthx/v1/consent/init`))
+		).toBeNull();
 		// No policy request; only the session report.
 		expect(
 			fetch.mock.calls.filter(([url]) => !String(url).endsWith('/sessions'))
@@ -63,7 +67,10 @@ describe('createConsentRoute', () => {
 	test('answers writes with 405 unless proxy is on', async () => {
 		const route = createConsentRoute({ projectUrl: BACKEND });
 		const response = await route.fetch(
-			new Request(`${SITE}/api/inth/subjects`, { body: '{}', method: 'POST' })
+			new Request(`${SITE}/api/inth/v1/consent/records`, {
+				body: '{}',
+				method: 'POST',
+			})
 		);
 		expect(response?.status).toBe(405);
 		expect(response?.headers.get('allow')).toBe('GET, HEAD');
@@ -78,10 +85,13 @@ describe('createConsentRoute', () => {
 			routePrefix: '/consent/',
 		});
 		const response = await route.fetch(
-			new Request(`${SITE}/consent/subjects`, { body: '{}', method: 'POST' })
+			new Request(`${SITE}/consent/v1/consent/records`, {
+				body: '{}',
+				method: 'POST',
+			})
 		);
 		expect(response?.status).toBe(201);
-		expect(fetch.mock.calls[0]?.[0]).toBe(`${BACKEND}/subjects`);
+		expect(fetch.mock.calls[0]?.[0]).toBe(`${BACKEND}/v1/consent/records`);
 		const headers = new Headers(fetch.mock.calls[0]?.[1]?.headers);
 		expect(headers.get('x-inth-proxy')).toBe('@inth/angular');
 		expect(headers.get('x-forwarded-host')).toBe('shop.example');
@@ -93,7 +103,7 @@ describe('createConsentRoute', () => {
 			const route = createConsentRoute({
 				snapshot: MANIFEST_FIXTURE,
 			});
-			const response = await route.localFetch('/api/inth/manifest');
+			const response = await route.localFetch('/api/inth/v1/consent/manifest');
 			expect(await response.json()).toEqual(MANIFEST_FIXTURE);
 			expect(global).not.toHaveBeenCalled();
 		} finally {
@@ -105,12 +115,14 @@ describe('createConsentRoute', () => {
 		const fetch = upstream();
 		const route = createConsentRoute({
 			fetch,
-			mode: manifest({ manifestUrl: 'https://cdn.example/manifest' }),
+			mode: manifest({
+				manifestUrl: 'https://cdn.example/v1/consent/manifest',
+			}),
 			projectUrl: BACKEND,
 		});
-		await route.fetch(new Request(`${SITE}/api/inth/manifest`));
+		await route.fetch(new Request(`${SITE}/api/inth/v1/consent/manifest`));
 		expect(String(fetch.mock.calls[0]?.[0])).toBe(
-			'https://cdn.example/manifest'
+			'https://cdn.example/v1/consent/manifest'
 		);
 	});
 
@@ -125,7 +137,7 @@ describe('createConsentRoute', () => {
 		['projectUrl', '/api/inth/v1'],
 		['projectUrl', '/api/inth/../inth/v1'],
 		['projectUrl', '/api/inth?region=eu'],
-		['manifestUrl', '/api/inth/manifest'],
+		['manifestUrl', '/api/inth/v1/consent/manifest'],
 	] as const)(
 		'rejects a %s of %s on or below the route at setup',
 		(option, url) => {
@@ -138,7 +150,7 @@ describe('createConsentRoute', () => {
 	test("allows an upstream path that only starts with the route's name", () => {
 		expect(() =>
 			createConsentRoute({
-				manifestUrl: '/api/inthx/manifest',
+				manifestUrl: '/api/inthx/v1/consent/manifest',
 				projectUrl: '/api/inth-other',
 			})
 		).not.toThrow();
@@ -153,7 +165,7 @@ describe('createConsentRoute', () => {
 		});
 
 		const response = await route.fetch(
-			new Request(`${SITE}/api/inth/init`, { method: 'POST' })
+			new Request(`${SITE}/api/inth/v1/consent/init`, { method: 'POST' })
 		);
 
 		expect(response?.status).toBe(500);
@@ -170,7 +182,7 @@ describe('createConsentRoute', () => {
 		});
 
 		const response = await route.fetch(
-			new Request('http://internal:4000/api/inth/init', {
+			new Request('http://internal:4000/api/inth/v1/consent/init', {
 				headers: {
 					'x-forwarded-host': new URL(SITE).host,
 					'x-forwarded-proto': 'https',
@@ -207,7 +219,7 @@ describe('createConsentRoute', () => {
 			});
 
 			const response = await route.fetch(
-				new Request('http://internal:4000/api/inth/init', {
+				new Request('http://internal:4000/api/inth/v1/consent/init', {
 					headers,
 					method: 'POST',
 				})
@@ -262,18 +274,23 @@ describe('createConsentRoute', () => {
 			const { port } = server.address() as AddressInfo;
 			const base = `http://127.0.0.1:${port}`;
 
-			const served = await globalThis.fetch(`${base}/api/inth/manifest`);
+			const served = await globalThis.fetch(
+				`${base}/api/inth/v1/consent/manifest`
+			);
 			expect(await served.json()).toEqual(MANIFEST_FIXTURE);
 
 			const page = await globalThis.fetch(`${base}/about?x=/api/inth`);
 			expect(page.status).toBe(404);
 			expect(await page.text()).toBe('page');
 
-			const save = await globalThis.fetch(`${base}/api/inth/subjects`, {
-				body: '{}',
-				headers: { 'content-type': 'application/json' },
-				method: 'POST',
-			});
+			const save = await globalThis.fetch(
+				`${base}/api/inth/v1/consent/records`,
+				{
+					body: '{}',
+					headers: { 'content-type': 'application/json' },
+					method: 'POST',
+				}
+			);
 			expect(save.status).toBe(201);
 			const headers = new Headers(fetch.mock.calls[0]?.[1]?.headers);
 			expect(headers.get('x-forwarded-for')).toBe('127.0.0.1');
@@ -314,7 +331,7 @@ describe('createConsentRoute', () => {
 			try {
 				const { port } = server.address() as AddressInfo;
 				return await globalThis.fetch(
-					`http://127.0.0.1:${port}/api/inth/subjects`,
+					`http://127.0.0.1:${port}/api/inth/v1/consent/records`,
 					{ body: '{}', headers: forwarded, method: 'POST' }
 				);
 			} finally {

@@ -14,7 +14,7 @@ afterEach(() => {
 	vi.unstubAllGlobals();
 });
 
-test("browser resolution sends a visitor without a location to the backend's /init", async () => {
+test("browser resolution sends a visitor without a location to the backend's /v1/consent/init", async () => {
 	// A region-based policy resolved for an unknown location could apply
 	// the wrong region's rules. Every single-page app asks the backend.
 	const fetch = vi
@@ -59,6 +59,6 @@ test("browser resolution sends a visitor without a location to the backend's /in
 		} as unknown as Parameters<NonNullable<typeof transport.init>>[0])
 		.catch(() => null);
 	expect(String(fetch.mock.calls[0]?.[0])).toContain(
-		'https://consent.example.com/init'
+		'https://consent.example.com/v1/consent/init'
 	);
 });

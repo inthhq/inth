@@ -6,20 +6,20 @@
  *
  * - `manifest()`, and no mode at all: the server resolves from the mode's
  *   `snapshot`, else the build's snapshot, else the manifest read at
- *   runtime from `manifestUrl` or `${projectUrl}/manifest`.
+ *   runtime from `manifestUrl` or `${projectUrl}/v1/consent/manifest`.
  *   `source: 'runtime'` and an absolute `manifestUrl` both mean "read it at
  *   runtime", so neither uses the build's snapshot, and the build makes
  *   none for them ({@link needsBuildSnapshot}). A `/`-relative
  *   `manifestUrl` is on this app's origin: the build still downloads
- *   `${projectUrl}/manifest`, and without that snapshot the server reads
+ *   `${projectUrl}/v1/consent/manifest`, and without that snapshot the server reads
  *   the relative URL. One on the app's own consent route is the browser's
- *   way to that route, which reads `${projectUrl}/manifest`, so the server
+ *   way to that route, which reads `${projectUrl}/v1/consent/manifest`, so the server
  *   and the route read that instead of calling themselves.
  *   `resolve: 'browser'` resolves nothing on the server, unless the
  *   adapter's render resolves it anyway (`serverResolvesBrowserMode`), and
  *   its `manifestUrl` is what the browser reads in place of the route.
  * - `hosted()`: the server asks the mode's `initUrl`, else
- *   `${projectUrl}/init`, with the mode's `headers`.
+ *   `${projectUrl}/v1/consent/init`, with the mode's `headers`.
  * - `testing()`: the server resolves the test policy offline when the
  *   adapter knows the provider's IAB setting, so it picks the pack the
  *   browser would; otherwise it leaves the policy to the browser. Never in
@@ -34,6 +34,7 @@ import type { ConsentManifest, PolicyRule } from '@inth/sdk-schema/types';
 
 import type { ConsentMode, TestingMode } from '../modes';
 import { assertNotProduction } from '../transports/testing';
+import { V1_ROUTES } from '../transports/v1/routes';
 import type { ConsentRouteHandlerOptions } from './consent-route';
 import type { ResolveRequestConsentOptions } from './request-consent';
 import { DEFAULT_CONSENT_ROUTE_PREFIX } from './shared';
@@ -88,7 +89,7 @@ export interface ServerModeOptions {
 	browserTransports?: boolean;
 	/**
 	 * A render resolves `manifest({ resolve: 'browser' })` from the build's
-	 * snapshot or `${projectUrl}/manifest`, as it does `manifest()`, so a
+	 * snapshot or `${projectUrl}/v1/consent/manifest`, as it does `manifest()`, so a
 	 * page rendered per visitor holds the policy and the browser resolver
 	 * serves only re-inits and pages rendered without server state
 	 * (Next.js's `resolveConsent`). Otherwise the server reads the cookie
@@ -178,7 +179,7 @@ const isOnRoute = function isOnRoute(url: string, prefix: string): boolean {
 
 /**
  * The `manifestUrl` the server and the consent route read, or `undefined`
- * for `${projectUrl}/manifest`.
+ * for `${projectUrl}/v1/consent/manifest`.
  */
 const serverManifestUrl = function serverManifestUrl(
 	mode: ConsentMode,
@@ -244,7 +245,7 @@ const isDatalessTransport = (mode: ServerModeInput): boolean =>
  * when it should: `hosted()` and `testing()` read no manifest, a `snapshot`
  * is one already, and `source: 'runtime'` and an absolute `manifestUrl` are
  * read at runtime. A `/`-relative `manifestUrl` still gets the snapshot
- * from `${projectUrl}/manifest`.
+ * from `${projectUrl}/v1/consent/manifest`.
  *
  * @param mode - The configured mode, `undefined` for `manifest()`.
  * @returns The reason, for a build's log, or `undefined`.
@@ -276,7 +277,7 @@ export const buildSnapshotSkipReason = function buildSnapshotSkipReason(
 
 /**
  * Whether a build should download a manifest snapshot for this mode from
- * `${projectUrl}/manifest`. See {@link buildSnapshotSkipReason}.
+ * `${projectUrl}/v1/consent/manifest`. See {@link buildSnapshotSkipReason}.
  *
  * @param mode - The configured mode, `undefined` for `manifest()`.
  * @returns `true` when the server would read a build snapshot.
@@ -325,8 +326,8 @@ const assertBackend = function assertBackend(
 	if (options.projectUrl === undefined) {
 		throw new TypeError(
 			mode.snapshot
-				? `${options.adapter}: manifest({ snapshot }) still needs a backend URL: the snapshot replaces the manifest download, but the browser saves consent with POST \${projectUrl}/subjects, and the consent route only answers GET.${hint}`
-				: `${options.adapter}: manifest() needs a backend URL: the server reads its policy from \${projectUrl}/manifest, and the browser saves consent there with POST /subjects.${hint}`
+				? `${options.adapter}: manifest({ snapshot }) still needs a backend URL: the snapshot replaces the manifest download, but the browser saves consent with POST \${projectUrl}/v1/consent/records, and the consent route only answers GET.${hint}`
+				: `${options.adapter}: manifest() needs a backend URL: the server reads its policy from \${projectUrl}/v1/consent/manifest, and the browser saves consent there with POST /v1/consent/records.${hint}`
 		);
 	}
 	if (options.projectUrl === '' && !mode.snapshot && !mode.manifestUrl) {
@@ -390,7 +391,10 @@ const resolvePolicy = function resolvePolicy(
 			}
 			return {
 				// The catch-all serves deferred vendor lists on its init path.
-				gvlRoute: routePrefix === undefined ? undefined : `${routePrefix}/init`,
+				gvlRoute:
+					routePrefix === undefined
+						? undefined
+						: `${routePrefix}${V1_ROUTES.init}`,
 				manifest,
 				manifestUrl,
 				mode: 'manifest',

@@ -30,7 +30,10 @@ export const startExampleFixture = async function startExampleFixture(
 			let result: Response;
 			if (request.method === 'OPTIONS') {
 				result = new Response(null, { status: 204 });
-			} else if (failing && ['init', 'manifest'].includes(segments[0] ?? '')) {
+			} else if (
+				failing &&
+				['v1/consent/init', 'v1/consent/manifest'].includes(segments.join('/'))
+			) {
 				result = Response.json(
 					{ error: 'Fixture unavailable' },
 					{ status: 503 }
@@ -38,7 +41,11 @@ export const startExampleFixture = async function startExampleFixture(
 			} else {
 				result = await handleFixtureRequest(webRequest, segments);
 			}
-			if (result.ok && options.translations && segments[0] === 'manifest') {
+			if (
+				result.ok &&
+				options.translations &&
+				segments.join('/') === 'v1/consent/manifest'
+			) {
 				const manifest = (await result.json()) as CompatManifest;
 				manifest.translations = {
 					i18n: {
@@ -52,7 +59,11 @@ export const startExampleFixture = async function startExampleFixture(
 					},
 				};
 				result = Response.json(manifest, { headers: result.headers });
-			} else if (result.ok && options.translations && segments[0] === 'init') {
+			} else if (
+				result.ok &&
+				options.translations &&
+				segments.join('/') === 'v1/consent/init'
+			) {
 				const init = (await result.json()) as ReturnType<
 					typeof buildInitResponse
 				>;

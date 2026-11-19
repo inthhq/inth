@@ -54,6 +54,8 @@
  */
 
 import type { OptionalConsentCategory } from '../../consent-record/types';
+import { createGivenAtClock } from '../../libs/given-at';
+import type { GivenAtClock } from '../../libs/given-at';
 import { warnInDevelopment } from '../../libs/is-production';
 import {
 	isConsentSaveRejection,
@@ -112,6 +114,18 @@ export interface SaveOutbox {
 	 * is not ready yet. Requests already sent are not held.
 	 */
 	hold: (until: Promise<unknown>) => void;
+	/**
+	 * Move the visitor from `from` to the subject id the backend answered
+	 * for it, such as the UUID of a `sub_` id, in every tab, with the saves
+	 * queued under `from`.
+	 */
+	adoptSubject: (from: string, to: string) => Promise<void>;
+	/** See {@link GivenAtClock.next}. */
+	dateSave: GivenAtClock['next'];
+	/** Keep the latest save date beside a stored consent record. */
+	keepDates: () => void;
+	/** Forget the latest save date, when the visitor's subject changes. */
+	forgetDates: () => void;
 }
 
 export interface SaveOutboxOptions {
@@ -157,6 +171,7 @@ export const createSaveOutbox = function createSaveOutbox({
 	loadQueue = () => import('./queue'),
 }: SaveOutboxOptions): SaveOutbox {
 	const { batch, commit, emit, getSnapshot } = runtime;
+	const dates = createGivenAtClock();
 	let worker: QueueWorker | undefined;
 	// Instance-local: another page must still recover a stranded request.
 	const directSends = new Set<SavePayload>();
@@ -245,6 +260,7 @@ export const createSaveOutbox = function createSaveOutbox({
 	};
 
 	const clear = function clear(): Promise<void> {
+		dates.clear();
 		// At once, so the page can close before the lock is granted: a later
 		// page must not replay the cleared subject's saves. Then again under
 		// the lock, after any transaction that read the lists before this.
@@ -290,31 +306,66 @@ export const createSaveOutbox = function createSaveOutbox({
 		retryWhenOnline();
 	};
 
-	/**
-	 * Take the subject id the backend returned for the newest action: only
-	 * while the action's choice and subject are still the current ones.
-	 */
-	const adoptServerSubject = function adoptServerSubject(
-		subjectId: string | undefined,
-		action: ConsentSnapshot
-	): void {
+	/** Whether a save is queued under `subjectId`. */
+	const holdsSaveFor = function holdsSaveFor(
+		subjectId: string
+	): Promise<boolean> {
+		return store.transact((tx) => {
+			const saves = tx.read('saves');
+			return (
+				Array.isArray(saves) &&
+				saves.some(
+					(entry) =>
+						(entry as { payload?: { subjectId?: unknown } } | null)?.payload
+							?.subjectId === subjectId
+				)
+			);
+		});
+	};
+
+	const adoptSubject = async function adoptSubject(
+		from: string,
+		to: string
+	): Promise<void> {
+		dates.move(from, to);
+		const queue = (await holdsSaveFor(from)) ? await loadWorker() : undefined;
+		if (queue) {
+			await queue.reassignSubject(from, to);
+			return;
+		}
 		const current = getSnapshot();
-		if (
-			!subjectId ||
-			subjectId === current.subject?.subjectId ||
-			current.explicitChoice !== action.explicitChoice ||
-			current.subject?.subjectId !== action.subject?.subjectId
-		) {
+		if (current.subject?.subjectId !== from) {
 			return;
 		}
 		batch(() => {
-			commit({ subject: { ...current.subject, subjectId } });
+			commit({ subject: { ...current.subject, subjectId: to } });
 			emit({
-				previousSubjectId: current.subject?.subjectId,
+				previousSubjectId: from,
 				snapshot: getSnapshot(),
 				type: 'subject:resolved',
 			});
 		});
+	};
+
+	/**
+	 * Take the subject id the backend returned for the newest action: only
+	 * while the action's choice and subject are still the current ones.
+	 */
+	const adoptServerSubject = async function adoptServerSubject(
+		subjectId: string | undefined,
+		action: ConsentSnapshot
+	): Promise<void> {
+		const current = getSnapshot();
+		const from = current.subject?.subjectId;
+		if (
+			!(subjectId && from) ||
+			subjectId === from ||
+			current.explicitChoice !== action.explicitChoice ||
+			from !== action.subject?.subjectId
+		) {
+			return;
+		}
+		await adoptSubject(from, subjectId);
 	};
 
 	const trackDirectSend = async function trackDirectSend(
@@ -405,7 +456,7 @@ export const createSaveOutbox = function createSaveOutbox({
 				retryWhenOnline();
 			}
 			if (result.ok && currentPayload()) {
-				adoptServerSubject(result.subjectId, actionSnapshot);
+				await adoptServerSubject(result.subjectId, actionSnapshot);
 			}
 			return { ...result, confirmed };
 		} catch (error) {
@@ -447,10 +498,14 @@ export const createSaveOutbox = function createSaveOutbox({
 	};
 
 	return {
+		adoptSubject,
 		clear,
+		dateSave: dates.next,
+		forgetDates: dates.clear,
 		hold(until) {
 			held = Promise.allSettled([held, until]);
 		},
+		keepDates: dates.persist,
 		replay,
 		send: (payload, action) =>
 			trackDirectSend(payload, () => performSendAction(payload, action, true)),

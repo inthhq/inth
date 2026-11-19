@@ -10,9 +10,9 @@
  */
 
 import type { KernelTransport } from '../types';
-import type { HostedTransportOptions } from './hosted';
 import { hostedFactories } from './hosted-modes';
 import type { HostedModeFactory, HostedModeOptions } from './mode';
+import type { V1HostedTransportOptions } from './v1/hosted';
 
 /**
  * Builds a `hosted()` factory whose transports come from `build`.
@@ -23,7 +23,7 @@ import type { HostedModeFactory, HostedModeOptions } from './mode';
  */
 export const createHostedModeFactory = function createHostedModeFactory(
 	options: HostedModeOptions,
-	build: (transport: HostedTransportOptions) => KernelTransport
+	build: (transport: V1HostedTransportOptions) => KernelTransport
 ): HostedModeFactory {
 	// The options as of this call: editing the object afterwards changes
 	// neither the transports this factory builds nor what a provider
@@ -41,12 +41,12 @@ export const createHostedModeFactory = function createHostedModeFactory(
 				assertDecisionInputs:
 					settings.assertDecisionInputs ?? settings.initUrl !== undefined,
 				decisionInputs: settings.decisionInputs,
-				domain: settings.domain,
 				fetch: settings.fetch,
 				headers: settings.headers && { ...settings.headers },
 				initUrl: settings.initUrl,
 				initialData: settings.initialData,
 				projectUrl: settings.projectUrl,
+				property: settings.property,
 			}),
 		settings,
 		{ kind: 'hosted' as const, type: 'hosted' as const }

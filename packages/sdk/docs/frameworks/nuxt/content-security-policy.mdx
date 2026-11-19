@@ -12,11 +12,11 @@ A Nuxt app with Inth adds these to the page, and your policy must allow them:
 | --- | --- |
 | The `<style id="inth-css-vars">` tag with your theme tokens, in the page head | `style-src` |
 | The components' CSS: inline `<style>` tags Nuxt writes for the server-rendered banner, and stylesheets Nuxt bundles with your app | `style-src` |
-| On `ssr: false` pages in `hosted()` mode, an inline `<script>` in the page head that starts `/init` | `script-src` |
+| On `ssr: false` pages in `hosted()` mode, an inline `<script>` in the page head that starts `/v1/consent/init` | `script-src` |
 | On server-rendered pages with a banner, an inline `<script>` before its buttons that holds a tap made before hydration | `script-src` |
 | On server-rendered pages when the visitor's consent or `alwaysLoad` already lets some vendor helper entries in `scripts` run, an inline `<script>` at the end of `<body>` that starts them | `script-src` |
-| Browser requests to `/api/inth/init` and `/api/inth/manifest` in the default `manifest()` mode | `connect-src 'self'` |
-| Consent saves to your backend's `/subjects`, plus `/init` in `hosted()` mode | `connect-src` |
+| Browser requests to `/api/inth/v1/consent/init` and `/api/inth/v1/consent/manifest` in the default `manifest()` mode | `connect-src 'self'` |
+| Consent saves to your backend's `/v1/consent/records`, plus `/v1/consent/init` in `hosted()` mode | `connect-src` |
 | Chunks Nuxt splits out, such as the browser resolver with `manifest({ resolve: 'browser' })` and the copy for a language other than English | `script-src 'self'` |
 | `<script>` elements the script loader creates for `scripts` | `script-src` |
 | Scripts, frames, images and requests your vendors load | `script-src`, `frame-src`, `img-src`, `connect-src` for each vendor |
@@ -49,9 +49,9 @@ Nuxt's own styles, the tag needs nothing more.
 ## Allow the early init script
 
 On a page with `ssr: false` in `hosted()` mode, the module writes an inline
-`<script>` into the page head that requests your backend's `/init` before the
+`<script>` into the page head that requests your backend's `/v1/consent/init` before the
 app's JavaScript loads. A `script-src` without `'unsafe-inline'` blocks it, and
-the app then sends its own `/init` request after it loads, as it would without
+the app then sends its own `/v1/consent/init` request after it loads, as it would without
 the script.
 
 - **With `nuxt-security`**, the script carries its per-request nonce. Nothing
@@ -92,7 +92,7 @@ hydration instead.
 ## Allow the backend
 
 In the default `manifest()` mode the browser calls your own origin for
-`/api/inth/init`, which `'self'` covers, and sends consent saves to your
+`/api/inth/v1/consent/init`, which `'self'` covers, and sends consent saves to your
 backend. Add the backend's origin to `connect-src`. A `manifestUrl` or
 `geoUrl` on another origin needs that origin too. With `iab` set and an IAB
 TCF policy, the browser loads the Global Vendor List through the module's
@@ -122,4 +122,4 @@ Enforce the policy, not report-only, and load a page. The banner shows your
 token colors, and the console shows no `Refused to apply inline style`,
 `Refused to connect` or `Refused to load the script` error that mentions a
 Inth element, your backend or a vendor you allowed. Click **Accept All**, and the
-vendor scripts load. The save to `/subjects` succeeds.
+vendor scripts load. The save to `/v1/consent/records` succeeds.

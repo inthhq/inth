@@ -8,7 +8,19 @@
 import {
 	V1_PROPERTY_MAX_LENGTH,
 	V1_PROPERTY_PATTERN,
+	V1_UUID_V7_PATTERN,
 } from '@inth/sdk-schema/types';
+
+/**
+ * Whether `id` has the layout of a `/v1` subject ID. The timestamp is not
+ * judged.
+ *
+ * @param id - The string to check.
+ * @returns `true` for a lowercase UUIDv7.
+ */
+export const isUuidV7 = function isUuidV7(id: string): boolean {
+	return V1_UUID_V7_PATTERN.test(id);
+};
 
 /** Route paths below the project URL. */
 export const V1_ROUTES = {

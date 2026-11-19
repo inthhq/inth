@@ -295,7 +295,7 @@ const buildKernelConfig = function buildKernelConfig(
 const mockFetch = function mockFetch(init: InitOutput): typeof fetch {
 	return vi.fn((input: RequestInfo | URL, request?: RequestInit) => {
 		const url = String(input);
-		if (url.endsWith('/init')) {
+		if (url.endsWith('/v1/consent/init')) {
 			return Promise.resolve(
 				new Response(JSON.stringify(init), {
 					headers: { 'content-type': 'application/json' },

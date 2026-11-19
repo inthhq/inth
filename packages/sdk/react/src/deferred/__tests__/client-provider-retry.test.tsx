@@ -15,6 +15,13 @@ import { testing } from '../../testing';
 import type * as ClientEngine from '../client-engine';
 import { createConsentProvider } from '../client-provider';
 
+/** What `POST /v1/consent/records` answers a save. */
+const recordAnswer = (request?: RequestInit) => ({
+	recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+	subjectId: (JSON.parse(String(request?.body)) as { subjectId: string })
+		.subjectId,
+});
+
 class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
 	constructor(props: { children: ReactNode }) {
 		super(props);
@@ -95,13 +102,8 @@ test('an engine import that keeps failing stops after three tries and shows the 
 
 test('a deferred root loads its engine after one failed import of its chunk', async () => {
 	const projectUrl = 'https://consent.test';
-	const fetchMock = vi.fn(() =>
-		Promise.resolve(
-			new Response('{}', {
-				headers: { 'content-type': 'application/json' },
-				status: 200,
-			})
-		)
+	const fetchMock = vi.fn((_url: string, request?: RequestInit) =>
+		Promise.resolve(Response.json(request?.body ? recordAnswer(request) : {}))
 	);
 	vi.stubGlobal('fetch', fetchMock);
 	// The inline prefetch's `/init` answer: the root defers its engine.
@@ -118,7 +120,6 @@ test('a deferred root loads its engine after one failed import of its chunk', as
 			promise: Promise.resolve({
 				init,
 				metadata: { experiment: null, journey: null, requestContext },
-				producerPolicyContract: '1',
 			}),
 			requestContext,
 		},
@@ -149,7 +150,7 @@ test('a deferred root loads its engine after one failed import of its chunk', as
 		() => {
 			expect(
 				fetchMock.mock.calls.filter(([url]) =>
-					String(url).includes('/subjects')
+					String(url).includes('/v1/consent/records')
 				)
 			).toHaveLength(1);
 		},
@@ -179,7 +180,6 @@ test('a save on a deferred root rejects when its engine chunk fails to load', as
 			promise: Promise.resolve({
 				init,
 				metadata: { experiment: null, journey: null, requestContext },
-				producerPolicyContract: '1',
 			}),
 			requestContext,
 		},

@@ -39,7 +39,6 @@ const answer = (changes: Record<string, unknown> = {}) => ({
 		translations: { language: 'en', translations: COPY },
 		...changes,
 	},
-	producerPolicyContract: '1',
 });
 
 const names = storedChoiceNames();

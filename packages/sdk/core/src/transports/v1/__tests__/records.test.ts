@@ -8,14 +8,14 @@ import {
 } from '@inth/sdk-schema/v1';
 import { describe, expect, test, vi } from 'vitest';
 
-import { isUuidV7 } from '../../../libs/subject-uuid';
 import {
 	isConsentSaveRejection,
 	isSubjectConflict,
 } from '../../save-rejection';
-import { ApiError, isApiError } from '../error';
+import { InthApiError, isInthApiError } from '../error';
 import { createV1RecordTransport } from '../records';
-import { ApiSaveRejectedError } from '../save-rejected';
+import { isUuidV7 } from '../routes';
+import { InthApiSaveRejectedError } from '../save-rejected';
 import {
 	ACTION_AT,
 	bodyAt,
@@ -337,9 +337,9 @@ describe('save: the answer', () => {
 				.save(savePayload())
 				.catch((caught: unknown) => caught);
 
-			expect(error).toBeInstanceOf(ApiSaveRejectedError);
+			expect(error).toBeInstanceOf(InthApiSaveRejectedError);
 			expect(isConsentSaveRejection(error)).toBe(true);
-			expect(isApiError(error)).toBe(true);
+			expect(isInthApiError(error)).toBe(true);
 			expect(error).toMatchObject({ code, requestId: 'req_save', status });
 		}
 	);
@@ -381,30 +381,9 @@ describe('save: the answer', () => {
 			.save(savePayload())
 			.catch((caught: unknown) => caught);
 
-		expect(error).toBeInstanceOf(ApiError);
+		expect(error).toBeInstanceOf(InthApiError);
 		expect(isConsentSaveRejection(error)).toBe(false);
 		expect(error).toMatchObject({ code, requestId: 'req_123', status });
-	});
-
-	test('reports the canonical ID a save answers for a stored sub_ ID', async () => {
-		const { fetch } = stubFetch(() =>
-			json(200, { recordId: RECORD, subjectId: SUBJECT })
-		);
-		const seen: [string, string][] = [];
-		const transport = createV1RecordTransport({
-			fetch,
-			onSubjectId: (subjectId, previous) => seen.push([subjectId, previous]),
-			projectUrl: PROJECT_URL,
-		});
-
-		await transport.save(
-			savePayload({
-				subject: { subjectId: LEGACY_SUBJECT },
-				subjectId: LEGACY_SUBJECT,
-			})
-		);
-
-		expect(seen).toEqual([[SUBJECT, LEGACY_SUBJECT]]);
 	});
 });
 
@@ -458,7 +437,7 @@ describe('identify: POST /v1/subjects/:id/link', () => {
 		});
 	});
 
-	test('reports the canonical ID for a stored sub_ ID', async () => {
+	test('answers the canonical ID for a stored sub_ ID', async () => {
 		const { fetch } = stubFetch(() =>
 			json(200, {
 				externalId: 'user_123',
@@ -466,19 +445,13 @@ describe('identify: POST /v1/subjects/:id/link', () => {
 				verifiedBy: 'identity_token',
 			})
 		);
-		const seen: [string, string][] = [];
-		const transport = createV1RecordTransport({
-			fetch,
-			onSubjectId: (subjectId, previous) => seen.push([subjectId, previous]),
-			projectUrl: PROJECT_URL,
-		});
 
-		await transport.identify(
-			{ ...user, identityToken: 'token' },
-			LEGACY_SUBJECT
-		);
-
-		expect(seen).toEqual([[SUBJECT, LEGACY_SUBJECT]]);
+		await expect(
+			transportWith(fetch).identify(
+				{ ...user, identityToken: 'token' },
+				LEGACY_SUBJECT
+			)
+		).resolves.toEqual({ subjectId: SUBJECT });
 	});
 
 	test('rejects a link answer without a canonical subject ID', async () => {
@@ -503,7 +476,7 @@ describe('identify: POST /v1/subjects/:id/link', () => {
 			.identify({ ...user, identityToken: 'stale' }, SUBJECT)
 			.catch((caught: unknown) => caught);
 
-		expect(error).toBeInstanceOf(ApiError);
+		expect(error).toBeInstanceOf(InthApiError);
 		expect(error).toMatchObject({
 			code: 'identity_token_invalid',
 			requestId: 'req_link',

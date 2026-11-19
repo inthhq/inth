@@ -14,10 +14,10 @@ export const traceConsent =
 		const path = (event.params.path ?? '').split('/').filter(Boolean).join('/');
 		let operation = 'proxy';
 		if (event.request.method === 'GET' || event.request.method === 'HEAD') {
-			if (path === '' || path === 'init') {
+			if (path === '' || path === 'v1/consent/init') {
 				operation = 'init';
 			}
-			if (path === 'manifest') {
+			if (path === 'v1/consent/manifest') {
 				operation = 'manifest';
 			}
 		}

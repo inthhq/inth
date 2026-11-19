@@ -27,10 +27,6 @@ import { trimSlash } from '../libs/url';
 import type { ConsentMode, TestingModeOptions } from '../modes';
 import { testingOptionsOf } from '../modes';
 import type { SSRInitialData } from '../options/ssr';
-import type * as HostedModule from '../transports/hosted';
-import { createHostedInitRequest } from '../transports/hosted-init-request';
-import type { HostedInitRequest } from '../transports/hosted-init-request';
-import { createHostedRecordTransport } from '../transports/hosted-records';
 import type * as ManifestBrowserModule from '../transports/manifest-browser';
 import type { BrowserManifestOptions } from '../transports/manifest-browser';
 import { createManifestRequestInit } from '../transports/manifest-request';
@@ -40,12 +36,16 @@ import type {
 	ProviderTransportKind,
 } from '../transports/mode';
 import type * as TestingTransportModule from '../transports/testing';
+import type * as HostedModule from '../transports/v1/hosted';
+import { createV1InitRequest } from '../transports/v1/init-request';
+import { createV1RecordTransport } from '../transports/v1/records';
+import { V1_ROUTES } from '../transports/v1/routes';
 import type { InitContext, KernelConfig, KernelTransport } from '../types';
 
 /** Where a client root's transport sends requests. */
 export interface ClientModeOptions {
 	/**
-	 * Backend URL for saves, and for `GET /init` with no `mode`. When the
+	 * Project URL for saves, and for init with no `mode`. When the
 	 * consent route forwards writes,
 	 * as with Next.js and TanStack Start's `proxy`, pass the route prefix
 	 * here: `routePrefix` alone never receives saves, because a route
@@ -54,8 +54,8 @@ export interface ClientModeOptions {
 	projectUrl?: string;
 	/**
 	 * Prefix of the app's own consent route, such as `/api/inth`. Manifest
-	 * mode re-inits through `${routePrefix}/init`, and browser resolution
-	 * fetches `${routePrefix}/manifest`.
+	 * mode re-inits through `${routePrefix}/v1/consent/init`, and browser
+	 * resolution fetches `${routePrefix}/v1/consent/manifest`.
 	 */
 	routePrefix?: string;
 	/**
@@ -76,7 +76,7 @@ export type LoadInitTransport = (ctx: InitContext) => Promise<KernelTransport>;
 
 /** The hosted transport's module, or a stand-in for tests. */
 export type LoadHostedModule = () => Promise<
-	Pick<typeof HostedModule, 'createHostedTransport'>
+	Pick<typeof HostedModule, 'createV1HostedTransport'>
 >;
 
 /** The `testing()` transport's module, or a stand-in for tests. */
@@ -138,7 +138,7 @@ const createLazyInitTransport = function createLazyInitTransport(
 
 	return {
 		async identify(user, subjectId) {
-			await (await recordTransport()).identify?.(user, subjectId);
+			return await (await recordTransport()).identify?.(user, subjectId);
 		},
 		async init(ctx) {
 			const transport = await resolver(ctx);
@@ -221,13 +221,13 @@ const withEarlyRequest = function withEarlyRequest(
 
 /** Options for {@link lazyHosted}. */
 export interface LazyHostedOptions {
-	/** Backend URL for saves, and for `GET /init` without `initUrl`. */
+	/** Project URL for saves, and for init without `initUrl`. */
 	projectUrl: string;
 	/** Same-origin route that resolves init, such as `/api/inth/init`. */
 	initUrl?: string;
 	/** Defaults to whether `initUrl` is set. */
 	assertDecisionInputs?: boolean;
-	/** Headers forwarded to `GET /init`. */
+	/** Headers a server-side caller forwards to init. */
 	headers?: Record<string, string>;
 	/** Kind reported through `window.__inthDebug.mode`. Defaults to `'hosted'`. */
 	kind?: ProviderTransportKind;
@@ -263,7 +263,7 @@ const startEarlyInit = function startEarlyInit(
 	// Carries the whole init context (overrides, experiment arm, journey),
 	// as the loaded transport does, so that transport's first request still
 	// matches this one and takes its response.
-	const request: HostedInitRequest = createHostedInitRequest({
+	const request = createV1InitRequest({
 		...ctx,
 		initUrl: options.initUrl,
 		projectUrl: options.projectUrl,
@@ -296,7 +296,7 @@ export const lazyHosted = function lazyHosted(
 		(): KernelTransport => {
 			const fetch = globalThis.fetch?.bind(globalThis);
 			return createLazyInitTransport(
-				createHostedRecordTransport(
+				createV1RecordTransport(
 					{ fetch, projectUrl: options.projectUrl },
 					assertDecisionInputs
 						? {
@@ -308,8 +308,8 @@ export const lazyHosted = function lazyHosted(
 				),
 				async (ctx) => {
 					const early = startEarlyInit(options, fetch, ctx);
-					const { createHostedTransport } = await load();
-					return createHostedTransport({
+					const { createV1HostedTransport } = await load();
+					return createV1HostedTransport({
 						assertDecisionInputs,
 						fetch: early && fetch ? withEarlyRequest(fetch, early) : fetch,
 						headers: options.headers,
@@ -371,7 +371,7 @@ export const lazyTesting = function lazyTesting(
 
 /** Options for {@link lazyBrowserManifest}. */
 export type LazyBrowserManifestOptions = BrowserManifestOptions & {
-	/** Backend URL for saves and the `/init` fallback. */
+	/** Project URL for saves and the init fallback. */
 	projectUrl: string;
 };
 
@@ -411,7 +411,8 @@ export const lazyBrowserManifest = function lazyBrowserManifest(
 					? globalThis.fetch.bind(globalThis)
 					: undefined);
 			const manifestUrl =
-				options.manifestUrl ?? `${trimSlash(options.projectUrl)}/manifest`;
+				options.manifestUrl ??
+				`${trimSlash(options.projectUrl)}${V1_ROUTES.manifest}`;
 			let early: EarlyRequest | undefined;
 			let firstLoad: ReturnType<LoadManifestBrowserModule> | undefined;
 			let initStarted = false;
@@ -464,10 +465,10 @@ export const lazyBrowserManifest = function lazyBrowserManifest(
 				}
 			}
 			return createLazyInitTransport(
-				createHostedRecordTransport({
-					domain: options.domain,
+				createV1RecordTransport({
 					fetch,
 					projectUrl: options.projectUrl,
+					property: options.property,
 				}),
 				async () => {
 					initStarted = true;
@@ -570,7 +571,9 @@ export const clientMode = function clientMode(
 				...browser,
 				manifestUrl:
 					mode.manifestUrl ??
-					(routePrefix === undefined ? undefined : `${routePrefix}/manifest`),
+					(routePrefix === undefined
+						? undefined
+						: `${routePrefix}${V1_ROUTES.manifest}`),
 				projectUrl,
 			} as LazyBrowserManifestOptions),
 			mode
@@ -578,7 +581,10 @@ export const clientMode = function clientMode(
 	}
 	return Object.assign(
 		lazyHosted({
-			initUrl: routePrefix === undefined ? undefined : `${routePrefix}/init`,
+			initUrl:
+				routePrefix === undefined
+					? undefined
+					: `${routePrefix}${V1_ROUTES.init}`,
 			initialData: options.initialData,
 			kind: 'manifest',
 			projectUrl,

@@ -441,7 +441,10 @@ describe('consentRequestMiddleware: consent route at any mount', () => {
 	test.each(['/api/inth', '/api/consent', '/consent'])(
 		'the bundled manifest at %s/manifest keeps its headers and gets no cookie',
 		async (prefix) => {
-			const response = await serve(`${prefix}/manifest`, 'manifest');
+			const response = await serve(
+				`${prefix}/v1/consent/manifest`,
+				'v1/consent/manifest'
+			);
 			expect(response.headers.getSetCookie()).toEqual([]);
 			expect(response.headers.get('cache-control')).toBeNull();
 			expect(await response.json()).toEqual(MANIFEST_FIXTURE);
@@ -451,7 +454,10 @@ describe('consentRequestMiddleware: consent route at any mount', () => {
 	test.each(['/api/inth', '/api/consent', '/consent'])(
 		'init at %s/init stays private, no-store with no cookie',
 		async (prefix) => {
-			const response = await serve(`${prefix}/init`, 'init');
+			const response = await serve(
+				`${prefix}/v1/consent/init`,
+				'v1/consent/init'
+			);
 			expect(response.status).toBe(200);
 			expect(response.headers.getSetCookie()).toEqual([]);
 			expect(response.headers.get('cache-control')).toBe('private, no-store');
@@ -470,22 +476,22 @@ describe('consentRequestMiddleware: consent route at any mount', () => {
 					context: {},
 					next: async () => ({
 						context: {},
-						pathname: '/api/consent/manifest',
+						pathname: '/api/consent/v1/consent/manifest',
 						request,
 						// A handler may see a copy of the request.
 						response: await GET({
-							params: { _splat: 'manifest' },
+							params: { _splat: 'v1/consent/manifest' },
 							request: request.clone(),
 						}),
 					}),
-					pathname: '/api/consent/manifest',
+					pathname: '/api/consent/v1/consent/manifest',
 					request,
 				})) as { response: Response };
 				return result.response;
 			},
 		});
 		const response = await entry.fetch(
-			new Request('https://app.example.com/api/consent/manifest')
+			new Request('https://app.example.com/api/consent/v1/consent/manifest')
 		);
 		expect(response.headers.getSetCookie()).toEqual([]);
 		expect(response.headers.get('cache-control')).toBeNull();

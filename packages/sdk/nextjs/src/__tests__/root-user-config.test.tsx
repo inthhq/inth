@@ -84,8 +84,11 @@ describe('ConsentRoot with inth.config.ts', () => {
 		const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation((input) =>
 			Promise.resolve(
 				Response.json(
-					String(input).includes('/subjects')
-						? { ok: true, subjectId: 'sub_saved' }
+					String(input).includes('/v1/consent/records')
+						? {
+								recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+								subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+							}
 						: {
 								branding: 'inth',
 								location: { countryCode: 'DE', regionCode: null },
@@ -125,7 +128,10 @@ describe('ConsentRoot with inth.config.ts', () => {
 		await vi.waitFor(() =>
 			expect(
 				fetch.mock.calls.map(([input]) => String(input).split('?')[0])
-			).toEqual(['/api/consent/init', 'https://consent.example.com/subjects'])
+			).toEqual([
+				'/api/consent/v1/consent/init',
+				'https://consent.example.com/v1/consent/records',
+			])
 		);
 	});
 });

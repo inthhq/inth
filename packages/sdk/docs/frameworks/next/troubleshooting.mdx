@@ -26,7 +26,7 @@ the absolute Inth or self-hosted backend endpoint. To send the browser through
 
 ## Why does `next build` or `next dev` fail to fetch the manifest?
 
-**Check.** `withConsentManifest` downloads `${projectUrl}/manifest` when
+**Check.** `withConsentManifest` downloads `${projectUrl}/v1/consent/manifest` when
 `next build`, `next dev` or `next typegen` loads `next.config.ts`. When the
 download fails or takes longer than 10 seconds, `next build` stops with an
 error that starts with `@inth/nextjs/build: could not fetch the consent
@@ -38,10 +38,10 @@ parentheses names the cause:
 - `fetch failed`, with `ENOTFOUND`, `ECONNREFUSED` or another network error,
   or `no response within 10 seconds`. The build machine cannot reach the
   backend.
-- `/manifest responded 404`, or another status. The URL is not your
+- `/v1/consent/manifest responded 404`, or another status. The URL is not your
   project's backend. Check for the `https://your-project.inth.app`
   placeholder and a missing path prefix.
-- `/manifest returned an invalid consent manifest.` The URL answered, but not
+- `/v1/consent/manifest returned an invalid consent manifest.` The URL answered, but not
   with an Inth manifest. It may be a different service, or a backend that does
   not support this Inth version.
 
@@ -107,10 +107,10 @@ Check the Next.js server and browser requests after following the
 [Pages Router](/docs/frameworks/next/pages-router) guide:
 
 1. Load the page twice. A warm manifest setup resolves policy without calling
-   the upstream backend `/init`. A browser request to your local
-   `/api/inth/init` is expected when client initialization is needed.
+   the upstream backend `/v1/consent/init`. A browser request to your local
+   `/api/inth/v1/consent/init` is expected when client initialization is needed.
 2. Make a consent choice. Confirm the submission reaches the backend
-   `/subjects` endpoint and reload to check that the choice persists.
+   `/v1/consent/records` endpoint and reload to check that the choice persists.
 3. Test two locations with different configured policies. Confirm the resolved
    policy matches each location and that your host passes trusted geography
    headers to Next.js.

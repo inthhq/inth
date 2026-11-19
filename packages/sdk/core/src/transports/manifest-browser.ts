@@ -32,7 +32,6 @@ import type {
 import type { InitContext, KernelOverrides, KernelTransport } from '../types';
 import { earlyInitModes } from './early-init-modes';
 import type { EarlyInitMode } from './early-init-modes';
-import { createHostedTransport } from './hosted';
 import type { TransportInitResponse } from './init-output';
 import {
 	hasLocationMatchers,
@@ -45,27 +44,33 @@ import type {
 	ProviderTransportContext,
 	ProviderTransportFactory,
 } from './mode';
+import { createV1HostedTransport } from './v1/hosted';
+import { V1_ROUTES } from './v1/routes';
 
 /** Options for {@link manifest} and {@link createBrowserManifestTransport}. */
 export type BrowserManifestOptions = ManifestModeBaseOptions &
 	ManifestModeSourceOptions & {
 		/**
-		 * Backend origin for `POST /subjects`, and for `GET /init` when the
-		 * policy depends on a location the browser doesn't know. Derived from
-		 * a `manifestUrl` ending in `/manifest`. Required for other URLs and
-		 * for a `snapshot` without `manifestUrl`. Use `''` for this origin.
+		 * Project URL for saves, and for init when the policy depends on a
+		 * location the browser doesn't know. Derived from a `manifestUrl`
+		 * ending in `/v1/consent/manifest` or `/manifest`. Required for other
+		 * URLs and for a `snapshot` without `manifestUrl`. Use `''` for this
+		 * origin.
 		 */
 		projectUrl?: string;
 		/** Fetch implementation. Defaults to `globalThis.fetch`. */
 		fetch?: typeof globalThis.fetch;
-		/** Headers sent with the manifest request and the `/init` fallback. */
+		/** Headers sent with the manifest request and the init fallback. */
 		headers?: Record<string, string>;
 		/** Fetch credentials mode for the manifest request. */
 		credentials?: RequestCredentials;
-		/** Domain sent to `POST /subjects`. Defaults to the page's hostname. */
-		domain?: string;
 		/**
-		 * Ask the backend's `GET /init` when the policy depends on a location
+		 * Host name or app ID the consent belongs to. Defaults to the page's
+		 * host name.
+		 */
+		property?: string;
+		/**
+		 * Ask the backend's init when the policy depends on a location
 		 * neither the inputs, the overrides nor `geoUrl` supplied. With
 		 * `false`, the manifest resolves for an unknown location instead.
 		 *
@@ -201,7 +206,7 @@ const createManifestSource = function createManifestSource(
 		options.manifestUrl ??
 		(options.snapshot || projectUrl === undefined
 			? undefined
-			: `${projectUrl}/manifest`);
+			: `${projectUrl}${V1_ROUTES.manifest}`);
 	if (!(options.snapshot || manifestUrl)) {
 		throw new Error(
 			'inth: manifest() needs `snapshot`, `manifestUrl` or `projectUrl`.'
@@ -209,7 +214,7 @@ const createManifestSource = function createManifestSource(
 	}
 	if (projectUrl === undefined) {
 		throw new Error(
-			'inth: manifest() needs `projectUrl` unless `manifestUrl` ends in `/manifest`. Pass the consent API URL, or an empty string for this origin.'
+			'inth: manifest() needs `projectUrl` unless `manifestUrl` ends in `/v1/consent/manifest` or `/manifest`. Pass the project URL, or an empty string for this origin.'
 		);
 	}
 	const getFetch = (): typeof globalThis.fetch =>
@@ -312,11 +317,11 @@ const transportFrom = function transportFrom(
 ): KernelTransport {
 	// `''` is a real answer: a root-relative `manifestUrl` such as
 	// `/manifest` or an explicit empty backend means this origin.
-	const hosted = createHostedTransport({
-		domain: options.domain,
+	const hosted = createV1HostedTransport({
 		fetch: options.fetch,
 		headers: options.headers,
 		projectUrl: source.projectUrl,
+		property: options.property,
 	});
 	// A local resolution makes no request, so nothing carries its
 	// journey; the saves that follow send none either.
@@ -396,7 +401,6 @@ const transportFrom = function transportFrom(
 			}
 			return initFrom(resolved, ctx);
 		},
-		loadSubjectRecord: hosted.loadSubjectRecord,
 		save: (payload) => hosted.save(unreported.strip(payload)),
 	};
 };
@@ -407,7 +411,7 @@ const transportFrom = function transportFrom(
  *
  * When some locations get a different banner than others and the browser
  * doesn't know where the visitor is, it asks `geoUrl` first, then falls
- * back to the backend's `GET /init` so the answer stays faithful. Packs
+ * back to the backend's `GET /v1/consent/init` so the answer stays faithful. Packs
  * keyed by location that all give the same banner resolve in the browser
  * (see {@link manifestNeedsLocation}), unless IAB GPP is on the page or
  * the runtime: its US sections need the visitor's country, and an answer

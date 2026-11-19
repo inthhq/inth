@@ -59,8 +59,8 @@ describe('the page transports', () => {
 	});
 
 	it.each([
-		['the injected route', '/api/inth', '/api/inth/init'],
-		['the backend without a route', undefined, `${BACKEND}/init`],
+		['the injected route', '/api/inth', '/api/inth/v1/consent/init'],
+		['the backend without a route', undefined, `${BACKEND}/v1/consent/init`],
 	])(
 		're-inits manifest mode through %s',
 		async (_name, routePrefix, expected) => {

@@ -15,7 +15,7 @@ no location header, the policy resolves with its rule for an unknown location.
 ## Which headers are read
 
 `consentRequestMiddleware`, `createConsentStateHandler`, `resolveConsent` and
-the `/api/inth/init` route read the same headers, in this order. The first one
+the `/api/inth/v1/consent/init` route read the same headers, in this order. The first one
 with a value wins.
 
 | Input | Headers, highest priority first | Set by |
@@ -67,7 +67,7 @@ them from there first, so they still see the location. Pass
 
 ## Keep visitor pages out of shared caches
 
-The middleware sets no cookie. The visitor's subject ID (`sub_…`) lives in
+The middleware sets no cookie. The visitor's subject ID, a UUIDv7, lives in
 the consent records their first save writes, and `resolveConsent` reads it
 from those cookies.
 
@@ -116,9 +116,9 @@ What happens next depends on your
 | Code | What it does with the location |
 | --- | --- |
 | `createConsentStateHandler` and `resolveConsent` | Resolve the visitor's policy in the Start server, from the bundled manifest or, with runtime fetching, a cached one. The manifest request to your backend carries no visitor location, only headers you name in `forwardHeaders` |
-| `/api/inth/init` from `createConsentRoute` | Resolves the policy in the Start server from the same inputs, for the browser's init request |
-| `createConsentRoute({ proxy: true })` | Forwards the location headers, `accept-language`, `sec-gpc`, `user-agent`, `origin`, `sec-fetch-site` and `referer` to your backend on proxied requests such as `POST /subjects` |
-| A state without `routePrefix` | The browser calls your backend's `/init` directly, and the backend reads the location its own host adds |
+| `/api/inth/v1/consent/init` from `createConsentRoute` | Resolves the policy in the Start server from the same inputs, for the browser's init request |
+| `createConsentRoute({ proxy: true })` | Forwards the location headers, `accept-language`, `sec-gpc`, `user-agent`, `origin`, `sec-fetch-site` and `referer` to your backend on proxied requests such as `POST /v1/consent/records` |
+| A state without `routePrefix` | The browser calls your backend's `/v1/consent/init` directly, and the backend reads the location its own host adds |
 
 The server render in the quickstart always uses the Start server's headers,
 even though the browser's init request goes to your backend.
@@ -191,7 +191,7 @@ curl -s -H 'x-inth-country: US' -H 'x-inth-region: CA' http://localhost:3000/ | 
 Use the port your server listens on. The first request prints `1` under a
 policy that asks Europe for opt-in. What the second prints depends on your
 policy's rule for California. With the consent route mounted, request
-`/api/inth/init` with the same headers. Its JSON has `location` and
+`/api/inth/v1/consent/init` with the same headers. Its JSON has `location` and
 `policyResolution` for that location.
 
 ## Verify

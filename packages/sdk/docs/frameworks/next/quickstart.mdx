@@ -8,7 +8,7 @@ group: frameworks
 
 This guide is for the App Router on a Next.js server, the setup most Next.js
 apps use. When you finish, your server works out each visitor's consent and
-sends it in the same response as the page. The browser makes no `/init`
+sends it in the same response as the page. The browser makes no `/v1/consent/init`
 request, and analytics wait until consent allows them. Consent
 choices are saved to Inth.
 
@@ -64,7 +64,7 @@ or function goes in as the first argument, unchanged:
 
 <include src="../../shared/examples/nextjs/quickstart-next-config.mdx" />
 
-`next build` and `next dev` fetch `${NEXT_PUBLIC_INTH_PROJECT_URL}/manifest`
+`next build` and `next dev` fetch `${NEXT_PUBLIC_INTH_PROJECT_URL}/v1/consent/manifest`
 and write the policy to `node_modules/.cache/inth/`. That's outside your source
 tree, so there's nothing to add to `.gitignore`. `resolveConsent` finds the
 file on its own. When the build produced a snapshot, `next start` serves it
@@ -126,8 +126,8 @@ site in a fresh browser session with DevTools open.
    `measurement` category). PostHog loads.
 4. Open **Privacy settings** again and turn **Analytics** off. The page
    reloads and PostHog does not load again.
-5. The browser makes no `/init` request, and choices post to
-   `${projectUrl}/subjects`.
+5. The browser makes no `/v1/consent/init` request, and choices post to
+   `${projectUrl}/v1/consent/records`.
 
 If the banner does not appear, see
 [why is there no banner](/docs/guides/troubleshooting#why-is-there-no-banner)
@@ -153,7 +153,7 @@ which throws in production builds. See
 ## Next steps
 
 - [App Router](/docs/frameworks/next/app-router): the awaited layout, the
-  consent route for static pages, and backend `/init` instead of the manifest.
+  consent route for static pages, and backend `/v1/consent/init` instead of the manifest.
 - [Scripts](/docs/frameworks/next/scripts): more vendors and how each loads
   and revokes.
 - [Customize](/docs/frameworks/next/customize): theme, layout and copy.

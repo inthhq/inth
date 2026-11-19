@@ -18,7 +18,7 @@ const params = (...segments: string[]) => ({
 const upstream = () =>
 	vi.fn<typeof globalThis.fetch>((input) =>
 		Promise.resolve(
-			String(input).endsWith('/manifest')
+			String(input).endsWith('/v1/consent/manifest')
 				? Response.json(MANIFEST_FIXTURE)
 				: Response.json({ ok: true }, { status: 201 })
 		)
@@ -41,16 +41,16 @@ describe('createConsentRoute', () => {
 		});
 
 		const manifest = await GET(
-			new Request('https://app.example.com/api/inth/manifest'),
-			params('manifest')
+			new Request('https://app.example.com/api/inth/v1/consent/manifest'),
+			params('v1', 'consent', 'manifest')
 		);
 		expect(await manifest.json()).toEqual(MANIFEST_FIXTURE);
 
 		const init = await GET(
-			new Request('https://app.example.com/api/inth/init', {
+			new Request('https://app.example.com/api/inth/v1/consent/init', {
 				headers: { 'x-vercel-ip-country': 'DE' },
 			}),
-			params('init')
+			params('v1', 'consent', 'init')
 		);
 		expect(await init.json()).toMatchObject({
 			policyResolution: { policyId: 'eu-opt-in', status: 'matched' },
@@ -65,7 +65,11 @@ describe('createConsentRoute', () => {
 		});
 
 		const responses = await Promise.all(
-			[['foo'], ['subjects'], ['manifest', 'extra']].map((segments) =>
+			[
+				['foo'],
+				['v1', 'consent', 'records'],
+				['v1', 'consent', 'manifest', 'extra'],
+			].map((segments) =>
 				GET(
 					new Request(`https://app.example.com/api/inth/${segments.join('/')}`),
 					params(...segments)
@@ -89,11 +93,11 @@ describe('createConsentRoute', () => {
 		});
 
 		await GET(
-			new Request('https://app.example.com/api/inth/manifest'),
-			params('manifest')
+			new Request('https://app.example.com/api/inth/v1/consent/manifest'),
+			params('v1', 'consent', 'manifest')
 		);
 		expect(String(fetch.mock.calls[0]?.[0])).toBe(
-			'https://consent.example.com/manifest'
+			'https://consent.example.com/v1/consent/manifest'
 		);
 	});
 
@@ -106,17 +110,17 @@ describe('createConsentRoute', () => {
 		});
 
 		const response = await handlers.POST(
-			new Request('https://app.example.com/api/inth/subjects', {
+			new Request('https://app.example.com/api/inth/v1/consent/records', {
 				body: '{}',
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
 			}),
-			params('subjects')
+			params('v1', 'consent', 'records')
 		);
 
 		expect(response.status).toBe(201);
 		expect(String(fetch.mock.calls[0]?.[0])).toBe(
-			'https://consent.example.com/subjects'
+			'https://consent.example.com/v1/consent/records'
 		);
 	});
 

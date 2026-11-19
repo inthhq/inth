@@ -191,7 +191,9 @@ describe('kernel: commands', () => {
 		expect(Object.keys(snap.explicitChoice?.categories ?? {})).not.toHaveLength(
 			0
 		);
-		expect(snap.subject?.subjectId ?? null).toMatch(/^sub_/u);
+		expect(snap.subject?.subjectId ?? null).toMatch(
+			/^[\da-f]{8}-[\da-f]{4}-7/u
+		);
 		expect(snap.subject?.subjectId).toBe(snap.subject?.subjectId ?? null);
 		expect(listener).toHaveBeenCalledTimes(1);
 	});

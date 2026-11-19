@@ -58,7 +58,9 @@ const answer = (body: unknown) =>
 
 const backend = () =>
 	vi.fn<typeof globalThis.fetch>((input) =>
-		answer(String(input).endsWith('/manifest') ? MANIFEST_FIXTURE : INIT)
+		answer(
+			String(input).endsWith('/v1/consent/manifest') ? MANIFEST_FIXTURE : INIT
+		)
 	);
 
 const requestOf = (
@@ -69,7 +71,7 @@ const requestOf = (
 	headers: () => new Headers({ host: 'app.example.com', ...headers }),
 });
 
-/** A config that asks the backend's `/init` for every render. */
+/** A config that asks the backend's `/v1/consent/init` for every render. */
 const hostedAt = (projectUrl: string, config: ConsentConfig = {}) =>
 	defineConsentConfig({ mode: hosted(), ...config, projectUrl });
 
@@ -95,7 +97,7 @@ describe('resolveConsent wiring', () => {
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
 		expect(policyCalls(fetch)).toEqual([
-			'https://consent.example.com/manifest',
+			'https://consent.example.com/v1/consent/manifest',
 		]);
 		expect(fetch.mock.calls[0]?.[1]).toMatchObject({
 			next: { revalidate: 300 },
@@ -114,7 +116,7 @@ describe('resolveConsent wiring', () => {
 		const state = await resolveConsent({
 			config: defineConsentConfig({
 				mode: manifest({
-					manifestUrl: '/api/inth/manifest',
+					manifestUrl: '/api/inth/v1/consent/manifest',
 					resolve: 'browser',
 				}),
 				projectUrl: 'https://consent.example.com',
@@ -123,7 +125,7 @@ describe('resolveConsent wiring', () => {
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
 		expect(policyCalls(fetch)).toEqual([
-			'https://consent.example.com/manifest',
+			'https://consent.example.com/v1/consent/manifest',
 		]);
 		expect(state.initialPolicyResolution).toMatchObject({
 			policyId: 'eu-opt-in',
@@ -156,7 +158,7 @@ describe('resolveConsent wiring', () => {
 			// The state tells ConsentRoot this page has no journey.
 			expect(state.journey).toBeNull();
 			expect(String(off.mock.calls[0]?.[0])).toBe(
-				'https://consent.example.com/init'
+				'https://consent.example.com/v1/consent/init'
 			);
 		}
 	});
@@ -174,7 +176,7 @@ describe('resolveConsent wiring', () => {
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
 		expect(policyCalls(manifestFetch)).toEqual([
-			'https://consent.example.com/manifest',
+			'https://consent.example.com/v1/consent/manifest',
 		]);
 
 		const initFetch = backend();
@@ -187,7 +189,7 @@ describe('resolveConsent wiring', () => {
 			request: requestOf({}),
 		});
 		expect(String(initFetch.mock.calls[0]?.[0]).split('?')[0]).toBe(
-			'https://consent.example.com/init'
+			'https://consent.example.com/v1/consent/init'
 		);
 	});
 
@@ -201,17 +203,17 @@ describe('resolveConsent wiring', () => {
 		});
 		// The query carries the consent journey the render started.
 		expect(String(fetch.mock.calls[0]?.[0]).split('?')[0]).toBe(
-			'https://consent.example.com/init'
+			'https://consent.example.com/v1/consent/init'
 		);
 		expect(fetch.mock.calls[0]?.[1]?.cache).toBe('no-store');
 		const headers = new Headers(fetch.mock.calls[0]?.[1]?.headers);
 		expect(headers.get('x-inth-country')).toBe('FR');
 		expect(headers.get('accept-language')).toBe('de');
-		expect(headers.get('cookie')).toBe('inth=x');
+		expect(headers.has('cookie')).toBe(false);
 		expect(state.initialPolicyResolution?.status).toBe('matched');
 	});
 
-	test('a relative backend prefix (rewrite or mounted backend) is asked for /init', async () => {
+	test('a relative backend prefix (rewrite or mounted backend) is asked for /v1/consent/init', async () => {
 		const fetch = backend();
 		const state = await resolveConsent({
 			config: hostedAt('/api/backend'),
@@ -220,7 +222,7 @@ describe('resolveConsent wiring', () => {
 		});
 		expect(
 			fetch.mock.calls.map(([input]) => String(input).split('?')[0])
-		).toEqual(['https://app.example.com/api/backend/init']);
+		).toEqual(['https://app.example.com/api/backend/v1/consent/init']);
 		const headers = new Headers(fetch.mock.calls[0]?.[1]?.headers);
 		expect(headers.get('x-inth-country')).toBe('DE');
 		expect(state.initialPolicyResolution?.status).toBe('matched');
@@ -246,7 +248,7 @@ describe('resolveConsent wiring', () => {
 		expect(fetch).toHaveBeenCalledTimes(1);
 		expect(nested.initialPolicyResolution).toBeUndefined();
 		expect(String(warn.mock.calls[0]?.[0])).toContain(
-			'https://app.example.com/api/backend/init'
+			'https://app.example.com/api/backend/v1/consent/init'
 		);
 	});
 
@@ -258,7 +260,7 @@ describe('resolveConsent wiring', () => {
 			request: requestOf({}),
 		});
 		expect(String(fetch.mock.calls[0]?.[0])).toMatch(
-			/^https:\/\/app\.example\.com\/api\/inth\/init\?/u
+			/^https:\/\/app\.example\.com\/api\/inth\/v1\/consent\/init\?/u
 		);
 		expect(state.initialPolicyResolution?.status).toBe('matched');
 	});
@@ -279,7 +281,7 @@ describe('resolveConsent wiring', () => {
 		expect(fetch).not.toHaveBeenCalled();
 		expect(state.initialPolicyResolution).toBeUndefined();
 		expect(String(warn.mock.calls[0]?.[0])).toContain(
-			'https://app.example.com/api/inth/manifest'
+			'https://app.example.com/api/inth/v1/consent/manifest'
 		);
 		// The handler's own upstream resolves it, as the docs describe.
 		const resolved = await resolveConsent({
@@ -289,7 +291,7 @@ describe('resolveConsent wiring', () => {
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
 		expect(policyCalls(fetch)).toEqual([
-			'https://consent.example.com/manifest',
+			'https://consent.example.com/v1/consent/manifest',
 		]);
 		expect(resolved.initialPolicyResolution?.status).toBe('matched');
 	});
@@ -341,7 +343,7 @@ describe('resolveConsent wiring', () => {
 		expect(warn).not.toHaveBeenCalled();
 	});
 
-	test('reads cookies() when the headers carry none, and keeps the experiment', async () => {
+	test('keeps the experiment, and sends init no cookie from cookies()', async () => {
 		const experiment = {
 			arm: 'b',
 			arms: [{ id: 'a' }, { id: 'b' }],
@@ -360,7 +362,7 @@ describe('resolveConsent wiring', () => {
 			},
 		});
 		const headers = new Headers(fetch.mock.calls[0]?.[1]?.headers);
-		expect(headers.get('cookie')).toBe('inth=x');
+		expect(headers.has('cookie')).toBe(false);
 		expect(state.experiment).toBe(experiment);
 	});
 });

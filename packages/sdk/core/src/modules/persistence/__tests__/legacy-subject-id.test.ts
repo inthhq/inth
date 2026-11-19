@@ -162,7 +162,9 @@ test('records stored without an ID and no 3.2 copy get a provisional ID that ide
 	identify.mockResolvedValue();
 
 	const { handle, kernel } = boot(undefined, { identify });
-	expect(kernel.getSnapshot().subject?.subjectId).toMatch(/^sub_/u);
+	expect(kernel.getSnapshot().subject?.subjectId).toMatch(
+		/^[\da-f]{8}-[\da-f]{4}-7/u
+	);
 	await kernel.commands.identify({ externalId: 'user-1' });
 
 	expect(identify).toHaveBeenCalledWith({ externalId: 'user-1' }, null);

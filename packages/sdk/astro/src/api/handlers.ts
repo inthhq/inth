@@ -1,5 +1,5 @@
 /**
- * Route handlers for `${routePrefix}/init` and `${routePrefix}/manifest`.
+ * Route handlers for `${routePrefix}/v1/consent/init` and `${routePrefix}/v1/consent/manifest`.
  *
  * The routes themselves live in `@inth/sdk/server`
  * (`createConsentRouteHandler`), shared with the Next.js, Nuxt, SvelteKit
@@ -148,7 +148,7 @@ export const createConsentRouteHandlers = function createConsentRouteHandlers(
 	};
 
 	/**
-	 * `GET ${routePrefix}/init` — a resolved `InitOutput`, never cached.
+	 * `GET ${routePrefix}/v1/consent/init` — a resolved `InitOutput`, never cached.
 	 *
 	 * @param lifetime - The route's `{ locals }`, so detached work can be
 	 * registered with the adapter's `waitUntil`.
@@ -165,7 +165,7 @@ export const createConsentRouteHandlers = function createConsentRouteHandlers(
 	};
 
 	/**
-	 * `GET ${routePrefix}/manifest` — the manifest, with its own cache headers.
+	 * `GET ${routePrefix}/v1/consent/manifest` — the manifest, with its own cache headers.
 	 *
 	 * @param lifetime - The route's `{ locals }`, so a background manifest
 	 * refresh can be registered with the adapter's `waitUntil`.

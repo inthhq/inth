@@ -151,7 +151,7 @@ describe('plain Vue modes', () => {
 		}
 	});
 
-	test("manifest() without a location sends the visitor to the backend's /init", async () => {
+	test("manifest() without a location sends the visitor to the backend's /v1/consent/init", async () => {
 		// A region-based policy resolved for an unknown location could apply
 		// the wrong region's rules. Core's default, shared with React,
 		// Svelte and the browser package, asks the backend instead.
@@ -171,7 +171,7 @@ describe('plain Vue modes', () => {
 			} as unknown as Parameters<NonNullable<typeof transport.init>>[0])
 			.catch(() => null);
 		expect(String(fetch.mock.calls[0]?.[0])).toContain(
-			'https://consent.example.com/init'
+			'https://consent.example.com/v1/consent/init'
 		);
 	});
 
@@ -216,7 +216,7 @@ describe('plain Vue modes', () => {
 		try {
 			await context.kernel.commands.init();
 			expect(fetch.mock.calls.map(([url]) => String(url))).toEqual([
-				'https://consent.example.com/manifest',
+				'https://consent.example.com/v1/consent/manifest',
 			]);
 			expect(context.snapshot.value.policyRule.id).toBe('eu-opt-in');
 		} finally {
@@ -282,17 +282,23 @@ describe('Nuxt modes', () => {
 		}) satisfies InitOutput;
 		const fetchMock = vi.fn((input: RequestInfo | URL, _init?: RequestInit) => {
 			const url = String(input);
-			if (url.startsWith('/internal/consent/init?')) {
+			if (url.split('?')[0] === '/internal/consent/v1/consent/init') {
 				return new Response(JSON.stringify(init), {
 					headers: { 'content-type': 'application/json' },
 					status: 200,
 				});
 			}
-			if (url.endsWith('/subjects')) {
-				return new Response(JSON.stringify({ ok: true, subjectId: 'sub-1' }), {
-					headers: { 'content-type': 'application/json' },
-					status: 200,
-				});
+			if (url.endsWith('/v1/consent/records')) {
+				return new Response(
+					JSON.stringify({
+						recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+						subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+					}),
+					{
+						headers: { 'content-type': 'application/json' },
+						status: 200,
+					}
+				);
 			}
 			return new Response('not found', { status: 404 });
 		});
@@ -314,7 +320,10 @@ describe('Nuxt modes', () => {
 
 		expect(
 			fetchMock.mock.calls.map(([url]) => String(url).split('?')[0])
-		).toEqual(['/internal/consent/init', 'https://backend.example/subjects']);
+		).toEqual([
+			'/internal/consent/v1/consent/init',
+			'https://backend.example/v1/consent/records',
+		]);
 		expect(fetchMock.mock.calls[1]?.[1]).toMatchObject({ method: 'POST' });
 		// The consent route resolves the manifest on the server and issues no
 		// snapshot token, so the save must still assert the decision it was

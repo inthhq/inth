@@ -1,4 +1,3 @@
-import { INTH_POLICY_CONTRACT_HEADER } from '@inth/sdk/engine';
 import type { SSRInitialData } from '@inth/sdk/engine';
 import { SPECULATION_HEADERS } from '@inth/sdk/schema/types';
 import { fetchRequestInit, resolveRequestProjectUrl } from '@inth/sdk/server';
@@ -143,7 +142,9 @@ export const fetchSSRData = async function fetchSSRData(
 	}
 
 	if (debug) {
-		console.log(`[@inth/react/server] Fetching from: ${normalizedUrl}/init`);
+		console.log(
+			`[@inth/react/server] Fetching from: ${normalizedUrl}/v1/consent/init`
+		);
 	}
 
 	const startTime = getNowMs();
@@ -164,7 +165,6 @@ export const fetchSSRData = async function fetchSSRData(
 		ownRoutes: [],
 		projectUrl: normalizedUrl,
 		request: { headers },
-		sendConsentCookie: false,
 		timeoutMs: false,
 		trustForwardedHeaders: options.trustForwardedHeaders,
 	});
@@ -196,8 +196,5 @@ export const fetchSSRData = async function fetchSSRData(
 		gvl: answer.init.gvl,
 		init: answer.init,
 		metadata,
-		producerPolicyContract: answer.responseHeaders.get(
-			INTH_POLICY_CONTRACT_HEADER
-		),
 	};
 };

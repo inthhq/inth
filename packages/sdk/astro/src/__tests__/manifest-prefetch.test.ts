@@ -79,7 +79,7 @@ describe('manifest-mode server prefetch', () => {
 	it('reports each render to the backend, detached from the response', async () => {
 		const fetchImpl = vi.fn((input: string) =>
 			Promise.resolve(
-				input.endsWith('/sessions')
+				input.endsWith('/v1/consent/sessions')
 					? new Response(null, { status: 204 })
 					: manifestResponse()
 			)
@@ -99,7 +99,7 @@ describe('manifest-mode server prefetch', () => {
 		});
 
 		const report = fetchImpl.mock.calls.find(
-			([url]) => url === 'https://consent.example.com/sessions'
+			([url]) => url === 'https://consent.example.com/v1/consent/sessions'
 		);
 		expect(report).toBeDefined();
 		const init = report?.[1] as RequestInit;
@@ -127,7 +127,9 @@ describe('manifest-mode server prefetch', () => {
 		});
 
 		expect(
-			fetchImpl.mock.calls.filter(([url]) => String(url).endsWith('/manifest'))
+			fetchImpl.mock.calls.filter(([url]) =>
+				String(url).endsWith('/v1/consent/manifest')
+			)
 		).toHaveLength(1);
 		expect(german.inth?.shouldShowBanner).toBe(true);
 		expect(american.inth?.shouldShowBanner).toBe(false);
@@ -154,8 +156,8 @@ describe('middleware skip list', () => {
 		const fetchImpl = vi.fn(() => Promise.resolve(manifestResponse()));
 
 		const results = await Promise.all(
-			['/api/inth/init', '/api/inth/manifest'].map((path) =>
-				render({ fetch: fetchImpl as never, path })
+			['/api/inth/v1/consent/init', '/api/inth/v1/consent/manifest'].map(
+				(path) => render({ fetch: fetchImpl as never, path })
 			)
 		);
 		// Resolving consent here would fetch the manifest from this same
@@ -180,7 +182,7 @@ describe('middleware skip list', () => {
 				await render({
 					astroOptions,
 					fetch: fetchImpl as never,
-					path: '/consent/init',
+					path: '/consent/v1/consent/init',
 				})
 			).inth
 		).toBeUndefined();
@@ -189,7 +191,7 @@ describe('middleware skip list', () => {
 				await render({
 					astroOptions,
 					fetch: fetchImpl as never,
-					path: '/api/inth/init',
+					path: '/api/inth/v1/consent/init',
 				})
 			).inth
 		).toBeDefined();

@@ -13,6 +13,13 @@ import init from '../../../../core/src/runtime/__tests__/fixtures/hosted-init-gb
 import { ConsentBanner } from '../../components/prompt';
 import { createConsentProvider } from '../client-provider';
 
+/** What `POST /v1/consent/records` answers a save. */
+const recordAnswer = (request?: RequestInit) => ({
+	recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+	subjectId: (JSON.parse(String(request?.body)) as { subjectId: string })
+		.subjectId,
+});
+
 let releaseEngine: () => void = () => undefined;
 const engineHeld = new Promise<void>((resolve) => {
 	releaseEngine = resolve;
@@ -23,20 +30,18 @@ const ConsentProvider = createConsentProvider(async () => {
 	return import('../client-engine');
 });
 
-const fetchMock = vi.fn((url: string) =>
+const fetchMock = vi.fn((url: string, request?: RequestInit) =>
 	Promise.resolve(
-		new Response(JSON.stringify(String(url).includes('/init') ? init : {}), {
-			headers: {
-				'content-type': 'application/json',
-				'x-inth-policy-contract': '1',
-			},
-			status: 200,
-		})
+		Response.json(
+			String(url).includes('/v1/consent/init') ? init : recordAnswer(request)
+		)
 	)
 );
 
 const initRequests = () =>
-	fetchMock.mock.calls.filter(([url]) => String(url).includes('/init'));
+	fetchMock.mock.calls.filter(([url]) =>
+		String(url).includes('/v1/consent/init')
+	);
 
 beforeEach(() => {
 	vi.stubGlobal('fetch', fetchMock);
@@ -74,7 +79,9 @@ test('sends /init itself and shows the banner before the engine; the engine reus
 	await vi.waitFor(
 		() =>
 			expect(
-				fetchMock.mock.calls.some(([url]) => String(url).includes('/subjects'))
+				fetchMock.mock.calls.some(([url]) =>
+					String(url).includes('/v1/consent/records')
+				)
 			).toBe(true),
 		{ timeout: 5000 }
 	);

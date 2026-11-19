@@ -1,7 +1,7 @@
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 
 import { failedResponseError } from '../libs/failed-response';
-import { inthProtocolHeaders } from '../libs/version-header';
+import { V1_ROUTES } from '../transports/v1/routes';
 
 /** Names that parse but cannot be bound with `export const`. */
 const RESERVED_EXPORT_NAMES = new Set([
@@ -76,11 +76,14 @@ export const loadStaticManifest = async (
 		throw new Error(`${label}: no fetch available.`);
 	}
 	const response = await fetchImpl(options.manifestUrl, {
-		headers: { accept: 'application/json', ...inthProtocolHeaders },
+		headers: { accept: 'application/json' },
 		method: 'GET',
 	});
 	if (!response.ok) {
-		throw await failedResponseError(`${label}: /manifest`, response);
+		throw await failedResponseError(
+			`${label}: ${V1_ROUTES.manifest}`,
+			response
+		);
 	}
 	try {
 		// Build/static loading owns validation; request resolvers need no schemas.
@@ -88,7 +91,7 @@ export const loadStaticManifest = async (
 		return parseConsentManifest(await response.json());
 	} catch (cause) {
 		throw new Error(
-			`${label}: /manifest returned an invalid consent manifest.`,
+			`${label}: ${V1_ROUTES.manifest} returned an invalid consent manifest.`,
 			{
 				cause,
 			}

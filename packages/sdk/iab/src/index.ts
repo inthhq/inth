@@ -31,7 +31,6 @@ import type {
 } from '@inth/sdk-core';
 import {
 	applyPublisherRestrictionsToGVL,
-	inthProtocolParams,
 	introducedLegitimateInterest,
 	registerIABControls,
 } from '@inth/sdk-core/iab-support';
@@ -770,7 +769,7 @@ const referenceHeaders = (
 /**
  * Where to fetch a referenced list. An init envelope's resolution context
  * goes in the query string, as the hosted transport sends it, so a
- * cross-origin `/init` stays a CORS simple request with no preflight.
+ * cross-origin init stays a CORS simple request with no preflight.
  */
 const referenceEndpoint = (
 	requested: NonNullable<ConsentSnapshot['iab']>['gvlReference']
@@ -779,7 +778,6 @@ const referenceEndpoint = (
 		return requested?.url;
 	}
 	return appendInitParams(requested.url, {
-		...inthProtocolParams,
 		country: requested.context?.country ?? undefined,
 		gpc: requested.context?.gpc,
 		region: requested.context?.region ?? undefined,

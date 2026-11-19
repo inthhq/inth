@@ -118,7 +118,7 @@ const readSubpath = function readSubpath(
 };
 
 /**
- * `GET ${routePrefix}/manifest` and `GET ${routePrefix}/init`: the backend
+ * `GET ${routePrefix}/v1/consent/manifest` and `GET ${routePrefix}/v1/consent/init`: the backend
  * manifest with its cache headers, and the visitor's init resolved from
  * it. The core handler is rebuilt only when the runtime config changes
  * where the route reads from.

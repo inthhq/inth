@@ -70,8 +70,17 @@ const config: Pick<RuntimeConsentConfig, 'projectUrl' | 'consentCategories'> = {
 const createBackend = () => {
 	const saves: unknown[] = [];
 	const fetch = vi.fn((input: RequestInfo | URL, request?: RequestInit) => {
-		if (String(input).split('?')[0]?.endsWith('/subjects')) {
-			saves.push(JSON.parse(String(request?.body ?? 'null')));
+		if (String(input).split('?')[0]?.endsWith('/v1/consent/records')) {
+			const save = JSON.parse(String(request?.body ?? 'null')) as {
+				subjectId: string;
+			};
+			saves.push(save);
+			return Promise.resolve(
+				Response.json({
+					recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+					subjectId: save.subjectId,
+				})
+			);
 		}
 		return Promise.resolve(Response.json({}));
 	});

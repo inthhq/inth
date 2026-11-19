@@ -182,7 +182,7 @@ describe('projectUrl', () => {
 		await runtime.kernel.commands.init().catch(() => undefined);
 
 		expect(String(fetchSpy.mock.calls[0]?.[0]).split('?')[0]).toBe(
-			'https://backend.example/init'
+			'https://backend.example/v1/consent/init'
 		);
 		expect(
 			(window as { __inthDebug?: { mode?: string } }).__inthDebug?.mode
@@ -205,7 +205,7 @@ describe('projectUrl', () => {
 		await runtime.kernel.commands.init().catch(() => undefined);
 
 		expect(String(fetchSpy.mock.calls[0]?.[0]).split('?')[0]).toBe(
-			'https://backend.example/init'
+			'https://backend.example/v1/consent/init'
 		);
 		runtime.dispose();
 	});

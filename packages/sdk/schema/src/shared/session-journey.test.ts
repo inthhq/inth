@@ -41,13 +41,13 @@ const unmatched = (status: 'failed' | 'no-match' | 'unconfigured') =>
 
 describe('journey query parameters', () => {
 	it('round-trips through a relative URL with an existing query', () => {
-		const url = appendJourneyParams('/api/inth/init?lang=de', {
+		const url = appendJourneyParams('/api/inth/v1/consent/init?lang=de', {
 			id: ID,
 			scope: 'tab',
 			storedChoice: false,
 		});
 		expect(url).toBe(
-			`/api/inth/init?lang=de&journey=${ID}&journeyScope=tab&stored=0`
+			`/api/inth/v1/consent/init?lang=de&journey=${ID}&journeyScope=tab&stored=0`
 		);
 		expect(readJourneyParams(url)).toEqual({
 			id: ID,
@@ -102,12 +102,12 @@ describe('journey query parameters', () => {
 		// `c15tJourneyScope` and `c15tStored`.
 		expect(
 			readJourneyParams(
-				`/init?c15tJourney=${ID}&c15tJourneyScope=tab&c15tStored=1`
+				`/v1/consent/init?c15tJourney=${ID}&c15tJourneyScope=tab&c15tStored=1`
 			)
 		).toEqual({ id: ID, scope: 'tab', storedChoice: true });
 		expect(
 			readSessionJourney(
-				`/init?c15tJourney=${ID}&c15tJourneyScope=page&c15tStored=0`
+				`/v1/consent/init?c15tJourney=${ID}&c15tJourneyScope=page&c15tStored=0`
 			)
 		).toEqual({ id: ID, scope: 'page', storedChoice: false });
 	});
@@ -116,19 +116,19 @@ describe('journey query parameters', () => {
 		const other = '9c5b94b1-35ad-49bb-b118-8e8fc24abf80';
 		expect(
 			readJourneyParams(
-				`/init?c15tJourney=${other}&c15tJourneyScope=tab&c15tStored=1&journey=${ID}&journeyScope=page&stored=0`
+				`/v1/consent/init?c15tJourney=${other}&c15tJourneyScope=tab&c15tStored=1&journey=${ID}&journeyScope=page&stored=0`
 			)
 		).toEqual({ id: ID, scope: 'page', storedChoice: false });
 		// A current id with only an alpha scope is no journey under either set.
 		expect(
-			readJourneyParams(`/init?journey=${ID}&c15tJourneyScope=page`)
+			readJourneyParams(`/v1/consent/init?journey=${ID}&c15tJourneyScope=page`)
 		).toBeNull();
 	});
 
 	it('ignores a stored flag that is not 0 or 1', () => {
 		expect(
 			readJourneyParams(
-				`/init?journey=${ID.toUpperCase()}&journeyScope=page&stored=yes`
+				`/v1/consent/init?journey=${ID.toUpperCase()}&journeyScope=page&stored=yes`
 			)
 		).toEqual({ id: ID, scope: 'page' });
 	});
@@ -176,7 +176,7 @@ describe('readSessionJourney', () => {
 	it('needs the stored flag and takes the domain from the site', () => {
 		expect(
 			readSessionJourney(
-				`/init?journey=${ID}&journeyScope=page&stored=0`,
+				`/v1/consent/init?journey=${ID}&journeyScope=page&stored=0`,
 				'https://shop.example.com'
 			)
 		).toEqual({
@@ -186,7 +186,7 @@ describe('readSessionJourney', () => {
 			storedChoice: false,
 		});
 		expect(
-			readSessionJourney(`/init?journey=${ID}&journeyScope=page`)
+			readSessionJourney(`/v1/consent/init?journey=${ID}&journeyScope=page`)
 		).toBeNull();
 	});
 });

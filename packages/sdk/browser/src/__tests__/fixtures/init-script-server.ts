@@ -1,7 +1,8 @@
 /**
  * Dev-server routes for `init-script.browser.test.ts`: the built
- * `inth.js` and `inth.hosted.js`, a backend that answers `/init` and
- * `/subjects`, and gated scripts that report when they run.
+ * `inth.js` and `inth.hosted.js`, a backend that answers
+ * `/v1/consent/init` and `/v1/consent/records`, and gated scripts that
+ * report when they run.
  *
  * - `/__inth-dist__/<file>?delay=<ms>`: a file from `dist/`, held back
  *   `delay` ms. With `fail=<n>`, the first `n` such requests after a page
@@ -19,9 +20,9 @@
  * - `/__inth-init__/stale-dialog.js`: a `inth.dialog.js` from another
  *   release.
  * - `/__inth-init__/init-delay?ms=<ms>`: hold the next `/init` answers.
- * - `/__inth-init__/backend/init`: the `/init` answer, an opt-in policy for
+ * - `/__inth-init__/backend/v1/consent/init`: the init answer, an opt-in policy for
  *   measurement and marketing with English copy.
- * - `/__inth-init__/backend/subjects`: counts saves.
+ * - `/__inth-init__/backend/v1/consent/records`: counts saves.
  * - `/__inth-init__/saves`: how many saves arrived since the last read.
  * - `/__inth-init__/inits`: how many `/init` requests arrived since the
  *   last read.
@@ -126,6 +127,21 @@ const countedFailure = function countedFailure(
 	return failsSincePage <= Number(query.get('fail'));
 };
 
+/** What `POST /v1/consent/records` answers: the subject the save named. */
+const recordAnswer = async function recordAnswer(
+	request: IncomingMessage
+): Promise<string> {
+	let body = '';
+	for await (const chunk of request) {
+		body += String(chunk);
+	}
+	const { subjectId } = JSON.parse(body) as { subjectId: string };
+	return JSON.stringify({
+		recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+		subjectId,
+	});
+};
+
 /**
  * Answer one fixture request, or call `next`.
  *
@@ -212,7 +228,7 @@ export const serveInitScriptFixture = async function serveInitScriptFixture(
 	if (backend?.groups) {
 		response.setHeader('Access-Control-Allow-Origin', '*');
 		response.setHeader('Content-Type', 'application/json');
-		if (backend.groups.route === 'init') {
+		if (backend.groups.route === 'v1/consent/init') {
 			inits += 1;
 			await wait(initDelay);
 			response.end(initBody());
@@ -220,6 +236,8 @@ export const serveInitScriptFixture = async function serveInitScriptFixture(
 		}
 		if (request.method === 'POST') {
 			saves += 1;
+			response.end(await recordAnswer(request));
+			return;
 		}
 		response.end('{}');
 		return;

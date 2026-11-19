@@ -210,7 +210,11 @@ export const createV1ManifestTransport = function createV1ManifestTransport(
 
 	const records = createV1RecordTransport(
 		{ ...options, fetch: fetchImpl, projectUrl: base },
-		() => lastDecisionInputs
+		{
+			inputs: () => lastDecisionInputs,
+			pending: () => undefined,
+			required: false,
+		}
 	);
 
 	return {

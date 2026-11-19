@@ -15,12 +15,12 @@ const MAX_MESSAGE_LENGTH = 500;
  * A `/v1` error code, usually a `V1ErrorCode`. A code added after this
  * client comes through as it is.
  */
-export type ApiErrorCode = string;
+export type InthApiErrorCode = string;
 
 /** What a failed `/v1` response said. */
-export interface ApiErrorDetail {
+export interface InthApiErrorDetail {
 	/** `error.code`, else a code derived from the HTTP status. */
-	code: ApiErrorCode;
+	code: InthApiErrorCode;
 	/** Whether the body named `code`, rather than the status implying it. */
 	codeFromBody: boolean;
 	/** `error.message`, cut to a bounded length. */
@@ -39,17 +39,17 @@ export interface ApiErrorDetail {
  * A `/v1` request that failed. Carries the backend's `code` and the
  * `requestId` to quote when reporting it.
  */
-export class ApiError extends Error {
+export class InthApiError extends Error {
 	readonly inthApiError = true;
-	readonly code: ApiErrorCode;
+	readonly code: InthApiErrorCode;
 	readonly requestId: string | undefined;
 	readonly details: unknown;
 	readonly status: number;
 	readonly retryAfter: number | undefined;
 
-	constructor(message: string, detail: ApiErrorDetail) {
+	constructor(message: string, detail: InthApiErrorDetail) {
 		super(message);
-		this.name = 'ApiError';
+		this.name = 'InthApiError';
 		this.code = detail.code;
 		this.requestId = detail.requestId;
 		this.details = detail.details;
@@ -59,17 +59,17 @@ export class ApiError extends Error {
 }
 
 /**
- * Whether `error` is a failed `/v1` response: an {@link ApiError}, or a
+ * Whether `error` is a failed `/v1` response: an {@link InthApiError}, or a
  * refused save with the same fields. Checks a brand rather than
  * `instanceof`, so it holds across package copies.
  *
  * @param error - Anything a `/v1` call threw.
  * @returns `true` for a failed `/v1` response.
  */
-export const isApiError = function isApiError(
+export const isInthApiError = function isInthApiError(
 	error: unknown
 ): error is Pick<
-	ApiError,
+	InthApiError,
 	'code' | 'details' | 'message' | 'requestId' | 'retryAfter' | 'status'
 > {
 	return (
@@ -180,7 +180,7 @@ const parseRetryAfter = function parseRetryAfter(
  */
 export const readApiErrorDetail = async function readApiErrorDetail(
 	response: Response
-): Promise<ApiErrorDetail> {
+): Promise<InthApiErrorDetail> {
 	let body: unknown;
 	try {
 		body = JSON.parse(await readText(response));
@@ -222,7 +222,7 @@ export const readApiErrorDetail = async function readApiErrorDetail(
 
 export const describeApiError = function describeApiError(
 	label: string,
-	detail: ApiErrorDetail
+	detail: InthApiErrorDetail
 ): string {
 	const said = detail.message ? `: ${detail.message}` : '';
 	const request = detail.requestId ? `, request ${detail.requestId}` : '';
@@ -234,12 +234,12 @@ export const describeApiError = function describeApiError(
  *
  * @param label - Names the caller and route, such as `Inth: /v1/consent/init`.
  * @param response - The response that is not ok. Its body is consumed.
- * @returns An {@link ApiError}.
+ * @returns An {@link InthApiError}.
  */
 export const readApiError = async function readApiError(
 	label: string,
 	response: Response
-): Promise<ApiError> {
+): Promise<InthApiError> {
 	const detail = await readApiErrorDetail(response);
-	return new ApiError(describeApiError(label, detail), detail);
+	return new InthApiError(describeApiError(label, detail), detail);
 };

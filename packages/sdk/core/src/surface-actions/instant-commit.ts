@@ -29,12 +29,12 @@ import type {
 	RestrictionReason,
 } from '../consent-record/types';
 import { readCookieValueFromHeader } from '../libs/cookie/read-header';
-import { generateSubjectId } from '../libs/generate-subject-id';
 import { resolveStorageKeys } from '../libs/storage-keys';
+import { generateUuidV7 } from '../libs/subject-uuid';
 import type { StorageConfig } from '../modules/persistence/types';
 import type { ConsentSnapshot } from '../types';
 
-export { generateSubjectId } from '../libs/generate-subject-id';
+export { generateUuidV7 } from '../libs/subject-uuid';
 
 /** Latest valid epoch milliseconds, as the record validator reads them. */
 const MAX_DATE_MS = 8_640_000_000_000_000;
@@ -296,7 +296,7 @@ const recordedSubject = function recordedSubject(
 ): ConsentSubject & { subjectId: string } {
 	const subject = {
 		...before.subject,
-		subjectId: before.subject?.subjectId ?? subjectId ?? generateSubjectId(),
+		subjectId: before.subject?.subjectId ?? subjectId ?? generateUuidV7(),
 	};
 	const { user } = before;
 	if (user?.externalId) {

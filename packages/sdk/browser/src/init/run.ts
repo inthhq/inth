@@ -30,10 +30,10 @@ import {
 } from '@inth/sdk-core/runtime/deferred-snapshot';
 import type {
 	DeferredSnapshotOptions,
-	PrefetchedInitialData,
+	SSRInitialData,
 } from '@inth/sdk-core/runtime/deferred-snapshot';
 import {
-	generateSubjectId,
+	generateUuidV7,
 	hasStoredClearEpoch,
 	planInstantCommit,
 } from '@inth/sdk-core/surface-actions/instant-commit';
@@ -201,7 +201,7 @@ export const runInitScript = function runInitScript(
 	let api: GlobalApiBase | null = null;
 	let options: ScriptTagClientOptions | null = null;
 	let snapshot: ConsentSnapshot | null = null;
-	let lastInit: PrefetchedInitialData | undefined;
+	let lastInit: SSRInitialData | undefined;
 	let banner: BannerSurface | null = null;
 	/** The dialog opened before the engine, from `inth.dialog.js`. */
 	let dialog: EarlyDialog | null = null;
@@ -762,7 +762,7 @@ export const runInitScript = function runInitScript(
 		};
 		ahead = {
 			clearEpoch: hasStoredClearEpoch(),
-			subjectId: generateSubjectId(),
+			subjectId: generateUuidV7(),
 		};
 		showSurface(next, 'banner');
 	};
@@ -788,7 +788,7 @@ export const runInitScript = function runInitScript(
 			overrides: current.overrides,
 		};
 		snapshot = pendingSnapshot(snapshotOptions);
-		let pending: Promise<PrefetchedInitialData | undefined> | undefined;
+		let pending: Promise<SSRInitialData | undefined> | undefined;
 		if (supportsEarlyStart(current, projectUrl)) {
 			try {
 				pending = primeInitRequest({

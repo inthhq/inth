@@ -74,23 +74,9 @@ import type {
 } from '../libs/manifest-cache-runtime';
 import { warnManifestFallback } from '../libs/manifest-fallback';
 import { resolveSessionReportProjectUrl } from '../libs/session-report';
-import {
-	resolveStorageKeys,
-	STORAGE_KEY,
-	storageKeyFamilies,
-} from '../libs/storage-keys';
 import { trimSlash } from '../libs/url';
-import {
-	INTH_VERSION_HEADER,
-	inthProtocolHeaders,
-	readProducerPolicyContract,
-} from '../libs/version-header';
+import { inthProtocolHeaders } from '../libs/version-header';
 import { readStoredRecordsFromCookieHeader } from '../modules/persistence/hydrate';
-import {
-	consentSinceEpoch,
-	readStoredClearEpochFromCookieHeader,
-	readStoredConsentRecordFromCookieHeader,
-} from '../modules/persistence/record-storage';
 import { fetchCachedAdTechProviders } from '../transports/ad-tech-provider-cache';
 import { deferInitGvl, deferInitGvlToRoute } from '../transports/gvl-reference';
 import {
@@ -99,6 +85,7 @@ import {
 } from '../transports/init-output';
 import { createOfflineTransport } from '../transports/offline';
 import type { OfflineTransportOptions } from '../transports/offline';
+import { V1_ROUTES } from '../transports/v1/routes';
 import type { KernelConfig } from '../types';
 import {
 	CONSENT_PROXY_FORWARDING_HEADERS,
@@ -186,8 +173,7 @@ export interface ResolveRequestConsentOptions {
 	>;
 	/**
 	 * Storage settings the browser persists consent with. Only `storageKey`
-	 * matters here: it names the cookie the records are read from, and the
-	 * one cookie hosted mode may forward.
+	 * matters here: it names the cookie the records are read from.
 	 */
 	storage?: StorageConfig;
 	/** Request clock reused for record validation and hydration. */
@@ -213,19 +199,22 @@ export interface ResolveRequestConsentOptions {
 	 */
 	mode?: RequestConsentMode;
 	/**
-	 * Backend base URL, absolute or `/`-relative. Manifest mode reads
-	 * `${projectUrl}/manifest` without a {@link manifestUrl}; hosted mode
-	 * asks `${projectUrl}/init` without an {@link initUrl}. Session reports
-	 * go here only when it is absolute.
+	 * Project URL, absolute or `/`-relative. Manifest mode reads
+	 * `${projectUrl}/v1/consent/manifest` without a {@link manifestUrl};
+	 * hosted mode asks `${projectUrl}/v1/consent/init` without an
+	 * {@link initUrl}. Session reports go here only when it is absolute.
 	 */
 	projectUrl?: string;
-	/** Full manifest URL. Takes precedence over `${projectUrl}/manifest`. */
+	/**
+	 * Full manifest URL. Takes precedence over
+	 * `${projectUrl}/v1/consent/manifest`.
+	 */
 	manifestUrl?: string;
 	/** An inline manifest: no manifest is fetched. */
 	manifest?: ConsentManifest;
 	/**
-	 * Hosted mode: the `/init` endpoint to ask. Defaults to
-	 * `${projectUrl}/init`. Pass the app's own init route together with
+	 * Hosted mode: the init endpoint to ask. Defaults to
+	 * `${projectUrl}/v1/consent/init`. Pass the app's own init route together with
 	 * {@link localFetch} to resolve through it in-process.
 	 */
 	initUrl?: string;
@@ -277,16 +266,12 @@ export interface ResolveRequestConsentOptions {
 	 * Extra request headers to forward upstream, such as a token a private
 	 * backend needs. The forwarding rule:
 	 *
-	 * - Always: the Inth protocol headers, the resolved country, region,
-	 *   language and GPC signal, the `user-agent`, and the experiment arm
-	 *   while the visitor has no stored choice.
+	 * - Always: the resolved country, region, language and GPC signal, the
+	 *   `user-agent`, and the experiment arm while the visitor has no
+	 *   stored choice.
 	 * - Hosted mode, only over `https`, to a loopback host, or in-process:
 	 *   these headers and, when {@link trustForwardedHeaders} is set, the
-	 *   visitor IP as `x-forwarded-for`. A remote backend (not an in-process
-	 *   route) also gets the consent cookie the render read
-	 *   ({@link storage}`.storageKey`, or c15t's under the default key when
-	 *   that one holds no valid record), never the pre-1.8 one or the rest
-	 *   of the jar.
+	 *   visitor IP as `x-forwarded-for`. No cookie: `/v1` reads none.
 	 * - Manifest mode: nothing about the visitor. The manifest is public
 	 *   policy data; only these headers and {@link cookieNames} travel, and
 	 *   not over cleartext.
@@ -558,17 +543,12 @@ interface Target {
 	sameOrigin: boolean;
 }
 
-/** What {@link fetchRequestInit} changes about a hosted `/init`. */
+/** What {@link fetchRequestInit} changes about a hosted init. */
 interface InitRequestRules {
-	/** Whether a remote backend gets the visitor's consent cookie. */
-	sendConsentCookie?: boolean;
 	/**
-	 * Whether `/init` gets the request's own headers where they say more
-	 * than this package's: a version header the request carries, such as a
-	 * client's a proxy relays, in place of this package's, and the full
-	 * `Accept-Language`, so the backend can fall back to the visitor's next
-	 * language, in place of the primary one, unless an override sets the
-	 * language.
+	 * Whether init gets the request's full `Accept-Language`, so the backend
+	 * can fall back to the visitor's next language, in place of the primary
+	 * one, unless an override sets the language.
 	 */
 	relayRequest?: boolean;
 }
@@ -580,7 +560,7 @@ interface InitRequestRules {
 const resolveRequest = async function resolveRequest(
 	options: ResolveRequestConsentOptions,
 	onHostedAnswer?: (answer: RequestInitAnswer) => void,
-	{ relayRequest = false, sendConsentCookie = true }: InitRequestRules = {}
+	{ relayRequest = false }: InitRequestRules = {}
 ): Promise<RequestConsentState> {
 	const { inputs, state: base } = readRequestConsent(options);
 	const mode = resolveMode(options);
@@ -779,7 +759,7 @@ const resolveRequest = async function resolveRequest(
 		const sourceUrl =
 			options.manifestUrl ??
 			(options.projectUrl
-				? `${trimSlash(options.projectUrl)}/manifest`
+				? `${trimSlash(options.projectUrl)}${V1_ROUTES.manifest}`
 				: undefined);
 		if (!sourceUrl) {
 			throw new RequestConsentError(
@@ -888,38 +868,9 @@ const resolveRequest = async function resolveRequest(
 		};
 
 	/**
-	 * The consent cookie a remote `/init` gets: the one holding the record
-	 * the render read, under the configured key or c15t's, else the
-	 * configured one as it is. Never the pre-1.8 key's, which no version
-	 * sent, even when it is the configured key.
-	 */
-	const forwardedConsentCookie = function forwardedConsentCookie(
-		cookie: string
-	): string | undefined {
-		const keys = resolveStorageKeys(options.storage);
-		const now = base.now ?? Date.now();
-		const forwardable = storageKeyFamilies(keys)
-			.map((family) => family.consent)
-			.filter((key) => key !== STORAGE_KEY);
-		const selected = consentSinceEpoch(
-			readStoredConsentRecordFromCookieHeader(cookie, options.storage, now)
-				.selected,
-			readStoredClearEpochFromCookieHeader(cookie, options.storage, now)
-		)?.key;
-		const name =
-			selected !== undefined && forwardable.includes(selected)
-				? selected
-				: keys.consent;
-		return forwardable.includes(name)
-			? filterCookieHeader(cookie, [name])
-			: undefined;
-	};
-
-	/**
-	 * What identifies the visitor on a hosted `/init`, only over a secure
-	 * hop: caller-named headers, the consent cookie for a remote backend
-	 * (see {@link forwardedConsentCookie}; the app's own routes read none),
-	 * and the trusted client IP.
+	 * What identifies the visitor on a hosted init, only over a secure hop:
+	 * caller-named headers and the trusted client IP. No cookie: `/v1` reads
+	 * none.
 	 */
 	const identityHeaders = function identityHeaders(
 		target: Target
@@ -928,15 +879,6 @@ const resolveRequest = async function resolveRequest(
 			return {};
 		}
 		const headers = namedHeaders();
-		const cookie =
-			target.inProcess || !sendConsentCookie
-				? undefined
-				: (options.request.cookie ??
-					readHeader(options.request.headers, 'cookie'));
-		const consentCookie = cookie ? forwardedConsentCookie(cookie) : undefined;
-		if (consentCookie) {
-			headers.cookie = consentCookie;
-		}
 		const clientIp = trust
 			? getIpAddress(readVisitorHeaders(), { masking: false })
 			: null;
@@ -983,26 +925,13 @@ const resolveRequest = async function resolveRequest(
 		}
 	};
 
-	/**
-	 * The Inth protocol headers, with the request's own version header in
-	 * place of this package's under {@link InitRequestRules.relayRequest}.
-	 */
-	const protocolHeaders = function protocolHeaders(): Readonly<
-		Record<string, string>
-	> {
-		const requestVersion = relayRequest
-			? readHeader(options.request.headers, INTH_VERSION_HEADER)
-			: null;
-		return requestVersion
-			? { ...inthProtocolHeaders, [INTH_VERSION_HEADER]: requestVersion }
-			: inthProtocolHeaders;
-	};
-
 	const resolveFromHosted =
 		async function resolveFromHosted(): Promise<RequestConsentState> {
 			const initUrl =
 				options.initUrl ??
-				(options.projectUrl ? `${trimSlash(options.projectUrl)}/init` : '');
+				(options.projectUrl
+					? `${trimSlash(options.projectUrl)}${V1_ROUTES.init}`
+					: '');
 			const target = resolveTarget(initUrl);
 			const headers: Record<string, string> = { accept: 'application/json' };
 			const userAgent = readHeader(options.request.headers, 'user-agent');
@@ -1011,12 +940,10 @@ const resolveRequest = async function resolveRequest(
 			}
 			const identity = identityHeaders(target);
 			// A remote `x-forwarded-for` is the trusted hop chain, not a
-			// credential; the cookie and named headers are.
-			const identifying =
-				identity.cookie !== undefined ||
-				Object.keys(identity).some(
-					(name) => name !== 'cookie' && name !== 'x-forwarded-for'
-				);
+			// credential; the named headers are.
+			const identifying = Object.keys(identity).some(
+				(name) => name !== 'x-forwarded-for'
+			);
 			Object.assign(headers, identity);
 			writeInputHeaders(headers);
 			for (const [name, value] of Object.entries(options.initHeaders ?? {})) {
@@ -1031,7 +958,6 @@ const resolveRequest = async function resolveRequest(
 				headers[CONSENT_EXPERIMENT_HEADER] = formatExperimentHeader(arm);
 			}
 			nameThePage(headers, target);
-			Object.assign(headers, protocolHeaders());
 			if (target.sameOrigin) {
 				headers[RENDER_REQUEST_HEADER] = '1';
 			}
@@ -1084,7 +1010,7 @@ const resolveRequest = async function resolveRequest(
 			return mergeInitResponseIntoKernelConfig(
 				base,
 				mapInitOutputToInitResponse(deferred, headers, {
-					producerContract: readProducerPolicyContract(response.headers),
+					producerContract: POLICY_CONTRACT_VERSION,
 				})
 			);
 		};
@@ -1192,7 +1118,7 @@ export interface RequestInitAnswer {
 	url: string;
 	/** The headers sent upstream, after the forwarding rule. */
 	requestHeaders: Readonly<Record<string, string>>;
-	/** The response's headers: cache status, the producer's contract. */
+	/** The response's headers, such as its cache status. */
 	responseHeaders: Headers;
 }
 
@@ -1209,24 +1135,15 @@ export type FetchRequestInitOptions = Omit<
 	| 'mode'
 	| 'offline'
 	| 'seed'
-> & {
-	/**
-	 * Whether a remote backend gets the visitor's consent cookie, as
-	 * {@link ResolveRequestConsentOptions.forwardHeaders} describes.
-	 *
-	 * @default true
-	 */
-	sendConsentCookie?: boolean;
-};
+>;
 
 /**
  * Asks the backend's `/init` for one request, as
  * {@link resolveRequestConsent} does in hosted mode (the same target,
  * forwarding and budget rules), and returns the answer as received rather
- * than folded into a consent state. A version header the request carries,
- * such as a client's a proxy relays, is sent in place of this package's,
- * and so is the visitor's full `Accept-Language` in place of its primary
- * language, unless `overrides.language` is set.
+ * than folded into a consent state. The visitor's full `Accept-Language` is
+ * sent in place of its primary language, unless `overrides.language` is
+ * set.
  *
  * Never throws: when nothing was fetched or the request failed, it returns
  * `undefined` and `onError` hears why.
@@ -1250,7 +1167,7 @@ export const fetchRequestInit = async function fetchRequestInit(
 		(received) => {
 			answer = received;
 		},
-		{ relayRequest: true, sendConsentCookie: options.sendConsentCookie }
+		{ relayRequest: true }
 	);
 	return answer;
 };

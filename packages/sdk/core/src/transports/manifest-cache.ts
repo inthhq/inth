@@ -86,7 +86,7 @@ export type ResolveManifestInitOptions =
 	  };
 
 /**
- * Resolves a `GET /init` response locally from a manifest.
+ * Resolves a `GET /v1/consent/init` response locally from a manifest.
  *
  * Mirrors what the backend's `/init` returns, minus a `policySnapshotToken`:
  * pair it with `hosted({ assertDecisionInputs: true })` on the client so saves

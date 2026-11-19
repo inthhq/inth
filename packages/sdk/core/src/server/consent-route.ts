@@ -6,9 +6,9 @@
  * `/init` locally per request. This module turns a Web `Request` into the
  * `Response` for those routes:
  *
- * - `GET …/manifest` passes the cached backend manifest through with its
- *   cache headers, `Age` and `ETag` revalidation.
- * - `GET …/init` resolves the visitor's init from that manifest (geo,
+ * - `GET …/v1/consent/manifest` passes the cached backend manifest through
+ *   with its cache headers, `Age` and `ETag` revalidation.
+ * - `GET …/v1/consent/init` resolves the visitor's init from that manifest (geo,
  *   language, GPC), negotiates the policy contract, attaches the Global
  *   Vendor List for IAB policies and reports the session to the backend.
  *   The same route serves versioned vendor-list requests (`?inth-gvl=`).
@@ -31,8 +31,6 @@ import {
 	extractConsentRequestInputs,
 	getIpAddress,
 	INIT_PARAM_HEADERS,
-	parsePolicyContractHeader,
-	POLICY_CONTRACT_HEADER,
 	POLICY_CONTRACT_VERSION,
 	primaryLanguage,
 	readJourneyParams,
@@ -65,11 +63,7 @@ import type {
 	ManifestFetch,
 } from '../libs/manifest-cache-runtime';
 import { warnManifestFallback } from '../libs/manifest-fallback';
-import { reportConsentSession } from '../libs/session-report';
-import {
-	inthProtocolHeaders,
-	readProducerPolicyContract,
-} from '../libs/version-header';
+import { inthProtocolHeaders } from '../libs/version-header';
 import {
 	fetchCachedAdTechProviders,
 	loadManifestAdTechProviders,
@@ -84,6 +78,8 @@ import {
 	getResolverInputsFromHeaders,
 	resolveManifestInit,
 } from '../transports/manifest-cache';
+import { V1_ROUTES } from '../transports/v1/routes';
+import { reportV1ConsentSession } from '../transports/v1/session-report';
 import {
 	CONSENT_PROXY_FORWARDING_HEADERS,
 	filterCookieHeader,
@@ -129,6 +125,13 @@ const INIT_CACHE_CONTROL = 'private, no-store';
 /** A conservative BCP 47 shape: primary subtag plus up to two subtags. */
 const LANGUAGE_TAG = /^[a-z]{2,3}(?:-[a-z0-9]{2,8}){0,2}$/u;
 
+/**
+ * The paths below the prefix the route answers itself: the backend's own,
+ * so a client builds the same URL on the backend and on this route.
+ */
+const INIT_PATH = trimPathSlashes(V1_ROUTES.init);
+const MANIFEST_PATH = trimPathSlashes(V1_ROUTES.manifest);
+
 /** Which consent route a request is for. */
 export type ConsentRouteName = 'manifest' | 'init' | 'proxy';
 
@@ -153,9 +156,9 @@ export interface ConsentRouteHandlerOptions {
 	 */
 	adapter: string;
 	/**
-	 * Backend base URL, absolute or `/`-relative. The manifest is read from
-	 * `${projectUrl}/manifest` unless `manifestUrl` is set; session reports,
-	 * the `/init` fallback and the proxy go here.
+	 * Project URL, absolute or `/`-relative. The manifest is read from
+	 * `${projectUrl}/v1/consent/manifest` unless `manifestUrl` is set;
+	 * session reports, the init fallback and the proxy go here.
 	 */
 	projectUrl?: string;
 	/** Full upstream manifest URL. Takes precedence over `projectUrl`. */
@@ -216,9 +219,10 @@ export interface ConsentRouteRequestContext {
 	 */
 	route?: ConsentRouteName;
 	/**
-	 * Path below the route prefix, from a catch-all parameter (`manifest`,
-	 * `init`, `subjects/sub_1`). `''` and `init` answer init, `manifest`
-	 * answers the manifest, anything else goes to the proxy or is a 404.
+	 * Path below the route prefix, from a catch-all parameter
+	 * (`v1/consent/init`, `v1/consent/manifest`, `v1/consent/records`). `''`
+	 * and `v1/consent/init` answer init, `v1/consent/manifest` answers the
+	 * manifest, anything else goes to the proxy or is a 404.
 	 * Without a path the route is a fixed mount: its last URL segment
 	 * decides, and a `GET` that does not end in `/manifest` is init.
 	 */
@@ -256,7 +260,7 @@ export type ConsentRouteHandler = (
 	context?: ConsentRouteRequestContext
 ) => Promise<Response>;
 
-/** How a resolution reports itself to the backend's `POST /sessions`. */
+/** How a resolution reports itself to `POST /v1/consent/sessions`. */
 export interface ConsentInitReport {
 	/** Package name of the adapter. */
 	adapter: string;
@@ -311,40 +315,20 @@ export interface ResolveConsentInitOptions {
 	loadAdTechProviders?: (
 		reference: ConsentManifestAdditionalConsent
 	) => Promise<AdTechProvider[] | undefined>;
-	/**
-	 * The client's `x-inth-policy-contract` header, if it sent one. A value
-	 * other than the supported version fails the resolution.
-	 */
-	clientContract?: string | null;
 	/** Session report to send once resolved. Absent means none. */
 	report?: ConsentInitReport;
 }
 
 /**
- * Applies the policy contract to an init payload. A client that declares a
- * contract other than {@link POLICY_CONTRACT_VERSION} gets a failed
- * `unsupported-contract` resolution; a client that declares none is treated
- * as compatible. Whenever the resolution is not `matched`, every field that
- * only a matched policy may carry is removed (`policySnapshotToken`, `gvl`,
- * `gvlReference`, `cmpId`, `customVendors`, `adTechProviders`), so no stale
- * proof travels with the new outcome.
+ * Whenever the resolution is not `matched`, removes every field that only a
+ * matched policy may carry (`policySnapshotToken`, `gvl`, `gvlReference`,
+ * `cmpId`, `customVendors`, `adTechProviders`), so no stale proof travels
+ * with the outcome.
  */
-const negotiateInit = function negotiateInit(
-	output: InitOutput,
-	clientContract: string | null | undefined
+const withoutUnmatchedProof = function withoutUnmatchedProof(
+	output: InitOutput
 ): InitOutput {
 	const negotiated = { ...output };
-	if (
-		clientContract !== null &&
-		clientContract !== undefined &&
-		parsePolicyContractHeader(clientContract) !== POLICY_CONTRACT_VERSION
-	) {
-		negotiated.policyResolution = writePolicyResolutionWire({
-			policy: null,
-			reason: 'unsupported-contract',
-			status: 'failed',
-		});
-	}
 	if (negotiated.policyResolution?.status !== 'matched') {
 		delete negotiated.policySnapshotToken;
 		delete negotiated.gvl;
@@ -393,9 +377,8 @@ export const resolveConsentInit = async function resolveConsentInit(
 	options: ResolveConsentInitOptions
 ): Promise<InitOutput> {
 	const { inputs, manifest } = options;
-	const payload = negotiateInit(
-		resolveManifestInit({ inputs, manifest }),
-		options.clientContract
+	const payload = withoutUnmatchedProof(
+		resolveManifestInit({ inputs, manifest })
 	);
 	// Loaded beside the vendor list, never failing the resolution.
 	const { loadAdTechProviders } = options;
@@ -421,7 +404,7 @@ export const resolveConsentInit = async function resolveConsentInit(
 	}
 	const { report } = options;
 	if (report && !report.abandoned?.()) {
-		reportConsentSession({
+		reportV1ConsentSession({
 			adapter: report.adapter,
 			experiment: report.experiment,
 			fetch: report.fetch,
@@ -707,7 +690,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 			throw new Error(`${adapter}: pass projectUrl or manifestUrl.`);
 		}
 		const backend = resolveBackend(request, context, options.projectUrl);
-		return { ...backend, url: `${backend.url}/manifest` };
+		return { ...backend, url: `${backend.url}${V1_ROUTES.manifest}` };
 	};
 
 	/**
@@ -880,17 +863,14 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		};
 	};
 
-	const initHeaders = {
-		'cache-control': INIT_CACHE_CONTROL,
-		[POLICY_CONTRACT_HEADER]: String(POLICY_CONTRACT_VERSION),
-	};
+	const initHeaders = { 'cache-control': INIT_CACHE_CONTROL };
 
 	/**
-	 * When the manifest is unavailable (an older backend with no
-	 * `/manifest`, an error, or a source backing off after one), ask the
-	 * backend's own `GET /init` and warn once. Forwards only the consent request headers (geo,
-	 * language, GPC) and the browser's consent journey, and rebuild the canonical output from its answer so
-	 * unknown upstream fields cannot carry stale policy evidence.
+	 * When the manifest is unavailable (an error, or a source backing off
+	 * after one), ask the backend's init and warn once. Forwards only the
+	 * consent request headers (geo, language, GPC) and the browser's consent
+	 * journey, and rebuilds the canonical output from its answer so unknown
+	 * upstream fields cannot carry stale policy evidence.
 	 */
 	const fallBackToBackendInit = async function fallBackToBackendInit(
 		request: Request,
@@ -912,7 +892,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		}
 		warnManifestFallback(manifestUrl, cause);
 		const backend = resolveBackend(request, context, options.projectUrl);
-		const forward: Record<string, string> = { ...inthProtocolHeaders };
+		const forward: Record<string, string> = {};
 		for (const name of CONSENT_REQUEST_HEADER_NAMES) {
 			const value = request.headers.get(name);
 			if (value) {
@@ -936,25 +916,22 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 			init.signal = AbortSignal.timeout(Math.max(0, left));
 		}
 		const fetchImpl = backend.fetch ?? configuredFetch();
-		const { payload, response } = await budget.bound(
+		const payload = await budget.bound(
 			(async () => {
 				const upstream = await fetchImpl(
 					journey
-						? appendJourneyParams(`${backend.url}/init`, journey)
-						: `${backend.url}/init`,
+						? appendJourneyParams(`${backend.url}${V1_ROUTES.init}`, journey)
+						: `${backend.url}${V1_ROUTES.init}`,
 					init
 				);
 				if (!upstream.ok) {
 					throw cause;
 				}
-				return {
-					payload: (await upstream.json()) as InitOutput,
-					response: upstream,
-				};
+				return (await upstream.json()) as InitOutput;
 			})()
 		);
 		const mapped = mapInitOutputToInitResponse(payload, forward, {
-			producerContract: readProducerPolicyContract(response.headers),
+			producerContract: POLICY_CONTRACT_VERSION,
 		});
 		const output: InitOutput = {
 			adTechProviders: mapped.adTechProviders,
@@ -976,10 +953,9 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 			vendorListVersion: mapped.vendorListVersion,
 			vendors: mapped.vendors,
 		} as InitOutput;
-		return Response.json(
-			negotiateInit(output, request.headers.get(POLICY_CONTRACT_HEADER)),
-			{ headers: initHeaders }
-		);
+		return Response.json(withoutUnmatchedProof(output), {
+			headers: initHeaders,
+		});
 	};
 
 	const serveInit = async function serveInit(
@@ -1044,7 +1020,6 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 				}
 			: getResolverInputsFromHeaders(request.headers);
 		const payload = await resolveConsentInit({
-			clientContract: request.headers.get(POLICY_CONTRACT_HEADER),
 			inputs,
 			loadAdTechProviders: createAdTechProviderLoader(request, budget, context),
 			loadGvl,
@@ -1113,11 +1088,14 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		let { route } = context;
 		if (route === undefined) {
 			const readable = READ_METHODS.has(request.method.toUpperCase());
-			if (readable && path === 'manifest') {
+			if (
+				readable &&
+				path === (context.path === undefined ? 'manifest' : MANIFEST_PATH)
+			) {
 				route = 'manifest';
 			} else if (
 				readable &&
-				(context.path === undefined || path === '' || path === 'init')
+				(context.path === undefined || path === '' || path === INIT_PATH)
 			) {
 				route = 'init';
 			} else {

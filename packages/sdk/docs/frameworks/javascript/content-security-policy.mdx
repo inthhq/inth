@@ -10,14 +10,14 @@ Your bundle contains Inth, so `script-src` already covers it. The rest:
 
 | Directive | Allow | Why |
 | --- | --- | --- |
-| `connect-src` | Your backend's origin, such as `https://your-project.inth.app` | `/init`, `/subjects`, and `/manifest` in manifest mode. |
+| `connect-src` | Your backend's origin, such as `https://your-project.inth.app` | `/v1/consent/init`, `/v1/consent/records`, and `/v1/consent/manifest` in manifest mode. |
 | `script-src` | Each vendor's script origin, or a nonce | Scripts the script loader adds and gated `text/plain` tags it runs. |
 | `style-src` | A nonce, or the origin of the CSS file your bundler emits | The stock UI's `<style>` element. |
 | `frame-src` | Each embed's origin | Iframes the iframe blocker releases. |
 | `img-src`, `connect-src` | Each vendor's collection endpoints | What vendor scripts send once they run. |
 
 A missing `connect-src` entry stops the policy from resolving. The console
-shows a CSP violation for `/init`, and no banner appears.
+shows a CSP violation for `/v1/consent/init`, and no banner appears.
 
 ## Put a nonce on created scripts and styles
 
@@ -78,7 +78,7 @@ it out of production builds.
 
 1. Send the policy as `Content-Security-Policy-Report-Only` and open the app
    with the console open.
-2. The console shows no violation for `/init`, `/subjects` or the banner's
+2. The console shows no violation for `/v1/consent/init`, `/v1/consent/records` or the banner's
    styles. The banner renders styled.
 3. Allow each category. Each vendor's scripts and requests load without a
    violation.

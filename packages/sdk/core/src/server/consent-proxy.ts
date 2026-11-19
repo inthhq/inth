@@ -3,18 +3,18 @@
  *
  * Lets an app point its consent client at its own origin (`/api/inth`):
  * the browser talks to the app, the app forwards to the Inth backend. Only
- * the paths the client transport calls (`subjects`, `subjects/:id`, `init`,
- * `manifest`, `health`, `status`) plus explicitly allowlisted extras are
+ * the `/v1` paths a browser calls plus explicitly allowlisted extras are
  * forwarded; everything else is a 404, so a route built on this is never an
- * open proxy.
+ * open proxy. Session reports are not among them: the backend refuses one
+ * that comes from a browser.
  *
  * Why the header shaping matters: the hosted backend sits behind Vercel
  * Firewall or Cloudflare. A bare server-to-server fetch carries a server TLS
  * fingerprint, no user agent, and one egress IP for every visitor, which
  * scores as a bot. Forwarding the browser's identity headers and the real
  * client IP gives the WAF the same signals a direct request would carry, and
- * `x-inth-proxy` plus the version headers give the platform a stable key for
- * a firewall bypass rule.
+ * `x-inth-proxy` gives the platform a stable key for a firewall bypass
+ * rule.
  *
  * Each adapter decides where the forwarding values come from (a trusted
  * `x-forwarded-for` chain, a framework's client address API) and passes
@@ -27,17 +27,16 @@ import {
 	markResponsePrivate,
 	PUBLIC_REQUEST_HEADERS,
 } from '../libs/identity-headers';
-import { inthVersionHeaders } from '../libs/version-header';
 import { trimPathSlashes } from './shared';
 
 /** Paths the proxy forwards when no extra `paths` are configured. */
 const CONSENT_PROXY_DEFAULT_PATHS: readonly string[] = [
-	'subjects',
-	'subjects/*',
-	'init',
-	'manifest',
-	'health',
-	'status',
+	'v1/consent/init',
+	'v1/consent/manifest',
+	'v1/consent/records',
+	'v1/subjects/*/link',
+	'v1/documents/*/current',
+	'v1/documents/acceptances',
 ];
 
 /**
@@ -85,7 +84,6 @@ const PROXY_PUBLIC_HEADERS: ReadonlySet<string> = new Set([
 	'x-forwarded-for',
 	'x-forwarded-host',
 	'x-forwarded-proto',
-	...Object.keys(inthVersionHeaders),
 ]);
 
 /**
@@ -122,9 +120,8 @@ const MAX_DECODE_PASSES = 3;
 export interface ConsentProxyOptions {
 	/**
 	 * Extra upstream paths to allow, relative to `projectUrl`. Exact segments
-	 * (`'export'`) or a trailing `*` for one wildcard segment
-	 * (`'subjects/*'`). The defaults (`subjects`, `subjects/*`, `init`,
-	 * `manifest`, `health`, `status`) are always allowed.
+	 * (`'export'`), or `*` for one wildcard segment. The `/v1` paths a
+	 * browser calls are always allowed.
 	 */
 	paths?: readonly string[];
 
@@ -363,7 +360,7 @@ export interface BuildConsentProxyRequestHeadersInput {
 
 /**
  * Builds the upstream request headers: the browser allowlist, then the
- * forwarding trio, then the Inth version header and `x-inth-proxy`.
+ * forwarding trio, then `x-inth-proxy`.
  *
  * @param input - Request, allowlists, forwarding values and adapter name.
  */
@@ -401,9 +398,6 @@ const buildConsentProxyRequestHeaders =
 		}
 		headers.set('x-forwarded-host', forwarding.host);
 		headers.set('x-forwarded-proto', forwarding.proto);
-		for (const [name, value] of Object.entries(inthVersionHeaders)) {
-			headers.set(name, value);
-		}
 		headers.set('x-inth-proxy', adapter);
 		return headers;
 	};

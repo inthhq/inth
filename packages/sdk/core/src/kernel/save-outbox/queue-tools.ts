@@ -15,8 +15,8 @@ import {
 	isPlainRecord,
 	validateExplicitChoice,
 } from '../../consent-record/validation';
-import { generateSubjectId } from '../../libs/generate-subject-id';
 import { warnInDevelopment } from '../../libs/is-production';
+import { generateUuidV7 } from '../../libs/subject-uuid';
 import {
 	isConsentSaveRejection,
 	isSubjectConflict,
@@ -29,7 +29,7 @@ import { supersededBy, withoutSuperseded, withSubjectId } from './supersession';
 /** @internal */
 export const queueTools: QueueTools = {
 	consentModels: CONSENT_MODELS,
-	generateSubjectId,
+	generateUuidV7,
 	isConsentSaveRejection,
 	isPlainRecord,
 	isSubjectConflict,

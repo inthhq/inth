@@ -66,7 +66,7 @@ describe('the transports provideInth() selects', () => {
 		[
 			'hosted',
 			'@inth/sdk/transports',
-			(init: () => unknown) => ({ createHostedTransport: () => ({ init }) }),
+			(init: () => unknown) => ({ createV1HostedTransport: () => ({ init }) }),
 			() => hostedFor('/api/chunk'),
 		],
 		[

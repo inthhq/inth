@@ -1,9 +1,8 @@
 /**
- * The browser's `GET /manifest` request. A module of its own so a client
- * that sends the request early, while the resolver chunk loads, builds the
- * same request the resolver would, without importing the resolver.
+ * The browser's manifest request. A module of its own so a client that
+ * sends the request early, while the resolver chunk loads, builds the same
+ * request the resolver would, without importing the resolver.
  */
-import { inthProtocolHeaders } from '../libs/version-header';
 
 /**
  * Builds the fetch options for the browser's manifest request.
@@ -19,7 +18,6 @@ export const createManifestRequestInit = function createManifestRequestInit(
 	const init: RequestInit & { headers: Record<string, string> } = {
 		headers: {
 			accept: 'application/json',
-			...inthProtocolHeaders,
 			...options.headers,
 		},
 		method: 'GET',

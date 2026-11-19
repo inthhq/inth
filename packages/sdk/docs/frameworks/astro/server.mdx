@@ -16,7 +16,7 @@ islands. For each request it:
 3. Resolves the policy through the integration's `mode`.
 4. Stores the result in `Astro.locals.inth`.
 
-It sets no cookie. The visitor's subject ID (`sub_…`) lives in the consent
+It sets no cookie. The visitor's subject ID, a UUIDv7, lives in the consent
 records their first save writes, and the middleware reads it from those
 cookies.
 

@@ -62,7 +62,7 @@ export const decisionInputsMatchOverrides =
 		);
 	};
 
-/** Fields added to `POST /subjects` to bind the save to a policy decision. */
+/** Fields added to `POST /v1/consent/records` to bind the save to a policy decision. */
 export type DecisionAssertion = Pick<
 	RememberedDecisionInputs,
 	'country' | 'fingerprint' | 'gpc' | 'language' | 'policyId' | 'region'

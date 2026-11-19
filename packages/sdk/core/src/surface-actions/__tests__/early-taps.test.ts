@@ -19,11 +19,11 @@ import {
 	EARLY_TAPS_WINDOW_KEY,
 } from '../../libs/page-globals';
 import type { EarlyConsentTapQueue } from '../../libs/page-globals';
-import { inthProtocolHeaders } from '../../libs/version-header';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { createConsentRuntime } from '../../runtime/index';
 import type { ConsentRuntime } from '../../runtime/types';
 import { hosted } from '../../transports/mode';
+import { recordAnswer } from '../../transports/v1/__tests__/fixtures';
 import {
 	EARLY_CONSENT_TAP_SCRIPT,
 	EARLY_TAP_OPT_OUT,
@@ -33,7 +33,7 @@ import { replayEarlyConsentTaps } from '../early-taps';
 let policy = matchedResolution(optInRule());
 let unavailable = false;
 const runtimes: ConsentRuntime[] = [];
-/** Request bodies the current test's runtimes sent to `/subjects`. */
+/** Request bodies the current test's runtimes sent to `/v1/consent/records`. */
 let saves: string[] = [];
 
 const queue = () =>
@@ -105,20 +105,19 @@ const createRuntime = () => {
 				if (unavailable) {
 					return Promise.resolve(new Response(null, { status: 503 }));
 				}
-				if (path.endsWith('/subjects')) {
+				if (path.endsWith('/v1/consent/records')) {
 					sent.push(String(init?.body));
 				}
 				return Promise.resolve(
 					Response.json(
-						path.endsWith('/init')
+						path.endsWith('/v1/consent/init')
 							? {
 									branding: 'inth',
 									location: { countryCode: 'DE', regionCode: null },
 									policyResolution: writePolicyResolutionWire(policy),
 									translations: { language: 'en', translations },
 								}
-							: {},
-						{ headers: inthProtocolHeaders }
+							: recordAnswer(init)
 					)
 				);
 			},

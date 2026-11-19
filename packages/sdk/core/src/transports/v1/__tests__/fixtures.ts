@@ -112,3 +112,20 @@ export const savePayload = (
 	user: null,
 	...overrides,
 });
+
+/**
+ * What `POST /v1/consent/records` answers a save: the subject it was sent
+ * with, or {@link SUBJECT} for a `sub_` id, and a record id.
+ */
+export const recordAnswer = function recordAnswer(
+	init: RequestInit | undefined
+): { recordId: string; subjectId: string } {
+	const sent =
+		typeof init?.body === 'string'
+			? (JSON.parse(init.body) as { subjectId?: string }).subjectId
+			: undefined;
+	return {
+		recordId: RECORD,
+		subjectId: sent && !sent.startsWith('sub_') ? sent : SUBJECT,
+	};
+};

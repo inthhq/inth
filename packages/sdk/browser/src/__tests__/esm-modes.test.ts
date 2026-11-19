@@ -82,9 +82,12 @@ describe('manifest() from @inth/sdk', () => {
 			withBuildDefaults({ source: 'runtime' }, buildOutput).snapshot
 		).toBeUndefined();
 		expect(
-			withBuildDefaults({ manifestUrl: '/api/inth/manifest' }, buildOutput)
+			withBuildDefaults(
+				{ manifestUrl: '/api/inth/v1/consent/manifest' },
+				buildOutput
+			)
 		).toEqual({
-			manifestUrl: '/api/inth/manifest',
+			manifestUrl: '/api/inth/v1/consent/manifest',
 			projectUrl: 'https://built.example',
 		});
 		expect(

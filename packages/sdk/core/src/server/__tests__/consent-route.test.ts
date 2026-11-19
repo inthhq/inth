@@ -170,10 +170,10 @@ afterEach(() => {
 
 describe('dispatch', () => {
 	test.each([
-		['init', 'init'],
+		['v1/consent/init', 'init'],
 		['', 'init'],
-		['/init/', 'init'],
-		['manifest', 'manifest'],
+		['/v1/consent/init/', 'init'],
+		['v1/consent/manifest', 'manifest'],
 	])('path %j answers %s', async (path, expected) => {
 		const handle = route({ fetch: upstream() });
 		const response = await handle(request('/api/inth/x'), { path });
@@ -186,7 +186,7 @@ describe('dispatch', () => {
 
 	test('a fixed mount picks the manifest from its last segment and init otherwise', async () => {
 		const handle = route({ fetch: upstream() });
-		const manifest = await handle(request('/api/inth/manifest'));
+		const manifest = await handle(request('/api/inth/v1/consent/manifest'));
 		const init = await handle(request('/api/inth'));
 		expect(manifest.headers.get('etag')).toBe('"manifest-revision"');
 		expect(init.headers.get('cache-control')).toBe('private, no-store');
@@ -199,8 +199,8 @@ describe('dispatch', () => {
 			path: 'subjects',
 		});
 		const write = await handle(
-			request('/api/inth/subjects', { body: '{}', method: 'POST' }),
-			{ path: 'subjects' }
+			request('/api/inth/v1/consent/records', { body: '{}', method: 'POST' }),
+			{ path: 'v1/consent/records' }
 		);
 		expect(unknown.status).toBe(404);
 		expect(write.status).toBe(405);
@@ -222,13 +222,15 @@ describe('dispatch', () => {
 describe('upstream source', () => {
 	test('reads the manifest below projectUrl, or manifestUrl when set', async () => {
 		const fromBackend = upstream();
-		await route({ fetch: fromBackend })(request('/api/inth/manifest'));
+		await route({ fetch: fromBackend })(
+			request('/api/inth/v1/consent/manifest')
+		);
 		const fromManifestUrl = upstream();
 		await route({
 			fetch: fromManifestUrl,
 			manifestUrl: 'https://cdn.example.com/m.json',
-		})(request('/api/inth/manifest'));
-		expect(calledURLs(fromBackend)).toEqual([`${BACKEND}/manifest`]);
+		})(request('/api/inth/v1/consent/manifest'));
+		expect(calledURLs(fromBackend)).toEqual([`${BACKEND}/v1/consent/manifest`]);
 		expect(calledURLs(fromManifestUrl)).toEqual([
 			'https://cdn.example.com/m.json',
 		]);
@@ -237,11 +239,13 @@ describe('upstream source', () => {
 	test('a relative URL resolves against request.url, never a forged forwarding header', async () => {
 		const fetch = upstream();
 		await route({ fetch, projectUrl: '/consent-backend' })(
-			request('/api/inth/manifest', {
+			request('/api/inth/v1/consent/manifest', {
 				headers: { 'x-forwarded-host': 'evil.example' },
 			})
 		);
-		expect(calledURLs(fetch)).toEqual([`${APP}/consent-backend/manifest`]);
+		expect(calledURLs(fetch)).toEqual([
+			`${APP}/consent-backend/v1/consent/manifest`,
+		]);
 	});
 
 	test('a relative URL resolves against forwarding headers when they are trusted', async () => {
@@ -251,7 +255,7 @@ describe('upstream source', () => {
 			projectUrl: '/consent-backend',
 			trustForwardedHeaders: true,
 		})(
-			request('/api/inth/manifest', {
+			request('/api/inth/v1/consent/manifest', {
 				headers: {
 					'x-forwarded-host': 'public.example',
 					'x-forwarded-proto': 'https',
@@ -259,7 +263,7 @@ describe('upstream source', () => {
 			})
 		);
 		expect(calledURLs(fetch)).toEqual([
-			'https://public.example/consent-backend/manifest',
+			'https://public.example/consent-backend/v1/consent/manifest',
 		]);
 	});
 
@@ -267,18 +271,22 @@ describe('upstream source', () => {
 		const fetch = upstream();
 		const localFetch = upstream();
 		await route({ fetch, projectUrl: '/api/self-host' })(
-			new Request('http://evil.example/api/inth/manifest'),
+			new Request('http://evil.example/api/inth/v1/consent/manifest'),
 			{ localFetch, route: 'manifest' }
 		);
-		expect(calledURLs(localFetch)).toEqual(['/api/self-host/manifest']);
+		expect(calledURLs(localFetch)).toEqual([
+			'/api/self-host/v1/consent/manifest',
+		]);
 		expect(fetch).not.toHaveBeenCalled();
 	});
 
 	test('an absolute URL uses the configured fetch even with localFetch', async () => {
 		const fetch = upstream();
 		const localFetch = upstream();
-		await route({ fetch })(request('/api/inth/manifest'), { localFetch });
-		expect(calledURLs(fetch)).toEqual([`${BACKEND}/manifest`]);
+		await route({ fetch })(request('/api/inth/v1/consent/manifest'), {
+			localFetch,
+		});
+		expect(calledURLs(fetch)).toEqual([`${BACKEND}/v1/consent/manifest`]);
 		expect(localFetch).not.toHaveBeenCalled();
 	});
 
@@ -286,29 +294,33 @@ describe('upstream source', () => {
 		vi.stubEnv('INTH_PROJECT_URL', BACKEND);
 		vi.stubEnv('C15T_BACKEND_URL', BACKEND);
 		const handle = route({ projectUrl: undefined });
-		await expect(handle(request('/api/inth/init'))).rejects.toThrow(
+		await expect(handle(request('/api/inth/v1/consent/init'))).rejects.toThrow(
 			'@c15t/test: pass projectUrl or manifestUrl.'
 		);
-		await expect(handle(request('/api/inth/manifest'))).rejects.toThrow(
-			'@c15t/test: pass projectUrl or manifestUrl.'
-		);
+		await expect(
+			handle(request('/api/inth/v1/consent/manifest'))
+		).rejects.toThrow('@c15t/test: pass projectUrl or manifestUrl.');
 	});
 
 	test('rejects a projectUrl or manifestUrl it cannot resolve', async () => {
 		await expect(
-			route({ projectUrl: 'consent.example.com' })(request('/api/inth/init'))
+			route({ projectUrl: 'consent.example.com' })(
+				request('/api/inth/v1/consent/init')
+			)
 		).rejects.toThrow('@c15t/test: invalid projectUrl.');
 		await expect(
 			route({ manifestUrl: '//evil.example/manifest' })(
-				request('/api/inth/manifest')
+				request('/api/inth/v1/consent/manifest')
 			)
 		).rejects.toThrow('@c15t/test: invalid manifestUrl.');
 	});
 
-	test('an invalid manifestUrl is an error, not a reason to fall back to /init', async () => {
+	test('an invalid manifestUrl is an error, not a reason to fall back to /v1/consent/init', async () => {
 		const fetch = upstream();
 		await expect(
-			route({ fetch, manifestUrl: 'not a url' })(request('/api/inth/init'))
+			route({ fetch, manifestUrl: 'not a url' })(
+				request('/api/inth/v1/consent/init')
+			)
 		).rejects.toThrow('@c15t/test: invalid manifestUrl.');
 		expect(fetch).not.toHaveBeenCalled();
 	});
@@ -316,7 +328,7 @@ describe('upstream source', () => {
 	test('passes the framework fetch hint to the manifest request', async () => {
 		const fetch = upstream();
 		await route({ fetch, manifestFetchInit: { cache: 'force-cache' } })(
-			request('/api/inth/init')
+			request('/api/inth/v1/consent/init')
 		);
 		expect(fetch.mock.calls[0]?.[1]).toMatchObject({ cache: 'force-cache' });
 	});
@@ -325,7 +337,7 @@ describe('upstream source', () => {
 describe('manifest route', () => {
 	test('passes the backend cache headers through and invents none', async () => {
 		const handle = route({ fetch: upstream() });
-		const response = await handle(request('/api/inth/manifest'));
+		const response = await handle(request('/api/inth/v1/consent/manifest'));
 		expect(response.status).toBe(200);
 		expect(response.headers.get('content-type')).toBe('application/json');
 		expect(response.headers.get('cache-control')).toBe(
@@ -342,7 +354,7 @@ describe('manifest route', () => {
 
 		clearManifestCache();
 		const bare = await route({ fetch: upstream(MANIFEST, {}) })(
-			request('/api/inth/manifest')
+			request('/api/inth/v1/consent/manifest')
 		);
 		expect(bare.headers.get('cache-control')).toBeNull();
 		expect(bare.headers.get('x-inth-next-revalidate')).toBeNull();
@@ -358,11 +370,11 @@ describe('manifest route', () => {
 				etag: '"v1"',
 			});
 			const handle = route({ fetch });
-			const first = await handle(request('/api/inth/manifest'));
+			const first = await handle(request('/api/inth/v1/consent/manifest'));
 			expect(first.headers.get('age')).toBe('55');
 			clock.mockReturnValue(2000);
 			const second = await handle(
-				request('/api/inth/manifest', {
+				request('/api/inth/v1/consent/manifest', {
 					headers: conditional ? { 'if-none-match': '"v1"' } : {},
 				})
 			);
@@ -378,7 +390,9 @@ describe('manifest route', () => {
 
 	test('serves the body when the ETag does not match', async () => {
 		const response = await route({ fetch: upstream() })(
-			request('/api/inth/manifest', { headers: { 'if-none-match': '"old"' } })
+			request('/api/inth/v1/consent/manifest', {
+				headers: { 'if-none-match': '"old"' },
+			})
 		);
 		expect(response.status).toBe(200);
 	});
@@ -393,10 +407,12 @@ describe('manifest route', () => {
 		const waitUntil = (task: Promise<void>) => {
 			registered.push(task);
 		};
-		await handle(request('/api/inth/manifest'), { waitUntil });
+		await handle(request('/api/inth/v1/consent/manifest'), { waitUntil });
 		expect(registered).toHaveLength(0);
 		vi.advanceTimersByTime(1500);
-		const stale = await handle(request('/api/inth/manifest'), { waitUntil });
+		const stale = await handle(request('/api/inth/v1/consent/manifest'), {
+			waitUntil,
+		});
 		expect(stale.status).toBe(200);
 		expect(registered).toHaveLength(1);
 		await expect(registered[0]).resolves.toBeUndefined();
@@ -414,18 +430,20 @@ describe('manifest route', () => {
 			const fetch = upstream();
 			await route({ fetch })(
 				request(
-					`/api/inth/manifest?utm_source=mail&language=${encodeURIComponent(language)}&visitor=42`
+					`/api/inth/v1/consent/manifest?utm_source=mail&language=${encodeURIComponent(language)}&visitor=42`
 				)
 			);
-			expect(calledURLs(fetch)).toEqual([`${BACKEND}/manifest${search}`]);
+			expect(calledURLs(fetch)).toEqual([
+				`${BACKEND}/v1/consent/manifest${search}`,
+			]);
 		}
 	);
 
 	test('the visitor query never splits the cache', async () => {
 		const fetch = upstream();
 		const handle = route({ fetch });
-		await handle(request('/api/inth/manifest?a=1'));
-		await handle(request('/api/inth/manifest?b=2'));
+		await handle(request('/api/inth/v1/consent/manifest?a=1'));
+		await handle(request('/api/inth/v1/consent/manifest?b=2'));
 		expect(fetch).toHaveBeenCalledTimes(1);
 	});
 
@@ -440,7 +458,7 @@ describe('manifest route', () => {
 			fetch: upstream(),
 			manifest: { ...MANIFEST, scriptRegistry: { sources: scriptSources } },
 		});
-		const init = await handle(request('/api/inth/init'), {
+		const init = await handle(request('/api/inth/v1/consent/init'), {
 			inputs: { country: 'DE' },
 		});
 		expect((await init.json()).scriptRegistry?.sources).toEqual(scriptSources);
@@ -449,9 +467,9 @@ describe('manifest route', () => {
 	test('serves an inline manifest without fetching', async () => {
 		const fetch = upstream();
 		const handle = route({ fetch, manifest: MANIFEST });
-		const response = await handle(request('/api/inth/manifest'));
+		const response = await handle(request('/api/inth/v1/consent/manifest'));
 		expect(await response.json()).toEqual(MANIFEST);
-		const init = await handle(request('/api/inth/init'), {
+		const init = await handle(request('/api/inth/v1/consent/init'), {
 			inputs: { country: 'DE' },
 		});
 		expect(await init.json()).toMatchObject({
@@ -470,7 +488,7 @@ describe('manifest request credentials', () => {
 			fetch,
 			proxy: { cookieNames: ['inth'], forwardHeaders: ['authorization'] },
 		})(
-			request('/api/inth/manifest', {
+			request('/api/inth/v1/consent/manifest', {
 				headers: {
 					authorization: 'Bearer tenant',
 					cookie: 'session=secret; inth=abc',
@@ -485,7 +503,9 @@ describe('manifest request credentials', () => {
 	test('without the proxy, sends no credentials', async () => {
 		const fetch = upstream();
 		await route({ fetch })(
-			request('/api/inth/manifest', { headers: { cookie: 'inth=abc' } })
+			request('/api/inth/v1/consent/manifest', {
+				headers: { cookie: 'inth=abc' },
+			})
 		);
 		expect(callHeaders(fetch).get('cookie')).toBeNull();
 	});
@@ -497,14 +517,14 @@ describe('manifest request credentials', () => {
 		});
 		const handle = route({ fetch, proxy: { cookieNames: ['inth'] } });
 		const credentialed = await handle(
-			request('/api/inth/manifest', {
+			request('/api/inth/v1/consent/manifest', {
 				headers: { cookie: 'inth=abc', 'if-none-match': '"rev"' },
 			})
 		);
 		expect(credentialed.status).toBe(200);
 		expect(credentialed.headers.get('cache-control')).toBe('private, no-store');
 		expect(credentialed.headers.get('etag')).toBeNull();
-		const anonymous = await handle(request('/api/inth/manifest'));
+		const anonymous = await handle(request('/api/inth/v1/consent/manifest'));
 		expect(anonymous.headers.get('cache-control')).toBe('public, s-maxage=120');
 	});
 
@@ -520,7 +540,7 @@ describe('manifest request credentials', () => {
 				],
 			},
 		})(
-			request('/api/inth/manifest', {
+			request('/api/inth/v1/consent/manifest', {
 				headers: {
 					'x-forwarded-for': '203.0.113.7',
 					'x-forwarded-host': 'evil.example',
@@ -541,7 +561,7 @@ describe('manifest request credentials', () => {
 			projectUrl: 'http://backend.example',
 			proxy: { forwardHeaders: ['x-api-key', 'accept-language'] },
 		})(
-			request('/api/inth/manifest', {
+			request('/api/inth/v1/consent/manifest', {
 				headers: { 'accept-language': 'de', 'x-api-key': 'tenant-a' },
 			})
 		);
@@ -556,7 +576,7 @@ describe('init route', () => {
 	test('resolves geo, language and GPC locally and is never shared-cached', async () => {
 		const fetch = upstream();
 		const response = await route({ fetch })(
-			request('/api/inth/init', {
+			request('/api/inth/v1/consent/init', {
 				headers: {
 					'accept-language': 'de-DE,de;q=0.9',
 					'x-inth-gpc': '1',
@@ -566,7 +586,7 @@ describe('init route', () => {
 			})
 		);
 		expect(response.headers.get('cache-control')).toBe('private, no-store');
-		expect(response.headers.get('x-inth-policy-contract')).toBe('1');
+		expect(response.headers.has('x-inth-policy-contract')).toBe(false);
 		const body = (await response.json()) as InitOutput;
 		expect(body.location).toEqual({ countryCode: 'DE', regionCode: 'BE' });
 		expect(body.translations.language).toBe('de');
@@ -577,14 +597,14 @@ describe('init route', () => {
 		// Init resolves in-process: the backend sees the manifest request and
 		// the session report, never `/init`.
 		expect(calledURLs(fetch).sort()).toEqual([
-			`${BACKEND}/manifest`,
-			`${BACKEND}/sessions`,
+			`${BACKEND}/v1/consent/manifest`,
+			`${BACKEND}/v1/consent/sessions`,
 		]);
 	});
 
 	test('echoes the resolved inputs so a server-rendered page keeps GPC', async () => {
 		const response = await route({ fetch: upstream() })(
-			request('/api/inth/init', {
+			request('/api/inth/v1/consent/init', {
 				headers: { 'x-inth-country': 'DE', 'x-inth-gpc': '1' },
 			})
 		);
@@ -596,7 +616,7 @@ describe('init route', () => {
 
 	test('adapter-supplied inputs win over the request headers', async () => {
 		const response = await route({ fetch: upstream() })(
-			request('/api/inth/init', {
+			request('/api/inth/v1/consent/init', {
 				headers: { 'accept-language': 'en', 'x-inth-country': 'US' },
 			}),
 			{ inputs: { country: 'DE', language: 'de' } }
@@ -610,7 +630,7 @@ describe('init route', () => {
 
 	test('reads the inputs a browser sends as query parameters', async () => {
 		const response = await route({ fetch: upstream() })(
-			request('/api/inth/init?v=3.1.0&contract=1&country=DE&gpc=1', {
+			request('/api/inth/v1/consent/init?country=DE&gpc=1', {
 				headers: { 'x-inth-country': 'US' },
 			})
 		);
@@ -625,7 +645,7 @@ describe('init route', () => {
 		// Next.js wraps the request in a Proxy that reads every property from
 		// the real request. Node 24's Request constructor rejects the Proxy
 		// itself as an input.
-		const real = request('/api/inth/init?country=DE&gpc=1', {
+		const real = request('/api/inth/v1/consent/init?country=DE&gpc=1', {
 			headers: { 'x-inth-country': 'US' },
 		});
 		const proxied = new Proxy(real, {
@@ -639,19 +659,9 @@ describe('init route', () => {
 		});
 	});
 
-	test('fails a client that declares an unknown contract in the query', async () => {
-		const response = await route({ fetch: upstream() })(
-			request('/api/inth/init?contract=99&country=DE')
-		);
-		expect((await response.json()).policyResolution).toMatchObject({
-			reason: 'unsupported-contract',
-			status: 'failed',
-		});
-	});
-
 	test('query overrides win over adapter-supplied inputs, as override headers did', async () => {
 		const response = await route({ fetch: upstream() })(
-			request('/api/inth/init?country=DE'),
+			request('/api/inth/v1/consent/init?country=DE'),
 			{ inputs: { country: 'US', language: 'de' } }
 		);
 		expect(await response.json()).toMatchObject({
@@ -659,59 +669,6 @@ describe('init route', () => {
 			translations: { language: 'de' },
 		});
 	});
-
-	test.each([undefined, '1', ' 1 '])(
-		'serves a client that declares contract %j',
-		async (contract) => {
-			const headers: Record<string, string> = { 'x-inth-country': 'DE' };
-			if (contract !== undefined) {
-				headers['x-inth-policy-contract'] = contract;
-			}
-			const response = await route({ fetch: upstream() })(
-				request('/api/inth/init', { headers })
-			);
-			expect(await response.json()).toMatchObject({
-				policyResolution: { status: 'matched' },
-			});
-		}
-	);
-
-	test.each(['99', 'invalid', ''])(
-		'fails a client that declares contract %j and strips matched-only fields',
-		async (contract) => {
-			const gvlFetch = upstream(IAB_MANIFEST);
-			const response = await route({ fetch: gvlFetch })(
-				request('/api/inth/init', {
-					headers: {
-						'x-inth-country': 'DE',
-						'x-inth-policy-contract': contract,
-					},
-				})
-			);
-			const body = await response.json();
-			expect(body.policyResolution).toEqual({
-				policy: null,
-				reason: 'unsupported-contract',
-				status: 'failed',
-				version: 1,
-			});
-			for (const field of [
-				'policySnapshotToken',
-				'gvl',
-				'gvlReference',
-				'cmpId',
-				'customVendors',
-				'adTechProviders',
-			]) {
-				expect(body).not.toHaveProperty(field);
-			}
-			expect(body.translations.language).toBe('en');
-			// No vendor list for a client that cannot represent the policy.
-			expect(calledURLs(gvlFetch).some((url) => url.startsWith(GVL_URL))).toBe(
-				false
-			);
-		}
-	);
 });
 
 describe('Google Additional Consent providers', () => {
@@ -746,7 +703,7 @@ describe('Google Additional Consent providers', () => {
 	test('are served with the IAB init the manifest resolves', async () => {
 		const response = await route({
 			fetch: withProviders(providerManifest),
-		})(request('/api/inth/init'));
+		})(request('/api/inth/v1/consent/init'));
 		const body = (await response.json()) as InitOutput;
 		expect(body.adTechProviders).toEqual([
 			{ id: 89, name: 'Meta', policyUrl: 'https://meta.example/privacy' },
@@ -759,18 +716,11 @@ describe('Google Additional Consent providers', () => {
 			iab: providerManifest.iab,
 		} as ConsentManifest);
 		const notIab = await route({ fetch: optIn })(
-			request('/api/inth/init', { headers: { 'x-inth-country': 'DE' } })
-		);
-		expect(await notIab.json()).not.toHaveProperty('adTechProviders');
-
-		const failed = await route({
-			fetch: withProviders(providerManifest),
-		})(
-			request('/api/inth/init', {
-				headers: { 'x-inth-policy-contract': '99' },
+			request('/api/inth/v1/consent/init', {
+				headers: { 'x-inth-country': 'DE' },
 			})
 		);
-		expect(await failed.json()).not.toHaveProperty('adTechProviders');
+		expect(await notIab.json()).not.toHaveProperty('adTechProviders');
 		expect(calledURLs(optIn).some((url) => url.startsWith(AC_URL))).toBe(false);
 	});
 
@@ -804,7 +754,9 @@ describe('Google Additional Consent providers', () => {
 		const fetch = vi.fn<ManifestFetch>((input, init) =>
 			String(input).includes('/api/ac-relative') ? answer() : base(input, init)
 		);
-		const response = await route({ fetch })(request('/api/inth/init'));
+		const response = await route({ fetch })(
+			request('/api/inth/v1/consent/init')
+		);
 		const body = (await response.json()) as InitOutput;
 		expect(body.adTechProviders?.map(({ id }) => id)).toEqual([89]);
 		expect(calledURLs(fetch)).toContain(
@@ -816,9 +768,12 @@ describe('Google Additional Consent providers', () => {
 		const { answer, manifest } = relativeEndpoint('/api/ac-local');
 		const fetch = upstream(manifest);
 		const localFetch = vi.fn<ManifestFetch>(() => answer());
-		const response = await route({ fetch })(request('/api/inth/init'), {
-			localFetch,
-		});
+		const response = await route({ fetch })(
+			request('/api/inth/v1/consent/init'),
+			{
+				localFetch,
+			}
+		);
 		const body = (await response.json()) as InitOutput;
 		expect(body.adTechProviders?.map(({ id }) => id)).toEqual([89]);
 		expect(calledURLs(localFetch)).toEqual(['/api/ac-local?providerIds=89']);
@@ -832,9 +787,15 @@ describe('Google Additional Consent providers', () => {
 		const firstLocal = vi.fn<ManifestFetch>(() => answer());
 		const secondLocal = vi.fn<ManifestFetch>(() => answer());
 		const nextRequest = vi.fn<ManifestFetch>(() => answer());
-		await first(request('/api/inth/init'), { localFetch: firstLocal });
-		await second(request('/api/inth/init'), { localFetch: secondLocal });
-		await first(request('/api/inth/init'), { localFetch: nextRequest });
+		await first(request('/api/inth/v1/consent/init'), {
+			localFetch: firstLocal,
+		});
+		await second(request('/api/inth/v1/consent/init'), {
+			localFetch: secondLocal,
+		});
+		await first(request('/api/inth/v1/consent/init'), {
+			localFetch: nextRequest,
+		});
 		expect(firstLocal).toHaveBeenCalledOnce();
 		expect(secondLocal).toHaveBeenCalledOnce();
 		// Adapters pass a new localFetch per request; the handler's cache
@@ -845,7 +806,7 @@ describe('Google Additional Consent providers', () => {
 	test('are withdrawn with an empty list once the manifest stops listing them', async () => {
 		const response = await route({
 			fetch: withProviders(IAB_MANIFEST as unknown as ConsentManifest),
-		})(request('/api/inth/init'));
+		})(request('/api/inth/v1/consent/init'));
 		const body = (await response.json()) as InitOutput;
 		expect(body.adTechProviders).toEqual([]);
 	});
@@ -855,7 +816,9 @@ describe('vendor list', () => {
 	test('is not loaded for a policy that is not IAB', async () => {
 		const fetchGvl = vi.fn(() => Promise.resolve(GVL));
 		await route({ fetch: upstream(), fetchGvl })(
-			request('/api/inth/init', { headers: { 'x-inth-country': 'DE' } })
+			request('/api/inth/v1/consent/init', {
+				headers: { 'x-inth-country': 'DE' },
+			})
 		);
 		expect(fetchGvl).not.toHaveBeenCalled();
 	});
@@ -864,7 +827,7 @@ describe('vendor list', () => {
 		const fetchGvl = vi.fn(() => Promise.resolve(GVL));
 		const handle = route({ fetch: upstream(IAB_MANIFEST), fetchGvl });
 		const response = await handle(
-			request('/privacy/init', {
+			request('/privacy/v1/consent/init', {
 				headers: { 'accept-language': 'de-DE,de;q=0.9' },
 			})
 		);
@@ -877,7 +840,7 @@ describe('vendor list', () => {
 		expect(body.gvlReference).toMatchObject({
 			language: 'de',
 			summary: { vendorCount: 1 },
-			url: '/privacy/init?inth-gvl=42&language=de',
+			url: '/privacy/v1/consent/init?inth-gvl=42&language=de',
 			vendorListVersion: 42,
 		});
 
@@ -885,11 +848,11 @@ describe('vendor list', () => {
 		expect(list.headers.get('cache-control')).toBe('public, max-age=86400');
 		expect(await list.json()).toEqual(GVL);
 		const mismatch = await handle(
-			request('/privacy/init?inth-gvl=43&language=de')
+			request('/privacy/v1/consent/init?inth-gvl=43&language=de')
 		);
 		expect(mismatch.status).toBe(409);
 		const invalid = await handle(
-			request('/privacy/init?inth-gvl=42&language=../en')
+			request('/privacy/v1/consent/init?inth-gvl=42&language=../en')
 		);
 		expect(invalid.status).toBe(400);
 	});
@@ -897,9 +860,9 @@ describe('vendor list', () => {
 	test('the default loader reads through the process cache with the protocol headers', async () => {
 		const fetch = upstream(IAB_MANIFEST);
 		const handle = route({ fetch });
-		await handle(request('/api/inth/init'));
-		await handle(request('/api/inth/init'));
-		await handle(request('/api/inth/init?inth-gvl=42&language=en'));
+		await handle(request('/api/inth/v1/consent/init'));
+		await handle(request('/api/inth/v1/consent/init'));
+		await handle(request('/api/inth/v1/consent/init?inth-gvl=42&language=en'));
 		const gvlCalls = fetch.mock.calls.filter(([url]) =>
 			String(url).startsWith(GVL_URL)
 		);
@@ -915,7 +878,7 @@ describe('vendor list', () => {
 			fetch,
 			fetchGvl: () => Promise.reject(new Error('gvl is down')),
 		});
-		await expect(handle(request('/api/inth/init'))).rejects.toThrow(
+		await expect(handle(request('/api/inth/v1/consent/init'))).rejects.toThrow(
 			'gvl is down'
 		);
 		await flush();
@@ -942,7 +905,7 @@ describe('vendor list', () => {
 			}
 			return Promise.resolve(json(IAB_MANIFEST));
 		});
-		const pending = route({ fetch })(request('/api/inth/init'));
+		const pending = route({ fetch })(request('/api/inth/v1/consent/init'));
 		await flush();
 		expect(timeout).toHaveBeenCalledWith(GVL_FETCH_TIMEOUT_MS);
 		deadlines.at(-1)?.abort();
@@ -952,13 +915,15 @@ describe('vendor list', () => {
 
 describe('session reports', () => {
 	const reportCall = (fetch: FetchMock) =>
-		fetch.mock.calls.find(([url]) => String(url) === `${BACKEND}/sessions`);
+		fetch.mock.calls.find(
+			([url]) => String(url) === `${BACKEND}/v1/consent/sessions`
+		);
 
 	test('reports the resolution to the backend, detached and without cookies', async () => {
 		const fetch = upstream();
 		const registered: Promise<void>[] = [];
 		const response = await route({ fetch })(
-			request('/api/inth/init', {
+			request('/api/inth/v1/consent/init', {
 				headers: {
 					cookie: 'inth=secret',
 					'user-agent': 'Mozilla/5.0',
@@ -993,16 +958,19 @@ describe('session reports', () => {
 		const registered: Promise<void>[] = [];
 		const id = '3b241101-e2bb-4255-8caf-4136c566a962';
 		await route({ fetch })(
-			request(`/api/inth/init?journey=${id}&journeyScope=page&stored=0`, {
-				headers: { 'x-vercel-ip-country': 'DE' },
-			}),
+			request(
+				`/api/inth/v1/consent/init?journey=${id}&journeyScope=page&stored=0`,
+				{
+					headers: { 'x-vercel-ip-country': 'DE' },
+				}
+			),
 			{ waitUntil: (task) => registered.push(task) }
 		);
 		await registered[0];
 		expect(JSON.parse(reportCall(fetch)?.[1]?.body as string).journey).toEqual({
-			domain: 'app.example.com',
 			id,
 			prompt: 'due',
+			property: 'app.example.com',
 			scope: 'page',
 			storedChoice: false,
 		});
@@ -1012,7 +980,9 @@ describe('session reports', () => {
 		const fetch = upstream();
 		const registered: Promise<void>[] = [];
 		await route({ fetch })(
-			request('/api/inth/init?journey=visitor-42&journeyScope=page&stored=0'),
+			request(
+				'/api/inth/v1/consent/init?journey=visitor-42&journeyScope=page&stored=0'
+			),
 			{ waitUntil: (task) => registered.push(task) }
 		);
 		await registered[0];
@@ -1026,13 +996,13 @@ describe('session reports', () => {
 		['a relative projectUrl', { projectUrl: '/api/self-host' }, {}],
 		[
 			'a manifestUrl alone',
-			{ manifestUrl: `${BACKEND}/manifest`, projectUrl: undefined },
+			{ manifestUrl: `${BACKEND}/v1/consent/manifest`, projectUrl: undefined },
 			{},
 		],
 	] as const)('sends none for %s', async (_, options, init) => {
 		const fetch = upstream();
 		const response = await route({ fetch, ...options })(
-			request('/api/inth/init', init)
+			request('/api/inth/v1/consent/init', init)
 		);
 		expect(response.status).toBe(200);
 		await flush();
@@ -1046,7 +1016,7 @@ describe('session reports', () => {
 		const controller = new AbortController();
 		controller.abort();
 		await route({ fetch })(
-			request('/api/inth/init', { signal: controller.signal })
+			request('/api/inth/v1/consent/init', { signal: controller.signal })
 		);
 		await flush();
 		expect(reportCall(fetch)).toBeUndefined();
@@ -1065,7 +1035,7 @@ describe('client abort', () => {
 		const controller = new AbortController();
 		const registered: Promise<void>[] = [];
 		const pending = route({ fetch })(
-			request('/api/inth/init', { signal: controller.signal }),
+			request('/api/inth/v1/consent/init', { signal: controller.signal }),
 			{ waitUntil: (task) => registered.push(task) }
 		);
 		await flush();
@@ -1085,14 +1055,14 @@ describe('request budget', () => {
 			);
 		});
 
-	test('fails within the budget header without falling back to /init', async () => {
+	test('fails within the budget header without falling back to /v1/consent/init', async () => {
 		const fetch = vi.fn<ManifestFetch>(hanging);
 		const startedAt = Date.now();
 		// The cache gets what is left of the header's 20 ms, which is less
 		// once a millisecond ticks before the read starts.
 		await expect(
 			route({ fetch })(
-				request('/api/inth/init', {
+				request('/api/inth/v1/consent/init', {
 					headers: { [CONSENT_ROUTE_TIMEOUT_HEADER]: '20' },
 				})
 			)
@@ -1113,13 +1083,15 @@ describe('request budget', () => {
 		const registered: Promise<void>[] = [];
 		await expect(
 			route({ fetch })(
-				request('/api/inth/init', {
+				request('/api/inth/v1/consent/init', {
 					headers: { [CONSENT_ROUTE_TIMEOUT_HEADER]: '50' },
 				}),
 				{ waitUntil: (task) => registered.push(task) }
 			)
 		).rejects.toThrow(/did not finish/u);
-		expect(calledURLs(fetch).some((url) => url.endsWith('/init'))).toBe(false);
+		expect(
+			calledURLs(fetch).some((url) => url.endsWith('/v1/consent/init'))
+		).toBe(false);
 		expect(registered).toHaveLength(1);
 		finishList(json(GVL));
 		await expect(registered[0]).resolves.toBeUndefined();
@@ -1127,7 +1099,7 @@ describe('request budget', () => {
 
 	test('bounds the /init fallback, even through a fetch that drops the signal', async () => {
 		const localFetch = vi.fn<ManifestFetch>((url) =>
-			String(url).endsWith('/manifest')
+			String(url).endsWith('/v1/consent/manifest')
 				? Promise.resolve(new Response('missing', { status: 404 }))
 				: new Promise(() => {
 						// Never answers.
@@ -1136,7 +1108,7 @@ describe('request budget', () => {
 		const startedAt = Date.now();
 		await expect(
 			route({ projectUrl: '/api/self-host' })(
-				request('/api/inth/init', {
+				request('/api/inth/v1/consent/init', {
 					headers: { [CONSENT_ROUTE_TIMEOUT_HEADER]: '50' },
 				}),
 				{ localFetch }
@@ -1144,7 +1116,7 @@ describe('request budget', () => {
 		).rejects.toThrow();
 		expect(Date.now() - startedAt).toBeLessThan(2000);
 		expect(localFetch).toHaveBeenLastCalledWith(
-			'/api/self-host/init',
+			'/api/self-host/v1/consent/init',
 			expect.objectContaining({ signal: expect.any(AbortSignal) })
 		);
 	});
@@ -1153,7 +1125,7 @@ describe('request budget', () => {
 		'ignores a budget header of %j',
 		async (value) => {
 			const response = await route({ fetch: upstream() })(
-				request('/api/inth/init', {
+				request('/api/inth/v1/consent/init', {
 					headers: { [CONSENT_ROUTE_TIMEOUT_HEADER]: value },
 				})
 			);
@@ -1162,14 +1134,14 @@ describe('request budget', () => {
 	);
 });
 
-describe('/init fallback for a backend without /manifest', () => {
+describe('init fallback for a backend without /v1/consent/manifest', () => {
 	const backendInit = (
 		body: Record<string, unknown>,
-		headers: Record<string, string> = { 'x-inth-policy-contract': '1' }
+		headers: Record<string, string> = {}
 	) =>
 		vi.fn<ManifestFetch>((url) =>
 			Promise.resolve(
-				String(url).endsWith('/manifest')
+				String(url).endsWith('/v1/consent/manifest')
 					? new Response('missing', { status: 404 })
 					: json(body, headers)
 			)
@@ -1197,7 +1169,7 @@ describe('/init fallback for a backend without /manifest', () => {
 			translations: { language: 'en', translations: {} },
 		});
 		const response = await route({ projectUrl: '/api/self-host' })(
-			request('/api/inth/init', {
+			request('/api/inth/v1/consent/init', {
 				headers: {
 					cookie: 'inth=secret',
 					'user-agent': 'Mozilla/5.0',
@@ -1208,17 +1180,17 @@ describe('/init fallback for a backend without /manifest', () => {
 			{ localFetch }
 		);
 		expect(response.headers.get('cache-control')).toBe('private, no-store');
-		expect(response.headers.get('x-inth-policy-contract')).toBe('1');
+		expect(response.headers.has('x-inth-policy-contract')).toBe(false);
 		expect(await response.json()).toMatchObject({
 			location: { countryCode: null, regionCode: null },
 		});
 		expect(localFetch).toHaveBeenLastCalledWith(
-			'/api/self-host/init',
+			'/api/self-host/v1/consent/init',
 			expect.anything()
 		);
 		const headers = callHeaders(localFetch, 1);
 		expect(headers.get('x-inth-country')).toBe('DE');
-		expect(headers.get('x-inth-policy-contract')).toBe('1');
+		expect(headers.has('x-inth-policy-contract')).toBe(false);
 		expect(headers.get('cookie')).toBeNull();
 		expect(headers.get('user-agent')).toBeNull();
 		expect(headers.get('x-forwarded-for')).toBeNull();
@@ -1232,12 +1204,12 @@ describe('/init fallback for a backend without /manifest', () => {
 		const id = '3b241101-e2bb-4255-8caf-4136c566a962';
 		await route({ projectUrl: '/api/self-host' })(
 			request(
-				`/api/inth/init?utm_source=mail&journey=${id}&journeyScope=tab&stored=1`
+				`/api/inth/v1/consent/init?utm_source=mail&journey=${id}&journeyScope=tab&stored=1`
 			),
 			{ localFetch }
 		);
 		expect(localFetch).toHaveBeenLastCalledWith(
-			`/api/self-host/init?journey=${id}&journeyScope=tab&stored=1`,
+			`/api/self-host/v1/consent/init?journey=${id}&journeyScope=tab&stored=1`,
 			expect.anything()
 		);
 	});
@@ -1250,11 +1222,11 @@ describe('/init fallback for a backend without /manifest', () => {
 			translations: { language: 'en', translations: {} },
 		});
 		await route({ projectUrl: '/api/self-host' })(
-			request('/api/inth/init?country=DE&gpc=0&contract=1'),
+			request('/api/inth/v1/consent/init?country=DE&gpc=0&contract=1'),
 			{ localFetch }
 		);
 		expect(localFetch).toHaveBeenLastCalledWith(
-			'/api/self-host/init',
+			'/api/self-host/v1/consent/init',
 			expect.anything()
 		);
 		const headers = callHeaders(localFetch, 1);
@@ -1272,8 +1244,9 @@ describe('/init fallback for a backend without /manifest', () => {
 		const query = `?journey=${id}&journeyScope=page&stored=0`;
 		const lastInitOrigin = () =>
 			new Headers(
-				fetch.mock.calls.findLast(([url]) => String(url).includes('/init'))?.[1]
-					?.headers
+				fetch.mock.calls.findLast(([url]) =>
+					String(url).includes('/v1/consent/init')
+				)?.[1]?.headers
 			).get('origin');
 		// A same-origin GET carries no Origin: the request URL is the page's.
 		await handle(request(`/api/inth/init${query}`));
@@ -1286,11 +1259,11 @@ describe('/init fallback for a backend without /manifest', () => {
 		);
 		expect(lastInitOrigin()).toBe('https://www.example.org');
 		// Without a journey nothing is added.
-		await handle(request('/api/inth/init'));
+		await handle(request('/api/inth/v1/consent/init'));
 		expect(lastInitOrigin()).toBeNull();
 	});
 
-	test('forwards vendors and privacy signals from backend /init', async () => {
+	test('forwards vendors and privacy signals from backend /v1/consent/init', async () => {
 		const acmeVendor = {
 			category: 'marketing',
 			id: 'acme',
@@ -1307,7 +1280,9 @@ describe('/init fallback for a backend without /manifest', () => {
 			vendors: [acmeVendor],
 		});
 		const response = await route({ fetch })(
-			request('/api/inth/init', { headers: { 'x-inth-country': 'DE' } })
+			request('/api/inth/v1/consent/init', {
+				headers: { 'x-inth-country': 'DE' },
+			})
 		);
 		const body = await response.json();
 		expect(body).toMatchObject({
@@ -1318,7 +1293,7 @@ describe('/init fallback for a backend without /manifest', () => {
 		expect(body).not.toHaveProperty('jurisdiction');
 	});
 
-	test('keeps the script registry list from backend /init', async () => {
+	test('keeps the script registry list from backend /v1/consent/init', async () => {
 		const scriptSources = {
 			posthog: {
 				integrity: 'sha384-posthog',
@@ -1331,7 +1306,9 @@ describe('/init fallback for a backend without /manifest', () => {
 			translations: { language: 'en', translations: {} },
 		});
 		const response = await route({ fetch })(
-			request('/api/inth/init', { headers: { 'x-inth-country': 'DE' } })
+			request('/api/inth/v1/consent/init', {
+				headers: { 'x-inth-country': 'DE' },
+			})
 		);
 		expect((await response.json()).scriptRegistry?.sources).toEqual(
 			scriptSources
@@ -1353,9 +1330,7 @@ describe('/init fallback for a backend without /manifest', () => {
 			translations: { language: 'en', translations: {} },
 		});
 		const response = await route({ fetch })(
-			request('/api/inth/init', {
-				headers: { 'x-inth-policy-contract': '1' },
-			})
+			request('/api/inth/v1/consent/init')
 		);
 		expect(await response.json()).toMatchObject({ cmpId: 28, gvlReference });
 	});
@@ -1381,9 +1356,7 @@ describe('/init fallback for a backend without /manifest', () => {
 				translations: { language: 'en', translations: {} },
 			});
 			const response = await route({ fetch })(
-				request('/api/inth/init', {
-					headers: { 'x-inth-policy-contract': '1' },
-				})
+				request('/api/inth/v1/consent/init')
 			);
 			const body = await response.json();
 			expect(body.policyResolution.status).toBe(resolution.status);
@@ -1402,46 +1375,35 @@ describe('/init fallback for a backend without /manifest', () => {
 		}
 	);
 
-	test.each([
-		{ declaration: undefined, reason: 'unsupported-contract' },
-		{ declaration: '1', reason: 'invalid-payload' },
-		{ declaration: '99', reason: 'unsupported-contract' },
-		{ declaration: 'invalid', reason: 'unsupported-contract' },
-	])(
-		'negotiates a backend that declares contract $declaration',
-		async ({ declaration, reason }) => {
-			const fetch = backendInit(
-				{
-					location: { countryCode: 'DE', regionCode: null },
-					policy: { id: 'legacy', model: 'opt-in' },
-					translations: { language: 'en', translations: {} },
-				},
-				declaration === undefined
-					? {}
-					: { 'x-inth-policy-contract': declaration }
-			);
-			const response = await route({ fetch })(
-				request('/api/inth/init', {
-					headers: { 'x-inth-policy-contract': '1' },
-				})
-			);
-			expect(await response.json()).toMatchObject({
-				policyResolution: { reason, status: 'failed' },
-			});
-		}
-	);
+	test('a backend answer without a policy resolution is a failed payload', async () => {
+		const fetch = backendInit({
+			location: { countryCode: 'DE', regionCode: null },
+			policy: { id: 'legacy', model: 'opt-in' },
+			translations: { language: 'en', translations: {} },
+		});
+		const response = await route({ fetch })(
+			request('/api/inth/v1/consent/init')
+		);
+		expect(await response.json()).toMatchObject({
+			policyResolution: { reason: 'invalid-payload', status: 'failed' },
+		});
+	});
 
 	test('falls back to /init while the manifest backs off, without asking the manifest again', async () => {
 		const fetch = vi.fn<ManifestFetch>(() =>
 			Promise.resolve(new Response('unavailable', { status: 503 }))
 		);
 		const handle = route({ fetch });
-		await expect(handle(request('/api/inth/init'))).rejects.toThrow(/503/u);
-		await expect(handle(request('/api/inth/init'))).rejects.toThrow();
+		await expect(handle(request('/api/inth/v1/consent/init'))).rejects.toThrow(
+			/503/u
+		);
+		await expect(
+			handle(request('/api/inth/v1/consent/init'))
+		).rejects.toThrow();
 		expect(calledURLs(fetch)).toEqual([
-			`${BACKEND}/manifest`,
-			`${BACKEND}/init`,
-			`${BACKEND}/init`,
+			`${BACKEND}/v1/consent/manifest`,
+			`${BACKEND}/v1/consent/init`,
+			`${BACKEND}/v1/consent/init`,
 		]);
 	});
 
@@ -1453,33 +1415,32 @@ describe('/init fallback for a backend without /manifest', () => {
 			translations: { language: 'en', translations: {} },
 		});
 		const fetch = vi.fn<ManifestFetch>((url, init) =>
-			String(url).endsWith('/manifest')
+			String(url).endsWith('/v1/consent/manifest')
 				? Promise.resolve(new Response('unavailable', { status: 500 }))
 				: answer(url, init)
 		);
 		const handle = route({ fetch, projectUrl: `${BACKEND}/warn` });
-		expect((await handle(request('/api/inth/init'))).ok).toBe(true);
+		expect((await handle(request('/api/inth/v1/consent/init'))).ok).toBe(true);
 		expect(warn).toHaveBeenCalledWith(
 			expect.stringContaining(
-				`could not read the consent manifest from ${BACKEND}/warn/manifest`
+				`could not read the consent manifest from ${BACKEND}/warn/v1/consent/manifest`
 			)
 		);
 		warn.mockRestore();
 	});
 
-	test('keeps falling back for a backend that has no /manifest', async () => {
+	test('keeps falling back for a backend that has no /v1/consent/manifest', async () => {
 		const fetch = backendInit({
 			location: { countryCode: 'DE', regionCode: null },
 			policyResolution: matchedIab(),
 			translations: { language: 'en', translations: {} },
 		});
 		const handle = route({ fetch });
-		expect((await handle(request('/api/inth/init'))).ok).toBe(true);
-		expect((await handle(request('/api/inth/init'))).ok).toBe(true);
-		expect(calledURLs(fetch).filter((url) => url.endsWith('/init'))).toEqual([
-			`${BACKEND}/init`,
-			`${BACKEND}/init`,
-		]);
+		expect((await handle(request('/api/inth/v1/consent/init'))).ok).toBe(true);
+		expect((await handle(request('/api/inth/v1/consent/init'))).ok).toBe(true);
+		expect(
+			calledURLs(fetch).filter((url) => url.endsWith('/v1/consent/init'))
+		).toEqual([`${BACKEND}/v1/consent/init`, `${BACKEND}/v1/consent/init`]);
 	});
 
 	test('surfaces the failure when only a manifestUrl is configured', async () => {
@@ -1489,9 +1450,9 @@ describe('/init fallback for a backend without /manifest', () => {
 		await expect(
 			route({
 				fetch,
-				manifestUrl: `${BACKEND}/manifest`,
+				manifestUrl: `${BACKEND}/v1/consent/manifest`,
 				projectUrl: undefined,
-			})(request('/api/inth/manifest'))
+			})(request('/api/inth/v1/consent/manifest'))
 		).rejects.toThrow(/503/u);
 		expect(fetch).toHaveBeenCalledTimes(1);
 	});
@@ -1501,55 +1462,69 @@ describe('proxy', () => {
 	test('keeps manifest and init in-process and forwards other paths and writes', async () => {
 		const fetch = upstream();
 		const handle = route({ fetch, proxy: true });
-		await handle(request('/api/inth/manifest'), { path: 'manifest' });
-		await handle(request('/api/inth/init'), { path: 'init' });
+		await handle(request('/api/inth/v1/consent/manifest'), {
+			path: 'v1/consent/manifest',
+		});
+		await handle(request('/api/inth/v1/consent/init'), {
+			path: 'v1/consent/init',
+		});
 		// Init resolves in-process: the backend sees the manifest request and
 		// the session report, never `/init`.
 		expect(calledURLs(fetch).sort()).toEqual([
-			`${BACKEND}/manifest`,
-			`${BACKEND}/sessions`,
+			`${BACKEND}/v1/consent/manifest`,
+			`${BACKEND}/v1/consent/sessions`,
 		]);
 
 		fetch.mockImplementation(() =>
 			Promise.resolve(json({ ok: true }, {}, 201))
 		);
 		const saved = await handle(
-			request('/api/inth/subjects?x=1', {
-				body: '{"choice":"all"}',
+			request('/api/inth/v1/consent/records?x=1', {
+				body: '{"answer":{"categories":{}}}',
 				headers: { 'content-type': 'application/json' },
 				method: 'POST',
 			}),
-			{ path: 'subjects' }
+			{ path: 'v1/consent/records' }
 		);
 		expect(saved.status).toBe(201);
 		const [url, init] = fetch.mock.calls.at(-1) ?? [];
-		expect(url).toBe(`${BACKEND}/subjects?x=1`);
+		expect(url).toBe(`${BACKEND}/v1/consent/records?x=1`);
 		expect(init?.method).toBe('POST');
-		const health = await handle(request('/api/inth/reports/manifest'), {
-			path: 'reports/manifest',
-		});
-		expect(health.status).toBe(404);
+		// A session report comes from a server only; a browser cannot send one.
+		const report = await handle(
+			request('/api/inth/v1/consent/sessions', { method: 'POST' }),
+			{ path: 'v1/consent/sessions' }
+		);
+		expect(report.status).toBe(404);
+		const other = await handle(
+			request('/api/inth/reports/v1/consent/manifest'),
+			{
+				path: 'reports/manifest',
+			}
+		);
+		expect(other.status).toBe(404);
 	});
 
 	test('a dedicated proxy mount forwards its last segment', async () => {
 		const fetch = vi.fn<ManifestFetch>(() => Promise.resolve(json({})));
-		await route({ fetch, proxy: true })(request('/api/inth/status'), {
-			route: 'proxy',
-		});
+		await route({ fetch, proxy: { paths: ['status'] } })(
+			request('/api/inth/status'),
+			{ route: 'proxy' }
+		);
 		expect(calledURLs(fetch)).toEqual([`${BACKEND}/status`]);
 	});
 
 	test('without trusted forwarding, believes only the request URL', async () => {
 		const fetch = vi.fn<ManifestFetch>(() => Promise.resolve(json({})));
 		await route({ fetch, proxy: true })(
-			request('/api/inth/subjects', {
+			request('/api/inth/v1/consent/records', {
 				headers: {
 					'x-forwarded-for': '198.51.100.1',
 					'x-forwarded-host': 'evil.example',
 				},
 				method: 'POST',
 			}),
-			{ path: 'subjects' }
+			{ path: 'v1/consent/records' }
 		);
 		const headers = callHeaders(fetch);
 		expect(headers.get('x-forwarded-host')).toBe('app.example.com');
@@ -1561,7 +1536,7 @@ describe('proxy', () => {
 	test('with trusted forwarding, keeps the chain and appends the client address', async () => {
 		const fetch = vi.fn<ManifestFetch>(() => Promise.resolve(json({})));
 		await route({ fetch, proxy: true, trustForwardedHeaders: true })(
-			request('/api/inth/subjects', {
+			request('/api/inth/v1/consent/records', {
 				headers: {
 					'cf-connecting-ip': '203.0.113.9',
 					'x-forwarded-host': 'public.example',
@@ -1569,7 +1544,7 @@ describe('proxy', () => {
 				},
 				method: 'POST',
 			}),
-			{ path: 'subjects' }
+			{ path: 'v1/consent/records' }
 		);
 		const headers = callHeaders(fetch);
 		expect(headers.get('x-forwarded-host')).toBe('public.example');
@@ -1579,14 +1554,14 @@ describe('proxy', () => {
 	test('uses the hop chain the adapter vouches for', async () => {
 		const fetch = vi.fn<ManifestFetch>(() => Promise.resolve(json({})));
 		await route({ fetch, proxy: true })(
-			request('/api/inth/subjects', { method: 'POST' }),
+			request('/api/inth/v1/consent/records', { method: 'POST' }),
 			{
 				forwarding: () => ({
 					for: '192.0.2.5',
 					host: 'framework.example',
 					proto: 'https',
 				}),
-				path: 'subjects',
+				path: 'v1/consent/records',
 			}
 		);
 		const headers = callHeaders(fetch);
@@ -1597,20 +1572,24 @@ describe('proxy', () => {
 	test('forwards to a relative backend through localFetch', async () => {
 		const localFetch = vi.fn<ManifestFetch>(() => Promise.resolve(json({})));
 		await route({ projectUrl: '/api/self-host', proxy: true })(
-			new Request('http://evil.example/api/inth/subjects', { method: 'POST' }),
-			{ localFetch, path: 'subjects' }
+			new Request('http://evil.example/api/inth/v1/consent/records', {
+				method: 'POST',
+			}),
+			{ localFetch, path: 'v1/consent/records' }
 		);
-		expect(calledURLs(localFetch)).toEqual(['/api/self-host/subjects']);
+		expect(calledURLs(localFetch)).toEqual([
+			'/api/self-host/v1/consent/records',
+		]);
 	});
 
 	test('needs a projectUrl', async () => {
 		await expect(
 			route({
-				manifestUrl: `${BACKEND}/manifest`,
+				manifestUrl: `${BACKEND}/v1/consent/manifest`,
 				projectUrl: undefined,
 				proxy: true,
-			})(request('/api/inth/subjects', { method: 'POST' }), {
-				path: 'subjects',
+			})(request('/api/inth/v1/consent/records', { method: 'POST' }), {
+				path: 'v1/consent/records',
 			})
 		).rejects.toThrow('@c15t/test: pass projectUrl to use proxy.');
 	});
@@ -1635,7 +1614,7 @@ describe('readWaitUntil', () => {
 describe('readRequestForwarding', () => {
 	const forwardingFor = (headers: Record<string, string>) =>
 		readRequestForwarding(
-			new Request('https://shop.example/api/inth/init', { headers }),
+			new Request('https://shop.example/api/inth/v1/consent/init', { headers }),
 			true
 		).for;
 

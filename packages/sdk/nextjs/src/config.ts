@@ -61,7 +61,7 @@ export interface ConsentConfig extends ConsentClientOptions {
 	/**
 	 * Backend base URL: your Inth project URL. The server reads its
 	 * consent manifest (or asks its `/init` with `mode: hosted()`), and
-	 * consent saves (`/subjects`) go here. Required unless `mode` is
+	 * consent saves (`/v1/consent/records`) go here. Required unless `mode` is
 	 * `testing()`; the environment variables below supply it when unset.
 	 *
 	 * @default process.env.NEXT_PUBLIC_INTH_PROJECT_URL, then
@@ -94,7 +94,7 @@ export interface ConsentConfig extends ConsentClientOptions {
 	 * Where the app's catch-all consent route from `createConsentRoute` or
 	 * `createPagesConsentRoute` is mounted, such as `/api/inth` for
 	 * `pages/api/inth/[...inth].ts`. With it, a browser that resolves
-	 * consent itself asks `${routePrefix}/init`, which resolves the cached
+	 * consent itself asks `${routePrefix}/v1/consent/init`, which resolves the cached
 	 * manifest with the request's geo, instead of the backend's `/init`.
 	 * The server never fetches its own route.
 	 *

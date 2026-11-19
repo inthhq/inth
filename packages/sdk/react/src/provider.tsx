@@ -193,7 +193,7 @@ export interface ConsentProviderOptions
 	/**
 	 * How the visitor's policy is resolved. Initial-only.
 	 *
-	 * - Omitted, or `hosted()`: ask `${projectUrl}/init`.
+	 * - Omitted, or `hosted()`: ask `${projectUrl}/v1/consent/init`.
 	 * - `manifest()` from `@inth/react`: resolve from the backend's consent
 	 *   manifest in the browser, falling back to `/init` with a warning
 	 *   when the manifest is unavailable.

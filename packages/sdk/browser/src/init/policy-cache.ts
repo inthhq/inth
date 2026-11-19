@@ -16,7 +16,7 @@
  */
 
 import type { KernelOverrides } from '@inth/sdk-core';
-import type { PrefetchedInitialData } from '@inth/sdk-core/runtime/deferred-snapshot';
+import type { SSRInitialData } from '@inth/sdk-core/runtime/deferred-snapshot';
 
 /** localStorage key of the cache. */
 export const POLICY_CACHE_KEY = 'inth-init-policy';
@@ -31,8 +31,6 @@ interface CachedPolicy {
 	t: number;
 	/** The response's policy fields. */
 	i: Record<string, unknown>;
-	/** The producer's policy contract header. */
-	c: string | null | undefined;
 }
 
 const keyOf = (projectUrl: string, overrides?: KernelOverrides): string =>
@@ -50,7 +48,7 @@ const keyOf = (projectUrl: string, overrides?: KernelOverrides): string =>
 export const readPolicyCache = function readPolicyCache(
 	projectUrl: string,
 	overrides?: KernelOverrides
-): PrefetchedInitialData | undefined {
+): SSRInitialData | undefined {
 	try {
 		const entry = JSON.parse(
 			window.localStorage.getItem(POLICY_CACHE_KEY) ?? 'null'
@@ -59,10 +57,7 @@ export const readPolicyCache = function readPolicyCache(
 			entry?.k === keyOf(projectUrl, overrides) &&
 			Date.now() - entry.t < MAX_AGE_MS
 		) {
-			return {
-				init: entry.i,
-				producerPolicyContract: entry.c,
-			} as unknown as PrefetchedInitialData;
+			return { init: entry.i } as unknown as SSRInitialData;
 		}
 	} catch {
 		// Blocked or unreadable storage: nothing cached.
@@ -74,14 +69,13 @@ export const readPolicyCache = function readPolicyCache(
 export const writePolicyCache = function writePolicyCache(
 	projectUrl: string,
 	overrides: KernelOverrides | undefined,
-	data: PrefetchedInitialData
+	data: SSRInitialData
 ): void {
 	const init = data.init as unknown as Record<string, unknown> | undefined;
 	if (!init?.policyResolution) {
 		return;
 	}
 	const entry: CachedPolicy = {
-		c: data.producerPolicyContract,
 		i: {
 			branding: init.branding,
 			hosting: init.hosting,

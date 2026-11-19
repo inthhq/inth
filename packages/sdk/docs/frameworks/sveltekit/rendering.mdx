@@ -236,7 +236,7 @@ own handles through `sequence(inthHandle(), yourHandle)` from
 | `cookieName` | `inth` | The consent cookie. Match the provider's `storageConfig.storageKey`. |
 | `country`, `region`, `language` | from headers | Forces one input for every request. |
 
-`inthHandle` sets no cookie. The visitor's subject ID (`sub_…`) lives in
+`inthHandle` sets no cookie. The visitor's subject ID, a UUIDv7, lives in
 the consent records their first save writes, and `loadConsent` reads it from
 those cookies.
 

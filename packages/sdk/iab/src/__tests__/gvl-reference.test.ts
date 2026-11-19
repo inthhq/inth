@@ -478,20 +478,21 @@ test('hosted fetching reproduces the server geo and privacy inputs', async () =>
 	const kernel = kernelWithReference();
 	const deferred = deferInitGvl(
 		{ ...payload, location: { countryCode: 'DE', regionCode: 'BE' } },
-		'/hosted/init',
+		'/hosted/v1/consent/init',
 		'init',
 		{ 'sec-gpc': '1' }
 	);
 	kernel.set.iab({ gvlReference: deferred.gvlReference });
 	const fetch = vi.fn((url: RequestInfo | URL, _init?: RequestInit) => {
 		// In the query string, as the hosted transport sends them, so a
-		// cross-origin `/init` stays a CORS simple request.
+		// cross-origin init stays a CORS simple request. `/v1` takes no
+		// contract parameter.
 		const query = new URL(String(url)).searchParams;
 		const matched =
 			query.get('country') === 'DE' &&
 			query.get('region') === 'BE' &&
 			query.get('gpc') === '1' &&
-			query.get('contract') === '1';
+			!query.has('contract');
 		return Promise.resolve(
 			Response.json({ gvl: matched ? completeGVL : null })
 		);

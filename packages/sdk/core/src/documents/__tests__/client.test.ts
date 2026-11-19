@@ -13,7 +13,7 @@ import {
 	SUBJECT,
 	v1Error,
 } from '../../transports/v1/__tests__/fixtures';
-import { ApiError, createDocumentsClient } from '../index';
+import { InthApiError, createDocumentsClient } from '../index';
 
 const HASH =
 	'sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08';
@@ -134,7 +134,7 @@ describe('getCurrent: GET /v1/documents/:type/current', () => {
 			.getCurrent('terms_eu')
 			.catch((caught: unknown) => caught);
 
-		expect(error).toBeInstanceOf(ApiError);
+		expect(error).toBeInstanceOf(InthApiError);
 		expect(error).toMatchObject({
 			code: 'not_found',
 			requestId: 'req_doc',

@@ -14,10 +14,10 @@ import {
 	matchedResolution,
 	optInRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
-import { inthProtocolHeaders } from '../../libs/version-header';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { hosted } from '../../transports/mode';
 import type { ProviderTransportFactory } from '../../transports/mode';
+import { recordAnswer } from '../../transports/v1/__tests__/fixtures';
 import { createConsentRuntime } from '../index';
 import type { ConsentRuntime, ConsentRuntimeOptions } from '../types';
 
@@ -54,20 +54,19 @@ const start = async (options: RuntimeOverrides = {}) => {
 			fetch: (input, init) => {
 				// The path alone: the runtime adds its consent journey as a query.
 				const url = String(input).split('?')[0] ?? '';
-				if (url.endsWith('/subjects')) {
+				if (url.endsWith('/v1/consent/records')) {
 					saves.push(JSON.parse(String(init?.body)));
 				}
 				return Promise.resolve(
 					Response.json(
-						url.endsWith('/init')
+						url.endsWith('/v1/consent/init')
 							? {
 									branding: 'inth',
 									location: { countryCode: 'DE', regionCode: null },
 									policyResolution: writePolicyResolutionWire(policy),
 									translations: { language: 'en', translations },
 								}
-							: {},
-						{ headers: inthProtocolHeaders }
+							: recordAnswer(init)
 					)
 				);
 			},
@@ -138,10 +137,9 @@ test.each([
 		expect(snapshot.activeUI).toBe('none');
 		expect(saves).toHaveLength(1);
 		expect(saves[0]).toMatchObject({
-			choice: { categories: {}, version: 3 },
+			answer: { categories: {} },
+			confirmed: [],
 			consentAction,
-			preferences: { necessary: true },
-			type: 'cookie_banner',
 		});
 		close(runtime);
 
@@ -199,7 +197,7 @@ test('a category declared after the acknowledgement asks again', async () => {
 	expect(snapshot.activeUI).toBe('banner');
 	await runtime.kernel.commands.save('all');
 	expect(saves.at(-1)).toMatchObject({
-		choice: { categories: { marketing: { value: true } } },
+		answer: { categories: { marketing: { value: true } } },
 	});
 	expect(runtime.kernel.getSnapshot().activeUI).toBe('none');
 });

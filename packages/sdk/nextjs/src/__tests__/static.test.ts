@@ -95,7 +95,7 @@ describe('@inth/nextjs/static', () => {
 		const source = await createStaticManifestModule({
 			exportName: 'testManifest',
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
-			manifestUrl: 'https://consent.example.com/manifest',
+			manifestUrl: 'https://consent.example.com/v1/consent/manifest',
 		});
 
 		expect(source).toContain(
@@ -114,7 +114,7 @@ test.each(['bad-name', 'default', 'eval', 'arguments', 'a;throw 1'])(
 			createStaticManifestModule({
 				exportName,
 				fetch,
-				manifestUrl: 'https://api.test/manifest',
+				manifestUrl: 'https://api.test/v1/consent/manifest',
 			})
 		).rejects.toThrow(/exportName/u);
 		expect(fetch).not.toHaveBeenCalled();
@@ -126,7 +126,7 @@ test('supports importing manifest types through the umbrella package', async () 
 			.fn<typeof globalThis.fetch>()
 			.mockResolvedValue(Response.json(MANIFEST_FIXTURE)),
 		importSource: '@inth/nextjs/static',
-		manifestUrl: 'https://api.test/manifest',
+		manifestUrl: 'https://api.test/v1/consent/manifest',
 	});
 	expect(source).toContain("from '@inth/nextjs/static'");
 });

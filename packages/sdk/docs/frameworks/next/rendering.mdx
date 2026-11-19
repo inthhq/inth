@@ -24,7 +24,7 @@ policy changes require a rebuild.
 | Pages Router with `getServerSideProps` | `withConsentProps` from `@inth/nextjs/pages` | Yes | [Pages Router](/docs/frameworks/next/pages-router#resolve-consent-in-getserversideprops) |
 | Pages Router pages without `getServerSideProps` | Browser, through the same `_app.tsx` and the consent API route | No | [Pages Router](/docs/frameworks/next/pages-router#mount-one-root-for-every-page) |
 | `output: 'export'` | Browser, calling the backend directly | No | [Static export](/docs/frameworks/next/static-export) |
-| A server app that should skip server work and local routes | Browser, calling backend `/init` with `mode: hosted()` | No | [Client-side initialization](/docs/frameworks/next/client-side) |
+| A server app that should skip server work and local routes | Browser, calling backend `/v1/consent/init` with `mode: hosted()` | No | [Client-side initialization](/docs/frameworks/next/client-side) |
 | Edge runtime | Not covered by an example or test | Not covered | [Edge runtime](#edge-runtime) |
 
 Server rendering puts the visitor's answer in the first response. The browser
@@ -144,9 +144,9 @@ hydration. The page can be static, use `export const revalidate` for ISR, or
 use `'use cache'`. Set `routePrefix: '/api/inth'` in `inth.config.ts` and
 mount the consent route from the
 [App Router guide](/docs/frameworks/next/app-router#initialize-in-the-browser).
-The browser then asks `/api/inth/init`, which resolves the bundled policy on
+The browser then asks `/api/inth/v1/consent/init`, which resolves the bundled policy on
 your server with the browser request's location headers. Without
-`routePrefix`, the browser asks `${projectUrl}/init`.
+`routePrefix`, the browser asks `${projectUrl}/v1/consent/init`.
 
 For a whole app of static pages, use this as the only root layout. To mix
 static pages with server-rendered ones, give each kind its own root layout in
@@ -157,8 +157,8 @@ localStorage.
 
 To resolve the policy in the browser itself, set
 `mode: manifest({ resolve: 'browser' })`. The browser then loads the resolver
-and fetches `${routePrefix}/manifest`. It has no location input of its own,
-so a location-based policy still asks `/init` unless you pass `geoUrl`. See
+and fetches `${routePrefix}/v1/consent/manifest`. It has no location input of its own,
+so a location-based policy still asks `/v1/consent/init` unless you pass `geoUrl`. See
 [consent modes](/docs/concepts/modes#manifest).
 
 ## Keep pages static with `ensureStatic`
@@ -200,15 +200,15 @@ The rendering path decides when consent resolves. The `mode` in
 | --- | --- | --- |
 | Build-time manifest, recommended | `manifest()`, the default, with `withConsentManifest` | Your app has a Next.js server and policy changes ship with a rebuild. |
 | Cached manifest | `manifest({ source: 'runtime' })` | Policy changes must apply without a rebuild. |
-| Backend `/init` | `hosted()` | You want the fewest moving parts, or you export a static site. |
+| Backend `/v1/consent/init` | `hosted()` | You want the fewest moving parts, or you export a static site. |
 | Tests | `testing()` from `@inth/nextjs/testing` | Tests only. Throws in production builds. |
 
 With a build-time manifest, your Next.js server resolves each visitor locally
 without fetching policy. With runtime caching, warm requests make no policy
 request to the backend, but an empty cache fetches upstream.
-With backend `/init`, every server render or browser initialization
+With backend `/v1/consent/init`, every server render or browser initialization
 asks the backend to resolve the visitor. Consent saves go to
-`${projectUrl}/subjects` either way.
+`${projectUrl}/v1/consent/records` either way.
 
 Tests run without a backend with `mode: testing()` from `@inth/nextjs/testing`;
 without a backend URL, `manifest()` and `hosted()` throw. See
@@ -330,7 +330,7 @@ visitor state, so Next.js can cache it.
    `getServerSideProps` pages contain `data-testid="consent-banner-root"`. The
    streamed and browser layouts do not.
 3. In DevTools Network, confirm no vendor request runs before you choose.
-   With a manifest, server-rendered pages make no `/init` request.
+   With a manifest, server-rendered pages make no `/v1/consent/init` request.
 4. Reject, reload, and confirm the banner stays closed and vendors stay blocked.
    Reopen Privacy settings and confirm the rejection is still selected.
 5. Test two locations if your policies differ by region.

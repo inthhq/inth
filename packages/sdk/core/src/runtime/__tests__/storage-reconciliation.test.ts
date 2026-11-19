@@ -1059,7 +1059,7 @@ test('a stored record without decisions from before a clear does not restore its
 
 	const subjectId = start().kernel.getSnapshot().subject?.subjectId;
 	expect(subjectId).not.toBe('sub_before_clear');
-	expect(subjectId).toMatch(/^sub_/u);
+	expect(subjectId).toMatch(/^[\da-f]{8}-[\da-f]{4}-7/u);
 });
 
 test('a removed choice does not replace a server subject with an older vendor subject', async () => {

@@ -17,10 +17,10 @@ import { displayedCategories } from '../consent/consent-types';
 import type { AllConsentNames } from '../consent/consent-types';
 import { clearKernelRecords } from '../kernel/clear-records';
 import { hostExperiment, startExperiment } from '../libs/experiment';
-import { generateSubjectId } from '../libs/generate-subject-id';
 import { extractConsentNamesFromCondition } from '../libs/has';
 import { removeLegacySubjectId } from '../libs/legacy-subject-id';
 import { storageFor } from '../libs/storage-for';
+import { generateUuidV7 } from '../libs/subject-uuid';
 import type { IframeBlockerHandle } from '../modules/iframe-blocker/types';
 import { holdNetworkRequests, NOT_HELD } from '../modules/network-blocker/hold';
 import type { NetworkHold } from '../modules/network-blocker/hold';
@@ -300,7 +300,7 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 				!externalPermissions &&
 				!subject?.subjectId
 			) {
-				const subjectId = generateSubjectId();
+				const subjectId = generateUuidV7();
 				// It lives in memory for this page only, until a save records it.
 				kernel.markProvisionalSubject(subjectId);
 				kernel.hydrate({ subject: { ...subject, subjectId } });

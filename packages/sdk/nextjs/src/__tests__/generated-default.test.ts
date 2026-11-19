@@ -43,8 +43,8 @@ describe('generated manifest default', () => {
 		const { GET } = createConsentRoute({ config });
 
 		const response = await GET(
-			new Request('https://app.example.com/api/inth/manifest'),
-			{ params: Promise.resolve({ inth: ['manifest'] }) }
+			new Request('https://app.example.com/api/inth/v1/consent/manifest'),
+			{ params: Promise.resolve({ inth: ['v1', 'consent', 'manifest'] }) }
 		);
 
 		expect(await response.json()).toEqual(MANIFEST_FIXTURE);
@@ -83,13 +83,13 @@ describe('generated manifest default', () => {
 		});
 
 		const response = await GET(
-			new Request('https://app.example.com/api/inth/manifest'),
-			{ params: Promise.resolve({ inth: ['manifest'] }) }
+			new Request('https://app.example.com/api/inth/v1/consent/manifest'),
+			{ params: Promise.resolve({ inth: ['v1', 'consent', 'manifest'] }) }
 		);
 
 		expect(await response.json()).toMatchObject({ revision: 'live' });
 		expect(String(fetch.mock.calls[0]?.[0])).toBe(
-			'https://consent.example.com/manifest'
+			'https://consent.example.com/v1/consent/manifest'
 		);
 	});
 
@@ -102,8 +102,8 @@ describe('generated manifest default', () => {
 		});
 
 		const response = await GET(
-			new Request('https://app.example.com/api/inth/manifest'),
-			{ params: Promise.resolve({ inth: ['manifest'] }) }
+			new Request('https://app.example.com/api/inth/v1/consent/manifest'),
+			{ params: Promise.resolve({ inth: ['v1', 'consent', 'manifest'] }) }
 		);
 
 		expect(await response.json()).toMatchObject({ revision: 'up' });

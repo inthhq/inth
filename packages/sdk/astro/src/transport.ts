@@ -15,7 +15,7 @@ import type {
 	ProviderTransportContext,
 	ProviderTransportFactory,
 } from '@inth/sdk/engine';
-import { createHostedTransport } from '@inth/sdk/engine';
+import { createV1HostedTransport } from '@inth/sdk/engine';
 import { testingOptionsOf } from '@inth/sdk/modes';
 import { clientMode } from '@inth/sdk/runtime/client-mode';
 
@@ -88,7 +88,7 @@ export const testingTransport: ResolveTransport = ({ mode }) =>
  * The server resolved the visitor, so the page ships only the record
  * transport that saves consent; the init path loads when the page inits
  * again, with the `/init` request sent alongside it. `manifest()` re-inits
- * through `${routePrefix}/init`, and `manifest({ resolve: 'browser' })`
+ * through `${routePrefix}/v1/consent/init`, and `manifest({ resolve: 'browser' })`
  * loads the browser resolver with `import()`.
  *
  * @returns A transport factory for `createConsentKernel`.
@@ -114,7 +114,7 @@ export const lazyTransport: ResolveTransport = (options) =>
  */
 export const hostedTransport: ResolveTransport = ({ projectUrl }) => {
 	const options = { projectUrl: projectUrl ?? '' };
-	return Object.assign(() => createHostedTransport(options), {
+	return Object.assign(() => createV1HostedTransport(options), {
 		kind: 'hosted' as const,
 	});
 };

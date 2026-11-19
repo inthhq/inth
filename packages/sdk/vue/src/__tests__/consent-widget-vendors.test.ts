@@ -150,7 +150,6 @@ const renderWidget = async function renderWidget(
 		config,
 		initialRecords: choiceRecords(values),
 		prefetch: initFor(translations),
-		producerContract: 1,
 	});
 	const wrapper = mount(ConsentWidget, {
 		attachTo: document.body,

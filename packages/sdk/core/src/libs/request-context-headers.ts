@@ -3,21 +3,20 @@ import type { InitRequestParams } from '@inth/sdk-schema/types';
 import type { Overrides } from '../options/overrides';
 
 /**
- * Credentials mode for `GET /init` when the caller sets none.
+ * Credentials mode for `GET /v1/consent/init` when the caller sets none.
  *
- * `/init` reads no cookie and sets none: its answer depends only on the
- * request's geo, language, GPC and declared contract. `same-origin` keeps
- * cookies on a same-origin init route (an app may gate `/api/inth` behind
- * its own session), and leaves them off a cross-origin backend, which can
- * then answer with `Access-Control-Allow-Origin: *`. Saves keep
- * `include`.
+ * Init reads no cookie and sets none. With `same-origin` a browser sends
+ * no cookie to a cross-origin backend, so its init stays a plain GET the
+ * backend answers with `Access-Control-Allow-Origin: *`. An app's own
+ * same-origin consent route still gets the app's cookies, for an app that
+ * puts that route behind its session.
  */
 export const DEFAULT_INIT_CREDENTIALS: RequestCredentials = 'same-origin';
 
 /**
  * The caller's init overrides in their request-header form.
  *
- * A browser's `GET /init` does not send most of these: country, region and
+ * A browser's `GET /v1/consent/init` does not send most of these: country, region and
  * GPC travel as query parameters ({@link buildRequestContextParams}) so the
  * request needs no CORS preflight. This record is what the response is read
  * against (the GPC override, prefetch matching) and what server-side
@@ -54,7 +53,7 @@ export const buildRequestContextHeaders = function buildRequestContextHeaders(
 };
 
 /**
- * The init overrides a browser's `GET /init` sends as query parameters:
+ * The init overrides a browser's `GET /v1/consent/init` sends as query parameters:
  * country, region and GPC. Language stays on `Accept-Language`, which is
  * CORS-safelisted (see {@link buildRequestContextSentHeaders}).
  *
@@ -71,7 +70,7 @@ export const buildRequestContextParams = function buildRequestContextParams(
 };
 
 /**
- * The override headers a browser's `GET /init` actually sends: only
+ * The override headers a browser's `GET /v1/consent/init` actually sends: only
  * `Accept-Language`, which is CORS-safelisted and which every backend
  * already reads.
  *

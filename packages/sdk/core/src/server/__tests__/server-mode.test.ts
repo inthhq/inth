@@ -48,7 +48,7 @@ describe('resolveServerMode: manifest()', () => {
 	test('the route prefix is the guarded route and serves vendor lists', () => {
 		const { consent } = resolve({ routePrefix: '/api/consent' });
 		expect(consent.ownRoutes).toEqual(['/api/consent']);
-		expect(consent.gvlRoute).toBe('/api/consent/init');
+		expect(consent.gvlRoute).toBe('/api/consent/v1/consent/init');
 	});
 
 	test("a snapshot of the mode's own wins over the build's", () => {
@@ -74,7 +74,7 @@ describe('resolveServerMode: manifest()', () => {
 	});
 
 	test('a relative manifestUrl on the consent route reads what the route reads', () => {
-		const mode = manifest({ manifestUrl: '/api/inth/manifest' });
+		const mode = manifest({ manifestUrl: '/api/inth/v1/consent/manifest' });
 		const { consent, route } = resolve({ mode, routePrefix: '/api/inth' });
 		expect(consent.manifest).toBe(BUILT);
 		expect(consent.manifestUrl).toBeUndefined();
@@ -104,7 +104,7 @@ describe('resolveServerMode: manifest()', () => {
 
 	test("serverResolvesBrowserMode resolves resolve: 'browser' as manifest() on the server", () => {
 		const mode = manifest({
-			manifestUrl: '/api/inth/manifest',
+			manifestUrl: '/api/inth/v1/consent/manifest',
 			resolve: 'browser',
 		});
 		const server = resolve({ mode, serverResolvesBrowserMode: true });
@@ -137,7 +137,7 @@ describe('resolveServerMode: manifest()', () => {
 });
 
 describe('resolveServerMode: hosted() and testing()', () => {
-	test("hosted() asks the backend's /init with the mode's headers", () => {
+	test("hosted() asks the backend's init with the mode's headers", () => {
 		const mode = {
 			headers: { 'x-inth-country': 'DE' },
 			type: 'hosted' as const,
@@ -236,7 +236,7 @@ describe('buildSnapshotSkipReason', () => {
 	test.each([
 		[undefined],
 		[manifest()],
-		[manifest({ manifestUrl: '/api/inth/manifest' })],
+		[manifest({ manifestUrl: '/api/inth/v1/consent/manifest' })],
 	])('%j needs a build snapshot', (mode) => {
 		expect(buildSnapshotSkipReason(mode)).toBeUndefined();
 	});

@@ -214,7 +214,7 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	 * `https://consent.example.com`. Defaults to the URL `consentManifest()`
 	 * read from `VITE_INTH_PROJECT_URL`. The
 	 * helper reads
-	 * `${projectUrl}/manifest` through the in-process manifest cache and
+	 * `${projectUrl}/v1/consent/manifest` through the in-process manifest cache and
 	 * resolves init locally, so the first paint already carries policy, UI,
 	 * translations, and IAB metadata.
 	 *
@@ -325,10 +325,10 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	/**
 	 * Where you mounted `createConsentRoute()`, such as `/api/inth` for
 	 * `src/routes/api/inth/$.ts`. The state carries it to `ConsentRoot`: the
-	 * browser then gets init from `${routePrefix}/init`, and saves assert the
+	 * browser then gets init from `${routePrefix}/v1/consent/init`, and saves assert the
 	 * decision inputs it resolved. Deferred public vendor lists load through
 	 * the route, and the render never fetches a URL under the prefix on its
-	 * own origin. Unset, the browser gets init from `${projectUrl}/init`.
+	 * own origin. Unset, the browser gets init from `${projectUrl}/v1/consent/init`.
 	 * Same option and default (none) as Next.js
 	 * `defineConsentConfig({ routePrefix })`. `/` is rejected: a catch-all
 	 * route at the site root would catch every page.

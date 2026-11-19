@@ -6,8 +6,8 @@ import type {
 	KernelTransport,
 } from '../types';
 import type { RememberedDecisionInputs } from './decision-inputs';
-import { createHostedTransport } from './hosted';
 import { createHostedModeFactory } from './hosted-factory';
+import { createV1HostedTransport } from './v1/hosted';
 
 /** Runtime values supplied by a provider to a transport factory. */
 export interface ProviderTransportContext {
@@ -65,29 +65,35 @@ export interface ProviderTransportFactory {
 
 /** Options for {@link hosted}. */
 export interface HostedModeOptions {
-	/** Backend URL. Can be relative (`/api/inth`) or absolute. */
+	/** Project URL. Can be relative (`/api/inth`) or absolute. */
 	projectUrl: string;
-	/** Domain sent when consent is saved. */
-	domain?: string;
+	/**
+	 * Host name or app ID the consent belongs to. Defaults to the page's
+	 * host name, lowercase and less one trailing dot.
+	 */
+	property?: string;
 	/** Fetch implementation used for backend requests. */
 	fetch?: typeof globalThis.fetch;
-	/** Headers forwarded to the backend init endpoint. */
+	/**
+	 * Headers a server-side caller forwards to init. Only the init inputs
+	 * (`accept-language`, the supported geo headers, `sec-gpc`) are sent.
+	 */
 	headers?: Record<string, string>;
 	/**
-	 * URL used for `GET /init`. Defaults to `${projectUrl}/init`.
+	 * URL for init. Defaults to `${projectUrl}/v1/consent/init`.
 	 *
 	 * Point this at a same-origin server route that resolves init from a
 	 * manifest (for example with `resolveManifestInit` from
 	 * `@inth/sdk/transports/manifest-cache`) while consent saves keep going
-	 * to `${projectUrl}/subjects`. Manifest resolution never issues a
-	 * `policySnapshotToken`, so setting `initUrl` also turns on
+	 * to `${projectUrl}/v1/consent/records`. Manifest resolution never
+	 * issues a `policySnapshotToken`, so setting `initUrl` also turns on
 	 * `assertDecisionInputs`.
 	 */
 	initUrl?: string;
 	/**
-	 * Assert the resolved policy decision on `POST /subjects` when the save
-	 * carries no signed `policySnapshotToken`, so the backend can reject a
-	 * save made against a stale policy instead of recording it unbound.
+	 * Assert the resolved policy decision on a save that carries no signed
+	 * `policySnapshotToken`, so the backend can reject a save made against
+	 * a stale policy instead of recording it unbound.
 	 *
 	 * @defaultValue `true` when `initUrl` is set, otherwise `false`
 	 */
@@ -139,5 +145,5 @@ export type HostedModeFactory = ProviderTransportFactory &
 export const hosted = function hosted(
 	options: HostedModeOptions
 ): HostedModeFactory {
-	return createHostedModeFactory(options, createHostedTransport);
+	return createHostedModeFactory(options, createV1HostedTransport);
 };

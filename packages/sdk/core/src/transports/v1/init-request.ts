@@ -8,6 +8,7 @@ import {
 	buildRequestContextHeaders,
 	buildRequestContextParams,
 	buildRequestContextSentHeaders,
+	DEFAULT_INIT_CREDENTIALS,
 } from '../../libs/request-context-headers';
 import type { InitContext } from '../../types';
 import { trimTrailingSlash, V1_ROUTES } from './routes';
@@ -61,7 +62,7 @@ export const createV1InitRequest = function createV1InitRequest(options: {
 	);
 	return {
 		init: {
-			credentials: options.credentials,
+			credentials: options.credentials ?? DEFAULT_INIT_CREDENTIALS,
 			// No custom headers: init must stay a CORS simple request, or a
 			// browser sends a preflight before the banner can show. The
 			// overrides go in the query; Accept-Language is safelisted.

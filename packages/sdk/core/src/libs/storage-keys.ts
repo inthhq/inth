@@ -21,6 +21,12 @@ export const C15T_PENDING_SAVES_STORAGE_KEY =
 	'c15t-v3-pending-consent-saves:v1';
 
 /**
+ * The latest `givenAt` a save sent, and its subject, so a device clock that
+ * moved back cannot date a later save before it. See `given-at.ts`.
+ */
+export const GIVEN_AT_STORAGE_KEY = 'inth-given-at';
+
+/**
  * Subject ids the backend refused as another tenant's, each with the id this
  * browser moved to, so every tab moves to the same one. Cleared with the
  * queued saves.

@@ -53,7 +53,7 @@ describe('loadConsent', () => {
 		})({ event, resolve: () => Promise.resolve(new Response()) });
 		const { consent } = await loadConsent(event);
 		expect(consent.prefetch.initialIab?.gvlReference?.url).toMatch(
-			/^\/api\/inth\/init\?inth-gvl=42/u
+			/^\/api\/inth\/v1\/consent\/init\?inth-gvl=42/u
 		);
 	});
 });

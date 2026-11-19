@@ -6,7 +6,7 @@ import { createConsentManifestPolicyPack } from '@inth/sdk-schema/types';
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 import { describe, expect, test } from 'vitest';
 
-import { ApiError } from '../error';
+import { InthApiError } from '../error';
 import { createV1ManifestTransport } from '../manifest';
 import {
 	buildV1ConsentSessionReport,
@@ -83,7 +83,7 @@ describe('GET /v1/consent/manifest', () => {
 		const error = await transport
 			.init({ overrides: {}, user: null })
 			.catch((caught: unknown) => caught);
-		expect(error).toBeInstanceOf(ApiError);
+		expect(error).toBeInstanceOf(InthApiError);
 		expect(error).toMatchObject({
 			code: 'server_error',
 			requestId: 'req_manifest',
@@ -273,12 +273,12 @@ describe('POST /v1/consent/sessions', () => {
 		[
 			'the x-inth-experiment header',
 			{ 'x-inth-experiment': 'banner-copy=b' },
-			'https://www.example.com/api/consent/init',
+			'https://www.example.com/api/consent/v1/consent/init',
 		],
 		[
 			'the experiment query parameter',
 			{},
-			'https://www.example.com/api/consent/init?experiment=banner-copy%3Db',
+			'https://www.example.com/api/consent/v1/consent/init?experiment=banner-copy%3Db',
 		],
 	])('reads the experiment arm from %s', async (_label, headers, url) => {
 		const { calls, fetch } = stubFetch(

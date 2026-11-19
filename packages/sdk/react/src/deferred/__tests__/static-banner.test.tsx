@@ -17,6 +17,13 @@ import { useSnapshot } from '../../hooks';
 import { renderStaticBanner, STATIC_BANNER_SHEETS } from '../../static-banner';
 import { ConsentProvider } from '../client-provider';
 
+/** What `POST /v1/consent/records` answers a save. */
+const recordAnswer = (request?: RequestInit) => ({
+	recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+	subjectId: (JSON.parse(String(request?.body)) as { subjectId: string })
+		.subjectId,
+});
+
 const BACKEND = 'https://consent.test';
 const ROOT = '[data-testid="consent-banner-root"]';
 
@@ -31,16 +38,13 @@ const Probe = () => {
 	);
 };
 
-const fetchMock = vi.fn(() =>
-	Promise.resolve(
-		new Response('{}', {
-			headers: { 'content-type': 'application/json' },
-			status: 200,
-		})
-	)
+const fetchMock = vi.fn((_url: string, request?: RequestInit) =>
+	Promise.resolve(Response.json(request?.body ? recordAnswer(request) : {}))
 );
 const subjectSaves = () =>
-	fetchMock.mock.calls.filter(([url]) => String(url).includes('/subjects'));
+	fetchMock.mock.calls.filter(([url]) =>
+		String(url).includes('/v1/consent/records')
+	);
 
 let answer: () => void = () => undefined;
 const requestContext = {
@@ -52,14 +56,13 @@ const requestContext = {
 	region: null,
 };
 
-/** What `index.html` holds: the inline `/init` request, still in flight. */
+/** What `index.html` holds: the inline `/v1/consent/init` request, still in flight. */
 const prefetch = function prefetch() {
 	const promise = new Promise((resolve) => {
 		answer = () =>
 			resolve({
 				init,
 				metadata: { experiment: null, journey: null, requestContext },
-				producerPolicyContract: '1',
 			});
 	});
 	(window as unknown as Record<string, unknown>)[PREFETCH_WINDOW_KEY] = {

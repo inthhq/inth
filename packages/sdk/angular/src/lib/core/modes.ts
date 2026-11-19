@@ -22,7 +22,7 @@ import type {
 } from '@inth/sdk/engine';
 import type { HostedMode } from '@inth/sdk/modes';
 import type { ConsentTesting } from '@inth/sdk/testing';
-import type { HostedTransportOptions } from '@inth/sdk/transports';
+import type { V1HostedTransportOptions } from '@inth/sdk/transports';
 import { createHostedModeFactory } from '@inth/sdk/transports/hosted-factory';
 import type {
 	BrowserManifestModeFactory,
@@ -31,7 +31,7 @@ import type {
 
 /** Builds a hosted transport. @internal */
 export type BuildHostedTransport = (
-	options: HostedTransportOptions
+	options: V1HostedTransportOptions
 ) => KernelTransport;
 
 /** The transport code the engine's chunk hands over. @internal */
@@ -45,7 +45,7 @@ let provided: ModeTransports | undefined;
  * Hands the mode factories their transport code. The engine's chunk calls
  * it before it builds a runtime.
  *
- * @param transports - `createHostedTransport` from `@inth/sdk/transports`.
+ * @param transports - `createV1HostedTransport` from `@inth/sdk/transports`.
  * @internal
  */
 export const provideModeTransports = function provideModeTransports(
@@ -104,7 +104,7 @@ export const hostedFor = function hostedFor(
 			provided
 				? provided.hosted(transport)
 				: lazyTransport(async () =>
-						(await import('@inth/sdk/transports')).createHostedTransport(
+						(await import('@inth/sdk/transports')).createV1HostedTransport(
 							transport
 						)
 					)

@@ -827,7 +827,7 @@ describe('experimentalScriptRegistry', () => {
 		runtime.dispose();
 	});
 
-	test("loads by the list a hosted backend's /init carries", async () => {
+	test("loads by the list a hosted backend's init carries", async () => {
 		const manifest: ConsentManifest = {
 			branding: 'inth',
 			policyPacks: [
@@ -864,8 +864,10 @@ describe('experimentalScriptRegistry', () => {
 				src: HASH_SRC,
 			})
 		);
-		// One request, to /init: the list costs nothing extra.
-		expect(urls.map((url) => new URL(url).pathname)).toEqual(['/init']);
+		// One request, to init: the list costs nothing extra.
+		expect(urls.map((url) => new URL(url).pathname)).toEqual([
+			'/v1/consent/init',
+		]);
 		runtime.dispose();
 	});
 

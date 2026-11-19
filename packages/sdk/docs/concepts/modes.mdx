@@ -12,17 +12,17 @@ set nothing else; `mode` is optional.
 
 | Mode | Where the policy resolves | Backend requests on a first visit | Default in |
 | --- | --- | --- | --- |
-| `manifest()` | Your server, from the policy the build downloaded. With `resolve: 'browser'`, or in a single-page app, the browser. | None to resolve the policy, unless the browser needs a location it doesn't have. Choices post to `/subjects`. | Next.js, TanStack Start, Nuxt, SvelteKit, Astro, and Angular with `provideInthServer()` |
-| `hosted()` | The backend's `GET /init` | One `/init` per page that resolves consent. | React, Vue, Svelte, Angular in the browser, `@inth/sdk` and the script tag |
+| `manifest()` | Your server, from the policy the build downloaded. With `resolve: 'browser'`, or in a single-page app, the browser. | None to resolve the policy, unless the browser needs a location it doesn't have. Choices post to `/v1/consent/records`. | Next.js, TanStack Start, Nuxt, SvelteKit, Astro, and Angular with `provideInthServer()` |
+| `hosted()` | The backend's `GET /v1/consent/init` | One `/v1/consent/init` per page that resolves consent. | React, Vue, Svelte, Angular in the browser, `@inth/sdk` and the script tag |
 | `testing()` | The browser, from a policy you pass or the recommended rule pack | None. | Never: import it from a package's `/testing` entry, in tests only |
 
 Leave `mode` out unless you need something other than your framework's
-default. Pass `hosted()` to make a server-rendered framework ask `/init` for
+default. Pass `hosted()` to make a server-rendered framework ask `/v1/consent/init` for
 every visitor, or `manifest()` to tune how the manifest is read.
 
-`manifest()` falls back to the backend's `/init` when the manifest is
+`manifest()` falls back to the backend's `/v1/consent/init` when the manifest is
 unavailable: the build could not download it, the backend has no
-`/manifest`, or reading it fails at runtime. Inth logs a warning and the
+`/v1/consent/manifest`, or reading it fails at runtime. Inth logs a warning and the
 visitor still gets a banner. A configuration error, such as an invalid
 `manifestUrl`, stays an error.
 
@@ -69,7 +69,7 @@ options and uses the provider's `projectUrl`.
 ## manifest()
 
 `manifest()` resolves the visitor's policy from the backend's public consent
-manifest instead of asking the backend's `/init`. A
+manifest instead of asking the backend's `/v1/consent/init`. A
 [consent manifest](/docs/concepts/data-fetching#what-is-a-consent-manifest)
 holds your policy rules and copy, and no visitor data.
 
@@ -78,7 +78,7 @@ holds your policy rules and copy, and no visitor data.
 | `source` | `'build'` | `'build'` uses the snapshot the build integration downloaded. Without one, such as after a failed download, it fetches the manifest at runtime. `'runtime'` always fetches at runtime, so policy edits apply without a rebuild. |
 | `snapshot` | none | A manifest you supply. You can pass `snapshot` or `source`, not both. |
 | `resolve` | `'server'` | `'server'` resolves each visitor on the server and ships no resolver to the browser. `'browser'` resolves in the browser, for pages the server does not render per visitor. Server-rendered frameworks only. |
-| `manifestUrl` | see below | Where to fetch the manifest at runtime. In the browser it defaults to `${routePrefix}/manifest`, else `${projectUrl}/manifest`. On the server it defaults to `${projectUrl}/manifest`. An absolute URL is read at runtime on the server too, so the build downloads no snapshot for it. A `/`-relative URL keeps the build's snapshot; without one the server reads that URL, except a URL on the app's own consent route, where the server reads `${projectUrl}/manifest` as the route does. With `resolve: 'browser'` only the browser reads it. |
+| `manifestUrl` | see below | Where to fetch the manifest at runtime. In the browser it defaults to `${routePrefix}/v1/consent/manifest`, else `${projectUrl}/v1/consent/manifest`. On the server it defaults to `${projectUrl}/v1/consent/manifest`. An absolute URL is read at runtime on the server too, so the build downloads no snapshot for it. A `/`-relative URL keeps the build's snapshot; without one the server reads that URL, except a URL on the app's own consent route, where the server reads `${projectUrl}/v1/consent/manifest` as the route does. With `resolve: 'browser'` only the browser reads it. |
 | `geoUrl` | none | A same-origin route that answers with the visitor's `{ country, region }`. Browser resolution only. |
 | `inputs` | none | `{ country, region }` when the page already knows the visitor's location, for example from an edge worker. Browser resolution only. |
 
@@ -91,7 +91,7 @@ downloaded.
 
 When the policy depends on where the visitor is, and the browser does not
 know the country or region, browser resolution asks `geoUrl`, then the
-backend's `/init`. Set `initFallback: false` to resolve for an unknown location
+backend's `/v1/consent/init`. Set `initFallback: false` to resolve for an unknown location
 instead. A policy with location rules therefore saves no request in a
 single-page app unless you pass `inputs` or `geoUrl`. The `consentManifest()`
 plugins from `@inth/sdk/build`, `@inth/vue/vite` and `@inth/svelte/vite` warn
@@ -99,22 +99,22 @@ about this when a single-page app build bundles such a policy.
 
 ### When the manifest is unavailable
 
-Each place that reads the manifest falls back to the backend's `/init` and
+Each place that reads the manifest falls back to the backend's `/v1/consent/init` and
 logs one warning per manifest URL:
 
 - The build cannot download it: the build warns and the server reads the
   manifest at runtime. Set `onBuildError: 'fail'` to stop the build instead;
   see [what happens when the download fails](#what-happens-when-the-download-fails).
-- The server cannot read it, or the backend has no `/manifest`: the server
-  render and the consent route answer from the backend's `/init`.
+- The server cannot read it, or the backend has no `/v1/consent/manifest`: the server
+  render and the consent route answer from the backend's `/v1/consent/init`.
 - The browser cannot fetch it with `resolve: 'browser'` or in a single-page
-  app: the browser asks the backend's `/init`, and tries the manifest again
+  app: the browser asks the backend's `/v1/consent/init`, and tries the manifest again
   on the next init.
 
 ## hosted()
 
-`hosted()` asks the backend's `GET /init` for each visitor's policy and posts
-choices to `${projectUrl}/subjects`. It takes no options. In React, Vue,
+`hosted()` asks the backend's `GET /v1/consent/init` for each visitor's policy and posts
+choices to `${projectUrl}/v1/consent/records`. It takes no options. In React, Vue,
 Svelte, Angular and `@inth/sdk` it is the default, so you write it only to
 be explicit; in a server-rendered framework it replaces the manifest.
 
@@ -175,7 +175,7 @@ runs:
 | Mode | First-load JavaScript | Loaded with `import()` when it runs |
 | --- | --- | --- |
 | `manifest()` | The code that saves choices and builds an init request | The hosted init path, if the browser has to resolve consent again |
-| `manifest({ resolve: 'browser' })` | The code that saves choices | The browser resolver, English copy and the fetch of `${routePrefix}/manifest` or `${projectUrl}/manifest`, unless the server state already holds the policy. Other languages load per language. |
+| `manifest({ resolve: 'browser' })` | The code that saves choices | The browser resolver, English copy and the fetch of `${routePrefix}/v1/consent/manifest` or `${projectUrl}/v1/consent/manifest`, unless the server state already holds the policy. Other languages load per language. |
 | `hosted()` | The code that saves choices | The hosted init path |
 | `testing()` | Nothing mode-specific | The testing transport, the rule pack and its copy |
 
@@ -223,7 +223,7 @@ on a built app has no effect until you rebuild.
 ## Download the manifest at build time
 
 `manifest()` with the default `source: 'build'` resolves from a snapshot that a
-build integration downloads from `${projectUrl}/manifest`:
+build integration downloads from `${projectUrl}/v1/consent/manifest`:
 
 | Framework | Build integration | Name in messages |
 | --- | --- | --- |
@@ -261,7 +261,7 @@ your CI caches build output, force a fresh build.
 The same policy applies in every framework: when the download fails or no
 backend URL is set, the build and dev log a warning and finish without a
 snapshot. The server, or a single-page app's browser, then fetches the
-manifest at runtime, and asks the backend's `/init` while it is still
+manifest at runtime, and asks the backend's `/v1/consent/init` while it is still
 unavailable.
 
 `onBuildError` changes that:

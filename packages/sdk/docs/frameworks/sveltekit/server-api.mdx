@@ -45,7 +45,7 @@ headers either: the page goes to every visitor.
 | Option | Type | Default | Behavior |
 | --- | --- | --- | --- |
 | `mode` | `ConsentMode` | `manifest()` | How `loadConsent` resolves the visitor. `manifest()`, `hosted()` or `testing()` from `@inth/svelte/kit`. A `custom()` transport throws; pass it to `ConsentRoot`'s `mode` prop instead. |
-| `routePrefix` | `string` | none | Where `createConsentRoute()` is mounted, such as `/api/inth`. The browser then resolves consent on pages the server did not, through that route. Without it, the browser asks the backend's `/init`. `'/'` throws ``@inth/svelte: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/inth'.`` when the hook is created. |
+| `routePrefix` | `string` | none | Where `createConsentRoute()` is mounted, such as `/api/inth`. The browser then resolves consent on pages the server did not, through that route. Without it, the browser asks the backend's `/v1/consent/init`. `'/'` throws ``@inth/svelte: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/inth'.`` when the hook is created. |
 | `projectUrl` | `string` | the URL `consentManifest()` read | The backend. Consent saves go here, unless `proxy` is on. |
 | `proxy` | `boolean` | `false` | Sends the browser's consent saves to the route at `routePrefix`, which forwards them to `projectUrl` with `createConsentRoute({ proxy: true })`. Throws without `routePrefix`. See [save consent through your own origin](./rendering#save-consent-through-your-own-origin). |
 | `snapshot` | `ConsentManifest` | the manifest `consentManifest()` downloaded | A manifest to resolve with. `createConsentRoute()` reads it too. |
@@ -82,9 +82,9 @@ Privacy Control, then resolves the policy with the handle's `mode`:
 | Mode | How it resolves |
 | --- | --- |
 | `manifest()` | From the snapshot `consentManifest()` downloaded, or the handle's `snapshot`, with this visitor's inputs. No policy request. |
-| `manifest({ source: 'runtime' })` | From the manifest at `${projectUrl}/manifest`, or `manifestUrl`, fetched and cached in memory. |
+| `manifest({ source: 'runtime' })` | From the manifest at `${projectUrl}/v1/consent/manifest`, or `manifestUrl`, fetched and cached in memory. |
 | `manifest({ resolve: 'browser' })` | Reads the cookie only. The browser resolves the policy. |
-| `hosted()` | Calls the backend's `/init`. |
+| `hosted()` | Calls the backend's `/v1/consent/init`. |
 | `testing()` | From the mode's `policy`, or Inth's recommended rules. |
 
 `consent` holds the resolved state, the mode as data, the backend URL and the
@@ -114,7 +114,7 @@ export const load = (event) => loadConsent(event, { timeoutMs: 1000 });
 | `onBackgroundRevalidate` | `(promise, event) => void` | platform hook when available | Keeps session reports and unfinished requests alive after the response. `event.platform.context.waitUntil` takes precedence; this callback is the fallback. See [keep background work alive](./rendering#keep-background-work-alive-after-the-response). |
 | `cookieName` | `string` | the handle's, or `inth` | The consent cookie. Match the provider's `storageConfig.storageKey`. |
 | `country`, `region`, `language` | `string` | from the handle or headers | Forces one input for this call. |
-| `forwardHeaders` | `string[]` | none | Extra request headers to send to the backend's `/init`, only over `https`, to a loopback host, or in-process. `cookie`, `forwarded` and `x-forwarded-*` cannot be named. |
+| `forwardHeaders` | `string[]` | none | Extra request headers to send to the backend's `/v1/consent/init`, only over `https`, to a loopback host, or in-process. `cookie`, `forwarded` and `x-forwarded-*` cannot be named. |
 | `trustForwardedHeaders` | `boolean` | `false` | Resolves a relative backend URL against the request's forwarding headers instead of `event.url`, and sends the visitor IP to the backend as `x-forwarded-for`. |
 | `fetch` | `typeof fetch` | global `fetch` | The fetch for a backend on another origin. A URL on the request's own origin always goes through `event.fetch`. A custom fetch keeps the vendor list inline. |
 
@@ -129,7 +129,7 @@ a warning; move it to `paths.origin` when you upgrade.
 `trustForwardedHeaders: true` resolves against the forwarding headers
 instead. Set it only when your proxy overwrites those headers.
 
-In `hosted()` mode, the backend's `/init` gets the resolved location,
+In `hosted()` mode, the backend's `/v1/consent/init` gets the resolved location,
 language and GPC, the `user-agent` and, while the visitor has no stored
 choice, the experiment arm. A backend on another origin, over `https` or a
 loopback host, also gets the consent cookie (`cookieName`, never the rest of
@@ -162,14 +162,14 @@ the route win.
 
 | Returned | Serves |
 | --- | --- |
-| `GET` | `init` below the rest parameter: the visitor's resolved policy, like the backend's `/init`, with `Cache-Control: private, no-store`. Under an IAB policy it also serves the Global Vendor List. `manifest`: the manifest, with the backend's `Cache-Control` and `ETag`, answering `If-None-Match` with `304`. Any other path is forwarded with `proxy` on and answers `404` without it. |
+| `GET` | `init` below the rest parameter: the visitor's resolved policy, like the backend's `/v1/consent/init`, with `Cache-Control: private, no-store`. Under an IAB policy it also serves the Global Vendor List. `manifest`: the manifest, with the backend's `Cache-Control` and `ETag`, answering `If-None-Match` with `304`. Any other path is forwarded with `proxy` on and answers `404` without it. |
 
 With `proxy` on, it also returns `POST`, `PATCH`, `PUT`, `DELETE` and
 `OPTIONS`, which forward writes to the backend.
 
 | Option | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `projectUrl` | `string` | the handle's: `inthHandle({ projectUrl })`, then the URL `consentManifest()` read from `PUBLIC_INTH_PROJECT_URL` | The backend's base URL, absolute or `/`-relative. The manifest is at `<projectUrl>/manifest` when there is no snapshot. |
+| `projectUrl` | `string` | the handle's: `inthHandle({ projectUrl })`, then the URL `consentManifest()` read from `PUBLIC_INTH_PROJECT_URL` | The backend's base URL, absolute or `/`-relative. The manifest is at `<projectUrl>/v1/consent/manifest` when there is no snapshot. |
 | `manifestUrl` | `string` | the handle's `manifest({ manifestUrl })`, unless it is on this route | A manifest URL of its own, such as a CDN. Wins over `projectUrl`. Absolute or `/`-relative. |
 | `snapshot` | `ConsentManifest` | the handle's: the mode's `snapshot`, then `inthHandle({ snapshot })`, then the manifest `consentManifest()` downloaded; none for `source: 'runtime'` or an absolute `manifestUrl` | A manifest to resolve with. The route and `loadConsent` pick the same one. |
 | `proxy` | `true` or `{ paths?, cookieNames? }` | off | Forwards consent writes to `projectUrl`. See [save consent through your own origin](./rendering#save-consent-through-your-own-origin). |
@@ -195,12 +195,10 @@ fresh copy.
 The `manifest` handler passes upstream only a `language` query parameter that
 looks like a language tag; the visitor's other parameters never reach the
 backend. When the manifest cannot be read and `projectUrl` is set, `init` asks
-the backend's own `/init`, which covers backends without `/manifest`.
+the backend's own `/v1/consent/init`, which covers backends without `/v1/consent/manifest`.
 
 These handlers are built on the consent route handler in `@inth/sdk/server`,
-shared with the Next.js, TanStack Start, Astro and Nuxt adapters. `init`
-answers with `x-inth-policy-contract: 1`. A browser that declares another
-policy contract gets a failed `unsupported-contract` resolution, and a
+shared with the Next.js, TanStack Start, Astro and Nuxt adapters. A
 resolution that did not match carries no snapshot token, vendor list, CMP ID
 or custom vendors.
 
@@ -251,9 +249,9 @@ In your collector, check these requests:
 
 | Request | `inth.operation` | `http.response.status_code` | Endpoint span status |
 | --- | --- | --- | --- |
-| `GET /api/inth/init` | `init` | `200` | Unchanged |
-| `GET /api/inth/manifest` | `manifest` | `200`, or `304` for a cached copy | Unchanged |
-| `POST /api/inth/subjects` | `proxy` | The backend's status | Error for `500` or higher |
+| `GET /api/inth/v1/consent/init` | `init` | `200` | Unchanged |
+| `GET /api/inth/v1/consent/manifest` | `manifest` | `200`, or `304` for a cached copy | Unchanged |
+| `POST /api/inth/v1/consent/records` | `proxy` | The backend's status | Error for `500` or higher |
 | A proxy request with an unreachable backend | `proxy` | `502` | Error |
 | A proxy request that times out | `proxy` | `504` | Error |
 
@@ -277,13 +275,13 @@ manifest refreshes need separate instrumentation.
 ## consentManifest
 
 `consentManifest(options)` from `@inth/svelte/vite` returns the Vite plugins
-that download `<projectUrl>/manifest` during the build. `loadConsent`,
+that download `<projectUrl>/v1/consent/manifest` during the build. `loadConsent`,
 `createConsentRoute()` and `manifest()` from `@inth/svelte` read the result
 without an import. The plugin writes no file into your project.
 
 | Option | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `projectUrl` | `string` | `PUBLIC_INTH_PROJECT_URL`, then `VITE_INTH_PROJECT_URL` | Absolute `http` or `https` backend URL. The plugin appends `/manifest`. |
+| `projectUrl` | `string` | `PUBLIC_INTH_PROJECT_URL`, then `VITE_INTH_PROJECT_URL` | Absolute `http` or `https` backend URL. The plugin appends `/v1/consent/manifest`. |
 | `onBuildError` | `'fail' \| 'runtime'` | Unset | What a failed fetch does. Unset, `vite build` stops and `vite dev` logs a warning. A missing backend URL counts as a failed fetch. The `INTH_ON_BUILD_ERROR` environment variable overrides it. |
 
 The plugin detects `sveltekit()` and keeps the snapshot on the server: the

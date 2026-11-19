@@ -87,7 +87,7 @@ export type InthVuePluginOptions = InthVuePluginConfig &
 				/**
 				 * How the visitor's policy is resolved.
 				 *
-				 * - Omitted, or `hosted()`: ask `${projectUrl}/init`.
+				 * - Omitted, or `hosted()`: ask `${projectUrl}/v1/consent/init`.
 				 * - `manifest()` from `@inth/vue/vue-plugin`: resolve from the
 				 *   backend's consent manifest in the browser, falling back to
 				 *   `/init` with a warning when it is unavailable.

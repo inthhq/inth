@@ -42,7 +42,7 @@ afterEach(() => {
 const trackerCalls = () =>
 	network.mock.calls.filter(([input]) => String(input).startsWith(TRACKER));
 
-/** A transport whose `/init` grants measurement (opt-out), counting calls. */
+/** A transport whose `/v1/consent/init` grants measurement (opt-out), counting calls. */
 const countingMode = () => {
 	const fixture = policyFixture({}, { model: 'opt-out' });
 	const init = vi.fn((_context: InitContext): Promise<InitResponse> =>

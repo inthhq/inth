@@ -143,7 +143,7 @@ describe('Pages Router build-time manifest', () => {
 		});
 		const manifestSink = await callRoute(route, {
 			headers: { host: 'app.example.com' },
-			url: '/api/inth/manifest',
+			url: '/api/inth/v1/consent/manifest',
 		});
 		expect(manifestSink.res.statusCode).toBe(200);
 		expect(JSON.parse(manifestSink.text())).toEqual(MANIFEST_FIXTURE);
@@ -154,7 +154,7 @@ describe('Pages Router build-time manifest', () => {
 				'x-vercel-ip-country': 'DE',
 				'x-vercel-ip-country-region': 'BE',
 			},
-			url: '/api/inth/init',
+			url: '/api/inth/v1/consent/init',
 		});
 		expect(initSink.res.statusCode).toBe(200);
 		expect(JSON.parse(initSink.text()).location).toEqual({
@@ -235,7 +235,7 @@ describe('@inth/nextjs/pages: cookies', () => {
 });
 
 describe('@inth/nextjs/pages: resolveConsent with a backend', () => {
-	test('resolves the backend URL from req and forwards cookies', async () => {
+	test('resolves the backend URL from req and forwards no cookie', async () => {
 		const fetchSpy = vi.fn().mockResolvedValue(
 			new Response(
 				JSON.stringify(
@@ -270,11 +270,11 @@ describe('@inth/nextjs/pages: resolveConsent with a backend', () => {
 		const [url, init] = fetchSpy.mock.calls[0] ?? [];
 		// The query carries the consent journey the render started.
 		expect(String(url).split('?')[0]).toBe(
-			'https://app.example.com/api/self-host/init'
+			'https://app.example.com/api/self-host/v1/consent/init'
 		);
 		const headers = (init as RequestInit).headers as Record<string, string>;
-		// The consent cookie alone, never the site's session cookies.
-		expect(headers.cookie).toBe('inth=stored');
+		// No cookie: `/v1` reads none.
+		expect(headers.cookie).toBeUndefined();
 		expect(headers['x-inth-country']).toBe('DE');
 		expect(config.initialPolicyResolution?.policy?.id).toBe('gdpr');
 		expect(config.initialLocation).toEqual({
@@ -284,7 +284,7 @@ describe('@inth/nextjs/pages: resolveConsent with a backend', () => {
 		expect(JSON.parse(JSON.stringify(config))).toEqual(config);
 	});
 
-	test('manifestUrl resolves init locally without calling /init', async () => {
+	test('manifestUrl resolves init locally without calling /v1/consent/init', async () => {
 		const fetchSpy = vi.fn().mockResolvedValue(
 			new Response(JSON.stringify(MANIFEST_FIXTURE), {
 				headers: { 'content-type': 'application/json' },
@@ -294,7 +294,7 @@ describe('@inth/nextjs/pages: resolveConsent with a backend', () => {
 
 		const config = await resolveConsent({
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
-			manifestUrl: '/api/consent/manifest',
+			manifestUrl: '/api/consent/v1/consent/manifest',
 			projectUrl: '/api/inth',
 			req: {
 				headers: {
@@ -306,7 +306,7 @@ describe('@inth/nextjs/pages: resolveConsent with a backend', () => {
 		});
 
 		const [url] = fetchSpy.mock.calls[0] ?? [];
-		expect(url).toBe('https://app.example.com/api/consent/manifest');
+		expect(url).toBe('https://app.example.com/api/consent/v1/consent/manifest');
 		expect(config.initialPolicyResolution?.policy?.id).toBe('eu-opt-in');
 	});
 
@@ -341,7 +341,7 @@ describe('@inth/nextjs/pages: resolveConsent with a backend', () => {
 		});
 
 		expect(String(fetchSpy.mock.calls[0]?.[0]).split('?')[0]).toBe(
-			'https://app.example.com/api/backend/init'
+			'https://app.example.com/api/backend/v1/consent/init'
 		);
 		expect(config.initialPolicyResolution?.status).toBe('matched');
 	});
@@ -366,7 +366,7 @@ describe('@inth/nextjs/pages: API bridge', () => {
 				'x-forwarded-host': 'attacker.example',
 				'x-forwarded-proto': 'http',
 			},
-			url: '/api/consent/manifest',
+			url: '/api/consent/v1/consent/manifest',
 		});
 
 		const [url] = fetchSpy.mock.calls[0] ?? [];
@@ -385,11 +385,11 @@ describe('@inth/nextjs/pages: API bridge', () => {
 				'x-forwarded-proto': 'https',
 			},
 			method: 'POST',
-			url: '/api/consent/manifest?language=de',
+			url: '/api/consent/v1/consent/manifest?language=de',
 		});
 		expect(request.method).toBe('POST');
 		expect(request.url).toBe(
-			'https://app.example.com/api/consent/manifest?language=de'
+			'https://app.example.com/api/consent/v1/consent/manifest?language=de'
 		);
 		expect(request.headers.get('content-type')).toBe('application/json');
 		expect(await request.json()).toEqual({ a: 1 });
@@ -400,9 +400,11 @@ describe('@inth/nextjs/pages: API bridge', () => {
 			body: { a: 1 },
 			headers: { host: 'app.example.com' },
 			method: 'POST',
-			url: '/api/inth/init',
+			url: '/api/inth/v1/consent/init',
 		});
-		expect(request.url).toBe('https://app.example.com/api/inth/init');
+		expect(request.url).toBe(
+			'https://app.example.com/api/inth/v1/consent/init'
+		);
 		expect(await request.json()).toEqual({ a: 1 });
 	});
 
@@ -423,11 +425,11 @@ describe('@inth/nextjs/pages: API bridge', () => {
 
 		const sink = await callRoute(route, {
 			headers: { host: 'app.example.com' },
-			url: '/api/consent/manifest?language=de',
+			url: '/api/consent/v1/consent/manifest?language=de',
 		});
 
 		expect(fetchSpy).toHaveBeenCalledWith(
-			'https://consent.example.com/api/inth/manifest?language=de',
+			'https://consent.example.com/api/inth/v1/consent/manifest?language=de',
 			expect.anything()
 		);
 		expect(sink.ended()).toBe(true);
@@ -458,7 +460,7 @@ describe('@inth/nextjs/pages: API bridge', () => {
 				'x-vercel-ip-country': 'DE',
 				'x-vercel-ip-country-region': 'BE',
 			},
-			url: '/api/inth/init',
+			url: '/api/inth/v1/consent/init',
 		});
 
 		expect(sink.res.statusCode).toBe(200);
@@ -488,7 +490,7 @@ describe('@inth/nextjs/pages: API bridge', () => {
 
 		const sink = await callRoute(route, {
 			headers: { host: 'app.example.com' },
-			url: '/api/consent/manifest',
+			url: '/api/consent/v1/consent/manifest',
 		});
 		const config = await resolveConsent({
 			config: consentConfig,
@@ -509,7 +511,7 @@ describe('@inth/nextjs/pages: API bridge', () => {
 			fetchSpy.mock.calls
 				.map(([url]) => url)
 				.filter((url) => !String(url).endsWith('/sessions'))
-		).toEqual(['https://consent.example.com/api/inth/manifest']);
+		).toEqual(['https://consent.example.com/api/inth/v1/consent/manifest']);
 		expect(sink.res.statusCode).toBe(200);
 		expect(config.initialPolicyResolution?.policy?.id).toBe('eu-opt-in');
 	});
@@ -536,8 +538,8 @@ describe('@inth/nextjs/pages: API bridge', () => {
 						host: 'app.example.com',
 					},
 					method: 'POST',
-					query: { inth: ['subjects'] },
-					url: '/api/inth/subjects',
+					query: { inth: ['v1', 'consent', 'records'] },
+					url: '/api/inth/v1/consent/records',
 				},
 				sink.res
 			).then(() => sink);
@@ -555,7 +557,7 @@ describe('@inth/nextjs/pages: API bridge', () => {
 		expect(sink.res.statusCode).toBe(201);
 		expect(JSON.parse(sink.text())).toEqual({ ok: true, subjectId: 'sub_1' });
 		const [url, init] = fetchSpy.mock.calls[0] ?? [];
-		expect(String(url)).toBe('https://consent.example.com/subjects');
+		expect(String(url)).toBe('https://consent.example.com/v1/consent/records');
 		expect(init?.method).toBe('POST');
 		expect(new Headers(init?.headers).get('x-inth-proxy')).toBe('@inth/nextjs');
 		expect(await new Response(init?.body).json()).toEqual({
@@ -582,11 +584,11 @@ describe('@inth/nextjs/pages: API bridge', () => {
 			return sink;
 		};
 
-		const manifest = await call(['manifest']);
+		const manifest = await call(['v1', 'consent', 'manifest']);
 		expect(JSON.parse(manifest.text())).toEqual(MANIFEST_FIXTURE);
-		const init = await call(['init']);
+		const init = await call(['v1', 'consent', 'init']);
 		expect(JSON.parse(init.text()).location.countryCode).toBe('DE');
-		expect((await call(['subjects'])).res.statusCode).toBe(404);
+		expect((await call(['v1', 'consent', 'records'])).res.statusCode).toBe(404);
 	});
 });
 

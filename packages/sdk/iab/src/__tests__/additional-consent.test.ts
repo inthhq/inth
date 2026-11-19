@@ -734,7 +734,7 @@ describe('createIAB with Additional Consent', () => {
 		expect(fetchMock).not.toHaveBeenCalled();
 	});
 
-	/** A kernel whose `/init` sends the backend's provider list. */
+	/** A kernel whose `/v1/consent/init` sends the backend's provider list. */
 	const kernelWithBackendProviders = function kernelWithBackendProviders() {
 		const { resolution } = makeKernel().getSnapshot();
 		const kernel = createConsentKernel({

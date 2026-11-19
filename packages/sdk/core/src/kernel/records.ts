@@ -75,6 +75,10 @@ export interface RecordsBoundaryOptions {
 	transport: KernelTransport | undefined;
 	/** Starts the lifecycle; hydration counts as a lifecycle command. */
 	start: () => void;
+	/** Moves the visitor to the subject id a link answered for theirs. */
+	adoptSubject: (from: string, to: string) => Promise<void>;
+	/** Forgets the latest save date when the app switches the subject. */
+	forgetDates: () => void;
 }
 
 export interface RecordsBoundary {
@@ -90,6 +94,8 @@ export interface RecordsBoundary {
 }
 
 export const createRecordsBoundary = function createRecordsBoundary({
+	adoptSubject,
+	forgetDates,
 	runtime,
 	transport,
 	start,
@@ -199,11 +205,15 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			}
 			runtime.announce(patch, 'user:identified', true);
 			if (transport?.identify) {
+				let linked: Awaited<ReturnType<typeof transport.identify>>;
 				try {
-					await transport.identify({ ...user }, linkedId);
+					linked = await transport.identify({ ...user }, linkedId);
 				} catch (error) {
 					emit({ command: 'identify', error, type: 'command:error' });
 					throw error;
+				}
+				if (linkedId && linked?.subjectId && linked.subjectId !== linkedId) {
+					await adoptSubject(linkedId, linked.subjectId);
 				}
 			}
 			if (
@@ -232,6 +242,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 				return;
 			}
 			runtime.invalidateRecords();
+			forgetDates();
 			const patch: SnapshotPatch = {};
 			if (iab) {
 				patch.iab = { ...iab, authority: null, tcString: null };

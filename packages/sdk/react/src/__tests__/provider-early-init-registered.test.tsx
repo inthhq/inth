@@ -8,7 +8,7 @@
  */
 import {
 	createConsentKernel,
-	createHostedTransport,
+	createV1HostedTransport,
 	earlyInitModes,
 } from '@inth/sdk/engine';
 import type { EarlyInitMode, ProviderTransportFactory } from '@inth/sdk/engine';
@@ -45,13 +45,7 @@ beforeEach(() => {
 	backendFetch = vi.fn(
 		() =>
 			new Promise<Response>((resolve) => {
-				respond.push((policyId) =>
-					resolve(
-						new Response(initBody(policyId), {
-							headers: { 'x-inth-policy-contract': '1' },
-						})
-					)
-				);
+				respond.push((policyId) => resolve(new Response(initBody(policyId))));
 			})
 	);
 });
@@ -62,7 +56,7 @@ afterEach(() => {
 
 const initCalls = () =>
 	backendFetch.mock.calls.filter(([url]) =>
-		String(url).split('?')[0]?.endsWith('/init')
+		String(url).split('?')[0]?.endsWith('/v1/consent/init')
 	);
 
 /** Shared by every mode `registeredMode` builds, so they count as one backend. */
@@ -73,7 +67,7 @@ const registeredMode = function registeredMode(
 	requestsInit: boolean
 ): ProviderTransportFactory {
 	const factory = Object.assign(
-		() => createHostedTransport({ fetch: backendFetch, projectUrl: BACKEND }),
+		() => createV1HostedTransport({ fetch: backendFetch, projectUrl: BACKEND }),
 		{ kind: 'custom' as const }
 	);
 	const entry: EarlyInitMode & { backend: object } = {
@@ -85,7 +79,7 @@ const registeredMode = function registeredMode(
 	return factory;
 };
 
-/** Records how many `/init` requests were out at render and at mount. */
+/** Records how many `/v1/consent/init` requests were out at render and at mount. */
 const Timing = ({
 	atRender,
 	atMount,

@@ -592,7 +592,7 @@ export interface InitContext {
 	/**
 	 * The consent journey this page load belongs to, set by the browser
 	 * runtime. The hosted transport sends it as query parameters on
-	 * `GET /init` (`journey`, `journeyScope`, `stored`) so the
+	 * `GET /v1/consent/init` (`journey`, `journeyScope`, `stored`) so the
 	 * backend's session report can be linked to the save that follows.
 	 */
 	journey?: KernelJourney;
@@ -711,7 +711,7 @@ export interface SavePayload {
 	/**
 	 * The consent journey of the page that made this save, added by the
 	 * browser runtime when that page sends it. The hosted transport sends it
-	 * as query parameters on `POST /subjects`. Never stored with a queued
+	 * as query parameters on `POST /v1/consent/records`. Never stored with a queued
 	 * save, and a replay carries none.
 	 */
 	journey?: Pick<KernelJourney, 'id' | 'scope'>;
@@ -722,7 +722,12 @@ export interface SavePayload {
 	 * only when `tcString` is, since Google discards it alone.
 	 */
 	addtlConsent?: string;
-	/** Equals `confirmed.actionAt`. Kept for backends that read one time. */
+	/**
+	 * When the save says the visitor decided: `confirmed.actionAt`, or later
+	 * when the device clock moved back since an earlier save or a receipt it
+	 * carries is later. The categories this action confirmed are sent with
+	 * this time.
+	 */
 	givenAt?: number;
 	/**
 	 * Granted flag for every declared vendor after this action. Present only
@@ -751,7 +756,16 @@ export interface SaveContext {
 export interface KernelTransport {
 	init?: (ctx: InitContext) => Promise<InitResponse>;
 	save?: (payload: SavePayload, context?: SaveContext) => Promise<SaveResult>;
-	identify?: (user: KernelUser, subjectId: string | null) => Promise<void>;
+	/**
+	 * Link `user` to the subject. A transport whose backend answers with
+	 * another id for the subject, such as the UUID of a `sub_` id, returns
+	 * it, and the kernel moves the visitor to it.
+	 */
+	identify?: (
+		user: KernelUser,
+		subjectId: string | null
+		// oxlint-disable-next-line no-invalid-void-type -- A transport with nothing to report returns `Promise<void>`.
+	) => Promise<{ subjectId?: string } | void>;
 	/**
 	 * Load the server-side record of a subject as validated receipts. The
 	 * kernel calls it after `identify` succeeds and applies the result through

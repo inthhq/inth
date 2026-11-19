@@ -25,10 +25,10 @@ import {
 	C15T_JOURNEY_STORAGE_KEY,
 	JOURNEY_STORAGE_KEY,
 } from '../../libs/storage-keys';
-import { inthProtocolHeaders } from '../../libs/version-header';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { hosted } from '../../transports/mode';
 import type { ProviderTransportFactory } from '../../transports/mode';
+import { recordAnswer } from '../../transports/v1/__tests__/fixtures';
 import type { KernelTransport } from '../../types';
 import {
 	createConsentProviderRuntime,
@@ -69,23 +69,22 @@ const fakeFetch: typeof globalThis.fetch = (input, init) => {
 		method: init?.method ?? 'GET',
 		path: url.pathname,
 	});
-	if (url.pathname.endsWith('/init') && initStatus !== 200) {
+	if (url.pathname.endsWith('/v1/consent/init') && initStatus !== 200) {
 		return Promise.resolve(new Response(null, { status: initStatus }));
 	}
-	if (url.pathname.endsWith('/subjects') && saveStatus !== 200) {
+	if (url.pathname.endsWith('/v1/consent/records') && saveStatus !== 200) {
 		return Promise.resolve(new Response(null, { status: saveStatus }));
 	}
 	return Promise.resolve(
 		Response.json(
-			url.pathname.endsWith('/init')
+			url.pathname.endsWith('/v1/consent/init')
 				? {
 						branding: 'inth',
 						location: { countryCode: 'DE', regionCode: null },
 						policyResolution: writePolicyResolutionWire(initPolicy),
 						translations: { language: 'en', translations },
 					}
-				: { subjectId: 'sub_1' },
-			{ headers: inthProtocolHeaders }
+				: recordAnswer(init)
 		)
 	);
 };
@@ -96,10 +95,12 @@ const backend = () =>
 /** `hosted()` on the global `fetch`, which a test stubs, as a page's is. */
 const pageBackend = () => hosted({ projectUrl: 'https://consent.example.com' });
 
-const init = () => requests.filter((request) => request.path === '/init');
-const saves = () => requests.filter((request) => request.path === '/subjects');
+const init = () =>
+	requests.filter((request) => request.path === '/v1/consent/init');
+const saves = () =>
+	requests.filter((request) => request.path === '/v1/consent/records');
 
-/** Start a runtime, as a page load does, and wait for its `/init`. */
+/** Start a runtime, as a page load does, and wait for its `/v1/consent/init`. */
 const load = async (options: RuntimeOverrides = {}) => {
 	const runtime = createConsentRuntime({
 		consentCategories: ['necessary', 'measurement'],

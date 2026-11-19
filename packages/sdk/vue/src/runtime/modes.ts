@@ -66,7 +66,7 @@ const missingProjectUrl = function missingProjectUrl(
  * downloaded during the build. With `manifestUrl` it fetches that URL when
  * the app starts and ignores the build's snapshot. With no build snapshot
  * (a dev server that could not reach the backend, or `source: 'runtime'`)
- * it fetches `${projectUrl}/manifest` when the app starts. With
+ * it fetches `${projectUrl}/v1/consent/manifest` when the app starts. With
  * `manifestUrl` or `source: 'runtime'`, also pass `source: 'runtime'` to
  * `consentManifest()`, so the build downloads no snapshot. English copy is
  * bundled; other languages load on demand.

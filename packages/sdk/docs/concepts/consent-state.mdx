@@ -64,7 +64,7 @@ categories your vendor list leaves denied.
 
 ## The subject ID
 
-Every visitor gets a subject ID (`sub_…`). It is in
+Every visitor gets a subject ID, a UUIDv7. It is in
 `snapshot.subject.subjectId` from the first snapshot.
 
 - Until the visitor acts, the ID lives in memory only. Inth stores no
@@ -76,6 +76,9 @@ Every visitor gets a subject ID (`sub_…`). It is in
 - Clearing choices keeps the ID in memory for the rest of the page. Revoking
   consent is a save, so the records keep the ID. Setting the subject to
   `null` starts over with a new one.
+- A visitor a c15t client consented for keeps its `sub_` ID until the next
+  save. The backend answers that save with the subject's UUID, and Inth
+  stores and sends the UUID from then on, in every tab.
 
 ## When a choice is saved
 

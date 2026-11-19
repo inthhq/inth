@@ -66,7 +66,13 @@ const backend = vi.fn<typeof fetch>((_input, init) => {
 		const body = JSON.parse(init.body) as { subjectId?: string };
 		saves.push(body);
 		return Promise.resolve(
-			Response.json({ subjectId: body.subjectId }, { status: 200 })
+			Response.json(
+				{
+					recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+					subjectId: body.subjectId,
+				},
+				{ status: 200 }
+			)
 		);
 	}
 	return Promise.resolve(Response.json({}, { status: 200 }));
@@ -135,7 +141,7 @@ const createActivityLog = function createActivityLog() {
 test('a reload before any save starts with a new ID and stores nothing', async () => {
 	const first = await start(load());
 	const subjectId = first.first.subject?.subjectId as string;
-	expect(subjectId).toMatch(/^sub_/u);
+	expect(subjectId).toMatch(/^[\da-f]{8}-[\da-f]{4}-7/u);
 	expect(first.ready.subject?.subjectId).toBe(subjectId);
 	expect(first.ready.explicitChoice).toBeNull();
 	expect(document.cookie).toBe('');
@@ -143,7 +149,7 @@ test('a reload before any save starts with a new ID and stores nothing', async (
 	clients.splice(0).forEach((client) => client.dispose());
 
 	const reload = await start(load());
-	expect(reload.first.subject?.subjectId).toMatch(/^sub_/u);
+	expect(reload.first.subject?.subjectId).toMatch(/^[\da-f]{8}-[\da-f]{4}-7/u);
 	expect(reload.first.subject?.subjectId).not.toBe(subjectId);
 });
 
@@ -156,7 +162,7 @@ test('activity kept before any save is deleted under the same ID when the visito
 	const client = load();
 	const page = await start(client);
 	const subjectId = page.first.subject?.subjectId as string;
-	expect(subjectId).toMatch(/^sub_/u);
+	expect(subjectId).toMatch(/^[\da-f]{8}-[\da-f]{4}-7/u);
 	expect(page.ready.effectivePermissions.measurement).toBe(true);
 	expect(page.ready.explicitChoice).toBeNull();
 	expect(client.hasConsented()).toBe(false);
@@ -206,7 +212,7 @@ test.each([
 			}
 		}
 		for (const seen of limited.seen) {
-			expect(seen.subject?.subjectId).toMatch(/^sub_/u);
+			expect(seen.subject?.subjectId).toMatch(/^[\da-f]{8}-[\da-f]{4}-7/u);
 		}
 		expect(limited.ready.explicitChoice).toBeNull();
 	}

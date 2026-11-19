@@ -309,12 +309,23 @@ describe('the first-load shell', () => {
 		const onPermissionsChanged = vi.fn();
 		const network = vi
 			.spyOn(globalThis, 'fetch')
-			.mockImplementation(() => Promise.resolve(Response.json({})));
+			.mockImplementation((_input, request) =>
+				Promise.resolve(
+					Response.json(
+						request?.method === 'POST'
+							? {
+									recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+									subjectId: JSON.parse(String(request.body)).subjectId,
+								}
+							: {}
+					)
+				)
+			);
 		/** Saves the backend received. */
 		const saves = () =>
 			network.mock.calls.filter(
 				([input, request]) =>
-					String(input).split('?')[0]?.endsWith('/subjects') &&
+					String(input).split('?')[0]?.endsWith('/v1/consent/records') &&
 					request?.method === 'POST'
 			);
 		const engine = heldEngine();

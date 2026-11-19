@@ -9,4 +9,4 @@
  *
  * @internal
  */
-export { createHostedTransport } from '../transports/hosted';
+export { createV1HostedTransport } from '../transports/v1/hosted';

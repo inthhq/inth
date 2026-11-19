@@ -138,9 +138,9 @@ It does not apply to anything else:
 
 ## Allow the consent backend in connect-src
 
-The browser sends consent submissions to `${projectUrl}/subjects`, and, when
+The browser sends consent submissions to `${projectUrl}/v1/consent/records`, and, when
 the browser initializes or retries after a failed server prefetch, requests to
-`${projectUrl}/init` or the manifest URL. Add the backend origin to
+`${projectUrl}/v1/consent/init` or the manifest URL. Add the backend origin to
 `connect-src`, and the manifest origin too when the mode's `manifestUrl` is an
 absolute URL on a different host such as a CDN:
 
@@ -175,7 +175,7 @@ violation should mention `inth-theme`. Grant a category that gates one of your
 - No `Refused to load the script` or `Refused to apply inline style` errors
   mention an Inth element. A refused vendor dependency points to a missing
   `'strict-dynamic'` or vendor host.
-- The consent submission to `/subjects` succeeds. A `connect-src` violation
+- The consent submission to `/v1/consent/records` succeeds. A `connect-src` violation
   here means the backend origin is missing.
 
 Reload with a different nonce and confirm the elements update. A stale nonce

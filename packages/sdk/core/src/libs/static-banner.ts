@@ -14,8 +14,6 @@
  * @internal
  */
 
-import { POLICY_CONTRACT_VERSION } from '@inth/sdk-schema/types';
-
 import { PREFETCH_WINDOW_KEY } from './page-globals';
 import { STORED_NAMES_CHECK } from './storage-keys';
 
@@ -95,8 +93,7 @@ export const buildStaticBannerScript = function buildStaticBannerScript(
 		f: key.policy,
 		k: stored,
 		l: key.language,
-		v: POLICY_CONTRACT_VERSION,
 		x: COPY_PATHS,
 	});
-	return `(function(w,d,p){var e=d.currentScript,b=e&&e.previousElementSibling,m,k,o,H=${STORED_NAMES_CHECK};function x(){b&&b.parentNode&&b.parentNode.removeChild(b)}function s(){return H(p.k)}function h(t){var v=p.x.map(function(a){var g=t&&t[a[0]],y=g&&g[a[1]];return typeof y==='string'?y:''}).join('\\n'),n=2166136261,i;for(i=0;i<v.length;i++)n=Math.imul(n^v.charCodeAt(i),16777619)>>>0;return n}if(!b||!b.hasAttribute('${STATIC_BANNER_ATTR}'))return;if(s())return x();m=w['${PREFETCH_WINDOW_KEY}'];for(k in m)if(o){o=0;break}else o=m[k];if(!o)return x();o.promise.then(function(r){var i=r&&r.init,q=i&&i.policyResolution,t=i&&i.translations,v=r&&r.producerPolicyContract;if(b.parentNode&&(v==null||Number(v)===p.v)&&q&&q.status==='matched'&&q.fingerprints&&q.fingerprints.policy===p.f&&t&&t.language===p.l&&(i.branding||null)===p.b&&!i.gvl&&!i.gvlReference&&!(i.vendors&&i.vendors.length)&&!(i.customVendors&&i.customVendors.length)&&h(t.translations)===p.c&&!s())b.hidden=false;else x()},x)})(window,document,${config})`;
+	return `(function(w,d,p){var e=d.currentScript,b=e&&e.previousElementSibling,m,k,o,H=${STORED_NAMES_CHECK};function x(){b&&b.parentNode&&b.parentNode.removeChild(b)}function s(){return H(p.k)}function h(t){var v=p.x.map(function(a){var g=t&&t[a[0]],y=g&&g[a[1]];return typeof y==='string'?y:''}).join('\\n'),n=2166136261,i;for(i=0;i<v.length;i++)n=Math.imul(n^v.charCodeAt(i),16777619)>>>0;return n}if(!b||!b.hasAttribute('${STATIC_BANNER_ATTR}'))return;if(s())return x();m=w['${PREFETCH_WINDOW_KEY}'];for(k in m)if(o){o=0;break}else o=m[k];if(!o)return x();o.promise.then(function(r){var i=r&&r.init,q=i&&i.policyResolution,t=i&&i.translations;if(b.parentNode&&q&&q.status==='matched'&&q.fingerprints&&q.fingerprints.policy===p.f&&t&&t.language===p.l&&(i.branding||null)===p.b&&!i.gvl&&!i.gvlReference&&!(i.vendors&&i.vendors.length)&&!(i.customVendors&&i.customVendors.length)&&h(t.translations)===p.c&&!s())b.hidden=false;else x()},x)})(window,document,${config})`;
 };

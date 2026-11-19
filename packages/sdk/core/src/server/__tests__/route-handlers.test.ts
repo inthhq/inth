@@ -13,7 +13,7 @@ describe('the consent route loop guard', () => {
 		['projectUrl', '/api/inth/v1'],
 		['projectUrl', '/api/inth/../inth/v1'],
 		['projectUrl', '/api/inth?region=eu'],
-		['manifestUrl', '/api/inth/manifest'],
+		['manifestUrl', '/api/inth/v1/consent/manifest'],
 	] as const)(
 		'rejects a %s of %s on or below routePrefix at setup',
 		(option, url) => {
@@ -31,7 +31,7 @@ describe('the consent route loop guard', () => {
 		expect(() =>
 			createConsentRouteHandler({
 				adapter: '@inth/test',
-				manifestUrl: '/api/inthx/manifest',
+				manifestUrl: '/api/inthx/v1/consent/manifest',
 				projectUrl: '/api/inth-other',
 				routePrefix: '/api/inth',
 			})
@@ -72,8 +72,11 @@ describe('the consent route loop guard', () => {
 			proxy: true,
 		});
 		const response = await handle(
-			new Request(`${SITE}/api/inth/subjects`, { body: '{}', method: 'POST' }),
-			{ path: 'subjects' }
+			new Request(`${SITE}/api/inth/v1/consent/records`, {
+				body: '{}',
+				method: 'POST',
+			}),
+			{ path: 'v1/consent/records' }
 		);
 		expect(response.status).toBe(201);
 	});

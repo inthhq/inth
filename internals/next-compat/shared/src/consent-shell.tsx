@@ -8,7 +8,7 @@ import {
 	hosted,
 } from '@inth/nextjs';
 import type { ConsentConfig, ConsentRootProps } from '@inth/nextjs';
-import { createManifestTransport } from '@inth/sdk/transports/manifest';
+import { manifest as browserManifest } from '@inth/sdk/transports/manifest-browser';
 import { useMemo } from 'react';
 import type { ReactNode } from 'react';
 
@@ -66,12 +66,13 @@ const createMode = function createMode({
 			return undefined;
 		}
 		case 'manifest': {
-			return customMode(
-				createManifestTransport({
-					manifestUrl: COMPAT_MANIFEST_URL,
-					projectUrl,
-				})
-			);
+			// The scenario claims the backend never sees init, so a policy
+			// that depends on location resolves for an unknown one.
+			return browserManifest({
+				initFallback: false,
+				manifestUrl: COMPAT_MANIFEST_URL,
+				projectUrl,
+			});
 		}
 		case 'static': {
 			if (!manifest) {
