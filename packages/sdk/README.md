@@ -153,7 +153,7 @@ The layout stays a Server Component. You write no `'use client'` wrapper and nee
 
 To set up Inth from the terminal, run `inth c15t` from the [Inth CLI](https://c15t.com/docs/cli/overview). It starts your coding agent with the Inth setup prompt or writes your framework's quickstart files.
 
-[`@c15t/scripts`](./packages/sdk/scripts) is deprecated. It re-exports `@inth/integrations` for older imports and goes away in v4.
+[`@c15t/scripts`](https://www.npmjs.com/package/@c15t/scripts) is deprecated. It re-exports `@inth/integrations` for older imports and goes away in v4.
 
 ## Docs for AI Agents
 
