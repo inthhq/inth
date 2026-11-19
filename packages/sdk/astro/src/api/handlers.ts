@@ -122,10 +122,10 @@ export const createConsentRouteHandlers = function createConsentRouteHandlers(
 	});
 	const handle = createConsentRouteHandler({
 		...route,
-		manifestUrl: route.manifestUrl ?? absoluteManifestUrl(mode),
 		adapter: '@inth/astro',
 		fetch: handlerOptions.fetch,
 		fetchGvl: handlerOptions.fetchGvl,
+		manifestUrl: route.manifestUrl ?? absoluteManifestUrl(mode),
 		routePrefix,
 	});
 	const locale = i18n?.locale;

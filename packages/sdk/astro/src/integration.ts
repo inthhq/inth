@@ -843,7 +843,10 @@ const bundleBuildManifest = async function bundleBuildManifest(
 			logger,
 			// Core reads an absolute `manifestUrl` at runtime and skips it;
 			// Astro bundles it (see `absoluteManifestUrl`).
-			mode: manifestUrl ? { ...mode, manifestUrl: undefined } : mode,
+			mode:
+				manifestUrl && mode.type === 'manifest'
+					? { ...mode, manifestUrl: undefined }
+					: mode,
 			onBuildError: resolved.onBuildError,
 		}
 	);
