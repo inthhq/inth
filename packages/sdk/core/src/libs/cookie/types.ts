@@ -73,7 +73,7 @@ export interface StorageConfig {
 	 * @default '' (current domain only)
 	 *
 	 * @remarks
-	 * Overrides crossSubdomain if set.
+	 * Ignored when `crossSubdomain` is set, which uses the root domain.
 	 * Use '.example.com' for all subdomains.
 	 */
 	defaultDomain?: string;

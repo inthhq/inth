@@ -72,16 +72,15 @@ export const getRootDomain = function getRootDomain(): string {
 
 /**
  * The `domain` attribute for a cookie written or deleted under `config`:
- * `defaultDomain` when set, else the root domain with `crossSubdomain`,
- * else `''` (host-only).
+ * the root domain with `crossSubdomain`, else `defaultDomain`, else `''`
+ * (host-only).
  *
  * @internal
  */
 export const resolveCookieDomain = function resolveCookieDomain(
 	config?: StorageConfig
 ): string {
-	if (config?.defaultDomain) {
-		return config.defaultDomain;
-	}
-	return config?.crossSubdomain ? getRootDomain() : '';
+	return config?.crossSubdomain
+		? getRootDomain()
+		: (config?.defaultDomain ?? '');
 };

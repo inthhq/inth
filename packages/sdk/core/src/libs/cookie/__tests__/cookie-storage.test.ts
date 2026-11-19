@@ -81,7 +81,7 @@ describe('Cookie Storage', () => {
 	});
 
 	describe('Cross-subdomain support', () => {
-		it('writes and deletes at defaultDomain when crossSubdomain is set too', () => {
+		it('writes and deletes at the root domain when crossSubdomain is set with a defaultDomain', () => {
 			Object.defineProperty(window, 'location', {
 				configurable: true,
 				value: { hostname: 'app.shop.example.com', protocol: 'https:' },
@@ -93,13 +93,13 @@ describe('Cookie Storage', () => {
 			};
 
 			setCookie('test-cookie', 'value', config);
-			expect(document.cookie).toContain('domain=.shop.example.com');
+			expect(document.cookie).toContain('domain=.example.com');
 
 			deleteCookie('test-cookie', config);
-			expect(document.cookie).toContain('domain=.shop.example.com');
-
-			setCookie('test-cookie', 'value', { crossSubdomain: true });
 			expect(document.cookie).toContain('domain=.example.com');
+
+			setCookie('test-cookie', 'value', { defaultDomain: '.shop.example.com' });
+			expect(document.cookie).toContain('domain=.shop.example.com');
 		});
 
 		it('should provide getRootDomain helper for cross-subdomain cookies', () => {
