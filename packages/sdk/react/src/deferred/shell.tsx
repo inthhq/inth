@@ -722,6 +722,7 @@ const createSession = function createSession<EngineModule>(
 		routing = true;
 		// One config for the whole tap, so both paths record with the same.
 		const config = tapConfig();
+		const before = handle.kernel.getSnapshot();
 		const instant =
 			commitInstantly(handle, config, choice, actionAt, ahead) ?? undefined;
 		if (instant) {
@@ -774,8 +775,16 @@ const createSession = function createSession<EngineModule>(
 				claimTaps(true);
 			} else if (instant) {
 				// The stand-in shows the choice, but nothing stored it: the
-				// engine records it (`routing` keeps this path closed).
-				void handle.kernel.commands.save(choice, { actionAt, uiSource });
+				// engine records it (`routing` keeps this path closed). When the
+				// engine can't load either, the visitor is asked again.
+				// Not awaited: the engine starts once this settles.
+				void (async () => {
+					try {
+						await handle.kernel.commands.save(choice, { actionAt, uiSource });
+					} catch {
+						handle.commit(before, []);
+					}
+				})();
 			}
 		})();
 		// oxlint-disable-next-line promise/prefer-await-to-then -- Never rejects.

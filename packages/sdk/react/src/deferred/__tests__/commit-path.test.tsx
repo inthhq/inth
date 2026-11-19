@@ -1093,6 +1093,49 @@ test('a commit the chunk declines after the tap took effect is recorded by the e
 	await hydrated.unmount();
 });
 
+test('an instant accept that neither the commit chunk nor the engine can record asks again', async () => {
+	const state = config();
+	const { boot, page: streamed } = await serve(state);
+	const unhandled = vi.fn();
+	window.addEventListener('unhandledrejection', unhandled);
+	const failure = new TypeError('Failed to fetch chunk');
+	// Fails once, then never settles: the page stays on the stand-in.
+	const loadEngine = vi
+		.fn<() => Promise<never>>()
+		.mockRejectedValueOnce(failure)
+		.mockImplementation(
+			() =>
+				new Promise<never>(() => {
+					// Never settles.
+				})
+		);
+	shareTapQueue(streamed);
+	const hydrated = await streamed.hydrate(
+		<ClientPage
+			boot={boot}
+			commit={{}}
+			loadCommit={() => Promise.reject(failure)}
+			loadEngine={loadEngine}
+			prefetch={fulfilledThenable(state)}
+			scripts={[]}
+		/>
+	);
+	const main = streamed.doc.querySelector('main');
+
+	await act(() => {
+		tapBanner(streamed, 'accept');
+	});
+	await vi.waitFor(() => {
+		expect(loadEngine).toHaveBeenCalled();
+		expect(main?.dataset.marketing).not.toBe('true');
+		expect(streamed.doc.querySelector(BANNER)).not.toBeNull();
+	});
+	expect(localStorage.getItem('inth')).toBeNull();
+	expect(unhandled).not.toHaveBeenCalled();
+	window.removeEventListener('unhandledrejection', unhandled);
+	await hydrated.unmount();
+});
+
 test('a save the outbox cannot keep goes to the engine, which records it once', async () => {
 	const state = config();
 	const { boot, page: streamed } = await serve(state);
