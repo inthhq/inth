@@ -246,3 +246,32 @@ test('a save refused for a clock that ran ahead does not hold later saves in the
 	);
 	expect(localStorage.getItem(PENDING_SAVES_STORAGE_KEY)).toBeNull();
 });
+
+test.each([
+	['another category', { measurement: true }],
+	['the same category, superseding it', { marketing: false }],
+] as const)(
+	'a c15t visitor whose first save is answered after a newer choice in %s moves to the UUID, with the queued save',
+	async (_name, newer) => {
+		await leaveC15tVisitor();
+		const page = await load();
+		const first = Promise.withResolvers<Response>();
+		recordsAnswer = () => first.promise;
+		const held = page.kernel.commands.save({ marketing: true });
+		await vi.waitFor(() => expect(records).toHaveLength(1));
+		recordsAnswer = () => Promise.reject(new TypeError('offline'));
+		await page.kernel.commands.save(newer);
+		first.resolve(Response.json(recordAnswer({ body: '{}' })));
+		await held;
+
+		expect(subjectOf(page)).toBe(SUBJECT);
+		recordsAnswer = answerRecord;
+		window.dispatchEvent(new Event('online'));
+		await vi.waitFor(() => expect(records).toHaveLength(3));
+		expect(records.map((record) => record.subjectId)).toEqual([
+			LEGACY_SUBJECT,
+			LEGACY_SUBJECT,
+			SUBJECT,
+		]);
+	}
+);

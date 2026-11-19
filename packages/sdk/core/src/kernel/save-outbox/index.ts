@@ -472,21 +472,18 @@ export const createSaveOutbox = function createSaveOutbox({
 				return { confirmed, ok: false };
 			}
 			const result = await sendDated(sending, () => save(sending));
-			const remaining = currentPayload();
-			if (!remaining) {
-				await discard(payload);
-				return { ...result, confirmed };
-			}
 			if (result.ok) {
 				// The whole action, not the part still current: a newer choice
 				// that storage refused never narrowed the queued entry.
 				await discard(payload);
-			} else {
+				// Also when a newer choice superseded this one: the answer names
+				// the subject, and saves queued under the old id move with it.
+				await adoptServerSubject(result.subjectId, actionSnapshot);
+			} else if (currentPayload()) {
 				warnSaveFailed(await ensureQueued());
 				retryWhenOnline();
-			}
-			if (result.ok && currentPayload()) {
-				await adoptServerSubject(result.subjectId, actionSnapshot);
+			} else {
+				await discard(payload);
 			}
 			return { ...result, confirmed };
 		} catch (error) {
