@@ -348,19 +348,19 @@ export const createSaveOutbox = function createSaveOutbox({
 	};
 
 	/**
-	 * Take the subject id the backend returned for the newest action: only
-	 * while the action's choice and subject are still the current ones.
+	 * Take the subject id the backend answered for the one a save went out
+	 * under, such as the UUID of a `sub_` id, while that id is still the
+	 * visitor's. A choice made since does not matter: the answer names the
+	 * subject, not the choice.
 	 */
 	const adoptServerSubject = async function adoptServerSubject(
 		subjectId: string | undefined,
 		action: ConsentSnapshot
 	): Promise<void> {
-		const current = getSnapshot();
-		const from = current.subject?.subjectId;
+		const from = getSnapshot().subject?.subjectId;
 		if (
 			!(subjectId && from) ||
 			subjectId === from ||
-			current.explicitChoice !== action.explicitChoice ||
 			from !== action.subject?.subjectId
 		) {
 			return;
@@ -385,8 +385,7 @@ export const createSaveOutbox = function createSaveOutbox({
 	/**
 	 * Transport phase of one action. The outcome only touches the queue
 	 * while the action's confirmed receipts are current. Disjoint category
-	 * actions remain independent. Only the newest action can map the subject
-	 * returned by the server; older outcomes cannot replace its identity.
+	 * actions remain independent.
 	 */
 	const performSendAction = async function performSendAction(
 		payload: SavePayload,

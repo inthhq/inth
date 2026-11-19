@@ -668,6 +668,36 @@ describe('the UUID the backend answers for a sub_ id', () => {
 		kernel.dispose();
 	});
 
+	test('a save answered after a newer choice still moves the visitor and the queue to it', async () => {
+		const storage = memoryStorage();
+		const marketing = Promise.withResolvers<SaveResult>();
+		const save = vi
+			.fn()
+			.mockReturnValueOnce(marketing.promise)
+			.mockRejectedValueOnce(new Error('offline'));
+		const kernel = kernelOn(
+			{
+				initialRecords: { subject: { subjectId: 'sub_legacy' } },
+				transport: { save },
+			},
+			{ localStorage: () => storage, locks: () => serialLocks().locks }
+		);
+
+		const held = kernel.commands.save({ marketing: true });
+		await vi.waitFor(() => expect(save).toHaveBeenCalledOnce());
+		await kernel.commands.save({ measurement: true });
+		marketing.resolve({ ok: true, subjectId: UUID });
+		await held;
+
+		expect(subjects(save)).toEqual(['sub_legacy', 'sub_legacy']);
+		expect(kernel.getSnapshot().subject?.subjectId).toBe(UUID);
+		const queued = JSON.parse(storage.getItem(SAVES_KEY) ?? '[]') as {
+			payload: SavePayload;
+		}[];
+		expect(queued.map((entry) => entry.payload.subjectId)).toEqual([UUID]);
+		kernel.dispose();
+	});
+
 	test('a link moves the visitor to it', async () => {
 		const storage = memoryStorage();
 		const kernel = kernelOn(
