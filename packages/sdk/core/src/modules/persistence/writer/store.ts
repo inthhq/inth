@@ -119,18 +119,6 @@ const writeLocalStorageText = function writeLocalStorageText(
 	return false;
 };
 
-const removeLocalStorageKey = function removeLocalStorageKey(
-	key: string
-): void {
-	try {
-		if (hasLocalStorage()) {
-			window.localStorage.removeItem(key);
-		}
-	} catch (error) {
-		console.warn('Failed to remove consent from localStorage:', error);
-	}
-};
-
 /**
  * The cookie text for a record, or `null` when a value in it has no URI
  * encoding, such as an opaque subject ID with a lone surrogate. Such a
@@ -184,7 +172,7 @@ export const createRecordStore = function createRecordStore(
 		key: string,
 		config: StorageConfig | undefined
 	): void {
-		removeLocalStorageKey(key);
+		tools.removeLocal(key);
 		tools.deleteCookie(key, config);
 	};
 
@@ -216,10 +204,10 @@ export const createRecordStore = function createRecordStore(
 			}
 			const cookieWritten = cookieDetail.attempted && cookieDetail.verified;
 			if (cookieWritten) {
-				removeLocalStorageKey(keys.cookieMiss);
+				tools.removeLocal(keys.cookieMiss);
 				// The local copy is now older than the cookie.
 				if (!localStorageWritten) {
-					removeLocalStorageKey(keys.consent);
+					tools.removeLocal(keys.consent);
 				}
 			} else if (localStorageWritten) {
 				writeLocalStorageText(
@@ -266,9 +254,9 @@ export const createRecordStore = function createRecordStore(
 				subjectWritten = tools.rawCookie(keys.noticeSubject) === null;
 			}
 			if (written.cookie && subjectWritten) {
-				removeLocalStorageKey(keys.noticeCookieMiss);
+				tools.removeLocal(keys.noticeCookieMiss);
 				if (!written.localStorage) {
-					removeLocalStorageKey(key);
+					tools.removeLocal(key);
 				}
 			} else if (written.localStorage) {
 				writeLocalStorageText(

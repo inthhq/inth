@@ -11,3 +11,19 @@ export const localStorageOf = function localStorageOf(): Storage | null {
 		return null;
 	}
 };
+
+/**
+ * Removes `key` from `window.localStorage`. A no-op on a server or where
+ * storage is blocked, which holds nothing to remove.
+ *
+ * @internal
+ */
+export const removeLocalStorageKey = function removeLocalStorageKey(
+	key: string
+): void {
+	try {
+		window.localStorage?.removeItem(key);
+	} catch {
+		// Blocked storage: the read path reports it.
+	}
+};

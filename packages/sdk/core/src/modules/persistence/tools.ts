@@ -12,6 +12,7 @@ import {
 	getRawCookieValue,
 	writeCookie,
 } from '../../libs/cookie';
+import { removeLocalStorageKey } from '../../libs/local-storage';
 import { resolveStorageKeys } from '../../libs/storage-keys';
 import { clearStoredRecords } from './clear';
 import {
@@ -39,6 +40,7 @@ export const persistenceTools: PersistenceTools = {
 	noticeSince: noticeSinceEpoch,
 	rawCookie: getRawCookieValue,
 	read: readStoredRecordsForReconcile,
+	removeLocal: removeLocalStorageKey,
 	validateEnvelope: validateStoredConsentEnvelope,
 	vendorsSince: vendorChoiceSinceEpoch,
 	writeCookie,

@@ -8,6 +8,7 @@ import type { InternalKernel } from '../../../kernel/internals';
  */
 import type { mergeNewestChoice } from '../../../kernel/record-validation';
 import type { deleteCookie, writeCookie } from '../../../libs/cookie';
+import type { removeLocalStorageKey } from '../../../libs/local-storage';
 import type { ResolvedStorageKeys } from '../../../libs/storage-keys';
 import type { clearStoredRecords } from '../clear';
 import type {
@@ -48,6 +49,8 @@ export interface PersistenceTools {
 	noticeSince: typeof noticeSinceEpoch;
 	vendorsSince: typeof vendorChoiceSinceEpoch;
 	merge: typeof mergeNewestChoice;
+	/** `removeLocalStorageKey`. */
+	removeLocal: typeof removeLocalStorageKey;
 	/** `clearStoredRecords`: first-load code, since `clear()` runs it at once. */
 	clear: typeof clearStoredRecords;
 }
@@ -60,6 +63,7 @@ export type RecordStoreTools = Pick<
 	| 'deleteCookie'
 	| 'keys'
 	| 'rawCookie'
+	| 'removeLocal'
 	| 'validateEnvelope'
 	| 'writeCookie'
 >;

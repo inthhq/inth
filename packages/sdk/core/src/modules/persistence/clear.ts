@@ -17,6 +17,7 @@ import {
 	writeCookie,
 } from '../../libs/cookie';
 import { removeLegacySubjectId } from '../../libs/legacy-subject-id';
+import { removeLocalStorageKey } from '../../libs/local-storage';
 import {
 	storageKeyFamilies,
 	resolveStorageKeys,
@@ -24,16 +25,6 @@ import {
 import { EPOCH_CLOCK_TOLERANCE_MS } from './record-codec';
 import { readStoredClearEpoch } from './record-storage';
 import type { StorageConfig } from './types';
-
-const removeLocalStorageKey = function removeLocalStorageKey(
-	key: string
-): void {
-	try {
-		window.localStorage?.removeItem(key);
-	} catch {
-		// Blocked storage: the read path reports it, and holds nothing here.
-	}
-};
 
 /**
  * Removes, for the configured family and every legacy family it reads,

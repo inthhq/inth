@@ -38,6 +38,8 @@ import {
 } from '../kernel/save-plan';
 import { deleteCookie, getRawCookieValue, writeCookie } from '../libs/cookie';
 import { generateSubjectId } from '../libs/generate-subject-id';
+import { removeLocalStorageKey } from '../libs/local-storage';
+import { storageFor } from '../libs/storage-for';
 import { resolveStorageKeys } from '../libs/storage-keys';
 import {
 	decodeNoticeDismissal,
@@ -50,7 +52,6 @@ import type { RecordStoreTools } from '../modules/persistence/writer/types';
 import { buildStoredEnvelope } from '../modules/persistence/writer/write';
 import type { Callbacks } from '../options/callbacks';
 import type { StandInKernelHandle } from '../runtime/stand-in-kernel';
-import { storageFor } from '../libs/storage-for';
 import type { ConsentRuntimeOptions } from '../runtime/types';
 import type {
 	ConsentSnapshot,
@@ -226,6 +227,7 @@ const writeTools: RecordStoreTools = {
 	deleteCookie,
 	keys: resolveStorageKeys,
 	rawCookie: getRawCookieValue,
+	removeLocal: removeLocalStorageKey,
 	validateEnvelope: validateStoredConsentEnvelope,
 	writeCookie,
 };
