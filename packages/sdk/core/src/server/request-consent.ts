@@ -563,10 +563,14 @@ interface InitRequestRules {
 	/** Whether a remote backend gets the visitor's consent cookie. */
 	sendConsentCookie?: boolean;
 	/**
-	 * Whether a version header the request carries, such as a client's a
-	 * proxy relays, is sent in place of this package's.
+	 * Whether `/init` gets the request's own headers where they say more
+	 * than this package's: a version header the request carries, such as a
+	 * client's a proxy relays, in place of this package's, and the full
+	 * `Accept-Language`, so the backend can fall back to the visitor's next
+	 * language, in place of the primary one, unless an override sets the
+	 * language.
 	 */
-	keepRequestVersion?: boolean;
+	relayRequest?: boolean;
 }
 
 /**
@@ -576,10 +580,7 @@ interface InitRequestRules {
 const resolveRequest = async function resolveRequest(
 	options: ResolveRequestConsentOptions,
 	onHostedAnswer?: (answer: RequestInitAnswer) => void,
-	{
-		keepRequestVersion = false,
-		sendConsentCookie = true,
-	}: InitRequestRules = {}
+	{ relayRequest = false, sendConsentCookie = true }: InitRequestRules = {}
 ): Promise<RequestConsentState> {
 	const { inputs, state: base } = readRequestConsent(options);
 	const mode = resolveMode(options);
@@ -965,13 +966,31 @@ const resolveRequest = async function resolveRequest(
 	};
 
 	/**
+	 * Writes the resolved geo, language and GPC, with the request's full
+	 * `Accept-Language` in place of the primary language under
+	 * {@link InitRequestRules.relayRequest}.
+	 */
+	const writeInputHeaders = function writeInputHeaders(
+		headers: Record<string, string>
+	): void {
+		writeConsentInputHeaders(headers, inputs);
+		const acceptLanguage =
+			relayRequest && !options.overrides?.language
+				? readHeader(options.request.headers, 'accept-language')
+				: null;
+		if (acceptLanguage) {
+			headers['accept-language'] = acceptLanguage;
+		}
+	};
+
+	/**
 	 * The Inth protocol headers, with the request's own version header in
-	 * place of this package's under {@link InitRequestRules.keepRequestVersion}.
+	 * place of this package's under {@link InitRequestRules.relayRequest}.
 	 */
 	const protocolHeaders = function protocolHeaders(): Readonly<
 		Record<string, string>
 	> {
-		const requestVersion = keepRequestVersion
+		const requestVersion = relayRequest
 			? readHeader(options.request.headers, INTH_VERSION_HEADER)
 			: null;
 		return requestVersion
@@ -999,7 +1018,7 @@ const resolveRequest = async function resolveRequest(
 					(name) => name !== 'cookie' && name !== 'x-forwarded-for'
 				);
 			Object.assign(headers, identity);
-			writeConsentInputHeaders(headers, inputs);
+			writeInputHeaders(headers);
 			for (const [name, value] of Object.entries(options.initHeaders ?? {})) {
 				const lower = name.toLowerCase();
 				if (
@@ -1205,7 +1224,9 @@ export type FetchRequestInitOptions = Omit<
  * {@link resolveRequestConsent} does in hosted mode (the same target,
  * forwarding and budget rules), and returns the answer as received rather
  * than folded into a consent state. A version header the request carries,
- * such as a client's a proxy relays, is sent in place of this package's.
+ * such as a client's a proxy relays, is sent in place of this package's,
+ * and so is the visitor's full `Accept-Language` in place of its primary
+ * language, unless `overrides.language` is set.
  *
  * Never throws: when nothing was fetched or the request failed, it returns
  * `undefined` and `onError` hears why.
@@ -1229,7 +1250,7 @@ export const fetchRequestInit = async function fetchRequestInit(
 		(received) => {
 			answer = received;
 		},
-		{ keepRequestVersion: true, sendConsentCookie: options.sendConsentCookie }
+		{ relayRequest: true, sendConsentCookie: options.sendConsentCookie }
 	);
 	return answer;
 };

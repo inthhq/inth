@@ -173,6 +173,27 @@ describe('fetchSSRData', () => {
 		expect(sent['x-c15t-country']).toBe('US');
 	});
 
+	it("sends the visitor's full Accept-Language, unless an override sets the language", async () => {
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValue(createResponse({ categories: [], gvl: null }));
+		vi.stubGlobal('fetch', fetchMock);
+		const headers = createRequestHeaders();
+		headers.set('accept-language', 'es,fr;q=0.9');
+		const projectUrl = 'https://consent.example.com/api/inth';
+
+		await fetchSSRData({ headers, projectUrl });
+		await fetchSSRData({ headers, overrides: { language: 'de' }, projectUrl });
+
+		const sent = fetchMock.mock.calls.map(
+			(call) =>
+				(call[1]?.headers as Record<string, string> | undefined)?.[
+					'accept-language'
+				]
+		);
+		expect(sent).toEqual(['es,fr;q=0.9', 'de']);
+	});
+
 	it('sends no cookie to a remote https backend', async () => {
 		const fetchMock = vi
 			.fn()

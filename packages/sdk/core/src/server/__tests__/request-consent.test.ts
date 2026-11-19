@@ -1303,6 +1303,23 @@ describe('fetchRequestInit', () => {
 		expect(callsTo(fetch, '/manifest')).toHaveLength(0);
 	});
 
+	test("sends the visitor's full Accept-Language unless an override sets the language", async () => {
+		const headers = { 'accept-language': 'es,fr;q=0.9' };
+		const relayed = upstream();
+		await ask({ fetch: relayed, headers, projectUrl: BACKEND });
+		expect(sentHeaders(relayed, '/init').get('accept-language')).toBe(
+			'es,fr;q=0.9'
+		);
+		const overridden = upstream();
+		await ask({
+			fetch: overridden,
+			headers,
+			overrides: { language: 'de' },
+			projectUrl: BACKEND,
+		});
+		expect(sentHeaders(overridden, '/init').get('accept-language')).toBe('de');
+	});
+
 	test('returns undefined and tells onError when the request fails', async () => {
 		const onError = vi.fn();
 		const answer = await ask({
