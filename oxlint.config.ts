@@ -13,11 +13,11 @@ export default defineConfig({
     // The SDK keeps its own lint rules until it adopts the root ones. Lint it
     // with `pnpm sdk:lint`, which reads oxlint.sdk.config.ts.
     ...sdkPaths.map((path) => (path.endsWith(".ts") ? path : `${path}/**`)),
-    // Inth CLI mobile manifest code, kept as imported until Scriptc can compile
+    // c15t CLI mobile manifest code, kept as imported until Scriptc can compile
     // it; see packages/cli/vendor/c15t-mobile/README.md.
     "packages/cli/vendor/c15t-mobile/**",
-    // Unmodified upstream source; see packages/cli/vendor/inth/UPSTREAM.md.
-    "packages/cli/vendor/inth/**",
+    // Unmodified upstream source; see packages/cli/vendor/c15t/UPSTREAM.md.
+    "packages/cli/vendor/c15t/**",
   ],
   jsPlugins: [
     {

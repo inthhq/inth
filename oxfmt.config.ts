@@ -13,8 +13,8 @@ export default defineConfig({
     // The SDK keeps its own formatting until it adopts the root style. Format
     // it with `pnpm sdk:fmt`, which reads oxfmt.sdk.config.ts.
     ...sdkPaths.map((path) => (path.endsWith(".ts") ? path : `${path}/**`)),
-    // Unmodified upstream source; see packages/cli/vendor/inth/UPSTREAM.md.
-    "packages/cli/vendor/inth/**",
+    // Unmodified upstream source; see packages/cli/vendor/c15t/UPSTREAM.md.
+    "packages/cli/vendor/c15t/**",
     "packages/cli/AGENTS.md",
     "packages/cli/SKILL.md",
     "packages/cli/docs/cli/**",
