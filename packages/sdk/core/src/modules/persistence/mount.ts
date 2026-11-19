@@ -27,7 +27,10 @@ import {
 	readStoredRecordsFromCookieHeader,
 } from './hydrate';
 import type { StoredRecords } from './hydrate';
-import { isNewerDenial } from './record-storage';
+import {
+	isNewerDenial,
+	readStoredConsentRecordFromCookieHeader,
+} from './record-storage';
 import { persistenceTools } from './tools';
 import type { PersistenceHandle, PersistenceOptions } from './types';
 import { pageWriterLoader, preloadWriter } from './writer-loader';
@@ -425,7 +428,10 @@ export const mountPersistence = function mountPersistence(
 	 * write while localStorage takes it, so a newer record may exist only
 	 * there. A newer denial only restricts, so it is
 	 * applied on top of the seed; a stored grant never is. A denial from the
-	 * same millisecond as a seeded grant counts as newer. The vendor record
+	 * same millisecond as a seeded grant counts as newer. A seed read from
+	 * a legacy family's cookie (c15t's) yields whole to a configured-family
+	 * record, as the browser reader picks the families: the configured
+	 * family wins whatever the timestamps. The vendor record
 	 * outlives a dropped cookie most often, since many denied ids push it
 	 * past the per-cookie limit, so a newer stored one replaces the seeded
 	 * list before any gate consults the denials.
@@ -436,6 +442,25 @@ export const mountPersistence = function mountPersistence(
 	 * grant left out here stays out until another runtime writes storage.
 	 * Returns the subject the stored records carry, `null` for none.
 	 */
+	/**
+	 * Whether `read` found a configured-family record while the cookies,
+	 * read as the server read them, hold only a legacy family's.
+	 */
+	const outranksSeedFamily = function outranksSeedFamily(
+		read: StoredRecords
+	): boolean {
+		const header = readCookieHeader();
+		return (
+			header !== null &&
+			read.candidates.some(
+				(candidate) =>
+					candidate.status === 'valid' && !candidate.source.startsWith('legacy')
+			) &&
+			readStoredConsentRecordFromCookieHeader(header, storageConfig, now())
+				.selected?.source === 'legacy-cookie'
+		);
+	};
+
 	const applyNewerStoredRecords =
 		function applyNewerStoredRecords(): ConsentSubject | null {
 			const at = now();
@@ -449,7 +474,9 @@ export const mountPersistence = function mountPersistence(
 				([category, decision]) =>
 					isNewerDenial(decision, seeded[category as keyof typeof seeded])
 			);
-			if (denials.length > 0) {
+			if (records.choice && outranksSeedFamily(read)) {
+				patch.choice = records.choice;
+			} else if (denials.length > 0) {
 				patch.choice = {
 					categories: { ...seeded, ...Object.fromEntries(denials) },
 					version: 3,

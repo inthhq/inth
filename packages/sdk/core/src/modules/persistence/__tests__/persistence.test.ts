@@ -16,6 +16,7 @@ import {
 	STORAGE_KEY_V2,
 	SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 } from '../../../libs/storage-keys';
+import { readStoredRecordsFromCookieHeader } from '../hydrate';
 import { createPersistence } from '../index';
 import type { StorageConfig } from '../index';
 import { clearStoredConsentRecords } from './record-writes';
@@ -408,6 +409,39 @@ describe('persistence: records c15t stored', () => {
 
 		expect(hydrated().effectivePermissions.marketing).toBe(false);
 		expect(hydrated(C15T).effectivePermissions.marketing).toBe(true);
+	});
+
+	test('a server seed from a newer c15t cookie yields to an Inth record only localStorage holds', async () => {
+		const inth = createConsentKernel({ now: NOW });
+		const inthHandle = createPersistence({ kernel: inth });
+		await inth.commands.save({ marketing: false, measurement: true });
+		flushWrites();
+		inthHandle.dispose();
+		// The Inth cookie write was dropped; its localStorage copy landed.
+		deleteCookieNamed(STORAGE_KEY_V2);
+		vi.setSystemTime(NOW + 1000);
+		const c15t = createConsentKernel({ now: NOW + 1000 });
+		const c15tHandle = createPersistence({
+			kernel: c15t,
+			storageConfig: C15T,
+		});
+		await c15t.commands.save({ marketing: true, measurement: false });
+		flushWrites();
+		c15tHandle.dispose();
+
+		const initialRecords = readStoredRecordsFromCookieHeader(
+			document.cookie,
+			undefined,
+			NOW + 1000
+		);
+		expect(initialRecords.choice?.categories.marketing?.value).toBe(true);
+		const kernel = createConsentKernel({ initialRecords, now: NOW + 1000 });
+		createPersistence({ kernel, skipHydration: true });
+
+		const { effectivePermissions } = kernel.getSnapshot();
+		expect(effectivePermissions.marketing).toBe(false);
+		expect(effectivePermissions.measurement).toBe(true);
+		expect(effectivePermissions).toEqual(hydrated().effectivePermissions);
 	});
 
 	test('a custom storageKey does not read c15t records', async () => {
