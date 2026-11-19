@@ -87,6 +87,9 @@ import { scheduleEngine } from './schedule';
  */
 const INIT_WAIT_MS = 3000;
 
+/** The waits before each retry of a failed `inth.hosted.js`. */
+const ENGINE_RETRY_MS = [1000, 2000];
+
 /** Calls that act on consent or the UI. They load the engine at once. */
 const ACTIONS = [
 	'save',
@@ -205,6 +208,8 @@ export const runInitScript = function runInitScript(
 	/** What the dialog closes back to before the engine. */
 	let beforeDialog: ConsentSnapshot['activeUI'] = 'banner';
 	let engineRequested = false;
+	/** Set once `inth.hosted.js` failed on every try. */
+	let engineError: Error | null = null;
 	let ahead: { clearEpoch: boolean; subjectId: string } | undefined;
 	let persist: (() => void) | null = null;
 	const parts: { commit?: InitCommitPart; records?: InitRecordsPart } = {};
@@ -292,7 +297,44 @@ export const runInitScript = function runInitScript(
 			);
 			return;
 		}
-		appendScript(src);
+		let tries = 0;
+		const request = () => {
+			const element = appendScript(src);
+			element.addEventListener('error', () => {
+				element.remove();
+				if (api) {
+					return;
+				}
+				if (boot.disposed) {
+					// A later `init()` requests it again.
+					engineRequested = false;
+					return;
+				}
+				const wait = ENGINE_RETRY_MS[tries];
+				tries += 1;
+				if (wait !== undefined) {
+					// The same URL: the browser fetches it again unless the
+					// failure came with cache headers, as a missing file's may.
+					setTimeout(() => {
+						if (boot.disposed) {
+							engineRequested = false;
+						} else if (!api) {
+							request();
+						}
+					}, wait);
+					return;
+				}
+				engineError = new Error(
+					`@inth/sdk: inth.hosted.js failed to load ${tries} times, from ${src}.`
+				);
+				// oxlint-disable-next-line no-console -- The engine is not coming.
+				console.error(engineError.message);
+				for (const call of boot.calls.splice(0) as SettledCall[]) {
+					call.settle?.(engineError, true);
+				}
+			});
+		};
+		request();
 	};
 
 	/**
@@ -319,7 +361,11 @@ export const runInitScript = function runInitScript(
 	};
 
 	const queue = function queue(call: SettledCall): void {
-		boot.calls.push(call);
+		if (engineError) {
+			call.settle?.(engineError, true);
+		} else {
+			boot.calls.push(call);
+		}
 	};
 
 	/**
@@ -874,12 +920,14 @@ export const runInitScript = function runInitScript(
 	document.addEventListener('click', onPageClick);
 	cleanups.push(() => document.removeEventListener('click', onPageClick));
 
+	/** With `failable`, rejects when the engine fails to load. */
 	const withClient = function withClient<Result>(
-		run: (client: ConsentClient) => Result
+		run: (client: ConsentClient) => Result,
+		failable = false
 	): Promise<Result> {
 		// oxlint-disable-next-line promise/avoid-new -- Settled from the engine's onInit.
 		return new Promise((resolve, reject) => {
-			queue([
+			const call: SettledCall = [
 				'onInit',
 				(client: ConsentClient) => {
 					try {
@@ -888,7 +936,15 @@ export const runInitScript = function runInitScript(
 						reject(error);
 					}
 				},
-			]);
+			];
+			if (failable) {
+				call.settle = (error, failed) => {
+					if (failed) {
+						reject(error);
+					}
+				};
+			}
+			queue(call);
 		});
 	};
 
@@ -1039,7 +1095,8 @@ export const runInitScript = function runInitScript(
 			}
 			return calls.length;
 		},
-		ready: () => (api ? api.ready() : withClient((client) => client.ready())),
+		ready: () =>
+			api ? api.ready() : withClient((client) => client.ready(), true),
 		rejectAll: () => tap('none'),
 		subscribe(listener: (next: ConsentSnapshot) => void) {
 			if (api) {

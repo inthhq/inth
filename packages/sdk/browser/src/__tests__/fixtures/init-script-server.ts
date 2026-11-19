@@ -4,9 +4,11 @@
  * `/subjects`, and gated scripts that report when they run.
  *
  * - `/__inth-dist__/<file>?delay=<ms>`: a file from `dist/`, held back
- *   `delay` ms.
+ *   `delay` ms. With `fail=<n>`, the first `n` such requests after a page
+ *   loads get a 404.
  * - `/__inth-init__/page?<query>`: a page whose `inth.js` tag uses the
- *   query: `manual`, `head` (tag in `<head>`), `hosted-delay`, `commit`,
+ *   query: `manual`, `head` (tag in `<head>`), `hosted-delay`,
+ *   `hosted-fail` (that many 404s for `inth.hosted.js`), `commit`,
  *   `records` and `dialog` (a delay for that file in ms, `fail` for a 404,
  *   or for `dialog`, `stale` for a file from another release),
  *   `queue` (a `window.inth` queue before the tag that records `ready`) and
@@ -23,6 +25,8 @@
  * - `/__inth-init__/saves`: how many saves arrived since the last read.
  * - `/__inth-init__/inits`: how many `/init` requests arrived since the
  *   last read.
+ * - `/__inth-init__/hosted-requests`: how many `fail=<n>` requests arrived
+ *   since the last read.
  * - `/__inth-init__/gated.js?name=<name>`: pushes `name` onto
  *   `window.__ran`.
  */
@@ -74,6 +78,8 @@ const wait = (ms: number) =>
 let saves = 0;
 let inits = 0;
 let initDelay = 0;
+let hostedRequests = 0;
+let failsSincePage = 0;
 
 const page = (query: URLSearchParams): string => {
 	const queue = query.has('queue')
@@ -94,7 +100,7 @@ const page = (query: URLSearchParams): string => {
 		}
 		return ` data-${name}-src="${src}"`;
 	};
-	const tag = `${queue}<script src="/__inth-dist__/inth.js" data-project-url="/__inth-init__/backend" data-hosted-src="/__inth-dist__/inth.hosted.js?delay=${Number(query.get('hosted-delay') ?? 0)}"${part('commit')}${part('records')}${part('dialog')}${query.has('manual') ? ' data-manual' : ''}></script>`;
+	const tag = `${queue}<script src="/__inth-dist__/inth.js" data-project-url="/__inth-init__/backend" data-hosted-src="/__inth-dist__/inth.hosted.js?delay=${Number(query.get('hosted-delay') ?? 0)}${query.has('hosted-fail') ? `&amp;fail=${Number(query.get('hosted-fail'))}` : ''}"${part('commit')}${part('records')}${part('dialog')}${query.has('manual') ? ' data-manual' : ''}></script>`;
 	const head = query.has('head') ? tag : '';
 	const body = query.has('head') ? '' : tag;
 	return `<!doctype html><html><head><meta charset="utf-8">${head}</head><body>
@@ -106,6 +112,18 @@ ${query.has('hero') ? `<img fetchpriority="high" alt="" src="/__inth-init__/hero
 <script type="text/plain" data-inth-category="marketing" src="/__inth-init__/gated.js?name=marketing"></script>
 ${body}
 </body></html>`;
+};
+
+/** Count a `fail=<n>` request; whether it gets a 404. */
+const countedFailure = function countedFailure(
+	query: URLSearchParams
+): boolean {
+	if (!query.has('fail')) {
+		return false;
+	}
+	hostedRequests += 1;
+	failsSincePage += 1;
+	return failsSincePage <= Number(query.get('fail'));
 };
 
 /**
@@ -122,6 +140,11 @@ export const serveInitScriptFixture = async function serveInitScriptFixture(
 	const url = new URL(request.url ?? '/', 'http://fixture.test');
 	if (url.pathname.startsWith('/__inth-dist__/')) {
 		await wait(Number(url.searchParams.get('delay') ?? 0));
+		if (countedFailure(url.searchParams)) {
+			response.statusCode = 404;
+			response.end();
+			return;
+		}
 		const file = url.pathname.slice('/__inth-dist__/'.length);
 		response.setHeader('Content-Type', 'text/javascript');
 		response.end(await readFile(resolvePath(dist, file)));
@@ -148,6 +171,7 @@ export const serveInitScriptFixture = async function serveInitScriptFixture(
 		return;
 	}
 	if (url.pathname === '/__inth-init__/page') {
+		failsSincePage = 0;
 		response.setHeader('Content-Type', 'text/html');
 		response.end(page(url.searchParams));
 		return;
@@ -161,6 +185,12 @@ export const serveInitScriptFixture = async function serveInitScriptFixture(
 		response.setHeader('Content-Type', 'application/json');
 		response.end(JSON.stringify(inits));
 		inits = 0;
+		return;
+	}
+	if (url.pathname === '/__inth-init__/hosted-requests') {
+		response.setHeader('Content-Type', 'application/json');
+		response.end(JSON.stringify(hostedRequests));
+		hostedRequests = 0;
 		return;
 	}
 	if (url.pathname === '/__inth-init__/saves') {

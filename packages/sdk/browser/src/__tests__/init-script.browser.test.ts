@@ -90,11 +90,15 @@ const initsSoFar = async (): Promise<number> =>
 const savesSoFar = async (): Promise<number> =>
 	(await (await fetch('/__inth-init__/saves')).json()) as number;
 
+const hostedRequestsSoFar = async (): Promise<number> =>
+	(await (await fetch('/__inth-init__/hosted-requests')).json()) as number;
+
 beforeEach(async () => {
 	clearStorage();
 	await setInitDelay(0);
 	await savesSoFar();
 	await initsSoFar();
+	await hostedRequestsSoFar();
 });
 
 afterEach(() => {
@@ -289,6 +293,70 @@ describe('inth.js before the engine', () => {
 		(win.inth.init as () => unknown)();
 		await expect.poll(() => win.inth.client).not.toBeNull();
 		await expect.poll(() => bannerOf(win), { timeout: 5000 }).not.toBeNull();
+	});
+});
+
+describe('inth.hosted.js failing to load', () => {
+	it('loads the engine on the second try, and runs the queued calls', async () => {
+		const win = await open({ 'hosted-fail': 1, queue: true });
+
+		await expect.poll(() => win.inth.client, { timeout: 5000 }).not.toBeNull();
+		await expect.poll(() => win.__heard).toEqual(['queued ready']);
+		expect(await hostedRequestsSoFar()).toBe(2);
+		// The failed tag went with its failure.
+		expect(
+			win.document.querySelectorAll('script[src*="inth.hosted.js"]')
+		).toHaveLength(1);
+	});
+
+	it('gives up after three tries with one error, and rejects what waits for the engine', async () => {
+		const win = await open({ 'hosted-fail': 3 });
+		const errors: unknown[][] = [];
+		win.console.error = (...args: unknown[]) => {
+			errors.push(args);
+		};
+		const ready = (win.inth.ready as () => Promise<unknown>)();
+		const dismissed = (win.inth.dismissNotice as () => Promise<unknown>)();
+		const failure = {
+			message: expect.stringContaining('inth.hosted.js failed to load 3 times'),
+		};
+
+		await expect(ready).rejects.toMatchObject(failure);
+		await expect(dismissed).rejects.toMatchObject(failure);
+		expect(errors).toHaveLength(1);
+		expect(String(errors[0]?.[0])).toContain('inth.hosted.js');
+		// A call after that fails at once.
+		await expect(
+			(win.inth.ready as () => Promise<unknown>)()
+		).rejects.toMatchObject(failure);
+		// No fourth try, even with the longest retry wait gone by.
+		await new Promise((resolve) => {
+			setTimeout(resolve, 2500);
+		});
+		expect(await hostedRequestsSoFar()).toBe(3);
+		expect(errors).toHaveLength(1);
+		expect(win.inth.client).toBeNull();
+	}, 15_000);
+
+	it('stops retrying after dispose(), and init() loads the engine again', async () => {
+		const win = await open({ 'hosted-fail': 1 });
+		await expect
+			.poll(() =>
+				win.performance
+					.getEntriesByType('resource')
+					.some(({ name }) => name.includes('inth.hosted.js'))
+			)
+			.toBe(true);
+
+		(win.inth.dispose as () => void)();
+		await new Promise((resolve) => {
+			setTimeout(resolve, 1500);
+		});
+		expect(await hostedRequestsSoFar()).toBe(1);
+
+		(win.inth.init as () => unknown)();
+		await expect.poll(() => win.inth.client, { timeout: 5000 }).not.toBeNull();
+		expect(await hostedRequestsSoFar()).toBe(1);
 	});
 });
 
