@@ -91,7 +91,7 @@ export const withIosDeploymentTargetFloor: ConfigPlugin = (config) => {
  * into the app's `PrivacyInfo.xcprivacy`. A plugin that wrote the file itself
  * would fight that merge on every `expo prebuild`.
  */
-export interface InthPrivacyManifestDeclarations {
+export interface PrivacyManifestDeclarations {
 	/** Whether the shipped binary uses data for tracking. */
 	NSPrivacyTracking: boolean;
 	/** Hosts the binary may send tracking data to. */
@@ -576,7 +576,7 @@ export const applyLocalizedMarkdownDescriptions =
 export const buildPrivacyManifestDeclarations =
 	function buildPrivacyManifestDeclarations(
 		params: ResolvedInthParams
-	): InthPrivacyManifestDeclarations {
+	): PrivacyManifestDeclarations {
 		return {
 			NSPrivacyTracking: params.appTrackingTransparency.enabled,
 			NSPrivacyTrackingDomains: [...params.privacyTrackingDomains],

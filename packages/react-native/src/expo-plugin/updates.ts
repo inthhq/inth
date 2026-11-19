@@ -9,7 +9,7 @@ import {
 import { InthPluginError } from './errors';
 
 /** The protocol range this JavaScript package speaks, as embeddable data. */
-export interface InthProtocolInfo {
+export interface ProtocolInfo {
 	/** Protocol this package speaks. */
 	protocolVersion: number;
 	/** Oldest native build this package can talk to. */
@@ -26,14 +26,13 @@ export interface InthProtocolInfo {
  * provider compares the two at mount, which is the only check that can see an
  * over-the-air update at all.
  */
-export const buildProtocolInfo =
-	function buildProtocolInfo(): InthProtocolInfo {
-		return {
-			maxSupportedProtocolVersion: MAX_SUPPORTED_PROTOCOL_VERSION,
-			minSupportedProtocolVersion: MIN_SUPPORTED_PROTOCOL_VERSION,
-			protocolVersion: PROTOCOL_VERSION,
-		};
+export const buildProtocolInfo = function buildProtocolInfo(): ProtocolInfo {
+	return {
+		maxSupportedProtocolVersion: MAX_SUPPORTED_PROTOCOL_VERSION,
+		minSupportedProtocolVersion: MIN_SUPPORTED_PROTOCOL_VERSION,
+		protocolVersion: PROTOCOL_VERSION,
 	};
+};
 
 const isUpdatesEnabled = function isUpdatesEnabled(
 	config: ExportedConfig

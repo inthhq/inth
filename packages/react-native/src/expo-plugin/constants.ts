@@ -175,7 +175,7 @@ export const CONSENT_CATEGORY_IDS = [
 ] as const;
 
 /** One declared consent category id. */
-export type InthConsentCategoryId = (typeof CONSENT_CATEGORY_IDS)[number];
+export type ConsentCategoryId = (typeof CONSENT_CATEGORY_IDS)[number];
 
 /**
  * Shape Apple accepts for an SKAdNetwork identifier.

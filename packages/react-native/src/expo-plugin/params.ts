@@ -4,7 +4,7 @@ import {
 	LOCALE_TAG_PATTERN,
 	SK_AD_NETWORK_IDENTIFIER_PATTERN,
 } from './constants';
-import type { InthConsentCategoryId } from './constants';
+import type { ConsentCategoryId } from './constants';
 import { InthPluginError } from './errors';
 import { resolveAndroidMavenRepository } from './maven';
 import type { InthAndroidMavenRepository } from './maven';
@@ -67,7 +67,7 @@ export interface InthGppPluginProps {
 	 *
 	 * @defaultValue ['marketing']
 	 */
-	optOutCategories?: readonly InthConsentCategoryId[];
+	optOutCategories?: readonly ConsentCategoryId[];
 	/**
 	 * Include the TCF EU section under an `iab` policy.
 	 *
@@ -84,7 +84,7 @@ export interface ResolvedInthGppParams {
 	 * `null` when the option was not set: no key is written and the cores use
 	 * their default, `marketing`. A list, empty included, is written as given.
 	 */
-	readonly optOutCategories: readonly InthConsentCategoryId[] | null;
+	readonly optOutCategories: readonly ConsentCategoryId[] | null;
 	readonly tcf: boolean;
 }
 
@@ -99,7 +99,7 @@ export interface ResolvedInthIabParams {
 }
 
 /** Optional categories a policy rule can name. `necessary` is tolerated and dropped. */
-export type InthPolicyCategory = InthConsentCategoryId;
+export type InCodePolicyCategory = ConsentCategoryId;
 
 /**
  * Where a policy rule applies, in the backend's `PolicyMatch` names.
@@ -108,7 +108,7 @@ export type InthPolicyCategory = InthConsentCategoryId;
  * for a country without a region, then the `fallback` rule for an unknown
  * location, then the `isDefault` rule.
  */
-export interface InthPolicyMatch {
+export interface InCodePolicyMatch {
 	regions?: readonly { country: string; region: string }[];
 	countries?: readonly string[];
 	regionFallbacks?: readonly string[];
@@ -123,30 +123,32 @@ export interface InthPolicyMatch {
  * list comes from `/init`, and minus the `rights`, `proof`, `i18n` and
  * `legacyMaterial` fields, which the device does not read.
  */
-export interface InthPolicyRule {
+export interface InCodePolicyRule {
 	id: string;
-	match: InthPolicyMatch;
+	match: InCodePolicyMatch;
 	model: 'opt-in' | 'opt-out' | 'none';
 	prompt: 'choice' | 'notice' | 'none';
 	/** Optional categories in scope. Omitted or `'*'` means every optional category. */
-	categories?: readonly InthPolicyCategory[] | readonly ['*'];
+	categories?: readonly InCodePolicyCategory[] | readonly ['*'];
 	/** How categories outside `categories` behave. Required for a partial scope. */
 	scopeMode?: 'strict' | 'permissive';
 	/** Categories the preference form preselects. Inside `categories`. */
-	preselectedCategories?: readonly InthPolicyCategory[];
+	preselectedCategories?: readonly InCodePolicyCategory[];
 	/** Actions a choice prompt offers. `accept` and `reject` are always offered. */
 	actions?: readonly ('accept' | 'reject' | 'customize')[];
 	/** Validity in days, fractions allowed. Defaults to 365. */
 	validity?: { choiceDays?: number; noticeDays?: number };
 	/** Categories an active Global Privacy Control signal denies. */
-	privacySignals?: { gpc?: { denyCategories: readonly InthPolicyCategory[] } };
+	privacySignals?: {
+		gpc?: { denyCategories: readonly InCodePolicyCategory[] };
+	};
 	/** Bump it when the wording a person agreed to changes; they are asked again. */
 	copyRevision?: string;
 }
 
 /** The in-code policy: rules the device resolves itself, without `/init`. */
-export interface InthPolicy {
-	rules: readonly InthPolicyRule[];
+export interface InCodePolicy {
+	rules: readonly InCodePolicyRule[];
 }
 
 /**
@@ -197,7 +199,7 @@ export interface InthPluginProps {
 	 * unless the app sets an override country and region. Cannot be combined
 	 * with `policyResource`, `bundleManifest` or `iab`.
 	 */
-	policy?: InthPolicy;
+	policy?: InCodePolicy;
 	/**
 	 * The project URL from your Inth dashboard, such as
 	 * `https://your-project.inth.app`. Required.
@@ -230,7 +232,7 @@ export interface InthPluginProps {
 	 * the same rows on web and mobile. Omit it to declare none: a strict policy
 	 * then offers its full scope and a permissive one offers `necessary` alone.
 	 */
-	consentCategories?: readonly InthConsentCategoryId[];
+	consentCategories?: readonly ConsentCategoryId[];
 	/**
 	 * The IAB vendor ids this app may disclose, the mobile spelling of the
 	 * `iab.vendors` array a web host passes to its provider.
@@ -378,7 +380,7 @@ export interface ResolvedInthParams {
 	/** Build-time manifest fetch settings, or `null` when the plugin fetches nothing. */
 	readonly bundleManifest: ResolvedBundleManifest | null;
 	/** The in-code policy rules, or `null` when the policy comes from `/init`. */
-	readonly policyRules: readonly InthPolicyRule[] | null;
+	readonly policyRules: readonly InCodePolicyRule[] | null;
 	/** The project URL in its normal form, without a trailing slash. */
 	readonly projectUrl: string;
 	/** Hostname of {@link projectUrl}, used for the iOS privacy manifest. */
@@ -394,7 +396,7 @@ export interface ResolvedInthParams {
 	 * `com.inth.CATEGORIES` meta-data. Absent keys are the no-declaration answer,
 	 * so the empty list is written nowhere rather than as an empty value.
 	 */
-	readonly consentCategories: readonly InthConsentCategoryId[];
+	readonly consentCategories: readonly ConsentCategoryId[];
 	/**
 	 * Vendor ids the app declares, de-duplicated; empty means no declaration.
 	 *
@@ -544,7 +546,7 @@ const normalizeTrackingDomain = function normalizeTrackingDomain(
 
 const normalizeConsentCategories = function normalizeConsentCategories(
 	categories: readonly string[] | undefined
-): InthConsentCategoryId[] {
+): ConsentCategoryId[] {
 	if (categories === undefined) {
 		return [];
 	}
@@ -576,7 +578,7 @@ const normalizeConsentCategories = function normalizeConsentCategories(
 				`${unknown.map((name) => JSON.stringify(name)).join(', ')}.`
 		);
 	}
-	return [...new Set(trimmed)] as InthConsentCategoryId[];
+	return [...new Set(trimmed)] as ConsentCategoryId[];
 };
 
 /**
@@ -704,7 +706,7 @@ const normalizeIab = function normalizeIab(
  */
 const normalizeGppOptOutCategories = function normalizeGppOptOutCategories(
 	categories: readonly string[]
-): InthConsentCategoryId[] {
+): ConsentCategoryId[] {
 	if (!Array.isArray(categories)) {
 		throw new InthPluginError(
 			'gpp.optOutCategories must be an array of category ids, such as ' +
@@ -728,7 +730,7 @@ const normalizeGppOptOutCategories = function normalizeGppOptOutCategories(
 	}
 	return [...new Set(trimmed)].filter(
 		(category) => category !== 'necessary'
-	) as InthConsentCategoryId[];
+	) as ConsentCategoryId[];
 };
 
 const GPP_MSPA_MODES: readonly InthGppMspaMode[] = [
@@ -1401,8 +1403,8 @@ const policyRuleProblem = function policyRuleProblem(
  * launch, so a policy the device would refuse never reaches a build.
  */
 const normalizePolicy = function normalizePolicy(
-	policy: InthPolicy | undefined
-): readonly InthPolicyRule[] | null {
+	policy: InCodePolicy | undefined
+): readonly InCodePolicyRule[] | null {
 	if (policy === undefined) {
 		return null;
 	}
@@ -1420,7 +1422,7 @@ const normalizePolicy = function normalizePolicy(
 	if (problem !== undefined && problem !== null) {
 		throw new InthPluginError(problem);
 	}
-	const valid = rules as InthPolicyRule[];
+	const valid = rules as InCodePolicyRule[];
 	const ids = valid.map((rule) => rule.id.trim());
 	const repeated = ids.find((id, index) => ids.indexOf(id) !== index);
 	if (repeated !== undefined) {
