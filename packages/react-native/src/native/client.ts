@@ -164,7 +164,7 @@ export interface ConsentClient {
 	/**
 	 * Ask the platform for tracking authorization.
 	 *
-	 * {@link ConsentProvider} calls it after the consent prompt closes with
+	 * {@link InthProvider} calls it after the consent prompt closes with
 	 * marketing granted, unless `trackingRequest` says otherwise. A platform
 	 * prompt that arrives before the subject has been told anything is the
 	 * rejection Apple writes back to the developer, and it is the ordering the ATT
@@ -219,7 +219,7 @@ export interface ConsentClient {
 	 * which is right for a render path and wrong for the one moment the answer
 	 * genuinely moves: the subject went to the Settings app, changed tracking, and
 	 * came back. Apple tells a running process nothing when that happens, so this is
-	 * the read that has to be asked for, and it is what {@link ConsentProvider} calls
+	 * the read that has to be asked for, and it is what {@link InthProvider} calls
 	 * when the app returns to the foreground.
 	 *
 	 * @returns The freshly read arm, with subscribers notified only when it moved.
@@ -1140,7 +1140,7 @@ export const getConsentClient = function getConsentClient(): ConsentClient {
  * Make `next` the app's shared client, so {@link getConsentClient} returns it.
  *
  * Only `@inth/react-native/testing` calls this, so an app's own
- * `<ConsentProvider>` and its integrations reach the test client.
+ * `<InthProvider>` and its integrations reach the test client.
  *
  * @internal
  * @param next - The client to share. The previous one is disposed.

@@ -88,7 +88,7 @@ export interface TestConsentSession {
 	readonly presentation: 'prompt' | 'preferences';
 	/**
 	 * `true` when native opened it by itself because a prompt was owed and a
-	 * `<ConsentProvider>` presents, `false` when the app called
+	 * `<InthProvider>` presents, `false` when the app called
 	 * `presentConsentPrompt()` or `presentPreferences()`.
 	 */
 	readonly automatic: boolean;
@@ -98,7 +98,7 @@ export interface TestConsentSession {
  * The simulated native consent screens.
  *
  * Native opens the owed prompt by itself as soon as a presenting
- * `<ConsentProvider>` mounts, and `presentConsentPrompt()` and
+ * `<InthProvider>` mounts, and `presentConsentPrompt()` and
  * `presentPreferences()` open a screen at once. Nothing is drawn: answer the
  * open screen with these methods, the way a person would tap it.
  */
@@ -150,9 +150,9 @@ export interface TestConsentPrompt {
 export interface TestConsentClient {
 	/**
 	 * The consent client, built by the same `createConsentClient` an app runs,
-	 * over a fake native module. Pass it to `<ConsentProvider client>`. It is
+	 * over a fake native module. Pass it to `<InthProvider client>`. It is
 	 * also the app's shared client until {@link TestConsentClient.dispose}, so an
-	 * app component that renders its own `<ConsentProvider>` reaches it too.
+	 * app component that renders its own `<InthProvider>` reaches it too.
 	 */
 	readonly client: ConsentClient;
 	/**
@@ -270,7 +270,7 @@ let active: TestConsentClient | null = null;
  * exists.
  *
  * The client is the real one, built by `createConsentClient` over a fake native
- * core. Hooks, `<ConsentProvider>`, the headless components and the presenter
+ * core. Hooks, `<InthProvider>`, the headless components and the presenter
  * calls run the same code they run in an app. The fake stores each commit the
  * way a native core does, so the hooks rerender with the saved consent.
  *
@@ -283,16 +283,16 @@ let active: TestConsentClient | null = null;
  * @example
  * ```tsx
  * import { fireEvent, render, screen } from '@testing-library/react-native';
- * import { ConsentProvider } from '@inth/react-native';
+ * import { InthProvider } from '@inth/react-native';
  * import { createTestConsentClient } from '@inth/react-native/testing';
  *
  * test('turns analytics on after accept all', async () => {
  *     const consent = createTestConsentClient({ consent: 'unset' });
  *
  *     await render(
- *         <ConsentProvider client={consent.client} autoPresent={false}>
+ *         <InthProvider client={consent.client} autoPresent={false}>
  *             <AnalyticsScreen />
- *         </ConsentProvider>
+ *         </InthProvider>
  *     );
  *     await fireEvent.press(screen.getByText('Accept all'));
  *

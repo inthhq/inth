@@ -1,16 +1,16 @@
 // #region docs:app-entry title="App.tsx"
-import { ConsentProvider } from '@inth/react-native';
+import { InthProvider } from '@inth/react-native';
 import { Text, View } from 'react-native';
 
 import { PrivacySettingsButton } from './setup';
 
 const App = () => (
-	<ConsentProvider privacyPolicyUrl="https://example.com/privacy">
+	<InthProvider privacyPolicyUrl="https://example.com/privacy">
 		<View>
 			<Text>My app</Text>
 			<PrivacySettingsButton />
 		</View>
-	</ConsentProvider>
+	</InthProvider>
 );
 
 export default App;

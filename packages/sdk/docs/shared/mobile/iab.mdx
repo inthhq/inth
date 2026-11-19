@@ -143,7 +143,7 @@ appears. By default the consent prompt comes first. Apple's alert follows once
 the prompt has closed, and only if the person granted marketing. Someone who
 refused marketing never sees it.
 
-Set the order with `trackingRequest` on `<ConsentProvider>` in React Native, or
+Set the order with `trackingRequest` on `<InthProvider>` in React Native, or
 on `.inth(...)` and `ConsentRootViewController` in Swift:
 
 | Value | What happens |
@@ -205,7 +205,7 @@ How it behaves:
   refusal is gone, for example after a reset, it asks then.
 - Privacy settings the person opens are never delayed. They asked for those
   controls, and Apple's alert is not one of them.
-- It is in force from the first render of `<ConsentProvider>`, before your own
+- It is in force from the first render of `<InthProvider>`, before your own
   components' effects run. In Swift, a `presentPrompt()` call made before the
   `.inth` scene has attached, for example from a view's `onAppear`, waits
   for that scene and follows its order.
@@ -223,7 +223,7 @@ Apple shows the Additional Information button only when something will handle
 the tap. The stock UI does, so the SDK asks for the button when it can open its
 own screens. A React Native app that draws its own consent UI, or a build
 without the stock native screens, gets the button only by passing
-`onTrackingAdditionalInformation` to `<ConsentProvider>`, which runs on a tap.
+`onTrackingAdditionalInformation` to `<InthProvider>`, which runs on a tap.
 Your own calls to `requestTrackingAuthorization()` and `InthApple.tracking.request`
 show no button unless you pass a handler (`onAdditionalInformation:` in Swift);
 `useTrackingRequest()` asks for it and opens its preference centre.
@@ -241,7 +241,7 @@ in the Expo plugin) is the optional rich-text copy for that sheet.
 
 In the European Union Apple lets an app show its alert again one year after the
 person's previous answer, whichever way it went. It is off by default. Turn it
-on with `trackingReprompt` on `<ConsentProvider>` in React Native, or
+on with `trackingReprompt` on `<InthProvider>` in React Native, or
 `trackingReprompt:` on `.inth(...)` and `ConsentRootViewController` in
 Swift:
 

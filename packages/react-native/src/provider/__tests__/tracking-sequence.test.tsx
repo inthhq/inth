@@ -27,8 +27,8 @@ import {
 	presentPreferences,
 } from '../../native/presenter';
 import type { ConsentSnapshot, TrackingAuthorization } from '../../protocol';
-import { ConsentProvider } from '../consent-provider';
-import type { ConsentProviderProps } from '../consent-provider';
+import { InthProvider } from '../inth-provider';
+import type { InthProviderProps } from '../inth-provider';
 import {
 	isRepromptDue,
 	shouldRequestTracking,
@@ -148,10 +148,10 @@ const finish = function finish(
 };
 
 const App = (
-	props: Partial<ConsentProviderProps> & { readonly children?: ReactNode }
+	props: Partial<InthProviderProps> & { readonly children?: ReactNode }
 ): ReactNode => (
-	<ConsentProvider
-		{...(props as ConsentProviderProps)}
+	<InthProvider
+		{...(props as InthProviderProps)}
 		privacyPolicyUrl={URL}
 	/>
 );
@@ -311,7 +311,7 @@ describe('afterConsent (default)', () => {
 
 	test('with autoPresent off, asks after a prompt the app opened but not at launch', async () => {
 		const { fake } = boot(saved(true));
-		const tree = renderTree(<ConsentProvider autoPresent={false} />);
+		const tree = renderTree(<InthProvider autoPresent={false} />);
 		await flushPromises();
 		expect(fake.trackingRequestCalls).toBe(0);
 
@@ -485,7 +485,7 @@ describe('Additional Information without a provider URL', () => {
 			stage: 'additional-information',
 			status: 'not-determined',
 		});
-		const tree = renderTree(<ConsentProvider autoPresent={false} />);
+		const tree = renderTree(<InthProvider autoPresent={false} />);
 		await flushPromises();
 		await presentConsentPrompt('https://app.example/privacy');
 
@@ -516,7 +516,7 @@ describe('beforeConsent and screens the app opens', () => {
 	test('a prompt the app opens waits for Apple first', async () => {
 		const { order } = boot(owed);
 		const tree = renderTree(
-			<ConsentProvider
+			<InthProvider
 				autoPresent={false}
 				trackingRequest="beforeConsent"
 			/>
@@ -532,7 +532,7 @@ describe('beforeConsent and screens the app opens', () => {
 	test('settings the person opens are not delayed', async () => {
 		const { order } = boot(owed);
 		const tree = renderTree(
-			<ConsentProvider
+			<InthProvider
 				autoPresent={false}
 				trackingRequest="beforeConsent"
 			/>
@@ -616,12 +616,12 @@ describe('beforeConsent when a child presents as it mounts', () => {
 		async (_name, strict, layout) => {
 			const { fake, order } = boot(owed);
 			const app = (
-				<ConsentProvider
+				<InthProvider
 					autoPresent={false}
 					trackingRequest="beforeConsent"
 				>
 					{layout ? <PresentsInLayoutEffect /> : <PresentsInEffect />}
-				</ConsentProvider>
+				</InthProvider>
 			);
 			const tree = renderTree(strict ? <StrictMode>{app}</StrictMode> : app);
 			await flushPromises();
@@ -635,7 +635,7 @@ describe('beforeConsent when a child presents as it mounts', () => {
 	test('a provider that unmounts stops holding the next prompt', async () => {
 		const { order } = boot(owed);
 		const tree = renderTree(
-			<ConsentProvider
+			<InthProvider
 				autoPresent={false}
 				trackingRequest="beforeConsent"
 			/>
@@ -1044,7 +1044,7 @@ describe('final review round', () => {
 	test('a build without the stock screens and no handler gets no button', async () => {
 		const { fake } = boot(owed);
 		Object.assign(getConsentClient().bootstrap, { nativeUI: false });
-		const tree = renderTree(<ConsentProvider autoPresent={false} />);
+		const tree = renderTree(<InthProvider autoPresent={false} />);
 		await flushPromises();
 		finish(fake, saved(true));
 		await flushPromises();
@@ -1062,7 +1062,7 @@ describe('final review round', () => {
 		});
 		const controls = vi.fn();
 		const tree = renderTree(
-			<ConsentProvider
+			<InthProvider
 				autoPresent={false}
 				onTrackingAdditionalInformation={controls}
 			/>
@@ -1081,7 +1081,7 @@ describe('final review round', () => {
 	test("the app's own requestTrackingAuthorization() offers no button", async () => {
 		const { fake } = boot(saved(false));
 		const tree = renderTree(
-			<ConsentProvider
+			<InthProvider
 				autoPresent={false}
 				trackingRequest="manual"
 			/>

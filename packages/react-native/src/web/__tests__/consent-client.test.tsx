@@ -21,7 +21,7 @@ import {
 	claimPrompt,
 	UNCLAIMED_PROMPT_MS,
 } from '../../native/without-native-ui';
-import { ConsentClientContext, ConsentProvider } from '../../provider';
+import { ConsentClientContext, InthProvider } from '../../provider';
 import {
 	createWebConsentClient,
 	WEB_CONFIGURATION_DRY_RUN_CODE,
@@ -691,9 +691,9 @@ describe('the shared provider on web', () => {
 
 		const tree = renderTree(
 			<ConsentClientContext.Provider value={client}>
-				<ConsentProvider autoPresent={false}>
+				<InthProvider autoPresent={false}>
 					<ConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			</ConsentClientContext.Provider>
 		);
 		await act(async () => {

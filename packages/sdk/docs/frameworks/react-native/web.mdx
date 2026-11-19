@@ -6,7 +6,7 @@ group: frameworks
 
 A universal Expo app imports `@inth/react-native` once for iOS, Android and
 web. On iOS and Android, consent runs in the native core inside the app binary.
-On web there is no binary, so the same `ConsentProvider`, hooks and components
+On web there is no binary, so the same `InthProvider`, hooks and components
 run on `@inth/sdk`, the engine the Inth web SDKs use. Both talk to the same
 Inth project.
 
@@ -60,15 +60,15 @@ own UI inside `ConsentPrompt`, for web:
 {/* example: fragment */}
 
 ```tsx title="App.tsx"
-import { ConsentBanner, ConsentProvider } from '@inth/react-native';
+import { ConsentBanner, InthProvider } from '@inth/react-native';
 import { Platform } from 'react-native';
 
 export default function App() {
 	return (
-		<ConsentProvider privacyPolicyUrl="https://example.com/privacy">
+		<InthProvider privacyPolicyUrl="https://example.com/privacy">
 			<Root />
 			{Platform.OS === 'web' ? <ConsentBanner /> : null}
-		</ConsentProvider>
+		</InthProvider>
 	);
 }
 ```
@@ -87,7 +87,7 @@ seconds, a development build warns in the browser console.
 
 | Feature | Web behavior |
 | --- | --- |
-| `ConsentProvider`, `useConsent`, `useConsentDecision`, `useSnapshot` and the other read hooks | Same API. The snapshot comes from the browser engine. |
+| `InthProvider`, `useConsent`, `useConsentDecision`, `useSnapshot` and the other read hooks | Same API. The snapshot comes from the browser engine. |
 | `ConsentGate`, `ConsentReady`, `ConsentPrompt` | Same API. |
 | `ConsentBanner`, `ConsentDialog`, `ConsentPreferences` | Render through React Native for Web. |
 | Saving a choice (`useSaveConsents`, `commit`) | Saves to the browser's cookie and `localStorage`, then sends the record to your Inth project. A save the network refuses is queued and retried. |

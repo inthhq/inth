@@ -422,7 +422,7 @@ Presenting the consent prompt
 The stock UI presents an owed prompt by itself. It is on by default on every
 platform, and each one offers the same opt-out:
 
-    React Native   <ConsentProvider privacyPolicyURL="https://...">     autoPresent={false}
+    React Native   <InthProvider privacyPolicyURL="https://...">     autoPresent={false}
     SwiftUI        view.inth(configuration, privacyPolicyURL:)  autoPresent: false
                    view.inth(privacyPolicyURL:)                 (core already installed)
     UIKit          ConsentRootViewController(root:configuration:privacyPolicyURL:)
@@ -474,7 +474,7 @@ The rules, identical on all three:
 
 **One decision, in native.** Only the native `ConsentPrompt` decides when a
 prompt is owed and opens it, on all three platforms. React Native does not
-decide: `ConsentProvider` hands native its settings and observes what native
+decide: `InthProvider` hands native its settings and observes what native
 shows, so no rule about when a prompt is owed exists in JavaScript.
 
 **The invariant.** If a prompt is owed, auto-present is on, and nothing of ours
@@ -558,7 +558,7 @@ In that last case `onConsentPresenterUnavailable` follows it, and the prompt
 shows when the app returns. On iOS the outcome also waits for the cover to
 animate away.
 
-`ConsentProvider` mirrors only what is on screen, from these events and from the
+`InthProvider` mirrors only what is on screen, from these events and from the
 answers to the app's own `presentConsentPrompt` and `presentPreferences`, so the
 ATT sequence can wait for it. With `trackingRequest="beforeConsent"` it keeps
 auto-present off until Apple has been asked: native opens an owed prompt the
@@ -576,7 +576,7 @@ as the host notices, so no request is answered with a session that is not
 visible. A repeated prompt request re-asks the open session, so a notice owed
 again shows. A refused privacy-policy URL is rejected with
 `INTH_PRESENTER_INVALID_URL`, by `configureAutoPresent` and the presenter calls
-alike; it is permanent, and `ConsentProvider` reports it with `console.error`.
+alike; it is permanent, and `InthProvider` reports it with `console.error`.
 A binary built without the stock screens rejects every presenter call, and
 `configureAutoPresent` with `autoPresent: true`, with `INTH_NATIVE_UI_EXCLUDED`,
 also permanent: the provider reports it once. When the bootstrap already says
@@ -596,7 +596,7 @@ follow the prompt, such as Apple's tracking request, attaches there. On iOS the
 React Native outcome is sent once the cover has finished animating away.
 
 The stock prompt sequences ATT through `trackingRequest` (`afterConsent` by
-default, `beforeConsent`, `manual`) on `<ConsentProvider>`, `.inth(...)`
+default, `beforeConsent`, `manual`) on `<InthProvider>`, `.inth(...)`
 and `ConsentRootViewController`. It asks only when
 `NSUserTrackingUsageDescription` is present, marketing is not refused (a stored
 choice, or a `gpc` or `explicit-denial` restriction on marketing), the app is
@@ -1641,7 +1641,7 @@ The bridge does not carry them, and it is the wrong place for them. Nothing in
 2 keeps the consent cores free of UI: a home indicator is not consent state, and
 neither core owns a window or a UI thread to read one from.
 
-The bands reach the surfaces from the app instead, through `ConsentProvider`'s
+The bands reach the surfaces from the app instead, through `InthProvider`'s
 `safeAreaInsets`, which the provider publishes on a context and
 `useConsentSafeArea()` reads. The host measures rather than the bridge because
 React Native itself has no inset API worth calling one: `SafeAreaView` is

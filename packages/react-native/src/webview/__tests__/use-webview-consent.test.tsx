@@ -19,7 +19,7 @@ import {
 } from '../../__tests__/helpers/fake-native';
 import { resetNativeStub } from '../../__tests__/helpers/react-native-stub';
 import { resetConsentClient } from '../../native/client';
-import { ConsentProvider } from '../../provider/consent-provider';
+import { InthProvider } from '../../provider/inth-provider';
 import { normalizeWebViewOrigin, parseWebViewConsent } from '../payload';
 import { DOCUMENT_START_SCRIPT, UPDATE_SCRIPT } from '../scripts.generated';
 import { useWebViewConsent } from '../use-webview-consent';
@@ -89,9 +89,9 @@ test('a malformed bridge reply injects nothing', () => {
 test('injects the native state at document start for the listed origins', () => {
 	createFakeNativeModule();
 	renderTree(
-		<ConsentProvider autoPresent={false}>
+		<InthProvider autoPresent={false}>
 			<Probe allowedOrigins={['https://WWW.example.com/']} />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	const props = latest();
 	expect(props.injectedJavaScriptBeforeContentLoadedForMainFrameOnly).toBe(
@@ -106,9 +106,9 @@ test('injects the native state at document start for the listed origins', () => 
 test('pushes a changed state into the loaded page, once per change', () => {
 	const fake = createFakeNativeModule();
 	renderTree(
-		<ConsentProvider autoPresent={false}>
+		<InthProvider autoPresent={false}>
 			<Probe allowedOrigins={['https://www.example.com']} />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	const injectJavaScript = vi.fn();
 	flush(() => {
@@ -143,12 +143,12 @@ test("answers only a preferences request that carries the top frame's key", () =
 	createFakeNativeModule();
 	const onPreferencesRequested = vi.fn();
 	renderTree(
-		<ConsentProvider autoPresent={false}>
+		<InthProvider autoPresent={false}>
 			<Probe
 				allowedOrigins={['https://www.example.com']}
 				onPreferencesRequested={onPreferencesRequested}
 			/>
-		</ConsentProvider>
+		</InthProvider>
 	);
 	const message = (data: string, url: string, isTopFrame?: boolean) => {
 		latest().onMessage({ nativeEvent: { data, isTopFrame, url } });
@@ -202,9 +202,9 @@ test('dropping an origin revokes the page already loaded from it', () => {
 		snapshot: buildSnapshot({ effectivePermissions: GRANTED }),
 	});
 	const handle = renderTree(
-		<ConsentProvider autoPresent={false}>
+		<InthProvider autoPresent={false}>
 			<Probe allowedOrigins={['https://old.example', 'https://kept.example']} />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	const page = openPage('https://old.example');
 	page.run(latest().injectedJavaScriptBeforeContentLoaded);
@@ -215,9 +215,9 @@ test('dropping an origin revokes the page already loaded from it', () => {
 	});
 
 	handle.rerender(
-		<ConsentProvider autoPresent={false}>
+		<InthProvider autoPresent={false}>
 			<Probe allowedOrigins={['https://kept.example']} />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	for (const script of injected) {
 		page.run(script);
@@ -233,9 +233,9 @@ test('a page on an origin that stays listed keeps following the app', () => {
 		snapshot: buildSnapshot({ effectivePermissions: GRANTED }),
 	});
 	const handle = renderTree(
-		<ConsentProvider autoPresent={false}>
+		<InthProvider autoPresent={false}>
 			<Probe allowedOrigins={['https://old.example', 'https://kept.example']} />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	const page = openPage('https://kept.example');
 	page.run(latest().injectedJavaScriptBeforeContentLoaded);
@@ -244,9 +244,9 @@ test('a page on an origin that stays listed keeps following the app', () => {
 		latest().ref({ injectJavaScript: (script) => injected.push(script) });
 	});
 	handle.rerender(
-		<ConsentProvider autoPresent={false}>
+		<InthProvider autoPresent={false}>
 			<Probe allowedOrigins={['https://kept.example']} />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	for (const script of injected) {
 		page.run(script);
@@ -273,9 +273,9 @@ test('the native GPP string reaches the page unchanged', () => {
 		})
 	);
 	renderTree(
-		<ConsentProvider autoPresent={false}>
+		<InthProvider autoPresent={false}>
 			<Probe allowedOrigins={['https://www.example.com']} />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	expect(latest().injectedJavaScriptBeforeContentLoaded).toContain(
 		'"gppString":"DBABMA~CQ"'
@@ -285,9 +285,9 @@ test('the native GPP string reaches the page unchanged', () => {
 test('a GPP string in a new snapshot reaches the loaded page', () => {
 	const fake = createFakeNativeModule();
 	renderTree(
-		<ConsentProvider autoPresent={false}>
+		<InthProvider autoPresent={false}>
 			<Probe allowedOrigins={['https://www.example.com']} />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	expect(latest().injectedJavaScriptBeforeContentLoaded).toContain(
 		'"gppString":null'
@@ -312,11 +312,11 @@ test('an entry holding a line break stays one invalid origin', () => {
 	createFakeNativeModule();
 	const message = captureErrorMessage(() => {
 		renderTree(
-			<ConsentProvider autoPresent={false}>
+			<InthProvider autoPresent={false}>
 				<Probe
 					allowedOrigins={['https://trusted.example\nhttps://other.example']}
 				/>
-			</ConsentProvider>
+			</InthProvider>
 		);
 	});
 	expect(message).toContain('not an allowed WebView origin');
@@ -326,9 +326,9 @@ test('an unsafe origin list is a wiring mistake, not a silent no-op', () => {
 	createFakeNativeModule();
 	const message = captureErrorMessage(() => {
 		renderTree(
-			<ConsentProvider autoPresent={false}>
+			<InthProvider autoPresent={false}>
 				<Probe allowedOrigins={['http://www.example.com']} />
-			</ConsentProvider>
+			</InthProvider>
 		);
 	});
 	expect(message).toContain('not an allowed WebView origin');

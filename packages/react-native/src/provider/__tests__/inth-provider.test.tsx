@@ -27,7 +27,7 @@ import { useSnapshot } from '../../hooks/use-snapshot';
 import { createConsentClient, resetConsentClient } from '../../native/client';
 import { NATIVE_INTH_MODULE_NAME } from '../../protocol';
 import { buildFakeSnapshot } from '../../testing/fake-native-inth';
-import { ConsentProvider } from '../consent-provider';
+import { InthProvider } from '../inth-provider';
 
 /** Render the revision, so a test can see which consumers updated. */
 const RevisionProbe = (): ReactNode => {
@@ -64,9 +64,9 @@ describe('handshake', () => {
 		const fake = createFakeNativeModule();
 
 		const tree = renderTree(
-			<ConsentProvider autoPresent={false}>
+			<InthProvider autoPresent={false}>
 				<FiveConsumers />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		expect(fake.bootstrapCalls).toBe(1);
@@ -81,12 +81,12 @@ describe('handshake', () => {
 		const tree = renderTree(
 			<>
 				{Array.from({ length: 5 }, (_unused, index) => (
-					<ConsentProvider
+					<InthProvider
 						autoPresent={false}
 						key={index}
 					>
 						<RevisionProbe />
-					</ConsentProvider>
+					</InthProvider>
 				))}
 			</>
 		);
@@ -100,9 +100,9 @@ describe('handshake', () => {
 	test('a nested provider reuses the ancestor client and adds no emitter', () => {
 		const fake = createFakeNativeModule();
 		const single = renderTree(
-			<ConsentProvider autoPresent={false}>
+			<InthProvider autoPresent={false}>
 				<RevisionProbe />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		// The client's own, and the presenter ledger's, which lives as long as the client.
 		const perClient = emitterState.instances;
@@ -111,11 +111,11 @@ describe('handshake', () => {
 		emitterState.instances = 0;
 
 		const tree = renderTree(
-			<ConsentProvider autoPresent={false}>
-				<ConsentProvider autoPresent={false}>
+			<InthProvider autoPresent={false}>
+				<InthProvider autoPresent={false}>
 					<RevisionProbe />
-				</ConsentProvider>
-			</ConsentProvider>
+				</InthProvider>
+			</InthProvider>
 		);
 
 		expect(fake.bootstrapCalls).toBe(2);
@@ -128,9 +128,9 @@ describe('handshake', () => {
 		createFakeNativeModule();
 
 		const tree = renderTree(
-			<ConsentProvider autoPresent={false}>
+			<InthProvider autoPresent={false}>
 				<BootstrapProbe />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		expect(tree.text()).toBe(
@@ -149,9 +149,9 @@ describe('protocol version guard', () => {
 
 		const message = captureErrorMessage(() =>
 			renderToStaticMarkup(
-				<ConsentProvider autoPresent={false}>
+				<InthProvider autoPresent={false}>
 					<RevisionProbe />
-				</ConsentProvider>
+				</InthProvider>
 			)
 		);
 
@@ -167,9 +167,9 @@ describe('protocol version guard', () => {
 		expect(
 			captureErrorMessage(() =>
 				renderToStaticMarkup(
-					<ConsentProvider autoPresent={false}>
+					<InthProvider autoPresent={false}>
 						<RevisionProbe />
-					</ConsentProvider>
+					</InthProvider>
 				)
 			)
 		).toContain('protocol 0');
@@ -181,9 +181,9 @@ describe('protocol version guard', () => {
 		expect(
 			captureErrorMessage(() =>
 				renderToStaticMarkup(
-					<ConsentProvider autoPresent={false}>
+					<InthProvider autoPresent={false}>
 						<RevisionProbe />
-					</ConsentProvider>
+					</InthProvider>
 				)
 			)
 		).toContain('no protocolVersion');
@@ -194,9 +194,9 @@ describe('protocol version guard', () => {
 		expect(
 			captureErrorMessage(() =>
 				renderToStaticMarkup(
-					<ConsentProvider autoPresent={false}>
+					<InthProvider autoPresent={false}>
 						<RevisionProbe />
-					</ConsentProvider>
+					</InthProvider>
 				)
 			)
 		).toContain('cannot reach its native consent module');
@@ -207,7 +207,7 @@ describe('wiring', () => {
 	test('a hook outside a provider says what is missing', () => {
 		expect(
 			captureErrorMessage(() => renderToStaticMarkup(<RevisionProbe />))
-		).toContain('<ConsentProvider>');
+		).toContain('<InthProvider>');
 	});
 });
 
@@ -223,12 +223,12 @@ describe('client prop', () => {
 		setNativeModule(NATIVE_INTH_MODULE_NAME);
 
 		const handle = renderTree(
-			<ConsentProvider
+			<InthProvider
 				autoPresent={false}
 				client={client}
 			>
 				<RevisionProbe />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		expect(handle.text()).toBe('r41');

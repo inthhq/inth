@@ -199,7 +199,7 @@ region from a debug screen with `useSetOverrides()`; see
 [Preview a regional policy](/docs/frameworks/react-native/configuration#preview-a-regional-policy).
 
 To keep the native prompt from appearing at all, pass `autoPresent={false}` to
-`ConsentProvider` in your test build. No decision is recorded, so each gate
+`InthProvider` in your test build. No decision is recorded, so each gate
 keeps the region's answer for a user who has not chosen: closed under opt-in
 rules. This suits screens that do not depend on consent; tests of consent
 itself should answer the prompt.

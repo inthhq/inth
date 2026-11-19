@@ -64,9 +64,9 @@ import type {
  * prompt links to. With `autoPresent={false}` nothing opens until the app calls
  * {@link presentConsentPrompt} or {@link presentPreferences}.
  */
-export type ConsentProviderPromptProps =
+export type InthProviderPromptProps =
 	// The opt-out comes first on purpose. TypeScript reports a failed union
-	// against its last member, so `<ConsentProvider>` with no props is told that
+	// against its last member, so `<InthProvider>` with no props is told that
 	// `privacyPolicyUrl` is missing rather than that `autoPresent` is.
 	| {
 			/** Present nothing by itself. The manual presenter APIs work as before. */
@@ -88,15 +88,14 @@ export type ConsentProviderPromptProps =
 	  };
 
 /**
- * Props for {@link ConsentProvider}.
+ * Props for {@link InthProvider}.
  */
-export type ConsentProviderProps = ConsentProviderBaseProps &
-	ConsentProviderPromptProps;
+export type InthProviderProps = InthProviderBaseProps & InthProviderPromptProps;
 
 /**
- * Props {@link ConsentProvider} takes whether or not it presents the prompt.
+ * Props {@link InthProvider} takes whether or not it presents the prompt.
  */
-export interface ConsentProviderBaseProps {
+export interface InthProviderBaseProps {
 	/** The app subtree that may read consent. */
 	readonly children?: ReactNode;
 	/**
@@ -118,9 +117,9 @@ export interface ConsentProviderBaseProps {
 	 *
 	 * const consent = createTestConsentClient({ consent: 'unset' });
 	 *
-	 * <ConsentProvider client={consent.client} autoPresent={false}>
+	 * <InthProvider client={consent.client} autoPresent={false}>
 	 *     <Screen />
-	 * </ConsentProvider>;
+	 * </InthProvider>;
 	 * ```
 	 */
 	readonly client?: ConsentClient;
@@ -139,9 +138,9 @@ export interface ConsentProviderBaseProps {
 	 *
 	 * const insets = useSafeAreaInsets();
 	 *
-	 * <ConsentProvider safeAreaInsets={insets}>
+	 * <InthProvider safeAreaInsets={insets}>
 	 *     <Root />
-	 * </ConsentProvider>;
+	 * </InthProvider>;
 	 * ```
 	 */
 	readonly safeAreaInsets?: ConsentSafeAreaInsets;
@@ -202,13 +201,13 @@ export interface ConsentProviderBaseProps {
  *
  * @example
  * ```tsx
- * import { ConsentProvider } from '@inth/react-native';
+ * import { InthProvider } from '@inth/react-native';
  *
  * export function App() {
  *     return (
- *         <ConsentProvider privacyPolicyUrl="https://example.com/privacy">
+ *         <InthProvider privacyPolicyUrl="https://example.com/privacy">
  *             <Root />
- *         </ConsentProvider>
+ *         </InthProvider>
  *     );
  * }
  * ```
@@ -236,7 +235,7 @@ export interface ConsentProviderBaseProps {
  *   native screens (`bootstrap.nativeUI === false`) presents nothing, so it
  *   neither checks the URL nor needs one.
  */
-export const ConsentProvider = ({
+export const InthProvider = ({
 	autoPresent = true,
 	children,
 	client: clientProp,
@@ -245,7 +244,7 @@ export const ConsentProvider = ({
 	trackingRequest = 'afterConsent',
 	trackingReprompt = 'never',
 	onTrackingAdditionalInformation,
-}: ConsentProviderProps): ReactNode => {
+}: InthProviderProps): ReactNode => {
 	const inherited = useContext(ConsentClientContext);
 	const inheritedInsets = useConsentSafeAreaInsets();
 	// The handshake runs here, during render, on purpose. A binary that cannot

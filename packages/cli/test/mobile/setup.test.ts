@@ -439,7 +439,7 @@ describe("inth mobile setup in a mobile project", () => {
     });
     const provider = read(root, "inth/privacy-app.tsx");
     expect(provider).toContain(
-      "<ConsentProvider privacyPolicyUrl={privacyPolicyUrl}>"
+      "<InthProvider privacyPolicyUrl={privacyPolicyUrl}>"
     );
     expect(provider).toContain("void presentPreferences(privacyPolicyUrl);");
     expect(provider).toContain("import type { ReactNode } from 'react';");

@@ -141,7 +141,7 @@ const mirrorFor = function mirrorFor(client: ConsentClient): PresenterMirror {
 				// per launch: it is a note for the developer, not an error.
 				report(mirror, 'unavailable', () => {
 					console.warn(
-						`Inth ConsentProvider: the native presenter could not show the owed consent prompt yet (${unavailable.code}). It shows it once the app has a foreground window or Activity.`,
+						`InthProvider: the native presenter could not show the owed consent prompt yet (${unavailable.code}). It shows it once the app has a foreground window or Activity.`,
 						unavailable.message
 					);
 				});
@@ -203,7 +203,7 @@ const failed = function failed(
 		report(mirror, `url:${String(settings.privacyPolicyURL)}`, () => {
 			// oxlint-disable-next-line no-console -- An owed consent prompt that can never show must be visible in every build.
 			console.error(
-				`Inth ConsentProvider: the native presenter refused privacyPolicyUrl ${JSON.stringify(settings.privacyPolicyURL)}, so the owed consent prompt cannot show. Pass an absolute HTTPS URL with a DNS host.`,
+				`InthProvider: the native presenter refused privacyPolicyUrl ${JSON.stringify(settings.privacyPolicyURL)}, so the owed consent prompt cannot show. Pass an absolute HTTPS URL with a DNS host.`,
 				error
 			);
 		});
@@ -211,13 +211,13 @@ const failed = function failed(
 		report(mirror, 'excluded', () => {
 			// oxlint-disable-next-line no-console -- An owed consent prompt that can never show must be visible in every build.
 			console.error(
-				'Inth ConsentProvider: this binary was built without the stock native consent screens (inth.nativeUI=false), so the owed consent prompt cannot be presented natively. Pass autoPresent={false} and draw the consent UI in JavaScript.',
+				'InthProvider: this binary was built without the stock native consent screens (inth.nativeUI=false), so the owed consent prompt cannot be presented natively. Pass autoPresent={false} and draw the consent UI in JavaScript.',
 				error
 			);
 		});
 	} else if (!isProduction()) {
 		console.warn(
-			'Inth ConsentProvider: native refused the auto-present settings.',
+			'InthProvider: native refused the auto-present settings.',
 			error
 		);
 	}
@@ -270,7 +270,7 @@ export const configureAutoPresent = function configureAutoPresent(
 			report(mirror, 'old-binary', () => {
 				// oxlint-disable-next-line no-console -- An owed consent prompt that never shows must be visible in every build.
 				console.error(
-					'Inth ConsentProvider: this native build predates native auto-present (no configureAutoPresent), so the consent prompt does not present by itself. Rebuild the app with this version of @inth/react-native, or call presentConsentPrompt yourself until then.'
+					'InthProvider: this native build predates native auto-present (no configureAutoPresent), so the consent prompt does not present by itself. Rebuild the app with this version of @inth/react-native, or call presentConsentPrompt yourself until then.'
 				);
 			});
 		}
@@ -325,7 +325,7 @@ export const assertPrivacyPolicyUrl: (
 ) {
 	if (privacyPolicyUrl === undefined || !isPrivacyPolicyUrl(privacyPolicyUrl)) {
 		throw new TypeError(
-			`<ConsentProvider> presents the consent prompt and needs an absolute HTTPS privacyPolicyUrl with a DNS host, such as "https://example.com/privacy". Got ${JSON.stringify(privacyPolicyUrl)}. Pass a valid URL, or autoPresent={false} to present the prompt yourself.`
+			`<InthProvider> presents the consent prompt and needs an absolute HTTPS privacyPolicyUrl with a DNS host, such as "https://example.com/privacy". Got ${JSON.stringify(privacyPolicyUrl)}. Pass a valid URL, or autoPresent={false} to present the prompt yourself.`
 		);
 	}
 };

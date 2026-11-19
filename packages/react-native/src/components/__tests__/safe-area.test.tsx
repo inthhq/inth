@@ -25,7 +25,7 @@ import {
 } from '../../__tests__/helpers/react-native-stub';
 import { RESERVED_BOTTOM_INSET } from '../../hooks/use-consent-safe-area';
 import { resetConsentClient } from '../../native/client';
-import { ConsentProvider } from '../../provider/consent-provider';
+import { InthProvider } from '../../provider/inth-provider';
 import type { ConsentSafeAreaInsets } from '../../provider/safe-area-context';
 import { ConsentBanner } from '../consent-banner';
 import { ConsentDialog } from '../consent-dialog';
@@ -83,24 +83,24 @@ const mountWithInsets = function mountWithInsets(
 	createFakeNativeModule({ snapshot: translatedSnapshot() });
 
 	const tree = renderTree(
-		<ConsentProvider
+		<InthProvider
 			autoPresent={false}
 			safeAreaInsets={insets}
 		>
 			{surface}
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 	return {
 		container: tree.container,
 		rerender: (nextInsets): void => {
 			tree.rerender(
-				<ConsentProvider
+				<InthProvider
 					autoPresent={false}
 					safeAreaInsets={nextInsets}
 				>
 					{surface}
-				</ConsentProvider>
+				</InthProvider>
 			);
 		},
 		unmount: tree.unmount,
@@ -399,7 +399,7 @@ describe('consent surface safe area', () => {
 			const [insets, setInsets] = useState<ConsentSafeAreaInsets>(PORTRAIT);
 
 			return (
-				<ConsentProvider
+				<InthProvider
 					autoPresent={false}
 					safeAreaInsets={insets}
 				>
@@ -413,7 +413,7 @@ describe('consent surface safe area', () => {
 						turn
 					</button>
 					<ConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			);
 		};
 

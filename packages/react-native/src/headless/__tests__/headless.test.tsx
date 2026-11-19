@@ -15,7 +15,7 @@ import {
 import type { FakeNativeModule } from '../../__tests__/helpers/fake-native';
 import { resetNativeStub } from '../../__tests__/helpers/react-native-stub';
 import { resetConsentClient } from '../../native/client';
-import { ConsentProvider } from '../../provider/consent-provider';
+import { InthProvider } from '../../provider/inth-provider';
 import { ConsentGate } from '../consent-gate';
 import { ConsentPrompt } from '../consent-prompt';
 import { ConsentReady } from '../consent-ready';
@@ -45,7 +45,7 @@ const mount = function mount(
 	fake = createFakeNativeModule(options);
 
 	return renderTree(
-		<ConsentProvider autoPresent={false}>{children}</ConsentProvider>
+		<InthProvider autoPresent={false}>{children}</InthProvider>
 	);
 };
 

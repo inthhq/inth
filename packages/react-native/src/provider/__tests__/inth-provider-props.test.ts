@@ -1,5 +1,5 @@
 /**
- * What TypeScript tells a developer who renders `<ConsentProvider>` with no
+ * What TypeScript tells a developer who renders `<InthProvider>` with no
  * props. The fix is to pass `privacyPolicyUrl`, so that is the property the
  * error must name, not `autoPresent`.
  *
@@ -31,10 +31,10 @@ afterAll(() => {
  * @returns The compiler's output; empty when it type-checks.
  */
 const typeCheck = function typeCheck(source: string): string {
-	const provider = join(packageDir, 'src/provider/consent-provider');
+	const provider = join(packageDir, 'src/provider/inth-provider');
 	writeFileSync(
 		join(workDir, 'consumer.tsx'),
-		`import { ConsentProvider } from ${JSON.stringify(provider)};\n${source}\n`
+		`import { InthProvider } from ${JSON.stringify(provider)};\n${source}\n`
 	);
 	writeFileSync(
 		join(workDir, 'tsconfig.json'),
@@ -59,7 +59,7 @@ const typeCheck = function typeCheck(source: string): string {
 
 test('a provider with no props is told that privacyPolicyUrl is missing', () => {
 	const output = typeCheck(
-		'export const app = <ConsentProvider><span /></ConsentProvider>;'
+		'export const app = <InthProvider><span /></InthProvider>;'
 	);
 
 	expect(output).toContain("Property 'privacyPolicyUrl' is missing");
@@ -69,7 +69,7 @@ test('a provider with no props is told that privacyPolicyUrl is missing', () => 
 test('the one-line form type-checks', () => {
 	expect(
 		typeCheck(
-			'export const app = <ConsentProvider privacyPolicyUrl="https://example.com/privacy"><span /></ConsentProvider>;'
+			'export const app = <InthProvider privacyPolicyUrl="https://example.com/privacy"><span /></InthProvider>;'
 		)
 	).toBe('');
 }, 60_000);

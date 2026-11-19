@@ -12,16 +12,16 @@ engine keeps the policy, saved choices and SDK permissions.
 
 Complete [Expo](/docs/frameworks/react-native/expo) or
 [bare RN setup](/docs/frameworks/react-native/bare), then keep one
-`ConsentProvider` above your app. If your app owns both the initial prompt and
+`InthProvider` above your app. If your app owns both the initial prompt and
 the standing settings screen, pass `autoPresent={false}` so the provider does
 not present the native prompt:
 
 {/* example: fragment */}
 
 ```tsx
-<ConsentProvider autoPresent={false}>
+<InthProvider autoPresent={false}>
 	<App />
-</ConsentProvider>;
+</InthProvider>;
 ```
 
 Your custom flow is then responsible for showing an owed prompt and keeping

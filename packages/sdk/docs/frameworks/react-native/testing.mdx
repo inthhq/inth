@@ -5,7 +5,7 @@ group: frameworks
 ---
 
 Jest and Vitest run your components without the native consent module, so a
-`ConsentProvider` on its own throws `NativeInthUnavailableError` there.
+`InthProvider` on its own throws `NativeInthUnavailableError` there.
 `@inth/react-native/testing` gives a test the real consent client over a fake
 native core: you choose the starting consent, render your screens, check what
 they saved and answer the native prompt the way a person would.
@@ -54,7 +54,7 @@ own accept button:
 
 <include src="../../shared/examples/react-native-bare/testing-screen.mdx" />
 
-The test creates a test client, passes its `client` to `ConsentProvider`, and
+The test creates a test client, passes its `client` to `InthProvider`, and
 drives the screen with React Native Testing Library:
 
 <include src="../../shared/examples/react-native-bare/testing-component-test.mdx" />
@@ -114,7 +114,7 @@ turned on its act environment, so you do not wrap them yourself.
 
 The fake presenter behaves like the native one, but draws nothing:
 
-- A `ConsentProvider` that presents (the default, with a `privacyPolicyUrl`)
+- An `InthProvider` that presents (the default, with a `privacyPolicyUrl`)
   opens the owed prompt by itself as soon as it mounts. `consent.prompt.current`
   then has `automatic: true`.
 - `presentConsentPrompt()` opens the prompt when one is owed, and answers
@@ -146,7 +146,7 @@ your rendered screen or from `consent.client.getSnapshot()`.
 ## Test a component that renders its own provider
 
 The test client is also the app's shared client until the next test client
-replaces it. A root component that renders `<ConsentProvider>` without a
+replaces it. A root component that renders `<InthProvider>` without a
 `client` prop, and integrations created without a `client` option, reach the
 same fake. You can render your whole `App` without changing it:
 

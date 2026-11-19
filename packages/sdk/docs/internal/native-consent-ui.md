@@ -371,7 +371,7 @@ bare RN and Expo examples use these screens when the native core is installed.
 Their explicit fake mode retains the existing JavaScript demo. Headless hooks
 and custom UI remain available.
 
-`ConsentProvider` hands its `autoPresent` setting and URL to native with
+`InthProvider` hands its `autoPresent` setting and URL to native with
 `configureAutoPresent`, and the native `ConsentPrompt` presents the owed prompt
 once per owed prompt, as it does for a Swift or Kotlin app. JavaScript keeps no
 record of its own; it hears `onConsentPresenterPresented`,

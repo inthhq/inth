@@ -8,7 +8,7 @@
  */
 
 import {
-	ConsentProvider,
+	InthProvider,
 	getConsentClient,
 	useConsentStatus,
 	useConsent,
@@ -82,7 +82,7 @@ const StatusProbe = (): ReactNode =>
 /** The tree under test: the real provider as an app mounts it, four subscribed components. */
 const BenchTree = (): ReactNode =>
 	createElement(
-		ConsentProvider,
+		InthProvider,
 		{ privacyPolicyUrl: 'https://example.com/privacy' },
 		createElement(MarketingProbe),
 		createElement(MeasurementProbe),

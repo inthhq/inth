@@ -23,7 +23,7 @@ import { resetNativeStub } from '../../__tests__/helpers/react-native-stub';
 import { useSaveConsents } from '../../hooks/use-consent-actions';
 import { resetConsentClient } from '../../native/client';
 import type { ConsentSnapshot } from '../../protocol';
-import { ConsentProvider } from '../../provider/consent-provider';
+import { InthProvider } from '../../provider/inth-provider';
 import {
 	ConsentDraftProvider,
 	useConsentDraft,
@@ -66,7 +66,7 @@ const mount = function mount(
 ): RenderHandle {
 	fake = createFakeNativeModule({ snapshot });
 	return renderTree(
-		<ConsentProvider autoPresent={false}>{children}</ConsentProvider>
+		<InthProvider autoPresent={false}>{children}</InthProvider>
 	);
 };
 

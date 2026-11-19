@@ -1,42 +1,42 @@
 /**
- * The prop shapes `ConsentProvider` accepts. Compiled by `check-types`, never run.
+ * The prop shapes `InthProvider` accepts. Compiled by `check-types`, never run.
  */
 
-import { ConsentProvider } from '../consent-provider';
+import { InthProvider } from '../inth-provider';
 
 declare const enabled: boolean;
 
 export const presents = (
-	<ConsentProvider privacyPolicyUrl="https://example.com/privacy">
+	<InthProvider privacyPolicyUrl="https://example.com/privacy">
 		<span />
-	</ConsentProvider>
+	</InthProvider>
 );
 
 export const optsOut = (
-	<ConsentProvider autoPresent={false}>
+	<InthProvider autoPresent={false}>
 		<span />
-	</ConsentProvider>
+	</InthProvider>
 );
 
 export const decidedAtRuntime = (
-	<ConsentProvider
+	<InthProvider
 		autoPresent={enabled}
 		privacyPolicyUrl="https://example.com/privacy"
 	>
 		<span />
-	</ConsentProvider>
+	</InthProvider>
 );
 
 export const missingURL = (
 	// @ts-expect-error -- presenting needs the privacy-policy URL.
-	<ConsentProvider>
+	<InthProvider>
 		<span />
-	</ConsentProvider>
+	</InthProvider>
 );
 
 export const presentsWithoutURL = (
 	// @ts-expect-error -- `autoPresent` on still needs the URL.
-	<ConsentProvider autoPresent>
+	<InthProvider autoPresent>
 		<span />
-	</ConsentProvider>
+	</InthProvider>
 );

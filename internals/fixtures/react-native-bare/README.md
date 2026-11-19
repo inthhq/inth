@@ -20,7 +20,7 @@ verify a new SDK revision.
 
 ## Fixture code and historical exercises
 
-- `ConsentProvider` and the protocol handshake against the Swift/Kotlin core in the
+- `InthProvider` and the protocol handshake against the Swift/Kotlin core in the
   binary, with the mismatch error surfaced on screen instead of a red box.
 - The headless surface: `useSnapshot`, `useSaveConsents`, `useConsentActions`, `useInthBootstrap`,
   `useConsent`, `ConsentGate`, `ConsentReady`, `ConsentPrompt`.
@@ -40,7 +40,7 @@ verify a new SDK revision.
   way to see both palettes without leaving the app: the surfaces resolve a scheme from
   `useColorScheme()` on their own, and a forced choice passes the stock theme with both
   appearances pinned to one palette instead of a theme this app invented.
-- `safeAreaInsets` on `ConsentProvider`, measured from React Native core in
+- `safeAreaInsets` on `InthProvider`, measured from React Native core in
   `src/safe-area.ts`, so the surfaces and this app's own header lay out against the same
   bands and nothing lands under a clock or a home indicator.
 - `inth-demo://` links, which is how a consent journey is run on a machine that cannot

@@ -47,7 +47,7 @@ Setup adds the plugin entry, with the project URL and the categories your app of
 
 When the app has an `app.config.ts`, `app.config.js`, `app.config.mjs` or `app.config.cjs`, setup prints the entry for you to add instead of editing either file. An existing entry for the plugin stays unless you pass `--overwrite`.
 
-The provider file is `inth/privacy-app.tsx`, or `.jsx` without a `tsconfig.json`, and sits under `src/` when the app has one. It exports `PrivacyApp`, which mounts `ConsentProvider`, opens the native prompt when the policy asks for one, and keeps a Privacy settings button reachable. The next steps name the import to add to your root component, such as `app/_layout.tsx` or `App.tsx`. An existing provider file stays unless you pass `--overwrite`.
+The provider file is `inth/privacy-app.tsx`, or `.jsx` without a `tsconfig.json`, and sits under `src/` when the app has one. It exports `PrivacyApp`, which mounts `InthProvider`, opens the native prompt when the policy asks for one, and keeps a Privacy settings button reachable. The next steps name the import to add to your root component, such as `app/_layout.tsx` or `App.tsx`. An existing provider file stays unless you pass `--overwrite`.
 
 Then build a native app with `npx expo prebuild`, and `npx expo run:ios` or `npx expo run:android`. Expo Go cannot load the native module.
 

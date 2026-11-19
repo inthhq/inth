@@ -56,7 +56,7 @@ do not include it.
 
 ## Configure the native app
 
-The backend URL belongs in native build configuration. `ConsentProvider` attaches
+The backend URL belongs in native build configuration. `InthProvider` attaches
 to that installed engine after JavaScript starts.
 
 | App | Native setup |
@@ -69,7 +69,7 @@ configuration changes require a new app binary.
 
 ## Add the consent provider
 
-Wrap your app in `ConsentProvider` in `App.tsx` and pass your privacy-policy
+Wrap your app in `InthProvider` in `App.tsx` and pass your privacy-policy
 URL. The provider presents the native consent prompt when the policy asks for
 one:
 
@@ -118,7 +118,7 @@ and calls your cleanup function when permission closes:
 <include src="../../shared/examples/react-native-bare/headless-gate.mdx" />
 
 Pass a stable `start` function that returns the vendor's actual stop or disable
-operation. Mount the hook under `ConsentProvider`. The tracking variant is only for
+operation. Mount the hook under `InthProvider`. The tracking variant is only for
 a feature that also needs Apple's tracking authorization.
 
 Native analytics and advertising initializers can run before React. Put those

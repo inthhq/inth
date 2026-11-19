@@ -81,7 +81,7 @@ export const prepareCompatibilityOutput = function prepareCompatibilityOutput(
 
 const consumerSource = `
 import { Text, View } from 'react-native';
-import { ConsentProvider, useConsent, useSaveConsents } from '@inth/react-native';
+import { InthProvider, useConsent, useSaveConsents } from '@inth/react-native';
 import withInth, { type InthPluginProps } from '@inth/react-native/expo-plugin';
 import { connectPostHog, connectFirebaseAnalytics } from '@inth/react-native/integrations';
 
@@ -90,7 +90,7 @@ function PrivacyStatus() {
   const saveConsents = useSaveConsents();
   return <View><Text onPress={() => { void saveConsents('none'); }}>{allowed ? 'Allowed' : 'Denied'}</Text></View>;
 }
-export const App = () => <ConsentProvider privacyPolicyUrl="https://example.com/privacy"><PrivacyStatus /></ConsentProvider>;
+export const App = () => <InthProvider privacyPolicyUrl="https://example.com/privacy"><PrivacyStatus /></InthProvider>;
 export const plugin: typeof withInth = withInth;
 export const configuration: InthPluginProps = {
 	projectUrl: 'https://your-project.inth.app',

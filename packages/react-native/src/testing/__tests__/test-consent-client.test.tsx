@@ -23,7 +23,7 @@ import {
 } from '../../native/presenter';
 import type { ConsentPresenterOutcome } from '../../native/presenter';
 import { isConsentScreenBusy } from '../../provider/auto-present';
-import { ConsentProvider } from '../../provider/consent-provider';
+import { InthProvider } from '../../provider/inth-provider';
 import { createTestConsentClient } from '../index';
 import type { TestConsentClient } from '../index';
 
@@ -66,12 +66,12 @@ const renderScreen = function renderScreen(
 	screen: ReactNode = <AnalyticsScreen />
 ): RenderHandle {
 	return renderTree(
-		<ConsentProvider
+		<InthProvider
 			autoPresent={false}
 			client={consent.client}
 		>
 			{screen}
-		</ConsentProvider>
+		</InthProvider>
 	);
 };
 
@@ -210,12 +210,12 @@ describe('the simulated native prompt', () => {
 		});
 
 		handle = renderTree(
-			<ConsentProvider
+			<InthProvider
 				client={consent.client}
 				privacyPolicyUrl={PRIVACY_URL}
 			>
 				<AnalyticsScreen />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		expect(consent.prompt.isOpen).toBe(true);
@@ -238,12 +238,12 @@ describe('the simulated native prompt', () => {
 		const consent = createTestConsentClient({ consent: 'granted' });
 
 		handle = renderTree(
-			<ConsentProvider
+			<InthProvider
 				client={consent.client}
 				privacyPolicyUrl={PRIVACY_URL}
 			>
 				<AnalyticsScreen />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		expect(consent.prompt.isOpen).toBe(false);
@@ -384,9 +384,9 @@ describe('the simulated native prompt', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
 		handle = renderTree(
-			<ConsentProvider client={consent.client}>
+			<InthProvider client={consent.client}>
 				<AnalyticsScreen />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		warn.mockRestore();
 
@@ -402,9 +402,9 @@ describe('installation', () => {
 		expect(getConsentClient()).toBe(consent.client);
 
 		const App = (): ReactNode => (
-			<ConsentProvider autoPresent={false}>
+			<InthProvider autoPresent={false}>
 				<AnalyticsScreen />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		handle = renderTree(<App />);
 		await press(handle);
@@ -417,17 +417,17 @@ describe('installation', () => {
 		const consent = createTestConsentClient({ consent: 'unset' });
 
 		handle = renderTree(
-			<ConsentProvider
+			<InthProvider
 				autoPresent={false}
 				client={consent.client}
 			>
-				<ConsentProvider
+				<InthProvider
 					client={consent.client}
 					privacyPolicyUrl={PRIVACY_URL}
 				>
 					<AnalyticsScreen />
-				</ConsentProvider>
-			</ConsentProvider>
+				</InthProvider>
+			</InthProvider>
 		);
 
 		expect(handle.text()).toContain('Analytics off');
@@ -453,12 +453,12 @@ describe('disposal', () => {
 	test("a disposed client does not hear the next client's screens", async () => {
 		const first = createTestConsentClient({ consent: 'unset' });
 		handle = renderTree(
-			<ConsentProvider
+			<InthProvider
 				autoPresent={false}
 				client={first.client}
 			>
 				<AnalyticsScreen />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		handle.unmount();
 		handle = null;
@@ -693,12 +693,12 @@ describe('what a commit records', () => {
 describe('the automatic prompt across snapshot changes', () => {
 	const renderPresenting = (consent: TestConsentClient): RenderHandle =>
 		renderTree(
-			<ConsentProvider
+			<InthProvider
 				client={consent.client}
 				privacyPolicyUrl={PRIVACY_URL}
 			>
 				<AnalyticsScreen />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 	test('a clean first layer follows a policy refresh and still saves', () => {
