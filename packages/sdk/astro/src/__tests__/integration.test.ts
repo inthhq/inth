@@ -300,6 +300,33 @@ describe('resolveOptions', () => {
 		);
 	});
 
+	it('leaves a relative manifestUrl to the server instead of bundling the backend manifest', async () => {
+		const sitePolicy = await buildConsentManifestFromConfig({
+			branding: 'inth',
+			policyRules: [policyRulePresets.worldOptOutNoPrompt()],
+		});
+		expect(sitePolicy.revision).not.toBe(INLINE_MANIFEST.revision);
+		const fetch = vi.fn<typeof globalThis.fetch>((input) =>
+			Promise.resolve(
+				Response.json(
+					String(input) === 'https://consent.example.com/manifest'
+						? INLINE_MANIFEST
+						: sitePolicy
+				)
+			)
+		);
+		vi.stubGlobal('fetch', fetch);
+		const { calls } = await runSetup({
+			mode: manifestMode({ manifestUrl: '/consent-policy.json' }),
+			projectUrl: 'https://consent.example.com',
+		});
+
+		expect(fetch).not.toHaveBeenCalled();
+		const source = serverOptionsSource(calls);
+		expect(source).not.toContain(JSON.stringify(INLINE_MANIFEST.revision));
+		expect(source).toContain('"manifestUrl":"/consent-policy.json"');
+	});
+
 	it('astro dev warns and keeps going when the default fetch fails', async () => {
 		vi.stubEnv('INTH_ON_BUILD_ERROR', '');
 		vi.stubGlobal(
@@ -489,7 +516,7 @@ describe('resolveOptions', () => {
 		}
 	);
 
-	it("onBuildError: 'fail' stops a build whose projectUrl gives it nothing to fetch", async () => {
+	it("onBuildError: 'fail' still needs an absolute upstream URL", async () => {
 		vi.stubEnv('INTH_ON_BUILD_ERROR', '');
 		await expect(
 			runSetup({
@@ -497,7 +524,7 @@ describe('resolveOptions', () => {
 				onBuildError: 'fail',
 				projectUrl: '',
 			})
-		).rejects.toThrow('no backend URL is set');
+		).rejects.toThrow('absolute upstream URL');
 	});
 
 	it('defaults the ui adapter to svelte', () => {

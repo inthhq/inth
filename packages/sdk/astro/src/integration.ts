@@ -816,7 +816,9 @@ const missingAdapterMessage = function missingAdapterMessage(
  * Fetch the manifest for `astro build` or `astro dev` and put it in the
  * resolved mode as its `snapshot`, for a mode that reads one
  * (`needsBuildSnapshot` in `@inth/sdk/server`) or has an absolute
- * `manifestUrl`.
+ * `manifestUrl`. A relative `manifestUrl` is on the site's own origin,
+ * which the build cannot fetch: the build bundles nothing, and the server
+ * reads that URL at runtime.
  *
  * @param resolved - The resolved options; its mode gains the snapshot.
  * @param command - `build` or `dev`.
@@ -831,7 +833,7 @@ const bundleBuildManifest = async function bundleBuildManifest(
 	envSource: BuildEnvSource
 ): Promise<void> {
 	const { mode } = resolved;
-	const manifestUrl = absoluteManifestUrl(mode);
+	const manifestUrl = mode.type === 'manifest' ? mode.manifestUrl : undefined;
 	const { loadManifestForBuild } = await import('@inth/sdk/build');
 	const snapshot = await loadManifestForBuild(
 		{ manifestUrl, projectUrl: resolved.projectUrl },
@@ -844,7 +846,7 @@ const bundleBuildManifest = async function bundleBuildManifest(
 			// Core reads an absolute `manifestUrl` at runtime and skips it;
 			// Astro bundles it (see `absoluteManifestUrl`).
 			mode:
-				manifestUrl && mode.type === 'manifest'
+				mode.type === 'manifest' && absoluteManifestUrl(mode)
 					? { ...mode, manifestUrl: undefined }
 					: mode,
 			onBuildError: resolved.onBuildError,
