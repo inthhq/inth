@@ -21,7 +21,15 @@ import { isRecord } from './registry';
  */
 export const REMEMBERED_REGISTRY_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
-const KEY_PREFIX = 'c15t-script-registry:v1:';
+/** Followed by the backend's absolute `projectUrl`. */
+export const REMEMBERED_REGISTRY_KEY_PREFIX = 'inth-script-registry:v1:';
+
+/**
+ * The most a stored list may take, in characters. A list for every
+ * integration with a few files is about 30 KB; anything far past that is
+ * not one the backend sent, and is refused on read and not written.
+ */
+export const REMEMBERED_REGISTRY_MAX_LENGTH = 256 * 1024;
 
 /** One backend's remembered list. */
 export interface RegistryMemory {
@@ -62,7 +70,7 @@ export const rememberedRegistry = function rememberedRegistry(
 	} catch {
 		return undefined;
 	}
-	const key = `${KEY_PREFIX}${backend}`;
+	const key = `${REMEMBERED_REGISTRY_KEY_PREFIX}${backend}`;
 	const forget = (): void => {
 		try {
 			storage()?.removeItem(key);
@@ -72,15 +80,22 @@ export const rememberedRegistry = function rememberedRegistry(
 	};
 	return {
 		read() {
-			let stored: unknown;
+			let raw: string | null | undefined;
 			try {
-				const raw = storage()?.getItem(key);
-				stored = raw ? JSON.parse(raw) : undefined;
+				raw = storage()?.getItem(key);
 			} catch {
-				stored = null;
+				raw = undefined;
 			}
-			if (stored === undefined) {
+			if (!raw) {
 				return undefined;
+			}
+			let stored: unknown = null;
+			if (raw.length <= REMEMBERED_REGISTRY_MAX_LENGTH) {
+				try {
+					stored = JSON.parse(raw);
+				} catch {
+					stored = null;
+				}
 			}
 			const { registry, savedAt, v } = isRecord(stored) ? stored : {};
 			const age = typeof savedAt === 'number' ? now() - savedAt : Number.NaN;
@@ -100,11 +115,17 @@ export const rememberedRegistry = function rememberedRegistry(
 				return;
 			}
 			const { files, sources } = registry;
+			const value = JSON.stringify({
+				registry: { files, sources },
+				savedAt: now(),
+				v: 1,
+			});
+			if (value.length > REMEMBERED_REGISTRY_MAX_LENGTH) {
+				forget();
+				return;
+			}
 			try {
-				storage()?.setItem(
-					key,
-					JSON.stringify({ registry: { files, sources }, savedAt: now(), v: 1 })
-				);
+				storage()?.setItem(key, value);
 			} catch {
 				// Full or blocked storage: the next failed init has no list.
 			}

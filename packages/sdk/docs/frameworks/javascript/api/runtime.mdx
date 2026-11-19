@@ -102,26 +102,38 @@ uses only a prefetched list.
 
 #### When init fails
 
-Inth remembers the last list this browser received, in `localStorage`, and loads
-by it when init fails: an outage, a rate limit, a blocked request, or an init
-that does not answer within 10 seconds. It does the same when init answers
-`"scriptRegistry": { "unavailable": true }`, which the backend sends when it
-could not read the project's registry. The remembered list works exactly as a
-fresh one, `sources`, `files`, `null` entries and `refuseIfSet` included, and
-Inth checks it the same way, so a stored list it cannot read counts as no list.
-Without a remembered list, every script loads from its vendor's URL.
+Inth remembers the last list this browser received and loads by it when init
+fails, such as during an outage, a rate limit or a blocked request. It does the
+same when init answers `"scriptRegistry": { "unavailable": true }`, which the
+backend sends when it could not read the project's registry. The remembered
+list works exactly as a fresh one, `sources`, `files`, `null` entries and
+`refuseIfSet` included, and Inth checks it the same way, so a stored list it
+cannot read counts as no list. Without a remembered list, every script loads
+from its vendor's URL.
 
-- **Per backend.** The list is kept under the runtime's `projectUrl`, so one
-  project's list is never read for another project or backend on the same
-  origin. A runtime with no `projectUrl` remembers nothing.
+When init fails, optional categories stay denied, so only `necessary` scripts
+load and the list applies to those. After an `unavailable` answer the visitor's
+choices apply as usual, and the list applies to every script that loads.
+
+- **Stored like the rest of c15t's state.** The list is kept in `localStorage`
+  under `inth-script-registry:v1:` followed by the runtime's absolute
+  `projectUrl`. It is written only once the visitor has made a choice, when c15t
+  stores its own record, and never with `persistence: false`, which turns it
+  off entirely. A page whose scripts are all `necessary` gets no choice, so
+  nothing is remembered for it.
+- **Per backend.** One project's list is never read for another project or
+  backend on the same origin. A runtime with no `projectUrl`, or one that never
+  calls `/init`, remembers nothing.
 - **Replaced by every answer.** Each init that answers replaces the list. An
   answer with no `scriptRegistry` removes it, so turning the registry off for a
   project takes effect on the next visit that reaches `/v1/consent/init`. An `unavailable`
-  answer leaves it.
+  answer leaves it, even beside empty `sources` and `files`.
 - **Seven days at most.** After that the list is dropped, and a failed init
   loads from vendor URLs again. A remembered list can name a version the
   registry has rejected since. The registry then answers that URL with an
   error, and the hash stops any other bytes, so the script does not load.
+- **256 KB at most.** A stored value larger than that is refused and removed.
+  A list for every integration is about 30 KB.
 - **Not a defence against the page.** Any script on your origin can edit
   `localStorage`. The remembered list keeps scripts pinned through honest
   failures; it does not protect against code already running on the page.

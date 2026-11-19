@@ -168,17 +168,20 @@ export const parseRegistryFiles = function parseRegistryFiles(
  * prefetch.
  * @internal
  */
+const entries = (map: unknown): number =>
+	isRecord(map) ? Object.keys(map).length : 0;
+
 /**
  * Whether an answer's registry says the backend could not read it
- * (`unavailable`), with no list beside it. A list beside it wins.
+ * (`unavailable`), with no entry beside it: empty maps count as none. A
+ * list with at least one entry beside it wins.
  *
  * @internal
  */
 export const registryUnavailable = (registry: unknown): boolean =>
 	isRecord(registry) &&
 	registry.unavailable === true &&
-	parseRegistrySources(registry.sources) === null &&
-	parseRegistryFiles(registry.files) === null;
+	entries(registry.sources) + entries(registry.files) === 0;
 
 export const readScriptRegistry = function readScriptRegistry(snapshot: {
 	readonly policyPending: boolean;
@@ -196,7 +199,7 @@ export const readScriptRegistry = function readScriptRegistry(snapshot: {
 	}
 	const sources = parseRegistrySources(snapshot.scriptRegistry?.sources);
 	const files = parseRegistryFiles(snapshot.scriptRegistry?.files);
-	if (!(sources || files)) {
+	if (!(sources || files) || registryUnavailable(snapshot.scriptRegistry)) {
 		return { status: 'failed' };
 	}
 	return { files: files ?? {}, sources: sources ?? {}, status: 'listed' };

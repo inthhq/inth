@@ -616,19 +616,27 @@ test("keeps a library's src setter that went on between two pins", async () => {
 			};
 		})
 	).toEqual({ kept: true, sawLogger: true });
+});
 
-/** Answer one init with `list`, so the browser remembers it, then load the page again. */
+/**
+ * Answer one init with the list `listFor` makes, have the visitor make a
+ * choice so the browser remembers it, then load the page again.
+ */
 const rememberThenReload = async function rememberThenReload(
-	list: unknown
+	listFor: () => unknown
 ): Promise<void> {
 	await open();
 	await page.evaluate(() => window.__scriptFiles.startPending());
-	await page.evaluate((answer) => window.__scriptFiles.answer(answer), list);
+	await page.evaluate(
+		(answer) => window.__scriptFiles.answer(answer),
+		listFor()
+	);
+	await page.evaluate(() => window.__scriptFiles.choose());
 	await expect
 		.poll(() =>
 			page.evaluate(() =>
 				Object.keys(localStorage).some((key) =>
-					key.startsWith('c15t-script-registry:')
+					key.startsWith('inth-script-registry:')
 				)
 			)
 		)
@@ -639,7 +647,7 @@ const rememberThenReload = async function rememberThenReload(
 };
 
 test('loads by the list the browser remembers when init fails', async () => {
-	await rememberThenReload(
+	await rememberThenReload(() =>
 		registry({ integrity: sri(logger), src: loggerAtGateway })
 	);
 	await page.evaluate(() => window.__scriptFiles.startFailing());
@@ -661,10 +669,10 @@ test('loads from the vendor when init fails and the browser remembers no list', 
 });
 
 test('loads nothing for a script the remembered list blocks, when init fails', async () => {
-	await rememberThenReload({
+	await rememberThenReload(() => ({
 		...registry(null),
 		sources: { [logRocketId]: null },
-	});
+	}));
 	await page.evaluate(() => window.__scriptFiles.startFailing());
 
 	await page.waitForTimeout(500);

@@ -2,7 +2,9 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import {
+	REMEMBERED_REGISTRY_KEY_PREFIX,
 	REMEMBERED_REGISTRY_MAX_AGE_MS,
+	REMEMBERED_REGISTRY_MAX_LENGTH,
 	rememberedRegistry,
 } from '../remembered';
 import type { RegistryMemory } from '../remembered';
@@ -78,6 +80,39 @@ describe('rememberedRegistry', () => {
 		localStorage.setItem(localStorage.key(0) as string, raw);
 
 		expect(memory.read()).toBeUndefined();
+		expect(localStorage.length).toBe(0);
+	});
+
+	test('keeps the list under its key, for the backend it came from', () => {
+		memoryAt(() => 1000).write(LIST);
+
+		expect(localStorage.key(0)).toBe(
+			`${REMEMBERED_REGISTRY_KEY_PREFIX}https://acme.inth.app/`
+		);
+	});
+
+	test('refuses a stored value past its size limit, and does not write one', () => {
+		const memory = memoryAt(() => 1000);
+		memory.write(LIST);
+		const key = localStorage.key(0) as string;
+		const padded = JSON.stringify({
+			pad: 'x'.repeat(REMEMBERED_REGISTRY_MAX_LENGTH),
+			registry: LIST,
+			savedAt: 1000,
+			v: 1,
+		});
+		localStorage.setItem(key, padded);
+		expect(memory.read()).toBeUndefined();
+		expect(localStorage.length).toBe(0);
+
+		memory.write({
+			sources: {
+				vendor: {
+					integrity: 'x'.repeat(REMEMBERED_REGISTRY_MAX_LENGTH),
+					src: 'y',
+				},
+			},
+		});
 		expect(localStorage.length).toBe(0);
 	});
 

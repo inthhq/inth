@@ -521,9 +521,17 @@ describe('experimentalScriptRegistry', () => {
 	const necessaryOther: Script = { ...otherScript, category: 'necessary' };
 	/** The backend the runtimes below ask, so the browser remembers its list. */
 	const BACKEND = 'https://acme.inth.app';
-	const MEMORY_KEY = 'c15t-script-registry:v1:';
+	const MEMORY_KEY = 'inth-script-registry:v1:';
+	/** Persistence on, as the remembered list needs, without other tabs. */
+	const PERSISTED = { sync: false } as const;
 	afterEach(() => {
 		localStorage.clear();
+		for (const cookie of document.cookie.split(';')) {
+			const name = cookie.split('=')[0]?.trim();
+			if (name) {
+				document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+			}
+		}
 	});
 
 	const listed = (scriptSources: Record<string, unknown>) =>
@@ -813,12 +821,15 @@ describe('experimentalScriptRegistry', () => {
 						scriptRegistry,
 					})
 				),
+				persistence: PERSISTED,
 				projectUrl,
-				scripts: [integrationScript()],
+				// An optional script too, so the visitor has a choice to make.
+				scripts: [integrationScript(), otherScript],
 			});
 		const failing = (projectUrl = BACKEND) =>
 			startWith({
 				mode: initMode(() => Promise.reject(new TypeError('offline'))),
+				persistence: PERSISTED,
 				projectUrl,
 				scripts: [integrationScript()],
 			});
@@ -829,12 +840,19 @@ describe('experimentalScriptRegistry', () => {
 			);
 			return raw ? (JSON.parse(raw) as { registry: unknown }).registry : null;
 		};
-		/** Answer once with `scriptRegistry`, so the browser remembers it. */
+		/**
+		 * Answer once with `scriptRegistry` to a visitor who then makes a
+		 * choice, so the browser remembers it.
+		 */
 		const remember = async (
 			scriptRegistry: Record<string, unknown> | undefined,
 			projectUrl = BACKEND
 		) => {
 			const runtime = answering(scriptRegistry, projectUrl);
+			await vi.waitFor(() =>
+				expect(runtime.kernel.getSnapshot().policyPending).toBe(false)
+			);
+			await runtime.kernel.commands.save('all');
 			await vi.waitFor(() =>
 				expect(stored(projectUrl)).toEqual(scriptRegistry ?? null)
 			);
@@ -869,6 +887,7 @@ describe('experimentalScriptRegistry', () => {
 			});
 			const refused = startWith({
 				mode: initMode(() => Promise.reject(new TypeError('offline'))),
+				persistence: PERSISTED,
 				projectUrl: BACKEND,
 				scripts: [
 					integrationScript({
@@ -955,6 +974,72 @@ describe('experimentalScriptRegistry', () => {
 				expect(fetchAttributes('vendor').src).toBe(HASH_SRC)
 			);
 			await vi.waitFor(() => expect(stored()).toEqual(list));
+			runtime.dispose();
+		});
+
+		test('is stored only once the visitor has made a choice', async () => {
+			const list = {
+				sources: { vendor: { integrity: HASH_INTEGRITY, src: HASH_SRC } },
+			};
+			const runtime = answering(list);
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor').src).toBe(HASH_SRC)
+			);
+			expect(stored()).toBeNull();
+
+			await runtime.kernel.commands.save('none');
+			await vi.waitFor(() => expect(stored()).toEqual(list));
+			runtime.dispose();
+		});
+
+		test('is neither stored nor read with persistence: false', async () => {
+			const list = {
+				sources: { vendor: { integrity: HASH_INTEGRITY, src: HASH_SRC } },
+			};
+			const unpersisted = startWith({
+				mode: initMode(() =>
+					Promise.resolve({
+						policyResolution: {
+							...matchedResolution(optInRule({ id: 'opt-in' })),
+							version: 1,
+						},
+						scriptRegistry: list,
+					})
+				),
+				projectUrl: BACKEND,
+				scripts: [integrationScript(), otherScript],
+			});
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor').src).toBe(HASH_SRC)
+			);
+			await unpersisted.kernel.commands.save('all');
+			expect(localStorage.length).toBe(0);
+			unpersisted.dispose();
+			document.head.innerHTML = '';
+
+			await remember(list);
+			const failingUnpersisted = startWith({
+				mode: initMode(() => Promise.reject(new TypeError('offline'))),
+				projectUrl: BACKEND,
+				scripts: [integrationScript()],
+			});
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor').src).toBe(VENDOR_SRC)
+			);
+			failingUnpersisted.dispose();
+		});
+
+		test('is kept and used when unavailable comes beside empty maps', async () => {
+			const list = {
+				sources: { vendor: { integrity: HASH_INTEGRITY, src: HASH_SRC } },
+			};
+			await remember(list);
+			const runtime = answering({ files: {}, sources: {}, unavailable: true });
+
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor').src).toBe(HASH_SRC)
+			);
+			expect(stored()).toEqual(list);
 			runtime.dispose();
 		});
 
@@ -1062,9 +1147,11 @@ describe('experimentalScriptRegistry', () => {
 					? Promise.reject(new TypeError('offline'))
 					: Promise.resolve({ scriptRegistry: { sources: { vendor: null } } });
 			}),
+			persistence: PERSISTED,
 			projectUrl: BACKEND,
-			scripts: [integrationScript()],
+			scripts: [integrationScript(), otherScript],
 		});
+		await runtime.kernel.commands.save('all');
 
 		await vi.waitFor(() =>
 			expect(fetchAttributes('vendor').src).toBe(VENDOR_SRC)
@@ -1076,7 +1163,9 @@ describe('experimentalScriptRegistry', () => {
 				}),
 			{ timeout: 3000 }
 		);
-		expect(srcs()).toEqual([VENDOR_SRC]);
+		expect(srcs().filter((src) => src !== otherScript.src)).toEqual([
+			VENDOR_SRC,
+		]);
 		await vi.waitFor(() =>
 			expect(
 				JSON.parse(localStorage.getItem(`${MEMORY_KEY}${BACKEND}/`) ?? 'null')

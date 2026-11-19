@@ -140,7 +140,9 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	};
 	// Each answer replaces the remembered list, a list-less one with none,
 	// so turning the registry off takes effect. One whose registry the
-	// backend could not read leaves it.
+	// backend could not read leaves it. A list is stored as the SDK's own
+	// state is: once the visitor has made a choice. Until then it waits,
+	// and is stored when the choice comes.
 	let remembered: unknown = Symbol('nothing remembered yet');
 	const remember = (snapshot: ConsentSnapshot): void => {
 		// A failed init leaves the policy pending, so this is an answer.
@@ -148,7 +150,8 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			!memory ||
 			snapshot.policyPending ||
 			snapshot.scriptRegistry === remembered ||
-			registryUnavailable(snapshot.scriptRegistry)
+			registryUnavailable(snapshot.scriptRegistry) ||
+			(snapshot.scriptRegistry !== null && snapshot.explicitChoice === null)
 		) {
 			return;
 		}

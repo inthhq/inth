@@ -15,6 +15,12 @@ import { logRocket } from '../vendors/analytics/logrocket';
 const APP_ID = 'inth-test/script-files';
 /** The backend the runtimes ask, so the browser remembers its list. */
 const BACKEND = 'https://backend.inth.test';
+/** An optional script, so the visitor has a choice to make. */
+const OPTIONAL = {
+	category: 'measurement' as const,
+	id: 'optional',
+	src: 'https://cdn.optional.inth.test/optional.js',
+};
 
 /** A mode whose init answers as `init` does, standing in for the backend. */
 const initMode = (init: () => Promise<unknown>): ProviderTransportFactory =>
@@ -45,6 +51,8 @@ export interface ScriptFilesPage {
 	answer: (registry: unknown) => void;
 	/** Start LogRocket on a runtime whose every init fails. */
 	startFailing: () => void;
+	/** Accept every category on the last runtime started. */
+	choose: () => Promise<unknown>;
 	dispose: () => void;
 }
 
@@ -59,6 +67,8 @@ let answer: (registry: unknown) => void = () => undefined;
 
 window.__scriptFiles = {
 	answer: (registry) => answer(registry),
+	choose: () =>
+		runtimes.at(-1)?.kernel.commands.save('all') ?? Promise.resolve(),
 	dispose() {
 		for (const runtime of runtimes.splice(0)) {
 			runtime.dispose();
@@ -94,9 +104,12 @@ window.__scriptFiles = {
 			mode: custom({
 				init: () => Promise.reject(new TypeError('Failed to fetch')),
 			}),
-			persistence: false,
+			persistence: { sync: false },
 			projectUrl: BACKEND,
-			scripts: [{ ...logRocket({ appId: APP_ID }), category: 'necessary' }],
+			scripts: [
+				{ ...logRocket({ appId: APP_ID }), category: 'necessary' },
+				OPTIONAL,
+			],
 		});
 		runtimes.push(runtime);
 		runtime.start();
@@ -113,9 +126,12 @@ window.__scriptFiles = {
 						answer = (registry) => resolve({ scriptRegistry: registry });
 					})
 			),
-			persistence: false,
+			persistence: { sync: false },
 			projectUrl: BACKEND,
-			scripts: [{ ...logRocket({ appId: APP_ID }), category: 'necessary' }],
+			scripts: [
+				{ ...logRocket({ appId: APP_ID }), category: 'necessary' },
+				OPTIONAL,
+			],
 		});
 		runtimes.push(runtime);
 		runtime.start();

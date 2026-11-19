@@ -9,14 +9,15 @@ import type { ConsentRuntimeOptions } from './types';
  *
  * @param callsInit - Whether the runtime asks `/v1/consent/init`. One that never
  * does, such as with `enabled: false` or a `consentSource`, has only the
- * list its prefetch carries. One that does remembers the last list its
- * `projectUrl` answered with, for when init fails.
+ * list its prefetch carries. One that does, with persistence on,
+ * remembers the last list its `projectUrl` answered with, for when init
+ * fails. `persistence: false` stores nothing, this list included.
  * @internal
  */
 export const scriptRegistry = function scriptRegistry(
 	options: Pick<
 		ConsentRuntimeOptions,
-		'experimentalScriptRegistry' | 'projectUrl'
+		'experimentalScriptRegistry' | 'persistence' | 'projectUrl'
 	>,
 	callsInit: boolean
 ): ScriptLoaderOptions['registry'] {
@@ -26,7 +27,10 @@ export const scriptRegistry = function scriptRegistry(
 	) {
 		return undefined;
 	}
-	const memory = callsInit ? rememberedRegistry(options.projectUrl) : undefined;
+	const memory =
+		callsInit && options.persistence !== false
+			? rememberedRegistry(options.projectUrl)
+			: undefined;
 	return memory
 		? { memory, waitForInit: callsInit }
 		: { waitForInit: callsInit };
