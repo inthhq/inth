@@ -51,7 +51,7 @@ sealed class PolicyRead {
  * reader does not have, and there is no default that could be guessed for it.
  */
 object StrictPolicyReader {
-	/** The `policyResolution.version` this build reads; matches `@c15t/schema`. */
+	/** The `policyResolution.version` this build reads; matches `@inth/sdk-schema`. */
 	const val POLICY_CONTRACT_VERSION = 1
 
 	/** Categories the `'*'` wildcard expands to. */
