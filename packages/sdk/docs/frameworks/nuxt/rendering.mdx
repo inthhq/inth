@@ -124,7 +124,7 @@ or `manualChunks` of its own.
 ### Without the consent route
 
 `routePrefix: false` adds no route. The server render still resolves each
-visitor from the bundled snapshot, and the browser asks the backend's `/init`
+visitor from the bundled snapshot, and the browser asks the backend's `/v1/consent/init`
 whenever it resolves the policy itself, such as on a prerendered page. Keep
 the route unless something else owns `/api/inth`.
 
@@ -234,7 +234,7 @@ first time it is needed.
 
 The browser has no request location. When your policy depends on the
 visitor's country or region and neither `inputs` nor `geoUrl` supplies one,
-the browser asks the backend's `/init` on the first visit, as every
+the browser asks the backend's `/v1/consent/init` on the first visit, as every
 single-page app does. It doesn't apply the rule for an unknown location,
 which could be another region's. To resolve by location in the browser, pass
 `manifest({ resolve: 'browser', geoUrl: '/geo' })` with a route on your own

@@ -113,7 +113,7 @@ back online, up to 10 attempts over 7 days. A replay carries the original action
 time and policy snapshot token, so the backend records when the visitor
 decided, and a duplicate submission resolves to the same consent record. A
 backend that signs policy snapshot tokens rejects a replay made after the
-token expires, which is 30 minutes by default for the self-hosted backend. A
+token expires. A
 save still queued by then is recorded only in the browser.
 
 A replay that fails and stays queued emits `save:replayed` with `ok: false` but

@@ -1,6 +1,6 @@
 ---
 title: Open source
-description: Which parts of Inth are open source, the Apache-2.0 license, where the code lives, and how the hosted Inth backend relates to the self-hostable c15t backend.
+description: Which parts of Inth are open source, the Apache-2.0 license, where the code lives, and and which backend the SDK talks to.
 group: reference
 ---
 
@@ -21,13 +21,12 @@ maps categories to Google Consent Mode or IAB TCF purposes. You can also run
 the same code in your own tests instead of trusting a vendor's description of
 it.
 
-## Hosted and self-hosted backends
+## The backend
 
 The consent backend serves policies and stores consent records.
-[Inth](https://inth.com) runs it for you, and the guides use it. You can also
-run `@c15t/backend` on your own server with your own database; your app talks
-to it the same way it talks to Inth, with a different URL. See the
-[backend overview](/docs/self-host/overview) to decide.
+[Inth](https://inth.com) runs it. The SDK talks to your Inth project's `/v1`
+routes and to no other backend. c15t is a separate open-source project with
+its own backend.
 
 ## License
 

@@ -184,8 +184,7 @@ With `proxy` on, it also returns `POST`, `PATCH`, `PUT`, `DELETE` and
 | `fetch` | `typeof fetch` | global `fetch` | The fetch used for an absolute `projectUrl` or `manifestUrl`, and for the vendor list. |
 
 An absolute `projectUrl` or `manifestUrl` is fetched over the network with
-`fetch`. A `/`-relative one, such as `/api/self-host` for a backend mounted in
-your app, names a route in this app. The handlers request it through
+`fetch`. A `/`-relative one, such as `/api/inth`, names a route in this app. The handlers request it through
 `event.fetch`, which SvelteKit answers in-process, so it is never resolved
 against `event.url` or the request's `Host` header. The proxy forwards to a
 relative `projectUrl` the same way. Do not point it at the route the handlers

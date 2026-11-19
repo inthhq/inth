@@ -16,7 +16,7 @@ group: frameworks
   5. The codemods write c15t v3 paths. Point `c15t/react` imports at `@inth/react` and `@c15t/integrations` imports at `@inth/integrations`, then remove the c15t packages.
   6. Check that `ConsentManagerProvider` is now `ConsentProvider` from `@inth/react`, with a transport such as `hosted()` as `mode`. Finish any custom mode the codemod marked.
   7. Update callbacks, policy presets, renamed options and components, theme CSS, CSS variables and IAB setup as the guide describes.
-  8. Keep the existing backend URL. If the app runs its own c15t backend, stop and tell me, because it has to be upgraded in the same release with https://v3.c15t.com/docs/self-host/upgrade-v3.md.
+  8. Point the app at its Inth project URL. If the app uses a c15t backend it runs itself, stop and tell me: Inth's SDK talks only to an Inth project.
   9. Run the typecheck and build, and resolve every `TODO(c15t v3)` comment.
 
   When you finish, list the files you changed, anything you could not migrate, and how you checked that vendor requests still wait for consent.
@@ -25,10 +25,8 @@ group: frameworks
 ## Before you start
 
 - Upgrade React and React DOM to 18 or later.
-- If you run your own c15t backend, upgrade it in the same release. A v3
-  client can't read a v2 backend. See
-  [Upgrade a self-hosted backend](/docs/self-host/upgrade-v3).
-  Inth-hosted backends need no change.
+- The Inth SDK talks only to an Inth project. An app on a c15t backend it
+  runs itself moves to an Inth project first.
 - Install the [Inth CLI](/docs/cli/overview#install-the-inth-cli). The
   codemods run through `inth c15t codemods`.
 

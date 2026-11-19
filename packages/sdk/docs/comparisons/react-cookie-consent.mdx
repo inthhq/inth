@@ -20,7 +20,7 @@ react-cookie-consent gives you a customisable React bar, cookie helpers and call
 | Offer category and vendor preferences | Built-in controls | Build the rest of the preference flow |
 | Decide whether a feature can run | Effective permissions and vendor state | Connect callbacks and the cookie value to your own rules |
 | Control vendor scripts | Registered integrations and consent rules | Build the loader behaviour around callbacks |
-| Keep remote records | Inth hosts the backend and stores records in its database. Self-hosting is optional | Build a backend integration |
+| Keep remote records | Inth hosts the backend and stores records in its database | Build a backend integration |
 | Handle policy changes | Policy resolution and recorded choices | Supply your own policy logic |
 | Reopen preferences | Preference dialog and persistent access | Visibility and cookie-reset helpers |
 | Customise presentation | Themes, component parts or headless UI | Styles, classes, content and button props |
@@ -47,7 +47,7 @@ The backend can store confirmed choices. Browser state changes first, so check t
 
 ## What Inth does not include
 
-- **Setup as small as a standalone bar.** Production policy and records need an Inth connection or your own backend.
+- **Setup as small as a standalone bar.** Production policy and records need an Inth project.
 - **Automatic control of current analytics code.** Move it from old callbacks into registered integrations or explicit rules.
 - **A safe automatic conversion of a boolean cookie.** Review what visitors previously accepted before you create category or vendor grants.
 - **Legal-policy generation or a website scanner.** These are outside the Inth packages.

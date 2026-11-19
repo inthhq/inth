@@ -11,37 +11,16 @@ Inth ignores IDs that Google does not list. When Google removes a provider
 from the list, usually because it joined the Global Vendor List, it leaves
 the AC string on the visitor's next page load.
 
-### List the providers on your backend
+### List the providers in your Inth project
 
-A self-hosted backend lists the providers in its manifest's `iab` block,
-next to `customVendors`. It loads each provider's name and privacy policy the
-way it loads the vendor list, caches them, and sends them in `/init` to every
-visitor whose policy uses IAB TCF. Framework servers and browsers that
-resolve `/init` from the manifest load the same providers.
-
-{/* example: fragment */}
-
-```ts
-manifest: {
-	iab: {
-		enabled: true,
-		cmpId: 123,
-		additionalConsent: {
-			// Google ATP IDs: Meta and Snap Inc.
-			providers: [89, 2572],
-		},
-	},
-},
-```
-
-The backend's `additionalConsent` option sets the cache, which defaults to the
-`gvl` cache, and `enabled: false` stops `/init` from serving the providers. See
-[instance options](/docs/self-host/api/configuration#instance-options).
+List the providers in your Inth project's IAB settings. Inth loads each
+provider's name and privacy policy, and sends them in `/v1/consent/init` to
+every visitor whose policy uses IAB TCF. Framework servers and browsers that
+resolve init from the manifest load the same providers.
 
 ### List the providers in the browser
 
-`testing()` has no backend, and some backends do not list providers. In
-those setups, pass `additionalConsent` with your other IAB options: the
+`testing()` has no backend, so with it pass `additionalConsent` with your other IAB options: the
 `IABProvider` props in React, Next.js and TanStack Start, the `createIAB`
 options in JavaScript, and the `iab` option of the Vue, Nuxt, Svelte, Astro
 and script-tag setups. A list passed here replaces the one the backend sent.
@@ -112,10 +91,8 @@ When the visitor's policy does not use IAB TCF, `__tcfapi` reports
 allows only `cmpId`, `cmpVersion` and `tcfPolicyVersion` beside it, plus the
 status fields.
 
-A self-hosted backend records the AC string with each consent, in the
-`addtlConsent` column of the `consent` table beside the TC String. Run the
-backend's migrations after upgrading to add the column. Consents recorded
-before then, and consents saved without a TC String, store `null`.
+Inth records the AC string with each consent, beside the TC String.
+Consents saved without a TC String store none.
 
 ### Send the string with ad requests
 

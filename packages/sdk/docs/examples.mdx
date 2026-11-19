@@ -59,11 +59,6 @@ the `https://example-inth.inth.app` demo project, so they build on a fresh
 clone. Set your own URL in `.env.local`, which overrides it. Replace the
 placeholder PostHog key with your own, or remove the script.
 
-`examples/self-host` is a Next.js App Router app with `@c15t/backend` mounted
-at `/api/inth` in the same app. It runs on an embedded PGlite database in
-development and Postgres from `DATABASE_URL` when deployed. The
-[backend quickstart](/docs/self-host/quickstart) publishes its route handler.
-
 ## Showcases
 
 Showcases are apps for Northwind Coffee, a made-up coffee roaster. Each one
@@ -144,4 +139,4 @@ EXAMPLE_TARGET=nextjs bun run --cwd internals/fixtures/acceptance test
 Both variables take a comma-separated list of targets, such as
 `react,tanstack-start`, or `all`. See the
 [verification guide](/docs/guides/verify-consent) for the checks to run against
-your own backend and vendor accounts before you ship.
+your Inth project and vendor accounts before you ship.

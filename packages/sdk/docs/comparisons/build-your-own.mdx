@@ -21,7 +21,7 @@ A custom implementation can match these features. The difference is which parts 
 | Offer category and vendor choices | Configure the supplied preference controls and vendor rules | Design the choice model and connect it to each vendor |
 | Control scripts, requests and embeds | Register supported integrations and explicit rules | Build or adopt controls for each way that a vendor can run |
 | Resolve policy for a visitor | Configure policy rules and the fallback for unknown locations | Build policy selection, fallback behaviour and policy updates |
-| Store remote records | Inth hosts the backend and stores records in its database. Self-hosting is optional | Build or adopt record storage, delivery and recovery from failures |
+| Store remote records | Inth hosts the backend and stores records in its database | Build or adopt record storage, delivery and recovery from failures |
 | Support server output | Follow the selected framework's server or browser path | Handle initial state, hydration and saved choices in each framework |
 | Handle withdrawal | Use the runtime's withdrawal flow and configured cleanup | Define how each vendor stops and which data your code can remove |
 | Support future changes | Review Inth updates and test your integrations | Own updates across the implementation and its dependencies |
@@ -59,7 +59,7 @@ Inth's source is open under Apache-2.0. Your team can inspect it, pin package ve
 - **A guarantee that no request occurs before consent.** Some integrations load with denied signals. Check the selected policy and actual network behaviour.
 - **Automatic deletion of all vendor data.** Withdrawal normally reloads the page. Optional cleanup cannot remove every cookie or erase data already sent elsewhere.
 - **Remote records without a backend.** A local choice is not proof that a backend received it.
-- **An end to maintenance.** Your team still owns configuration, dependency updates, accessibility checks and production tests. Self-hosting also includes database operations and availability.
+- **An end to maintenance.** Your team still owns configuration, dependency updates, accessibility checks and production tests.
 
 The software has no licence fee, but Inth, infrastructure and implementation still have costs.
 

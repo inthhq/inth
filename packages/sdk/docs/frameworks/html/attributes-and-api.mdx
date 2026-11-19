@@ -132,32 +132,11 @@ version. If you copy `inth.js` to your own server, copy all four next to it.
 `inth.dialog.js` is recommended, not required. Without it, a Customize tap
 before the engine has loaded waits for the engine, and the engine opens its
 own copy of the dialog. With it, `inth.js` opens the dialog at once.
-A backend's `/inth.js` and `/inth.hosted.js` name its own
-[routes for them](/docs/self-host/api/endpoints#serve-the-script-tag). Set
-`data-hosted-src`, `data-commit-src`, `data-records-src` or
+Set `data-hosted-src`, `data-commit-src`, `data-records-src` or
 `data-dialog-src` on the tag to load a file from another URL; take all of
 them from the same `@inth/sdk` version. Under a Content Security Policy,
 the `script-src` that allows `inth.js` must allow the other files too; their
 tags carry `data-nonce` or the tag's `nonce`.
-
-### Start /init before inth.js
-
-A self-hosted c15t backend also serves `inth.init.js`. Put it before the
-`inth.js` tag with `async` when `inth.js` is low on the page, so the
-visitor's `/init` request starts while `inth.js` downloads:
-
-```html title="index.html"
-<script src="https://consent.example.com/inth.init.js" async></script>
-<script src="https://consent.example.com/inth.js" defer></script>
-```
-
-Add the same `?language=` to both URLs if you use it. Leave `inth.init.js` out
-when the page changes the `/init` request, for example when the `inth.js` tag
-sets `data-country`, `data-region` or `data-language`, or a queued `config`
-call sets `overrides`, `experiment` or `storageConfig`. `inth.js` then sends a
-different `/init`, and the first request goes unused. The
-[endpoint reference](/docs/self-host/api/endpoints#serve-the-script-tag) lists
-every case.
 
 `dist/inth.css` and `dist/inth.iab.css` are the stylesheets, for pages that
 render the UI with `data-shadow="false"` and load the CSS themselves.
