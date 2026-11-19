@@ -1,10 +1,11 @@
 /**
  * Work around a defect in the shipped `@inth/react-native` output.
  *
- * `dist/provider/consent-provider.js` compiles its JSX with the classic runtime
- * (`React.createElement`) without importing `React`, while every other file in
- * the same build uses the automatic runtime. Nothing in a React Native app
- * defines a `React` global, so the provider would throw on first render there.
+ * A built file that compiles its JSX with the classic runtime
+ * (`React.createElement`) without importing `React` throws on first render,
+ * because nothing in a React Native app defines a `React` global. The provider
+ * module shipped that way once, while the rest of the build used the automatic
+ * runtime.
  *
  * The benchmark measures the published artifact rather than a patched copy, so
  * it supplies the global the artifact expects and reports the file count as a

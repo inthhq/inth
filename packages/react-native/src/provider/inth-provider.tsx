@@ -138,7 +138,7 @@ export interface InthProviderBaseProps {
 	 *
 	 * const insets = useSafeAreaInsets();
 	 *
-	 * <InthProvider safeAreaInsets={insets}>
+	 * <InthProvider privacyPolicyUrl="https://example.com/privacy" safeAreaInsets={insets}>
 	 *     <Root />
 	 * </InthProvider>;
 	 * ```

@@ -422,7 +422,7 @@ Presenting the consent prompt
 The stock UI presents an owed prompt by itself. It is on by default on every
 platform, and each one offers the same opt-out:
 
-    React Native   <InthProvider privacyPolicyURL="https://...">     autoPresent={false}
+    React Native   <InthProvider privacyPolicyUrl="https://...">     autoPresent={false}
     SwiftUI        view.inth(configuration, privacyPolicyURL:)  autoPresent: false
                    view.inth(privacyPolicyURL:)                 (core already installed)
     UIKit          ConsentRootViewController(root:configuration:privacyPolicyURL:)
