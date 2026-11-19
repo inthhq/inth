@@ -39,26 +39,18 @@ const ownBooleanMap = function ownBooleanMap(
 };
 
 /**
- * The stored receipt text, or `null` when there is none or no storage. A
- * receipt only c15t's key holds is copied to Inth's.
+ * The stored receipt text, or `null` when there is none or no storage.
+ * Without an Inth receipt, c15t's is read where it is: a c15t page on the
+ * same origin keeps it, and withdraws it when its TC string goes.
  */
 export const readAuthorityReceiptText = function readAuthorityReceiptText():
 	| string
 	| null {
 	try {
-		const own = localStorage.getItem(IAB_STORAGE_KEYS.authority);
-		if (own !== null) {
-			return own;
-		}
-		const c15t = localStorage.getItem(IAB_STORAGE_KEYS.c15tAuthority);
-		if (c15t !== null) {
-			try {
-				localStorage.setItem(IAB_STORAGE_KEYS.authority, c15t);
-			} catch {
-				// Full storage: c15t's copy is read again next time.
-			}
-		}
-		return c15t;
+		return (
+			localStorage.getItem(IAB_STORAGE_KEYS.authority) ??
+			localStorage.getItem(IAB_STORAGE_KEYS.c15tAuthority)
+		);
 	} catch {
 		return null;
 	}

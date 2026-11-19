@@ -1345,7 +1345,9 @@ export const createIAB = function createIAB(
 		if (
 			options.persistence === false ||
 			!held ||
-			(event.key !== IAB_STORAGE_KEYS.authority && event.key !== null)
+			(event.key !== IAB_STORAGE_KEYS.authority &&
+				event.key !== IAB_STORAGE_KEYS.c15tAuthority &&
+				event.key !== null)
 		) {
 			return;
 		}

@@ -550,7 +550,7 @@ const c15tOnlyReceipt = async () => {
 	};
 };
 
-test("restores a receipt only c15t's key holds, copied to Inth's and kept for c15t pages", async () => {
+test("restores a receipt only c15t's key holds, read where c15t keeps it", async () => {
 	const { confirmedAt, receipt } = await c15tOnlyReceipt();
 	vi.setSystemTime(NOW + 1000);
 	const kernel = makeKernel();
@@ -558,8 +558,24 @@ test("restores a receipt only c15t's key holds, copied to Inth's and kept for c1
 	await vi.waitFor(() =>
 		expect(kernel.getSnapshot().iab?.authority?.confirmedAt).toBe(confirmedAt)
 	);
-	expect(localStorage.getItem('inth-iab-authority-v1')).toBe(receipt);
+	expect(localStorage.getItem('inth-iab-authority-v1')).toBeNull();
 	expect(localStorage.getItem('c15t-iab-authority-v1')).toBe(receipt);
+});
+
+test('a c15t tab withdrawing its receipt withdraws the authority read from it', async () => {
+	await c15tOnlyReceipt();
+	const kernel = makeKernel();
+	createAddon(kernel);
+	await vi.waitFor(() =>
+		expect(kernel.getSnapshot().iab?.authority).not.toBeNull()
+	);
+	localStorage.removeItem('c15t-iab-authority-v1');
+	window.dispatchEvent(
+		new StorageEvent('storage', { key: 'c15t-iab-authority-v1' })
+	);
+	await vi.waitFor(() =>
+		expect(kernel.getSnapshot().iab?.authority ?? null).toBeNull()
+	);
 });
 
 test("an Inth receipt wins over c15t's", async () => {
