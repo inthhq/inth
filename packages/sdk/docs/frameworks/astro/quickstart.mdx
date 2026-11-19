@@ -91,7 +91,7 @@ still go to Inth. [Data fetching](/docs/concepts/data-fetching) compares
 this with calling the backend on every request.
 
 `manifest()` injects one route, `/api/inth/[...path]`, which answers
-`/api/inth/init` and `/api/inth/manifest`, so it needs a server adapter. Use
+`/api/inth/v1/consent/init` and `/api/inth/v1/consent/manifest`, so it needs a server adapter. Use
 the adapter for your host in place of `@astrojs/node`. A server-rendered page
 ships only the code that saves consent; the code that resolves a policy in
 the browser loads when a page needs it.

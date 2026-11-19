@@ -9,7 +9,7 @@ group: frameworks
 Add `inthProxy` when your hosting platform exposes the visitor's location to
 Next.js middleware or proxy but strips those headers before Server Components
 and Route Handlers run. Without them, `resolveConsent`, the awaited
-server helpers and the optional consent route at `/api/inth/init` see an unknown
+server helpers and the optional consent route at `/api/inth/v1/consent/init` see an unknown
 location and apply your unknown-location policy rule for every visitor.
 
 Inth reads location from the platform headers listed in
@@ -251,7 +251,7 @@ unknown-location rule, your platform strips location headers before Server
 Components and the proxy is required. If they still resolve correctly, your
 platform already passes the headers through and the proxy is optional.
 
-With the consent route in the matcher, request `/api/inth/init` from each
+With the consent route in the matcher, request `/api/inth/v1/consent/init` from each
 location and confirm its `policyResolution` reflects the location. If you use
 `cookie: true`, check the response for `Set-Cookie: inth-country=...` with
 `HttpOnly` and `SameSite=Lax`.

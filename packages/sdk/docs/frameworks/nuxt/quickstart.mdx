@@ -55,7 +55,7 @@ set, `NUXT_PUBLIC_INTH_PROJECT_URL` wins.
 The module's default mode, `manifest()`, fetches your project's public
 policy once, during `nuxt build` and when `nuxt dev` starts, and embeds it in
 the server bundle. It also adds one consent route to your Nuxt server,
-`/api/inth/**`, which answers `/api/inth/init` and `/api/inth/manifest`. The
+`/api/inth/**`, which answers `/api/inth/v1/consent/init` and `/api/inth/v1/consent/manifest`. The
 server resolves each visitor from the bundled policy and the request's
 location and language headers, so rendering a page never waits on Inth. The
 browser bundle carries no policy and no resolver. Consent saves still go to

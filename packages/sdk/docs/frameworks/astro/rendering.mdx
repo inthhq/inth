@@ -59,7 +59,7 @@ export default defineConfig({
 ```
 
 The build downloads the manifest and the integration prerenders it as a
-static file at `/api/inth/manifest`, so no adapter is needed. The browser
+static file at `/api/inth/v1/consent/manifest`, so no adapter is needed. The browser
 fetches that file from your own origin, loads the resolver, and resolves the
 policy. It has no request location, so without `inputs` or `geoUrl` every
 visitor gets the policy your project assigns when the location is unknown.
@@ -84,7 +84,7 @@ policy file. By default the build downloads that file and bundles it, so a
 render never waits on the backend for the policy. With
 `manifest({ source: 'runtime' })`, in `astro dev` when the fetch fails, or
 with `onBuildError: 'runtime'`, the server downloads and caches the file at
-runtime. The browser asks the injected `/api/inth/init` route when it needs a
+runtime. The browser asks the injected `/api/inth/v1/consent/init` route when it needs a
 decision, and saves consent to the backend URL. A server-rendered page ships
 only the code that saves consent; the code that resolves a policy loads when
 a page asks again. `manifest()` needs the backend URL as `projectUrl` or
@@ -149,7 +149,7 @@ export const prerender = true;
 The middleware sees that the page is prerendered and does not read the build's
 request headers or cookies. The page then behaves like a page from a static
 build. The browser reads the visitor's cookie, requests the policy from
-`/api/inth/init` and renders the banner. Other pages still render per request.
+`/api/inth/v1/consent/init` and renders the banner. Other pages still render per request.
 
 If you call `resolveConsentContext` from `@inth/astro/server` yourself, pass
 `prerendered: true` only for output that every visitor shares. It drops the
@@ -276,8 +276,8 @@ stylesheet. Opening the dialog on that page adds the stylesheet first.
   page.
 - **Static output or a prerendered page:** the page source has no banner
   markup. In DevTools Network, the browser requests `/init` from your backend
-  with `hosted()`, `/api/inth/manifest` with
-  `manifest({ resolve: 'browser' })`, or `/api/inth/init` in a server build,
+  with `hosted()`, `/api/inth/v1/consent/manifest` with
+  `manifest({ resolve: 'browser' })`, or `/api/inth/v1/consent/init` in a server build,
   and the banner appears after it returns.
 - **Server island:** the page source has no banner markup. In DevTools
   Network, a request to `/_server-islands/ConsentBanner` returns it.

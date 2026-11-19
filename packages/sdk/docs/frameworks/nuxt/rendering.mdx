@@ -58,8 +58,8 @@ To start every `scripts` entry after hydration instead, set
 `app.config.ts`.
 
 The module adds one catch-all route at `${routePrefix}/**`, `/api/inth/**` by
-default. It answers `GET /api/inth/init`, the visitor's resolved policy, and
-`GET /api/inth/manifest`, the deployment's manifest. The server render
+default. It answers `GET /api/inth/v1/consent/init`, the visitor's resolved policy, and
+`GET /api/inth/v1/consent/manifest`, the deployment's manifest. The server render
 resolves through the init route in-process, through Nitro's local fetch, so
 it never leaves the server. The browser uses the init route when it resolves
 the policy itself, for example on a prerendered route or after a server
@@ -184,7 +184,7 @@ A prerendered route, or one with a `prerender`, `swr`, `isr` or `cache` route
 rule, sends the same HTML to every visitor. The module renders that HTML
 without any visitor's consent record, location or request headers, so it has
 no banner. After hydration the browser requests the visitor's policy from
-`/api/inth/init` and reads their stored choice, then shows the banner if the
+`/api/inth/v1/consent/init` and reads their stored choice, then shows the banner if the
 policy asks for one. With `hosted()`, or `routePrefix: false`, the browser
 asks the backend's `/init` instead.
 
@@ -257,7 +257,7 @@ above. The module reads the visitor's stored choice from their own cookie,
 and the browser resolves the policy from the bundled manifest. The banner
 appears once the resolver chunk loads. `examples/nuxt-static` in the Inth
 repository builds this setup. With a Nuxt server, the default `manifest()`
-also works: the browser asks the server's `/api/inth/init`.
+also works: the browser asks the server's `/api/inth/v1/consent/init`.
 
 With `hosted()`, the module adds a small inline script to the head of every
 `ssr: false` page, prerendered ones included, that starts the backend's
@@ -288,7 +288,7 @@ confirm the banner stays closed.
 
 For a prerendered or cached route, view the page source and confirm it has no
 `consent-banner-root`. Open the Network tab and reload. The browser requests
-`/api/inth/init` after the page loads, and the banner appears. Reject, reload,
+`/api/inth/v1/consent/init` after the page loads, and the banner appears. Reject, reload,
 and confirm the banner stays closed.
 
 For static output with browser resolution, serve `.output/public` and open

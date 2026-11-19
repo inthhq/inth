@@ -11,7 +11,7 @@ host or CDN adds. It never looks up an IP address itself. The headers are read
 in three places:
 
 - During server rendering, the Inth plugin reads them from the page request.
-- In the default `manifest()` mode, the `/api/inth/init` route reads them
+- In the default `manifest()` mode, the `/api/inth/v1/consent/init` route reads them
   from the browser's own request, for example on a prerendered route.
 - In `hosted()` mode, the plugin forwards them to your backend's `/init`.
 
@@ -65,7 +65,7 @@ of its own.
 Stripping the headers also turns off the `country` and `region` props of
 `ConsentRoot` when the server resolves the policy. In the browser, those
 props reach the
-`/api/inth/init` route as `x-inth-country` and `x-inth-region` headers, so
+`/api/inth/v1/consent/init` route as `x-inth-country` and `x-inth-region` headers, so
 the edge removes them too.
 
 Do not strip them in a Nitro server middleware. During server rendering, the
@@ -86,7 +86,7 @@ Use one of these while you build, never in production:
   the policy again for that location. When the server resolves the policy,
   this only works while nothing strips the `x-inth-*` headers.
 - Send the override header yourself, for example
-  `curl -H 'x-inth-country: DE' http://localhost:3000/api/inth/init`. This
+  `curl -H 'x-inth-country: DE' http://localhost:3000/api/inth/v1/consent/init`. This
   only works while nothing strips the header.
 - Use a VPN or your host's geography testing tools against a deployment.
 
@@ -99,5 +99,5 @@ policy, so do not copy it into production.
 Deploy and load the site from two locations with different policy rules, for
 example through a VPN. View the source of each page: an opt-in region has
 `data-testid="consent-banner-root"` in the HTML, and a region with no prompt
-does not. Then request `/api/inth/init` with `curl -H 'x-inth-country: US'`
+does not. Then request `/api/inth/v1/consent/init` with `curl -H 'x-inth-country: US'`
 against production and confirm the resolved location ignores the header.

@@ -4,7 +4,7 @@
 it when `astro build` or `astro dev` starts, then embeds it in its generated
 server options. The middleware and the consent route use that same snapshot.
 The browser options omit it; only `manifest({ resolve: 'browser' })` serves
-it to the browser, as the prerendered `/api/inth/manifest`. No
+it to the browser, as the prerendered `/api/inth/v1/consent/manifest`. No
 generated file or extra import is needed. `astro check` and `astro sync` do
 not fetch, so type checks work without the backend. `astro preview` serves the
 completed build and never fetches a new snapshot.
