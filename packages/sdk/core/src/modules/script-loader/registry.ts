@@ -1,7 +1,11 @@
-import type { ScriptSource } from '../../libs/script-loader/types';
 import type { ConsentSnapshot } from '../../types';
+import { parseRegistrySignature } from './signature';
 import { sriHashes } from './sources';
-import type { RegistrySources, ScriptRegistryState } from './sources';
+import type {
+	RegistrySource,
+	RegistrySources,
+	ScriptRegistryState,
+} from './sources';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
 	typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -26,21 +30,26 @@ const isHttpsURL = (value: string): boolean => {
  * One entry of the list, or `null` for one the loader cannot use: no
  * https `src`, no integrity hash, or attributes that are not strings or
  * `null`. Fields it does not know are ignored, so a later backend can add
- * them.
+ * them. A `null` signature is a missing one; a `signature` that is not
+ * one reads as `null`, which no check passes.
  */
-const parseEntry = (entry: unknown): ScriptSource | null => {
+const parseEntry = (entry: unknown): RegistrySource | null => {
 	if (!isRecord(entry)) {
 		return null;
 	}
-	const { attributes, integrity, src } = entry;
+	const { attributes, integrity, signature, src } = entry;
 	if (
 		!(typeof src === 'string' && isHttpsURL(src)) ||
 		!(typeof integrity === 'string' && hasSriHash(integrity))
 	) {
 		return null;
 	}
+	const signed =
+		signature === undefined || signature === null
+			? {}
+			: { signature: parseRegistrySignature(signature) };
 	if (attributes === undefined || attributes === null) {
-		return { integrity, src };
+		return { integrity, src, ...signed };
 	}
 	if (
 		!(
@@ -59,12 +68,13 @@ const parseEntry = (entry: unknown): ScriptSource | null => {
 		>,
 		integrity,
 		src,
+		...signed,
 	};
 };
 
 /**
  * Check the registry's sources as init carries them:
- * `{ "<script id>": { "src", "integrity", "attributes"? } }`.
+ * `{ "<script id>": { "src", "integrity", "attributes"?, "signature"? } }`.
  *
  * @param sources - The unchecked sources.
  * @returns The sources by script `id`, with `null` for an entry the loader

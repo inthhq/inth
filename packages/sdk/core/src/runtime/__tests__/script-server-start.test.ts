@@ -24,6 +24,7 @@ import {
 	encodeStoredConsentEnvelopeJson,
 	encodeVendorChoice,
 } from '../../modules/persistence/writer/encode';
+import { signRelease } from '../../modules/script-loader/__tests__/signing-fixtures';
 import { releaseServerStartedScripts } from '../../surface-actions/plain-scripts';
 import {
 	PAGE_RENDER_KEY,
@@ -45,6 +46,13 @@ type StartedWindow = Window & {
 	__c15tSetup?: number;
 	__c15tStarted?: Record<string, HTMLScriptElement>;
 };
+
+// oxlint-disable-next-line anti-slop/no-module-mocking -- The tests cannot sign with Inth's keys, so they trust test keys in their place; the verifier is the real one.
+vi.mock('../../modules/script-loader/signing-keys', async () => ({
+	SIGNING_KEYS: (
+		await import('../../modules/script-loader/__tests__/signing-fixtures')
+	).TEST_SIGNING_KEYS,
+}));
 
 const CONFIRMED_AT = NOW - 1000;
 
@@ -175,7 +183,7 @@ describe('serverScriptStart', () => {
 			scriptLoader?: ConsentRuntimeOptions['scriptLoader']
 		) =>
 			serverScriptStart({
-				experimentalScriptRegistry: true,
+				experimentalScriptRegistry: { requireSignatures: false },
 				mode,
 				prefetch: {
 					...prefetchFor({ marketing: true }),
@@ -237,10 +245,42 @@ describe('serverScriptStart', () => {
 		});
 	});
 
+	test('starts a registry entry only once this process has verified its signature', async () => {
+		const integrity = `sha384-${'A'.repeat(64)}`;
+		const registrySrc =
+			'https://acme.inth.app/scripts/pixel@fedcba9876543210.js';
+		const render = (entry: Record<string, unknown>) =>
+			serverScriptStart({
+				experimentalScriptRegistry: true,
+				mode,
+				prefetch: {
+					...prefetchFor({ marketing: true }),
+					initialScriptRegistry: { sources: { pixel: entry as never } },
+				},
+				scripts: [{ ...pixel, integration: 'pixel' }],
+			});
+		const signed = {
+			integrity,
+			signature: signRelease({ integrity, url: pixel.src ?? '' }),
+			src: registrySrc,
+		};
+
+		// A render cannot wait for the check: the loader runs it in the
+		// browser. This render starts it, so a later one can start the script.
+		expect(render(signed)).toBeUndefined();
+		expect(render({ integrity, src: registrySrc })).toBeUndefined();
+		await vi.waitFor(() => expect(render(signed)).not.toBeUndefined());
+
+		run(render(signed));
+		expect(document.head.querySelector('script')?.getAttribute('src')).toBe(
+			registrySrc
+		);
+	});
+
 	test('leaves an integration to the client when the prefetch has not resolved init', () => {
 		expect(
 			serverScriptStart({
-				experimentalScriptRegistry: true,
+				experimentalScriptRegistry: { requireSignatures: false },
 				mode,
 				prefetch: {
 					...prefetchFor({ marketing: true }),
@@ -254,7 +294,7 @@ describe('serverScriptStart', () => {
 	test('starts an integration from its own URL when the prefetch carries no registry list', () => {
 		run(
 			serverScriptStart({
-				experimentalScriptRegistry: true,
+				experimentalScriptRegistry: { requireSignatures: false },
 				mode,
 				prefetch: prefetchFor({ marketing: true }),
 				scripts: [{ ...pixel, integration: 'pixel' }],

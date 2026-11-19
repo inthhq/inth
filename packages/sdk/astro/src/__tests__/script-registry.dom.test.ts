@@ -22,7 +22,9 @@ const REGISTRY_INTEGRITY =
 let client: AstroConsentClient | null = null;
 
 /** Boots the page as the server rendered it, and returns the vendor's tag. */
-const loadedTag = (experimentalScriptRegistry?: boolean) => {
+const loadedTag = (experimentalScriptRegistry?: {
+	requireSignatures: boolean;
+}) => {
 	// The server's init, with the registry's list, as the page carries it.
 	(window as unknown as Record<string, unknown>).__c15tAstroConfig = {
 		initialPolicyResolution: testResolution(),
@@ -70,7 +72,7 @@ afterEach(() => {
 });
 
 it('loads an integration from the registry source init lists', () => {
-	expect(loadedTag(true)).toEqual({
+	expect(loadedTag({ requireSignatures: false })).toEqual({
 		integrity: REGISTRY_INTEGRITY,
 		src: REGISTRY_SRC,
 	});

@@ -42,7 +42,9 @@ afterEach(() => {
 });
 
 /** Renders the provider, and returns the vendor's script tag once loaded. */
-const loadedTag = async (experimentalScriptRegistry?: boolean) => {
+const loadedTag = async (experimentalScriptRegistry?: {
+	requireSignatures: boolean;
+}) => {
 	const view = render(ConsentProvider, {
 		props: {
 			options: {
@@ -68,7 +70,7 @@ const loadedTag = async (experimentalScriptRegistry?: boolean) => {
 };
 
 test('loads an integration from the registry source init lists', async () => {
-	expect(await loadedTag(true)).toEqual({
+	expect(await loadedTag({ requireSignatures: false })).toEqual({
 		integrity: REGISTRY_INTEGRITY,
 		src: REGISTRY_SRC,
 	});

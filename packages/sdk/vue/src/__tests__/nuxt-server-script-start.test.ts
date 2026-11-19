@@ -203,7 +203,9 @@ test('starts an integration from the registry source init lists with experimenta
 		};
 	};
 
-	nuxt.publicConfig = { experimentalScriptRegistry: true };
+	nuxt.publicConfig = {
+		experimentalScriptRegistry: { requireSignatures: false },
+	};
 	expect(await started()).toEqual({
 		attributes: '{"integrity":"sha384-registry","crossorigin":"anonymous"}',
 		src: JSON.stringify(registrySrc),

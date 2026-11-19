@@ -75,6 +75,7 @@ export type {
 	ConsentRuntimeModules,
 	ConsentRuntimeOptions,
 	ConsentRuntimeUpdate,
+	ExperimentalScriptRegistryOptions,
 	GPPModuleLoader,
 	RuntimeGPPOptions,
 	RuntimeIABOptions,

@@ -63,7 +63,9 @@ afterEach(() => {
 });
 
 /** Mounts an app with the plugin, and returns the vendor's script tag. */
-const loadedTag = async (experimentalScriptRegistry?: boolean) => {
+const loadedTag = async (experimentalScriptRegistry?: {
+	requireSignatures: boolean;
+}) => {
 	vi.stubGlobal(
 		'fetch',
 		vi.fn(() =>
@@ -99,7 +101,7 @@ const loadedTag = async (experimentalScriptRegistry?: boolean) => {
 };
 
 test('loads an integration from the registry source init lists', async () => {
-	expect(await loadedTag(true)).toEqual({
+	expect(await loadedTag({ requireSignatures: false })).toEqual({
 		integrity: REGISTRY_INTEGRITY,
 		src: REGISTRY_SRC,
 	});

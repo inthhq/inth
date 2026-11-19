@@ -78,7 +78,7 @@ mode, not the plugin:
 | `nonce` | Unset | Content Security Policy nonce for every script the loader creates and for the token style element. See [Content Security Policy](/docs/frameworks/vue/content-security-policy). |
 | `reloadOnConsentRevoked` | `true` | Reloads the page when a save withdraws a granted category or vendor. |
 | `clearOnRevocation` | Unset | Deletes first-party cookies and storage keys for a withdrawn category. See [clear on revocation](/docs/frameworks/vue/clear-on-revocation). |
-| `experimentalScriptRegistry` | `false` | Experimental. Loads `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. Read once. |
+| `experimentalScriptRegistry` | `false` | Experimental. Loads `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks, once Inth's release signature on the entry verifies. Pass `{ requireSignatures, signingKeys }` to change the check; see [release signatures](/docs/frameworks/javascript/api/runtime#release-signatures). Read once. |
 | `iab` | Off | Turns IAB TCF on; `{}` is enough. Also takes publisher settings, such as `publisherRestrictions`; fields left out come from the policy. Unset, `false` or `{ enabled: false }` leaves IAB off, and an `iab` policy with a vendor list throws an `IABUnavailableError`. See [IAB TCF](/docs/frameworks/vue/iab). |
 
 ### Events and other tools

@@ -413,6 +413,29 @@ export interface ConsentRuntimeModules {
  * Framework-independent lifecycle options. Adapters add presentation options.
  * External sources are initial-only; recreate the runtime to change authority.
  */
+/**
+ * How the script registry's release signatures are checked. Each listed
+ * script waits while its entry's signature is checked, and an invalid
+ * signature always keeps it from loading, from the registry or its vendor.
+ * Experimental: its name and behaviour can change in a minor release.
+ */
+export interface ExperimentalScriptRegistryOptions {
+	/**
+	 * Refuse an entry with no release signature, as the registry's `null`
+	 * does. With `false`, such an entry loads and `scriptLoader.onDebug`
+	 * reports it.
+	 * @default true
+	 */
+	requireSignatures?: boolean;
+	/**
+	 * Whose signing keys to trust: `'production'`, or `'preview'` for a
+	 * project on an Inth preview deployment. Each trusts its own keys
+	 * alone.
+	 * @default 'production'
+	 */
+	signingKeys?: 'production' | 'preview';
+}
+
 export interface ConsentRuntimeOptions {
 	/** External authority. Disables c15t persistence, initialization, IAB and choice UI. */
 	consentSource?: ExternalConsentSource;
@@ -462,11 +485,15 @@ export interface ConsentRuntimeOptions {
 	 * every script when init carries no list, loads from its own URL. Only
 	 * the URL and tag attributes change: an integration's setup and
 	 * callbacks still run. An entry in `scriptLoader.sources` wins.
+	 *
+	 * Before a script loads from the registry, c15t checks Inth's release
+	 * signature on its entry against keys this package ships; see
+	 * {@link ExperimentalScriptRegistryOptions}. `true` takes the defaults.
 	 * Initial-only. Experimental: its name and behaviour can change in a
 	 * minor release.
 	 * @default false
 	 */
-	experimentalScriptRegistry?: boolean;
+	experimentalScriptRegistry?: boolean | ExperimentalScriptRegistryOptions;
 	/**
 	 * Reload the page after an accept, reject or save turns off a category or
 	 * vendor that was granted, or after a `consentSource` withdraws one.

@@ -231,7 +231,9 @@ describe('experimentalScriptRegistry', () => {
 		'sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8wC';
 
 	/** Boots an app whose init lists the registry's copy of an integration. */
-	const loadedTag = async (experimentalScriptRegistry?: boolean) => {
+	const loadedTag = async (experimentalScriptRegistry?: {
+		requireSignatures: boolean;
+	}) => {
 		TestBed.configureTestingModule({
 			providers: [
 				provideC15t({
@@ -279,7 +281,7 @@ describe('experimentalScriptRegistry', () => {
 	};
 
 	test('loads an integration from the registry source init lists', async () => {
-		expect(await loadedTag(true)).toEqual({
+		expect(await loadedTag({ requireSignatures: false })).toEqual({
 			integrity: REGISTRY_INTEGRITY,
 			src: REGISTRY_SRC,
 		});

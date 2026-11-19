@@ -73,10 +73,13 @@ afterEach(() => {
 
 describe('createConsentClient()', () => {
 	it.each([
-		[true, { integrity: REGISTRY_INTEGRITY, src: REGISTRY_SRC }],
+		[
+			{ requireSignatures: false },
+			{ integrity: REGISTRY_INTEGRITY, src: REGISTRY_SRC },
+		],
 		[undefined, { integrity: null, src: VENDOR_SRC }],
 	])(
-		'with experimentalScriptRegistry: %s loads %o',
+		'with experimentalScriptRegistry: %o loads %o',
 		async (experimentalScriptRegistry, expected) => {
 			client = createConsentClient({ ...listing, experimentalScriptRegistry });
 			client.start();
@@ -88,10 +91,13 @@ describe('createConsentClient()', () => {
 
 describe('a queued config call', () => {
 	it.each([
-		[true, { integrity: REGISTRY_INTEGRITY, src: REGISTRY_SRC }],
+		[
+			{ requireSignatures: false },
+			{ integrity: REGISTRY_INTEGRITY, src: REGISTRY_SRC },
+		],
 		[undefined, { integrity: null, src: VENDOR_SRC }],
 	])(
-		'with experimentalScriptRegistry: %s loads %o',
+		'with experimentalScriptRegistry: %o loads %o',
 		async (experimentalScriptRegistry, expected) => {
 			testWindow.c15t = [
 				['config', { ...listing, experimentalScriptRegistry }],

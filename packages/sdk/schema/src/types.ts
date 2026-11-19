@@ -82,6 +82,7 @@ export type Branding = (typeof brandingValues)[number];
 export type Hosting = (typeof hostingValues)[number];
 export type {
 	ScriptRegistryWire,
+	ScriptSignatureWire,
 	ScriptSourceWire,
 	ScriptSourcesWire,
 } from './shared/script-sources';

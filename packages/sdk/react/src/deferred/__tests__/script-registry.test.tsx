@@ -25,7 +25,7 @@ test('loads an integration from the registry source init lists', async () => {
 	const screen = await render(
 		<ConsentProvider
 			options={{
-				experimentalScriptRegistry: true,
+				experimentalScriptRegistry: { requireSignatures: false },
 				mode: listing({
 					vendor: { integrity: await sha384(body), src: registrySrc },
 				}),

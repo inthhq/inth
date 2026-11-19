@@ -16,6 +16,35 @@ export interface ScriptSourceWire {
 	 * does not set itself, and `null` removes it.
 	 */
 	attributes?: Record<string, string | null>;
+	/**
+	 * Inth's signature that it released these bytes. c15t rebuilds the
+	 * signed statement from the URL its integration would have loaded,
+	 * `integrity` and the fields here, then checks it against a key it
+	 * ships with.
+	 */
+	signature?: ScriptSignatureWire;
+}
+
+/**
+ * The Inth script registry's `released` signature over one version.
+ *
+ * The signed bytes are, joined by `\n`: `inth-script-registry-v1`,
+ * `released`, the vendor URL as a parsed URL's `href`, `integrity`,
+ * `sha256` and `signedAt`. c15t builds them itself, so a signature over
+ * another statement, URL or hash does not verify.
+ */
+export interface ScriptSignatureWire {
+	/** The id of the signing key; c15t trusts only keys it ships with. */
+	keyId: string;
+	/**
+	 * The ECDSA P-256 signature over SHA-256 of the statement: 64 bytes,
+	 * `r` then `s` (IEEE P1363), in standard base64.
+	 */
+	value: string;
+	/** The SHA-256 of the bytes, lowercase hex. */
+	sha256: string;
+	/** When the release was signed, ISO 8601 with milliseconds in UTC. */
+	signedAt: string;
 }
 
 /**

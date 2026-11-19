@@ -395,7 +395,9 @@ test('runs each serverStart once per render', async () => {
 
 test('starts an integration from the registry source the state lists with experimentalScriptRegistry', async () => {
 	const registrySrc = 'https://acme.inth.app/scripts/pixel@0123456789abcdef.js';
-	const renderListed = async (experimentalScriptRegistry?: boolean) => {
+	const renderListed = async (experimentalScriptRegistry?: {
+		requireSignatures: boolean;
+	}) => {
 		const stream = await renderToReadableStream(
 			<ConsentRoot
 				options={{
@@ -424,9 +426,11 @@ test('starts an integration from the registry source the state lists with experi
 			html
 		)?.groups ?? {};
 	// The first render loads the start module.
-	await renderListed(true);
+	await renderListed({ requireSignatures: false });
 
-	expect({ ...started(await renderListed(true)) }).toEqual({
+	expect({
+		...started(await renderListed({ requireSignatures: false })),
+	}).toEqual({
 		attributes: '{"integrity":"sha384-registry","crossorigin":"anonymous"}',
 		src: JSON.stringify(registrySrc),
 	});

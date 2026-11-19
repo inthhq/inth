@@ -407,7 +407,9 @@ test('starts an integration from the registry source the manifest lists with exp
 				},
 			},
 		});
-	const renderListed = async (experimentalScriptRegistry?: boolean) => {
+	const renderListed = async (experimentalScriptRegistry?: {
+		requireSignatures: boolean;
+	}) => {
 		const stream = await renderToReadableStream(
 			createElement(
 				ConsentRoot,
@@ -428,9 +430,11 @@ test('starts an integration from the registry source the manifest lists with exp
 			html
 		)?.groups ?? {};
 	// The first render loads the start module.
-	await renderListed(true);
+	await renderListed({ requireSignatures: false });
 
-	expect({ ...started(await renderListed(true)) }).toEqual({
+	expect({
+		...started(await renderListed({ requireSignatures: false })),
+	}).toEqual({
 		attributes: '{"integrity":"sha384-registry","crossorigin":"anonymous"}',
 		src: JSON.stringify(registrySrc),
 	});

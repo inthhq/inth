@@ -45,7 +45,7 @@ Only `mode` is required.
 | `vendors` | `Vendor[]` | none | Vendors offered for vendor-level consent outside IAB. |
 | `nonce` | `string` | none | CSP nonce the script loader puts on every `<script>` it creates. A script's own `nonce` wins. |
 | `scriptLoader` | `{ onDebug?, sources? }` | none | `onDebug` receives every script loader lifecycle event. `sources` loads a script from another URL, keyed by script `id`, such as a vetted copy on your own host: `{ posthog: { src, integrity, attributes? } }`. Only the URL changes; an integration's setup, attributes and callbacks still run. `integrity` also sets `crossorigin="anonymous"`; an `integrity` with no hash a browser can parse keeps the script from loading, because the browser would run it unchecked. `attributes` sets `data-*` attributes on the tag that the script does not set itself, and removes those set to `null`. A script with its own `integrity` keeps it, and keeps its own URL when the entry lists a different hash. Fields c15t does not know are ignored. Read when the script loader starts. |
-| `experimentalScriptRegistry` | `boolean` | `false` | Experimental. Load `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. See [Inth script registry](#inth-script-registry-experimental). Read when the runtime starts. Every framework package takes it in the same options. |
+| `experimentalScriptRegistry` | `boolean` or `{ requireSignatures?, signingKeys? }` | `false` | Experimental. Load `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks, once Inth's release signature on the entry verifies. `true` takes the defaults. See [Inth script registry](#inth-script-registry-experimental) and [release signatures](#release-signatures). Read when the runtime starts. Every framework package takes it in the same options. |
 | `iab` | IAB options or `false` | none | CMP settings. Needs `createIAB`. |
 | `createIAB` | `createIAB` from `@inth/sdk/iab` | none | The IAB module factory. Without it, `iab` is ignored. |
 | `consentSource` | `{ getPermissions, subscribe, openPreferences }` | none | Take consent from another authority. c15t then shows no banner or dialog, stores nothing and mounts no IAB CMP. Pass `webViewConsentSource()` to follow a c15t mobile app when the page runs in its WebView; see [consent in WebViews](/docs/guides/mobile-webview). Read once. |
@@ -125,7 +125,68 @@ with an entry can start from its own URL there before the engine loads.
 
 The list's hashes come from the same backend that serves the files. They stop a
 copy that changed after the registry recorded it, but not a backend that sends
-another list. Scripts you write yourself are not affected.
+another list. Release signatures, below, cover that case. Scripts you write
+yourself are not affected.
+
+### Release signatures
+
+Inth signs each version the registry releases. The public keys ship in
+`@inth/sdk`. Before a script loads
+from the registry, c15t checks the signature on its entry with WebCrypto:
+
+- It must be a `released` signature. A version Inth fetched but held back has
+  none.
+- It must cover the entry's `integrity`, so it is for these bytes.
+- It must cover the URL the integration would load from the vendor, so a
+  release of one script can't be moved onto another.
+- The key must be one c15t ships for the environment. An unknown key fails.
+
+The script waits while c15t checks the signature, and no tag for the registry's
+URL goes on the page before the check passes. Each entry is checked once. A
+server start skips a script until its server process has checked that entry,
+and leaves the first render's script to the loader. A page served over plain
+http has no WebCrypto, so no signature verifies there.
+
+```ts
+createConsentRuntime({
+  experimentalScriptRegistry: {
+    requireSignatures: true, // default
+    signingKeys: 'production', // default; 'preview' for an Inth preview deployment
+  },
+});
+```
+
+| Entry | `requireSignatures: true` (default) | `requireSignatures: false` |
+| --- | --- | --- |
+| Valid signature | Loads from the registry | Loads from the registry |
+| Invalid signature | Loads nothing | Loads nothing |
+| No signature | Loads nothing | Loads from the registry; `onDebug` reports it |
+
+"Loads nothing" works like a `null` entry. The script does not load from the
+registry or from the vendor's URL, and `onDebug` reports an `error`. The report
+for a missing signature when signatures are not required is an `error` at
+`step` scope, and the script still loads.
+
+`signingKeys: 'preview'` trusts only the keys of Inth's preview deployments,
+and then no production key. Use it only against a preview project.
+
+#### What signatures protect
+
+With `@inth/sdk` installed from npm, someone who controls Inth's database or
+gateway can change the list, but can't make your page load bytes Inth never
+released. The keys come from the package your build installed, not from Inth's
+servers.
+
+#### What they don't protect
+
+- The hosted `/c15t.js`. A page that loads the SDK from Inth's gateway gets the
+  verifier and its keys from that same gateway, so whoever controls the gateway
+  controls the check. Install the package from npm to get this protection.
+- An older release. A signature has no expiry and can't be withdrawn yet, so a
+  backend that controls the list can serve a version Inth signed and later
+  rejected.
+- A compromised signing key, which can sign any bytes.
+- Tag `attributes`. The signature does not cover them.
 
 ## What start and dispose do
 

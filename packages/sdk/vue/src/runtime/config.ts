@@ -50,11 +50,13 @@ export interface ConsentConfig
 	/**
 	 * Load `@inth/integrations` scripts from the Inth script registry: each
 	 * script the consent manifest lists loads from the registry's URL with an
-	 * integrity hash the browser checks. Initial-only. Experimental: its name
+	 * integrity hash the browser checks, once its release signature
+	 * verifies. Pass `{ requireSignatures, signingKeys }` to change how
+	 * signatures are checked. Initial-only. Experimental: its name
 	 * and behaviour can change in a minor release.
 	 * @default false
 	 */
-	experimentalScriptRegistry?: boolean;
+	experimentalScriptRegistry?: ConsentRuntimeOptions['experimentalScriptRegistry'];
 	/**
 	 * Reload the page after an accept, reject or save turns off a category or
 	 * vendor that was granted, or after a `consentSource` withdraws one.

@@ -130,7 +130,9 @@ test('starts nothing without scripts', () => {
 test('starts an integration from the registry source init lists with experimentalScriptRegistry', () => {
 	const registrySrc = 'https://acme.inth.app/scripts/pixel@0123456789abcdef.js';
 	// The URL and attributes the start inserts the pixel's tag with.
-	const started = (experimentalScriptRegistry?: boolean) => {
+	const started = (experimentalScriptRegistry?: {
+		requireSignatures: boolean;
+	}) => {
 		const [start] = startScripts(
 			renderPage({
 				experimentalScriptRegistry,
@@ -149,7 +151,7 @@ test('starts an integration from the registry source init lists with experimenta
 		};
 	};
 
-	expect(started(true)).toEqual({
+	expect(started({ requireSignatures: false })).toEqual({
 		attributes: '{"integrity":"sha384-registry","crossorigin":"anonymous"}',
 		src: JSON.stringify(registrySrc),
 	});

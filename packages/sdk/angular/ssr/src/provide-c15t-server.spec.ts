@@ -318,7 +318,9 @@ describe('provideC15tServer', () => {
 			},
 		});
 		// The URL and attributes the server start inserts the pixel's tag with.
-		const started = async (experimentalScriptRegistry?: boolean) => {
+		const started = async (experimentalScriptRegistry?: {
+			requireSignatures: boolean;
+		}) => {
 			const html = await render(
 				{
 					experimentalScriptRegistry,
@@ -343,7 +345,7 @@ describe('provideC15tServer', () => {
 			};
 		};
 
-		expect(await started(true)).toEqual({
+		expect(await started({ requireSignatures: false })).toEqual({
 			attributes: '{"integrity":"sha384-registry","crossorigin":"anonymous"}',
 			src: JSON.stringify(registrySrc),
 		});

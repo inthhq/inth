@@ -28,6 +28,7 @@ import {
 } from '../modules/persistence/writer/encode';
 import { isCallbackOnly } from '../modules/script-loader/callback-only';
 import { readScriptRegistry } from '../modules/script-loader/registry';
+import { createRegistryVerifier } from '../modules/script-loader/signature';
 import { createScriptSourceResolver } from '../modules/script-loader/sources';
 import {
 	portableDeclaration,
@@ -37,6 +38,7 @@ import {
 import type { ConsentSnapshot } from '../types';
 import { storageFor } from './assemble';
 import { createRuntimeKernel } from './runtime-kernel';
+import { scriptRegistrySignatures } from './script-registry';
 import type { ConsentRuntimeOptions, RuntimePrefetch } from './types';
 
 type ServerScriptOptions = ConsentRuntimeOptions & {
@@ -304,10 +306,22 @@ const serverStartCandidates = function serverStartCandidates(
 	// With the registry on, scripts start from the sources the prefetched
 	// init carries, as the loader would load them. Without a resolved
 	// prefetch, an integration the list may name waits for the loader.
+	// A render cannot wait for a signature check, so a script whose entry
+	// has not been verified in this process is left to the loader, which
+	// checks it; the check started here lets a later render start it.
 	const { prefetch } = options;
+	const signatures = scriptRegistrySignatures(
+		options.experimentalScriptRegistry
+	);
+	const verifier = signatures
+		? createRegistryVerifier({
+				keys: signatures.signingKeys ?? 'production',
+				requireSignatures: signatures.requireSignatures ?? true,
+			})
+		: undefined;
 	const { scripts } = createScriptSourceResolver(
 		options.scriptLoader?.sources,
-		options.experimentalScriptRegistry
+		signatures
 			? () =>
 					readScriptRegistry({
 						policyPending:
@@ -316,7 +330,8 @@ const serverStartCandidates = function serverStartCandidates(
 						resolution: prefetch?.initialPolicyResolution,
 						scriptRegistry: prefetch?.initialScriptRegistry ?? null,
 					})
-			: undefined
+			: undefined,
+		verifier && ((script, entry) => verifier(script.src ?? '', entry))
 	)(options.scripts ?? []);
 	if (
 		options.scriptLoader?.serverStart === false ||

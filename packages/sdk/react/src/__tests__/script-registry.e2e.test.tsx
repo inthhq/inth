@@ -30,7 +30,7 @@ test('loads an integration from the registry, and the browser runs the copy that
 	const screen = await render(
 		<ConsentProvider
 			options={{
-				experimentalScriptRegistry: true,
+				experimentalScriptRegistry: { requireSignatures: false },
 				mode: listing({
 					vendor: { integrity: await sha384(body), src: registrySrc },
 				}),
@@ -60,7 +60,7 @@ test('does not run a registry copy whose bytes changed, and does not fall back t
 	const screen = await render(
 		<ConsentProvider
 			options={{
-				experimentalScriptRegistry: true,
+				experimentalScriptRegistry: { requireSignatures: false },
 				mode: listing({
 					vendor: { integrity: await sha384(body), src: registrySrc },
 				}),
