@@ -307,6 +307,11 @@ export const resolveConsent = async function resolveConsent(
 		now: options.now,
 		onError: (error, url) => reportPrefetchError(options, error, url),
 		overrides: { country: options.country, language: options.language },
+		// Next.js mounts no consent route unless the config names one, and an
+		// app often rewrites `/api/inth` to its backend, so only an explicit
+		// prefix is guarded. The loop guard still stops a render that reaches
+		// itself.
+		ownRoutes: source.routePrefix ? [source.routePrefix] : [],
 		request: facts,
 		storage: options.cookieName
 			? { storageKey: options.cookieName }

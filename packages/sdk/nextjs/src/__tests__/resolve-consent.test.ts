@@ -250,19 +250,17 @@ describe('resolveConsent wiring', () => {
 		);
 	});
 
-	test('never fetches the default /api/inth route, with no routePrefix set', async () => {
+	test('fetches a hosted /api/inth when no routePrefix claims it', async () => {
 		const fetch = backend();
-		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 		const state = await resolveConsent({
 			config: hostedAt('/api/inth'),
 			fetch,
 			request: requestOf({}),
 		});
-		expect(fetch).not.toHaveBeenCalled();
-		expect(state.initialPolicyResolution).toBeUndefined();
-		expect(String(warn.mock.calls[0]?.[0])).toContain(
-			"this app's own consent route"
+		expect(String(fetch.mock.calls[0]?.[0])).toMatch(
+			/^https:\/\/app\.example\.com\/api\/inth\/init\?/u
 		);
+		expect(state.initialPolicyResolution?.status).toBe('matched');
 	});
 
 	test('never fetches under the route prefix, and says so outside production', async () => {
