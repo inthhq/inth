@@ -48,8 +48,8 @@ describe('<inth-consent-dialog [(open)]>', () => {
 				expect(
 					document.querySelector('[data-testid="consent-dialog-root"]')
 				).not.toBeNull();
-				// The first test in the file waits for the dialog chunk's cold import.
 			},
+			// The first test in the file waits for the dialog chunk's cold import.
 			{ timeout: 5000 }
 		);
 		// The parent opened it, so the consent state never moved to it.

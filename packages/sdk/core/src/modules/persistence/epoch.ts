@@ -16,11 +16,17 @@
  * forward, even when the clock went back, so a later clear never lets
  * earlier decisions back in.
  *
+ * A legacy family that another runtime writes, such as c15t's, keeps its
+ * own epoch under its own key, which voids that family's records alone.
+ *
  * Ties: a category decision in the clearing millisecond counts only when
- * its writer had seen the clear (see {@link choiceSinceEpoch}). The notice
- * dismissal and vendor denials keep a tie: after a clear neither exists,
- * so one surviving a tie can only restrict or hide the notice, never
- * grant.
+ * its writer had seen the clear (see {@link choiceSinceEpoch}). One
+ * exception: a server seed keeps such a decision (`applyNewerStoredRecords`
+ * in `mount.ts`). The seed does not say who wrote it, and a server that
+ * read the cookies after the clear holds an envelope written under that
+ * epoch, whose tie counts. The notice dismissal and vendor denials keep a
+ * tie: after a clear neither exists, so one surviving a tie can only
+ * restrict or hide the notice, never grant.
  *
  * Pure.
  */
