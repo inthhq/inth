@@ -27,7 +27,7 @@ describe('inthHandle', () => {
 		vi.restoreAllMocks();
 	});
 
-	test('normalizes infra geo headers onto the request as x-c15t-*', async () => {
+	test('normalizes infra geo headers onto the request as x-inth-*', async () => {
 		const event = createEvent({
 			headers: {
 				'cf-ipcountry': 'DE',
@@ -36,8 +36,8 @@ describe('inthHandle', () => {
 		});
 		await runHandle(event);
 
-		expect(event.request.headers.get('x-c15t-country')).toBe('DE');
-		expect(event.request.headers.get('x-c15t-region')).toBe('BE');
+		expect(event.request.headers.get('x-inth-country')).toBe('DE');
+		expect(event.request.headers.get('x-inth-region')).toBe('BE');
 	});
 
 	test('normalizes GPC to sec-gpc and into the kernel overrides', async () => {
@@ -49,21 +49,21 @@ describe('inthHandle', () => {
 		expect(locals.config.initialPrivacySignals?.gpc).toBe(true);
 	});
 
-	test('lets explicit x-c15t-* headers beat infrastructure headers', async () => {
+	test('lets explicit x-inth-* headers beat infrastructure headers', async () => {
 		const event = createEvent({
 			headers: {
 				'cf-ipcountry': 'DE',
-				'x-c15t-country': 'FR',
+				'x-inth-country': 'FR',
 			},
 		});
 		const { locals } = await runHandle(event);
 
 		expect(locals.inputs.country).toBe('FR');
-		expect(event.request.headers.get('x-c15t-country')).toBe('FR');
+		expect(event.request.headers.get('x-inth-country')).toBe('FR');
 	});
 
 	test('option overrides beat every header', async () => {
-		const event = createEvent({ headers: { 'x-c15t-country': 'FR' } });
+		const event = createEvent({ headers: { 'x-inth-country': 'FR' } });
 		const { locals } = await runHandle(event, { country: 'US', region: 'CA' });
 
 		expect(locals.inputs.country).toBe('US');

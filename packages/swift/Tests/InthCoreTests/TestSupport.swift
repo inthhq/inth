@@ -221,7 +221,7 @@ extension HTTPResponse {
     static func json(_ body: String, status: Int = 200) -> HTTPResponse {
         HTTPResponse(
             status: status,
-            headers: ["x-c15t-policy-contract": String(inthPolicyContractVersion)],
+            headers: ["x-inth-policy-contract": String(inthPolicyContractVersion)],
             body: Data(body.utf8)
         )
     }

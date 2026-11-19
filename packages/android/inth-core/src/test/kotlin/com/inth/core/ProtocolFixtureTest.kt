@@ -329,7 +329,7 @@ class ProtocolFixtureTest {
 			put("method", request.method)
 			put("path", java.net.URI(request.url).rawPath)
 		}
-		// `x-c15t-version` is platform telemetry, and the contract says the fixtures
+		// `x-inth-version` is platform telemetry, and the contract says the fixtures
 		// deliberately leave it unpinned, so extra header keys are not a difference.
 		record(
 			id(entry),

@@ -122,17 +122,17 @@ describe('resolveSessionReportProjectUrl', () => {
 });
 
 describe('forwardSessionReportHeaders', () => {
-	test('ignores a caller-supplied x-c15t-client-ip', () => {
+	test('ignores a caller-supplied x-inth-client-ip', () => {
 		// A visitor can send the report header to a public init route, so the
 		// address always comes from the proxy chain.
 		expect(
 			forwardSessionReportHeaders(
 				new Headers({
-					'x-c15t-client-ip': '198.51.100.7',
 					'x-forwarded-for': '203.0.113.42',
+					'x-inth-client-ip': '198.51.100.7',
 				})
 			)
-		).toEqual({ 'x-c15t-client-ip': '203.0.113.42' });
+		).toEqual({ 'x-inth-client-ip': '203.0.113.42' });
 	});
 
 	test('derives the client IP from the proxy chain and copies the user agent, never cookies', () => {
@@ -145,7 +145,7 @@ describe('forwardSessionReportHeaders', () => {
 		);
 		expect(forwarded).toEqual({
 			'user-agent': 'Mozilla/5.0',
-			'x-c15t-client-ip': '203.0.113.42',
+			'x-inth-client-ip': '203.0.113.42',
 		});
 	});
 
@@ -156,7 +156,7 @@ describe('forwardSessionReportHeaders', () => {
 				'User-Agent': ['UA'],
 				'X-Forwarded-For': '203.0.113.42',
 			})
-		).toEqual({ 'user-agent': 'UA', 'x-c15t-client-ip': '203.0.113.42' });
+		).toEqual({ 'user-agent': 'UA', 'x-inth-client-ip': '203.0.113.42' });
 	});
 });
 
@@ -243,10 +243,10 @@ describe('reportConsentSession', () => {
 		expect(request.method).toBe('POST');
 		const headers = request.headers as Record<string, string>;
 		expect(headers['content-type']).toBe('application/json');
-		expect(headers['x-c15t-client-ip']).toBe('203.0.113.42');
+		expect(headers['x-inth-client-ip']).toBe('203.0.113.42');
 		expect(headers['user-agent']).toBe('UA');
 		expect(headers).not.toHaveProperty('cookie');
-		expect(typeof headers['x-c15t-version']).toBe('string');
+		expect(typeof headers['x-inth-version']).toBe('string');
 		expect(readBody(fetchSpy.mock.calls[0])).toMatchObject({
 			adapter: '@inth/svelte',
 			country: 'DE',
@@ -514,7 +514,7 @@ describe('createManifestTransport report option', () => {
 			string,
 			string
 		>;
-		expect(headers['x-c15t-client-ip']).toBe('203.0.113.42');
+		expect(headers['x-inth-client-ip']).toBe('203.0.113.42');
 		expect(headers).not.toHaveProperty('cookie');
 		expect(readBody(call)).toMatchObject({
 			adapter: '@inth/nextjs',

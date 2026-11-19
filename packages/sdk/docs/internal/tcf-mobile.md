@@ -793,7 +793,7 @@ these are the spec duties it would miss. Ordered by how much they matter.
    publisher's declaration beside it: `NativeConfig.vendors` (`NativeConfig.kt:61`) and
    `CoreConfig.vendors` (`ConsentCore.swift:57`), where `null`/`nil` and an empty list all read as
    no scope declared. Web's `iab.vendors` does three jobs and mobile now does two of them. The
-   request goes out with `x-c15t-vendors` (`InthProtocol.kt:48`, `Transports.swift:53`): deduped,
+   request goes out with `x-inth-vendors` (`InthProtocol.kt:48`, `Transports.swift:53`): deduped,
    ascending, comma-separated, and absent above the same 500 that `MAX_GVL_QUERY_VENDOR_IDS` uses.
    The held list is pruned on every path it arrives by — `ConsentCore.kt:253` and `:1077`,
    `ConsentCore.swift:1076` and `:1490` — which is what makes it a read-path rule rather than a

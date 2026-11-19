@@ -100,8 +100,8 @@ for (const [name, file] of Object.entries(packed)) {
 }
 const files = run('tar', ['-tzf', packed['@inth/sdk'] ?? ''], root);
 check(
-	files.includes('package/lib/browser/dist/c15t.js') &&
-		files.includes('package/lib/browser/dist/c15t.testing.js'),
+	files.includes('package/lib/browser/dist/inth.js') &&
+		files.includes('package/lib/browser/dist/inth.testing.js'),
 	'@inth/sdk ships the script-tag files under their current names'
 );
 

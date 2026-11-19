@@ -1,5 +1,5 @@
 /**
- * The client behind `c15t.headless.js` and `c15t.iab.js`, which carry the
+ * The client behind `inth.headless.js` and `inth.iab.js`, which carry the
  * hosted and manifest transports so a script tag can pick one by name with
  * `data-mode`. ES module entries take `hosted()` or a factory instead
  * (`./client`).

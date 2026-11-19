@@ -520,7 +520,7 @@ final class ProtocolFixtureTests: XCTestCase {
             "method": .string(request.method.rawValue),
             "path": .string(request.url.path),
         ])
-        // `x-c15t-version` is platform telemetry and the contract says the fixtures
+        // `x-inth-version` is platform telemetry and the contract says the fixtures
         // deliberately do not pin it, so extra header keys are not a difference.
         record(
             for: entry,

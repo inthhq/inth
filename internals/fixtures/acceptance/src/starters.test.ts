@@ -32,10 +32,10 @@ import { exampleEnvironment } from './targets';
 const repository = fileURLToPath(new URL('../../../..', import.meta.url));
 const browserDist = join(repository, 'packages/sdk/browser/dist');
 
-// What `@c15t/backend` serves on `/c15t.js`: this checkout's full bundle
+// What `@c15t/backend` serves on `/inth.js`: this checkout's full bundle
 // behind the queued hosted config its script route prepends.
 const hostedScript = async function hostedScript(): Promise<string> {
-	const bundle = await readFile(join(browserDist, 'c15t.js'), 'utf8');
+	const bundle = await readFile(join(browserDist, 'inth.js'), 'utf8');
 	const config = JSON.stringify({
 		mode: 'hosted',
 		projectUrl: placeholderProjectUrl,
@@ -43,10 +43,10 @@ const hostedScript = async function hostedScript(): Promise<string> {
 	return `(function(c){window.inth=window.inth||[];Array.isArray(window.inth)?window.inth.unshift(["config",c]):window.inth.config(c)})(${config});\n${bundle}`;
 };
 
-// `c15t.hosted.js`, `c15t.commit.js`, `c15t.records.js` and
-// `c15t.dialog.js`, with or without the hash query the backend adds.
+// `inth.hosted.js`, `inth.commit.js`, `inth.records.js` and
+// `inth.dialog.js`, with or without the hash query the backend adds.
 const scriptPartURL = new RegExp(
-	`^${placeholderProjectUrl.replaceAll('.', '\\.')}/c15t\\.(?:hosted|commit|records|dialog)\\.js(?:\\?.*)?$`,
+	`^${placeholderProjectUrl.replaceAll('.', '\\.')}/inth\\.(?:hosted|commit|records|dialog)\\.js(?:\\?.*)?$`,
 	'u'
 );
 
@@ -135,7 +135,7 @@ for (const target of selectedStarterTargets()) {
 					contentType: 'text/javascript; charset=utf-8',
 				});
 			});
-			// The files `c15t.js` loads next, which the backend serves as built.
+			// The files `inth.js` loads next, which the backend serves as built.
 			await context.route(scriptPartURL, async (route) => {
 				const file = new URL(route.request().url()).pathname.slice(1);
 				await route.fulfill({

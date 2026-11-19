@@ -145,11 +145,11 @@ describe('consent middleware', () => {
 		const inth = await run({
 			headers: {
 				'cf-ipcountry': 'FR',
-				'x-c15t-country': 'DE',
+				'x-inth-country': 'DE',
 				'x-vercel-ip-country-region': 'BY',
 			},
 		});
-		// `x-c15t-*` always outranks infrastructure headers.
+		// `x-inth-*` always outranks infrastructure headers.
 		expect(inth.inputs.country).toBe('DE');
 		expect(inth.inputs.region).toBe('BY');
 		expect(inth.config.initialOverrides?.country).toBe('DE');
@@ -277,7 +277,7 @@ describe('consent middleware', () => {
 		);
 		const inth = await run({
 			fetch: fetchImpl as never,
-			headers: { 'x-c15t-country': 'DE' },
+			headers: { 'x-inth-country': 'DE' },
 			options: {
 				mode: hostedMode(),
 				projectUrl: 'https://consent.example.com',
@@ -287,7 +287,7 @@ describe('consent middleware', () => {
 		const [url, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
 		// The query carries the consent journey the render started.
 		expect(url.split('?')[0]).toBe('https://consent.example.com/init');
-		expect((init.headers as Record<string, string>)['x-c15t-country']).toBe(
+		expect((init.headers as Record<string, string>)['x-inth-country']).toBe(
 			'DE'
 		);
 		expect(inth.config.initialLocation?.countryCode).toBe('DE');
@@ -377,7 +377,7 @@ describe('consent middleware', () => {
 							policyResolution: testWire({ model: 'opt-out', prompt: 'none' }),
 							translations: { language: 'en', translations: {} },
 						},
-						{ headers: { 'x-c15t-policy-contract': contract } }
+						{ headers: { 'x-inth-policy-contract': contract } }
 					)
 				) as never,
 				options: {

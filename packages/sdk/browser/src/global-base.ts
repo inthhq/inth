@@ -89,13 +89,13 @@ export interface InthGlobalBase {
 	init: (options?: ScriptTagClientOptions) => ConsentClient;
 	/**
 	 * Run once the client exists, immediately if it already does. Safe to
-	 * call before `init()`; `c15t.devtools.js` mounts through this.
+	 * call before `init()`; `inth.devtools.js` mounts through this.
 	 *
 	 * @returns A function that cancels the call if it has not run yet.
 	 */
 	onInit: (listener: (client: ConsentClient) => void) => Unsubscribe;
 	/**
-	 * Supply the GPP implementation. `c15t.gpp.js` calls this, before or
+	 * Supply the GPP implementation. `inth.gpp.js` calls this, before or
 	 * after `init()`; the client mounts `__gpp` once it arrives unless the
 	 * page set `gpp: false`.
 	 *
@@ -113,11 +113,11 @@ export interface InthGlobalBase {
 	 * @returns The number of calls received.
 	 */
 	push: (...calls: unknown[]) => number;
-	/** The DevTools panel, once `c15t.devtools.js` has mounted it. */
+	/** The DevTools panel, once `inth.devtools.js` has mounted it. */
 	devtools: DevToolsInstance | null;
 	/**
 	 * Offer a DevTools panel's launcher to the stock trigger, which then
-	 * shows a DevTools button and docks the panel. `c15t.devtools.js` is a
+	 * shows a DevTools button and docks the panel. `inth.devtools.js` is a
 	 * separate bundle with its own copy of the launcher slot, so it
 	 * publishes through this one, the copy the trigger reads. Absent from
 	 * builds without the stock UI.
@@ -451,7 +451,7 @@ export const createGlobalWith = function createGlobalWith(
 	}
 	const scriptOptions = readOptions(script);
 	let client: ConsentClient | null = null;
-	// Resolved by `c15t.gpp.js`. Until then a client's GPP waits; pages
+	// Resolved by `inth.gpp.js`. Until then a client's GPP waits; pages
 	// without the add-on never load it.
 	const gppModule = createDeferred<{ createGPP: ConsentRuntimeGPPFactory }>();
 	const clientContext: CreateConsentClientContext = {

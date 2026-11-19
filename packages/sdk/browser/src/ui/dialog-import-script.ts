@@ -1,14 +1,14 @@
 // A promise chain, not an async function: see `./dialog-surface.ts`.
 /* oxlint-disable promise/prefer-await-to-then */
 /**
- * The engine's dialog in `c15t.hosted.js`: `c15t.dialog.js`, loaded the
+ * The engine's dialog in `inth.hosted.js`: `inth.dialog.js`, loaded the
  * first time the engine needs it. `rslib.config.ts` swaps this in for
  * `./dialog-import.ts` in that build.
  *
  * The file's URL is the backend's, the init tag's `data-dialog-src`, or
- * `c15t.dialog.js` next to this file, at this version (`partSrc`). When the file is missing, fails to load or is from another
+ * `inth.dialog.js` next to this file, at this version (`partSrc`). When the file is missing, fails to load or is from another
  * release, the engine uses its own copy of the dialog, so a site that
- * serves only `c15t.js` and `c15t.hosted.js` still has a preference
+ * serves only `inth.js` and `inth.hosted.js` still has a preference
  * centre. The file is still worth serving: the init script opens it on a
  * Customize tap before the engine has loaded.
  *
@@ -32,7 +32,7 @@ const dialogSrc = (): string | null =>
 	partSrc('dialog', adoptedBoot()?.script, own?.src);
 
 /**
- * Load `c15t.dialog.js`, or fall back to the engine's own dialog.
+ * Load `inth.dialog.js`, or fall back to the engine's own dialog.
  *
  * @returns The dialog factory: the file's, or the built-in one when the
  * file cannot be found, fails to load, or is from another release.

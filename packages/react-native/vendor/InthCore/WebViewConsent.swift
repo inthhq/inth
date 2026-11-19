@@ -3,7 +3,7 @@ import Foundation
 import Security
 #endif
 
-/// What a page inside a WebView reads as `window.__c15tNativeConsent.getState()`.
+/// What a page inside a WebView reads as `window.__inthNativeConsent.getState()`.
 ///
 /// Consent state only: no subject id, no policy token, no location. The shape is
 /// "WebView consent" in `packages/native-protocol/CONTRACT.md`, and `webViewConsentSource()` in
@@ -155,7 +155,7 @@ public struct WebViewConsentScript: Sendable {
     }
 
     /// The message-channel name pages post to.
-    public static let channel = "c15tConsent"
+    public static let channel = "inthConsent"
 
     /// The normalized origins, in the order given, without duplicates.
     public let origins: [String]
@@ -183,7 +183,7 @@ public struct WebViewConsentScript: Sendable {
         originsJSON = Self.encode(normalized)
         tokenJSON = Self.encode(token)
         requestKeyJSON = Self.encode(requestKey)
-        preferencesRequest = #"{"type":"c15t:open-preferences","key":"#
+        preferencesRequest = #"{"type":"inth:open-preferences","key":"#
             + Self.encode(requestKey) + "}"
     }
 

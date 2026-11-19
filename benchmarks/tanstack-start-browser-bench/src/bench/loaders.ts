@@ -31,10 +31,10 @@ const fetchDirectInit = async function fetchDirectInit(
 	}
 	const overrides = base.initialOverrides ?? {};
 	if (overrides.country) {
-		headers['x-c15t-country'] = overrides.country;
+		headers['x-inth-country'] = overrides.country;
 	}
 	if (overrides.region) {
-		headers['x-c15t-region'] = overrides.region;
+		headers['x-inth-region'] = overrides.region;
 	}
 	if (overrides.language) {
 		headers['accept-language'] = overrides.language;

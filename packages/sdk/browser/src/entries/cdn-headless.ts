@@ -1,5 +1,5 @@
 /**
- * `dist/c15t.headless.js` — the runtime with no UI or CSS.
+ * `dist/inth.headless.js` — the runtime with no UI or CSS.
  *
  * Installs `window.inth` and initialises from the script tag unless it
  * carries `data-manual`. The page renders its own banner against the

@@ -112,7 +112,7 @@ package struct ResolvedPolicy: Sendable, Equatable {
 extension ResolvedPolicy {
     /// `SAFE_FALLBACK_POLICY_ID` in `@c15t/schema`. Never reported as a matched
     /// policy, but it is what every non-matched outcome evaluates against.
-    static let safeFallbackPolicyId = "c15t_safe_fallback"
+    static let safeFallbackPolicyId = "inth_safe_fallback"
 
     /// Constants, not runtime hashes: the same values `@c15t/schema` ships, so a
     /// subject who chose on the web is not asked again on mobile under the same

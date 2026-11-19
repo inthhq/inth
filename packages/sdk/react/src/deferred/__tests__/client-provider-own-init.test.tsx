@@ -28,7 +28,7 @@ const fetchMock = vi.fn((url: string) =>
 		new Response(JSON.stringify(String(url).includes('/init') ? init : {}), {
 			headers: {
 				'content-type': 'application/json',
-				'x-c15t-policy-contract': '1',
+				'x-inth-policy-contract': '1',
 			},
 			status: 200,
 		})

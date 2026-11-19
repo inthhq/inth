@@ -90,8 +90,8 @@ describe('manifest resolution in core', () => {
 		const init = resolveManifestInit({
 			headers: {
 				'accept-language': 'de-DE,de;q=0.8,en;q=0.7',
-				'x-c15t-country': 'DE',
-				'x-c15t-region': 'BE',
+				'x-inth-country': 'DE',
+				'x-inth-region': 'BE',
 			},
 			manifest: createManifestFixture(),
 		});
@@ -275,8 +275,8 @@ describe('Nuxt modes', () => {
 		const init = resolveManifestInit({
 			headers: {
 				'accept-language': 'de',
-				'x-c15t-country': 'DE',
-				'x-c15t-region': 'BE',
+				'x-inth-country': 'DE',
+				'x-inth-region': 'BE',
 			},
 			manifest: createManifestFixture(),
 		}) satisfies InitOutput;

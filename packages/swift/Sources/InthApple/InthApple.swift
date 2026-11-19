@@ -89,9 +89,9 @@ public struct InthAppleConfiguration: Sendable {
     /// `nil`, the default, writes no GPP signal.
     public var gpp: GPPOptions?
 
-    /// The host reported as `x-c15t-platform: <platform>-><version>` on hosted
+    /// The host reported as `x-inth-platform: <platform>-><version>` on hosted
     /// requests. `apple` for a Swift app; the React Native bridge sets `rn`, so the
-    /// backend can tell the two apart now that `x-c15t-version` carries no prefix.
+    /// backend can tell the two apart now that `x-inth-version` carries no prefix.
     public var platform = "apple"
 
     /// Keychain is the default store.
@@ -146,7 +146,7 @@ public struct InthAppleConfiguration: Sendable {
     ) throws -> any InthTransport {
         HostedTransport(
             baseURL: try normalizedBackendURL(), domain: domain,
-            extraHeaders: ["x-c15t-platform": "\(platform)->\(InthApple.version)"],
+            extraHeaders: ["x-inth-platform": "\(platform)->\(InthApple.version)"],
             client: client
         )
     }

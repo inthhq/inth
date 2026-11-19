@@ -21,7 +21,7 @@ const response = (
 			translations: { language: 'en', translations: {} },
 			...body,
 		}),
-		{ headers: contract === null ? {} : { 'x-c15t-policy-contract': contract } }
+		{ headers: contract === null ? {} : { 'x-inth-policy-contract': contract } }
 	);
 beforeEach(() => {
 	delete (window as Window & { __inthInitialDataPromises?: unknown })

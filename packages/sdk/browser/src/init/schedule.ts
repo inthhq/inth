@@ -1,5 +1,5 @@
 /**
- * When the init script loads the engine (`c15t.hosted.js`).
+ * When the init script loads the engine (`inth.hosted.js`).
  *
  * On a slow connection the engine shares bandwidth with the page's largest
  * image; started after it, it no longer delays Largest Contentful Paint
@@ -29,7 +29,7 @@ const WAKE_EVENTS = ['pointerdown', 'keydown', 'scroll'] as const;
  *
  * A press `holds` claims does not load the engine: the init script records
  * that accept or reject itself and loads the engine once the choice is
- * stored, so the gated scripts and `c15t.commit.js` get the connection
+ * stored, so the gated scripts and `inth.commit.js` get the connection
  * first.
  *
  * @param holds - Whether a press is one the init script handles first.

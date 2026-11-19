@@ -425,7 +425,7 @@ const resolveConsentState = async function resolveConsentState(
  * Resolves the visitor's consent state from the current TanStack Start
  * request.
  *
- * 1. Reads the consent cookie, the CDN geo headers (plus the `x-c15t-*`
+ * 1. Reads the consent cookie, the CDN geo headers (plus the `x-inth-*`
  *    overrides `consentRequestMiddleware()` wrote), `accept-language`, and
  *    `sec-gpc`.
  * 2. Resolves the policy for the {@link ResolveConsentOptions.mode}. The

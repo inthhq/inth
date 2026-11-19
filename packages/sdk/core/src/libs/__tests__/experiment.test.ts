@@ -81,7 +81,7 @@ describe('pickExperimentArm', () => {
 		).toEqual({
 			acknowledgedDiagnostics: false,
 			arm: 'bar',
-			assignedBy: 'c15t',
+			assignedBy: 'inth',
 			id: 'banner-shape',
 		});
 	});

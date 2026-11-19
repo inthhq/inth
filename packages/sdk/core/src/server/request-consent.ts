@@ -9,7 +9,7 @@
  *
  * 1. **Request read.** Stored records from the consent cookie, and geo,
  *    language and GPC through the one shared extractor, so every adapter
- *    reads `x-c15t-gpc` before `sec-gpc` and leaves an absent signal
+ *    reads `x-inth-gpc` before `sec-gpc` and leaves an absent signal
  *    `undefined`.
  * 2. **Mode.** An inline manifest or a manifest URL resolves `/init`
  *    locally with {@link resolveConsentInit}; hosted mode asks a backend
@@ -130,7 +130,7 @@ import {
  * the second render sees the marker and does not fetch its origin again, so
  * a self-fetch stops after one hop instead of recursing.
  */
-const RENDER_REQUEST_HEADER = 'x-c15t-render-request';
+const RENDER_REQUEST_HEADER = 'x-inth-render-request';
 
 /**
  * The state a server render hands the client: a `KernelConfig` without the
@@ -268,7 +268,7 @@ export interface ResolveRequestConsentOptions {
 	manifestFetchInit?: Omit<RequestInit, 'headers' | 'method'>;
 	/**
 	 * Consent request headers configured on the browser's own `/init`
-	 * (`x-c15t-country`, ...), applied to the hosted request so server and
+	 * (`x-inth-country`, ...), applied to the hosted request so server and
 	 * browser resolve one policy. Anything outside the consent request
 	 * headers is ignored.
 	 */

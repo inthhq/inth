@@ -20,7 +20,7 @@ lists both paths.
 
 Paste this tag into the `<head>` of every page.
 Replace `https://your-project.inth.app` with the URL from your Inth project,
-and keep `/c15t.js` on the end.
+and keep `/inth.js` on the end.
 
 <include src="../../shared/examples/html/script-tag.mdx" />
 
@@ -33,12 +33,12 @@ A returning visitor who already chose sees no banner. Attributes from the
 [attribute reference](/docs/frameworks/html/attributes-and-api), such as
 `data-language`, still work on this tag.
 
-`c15t.js` is small. It starts `/init`, shows the banner when `/init`
+`inth.js` is small. It starts `/init`, shows the banner when `/init`
 answers, and records an Accept or Reject tapped on it. It then loads
-`c15t.hosted.js`, the consent engine and the rest of the UI, after the
+`inth.hosted.js`, the consent engine and the rest of the UI, after the
 page's `fetchpriority="high"` images have loaded, at the visitor's first
 tap, key press or scroll, or after 10 seconds, whichever comes first. You
-add only the one tag; `c15t.js` loads `c15t.hosted.js` from the same place.
+add only the one tag; `inth.js` loads `inth.hosted.js` from the same place.
 See [the two script files](/docs/frameworks/html/attributes-and-api#how-c15tjs-loads-c15thostedjs).
 
 Neither file includes the policy presets, the testing transport or manifest
@@ -124,31 +124,31 @@ If no banner appears, the policy for your location may not ask for one. See
 
 ## Other ways to run the tag
 
-- **In tests.** Load `c15t.testing.js` on a test page, without
+- **In tests.** Load `inth.testing.js` on a test page, without
   `data-project-url`, and Inth resolves the policy in the browser from
   `data-policy` or its recommended rules. Without `data-country` every
   visitor gets the strict opt-in fallback. Choices stay in that browser.
   Never load it on a production page; the other script files contain
   neither its transport nor the policy presets.
 - **A self-hosted backend.** A [self-hosted c15t backend](/docs/self-host/overview)
-  serves the hosted bundle at `/c15t.js` with its backend URL already
+  serves the hosted bundle at `/inth.js` with its backend URL already
   configured, so the tag needs only a `src`:
-  `<script src="https://consent.example.com/c15t.js" defer></script>`, with
+  `<script src="https://consent.example.com/inth.js" defer></script>`, with
   your backend's origin in place of `consent.example.com`.
-- **From a CDN.** Load a pinned version from jsDelivr. Use `c15t.js` with
+- **From a CDN.** Load a pinned version from jsDelivr. Use `inth.js` with
   `data-project-url` for hosted mode:
-  `<script src="https://cdn.jsdelivr.net/npm/@inth/sdk@<version>/lib/browser/dist/c15t.js" data-project-url="https://your-project.inth.app" defer></script>`.
+  `<script src="https://cdn.jsdelivr.net/npm/@inth/sdk@<version>/lib/browser/dist/inth.js" data-project-url="https://your-project.inth.app" defer></script>`.
   Replace `<version>` with the exact version listed on
   [npm](https://www.npmjs.com/package/@inth/sdk?activeTab=versions).
-  `c15t.js` loads `c15t.hosted.js`, `c15t.commit.js`, `c15t.records.js` and
-  `c15t.dialog.js` from the same folder. If you copy `c15t.js` to your own
-  server, copy those four next to it. `c15t.dialog.js` is recommended, not
-  required: without it, a Customize tap waits for `c15t.hosted.js`, which
+  `inth.js` loads `inth.hosted.js`, `inth.commit.js`, `inth.records.js` and
+  `inth.dialog.js` from the same folder. If you copy `inth.js` to your own
+  server, copy those four next to it. `inth.dialog.js` is recommended, not
+  required: without it, a Customize tap waits for `inth.hosted.js`, which
   opens its own copy of the dialog.
   A URL without a version loads the newest release, so a new release can
   change your banner without a deploy.
 - **Manifest mode.** Use the `@inth/sdk` ES module for manifest mode
-  with the stock UI, or `c15t.headless.js` with your own UI. These clients can
+  with the stock UI, or `inth.headless.js` with your own UI. These clients can
   fetch or inline the backend's cacheable policy manifest. The IAB script
   also supports manifest mode for IAB policies. See
   [modes](/docs/frameworks/html/attributes-and-api#choose-a-mode).

@@ -488,8 +488,8 @@ describe('resolveManifestInit', () => {
 		const init = resolveManifestInit({
 			headers: {
 				'Accept-Language': 'de-DE,de;q=0.8,en;q=0.7',
-				'x-c15t-country': ['DE'],
-				'x-c15t-region': 'BE',
+				'x-inth-country': ['DE'],
+				'x-inth-region': 'BE',
 			},
 			manifest: createManifestFixture(),
 		});

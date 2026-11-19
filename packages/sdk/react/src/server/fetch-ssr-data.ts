@@ -11,11 +11,11 @@ const buildRequestContext = function buildRequestContext(
 	sent: Readonly<Record<string, string>>
 ): NonNullable<SSRInitialData['metadata']>['requestContext'] {
 	return {
-		country: sent['x-c15t-country'] ?? null,
+		country: sent['x-inth-country'] ?? null,
 		gpc: sent['sec-gpc'] === '1',
 		language: sent['accept-language'] ?? null,
 		projectUrl,
-		region: sent['x-c15t-region'] ?? null,
+		region: sent['x-inth-region'] ?? null,
 	};
 };
 

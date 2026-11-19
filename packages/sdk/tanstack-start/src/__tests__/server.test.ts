@@ -89,7 +89,7 @@ describe('resolveConsent without projectUrl: cookies', () => {
 
 	test('accepts a request factory', async () => {
 		const state = await baseResolveConsent({
-			request: () => createRequest({ 'x-c15t-country': 'FR' }),
+			request: () => createRequest({ 'x-inth-country': 'FR' }),
 		});
 		expect(state.initialOverrides?.country).toBe('FR');
 	});
@@ -103,10 +103,10 @@ describe('resolveConsent without projectUrl: geo headers', () => {
 		expect(state.initialOverrides?.country).toBe('DE');
 	});
 
-	test('x-c15t-country from the middleware wins over CDN headers', async () => {
+	test('x-inth-country from the middleware wins over CDN headers', async () => {
 		const state = await resolveConsent({
 			'cf-ipcountry': 'FR',
-			'x-c15t-country': 'DE',
+			'x-inth-country': 'DE',
 		});
 		expect(state.initialOverrides?.country).toBe('DE');
 	});
@@ -156,7 +156,7 @@ describe('resolveConsent without projectUrl: language and GPC', () => {
 describe('createConsentStateHandler: server function contract', () => {
 	test('never carries a transport in the resolved state', async () => {
 		const state = await createConsentStateHandler({
-			request: createRequest({ 'x-c15t-country': 'DE' }),
+			request: createRequest({ 'x-inth-country': 'DE' }),
 		})();
 		expect(state).not.toHaveProperty('transport');
 		expect(state.initialOverrides).toMatchObject({ country: 'DE' });
@@ -194,7 +194,7 @@ describe('resolveConsent with an inline manifest: session reports', () => {
 		expect(fetchSpy).toHaveBeenCalledTimes(1);
 		const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
 		expect(url).toBe('https://consent.example.com/sessions');
-		expect((init.headers as Record<string, string>)['x-c15t-client-ip']).toBe(
+		expect((init.headers as Record<string, string>)['x-inth-client-ip']).toBe(
 			'203.0.113.42'
 		);
 		expect(JSON.parse(init.body as string)).toMatchObject({

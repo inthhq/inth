@@ -55,7 +55,7 @@ your build emits for `@inth/sdk/lib/core/dist/modules/loader-and-blocker.js`. Wi
 Vite, `.vite/manifest.json` lists it under that path when `build.manifest` is
 on. Give the link `fetchpriority="low"`. Inth needs the chunk only when it
 starts, and at the default priority the preload can delay your app's own
-chunks over HTTP/1.1. The script-tag build, `c15t.js`, already contains the
+chunks over HTTP/1.1. The script-tag build, `inth.js`, already contains the
 loader.
 
 ## Gate a snippet in your HTML

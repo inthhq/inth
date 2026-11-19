@@ -505,7 +505,7 @@ test.each(['pixel-first', 'sdk-first'] as const)(
 		);
 		expect(
 			await page
-				.locator('script[type="application/x-c15t-default-conflict"]')
+				.locator('script[type="application/x-inth-default-conflict"]')
 				.count()
 		).toBe(1);
 		expect(

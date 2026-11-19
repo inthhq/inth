@@ -26,7 +26,7 @@ export type CompatManifest = NonNullable<
 >;
 
 const COUNTRY_HEADERS = [
-	'x-c15t-country',
+	'x-inth-country',
 	'cf-ipcountry',
 	'x-vercel-ip-country',
 	'x-amz-cf-ipcountry',

@@ -4,8 +4,8 @@ import type { createDialog } from './dialog';
 
 /**
  * Load the dialog chunk. `rslib.config.ts` swaps in
- * `./dialog-import-script.ts` for `c15t.hosted.js`, which has no chunks
- * and loads `c15t.dialog.js` instead.
+ * `./dialog-import-script.ts` for `inth.hosted.js`, which has no chunks
+ * and loads `inth.dialog.js` instead.
  *
  * @internal
  */

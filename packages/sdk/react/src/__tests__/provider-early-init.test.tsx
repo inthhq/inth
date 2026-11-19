@@ -74,7 +74,7 @@ beforeEach(() => {
 					respond: (policyId) =>
 						resolve(
 							new Response(initBody(policyId), {
-								headers: { 'x-c15t-policy-contract': '1' },
+								headers: { 'x-inth-policy-contract': '1' },
 							})
 						),
 				});

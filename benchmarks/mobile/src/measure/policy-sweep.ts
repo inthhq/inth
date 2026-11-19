@@ -79,7 +79,7 @@ export interface PolicySweepResult {
 const FIXTURE_DIR = resolve(REPO_ROOT, 'packages', 'native-protocol');
 
 /** The contract declaration the kernel needs to trust a policy body. */
-const CONTRACT_HEADER = 'x-c15t-policy-contract';
+const CONTRACT_HEADER = 'x-inth-policy-contract';
 
 const median = function median(values: number[]): number {
 	if (values.length === 0) {

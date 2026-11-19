@@ -120,7 +120,7 @@ describe('forwardConsentRequest', () => {
 		expect(await new Response(calls[0]?.init.body as BodyInit).text()).toBe(
 			'{"a":1}'
 		);
-		expect(calls[0]?.init.headers.get('x-c15t-proxy')).toBe(
+		expect(calls[0]?.init.headers.get('x-inth-proxy')).toBe(
 			'@c15t/test-adapter'
 		);
 		for (const [name, value] of Object.entries(inthVersionHeaders)) {

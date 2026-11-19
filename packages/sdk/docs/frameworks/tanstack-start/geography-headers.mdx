@@ -20,15 +20,15 @@ with a value wins.
 
 | Input | Headers, highest priority first | Set by |
 | --- | --- | --- |
-| Country | `x-c15t-country`, `cf-ipcountry`, `x-vercel-ip-country`, `x-amz-cf-ipcountry`, `x-country-code`, `x-country` | Inth override, Cloudflare, Vercel, CloudFront, generic proxies |
-| Region | `x-c15t-region`, `cf-region-code`, `x-vercel-ip-country-region`, `x-region-code` | Inth override, Cloudflare, Vercel, generic proxies |
+| Country | `x-inth-country`, `cf-ipcountry`, `x-vercel-ip-country`, `x-amz-cf-ipcountry`, `x-country-code`, `x-country` | Inth override, Cloudflare, Vercel, CloudFront, generic proxies |
+| Region | `x-inth-region`, `cf-region-code`, `x-vercel-ip-country-region`, `x-region-code` | Inth override, Cloudflare, Vercel, generic proxies |
 | Language | `accept-language`, negotiated by quality value to a primary tag such as `de` | The browser |
-| Global Privacy Control | `x-c15t-gpc`, `sec-gpc`. Only `1` and `0` count | Inth override, the browser |
+| Global Privacy Control | `x-inth-gpc`, `sec-gpc`. Only `1` and `0` count | Inth override, the browser |
 
 Vercel adds its country and region headers to every request. Cloudflare adds
 `cf-ipcountry`; for `cf-region-code`, turn on Cloudflare's visitor location
-headers. On another host, or a Node server without a CDN, set `x-c15t-country`
-and `x-c15t-region` at your edge from whatever location data it has.
+headers. On another host, or a Node server without a CDN, set `x-inth-country`
+and `x-inth-region` at your edge from whatever location data it has.
 
 ## Read the headers once per request
 
@@ -44,8 +44,8 @@ On every request, including server function calls and server routes, the
 middleware:
 
 - reads the headers in the table above,
-- writes the result back onto the request as `x-c15t-country`,
-  `x-c15t-region` and `sec-gpc`, so later code sees one format whichever CDN
+- writes the result back onto the request as `x-inth-country`,
+  `x-inth-region` and `sec-gpc`, so later code sees one format whichever CDN
   sent the value,
 - exposes the same values as `context.consent` to server routes and server
   functions,
@@ -149,11 +149,11 @@ client sent.
 
 ## Trust the location headers
 
-The `x-c15t-*` headers always win, and a browser can send them.
+The `x-inth-*` headers always win, and a browser can send them.
 `consentRequestMiddleware` does not remove them. A visitor who sends
-`x-c15t-country: US` gets the policy for the United States. That changes only
+`x-inth-country: US` gets the policy for the United States. That changes only
 their own banner, but if you need the policy to follow your CDN's location,
-delete incoming `x-c15t-*` headers at your edge before the request reaches the
+delete incoming `x-inth-*` headers at your edge before the request reaches the
 Start server. The provider's `overrides` option sends the same headers on the
 browser's init request, so stripping them also turns off that testing path
 through your edge.
@@ -184,8 +184,8 @@ With the awaited loader from the quickstart:
 {/* example: fragment */}
 
 ```sh
-curl -s -H 'x-c15t-country: DE' http://localhost:3000/ | grep -c consent-banner-root
-curl -s -H 'x-c15t-country: US' -H 'x-c15t-region: CA' http://localhost:3000/ | grep -c consent-banner-root
+curl -s -H 'x-inth-country: DE' http://localhost:3000/ | grep -c consent-banner-root
+curl -s -H 'x-inth-country: US' -H 'x-inth-region: CA' http://localhost:3000/ | grep -c consent-banner-root
 ```
 
 Use the port your server listens on. The first request prints `1` under a
@@ -202,5 +202,5 @@ policy's rule for California. With the consent route mounted, request
 2. View the page source from two locations with different policy rules, for
    example through a VPN. The banner is in the HTML where the rule asks for a
    choice, and absent where it does not.
-3. Send `x-c15t-country` from outside your edge. If you strip the header, the
+3. Send `x-inth-country` from outside your edge. If you strip the header, the
    response still follows your real location.

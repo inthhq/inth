@@ -30,7 +30,7 @@ config for the app. Register it in `src/hooks.server.ts`. For every request
 it:
 
 1. reads the location, language and GPC inputs from the headers,
-2. writes them back as `x-c15t-country`, `x-c15t-region`, `accept-language`
+2. writes them back as `x-inth-country`, `x-inth-region`, `accept-language`
    and `sec-gpc`, so later code sees one normalized form,
 3. reads the consent cookie, and the subject ID its records carry,
 4. stores the result and its own options on `event.locals.inth`,
@@ -199,7 +199,7 @@ the backend's own `/init`, which covers backends without `/manifest`.
 
 These handlers are built on the consent route handler in `@inth/sdk/server`,
 shared with the Next.js, TanStack Start, Astro and Nuxt adapters. `init`
-answers with `x-c15t-policy-contract: 1`. A browser that declares another
+answers with `x-inth-policy-contract: 1`. A browser that declares another
 policy contract gets a failed `unsupported-contract` resolution, and a
 resolution that did not match carries no snapshot token, vendor list, CMP ID
 or custom vendors.

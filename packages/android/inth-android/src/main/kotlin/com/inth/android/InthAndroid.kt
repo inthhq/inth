@@ -539,7 +539,7 @@ object InthAndroid {
 	 *
 	 * The device half of the declaration -- prune the list the core holds -- is what carries the
 	 * disclosure promise, and it runs whatever this key says. The request half travels to the backend
-	 * as `x-c15t-vendors`, which is an optimisation about bytes: an unusable entry here costs a
+	 * as `x-inth-vendors`, which is an optimisation about bytes: an unusable entry here costs a
 	 * slightly wider request, not a wider disclosure, and a declaration too long to fit on the request
 	 * line is sent as no header at all.
 	 *

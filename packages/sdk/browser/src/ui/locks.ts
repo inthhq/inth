@@ -1,6 +1,6 @@
 /**
  * The dialog's scroll lock and focus trap, and the hook that lends them to
- * `c15t.dialog.js` (see `./locks-shared.ts`).
+ * `inth.dialog.js` (see `./locks-shared.ts`).
  *
  * @packageDocumentation
  * @internal
@@ -14,7 +14,7 @@ import type { SharedLocks } from './locks-shared';
 export { setupFocusTrap, setupScrollLock };
 
 /**
- * Lend this bundle's scroll lock and focus trap to `c15t.dialog.js`, so the
+ * Lend this bundle's scroll lock and focus trap to `inth.dialog.js`, so the
  * dialog counts its lock with this bundle's banner.
  *
  * @internal

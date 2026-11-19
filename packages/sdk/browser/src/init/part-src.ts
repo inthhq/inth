@@ -7,23 +7,20 @@
 
 import { version } from '../version';
 
-/** A file the init script or the engine loads next to `c15t.js`. */
+/** A file the init script or the engine loads next to `inth.js`. */
 export type InitFile = 'hosted' | 'commit' | 'records' | 'dialog';
 
-/**
- * The globals the backend's `/c15t.js` sets to each file's URL. A contract
- * with the backend, so the names keep the c15t spelling.
- */
+/** The globals the backend's `/inth.js` sets to each file's URL. */
 const BACKEND_SRC_GLOBALS: Record<InitFile, string> = {
-	commit: '__c15tCommitSrc',
-	dialog: '__c15tDialogSrc',
-	hosted: '__c15tHostedSrc',
-	records: '__c15tRecordsSrc',
+	commit: '__inthCommitSrc',
+	dialog: '__inthDialogSrc',
+	hosted: '__inthHostedSrc',
+	records: '__inthRecordsSrc',
 };
 
 /**
  * The URL of `file`: the backend's global, the init tag's
- * `data-<file>-src`, or `c15t.<file>.js` at this version next to
+ * `data-<file>-src`, or `inth.<file>.js` at this version next to
  * `besides`.
  *
  * @param besides - The URL of a file the wanted one sits next to.
@@ -42,7 +39,7 @@ export const partSrc = function partSrc(
 		return configured;
 	}
 	return besides
-		? new URL(`c15t.${file}.js?v=${version}`, new URL(besides, location.href))
+		? new URL(`inth.${file}.js?v=${version}`, new URL(besides, location.href))
 				.href
 		: null;
 };

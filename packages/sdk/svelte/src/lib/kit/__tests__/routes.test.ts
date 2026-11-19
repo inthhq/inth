@@ -152,7 +152,7 @@ describe('createConsentRoute', () => {
 		expect(fetch.mock.calls[0]?.[0]).toBe(`${BACKEND}/subjects`);
 		expect(headers.get('x-forwarded-for')).toBe('203.0.113.7');
 		expect(headers.get('x-forwarded-host')).toBe('shop.example');
-		expect(headers.get('x-c15t-proxy')).toBe('@inth/svelte');
+		expect(headers.get('x-inth-proxy')).toBe('@inth/svelte');
 	});
 });
 

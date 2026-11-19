@@ -226,7 +226,7 @@ try {
 							cache,
 							...sample,
 							resources: sample.resources.filter(
-								(r) => r.url.includes('c15t-gvl') || r.url.endsWith('/init')
+								(r) => r.url.includes('inth-gvl') || r.url.endsWith('/init')
 							),
 						});
 					}

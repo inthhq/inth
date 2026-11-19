@@ -35,7 +35,7 @@ export const hostedMarker = function hostedMarker(
 ): HostedMarker {
 	const marker = (() => {
 		throw new Error(
-			'@inth/sdk: inth.hosted() from c15t.js runs once c15t.hosted.js has loaded.'
+			'@inth/sdk: inth.hosted() from inth.js runs once inth.hosted.js has loaded.'
 		);
 	}) as unknown as HostedMarker;
 	marker.kind = 'hosted';

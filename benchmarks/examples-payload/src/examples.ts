@@ -40,7 +40,7 @@ const RUNTIMES: Record<
 		startArgs: ['--port', '4522', '--host', '127.0.0.1'],
 		startEnv: {},
 	},
-	// The page loads c15t.js from the backend, so there is no client build.
+	// The page loads inth.js from the backend, so there is no client build.
 	html: { ...portEnv(4523), clientDirs: [] },
 	javascript: { ...vitePreview(4524), clientDirs: ['dist'] },
 	// `next start --port 3100` is fixed in the example's script.

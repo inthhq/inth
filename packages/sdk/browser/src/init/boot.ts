@@ -1,5 +1,5 @@
 /**
- * What the init script (`c15t.js`) hands the engine (`c15t.hosted.js`).
+ * What the init script (`inth.js`) hands the engine (`inth.hosted.js`).
  *
  * The init script installs a stand-in `window.inth` that carries this
  * object under {@link BOOT_KEY}. The engine finds it there when it
@@ -97,7 +97,7 @@ export interface InitCommit {
 }
 
 /**
- * What `c15t.commit.js` hands the init script: core's code to store an
+ * What `inth.commit.js` hands the init script: core's code to store an
  * early choice and queue its save. @internal
  */
 export interface InitCommitPart {
@@ -109,7 +109,7 @@ export interface InitCommitPart {
 }
 
 /**
- * What `c15t.records.js` hands the init script: core's reader for a
+ * What `inth.records.js` hands the init script: core's reader for a
  * returning visitor's stored records. @internal
  */
 export interface InitRecordsPart {
@@ -160,7 +160,7 @@ export interface InitBoot {
 	 * answer. `null` when no request is in flight.
 	 */
 	settled: Promise<void> | null;
-	/** Called by `c15t.commit.js` and `c15t.records.js` when they run. */
+	/** Called by `inth.commit.js` and `inth.records.js` when they run. */
 	provide: (part: InitPart) => void;
 	/**
 	 * Called by the engine once `window.inth` is the real API. The init

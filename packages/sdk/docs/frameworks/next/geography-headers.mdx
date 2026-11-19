@@ -25,7 +25,7 @@ If it is missing while the same header is present in `proxy.ts`, add the proxy.
 
 The proxy copies the incoming request headers, resolves country, region and
 Global Privacy Control from them, and forwards the result on the request as
-`x-c15t-country`, `x-c15t-region` and `sec-gpc`. Those application override
+`x-inth-country`, `x-inth-region` and `sec-gpc`. Those application override
 headers have the highest precedence, so Server Components and Route Handlers
 read the same values the proxy saw. When no location header is present, the
 proxy sets nothing and the location stays unknown.
@@ -166,9 +166,9 @@ resolution and use it only for non-policy code such as display defaults.
 
 | Input | Headers, highest precedence first | Source |
 | --- | --- | --- |
-| Country | `x-c15t-country`, `cf-ipcountry`, `x-vercel-ip-country`, `x-amz-cf-ipcountry`, `x-country-code`, `x-country` | Inth override, Cloudflare, Vercel, CloudFront, generic |
-| Region | `x-c15t-region`, `cf-region-code`, `x-vercel-ip-country-region`, `x-region-code` | Inth override, Cloudflare, Vercel, generic |
-| Global Privacy Control | `x-c15t-gpc`, `sec-gpc` | Inth override, browser signal |
+| Country | `x-inth-country`, `cf-ipcountry`, `x-vercel-ip-country`, `x-amz-cf-ipcountry`, `x-country-code`, `x-country` | Inth override, Cloudflare, Vercel, CloudFront, generic |
+| Region | `x-inth-region`, `cf-region-code`, `x-vercel-ip-country-region`, `x-region-code` | Inth override, Cloudflare, Vercel, generic |
+| Global Privacy Control | `x-inth-gpc`, `sec-gpc` | Inth override, browser signal |
 | Language | `accept-language` | browser |
 
 CloudFront's own geolocation headers, `CloudFront-Viewer-Country` and
@@ -189,13 +189,13 @@ import { NextRequest } from 'next/server';
 export function proxy(request: NextRequest) {
 	const headers = new Headers(request.headers);
 	for (const name of [
-		'x-c15t-country',
+		'x-inth-country',
 		'cf-ipcountry',
 		'x-vercel-ip-country',
 		'x-amz-cf-ipcountry',
 		'x-country-code',
 		'x-country',
-		'x-c15t-region',
+		'x-inth-region',
 		'cf-region-code',
 		'x-vercel-ip-country-region',
 		'x-region-code',
@@ -204,8 +204,8 @@ export function proxy(request: NextRequest) {
 	}
 	const country = headers.get('cloudfront-viewer-country');
 	const region = headers.get('cloudfront-viewer-country-region');
-	if (country) headers.set('x-c15t-country', country);
-	if (region) headers.set('x-c15t-region', region);
+	if (country) headers.set('x-inth-country', country);
+	if (region) headers.set('x-inth-region', region);
 	return inthProxy(new NextRequest(request, { headers }));
 }
 ```
@@ -216,15 +216,15 @@ instead of falling through to a header supplied by the visitor.
 
 GPC values are meaningful only as `1` or `0`; any other value is treated as
 absent. The proxy writes the normalized result to `sec-gpc`, so an incoming
-`x-c15t-gpc: 1` reaches Server Components as `sec-gpc: 1`. Browsers refuse to
-let scripts set `Sec-*` request headers, which is why the `x-c15t-gpc` override
+`x-inth-gpc: 1` reaches Server Components as `sec-gpc: 1`. Browsers refuse to
+let scripts set `Sec-*` request headers, which is why the `x-inth-gpc` override
 exists for the browser's own init request.
 
-Only trusted infrastructure may set `x-c15t-country`, `x-c15t-region` or
-`x-c15t-gpc` in production, because they always win. A client that sends them
+Only trusted infrastructure may set `x-inth-country`, `x-inth-region` or
+`x-inth-gpc` in production, because they always win. A client that sends them
 chooses its own policy rule, and `inthProxy` forwards a client-supplied value
 over the platform header rather than stripping it. The edge that terminates all
-traffic must therefore delete incoming `x-c15t-*` headers before anything sets
+traffic must therefore delete incoming `x-inth-*` headers before anything sets
 them, in every deployment. Blocking direct origin access with a firewall or
 platform origin protection is an additional control that keeps requests on that
 edge; it does not replace the stripping, because a forwarded client header
@@ -233,7 +233,7 @@ still passes through the protected path.
 The browser's own `/init` request carries the same overrides as the
 `country`, `region` and `gpc` query parameters, so that a
 cross-origin request needs no CORS preflight. The init route and the backend
-treat them like the `x-c15t-*` headers, so strip them from `/init` requests at
+treat them like the `x-inth-*` headers, so strip them from `/init` requests at
 the same edge.
 
 ## Verify
@@ -243,7 +243,7 @@ configured policy rules, for example through a VPN or your host's geo testing
 tools. After server prefetch resolves, the rendered consent policy must match
 each location: an opt-in region shows the banner with optional categories denied, while a region
 configured for notice-only or no notice renders accordingly. Confirm the values
-by logging `(await headers()).get('x-c15t-country')` in a Server Component;
+by logging `(await headers()).get('x-inth-country')` in a Server Component;
 it should equal the platform header seen in the proxy.
 
 Remove the proxy temporarily and reload. If both locations now resolve the

@@ -247,7 +247,7 @@ describe('Default loader options', () => {
 			expect(document.querySelectorAll('script[src]')).toHaveLength(1);
 			expect(
 				document.querySelector(
-					'script[type="application/x-c15t-default-conflict"]'
+					'script[type="application/x-inth-default-conflict"]'
 				)
 			).not.toBeNull();
 			updateScripts(scripts, ALL_DENIED);

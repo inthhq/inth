@@ -74,7 +74,7 @@ export const Default: Story = {
 							{
 								headers: {
 									'content-type': 'application/json',
-									'x-c15t-policy-contract': '1',
+									'x-inth-policy-contract': '1',
 								},
 							}
 						)

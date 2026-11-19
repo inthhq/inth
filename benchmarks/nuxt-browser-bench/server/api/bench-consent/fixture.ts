@@ -60,7 +60,7 @@ const getMutableBenchConsentFixtureVersionHeaders =
 	};
 
 /**
- * Records the `x-c15t-version` request header the fixture endpoint
+ * Records the `x-inth-version` request header the fixture endpoint
  * received. The @inth/nuxt Nitro manifest proxy (and the core transports)
  * send it on every inth-bound request — the e2e suite asserts the value
  * observed upstream matches the built Inth version.

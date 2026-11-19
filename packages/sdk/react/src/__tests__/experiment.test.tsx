@@ -252,7 +252,7 @@ test('built-in assignment lands after mount and is stored for the next visit', a
 	try {
 		await vi.waitFor(() =>
 			expect(mounted.read()).toMatchObject({
-				assignedBy: 'c15t',
+				assignedBy: 'inth',
 				id: 'banner-shape',
 			})
 		);
@@ -387,7 +387,7 @@ const mountDraftWithLateArm = function mountDraftWithLateArm() {
 			runtime.kernel.set.experiment({
 				acknowledgedDiagnostics: false,
 				arm: 'bar',
-				assignedBy: 'c15t',
+				assignedBy: 'inth',
 				id: 'defaults',
 			});
 		},
@@ -487,7 +487,7 @@ test('a provider enabled after mount builds its controller then', async () => {
 		render(true);
 		await vi.waitFor(() =>
 			expect(JSON.parse(readText('experiment') ?? 'null')).toMatchObject({
-				assignedBy: 'c15t',
+				assignedBy: 'inth',
 				id: 'banner-shape',
 			})
 		);

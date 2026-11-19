@@ -57,7 +57,7 @@ public struct CoreConfig: @unchecked Sendable {
     /// This is the native twin of `iab.vendors` on web. That option does three jobs
     /// there: it filters the GVL request, it narrows the list the module holds through
     /// ``GlobalVendorList/narrowed(toVendorIds:)``, and it clears a summary that had
-    /// counted the wider list. The first one reaches here as the `x-c15t-vendors`
+    /// counted the wider list. The first one reaches here as the `x-inth-vendors`
     /// request header, and the second is what ``ConsentCore`` does with this field on
     /// every path a list arrives by. The third has no native equivalent yet, because
     /// this build holds one list and reports it whole.

@@ -49,7 +49,7 @@ const answer = () =>
 	vi.fn<typeof globalThis.fetch>(() =>
 		Promise.resolve(
 			new Response(JSON.stringify(INIT_PAYLOAD), {
-				headers: { 'x-c15t-policy-contract': '1' },
+				headers: { 'x-inth-policy-contract': '1' },
 			})
 		)
 	);
@@ -91,7 +91,7 @@ describe('loadConsent', () => {
 			const callerHook = vi.fn();
 			const platform = { waitUntil: vi.fn() };
 			const event = await withHandle(
-				createEvent({ fetch, headers: { 'x-c15t-country': 'DE' } }),
+				createEvent({ fetch, headers: { 'x-inth-country': 'DE' } }),
 				{ projectUrl: BACKEND, snapshot: MANIFEST_FIXTURE }
 			);
 			if (hasPlatformHook) {
@@ -163,7 +163,7 @@ describe('loadConsent', () => {
 			Promise.resolve(Response.json(MANIFEST_FIXTURE))
 		);
 		const event = await withHandle(
-			createEvent({ fetch, headers: { 'x-c15t-country': 'DE' } }),
+			createEvent({ fetch, headers: { 'x-inth-country': 'DE' } }),
 			{ mode: manifest(), projectUrl: BACKEND }
 		);
 		const { consent } = await loadConsent(event, {
@@ -178,7 +178,7 @@ describe('loadConsent', () => {
 	test('reads the inputs the handle normalized; per-call inputs win', async () => {
 		const event = await withHandle(
 			createEvent({
-				headers: { cookie: CONSENTED_COOKIE, 'x-c15t-country': 'CA' },
+				headers: { cookie: CONSENTED_COOKIE, 'x-inth-country': 'CA' },
 			}),
 			{ mode: testing() }
 		);
@@ -225,7 +225,7 @@ describe('loadConsent', () => {
 	test('a testing value resolves nothing on the server and reaches the browser', async () => {
 		const fetch = answer();
 		const event = await withHandle(
-			createEvent({ fetch, headers: { 'x-c15t-country': 'DE' } }),
+			createEvent({ fetch, headers: { 'x-inth-country': 'DE' } }),
 			{ mode: testing() }
 		);
 		const { consent } = await loadConsent(event, { fetch });
@@ -293,7 +293,7 @@ describe('loadConsent', () => {
 	test('browser resolution leaves the server with the cookie only', async () => {
 		const fetch = answer();
 		const event = await withHandle(
-			createEvent({ fetch, headers: { 'x-c15t-country': 'DE' } }),
+			createEvent({ fetch, headers: { 'x-inth-country': 'DE' } }),
 			{
 				mode: manifest({ resolve: 'browser', snapshot: MANIFEST_FIXTURE }),
 				projectUrl: BACKEND,
@@ -311,7 +311,7 @@ describe('loadConsent', () => {
 		const event = await withHandle(
 			createEvent({
 				fetch,
-				headers: { cookie: CONSENTED_COOKIE, 'x-c15t-country': 'DE' },
+				headers: { cookie: CONSENTED_COOKIE, 'x-inth-country': 'DE' },
 			}),
 			{ projectUrl: BACKEND, routePrefix: '/api/inth' }
 		);

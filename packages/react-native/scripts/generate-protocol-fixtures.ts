@@ -2073,7 +2073,7 @@ const buildEvaluationFixtures =
 const SAVE_NOTES = [
 	...NOTES,
 	'savePayload is what the pending queue must persist before the request, byte-for-byte, and a replay must resend it unchanged after a later init changes policy.',
-	'request.headers must carry the policy contract declaration with exactly this value. x-c15t-version is platform telemetry and is deliberately not pinned.',
+	'request.headers must carry the policy contract declaration with exactly this value. x-inth-version is platform telemetry and is deliberately not pinned.',
 	'request.body is the POST /subjects body. tcString is absent because IAB is out of scope: never add the key.',
 	'the commit happens at input.now, so givenAt, every confirmedAt, and snapshotAfter.evaluatedAt all equal it.',
 	'snapshotBefore is the snapshot after init and before the commit, and snapshotAfter is the snapshot the commit leaves behind. Both are asserted.',

@@ -105,7 +105,7 @@ export const FAILED_CONFIGURATION: PolicyResolutionFailed = {
 };
 
 /** Identifier of the runtime fallback rule. Never a matched policy. */
-export const SAFE_FALLBACK_POLICY_ID = 'c15t_safe_fallback';
+export const SAFE_FALLBACK_POLICY_ID = 'inth_safe_fallback';
 
 /**
  * The safe opt-in choice fallback used whenever resolution did not match.

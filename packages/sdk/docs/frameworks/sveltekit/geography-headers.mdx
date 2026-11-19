@@ -19,20 +19,20 @@ same headers, in this order. The first one present wins.
 
 | Input | Headers, highest priority first |
 | --- | --- |
-| Country | `x-c15t-country`, `cf-ipcountry`, `x-vercel-ip-country`, `x-amz-cf-ipcountry`, `x-country-code`, `x-country` |
-| Region | `x-c15t-region`, `cf-region-code`, `x-vercel-ip-country-region`, `x-region-code` |
+| Country | `x-inth-country`, `cf-ipcountry`, `x-vercel-ip-country`, `x-amz-cf-ipcountry`, `x-country-code`, `x-country` |
+| Region | `x-inth-region`, `cf-region-code`, `x-vercel-ip-country-region`, `x-region-code` |
 | Language | `accept-language`, negotiated by quality value to a primary tag such as `de` |
-| Global Privacy Control | `x-c15t-gpc`, `sec-gpc`; only `1` and `0` count |
+| Global Privacy Control | `x-inth-gpc`, `sec-gpc`; only `1` and `0` count |
 
 Vercel adds its country and region headers on every request. Cloudflare adds
 `cf-ipcountry`; for `cf-region-code`, turn on Cloudflare's visitor location
-headers. On another host, or a Node server without a CDN, set `x-c15t-country`
-and `x-c15t-region` at your proxy from whatever location data it has.
+headers. On another host, or a Node server without a CDN, set `x-inth-country`
+and `x-inth-region` at your proxy from whatever location data it has.
 
 With a build-time snapshot, as in the quickstart, `loadConsent` resolves the
 policy in the server process from these inputs and makes no policy request.
 In `hosted()` mode, it sends the resolved inputs to the backend's `/init` as
-`x-c15t-country`, `x-c15t-region`, `accept-language` and `sec-gpc`, along
+`x-inth-country`, `x-inth-region`, `accept-language` and `sec-gpc`, along
 with `user-agent`. It adds the visitor IP as `x-forwarded-for` only with
 `trustForwardedHeaders: true`. It never forwards `forwarded`,
 `x-forwarded-host` or `x-forwarded-proto`; with that option it reads them to
@@ -44,7 +44,7 @@ cookies and authorization by itself.
 
 `inthHandle` in `src/hooks.server.ts` reads the headers once, stores the
 inputs on `event.locals.inth.inputs`, and rewrites the request's headers to
-the normalized `x-c15t-country`, `x-c15t-region`, `accept-language` and
+the normalized `x-inth-country`, `x-inth-region`, `accept-language` and
 `sec-gpc`. Later loads, endpoints and proxied backend calls then see one
 form, whichever CDN header carried the value:
 
@@ -54,10 +54,10 @@ form, whichever CDN header carried the value:
 
 ## Trust the headers
 
-The `x-c15t-*` headers always win, and a browser can send them. A visitor who
-sets `x-c15t-country: US` gets the policy for the United States. That changes
+The `x-inth-*` headers always win, and a browser can send them. A visitor who
+sets `x-inth-country: US` gets the policy for the United States. That changes
 only their own banner, not anyone else's, but if you need the policy to
-follow your CDN's location, remove incoming `x-c15t-*` headers at your edge
+follow your CDN's location, remove incoming `x-inth-*` headers at your edge
 before the request reaches SvelteKit.
 
 `cf-ipcountry` and the Vercel headers are set by the platform and cannot be
@@ -97,9 +97,9 @@ Send the override header with a request and look for the banner in the HTML:
 {/* example: fragment */}
 
 ```sh
-curl -s -H 'x-c15t-country: DE' http://localhost:5173/ | grep -c consent-banner-root
-curl -s -H 'x-c15t-country: US' -H 'x-c15t-region: CA' http://localhost:5173/ | grep -c consent-banner-root
-curl -s -H 'Sec-GPC: 1' -H 'x-c15t-country: US' -H 'x-c15t-region: CA' http://localhost:5173/
+curl -s -H 'x-inth-country: DE' http://localhost:5173/ | grep -c consent-banner-root
+curl -s -H 'x-inth-country: US' -H 'x-inth-region: CA' http://localhost:5173/ | grep -c consent-banner-root
+curl -s -H 'Sec-GPC: 1' -H 'x-inth-country: US' -H 'x-inth-region: CA' http://localhost:5173/
 ```
 
 The first request prints `1` under a policy that asks Europe for opt-in. What

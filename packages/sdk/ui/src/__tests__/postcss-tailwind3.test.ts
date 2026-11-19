@@ -299,7 +299,7 @@ describe('@inth/sdk/ui/postcss-tailwind3', () => {
 		).toBe(true);
 		expect(
 			isInthUiStylesheetPath(
-				'/app/node_modules/@inth/sdk/lib/browser/dist/c15t.js'
+				'/app/node_modules/@inth/sdk/lib/browser/dist/inth.js'
 			)
 		).toBe(false);
 		expect(

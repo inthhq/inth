@@ -1,26 +1,26 @@
 ---
 title: IAB GPP
-description: Add the IAB Global Privacy Platform API (__gpp) to a plain HTML page with the c15t.gpp.js script tag, so ad tech can read US state opt-outs and the TCF EU consent string.
+description: Add the IAB Global Privacy Platform API (__gpp) to a plain HTML page with the inth.gpp.js script tag, so ad tech can read US state opt-outs and the TCF EU consent string.
 group: frameworks
 ---
 
 ## What GPP does
 
-`c15t.gpp.js` installs `window.__gpp`, the GPP 1.1 CMP API, and keeps its GPP
+`inth.gpp.js` installs `window.__gpp`, the GPP 1.1 CMP API, and keeps its GPP
 string in step with the visitor's choices. Prebid.js, Google Ad Manager and
 other ad tech read US privacy signals from it.
 
 ## Load the GPP script
 
-Add `c15t.gpp.js` next to the Inth script. It works with `c15t.js`,
-`c15t.testing.js`, `c15t.headless.js` and `c15t.iab.js`:
+Add `inth.gpp.js` next to the Inth script. It works with `inth.js`,
+`inth.testing.js`, `inth.headless.js` and `inth.iab.js`:
 
 {/* example: fragment */}
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@inth/sdk/lib/browser/dist/c15t.gpp.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@inth/sdk/lib/browser/dist/inth.gpp.js"></script>
 <script
-  src="https://your-project.inth.app/c15t.js"
+  src="https://your-project.inth.app/inth.js"
   defer
 ></script>
 ```
@@ -28,9 +28,9 @@ Add `c15t.gpp.js` next to the Inth script. It works with `c15t.js`,
 Loading the script turns GPP on with the defaults. It installs a `__gpp`
 stub as soon as it runs, so ad tags that call `__gpp` before Inth starts
 are queued rather than lost. Load it without `defer`, before your ad tags,
-to get that. The order relative to `c15t.js` does not matter.
+to get that. The order relative to `inth.js` does not matter.
 
-Use the same version for both files. Pages that do not load `c15t.gpp.js`
+Use the same version for both files. Pages that do not load `inth.gpp.js`
 download none of the GPP code. It also carries the TCF decoder that fills in
 `parsedSections.tcfeuv2`, which makes it about 15 kB gzipped.
 
@@ -53,6 +53,6 @@ Queue a `gpp` object with the rest of your configuration:
 stub. `inth.dispose()` removes `__gpp`.
 
 To add the TCF EU section for visitors under an `iab` policy, load
-`c15t.iab.js` instead of `c15t.js`; see [IAB TCF](/docs/frameworks/html/iab).
+`inth.iab.js` instead of `inth.js`; see [IAB TCF](/docs/frameworks/html/iab).
 
 <include src="../../shared/iab-gpp.mdx" />

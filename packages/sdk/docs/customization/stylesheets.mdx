@@ -13,7 +13,7 @@ group: customization
 | Astro | Nothing | `<ConsentScript />` inlines the banner's rules into the HTML. The client links the dialog's rules when a dialog first opens. On a Tailwind CSS 3 site, the integration adds `@inth/astro/styles.css` to every page instead |
 | Svelte | Nothing | Each stock surface inserts the rules it uses into `<head>` |
 | SvelteKit | Nothing | `inthHandle` writes a server-rendered banner's rules into the HTML. The other surfaces insert theirs in the browser |
-| HTML | Nothing | `c15t.js` carries its stylesheet into the UI's shadow root |
+| HTML | Nothing | `inth.js` carries its stylesheet into the UI's shadow root |
 | JavaScript | Nothing | `init()` carries its stylesheet into the UI's shadow root |
 
 Inline Inth styles avoid a stylesheet request before the page's first paint.

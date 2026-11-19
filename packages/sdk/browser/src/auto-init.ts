@@ -94,7 +94,7 @@ const readNonce = function readNonce(element: Element): string | undefined {
  * Read client options from a `<script>` tag's `data-*` attributes.
  *
  * ```html
- * <script src="https://cdn.jsdelivr.net/npm/@inth/sdk/lib/browser/dist/c15t.js"
+ * <script src="https://cdn.jsdelivr.net/npm/@inth/sdk/lib/browser/dist/inth.js"
  *   data-project-url="https://your-project.inth.app"
  *   data-categories="measurement,marketing"
  *   data-color-scheme="dark"

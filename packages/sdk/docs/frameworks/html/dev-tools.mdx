@@ -12,7 +12,7 @@ Add the DevTools tag next to the Inth tag while you debug:
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/@inth/sdk/lib/browser/dist/c15t.devtools.js"
+  src="https://cdn.jsdelivr.net/npm/@inth/sdk/lib/browser/dist/inth.devtools.js"
   data-open
   data-tab="location"
   defer
@@ -43,7 +43,7 @@ corner.
 
 The trigger hides while the banner or the dialog is open. The panel then shows
 its own launcher in the `data-position` corner until the trigger returns. With
-`c15t.headless.js` there is no trigger, so the panel always keeps its launcher.
+`inth.headless.js` there is no trigger, so the panel always keeps its launcher.
 
 ## What each tab shows
 
@@ -53,7 +53,7 @@ its own launcher in the `data-position` corner until the trigger returns. With
 | Scripts | Scripts from `config` and their state: blocked, loading, loaded, failed or retained. A page scan lists other script and iframe elements. |
 | Location | The country, region, language and GPC signal. **Apply and refresh** resolves the policy again with your values; **Clear overrides** goes back to detection. |
 | Policy | The resolved policy rule and the prompt it requires. |
-| IAB | Purposes, vendors and the TC string, under an IAB policy with `c15t.iab.js`. |
+| IAB | Purposes, vendors and the TC string, under an IAB policy with `inth.iab.js`. |
 | Events | Every consent event in order. |
 | Actions | **Show banner**, **Open preferences** and **Clear stored records**. |
 

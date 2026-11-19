@@ -275,7 +275,7 @@ describe('@inth/nextjs/pages: resolveConsent with a backend', () => {
 		const headers = (init as RequestInit).headers as Record<string, string>;
 		// The consent cookie alone, never the site's session cookies.
 		expect(headers.cookie).toBe('inth=stored');
-		expect(headers['x-c15t-country']).toBe('DE');
+		expect(headers['x-inth-country']).toBe('DE');
 		expect(config.initialPolicyResolution?.policy?.id).toBe('gdpr');
 		expect(config.initialLocation).toEqual({
 			countryCode: 'DE',
@@ -557,7 +557,7 @@ describe('@inth/nextjs/pages: API bridge', () => {
 		const [url, init] = fetchSpy.mock.calls[0] ?? [];
 		expect(String(url)).toBe('https://consent.example.com/subjects');
 		expect(init?.method).toBe('POST');
-		expect(new Headers(init?.headers).get('x-c15t-proxy')).toBe('@inth/nextjs');
+		expect(new Headers(init?.headers).get('x-inth-proxy')).toBe('@inth/nextjs');
 		expect(await new Response(init?.body).json()).toEqual({
 			consents: { marketing: true },
 		});

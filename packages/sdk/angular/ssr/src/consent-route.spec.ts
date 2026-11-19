@@ -83,7 +83,7 @@ describe('createConsentRoute', () => {
 		expect(response?.status).toBe(201);
 		expect(fetch.mock.calls[0]?.[0]).toBe(`${BACKEND}/subjects`);
 		const headers = new Headers(fetch.mock.calls[0]?.[1]?.headers);
-		expect(headers.get('x-c15t-proxy')).toBe('@inth/angular');
+		expect(headers.get('x-inth-proxy')).toBe('@inth/angular');
 		expect(headers.get('x-forwarded-host')).toBe('shop.example');
 	});
 

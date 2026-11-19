@@ -1,5 +1,5 @@
 /**
- * Shared by `mountDevTools` and the `c15t.devtools.js` tag, which differ
+ * Shared by `mountDevTools` and the `inth.devtools.js` tag, which differ
  * only in which copy of the launcher slot they publish to.
  *
  * @internal

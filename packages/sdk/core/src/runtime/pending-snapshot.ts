@@ -50,7 +50,7 @@ const fallbackRule = (): ConsentSnapshot['policyRule'] => ({
 		required: ['accept', 'reject'],
 	},
 	copyRevision: null,
-	id: 'c15t_safe_fallback',
+	id: 'inth_safe_fallback',
 	model: 'opt-in',
 	preselectedCategories: [],
 	privacySignals: { gpc: { denyCategories: [] } },

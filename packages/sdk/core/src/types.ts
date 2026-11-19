@@ -584,7 +584,7 @@ export interface InitContext {
 	user: Readonly<KernelUser> | null;
 	/**
 	 * The banner-experiment arm the visitor runs, set only while they have
-	 * no stored choice. Transports send it with the request (`x-c15t-experiment`)
+	 * no stored choice. Transports send it with the request (`x-inth-experiment`)
 	 * or put it on the session report, so the backend can count the visitors
 	 * each arm's banner was owed to.
 	 */

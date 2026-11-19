@@ -176,7 +176,7 @@ describe('trigger with DevTools', () => {
 	});
 });
 
-describe('c15t.devtools.js', () => {
+describe('inth.devtools.js', () => {
 	/** Load a script-tag entry as its own bundle, with its own modules. */
 	const loadTag = async function loadTag(
 		entry: 'cdn-testing' | 'cdn-devtools'

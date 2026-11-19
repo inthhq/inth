@@ -59,9 +59,9 @@ option replaces the earlier value.
 ## Start Inth yourself
 
 With `data-manual` on the tag, the bundle installs `window.inth` and waits.
-`c15t.js` still requires a backend URL when `init()` runs. Manifest mode
+`inth.js` still requires a backend URL when `init()` runs. Manifest mode
 needs the `@inth/sdk` ES module, a headless script with your own UI, or
-the IAB script for an IAB policy. Test pages load `c15t.testing.js`.
+the IAB script for an IAB policy. Test pages load `inth.testing.js`.
 
 Call `inth.init()` when your page is ready, for example once it knows the
 visitor's country:
@@ -79,10 +79,10 @@ visitor's country:
 
 `init()` reads the original tag's attributes even if the tag has since been
 removed, layers queued `config` calls and its own options on top, starts the
-client and returns it. Called on `c15t.js` before `c15t.hosted.js` has
+client and returns it. Called on `inth.js` before `inth.hosted.js` has
 loaded, it returns a stand-in with the client's methods instead, and
 `inth.onInit()` hands you the client once it exists; see
-[how c15t.js loads c15t.hosted.js](/docs/frameworks/html/attributes-and-api#how-c15tjs-loads-c15thostedjs).
+[how inth.js loads inth.hosted.js](/docs/frameworks/html/attributes-and-api#how-c15tjs-loads-c15thostedjs).
 A second call returns the same client. Until `init()`,
 queued actions and `subscribe` wait, and direct calls to methods that read or
 change consent throw `call inth.init() first`.
@@ -128,7 +128,7 @@ Call these only in response to a visitor's click or key press, never at load.
 | `acceptAll()` | Without IAB, allows every category the dialog offers. Under an IAB policy it confirms the vendors' declared processing through the CMP. Optional categories without declared consent purposes remain denied. See [categories under an IAB policy](/docs/concepts/consent-state#categories-under-an-iab-policy). |
 | `rejectAll()` | Denies every optional category the dialog offers. |
 | `save(choices)` | The categories you name, such as `{ measurement: true, marketing: false }`. Categories the dialog does not offer are ignored. A `vendors` map, such as `{ vendors: { 'x-pixel': false } }`, records vendor switches too. Fails under an IAB policy; use `saveIAB()`. |
-| `saveIAB()` | Confirms the IAB purpose and vendor choices set on the CMP. `c15t.iab.js` only. See [IAB TCF](/docs/frameworks/html/iab). |
+| `saveIAB()` | Confirms the IAB purpose and vendor choices set on the CMP. `inth.iab.js` only. See [IAB TCF](/docs/frameworks/html/iab). |
 | `dismissNotice()` | Acknowledges a notice. Grants nothing. Resolves with `{ ok: false, reason: 'not-required' }` when no notice is showing. |
 | `identify(user)` | Links the consent record to a signed-in user, such as `{ externalId: 'user_123', identityProvider: 'auth0' }`. An [`identityToken`](/docs/self-host/api/node-sdk#verify-a-link-made-in-the-browser) verifies the link. |
 
@@ -144,10 +144,10 @@ the choice stays in effect, and Inth retries the request later.
 | `showBanner()` | Shows the banner. Records nothing. |
 | `openDialog()` | Opens the preference dialog. Records nothing. |
 | `closeDialog()` | Closes the dialog, or the banner when no dialog is open. Closing the dialog brings the banner back while the policy still owes a choice. Records nothing. |
-| `setLanguage(code)` | Switches language and re-renders with that language's copy, from the backend or, with `c15t.testing.js`, from the bundled copy and `i18n.messages`. See [translations](/docs/frameworks/html/translations). |
-| `mountUI(options?)` | Removes the stock UI and mounts it again, with new UI options or the configured ones. Throws in `c15t.headless.js`. |
+| `setLanguage(code)` | Switches language and re-renders with that language's copy, from the backend or, with `inth.testing.js`, from the bundled copy and `i18n.messages`. See [translations](/docs/frameworks/html/translations). |
+| `mountUI(options?)` | Removes the stock UI and mounts it again, with new UI options or the configured ones. Throws in `inth.headless.js`. |
 
-In `c15t.headless.js`, `showBanner`, `openDialog` and `closeDialog` still
+In `inth.headless.js`, `showBanner`, `openDialog` and `closeDialog` still
 change the surface Inth reports through the `ui` event, so your own banner
 can follow them.
 
@@ -167,15 +167,15 @@ can follow them.
 | Property | What it holds |
 | --- | --- |
 | `version` | The `@inth/sdk` version. |
-| `pkg` | `@inth/sdk`, `@inth/sdk/testing`, `@inth/sdk/headless` or `@inth/sdk/iab-client`, by bundle. `c15t.testing.js` reports `@inth/sdk/testing`. |
+| `pkg` | `@inth/sdk`, `@inth/sdk/testing`, `@inth/sdk/headless` or `@inth/sdk/iab-client`, by bundle. `inth.testing.js` reports `@inth/sdk/testing`. |
 | `mode` | `hosted`, `manifest`, `testing` or `custom` once started, else `null`. A transport factory passed as `mode` reports `custom`, except `hosted()` and `manifest()`. |
-| `hosting` | `'inth'` or `'self-hosted'` once `/init` reports who runs the backend, else `null`. Stays `null` with `c15t.testing.js` and with backends older than the field. |
+| `hosting` | `'inth'` or `'self-hosted'` once `/init` reports who runs the backend, else `null`. Stays `null` with `inth.testing.js` and with backends older than the field. |
 | `client` | The started client, or `null`. It has the same methods plus `kernel`, `runtime`, `options`, `consentCategories`, `ui` and `setOverrides()`. |
-| `devtools` | The DevTools panel once `c15t.devtools.js` mounted it, else `null`. |
-| `hosted`, `manifest` | Transport factories. `c15t.js` exports only `hosted`. Headless and IAB export both, for calls such as `inth.init({ mode: inth.manifest({ … }) })` with `data-manual`. |
-| `testing` | `c15t.testing.js` only: `inth.testing({ policy })`, for `inth.init({ mode })`. |
+| `devtools` | The DevTools panel once `inth.devtools.js` mounted it, else `null`. |
+| `hosted`, `manifest` | Transport factories. `inth.js` exports only `hosted`. Headless and IAB export both, for calls such as `inth.init({ mode: inth.manifest({ … }) })` with `data-manual`. |
+| `testing` | `inth.testing.js` only: `inth.testing({ policy })`, for `inth.init({ mode })`. |
 
-`c15t.js` reports `pkg: '@inth/sdk'` and `mode: 'hosted'` once started.
+`inth.js` reports `pkg: '@inth/sdk'` and `mode: 'hosted'` once started.
 
 `inth.client.setOverrides({ country, region, language, gpc })` changes the
 location, language or GPC signal policy matching uses. The DevTools Location

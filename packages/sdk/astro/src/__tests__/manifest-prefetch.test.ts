@@ -90,8 +90,8 @@ describe('manifest-mode server prefetch', () => {
 			headers: {
 				accept: 'text/html',
 				'user-agent': 'Mozilla/5.0',
-				'x-c15t-country': 'DE',
 				'x-forwarded-for': '203.0.113.42',
+				'x-inth-country': 'DE',
 			},
 		});
 		await new Promise<void>((resolve) => {
@@ -103,7 +103,7 @@ describe('manifest-mode server prefetch', () => {
 		);
 		expect(report).toBeDefined();
 		const init = report?.[1] as RequestInit;
-		expect((init.headers as Record<string, string>)['x-c15t-client-ip']).toBe(
+		expect((init.headers as Record<string, string>)['x-inth-client-ip']).toBe(
 			'203.0.113.42'
 		);
 		expect(JSON.parse(init.body as string)).toMatchObject({
@@ -119,11 +119,11 @@ describe('manifest-mode server prefetch', () => {
 
 		const german = await render({
 			fetch: fetchImpl as never,
-			headers: { 'x-c15t-country': 'DE' },
+			headers: { 'x-inth-country': 'DE' },
 		});
 		const american = await render({
 			fetch: fetchImpl as never,
-			headers: { 'x-c15t-country': 'US' },
+			headers: { 'x-inth-country': 'US' },
 		});
 
 		expect(
@@ -142,7 +142,7 @@ describe('manifest-mode server prefetch', () => {
 				projectUrl: '/api/self-host',
 			},
 			fetch: fetchImpl as never,
-			headers: { 'x-c15t-country': 'DE' },
+			headers: { 'x-inth-country': 'DE' },
 		});
 		expect(fetchImpl).not.toHaveBeenCalled();
 		expect(inth?.shouldShowBanner).toBe(true);
@@ -246,7 +246,7 @@ it.each(['public', 'custom'] as const)(
 					projectUrl: 'https://consent.example.com',
 				},
 				fetch: loader === 'custom' ? fetch : undefined,
-				headers: { 'x-c15t-country': 'DE' },
+				headers: { 'x-inth-country': 'DE' },
 			});
 			// The list, besides the render's session report.
 			expect(

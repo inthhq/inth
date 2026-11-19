@@ -243,7 +243,7 @@ describe('resolveConsent wiring', () => {
 		vi.unstubAllGlobals();
 		expect(fetch).not.toHaveBeenCalled();
 		expect(state.initialIab?.gvlReference?.url).toMatch(
-			/^\/api\/consent\/init\?c15t-gvl=7/u
+			/^\/api\/consent\/init\?inth-gvl=7/u
 		);
 		expect(state.routePrefix).toBe('/api/consent');
 	});

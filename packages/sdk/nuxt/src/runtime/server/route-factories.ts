@@ -4,7 +4,7 @@ import type { ConsentManifest } from '@inth/sdk/schema/types';
  * `${routePrefix}/**`, around the consent route handler in
  * `@inth/sdk/server`. Core owns the `/manifest` and `/init` behaviour for
  * every adapter (including the fallback to the backend's own `/init` and
- * the render budget the SSR plugin sends in `x-c15t-timeout-ms`). This
+ * the render budget the SSR plugin sends in `x-inth-timeout-ms`). This
  * module only converts between h3 and the Web `Request`/`Response`, reads
  * the Inth runtime config, sends relative backend URLs through Nitro's
  * in-process fetch, and hands detached work to the preset's `waitUntil`.

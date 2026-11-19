@@ -322,7 +322,7 @@ describe('ordered gated scripts', () => {
 });
 
 it('offers the category of a tag that ran before the client', async () => {
-	// `c15t.js` started the measurement tag for an early choice; the engine
+	// `inth.js` started the measurement tag for an early choice; the engine
 	// that takes over finds only the marketing tag still inert.
 	const ran = document.createElement('script');
 	ran.setAttribute('data-inth-category', 'measurement');

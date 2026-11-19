@@ -40,7 +40,7 @@ const POSITION_CLASS: Record<CornerPosition, keyof typeof classes.trigger> = {
  * and remembers the choice, the way the framework triggers do.
  *
  * While a DevTools panel is mounted for the same client (`mountDevTools`
- * or `c15t.devtools.js`), the visible trigger becomes a two-item toolbar
+ * or `inth.devtools.js`), the visible trigger becomes a two-item toolbar
  * that carries the DevTools launcher and docks the panel beside itself.
  * Hidden, it hands the launcher back to the panel.
  */

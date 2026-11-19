@@ -157,11 +157,11 @@ export interface ConsentRouteOptions {
 	 * `trustForwardedHeaders` (a client-controlled chain would let a visitor
 	 * choose the address the backend sees), and adds
 	 * `x-forwarded-host`, `x-forwarded-proto`, the Inth version header, and
-	 * `x-c15t-proxy: @inth/tanstack-start`. The hosted backend sits behind
+	 * `x-inth-proxy: @inth/tanstack-start`. The hosted backend sits behind
 	 * Vercel Firewall or Cloudflare, and a bare server-to-server fetch (server
 	 * TLS fingerprint, no user agent, one egress IP for every visitor) scores
 	 * as a bot. Forwarding those headers gives the WAF the same signals a
-	 * direct browser request would carry, and `x-c15t-proxy` plus the version
+	 * direct browser request would carry, and `x-inth-proxy` plus the version
 	 * header give the platform a stable key for a firewall bypass rule.
 	 *
 	 * Operational note: Vercel Attack Challenge Mode and Cloudflare Super Bot

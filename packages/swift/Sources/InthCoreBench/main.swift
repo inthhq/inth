@@ -13,7 +13,7 @@ struct StubHTTP: HTTPTransport {
     func send(_ request: HTTPRequest) async throws -> HTTPResponse {
         HTTPResponse(
             status: 200,
-            headers: ["x-c15t-policy-contract": "1"],
+            headers: ["x-inth-policy-contract": "1"],
             body: body
         )
     }

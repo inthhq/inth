@@ -269,10 +269,10 @@ describe('init route', () => {
 			manifestResponse({ 'cache-control': 'public, s-maxage=120' })
 		);
 
-		const response = await callInitRoute({ 'x-c15t-country': 'DE' });
+		const response = await callInitRoute({ 'x-inth-country': 'DE' });
 
 		expect(response.headers.get('cache-control')).toBe('private, no-store');
-		expect(response.headers.get('x-c15t-policy-contract')).toBe('1');
+		expect(response.headers.get('x-inth-policy-contract')).toBe('1');
 		expect(await response.json()).toMatchObject({
 			location: { countryCode: 'DE' },
 			policyResolution: { policyId: 'eu-opt-in' },
@@ -315,7 +315,7 @@ describe('init route', () => {
 			);
 		});
 
-		const response = await callInitRoute({ 'x-c15t-country': 'DE' });
+		const response = await callInitRoute({ 'x-inth-country': 'DE' });
 
 		const body = await response.json();
 		expect(body).toMatchObject({
@@ -327,7 +327,7 @@ describe('init route', () => {
 		expect(mocks.serverFetch).toHaveBeenLastCalledWith(
 			'/api/self-host/init',
 			expect.objectContaining({
-				headers: expect.objectContaining({ 'x-c15t-country': 'DE' }),
+				headers: expect.objectContaining({ 'x-inth-country': 'DE' }),
 			})
 		);
 	});

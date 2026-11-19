@@ -359,7 +359,7 @@ const sameSdkOptions = (
 };
 type DefaultComLoader = 'defaultComPixel' | 'defaultComFormsSdk';
 const pageLoaders = new WeakMap<Document, DefaultComLoader>();
-const blockedLoaderType = 'application/x-c15t-default-conflict';
+const blockedLoaderType = 'application/x-inth-default-conflict';
 interface PixelConfiguration extends DefaultComFormsSdkInitOptions {
 	scriptUrl: string;
 }

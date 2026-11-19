@@ -143,7 +143,7 @@ const trackPendingScript = (script: HTMLScriptElement): PendingScript => {
 
 /**
  * The categories the page's tags offer: those of the inert `elements`, and
- * of tags that already ran. The init script (`c15t.js`) may have started
+ * of tags that already ran. The init script (`inth.js`) may have started
  * some before the client that scans.
  */
 const offeredCategories = function offeredCategories(

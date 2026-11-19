@@ -11,7 +11,7 @@
  * - `GET …/init` resolves the visitor's init from that manifest (geo,
  *   language, GPC), negotiates the policy contract, attaches the Global
  *   Vendor List for IAB policies and reports the session to the backend.
- *   The same route serves versioned vendor-list requests (`?c15t-gvl=`).
+ *   The same route serves versioned vendor-list requests (`?inth-gvl=`).
  * - With `proxy` on, every other allowlisted path is forwarded to the
  *   backend through {@link forwardConsentRequest}.
  *
@@ -119,7 +119,7 @@ import {
  * (manifest, vendor list, `/init` fallback) before failing. Values above
  * ten seconds are capped; anything that is not a whole number is ignored.
  */
-export const CONSENT_ROUTE_TIMEOUT_HEADER = 'x-c15t-timeout-ms';
+export const CONSENT_ROUTE_TIMEOUT_HEADER = 'x-inth-timeout-ms';
 
 /** Longest request-supplied budget honoured, in milliseconds. */
 const MAX_ROUTE_TIMEOUT_MS = 10_000;
@@ -149,7 +149,7 @@ export type ConsentRouteFetchGvl = (input: {
 export interface ConsentRouteHandlerOptions {
 	/**
 	 * Package name of the adapter, such as `@inth/nextjs`. Prefixes errors,
-	 * names the adapter in session reports, and is sent as `x-c15t-proxy`.
+	 * names the adapter in session reports, and is sent as `x-inth-proxy`.
 	 */
 	adapter: string;
 	/**
@@ -312,7 +312,7 @@ export interface ResolveConsentInitOptions {
 		reference: ConsentManifestAdditionalConsent
 	) => Promise<AdTechProvider[] | undefined>;
 	/**
-	 * The client's `x-c15t-policy-contract` header, if it sent one. A value
+	 * The client's `x-inth-policy-contract` header, if it sent one. A value
 	 * other than the supported version fails the resolution.
 	 */
 	clientContract?: string | null;
@@ -1038,7 +1038,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 					...context.inputs,
 					// Inputs an adapter resolved from the request headers miss the
 					// overrides a browser sends in the query string; those win,
-					// as the `x-c15t-*` override headers did.
+					// as the `x-inth-*` override headers did.
 					...queryOverrides(url),
 					language: context.inputs.language ?? 'en',
 				}

@@ -79,7 +79,7 @@ const storybookFetch = function storybookFetch(): typeof fetch {
 			return new Response(JSON.stringify(storybookInit), {
 				headers: {
 					'content-type': 'application/json',
-					'x-c15t-policy-contract': '1',
+					'x-inth-policy-contract': '1',
 				},
 				status: 200,
 			});
@@ -93,7 +93,7 @@ const storybookFetch = function storybookFetch(): typeof fetch {
 				{
 					headers: {
 						'content-type': 'application/json',
-						'x-c15t-policy-contract': '1',
+						'x-inth-policy-contract': '1',
 					},
 					status: 200,
 				}

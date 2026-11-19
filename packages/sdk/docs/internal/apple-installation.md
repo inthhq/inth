@@ -124,8 +124,8 @@ presentation and Settings changes still need on-device verification.
 
 ## Versions and validation limits
 
-Core requests report `x-c15t-version: <Inth.version>`. Platform-created
-hosted transports also report `x-c15t-platform: <platform>-><InthApple.version>`,
+Core requests report `x-inth-version: <Inth.version>`. Platform-created
+hosted transports also report `x-inth-platform: <platform>-><InthApple.version>`,
 where `InthAppleConfiguration.platform` is `apple` by default and `rn` for a core
 the React Native bridge configures, on
 init, save and identity requests. These native source versions are independent

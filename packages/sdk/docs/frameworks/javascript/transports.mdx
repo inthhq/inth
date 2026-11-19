@@ -31,7 +31,7 @@ Each setup takes the transport in a slightly different form:
 | --- | --- |
 | `@inth/sdk` | `init({ projectUrl, mode })`. `mode` is optional: `manifest()` or `hosted()` from `@inth/sdk`, or `testing()` from `@inth/sdk/testing`. |
 | `createConsentRuntime` | `projectUrl`, and an optional `mode` from the same entries. |
-| Script tag | `data-project-url`, and `data-mode="hosted"` or `"manifest"` on the headless and IAB scripts. Tests load `c15t.testing.js`. |
+| Script tag | `data-project-url`, and `data-mode="hosted"` or `"manifest"` on the headless and IAB scripts. Tests load `inth.testing.js`. |
 | `createConsentKernel` | `transport`, the transport object itself, such as `createHostedTransport({ projectUrl })`. |
 
 A factory is created once. To switch transports, dispose the client or
@@ -121,7 +121,7 @@ and region. Code that reads the visitor's country should supply it through
 `inputs`, or use `/init`. IAB GPP needs it for its US state sections, so when
 GPP is on, through the runtime's `gpp` option, `<ConsentGPP>` or `mountGPP()`,
 an unknown location goes to `/init` even when every location gets the same
-banner. The script-tag build counts GPP as on, because `c15t.gpp.js` can load
+banner. The script-tag build counts GPP as on, because `inth.gpp.js` can load
 after `init()`; pass `gpp: false` to `inth.init()` to resolve in the browser on
 pages that do not load it.
 
@@ -167,7 +167,7 @@ locations, opt-out for US states with a privacy law, and no prompt elsewhere.
 The browser cannot see the visitor's country, so set `overrides.country` to
 pick a rule. [Policies](/docs/concepts/policies) lists the presets.
 
-A test page with no bundler loads `c15t.testing.js`, which takes preset names
+A test page with no bundler loads `inth.testing.js`, which takes preset names
 in `data-policy`; see [Modes](/docs/concepts/modes#testing).
 
 ## Check it works

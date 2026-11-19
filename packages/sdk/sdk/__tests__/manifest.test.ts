@@ -33,7 +33,7 @@ describe('@inth/sdk manifest', () => {
 		for (const key of [
 			'.',
 			'./hosted',
-			'./c15t.js',
+			'./inth.js',
 			// Script-tag servers such as @c15t/backend import it.
 			'./prefetch',
 			'./engine',

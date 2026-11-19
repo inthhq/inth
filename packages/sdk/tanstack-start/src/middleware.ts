@@ -31,7 +31,7 @@ export interface ConsentRequestMiddlewareOptions {
 	language?: string;
 
 	/**
-	 * Write the normalized `x-c15t-country`, `x-c15t-region`, and `sec-gpc`
+	 * Write the normalized `x-inth-country`, `x-inth-region`, and `sec-gpc`
 	 * headers back onto the incoming request so every downstream reader
 	 * (server routes, server functions, `resolveConsent`) sees one
 	 * canonical set regardless of which CDN populated them.
@@ -174,7 +174,7 @@ const keepVisitorRenderPrivate = function keepVisitorRenderPrivate<
  *
  * It reads the CDN geo headers (Cloudflare, Vercel, CloudFront, generic
  * proxies), `accept-language`, and `sec-gpc` through the shared extractor,
- * rewrites them onto the canonical `x-c15t-country`, `x-c15t-region`, and
+ * rewrites them onto the canonical `x-inth-country`, `x-inth-region`, and
  * `sec-gpc` request headers, and exposes the same values as
  * `context.consent` for server routes and server functions.
  *

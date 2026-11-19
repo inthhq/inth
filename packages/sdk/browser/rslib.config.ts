@@ -16,34 +16,34 @@ import { modeBundleBoundary } from './scripts/mode-bundle-boundary';
  *   workspace packages left external so they dedupe against `@inth/sdk-core`.
  * - `dist/postcss-tailwind3.js` — a re-export of `@inth/sdk-ui/postcss-tailwind3`
  *   for Tailwind 3 PostCSS configs.
- * - `dist/c15t.js` — the hosted script tag's init script: it starts
+ * - `dist/inth.js` — the hosted script tag's init script: it starts
  *   `/init`, shows the banner with only the banner's styles, records an
- *   early accept or reject, and loads `dist/c15t.hosted.js` after the
+ *   early accept or reject, and loads `dist/inth.hosted.js` after the
  *   page's priority images.
- * - `dist/c15t.commit.js` — what the init script fetches when the visitor
+ * - `dist/inth.commit.js` — what the init script fetches when the visitor
  *   taps Accept or Reject on its banner: the record write and the queued
- *   save for that choice. Served next to `dist/c15t.hosted.js`.
- * - `dist/c15t.records.js` — what the init script fetches at once for a
+ *   save for that choice. Served next to `dist/inth.hosted.js`.
+ * - `dist/inth.records.js` — what the init script fetches at once for a
  *   returning visitor: the stored-record reader. Served next to
- *   `dist/c15t.hosted.js`.
- * - `dist/c15t.dialog.js` — the stock preference centre and the full
+ *   `dist/inth.hosted.js`.
+ * - `dist/inth.dialog.js` — the stock preference centre and the full
  *   stylesheet. The init script fetches it when the visitor taps Customize
  *   before the engine and opens the dialog without the engine; the engine
  *   fetches it the first time it needs the dialog. Served next to
- *   `dist/c15t.hosted.js`.
- * - `dist/c15t.hosted.js` — the hosted engine: runtime, the vanilla banner
+ *   `dist/inth.hosted.js`.
+ * - `dist/inth.hosted.js` — the hosted engine: runtime, the vanilla banner
  *   and trigger, the stylesheet, and auto-init from the `<script>` tag's
  *   `data-*` attributes. It also works as a tag of its own, with
- *   `dist/c15t.dialog.js` next to it.
- * - `dist/c15t.testing.js` — the stock UI with `testing()`, for test
+ *   `dist/inth.dialog.js` next to it.
+ * - `dist/inth.testing.js` — the stock UI with `testing()`, for test
  *   pages: it resolves a policy in the browser with no backend. Built
  *   without `NODE_ENV=production`, so `testing()` runs; no other file
  *   contains its transport or the policy pack.
- * - `dist/c15t.headless.js` — the same without any UI or CSS, for sites
+ * - `dist/inth.headless.js` — the same without any UI or CSS, for sites
  *   that render their own banner against `window.inth`.
- * - `dist/c15t.iab.js` — an optional replacement with the CMP and IAB UI.
- * - `dist/c15t.devtools.js` — the DevTools panel as a second tag.
- * - `dist/c15t.gpp.js` — IAB GPP as a second tag.
+ * - `dist/inth.iab.js` — an optional replacement with the CMP and IAB UI.
+ * - `dist/inth.devtools.js` — the DevTools panel as a second tag.
+ * - `dist/inth.gpp.js` — IAB GPP as a second tag.
  */
 /** What core's snapshot code reads copy through, in the init script. */
 const INIT_SNAPSHOT_TRANSLATIONS = fileURLToPath(
@@ -51,29 +51,29 @@ const INIT_SNAPSHOT_TRANSLATIONS = fileURLToPath(
 );
 
 /** Script builds allowed to contain `@inth/sdk-iab` code. */
-const IAB_BUNDLES = new Set(['c15t.iab', 'c15t.gpp']);
+const IAB_BUNDLES = new Set(['inth.iab', 'inth.gpp']);
 
 /** Script builds that run hosted mode only. */
 const HOSTED_BUNDLES = new Set([
-	'c15t',
-	'c15t.commit',
-	'c15t.dialog',
-	'c15t.hosted',
-	'c15t.records',
+	'inth',
+	'inth.commit',
+	'inth.dialog',
+	'inth.hosted',
+	'inth.records',
 ]);
 
 /** Script builds that run hosted or manifest mode: no testing transport. */
-const PRODUCTION_BUNDLES = new Set(['c15t.headless', 'c15t.iab', 'c15t.gpp']);
+const PRODUCTION_BUNDLES = new Set(['inth.headless', 'inth.iab', 'inth.gpp']);
 
 /**
  * The ESM build loads the preference centre on demand
  * (`ui/dialog-surface.ts`). A script tag has nowhere to load a chunk from:
- * `c15t.hosted.js` loads `c15t.dialog.js` instead
+ * `inth.hosted.js` loads `inth.dialog.js` instead
  * (`ui/dialog-import-script.ts`), and the other script-tag builds use the
  * dialog module directly.
  */
 const dialogModule = (name: string) =>
-	name === 'c15t.hosted'
+	name === 'inth.hosted'
 		? new rspack.NormalModuleReplacementPlugin(
 				/^\.\/dialog-import$/u,
 				'./dialog-import-script'
@@ -89,7 +89,7 @@ const scriptTagLib = function scriptTagLib(name: string, entry: string) {
 		entry: Record<string, string>;
 	} = { entry: { [name]: entry } };
 	// The testing file must let `testing()` run: it is for test pages.
-	if (name === 'c15t.testing') {
+	if (name === 'inth.testing') {
 		source.define = { 'process.env.NODE_ENV': JSON.stringify('test') };
 	}
 	return {
@@ -121,9 +121,9 @@ const scriptTagLib = function scriptTagLib(name: string, entry: string) {
 						'./create-runtime-static'
 					),
 					dialogModule(name),
-					// `c15t.dialog.js` locks scrolling and traps focus with the
+					// `inth.dialog.js` locks scrolling and traps focus with the
 					// functions of the bundle that loaded it (`ui/locks-shared.ts`).
-					...(name === 'c15t.dialog'
+					...(name === 'inth.dialog'
 						? [
 								new rspack.NormalModuleReplacementPlugin(
 									/^\.\/locks$/u,
@@ -147,7 +147,7 @@ const scriptTagLib = function scriptTagLib(name: string, entry: string) {
 					// banner's share of the stylesheet and class names, and no
 					// copy of its own (`src/init/copy.ts`,
 					// `src/init/snapshot-translations.ts`).
-					...(name === 'c15t'
+					...(name === 'inth'
 						? [
 								new rspack.NormalModuleReplacementPlugin(
 									/generated[\\/]styles(?:\.ts)?$/u,
@@ -181,7 +181,7 @@ const scriptTagLib = function scriptTagLib(name: string, entry: string) {
 					...(PRODUCTION_BUNDLES.has(name)
 						? [modeBundleBoundary('production')]
 						: []),
-					...(name === 'c15t.testing' ? [modeBundleBoundary('testing')] : []),
+					...(name === 'inth.testing' ? [modeBundleBoundary('testing')] : []),
 				],
 			},
 		},
@@ -210,16 +210,16 @@ export default defineConfig({
 				},
 			},
 		},
-		scriptTagLib('c15t', './src/entries/cdn-init.ts'),
-		scriptTagLib('c15t.hosted', './src/entries/cdn.ts'),
-		scriptTagLib('c15t.commit', './src/entries/cdn-commit.ts'),
-		scriptTagLib('c15t.records', './src/entries/cdn-records.ts'),
-		scriptTagLib('c15t.dialog', './src/entries/cdn-dialog.ts'),
-		scriptTagLib('c15t.testing', './src/entries/cdn-testing.ts'),
-		scriptTagLib('c15t.headless', './src/entries/cdn-headless.ts'),
-		scriptTagLib('c15t.iab', './src/entries/cdn-iab.ts'),
-		scriptTagLib('c15t.devtools', './src/entries/cdn-devtools.ts'),
-		scriptTagLib('c15t.gpp', './src/entries/cdn-gpp.ts'),
+		scriptTagLib('inth', './src/entries/cdn-init.ts'),
+		scriptTagLib('inth.hosted', './src/entries/cdn.ts'),
+		scriptTagLib('inth.commit', './src/entries/cdn-commit.ts'),
+		scriptTagLib('inth.records', './src/entries/cdn-records.ts'),
+		scriptTagLib('inth.dialog', './src/entries/cdn-dialog.ts'),
+		scriptTagLib('inth.testing', './src/entries/cdn-testing.ts'),
+		scriptTagLib('inth.headless', './src/entries/cdn-headless.ts'),
+		scriptTagLib('inth.iab', './src/entries/cdn-iab.ts'),
+		scriptTagLib('inth.devtools', './src/entries/cdn-devtools.ts'),
+		scriptTagLib('inth.gpp', './src/entries/cdn-gpp.ts'),
 	],
 	output: {
 		cleanDistPath: true,

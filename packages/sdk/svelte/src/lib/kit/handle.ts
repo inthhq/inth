@@ -100,7 +100,7 @@ export type InthHandle = (input: {
 
 /**
  * Rewrites the resolved inputs back onto the request as the canonical
- * `x-c15t-*` / `sec-gpc` headers, so anything downstream that reads raw
+ * `x-inth-*` / `sec-gpc` headers, so anything downstream that reads raw
  * headers (a proxied backend call, a nested handle) sees one normalized
  * shape instead of whichever CDN header happened to carry it.
  *

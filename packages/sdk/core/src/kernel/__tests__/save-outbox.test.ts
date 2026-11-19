@@ -268,6 +268,38 @@ describe('save outbox: queue and replay', () => {
 		kernel.dispose();
 	});
 
+	test('a save queued before the Inth rename replays with its c15t experiment arm', async () => {
+		const saveSpy = vi
+			.fn()
+			.mockRejectedValueOnce(new Error('save offline'))
+			.mockResolvedValue({ ok: true });
+		const kernel = kernelOn({
+			transport: { init: vi.fn().mockResolvedValue({}), save: saveSpy },
+		});
+		await kernel.commands.save('all');
+		const legacyArm = {
+			acknowledgedDiagnostics: false,
+			arm: 'bar',
+			assignedBy: 'c15t',
+			id: 'banner-shape',
+		};
+		await editQueue((entries) =>
+			entries.map((entry) => ({
+				...entry,
+				payload: { ...entry.payload, experiment: legacyArm },
+			}))
+		);
+
+		await kernel.commands.init();
+		await vi.waitFor(() => {
+			expect(saveSpy).toHaveBeenCalledTimes(2);
+		});
+		expect(saveSpy.mock.calls[1]?.[0]).toMatchObject({
+			experiment: legacyArm,
+		});
+		kernel.dispose();
+	});
+
 	test('queued saves replay with the original timeToDecisionMs', async () => {
 		vi.useFakeTimers({ now: 1_700_000_000_000 });
 		const saveSpy = vi

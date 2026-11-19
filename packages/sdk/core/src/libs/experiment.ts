@@ -180,8 +180,8 @@ export interface ExperimentAssignment {
 	id: string;
 	/** `control` or a key of {@link ConsentExperiment.arms}. */
 	arm: string;
-	/** `host` when the host passed `arm`, `c15t` when Inth picked it. */
-	assignedBy: 'host' | 'c15t';
+	/** `host` when the host passed `arm`, `inth` when Inth picked it. */
+	assignedBy: 'host' | 'inth';
 	/** Whether the host acknowledged presentation diagnostics for this experiment. */
 	acknowledgedDiagnostics: boolean;
 }
@@ -335,7 +335,7 @@ export const experimentArmWeights = function experimentArmWeights(
  * @param experiment - A valid experiment definition without `arm`.
  * @param stored - The arm this browser stored, if any.
  * @param random - A number in `[0, 1)`; injectable for tests.
- * @returns The assignment, `assignedBy: 'c15t'`.
+ * @returns The assignment, `assignedBy: 'inth'`.
  */
 export const pickExperimentArm = function pickExperimentArm(
 	experiment: ConsentExperiment,
@@ -345,7 +345,7 @@ export const pickExperimentArm = function pickExperimentArm(
 	const assignment = (arm: string): ExperimentAssignment => ({
 		acknowledgedDiagnostics: experiment.acknowledgeDiagnostics === true,
 		arm,
-		assignedBy: 'c15t',
+		assignedBy: 'inth',
 		id: experiment.id,
 	});
 	if (stored?.id === experiment.id && isExperimentArm(experiment, stored.arm)) {

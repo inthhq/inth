@@ -51,7 +51,7 @@ const answer = (body: unknown) =>
 		new Response(JSON.stringify(body), {
 			headers: {
 				'content-type': 'application/json',
-				'x-c15t-policy-contract': '1',
+				'x-inth-policy-contract': '1',
 			},
 		})
 	);
@@ -205,7 +205,7 @@ describe('resolveConsent wiring', () => {
 		);
 		expect(fetch.mock.calls[0]?.[1]?.cache).toBe('no-store');
 		const headers = new Headers(fetch.mock.calls[0]?.[1]?.headers);
-		expect(headers.get('x-c15t-country')).toBe('FR');
+		expect(headers.get('x-inth-country')).toBe('FR');
 		expect(headers.get('accept-language')).toBe('de');
 		expect(headers.get('cookie')).toBe('inth=x');
 		expect(state.initialPolicyResolution?.status).toBe('matched');
@@ -222,7 +222,7 @@ describe('resolveConsent wiring', () => {
 			fetch.mock.calls.map(([input]) => String(input).split('?')[0])
 		).toEqual(['https://app.example.com/api/backend/init']);
 		const headers = new Headers(fetch.mock.calls[0]?.[1]?.headers);
-		expect(headers.get('x-c15t-country')).toBe('DE');
+		expect(headers.get('x-inth-country')).toBe('DE');
 		expect(state.initialPolicyResolution?.status).toBe('matched');
 	});
 

@@ -92,7 +92,7 @@ server cannot solve a browser challenge, such as Vercel Attack Challenge Mode
 or Cloudflare Super Bot Fight Mode.
 
 **Fix.** Exempt the consent paths from the challenge. Requests from the route
-carry an `x-c15t-proxy: @inth/tanstack-start` header you can match in a
+carry an `x-inth-proxy: @inth/tanstack-start` header you can match in a
 firewall rule. If rate limits treat every visitor as one IP address, and your
 host overwrites `x-forwarded-for`, set `trustForwardedHeaders: true` on
 `createConsentRoute`.

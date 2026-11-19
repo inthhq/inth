@@ -12,8 +12,8 @@ group: reference
   Every entry needs `projectUrl`, your Inth project URL, unless `mode` is
   `testing()` or `enabled` is `false`. The ES modules take `mode` as
   `hosted()`, `manifest()` or `testing()`. The script-tag builds take a mode
-  name and the manifest options below. `c15t.js` and `@inth/sdk/hosted`
-  accept hosted mode only. `c15t.testing.js` takes no backend options and
+  name and the manifest options below. `inth.js` and `@inth/sdk/hosted`
+  accept hosted mode only. `inth.testing.js` takes no backend options and
   resolves `policy` instead.
 
   | Option | Type | Default | What it does |
@@ -22,7 +22,7 @@ group: reference
   | `mode` | `hosted()`, `manifest()` or `testing()`. Script-tag builds also take `'hosted'` or `'manifest'`. | `hosted` | See [consent modes](/docs/concepts/modes). In the script-tag builds, `manifest` when `manifest` or `manifestUrl` is set, otherwise `hosted`. |
   | `manifest` | `ConsentManifest` | none | Script-tag builds. The backend's policy manifest, inlined in the page, for manifest mode. In the ES modules, `manifest({ snapshot })`. |
   | `manifestUrl` | `string` | none | Script-tag builds. Where manifest mode fetches the manifest. A URL that ends in `/manifest` also gives the backend URL; any other URL needs `projectUrl` too. In the ES modules, `manifest({ manifestUrl })`. |
-  | `policy` | array of policy rules or preset names | recommended rules | `c15t.testing.js` only. A preset name such as `'europeOptIn'` stands for that preset in `policyRulePresets`. An unknown name throws. The `data-policy` attribute sets it. In the ES modules, `testing({ policy })` with rule objects. |
+  | `policy` | array of policy rules or preset names | recommended rules | `inth.testing.js` only. A preset name such as `'europeOptIn'` stands for that preset in `policyRulePresets`. An unknown name throws. The `data-policy` attribute sets it. In the ES modules, `testing({ policy })` with rule objects. |
   | `overrides` | `{ country?, region?, language?, gpc? }` | none | The visitor's location, language or GPC signal, when the page knows it. Policy matching uses these instead of detection. |
   | `prefetch` | kernel configuration | none | A server-resolved init answer. When it carries a resolved policy, the client renders from it and does not call `/init`. |
   | `enabled` | `boolean` | `true` | `false` grants every category, shows no UI and loads every configured script at once. |

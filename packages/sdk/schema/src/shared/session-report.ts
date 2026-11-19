@@ -24,7 +24,7 @@ import { appendSearchParams, readSearchParams } from './search-params';
  * masking and tracking settings to this value exactly as it would to a
  * connection-derived one.
  */
-export const CONSENT_SESSION_CLIENT_IP_HEADER = 'x-c15t-client-ip';
+export const CONSENT_SESSION_CLIENT_IP_HEADER = 'x-inth-client-ip';
 
 /**
  * Request header that carries the banner-experiment arm a visitor runs, as
@@ -34,7 +34,7 @@ export const CONSENT_SESSION_CLIENT_IP_HEADER = 'x-c15t-client-ip';
  * value as the `experiment` query parameter instead, so a cross-origin
  * `/init` needs no CORS preflight.
  */
-export const CONSENT_EXPERIMENT_HEADER = 'x-c15t-experiment';
+export const CONSENT_EXPERIMENT_HEADER = 'x-inth-experiment';
 
 /** Longest experiment id or arm name a session report carries. */
 const EXPERIMENT_TEXT_MAX = 128;

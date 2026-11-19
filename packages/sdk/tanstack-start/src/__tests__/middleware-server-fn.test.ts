@@ -96,7 +96,7 @@ test('passes a server function result through', async () => {
 	expect(outcome.error).toBeUndefined();
 	expect(outcome.result).toEqual({ ok: true });
 	expect(seen).toMatchObject({ country: 'DE', gpc: true });
-	expect(request.headers.get('x-c15t-country')).toBe('DE');
+	expect(request.headers.get('x-inth-country')).toBe('DE');
 });
 
 test('renders ConsentRoot from a server function that lists it', async () => {

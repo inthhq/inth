@@ -116,7 +116,7 @@ const json = function json(
 	return new Response(JSON.stringify(body), {
 		headers: {
 			'content-type': 'application/json',
-			'x-c15t-policy-contract': '1',
+			'x-inth-policy-contract': '1',
 			...headers,
 		},
 	});
@@ -221,14 +221,14 @@ describe('request read', () => {
 		}
 	);
 
-	test('GPC comes from the shared extractor: x-c15t-gpc first, absent stays undefined', () => {
+	test('GPC comes from the shared extractor: x-inth-gpc first, absent stays undefined', () => {
 		const read = (headers: Record<string, string>) =>
 			readRequestConsent({
 				adapter: '@c15t/test',
 				request: { headers: new Headers(headers) },
 			}).state.initialPrivacySignals;
 		expect(read({ 'sec-gpc': '1' })).toEqual({ gpc: true });
-		expect(read({ 'sec-gpc': '1', 'x-c15t-gpc': '0' })).toEqual({
+		expect(read({ 'sec-gpc': '1', 'x-inth-gpc': '0' })).toEqual({
 			gpc: false,
 		});
 		// SvelteKit used to read raw `sec-gpc` and turn an absent signal into
@@ -564,9 +564,9 @@ describe('forwarding', () => {
 			cookie: CONSENTED,
 			'sec-gpc': '1',
 			'user-agent': 'Visitor/1.0',
-			'x-c15t-country': 'DE',
-			'x-c15t-policy-contract': '1',
-			'x-c15t-region': 'BE',
+			'x-inth-country': 'DE',
+			'x-inth-policy-contract': '1',
+			'x-inth-region': 'BE',
 		});
 		expect(headers.has('authorization')).toBe(false);
 		expect(headers.has('x-forwarded-for')).toBe(false);
@@ -664,7 +664,7 @@ describe('forwarding', () => {
 		expect(headers.has('cookie')).toBe(false);
 		expect(headers.has('x-tenant')).toBe(false);
 		expect(headers.has('x-forwarded-for')).toBe(false);
-		expect(headers.get('x-c15t-country')).toBe('DE');
+		expect(headers.get('x-inth-country')).toBe('DE');
 	});
 
 	test('a loopback backend counts as local', async () => {
@@ -723,11 +723,11 @@ describe('forwarding', () => {
 		const fetch = upstream();
 		await render({
 			fetch,
-			initHeaders: { 'X-C15T-Country': 'FR', 'x-private': 'no' },
+			initHeaders: { 'X-INTH-Country': 'FR', 'x-private': 'no' },
 			projectUrl: BACKEND,
 		});
 		const headers = sentHeaders(fetch, '/init');
-		expect(headers.get('x-c15t-country')).toBe('FR');
+		expect(headers.get('x-inth-country')).toBe('FR');
 		expect(headers.has('x-private')).toBe(false);
 	});
 });
@@ -748,7 +748,7 @@ describe('vendor list deferral', () => {
 			projectUrl: BACKEND,
 		});
 		expect(toRoute.initialIab?.gvlReference?.url).toMatch(
-			/^\/api\/inth\/init\?c15t-gvl=42/u
+			/^\/api\/inth\/init\?inth-gvl=42/u
 		);
 	});
 
@@ -981,7 +981,7 @@ describe('experiment', () => {
 	test('an undecided visitor’s arm goes with hosted /init; the state carries the experiment', async () => {
 		const fetch = upstream();
 		const state = await render({ experiment, fetch, projectUrl: BACKEND });
-		expect(sentHeaders(fetch, '/init').get('x-c15t-experiment')).toBe(
+		expect(sentHeaders(fetch, '/init').get('x-inth-experiment')).toBe(
 			'banner-test=b'
 		);
 		expect(state.experiment).toBe(experiment);
@@ -995,7 +995,7 @@ describe('experiment', () => {
 			headers: { cookie: CONSENTED },
 			projectUrl: BACKEND,
 		});
-		expect(sentHeaders(fetch, '/init').has('x-c15t-experiment')).toBe(false);
+		expect(sentHeaders(fetch, '/init').has('x-inth-experiment')).toBe(false);
 		expect(state.experiment).toBe(experiment);
 	});
 
@@ -1297,7 +1297,7 @@ describe('fetchRequestInit', () => {
 		expect(answer?.url).toBe(`${BACKEND}/init`);
 		expect(answer?.requestHeaders).toMatchObject({
 			'user-agent': 'UA',
-			'x-c15t-country': 'DE',
+			'x-inth-country': 'DE',
 		});
 		expect(answer?.responseHeaders.get('content-type')).toContain('json');
 		expect(callsTo(fetch, '/manifest')).toHaveLength(0);

@@ -500,7 +500,7 @@ describe('<ConsentBanner /> without a resolved policy', () => {
 						policyResolution: testWire(),
 						translations: { language: 'en', translations: {} },
 					},
-					{ headers: { 'x-c15t-policy-contract': '999' } }
+					{ headers: { 'x-inth-policy-contract': '999' } }
 				)
 			) as never,
 			headers: new Headers(),

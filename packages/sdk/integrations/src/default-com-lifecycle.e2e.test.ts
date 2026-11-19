@@ -502,7 +502,7 @@ describe('Default explicit marketing gate lifecycle', () => {
 			grantedMarketingConsents
 		);
 		expect(getLoader().getAttribute('src')).toBeNull();
-		expect(getLoader().type).toBe('application/x-c15t-default-conflict');
+		expect(getLoader().type).toBe('application/x-inth-default-conflict');
 		expect(error).toHaveBeenCalledWith(
 			'defaultComFormsSdk: Reload the page to change the Forms SDK URL.'
 		);
@@ -670,11 +670,11 @@ describe('Default explicit marketing gate lifecycle', () => {
 					: 'https://handshake.default.com/sdk.js';
 			expect(inserted).toEqual([
 				{ src: expectedUrl, type: '' },
-				{ src: null, type: 'application/x-c15t-default-conflict' },
+				{ src: null, type: 'application/x-inth-default-conflict' },
 			]);
 			expect(error).toHaveBeenCalledOnce();
 			const blocked = document.querySelector<HTMLScriptElement>(
-				'script[type="application/x-c15t-default-conflict"]'
+				'script[type="application/x-inth-default-conflict"]'
 			);
 			const init = vi.fn();
 			const setConsent = vi.fn();
@@ -702,7 +702,7 @@ describe('Default explicit marketing gate lifecycle', () => {
 			fullConsent
 		);
 		expect(getLoader().getAttribute('src')).toBeNull();
-		expect(getLoader().type).toBe('application/x-c15t-default-conflict');
+		expect(getLoader().type).toBe('application/x-inth-default-conflict');
 		expect(window.__defaultPixel__).toBe(config);
 		expect(config).toEqual({ key: 'existing-key', q: [['existing']] });
 	});
@@ -713,7 +713,7 @@ describe('Default explicit marketing gate lifecycle', () => {
 		window.DefaultPixelSDK = sdk;
 		loadScripts([defaultComPixel({ publicKey: 'workspace-key' })], fullConsent);
 		expect(getLoader().getAttribute('src')).toBeNull();
-		expect(getLoader().type).toBe('application/x-c15t-default-conflict');
+		expect(getLoader().type).toBe('application/x-inth-default-conflict');
 		expect('__defaultPixel__' in window).toBe(false);
 		expect(window.DefaultPixelSDK).toBe(sdk);
 	});
@@ -740,7 +740,7 @@ describe('Default explicit marketing gate lifecycle', () => {
 				order === 'sdk-first' ? ['https://handshake.default.com/sdk.js'] : []
 			);
 			expect(document.querySelector('script:not([src])')?.type).toBe(
-				'application/x-c15t-default-conflict'
+				'application/x-inth-default-conflict'
 			);
 		}
 	);

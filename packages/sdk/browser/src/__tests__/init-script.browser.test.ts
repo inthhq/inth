@@ -1,6 +1,6 @@
 /**
- * The two-stage script tag in Chromium, on the built files: `c15t.js` (the
- * init script) and `c15t.hosted.js` (the engine), against a test backend
+ * The two-stage script tag in Chromium, on the built files: `inth.js` (the
+ * init script) and `inth.hosted.js` (the engine), against a test backend
  * (`fixtures/init-script-server.ts`).
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -104,7 +104,7 @@ afterEach(() => {
 	clearStorage();
 });
 
-describe('c15t.js before the engine', () => {
+describe('inth.js before the engine', () => {
 	it('shows the banner from /init without loading the engine', async () => {
 		const win = await open({ 'hosted-delay': 4000 });
 
@@ -305,25 +305,25 @@ describe('the engine after a banner press', () => {
 		button?.click();
 	};
 
-	it('starts the scripts and c15t.commit.js before the engine on an accept', async () => {
+	it('starts the scripts and inth.commit.js before the engine on an accept', async () => {
 		// The priority image holds the engine back until the press.
 		const win = await open({ hero: 10_000 }, { parsed: true });
 		await expect.poll(() => buttonOf(win, 'accept')).not.toBeNull();
-		expect(added(win, 'c15t.hosted.js')).toBe(false);
+		expect(added(win, 'inth.hosted.js')).toBe(false);
 
 		press(win, 'accept');
 
-		expect(added(win, 'c15t.commit.js')).toBe(true);
-		expect(added(win, 'c15t.hosted.js')).toBe(false);
+		expect(added(win, 'inth.commit.js')).toBe(true);
+		expect(added(win, 'inth.hosted.js')).toBe(false);
 		await expect
 			.poll(() => win.__ran.toSorted())
 			.toEqual(['marketing', 'measurement']);
 		// Once the choice is stored, the engine loads.
-		await expect.poll(() => added(win, 'c15t.hosted.js')).toBe(true);
+		await expect.poll(() => added(win, 'inth.hosted.js')).toBe(true);
 		expect(win.localStorage.getItem('inth')).not.toBeNull();
 	});
 
-	it('fetches c15t.dialog.js, not the engine, with the press on Customize', async () => {
+	it('fetches inth.dialog.js, not the engine, with the press on Customize', async () => {
 		const win = await open({ hero: 10_000 }, { parsed: true });
 		await expect.poll(() => buttonOf(win, 'customize')).not.toBeNull();
 
@@ -331,9 +331,9 @@ describe('the engine after a banner press', () => {
 			new win.PointerEvent('pointerdown', { bubbles: true, composed: true })
 		);
 
-		expect(added(win, 'c15t.dialog.js')).toBe(true);
-		expect(added(win, 'c15t.commit.js')).toBe(false);
-		expect(added(win, 'c15t.hosted.js')).toBe(false);
+		expect(added(win, 'inth.dialog.js')).toBe(true);
+		expect(added(win, 'inth.commit.js')).toBe(false);
+		expect(added(win, 'inth.hosted.js')).toBe(false);
 	});
 
 	it('loads the engine with any other press', async () => {
@@ -344,25 +344,25 @@ describe('the engine after a banner press', () => {
 			.querySelector('p')
 			?.dispatchEvent(new win.PointerEvent('pointerdown', { bubbles: true }));
 
-		expect(added(win, 'c15t.hosted.js')).toBe(true);
-		expect(added(win, 'c15t.dialog.js')).toBe(false);
+		expect(added(win, 'inth.hosted.js')).toBe(true);
+		expect(added(win, 'inth.dialog.js')).toBe(false);
 	});
 });
 
-describe('c15t.commit.js and c15t.records.js', () => {
+describe('inth.commit.js and inth.records.js', () => {
 	const wait = (ms: number) =>
 		new Promise((resolve) => {
 			setTimeout(resolve, ms);
 		});
 
-	it('stores a tap in the next task when a press already fetched c15t.commit.js', async () => {
+	it('stores a tap in the next task when a press already fetched inth.commit.js', async () => {
 		const win = await open({ 'hosted-delay': 4000 });
 		await expect.poll(() => buttonOf(win, 'accept')).not.toBeNull();
 		// Not fetched before the visitor presses the banner.
 		const fetchedCommit = () =>
 			win.performance
 				.getEntriesByType('resource')
-				.some(({ name }) => name.includes('c15t.commit.js'));
+				.some(({ name }) => name.includes('inth.commit.js'));
 		expect(fetchedCommit()).toBe(false);
 
 		win.document
@@ -384,7 +384,7 @@ describe('c15t.commit.js and c15t.records.js', () => {
 			.toEqual(['marketing', 'measurement']);
 	});
 
-	it('records a tap on the next page when the visitor left before c15t.commit.js arrived', async () => {
+	it('records a tap on the next page when the visitor left before inth.commit.js arrived', async () => {
 		const first = await open({ commit: 5000, 'hosted-delay': 10_000 });
 		await expect.poll(() => buttonOf(first, 'accept')).not.toBeNull();
 		buttonOf(first, 'accept')?.click();
@@ -418,7 +418,7 @@ describe('c15t.commit.js and c15t.records.js', () => {
 		expect(await savesSoFar()).toBe(0);
 	});
 
-	it('hands the tap to the engine, which records it once, when c15t.commit.js fails', async () => {
+	it('hands the tap to the engine, which records it once, when inth.commit.js fails', async () => {
 		const win = await open({ commit: 'fail', 'hosted-delay': 500 });
 		await expect.poll(() => buttonOf(win, 'accept')).not.toBeNull();
 		buttonOf(win, 'accept')?.click();
@@ -486,7 +486,7 @@ describe('c15t.commit.js and c15t.records.js', () => {
 		expect(bannerOf(win)).toBeNull();
 	});
 
-	it('leaves a returning visitor to the engine when c15t.records.js fails', async () => {
+	it('leaves a returning visitor to the engine when inth.records.js fails', async () => {
 		const first = await open({ 'hosted-delay': 200 });
 		await expect
 			.poll(() => first.inth.client, { timeout: 5000 })
@@ -499,7 +499,7 @@ describe('c15t.commit.js and c15t.records.js', () => {
 		expect(
 			first.performance
 				.getEntriesByType('resource')
-				.some(({ name }) => name.includes('c15t.records.js'))
+				.some(({ name }) => name.includes('inth.records.js'))
 		).toBe(false);
 
 		const second = await open({ 'hosted-delay': 300, records: 'fail' });
@@ -515,7 +515,7 @@ describe('c15t.commit.js and c15t.records.js', () => {
 	});
 });
 
-describe('c15t.dialog.js', () => {
+describe('inth.dialog.js', () => {
 	const shadowOf = (win: PageWindow): ShadowRoot | null =>
 		win.document.querySelector('[data-inth-ui]')?.shadowRoot ?? null;
 
@@ -579,7 +579,7 @@ describe('c15t.dialog.js', () => {
 		).toBe('fixed');
 
 		// Then the engine, which takes the same dialog over.
-		await expect.poll(() => added(win, 'c15t.hosted.js')).toBe(true);
+		await expect.poll(() => added(win, 'inth.hosted.js')).toBe(true);
 		const early = dialogOf(win);
 		await expect.poll(() => win.inth.client, { timeout: 5000 }).not.toBeNull();
 		await (win.inth.ready as () => Promise<unknown>)();
@@ -648,7 +648,7 @@ describe('c15t.dialog.js', () => {
 		customize(win);
 		await expect.poll(() => dialogOf(win)).not.toBeNull();
 		// The commit file loads once the dialog is on screen.
-		await expect.poll(() => added(win, 'c15t.commit.js')).toBe(true);
+		await expect.poll(() => added(win, 'inth.commit.js')).toBe(true);
 		await new Promise((resolve) => {
 			setTimeout(resolve, 200);
 		});
@@ -713,7 +713,7 @@ describe('c15t.dialog.js', () => {
 	});
 
 	for (const dialog of ['fail', 'stale'] as const) {
-		it(`loads the engine instead when c15t.dialog.js ${dialog === 'fail' ? 'fails' : 'is from another release'}`, async () => {
+		it(`loads the engine instead when inth.dialog.js ${dialog === 'fail' ? 'fails' : 'is from another release'}`, async () => {
 			const win = await open(
 				{ dialog, hero: 10_000, 'hosted-delay': 800 },
 				{ parsed: true }
@@ -723,7 +723,7 @@ describe('c15t.dialog.js', () => {
 			customize(win);
 
 			// No dialog before the engine; the tap goes to the engine.
-			await expect.poll(() => added(win, 'c15t.hosted.js')).toBe(true);
+			await expect.poll(() => added(win, 'inth.hosted.js')).toBe(true);
 			expect(win.inth.client).toBeNull();
 			expect(dialogOf(win)).toBeNull();
 			await expect

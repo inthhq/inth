@@ -6,7 +6,7 @@
  * (`../ui/copy.ts`). The init script carries no copy of its own, so it
  * renders its banner only when the answer has every string the banner can
  * show ({@link hasBannerCopy}), and leaves any other banner to the engine.
- * `rslib.config.ts` swaps this module in for `../ui/copy.ts` in `c15t.js`.
+ * `rslib.config.ts` swaps this module in for `../ui/copy.ts` in `inth.js`.
  *
  * @packageDocumentation
  * @internal

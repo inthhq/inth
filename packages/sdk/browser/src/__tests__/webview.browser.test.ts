@@ -148,7 +148,7 @@ it('asks the app for its preferences instead of opening a web dialog', async () 
 		.toBe(true);
 	page.client.openDialog();
 	expect(page.posted).toEqual([
-		'{"type":"c15t:open-preferences","key":"0badc0de0badc0de0badc0de0badc0de"}',
+		'{"type":"inth:open-preferences","key":"0badc0de0badc0de0badc0de0badc0de"}',
 	]);
 	expect(page.client.getSnapshot().activeUI).toBe('none');
 	expect(banner(tab, page)).toBeNull();

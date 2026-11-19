@@ -1,12 +1,12 @@
 /**
- * The init script (`c15t.js`): the part of the script tag that runs before
+ * The init script (`inth.js`): the part of the script tag that runs before
  * the page's largest image has loaded.
  *
  * It installs a stand-in `window.inth`, starts `/init`, renders the stock
  * banner from the answer, records an accept or reject tapped on it, and
  * starts the scripts a stored or new choice allows. A Customize tap on its
- * banner opens the stock preference dialog from `c15t.dialog.js` without
- * the engine. Then it loads the engine (`c15t.hosted.js`) after the page's
+ * banner opens the stock preference dialog from `inth.dialog.js` without
+ * the engine. Then it loads the engine (`inth.hosted.js`) after the page's
  * priority images, at the first input, once a tapped choice is stored or
  * the dialog is on screen, or after `ENGINE_TIMEOUT_MS`, and hands it
  * everything through the boot object (`./boot.ts`).
@@ -83,7 +83,7 @@ import { scheduleEngine } from './schedule';
 
 /**
  * How long the engine waits for the init script's `/init` answer, and the
- * init script for `c15t.commit.js`, `c15t.records.js` or `c15t.dialog.js`.
+ * init script for `inth.commit.js`, `inth.records.js` or `inth.dialog.js`.
  */
 const INIT_WAIT_MS = 3000;
 
@@ -199,7 +199,7 @@ export const runInitScript = function runInitScript(
 	let snapshot: ConsentSnapshot | null = null;
 	let lastInit: PrefetchedInitialData | undefined;
 	let banner: BannerSurface | null = null;
-	/** The dialog opened before the engine, from `c15t.dialog.js`. */
+	/** The dialog opened before the engine, from `inth.dialog.js`. */
 	let dialog: EarlyDialog | null = null;
 	let dialogLoading = false;
 	/** What the dialog closes back to before the engine. */
@@ -288,7 +288,7 @@ export const runInitScript = function runInitScript(
 		if (!src) {
 			// oxlint-disable-next-line no-console -- Authoring-time diagnostic.
 			console.error(
-				'@inth/sdk: c15t.js cannot tell where c15t.hosted.js is. Load c15t.js from a URL, or set data-hosted-src.'
+				'@inth/sdk: inth.js cannot tell where inth.hosted.js is. Load inth.js from a URL, or set data-hosted-src.'
 			);
 			return;
 		}
@@ -296,7 +296,7 @@ export const runInitScript = function runInitScript(
 	};
 
 	/**
-	 * Fetch `c15t.commit.js`, `c15t.records.js` or `c15t.dialog.js`, once.
+	 * Fetch `inth.commit.js`, `inth.records.js` or `inth.dialog.js`, once.
 	 * Settles when it has run, failed, or after {@link INIT_WAIT_MS}; `parts`
 	 * or the dialog global holds what it provided.
 	 */
@@ -465,7 +465,7 @@ export const runInitScript = function runInitScript(
 		const commit: InitCommit = { queued: null, snapshot: plan.snapshot };
 		boot.commit = commit;
 		// Kept until the choice is stored, so a visitor who leaves before
-		// `c15t.commit.js` arrives still has it recorded on the next page.
+		// `inth.commit.js` arrives still has it recorded on the next page.
 		writePendingTap(choice, plan.previous, actionAt);
 		setSnapshot(plan.snapshot);
 		startScripts(plan.snapshot);
@@ -478,7 +478,7 @@ export const runInitScript = function runInitScript(
 		// oxlint-disable-next-line promise/avoid-new -- Settled by the write below.
 		return new Promise<SaveResult>((resolve) => {
 			// The record is written in a task after the tap, once
-			// `c15t.commit.js` has run, so the tap's own task only hides the
+			// `inth.commit.js` has run, so the tap's own task only hides the
 			// banner and starts the scripts. An engine that takes over sooner
 			// flushes it first, or records the tap itself without the file.
 			persist = () => {
@@ -550,7 +550,7 @@ export const runInitScript = function runInitScript(
 	};
 
 	/**
-	 * Fetch `c15t.dialog.js`, once. Settles with what it published, or
+	 * Fetch `inth.dialog.js`, once. Settles with what it published, or
 	 * `undefined` when it failed, came from another release, or took longer
 	 * than {@link INIT_WAIT_MS}.
 	 */
@@ -624,7 +624,7 @@ export const runInitScript = function runInitScript(
 	};
 
 	/**
-	 * Opens the preference dialog: from `c15t.dialog.js` before the engine
+	 * Opens the preference dialog: from `inth.dialog.js` before the engine
 	 * when it can, else through the engine, which then loads at once, as it
 	 * does when the file fails to load.
 	 */
@@ -752,7 +752,7 @@ export const runInitScript = function runInitScript(
 		};
 		// oxlint-disable-next-line promise/prefer-await-to-then -- Not in an async function.
 		void pending.then(markAnswered, markAnswered);
-		// A returning visitor: `c15t.records.js`, the record reader, loads at
+		// A returning visitor: `inth.records.js`, the record reader, loads at
 		// once. The choice they stored, evaluated against the policy the last
 		// `/init` sent, starts its scripts as soon as it has run, unless
 		// `/init` answered first. Settles `false` when it did not run.
@@ -979,7 +979,7 @@ export const runInitScript = function runInitScript(
 		isVendorAllowed(vendorId: string) {
 			if (!api) {
 				throw new Error(
-					'@inth/sdk: isVendorAllowed() needs c15t.hosted.js. Call it from inth.onInit().'
+					'@inth/sdk: isVendorAllowed() needs inth.hosted.js. Call it from inth.onInit().'
 				);
 			}
 			return api.isVendorAllowed(vendorId);
@@ -1101,7 +1101,7 @@ export const runInitScript = function runInitScript(
 
 	/**
 	 * A press fetches what its tap needs, so it has usually run by the time
-	 * the click lands: `c15t.dialog.js` for Customize, `c15t.commit.js` for
+	 * the click lands: `inth.dialog.js` for Customize, `inth.commit.js` for
 	 * anything else in the init script's UI.
 	 */
 	const onPress = function onPress(event: Event): void {
@@ -1123,10 +1123,10 @@ export const runInitScript = function runInitScript(
 	/**
 	 * A press on an accept or reject the init script will record itself, or
 	 * on a Customize it will open the dialog for, on the stock banner or a
-	 * `data-inth-action` button. The engine (`c15t.hosted.js`) then starts
+	 * `data-inth-action` button. The engine (`inth.hosted.js`) then starts
 	 * once the choice is stored or the dialog is on screen instead of with
-	 * the press, so the gated scripts the tap starts, `c15t.commit.js` and
-	 * `c15t.dialog.js` do not share the connection with it. Any other press
+	 * the press, so the gated scripts the tap starts, `inth.commit.js` and
+	 * `inth.dialog.js` do not share the connection with it. Any other press
 	 * loads the engine at once.
 	 */
 	const holdsEngine = function holdsEngine(event: Event): boolean {

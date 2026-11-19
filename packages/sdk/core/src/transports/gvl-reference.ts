@@ -96,8 +96,8 @@ export const createGvlReferenceUrl = (
 	gvl: GlobalVendorList,
 	language: string
 ): string => {
-	const url = new URL(initUrl, 'http://c15t.local');
-	url.searchParams.set('c15t-gvl', String(gvl.vendorListVersion));
+	const url = new URL(initUrl, 'http://inth.local');
+	url.searchParams.set('inth-gvl', String(gvl.vendorListVersion));
 	url.searchParams.set('language', normalizeLanguage(language));
 	return initUrl.startsWith('/') ? `${url.pathname}${url.search}` : url.href;
 };
@@ -114,7 +114,7 @@ export const serveGvlReference = async (
 	load: (language: string) => Promise<GlobalVendorList | null>
 ): Promise<Response | null> => {
 	const url = new URL(request.url);
-	const version = url.searchParams.get('c15t-gvl');
+	const version = url.searchParams.get('inth-gvl');
 	if (version === null) {
 		return null;
 	}

@@ -345,7 +345,7 @@ describe('manifest route', () => {
 			request('/api/inth/manifest')
 		);
 		expect(bare.headers.get('cache-control')).toBeNull();
-		expect(bare.headers.get('x-c15t-next-revalidate')).toBeNull();
+		expect(bare.headers.get('x-inth-next-revalidate')).toBeNull();
 	});
 
 	test.each([false, true])(
@@ -559,14 +559,14 @@ describe('init route', () => {
 			request('/api/inth/init', {
 				headers: {
 					'accept-language': 'de-DE,de;q=0.9',
-					'x-c15t-gpc': '1',
+					'x-inth-gpc': '1',
 					'x-vercel-ip-country': 'DE',
 					'x-vercel-ip-country-region': 'BE',
 				},
 			})
 		);
 		expect(response.headers.get('cache-control')).toBe('private, no-store');
-		expect(response.headers.get('x-c15t-policy-contract')).toBe('1');
+		expect(response.headers.get('x-inth-policy-contract')).toBe('1');
 		const body = (await response.json()) as InitOutput;
 		expect(body.location).toEqual({ countryCode: 'DE', regionCode: 'BE' });
 		expect(body.translations.language).toBe('de');
@@ -585,7 +585,7 @@ describe('init route', () => {
 	test('echoes the resolved inputs so a server-rendered page keeps GPC', async () => {
 		const response = await route({ fetch: upstream() })(
 			request('/api/inth/init', {
-				headers: { 'x-c15t-country': 'DE', 'x-c15t-gpc': '1' },
+				headers: { 'x-inth-country': 'DE', 'x-inth-gpc': '1' },
 			})
 		);
 		expect(await response.json()).toMatchObject({
@@ -597,7 +597,7 @@ describe('init route', () => {
 	test('adapter-supplied inputs win over the request headers', async () => {
 		const response = await route({ fetch: upstream() })(
 			request('/api/inth/init', {
-				headers: { 'accept-language': 'en', 'x-c15t-country': 'US' },
+				headers: { 'accept-language': 'en', 'x-inth-country': 'US' },
 			}),
 			{ inputs: { country: 'DE', language: 'de' } }
 		);
@@ -611,7 +611,7 @@ describe('init route', () => {
 	test('reads the inputs a browser sends as query parameters', async () => {
 		const response = await route({ fetch: upstream() })(
 			request('/api/inth/init?v=3.1.0&contract=1&country=DE&gpc=1', {
-				headers: { 'x-c15t-country': 'US' },
+				headers: { 'x-inth-country': 'US' },
 			})
 		);
 		expect(await response.json()).toMatchObject({
@@ -626,7 +626,7 @@ describe('init route', () => {
 		// the real request. Node 24's Request constructor rejects the Proxy
 		// itself as an input.
 		const real = request('/api/inth/init?country=DE&gpc=1', {
-			headers: { 'x-c15t-country': 'US' },
+			headers: { 'x-inth-country': 'US' },
 		});
 		const proxied = new Proxy(real, {
 			get: (target, property) => target[property as keyof Request],
@@ -663,9 +663,9 @@ describe('init route', () => {
 	test.each([undefined, '1', ' 1 '])(
 		'serves a client that declares contract %j',
 		async (contract) => {
-			const headers: Record<string, string> = { 'x-c15t-country': 'DE' };
+			const headers: Record<string, string> = { 'x-inth-country': 'DE' };
 			if (contract !== undefined) {
-				headers['x-c15t-policy-contract'] = contract;
+				headers['x-inth-policy-contract'] = contract;
 			}
 			const response = await route({ fetch: upstream() })(
 				request('/api/inth/init', { headers })
@@ -683,8 +683,8 @@ describe('init route', () => {
 			const response = await route({ fetch: gvlFetch })(
 				request('/api/inth/init', {
 					headers: {
-						'x-c15t-country': 'DE',
-						'x-c15t-policy-contract': contract,
+						'x-inth-country': 'DE',
+						'x-inth-policy-contract': contract,
 					},
 				})
 			);
@@ -759,7 +759,7 @@ describe('Google Additional Consent providers', () => {
 			iab: providerManifest.iab,
 		} as ConsentManifest);
 		const notIab = await route({ fetch: optIn })(
-			request('/api/inth/init', { headers: { 'x-c15t-country': 'DE' } })
+			request('/api/inth/init', { headers: { 'x-inth-country': 'DE' } })
 		);
 		expect(await notIab.json()).not.toHaveProperty('adTechProviders');
 
@@ -767,7 +767,7 @@ describe('Google Additional Consent providers', () => {
 			fetch: withProviders(providerManifest),
 		})(
 			request('/api/inth/init', {
-				headers: { 'x-c15t-policy-contract': '99' },
+				headers: { 'x-inth-policy-contract': '99' },
 			})
 		);
 		expect(await failed.json()).not.toHaveProperty('adTechProviders');
@@ -855,7 +855,7 @@ describe('vendor list', () => {
 	test('is not loaded for a policy that is not IAB', async () => {
 		const fetchGvl = vi.fn(() => Promise.resolve(GVL));
 		await route({ fetch: upstream(), fetchGvl })(
-			request('/api/inth/init', { headers: { 'x-c15t-country': 'DE' } })
+			request('/api/inth/init', { headers: { 'x-inth-country': 'DE' } })
 		);
 		expect(fetchGvl).not.toHaveBeenCalled();
 	});
@@ -877,7 +877,7 @@ describe('vendor list', () => {
 		expect(body.gvlReference).toMatchObject({
 			language: 'de',
 			summary: { vendorCount: 1 },
-			url: '/privacy/init?c15t-gvl=42&language=de',
+			url: '/privacy/init?inth-gvl=42&language=de',
 			vendorListVersion: 42,
 		});
 
@@ -885,11 +885,11 @@ describe('vendor list', () => {
 		expect(list.headers.get('cache-control')).toBe('public, max-age=86400');
 		expect(await list.json()).toEqual(GVL);
 		const mismatch = await handle(
-			request('/privacy/init?c15t-gvl=43&language=de')
+			request('/privacy/init?inth-gvl=43&language=de')
 		);
 		expect(mismatch.status).toBe(409);
 		const invalid = await handle(
-			request('/privacy/init?c15t-gvl=42&language=../en')
+			request('/privacy/init?inth-gvl=42&language=../en')
 		);
 		expect(invalid.status).toBe(400);
 	});
@@ -899,14 +899,14 @@ describe('vendor list', () => {
 		const handle = route({ fetch });
 		await handle(request('/api/inth/init'));
 		await handle(request('/api/inth/init'));
-		await handle(request('/api/inth/init?c15t-gvl=42&language=en'));
+		await handle(request('/api/inth/init?inth-gvl=42&language=en'));
 		const gvlCalls = fetch.mock.calls.filter(([url]) =>
 			String(url).startsWith(GVL_URL)
 		);
 		expect(gvlCalls).toHaveLength(1);
 		const headers = new Headers(gvlCalls[0]?.[1]?.headers);
 		expect(headers.get('accept-language')).toBe('en');
-		expect(headers.get('x-c15t-policy-contract')).toBe('1');
+		expect(headers.get('x-inth-policy-contract')).toBe('1');
 	});
 
 	test('a list that cannot be loaded fails the request instead of turning IAB off', async () => {
@@ -962,8 +962,8 @@ describe('session reports', () => {
 				headers: {
 					cookie: 'inth=secret',
 					'user-agent': 'Mozilla/5.0',
-					'x-c15t-gpc': '1',
 					'x-forwarded-for': '203.0.113.42',
+					'x-inth-gpc': '1',
 					'x-vercel-ip-country': 'DE',
 				},
 			}),
@@ -975,7 +975,7 @@ describe('session reports', () => {
 		const init = reportCall(fetch)?.[1];
 		expect(init?.method).toBe('POST');
 		const headers = init?.headers as Record<string, string>;
-		expect(headers['x-c15t-client-ip']).toBe('203.0.113.42');
+		expect(headers['x-inth-client-ip']).toBe('203.0.113.42');
 		expect(headers['user-agent']).toBe('Mozilla/5.0');
 		expect(headers).not.toHaveProperty('cookie');
 		expect(JSON.parse(init?.body as string)).toMatchObject({
@@ -1165,7 +1165,7 @@ describe('request budget', () => {
 describe('/init fallback for a backend without /manifest', () => {
 	const backendInit = (
 		body: Record<string, unknown>,
-		headers: Record<string, string> = { 'x-c15t-policy-contract': '1' }
+		headers: Record<string, string> = { 'x-inth-policy-contract': '1' }
 	) =>
 		vi.fn<ManifestFetch>((url) =>
 			Promise.resolve(
@@ -1201,14 +1201,14 @@ describe('/init fallback for a backend without /manifest', () => {
 				headers: {
 					cookie: 'inth=secret',
 					'user-agent': 'Mozilla/5.0',
-					'x-c15t-country': 'DE',
 					'x-forwarded-for': '203.0.113.42',
+					'x-inth-country': 'DE',
 				},
 			}),
 			{ localFetch }
 		);
 		expect(response.headers.get('cache-control')).toBe('private, no-store');
-		expect(response.headers.get('x-c15t-policy-contract')).toBe('1');
+		expect(response.headers.get('x-inth-policy-contract')).toBe('1');
 		expect(await response.json()).toMatchObject({
 			location: { countryCode: null, regionCode: null },
 		});
@@ -1217,8 +1217,8 @@ describe('/init fallback for a backend without /manifest', () => {
 			expect.anything()
 		);
 		const headers = callHeaders(localFetch, 1);
-		expect(headers.get('x-c15t-country')).toBe('DE');
-		expect(headers.get('x-c15t-policy-contract')).toBe('1');
+		expect(headers.get('x-inth-country')).toBe('DE');
+		expect(headers.get('x-inth-policy-contract')).toBe('1');
 		expect(headers.get('cookie')).toBeNull();
 		expect(headers.get('user-agent')).toBeNull();
 		expect(headers.get('x-forwarded-for')).toBeNull();
@@ -1258,8 +1258,8 @@ describe('/init fallback for a backend without /manifest', () => {
 			expect.anything()
 		);
 		const headers = callHeaders(localFetch, 1);
-		expect(headers.get('x-c15t-country')).toBe('DE');
-		expect(headers.get('x-c15t-gpc')).toBe('0');
+		expect(headers.get('x-inth-country')).toBe('DE');
+		expect(headers.get('x-inth-gpc')).toBe('0');
 	});
 
 	test('names the page origin on the backend /init it forwards a journey to', async () => {
@@ -1307,7 +1307,7 @@ describe('/init fallback for a backend without /manifest', () => {
 			vendors: [acmeVendor],
 		});
 		const response = await route({ fetch })(
-			request('/api/inth/init', { headers: { 'x-c15t-country': 'DE' } })
+			request('/api/inth/init', { headers: { 'x-inth-country': 'DE' } })
 		);
 		const body = await response.json();
 		expect(body).toMatchObject({
@@ -1331,7 +1331,7 @@ describe('/init fallback for a backend without /manifest', () => {
 			translations: { language: 'en', translations: {} },
 		});
 		const response = await route({ fetch })(
-			request('/api/inth/init', { headers: { 'x-c15t-country': 'DE' } })
+			request('/api/inth/init', { headers: { 'x-inth-country': 'DE' } })
 		);
 		expect((await response.json()).scriptRegistry?.sources).toEqual(
 			scriptSources
@@ -1354,7 +1354,7 @@ describe('/init fallback for a backend without /manifest', () => {
 		});
 		const response = await route({ fetch })(
 			request('/api/inth/init', {
-				headers: { 'x-c15t-policy-contract': '1' },
+				headers: { 'x-inth-policy-contract': '1' },
 			})
 		);
 		expect(await response.json()).toMatchObject({ cmpId: 28, gvlReference });
@@ -1382,7 +1382,7 @@ describe('/init fallback for a backend without /manifest', () => {
 			});
 			const response = await route({ fetch })(
 				request('/api/inth/init', {
-					headers: { 'x-c15t-policy-contract': '1' },
+					headers: { 'x-inth-policy-contract': '1' },
 				})
 			);
 			const body = await response.json();
@@ -1418,11 +1418,11 @@ describe('/init fallback for a backend without /manifest', () => {
 				},
 				declaration === undefined
 					? {}
-					: { 'x-c15t-policy-contract': declaration }
+					: { 'x-inth-policy-contract': declaration }
 			);
 			const response = await route({ fetch })(
 				request('/api/inth/init', {
-					headers: { 'x-c15t-policy-contract': '1' },
+					headers: { 'x-inth-policy-contract': '1' },
 				})
 			);
 			expect(await response.json()).toMatchObject({
@@ -1555,7 +1555,7 @@ describe('proxy', () => {
 		expect(headers.get('x-forwarded-host')).toBe('app.example.com');
 		expect(headers.get('x-forwarded-proto')).toBe('https');
 		expect(headers.get('x-forwarded-for')).toBeNull();
-		expect(headers.get('x-c15t-proxy')).toBe('@c15t/test');
+		expect(headers.get('x-inth-proxy')).toBe('@c15t/test');
 	});
 
 	test('with trusted forwarding, keeps the chain and appends the client address', async () => {

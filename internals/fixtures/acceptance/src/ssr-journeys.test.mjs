@@ -193,15 +193,15 @@ const verifyOverrideHeaders = async function verifyOverrideHeaders(
 	const { page, url } = await newPage(browser, app, {
 		'cf-ipcountry': 'US',
 		'cf-region-code': 'TX',
-		'x-c15t-country': 'FR',
-		'x-c15t-region': 'BRE',
+		'x-inth-country': 'FR',
+		'x-inth-region': 'BRE',
 		'x-vercel-ip-country': 'US',
 	});
 	await gotoSettled(page, url);
 	const probe = await readProbe(page, app);
 	assertEqual(probe.overrides?.country, 'FR', `${app.label}: override country`);
 	assertEqual(probe.overrides?.region, 'BRE', `${app.label}: override region`);
-	console.log(`✓ ${app.label}: x-c15t override beats infra headers`);
+	console.log(`✓ ${app.label}: x-inth override beats infra headers`);
 };
 
 const verifyGpc = async function verifyGpc(browser, app) {
@@ -399,8 +399,8 @@ const verifyNuxtNitroRoutes = async function verifyNuxtNitroRoutes(app) {
 			'accept-language': 'en;q=0.2, de-DE;q=0.9',
 			'cf-ipcountry': 'US',
 			'sec-gpc': '1',
-			'x-c15t-country': 'FR',
-			'x-c15t-region': 'BRE',
+			'x-inth-country': 'FR',
+			'x-inth-region': 'BRE',
 		}
 	);
 	assertEqual(
@@ -413,7 +413,7 @@ const verifyNuxtNitroRoutes = async function verifyNuxtNitroRoutes(app) {
 		`${app.label}: nitro init translations payload`
 	);
 	assertEqual(
-		initResponse.headers.get('x-c15t-policy-contract'),
+		initResponse.headers.get('x-inth-policy-contract'),
 		'1',
 		`${app.label}: nitro policy contract header`
 	);
@@ -450,7 +450,7 @@ const verifyNuxtNitroRoutes = async function verifyNuxtNitroRoutes(app) {
 	assertEqual(
 		init.resolvedOverrides?.country,
 		'FR',
-		`${app.label}: nitro init override country (x-c15t beats cf-ipcountry)`
+		`${app.label}: nitro init override country (x-inth beats cf-ipcountry)`
 	);
 	assertEqual(
 		init.resolvedOverrides?.region,
@@ -471,7 +471,7 @@ const verifyNuxtNitroRoutes = async function verifyNuxtNitroRoutes(app) {
 		`✓ ${app.label}: Nitro /api/inth/init resolves init from the manifest (geo/GPC/language aware)`
 	);
 
-	// --- x-c15t-version on the proxy's upstream manifest fetch ---
+	// --- x-inth-version on the proxy's upstream manifest fetch ---
 	// The Nitro handlers fetch the upstream manifest (the bench fixture)
 	// with `inthVersionHeaders`; the fixture records what it received.
 	const { body: versionHeaders } = await fetchJsonResponse(
@@ -482,10 +482,10 @@ const verifyNuxtNitroRoutes = async function verifyNuxtNitroRoutes(app) {
 	assertEqual(
 		versionHeaders.manifest,
 		expectedVersion,
-		`${app.label}: upstream manifest fetch x-c15t-version`
+		`${app.label}: upstream manifest fetch x-inth-version`
 	);
 	console.log(
-		`✓ ${app.label}: upstream manifest fetch carries x-c15t-version=${expectedVersion}`
+		`✓ ${app.label}: upstream manifest fetch carries x-inth-version=${expectedVersion}`
 	);
 };
 
@@ -600,7 +600,7 @@ for (const app of selected) {
 			test('a returning visitor who chose learns the engine chunks and gets no preload', async () => {
 				const base = `http://127.0.0.1:${app.port}`;
 				const { page } = await newPage(browser, app, {
-					'x-c15t-country': 'DE',
+					'x-inth-country': 'DE',
 				});
 				const learned = () =>
 					page.evaluate(

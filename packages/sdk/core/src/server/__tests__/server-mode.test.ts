@@ -139,11 +139,11 @@ describe('resolveServerMode: manifest()', () => {
 describe('resolveServerMode: hosted() and testing()', () => {
 	test("hosted() asks the backend's /init with the mode's headers", () => {
 		const mode = {
-			headers: { 'x-c15t-country': 'DE' },
+			headers: { 'x-inth-country': 'DE' },
 			type: 'hosted' as const,
 		};
 		expect(resolve({ mode }).consent).toMatchObject({
-			initHeaders: { 'x-c15t-country': 'DE' },
+			initHeaders: { 'x-inth-country': 'DE' },
 			mode: 'hosted',
 			projectUrl: BACKEND,
 		});

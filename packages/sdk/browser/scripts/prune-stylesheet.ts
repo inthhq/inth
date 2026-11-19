@@ -5,7 +5,7 @@
  * primitives, the tabbed and collapsible parts, the ConsentGate
  * placeholder. The vanilla banner, dialog and trigger render a
  * fixed set of class maps, so a rule that needs a class outside them only
- * costs bytes in `c15t.js` and selector matching in the shadow root.
+ * costs bytes in `inth.js` and selector matching in the shadow root.
  *
  * Only `@inth/sdk-ui`'s hashed CSS-module classes (`inth-ui-<name>-<hash>`) decide
  * anything. A selector keeps its rule unless it requires one of those classes
@@ -181,7 +181,7 @@ export const pruneStylesheet = function pruneStylesheet(
  * `@inth/sdk-ui` ships a readable sheet: a comment above each section (one
  * names `@inth/sdk-ui/postcss-tailwind3` so Tailwind 3's build error shows the
  * fix) and line breaks between blocks. In the shadow root they only add
- * bytes to `c15t.js`. Selectors, at-rule params and declaration values
+ * bytes to `inth.js`. Selectors, at-rule params and declaration values
  * are left as written, so every rule still means the same thing.
  */
 export const compactStylesheet = function compactStylesheet(

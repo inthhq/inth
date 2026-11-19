@@ -1,6 +1,6 @@
 /**
- * Where the init script (`c15t.js`) looks for the files it loads, and when
- * it loads `c15t.records.js`: at once for a visitor with a stored choice,
+ * Where the init script (`inth.js`) looks for the files it loads, and when
+ * it loads `inth.records.js`: at once for a visitor with a stored choice,
  * never on a first visit.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runInitScript } from '../init/run';
 import { version } from '../version';
 
-const OWN_SRC = 'https://cdn.example/npm/@inth/sdk/lib/browser/dist/c15t.js';
+const OWN_SRC = 'https://cdn.example/npm/@inth/sdk/lib/browser/dist/inth.js';
 
 const tagWith = (attributes: Record<string, string> = {}) => {
 	const script = document.createElement('script');
@@ -43,37 +43,37 @@ beforeEach(() => {
 afterEach(() => {
 	vi.unstubAllGlobals();
 	delete target.inth;
-	delete target.__c15tRecordsSrc;
+	delete target.__inthRecordsSrc;
 	localStorage.clear();
 	for (const script of document.head.querySelectorAll('script')) {
 		script.remove();
 	}
 });
 
-describe('c15t.records.js', () => {
+describe('inth.records.js', () => {
 	it('is not loaded on a first visit', () => {
 		runInitScript(tagWith());
-		expect(loaded('c15t.records.js')).toEqual([]);
+		expect(loaded('inth.records.js')).toEqual([]);
 	});
 
-	it('loads at once for a stored choice, next to c15t.js at its version', () => {
+	it('loads at once for a stored choice, next to inth.js at its version', () => {
 		localStorage.setItem('inth', 'stored');
 		runInitScript(tagWith());
-		expect(loaded('c15t.records.js')).toEqual([
-			`https://cdn.example/npm/@inth/sdk/lib/browser/dist/c15t.records.js?v=${version}`,
+		expect(loaded('inth.records.js')).toEqual([
+			`https://cdn.example/npm/@inth/sdk/lib/browser/dist/inth.records.js?v=${version}`,
 		]);
 	});
 
 	it('takes the backend’s URL, then the tag’s data-records-src', () => {
 		localStorage.setItem('inth', 'stored');
-		target.__c15tRecordsSrc = 'https://consent.example/c15t.records.js?v=abc';
+		target.__inthRecordsSrc = 'https://consent.example/inth.records.js?v=abc';
 		runInitScript(tagWith({ 'data-records-src': '/own/records.js' }));
 		expect(loaded('records.js')).toEqual([
-			'https://consent.example/c15t.records.js?v=abc',
+			'https://consent.example/inth.records.js?v=abc',
 		]);
 
 		delete target.inth;
-		delete target.__c15tRecordsSrc;
+		delete target.__inthRecordsSrc;
 		document.head.replaceChildren();
 		runInitScript(tagWith({ 'data-records-src': '/own/records.js' }));
 		expect(loaded('records.js')).toEqual([
@@ -95,7 +95,7 @@ describe('c15t.records.js', () => {
 			version: '0.0.0-other',
 		});
 		document.head
-			.querySelector('script[src*="c15t.records.js"]')
+			.querySelector('script[src*="inth.records.js"]')
 			?.dispatchEvent(new Event('load'));
 		await new Promise((resolve) => {
 			setTimeout(resolve, 0);

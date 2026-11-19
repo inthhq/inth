@@ -28,7 +28,7 @@ const ping = (): GPPPingData | undefined => {
 	return data;
 };
 
-/** Run `c15t.gpp.js` the way a second script tag would. */
+/** Run `inth.gpp.js` the way a second script tag would. */
 const loadAddon = async function loadAddon(): Promise<void> {
 	vi.resetModules();
 	await import('../entries/cdn-gpp');
@@ -81,7 +81,7 @@ describe('mountGPP', () => {
 	});
 });
 
-describe('c15t.gpp.js', () => {
+describe('inth.gpp.js', () => {
 	it('mounts __gpp when it loads before the main tag', async () => {
 		testWindow.inth = [['config', options]];
 		await loadAddon();

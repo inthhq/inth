@@ -253,7 +253,7 @@ misconfiguration.
 ## Let Inth assign the arm
 
 Omit `arm` and Inth picks one by `split` (equal by default) when the page
-starts, before `/init`, and records `assignedBy: 'c15t'`. A visitor who
+starts, before `/init`, and records `assignedBy: 'inth'`. A visitor who
 already saw an arm keeps it.
 
 The banner waits until the arm is picked, so the visitor never sees the base
@@ -411,7 +411,7 @@ its own; you do not wire anything up.
   `experiment: { id, arm }`. In manifest mode, the server render or the
   init route puts it on the report it sends to `POST /sessions`. A visitor
   who already chose is not shown the banner, so is not counted. A
-  server-to-server caller can send the `x-c15t-experiment` header instead.
+  server-to-server caller can send the `x-inth-experiment` header instead.
 - **Choices.** Every choice saved through `POST /subjects` carries the arm
   in `metadata.experiment`, as above.
 

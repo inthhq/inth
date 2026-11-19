@@ -55,7 +55,7 @@ test('built-in assignment lands in the snapshot on mount and is stored', async (
 	try {
 		await vi.waitFor(() =>
 			expect(kernel.getSnapshot().experiment).toMatchObject({
-				assignedBy: 'c15t',
+				assignedBy: 'inth',
 				id: 'banner-shape',
 			})
 		);

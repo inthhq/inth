@@ -1042,19 +1042,19 @@ constructor in `inth-core`, which have no Android context to ask.
 
 Every request carries these headers:
 
-    x-c15t-version:            <Inth.version> on Swift, <NativeConfig.sdkVersion> on Kotlin
-    x-c15t-platform:           apple-><InthApple.version> for a Swift app, android-><sdkVersion>
+    x-inth-version:            <Inth.version> on Swift, <NativeConfig.sdkVersion> on Kotlin
+    x-inth-platform:           apple-><InthApple.version> for a Swift app, android-><sdkVersion>
                                for a Kotlin app, rn-><version> for a core either React Native
                                binding configures
-    x-c15t-policy-contract:    <POLICY_CONTRACT_VERSION from @c15t/schema>
+    x-inth-policy-contract:    <POLICY_CONTRACT_VERSION from @c15t/schema>
 
 Both cores send the unprefixed semantic version, matching the web header format.
-Each reports its host separately in `x-c15t-platform`. Hosted gateways can reject
-unknown platform prefixes in `x-c15t-version`, so platform attribution must not be
+Each reports its host separately in `x-inth-platform`. Hosted gateways can reject
+unknown platform prefixes in `x-inth-version`, so platform attribution must not be
 prepended to either version. Kotlin reads the tag from `NativeConfig.platform`,
 which defaults to `android`; `null` sends no platform header. Swift reads it from
 `InthAppleConfiguration.platform`, which defaults to `apple`. Web clients send no
-platform header. `@c15t/backend` passes `x-c15t-platform` to `sessions.onReport`.
+platform header. `@c15t/backend` passes `x-inth-platform` to `sessions.onReport`.
 The policy-contract header remains the capability declaration.
 
 A backend that answers `unsupported-contract` is a hard configuration error. The
@@ -1592,7 +1592,7 @@ with the single exception named in "The stored envelope". `evaluation-*` pin
 `snapshot`, the subset of the mobile snapshot named above. `save-body-*` pin
 `snapshotBefore`, `snapshotAfter`, the `savePayload` the core must hold, and
 `request`: the exact `method`, `path`, `headers`, and `body` the backend receives,
-including the `x-c15t-policy-contract` value. `native-envelope-*` pin `write`,
+including the `x-inth-policy-contract` value. `native-envelope-*` pin `write`,
 `relaunch`, the field set in `fields`, and for a read case `read`.
 
 `index.json` lists every fixture with `id`, `kind`, `protocolVersion`, `file`,
@@ -2363,7 +2363,7 @@ file is one parenthesized function expression, called with JSON arguments.
     document-start.js   <script>(<origins>, <token>, <key>, <state>);
                         runs before any page script. It returns at once unless
                         location.origin is one of <origins> and the frame is the
-                        top frame. Otherwise it defines window.__c15tNativeConsent
+                        top frame. Otherwise it defines window.__inthNativeConsent
                         as a frozen object on a non-writable, non-configurable
                         property: { version: 1, getState(), subscribe(listener),
                         update(token, state), openPreferences() }.
@@ -2482,8 +2482,8 @@ no IAB CMP; permissions follow the injected state and are all denied until
 
 One way, native to web. A choice cannot be made in the page: the consent
 source disables the web choice UI. The page may only ask the app to open its
-own preferences, by posting `{"type":"c15t:open-preferences","key":"<key>"}`
-to the `c15tConsent` message handler (iOS), the `c15tConsent` web message
+own preferences, by posting `{"type":"inth:open-preferences","key":"<key>"}`
+to the `inthConsent` message handler (iOS), the `inthConsent` web message
 listener (Android) or `ReactNativeWebView` (React Native). Every platform
 requires the exact key. A frame can post to the same channel (React Native's
 Android fallback exposes it to every frame and reports the top page's URL), but

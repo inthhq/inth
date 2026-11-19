@@ -142,7 +142,7 @@ describe('policy contract header', () => {
 				string
 			>;
 			expect(headers[POLICY_CONTRACT_HEADER]).toBe('1');
-			expect(headers['x-c15t-version']).toMatch(/^\d+\.\d+\.\d+/u);
+			expect(headers['x-inth-version']).toMatch(/^\d+\.\d+\.\d+/u);
 		}
 		expect(inthProtocolHeaders[POLICY_CONTRACT_HEADER]).toBe('1');
 	});

@@ -1,9 +1,9 @@
 /**
- * `dist/c15t.devtools.js` — the DevTools panel as a second script tag.
+ * `dist/inth.devtools.js` — the DevTools panel as a second script tag.
  *
  * ```html
- * <script src=".../c15t.js" data-project-url="..." defer></script>
- * <script src=".../c15t.devtools.js" data-open data-tab="location" defer></script>
+ * <script src=".../inth.js" data-project-url="..." defer></script>
+ * <script src=".../inth.devtools.js" data-open data-tab="location" defer></script>
  * ```
  *
  * Order does not matter: loaded first, it queues itself on `window.inth`

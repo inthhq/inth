@@ -95,7 +95,7 @@ describe('mountConsentUI', () => {
 		client.kernel.set.experiment({
 			acknowledgedDiagnostics: false,
 			arm: 'bar',
-			assignedBy: 'c15t',
+			assignedBy: 'inth',
 			id: 'banner-shape',
 		});
 		expect(query(root, 'consent-banner-root').dataset.variant).toBe('bar');
@@ -128,7 +128,7 @@ describe('mountConsentUI', () => {
 		client.kernel.set.experiment({
 			acknowledgedDiagnostics: false,
 			arm: 'branded',
-			assignedBy: 'c15t',
+			assignedBy: 'inth',
 			id: 'card-class',
 		});
 		expect(query(root, 'consent-banner-card').classList).toContain('arm-card');
@@ -171,7 +171,7 @@ describe('mountConsentUI', () => {
 			client.kernel.set.experiment({
 				acknowledgedDiagnostics: false,
 				arm,
-				assignedBy: 'c15t',
+				assignedBy: 'inth',
 				id: 'trigger-icon',
 			});
 		assign('branded');
@@ -199,7 +199,7 @@ describe('mountConsentUI', () => {
 		client.kernel.set.experiment({
 			acknowledgedDiagnostics: false,
 			arm: 'bold',
-			assignedBy: 'c15t',
+			assignedBy: 'inth',
 			id: 'button-style',
 		});
 		expect(root.querySelector('style')?.textContent).toContain('#123456');
@@ -517,7 +517,7 @@ describe('mountConsentUI', () => {
 			client.kernel.set.experiment({
 				acknowledgedDiagnostics: false,
 				arm: 'bar',
-				assignedBy: 'c15t',
+				assignedBy: 'inth',
 				id: 'banner-shape',
 			});
 

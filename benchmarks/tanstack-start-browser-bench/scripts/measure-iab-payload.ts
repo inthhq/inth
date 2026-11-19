@@ -59,7 +59,7 @@ const { gvlReference: _reference, ...common } = response;
 const before = { ...common, gvl };
 const after = deferInitGvl(
 	before,
-	`/api/inth/init?c15t-gvl=${gvl.vendorListVersion}&language=en`
+	`/api/inth/init?inth-gvl=${gvl.vendorListVersion}&language=en`
 );
 if (
 	JSON.stringify(resolveIABBannerSummary({ gvl })) !==

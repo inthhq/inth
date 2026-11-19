@@ -7,7 +7,7 @@
  * overrides (a page with `i18n` options leaves the banner to the engine),
  * and without them core only renames legacy keys, which this does the same
  * way. Given overrides it throws, so the snapshot cannot be read and the
- * engine decides. `rslib.config.ts` swaps this in for `c15t.js` only.
+ * engine decides. `rslib.config.ts` swaps this in for `inth.js` only.
  *
  * @packageDocumentation
  * @internal
@@ -29,7 +29,7 @@ export const applyTranslationOverrides = function applyTranslationOverrides(
 	overrides: unknown
 ): KernelTranslations {
 	if (overrides) {
-		throw new Error('@inth/sdk: c15t.js does not apply i18n overrides.');
+		throw new Error('@inth/sdk: inth.js does not apply i18n overrides.');
 	}
 	const migrated = migrateLegacyTranslationKeys(
 		resolved.translations as Partial<Translations>

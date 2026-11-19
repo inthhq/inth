@@ -1,12 +1,12 @@
 /**
- * `dist/c15t.gpp.js` — IAB GPP as a second script tag.
+ * `dist/inth.gpp.js` — IAB GPP as a second script tag.
  *
  * ```html
- * <script src=".../c15t.gpp.js"></script>
- * <script src=".../c15t.js" data-project-url="..." defer></script>
+ * <script src=".../inth.gpp.js"></script>
+ * <script src=".../inth.js" data-project-url="..." defer></script>
  * ```
  *
- * Works with `c15t.js`, `c15t.headless.js` and `c15t.iab.js`, in either
+ * Works with `inth.js`, `inth.headless.js` and `inth.iab.js`, in either
  * order. It installs the `__gpp` stub as soon as it runs, so load it before
  * ad tags that call `__gpp`, then hands `createGPP` to the client, which
  * mounts the API with the page's `gpp` options. `gpp: false` turns it off.
@@ -45,7 +45,7 @@ if (existing && !Array.isArray(existing)) {
 	} else {
 		// oxlint-disable-next-line no-console -- Authoring-time diagnostic.
 		console.warn(
-			'@inth/sdk: c15t.gpp.js needs a newer c15t.js. Load both from the same version.'
+			'@inth/sdk: inth.gpp.js needs a newer inth.js. Load both from the same version.'
 		);
 	}
 } else {

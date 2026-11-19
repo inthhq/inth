@@ -36,7 +36,7 @@ export const placeholderProjectUrl = 'https://your-project.inth.app';
  * The hosted script tag the plain HTML starter loads. A real backend serves
  * it from `@inth/sdk`; the fixture does not, so the test serves it.
  */
-export const hostedScriptURL = `${placeholderProjectUrl}/c15t.js`;
+export const hostedScriptURL = `${placeholderProjectUrl}/inth.js`;
 
 const nextStart = (port: number) => ['run', 'start', '--port', String(port)];
 const vitePreview = (port: number) => [
@@ -177,7 +177,7 @@ export const starterTargets: StarterTarget[] = [
 		start: vitePreview,
 	})),
 	{
-		// Loads the hosted `c15t.js`, which the test serves from this
+		// Loads the hosted `inth.js`, which the test serves from this
 		// checkout's build. `serve.ts` reads PORT.
 		directory: 'examples/html',
 		id: 'html',

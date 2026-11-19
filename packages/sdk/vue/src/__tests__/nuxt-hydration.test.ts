@@ -416,7 +416,7 @@ test('the server init fetch carries a fixed experiment arm until the visitor cho
 		runWithContext: (run) => run(),
 		vueApp: createSSRApp(defineComponent({ render: () => null })),
 	});
-	expect(nuxt.fetchHeaders[0]?.['x-c15t-experiment']).toBe('banner-shape=wall');
+	expect(nuxt.fetchHeaders[0]?.['x-inth-experiment']).toBe('banner-shape=wall');
 });
 
 test('an `ssr: false` route asks for the policy before the app mounts', async () => {

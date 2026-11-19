@@ -1,11 +1,11 @@
 /**
  * Dev-server routes for `init-script.browser.test.ts`: the built
- * `c15t.js` and `c15t.hosted.js`, a backend that answers `/init` and
+ * `inth.js` and `inth.hosted.js`, a backend that answers `/init` and
  * `/subjects`, and gated scripts that report when they run.
  *
  * - `/__inth-dist__/<file>?delay=<ms>`: a file from `dist/`, held back
  *   `delay` ms.
- * - `/__inth-init__/page?<query>`: a page whose `c15t.js` tag uses the
+ * - `/__inth-init__/page?<query>`: a page whose `inth.js` tag uses the
  *   query: `manual`, `head` (tag in `<head>`), `hosted-delay`, `commit`,
  *   `records` and `dialog` (a delay for that file in ms, `fail` for a 404,
  *   or for `dialog`, `stale` for a file from another release),
@@ -14,7 +14,7 @@
  *   engine waits for it).
  * - `/__inth-init__/hero.svg?delay=<ms>`: a small image, held back.
  * - `/__inth-init__/missing.js`: a 404.
- * - `/__inth-init__/stale-dialog.js`: a `c15t.dialog.js` from another
+ * - `/__inth-init__/stale-dialog.js`: a `inth.dialog.js` from another
  *   release.
  * - `/__inth-init__/init-delay?ms=<ms>`: hold the next `/init` answers.
  * - `/__inth-init__/backend/init`: the `/init` answer, an opt-in policy for
@@ -80,13 +80,13 @@ const page = (query: URLSearchParams): string => {
 		? `<script>window.__heard = []; window.inth = [['on', 'ready', function () { window.__heard.push('queued ready'); }]];</script>`
 		: '';
 	// `commit` and `records`: a delay in ms, or `fail` for a 404. Without
-	// either, `c15t.js` finds the file next to itself.
+	// either, `inth.js` finds the file next to itself.
 	const part = (name: 'commit' | 'records' | 'dialog'): string => {
 		const value = query.get(name);
 		if (value === null) {
 			return '';
 		}
-		let src = `/__inth-dist__/c15t.${name}.js?delay=${Number(value)}`;
+		let src = `/__inth-dist__/inth.${name}.js?delay=${Number(value)}`;
 		if (value === 'fail') {
 			src = '/__inth-init__/missing.js';
 		} else if (value === 'stale') {
@@ -94,7 +94,7 @@ const page = (query: URLSearchParams): string => {
 		}
 		return ` data-${name}-src="${src}"`;
 	};
-	const tag = `${queue}<script src="/__inth-dist__/c15t.js" data-project-url="/__inth-init__/backend" data-hosted-src="/__inth-dist__/c15t.hosted.js?delay=${Number(query.get('hosted-delay') ?? 0)}"${part('commit')}${part('records')}${part('dialog')}${query.has('manual') ? ' data-manual' : ''}></script>`;
+	const tag = `${queue}<script src="/__inth-dist__/inth.js" data-project-url="/__inth-init__/backend" data-hosted-src="/__inth-dist__/inth.hosted.js?delay=${Number(query.get('hosted-delay') ?? 0)}"${part('commit')}${part('records')}${part('dialog')}${query.has('manual') ? ' data-manual' : ''}></script>`;
 	const head = query.has('head') ? tag : '';
 	const body = query.has('head') ? '' : tag;
 	return `<!doctype html><html><head><meta charset="utf-8">${head}</head><body>

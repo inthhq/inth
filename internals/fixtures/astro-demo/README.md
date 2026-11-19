@@ -24,12 +24,12 @@ Then open http://localhost:4321.
 - **Second page** — navigate back and forth with the ClientRouter on. The
   runtime is a page singleton: consent state stays put, the banner does not
   reappear, nothing re-initialises over the network.
-- **Geo overrides** — send `x-c15t-country`, `x-c15t-region`, `sec-gpc` or
+- **Geo overrides** — send `x-inth-country`, `x-inth-region`, `sec-gpc` or
   `accept-language` and watch the server-side decision change:
 
   ```bash
-  curl -H 'x-c15t-country: DE' http://localhost:4321/geo
-  curl -H 'x-c15t-country: US' -H 'x-c15t-region: CA' http://localhost:4321/geo
+  curl -H 'x-inth-country: DE' http://localhost:4321/geo
+  curl -H 'x-inth-country: US' -H 'x-inth-region: CA' http://localhost:4321/geo
   curl -H 'sec-gpc: 1' http://localhost:4321/geo
   curl -H 'accept-language: de-DE,de;q=0.9' http://localhost:4321/
   ```

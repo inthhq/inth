@@ -1,11 +1,11 @@
 /**
  * Headers every inth-backend-bound request carries.
  *
- * `x-c15t-version` (issue #916) is telemetry: it lets the backend attribute
+ * `x-inth-version` (issue #916) is telemetry: it lets the backend attribute
  * traffic to a client version. It is never used to guess what a client can
  * represent.
  *
- * `x-c15t-policy-contract` (issue #1025) is the capability declaration: the
+ * `x-inth-policy-contract` (issue #1025) is the capability declaration: the
  * policy wire contract version this client reads. A producer that speaks a
  * different contract answers with an explicit `unsupported-contract`
  * failure instead of a wire the client would misread, and echoes its own
@@ -38,7 +38,7 @@ import type { InitRequestParams } from '@inth/sdk-schema/types';
 
 import { version } from '../version';
 
-export const INTH_VERSION_HEADER = 'x-c15t-version';
+export const INTH_VERSION_HEADER = 'x-inth-version';
 
 /** Request header naming the policy contract this client reads. */
 export const INTH_POLICY_CONTRACT_HEADER = POLICY_CONTRACT_HEADER;

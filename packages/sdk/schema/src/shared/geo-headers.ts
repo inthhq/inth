@@ -8,16 +8,16 @@
  * headers, then call into here to INTERPRET them. (An audit
  * found four diverged hand-rolled copies of these rules.)
  *
- * Precedence rule: the explicit `x-c15t-*` override headers ALWAYS win
+ * Precedence rule: the explicit `x-inth-*` override headers ALWAYS win
  * over infrastructure-derived headers (Cloudflare, Vercel, CloudFront,
  * generic proxies). Infra order after that: Cloudflare → Vercel →
  * CloudFront → generic.
  */
 import { parseAcceptLanguage } from '@inth/sdk-translations';
 
-/** Country headers, highest priority first. `x-c15t-country` always wins. */
+/** Country headers, highest priority first. `x-inth-country` always wins. */
 export const COUNTRY_HEADERS = [
-	'x-c15t-country',
+	'x-inth-country',
 	'cf-ipcountry',
 	'x-vercel-ip-country',
 	'x-amz-cf-ipcountry',
@@ -25,21 +25,21 @@ export const COUNTRY_HEADERS = [
 	'x-country',
 ] as const;
 
-/** Region headers, highest priority first. `x-c15t-region` always wins. */
+/** Region headers, highest priority first. `x-inth-region` always wins. */
 export const REGION_HEADERS = [
-	'x-c15t-region',
+	'x-inth-region',
 	'cf-region-code',
 	'x-vercel-ip-country-region',
 	'x-region-code',
 ] as const;
 
 /**
- * GPC headers, highest priority first. `x-c15t-gpc` is the application
+ * GPC headers, highest priority first. `x-inth-gpc` is the application
  * override: browsers refuse to let scripts set `Sec-*` request headers, so a
  * client that needs to assert a GPC value on its own init request sends it
  * here, and the user agent's `Sec-GPC` remains the browser-provided signal.
  */
-export const GPC_HEADERS = ['x-c15t-gpc', 'sec-gpc'] as const;
+export const GPC_HEADERS = ['x-inth-gpc', 'sec-gpc'] as const;
 
 /**
  * Every header name that carries a consent request input. This is the

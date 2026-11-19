@@ -1,8 +1,8 @@
 // @vitest-environment node
 /**
  * The build check that keeps `testing()` out of the production script
- * files (`c15t.js`, `c15t.hosted.js`, `c15t.headless.js`, `c15t.iab.js`)
- * and lets `c15t.testing.js` carry it.
+ * files (`inth.js`, `inth.hosted.js`, `inth.headless.js`, `inth.iab.js`)
+ * and lets `inth.testing.js` carry it.
  */
 import { describe, expect, it } from 'vitest';
 
@@ -49,7 +49,7 @@ describe('modeBundleBoundary', () => {
 		}
 	);
 
-	it('lets c15t.testing.js carry them, but not the hosted transport', () => {
+	it('lets inth.testing.js carry them, but not the hosted transport', () => {
 		expect(() =>
 			check('testing', [TESTING_TRANSPORT, POLICY_PACK])
 		).not.toThrow();

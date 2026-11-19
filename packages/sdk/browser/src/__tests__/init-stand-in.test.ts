@@ -1,5 +1,5 @@
 /**
- * The init script (`c15t.js`) from source, in jsdom: what its stand-in
+ * The init script (`inth.js`) from source, in jsdom: what its stand-in
  * does with a tap whose save the outbox cannot keep, and with `dispose()`
  * before the engine arrives. The built files run in Chromium in
  * `init-script.browser.test.ts`.
@@ -29,7 +29,7 @@ import type { InitBoot } from '../init/boot';
 import { runInitScript } from '../init/run';
 import { version } from '../version';
 
-const OWN_SRC = 'https://cdn.example/npm/@inth/sdk/lib/browser/dist/c15t.js';
+const OWN_SRC = 'https://cdn.example/npm/@inth/sdk/lib/browser/dist/inth.js';
 const BACKEND_URL = 'https://consent.example';
 
 type StandIn = InthGlobalBase & { __inthBoot: InitBoot };
@@ -97,7 +97,7 @@ const showBanner = async () => {
 	});
 };
 
-/** Hands the init script `c15t.commit.js`, as the file does when it runs. */
+/** Hands the init script `inth.commit.js`, as the file does when it runs. */
 const provideCommit = (standIn: StandIn) => {
 	standIn.__inthBoot.provide({
 		name: 'commit',
@@ -106,7 +106,7 @@ const provideCommit = (standIn: StandIn) => {
 		version,
 	});
 	document.head
-		.querySelector('script[src*="c15t.commit.js"]')
+		.querySelector('script[src*="inth.commit.js"]')
 		?.dispatchEvent(new Event('load'));
 };
 
@@ -239,7 +239,7 @@ describe('a tap recorded before the engine', () => {
 			['config', { callbacks: { onChoiceRecorded, onPermissionsChanged } }],
 		]);
 		await showBanner();
-		expect(loaded('c15t.hosted.js')).toEqual([]);
+		expect(loaded('inth.hosted.js')).toEqual([]);
 
 		const saved = standIn.acceptAll() as Promise<SaveResult>;
 		provideCommit(standIn);
@@ -255,7 +255,7 @@ describe('a tap recorded before the engine', () => {
 		});
 		// Nothing for the engine to record again.
 		expect(queuedForEngine(standIn)).toEqual([]);
-		expect(loaded('c15t.hosted.js')).toHaveLength(1);
+		expect(loaded('inth.hosted.js')).toHaveLength(1);
 	});
 
 	it.each([
@@ -285,7 +285,7 @@ describe('a tap recorded before the engine', () => {
 			expect(queuedForEngine(standIn)).toEqual([[method]]);
 			expect(onChoiceRecorded).not.toHaveBeenCalled();
 			expect(onPermissionsChanged).not.toHaveBeenCalled();
-			expect(loaded('c15t.hosted.js')).toHaveLength(1);
+			expect(loaded('inth.hosted.js')).toHaveLength(1);
 		}
 	);
 });
@@ -293,14 +293,14 @@ describe('a tap recorded before the engine', () => {
 describe('options the stand-in cannot serve', () => {
 	it('loads the engine at once for a network blocker, unless it is turned off', () => {
 		const blocking = start([['config', { networkBlocker: { rules: [] } }]]);
-		expect(loaded('c15t.hosted.js')).toHaveLength(1);
+		expect(loaded('inth.hosted.js')).toHaveLength(1);
 		blocking.dispose();
 		document.head.replaceChildren();
 
 		const off = start([
 			['config', { networkBlocker: { enabled: false, rules: [] } }],
 		]);
-		expect(loaded('c15t.hosted.js')).toEqual([]);
+		expect(loaded('inth.hosted.js')).toEqual([]);
 		off.dispose();
 	});
 });
@@ -309,7 +309,7 @@ describe('dispose() before the engine', () => {
 	it('loads the engine at the first input until then', () => {
 		start();
 		window.dispatchEvent(new Event('pointerdown'));
-		expect(loaded('c15t.hosted.js')).toHaveLength(1);
+		expect(loaded('inth.hosted.js')).toHaveLength(1);
 	});
 
 	it('stops input, scrolling and the timer from loading the engine', () => {
@@ -322,7 +322,7 @@ describe('dispose() before the engine', () => {
 		window.dispatchEvent(new Event('scroll'));
 		vi.advanceTimersByTime(ENGINE_TIMEOUT_MS + 1);
 
-		expect(loaded('c15t.hosted.js')).toEqual([]);
+		expect(loaded('inth.hosted.js')).toEqual([]);
 		expect(standIn.__inthBoot.disposed).toBe(true);
 	});
 
@@ -337,17 +337,17 @@ describe('dispose() before the engine', () => {
 		expect(document.querySelector('[data-inth-ui]')).toBeNull();
 		expect(() => standIn.getSnapshot()).toThrow(/init/u);
 		expect(standIn.__inthBoot.prefetch).toBeNull();
-		expect(loaded('c15t.hosted.js')).toEqual([]);
+		expect(loaded('inth.hosted.js')).toEqual([]);
 	});
 
 	it('loads the engine for a later init(), which starts from the queued call', () => {
 		const standIn = start();
 		standIn.dispose();
-		expect(loaded('c15t.hosted.js')).toEqual([]);
+		expect(loaded('inth.hosted.js')).toEqual([]);
 
 		standIn.init();
 
-		expect(loaded('c15t.hosted.js')).toHaveLength(1);
+		expect(loaded('inth.hosted.js')).toHaveLength(1);
 		expect(standIn.__inthBoot.calls).toEqual([['init']]);
 		expect(standIn.__inthBoot.disposed).toBe(false);
 	});

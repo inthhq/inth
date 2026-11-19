@@ -9,7 +9,7 @@ final class ServedInit: HTTPTransport, @unchecked Sendable {
     init(body: Data) { self.body = body }
     func send(_ request: HTTPRequest) async throws -> HTTPResponse {
         request.url.path.hasSuffix("/init")
-            ? HTTPResponse(status: 200, headers: ["x-c15t-policy-contract": "1"], body: body)
+            ? HTTPResponse(status: 200, headers: ["x-inth-policy-contract": "1"], body: body)
             : HTTPResponse(status: 503)
     }
 }

@@ -99,7 +99,7 @@ describe('createConsentRouteHandlers', () => {
 			}),
 		});
 		const response = await handlers.init(
-			request('/api/inth/init', { 'x-c15t-country': 'DE' })
+			request('/api/inth/init', { 'x-inth-country': 'DE' })
 		);
 		expect(response.status).toBe(200);
 		expect(
@@ -120,7 +120,7 @@ describe('createConsentRouteHandlers', () => {
 			await handlers.init(
 				request('/api/inth/init', {
 					'accept-language': 'fr',
-					'x-c15t-country': 'DE',
+					'x-inth-country': 'DE',
 				})
 			)
 		).json();
@@ -209,18 +209,18 @@ it('serves Astro manifest SSR references through the same-origin init route', as
 		routePrefix: '/privacy',
 	});
 	const context = await resolveConsentContext({
-		headers: new Headers({ 'x-c15t-country': 'DE' }),
+		headers: new Headers({ 'x-inth-country': 'DE' }),
 		options: resolved,
 		url: 'https://site.example.com/page',
 	});
 	const reference = context.config.initialIab?.gvlReference;
 	expect(context.config.initialIab?.gvl).toBeNull();
 	expect(reference?.url).toBe(
-		`/privacy/init?c15t-gvl=${completeGVL.vendorListVersion}&language=en`
+		`/privacy/init?inth-gvl=${completeGVL.vendorListVersion}&language=en`
 	);
 	const handlers = createConsentRouteHandlers({ options: resolved });
 	const init = await handlers.init(
-		request('/privacy/init', { 'x-c15t-country': 'DE' })
+		request('/privacy/init', { 'x-inth-country': 'DE' })
 	);
 	expect((await init.json()).gvlReference.url).toBe(reference?.url);
 	const list = await handlers.init(request(reference?.url ?? ''));

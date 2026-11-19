@@ -154,7 +154,7 @@ describe('Next.js request policy and RSC hydration', () => {
 						),
 						translations: { language: 'en', translations: {} },
 					}),
-					{ headers: { 'x-c15t-policy-contract': '1' } }
+					{ headers: { 'x-inth-policy-contract': '1' } }
 				)
 			);
 			const config = await resolveConsent({
@@ -324,7 +324,7 @@ describe('Next.js request policy and RSC hydration', () => {
 					),
 					translations: { language: 'en', translations: {} },
 				}),
-				{ headers: { 'x-c15t-policy-contract': '1' } }
+				{ headers: { 'x-inth-policy-contract': '1' } }
 			)
 		);
 		vi.stubGlobal('fetch', fetch);

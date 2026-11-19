@@ -102,7 +102,7 @@ public struct InthBridgeConfiguration: Sendable, Equatable {
     /// provider and of the comma-separated `com.inth.VENDORS` Android meta-data. It goes into
     /// ``makeCoreConfiguration`` as ``CoreConfig/vendors``, where two things follow from it: the
     /// vendor list served to this device is pruned to these ids on every path it arrives by, and the
-    /// declaration travels on `/init` as `x-c15t-vendors` so the request stops carrying what the
+    /// declaration travels on `/init` as `x-inth-vendors` so the request stops carrying what the
     /// app is going to prune anyway.
     ///
     /// The prune is the promise and the header is the saving, so an over-long declaration that

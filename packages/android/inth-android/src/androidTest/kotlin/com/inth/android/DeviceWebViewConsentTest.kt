@@ -29,7 +29,7 @@ class DeviceWebViewConsentTest {
 	/** What the page's first inline script saw, as JSON, before any other page code ran. */
 	private val page = """
 		<!doctype html><html><head><script>
-		var api = window.__c15tNativeConsent;
+		var api = window.__inthNativeConsent;
 		window.seenAtStart = api ? JSON.stringify(api.getState()) : 'none';
 		</script></head><body></body></html>
 	""".trimIndent()

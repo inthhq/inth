@@ -37,7 +37,7 @@ const payload = {
 } as InitOutput;
 const reference = deferInitGvl(
 	payload,
-	'/api/privacy?c15t-gvl=142&language=de'
+	'/api/privacy?inth-gvl=142&language=de'
 ).gvlReference;
 const disposers: (() => void)[] = [];
 const kernelWithReference = () => {
@@ -502,7 +502,7 @@ test('hosted fetching reproduces the server geo and privacy inputs', async () =>
 	await handle.whenReady();
 	expect(kernel.getSnapshot().iab?.gvl).toEqual(completeGVL);
 	expect(
-		new Headers(fetch.mock.calls[0]?.[1]?.headers).get('x-c15t-country')
+		new Headers(fetch.mock.calls[0]?.[1]?.headers).get('x-inth-country')
 	).toBeNull();
 });
 

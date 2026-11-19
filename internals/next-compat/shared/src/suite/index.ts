@@ -359,7 +359,7 @@ export const defineCompatSuite = function defineCompatSuite({
 							// resulting policy reached the first HTML, so the banner is
 							// already in the document before hydration.
 							expect(serverSide.length).toBeGreaterThanOrEqual(1);
-							expect(serverSide[0]?.headers['x-c15t-country']).toBe(
+							expect(serverSide[0]?.headers['x-inth-country']).toBe(
 								TEST_COUNTRY
 							);
 							// The client's IP and user agent travel with the server call,
@@ -378,7 +378,7 @@ export const defineCompatSuite = function defineCompatSuite({
 							// browser did not, and the banner followed the shell in a
 							// later chunk of the same response.
 							expect(serverSide.length).toBeGreaterThanOrEqual(1);
-							expect(serverSide[0]?.headers['x-c15t-country']).toBe(
+							expect(serverSide[0]?.headers['x-inth-country']).toBe(
 								TEST_COUNTRY
 							);
 							expect(browserSide).toHaveLength(0);

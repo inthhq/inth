@@ -76,7 +76,7 @@ test('outside a WebView there is no source, so inth runs as usual', () => {
 test('a plain global assignment is not the native object', () => {
 	const page = openWindow();
 	Object.assign(page, {
-		__c15tNativeConsent: Object.freeze({
+		__inthNativeConsent: Object.freeze({
 			getState: () => nativeState(),
 			openPreferences: () => true,
 			subscribe: () => () => {},
@@ -113,10 +113,22 @@ test('reads the native decision on a listed origin', () => {
 	});
 });
 
+test('reads an app built before the rename, which injects __c15tNativeConsent', () => {
+	const page = openWindow();
+	const legacyScript = DOCUMENT_START.replace(
+		"'__inthNativeConsent'",
+		"'__c15tNativeConsent'"
+	);
+	expect(legacyScript).not.toBe(DOCUMENT_START);
+	page.eval(call(legacyScript, [ORIGIN], TOKEN, KEY, nativeState()));
+	expect('__inthNativeConsent' in page).toBe(false);
+	expect(webViewConsentSource()?.getState()?.revision).toBe(4);
+});
+
 test('injects nothing on an origin the app did not list', () => {
 	const page = openWindow('https://other.example');
 	page.eval(call(DOCUMENT_START, [ORIGIN], TOKEN, KEY, nativeState()));
-	expect('__c15tNativeConsent' in page).toBe(false);
+	expect('__inthNativeConsent' in page).toBe(false);
 	expect(webViewConsentSource()).toBeUndefined();
 });
 
@@ -125,12 +137,12 @@ test('a page script cannot replace the injected object', () => {
 	page.eval(call(DOCUMENT_START, [ORIGIN], TOKEN, KEY, nativeState()));
 	expect(() =>
 		page.eval(
-			"'use strict'; window.__c15tNativeConsent = { version: 1, getState() { return {}; } };"
+			"'use strict'; window.__inthNativeConsent = { version: 1, getState() { return {}; } };"
 		)
 	).toThrow();
 	expect(() =>
 		page.eval(
-			"Object.defineProperty(window, '__c15tNativeConsent', { value: {} });"
+			"Object.defineProperty(window, '__inthNativeConsent', { value: {} });"
 		)
 	).toThrow();
 	expect(webViewConsentSource()?.getState()?.revision).toBe(4);
@@ -155,7 +167,7 @@ test('only the native token can change the state', () => {
 	expect(page.eval(call(UPDATE, [ORIGIN], 'guess', forged))).toBe(false);
 	expect(
 		page.eval(
-			`window.__c15tNativeConsent.update('guess', ${JSON.stringify(forged)})`
+			`window.__inthNativeConsent.update('guess', ${JSON.stringify(forged)})`
 		)
 	).toBe(false);
 	expect(listener).not.toHaveBeenCalled();
@@ -260,12 +272,12 @@ test('opening preferences asks the app through its message channel', () => {
 	const page = openWindow();
 	const postMessage = vi.fn();
 	Object.assign(page, {
-		webkit: { messageHandlers: { c15tConsent: { postMessage } } },
+		webkit: { messageHandlers: { inthConsent: { postMessage } } },
 	});
 	page.eval(call(DOCUMENT_START, [ORIGIN], TOKEN, KEY, nativeState()));
 	webViewConsentSource()?.openPreferences();
 	expect(postMessage).toHaveBeenCalledWith(
-		`{"type":"c15t:open-preferences","key":"${KEY}"}`
+		`{"type":"inth:open-preferences","key":"${KEY}"}`
 	);
 });
 

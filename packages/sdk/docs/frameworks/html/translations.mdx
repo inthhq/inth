@@ -12,7 +12,7 @@ bundle, and which source wins depends on the mode:
 | Mode | Where the copy comes from |
 | --- | --- |
 | Hosted, with `data-project-url` | Your Inth project. The backend picks the language from the visitor's browser, or from `data-language`, and sends its copy with the policy. |
-| Manifest, including a tag loaded from your backend's `/c15t.js` | The manifest's translations for the visitor's language. |
+| Manifest, including a tag loaded from your backend's `/inth.js` | The manifest's translations for the visitor's language. |
 | Local | English, or the language and messages you set in `i18n`. |
 
 In every mode, your `i18n.messages` for the language in use override that copy
@@ -28,7 +28,7 @@ force one, add `data-language` to the tag:
 
 ```html
 <script
-  src="https://your-project.inth.app/c15t.js"
+  src="https://your-project.inth.app/inth.js"
   data-language="de"
   defer
 ></script>
@@ -39,7 +39,7 @@ from the `lang` attribute your CMS already writes on `<html>`.
 
 To switch after load, call `inth.setLanguage('fr')`. With a backend, Inth asks
 the backend for French copy and re-renders the banner and dialog. On a test
-page with `c15t.testing.js`, `data-language` and `inth.setLanguage()` switch
+page with `inth.testing.js`, `data-language` and `inth.setLanguage()` switch
 to a language that has copy in the bundle or in `i18n.messages`. A language
 with no copy shows the default copy. See
 [add a language on a test page](#add-a-language-on-a-test-page).
@@ -84,7 +84,7 @@ recognize its stock wording.
 
 ## Add a language on a test page
 
-Load `c15t.testing.js`. Queue your `i18n` configuration before that tag. It
+Load `inth.testing.js`. Queue your `i18n` configuration before that tag. It
 shows the language named in `i18n.locale`, built from your messages over the
 English defaults:
 
@@ -119,7 +119,7 @@ English defaults:
 Keys you leave out stay in English, so translate every key your banner and
 dialog show. The messages follow the same structure every Inth package uses.
 
-`c15t.testing.js` bundles English only, so every other language needs an
+`inth.testing.js` bundles English only, so every other language needs an
 entry in `i18n.messages`. With one entry per language,
 `data-language` and `inth.setLanguage()` switch between them. A regional
 code such as `de-AT` uses the `de` entry when there is no `de-AT` entry. A

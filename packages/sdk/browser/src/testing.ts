@@ -16,7 +16,7 @@
  * a rule with a `notice` prompt for the opt-out notice banner.
  *
  * It throws in production builds. A page with no bundler loads
- * `c15t.testing.js` instead of `c15t.js`.
+ * `inth.testing.js` instead of `inth.js`.
  *
  * @example
  * ```ts

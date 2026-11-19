@@ -77,7 +77,7 @@ describes.
 ## Why does the preferences link do nothing?
 
 **Check.** Confirm that the link's `href` ends in `#inth-preferences` and that
-the page loads the Inth tag. With `c15t.headless.js` or `ui: { dialog: false }`, the link asks for
+the page loads the Inth tag. With `inth.headless.js` or `ui: { dialog: false }`, the link asks for
 the dialog but nothing renders it.
 
 **Fix.** Correct the `href` or add the Inth tag. With a headless setup, your
@@ -115,12 +115,12 @@ everywhere.
 **Fix.** Run the `config` call before the tag, or pass the configuration to
 `inth.init()` with `data-manual`.
 
-## Why does the page throw "Load c15t.iab.js instead of c15t.js"?
+## Why does the page throw "Load inth.iab.js instead of inth.js"?
 
 **Check.** Two Inth bundles are on the page, including copies a plugin adds.
 
-**Fix.** Keep only `c15t.iab.js` for an IAB policy, and remove `c15t.js`,
-`c15t.testing.js` or `c15t.headless.js`.
+**Fix.** Keep only `inth.iab.js` for an IAB policy, and remove `inth.js`,
+`inth.testing.js` or `inth.headless.js`.
 
 ## Why did the banner change after a release?
 

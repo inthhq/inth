@@ -56,7 +56,7 @@ export type ConsentInputHeaderTarget =
 
 /**
  * Writes resolved geo, language and GPC as the canonical consent request
- * headers (`x-c15t-country`, `x-c15t-region`, `accept-language`,
+ * headers (`x-inth-country`, `x-inth-region`, `accept-language`,
  * `sec-gpc`), the form every reader downstream understands. Inputs that are
  * unset are left out.
  *

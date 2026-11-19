@@ -354,7 +354,7 @@ describe('pages whose request the server cannot know get no script', () => {
 			'hosted() with init headers the script cannot send',
 			{
 				...HOSTED,
-				mode: { headers: { 'x-c15t-country': 'DE' }, type: 'hosted' },
+				mode: { headers: { 'x-inth-country': 'DE' }, type: 'hosted' },
 			},
 		],
 		['hosted() without a backend URL', { mode: { type: 'hosted' } }],

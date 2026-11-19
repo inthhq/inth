@@ -281,7 +281,7 @@ test('server mapping accepts a reference without a redundant gvl field', () => {
 	const gvlReference = {
 		language: 'en',
 		summary: { items: ['Storage'], vendorCount: 2 },
-		url: '/api/inth/init?c15t-gvl=1',
+		url: '/api/inth/init?inth-gvl=1',
 		vendorListVersion: 1,
 	};
 	const result = mergeInitResponseIntoKernelConfig({}, { gvlReference });

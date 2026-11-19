@@ -1,6 +1,6 @@
 /**
  * Region preview for the demo: `?country=US&region=CA` becomes the
- * `x-c15t-country` / `x-c15t-region` headers a CDN would normally add.
+ * `x-inth-country` / `x-inth-region` headers a CDN would normally add.
  *
  * It runs in the HTTP host (the Vite dev server and `scripts/serve.mjs`),
  * outside the application, so the app's `src/start.ts` stays the plain
@@ -34,10 +34,10 @@ export const regionPreviewHeaders = (url, referer) => {
 	const country = source?.get('country');
 	const region = source?.get('region');
 	if (country) {
-		headers['x-c15t-country'] = country.toUpperCase();
+		headers['x-inth-country'] = country.toUpperCase();
 	}
 	if (region) {
-		headers['x-c15t-region'] = region.toUpperCase();
+		headers['x-inth-region'] = region.toUpperCase();
 	}
 	return headers;
 };

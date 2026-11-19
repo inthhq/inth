@@ -145,7 +145,7 @@ public enum InthPayload {
     /// - Parameters:
     ///   - snapshot: The snapshot the core already holds, which carries the subject id.
     ///   - hasStoredSnapshot: Whether hydration found a stored envelope.
-    ///   - sdkVersion: Native SDK version, the same value sent as `x-c15t-version`.
+    ///   - sdkVersion: Native SDK version, the same value sent as `x-inth-version`.
     public static func bootstrap(
         snapshot: ConsentSnapshot,
         hasStoredSnapshot: Bool,

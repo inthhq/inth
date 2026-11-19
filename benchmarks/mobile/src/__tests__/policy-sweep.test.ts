@@ -65,7 +65,7 @@ describe('fixture shapes it cannot drive', () => {
 				transport: { body: {}, headers: {}, status: 200 },
 			},
 		};
-		expect(skipReason(fixture, 'x.json')).toContain('x-c15t-policy-contract');
+		expect(skipReason(fixture, 'x.json')).toContain('x-inth-policy-contract');
 	});
 
 	it('names a fixture with no input at all', () => {
@@ -78,7 +78,7 @@ describe('fixture shapes it cannot drive', () => {
 			input: {
 				transport: {
 					body: {},
-					headers: { 'x-c15t-policy-contract': '1' },
+					headers: { 'x-inth-policy-contract': '1' },
 					status: 200,
 				},
 			},

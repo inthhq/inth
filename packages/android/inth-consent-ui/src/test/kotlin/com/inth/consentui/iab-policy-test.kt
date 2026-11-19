@@ -748,7 +748,7 @@ class IabPolicyTest {
         val body = JsonObject(if (customVendors == null) served else served + ("customVendors" to customVendors)).toString()
         val client = object : HttpClient {
             override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
-                HttpResponse(200, mapOf("x-c15t-policy-contract" to "1"), body) else HttpResponse(503)
+                HttpResponse(200, mapOf("x-inth-policy-contract" to "1"), body) else HttpResponse(503)
         }
         val config = NativeConfig("https://fixture.invalid", iab = IabConfiguration(cmpId = 53, cmpVersion = 7, publisherCountryCode = "GB", consentLanguage = language))
         val core = ConsentCore(config, InthStore(Memory()), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)

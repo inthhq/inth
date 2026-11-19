@@ -66,7 +66,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header('Content-Type', 'application/json')
         self.send_header('Content-Length', str(len(data)))
-        self.send_header('x-c15t-policy-contract', '1')
+        self.send_header('x-inth-policy-contract', '1')
         self.end_headers()
         self.wfile.write(data)
 
@@ -157,7 +157,7 @@ class Handler(BaseHTTPRequestHandler):
                     self.connection.shutdown(socket.SHUT_RDWR)
                     self.connection.close()
                     return
-                if self.headers.get('x-c15t-policy-contract') != '1' or not body.get('choice'):
+                if self.headers.get('x-inth-policy-contract') != '1' or not body.get('choice'):
                     self.reply(400, {'error': 'missing native protocol receipt'})
                     return
                 saves.append(body)

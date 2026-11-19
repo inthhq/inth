@@ -4,7 +4,7 @@
  * A browser on another origin can send `/init` as a CORS simple request,
  * with no `OPTIONS` preflight, only while every request header is
  * CORS-safelisted. The protocol version, the policy contract, the init
- * overrides and the experiment arm used to travel on `x-c15t-*` headers,
+ * overrides and the experiment arm used to travel on `x-inth-*` headers,
  * which cost every first visit an extra round trip before the banner could
  * show. They now travel in the query string, next to the journey
  * parameters.
@@ -30,34 +30,34 @@ import {
 } from './session-report';
 import type { SessionExperiment } from './session-report';
 
-/** Client package version, as the `x-c15t-version` header carried it. */
+/** Client package version, as the `x-inth-version` header carried it. */
 export const INIT_VERSION_PARAM = 'v';
 
-/** Policy wire contract the client reads (`x-c15t-policy-contract`). */
+/** Policy wire contract the client reads (`x-inth-policy-contract`). */
 export const INIT_POLICY_CONTRACT_PARAM = 'contract';
 
-/** Country override, an ISO 3166-1 alpha-2 code (`x-c15t-country`). */
+/** Country override, an ISO 3166-1 alpha-2 code (`x-inth-country`). */
 export const INIT_COUNTRY_PARAM = 'country';
 
-/** Region override, an ISO 3166-2 subdivision code (`x-c15t-region`). */
+/** Region override, an ISO 3166-2 subdivision code (`x-inth-region`). */
 export const INIT_REGION_PARAM = 'region';
 
-/** GPC override, `1` or `0` (`x-c15t-gpc`). Any other value is ignored. */
+/** GPC override, `1` or `0` (`x-inth-gpc`). Any other value is ignored. */
 export const INIT_GPC_PARAM = 'gpc';
 
 /**
  * Banner-experiment arm as `<id>=<arm>`, both parts URI-encoded
- * (`x-c15t-experiment`). Sent only while the visitor has no stored choice.
+ * (`x-inth-experiment`). Sent only while the visitor has no stored choice.
  */
 export const INIT_EXPERIMENT_PARAM = 'experiment';
 
 /** Each init query parameter and the legacy header it replaces. */
 export const INIT_PARAM_HEADERS: readonly (readonly [string, string])[] = [
-	[INIT_VERSION_PARAM, 'x-c15t-version'],
+	[INIT_VERSION_PARAM, 'x-inth-version'],
 	[INIT_POLICY_CONTRACT_PARAM, POLICY_CONTRACT_HEADER],
-	[INIT_COUNTRY_PARAM, 'x-c15t-country'],
-	[INIT_REGION_PARAM, 'x-c15t-region'],
-	[INIT_GPC_PARAM, 'x-c15t-gpc'],
+	[INIT_COUNTRY_PARAM, 'x-inth-country'],
+	[INIT_REGION_PARAM, 'x-inth-region'],
+	[INIT_GPC_PARAM, 'x-inth-gpc'],
 	[INIT_EXPERIMENT_PARAM, CONSENT_EXPERIMENT_HEADER],
 ];
 

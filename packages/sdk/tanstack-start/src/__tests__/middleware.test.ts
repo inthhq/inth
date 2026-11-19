@@ -60,8 +60,8 @@ describe('consentRequestMiddleware', () => {
 			'sec-gpc': '1',
 		});
 
-		expect(request.headers.get('x-c15t-country')).toBe('DE');
-		expect(request.headers.get('x-c15t-region')).toBe('BE');
+		expect(request.headers.get('x-inth-country')).toBe('DE');
+		expect(request.headers.get('x-inth-region')).toBe('BE');
 		expect(request.headers.get('sec-gpc')).toBe('1');
 		expect(next).toHaveBeenCalledWith({
 			context: {
@@ -80,7 +80,7 @@ describe('consentRequestMiddleware', () => {
 			{ 'accept-language': 'de', 'x-vercel-ip-country': 'DE' }
 		);
 
-		expect(request.headers.get('x-c15t-country')).toBe('FR');
+		expect(request.headers.get('x-inth-country')).toBe('FR');
 		expect(next).toHaveBeenCalledWith({
 			context: {
 				consent: expect.objectContaining({ country: 'FR', language: 'fr' }),
@@ -94,7 +94,7 @@ describe('consentRequestMiddleware', () => {
 			{ 'cf-ipcountry': 'DE' }
 		);
 
-		expect(request.headers.get('x-c15t-country')).toBeNull();
+		expect(request.headers.get('x-inth-country')).toBeNull();
 		expect(next).toHaveBeenCalledWith({
 			context: { consent: expect.objectContaining({ country: 'DE' }) },
 		});
@@ -138,7 +138,7 @@ describe('consentRequestMiddleware: immutable request headers', () => {
 			request,
 		});
 
-		expect(request.headers.get('x-c15t-country')).toBeNull();
+		expect(request.headers.get('x-inth-country')).toBeNull();
 		const state = await resolveConsent({ request });
 		expect(state.initialOverrides).toMatchObject({
 			country: 'FR',

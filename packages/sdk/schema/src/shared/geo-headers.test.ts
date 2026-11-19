@@ -9,18 +9,18 @@ import {
 } from './geo-headers';
 
 describe('getRegionFromHeaders, kept for backend call sites', () => {
-	it('reads x-c15t-country and x-c15t-region', () => {
+	it('reads x-inth-country and x-inth-region', () => {
 		expect(
 			getRegionFromHeaders({
-				'x-c15t-country': 'DE',
-				'x-c15t-region': 'BE',
+				'x-inth-country': 'DE',
+				'x-inth-region': 'BE',
 			})
 		).toEqual({ country: 'DE', region: 'BE' });
 	});
 
-	it('prioritizes x-c15t-country over cf-ipcountry', () => {
+	it('prioritizes x-inth-country over cf-ipcountry', () => {
 		expect(
-			getRegionFromHeaders({ 'cf-ipcountry': 'FR', 'x-c15t-country': 'DE' })
+			getRegionFromHeaders({ 'cf-ipcountry': 'FR', 'x-inth-country': 'DE' })
 		).toEqual({ country: 'DE' });
 		expect(getRegionFromHeaders({ 'cf-ipcountry': 'FR' })).toEqual({
 			country: 'FR',
@@ -33,12 +33,12 @@ describe('getRegionFromHeaders, kept for backend call sites', () => {
 });
 
 describe('extractConsentRequestInputs', () => {
-	it('x-c15t-* overrides always beat infrastructure headers', () => {
+	it('x-inth-* overrides always beat infrastructure headers', () => {
 		const headers = new Headers({
 			'cf-ipcountry': 'FR',
 			'cf-region-code': 'IDF',
-			'x-c15t-country': 'DE',
-			'x-c15t-region': 'BE',
+			'x-inth-country': 'DE',
+			'x-inth-region': 'BE',
 			'x-vercel-ip-country': 'US',
 			'x-vercel-ip-country-region': 'CA',
 		});
@@ -63,7 +63,7 @@ describe('extractConsentRequestInputs', () => {
 	it('accepts plain header records (lowercase keys)', () => {
 		const inputs = extractConsentRequestInputs({
 			'sec-gpc': '1',
-			'x-c15t-country': 'NL',
+			'x-inth-country': 'NL',
 		});
 		expect(inputs.country).toBe('NL');
 		expect(inputs.gpc).toBe(true);
@@ -85,7 +85,7 @@ describe('extractConsentRequestInputs', () => {
 
 	it('caller overrides beat everything', () => {
 		const inputs = extractConsentRequestInputs(
-			new Headers({ 'x-c15t-country': 'DE' }),
+			new Headers({ 'x-inth-country': 'DE' }),
 			{ country: 'JP' }
 		);
 		expect(inputs.country).toBe('JP');
@@ -103,12 +103,12 @@ describe('consentInputsToOverrides', () => {
 });
 
 describe('GPC override header', () => {
-	it('x-c15t-gpc wins over the browser sec-gpc signal', () => {
+	it('x-inth-gpc wins over the browser sec-gpc signal', () => {
 		expect(
-			extractConsentRequestInputs({ 'sec-gpc': '1', 'x-c15t-gpc': '0' }).gpc
+			extractConsentRequestInputs({ 'sec-gpc': '1', 'x-inth-gpc': '0' }).gpc
 		).toBe(false);
 		expect(extractConsentRequestInputs({ 'sec-gpc': '1' }).gpc).toBe(true);
-		expect(extractConsentRequestInputs({ 'x-c15t-gpc': '1' }).gpc).toBe(true);
-		expect(CONSENT_REQUEST_HEADER_NAMES).toContain('x-c15t-gpc');
+		expect(extractConsentRequestInputs({ 'x-inth-gpc': '1' }).gpc).toBe(true);
+		expect(CONSENT_REQUEST_HEADER_NAMES).toContain('x-inth-gpc');
 	});
 });

@@ -51,7 +51,7 @@ it needs.
 | Svelte | `@inth/svelte` | `@inth/svelte/testing` | `<ConsentProvider mode={...}>` | Transport |
 | Angular | `@inth/angular` | `@inth/angular/testing` | `provideInth({ mode })` | Transport |
 | JavaScript | `@inth/sdk` | `@inth/sdk/testing` | `init({ mode })` | Transport |
-| Script tag | none | `c15t.testing.js` | `data-mode="manifest"` on the headless and IAB scripts | Name |
+| Script tag | none | `inth.testing.js` | `data-mode="manifest"` on the headless and IAB scripts | Name |
 
 **Data factories** return a plain object such as `{ type: 'manifest' }`.
 Server-rendered frameworks read their config on the server and in the
@@ -162,7 +162,7 @@ import { testing } from '@inth/react/testing';
 To keep consent out of the way in an app's own tests instead, set
 `enabled: false`: it grants every category, shows no UI and sends nothing.
 
-The script tag has a separate file for tests, `c15t.testing.js`. The other
+The script tag has a separate file for tests, `inth.testing.js`. The other
 script files are production builds and contain neither the testing transport
 nor the policy pack.
 

@@ -127,7 +127,7 @@ final class InthBootstrapTests: XCTestCase {
         XCTAssertEqual(transport.baseURL, URL(string: "https://your-project.inth.app"))
         XCTAssertEqual(transport.domain, "your-project.inth.app")
         // ENG-530: a React Native app reports `rn`, not the Swift app's `apple`.
-        XCTAssertEqual(transport.extraHeaders["x-c15t-platform"], "rn->\(Inth.version)")
+        XCTAssertEqual(transport.extraHeaders["x-inth-platform"], "rn->\(Inth.version)")
         XCTAssertFalse(core.dryRun)
     }
 

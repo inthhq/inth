@@ -248,7 +248,7 @@ final class BundledPolicyTests: XCTestCase {
             var online: [String: JSONValue] = ["policyResolution": selected.response.policyResolution!]
             online["gvl"] = body["disclosures"]?["gvl"]?["data"]
             online["adTechProviders"] = body["disclosures"]?["atp"]?["providers"]
-            http.initResponse = HTTPResponse(status: 200, headers: ["x-c15t-policy-contract": "1"], body: try XCTUnwrap(InthJSON.encode(JSONValue.object(online))))
+            http.initResponse = HTTPResponse(status: 200, headers: ["x-inth-policy-contract": "1"], body: try XCTUnwrap(InthJSON.encode(JSONValue.object(online))))
             restored.refresh()
             await restored.waitUntilIdle()
             XCTAssertNil(restored.bundledPolicyInfo)

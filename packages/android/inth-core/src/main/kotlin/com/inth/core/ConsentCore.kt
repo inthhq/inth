@@ -1710,7 +1710,7 @@ class ConsentCore @InthInternalApi constructor(
 			// The declared scope narrows what arrives, before the latch. Web does the same on both
 			// of its routes: `createIAB` in `packages/sdk/iab` asks the GVL endpoint for its scope and
 			// then prunes whatever comes back, in case the endpoint ignored the parameter. The prune
-			// is the part that carries the disclosure promise and the `x-c15t-vendors` header is the
+			// is the part that carries the disclosure promise and the `x-inth-vendors` header is the
 			// bytes-saving optimisation in front of it, so a producer that embeds the whole list
 			// here is answered by this line and not by the request.
 			//

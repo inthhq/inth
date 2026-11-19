@@ -29,7 +29,7 @@ to a parent theme are lost when it updates. A block theme without
 
 ```php
 add_action('wp_head', function () {
-  echo '<script src="https://your-project.inth.app/c15t.js" defer></script>';
+  echo '<script src="https://your-project.inth.app/inth.js" defer></script>';
 }, 1);
 ```
 
@@ -120,7 +120,7 @@ covers Google Consent Mode.
 
 Plugins and CDN features that combine, defer or delay scripts can rewrite a
 gated tag's `type`, move it, or delay the Inth tag until the first click. Any
-of these breaks gating. Exclude the Inth tag, `c15t.js`, and every tag with
+of these breaks gating. Exclude the Inth tag, `inth.js`, and every tag with
 `data-inth-category` from script optimization. Then check the page source of
 the published site. Each gated tag still has `type="text/plain"` before a
 choice.

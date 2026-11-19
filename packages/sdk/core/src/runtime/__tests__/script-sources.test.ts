@@ -849,7 +849,7 @@ describe('experimentalScriptRegistry', () => {
 					urls.push(String(input));
 					return Promise.resolve(
 						Response.json(resolveInitFromManifest(manifest, {}), {
-							headers: { 'x-c15t-policy-contract': '1' },
+							headers: { 'x-inth-policy-contract': '1' },
 						})
 					);
 				},

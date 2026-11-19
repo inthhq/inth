@@ -1,10 +1,10 @@
 /**
- * `dist/c15t.dialog.js`: the stock preference centre (dialog, preference
+ * `dist/inth.dialog.js`: the stock preference centre (dialog, preference
  * widget, vendor list, preference draft), and the dialog's rules for the
  * init script's root, which holds only the banner's. The init script
- * (`c15t.js`) fetches it when the visitor taps Customize before the engine
+ * (`inth.js`) fetches it when the visitor taps Customize before the engine
  * has loaded, and opens the dialog without the engine (`../init/early-dialog.ts`);
- * the engine (`c15t.hosted.js`) fetches it the first time it needs the
+ * the engine (`inth.hosted.js`) fetches it the first time it needs the
  * dialog. See `../init/dialog-file.ts`.
  */
 

@@ -1,6 +1,6 @@
 /**
- * The preference dialog the init script (`c15t.js`) opens before the
- * engine, in `c15t.dialog.js`.
+ * The preference dialog the init script (`inth.js`) opens before the
+ * engine, in `inth.dialog.js`.
  *
  * It renders the stock dialog against the init script's stand-in: the
  * stand-in's snapshot, its accept and reject (recorded without the engine
@@ -9,7 +9,7 @@
  * same dialog talks to the engine. {@link EarlyDialog.handOver} then gives
  * it to the engine's UI.
  *
- * In `c15t.dialog.js`, not `c15t.js`: the init script carries only the
+ * In `inth.dialog.js`, not `inth.js`: the init script carries only the
  * hooks.
  *
  * @packageDocumentation

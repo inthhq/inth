@@ -186,7 +186,7 @@ export interface ConsentRouteOptions {
 	 * cookies only when {@link ConsentProxyOptions.cookieNames} names them,
 	 * and sets `x-forwarded-for` from `event.getClientAddress()`,
 	 * `x-forwarded-host` and `x-forwarded-proto` from `event.url`, the Inth
-	 * version header, and `x-c15t-proxy: @inth/svelte`. The hosted backend
+	 * version header, and `x-inth-proxy: @inth/svelte`. The hosted backend
 	 * sits behind a firewall that scores a bare server-to-server request as a
 	 * bot; these give it the signals a direct browser request carries, and a
 	 * stable key for a bypass rule. It needs `projectUrl`, not a

@@ -410,7 +410,7 @@ class InthPayloadTest {
 		))
 		val transport = object : com.inth.core.transport.InthTransport {
 			override fun init(context: com.inth.core.transport.InitContext) =
-				com.inth.core.transport.TransportOutcome.Success(body, mapOf("x-c15t-policy-contract" to "1"))
+				com.inth.core.transport.TransportOutcome.Success(body, mapOf("x-inth-policy-contract" to "1"))
 
 			override fun save(entry: com.inth.core.model.QueuedSave) = com.inth.core.transport.SaveOutcome.Unavailable("offline")
 

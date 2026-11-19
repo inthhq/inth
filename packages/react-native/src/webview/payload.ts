@@ -29,7 +29,7 @@ export interface WebViewConsentPayload {
 export const preferencesRequest = function preferencesRequest(
 	key: string
 ): string {
-	return `{"type":"c15t:open-preferences","key":"${key}"}`;
+	return `{"type":"inth:open-preferences","key":"${key}"}`;
 };
 
 const TOKEN = /^[0-9a-f]{32}$/u;

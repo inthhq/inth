@@ -154,12 +154,12 @@ test("answers only a preferences request that carries the top frame's key", () =
 		latest().onMessage({ nativeEvent: { data, isTopFrame, url } });
 	};
 	const request =
-		'{"type":"c15t:open-preferences","key":"fedcba9876543210fedcba9876543210"}';
+		'{"type":"inth:open-preferences","key":"fedcba9876543210fedcba9876543210"}';
 	// An iframe on the listed page: `react-native-webview` on Android reports
 	// the top page's URL and no frame, but the frame cannot read the key.
-	message('{"type":"c15t:open-preferences"}', 'https://www.example.com/');
+	message('{"type":"inth:open-preferences"}', 'https://www.example.com/');
 	message(
-		'{"type":"c15t:open-preferences","key":"00000000000000000000000000000000"}',
+		'{"type":"inth:open-preferences","key":"00000000000000000000000000000000"}',
 		'https://www.example.com/'
 	);
 	message(request, 'https://evil.example/');
@@ -184,7 +184,7 @@ const openPage = (origin: string) => {
 	const run = (code: string): unknown => runInContext(code, context);
 	const state = () =>
 		JSON.parse(
-			run('JSON.stringify(window.__c15tNativeConsent.getState())') as string
+			run('JSON.stringify(window.__inthNativeConsent.getState())') as string
 		) as { ready: boolean; permissions: Record<string, boolean> };
 	return { run, state };
 };

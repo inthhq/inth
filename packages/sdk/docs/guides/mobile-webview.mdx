@@ -249,9 +249,9 @@ the state in full.
 1. Make a choice in the app, then open your site in the WebView.
 2. No banner shows. In the WebView's developer tools (Safari Web Inspector for
    iOS, `chrome://inspect` for Android), run
-   `window.__c15tNativeConsent.getState()` and compare `permissions` with the
+   `window.__inthNativeConsent.getState()` and compare `permissions` with the
    app's choice.
 3. Change the choice in the app while the page is open. `getState().revision`
    goes up, and scripts the change allows start.
-4. Open a page on an origin you did not list. `window.__c15tNativeConsent` is
+4. Open a page on an origin you did not list. `window.__inthNativeConsent` is
    `undefined`, and the site's own banner shows.

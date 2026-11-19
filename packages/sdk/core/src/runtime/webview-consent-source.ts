@@ -3,7 +3,7 @@
  *
  * The Swift, Kotlin and React Native WebView helpers add a script that runs
  * at document start, in the main frame, on origins the app lists. It defines
- * `window.__c15tNativeConsent` as a frozen, non-writable, non-configurable
+ * `window.__inthNativeConsent` as a frozen, non-writable, non-configurable
  * object before any page script runs. This module reads that object and
  * returns it as an {@link ExternalConsentSource}, so the native app stays the
  * consent authority while the page runs inside the app. The contract is
@@ -12,8 +12,15 @@
 import type { ConsentState, Unsubscribe } from '../types';
 import type { ExternalConsentSource } from './types';
 
-/** The global the native document-start script defines. */
-const WEBVIEW_CONSENT_GLOBAL = '__c15tNativeConsent';
+/**
+ * The globals the native document-start script defines, newest first. App
+ * builds made before the Inth rename define `__c15tNativeConsent`, and they
+ * stay installed long after a site updates.
+ */
+const WEBVIEW_CONSENT_GLOBALS = [
+	'__inthNativeConsent',
+	'__c15tNativeConsent',
+] as const;
 
 /** Consent state a native app injected into its WebView. */
 export interface WebViewConsentState {
@@ -94,16 +101,10 @@ const readState = (value: unknown): WebViewConsentState | null => {
  * script gives it. A plain assignment to the global, or an object that can
  * still be changed, is not the native one and is ignored.
  */
-const readInjected = (): InjectedConsent | null => {
-	if (typeof window === 'undefined') {
-		return null;
-	}
+const readInjectedGlobal = (name: string): InjectedConsent | null => {
 	let descriptor: PropertyDescriptor | undefined;
 	try {
-		descriptor = Object.getOwnPropertyDescriptor(
-			window,
-			WEBVIEW_CONSENT_GLOBAL
-		);
+		descriptor = Object.getOwnPropertyDescriptor(window, name);
 	} catch {
 		return null;
 	}
@@ -126,6 +127,19 @@ const readInjected = (): InjectedConsent | null => {
 		return null;
 	}
 	return injected as unknown as InjectedConsent;
+};
+
+const readInjected = (): InjectedConsent | null => {
+	if (typeof window === 'undefined') {
+		return null;
+	}
+	for (const name of WEBVIEW_CONSENT_GLOBALS) {
+		const injected = readInjectedGlobal(name);
+		if (injected) {
+			return injected;
+		}
+	}
+	return null;
 };
 
 /**

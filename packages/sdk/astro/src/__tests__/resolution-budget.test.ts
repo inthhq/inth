@@ -46,7 +46,7 @@ const resolveContext = (
 	extra: Partial<Parameters<typeof resolveConsentContext>[0]> = {}
 ) =>
 	resolveConsentContext({
-		headers: new Headers({ 'x-c15t-country': 'DE' }),
+		headers: new Headers({ 'x-inth-country': 'DE' }),
 		options: resolveOptions(astroOptions),
 		url: 'https://site.example.com/',
 		...extra,

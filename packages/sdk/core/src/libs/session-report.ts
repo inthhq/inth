@@ -108,7 +108,7 @@ export const isSpeculativeRequest = function isSpeculativeRequest(
  *
  * The client IP is the address the shared derivation recovers from the
  * request's proxy headers, unmasked: masking is the backend's decision and
- * happens there. An `x-c15t-client-ip` already on the incoming request is
+ * happens there. An `x-inth-client-ip` already on the incoming request is
  * ignored on purpose: a visitor can send that header to a public init
  * route, and honouring it would let them choose the address the backend
  * attributes to them.

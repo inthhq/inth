@@ -26,7 +26,7 @@ const posted: string[] = [];
 Object.assign(window, {
 	webkit: {
 		messageHandlers: {
-			c15tConsent: { postMessage: (message: string) => posted.push(message) },
+			inthConsent: { postMessage: (message: string) => posted.push(message) },
 		},
 	},
 });

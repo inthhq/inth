@@ -1,7 +1,7 @@
 /**
  * `@inth/sdk` — consent for sites without a build step.
  *
- * Most sites load `dist/c15t.js` from a CDN and never import this module.
+ * Most sites load `dist/inth.js` from a CDN and never import this module.
  * This ES module asks the backend's `/init` by default; `mode: manifest()`
  * resolves from the consent manifest instead, and is left out of the
  * bundle when the page does not import it. Tests pass `testing()` from

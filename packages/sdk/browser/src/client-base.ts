@@ -332,7 +332,7 @@ export const createConsentClientWith = function createConsentClientWith(
 				)
 			: new IABUnavailableError(
 					'this page loads the build without IAB',
-					'Load c15t.iab.js instead of c15t.js, or import from @inth/sdk/iab-client'
+					'Load inth.iab.js instead of inth.js, or import from @inth/sdk/iab-client'
 				);
 		emit('error', error);
 		queueMicrotask(() => {
@@ -527,7 +527,7 @@ export const createConsentClientWith = function createConsentClientWith(
 		mountUI(uiOptions?: ConsentUIOptions) {
 			if (!context.mountUI) {
 				throw new Error(
-					'@inth/sdk: this build is headless. Load c15t.js, or import `mountConsentUI` from "@inth/sdk".'
+					'@inth/sdk: this build is headless. Load inth.js, or import `mountConsentUI` from "@inth/sdk".'
 				);
 			}
 			ui?.destroy();

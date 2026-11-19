@@ -250,7 +250,7 @@ describe('resolveConsent: fluid-compute safety', () => {
 									),
 									translations: { language: 'en', translations: {} },
 								}),
-								{ headers: { 'x-c15t-policy-contract': '1' } }
+								{ headers: { 'x-inth-policy-contract': '1' } }
 							)
 						);
 					});
@@ -316,7 +316,7 @@ describe('resolveConsent: manifest session reports', () => {
 		const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
 		expect(url).toBe('https://consent.example.com/sessions');
 		const headers = init.headers as Record<string, string>;
-		expect(headers['x-c15t-client-ip']).toBe('203.0.113.42');
+		expect(headers['x-inth-client-ip']).toBe('203.0.113.42');
 		expect(headers['user-agent']).toBe('Mozilla/5.0');
 		expect(headers).not.toHaveProperty('cookie');
 		expect(JSON.parse(init.body as string)).toMatchObject({

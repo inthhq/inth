@@ -37,15 +37,15 @@ Within each row, the first header with a value wins:
 
 | Input | Headers, highest precedence first | Source |
 | --- | --- | --- |
-| Country | `x-c15t-country`, `cf-ipcountry`, `x-vercel-ip-country`, `x-amz-cf-ipcountry`, `x-country-code`, `x-country` | Inth override, Cloudflare, Vercel, CloudFront, generic |
-| Region | `x-c15t-region`, `cf-region-code`, `x-vercel-ip-country-region`, `x-region-code` | Inth override, Cloudflare, Vercel, generic |
-| Global Privacy Control | `x-c15t-gpc`, `sec-gpc` | Inth override, browser signal |
+| Country | `x-inth-country`, `cf-ipcountry`, `x-vercel-ip-country`, `x-amz-cf-ipcountry`, `x-country-code`, `x-country` | Inth override, Cloudflare, Vercel, CloudFront, generic |
+| Region | `x-inth-region`, `cf-region-code`, `x-vercel-ip-country-region`, `x-region-code` | Inth override, Cloudflare, Vercel, generic |
+| Global Privacy Control | `x-inth-gpc`, `sec-gpc` | Inth override, browser signal |
 | Language | `accept-language` | Browser |
 
 Vercel sends its headers without setup. Cloudflare sends `cf-region-code`
 only with its visitor location headers setting turned on. CloudFront's own
 `CloudFront-Viewer-Country` and `CloudFront-Viewer-Country-Region` headers are
-not in the list. Map them to `x-c15t-country` and `x-c15t-region` at the edge,
+not in the list. Map them to `x-inth-country` and `x-inth-region` at the edge,
 for example with a CloudFront Function, as in
 [AWS's viewer-request example](https://github.com/aws-samples/amazon-cloudfront-functions/tree/main/redirect-based-on-country).
 
@@ -54,18 +54,18 @@ answer belongs to one visitor.
 
 ## Trust only your own infrastructure
 
-The `x-c15t-*` headers always win, by design. A visitor who sends
-`x-c15t-country: US` picks their own policy unless something removes the
+The `x-inth-*` headers always win, by design. A visitor who sends
+`x-inth-country: US` picks their own policy unless something removes the
 header first. The header only changes the policy for the visitor who sent it.
 For geography you can trust, configure the edge that terminates all your
 traffic, such as your CDN or load balancer, to delete incoming
-`x-c15t-country`, `x-c15t-region` and `x-c15t-gpc` headers before it sets any
+`x-inth-country`, `x-inth-region` and `x-inth-gpc` headers before it sets any
 of its own.
 
 Stripping the headers also turns off the `country` and `region` props of
 `ConsentRoot` when the server resolves the policy. In the browser, those
 props reach the
-`/api/inth/init` route as `x-c15t-country` and `x-c15t-region` headers, so
+`/api/inth/init` route as `x-inth-country` and `x-inth-region` headers, so
 the edge removes them too.
 
 Do not strip them in a Nitro server middleware. During server rendering, the
@@ -84,9 +84,9 @@ Use one of these while you build, never in production:
 
 - Render `<ConsentRoot country="DE" />`, or pass `region` too. Inth resolves
   the policy again for that location. When the server resolves the policy,
-  this only works while nothing strips the `x-c15t-*` headers.
+  this only works while nothing strips the `x-inth-*` headers.
 - Send the override header yourself, for example
-  `curl -H 'x-c15t-country: DE' http://localhost:3000/api/inth/init`. This
+  `curl -H 'x-inth-country: DE' http://localhost:3000/api/inth/init`. This
   only works while nothing strips the header.
 - Use a VPN or your host's geography testing tools against a deployment.
 
@@ -99,5 +99,5 @@ policy, so do not copy it into production.
 Deploy and load the site from two locations with different policy rules, for
 example through a VPN. View the source of each page: an opt-in region has
 `data-testid="consent-banner-root"` in the HTML, and a region with no prompt
-does not. Then request `/api/inth/init` with `curl -H 'x-c15t-country: US'`
+does not. Then request `/api/inth/init` with `curl -H 'x-inth-country: US'`
 against production and confirm the resolved location ignores the header.

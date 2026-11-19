@@ -253,7 +253,7 @@ final class ConsentCoreTests: XCTestCase {
     func testUnsupportedContractFromTheBackendIsReportedAndStaysDenyAll() async {
         http.initResponse = HTTPResponse(
             status: 200,
-            headers: ["x-c15t-policy-contract": "9"],
+            headers: ["x-inth-policy-contract": "9"],
             body: Fixture.initBody(policyResolution: Fixture.matchedResolution())
         )
         let core = ConsentCore()

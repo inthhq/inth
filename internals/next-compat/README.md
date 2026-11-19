@@ -31,7 +31,7 @@ For every scenario the suite (`shared/src/suite/index.ts`) checks:
 
 1. `next build` rendered the route the way the docs promise: static, ISR with the declared revalidate, dynamic, or partial (a Cache Components route with a static shell and a postponed hole). Read from `.next/prerender-manifest.json`, the route `.meta` file, and for Pages Router pages without data fetching `.next/server/pages-manifest.json`.
 2. The banner renders once the kernel holds an authoritative policy, and the location it reports matches the forwarded `x-vercel-ip-country` header.
-3. Who called `/init` and `/manifest`. The backend stub records every request; browser requests carry `sec-fetch-site`, server requests do not. `ssr` needs a server `/init` call with `x-c15t-country`, `client` needs exactly one browser call and no server call, the manifest scenarios need zero `/init` calls, and `manifest` additionally needs the backend `/manifest` to be fetched once across two page loads (the caching claim).
+3. Who called `/init` and `/manifest`. The backend stub records every request; browser requests carry `sec-fetch-site`, server requests do not. `ssr` needs a server `/init` call with `x-inth-country`, `client` needs exactly one browser call and no server call, the manifest scenarios need zero `/init` calls, and `manifest` additionally needs the backend `/manifest` to be fetched once across two page loads (the caching claim).
 4. The first HTML contains the banner only for the server-resolved scenarios.
 5. Accepting consent persists across a reload.
 6. No console errors or warnings and no page errors.

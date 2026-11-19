@@ -3,7 +3,7 @@
  * init script showed at once but has not stored yet.
  *
  * The init script hides the banner and starts the scripts in the tap's own
- * task, then stores the choice with `c15t.commit.js`, which it fetches at
+ * task, then stores the choice with `inth.commit.js`, which it fetches at
  * the tap. If the visitor leaves before that file arrives, the choice would
  * be lost, so the tap's task also writes this small marker. Whichever
  * stores the choice removes it: the commit file, or the engine recording

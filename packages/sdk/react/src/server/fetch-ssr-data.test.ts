@@ -100,7 +100,7 @@ describe('fetchSSRData', () => {
 	it('sends the SDK version and policy contract, and returns the producer contract', async () => {
 		const fetchMock = vi.fn().mockResolvedValue(
 			new Response(JSON.stringify({ categories: [], gvl: null }), {
-				headers: { 'x-c15t-policy-contract': '2' },
+				headers: { 'x-inth-policy-contract': '2' },
 				status: 200,
 			})
 		);
@@ -118,8 +118,8 @@ describe('fetchSSRData', () => {
 		expect(fetchMock.mock.calls[0]?.[0]).toBe(
 			'https://consent.example.com/api/inth/init'
 		);
-		expect(sent['x-c15t-version']).toBe(version);
-		expect(sent['x-c15t-policy-contract']).toMatch(/^\d+$/u);
+		expect(sent['x-inth-version']).toBe(version);
+		expect(sent['x-inth-policy-contract']).toMatch(/^\d+$/u);
 		expect(result?.producerPolicyContract).toBe('2');
 	});
 
@@ -133,7 +133,7 @@ describe('fetchSSRData', () => {
 
 			const requestHeaders = createRequestHeaders();
 			if (incomingVersion !== undefined) {
-				requestHeaders.set('x-c15t-version', incomingVersion);
+				requestHeaders.set('x-inth-version', incomingVersion);
 			}
 
 			await fetchSSRData({
@@ -145,7 +145,7 @@ describe('fetchSSRData', () => {
 				'https://consent.example.com/api/inth/init',
 				expect.objectContaining({
 					headers: expect.objectContaining({
-						'x-c15t-version': incomingVersion ?? version,
+						'x-inth-version': incomingVersion ?? version,
 					}),
 				})
 			);
@@ -170,7 +170,7 @@ describe('fetchSSRData', () => {
 			string
 		>;
 		expect(sent['sec-purpose']).toBe('prefetch');
-		expect(sent['x-c15t-country']).toBe('US');
+		expect(sent['x-inth-country']).toBe('US');
 	});
 
 	it("sends the visitor's full Accept-Language, unless an override sets the language", async () => {

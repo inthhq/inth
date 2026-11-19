@@ -6,13 +6,13 @@ group: frameworks
 
 ## Load the IAB build
 
-Load `c15t.iab.js` instead of `c15t.js` when your policy uses IAB TCF. It
+Load `inth.iab.js` instead of `inth.js` when your policy uses IAB TCF. It
 contains the CMP, the TC string encoder, the IAB banner and the purpose and
-vendor preference dialog. `c15t.js` and `c15t.headless.js` leave all of that out, so pages without an IAB policy stay
+vendor preference dialog. `inth.js` and `inth.headless.js` leave all of that out, so pages without an IAB policy stay
 smaller. The stock banner on those builds stands aside for a policy that
 uses the `iab` model, so a page that resolves one emits an `error` event and
 throws an `IABUnavailableError` (code `INTH_IAB_UNAVAILABLE`) as an uncaught
-error. So does `c15t.iab.js` with `iab: false`. Load `c15t.iab.js` for
+error. So does `inth.iab.js` with `iab: false`. Load `inth.iab.js` for
 visitors whose policy uses IAB TCF, or remove the `iab` model from the
 policy.
 
@@ -34,7 +34,7 @@ policy.
   }]);
 </script>
 <script
-  src="https://your-project.inth.app/c15t.iab.js"
+  src="https://your-project.inth.app/inth.iab.js"
   defer
 ></script>
 ```
@@ -45,14 +45,14 @@ CMP that wrote it, so never copy an ID from an example. A backend can supply
 `cmpId` and the vendor list instead. `vendors` limits the list to the vendors
 your site works with.
 
-Load only one Inth bundle. `c15t.iab.js` throws an error if `c15t.js`,
-`c15t.testing.js` or `c15t.headless.js` loaded first. When the resolved policy is not an IAB
+Load only one Inth bundle. `inth.iab.js` throws an error if `inth.js`,
+`inth.testing.js` or `inth.headless.js` loaded first. When the resolved policy is not an IAB
 policy, the IAB build shows the ordinary banner. If an IAB policy cannot load
 its vendor list, the banner shows an error and keeps its confirm buttons
 disabled.
 
 A [self-hosted backend](/docs/self-host/overview) serves this build at
-`/c15t.iab.js`. Set `script.config.iab` on the backend to supply CMP defaults.
+`/inth.iab.js`. Set `script.config.iab` on the backend to supply CMP defaults.
 
 ## Confirm IAB choices from your code
 

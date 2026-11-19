@@ -3,10 +3,10 @@ export default defineEventHandler((event) => {
 	const { headers } = event.node.req;
 
 	if (typeof country === 'string' && country.length > 0) {
-		headers['x-c15t-country'] = country.toUpperCase();
+		headers['x-inth-country'] = country.toUpperCase();
 	}
 
 	if (typeof region === 'string' && region.length > 0) {
-		headers['x-c15t-region'] = region.toUpperCase();
+		headers['x-inth-region'] = region.toUpperCase();
 	}
 });

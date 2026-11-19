@@ -62,7 +62,7 @@ const warmWhenIdle = function warmWhenIdle(): void {
  * bundler users, so a page that only shows the banner never downloads
  * them. The chunk starts loading in idle time once a banner or the trigger
  * is on screen, and at the latest when the dialog opens; the dialog then
- * renders the newest snapshot. `c15t.hosted.js` loads `c15t.dialog.js` the
+ * renders the newest snapshot. `inth.hosted.js` loads `inth.dialog.js` the
  * same way (`./dialog-import-script.ts`); the other script-tag builds
  * replace this module with `./dialog` at build time and stay one file.
  *

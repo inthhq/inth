@@ -1,7 +1,7 @@
 /**
  * `@inth/sdk/gpp` — IAB GPP for a bundled `@inth/sdk` client, the
  * way `@inth/sdk/devtools` mounts the DevTools panel. Script-tag pages
- * load `c15t.gpp.js` instead.
+ * load `inth.gpp.js` instead.
  *
  * @example
  * ```ts

@@ -45,7 +45,7 @@ describe('loadConsent', () => {
 			'fetch',
 			vi.fn<typeof globalThis.fetch>(() => Promise.resolve(Response.json(GVL)))
 		);
-		const event = createEvent({ headers: { 'x-c15t-country': 'DE' } });
+		const event = createEvent({ headers: { 'x-inth-country': 'DE' } });
 		await inthHandle({
 			mode: manifest({ snapshot: IAB_MANIFEST }),
 			projectUrl: 'https://consent.example.com',
@@ -53,7 +53,7 @@ describe('loadConsent', () => {
 		})({ event, resolve: () => Promise.resolve(new Response()) });
 		const { consent } = await loadConsent(event);
 		expect(consent.prefetch.initialIab?.gvlReference?.url).toMatch(
-			/^\/api\/inth\/init\?c15t-gvl=42/u
+			/^\/api\/inth\/init\?inth-gvl=42/u
 		);
 	});
 });

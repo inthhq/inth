@@ -144,10 +144,10 @@ final class WebViewConsentTests: XCTestCase {
 
     func testAPreferencesRequestMustCarryTheKeyOnlyTheTopFrameHolds() throws {
         let script = try WebViewConsentScript(allowedOrigins: ["https://app.example"], requestKey: "k3y")
-        XCTAssertTrue(script.isPreferencesRequest(#"{"type":"c15t:open-preferences","key":"k3y"}"#))
+        XCTAssertTrue(script.isPreferencesRequest(#"{"type":"inth:open-preferences","key":"k3y"}"#))
         // What a frame that can post to the channel, but cannot read the key, can send.
-        XCTAssertFalse(script.isPreferencesRequest(#"{"type":"c15t:open-preferences"}"#))
-        XCTAssertFalse(script.isPreferencesRequest(#"{"type":"c15t:open-preferences","key":"guess"}"#))
+        XCTAssertFalse(script.isPreferencesRequest(#"{"type":"inth:open-preferences"}"#))
+        XCTAssertFalse(script.isPreferencesRequest(#"{"type":"inth:open-preferences","key":"guess"}"#))
         XCTAssertFalse(script.isPreferencesRequest(nil))
     }
 
@@ -159,6 +159,6 @@ final class WebViewConsentTests: XCTestCase {
             next.update(decided),
             "\(WebViewConsentScripts.update)([\"https://www.example.com\"],\"t0k3n\",\(decided.json()));"
         )
-        XCTAssertTrue(next.isPreferencesRequest(#"{"type":"c15t:open-preferences","key":"k3y"}"#))
+        XCTAssertTrue(next.isPreferencesRequest(#"{"type":"inth:open-preferences","key":"k3y"}"#))
     }
 }

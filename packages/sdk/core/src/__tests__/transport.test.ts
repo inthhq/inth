@@ -1179,9 +1179,9 @@ describe('hosted init: CORS simple request', () => {
 		});
 		// The response is still read against the overrides as headers.
 		expect(request.requestHeaders).toMatchObject({
-			'x-c15t-country': 'US',
-			'x-c15t-gpc': '1',
-			'x-c15t-region': 'CA',
+			'x-inth-country': 'US',
+			'x-inth-gpc': '1',
+			'x-inth-region': 'CA',
 		});
 	});
 
@@ -1212,8 +1212,8 @@ describe('hosted init: CORS simple request', () => {
 			projectUrl: 'https://backend.example',
 		});
 		expect(request.requestHeaders).toMatchObject({
-			'x-c15t-country': 'GB',
-			'x-c15t-gpc': '1',
+			'x-inth-country': 'GB',
+			'x-inth-gpc': '1',
 		});
 	});
 
@@ -1831,13 +1831,13 @@ describe('createHostedTransport: request shape', () => {
 		const transport = createHostedTransport({
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
 			headers: {
-				'X-C15T-Region': 'BE',
+				'X-INTH-Region': 'BE',
 				'accept-language': 'de-DE,de;q=0.9',
 				authorization: 'Bearer t',
 				cookie: 'session=secret',
 				'sec-gpc': '1',
-				'x-c15t-country': 'DE',
 				'x-forwarded-for': '203.0.113.1',
+				'x-inth-country': 'DE',
 			},
 			projectUrl: '/api/inth',
 		});
@@ -1850,8 +1850,8 @@ describe('createHostedTransport: request shape', () => {
 			accept: 'application/json',
 			'accept-language': 'de-DE,de;q=0.9',
 			'sec-gpc': '1',
-			'x-c15t-country': 'DE',
-			'x-c15t-region': 'BE',
+			'x-inth-country': 'DE',
+			'x-inth-region': 'BE',
 		});
 	});
 
@@ -2017,7 +2017,7 @@ describe('createManifestTransport: local init resolution', () => {
 			gvl: null,
 			gvlReference: {
 				language: 'de',
-				url: '/api/inth/init?c15t-gvl=42&language=de',
+				url: '/api/inth/init?inth-gvl=42&language=de',
 				vendorListVersion: 42,
 			},
 			policyResolution: {
@@ -2378,12 +2378,12 @@ describe('experiment query parameter', () => {
 		const [url, init] = fetchSpy.mock.calls[0] ?? [];
 		// The header's `<id>=<arm>` value, URI-encoded parts, as a parameter.
 		expect(queryOf(url).get('experiment')).toBe('banner%20shape=wall');
-		expect(init?.headers).not.toHaveProperty('x-c15t-experiment');
+		expect(init?.headers).not.toHaveProperty('x-inth-experiment');
 		kernel.dispose();
 	});
 });
 
-describe('x-c15t-version header (issue #916)', () => {
+describe('x-inth-version header (issue #916)', () => {
 	test('hosted init and save carry the client version', async () => {
 		const fetchSpy = vi.fn(
 			// oxlint-disable-next-line require-await -- Match the asynchronous fetch contract.
@@ -2418,9 +2418,9 @@ describe('x-c15t-version header (issue #916)', () => {
 		// Init carries it in the query string, so it stays a simple request.
 		expect(queryOf(initUrl).get('v')).toMatch(/^\d+\.\d+\.\d+/u);
 		expect(queryOf(initUrl).get('contract')).toBe('1');
-		expect(init.headers).not.toHaveProperty('x-c15t-version');
+		expect(init.headers).not.toHaveProperty('x-inth-version');
 		const saveHeaders = saveInit.headers as Record<string, string>;
-		expect(saveHeaders['x-c15t-version']).toMatch(/^\d+\.\d+\.\d+/u);
+		expect(saveHeaders['x-inth-version']).toMatch(/^\d+\.\d+\.\d+/u);
 	});
 
 	test('manifest fetch and save both carry the client version', async () => {
@@ -2465,12 +2465,12 @@ describe('x-c15t-version header (issue #916)', () => {
 			{}) as Record<string, string>;
 		// The manifest/GVL hosts are inth/tenant-controlled (IAB requires
 		// self-hosting the GVL), so version telemetry rides here too.
-		expect(manifestHeaders['x-c15t-version']).toMatch(/^\d+\.\d+\.\d+/u);
+		expect(manifestHeaders['x-inth-version']).toMatch(/^\d+\.\d+\.\d+/u);
 
 		expect(saveCall?.[1]).toBeDefined();
 		const saveInit = saveCall?.[1] as RequestInit;
 		const saveHeaders = saveInit.headers as Record<string, string>;
-		expect(saveHeaders['x-c15t-version']).toMatch(/^\d+\.\d+\.\d+/u);
+		expect(saveHeaders['x-inth-version']).toMatch(/^\d+\.\d+\.\d+/u);
 	});
 });
 

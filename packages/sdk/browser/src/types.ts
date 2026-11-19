@@ -46,7 +46,7 @@ import type { Theme } from '@inth/sdk-ui/theme';
  *   resolved locally so the banner can render without waiting on `/init`.
  *   Falls back to `/init` with a warning when the manifest is unavailable.
  *
- * Tests load `c15t.testing.js` instead, which resolves a policy with no
+ * Tests load `inth.testing.js` instead, which resolves a policy with no
  * backend.
  */
 export type ConsentModeName = 'hosted' | 'manifest';
@@ -232,7 +232,7 @@ export interface ConsentClientBaseOptions extends Pick<
 	 * instead of `'unsafe-inline'`. A script's own `nonce` takes precedence.
 	 *
 	 * The script-tag build reads `data-nonce`, then the tag's own `nonce`, so
-	 * `<script nonce="…" src=".../c15t.js">` needs nothing else.
+	 * `<script nonce="…" src=".../inth.js">` needs nothing else.
 	 *
 	 * With a nonce set, inert `<script type="text/plain" data-inth-category>`
 	 * tags run only when they carry the same nonce; others are skipped with
@@ -245,7 +245,7 @@ export interface ConsentClientBaseOptions extends Pick<
 	/** IAB configuration. Requires the `@inth/sdk/iab-client` entry. */
 	iab?: ConsentRuntimeOptions['iab'];
 	/**
-	 * IAB GPP options for `c15t.gpp.js` on a script-tag page: an object sets
+	 * IAB GPP options for `inth.gpp.js` on a script-tag page: an object sets
 	 * `usApproach`, `usFallback`, `mspaMode`, `optOutCategories`, `cmpId`
 	 * or `tcf`, and `false` keeps GPP off although the script loaded. In a
 	 * bundled app, call `mountGPP()` from `@inth/sdk/gpp` instead.
@@ -360,7 +360,7 @@ export interface ScriptTagClientOptions extends ConsentClientBaseOptions {
 	mode?: ProviderTransportFactory | ConsentModeName;
 	/**
 	 * Backend origin: your Inth project URL. Required, except in
-	 * `c15t.testing.js`.
+	 * `inth.testing.js`.
 	 */
 	projectUrl?: string;
 	/** Inline consent manifest for `manifest` mode. */
@@ -372,7 +372,7 @@ export interface ScriptTagClientOptions extends ConsentClientBaseOptions {
 	manifestUrl?: string;
 }
 
-/** Options for `@inth/sdk/hosted` and the default `c15t.js` bundle. */
+/** Options for `@inth/sdk/hosted` and the default `inth.js` bundle. */
 export interface HostedConsentClientOptions extends Omit<
 	ScriptTagClientOptions,
 	'mode' | 'manifest' | 'manifestUrl'
@@ -385,7 +385,7 @@ export interface HostedConsentClientOptions extends Omit<
 	manifestUrl?: never;
 }
 
-/** Options for `c15t.testing.js`. */
+/** Options for `inth.testing.js`. */
 export interface TestingScriptTagOptions extends Omit<
 	ScriptTagClientOptions,
 	'mode' | 'projectUrl' | 'manifest' | 'manifestUrl'

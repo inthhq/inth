@@ -23,7 +23,7 @@ describe('inthProxy', () => {
 		expect(response.headers.get('set-cookie')).toBeNull();
 		expect(response.cookies.get('c15t-sid')).toBeUndefined();
 		expect(renderedCookie(response)).toBe('theme=dark');
-		expect(response.headers.get('x-middleware-request-x-c15t-country')).toBe(
+		expect(response.headers.get('x-middleware-request-x-inth-country')).toBe(
 			'DE'
 		);
 		expect(response.headers.get('x-middleware-request-sec-gpc')).toBe('1');

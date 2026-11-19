@@ -13,7 +13,7 @@
  * fingerprint, no user agent, and one egress IP for every visitor, which
  * scores as a bot. Forwarding the browser's identity headers and the real
  * client IP gives the WAF the same signals a direct request would carry, and
- * `x-c15t-proxy` plus the version headers give the platform a stable key for
+ * `x-inth-proxy` plus the version headers give the platform a stable key for
  * a firewall bypass rule.
  *
  * Each adapter decides where the forwarding values come from (a trusted
@@ -81,7 +81,7 @@ const CONSENT_PROXY_PUBLIC_FORWARD_HEADERS: ReadonlySet<string> = new Set(
  */
 const PROXY_PUBLIC_HEADERS: ReadonlySet<string> = new Set([
 	...PUBLIC_REQUEST_HEADERS,
-	'x-c15t-proxy',
+	'x-inth-proxy',
 	'x-forwarded-for',
 	'x-forwarded-host',
 	'x-forwarded-proto',
@@ -357,13 +357,13 @@ export interface BuildConsentProxyRequestHeadersInput {
 	cookieNames?: readonly string[];
 	/** Hop-chain values the adapter vouches for. */
 	forwarding: ConsentProxyForwarding;
-	/** Package name sent as `x-c15t-proxy`, for example `@inth/svelte`. */
+	/** Package name sent as `x-inth-proxy`, for example `@inth/svelte`. */
 	adapter: string;
 }
 
 /**
  * Builds the upstream request headers: the browser allowlist, then the
- * forwarding trio, then the Inth version header and `x-c15t-proxy`.
+ * forwarding trio, then the Inth version header and `x-inth-proxy`.
  *
  * @param input - Request, allowlists, forwarding values and adapter name.
  */
@@ -404,7 +404,7 @@ const buildConsentProxyRequestHeaders =
 		for (const [name, value] of Object.entries(inthVersionHeaders)) {
 			headers.set(name, value);
 		}
-		headers.set('x-c15t-proxy', adapter);
+		headers.set('x-inth-proxy', adapter);
 		return headers;
 	};
 
@@ -479,7 +479,7 @@ export interface ForwardConsentRequestInput {
 	options: ResolvedConsentProxyOptions;
 	/** Hop-chain values the adapter vouches for. */
 	forwarding: ConsentProxyForwarding;
-	/** Package name sent as `x-c15t-proxy`, for example `@inth/svelte`. */
+	/** Package name sent as `x-inth-proxy`, for example `@inth/svelte`. */
 	adapter: string;
 	/** Fetch implementation. Defaults to `globalThis.fetch`. */
 	fetch?: typeof globalThis.fetch;

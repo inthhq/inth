@@ -10,7 +10,7 @@ import kotlinx.serialization.json.put
 import java.security.SecureRandom
 
 /**
- * What a page inside a WebView reads as `window.__c15tNativeConsent.getState()`.
+ * What a page inside a WebView reads as `window.__inthNativeConsent.getState()`.
  *
  * Consent state only: no subject id, no policy token, no location. The shape is
  * "WebView consent" in `packages/native-protocol/CONTRACT.md`, and `webViewConsentSource()` in
@@ -122,7 +122,7 @@ class WebViewConsentScript(
 	private val tokenJson = JsonPrimitive(token).toString()
 	private val requestKeyJson = JsonPrimitive(requestKey).toString()
 	private val preferencesRequest = buildJsonObject {
-		put("type", "c15t:open-preferences")
+		put("type", "inth:open-preferences")
 		put("key", requestKey)
 	}.toString()
 
@@ -160,7 +160,7 @@ class WebViewConsentScript(
 
 	companion object {
 		/** The message-channel name pages post to. */
-		const val CHANNEL: String = "c15tConsent"
+		const val CHANNEL: String = "inthConsent"
 
 		private val ORIGIN = Regex("""^(https?)://([a-z0-9-]+(?:\.[a-z0-9-]+)*|\[[0-9a-f:]+\])(?::([0-9]{1,5}))?/?$""", RegexOption.IGNORE_CASE)
 		private val LOOPBACK = setOf("localhost", "127.0.0.1", "[::1]")

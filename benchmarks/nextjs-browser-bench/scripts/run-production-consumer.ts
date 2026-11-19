@@ -123,7 +123,7 @@ const repoRoot = resolve(benchDir, '../..');
 const templateDir = join(benchDir, 'production-consumer', 'template');
 const bannerRootTestId = 'consent-banner-root';
 const bannerElementTimingName = 'inth-consent-banner';
-const manifestTokenHeader = 'x-c15t-bench-manifest-token';
+const manifestTokenHeader = 'x-inth-bench-manifest-token';
 
 const readCliFlags = function readCliFlags(name: string): string[] {
 	const values: string[] = [];
