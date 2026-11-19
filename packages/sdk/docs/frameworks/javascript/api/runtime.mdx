@@ -239,8 +239,11 @@ paths into the integration's options:
 When your options set any listed path, the script loads nothing: not from the
 registry, and not from the vendor's URL. `onDebug` reports an `error` that names
 the path. c15t reads an option as the loader does: `undefined`, `null`, `''`,
-`false` and `0` count as unset. A script that carries no options to check also
-loads nothing. A `refuseIfSet` that is not a list of paths makes the entry one
+`false` and `0` count as unset, and so does a blank `asyncScriptUrl`. For
+LogRocket that means a page that moves the logger with `asyncScriptUrl`, or sets
+`sdkServer` or `enterpriseServer`, gets no LogRocket at all while the registry
+is on: the loader would fetch a file the list does not name. A script that
+carries no options to check also loads nothing. A `refuseIfSet` that is not a list of paths makes the entry one
 c15t cannot use. To load such a script with that option, give it your own
 `scriptLoader.sources` entry, which wins over the list.
 

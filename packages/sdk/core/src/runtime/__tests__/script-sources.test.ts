@@ -1779,6 +1779,36 @@ describe('experimentalScriptRegistry refuseIfSet', () => {
 		}
 	);
 
+	test("refuses by a top-level path, as LogRocket's asyncScriptUrl is", () => {
+		const entry = {
+			integrity: HASH_INTEGRITY,
+			refuseIfSet: [...PATHS, 'asyncScriptUrl'],
+			src: HASH_SRC,
+		};
+		const moved = startListed(
+			{
+				integrationOptions: {
+					asyncScriptUrl: 'https://lr.example.com/logger.js',
+					initOptions: {},
+				},
+			},
+			entry
+		);
+		expect(element('vendor')).toBeNull();
+		expect(moved.refusal()).toMatchObject({
+			data: { refuseIfSet: 'asyncScriptUrl' },
+		});
+		moved.runtime.dispose();
+
+		// The helper publishes a blank asyncScriptUrl as undefined.
+		const unset = startListed(
+			{ integrationOptions: { asyncScriptUrl: undefined, initOptions: {} } },
+			entry
+		);
+		expect(element('vendor')?.getAttribute('src')).toBe(HASH_SRC);
+		unset.runtime.dispose();
+	});
+
 	test.each([
 		['undefined', undefined],
 		['null', null],
