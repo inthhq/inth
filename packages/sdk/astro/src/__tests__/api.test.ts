@@ -73,6 +73,22 @@ describe('createConsentRouteHandlers', () => {
 		}
 	});
 
+	it("serves a browser-resolved mode's absolute manifestUrl on a same-origin backend", async () => {
+		const fetch = upstream();
+		const response = await createConsentRouteHandlers({
+			fetch,
+			options: options({
+				mode: manifestMode({
+					manifestUrl: 'https://cdn.example.com/m.json',
+					resolve: 'browser',
+				}),
+				projectUrl: '',
+			}),
+		}).manifest(request('/api/inth/manifest'));
+		expect(response.status).toBe(200);
+		expect(fetch.mock.calls[0]?.[0]).toBe('https://cdn.example.com/m.json');
+	});
+
 	it('resolves an inline manifest without fetching it', async () => {
 		const fetch = upstream();
 		const handlers = createConsentRouteHandlers({

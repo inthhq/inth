@@ -279,6 +279,27 @@ describe('resolveOptions', () => {
 		expect(calls.logger.warn).not.toHaveBeenCalled();
 	});
 
+	it('bundles an absolute manifestUrl for a static site saving on its own origin', async () => {
+		const fetch = vi.fn<typeof globalThis.fetch>(() =>
+			Promise.resolve(Response.json(INLINE_MANIFEST))
+		);
+		vi.stubGlobal('fetch', fetch);
+		const { calls } = await runSetup({
+			mode: manifestMode({
+				manifestUrl: 'https://cdn.example.com/m.json',
+				resolve: 'browser',
+			}),
+			projectUrl: '',
+		});
+		expect(fetch).toHaveBeenCalledWith(
+			'https://cdn.example.com/m.json',
+			expect.anything()
+		);
+		expect(serverOptionsSource(calls)).toContain(
+			JSON.stringify(INLINE_MANIFEST.revision)
+		);
+	});
+
 	it('astro dev warns and keeps going when the default fetch fails', async () => {
 		vi.stubEnv('INTH_ON_BUILD_ERROR', '');
 		vi.stubGlobal(

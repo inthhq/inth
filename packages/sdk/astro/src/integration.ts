@@ -29,6 +29,7 @@ import {
 } from '@inth/sdk/server';
 import type { AstroIntegration } from 'astro';
 
+import { absoluteManifestUrl } from './libs/absolute-manifest-url';
 import { createClassMapPlugin } from './libs/class-map-plugin';
 import type {
 	InthAstroOptions,
@@ -814,7 +815,8 @@ const missingAdapterMessage = function missingAdapterMessage(
 /**
  * Fetch the manifest for `astro build` or `astro dev` and put it in the
  * resolved mode as its `snapshot`, for a mode that reads one
- * (`needsBuildSnapshot` in `@inth/sdk/server`).
+ * (`needsBuildSnapshot` in `@inth/sdk/server`) or has an absolute
+ * `manifestUrl`.
  *
  * @param resolved - The resolved options; its mode gains the snapshot.
  * @param command - `build` or `dev`.
@@ -829,16 +831,19 @@ const bundleBuildManifest = async function bundleBuildManifest(
 	envSource: BuildEnvSource
 ): Promise<void> {
 	const { mode } = resolved;
+	const manifestUrl = absoluteManifestUrl(mode);
 	const { loadManifestForBuild } = await import('@inth/sdk/build');
 	const snapshot = await loadManifestForBuild(
-		{ projectUrl: resolved.projectUrl },
+		{ manifestUrl, projectUrl: resolved.projectUrl },
 		{
 			command,
 			envNames: [PROJECT_URL_ENV],
 			envSource,
 			label: '@inth/astro',
 			logger,
-			mode,
+			// Core reads an absolute `manifestUrl` at runtime and skips it;
+			// Astro bundles it (see `absoluteManifestUrl`).
+			mode: manifestUrl ? { ...mode, manifestUrl: undefined } : mode,
 			onBuildError: resolved.onBuildError,
 		}
 	);

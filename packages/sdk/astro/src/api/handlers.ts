@@ -17,6 +17,7 @@ import {
 } from '@inth/sdk/server';
 import type { ConsentRouteFetchGvl, ManifestFetch } from '@inth/sdk/server';
 
+import { absoluteManifestUrl } from '../libs/absolute-manifest-url';
 import type { InthResolvedOptions } from '../types';
 
 /**
@@ -113,13 +114,15 @@ export const createConsentRouteHandlers = function createConsentRouteHandlers(
 	handlerOptions: ConsentRouteHandlerOptions
 ) {
 	const { i18n, mode, projectUrl, routePrefix } = handlerOptions.options;
+	const { route } = resolveServerMode({
+		adapter: '@inth/astro',
+		mode,
+		projectUrl,
+		routePrefix,
+	});
 	const handle = createConsentRouteHandler({
-		...resolveServerMode({
-			adapter: '@inth/astro',
-			mode,
-			projectUrl,
-			routePrefix,
-		}).route,
+		...route,
+		manifestUrl: route.manifestUrl ?? absoluteManifestUrl(mode),
 		adapter: '@inth/astro',
 		fetch: handlerOptions.fetch,
 		fetchGvl: handlerOptions.fetchGvl,
