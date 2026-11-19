@@ -119,7 +119,7 @@ try {
 				'turbo',
 				'run',
 				'test:compat',
-				`--filter=@c15t/next-compat-${target}`,
+				`--filter=@inth/next-compat-${target}`,
 			]);
 		}
 	} else if (kind === 'parity') {

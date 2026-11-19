@@ -98,7 +98,7 @@ export const browserGroups = (
     .toSorted();
   const compat = selected
     .filter((workspace) => workspace.scripts.includes("test:compat"))
-    .map((workspace) => workspace.name.replace("@c15t/next-compat-", ""));
+    .map((workspace) => workspace.name.replace("@inth/next-compat-", ""));
   const journeys = everything
     ? allJourneys
     : allJourneys.filter((target) =>
