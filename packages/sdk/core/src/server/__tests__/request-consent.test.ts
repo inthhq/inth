@@ -38,6 +38,7 @@ const NOW = 1_780_000_000_000;
 /** The URL a render fetched, without the consent journey it adds as a query. */
 const target = (input: unknown): string => String(input).split('?')[0] ?? '';
 const CONSENTED = `inth=c.necessary:1,c.marketing:1,i.t:${NOW - 1000}`;
+const C15T_CONSENTED = CONSENTED.replace('inth=', 'c15t=');
 const DISMISSED = `inth-notice=v=1&t=${NOW - 1000}&f=${'a'.repeat(64)}`;
 
 const MANIFEST = {
@@ -572,6 +573,18 @@ describe('forwarding', () => {
 		expect(headers.has('x-forwarded-host')).toBe(false);
 		expect(headers.has('x-tenant')).toBe(false);
 	});
+
+	test.each([
+		['only a c15t choice', `session=secret; ${C15T_CONSENTED}`, C15T_CONSENTED],
+		['both choices', `${C15T_CONSENTED}; ${CONSENTED}`, CONSENTED],
+	])(
+		'hosted /init gets the consent cookie the reader picks, with %s',
+		async (_name, cookie, sent) => {
+			const fetch = upstream();
+			await render({ fetch, headers: { cookie }, projectUrl: BACKEND });
+			expect(sentHeaders(fetch, '/init').get('cookie')).toBe(sent);
+		}
+	);
 
 	test('named headers travel; cookies and hop-chain headers cannot be named', async () => {
 		const fetch = upstream();
