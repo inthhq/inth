@@ -128,7 +128,7 @@ const readCurrent = function readCurrent(
 		isRecord(body) &&
 		isRecord(body.document) &&
 		typeof body.document.id === 'string' &&
-		V1_UUID_PATTERN.test(body.document.id) &&
+		V1_UUID_PATTERN.test(body.document.id.toLowerCase()) &&
 		typeof body.document.type === 'string' &&
 		typeof body.document.version === 'string' &&
 		typeof body.document.hash === 'string' &&

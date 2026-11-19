@@ -76,6 +76,16 @@ describe('getCurrent: GET /v1/documents/:type/current', () => {
 		expect(calls[0]?.headers).toEqual({ accept: 'application/json' });
 	});
 
+	test('reads a document whose id is an uppercase UUID', async () => {
+		const answer = {
+			document: { ...CURRENT.document, id: CURRENT.document.id.toUpperCase() },
+		};
+		const { fetch } = stubFetch(() => json(200, answer));
+		const documents = createDocumentsClient({ fetch, projectUrl: PROJECT_URL });
+
+		await expect(documents.getCurrent('terms_us')).resolves.toEqual(answer);
+	});
+
 	test.each([
 		['a page', () => new Response('<html>ok</html>', { status: 200 })],
 		[
@@ -312,6 +322,14 @@ describe('recordAcceptances: POST /v1/documents/acceptances', () => {
 			{
 				acceptances: [{ hash: HASH, type: 'Terms' }],
 				idempotencyKey: KEY,
+				subjectId: SUBJECT,
+			},
+		],
+		[
+			'an idempotency key that is a list holding a valid key',
+			{
+				acceptances: [{ hash: HASH, type: 'terms_us' }],
+				idempotencyKey: [KEY] as unknown as string,
 				subjectId: SUBJECT,
 			},
 		],
