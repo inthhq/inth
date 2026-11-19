@@ -379,6 +379,15 @@ describe('databuddy contract', () => {
 			},
 			{ integrity: null, src: 'https://cdn.databuddy.cc/replay.custom.js' },
 		],
+		[
+			'the pinned release when replay.scriptUrl is blank',
+			{ replay: { scriptUrl: '  ' }, version: '2026-10-30.1' },
+			{
+				integrity:
+					'sha384-naub2msIlvDqEZRXGKjjR1CEOa9ZNszRcSgfitF8vO2qgKGlygxmOkxzH/puniCl',
+				src: 'https://cdn.databuddy.cc/replay.2026-10-30.1.js',
+			},
+		],
 	])('loads replay.js from %s', (_name, options, expected) => {
 		const { replayScripts } = probeDatabuddyScripts();
 

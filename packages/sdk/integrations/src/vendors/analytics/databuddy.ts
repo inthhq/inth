@@ -234,8 +234,10 @@ export interface DatabuddyConsentOptions {
 	 * `databuddy.js` and `replay.js`: they load from
 	 * `https://cdn.databuddy.cc/databuddy.<version>.js`. A release this
 	 * package knows the hashes of loads with subresource integrity; another
-	 * loads without it. Unset loads Databuddy's unversioned files, and the
-	 * Inth script registry can pin their versions for you.
+	 * loads without it. Unset loads Databuddy's unversioned files. The Inth
+	 * script registry can pin `databuddy.js` for you, but not `replay.js`.
+	 * With the registry on, a pin without integrity yields to the registry's
+	 * `databuddy.js`.
 	 * @default undefined
 	 */
 	version?: string;

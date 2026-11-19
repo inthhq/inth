@@ -9,7 +9,7 @@ import {
 } from '../../__tests__/helpers';
 import { databuddy } from './databuddy';
 
-/** The hashes of release 2026-10-30.1, checked against cdn.databuddy.cc. */
+/** The `databuddy.js` hash of release 2026-10-30.1, checked against cdn.databuddy.cc. */
 const PINNED_INTEGRITY =
 	'sha384-xXKfqQUu53gQi7i1OUzZ1t/rlpkyILPqMsDxO4MQH70gAX/yiDVUj1JogQaW0M2s';
 
