@@ -539,9 +539,12 @@ describe('experimentalScriptRegistry', () => {
 			Promise.resolve({ scriptRegistry: { sources: scriptSources } })
 		);
 
-	/** A runtime with consent management on and no stored consent. */
+	/**
+	 * A runtime with consent management on and no stored consent, unless
+	 * the test passes `persistence`.
+	 */
 	const startWith = (
-		options: Omit<ConsentRuntimeOptions, 'mode' | 'persistence'> & {
+		options: Omit<ConsentRuntimeOptions, 'mode'> & {
 			mode: ProviderTransportFactory;
 		}
 	) => {
