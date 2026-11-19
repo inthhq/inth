@@ -103,7 +103,7 @@ private final class ConsentColorCache: @unchecked Sendable {
 
 /// Appearance of the native consent screens. Every value has a c15t default.
 ///
-/// Pass one to `c15tConsent(presenter:privacyPolicyURL:theme:)`, set ``current``
+/// Pass one to `inthConsent(presenter:privacyPolicyURL:theme:)`, set ``current``
 /// once at launch, or declare the same values in `Info.plist` under the
 /// ``InfoPlistKey`` names. Plist values override ``current``; an explicit theme
 /// passed to the root modifier takes precedence over both.

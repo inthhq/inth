@@ -41,14 +41,14 @@ is ready, once per owed prompt. `ConsentPrompt.onFinished` reports each closed
 session with its outcome, which is where a follow-up step such as Apple's
 tracking request attaches.
 
-On Apple platforms, apply `.c15tConsent(configuration, privacyPolicyURL:)` to the
+On Apple platforms, apply `.inthConsent(configuration, privacyPolicyURL:)` to the
 SwiftUI root, or make `ConsentRootViewController` the UIKit window root. Both
 install the engine on first appearance and retry after protected data becomes
-available. `.c15tConsent(privacyPolicyURL:)` attaches to a core the app
+available. `.inthConsent(privacyPolicyURL:)` attaches to a core the app
 installed itself. Call `ConsentPrompt.current?.presentPreferences()` from the
 app's standing Privacy settings entry. An app that needs its own presenter
 lifetime can still keep a `ConsentPresenter(core:)` and apply
-`c15tConsent(presenter:privacyPolicyURL:)`, as
+`inthConsent(presenter:privacyPolicyURL:)`, as
 `ios/Sources/consent-demo-app.swift` does.
 
 On Android, install with `InthAndroid.install`, then place
@@ -227,7 +227,7 @@ ConsentTheme.current = ConsentTheme(
     copy: ConsentTheme.Copy(headline: "Before you shop.", introduction: "Pantry uses data to remember your basket, measure what works and show offers you might like."))
 
 // 2. Pass one to the root modifier.
-content.c15tConsent(presenter: presenter, privacyPolicyURL: policyURL, theme: PantryBrand.theme)
+content.inthConsent(presenter: presenter, privacyPolicyURL: policyURL, theme: PantryBrand.theme)
 ```
 
 ```kotlin

@@ -125,7 +125,7 @@ final class InthConsentHost {
             let overlay = ConsentPassthroughView(frame: parent.view.bounds)
             overlay.autoresizingMask = [.flexibleWidth, .flexibleHeight]
             presenter.onAnnouncement = { UIAccessibility.post(notification: .announcement, argument: $0) }
-            let controller = UIHostingController(rootView: AnyView(Color.clear.c15tConsent(
+            let controller = UIHostingController(rootView: AnyView(Color.clear.inthConsent(
                 presenter: presenter, privacyPolicyURL: privacyPolicyURL,
                 onNoticeFrameChange: { [weak overlay] in overlay?.noticeFrame = $0 })))
             controller.view.backgroundColor = .clear

@@ -8,7 +8,7 @@ struct MyApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .c15tConsent(
+                .inthConsent(
                     InthAppleConfiguration(
                         backendURL: "https://your-project.inth.app",
                         consentCategories: [.necessary, .measurement, .marketing]

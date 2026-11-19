@@ -162,7 +162,7 @@ private extension DynamicTypeSize {
 ///   - onNoticeFrameChange: Optional notice bounds for UIKit hosts that pass touches through outside the notice.
 public extension View {
     @MainActor
-    func c15tConsent(presenter: ConsentPresenter, privacyPolicyURL: URL, theme: ConsentTheme? = nil,
+    func inthConsent(presenter: ConsentPresenter, privacyPolicyURL: URL, theme: ConsentTheme? = nil,
         onNoticeFrameChange: ((CGRect) -> Void)? = nil) -> some View {
         modifier(ConsentPresentationModifier(presenter: presenter, privacyPolicyURL: privacyPolicyURL,
             theme: (theme ?? ConsentTheme.resolved()).withSystemAppearance(tint: .appAccent()).withReadableDecisions(),
