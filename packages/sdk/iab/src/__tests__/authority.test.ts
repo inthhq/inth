@@ -578,6 +578,30 @@ test('a c15t tab withdrawing its receipt withdraws the authority read from it', 
 	);
 });
 
+test("a c15t tab's receipt change leaves the TC string of a page with its own receipt", async () => {
+	const kernel = makeKernel();
+	const addon = createAddon(kernel);
+	await addon.whenReady?.();
+	addon.acceptAll();
+	await addon.save();
+	const granted = kernel.getSnapshot().iab?.authority?.tcString;
+	expect(granted).toBeTruthy();
+	const { cmpApi } = addon;
+	if (!cmpApi) {
+		throw new Error('Expected a CMP API');
+	}
+	const published = vi.spyOn(cmpApi, 'updateConsent');
+
+	localStorage.setItem('c15t-iab-authority-v1', '{}');
+	window.dispatchEvent(
+		new StorageEvent('storage', { key: 'c15t-iab-authority-v1' })
+	);
+	await vi.advanceTimersByTimeAsync(10);
+
+	expect(published.mock.calls.map(([tcString]) => tcString)).not.toContain('');
+	expect(kernel.getSnapshot().iab?.authority?.tcString).toBe(granted);
+});
+
 test("an Inth receipt wins over c15t's", async () => {
 	const original = makeKernel();
 	const addon = createIAB({ cmpId: 28, gvl: completeGVL, kernel: original });

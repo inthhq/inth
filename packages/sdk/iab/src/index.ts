@@ -47,6 +47,7 @@ import {
 	clearAuthorityReceipt,
 	createAuthorityReceipt,
 	readAuthorityReceipt,
+	hasOwnReceipt,
 	readAuthorityReceiptText,
 	storeAuthority,
 	validateAuthority,
@@ -1349,6 +1350,10 @@ export const createIAB = function createIAB(
 				event.key !== IAB_STORAGE_KEYS.c15tAuthority &&
 				event.key !== null)
 		) {
+			return;
+		}
+		if (event.key === IAB_STORAGE_KEYS.c15tAuthority && hasOwnReceipt()) {
+			// c15t's receipt only stands in while Inth has none.
 			return;
 		}
 		const snapshot = kernel.getSnapshot();

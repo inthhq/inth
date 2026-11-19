@@ -56,6 +56,15 @@ export const readAuthorityReceiptText = function readAuthorityReceiptText():
 	}
 };
 
+/** Whether Inth's own receipt is stored. */
+export const hasOwnReceipt = function hasOwnReceipt(): boolean {
+	try {
+		return localStorage.getItem(IAB_STORAGE_KEYS.authority) !== null;
+	} catch {
+		return false;
+	}
+};
+
 /** Reads the addon receipt without writing or extending its lifetime. */
 export const readAuthorityReceipt = function readAuthorityReceipt(
 	text = readAuthorityReceiptText()
