@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { join } from "node:path";
 
@@ -66,6 +66,29 @@ const generatedPageExtension = (name: string, extensions: string[]): string => {
   return extension;
 };
 
+/**
+ * A catch-all route already in the directory the consent route goes in,
+ * under any parameter name. Next.js refuses two catch-alls side by side.
+ */
+const existingCatchAll = (
+  cwd: string,
+  stem: string,
+  extensions: string[]
+): string | undefined => {
+  const directory = stem.slice(0, stem.lastIndexOf("/"));
+  if (!existsSync(join(cwd, directory))) {
+    return undefined;
+  }
+  const file = readdirSync(join(cwd, directory)).find((name) =>
+    extensions.some(
+      (extension) =>
+        name.endsWith(`.${extension}`) &&
+        /^\[\[?\.\.\.[\w$]+\]\]?$/u.test(name.slice(0, -(extension.length + 1)))
+    )
+  );
+  return file ? `${directory}/${file}` : undefined;
+};
+
 const preserveNextEntries = (
   generation: GenerationPlan,
   cwd: string,
@@ -76,9 +99,13 @@ const preserveNextEntries = (
       continue;
     }
     const stem = name.replace(/\.tsx?$/u, "");
-    const existing = extensions
-      .map((extension) => `${stem}.${extension}`)
-      .find((candidate) => existsSync(join(cwd, candidate)));
+    const existing =
+      extensions
+        .map((extension) => `${stem}.${extension}`)
+        .find((candidate) => existsSync(join(cwd, candidate))) ??
+      (stem.endsWith("/[...inth]")
+        ? existingCatchAll(cwd, stem, extensions)
+        : undefined);
     const target =
       existing ?? `${stem}.${generatedPageExtension(name, extensions)}`;
     if (!existing && target === name) {
@@ -117,7 +144,7 @@ const preserveNextEntries = (
         "Keep your providers and styles. Import ConsentRoot, ConsentBanner, ConsentDialog, and ConsentDialogLink from '@inth/nextjs'. Wrap <Component {...pageProps} /> and the consent components in <ConsentRoot state={pageProps.consent}>.";
     } else if (stem.endsWith("/[...inth]")) {
       guidance =
-        "Keep or adapt your existing consent handler. Import createPagesConsentRoute from '@inth/nextjs/pages' and use createPagesConsentRoute() as the default handler for /api/inth.";
+        "Keep or adapt your existing consent handler. Import createPagesConsentRoute from '@inth/nextjs/pages' and use createPagesConsentRoute() as the default handler for /api/inth. If the file's catch-all parameter is not named inth, pass its name as the second argument.";
     }
     generation.instructions.push(
       `Integrate c15t into ${existing}: ${guidance}`

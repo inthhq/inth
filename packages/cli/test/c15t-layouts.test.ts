@@ -87,6 +87,22 @@ it.each([
   }
 );
 
+it.each(["[...path].ts", "[[...path]].ts"])(
+  "keeps an existing consent catch-all named %s",
+  async (file) => {
+    const api = path.join(directory, "pages/api/inth");
+    await mkdir(api, { recursive: true });
+    await writeFile(path.join(api, file), "export default () => {};\n");
+    const result = await runGenerationWorkflow(
+      ["setup", "--framework", "next-pages", "--apply", "--skip-install"],
+      context,
+      { cwd: directory }
+    );
+    expect(result.created).toContain("pages/_app.tsx");
+    expect(await readdir(api)).toEqual([file]);
+  }
+);
+
 it("reads a real extension property after comments without stripping URL strings", async () => {
   const config =
     "export default { docs: 'https://example.com/docs', pageExtensions: /* next pages */ [\n'page.js', // page.tsx is unused\n] };\n";
