@@ -102,6 +102,21 @@ describe('resolveServerMode: manifest()', () => {
 		expect(server.browser.mode).toBe(mode);
 	});
 
+	test("serverResolvesBrowserMode resolves resolve: 'browser' as manifest() on the server", () => {
+		const mode = manifest({
+			manifestUrl: '/api/inth/manifest',
+			resolve: 'browser',
+		});
+		const server = resolve({ mode, serverResolvesBrowserMode: true });
+		expect(server.consent).toMatchObject({
+			manifest: BUILT,
+			manifestUrl: undefined,
+			mode: 'manifest',
+			projectUrl: BACKEND,
+		});
+		expect(server.browser.mode).toBe(mode);
+	});
+
 	test('without a backend or a manifest nothing resolves', () => {
 		const { consent } = resolve({
 			buildSnapshot: undefined,

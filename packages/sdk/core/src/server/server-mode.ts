@@ -15,8 +15,9 @@
  *   the relative URL. One on the app's own consent route is the browser's
  *   way to that route, which reads `${projectUrl}/manifest`, so the server
  *   and the route read that instead of calling themselves.
- *   `resolve: 'browser'` resolves nothing on the server, and its
- *   `manifestUrl` is what the browser reads in place of the route.
+ *   `resolve: 'browser'` resolves nothing on the server, unless the
+ *   adapter's render resolves it anyway (`serverResolvesBrowserMode`), and
+ *   its `manifestUrl` is what the browser reads in place of the route.
  * - `hosted()`: the server asks the mode's `initUrl`, else
  *   `${projectUrl}/init`, with the mode's `headers`.
  * - `testing()`: the server resolves the test policy offline when the
@@ -85,6 +86,17 @@ export interface ServerModeOptions {
 	 * @default false
 	 */
 	browserTransports?: boolean;
+	/**
+	 * A render resolves `manifest({ resolve: 'browser' })` from the build's
+	 * snapshot or `${projectUrl}/manifest`, as it does `manifest()`, so a
+	 * page rendered per visitor holds the policy and the browser resolver
+	 * serves only re-inits and pages rendered without server state
+	 * (Next.js's `resolveConsent`). Otherwise the server reads the cookie
+	 * only.
+	 *
+	 * @default false
+	 */
+	serverResolvesBrowserMode?: boolean;
 	/**
 	 * The adapter ships the browser's snapshot in a module of its own
 	 * (Nuxt's `#inth/client-manifest-snapshot`), so `browser.mode` carries
@@ -370,7 +382,7 @@ const resolvePolicy = function resolvePolicy(
 			};
 		}
 		default: {
-			if (mode.resolve === 'browser') {
+			if (mode.resolve === 'browser' && !options.serverResolvesBrowserMode) {
 				return {};
 			}
 			if (!(manifest || manifestUrl || projectUrl)) {

@@ -106,6 +106,31 @@ describe('resolveConsent wiring', () => {
 		});
 	});
 
+	test("manifest({ resolve: 'browser' }) still resolves the render from the backend's manifest", async () => {
+		// The browser resolver is for re-inits; a render that resolves holds
+		// the policy, so a returning visitor's stored choice can be checked
+		// before the engine loads.
+		const fetch = backend();
+		const state = await resolveConsent({
+			config: defineConsentConfig({
+				mode: manifest({
+					manifestUrl: '/api/inth/manifest',
+					resolve: 'browser',
+				}),
+				projectUrl: 'https://consent.example.com',
+			}),
+			fetch,
+			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
+		});
+		expect(policyCalls(fetch)).toEqual([
+			'https://consent.example.com/manifest',
+		]);
+		expect(state.initialPolicyResolution).toMatchObject({
+			policyId: 'eu-opt-in',
+			status: 'matched',
+		});
+	});
+
 	test('a tab config reports a page journey, and false turns it off', async () => {
 		const tab = backend();
 		const started = await resolveConsent({

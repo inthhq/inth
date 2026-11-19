@@ -123,6 +123,7 @@ export const resolveConsentSource = function resolveConsentSource(
 			readProjectUrlFromEnv() ??
 			generatedProjectUrl,
 		routePrefix,
+		serverResolvesBrowserMode: true,
 	});
 	return { config, routePrefix, server };
 };
