@@ -13,17 +13,19 @@ export type { ConsentBoot, RootEngineInputs } from './boot';
 export type { DeferredCommitConfig, DeferredCommitted } from './committed';
 export {
 	awaitsChoice,
-	engineNeededAtLoad,
 	canDeferEngineAfterChoice,
 	iabProviderLoaded,
 	whenIABProviderLoads,
 	liveRootKey,
 	readConsentBoot,
 	rootNeedsEngine,
-	startsScriptsWithoutEngine,
 	storedChoiceCurrent,
 } from './boot';
-export { useConsentBootPlan } from './boot-plan';
+export {
+	engineNeededAtLoad,
+	startsScriptsWithoutEngine,
+	useConsentBootPlan,
+} from './boot-plan';
 export type { DeferredEngine, DeferredKernelHandle } from './deferred-kernel';
 export { learnEngineChunks } from './engine-preload';
 export { isRunnableNow, scriptsNeedEngine } from './runnable';

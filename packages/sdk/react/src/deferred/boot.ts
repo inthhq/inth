@@ -13,7 +13,6 @@ import {
 	ENDED_RENDERS_LIMIT,
 	PAGE_RENDER_KEY,
 } from '@inth/sdk/runtime/page-globals';
-import { awaitsChoice } from '@inth/sdk/surface-actions/plain-scripts';
 
 /** Attribute on the `<script type="application/json">` element. @internal */
 export const CONSENT_BOOT_ATTRIBUTE = 'data-inth-boot';
@@ -176,30 +175,6 @@ export const storedChoiceCurrent = function storedChoiceCurrent(
 	} catch {
 		return false;
 	}
-};
-
-/**
- * Whether a root can start the plain scripts this visitor's stored choice
- * allows without its engine, and let the engine wait for the page's
- * priority images: a returning visitor who chose
- * ({@link canDeferEngineAfterChoice}), and whose browser holds nothing
- * newer than what the server read ({@link storedChoiceCurrent}). When the
- * browser's records differ, a GPC signal the server did not see, a newer
- * stored denial, or an expired decision, the engine applies them when it
- * loads and the app's callbacks hear the change, so it loads at once.
- *
- * @param snapshot - The snapshot the visitor's page renders from.
- * @returns `true` when the root starts the scripts itself.
- * @internal
- */
-export const startsScriptsWithoutEngine = function startsScriptsWithoutEngine(
-	snapshot: ConsentSnapshot
-): boolean {
-	return (
-		!awaitsChoice(snapshot) &&
-		canDeferEngineAfterChoice(snapshot) &&
-		storedChoiceCurrent()
-	);
 };
 
 /** Longest delay `setTimeout` takes before it fires at once. */
@@ -422,27 +397,4 @@ export const whenIABProviderLoads = function whenIABProviderLoads(
 	const host = globalThis as Record<symbol, (() => void)[] | undefined>;
 	const key = Symbol.for('inth.react.iab-provider-waiters');
 	host[key] = [...(host[key] ?? []), run];
-};
-
-/**
- * Whether a root's engine starts downloading as soon as its chunk runs,
- * ahead of hydration: the app loaded `IABProvider`, which the shell cannot
- * serve ({@link iabProviderLoaded}), or the page's boot data names a
- * visitor the engine must serve at once.
- *
- * @param root - Where the page's boot data is.
- * @returns `true` when the engine loads at once.
- * @internal
- */
-export const engineNeededAtLoad = function engineNeededAtLoad(
-	root: ParentNode = document
-): boolean {
-	if (iabProviderLoaded()) {
-		return true;
-	}
-	const boot = readConsentBoot(root);
-	const snapshot = boot && (boot.r ?? boot.s);
-	return Boolean(
-		snapshot && !awaitsChoice(snapshot) && !startsScriptsWithoutEngine(snapshot)
-	);
 };

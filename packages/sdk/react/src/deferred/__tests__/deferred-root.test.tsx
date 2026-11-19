@@ -28,11 +28,11 @@ import {
 	awaitsChoice,
 	canDeferEngineAfterChoice,
 	endPageRender,
-	engineNeededAtLoad,
 	readConsentBoot,
 } from '../boot';
 import type { ConsentBoot } from '../boot';
 import { ConsentBootData, ServerBootData } from '../boot-data';
+import { engineNeededAtLoad } from '../boot-plan';
 import type { DeferredCommitConfig } from '../committed';
 import type * as EngineNamespace from '../engine';
 import { ENGINE_CHUNKS_KEY } from '../engine-preload';

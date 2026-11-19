@@ -167,7 +167,7 @@ const deferredModules = [
 
 describe('TanStack Start client chunks', () => {
 	test.each([
-		['root-route', 12],
+		['root-route', 11],
 		['provider-route', 22],
 	])(
 		'a %s loads at most %i files first',
@@ -176,7 +176,9 @@ describe('TanStack Start client chunks', () => {
 			// shell shares with lazy chunks (the engine, the commit path, the
 			// stock surfaces) and with the other route. The commit path no
 			// longer loads the shell's file, so the instant commit it shares
-			// with the shell is a file of its own. The provider route
+			// with the shell is a file of its own. The plain-script rules share
+			// the registry's file only while the trigger's boot reader, which
+			// the dialog loads too, imports none of them. The provider route
 			// also builds the banner's snapshot from the inline prefetch
 			// before its engine loads, so it loads the policy and copy code.
 			const { files } = await routeFirstLoad(route);
