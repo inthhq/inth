@@ -136,11 +136,15 @@ export interface InthProviderBaseProps {
 	 * ```tsx
 	 * import { useSafeAreaInsets } from 'react-native-safe-area-context';
 	 *
-	 * const insets = useSafeAreaInsets();
+	 * function App() {
+	 *     const insets = useSafeAreaInsets();
 	 *
-	 * <InthProvider privacyPolicyUrl="https://example.com/privacy" safeAreaInsets={insets}>
-	 *     <Root />
-	 * </InthProvider>;
+	 *     return (
+	 *         <InthProvider privacyPolicyUrl="https://example.com/privacy" safeAreaInsets={insets}>
+	 *             <Root />
+	 *         </InthProvider>
+	 *     );
+	 * }
 	 * ```
 	 */
 	readonly safeAreaInsets?: ConsentSafeAreaInsets;
