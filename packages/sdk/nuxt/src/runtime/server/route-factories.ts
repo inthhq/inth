@@ -21,7 +21,7 @@ import type { NuxtConsentModeConfig } from '@inth/vue/nuxt';
 import { defineEventHandler, sendWebResponse, toWebRequest } from 'h3';
 import type { EventHandlerRequest, H3Event } from 'h3';
 
-interface InthNitroRuntimeConfig {
+interface NitroRuntimeConfig {
 	inth?: Record<string, unknown>;
 	public?: {
 		inth?: Record<string, unknown>;
@@ -83,7 +83,7 @@ const readConsentConfig = function readConsentConfig(
 ): RouteConfig {
 	const config =
 		typeof runtimeConfig === 'object' && runtimeConfig !== null
-			? (runtimeConfig as InthNitroRuntimeConfig)
+			? (runtimeConfig as NitroRuntimeConfig)
 			: {};
 	const serverOnly = Object.fromEntries(
 		Object.entries(config.inth ?? {}).filter(

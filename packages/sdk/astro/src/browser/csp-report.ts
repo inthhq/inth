@@ -15,7 +15,7 @@
 import type { Script } from '@inth/sdk/engine';
 
 import { hashSource } from '../libs/csp-hash';
-import type { InthBrowserCsp } from '../types';
+import type { BrowserCsp } from '../types';
 
 /**
  * Log an error for each inline script whose hash the policy lacks.
@@ -29,7 +29,7 @@ import type { InthBrowserCsp } from '../types';
  */
 export const reportUnhashedScripts = async function reportUnhashedScripts(
 	scripts: readonly Script[],
-	csp: InthBrowserCsp
+	csp: BrowserCsp
 ): Promise<void> {
 	// `crypto.subtle` only exists in a secure context; a plain-HTTP page is
 	// left to the browser's own violation report.

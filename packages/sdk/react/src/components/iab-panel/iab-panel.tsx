@@ -1,6 +1,6 @@
 'use client';
 
-import type * as InthCoreTypes from '@inth/sdk/engine';
+import type * as CoreTypes from '@inth/sdk/engine';
 import { applyPublisherRestrictionsToGVL } from '@inth/sdk/iab/headless';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { onDialogDismiss } from '@inth/sdk/ui/primitives/dialog';
@@ -46,7 +46,7 @@ import type { VendorId } from './types';
 import { useExitTransition } from './use-exit-transition';
 import { useIABTranslations } from './use-iab-translations';
 
-const DEFAULT_MODELS: InthCoreTypes.Model[] = ['iab'];
+const DEFAULT_MODELS: CoreTypes.Model[] = ['iab'];
 
 const dialogFocusTargetProps = { tabIndex: -1 } as const;
 
@@ -113,7 +113,7 @@ export interface IABConsentDialogProps {
 	 * Which consent models this dialog responds to.
 	 * @default ['iab']
 	 */
-	models?: InthCoreTypes.Model[];
+	models?: CoreTypes.Model[];
 
 	/**
 	 * Override the UI source identifier sent with consent API calls.

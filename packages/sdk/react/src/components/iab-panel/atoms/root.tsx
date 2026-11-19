@@ -1,6 +1,6 @@
 'use client';
 
-import type * as InthCoreTypes from '@inth/sdk/engine';
+import type * as CoreTypes from '@inth/sdk/engine';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { onDialogDismiss } from '@inth/sdk/ui/primitives/dialog';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
@@ -27,7 +27,7 @@ import {
 import { useExitTransition } from '../use-exit-transition';
 import { IABConsentDialogOverlay } from './overlay';
 
-const DEFAULT_MODELS: InthCoreTypes.Model[] = ['iab'];
+const DEFAULT_MODELS: CoreTypes.Model[] = ['iab'];
 
 interface IABConsentDialogRootProps {
 	children: ReactNode;
@@ -43,7 +43,7 @@ interface IABConsentDialogRootProps {
 	 * Which consent models this dialog responds to.
 	 * @default ['iab']
 	 */
-	models?: InthCoreTypes.Model[];
+	models?: CoreTypes.Model[];
 	/**
 	 * Override the UI source identifier sent with consent API calls.
 	 * @default 'iab_dialog'

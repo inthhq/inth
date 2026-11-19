@@ -1,6 +1,6 @@
 'use client';
 
-import type * as InthCoreTypes from '@inth/sdk/engine';
+import type * as CoreTypes from '@inth/sdk/engine';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { onDialogDismiss } from '@inth/sdk/ui/primitives/dialog';
 import styles from '@inth/sdk/ui/styles/components/consent-dialog';
@@ -34,7 +34,7 @@ import { Overlay } from './overlay';
 
 // `none` is included: it never owes a prompt, but a `none` rule that lists
 // the `preferences` right still opens this dialog as its settings route.
-const DEFAULT_MODELS: InthCoreTypes.Model[] = ['opt-in', 'opt-out', 'none'];
+const DEFAULT_MODELS: CoreTypes.Model[] = ['opt-in', 'opt-out', 'none'];
 
 const resolveDialogOptions = (
 	localDisableAnimation: boolean | undefined,
@@ -52,8 +52,8 @@ const resolveDialogOptions = (
 const resolveDialogOpen = (
 	sheetsReady: boolean,
 	hasConsentUI: boolean,
-	models: InthCoreTypes.Model[],
-	model: InthCoreTypes.Model | null,
+	models: CoreTypes.Model[],
+	model: CoreTypes.Model | null,
 	open: boolean | undefined,
 	activeUI: string | null
 ): boolean => {
@@ -100,7 +100,7 @@ export interface ConsentDialogRootProps extends HTMLAttributes<HTMLDivElement> {
 	 * Which consent models this dialog responds to.
 	 * @default ['opt-in', 'opt-out', 'none']
 	 */
-	models?: InthCoreTypes.Model[];
+	models?: CoreTypes.Model[];
 
 	/**
 	 * When true, the component will not apply any internal styles.

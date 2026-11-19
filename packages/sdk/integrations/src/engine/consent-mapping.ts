@@ -18,8 +18,8 @@ export const mapConsentState = function mapConsentState(
 ): Record<string, 'granted' | 'denied'> {
 	const result: Record<string, 'granted' | 'denied'> = {};
 
-	for (const [inthCategory, vendorTypes] of Object.entries(mapping)) {
-		const isGranted = (consents as Record<string, boolean>)[inthCategory];
+	for (const [category, vendorTypes] of Object.entries(mapping)) {
+		const isGranted = (consents as Record<string, boolean>)[category];
 		for (const vendorType of vendorTypes) {
 			result[vendorType] = isGranted ? 'granted' : 'denied';
 		}

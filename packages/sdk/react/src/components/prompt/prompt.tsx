@@ -1,6 +1,6 @@
 'use client';
 
-import type * as InthCoreTypes from '@inth/sdk/engine';
+import type * as CoreTypes from '@inth/sdk/engine';
 import type {
 	PromptPosition,
 	PromptVariant,
@@ -183,7 +183,7 @@ export interface ConsentBannerProps {
 	 * Which consent models this banner responds to.
 	 * @default ['opt-in']
 	 */
-	models?: InthCoreTypes.Model[];
+	models?: CoreTypes.Model[];
 
 	/**
 	 * Override the UI source identifier sent with consent API calls.

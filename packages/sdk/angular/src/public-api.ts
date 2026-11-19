@@ -13,8 +13,8 @@ export { provideInth } from './lib/core/provide-inth';
 export { INTH_OPTIONS } from './lib/core/options';
 // Private (`ɵ`): the TransferState key `@inth/angular/ssr` writes.
 export {
-	INTH_SERVER_STATE as ɵINTH_SERVER_STATE,
-	INTH_SERVER_STATE_GATE as ɵINTH_SERVER_STATE_GATE,
+	SERVER_STATE_KEY as ɵINTH_SERVER_STATE,
+	SERVER_STATE_GATE as ɵINTH_SERVER_STATE_GATE,
 	ServerStateGate as ɵServerStateGate,
 } from './lib/core/server-state';
 export type {

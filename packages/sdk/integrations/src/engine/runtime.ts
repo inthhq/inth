@@ -618,8 +618,8 @@ const partitionConsentIds = function partitionConsentIds(
 	const allowedConsentIds: string[] = [];
 	const deniedConsentIds: string[] = [];
 
-	for (const [inthCategory, consentIds] of Object.entries(mapping)) {
-		const isGranted = (consents as Record<string, boolean>)[inthCategory];
+	for (const [category, consentIds] of Object.entries(mapping)) {
+		const isGranted = (consents as Record<string, boolean>)[category];
 		for (const consentId of consentIds) {
 			(isGranted ? allowedConsentIds : deniedConsentIds).push(consentId);
 		}

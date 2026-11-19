@@ -1,6 +1,6 @@
 'use client';
 
-import type * as InthCoreTypes from '@inth/sdk/engine';
+import type * as CoreTypes from '@inth/sdk/engine';
 import type { PromptPosition, PromptVariant } from '@inth/sdk/engine';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { defaultTranslationConfig } from '@inth/sdk/surface-state';
@@ -45,7 +45,7 @@ import type { ConsentBannerSurface } from '../surface-context';
 import { EarlyTapScript } from './early-tap-script';
 import { Overlay } from './overlay';
 
-const DEFAULT_MODELS: InthCoreTypes.Model[] = ['opt-in', 'opt-out'];
+const DEFAULT_MODELS: CoreTypes.Model[] = ['opt-in', 'opt-out'];
 
 /** A layout effect in the browser; nothing to run on the server. */
 const useBrowserLayoutEffect =
@@ -103,7 +103,7 @@ interface ConsentBannerRootProps extends HTMLAttributes<HTMLDivElement> {
 	 * Which consent models this banner responds to.
 	 * @default ['opt-in', 'opt-out']
 	 */
-	models?: InthCoreTypes.Model[];
+	models?: CoreTypes.Model[];
 
 	/**
 	 * Override the UI source identifier sent with consent API calls.
@@ -302,7 +302,7 @@ interface ConsentBannerRootChildrenProps extends HTMLAttributes<HTMLDivElement> 
 	 * Which consent models this banner responds to.
 	 * @default ['opt-in', 'opt-out']
 	 */
-	models?: InthCoreTypes.Model[];
+	models?: CoreTypes.Model[];
 }
 
 ConsentBannerRootChildren.displayName = 'ConsentBannerRootChildren';

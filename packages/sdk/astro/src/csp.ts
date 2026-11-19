@@ -37,7 +37,7 @@ import {
 	buildThemeCSS,
 	EARLY_CONSENT_TAP_SCRIPT,
 } from './server';
-import type { InthBrowserCsp, InthResolvedOptions } from './types';
+import type { BrowserCsp, InthResolvedOptions } from './types';
 
 export type { CspHashAlgorithm } from './libs/csp-hash';
 
@@ -159,7 +159,7 @@ export interface AstroCspSetup {
 	 * Only set with a `clientEntrypoint`, the one source of scripts the
 	 * config cannot hash.
 	 */
-	browser?: InthBrowserCsp;
+	browser?: BrowserCsp;
 }
 
 /**

@@ -502,7 +502,7 @@ export interface InthResolvedOptions extends Omit<
 	 * Set when the site turned on Astro's CSP and has a `clientEntrypoint`.
 	 * The browser checks the inline scripts that module adds against it.
 	 */
-	csp?: InthBrowserCsp;
+	csp?: BrowserCsp;
 }
 
 /**
@@ -511,7 +511,7 @@ export interface InthResolvedOptions extends Omit<
  *
  * @internal
  */
-export interface InthBrowserCsp {
+export interface BrowserCsp {
 	/** The digest the policy's hashes use. */
 	algorithm: 'SHA-256' | 'SHA-384' | 'SHA-512';
 	/** Every script hash the policy allows: Inth's and the site's own. */
