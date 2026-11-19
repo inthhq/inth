@@ -144,6 +144,26 @@ describe('fetchSSRData', () => {
 		expect(sent['x-c15t-country']).toBe('US');
 	});
 
+	it('sends no cookie to a remote https backend', async () => {
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValue(createResponse({ categories: [], gvl: null }));
+		vi.stubGlobal('fetch', fetchMock);
+		const headers = createRequestHeaders();
+		headers.set('cookie', 'inth=v%3D3; c15t=v%3D3; session=secret');
+
+		await fetchSSRData({
+			headers,
+			projectUrl: 'https://consent.example.com/api/inth',
+		});
+
+		const sent = fetchMock.mock.calls[0]?.[1]?.headers as Record<
+			string,
+			string
+		>;
+		expect(sent).not.toHaveProperty('cookie');
+	});
+
 	it('resolves a relative projectUrl against host, not a forged x-forwarded-host', async () => {
 		const fetchMock = vi
 			.fn()

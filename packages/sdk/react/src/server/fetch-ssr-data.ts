@@ -164,6 +164,7 @@ export const fetchSSRData = async function fetchSSRData(
 		ownRoutes: [],
 		projectUrl: normalizedUrl,
 		request: { headers },
+		sendConsentCookie: false,
 		timeoutMs: false,
 		trustForwardedHeaders: options.trustForwardedHeaders,
 	});

@@ -552,7 +552,8 @@ interface Target {
  */
 const resolveRequest = async function resolveRequest(
 	options: ResolveRequestConsentOptions,
-	onHostedAnswer?: (answer: RequestInitAnswer) => void
+	onHostedAnswer?: (answer: RequestInitAnswer) => void,
+	sendConsentCookie = true
 ): Promise<RequestConsentState> {
 	const { inputs, state: base } = readRequestConsent(options);
 	const mode = resolveMode(options);
@@ -871,10 +872,11 @@ const resolveRequest = async function resolveRequest(
 			return {};
 		}
 		const headers = namedHeaders();
-		const cookie = target.inProcess
-			? undefined
-			: (options.request.cookie ??
-				readHeader(options.request.headers, 'cookie'));
+		const cookie =
+			target.inProcess || !sendConsentCookie
+				? undefined
+				: (options.request.cookie ??
+					readHeader(options.request.headers, 'cookie'));
 		const consentCookie = cookie
 			? filterCookieHeader(cookie, [
 					resolveStorageKeys(options.storage).consent,
@@ -1122,7 +1124,15 @@ export type FetchRequestInitOptions = Omit<
 	| 'mode'
 	| 'offline'
 	| 'seed'
->;
+> & {
+	/**
+	 * Whether a remote backend gets the visitor's consent cookie, as
+	 * {@link ResolveRequestConsentOptions.forwardHeaders} describes.
+	 *
+	 * @default true
+	 */
+	sendConsentCookie?: boolean;
+};
 
 /**
  * Asks the backend's `/init` for one request, as
@@ -1147,8 +1157,12 @@ export const fetchRequestInit = async function fetchRequestInit(
 	options: FetchRequestInitOptions
 ): Promise<RequestInitAnswer | undefined> {
 	let answer: RequestInitAnswer | undefined;
-	await resolveRequest({ ...options, mode: 'hosted' }, (received) => {
-		answer = received;
-	});
+	await resolveRequest(
+		{ ...options, mode: 'hosted' },
+		(received) => {
+			answer = received;
+		},
+		options.sendConsentCookie
+	);
 	return answer;
 };
