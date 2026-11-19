@@ -18,7 +18,10 @@ import {
 } from '../../surface-actions/early-commit';
 import type { KernelUser, SavePayload } from '../../types';
 import { createKernel } from '../index';
-import { createMemoryOutboxStore } from '../save-outbox';
+import {
+	createBrowserOutboxStore,
+	createMemoryOutboxStore,
+} from '../save-outbox';
 import type { SaveOutboxStore } from '../save-outbox';
 
 interface QueuedEntry {
@@ -274,5 +277,47 @@ describe('identity token in the save queue', () => {
 			STORED_USER,
 		]);
 		localStorage.clear();
+	});
+
+	test("a save moved from c15t's queue is stored without its token", async () => {
+		const values = new Map<string, string>([
+			[
+				'c15t-v3-pending-consent-saves:v1',
+				JSON.stringify([
+					{
+						attempts: 1,
+						payload: { subjectId: 'sub_c15t', user: USER },
+						queuedAt: NOW,
+					},
+				]),
+			],
+		]);
+		const c15tStore = createBrowserOutboxStore({
+			localStorage: () => ({
+				getItem: (key) => values.get(key) ?? null,
+				removeItem: (key) => {
+					values.delete(key);
+				},
+				setItem: (key, value) => {
+					values.set(key, value);
+				},
+			}),
+			locks: () => null,
+		});
+
+		// Any transaction moves c15t's list, before the queue module reads it.
+		await c15tStore.transact((tx) => tx.read('reassignments'));
+
+		expect(values.has('c15t-v3-pending-consent-saves:v1')).toBe(false);
+		expect(
+			JSON.parse(values.get('inth-pending-consent-saves:v1') ?? '[]')
+		).toEqual([
+			{
+				adoptedFrom: 'c15t',
+				attempts: 1,
+				payload: { subjectId: 'sub_c15t', user: STORED_USER },
+				queuedAt: NOW,
+			},
+		]);
 	});
 });

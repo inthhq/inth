@@ -205,8 +205,9 @@ const c15tClearEpoch = function c15tClearEpoch(storage: TextStorage): number {
  * The outbox store every tab of an origin shares: JSON arrays in
  * localStorage under {@link PENDING_SAVES_STORAGE_KEY} and
  * {@link SUBJECT_REASSIGNMENTS_STORAGE_KEY}. Every transaction first
- * appends c15t's lists to these and removes them, so the outbox replays
- * what a c15t page queued; `clear` removes c15t's lists too.
+ * appends c15t's lists to these, its saves without their identity tokens,
+ * and removes them, so the outbox replays what a c15t page queued; `clear`
+ * removes c15t's lists too.
  *
  * Every transaction holds one Web Lock, so two tabs cannot overwrite each
  * other's entries or replay one twice. Without
@@ -298,7 +299,10 @@ export const createBrowserOutboxStore = function createBrowserOutboxStore(
 						if (
 							!tx.write(slot, [
 								...(Array.isArray(own) ? own : []),
-								...adopted.map(markAdopted),
+								...(slot === 'saves'
+									? withoutStoredTokens(adopted)
+									: adopted
+								).map(markAdopted),
 							])
 						) {
 							continue;
