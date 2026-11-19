@@ -23,7 +23,7 @@ server with the state the root loader resolved.
 | `ConsentDialogTrigger` | A floating, draggable button that opens the dialog. `ConsentDialogTriggerToolbar` adds your own actions beside it | [ConsentDialogTrigger](/docs/frameworks/tanstack-start/components/consent-dialog-trigger) |
 | `ConsentGate` | Its children only while a category is allowed | [ConsentGate](/docs/frameworks/tanstack-start/components/consent-gate) |
 | `ConsentTheme` | A `<style>` element with your theme tokens | [Customize](/docs/frameworks/tanstack-start/customize) |
-| `DevTools` from `@inth/react/devtools` | A development panel for consent state and scripts | [DevTools](/docs/frameworks/tanstack-start/components/dev-tools) |
+| `DevTools` from `@inth/tanstack-start/devtools` | A development panel for consent state and scripts | [DevTools](/docs/frameworks/tanstack-start/components/dev-tools) |
 
 Render every component inside `InthProvider`. Do not also mount the
 `InthProvider` from `@inth/tanstack-start/react`; this one already renders it.
@@ -51,8 +51,9 @@ The state carries the backend URL, the mode and the route prefix you passed
 to `createConsentStateHandler`, so `InthProvider` has no props for them. With
 `state={{}}`, it takes the backend URL from `consentManifest()` and uses
 `manifest()`. Without a backend URL from either, it throws, unless the mode is
-`testing()`. `options.mode` replaces the state's mode: `manifest()`,
-`hosted()` or `testing()` from `@inth/tanstack-start`, or a transport such as
+`testing()`. `options.mode` replaces the state's mode: `manifest()` or
+`hosted()` from `@inth/tanstack-start`, `testing()` from
+`@inth/tanstack-start/testing`, or a transport such as
 a transport factory.
 
 `InthProvider` creates the runtime once, when it mounts, and ignores later

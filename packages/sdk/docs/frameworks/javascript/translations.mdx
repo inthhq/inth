@@ -55,8 +55,7 @@ The banner and dialog re-render. With a runtime or kernel, call
 To follow your app's own language setting from the first render, pass it as
 an override: `init({ mode, overrides: { language: 'fr' } })`.
 
-In local mode there is no copy to fetch. With `testing()` from `@inth/sdk/engine` or
-`@inth/sdk`, a language set with the `language` override,
+In local mode there is no copy to fetch. With `testing()` from `@inth/sdk/testing`, a language set with the `language` override,
 `setLanguage()` or `kernel.set.language()` switches to that language's copy
 from the bundle or `i18n.messages`. This works for `@inth/sdk` and for a
 headless `createConsentRuntime({ mode: testing() })`. A language with no copy

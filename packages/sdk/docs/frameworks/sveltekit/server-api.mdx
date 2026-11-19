@@ -44,7 +44,7 @@ headers either: the page goes to every visitor.
 
 | Option | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `mode` | `ConsentMode` | `manifest()` | How `loadConsent` resolves the visitor. `manifest()`, `hosted()` or `testing()` from `@inth/svelte/kit`. A transport factory throws; pass it to `InthProvider`'s `mode` prop instead. |
+| `mode` | `ConsentMode` | `manifest()` | How `loadConsent` resolves the visitor. `manifest()` or `hosted()` from `@inth/svelte/kit`, or `testing()` from `@inth/svelte/testing`. A transport factory throws; pass it to `InthProvider`'s `mode` prop instead. |
 | `routePrefix` | `string` | none | Where `createConsentRoute()` is mounted, such as `/api/inth`. The browser then resolves consent on pages the server did not, through that route. Without it, the browser asks the backend's `/v1/consent/init`. `'/'` throws ``@inth/svelte: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/inth'.`` when the hook is created. |
 | `projectUrl` | `string` | the URL `consentManifest()` read | The backend. Consent saves go here, unless `proxy` is on. |
 | `proxy` | `boolean` | `false` | Sends the browser's consent saves to the route at `routePrefix`, which forwards them to `projectUrl` with `createConsentRoute({ proxy: true })`. Throws without `routePrefix`. See [save consent through your own origin](./rendering#save-consent-through-your-own-origin). |

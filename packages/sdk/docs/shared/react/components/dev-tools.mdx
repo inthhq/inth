@@ -197,7 +197,7 @@ group: reference
   }
   ```
 
-  In a Next.js app, import `inthDevtools` from `@inth/nextjs/devtools` instead. Scoped installs use `@inth/react/devtools` and `@inth/nextjs/devtools`.
+  In a Next.js app, import `inthDevtools` from `@inth/nextjs/devtools` instead, and in a TanStack Start app from `@inth/tanstack-start/devtools`. Import `InthTanStackDevtoolsPanel` below from the same path.
 
   The Inth panel follows the TanStack Devtools light or dark theme, not your app's consent theme. If you write the plugin entry yourself, use a render function and pass the theme to `InthTanStackDevtoolsPanel`:
 

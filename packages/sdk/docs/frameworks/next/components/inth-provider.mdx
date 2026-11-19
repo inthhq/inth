@@ -64,10 +64,10 @@ instead of running a mode you did not choose. See
 [testing configuration](/docs/frameworks/next/data-fetching-reference#testing-configuration)
 and [consent modes](/docs/concepts/modes).
 
-`options.mode` also takes a transport factory. A
-`hosted()` or `testing()` transport from `@inth/react` works there, but
+`options.mode` also takes a transport factory. A transport works there, but
 outside production it warns that its code is now in the first-load bundle.
-Use the data factories from `@inth/nextjs` instead.
+Use the data factories instead: `manifest()` and `hosted()` from `@inth/nextjs`,
+and `testing()` from `@inth/nextjs/testing`.
 
 ## Provider options
 
@@ -81,7 +81,7 @@ switch visitors or backends after mounting.
 
 | Option | Purpose |
 | --- | --- |
-| `mode` | `manifest()`, `hosted()` or `testing()` from `@inth/nextjs`, or a transport factory. Replaces the config's `mode` |
+| `mode` | `manifest()` or `hosted()` from `@inth/nextjs`, `testing()` from `@inth/nextjs/testing`, or a transport factory. Replaces the config's `mode` |
 | `callbacks` | Choice, permission and error events |
 | `theme`, `components` | Consent-action styles, theme slots and component slot attributes. Tokens render through `ConsentTheme` |
 | `presentation` | Prompt and preferences layout behavior |

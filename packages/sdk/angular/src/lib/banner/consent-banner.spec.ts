@@ -157,10 +157,12 @@ describe('<inth-provider>', () => {
 		});
 	});
 
-	test('renders the content it wraps', async () => {
+	test('renders the content it wraps, without a box of its own', async () => {
 		const { byTestId } = await boot(WrappingRootHost);
 		expect(byTestId('wrapped-app')?.textContent).toBe('App');
 		expect(byTestId('consent-banner-root')).not.toBeNull();
+		const host = document.querySelector('inth-provider');
+		expect(host && getComputedStyle(host).display).toBe('contents');
 	});
 });
 

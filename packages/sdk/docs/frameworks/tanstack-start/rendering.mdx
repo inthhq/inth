@@ -36,8 +36,8 @@ and caches it in memory. Keep the plugin: it still supplies the backend URL.
 Pass the same `mode`, and the same `routePrefix`, to `createConsentRoute`, so
 the route reads the manifest where the render does.
 
-`createConsentStateHandler({ mode })` takes `manifest()`, `hosted()` or
-`testing()` from `@inth/tanstack-start`. They are plain data, so the state
+`createConsentStateHandler({ mode })` takes `manifest()` or `hosted()` from
+`@inth/tanstack-start`, or `testing()` from `@inth/tanstack-start/testing`. They are plain data, so the state
 carries the mode to `InthProvider`, and the browser loads only that mode's
 code. A mode's `snapshot` stays on the server.
 [Consent modes](/docs/concepts/modes) compares them.
