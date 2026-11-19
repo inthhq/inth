@@ -1038,6 +1038,24 @@ describe('serverScriptStart', () => {
 			expect(document.head.querySelector('script')).toBeNull();
 		});
 
+		test('starts after a newer c15t clear when the Inth cookie holds the decision the server read', () => {
+			const { choice } = choiceRecords(
+				{ marketing: true },
+				{ confirmedAt: CONFIRMED_AT }
+			);
+			// oxlint-disable-next-line unicorn/no-document-cookie -- Stores the record under test.
+			document.cookie = `inth=${encodeStoredConsentEnvelopeCompact({
+				categories: choice?.categories ?? {},
+				version: 3,
+			})}; path=/`;
+			// oxlint-disable-next-line unicorn/no-document-cookie -- Stores the record under test.
+			document.cookie = `c15t-epoch=${CONFIRMED_AT + 1}; path=/`;
+
+			startPixel();
+
+			expect(document.head.querySelectorAll('script')).toHaveLength(1);
+		});
+
 		// The client's decoder rejects the whole record, then falls back to
 		// another copy, which may hold a denial.
 		test.each([
