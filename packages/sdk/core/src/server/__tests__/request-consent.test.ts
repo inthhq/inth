@@ -1313,6 +1313,37 @@ describe('fetchRequestInit', () => {
 		);
 	});
 
+	test('reports the /v1 refusal code, message and request ID', async () => {
+		const onError = vi.fn();
+		await ask({
+			fetch: vi.fn<typeof globalThis.fetch>(() =>
+				Promise.resolve(
+					Response.json(
+						{
+							error: {
+								code: 'forbidden',
+								message: 'This origin is not trusted.',
+							},
+							requestId: 'req_123',
+						},
+						{ status: 403 }
+					)
+				)
+			),
+			onError,
+			projectUrl: BACKEND,
+		});
+		const [error] = onError.mock.calls[0] ?? [];
+		expect(String(error)).toContain(
+			'/v1/consent/init responded 403: This origin is not trusted. (forbidden, request req_123)'
+		);
+		expect((error as Error).cause).toMatchObject({
+			code: 'forbidden',
+			requestId: 'req_123',
+			status: 403,
+		});
+	});
+
 	test('a shared render asks nothing', async () => {
 		const fetch = upstream();
 		expect(await ask({ fetch, projectUrl: BACKEND, shared: true })).toBe(

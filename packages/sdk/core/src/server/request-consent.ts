@@ -57,7 +57,6 @@ import type {
 import type { StorageConfig } from '../libs/cookie/types';
 import { experimentArmRef } from '../libs/experiment';
 import type { ExperimentState, ServerExperiment } from '../libs/experiment';
-import { failedResponseError } from '../libs/failed-response';
 import { readHeader, toHeaders } from '../libs/headers';
 import { isCleartextRemoteURL } from '../libs/identity-headers';
 import { createJourneyId } from '../libs/journey';
@@ -85,6 +84,7 @@ import {
 } from '../transports/init-output';
 import { createOfflineTransport } from '../transports/offline';
 import type { OfflineTransportOptions } from '../transports/offline';
+import { readApiError } from '../transports/v1/error';
 import { V1_ROUTES } from '../transports/v1/paths';
 import type { KernelConfig } from '../types';
 import {
@@ -985,7 +985,7 @@ const resolveRequest = async function resolveRequest(
 					init
 				);
 				if (!response.ok) {
-					throw await failedResponseError(V1_ROUTES.init, response);
+					throw await readApiError(V1_ROUTES.init, response);
 				}
 				payload = (await response.json()) as InitOutput;
 			} catch (error) {

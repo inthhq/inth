@@ -140,7 +140,7 @@ const readFailedResponse = async function readFailedResponse(
  * status text as before.
  *
  * @param prefix - Names the caller and route, such as
- * `inth manifest: /v1/consent/manifest`.
+ * `inth: GVL`.
  * @param detail - What {@link readFailedResponse} read from its body.
  */
 const describeFailedResponse = function describeFailedResponse(
@@ -160,15 +160,15 @@ const describeFailedResponse = function describeFailedResponse(
  * backend's message and code.
  *
  * @param prefix - Names the caller and route, such as
- * `inth manifest: /v1/consent/manifest`.
+ * `inth: GVL`.
  * @param response - The response that is not ok. Its body is consumed.
  * @returns An `Error` carrying `status`, and `code` when the body had one.
  * @example
  * ```ts
  * if (!response.ok) {
- *   throw await failedResponseError('inth manifest: /v1/consent/manifest', response);
+ *   throw await failedResponseError('inth: GVL', response);
  * }
- * // inth manifest: /v1/consent/manifest responded 429: Slow down.
+ * // inth: GVL responded 429: Slow down.
  * // (rate_limited)
  * ```
  * @internal

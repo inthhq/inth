@@ -8,9 +8,9 @@
  */
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 
-import { failedResponseError } from '../libs/failed-response';
 import type { ManifestModeInputs } from '../modes';
 import { createManifestRequestInit } from './manifest-request';
+import { readApiError } from './v1/error';
 
 /**
  * Fetch the backend's consent manifest.
@@ -31,7 +31,7 @@ export const fetchManifest = async function fetchManifest(
 		createManifestRequestInit(options)
 	);
 	if (!response.ok) {
-		throw await failedResponseError(
+		throw await readApiError(
 			'inth manifest transport: /v1/consent/manifest',
 			response
 		);

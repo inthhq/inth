@@ -1,6 +1,7 @@
 /** Shared manifest HTTP cache. Does not load translations or resolve policy. */
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 
+import { readApiError } from '../transports/v1/error';
 import { V1_ROUTES } from '../transports/v1/paths';
 import { boundedSet, mapFor } from './bounded-map';
 import {
@@ -8,7 +9,6 @@ import {
 	parseCacheDirectiveSeconds,
 	readUpstreamAge,
 } from './cache-directive';
-import { failedResponseError } from './failed-response';
 import {
 	identityHeaderOf,
 	isCleartextRemoteURL,
@@ -823,7 +823,7 @@ const revalidateManifest = async function revalidateManifest(input: {
 	if (!response.ok) {
 		// `status` lets a host tell a backend without `/v1/consent/manifest` (404) from
 		// one that is failing, including through a `backoff` error's `cause`.
-		throw await failedResponseError(
+		throw await readApiError(
 			'inth manifest cache: backend /v1/consent/manifest',
 			response
 		);
