@@ -239,7 +239,7 @@ describe('POST /v1/consent/sessions', () => {
 		expect(calls[0]?.headers).toEqual({
 			'content-type': 'application/json',
 			'user-agent': 'Mozilla/5.0',
-			'x-c15t-client-ip': '203.0.113.7',
+			'x-inth-client-ip': '203.0.113.7',
 		});
 		expect(calls[0]?.body).toMatchObject({
 			adapter: '@inth/nextjs',
