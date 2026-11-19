@@ -824,7 +824,7 @@ const revalidateManifest = async function revalidateManifest(input: {
 		// `status` lets a host tell a backend without `/v1/consent/manifest` (404) from
 		// one that is failing, including through a `backoff` error's `cause`.
 		throw await failedResponseError(
-			'inth manifest cache: backend /manifest',
+			'inth manifest cache: backend /v1/consent/manifest',
 			response
 		);
 	}

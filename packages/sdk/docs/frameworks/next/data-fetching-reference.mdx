@@ -219,7 +219,7 @@ the baseline state instead. Keep the config's `projectUrl` absolute, and use
 to keep the browser on your origin.
 
 Any other same-origin `projectUrl` is a backend reached through your app, such
-as `/api/inth` with a rewrite or a mounted `@c15t/backend`. `resolveConsent`
+as `/api/inth` with a rewrite to your Inth project. `resolveConsent`
 calls its `/v1/consent/init` like any backend. That request goes back through your own
 server, which costs a second function invocation on serverless hosts and fails
 behind deployment protection; the render then returns the baseline state and

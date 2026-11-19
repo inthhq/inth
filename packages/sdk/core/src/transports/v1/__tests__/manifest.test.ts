@@ -115,6 +115,20 @@ describe('GET /v1/consent/manifest', () => {
 	});
 });
 
+describe('options', () => {
+	test('names projectUrl when only manifestUrl is set', () => {
+		expect(() =>
+			createV1ManifestTransport({
+				manifestUrl: 'https://cdn.example.com/policy.json',
+			} as never)
+		).toThrowError(
+			new TypeError(
+				'Inth manifest transport: pass projectUrl, your Inth project URL. Saves go there, and the manifest is read from it unless manifestUrl is set.'
+			)
+		);
+	});
+});
+
 describe('a manifest body that is not an object', () => {
 	test('fails the init and is fetched again by the next one', async () => {
 		let attempts = 0;

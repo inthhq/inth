@@ -151,6 +151,11 @@ const resolveEndpoint = function resolveEndpoint(
 export const createV1ManifestTransport = function createV1ManifestTransport(
 	options: V1ManifestTransportOptions
 ): V1ManifestTransport {
+	if (typeof options.projectUrl !== 'string') {
+		throw new TypeError(
+			'Inth manifest transport: pass projectUrl, your Inth project URL. Saves go there, and the manifest is read from it unless manifestUrl is set.'
+		);
+	}
 	const base = trimTrailingSlash(options.projectUrl);
 	const fetchImpl = resolveV1Fetch(options.fetch, 'createV1ManifestTransport');
 	const manifestUrl = options.manifestUrl ?? `${base}${V1_ROUTES.manifest}`;

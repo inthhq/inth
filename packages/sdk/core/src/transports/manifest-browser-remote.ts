@@ -32,7 +32,7 @@ export const fetchManifest = async function fetchManifest(
 	);
 	if (!response.ok) {
 		throw await failedResponseError(
-			'inth manifest transport: /manifest',
+			'inth manifest transport: /v1/consent/manifest',
 			response
 		);
 	}

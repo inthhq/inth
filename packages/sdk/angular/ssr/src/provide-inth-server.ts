@@ -37,7 +37,7 @@ export interface InthServerOptions {
 	 * The app's consent route from `createConsentRoute()`. A relative
 	 * backend below its prefix, such as `hosted({ projectUrl: '/api/inth' })`,
 	 * is then resolved in-process instead of over the network. In manifest
-	 * mode, deferred vendor lists point at its `/init`.
+	 * mode, deferred vendor lists point at its `/v1/consent/init`.
 	 */
 	route?: ConsentRoute;
 	/**
@@ -135,7 +135,7 @@ const resolveServerState = function resolveServerState(
  *
  * Add it to `app.config.server.ts`, next to `provideServerRendering()`.
  * It reads the request through Angular's `REQUEST` token, resolves with
- * the `mode` given to `provideInth()` (a backend `/init` for `hosted()`,
+ * the `mode` given to `provideInth()` (a backend `/v1/consent/init` for `hosted()`,
  * local policy rules for `local()`, the manifest for `manifest()`), and
  * stores the result in `TransferState`. `provideInth()` reads it there on
  * the server and again in the browser, so hydration matches.

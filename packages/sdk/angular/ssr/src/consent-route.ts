@@ -173,7 +173,7 @@ const FORWARDING_HEADERS = [
 ] as const;
 
 /**
- * Creates the consent route for an Angular server: `/manifest` and `/init`
+ * Creates the consent route for an Angular server: `/v1/consent/manifest` and `/v1/consent/init`
  * below `routePrefix`, resolved in-process, and with `proxy`, consent
  * writes forwarded to the backend.
  *

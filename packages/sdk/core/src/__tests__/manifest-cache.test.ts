@@ -356,7 +356,9 @@ describe('fetchCachedManifest', () => {
 
 		await expect(
 			fetchCachedManifest({ fetch: fetchMock, sourceUrl: SOURCE_URL })
-		).rejects.toThrow('inth manifest cache: backend /manifest responded 503');
+		).rejects.toThrow(
+			'inth manifest cache: backend /v1/consent/manifest responded 503'
+		);
 	});
 
 	test('a refusal carries the backend message, status and code', async () => {
@@ -375,7 +377,7 @@ describe('fetchCachedManifest', () => {
 		).rejects.toMatchObject({
 			code: 'CONSENT_SESSIONS_EXHAUSTED',
 			message:
-				'inth manifest cache: backend /manifest responded 402: This project is out of consent sessions. (CONSENT_SESSIONS_EXHAUSTED)',
+				'inth manifest cache: backend /v1/consent/manifest responded 402: This project is out of consent sessions. (CONSENT_SESSIONS_EXHAUSTED)',
 			status: 402,
 		});
 	});

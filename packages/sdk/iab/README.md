@@ -57,7 +57,6 @@ See the [documentation](https://c15t.com/docs/frameworks/react/iab) for guides, 
 ## Related Packages
 
 - [@inth/react](https://www.npmjs.com/package/@inth/react): React IAB consent banner, dialog, and hooks through @inth/react/iab
-- [@c15t/backend](https://www.npmjs.com/package/@c15t/backend): Backend configuration for IAB TCF, GVL, CMP registration, and custom vendors
 - [@inth/sdk](https://www.npmjs.com/package/@inth/sdk): the consent engine with this IAB TCF support
 
 ## Support
