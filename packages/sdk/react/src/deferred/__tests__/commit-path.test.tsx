@@ -1136,6 +1136,61 @@ test('an instant accept that neither the commit chunk nor the engine can record 
 	await hydrated.unmount();
 });
 
+test('a second accept after both paths failed is recorded once', async () => {
+	const state = config();
+	const { boot, page: streamed } = await serve(state);
+	const onChoiceRecorded = vi.fn();
+	const failure = new TypeError('Failed to fetch chunk');
+	const loadEngine = vi
+		.fn<() => Promise<never>>()
+		.mockRejectedValueOnce(failure)
+		.mockImplementation(
+			() =>
+				new Promise<never>(() => {
+					// Never settles.
+				})
+		);
+	const failingOnce = vi
+		.fn<typeof loadCommit>()
+		.mockRejectedValueOnce(failure)
+		.mockImplementation(loadCommit);
+	shareTapQueue(streamed);
+	const hydrated = await streamed.hydrate(
+		<ClientPage
+			boot={boot}
+			commit={{ callbacks: { onChoiceRecorded } }}
+			loadCommit={failingOnce}
+			loadEngine={loadEngine}
+			prefetch={fulfilledThenable(state)}
+			scripts={[]}
+		/>
+	);
+	const main = streamed.doc.querySelector('main');
+
+	await act(() => {
+		tapBanner(streamed, 'accept');
+	});
+	await vi.waitFor(() => {
+		expect(main?.dataset.marketing).not.toBe('true');
+		expect(streamed.doc.querySelector(BANNER)).not.toBeNull();
+	});
+
+	await act(() => {
+		tapBanner(streamed, 'accept');
+	});
+	await vi.waitFor(
+		() => {
+			expect(onChoiceRecorded).toHaveBeenCalledTimes(1);
+		},
+		{ timeout: 5000 }
+	);
+	expect(main?.dataset.marketing).toBe('true');
+	expect(JSON.parse(localStorage.getItem('inth') ?? 'null')).toMatchObject({
+		categories: { marketing: { value: true } },
+	});
+	await hydrated.unmount();
+});
+
 test('a save the outbox cannot keep goes to the engine, which records it once', async () => {
 	const state = config();
 	const { boot, page: streamed } = await serve(state);

@@ -728,8 +728,10 @@ const createSession = function createSession<EngineModule>(
 		if (instant) {
 			// It started the root's plain scripts in this task.
 			claimRoot();
-			// The banner is hidden; nothing replays the tap.
-			claimTaps(true);
+			// The banner is hidden; nothing replays the tap. The tap script
+			// keeps listening until something stores the choice, so the
+			// banner still answers a press if neither path can.
+			claimTaps(false);
 			// A loader that registers its scripts after this starts them
 			// from the choice too.
 			setDeferredScriptStarter(handle.kernel, (scripts) =>
@@ -782,8 +784,10 @@ const createSession = function createSession<EngineModule>(
 				void (async () => {
 					try {
 						await handle.kernel.commands.save(choice, { actionAt, uiSource });
+						claimTaps(true);
 					} catch {
 						handle.commit(before, []);
+						routing = false;
 					}
 				})();
 			}
