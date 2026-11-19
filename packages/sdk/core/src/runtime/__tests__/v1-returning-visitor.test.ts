@@ -13,7 +13,11 @@ import {
 	optInRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../index';
-import { C15T_STORAGE_KEY, STORAGE_KEY_V2 } from '../../libs/storage-keys';
+import {
+	C15T_STORAGE_KEY,
+	PENDING_SAVES_STORAGE_KEY,
+	STORAGE_KEY_V2,
+} from '../../libs/storage-keys';
 import { createPersistence } from '../../modules/persistence';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { hosted } from '../../transports/mode';
@@ -21,6 +25,7 @@ import {
 	LEGACY_SUBJECT,
 	recordAnswer,
 	SUBJECT,
+	v1Error,
 } from '../../transports/v1/__tests__/fixtures';
 import { createConsentRuntime } from '../index';
 import type { ConsentRuntime } from '../types';
@@ -34,12 +39,16 @@ interface SentRecord {
 	subjectId: string;
 }
 let records: SentRecord[] = [];
+const answerRecord = (init?: RequestInit) =>
+	Promise.resolve(Response.json(recordAnswer(init)));
+/** How the backend answers the next saves. */
+let recordsAnswer: (init?: RequestInit) => Promise<Response> = answerRecord;
 
 const backend: typeof globalThis.fetch = (input, init) => {
 	const { pathname } = new URL(String(input));
 	if (pathname === '/v1/consent/records') {
 		records.push(JSON.parse(String(init?.body)) as SentRecord);
-		return Promise.resolve(Response.json(recordAnswer(init)));
+		return recordsAnswer(init);
 	}
 	return Promise.resolve(
 		Response.json({
@@ -82,22 +91,8 @@ const settle = () =>
 const subjectOf = (runtime: ConsentRuntime) =>
 	runtime.kernel.getSnapshot().subject?.subjectId;
 
-beforeEach(() => {
-	localStorage.clear();
-	clearStoredConsentRecords();
-	records = [];
-});
-
-afterEach(() => {
-	for (const runtime of runtimes.splice(0)) {
-		unload(runtime);
-	}
-	clearStoredConsentRecords();
-	vi.useRealTimers();
-});
-
-test('a visitor with only c15t storage is not asked again, and saves under the UUID from then on', async () => {
-	// What a c15t client left: its consent cookie and storage, and a sub_ id.
+/** What a c15t client left: its consent cookie and storage, and a sub_ id. */
+const leaveC15tVisitor = async () => {
 	const c15t = createConsentKernel({
 		consentCategories: [...CATEGORIES],
 		initialPolicyResolution: policy,
@@ -111,6 +106,25 @@ test('a visitor with only c15t storage is not asked again, and saves under the U
 	await settle();
 	c15tStorage.dispose();
 	c15t.dispose();
+};
+
+beforeEach(() => {
+	localStorage.clear();
+	clearStoredConsentRecords();
+	records = [];
+	recordsAnswer = answerRecord;
+});
+
+afterEach(() => {
+	for (const runtime of runtimes.splice(0)) {
+		unload(runtime);
+	}
+	clearStoredConsentRecords();
+	vi.useRealTimers();
+});
+
+test('a visitor with only c15t storage is not asked again, and saves under the UUID from then on', async () => {
+	await leaveC15tVisitor();
 	expect(localStorage.getItem(STORAGE_KEY_V2)).toBeNull();
 
 	const page = await load();
@@ -162,4 +176,74 @@ test('the next page reads the last givenAt sent from storage', async () => {
 	await next.kernel.commands.save({ marketing: false, measurement: true });
 
 	expect(records.at(-1)?.givenAt).toBe(sentAt + 1);
+});
+
+test('a replay that moves a c15t visitor to the UUID carries the floor to it', async () => {
+	const sentAt = 1_800_000_000_000;
+	vi.useFakeTimers({ toFake: ['Date'] });
+	vi.setSystemTime(sentAt);
+	await leaveC15tVisitor();
+	recordsAnswer = () => Promise.resolve(v1Error(500, 'server_error'));
+	const page = await load();
+	await page.kernel.commands.save({ marketing: true });
+	await settle();
+	unload(page);
+
+	recordsAnswer = answerRecord;
+	const next = await load();
+	await vi.waitFor(() => expect(subjectOf(next)).toBe(SUBJECT));
+	vi.setSystemTime(sentAt - 3_600_000);
+	await next.kernel.commands.save({ marketing: false });
+
+	expect(records.map((record) => record.subjectId)).toEqual([
+		LEGACY_SUBJECT,
+		LEGACY_SUBJECT,
+		SUBJECT,
+	]);
+	expect(records.at(-1)?.givenAt).toBe(sentAt + 1);
+});
+
+test('a save queued offline is sent after the device clock moved back', async () => {
+	const queuedAt = 1_800_000_000_000;
+	vi.useFakeTimers({ toFake: ['Date'] });
+	vi.setSystemTime(queuedAt);
+	const page = await load();
+	recordsAnswer = () => Promise.reject(new TypeError('offline'));
+	await page.kernel.commands.save({ marketing: false, measurement: true });
+
+	vi.setSystemTime(queuedAt - 1000);
+	recordsAnswer = answerRecord;
+	window.dispatchEvent(new Event('online'));
+
+	await vi.waitFor(() => expect(records).toHaveLength(2));
+	expect(records[1]).toEqual(records[0]);
+});
+
+test('a save refused for a clock that ran ahead does not hold later saves in the future', async () => {
+	const realNow = 1_800_000_000_000;
+	const ahead = realNow + 3_600_000;
+	vi.useFakeTimers({ toFake: ['Date'] });
+	vi.setSystemTime(realNow);
+	const page = await load();
+	// The backend refuses a givenAt more than ten minutes past its clock.
+	recordsAnswer = (init) =>
+		(JSON.parse(String(init?.body)) as SentRecord).givenAt >
+		realNow + 600_000
+			? Promise.resolve(v1Error(400, 'invalid_request'))
+			: answerRecord(init);
+
+	vi.setSystemTime(ahead);
+	await page.kernel.commands.save({ marketing: true, measurement: true });
+	vi.setSystemTime(realNow + 1000);
+	await page.kernel.commands.save({ marketing: false });
+	await settle();
+
+	expect(records.map((record) => record.givenAt)).toEqual([
+		ahead,
+		realNow + 1000,
+	]);
+	expect(records[1]?.answer.categories.measurement?.confirmedAt).toBe(
+		realNow + 1000
+	);
+	expect(localStorage.getItem(PENDING_SAVES_STORAGE_KEY)).toBeNull();
 });

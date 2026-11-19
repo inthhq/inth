@@ -221,7 +221,9 @@ const createStoredLists = function createStoredLists(
 			!isSubject(value.subject) ||
 			!isDecisionInputs(value.decisionInputs) ||
 			!isConfirmedCoverage(value.confirmed) ||
-			!validateExplicitChoice(value.choice, Date.now()).ok
+			// No clock: a device clock moved back since the save was queued
+			// must not make its dates look like they are in the future.
+			!validateExplicitChoice(value.choice, Number.MAX_SAFE_INTEGER).ok
 		) {
 			return false;
 		}

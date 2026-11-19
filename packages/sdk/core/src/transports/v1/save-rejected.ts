@@ -46,8 +46,8 @@ const PERMANENT_SAVE_CODES: ReadonlySet<string> = new Set<V1ErrorCode>([
 /**
  * The error for a failed `POST /v1/consent/records`: an
  * {@link InthApiSaveRejectedError} when a replay would be refused the
- * same way (`413`, and the `409` codes above when the body names them),
- * else an
+ * same way (`413`, a `400` whose body names `invalid_request`, and the
+ * `409` codes above when the body names them), else an
  * {@link InthApiError} the kernel queues and retries.
  *
  * A `401` is retried: the backend never refuses a save for its identity
@@ -65,6 +65,9 @@ export const readSaveFailure = async function readSaveFailure(
 	const message = describeApiError(label, detail);
 	const permanent =
 		response.status === 413 ||
+		(response.status === 400 &&
+			detail.codeFromBody &&
+			detail.code === 'invalid_request') ||
 		(response.status === 409 &&
 			detail.codeFromBody &&
 			PERMANENT_SAVE_CODES.has(detail.code));

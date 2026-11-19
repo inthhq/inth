@@ -8,7 +8,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { ConsentSaveRejectedError, createConsentKernel } from '../../index';
-import type { KernelConfig, SavePayload } from '../../types';
+import type { KernelConfig, SavePayload, SaveResult } from '../../types';
 import { clearKernelRecords } from '../clear-records';
 import { createKernel } from '../index';
 import { createBrowserOutboxStore } from '../save-outbox';

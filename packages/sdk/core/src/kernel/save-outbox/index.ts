@@ -54,7 +54,7 @@
  */
 
 import type { OptionalConsentCategory } from '../../consent-record/types';
-import { createGivenAtClock } from '../../libs/given-at';
+import { createGivenAtClock, queuedGivenAt } from '../../libs/given-at';
 import type { GivenAtClock } from '../../libs/given-at';
 import { warnInDevelopment } from '../../libs/is-production';
 import {
@@ -171,7 +171,19 @@ export const createSaveOutbox = function createSaveOutbox({
 	loadQueue = () => import('./queue'),
 }: SaveOutboxOptions): SaveOutbox {
 	const { batch, commit, emit, getSnapshot } = runtime;
-	const dates = createGivenAtClock();
+	const dates = createGivenAtClock((subjectId) =>
+		queuedGivenAt(store.peek('saves'), subjectId)
+	);
+	// Every path that moves the visitor to another subject id (a replay, a
+	// link, a direct save, a reassignment) commits it here.
+	let datedSubject = getSnapshot().subject?.subjectId;
+	runtime.subscribe((snapshot) => {
+		const next = snapshot.subject?.subjectId;
+		if (datedSubject !== undefined && next !== undefined && next !== datedSubject) {
+			dates.move(datedSubject, next);
+		}
+		datedSubject = next;
+	});
 	let worker: QueueWorker | undefined;
 	// Instance-local: another page must still recover a stranded request.
 	const directSends = new Set<SavePayload>();
@@ -270,6 +282,23 @@ export const createSaveOutbox = function createSaveOutbox({
 		});
 	};
 
+	/** `transport.save`, settling the date the save carries. */
+	const sendDated = async function sendDated(
+		save: NonNullable<KernelTransport['save']>,
+		payload: SavePayload,
+		options?: Parameters<NonNullable<KernelTransport['save']>>[1]
+	): Promise<SaveResult> {
+		const at = payload.givenAt ?? payload.confirmed.actionAt;
+		let accepted = false;
+		try {
+			const result = await save(payload, options);
+			accepted = result.ok;
+			return result;
+		} finally {
+			dates.settle(payload.subjectId, at, accepted);
+		}
+	};
+
 	const replay = async function replay(): Promise<void> {
 		const save = transport?.save;
 		if (!save || !(await hasQueued())) {
@@ -278,7 +307,7 @@ export const createSaveOutbox = function createSaveOutbox({
 		// A replay is no longer the page that made the save: it carries no
 		// consent journey, so a backend never links it to this page load.
 		const resend: NonNullable<KernelTransport['save']> = (payload) =>
-			save(payload, { replay: true });
+			sendDated(save, payload, { replay: true });
 		if (await (await loadWorker())?.replay(resend)) {
 			retryWhenOnline();
 		}
@@ -327,7 +356,6 @@ export const createSaveOutbox = function createSaveOutbox({
 		from: string,
 		to: string
 	): Promise<void> {
-		dates.move(from, to);
 		const queue = (await holdsSaveFor(from)) ? await loadWorker() : undefined;
 		if (queue) {
 			await queue.reassignSubject(from, to);
@@ -440,7 +468,7 @@ export const createSaveOutbox = function createSaveOutbox({
 				await discard(payload);
 				return { confirmed, ok: false };
 			}
-			const result = await save(sending);
+			const result = await sendDated(save, sending);
 			const remaining = currentPayload();
 			if (!remaining) {
 				await discard(payload);

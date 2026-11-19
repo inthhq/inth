@@ -37,7 +37,7 @@ import {
 	saveSubject,
 } from '../kernel/save-plan';
 import { deleteCookie, getRawCookieValue, writeCookie } from '../libs/cookie';
-import { readStoredGivenAt } from '../libs/given-at';
+import { givenAtFloor } from '../libs/given-at';
 import { removeLocalStorageKey } from '../libs/local-storage';
 import { storageFor } from '../libs/storage-for';
 import { resolveStorageKeys } from '../libs/storage-keys';
@@ -203,7 +203,11 @@ export const planEarlyCommit = function planEarlyCommit(
 			choice: recorded.choice,
 			confirmed: recorded.confirmed,
 			consentAction: selection.consentAction,
-			date: (time) => Math.max(time, readStoredGivenAt(subjectId) + 1),
+			date: (time) =>
+				Math.max(
+					time,
+					givenAtFloor(subjectId, createBrowserOutboxStore().peek('saves')) + 1
+				),
 			subject,
 			subjectId,
 			timing,

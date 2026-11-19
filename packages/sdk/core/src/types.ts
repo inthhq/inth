@@ -723,10 +723,11 @@ export interface SavePayload {
 	 */
 	addtlConsent?: string;
 	/**
-	 * When the save says the visitor decided: `confirmed.actionAt`, or later
-	 * when the device clock moved back since an earlier save or a receipt it
-	 * carries is later. The categories this action confirmed are sent with
-	 * this time.
+	 * When the save says the visitor decided: `confirmed.actionAt`, or one
+	 * millisecond after the subject's floor when the device clock moved back
+	 * since a save the backend accepted or still holds queued. The categories
+	 * this action confirmed are sent with this time, and no time the save
+	 * carries is later.
 	 */
 	givenAt?: number;
 	/**

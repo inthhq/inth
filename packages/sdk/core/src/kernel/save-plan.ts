@@ -227,12 +227,40 @@ export interface SavePayloadInput {
 	uiSource: SaveUISource;
 	/** `timeToDecisionMs` and `experiment` from {@link saveAttribution}. */
 	timing: Pick<SavePayload, 'experiment' | 'timeToDecisionMs'>;
+	/** The vendor choice the save carries, if any. */
+	vendorChoice?: SavePayload['vendorChoice'];
 	/**
 	 * Dates the save: the later of `time` and one millisecond after the
-	 * latest `givenAt` sent for the subject.
+	 * subject's floor.
 	 */
 	date: (time: number) => number;
 }
+
+/**
+ * `choice` with every receipt later than `givenAt` dated `givenAt`. A
+ * receipt from a device clock that ran ahead would otherwise date the save
+ * after `givenAt`, which the backend refuses.
+ */
+const receiptsUntil = function receiptsUntil(
+	choice: ExplicitChoice,
+	givenAt: number
+): ExplicitChoice {
+	const entries = Object.entries(choice.categories);
+	if (entries.every(([, receipt]) => !receipt || receipt.confirmedAt <= givenAt)) {
+		return choice;
+	}
+	return {
+		...choice,
+		categories: Object.fromEntries(
+			entries.map(([category, receipt]) => [
+				category,
+				receipt && receipt.confirmedAt > givenAt
+					? { ...receipt, confirmedAt: givenAt }
+					: receipt,
+			])
+		),
+	};
+};
 
 /**
  * The payload one recorded action sends, built once so a queued replay
@@ -251,24 +279,20 @@ export const buildSavePayload = function buildSavePayload(
 	// caller mutating its input object cannot change the queued payload.
 	const confirmedCategories: Partial<Record<OptionalConsentCategory, boolean>> =
 		{};
-	let latestReceipt = input.actionAt;
 	for (const [category, decision] of Object.entries(input.choice.categories)) {
-		if (!decision) {
-			continue;
-		}
-		if (input.confirmed.includes(category as OptionalConsentCategory)) {
+		if (decision && input.confirmed.includes(category as OptionalConsentCategory)) {
 			confirmedCategories[category as OptionalConsentCategory] = decision.value;
-		} else {
-			latestReceipt = Math.max(latestReceipt, decision.confirmedAt);
 		}
 	}
+	const givenAt = input.date(input.actionAt);
+	const { vendorChoice } = input;
 	return {
-		choice: input.choice,
+		choice: receiptsUntil(input.choice, givenAt),
 		confirmed: { actionAt: input.actionAt, categories: confirmedCategories },
 		consentAction: input.consentAction,
 		consents: after.effectivePermissions,
 		...saveDecisionInputs(after),
-		givenAt: input.date(latestReceipt),
+		givenAt,
 		idempotencyKey: createIdempotencyKey(),
 		model: after.model,
 		overrides: after.overrides,
@@ -278,6 +302,12 @@ export const buildSavePayload = function buildSavePayload(
 		tcString: after.iab?.tcString ?? null,
 		uiSource: input.uiSource,
 		user: after.user,
+		...(vendorChoice && {
+			vendorChoice: {
+				...vendorChoice,
+				confirmedAt: Math.min(vendorChoice.confirmedAt, givenAt),
+			},
+		}),
 		...input.timing,
 	};
 };

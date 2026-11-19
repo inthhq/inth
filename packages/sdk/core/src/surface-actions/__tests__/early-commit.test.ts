@@ -230,6 +230,37 @@ describe('storeEarlyCommit', () => {
 		expect(save).toHaveBeenCalledTimes(1);
 	});
 
+	test('a kernel save after the clock moved back is dated after the queued commit', async () => {
+		const plan = planEarlyCommit({
+			actionAt: TAP_AT,
+			choice: 'all',
+			snapshot: createKernel(config()).getSnapshot(),
+		});
+		if (!plan) {
+			throw new Error('expected a commit');
+		}
+		await storeEarlyCommit(plan);
+		vi.setSystemTime(TAP_AT - 3_600_000);
+
+		const sent: SavePayload[] = [];
+		const next = createKernel({
+			...config({ initialRecords: plan.records, now: CLOCK }),
+			transport: {
+				save: (payload) => {
+					sent.push(payload);
+					return Promise.resolve({ ok: true });
+				},
+			},
+		});
+		await next.commands.save({ marketing: false });
+
+		const withdrawal = sent.find(
+			(payload) => payload.confirmed.categories.marketing === false
+		);
+		expect(withdrawal?.givenAt).toBe(TAP_AT + 1);
+		next.dispose();
+	});
+
 	test('a stored clear epoch is reported, so the kernel records the choice', () => {
 		expect(hasStoredClearEpoch()).toBe(false);
 		localStorage.setItem('inth-epoch', String(NOW));

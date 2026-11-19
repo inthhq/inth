@@ -393,6 +393,7 @@ describe('save outbox: queue and replay', () => {
 		let transactions = 0;
 		const racing: SaveOutboxStore = {
 			clear: store.clear,
+			peek: store.peek,
 			transact: (run) =>
 				store.transact((tx) => {
 					transactions += 1;
@@ -1245,6 +1246,7 @@ describe('save outbox: subject reassignment', () => {
 		let gate: Promise<void> = Promise.resolve();
 		const gated: SaveOutboxStore = {
 			clear: store.clear,
+			peek: store.peek,
 			async transact(run) {
 				await gate;
 				return store.transact(run);
@@ -1350,6 +1352,7 @@ describe('save outbox: subject reassignment', () => {
 		// Holds the first transaction after the refusal: the claim.
 		const gated: SaveOutboxStore = {
 			clear: store.clear,
+			peek: store.peek,
 			async transact(run) {
 				if (conflictSeen && !claimWaiting) {
 					claimWaiting = true;
@@ -1512,6 +1515,7 @@ describe('save outbox: queue module loading', () => {
 			let full = false;
 			const filling: SaveOutboxStore = {
 				clear: store.clear,
+				peek: store.peek,
 				transact: (run) =>
 					store.transact((tx) =>
 						run({
@@ -1588,6 +1592,7 @@ describe('save outbox: clearing records', () => {
 		// (the clear) go straight through.
 		const gated: SaveOutboxStore = {
 			clear: store.clear,
+			peek: store.peek,
 			async transact(run) {
 				if (!waiting) {
 					waiting = true;
@@ -1867,6 +1872,7 @@ describe('save outbox: development warnings', () => {
 			let release: () => void = () => {};
 			const gated: SaveOutboxStore = {
 				clear: store.clear,
+				peek: store.peek,
 				async transact(run) {
 					if (!waiting) {
 						waiting = true;
@@ -2060,6 +2066,7 @@ describe('save outbox: replay failures and dropped saves', () => {
 			let refusedWrites = 0;
 			const refusing: SaveOutboxStore = {
 				clear: store.clear,
+				peek: store.peek,
 				transact: (run) =>
 					store.transact((tx) =>
 						run({

@@ -283,6 +283,32 @@ describe('save with vendors', () => {
 		kernel.dispose();
 	});
 
+	test('a vendor choice dated after the device clock is sent no later than givenAt', async () => {
+		const save = vi.fn<NonNullable<KernelTransport['save']>>(() =>
+			Promise.resolve({ ok: true })
+		);
+		const kernel = createKernel({
+			initialRecords: {
+				...choiceRecords({ marketing: true, measurement: true }),
+				vendorChoice: {
+					confirmedAt: NOW + 60_000,
+					denied: ['meta-pixel'],
+					version: 1,
+				},
+			},
+			// The records were made by a clock a minute ahead of this one.
+			now: NOW + 60_000,
+			transport: { save },
+		});
+
+		await kernel.commands.save({ measurement: false });
+
+		const payload = save.mock.calls[0]?.[0] as SavePayload;
+		expect(payload.givenAt).toBe(NOW);
+		expect(payload.vendorChoice?.confirmedAt).toBe(NOW);
+		kernel.dispose();
+	});
+
 	test('an explicit reconfirmation of the same denials renews the confirmation time', async () => {
 		const kernel = createKernel({
 			initialRecords: {

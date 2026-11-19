@@ -323,6 +323,7 @@ describe('save: the answer', () => {
 	});
 
 	test.each([
+		[400, 'invalid_request'],
 		[409, 'policy_snapshot_expired'],
 		[409, 'policy_snapshot_invalid'],
 		[409, 'policy_snapshot_required'],
@@ -344,16 +345,19 @@ describe('save: the answer', () => {
 		}
 	);
 
-	test('retries a 409 whose body names no code', async () => {
+	test.each([
+		[400, 'invalid_request'],
+		[409, 'conflict'],
+	])('retries a %i whose body names no code', async (status, code) => {
 		const { fetch } = stubFetch(
-			() => new Response('<html>Conflict</html>', { status: 409 })
+			() => new Response('<html>Refused</html>', { status })
 		);
 
 		const error = await transportWith(fetch)
 			.save(savePayload())
 			.catch((caught: unknown) => caught);
 
-		expect(error).toMatchObject({ code: 'conflict', status: 409 });
+		expect(error).toMatchObject({ code, status });
 		expect(isConsentSaveRejection(error)).toBe(false);
 	});
 
@@ -368,7 +372,6 @@ describe('save: the answer', () => {
 	});
 
 	test.each([
-		[400, 'invalid_request'],
 		// Never the identity token, which only leaves the link off.
 		[401, 'unauthorized'],
 		[429, 'rate_limited'],

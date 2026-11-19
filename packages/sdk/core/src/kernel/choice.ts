@@ -880,11 +880,8 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				subjectId,
 				timing: decisionTiming,
 				uiSource,
+				vendorChoice: vendorChoicePayload(after, before.vendorChoice),
 			});
-			const vendorChoice = vendorChoicePayload(after, before.vendorChoice);
-			if (vendorChoice) {
-				payload.vendorChoice = vendorChoice;
-			}
 			const addtlConsent = after.iab?.authority?.addtlConsent;
 			if (payload.tcString && addtlConsent) {
 				payload.addtlConsent = addtlConsent;
