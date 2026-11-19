@@ -311,10 +311,9 @@ const hasMarketingCategory = function hasMarketingCategory(init) {
 };
 
 /**
- * Direct HTTP assertions against the Nitro server routes the @inth/vue
- * Nuxt module registers (packages/sdk/vue/src/module.ts →
- * runtime/server/{init,manifest}.get.ts). Runs against the already-booted
- * Nuxt server — no browser involved.
+ * Direct HTTP assertions against the consent route the @inth/nuxt module
+ * registers (packages/sdk/nuxt/src/runtime/server/consent-route.ts). Runs
+ * against the already-booted Nuxt server — no browser involved.
  */
 const verifyNuxtNitroRoutes = async function verifyNuxtNitroRoutes(app) {
 	const base = `http://127.0.0.1:${app.port}`;
