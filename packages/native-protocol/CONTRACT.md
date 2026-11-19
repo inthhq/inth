@@ -1214,9 +1214,8 @@ fresh, which matches the web SDK when storage is cleared.
 The format is the one the backend validates, so a core that invents its own gets
 every save rejected: `packages/sdk/schema/src/api/subject/post.ts` requires
 `^sub_[1-9A-HJ-NP-Za-km-z]+$`. Build it as
-`generateSubjectId` in `packages/react-native/scripts/native-wire.ts` does, byte for
-byte, because the fixtures and both native cores have to produce ids a server cannot
-tell apart:
+`packages/sdk/core/src/libs/generate-subject-id.ts` does, byte for byte, because the
+web SDK and both native cores have to produce ids a server cannot tell apart:
 
 - 20 bytes: the big-endian signed 64-bit count of milliseconds since
   `1_700_000_000_000`, then 12 cryptographically random bytes. The offset may be
@@ -1254,11 +1253,11 @@ the producer refuses must read exactly like a first launch, records and all.
 
 The encoding is pinned by a table of eight vectors -- twelve random bytes, a wall
 clock reading, and the id -- asserted identically in three places:
-`packages/react-native/scripts/__tests__/native-wire.test.ts`,
+`packages/sdk/core/src/libs/__tests__/generate-subject-id.vectors.test.ts`,
 `packages/android/.../SubjectIdGeneratorTest.kt`, and
 `packages/swift/Tests/InthCoreTests/SubjectIdTests.swift`. The clock column is
 the reading the generator is pinned to, not the offset it encodes; the epoch is
-subtracted inside, as `generateSubjectId` subtracts it from `Date.now()`. Add a row to all
+subtracted inside, as the web SDK subtracts it from `Date.now()`. Add a row to all
 three at once.
 
 Wiping consent (reset)

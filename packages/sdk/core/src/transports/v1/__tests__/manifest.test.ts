@@ -166,6 +166,96 @@ describe('the IAB vendor list', () => {
 	});
 });
 
+/** An IAB manifest that lists Google Additional Consent providers at `url`. */
+const iabManifest = function iabManifest(
+	additionalConsent?: { providers: number[]; url: string }
+): ConsentManifest {
+	return {
+		...MANIFEST,
+		cmpId: 28,
+		iab: {
+			enabled: true,
+			gvl: { url: '/gvl/vendor-list.json' },
+			...(additionalConsent && { additionalConsent }),
+		},
+		policyPacks: [
+			createConsentManifestPolicyPack({
+				id: 'iab',
+				match: { fallback: true },
+				model: 'iab',
+				prompt: 'choice',
+			}),
+		],
+	} as unknown as ConsentManifest;
+};
+
+const META = { id: 89, name: 'Meta', policyUrl: 'https://meta.example/p' };
+
+describe('Google Additional Consent providers', () => {
+	test('loads the providers the manifest lists', async () => {
+		const { calls, fetch } = stubFetch(() =>
+			json(200, { providers: { '89': META } })
+		);
+		const transport = createV1ManifestTransport({
+			fetch,
+			fetchGvl: () => Promise.resolve(null),
+			projectUrl: PROJECT_URL,
+			snapshot: iabManifest({
+				providers: [89, 404],
+				url: 'https://lists.example/ac-manifest',
+			}),
+		});
+
+		const response = await transport.init({ overrides: {}, user: null });
+
+		expect(response.adTechProviders).toEqual([META]);
+		expect(calls.map((call) => call.url)).toEqual([
+			'https://lists.example/ac-manifest?providerIds=89%2C404',
+		]);
+	});
+
+	test('resolves a relative provider URL against the manifest URL', async () => {
+		const { calls, fetch } = stubFetch(() =>
+			json(200, { providers: { '89': META } })
+		);
+		const transport = createV1ManifestTransport({
+			fetch,
+			fetchGvl: () => Promise.resolve(null),
+			projectUrl: PROJECT_URL,
+			snapshot: iabManifest({
+				providers: [89],
+				url: '/api/additional-consent-relative',
+			}),
+		});
+
+		const response = await transport.init({ overrides: {}, user: null });
+
+		expect(calls.map((call) => call.url)).toEqual([
+			`${PROJECT_URL}/api/additional-consent-relative?providerIds=89`,
+		]);
+		expect(response.adTechProviders).toHaveLength(1);
+	});
+
+	test('withdraws them once the manifest stops listing them, but not when the list is down', async () => {
+		const init = (snapshot: ConsentManifest, fetch: typeof globalThis.fetch) =>
+			createV1ManifestTransport({
+				fetch,
+				fetchGvl: () => Promise.resolve(null),
+				projectUrl: PROJECT_URL,
+				snapshot,
+			}).init({ overrides: {}, user: null });
+
+		const unlisted = await init(iabManifest(), stubFetch().fetch);
+		expect(unlisted.adTechProviders).toEqual([]);
+
+		const down = await init(
+			iabManifest({ providers: [89], url: 'https://lists.example/ac-down' }),
+			stubFetch(() => new Response('', { status: 503 })).fetch
+		);
+		expect(down).not.toHaveProperty('adTechProviders');
+	});
+});
+
 describe('saves in manifest mode', () => {
 	test('assert the decision the manifest resolved', async () => {
 		const { calls, fetch } = stubFetch(() =>

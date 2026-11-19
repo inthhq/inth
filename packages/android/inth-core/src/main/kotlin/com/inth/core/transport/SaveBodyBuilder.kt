@@ -14,7 +14,7 @@ import kotlinx.serialization.json.putJsonObject
  * Builds the `POST /subjects` body.
  *
  * Port of `buildSubjectPostBody` in
- * `packages/react-native/scripts/native-wire.ts`. Two representations of the same
+ * `packages/sdk/core/src/transports/subject-body.ts`. Two representations of the same
  * act travel together on purpose:
  *
  * - `preferences` is the complete explicit map after the act, `necessary` plus
