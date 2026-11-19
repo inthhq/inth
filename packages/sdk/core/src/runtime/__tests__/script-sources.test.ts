@@ -801,9 +801,18 @@ describe('experimentalScriptRegistry', () => {
 	});
 
 	describe('when init fails, the list the browser remembers', () => {
+		/** An init that answers, with a policy, carrying `scriptRegistry`. */
 		const answering = (scriptRegistry: unknown, projectUrl = BACKEND) =>
 			startWith({
-				mode: initMode(() => Promise.resolve({ scriptRegistry })),
+				mode: initMode(() =>
+					Promise.resolve({
+						policyResolution: {
+							...matchedResolution(optInRule({ id: 'opt-in' })),
+							version: 1,
+						},
+						scriptRegistry,
+					})
+				),
 				projectUrl,
 				scripts: [integrationScript()],
 			});
@@ -905,6 +914,47 @@ describe('experimentalScriptRegistry', () => {
 			await vi.waitFor(() =>
 				expect(fetchAttributes('vendor').src).toBe(VENDOR_SRC)
 			);
+			runtime.dispose();
+		});
+
+		test('is kept and used when init answers that the backend could not read the registry', async () => {
+			const list = {
+				sources: { vendor: { integrity: HASH_INTEGRITY, src: HASH_SRC } },
+			};
+			await remember(list);
+			const runtime = answering({ unavailable: true });
+
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor')).toMatchObject({
+					integrity: HASH_INTEGRITY,
+					src: HASH_SRC,
+				})
+			);
+			expect(stored()).toEqual(list);
+			runtime.dispose();
+		});
+
+		test('leaves the vendor URL when the backend could not read the registry and none is remembered', async () => {
+			const runtime = answering({ unavailable: true });
+
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor').src).toBe(VENDOR_SRC)
+			);
+			expect(stored()).toBeNull();
+			runtime.dispose();
+		});
+
+		test('ignores unavailable beside a list: the list applies and is remembered', async () => {
+			await remember({ sources: { vendor: null } });
+			const list = {
+				sources: { vendor: { integrity: HASH_INTEGRITY, src: HASH_SRC } },
+			};
+			const runtime = answering({ ...list, unavailable: true });
+
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor').src).toBe(HASH_SRC)
+			);
+			await vi.waitFor(() => expect(stored()).toEqual(list));
 			runtime.dispose();
 		});
 

@@ -168,6 +168,18 @@ export const parseRegistryFiles = function parseRegistryFiles(
  * prefetch.
  * @internal
  */
+/**
+ * Whether an answer's registry says the backend could not read it
+ * (`unavailable`), with no list beside it. A list beside it wins.
+ *
+ * @internal
+ */
+export const registryUnavailable = (registry: unknown): boolean =>
+	isRecord(registry) &&
+	registry.unavailable === true &&
+	parseRegistrySources(registry.sources) === null &&
+	parseRegistryFiles(registry.files) === null;
+
 export const readScriptRegistry = function readScriptRegistry(snapshot: {
 	readonly policyPending: boolean;
 	readonly resolution?: Pick<ConsentSnapshot['resolution'], 'status'>;

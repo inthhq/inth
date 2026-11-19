@@ -104,7 +104,9 @@ uses only a prefetched list.
 
 Inth remembers the last list this browser received, in `localStorage`, and loads
 by it when init fails: an outage, a rate limit, a blocked request, or an init
-that does not answer within 10 seconds. The remembered list works exactly as a
+that does not answer within 10 seconds. It does the same when init answers
+`"scriptRegistry": { "unavailable": true }`, which the backend sends when it
+could not read the project's registry. The remembered list works exactly as a
 fresh one, `sources`, `files`, `null` entries and `refuseIfSet` included, and
 Inth checks it the same way, so a stored list it cannot read counts as no list.
 Without a remembered list, every script loads from its vendor's URL.
@@ -113,8 +115,9 @@ Without a remembered list, every script loads from its vendor's URL.
   project's list is never read for another project or backend on the same
   origin. A runtime with no `projectUrl` remembers nothing.
 - **Replaced by every answer.** Each init that answers replaces the list. An
-  answer without a list removes it, so turning the registry off for a project
-  takes effect on the next visit that reaches `/v1/consent/init`.
+  answer with no `scriptRegistry` removes it, so turning the registry off for a
+  project takes effect on the next visit that reaches `/v1/consent/init`. An `unavailable`
+  answer leaves it.
 - **Seven days at most.** After that the list is dropped, and a failed init
   loads from vendor URLs again. A remembered list can name a version the
   registry has rejected since. The registry then answers that URL with an

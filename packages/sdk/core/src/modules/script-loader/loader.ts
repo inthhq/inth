@@ -24,7 +24,7 @@ import {
 	hasSameResource,
 	normalizeScripts,
 } from './normalize';
-import { readScriptRegistry } from './registry';
+import { readScriptRegistry, registryUnavailable } from './registry';
 import { createScriptSourceResolver } from './sources';
 import type { HeldScript, ScriptRegistryState } from './sources';
 import type {
@@ -116,8 +116,9 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		? options.registry.memory
 		: undefined;
 	// Read once init resolves; a later init's list does not move scripts.
-	// When init fails, the last list this browser received from the
-	// backend stands in for it, read as a fresh one is.
+	// When init fails, or answers that the backend could not read the
+	// registry, the last list this browser received from the backend
+	// stands in for it, read as a fresh one is.
 	const readRegistry = (snapshot: ConsentSnapshot): ScriptRegistryState => {
 		const state = readScriptRegistry(
 			options.registry?.waitForInit
@@ -125,7 +126,9 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 				: { ...snapshot, policyPending: false }
 		);
 		const remembered =
-			state.status === 'failed' && snapshot.resolution?.status === 'failed'
+			state.status === 'failed' &&
+			(snapshot.resolution?.status === 'failed' ||
+				registryUnavailable(snapshot.scriptRegistry))
 				? memory?.read()
 				: undefined;
 		return remembered === undefined
@@ -136,14 +139,16 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 				});
 	};
 	// Each answer replaces the remembered list, a list-less one with none,
-	// so turning the registry off takes effect.
+	// so turning the registry off takes effect. One whose registry the
+	// backend could not read leaves it.
 	let remembered: unknown = Symbol('nothing remembered yet');
 	const remember = (snapshot: ConsentSnapshot): void => {
 		// A failed init leaves the policy pending, so this is an answer.
 		if (
 			!memory ||
 			snapshot.policyPending ||
-			snapshot.scriptRegistry === remembered
+			snapshot.scriptRegistry === remembered ||
+			registryUnavailable(snapshot.scriptRegistry)
 		) {
 			return;
 		}
