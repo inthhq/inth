@@ -25,6 +25,7 @@ import {
 	encodeStoredConsentEnvelopeJson,
 	encodeVendorChoice,
 } from '../../modules/persistence/writer/encode';
+import { signRelease } from '../../modules/script-loader/__tests__/signing-fixtures';
 import { releaseServerStartedScripts } from '../../surface-actions/plain-scripts';
 import {
 	serverScriptStart,
@@ -44,6 +45,13 @@ type StartedWindow = Window & {
 	__inthSetup?: number;
 	__inthStarted?: Record<string, HTMLScriptElement>;
 };
+
+// oxlint-disable-next-line anti-slop/no-module-mocking -- The tests cannot sign with Inth's keys, so they trust test keys in their place; the verifier is the real one.
+vi.mock('../../modules/script-loader/signing-keys', async () => ({
+	SIGNING_KEYS: (
+		await import('../../modules/script-loader/__tests__/signing-fixtures')
+	).TEST_SIGNING_KEYS,
+}));
 
 const CONFIRMED_AT = NOW - 1000;
 
@@ -234,6 +242,125 @@ describe('serverScriptStart', () => {
 			integrity: 'sha384-pinned',
 			src: 'https://cdn.example.com/pinned/pixel.js',
 		});
+	});
+
+	test('starts a registry entry only once this process has verified its signature', async () => {
+		const integrity = `sha384-${'A'.repeat(64)}`;
+		const registrySrc =
+			'https://acme.inth.app/scripts/pixel@fedcba9876543210.js';
+		const render = (entry: Record<string, unknown>) =>
+			serverScriptStart({
+				experimentalScriptRegistry: { requireSignatures: true },
+				mode,
+				prefetch: {
+					...prefetchFor({ marketing: true }),
+					initialScriptRegistry: { sources: { pixel: entry as never } },
+				},
+				scripts: [{ ...pixel, integration: 'pixel' }],
+			});
+		const signed = {
+			integrity,
+			signature: signRelease({ integrity, url: pixel.src ?? '' }),
+			src: registrySrc,
+		};
+
+		// A render cannot wait for the check: the loader runs it in the
+		// browser. This render starts it, so a later one can start the script.
+		expect(render(signed)).toBeUndefined();
+		expect(render({ integrity, src: registrySrc })).toBeUndefined();
+		await vi.waitFor(() => expect(render(signed)).not.toBeUndefined());
+
+		run(render(signed));
+		expect(document.head.querySelector('script')?.getAttribute('src')).toBe(
+			registrySrc
+		);
+	});
+
+	test.each([
+		['required', { requireSignatures: true }],
+		['not required', true],
+	] as const)(
+		'never starts an entry whose signature fails, after its check settles, with signatures %s',
+		async (_name, experimentalScriptRegistry) => {
+			const integrity = `sha384-${'D'.repeat(64)}`;
+			// A release of another script, moved onto this entry.
+			const signature = signRelease({
+				integrity,
+				url: 'https://cdn.other.example/other.js',
+			});
+			const verify = vi.spyOn(crypto.subtle, 'verify');
+			const render = () =>
+				serverScriptStart({
+					experimentalScriptRegistry,
+					mode,
+					prefetch: {
+						...prefetchFor({ marketing: true }),
+						initialScriptRegistry: {
+							sources: {
+								pixel: {
+									integrity,
+									signature,
+									src: 'https://acme.inth.app/scripts/pixel@99887766554433.js',
+								},
+							},
+						},
+					},
+					scripts: [{ ...pixel, integration: 'pixel' }],
+				});
+
+			expect(render()).toBeUndefined();
+			await vi.waitFor(() => expect(verify).toHaveBeenCalled());
+			expect(await verify.mock.results.at(-1)?.value).toBe(false);
+			expect(render()).toBeUndefined();
+			verify.mockRestore();
+		}
+	);
+
+	test('the browser waits on its own check, then takes over the element the server started', async () => {
+		const integrity = `sha384-${'C'.repeat(64)}`;
+		const registrySrc = 'https://acme.inth.app/scripts/pixel@00112233445566.js';
+		const options = {
+			experimentalScriptRegistry: true,
+			mode,
+			prefetch: {
+				...prefetchFor({ marketing: true }),
+				initialScriptRegistry: {
+					sources: {
+						pixel: {
+							integrity,
+							signature: signRelease({ integrity, url: pixel.src ?? '' }),
+							src: registrySrc,
+						},
+					},
+				},
+			},
+			scripts: [{ ...pixel, integration: 'pixel' }],
+		} satisfies ConsentRuntimeOptions;
+		const elements = () =>
+			document.head.querySelectorAll<
+				HTMLScriptElement & { __inthAdopted?: boolean }
+			>(`script[src="${registrySrc}"]`);
+		await vi.waitFor(() =>
+			expect(serverScriptStart(options)).not.toBeUndefined()
+		);
+		run(serverScriptStart(options));
+		expect(elements()).toHaveLength(1);
+
+		// The browser has its own modules, so its own cache: it checks again.
+		vi.resetModules();
+		const { createConsentRuntime } = await import('../index');
+		const verify = vi.spyOn(crypto.subtle, 'verify');
+		const runtime = createConsentRuntime(options);
+		runtime.start();
+		expect(elements()[0]?.__inthAdopted).toBeUndefined();
+
+		await vi.waitFor(() => expect(verify).toHaveBeenCalled());
+		expect(await verify.mock.results[0]?.value).toBe(true);
+		await vi.waitFor(() => expect(elements()[0]?.__inthAdopted).toBe(true));
+		expect(elements()).toHaveLength(1);
+		expect((window as { __inthSetup?: number }).__inthSetup).toBe(1);
+		runtime.dispose();
+		verify.mockRestore();
 	});
 
 	test('leaves an integration to the client when the prefetch has not resolved init', () => {

@@ -257,6 +257,10 @@ type DocumentGaps =
 	| 'registry list.files: only in document'
 	| 'registry list.sources: optional in SDK, required in document'
 	| 'registry sources.*.refuseIfSet: only in document'
+	// For the document to add. The SDK reads an optional release `signature`
+	// on each source and checks it before the script loads; the document
+	// does not describe it yet.
+	| 'registry sources.*.signature: only in SDK'
 	// The manifest type is shared with the 3.x routes, whose producer may
 	// name a tenant. `/v1` names none, and the SDK does not send it on.
 	| 'manifest answer.tenantId: only in SDK'
