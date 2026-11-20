@@ -278,6 +278,10 @@ describe('save: the answer', () => {
 			{ reason: 'invalid_token', stored: false },
 			{ externalId: 'user_123', identityToken: 'stale' },
 		],
+		[
+			{ reason: 'refused', stored: false },
+			{ externalId: 'erased_user', identityToken: 'token' },
+		],
 	])(
 		'a save with an externalId succeeds with the link %o',
 		async (link, user) => {

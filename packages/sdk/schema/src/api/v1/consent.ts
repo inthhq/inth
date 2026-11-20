@@ -241,7 +241,8 @@ export const v1ConsentRecordInputSchema = v.pipe(
  * Whether the external ID sent with a save was stored as a link. A link left
  * off is not an error: the save was recorded either way. `unverified` means
  * the save carried no identity token, `invalid_token` one that did not
- * verify.
+ * verify, and `refused` a token that verified for a person the backend will
+ * not link, such as one who was erased.
  */
 export const v1ConsentRecordLinkSchema = v.variant('stored', [
 	v.object({
@@ -249,7 +250,7 @@ export const v1ConsentRecordLinkSchema = v.variant('stored', [
 		verifiedBy: v.literal('identity_token'),
 	}),
 	v.object({
-		reason: v.picklist(['unverified', 'invalid_token']),
+		reason: v.picklist(['unverified', 'invalid_token', 'refused']),
 		stored: v.literal(false),
 	}),
 ]);

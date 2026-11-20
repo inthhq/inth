@@ -39,6 +39,13 @@ export const V1_MAX_ACCEPTANCES = 20;
 /** A document type, such as `privacy_policy`, `terms_us` or `terms_eu`. */
 export const V1_DOCUMENT_TYPE_PATTERN = /^[a-z][a-z0-9_]*$/u;
 
+/**
+ * A document hash: the SHA-256 of the published file's exact bytes, in
+ * lowercase hex, prefixed `sha256:`. The backend's OpenAPI document does not
+ * state the pattern, but the backend refuses any other hash.
+ */
+export const V1_DOCUMENT_HASH_PATTERN = /^sha256:[\da-f]{64}$/u;
+
 /** Response header that carries the request ID. */
 export const V1_REQUEST_ID_HEADER = 'x-request-id';
 
@@ -56,8 +63,7 @@ export const V1_ERROR_CODES = [
 	'policy_snapshot_required',
 	'policy_snapshot_invalid',
 	'policy_snapshot_expired',
-	'document_proof_invalid',
-	'document_proof_expired',
+	'document_unknown',
 	'payload_too_large',
 	'rate_limited',
 	'server_error',

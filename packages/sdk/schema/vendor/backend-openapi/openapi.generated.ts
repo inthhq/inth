@@ -111,7 +111,7 @@ export interface paths {
 		};
 		/**
 		 * Read the legal document release in force
-		 * @description The release of a legal document in force for its type, and a proof token that pins the type, version and hash shown. Send the token back with an acceptance. It is valid for a day.
+		 * @description The release of a legal document in force for its type. Send its `hash` back with an acceptance to name the release that was shown.
 		 */
 		get: operations['getV1DocumentsByTypeCurrent'];
 		/**
@@ -137,7 +137,7 @@ export interface paths {
 		put?: never;
 		/**
 		 * Record document acceptances
-		 * @description Records that a device or a person accepted one or more legal document releases, each named by the proof token `GET /v1/documents/{type}/current` gave. All are recorded, or none. With only subjectId, the acceptances are the device’s and need no key. With externalId, they are the person’s, who is made when missing, and the request needs the secret key or an identityToken that names them. `context` carries the visitor’s IP address and user agent when your server records the acceptance, and is read only with the secret key; otherwise both come from the request. A retry with the same idempotencyKey is recorded once and answered as the first try was.
+		 * @description Records that a device or a person accepted one or more legal document releases, each named by its type and the hash `GET /v1/documents/{type}/current` gave. A release no longer in force can still be accepted; `GET /v1/consent/check` then reports the newer one as not accepted. All are recorded, or none. With only subjectId, the acceptances are the device’s and need no key. With externalId, they are the person’s, who is made when missing, and the request needs the secret key or an identityToken that names them. `context` carries the visitor’s IP address and user agent when your server records the acceptance, and is read only with the secret key; otherwise both come from the request. A retry with the same idempotencyKey is recorded once and answered as the first try was.
 		 */
 		post: operations['postV1DocumentsAcceptances'];
 		delete?: never;
@@ -506,6 +506,7 @@ export interface components {
 				/** Format: uri */
 				privacyPolicyUrl: string;
 			}[];
+			scriptRegistry?: components['schemas']['ScriptRegistry'];
 		};
 		/** @description Every policy the project serves, with the banner text in each language, independent of the visitor. */
 		ConsentManifestResponse: {
@@ -617,10 +618,11 @@ export interface components {
 					};
 				};
 			}[];
-			/** @description Fingerprints the manifest. It is also the ETag. */
+			/** @description Fingerprints the manifest, `scriptRegistry` included. It is also the ETag. */
 			revision: string;
 			/** @constant */
 			schemaVersion: 2;
+			scriptRegistry?: components['schemas']['ScriptRegistry'];
 			translations?: {
 				/** @description Banner text overrides, by language. */
 				customTranslations?: {
@@ -654,57 +656,6 @@ export interface components {
 			 * @example 2~89.486~dv.2572
 			 */
 			addtlConsent?: string;
-			/**
-			 * @description User action that produced this consent state.
-			 * @example all
-			 * @example necessary
-			 * @example custom
-			 */
-			consentAction?: string;
-			country?: string | null;
-			/** @description Runtime policy fingerprint asserted by manifest-mode clients. */
-			fingerprint?: string;
-			/** @description Global Privacy Control input used by manifest-mode saves. */
-			gpc?: boolean;
-			/**
-			 * @description Language input used by manifest-mode decision replay.
-			 * @example en
-			 */
-			language?: string;
-			/** @description Additional audit metadata to store with the consent. */
-			metadata?: {
-				[key: string]: unknown;
-			};
-			/**
-			 * @description Consent model the client applied. Used when no policy decision is available.
-			 * @example opt-in
-			 * @example opt-out
-			 * @example iab
-			 */
-			model?: string;
-			policyId?: string | null;
-			/** @description The signed policy snapshot token `GET /v1/consent/init` answered with. */
-			policySnapshotToken?: string;
-			region?: string | null;
-			/** @description IAB TCF TC string for IAB consent submissions. */
-			tcString?: string;
-			/**
-			 * @description UI surface that collected the consent.
-			 * @example banner
-			 * @example dialog
-			 * @example widget
-			 */
-			uiSource?: string;
-			vendorChoice?: {
-				/** @description Epoch milliseconds when the vendor grants were confirmed. */
-				confirmedAt: number;
-				/** @description Granted flag per declared vendor id. */
-				grants: {
-					[key: string]: boolean;
-				};
-				/** @constant */
-				version: 1;
-			};
 			answer: {
 				categories: {
 					necessary?: {
@@ -806,9 +757,21 @@ export interface components {
 				| 'marketing'
 				| 'measurement'
 			)[];
+			/**
+			 * @description User action that produced this consent state.
+			 * @example all
+			 * @example necessary
+			 * @example custom
+			 */
+			consentAction?: string;
+			country?: string | null;
 			externalId?: string;
+			/** @description Runtime policy fingerprint asserted by manifest-mode clients. */
+			fingerprint?: string;
 			/** @description When the visitor gave this answer, in epoch milliseconds. */
 			givenAt: number;
+			/** @description Global Privacy Control input used by manifest-mode saves. */
+			gpc?: boolean;
 			/**
 			 * Format: uuid
 			 * @description A UUID of any version, in lower case, made once per user action and sent again on every retry of it.
@@ -816,10 +779,49 @@ export interface components {
 			idempotencyKey: string;
 			identityProvider?: string;
 			identityToken?: string;
+			/**
+			 * @description Language input used by manifest-mode decision replay.
+			 * @example en
+			 */
+			language?: string;
+			/** @description Additional audit metadata to store with the consent. */
+			metadata?: {
+				[key: string]: unknown;
+			};
+			/**
+			 * @description Consent model the client applied. Used when no policy decision is available.
+			 * @example opt-in
+			 * @example opt-out
+			 * @example iab
+			 */
+			model?: string;
+			policyId?: string | null;
+			/** @description The signed policy snapshot token `GET /v1/consent/init` answered with. */
+			policySnapshotToken?: string;
 			/** @description Where the answer was given: a site’s host name, or an app’s application or bundle ID, in lower case. */
 			property: string;
+			region?: string | null;
 			/** @description A lower-case UUIDv7 the SDK makes. A legacy `sub_` ID is accepted too; the answer names the subject’s UUID, to store in its place. */
 			subjectId: string;
+			/** @description IAB TCF TC string for IAB consent submissions. */
+			tcString?: string;
+			/**
+			 * @description UI surface that collected the consent.
+			 * @example banner
+			 * @example dialog
+			 * @example widget
+			 */
+			uiSource?: string;
+			vendorChoice?: {
+				/** @description Epoch milliseconds when the vendor grants were confirmed. */
+				confirmedAt: number;
+				/** @description Granted flag per declared vendor id. */
+				grants: {
+					[key: string]: boolean;
+				};
+				/** @constant */
+				version: 1;
+			};
 		};
 		ConsentRecordResponse: {
 			link?:
@@ -831,7 +833,7 @@ export interface components {
 				  }
 				| {
 						/** @enum {string} */
-						reason: 'unverified' | 'invalid_token';
+						reason: 'unverified' | 'invalid_token' | 'refused';
 						/** @constant */
 						stored: false;
 				  };
@@ -883,9 +885,11 @@ export interface components {
 		};
 		DocumentAcceptancesRequest: {
 			acceptances: {
-				proofToken: string;
+				/** @description The hash of the release accepted, as `GET /v1/documents/{type}/current` gave it. */
+				hash: string;
 				type: string;
 			}[];
+			/** @description When the subject accepted the releases, in epoch milliseconds. */
 			acceptedAt: number;
 			context?: {
 				ipAddress?: string;
@@ -925,14 +929,13 @@ export interface components {
 				effectiveDate: string;
 				/** @description `sha256:` and the lower-case hex SHA-256 of the exact bytes of the published file. */
 				hash: string;
+				/** Format: uuid */
+				id: string;
+				isCurrent: boolean;
 				requiresAcceptance: boolean;
 				type: string;
 				version: string;
 			};
-			/** @description Send it back with an acceptance. It pins the type, version and hash shown. */
-			proofToken: string;
-			/** Format: date-time */
-			proofTokenExpiresAt: string;
 		};
 		DocumentPublishRequest: {
 			/** @description An ISO-8601 date, or a date and time that names its zone. */
@@ -949,13 +952,52 @@ export interface components {
 				effectiveDate: string;
 				/** @description `sha256:` and the lower-case hex SHA-256 of the exact bytes of the published file. */
 				hash: string;
-				requiresAcceptance: boolean;
-				type: string;
-				version: string;
 				/** Format: uuid */
 				id: string;
 				isCurrent: boolean;
+				requiresAcceptance: boolean;
+				type: string;
+				version: string;
 			};
+		};
+		/** @description The Script Registry scripts to load by hash. Absent when the registry lists no script for the project. */
+		ScriptRegistry:
+			| {
+					/** @description Files loaders download at run time, by the exact vendor URL a loader requests. `null`: the registry has no release of the file it may serve, so load it from nowhere. */
+					files?: {
+						[key: string]: components['schemas']['ScriptRegistryFile'] | null;
+					};
+					/** @description By script ID. `null`: the registry blocks the script, so load it from neither the registry nor the vendor. A script not listed loads from its vendor. */
+					sources: {
+						[key: string]: components['schemas']['ScriptRegistrySource'] | null;
+					};
+			  }
+			| {
+					/**
+					 * @description The registry could not be read, so this answer says nothing about the scripts. Keep the list from an earlier answer.
+					 * @constant
+					 */
+					unavailable: true;
+			  };
+		/** @description Where to load one file a loader downloads at run time. */
+		ScriptRegistryFile: {
+			/** @description The SRI hash of the file. */
+			integrity: string;
+			/** @description The registry copy of the release the loader is bound to. */
+			src: string;
+		};
+		/** @description Where to load one script from. */
+		ScriptRegistrySource: {
+			/** @description Attributes to set on the script tag, for a script that reads its own URL. Skip one the page already sets. Remove an attribute whose value is `null`. */
+			attributes?: {
+				[key: string]: string | null;
+			};
+			/** @description The SRI hash of the version. Load it with `crossorigin="anonymous"`. */
+			integrity: string;
+			/** @description On a loader that downloads more files at run time: integration options, by dotted path, with which it would download them from an address `files` does not list. With any of them set, load nothing for the script. */
+			refuseIfSet?: string[];
+			/** @description The URL of the version the registry serves, named by its hash. Keep its query string. */
+			src: string;
 		};
 		SubjectLinkRequest: {
 			externalId: string;
@@ -979,8 +1021,7 @@ export interface components {
 				code:
 					| 'bad_gateway'
 					| 'conflict'
-					| 'document_proof_expired'
-					| 'document_proof_invalid'
+					| 'document_unknown'
 					| 'forbidden'
 					| 'gateway_timeout'
 					| 'identity_conflict'
@@ -1641,6 +1682,20 @@ export interface operations {
 					};
 				};
 			};
+			/** @description forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['V1Error'] & {
+						error?: {
+							/** @enum {string} */
+							code?: 'forbidden';
+						};
+					};
+				};
+			};
 			/** @description not_found */
 			404: {
 				headers: {
@@ -1903,6 +1958,20 @@ export interface operations {
 					};
 				};
 			};
+			/** @description forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['V1Error'] & {
+						error?: {
+							/** @enum {string} */
+							code?: 'forbidden';
+						};
+					};
+				};
+			};
 			/** @description not_found */
 			404: {
 				headers: {
@@ -2058,6 +2127,20 @@ export interface operations {
 					};
 				};
 			};
+			/** @description forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['V1Error'] & {
+						error?: {
+							/** @enum {string} */
+							code?: 'forbidden';
+						};
+					};
+				};
+			};
 			/** @description not_found */
 			404: {
 				headers: {
@@ -2072,7 +2155,7 @@ export interface operations {
 					};
 				};
 			};
-			/** @description conflict, document_proof_expired, document_proof_invalid, identity_conflict, subject_conflict */
+			/** @description conflict, document_unknown, identity_conflict, subject_conflict */
 			409: {
 				headers: {
 					[name: string]: unknown;
@@ -2083,8 +2166,7 @@ export interface operations {
 							/** @enum {string} */
 							code?:
 								| 'conflict'
-								| 'document_proof_expired'
-								| 'document_proof_invalid'
+								| 'document_unknown'
 								| 'identity_conflict'
 								| 'subject_conflict';
 						};
@@ -2212,6 +2294,20 @@ export interface operations {
 						error?: {
 							/** @enum {string} */
 							code?: 'unauthorized';
+						};
+					};
+				};
+			};
+			/** @description forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['V1Error'] & {
+						error?: {
+							/** @enum {string} */
+							code?: 'forbidden';
 						};
 					};
 				};

@@ -5,6 +5,10 @@ import type {
 	operations,
 } from '../../../../vendor/backend-openapi/openapi.generated';
 import type { ConsentManifest } from '../../../shared/consent-manifest';
+import type {
+	ScriptRegistryWire,
+	ScriptSourcesWire,
+} from '../../../shared/script-sources';
 import type { v1ErrorBodySchema } from '../common';
 import type {
 	v1ConsentCheckOutputSchema,
@@ -71,6 +75,19 @@ type DocumentErrorBody = Omit<DocumentError, 'error'> & {
 	error: Omit<DocumentError['error'], 'code'> & { code: string };
 };
 
+type WithoutRegistry<T> = Omit<T, 'scriptRegistry'>;
+
+/** Only whether `scriptRegistry` is optional. Its value is compared apart. */
+type RegistryField<T extends { scriptRegistry?: unknown }> = {
+	[K in keyof Pick<T, 'scriptRegistry'>]: true;
+};
+
+/**
+ * Init and the manifest carry the same registry. It is compared once, by its
+ * list variant, because the document's is a union and the SDK's is not.
+ */
+type DocumentRegistry = components['schemas']['ScriptRegistry'];
+
 type Found =
 	| WireDiff<
 			Out<typeof v1ConsentInitQuerySchema>,
@@ -78,11 +95,55 @@ type Found =
 			'init query'
 	  >
 	| WireDiff<
-			Out<typeof v1ConsentInitOutputSchema>,
-			Ok<'getV1ConsentInit'>,
+			WithoutRegistry<Out<typeof v1ConsentInitOutputSchema>>,
+			WithoutRegistry<Ok<'getV1ConsentInit'>>,
 			'init answer'
 	  >
-	| WireDiff<ConsentManifest, Ok<'getV1ConsentManifest'>, 'manifest answer'>
+	| WireDiff<
+			WithoutRegistry<ConsentManifest>,
+			WithoutRegistry<Ok<'getV1ConsentManifest'>>,
+			'manifest answer'
+	  >
+	| WireDiff<
+			RegistryField<Out<typeof v1ConsentInitOutputSchema>>,
+			RegistryField<Ok<'getV1ConsentInit'>>,
+			'init answer'
+	  >
+	| WireDiff<
+			RegistryField<ConsentManifest>,
+			RegistryField<Ok<'getV1ConsentManifest'>>,
+			'manifest answer'
+	  >
+	| WireDiff<
+			NonNullable<Out<typeof v1ConsentInitOutputSchema>['scriptRegistry']>,
+			ScriptRegistryWire,
+			'init registry in SDK'
+	  >
+	| WireDiff<
+			NonNullable<ConsentManifest['scriptRegistry']>,
+			ScriptRegistryWire,
+			'manifest registry in SDK'
+	  >
+	| WireDiff<
+			NonNullable<Ok<'getV1ConsentInit'>['scriptRegistry']>,
+			DocumentRegistry,
+			'init registry in document'
+	  >
+	| WireDiff<
+			NonNullable<Ok<'getV1ConsentManifest'>['scriptRegistry']>,
+			DocumentRegistry,
+			'manifest registry in document'
+	  >
+	| WireDiff<
+			ScriptRegistryWire,
+			Exclude<DocumentRegistry, { unavailable: true }>,
+			'registry list'
+	  >
+	| WireDiff<
+			ScriptSourcesWire,
+			Exclude<DocumentRegistry, { unavailable: true }>['sources'],
+			'registry sources'
+	  >
 	| WireDiff<
 			Out<typeof v1ConsentRecordQuerySchema>,
 			Query<'postV1ConsentRecords'>,
@@ -167,16 +228,17 @@ type Found =
 	| WireDiff<V1ErrorCode, DocumentError['error']['code'], 'error codes'>;
 
 /**
- * Where the backend's document disagrees with the wire contract, or the
- * contract does not settle the field. Each entry is one field for the
- * backend to fix.
+ * Where the SDK and the backend's document differ and both stay as they are
+ * for now. Each entry says which side has to change.
  */
 type DocumentGaps =
-	// Clarification 19 says the document describes `scriptRegistry`, but the
-	// backend does not answer it on `/v1` yet and the document leaves it out.
-	// The SDK reads it when present.
-	| 'init answer.scriptRegistry: only in SDK'
-	| 'manifest answer.scriptRegistry: only in SDK'
+	// For the SDK to add. It reads `sources` and nothing else from the
+	// registry: it loads no runtime `files` and does not refuse a loader for
+	// `refuseIfSet`. With `{ unavailable: true }` it has no list, so every
+	// script loads from its own URL.
+	| 'registry list.files: only in document'
+	| 'registry list.sources: optional in SDK, required in document'
+	| 'registry sources.*.refuseIfSet: only in document'
 	// The manifest type is shared with the 3.x routes, whose producer may
 	// name a tenant. `/v1` names none, and the SDK does not send it on.
 	| 'manifest answer.tenantId: only in SDK'

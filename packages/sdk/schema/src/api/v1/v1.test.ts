@@ -207,6 +207,7 @@ describe('POST /v1/consent/records answer', () => {
 		{ stored: true, verifiedBy: 'identity_token' },
 		{ reason: 'unverified', stored: false },
 		{ reason: 'invalid_token', stored: false },
+		{ reason: 'refused', stored: false },
 	])('reads the link %o', (link) => {
 		const result = v.parse(v1ConsentRecordOutputSchema, {
 			link,
@@ -308,36 +309,32 @@ describe('documents', () => {
 		).toBe(valid);
 	});
 
+	const current = {
+		effectiveDate: '2026-11-18T00:00:00.000Z',
+		hash: HASH,
+		id: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+		isCurrent: true,
+		requiresAcceptance: true,
+		type: 'terms_us',
+		version: '2026-11-18',
+	};
+
 	it.each([
-		['June 30', '2026-06-30T00:00:00.000Z', '2026-11-19T00:00:00.000Z', true],
-		[
-			'an effective date of June 31',
-			'2026-06-31T00:00:00.000Z',
-			'2026-11-19T00:00:00.000Z',
-			false,
-		],
-		[
-			'a proof expiry of June 31',
-			'2026-06-30T00:00:00.000Z',
-			'2026-06-31T00:00:00.000Z',
-			false,
-		],
-	])(
-		'reads a current document dated %s',
-		(_label, effectiveDate, expiresAt, valid) => {
-			expect(
-				v.is(v1DocumentCurrentOutputSchema, {
-					document: {
-						effectiveDate,
-						hash: HASH,
-						requiresAcceptance: true,
-						type: 'terms_us',
-						version: '2026-11-18',
-					},
-					proofToken: 'token',
-					proofTokenExpiresAt: expiresAt,
-				})
-			).toBe(valid);
+		['June 30', '2026-06-30T00:00:00.000Z', true],
+		['June 31', '2026-06-31T00:00:00.000Z', false],
+	])('reads a current document dated %s', (_label, effectiveDate, valid) => {
+		expect(
+			v.is(v1DocumentCurrentOutputSchema, {
+				document: { ...current, effectiveDate },
+			})
+		).toBe(valid);
+	});
+
+	it.each(['id', 'isCurrent'])(
+		'refuses a current document without %s',
+		(field) => {
+			const { [field as keyof typeof current]: _left, ...document } = current;
+			expect(v.is(v1DocumentCurrentOutputSchema, { document })).toBe(false);
 		}
 	);
 
@@ -350,26 +347,10 @@ describe('documents', () => {
 		expect(result.success).toBe(false);
 	});
 
-	it('reads the current document with its proof token', () => {
-		expect(
-			v.is(v1DocumentCurrentOutputSchema, {
-				document: {
-					effectiveDate: '2026-11-18T00:00:00.000Z',
-					hash: HASH,
-					requiresAcceptance: true,
-					type: 'terms_us',
-					version: '2026-11-18',
-				},
-				proofToken: 'token',
-				proofTokenExpiresAt: '2026-11-19T00:00:00.000Z',
-			})
-		).toBe(true);
-	});
-
 	const acceptances = {
 		acceptances: [
-			{ proofToken: 'a', type: 'terms_us' },
-			{ proofToken: 'b', type: 'privacy_policy' },
+			{ hash: HASH, type: 'terms_us' },
+			{ hash: HASH, type: 'privacy_policy' },
 		],
 		acceptedAt: 1_763_467_200_000,
 		idempotencyKey: KEY,
@@ -394,6 +375,19 @@ describe('documents', () => {
 		).toBe(true);
 	});
 
+	it.each(['', 'proof-token', HASH.toUpperCase(), HASH.slice(0, -1)])(
+		'refuses an acceptance with the hash %j',
+		(hash) => {
+			expect(
+				v.is(v1DocumentAcceptancesInputSchema, {
+					...acceptances,
+					acceptances: [{ hash, type: 'terms_us' }],
+					subjectId: SUBJECT,
+				})
+			).toBe(false);
+		}
+	);
+
 	it.each([
 		[0, false],
 		[1, true],
@@ -404,7 +398,7 @@ describe('documents', () => {
 			v.is(v1DocumentAcceptancesInputSchema, {
 				...acceptances,
 				acceptances: Array.from({ length: count }, () => ({
-					proofToken: 'a',
+					hash: HASH,
 					type: 'terms_us',
 				})),
 				subjectId: SUBJECT,

@@ -17,17 +17,19 @@ import { ApiError, createDocumentsClient } from '../index';
 
 const HASH =
 	'sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08';
+const PRIVACY_HASH =
+	'sha256:60303ae22b998861bce3b28f33eec1be758a213c86c93c076dbe9f558c11c752';
 
 const CURRENT = {
 	document: {
 		effectiveDate: '2026-11-18T00:00:00.000Z',
 		hash: HASH,
+		id: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+		isCurrent: true,
 		requiresAcceptance: true,
 		type: 'terms_us',
 		version: '2026-11-18',
 	},
-	proofToken: 'proof-terms',
-	proofTokenExpiresAt: '2026-11-19T00:00:00.000Z',
 };
 
 const RECORDED = {
@@ -49,7 +51,7 @@ const RECORDED_BOTH = {
 		...RECORDED.acceptances,
 		{
 			acceptedAt: 1_763_467_200_000,
-			hash: HASH,
+			hash: PRIVACY_HASH,
 			type: 'privacy_policy',
 			version: '2026-11-01',
 		},
@@ -57,7 +59,7 @@ const RECORDED_BOTH = {
 };
 
 describe('getCurrent: GET /v1/documents/:type/current', () => {
-	test('reads the version in force and its proof token, without the secret key', async () => {
+	test('reads the release in force, without the secret key', async () => {
 		const { calls, fetch } = stubFetch(() => json(200, CURRENT));
 		const documents = createDocumentsClient({
 			fetch,
@@ -74,6 +76,16 @@ describe('getCurrent: GET /v1/documents/:type/current', () => {
 		expect(calls[0]?.headers).toEqual({ accept: 'application/json' });
 	});
 
+	test('reads a document whose id is an uppercase UUID', async () => {
+		const answer = {
+			document: { ...CURRENT.document, id: CURRENT.document.id.toUpperCase() },
+		};
+		const { fetch } = stubFetch(() => json(200, answer));
+		const documents = createDocumentsClient({ fetch, projectUrl: PROJECT_URL });
+
+		await expect(documents.getCurrent('terms_us')).resolves.toEqual(answer);
+	});
+
 	test.each([
 		['a page', () => new Response('<html>ok</html>', { status: 200 })],
 		[
@@ -82,6 +94,27 @@ describe('getCurrent: GET /v1/documents/:type/current', () => {
 				json(200, {
 					...CURRENT,
 					document: { ...CURRENT.document, effectiveDate: undefined },
+				}),
+		],
+		[
+			'a document whose id is not a UUID',
+			() =>
+				json(200, {
+					document: { ...CURRENT.document, id: 'not-a-uuid' },
+				}),
+		],
+		[
+			'a document whose hash is not sha256 hex',
+			() =>
+				json(200, {
+					document: { ...CURRENT.document, hash: 'sha256:abc' },
+				}),
+		],
+		[
+			'a document without isCurrent',
+			() =>
+				json(200, {
+					document: { ...CURRENT.document, isCurrent: undefined },
 				}),
 		],
 	])('refuses an answer that is %s', async (_label, answer) => {
@@ -127,8 +160,8 @@ describe('recordAcceptances: POST /v1/documents/acceptances', () => {
 
 		const result = await documents.recordAcceptances({
 			acceptances: [
-				{ proofToken: 'proof-terms', type: 'terms_us' },
-				{ proofToken: 'proof-privacy', type: 'privacy_policy' },
+				{ hash: HASH, type: 'terms_us' },
+				{ hash: PRIVACY_HASH, type: 'privacy_policy' },
 			],
 			acceptedAt: 1_763_467_200_000,
 			idempotencyKey: KEY,
@@ -150,8 +183,8 @@ describe('recordAcceptances: POST /v1/documents/acceptances', () => {
 		});
 		expect(calls[0]?.body).toEqual({
 			acceptances: [
-				{ proofToken: 'proof-terms', type: 'terms_us' },
-				{ proofToken: 'proof-privacy', type: 'privacy_policy' },
+				{ hash: HASH, type: 'terms_us' },
+				{ hash: PRIVACY_HASH, type: 'privacy_policy' },
 			],
 			acceptedAt: 1_763_467_200_000,
 			idempotencyKey: KEY,
@@ -165,7 +198,7 @@ describe('recordAcceptances: POST /v1/documents/acceptances', () => {
 		const documents = createDocumentsClient({ fetch, projectUrl: PROJECT_URL });
 
 		await documents.recordAcceptances({
-			acceptances: [{ proofToken: 'proof-terms', type: 'terms_us' }],
+			acceptances: [{ hash: HASH, type: 'terms_us' }],
 			externalId: 'user_123',
 			idempotencyKey: KEY,
 			identityProvider: 'clerk',
@@ -189,7 +222,7 @@ describe('recordAcceptances: POST /v1/documents/acceptances', () => {
 		});
 
 		await documents.recordAcceptances({
-			acceptances: [{ proofToken: 'proof-terms', type: 'terms_us' }],
+			acceptances: [{ hash: HASH, type: 'terms_us' }],
 			context: { ipAddress: '203.0.113.7', userAgent: 'Mozilla/5.0' },
 			externalId: 'user_123',
 			idempotencyKey: KEY,
@@ -203,22 +236,22 @@ describe('recordAcceptances: POST /v1/documents/acceptances', () => {
 		expect(bodyAt(calls, 0)).not.toHaveProperty('subjectId');
 	});
 
-	test('an expired proof token throws its code', async () => {
+	test('a release the project never published throws document_unknown', async () => {
 		const { fetch } = stubFetch(() =>
-			v1Error(409, 'document_proof_expired', 'req_accept')
+			v1Error(409, 'document_unknown', 'req_accept')
 		);
 		const documents = createDocumentsClient({ fetch, projectUrl: PROJECT_URL });
 
 		const error = await documents
 			.recordAcceptances({
-				acceptances: [{ proofToken: 'old', type: 'terms_us' }],
+				acceptances: [{ hash: PRIVACY_HASH, type: 'terms_us' }],
 				idempotencyKey: KEY,
 				subjectId: SUBJECT,
 			})
 			.catch((caught: unknown) => caught);
 
 		expect(error).toMatchObject({
-			code: 'document_proof_expired',
+			code: 'document_unknown',
 			requestId: 'req_accept',
 		});
 	});
@@ -232,7 +265,7 @@ describe('recordAcceptances: POST /v1/documents/acceptances', () => {
 			'more than 20 acceptances',
 			{
 				acceptances: Array.from({ length: 21 }, () => ({
-					proofToken: 'p',
+					hash: HASH,
 					type: 'terms_us',
 				})),
 				idempotencyKey: KEY,
@@ -242,7 +275,7 @@ describe('recordAcceptances: POST /v1/documents/acceptances', () => {
 		[
 			'no key',
 			{
-				acceptances: [{ proofToken: 'p', type: 'terms_us' }],
+				acceptances: [{ hash: HASH, type: 'terms_us' }],
 				idempotencyKey: '',
 				subjectId: SUBJECT,
 			},
@@ -250,7 +283,7 @@ describe('recordAcceptances: POST /v1/documents/acceptances', () => {
 		[
 			'an uppercase key',
 			{
-				acceptances: [{ proofToken: 'p', type: 'terms_us' }],
+				acceptances: [{ hash: HASH, type: 'terms_us' }],
 				idempotencyKey: KEY.toUpperCase(),
 				subjectId: SUBJECT,
 			},
@@ -258,23 +291,60 @@ describe('recordAcceptances: POST /v1/documents/acceptances', () => {
 		[
 			'no subject or person',
 			{
-				acceptances: [{ proofToken: 'p', type: 'terms_us' }],
+				acceptances: [{ hash: HASH, type: 'terms_us' }],
 				idempotencyKey: KEY,
 			},
 		],
 		[
 			'a property that is not a host name',
 			{
-				acceptances: [{ proofToken: 'p', type: 'terms_us' }],
+				acceptances: [{ hash: HASH, type: 'terms_us' }],
 				idempotencyKey: KEY,
 				property: 'https://example.com',
 				subjectId: SUBJECT,
 			},
 		],
 		[
+			'a hash that is not sha256 hex',
+			{
+				acceptances: [
+					{
+						hash: `sha256:${HASH.slice(7).toUpperCase()}`,
+						type: 'terms_us',
+					},
+				],
+				idempotencyKey: KEY,
+				subjectId: SUBJECT,
+			},
+		],
+		[
 			'a malformed type',
 			{
-				acceptances: [{ proofToken: 'p', type: 'Terms' }],
+				acceptances: [{ hash: HASH, type: 'Terms' }],
+				idempotencyKey: KEY,
+				subjectId: SUBJECT,
+			},
+		],
+		[
+			'an idempotency key that is a list holding a valid key',
+			{
+				acceptances: [{ hash: HASH, type: 'terms_us' }],
+				idempotencyKey: [KEY] as unknown as string,
+				subjectId: SUBJECT,
+			},
+		],
+		[
+			'a hash that is a list holding a valid hash',
+			{
+				acceptances: [{ hash: [HASH] as unknown as string, type: 'terms_us' }],
+				idempotencyKey: KEY,
+				subjectId: SUBJECT,
+			},
+		],
+		[
+			'a type that is a list holding a valid type',
+			{
+				acceptances: [{ hash: HASH, type: ['terms_us'] as unknown as string }],
 				idempotencyKey: KEY,
 				subjectId: SUBJECT,
 			},
