@@ -7,6 +7,8 @@
 
 /** Route paths below the project URL. */
 export const V1_ROUTES = {
+	acceptances: '/v1/documents/acceptances',
+	currentDocument: '/v1/documents/:type/current',
 	init: '/v1/consent/init',
 	manifest: '/v1/consent/manifest',
 	records: '/v1/consent/records',
@@ -18,6 +20,12 @@ export const subjectLinkPath = function subjectLinkPath(
 	subjectId: string
 ): string {
 	return V1_ROUTES.subjectLink.replace(':id', encodeURIComponent(subjectId));
+};
+
+export const currentDocumentPath = function currentDocumentPath(
+	type: string
+): string {
+	return V1_ROUTES.currentDocument.replace(':type', encodeURIComponent(type));
 };
 
 export const V1_JSON_HEADERS: Readonly<Record<string, string>> = {
