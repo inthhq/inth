@@ -175,8 +175,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'സേവന നിബന്ധനകൾ',
 	},
 	rights: {
+		californiaPrivacyChoices: 'നിങ്ങളുടെ കാലിഫോർണിയ സ്വകാര്യതാ തിരഞ്ഞെടുപ്പുകൾ',
 		optOut: 'എന്റെ ഡാറ്റ വിൽക്കുകയോ പങ്കിടുകയോ ചെയ്യരുത്',
 		preferences: 'മുൻഗണനകൾ നിയന്ത്രിക്കുക',
+		privacyChoices: 'നിങ്ങളുടെ സ്വകാര്യതാ തിരഞ്ഞെടുപ്പുകൾ',
 	},
 };
 

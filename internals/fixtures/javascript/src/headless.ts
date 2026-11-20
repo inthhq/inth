@@ -91,7 +91,7 @@ const renderActions = function renderActions(
 			button.type = 'button';
 			button.textContent =
 				right === 'opt-out'
-					? 'Do not sell or share my data'
+					? 'Do Not Sell or Share My Personal Information'
 					: 'Privacy settings';
 			button.addEventListener('click', () => kernel.set.activeUI('dialog'));
 			buttons.push(button);

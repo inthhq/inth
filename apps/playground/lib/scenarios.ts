@@ -681,7 +681,7 @@ const authoredScenarios: Omit<
 	{
 		country: 'US',
 		description:
-			'Opt-out notice prompt. The banner renders an OK dismissal plus a "Do not sell or share my data" button styled as underlined text that opens the preference center, because a notice offers no choice actions and the opt-out right stays reachable.',
+			'Opt-out notice prompt. The banner renders an OK dismissal plus a "Do Not Sell or Share My Personal Information" button styled as underlined text that opens the preference center, because a notice offers no choice actions and the opt-out right stays reachable.',
 		group: 'custom',
 		id: 'custom-us-notice',
 		label: 'US notice',

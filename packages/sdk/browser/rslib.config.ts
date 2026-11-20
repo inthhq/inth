@@ -177,6 +177,14 @@ const scriptTagLib = function scriptTagLib(name: string, entry: string) {
 									}
 								),
 								new rspack.NormalModuleReplacementPlugin(
+									/^\.\/opt-out-icon$/u,
+									(resource) => {
+										if (/[\\/]src[\\/]ui$/u.test(resource.context)) {
+											resource.request = '../init/opt-out-icon';
+										}
+									}
+								),
+								new rspack.NormalModuleReplacementPlugin(
 									/^\.\.\/translations\/index\.js$/u,
 									(resource) => {
 										if (

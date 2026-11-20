@@ -62,8 +62,8 @@ export const BannerFocusManagement: Story = {
 
 /**
  * A notice prompt under an opt-out model: a primary "Accept All" that records
- * a dismissal, beside an underlined "Do not sell or share my data" text control that
- * opens the preference center.
+ * a dismissal, beside an underlined "Do Not Sell or Share My Personal Information"
+ * text control that opens the preference center.
  */
 export const Notice: Story = {
 	render: () => (

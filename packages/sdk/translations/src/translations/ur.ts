@@ -177,8 +177,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'شرائطِ خدمت',
 	},
 	rights: {
+		californiaPrivacyChoices: 'کیلیفورنیا میں آپ کے رازداری کے انتخابات',
 		optOut: 'میرا ڈیٹا فروخت یا شیئر نہ کریں',
 		preferences: 'ترجیحات کا نظم کریں',
+		privacyChoices: 'آپ کے رازداری کے انتخابات',
 	},
 };
 

@@ -40,7 +40,7 @@ describe('useConsentLabels', () => {
 				save: 'Save Settings',
 			},
 			preferenceControls: {
-				'opt-out': 'Do not sell or share my data',
+				'opt-out': 'Do Not Sell or Share My Personal Information',
 				preferences: 'Manage preferences',
 			},
 		});

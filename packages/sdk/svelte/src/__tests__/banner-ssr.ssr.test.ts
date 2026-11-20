@@ -215,7 +215,7 @@ describe('consent banner SSR', () => {
 		expect(html).toContain('Privacy notice');
 		expect(html).toContain('data-right="opt-out"');
 		expect(html).not.toContain('data-right="preferences"');
-		expect(html).toContain('Do not sell or share my data');
+		expect(html).toContain('Do Not Sell or Share My Personal Information');
 		expect(html).toContain('data-action="right"');
 		const rightTag = /<button[^>]*data-action="right"[^>]*>/u.exec(html);
 		expect(rightTag?.[0]).toContain(bannerStyles.rightLink);

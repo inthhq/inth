@@ -172,8 +172,11 @@ export const translations: CompleteTranslations = {
 		termsOfService: "Cundiziuns d'utilisaziun",
 	},
 	rights: {
+		californiaPrivacyChoices:
+			'Tias tschernas da protecziun da datas en California',
 		optOut: 'Betg vender ni parter mias datas',
 		preferences: 'Administrar preferenzas',
+		privacyChoices: 'Tias tschernas da protecziun da datas',
 	},
 };
 export default translations;

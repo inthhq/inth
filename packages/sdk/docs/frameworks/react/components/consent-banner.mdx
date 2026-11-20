@@ -15,7 +15,7 @@ The [quickstart](/docs/frameworks/react/quickstart) mounts both in `src/consent.
 The banner adapts automatically to the active policy rule:
 
 - A `choice` prompt renders the rule's actions: Reject and Accept at equal prominence, plus Customize when offered.
-- A `notice` prompt renders an "OK" button and an underlined text button labelled "Do not sell or share my data" that opens preferences. Notices never trap focus or lock scroll.
+- A `notice` prompt renders an "OK" button and an underlined text button labelled "Do Not Sell or Share My Personal Information" that opens preferences. Notices never trap focus or lock scroll.
 - A rule with `prompt: 'none'` renders nothing.
 
 An opt-out rule with `prompt: 'none'` still grants rights, so the preference center and dialog trigger stay available. A rule with `model: 'none'` owes no rights and renders nothing unless you add `rights: ['preferences']`. When no rule has resolved yet, no consent surface renders; all surfaces appear automatically without remounting once a rule resolves. `testing()` without a custom `policy` resolves the recommended pack and displays the opt-in banner until you pass a country.
@@ -148,7 +148,9 @@ Use individual parts when you need custom ordering or markup:
 ```tsx
 <ConsentBanner.Rights>
 	<ConsentBanner.RightLink right="opt-out" asChild>
-		<a href="/privacy/do-not-sell">Do not sell or share my data</a>
+		<a href="/privacy/do-not-sell">
+			Do Not Sell or Share My Personal Information
+		</a>
 	</ConsentBanner.RightLink>
 </ConsentBanner.Rights>;
 ```

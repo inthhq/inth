@@ -171,8 +171,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Uvjeti pružanja usluge',
 	},
 	rights: {
+		californiaPrivacyChoices: 'Vaši izbori privatnosti u Kaliforniji',
 		optOut: 'Ne prodajte i ne dijelite moje podatke',
 		preferences: 'Upravljanje postavkama',
+		privacyChoices: 'Vaši izbori privatnosti',
 	},
 };
 export default translations;

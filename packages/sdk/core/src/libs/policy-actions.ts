@@ -5,6 +5,8 @@ import type {
 	ResolvedPolicyRule,
 } from '@inth/sdk-schema/types';
 
+import type { OptOutLinkVariant } from './consent-copy';
+
 /** Semantic control roles, independent of their visual variant. */
 export type PresentationAction =
 	| 'accept'
@@ -116,6 +118,13 @@ export interface PreferencesPresentation extends SurfacePresentation {
 export interface ConsentPresentation {
 	prompt?: PromptPresentation;
 	preferences?: PreferencesPresentation;
+	/**
+	 * Opt-out link form when the active policy carries the `opt-out` right.
+	 * `'privacy-choices'` and `'california-privacy-choices'` always render
+	 * with the CPPA opt-out icon.
+	 * @default 'do-not-sell'
+	 */
+	optOutLink?: OptOutLinkVariant;
 }
 
 /** Mechanical findings for headless hosts and development diagnostics. */
@@ -149,6 +158,8 @@ export interface ResolvedConsentPresentation {
 	 * Hosts remain responsible for disclosure and persistent access.
 	 */
 	preferenceControls: Exclude<PolicyRight, 'disclosure'>[];
+	/** Resolved opt-out link form. Defaults to `'do-not-sell'`. */
+	optOutLink: OptOutLinkVariant;
 	direction: 'row' | 'column';
 	uiProfile: 'balanced' | 'compact' | 'strict';
 	scrollLock: boolean;
@@ -462,6 +473,7 @@ export const resolveConsentPresentation =
 			diagnostics,
 			direction,
 			equivalentActions,
+			optOutLink: input.presentation?.optOutLink ?? 'do-not-sell',
 			orderedActions,
 			preferenceControls: resolvePreferenceControls(
 				input.policy.rights,

@@ -170,8 +170,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Þjónustuskilmálar',
 	},
 	rights: {
+		californiaPrivacyChoices: 'Persónuverndarval þitt í Kaliforníu',
 		optOut: 'Ekki selja eða deila gögnunum mínum',
 		preferences: 'Stjórna stillingum',
+		privacyChoices: 'Persónuverndarval þitt',
 	},
 };
 export default translations;

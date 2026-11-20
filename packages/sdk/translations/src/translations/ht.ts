@@ -176,8 +176,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Kondisyon itilizasyon',
 	},
 	rights: {
+		californiaPrivacyChoices: 'Chwa Konfidansyalite Kalifòni Ou',
 		optOut: 'Pa vann ni pataje done mwen yo',
 		preferences: 'Jere preferans yo',
+		privacyChoices: 'Chwa Konfidansyalite Ou',
 	},
 };
 

@@ -78,7 +78,9 @@ describe('notice banner', () => {
 		// preferences right too and no second control appears.
 		expect(buttons.map((button) => button.dataset.right)).toEqual(['opt-out']);
 		const optOut = required(buttons[0]);
-		expect(optOut.textContent?.trim()).toBe('Do not sell or share my data');
+		expect(optOut.textContent?.trim()).toBe(
+			'Do Not Sell or Share My Personal Information'
+		);
 		expect(optOut.dataset.action).toBe('right');
 		expect(optOut.classList.contains(bannerStyles.rightLink)).toBe(true);
 		expect(optOut.dataset.variant).toBeUndefined();

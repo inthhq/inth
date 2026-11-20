@@ -5,6 +5,7 @@ export * from './color-scheme';
 export * from './dom';
 export * from './legal-links';
 export * from './merge-styles';
+export * from './opt-out-icon';
 export * from './reduced-motion';
 export * from './resolve-styles';
 export * from './theme-slots';

@@ -175,8 +175,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Terms of Service',
 	},
 	rights: {
-		optOut: 'Do not sell or share my data',
+		californiaPrivacyChoices: 'Your California Privacy Choices',
+		optOut: 'Do Not Sell or Share My Personal Information',
 		preferences: 'Manage preferences',
+		privacyChoices: 'Your Privacy Choices',
 	},
 	trigger: {
 		devToolsLabel: 'Inth DevTools',

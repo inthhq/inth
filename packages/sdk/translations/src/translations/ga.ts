@@ -173,8 +173,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Téarmaí Seirbhíse',
 	},
 	rights: {
+		californiaPrivacyChoices: 'Do Roghanna Príobháideachais i gCalifornia',
 		optOut: 'Ná díol agus ná roinn mo shonraí',
 		preferences: 'Bainistigh roghanna',
+		privacyChoices: 'Do Roghanna Príobháideachais',
 	},
 };
 export default translations;

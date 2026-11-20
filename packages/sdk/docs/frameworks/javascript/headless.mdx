@@ -66,10 +66,14 @@ buttons and order required by the policy:
 `{ measurement: true }`. `dismissNotice()` records notice acknowledgement
 without granting consent.
 
-Use `resolveActionLabels`, `resolvePreferenceControlLabels` and
-`resolvePromptCopy` from `@inth/sdk/engine` (or `@inth/sdk/headless`) with
+Use `resolveActionLabels`, `resolvePreferenceControlLabels`, `resolveOptOutLink`
+and `resolvePromptCopy` from `@inth/sdk/engine` (or `@inth/sdk/headless`) with
 `snapshot.translations?.translations` to get localized copy with English
-fallbacks.
+fallbacks. `resolveOptOutLink` resolves `'do-not-sell'`, `'privacy-choices'`
+or `'california-privacy-choices'` and returns
+`{ variant: 'privacy-choices', label, icon: 'cppa-opt-out' }` for both
+"Privacy Choices" forms so neither renders without the California Privacy
+Protection Agency opt-out icon.
 
 ## Build a preference form with a draft
 

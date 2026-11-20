@@ -64,6 +64,18 @@ describe('bundled notice and rights translations', () => {
 		expect(value.trim()).not.toBe('');
 	};
 
+	it('uses the statutory English opt-out link titles', () => {
+		expect(bundledTranslations.en.rights.optOut).toBe(
+			'Do Not Sell or Share My Personal Information'
+		);
+		expect(bundledTranslations.en.rights.privacyChoices).toBe(
+			'Your Privacy Choices'
+		);
+		expect(bundledTranslations.en.rights.californiaPrivacyChoices).toBe(
+			'Your California Privacy Choices'
+		);
+	});
+
 	it.each(Object.entries(bundledTranslations))(
 		'%s defines dismiss, notice copy, and rights labels',
 		(_language, translations) => {
@@ -73,6 +85,8 @@ describe('bundled notice and rights translations', () => {
 			expectNonEmpty(translations.cookieBanner.noticeDescription);
 			expectNonEmpty(translations.rights.optOut);
 			expectNonEmpty(translations.rights.preferences);
+			expectNonEmpty(translations.rights.privacyChoices);
+			expectNonEmpty(translations.rights.californiaPrivacyChoices);
 		}
 	);
 
@@ -88,6 +102,12 @@ describe('bundled notice and rights translations', () => {
 				english.cookieBanner.noticeDescription
 			);
 			expect(translations.rights.optOut).not.toBe(english.rights.optOut);
+			expect(translations.rights.privacyChoices).not.toBe(
+				english.rights.privacyChoices
+			);
+			expect(translations.rights.californiaPrivacyChoices).not.toBe(
+				english.rights.californiaPrivacyChoices
+			);
 		}
 	);
 });

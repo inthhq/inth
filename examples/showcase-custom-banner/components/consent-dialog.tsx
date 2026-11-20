@@ -42,7 +42,7 @@ const actionLabels: Record<
 };
 
 const preferenceLabels = {
-	'opt-out': 'Do not sell or share my data',
+	'opt-out': 'Do Not Sell or Share My Personal Information',
 	preferences: 'Choose',
 } as const;
 

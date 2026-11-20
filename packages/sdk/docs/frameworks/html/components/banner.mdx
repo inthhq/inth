@@ -25,7 +25,7 @@ The active policy determines the buttons:
 | Policy prompt | Buttons |
 | --- | --- |
 | Choice | Policy-allowed actions (by default Reject All and Accept All at equal size, plus Customize). |
-| Choice with opt-out right and no reject action | Allowed actions plus "Do not sell or share my data", opening the dialog. |
+| Choice with opt-out right and no reject action | Allowed actions plus "Do Not Sell or Share My Personal Information", opening the dialog. |
 | Notice | "OK" (acknowledgement) plus any other policy-allowed action. |
 
 Accept and Reject record consent and close the banner immediately. Customize
@@ -35,6 +35,36 @@ without saving. Dismissing a notice records acknowledgement, not consent; see
 
 `presentation.prompt` can reorder or group buttons, but Inth restores any
 policy-required button and preserves equal prominence rules.
+
+## Choose the opt-out link title
+
+Under a policy that carries the `opt-out` right, the banner renders an opt-out
+button that opens the preference dialog. By default it uses the standard
+"Do Not Sell or Share My Personal Information" title with no icon.
+
+Set `presentation.optOutLink` (or `data-opt-out-link` on the script tag) to
+switch to one of California's alternative "Privacy Choices" forms:
+
+| `presentation.optOutLink` | Title | Icon |
+| --- | --- | --- |
+| `'do-not-sell'` (default) | "Do Not Sell or Share My Personal Information" | None |
+| `'privacy-choices'` | "Your Privacy Choices" | California Privacy Protection Agency opt-out icon |
+| `'california-privacy-choices'` | "Your California Privacy Choices" | California Privacy Protection Agency opt-out icon |
+
+Both "Your Privacy Choices" and "Your California Privacy Choices" always
+render with the official California Privacy Protection Agency opt-out icon in
+its fixed blue and white colors across light and dark themes. There is no
+option to show either title without the icon.
+
+{/* example: fragment */}
+
+```html
+<script
+  src="https://your-project.inth.app/inth.js"
+  data-opt-out-link="privacy-choices"
+  defer
+></script>
+```
 
 ## Change the text
 

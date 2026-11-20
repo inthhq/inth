@@ -78,7 +78,9 @@ describe('ConsentBanner notice prompt', () => {
 		expect(controls.map((control) => control.dataset.right)).toEqual([
 			'opt-out',
 		]);
-		expect(controls[0]).toHaveTextContent('Do not sell or share my data');
+		expect(controls[0]).toHaveTextContent(
+			'Do Not Sell or Share My Personal Information'
+		);
 		expect(controls[0]?.dataset.action).toBe('right');
 		expect(controls[0]?.dataset.variant).toBeUndefined();
 		expect(controls[0]?.dataset.mode).toBeUndefined();

@@ -23,10 +23,14 @@ export interface CommonTranslations {
  * on a notice prompt.
  */
 export interface RightsTranslations {
+	/** California-specific alternative opt-out link title. Always renders with the opt-out icon. */
+	californiaPrivacyChoices: string;
 	/** Opt-out right. Keeps the statutory "do not sell or share" meaning. */
 	optOut: string;
 	/** Preferences right; opens the preference center. */
 	preferences: string;
+	/** Alternative opt-out link title. Always renders with the opt-out icon. */
+	privacyChoices: string;
 }
 
 /** Accessible names for the floating trigger that reopens preferences. */
