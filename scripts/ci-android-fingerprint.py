@@ -50,6 +50,18 @@ SUITES = {
         'internals/fixtures/expo-dev',
         'internals/typescript-config',
         'internals/vitest-config',
+        # Root scripts the package builds run, and what they import.
+        'scripts/docs-origin.ts',
+        'scripts/generate-package-docs.ts',
+        'scripts/manifest-utils.ts',
+        'scripts/normalize-dist-types.mjs',
+        'scripts/package-doc-entry-points.ts',
+        'scripts/package-skill.ts',
+        'scripts/prune-dist-types.ts',
+        'scripts/rewrite-package-doc-links.ts',
+        'scripts/sync-vendored-apple.ts',
+        'scripts/sync-vendored-core.ts',
+        'scripts/verify-package-artifacts.ts',
         'scripts/export-mobile-e2e-policy.ts',
         'scripts/export-mobile-policy.ts',
         'scripts/mobile-compatibility.json',
@@ -65,15 +77,14 @@ SUITES = {
 }
 
 
-def object_id(path: str) -> str:
-    result = subprocess.run(['git', 'rev-parse', f'HEAD:{path}'], capture_output=True, text=True, check=False)
-    return result.stdout.strip() if result.returncode == 0 else 'absent'
-
-
 def fingerprint(paths: list[str]) -> str:
+    """Hash the requested paths and git's entry for each one that exists at HEAD."""
+    wanted = sorted(set(paths + COMMON))
+    entries = subprocess.run(['git', 'ls-tree', 'HEAD', '--', *wanted],
+                             capture_output=True, text=True, check=True).stdout
     digest = hashlib.sha256()
-    for path in sorted(set(paths + COMMON)):
-        digest.update(f'{path} {object_id(path)}\n'.encode())
+    digest.update('\n'.join(wanted).encode())
+    digest.update(entries.encode())
     return digest.hexdigest()
 
 
