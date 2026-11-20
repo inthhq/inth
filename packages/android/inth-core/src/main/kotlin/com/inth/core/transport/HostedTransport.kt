@@ -2,8 +2,12 @@ package com.inth.core.transport
 
 import com.inth.core.InthInternalApi
 import com.inth.core.NativeConfig
+import com.inth.core.SubjectIdGenerator
 import com.inth.core.model.ConsentSubject
 import com.inth.core.model.KernelUser
+import com.inth.core.model.LiftOptOutPayload
+import com.inth.core.model.OptOutPayload
+import com.inth.core.model.OptOutRecord
 import com.inth.core.model.QueuedSave
 import com.inth.core.spi.Clock
 import com.inth.core.spi.HttpClient
@@ -11,6 +15,7 @@ import com.inth.core.spi.HttpRequest
 import com.inth.core.spi.HttpResponse
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -88,7 +93,7 @@ class HostedTransport(
 				?: json.encodeToString(JsonElement.serializer(), SaveBodyBuilder.build(entry.payload, config.resolvedProperty)),
 		)
 		return when (val outcome = send(request)) {
-			is TransportOutcome.Success -> SaveOutcome.Delivered(subjectIdOf(outcome))
+			is TransportOutcome.Success -> SaveOutcome.Delivered(subjectIdOf(outcome), optOutOf(outcome))
 			is TransportOutcome.HttpFailure -> SaveOutcome.Rejected(outcome)
 			is TransportOutcome.NetworkFailure -> SaveOutcome.Unavailable(outcome.message)
 		}
@@ -113,9 +118,85 @@ class HostedTransport(
 			),
 		)
 		return when (val outcome = send(request)) {
-			is TransportOutcome.Success -> LinkOutcome.Linked(subjectIdOf(outcome))
+			is TransportOutcome.Success -> LinkOutcome.Linked(subjectIdOf(outcome), optOutOf(outcome))
 			is TransportOutcome.HttpFailure -> LinkOutcome.Rejected(outcome)
 			is TransportOutcome.NetworkFailure -> LinkOutcome.Unavailable(outcome.message)
+		}
+	}
+
+	override fun optOut(
+		payload: OptOutPayload,
+		identityToken: String?,
+	): OptOutOutcome {
+		val request = HttpRequest(
+			method = HttpRequest.POST,
+			url = base + InthProtocol.OPT_OUTS_PATH,
+			headers = jsonHeaders(),
+			body = json.encodeToString(
+				JsonElement.serializer(),
+				SaveBodyBuilder.buildOptOut(payload, config.resolvedProperty, identityToken),
+			),
+		)
+		return when (val outcome = send(request)) {
+			is TransportOutcome.Success -> {
+				val root = outcome.body as? JsonObject
+				val subjectId = root.string("subjectId")?.takeIf(SubjectIdGenerator::isUuidV7)
+				val recordId = root.string("recordId")?.takeIf(::isUuid)
+				if (root == null || subjectId == null || recordId == null) {
+					OptOutOutcome.Unavailable(
+						"Inth transport: ${InthProtocol.OPT_OUTS_PATH} answered without a subject ID and record ID",
+					)
+				} else {
+					OptOutOutcome.Delivered(
+						subjectId = subjectId,
+						optOut = OptOutRecord.fromWire(root["optOut"]),
+					)
+				}
+			}
+
+			is TransportOutcome.HttpFailure -> OptOutOutcome.Rejected(outcome)
+			is TransportOutcome.NetworkFailure -> OptOutOutcome.Unavailable(outcome.message)
+		}
+	}
+
+	override fun liftOptOut(
+		payload: LiftOptOutPayload,
+		identityToken: String?,
+	): LiftOptOutOutcome {
+		val request = HttpRequest(
+			method = HttpRequest.POST,
+			url = base + InthProtocol.OPT_OUT_LIFT_PATH,
+			headers = jsonHeaders(),
+			body = json.encodeToString(
+				JsonElement.serializer(),
+				SaveBodyBuilder.buildLiftOptOut(payload, config.resolvedProperty, identityToken),
+			),
+		)
+		return when (val outcome = send(request)) {
+			is TransportOutcome.Success -> {
+				val root = outcome.body as? JsonObject
+				val subjectId = root.string("subjectId")?.takeIf(SubjectIdGenerator::isUuidV7)
+				val recordId = root.string("recordId")?.takeIf(::isUuid)
+				if (root == null || subjectId == null || recordId == null) {
+					LiftOptOutOutcome.Unavailable(
+						"Inth transport: ${InthProtocol.OPT_OUT_LIFT_PATH} answered without a subject ID and record ID",
+					)
+				} else {
+					val rawOptOut = root["optOut"]
+					if (rawOptOut === JsonNull) {
+						LiftOptOutOutcome.Delivered(subjectId = subjectId, optOut = null, cleared = true)
+					} else {
+						LiftOptOutOutcome.Delivered(
+							subjectId = subjectId,
+							optOut = OptOutRecord.fromWire(rawOptOut),
+							cleared = false,
+						)
+					}
+				}
+			}
+
+			is TransportOutcome.HttpFailure -> LiftOptOutOutcome.Rejected(outcome)
+			is TransportOutcome.NetworkFailure -> LiftOptOutOutcome.Unavailable(outcome.message)
 		}
 	}
 
@@ -175,6 +256,17 @@ class HostedTransport(
 
 		/** The `subjectId` a `200` names. The core decides whether to adopt it. */
 		fun subjectIdOf(outcome: TransportOutcome.Success): String? = (outcome.body as? JsonObject).string("subjectId")
+
+		/** The authoritative `optOut` a `200` carries, or `null` when absent or invalid. */
+		fun optOutOf(outcome: TransportOutcome.Success): OptOutRecord? =
+			OptOutRecord.fromWire((outcome.body as? JsonObject)?.get("optOut"))
+
+		private val UUID_PATTERN = Regex(
+			"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+			RegexOption.IGNORE_CASE,
+		)
+
+		fun isUuid(value: String): Boolean = UUID_PATTERN.matches(value)
 
 		fun JsonObject?.string(key: String): String? =
 			(this?.get(key) as? JsonPrimitive)?.takeIf { it.isString }?.contentOrNull?.takeIf { it.isNotEmpty() }

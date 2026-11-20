@@ -1,6 +1,8 @@
 package com.inth.core.transport
 
 import com.inth.core.model.ConsentCategory
+import com.inth.core.model.LiftOptOutPayload
+import com.inth.core.model.OptOutPayload
 import com.inth.core.model.SavePayload
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -68,6 +70,56 @@ object SaveBodyBuilder {
 		for ((field, value) in decisionAssertion(payload)) {
 			put(field, value)
 		}
+	}
+
+	/**
+	 * Build the `POST /v1/consent/opt-outs` body.
+	 *
+	 * Mirrors `buildV1ConsentOptOutBody` in `packages/sdk/core`. Deliberately omits
+	 * `rights` so the backend derives applicable rights from the visitor's location.
+	 * [identityToken] is attached in memory for this request only and is never persisted.
+	 */
+	fun buildOptOut(
+		payload: OptOutPayload,
+		property: String,
+		identityToken: String? = null,
+	): JsonObject = buildJsonObject {
+		put("subjectId", payload.subjectId)
+		put("property", property)
+		put("method", payload.method.wireName)
+		put("givenAt", payload.givenAt)
+		put("idempotencyKey", payload.idempotencyKey)
+		payload.user?.externalId?.takeIf { it.isNotEmpty() }?.let { put("externalId", it) }
+		payload.user?.identityProvider?.takeIf { it.isNotEmpty() }?.let { put("identityProvider", it) }
+		identityToken?.takeIf { it.isNotEmpty() }?.let { put("identityToken", it) }
+		payload.uiSource?.let { put("uiSource", it.wireName) }
+		payload.policyId?.let { put("policyId", it) }
+		payload.country?.let { put("country", it) }
+		payload.region?.let { put("region", it) }
+		payload.language?.takeIf { it.isNotEmpty() }?.let { put("language", it) }
+		payload.policySnapshotToken?.takeIf { it.isNotEmpty() }?.let { put("policySnapshotToken", it) }
+	}
+
+	/**
+	 * Build the `POST /v1/consent/opt-outs/lift` body.
+	 *
+	 * Mirrors `buildV1ConsentOptOutLiftBody` in `packages/sdk/core`. Deliberately omits
+	 * `rights` so the backend lifts every right the device (and, with a verifying
+	 * [identityToken], the account) holds.
+	 */
+	fun buildLiftOptOut(
+		payload: LiftOptOutPayload,
+		property: String,
+		identityToken: String? = null,
+	): JsonObject = buildJsonObject {
+		put("subjectId", payload.subjectId)
+		put("property", property)
+		put("givenAt", payload.givenAt)
+		put("idempotencyKey", payload.idempotencyKey)
+		payload.user?.externalId?.takeIf { it.isNotEmpty() }?.let { put("externalId", it) }
+		payload.user?.identityProvider?.takeIf { it.isNotEmpty() }?.let { put("identityProvider", it) }
+		identityToken?.takeIf { it.isNotEmpty() }?.let { put("identityToken", it) }
+		payload.uiSource?.let { put("uiSource", it.wireName) }
 	}
 
 	/** Every receipt in the complete choice after the act, `necessary` left out. */

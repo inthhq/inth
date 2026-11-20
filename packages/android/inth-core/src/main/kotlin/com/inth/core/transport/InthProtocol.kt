@@ -11,6 +11,12 @@ object InthProtocol {
 	/** `POST`: one consent save, the bytes the pending queue holds. */
 	const val RECORDS_PATH = "/v1/consent/records"
 
+	/** `POST`: record a durable opt-out (`button` or `gpc`). */
+	const val OPT_OUTS_PATH = "/v1/consent/opt-outs"
+
+	/** `POST`: lift a durable opt-out. */
+	const val OPT_OUT_LIFT_PATH = "/v1/consent/opt-outs/lift"
+
 	/** `POST /v1/subjects/{id}/link`, with [encodedSubjectId] already percent-encoded. */
 	fun linkPath(encodedSubjectId: String): String = "/v1/subjects/$encodedSubjectId/link"
 

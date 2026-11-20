@@ -4,6 +4,8 @@ import com.inth.core.model.ConsentCategory
 import com.inth.core.model.KernelError
 import com.inth.core.model.KernelUser
 import com.inth.core.model.ConsentSubject
+import com.inth.core.model.LiftOptOutPayload
+import com.inth.core.model.OptOutPayload
 import com.inth.core.model.QueuedSave
 import com.inth.core.spi.HttpClient
 import com.inth.core.spi.HttpRequest
@@ -14,7 +16,9 @@ import com.inth.core.spi.TaskExecutor
 import com.inth.core.store.InthStore
 import com.inth.core.transport.InthTransport
 import com.inth.core.transport.InitContext
+import com.inth.core.transport.LiftOptOutOutcome
 import com.inth.core.transport.LinkOutcome
+import com.inth.core.transport.OptOutOutcome
 import com.inth.core.transport.SaveOutcome
 import com.inth.core.transport.TransportOutcome
 
@@ -84,11 +88,19 @@ class RecordingTransport(
 ) : InthTransport {
 	private val responses = mutableListOf<TransportOutcome>()
 	private val saveOutcomes = mutableListOf<SaveOutcome>()
+	private val optOutOutcomes = mutableListOf<OptOutOutcome>()
+	private val liftOptOutOutcomes = mutableListOf<LiftOptOutOutcome>()
 	private var lastInit: TransportOutcome? = null
 	private var lastSave: SaveOutcome = SaveOutcome.Delivered()
+	private var lastOptOut: OptOutOutcome = OptOutOutcome.Delivered()
+	private var lastLiftOptOut: LiftOptOutOutcome = LiftOptOutOutcome.Delivered(optOut = null, cleared = false)
 
 	val initRequests = mutableListOf<InitContext>()
 	val saveRequests = mutableListOf<QueuedSave>()
+	/** Each opt-out request: payload and optional in-memory identity token. */
+	val optOutRequests = mutableListOf<Pair<OptOutPayload, String?>>()
+	/** Each opt-out lift request: payload and optional in-memory identity token. */
+	val liftOptOutRequests = mutableListOf<Pair<LiftOptOutPayload, String?>>()
 	/** Each link request: subject id, external id, identity token. */
 	val linkRequests = mutableListOf<Triple<String, String, String>>()
 	private var linkOutcome: LinkOutcome = LinkOutcome.Linked()
@@ -111,6 +123,18 @@ class RecordingTransport(
 		return this
 	}
 
+	/** Queue one more opt-out answer; the last one sticks. */
+	fun respondOptOut(outcome: OptOutOutcome): RecordingTransport {
+		optOutOutcomes += outcome
+		return this
+	}
+
+	/** Queue one more opt-out lift answer; the last one sticks. */
+	fun respondLiftOptOut(outcome: LiftOptOutOutcome): RecordingTransport {
+		liftOptOutOutcomes += outcome
+		return this
+	}
+
 	override fun init(context: InitContext): TransportOutcome {
 		record("network:init")
 		initRequests += context
@@ -124,6 +148,28 @@ class RecordingTransport(
 		saveRequests += entry
 		val next = saveOutcomes.removeFirstOrNull() ?: lastSave
 		lastSave = next
+		return next
+	}
+
+	override fun optOut(
+		payload: OptOutPayload,
+		identityToken: String?,
+	): OptOutOutcome {
+		record("network:optOut")
+		optOutRequests += payload to identityToken
+		val next = optOutOutcomes.removeFirstOrNull() ?: lastOptOut
+		lastOptOut = next
+		return next
+	}
+
+	override fun liftOptOut(
+		payload: LiftOptOutPayload,
+		identityToken: String?,
+	): LiftOptOutOutcome {
+		record("network:liftOptOut")
+		liftOptOutRequests += payload to identityToken
+		val next = liftOptOutOutcomes.removeFirstOrNull() ?: lastLiftOptOut
+		lastLiftOptOut = next
 		return next
 	}
 

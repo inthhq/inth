@@ -5,6 +5,8 @@ import com.inth.core.model.KernelOverrides
 import com.inth.core.model.KernelUser
 import com.inth.core.model.ConsentSubject
 import com.inth.core.model.KernelError
+import com.inth.core.model.LiftOptOutPayload
+import com.inth.core.model.OptOutPayload
 import com.inth.core.model.PolicyResolution
 import com.inth.core.model.QueuedSave
 import com.inth.core.model.SavePayload
@@ -63,6 +65,27 @@ interface InthTransport {
 		identityToken: String,
 	): LinkOutcome
 
+	/**
+	 * `POST /v1/consent/opt-outs`: record a durable opt-out (`button` or `gpc`).
+	 *
+	 * [identityToken] is attached in memory for this request only and is never stored.
+	 */
+	fun optOut(
+		payload: OptOutPayload,
+		identityToken: String? = null,
+	): OptOutOutcome = OptOutOutcome.Unavailable("no transport configured")
+
+	/**
+	 * `POST /v1/consent/opt-outs/lift`: lift a durable opt-out.
+	 *
+	 * With a verifying [identityToken], the account's opt-out lifts too. Without one,
+	 * only the device's lifts and the backend returns any remaining account opt-out.
+	 */
+	fun liftOptOut(
+		payload: LiftOptOutPayload,
+		identityToken: String? = null,
+	): LiftOptOutOutcome = LiftOptOutOutcome.Unavailable("no transport configured")
+
 	companion object {
 		/**
 		 * A transport that answers nothing. Commands become local-only, which is the
@@ -78,6 +101,16 @@ interface InthTransport {
 				user: KernelUser,
 				identityToken: String,
 			): LinkOutcome = LinkOutcome.Unavailable("no transport configured")
+
+			override fun optOut(
+				payload: OptOutPayload,
+				identityToken: String?,
+			): OptOutOutcome = OptOutOutcome.Unavailable("no transport configured")
+
+			override fun liftOptOut(
+				payload: LiftOptOutPayload,
+				identityToken: String?,
+			): LiftOptOutOutcome = LiftOptOutOutcome.Unavailable("no transport configured")
 		}
 	}
 }

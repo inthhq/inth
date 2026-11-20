@@ -310,8 +310,9 @@ class ProtocolFixtureTest {
 			SnapshotWire.toJsonElement(run.kernel.snapshot()),
 		)
 
-		val request = run.http.requests.lastOrNull { it.method == "POST" }
-			?: fail("${id(entry)}: the core sent no POST /v1/consent/records request")
+		val request = run.http.requests.lastOrNull {
+			it.method == "POST" && it.url.endsWith(InthProtocol.RECORDS_PATH)
+		} ?: fail("${id(entry)}: the core sent no POST /v1/consent/records request")
 		val body = json.parseToJsonElement(request.body ?: fail("${id(entry)}: the save request carried no JSON body"))
 		val actual = buildJsonObject {
 			put("body", body)
@@ -649,7 +650,15 @@ class ProtocolFixtureTest {
 					"GET" -> initScript.removeFirstOrNull()
 						?: fail("$fixtureId: the core asked for /init with nothing left scripted")
 
-					else -> HttpResponse(200, emptyMap(), "{}")
+					else -> when {
+						request.url.endsWith(InthProtocol.OPT_OUTS_PATH) ||
+							request.url.endsWith(InthProtocol.OPT_OUT_LIFT_PATH) ->
+							// The fixture kernel's opt-out routes fail like an offline request, so
+							// fixtures show rights: [] and expect no backend opt-out answer applied.
+							throw java.io.IOException("fixture offline opt-out route")
+
+						else -> HttpResponse(200, emptyMap(), "{}")
+					}
 				}
 			}
 		}
