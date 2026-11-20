@@ -2257,10 +2257,11 @@ the contract moved, not the kernel.
   and a save that grants one lifts a device-held opt-out when GPC is not active. The
   durable opt-out record never expires and ignores policy changes. The backend
   derives which legal rights apply from the visitor's location and returns them in
-  `optOut.rights`: a local record starts with `rights: []` when the transport has an
-  `optOut` method, or with all three rights (`sale`, `share`, `targeted_ads`) when
-  the transport has no `optOut` method (including the fixture generator's transport)
-  or when the backend answers `404`.
+  `optOut.rights`: a local record starts with `rights: []` and keeps it until the
+  backend answers. A native core always talks to a backend that stores opt-outs, and
+  no fixture serves an opt-out answer, so every record a fixture's kernel creates has
+  `rights: []`. On the web, a transport with no `optOut` method and a backend that
+  answers `404` record all three rights (`sale`, `share`, `targeted_ads`) instead.
 - `revision` is a monotonic counter over committed mutations, not a count of the
   steps a runner took. It is not comparable
   across the three implementations, because hydration and bootstrap are mutations in

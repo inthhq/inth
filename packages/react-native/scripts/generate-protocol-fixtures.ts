@@ -1267,6 +1267,17 @@ const APP_CATEGORIES: readonly AllConsentNames[] = [
 ];
 
 /**
+ * The answer of an opt-out route no fixture serves: the request fails as it
+ * does offline, so the act stays queued and a record the kernel creates is
+ * observed as it stands before the backend answers.
+ */
+const optOutUnanswered = function optOutUnanswered(): Promise<never> {
+	return Promise.reject(
+		new Error('fixture: the opt-out route is not answered')
+	);
+};
+
+/**
  * Build a kernel over a transport double, with nothing injected but the device.
  *
  * Both harnesses -- the single-step fixtures and the revision trace -- go through
@@ -1316,6 +1327,13 @@ const kernelFor = function kernelFor(
 			now: input.now,
 			transport: {
 				init,
+				// A native core always talks to a backend that stores opt-outs, so
+				// the fixture kernel has the opt-out routes too. No fixture serves
+				// their answer: a record the kernel creates keeps the empty rights
+				// it starts with, which is what a core holds until the backend
+				// answers.
+				liftOptOut: optOutUnanswered,
+				optOut: optOutUnanswered,
 				save: (payload) => {
 					payloads.push(payload);
 					return Promise.resolve({ ok: true, subjectId: payload.subjectId });
@@ -1956,7 +1974,7 @@ const buildEvaluationFixtures =
 			},
 			{
 				description:
-					'An active GPC signal under the CCPA opt-out rule denies marketing and measurement even though the model would allow them, records a durable opt-out with method gpc and all three rights locally because the fixture transport has no optOut method, and reports both gpc and opt-out restrictions on the snapshot.',
+					'An active GPC signal under the CCPA opt-out rule denies marketing and measurement even though the model would allow them, records a durable opt-out with method gpc and no rights yet, because the backend has not answered, and reports both gpc and opt-out restrictions on the snapshot.',
 				id: 'gpc-signal-present',
 				scenario: GPC_SCENARIO,
 			},
@@ -2408,7 +2426,7 @@ const buildSaveBodyFixtures = async function buildSaveBodyFixtures(): Promise<
 		},
 		{
 			description:
-				'Reject all under the CCPA opt-out rule. Every optional category gets an explicit false receipt, and refusing both marketing and measurement under an opt-out rule records a durable opt-out with method button and all three rights locally because the fixture transport has no optOut method.',
+				'Reject all under the CCPA opt-out rule. Every optional category gets an explicit false receipt, and refusing both marketing and measurement under an opt-out rule records a durable opt-out with method button and no rights yet, because the backend has not answered.',
 			id: 'ccpa-reject-all',
 			intent: { action: 'necessary' },
 			scenario: CCPA_SCENARIO,
