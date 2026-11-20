@@ -1,35 +1,41 @@
 ---
 title: Legal documents
-description: Check whether a visitor accepted the current terms of service or privacy policy, and record their acceptance, with client.documents in @inth/sdk.
+description: Check whether a visitor accepted the current terms of service or privacy policy, and record their acceptance, with createRuntimeDocuments from @inth/sdk/runtime/documents.
 group: frameworks
 ---
 
 ## Check and accept on a sign-up page
 
-`client.documents` has `check` and `accept`. They use the client's backend,
-subject ID and property. The script-tag files do not include them: there,
-both reject.
+`createRuntimeDocuments` from `@inth/sdk/runtime/documents` binds `check`
+and `accept` to your client's runtime: they use its backend, subject ID and
+property. Their code loads only when you first call one. The script-tag files
+(`inth.js` and the others) do not support them yet: they cannot load code on
+demand.
 
 ```ts title="src/sign-up.ts"
 import { init } from '@inth/sdk';
+import { createRuntimeDocuments } from '@inth/sdk/runtime/documents';
 
 const client = init({ projectUrl: 'https://your-project.inth.app' });
+const { check, accept } = createRuntimeDocuments(() => client.runtime);
 const form = document.querySelector<HTMLFormElement>('#sign-up');
 const label = document.querySelector<HTMLElement>('#terms-label');
+const button = document.querySelector<HTMLButtonElement>('#sign-up-button');
 
-const terms = await client.documents.check('terms_us');
+const terms = await check('terms_us');
 if (label && !terms.accepted) {
 	label.hidden = false;
 	label.querySelector('.version')?.replaceChildren(terms.document.version);
+}
+if (button) {
+	button.disabled = false;
 }
 
 form?.addEventListener('submit', async (event) => {
 	event.preventDefault();
 	if (!terms.accepted) {
-		await client.documents.accept({
-			type: 'terms_us',
-			hash: terms.document.hash,
-		});
+		// Rejects when the backend did not record it: no account then.
+		await accept({ type: 'terms_us', hash: terms.document.hash });
 	}
 	// Create the account.
 });
@@ -41,48 +47,84 @@ form?.addEventListener('submit', async (event) => {
 		<input type="checkbox" required /> I accept the
 		<a href="/terms">terms of service</a> (version <span class="version"></span>)
 	</label>
-	<button type="submit">Sign up</button>
+	<button id="sign-up-button" type="submit" disabled>Sign up</button>
 </form>
 ```
+
+The button stays disabled until `check` has answered, and the account is
+created only once `accept` has succeeded.
 
 ## What `check` and `accept` do
 
 `check(type)` reads the release of `type` in force from
 `GET /v1/documents/{type}/current` and resolves with `{ document, accepted }`.
 `document` carries the `version`, `hash`, `effectiveDate` and
-`requiresAcceptance` of that release. `accepted` is `true` when this browser
-accepted the same release, or accepted an earlier release of the type and the
-current one has `requiresAcceptance: false`. A type with no release in force
-rejects with an `InthApiError` whose `code` is `not_found`.
+`requiresAcceptance` of that release. `accepted` is `true` only when this
+browser recorded an acceptance of that release, by its hash, for the visitor's
+current subject ID. An earlier release accepted does not count, because the
+browser cannot see the releases published in between. When
+`document.requiresAcceptance` is `false` you may choose not to ask again a
+visitor who accepted before; that is your app's call.
 
 `accept(documents, options?)` takes one `{ type, hash }` or an array of them,
 with the `hash` that `check` gave. It sends one
 `POST /v1/documents/acceptances` for the visitor's subject ID, with the
 property the consent records use, and resolves with what the backend
-recorded. If the visitor has no subject ID yet, `accept` makes one and keeps
-it, so their consent and acceptances share a subject. On failure it rejects
-with an `InthApiError` and retries nothing. To retry, pass the same key:
+recorded. The subject ID is kept: after a reload, and in the visitor's next
+consent save, it is the same one.
+
+Without a verified identity, the acceptance is recorded for the device. Pass
+`externalId` and `identityProvider` with an `identityToken` your server signed,
+and it is recorded for the person; the device keeps its own subject ID.
+
+Both calls need a backend: the one your consent records go to. In tests, with
+`testing()` or an offline mode, they reject.
+
+## Handle errors and retry
+
+Both calls reject with an API error when the backend refuses them. Test it
+with `isInthApiError`; a type with no release in force has the code
+`not_found`. `accept` sends nothing again by itself, so to retry an
+acceptance, send it with the same idempotency key, and the backend records the
+action once:
 
 ```ts
-const idempotencyKey = crypto.randomUUID();
-await accept({ type: 'terms_us', hash }, { idempotencyKey });
+import {
+	createIdempotencyKey,
+	isInthApiError,
+} from '@inth/sdk/runtime/documents';
+
+const idempotencyKey = createIdempotencyKey();
+const send = () =>
+	accept({ type: 'terms_us', hash }, { idempotencyKey });
+
+try {
+	await send();
+} catch (error) {
+	if (isInthApiError(error) && error.code === 'not_found') {
+		// No terms are published.
+	} else {
+		await send();
+	}
+}
 ```
 
-An app that knows who the person is can pass `externalId` and
-`identityProvider` with an `identityToken` your server signed.
+## What this browser stores
 
 The backend has no route that tells a browser what it accepted, so this
-browser stores each acceptance it recorded (type, hash, version and
-`acceptedAt`) in `localStorage` under `inth-document-acceptances:v1`. Another
-browser, or this one after its storage is cleared, reports `accepted: false`
-until the visitor accepts again. Where storage is blocked, `check` reports
-`accepted: false` and `accept` still records.
+browser stores each acceptance it recorded under
+`inth-document-acceptances:v1` in `localStorage`, with the project URL and the
+subject ID it was recorded for. `check` counts it only for the same project and
+subject, and clearing the visitor's consent records removes it. Another browser, or this one after its
+storage is cleared, reports `accepted: false` until the visitor accepts again.
+Where storage is blocked, `check` reports `accepted: false` and `accept` still
+records.
 
 ## Record from your server when you know the person
 
-A browser acceptance belongs to the device. When your server knows who the
-person is, for example after sign-up, record the acceptance from the server
-with the project's secret key and the person's `externalId` instead.
+When your server knows who the person is, for example after sign-up, it can
+record the acceptance itself with the project's secret key and the person's
+`externalId`, instead of the browser.
 
 The code behind `check` and `accept` loads the first time you call one of
 them, so a page that never calls them does not download it.
