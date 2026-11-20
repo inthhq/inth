@@ -64,7 +64,7 @@ describe('consent widget restriction notice', () => {
 					mode: testing(),
 					overrides: { gpc: true },
 					prefetch: policyFixture(
-						{ marketing: true, measurement: true },
+						{ functionality: true, marketing: true },
 						{
 							categories: [...CATEGORIES],
 							id: 'gpc-restricted',
@@ -98,6 +98,6 @@ describe('consent widget restriction notice', () => {
 		expect(marketing?.getAttribute('aria-describedby')).toBe(notice.id);
 
 		// A saved grant that nothing restricts gets no notice.
-		expect(restriction('measurement')).toBeNull();
+		expect(restriction('functionality')).toBeNull();
 	});
 });
