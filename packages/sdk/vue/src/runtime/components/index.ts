@@ -20,3 +20,4 @@ export { default as ConsentTag } from './tag.vue';
 export { default as ConsentWidget } from './preferences.vue';
 export { default as IABConsentBanner } from './iab-prompt.vue';
 export { default as IABConsentDialog } from './iab-panel.vue';
+export { LazyOptOutConfirmation as OptOutConfirmation } from './lazy-surfaces';

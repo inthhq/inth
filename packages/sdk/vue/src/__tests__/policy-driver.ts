@@ -62,9 +62,11 @@ import { gtag } from '../../../integrations/src/vendors/analytics/google-tag';
 import ConsentDialogLink from '../runtime/components/consent-dialog-link.vue';
 import ConsentGate from '../runtime/components/consent-gate.vue';
 import ConsentManager from '../runtime/components/manager.vue';
+import OptOutConfirmation from '../runtime/components/opt-out-confirmation.vue';
 import ConsentDialogTrigger from '../runtime/components/panel-trigger.vue';
 import ConsentBanner from '../runtime/components/prompt.vue';
 import { consentConfigKey } from '../runtime/composables/config';
+import { useOptOutConfirmationOpen } from '../runtime/composables/kernel';
 import type { ConsentConfig } from '../runtime/config';
 import {
 	symbolKernelContext,
@@ -460,6 +462,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 		({ kernel } = context);
 		const Component = defineComponent({
 			setup() {
+				const confirmationOpen = useOptOutConfirmationOpen();
 				let dispose: (() => void) | undefined;
 				onMounted(() => {
 					dispose = connect();
@@ -471,6 +474,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 				return () => [
 					h(ConsentBanner),
 					context.activeUI.value === 'manager' ? h(ConsentManager) : null,
+					confirmationOpen.value ? h(OptOutConfirmation) : null,
 					h(ConsentDialogTrigger),
 					h(ConsentDialogLink),
 					setup.probeGates
@@ -599,6 +603,21 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 		}
 		await settle();
 	};
+	const openPreferencesFromTrigger = async () => {
+		await click('consent-dialog-trigger');
+		if (kernel.getSnapshot().activeUI !== 'dialog') {
+			await vi.waitFor(() => {
+				if (
+					!document.querySelector(
+						'[data-testid="opt-out-confirmation-preferences-link"]'
+					)
+				) {
+					throw new Error('Opt-out confirmation did not mount');
+				}
+			});
+			await click('opt-out-confirmation-preferences-link');
+		}
+	};
 	return {
 		baseline,
 		dispose() {
@@ -633,7 +652,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 					) {
 						await click('consent-banner-accept-button');
 					} else {
-						await click('consent-dialog-trigger');
+						await openPreferencesFromTrigger();
 						await click('consent-widget-footer-accept-all-button');
 					}
 					break;
@@ -645,7 +664,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 					) {
 						await click('consent-banner-reject-button');
 					} else {
-						await click('consent-dialog-trigger');
+						await openPreferencesFromTrigger();
 						await click('consent-widget-reject-button');
 					}
 					break;
@@ -653,7 +672,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 					// The trigger hides while the dialog is open; a save under a
 					// notice or none rule leaves the dialog open.
 					if (kernel.getSnapshot().activeUI !== 'dialog') {
-						await click('consent-dialog-trigger');
+						await openPreferencesFromTrigger();
 					}
 					await click('consent-widget-footer-save-button');
 					break;
@@ -714,11 +733,11 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 					};
 					break;
 				case 'open-preferences':
-					await click(
-						operation.via === 'trigger'
-							? 'consent-dialog-trigger'
-							: 'consent-dialog-link'
-					);
+					if (operation.via === 'trigger') {
+						await openPreferencesFromTrigger();
+					} else {
+						await click('consent-dialog-link');
+					}
 					break;
 				case 'reload':
 					root?.unmount();

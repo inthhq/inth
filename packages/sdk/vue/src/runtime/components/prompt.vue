@@ -8,6 +8,7 @@ import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { replayEarlyConsentTaps } from '@inth/sdk/surface-actions';
 import {
 	resolveActionLabels,
+	resolveOptOutLink,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
 } from '@inth/sdk/surface-state';
@@ -34,6 +35,7 @@ import {
 	useConsentKernelContext,
 	useConsentSnapshot,
 	useHasConsentUi,
+	useOptOut,
 } from '../composables';
 import { useConsentPolicyActions } from '../composables/use-consent-policy-actions';
 import { useConsentScrollLock } from '../composables/use-consent-scroll-lock';
@@ -46,6 +48,7 @@ import { slotAttrs } from '../utils/slot-attrs';
 import ConsentActions from './actions.vue';
 import DescriptionContent from './description-content.vue';
 import EarlyTapScript from './early-tap-script';
+import OptOutIcon from './opt-out-icon.vue';
 import ConsentTag from './tag.vue';
 
 /**
@@ -83,6 +86,7 @@ const textDirection = computed(() =>
 	getTextDirection(init.value?.translations?.language)
 );
 const save = useConsentSave();
+const optOut = useOptOut();
 const kernel = useConsentKernel();
 const snapshot = useConsentSnapshot();
 
@@ -168,7 +172,15 @@ const rightLabels = computed(() =>
 	resolvePreferenceControlLabels(translations.value)
 );
 
-const onRight = function onRight() {
+const optOutLink = computed(() =>
+	resolveOptOutLink(translations.value, surface.value.optOutLink)
+);
+
+const onRight = function onRight(right: string) {
+	if (right === 'opt-out') {
+		void optOut({ uiSource: 'banner' });
+		return;
+	}
 	activeUI.value = 'manager';
 };
 
@@ -348,11 +360,25 @@ const onAction = function onAction(action: PresentationAction) {
 										type="button"
 										data-action="right"
 										:data-inth-rights="snapshot.policyRule.rights.join(' ')"
+										:data-opt-out-variant="
+											right === 'opt-out' ? optOutLink.variant : undefined
+										"
 										:data-right="right"
 										:data-testid="`consent-banner-right-link-${right}`"
-										@click="onRight"
+										@click="onRight(right)"
 									>
-										{{ rightLabels[right] }}
+										<OptOutIcon
+											v-if="
+												right === 'opt-out' &&
+												optOutLink.variant === 'privacy-choices'
+											"
+											:class="bannerStyles.optOutIcon"
+										/>
+										{{
+											right === 'opt-out'
+												? optOutLink.label
+												: rightLabels[right]
+										}}
 									</button>
 								</div>
 							</template>

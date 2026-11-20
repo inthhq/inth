@@ -71,6 +71,10 @@ group: reference
   an acknowledgement, grants nothing, and leaves earlier refusals in place.
   Use it only for a policy whose prompt is `notice`.
 
+  `useOptOut()` returns a function that records a durable opt-out in one click
+  and opens `OptOutConfirmation` under an opt-out policy. Under other policy
+  models it opens the preference dialog.
+
   ## Open the banner or preferences
 
   `useConsentActiveUI()` returns a writable computed with value `'banner'`,

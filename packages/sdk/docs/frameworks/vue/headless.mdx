@@ -58,7 +58,11 @@ instead of hard-coding buttons, and call `useDismissNotice()` to dismiss a
 notice (recording an acknowledgement, not consent).
 
 Use `usePromptRequirement()` to check whether the policy requires a `'choice'`,
-a `'notice'`, or `'none'`.
+a `'notice'`, or `'none'`. For an opt-out link in custom markup, call
+`useOptOut()` to record the opt-out in one step and open `OptOutConfirmation`
+under an opt-out policy, or open the preference dialog otherwise. Use
+`resolveOptOutLink` from `@inth/vue` with `presentation.optOutLink` to resolve
+the statutory link title and icon requirement.
 
 ## Verify the custom UI
 

@@ -188,11 +188,12 @@ describe('ConsentBanner under a notice prompt', () => {
 		expect(root?.getAttribute('data-model')).toBe('opt-out');
 	});
 
-	test('opens the preference center from the opt-out link', async () => {
+	test('opts out in one click from the opt-out link', async () => {
 		const context = await renderBanner(buildInit(noticeRule));
 		query('consent-banner-right-link-opt-out')?.click();
 		await flushPromises();
-		expect(context.activeUI.value).toBe('manager');
+		expect(context.kernel.getSnapshot().optOut?.method).toBe('button');
+		expect(context.activeUI.value).toBeNull();
 	});
 
 	test('uses the notice copy', async () => {

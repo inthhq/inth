@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import type { ConsentDialogTriggerSize } from '@inth/sdk/schema/config';
-import { resolveTriggerLabels } from '@inth/sdk/surface-state';
+import { isOptOutTrigger } from '@inth/sdk/surface-actions';
+import {
+	resolveOptOutLink,
+	resolveTriggerLabels,
+} from '@inth/sdk/surface-state';
 import triggerStyles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import { followDevToolsDock } from '@inth/sdk/ui/utils/devtools-launcher';
 import {
@@ -27,9 +31,13 @@ import {
 	useConsentInit,
 } from '#inth/composables';
 
+import { useResolvedPresentation } from '../composables/experiment';
 import {
 	useConsentKernel,
+	useConsentSnapshot,
 	useHasConsentPreferences,
+	useOptOut,
+	useOptOutConfirmationOpen,
 	usePolicyRule,
 	usePromptRequirement,
 } from '../composables/kernel';
@@ -42,15 +50,25 @@ import TriggerIcon from './trigger-icon.vue';
 const activeUI = useConsentActiveUI();
 const config = useConsentConfig();
 const policy = usePolicyRule();
+const snapshot = useConsentSnapshot();
+const presentation = useResolvedPresentation();
 const init = useConsentInit();
 const translations = useSurfaceTranslations();
+const optOut = useOptOut();
+const confirmationOpen = useOptOutConfirmationOpen();
 
 const mounted = useMounted();
 const triggerRef = ref<HTMLElement | null>(null);
 
+const isOptOut = computed(() => isOptOutTrigger(snapshot.value));
 const labels = computed(() => resolveTriggerLabels(translations.value));
+const optOutLink = computed(() =>
+	resolveOptOutLink(translations.value, presentation.value?.optOutLink)
+);
 const triggerLabel = computed(
-	() => config.value.triggerAriaLabel ?? labels.value.label
+	() =>
+		config.value.triggerAriaLabel ??
+		(isOptOut.value ? optOutLink.value.label : labels.value.label)
 );
 
 const hasConsentPreferences = useHasConsentPreferences();
@@ -59,7 +77,7 @@ const isVisible = computed(
 	() =>
 		mounted.value &&
 		isTriggerVisible({
-			dialogOpen: activeUI.value === 'manager',
+			dialogOpen: activeUI.value === 'manager' || confirmationOpen.value,
 			hasConsentPreferences: hasConsentPreferences.value,
 			promptOwed: promptRequirement.value.kind !== 'none',
 			showWhen: config.value.triggerShowWhen ?? 'after-consent',
@@ -147,7 +165,11 @@ const motionClasses = computed(() => [
 
 const openDialog = function openDialog(event: MouseEvent) {
 	if (!drag.endsDrag(event)) {
-		activeUI.value = 'manager';
+		if (isOptOut.value) {
+			void optOut();
+		} else {
+			activeUI.value = 'manager';
+		}
 	}
 };
 

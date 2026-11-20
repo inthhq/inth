@@ -23,16 +23,21 @@ export type {
 export {
 	resolveActionLabels,
 	resolveOptOutCopy,
+	resolveOptOutLink,
 	resolveOptOutState,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
 } from '@inth/sdk/engine';
 export type {
+	OptOutLinkIcon,
+	OptOutLinkVariant,
 	OptOutLock,
+	OptOutResult,
 	OptOutVia,
 	PreferenceControl,
 	PresentationAction,
 	PromptCopy,
+	ResolvedOptOutLink,
 	ResolvedOptOutState,
 } from '@inth/sdk/engine';
 export type * from '@inth/sdk/schema/config';

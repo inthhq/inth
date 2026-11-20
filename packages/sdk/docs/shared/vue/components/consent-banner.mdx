@@ -19,9 +19,13 @@ group: reference
   - A `choice` prompt shows Reject All, Accept All, and Customize. Customize
     uses the primary style by default so Accept All and Reject All have equal
     weight.
-  - A `notice` prompt shows an OK button. When the policy grants an opt-out or
-    preferences right, the banner adds an underlined text button ("Do Not Sell
-    or Share My Personal Information" or "Manage preferences") that opens preferences.
+  - A `notice` prompt shows an OK button. When the policy grants an opt-out
+    right, the banner adds an underlined link labelled "Do Not Sell or Share My
+    Personal Information" (or "Your Privacy Choices" / "Your California Privacy
+    Choices" with the California Privacy Protection Agency opt-out icon when
+    `presentation.optOutLink` is set). Activating it under an opt-out policy
+    records the opt-out in one click and opens `OptOutConfirmation`. When only
+    the `preferences` right is shown, the link opens `ConsentManager`.
   - A policy with prompt `none` shows no banner.
 
   Accept All and Reject All record a choice for every category in the policy

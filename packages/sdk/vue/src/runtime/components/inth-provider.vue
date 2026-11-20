@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, watch } from 'vue';
+import { onMounted, provide, watch } from 'vue';
 
 import {
 	useConsentActiveUI,
@@ -7,13 +7,19 @@ import {
 	useConsentKernelContext,
 } from '../composables';
 import { useConsentConfig } from '../composables/config';
+import {
+	useHasOptOutConfirmationHost,
+	useOptOutConfirmationOpen,
+} from '../composables/kernel';
 import { useMounted } from '../composables/use-mounted';
 import { applyRootOverrides } from '../root-overrides';
+import { symbolConfirmationHosted } from '../utils/symbols';
 import {
 	LazyConsentDialogTrigger,
 	LazyConsentManager,
 	LazyIabConsentBanner,
 	LazyIabConsentDialog,
+	LazyOptOutConfirmation,
 	prefetchConsentManager,
 	prefetchIabConsentDialog,
 } from './lazy-surfaces';
@@ -31,6 +37,9 @@ const activeUI = useConsentActiveUI();
 const init = useConsentInit();
 const config = useConsentConfig();
 const context = useConsentKernelContext();
+const confirmationOpen = useOptOutConfirmationOpen();
+const hasStandaloneConfirmation = useHasOptOutConfirmationHost();
+provide(symbolConfirmationHosted, true);
 // An `iab` policy without `iab` has no surface to show; the context reports
 // the error instead.
 const { iabUnavailable } = context;
@@ -70,6 +79,14 @@ watch(
 		/>
 		<LazyConsentManager
 			v-else-if="!(init?.gvl || init?.gvlReference) && activeUI === 'manager'"
+		/>
+		<LazyOptOutConfirmation
+			v-if="
+				!(init?.gvl || init?.gvlReference) &&
+				confirmationOpen &&
+				!hasStandaloneConfirmation
+			"
+			embedded
 		/>
 		<LazyConsentDialogTrigger v-if="config.showTrigger && mounted" />
 	</template>
