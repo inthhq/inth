@@ -6,6 +6,7 @@ import type { ConsentSnapshot } from '@inth/sdk-core';
 import type { ConsentDialogOptions } from '../types';
 import type { createDialog as createDialogNow } from './dialog';
 import { importDialog } from './dialog-import';
+import { isOptOutConfirmationOpen } from './opt-out-confirmation-state';
 import type { Surface, SurfaceContext } from './surface';
 
 // Safari has no requestIdleCallback; a short delay after load stands in.
@@ -127,7 +128,8 @@ export const createDialog = function createDialog(
 			}
 			if (
 				requested ||
-				snapshot.activeUI !== 'dialog' ||
+				(snapshot.activeUI !== 'dialog' &&
+					!isOptOutConfirmationOpen(ctx.client.kernel)) ||
 				snapshot.policyRule.model === 'iab'
 			) {
 				return;

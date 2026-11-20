@@ -107,6 +107,18 @@ export const TEST_IDS = {
 		overlay: 'iab-consent-dialog-overlay',
 		root: 'iab-consent-dialog-root',
 	},
+	optOutConfirmation: {
+		card: 'opt-out-confirmation-card',
+		description: 'opt-out-confirmation-description',
+		doneButton: 'opt-out-confirmation-done-button',
+		footer: 'opt-out-confirmation-footer',
+		header: 'opt-out-confirmation-header',
+		overlay: 'opt-out-confirmation-overlay',
+		preferencesLink: 'opt-out-confirmation-preferences-link',
+		root: 'opt-out-confirmation-root',
+		status: 'opt-out-confirmation-status',
+		title: 'opt-out-confirmation-title',
+	},
 	vuePrimitive: {
 		// Generic Vue wrapper around rendered policy action buttons.
 		actions: 'consent-actions',

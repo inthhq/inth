@@ -169,6 +169,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Privātuma politika',
 		termsOfService: 'Pakalpojumu sniegšanas noteikumi',
 	},
+	optOut: {
+		description:
+			'Šī vietne nepārdos un nekopīgos jūsu personas datus, un jūsu izvēle ir saglabāta šajā pārlūkprogrammā.',
+		done: 'Gatavs',
+		lockedByAccount:
+			'Jūsu konts ir atteicies, un jūs varat to mainīt pēc pierakstīšanās.',
+		lockedByGpc:
+			'Jūsu pārlūkprogrammas Global Privacy Control signāls ir ieslēgts, tāpēc tas paliek izslēgts.',
+		statusRequest: 'Atteikšanās pieprasījums ievērots',
+		statusSignal: 'Atteikšanās preferences signāls ievērots',
+	},
 	rights: {
 		californiaPrivacyChoices: 'Jūsu Kalifornijas privātuma izvēles',
 		optOut: 'Nepārdot un nekopīgot manus datus',

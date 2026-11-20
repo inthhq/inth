@@ -158,6 +158,16 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: '隐私政策',
 		termsOfService: '服务条款',
 	},
+	optOut: {
+		description:
+			'本网站不会出售或共享您的个人信息，您的选择已保存在此浏览器中。',
+		done: '完成',
+		lockedByAccount: '您的账户已选择退出，您可以在登录后更改此设置。',
+		lockedByGpc:
+			'您浏览器的 Global Privacy Control 信号已开启，因此此选项保持关闭。',
+		statusRequest: '已响应退出请求',
+		statusSignal: '已响应退出偏好信号',
+	},
 	rights: {
 		californiaPrivacyChoices: '您的加利福尼亚隐私选择',
 		optOut: '请勿出售或共享我的数据',

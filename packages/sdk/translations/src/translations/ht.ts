@@ -175,6 +175,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Politik konfidansyalite',
 		termsOfService: 'Kondisyon itilizasyon',
 	},
+	optOut: {
+		description:
+			'Sit sa a p ap vann ni pataje enfòmasyon pèsonèl ou yo, epi chwa ou anrejistre nan navigatè sa a.',
+		done: 'Fini',
+		lockedByAccount:
+			'Kont ou a te refize pataj la, epi ou ka chanje sa apre ou fin konekte.',
+		lockedByGpc:
+			'Siyal Global Privacy Control navigatè ou a aktive, kidonk sa a rete etenn.',
+		statusRequest: 'Demann refi a respekte',
+		statusSignal: 'Siyal preferans refi a respekte',
+	},
 	rights: {
 		californiaPrivacyChoices: 'Chwa Konfidansyalite Kalifòni Ou',
 		optOut: 'Pa vann ni pataje done mwen yo',

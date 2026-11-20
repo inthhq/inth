@@ -169,6 +169,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Tietosuojakäytäntö',
 		termsOfService: 'Käyttöehdot',
 	},
+	optOut: {
+		description:
+			'Tämä sivusto ei myy eikä jaa henkilötietojasi, ja valintasi on tallennettu tähän selaimeen.',
+		done: 'Valmis',
+		lockedByAccount:
+			'Tilisi on kieltäytynyt, ja voit muuttaa tätä kirjauduttuasi sisään.',
+		lockedByGpc:
+			'Selaimesi Global Privacy Control -signaali on päällä, joten tämä pysyy poissa käytöstä.',
+		statusRequest: 'Kieltäytymispyyntö huomioitu',
+		statusSignal: 'Kieltäytymissignaali huomioitu',
+	},
 	rights: {
 		californiaPrivacyChoices: 'Kalifornian tietosuojavalintasi',
 		optOut: 'Älä myy tai jaa tietojani',

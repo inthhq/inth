@@ -171,6 +171,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Directivas da protecziun da datas',
 		termsOfService: "Cundiziuns d'utilisaziun",
 	},
+	optOut: {
+		description:
+			'Questa pagina na venda e na cundivida betg tias datas persunalas, e tia elecziun è memorisada en quest navigatur.',
+		done: 'Finì',
+		lockedByAccount:
+			'Tes conto ha refusà e ti pos midar quai suenter esser s’annunzià.',
+		lockedByGpc:
+			'Il signal Global Privacy Control da tes navigatur è activà, perquai resta questa opziun deactivada.',
+		statusRequest: 'Dumonda da refusa resguardada',
+		statusSignal: 'Signal da preferenza da refusa resguardà',
+	},
 	rights: {
 		californiaPrivacyChoices:
 			'Tias tschernas da protecziun da datas en California',

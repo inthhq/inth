@@ -169,6 +169,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Dateschutzrichtlinn',
 		termsOfService: 'Notzungsbedingungen',
 	},
+	optOut: {
+		description:
+			'Dës Websäit verkeeft oder deelt Är perséinlech Daten net, an Är Auswiel ass an dësem Browser gespäichert.',
+		done: 'Fäerdeg',
+		lockedByAccount:
+			'Äre Kont huet ofgeleent, an Dir kënnt dat no der Umeldung änneren.',
+		lockedByGpc:
+			'D’Global-Privacy-Control-Signal vun Ärem Browser ass aktiv, dowéinst bleift dëst ausgeschalt.',
+		statusRequest: 'Ofleenungsufro berücksichtegt',
+		statusSignal: 'Ofleenungssignal berücksichtegt',
+	},
 	rights: {
 		californiaPrivacyChoices: 'Är kalifornesch Dateschutzoptiounen',
 		optOut: 'Meng Donnéeën net verkafen oder deelen',

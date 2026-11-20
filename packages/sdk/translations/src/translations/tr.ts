@@ -175,6 +175,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Gizlilik Politikası',
 		termsOfService: 'Hizmet Şartları',
 	},
+	optOut: {
+		description:
+			'Bu site kişisel bilgilerinizi satmaz veya paylaşmaz ve seçiminiz bu tarayıcıda kaydedilir.',
+		done: 'Tamam',
+		lockedByAccount:
+			'Hesabınız kapsam dışı bırakıldı, oturum açtıktan sonra bunu değiştirebilirsiniz.',
+		lockedByGpc:
+			'Tarayıcınızın Global Privacy Control sinyali açık olduğundan bu ayar kapalı kalır.',
+		statusRequest: 'Kapsam dışı bırakma isteği uygulandı',
+		statusSignal: 'Kapsam dışı bırakma tercih sinyali uygulandı',
+	},
 	rights: {
 		californiaPrivacyChoices: 'Kaliforniya Gizlilik Tercihleriniz',
 		optOut: 'Verilerimi satma veya paylaşma',

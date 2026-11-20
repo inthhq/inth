@@ -371,3 +371,83 @@ describe('dispose() before the engine', () => {
 		api.dispose();
 	});
 });
+
+describe('early opt-out tap before the engine loads', () => {
+	const optOutInitBody = () => ({
+		branding: 'inth',
+		location: { countryCode: 'US', regionCode: 'CA' },
+		policyResolution: writePolicyResolutionWire(
+			resolvePolicyRules({
+				countryCode: 'US',
+				regionCode: 'CA',
+				rules: [
+					{
+						...policyRulePresets.usPrivacyStatesOptOut(),
+						prompt: 'notice',
+					},
+				],
+			})
+		),
+		translations: { language: 'en', translations: enTranslations },
+	});
+
+	it('queues optOut and loads the engine when the banner opt-out link is tapped early', async () => {
+		const standIn = start();
+		answerInit.resolve(optOutInitBody());
+		await vi.waitFor(() => {
+			expect(banner()).not.toBeNull();
+		});
+		const optOutButton = banner()?.querySelector<HTMLButtonElement>(
+			'[data-testid="consent-banner-right-opt-out-button"]'
+		);
+		expect(optOutButton?.getAttribute('data-action')).toBe('opt-out');
+
+		optOutButton?.dispatchEvent(
+			new Event('pointerdown', { bubbles: true, composed: true })
+		);
+		expect(loaded('inth.commit.js')).toEqual([]);
+		expect(loaded('inth.dialog.js')).toEqual([]);
+		expect(loaded('inth.hosted.js')).toHaveLength(1);
+
+		optOutButton?.click();
+		expect(queuedForEngine(standIn).map(([method]) => method)).toEqual([
+			'optOut',
+		]);
+
+		// When the engine takes over, it replays optOut, records the opt-out
+		// and opens the confirmation view.
+		const api = installGlobal(createGlobal({ pkg: '@inth/sdk' }));
+		autoInit(api);
+		await vi.waitFor(() => {
+			expect(api.client?.getSnapshot().optOut?.method).toBe('button');
+		});
+		const { client } = api;
+		expect(client?.getSnapshot().effectivePermissions.marketing).toBe(false);
+		expect(client?.getSnapshot().effectivePermissions.measurement).toBe(false);
+		await vi.waitFor(() => {
+			expect(
+				client?.ui?.root.querySelector(
+					'[data-testid="opt-out-confirmation-root"]'
+				)
+			).not.toBeNull();
+		});
+		api.dispose();
+	});
+
+	it('queues optOut and loads the engine for a data-inth-action="opt-out" link before the engine loads', () => {
+		const standIn = start();
+		const link = document.createElement('a');
+		link.href = '#';
+		link.setAttribute('data-inth-action', 'opt-out');
+		document.body.append(link);
+
+		link.click();
+
+		expect(queuedForEngine(standIn).map(([method]) => method)).toEqual([
+			'optOut',
+		]);
+		expect(loaded('inth.hosted.js')).toHaveLength(1);
+		expect(loaded('inth.dialog.js')).toEqual([]);
+		standIn.dispose();
+	});
+});

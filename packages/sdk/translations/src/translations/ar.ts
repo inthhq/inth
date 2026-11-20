@@ -174,6 +174,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'سياسة الخصوصية',
 		termsOfService: 'شروط الخدمة',
 	},
+	optOut: {
+		description:
+			'لن يبيع هذا الموقع معلوماتك الشخصية أو يشاركها، وقد تم حفظ اختيارك على هذا المتصفح.',
+		done: 'تم',
+		lockedByAccount:
+			'اختار حسابك عدم المشاركة، ويمكنك تغيير ذلك بعد تسجيل الدخول.',
+		lockedByGpc:
+			'إشارة التحكم العالمي في الخصوصية في متصفحك مفعلة، لذا يبقى هذا الخيار متوقفاً.',
+		statusRequest: 'تم تنفيذ طلب عدم المشاركة',
+		statusSignal: 'تم تنفيذ إشارة تفضيل عدم المشاركة',
+	},
 	rights: {
 		californiaPrivacyChoices: 'خيارات الخصوصية الخاصة بك في كاليفورنيا',
 		optOut: 'عدم بيع بياناتي أو مشاركتها',

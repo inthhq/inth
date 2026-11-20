@@ -1,0 +1,304 @@
+@import url('./animations/enter-exit.css');
+
+:root {
+	--opt-out-confirmation-font-family: var(--inth-font-family);
+	--opt-out-confirmation-line-height: var(--inth-line-height-tight);
+	--opt-out-confirmation-title-font-size: var(--inth-font-size-base);
+	--opt-out-confirmation-title-font-weight: var(--inth-font-weight-semibold);
+	--opt-out-confirmation-title-letter-spacing: -0.025em;
+	--opt-out-confirmation-status-font-size: var(--inth-font-size-sm);
+	--opt-out-confirmation-status-font-weight: var(--inth-font-weight-medium);
+	--opt-out-confirmation-description-font-size: var(--inth-font-size-sm);
+	--opt-out-confirmation-description-font-weight: var(
+		--inth-font-weight-normal
+	);
+	--opt-out-confirmation-description-line-height: var(
+		--inth-line-height-normal
+	);
+	--opt-out-confirmation-link-font-size: var(--inth-font-size-sm);
+	--opt-out-confirmation-border-color: var(--inth-border);
+	--opt-out-confirmation-border-color-dark: var(--inth-border);
+	--opt-out-confirmation-background-color: var(--inth-surface);
+	--opt-out-confirmation-background-color-dark: var(--inth-surface);
+	--opt-out-confirmation-foreground-color: var(--inth-text);
+	--opt-out-confirmation-foreground-color-dark: var(--inth-text);
+	--opt-out-confirmation-muted-color: var(--inth-text-muted);
+	--opt-out-confirmation-muted-color-dark: var(--inth-text-muted);
+	--opt-out-confirmation-overlay-background-color: var(--inth-overlay);
+	--opt-out-confirmation-overlay-background-color-dark: var(--inth-overlay);
+	--opt-out-confirmation-status-background-color: color-mix(
+		in srgb,
+		var(--inth-primary) 10%,
+		var(--inth-surface)
+	);
+	--opt-out-confirmation-status-border-color: color-mix(
+		in srgb,
+		var(--inth-primary) 28%,
+		var(--inth-border)
+	);
+	--opt-out-confirmation-card-padding: var(--inth-space-lg);
+	--opt-out-confirmation-card-padding-mobile: var(--inth-space-md);
+	--opt-out-confirmation-card-gap: var(--inth-space-md);
+	--opt-out-confirmation-card-radius: var(--inth-radius-lg);
+	--opt-out-confirmation-card-shadow: var(--inth-shadow-md);
+	--opt-out-confirmation-max-width: 24rem;
+	--opt-out-confirmation-z-index: 999999;
+	--opt-out-confirmation-overlay-z-index: 999998;
+	--opt-out-confirmation-animation-duration: var(--inth-duration-normal);
+	--opt-out-confirmation-animation-timing: var(--inth-easing-out);
+}
+
+@layer components {
+	.root:not(:global(.headless)) {
+		pointer-events: none;
+		box-sizing: border-box;
+		isolation: isolate;
+		font-family: var(--opt-out-confirmation-font-family);
+		color: var(--opt-out-confirmation-foreground-color);
+		line-height: var(--opt-out-confirmation-line-height);
+		-webkit-text-size-adjust: 100%;
+		margin: 0;
+		padding: var(--opt-out-confirmation-card-padding-mobile);
+		border: 0;
+		background: transparent;
+		position: fixed;
+		inset: 0px;
+		z-index: var(--opt-out-confirmation-z-index);
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 100%;
+		height: 100%;
+	}
+
+	.root:not(:global(.headless))[dir='rtl'] {
+		direction: rtl;
+	}
+
+	.root:not(:global(.headless)):focus {
+		outline: none;
+	}
+
+	.dialogVisible:not(:global(.headless)) {
+		opacity: 1;
+		transition: opacity var(--opt-out-confirmation-animation-duration)
+			var(--opt-out-confirmation-animation-timing);
+	}
+
+	.dialogHidden:not(:global(.headless)) {
+		opacity: 0;
+		transition: opacity var(--opt-out-confirmation-animation-duration)
+			var(--opt-out-confirmation-animation-timing);
+	}
+
+	.contentVisible:not(:global(.headless)) {
+		opacity: 1;
+		transform: scale(1);
+		transition:
+			opacity var(--opt-out-confirmation-animation-duration)
+				var(--opt-out-confirmation-animation-timing),
+			transform var(--opt-out-confirmation-animation-duration)
+				var(--inth-easing-spring);
+	}
+
+	.contentHidden:not(:global(.headless)) {
+		opacity: 0;
+		transform: scale(0.95);
+		transition:
+			opacity var(--opt-out-confirmation-animation-duration)
+				var(--opt-out-confirmation-animation-timing),
+			transform var(--opt-out-confirmation-animation-duration)
+				var(--opt-out-confirmation-animation-timing);
+	}
+
+	@starting-style {
+		.dialogEntering:not(:global(.headless)) {
+			opacity: 0;
+		}
+
+		.contentEntering:not(:global(.headless)) {
+			opacity: 0;
+			transform: scale(0.95);
+		}
+	}
+
+	@media (min-width: 640px) {
+		.root:not(:global(.headless)) {
+			padding: var(--opt-out-confirmation-card-padding);
+		}
+	}
+
+	.container:not(:global(.headless)) {
+		pointer-events: auto;
+		width: 100%;
+		max-height: 100%;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.container:not(:global(.headless)):focus-visible {
+		outline: none;
+	}
+
+	.container:not(:global(.headless)):focus-visible
+		> .card:not(:global(.headless)) {
+		outline: 2px solid var(--inth-primary);
+		outline-offset: 2px;
+	}
+
+	.overlay:not(:global(.headless)) {
+		position: fixed;
+		inset: 0px;
+		background-color: var(--opt-out-confirmation-overlay-background-color);
+		z-index: var(--opt-out-confirmation-overlay-z-index);
+	}
+
+	.overlayVisible:not(:global(.headless)) {
+		opacity: 1;
+		transition: opacity var(--opt-out-confirmation-animation-duration)
+			var(--opt-out-confirmation-animation-timing);
+	}
+
+	.overlayHidden:not(:global(.headless)) {
+		opacity: 0;
+		transition: opacity var(--opt-out-confirmation-animation-duration)
+			var(--opt-out-confirmation-animation-timing);
+	}
+
+	@starting-style {
+		.overlayEntering:not(:global(.headless)) {
+			opacity: 0;
+		}
+	}
+
+	:global(.inth-dark) .overlay:not(:global(.headless)) {
+		background-color: var(--opt-out-confirmation-overlay-background-color-dark);
+	}
+
+	.card:not(:global(.headless)) {
+		position: relative;
+		box-sizing: border-box;
+		width: min(100%, var(--opt-out-confirmation-max-width));
+		margin: 0 auto;
+		padding: var(--opt-out-confirmation-card-padding-mobile);
+		border-radius: var(--opt-out-confirmation-card-radius);
+		border: 1px solid var(--opt-out-confirmation-border-color);
+		background-color: var(--opt-out-confirmation-background-color);
+		color: var(--opt-out-confirmation-foreground-color);
+		box-shadow: var(--opt-out-confirmation-card-shadow);
+		display: flex;
+		flex-direction: column;
+		gap: var(--opt-out-confirmation-card-gap);
+	}
+
+	@media (min-width: 640px) {
+		.card:not(:global(.headless)) {
+			padding: var(--opt-out-confirmation-card-padding);
+		}
+	}
+
+	:global(.inth-dark) .card:not(:global(.headless)) {
+		background-color: var(--opt-out-confirmation-background-color-dark);
+		color: var(--opt-out-confirmation-foreground-color-dark);
+		border-color: var(--opt-out-confirmation-border-color-dark);
+	}
+
+	.header:not(:global(.headless)) {
+		display: flex;
+		flex-direction: column;
+		gap: var(--inth-space-xs);
+	}
+
+	.title:not(:global(.headless)) {
+		margin: 0;
+		font-weight: var(--opt-out-confirmation-title-font-weight);
+		font-size: var(--opt-out-confirmation-title-font-size);
+		line-height: var(--opt-out-confirmation-line-height);
+		letter-spacing: var(--opt-out-confirmation-title-letter-spacing);
+	}
+
+	.status:not(:global(.headless)) {
+		margin: 0;
+		padding: var(--inth-space-xs) var(--inth-space-sm);
+		border-radius: var(--inth-radius-md);
+		border: 1px solid var(--opt-out-confirmation-status-border-color);
+		background-color: var(--opt-out-confirmation-status-background-color);
+		color: var(--opt-out-confirmation-foreground-color);
+		font-size: var(--opt-out-confirmation-status-font-size);
+		font-weight: var(--opt-out-confirmation-status-font-weight);
+		line-height: var(--inth-line-height-normal);
+	}
+
+	:global(.inth-dark) .status:not(:global(.headless)) {
+		color: var(--opt-out-confirmation-foreground-color-dark);
+	}
+
+	.description:not(:global(.headless)) {
+		margin: 0;
+		color: var(--opt-out-confirmation-muted-color);
+		font-size: var(--opt-out-confirmation-description-font-size);
+		font-weight: var(--opt-out-confirmation-description-font-weight);
+		line-height: var(--opt-out-confirmation-description-line-height);
+	}
+
+	:global(.inth-dark) .description:not(:global(.headless)) {
+		color: var(--opt-out-confirmation-muted-color-dark);
+	}
+
+	.footer:not(:global(.headless)) {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--inth-space-sm);
+	}
+
+	.preferencesLink:not(:global(.headless)) {
+		color: var(--opt-out-confirmation-muted-color);
+		font-size: var(--opt-out-confirmation-link-font-size);
+		line-height: var(--inth-line-height-normal);
+		text-decoration: underline;
+		text-underline-offset: 2px;
+		border-radius: var(--inth-radius-sm);
+		cursor: pointer;
+	}
+
+	.preferencesLink:not(:global(.headless)):hover {
+		color: var(--opt-out-confirmation-foreground-color);
+	}
+
+	.preferencesLink:not(:global(.headless)):focus-visible {
+		outline: 2px solid var(--inth-primary);
+		outline-offset: 2px;
+	}
+
+	:global(.inth-dark) .preferencesLink:not(:global(.headless)) {
+		color: var(--opt-out-confirmation-muted-color-dark);
+	}
+
+	:global(.inth-dark) .preferencesLink:not(:global(.headless)):hover {
+		color: var(--opt-out-confirmation-foreground-color-dark);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.dialogVisible:not(:global(.headless)),
+		.dialogHidden:not(:global(.headless)),
+		.contentVisible:not(:global(.headless)),
+		.contentHidden:not(:global(.headless)),
+		.overlayVisible:not(:global(.headless)),
+		.overlayHidden:not(:global(.headless)) {
+			transition: none;
+			animation: none;
+		}
+	}
+
+	.overlay[data-disable-animation]:not(:global(.headless)),
+	.root[data-disable-animation]:not(:global(.headless)),
+	.root[data-disable-animation] .container:not(:global(.headless)),
+	:global([data-disable-animation]) .overlay:not(:global(.headless)),
+	:global([data-disable-animation]) .root:not(:global(.headless)),
+	:global([data-disable-animation]) .container:not(:global(.headless)) {
+		transition: none;
+		animation: none;
+	}
+}

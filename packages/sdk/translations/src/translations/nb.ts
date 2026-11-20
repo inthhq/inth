@@ -170,6 +170,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Personvernerklæring',
 		termsOfService: 'Vilkår for bruk',
 	},
+	optOut: {
+		description:
+			'Dette nettstedet vil ikke selge eller dele personopplysningene dine, og valget ditt er lagret i denne nettleseren.',
+		done: 'Ferdig',
+		lockedByAccount:
+			'Kontoen din har reservert seg, og du kan endre dette etter at du logger inn.',
+		lockedByGpc:
+			'Nettleserens Global Privacy Control-signal er på, så dette forblir av.',
+		statusRequest: 'Reservasjonsforespørsel etterkommet',
+		statusSignal: 'Reservasjonssignal etterkommet',
+	},
 	rights: {
 		californiaPrivacyChoices: 'Dine personvernvalg i California',
 		optOut: 'Ikke selg eller del dataene mine',

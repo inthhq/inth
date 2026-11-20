@@ -147,6 +147,7 @@ export interface GlobalApiBase {
 	save: ConsentClient['save'];
 	saveIAB: ConsentClient['saveIAB'];
 	dismissNotice: ConsentClient['dismissNotice'];
+	optOut: ConsentClient['optOut'];
 	showBanner: () => void;
 	openDialog: () => void;
 	closeDialog: () => void;
@@ -189,6 +190,7 @@ const QUEUE_ACTION_METHODS: ReadonlySet<string> = new Set([
 	'identify',
 	'mountUI',
 	'openDialog',
+	'optOut',
 	'processIframes',
 	'rejectAll',
 	'save',
@@ -577,6 +579,7 @@ export const createGlobalWith = function createGlobalWith(
 		openDialog: () => {
 			require().openDialog();
 		},
+		optOut: () => require().optOut(),
 		pkg: context.pkg ?? '@inth/sdk',
 		processIframes: () => {
 			require().processIframes();

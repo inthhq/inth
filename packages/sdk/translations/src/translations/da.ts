@@ -169,6 +169,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Privatlivspolitik',
 		termsOfService: 'Servicevilkår',
 	},
+	optOut: {
+		description:
+			'Dette websted sælger eller deler ikke dine personoplysninger, og dit valg er gemt i denne browser.',
+		done: 'Færdig',
+		lockedByAccount:
+			'Din konto har fravalgt dette, og du kan ændre det efter login.',
+		lockedByGpc:
+			'Din browsers Global Privacy Control-signal er slået til, så dette forbliver slået fra.',
+		statusRequest: 'Anmodning om fravalg er imødekommet',
+		statusSignal: 'Signal om fravalgspræference er imødekommet',
+	},
 	rights: {
 		californiaPrivacyChoices: 'Dine privatlivsvalg i Californien',
 		optOut: 'Sælg eller del ikke mine data',

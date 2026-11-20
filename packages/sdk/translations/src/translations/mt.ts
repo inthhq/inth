@@ -171,6 +171,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Politika tal-Privatezza',
 		termsOfService: 'Termini tas-Servizz',
 	},
+	optOut: {
+		description:
+			'Dan is-sit mhux se jbigħ jew jaqsam l-informazzjoni personali tiegħek, u l-għażla tiegħek hija salvata fuq dan il-brawżer.',
+		done: 'Lest',
+		lockedByAccount:
+			'Il-kont tiegħek għażel li joħroġ, u tista’ tibdel dan wara li tidħol.',
+		lockedByGpc:
+			'Is-sinjal Global Privacy Control tal-brawżer tiegħek huwa mixgħul, għalhekk dan jibqa’ mitfi.',
+		statusRequest: 'It-talba għall-ħruġ ġiet rispettata',
+		statusSignal: 'Is-sinjal tal-preferenza għall-ħruġ ġie rispettat',
+	},
 	rights: {
 		californiaPrivacyChoices: "L-Għażliet tal-Privatezza Tiegħek f'Kalifornja",
 		optOut: 'Tbigħx u taqsamx id-data tiegħi',

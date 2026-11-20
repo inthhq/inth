@@ -171,6 +171,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Adatvédelmi szabályzat',
 		termsOfService: 'Felhasználási feltételek',
 	},
+	optOut: {
+		description:
+			'Ez az oldal nem adja el és nem osztja meg személyes adataidat, választásodat pedig ebben a böngészőben mentettük.',
+		done: 'Kész',
+		lockedByAccount:
+			'Fiókod leiratkozott, és ezt bejelentkezés után módosíthatod.',
+		lockedByGpc:
+			'A böngésződ Global Privacy Control jelzése be van kapcsolva, ezért ez kikapcsolva marad.',
+		statusRequest: 'Leiratkozási kérelem teljesítve',
+		statusSignal: 'Leiratkozási preferenciajelzés teljesítve',
+	},
 	rights: {
 		californiaPrivacyChoices: 'Az Ön kaliforniai adatvédelmi beállításai',
 		optOut: 'Ne adják el és ne osszák meg az adataimat',

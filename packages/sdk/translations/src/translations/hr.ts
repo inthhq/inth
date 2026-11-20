@@ -170,6 +170,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Pravila o privatnosti',
 		termsOfService: 'Uvjeti pružanja usluge',
 	},
+	optOut: {
+		description:
+			'Ova web-lokacija neće prodavati ni dijeliti vaše osobne podatke, a vaš je izbor spremljen u ovom pregledniku.',
+		done: 'Gotovo',
+		lockedByAccount:
+			'Vaš je račun zatražio isključivanje, a to možete promijeniti nakon prijave.',
+		lockedByGpc:
+			'Signal Global Privacy Control u vašem pregledniku je uključen, pa ova postavka ostaje isključena.',
+		statusRequest: 'Zahtjev za isključivanje je uvažen',
+		statusSignal: 'Signal postavke isključivanja je uvažen',
+	},
 	rights: {
 		californiaPrivacyChoices: 'Vaši izbori privatnosti u Kaliforniji',
 		optOut: 'Ne prodajte i ne dijelite moje podatke',

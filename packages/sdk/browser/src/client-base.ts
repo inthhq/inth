@@ -6,6 +6,7 @@ import {
 	forgetOwnedVendors,
 	IABUnavailableError,
 	isVendorAllowed,
+	resolveOptOutState,
 } from '@inth/sdk-core';
 import type {
 	AllConsentNames,
@@ -15,6 +16,7 @@ import type {
 	KernelActiveUI,
 	KernelOverrides,
 	KernelUser,
+	OptOutResult,
 	SaveResult,
 	SaveInput,
 	ProviderTransportFactory,
@@ -50,6 +52,11 @@ import type {
 	ConsentUIMounter,
 	ConsentUIOptions,
 } from './types';
+import {
+	closeOptOutConfirmation,
+	openOptOutConfirmation,
+	readFocusedElement,
+} from './ui/opt-out-confirmation-state';
 
 export { ACTION_ATTRIBUTE, PREFERENCES_HASH } from './page-actions';
 
@@ -58,6 +65,7 @@ export type PageAction =
 	| 'accept'
 	| 'reject'
 	| 'customize'
+	| 'opt-out'
 	| 'dismiss'
 	| 'close'
 	| 'banner';
@@ -66,6 +74,7 @@ const PAGE_ACTIONS: ReadonlySet<string> = new Set<PageAction>([
 	'accept',
 	'reject',
 	'customize',
+	'opt-out',
 	'close',
 	'dismiss',
 	'banner',
@@ -393,13 +402,56 @@ export const createConsentClientWith = function createConsentClientWith(
 
 	// Surfaces close and follow through core's surface actions: a save
 	// closes on the local record, explicit navigation supersedes it.
-	const closeSurfaces = (): void => showConsentSurface(kernel, 'none');
-	const openDialog = (): void => showConsentSurface(kernel, 'dialog');
-	const showBanner = (): void => showConsentSurface(kernel, 'banner');
-	const saveSelection = (input: SaveInput): Promise<SaveResult> =>
-		saveConsentSurface(kernel, () =>
+	const closeSurfaces = (): void => {
+		closeOptOutConfirmation(kernel);
+		showConsentSurface(kernel, 'none');
+	};
+	const openDialog = (): void => {
+		closeOptOutConfirmation(kernel);
+		showConsentSurface(kernel, 'dialog');
+	};
+	const showBanner = (): void => {
+		closeOptOutConfirmation(kernel);
+		showConsentSurface(kernel, 'banner');
+	};
+	const optOut = (): Promise<OptOutResult> => {
+		const opener = readFocusedElement();
+		const before = kernel.getSnapshot();
+		const pending = kernel.commands.optOut({ uiSource: before.activeUI });
+		if (before.externalPermissions) {
+			return pending;
+		}
+		if (!resolveOptOutState(before).available) {
+			openDialog();
+			return pending;
+		}
+		if (before.activeUI === 'dialog') {
+			showConsentSurface(kernel, 'none');
+		}
+		// `commands.optOut()` writes the local record synchronously before its
+		// first await, so the snapshot already reflects the honored opt-out.
+		if (resolveOptOutState(kernel.getSnapshot()).honored) {
+			openOptOutConfirmation(kernel, opener);
+		}
+		// Fall back to the preference centre if a custom kernel reports not-available.
+		// oxlint-disable-next-line promise/prefer-await-to-then -- Synchronous open must not await the network.
+		void pending.then(
+			(result) => {
+				if (!result.ok && result.reason === 'not-available') {
+					closeOptOutConfirmation(kernel);
+					openDialog();
+				}
+			},
+			() => undefined
+		);
+		return pending;
+	};
+	const saveSelection = (input: SaveInput): Promise<SaveResult> => {
+		closeOptOutConfirmation(kernel);
+		return saveConsentSurface(kernel, () =>
 			kernel.commands.save(input, { categories: categories() })
 		);
+	};
 	/**
 	 * Save an IAB choice through the CMP, applying a blanket first. The IAB
 	 * UI has no opt-in fallback: without the CMP and its vendor list it shows
@@ -460,6 +512,10 @@ export const createConsentClientWith = function createConsentClientWith(
 				openDialog();
 				break;
 			}
+			case 'opt-out': {
+				void optOut();
+				break;
+			}
 			case 'dismiss': {
 				void kernel.commands.dismissNotice();
 				break;
@@ -487,6 +543,7 @@ export const createConsentClientWith = function createConsentClientWith(
 			}
 			disposed = true;
 			started = false;
+			closeOptOutConfirmation(kernel);
 			detachPageActions?.();
 			detachPageActions = null;
 			ui?.destroy();
@@ -563,6 +620,7 @@ export const createConsentClientWith = function createConsentClientWith(
 			};
 		},
 		openDialog,
+		optOut,
 		options,
 		get presentation(): ConsentPresentation | undefined {
 			return applyExperimentAssignment(

@@ -165,6 +165,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'ગોપનીયતા નીતિ',
 		termsOfService: 'સેવાની શરતો',
 	},
+	optOut: {
+		description:
+			'આ સાઇટ તમારી વ્યક્તિગત માહિતી વેચશે કે શેર કરશે નહીં, અને તમારી પસંદગી આ બ્રાઉઝરમાં સાચવવામાં આવી છે.',
+		done: 'પૂર્ણ',
+		lockedByAccount:
+			'તમારા ખાતાએ ઓપ્ટ-આઉટ કર્યું છે, અને તમે સાઇન ઇન કર્યા પછી આ બદલી શકો છો.',
+		lockedByGpc:
+			'તમારા બ્રાઉઝરનું Global Privacy Control સિગ્નલ ચાલુ છે, તેથી આ બંધ રહે છે.',
+		statusRequest: 'ઓપ્ટ-આઉટ વિનંતી માન્ય રાખવામાં આવી',
+		statusSignal: 'ઓપ્ટ-આઉટ પસંદગી સિગ્નલ માન્ય રાખવામાં આવ્યું',
+	},
 	rights: {
 		californiaPrivacyChoices: 'તમારી કેલિફોર્નિયા ગોપનીયતા પસંદગીઓ',
 		optOut: 'મારો ડેટા વેચશો કે શેર કરશો નહીં',

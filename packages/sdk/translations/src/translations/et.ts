@@ -169,6 +169,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Privaatsuspoliitika',
 		termsOfService: 'Kasutustingimused',
 	},
+	optOut: {
+		description:
+			'See sait ei müü ega jaga teie isikuandmeid ja teie valik on selles brauseris salvestatud.',
+		done: 'Valmis',
+		lockedByAccount:
+			'Teie konto on loobunud ja saate seda muuta pärast sisselogimist.',
+		lockedByGpc:
+			'Teie brauseri Global Privacy Control signaal on sisse lülitatud, seega jääb see välja lülitatuks.',
+		statusRequest: 'Loobumistaotlus on täidetud',
+		statusSignal: 'Loobumiseelistuse signaal on täidetud',
+	},
 	rights: {
 		californiaPrivacyChoices: 'Teie California privaatsusvalikud',
 		optOut: 'Ära müü ega jaga minu andmeid',

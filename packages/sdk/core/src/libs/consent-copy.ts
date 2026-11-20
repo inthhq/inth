@@ -3,6 +3,7 @@ import type { PolicyPrompt, PolicyRight } from '@inth/sdk-schema/types';
 import type {
 	CompleteTranslations,
 	IABTranslations,
+	OptOutTranslations,
 	Translations,
 	TriggerTranslations,
 	VendorListTranslations,
@@ -281,6 +282,22 @@ export const resolveIABCopy = function resolveIABCopy(
 ): ResolvedIABCopy {
 	// English sets every key, so the merge leaves none unset.
 	return mergeOver(enTranslations.iab as ResolvedIABCopy, translations?.iab);
+};
+
+/**
+ * Copy for the opt-out confirmation view and opt-out notices in preferences.
+ *
+ * @param translations - The active language bundle. Missing keys use English.
+ * @returns The opt-out status, confirmation and lock-reason copy.
+ */
+export const resolveOptOutCopy = function resolveOptOutCopy(
+	translations: Partial<Translations> | undefined
+): OptOutTranslations {
+	// English always carries the section.
+	return mergeOver(
+		enTranslations.optOut as OptOutTranslations,
+		translations?.optOut
+	);
 };
 
 /**

@@ -171,6 +171,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Privacybeleid',
 		termsOfService: 'Servicevoorwaarden',
 	},
+	optOut: {
+		description:
+			'Deze site verkoopt of deelt je persoonsgegevens niet, en je keuze is opgeslagen in deze browser.',
+		done: 'Klaar',
+		lockedByAccount:
+			'Je account heeft zich afgemeld en je kunt dit wijzigen nadat je bent ingelogd.',
+		lockedByGpc:
+			'Het Global Privacy Control-signaal van je browser staat aan, dus dit blijft uitgeschakeld.',
+		statusRequest: 'Afmeldingsverzoek gehonoreerd',
+		statusSignal: 'Signaal voor afmeldingsvoorkeur gehonoreerd',
+	},
 	rights: {
 		californiaPrivacyChoices: 'Uw privacykeuzes voor Californië',
 		optOut: 'Mijn gegevens niet verkopen of delen',

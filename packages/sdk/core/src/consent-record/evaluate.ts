@@ -13,7 +13,11 @@
 
 import type { OptOutRecord } from '@inth/sdk-schema/types';
 
-import { optOutDenyCategories } from './opt-out';
+import {
+	OPT_OUT_REPROMPT_WAIT_MS,
+	optInPromptAllowedAt,
+	optOutDenyCategories,
+} from './opt-out';
 import { OPTIONAL_CONSENT_CATEGORIES } from './types';
 import type {
 	CategoryDecision,
@@ -30,22 +34,7 @@ import type {
 	RestrictionReason,
 } from './types';
 
-/**
- * Minimum wait before asking a visitor who opted out to opt back in.
- * Uses 366 days in milliseconds so a leap year is still at least 12 months
- * under California regulations (section 7026(k)).
- */
-export const OPT_OUT_REPROMPT_WAIT_MS = 366 * 86_400_000;
-
-/**
- * Earliest epoch millisecond from which an opt-in prompt is allowed for an
- * opt-out record.
- */
-export const optInPromptAllowedAt = function optInPromptAllowedAt(
-	optOut: Pick<OptOutRecord, 'recordedAt'>
-): number {
-	return optOut.recordedAt + OPT_OUT_REPROMPT_WAIT_MS;
-};
+export { OPT_OUT_REPROMPT_WAIT_MS, optInPromptAllowedAt };
 
 export interface ConsentEvaluationInput {
 	policy: EvaluationPolicy;

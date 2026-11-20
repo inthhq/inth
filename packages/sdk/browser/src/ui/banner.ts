@@ -185,14 +185,20 @@ export const createBanner = function createBanner(
 						'button',
 						{
 							class: noStyle ? '' : classes.button.button,
-							'data-action': 'customize',
+							'data-action': control === 'opt-out' ? 'opt-out' : 'customize',
 							'data-mode': noStyle ? undefined : 'stroke',
 							'data-opt-out-variant':
 								control === 'opt-out' ? copy.optOutLink.variant : undefined,
 							'data-size': noStyle ? undefined : 'small',
 							'data-testid': `consent-banner-right-${control}-button`,
 							'data-variant': noStyle ? undefined : 'neutral',
-							onclick: () => ctx.client.openDialog(),
+							onclick: () => {
+								if (control === 'opt-out') {
+									dropRejection(ctx.client.optOut());
+								} else {
+									ctx.client.openDialog();
+								}
+							},
 							type: 'button',
 						},
 						...content

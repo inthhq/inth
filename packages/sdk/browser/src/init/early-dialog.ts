@@ -23,6 +23,7 @@ import { stylesheet } from '../generated/dialog-styles';
 import type { GlobalApiBase } from '../global-base';
 import type { ConsentClient, ScriptTagClientOptions } from '../types';
 import { createDialog } from '../ui/dialog';
+import { createOptOutConfirmation } from '../ui/opt-out-confirmation';
 import { createStyle } from '../ui/root';
 import type { Surface } from '../ui/surface';
 import type { InitUI } from './boot';
@@ -141,9 +142,25 @@ export const openEarlyDialog = function openEarlyDialog(
 			};
 			// oxlint-disable-next-line promise/prefer-await-to-then -- Not in an async function.
 			void engine.ready().then(release, release);
+			const optOutConfirmation = createOptOutConfirmation(
+				{
+					client: engine,
+					disableAnimation:
+						uiOptions.disableAnimation ?? prefersReducedMotion(),
+					legalLinks: options.legalLinks,
+					noStyle: false,
+					root: ui.themeRoot,
+					slot: (element) => element,
+				},
+				typeof uiOptions.dialog === 'object' ? uiOptions.dialog : {}
+			);
 			return {
-				destroy: () => surface.destroy(),
+				destroy: () => {
+					optOutConfirmation.destroy();
+					surface.destroy();
+				},
 				sync(next) {
+					optOutConfirmation.sync(next);
 					if (!holding || next.activeUI === 'dialog') {
 						sync(next);
 					}

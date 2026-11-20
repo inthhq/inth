@@ -163,6 +163,16 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'מדיניות פרטיות',
 		termsOfService: 'תנאי שירות',
 	},
+	optOut: {
+		description:
+			'אתר זה לא ימכור או ישתף את המידע האישי שלך, והבחירה שלך נשמרה בדפדפן זה.',
+		done: 'סיום',
+		lockedByAccount: 'החשבון שלך ביטל השתתפות, ותוכל לשנות זאת לאחר ההתחברות.',
+		lockedByGpc:
+			'אות Global Privacy Control של הדפדפן שלך פעיל, ולכן אפשרות זו נשארת כבויה.',
+		statusRequest: 'בקשת ביטול ההשתתפות כובדה',
+		statusSignal: 'אות העדפת ביטול ההשתתפות כובד',
+	},
 	rights: {
 		californiaPrivacyChoices: 'בחירות הפרטיות שלך בקליפורניה',
 		optOut: 'אין למכור או לשתף את הנתונים שלי',
