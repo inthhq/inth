@@ -1,5 +1,9 @@
-import { consentTypes, resolveCategoryTitle } from '@inth/sdk/engine';
 import type { AllConsentNames, ConsentType } from '@inth/sdk/engine';
+import {
+	consentTypes,
+	resolveCategoryTitle,
+	resolveOptOutCopy,
+} from '@inth/sdk/surface-state';
 import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
 import {
 	createContext,
@@ -18,6 +22,7 @@ import * as PreferenceItem from '~/components/shared/ui/preference-item';
 import * as RadixSwitch from '~/components/shared/ui/switch';
 import { useConsentDraftSlice, useConsentDraftStore } from '~/draft';
 import { useExplicitChoice, useRestrictions } from '~/hooks';
+import { useOptOutState } from '~/hooks/use-opt-out-state';
 import { useTheme } from '~/hooks/use-theme';
 
 import { ConsentWidgetVendorList } from './vendor-list';
@@ -144,7 +149,8 @@ interface ConsentWidgetAccordionRowProps {
 	consent: ConsentType;
 	title: string;
 	description: string;
-	restricted: boolean;
+	gpcLocked: boolean;
+	restrictionReason: string | null;
 	open: boolean;
 	noStyle?: boolean;
 	onToggleItem: (value: string, open: boolean) => void;
@@ -158,7 +164,8 @@ const ConsentWidgetAccordionRow = ({
 	consent,
 	title,
 	description,
-	restricted,
+	gpcLocked,
+	restrictionReason,
 	open,
 	noStyle,
 	onToggleItem,
@@ -168,6 +175,7 @@ const ConsentWidgetAccordionRow = ({
 		draft,
 		(snapshot) => snapshot.values[consent.name]
 	);
+	const disabled = Boolean(consent.disabled) || gpcLocked;
 
 	return (
 		<PreferenceItem.Root
@@ -225,22 +233,22 @@ const ConsentWidgetAccordionRow = ({
 						aria-label={title}
 						checked={checked}
 						aria-describedby={
-							restricted ? `inth-restriction-${consent.name}` : undefined
+							restrictionReason ? `inth-restriction-${consent.name}` : undefined
 						}
 						onCheckedChange={(value) => draft.set(consent.name, value)}
-						disabled={consent.disabled}
+						disabled={disabled}
 						size="small"
 						data-testid={`consent-widget-switch-${consent.name}`}
 					/>
 				</PreferenceItem.Control>
 			</ConsentWidgetAccordionTrigger>
-			{restricted ? (
+			{restrictionReason ? (
 				<output
 					className={noStyle ? undefined : accordionStyles.restriction}
 					data-testid={`consent-widget-restriction-${consent.name}`}
 					id={`inth-restriction-${consent.name}`}
 				>
-					Your saved choice is restricted by the current privacy settings.
+					{restrictionReason}
 				</output>
 			) : null}
 			<ConsentWidgetAccordionContent
@@ -257,6 +265,7 @@ const ConsentWidgetAccordionRow = ({
 				{description}
 				<ConsentWidgetVendorList
 					category={consent.name}
+					hideHint={gpcLocked}
 					noStyle={noStyle}
 				/>
 			</ConsentWidgetAccordionContent>
@@ -273,18 +282,49 @@ const ConsentWidgetAccordionItems = () => {
 	);
 	const explicitChoice = useExplicitChoice();
 	const restrictions = useRestrictions();
-	// Only a saved grant that the current policy or a privacy signal
-	// overrides is "restricted". An unsaved draft toggle is not.
-	const isRestricted = function isRestricted(name: AllConsentNames): boolean {
-		if (name === 'necessary') {
-			return false;
-		}
-		const decision = explicitChoice?.categories[name];
-		return decision?.value === true && (restrictions[name]?.length ?? 0) > 0;
-	};
+	const optOutState = useOptOutState();
 	const { noStyle, onToggleItem, openValues } =
 		useConsentWidgetAccordionContext();
 	const translations = useTranslations();
+	const optOutCopy = resolveOptOutCopy(translations);
+
+	const isGpcLocked = function isGpcLocked(name: AllConsentNames): boolean {
+		if (name === 'necessary') {
+			return false;
+		}
+		return (
+			(optOutState.lock === 'gpc-active' &&
+				optOutState.categories.includes(name)) ||
+			restrictions[name]?.includes('gpc') === true
+		);
+	};
+
+	const restrictionReasonFor = function restrictionReasonFor(
+		name: AllConsentNames
+	): string | null {
+		if (name === 'necessary') {
+			return null;
+		}
+		if (isGpcLocked(name)) {
+			return optOutCopy.lockedByGpc;
+		}
+		if (
+			optOutState.lock === 'held-by-account' &&
+			optOutState.categories.includes(name)
+		) {
+			return optOutCopy.lockedByAccount;
+		}
+		const decision = explicitChoice?.categories[name];
+		const reasons = restrictions[name];
+		if (
+			decision?.value === true &&
+			reasons?.some((reason) => reason !== 'opt-out')
+		) {
+			return 'Your saved choice is restricted by the current privacy settings.';
+		}
+		return null;
+	};
+
 	const consents = useMemo(
 		() =>
 			displayedCategories.flatMap((name) =>
@@ -301,10 +341,11 @@ const ConsentWidgetAccordionItems = () => {
 				translations.consentTypes[consent.name]?.description ??
 				consent.description
 			}
+			gpcLocked={isGpcLocked(consent.name)}
 			noStyle={noStyle}
 			onToggleItem={onToggleItem}
 			open={openValues.includes(consent.name)}
-			restricted={isRestricted(consent.name)}
+			restrictionReason={restrictionReasonFor(consent.name)}
 			title={resolveCategoryTitle(translations, consent.name)}
 		/>
 	));

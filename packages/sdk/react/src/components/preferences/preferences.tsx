@@ -10,6 +10,7 @@ import {
 	ConsentWidgetAccordion,
 	ConsentWidgetAccordionItems,
 } from './atoms/accordion';
+import { ConsentWidgetOptOutStatus } from './atoms/opt-out-status';
 import { ConsentWidgetRoot } from './atoms/root';
 import { ConsentWidgetPolicyActions } from './policy-actions';
 import type { ConsentWidgetProps } from './types';
@@ -36,6 +37,7 @@ export const ConsentWidget = ({
 
 	return (
 		<ConsentWidgetRoot {...mergedProps}>
+			<ConsentWidgetOptOutStatus />
 			<ConsentWidgetAccordion
 				type="single"
 				value={openItem}

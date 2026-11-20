@@ -18,6 +18,8 @@ export interface ConsentWidgetVendorListProps extends Omit<
 > {
 	/** Category whose vendors to list. */
 	category: AllConsentNames;
+	/** Hide the disabled-category hint when the parent switch is locked off. */
+	hideHint?: boolean;
 }
 
 /** Plus or minus, the same glyphs the category rows use. */
@@ -191,6 +193,7 @@ const VendorRow = ({
 export const ConsentWidgetVendorList = ({
 	category,
 	className,
+	hideHint = false,
 	noStyle,
 	...props
 }: ConsentWidgetVendorListProps) => {
@@ -228,7 +231,7 @@ export const ConsentWidgetVendorList = ({
 			{...props}
 		>
 			<section aria-label={title}>
-				{categoryOn ? null : (
+				{categoryOn || hideHint ? null : (
 					<p
 						className={styles?.hint}
 						data-testid={`consent-widget-vendor-hint-${category}`}

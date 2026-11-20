@@ -453,6 +453,7 @@ export const useExperiment =
 // In modules of their own, so a bundler that keeps whole modules leaves
 // their imports (experiment arms, vendor evaluation) out of a page that
 // only reads consent.
+export { useOptOutState } from './hooks/use-opt-out-state';
 export {
 	usePreferencesPresentation,
 	usePromptPresentation,

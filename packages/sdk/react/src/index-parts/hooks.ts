@@ -24,6 +24,7 @@ export {
 	useLocation,
 	useModel,
 	useNoticeDismissal,
+	useOptOutState,
 	useOverrides,
 	usePolicyCategories,
 	usePolicyResolution,
