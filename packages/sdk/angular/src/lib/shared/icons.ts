@@ -23,7 +23,7 @@ import {
 	computed,
 	input,
 } from '@angular/core';
-import { BRAND_MARKS } from '@inth/sdk/ui/utils';
+import { BRAND_MARKS, CPPA_OPT_OUT_ICON } from '@inth/sdk/ui/utils';
 import type { BrandMark } from '@inth/sdk/ui/utils';
 
 /**
@@ -52,4 +52,32 @@ export class BrandMarkIcon {
 	readonly mark = input.required<BrandMark>();
 	/** @internal */
 	protected readonly glyph = computed(() => BRAND_MARKS[this.mark()]);
+}
+
+/**
+ * Official California CCPA opt-out icon rendered beside "Privacy Choices"
+ * links. Decorative next to visible text (`aria-hidden="true"`).
+ *
+ * @internal
+ */
+@Component({
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	host: {
+		'[attr.viewBox]': 'glyph.viewBox',
+		'aria-hidden': 'true',
+		focusable: 'false',
+	},
+	selector: 'svg[inth-opt-out-icon]',
+	template: `@for (path of glyph.paths; track path.d) {
+		<svg:path
+			[attr.fill]="path.fill"
+			[attr.fill-rule]="path.evenOdd ? 'evenodd' : null"
+			[attr.clip-rule]="path.evenOdd ? 'evenodd' : null"
+			[attr.d]="path.d"
+		/>
+	}`,
+})
+export class OptOutIcon {
+	/** @internal */
+	protected readonly glyph = CPPA_OPT_OUT_ICON;
 }

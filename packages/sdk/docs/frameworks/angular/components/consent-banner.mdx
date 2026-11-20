@@ -91,9 +91,17 @@ when no banner appears.
 
 Choice prompts show Accept, Reject and Customize in policy order. Notices show
 a dismiss button using `noticeTitle` and `noticeDescription`; dismissing a
-notice records acknowledgement rather than consent. When the policy grants
-visitor rights such as opting out of sale, each appears as a button opening
-the preference dialog.
+notice records acknowledgement rather than consent.
+
+When the policy grants the `opt-out` right, the banner shows an underlined
+opt-out link. Under an opt-out policy, activating it records the opt-out in one
+click and opens `<inth-opt-out-confirmation>` (rendered lazily by
+`<inth-consent-dialog>` or a standalone `<inth-opt-out-confirmation>`). Set
+`presentation.optOutLink` in `provideInth()` to `'do-not-sell'`,
+`'privacy-choices'`, or `'california-privacy-choices'`; the two "Privacy
+Choices" forms always render with the California Privacy Protection Agency
+opt-out icon. When only the `preferences` right is shown, the link opens
+`<inth-consent-dialog>`.
 
 Accept and Reject record the choice and close the banner immediately, then
 send the request to Inth in the background.

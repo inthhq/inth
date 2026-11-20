@@ -29,7 +29,9 @@ import type {
 	KernelActiveUI,
 	KernelIABState,
 	Model,
+	OptOutResult,
 	ResolvedVendor,
+	SaveUISource,
 } from '@inth/sdk/engine';
 import type { IABHandle } from '@inth/sdk/iab';
 import type {
@@ -41,9 +43,13 @@ import type { ConsentRuntime } from '@inth/sdk/runtime/provider';
 import {
 	hasConsentPreferences,
 	hasConsentUI,
+	hasOptOutConfirmationHost,
+	isOptOutConfirmationOpen,
 	isSnapshotVendorAllowed,
+	optOutConsentSurface,
 	saveConsentSurface,
 	showConsentSurface,
+	subscribeOptOutConfirmation,
 } from '@inth/sdk/surface-actions';
 import {
 	allConsentNames,
@@ -248,6 +254,9 @@ export class ConsentManager {
 	readonly #draftRetry = signal(0);
 	#draftFailures = 0;
 	#unsubscribeKernel: () => void = noop;
+	#unsubscribeOptOutConfirmation: () => void = noop;
+	readonly #optOutConfirmationOpen = signal(false);
+	readonly #hasStandaloneOptOutConfirmation = signal(false);
 	readonly #consentListeners = new Set<(state: ConsentState) => void>();
 	#noBootPrefetch = false;
 
@@ -332,6 +341,16 @@ export class ConsentManager {
 	readonly optOut: Signal<ConsentSnapshot['optOut']>;
 	/** Opt-out display state derived from the current snapshot. */
 	readonly optOutState: Signal<ResolvedOptOutState>;
+	/** Whether the opt-out confirmation view is currently open. */
+	readonly optOutConfirmationOpen: Signal<boolean> =
+		this.#optOutConfirmationOpen.asReadonly();
+	/**
+	 * Whether a standalone `<inth-opt-out-confirmation>` host is mounted.
+	 *
+	 * @internal
+	 */
+	readonly ɵhasStandaloneOptOutConfirmation: Signal<boolean> =
+		this.#hasStandaloneOptOutConfirmation.asReadonly();
 	/** GPC and other privacy signals. */
 	readonly privacySignals: Signal<ConsentSnapshot['privacySignals']>;
 	/** How the policy was resolved. */
@@ -547,6 +566,7 @@ export class ConsentManager {
 			// final `null` IAB handle and this service is already tearing down.
 			unsubscribeRuntime();
 			this.#unsubscribeKernel();
+			this.#unsubscribeOptOutConfirmation();
 			this.#stopDraft();
 			owned?.dispose();
 		});
@@ -630,6 +650,15 @@ export class ConsentManager {
 	 */
 	dismissNotice(): Promise<unknown> {
 		return untracked(this.#kernel).commands.dismissNotice();
+	}
+
+	/**
+	 * Record an opt-out in one click and open `<inth-opt-out-confirmation>`
+	 * under an opt-out policy. Under other policy models, open the preference
+	 * dialog.
+	 */
+	requestOptOut(context?: { uiSource?: SaveUISource }): Promise<OptOutResult> {
+		return optOutConsentSurface(untracked(this.#kernel), context);
 	}
 
 	/**
@@ -880,7 +909,19 @@ export class ConsentManager {
 
 	#follow(kernel: ConsentKernel): void {
 		this.#unsubscribeKernel();
+		this.#unsubscribeOptOutConfirmation();
 		this.#kernel.set(kernel);
+		const syncConfirmation = () => {
+			this.#optOutConfirmationOpen.set(isOptOutConfirmationOpen(kernel));
+			this.#hasStandaloneOptOutConfirmation.set(
+				hasOptOutConfirmationHost(kernel)
+			);
+		};
+		syncConfirmation();
+		this.#unsubscribeOptOutConfirmation = subscribeOptOutConfirmation(
+			kernel,
+			syncConfirmation
+		);
 		const emit = (snapshot: ConsentSnapshot) => {
 			this.#snapshot.set(snapshot);
 			for (const listener of [...this.#consentListeners]) {
