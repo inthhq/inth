@@ -88,7 +88,7 @@ describe('policy records and Svelte controls', () => {
 			).not.toBeNull()
 		);
 	});
-	test('draft retains explicit grants under GPC and records only displayed optional keys', async () => {
+	test('draft seeds GPC-restricted grants off and records only displayed optional keys', async () => {
 		const context = captureContext();
 		const choice = vi.fn();
 		render(Fixture, {
@@ -108,11 +108,14 @@ describe('policy records and Svelte controls', () => {
 			},
 		});
 		await draftReady(context.current.state);
-		expect(context.current.state.draft.values.marketing).toBe(true);
+		expect(context.current.state.draft.values.marketing).toBe(false);
 		expect(context.current.snapshot.effectivePermissions.marketing).toBe(false);
 		await context.current.state.saveConsents('custom');
 		expect(choice).toHaveBeenCalledOnce();
 		expect(choice.mock.calls[0]?.[0].confirmed).toEqual(['marketing']);
+		expect(
+			context.current.snapshot.explicitChoice?.categories.marketing?.value
+		).toBe(false);
 		expect(context.current.snapshot.effectivePermissions.marketing).toBe(false);
 	});
 	test('dirty draft rejects a material policy change until reviewed', async () => {

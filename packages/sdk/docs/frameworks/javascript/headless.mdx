@@ -103,7 +103,7 @@ stage unsaved category and vendor switches before saving:
 | Field | What it holds |
 | --- | --- |
 | `displayedCategories` | `necessary` plus policy-editable categories in canonical order. |
-| `values` | Staged edit, else recorded choice, else policy default. Pass `honorOptOut: true` to seed restricted categories off and lock GPC-restricted categories against `set()`, `acceptAll()` and bulk `'all'` saves. |
+| `values` | Staged edit, else `false` when an active opt-out or GPC restriction denies it, else recorded choice, else policy default. GPC-restricted categories cannot be staged on or granted by `acceptAll()` or bulk `'all'` saves. |
 | `vendors` | Declared vendor switches (empty under IAB). |
 | `isDirty` | Whether any staged value differs from the stored record. |
 | `isStale` | Whether policy, categories or vendors changed since edits began. |

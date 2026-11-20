@@ -620,7 +620,7 @@ describe('opt-out and GPC restrictions', () => {
 			},
 			gpcOptOutRule
 		);
-		const draft = createPreferenceDraft(kernel, { honorOptOut: true });
+		const draft = createPreferenceDraft(kernel);
 		expect(draft.getState().values).toMatchObject({
 			functionality: true,
 			marketing: false,
@@ -657,7 +657,7 @@ describe('opt-out and GPC restrictions', () => {
 			},
 			gpcOptOutRule
 		);
-		const draft = createPreferenceDraft(kernel, { honorOptOut: true });
+		const draft = createPreferenceDraft(kernel);
 		expect(draft.getState().values).toMatchObject({
 			functionality: true,
 			marketing: false,
@@ -698,7 +698,7 @@ describe('opt-out and GPC restrictions', () => {
 			},
 			gpcOptOutRule
 		);
-		const draft = createPreferenceDraft(kernel, { honorOptOut: true });
+		const draft = createPreferenceDraft(kernel);
 		expect(draft.getState().values.marketing).toBe(false);
 		draft.set('marketing', true);
 		expect(draft.getState().values.marketing).toBe(true);

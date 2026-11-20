@@ -5,7 +5,6 @@ import type { AllThemeKeys, CSSProperties, SlotStyle } from '../theme/types';
  * yet bind into their `components` map.
  */
 type BrowserOnlyThemeKeys =
-	| 'consentWidgetOptOutStatus'
 	| 'optOutConfirmation'
 	| 'optOutConfirmationCard'
 	| 'optOutConfirmationDescription'
@@ -64,6 +63,7 @@ export const THEME_SLOT_COMPONENT_KEYS = {
 	consentWidgetAccordion: 'accordion.root',
 	consentWidgetFooter: 'manager.footer',
 	consentWidgetFooterSubGroup: 'manager.actionGroup',
+	consentWidgetOptOutStatus: 'manager.optOutStatus',
 	consentWidgetTag: 'tag.manager',
 	iabConsentBanner: 'iab-banner.root',
 	iabConsentBannerCard: 'iab-banner.card',

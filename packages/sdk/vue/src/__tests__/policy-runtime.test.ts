@@ -89,7 +89,7 @@ test('subject-only prefetch preserves browser receipts without a prepared record
 	}
 });
 
-test('a draft reads the raw grant under GPC and confirms only displayed categories', async () => {
+test('a draft seeds GPC-restricted grants off and confirms only displayed categories', async () => {
 	const now = 1_800_000_000_000;
 	vi.spyOn(Date, 'now').mockReturnValue(now);
 	const context = createVueConsentKernelContext({
@@ -119,7 +119,8 @@ test('a draft reads the raw grant under GPC and confirms only displayed categori
 	app.mount(container);
 	try {
 		expect(context.snapshot.value.effectivePermissions.marketing).toBe(false);
-		expect(draft.values.value.marketing).toBe(true);
+		expect(draft.values.value.marketing).toBe(false);
+		expect(draft.values.value.measurement).toBe(true);
 		expect(context.storedConsent.value).toBe(receipt);
 		const confirmed: unknown[] = [];
 		context.kernel.events.on('choice:recorded', (event) =>
@@ -127,6 +128,12 @@ test('a draft reads the raw grant under GPC and confirms only displayed categori
 		);
 		await draft.save();
 		expect(confirmed).toEqual([['measurement', 'marketing']]);
+		expect(
+			context.snapshot.value.explicitChoice?.categories.marketing?.value
+		).toBe(false);
+		expect(
+			context.snapshot.value.explicitChoice?.categories.measurement?.value
+		).toBe(true);
 	} finally {
 		app.unmount();
 		context.dispose();

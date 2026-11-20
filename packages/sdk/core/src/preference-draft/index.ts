@@ -166,12 +166,6 @@ export interface PreferenceDraft {
 export interface PreferenceDraftOptions {
 	/** Presentation defaults for categories without a recorded choice. */
 	defaults?: Partial<ConsentState>;
-	/**
-	 * Follow active opt-out and GPC restrictions in displayed values and locks:
-	 * restricted categories seed off, untouched saves do not re-confirm grants,
-	 * and GPC-locked categories cannot be staged on or granted by bulk accept.
-	 */
-	honorOptOut?: boolean;
 }
 
 /**
@@ -224,13 +218,9 @@ const vendorSurface = function vendorSurface(
  * any category under the active policy.
  */
 const gpcLockedCategories = function gpcLockedCategories(
-	snapshot: ConsentSnapshot,
-	honorOptOut: boolean
+	snapshot: ConsentSnapshot
 ): ReadonlySet<AllConsentNames> {
 	const locked = new Set<AllConsentNames>();
-	if (!honorOptOut) {
-		return locked;
-	}
 	const gpcActive =
 		snapshot.privacySignals.gpc.active &&
 		snapshot.evaluationPolicy.gpcDenyCategories.length > 0;
@@ -246,16 +236,15 @@ const gpcLockedCategories = function gpcLockedCategories(
 };
 
 /**
- * What a category shows before the visitor moves it: `false` when
- * `honorOptOut` is on and an active opt-out or GPC restriction denies it, else
- * the recorded choice, else the presentation default, else the policy default.
- * `necessary` is always on and a category outside the choice scope is off.
+ * What a category shows before the visitor moves it: `false` when an active
+ * opt-out or GPC restriction denies it, else the recorded choice, else the
+ * presentation default, else the policy default. `necessary` is always on and
+ * a category outside the choice scope is off.
  */
 const recordedValues = function recordedValues(
 	snapshot: ConsentSnapshot,
 	scope: readonly AllConsentNames[],
-	defaults: Partial<ConsentState> | undefined,
-	honorOptOut: boolean
+	defaults: Partial<ConsentState> | undefined
 ): ConsentState {
 	const rule = snapshot.policyRule;
 	const recorded = snapshot.explicitChoice?.categories;
@@ -263,10 +252,7 @@ const recordedValues = function recordedValues(
 	for (const category of scope) {
 		if (category !== 'necessary') {
 			const reasons = snapshot.restrictions[category];
-			if (
-				honorOptOut &&
-				(reasons?.includes('opt-out') || reasons?.includes('gpc'))
-			) {
+			if (reasons?.includes('opt-out') || reasons?.includes('gpc')) {
 				values[category] = false;
 			} else {
 				values[category] =
@@ -350,7 +336,6 @@ export const createPreferenceDraft = function createPreferenceDraft(
 	options: PreferenceDraftOptions = {}
 ): PreferenceDraft {
 	let { defaults } = options;
-	const honorOptOut = options.honorOptOut === true;
 	/**
 	 * The defaults the visitor is looking at. New defaults (an experiment
 	 * arm assigned after mount) wait until nothing is staged, so a switch
@@ -383,8 +368,8 @@ export const createPreferenceDraft = function createPreferenceDraft(
 		if (isClean()) {
 			shownDefaults = defaults;
 		}
-		locked = gpcLockedCategories(snapshot, honorOptOut);
-		baseline = recordedValues(snapshot, scope, shownDefaults, honorOptOut);
+		locked = gpcLockedCategories(snapshot);
+		baseline = recordedValues(snapshot, scope, shownDefaults);
 		[seeded, toggleable] = recordedVendors(snapshot);
 		for (const category of locked) {
 			staged.delete(category);
@@ -394,7 +379,7 @@ export const createPreferenceDraft = function createPreferenceDraft(
 		prune(stagedVendors, seeded);
 		if (isClean() && shownDefaults !== defaults) {
 			shownDefaults = defaults;
-			baseline = recordedValues(snapshot, scope, shownDefaults, honorOptOut);
+			baseline = recordedValues(snapshot, scope, shownDefaults);
 		}
 		const isDirty = !isClean();
 		const review = [

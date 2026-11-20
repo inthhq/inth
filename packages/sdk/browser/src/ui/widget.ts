@@ -261,7 +261,6 @@ export const createWidget = function createWidget(
 
 	const draft = createPreferenceDraft(ctx.client.kernel, {
 		defaults: ctx.client.presentation?.preferences?.defaults,
-		honorOptOut: true,
 	});
 	const openVendorCards = new Set<string>();
 	let openItem: AllConsentNames | null = null;
