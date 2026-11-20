@@ -199,10 +199,7 @@ export const isShortCase = function isShortCase(
 		!Number.isSafeInteger(actionAt) ||
 		actionAt < 0 ||
 		actionAt > now ||
-		actionAt > MAX_DATE_MS ||
-		// The kernel dates the tap after a time the subject already holds.
-		(before.subjectDates?.acceptedGivenAt ?? -1) >= actionAt ||
-		(before.subjectDates?.datedAt ?? -1) >= actionAt
+		actionAt > MAX_DATE_MS
 	);
 };
 
@@ -375,8 +372,6 @@ export const planInstantCommit = function planInstantCommit(
 				: evaluation.restrictions,
 			revision: before.revision + 1,
 			subject,
-			// Its save is queued, as the kernel's is.
-			subjectDates: { ...before.subjectDates, datedAt: actionAt },
 		},
 		subjectId: subject.subjectId,
 	};

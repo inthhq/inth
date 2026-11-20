@@ -37,13 +37,6 @@ export const buildStoredEnvelope = function buildStoredEnvelope(
 	if (epoch > 0) {
 		envelope.epoch = epoch;
 	}
-	const { acceptedGivenAt, datedAt } = snapshot.subjectDates ?? {};
-	if (acceptedGivenAt !== undefined) {
-		envelope.acceptedGivenAt = acceptedGivenAt;
-	}
-	if (datedAt !== undefined) {
-		envelope.datedAt = datedAt;
-	}
 	if (iab) {
 		envelope.iab = iab;
 	}

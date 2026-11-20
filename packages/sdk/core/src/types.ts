@@ -342,29 +342,9 @@ export interface VendorChoice {
  * `now` before anything is applied; an invalid input rejects the whole
  * call.
  */
-/**
- * Times kept for the visitor's subject, so a device clock that moved back
- * cannot date a choice before one already made. They stay with the visitor
- * when the subject's id changes, such as from a c15t `sub_` id to its UUID.
- *
- * @internal
- */
-export interface SubjectDates {
-	/** The latest `givenAt` the backend accepted for the subject. */
-	acceptedGivenAt?: number;
-	/**
-	 * The latest time a choice whose save is queued was dated with. Stored
-	 * records are checked against it, so a record stands while its save
-	 * waits, however the device clock moved.
-	 */
-	datedAt?: number;
-}
-
 export interface HydrationRecords {
 	choice?: ExplicitChoice | null;
 	subject?: ConsentSubject | null;
-	/** @internal */
-	subjectDates?: SubjectDates | null;
 	noticeDismissal?: NoticeDismissal | null;
 	/** Vendors the subject turned off. `null` clears the denial list. */
 	vendorChoice?: VendorChoice | null;
@@ -483,8 +463,6 @@ export interface ConsentSnapshot {
 	readonly vendors: Readonly<KernelVendorsState> | null;
 	/** Vendors the subject turned off, or `null` when none is denied. */
 	readonly vendorChoice: Readonly<VendorChoice> | null;
-	/** @internal */
-	readonly subjectDates?: Readonly<SubjectDates> | null;
 }
 
 /**
@@ -684,11 +662,7 @@ export interface InitResponse {
 /** Categories one save confirmed, with the single captured action time. */
 export interface ConfirmedCoverage {
 	categories: Readonly<Partial<Record<OptionalConsentCategory, boolean>>>;
-	/**
-	 * The action's one time, set once before any yield or network call: the
-	 * device clock, or one millisecond after the subject's floor when that
-	 * is later. Its receipts carry it, and the queue orders by it.
-	 */
+	/** Epoch milliseconds captured once, before any yield or network call. */
 	actionAt: number;
 }
 
@@ -748,10 +722,7 @@ export interface SavePayload {
 	 * only when `tcString` is, since Google discards it alone.
 	 */
 	addtlConsent?: string;
-	/**
-	 * The action's one time, the same as `confirmed.actionAt`: the device
-	 * clock, or one millisecond after the subject's floor when that is later.
-	 */
+	/** Equals `confirmed.actionAt`. Kept for backends that read one time. */
 	givenAt?: number;
 	/**
 	 * Granted flag for every declared vendor after this action. Present only

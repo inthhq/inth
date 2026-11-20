@@ -68,11 +68,6 @@ export interface OutboxTransaction {
 export interface SaveOutboxStore {
 	transact: <Result>(run: (tx: OutboxTransaction) => Result) => Promise<Result>;
 	/**
-	 * What a slot holds now, read without exclusive access and without
-	 * writing, c15t's list included: a list another tab may be changing.
-	 */
-	peek: (slot: OutboxSlot) => unknown;
-	/**
 	 * Remove both lists now, without waiting for exclusive access, so a clear
 	 * holds even when the page closes before a transaction could run. A
 	 * transaction already running elsewhere can still write back what it
@@ -187,19 +182,6 @@ const C15T_EPOCH_KEY = resolveStorageKeys({
 	storageKey: C15T_STORAGE_KEY,
 }).epoch;
 
-/** A stored JSON value: `undefined` when absent, `null` when unreadable. */
-const readStorageKey = function readStorageKey(
-	storage: TextStorage,
-	key: string
-): unknown {
-	try {
-		const text = storage.getItem(key);
-		return text === null ? undefined : JSON.parse(text);
-	} catch {
-		return null;
-	}
-};
-
 /** c15t's clear epoch, from its cookie or localStorage copy; `0` for none. */
 const c15tClearEpoch = function c15tClearEpoch(storage: TextStorage): number {
 	const now = Date.now();
@@ -263,16 +245,16 @@ export const createBrowserOutboxStore = function createBrowserOutboxStore(
 				}
 			}
 		},
-		peek(slot) {
-			const storage = environment.localStorage() ?? memory;
-			return [SLOT_KEYS[slot], C15T_SLOT_KEYS[slot]].flatMap((key) => {
-				const value = readStorageKey(storage, key);
-				return Array.isArray(value) ? value : [];
-			});
-		},
 		async transact(run) {
 			const storage = environment.localStorage() ?? memory;
-			const readKey = (key: string): unknown => readStorageKey(storage, key);
+			const readKey = (key: string): unknown => {
+				try {
+					const text = storage.getItem(key);
+					return text === null ? undefined : JSON.parse(text);
+				} catch {
+					return null;
+				}
+			};
 			const tx: OutboxTransaction = {
 				read(slot) {
 					const value = readKey(SLOT_KEYS[slot]);

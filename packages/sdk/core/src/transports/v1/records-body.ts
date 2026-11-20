@@ -15,23 +15,17 @@ export type V1ConsentRecordBody = Omit<
 >;
 
 /**
- * Every explicit receipt of a choice dated no later than `givenAt`, in wire
- * form. Receipts are copied, never restamped, so a replay sends the same
- * answer. `necessary` is left out: the backend counts it as `true`.
+ * Every explicit receipt of a choice, in wire form. Receipts are copied,
+ * never restamped, so a replay sends the same answer. `necessary` is left
+ * out: the backend counts it as `true`.
  */
 export const buildV1Answer = function buildV1Answer(
-	choice: Readonly<ExplicitChoice>,
-	givenAt: number
+	choice: Readonly<ExplicitChoice>
 ): V1ConsentAnswer {
 	const categories: V1ConsentAnswer['categories'] = {};
 	for (const category of OPTIONAL_CONSENT_CATEGORIES) {
 		const receipt = choice.categories[category];
-		// Last resort, for a receipt re-dated while the device clock was still
-		// wrong and corrected afterwards: every other receipt a save carries is
-		// dated no later than its givenAt. Sent with a later time it would be
-		// refused; dated givenAt it could overtake what another tab recorded
-		// since. Left out, the backend keeps what it holds for the category.
-		if (receipt === undefined || receipt.confirmedAt > givenAt) {
+		if (receipt === undefined) {
 			continue;
 		}
 		categories[category] = {
@@ -86,8 +80,7 @@ export const buildV1ConsentRecordBody = function buildV1ConsentRecordBody(
 			'Inth transport: a save needs an idempotencyKey. Make one with createIdempotencyKey() when the visitor acts, and send it unchanged on every retry.'
 		);
 	}
-	const givenAt = payload.givenAt ?? payload.confirmed.actionAt;
-	const answer = buildV1Answer(payload.choice, givenAt);
+	const answer = buildV1Answer(payload.choice);
 	const confirmed = OPTIONAL_CONSENT_CATEGORIES.filter(
 		(category) =>
 			Object.hasOwn(payload.confirmed.categories, category) &&
@@ -98,7 +91,7 @@ export const buildV1ConsentRecordBody = function buildV1ConsentRecordBody(
 		answer,
 		confirmed,
 		consentAction: payload.consentAction,
-		givenAt,
+		givenAt: payload.confirmed.actionAt,
 		idempotencyKey: payload.idempotencyKey,
 		property,
 		subjectId: payload.subjectId,
@@ -127,11 +120,7 @@ export const buildV1ConsentRecordBody = function buildV1ConsentRecordBody(
 			body.addtlConsent = payload.addtlConsent;
 		}
 	}
-	// The same last resort as for a receipt: see buildV1Answer.
-	if (
-		payload.vendorChoice !== undefined &&
-		payload.vendorChoice.confirmedAt <= givenAt
-	) {
+	if (payload.vendorChoice !== undefined) {
 		body.vendorChoice = {
 			confirmedAt: payload.vendorChoice.confirmedAt,
 			grants: { ...payload.vendorChoice.grants },

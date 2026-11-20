@@ -95,20 +95,8 @@ const assertCallbackPayloads = function assertCallbackPayloads(
 				api.expect(callbackPayload[field]).toEqual(eventPayload[field]);
 			}
 			if (eventName === 'choice:recorded') {
-				// The action's one time: the device clock, or later when an
-				// earlier save of the subject was dated at or after it. Every
-				// receipt the action confirmed carries it.
-				const actionAt = eventPayload.actionAt as number;
-				api.expect(actionAt).toBeGreaterThanOrEqual(now);
+				api.expect(eventPayload.actionAt).toBe(now);
 				api.expect(Array.isArray(eventPayload.confirmed)).toBe(true);
-				const receipts = (
-					recordPayload(eventPayload.snapshot).explicitChoice as {
-						categories: Record<string, { confirmedAt: number }>;
-					} | null
-				)?.categories;
-				for (const category of eventPayload.confirmed as string[]) {
-					api.expect(receipts?.[category]?.confirmedAt).toBe(actionAt);
-				}
 			}
 		}
 	}

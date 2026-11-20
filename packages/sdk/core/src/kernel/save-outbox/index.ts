@@ -53,15 +53,8 @@
  *   `givenAt` makes the backend derive the same consent id for both.
  */
 
-import { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
 import type { OptionalConsentCategory } from '../../consent-record/types';
-import {
-	createInFlightSaves,
-	dateChoice,
-	queuedGivenAt,
-} from '../../libs/given-at';
 import { warnInDevelopment } from '../../libs/is-production';
-import { createIdempotencyKey } from '../../libs/subject-uuid';
 import {
 	isConsentSaveRejection,
 	isSubjectConflict,
@@ -72,9 +65,7 @@ import type {
 	SavePayload,
 	SaveResult,
 } from '../../types';
-import type { SnapshotPatch } from '../patch';
 import type { KernelRuntime } from '../runtime';
-import { datedSubjectDates } from '../save-plan';
 import type { EnqueueResult, QueueWorker, QueueWorkerOptions } from './queue';
 import { queueTools } from './queue-tools';
 import type { SaveOutboxStore } from './store';
@@ -122,24 +113,11 @@ export interface SaveOutbox {
 	 */
 	hold: (until: Promise<unknown>) => void;
 	/**
-	 * Register a write that must land before an accepted save leaves the
-	 * queue: persistence's, which stores the subject's accepted time.
-	 * Returns the unregister function.
-	 */
-	flushWith: (flush: () => void) => () => void;
-	/**
 	 * Move the visitor from `from` to the subject id the backend answered
 	 * for it, such as the UUID of a `sub_` id, in every tab, with the saves
 	 * queued under `from`.
 	 */
 	adoptSubject: (from: string, to: string) => Promise<void>;
-	/** Whether a save is queued before it is sent: there is a transport. */
-	queues: boolean;
-	/**
-	 * The time to date a choice of `subjectId` with: the later of `time` and
-	 * one millisecond after the subject's floor.
-	 */
-	dateChoice: (subjectId: string, time: number) => number;
 }
 
 export interface SaveOutboxOptions {
@@ -180,53 +158,6 @@ const warnSaveFailed = function warnSaveFailed(
 	}
 };
 
-/**
- * Whether the backend refused a save as invalid: what it answers for a
- * `givenAt` too far ahead of its clock.
- */
-const isRefusedAsInvalid = (error: unknown): boolean =>
-	isConsentSaveRejection(error) &&
-	error.status === 400 &&
-	error.code === 'invalid_request';
-
-/**
- * The receipts of `choice` that `refused` itself made, dated with its time,
- * and that are still the same, dated `at`: the new categories, the receipts
- * to send, and which categories they are.
- */
-const restampOwnReceipts = function restampOwnReceipts(
-	choice: ConsentSnapshot['explicitChoice'],
-	refused: SavePayload,
-	at: number
-): {
-	categories: NonNullable<ConsentSnapshot['explicitChoice']>['categories'];
-	sent: SavePayload['choice']['categories'];
-	confirmed: OptionalConsentCategory[];
-} {
-	const categories = { ...choice?.categories };
-	const sent: SavePayload['choice']['categories'] = {};
-	const actionAt = refused.givenAt ?? refused.confirmed.actionAt;
-	const confirmed = OPTIONAL_CONSENT_CATEGORIES.filter((category) => {
-		const receipt = categories[category];
-		const own = refused.choice.categories[category];
-		return (
-			Object.hasOwn(refused.confirmed.categories, category) &&
-			own?.confirmedAt === actionAt &&
-			receipt?.confirmedAt === own.confirmedAt &&
-			receipt?.value === own?.value &&
-			receipt !== undefined
-		);
-	});
-	for (const category of confirmed) {
-		const restamped = { ...categories[category], confirmedAt: at };
-		categories[category] = restamped as NonNullable<
-			(typeof categories)[typeof category]
-		>;
-		sent[category] = categories[category];
-	}
-	return { categories, confirmed, sent };
-};
-
 export const createSaveOutbox = function createSaveOutbox({
 	runtime,
 	transport,
@@ -235,7 +166,6 @@ export const createSaveOutbox = function createSaveOutbox({
 	loadQueue = () => import('./queue'),
 }: SaveOutboxOptions): SaveOutbox {
 	const { batch, commit, emit, getSnapshot } = runtime;
-	const inFlight = createInFlightSaves();
 	let worker: QueueWorker | undefined;
 	// Instance-local: another page must still recover a stranded request.
 	const directSends = new Set<SavePayload>();
@@ -333,176 +263,18 @@ export const createSaveOutbox = function createSaveOutbox({
 		});
 	};
 
-	const flushers = new Set<() => void>();
-
-	/**
-	 * Land the writes a commit scheduled before what follows: persistence's
-	 * now, or once its code has loaded when it holds saves until then.
-	 */
-	const landed = async function landed(): Promise<void> {
-		for (const flush of flushers) {
-			flush();
-		}
-		if (held) {
-			await held;
-		}
-	};
-
-	/**
-	 * Keep `givenAt` as the latest the backend accepted for the subject, when
-	 * the save went out under the visitor's subject id or the answer names it.
-	 */
-	const recordAccepted = function recordAccepted(
-		payload: SavePayload,
-		result: SaveResult
-	): void {
-		const { subject, subjectDates } = getSnapshot();
-		const at = payload.givenAt ?? payload.confirmed.actionAt;
-		if (
-			!subject?.subjectId ||
-			(subject.subjectId !== payload.subjectId &&
-				subject.subjectId !== result.subjectId) ||
-			(subjectDates?.acceptedGivenAt ?? -1) >= at
-		) {
+	const replay = async function replay(): Promise<void> {
+		const save = transport?.save;
+		if (!save || !(await hasQueued())) {
 			return;
 		}
-		commit({ subjectDates: { ...subjectDates, acceptedGivenAt: at } });
-	};
-
-	/**
-	 * Sends `payload` through `send`. While the request is out its `givenAt`
-	 * holds the floor. An accepted save's time is stored with the subject,
-	 * and lands before the caller takes the save out of the queue, so a page
-	 * that closes in between still has it in one place or the other.
-	 */
-	const sendDated = async function sendDated(
-		payload: SavePayload,
-		send: () => Promise<SaveResult>
-	): Promise<SaveResult> {
-		inFlight.start(payload);
-		let result: SaveResult;
-		try {
-			result = await send();
-		} finally {
-			inFlight.settle(payload);
+		// A replay is no longer the page that made the save: it carries no
+		// consent journey, so a backend never links it to this page load.
+		const resend: NonNullable<KernelTransport['save']> = (payload) =>
+			save(payload, { replay: true });
+		if (await (await loadWorker())?.replay(resend)) {
+			retryWhenOnline();
 		}
-		if (result.ok) {
-			recordAccepted(payload, result);
-			await landed();
-		}
-		return result;
-	};
-
-	/**
-	 * The subject's floor: its accepted time, or the latest `givenAt` of a
-	 * save queued or in flight, except the one with `exceptKey`.
-	 */
-	const floor = function floor(subjectId: string, exceptKey?: string): number {
-		const { subject, subjectDates } = getSnapshot();
-		const accepted =
-			subject?.subjectId === subjectId
-				? (subjectDates?.acceptedGivenAt ?? -1)
-				: -1;
-		// Without a transport nothing is sent or queued, and storage is not read.
-		const queued = transport?.save
-			? queuedGivenAt(
-					store.peek('saves'),
-					subjectId,
-					(payload) => payload.idempotencyKey !== exceptKey
-				)
-			: -1;
-		return Math.max(accepted, queued, inFlight.latest());
-	};
-
-	/** Saves already re-dated once: a second refusal drops them. */
-	const redatedKeys = new Set<string>();
-	/** The UUID this kernel moved the visitor to from each `sub_` id. */
-	const movedTo = new Map<string, string>();
-
-	/**
-	 * A save the backend refused as invalid, dated again once by the device
-	 * clock now, under a new key. Its receipts in the local record that it
-	 * still holds take the new time too, and keep it if this one is refused
-	 * as well. `null` when it was re-dated before, or nothing of it is still
-	 * the visitor's.
-	 */
-	const redate = function redate(
-		refused: SavePayload
-	): { payload: SavePayload; action: RecordedAction } | null {
-		const current = getSnapshot();
-		// Under the visitor's subject, also once a `sub_` id it went out under
-		// moved to its UUID.
-		const subjectId = current.subject?.subjectId;
-		if (
-			!refused.idempotencyKey ||
-			redatedKeys.has(refused.idempotencyKey) ||
-			!subjectId ||
-			(subjectId !== refused.subjectId &&
-				movedTo.get(refused.subjectId) !== subjectId)
-		) {
-			return null;
-		}
-		// The refused save never counts toward the floor.
-		const at = dateChoice(
-			runtime.now(),
-			floor(subjectId, refused.idempotencyKey)
-		);
-		const { categories, confirmed, sent } = restampOwnReceipts(
-			current.explicitChoice,
-			refused,
-			at
-		);
-		// The vendor choice is the action's own only when the action dated it;
-		// a carried one keeps its time.
-		const actionAt = refused.givenAt ?? refused.confirmed.actionAt;
-		const vendors =
-			refused.vendorChoice?.confirmedAt === actionAt &&
-			current.vendorChoice?.confirmedAt === actionAt;
-		if (confirmed.length === 0 && !vendors) {
-			return null;
-		}
-		const subjectDates = datedSubjectDates(current, at, true);
-		const patch: SnapshotPatch = subjectDates ? { subjectDates } : {};
-		if (confirmed.length > 0 && current.explicitChoice) {
-			patch.explicitChoice = { ...current.explicitChoice, categories };
-		}
-		if (vendors && current.vendorChoice) {
-			patch.vendorChoice = { ...current.vendorChoice, confirmedAt: at };
-		}
-		commit(patch);
-		const { vendorChoice, ...rest } = refused;
-		const payload: SavePayload = {
-			...rest,
-			choice: {
-				...refused.choice,
-				categories: { ...refused.choice.categories, ...sent },
-			},
-			confirmed: {
-				actionAt: at,
-				categories: Object.fromEntries(
-					confirmed.map((category) => [
-						category,
-						refused.confirmed.categories[category],
-					])
-				),
-			},
-			givenAt: at,
-			idempotencyKey: createIdempotencyKey(),
-			...(vendorChoice && {
-				vendorChoice: vendors
-					? { ...vendorChoice, confirmedAt: at }
-					: vendorChoice,
-			}),
-		};
-		redatedKeys.add(payload.idempotencyKey as string);
-		return {
-			action: {
-				confirmed,
-				generation: runtime.getGeneration(),
-				snapshot: getSnapshot(),
-			},
-			payload: withSubjectId(payload, subjectId),
-		};
 	};
 
 	// -- Send ------------------------------------------------------------------
@@ -548,7 +320,6 @@ export const createSaveOutbox = function createSaveOutbox({
 		from: string,
 		to: string
 	): Promise<void> {
-		movedTo.set(from, to);
 		const queue = (await holdsSaveFor(from)) ? await loadWorker() : undefined;
 		if (queue) {
 			await queue.reassignSubject(from, to);
@@ -661,15 +432,14 @@ export const createSaveOutbox = function createSaveOutbox({
 				await discard(payload);
 				return { confirmed, ok: false };
 			}
-			const result = await sendDated(sending, () => save(sending));
+			const result = await save(sending);
 			if (result.ok) {
-				// Also when a newer choice superseded this one: the answer names
-				// the subject, and saves queued under the old id move with it.
-				await adoptServerSubject(result.subjectId, actionSnapshot);
-				await landed();
 				// The whole action, not the part still current: a newer choice
 				// that storage refused never narrowed the queued entry.
 				await discard(payload);
+				// Also when a newer choice superseded this one: the answer names
+				// the subject, and saves queued under the old id move with it.
+				await adoptServerSubject(result.subjectId, actionSnapshot);
 			} else if (currentPayload()) {
 				warnSaveFailed(await ensureQueued());
 				retryWhenOnline();
@@ -705,14 +475,6 @@ export const createSaveOutbox = function createSaveOutbox({
 					)
 				);
 			}
-			const again =
-				remaining && isRefusedAsInvalid(error) ? redate(remaining) : null;
-			if (again) {
-				await discard(payload);
-				return trackDirectSend(again.payload, () =>
-					performSendAction(again.payload, again.action, reassign)
-				);
-			}
 			emit({ command: 'save', error, type: 'command:error' });
 			if (remaining) {
 				await settleThrownSave(payload, ensureQueued, error);
@@ -723,55 +485,14 @@ export const createSaveOutbox = function createSaveOutbox({
 		}
 	};
 
-	const sendAction = function sendAction(
-		payload: SavePayload,
-		action: RecordedAction
-	): Promise<SaveResult> {
-		return trackDirectSend(payload, () =>
-			performSendAction(payload, action, true)
-		);
-	};
-
-	const replay = async function replay(): Promise<void> {
-		const save = transport?.save;
-		if (!save || !(await hasQueued())) {
-			return;
-		}
-		// A replay is no longer the page that made the save: it carries no
-		// consent journey, so a backend never links it to this page load.
-		const resend: NonNullable<KernelTransport['save']> = async (payload) => {
-			try {
-				return await sendDated(payload, () => save(payload, { replay: true }));
-			} catch (error) {
-				// The queue drops the refused entry; its re-dated copy goes out as
-				// a save of its own.
-				const again = isRefusedAsInvalid(error) ? redate(payload) : null;
-				if (again) {
-					void sendAction(again.payload, again.action);
-				}
-				throw error;
-			}
-		};
-		if (await (await loadWorker())?.replay(resend)) {
-			retryWhenOnline();
-		}
-	};
-
 	return {
 		adoptSubject,
 		clear,
-		dateChoice: (subjectId, time) => dateChoice(time, floor(subjectId)),
-		flushWith(flush) {
-			flushers.add(flush);
-			return () => {
-				flushers.delete(flush);
-			};
-		},
 		hold(until) {
 			held = Promise.allSettled([held, until]);
 		},
-		queues: transport?.save !== undefined,
 		replay,
-		send: sendAction,
+		send: (payload, action) =>
+			trackDirectSend(payload, () => performSendAction(payload, action, true)),
 	};
 };

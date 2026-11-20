@@ -71,10 +71,6 @@ export interface StoredConsentEnvelope {
 	 * confirmed before the current epoch are void.
 	 */
 	epoch?: number;
-	/** See `SubjectDates.acceptedGivenAt`. */
-	acceptedGivenAt?: number;
-	/** See `SubjectDates.datedAt`. */
-	datedAt?: number;
 	categories: ExplicitChoice['categories'];
 	iab?: StoredIabMetadata;
 }
@@ -158,42 +154,6 @@ const CODE_TO_IAB_KEY: ReadonlyMap<string, keyof StoredIabMetadata> = new Map(
 
 const BASIS_FIELD = 'b';
 const EPOCH_FIELD = 'e';
-/** Compact codes of the envelope's times. The encoder repeats them. @internal */
-export const DATE_CODES = { acceptedGivenAt: 'agt', datedAt: 'dat' } as const;
-const DATE_KEYS = ['acceptedGivenAt', 'datedAt'] as const;
-type EnvelopeDates = Pick<StoredConsentEnvelope, (typeof DATE_KEYS)[number]>;
-
-/**
- * The envelope's times: whole, non-negative milliseconds. An unreadable
- * one is an issue: the receipts are checked against them.
- */
-const readDates = function readDates(
-	read: (key: (typeof DATE_KEYS)[number]) => unknown,
-	issues: StorageIssue[]
-): EnvelopeDates {
-	const dates: EnvelopeDates = {};
-	for (const key of DATE_KEYS) {
-		const value = read(key);
-		if (value === undefined) {
-			continue;
-		}
-		if (Number.isSafeInteger(value) && (value as number) >= 0) {
-			dates[key] = value as number;
-		} else {
-			issues.push({ code: 'invalid-timestamp', path: key });
-		}
-	}
-	return dates;
-};
-
-/**
- * The latest time the envelope's receipts may carry: the device clock, or
- * a time the envelope says its subject was dated or accepted at when that
- * is later. A device clock that moved back does not void a choice dated
- * after it.
- */
-const datesCeiling = (dates: EnvelopeDates, now: number): number =>
-	Math.max(now, dates.acceptedGivenAt ?? now, dates.datedAt ?? now);
 const VERSION_FIELD = 'v';
 
 const SUBJECT_KEYS = ['subjectId', 'externalId', 'identityProvider'] as const;
@@ -331,8 +291,6 @@ const ENVELOPE_KEYS = [
 	'version',
 	'subject',
 	'epoch',
-	'acceptedGivenAt',
-	'datedAt',
 	'categories',
 	'iab',
 ] as const;
@@ -374,13 +332,12 @@ const envelopeResult = function envelopeResult(
 	categories: ExplicitChoice['categories'],
 	subject: ConsentSubject | undefined,
 	epoch: number | undefined,
-	iab: StoredIabMetadata | undefined,
-	dates: EnvelopeDates
+	iab: StoredIabMetadata | undefined
 ): DecodeResult<StoredConsentEnvelope> {
 	if (issues.length > 0) {
 		return { issues, ok: false };
 	}
-	const envelope: StoredConsentEnvelope = { categories, version: 3, ...dates };
+	const envelope: StoredConsentEnvelope = { categories, version: 3 };
 	if (subject && Object.keys(subject).length > 0) {
 		envelope.subject = subject;
 	}
@@ -406,20 +363,11 @@ export const validateStoredConsentEnvelope =
 		if (!isPlainRecord(input)) {
 			return { issues: [{ code: 'not-an-object', path: '' }], ok: false };
 		}
-		const issues: StorageIssue[] = [];
-		const dates = readDates((key) => ownValue(input, key), issues);
-		const {
-			acceptedGivenAt: _accepted,
-			datedAt: _dated,
-			...choiceInput
-		} = input;
-		const choice = validateExplicitChoice(
-			choiceInput,
-			datesCeiling(dates, now)
-		);
+		const choice = validateExplicitChoice(input, now);
 		if (choice.ok === false) {
 			return { issues: choice.issues, ok: false };
 		}
+		const issues: StorageIssue[] = [];
 		for (const key of ownKeys(input)) {
 			if (!ENVELOPE_KEYS.includes(key as (typeof ENVELOPE_KEYS)[number])) {
 				issues.push({ code: 'unknown-key', path: key });
@@ -450,8 +398,7 @@ export const validateStoredConsentEnvelope =
 			choice.record.categories,
 			subject,
 			epoch,
-			iab,
-			dates
+			iab
 		);
 	};
 
@@ -669,12 +616,6 @@ export const decodeStoredConsentEnvelopeCompact =
 						now
 					);
 
-		const dates = readDates((key) => {
-			const raw = fields.get(DATE_CODES[key]);
-			fields.delete(DATE_CODES[key]);
-			return raw !== undefined && DIGITS_ONLY.test(raw) ? Number(raw) : raw;
-		}, issues);
-		const ceiling = datesCeiling(dates, now);
 		const subject: ConsentSubject = {};
 		const categories: ExplicitChoice['categories'] = {};
 		const iab: StoredIabMetadata = {};
@@ -685,13 +626,7 @@ export const decodeStoredConsentEnvelopeCompact =
 			}
 			const category = CODE_TO_CATEGORY.get(key);
 			if (category) {
-				const decision = parseDecision(
-					value,
-					key,
-					bases ?? [],
-					ceiling,
-					issues
-				);
+				const decision = parseDecision(value, key, bases ?? [], now, issues);
 				if (decision) {
 					categories[category] = decision;
 				}
@@ -708,7 +643,7 @@ export const decodeStoredConsentEnvelopeCompact =
 			issues.push({ code: 'unknown-key', path: key });
 		}
 
-		return envelopeResult(issues, categories, subject, epoch, iab, dates);
+		return envelopeResult(issues, categories, subject, epoch, iab);
 	};
 
 // ---------------------------------------------------------------------------

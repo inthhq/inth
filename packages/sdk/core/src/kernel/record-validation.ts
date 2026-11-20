@@ -24,13 +24,12 @@ import {
 } from '../consent-record/validation';
 import type { RecordIssue } from '../consent-record/validation';
 import { isValidVendorId } from '../libs/vendors';
-import type { HydrationRecords, SubjectDates, VendorChoice } from '../types';
+import type { HydrationRecords, VendorChoice } from '../types';
 
 /** Validated records with the same omit/clear semantics as the input. */
 export interface ValidatedRecords {
 	choice?: ExplicitChoice | null;
 	subject?: ConsentSubject | null;
-	subjectDates?: SubjectDates | null;
 	noticeDismissal?: NoticeDismissal | null;
 	vendorChoice?: VendorChoice | null;
 }
@@ -132,48 +131,12 @@ export const validateVendorChoice = function validateVendorChoice(
  * caller can preserve current values; `null` passes through as an explicit
  * clear.
  */
-/** Whole, non-negative milliseconds for each time present. */
-const validateSubjectDates = function validateSubjectDates(
-	input: unknown,
-	issues: RecordIssue[]
-): SubjectDates | null {
-	if (!isPlainRecord(input)) {
-		issues.push({ code: 'not-an-object', path: 'subjectDates' });
-		return null;
-	}
-	const dates: SubjectDates = {};
-	for (const key of ownKeys(input)) {
-		const value = ownValue(input, key);
-		if (key !== 'acceptedGivenAt' && key !== 'datedAt') {
-			issues.push({ code: 'unknown-key', path: `subjectDates.${key}` });
-		} else if (Number.isSafeInteger(value) && (value as number) >= 0) {
-			dates[key] = value as number;
-		} else if (value !== undefined) {
-			issues.push({ code: 'invalid-timestamp', path: `subjectDates.${key}` });
-		}
-	}
-	return dates;
-};
-
 export const validateHydrationRecords = function validateHydrationRecords(
 	input: HydrationRecords,
-	deviceNow: number
+	now: number
 ): ValidateRecordsResult {
 	const issues: RecordIssue[] = [];
 	const records: ValidatedRecords = {};
-	if (input.subjectDates !== undefined) {
-		records.subjectDates =
-			input.subjectDates === null
-				? null
-				: validateSubjectDates(input.subjectDates, issues);
-	}
-	// A device clock that moved back does not void a choice dated after it:
-	// records are checked against the subject's own times too.
-	const now = Math.max(
-		deviceNow,
-		records.subjectDates?.acceptedGivenAt ?? deviceNow,
-		records.subjectDates?.datedAt ?? deviceNow
-	);
 
 	if (input.choice !== undefined) {
 		if (input.choice === null) {

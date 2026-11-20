@@ -125,13 +125,6 @@ const recordedSubject = function recordedSubject(
 	);
 };
 
-/** The subject's times the envelope carries, as a records field. */
-const storedDates = function storedDates(
-	selected: StoredConsentSelection['selected']
-): Pick<HydrationRecords, 'subjectDates'> {
-	return selected?.subjectDates ? { subjectDates: selected.subjectDates } : {};
-};
-
 /**
  * Builds the records from decoded reads. Anything confirmed before the
  * clear epoch (the newer of the stored epoch and the envelope's own) was
@@ -163,7 +156,6 @@ const composeRecords = function composeRecords(
 		now,
 		subject: recorded,
 		vendorChoice: kernelVendorChoice(vendorRecord),
-		...storedDates(selected),
 	};
 	return {
 		candidates: selection.candidates,

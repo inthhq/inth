@@ -48,7 +48,6 @@ import {
 	applyNoticeAcknowledgement,
 	buildSavePayload,
 	choiceAcknowledgement,
-	datedSubjectDates,
 	resolveSaveSelection,
 	saveAttribution,
 	saveSubject,
@@ -618,8 +617,8 @@ const createBoundDraft = function createBoundDraft<Values>(
 
 export interface ChoiceRecorderOptions {
 	runtime: KernelRuntime;
-	/** Dates each action, and takes it from here on. */
-	outbox: Pick<SaveOutbox, 'dateChoice' | 'queues' | 'send'>;
+	/** Takes each recorded action from here on. */
+	outbox: Pick<SaveOutbox, 'send'>;
 	/** Draft values staged by config. */
 	initialDraft: PresentedSelection | null;
 }
@@ -714,11 +713,9 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			const { input, vendors: inlineVendors } = splitSaveInput(rawInput);
 			const explicitVendors = context?.vendors ?? inlineVendors;
 			const currentTime = runtime.now();
-			// When the visitor acted, by the device clock. Timing reads it; the
-			// action is dated from it below.
-			const capturedAt =
+			const actionAt =
 				context?.actionAt === undefined ? currentTime : context.actionAt;
-			if (!isValidSaveActionAt(capturedAt, currentTime)) {
+			if (!isValidSaveActionAt(actionAt, currentTime)) {
 				return {
 					issues: [{ code: 'invalid-timestamp', path: 'actionAt' }],
 					ok: false,
@@ -729,7 +726,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				!validSaveAuthority(
 					context.iabAuthority,
 					getSnapshot(),
-					capturedAt,
+					actionAt,
 					currentTime
 				)
 			) {
@@ -746,11 +743,11 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			const before = getSnapshot();
 			// Vendor denials resolve before any early return so a vendor-only
 			// toggle is recorded even when no category receipt is owed.
-			let nextVendorChoice = resolveVendorSelection(
+			const nextVendorChoice = resolveVendorSelection(
 				before,
 				input,
 				explicitVendors,
-				capturedAt,
+				actionAt,
 				context?.categories
 			);
 			const vendorsChanged = nextVendorChoice !== before.vendorChoice;
@@ -763,18 +760,18 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			const { uiSource, ...decisionTiming } = saveAttribution(
 				before,
 				context?.uiSource,
-				capturedAt
+				actionAt
 			);
 			let consentAction: SavePayload['consentAction'] = 'custom';
-			// A `none` regime owes no category receipt; only vendors change.
-			let record: (
-				at: number
-			) => ReturnType<typeof recordCategoryPatch> = () => ({
-				choice: before.explicitChoice ?? EMPTY_CHOICE,
-				confirmed: [],
-				ok: true as const,
-			});
-			if (!owedNothing) {
+			let recorded: ReturnType<typeof recordCategoryPatch>;
+			if (owedNothing) {
+				// A `none` regime owes no category receipt; only vendors change.
+				recorded = {
+					choice: before.explicitChoice ?? EMPTY_CHOICE,
+					confirmed: [],
+					ok: true,
+				};
+			} else {
 				const selection = resolveSaveSelection(
 					before,
 					draft.get(),
@@ -782,14 +779,16 @@ export const createChoiceRecorder = function createChoiceRecorder({
 					context?.categories
 				);
 				({ consentAction } = selection);
-				record = (at) =>
-					recordCategoryPatch(before.explicitChoice, selection.values, {
-						actionAt: at,
-						now: Math.max(currentTime, at),
+				recorded = recordCategoryPatch(
+					before.explicitChoice,
+					selection.values,
+					{
+						actionAt,
+						now: currentTime,
 						policy: before.evaluationPolicy,
-					});
+					}
+				);
 			}
-			let recorded = record(capturedAt);
 			if (recorded.ok === false) {
 				const result: SaveResult = { issues: recorded.issues, ok: false };
 				emit({ result, type: 'command:save:completed' });
@@ -798,13 +797,10 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			const categoriesChanged = recorded.confirmed.length > 0;
 			// Any action on a choice prompt with nothing to decide acknowledges
 			// it, and sends a receipt for strictly necessary alone.
-			const acknowledgementAt = (at: number) =>
-				owedNothing ? null : choiceAcknowledgement(before, at);
-			if (
-				!categoriesChanged &&
-				!vendorsChanged &&
-				!acknowledgementAt(capturedAt)
-			) {
+			const acknowledgement = owedNothing
+				? null
+				: choiceAcknowledgement(before, actionAt);
+			if (!categoriesChanged && !vendorsChanged && !acknowledgement) {
 				// Nothing confirmed: no receipt, no choice event, no request, no write.
 				const result: SaveResult = {
 					confirmed: [],
@@ -816,39 +812,12 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			}
 
 			const subjectId = before.subject?.subjectId ?? generateUuidV7();
-			// One time for the action: its receipts, its save's givenAt, its
-			// place in the queue.
-			const actionAt = outbox.dateChoice(subjectId, capturedAt);
-			if (actionAt !== capturedAt) {
-				recorded = record(actionAt);
-				nextVendorChoice = resolveVendorSelection(
-					before,
-					input,
-					explicitVendors,
-					actionAt,
-					context?.categories
-				);
-			}
-			if (recorded.ok === false) {
-				const result: SaveResult = { issues: recorded.issues, ok: false };
-				emit({ result, type: 'command:save:completed' });
-				return result;
-			}
-			const acknowledgement = acknowledgementAt(actionAt);
 			const subject = saveSubject(before, subjectId);
 			draft.set(null);
 			const patch: SnapshotPatch = {
-				now: Math.max(currentTime, actionAt),
+				now: currentTime,
 				subject,
 			};
-			const subjectDates = datedSubjectDates(
-				before,
-				actionAt,
-				outbox.queues || actionAt > currentTime
-			);
-			if (subjectDates) {
-				patch.subjectDates = subjectDates;
-			}
 			if (categoriesChanged) {
 				patch.explicitChoice = recorded.choice;
 			}
@@ -910,8 +879,11 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				subjectId,
 				timing: decisionTiming,
 				uiSource,
-				vendorChoice: vendorChoicePayload(after, before.vendorChoice),
 			});
+			const vendorChoice = vendorChoicePayload(after, before.vendorChoice);
+			if (vendorChoice) {
+				payload.vendorChoice = vendorChoice;
+			}
 			const addtlConsent = after.iab?.authority?.addtlConsent;
 			if (payload.tcString && addtlConsent) {
 				payload.addtlConsent = addtlConsent;

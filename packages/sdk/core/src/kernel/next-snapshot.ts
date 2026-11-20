@@ -42,7 +42,6 @@ import type {
 	KernelTranslations,
 	KernelUser,
 	KernelVendorsState,
-	SubjectDates,
 	VendorChoice,
 } from '../types';
 import { evaluateExternalPermissions } from './external-permissions';
@@ -76,7 +75,6 @@ export interface SnapshotPatch {
 	iab?: KernelIABState | null;
 	vendors?: KernelVendorsState | null;
 	vendorChoice?: VendorChoice | null;
-	subjectDates?: SubjectDates | null;
 	experiment?: ExperimentAssignment | null;
 	experimentPending?: boolean;
 	/** Evaluation time. Defaults to the current `evaluatedAt`. */
@@ -140,7 +138,6 @@ export const isUnchangedPatch = function isUnchangedPatch(
 		pick(patch.iab, current.iab) === current.iab &&
 		pick(patch.vendors, current.vendors) === current.vendors &&
 		pick(patch.vendorChoice, current.vendorChoice) === current.vendorChoice &&
-		pick(patch.subjectDates, current.subjectDates) === current.subjectDates &&
 		pick(patch.experiment, current.experiment) === current.experiment &&
 		pick(patch.experimentPending, current.experimentPending) ===
 			current.experimentPending
@@ -447,7 +444,6 @@ export const buildNextSnapshot = function buildNextSnapshot(
 		revision: current.revision + 1,
 		scriptRegistry: pick(patch.scriptRegistry, current.scriptRegistry),
 		subject,
-		subjectDates: pick(patch.subjectDates, current.subjectDates ?? null),
 		// Impressions are stamped by the runtime once its lifecycle started;
 		// derivation only carries the record through.
 		surfaceShownAt: current.surfaceShownAt,

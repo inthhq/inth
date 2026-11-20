@@ -80,7 +80,6 @@ const refusingWrites = function refusingWrites(
 ): SaveOutboxStore {
 	return {
 		clear: () => {},
-		peek: inner.peek,
 		transact: (run) =>
 			inner.transact((tx) => run({ read: tx.read, write: () => false })),
 	};

@@ -16,10 +16,7 @@ import {
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { PAGE_RENDER_KEY } from '../../libs/page-globals';
 import type { Script } from '../../libs/script-loader/types';
-import {
-	encodeStoredConsentEnvelopeCompact,
-	encodeStoredConsentEnvelopeJson,
-} from '../../modules/persistence/writer/encode';
+import { encodeStoredConsentEnvelopeJson } from '../../modules/persistence/writer/encode';
 import {
 	serverScriptStartPlan,
 	storedChoiceCheckScript,
@@ -71,37 +68,6 @@ describe('storedChoiceCheckScript', () => {
 		// oxlint-disable-next-line no-new-func -- Runs the inline script, as the page would.
 		new Function(code ?? '')();
 		expect(current()).toBe(true);
-		vi.useRealTimers();
-	});
-
-	test("holds for the server's record whose cookie carries its own times", () => {
-		// The server read the choice at NOW - 1000; its save is dated after
-		// a clock the device has since moved back.
-		vi.useFakeTimers({ now: NOW - 5000 });
-		const prefetch = prefetchFor({ marketing: true, measurement: true });
-		const choice = prefetch.initialRecords?.choice;
-		document.cookie = `inth=${encodeStoredConsentEnvelopeCompact({
-			acceptedGivenAt: NOW - 1000,
-			categories: choice?.categories ?? {},
-			datedAt: NOW - 1000,
-			version: 3,
-		})}; path=/`;
-		const code = storedChoiceCheckScript({
-			mode,
-			prefetch: {
-				...prefetch,
-				// What the server reads from that cookie.
-				initialRecords: {
-					...prefetch.initialRecords,
-					subjectDates: { acceptedGivenAt: NOW - 1000, datedAt: NOW - 1000 },
-				},
-				now: NOW - 5000,
-			},
-		});
-		// oxlint-disable-next-line no-new-func -- Runs the inline script, as the page would.
-		new Function(code ?? '')();
-		expect(current()).toBe(true);
-		document.cookie = 'inth=; max-age=0; path=/';
 		vi.useRealTimers();
 	});
 

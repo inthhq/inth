@@ -27,7 +27,6 @@ import type {
 	SaveInput,
 	SavePayload,
 	SaveUISource,
-	SubjectDates,
 } from '../types';
 import type { SnapshotPatch } from './next-snapshot';
 
@@ -147,23 +146,6 @@ export const saveSubject = function saveSubject(
 	return subject;
 };
 
-/**
- * The subject's times after an action dated `actionAt`, or `undefined` when
- * they do not change. The time is kept, as the ceiling the stored records
- * are checked against, when the action's save is queued (`kept`), so the
- * record stands while it waits however the device clock moves.
- */
-export const datedSubjectDates = function datedSubjectDates(
-	snapshot: ConsentSnapshot,
-	actionAt: number,
-	kept: boolean
-): SubjectDates | undefined {
-	if (!kept || (snapshot.subjectDates?.datedAt ?? -1) >= actionAt) {
-		return undefined;
-	}
-	return { ...snapshot.subjectDates, datedAt: actionAt };
-};
-
 /** Capture the action’s policy evidence before init or navigation changes it. */
 export const saveDecisionInputs = (
 	snapshot: ConsentSnapshot
@@ -245,8 +227,6 @@ export interface SavePayloadInput {
 	uiSource: SaveUISource;
 	/** `timeToDecisionMs` and `experiment` from {@link saveAttribution}. */
 	timing: Pick<SavePayload, 'experiment' | 'timeToDecisionMs'>;
-	/** The vendor choice the save carries, if any. */
-	vendorChoice?: SavePayload['vendorChoice'];
 }
 
 /**
@@ -266,15 +246,12 @@ export const buildSavePayload = function buildSavePayload(
 	// caller mutating its input object cannot change the queued payload.
 	const confirmedCategories: Partial<Record<OptionalConsentCategory, boolean>> =
 		{};
-	for (const [category, decision] of Object.entries(input.choice.categories)) {
-		if (
-			decision &&
-			input.confirmed.includes(category as OptionalConsentCategory)
-		) {
-			confirmedCategories[category as OptionalConsentCategory] = decision.value;
+	for (const category of input.confirmed) {
+		const decision = input.choice.categories[category];
+		if (decision) {
+			confirmedCategories[category] = decision.value;
 		}
 	}
-	const { vendorChoice } = input;
 	return {
 		choice: input.choice,
 		confirmed: { actionAt: input.actionAt, categories: confirmedCategories },
@@ -291,7 +268,6 @@ export const buildSavePayload = function buildSavePayload(
 		tcString: after.iab?.tcString ?? null,
 		uiSource: input.uiSource,
 		user: after.user,
-		...(vendorChoice && { vendorChoice }),
 		...input.timing,
 	};
 };

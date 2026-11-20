@@ -103,37 +103,6 @@ export interface RuntimeOptions {
 	onDeadlineChange: () => void;
 }
 
-/** A prompt surface a save's commit hid, and the snapshot that hid it. */
-interface HiddenBySave {
-	snapshot: ConsentSnapshot;
-	surface: PromptSurface;
-}
-
-/**
- * What stays hidden by a save after a commit: the surface this commit hid,
- * or the one an earlier save hid while this commit left the surface alone
- * (the save's answer may commit in between), else nothing.
- */
-const nextHiddenBySave = function nextHiddenBySave(
-	hidden: HiddenBySave | null,
-	current: ConsentSnapshot,
-	adopted: ConsentSnapshot,
-	patch: SnapshotPatch
-): HiddenBySave | null {
-	if (patch.activeUI !== undefined) {
-		return null;
-	}
-	if (
-		isPromptSurface(current.activeUI) &&
-		current.activeUI !== adopted.activeUI
-	) {
-		return { snapshot: adopted, surface: current.activeUI };
-	}
-	return hidden?.snapshot === current && adopted.activeUI === current.activeUI
-		? { snapshot: adopted, surface: hidden.surface }
-		: null;
-};
-
 export const createRuntime = function createRuntime(
 	options: RuntimeOptions
 ): KernelRuntime {
@@ -148,7 +117,10 @@ export const createRuntime = function createRuntime(
 	 * a new impression. Any other commit clears it, so a later derived
 	 * re-show (an expired choice, a refresh, a re-init) counts again.
 	 */
-	let hiddenBySave: HiddenBySave | null = null;
+	let hiddenBySave: {
+		snapshot: ConsentSnapshot;
+		surface: PromptSurface;
+	} | null = null;
 	let generation = 0;
 	let listeners: ListenerSet<ConsentSnapshot> | undefined;
 	/**
@@ -323,16 +295,21 @@ export const createRuntime = function createRuntime(
 		// A save derives `activeUI` to `none` in the same commit that clears
 		// the prompt. An adapter that keeps its preference dialog open for the
 		// save then restores `dialog` with an explicit `set.activeUI` before
-		// anything else changes the surface (the save's answer may commit in
-		// between); the visitor never saw it close. That restore is not a new
-		// impression. A surface the visitor reopens after the kernel hid it
-		// for real is, and so is a surface the kernel derives back into view
-		// later (an expired choice, a refresh, a re-init).
+		// anything else commits; the visitor never saw it close. That restore
+		// is not a new impression. A surface the visitor reopens after the
+		// kernel hid it for real is, and so is a surface the kernel derives
+		// back into view later (an expired choice, a refresh, a re-init).
 		const restoredAfterSave =
-			hiddenBySave?.snapshot === current &&
+			hiddenBySave !== null &&
+			hiddenBySave.snapshot === current &&
 			hiddenBySave.surface === surface &&
 			patch.activeUI === surface;
-		hiddenBySave = nextHiddenBySave(hiddenBySave, current, adopted, patch);
+		hiddenBySave =
+			isPromptSurface(current.activeUI) &&
+			current.activeUI !== surface &&
+			patch.activeUI === undefined
+				? { snapshot: adopted, surface: current.activeUI }
+				: null;
 		const shown: PromptSurface | null =
 			live &&
 			isPromptSurface(surface) &&

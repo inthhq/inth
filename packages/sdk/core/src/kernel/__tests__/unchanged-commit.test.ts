@@ -193,10 +193,6 @@ test('every snapshot input agrees with the full evaluator', async () => {
 			},
 		}),
 		subject: { idempotent: true, run: (k) => k.set.subjectId('sub_test') },
-		subjectDates: {
-			idempotent: true,
-			run: (k) => k.hydrate({ subjectDates: { acceptedGivenAt: NOW - 1 } }),
-		},
 		translations: initWith({
 			translations: { language: 'en', translations: enTranslations },
 		}),

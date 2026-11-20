@@ -32,13 +32,11 @@ import {
 	applyNoticeAcknowledgement,
 	buildSavePayload,
 	choiceAcknowledgement,
-	datedSubjectDates,
 	resolveSaveSelection,
 	saveAttribution,
 	saveSubject,
 } from '../kernel/save-plan';
 import { deleteCookie, getRawCookieValue, writeCookie } from '../libs/cookie';
-import { dateChoice, queuedGivenAt } from '../libs/given-at';
 import { removeLocalStorageKey } from '../libs/local-storage';
 import { storageFor } from '../libs/storage-for';
 import { resolveStorageKeys } from '../libs/storage-keys';
@@ -135,13 +133,13 @@ export const planEarlyCommit = function planEarlyCommit(
 	input: EarlyCommitInput
 ): EarlyCommit | null {
 	const before = input.snapshot;
-	const deviceNow = input.now ?? Date.now();
-	const tapAt = input.actionAt;
+	const now = input.now ?? Date.now();
+	const { actionAt } = input;
 	if (
 		kernelOnly(before) ||
-		!Number.isSafeInteger(tapAt) ||
-		tapAt < 0 ||
-		tapAt > deviceNow
+		!Number.isSafeInteger(actionAt) ||
+		actionAt < 0 ||
+		actionAt > now
 	) {
 		return null;
 	}
@@ -149,26 +147,11 @@ export const planEarlyCommit = function planEarlyCommit(
 	// cover the whole choice scope: the same selection as passing none. An
 	// object is recorded as given, as the kernel records it.
 	const selection = resolveSaveSelection(before, null, input.choice);
-	const record = (at: number) =>
-		recordCategoryPatch(before.explicitChoice, selection.values, {
-			actionAt: at,
-			now: Math.max(deviceNow, at),
-			policy: before.evaluationPolicy,
-		});
-	const subjectId =
-		before.subject?.subjectId ?? input.subjectId ?? generateUuidV7();
-	// Dated as the kernel dates an action: after the subject's floor.
-	const actionAt = dateChoice(
-		tapAt,
-		Math.max(
-			before.subject?.subjectId === subjectId
-				? (before.subjectDates?.acceptedGivenAt ?? -1)
-				: -1,
-			queuedGivenAt(createBrowserOutboxStore().peek('saves'), subjectId)
-		)
+	const recorded = recordCategoryPatch(
+		before.explicitChoice,
+		selection.values,
+		{ actionAt, now, policy: before.evaluationPolicy }
 	);
-	const now = Math.max(deviceNow, actionAt);
-	const recorded = record(actionAt);
 	if (
 		recorded.ok === false ||
 		recorded.confirmed.length === 0 ||
@@ -179,19 +162,16 @@ export const planEarlyCommit = function planEarlyCommit(
 	const { uiSource, ...timing } = saveAttribution(
 		before,
 		input.uiSource ?? 'banner',
-		tapAt
+		actionAt
 	);
+	const subjectId =
+		before.subject?.subjectId ?? input.subjectId ?? generateUuidV7();
 	const subject = saveSubject(before, subjectId);
 	const patch: SnapshotPatch = {
 		explicitChoice: recorded.choice,
 		now,
 		subject,
 	};
-	// The commit's save is queued.
-	const subjectDates = datedSubjectDates(before, actionAt, true);
-	if (subjectDates) {
-		patch.subjectDates = subjectDates;
-	}
 	applyNoticeAcknowledgement(patch, before, actionAt);
 	if (patch.noticeDismissal !== undefined) {
 		// A notice record goes through persistence's notice write.
