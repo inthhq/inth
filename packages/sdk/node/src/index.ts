@@ -46,7 +46,8 @@ export interface InthOptions {
 	readonly timeout?: number;
 	/**
 	 * How many times a request that could not be answered is tried again:
-	 * a network failure, a timeout, a 429 or a 5xx. Defaults to 2
+	 * a network failure, a timeout, a 429 or a 5xx. Defaults to 2.
+	 * `documents.publish` is never tried again
 	 */
 	readonly maxRetries?: number;
 	/** For tests and runtimes without a global `fetch` */
@@ -555,7 +556,20 @@ const segment = (value: string): string | undefined => {
 	}
 };
 
-/** The refusal for a path parameter `segment` cannot encode */
+/**
+ * The name of the first value no URL can carry, or `undefined` when all can.
+ * For a query: `URLSearchParams` would not refuse such a value but swap the
+ * lone surrogate for U+FFFD, and ask about someone else
+ */
+const uncarried = (
+	values: Readonly<Record<string, string | undefined>>
+): string | undefined =>
+	Object.keys(values).find((name) => {
+		const value = values[name];
+		return value !== undefined && segment(value) === undefined;
+	});
+
+/** The refusal for a parameter no URL can carry */
 const unusableSegment = (name: string): InthResult<never> =>
 	failed(
 		new InthError(
@@ -645,6 +659,13 @@ class Consents {
 		params: CheckConsentParams,
 		options?: InthRequestOptions
 	): Promise<InthResult<InthConsent>> {
+		const unusable = uncarried({
+			externalId: params.externalId,
+			property: params.property,
+		});
+		if (unusable !== undefined) {
+			return unusableSegment(unusable);
+		}
 		const query = new URLSearchParams({ externalId: params.externalId });
 		if (params.property !== undefined) {
 			query.set('property', params.property);
@@ -913,7 +934,9 @@ class Documents {
 	}
 
 	/**
-	 * Publishes a version of a document, which is in force from then on
+	 * Publishes a version of a document, which is in force from then on.
+	 * Never tried again, whatever `maxRetries` says: after a failure it may
+	 * have been stored, so check `documents.current` before publishing again
 	 *
 	 * @example
 	 * const { data, error } = await inth.documents.publish({
@@ -1059,6 +1082,10 @@ class Documents {
 			externalId: params.externalId,
 			types: params.types.join(','),
 		};
+		const unusable = uncarried(query);
+		if (unusable !== undefined) {
+			return unusableSegment(unusable);
+		}
 		const answer = await this.#send(
 			checkAnswer,
 			{

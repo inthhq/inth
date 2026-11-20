@@ -898,6 +898,18 @@ describe('documents', () => {
 		assert.strictEqual(accepted.error?.code, 'unexpected_response');
 	});
 
+	it('refuses a query value no URL can carry, rather than ask about another', async () => {
+		const { inth, sent } = stubbed([checked]);
+		const consent = await inth.consents.check({ externalId: 'user_\uD800' });
+		const documents = await inth.documents.check({
+			externalId: 'user_\uD800',
+			types: ['terms_us'],
+		});
+		assert.strictEqual(consent.error?.code, 'invalid_request');
+		assert.strictEqual(documents.error?.code, 'invalid_request');
+		assert.strictEqual(sent.length, 0);
+	});
+
 	it('refuses a subject id no URL can carry, without sending it', async () => {
 		const { inth, sent } = stubbed([checked]);
 		const linked = await inth.users.identify({
