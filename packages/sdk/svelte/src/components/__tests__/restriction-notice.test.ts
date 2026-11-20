@@ -82,10 +82,12 @@ describe('consent widget restriction notice', () => {
 			expect(element).toBeInTheDocument();
 			return element as HTMLElement;
 		});
-		expect(notice.textContent).toContain('restricted');
-		const marketing = document.querySelector(
+		expect(notice.textContent).toContain('Global Privacy Control');
+		const marketing = document.querySelector<HTMLButtonElement>(
 			'[data-testid="consent-widget-switch-marketing"]'
 		);
+		expect(marketing?.disabled).toBe(true);
+		expect(marketing?.getAttribute('aria-checked')).toBe('false');
 		expect(marketing?.getAttribute('aria-describedby')).toBe(notice.id);
 		expect(restriction('functionality')).toBeNull();
 	});

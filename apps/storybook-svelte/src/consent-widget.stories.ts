@@ -4,6 +4,7 @@ import {
 } from '@inth/conformance/play/consent-widget';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 
+import ConsentWidgetOptOutStory from './consent-widget-opt-out-story.svelte';
 import ConsentWidgetVendorsStory from './consent-widget-vendors-story.svelte';
 import ConsentWidgetStory from './ConsentWidgetStory.svelte';
 
@@ -34,4 +35,28 @@ export const WithVendors: Story = {
 export const WithVendorsExpanded: Story = {
 	...WithVendors,
 	play: expandedVendors,
+};
+
+/** Durable opt-out honored by a visitor request; switches stay off and usable. */
+export const OptOutHonoredByRequest: Story = {
+	render: () => ({
+		Component: ConsentWidgetOptOutStory,
+		props: { kind: 'request' },
+	}),
+};
+
+/** Durable opt-out honored by an active GPC signal; restricted switches are locked off. */
+export const OptOutGpcLocked: Story = {
+	render: () => ({
+		Component: ConsentWidgetOptOutStory,
+		props: { kind: 'gpc' },
+	}),
+};
+
+/** Account-held opt-out; switches stay usable with the account notice below each row. */
+export const OptOutHeldByAccount: Story = {
+	render: () => ({
+		Component: ConsentWidgetOptOutStory,
+		props: { kind: 'account' },
+	}),
 };
