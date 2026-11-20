@@ -6,7 +6,15 @@ import { saveConsentSurface } from '@inth/sdk/surface-actions';
 import '@inth/sdk/ui/styles/components/consent-dialog.css';
 import dialogStyles from '@inth/sdk/ui/styles/components/consent-dialog';
 import { getTextDirection } from '@inth/sdk/ui/utils';
-import { computed, nextTick, onUnmounted, provide, ref, watch } from 'vue';
+import {
+	computed,
+	inject,
+	nextTick,
+	onUnmounted,
+	provide,
+	ref,
+	watch,
+} from 'vue';
 import type { HTMLAttributes } from 'vue';
 
 import {
@@ -17,6 +25,10 @@ import {
 	useHasConsentUi,
 } from '../composables';
 import { useConsentDraft } from '../composables/draft';
+import {
+	useHasOptOutConfirmationHost,
+	useOptOutConfirmationOpen,
+} from '../composables/kernel';
 import { useConsentPolicyActions } from '../composables/use-consent-policy-actions';
 import { useConsentScrollLock } from '../composables/use-consent-scroll-lock';
 import {
@@ -26,7 +38,9 @@ import {
 	DialogRoot,
 } from '../primitives';
 import { slotAttrs } from '../utils/slot-attrs';
+import { symbolConfirmationHosted } from '../utils/symbols';
 import ConsentDescription from './description.vue';
+import { LazyOptOutConfirmation } from './lazy-surfaces';
 import { consentWidgetManagerKey } from './preferences-manager-context';
 import ConsentWidget from './preferences.vue';
 import ConsentTag from './tag.vue';
@@ -49,6 +63,9 @@ const config = useConsentConfig();
 const kernel = useConsentKernel();
 // No resolved policy means nothing to manage: render no surface at all.
 const hasConsentUi = useHasConsentUi();
+const confirmationHostedByProvider = inject(symbolConfirmationHosted, false);
+const confirmationOpen = useOptOutConfirmationOpen();
+const hasStandaloneConfirmation = useHasOptOutConfirmationHost();
 
 const { presentation: surface } = useConsentPolicyActions('preferences');
 let actionSequence = 0;
@@ -150,6 +167,15 @@ provide(consentWidgetManagerKey, { draft: draftState, onAction });
 </script>
 
 <template>
+	<LazyOptOutConfirmation
+		v-if="
+			!confirmationHostedByProvider &&
+			confirmationOpen &&
+			!hasStandaloneConfirmation
+		"
+		embedded
+		:disable-animation="props.disableAnimation"
+	/>
 	<div
 		v-if="hasConsentUi && isStale"
 		role="status"

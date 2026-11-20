@@ -42,9 +42,12 @@ group: reference
   ## Accessibility and styling
 
   The trigger is a native `button` with `aria-label` set from
-  `triggerAriaLabel` and its icon hidden from assistive technology. Set
-  `triggerAriaLabel` in the visitor's language when your site supports
-  multiple languages.
+  `triggerAriaLabel`, else the resolved opt-out link title under an opt-out
+  policy with the `opt-out` right, or the `trigger.label` translation ("Open
+  privacy settings" in English) otherwise. When it shows the opt-out label,
+  clicking it records an opt-out in one click and opens `OptOutConfirmation`.
+  Its icon is hidden from assistive technology. Set `triggerAriaLabel` in the
+  visitor's language when your site supports multiple languages.
 
   `components.trigger` binds attributes to `root`, `icon`, and `text`. Setting
   `components.trigger.text`, even to `{}`, shows `triggerAriaLabel` as visible

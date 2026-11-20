@@ -1,7 +1,18 @@
-import type { ConsentSnapshot } from '@inth/sdk/engine';
-import { hasConsentPreferences, hasConsentUI } from '@inth/sdk/surface-actions';
+import type {
+	ConsentSnapshot,
+	OptOutResult,
+	SaveUISource,
+} from '@inth/sdk/engine';
+import {
+	hasConsentPreferences,
+	hasConsentUI,
+	hasOptOutConfirmationHost,
+	isOptOutConfirmationOpen,
+	optOutConsentSurface,
+	subscribeOptOutConfirmation,
+} from '@inth/sdk/surface-actions';
 import { resolveOptOutState } from '@inth/sdk/surface-state';
-import { computed, inject } from 'vue';
+import { computed, inject, onScopeDispose, ref } from 'vue';
 
 import {
 	symbolKernel,
@@ -85,3 +96,46 @@ export const useHasConsentPreferences = () => {
 /** Read the reasons that currently restrict permissions. */
 export const useConsentRestrictions = () => useSnapshotField('restrictions');
 export const useDismissNotice = () => useConsentKernel().commands.dismissNotice;
+
+/**
+ * Record an opt-out in one click and open `OptOutConfirmation` under an
+ * opt-out policy. Under other policy models, open the preference dialog.
+ */
+export const useOptOut = function useOptOut(): (context?: {
+	uiSource?: SaveUISource;
+}) => Promise<OptOutResult> {
+	const kernel = useConsentKernel();
+	return (context) => optOutConsentSurface(kernel, context);
+};
+
+/**
+ * Reactive open state of the opt-out confirmation view for the active kernel.
+ *
+ * @internal
+ */
+export const useOptOutConfirmationOpen = function useOptOutConfirmationOpen() {
+	const kernel = useConsentKernel();
+	const open = ref(isOptOutConfirmationOpen(kernel));
+	const stop = subscribeOptOutConfirmation(kernel, () => {
+		open.value = isOptOutConfirmationOpen(kernel);
+	});
+	onScopeDispose(stop);
+	return open;
+};
+
+/**
+ * Whether a standalone `OptOutConfirmation` host is mounted for the active
+ * kernel.
+ *
+ * @internal
+ */
+export const useHasOptOutConfirmationHost =
+	function useHasOptOutConfirmationHost() {
+		const kernel = useConsentKernel();
+		const hasHost = ref(hasOptOutConfirmationHost(kernel));
+		const stop = subscribeOptOutConfirmation(kernel, () => {
+			hasHost.value = hasOptOutConfirmationHost(kernel);
+		});
+		onScopeDispose(stop);
+		return hasHost;
+	};

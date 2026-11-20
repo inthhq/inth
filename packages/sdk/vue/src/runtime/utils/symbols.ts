@@ -32,3 +32,8 @@ export const symbolKernelContext = Symbol(
 export const consentConfigKey: InjectionKey<
 	MaybeRefOrGetter<Partial<ConsentConfig> | undefined>
 > = Symbol('inth:config');
+
+/** Provided by `InthProvider` so `ConsentManager` does not mount a second embedded confirmation host. */
+export const symbolConfirmationHosted: InjectionKey<boolean> = Symbol(
+	'inth:confirmation-hosted'
+);

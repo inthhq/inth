@@ -134,3 +134,35 @@ export const BannerFocusManagement: Story = {
 		template: '<ConsentBanner blocking />',
 	}),
 };
+
+/** Notice banner with the statutory opt-out link. */
+export const OptOutLink: Story = {
+	render: () => ({
+		components: { ConsentBanner, ConsentManager },
+		setup() {
+			setupStorybookConsent(
+				'banner',
+				{ presentation: { optOutLink: 'do-not-sell' } },
+				storybookNoticeInit
+			);
+		},
+		template:
+			'<ConsentBanner disable-animation /><ConsentManager disable-animation />',
+	}),
+};
+
+/** Notice banner with the Privacy Choices link and CPPA opt-out icon. */
+export const PrivacyChoicesLink: Story = {
+	render: () => ({
+		components: { ConsentBanner, ConsentManager },
+		setup() {
+			setupStorybookConsent(
+				'banner',
+				{ presentation: { optOutLink: 'privacy-choices' } },
+				storybookNoticeInit
+			);
+		},
+		template:
+			'<ConsentBanner disable-animation /><ConsentManager disable-animation />',
+	}),
+};

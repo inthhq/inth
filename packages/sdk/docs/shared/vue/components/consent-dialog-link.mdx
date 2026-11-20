@@ -10,10 +10,15 @@ group: reference
   ## What ConsentDialogLink renders
 
   `ConsentDialogLink` renders a `button` that sets `activeUI` to `'manager'`
-  to open the preference dialog. It takes no props. Its default label comes
-  from the `consentManagerDialog.title` translation ("Privacy Settings" in
-  English), updating to the visitor's language once init delivers copy. Pass
-  default slot content to replace the label.
+  to open the preference dialog. Pass `right="opt-out"` to record an opt-out in
+  one click and open `OptOutConfirmation` under an opt-out policy, falling back
+  to the preference dialog under other policy models. With `right="opt-out"`,
+  the default label follows `presentation.optOutLink` and the two "Privacy
+  Choices" forms always render with the California Privacy Protection Agency
+  opt-out icon. Otherwise its default label comes from the
+  `consentManagerDialog.title` translation ("Privacy Settings" in English),
+  updating to the visitor's language once init delivers copy. Pass default slot
+  content to replace the label.
 
   The button renders only when preferences apply:
 
