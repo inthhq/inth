@@ -5,7 +5,6 @@ import type { RuntimeDocuments } from '@inth/sdk/runtime/documents';
 import { useContext, useMemo } from 'react';
 
 import { ProviderServicesContext } from './context';
-import { requestDeferredEngine } from './deferred/registry';
 import { useKernel } from './kernel-selector';
 
 /**
@@ -35,8 +34,12 @@ export const useDocuments = function useDocuments(): RuntimeDocuments {
 					);
 				}
 				if (services.ready) {
-					requestDeferredEngine(kernel);
-					await services.ready;
+					// A deferred root's stand-in kernel answers any command once
+					// it has asked for the engine and the engine attached, and
+					// rejects it when the engine failed to load.
+					await (
+						kernel.commands as unknown as Record<string, () => unknown>
+					).whenEngine?.();
 				}
 				return services.runtime;
 			}),

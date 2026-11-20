@@ -685,16 +685,6 @@ export interface ConsentRuntime {
 	/** The mounted IAB CMP, or `null` while IAB is off or not yet ready. */
 	readonly iab: ConsentRuntimeIABHandle | null;
 	/**
-	 * The transport factory the runtime sends consent through. A backend
-	 * factory carries its `projectUrl`, and its `property` and `fetch` when
-	 * set, as data, which `@inth/sdk/runtime/documents` reads. Absent on a
-	 * stand-in runtime.
-	 *
-	 * @internal
-	 */
-	readonly mode?: ProviderTransportFactory;
-
-	/**
 	 * Categories surfaced in the UI: `necessary` plus the choice scope, in
 	 * the fixed order of `consentTypes`, as the preference draft lists them.
 	 * See {@link ConsentRuntime.setConsentCategories}.

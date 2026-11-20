@@ -7,8 +7,9 @@
  * subject and property. The code behind them loads on the first call, so a
  * page that never calls them does not download it.
  *
- * A browser acceptance belongs to the device. A server that knows the
- * person should record the acceptance with the project's secret key instead.
+ * Without a verified identity an acceptance is recorded for the device. A
+ * server that knows the person should record it with the project's secret
+ * key instead.
  *
  * @example
  * ```ts
@@ -31,14 +32,19 @@ import type {
 import type * as LazyDocuments from './lazy-documents';
 import type { ConsentRuntime } from './types';
 
+export { createIdempotencyKey } from '../libs/subject-uuid';
+export { isInthApiError } from '../transports/v1/error';
+
 /** What {@link RuntimeDocuments.check} resolves with. */
 export interface DocumentCheck {
 	/** The release in force. Its `hash` names it in `accept`. */
 	document: V1DocumentCurrentOutput['document'];
 	/**
-	 * Whether this browser accepted it: it stored an acceptance of the same
-	 * hash, or of an earlier release while this one has
-	 * `requiresAcceptance: false`.
+	 * Whether this browser recorded an acceptance of this release, by its
+	 * hash, for the runtime's backend and current subject. An earlier release accepted
+	 * does not count: the browser cannot see the releases in between. Not
+	 * asking again when `document.requiresAcceptance` is `false` is the
+	 * app's call.
 	 */
 	accepted: boolean;
 }
@@ -61,15 +67,16 @@ export interface AcceptDocumentsOptions {
 export interface RuntimeDocuments {
 	/**
 	 * Read the release of `type` in force and whether this browser accepted
-	 * it. Rejects with an `InthApiError` with code `not_found` when the type
-	 * has no current release.
+	 * it. Rejects with an API error whose `code` is `not_found` when the
+	 * type has no current release: test it with `isInthApiError`.
 	 */
 	check: (type: string) => Promise<DocumentCheck>;
 	/**
 	 * Record that the visitor accepted one or more releases, by the `type`
 	 * and `hash` that `check` gave, and remember it in this browser. Uses
 	 * the runtime's subject ID, and makes one when there is none. Rejects
-	 * with an `InthApiError` when nothing was recorded; nothing is retried.
+	 * with an API error (`isInthApiError`) when nothing was recorded, and
+	 * retries only after a `subject_conflict`, under a new subject ID.
 	 */
 	accept: (
 		documents: V1DocumentAcceptanceItem | readonly V1DocumentAcceptanceItem[],
@@ -85,7 +92,12 @@ const load = async function load(): Promise<typeof LazyDocuments> {
 		return await loading;
 	} catch (error) {
 		loading = undefined;
-		throw error;
+		// The next call imports again, but a browser can answer with the
+		// same failure until the page reloads.
+		throw new Error(
+			'Inth documents: their code failed to load. Reload the page to try again.',
+			{ cause: error }
+		);
 	}
 };
 

@@ -129,6 +129,11 @@ const deferredTransport = function deferredTransport(
 				})();
 				return loading;
 			};
+			// Built once the state arrives, so the transport reports its
+			// backend before any request needs it. A request that needs it
+			// awaits it and sees a failure.
+			// oxlint-disable-next-line promise/prefer-await-to-then -- Started here, awaited by requests.
+			load().catch(() => undefined);
 			return {
 				async identify(user, subjectId) {
 					return await (await load()).identify?.(user, subjectId);

@@ -51,11 +51,6 @@ export type {
 	EventProperties,
 	RuntimeEventDispatcherOptions as GetEventDispatcherOptions,
 } from '@inth/sdk-core/events';
-export type {
-	AcceptDocumentsOptions,
-	DocumentCheck,
-	RuntimeDocuments,
-} from '@inth/sdk-core/runtime/documents';
 export { hosted } from '@inth/sdk-core/modes';
 export type { HostedMode } from '@inth/sdk-core/modes';
 export {

@@ -293,11 +293,13 @@ export const lazyHosted = function lazyHosted(
 	const assertDecisionInputs =
 		options.assertDecisionInputs ?? options.initUrl !== undefined;
 	return Object.assign(
-		(): KernelTransport => {
+		(context?: ProviderTransportContext): KernelTransport => {
 			const fetch = globalThis.fetch?.bind(globalThis);
+			const backend = { fetch, projectUrl: options.projectUrl };
+			context?.backend?.(backend);
 			return createLazyInitTransport(
 				createV1RecordTransport(
-					{ fetch, projectUrl: options.projectUrl },
+					backend,
 					assertDecisionInputs
 						? {
 								inputs: () => undefined,
@@ -322,10 +324,7 @@ export const lazyHosted = function lazyHosted(
 				}
 			);
 		},
-		{
-			kind: options.kind ?? ('hosted' as const),
-			projectUrl: options.projectUrl,
-		}
+		{ kind: options.kind ?? ('hosted' as const) }
 	);
 };
 
@@ -467,12 +466,14 @@ export const lazyBrowserManifest = function lazyBrowserManifest(
 					warm();
 				}
 			}
+			const backend = {
+				fetch,
+				projectUrl: options.projectUrl,
+				property: options.property,
+			};
+			context?.backend?.(backend);
 			return createLazyInitTransport(
-				createV1RecordTransport({
-					fetch,
-					projectUrl: options.projectUrl,
-					property: options.property,
-				}),
+				createV1RecordTransport(backend),
 				async () => {
 					initStarted = true;
 					// Not warmed: the manifest request goes out while the
@@ -494,7 +495,6 @@ export const lazyBrowserManifest = function lazyBrowserManifest(
 				}
 			);
 		},
-		options,
 		{ kind: 'manifest' as const }
 	);
 };

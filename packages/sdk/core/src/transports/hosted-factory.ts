@@ -11,7 +11,11 @@
 
 import type { KernelTransport } from '../types';
 import { hostedFactories } from './hosted-modes';
-import type { HostedModeFactory, HostedModeOptions } from './mode';
+import type {
+	HostedModeFactory,
+	HostedModeOptions,
+	ProviderTransportContext,
+} from './mode';
 import type { V1HostedTransportOptions } from './v1/hosted';
 
 /**
@@ -36,8 +40,9 @@ export const createHostedModeFactory = function createHostedModeFactory(
 		delete settings.headers;
 	}
 	const mode = Object.assign(
-		() =>
-			build({
+		(context?: ProviderTransportContext) => {
+			context?.backend?.(settings);
+			return build({
 				assertDecisionInputs:
 					settings.assertDecisionInputs ?? settings.initUrl !== undefined,
 				decisionInputs: settings.decisionInputs,
@@ -47,7 +52,8 @@ export const createHostedModeFactory = function createHostedModeFactory(
 				initialData: settings.initialData,
 				projectUrl: settings.projectUrl,
 				property: settings.property,
-			}),
+			});
+		},
 		settings,
 		{ kind: 'hosted' as const, type: 'hosted' as const }
 	);

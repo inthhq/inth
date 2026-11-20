@@ -313,15 +313,19 @@ const createManifestSource = function createManifestSource(
 const transportFrom = function transportFrom(
 	options: BrowserManifestOptions,
 	source: ManifestSource,
-	context: Pick<ProviderTransportContext, 'gppEnabled'> | undefined
+	context: Pick<ProviderTransportContext, 'backend' | 'gppEnabled'> | undefined
 ): KernelTransport {
 	// `''` is a real answer: a root-relative `manifestUrl` such as
 	// `/manifest` or an explicit empty backend means this origin.
-	const hosted = createV1HostedTransport({
+	const backend = {
 		fetch: options.fetch,
-		headers: options.headers,
 		projectUrl: source.projectUrl,
 		property: options.property,
+	};
+	context?.backend?.(backend);
+	const hosted = createV1HostedTransport({
+		...backend,
+		headers: options.headers,
 	});
 	// A local resolution makes no request, so nothing carries its
 	// journey; the saves that follow send none either.

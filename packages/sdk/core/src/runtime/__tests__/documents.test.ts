@@ -5,12 +5,14 @@
 import { v1DocumentAcceptancesInputSchema } from '@inth/sdk-schema/v1';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { testing } from '../../testing';
 import { hosted } from '../../transports/mode';
 import {
 	KEY,
 	LEGACY_SUBJECT,
 	PROJECT_URL,
 	SUBJECT,
+	v1Error,
 } from '../../transports/v1/__tests__/fixtures';
 import { isUuidV7 } from '../../transports/v1/routes';
 import { createRuntimeDocuments } from '../documents';
@@ -24,6 +26,7 @@ const EARLIER_HASH =
 
 let current = { hash: HASH, requiresAcceptance: true };
 let sent: Record<string, unknown>[] = [];
+let conflicts = 0;
 
 const backend: typeof globalThis.fetch = (input, init) => {
 	const { pathname } = new URL(String(input));
@@ -34,6 +37,10 @@ const backend: typeof globalThis.fetch = (input, init) => {
 			subjectId: string;
 		};
 		sent.push(body);
+		if (conflicts > 0) {
+			conflicts -= 1;
+			return Promise.resolve(v1Error(409, 'subject_conflict'));
+		}
 		return Promise.resolve(
 			Response.json({
 				acceptances: body.acceptances.map(({ hash, type }) => ({
@@ -67,6 +74,7 @@ beforeEach(() => {
 	localStorage.clear();
 	current = { hash: HASH, requiresAcceptance: true };
 	sent = [];
+	conflicts = 0;
 	runtime = createConsentRuntime({
 		mode: hosted({ fetch: backend, projectUrl: PROJECT_URL }),
 	});
@@ -91,18 +99,34 @@ describe('check', () => {
 		expect((await documents.check('terms_us')).accepted).toBe(true);
 	});
 
-	test.each([
-		[false, true],
-		[true, false],
-	])(
-		'an earlier release accepted, requiresAcceptance %s: accepted %s',
-		async (requiresAcceptance, accepted) => {
+	test.each([true, false])(
+		'an earlier release accepted does not count, requiresAcceptance %s',
+		async (requiresAcceptance) => {
 			await documents.accept({ hash: EARLIER_HASH, type: 'terms_us' });
 			current = { hash: HASH, requiresAcceptance };
 
-			expect((await documents.check('terms_us')).accepted).toBe(accepted);
+			const result = await documents.check('terms_us');
+
+			expect(result.accepted).toBe(false);
+			expect(result.document.requiresAcceptance).toBe(requiresAcceptance);
 		}
 	);
+
+	test('an older release accepted later keeps the newer one accepted', async () => {
+		await documents.accept({ hash: HASH, type: 'terms_us' });
+		await documents.accept({ hash: EARLIER_HASH, type: 'terms_us' });
+
+		expect((await documents.check('terms_us')).accepted).toBe(true);
+	});
+
+	test('says a testing() runtime has no backend', async () => {
+		runtime.dispose();
+		runtime = createConsentRuntime({ mode: testing() });
+
+		await expect(documents.check('terms_us')).rejects.toThrow(
+			'legal documents need a backend, and this runtime has none. A testing() or offline mode'
+		);
+	});
 });
 
 describe('accept', () => {
@@ -142,6 +166,25 @@ describe('accept', () => {
 		expect(isUuidV7(subjectId)).toBe(true);
 		expect(sent[1]?.subjectId).toBe(subjectId);
 		expect(runtime.kernel.getSnapshot().subject?.subjectId).toBe(subjectId);
+	});
+
+	test('moves to a new subject ID after a subject_conflict and sends the action again', async () => {
+		runtime.kernel.set.subjectId(SUBJECT);
+		conflicts = 1;
+
+		const answer = await documents.accept(
+			{ hash: HASH, type: 'terms_us' },
+			{ idempotencyKey: KEY }
+		);
+
+		expect(sent).toHaveLength(2);
+		expect(sent[0]).toMatchObject({ idempotencyKey: KEY, subjectId: SUBJECT });
+		expect(sent[1]?.idempotencyKey).toBe(KEY);
+		expect(sent[1]?.subjectId).not.toBe(SUBJECT);
+		expect(runtime.kernel.getSnapshot().subject?.subjectId).toBe(
+			sent[1]?.subjectId
+		);
+		expect(answer.subjectId).toBe(sent[1]?.subjectId);
 	});
 
 	test('adopts the subject ID the backend swapped a sub_ ID for', async () => {

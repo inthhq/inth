@@ -8,6 +8,7 @@
  *
  * @internal
  */
+import type { TransportBackend } from '../transports/mode';
 import type {
 	ConsentKernel,
 	HydrationRecords,
@@ -60,6 +61,12 @@ export interface InternalKernel extends ConsentKernel {
 	 * once the subject is no longer `from`.
 	 */
 	adoptSubject: (from: string, to: string) => Promise<void>;
+	/**
+	 * The backend this kernel's transport reported, for a kernel a runtime
+	 * built. `undefined` before it resolved one, and for a transport with no
+	 * backend.
+	 */
+	backend?: () => TransportBackend | undefined;
 	/** The ID {@link markProvisionalSubject} marked, `null` for none. */
 	getProvisionalSubject: () => string | null;
 	/**

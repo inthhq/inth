@@ -10,9 +10,11 @@ import {
 	readLegacySubjectId,
 	removeLegacySubjectId,
 } from '../../libs/legacy-subject-id';
+import { localStorageOf } from '../../libs/local-storage';
 import {
-	storageKeyFamilies,
+	DOCUMENT_ACCEPTANCES_STORAGE_KEY,
 	resolveStorageKeys,
+	storageKeyFamilies,
 } from '../../libs/storage-keys';
 import { generateUuidV7 } from '../../libs/subject-uuid';
 import type {
@@ -67,6 +69,22 @@ const RETRIES = 3;
 // up keeps it: its writes never reach storage, so a later mount still needs
 // its records. That holds one kernel per key until a handle for the key
 // writes or clears.
+/**
+ * The subject document acceptances were recorded for in this browser
+ * (`@inth/sdk/runtime/documents`). It keeps a visitor who accepted a
+ * document before any consent choice on the same subject after a reload.
+ */
+const acceptedSubjectId = function acceptedSubjectId(): string | undefined {
+	try {
+		const { subjectId } = JSON.parse(
+			localStorageOf()?.getItem(DOCUMENT_ACCEPTANCES_STORAGE_KEY) ?? '{}'
+		) as { subjectId?: unknown };
+		return typeof subjectId === 'string' && subjectId ? subjectId : undefined;
+	} catch {
+		return undefined;
+	}
+};
+
 /**
  * Exported for tests.
  *
@@ -733,6 +751,11 @@ export const mountPersistence = function mountPersistence(
 		}
 		if (previous !== undefined && previous === unusedSubjectId) {
 			unusedSubjectId = undefined;
+			// Document acceptances recorded for the ID stay with it: nothing
+			// follows it to the new one.
+			if (previous === acceptedSubjectId()) {
+				return;
+			}
 			followingSubject = true;
 			try {
 				kernel.events.emit({
@@ -817,6 +840,10 @@ export const mountPersistence = function mountPersistence(
 					snapshot.noticeDismissal)
 			) {
 				return [{ ...subject, subjectId: legacy }, false, 'legacy'];
+			}
+			const accepted = acceptedSubjectId();
+			if (accepted) {
+				return [{ ...subject, subjectId: accepted }, false];
 			}
 			return [{ ...subject, subjectId: generateUuidV7() }, true, 'new'];
 		}

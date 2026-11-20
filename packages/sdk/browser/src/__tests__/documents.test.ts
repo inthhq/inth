@@ -1,7 +1,9 @@
 /**
- * `client.documents` checks and accepts a document through the client's
- * backend, for the client's subject.
+ * A plain JavaScript app binds `@inth/sdk/runtime/documents` to its
+ * client's runtime: `check` and `accept` use the client's backend and
+ * subject.
  */
+import { createRuntimeDocuments } from '@inth/sdk-core/runtime/documents';
 import { hosted } from '@inth/sdk-core/transports';
 import { afterEach, expect, test, vi } from 'vitest';
 
@@ -47,10 +49,11 @@ test('accepts for the client subject, then checks as accepted', async () => {
 	const client = createConsentClient({
 		mode: hosted({ fetch, projectUrl: 'https://consent.example.com' }),
 	});
+	const documents = createRuntimeDocuments(() => client.runtime);
 
 	try {
-		await client.documents.accept({ hash: HASH, type: 'terms_us' });
-		const check = await client.documents.check('terms_us');
+		await documents.accept({ hash: HASH, type: 'terms_us' });
+		const check = await documents.check('terms_us');
 
 		expect(posted).toHaveLength(1);
 		expect(posted[0]?.subjectId).toBe(client.getSnapshot().subject?.subjectId);

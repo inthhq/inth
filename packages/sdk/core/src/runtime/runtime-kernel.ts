@@ -25,6 +25,7 @@ import {
 import type {
 	ProviderTransportContext,
 	ProviderTransportFactory,
+	TransportBackend,
 } from '../transports/mode';
 import type {
 	KernelConfig,
@@ -286,7 +287,11 @@ export const createRuntimeKernel = function createRuntimeKernel(
 	const i18nTranslations =
 		resolveRuntimeTranslations(options.i18n) ?? DEFAULT_TRANSLATIONS;
 
+	let backend: TransportBackend | undefined;
 	const transportContext: ProviderTransportContext = {
+		backend: (resolved) => {
+			backend = resolved;
+		},
 		consentCategories: options.consentCategories,
 		// The same test `start()` uses to mount GPP.
 		gppEnabled:
@@ -327,7 +332,7 @@ export const createRuntimeKernel = function createRuntimeKernel(
 			)
 		: {};
 
-	return createKernel({
+	const kernel = createKernel({
 		...prefetch,
 		consentCategories: options.consentCategories,
 		// Every declared vendor, from code or a resolved prefetch, makes its
@@ -383,4 +388,6 @@ export const createRuntimeKernel = function createRuntimeKernel(
 		translationOverrides: options.i18n?.messages,
 		transport,
 	});
+	kernel.backend = () => backend;
+	return kernel;
 };

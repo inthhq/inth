@@ -10,13 +10,17 @@
  *   the same-origin init route's decision assertion accepts it.
  * - A promise that resolves without a policy (the server gave up on the
  *   manifest) falls back to the init route.
+ * - Legal documents go to the backend the resolved state names.
  */
 import {
 	useActiveUI,
 	useConsent,
 	useModel,
+	useDocuments,
 	useSaveConsents,
 } from '@inth/react';
+import type { RuntimeDocuments } from '@inth/react';
+import { useEffect } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
@@ -68,6 +72,15 @@ const initResponse = () =>
 		location: { countryCode: 'DE', regionCode: null },
 		translations: { language: 'en', translations: { common: {} } },
 	});
+
+let documents: RuntimeDocuments | undefined;
+const DocumentsCapture = () => {
+	const bound = useDocuments();
+	useEffect(() => {
+		documents = bound;
+	}, [bound]);
+	return null;
+};
 
 describe('InthProvider: streamed state', () => {
 	test('the server render with a pending state shows no consent UI', async () => {
@@ -153,6 +166,50 @@ describe('InthProvider: streamed state', () => {
 			expect(String(fetchSpy.mock.calls[0]?.[0])).toContain(
 				'/api/inth/v1/consent/init'
 			);
+		} finally {
+			fetchSpy.mockRestore();
+		}
+	});
+
+	test('documents reach the backend the streamed state names', async () => {
+		// No save an earlier test queued replays and builds the transport.
+		localStorage.clear();
+		const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
+			Promise.resolve(
+				Response.json({
+					document: {
+						effectiveDate: '2026-11-18T00:00:00.000Z',
+						hash: 'sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
+						id: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+						isCurrent: true,
+						requiresAcceptance: true,
+						type: 'terms_us',
+						version: '1',
+					},
+				})
+			)
+		);
+		const { promise, resolve: resolveState } = deferred();
+		try {
+			const { getByTestId } = await render(
+				<InthProvider
+					persistence={false}
+					state={promise}
+				>
+					<Status />
+					<DocumentsCapture />
+				</InthProvider>
+			);
+			resolveState({ ...policyFixture(), ...sameOrigin });
+			await expect
+				.element(getByTestId('status'))
+				.toHaveTextContent('opt-in/banner/false');
+
+			await documents?.check('terms_us');
+
+			expect(fetchSpy.mock.calls.map(([url]) => String(url))).toEqual([
+				'/api/inth/v1/documents/terms_us/current',
+			]);
 		} finally {
 			fetchSpy.mockRestore();
 		}
