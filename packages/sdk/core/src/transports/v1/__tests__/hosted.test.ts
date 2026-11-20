@@ -15,6 +15,7 @@ import {
 	json,
 	LEGACY_SUBJECT,
 	PROJECT_URL,
+	RECORD,
 	savePayload,
 	stubFetch,
 	SUBJECT,
@@ -103,6 +104,33 @@ describe('init: GET /v1/consent/init', () => {
 		});
 	});
 
+	test('a server caller forwards only the init headers', async () => {
+		const { calls, fetch } = stubFetch(() => json(200, INIT_OUTPUT));
+		const transport = createV1HostedTransport({
+			fetch,
+			headers: {
+				'Accept-Language': 'de',
+				'cf-ipcountry': 'FR',
+				cookie: 'session=1',
+				'x-inth-country': 'DE',
+				'x-inth-gpc': '1',
+				'x-inth-region': 'BY',
+			},
+			projectUrl: PROJECT_URL,
+		});
+
+		await transport.init({ overrides: {}, user: null });
+
+		expect(calls[0]?.headers).toEqual({
+			accept: 'application/json',
+			'accept-language': 'de',
+			'cf-ipcountry': 'FR',
+			'x-inth-country': 'DE',
+			'x-inth-gpc': '1',
+			'x-inth-region': 'BY',
+		});
+	});
+
 	test('maps the answer as the current policy contract', async () => {
 		const { fetch } = stubFetch(() => json(200, INIT_OUTPUT));
 		const transport = createV1HostedTransport({
@@ -182,7 +210,7 @@ describe('assertDecisionInputs', () => {
 	test('a save without a token carries the decision init resolved', async () => {
 		const { calls, fetch } = stubFetch(
 			() => json(200, MATCHED),
-			() => json(200, { subjectId: SUBJECT })
+			() => json(200, { recordId: RECORD, subjectId: SUBJECT })
 		);
 		const transport = createV1HostedTransport({
 			assertDecisionInputs: true,
@@ -219,7 +247,9 @@ describe('assertDecisionInputs', () => {
 
 describe('inside a kernel', () => {
 	test('a stored sub_ ID is replaced by the UUID the backend answers with', async () => {
-		const { calls, fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
+		const { calls, fetch } = stubFetch(() =>
+			json(200, { recordId: RECORD, subjectId: SUBJECT })
+		);
 		const kernel = createKernel(
 			{
 				transport: createV1HostedTransport({ fetch, projectUrl: PROJECT_URL }),

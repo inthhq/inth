@@ -50,6 +50,9 @@ const PERMANENT_SAVE_CODES: ReadonlySet<string> = new Set<V1ErrorCode>([
  * else an
  * {@link ApiError} the kernel queues and retries.
  *
+ * A `401` is retried: the backend never refuses a save for its identity
+ * token, it leaves the link off.
+ *
  * @param label - Names the caller and route.
  * @param response - The response that is not ok. Its body is consumed.
  * @returns The error to throw.

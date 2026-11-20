@@ -8,11 +8,15 @@ import { describe, expect, test } from 'vitest';
 
 import { ApiError } from '../error';
 import { createV1ManifestTransport } from '../manifest';
-import { buildV1ConsentSessionReport } from '../session-report';
+import {
+	buildV1ConsentSessionReport,
+	reportV1ConsentSession,
+} from '../session-report';
 import {
 	bodyAt,
 	json,
 	PROJECT_URL,
+	RECORD,
 	savePayload,
 	stubFetch,
 	SUBJECT,
@@ -33,6 +37,11 @@ const MANIFEST = {
 	revision: 'rev-1',
 	schemaVersion: 2,
 } as unknown as ConsentManifest;
+
+const REPORT_INIT = {
+	location: { countryCode: null, regionCode: null },
+	translations: { language: 'en' },
+} as never;
 
 const JOURNEY = {
 	id: '3b241101-e2bb-4255-8caf-4136c566a962',
@@ -159,7 +168,9 @@ describe('the IAB vendor list', () => {
 
 describe('saves in manifest mode', () => {
 	test('assert the decision the manifest resolved', async () => {
-		const { calls, fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
+		const { calls, fetch } = stubFetch(() =>
+			json(200, { recordId: RECORD, subjectId: SUBJECT })
+		);
 		const transport = createV1ManifestTransport({
 			fetch,
 			projectUrl: PROJECT_URL,
@@ -182,11 +193,13 @@ describe('saves in manifest mode', () => {
 			region: null,
 		});
 		expect(bodyAt(calls, 0).fingerprint).toEqual(expect.any(String));
-		expect(result).toEqual({ ok: true, subjectId: SUBJECT });
+		expect(result).toEqual({ ok: true, recordId: RECORD, subjectId: SUBJECT });
 	});
 
 	test('drop the journey no request carried', async () => {
-		const { calls, fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
+		const { calls, fetch } = stubFetch(() =>
+			json(200, { recordId: RECORD, subjectId: SUBJECT })
+		);
 		const transport = createV1ManifestTransport({
 			fetch,
 			projectUrl: PROJECT_URL,
@@ -256,6 +269,39 @@ describe('POST /v1/consent/sessions', () => {
 		});
 	});
 
+	test.each([
+		[
+			'the x-inth-experiment header',
+			{ 'x-inth-experiment': 'banner-copy=b' },
+			'https://www.example.com/api/consent/init',
+		],
+		[
+			'the experiment query parameter',
+			{},
+			'https://www.example.com/api/consent/init?experiment=banner-copy%3Db',
+		],
+	])('reads the experiment arm from %s', async (_label, headers, url) => {
+		const { calls, fetch } = stubFetch(
+			() => new Response(null, { status: 202 })
+		);
+
+		await reportV1ConsentSession({
+			fetch,
+			headers,
+			init: REPORT_INIT,
+			inputs: { country: 'DE', gpc: false, region: null },
+			manifest: MANIFEST,
+			projectUrl: PROJECT_URL,
+			source: 'route',
+			url,
+		});
+
+		expect(bodyAt(calls, 0).experiment).toEqual({
+			arm: 'b',
+			id: 'banner-copy',
+		});
+	});
+
 	test('names the journey site property, in lowercase with no trailing dot', () => {
 		const report = buildV1ConsentSessionReport({
 			init: {
@@ -283,7 +329,7 @@ describe('POST /v1/consent/sessions', () => {
 		'%s reports nothing, and the save carries no journey',
 		async (_label, report) => {
 			const { calls, fetch } = stubFetch(() =>
-				json(200, { subjectId: SUBJECT })
+				json(200, { recordId: RECORD, subjectId: SUBJECT })
 			);
 			const transport = createV1ManifestTransport({
 				fetch,
@@ -304,7 +350,9 @@ describe('POST /v1/consent/sessions', () => {
 	);
 
 	test('a relative project URL reports nothing', async () => {
-		const { calls, fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
+		const { calls, fetch } = stubFetch(() =>
+			json(200, { recordId: RECORD, subjectId: SUBJECT })
+		);
 		const transport = createV1ManifestTransport({
 			fetch,
 			projectUrl: '/api/inth',

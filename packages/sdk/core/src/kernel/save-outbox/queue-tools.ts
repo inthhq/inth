@@ -23,6 +23,7 @@ import {
 } from '../../transports/save-rejection';
 import type { QueueTools } from './queue';
 import { pendingSave } from './store';
+import { toStoredPayload } from './stored-payload';
 import { supersededBy, withoutSuperseded, withSubjectId } from './supersession';
 
 /** @internal */
@@ -35,6 +36,7 @@ export const queueTools: QueueTools = {
 	optionalCategories: OPTIONAL_CONSENT_CATEGORIES,
 	pendingSave,
 	supersededBy,
+	toStoredPayload,
 	validateExplicitChoice,
 	warnInDevelopment,
 	withSubjectId,

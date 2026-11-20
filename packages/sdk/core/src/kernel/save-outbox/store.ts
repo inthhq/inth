@@ -26,6 +26,7 @@ import {
 } from '../../libs/storage-keys';
 import { decodeClearEpoch } from '../../modules/persistence/record-codec';
 import type { SavePayload } from '../../types';
+import { toStoredPayload, withoutStoredTokens } from './stored-payload';
 import type { PendingSaveEntry } from './supersession';
 
 /**
@@ -76,7 +77,7 @@ export interface SaveOutboxStore {
 }
 
 /**
- * A save as the outbox queues it.
+ * A save as the outbox queues it, without its identity token.
  *
  * @param now - When it was queued.
  * @internal
@@ -84,7 +85,11 @@ export interface SaveOutboxStore {
 export const pendingSave = (
 	payload: SavePayload,
 	now: number
-): PendingSaveEntry => ({ attempts: 0, payload, queuedAt: now });
+): PendingSaveEntry => ({
+	attempts: 0,
+	payload: toStoredPayload(payload),
+	queuedAt: now,
+});
 
 /**
  * Queues `payload` after the saves `store` holds, for the kernel's replay
@@ -103,7 +108,7 @@ export const enqueueSave = function enqueueSave(
 	return store.transact((tx) => {
 		const stored = tx.read('saves');
 		return tx.write('saves', [
-			...(Array.isArray(stored) ? stored : []),
+			...withoutStoredTokens(stored),
 			pendingSave(payload, now),
 		]);
 	});
@@ -200,8 +205,9 @@ const c15tClearEpoch = function c15tClearEpoch(storage: TextStorage): number {
  * The outbox store every tab of an origin shares: JSON arrays in
  * localStorage under {@link PENDING_SAVES_STORAGE_KEY} and
  * {@link SUBJECT_REASSIGNMENTS_STORAGE_KEY}. Every transaction first
- * appends c15t's lists to these and removes them, so the outbox replays
- * what a c15t page queued; `clear` removes c15t's lists too.
+ * appends c15t's lists to these, its saves without their identity tokens,
+ * and removes them, so the outbox replays what a c15t page queued; `clear`
+ * removes c15t's lists too.
  *
  * Every transaction holds one Web Lock, so two tabs cannot overwrite each
  * other's entries or replay one twice. Without
@@ -293,7 +299,10 @@ export const createBrowserOutboxStore = function createBrowserOutboxStore(
 						if (
 							!tx.write(slot, [
 								...(Array.isArray(own) ? own : []),
-								...adopted.map(markAdopted),
+								...(slot === 'saves'
+									? withoutStoredTokens(adopted)
+									: adopted
+								).map(markAdopted),
 							])
 						) {
 							continue;

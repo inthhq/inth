@@ -20,6 +20,7 @@ import {
 	KEY,
 	LEGACY_SUBJECT,
 	PROJECT_URL,
+	RECORD,
 	savePayload,
 	stubFetch,
 	SUBJECT,
@@ -35,7 +36,9 @@ const transportWith = (fetch: typeof globalThis.fetch, property?: string) =>
 
 describe('save: POST /v1/consent/records', () => {
 	test('sends the complete answer, the confirmed categories and the key', async () => {
-		const { calls, fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
+		const { calls, fetch } = stubFetch(() =>
+			json(200, { recordId: RECORD, subjectId: SUBJECT })
+		);
 
 		await transportWith(fetch).save(savePayload());
 
@@ -75,7 +78,9 @@ describe('save: POST /v1/consent/records', () => {
 	});
 
 	test('sends the identity fields', async () => {
-		const { calls, fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
+		const { calls, fetch } = stubFetch(() =>
+			json(200, { recordId: RECORD, subjectId: SUBJECT })
+		);
 
 		await transportWith(fetch).save(
 			savePayload({
@@ -95,7 +100,9 @@ describe('save: POST /v1/consent/records', () => {
 	});
 
 	test('builds a body the records schema accepts', async () => {
-		const { calls, fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
+		const { calls, fetch } = stubFetch(() =>
+			json(200, { recordId: RECORD, subjectId: SUBJECT })
+		);
 
 		await transportWith(fetch).save(
 			savePayload({
@@ -130,7 +137,9 @@ describe('save: POST /v1/consent/records', () => {
 	});
 
 	test('carries the journey as query parameters', async () => {
-		const { calls, fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
+		const { calls, fetch } = stubFetch(() =>
+			json(200, { recordId: RECORD, subjectId: SUBJECT })
+		);
 
 		await transportWith(fetch).save(
 			savePayload({
@@ -149,7 +158,9 @@ describe('save: POST /v1/consent/records', () => {
 	});
 
 	test('a vendor-only save confirms no category and still sends the answer', async () => {
-		const { calls, fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
+		const { calls, fetch } = stubFetch(() =>
+			json(200, { recordId: RECORD, subjectId: SUBJECT })
+		);
 
 		await transportWith(fetch).save(
 			savePayload({
@@ -175,7 +186,9 @@ describe('save: POST /v1/consent/records', () => {
 	});
 
 	test('a payload without a key gets one', async () => {
-		const { calls, fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
+		const { calls, fetch } = stubFetch(() =>
+			json(200, { recordId: RECORD, subjectId: SUBJECT })
+		);
 
 		await transportWith(fetch).save(savePayload({ idempotencyKey: undefined }));
 
@@ -183,7 +196,9 @@ describe('save: POST /v1/consent/records', () => {
 	});
 
 	test('sends the property without a trailing dot', async () => {
-		const { calls, fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
+		const { calls, fetch } = stubFetch(() =>
+			json(200, { recordId: RECORD, subjectId: SUBJECT })
+		);
 
 		await transportWith(fetch, 'www.example.com.').save(savePayload());
 
@@ -191,7 +206,9 @@ describe('save: POST /v1/consent/records', () => {
 	});
 
 	test('lowercases the property', async () => {
-		const { calls, fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
+		const { calls, fetch } = stubFetch(() =>
+			json(200, { recordId: RECORD, subjectId: SUBJECT })
+		);
 
 		await transportWith(fetch, 'WWW.Example.COM').save(savePayload());
 
@@ -202,10 +219,7 @@ describe('save: POST /v1/consent/records', () => {
 describe('save: the answer', () => {
 	test('returns the canonical subject ID for a stored sub_ ID', async () => {
 		const { calls, fetch } = stubFetch(() =>
-			json(200, {
-				link: { reason: 'unverified', stored: false },
-				subjectId: SUBJECT,
-			})
+			json(200, { recordId: RECORD, subjectId: SUBJECT })
 		);
 
 		const result = await transportWith(fetch).save(
@@ -216,15 +230,43 @@ describe('save: the answer', () => {
 		);
 
 		expect(bodyAt(calls, 0).subjectId).toBe(LEGACY_SUBJECT);
-		expect(result).toEqual({
-			link: { reason: 'unverified', stored: false },
-			ok: true,
-			subjectId: SUBJECT,
-		});
+		expect(result).toEqual({ ok: true, recordId: RECORD, subjectId: SUBJECT });
 	});
 
 	test.each([
-		['a sub_ subject ID', () => json(200, { subjectId: LEGACY_SUBJECT })],
+		[
+			{ stored: true, verifiedBy: 'identity_token' },
+			{ externalId: 'user_123', identityToken: 'token' },
+		],
+		[{ reason: 'unverified', stored: false }, { externalId: 'user_123' }],
+		[
+			{ reason: 'invalid_token', stored: false },
+			{ externalId: 'user_123', identityToken: 'stale' },
+		],
+	])(
+		'a save with an externalId succeeds with the link %o',
+		async (link, user) => {
+			const { fetch } = stubFetch(() =>
+				json(200, { link, recordId: RECORD, subjectId: SUBJECT })
+			);
+
+			const result = await transportWith(fetch).save(savePayload({ user }));
+
+			expect(result).toEqual({
+				link,
+				ok: true,
+				recordId: RECORD,
+				subjectId: SUBJECT,
+			});
+		}
+	);
+
+	test.each([
+		[
+			'a sub_ subject ID',
+			() => json(200, { recordId: RECORD, subjectId: LEGACY_SUBJECT }),
+		],
+		['no record ID', () => json(200, { subjectId: SUBJECT })],
 		['a page', () => new Response('<html>ok</html>', { status: 200 })],
 	])('retries an answer with %s', async (_label, answer) => {
 		const { fetch } = stubFetch(answer);
@@ -284,6 +326,8 @@ describe('save: the answer', () => {
 
 	test.each([
 		[400, 'invalid_request'],
+		// Never the identity token, which only leaves the link off.
+		[401, 'unauthorized'],
 		[429, 'rate_limited'],
 		[500, 'server_error'],
 		[502, 'bad_gateway'],
@@ -300,7 +344,9 @@ describe('save: the answer', () => {
 	});
 
 	test('reports the canonical ID a save answers for a stored sub_ ID', async () => {
-		const { fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
+		const { fetch } = stubFetch(() =>
+			json(200, { recordId: RECORD, subjectId: SUBJECT })
+		);
 		const seen: [string, string][] = [];
 		const transport = createV1RecordTransport({
 			fetch,

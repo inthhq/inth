@@ -5,6 +5,7 @@ import type { SavePayload } from '../../../types';
 export const PROJECT_URL = 'https://your-project.inth.app';
 export const SUBJECT = '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c';
 export const LEGACY_SUBJECT = 'sub_2VZxR7YmNpKq3WfLs8TgHd';
+export const RECORD = '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d';
 export const KEY = '0193e5a8-7c1e-7b7a-9d7e-2f0c9a3b4d5e';
 export const ACTION_AT = 1_763_467_200_000;
 

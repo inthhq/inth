@@ -93,9 +93,14 @@ const answerCategoryEntries = Object.fromEntries(
 >;
 
 /**
- * The subject's complete answer after an action: one receipt for every
- * category with an explicit value, each with the time and policy basis it
- * was confirmed under. `necessary` may be left out and counts as `true`.
+ * The subject's answer after an action: one receipt for every category with
+ * an explicit value, each with the time and policy basis it was confirmed
+ * under. `necessary` may be left out and counts as `true`.
+ *
+ * The backend merges an answer into the stored one: per category, the
+ * receipt with the newer `confirmedAt` wins, and a category the answer
+ * leaves out keeps its stored receipt. So an answer may be partial, such as
+ * a queued save a newer action partly superseded.
  */
 export const v1ConsentAnswerSchema = v.pipe(
 	plainObjectSchema,
@@ -143,9 +148,11 @@ const decisionAssertionEntries = {
 /**
  * Body of `POST /v1/consent/records`: one banner answer.
  *
- * `answer` is the complete answer after the action; `confirmed` names the
- * categories this action confirmed, each a key of `answer.categories`.
- * `externalId` is stored as a link only with a valid `identityToken`.
+ * `answer` is the answer after the action; `confirmed` names the categories
+ * this action confirmed, each a key of `answer.categories`, in no
+ * particular order. `externalId` is stored as a link only with a valid
+ * `identityToken`; a missing or invalid token leaves the link off and the
+ * save still succeeds.
  */
 export const v1ConsentRecordInputSchema = v.pipe(
 	v.object({
@@ -224,14 +231,19 @@ export const v1ConsentRecordInputSchema = v.pipe(
 	)
 );
 
-/** Whether the external ID sent with a save was stored as a link. */
+/**
+ * Whether the external ID sent with a save was stored as a link. A link left
+ * off is not an error: the save was recorded either way. `unverified` means
+ * the save carried no identity token, `invalid_token` one that did not
+ * verify.
+ */
 export const v1ConsentRecordLinkSchema = v.variant('stored', [
 	v.object({
 		stored: v.literal(true),
 		verifiedBy: v.literal('identity_token'),
 	}),
 	v.object({
-		reason: v.literal('unverified'),
+		reason: v.picklist(['unverified', 'invalid_token']),
 		stored: v.literal(false),
 	}),
 ]);
@@ -240,8 +252,13 @@ export const v1ConsentRecordLinkSchema = v.variant('stored', [
  * Answer of `POST /v1/consent/records`. `subjectId` is canonical: the client
  * stores it in place of a `sub_` ID.
  */
-export const v1ConsentRecordOutputSchema = v.looseObject({
+export const v1ConsentRecordOutputSchema = v.object({
 	link: v.optional(v1ConsentRecordLinkSchema),
+	recordId: v.pipe(
+		v.string(),
+		v.uuid('Record ID must be a UUID'),
+		v.description('ID of the event that recorded the save.')
+	),
 	subjectId: v1CanonicalSubjectIdSchema,
 });
 

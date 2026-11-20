@@ -139,14 +139,65 @@ describe('POST /v1/consent/records', () => {
 		expect(v.safeParse(v1ConsentRecordInputSchema, rest).success).toBe(false);
 	});
 
-	it('reads the canonical subject ID and the link from the answer', () => {
+	it('rejects an answer with a field besides categories', () => {
+		const result = v.safeParse(v1ConsentRecordInputSchema, {
+			...contractRecord,
+			answer: { ...contractRecord.answer, version: 3 },
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it('accepts a partial answer that leaves categories out', () => {
+		const result = v.safeParse(v1ConsentRecordInputSchema, {
+			...contractRecord,
+			answer: {
+				categories: {
+					measurement: contractRecord.answer.categories.measurement,
+				},
+			},
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it('reads epoch milliseconds for givenAt and confirmedAt', () => {
+		expect(
+			v.safeParse(v1ConsentRecordInputSchema, {
+				...contractRecord,
+				givenAt: '2026-11-18T00:00:00.000Z',
+			}).success
+		).toBe(false);
+	});
+});
+
+describe('POST /v1/consent/records answer', () => {
+	const RECORD = '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d';
+
+	it('reads subjectId and recordId', () => {
+		expect(
+			v.is(v1ConsentRecordOutputSchema, {
+				recordId: RECORD,
+				subjectId: SUBJECT,
+			})
+		).toBe(true);
+	});
+
+	it.each([
+		{ stored: true, verifiedBy: 'identity_token' },
+		{ reason: 'unverified', stored: false },
+		{ reason: 'invalid_token', stored: false },
+	])('reads the link %o', (link) => {
 		const result = v.parse(v1ConsentRecordOutputSchema, {
-			consentId: 'cns_1',
-			link: { reason: 'unverified', stored: false },
+			link,
+			recordId: RECORD,
 			subjectId: SUBJECT,
 		});
-		expect(result.subjectId).toBe(SUBJECT);
-		expect(result.link).toEqual({ reason: 'unverified', stored: false });
+		expect(result.link).toEqual(link);
+	});
+
+	it('rejects an answer without a recordId', () => {
+		expect(
+			v.safeParse(v1ConsentRecordOutputSchema, { subjectId: SUBJECT }).success
+		).toBe(false);
 	});
 });
 
