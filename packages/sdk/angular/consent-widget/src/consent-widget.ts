@@ -38,6 +38,7 @@ import { createPreferenceDraft } from '@inth/sdk/preference-draft';
 import {
 	resolveCategoryTitle,
 	resolveConsentPresentation,
+	resolveOptOutCopy,
 } from '@inth/sdk/surface-state';
 import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
 import managerStyles from '@inth/sdk/ui/styles/components/consent-manager';
@@ -103,6 +104,20 @@ type ChoiceCategory = Exclude<AllConsentNames, 'necessary'>;
 				</button>
 			</div>
 		}
+		@if (optOutState().honored) {
+			<p
+				[class]="optOutStatusStyle().className || ''"
+				[attr.style]="styleOf(optOutStatusStyle())"
+				role="status"
+				data-testid="consent-widget-opt-out-status"
+			>
+				{{
+					optOutState().via === 'signal'
+						? optOutCopy().statusSignal
+						: optOutCopy().statusRequest
+				}}
+			</p>
+		}
 		<div
 			[class]="accordionStyle().className || ''"
 			[attr.style]="styleOf(accordionStyle())"
@@ -112,7 +127,8 @@ type ChoiceCategory = Exclude<AllConsentNames, 'necessary'>;
 				@let name = consentType.name;
 				@let isOpen = openItems()[name] ?? false;
 				@let checked = isChecked(name);
-				@let restricted = isRestricted(name);
+				@let gpcLocked = isGpcLocked(name);
+				@let reason = restrictionReason(name);
 				@let title = titleOf(consentType);
 				<div
 					inthPreferenceItem
@@ -171,9 +187,7 @@ type ChoiceCategory = Exclude<AllConsentNames, 'necessary'>;
 								[attr.aria-label]="title"
 								[checked]="checked"
 								(checkedChange)="toggleConsent(name, $event)"
-								[attr.aria-describedby]="
-									restricted ? restrictionId(name) : null
-								"
+								[attr.aria-describedby]="reason ? restrictionId(name) : null"
 								[disabled]="isDisabled(consentType)"
 								[class]="toggleStyle().className || ''"
 								[attr.style]="styleOf(toggleStyle())"
@@ -193,14 +207,14 @@ type ChoiceCategory = Exclude<AllConsentNames, 'necessary'>;
 						</div>
 					</div>
 
-					@if (restricted) {
-						<p
+					@if (reason) {
+						<output
 							[id]="restrictionId(name)"
 							[class]="resolvedNoStyle() ? '' : accordion.restriction || ''"
 							[attr.data-testid]="'consent-widget-restriction-' + name"
 						>
-							Your saved choice is restricted by the current privacy settings.
-						</p>
+							{{ reason }}
+						</output>
 					}
 					<div
 						inth-preference-item-content
@@ -218,6 +232,7 @@ type ChoiceCategory = Exclude<AllConsentNames, 'necessary'>;
 							<section
 								inth-consent-vendor-list
 								[category]="name"
+								[hideHint]="gpcLocked"
 								[noStyle]="resolvedNoStyle()"
 							></section>
 						}
@@ -319,6 +334,12 @@ export class ConsentWidgetRoot {
 	/** @internal */
 	protected readonly translations = this.consent.copy;
 	/** @internal */
+	protected readonly optOutState = this.consent.optOutState;
+	/** @internal */
+	protected readonly optOutCopy = computed(() =>
+		resolveOptOutCopy(this.translations())
+	);
+	/** @internal */
 	protected readonly textDirection = computed(() =>
 		getTextDirection(this.consent.translations()?.language)
 	);
@@ -345,6 +366,10 @@ export class ConsentWidgetRoot {
 			},
 			this.resolvedNoStyle()
 		)
+	);
+	/** @internal */
+	protected readonly optOutStatusStyle = computed(() =>
+		this.#slot('consentWidgetOptOutStatus', managerStyles.optOutStatus)
 	);
 	/** @internal */
 	protected readonly footerStyle = computed(() =>
@@ -429,20 +454,47 @@ export class ConsentWidgetRoot {
 	}
 
 	/** @internal */
-	protected isDisabled(type: ConsentType): boolean {
-		return type.name === 'necessary' || (type.disabled ?? false);
-	}
-
-	/** @internal */
-	protected isRestricted(name: AllConsentNames): boolean {
+	protected isGpcLocked(name: AllConsentNames): boolean {
 		if (name === 'necessary') {
 			return false;
 		}
-		const category = name as ChoiceCategory;
+		const state = this.optOutState();
 		return (
-			this.consent.explicitChoice()?.categories[category]?.value === true &&
-			(this.consent.restrictions()[category]?.length ?? 0) > 0
+			(state.lock === 'gpc-active' && state.categories.includes(name)) ||
+			this.consent.restrictions()[name]?.includes('gpc') === true
 		);
+	}
+
+	/** @internal */
+	protected isDisabled(type: ConsentType): boolean {
+		return (
+			type.name === 'necessary' ||
+			(type.disabled ?? false) ||
+			this.isGpcLocked(type.name)
+		);
+	}
+
+	/** @internal */
+	protected restrictionReason(name: AllConsentNames): string | null {
+		if (name === 'necessary') {
+			return null;
+		}
+		if (this.isGpcLocked(name)) {
+			return this.optOutCopy().lockedByGpc;
+		}
+		const state = this.optOutState();
+		if (state.lock === 'held-by-account' && state.categories.includes(name)) {
+			return this.optOutCopy().lockedByAccount;
+		}
+		const category = name as ChoiceCategory;
+		const reasons = this.consent.restrictions()[category];
+		if (
+			this.consent.explicitChoice()?.categories[category]?.value === true &&
+			reasons?.some((reason) => reason !== 'opt-out')
+		) {
+			return 'Your saved choice is restricted by the current privacy settings.';
+		}
+		return null;
 	}
 
 	/** @internal */

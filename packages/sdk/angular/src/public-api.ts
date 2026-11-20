@@ -70,6 +70,8 @@ export {
 export {
 	resolveActionLabels,
 	resolveConsentPresentation,
+	resolveOptOutCopy,
+	resolveOptOutState,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
 } from '@inth/sdk/surface-state';
@@ -103,6 +105,8 @@ export type {
 	LegalLinks,
 	LocationResponse,
 	NonIABVendor,
+	OptOutLock,
+	OptOutVia,
 	PolicyRule,
 	PolicyScopeMode,
 	PreferenceControl,
@@ -112,6 +116,7 @@ export type {
 	ProviderTransportFactory,
 	ProviderTransportKind,
 	ResolvedConsentPresentation,
+	ResolvedOptOutState,
 	SavePayload,
 	SaveResult,
 	Translations,

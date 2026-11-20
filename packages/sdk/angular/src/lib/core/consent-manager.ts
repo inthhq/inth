@@ -56,9 +56,11 @@ import {
 	iabSurfaceActions,
 	pendingBootSnapshot,
 	policyNeedsIAB,
+	resolveOptOutState,
 	resolveSurfaceTranslations,
 	vendorsListedUnder,
 } from '@inth/sdk/surface-state';
+import type { ResolvedOptOutState } from '@inth/sdk/surface-state';
 import type { CompleteTranslations } from '@inth/sdk/translations';
 import type { Theme } from '@inth/sdk/ui/theme';
 
@@ -326,6 +328,10 @@ export class ConsentManager {
 	readonly promptRequirement: Signal<ConsentSnapshot['promptRequirement']>;
 	/** The notice dismissal record. */
 	readonly noticeDismissal: Signal<ConsentSnapshot['noticeDismissal']>;
+	/** The durable opt-out record, or `null`. */
+	readonly optOut: Signal<ConsentSnapshot['optOut']>;
+	/** Opt-out display state derived from the current snapshot. */
+	readonly optOutState: Signal<ResolvedOptOutState>;
 	/** GPC and other privacy signals. */
 	readonly privacySignals: Signal<ConsentSnapshot['privacySignals']>;
 	/** How the policy was resolved. */
@@ -453,6 +459,8 @@ export class ConsentManager {
 		this.effectivePermissions = field('effectivePermissions');
 		this.promptRequirement = field('promptRequirement');
 		this.noticeDismissal = field('noticeDismissal');
+		this.optOut = field('optOut');
+		this.optOutState = computed(() => resolveOptOutState(snapshot()));
 		this.privacySignals = field('privacySignals');
 		this.resolution = field('resolution');
 		this.policyRule = field('policyRule');
@@ -644,9 +652,13 @@ export class ConsentManager {
 				await draft.save(categories);
 				return { ok: true };
 			}
+			const input = type === 'all' ? 'all' : 'none';
+			if (this.#preferenceDraft) {
+				return this.#preferenceDraft.save({ input });
+			}
 			// No category list: the kernel narrows a bulk choice to its own
 			// choice scope, the categories the draft displays.
-			const pending = kernel.commands.save(type === 'all' ? 'all' : 'none');
+			const pending = kernel.commands.save(input);
 			// A bulk choice supersedes every staged edit.
 			draft.reset();
 			return pending;

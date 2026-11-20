@@ -6,6 +6,10 @@ import {
 } from '@inth/conformance/play/consent-widget';
 
 import {
+	storybookMode,
+	storybookOptOutPolicy,
+	storybookOptOutPolicyResolution,
+	storybookOptOutRecords,
 	storybookVendors,
 	storybookVendorStoredConsent,
 } from '../../storybook-consent-policy';
@@ -62,4 +66,60 @@ export const WithVendors: Story = {
 export const WithVendorsExpanded: Story = {
 	...WithVendors,
 	play: expandedVendors,
+};
+
+/** Durable opt-out honored by a visitor request; switches stay off and usable. */
+export const OptOutHonoredByRequest: Story = {
+	render: () => ({
+		applicationConfig: consentApplication({
+			options: {
+				...editableConsentOptions,
+				mode: storybookMode([storybookOptOutPolicy]),
+				prefetch: {
+					initialPolicyResolution: storybookOptOutPolicyResolution,
+					initialRecords: storybookOptOutRecords('request'),
+				},
+			},
+		}),
+		moduleMetadata: { imports: [ConsentWidget] },
+		template,
+	}),
+};
+
+/** Durable opt-out honored by an active GPC signal; restricted switches are locked off. */
+export const OptOutGpcLocked: Story = {
+	render: () => ({
+		applicationConfig: consentApplication({
+			options: {
+				...editableConsentOptions,
+				mode: storybookMode([storybookOptOutPolicy]),
+				overrides: { gpc: true },
+				prefetch: {
+					initialPolicyResolution: storybookOptOutPolicyResolution,
+					initialPrivacySignals: { gpc: true },
+					initialRecords: storybookOptOutRecords('gpc'),
+				},
+			},
+		}),
+		moduleMetadata: { imports: [ConsentWidget] },
+		template,
+	}),
+};
+
+/** Account-held opt-out; switches stay usable with the account notice below each row. */
+export const OptOutHeldByAccount: Story = {
+	render: () => ({
+		applicationConfig: consentApplication({
+			options: {
+				...editableConsentOptions,
+				mode: storybookMode([storybookOptOutPolicy]),
+				prefetch: {
+					initialPolicyResolution: storybookOptOutPolicyResolution,
+					initialRecords: storybookOptOutRecords('account'),
+				},
+			},
+		}),
+		moduleMetadata: { imports: [ConsentWidget] },
+		template,
+	}),
 };

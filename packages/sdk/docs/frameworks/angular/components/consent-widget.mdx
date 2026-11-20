@@ -34,9 +34,20 @@ The host element uses `display: contents`, so apply layout classes via
 consent UI. It lists `consentCategories` within the policy's scope, with
 `necessary` always enabled and locked.
 
-Switches initialize from the visitor's recorded choice (or preselected /
-opt-out defaults before a choice) and update a shared unsaved draft. Save
-records the draft; Accept and Reject record every category at once.
+Switches start off when an active durable opt-out or Global Privacy Control
+(GPC) signal restricts that category, even when a stored choice granted it.
+Otherwise they initialize from the visitor's recorded choice (or preselected
+or opt-out defaults before a choice) and update a shared unsaved draft. Save
+records the draft; Accept and Reject record every unlocked category at once.
+
+When a durable opt-out is held, the widget shows a status line
+(`role="status"`) above the category list: "Opt-out request honored" for a
+visitor request, or "Opt-out preference signal honored" when GPC recorded or
+enforces it. While GPC is active under a policy that maps it, the restricted
+switches stay off and disabled with a notice below each row, and Save Settings
+and Accept All skip locked categories. When an account holds the opt-out and
+GPC is off, the account notice appears below each row and the switches stay
+usable. Read the same derived state from `ConsentManager.optOutState()`.
 
 Declared vendors appear under their category with individual switches (not
 shown under IAB policies). If the policy changes while edits are unsaved, the
@@ -48,11 +59,15 @@ the stale draft until reviewed.
 - Category controls use `role="switch"` labelled by category title.
 - Category headers are buttons with `aria-expanded`.
 - The stale-policy warning uses `role="alert"`.
+- An honored opt-out renders a status line with `role="status"` above the
+  list, and a GPC or account lock notice renders as an `output` element linked
+  to its switch with `aria-describedby`.
 - The root sets `dir` from the active language.
 
 ## Style the widget
 
-`<inth-consent-widget>` reads `consentWidget`, `consentWidgetAccordion`,
-`consentWidgetFooter`, `consentWidgetFooterSubGroup` and `consentWidgetTag`
-theme slots. The root carries `data-testid="consent-widget-root"`, and each
-row carries `data-testid="consent-widget-accordion-item-<category>"`.
+`<inth-consent-widget>` reads `consentWidget`, `consentWidgetOptOutStatus`,
+`consentWidgetAccordion`, `consentWidgetFooter`,
+`consentWidgetFooterSubGroup` and `consentWidgetTag` theme slots. The root
+carries `data-testid="consent-widget-root"`, and each row carries
+`data-testid="consent-widget-accordion-item-<category>"`.
