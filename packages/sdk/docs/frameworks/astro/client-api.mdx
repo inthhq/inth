@@ -92,7 +92,8 @@ console warning that names the id.
 | Member | Does |
 | --- | --- |
 | `openDialog(kind?, tab?)` | Opens `'preferences'` (default) or `'iab'`. For `'iab'`, `tab` is `'purposes'` or `'vendors'` |
-| `client.closeDialog()` | Closes the open dialog. The banner comes back while the policy still owes a choice |
+| `optOut(opener?)` | Records an opt-out in one click and opens the confirmation view under an opt-out rule, or opens the preference dialog under other models. Also available as `client.optOut()` |
+| `client.closeDialog()` | Closes the open dialog or opt-out confirmation view. The banner comes back while the policy still owes a choice |
 | `preloadDialog()` | Downloads the dialog without opening it |
 
 `openDialog()` downloads and mounts the dialog island the first time. While

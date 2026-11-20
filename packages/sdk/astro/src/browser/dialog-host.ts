@@ -63,9 +63,15 @@ export const readDialogLegalLinks = function readDialogLegalLinks():
 export const readDialogDisableAnimation = function readDialogDisableAnimation(
 	kind: ConsentDialogKind
 ): boolean | undefined {
-	const value = document
-		.querySelector(`[data-inth-dialog-host="${kind}"]`)
-		?.getAttribute('data-disable-animation');
+	const value =
+		document
+			.querySelector(`[data-inth-dialog-host="${kind}"]`)
+			?.getAttribute('data-disable-animation') ??
+		(kind === 'preferences'
+			? document
+					.querySelector('[data-inth-opt-out-confirmation-host]')
+					?.getAttribute('data-disable-animation')
+			: null);
 	if (value === 'true' || value === 'false') {
 		return value === 'true';
 	}

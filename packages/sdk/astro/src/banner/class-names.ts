@@ -55,6 +55,7 @@ export const promptClassNames: PromptClassNames = {
 		'description',
 		'footer',
 		'header',
+		'optOutIcon',
 		'overlay',
 		'overlayEntering',
 		'overlayVisible',

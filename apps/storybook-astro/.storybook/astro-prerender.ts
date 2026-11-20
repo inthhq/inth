@@ -84,6 +84,7 @@ const COMPONENT_FILES: Record<string, string> = {
 	'consent-dialog-trigger': 'components/panel-link.astro',
 	'iab-consent-banner': 'components/iab-prompt.astro',
 	'iab-consent-dialog': 'components/iab-panel.astro',
+	'opt-out-confirmation': 'components/opt-out-confirmation.astro',
 };
 
 /**
@@ -166,14 +167,16 @@ const renderVariants = async function renderVariants(
 				iab,
 				policyRules,
 			});
-		const [storySnapshot, storyIABSnapshot] = await Promise.all([
-			snapshotOf([storybook.storybookPolicy]),
-			snapshotOf([storybook.storybookIABPolicy], {
-				cmpId: 160,
-				enabled: true,
-				endpoint: STORY_GVL_URL,
-			}),
-		]);
+		const [storySnapshot, storyIABSnapshot, storyOptOutSnapshot] =
+			await Promise.all([
+				snapshotOf([storybook.storybookPolicy]),
+				snapshotOf([storybook.storybookIABPolicy], {
+					cmpId: 160,
+					enabled: true,
+					endpoint: STORY_GVL_URL,
+				}),
+				snapshotOf([storybook.storybookOptOutPolicy]),
+			]);
 		const container = await experimental_AstroContainer.create();
 
 		const out: Record<string, PrerenderedVariant> = {};
@@ -187,9 +190,15 @@ const renderVariants = async function renderVariants(
 			const astroOptions: Record<string, unknown> = {
 				colorScheme: variant.options?.colorScheme ?? 'light',
 				consentCategories: variant.options?.consentCategories,
-				mode: mode.manifest({ snapshot: storySnapshot }),
+				mode: mode.manifest({
+					snapshot:
+						variant.options?.policy === 'opt-out'
+							? storyOptOutSnapshot
+							: storySnapshot,
+				}),
 				presentation: {
 					...storybook.storybookPresentation,
+					...variant.options?.presentation,
 					prompt: {
 						...storybook.storybookPresentation.prompt,
 						...variant.options?.presentation?.prompt,
@@ -211,7 +220,9 @@ const renderVariants = async function renderVariants(
 			// oxlint-disable-next-line no-await-in-loop -- See above.
 			const locals = await serverModule.resolveConsentContext({
 				fetch: storyFetch,
-				headers: new Headers(),
+				headers: new Headers(
+					variant.openOptOutConfirmation === 'signal' ? { 'sec-gpc': '1' } : {}
+				),
 				options: resolved,
 			});
 			const renderPart = async (

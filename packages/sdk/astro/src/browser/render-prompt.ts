@@ -21,6 +21,7 @@ import type {
 } from '@inth/sdk/engine';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import type { Theme } from '@inth/sdk/ui/theme';
+import { CPPA_OPT_OUT_ICON } from '@inth/sdk/ui/utils/opt-out-icon';
 
 import type { PromptClassNames } from '../banner/class-names';
 import { resolvePromptModel } from '../banner/prompt-model';
@@ -64,6 +65,31 @@ const readSlot = function readSlot(slot: HTMLElement): PromptSlotData {
 	};
 };
 
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+
+const createOptOutIcon = function createOptOutIcon(
+	className: string
+): SVGSVGElement {
+	const svg = document.createElementNS(SVG_NAMESPACE, 'svg');
+	svg.setAttribute('aria-hidden', 'true');
+	if (className) {
+		svg.setAttribute('class', className);
+	}
+	svg.setAttribute('focusable', 'false');
+	svg.setAttribute('viewBox', CPPA_OPT_OUT_ICON.viewBox);
+	for (const spec of CPPA_OPT_OUT_ICON.paths) {
+		const path = document.createElementNS(SVG_NAMESPACE, 'path');
+		path.setAttribute('d', spec.d);
+		path.setAttribute('fill', spec.fill);
+		if (spec.evenOdd) {
+			path.setAttribute('clip-rule', 'evenodd');
+			path.setAttribute('fill-rule', 'evenodd');
+		}
+		svg.append(path);
+	}
+	return svg;
+};
+
 const renderFooter = function renderFooter(
 	model: PromptModel,
 	props: PromptProps
@@ -78,20 +104,24 @@ const renderFooter = function renderFooter(
 					'data-testid': 'consent-banner-rights',
 					style: model.styles.rights,
 				},
-				model.rights.map(({ right, label }) =>
-					element(
-						'button',
-						{
-							class: model.classes.rightLink,
-							'data-action': 'right',
-							'data-inth-action': 'customize',
-							'data-right': right,
-							'data-testid': `consent-banner-right-link-${right}`,
-							style: model.styles.rightLink,
-							type: 'button',
-						},
-						[label]
-					)
+				model.rights.map(
+					({ action, label, optOutVariant, right, showOptOutIcon }) =>
+						element(
+							'button',
+							{
+								class: model.classes.rightLink,
+								'data-action': 'right',
+								'data-inth-action': action,
+								'data-opt-out-variant': optOutVariant,
+								'data-right': right,
+								'data-testid': `consent-banner-right-link-${right}`,
+								style: model.styles.rightLink,
+								type: 'button',
+							},
+							showOptOutIcon
+								? [createOptOutIcon(model.classes.optOutIcon), label]
+								: [label]
+						)
 				)
 			)
 		);

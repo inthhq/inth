@@ -1,5 +1,8 @@
 import type { ConsentRuntime } from '@inth/sdk/runtime';
-import { showConsentSurface } from '@inth/sdk/surface-actions';
+import {
+	closeOptOutConfirmation,
+	showConsentSurface,
+} from '@inth/sdk/surface-actions';
 
 /**
  * `close()` for the built-in surfaces, which render from the kernel's
@@ -13,6 +16,7 @@ import { showConsentSurface } from '@inth/sdk/surface-actions';
 export const closeDialogSurface = function closeDialogSurface(
 	runtime: ConsentRuntime
 ): void {
+	closeOptOutConfirmation(runtime.kernel);
 	if (runtime.kernel.getSnapshot().activeUI === 'dialog') {
 		showConsentSurface(runtime.kernel, 'none');
 	}

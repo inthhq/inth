@@ -20,3 +20,11 @@ export const Default: Story = {
 export const Dark: Story = {
 	render: () => renderAstroStory('consent-banner--dark'),
 };
+
+export const OptOutLink: Story = {
+	render: () => renderAstroStory('consent-banner--opt-out-link'),
+};
+
+export const PrivacyChoicesLink: Story = {
+	render: () => renderAstroStory('consent-banner--privacy-choices-link'),
+};

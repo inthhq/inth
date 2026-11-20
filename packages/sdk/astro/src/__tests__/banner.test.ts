@@ -602,14 +602,19 @@ describe('<ConsentBanner /> under a notice prompt', () => {
 		)?.[0];
 		expect(optOutButton).toBeDefined();
 		// An underlined button keeps acknowledgement as the primary action in the
-		// row. It opens the preference center through the same delegated
-		// handler as customize.
+		// row. It records the opt-out in one click through the delegated handler.
 		expect(optOutButton).toContain('data-action="right"');
-		expect(optOutButton).toContain('data-inth-action="customize"');
+		expect(optOutButton).toContain('data-inth-action="opt-out"');
+		expect(optOutButton).toContain('data-opt-out-variant="do-not-sell"');
 		expect(optOutButton).toContain(bannerStyles.rightLink);
 		expect(optOutButton).not.toContain('data-variant=');
 		expect(optOutButton).not.toContain('data-mode=');
 		expect(html).toContain('Do Not Sell or Share My Personal Information');
+		expect(
+			new JSDOM(html).window.document.querySelector(
+				'[data-testid="consent-banner-right-link-opt-out"] svg'
+			)
+		).toBeNull();
 		expect(html).toContain('data-action="dismiss"');
 		expect(html).toContain('data-inth-action="dismiss"');
 		// The only button leads, as it does in the React and Svelte banners.
@@ -652,6 +657,53 @@ describe('<ConsentBanner /> under a notice prompt', () => {
 				html
 			)?.groups?.text;
 		expect(dismiss).toBe('OK');
+	});
+
+	it('renders the Privacy Choices title with the decorative CPPA icon for both Privacy Choices variants', async () => {
+		for (const [variant, title] of [
+			['privacy-choices', 'Your Privacy Choices'],
+			['california-privacy-choices', 'Your California Privacy Choices'],
+		] as const) {
+			// oxlint-disable-next-line no-await-in-loop -- Small two-variant check.
+			const locals = await buildLocals({
+				mode: testingMode({
+					policy: [
+						{ ...testRule, id: 'notice', model: 'opt-out', prompt: 'notice' },
+					],
+				}),
+				presentation: { optOutLink: variant },
+			});
+			// oxlint-disable-next-line no-await-in-loop -- Small two-variant check.
+			const html = await render(locals);
+			const link = new JSDOM(html).window.document.querySelector(
+				'[data-testid="consent-banner-right-link-opt-out"]'
+			);
+			expect(link?.getAttribute('data-inth-action')).toBe('opt-out');
+			expect(link?.getAttribute('data-opt-out-variant')).toBe(
+				'privacy-choices'
+			);
+			expect(link?.textContent?.trim()).toBe(title);
+			const icon = link?.querySelector('svg');
+			expect(icon).not.toBeNull();
+			expect(icon?.getAttribute('aria-hidden')).toBe('true');
+
+			// oxlint-disable-next-line no-await-in-loop -- Small two-variant check.
+			const footerLinkHtml = await container.renderToString(ConsentDialogLink, {
+				locals: { inth: locals },
+				props: { right: 'opt-out' },
+			});
+			const footerLink = new JSDOM(
+				footerLinkHtml
+			).window.document.querySelector('[data-testid="consent-dialog-trigger"]');
+			expect(footerLink?.getAttribute('data-inth-action')).toBe('opt-out');
+			expect(footerLink?.getAttribute('data-opt-out-variant')).toBe(
+				'privacy-choices'
+			);
+			expect(footerLink?.textContent?.trim()).toBe(title);
+			expect(
+				footerLink?.querySelector('svg')?.getAttribute('aria-hidden')
+			).toBe('true');
+		}
 	});
 
 	it('renders no rights group when the prompt already covers them', async () => {

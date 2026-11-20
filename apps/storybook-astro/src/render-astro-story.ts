@@ -25,6 +25,9 @@ import prerendered from 'virtual:inth-astro-prerendered';
 import {
 	storybookIABPolicy,
 	storybookMode,
+	storybookOptOutPolicy,
+	storybookOptOutRecords,
+	storybookOptOutPolicyResolution,
 	storybookPolicy,
 } from '../../storybook-consent-policy';
 import { requireStoryVariant } from './story-variants';
@@ -33,6 +36,7 @@ import type { AstroUIAdapter } from './story-variants';
 const DIALOG_HOST_ID = 'inth-dialog-host';
 
 const registered = new Set<string>();
+let activeStoryPolicy: 'default' | 'opt-out' = 'default';
 
 // Every story resolves its policy in the browser when it inits again, such as
 // when its dialog opens: the IAB rule when the story turns IAB on, else the
@@ -41,11 +45,19 @@ const registered = new Set<string>();
 const storyModes = {
 	default: storybookMode([storybookPolicy]),
 	iab: storybookMode([storybookIABPolicy]),
+	optOut: storybookMode([storybookOptOutPolicy]),
 };
 registerTransport(() =>
 	Object.assign(
-		(context: Parameters<typeof storyModes.default>[0]) =>
-			(context.iabEnabled ? storyModes.iab : storyModes.default)(context),
+		(context: Parameters<typeof storyModes.default>[0]) => {
+			if (context.iabEnabled) {
+				return storyModes.iab(context);
+			}
+			if (activeStoryPolicy === 'opt-out') {
+				return storyModes.optOut(context);
+			}
+			return storyModes.default(context);
+		},
 		{ kind: 'offline' as const }
 	)
 );
@@ -144,6 +156,7 @@ export const renderAstroStory = function renderAstroStory(
 	}
 
 	resetPage();
+	activeStoryPolicy = variant.options?.policy ?? 'default';
 	registerAdapters(variant.ui ?? 'svelte');
 	if (variant.options?.iab) {
 		registerIAB({
@@ -160,8 +173,29 @@ export const renderAstroStory = function renderAstroStory(
 
 	// The banner reads its kernel config off `window` exactly as it does on
 	// a server-rendered page, so it must be there before `boot()` runs.
-	(window as unknown as Record<string, unknown>).__inthAstroConfig =
-		entry.config;
+	const baseConfig =
+		entry.config && typeof entry.config === 'object'
+			? (entry.config as Record<string, unknown>)
+			: {};
+	const config =
+		variant.openOptOutConfirmation === 'signal'
+			? {
+					...baseConfig,
+					initialGpc: true,
+					initialPolicyResolution:
+						baseConfig.initialPolicyResolution ??
+						storybookOptOutPolicyResolution,
+					initialRecords: storybookOptOutRecords('gpc'),
+				}
+			: variant.openOptOutConfirmation === 'request'
+				? {
+						...baseConfig,
+						initialPolicyResolution:
+							baseConfig.initialPolicyResolution ??
+							storybookOptOutPolicyResolution,
+					}
+				: baseConfig;
+	(window as unknown as Record<string, unknown>).__inthAstroConfig = config;
 
 	if (variant.dark) {
 		document.documentElement.classList.add('inth-dark');
@@ -174,6 +208,9 @@ export const renderAstroStory = function renderAstroStory(
 		const client = boot(entry.options as Parameters<typeof boot>[0], extension);
 		if (variant.openDialog) {
 			void client.openDialog(variant.openDialog);
+		}
+		if (variant.openOptOutConfirmation) {
+			void client.optOut();
 		}
 	});
 
