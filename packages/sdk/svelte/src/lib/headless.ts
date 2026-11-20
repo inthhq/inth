@@ -8,17 +8,22 @@ export {
 	resolveActionLabels,
 	resolveIABCopy,
 	resolveOptOutCopy,
+	resolveOptOutLink,
 	resolveOptOutState,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
 } from '@inth/sdk/engine';
 export type {
+	OptOutLinkIcon,
+	OptOutLinkVariant,
 	OptOutLock,
+	OptOutResult,
 	OptOutVia,
 	PreferenceControl,
 	PresentationAction,
 	PromptCopy,
 	ResolvedIABCopy,
+	ResolvedOptOutLink,
 	ResolvedOptOutState,
 } from '@inth/sdk/engine';
 export { focusTrap } from './actions/focus-trap';

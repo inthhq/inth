@@ -22,8 +22,10 @@ import type {
 	KernelActiveUI,
 	KernelIABState,
 	Model,
+	OptOutResult,
 	ResolvedVendor,
 	SaveResult,
+	SaveUISource,
 } from '@inth/sdk/engine';
 import type { createPreferenceDraft } from '@inth/sdk/preference-draft';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
@@ -31,6 +33,7 @@ import {
 	hasConsentPreferences,
 	hasConsentUI,
 	isSnapshotVendorAllowed,
+	optOutConsentSurface,
 	saveConsentSurface,
 	showConsentSurface,
 } from '@inth/sdk/surface-actions';
@@ -196,6 +199,13 @@ export interface ConsentManagerState extends Pick<
 	 */
 	isVendorAllowed: (vendorId: string) => boolean;
 	dismissNotice: () => Promise<unknown>;
+	/**
+	 * Record an opt-out in one click and open `OptOutConfirmation` under an
+	 * opt-out policy. Under other policy models, open the preference dialog.
+	 */
+	requestOptOut: (context?: {
+		uiSource?: SaveUISource;
+	}) => Promise<OptOutResult>;
 	saveConsents: (type: SaveType) => Promise<void>;
 	setActiveUI: (ui: ActiveUI, options?: { force?: boolean }) => void;
 	setConsent: (name: AllConsentNames, value: boolean) => void;
@@ -342,6 +352,9 @@ const createConsentState = function createConsentState(
 		},
 		dismissNotice() {
 			return getKernel().commands.dismissNotice();
+		},
+		requestOptOut(context?: { uiSource?: SaveUISource }) {
+			return optOutConsentSurface(getKernel(), context);
 		},
 		get iab() {
 			return options.getIAB();
@@ -603,6 +616,9 @@ export const getHeadlessConsent = function getHeadlessConsent() {
 		},
 		openDialog() {
 			consent.setActiveUI('dialog');
+		},
+		optOut(context?: { uiSource?: SaveUISource }) {
+			return consent.requestOptOut(context);
 		},
 		async performAction(
 			action: 'accept' | 'reject' | 'customize' | 'dismiss' | 'save'

@@ -16,6 +16,7 @@
 	} from '@inth/sdk/surface-actions';
 	import {
 		resolveActionLabels,
+		resolveOptOutLink,
 		resolvePreferenceControlLabels,
 		resolvePromptCopy,
 	} from '@inth/sdk/surface-state';
@@ -39,6 +40,7 @@
 	import { useBannerVisibility } from '../use-banner-visibility.svelte';
 	import ConsentButton from './action-button.svelte';
 	import Branding from './branding.svelte';
+	import OptOutIcon from './icons/opt-out-icon.svelte';
 	import InlineLegalLinks from './inline-legal-links.svelte';
 	import Overlay from './overlay.svelte';
 	import PolicyActionsRenderer from './policy-actions-renderer.svelte';
@@ -240,8 +242,11 @@
 		)
 	);
 
-	// A right control opens the preference center without recording a choice.
-	const openPreferences = function openPreferences() {
+	const onRightClick = function onRightClick(right: string) {
+		if (right === 'opt-out') {
+			void consent.state.requestOptOut({ uiSource: 'banner' });
+			return;
+		}
 		consent.state.setActiveUI('dialog');
 	};
 
@@ -312,6 +317,9 @@
 	const resolvedDescription = $derived(description ?? promptCopy.description);
 	const actionLabels = $derived(resolveActionLabels(translations));
 	const rightLabels = $derived(resolvePreferenceControlLabels(translations));
+	const optOutLink = $derived(
+		resolveOptOutLink(translations, presentation.optOutLink)
+	);
 	// Acknowledgement records no category choice.
 	const resolvedDismissText = $derived(
 		dismissButtonText ?? actionLabels.dismiss
@@ -424,14 +432,24 @@
 											class={rightLinkStyle.className || ''}
 											style={toStyleAttributeValue(rightLinkStyle.style)}
 											data-action="right"
+											data-opt-out-variant={right === 'opt-out'
+												? optOutLink.variant
+												: undefined}
 											data-right={right}
 											data-inth-rights={consent.snapshot.policyRule.rights.join(
 												' '
 											)}
 											data-testid={`consent-banner-right-link-${right}`}
-											onclick={openPreferences}
+											onclick={() => onRightClick(right)}
 										>
-											{rightLabels[right]}
+											{#if right === 'opt-out' && optOutLink.variant === 'privacy-choices'}
+												<OptOutIcon
+													class={noStyle ? '' : styles.optOutIcon || ''}
+												/>
+											{/if}
+											{right === 'opt-out'
+												? optOutLink.label
+												: rightLabels[right]}
 										</button>
 									{/each}
 								</div>

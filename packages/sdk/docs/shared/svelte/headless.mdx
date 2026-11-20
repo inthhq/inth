@@ -44,6 +44,7 @@ renders the provider.
 | `activeUI` | `'banner'`, `'dialog'` or `'none'`. |
 | `performAction(action)` | `accept`, `reject`, `dismiss`, `save` or `customize`. Customize opens the dialog. |
 | `openBanner()`, `openDialog()`, `closeUI()` | Show or hide a surface. |
+| `optOut()` | Record an opt-out in one click and open `OptOutConfirmation` under an opt-out policy, or open the preference dialog under other models. |
 | `saveCustomPreferences()` | Record the dialog's draft. |
 
 Render from `actionGroups` or `orderedActions` rather than a fixed list. A
@@ -56,7 +57,9 @@ which `@inth/svelte` exports. Pass them
 title, description and button labels in the active language, with English for
 any missing key. Under a notice, `resolvePromptCopy` reads the
 notice copy and `banner.primaryActions` contains `dismiss`.
-`resolvePreferenceControlLabels` labels an opt-out or preferences button.
+`resolvePreferenceControlLabels` labels a preferences button, and
+`resolveOptOutLink` resolves the statutory opt-out link title and icon marker
+for `presentation.optOutLink`.
 
 ## Build your own preferences
 

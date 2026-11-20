@@ -502,6 +502,21 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 		button.click();
 		await settle();
 	};
+	const openPreferencesFromTrigger = async () => {
+		await click('consent-dialog-trigger');
+		if (kernel.getSnapshot().activeUI !== 'dialog') {
+			await vi.waitFor(() => {
+				if (
+					!document.querySelector(
+						'[data-testid="opt-out-confirmation-preferences-link"]'
+					)
+				) {
+					throw new Error('Opt-out confirmation did not mount');
+				}
+			});
+			await click('opt-out-confirmation-preferences-link');
+		}
+	};
 	return {
 		baseline,
 		async dispose() {
@@ -539,7 +554,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 					) {
 						await click('consent-banner-accept-button');
 					} else {
-						await click('consent-dialog-trigger');
+						await openPreferencesFromTrigger();
 						await click('consent-widget-footer-accept-all-button');
 					}
 					break;
@@ -551,7 +566,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 					) {
 						await click('consent-banner-reject-button');
 					} else {
-						await click('consent-dialog-trigger');
+						await openPreferencesFromTrigger();
 						await click('consent-widget-reject-button');
 					}
 					break;
@@ -559,7 +574,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 					// The trigger hides while the dialog is open; a save under a
 					// notice or none rule leaves the dialog open.
 					if (kernel.getSnapshot().activeUI !== 'dialog') {
-						await click('consent-dialog-trigger');
+						await openPreferencesFromTrigger();
 					}
 					await click('consent-widget-footer-save-button');
 					break;
@@ -621,11 +636,11 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 					updatePresentation?.(presentation);
 					break;
 				case 'open-preferences':
-					await click(
-						operation.via === 'trigger'
-							? 'consent-dialog-trigger'
-							: 'consent-dialog-link'
-					);
+					if (operation.via === 'trigger') {
+						await openPreferencesFromTrigger();
+					} else {
+						await click('consent-dialog-link');
+					}
 					break;
 				case 'reload':
 					cleanup?.();

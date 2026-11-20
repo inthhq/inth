@@ -18,3 +18,4 @@
 export { default as ConsentDialogPanel } from './components/panel.svelte';
 export type { ConsentDialogProps } from './components/panel-props';
 export { default as ConsentRuntimeProvider } from './components/runtime-provider.svelte';
+export { default as OptOutConfirmationPanel } from './components/opt-out-confirmation.svelte';

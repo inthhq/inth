@@ -14,6 +14,7 @@
 	import { DIALOG_SHEETS } from '../dialog-sheets';
 	import { Dialog, Portal } from '../primitives';
 	import Branding from './branding.svelte';
+	import DeferredOptOutConfirmation from './deferred-opt-out-confirmation.svelte';
 	import InlineLegalLinks from './inline-legal-links.svelte';
 	import type { ConsentDialogProps } from './panel-props';
 	import ConsentDialogTrigger from './panel-trigger.svelte';
@@ -30,7 +31,11 @@
 		// A `none` rule that grants the preferences right still opens here.
 		models = ['opt-in', 'opt-out', 'iab', 'none'] as Model[],
 		class: className,
-	}: ConsentDialogProps = $props();
+		embedOptOutConfirmation = true,
+	}: ConsentDialogProps & {
+		/** @internal */
+		embedOptOutConfirmation?: boolean;
+	} = $props();
 
 	const consent = getConsentContext();
 	const theme = getThemeContext();
@@ -167,6 +172,14 @@
 
 {#if triggerProps}
 	<ConsentDialogTrigger {...triggerProps} />
+{/if}
+
+{#if embedOptOutConfirmation}
+	<DeferredOptOutConfirmation
+		embedded
+		noStyle={localNoStyle}
+		disableAnimation={localDisableAnimation}
+	/>
 {/if}
 
 <Dialog.Root

@@ -66,8 +66,14 @@ dismiss button and its own title and description from the `noticeTitle` and
 `noticeDescription` translations. Dismissing a notice records the dismissal,
 not a grant.
 
-When the policy grants visitor rights, such as opting out of sale, the banner
-shows each one as a text button that opens the preference dialog.
+When the policy grants the `opt-out` right, the banner shows an underlined
+opt-out link. Under an opt-out policy, activating it records the opt-out in one
+click and opens `OptOutConfirmation` (rendered lazily by `ConsentDialog` or a
+standalone `OptOutConfirmation`). Set `presentation.optOutLink` on
+`InthProvider` to `'do-not-sell'`, `'privacy-choices'`, or
+`'california-privacy-choices'`; the two "Privacy Choices" forms always render
+with the California Privacy Protection Agency opt-out icon. When only the
+`preferences` right is shown, the link opens `ConsentDialog`.
 
 Accept and Reject record the choice and close the banner in the same task.
 The backend request runs after; a failed request is retried and does not
