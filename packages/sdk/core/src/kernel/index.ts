@@ -8,12 +8,13 @@
  * - `init-lifecycle.ts` — start, `init()` attempts, retry and fencing, the
  *                         `/v1/consent/init` fold, the deadline timer, and the one
  *                         visibility and one online listener.
- * - `choice.ts`         — `save()`, `dismissNotice()` and drafts; hands each
- *                         recorded action to the save outbox.
+ * - `choice.ts`         — `save()`, `optOut()`, `optIn()`, `dismissNotice()`
+ *                         and drafts; hands each recorded action and opt-out
+ *                         act to the save outbox.
  * - `records.ts`        — the records boundary: validation, `hydrate()`,
  *                         server-record merge, `identify()`, subject id.
- * - `save-outbox/`      — sending recorded choices, the replay queue and
- *                         its storage seam.
+ * - `save-outbox/`      — sending recorded choices and opt-out acts, the
+ *                         replay queues and their storage seam.
  * - `setters.ts`        — the remaining `kernel.set.*` inputs.
  *
  * They all write through `runtime.ts`, the snapshot cell, which derives
@@ -30,10 +31,12 @@
  * - Only `commands.save()` records an explicit choice. Hydration,
  *   initialization, setters, elapsed time and privacy signals change
  *   permissions at most, never the choice. A durable opt-out record is
- *   created by `commands.optOut()`, or automatically when a live kernel
- *   observes an active GPC signal under a matched policy with a deny list,
- *   and is lifted by `commands.optIn()` or a save that grants a denied
- *   category.
+ *   created by `commands.optOut()`, by a refusing `commands.save()` under
+ *   an opt-out rule, or automatically when a live kernel observes an active
+ *   GPC signal under a matched policy with a deny list, and is lifted by
+ *   `commands.optIn()` or a save that grants a denied category. Each local
+ *   opt-out act goes through the save outbox, and authoritative backend
+ *   opt-out answers replace the local record via `opt-out:synced`.
  * - Timers and browser listeners are installed by lifecycle commands
  *   (`init`, `hydrate`) and removed by `dispose()`.
  * - Subscribers and event listeners are notified synchronously, in commit
@@ -47,6 +50,7 @@ import { createDispatcher } from './dispatch';
 import { createEventBus } from './events';
 import { createInitLifecycle } from './init-lifecycle';
 import type { InternalKernel } from './internals';
+import { buildOptOutPayload } from './opt-out';
 import { createRecordsBoundary } from './records';
 import { createRuntime } from './runtime';
 import { createBrowserOutboxStore, createSaveOutbox } from './save-outbox';
@@ -145,6 +149,25 @@ export const createKernel = function createKernel(
 	};
 	eventBus.on('choice:recorded', noteRecorded);
 	eventBus.on('vendors:recorded', noteRecorded);
+	eventBus.on('opt-out:recorded', (event) => {
+		if (transport?.optOut) {
+			noteRecorded(event);
+		}
+		if (event.optOut.method === 'gpc') {
+			void outbox.sendOptOut(
+				buildOptOutPayload(
+					event.snapshot,
+					event.optOut,
+					event.actionAt,
+					event.uiSource
+				),
+				{
+					actVersion: runtime.getOptOutActVersion(),
+					generation: runtime.getGeneration(),
+				}
+			);
+		}
+	});
 	eventBus.on('notice:dismissed', (event) => {
 		if (saving) {
 			noteRecorded(event);

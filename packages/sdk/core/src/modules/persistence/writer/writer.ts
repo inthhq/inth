@@ -359,7 +359,9 @@ export const createPersistenceWriter = function createPersistenceWriter(
 	});
 	const optOutWrites = createWriteScheduler(() => {
 		const subjectOnly = !state.optOutRecorded;
+		const synced = state.optOutSynced === true;
 		state.optOutRecorded = false;
+		state.optOutSynced = false;
 		const snapshot = kernel.getSnapshot();
 		const at = now();
 		const read = tools.read(storageConfig, at);
@@ -372,7 +374,8 @@ export const createPersistenceWriter = function createPersistenceWriter(
 				ours,
 				read.records.optOut ?? null,
 				subjectOnly,
-				changedSinceSeen('optOut', read)
+				changedSinceSeen('optOut', read),
+				synced
 			)
 		) {
 			return;

@@ -12,6 +12,7 @@ const EVENT_TYPES = [
 	'notice:dismissed',
 	'opt-out:recorded',
 	'opt-out:lifted',
+	'opt-out:synced',
 	'overrides:set',
 	'user:identified',
 	'subject:resolved',
@@ -189,6 +190,19 @@ export function kernelEventToDevToolsEvent(
 				},
 				id,
 				message: 'Opt-out lifted',
+				timestamp,
+				type: event.type,
+			};
+		case 'opt-out:synced':
+			return {
+				data: {
+					...snapshotData(event.snapshot),
+					optOut: event.optOut,
+				},
+				id,
+				message: event.optOut
+					? 'Opt-out synced from backend'
+					: 'Opt-out cleared from backend',
 				timestamp,
 				type: event.type,
 			};

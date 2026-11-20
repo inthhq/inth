@@ -307,6 +307,20 @@ export const withJourney = function withJourney(
 				subjectId
 			);
 	}
+	if (transport.optOut) {
+		wrapped.optOut = (payload, context) =>
+			(transport.optOut as NonNullable<KernelTransport['optOut']>)(
+				payload,
+				context
+			);
+	}
+	if (transport.liftOptOut) {
+		wrapped.liftOptOut = (payload, context) =>
+			(transport.liftOptOut as NonNullable<KernelTransport['liftOptOut']>)(
+				payload,
+				context
+			);
+	}
 	if (transport.loadSubjectRecord) {
 		wrapped.loadSubjectRecord = (subjectId) =>
 			(

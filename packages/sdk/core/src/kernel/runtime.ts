@@ -21,6 +21,7 @@
 import type { OptOutRecord } from '@inth/sdk-schema/types';
 
 import type { ExperimentAssignment, ExperimentGate } from '../libs/experiment';
+import { generateUuidV7 } from '../libs/subject-uuid';
 import type {
 	ConsentSnapshot,
 	KernelEvent,
@@ -80,6 +81,14 @@ export interface KernelRuntime {
 	/** Bump the records generation. Only the records boundary calls this. */
 	invalidateRecords: () => void;
 	/**
+	 * Monotonic counter of local opt-out acts (`opt-out:recorded`,
+	 * `opt-out:lifted`). An answer from a request started before a newer local
+	 * act must not overwrite that act.
+	 */
+	getOptOutActVersion: () => number;
+	/** Record that a local opt-out act happened and return the new counter. */
+	noteOptOutAct: () => number;
+	/**
 	 * Mark the kernel live in a visitor's browser: from here on, every commit
 	 * that leaves a prompt surface visible stamps its first impression. A
 	 * surface already visible is stamped at `at` (default: now). Hydration
@@ -125,6 +134,7 @@ export const createRuntime = function createRuntime(
 		surface: PromptSurface;
 	} | null = null;
 	let generation = 0;
+	let optOutActVersion = 0;
 	let listeners: ListenerSet<ConsentSnapshot> | undefined;
 	/**
 	 * The arm the visitor runs whenever the policy accepts it.
@@ -299,11 +309,11 @@ export const createRuntime = function createRuntime(
 				recordedAt: next.evaluatedAt,
 				rights: optOutRightsForSnapshot(next),
 			};
-			next = gateExperiment(
-				current,
-				buildNextSnapshot(current, { ...patch, optOut }),
-				patch
-			);
+			const gpcPatch: SnapshotPatch = { ...patch, optOut };
+			if (!next.subject?.subjectId) {
+				gpcPatch.subject = { ...next.subject, subjectId: generateUuidV7() };
+			}
+			next = gateExperiment(current, buildNextSnapshot(current, gpcPatch), patch);
 			recordedGpcOptOut = true;
 		}
 		if (impressionDue(next)) {
@@ -375,6 +385,9 @@ export const createRuntime = function createRuntime(
 		// this commit's events nor see a stale `hiddenBySave`. Deliver the
 		// snapshot this commit produced, never the live cell, so later
 		// listeners still observe this transition first.
+		if (recordedGpcOptOut) {
+			optOutActVersion += 1;
+		}
 		publish(current, adopted, shown, recordedGpcOptOut ? adopted.optOut : null);
 		if (adopted.nextDeadline !== current.nextDeadline) {
 			onDeadlineChange();
@@ -451,11 +464,16 @@ export const createRuntime = function createRuntime(
 		commit,
 		emit,
 		getGeneration: () => generation,
+		getOptOutActVersion: () => optOutActVersion,
 		getSnapshot,
 		invalidateRecords: () => {
 			generation += 1;
 		},
 		markLive,
+		noteOptOutAct: () => {
+			optOutActVersion += 1;
+			return optOutActVersion;
+		},
 		now,
 		setExperiment,
 		subscribe(listener) {

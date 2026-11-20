@@ -4,9 +4,13 @@
  * - `save()` records an explicit choice, or acknowledges a choice prompt
  *   with no category to decide. It captures one action time before any
  *   yield, network call or persistence, commits the choice, the vendor
- *   decision and any notice it acknowledges in one commit, and then hands
- *   the action's payload to the save outbox (`save-outbox/`), which owns
- *   sending, queueing, replay and subject reassignment.
+ *   decision, any opt-out transition and any notice it acknowledges in one
+ *   commit, and then hands the action's payloads to the save outbox
+ *   (`save-outbox/`), which owns sending, queueing, replay and subject
+ *   reassignment.
+ * - `optOut()` and `optIn()` record and lift durable opt-out records and
+ *   hand their acts to the save outbox. Lifting an account-held opt-out
+ *   waits for the backend's lift answer before clearing locally.
  * - `dismissNotice()` records the local notice dismissal only.
  * - Drafts stage what a no-input `save()` confirms. They are bound to the
  *   choice contract they were presented under and dropped, never
@@ -45,7 +49,13 @@ import type {
 	SaveUISource,
 	VendorChoice,
 } from '../types';
-import { nextButtonOptOutRecord, optOutLiftBlocker } from './opt-out';
+import {
+	applySyncedOptOut,
+	buildLiftOptOutPayload,
+	buildOptOutPayload,
+	nextButtonOptOutRecord,
+	optOutLiftBlocker,
+} from './opt-out';
 import type { SnapshotPatch } from './patch';
 import type { KernelRuntime } from './runtime';
 import type { SaveOutbox } from './save-outbox';
@@ -623,7 +633,10 @@ const createBoundDraft = function createBoundDraft<Values>(
 export interface ChoiceRecorderOptions {
 	runtime: KernelRuntime;
 	/** Takes each recorded action from here on. */
-	outbox: Pick<SaveOutbox, 'send'>;
+	outbox: Pick<
+		SaveOutbox,
+		'liftAccountOptOut' | 'send' | 'sendOptOut' | 'sendOptOutLift'
+	>;
 	/** Draft values staged by config. */
 	initialDraft: PresentedSelection | null;
 }
@@ -640,6 +653,88 @@ export const createChoiceRecorder = function createChoiceRecorder({
 }: ChoiceRecorderOptions) {
 	const { batch, getSnapshot, commit, emit } = runtime;
 	const draft = createBoundDraft<PresentedSelection>(getSnapshot, initialDraft);
+
+	const liftAccountOptOut = async function liftAccountOptOut(
+		before: ConsentSnapshot,
+		actionAt: number,
+		uiSource: SaveUISource | undefined
+	): Promise<OptInResult> {
+		const actVersion = runtime.getOptOutActVersion();
+		const generation = runtime.getGeneration();
+		const existingSubjectId = before.subject?.subjectId ?? null;
+		const requestSubjectId = existingSubjectId ?? generateUuidV7();
+		const payload = buildLiftOptOutPayload(
+			before,
+			requestSubjectId,
+			actionAt,
+			uiSource
+		);
+		const outcome = await outbox.liftAccountOptOut(payload);
+		if (!outcome.ok) {
+			return { ok: false, reason: 'held-by-account' };
+		}
+		const expectedSubjectId =
+			existingSubjectId === null
+				? null
+				: (outcome.subjectId ?? existingSubjectId);
+		const fresh =
+			runtime.getOptOutActVersion() === actVersion &&
+			runtime.getGeneration() === generation &&
+			(getSnapshot().subject?.subjectId ?? null) === expectedSubjectId;
+		if (!fresh) {
+			return { ok: false, reason: 'held-by-account' };
+		}
+		if (outcome.optOut === null) {
+			batch(() => {
+				runtime.noteOptOutAct();
+				commit({ now: runtime.now(), optOut: null });
+				const event: Extract<KernelEvent, { type: 'opt-out:lifted' }> = {
+					actionAt,
+					snapshot: getSnapshot(),
+					type: 'opt-out:lifted',
+				};
+				if (uiSource !== undefined) {
+					event.uiSource = uiSource;
+				}
+				emit(event);
+			});
+			return { ok: true, optOut: null };
+		}
+		if (outcome.optOut !== undefined) {
+			applySyncedOptOut(runtime, outcome.optOut, {
+				actVersion,
+				allowClear: false,
+				generation,
+				subjectId: expectedSubjectId,
+			});
+		}
+		return { ok: false, reason: 'held-by-account' };
+	};
+
+	const liftAccountOptOutAfterSave = async function liftAccountOptOutAfterSave(
+		subjectId: string,
+		actionAt: number,
+		uiSource: SaveUISource,
+		optOutActVersion: number,
+		generation: number
+	): Promise<void> {
+		const liftSubjectId = getSnapshot().subject?.subjectId ?? subjectId;
+		const liftPayload = buildLiftOptOutPayload(
+			getSnapshot(),
+			liftSubjectId,
+			actionAt,
+			uiSource
+		);
+		const outcome = await outbox.liftAccountOptOut(liftPayload);
+		if (outcome.ok && outcome.optOut !== undefined) {
+			applySyncedOptOut(runtime, outcome.optOut, {
+				actVersion: optOutActVersion,
+				allowClear: true,
+				generation,
+				subjectId: outcome.subjectId ?? liftSubjectId,
+			});
+		}
+	};
 
 	return {
 		dismissNotice(context?: {
@@ -695,57 +790,72 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			draft.set(mergeDraft(draft.get(), input));
 		},
 
-		optIn(context?: {
+		async optIn(context?: {
 			uiSource?: SaveUISource;
 			actionAt?: number;
 		}): Promise<OptInResult> {
 			const before = getSnapshot();
 			if (before.externalPermissions) {
-				return Promise.reject(
-					new Error(
-						'Consent is owned by an external CMP. Save through that provider.'
-					)
+				throw new Error(
+					'Consent is owned by an external CMP. Save through that provider.'
 				);
 			}
 			const blocker = optOutLiftBlocker(before);
-			if (blocker !== null) {
-				return Promise.resolve({ ok: false, reason: blocker });
-			}
 			const currentTime = runtime.now();
 			const actionAt =
 				context?.actionAt !== undefined &&
 				isValidSaveActionAt(context.actionAt, currentTime)
 					? context.actionAt
 					: currentTime;
-			batch(() => {
-				commit({ now: currentTime, optOut: null });
+			if (blocker === 'held-by-account') {
+				return liftAccountOptOut(before, actionAt, context?.uiSource);
+			}
+			if (blocker !== null) {
+				return { ok: false, reason: blocker };
+			}
+			const subjectId = before.subject?.subjectId ?? generateUuidV7();
+			const subject = saveSubject(before, subjectId);
+			const { actVersion, after, generation } = batch(() => {
+				const nextActVersion = runtime.noteOptOutAct();
+				commit({ now: currentTime, optOut: null, subject });
+				const committed = getSnapshot();
 				const event: Extract<KernelEvent, { type: 'opt-out:lifted' }> = {
 					actionAt,
-					snapshot: getSnapshot(),
+					snapshot: committed,
 					type: 'opt-out:lifted',
 				};
 				if (context?.uiSource !== undefined) {
 					event.uiSource = context.uiSource;
 				}
 				emit(event);
+				return {
+					actVersion: nextActVersion,
+					after: committed,
+					generation: runtime.getGeneration(),
+				};
 			});
-			return Promise.resolve({ ok: true, optOut: null });
+			const payload = buildLiftOptOutPayload(
+				after,
+				subjectId,
+				actionAt,
+				context?.uiSource
+			);
+			await outbox.sendOptOutLift(payload, { actVersion, generation });
+			return { ok: true, optOut: null };
 		},
 
-		optOut(context?: {
+		async optOut(context?: {
 			uiSource?: SaveUISource;
 			actionAt?: number;
 		}): Promise<OptOutResult> {
 			const before = getSnapshot();
 			if (before.externalPermissions) {
-				return Promise.reject(
-					new Error(
-						'Consent is owned by an external CMP. Save through that provider.'
-					)
+				throw new Error(
+					'Consent is owned by an external CMP. Save through that provider.'
 				);
 			}
 			if (before.evaluationPolicy.model !== 'opt-out') {
-				return Promise.resolve({ ok: false, reason: 'not-available' });
+				return { ok: false, reason: 'not-available' };
 			}
 			const currentTime = runtime.now();
 			const actionAt =
@@ -755,18 +865,22 @@ export const createChoiceRecorder = function createChoiceRecorder({
 					: currentTime;
 			const nextOptOut = nextButtonOptOutRecord(before, actionAt);
 			if (nextOptOut === null) {
-				return Promise.resolve({
+				return {
 					changed: false,
 					ok: true,
 					optOut: before.optOut as Readonly<OptOutRecord>,
-				});
+				};
 			}
+			const subjectId = before.subject?.subjectId ?? generateUuidV7();
+			const subject = saveSubject(before, subjectId);
 			const patch: SnapshotPatch = {
 				now: currentTime,
 				optOut: nextOptOut,
+				subject,
 			};
 			applyNoticeAcknowledgement(patch, before, actionAt);
-			const recorded = batch(() => {
+			const { actVersion, after, generation, recorded } = batch(() => {
+				const nextActVersion = runtime.noteOptOutAct();
 				commit(patch);
 				const committed = getSnapshot();
 				const optOut = committed.optOut as Readonly<OptOutRecord>;
@@ -780,9 +894,29 @@ export const createChoiceRecorder = function createChoiceRecorder({
 					event.uiSource = context.uiSource;
 				}
 				emit(event);
-				return optOut;
+				return {
+					actVersion: nextActVersion,
+					after: committed,
+					generation: runtime.getGeneration(),
+					recorded: optOut,
+				};
 			});
-			return Promise.resolve({ changed: true, ok: true, optOut: recorded });
+			const payload = buildOptOutPayload(
+				after,
+				recorded,
+				actionAt,
+				context?.uiSource
+			);
+			await outbox.sendOptOut(payload, { actVersion, generation });
+			const current = getSnapshot().optOut;
+			return {
+				changed: true,
+				ok: true,
+				optOut:
+					runtime.getOptOutActVersion() === actVersion && current !== null
+						? current
+						: recorded,
+			};
 		},
 
 		// oxlint-disable-next-line complexity -- One action records categories and vendors together in a fixed order.
@@ -921,8 +1055,10 @@ export const createChoiceRecorder = function createChoiceRecorder({
 						optOutCategories.includes(category) &&
 						recorded.choice.categories[category]?.value === true
 				);
-			const liftsOptOut =
-				grantsOptOutCategory && optOutLiftBlocker(before) === null;
+			const optOutBlocker = optOutLiftBlocker(before);
+			const liftsOptOut = grantsOptOutCategory && optOutBlocker === null;
+			const liftsAccountOptOut =
+				grantsOptOutCategory && optOutBlocker === 'held-by-account';
 			const refusesOptOutCategories =
 				!grantsOptOutCategory &&
 				before.evaluationPolicy.model === 'opt-out' &&
@@ -960,7 +1096,11 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			// Listeners run when the batch closes, after this action's events
 			// are queued: `after` and the events carry this action's snapshot
 			// even when a listener records another choice in response.
-			const { after, generation } = batch(() => {
+			const { after, generation, optOutActVersion } = batch(() => {
+				const actVersion =
+					liftsOptOut || recordedOptOut !== null
+						? runtime.noteOptOutAct()
+						: runtime.getOptOutActVersion();
 				commit(patch);
 				const committed = getSnapshot();
 				// Records generation at the moment the action landed. A hydration
@@ -1011,7 +1151,11 @@ export const createChoiceRecorder = function createChoiceRecorder({
 						...decisionTiming,
 					});
 				}
-				return { after: committed, generation: recordsGeneration };
+				return {
+					after: committed,
+					generation: recordsGeneration,
+					optOutActVersion: actVersion,
+				};
 			});
 			const payload = buildSavePayload(after, {
 				actionAt,
@@ -1032,11 +1176,42 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				payload.addtlConsent = addtlConsent;
 			}
 
+			if (recordedOptOut !== null) {
+				void outbox.sendOptOut(
+					buildOptOutPayload(
+						after,
+						after.optOut as Readonly<OptOutRecord>,
+						actionAt,
+						uiSource
+					),
+					{ actVersion: optOutActVersion, generation }
+				);
+			} else if (liftsOptOut) {
+				void outbox.sendOptOutLift(
+					buildLiftOptOutPayload(after, subjectId, actionAt, uiSource),
+					{ actVersion: optOutActVersion, generation }
+				);
+			}
+
 			const result = await outbox.send(payload, {
 				confirmed: recorded.confirmed,
 				generation,
+				optOutActVersion,
 				snapshot: after,
 			});
+			if (
+				liftsAccountOptOut &&
+				runtime.getOptOutActVersion() === optOutActVersion &&
+				runtime.getGeneration() === generation
+			) {
+				void liftAccountOptOutAfterSave(
+					subjectId,
+					actionAt,
+					uiSource,
+					optOutActVersion,
+					generation
+				);
+			}
 			emit({ result, type: 'command:save:completed' });
 			return result;
 		},

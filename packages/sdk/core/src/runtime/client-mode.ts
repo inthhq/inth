@@ -144,11 +144,27 @@ const createLazyInitTransport = function createLazyInitTransport(
 			const transport = await resolver(ctx);
 			return (await transport.init?.(ctx)) ?? {};
 		},
+		...(records.liftOptOut && {
+			async liftOptOut(payload, context) {
+				const fn = (await recordTransport()).liftOptOut ?? records.liftOptOut;
+				return await (
+					fn as NonNullable<KernelTransport['liftOptOut']>
+				)(payload, context);
+			},
+		}),
 		async loadSubjectRecord(subjectId) {
 			return (
 				(await (await recordTransport()).loadSubjectRecord?.(subjectId)) ?? null
 			);
 		},
+		...(records.optOut && {
+			async optOut(payload, context) {
+				const fn = (await recordTransport()).optOut ?? records.optOut;
+				return await (
+					fn as NonNullable<KernelTransport['optOut']>
+				)(payload, context);
+			},
+		}),
 		async save(payload) {
 			const transport = await recordTransport();
 			if (!transport.save) {

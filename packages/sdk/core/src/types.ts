@@ -747,6 +747,67 @@ export interface SavePayload {
 }
 
 /**
+ * Payload passed to `transport.optOut()`. Built once per local opt-out act
+ * and reused unchanged by a queued replay.
+ */
+export interface OptOutPayload {
+	subjectId: string;
+	/** UUID made once with the act and sent unchanged on every retry. */
+	idempotencyKey: string;
+	/** Refused opt-out rights in canonical order. */
+	rights: readonly OptOutRight[];
+	/** How the browser recorded this opt-out. */
+	method: 'button' | 'gpc';
+	/** Epoch milliseconds when the visitor acted. */
+	givenAt: number;
+	user: Readonly<KernelUser> | null;
+	uiSource?: SaveUISource;
+	metadata?: Readonly<Record<string, unknown>>;
+	policyId?: string | null;
+	country?: string | null;
+	region?: string | null;
+	language?: string;
+	policySnapshotToken?: string | null;
+}
+
+/**
+ * Payload passed to `transport.liftOptOut()`. Built once per lift act and
+ * reused unchanged by a queued replay.
+ */
+export interface LiftOptOutPayload {
+	subjectId: string;
+	/** UUID made once with the act and sent unchanged on every retry. */
+	idempotencyKey: string;
+	/** Epoch milliseconds when the visitor acted. */
+	givenAt: number;
+	user: Readonly<KernelUser> | null;
+	uiSource?: SaveUISource;
+}
+
+/** Result returned by `transport.optOut()`. */
+export interface OptOutTransportResult {
+	ok: boolean;
+	subjectId?: string;
+	/** Authoritative effective opt-out returned by the backend, when valid. */
+	optOut?: OptOutRecord;
+	/** `true` when the backend answered 404 (does not store opt-outs). */
+	unsupported?: boolean;
+}
+
+/** Result returned by `transport.liftOptOut()`. */
+export interface LiftOptOutTransportResult {
+	ok: boolean;
+	subjectId?: string;
+	/**
+	 * Authoritative remaining opt-out returned by the backend, or `null` when
+	 * lifted completely. Omitted when the response carried no valid opt-out info.
+	 */
+	optOut?: OptOutRecord | null;
+	/** `true` when the backend answered 404 (does not store opt-outs). */
+	unsupported?: boolean;
+}
+
+/**
  * Pluggable transport. Each method is optional — a partial transport is
  * valid. Missing methods make the corresponding command a no-op.
  */
@@ -762,6 +823,16 @@ export interface SaveContext {
 export interface KernelTransport {
 	init?: (ctx: InitContext) => Promise<InitResponse>;
 	save?: (payload: SavePayload, context?: SaveContext) => Promise<SaveResult>;
+	/** Record a durable opt-out on the backend. */
+	optOut?: (
+		payload: OptOutPayload,
+		context?: SaveContext
+	) => Promise<OptOutTransportResult>;
+	/** Lift an opt-out on the backend. */
+	liftOptOut?: (
+		payload: LiftOptOutPayload,
+		context?: SaveContext
+	) => Promise<LiftOptOutTransportResult>;
 	/**
 	 * Link `user` to the subject. A transport whose backend answers with
 	 * another id for the subject, such as the UUID of a `sub_` id, returns
@@ -771,7 +842,7 @@ export interface KernelTransport {
 		user: KernelUser,
 		subjectId: string | null
 		// oxlint-disable-next-line no-invalid-void-type -- A transport with nothing to report returns `Promise<void>`.
-	) => Promise<{ subjectId?: string } | void>;
+	) => Promise<{ subjectId?: string; optOut?: OptOutRecord } | void>;
 	/**
 	 * Load the server-side record of a subject as validated receipts. The
 	 * kernel calls it after `identify` succeeds and applies the result through
@@ -861,6 +932,15 @@ export type KernelEvent =
 			snapshot: ConsentSnapshot;
 			actionAt: number;
 			uiSource?: SaveUISource;
+	  }
+	| {
+			/**
+			 * The backend's effective opt-out state replaced the local record,
+			 * without creating a new local act or sending a request.
+			 */
+			type: 'opt-out:synced';
+			snapshot: ConsentSnapshot;
+			optOut: Readonly<OptOutRecord> | null;
 	  }
 	| { type: 'overrides:set'; snapshot: ConsentSnapshot }
 	| { type: 'user:identified'; snapshot: ConsentSnapshot }
@@ -967,6 +1047,8 @@ export interface SaveResult {
 	subjectId?: string;
 	/** Categories this save confirmed. Empty when nothing was recorded. */
 	confirmed?: readonly OptionalConsentCategory[];
+	/** Authoritative effective opt-out returned by the backend, when valid. */
+	optOut?: OptOutRecord;
 	issues?: RecordIssue[];
 }
 

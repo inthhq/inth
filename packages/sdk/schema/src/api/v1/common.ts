@@ -12,6 +12,12 @@
 import * as v from 'valibot';
 
 import {
+	OPT_OUT_HOLDERS,
+	OPT_OUT_METHODS,
+	OPT_OUT_RIGHTS,
+} from '../../shared/opt-out';
+import type { OptOutRecord } from '../../shared/opt-out';
+import {
 	V1_LEGACY_SUBJECT_ID_PATTERN,
 	V1_UUID_PATTERN,
 	V1_UUID_V7_PATTERN,
@@ -83,6 +89,27 @@ export const v1EpochMillisecondsSchema = v.pipe(
 	v.description('Epoch milliseconds.')
 );
 
+/** Non-empty, de-duplicated opt-out rights list. */
+export const v1OptOutRightsSchema = v.pipe(
+	v.array(v.picklist(OPT_OUT_RIGHTS)),
+	v.minLength(1, 'At least one opt-out right is required'),
+	v.check(
+		(rights) => new Set(rights).size === rights.length,
+		'Opt-out rights must not repeat'
+	),
+	v.description('Opt-out rights refused by this record.')
+);
+
+/** Effective opt-out state returned by `/v1` consent and subject routes. */
+export const v1EffectiveOptOutSchema = jsonObject(
+	v.object({
+		heldBy: v.picklist(OPT_OUT_HOLDERS),
+		method: v.picklist(OPT_OUT_METHODS),
+		recordedAt: v1EpochMillisecondsSchema,
+		rights: v1OptOutRightsSchema,
+	})
+);
+
 /**
  * `error.details` of a validation failure. The document leaves `details`
  * open.
@@ -113,6 +140,7 @@ export const v1ErrorBodySchema = jsonObject(
 	})
 );
 
+export type V1EffectiveOptOut = OptOutRecord;
 export type V1ErrorBody = v.InferOutput<typeof v1ErrorBodySchema>;
 export type V1ValidationDetails = v.InferOutput<
 	typeof v1ValidationDetailsSchema

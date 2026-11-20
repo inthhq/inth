@@ -24,6 +24,8 @@ export type {
 } from './manifest';
 export { createV1RecordTransport } from './records';
 export type {
+	V1LiftOptOutResult,
+	V1OptOutResult,
 	V1RecordTransport,
 	V1RecordTransportOptions,
 	V1SaveResult,

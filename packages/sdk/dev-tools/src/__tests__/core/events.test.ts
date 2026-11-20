@@ -86,6 +86,16 @@ describe('kernel event mapping', () => {
 				snapshot,
 				type: 'opt-out:lifted',
 			},
+			{
+				optOut: {
+					heldBy: 'person',
+					method: 'api',
+					recordedAt: 1,
+					rights: ['sale', 'share'],
+				},
+				snapshot,
+				type: 'opt-out:synced',
+			},
 			{ snapshot, type: 'overrides:set' },
 			{ snapshot, type: 'user:identified' },
 			{ snapshot, type: 'subject:resolved' },

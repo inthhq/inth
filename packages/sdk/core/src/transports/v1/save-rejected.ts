@@ -75,3 +75,44 @@ export const readSaveFailure = async function readSaveFailure(
 		? new InthApiSaveRejectedError(message, detail)
 		: new InthApiError(message, detail);
 };
+
+/**
+ * The error for a failed `POST /v1/consent/opt-outs` or
+ * `POST /v1/consent/opt-outs/lift`, or `null` on `404` (the backend does not
+ * store opt-outs, which is not an error).
+ *
+ * `413` and a `400` whose body names `invalid_request` are refused for good.
+ * `409` with `subject_conflict` is returned as a rejection so the kernel
+ * moves the visitor to a new subject ID and resends. Policy snapshot codes
+ * are never treated as permanent on opt-out routes.
+ *
+ * @param label - Names the caller and route.
+ * @param response - The response that is not ok. Its body is consumed.
+ * @returns The error to throw, or `null` on `404`.
+ */
+export const readOptOutFailure = async function readOptOutFailure(
+	label: string,
+	response: Response
+): Promise<ApiFailure | null> {
+	if (response.status === 404) {
+		try {
+			await response.body?.cancel();
+		} catch {
+			// Stream already closed or unavailable.
+		}
+		return null;
+	}
+	const detail = await readApiErrorDetail(response);
+	const message = describeApiError(label, detail);
+	const permanent =
+		response.status === 413 ||
+		(response.status === 400 &&
+			detail.codeFromBody &&
+			detail.code === 'invalid_request') ||
+		(response.status === 409 &&
+			detail.codeFromBody &&
+			detail.code === 'subject_conflict');
+	return permanent
+		? new InthApiSaveRejectedError(message, detail)
+		: new InthApiError(message, detail);
+};
