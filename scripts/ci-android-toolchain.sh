@@ -5,13 +5,16 @@
 #
 #   scripts/ci-android-toolchain.sh emulator   # boot an emulator: needs KVM; adds the emulator and system image
 #   scripts/ci-android-toolchain.sh build      # build the RN and Expo apps: adds the NDK and turns on the Gradle build cache
+#   scripts/ci-android-toolchain.sh build --no-ndk   # build the native suites, which need no NDK
 set -euo pipefail
 
 mode="${1:-emulator}"
-case "${mode}" in
-emulator | build) ;;
+ndk_wanted=true
+case "${mode} ${2:-}" in
+"emulator " | "build " ) ;;
+"build --no-ndk") ndk_wanted=false ;;
 *)
-	echo "usage: $0 [emulator|build]" >&2
+	echo "usage: $0 [emulator | build [--no-ndk]]" >&2
 	exit 2
 	;;
 esac
@@ -54,9 +57,12 @@ image="${INTH_ANDROID_IMAGE:-system-images;android-36;google_apis;x86_64}"
 if [[ "${mode}" == emulator ]]; then
 	packages=('platform-tools' 'emulator' "${image}")
 	paths=("${sdk}/platform-tools/adb" "${sdk}/emulator/emulator" "${sdk}/${image//;//}")
-else
+elif [[ "${ndk_wanted}" == true ]]; then
 	packages=('platform-tools' "${ndk}")
 	paths=("${sdk}/platform-tools/adb" "${sdk}/${ndk//;//}")
+else
+	packages=('platform-tools')
+	paths=("${sdk}/platform-tools/adb")
 fi
 installed() {
 	local path
