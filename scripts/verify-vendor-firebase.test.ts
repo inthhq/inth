@@ -74,6 +74,33 @@ describe('verify-vendor-firebase.py', () => {
 		]);
 		expect(result.status).toBe(1);
 	});
+
+	it('reads the first state when Firebase starts after a launch probe', () => {
+		// Expo 55 on a GitHub runner: Firebase's first line came 2.2 s after the
+		// probe, and it adopted the denied state 2.5 and 3 s after.
+		const result = check([
+			fa(start + 2.171, 'onActivityCreated'),
+			fa(
+				start + 2.46,
+				'Ignoring lower-priority consent settings, proposed settings: source=MANIFEST,ad_storage=denied,analytics_storage=denied'
+			),
+			fa(start + 3.05, 'Setting app measurement enabled (FE): false'),
+		]);
+		expect(result.stdout).toContain('Firebase followed every Inth decision');
+		expect(result.status).toBe(0);
+	});
+
+	it('fails a refusal when Firebase starts after the probe with collection on', () => {
+		const result = check([
+			fa(
+				start + 2.46,
+				'Setting storage consent(FE): source=API,ad_storage=denied,analytics_storage=denied'
+			),
+			fa(start + 3.05, 'Setting app measurement enabled (FE): true'),
+		]);
+		expect(result.stdout).toContain('Firebase collection does not match');
+		expect(result.status).toBe(1);
+	});
 	it('reads a granted probe at the moment Firebase logged it', () => {
 		// Before each probe the journey re-syncs, and the Firebase helper turns
 		// collection off, applies consent, then turns it on. Expo 57 on Android
