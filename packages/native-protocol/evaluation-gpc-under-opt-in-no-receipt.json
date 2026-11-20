@@ -32,7 +32,7 @@
 				"heldBy": "device",
 				"method": "gpc",
 				"recordedAt": 1770000000000,
-				"rights": ["sale", "share", "targeted_ads"]
+				"rights": []
 			},
 			"overrides": {
 				"country": "NL",

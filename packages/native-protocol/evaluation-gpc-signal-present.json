@@ -1,5 +1,5 @@
 {
-	"description": "An active GPC signal under the CCPA opt-out rule denies marketing and measurement even though the model would allow them, records a durable opt-out with method gpc and all three rights locally because the fixture transport has no optOut method, and reports both gpc and opt-out restrictions on the snapshot.",
+	"description": "An active GPC signal under the CCPA opt-out rule denies marketing and measurement even though the model would allow them, records a durable opt-out with method gpc and no rights yet, because the backend has not answered, and reports both gpc and opt-out restrictions on the snapshot.",
 	"expected": {
 		"snapshot": {
 			"activeUI": "none",
@@ -32,7 +32,7 @@
 				"heldBy": "device",
 				"method": "gpc",
 				"recordedAt": 1770000000000,
-				"rights": ["sale", "share", "targeted_ads"]
+				"rights": []
 			},
 			"overrides": {
 				"country": "US",

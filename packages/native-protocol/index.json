@@ -27,12 +27,12 @@
 			"sha256": "d39240a12d3c5c3e40667e64df4b7921c526944b6e32b38e722e536495769314"
 		},
 		{
-			"bytes": 6686,
+			"bytes": 6631,
 			"file": "evaluation-gpc-signal-present.json",
 			"id": "evaluation-gpc-signal-present",
 			"kind": "evaluation",
 			"protocolVersion": 1,
-			"sha256": "c868ca5ac89fb7891507451ecd0ef621b9e92c6082e44a59c1446382907b7456"
+			"sha256": "d8869ee522c91da0905cdb8eca346a73dbd54b2d25f36e071e7fa791d031c0b9"
 		},
 		{
 			"bytes": 6178,
@@ -131,12 +131,12 @@
 			"sha256": "dafe5eb53b92ccf6f33318b0295352d49c04221dfc446e207926ae676c485343"
 		},
 		{
-			"bytes": 6636,
+			"bytes": 6605,
 			"file": "evaluation-gpc-under-opt-in-no-receipt.json",
 			"id": "evaluation-gpc-under-opt-in-no-receipt",
 			"kind": "evaluation",
 			"protocolVersion": 1,
-			"sha256": "c81fc28a250cdbc8d06a542f4f5ff9fe5cf5f3c31452154a4dc8b8d7bf9e6c57"
+			"sha256": "10da33024435165912e1fe2d039fcf5f59982e8cb6ab2ed82aae18e4e8eec1fe"
 		},
 		{
 			"bytes": 7458,
@@ -275,20 +275,20 @@
 			"sha256": "e3ccd6cc6ede04863848ea423e26503e707adef2d03aede7983242e951f09fa5"
 		},
 		{
-			"bytes": 14231,
+			"bytes": 14169,
 			"file": "save-body-ccpa-gpc.json",
 			"id": "save-body-ccpa-gpc",
 			"kind": "save-body",
 			"protocolVersion": 1,
-			"sha256": "09e0f90b0ef3561cb09d5dab33d9b7744329d6ce02eae61edb79dc3924120939"
+			"sha256": "e24b5fae55fa5ff879aaf6a2b841ed48091a3091c169805a4feb7ddba76c148a"
 		},
 		{
-			"bytes": 14183,
+			"bytes": 14128,
 			"file": "save-body-ccpa-reject-all.json",
 			"id": "save-body-ccpa-reject-all",
 			"kind": "save-body",
 			"protocolVersion": 1,
-			"sha256": "72ad385b439fd7886bccf75e73b41f73a8ebd8fff873783a2752443c84114643"
+			"sha256": "0d38f6502b5e95b36cc54bb3a464b613fa702a1d940e383c26fe84f98e5f4d54"
 		},
 		{
 			"bytes": 11915,
