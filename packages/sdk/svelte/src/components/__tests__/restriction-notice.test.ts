@@ -63,7 +63,7 @@ describe('consent widget restriction notice', () => {
 				persistence: false,
 				prefetch: {
 					...policyFixture(
-						{ marketing: true, measurement: true },
+						{ functionality: true, marketing: true },
 						{
 							categories: [...CATEGORIES],
 							id: 'gpc-restricted',
@@ -87,6 +87,6 @@ describe('consent widget restriction notice', () => {
 			'[data-testid="consent-widget-switch-marketing"]'
 		);
 		expect(marketing?.getAttribute('aria-describedby')).toBe(notice.id);
-		expect(restriction('measurement')).toBeNull();
+		expect(restriction('functionality')).toBeNull();
 	});
 });

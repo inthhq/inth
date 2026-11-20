@@ -58,6 +58,7 @@ afterEach(() => {
 	for (const key of [
 		storageKey,
 		`${storageKey}-notice`,
+		`${storageKey}-opt-out`,
 		`${storageKey}-epoch`,
 	]) {
 		document.cookie = `${key}=; Max-Age=0; Path=/`;
@@ -255,7 +256,7 @@ describe('Next.js request policy and RSC hydration', () => {
 		});
 	}
 
-	test('server reads the notice dismissal and request GPC without writes', async () => {
+	test('server reads the notice dismissal and request GPC, and the browser records the opt-out', async () => {
 		vi.spyOn(Date, 'now').mockReturnValue(now);
 		const prepared = policyFixture(
 			{},
@@ -291,7 +292,15 @@ describe('Next.js request policy and RSC hydration', () => {
 		expect(rendered.prompts.every((value) => !value)).toBe(true);
 		expect(rendered.snapshot()?.privacySignals.gpc.active).toBe(true);
 		expect(rendered.snapshot()?.effectivePermissions.marketing).toBe(false);
-		expect(document.cookie).toBe(cookie);
+		// The browser stores the opt-out the signal asks for and leaves the
+		// cookies the server read as they were.
+		await vi.waitFor(() =>
+			expect(document.cookie).toContain(`${storageKey}-opt-out=`)
+		);
+		for (const pair of cookie.split('; ')) {
+			expect(document.cookie.split('; ')).toContain(pair);
+		}
+		expect(rendered.snapshot()?.optOut?.method).toBe('gpc');
 	});
 
 	test('the consent banner reopens an expired receipt after an initially hidden prompt', async () => {

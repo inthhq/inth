@@ -625,7 +625,7 @@ test('StrictMode remount keeps persistence subscriptions active', async () => {
 });
 
 test.each(['header', 'browser'] as const)(
-	'prepared mount applies %s GPC live without init, category choice or storage',
+	'prepared mount records %s GPC as an opt-out without init or a category choice',
 	async (source) => {
 		const key = `react-prepared-gpc-${source}`;
 		const previous = Object.getOwnPropertyDescriptor(
@@ -672,9 +672,11 @@ test.each(['header', 'browser'] as const)(
 				prepared.initialRecords?.choice
 			);
 			expect(localStorage.getItem(`${key}-privacy`)).toBeNull();
-			// The restriction ends with the signal; the stored grant applies again.
+			// The signal recorded an opt-out, so the denial outlasts it.
 			kernel.set.privacySignals({ gpc: false });
-			expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
+			expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+			expect(kernel.getSnapshot().restrictions.marketing).toEqual(['opt-out']);
+			expect(kernel.getSnapshot().optOut?.method).toBe('gpc');
 			expect(init).not.toHaveBeenCalled();
 			expect(save).not.toHaveBeenCalled();
 			expect(onChoiceRecorded).not.toHaveBeenCalled();
