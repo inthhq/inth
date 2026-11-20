@@ -1,0 +1,245 @@
+/**
+ * Errors from `/v1` routes. Every failure, from the backend and from its
+ * gateway, has the body `{ error: { code, message, details? }, requestId }`.
+ */
+import { V1_REQUEST_ID_HEADER } from '@inth/sdk-schema/types';
+import type { V1ErrorCode } from '@inth/sdk-schema/types';
+
+/** Stop waiting for an error body after this long. */
+const BODY_TIMEOUT_MS = 2000;
+
+/** Longest backend message an error carries. */
+const MAX_MESSAGE_LENGTH = 500;
+
+/**
+ * A `/v1` error code, usually a `V1ErrorCode`. A code added after this
+ * client comes through as it is.
+ */
+export type ApiErrorCode = string;
+
+/** What a failed `/v1` response said. */
+export interface ApiErrorDetail {
+	/** `error.code`, else a code derived from the HTTP status. */
+	code: ApiErrorCode;
+	/** Whether the body named `code`, rather than the status implying it. */
+	codeFromBody: boolean;
+	/** `error.message`, cut to a bounded length. */
+	message: string;
+	/** `requestId` from the body, else the `x-request-id` header. */
+	requestId: string | undefined;
+	/** `error.details`; field errors for a validation failure. */
+	details: unknown;
+	/** HTTP status. */
+	status: number;
+	/** Seconds from `Retry-After`, on a `429`. */
+	retryAfter: number | undefined;
+}
+
+/**
+ * A `/v1` request that failed. Carries the backend's `code` and the
+ * `requestId` to quote when reporting it.
+ */
+export class ApiError extends Error {
+	readonly inthApiError = true;
+	readonly code: ApiErrorCode;
+	readonly requestId: string | undefined;
+	readonly details: unknown;
+	readonly status: number;
+	readonly retryAfter: number | undefined;
+
+	constructor(message: string, detail: ApiErrorDetail) {
+		super(message);
+		this.name = 'ApiError';
+		this.code = detail.code;
+		this.requestId = detail.requestId;
+		this.details = detail.details;
+		this.status = detail.status;
+		this.retryAfter = detail.retryAfter;
+	}
+}
+
+/**
+ * Whether `error` is a failed `/v1` response: an {@link ApiError}, or a
+ * refused save with the same fields. Checks a brand rather than
+ * `instanceof`, so it holds across package copies.
+ *
+ * @param error - Anything a `/v1` call threw.
+ * @returns `true` for a failed `/v1` response.
+ */
+export const isApiError = function isApiError(
+	error: unknown
+): error is Pick<
+	ApiError,
+	'code' | 'details' | 'message' | 'requestId' | 'retryAfter' | 'status'
+> {
+	return (
+		typeof error === 'object' &&
+		error !== null &&
+		(error as { inthApiError?: unknown }).inthApiError === true
+	);
+};
+
+/** A code for a body that named none, such as a proxy's answer. */
+const codeForStatus = function codeForStatus(status: number): V1ErrorCode {
+	switch (status) {
+		case 400:
+		case 422:
+			return 'invalid_request';
+		case 401:
+			return 'unauthorized';
+		case 403:
+			return 'forbidden';
+		case 404:
+			return 'not_found';
+		case 409:
+			return 'conflict';
+		case 413:
+			return 'payload_too_large';
+		case 429:
+			return 'rate_limited';
+		case 502:
+			return 'bad_gateway';
+		case 504:
+			return 'gateway_timeout';
+		default:
+			return 'server_error';
+	}
+};
+
+const cancelQuietly = async function cancelQuietly(
+	reader: ReadableStreamDefaultReader<Uint8Array>
+): Promise<void> {
+	try {
+		await reader.cancel();
+	} catch {
+		// The stream already failed; nothing is left to stop.
+	}
+};
+
+/**
+ * The body as text, or `''` when it cannot be read within
+ * {@link BODY_TIMEOUT_MS}. A body still open at the deadline is cancelled,
+ * so a stalled gateway answer stops downloading.
+ */
+const readText = async function readText(response: Response): Promise<string> {
+	const reader = response.body?.getReader();
+	if (!reader) {
+		return '';
+	}
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const deadline = new Promise<undefined>((resolve) => {
+		timer = setTimeout(() => resolve(undefined), BODY_TIMEOUT_MS);
+	});
+	const decoder = new TextDecoder();
+	let text = '';
+	try {
+		for (;;) {
+			// oxlint-disable-next-line no-await-in-loop -- Chunks arrive in order.
+			const chunk = await Promise.race([reader.read(), deadline]);
+			if (!chunk) {
+				void cancelQuietly(reader);
+				return '';
+			}
+			if (chunk.done) {
+				return text + decoder.decode();
+			}
+			text += decoder.decode(chunk.value, { stream: true });
+		}
+	} catch {
+		return '';
+	} finally {
+		clearTimeout(timer);
+	}
+};
+
+const nonEmpty = (value: unknown): string | undefined =>
+	typeof value === 'string' && value.trim() ? value.trim() : undefined;
+
+const parseRetryAfter = function parseRetryAfter(
+	value: string | null
+): number | undefined {
+	if (!value) {
+		return undefined;
+	}
+	const seconds = Number(value.trim());
+	if (Number.isFinite(seconds) && seconds >= 0) {
+		return seconds;
+	}
+	const date = Date.parse(value);
+	return Number.isNaN(date)
+		? undefined
+		: Math.max(0, Math.ceil((date - Date.now()) / 1000));
+};
+
+/**
+ * Read a failed `/v1` response. Never throws; a body that is not the `/v1`
+ * error shape yields a code derived from the status.
+ *
+ * @param response - The response that is not ok. Its body is consumed.
+ * @returns What the response said.
+ */
+export const readApiErrorDetail = async function readApiErrorDetail(
+	response: Response
+): Promise<ApiErrorDetail> {
+	let body: unknown;
+	try {
+		body = JSON.parse(await readText(response));
+	} catch {
+		body = undefined;
+	}
+	const record =
+		typeof body === 'object' && body !== null
+			? (body as { error?: unknown; requestId?: unknown })
+			: {};
+	const error =
+		typeof record.error === 'object' && record.error !== null
+			? (record.error as {
+					code?: unknown;
+					details?: unknown;
+					message?: unknown;
+				})
+			: {};
+	const message = nonEmpty(error.message) ?? response.statusText ?? '';
+	const bodyCode = nonEmpty(error.code);
+	return {
+		code: bodyCode ?? codeForStatus(response.status),
+		codeFromBody: bodyCode !== undefined,
+		details: error.details,
+		message:
+			message.length > MAX_MESSAGE_LENGTH
+				? `${message.slice(0, MAX_MESSAGE_LENGTH - 1)}…`
+				: message,
+		requestId:
+			nonEmpty(record.requestId) ??
+			nonEmpty(response.headers?.get(V1_REQUEST_ID_HEADER)),
+		retryAfter:
+			response.status === 429
+				? parseRetryAfter(response.headers?.get('retry-after') ?? null)
+				: undefined,
+		status: response.status,
+	};
+};
+
+export const describeApiError = function describeApiError(
+	label: string,
+	detail: ApiErrorDetail
+): string {
+	const said = detail.message ? `: ${detail.message}` : '';
+	const request = detail.requestId ? `, request ${detail.requestId}` : '';
+	return `${label} responded ${detail.status}${said} (${detail.code}${request})`;
+};
+
+/**
+ * Build the error for a failed `/v1` response.
+ *
+ * @param label - Names the caller and route, such as `Inth: /v1/consent/init`.
+ * @param response - The response that is not ok. Its body is consumed.
+ * @returns An {@link ApiError}.
+ */
+export const readApiError = async function readApiError(
+	label: string,
+	response: Response
+): Promise<ApiError> {
+	const detail = await readApiErrorDetail(response);
+	return new ApiError(describeApiError(label, detail), detail);
+};
