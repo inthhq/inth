@@ -300,29 +300,33 @@ const gpc = (
 			operation: { active: true, kind: 'set-gpc' },
 		},
 		{
+			// Accept all in preferences skips GPC-locked categories; with every
+			// category in scope locked, nothing is granted or recorded.
 			expect: {
-				choice: policyChoice(
-					{ marketing: true, measurement: true },
-					POLICY_NOW
-				),
-				consentCallbacks: 1,
-				// The choice acknowledges the notice; no separate dismissal event.
-				events: { 'choice-recorded': 1, 'notice-dismissed': 0 },
+				choice: POLICY_RECORDS[record].expected.choice,
+				consentCallbacks: 0,
+				events: { 'choice-recorded': 0, 'notice-dismissed': 0 },
 				gates: blockedGates,
-				noticeDismissal: 'current',
+				noticeDismissal: 'absent',
 				permissions: denied,
-				prompt: { kind: 'none' },
+				prompt: { kind: 'notice', reason: 'missing' },
 			},
 			operation: { kind: 'accept' },
 		},
 		{
+			// Saving the preference draft records the restricted categories as
+			// off and acknowledges the notice without re-confirming the old grant.
 			expect: {
 				choice: policyChoice(
-					{ marketing: true, measurement: true },
+					{ marketing: false, measurement: false },
 					POLICY_NOW
 				),
 				consentCallbacks: 1,
-				events: { 'choice-recorded': 1, 'permissions-changed': 0 },
+				events: {
+					'choice-recorded': 1,
+					'notice-dismissed': 0,
+					'permissions-changed': 0,
+				},
 				noticeDismissal: 'current',
 				permissions: denied,
 				prompt: { kind: 'none' },

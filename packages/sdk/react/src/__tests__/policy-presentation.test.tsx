@@ -125,7 +125,7 @@ describe('policy presentation reference behavior', () => {
 		expect(save).not.toHaveBeenCalled();
 		expect(init).not.toHaveBeenCalled();
 	});
-	it('keeps explicit masked choices selected and saves only displayed categories', async () => {
+	it('seeds GPC-restricted choices off and saves only displayed categories', async () => {
 		const policy = resolution({
 			privacySignals: { gpc: { denyCategories: ['marketing'] } },
 		});
@@ -170,8 +170,12 @@ describe('policy presentation reference behavior', () => {
 		);
 		await expect
 			.element(screen.getByTestId('draft'))
-			.toHaveTextContent('"marketing":true');
+			.toHaveTextContent('"marketing":false');
 		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		await screen.getByRole('button', { name: 'Select marketing' }).click();
+		await expect
+			.element(screen.getByTestId('draft'))
+			.toHaveTextContent('"marketing":false');
 		await screen.getByRole('button', { name: 'Change necessary' }).click();
 		await screen.getByRole('button', { name: 'Save draft' }).click();
 		expect(choice).toHaveBeenCalledTimes(1);
@@ -181,7 +185,7 @@ describe('policy presentation reference behavior', () => {
 		]);
 		expect(
 			kernel.getSnapshot().explicitChoice?.categories.marketing?.value
-		).toBe(true);
+		).toBe(false);
 		expect(
 			kernel.getSnapshot().explicitChoice?.categories.functionality
 		).toBeUndefined();

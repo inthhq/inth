@@ -28,6 +28,15 @@ export const storybookIABPolicy: PolicyRule = {
 	model: 'iab',
 };
 
+export const storybookOptOutPolicy: PolicyRule = {
+	...storybookPolicy,
+	id: 'storybook-opt-out',
+	model: 'opt-out',
+	privacySignals: { gpc: { denyCategories: ['marketing', 'measurement'] } },
+	prompt: 'notice',
+	rights: ['disclosure', 'preferences', 'opt-out'],
+};
+
 /**
  * The stories' `mode`: resolves `policy` in the browser and sends nothing.
  * A Storybook build is a production build, where `testing()` refuses to run,
@@ -67,6 +76,13 @@ export const storybookPolicyResolution: PolicyResolution = resolvePolicyRules({
 	regionCode: null,
 	rules: [storybookPolicy],
 });
+
+export const storybookOptOutPolicyResolution: PolicyResolution =
+	resolvePolicyRules({
+		countryCode: 'US',
+		regionCode: 'CA',
+		rules: [storybookOptOutPolicy],
+	});
 
 /**
  * Shared story presentation. The prompt keeps the resolver's non-blocking
@@ -163,3 +179,28 @@ export const storybookIABPresentation: ConsentPresentation = {
 	preferences: { ...storybookPresentation.preferences, blocking: true },
 	prompt: { ...storybookPresentation.prompt, blocking: true },
 };
+
+/** Stored grants under an opt-out policy; opted-out categories still show off. */
+export const storybookOptOutStoredConsent: Record<string, boolean> = {
+	experience: true,
+	functionality: true,
+	marketing: true,
+	measurement: true,
+	necessary: true,
+};
+
+/** Initial choice and opt-out records for the three opt-out widget stories. */
+export const storybookOptOutRecords = (
+	kind: 'request' | 'gpc' | 'account'
+): HydrationRecords => ({
+	choice: storybookChoiceRecord(
+		storybookOptOutStoredConsent,
+		storybookOptOutPolicy
+	),
+	optOut: {
+		heldBy: kind === 'account' ? 'person' : 'device',
+		method: kind === 'gpc' ? 'gpc' : 'button',
+		recordedAt: Date.now() - 1000,
+		rights: ['sale', 'share'],
+	},
+});
