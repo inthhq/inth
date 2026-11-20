@@ -25,3 +25,17 @@ it("preserves existing v2 apps unless an upgrade is requested", () => {
   expect(prompt).toContain('"framework": "next-app"');
   expect(prompt).toContain("<package>@latest");
 });
+
+it("points custom storage at a transport factory passed as mode", () => {
+  const { prompt } = createAgentSetupPlan({
+    framework: "next-app",
+    mode: "custom",
+  });
+  expect(prompt).toContain(
+    "Use the app's own transport as a transport factory passed as the provider's `mode`"
+  );
+  expect(prompt).toContain(
+    "`ProviderTransportFactory` from `@inth/sdk/transports`"
+  );
+  expect(prompt).not.toContain("custom(transport)");
+});
