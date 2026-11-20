@@ -218,6 +218,37 @@ it('records a /v1 body once per idempotency key, as the backend does', async () 
 		});
 		expect(malformed.status).toBe(400);
 
+		// givenAt is required epoch milliseconds; model and uiSource are strings on every save.
+		const { model: _model, ...modelless } = body;
+		for (const [index, payload] of [
+			{ ...body, givenAt: undefined },
+			{ ...body, givenAt: '1770000000000' },
+			{ ...body, givenAt: 1.5 },
+			modelless,
+			{ ...body, uiSource: 1 },
+		].entries()) {
+			const response = await post({
+				...payload,
+				idempotencyKey: `019c1c38-a400-7100-8000-00000000050${index}`,
+			});
+			expect(response.status).toBe(400);
+			expect((await response.json()).error.code).toBe('invalid_request');
+		}
+
+		// A link body that is JSON but not an object gets the same 400, not a closed socket.
+		for (const payload of [[], null]) {
+			const link = await fetch(
+				`${url}/api/self-host/v1/subjects/${body.subjectId}/link`,
+				{
+					body: JSON.stringify(payload),
+					headers: { 'content-type': 'application/json', ...PLATFORM },
+					method: 'POST',
+				}
+			);
+			expect(link.status).toBe(400);
+			expect((await link.json()).error.code).toBe('invalid_request');
+		}
+
 		// transport/cases.json forbids the x-c15t- headers and the version header /v1 retired.
 		const retired = await fetch(`${url}/api/self-host/v1/consent/records`, {
 			body: JSON.stringify({
