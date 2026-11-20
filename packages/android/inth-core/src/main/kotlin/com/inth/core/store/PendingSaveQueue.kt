@@ -1,5 +1,6 @@
 package com.inth.core.store
 
+import com.inth.core.model.QueuedOptOut
 import com.inth.core.model.QueuedSave
 import com.inth.core.model.SavePayload
 import com.inth.core.model.isWithdrawal
@@ -184,5 +185,84 @@ class PendingSaveQueue(
 		 * `PendingSaveQueue.maxAttempts` holds the same ceiling.
 		 */
 		const val MAX_ATTEMPTS = 10
+	}
+}
+
+/**
+ * The offline durable opt-out queue, stored inside [SnapshotEnvelope.pendingOptOuts]
+ * alongside [PendingSaveQueue] and under the same retention and contract rules:
+ * - entries are persisted before the request goes out, without any identity token;
+ * - entries replay in exact enqueue order with the same `idempotencyKey`;
+ * - entries are never narrowed, superseded, or dropped because the policy or policy
+ *   snapshot changed;
+ * - age and attempt ceilings are enforced when a delivery fails, never on a read.
+ */
+class PendingOptOutQueue(
+	private val store: InthStore,
+	private val limit: Int = DEFAULT_LIMIT,
+) {
+	private val capacity = limit.coerceIn(1, DEFAULT_LIMIT)
+
+	/** Everything still waiting, oldest first. */
+	fun pending(): List<QueuedOptOut> = store.readPendingOptOuts()
+
+	/** Whether [id] is still waiting to be delivered. */
+	fun isPending(id: String): Boolean = store.readPendingOptOuts().any { it.id == id }
+
+	/** Persist [entry] at the tail of the queue, dropping the oldest if at capacity. */
+	fun enqueue(entry: QueuedOptOut): Boolean = synchronized(store) {
+		val next = store.readPendingOptOuts().takeLast(maxOf(0, capacity - 1)) + entry
+		store.writePendingOptOuts(next)
+	}
+
+	/** Drop one delivered or permanently refused entry; returns whether storage released it. */
+	fun complete(id: String): Boolean = synchronized(store) {
+		val current = store.readPendingOptOuts()
+		val next = current.filterNot { it.id == id }
+		if (next.size == current.size) return@synchronized true
+		store.writePendingOptOuts(next)
+	}
+
+	/**
+	 * Account for a retryable delivery failure, releasing the entry at the attempt or age
+	 * ceiling. Enforced on failure rather than on read, mirroring [PendingSaveQueue].
+	 */
+	fun recordFailedAttempt(id: String, now: Long): FailedAttempt = synchronized(store) {
+		val cutoff = now - MAX_AGE_MS
+		val current = store.readPendingOptOuts()
+		val index = current.indexOfFirst { it.id == id }
+		if (index < 0) return@synchronized FailedAttempt.AlreadyGone
+		val entry = current[index].let { it.copy(attempts = minOf(it.attempts, MAX_ATTEMPTS) + 1) }
+		val outcome = when {
+			entry.attempts >= MAX_ATTEMPTS -> FailedAttempt.DroppedAfterAttempts(entry.attempts)
+			entry.queuedAt < cutoff -> FailedAttempt.DroppedAsTooOld(entry.queuedAt)
+			else -> FailedAttempt.Retrying
+		}
+		val next = if (outcome.dropsEntry) {
+			current.filterIndexed { at, _ -> at != index }
+		} else {
+			current.toMutableList().also { it[index] = entry }
+		}
+		store.writePendingOptOuts(next)
+		outcome
+	}
+
+	/** Move queued opt-out acts under [from] to [to], keeping their order and idempotency keys. */
+	fun reassignSubject(from: String, to: String): Boolean = synchronized(store) {
+		val current = store.readPendingOptOuts()
+		if (current.none { it.subjectId == from }) return@synchronized true
+		val moved = current.map { entry -> if (entry.subjectId == from) entry.withSubjectId(to) else entry }
+		store.writePendingOptOuts(moved)
+	}
+
+	/** Empty the queue when stored consent records are cleared. */
+	fun clear() = synchronized(store) {
+		store.writePendingOptOuts(emptyList())
+	}
+
+	companion object {
+		const val DEFAULT_LIMIT = PendingSaveQueue.DEFAULT_LIMIT
+		const val MAX_AGE_MS = PendingSaveQueue.MAX_AGE_MS
+		const val MAX_ATTEMPTS = PendingSaveQueue.MAX_ATTEMPTS
 	}
 }

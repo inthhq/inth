@@ -1,6 +1,7 @@
 package com.inth.core.store
 
 import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.QueuedOptOut
 import com.inth.core.model.QueuedSave
 import com.inth.core.policy.EvaluationPolicy
 import com.inth.core.policy.NoticeDismissal
@@ -31,6 +32,7 @@ data class SnapshotEnvelope(
 	val iabListFetchedAt: Long? = null,
 	val iabConsent: com.inth.core.iab.IabCommittedConsent? = null,
 	val pendingSaves: List<@Serializable(with = EnvelopeQueuedSaveSerializer::class) QueuedSave>? = null,
+	val pendingOptOuts: List<@Serializable(with = EnvelopeQueuedOptOutSerializer::class) QueuedOptOut>? = null,
 	val evaluationPolicy: EvaluationPolicy? = null,
 	val noticeDismissal: NoticeDismissal? = null,
 	/**
@@ -73,5 +75,16 @@ internal object EnvelopeQueuedSaveSerializer : KSerializer<QueuedSave> {
 	override fun deserialize(decoder: Decoder): QueuedSave {
 		val input = decoder as? JsonDecoder ?: return QueuedSave.serializer().deserialize(decoder)
 		return InthJson.queue.decodeFromJsonElement(QueuedSave.serializer(), input.decodeJsonElement())
+	}
+}
+
+/** Keep opt-out queue compatibility separate from the envelope's strict consent authority. */
+internal object EnvelopeQueuedOptOutSerializer : KSerializer<QueuedOptOut> {
+	override val descriptor = QueuedOptOut.serializer().descriptor
+	override fun serialize(encoder: Encoder, value: QueuedOptOut) =
+		QueuedOptOut.serializer().serialize(encoder, value)
+	override fun deserialize(decoder: Decoder): QueuedOptOut {
+		val input = decoder as? JsonDecoder ?: return QueuedOptOut.serializer().deserialize(decoder)
+		return InthJson.queue.decodeFromJsonElement(QueuedOptOut.serializer(), input.decodeJsonElement())
 	}
 }

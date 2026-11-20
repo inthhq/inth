@@ -7,6 +7,7 @@ import com.inth.core.model.sameOwner
 import com.inth.core.SubjectIdGenerator
 import com.inth.core.model.ConsentSnapshot
 import com.inth.core.model.ConsentSubject
+import com.inth.core.model.QueuedOptOut
 import com.inth.core.model.QueuedSave
 import com.inth.core.spi.KeyValueStore
 import kotlinx.serialization.DeserializationStrategy
@@ -203,8 +204,11 @@ class InthStore(
 	internal fun writeEnvelope(envelope: SnapshotEnvelope, publishBus: Boolean, dropPending: Boolean = false): Boolean {
 		val old = readEnvelope()
 		if (old != null && old.snapshot.revision > envelope.snapshot.revision) return false
-		// A dry-run save empties the queue in the same write as the decision.
-		val next = envelope.copy(pendingSaves = if (dropPending) emptyList() else old?.pendingSaves)
+		// A dry-run save empties both queues in the same write as the decision.
+		val next = envelope.copy(
+			pendingSaves = if (dropPending) emptyList() else old?.pendingSaves,
+			pendingOptOuts = if (dropPending) emptyList() else old?.pendingOptOuts,
+		)
 		return writeAtomic(next, publishBus)
 	}
 
@@ -217,7 +221,7 @@ class InthStore(
 		entry: QueuedSave,
 		limit: Int = PendingSaveQueue.DEFAULT_LIMIT,
 		supersedeGrants: Boolean = true,
-	): Boolean = commit(envelope, entry, limit, supersedeGrants, publishBus = true)
+	): Boolean = commit(envelope, entry, limit, supersedeGrants, publishBus = true, optOutEntry = null)
 
 	@Synchronized
 	internal fun commit(
@@ -226,6 +230,7 @@ class InthStore(
 		limit: Int,
 		supersedeGrants: Boolean,
 		publishBus: Boolean,
+		optOutEntry: QueuedOptOut? = null,
 	): Boolean {
 		val capacity = limit.coerceIn(1, PendingSaveQueue.DEFAULT_LIMIT)
 		val current = readPending().filterNot { entry.isWithdrawal() && it.sameOwner(entry) && entry.covers(it) }
@@ -233,13 +238,53 @@ class InthStore(
 		if (withdrawals.size >= capacity) return false
 		val grants = if (supersedeGrants) emptyList() else
 			current.filterNot { it.isWithdrawal() }.takeLast(capacity - withdrawals.size - 1)
-		return writeAtomic(envelope.copy(pendingSaves = withdrawals + grants + entry), publishBus)
+		val nextOptOuts = if (optOutEntry != null) {
+			appendOptOut(readPendingOptOuts(), optOutEntry, capacity)
+		} else {
+			readEnvelope()?.pendingOptOuts
+		}
+		return writeAtomic(
+			envelope.copy(pendingSaves = withdrawals + grants + entry, pendingOptOuts = nextOptOuts),
+			publishBus,
+		)
+	}
+
+	/** Persist a snapshot alongside one newly queued opt-out act in one atomic write. */
+	@Synchronized
+	internal fun commitOptOut(
+		envelope: SnapshotEnvelope,
+		entry: QueuedOptOut,
+		limit: Int = PendingOptOutQueue.DEFAULT_LIMIT,
+		publishBus: Boolean = false,
+	): Boolean {
+		val old = readEnvelope()
+		if (old != null && old.snapshot.revision > envelope.snapshot.revision) return false
+		val capacity = limit.coerceIn(1, PendingOptOutQueue.DEFAULT_LIMIT)
+		val nextOptOuts = appendOptOut(readPendingOptOuts(), entry, capacity)
+		return writeAtomic(
+			envelope.copy(pendingSaves = old?.pendingSaves, pendingOptOuts = nextOptOuts),
+			publishBus,
+		)
 	}
 
 	/** Atomic empty consent state for reset and identity changes. */
 	@Synchronized
-	fun replace(envelope: SnapshotEnvelope): Boolean =
-		writeAtomic(envelope.copy(pendingSaves = readPending().filter { it.isWithdrawal() }))
+	fun replace(envelope: SnapshotEnvelope): Boolean = replace(envelope, clearOptOuts = false)
+
+	@Synchronized
+	internal fun replace(envelope: SnapshotEnvelope, clearOptOuts: Boolean): Boolean =
+		writeAtomic(
+			envelope.copy(
+				pendingSaves = readPending().filter { it.isWithdrawal() },
+				pendingOptOuts = if (clearOptOuts) emptyList() else readEnvelope()?.pendingOptOuts,
+			),
+		)
+
+	private fun appendOptOut(
+		current: List<QueuedOptOut>,
+		entry: QueuedOptOut,
+		capacity: Int,
+	): List<QueuedOptOut> = current.takeLast(maxOf(0, capacity - 1)) + entry
 
 	private fun writeAtomic(envelope: SnapshotEnvelope, publishBus: Boolean = true): Boolean {
 		val raw = json.encodeToString(SnapshotEnvelope.serializer(), envelope)
@@ -289,6 +334,22 @@ class InthStore(
 		val raw = queueJson.encodeToString(PendingQueue.serializer(), PendingQueue(entries))
 		backend.write(InthStoreKeys.PENDING, raw)
 		return readRaw(InthStoreKeys.PENDING).getOrNull() == raw
+	}
+
+	/** Read the offline opt-out queue; an unparseable envelope reads as empty. */
+	@Synchronized
+	fun readPendingOptOuts(): List<QueuedOptOut> {
+		val envelope = readEnvelope()
+		val snapshot = readRaw(InthStoreKeys.SNAPSHOT).getOrElse { return emptyList() }
+		if (snapshot != null && envelope == null) return emptyList()
+		return envelope?.pendingOptOuts ?: emptyList()
+	}
+
+	/** Replace the offline opt-out queue inside the envelope without republishing consent buses. */
+	@Synchronized
+	fun writePendingOptOuts(entries: List<QueuedOptOut>): Boolean {
+		val old = readEnvelope() ?: return false
+		return writeAtomic(old.copy(pendingOptOuts = entries), publishBus = false)
 	}
 
 	/** Drop stored consent state, keeping the subject id so identity survives. */
