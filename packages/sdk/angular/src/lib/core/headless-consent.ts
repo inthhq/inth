@@ -1,6 +1,11 @@
 import { computed, inject, Injectable } from '@angular/core';
 import type { Signal } from '@angular/core';
-import type { ActiveUI, ResolvedConsentPresentation } from '@inth/sdk/engine';
+import type {
+	ActiveUI,
+	OptOutResult,
+	ResolvedConsentPresentation,
+	SaveUISource,
+} from '@inth/sdk/engine';
 import { resolveConsentPresentation } from '@inth/sdk/surface-state';
 
 import { ConsentManager } from './consent-manager';
@@ -72,6 +77,14 @@ export class HeadlessConsent {
 	/** Close whichever surface is open. */
 	closeUI(): void {
 		this.#consent.setActiveUI('none');
+	}
+
+	/**
+	 * Record an opt-out in one click and open the confirmation view under an
+	 * opt-out policy. Under other policy models, open the preference dialog.
+	 */
+	optOut(context?: { uiSource?: SaveUISource }): Promise<OptOutResult> {
+		return this.#consent.requestOptOut(context);
 	}
 
 	/**

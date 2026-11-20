@@ -4,25 +4,64 @@ import {
 	computed,
 	DestroyRef,
 	Directive,
+	effect,
+	ElementRef,
 	inject,
+	input,
 	PLATFORM_ID,
 } from '@angular/core';
+import type { PolicyRight } from '@inth/sdk/schema/types';
+import { resolveOptOutLink } from '@inth/sdk/surface-state';
+import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
+import { CPPA_OPT_OUT_ICON } from '@inth/sdk/ui/utils';
 
 import { ConsentManager } from '../core/consent-manager';
 import { ConsentTheme } from '../core/consent-theme';
 import { holdIdleDialogWarming, warmDialog } from '../core/dialog-warming';
 
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const ICON_ATTR = 'data-inth-opt-out-icon';
+const LABEL_ATTR = 'data-inth-opt-out-label';
+
+const createOptOutIconElement = function createOptOutIconElement(
+	doc: Document,
+	className: string | undefined
+): SVGSVGElement {
+	const svg = doc.createElementNS(SVG_NS, 'svg');
+	svg.setAttribute('aria-hidden', 'true');
+	svg.setAttribute('focusable', 'false');
+	svg.setAttribute('viewBox', CPPA_OPT_OUT_ICON.viewBox);
+	svg.setAttribute(ICON_ATTR, '');
+	if (className) {
+		svg.setAttribute('class', className);
+	}
+	for (const path of CPPA_OPT_OUT_ICON.paths) {
+		const node = doc.createElementNS(SVG_NS, 'path');
+		node.setAttribute('d', path.d);
+		node.setAttribute('fill', path.fill);
+		if (path.evenOdd) {
+			node.setAttribute('clip-rule', 'evenodd');
+			node.setAttribute('fill-rule', 'evenodd');
+		}
+		svg.append(node);
+	}
+	return svg;
+};
+
 /**
  * Turns the host, typically a footer `<button>` or `<a>`, into the control
- * that opens the consent dialog.
+ * that opens the consent dialog or exercises the opt-out right.
  *
- * It is hidden while the policy offers no way back to preferences. It also
- * starts loading the deferred dialog in idle time and on hover or focus, so
- * the first open does not wait for its code.
+ * Set `right="opt-out"` for a "Do Not Sell or Share" / "Your Privacy Choices"
+ * link that opts out in one click and opens `<inth-opt-out-confirmation>`
+ * under an opt-out policy. When `presentation.optOutLink` is set to either
+ * "Privacy Choices" form, the mandated CPPA opt-out icon is prepended inside
+ * the host element.
  *
  * @example
  * ```html
  * <button type="button" inthConsentDialogLink>Privacy settings</button>
+ * <button type="button" inthConsentDialogLink right="opt-out"></button>
  * ```
  */
 @Directive({
@@ -31,6 +70,8 @@ import { holdIdleDialogWarming, warmDialog } from '../core/dialog-warming';
 		'(focus)': 'warm()',
 		'(pointerenter)': 'warm()',
 		'[attr.data-inth-rights]': 'offered() ? rights() : null',
+		'[attr.data-opt-out-variant]': 'optOutLink()?.variant ?? null',
+		'[attr.data-right]': 'right() ?? null',
 		'[attr.data-testid]': 'offered() ? "consent-dialog-link" : null',
 		'[attr.hidden]': 'offered() ? null : ""',
 	},
@@ -39,6 +80,17 @@ import { holdIdleDialogWarming, warmDialog } from '../core/dialog-warming';
 export class ConsentDialogLink {
 	/** @internal */
 	protected readonly consent = inject(ConsentManager);
+	readonly #element = inject<ElementRef<HTMLElement>>(ElementRef);
+	readonly #theme = inject(ConsentTheme);
+
+	/**
+	 * Persistent right this link exercises. Set to `'opt-out'` to record an
+	 * opt-out in one click and open `<inth-opt-out-confirmation>` under an
+	 * opt-out policy.
+	 */
+	readonly right = input<Exclude<PolicyRight, 'disclosure'> | undefined>(
+		undefined
+	);
 
 	/**
 	 * Whether the policy offers a way back to preferences. While it does
@@ -54,19 +106,79 @@ export class ConsentDialogLink {
 		this.consent.snapshot().policyRule.rights.join(' ')
 	);
 
+	/** @internal */
+	protected readonly optOutLink = computed(() => {
+		if (this.right() !== 'opt-out') {
+			return null;
+		}
+		return resolveOptOutLink(
+			this.consent.copy(),
+			this.consent.presentation()?.optOutLink
+		);
+	});
+
 	constructor() {
-		if (!isPlatformBrowser(inject(PLATFORM_ID))) {
+		const isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+		const destroyRef = inject(DestroyRef);
+
+		effect(() => {
+			const link = this.optOutLink();
+			const host = this.#element.nativeElement;
+			const existingIcon = host.querySelector(`[${ICON_ATTR}]`);
+			const existingLabel = host.querySelector(`[${LABEL_ATTR}]`);
+			if (!link) {
+				existingIcon?.remove();
+				existingLabel?.remove();
+				return;
+			}
+			const needsIcon = link.variant === 'privacy-choices';
+			if (needsIcon && !existingIcon) {
+				const icon = createOptOutIconElement(
+					host.ownerDocument,
+					this.#theme.noStyle() ? undefined : bannerStyles.optOutIcon
+				);
+				host.prepend(icon);
+			} else if (!needsIcon && existingIcon) {
+				existingIcon.remove();
+			}
+			// Provide the statutory label when the host has no custom text.
+			const customText = [...host.childNodes]
+				.filter(
+					(node) =>
+						node !== existingIcon &&
+						node !== existingLabel &&
+						!(
+							node instanceof Element &&
+							(node.hasAttribute(ICON_ATTR) || node.hasAttribute(LABEL_ATTR))
+						)
+				)
+				.map((node) => node.textContent ?? '')
+				.join('')
+				.trim();
+			if (!customText) {
+				const labelEl =
+					existingLabel ??
+					Object.assign(host.ownerDocument.createElement('span'), {});
+				if (!existingLabel) {
+					labelEl.setAttribute(LABEL_ATTR, '');
+					host.append(labelEl);
+				}
+				labelEl.textContent = link.label;
+			} else if (existingLabel) {
+				existingLabel.remove();
+			}
+		});
+
+		if (!isBrowser) {
 			return;
 		}
-		const theme = inject(ConsentTheme);
-		const destroyRef = inject(DestroyRef);
 		afterNextRender(() => {
-			destroyRef.onDestroy(holdIdleDialogWarming(theme.preloadDialog()));
+			destroyRef.onDestroy(holdIdleDialogWarming(this.#theme.preloadDialog()));
 		});
 	}
 
 	/**
-	 * Opens the dialog, unless a handler before it called `preventDefault()`.
+	 * Runs the link action, unless a handler before it called `preventDefault()`.
 	 *
 	 * @internal
 	 */
@@ -75,6 +187,10 @@ export class ConsentDialogLink {
 			return;
 		}
 		event.preventDefault();
+		if (this.right() === 'opt-out') {
+			void this.consent.requestOptOut();
+			return;
+		}
 		this.consent.setActiveUI('dialog');
 	}
 

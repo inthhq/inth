@@ -15,9 +15,15 @@ Import `ConsentDialogLink` and add `inthConsentDialogLink` to your own
 <include src="../../../shared/examples/angular/app-component.mdx" />
 
 Clicking the element sets `activeUI` to `'dialog'`, opening
-`<inth-consent-dialog>`. Keep the dialog rendered in your root component. A
-click handler that runs first and calls `event.preventDefault()` cancels the
-open.
+`<inth-consent-dialog>`. Pass `right="opt-out"` to record an opt-out in one
+click and open `<inth-opt-out-confirmation>` under an opt-out policy, falling
+back to `<inth-consent-dialog>` under other models. With `right="opt-out"` and
+`presentation.optOutLink` set to `'privacy-choices'` or
+`'california-privacy-choices'`, the directive prepends the California Privacy
+Protection Agency opt-out icon and supplies the statutory label when the host
+element is empty. Keep `<inth-consent-dialog>` or `<inth-opt-out-confirmation>`
+rendered in your root component. A click handler that runs first and calls
+`event.preventDefault()` cancels the action.
 
 The directive adds no classes or markup. Your element keeps its own styling
 and label, so translate its text with the rest of your page.

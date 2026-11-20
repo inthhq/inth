@@ -7,7 +7,11 @@ import {
 	bannerFocusManagement,
 	bannerToDialogFlow,
 } from '@inth/conformance/play/consent-banner';
-import type { PromptPosition, PromptVariant } from '@inth/sdk/engine';
+import type {
+	OptOutLinkVariant,
+	PromptPosition,
+	PromptVariant,
+} from '@inth/sdk/engine';
 
 import { storybookMode, storybookPolicy } from '../../storybook-consent-policy';
 import {
@@ -19,13 +23,14 @@ interface BannerStoryArgs {
 	includeDialog?: boolean;
 	trapFocus?: boolean;
 	notice?: boolean;
+	optOutLink?: OptOutLinkVariant;
+	disableAnimation?: boolean;
 	variant?: PromptVariant;
 	position?: PromptPosition;
 	blocking?: boolean;
 }
 
-// A notice under an opt-out model: an opt-out link plus a primary Accept All.
-const noticeOptions = {
+const noticeOptionsFor = (optOutLink?: OptOutLinkVariant) => ({
 	mode: storybookMode([
 		{
 			...storybookPolicy,
@@ -34,8 +39,8 @@ const noticeOptions = {
 			prompt: 'notice' as const,
 		},
 	]),
-	presentation: undefined,
-};
+	presentation: optOutLink ? { optOutLink } : undefined,
+});
 
 const meta = {
 	parameters: {
@@ -46,10 +51,15 @@ const meta = {
 			options: args.notice
 				? {
 						...editableConsentOptions,
+						disableAnimation: args.disableAnimation,
 						trapFocus: args.trapFocus,
-						...noticeOptions,
+						...noticeOptionsFor(args.optOutLink),
 					}
-				: { ...editableConsentOptions, trapFocus: args.trapFocus },
+				: {
+						...editableConsentOptions,
+						disableAnimation: args.disableAnimation,
+						trapFocus: args.trapFocus,
+					},
 		}),
 		moduleMetadata: {
 			imports: [ConsentBanner, ConsentDialog],
@@ -57,13 +67,14 @@ const meta = {
 		props: args,
 		template: `
 			<inth-consent-banner
+				[disableAnimation]="disableAnimation"
 				[trapFocus]="trapFocus"
 				[variant]="variant"
 				[position]="position"
 				[blocking]="blocking"
 			/>
 			@if (includeDialog || notice) {
-				<inth-consent-dialog />
+				<inth-consent-dialog [disableAnimation]="disableAnimation" />
 			}
 		`,
 	}),
@@ -135,4 +146,22 @@ export const BannerFocusManagement: Story = {
 		trapFocus: true,
 	},
 	play: bannerFocusManagement,
+};
+
+/** Notice banner with the statutory opt-out link. */
+export const OptOutLink: Story = {
+	args: {
+		disableAnimation: true,
+		notice: true,
+		optOutLink: 'do-not-sell',
+	},
+};
+
+/** Notice banner with the Privacy Choices link and CPPA opt-out icon. */
+export const PrivacyChoicesLink: Story = {
+	args: {
+		disableAnimation: true,
+		notice: true,
+		optOutLink: 'privacy-choices',
+	},
 };

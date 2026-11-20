@@ -31,7 +31,11 @@ import {
 	ɵresolveNoStyle as resolveNoStyle,
 } from '@inth/angular';
 import type { ConsentDialogTriggerVisibility } from '@inth/sdk/schema/config';
-import { resolveTriggerLabels } from '@inth/sdk/surface-state';
+import { isOptOutTrigger } from '@inth/sdk/surface-actions';
+import {
+	resolveOptOutLink,
+	resolveTriggerLabels,
+} from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import type { ClassNameStyle } from '@inth/sdk/ui/theme';
 import {
@@ -291,15 +295,25 @@ export class ConsentDialogTrigger {
 	protected readonly labels = computed(() =>
 		resolveTriggerLabels(this.#translations())
 	);
+	readonly #isOptOut = computed(() => isOptOutTrigger(this.consent.snapshot()));
 	/** @internal */
 	protected readonly resolvedLabel = computed(
-		() => this.label() ?? this.labels().label
+		() =>
+			this.label() ??
+			(this.#isOptOut()
+				? resolveOptOutLink(
+						this.#translations(),
+						this.consent.presentation()?.optOutLink
+					).label
+				: this.labels().label)
 	);
 
 	/** @internal */
 	protected readonly visible = computed(() =>
 		isTriggerVisible({
-			dialogOpen: this.consent.snapshot().activeUI === 'dialog',
+			dialogOpen:
+				this.consent.snapshot().activeUI === 'dialog' ||
+				this.consent.optOutConfirmationOpen(),
 			hasConsentPreferences: this.consent.hasConsentPreferences(),
 			promptOwed: this.consent.promptRequirement().kind !== 'none',
 			showWhen: this.showWhen(),
@@ -585,7 +599,11 @@ export class ConsentDialogTrigger {
 		}
 		this.triggerClick.emit(event);
 		if (!event.defaultPrevented) {
-			this.consent.setActiveUI('dialog');
+			if (this.#isOptOut()) {
+				void this.consent.requestOptOut();
+			} else {
+				this.consent.setActiveUI('dialog');
+			}
 		}
 	}
 

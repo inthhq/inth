@@ -33,6 +33,7 @@ import type {
 	ConsentDialogModels,
 	ConsentDialogTriggerOptions,
 } from './dialog-options';
+import { OptOutConfirmation } from './opt-out-confirmation';
 
 /**
  * Loads the dialog's body, a chunk of its own. Provide another to test a
@@ -72,8 +73,13 @@ export const CONSENT_DIALOG_PANEL = new InjectionToken<
 	// The server renders nothing here, and the body is created in the
 	// browser: there is nothing to hydrate.
 	host: { ngSkipHydration: 'true' },
+	imports: [OptOutConfirmation],
 	selector: 'inth-consent-dialog',
-	template: '<ng-container #body />',
+	template: `<inth-opt-out-confirmation
+			[embedded]="true"
+			[noStyle]="noStyle()"
+			[disableAnimation]="disableAnimation()"
+		/><ng-container #body />`,
 })
 export class ConsentDialog {
 	readonly #consent = inject(ConsentManager);

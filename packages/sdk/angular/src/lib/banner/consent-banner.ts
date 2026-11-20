@@ -19,6 +19,7 @@ import { replayEarlyConsentTaps } from '@inth/sdk/surface-actions';
 import {
 	resolveActionLabels,
 	resolveConsentPresentation,
+	resolveOptOutLink,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
 } from '@inth/sdk/surface-state';
@@ -45,6 +46,7 @@ import { Portal } from '../overlay/portal';
 import { ScrollLock } from '../overlay/scroll-lock';
 import { Branding, shouldShowBranding } from '../shared/branding';
 import { ConsentButton } from '../shared/consent-button';
+import { OptOutIcon } from '../shared/icons';
 import { InlineLegalLinks } from '../shared/inline-legal-links';
 import type { LegalLinkSelection } from '../shared/inline-legal-links';
 import { PolicyActions } from '../shared/policy-actions';
@@ -116,6 +118,7 @@ const primaryActions = function primaryActions(
 		FocusTrap,
 		InlineLegalLinks,
 		NgTemplateOutlet,
+		OptOutIcon,
 		Overlay,
 		PolicyActions,
 		Portal,
@@ -251,14 +254,32 @@ const primaryActions = function primaryActions(
 												[class]="part().rightLink.className"
 												[style]="part().rightLink.style"
 												data-action="right"
+												[attr.data-opt-out-variant]="
+													right === 'opt-out' ? optOutLink().variant : null
+												"
 												[attr.data-right]="right"
 												[attr.data-inth-rights]="rights()"
 												[attr.data-testid]="
 													'consent-banner-right-link-' + right
 												"
-												(click)="openPreferences()"
+												(click)="onRightClick(right)"
 											>
-												{{ rightLabels()[right] ?? right }}
+												@if (
+													right === 'opt-out' &&
+													optOutLink().variant === 'privacy-choices'
+												) {
+													<svg
+														inth-opt-out-icon
+														[class]="
+															resolvedNoStyle() ? '' : styles.optOutIcon || ''
+														"
+													></svg>
+												}
+												{{
+													right === 'opt-out'
+														? optOutLink().label
+														: (rightLabels()[right] ?? right)
+												}}
 											</button>
 										}
 									</div>
@@ -467,6 +488,10 @@ export class ConsentBanner {
 		(): Partial<Record<PolicyRight, string | undefined>> =>
 			resolvePreferenceControlLabels(this.#translations())
 	);
+	/** @internal */
+	protected readonly optOutLink = computed(() =>
+		resolveOptOutLink(this.#translations(), this.presentation().optOutLink)
+	);
 	readonly #labels = computed(() => {
 		const labels = resolveActionLabels(this.#translations());
 		return {
@@ -600,12 +625,16 @@ export class ConsentBanner {
 	}
 
 	/**
-	 * A right control opens the preference center without recording a
-	 * choice.
+	 * Handle a persistent-right control click: opt out in one click for
+	 * `'opt-out'`, or open the preference center for `'preferences'`.
 	 *
 	 * @internal
 	 */
-	protected openPreferences(): void {
+	protected onRightClick(right: PolicyRight): void {
+		if (right === 'opt-out') {
+			void this.consent.requestOptOut({ uiSource: 'banner' });
+			return;
+		}
 		this.consent.setActiveUI('dialog');
 	}
 }

@@ -7,6 +7,7 @@
  */
 
 export { ConsentDialog } from './consent-dialog';
+export { OptOutConfirmation } from './opt-out-confirmation';
 export { DEFAULT_DIALOG_MODELS } from './dialog-options';
 export type {
 	ConsentDialogLegalLinks,

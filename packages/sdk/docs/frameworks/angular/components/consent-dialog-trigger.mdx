@@ -30,7 +30,7 @@ directly shows it from the first render.
 | `persistPosition` | `boolean` | `true` | Saves the dragged corner in `localStorage`. |
 | `showWhen` | `'always'` or `'never'` | `'always'` | `'never'` hides the button. |
 | `size` | `'sm'`, `'md'` or `'lg'` | `'md'` | Button size. |
-| `label` | `string` | `'Open privacy settings'` | Accessible `aria-label`. Translate it yourself; not read from `i18n`. |
+| `label` | `string` | Resolved opt-out link title or `trigger.label` translation | Accessible `aria-label`. Under an opt-out rule with the `opt-out` right, defaults to the resolved opt-out link title and activating the trigger records an opt-out in one click and opens `<inth-opt-out-confirmation>`. |
 | `noStyle` | `boolean` | `false` | Drops `inth` classes, including fixed positioning. Does not inherit provider `noStyle`. |
 | `rootClass` | `string` | none | Extra class on the button. |
 | `(triggerClick)` | `MouseEvent` | | Fires before opening the dialog. Call `$event.preventDefault()` to cancel. |
