@@ -62,6 +62,7 @@ jobs:
       - name: Prepare the Android toolchain
         run: bash scripts/ci-android-toolchain.sh
       - name: Boot the emulator
+        id: boot
         run: bash scripts/ci-android-emulator.sh start
       - name: Android kernel instrumented suite
         run: sh packages/android/gradlew -p packages/android --no-build-cache :inth-android:connectedDebugAndroidTest
@@ -69,7 +70,7 @@ jobs:
       # The app reaches it as localhost through adb reverse, and Mixpanel, which
       # refuses loopback hosts, as 10.0.2.2, the emulator's alias for this machine.
       - name: Start the vendor capture server
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.boot.outcome == 'success' }}
         run: |
           out="${RUNNER_TEMP}/vendor-capture"
           mkdir -p "${out}"
@@ -78,7 +79,7 @@ jobs:
           curl -fsS http://localhost:39874/health
           adb reverse tcp:39874 tcp:39874
       - name: Consent demo journeys
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.boot.outcome == 'success' }}
         run: sh packages/android/gradlew -p packages/android --no-build-cache :consent-demo:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.inthVendorCapture=http://localhost:39874
       - name: Stop the emulator
         if: always()
