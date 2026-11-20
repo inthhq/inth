@@ -19,8 +19,10 @@
  * @internal
  */
 
-import { optOutDenyCategories } from '../consent-record/opt-out';
-import { OPTIONAL_CONSENT_CATEGORIES } from '../consent-record/types';
+import {
+	OPTIONAL_CONSENT_CATEGORIES,
+	optOutDenyCategories,
+} from '../consent-record/types';
 import type {
 	CategoryDecision,
 	ConsentSubject,

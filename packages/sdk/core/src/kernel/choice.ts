@@ -26,8 +26,8 @@ import {
 } from '@inth/sdk-schema/types';
 import type { OptOutRecord, OptOutRight } from '@inth/sdk-schema/types';
 
-import { optOutDenyCategories } from '../consent-record/opt-out';
 import { EMPTY_CHOICE, recordCategoryPatch } from '../consent-record/record';
+import { optOutDenyCategories } from '../consent-record/types';
 import type { AllConsentNames } from '../consent/consent-types';
 import { extractConsentNamesFromCondition, has } from '../libs/has';
 import type { HasCondition } from '../libs/has';
