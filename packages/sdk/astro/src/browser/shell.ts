@@ -661,6 +661,25 @@ export const startDeferredClient = function startDeferredClient(
 			})();
 			await (await start()).openDialog(kind, tab);
 		},
+		async optOut(opener?: HTMLElement | null) {
+			if (engine) {
+				await engine.optOut(opener);
+				return;
+			}
+			if (disposed) {
+				return;
+			}
+			// Download the dialog island beside the engine so confirmation opens
+			// as soon as the engine attaches.
+			void (async () => {
+				try {
+					await loadDialog(options.ui, 'preferences', nonce);
+				} catch {
+					// The engine's optOut reports its own failure.
+				}
+			})();
+			await (await start()).optOut(opener);
+		},
 		options,
 		ready,
 		async rejectAll() {
@@ -716,6 +735,8 @@ export const startDeferredClient = function startDeferredClient(
 				replays.push(choice);
 				request();
 			}
+		} else if (tap?.action === 'opt-out') {
+			void client.optOut();
 		} else if (tap?.action === 'customize') {
 			void client.openDialog();
 		} else if (tap?.action === 'dismiss') {
@@ -744,7 +765,7 @@ export const startDeferredClient = function startDeferredClient(
 			});
 		};
 		stopTrigger = scheduleDeferredEngine(startEngine, (action) => {
-			if (action === 'customize') {
+			if (action === 'customize' || action === 'opt-out') {
 				void warmDialog(client);
 			}
 		});

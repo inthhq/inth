@@ -87,6 +87,16 @@ export const openDialog = async function openDialog(
 	await getConsentClient()?.openDialog(kind, tab);
 };
 
+/**
+ * Record an opt-out in one click and open the confirmation view under an
+ * opt-out rule, or open the preference dialog under other models.
+ */
+export const optOut = async function optOut(
+	opener?: HTMLElement | null
+): Promise<void> {
+	await getConsentClient()?.optOut(opener);
+};
+
 /** `EVENTS_KEY` in `./client-engine`; a test keeps them equal. */
 const EVENTS_KEY = Symbol.for('inth.astro.events');
 

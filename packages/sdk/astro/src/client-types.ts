@@ -21,6 +21,7 @@ export type ConsentAction =
 	| 'accept'
 	| 'reject'
 	| 'customize'
+	| 'opt-out'
 	| 'dismiss'
 	| 'close';
 
@@ -72,8 +73,13 @@ export interface AstroConsentClient {
 		kind?: ConsentDialogKind,
 		tab?: 'purposes' | 'vendors'
 	) => Promise<void>;
-	/** Close the open dialog. */
+	/** Close the open dialog or opt-out confirmation view. */
 	closeDialog: () => void;
+	/**
+	 * Record an opt-out in one click and open the confirmation view under an
+	 * opt-out rule, or open the preference dialog under other models.
+	 */
+	optOut: (opener?: HTMLElement | null) => Promise<void>;
 	/**
 	 * Without IAB, accept every category in scope. Under an IAB policy, the CMP
 	 * grants only the vendors' declared processing after publisher restrictions

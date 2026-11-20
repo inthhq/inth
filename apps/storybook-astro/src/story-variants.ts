@@ -16,7 +16,8 @@ export type AstroComponentName =
 	| 'consent-dialog'
 	| 'consent-dialog-trigger'
 	| 'iab-consent-banner'
-	| 'iab-consent-dialog';
+	| 'iab-consent-dialog'
+	| 'opt-out-confirmation';
 
 /** Which framework renders the on-demand dialog island. */
 export type AstroUIAdapter = 'svelte' | 'react' | 'vue';
@@ -47,8 +48,16 @@ export interface AstroStoryVariant {
 		 * runtime whose model is `iab`.
 		 */
 		iab?: boolean;
+		/** Use the opt-out policy pack instead of the default opt-in rule. */
+		policy?: 'default' | 'opt-out';
 		/** Banner presentation, merged over the shared story presentation. */
-		presentation?: { prompt?: Record<string, unknown> };
+		presentation?: {
+			optOutLink?:
+				| 'do-not-sell'
+				| 'privacy-choices'
+				| 'california-privacy-choices';
+			prompt?: Record<string, unknown>;
+		};
 	};
 	/**
 	 * Which dialog adapter the story boots. Defaults to `svelte`, the
@@ -63,6 +72,11 @@ export interface AstroStoryVariant {
 	 * so a story that wants the dialog visible has to ask for it.
 	 */
 	openDialog?: 'preferences' | 'iab';
+	/**
+	 * Open the opt-out confirmation view once the runtime has booted, either
+	 * after an interactive request or with a Global Privacy Control signal.
+	 */
+	openOptOutConfirmation?: 'request' | 'signal';
 	/**
 	 * Render the component as a docs design recipe: over the demo page, with
 	 * a "Privacy settings" `<ConsentDialogTrigger>` in its footer and a
@@ -112,6 +126,47 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 		id: 'consent-banner--dark',
 		options: { colorScheme: 'dark', consentCategories: CATEGORIES },
 		props: { force: true },
+	},
+	{
+		component: 'consent-banner',
+		id: 'consent-banner--opt-out-link',
+		options: {
+			colorScheme: 'light',
+			consentCategories: CATEGORIES,
+			policy: 'opt-out',
+		},
+		props: { force: true },
+	},
+	{
+		component: 'consent-banner',
+		id: 'consent-banner--privacy-choices-link',
+		options: {
+			colorScheme: 'light',
+			consentCategories: CATEGORIES,
+			policy: 'opt-out',
+			presentation: { optOutLink: 'privacy-choices' },
+		},
+		props: { force: true },
+	},
+	{
+		component: 'opt-out-confirmation',
+		id: 'opt-out-confirmation--request-honored',
+		openOptOutConfirmation: 'request',
+		options: {
+			colorScheme: 'light',
+			consentCategories: CATEGORIES,
+			policy: 'opt-out',
+		},
+	},
+	{
+		component: 'opt-out-confirmation',
+		id: 'opt-out-confirmation--signal-honored',
+		openOptOutConfirmation: 'signal',
+		options: {
+			colorScheme: 'light',
+			consentCategories: CATEGORIES,
+			policy: 'opt-out',
+		},
 	},
 	{
 		component: 'consent-dialog',

@@ -34,6 +34,7 @@ export const DIALOG_TAB_ATTRIBUTE = 'data-inth-tab';
 export interface ResolvedAction {
 	action: ConsentAction;
 	dialog: ConsentDialogKind;
+	element: HTMLElement | null;
 	tab?: 'purposes' | 'vendors';
 }
 
@@ -55,6 +56,7 @@ export const resolveAction = function resolveAction(
 		action !== 'accept' &&
 		action !== 'reject' &&
 		action !== 'customize' &&
+		action !== 'opt-out' &&
 		action !== 'dismiss' &&
 		action !== 'close'
 	) {
@@ -65,6 +67,7 @@ export const resolveAction = function resolveAction(
 	return {
 		action,
 		dialog: dialog === 'iab' ? 'iab' : 'preferences',
+		element: element instanceof HTMLElement ? element : null,
 		tab: tab === 'vendors' || tab === 'purposes' ? tab : undefined,
 	};
 };
@@ -145,7 +148,7 @@ const warmDialogOnIntent = function warmDialogOnIntent(event: Event): void {
 	const client = getWindow()?.__inthAstro;
 	if (
 		!client ||
-		resolved?.action !== 'customize' ||
+		(resolved?.action !== 'customize' && resolved?.action !== 'opt-out') ||
 		resolved.dialog !== 'preferences'
 	) {
 		return;
@@ -202,6 +205,10 @@ export const attachBannerActions = function attachBannerActions(): void {
 		}
 		if (resolved.action === 'reject') {
 			void client.rejectAll();
+			return;
+		}
+		if (resolved.action === 'opt-out') {
+			void client.optOut(resolved.element);
 			return;
 		}
 		if (resolved.action === 'customize') {

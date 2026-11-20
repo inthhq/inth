@@ -12,16 +12,21 @@ choice at any time. Its children are the label:
 <include src="../../../shared/examples/astro/layout.mdx" />
 
 `ConsentDialogLink` renders a plain `<button>` or `<a>` with no styles of
-its own. It carries `data-inth-action="customize"`, and the same shared
-listener the banner uses opens the dialog on click.
+its own. By default it carries `data-inth-action="customize"`, and the same
+shared listener the banner uses opens the dialog on click. Pass
+`right="opt-out"` to make it record an opt-out in one click and open the
+confirmation view under an opt-out policy (falling back to the preference
+dialog under other models).
 
 ## Props
 
 | Prop | Type | Default | Effect |
 | --- | --- | --- | --- |
 | `kind` | `'preferences' \| 'iab'` | `'preferences'` | Which dialog to open |
+| `right` | `'opt-out' \| 'preferences'` | None | Pass `'opt-out'` to record an opt-out in one click and open the confirmation view under an opt-out rule. When the slot is empty, uses the label resolved from `presentation.optOutLink`, and always renders the California Privacy Protection Agency opt-out icon for `'privacy-choices'` and `'california-privacy-choices'` |
 | `as` | `'button' \| 'a'` | `'button'` | Renders a `<button type="button">`, or an `<a href="#inth-preferences">` |
 | `class` | `string` | None | Class names for your own styles |
+| `noStyle` | `boolean` | `false` | Omits the bundled icon class name when `right="opt-out"` renders the Privacy Choices icon |
 
 Use `as="a"` when your footer styles links and not buttons. The click handler
 cancels the link's navigation, so the page does not jump.

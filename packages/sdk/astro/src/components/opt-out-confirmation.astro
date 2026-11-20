@@ -1,0 +1,63 @@
+---
+/**
+ * The opt-out confirmation view host.
+ *
+ * Renders an empty host element. The confirmation surface mounts lazily in the
+ * configured UI island when the visitor activates an opt-out link or calls
+ * `optOut()` from `@inth/astro/client`, so visitors who never opt out download
+ * no framework code.
+ *
+ * ```astro
+ * ---
+ * import OptOutConfirmation from '@inth/astro/components/opt-out-confirmation.astro';
+ * ---
+ * <OptOutConfirmation />
+ * ```
+ */
+import ComponentStyles from './component-styles.astro';
+
+interface Props {
+	/**
+	 * Warm the island's chunk once the browser is idle, so the first open
+	 * is instant. Costs a background download on every page.
+	 *
+	 * @default false
+	 */
+	preload?: boolean;
+	/**
+	 * Skip the confirmation view's enter and exit animations. Defaults to the
+	 * integration's `disableAnimation`.
+	 */
+	disableAnimation?: boolean;
+}
+
+const { preload = false, disableAnimation } = Astro.props;
+---
+
+<ComponentStyles />
+
+<div
+	data-inth-opt-out-confirmation-host=""
+	data-disable-animation={disableAnimation === undefined
+		? undefined
+		: String(disableAnimation)}
+	data-preload={preload ? 'true' : undefined}
+>
+</div>
+
+<script>
+	import { preloadDialog } from '@inth/astro/client';
+
+	const host = document.querySelector('[data-inth-opt-out-confirmation-host]');
+
+	if (host?.getAttribute('data-preload') === 'true') {
+		const schedule = () => {
+			void preloadDialog();
+		};
+		if ('requestIdleCallback' in window) {
+			window.requestIdleCallback(schedule);
+		} else {
+			window.setTimeout(schedule, 2000);
+		}
+	}
+</script>

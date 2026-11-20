@@ -42,8 +42,12 @@ import { createConsentRuntimeWith } from '@inth/sdk/runtime/on-demand';
 import { clearOnRevocationOnDemand } from '@inth/sdk/runtime/on-demand-factories';
 import type { ConsentRuntimeModules } from '@inth/sdk/runtime/provider';
 import {
+	closeOptOutConfirmation,
 	hasConsentPreferences,
 	hasConsentUI,
+	isOptOutConfirmationOpen,
+	optOutConsentSurface,
+	readFocusedElement,
 	saveConsentBlanket,
 	saveConsentSurface,
 	showConsentSurface,
@@ -675,6 +679,83 @@ const createClient = function createClient(
 		return true;
 	};
 
+	const ensureDialogMounted = async (
+		kind: ConsentDialogKind,
+		tab?: 'purposes' | 'vendors'
+	): Promise<boolean> => {
+		if (opening) {
+			await opening;
+		}
+		if (disposed) {
+			return false;
+		}
+		releaseDetachedDialog();
+		// The tab lives in the island's own component state, so asking
+		// for a different one on an already-mounted surface means
+		// remounting it. Checked after any pending mount has settled, so
+		// a "N partners" click that lands while "Customize" is still
+		// loading the island is honoured rather than dropped.
+		if (
+			dialog &&
+			(dialogKind !== kind || (tab !== undefined && tab !== dialogTab))
+		) {
+			await dialog.destroy();
+			dialog = null;
+		}
+		if (!dialog) {
+			opening = (async () => {
+				// The island and the stylesheets load beside the adapter, and
+				// the mount waits for them so the dialog never paints without
+				// its rules.
+				const [adapter] = await Promise.all([
+					loadDialog(options.ui, kind, pageNonce),
+					ensureFirstPaintStyles(options, pageNonce),
+				]);
+				if (disposed) {
+					return;
+				}
+				if (kind === 'iab') {
+					// The IAB surface renders against `runtime.iab`, which is
+					// a lazy proxy until `@inth/sdk/iab` lands.
+					await iab?.whenReady();
+					if (disposed) {
+						return;
+					}
+				}
+				const target = ensureDialogHost();
+				const handle = await adapter.mount({
+					kind,
+					legalLinks:
+						kind === 'preferences' ? readDialogLegalLinks() : undefined,
+					options: {
+						...options,
+						disableAnimation:
+							readDialogDisableAnimation(kind) ?? options.disableAnimation,
+					},
+					runtime,
+					tab,
+					target,
+				});
+				if (disposed) {
+					// Disposal happened during the mount, so nothing will
+					// ever ask for this handle again — tear it down here.
+					await handle.destroy();
+					return;
+				}
+				dialog = handle;
+				dialogKind = kind;
+				dialogTab = tab;
+				dialogTarget = target;
+			})();
+			try {
+				await opening;
+			} finally {
+				opening = null;
+			}
+		}
+		return !disposed;
+	};
+
 	const client: AstroEngineClient = {
 		// Under an IAB policy the blanket goes through the CMP handle, so the
 		// TC string records it. Any surface closes on the local record.
@@ -682,6 +763,7 @@ const createClient = function createClient(
 			await saveConsentBlanket(runtime.kernel, 'all', runtime.iab);
 		},
 		closeDialog() {
+			closeOptOutConfirmation(runtime.kernel);
 			showConsentSurface(runtime.kernel, 'none');
 			dialog?.close();
 		},
@@ -697,6 +779,7 @@ const createClient = function createClient(
 			resetDialogWarming();
 			detachPageSwapListeners();
 			releaseBlocking?.();
+			closeOptOutConfirmation(runtime.kernel);
 			void dialog?.destroy();
 			dialog = null;
 			dialogKind = null;
@@ -744,80 +827,32 @@ const createClient = function createClient(
 			if (disposed || !hasConsentUI(runtime.kernel.getSnapshot())) {
 				return;
 			}
-			if (opening) {
-				await opening;
-			}
-			if (disposed) {
-				return;
-			}
-			releaseDetachedDialog();
-			// The tab lives in the island's own component state, so asking
-			// for a different one on an already-mounted surface means
-			// remounting it. Checked after any pending mount has settled, so
-			// a "N partners" click that lands while "Customize" is still
-			// loading the island is honoured rather than dropped.
-			if (
-				dialog &&
-				(dialogKind !== kind || (tab !== undefined && tab !== dialogTab))
-			) {
-				await dialog.destroy();
-				dialog = null;
-			}
-			if (!dialog) {
-				opening = (async () => {
-					// The island and the stylesheets load beside the adapter, and
-					// the mount waits for them so the dialog never paints without
-					// its rules.
-					const [adapter] = await Promise.all([
-						loadDialog(options.ui, kind, pageNonce),
-						ensureFirstPaintStyles(options, pageNonce),
-					]);
-					if (disposed) {
-						return;
-					}
-					if (kind === 'iab') {
-						// The IAB surface renders against `runtime.iab`, which is
-						// a lazy proxy until `@inth/sdk/iab` lands.
-						await iab?.whenReady();
-						if (disposed) {
-							return;
-						}
-					}
-					const target = ensureDialogHost();
-					const handle = await adapter.mount({
-						kind,
-						legalLinks:
-							kind === 'preferences' ? readDialogLegalLinks() : undefined,
-						options: {
-							...options,
-							disableAnimation:
-								readDialogDisableAnimation(kind) ?? options.disableAnimation,
-						},
-						runtime,
-						tab,
-						target,
-					});
-					if (disposed) {
-						// Disposal happened during the mount, so nothing will
-						// ever ask for this handle again — tear it down here.
-						await handle.destroy();
-						return;
-					}
-					dialog = handle;
-					dialogKind = kind;
-					dialogTab = tab;
-					dialogTarget = target;
-				})();
-				try {
-					await opening;
-				} finally {
-					opening = null;
-				}
-			}
-			if (disposed) {
+			if (!(await ensureDialogMounted(kind, tab))) {
 				return;
 			}
 			showConsentSurface(runtime.kernel, 'dialog');
+		},
+		async optOut(opener?: HTMLElement | null) {
+			const resolvedOpener = opener ?? readFocusedElement();
+			if (disposed) {
+				return;
+			}
+			if (extension.consentSource) {
+				await optOutConsentSurface(runtime.kernel, { opener: resolvedOpener });
+				return;
+			}
+			await whenPolicySettled(runtime.kernel);
+			if (disposed || !hasConsentUI(runtime.kernel.getSnapshot())) {
+				return;
+			}
+			if (runtime.kernel.getSnapshot().policyRule.model !== 'opt-out') {
+				await client.openDialog('preferences');
+				return;
+			}
+			const optOutTask = optOutConsentSurface(runtime.kernel, {
+				opener: resolvedOpener,
+			});
+			await Promise.all([optOutTask, ensureDialogMounted('preferences')]);
 		},
 		options,
 		ready: Promise.resolve(),
@@ -856,11 +891,20 @@ const createClient = function createClient(
 		await opening?.catch(() => undefined);
 		const kind = dialogKind ?? 'preferences';
 		const tab = dialogTab;
-		const wasOpen = runtime.kernel.getSnapshot().activeUI === 'dialog';
-		if (disposed || !releaseDetachedDialog() || !wasOpen) {
+		const dialogOpen = runtime.kernel.getSnapshot().activeUI === 'dialog';
+		const confirmationOpen = isOptOutConfirmationOpen(runtime.kernel);
+		if (
+			disposed ||
+			!releaseDetachedDialog() ||
+			!(dialogOpen || confirmationOpen)
+		) {
 			return;
 		}
-		await client.openDialog(kind, tab);
+		if (dialogOpen) {
+			await client.openDialog(kind, tab);
+		} else {
+			await ensureDialogMounted('preferences');
+		}
 	});
 
 	return client;

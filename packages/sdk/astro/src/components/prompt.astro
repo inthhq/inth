@@ -33,6 +33,7 @@
  * ```
  */
 import { THEME_STYLE_ELEMENT_ID } from '@inth/sdk/ui/theme';
+import { cppaOptOutIconSvg } from '@inth/sdk/ui/utils/opt-out-icon';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { applyExperimentAssignment, applyExperimentTheme } from '@inth/sdk/engine';
 import {
@@ -320,16 +321,24 @@ const earlyTaps =
 								style={model.styles.rights}
 								data-testid="consent-banner-rights"
 							>
-								{model.rights.map(({ right, label }) => (
+								{model.rights.map(({ action, label, optOutVariant, right, showOptOutIcon }) => (
 									<button
 										class={model.classes.rightLink}
 										style={model.styles.rightLink}
 										data-action="right"
-										data-inth-action="customize"
+										data-inth-action={action}
+										data-opt-out-variant={optOutVariant}
 										data-right={right}
 										data-testid={`consent-banner-right-link-${right}`}
 										type="button"
 									>
+										{showOptOutIcon && (
+											<Fragment
+												set:html={cppaOptOutIconSvg(
+													model.classes.optOutIcon || undefined
+												)}
+											/>
+										)}
 										{label}
 									</button>
 								))}

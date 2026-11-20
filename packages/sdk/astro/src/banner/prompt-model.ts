@@ -13,6 +13,7 @@ import {
 	defaultTranslationConfig,
 	resolveActionLabels,
 	resolveConsentPresentation,
+	resolveOptOutLink,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
 } from '@inth/sdk/engine';
@@ -108,7 +109,13 @@ export interface PromptModel {
 		securedBy: string;
 	};
 	legalLinks: LegalLinkEntry[];
-	rights: { right: string; label: string }[];
+	rights: {
+		action: 'opt-out' | 'customize';
+		label: string;
+		optOutVariant?: 'do-not-sell' | 'privacy-choices';
+		right: string;
+		showOptOutIcon: boolean;
+	}[];
 	actionGroups: PromptAction[][];
 	classes: {
 		root: string;
@@ -121,6 +128,7 @@ export interface PromptModel {
 		footer: string;
 		rights: string;
 		rightLink: string;
+		optOutIcon: string;
 		actionGroup: string;
 		button: string;
 		legalLink: string;
@@ -249,6 +257,7 @@ const resolveClasses = function resolveClasses(
 		header: cls(banner.header),
 		// The React, Vue and Svelte legal links take only this stock class.
 		legalLink: cls(legalLinks?.legalLink),
+		optOutIcon: cls(banner.optOutIcon),
 		overlay: cls(
 			banner.overlay,
 			banner.overlayVisible,
@@ -314,6 +323,7 @@ export const resolvePromptModel = function resolvePromptModel(
 	} = presentation;
 
 	const { position } = presentation;
+	const optOutLink = resolveOptOutLink(bundle, presentation.optOutLink);
 
 	const classesAndStyles = resolveClasses(
 		input.classNames,
@@ -360,10 +370,23 @@ export const resolvePromptModel = function resolvePromptModel(
 			snapshot.policyRule.prompt === 'none'
 				? undefined
 				: snapshot.policyRule.prompt,
-		rights: preferenceControls.map((right) => ({
-			label: labels.rights[right] ?? right,
-			right,
-		})),
+		rights: preferenceControls.map((right) => {
+			if (right === 'opt-out') {
+				return {
+					action: 'opt-out' as const,
+					label: optOutLink.label,
+					optOutVariant: optOutLink.variant,
+					right,
+					showOptOutIcon: optOutLink.variant === 'privacy-choices',
+				};
+			}
+			return {
+				action: 'customize' as const,
+				label: labels.rights[right] ?? right,
+				right,
+				showOptOutIcon: false,
+			};
+		}),
 		shouldFill,
 		split: actionGroups.length > 1 && !shouldFill,
 		textDirection,

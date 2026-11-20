@@ -73,13 +73,18 @@ produces the same actions on every framework:
   Customize when the rule offers it. Customize is the primary action by
   default.
 - A `notice` prompt shows an acknowledgement button and, under an opt-out
-  rule, a "Do Not Sell or Share My Personal Information" button. The acknowledgement records
-  that the visitor saw the notice. It records no consent and changes no
-  permission.
+  rule, an opt-out link (by default "Do Not Sell or Share My Personal
+  Information"). The acknowledgement records that the visitor saw the notice.
+  It records no consent and changes no permission.
 - A rule that keeps preferences reachable adds a "Manage preferences" button.
 
-Every button that opens preferences opens the preference dialog. None of them
-submits an opt-out by itself.
+Under an opt-out rule, activating the opt-out link records the opt-out in one
+click, denies the opt-out categories immediately, and opens the opt-out
+confirmation view (`OptOutConfirmation`). Set `presentation.optOutLink` in the
+integration options to `'do-not-sell'`, `'privacy-choices'`, or
+`'california-privacy-choices'`; the two "Privacy Choices" forms always render
+with the California Privacy Protection Agency opt-out icon. Under any other
+model, or for the `preferences` right, the link opens the preference dialog.
 [How consent works](/docs/concepts/how-consent-works) explains prompts, rights
 and recorded choices.
 
