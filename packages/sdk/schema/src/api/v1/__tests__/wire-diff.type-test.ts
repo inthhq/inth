@@ -78,7 +78,20 @@ export type Cases = [
 	Expect<
 		Equal<
 			WireDiff<Record<string, number>, { a: number }, 'record'>,
-			'record: record in SDK only'
+			'record: record of number in SDK only'
+		>
+	>,
+	Expect<
+		Equal<
+			WireDiff<{ a: string }, Record<string, number>, 'record values'>,
+			| 'record values: record of number in document only'
+			| 'record values.a: types differ'
+		>
+	>,
+	Expect<
+		Equal<
+			WireDiff<{ a: string }, Record<string, unknown>, 'open record'>,
+			'open record: record of unknown in document only'
 		>
 	>,
 ];

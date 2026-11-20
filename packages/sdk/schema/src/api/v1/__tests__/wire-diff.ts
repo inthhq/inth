@@ -115,17 +115,68 @@ type KnownDiff<A, B, Path extends string, Depth extends unknown[]> =
 			[K in keyof A & keyof B & string]: KeyDiff<A, B, K, Path, Depth>;
 	  }[keyof A & keyof B & string];
 
+/** A name for a record's value type, so a change to it changes the report. */
+type ValueName<T> = unknown extends T
+	? 'unknown'
+	: [T] extends [string]
+		? 'string'
+		: [T] extends [number]
+			? 'number'
+			: [T] extends [boolean]
+				? 'boolean'
+				: [T] extends [readonly unknown[]]
+					? 'array'
+					: [T] extends [object]
+						? 'object'
+						: 'mixed';
+
+/**
+ * Known keys on one side against the value type of a record on the other.
+ * An `unknown` value says nothing to compare a key with.
+ */
+type KnownAgainstRecord<
+	KnownSide,
+	Value,
+	Path extends string,
+	Depth extends unknown[],
+	KnownIsSdk extends boolean,
+> = unknown extends Value
+	? never
+	: {
+			[K in keyof KnownSide & string]: KnownIsSdk extends true
+				? Diff<KnownSide[K], Value, `${Path}.${K}`, Depth>
+				: Diff<Value, KnownSide[K], `${Path}.${K}`, Depth>;
+		}[keyof KnownSide & string];
+
 /**
  * An index signature beside known keys (a valibot loose object) only says
- * that more keys are accepted, which the document does by default.
+ * that more keys are accepted, which the document does by default. A record
+ * on one side only is reported with its value type, and the known keys on
+ * the other side are compared against that type.
  */
 type ObjectDiff<A, B, Path extends string, Depth extends unknown[]> =
 	IsRecord<A> extends true
 		? IsRecord<B> extends true
 			? Diff<A[string & keyof A], B[string & keyof B], `${Path}.*`, Depth>
-			: `${Path}: record in SDK only`
+			:
+					| `${Path}: record of ${ValueName<A[string & keyof A]>} in SDK only`
+					| KnownAgainstRecord<
+							Known<B>,
+							A[string & keyof A],
+							Path,
+							Depth,
+							false
+					  >
 		: IsRecord<B> extends true
-			? `${Path}: record in document only`
+			?
+					| `${Path}: record of ${ValueName<B[string & keyof B]>} in document only`
+					| KnownAgainstRecord<
+							Known<A>,
+							B[string & keyof B],
+							Path,
+							Depth,
+							true
+					  >
 			: KnownDiff<Known<A>, Known<B>, Path, Depth>;
 
 type Diff<

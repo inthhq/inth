@@ -250,8 +250,8 @@ type DocumentGaps =
 	| 'manifest answer.tenantId: only in SDK'
 	// The document leaves the manifest's translation inputs open. The SDK
 	// types them as the 3.x manifest does.
-	| 'manifest answer.translations.customTranslations.*: record in document only'
-	| 'manifest answer.translations.i18n: record in document only';
+	| 'manifest answer.translations.customTranslations.*: record of unknown in document only'
+	| 'manifest answer.translations.i18n: record of unknown in document only';
 
 /** A mismatch this file does not list. */
 export type UnlistedMismatches = ExpectNone<Exclude<Found, DocumentGaps>>;
