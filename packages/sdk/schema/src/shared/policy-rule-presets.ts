@@ -175,6 +175,13 @@ const quebecOptInPreset = function quebecOptInPreset(): PolicyRule {
 	};
 };
 
+const californiaOptOutPreset = function californiaOptOutPreset(): PolicyRule {
+	return {
+		...californiaRule('opt-out'),
+		legacyMaterial: structuredClone(legacyPresetMaterial.californiaOptOut),
+	};
+};
+
 const worldOptOutNoPromptRule = function worldOptOutNoPromptRule(): PolicyRule {
 	return {
 		i18n: { messageProfile: 'preferences' },
@@ -509,10 +516,7 @@ export const policyRulePresets: PolicyRulePresets = {
 		...californiaRule('opt-in'),
 		legacyMaterial: structuredClone(legacyPresetMaterial.californiaOptIn),
 	}),
-	californiaOptOut: () => ({
-		...californiaRule('opt-out'),
-		legacyMaterial: structuredClone(legacyPresetMaterial.californiaOptOut),
-	}),
+	californiaOptOut: () => californiaOptOutPreset(),
 	canadaOptIn: () => canadaRule('opt-in'),
 	canadaOptOut: () => canadaRule('opt-out'),
 	chinaOptIn: () =>
@@ -785,9 +789,10 @@ export interface RecommendedPolicyRulesOptions {
 /**
  * The recommended global pack, in match order: Europe (EEA, UK, Gibraltar,
  * and the geo fallback for an unknown location) opt-in or IAB, Quebec
- * opt-in, the US privacy states and missing US states opt-out with GPC, and
- * `none` for every other known location. A missing Canadian province remains
- * strict. `local()` resolves this pack when the host passes no rules.
+ * opt-in, California opt-out with GPC and full proof, the other US privacy
+ * states and missing US states opt-out with GPC, and `none` for every other
+ * known location. A missing Canadian province remains strict. `testing()`
+ * and `createOfflineTransport()` resolve this pack when no rules are passed.
  *
  * @example
  * ```ts
@@ -803,10 +808,14 @@ export const recommendedPolicyRules = function recommendedPolicyRules(
 	return [
 		options.iab ? europeIabPreset() : europeOptInPreset(),
 		quebecOptInPreset(),
+		californiaOptOutPreset(),
 		{
 			...us,
 			match: policyMatchers.merge(
-				us.match,
+				{
+					...us.match,
+					regions: us.match.regions?.filter((region) => region.region !== 'CA'),
+				},
 				policyMatchers.regionFallback(['US'])
 			),
 		},

@@ -274,6 +274,7 @@ export const playgroundPresets: PlaygroundPreset[] = [
 
 /** Preset ids that make up `recommendedPolicyRules()`, what a bare `testing()` resolves. */
 export const RECOMMENDED_PRESET_IDS: ReadonlySet<string> = new Set([
+	'californiaOptOut',
 	'europeOptIn',
 	'quebecOptIn',
 	'usPrivacyStatesOptOut',
@@ -824,8 +825,8 @@ export interface ProviderSnippetOptions {
 }
 
 const RECOMMENDED_PACK_COMMENT = `// testing() with no policyRules applies the recommended pack: EU/UK and
-// Quebec opt-in (Europe also covers an unknown location), US privacy states
-// opt-out, and none elsewhere. Pass policyRules to replace it.`;
+// Quebec opt-in (Europe also covers an unknown location), California and other
+// US privacy states opt-out, and none elsewhere. Pass policyRules to replace it.`;
 
 export const buildProviderSnippet = function buildProviderSnippet(
 	rule: PolicyRule,

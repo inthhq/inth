@@ -223,6 +223,7 @@ describe('policy playground helpers', () => {
 	it('emits a bare testing() for presets in the recommended pack', () => {
 		expect([...RECOMMENDED_PRESET_IDS].sort()).toEqual(
 			[
+				'californiaOptOut',
 				'europeOptIn',
 				'quebecOptIn',
 				'usPrivacyStatesOptOut',
@@ -230,7 +231,8 @@ describe('policy playground helpers', () => {
 			].sort()
 		);
 		expect(isRecommendedPreset('worldNone')).toBe(true);
-		expect(isRecommendedPreset('californiaOptOut')).toBe(false);
+		expect(isRecommendedPreset('californiaOptOut')).toBe(true);
+		expect(isRecommendedPreset('californiaOptIn')).toBe(false);
 		expect(isRecommendedPreset(null)).toBe(false);
 		const recommended = buildProviderSnippet(
 			policyRulePresets.worldNone(),
