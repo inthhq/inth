@@ -128,8 +128,8 @@ for step in steps:
     started_at = probe['startedAt'] / 1000
     if logged_at is None and not any(when <= started_at for when, _ in lines):
         until = next((when for when in starts if when > started_at), float('inf'))
-        collection = collection or first(lines, started_at, until, COLLECTION)
-        storage = storage or first(lines, started_at, until, STORAGE)
+        collection = first(lines, started_at, until, COLLECTION)
+        storage = first(lines, started_at, until, STORAGE)
     want_on = {'enabled', 'true', 'granted', '1'}
     checks = {
         'collection': collection is not None and (collection[0] in want_on) == granted,

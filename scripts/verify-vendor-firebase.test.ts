@@ -90,6 +90,21 @@ describe('verify-vendor-firebase.py', () => {
 		expect(result.status).toBe(0);
 	});
 
+	it('fails a refusal when Firebase starts after the probe with collection on, then turns it off', () => {
+		// The first state Firebase adopts governs the held probe, even when a later
+		// one inside the 2 s window looks right.
+		const result = check([
+			fa(start + 0.5, 'Setting app measurement enabled (FE): true'),
+			fa(start + 1.5, 'Setting app measurement enabled (FE): false'),
+			fa(
+				start + 3,
+				'Setting storage consent(FE): source=API,ad_storage=denied,analytics_storage=denied'
+			),
+		]);
+		expect(result.stdout).toContain('Firebase collection does not match');
+		expect(result.status).toBe(1);
+	});
+
 	it('ignores consent settings Firebase rejected', () => {
 		// Firebase quotes a proposal it turned down; that is not its state.
 		const result = check([
