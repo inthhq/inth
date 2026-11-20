@@ -66,9 +66,12 @@ const generatedPageExtension = (name: string, extensions: string[]): string => {
   return extension;
 };
 
+const CATCH_ALL = /^\[\[?\.\.\.[^\]/]+\]\]?$/u;
+
 /**
  * A catch-all route already in the directory the consent route goes in,
- * under any parameter name. Next.js refuses two catch-alls side by side.
+ * under any parameter name, as a file or as a directory with an index page.
+ * Next.js refuses two catch-alls side by side.
  */
 const existingCatchAll = (
   cwd: string,
@@ -79,14 +82,29 @@ const existingCatchAll = (
   if (!existsSync(join(cwd, directory))) {
     return undefined;
   }
-  const file = readdirSync(join(cwd, directory)).find((name) =>
-    extensions.some(
-      (extension) =>
-        name.endsWith(`.${extension}`) &&
-        /^\[\[?\.\.\.[\w$]+\]\]?$/u.test(name.slice(0, -(extension.length + 1)))
-    )
-  );
-  return file ? `${directory}/${file}` : undefined;
+  for (const entry of readdirSync(join(cwd, directory), {
+    withFileTypes: true,
+  })) {
+    if (entry.isDirectory() && CATCH_ALL.test(entry.name)) {
+      const index = extensions
+        .map((extension) => `${directory}/${entry.name}/index.${extension}`)
+        .find((candidate) => existsSync(join(cwd, candidate)));
+      if (index) {
+        return index;
+      }
+    }
+    const extension = extensions.find((candidate) =>
+      entry.name.endsWith(`.${candidate}`)
+    );
+    if (
+      entry.isFile() &&
+      extension &&
+      CATCH_ALL.test(entry.name.slice(0, -(extension.length + 1)))
+    ) {
+      return `${directory}/${entry.name}`;
+    }
+  }
+  return undefined;
 };
 
 const preserveNextEntries = (
