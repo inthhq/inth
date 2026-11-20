@@ -162,13 +162,28 @@ const checkSchema = v.object({
 	acceptedLatest: v.boolean(),
 });
 
+/**
+ * A JSON object of `entry` values, with every key kept. Checked by hand:
+ * `v.record` drops a key such as `constructor`, a valid document type, and
+ * still succeeds
+ */
+const ownRecord = <Entry extends v.GenericSchema>(entry: Entry) =>
+	v.custom<Record<string, v.InferOutput<Entry>>>(
+		(input) =>
+			typeof input === 'object' &&
+			input !== null &&
+			!Array.isArray(input) &&
+			Object.values(input).every((value) => v.is(entry, value)),
+		'Expected an object of entries'
+	);
+
 const checkAnswer = v.object({
-	documents: v.record(v.string(), checkSchema),
+	documents: ownRecord(checkSchema),
 });
 
 const consentAnswer = v.object({
 	/** Each category the user answered, and whether they grant it now */
-	categories: v.record(v.string(), v.boolean()),
+	categories: ownRecord(v.boolean()),
 });
 
 const linkAnswer = v.object({
@@ -549,6 +564,10 @@ const settledBeforeBody = (
  * such as one with a lone UTF-16 surrogate, which `encodeURIComponent` throws on
  */
 const segment = (value: string): string | undefined => {
+	// A dot segment would move the request to another route
+	if (value === '.' || value === '..') {
+		return undefined;
+	}
 	try {
 		return encodeURIComponent(value);
 	} catch {
@@ -574,7 +593,7 @@ const unusableSegment = (name: string): InthResult<never> =>
 	failed(
 		new InthError(
 			'invalid_request',
-			`\`${name}\` holds a character no URL can carry`
+			`\`${name}\` cannot be sent in a URL: it is a dot segment, or holds a character no URL can carry`
 		)
 	);
 
@@ -1219,6 +1238,13 @@ export class Inth {
 			// stalls is a timeout and one that is cut off is a network failure;
 			// neither is an answer in the wrong shape
 			const text = await response.text().catch(() => undefined);
+			if (text === undefined && !response.ok) {
+				// The status says what happened, and its `Retry-After` still holds
+				return {
+					error: refusalError(response.status, undefined, requestId),
+					retryAfter: response.headers.get('retry-after'),
+				};
+			}
 			if (text === undefined) {
 				return {
 					error: new InthError(

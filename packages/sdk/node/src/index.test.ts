@@ -535,6 +535,33 @@ describe('retries and limits', () => {
 		assert.strictEqual(calls, 2);
 	});
 
+	it('reads a refusal whose body breaks by its status, and keeps its Retry-After', async () => {
+		let calls = 0;
+		const inth = new Inth({
+			baseUrl: PROJECT_URL,
+			fetch: () => {
+				calls += 1;
+				const body = new ReadableStream({
+					start: (controller) => {
+						controller.error(new TypeError('terminated'));
+					},
+				});
+				return Promise.resolve(
+					new Response(body, {
+						headers: { 'retry-after': '120' },
+						status: 429,
+					})
+				);
+			},
+			secretKey: SECRET,
+		});
+		const limitedCall = await checkTerms(inth);
+		assert.strictEqual(limitedCall.error?.code, 'rate_limited');
+		assert.strictEqual(limitedCall.error?.status, 429);
+		// Asked to wait two minutes, longer than the client waits: no retry
+		assert.strictEqual(calls, 1);
+	});
+
 	it.each([
 		{ maxRetries: Number.POSITIVE_INFINITY },
 		{ maxRetries: Number.NaN },
@@ -908,6 +935,31 @@ describe('documents', () => {
 		assert.strictEqual(consent.error?.code, 'invalid_request');
 		assert.strictEqual(documents.error?.code, 'invalid_request');
 		assert.strictEqual(sent.length, 0);
+	});
+
+	it('refuses a dot segment, which would move the call to another route', async () => {
+		const { inth, sent } = stubbed([checked]);
+		const linked = await inth.users.identify({
+			externalId: 'user_1',
+			subjectId: '..',
+		});
+		const current = await inth.documents.current({ type: '.' });
+		assert.strictEqual(linked.error?.code, 'invalid_request');
+		assert.strictEqual(current.error?.code, 'invalid_request');
+		assert.strictEqual(sent.length, 0);
+	});
+
+	it('keeps a document type that is also an object key, such as constructor', async () => {
+		const result = { accepted: true, acceptedLatest: false };
+		const { inth } = stubbed([
+			() => Response.json({ documents: { constructor: result } }),
+		]);
+		const answer = await inth.documents.check({
+			externalId: 'user_1',
+			types: ['constructor'],
+		});
+		assert.isNull(answer.error);
+		assert.deepStrictEqual(answer.data?.constructor, result);
 	});
 
 	it('refuses a subject id no URL can carry, without sending it', async () => {
