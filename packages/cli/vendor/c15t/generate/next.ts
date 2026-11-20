@@ -28,7 +28,7 @@ const consentConfig = (
 ): string => {
 	const offline = options.mode === 'offline';
 	const body = `${offline ? '\tmode: offline(),\n' : ''}${
-		routePrefix ? "\troutePrefix: '/api/c15t',\n" : ''
+		routePrefix ? "\troutePrefix: '/api/inth',\n" : ''
 	}${scriptsProperty(options.scripts, '\t')}`;
 	return `${sortImports([
 		...scriptImports(options.scripts),
@@ -114,7 +114,7 @@ export default Page;
 `;
 
 /**
- * Generate the Next.js quickstart: `c15t.config.ts`, `next.config.ts` and
+ * Generate the Next.js quickstart: `inth.config.ts`, `next.config.ts` and
  * the root layout (App Router) or `_app.tsx`, consent route and a page with
  * `getServerSideProps` (Pages Router).
  * @param options Router, mode and vendor selections.
@@ -128,13 +128,13 @@ export const generateNextBoilerplate = (
 	const route = pages && options.mode === 'hosted';
 	const files: Record<string, string> = {
 		...envFile(BACKEND_URL_ENV.next, options),
-		'c15t.config.ts': consentConfig(options, route),
+		'inth.config.ts': consentConfig(options, route),
 		'next.config.ts': nextConfig(options),
 	};
 	if (pages) {
 		files['pages/_app.tsx'] = pagesApp;
 		if (route) {
-			files['pages/api/c15t/[...c15t].ts'] = pagesRoute;
+			files['pages/api/inth/[...inth].ts'] = pagesRoute;
 		}
 		files['pages/index.tsx'] = pagesIndex;
 	} else {
@@ -147,7 +147,7 @@ export const generateNextBoilerplate = (
 			pages
 				? 'Add `export const getServerSideProps = withConsentProps();` (from @inth/nextjs/pages) to each page that should render the banner on the server. Pages without it resolve consent in the browser.'
 				: 'app/layout.tsx imports ./globals.css. Keep your existing fonts and metadata when you merge it with your layout.',
-			...vendorInstruction(options, 'c15t.config.ts'),
+			...vendorInstruction(options, 'inth.config.ts'),
 			...offlineInstruction(options),
 		],
 		merge: pages ? { 'pages/index.tsx': { type: 'keep' } } : {},

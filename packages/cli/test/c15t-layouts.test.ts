@@ -45,7 +45,7 @@ it.each(["page.jsx", "page.js", "js"])(
       expect.arrayContaining([
         `pages/_app.${extension}`,
         `pages/index.${extension}`,
-        `pages/api/c15t/[...c15t].${extension}`,
+        `pages/api/inth/[...inth].${extension}`,
       ])
     );
     expect(await readdir(path.join(directory, "pages"))).toEqual([
@@ -57,7 +57,7 @@ it.each(["page.jsx", "page.js", "js"])(
       [
         `pages/_app.${extension}`,
         `pages/index.${extension}`,
-        `pages/api/c15t/[...c15t].${extension}`,
+        `pages/api/inth/[...inth].${extension}`,
       ].map(async (filename) => {
         const content = await readFile(path.join(directory, filename), "utf-8");
         expect(() => transformSync(content, { loader: "jsx" })).not.toThrow();
@@ -80,12 +80,30 @@ it.each([
       { cwd: directory }
     );
     expect(result.created).toContain("pages/_app.tsx");
-    expect(result.created).toContain("pages/api/c15t/[...c15t].ts");
+    expect(result.created).toContain("pages/api/inth/[...inth].ts");
     expect(
       await readFile(path.join(directory, "next.config.mjs"), "utf-8")
     ).toBe(config);
   }
 );
+
+it.each([
+  "[...path].ts",
+  "[[...path]].ts",
+  "[...consent-path].ts",
+  "[...path]/index.ts",
+])("keeps an existing consent catch-all at %s", async (file) => {
+  const api = path.join(directory, "pages/api/inth");
+  await mkdir(path.dirname(path.join(api, file)), { recursive: true });
+  await writeFile(path.join(api, file), "export default () => {};\n");
+  const result = await runGenerationWorkflow(
+    ["setup", "--framework", "next-pages", "--apply", "--skip-install"],
+    context,
+    { cwd: directory }
+  );
+  expect(result.created).toContain("pages/_app.tsx");
+  expect(await readdir(api)).toEqual([file.split("/")[0]]);
+});
 
 it("reads a real extension property after comments without stripping URL strings", async () => {
   const config =
@@ -97,7 +115,7 @@ it("reads a real extension property after comments without stripping URL strings
     { cwd: directory }
   );
   expect(result.created).toContain("pages/_app.page.js");
-  expect(result.created).toContain("pages/api/c15t/[...c15t].page.js");
+  expect(result.created).toContain("pages/api/inth/[...inth].page.js");
   expect(await readFile(path.join(directory, "next.config.mjs"), "utf-8")).toBe(
     config
   );
@@ -268,5 +286,44 @@ it.each([
     ).rejects.toThrow(message);
     expect(await readdir(directory)).toEqual(before);
     expect(await readdir(path.join(directory, "src"))).toEqual([]);
+  }
+);
+
+it.each(["inth.config.mts", "inth.config.js", "inth.config.mjs"])(
+  "keeps an existing %s instead of writing inth.config.ts beside it",
+  async (file) => {
+    const config = "export default { scripts: [] };\n";
+    await writeFile(path.join(directory, file), config);
+    const result = await runGenerationWorkflow(
+      ["setup", "--framework", "next-app", "--apply", "--skip-install"],
+      context,
+      { cwd: directory }
+    );
+    expect(result.created).not.toContain("inth.config.ts");
+    expect(await readFile(path.join(directory, file), "utf-8")).toBe(config);
+    expect(result.plan.instructions).toContain(
+      `Integrate c15t into ${file}: keep your settings and add the generated ones to its default export.`
+    );
+  }
+);
+
+it.each(["src/inth.client.js", "src/inth.client.mjs"])(
+  "keeps an existing Astro client entry %s",
+  async (file) => {
+    const entry = "export default {};\n";
+    await mkdir(path.join(directory, "src"), { recursive: true });
+    await writeFile(path.join(directory, file), entry);
+    const result = await runGenerationWorkflow(
+      ["setup", "--framework", "astro", "--apply", "--skip-install"],
+      { generation: { ...context.generation, scripts: ["posthog"] } },
+      { cwd: directory }
+    );
+    expect(result.created).not.toContain("src/inth.client.ts");
+    expect(await readFile(path.join(directory, file), "utf-8")).toBe(entry);
+    expect(
+      result.plan.instructions.some((instruction) =>
+        instruction.startsWith(`Integrate c15t into ${file}:`)
+      )
+    ).toBe(true);
   }
 );

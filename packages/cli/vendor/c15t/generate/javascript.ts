@@ -11,18 +11,30 @@ import {
 } from './source.ts';
 import type { BoilerplateOptions, BoilerplateTemplate } from './types.ts';
 
-/** The link that opens the preference dialog, without any script. */
-export const PREFERENCES_LINK =
-	'<a href="#c15t-preferences">Privacy settings</a>';
+/**
+ * A link that opens the preference dialog, without any script.
+ * @param hash The hash the loaded client opens the dialog for.
+ * @returns The link.
+ */
+export const preferencesLink = (hash: string): string =>
+	`<a href="${hash}">Privacy settings</a>`;
+
+const PREFERENCES_HASH = '#inth-preferences';
 
 /**
  * A minimal page for a project without an `index.html`.
  * @param title Page title.
  * @param head Extra lines inside `<head>`, already indented by two tabs.
  * @param body Extra lines after the footer, already indented by two tabs.
+ * @param link The link that opens the preference dialog.
  * @returns The page.
  */
-export const htmlPage = (title: string, head: string, body: string): string =>
+export const htmlPage = (
+	title: string,
+	head: string,
+	body: string,
+	link: string
+): string =>
 	`<!doctype html>
 <html lang="en">
 	<head>
@@ -35,7 +47,7 @@ export const htmlPage = (title: string, head: string, body: string): string =>
 ${head}	</head>
 	<body>
 		<footer>
-			${PREFERENCES_LINK}
+			${link}
 		</footer>
 ${body}	</body>
 </html>
@@ -61,7 +73,8 @@ export const generateJavaScriptBoilerplate = (
 			'index.html': htmlPage(
 				'c15t with JavaScript',
 				'',
-				'\t\t<script\n\t\t\ttype="module"\n\t\t\tsrc="/src/main.ts"\n\t\t></script>\n'
+				'\t\t<script\n\t\t\ttype="module"\n\t\t\tsrc="/src/main.ts"\n\t\t></script>\n',
+				preferencesLink(PREFERENCES_HASH)
 			),
 			'src/main.ts': `${sortImports([
 				`import { init, ${mode} } from '@inth/sdk';`,
@@ -81,14 +94,16 @@ export default defineConfig({
 `,
 		},
 		instructions: [
-			'Call init() once from the script your page loads. The client opens the preference dialog for any link to #c15t-preferences.',
+			`Call init() once from the script your page loads. The client opens the preference dialog for any link to ${PREFERENCES_HASH}.`,
 			...vendorInstruction(options, 'src/main.ts'),
 			...offlineInstruction(options),
 		],
 		merge: {
 			'index.html': {
-				inserts: [{ before: '</body>', content: PREFERENCES_LINK }],
-				marker: '#c15t-preferences',
+				inserts: [
+					{ before: '</body>', content: preferencesLink(PREFERENCES_HASH) },
+				],
+				marker: PREFERENCES_HASH,
 				type: 'insert',
 			},
 		},

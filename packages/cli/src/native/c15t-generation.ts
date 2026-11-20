@@ -137,6 +137,60 @@ const installAppliedPlan = async (
   }
 };
 
+/**
+ * Files the SDK reads under several extensions, in the order it looks for
+ * them: `@inth/nextjs` for `inth.config.*`, `@inth/astro` for the client
+ * entry. A generated file beside another variant would be read in its place.
+ */
+const CONFIG_VARIANTS = {
+  "inth.config.ts": [
+    "inth.config.ts",
+    "inth.config.mts",
+    "inth.config.js",
+    "inth.config.mjs",
+  ],
+  "src/inth.client.ts": [
+    "src/inth.client.ts",
+    "src/inth.client.js",
+    "src/inth.client.mjs",
+  ],
+} satisfies Record<string, readonly string[]>;
+
+/** Keep an existing variant of a generated config file and guide the merge. */
+const keepExistingConfigVariants = (
+  generation: GenerationPlan,
+  cwd: string
+): void => {
+  for (const [name, variants] of Object.entries(CONFIG_VARIANTS)) {
+    const content = generation.files[name];
+    if (content === undefined || existsSync(join(cwd, name))) {
+      continue;
+    }
+    const existing = variants.find((variant) => existsSync(join(cwd, variant)));
+    if (!existing) {
+      continue;
+    }
+    generation.files = {
+      ...Object.fromEntries(
+        Object.entries(generation.files).filter(([key]) => key !== name)
+      ),
+      [existing]: content,
+    };
+    generation.merge = {
+      ...Object.fromEntries(
+        Object.entries(generation.merge ?? {}).filter(([key]) => key !== name)
+      ),
+      [existing]: { type: "keep" },
+    };
+    generation.instructions = [
+      ...generation.instructions.map((instruction) =>
+        instruction.replaceAll(name, existing)
+      ),
+      `Integrate c15t into ${existing}: keep your settings and add the generated ones to its default export.`,
+    ];
+  }
+};
+
 /** Adapt upstream plans before using its filesystem and installation runtime. */
 export const runGenerationWorkflow = async (
   args: string[],
@@ -172,6 +226,7 @@ export const runGenerationWorkflow = async (
   adaptNuxtGeneration(generation.data, options.cwd);
   adaptReactGeneration(generation.data, options.cwd);
   adaptSvelteKitGeneration(generation.data, options.cwd);
+  keepExistingConfigVariants(generation.data, options.cwd);
   const plan = planGeneration(options.cwd, generation.data);
   addNextConfigInstructions(plan, generation.data);
   missingInsertInstructions(plan, generation.data);

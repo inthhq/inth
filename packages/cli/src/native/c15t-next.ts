@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { join } from "node:path";
 
@@ -66,6 +66,47 @@ const generatedPageExtension = (name: string, extensions: string[]): string => {
   return extension;
 };
 
+const CATCH_ALL = /^\[\[?\.\.\.[^\]/]+\]\]?$/u;
+
+/**
+ * A catch-all route already in the directory the consent route goes in,
+ * under any parameter name, as a file or as a directory with an index page.
+ * Next.js refuses two catch-alls side by side.
+ */
+const existingCatchAll = (
+  cwd: string,
+  stem: string,
+  extensions: string[]
+): string | undefined => {
+  const directory = stem.slice(0, stem.lastIndexOf("/"));
+  if (!existsSync(join(cwd, directory))) {
+    return undefined;
+  }
+  for (const entry of readdirSync(join(cwd, directory), {
+    withFileTypes: true,
+  })) {
+    if (entry.isDirectory() && CATCH_ALL.test(entry.name)) {
+      const index = extensions
+        .map((extension) => `${directory}/${entry.name}/index.${extension}`)
+        .find((candidate) => existsSync(join(cwd, candidate)));
+      if (index) {
+        return index;
+      }
+    }
+    const extension = extensions.find((candidate) =>
+      entry.name.endsWith(`.${candidate}`)
+    );
+    if (
+      entry.isFile() &&
+      extension &&
+      CATCH_ALL.test(entry.name.slice(0, -(extension.length + 1)))
+    ) {
+      return `${directory}/${entry.name}`;
+    }
+  }
+  return undefined;
+};
+
 const preserveNextEntries = (
   generation: GenerationPlan,
   cwd: string,
@@ -76,9 +117,13 @@ const preserveNextEntries = (
       continue;
     }
     const stem = name.replace(/\.tsx?$/u, "");
-    const existing = extensions
-      .map((extension) => `${stem}.${extension}`)
-      .find((candidate) => existsSync(join(cwd, candidate)));
+    const existing =
+      extensions
+        .map((extension) => `${stem}.${extension}`)
+        .find((candidate) => existsSync(join(cwd, candidate))) ??
+      (stem.endsWith("/[...inth]")
+        ? existingCatchAll(cwd, stem, extensions)
+        : undefined);
     const target =
       existing ?? `${stem}.${generatedPageExtension(name, extensions)}`;
     if (!existing && target === name) {
@@ -115,9 +160,9 @@ const preserveNextEntries = (
     } else if (stem.endsWith("/_app")) {
       guidance =
         "Keep your providers and styles. Import ConsentRoot, ConsentBanner, ConsentDialog, and ConsentDialogLink from '@inth/nextjs'. Wrap <Component {...pageProps} /> and the consent components in <ConsentRoot state={pageProps.consent}>.";
-    } else if (stem.endsWith("/[...c15t]")) {
+    } else if (stem.endsWith("/[...inth]")) {
       guidance =
-        "Keep or adapt your existing consent handler. Import createPagesConsentRoute from '@inth/nextjs/pages' and use createPagesConsentRoute() as the default handler for /api/c15t.";
+        "Keep or adapt your existing consent handler. Import createPagesConsentRoute from '@inth/nextjs/pages' and use createPagesConsentRoute() as the default handler for /api/inth. If the file's catch-all parameter is not named inth, pass its name as the second argument.";
     }
     generation.instructions.push(
       `Integrate c15t into ${existing}: ${guidance}`
