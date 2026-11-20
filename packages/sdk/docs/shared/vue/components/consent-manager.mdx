@@ -21,7 +21,15 @@ group: reference
   stays on.
 
   - Save records the current switches. Accept All and Reject All record a
-    choice for every category in the policy.
+    choice for every unlocked category in the policy.
+  - When a durable opt-out is held, the widget inside the dialog shows a status
+    line (`role="status"`) above the category list and keeps opted-out
+    categories off. While Global Privacy Control is active under a policy that
+    maps it, those switches stay off and disabled with the GPC notice below
+    each row, and Save Settings and Accept All skip locked categories. When an
+    account holds the opt-out and GPC is off, the account notice appears below
+    each row and the switches stay usable. Read the same state with
+    `useOptOutState()`.
   - After a save, the dialog closes. The banner reappears only if the policy
     still requires a choice.
   - Pressing Escape closes the dialog without saving. The banner reappears if

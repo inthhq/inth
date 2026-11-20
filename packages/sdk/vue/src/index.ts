@@ -22,13 +22,18 @@ export type {
 } from '@inth/sdk/engine';
 export {
 	resolveActionLabels,
+	resolveOptOutCopy,
+	resolveOptOutState,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
 } from '@inth/sdk/engine';
 export type {
+	OptOutLock,
+	OptOutVia,
 	PreferenceControl,
 	PresentationAction,
 	PromptCopy,
+	ResolvedOptOutState,
 } from '@inth/sdk/engine';
 export type * from '@inth/sdk/schema/config';
 export { defineTheme, type Theme } from '@inth/sdk/ui/theme';

@@ -46,6 +46,7 @@ group: reference
   | `useExplicitChoice()` | Computed recorded choice, or `null` | Read what the visitor decided. |
   | `useStoredConsent()` | Computed recorded choice, or `null` | Read the same value as `useExplicitChoice()`. |
   | `useNoticeDismissal()` | Computed dismissal record, or `null` | Check whether the visitor dismissed a notice. |
+  | `useOptOutState()` | Computed opt-out display state | Check whether an opt-out is honored, how it was recorded and whether GPC or an account locks it. |
   | `usePrivacySignals()` | Computed privacy signals | Read whether Global Privacy Control was detected and applied. |
   | `useConsentRestrictions()` | Computed restrictions | Inspect why a policy or privacy signal limits a permission. |
   | `usePolicyRule()` | Computed policy rule | Read the `model`, `prompt`, `scope`, and `rights` of the matched policy. |

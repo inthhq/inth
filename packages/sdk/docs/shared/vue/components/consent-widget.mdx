@@ -16,10 +16,20 @@ group: reference
   stays on with a disabled switch.
 
   - Save records the current switches. Accept All and Reject All record a
-    choice for every category in the policy.
-  - Switches start from the recorded choice, or from the policy's defaults
-    before any choice (on under an opt-out policy or for preselected
-    categories, otherwise off).
+    choice for every unlocked category in the policy.
+  - Switches start off when an active durable opt-out or Global Privacy
+    Control (GPC) signal restricts that category, even when a stored choice
+    granted it. Otherwise they start from the recorded choice, or from the
+    policy's defaults before any choice (on under an opt-out policy or for
+    preselected categories, otherwise off).
+  - When a durable opt-out is held, a status line (`role="status"`) appears
+    above the category list: "Opt-out request honored" for a visitor request,
+    or "Opt-out preference signal honored" when GPC recorded or enforces it.
+    While GPC is active under a policy that maps it, the restricted switches
+    stay off and disabled with a notice below each row, and Accept All and Save
+    skip locked categories. When an account holds the opt-out and GPC is off,
+    the account notice appears below each row and the switches stay usable.
+    Read the same derived state with `useOptOutState()`.
   - A choice saved elsewhere updates untouched switches and preserves edits
     the visitor already made.
   - If the policy changes while the page is open, the widget shows "Privacy
@@ -46,19 +56,23 @@ group: reference
 
   Each switch is a `button` with `role="switch"`, `aria-checked`, and the
   category title as its label. Each row expands with a button setting
-  `aria-expanded` and `aria-controls`, keeping one row open at a time. Footer
-  actions are native buttons. Place a heading above the widget as shown.
+  `aria-expanded` and `aria-controls`, keeping one row open at a time. An
+  honored opt-out renders a status line with `role="status"` above the list,
+  and a GPC or account lock notice renders as an `output` element linked to
+  its switch with `aria-describedby`. Footer actions are native buttons. Place
+  a heading above the widget as shown.
 </section>
 
 <section id="styling">
   ## Style the widget
 
-  `ConsentWidget` reads `components.manager` for its root and footer,
-  `components.accordion` and `components['accordion-item']` for rows,
-  `components.switch` for switches, and `components['vendor-list']` for vendor
-  rows. See [component parts](/docs/customization/slots).
-  `presentation.preferences` sets footer `layout`, `primaryActions`,
-  `direction`, and `uiProfile` for both the widget and dialog.
+  `ConsentWidget` reads `components.manager` for its root, opt-out status line
+  (`optOutStatus`), and footer, `components.accordion` and
+  `components['accordion-item']` for rows, `components.switch` for switches,
+  and `components['vendor-list']` for vendor rows. See
+  [component parts](/docs/customization/slots). `presentation.preferences` sets
+  footer `layout`, `primaryActions`, `direction`, and `uiProfile` for both the
+  widget and dialog.
 </section>
 
 <section id="verify">

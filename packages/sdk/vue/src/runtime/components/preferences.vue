@@ -16,6 +16,7 @@ import { vendorsListedUnder } from '@inth/sdk/engine';
 import {
 	resolveActionLabels,
 	resolveCategoryTitle,
+	resolveOptOutCopy,
 } from '@inth/sdk/surface-state';
 import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
 
@@ -36,11 +37,10 @@ import { computed, inject, mergeProps, ref, useId } from 'vue';
 import {
 	useConsentConfig,
 	useConsentInit,
-	useConsentSave,
 	useHasConsentUi,
 } from '../composables';
 import { useConsentDraft } from '../composables/draft';
-import { useConsentSnapshot } from '../composables/kernel';
+import { useConsentSnapshot, useOptOutState } from '../composables/kernel';
 import { useConsentPolicyActions } from '../composables/use-consent-policy-actions';
 import { switchVariants } from '../primitives/switch-variants';
 import { slotAttrs } from '../utils/slot-attrs';
@@ -70,7 +70,6 @@ const config = useConsentConfig();
 const hasConsentUi = useHasConsentUi();
 
 const manager = inject(consentWidgetManagerKey, null);
-const save = useConsentSave();
 
 const sw = switchVariants();
 
@@ -130,8 +129,63 @@ const categories = draftCategories;
 
 /** Vendors to list under each category; none under an `iab` policy. */
 const snapshot = useConsentSnapshot();
+const optOutState = useOptOutState();
+const optOutCopy = computed(() =>
+	resolveOptOutCopy(
+		init.value?.translations?.translations as
+			| Parameters<typeof resolveOptOutCopy>[0]
+			| undefined
+	)
+);
 const displayedVendors = function displayedVendors(category: CONSENT_CATEGORY) {
 	return vendorsListedUnder(snapshot.value, category);
+};
+
+const isGpcLocked = function isGpcLocked(category: CONSENT_CATEGORY): boolean {
+	if (category === 'necessary') {
+		return false;
+	}
+	return (
+		(optOutState.value.lock === 'gpc-active' &&
+			optOutState.value.categories.includes(category)) ||
+		snapshot.value.restrictions[category]?.includes('gpc') === true
+	);
+};
+
+const isDisabled = function isDisabled(category: CONSENT_CATEGORY): boolean {
+	return category === 'necessary' || isGpcLocked(category);
+};
+
+const restrictionReason = function restrictionReason(
+	category: CONSENT_CATEGORY
+): string | null {
+	if (category === 'necessary') {
+		return null;
+	}
+	if (isGpcLocked(category)) {
+		return optOutCopy.value.lockedByGpc;
+	}
+	if (
+		optOutState.value.lock === 'held-by-account' &&
+		optOutState.value.categories.includes(category)
+	) {
+		return optOutCopy.value.lockedByAccount;
+	}
+	const decision = snapshot.value.explicitChoice?.categories[category];
+	const reasons = snapshot.value.restrictions[category];
+	if (
+		decision?.value === true &&
+		reasons?.some((reason) => reason !== 'opt-out')
+	) {
+		return 'Your saved choice is restricted by the current privacy settings.';
+	}
+	return null;
+};
+
+const restrictionId = function restrictionId(
+	category: CONSENT_CATEGORY
+): string {
+	return `inth-restriction-${uid}-${category}`;
 };
 
 /** Single-open accordion state (opening one category closes the rest). */
@@ -166,7 +220,7 @@ const toggleOpenItem = function toggleOpenItem(category: CONSENT_CATEGORY) {
 };
 
 const toggleConsent = function toggleConsent(category: CONSENT_CATEGORY) {
-	if (category === 'necessary') {
+	if (isDisabled(category)) {
 		return;
 	}
 	draft.value = {
@@ -230,10 +284,7 @@ const onAction = async function onAction(action: PresentationAction) {
 		return;
 	}
 	if (action === 'accept' || action === 'reject') {
-		save(action === 'accept' ? 'all' : 'none');
-		// A bulk choice supersedes every staged edit, even one that records
-		// nothing new.
-		resetDraft();
+		await saveDraft({ input: action === 'accept' ? 'all' : 'none' });
 	} else if (action === 'save') {
 		await saveDraft();
 	}
@@ -265,6 +316,23 @@ const onAction = async function onAction(action: PresentationAction) {
 		data-testid="consent-widget-root"
 		:data-disable-animation="config.disableAnimation ? true : undefined"
 	>
+		<p
+			v-if="optOutState.honored"
+			v-bind="
+				slotAttrs(
+					config.components?.manager?.optOutStatus,
+					noStyle ? undefined : managerStyles.optOutStatus
+				)
+			"
+			data-testid="consent-widget-opt-out-status"
+			role="status"
+		>
+			{{
+				optOutState.via === 'signal'
+					? optOutCopy.statusSignal
+					: optOutCopy.statusRequest
+			}}
+		</p>
 		<div
 			v-bind="
 				slotAttrs(
@@ -341,6 +409,11 @@ const onAction = async function onAction(action: PresentationAction) {
 							type="button"
 							role="switch"
 							:aria-checked="draft[category] ? 'true' : 'false'"
+							:aria-describedby="
+								restrictionReason(category)
+									? restrictionId(category)
+									: undefined
+							"
 							:aria-label="consentTitle(category)"
 							v-bind="
 								slotAttrs(
@@ -348,12 +421,12 @@ const onAction = async function onAction(action: PresentationAction) {
 									noStyle ? undefined : sw.root()
 								)
 							"
-							:data-disabled="category === 'necessary' ? '' : undefined"
+							:data-disabled="isDisabled(category) ? '' : undefined"
 							:data-size="noStyle ? undefined : 'small'"
 							data-slot="switch"
 							:data-state="draft[category] ? 'checked' : 'unchecked'"
 							:data-testid="`consent-widget-switch-${category}`"
-							:disabled="category === 'necessary'"
+							:disabled="isDisabled(category)"
 							@click="toggleConsent(category)"
 						>
 							<span
@@ -370,6 +443,14 @@ const onAction = async function onAction(action: PresentationAction) {
 						</button>
 					</div>
 				</div>
+				<output
+					v-if="restrictionReason(category)"
+					:id="restrictionId(category)"
+					:class="noStyle ? undefined : accordionStyles.restriction"
+					:data-testid="`consent-widget-restriction-${category}`"
+				>
+					{{ restrictionReason(category) }}
+				</output>
 				<div
 					v-bind="config.components?.['accordion-item']?.content"
 					:id="contentId(index)"
@@ -398,6 +479,7 @@ const onAction = async function onAction(action: PresentationAction) {
 									:category="category"
 									:category-on="draft[category] === true"
 									:granted="draftVendors"
+									:hide-hint="isGpcLocked(category)"
 									:no-style="noStyle"
 									:vendors="displayedVendors(category)"
 									@toggle="setVendor"

@@ -1,5 +1,6 @@
 import type { ConsentSnapshot } from '@inth/sdk/engine';
 import { hasConsentPreferences, hasConsentUI } from '@inth/sdk/surface-actions';
+import { resolveOptOutState } from '@inth/sdk/surface-state';
 import { computed, inject } from 'vue';
 
 import {
@@ -45,6 +46,11 @@ export const useEffectivePermissions = () =>
 export const usePromptRequirement = () => useSnapshotField('promptRequirement');
 /** Read the stored notice acknowledgement independently of choices. */
 export const useNoticeDismissal = () => useSnapshotField('noticeDismissal');
+/** Read the opt-out display state derived from the current snapshot. */
+export const useOptOutState = () => {
+	const snapshot = useConsentSnapshot();
+	return computed(() => resolveOptOutState(snapshot.value));
+};
 /** Read detected and active user-agent privacy signals. */
 export const usePrivacySignals = () => useSnapshotField('privacySignals');
 /** Read the canonical policy rule used by the evaluator. */

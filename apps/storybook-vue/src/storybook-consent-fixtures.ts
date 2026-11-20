@@ -26,6 +26,8 @@ import {
 	storybookChoiceRecord,
 	storybookIABPolicy,
 	storybookIABPresentation,
+	storybookOptOutPolicyResolution,
+	storybookOptOutRecords,
 	storybookPolicy,
 	storybookPresentation,
 } from '../../storybook-consent-policy';
@@ -196,6 +198,40 @@ export const storybookNoticeInit: InitOutput = {
 			rules: [storybookNoticePolicy],
 		})
 	),
+};
+
+export const storybookOptOutInit: InitOutput = {
+	...storybookInit,
+	location: { countryCode: 'US', regionCode: 'CA' },
+	policyResolution: writePolicyResolutionWire(storybookOptOutPolicyResolution),
+};
+
+export const useStorybookOptOutConsent = function useStorybookOptOutConsent(
+	kind: 'request' | 'gpc' | 'account'
+) {
+	const config: ConsentConfig = {
+		...storybookConsentConfig,
+		...(kind === 'gpc' ? { overrides: { gpc: true } } : {}),
+	} as ConsentConfig;
+	const now = Date.now();
+	const context = createVueConsentKernelContext({
+		config,
+		initialRecords: {
+			...storybookOptOutRecords(kind),
+			now,
+		},
+		mode: storybookMode(),
+		now,
+		prefetch: storybookOptOutInit,
+		producerContract: 1,
+	});
+	if (kind === 'gpc') {
+		context.kernel.set.privacySignals({ gpc: true });
+	}
+	context.activeUI.value = null;
+	provideStorybookConsentContext(null, context, config);
+	onUnmounted(() => context.dispose());
+	return context;
 };
 
 export const useStorybookConsent = function useStorybookConsent(
