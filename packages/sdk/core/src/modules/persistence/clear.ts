@@ -19,7 +19,6 @@ import {
 import { removeLegacySubjectId } from '../../libs/legacy-subject-id';
 import { removeLocalStorageKey } from '../../libs/local-storage';
 import {
-	DOCUMENT_ACCEPTANCES_STORAGE_KEY,
 	storageKeyFamilies,
 	resolveStorageKeys,
 } from '../../libs/storage-keys';
@@ -72,7 +71,6 @@ export const clearStoredConsentRecords = function clearStoredConsentRecords(
 		}
 	}
 	removeLegacySubjectId(config);
-	removeLocalStorageKey(DOCUMENT_ACCEPTANCES_STORAGE_KEY);
 	// Addon bytes must be removed even when the addon is not mounted.
 	removeLocalStorageKey(IAB_STORAGE_KEYS.authority);
 	removeLocalStorageKey(IAB_STORAGE_KEYS.c15tAuthority);

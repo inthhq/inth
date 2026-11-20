@@ -173,58 +173,6 @@ test('one request accepts two types, with the property option', async () => {
 	]);
 });
 
-describe('what this browser stores', () => {
-	const runtimeFor = (projectUrl: string) => {
-		const runtime = create({ mode: hosted({ fetch: backend, projectUrl }) });
-		runtime.kernel.set.subjectId(SUBJECT);
-		return createRuntimeDocuments(() => runtime);
-	};
-
-	test('an acceptance through one project does not count for another', async () => {
-		await runtimeFor('https://one.example.com').accept({
-			hash: HASH,
-			type: 'terms_us',
-		});
-
-		const other = await runtimeFor('https://two.example.com').check('terms_us');
-
-		expect(other.accepted).toBe(false);
-	});
-
-	test('two writers keep both types', async () => {
-		const first = runtimeFor('https://one.example.com');
-		const second = runtimeFor('https://one.example.com');
-
-		await Promise.all([
-			first.accept({ hash: HASH, type: 'terms_us' }),
-			second.accept({ hash: PRIVACY_HASH, type: 'privacy_policy' }),
-		]);
-
-		expect((await first.check('terms_us')).accepted).toBe(true);
-		expect((await first.check('privacy_policy')).accepted).toBe(true);
-	});
-
-	test('an oversized stored value is ignored and replaced', async () => {
-		localStorage.setItem(
-			'inth-document-acceptances:v1',
-			JSON.stringify({
-				accepted: {},
-				pad: 'x'.repeat(70_000),
-				subjectId: SUBJECT,
-			})
-		);
-		const documents = runtimeFor('https://one.example.com');
-		expect((await documents.check('terms_us')).accepted).toBe(false);
-
-		await documents.accept({ hash: HASH, type: 'terms_us' });
-
-		expect((await documents.check('terms_us')).accepted).toBe(true);
-		expect(
-			localStorage.getItem('inth-document-acceptances:v1')?.length
-		).toBeLessThan(1000);
-	});
-});
-
 test('accept waits for a streamed prefetch to settle the subject', async () => {
 	const stream = Promise.withResolvers<RuntimePrefetch>();
 	const runtime = createConsentProviderRuntime(

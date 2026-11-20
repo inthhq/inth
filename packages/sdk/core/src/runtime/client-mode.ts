@@ -27,6 +27,7 @@ import { trimSlash } from '../libs/url';
 import type { ConsentMode, TestingModeOptions } from '../modes';
 import { testingOptionsOf } from '../modes';
 import type { SSRInitialData } from '../options/ssr';
+import type { BackendReportingContext } from '../transports/backend';
 import type * as ManifestBrowserModule from '../transports/manifest-browser';
 import type { BrowserManifestOptions } from '../transports/manifest-browser';
 import { createManifestRequestInit } from '../transports/manifest-request';
@@ -296,7 +297,7 @@ export const lazyHosted = function lazyHosted(
 		(context?: ProviderTransportContext): KernelTransport => {
 			const fetch = globalThis.fetch?.bind(globalThis);
 			const backend = { fetch, projectUrl: options.projectUrl };
-			context?.backend?.(backend);
+			(context as BackendReportingContext | undefined)?.backend?.(backend);
 			return createLazyInitTransport(
 				createV1RecordTransport(
 					backend,
@@ -471,7 +472,7 @@ export const lazyBrowserManifest = function lazyBrowserManifest(
 				projectUrl: options.projectUrl,
 				property: options.property,
 			};
-			context?.backend?.(backend);
+			(context as BackendReportingContext | undefined)?.backend?.(backend);
 			return createLazyInitTransport(
 				createV1RecordTransport(backend),
 				async () => {

@@ -171,27 +171,47 @@ describe('InthProvider: streamed state', () => {
 		}
 	});
 
-	test('documents reach the backend the streamed state names', async () => {
+	test('documents wait for the streamed state, then use its backend and subject', async () => {
 		// No save an earlier test queued replays and builds the transport.
 		localStorage.clear();
-		const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
-			Promise.resolve(
-				Response.json({
-					document: {
-						effectiveDate: '2026-11-18T00:00:00.000Z',
-						hash: 'sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
-						id: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
-						isCurrent: true,
-						requiresAcceptance: true,
-						type: 'terms_us',
-						version: '1',
-					},
-				})
-			)
+		const hash =
+			'sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08';
+		const streamed = '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b22';
+		// What an earlier page remembered for the subject the server keeps.
+		localStorage.setItem(
+			'inth-document-acceptances:v1:/api/inth',
+			JSON.stringify({
+				accepted: { terms_us: { [hash]: { acceptedAt: 1, version: '1' } } },
+				subjectId: streamed,
+			})
 		);
+		const fetchSpy = vi
+			.spyOn(globalThis, 'fetch')
+			.mockImplementation((_input, init) =>
+				Promise.resolve(
+					init?.method === 'POST'
+						? Response.json({
+								acceptances: [
+									{ acceptedAt: 2, hash, type: 'privacy_policy', version: '1' },
+								],
+								subjectId: streamed,
+							})
+						: Response.json({
+								document: {
+									effectiveDate: '2026-11-18T00:00:00.000Z',
+									hash,
+									id: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+									isCurrent: true,
+									requiresAcceptance: true,
+									type: 'terms_us',
+									version: '1',
+								},
+							})
+				)
+			);
 		const { promise, resolve: resolveState } = deferred();
 		try {
-			const { getByTestId } = await render(
+			await render(
 				<InthProvider
 					persistence={false}
 					state={promise}
@@ -200,16 +220,42 @@ describe('InthProvider: streamed state', () => {
 					<DocumentsCapture />
 				</InthProvider>
 			);
-			resolveState({ ...policyFixture(), ...sameOrigin });
-			await expect
-				.element(getByTestId('status'))
-				.toHaveTextContent('opt-in/banner/false');
+			await vi.waitFor(() => expect(documents).toBeDefined());
+			const checking = documents?.check('terms_us');
+			const accepting = documents?.accept({ hash, type: 'privacy_policy' });
+			await new Promise((resolve) => {
+				setTimeout(resolve, 50);
+			});
+			expect(fetchSpy).not.toHaveBeenCalled();
 
-			await documents?.check('terms_us');
+			const fixture = policyFixture({ marketing: true });
+			resolveState({
+				...fixture,
+				...sameOrigin,
+				initialRecords: {
+					...fixture.initialRecords,
+					subject: { subjectId: streamed },
+				},
+			});
 
-			expect(fetchSpy.mock.calls.map(([url]) => String(url))).toEqual([
-				'/api/inth/v1/documents/terms_us/current',
-			]);
+			await expect(checking).resolves.toMatchObject({ accepted: true });
+			await accepting;
+			const calls = fetchSpy.mock.calls.map(([url, init]) => ({
+				subjectId: init?.body
+					? (JSON.parse(String(init.body)) as { subjectId?: string }).subjectId
+					: undefined,
+				url: String(url),
+			}));
+			expect(calls).toEqual(
+				expect.arrayContaining([
+					{
+						subjectId: undefined,
+						url: '/api/inth/v1/documents/terms_us/current',
+					},
+					{ subjectId: streamed, url: '/api/inth/v1/documents/acceptances' },
+				])
+			);
+			expect(calls).toHaveLength(2);
 		} finally {
 			fetchSpy.mockRestore();
 		}

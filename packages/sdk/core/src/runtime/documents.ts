@@ -56,7 +56,10 @@ export interface AcceptDocumentsOptions {
 	 * of a failed call to retry it. Defaults to a new key.
 	 */
 	idempotencyKey?: string;
-	/** The person, with `identityToken`. Recorded for the person too. */
+	/**
+	 * The person, with `identityToken`. The acceptance is recorded for the
+	 * person, and this browser remembers nothing for the device.
+	 */
 	externalId?: string;
 	identityProvider?: string;
 	/** Signed proof of `externalId`, minted by your server. */
@@ -73,10 +76,10 @@ export interface RuntimeDocuments {
 	check: (type: string) => Promise<DocumentCheck>;
 	/**
 	 * Record that the visitor accepted one or more releases, by the `type`
-	 * and `hash` that `check` gave, and remember it in this browser. Uses
-	 * the runtime's subject ID, and makes one when there is none. Rejects
-	 * with an API error (`isInthApiError`) when nothing was recorded, and
-	 * retries only after a `subject_conflict`, under a new subject ID.
+	 * and `hash` that `check` gave, under the runtime's subject ID once it
+	 * has settled, and remember it in this browser for that subject. Rejects
+	 * when the runtime has no subject yet, and with an API error
+	 * (`isInthApiError`) when nothing was recorded; nothing is sent again.
 	 */
 	accept: (
 		documents: V1DocumentAcceptanceItem | readonly V1DocumentAcceptanceItem[],

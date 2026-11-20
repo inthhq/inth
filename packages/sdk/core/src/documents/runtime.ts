@@ -2,8 +2,18 @@
  * `check` and `accept` of `@inth/sdk/runtime/documents`. They load on
  * their first call, through `runtime/lazy-documents.ts`.
  *
+ * Documents never create, store or replace the visitor's subject: consent
+ * persistence owns it. An acceptance is remembered for the subject it was
+ * recorded under, for this page, and across reloads only while consent
+ * persistence keeps that subject (the visitor has a consent record). When
+ * the subject changes, the remembered acceptances no longer match.
+ *
  * @internal
  */
+import {
+	V1_DOCUMENT_HASH_PATTERN,
+	V1_LEGACY_SUBJECT_ID_PATTERN,
+} from '@inth/sdk-schema/types';
 import type {
 	V1DocumentAcceptanceItem,
 	V1DocumentAcceptancesOutput,
@@ -12,170 +22,221 @@ import type {
 import type { InternalKernel } from '../kernel/internals';
 import { localStorageOf } from '../libs/local-storage';
 import { DOCUMENT_ACCEPTANCES_STORAGE_KEY } from '../libs/storage-keys';
-import { createIdempotencyKey, generateUuidV7 } from '../libs/subject-uuid';
+import { createIdempotencyKey } from '../libs/subject-uuid';
 import type {
 	AcceptDocumentsOptions,
 	DocumentCheck,
 } from '../runtime/documents';
 import type { ConsentRuntime, StreamedPrefetch } from '../runtime/types';
-import { isInthApiError } from '../transports/v1/error';
-import { resolveProperty, trimTrailingSlash } from '../transports/v1/routes';
+import {
+	isUuidV7,
+	resolveProperty,
+	trimTrailingSlash,
+} from '../transports/v1/routes';
+import type { ConsentSnapshot } from '../types';
 import { createDocumentsClient } from './client';
 
-/** Larger stored values are ignored, and replaced on the next write. */
-const MAX_STORED_LENGTH = 64 * 1024;
+/** Larger entries read as nothing. The writer stays below it. */
+const MAX_ENTRY_LENGTH = 16 * 1024;
+/** What one entry keeps: the latest types, and their latest hashes. */
+const MAX_TYPES = 16;
+const MAX_HASHES = 4;
 
-type AcceptedHashes = Record<string, { version: string; acceptedAt: number }>;
-
-/**
- * What this browser stores under `DOCUMENT_ACCEPTANCES_STORAGE_KEY`.
- * Persistence starts a reload from `subjectId` when no consent record
- * carries a subject, and a clear removes the key.
- */
-interface StoredAcceptances {
-	/** The subject the latest acceptance was recorded for. */
-	subjectId: string;
-	/** By {@link scopeOf}, the hashes accepted of each document type. */
-	accepted: Record<string, Record<string, AcceptedHashes>>;
+interface Accepted {
+	version: string;
+	acceptedAt: number;
 }
 
-const scopeOf = (projectUrl: string, subjectId: string): string =>
-	`${subjectId} ${projectUrl}`;
+/** The acceptances of one subject for one project: by type, by hash. */
+interface Entry {
+	subjectId: string;
+	accepted: Record<string, Record<string, Accepted>>;
+}
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
 	typeof value === 'object' && value !== null && !Array.isArray(value);
 
-const readStored = function readStored(): StoredAcceptances | null {
+const isSubjectId = (value: unknown): value is string =>
+	typeof value === 'string' &&
+	(isUuidV7(value) || V1_LEGACY_SUBJECT_ID_PATTERN.test(value));
+
+const isAccepted = (value: unknown): value is Accepted =>
+	isRecord(value) &&
+	typeof value.version === 'string' &&
+	typeof value.acceptedAt === 'number';
+
+/**
+ * The one reader of a stored or remembered entry. A wrong shape, a
+ * malformed subject or hash, missing metadata, more than the writer keeps
+ * or more than the size limit reads as nothing.
+ */
+const readEntry = function readEntry(
+	text: string | null | undefined
+): Entry | null {
+	if (!text || text.length > MAX_ENTRY_LENGTH) {
+		return null;
+	}
+	let value: unknown;
 	try {
-		const raw = localStorageOf()?.getItem(DOCUMENT_ACCEPTANCES_STORAGE_KEY);
-		if (!raw || raw.length > MAX_STORED_LENGTH) {
+		value = JSON.parse(text);
+	} catch {
+		return null;
+	}
+	if (
+		!(
+			isRecord(value) &&
+			isSubjectId(value.subjectId) &&
+			isRecord(value.accepted)
+		)
+	) {
+		return null;
+	}
+	const types = Object.values(value.accepted);
+	if (types.length > MAX_TYPES) {
+		return null;
+	}
+	for (const hashes of types) {
+		if (!isRecord(hashes) || Object.keys(hashes).length > MAX_HASHES) {
 			return null;
 		}
-		const value: unknown = JSON.parse(raw);
-		return isRecord(value) &&
-			typeof value.subjectId === 'string' &&
-			isRecord(value.accepted)
-			? (value as unknown as StoredAcceptances)
-			: null;
+		for (const [hash, accepted] of Object.entries(hashes)) {
+			if (!(V1_DOCUMENT_HASH_PATTERN.test(hash) && isAccepted(accepted))) {
+				return null;
+			}
+		}
+	}
+	return value as unknown as Entry;
+};
+
+/** Newest first, by when the latest of `items` was accepted. */
+const newestFirst = <Item>(
+	items: [string, Item][],
+	at: (item: Item) => number
+): [string, Item][] =>
+	[...items].sort((left, right) => at(right[1]) - at(left[1]));
+
+const latestOf = (hashes: Record<string, Accepted>): number =>
+	Math.max(...Object.values(hashes).map((accepted) => accepted.acceptedAt));
+
+/**
+ * `entry` with `acceptances` added, cut to what an entry keeps, as text
+ * the reader accepts; `null` when even the newest acceptance alone is too
+ * large.
+ */
+const writeEntry = function writeEntry(
+	entry: Entry,
+	acceptances: V1DocumentAcceptancesOutput['acceptances']
+): string | null {
+	const accepted: Entry['accepted'] = {};
+	for (const [type, hashes] of Object.entries(entry.accepted)) {
+		accepted[type] = { ...hashes };
+	}
+	for (const { acceptedAt, hash, type, version } of acceptances) {
+		accepted[type] = {
+			...(Object.hasOwn(accepted, type) ? accepted[type] : undefined),
+			[hash]: { acceptedAt, version },
+		};
+	}
+	let kept = newestFirst(Object.entries(accepted), latestOf)
+		.slice(0, MAX_TYPES)
+		.map(([type, hashes]): [string, Record<string, Accepted>] => [
+			type,
+			Object.fromEntries(
+				newestFirst(Object.entries(hashes), (item) => item.acceptedAt).slice(
+					0,
+					MAX_HASHES
+				)
+			),
+		]);
+	while (kept.length > 0) {
+		const text = JSON.stringify({
+			accepted: Object.fromEntries(kept),
+			subjectId: entry.subjectId,
+		} satisfies Entry);
+		if (text.length <= MAX_ENTRY_LENGTH) {
+			return text;
+		}
+		kept = kept.slice(0, -1);
+	}
+	return null;
+};
+
+/** What each runtime's page remembers, by storage key, as stored text. */
+const pages = new WeakMap<InternalKernel, Map<string, string>>();
+
+const rememberedOf = function rememberedOf(
+	kernel: InternalKernel
+): Map<string, string> {
+	let remembered = pages.get(kernel);
+	if (!remembered) {
+		remembered = new Map();
+		pages.set(kernel, remembered);
+	}
+	return remembered;
+};
+
+/** Whether consent persistence keeps the subject: a consent record exists. */
+const hasConsentRecord = (snapshot: ConsentSnapshot): boolean =>
+	Boolean(
+		snapshot.explicitChoice || snapshot.vendorChoice || snapshot.noticeDismissal
+	);
+
+const readStored = function readStored(key: string): Entry | null {
+	try {
+		return readEntry(localStorageOf()?.getItem(key));
 	} catch {
 		return null;
 	}
 };
 
-const write = function write(stored: StoredAcceptances): void {
-	let text = JSON.stringify(stored);
-	if (text.length > MAX_STORED_LENGTH) {
-		const scope = Object.keys(stored.accepted).at(-1);
-		text = JSON.stringify({
-			accepted: scope ? { [scope]: stored.accepted[scope] } : {},
-			subjectId: stored.subjectId,
-		});
-	}
-	try {
-		localStorageOf()?.setItem(DOCUMENT_ACCEPTANCES_STORAGE_KEY, text);
-	} catch {
-		// The backend recorded it; this browser asks again next time.
-	}
-};
-
-/**
- * Read, change and write the stored acceptances under a Web Lock, so tabs
- * writing at once each keep what the others wrote.
- */
-const update = async function update(
-	change: (stored: StoredAcceptances | null) => StoredAcceptances | null
+/** Run `write` under a Web Lock on `key`, so tabs do not lose each other's. */
+const locked = async function locked(
+	key: string,
+	write: () => void
 ): Promise<void> {
-	const run = () => {
-		const next = change(readStored());
-		if (next) {
-			write(next);
-		}
-	};
 	try {
 		const { locks } = navigator;
 		if (typeof locks?.request === 'function') {
-			await locks.request(DOCUMENT_ACCEPTANCES_STORAGE_KEY, run);
+			await locks.request(key, write);
 			return;
 		}
 	} catch {
 		// No usable lock: write without one.
 	}
-	run();
+	write();
 };
 
-/** The hashes of `type` accepted in `scope`; none when nothing is stored. */
-const acceptedHashes = function acceptedHashes(
-	scope: string,
-	type: string
-): AcceptedHashes {
-	const accepted = readStored()?.accepted;
-	const types =
-		accepted && Object.hasOwn(accepted, scope) ? accepted[scope] : undefined;
-	const hashes =
-		isRecord(types) && Object.hasOwn(types, type) ? types[type] : undefined;
-	return isRecord(hashes) ? hashes : {};
-};
-
-const following = new WeakSet<InternalKernel>();
+const forgetting = new WeakSet<InternalKernel>();
 
 /**
- * Move the stored acceptances with the kernel's subject when the backend
- * replaces it (a link, a save's answer, a conflict), for as long as this
- * page runs. Persistence does not announce replacing an ID acceptances
- * were recorded for.
+ * A clear forgets what this page and storage remember for the subject it
+ * cleared. A clear before the documents code loaded leaves no consent
+ * record, so a stored entry does not count until one is made again.
  */
-const followSubject = function followSubject(kernel: InternalKernel): void {
-	if (following.has(kernel)) {
+const forgetOnClear = function forgetOnClear(
+	kernel: InternalKernel,
+	key: string
+): void {
+	if (forgetting.has(kernel)) {
 		return;
 	}
-	following.add(kernel);
-	kernel.events.on('subject:resolved', ({ previousSubjectId, snapshot }) => {
-		const subjectId = snapshot.subject?.subjectId;
-		if (!(previousSubjectId && subjectId)) {
-			return;
+	forgetting.add(kernel);
+	kernel.events.on('records:cleared', () => {
+		const subjectId = kernel.getSnapshot().subject?.subjectId;
+		const remembered = rememberedOf(kernel);
+		if (readEntry(remembered.get(key))?.subjectId === subjectId) {
+			remembered.delete(key);
 		}
-		void update((stored) => {
-			if (!stored) {
-				return null;
+		void locked(key, () => {
+			if (readStored(key)?.subjectId === subjectId) {
+				try {
+					localStorageOf()?.removeItem(key);
+				} catch {
+					// Without a consent record it no longer counts.
+				}
 			}
-			const accepted: StoredAcceptances['accepted'] = {};
-			for (const [scope, types] of Object.entries(stored.accepted)) {
-				const [owner, ...project] = scope.split(' ');
-				accepted[
-					owner === previousSubjectId
-						? scopeOf(project.join(' '), subjectId)
-						: scope
-				] = types;
-			}
-			return {
-				accepted,
-				subjectId:
-					stored.subjectId === previousSubjectId ? subjectId : stored.subjectId,
-			};
 		});
 	});
-};
-
-/**
- * The backend consent records go to, and the kernel that holds the
- * visitor's subject.
- */
-const bind = function bind(runtime: ConsentRuntime) {
-	const kernel = runtime.kernel as InternalKernel;
-	const backend = kernel.backend?.();
-	if (!backend) {
-		throw new Error(
-			'Inth documents: legal documents need a backend, and this runtime has none. A testing() or offline mode, a disabled provider and a stand-in runtime have none.'
-		);
-	}
-	followSubject(kernel);
-	const projectUrl = trimTrailingSlash(backend.projectUrl);
-	return {
-		client: createDocumentsClient({ fetch: backend.fetch, projectUrl }),
-		kernel,
-		projectUrl,
-		property: resolveProperty(projectUrl, backend.property),
-	};
 };
 
 /**
@@ -209,22 +270,44 @@ const subjectSettled = async function subjectSettled(
 	});
 };
 
+/** The backend consent records go to, once the subject has settled. */
+const bind = async function bind(runtime: ConsentRuntime) {
+	await subjectSettled(runtime);
+	const kernel = runtime.kernel as InternalKernel;
+	const backend = kernel.backend?.();
+	if (!backend) {
+		throw new Error(
+			'Inth documents: legal documents need a backend, and this runtime has none. A testing() or offline mode, a disabled provider and a stand-in runtime have none.'
+		);
+	}
+	const projectUrl = trimTrailingSlash(backend.projectUrl);
+	const key = `${DOCUMENT_ACCEPTANCES_STORAGE_KEY}:${projectUrl}`;
+	forgetOnClear(kernel, key);
+	return {
+		client: createDocumentsClient({ fetch: backend.fetch, projectUrl }),
+		kernel,
+		key,
+		property: resolveProperty(projectUrl, backend.property),
+	};
+};
+
 export const checkDocument = async function checkDocument(
 	runtime: ConsentRuntime,
 	type: string
 ): Promise<DocumentCheck> {
-	const { client, kernel, projectUrl } = bind(runtime);
+	const { client, kernel, key } = await bind(runtime);
 	const { document } = await client.getCurrent(type);
-	const subjectId = kernel.getSnapshot().subject?.subjectId;
-	// The current hash is checked against the hash pattern on the way in,
-	// so only a well-formed stored hash can match it.
+	const snapshot = kernel.getSnapshot();
+	const subjectId = snapshot.subject?.subjectId;
+	const counts = (entry: Entry | null): boolean =>
+		entry !== null &&
+		entry.subjectId === subjectId &&
+		Object.hasOwn(entry.accepted, type) &&
+		Object.hasOwn(entry.accepted[type] ?? {}, document.hash);
 	return {
 		accepted:
-			subjectId !== undefined &&
-			Object.hasOwn(
-				acceptedHashes(scopeOf(projectUrl, subjectId), type),
-				document.hash
-			),
+			counts(readEntry(rememberedOf(kernel).get(key))) ||
+			(hasConsentRecord(snapshot) && counts(readStored(key))),
 		document,
 	};
 };
@@ -234,72 +317,71 @@ export const acceptDocuments = async function acceptDocuments(
 	documents: V1DocumentAcceptanceItem | readonly V1DocumentAcceptanceItem[],
 	options: AcceptDocumentsOptions = {}
 ): Promise<V1DocumentAcceptancesOutput> {
-	const { client, kernel, projectUrl, property } = bind(runtime);
-	await subjectSettled(runtime);
-	let subjectId = kernel.getSnapshot().subject?.subjectId;
-	if (!subjectId) {
-		subjectId = generateUuidV7();
-		kernel.set.subjectId(subjectId);
+	const { client, kernel, key, property } = await bind(runtime);
+	const sent = kernel.getSnapshot().subject?.subjectId;
+	if (!sent) {
+		throw new Error(
+			'Inth documents: the runtime has no subject yet. Start it before accepting.'
+		);
 	}
-	const input = {
+	const generation = kernel.getRecordsGeneration();
+	const answer = await client.recordAcceptances({
 		acceptances: 'hash' in documents ? [documents] : documents,
 		externalId: options.externalId,
 		idempotencyKey: options.idempotencyKey ?? createIdempotencyKey(),
 		identityProvider: options.identityProvider,
 		identityToken: options.identityToken,
 		property,
-	};
-	let answer: V1DocumentAcceptancesOutput;
-	try {
-		answer = await client.recordAcceptances({ ...input, subjectId });
-	} catch (error) {
-		if (!(isInthApiError(error) && error.code === 'subject_conflict')) {
-			throw error;
-		}
-		// Another project holds the ID. Move to a new one, as a refused
-		// consent save does, and send the same action under it.
-		const conflicted = subjectId;
-		subjectId = generateUuidV7();
-		await kernel.adoptSubject(conflicted, subjectId);
-		answer = await client.recordAcceptances({ ...input, subjectId });
+		subjectId: sent,
+	});
+	// A person's acceptance is not the device's to remember.
+	if (options.externalId) {
+		return answer;
 	}
-	// For a device the answer names its canonical ID, which replaces a
-	// stored `sub_` ID. For a person it names the person, and the device
-	// keeps its own.
-	if (!input.externalId && answer.subjectId !== subjectId) {
-		await kernel.adoptSubject(subjectId, answer.subjectId);
-		({ subjectId } = answer);
+	let device = sent;
+	// The canonical UUID of a stored `sub_` ID. The kernel's adoption does
+	// nothing once the subject has moved on.
+	if (!isUuidV7(sent) && isUuidV7(answer.subjectId)) {
+		await kernel.adoptSubject(sent, answer.subjectId);
+		device = answer.subjectId;
 	}
-	// Stored with the acceptances, the ID outlives this page.
-	if (kernel.getProvisionalSubject() === subjectId) {
+	// `identify()` links the ID now: the backend has a record of it.
+	if (kernel.getProvisionalSubject() === device) {
 		kernel.markProvisionalSubject(null);
 	}
-	const device = subjectId;
-	const scope = scopeOf(projectUrl, device);
-	await update((stored) => {
-		// The scope written last goes last: a value over the size limit
-		// keeps it alone.
-		const accepted: StoredAcceptances['accepted'] = {};
-		for (const [key, types] of Object.entries(stored?.accepted ?? {})) {
-			if (key !== scope) {
-				accepted[key] = types;
+	if (
+		answer.subjectId !== device ||
+		kernel.getSnapshot().subject?.subjectId !== device ||
+		kernel.getRecordsGeneration() !== generation
+	) {
+		return answer;
+	}
+	const persisted = hasConsentRecord(kernel.getSnapshot());
+	const empty: Entry = { accepted: {}, subjectId: device };
+	const remembered = rememberedOf(kernel);
+	const fromMemory = readEntry(remembered.get(key));
+	const text = writeEntry(
+		fromMemory?.subjectId === device ? fromMemory : empty,
+		answer.acceptances
+	);
+	if (text) {
+		remembered.set(key, text);
+	}
+	if (persisted) {
+		await locked(key, () => {
+			const stored = readStored(key);
+			const next = writeEntry(
+				stored?.subjectId === device ? stored : empty,
+				answer.acceptances
+			);
+			try {
+				if (next) {
+					localStorageOf()?.setItem(key, next);
+				}
+			} catch {
+				// Remembered for this page; asked again after a reload.
 			}
-		}
-		const types: Record<string, AcceptedHashes> = {};
-		const previous = stored?.accepted[scope];
-		if (stored && Object.hasOwn(stored.accepted, scope) && isRecord(previous)) {
-			Object.assign(types, previous);
-		}
-		for (const { acceptedAt, hash, type, version } of answer.acceptances) {
-			const hashes: AcceptedHashes = {};
-			if (Object.hasOwn(types, type) && isRecord(types[type])) {
-				Object.assign(hashes, types[type]);
-			}
-			hashes[hash] = { acceptedAt, version };
-			types[type] = hashes;
-		}
-		accepted[scope] = types;
-		return { accepted, subjectId: device };
-	});
+		});
+	}
 	return answer;
 };

@@ -8,7 +8,6 @@
  *
  * @internal
  */
-import type { TransportBackend } from '../transports/mode';
 import type {
 	ConsentKernel,
 	HydrationRecords,
@@ -16,6 +15,18 @@ import type {
 	InitResponse,
 	KernelEvent,
 } from '../types';
+
+/**
+ * Where a kernel's transport sends records. `projectUrl` is `''` for this
+ * origin.
+ *
+ * @internal
+ */
+export interface TransportBackend {
+	projectUrl: string;
+	property?: string;
+	fetch?: typeof globalThis.fetch;
+}
 
 /** @internal */
 export interface InternalKernel extends ConsentKernel {

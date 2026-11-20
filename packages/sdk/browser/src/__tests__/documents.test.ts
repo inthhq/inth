@@ -50,6 +50,8 @@ test('accepts for the client subject, then checks as accepted', async () => {
 		mode: hosted({ fetch, projectUrl: 'https://consent.example.com' }),
 	});
 	const documents = createRuntimeDocuments(() => client.runtime);
+	// What a started client has: a subject from consent.
+	client.runtime.kernel.set.subjectId('0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c');
 
 	try {
 		await documents.accept({ hash: HASH, type: 'terms_us' });

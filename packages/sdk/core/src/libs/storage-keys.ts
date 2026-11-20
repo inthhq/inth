@@ -36,9 +36,9 @@ export const C15T_SUBJECT_REASSIGNMENTS_STORAGE_KEY =
 	'c15t-v3-subject-reassignments:v1';
 
 /**
- * The legal documents this browser accepted, by project URL, subject and
- * type, and the subject of the latest acceptance. The backend has no route
- * that tells a browser what it accepted. A clear removes it.
+ * Prefix of the keys that hold the legal documents this browser accepted:
+ * one key per project URL, for the subject consent persistence stored.
+ * The backend has no route that tells a browser what it accepted.
  */
 export const DOCUMENT_ACCEPTANCES_STORAGE_KEY = 'inth-document-acceptances:v1';
 

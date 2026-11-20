@@ -30,6 +30,7 @@ import type {
 	ManifestModeSourceOptions,
 } from '../modes';
 import type { InitContext, KernelOverrides, KernelTransport } from '../types';
+import type { BackendReportingContext } from './backend';
 import { earlyInitModes } from './early-init-modes';
 import type { EarlyInitMode } from './early-init-modes';
 import type { TransportInitResponse } from './init-output';
@@ -313,7 +314,7 @@ const createManifestSource = function createManifestSource(
 const transportFrom = function transportFrom(
 	options: BrowserManifestOptions,
 	source: ManifestSource,
-	context: Pick<ProviderTransportContext, 'backend' | 'gppEnabled'> | undefined
+	context: Pick<BackendReportingContext, 'backend' | 'gppEnabled'> | undefined
 ): KernelTransport {
 	// `''` is a real answer: a root-relative `manifestUrl` such as
 	// `/manifest` or an explicit empty backend means this origin.

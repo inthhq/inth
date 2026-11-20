@@ -11,7 +11,7 @@ import type { I18nConfig } from '@inth/sdk-translations';
 
 import type { AllConsentNames } from '../consent/consent-types';
 import { createKernel } from '../kernel';
-import type { InternalKernel } from '../kernel/internals';
+import type { InternalKernel, TransportBackend } from '../kernel/internals';
 import { hostExperiment, seedExperiment } from '../libs/experiment';
 import { extractConsentNamesFromCondition } from '../libs/has';
 import { warnInDevelopment } from '../libs/is-production';
@@ -22,11 +22,8 @@ import {
 	defaultTranslationConfig,
 	resolveLocalTranslations,
 } from '../translations';
-import type {
-	ProviderTransportContext,
-	ProviderTransportFactory,
-	TransportBackend,
-} from '../transports/mode';
+import type { BackendReportingContext } from '../transports/backend';
+import type { ProviderTransportFactory } from '../transports/mode';
 import type {
 	KernelConfig,
 	KernelTranslations,
@@ -288,7 +285,7 @@ export const createRuntimeKernel = function createRuntimeKernel(
 		resolveRuntimeTranslations(options.i18n) ?? DEFAULT_TRANSLATIONS;
 
 	let backend: TransportBackend | undefined;
-	const transportContext: ProviderTransportContext = {
+	const transportContext: BackendReportingContext = {
 		backend: (resolved) => {
 			backend = resolved;
 		},

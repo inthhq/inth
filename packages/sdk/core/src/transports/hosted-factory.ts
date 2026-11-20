@@ -10,12 +10,9 @@
  */
 
 import type { KernelTransport } from '../types';
+import type { BackendReportingContext } from './backend';
 import { hostedFactories } from './hosted-modes';
-import type {
-	HostedModeFactory,
-	HostedModeOptions,
-	ProviderTransportContext,
-} from './mode';
+import type { HostedModeFactory, HostedModeOptions } from './mode';
 import type { V1HostedTransportOptions } from './v1/hosted';
 
 /**
@@ -40,7 +37,7 @@ export const createHostedModeFactory = function createHostedModeFactory(
 		delete settings.headers;
 	}
 	const mode = Object.assign(
-		(context?: ProviderTransportContext) => {
+		(context?: BackendReportingContext) => {
 			context?.backend?.(settings);
 			return build({
 				assertDecisionInputs:

@@ -9,18 +9,6 @@ import type { RememberedDecisionInputs } from './decision-inputs';
 import { createHostedModeFactory } from './hosted-factory';
 import { createV1HostedTransport } from './v1/hosted';
 
-/**
- * Where a transport sends records: the project URL as resolved (`''` for
- * this origin), the property option and the fetch it uses.
- *
- * @internal
- */
-export interface TransportBackend {
-	projectUrl: string;
-	property?: string;
-	fetch?: typeof globalThis.fetch;
-}
-
 /** Runtime values supplied by a provider to a transport factory. */
 export interface ProviderTransportContext {
 	/** Categories configured on the provider. */
@@ -46,13 +34,6 @@ export interface ProviderTransportContext {
 	pendingPrefetch?: PromiseLike<Partial<KernelConfig> | undefined>;
 	/** Translations resolved from the provider's i18n configuration. */
 	translations: KernelTranslations;
-	/**
-	 * Hears the backend a transport sends records to, once it has resolved
-	 * it: the settings `@inth/sdk/runtime/documents` sends with.
-	 *
-	 * @internal
-	 */
-	backend?: (backend: TransportBackend) => void;
 	/**
 	 * Copy for another language from the bundled translations and the
 	 * provider's `i18n.messages`, or `undefined` when neither has it. Lets a

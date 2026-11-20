@@ -14,8 +14,7 @@ import {
 	SUBJECT,
 	v1Error,
 } from '../../transports/v1/__tests__/fixtures';
-import { isUuidV7 } from '../../transports/v1/routes';
-import { createRuntimeDocuments } from '../documents';
+import { createRuntimeDocuments, isInthApiError } from '../documents';
 import { createConsentRuntime } from '../index';
 import type { ConsentRuntime } from '../types';
 
@@ -78,6 +77,7 @@ beforeEach(() => {
 	runtime = createConsentRuntime({
 		mode: hosted({ fetch: backend, projectUrl: PROJECT_URL }),
 	});
+	runtime.kernel.set.subjectId(SUBJECT);
 });
 
 afterEach(() => {
@@ -131,8 +131,6 @@ describe('check', () => {
 
 describe('accept', () => {
 	test("sends one valid request for the runtime's subject and property", async () => {
-		runtime.kernel.set.subjectId(SUBJECT);
-
 		const answer = await documents.accept([{ hash: HASH, type: 'terms_us' }]);
 
 		expect(sent).toHaveLength(1);
@@ -156,35 +154,27 @@ describe('accept', () => {
 		expect(sent[0]?.idempotencyKey).toBe(KEY);
 	});
 
-	test('makes a subject ID when there is none, and keeps it', async () => {
+	test('rejects without a subject, and makes none', async () => {
+		runtime.kernel.set.subjectId(null);
+
+		await expect(
+			documents.accept({ hash: HASH, type: 'terms_us' })
+		).rejects.toThrow('the runtime has no subject yet');
+		expect(sent).toHaveLength(0);
 		expect(runtime.kernel.getSnapshot().subject?.subjectId).toBeUndefined();
-
-		await documents.accept({ hash: HASH, type: 'terms_us' });
-		await documents.accept({ hash: HASH, type: 'terms_us' });
-
-		const subjectId = String(sent[0]?.subjectId);
-		expect(isUuidV7(subjectId)).toBe(true);
-		expect(sent[1]?.subjectId).toBe(subjectId);
-		expect(runtime.kernel.getSnapshot().subject?.subjectId).toBe(subjectId);
 	});
 
-	test('moves to a new subject ID after a subject_conflict and sends the action again', async () => {
-		runtime.kernel.set.subjectId(SUBJECT);
+	test('rejects a subject_conflict and keeps the subject', async () => {
 		conflicts = 1;
 
-		const answer = await documents.accept(
-			{ hash: HASH, type: 'terms_us' },
-			{ idempotencyKey: KEY }
-		);
+		const accepting = documents.accept({ hash: HASH, type: 'terms_us' });
 
-		expect(sent).toHaveLength(2);
-		expect(sent[0]).toMatchObject({ idempotencyKey: KEY, subjectId: SUBJECT });
-		expect(sent[1]?.idempotencyKey).toBe(KEY);
-		expect(sent[1]?.subjectId).not.toBe(SUBJECT);
-		expect(runtime.kernel.getSnapshot().subject?.subjectId).toBe(
-			sent[1]?.subjectId
+		await expect(accepting).rejects.toSatisfy(
+			(error) => isInthApiError(error) && error.code === 'subject_conflict'
 		);
-		expect(answer.subjectId).toBe(sent[1]?.subjectId);
+		expect(sent).toHaveLength(1);
+		expect(runtime.kernel.getSnapshot().subject?.subjectId).toBe(SUBJECT);
+		expect((await documents.check('terms_us')).accepted).toBe(false);
 	});
 
 	test('adopts the subject ID the backend swapped a sub_ ID for', async () => {
@@ -197,7 +187,7 @@ describe('accept', () => {
 	});
 });
 
-test('without storage, nothing is accepted and accept still records', async () => {
+test('without storage, accept records and the page remembers it', async () => {
 	vi.spyOn(window, 'localStorage', 'get').mockImplementation(() => {
 		throw new DOMException('blocked', 'SecurityError');
 	});
@@ -206,5 +196,5 @@ test('without storage, nothing is accepted and accept still records', async () =
 		documents.accept({ hash: HASH, type: 'terms_us' })
 	).resolves.toMatchObject({ subjectId: expect.any(String) });
 	expect(sent).toHaveLength(1);
-	expect((await documents.check('terms_us')).accepted).toBe(false);
+	expect((await documents.check('terms_us')).accepted).toBe(true);
 });
