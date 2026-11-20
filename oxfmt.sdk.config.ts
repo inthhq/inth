@@ -14,6 +14,8 @@ export default defineConfig({
 		'apps/shadcn-registry/registry/**',
 		'apps/shadcn-registry/vendor/**',
 		'packages/sdk/ui/types/**',
+		// A copy of the backend's document, replaced whole when it changes.
+		'packages/sdk/schema/vendor/backend-openapi/openapi.json',
 	],
 	jsxSingleQuote: false,
 	printWidth: 80,

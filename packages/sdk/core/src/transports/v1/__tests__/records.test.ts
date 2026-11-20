@@ -2,7 +2,10 @@
  * `POST /v1/consent/records` and `POST /v1/subjects/:id/link` against a
  * stubbed `fetch`: the exact request, and how each answer is read.
  */
-import { v1ConsentRecordInputSchema } from '@inth/sdk-schema/v1';
+import {
+	v1ConsentRecordInputSchema,
+	v1ConsentRecordQuerySchema,
+} from '@inth/sdk-schema/v1';
 import { describe, expect, test } from 'vitest';
 
 import { isUuidV7 } from '../../../libs/subject-uuid';
@@ -151,10 +154,16 @@ describe('save: POST /v1/consent/records', () => {
 		expect(`${url.origin}${url.pathname}`).toBe(
 			`${PROJECT_URL}/v1/consent/records`
 		);
-		expect(url.searchParams.get('journey')).toBe(
-			'3b241101-e2bb-4255-8caf-4136c566a962'
-		);
-		expect(url.searchParams.get('journeyScope')).toBe('tab');
+		expect(
+			v1ConsentRecordQuerySchema['~standard'].validate(
+				Object.fromEntries(url.searchParams)
+			)
+		).toMatchObject({
+			value: {
+				journey: '3b241101-e2bb-4255-8caf-4136c566a962',
+				journeyScope: 'tab',
+			},
+		});
 	});
 
 	test('a vendor-only save confirms no category and still sends the answer', async () => {
