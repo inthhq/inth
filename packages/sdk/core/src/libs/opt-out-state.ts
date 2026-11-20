@@ -5,11 +5,11 @@
  * `@inth/sdk/surface-state` without pulling in the kernel or evaluator.
  */
 
+import { optOutDenyCategories } from '../consent-record/opt-out';
 import {
 	optInPromptAllowedAt,
-	optOutDenyCategories,
 	optOutLiftBlocker,
-} from '../consent-record/opt-out';
+} from '../consent-record/opt-out-rules';
 import type { OptionalConsentCategory } from '../consent-record/types';
 import type { ConsentSnapshot } from '../types';
 

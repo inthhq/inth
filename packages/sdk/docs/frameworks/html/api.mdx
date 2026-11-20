@@ -34,7 +34,7 @@ accepted.
 | --- | --- |
 | `config`, `init`, `on`, `onInit` | Immediately in queue order as the bundle loads. |
 | `subscribe` | Once the client instance exists. |
-| `acceptAll`, `rejectAll`, `save`, `dismissNotice`, `saveIAB`, `showBanner`, `openDialog`, `closeDialog`, `setLanguage`, `identify`, `mountUI`, `processIframes` | In queue order once the policy resolves (so a queued `openDialog` stays open instead of being overwritten by the banner). |
+| `acceptAll`, `rejectAll`, `save`, `dismissNotice`, `optOut`, `saveIAB`, `showBanner`, `openDialog`, `closeDialog`, `setLanguage`, `identify`, `mountUI`, `processIframes` | In queue order once the policy resolves (so a queued `openDialog` stays open instead of being overwritten by the banner). |
 | Reads and unknown methods (`getSnapshot`, `has`, `hasConsented`, `isVendorAllowed`, `ready`, `dispose`) | Skipped with a console warning. Call them inside `onInit` or after `ready()`. |
 
 Errors thrown by a queued call log via `console.error` without blocking later
@@ -108,6 +108,7 @@ Call these only from user interactions, never automatically on page load:
 | `save(choices)` | Saves named categories (`{ measurement: true, marketing: false }`) and optional `vendors` map. Fails under IAB; use `saveIAB()`. |
 | `saveIAB()` | Confirms IAB purpose and vendor choices (`inth.iab.js` only). See [IAB TCF](/docs/frameworks/html/iab). |
 | `dismissNotice()` | Acknowledges a notice without granting consent. |
+| `optOut()` | Under an opt-out policy, records a durable opt-out in one step and opens the confirmation view without waiting on the network. Under any other policy, opens the preference dialog and resolves with `{ ok: false, reason: 'not-available' }`. |
 | `identify(user)` | Links the consent record to `{ externalId, identityProvider?, identityToken? }`, where `identityToken` verifies the link on the server. |
 
 Save methods resolve with `{ ok }`. Choices apply and surfaces close

@@ -25,8 +25,8 @@ The active policy determines the buttons:
 | Policy prompt | Buttons |
 | --- | --- |
 | Choice | Policy-allowed actions (by default Reject All and Accept All at equal size, plus Customize). |
-| Choice with opt-out right and no reject action | Allowed actions plus "Do Not Sell or Share My Personal Information", opening the dialog. |
-| Notice | "OK" (acknowledgement) plus any other policy-allowed action. |
+| Choice with opt-out right and no reject action | Allowed actions plus "Do Not Sell or Share My Personal Information", which records an opt-out in one click and shows a confirmation view. |
+| Notice | "OK" (acknowledgement) plus any other policy-allowed action, including the opt-out link under an opt-out policy. |
 
 Accept and Reject record consent and close the banner immediately. Customize
 opens the [preference dialog](/docs/frameworks/html/components/dialog)
@@ -39,8 +39,13 @@ policy-required button and preserves equal prominence rules.
 ## Choose the opt-out link title
 
 Under a policy that carries the `opt-out` right, the banner renders an opt-out
-button that opens the preference dialog. By default it uses the standard
-"Do Not Sell or Share My Personal Information" title with no icon.
+button. Clicking it under an opt-out policy records a durable opt-out in one
+step, switches off `marketing` and `measurement` in scope, and opens a focused
+confirmation view with the link title, a status line (`role="status"`), a
+plain confirmation message, a single **Done** button and a **Manage
+preferences** link. Under a non-opt-out policy, the button opens the preference
+dialog instead. By default the link uses the standard "Do Not Sell or Share My
+Personal Information" title with no icon.
 
 Set `presentation.optOutLink` (or `data-opt-out-link` on the script tag) to
 switch to one of California's alternative "Privacy Choices" forms:

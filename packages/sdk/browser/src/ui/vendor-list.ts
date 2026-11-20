@@ -28,7 +28,8 @@ export interface VendorList {
 	 */
 	patch: (
 		categoryOn: boolean,
-		isChecked: (vendorId: string) => boolean
+		isChecked: (vendorId: string) => boolean,
+		hideHint?: boolean
 	) => void;
 }
 
@@ -348,8 +349,8 @@ export const createVendorList = function createVendorList(
 
 	return {
 		element,
-		patch(categoryOn, isChecked) {
-			if (categoryOn) {
+		patch(categoryOn, isChecked, hideHint = false) {
+			if (categoryOn || hideHint) {
 				hint.remove();
 			} else if (!hint.isConnected) {
 				element.prepend(hint);

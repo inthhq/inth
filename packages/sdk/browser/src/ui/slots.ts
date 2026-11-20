@@ -39,6 +39,7 @@ export type BrowserSlotKey = Extract<
 	| 'consentDialogTrigger'
 	| 'consentDialogTriggerIcon'
 	| 'consentWidget'
+	| 'consentWidgetOptOutStatus'
 	| 'consentWidgetAccordion'
 	| 'consentWidgetFooter'
 	| 'consentWidgetFooterSubGroup'

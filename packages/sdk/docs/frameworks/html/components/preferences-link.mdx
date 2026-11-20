@@ -34,10 +34,14 @@ You can also use `<button data-inth-action="customize">`; see
 
 ## Word the link for your visitors
 
-Use wording appropriate for your regions, such as "Privacy settings", "Cookie
-settings", "Your privacy choices", or "Do not sell or share my personal
-information" where US state laws require it. Inth does not rewrite your link
-text by region.
+Use "Privacy settings" or "Cookie settings" for a link that opens the
+preference dialog. For a US state privacy opt-out link such as "Do Not Sell or
+Share My Personal Information" or "Your Privacy Choices", add
+`data-inth-action="opt-out"` so one click records the opt-out under an opt-out
+policy and opens the confirmation view instead of requiring extra steps in the
+preference dialog. See
+[action buttons](/docs/frameworks/html/components/action-buttons). Inth does
+not rewrite your link text by region.
 
 ## When the dialog is off
 

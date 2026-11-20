@@ -1,6 +1,8 @@
 import {
 	consentTypes,
 	resolveCategoryTitle,
+	resolveOptOutCopy,
+	resolveOptOutState,
 	resolveVendorListCopy,
 	vendorsListedUnder,
 } from '@inth/sdk-core';
@@ -8,11 +10,17 @@ import type {
 	AllConsentNames,
 	ConsentSnapshot,
 	PresentationAction,
+	ResolvedOptOutState,
+	Translations,
 } from '@inth/sdk-core';
 import { createPreferenceDraft } from '@inth/sdk-core/preference-draft';
-import type { CompleteTranslations } from '@inth/sdk-translations';
+import type {
+	CompleteTranslations,
+	OptOutTranslations,
+} from '@inth/sdk-translations';
 
 import { classes } from '../generated/styles';
+import type { ConsentSaveInput } from '../types';
 import { renderActionFooter, resolveActions } from './actions';
 import { renderBranding } from './branding';
 import { resolveCopy } from './copy';
@@ -50,6 +58,7 @@ interface Row {
 	content: HTMLElement;
 	switchButton: HTMLButtonElement;
 	vendorList: VendorList | null;
+	gpcLocked: boolean;
 }
 
 interface RowCopy {
@@ -57,19 +66,71 @@ interface RowCopy {
 	title: string;
 	description: string;
 	disabled: boolean;
+	gpcLocked: boolean;
+	restrictionReason: string | null;
 }
 
+const isGpcLockedCategory = function isGpcLockedCategory(
+	snapshot: ConsentSnapshot,
+	optOutState: ResolvedOptOutState,
+	name: AllConsentNames
+): boolean {
+	if (name === 'necessary') {
+		return false;
+	}
+	return (
+		(optOutState.lock === 'gpc-active' &&
+			optOutState.categories.includes(name)) ||
+		snapshot.restrictions[name]?.includes('gpc') === true
+	);
+};
+
 const resolveRowCopy = function resolveRowCopy(
+	snapshot: ConsentSnapshot,
 	t: CompleteTranslations,
+	optOutState: ResolvedOptOutState,
+	optOutCopy: OptOutTranslations,
 	name: AllConsentNames
 ): RowCopy {
 	const type = consentTypes.find((candidate) => candidate.name === name);
+	const gpcLocked = isGpcLockedCategory(snapshot, optOutState, name);
+	const accountHeld =
+		!gpcLocked &&
+		name !== 'necessary' &&
+		optOutState.lock === 'held-by-account' &&
+		optOutState.categories.includes(name);
+	let restrictionReason: string | null = null;
+	if (gpcLocked) {
+		restrictionReason = optOutCopy.lockedByGpc;
+	} else if (accountHeld) {
+		restrictionReason = optOutCopy.lockedByAccount;
+	}
 	return {
 		description: t.consentTypes[name]?.description ?? type?.description ?? '',
-		disabled: type?.disabled ?? false,
+		disabled: (type?.disabled ?? false) || gpcLocked,
+		gpcLocked,
 		name,
+		restrictionReason,
 		title: resolveCategoryTitle(t, name),
 	};
+};
+
+const optOutRenderKey = function optOutRenderKey(
+	snapshot: ConsentSnapshot,
+	optOutState: ResolvedOptOutState
+): string {
+	const gpcRestricted = Object.entries(snapshot.restrictions)
+		.filter(([, reasons]) => reasons?.includes('gpc'))
+		.map(([category]) => category)
+		.sort()
+		.join(',');
+	return [
+		optOutState.honored,
+		optOutState.via ?? '',
+		optOutState.lock ?? '',
+		optOutState.categories.join(','),
+		gpcRestricted,
+	].join('|');
 };
 
 const buildArrow = function buildArrow(): SVGSVGElement {
@@ -88,6 +149,7 @@ const buildArrow = function buildArrow(): SVGSVGElement {
 
 const buildSwitch = function buildSwitch(
 	copy: RowCopy,
+	describedBy: string | undefined,
 	ctx: Pick<SurfaceContext, 'noStyle' | 'slot'>,
 	onToggle: () => void
 ): HTMLButtonElement {
@@ -95,6 +157,7 @@ const buildSwitch = function buildSwitch(
 	const element = h(
 		'button',
 		{
+			'aria-describedby': describedBy,
 			'aria-label': copy.title,
 			class: noStyle ? '' : cx(switchStyles.root, switchStyles.rootSmall),
 			'data-disabled': copy.disabled ? '' : undefined,
@@ -198,6 +261,7 @@ export const createWidget = function createWidget(
 
 	const draft = createPreferenceDraft(ctx.client.kernel, {
 		defaults: ctx.client.presentation?.preferences?.defaults,
+		honorOptOut: true,
 	});
 	const openVendorCards = new Set<string>();
 	let openItem: AllConsentNames | null = null;
@@ -210,6 +274,7 @@ export const createWidget = function createWidget(
 		experiment: ConsentSnapshot['experiment'];
 		vendorChoice: ConsentSnapshot['vendorChoice'];
 		vendors: ConsentSnapshot['vendors'];
+		optOutKey: string;
 	} | null = null;
 
 	const element = slot(
@@ -228,7 +293,8 @@ export const createWidget = function createWidget(
 		for (const row of rows) {
 			row.vendorList?.patch(
 				isChecked(row.name),
-				(vendorId) => vendors[vendorId] ?? true
+				(vendorId) => vendors[vendorId] ?? true,
+				row.gpcLocked
 			);
 		}
 	};
@@ -271,6 +337,9 @@ export const createWidget = function createWidget(
 		const { name } = copy;
 		const ids = {
 			content: `inth-pref-${name}-content`,
+			restriction: copy.restrictionReason
+				? `inth-restriction-${name}`
+				: undefined,
 			trigger: `inth-pref-${name}-trigger`,
 		};
 		const arrow = buildArrow();
@@ -309,7 +378,7 @@ export const createWidget = function createWidget(
 				)
 			)
 		);
-		const switchButton = buildSwitch(copy, ctx, () => {
+		const switchButton = buildSwitch(copy, ids.restriction, ctx, () => {
 			if (!copy.disabled) {
 				toggle(name);
 			}
@@ -323,6 +392,18 @@ export const createWidget = function createWidget(
 			slot,
 			vendors: vendorsListedUnder(snapshot, name),
 		});
+		const restriction =
+			copy.restrictionReason && ids.restriction
+				? h(
+						'output',
+						{
+							class: noStyle ? '' : accordion.restriction,
+							'data-testid': `consent-widget-restriction-${name}`,
+							id: ids.restriction,
+						},
+						copy.restrictionReason
+					)
+				: null;
 		const content = buildContent(copy, ids, noStyle, vendorList);
 		const item = h(
 			'div',
@@ -345,11 +426,13 @@ export const createWidget = function createWidget(
 					switchButton
 				)
 			),
+			restriction,
 			content
 		);
 		const row: Row = {
 			arrow,
 			content,
+			gpcLocked: copy.gpcLocked,
 			item,
 			name,
 			switchButton,
@@ -359,6 +442,30 @@ export const createWidget = function createWidget(
 		patchOpen(row, openItem === name);
 		patchSwitch(row, isChecked(name));
 		return row;
+	};
+
+	const acceptUnlocked = function acceptUnlocked(): void {
+		const latest = ctx.client.getSnapshot();
+		const optOutState = resolveOptOutState(latest);
+		const displayed = draft.getState().displayedCategories;
+		const hasLocked = displayed.some((name) =>
+			isGpcLockedCategory(latest, optOutState, name)
+		);
+		draft.reset();
+		if (!hasLocked) {
+			void ctx.client.acceptAll();
+			return;
+		}
+		const selection: ConsentSaveInput = {};
+		for (const name of displayed) {
+			if (
+				name !== 'necessary' &&
+				!isGpcLockedCategory(latest, optOutState, name)
+			) {
+				selection[name] = true;
+			}
+		}
+		void ctx.client.save(selection);
 	};
 
 	const buildFooter = function buildFooter(
@@ -388,11 +495,13 @@ export const createWidget = function createWidget(
 			noStyle,
 			onAction: (action) => {
 				// Accept all and Reject all supersede every staged switch.
-				if (action === 'accept' || action === 'reject') {
+				if (action === 'accept') {
+					acceptUnlocked();
+					return;
+				}
+				if (action === 'reject') {
 					draft.reset();
-					void (action === 'accept'
-						? ctx.client.acceptAll()
-						: ctx.client.rejectAll());
+					void ctx.client.rejectAll();
 					return;
 				}
 				// The displayed categories and only the vendors the visitor
@@ -411,13 +520,25 @@ export const createWidget = function createWidget(
 		});
 	};
 
-	const rebuild = function rebuild(snapshot: ConsentSnapshot): void {
+	const rebuild = function rebuild(
+		snapshot: ConsentSnapshot,
+		optOutState: ResolvedOptOutState,
+		optOutKey: string
+	): void {
 		const { t, dir, actions } = resolveCopy(snapshot);
+		const bundle = snapshot.translations?.translations as
+			| Partial<Translations>
+			| undefined;
+		const optOutCopy = resolveOptOutCopy(bundle);
 		const categories = draft.getState().displayedCategories;
 		element.replaceChildren();
 		element.setAttribute('dir', dir);
 		rows = categories.map((name) =>
-			buildRow(snapshot, resolveRowCopy(t, name), t)
+			buildRow(
+				snapshot,
+				resolveRowCopy(snapshot, t, optOutState, optOutCopy, name),
+				t
+			)
 		);
 		review = h(
 			'div',
@@ -436,6 +557,23 @@ export const createWidget = function createWidget(
 			)
 		);
 
+		const optOutStatus = optOutState.honored
+			? slot(
+					h(
+						'p',
+						{
+							class: noStyle ? '' : classes.manager.optOutStatus,
+							'data-testid': 'consent-widget-opt-out-status',
+							role: 'status',
+						},
+						optOutState.via === 'signal'
+							? optOutCopy.statusSignal
+							: optOutCopy.statusRequest
+					),
+					'consentWidgetOptOutStatus'
+				)
+			: null;
+
 		const list = slot(
 			h('div', {
 				class: noStyle ? '' : accordion.list,
@@ -446,7 +584,16 @@ export const createWidget = function createWidget(
 		for (const row of rows) {
 			list.append(row.item);
 		}
-		element.append(review, list, buildFooter(snapshot, actions));
+		if (optOutStatus) {
+			element.append(
+				review,
+				optOutStatus,
+				list,
+				buildFooter(snapshot, actions)
+			);
+		} else {
+			element.append(review, list, buildFooter(snapshot, actions));
+		}
 		patchAll();
 		const branding = slot(
 			renderBranding({
@@ -464,6 +611,7 @@ export const createWidget = function createWidget(
 		renderedFrom = {
 			categories: categories.join(','),
 			experiment: snapshot.experiment,
+			optOutKey,
 			policyRule: snapshot.policyRule,
 			translations: snapshot.translations,
 			vendorChoice: snapshot.vendorChoice,
@@ -479,6 +627,8 @@ export const createWidget = function createWidget(
 		sync(snapshot) {
 			draft.setDefaults(ctx.client.presentation?.preferences?.defaults);
 			const categories = draft.getState().displayedCategories.join(',');
+			const optOutState = resolveOptOutState(snapshot);
+			const optOutKey = optOutRenderKey(snapshot, optOutState);
 			if (
 				!renderedFrom ||
 				renderedFrom.categories !== categories ||
@@ -486,9 +636,10 @@ export const createWidget = function createWidget(
 				renderedFrom.policyRule !== snapshot.policyRule ||
 				renderedFrom.experiment !== snapshot.experiment ||
 				renderedFrom.vendors !== snapshot.vendors ||
-				renderedFrom.vendorChoice !== snapshot.vendorChoice
+				renderedFrom.vendorChoice !== snapshot.vendorChoice ||
+				renderedFrom.optOutKey !== optOutKey
 			) {
-				rebuild(snapshot);
+				rebuild(snapshot, optOutState, optOutKey);
 				return;
 			}
 			patchAll();
