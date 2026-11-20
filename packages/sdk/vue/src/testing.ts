@@ -21,10 +21,10 @@
  *
  * @example
  * ```ts
- * import { inthVue } from '@inth/vue/vue-plugin';
+ * import { inth } from '@inth/vue/vue-plugin';
  * import { testing } from '@inth/vue/testing';
  *
- * app.use(inthVue, {
+ * app.use(inth, {
  *   overrides: { country: 'DE' },
  *   mode: testing(),
  * });

@@ -1,7 +1,7 @@
 import { afterEach, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h } from 'vue';
 
-import { inthVue } from './test-plugin';
+import { inth } from './test-plugin';
 import type { InthVuePluginOptions } from './test-plugin';
 
 const TRACKER = 'https://tracker.example/collect';
@@ -26,7 +26,7 @@ const mountWith = (options: InthVuePluginOptions) => {
 	const app = createApp(
 		defineComponent({ setup: () => () => h('main', 'App') })
 	);
-	app.use(inthVue, options);
+	app.use(inth, options);
 	app.mount(container);
 	cleanups.push(() => {
 		app.unmount();

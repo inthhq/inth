@@ -10,7 +10,7 @@ import {
 } from 'vue';
 import type { App } from 'vue';
 
-import { inthVue, generateTokensCSS } from './test-plugin';
+import { inth, generateTokensCSS } from './test-plugin';
 import type { InthVuePluginOptions } from './test-plugin';
 
 const nuxt = vi.hoisted(() => ({
@@ -113,7 +113,7 @@ const mount = (app: App) => {
 const installVue = (options: InthVuePluginOptions) => {
 	failingFetch();
 	const app = createApp(defineComponent({ setup: () => () => h('main') }));
-	app.use(inthVue, options);
+	app.use(inth, options);
 	apps.add(app);
 	return app;
 };
@@ -260,7 +260,7 @@ describe('the Vue plugin applies colorScheme', () => {
 			projectUrl: 'https://consent.example.test',
 		});
 		const app = createApp(defineComponent({ setup: () => () => h('main') }));
-		app.use(inthVue, { colorScheme: 'dark', runtime });
+		app.use(inth, { colorScheme: 'dark', runtime });
 		apps.add(app);
 		expect(isDark()).toBe(false);
 		runtime.dispose();

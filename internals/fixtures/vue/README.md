@@ -41,7 +41,7 @@ The docs no longer publish code from this app. The Vue quickstart quotes
 `internals/doc-snippets/vue`.
 
 - `vite.config.ts` adds the Inth Vite plugin.
-- `src/main.ts` installs `inthVue` with the backend URL and `scripts`.
+- `src/main.ts` installs `inth` with the backend URL and `scripts`.
 - `src/scripts.ts` holds the vendor configuration.
 - `src/App.vue` mounts `InthProvider` and `ConsentDialogLink`.
 - `src/VideoEmbed.vue` gates the YouTube iframe with `ConsentGate`.

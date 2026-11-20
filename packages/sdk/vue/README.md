@@ -30,7 +30,7 @@ pnpm add @inth/vue
 ## Usage
 
 1. Add `consentManifest()` from `@inth/vue/vite` to `vite.config.ts`
-2. Install the plugin with `app.use(inthVue, { mode: hosted() })` from `@inth/vue/vue-plugin`, and render `InthProvider` in `App.vue`
+2. Install the plugin with `app.use(inth, { mode: hosted() })` from `@inth/vue/vue-plugin`, and render `InthProvider` in `App.vue`
 3. For the full setup, see the [Vue quickstart](https://c15t.com/docs/frameworks/vue/quickstart)
 
 ## Hosting

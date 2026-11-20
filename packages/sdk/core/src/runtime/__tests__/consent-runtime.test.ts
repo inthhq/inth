@@ -140,7 +140,7 @@ describe('createRuntimeKernel', () => {
 		[undefined, '@inth/sdk/engine createConsentRuntime()'],
 		['@inth/react', '@inth/react InthProvider'],
 		['@inth/svelte', '@inth/svelte InthProvider'],
-		['@inth/vue', '@inth/vue the inthVue plugin'],
+		['@inth/vue', '@inth/vue the inth plugin'],
 		['@inth/sdk', '@inth/sdk init()'],
 		['@inth/sdk/hosted', '@inth/sdk/hosted init()'],
 		['@inth/nextjs', '@inth/nextjs InthProvider'],

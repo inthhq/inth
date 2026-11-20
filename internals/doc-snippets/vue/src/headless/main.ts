@@ -1,12 +1,12 @@
 // #region docs:headless-main title="src/main.ts"
-import { inthVue, manifest } from '@inth/vue/vue-plugin';
+import { inth, manifest } from '@inth/vue/vue-plugin';
 import { createApp } from 'vue';
 
 import App from './App.vue';
 import { scripts } from './scripts';
 
 createApp(App)
-	.use(inthVue, {
+	.use(inth, {
 		mode: manifest(),
 		scripts,
 	})

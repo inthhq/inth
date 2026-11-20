@@ -48,7 +48,7 @@ Add `'strict-dynamic'` to `script-src` to allow them, or list their hosts.
 {/* example: fragment */}
 
 ```ts title="src/main.ts"
-app.use(inthVue, { mode: hosted(), nonce, scripts });
+app.use(inth, { mode: hosted(), nonce, scripts });
 ```
 
 The plugin's `nonce` option does not reach the early `/v1/consent/init` script, because
@@ -64,7 +64,7 @@ The components import their CSS, which Vite adds to your app's stylesheet in
 a production build. `style-src 'self'` covers it. In development, Vite injects
 `<style>` elements, which need `'unsafe-inline'` in `style-src`.
 
-The inthVue plugin adds your theme tokens to `<head>` in an inline
+The inth plugin adds your theme tokens to `<head>` in an inline
 `<style id="inth-css-vars">` element. A `style-src` without
 `'unsafe-inline'` blocks it, and the components fall back to the default
 theme. The element's content is the same for every visitor and only changes

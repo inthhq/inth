@@ -142,7 +142,7 @@ const runtimeOwner = function runtimeOwner(pkg: string): string {
 		return 'init()';
 	}
 	if (pkg === '@inth/vue') {
-		return 'the inthVue plugin';
+		return 'the inth plugin';
 	}
 	return 'InthProvider';
 };

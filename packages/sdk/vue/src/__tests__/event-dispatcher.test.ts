@@ -5,7 +5,7 @@ import { mount } from '@vue/test-utils';
 import { expect, test, vi } from 'vitest';
 import { defineComponent, h } from 'vue';
 
-import { inthVue } from '../index';
+import { inth } from '../index';
 import type { EventDispatcher } from '../runtime/composables';
 import { useEventDispatcher } from '../runtime/composables';
 import { testing } from '../testing';
@@ -50,7 +50,7 @@ test('useEventDispatcher follows the runtime scripts, live consent and one pagev
 	});
 	const wrapper = mount(
 		defineComponent({ setup: () => () => [h(Probe), h(Probe)] }),
-		{ global: { plugins: [[inthVue, { runtime }]] } }
+		{ global: { plugins: [[inth, { runtime }]] } }
 	);
 	const [first, second] = dispatchers;
 

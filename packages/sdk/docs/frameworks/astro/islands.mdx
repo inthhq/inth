@@ -89,7 +89,7 @@ The Vue and Svelte adapters take the page runtime the same way:
 | Framework | Pass the runtime to | With |
 | --- | --- | --- |
 | React | `InthProvider` from `@inth/react` | `runtime={runtime}` and `options={{ colorScheme: null }}` |
-| Vue | `app.use(inthVue, …)`, with `inthVue` from `@inth/vue/vue-plugin` | `{ runtime, colorScheme: null }` |
+| Vue | `app.use(inth, …)`, with `inth` from `@inth/vue/vue-plugin` | `{ runtime, colorScheme: null }` |
 | Svelte | `InthProvider` from `@inth/svelte` | `runtime={runtime}` and `options={{ colorScheme: null }}` |
 
 For Vue, an island's app is set up in the `appEntrypoint` module of

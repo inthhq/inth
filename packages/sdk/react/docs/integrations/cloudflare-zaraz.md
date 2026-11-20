@@ -162,13 +162,13 @@ callbacks. Write the vendor IDs into `consent-scripts.ts`. See
 
 **Vue**
 
-Pass the scripts to the existing `inthVue` plugin call in `src/main.ts`:
+Pass the scripts to the existing `inth` plugin call in `src/main.ts`:
 
 ```ts title="src/main.ts"
-import { inthVue, manifest } from '@inth/vue/vue-plugin';
+import { inth, manifest } from '@inth/vue/vue-plugin';
 import { scripts } from './consent-scripts';
 
-app.use(inthVue, {
+app.use(inth, {
   mode: manifest(),
   scripts,
 });

@@ -1,7 +1,7 @@
 import { afterEach, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h, inject, onMounted } from 'vue';
 
-import { inthVue, manifest } from '../index';
+import { inth, manifest } from '../index';
 import type { RuntimeConsentConfig } from '../runtime/kernel';
 import { symbolKernel } from '../runtime/utils/symbols';
 
@@ -53,7 +53,7 @@ test.each([false, true])(
 		const container = document.createElement('div');
 		document.body.append(container);
 		const app = createApp(root);
-		app.use(inthVue, {
+		app.use(inth, {
 			projectUrl: 'https://consent.example.test',
 		});
 		let mounted = false;
@@ -82,7 +82,7 @@ test("manifest() without a build snapshot reads the backend's /v1/consent/manife
 	const container = document.createElement('div');
 	document.body.append(container);
 	const app = createApp(defineComponent({ setup: () => () => h('main') }));
-	app.use(inthVue, {
+	app.use(inth, {
 		mode: manifest({ projectUrl: 'https://consent.example.test/api/' }),
 	});
 	app.mount(container);
@@ -127,7 +127,7 @@ test('holds tracker requests from child mount hooks until the blocker decides th
 			rules: [{ category: 'measurement', domain: 'tracker.example' }],
 		},
 	};
-	app.use(inthVue, {
+	app.use(inth, {
 		...config,
 		projectUrl: 'https://consent.example.test',
 	});
@@ -156,7 +156,7 @@ test('manifest() with a manifestUrl asks the backend /init when the manifest is 
 	document.body.append(container);
 	const app = createApp(defineComponent({ setup: () => () => h('main') }));
 	// Plain Vue has no Nuxt server, so there is no `/api/inth/init` to call.
-	app.use(inthVue, {
+	app.use(inth, {
 		mode: manifest({
 			manifestUrl: 'https://cdn.example.test/v1/consent/manifest',
 		}),

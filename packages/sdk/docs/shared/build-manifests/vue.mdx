@@ -13,9 +13,9 @@ needs no import of the snapshot:
 {/* example: fragment */}
 
 ```ts title="src/main.ts"
-import { inthVue, manifest } from '@inth/vue/vue-plugin';
+import { inth, manifest } from '@inth/vue/vue-plugin';
 
-app.use(inthVue, { mode: manifest(), scripts });
+app.use(inth, { mode: manifest(), scripts });
 ```
 
 The browser resolves the visitor's policy from the bundled snapshot, with no

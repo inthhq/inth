@@ -12,11 +12,11 @@ Import it from `@inth/vue/vue-plugin`:
 <include src="../../../shared/examples/vue/app.mdx" />
 
 `InthProvider` reads the consent runtime that
-[the inthVue plugin](/docs/frameworks/vue/plugin) creates in `src/main.ts`.
+[the inth plugin](/docs/frameworks/vue/plugin) creates in `src/main.ts`.
 Keep it in the root component so it stays mounted when the route changes.
 It brings its own styles.
 
-The inthVue plugin already gives every component the consent runtime, so
+The inth plugin already gives every component the consent runtime, so
 nothing needs to sit inside `InthProvider`. Render
 `<InthProvider />` next to your page content as shown above. If you wrap your
 content in it instead, the content still renders after the banner, dialog
@@ -44,7 +44,7 @@ closes.
 
 ## Theme tokens
 
-`InthProvider` does not apply theme tokens. The inthVue plugin adds every
+`InthProvider` does not apply theme tokens. The inth plugin adds every
 token from the `tokens` option, including the defaults you did not set, to
 `document.head` in a `<style id="inth-css-vars">` element when you install
 it, before the first render. Set token values through the `tokens` option
@@ -87,7 +87,7 @@ reload, and confirm the banner stays closed.
 
 ## Next steps
 
-- [inthVue plugin](/docs/frameworks/vue/plugin) lists the options
+- [inth plugin](/docs/frameworks/vue/plugin) lists the options
   `InthProvider` reads.
 - [Customize](/docs/frameworks/vue/customize) changes tokens, layout and
   slots.

@@ -5,7 +5,7 @@
 	never with `client:load` — so a visitor who never opens the preference
 	centre downloads no consent UI at all.
 
-	The adapter installs `inthVue` with the page's runtime before mounting
+	The adapter installs `inth` with the page's runtime before mounting
 	this component: Astro islands cannot see each other's provides, so the
 	kernel has to be owned outside the app. The plugin borrows it and leaves
 	`start()`/`dispose()` to the owner.

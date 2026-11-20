@@ -4,7 +4,7 @@ import { mount } from '@vue/test-utils';
 import { afterEach, expect, test, vi } from 'vitest';
 import { defineComponent, h, ref } from 'vue';
 
-import { inthVue } from '../index';
+import { inth } from '../index';
 import { useScriptLoader } from '../runtime/composables';
 import type { Script } from '../runtime/composables';
 import type { VueConsentKernelContext } from '../runtime/kernel';
@@ -127,7 +127,7 @@ test('runs its own loader on a borrowed runtime, whose scripts are its host’s'
 		},
 	});
 	const wrapper = mount(Probe, {
-		global: { plugins: [[inthVue, { runtime }]] },
+		global: { plugins: [[inth, { runtime }]] },
 	});
 	runtime.start();
 	expect(runtime.scripts).toEqual([]);
@@ -202,7 +202,7 @@ test('on a borrowed runtime the loader waits for the host to start it', async ()
 		},
 	});
 	const wrapper = mount(Probe, {
-		global: { plugins: [[inthVue, { runtime }]] },
+		global: { plugins: [[inth, { runtime }]] },
 	});
 	await new Promise((resolve) => {
 		setTimeout(resolve, 50);
@@ -230,7 +230,7 @@ test('on a borrowed runtime turned off, the loader still runs once the host star
 		},
 	});
 	const wrapper = mount(Probe, {
-		global: { plugins: [[inthVue, { runtime }]] },
+		global: { plugins: [[inth, { runtime }]] },
 	});
 	await new Promise((resolve) => {
 		setTimeout(resolve, 50);

@@ -33,7 +33,7 @@ import type {
 	RuntimeConsentConfig,
 	VueConsentKernelContext,
 } from './test-kernel';
-import { inthVue } from './test-plugin';
+import { inth } from './test-plugin';
 
 /** What `POST /v1/consent/records` answers a save of a generated subject. */
 const SAVED = {
@@ -165,7 +165,7 @@ const mountRoot = async function mountRoot() {
 		global: {
 			plugins: [
 				[
-					inthVue,
+					inth,
 					{
 						consentCategories: ['necessary', 'measurement', 'marketing'],
 						domain: 'consent.example',
@@ -194,7 +194,7 @@ const mountRootWithConsentProbe = async function mountRootWithConsentProbe() {
 		global: {
 			plugins: [
 				[
-					inthVue,
+					inth,
 					{
 						consentCategories: ['necessary', 'measurement', 'marketing'],
 						domain: 'consent.example',
@@ -905,7 +905,7 @@ test('with `iab` set, mounts the shared CMP for a prefetched IAB reference and e
 
 describe('IAB is opt-in', () => {
 	const VUE_MESSAGE =
-		"inth: this visitor's policy uses IAB TCF, but `iab` is not set. Pass `iab` to the Inth plugin, such as `app.use(inthVue, { iab: {} })`, or remove the IAB model from your policy.";
+		"inth: this visitor's policy uses IAB TCF, but `iab` is not set. Pass `iab` to the Inth plugin, such as `app.use(inth, { iab: {} })`, or remove the IAB model from your policy.";
 
 	const iabPolicyResolution = writePolicyResolutionWire(
 		resolvePolicyRules({
@@ -995,7 +995,7 @@ describe('IAB is opt-in', () => {
 		const app = createSSRApp(InthProvider);
 
 		expect(() =>
-			app.use(inthVue, { prefetch, projectUrl: 'https://consent.test' })
+			app.use(inth, { prefetch, projectUrl: 'https://consent.test' })
 		).toThrow(VUE_MESSAGE);
 	});
 

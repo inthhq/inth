@@ -7,7 +7,7 @@ import { afterEach, beforeAll, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h } from 'vue';
 
 import { testing } from '../testing';
-import { inthVue } from './test-plugin';
+import { inth } from './test-plugin';
 import type { InthVuePluginOptions } from './test-plugin';
 
 type GPPWindow = Window & {
@@ -53,7 +53,7 @@ const mountApp = function mountApp(options: InthVuePluginOptions) {
 	const container = document.createElement('div');
 	document.body.append(container);
 	const app = createApp(defineComponent({ setup: () => () => h('main') }));
-	app.use(inthVue, options);
+	app.use(inth, options);
 	let mounted = true;
 	app.mount(container);
 	const unmount = () => {

@@ -56,7 +56,7 @@ export {
 } from './runtime/theme-tokens';
 
 /**
- * The consent config the {@link inthVue} plugin takes, without where the
+ * The consent config the {@link inth} plugin takes, without where the
  * policy comes from: the browser modules it starts on mount (`scripts`,
  * `networkBlocker`, `iframeBlocker`, `gpp`, `storageConfig`, `nonce`), the
  * UI options and callbacks.
@@ -67,7 +67,7 @@ export type InthVuePluginConfig = Omit<
 >;
 
 /**
- * Options accepted by the {@link inthVue} plugin: a `mode`, or a `runtime`
+ * Options accepted by the {@link inth} plugin: a `mode`, or a `runtime`
  * the host owns, plus the {@link InthVuePluginConfig}.
  */
 export type InthVuePluginOptions = InthVuePluginConfig &
@@ -80,7 +80,7 @@ export type InthVuePluginOptions = InthVuePluginConfig &
 				 *
 				 * @example
 				 * ```ts
-				 * app.use(inthVue, { projectUrl: '/api/inth' });
+				 * app.use(inth, { projectUrl: '/api/inth' });
 				 * ```
 				 */
 				projectUrl?: string;
@@ -98,9 +98,9 @@ export type InthVuePluginOptions = InthVuePluginConfig &
 				 *
 				 * @example
 				 * ```ts
-				 * import { inthVue, manifest } from '@inth/vue/vue-plugin';
+				 * import { inth, manifest } from '@inth/vue/vue-plugin';
 				 *
-				 * app.use(inthVue, { mode: manifest() });
+				 * app.use(inth, { mode: manifest() });
 				 * ```
 				 */
 				mode?: ProviderTransportFactory | HostedMode | ConsentTesting;
@@ -122,9 +122,9 @@ export type InthVuePluginOptions = InthVuePluginConfig &
 				 * @example
 				 * ```ts
 				 * import { createApp } from 'vue';
-				 * import { inthVue } from '@inth/vue/vue-plugin';
+				 * import { inth } from '@inth/vue/vue-plugin';
 				 *
-				 * createApp(Dialog).use(inthVue, { runtime }).mount(target);
+				 * createApp(Dialog).use(inth, { runtime }).mount(target);
 				 * ```
 				 */
 				runtime: ConsentRuntime;
@@ -137,13 +137,13 @@ export type InthVuePluginOptions = InthVuePluginConfig &
  *
  * @example
  * ```ts
- * import { inthVue, manifest } from '@inth/vue/vue-plugin';
+ * import { inth, manifest } from '@inth/vue/vue-plugin';
  * import { createApp } from 'vue';
  *
- * createApp(App).use(inthVue, { projectUrl: '/api/inth' }).mount('#app');
+ * createApp(App).use(inth, { projectUrl: '/api/inth' }).mount('#app');
  * ```
  */
-export const inthVue: Plugin<[InthVuePluginOptions]> = {
+export const inth: Plugin<[InthVuePluginOptions]> = {
 	install(app: App, options: InthVuePluginOptions) {
 		app.provide(consentConfigKey, options);
 

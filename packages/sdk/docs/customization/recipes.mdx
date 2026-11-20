@@ -47,7 +47,7 @@ right.
     Render `CookieBanner` and `ConsentManager` from
     `@inth/vue/runtime/components/consent-manager.vue` in place of
     `InthProvider`. To keep it, set `presentation.prompt` in the
-    `inthVue` options instead, as in [customize](/docs/frameworks/vue/customize).
+    `inth` options instead, as in [customize](/docs/frameworks/vue/customize).
 
     <include src="../shared/examples/storybook-vue/bottom-bar.mdx" />
   </Tab>
@@ -140,7 +140,7 @@ requires.
   </Tab>
 
   <Tab value="Vue">
-    Spread `slimBar` into the options you pass to `app.use(inthVue, ...)`.
+    Spread `slimBar` into the options you pass to `app.use(inth, ...)`.
     `InthProvider` then renders the slim bar.
 
     <include src="../shared/examples/storybook-vue/slim-bar.mdx" />

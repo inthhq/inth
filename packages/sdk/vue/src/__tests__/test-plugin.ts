@@ -1,13 +1,13 @@
 import { hosted } from '@inth/sdk/transports';
 /**
- * The `inthVue` plugin for tests whose subject is not the mode. Their
+ * The `inth` plugin for tests whose subject is not the mode. Their
  * options name a backend the way older tests did, with `projectUrl`; this
  * wrapper turns it into `hosted()` and installs the real plugin. A test
  * that passes `mode` or `runtime` gets the plugin unchanged.
  */
 import type { App, Plugin } from 'vue';
 
-import { inthVue as plugin } from '../index';
+import { inth as plugin } from '../index';
 import type { InthVuePluginOptions as PluginOptions } from '../index';
 import type { RuntimeConsentConfig } from '../runtime/kernel';
 
@@ -20,7 +20,7 @@ export type InthVuePluginOptions = Partial<RuntimeConsentConfig> & {
 	domain?: string;
 } & Partial<Pick<PluginOptions, 'mode' | 'runtime'>>;
 
-export const inthVue: Plugin<[InthVuePluginOptions?]> = {
+export const inth: Plugin<[InthVuePluginOptions?]> = {
 	install(app: App, options: InthVuePluginOptions = {}) {
 		const { projectUrl, domain, ...rest } = options;
 		plugin.install?.(

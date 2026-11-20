@@ -15,7 +15,7 @@ import type { App, Component } from 'vue';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 
-import { inthVue } from '../index';
+import { inth } from '../index';
 import InthProvider from '../runtime/components/inth-provider.vue';
 import NuxtInthProvider from '../runtime/components/nuxt-inth-provider.vue';
 import { consentConfigKey } from '../runtime/composables/config';
@@ -133,7 +133,7 @@ describe.each([
 	test('renders wrapped children next to the banner', async () => {
 		const wrapper = mount(Root, {
 			attachTo: document.body,
-			global: { plugins: [[inthVue, { ...config, mode }]] },
+			global: { plugins: [[inth, { ...config, mode }]] },
 			slots: { default: page },
 		});
 		try {
