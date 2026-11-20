@@ -235,6 +235,9 @@ class ConsentJourney {
         receipts != null && permissions != null && writes.length() == saves &&
             writes.getJSONObject(saves - 1).getString("consentAction") == action &&
             permissions.getBoolean("necessary") &&
+            // The wire map carries every receipt but necessary, and nothing else.
+            writes.getJSONObject(saves - 1).getJSONObject("answer").getJSONObject("categories").keys().asSequence().toSet() ==
+                receipts.keys().asSequence().toSet() - "necessary" &&
             categories.all { category ->
                 val receipt = receipts.optJSONObject(category)
                 val delivered = writes.getJSONObject(saves - 1)

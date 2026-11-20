@@ -189,8 +189,10 @@ final class SubjectLinkTests: XCTestCase {
     func testALinkAnsweredAfterIdentifyMovedToAnotherPersonKeepsTheLocalId() async {
         let core = await started(subjectId: Self.c15tId)
         http.linkResponse = .json(#"{"subjectId":"\#(Self.canonical)","externalId":"user_123","verifiedBy":"identity_token"}"#)
+        http.holdsLinks = true
         core.identify(KernelUser(externalId: "user_123"), identityToken: "token")
         core.identify(KernelUser(externalId: "user_456"))
+        http.releaseLinks()
         await core.waitUntilIdle()
         XCTAssertEqual(http.recordedIdentityRequests.count, 1)
         XCTAssertEqual(core.snapshot().subject?.id, Self.c15tId, "user_123's canonical id is not installed under user_456")
@@ -200,8 +202,10 @@ final class SubjectLinkTests: XCTestCase {
     func testALinkAnsweredAfterIdentifyMovedToAnotherProviderKeepsTheLocalId() async {
         let core = await started(subjectId: Self.c15tId)
         http.linkResponse = .json(#"{"subjectId":"\#(Self.canonical)","externalId":"user_123","verifiedBy":"identity_token"}"#)
+        http.holdsLinks = true
         core.identify(KernelUser(externalId: "user_123", identityProvider: "provider-a"), identityToken: "token")
         core.identify(KernelUser(externalId: "user_123", identityProvider: "provider-b"))
+        http.releaseLinks()
         await core.waitUntilIdle()
         XCTAssertEqual(http.recordedIdentityRequests.count, 1)
         XCTAssertEqual(core.snapshot().subject?.id, Self.c15tId, "provider-a's canonical id is not installed under provider-b")

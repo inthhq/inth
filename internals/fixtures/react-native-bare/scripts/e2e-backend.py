@@ -68,9 +68,14 @@ def records_problem(body):
     """Why a records body is not the /v1 shape, or None."""
     if not isinstance(body, dict):
         return 'body is not an object'
-    for field in ('idempotencyKey', 'subjectId', 'property', 'consentAction'):
+    # The /v1 API types model and uiSource as strings; the native contract sends both on every save.
+    for field in ('idempotencyKey', 'subjectId', 'property', 'consentAction', 'model', 'uiSource'):
         if not isinstance(body.get(field), str) or not body[field]:
             return field + ' is required'
+    # givenAt is epoch milliseconds, an integer from 0 to the largest JavaScript date.
+    given_at = body.get('givenAt')
+    if not isinstance(given_at, int) or isinstance(given_at, bool) or not 0 <= given_at <= 8640000000000000:
+        return 'givenAt must be epoch milliseconds'
     categories = (body.get('answer') or {}).get('categories') if isinstance(body.get('answer'), dict) else None
     if not isinstance(categories, dict) or set(body['answer']) != {'categories'}:
         return 'answer must be { categories }'
@@ -240,6 +245,9 @@ class Handler(BaseHTTPRequestHandler):
                 problem = header_problem(self.headers)
                 if problem:
                     self.fail(400, 'invalid_request', problem)
+                    return
+                if not isinstance(body, dict):
+                    self.fail(400, 'invalid_request', 'body is not an object')
                     return
                 if not isinstance(body.get('externalId'), str):
                     self.fail(400, 'invalid_request', 'externalId is required')
