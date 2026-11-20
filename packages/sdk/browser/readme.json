@@ -12,7 +12,7 @@
 	],
 	"prerequisites": [
 		"A page where you can add a `<script>` tag",
-		"An [Inth project](https://inth.com) (free sign-up), a [self-hosted backend](https://c15t.com/docs/self-host/quickstart), or `inth.testing.js` on test pages"
+		"An [Inth project](https://inth.com) (free sign-up), or `inth.testing.js` on test pages"
 	],
 	"manualInstallation": [
 		"",
@@ -37,7 +37,7 @@
 	"quickStartLink": "https://c15t.com/docs/frameworks/html/quickstart",
 	"showCLIGeneration": false,
 	"customSections": {
-		"Which Script to Load": "| File | Use it for |\n| --- | --- |\n| `inth.js` | Inth or a self-hosted backend. Set `data-project-url`. A self-hosted backend also serves a preconfigured script at `/inth.js` |\n| `inth.testing.js` | Test pages only: the stock UI with `testing()`, which resolves a policy in the browser with no backend |\n| `inth.headless.js` | The runtime without UI, for your own banner. Can inline or fetch the backend's cacheable `/manifest` |\n| `inth.iab.js` | IAB TCF 2.4. Configure `iab` with your registered CMP ID and vendor list. See the [IAB example](https://c15t.com/docs/frameworks/html/iab) |\n| `inth.devtools.js` | A DevTools panel, with a Location tab to try policies by region |\n| `inth.gpp.js` | IAB GPP (`__gpp`) for US state opt-outs. Also available as `mountGPP` from `@inth/sdk/gpp` |"
+		"Which Script to Load": "| File | Use it for |\n| --- | --- |\n| `inth.js` | Your Inth project. Set `data-project-url` |\n| `inth.testing.js` | Test pages only: the stock UI with `testing()`, which resolves a policy in the browser with no backend |\n| `inth.headless.js` | The runtime without UI, for your own banner. Can inline or fetch the backend's cacheable `/v1/consent/manifest` |\n| `inth.iab.js` | IAB TCF 2.4. Configure `iab` with your registered CMP ID and vendor list. See the [IAB example](https://c15t.com/docs/frameworks/html/iab) |\n| `inth.devtools.js` | A DevTools panel, with a Location tab to try policies by region |\n| `inth.gpp.js` | IAB GPP (`__gpp`) for US state opt-outs. Also available as `mountGPP` from `@inth/sdk/gpp` |"
 	},
 	"showHosting": true
 }

@@ -43,7 +43,7 @@ import { consentConfigKey } from './utils/symbols';
 export { withClientData } from './client-data';
 
 /**
- * Development only: after the first init, warn when the `/init` request the
+ * Development only: after the first init, warn when the `/v1/consent/init` request the
  * page's HTML started (`runtime/server/init-prefetch.ts` in `@inth/nuxt`)
  * is still unused. The app asked with other inputs than the server
  * expected, so the page sent two requests.
@@ -459,7 +459,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 			// so starting earlier would only put work in front of the mount.
 			nuxtApp.hook('app:mounted', () => context.start());
 		} else {
-			// No server markup to match (`ssr: false`): start now, so `/init`
+			// No server markup to match (`ssr: false`): start now, so `/v1/consent/init`
 			// overlaps the mount instead of waiting for it.
 			context.start();
 		}

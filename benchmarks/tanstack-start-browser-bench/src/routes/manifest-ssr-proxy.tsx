@@ -8,7 +8,7 @@ import { consentStylesheetHead } from '../bench/stylesheets';
 
 /**
  * Same prefetch as `manifest-ssr`, but the root talks to the proxy
- * mount, so the accept click's `POST /subjects` takes one extra hop
+ * mount, so the accept click's `POST /v1/consent/records` takes one extra hop
  * through the Start server before it reaches the fixture.
  */
 const ManifestSSRProxyPage = () => {

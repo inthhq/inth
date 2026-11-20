@@ -168,7 +168,7 @@ export const createExperimentControllerWith =
 		};
 
 		// The arm is already on the kernel: seeded from the host or a prefetch,
-		// or picked by `startExperiment` before `/init`.
+		// or picked by `startExperiment` before `/v1/consent/init`.
 		const assignment: ExperimentAssignment | null =
 			kernel.getSnapshot().experiment;
 		if (!assignment) {

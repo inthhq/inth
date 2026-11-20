@@ -49,7 +49,7 @@ export const handle = inthHandle({ mode: manifest({ source: 'runtime' }) });
 Keep `consentManifest` in `vite.config.ts`: it supplies the backend URL. Set
 `consentManifest({ onBuildError: 'runtime' })` so a build does not depend on
 the backend, or pass `inthHandle({ projectUrl })`. `loadConsent` fetches
-`${projectUrl}/manifest`, or the URL in `manifest({ manifestUrl })`.
+`${projectUrl}/v1/consent/manifest`, or the URL in `manifest({ manifestUrl })`.
 
 The server caches the manifest in memory for as long as its `s-maxage`
 allows. After that, within the backend's `stale-while-revalidate` window, it
@@ -59,7 +59,7 @@ the next request waits for a fresh copy, up to the 500 ms budget of
 still counts visitors it never served `/init` to.
 
 Pass the absolute Inth URL as `projectUrl`. A relative URL, such as
-`/api/self-host` for a backend mounted in your app, is fetched with
+`/api/inth`, is fetched with
 `event.fetch` inside the app and is never resolved against the request's
 `Host` header. One that points back at the consent route makes the route
 fetch itself.
@@ -230,7 +230,7 @@ own handles through `sequence(inthHandle(), yourHandle)` from
 | Option | Default | What it does |
 | --- | --- | --- |
 | `mode` | `manifest()` | How `loadConsent` resolves the visitor: `manifest()`, `hosted()` or `testing()` from `@inth/svelte/kit`. |
-| `routePrefix` | none | Where [`createConsentRoute()`](#serve-the-consent-route) is mounted, such as `/api/inth`. Without it, the browser asks the backend's `/init` when it resolves consent itself. |
+| `routePrefix` | none | Where [`createConsentRoute()`](#serve-the-consent-route) is mounted, such as `/api/inth`. Without it, the browser asks the backend's `/v1/consent/init` when it resolves consent itself. |
 | `projectUrl` | The URL `consentManifest` read from `PUBLIC_INTH_PROJECT_URL` | The backend. |
 | `snapshot` | The manifest `consentManifest` downloaded | A manifest of your own to resolve with. |
 | `cookieName` | `inth` | The consent cookie. Match the provider's `storageConfig.storageKey`. |

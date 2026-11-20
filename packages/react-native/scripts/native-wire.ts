@@ -1,0 +1,211 @@
+/**
+ * The save request the native cores send: `POST /subjects` with a `sub_`
+ * subject ID and the policy contract header. The web SDK speaks `/v1`, so
+ * this wire lives here, beside the fixtures that pin it for the Swift and
+ * Kotlin cores.
+ */
+import { OPTIONAL_CONSENT_CATEGORIES } from '@inth/sdk/engine';
+import type { OptionalConsentCategory, SavePayload } from '@inth/sdk/engine';
+import {
+	POLICY_CONTRACT_HEADER,
+	POLICY_CONTRACT_VERSION,
+} from '@inth/sdk/schema/types';
+import type {
+	SubjectChoiceWire,
+	VendorChoiceWire,
+} from '@inth/sdk/schema/types';
+
+export { POLICY_CONTRACT_HEADER };
+
+/**
+ * The policy contract the native cores declare. Read from the schema, so a
+ * fixture never pins a contract the code it was generated from moved past.
+ */
+export const POLICY_CONTRACT_HEADER_VALUE = String(POLICY_CONTRACT_VERSION);
+
+// Base58 without 0, O, I and l, as the backend encodes subject IDs.
+const BASE58_ALPHABET =
+	'123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+// The backend's subject ID epoch, 2023-11-14T22:13:20Z.
+const EPOCH_TIMESTAMP = 1_700_000_000_000;
+
+const base58Encode = function base58Encode(
+	bytes: Uint8Array,
+	view: DataView
+): string {
+	let num = BigInt(0);
+	for (let offset = 0; offset < bytes.length; offset += 4) {
+		num = num * BigInt(2 ** 32) + BigInt(view.getUint32(offset, false));
+	}
+	const groupBase = BigInt(58 ** 5);
+	let encoded = '';
+	while (num > BigInt(0)) {
+		let group = Number(num % groupBase);
+		num /= groupBase;
+		let digits = '';
+		for (let index = 0; index < 5; index += 1) {
+			digits = BASE58_ALPHABET.charAt(group % 58) + digits;
+			group = Math.floor(group / 58);
+			if (num === BigInt(0) && group === 0) {
+				break;
+			}
+		}
+		encoded = digits + encoded;
+	}
+	for (const byte of bytes) {
+		if (byte !== 0) {
+			break;
+		}
+		encoded = BASE58_ALPHABET.charAt(0) + encoded;
+	}
+	return encoded || BASE58_ALPHABET.charAt(0);
+};
+
+/**
+ * A `sub_` subject ID: 8 bytes of milliseconds since the backend's epoch
+ * and 12 random bytes, base58 encoded.
+ */
+export const generateSubjectId = function generateSubjectId(): string {
+	const buf = crypto.getRandomValues(new Uint8Array(20));
+	const t = Date.now() - EPOCH_TIMESTAMP;
+	const view = new DataView(buf.buffer);
+	view.setUint32(0, Math.floor(t / 2 ** 32), false);
+	view.setUint32(4, t % 2 ** 32, false);
+	return `sub_${base58Encode(buf, view)}`;
+};
+
+/** Whether `id` is a `sub_` ID the backend's `subjectIdSchema` accepts. */
+export const isValidSubjectId = function isValidSubjectId(id: string): boolean {
+	if (!id.startsWith('sub_')) {
+		return false;
+	}
+	const encoded = id.slice(4);
+	if (encoded.length === 0) {
+		return false;
+	}
+	for (const char of encoded) {
+		if (!BASE58_ALPHABET.includes(char)) {
+			return false;
+		}
+	}
+	return true;
+};
+
+export interface SubjectPostBody {
+	subjectId: string;
+	externalSubjectId?: string;
+	identityProvider?: string;
+	identityToken?: string;
+	domain: string;
+	type: 'cookie_banner';
+	preferences: Record<string, boolean>;
+	givenAt: number;
+	choice?: SubjectChoiceWire;
+	model?: NonNullable<SavePayload['model']>;
+	uiSource?: NonNullable<SavePayload['uiSource']>;
+	consentAction: SavePayload['consentAction'];
+	policySnapshotToken?: string;
+	tcString?: string;
+	addtlConsent?: string;
+	vendorChoice?: VendorChoiceWire;
+	metadata?: Record<string, unknown>;
+}
+
+const buildMetadata = function buildMetadata(
+	payload: SavePayload
+): SubjectPostBody['metadata'] {
+	const metadata: NonNullable<SubjectPostBody['metadata']> = {};
+	if (payload.user?.properties) {
+		metadata.userProperties = payload.user.properties;
+	}
+	if (payload.timeToDecisionMs !== undefined) {
+		metadata.timeToDecisionMs = payload.timeToDecisionMs;
+	}
+	if (payload.experiment) {
+		metadata.experiment = { ...payload.experiment };
+	}
+	return Object.keys(metadata).length > 0 ? metadata : undefined;
+};
+
+/**
+ * Receipts for exactly the categories the act confirmed. An act that
+ * confirmed none sends an empty receipt: a body without `choice` reads as a
+ * 2.x save, and the backend would stamp a receipt for every preference.
+ */
+const buildConfirmedChoiceWire = function buildConfirmedChoiceWire(
+	payload: Pick<SavePayload, 'choice' | 'confirmed'>
+): SubjectChoiceWire | undefined {
+	const { choice, confirmed } = payload;
+	if (!choice || !confirmed) {
+		return undefined;
+	}
+	const categories: SubjectChoiceWire['categories'] = {};
+	for (const key of Object.keys(confirmed.categories)) {
+		const receipt = choice.categories[key as OptionalConsentCategory];
+		if (receipt === undefined) {
+			continue;
+		}
+		categories[key as OptionalConsentCategory] = {
+			basis:
+				receipt.basis.kind === 'choice-v1'
+					? { fingerprint: receipt.basis.fingerprint, kind: 'choice-v1' }
+					: {
+							kind: 'legacy-v2',
+							...(receipt.basis.materialFingerprint !== undefined && {
+								materialFingerprint: receipt.basis.materialFingerprint,
+							}),
+						},
+			confirmedAt: receipt.confirmedAt,
+			value: receipt.value,
+		};
+	}
+	return { categories, version: 3 };
+};
+
+const explicitPreferences = function explicitPreferences(
+	choice: SavePayload['choice']
+): Record<string, boolean> {
+	const preferences: Record<string, boolean> = { necessary: true };
+	for (const category of OPTIONAL_CONSENT_CATEGORIES) {
+		const receipt = choice.categories[category];
+		if (receipt !== undefined) {
+			preferences[category] = receipt.value;
+		}
+	}
+	return preferences;
+};
+
+/** The `POST /subjects` body a native core sends for a kernel save. */
+export const buildSubjectPostBody = function buildSubjectPostBody(
+	payload: SavePayload,
+	options: { domain: string }
+): SubjectPostBody {
+	const choice = buildConfirmedChoiceWire(payload);
+	return {
+		consentAction: payload.consentAction,
+		domain: options.domain,
+		externalSubjectId: payload.user?.externalId,
+		givenAt: payload.confirmed.actionAt,
+		identityProvider: payload.user?.identityProvider,
+		identityToken: payload.user?.identityToken,
+		metadata: buildMetadata(payload),
+		model: payload.model ?? undefined,
+		policySnapshotToken: payload.policySnapshotToken ?? undefined,
+		preferences: explicitPreferences(payload.choice),
+		subjectId: payload.subjectId,
+		tcString: payload.tcString ?? undefined,
+		type: 'cookie_banner',
+		uiSource: payload.uiSource ?? undefined,
+		...(choice !== undefined && { choice }),
+		...(payload.tcString &&
+			payload.addtlConsent && { addtlConsent: payload.addtlConsent }),
+		...(payload.vendorChoice !== undefined && {
+			vendorChoice: {
+				confirmedAt: payload.vendorChoice.confirmedAt,
+				grants: { ...payload.vendorChoice.grants },
+				version: 1 as const,
+			},
+		}),
+	};
+};

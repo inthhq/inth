@@ -14,10 +14,10 @@ the cause:
 
 | Error | Cause |
 | --- | --- |
-| `/manifest responded 404` | The backend URL is wrong, or still the `https://your-project.inth.app` placeholder. |
+| `/v1/consent/manifest responded 404` | The backend URL is wrong, or still the `https://your-project.inth.app` placeholder. |
 | `no backend URL is set` | Neither the `projectUrl` option nor `VITE_INTH_PROJECT_URL` is set, or it is empty. `vite build` stops; `vite dev` warns. |
 | `skipped the consent manifest fetch` (a notice) | The backend URL is relative. With `onBuildError: 'fail'`, this is the error `build-time manifests require an absolute upstream URL`. |
-| `/manifest returned an invalid consent manifest.` | The URL answers, but not with an Inth v3 manifest. |
+| `/v1/consent/manifest returned an invalid consent manifest.` | The URL answers, but not with an Inth v3 manifest. |
 | `fetch failed` or `no response within 10 seconds` | The machine running the command cannot reach the backend. |
 
 **Fix.** Set `VITE_INTH_PROJECT_URL` to your
@@ -27,7 +27,7 @@ machine can reach the backend. To deploy while it is down, build with
 
 ## The browser fetches the manifest at runtime
 
-**Check.** With `manifest()`, the browser requests `<projectUrl>/manifest` on
+**Check.** With `manifest()`, the browser requests `<projectUrl>/v1/consent/manifest` on
 page load instead of resolving from a bundled policy. The build had no policy
 to bundle: `consentManifest` is missing from `plugins` in `vite.config.ts`,
 the fetch failed in `vite dev` or in a build with

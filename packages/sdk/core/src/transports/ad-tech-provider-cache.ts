@@ -1,6 +1,6 @@
 /**
- * Google Additional Consent providers for hosts that resolve `/init` from a
- * manifest. The backend embeds them in its own `/init`; a manifest host loads
+ * Google Additional Consent providers for hosts that resolve `/v1/consent/init` from a
+ * manifest. The backend embeds them in its own `/v1/consent/init`; a manifest host loads
  * them from the manifest's `iab.additionalConsent.url`, as it loads the
  * vendor list from `iab.gvl.url`.
  *

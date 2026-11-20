@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 
+import { loadStaticManifest } from '../../../server/static-manifest';
 import { InthApiError, isInthApiError, readApiError } from '../error';
 import { json } from './fixtures';
 
@@ -72,6 +73,55 @@ describe('readApiError', () => {
 		} finally {
 			vi.useRealTimers();
 		}
+	});
+
+	/** A 2 MiB body sent 64 KiB at a time, counting what was read. */
+	const largeBody = () => {
+		const chunk = new Uint8Array(64 * 1024).fill(0x20);
+		const state = { cancelled: false, pulled: 0 };
+		const body = new ReadableStream<Uint8Array>({
+			cancel() {
+				state.cancelled = true;
+			},
+			pull(controller) {
+				if (state.pulled === 32) {
+					controller.close();
+					return;
+				}
+				state.pulled += 1;
+				controller.enqueue(chunk);
+			},
+		});
+		return { body, state };
+	};
+
+	test('stops reading a body past 16 KiB and reads the status', async () => {
+		const { body, state } = largeBody();
+
+		const error = await readApiError(
+			'Inth',
+			new Response(body, { status: 502 })
+		);
+
+		expect(error).toMatchObject({ code: 'bad_gateway', status: 502 });
+		expect(state.cancelled).toBe(true);
+		expect(state.pulled).toBeLessThan(4);
+	});
+
+	test('the static manifest loader reads no more of a large failure', async () => {
+		const { body, state } = largeBody();
+
+		await expect(
+			loadStaticManifest(
+				{
+					fetch: () => Promise.resolve(new Response(body, { status: 502 })),
+					manifestUrl: 'https://consent.example.com/v1/consent/manifest',
+				},
+				'@inth/test'
+			)
+		).rejects.toMatchObject({ status: 502 });
+		expect(state.cancelled).toBe(true);
+		expect(state.pulled).toBeLessThan(4);
 	});
 
 	test('keeps a code added after this client', async () => {

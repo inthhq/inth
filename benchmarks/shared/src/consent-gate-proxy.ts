@@ -201,19 +201,34 @@ export const startGateProxy = async function startGateProxy(
 			options.backendPrefix &&
 			url.pathname.startsWith(options.backendPrefix)
 		) {
-			request.resume();
+			const chunks: Buffer[] = [];
+			for await (const chunk of request) {
+				chunks.push(chunk as Buffer);
+			}
 			await sleep(options.backendLatencyMs);
 			const endpoint = url.pathname.slice(options.backendPrefix.length);
-			send(
-				request,
-				response,
-				JSON.stringify(
-					endpoint.startsWith('/init')
-						? await init
-						: { ok: true, subjectId: 'benchmark-subject' }
-				),
-				'application/json'
-			);
+			if (endpoint === '/v1/consent/init') {
+				send(request, response, JSON.stringify(await init), 'application/json');
+				return;
+			}
+			if (endpoint === '/v1/consent/records') {
+				send(
+					request,
+					response,
+					JSON.stringify({
+						recordId: '019a0000-0000-7000-8000-000000000002',
+						subjectId: (
+							JSON.parse(Buffer.concat(chunks).toString() || '{}') as {
+								subjectId?: string;
+							}
+						).subjectId,
+					}),
+					'application/json'
+				);
+				return;
+			}
+			response.writeHead(404, { 'content-type': 'text/plain' });
+			response.end('not found');
 			return;
 		}
 		if (upstream) {

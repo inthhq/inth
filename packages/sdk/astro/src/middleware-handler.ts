@@ -68,7 +68,7 @@ const resolveSkipPaths = function resolveSkipPaths(
  * It reads the consent cookie and the geo/GPC headers, resolves the policy
  * decision through the configured mode, and leaves the result on locals so
  * the components render the right thing on the server and the browser boots
- * without an `/init` roundtrip.
+ * without a `/v1/consent/init` roundtrip.
  *
  * A prerendered route is resolved without its request: there is no
  * per-visitor request to read, and resolving one would bake one visitor's

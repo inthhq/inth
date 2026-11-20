@@ -15,6 +15,7 @@ import type {
 	V1ConsentSessionReport,
 } from '@inth/sdk-schema/types';
 
+import { readHeader } from '../../libs/headers';
 import {
 	forwardSessionReportHeaders,
 	isSpeculativeRequest,
@@ -52,24 +53,6 @@ export interface V1SessionReportOptions extends BuildConsentSessionReportOptions
 	/** Keeps the report alive on runtimes that stop detached work. */
 	waitUntil?: (task: Promise<void>) => void;
 }
-
-const readHeader = function readHeader(
-	headers: SessionReportHeaders | undefined,
-	name: string
-): string | undefined {
-	if (!headers) {
-		return undefined;
-	}
-	if (headers instanceof Headers) {
-		return headers.get(name) ?? undefined;
-	}
-	for (const [key, value] of Object.entries(headers)) {
-		if (key.toLowerCase() === name) {
-			return Array.isArray(value) ? value[0] : value;
-		}
-	}
-	return undefined;
-};
 
 /**
  * The arm the visitor's init carried: the `x-inth-experiment` header, which

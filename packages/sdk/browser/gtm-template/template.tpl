@@ -65,7 +65,7 @@ ___TEMPLATE_PARAMETERS___
         "type": "EQUALS"
       }
     ],
-    "help": "Your Inth project URL with /inth.js on the end, such as https://your-project.inth.app/inth.js. You can also load an exact version from jsDelivr, such as https://cdn.jsdelivr.net/npm/@inth/sdk@3.2.0/lib/browser/dist/inth.js. Tags such as latest and ranges such as 3.1 are not accepted, because jsDelivr would serve new releases without a container change. A self-hosted backend is not supported here; add its script tag to your page instead."
+    "help": "Your Inth project URL with /inth.js on the end, such as https://your-project.inth.app/inth.js. You can also load an exact version from jsDelivr, such as https://cdn.jsdelivr.net/npm/@inth/sdk@3.2.0/lib/browser/dist/inth.js. Tags such as latest and ranges such as 3.1 are not accepted, because jsDelivr would serve new releases without a container change."
   },
   {
     "type": "TEXT",

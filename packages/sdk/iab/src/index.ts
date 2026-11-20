@@ -6,7 +6,7 @@
  * - Installs `window.__tcfapi` global (synchronous stub + async real
  *   implementation) so third-party vendors can discover the CMP.
  * - Fetches the Global Vendor List (GVL) with HTTP cache + in-flight
- *   deduplication. Respects `gvl: null` on the `/init` response
+ *   deduplication. Respects `gvl: null` on the `/v1/consent/init` response
  *   (server-side non-IAB region opt-out).
  * - Encodes and decodes TCF 2.4 strings via lazy-loaded
  *   `@iabtechlabtcf/core`, so the 50KB codec loads only when a TC string
@@ -160,7 +160,7 @@ export interface IABProviderConfig extends IABUserConfig {
  * Enables IAB TCF support for a framework consent provider.
  *
  * @throws {Error} When `cmpId` is present but is not a registered CMP ID. An
- * absent `cmpId` is allowed: a hosted backend can supply it from `/init`.
+ * absent `cmpId` is allowed: a hosted backend can supply it from `/v1/consent/init`.
  *
  * @example
  * ```tsx
@@ -971,7 +971,7 @@ export const createIAB = function createIAB(
 	let adTechProvidersSettled = false;
 	/**
 	 * The provider list this handle published from its own configuration.
-	 * It replaces the backend's, including after a later `/init` sends the
+	 * It replaces the backend's, including after a later `/v1/consent/init` sends the
 	 * backend's again. `null` while none is published, or when the request
 	 * failed and the backend's list stands.
 	 */
@@ -980,7 +980,7 @@ export const createIAB = function createIAB(
 	 * Loads names and privacy links for the ad tech providers this handle was
 	 * configured with, once per handle. A client list replaces the backend's,
 	 * so an empty one resolves to `[]` and clears it. `null` keeps what the
-	 * kernel holds: no list configured here (a backend's `/init` may already
+	 * kernel holds: no list configured here (a backend's `/v1/consent/init` may already
 	 * have put providers in the kernel), no TC string coming, or a failed
 	 * request. A failure leaves the TC string working, since the AC string
 	 * only supplements it.
@@ -1482,7 +1482,7 @@ export const createIAB = function createIAB(
 			update.customVendors = distinct;
 		}
 		// Configured on the client: its list replaces the backend's, now and
-		// after any later `/init`.
+		// after any later `/v1/consent/init`.
 		if (adTechProviders) {
 			update.adTechProviders = adTechProviders;
 			clientAdTechProviders = adTechProviders;
@@ -1852,7 +1852,7 @@ export const createIAB = function createIAB(
 		if (held === previous.iab?.adTechProviders) {
 			return;
 		}
-		// A later `/init` put the backend's list back. The client's replaces
+		// A later `/v1/consent/init` put the backend's list back. The client's replaces
 		// it; the update notifies again, and that notification rechecks.
 		if (
 			clientAdTechProviders &&

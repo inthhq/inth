@@ -1,9 +1,9 @@
 /**
- * Where an `/init` prefetch script goes in a page, written once for every
+ * Where a `/v1/consent/init` prefetch script goes in a page, written once for every
  * integration that adds one to HTML.
  */
 
-/** Id of the inline script that starts the `/init` prefetch. */
+/** Id of the inline script that starts the `/v1/consent/init` prefetch. */
 export const PREFETCH_SCRIPT_ID = 'inth-initial-data-prefetch';
 
 /**

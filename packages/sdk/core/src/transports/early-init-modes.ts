@@ -7,7 +7,7 @@
 import type { KernelOverrides } from '../types';
 import type { ProviderTransportFactory } from './mode';
 
-/** What a mode tells a provider about sending its `/init` early. */
+/** What a mode tells a provider about sending its `/v1/consent/init` early. */
 export interface EarlyInitMode {
 	/**
 	 * Whether `init()` for these overrides would request the backend,

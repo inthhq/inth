@@ -1,7 +1,7 @@
 /**
  * Builds a session report from an init resolution.
  *
- * Shared between the backend, whose `/init` emits one, and the host
+ * Shared between the backend, whose `/v1/consent/init` emits one, and the host
  * adapters, which post one after resolving locally, so both describe a
  * resolution the same way and a consumer never has to reconcile two shapes.
  */
@@ -28,11 +28,11 @@ export const CONSENT_SESSION_CLIENT_IP_HEADER = 'x-inth-client-ip';
 
 /**
  * Request header that carries the banner-experiment arm a visitor runs, as
- * `<id>=<arm>` with both parts URI-encoded. A client sends it on `/init`
+ * `<id>=<arm>` with both parts URI-encoded. A client sends it on `/v1/consent/init`
  * only while the visitor has no stored choice, so a session that carries it
  * is one where the banner was owed under that arm. A browser sends the same
  * value as the `experiment` query parameter instead, so a cross-origin
- * `/init` needs no CORS preflight.
+ * `/v1/consent/init` needs no CORS preflight.
  */
 export const CONSENT_EXPERIMENT_HEADER = 'x-inth-experiment';
 
@@ -81,8 +81,8 @@ export const parseExperimentHeader = function parseExperimentHeader(
 };
 
 /**
- * Query parameter carrying the consent journey id on `GET /init` and
- * `POST /subjects`. A query parameter, not a header, so it adds no CORS
+ * Query parameter carrying the consent journey id on `GET /v1/consent/init` and
+ * `POST /v1/consent/records`. A query parameter, not a header, so it adds no CORS
  * preflight.
  */
 export const CONSENT_JOURNEY_PARAM = 'journey';
@@ -91,7 +91,7 @@ export const CONSENT_JOURNEY_PARAM = 'journey';
 export const CONSENT_JOURNEY_SCOPE_PARAM = 'journeyScope';
 
 /**
- * Query parameter on `GET /init`: `1` when the browser had a stored choice
+ * Query parameter on `GET /v1/consent/init`: `1` when the browser had a stored choice
  * or notice dismissal when the journey started, else `0`.
  */
 export const CONSENT_JOURNEY_STORED_PARAM = 'stored';
@@ -123,7 +123,7 @@ export type ConsentJourneyScope = 'page' | 'tab';
 export interface ConsentJourneyParams {
 	id: string;
 	scope: ConsentJourneyScope;
-	/** Whether a choice or notice dismissal was stored at the start. `/init` only. */
+	/** Whether a choice or notice dismissal was stored at the start. `/v1/consent/init` only. */
 	storedChoice?: boolean;
 }
 
@@ -280,12 +280,12 @@ export const journeyDomainFrom = function journeyDomainFrom(
 };
 
 /**
- * The journey a browser's `GET /init` carries, as a report records it.
+ * The journey a browser's `GET /v1/consent/init` carries, as a report records it.
  *
  * The stored flag is required here: without it a report cannot say
  * whether the prompt was owed, so a journey without it is none.
  *
- * @param url - The `/init` request URL.
+ * @param url - The `/v1/consent/init` request URL.
  * @param site - Where the domain comes from: the request's `Origin`, or the
  *   URL of the page or route the browser asked.
  */
@@ -337,7 +337,7 @@ export interface BuildConsentSessionReportOptions {
 	journey?: SessionJourney | null;
 }
 
-/** Builds the `POST /sessions` body for one resolution. */
+/** Builds the session report body for one resolution. */
 export const buildConsentSessionReport = function buildConsentSessionReport(
 	options: BuildConsentSessionReportOptions
 ): ConsentSessionReport {

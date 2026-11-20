@@ -23,7 +23,7 @@ Cookie banner, preference center, and consent-gated scripts for sites without a 
 ## Prerequisites
 
 - A page where you can add a `<script>` tag
-- An [Inth project](https://inth.com) (free sign-up), a [self-hosted backend](https://c15t.com/docs/self-host/quickstart), or `inth.testing.js` on test pages
+- An [Inth project](https://inth.com) (free sign-up), or `inth.testing.js` on test pages
 
 ## Installation
 
@@ -63,13 +63,9 @@ inth.push(['on', 'consent', () => {
 
 ## Hosting
 
-Inth needs somewhere to keep policies and consent records. Pick one:
+[Inth](https://inth.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=%40inth%2Fsdk-browser) keeps your policies and consent records. You get policy storage, consent records, audit history, and a dashboard, with no database or server to run. Sign-up is free. Set the project URL from your Inth dashboard as `projectUrl`.
 
-- **Hosted on [Inth](https://inth.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=%40inth%2Fsdk-browser)**: Inth runs the backend for you. You get policy storage, consent records, audit history, and a dashboard, with no database or server to run. Sign-up is free.
-- **Self-hosted**: Run [`@c15t/backend`](https://www.npmjs.com/package/@c15t/backend) on your own server with PostgreSQL, MySQL, or SQLite. You own migrations, backups, and uptime. See the [self-hosting guide](https://c15t.com/docs/self-host/quickstart).
-- **Offline**: Choices stay in the browser, with no consent records. Use it for local development, previews, and demos, not production.
-
-The frontend code is the same for Inth and a self-hosted backend. Only the backend URL changes.
+For local development, previews, and tests, `testing()` keeps choices in the browser and sends no consent records. It throws in production builds.
 
 ## Documentation
 
@@ -79,9 +75,9 @@ See the [documentation](https://c15t.com/docs/frameworks/html/quickstart) for gu
 
 | File | Use it for |
 | --- | --- |
-| `inth.js` | Inth or a self-hosted backend. Set `data-project-url`. A self-hosted backend also serves a preconfigured script at `/inth.js` |
+| `inth.js` | Your Inth project. Set `data-project-url` |
 | `inth.testing.js` | Test pages only: the stock UI with `testing()`, which resolves a policy in the browser with no backend |
-| `inth.headless.js` | The runtime without UI, for your own banner. Can inline or fetch the backend's cacheable `/manifest` |
+| `inth.headless.js` | The runtime without UI, for your own banner. Can inline or fetch the backend's cacheable `/v1/consent/manifest` |
 | `inth.iab.js` | IAB TCF 2.4. Configure `iab` with your registered CMP ID and vendor list. See the [IAB example](https://c15t.com/docs/frameworks/html/iab) |
 | `inth.devtools.js` | A DevTools panel, with a Location tab to try policies by region |
 | `inth.gpp.js` | IAB GPP (`__gpp`) for US state opt-outs. Also available as `mountGPP` from `@inth/sdk/gpp` |

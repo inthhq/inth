@@ -22,7 +22,7 @@ You need an [Inth project](https://inth.com/dashboard/sign-up?framework=tanstack
 rules for your regions, add your site's origin to the trusted origins, and copy
 the backend URL.
 [Choose your setup](/docs/concepts/choose-your-setup#decide-who-runs-the-consent-backend)
-covers self-hosting and testing without a backend.
+covers testing without a backend.
 
 The setup bundles your policy into the server at build time, the
 recommended production setup. Rebuild after changing policies, translations
@@ -54,7 +54,7 @@ Add the `consentManifest` plugin to `vite.config.ts`, before `tanstackStart()`:
 <include src="../../shared/examples/tanstack-start/vite-config.mdx" />
 
 During `vite build`, or in `vite dev` when the server first loads it, the
-plugin downloads your project's public policy from `${projectUrl}/manifest` and serves it to server code as
+plugin downloads your project's public policy from `${projectUrl}/v1/consent/manifest` and serves it to server code as
 `snapshot` from `@inth/tanstack-start/generated`. In the browser bundle, `snapshot` is
 `undefined`, so the policy stays on the server. No file is written into your
 project.

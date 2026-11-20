@@ -1,12 +1,12 @@
 /**
  * `@inth/sdk/runtime/deferred-boot`: the part of
  * `@inth/sdk/runtime/deferred-snapshot` a client-rendered provider needs
- * for its first render, before the `/init` answer is read.
+ * for its first render, before the `/v1/consent/init` answer is read.
  *
- * It finds or starts the `/init` request, tells a returning visitor apart,
+ * It finds or starts the `/v1/consent/init` request, tells a returning visitor apart,
  * and builds the pending snapshot hooks read until the stand-in has the
  * policy. None of it evaluates records or resolves a policy, so it stays
- * small: reading the `/init` answer (`snapshotFromPrefetchedInit`) lives
+ * small: reading the `/v1/consent/init` answer (`snapshotFromPrefetchedInit`) lives
  * in `deferred-snapshot`, which a provider can load after the page.
  *
  * @packageDocumentation
@@ -90,7 +90,7 @@ export const findPrefetchedInitFor = function findPrefetchedInitFor(
 };
 
 /**
- * The prefetched `/init` response the engine's `hosted()` transport will
+ * The prefetched `/v1/consent/init` response the engine's `hosted()` transport will
  * take, without taking it.
  *
  * @returns The pending response, or `undefined` when `mode` is not
@@ -150,7 +150,7 @@ export const startPrefetchedHostedInit = function startPrefetchedHostedInit(
 };
 
 /**
- * Starts the `/init` request a `hosted()` mode's transport would send
+ * Starts the `/v1/consent/init` request a `hosted()` mode's transport would send
  * first, as an inline prefetch script would have, unless one is already
  * on the page, and returns it as {@link findPrefetchedInit} reads it. The
  * transport then takes that response instead of sending its own.

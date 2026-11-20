@@ -1,6 +1,6 @@
 /**
  * A provider with a hosted transport and nothing prefetched sends its
- * `/init` request from the client render that builds its runtime, not
+ * `/v1/consent/init` request from the client render that builds its runtime, not
  * from the mount effect, so the request leaves before the first paint.
  * Server renders and hydration send nothing. The response still applies
  * at mount, through the kernel's own init. These tests pin when it is
@@ -34,7 +34,7 @@ import { policyFixture } from './policy-fixture';
 
 const BACKEND = 'https://consent.example/api/inth';
 
-/** An `/v1/consent/init` body for a policy whose id tells the responses apart. */
+/** A `/v1/consent/init` body for a policy whose id tells the responses apart. */
 const initBody = (id: string) =>
 	JSON.stringify({
 		branding: 'inth',

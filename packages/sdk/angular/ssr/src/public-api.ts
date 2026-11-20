@@ -6,8 +6,8 @@
  * - `provideInthServer()` resolves the visitor's consent for each request
  *   and hands it to the browser through `TransferState`, so the first HTML
  *   carries the right banner and hydration matches.
- * - `createConsentRoute()` serves the consent backend routes (`/manifest`,
- *   `/init`, and with `proxy` the writes) from the Angular server, for
+ * - `createConsentRoute()` serves the consent backend routes (`/v1/consent/manifest`,
+ *   `/v1/consent/init`, and with `proxy` the writes) from the Angular server, for
  *   `AngularNodeAppEngine` (Express, `node:http`) and fetch-style
  *   `AngularAppEngine` handlers.
  *

@@ -302,7 +302,7 @@ describe('runtime experiments', () => {
 		first.runtime.dispose();
 
 		// The choice is stored: this visitor is not shown the banner, so the
-		// next page's `/init` does not count them toward the arm.
+		// next page's `/v1/consent/init` does not count them toward the arm.
 		const second = createRuntime({ arm: 'bar' });
 		second.runtime.start();
 		await vi.waitFor(() => expect(second.transport.init).toHaveBeenCalled());

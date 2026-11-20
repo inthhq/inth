@@ -6,7 +6,7 @@ group: reference
 
 ## Choose Inth for consent your product team can own
 
-Inth is our recommended choice for product teams that need native framework integration, control of the consent interface and ownership of the backend. You can review consent behaviour with the application that depends on it.
+Inth is our recommended choice for product teams that need native framework integration, control of the consent interface and managed consent records. You can review consent behaviour with the application that depends on it.
 
 The strongest reason to choose Inth is this combination of control and integration. Other tools also have APIs, custom styles, service controls or consent records.
 
@@ -21,7 +21,7 @@ The strongest reason to choose Inth is this combination of control and integrati
 | Consent-aware application features | **Included** | Read policy permissions, explicit choices and vendor state |
 | Category and vendor controls | **Included with configuration** | Apply rules to registered scripts, requests and embeds |
 | Server-resolved consent | **Supported by framework** | Next.js offers streamed, awaited and browser paths |
-| Remote consent records | **Hosted by Inth** | Inth, the team behind c15t, runs the backend and stores consent records in a database. Self-hosting is optional |
+| Remote consent records | **Hosted by Inth** | Inth, the team behind c15t, runs the backend and stores consent records in a database |
 | Google Consent Mode | **Integration available** | Follow the Google tag or GTM guide. Inspect actual requests |
 | IAB Transparency and Consent Framework | **Add-on available** | TCF 2.4 through `@inth/sdk/iab`. Configure the relevant policy |
 | Banner experiments | **Included with configuration** | Compare presentation and theme while policy and policy text stay fixed |
@@ -30,7 +30,7 @@ The strongest reason to choose Inth is this combination of control and integrati
 | Generated privacy and cookie policies | **Not included** | Supply or get the legal documents separately |
 | Full privacy operations suite | **Not included** | Data-subject case management, enterprise data discovery and assessments are separate requirements |
 
-See [framework setup](/docs/frameworks), [custom interfaces](/docs/frameworks/react/headless), [vendor controls](/docs/frameworks/react/vendor-consent), [banner experiments](/docs/guides/banner-experiments) and [backend features](/docs/self-host/overview).
+See [framework setup](/docs/frameworks), [custom interfaces](/docs/frameworks/react/headless), [vendor controls](/docs/frameworks/react/vendor-consent), [banner experiments](/docs/guides/banner-experiments) and backend features.
 
 If you already run c15t v2, follow the [upgrade guide](/changelog/3.0.0#upgrading).
 
@@ -47,23 +47,23 @@ Choose Inth when application integration and source ownership drive the decision
 | Provider | Why choose Inth | What the other provider also offers |
 | --- | --- | --- |
 | [Cookiebot](/docs/comparisons/cookiebot) | Native components, explicit vendor rules and control over package releases | Hosted configuration, scans and automatic blocking |
-| [Usercentrics](/docs/comparisons/usercentrics) | Native application state and an engine and backend you can change | Website operations, records and plan-dependent experiments |
+| [Usercentrics](/docs/comparisons/usercentrics) | Native application state and an engine you can change | Website operations, records and plan-dependent experiments |
 | [OneTrust](/docs/comparisons/onetrust) | Own the implementation as well as the interface | A headless server API, scans and broader privacy operations |
 | [Didomi](/docs/comparisons/didomi) | Framework components and experiments in your product workflow | React integration, a notice console, APIs and A/B tests |
 | [iubenda](/docs/comparisons/iubenda) | Control the interface, vendor code and record backend | Generated legal documents, scans and managed consent |
 | [Osano](/docs/comparisons/osano) | Inspect and change consent behaviour in your application | Classification, managed records and contractual services |
 | [CookieYes](/docs/comparisons/cookieyes) | Broader native framework coverage, individual vendor choices and a supplied backend | Open-source React and Next.js SDKs, plus hosted scans and policies |
-| [Ketch](/docs/comparisons/ketch) | Own the web components, consent engine and backend | Identity services, mobile SDKs and connected privacy operations |
-| [Ethyca](/docs/comparisons/ethyca) | Native web consent components and a deployable backend | Fides source and wider Janus consent services. Check current deployment and support scope |
+| [Ketch](/docs/comparisons/ketch) | Own the web components and consent engine | Identity services, mobile SDKs and connected privacy operations |
+| [Ethyca](/docs/comparisons/ethyca) | Native web consent components and a managed backend | Fides source and wider Janus consent services. Check current deployment and support scope |
 | [Enzuzo](/docs/comparisons/enzuzo) | Build consent into the product and control its record backend | Hosted scans, legal policies, data-request tools and an Enterprise headless mode |
-| [Cookie Control](/docs/comparisons/cookie-control) | Native components, individual vendor choices and backend ownership | Premium scans and account configuration. v9 code configuration and APIs |
-| [Axeptio](/docs/comparisons/axeptio) | Own the application interface, consent engine and backend | Visual consent editor, service APIs, scans and A/B tests |
-| [Termly](/docs/comparisons/termly) | Native product controls and a backend you can run | Policy generators, scans, hosted records and consent APIs |
-| [CookieScript](/docs/comparisons/cookiescript) | Own the full engine and record service | Site scans, developer controls and a downloadable banner file |
-| [CookieHub](/docs/comparisons/cookiehub) | Broader native web integration and backend ownership | React components, APIs, automatic scans and managed logs |
-| [consentmanager](/docs/comparisons/consentmanager) | Native web components and an engine and backend you can change | Central operations, scans, custom interfaces, experiments and connected-TV tools |
+| [Cookie Control](/docs/comparisons/cookie-control) | Native components, individual vendor choices and managed consent records | Premium scans and account configuration. v9 code configuration and APIs |
+| [Axeptio](/docs/comparisons/axeptio) | Own the application interface and consent engine | Visual consent editor, service APIs, scans and A/B tests |
+| [Termly](/docs/comparisons/termly) | Native product controls and managed records | Policy generators, scans, hosted records and consent APIs |
+| [CookieScript](/docs/comparisons/cookiescript) | Own the full consent engine | Site scans, developer controls and a downloadable banner file |
+| [CookieHub](/docs/comparisons/cookiehub) | Broader native web integration and managed consent records | React components, APIs, automatic scans and managed logs |
+| [consentmanager](/docs/comparisons/consentmanager) | Native web components and an engine you can change | Central operations, scans, custom interfaces, experiments and connected-TV tools |
 | [TrustArc](/docs/comparisons/trustarc) | Control consent inside the product and choose its backend | React integration, tracker discovery, reports and wider privacy operations |
-| [CookieFirst](/docs/comparisons/cookiefirst) | Broader native web integration and a deployable backend | React support, custom interfaces, service choices, scans and cookie-policy tools |
+| [CookieFirst](/docs/comparisons/cookiefirst) | Broader native web integration and a managed backend | React support, custom interfaces, service choices, scans and cookie-policy tools |
 | [Sourcepoint by Didomi](/docs/comparisons/sourcepoint) | Own consent inside a custom web application | Publisher campaigns, vendor controls, records and connected-TV support |
 
 Each linked page cites the provider's own sources. A wider privacy suite can be the better fit when that wider scope is the main requirement.
@@ -86,7 +86,7 @@ Choose Inth when you want the framework integration and consent backend together
 | Library | Why choose Inth | What to recognise in the alternative |
 | --- | --- | --- |
 | [CookieConsent v3](/docs/comparisons/cookieconsent-v3) | Native state and a supplied record backend | Category and service controls. Callbacks can connect to your backend |
-| [Klaro](/docs/comparisons/klaro) | Dedicated framework adapters and a deployable backend | Open-source client. Hosted plans also have records and scans |
+| [Klaro](/docs/comparisons/klaro) | Dedicated framework adapters and a managed backend | Open-source client. Hosted plans also have records and scans |
 | [react-cookie-consent](/docs/comparisons/react-cookie-consent) | Policy, preferences and vendor controls beyond a React bar | A small component for an application that supplies the rest |
 | [Silktide Consent Manager](/docs/comparisons/silktide-consent-manager) | Regional policy, framework state and remote records | A free browser manager with scripts and Consent Mode support |
 | [tarteaucitron.js](/docs/comparisons/tarteaucitron) | Connect service choices to application state and backend records | Individual service controls. Separate Pro automation |
@@ -101,9 +101,9 @@ Some integrations load before consent and receive denied signals. Withdrawal nor
 
 A local choice is not proof of a successful save.
 
-The software has no licence fee. Inth, infrastructure, implementation and any separate site scans or legal services still have costs.
+The software has no licence fee. Your Inth plan, implementation and any separate site scans or legal services still have costs.
 
-These comparisons cover the Inth packages and their documented backend options. The open-source software does not include every commercial Inth service.
+These comparisons cover the Inth packages and the Inth backend. The open-source software does not include every commercial Inth service.
 
 ## Prove the advantage in your application
 

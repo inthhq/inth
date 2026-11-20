@@ -402,7 +402,7 @@ export const createFirstLoadChunkPlugin =
  * `import.meta.env.VITE_INTH_PROJECT_URL` to the URL it used, so app code
  * reads the same value. A missing URL or a failed fetch warns, and
  * `snapshot` is `undefined`, so the policy is read at runtime, from the
- * backend's `/init` while the manifest is unavailable. Set
+ * backend's `/v1/consent/init` while the manifest is unavailable. Set
  * `onBuildError: 'fail'` or `INTH_ON_BUILD_ERROR=fail` to stop the build
  * instead. In a Svelte single-page app whose policy depends on the
  * visitor's location, the build warns and suggests `hosted()`. With `manifest({ manifestUrl })` or
@@ -417,7 +417,7 @@ export const createFirstLoadChunkPlugin =
  * one chunk ({@link createFirstLoadChunkPlugin}).
  *
  * @param options - Backend URL, `onBuildError` and `source`. Appends
- * `/manifest`.
+ * `/v1/consent/manifest`.
  * @returns The Vite plugins, for `plugins`.
  * @throws {Error} When the fetch fails in `'fail'` mode.
  * @example

@@ -146,7 +146,7 @@ export interface InthOptions extends InthSharedOptions {
 	 *
 	 * - Omitted: the browser asks `${projectUrl}/v1/consent/init`. With
 	 *   `provideInthServer()`, the server render resolves from the
-	 *   backend's consent manifest, falling back to `/init` with a warning
+	 *   backend's consent manifest, falling back to `/v1/consent/init` with a warning
 	 *   when it is unavailable.
 	 * - `hosted()` from `@inth/angular`: ask `${projectUrl}/v1/consent/init`, on the
 	 *   server too.

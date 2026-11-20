@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'vitest';
 
-import { createManifestTransport } from '../manifest';
 import { projectUrlOfManifest } from '../manifest-url';
 
 describe('projectUrlOfManifest', () => {
@@ -25,19 +24,4 @@ describe('projectUrlOfManifest', () => {
 	])('%s names no backend', (manifestUrl) => {
 		expect(projectUrlOfManifest(manifestUrl)).toBeUndefined();
 	});
-});
-
-test('the server transport sends no save to a manifest asset', async () => {
-	const requests: string[] = [];
-	const transport = createManifestTransport({
-		fetch: (input) => {
-			requests.push(String(input));
-			return Promise.resolve(new Response('{}'));
-		},
-		manifestUrl: 'https://cdn.example.com/policy.json',
-	});
-	await expect(
-		transport.identify({ externalId: 'user-1' }, 'sub_1')
-	).rejects.toThrow();
-	expect(requests.some((url) => url.includes('policy.json/'))).toBe(false);
 });

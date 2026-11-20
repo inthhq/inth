@@ -8,9 +8,9 @@
  */
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 
-import { failedResponseError } from '../libs/failed-response';
 import type { ManifestModeInputs } from '../modes';
 import { createManifestRequestInit } from './manifest-request';
+import { readApiError } from './v1/error';
 
 /**
  * Fetch the backend's consent manifest.
@@ -31,8 +31,8 @@ export const fetchManifest = async function fetchManifest(
 		createManifestRequestInit(options)
 	);
 	if (!response.ok) {
-		throw await failedResponseError(
-			'inth manifest transport: /manifest',
+		throw await readApiError(
+			'inth manifest transport: /v1/consent/manifest',
 			response
 		);
 	}
@@ -68,7 +68,7 @@ export const readGeoInputs = function readGeoInputs(
 /**
  * Ask a same-origin route for the visitor's `{ country, region }`.
  *
- * @returns The location, or `undefined` when the route fails; the `/init`
+ * @returns The location, or `undefined` when the route fails; the `/v1/consent/init`
  * fallback still answers then.
  * @internal
  */

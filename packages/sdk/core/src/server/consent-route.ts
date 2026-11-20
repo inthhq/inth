@@ -3,14 +3,14 @@
  *
  * Manifest mode moves policy resolution off the browser's critical path:
  * the host reads one geo-independent, CDN-cacheable manifest and resolves
- * `/init` locally per request. This module turns a Web `Request` into the
+ * `/v1/consent/init` locally per request. This module turns a Web `Request` into the
  * `Response` for those routes:
  *
  * - `GET …/v1/consent/manifest` passes the cached backend manifest through
  *   with its cache headers, `Age` and `ETag` revalidation.
  * - `GET …/v1/consent/init` resolves the visitor's init from that manifest (geo,
- *   language, GPC), negotiates the policy contract, attaches the Global
- *   Vendor List for IAB policies and reports the session to the backend.
+ *   language, GPC), attaches the Global Vendor List for IAB policies and
+ *   reports the session to the backend.
  *   The same route serves versioned vendor-list requests (`?inth-gvl=`).
  * - With `proxy` on, every other allowlisted path is forwarded to the
  *   backend through {@link forwardConsentRequest}.
@@ -112,7 +112,7 @@ import {
 /**
  * Request header a server render sets on its call to the init route: the
  * longest, in whole milliseconds, the route may wait for upstream work
- * (manifest, vendor list, `/init` fallback) before failing. Values above
+ * (manifest, vendor list, `/v1/consent/init` fallback) before failing. Values above
  * ten seconds are capped; anything that is not a whole number is ignored.
  */
 export const CONSENT_ROUTE_TIMEOUT_HEADER = 'x-inth-timeout-ms';
@@ -353,17 +353,16 @@ const isIabMatch = function isIabMatch(
 };
 
 /**
- * Resolves one visitor's `/init` from a manifest: the policy, translations
- * and overrides for the inputs, the contract negotiation, the vendor list
- * for an IAB policy, and a detached session report.
+ * Resolves one visitor's init from a manifest: the policy, translations
+ * and overrides for the inputs, the vendor list for an IAB policy, and a
+ * detached session report.
  *
  * The init route uses this, and so can a server render that resolves from
  * the same manifest. `resolvedOverrides` and `resolvedPrivacySignals` echo
  * the inputs back, because the resolver's inputs are the only place GPC
  * survives on a server-rendered page.
  *
- * @param options - Manifest, inputs, vendor-list loader, client contract
- * and report target.
+ * @param options - Manifest, inputs, vendor-list loader and report target.
  * @returns The resolved init payload, with the vendor list inline.
  * @throws {Error} When `loadGvl` rejects: a vendor list that could not be loaded is
  * a failed resolution, not `gvl: null`, which a client reads as "IAB is
@@ -481,7 +480,7 @@ const readTimeoutMs = function readTimeoutMs(
 
 /**
  * What is left of the request's budget. Every upstream wait (manifest,
- * vendor list, `/init` fallback) fits in the same budget.
+ * vendor list, `/v1/consent/init` fallback) fits in the same budget.
  */
 const createBudget = function createBudget(budgetMs: number | undefined) {
 	const startedAt = Date.now();
@@ -575,7 +574,7 @@ const notFound = () => Response.json({ error: 'Not found' }, { status: 404 });
 const READ_METHODS: ReadonlySet<string> = new Set(['GET', 'HEAD']);
 
 /**
- * The country, region and GPC overrides a browser's `/init` carries as
+ * The country, region and GPC overrides a browser's `/v1/consent/init` carries as
  * query parameters, leaving out any it did not send.
  */
 const queryOverrides = function queryOverrides(
@@ -600,7 +599,7 @@ const queryOverrides = function queryOverrides(
  *
  * @param options - Upstream location, fetch seams, reporting and proxy.
  * @returns One handler for every consent route. Upstream failures reject:
- * a manifest that cannot be read (after the `/init` fallback, when a
+ * a manifest that cannot be read (after the `/v1/consent/init` fallback, when a
  * `projectUrl` allows one), a vendor list that cannot be loaded, or a
  * request budget that runs out.
  * @throws {Error} From the handler, when neither `projectUrl` nor
@@ -696,7 +695,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 	/**
 	 * Credentials for the manifest request when the proxy is on: the cookies
 	 * `cookieNames` names and the extra `forwardHeaders`, so a backend that
-	 * gates `/manifest` on them still serves it. Hop-chain headers are never
+	 * gates `/v1/consent/manifest` on them still serves it. Hop-chain headers are never
 	 * copied from the browser. Nothing identity-bearing crosses cleartext.
 	 */
 	const manifestCredentials = function manifestCredentials(
@@ -970,7 +969,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		// Copy the fields instead of passing `incoming` as the input: the App
 		// Router hands route handlers a Proxy of the request, and Node 24's
 		// `Request` constructor reads the input's private fields, which a
-		// Proxy does not forward. `/init` is GET or HEAD, so it has no body.
+		// Proxy does not forward. `/v1/consent/init` is GET or HEAD, so it has no body.
 		const request = INIT_PARAM_HEADERS.some(([param]) =>
 			url.searchParams.has(param)
 		)
@@ -988,7 +987,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 			({ manifest } = options);
 		} else {
 			// Outside the fallback: a misconfigured source is an error, not a
-			// reason to ask the backend's `/init` instead.
+			// reason to ask the backend's `/v1/consent/init` instead.
 			const source = resolveManifestSource(request, context);
 			try {
 				({

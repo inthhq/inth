@@ -10,10 +10,9 @@ import { gzipSync, gunzipSync } from 'node:zlib';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-	inthProtocolHeaders,
 } from '@inth/sdk/engine';
 import type { GlobalVendorList } from '@inth/sdk/engine';
-import { createManifestTransport } from '@inth/sdk/transports/manifest';
+import { createV1ManifestTransport } from '@inth/sdk/transports/manifest';
 import { chromium } from 'playwright';
 
 const [appRoot, label, output] = process.argv.slice(2);
@@ -56,9 +55,10 @@ const manifest = {
 	revision: 'iab-page-benchmark',
 	schemaVersion: 2 as const,
 };
-const init = await createManifestTransport({
+const init = await createV1ManifestTransport({
 	fetchGvl: () => Promise.resolve(gvl),
 	inputs: { country: 'DE', language: 'en' },
+	projectUrl: 'https://bench.invalid',
 	snapshot: manifest,
 }).init({ overrides: {}, user: null });
 // Both revisions receive the same full upstream response.
@@ -75,14 +75,11 @@ const fixture = createServer((req, res) => {
 		res.end();
 		return;
 	}
-	for (const [key, value] of Object.entries(inthProtocolHeaders)) {
-		res.setHeader(key, value);
-	}
 	res.setHeader('content-type', 'application/json');
 	const path = new URL(req.url ?? '/', 'http://localhost').pathname;
 	const payloads: Record<string, unknown> = {
 		'/gvl': gvl,
-		'/manifest': manifest,
+		'/v1/consent/manifest': manifest,
 	};
 	const body = JSON.stringify(payloads[path] ?? inline);
 	res.setHeader(
@@ -109,7 +106,7 @@ try {
 				env: {
 					...process.env,
 					HOST: '127.0.0.1',
-					INTH_BENCH_MANIFEST_URL: 'http://127.0.0.1:4325/manifest',
+					INTH_BENCH_MANIFEST_URL: 'http://127.0.0.1:4325/v1/consent/manifest',
 					NUXT_PUBLIC_INTH_PROJECT_URL: 'http://127.0.0.1:4325',
 					PORT: String(port),
 				},

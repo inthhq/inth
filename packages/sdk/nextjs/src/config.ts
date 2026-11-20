@@ -60,7 +60,7 @@ export const readProjectUrlFromEnv = function readProjectUrlFromEnv():
 export interface ConsentConfig extends ConsentClientOptions {
 	/**
 	 * Backend base URL: your Inth project URL. The server reads its
-	 * consent manifest (or asks its `/init` with `mode: hosted()`), and
+	 * consent manifest (or asks its `/v1/consent/init` with `mode: hosted()`), and
 	 * consent saves (`/v1/consent/records`) go here. Required unless `mode` is
 	 * `testing()`; the environment variables below supply it when unset.
 	 *
@@ -76,8 +76,8 @@ export interface ConsentConfig extends ConsentClientOptions {
 	 * - Omitted, or `manifest()` from `@inth/nextjs`: resolve from the
 	 *   backend's consent manifest, which the build downloads. When it is
 	 *   unavailable, the server and the consent route ask the backend's
-	 *   `/init` instead and log a warning.
-	 * - `hosted()` from `@inth/nextjs`: ask the backend's `/init` for every
+	 *   `/v1/consent/init` instead and log a warning.
+	 * - `hosted()` from `@inth/nextjs`: ask the backend's `/v1/consent/init` for every
 	 *   visitor.
 	 * - `testing()` from `@inth/nextjs/testing`: the browser resolves a policy
 	 *   with no network, for tests. Needs no `projectUrl`, and throws in
@@ -95,7 +95,7 @@ export interface ConsentConfig extends ConsentClientOptions {
 	 * `createPagesConsentRoute` is mounted, such as `/api/inth` for
 	 * `pages/api/inth/[...inth].ts`. With it, a browser that resolves
 	 * consent itself asks `${routePrefix}/v1/consent/init`, which resolves the cached
-	 * manifest with the request's geo, instead of the backend's `/init`.
+	 * manifest with the request's geo, instead of the backend's `/v1/consent/init`.
 	 * The server never fetches its own route.
 	 *
 	 * No default: without it there is no route to serve. Leave it unset

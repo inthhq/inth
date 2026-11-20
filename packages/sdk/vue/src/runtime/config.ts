@@ -91,7 +91,7 @@ export interface ConsentConfig
 	 * The object takes publisher settings: `publisherRestrictions`,
 	 * `publisherCountryCode`, `vendors`, `customVendors`, `cmpVersion`, and
 	 * `cmpId` or `gvl` when the backend does not supply them. Fields left
-	 * out come from `/init`. Read once, when the app starts.
+	 * out come from `/v1/consent/init`. Read once, when the app starts.
 	 *
 	 * @example
 	 * ```ts

@@ -1,6 +1,6 @@
 import { CONSENT_REQUEST_HEADER_NAMES } from '@inth/sdk/schema/types';
 
-/** The request headers `/init` and the manifest inputs read. */
+/** The request headers `/v1/consent/init` and the manifest inputs read. */
 export const INIT_HEADER_NAMES = [...CONSENT_REQUEST_HEADER_NAMES] as const;
 
 const INIT_HEADER_ALLOWLIST = new Set<string>(INIT_HEADER_NAMES);

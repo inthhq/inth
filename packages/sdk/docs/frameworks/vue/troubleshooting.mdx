@@ -38,8 +38,8 @@ composables inside `setup`.
 ## Why is there no banner?
 
 **Check.** [DevTools](/docs/frameworks/vue/components/dev-tools) shows the
-matched policy. With `hosted()`, find the `/init` request in the Network tab;
-with `manifest({ source: 'runtime' })`, the `/manifest` request.
+matched policy. With `hosted()`, find the `/v1/consent/init` request in the Network tab;
+with `manifest({ source: 'runtime' })`, the `/v1/consent/manifest` request.
 
 **Fix.** Work through these causes in order:
 
@@ -52,8 +52,8 @@ with `manifest({ source: 'runtime' })`, the `/manifest` request.
    `hosted()`, or check that rule and rebuild.
 3. **`ConsentRoot` is inside a route that unmounts.** Put it in the root
    component.
-4. **The backend did not answer.** With `hosted()`, `/init` must return
-   200; with a runtime manifest, `/manifest` must. A CORS error means your site's origin is missing from the
+4. **The backend did not answer.** With `hosted()`, `/v1/consent/init` must return
+   200; with a runtime manifest, `/v1/consent/manifest` must. A CORS error means your site's origin is missing from the
    Inth project's trusted origins. While resolution fails, Inth shows no UI and
    keeps every optional category denied.
 5. **A stored choice exists.** Clear the `inth` cookie and localStorage entry,

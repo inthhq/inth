@@ -29,7 +29,7 @@ import {
 import type { PolicyMatchedBy } from './policy-runtime';
 
 // In a module of their own, so code that only names the contract, such as
-// the `/init` request a page sends first, does not carry the wire reader.
+// the `/v1/consent/init` request a page sends first, does not carry the wire reader.
 export {
 	POLICY_CONTRACT_HEADER,
 	POLICY_CONTRACT_VERSION,
@@ -602,7 +602,7 @@ const readWire = function readWire(input: unknown): PolicyResolution {
  * matched rule must satisfy the same semantic invariants as an authored rule
  * ({@link collectResolvedPolicyRuleIssues}). Never throws; needs no valibot.
  *
- * @param input - The raw `policyResolution` field from `/init`.
+ * @param input - The raw `policyResolution` field from `/v1/consent/init`.
  */
 export const readPolicyResolutionWire = function readPolicyResolutionWire(
 	input: unknown

@@ -1,12 +1,12 @@
 ---
 title: Inth vs CookieScript
-description: Choose Inth to own the consent engine, framework components and backend. Compare CookieScript's scans, developer controls and self-hosted banner option.
+description: Choose Inth to own the consent engine and framework components. Compare CookieScript's scans, developer controls and self-hosted banner option.
 group: reference
 ---
 
-## Own the consent system from interface to backend
+## Own the consent system in your application
 
-Inth is the stronger fit when you want control of the consent engine and record service as well as the banner. Its native components and headless APIs connect consent to your application.
+Inth is the stronger fit when you want control of the consent engine as well as the banner. Its native components and headless APIs connect consent to your application.
 
 CookieScript combines banner settings, site scans and hosted consent records. Paid plans also let you download and host the banner's JavaScript file.
 
@@ -19,22 +19,20 @@ CookieScript combines banner settings, site scans and hosted consent records. Pa
 | Integrate with your application | Native framework components and state | Browser script with custom functions and events |
 | Create a custom interface | Themes, component parts and headless APIs | Banner design settings and programmatic controls |
 | Host frontend code yourself | Packages in your application | Downloadable banner JavaScript on paid plans |
-| Run the record backend | Inth hosts the backend and stores records in its database. Self-hosting is optional | Hosted consent records. Banner download does not establish a deployable record backend |
+| Run the record backend | Inth hosts the backend and stores records in its database | Hosted consent records. |
 | Control scripts | Declared category and vendor rules | Automatic script controls and manual setup |
 | Discover cookies | **No automatic scanner in the packages** | Website scans and cookie declarations |
 | Update a local installation | Review and deploy package upgrades | Download the banner file again after account changes |
 
 Sources: [CookieScript plans](https://cookie-script.com/pricing), [self-hosted banner guide](https://cookie-script.com/download-and-host-javascript-files.html) and [custom functions](https://help.cookie-script.com/en/articles/30246-custom-functions).
 
-## Compare what self-hosting gives you
+## Compare what local files give you
 
 CookieScript's local file option is useful when your team needs to control asset delivery. Its guide also notes manual file updates and unavailable geo-targeting on that path.
 
-Inth gives your team another level of control: the framework components, consent engine and backend source. You can change the code and run the backend with your own database.
+Inth gives your team another level of control: the source of the framework components and consent engine. Inth runs the backend.
 
-That control brings work. Your team owns deployment, updates and operations when it runs the service itself. Inth remains the recommended managed path.
-
-Do not treat a locally hosted banner file and a complete backend deployment as the same requirement. Check where choices go and who operates that service.
+A locally hosted banner file still sends choices to a record service. Check where choices go and who operates that service.
 
 ## Keep consent beside the features it controls
 
@@ -42,7 +40,7 @@ Use Inth's [framework components](/docs/frameworks) to connect product settings,
 
 CookieScript also has functions to read consent state and events for banner actions. Inth's advantage is the combined application and backend workflow.
 
-Choose CookieScript when site scans and banner administration are the main tasks. Choose Inth when your developers need to own the full consent system.
+Choose CookieScript when site scans and banner administration are the main tasks. Choose Inth when your developers need to own the consent interface and engine.
 
 ## What Inth does not include
 
@@ -53,7 +51,7 @@ Choose CookieScript when site scans and banner administration are the main tasks
 
 Some integrations load with denied signals. Withdrawal normally reloads the page, and optional cleanup cannot remove all vendor data.
 
-The software has no licence fee. Setup, Inth or your own servers still have costs.
+The SDK has no licence fee. Setup and your Inth plan still have costs.
 
 ## Test the ownership you need
 

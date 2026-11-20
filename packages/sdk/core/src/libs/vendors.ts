@@ -3,7 +3,7 @@
  *
  * Vendors reach the kernel from three places: the runtime's `vendors`
  * option, the `vendor` slug on scripts and network rules, and the backend's
- * `/init` response. Existence is the union of all three. Presentation
+ * `/v1/consent/init` response. Existence is the union of all three. Presentation
  * (name, privacy policy, description) follows config, then manifest, then
  * the `vendorDetails` a script carries with its slug. The category follows
  * config, then manifest, then an `or` of every owning script's or rule's

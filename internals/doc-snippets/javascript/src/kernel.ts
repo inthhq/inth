@@ -1,5 +1,5 @@
 // #region docs:kernel title="src/consent.ts"
-import { createConsentKernel, createHostedTransport } from '@inth/sdk/engine';
+import { createConsentKernel, createV1HostedTransport } from '@inth/sdk/engine';
 import { createPersistence } from '@inth/sdk/modules/persistence';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 
@@ -9,7 +9,7 @@ export const startConsentKernel = async function startConsentKernel(
 	projectUrl: string
 ) {
 	const kernel = createConsentKernel({
-		transport: createHostedTransport({ projectUrl }),
+		transport: createV1HostedTransport({ projectUrl }),
 	});
 	// Each module is yours to create and dispose. This kernel has no iframe
 	// blocker, network blocker, data clearing or reload after revocation.

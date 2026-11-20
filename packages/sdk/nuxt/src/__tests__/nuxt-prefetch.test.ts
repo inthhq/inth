@@ -1,7 +1,7 @@
 /**
  * The Nuxt module stops Nuxt prefetching Inth chunks a page loads only
  * after its first banner, or only when it configures them. Every finished
- * prefetch queues main-thread work, and on a page whose `/init` answer
+ * prefetch queues main-thread work, and on a page whose `/v1/consent/init` answer
  * arrives while they land, the banner waits behind them.
  */
 import { join } from 'node:path';

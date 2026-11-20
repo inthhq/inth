@@ -71,7 +71,7 @@ export type {
 };
 
 /**
- * Brand palette served by `/init` (or chosen offline). Drives default
+ * Brand palette served by `/v1/consent/init` (or chosen offline). Drives default
  * UI theme but has no effect on consent semantics. `none` hides the
  * "Secured by" tag.
  */
@@ -80,9 +80,8 @@ export type KernelBranding = 'c15t' | 'consent' | 'inth' | 'none';
 export { DEFAULT_BRANDING } from '@inth/sdk-schema/types';
 
 /**
- * Who runs the backend that served `/init`: Inth's hosted platform or a
- * site's own `@c15t/backend`. Reported, not verified, and independent of
- * branding.
+ * Who runs the backend that served `/v1/consent/init`, as the backend reports
+ * it. Not verified, and independent of branding.
  */
 export type KernelHosting = 'inth' | 'self-hosted';
 
@@ -184,7 +183,7 @@ export interface KernelUser {
 
 /**
  * Translation bundle carried on the snapshot. Matches the `translations`
- * field of the `/init` response — a single resolved language + payload.
+ * field of the `/v1/consent/init` response — a single resolved language + payload.
  */
 export interface KernelTranslations {
 	language: string;
@@ -192,7 +191,7 @@ export interface KernelTranslations {
 }
 
 /**
- * IAB TCF state, populated when the `/init` response carries a GVL and
+ * IAB TCF state, populated when the `/v1/consent/init` response carries a GVL and
  * the kernel is running in `model === 'iab'`. Mutations go through
  * `kernel.set.iab(patch)` — the IAB module is the primary writer. TC
  * authority (validity, expiry) is owned by the IAB module; the kernel never
@@ -410,7 +409,7 @@ export interface ConsentSnapshot {
 	/** Branding identifier. {@link DEFAULT_BRANDING} until init names one. */
 	readonly branding: KernelBranding;
 	/**
-	 * Who runs the backend, as `/init` reported it. `null` until init
+	 * Who runs the backend, as `/v1/consent/init` reported it. `null` until init
 	 * resolves, and for transports or older backends that do not say.
 	 */
 	readonly hosting: KernelHosting | null;
@@ -673,7 +672,7 @@ export interface ConfirmedCoverage {
 export interface SavePayload {
 	subjectId: string;
 	/** UUID made once with the action and sent unchanged by every replay. */
-	idempotencyKey?: string;
+	idempotencyKey: string;
 	subject: Readonly<ConsentSubject>;
 	/** Receipt snapshot for this action; superseded categories are omitted when delivery is narrowed. */
 	choice: Readonly<ExplicitChoice>;
@@ -881,7 +880,7 @@ export type KernelEvent =
 			ok: boolean;
 			/**
 			 * The backend's code when it refused the save for good, for
-			 * example `POLICY_SNAPSHOT_EXPIRED`. The save left the queue and
+			 * example `policy_snapshot_expired`. The save left the queue and
 			 * the choice stays recorded in the browser only.
 			 */
 			rejected?: string;

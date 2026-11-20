@@ -6,7 +6,7 @@ group: reference
 
 ## Keep control of consent in your product
 
-Inth is the stronger fit when your product team wants to own the consent interface, vendor rules and record backend. Your developers can change its open-source code. They can build consent into the application they already build.
+Inth is the stronger fit when your product team wants to own the consent interface and vendor rules. Your developers can change its open-source code. They can build consent into the application they already build.
 
 Choose iubenda if you want consent tools, website scans, and legal documents in one managed package. Its [plans](https://www.iubenda.com/en/pricing/) combine these products with different features and usage limits.
 
@@ -26,7 +26,7 @@ IAB TCF means the IAB Transparency and Consent Framework. It defines rules for c
 | Match your product design | Themes, components, or your own interface | Custom styles and banner content |
 | Set when vendors run | Category and vendor rules for scripts and embeds | Automatic blocking, manual tags, and tag-manager integrations |
 | Give visitors vendor choices | Vendor switches outside IAB TCF, plus IAB controls | Purpose categories and IAB vendor controls |
-| Choose where records stay | Inth hosts the backend and stores records in its database. Self-hosting is optional | A managed consent service |
+| Choose where records stay | Inth hosts the backend and stores records in its database | A managed consent service |
 | Keep evidence of consent | Records in the selected backend | Consent logs in all current plans |
 | Manage legal documents | Your documents, with helpers for versions and signed snapshots | Generated policies and other legal tools |
 | Discover cookies automatically | **Not included in the Inth packages** | Website scans |
@@ -86,23 +86,19 @@ Inth normally reloads the page after withdrawal to stop vendor code that already
 
 Check these limits against the vendors on your site. Do not treat a consent change as proof that all vendor data is gone.
 
-## Choose who runs the backend
+## Read the code
 
-You can use Inth now and keep the option to run the c15t backend yourself. Both paths use the [same backend protocol](/docs/self-host/overview).
-
-The [Apache-2.0 licence](https://github.com/c15t/c15t/blob/v3/LICENSE.md) lets your team read, change, and run the source code. Your team can trace how the application saves a visitor's choice.
-
-If you run the backend, you own its database, backups, updates, and availability. Inth is the recommended path if you do not want that operational work.
+The SDK is open source under the [Apache-2.0 licence](https://github.com/c15t/c15t/blob/v3/LICENSE.md). Your team can read it and trace how the application saves a visitor's choice.
 
 iubenda also keeps consent records. Its [Cookie and Consent Preference Log](https://www.iubenda.com/en/help/45718-cookie-preference-log/) comes with every current plan, even the free plan.
 
-Inth gives you the additional choice to run the record system yourself. That choice matters when your organisation needs its own servers or database.
+Inth keeps the records in your Inth project.
 
 ## Keep evidence of the document you show
 
-You can tie your consent flow to a specific legal-document version. The c15t backend can store that document's version and content hash.
+You can tie your consent flow to a specific legal-document version. Inth can store that document's version and content hash.
 
-A content hash is a value that identifies document content. The [snapshot helpers](/docs/self-host/guides/legal-document-snapshot-integration) let your server sign and check that document identity in an acceptance flow.
+A content hash is a value that identifies document content.
 
 Your developers must connect those helpers to the flow. A signed snapshot does not prove that a visitor accepted the document. Inth does not write the legal text.
 
@@ -120,20 +116,20 @@ iubenda's [Ultimate plan](https://www.iubenda.com/en/pricing/) includes detailed
 
 ## Pay for the scope you need
 
-You can choose Inth without a software licence fee. Budget separately for Inth or the servers and work to run your own backend.
+You can use the SDK without a software licence fee. Budget separately for your Inth plan.
 
 iubenda bundles consent administration with legal documents and website scans. Its plans differ by pageviews, scan frequency, languages, and other features. Check its [current prices](https://www.iubenda.com/en/pricing/) for extra pageviews and form-consent services.
 
 Both products support Google Consent Mode, IAB workflows and [Global Privacy Control](https://www.iubenda.com/en/help/162529-global-privacy-control/), a browser signal for privacy preferences.
 
-Choose Inth when you want native framework code, your own interface, and control over the backend. Choose iubenda when its broader managed package matches your needs.
+Choose Inth when you want native framework code and your own interface. Choose iubenda when its broader managed package matches your needs.
 
 ## What Inth does not include
 
 - **Generated privacy and cookie policies.** Supply your legal text. Document snapshot helpers do not write it.
 - **Automatic website scans.** Keep a separate process to discover and classify the services on your site.
 - **The whole iubenda legal suite.** Form-consent products and wider legal administration need their own scope review.
-- **A free managed backend.** Budget for Inth or the database and service that your team operates.
+- **A free managed backend.** Budget for your Inth plan.
 - **Automatic migration of previous choices.** Map purposes, vendor identifiers and policy versions before you reuse records.
 
 These limits refer to the Inth packages. Evaluate any additional Inth services separately.

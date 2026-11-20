@@ -20,11 +20,9 @@ export const STATIC_MARKERS: Omit<MarkerTable, 'snapshotBytes'> = {
 	nonEnLocaleBytes: ['Wir respektieren deine', 'Nous respectons votre vie'],
 	// A rule id from `recommendedPolicyRules()` that the fixture doesn't use.
 	offlinePolicyBytes: ['quebec_opt_in'],
-	// Errors thrown only by core's manifest transport, the browser resolver.
-	resolverBytes: [
-		'createManifestTransport: either',
-		'inth manifest transport: /manifest responded',
-	],
+	// Errors only `resolveInitFromManifest` throws: the code `manifest()`
+	// loads to resolve a policy in the browser.
+	resolverBytes: ['Unsupported pack field', 'Invalid matchers'],
 };
 
 interface FixtureManifestFields {

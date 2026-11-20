@@ -350,7 +350,7 @@ describe('manifest() first paint without a known location', () => {
 		const snapshot = await client.ready();
 
 		// The browser loads German base copy on demand, so a local answer has
-		// the same copy `/init` would send.
+		// the same copy `/v1/consent/init` would send.
 		expect(fetchSpy).not.toHaveBeenCalled();
 		expect(snapshot.activeUI).toBe('banner');
 		expect(snapshot.translations?.language).toBe('de');
@@ -699,7 +699,7 @@ describe('manifest()', () => {
 		expect(snapshot.translations?.language).toBe('en');
 	});
 
-	it('falls back to GET /init when the policy needs a country it lacks', async () => {
+	it('falls back to GET /v1/consent/init when the policy needs a country it lacks', async () => {
 		const fetchSpy = vi.fn<typeof fetch>(() => Promise.resolve(initResponse()));
 		const client = createConsentClient(
 			{

@@ -3,7 +3,7 @@
  *
  * `prompt.astro` renders this on the server. The browser renders the same
  * model when the server could not: a prerendered page in hosted or
- * manifest mode, where only the visitor's own `/init` can say which policy
+ * manifest mode, where only the visitor's own `/v1/consent/init` can say which policy
  * applies. Keeping the decisions here means the two renderings cannot
  * drift apart.
  */

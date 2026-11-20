@@ -328,7 +328,7 @@ const withConsentAliases = function withConsentAliases(
  * The fetch waits at most 10 seconds. When it fails, `next build` and
  * `next dev` log a warning and write a module whose `snapshot` is
  * `undefined`, so the server fetches the policy at runtime and asks the
- * backend's `/init` while the manifest is unavailable. A missing backend
+ * backend's `/v1/consent/init` while the manifest is unavailable. A missing backend
  * URL counts as a failed fetch. Set `onBuildError: 'fail'`, or
  * `INTH_ON_BUILD_ERROR=fail`, to stop the build instead. The fetch is skipped
  * for a `projectUrl` that is not absolute http(s), for `output: 'export'`,
@@ -355,7 +355,7 @@ const withConsentAliases = function withConsentAliases(
  * from the alias and `env`, which gains the Inth variable.
  * @param options - Backend URL and `onBuildError`. `projectUrl` defaults to
  * the one in `inth.config.ts`, then `NEXT_PUBLIC_INTH_PROJECT_URL`, from
- * the environment or a `.env` file, and the build appends `/manifest`.
+ * the environment or a `.env` file, and the build appends `/v1/consent/manifest`.
  * @returns An asynchronous Next.js configuration factory.
  * @throws {Error} When the fetch fails in `'fail'` mode, the snapshot cannot be written, or `defineConsentConfig`
  * rejects `inth.config.ts`.

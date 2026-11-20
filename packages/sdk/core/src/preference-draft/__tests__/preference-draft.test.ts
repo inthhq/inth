@@ -54,7 +54,7 @@ const DECLARED = [
 const RULE = optInRule({ categories: ['marketing', 'measurement'] });
 
 /**
- * A kernel whose policy can change through `/init`, recording every save
+ * A kernel whose policy can change through `/v1/consent/init`, recording every save
  * payload it sends.
  */
 const setup = function setup(config: KernelConfig = {}, rule = RULE) {

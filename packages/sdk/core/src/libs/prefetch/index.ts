@@ -1,7 +1,7 @@
 /**
  * Browser-side prefetch utilities for Inth consent init data.
  *
- * These functions let any framework start the `/init` request early
+ * These functions let any framework start the `/v1/consent/init` request early
  * (before hydration) so the runtime can consume matching data automatically.
  *
  * @remarks

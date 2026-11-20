@@ -1,13 +1,13 @@
 /**
- * The last `/init` policy a visitor with a stored choice saw, kept so the
+ * The last `/v1/consent/init` policy a visitor with a stored choice saw, kept so the
  * next page's init script can start the scripts that choice allows before
- * `/init` answers again.
+ * `/v1/consent/init` answers again.
  *
  * Written only once the visitor has a stored choice, so a visitor who never
  * answered stores nothing. It holds the policy resolution and location the
  * backend sent, no visitor data. The init script evaluates the stored
  * choice against it with the kernel's own code, so a decision made under
- * another policy (another fingerprint) allows nothing. When `/init`
+ * another policy (another fingerprint) allows nothing. When `/v1/consent/init`
  * answers, the init script evaluates again with the live policy and
  * replaces the entry.
  *
@@ -65,7 +65,7 @@ export const readPolicyCache = function readPolicyCache(
 	return undefined;
 };
 
-/** Keep the policy fields of an `/init` response. */
+/** Keep the policy fields of a `/v1/consent/init` response. */
 export const writePolicyCache = function writePolicyCache(
 	projectUrl: string,
 	overrides: KernelOverrides | undefined,
@@ -90,6 +90,6 @@ export const writePolicyCache = function writePolicyCache(
 	try {
 		window.localStorage.setItem(POLICY_CACHE_KEY, JSON.stringify(entry));
 	} catch {
-		// Full or blocked storage: the next page waits for `/init`.
+		// Full or blocked storage: the next page waits for `/v1/consent/init`.
 	}
 };

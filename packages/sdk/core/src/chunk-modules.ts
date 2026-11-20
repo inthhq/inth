@@ -34,7 +34,6 @@ export const CORE_FIRST_LOAD_MODULES = [
 	'consent-record/types',
 	'consent/consent-types',
 	'derive-surface',
-	'libs/generate-subject-id',
 	'libs/has',
 	'libs/is-production',
 	'libs/storage-keys',

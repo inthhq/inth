@@ -72,7 +72,7 @@ const missingProjectUrl = function missingProjectUrl(
  * bundled; other languages load on demand.
  *
  * The browser does not know where the visitor is, so when the policy
- * depends on location, the first visit asks the backend's `/init`, as in
+ * depends on location, the first visit asks the backend's `/v1/consent/init`, as in
  * every single-page app. Pass `inputs` when the page knows the location, or
  * `geoUrl` for a route that answers it. `initFallback: false` resolves as
  * for an unknown location instead, with no request.

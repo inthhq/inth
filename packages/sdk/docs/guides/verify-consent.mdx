@@ -73,8 +73,8 @@ having clicked anything. Turn GPC off and confirm the restriction ends.
 ## Check failure behavior
 
 Make the request that initializes consent fail, then reload. Depending on your
-setup, that is the backend `/init`, a same-origin init route, a manifest fetch,
-or the `/init` a bundled manifest falls back to when a regional policy needs a
+setup, that is the backend `/v1/consent/init`, a same-origin init route, a manifest fetch,
+or the `/v1/consent/init` a bundled manifest falls back to when a regional policy needs a
 location the browser does not know.
 
 - For a request the browser makes, block it in DevTools (right-click the
@@ -82,7 +82,6 @@ location the browser does not know.
 - When the server resolves consent before the page loads, the browser never
   sees that request. Make it fail on the server instead, for example by
   pointing the backend URL at an unreachable address for one run.
-- With a custom transport, make its `init` fail.
 
 No banner appears, and vendors that wait for consent send no requests. Skip this
 check only if the page makes no initialization request at all, such as a

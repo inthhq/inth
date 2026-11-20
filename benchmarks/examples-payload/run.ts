@@ -497,7 +497,7 @@ const visit = async function visit(
 			page.waitForResponse(
 				(response) =>
 					response.request().method() !== 'GET' &&
-					new URL(response.url()).pathname.includes('/subjects'),
+					new URL(response.url()).pathname.endsWith('/v1/consent/records'),
 				{ timeout: TIMEOUT_MS }
 			)
 		);

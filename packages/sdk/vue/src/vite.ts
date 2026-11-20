@@ -38,7 +38,7 @@ export type {
  * the build never fetches a snapshot the app would discard.
  *
  * @param options - Backend URL, `onBuildError` and `source`. Appends
- * `/manifest`.
+ * `/v1/consent/manifest`.
  * @returns A Vite plugin.
  * @throws {Error} When the fetch fails in `'fail'` mode, the default for
  * `vite build`.

@@ -17,7 +17,7 @@ import { modeBundleBoundary } from './scripts/mode-bundle-boundary';
  * - `dist/postcss-tailwind3.js` — a re-export of `@inth/sdk-ui/postcss-tailwind3`
  *   for Tailwind 3 PostCSS configs.
  * - `dist/inth.js` — the hosted script tag's init script: it starts
- *   `/init`, shows the banner with only the banner's styles, records an
+ *   `/v1/consent/init`, shows the banner with only the banner's styles, records an
  *   early accept or reject, and loads `dist/inth.hosted.js` after the
  *   page's priority images.
  * - `dist/inth.commit.js` — what the init script fetches when the visitor

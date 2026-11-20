@@ -68,6 +68,11 @@ export const v1ConsentInitQuerySchema = v.object({
 	),
 });
 
+/** Query of `GET /v1/consent/manifest`. */
+export const v1ConsentManifestQuerySchema = v.object({
+	language: optionalQueryString('Only the banner text in this language.'),
+});
+
 export const v1ConsentInitOutputSchema = initOutputSchema;
 
 // ---------------------------------------------------------------------------
@@ -318,14 +323,16 @@ export const v1ConsentCheckResultSchema = v.object({
 });
 
 /**
- * One result per type asked about. Checked by hand: `v.record` drops a key
- * such as `constructor`, a valid document type, and still succeeds.
+ * One result per type asked about, and at least one, since a check names at
+ * least one type. Checked by hand: `v.record` drops a key such as
+ * `constructor`, a valid document type, and still succeeds.
  */
 const checkResultsSchema = v.custom<
 	Record<string, v.InferOutput<typeof v1ConsentCheckResultSchema>>
 >(
 	(input) =>
 		isPlainPolicyObject(input) &&
+		Object.keys(input).length > 0 &&
 		Object.values(input).every((result) =>
 			v.is(v1ConsentCheckResultSchema, result)
 		),
@@ -341,6 +348,9 @@ export const v1ConsentCheckOutputSchema = v.object({
 // ---------------------------------------------------------------------------
 
 export type V1ConsentInitQuery = v.InferOutput<typeof v1ConsentInitQuerySchema>;
+export type V1ConsentManifestQuery = v.InferOutput<
+	typeof v1ConsentManifestQuerySchema
+>;
 export type V1ConsentInitOutput = InitOutput;
 export type V1ConsentManifest = ConsentManifest;
 export type V1ConsentAnswer = v.InferOutput<typeof v1ConsentAnswerSchema>;

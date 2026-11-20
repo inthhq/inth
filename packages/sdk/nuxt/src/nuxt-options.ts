@@ -30,7 +30,7 @@ export interface ConsentModuleOptions {
 	/**
 	 * What a failed build-time manifest download does in `manifest()` mode.
 	 * `'runtime'` (the default) logs a warning, and the policy is read at
-	 * runtime instead, from the backend's `/init` while the manifest is
+	 * runtime instead, from the backend's `/v1/consent/init` while the manifest is
 	 * unavailable. `'fail'` stops `nuxt build` and `nuxt dev`. A missing
 	 * backend URL counts as a failed
 	 * download. The `INTH_ON_BUILD_ERROR` environment variable overrides this
@@ -46,7 +46,7 @@ export interface ConsentModuleOptions {
 	/**
 	 * Start the policy request from the HTML of `ssr: false` pages, before
 	 * the app's JavaScript loads. A small inline script in the page head
-	 * calls the backend's `/init`, and the app uses that response instead of
+	 * calls the backend's `/v1/consent/init`, and the app uses that response instead of
 	 * sending its own request. Applies in `hosted()` mode when no
 	 * `consentSource`, `experiment` or init `headers` are configured;
 	 * server-rendered pages are unchanged.

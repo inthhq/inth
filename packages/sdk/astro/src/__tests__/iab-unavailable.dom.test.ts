@@ -5,7 +5,7 @@
  * The server render throws for a page it resolves; see
  * `iab-unavailable.test.ts`. A page the browser resolves itself, such as a
  * prerendered one, throws there: at boot for a config that already carries
- * the vendor list, or as an uncaught error once `/init` sends it.
+ * the vendor list, or as an uncaught error once `/v1/consent/init` sends it.
  */
 import { MINIMAL_GVL } from '@inth/conformance/fixtures/gvl';
 import { IAB_UNAVAILABLE_ERROR_CODE } from '@inth/sdk/engine';

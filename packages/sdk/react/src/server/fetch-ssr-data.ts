@@ -4,7 +4,7 @@ import { fetchRequestInit, resolveRequestProjectUrl } from '@inth/sdk/server';
 
 import type { FetchSSRDataOptions } from './types';
 
-/** What the request told the backend, from the headers `/init` was sent. */
+/** What the request told the backend, from the headers `/v1/consent/init` was sent. */
 const buildRequestContext = function buildRequestContext(
 	projectUrl: string,
 	sent: Readonly<Record<string, string>>

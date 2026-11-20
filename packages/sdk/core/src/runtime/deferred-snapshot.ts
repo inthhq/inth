@@ -2,7 +2,7 @@
  * `@inth/sdk/runtime/deferred-snapshot`: what a client-rendered provider
  * needs to show the banner before the consent engine has loaded.
  *
- * A page that ran the inline `/init` prefetch already has the policy and
+ * A page that ran the inline `/v1/consent/init` prefetch already has the policy and
  * the copy. These helpers turn that response into the snapshot the kernel
  * would compute from it, with the same pure functions the kernel uses, so
  * the stock banner can render from it. Nothing here persists, sends or
@@ -102,7 +102,7 @@ const isReadableInit = function isReadableInit(
 	);
 };
 
-/** The provider's overrides, with the location and language `/init` resolved. */
+/** The provider's overrides, with the location and language `/v1/consent/init` resolved. */
 const overridesFromInit = function overridesFromInit(
 	overrides: KernelOverrides | undefined,
 	payload: Partial<InitOutput>
@@ -122,10 +122,10 @@ const overridesFromInit = function overridesFromInit(
 };
 
 /**
- * The kernel configuration a prefetched `/init` response stands for: the
+ * The kernel configuration a prefetched `/v1/consent/init` response stands for: the
  * policy, copy, location, branding and hosting, as a runtime's `prefetch`
  * option takes them. A runtime given it starts with the policy resolved
- * and sends no `/init` of its own. Records, categories and other options
+ * and sends no `/v1/consent/init` of its own. Records, categories and other options
  * are left to the runtime.
  *
  * @param overrides - The overrides the request was sent with.
@@ -163,7 +163,7 @@ export const configFromPrefetchedInit = function configFromPrefetchedInit(
 };
 
 /**
- * The snapshot a fresh kernel computes once a prefetched `/init` response
+ * The snapshot a fresh kernel computes once a prefetched `/v1/consent/init` response
  * resolved: for a visitor with no stored records, or with the records in
  * `options.records`.
  *

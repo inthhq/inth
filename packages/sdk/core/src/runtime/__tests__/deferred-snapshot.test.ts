@@ -1,6 +1,6 @@
 /**
  * The snapshot a deferred client root shows the banner from must be the one
- * the engine's kernel computes from the same prefetched `/init`, or the
+ * the engine's kernel computes from the same prefetched `/v1/consent/init`, or the
  * banner would change when the engine attaches.
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';

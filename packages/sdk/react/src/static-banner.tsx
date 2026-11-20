@@ -4,7 +4,7 @@
  *
  * `consentManifest()` from `@inth/sdk/build` loads this
  * module in Node during `vite build`. It renders `<ConsentBanner />` the way
- * the client-rendered `ConsentProvider` renders it once the page's `/init`
+ * the client-rendered `ConsentProvider` renders it once the page's `/v1/consent/init`
  * answers: the same stand-in kernel, the same snapshot from the same answer.
  * The page shows that markup before its JavaScript has run, and the app's
  * banner replaces it when it renders.
@@ -36,11 +36,11 @@ const never = (): Promise<never> =>
 
 /**
  * The stock banner's HTML for a visitor with no stored choice who gets
- * `init` from `/init`, including the inline script that records a tap made
+ * `init` from `/v1/consent/init`, including the inline script that records a tap made
  * before the app has loaded. Stylesheets are left out: see
  * {@link STATIC_BANNER_SHEETS}.
  *
- * @param init - An `/init` answer, such as one resolved from the manifest.
+ * @param init - A `/v1/consent/init` answer, such as one resolved from the manifest.
  * @returns The markup, or `undefined` when that answer shows no choice
  * banner: no prompt, a notice, IAB, vendors, or an answer the
  * client-rendered provider would not read itself.

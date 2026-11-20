@@ -110,6 +110,32 @@ describe('save: POST /v1/consent/records', () => {
 		});
 	});
 
+	test('without a decision source, a save without a token asserts its own decision inputs', async () => {
+		const { calls, fetch } = stubFetch(() =>
+			json(200, { recordId: RECORD, subjectId: SUBJECT })
+		);
+
+		await transportWith(fetch).save(
+			savePayload({
+				decisionInputs: {
+					country: 'DE',
+					fingerprint: 'fp',
+					gpc: false,
+					language: 'en',
+					policyId: 'gdpr',
+					region: null,
+				},
+				policySnapshotToken: null,
+			})
+		);
+
+		expect(bodyAt(calls, 0)).toMatchObject({
+			country: 'DE',
+			fingerprint: 'fp',
+			policyId: 'gdpr',
+		});
+	});
+
 	test('builds a body the records schema accepts', async () => {
 		const { calls, fetch } = stubFetch(() =>
 			json(200, { recordId: RECORD, subjectId: SUBJECT })
@@ -264,6 +290,20 @@ describe('save: the answer', () => {
 
 		expect(bodyAt(calls, 0).subjectId).toBe(LEGACY_SUBJECT);
 		expect(result).toEqual({ ok: true, recordId: RECORD, subjectId: SUBJECT });
+	});
+
+	test('reads a record ID in uppercase', async () => {
+		const { fetch } = stubFetch(() =>
+			json(200, { recordId: RECORD.toUpperCase(), subjectId: SUBJECT })
+		);
+
+		const result = await transportWith(fetch).save(savePayload());
+
+		expect(result).toEqual({
+			ok: true,
+			recordId: RECORD.toUpperCase(),
+			subjectId: SUBJECT,
+		});
 	});
 
 	test.each([

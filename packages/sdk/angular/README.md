@@ -19,7 +19,7 @@ pnpm add @inth/angular
 
 - Angular 20, 21 or 22
 - Node.js 20.19 or later
-- An [Inth project](https://inth.com) (free sign-up), a [self-hosted backend](https://c15t.com/docs/self-host/quickstart), or local mode for development and tests
+- An [Inth project](https://inth.com) (free sign-up), or `testing()` for development and tests
 
 ## Installation
 
@@ -54,13 +54,9 @@ export const appConfig: ApplicationConfig = {
 
 ## Hosting
 
-Inth needs somewhere to keep policies and consent records. Pick one:
+[Inth](https://inth.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=%40inth%2Fangular) keeps your policies and consent records. You get policy storage, consent records, audit history, and a dashboard, with no database or server to run. Sign-up is free. Set the project URL from your Inth dashboard as `projectUrl`.
 
-- **Hosted on [Inth](https://inth.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=%40inth%2Fangular)**: Inth runs the backend for you. You get policy storage, consent records, audit history, and a dashboard, with no database or server to run. Sign-up is free.
-- **Self-hosted**: Run [`@c15t/backend`](https://www.npmjs.com/package/@c15t/backend) on your own server with PostgreSQL, MySQL, or SQLite. You own migrations, backups, and uptime. See the [self-hosting guide](https://c15t.com/docs/self-host/quickstart).
-- **Offline**: Choices stay in the browser, with no consent records. Use it for local development, previews, and demos, not production.
-
-The frontend code is the same for Inth and a self-hosted backend. Only the backend URL changes.
+For local development, previews, and tests, `testing()` keeps choices in the browser and sends no consent records. It throws in production builds.
 
 ## Documentation
 

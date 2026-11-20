@@ -3,7 +3,7 @@ or function goes in as the first argument, unchanged:
 
 <include src="../examples/nextjs/next-config.mdx" />
 
-`next build`, `next dev` and `next typegen` fetch `${projectUrl}/manifest` and
+`next build`, `next dev` and `next typegen` fetch `${projectUrl}/v1/consent/manifest` and
 write the policy to `node_modules/.cache/inth/`, outside your source tree, so
 there is nothing to keep out of Git. `next start` serves the built snapshot and
 fetches no policy. Without a `projectUrl` option, the build reads the

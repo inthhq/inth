@@ -187,8 +187,8 @@ when the server did not resolve the policy. Allow those origins:
 connect-src 'self' https://your-project.inth.app;
 ```
 
-Replace `https://your-project.inth.app` with the URL from your Inth project or
-your self-hosted backend. Server-side requests from the middleware and the
+Replace `https://your-project.inth.app` with the URL from your Inth project.
+Server-side requests from the middleware and the
 injected routes run in Astro and are not subject to the browser's policy.
 Under an IAB TCF policy, the browser fetches the vendor list from the `/v1/consent/init`
 route or the URL the policy names. Allow that host too.

@@ -38,7 +38,7 @@ export interface NuxtConsentRequest {
  * Resolves the visitor's consent state for a Nuxt server render, by the
  * rule `resolveServerMode` applies in every adapter: `manifest()` from the
  * snapshot, or the manifest read at runtime, falling back to the backend's
- * `/init`; `hosted()` from the backend's `/init`.
+ * `/v1/consent/init`; `hosted()` from the backend's `/v1/consent/init`.
  *
  * @param config - The merged Inth runtime config. Its `projectUrl` is the
  * server's: the private `NUXT_INTH_PROJECT_URL` over the public one, as the

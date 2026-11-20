@@ -143,7 +143,7 @@ export interface VueConsentKernelContext {
 	experimentDefinition?: ConsentExperiment;
 	/**
 	 * Mount the browser side of a runtime this app owns: persistence, the
-	 * blockers, IAB, `window.__inthDebug`, and the first `/init` (or the adoption
+	 * blockers, IAB, `window.__inthDebug`, and the first `/v1/consent/init` (or the adoption
 	 * of a server-resolved prefetch). A no-op on the server, when already
 	 * started, and for a borrowed runtime, whose host starts it.
 	 */
@@ -151,7 +151,7 @@ export interface VueConsentKernelContext {
 	/**
 	 * Change the decision-input overrides (country, region, language) and
 	 * ask for the policy again once the runtime runs. Before
-	 * {@link VueConsentKernelContext.start} the first `/init` carries them.
+	 * {@link VueConsentKernelContext.start} the first `/v1/consent/init` carries them.
 	 */
 	setOverrides: (
 		overrides: Pick<
@@ -453,7 +453,7 @@ export interface VueConsentContextOptions {
 	mode?: ProviderTransportFactory;
 	/** The request's consent headers (Nuxt), for init and the manifest inputs. */
 	headers?: Record<string, string | undefined>;
-	/** A resolved `/init` answer to start from (`config.prefetch` otherwise). */
+	/** A resolved `/v1/consent/init` answer to start from (`config.prefetch` otherwise). */
 	prefetch?: InitOutput;
 	/**
 	 * The state a server render resolved for this request (Nuxt), used in
@@ -483,7 +483,7 @@ export interface VueConsentContextOptions {
 	host?: VueIABHost;
 	/**
 	 * Receives the {@link IABUnavailableError} when a policy that resolves
-	 * after construction (`/init` in the browser) uses IAB TCF on an app
+	 * after construction (`/v1/consent/init` in the browser) uses IAB TCF on an app
 	 * without `iab`. Called once, in a microtask. Defaults to throwing it
 	 * as an uncaught error; the Nuxt plugin shows Nuxt's error page.
 	 */

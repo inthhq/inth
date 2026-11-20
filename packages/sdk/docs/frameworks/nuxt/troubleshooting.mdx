@@ -17,7 +17,7 @@ Network tab, find the init request.
    [why the banner may be absent](/docs/concepts/policies#why-the-banner-may-be-absent).
 2. **`ConsentRoot` is inside a page that unmounts.** Put it in `app.vue`.
 3. **The policy did not resolve.** In the default `manifest()` mode,
-   `/api/inth/v1/consent/init` must return 200. With `hosted()`, the backend's `/init`
+   `/api/inth/v1/consent/init` must return 200. With `hosted()`, the backend's `/v1/consent/init`
    must. While resolution fails, Inth shows no UI and keeps every optional
    category denied.
 4. **A stored choice exists.** Clear the `inth` cookie and localStorage entry,
@@ -110,7 +110,7 @@ part in parentheses names the cause:
 - `fetch failed` with a network error, or `no response within 10 seconds`:
   the build machine can't reach the backend.
 
-- `/manifest responded 404 Not Found`, or another status: the URL doesn't
+- `/v1/consent/manifest responded 404: Not Found (not_found)`, or another status: the URL doesn't
   point at your project's backend, or the backend is down.
 
 - `returned an invalid consent manifest`: the URL answers, but not with an Inth
@@ -129,7 +129,7 @@ With `onBuildError: 'fail'`, this error also appears:
   module skips the fetch instead.
 
 **Fix.** Set `NUXT_PUBLIC_INTH_PROJECT_URL`, or `projectUrl` under the `inth` key, to your project's absolute backend URL, including any path prefix; the
-module adds `/manifest`. To download from another address, set
+module adds `/v1/consent/manifest`. To download from another address, set
 `mode: manifest({ manifestUrl })` to the full manifest URL, which is used as
 written. Make sure the build machine can reach the backend. To deploy while
 it is down, build with `INTH_ON_BUILD_ERROR=runtime`, or set
@@ -157,7 +157,7 @@ about this when `mode` is the default `manifest()`.
 **Fix.** Set `mode: manifest({ resolve: 'browser' })` with
 `routePrefix: false`, or `mode: hosted()`, as in
 [deploy to static hosting](/docs/frameworks/nuxt/rendering#deploy-to-static-hosting).
-If the browser reports a CORS error for a consent save or `/init`, add your
+If the browser reports a CORS error for a consent save or `/v1/consent/init`, add your
 site's origin to the Inth project's trusted origins.
 
 ## The module throws "`inth.mode` in nuxt.config.ts is a transport"
@@ -191,15 +191,15 @@ longer reads them.
 | `ConsentPreferencesLink` | `ConsentDialogLink`. The floating `ConsentDialogTrigger` keeps its name. |
 | `ConsentFrame` | `ConsentGate` |
 
-## Every first visit calls /init on a static site
+## Every first visit calls /v1/consent/init on a static site
 
 **Check.** With `manifest({ resolve: 'browser' })` the browser has no request
 location. When your policy depends on the visitor's country or region, the
-browser asks the backend's `/init` for it on the first visit.
+browser asks the backend's `/v1/consent/init` for it on the first visit.
 
 **Fix.** Pass `geoUrl` to `manifest()` with a route on your site that returns
 the visitor's `country` and `region`, so the browser resolves the policy
-itself. Or use `hosted()`, which makes the same `/init` request without
+itself. Or use `hosted()`, which makes the same `/v1/consent/init` request without
 bundling the manifest.
 
 ## A composable throws "Kernel not found"

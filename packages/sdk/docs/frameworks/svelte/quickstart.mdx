@@ -22,9 +22,6 @@ The guide uses [Inth](https://inth.com) for policies and consent records.
    origins.
 3. Copy the project's backend URL.
 
-A self-hosted backend works too; see
-[other setups](#other-setups).
-
 The guide uses `hosted()` mode. The browser asks your backend for each
 visitor's policy, and the backend reads the visitor's location from the
 request, so regional policies need no extra setup. Policy, translation and
@@ -135,9 +132,6 @@ import { testing } from '@inth/svelte/testing';
 
 [Consent modes](/docs/concepts/modes#testing) lists what each country
 shows.
-
-**A self-hosted backend** uses the same setup with your own backend URL. See
-[self-hosting](/docs/self-host/overview).
 
 **A bundled policy** with `manifest()` saves the `/init` request in a few
 cases; see [bundle the policy at build time](#bundle-the-policy-at-build-time).

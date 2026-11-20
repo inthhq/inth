@@ -62,9 +62,7 @@ export {
 	INIT_EXPERIMENT_PARAM,
 	INIT_GPC_PARAM,
 	INIT_PARAM_HEADERS,
-	INIT_POLICY_CONTRACT_PARAM,
 	INIT_REGION_PARAM,
-	INIT_VERSION_PARAM,
 	type InitRequestParams,
 } from './init-request-params';
 export { DEFAULT_GVL_ENDPOINT } from './constants';

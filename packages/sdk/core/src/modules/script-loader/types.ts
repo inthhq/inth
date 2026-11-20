@@ -139,7 +139,7 @@ export interface ScriptLoaderOptions {
 	 */
 	registry?: {
 		/**
-		 * Whether the runtime asks `/init`. When it does not, the loader
+		 * Whether the runtime asks `/v1/consent/init`. When it does not, the loader
 		 * reads only the list a prefetch carried, and never waits.
 		 */
 		waitForInit: boolean;

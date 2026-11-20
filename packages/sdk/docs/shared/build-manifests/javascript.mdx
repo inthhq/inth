@@ -40,7 +40,7 @@ and can receive newer policy than the build snapshot.
 
 When the build has no snapshot, as in `vite dev` after a failed fetch,
 `snapshot` is `undefined`, and the browser fetches
-`${projectUrl}/manifest` instead.
+`${projectUrl}/v1/consent/manifest` instead.
 
 A script-tag site without a build step cannot run this hook.
 

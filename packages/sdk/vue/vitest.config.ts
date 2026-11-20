@@ -127,7 +127,7 @@ export default mergeConfig(
 				{
 					'@inth/sdk/transports/manifest': resolve(
 						__dirname,
-						'../core/src/transports/manifest.ts'
+						'../core/src/transports/v1/manifest.ts'
 					),
 				},
 				{

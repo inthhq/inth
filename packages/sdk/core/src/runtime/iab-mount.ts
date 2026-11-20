@@ -1,6 +1,6 @@
 /**
  * Mounting the IAB CMP for a runtime: wait until the kernel knows a
- * `cmpId` (from options or a hosted `/init`), then create the CMP with the
+ * `cmpId` (from options or a hosted `/v1/consent/init`), then create the CMP with the
  * publisher's options. A runtime mounts it through the `mountIAB` module,
  * so a host that never configures IAB through the runtime ships none of
  * this.
@@ -84,7 +84,7 @@ export const mountRuntimeIAB = function mountRuntimeIAB({
 		}
 	};
 	mountWhenReady();
-	// A hosted backend can return `cmpId` and the GVL from `/init`, so keep
+	// A hosted backend can return `cmpId` and the GVL from `/v1/consent/init`, so keep
 	// watching until the snapshot carries enough to mount.
 	const unsubscribe = kernel.subscribe(mountWhenReady);
 	return () => {

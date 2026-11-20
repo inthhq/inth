@@ -38,6 +38,7 @@ import type { ConsentSubject, KernelTransport, SavePayload } from '../../types';
 import type { KernelRuntime } from '../runtime';
 import type { appendSave, OutboxTransaction, SaveOutboxStore } from './store';
 import { withStoredIdempotencyKey } from './stored-key';
+import type { StoredSavePayload } from './stored-key';
 import type { toStoredPayload } from './stored-payload';
 import type {
 	PendingSaveEntry,
@@ -222,7 +223,7 @@ const createStoredLists = function createStoredLists(
 	// oxlint-disable-next-line complexity
 	const isSavePayload = function isSavePayload(
 		value: unknown
-	): value is SavePayload {
+	): value is StoredSavePayload {
 		if (!isPlainRecord(value)) {
 			return false;
 		}
@@ -277,7 +278,9 @@ const createStoredLists = function createStoredLists(
 
 	const isPendingSaveEntry = function isPendingSaveEntry(
 		value: unknown
-	): value is PendingSaveEntry {
+	): value is Omit<PendingSaveEntry, 'payload'> & {
+		payload: StoredSavePayload;
+	} {
 		return (
 			isPlainRecord(value) &&
 			isSavePayload(value.payload) &&
@@ -678,7 +681,7 @@ export const createQueueWorker = function createQueueWorker({
 
 	/**
 	 * Give the visitor a new subject id after the backend refused `from`
-	 * with `SUBJECT_CONFLICT`: on a database several tenants share, another
+	 * with `subject_conflict`: on a database several tenants share, another
 	 * tenant already owns it. Resending under the same id is refused every
 	 * time, so without this the visitor's choices would never be recorded.
 	 *
@@ -787,7 +790,7 @@ export const createQueueWorker = function createQueueWorker({
 	 * for good (a `ConsentSaveRejectedError`) leaves the queue at once
 	 * instead of using up its attempts.
 	 *
-	 * The exception is a `SUBJECT_CONFLICT`: the subject id belongs to
+	 * The exception is a `subject_conflict`: the subject id belongs to
 	 * another tenant, not the choice. The visitor moves to a new subject,
 	 * which rekeys the queue, and the entry is replayed once more under the
 	 * new id. The move is recorded in `moved` so the rest of this run replays

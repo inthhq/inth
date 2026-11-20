@@ -4,7 +4,7 @@ import type { ConsentJourneyOption } from '../journey';
 
 export interface PrefetchOptions {
 	/**
-	 * Backend URL used for fetching `/init`.
+	 * Backend URL used for fetching `/v1/consent/init`.
 	 * Accepts absolute URLs or same-origin paths like `/api/inth`.
 	 */
 	projectUrl: string;
@@ -15,7 +15,7 @@ export interface PrefetchOptions {
 	overrides?: Pick<Overrides, 'country' | 'region' | 'language' | 'gpc'>;
 
 	/**
-	 * Fetch credentials mode. `/init` reads no cookie, so the default sends
+	 * Fetch credentials mode. `/v1/consent/init` reads no cookie, so the default sends
 	 * cookies only to a same-origin init route, and a cross-origin backend
 	 * can answer with `Access-Control-Allow-Origin: *`.
 	 *
@@ -24,7 +24,7 @@ export interface PrefetchOptions {
 	credentials?: RequestCredentials;
 
 	/**
-	 * The provider's `journey` setting, for the journey this `/init` starts.
+	 * The provider's `journey` setting, for the journey this `/v1/consent/init` starts.
 	 * Unset, the request continues a `'tab'` journey id this tab already
 	 * holds, and otherwise starts a `'page'` journey.
 	 */
@@ -37,7 +37,7 @@ export interface PrefetchOptions {
 	 * runtime then runs that arm. Only `id`, the arm names, `split` and a
 	 * fixed `arm` are read.
 	 *
-	 * Without it, an app that runs an experiment sends its own `/init`
+	 * Without it, an app that runs an experiment sends its own `/v1/consent/init`
 	 * while the visitor has no stored choice, so every visit is counted
 	 * with its arm. The same happens when the arm the runtime runs differs,
 	 * for example one a feature flag resolves at runtime.

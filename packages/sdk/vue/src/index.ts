@@ -90,7 +90,7 @@ export type InthVuePluginOptions = InthVuePluginConfig &
 				 * - Omitted, or `hosted()`: ask `${projectUrl}/v1/consent/init`.
 				 * - `manifest()` from `@inth/vue/vue-plugin`: resolve from the
 				 *   backend's consent manifest in the browser, falling back to
-				 *   `/init` with a warning when it is unavailable.
+				 *   `/v1/consent/init` with a warning when it is unavailable.
 				 * - `testing()` from `@inth/vue/testing`: resolve a policy with
 				 *   no backend, for tests. It throws in production builds. To
 				 *   keep consent out of the way in an app's own tests instead,

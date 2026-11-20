@@ -1,6 +1,6 @@
 ---
 title: Inth vs Ketch
-description: Choose Inth to own consent components, vendor rules and the backend. Compare Ketch's connected privacy platform and the services Inth does not supply.
+description: Choose Inth to own consent components and vendor rules. Compare Ketch's connected privacy platform and the services Inth does not supply.
 group: reference
 ---
 
@@ -18,9 +18,8 @@ Ketch serves a broader need: consent across identities and connected systems, wi
 | --- | --- | --- |
 | Integrate with web application code | Native framework components and reactive consent state | Web APIs and SDKs. Ketch also advertises React support |
 | Build your own interface | Themes, component parts and headless APIs | Visual editor, SDKs and custom integration APIs |
-| Choose the backend | Inth, or the Apache-2.0 backend on your own infrastructure | Managed platform. Reviewed public sources do not establish a deployable equivalent backend |
 | Review vendor behaviour | Explicit rules for registered scripts, requests and embeds | Tag controls and connectors to other systems |
-| Keep consent records | Inth hosts the backend and stores records in its database. Self-hosting is optional | Managed records tied to the visitor and connected systems |
+| Keep consent records | Inth hosts the backend and stores records in its database | Managed records tied to the visitor and connected systems |
 | Find trackers automatically | **Not included in the Inth packages** | Tracker scans and related analysis |
 | Manage data-subject requests and assessments | **Not included as a privacy operations suite** | Broader platform products |
 | Support native mobile apps | **No equivalent native mobile SDKs in this comparison** | iOS and Android SDKs |
@@ -35,13 +34,13 @@ The [framework guides](/docs/frameworks) cover React, Next.js, Vue, Nuxt, Svelte
 
 Declare each integration and its consent rules in application code. [Individual vendor choices](/docs/frameworks/react/vendor-consent) let a visitor refuse one vendor within an accepted category.
 
-Ketch also connects consent to application code. Inth's advantage for this task is the combined framework interface, inspectable engine and deployable backend.
+Ketch also connects consent to application code. Inth's advantage for this task is the combined framework interface and inspectable engine.
 
 ## Control the software and its release
 
 Your team can pin Inth package versions, test a change and release it with the application. You can inspect and change the Apache-2.0 source.
 
-The backend gives you a choice between a managed service and your own deployment. Self-hosting also makes your team responsible for updates, storage and availability.
+Inth runs the backend as a managed service.
 
 Ketch publishes open-source SDKs. An open SDK does not, by itself, give you the whole service to deploy. Confirm the deployment and API terms for your Ketch plan.
 

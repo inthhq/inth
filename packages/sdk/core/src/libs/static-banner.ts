@@ -4,7 +4,7 @@
  *
  * `consentManifest()` renders the stock banner at build time, for the
  * manifest's choice policy, and puts it in `index.html` hidden. The page's
- * inline `/init` prefetch answers long before the app's JavaScript has run;
+ * inline `/v1/consent/init` prefetch answers long before the app's JavaScript has run;
  * when the answer names the same policy, language, branding and banner copy,
  * and the visitor has no stored choice, this script shows the banner. Any
  * other answer removes it, and the app renders its banner as before. The
@@ -20,7 +20,7 @@ import { STORED_NAMES_CHECK } from './storage-keys';
 /** Attribute on the element that wraps the static banner. @internal */
 export const STATIC_BANNER_ATTR = 'data-inth-static-banner';
 
-/** What the reveal script compares the `/init` answer with. @internal */
+/** What the reveal script compares the `/v1/consent/init` answer with. @internal */
 export interface StaticBannerKey {
 	/** `policyResolution.fingerprints.policy` of the rendered policy. */
 	policy: string;
@@ -44,9 +44,9 @@ const COPY_PATHS = [
 
 /**
  * FNV-1a over the banner copy, as the reveal script computes it from the
- * `/init` translations.
+ * `/v1/consent/init` translations.
  *
- * @param translations - `translations.translations` of an `/init` answer.
+ * @param translations - `translations.translations` of a `/v1/consent/init` answer.
  * @returns An unsigned 32-bit hash.
  * @internal
  */
@@ -69,10 +69,10 @@ export const staticBannerCopyHash = function staticBannerCopyHash(
 
 /**
  * Source of the inline script that follows the static banner. It shows the
- * banner when the page's prefetched `/init` names the banner's policy,
+ * banner when the page's prefetched `/v1/consent/init` names the banner's policy,
  * language, branding and copy, and nothing is stored under the consent
  * storage keys; otherwise it removes it. A stored choice removes it before
- * `/init` answers, so a returning visitor never sees it.
+ * `/v1/consent/init` answers, so a returning visitor never sees it.
  *
  * Plain ES5 apart from `Promise`, which the prefetch script already uses.
  * Must directly follow the banner's wrapper element.

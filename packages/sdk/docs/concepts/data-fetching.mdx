@@ -6,18 +6,16 @@ group: concepts
 
 ## Compare the fetching paths
 
-Where policy resolves and where choices are saved are separate from who runs
-the backend. Inth and a [self-hosted backend](/docs/self-host/quickstart) speak
-the same protocol, so every path below works with either. Only `testing()`
-removes backend requests. For a recommendation by framework, start with
+Every path below talks to your Inth project. Only `testing()` removes backend
+requests. For a recommendation by framework, start with
 [choose your setup](/docs/concepts/choose-your-setup).
 
 | Fetching path | Where policy resolves | Where choices are submitted | Choose it when |
 | --- | --- | --- | --- |
-| Build-time manifest, recommended for server-rendered apps | Your server resolves a bundled policy snapshot with each visitor's inputs | Inth or your c15t backend | Your framework renders on the server, supports a build integration, and policy changes can ship with a rebuild |
-| Cached manifest on your server | Your application resolves public policy data with each request's location and signals | Inth or your c15t backend | Policy changes must reach the app without rebuilding, or builds cannot access the backend |
+| Build-time manifest, recommended for server-rendered apps | Your server resolves a bundled policy snapshot with each visitor's inputs | Your Inth project | Your framework renders on the server, supports a build integration, and policy changes can ship with a rebuild |
+| Cached manifest on your server | Your application resolves public policy data with each request's location and signals | Your Inth project | Policy changes must reach the app without rebuilding, or builds cannot access the backend |
 | Regular backend `/v1/consent/init` | The consent backend | The same backend | You have no application server, as in a React, Vue or Svelte single-page app, want the fewest moving parts, or need backend-owned request resolution |
-| Manifest in the browser | The browser, using a supplied location, or `/v1/consent/init` when the policy needs one it doesn't have | Inth or your c15t backend | The policy has no location rules or the page knows the visitor's location, and you accept about 3 KB more bundle and a rebuild for policy edits |
+| Manifest in the browser | The browser, using a supplied location, or `/v1/consent/init` when the policy needs one it doesn't have | Your Inth project | The policy has no location rules or the page knows the visitor's location, and you accept about 3 KB more bundle and a rebuild for policy edits |
 | `testing()` | The browser or local runtime, using the test's rules | No backend submission | Tests only. It throws in production builds. |
 
 ## What is a consent manifest?
@@ -83,7 +81,7 @@ banner counts as `due` or `stored`. A stored answer counts as `stored` even if a
 policy change makes Inth ask again.
 
 The id is random, is never the subject id and is never written to a cookie.
-Every save that carries one follows an `/v1/consent/init` or report with the same id.
+Every save that carries one follows a `/v1/consent/init` or report with the same id.
 Saves replayed after going offline carry none.
 
 | `journey` | Behavior |
@@ -107,8 +105,8 @@ If you pass a transport `hosted()` a `fetch`, match on the path: URLs now carry 
 ## What does regular `/v1/consent/init` do?
 
 `hosted()` uses `${projectUrl}/v1/consent/init` for initialization and
-`${projectUrl}/v1/consent/records` for consent submissions. The name `hosted` describes
-the protocol; the URL can belong to Inth or your own c15t backend.
+`${projectUrl}/v1/consent/records` for consent submissions. `projectUrl` is
+your Inth project URL, or a same-origin route in front of it.
 
 {/* example: fragment */}
 
@@ -158,9 +156,8 @@ export const mode = hosted({
 ```
 
 The route must return the Inth init response contract. Inth adds its inputs to
-`initUrl` as query parameters, replacing any of your own with the same name.
-See [query parameters and CORS](/docs/self-host/api/endpoints#query-parameters-and-cors)
-for the names. Because `initUrl` is set, `assertDecisionInputs` defaults to
+`initUrl` as the query parameters `country`, `region`, `gpc` and `experiment`,
+replacing any of your own with the same name. Because `initUrl` is set, `assertDecisionInputs` defaults to
 `true`: saves carry the policy decision they were made against when init
 returned no signed policy snapshot token, so the backend can reject a save
 made against a stale policy. Server-rendered frameworks do this for you when

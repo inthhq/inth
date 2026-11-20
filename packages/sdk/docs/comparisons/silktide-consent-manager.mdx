@@ -16,8 +16,8 @@ Start on Inth's [free plan](https://inth.com/pricing) and follow the [framework 
 
 | What you need | Inth | Silktide Consent Manager |
 | --- | --- | --- |
-| Apply different rules by region | Policy rules by country and US state. Inth or your backend finds the location | One default for each consent type, for all visitors. No location detection |
-| Keep consent records on a server | Inth hosts the backend and keeps records in its database. Self-hosting is optional | Not included. Choices stay in browser storage |
+| Apply different rules by region | Policy rules by country and US state. Inth finds the location | One default for each consent type, for all visitors. No location detection |
+| Keep consent records on a server | Inth hosts the backend and keeps records in its database | Not included. Choices stay in browser storage |
 | Use IAB TCF | TCF 2.4 with the `@inth/sdk/iab` add-on. Inth is a registered IAB Europe CMP, ID 490 | Not documented |
 | Respect privacy signals | Reads Global Privacy Control. IAB GPP API for US state opt-outs | Not documented |
 | Use Google Consent Mode v2 | Google tag and GTM integrations send the default and each update | Consent Mode updates for each consent type, and a dataLayer event |
@@ -51,7 +51,7 @@ When your policy lets scripts run before a choice in a region, Inth runs them th
 
 Inth picks a [policy rule](/docs/concepts/policies) for each visitor from their location. The `recommendedPolicyRules()` pack uses opt-in rules for Europe and Québec. It uses opt-out rules for supported US privacy states. Other known locations get no banner. A visitor from an unknown country gets strict opt-in.
 
-Inth or your own backend finds the location. Browser-only mode does not find the visitor's country.
+Inth finds the location. Browser-only mode does not find the visitor's country.
 
 Silktide Consent Manager does not find the visitor's location. Each consent type has one `defaultValue`, and the same default applies to all visitors. The banner shows to all visitors, also where your policy lets optional scripts run before a choice. Until those visitors accept, you lose their analytics and ad data.
 
@@ -59,13 +59,13 @@ Before you let categories run by default, compare the preset with how you use th
 
 ## Keep consent records without a backend project
 
-You do not need to design a consent record system. Inth runs the [c15t backend](/docs/self-host/overview) and keeps each consent record in its database. If your team must operate the service, you can self-host the same backend.
+You do not need to design a consent record system. Inth runs the backend and keeps each consent record in its database.
 
 Silktide saves choices in the visitor's browser storage. It documents no record service. If you need proof of consent, your team must build the endpoint and the storage.
 
 Inth applies the visitor's choice in the browser before the backend confirms it. Inth keeps each choice in a queue in browser storage. If the page closes before the backend answers, Inth sends the choice again on the next page. A permanent rejection, such as a stale policy, removes the choice from the queue. If browser storage is unavailable, Inth cannot keep an interrupted request for the next page.
 
-A choice in the browser does not prove that the backend saved a consent record. Check the saved record in Inth or in your self-hosted backend. The [consent state guide](/docs/concepts/consent-state) gives all of these conditions.
+A choice in the browser does not prove that the backend saved a consent record. Check the saved record in Inth. The [consent state guide](/docs/concepts/consent-state) gives all of these conditions.
 
 ## Fit consent to the application
 
@@ -83,11 +83,11 @@ The script is free, with an MIT licence and no traffic or domain limits. The par
 
 ### Does Silktide Consent Manager store consent records?
 
-Not on a server. Silktide saves choices in the visitor's browser storage and documents no record service. Inth sends consent records to Inth or to a [self-hosted backend](/docs/self-host/overview).
+Not on a server. Silktide saves choices in the visitor's browser storage and documents no record service. Inth sends consent records to your Inth project.
 
 ### Does Silktide Consent Manager support IAB TCF?
 
-Silktide documents no IAB TCF support. Its source has no TCF API. Inth supports TCF 2.4 with the [`@inth/sdk/iab` add-on](/docs/self-host/guides/iab-tcf). IAB Europe lists Consent Management Inc., the company behind Inth, as a CMP with ID 490. IAB Europe registration is separate from Google's CMP certification.
+Silktide documents no IAB TCF support. Its source has no TCF API. Inth supports TCF 2.4 with the `@inth/sdk/iab` add-on. IAB Europe lists Consent Management Inc., the company behind Inth, as a CMP with ID 490. IAB Europe registration is separate from Google's CMP certification.
 
 ### Does Silktide Consent Manager support Google Consent Mode v2?
 

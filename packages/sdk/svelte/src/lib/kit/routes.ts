@@ -3,7 +3,7 @@
  *
  * A prerendered page carries no visitor's consent, so the browser resolves
  * it. With this route, it does so through the app's own origin: the route
- * resolves `/init` from the snapshot the build downloaded, and serves the
+ * resolves `/v1/consent/init` from the snapshot the build downloaded, and serves the
  * manifest for browser resolution. The routes themselves live in
  * `@inth/sdk/server` (`createConsentRouteHandler`), shared with the
  * Next.js, Nuxt, Astro and TanStack Start adapters; this module mounts them

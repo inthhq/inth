@@ -104,7 +104,7 @@ export interface ConsentManagerOptions
 	 * - Omitted, or `hosted()` from `@inth/svelte`: ask
 	 *   `${projectUrl}/v1/consent/init`.
 	 * - `manifest()` from `@inth/svelte`: resolve from the backend's
-	 *   consent manifest in the browser, falling back to `/init` with a
+	 *   consent manifest in the browser, falling back to `/v1/consent/init` with a
 	 *   warning when it is unavailable.
 	 * - `testing()` from `@inth/svelte/testing`: resolve a policy with no
 	 *   backend, for tests. It throws in production builds. To keep consent

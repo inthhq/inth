@@ -19,12 +19,12 @@
  * - `/__inth-init__/missing.js`: a 404.
  * - `/__inth-init__/stale-dialog.js`: a `inth.dialog.js` from another
  *   release.
- * - `/__inth-init__/init-delay?ms=<ms>`: hold the next `/init` answers.
+ * - `/__inth-init__/init-delay?ms=<ms>`: hold the next `/v1/consent/init` answers.
  * - `/__inth-init__/backend/v1/consent/init`: the init answer, an opt-in policy for
  *   measurement and marketing with English copy.
  * - `/__inth-init__/backend/v1/consent/records`: counts saves.
  * - `/__inth-init__/saves`: how many saves arrived since the last read.
- * - `/__inth-init__/inits`: how many `/init` requests arrived since the
+ * - `/__inth-init__/inits`: how many `/v1/consent/init` requests arrived since the
  *   last read.
  * - `/__inth-init__/hosted-requests`: how many `fail=<n>` requests arrived
  *   since the last read.

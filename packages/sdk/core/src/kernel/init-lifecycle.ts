@@ -6,7 +6,7 @@
  *   arms the deadline timer. `init()` and `hydrate()` call it; construction
  *   never does.
  * - `init()` runs one attempt against the transport, folds the complete
- *   `/init` response into one commit, and on failure applies the safe
+ *   `/v1/consent/init` response into one commit, and on failure applies the safe
  *   fallback and schedules a retry with exponential backoff and jitter.
  *   A 402 (payment required) is not retried.
  *   Every explicit `init()` fences older attempts: a response that resolves

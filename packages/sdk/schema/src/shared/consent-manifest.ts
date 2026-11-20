@@ -55,7 +55,7 @@ export interface ConsentManifestTranslationInputs {
 
 /**
  * Google Additional Consent providers a manifest discloses. Whoever resolves
- * `/init` from the manifest fetches their names and privacy policies from
+ * `/v1/consent/init` from the manifest fetches their names and privacy policies from
  * `url`, as it fetches the vendor list from `gvl.url`.
  */
 export interface ConsentManifestAdditionalConsent {
@@ -85,7 +85,7 @@ export interface ConsentManifest {
 	branding: ConsentManifestBranding;
 	/**
 	 * Who runs the backend that produced this manifest. Copied onto every
-	 * `/init` resolved from it. Absent from producers that do not say.
+	 * `/v1/consent/init` resolved from it. Absent from producers that do not say.
 	 */
 	hosting?: ConsentManifestHosting;
 	policyPacks?: ConsentManifestPolicyPack[];
@@ -104,7 +104,7 @@ export interface ConsentManifest {
 	vendorListVersion?: string;
 	/**
 	 * What the Inth script registry tells Inth, such as where it serves
-	 * each script. Copied onto every `/init` resolved from this manifest.
+	 * each script. Copied onto every `/v1/consent/init` resolved from this manifest.
 	 * Absent from producers without a registry.
 	 */
 	scriptRegistry?: ScriptRegistryWire;

@@ -47,7 +47,7 @@ export type ProviderTransportKind =
 	| 'hosted'
 	| 'manifest'
 	| 'offline'
-	// The deprecated `custom()` that `@inth/react-native` still uses.
+	// A factory built around a transport of its own, such as a test fake.
 	| 'custom';
 
 /**

@@ -83,12 +83,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-	buildSubjectPostBody,
-	INTH_POLICY_CONTRACT_HEADER,
-	inthProtocolHeaders,
 	createConsentKernel,
-	generateSubjectId,
-	isValidSubjectId,
 	mapInitOutputToInitResponse,
 	policyRulePresets,
 	readPolicyResolutionWire,
@@ -129,6 +124,13 @@ import {
 	isProtocolVersionSupported,
 	PROTOCOL_VERSION,
 } from '../src/protocol/version';
+import {
+	buildSubjectPostBody,
+	generateSubjectId,
+	isValidSubjectId,
+	POLICY_CONTRACT_HEADER,
+	POLICY_CONTRACT_HEADER_VALUE as CONTRACT_HEADER_VALUE,
+} from './native-wire';
 import { buildTcStringFixtures } from './tc-string-fixtures';
 import type { TcStringFixture } from './tc-string-fixtures';
 import { buildVendorListScopeFixtures } from './vendor-list-scope-fixtures';
@@ -213,14 +215,6 @@ const SUBJECT_MINTS: Record<string, { clock: number; randomHex: string }> = {
 	noMatch: { clock: NOW, randomHex: '040000000000000000000000' },
 	notice: { clock: NOW, randomHex: '050000000000000000000000' },
 };
-
-/**
- * The policy contract this build declares and reads, as the header string.
- *
- * Read from the kernel rather than hard-coded so a fixture can never pin a
- * contract the code it generates against has already moved past.
- */
-const CONTRACT_HEADER_VALUE = inthProtocolHeaders[INTH_POLICY_CONTRACT_HEADER];
 
 /**
  * The translation bundle `/init` serves.
@@ -960,7 +954,7 @@ const transportFor = function transportFor(
 		// A negotiated producer declares its contract on the response. Without this
 		// header every client treats the body as pre-contract and fails closed, so
 		// the fixtures that carry a policy have to declare it.
-		headers: { [INTH_POLICY_CONTRACT_HEADER]: CONTRACT_HEADER_VALUE },
+		headers: { [POLICY_CONTRACT_HEADER]: CONTRACT_HEADER_VALUE },
 		status: 200,
 	};
 };
@@ -982,7 +976,7 @@ const unspeakingTransportFor = function unspeakingTransportFor(
 	return {
 		body,
 		headers: {
-			[INTH_POLICY_CONTRACT_HEADER]: UNSPOKEN_CONTRACT_HEADER_VALUE,
+			[POLICY_CONTRACT_HEADER]: UNSPOKEN_CONTRACT_HEADER_VALUE,
 		},
 		status: 200,
 	};
@@ -998,7 +992,7 @@ const unspeakingTransportFor = function unspeakingTransportFor(
 const initResponseFor = function initResponseFor(
 	transport: InitTransport
 ): InitResponse {
-	const declared = transport.headers[INTH_POLICY_CONTRACT_HEADER];
+	const declared = transport.headers[POLICY_CONTRACT_HEADER];
 	return mapInitOutputToInitResponse(
 		transport.body,
 		{},
@@ -1020,7 +1014,7 @@ const isDefinitiveInit = function isDefinitiveInit(
 ): boolean {
 	return (
 		transport.status === 200 &&
-		transport.headers[INTH_POLICY_CONTRACT_HEADER] === CONTRACT_HEADER_VALUE
+		transport.headers[POLICY_CONTRACT_HEADER] === CONTRACT_HEADER_VALUE
 	);
 };
 
@@ -2157,7 +2151,7 @@ const buildSaveBodyFixtures = async function buildSaveBodyFixtures(): Promise<
 			expected: {
 				request: {
 					body: buildSubjectPostBody(payload, { domain: DOMAIN }),
-					headers: { [INTH_POLICY_CONTRACT_HEADER]: CONTRACT_HEADER_VALUE },
+					headers: { [POLICY_CONTRACT_HEADER]: CONTRACT_HEADER_VALUE },
 					method: 'POST',
 					path: '/subjects',
 				},
@@ -2905,9 +2899,7 @@ const assertWiresReadable = function assertWiresReadable(
 			// A response whose declaration this client refuses never reaches a reader at
 			// all, which is the rule under test in the revision trace. Asking a client
 			// reader to consume it would assert the opposite of the contract.
-			if (
-				transport.headers[INTH_POLICY_CONTRACT_HEADER] !== CONTRACT_HEADER_VALUE
-			) {
+			if (transport.headers[POLICY_CONTRACT_HEADER] !== CONTRACT_HEADER_VALUE) {
 				continue;
 			}
 			const { policyResolution } = transport.body;
@@ -3026,7 +3018,7 @@ const writeIndex = function writeIndex(
 		generatedBy: 'packages/react-native/scripts/generate-protocol-fixtures.ts',
 		kinds: [...new Set(entries.map((entry) => entry.kind))].sort(),
 		policyContractHeader: {
-			name: INTH_POLICY_CONTRACT_HEADER,
+			name: POLICY_CONTRACT_HEADER,
 			value: CONTRACT_HEADER_VALUE,
 		},
 		protocolVersion: PROTOCOL_VERSION,

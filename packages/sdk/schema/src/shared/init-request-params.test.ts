@@ -5,23 +5,20 @@ import {
 	applyInitParamsToHeaders,
 	INIT_PARAM_HEADERS,
 } from './init-request-params';
-import { POLICY_CONTRACT_HEADER } from './policy-resolution-wire';
 import {
 	CONSENT_EXPERIMENT_HEADER,
 	parseExperimentHeader,
 } from './session-report';
 
 describe('init query parameters', () => {
-	it('names the header each parameter replaces', () => {
-		// The hosted gateway and older backends read these header names; a
-		// rename here silently drops the input for them.
+	it('names the header each parameter stands for', () => {
+		// Server callers send these header names; a rename here silently
+		// drops the input for them.
 		expect(Object.fromEntries(INIT_PARAM_HEADERS)).toEqual({
-			contract: POLICY_CONTRACT_HEADER,
 			country: 'x-inth-country',
 			experiment: CONSENT_EXPERIMENT_HEADER,
 			gpc: 'x-inth-gpc',
 			region: 'x-inth-region',
-			v: 'x-inth-version',
 		});
 	});
 
@@ -31,12 +28,10 @@ describe('init query parameters', () => {
 				country: 'DE',
 				experiment: { arm: 'a=b', id: 'banner shape' },
 				gpc: false,
-				policyContract: 1,
 				region: 'BE',
-				version: '3.0.0',
 			})
 		).toBe(
-			'/api/inth/v1/consent/init?site=shop&v=3.0.0&contract=1&country=DE&region=BE&gpc=0&experiment=banner%2520shape%3Da%253Db#top'
+			'/api/inth/v1/consent/init?site=shop&country=DE&region=BE&gpc=0&experiment=banner%2520shape%3Da%253Db#top'
 		);
 	});
 
@@ -44,7 +39,7 @@ describe('init query parameters', () => {
 		expect(appendInitParams('https://c.example/v1/consent/init', {})).toBe(
 			'https://c.example/v1/consent/init'
 		);
-		expect(appendInitParams('', { version: '3.0.0' })).toBe('?v=3.0.0');
+		expect(appendInitParams('', { country: 'DE' })).toBe('?country=DE');
 	});
 
 	it('replaces a parameter the URL already carries, so it appears once', () => {
@@ -52,15 +47,15 @@ describe('init query parameters', () => {
 		// Inth's value wins, and the app's other parameters keep their order
 		// and encoding.
 		const url = appendInitParams(
-			'/api/consent/v1/consent/init?country=US&site=a%20b&v=1&tag=x#top',
-			{ country: 'GB', version: '3.0.0' }
+			'/api/consent/v1/consent/init?country=US&site=a%20b&gpc=0&tag=x#top',
+			{ country: 'GB', gpc: true }
 		);
 		expect(url).toBe(
-			'/api/consent/v1/consent/init?site=a%20b&tag=x&v=3.0.0&country=GB#top'
+			'/api/consent/v1/consent/init?site=a%20b&tag=x&country=GB&gpc=1#top'
 		);
 		const params = new URL(url, 'https://shop.example').searchParams;
 		expect(params.getAll('country')).toEqual(['GB']);
-		expect(params.getAll('v')).toEqual(['3.0.0']);
+		expect(params.getAll('gpc')).toEqual(['1']);
 	});
 
 	it('leaves a parameter inth does not send for the backend to read', () => {
@@ -84,35 +79,31 @@ describe('init query parameters', () => {
 			country: 'DE',
 			experiment: { arm: 'a=b', id: 'banner shape' },
 			gpc: true,
-			policyContract: 1,
 			region: 'BE',
-			version: '3.0.0',
 		});
 		const headers = applyInitParamsToHeaders(url, new Headers());
 		expect(Object.fromEntries(headers)).toEqual({
 			'x-inth-country': 'DE',
 			'x-inth-experiment': 'banner%20shape=a%3Db',
 			'x-inth-gpc': '1',
-			'x-inth-policy-contract': '1',
 			'x-inth-region': 'BE',
-			'x-inth-version': '3.0.0',
 		});
 		expect(
 			parseExperimentHeader(headers.get(CONSENT_EXPERIMENT_HEADER))
 		).toEqual({ arm: 'a=b', id: 'banner shape' });
 	});
 
-	it('lets a parameter win over the legacy header and keeps the other headers', () => {
+	it('lets a parameter win over its header and keeps the other headers', () => {
 		const headers = applyInitParamsToHeaders(
-			'/v1/consent/init?country=FR&contract=2',
+			'/v1/consent/init?country=FR&region=IDF',
 			new Headers({
 				'cf-ipcountry': 'US',
 				'x-inth-country': 'DE',
-				'x-inth-policy-contract': '1',
+				'x-inth-region': 'BE',
 			})
 		);
 		expect(headers.get('x-inth-country')).toBe('FR');
-		expect(headers.get('x-inth-policy-contract')).toBe('2');
+		expect(headers.get('x-inth-region')).toBe('IDF');
 		expect(headers.get('cf-ipcountry')).toBe('US');
 	});
 
@@ -124,10 +115,10 @@ describe('init query parameters', () => {
 		expect(headers.get('x-inth-country')).toBe('DE');
 	});
 
-	it('falls back to the legacy headers when no parameter is sent', () => {
+	it('falls back to the headers when no parameter is sent', () => {
 		const original = new Headers({
+			'x-inth-country': 'DE',
 			'x-inth-gpc': '1',
-			'x-inth-version': '2.0.0',
 		});
 		const headers = applyInitParamsToHeaders(
 			new URL('https://c.example/v1/consent/init'),

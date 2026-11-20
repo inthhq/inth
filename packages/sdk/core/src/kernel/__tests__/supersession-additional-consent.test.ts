@@ -31,6 +31,7 @@ const payload: SavePayload = {
 		measurement: true,
 		necessary: true,
 	},
+	idempotencyKey: '0193e5a8-7c1e-7b7a-9d7e-2f0c9a3b4d5e',
 	model: 'iab',
 	overrides: {},
 	policySnapshotToken: null,

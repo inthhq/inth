@@ -95,7 +95,7 @@ their own language only, never the full set.
 ## Fetch the manifest at runtime
 
 `manifest({ source: 'runtime' })` ignores the build's snapshot and fetches
-`${projectUrl}/manifest` when the app starts. The browser resolves the
+`${projectUrl}/v1/consent/manifest` when the app starts. The browser resolves the
 policy from it, so policy edits apply without a rebuild:
 
 {/* example: fragment */}
@@ -171,9 +171,9 @@ Serve the production build and open the Network tab:
 
 | `mode` | Policy requests on the first page load |
 | --- | --- |
-| `hosted()` | One `GET` to `${projectUrl}/init` |
-| `manifest()` with a build snapshot | None to the backend when the policy has no location rules or the browser knows the location, otherwise one `GET` to `${projectUrl}/init`. A language other than English loads its text from your site. |
-| `manifest({ source: 'runtime' })` | One `GET` to `${projectUrl}/manifest` |
+| `hosted()` | One `GET` to `${projectUrl}/v1/consent/init` |
+| `manifest()` with a build snapshot | None to the backend when the policy has no location rules or the browser knows the location, otherwise one `GET` to `${projectUrl}/v1/consent/init`. A language other than English loads its text from your site. |
+| `manifest({ source: 'runtime' })` | One `GET` to `${projectUrl}/v1/consent/manifest` |
 | `manifest({ manifestUrl })` | One `GET` to `manifestUrl` |
 | `testing()` | None |
 

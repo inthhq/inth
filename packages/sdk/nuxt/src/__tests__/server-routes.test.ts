@@ -288,7 +288,7 @@ describe('init route', () => {
 		expect(mocks.serverFetch).toHaveBeenCalledTimes(1);
 	});
 
-	test('falls back to a proxied GET /init through serverFetch', async () => {
+	test('falls back to a proxied GET /v1/consent/init through serverFetch', async () => {
 		const acmeVendor = {
 			category: 'marketing',
 			id: 'acme',

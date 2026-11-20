@@ -898,7 +898,7 @@ describe('createConsentRuntime', () => {
 
 		// `@inth/sdk/engine` bundles English only, so the copy stays English until
 		// the backend or a `messages` override supplies German. The language
-		// is what travels to `/init`, and it has to be the one asked for.
+		// is what travels to `/v1/consent/init`, and it has to be the one asked for.
 		const { translations } = runtime.kernel.getSnapshot();
 		expect(translations?.language).toBe('de');
 		expect(translations?.translations.common.save).toBeTruthy();

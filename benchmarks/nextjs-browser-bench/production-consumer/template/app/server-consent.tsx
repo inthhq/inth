@@ -18,8 +18,8 @@ export const ServerConsent = async ({ children }: { children: ReactNode }) => {
 	const requestHeaders = await headers();
 	const token = requestHeaders.get('x-inth-bench-manifest-token');
 	const manifestUrl = token
-		? `${projectUrl}/manifest?cold=${encodeURIComponent(token)}`
-		: `${projectUrl}/manifest`;
+		? `${projectUrl}/v1/consent/manifest?cold=${encodeURIComponent(token)}`
+		: `${projectUrl}/v1/consent/manifest`;
 	const state = await resolveConsent({
 		manifestUrl,
 		projectUrl,

@@ -106,7 +106,7 @@ test('a deferred root loads its engine after one failed import of its chunk', as
 		Promise.resolve(Response.json(request?.body ? recordAnswer(request) : {}))
 	);
 	vi.stubGlobal('fetch', fetchMock);
-	// The inline prefetch's `/init` answer: the root defers its engine.
+	// The inline prefetch's `/v1/consent/init` answer: the root defers its engine.
 	const requestContext = {
 		country: null,
 		credentials: 'same-origin',

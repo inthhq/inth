@@ -18,7 +18,7 @@ import type {
  * read the incoming request, resolve the consent decision for it through
  * `resolveRequestConsent` from `@inth/sdk/server` (shared with every other
  * adapter), and produce the `KernelConfig` the page inlines so the browser
- * boots without an `/init` roundtrip. Translations, the offline vendor
+ * boots without a `/v1/consent/init` roundtrip. Translations, the offline vendor
  * list, the snapshot and the banner flags stay Astro's own.
  */
 import {
@@ -187,7 +187,7 @@ const modeOptions = function modeOptions(
 /**
  * Fold a vendor list into the config when the prefetch did not supply one.
  *
- * Hosted and manifest mode get theirs from `/init`. Offline mode has no
+ * Hosted and manifest mode get theirs from `/v1/consent/init`. Offline mode has no
  * backend to ask, so a site that wants a server-rendered IAB banner points
  * `iab.gvl` at a list or `iab.gvlUrl` at where one lives — the second goes
  * through the shared in-process cache, so a page render is not a download.
@@ -605,7 +605,7 @@ export {
 
 // The handlers behind the injected route, for a site that sets
 // `routePrefix: false` and mounts them itself. The browser does not call
-// such a route for `/init`; see `createConsentRouteHandlers`. The manifest
+// such a route for `/v1/consent/init`; see `createConsentRouteHandlers`. The manifest
 // cache is in `@inth/sdk/server`, one process cache shared with the other
 // framework adapters.
 export {

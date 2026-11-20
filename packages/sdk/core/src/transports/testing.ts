@@ -102,7 +102,7 @@ export const testingTransport = function testingTransport(
 					const countryCode = overrides.country ?? null;
 					const regionCode = overrides.region ?? null;
 					return Promise.resolve({
-						// The location it resolved for, as `/init` answers:
+						// The location it resolved for, as `/v1/consent/init` answers:
 						// surfaces that read the init's display data wait for one.
 						location: { countryCode, regionCode },
 						policyResolution: writePolicyResolutionWire(

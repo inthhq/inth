@@ -108,7 +108,7 @@ const resolveRuntimeTranslations = function resolveRuntimeTranslations(
 /**
  * Whether a prefetch already carries a server-resolved policy.
  *
- * A resolved prefetch is what `/init` would have returned: the policy, the
+ * A resolved prefetch is what `/v1/consent/init` would have returned: the policy, the
  * decision that produced it, and no provisional marker. The kernel is
  * built from it, so calling `init()` again on `start()` would re-fetch the
  * same answer and cost every SSR page one request. Frameworks that render

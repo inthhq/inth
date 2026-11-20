@@ -1,11 +1,10 @@
-import { createConsentRuntime } from '@inth/sdk/runtime';
 /**
  * @vitest-environment jsdom
  *
  * An integration loaded from a `scriptLoader.sources` entry, such as a
  * vetted copy on the site's own host, keeps its setup and attributes.
  */
-import { custom } from '@inth/sdk/transports';
+import { createConsentRuntime } from '@inth/sdk/runtime';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { registerVendorContractCleanup } from './e2e-test-utils';
@@ -14,6 +13,11 @@ import { metaPixel } from './vendors/ads-and-pixels/meta-pixel';
 import { plausibleAnalytics } from './vendors/analytics/plausible-analytics';
 import { posthog } from './vendors/analytics/posthog';
 import { rudderstack } from './vendors/analytics/rudderstack';
+
+/** A mode with no backend: init answers nothing and nothing is saved. */
+const noBackend = Object.assign(() => ({ init: () => Promise.resolve({}) }), {
+	kind: 'custom' as const,
+});
 
 const REGISTRY_SRC = 'https://acme.example/scripts/posthog@0123456789abcdef.js';
 const REGISTRY_INTEGRITY = 'sha384-registry';
@@ -43,7 +47,7 @@ describe('scriptLoader.sources with integrations', () => {
 		const runtime = createConsentRuntime({
 			// Consent management off grants every category, so both load now.
 			enabled: false,
-			mode: custom({ init: () => Promise.resolve({}) }),
+			mode: noBackend,
 			persistence: false,
 			scriptLoader: {
 				sources: {
@@ -83,7 +87,7 @@ describe('scriptLoader.sources with integrations', () => {
 			'https://acme.example/scripts/hubspot@0123456789abcdef.js';
 		const runtime = createConsentRuntime({
 			enabled: false,
-			mode: custom({ init: () => Promise.resolve({}) }),
+			mode: noBackend,
 			persistence: false,
 			scriptLoader: {
 				sources: {
@@ -130,7 +134,7 @@ describe('scriptLoader.sources with integrations', () => {
 			const script = { ...(await build()), onError };
 			const runtime = createConsentRuntime({
 				enabled: false,
-				mode: custom({ init: () => Promise.resolve({}) }),
+				mode: noBackend,
 				persistence: false,
 				scriptLoader: {
 					sources: {
@@ -173,7 +177,7 @@ describe('scriptLoader.sources with integrations', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 		const runtime = createConsentRuntime({
 			enabled: false,
-			mode: custom({ init: () => Promise.resolve({}) }),
+			mode: noBackend,
 			persistence: false,
 			scriptLoader: {
 				sources: {
@@ -200,7 +204,7 @@ describe('scriptLoader.sources with integrations', () => {
 		const withIntegrity = (integrity: string) =>
 			createConsentRuntime({
 				enabled: false,
-				mode: custom({ init: () => Promise.resolve({}) }),
+				mode: noBackend,
 				persistence: false,
 				scriptLoader: {
 					sources: { hubspot: { integrity, src: hubspotSource } },
@@ -246,7 +250,7 @@ describe('scriptLoader.sources with integrations', () => {
 			const source = 'https://acme.example/scripts/vendor@0123456789abcdef.js';
 			const runtime = createConsentRuntime({
 				enabled: false,
-				mode: custom({ init: () => Promise.resolve({}) }),
+				mode: noBackend,
 				persistence: false,
 				scriptLoader: {
 					sources: {
@@ -285,7 +289,7 @@ describe('scriptLoader.sources with integrations', () => {
 			.mockImplementation(() => undefined);
 		const runtime = createConsentRuntime({
 			enabled: false,
-			mode: custom({ init: () => Promise.resolve({}) }),
+			mode: noBackend,
 			persistence: false,
 			scriptLoader: { sources: { [script.id]: { src: source } } },
 			scripts: [script],
@@ -319,7 +323,7 @@ describe('scriptLoader.sources with integrations', () => {
 			const script = activeCampaignTracking({ accountId: '123456' });
 			const runtime = createConsentRuntime({
 				enabled: false,
-				mode: custom({ init: () => Promise.resolve({}) }),
+				mode: noBackend,
 				persistence: false,
 				scriptLoader: entry ? { sources: { [script.id]: entry } } : {},
 				scripts: [script],
@@ -361,7 +365,7 @@ describe('scriptLoader.sources with integrations', () => {
 			.mockImplementation(() => undefined);
 		const runtime = createConsentRuntime({
 			enabled: false,
-			mode: custom({ init: () => Promise.resolve({}) }),
+			mode: noBackend,
 			persistence: false,
 			scriptLoader: { sources: { [script.id]: { src: source } } },
 			scripts: [script],
@@ -397,7 +401,7 @@ describe('scriptLoader.sources with integrations', () => {
 		const runtime = createConsentRuntime({
 			enabled: false,
 			experimentalScriptRegistry: true,
-			mode: custom({ init: () => Promise.resolve({}) }),
+			mode: noBackend,
 			persistence: false,
 			// The init a server resolved from the manifest.
 			prefetch: { initialScriptRegistry: { sources: scriptSources } },
@@ -486,7 +490,7 @@ describe('scriptLoader.sources with integrations', () => {
 		const runtime = createConsentRuntime({
 			enabled: false,
 			experimentalScriptRegistry: true,
-			mode: custom({ init: () => Promise.resolve({}) }),
+			mode: noBackend,
 			persistence: false,
 			prefetch: {
 				initialScriptRegistry: {

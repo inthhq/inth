@@ -2,6 +2,11 @@
 
 import type { SavePayload } from '../../types';
 
+/** A save payload as read from storage: an older client may have stored no key. */
+export type StoredSavePayload = Omit<SavePayload, 'idempotencyKey'> & {
+	idempotencyKey?: string;
+};
+
 /**
  * `V1_UUID_PATTERN` from `@inth/sdk-schema/types`, copied: this module loads
  * with the stored queue alone, so it imports no values
@@ -54,14 +59,12 @@ const hashLanes = function hashLanes(
  * @internal
  */
 export const withStoredIdempotencyKey = function withStoredIdempotencyKey(
-	payload: SavePayload,
+	payload: StoredSavePayload,
 	queuedAt: number
 ): SavePayload {
-	if (
-		payload.idempotencyKey !== undefined &&
-		LOWERCASE_UUID.test(payload.idempotencyKey)
-	) {
-		return payload;
+	const { idempotencyKey: stored } = payload;
+	if (stored !== undefined && LOWERCASE_UUID.test(stored)) {
+		return { ...payload, idempotencyKey: stored };
 	}
 	// A key that is not a lowercase UUID was never accepted by the backend,
 	// so the save gets the key it would have had with none.

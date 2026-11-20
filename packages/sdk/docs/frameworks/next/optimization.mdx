@@ -75,7 +75,7 @@ without it.
 The app server still connects to the backend, and each save takes an extra
 hop through your server. Measure your deployment to check the effect on
 latency. Vendor scripts, pixels and iframes keep their own URLs; only Inth
-requests move. The same setup works with a self-hosted c15t backend.
+requests move.
 
 Set `routePrefix` and `proxy: true` in the config, and keep `projectUrl`
 absolute:
@@ -175,8 +175,7 @@ and refreshes it in the background. Requests do not wait for that refresh, and
 a refresh that fails or times out leaves the cached manifest in place, so a
 slow or unavailable backend does not delay rendering on a server that has
 already loaded the manifest. Inth sends `s-maxage=300` and a 24 hour
-`stale-while-revalidate` by default; lower the second value on a self-hosted
-backend if a policy change must reach servers sooner after an outage. A server
+`stale-while-revalidate` by default. A server
 with both caches empty still waits for the first upstream response.
 
 The background refresh is detached from the request. On runtimes that stop

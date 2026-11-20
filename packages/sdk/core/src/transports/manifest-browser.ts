@@ -1,10 +1,10 @@
 /**
- * `@inth/sdk/transports/manifest-browser` — resolve `/init` in the browser
+ * `@inth/sdk/transports/manifest-browser` — resolve `/v1/consent/init` in the browser
  * from the backend's consent manifest.
  *
  * The manifest is the location-independent half of the backend's decision:
  * policy packs, translations, branding. With it the browser can render the
- * banner without a per-visitor `/init` round trip. Saves still go to the
+ * banner without a per-visitor `/v1/consent/init` round trip. Saves still go to the
  * backend.
  *
  * Only English base copy is bundled. Another language's base copy loads
@@ -126,12 +126,12 @@ const gppOnPage = (): boolean =>
 	typeof (window as Window & { __gpp?: unknown }).__gpp === 'function';
 
 /**
- * Whether `init()` for these inputs asks the backend's `/init`, decided
+ * Whether `init()` for these inputs asks the backend's `/v1/consent/init`, decided
  * without loading anything: `true` asks it at once, `false` resolves in
  * the browser, `undefined` leaves it to the resolver chunk, which knows
  * whether every location gets the same banner, and to `geoUrl`.
  *
- * GPP asks `/init`: its US sections need the country an answer for an
+ * GPP asks `/v1/consent/init`: its US sections need the country an answer for an
  * unknown location does not report. So does IAB, whose vendor list the
  * backend supplies.
  */
@@ -200,7 +200,7 @@ const createManifestSource = function createManifestSource(
 			? projectUrlOfManifest(options.manifestUrl)
 			: trimSlash(options.projectUrl);
 	// Without a snapshot or a `manifestUrl`, read the backend's own
-	// `/manifest`. A build that could not fetch the snapshot passes
+	// `/v1/consent/manifest`. A build that could not fetch the snapshot passes
 	// `snapshot: undefined`, and the page still gets its policy.
 	const manifestUrl =
 		options.manifestUrl ??
@@ -251,7 +251,7 @@ const createManifestSource = function createManifestSource(
 		}
 	};
 	// A policy that needs a location the page can't supply goes to the
-	// backend's `/init`, so the resolver loads only when a local answer
+	// backend's `/v1/consent/init`, so the resolver loads only when a local answer
 	// is likely, and then as soon as possible.
 	const { snapshot } = options;
 	if (
@@ -268,7 +268,7 @@ const createManifestSource = function createManifestSource(
 		getFetch,
 		/** The visitor's location from `geoUrl`, asked once per page. */
 		loadGeo(geoUrl) {
-			// Without a location the `/init` fallback still answers.
+			// Without a location the `/v1/consent/init` fallback still answers.
 			cachedGeo ??= (async () => {
 				try {
 					const remoteModule = await loadRemote();
@@ -308,7 +308,7 @@ const createManifestSource = function createManifestSource(
 /**
  * One transport over a shared {@link ManifestSource}. Each has its own
  * hosted transport and unreported journeys: a provider builds a second
- * transport to carry an `/init` it sends during its first render.
+ * transport to carry a `/v1/consent/init` it sends during its first render.
  */
 const transportFrom = function transportFrom(
 	options: BrowserManifestOptions,
@@ -376,7 +376,7 @@ const transportFrom = function transportFrom(
 		identify: hosted.identify,
 		async init(ctx: InitContext): Promise<TransportInitResponse> {
 			const { snapshot } = options;
-			// A snapshot decides synchronously, so an `/init` it needs leaves
+			// A snapshot decides synchronously, so a `/v1/consent/init` it needs leaves
 			// within this call: a provider that calls it during render gets
 			// the request out at that moment.
 			if (
@@ -394,7 +394,7 @@ const transportFrom = function transportFrom(
 			try {
 				resolved = await source.loadManifest();
 			} catch (error) {
-				// The backend's `/init` still answers when the manifest is
+				// The backend's `/v1/consent/init` still answers when the manifest is
 				// unavailable; the next init tries the manifest again.
 				warnManifestFallback(source.manifestUrl ?? 'the snapshot', error);
 				return ask(ctx);
@@ -406,7 +406,7 @@ const transportFrom = function transportFrom(
 };
 
 /**
- * Build a transport that resolves `/init` in the browser from a consent
+ * Build a transport that resolves `/v1/consent/init` in the browser from a consent
  * manifest and saves to the backend.
  *
  * When some locations get a different banner than others and the browser
@@ -535,7 +535,7 @@ const sameManifest = function sameManifest(
 };
 
 /**
- * Let a provider send this mode's first `/init` during its first render,
+ * Let a provider send this mode's first `/v1/consent/init` during its first render,
  * as it does for `hosted()`. It does so only when the snapshot can't
  * answer for the location the render knows. A mode without a snapshot
  * can't tell before its manifest request, so it never sends early.

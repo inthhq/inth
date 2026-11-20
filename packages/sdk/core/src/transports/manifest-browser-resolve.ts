@@ -2,7 +2,7 @@
  * The local resolution step of the browser manifest resolver: the policy
  * for the visitor's location, in the visitor's language. The transport
  * loads this module when it resolves in the browser. A page whose policy
- * depends on a location it doesn't know asks the backend's `/init` instead
+ * depends on a location it doesn't know asks the backend's `/v1/consent/init` instead
  * and never loads it.
  *
  * @internal

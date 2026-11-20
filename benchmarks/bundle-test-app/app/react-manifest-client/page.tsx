@@ -8,7 +8,7 @@ import {
 	ConsentWidget,
 } from '@inth/react';
 import type { Script } from '@inth/sdk/modules/script-loader';
-import { createManifestTransport } from '@inth/sdk/transports/manifest';
+import { createV1ManifestTransport } from '@inth/sdk/transports/manifest';
 import { lazy, Suspense, useMemo } from 'react';
 
 /** A transport factory that hands the provider `transport`. */
@@ -69,8 +69,7 @@ const BANNER_DESCRIPTION =
 const ReactManifestClientPage = () => {
 	const transport = useMemo(
 		() =>
-			createManifestTransport({
-				manifestUrl: '/api/inth/manifest',
+			createV1ManifestTransport({
 				projectUrl: '/api/bench-consent',
 			}),
 		[]

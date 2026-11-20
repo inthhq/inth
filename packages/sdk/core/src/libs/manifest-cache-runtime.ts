@@ -1,6 +1,7 @@
 /** Shared manifest HTTP cache. Does not load translations or resolve policy. */
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 
+import { readApiError } from '../transports/v1/error';
 import { V1_ROUTES } from '../transports/v1/paths';
 import { boundedSet, mapFor } from './bounded-map';
 import {
@@ -8,7 +9,6 @@ import {
 	parseCacheDirectiveSeconds,
 	readUpstreamAge,
 } from './cache-directive';
-import { failedResponseError } from './failed-response';
 import {
 	identityHeaderOf,
 	isCleartextRemoteURL,
@@ -390,7 +390,7 @@ export const MANIFEST_PASSTHROUGH_HEADERS = [
 ] as const;
 
 /**
- * In-process dedupe floor, in seconds, for backends that serve `/manifest`
+ * In-process dedupe floor, in seconds, for backends that serve `/v1/consent/manifest`
  * without a shared-cache TTL. Without it every request to an older backend
  * would hit the network. Kept deliberately short: it only collapses
  * concurrent/bursty requests and is never advertised downstream as a
@@ -821,10 +821,10 @@ const revalidateManifest = async function revalidateManifest(input: {
 	}
 
 	if (!response.ok) {
-		// `status` lets a host tell a backend without `/manifest` (404) from
+		// `status` lets a host tell a backend without `/v1/consent/manifest` (404) from
 		// one that is failing, including through a `backoff` error's `cause`.
-		throw await failedResponseError(
-			'inth manifest cache: backend /manifest',
+		throw await readApiError(
+			'inth manifest cache: backend /v1/consent/manifest',
 			response
 		);
 	}
@@ -1195,7 +1195,7 @@ export const fetchCachedManifest = async function fetchCachedManifest(
 /**
  * Default time budget, in milliseconds, for resolving consent while a server
  * renders a page. Server adapters wait at most this long for the manifest (or
- * backend `/init`) before rendering without a resolved policy.
+ * backend `/v1/consent/init`) before rendering without a resolved policy.
  *
  * A warm in-process cache answers in about a millisecond. A cold read over a
  * new TLS connection to a hosted backend measured 115 to 385 ms, so 500 ms

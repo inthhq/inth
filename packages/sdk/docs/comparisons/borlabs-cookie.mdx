@@ -1,14 +1,14 @@
 ---
 title: Inth vs Borlabs Cookie
-description: Choose Inth for consent beyond WordPress, with native web components and a separate backend. Compare Borlabs Cookie's local records, service controls and scanner.
+description: Choose Inth for consent beyond WordPress, with native web components and a managed backend. Compare Borlabs Cookie's local records, service controls and scanner.
 group: reference
 ---
 
 ## Keep control when your product extends beyond WordPress
 
-Inth is the stronger fit when your team needs consent in a custom web application. Its framework components and backend let you own the consent system independently of WordPress.
+Inth is the stronger fit when your team needs consent in a custom web application. Its framework components and Inth's backend run consent independently of WordPress.
 
-Borlabs Cookie is a WordPress product with local visitor data, individual service controls and developer tools. Self-hosting alone does not distinguish Inth from Borlabs.
+Borlabs Cookie is a WordPress product with local visitor data, individual service controls and developer tools.
 
 <include src="../shared/comparisons/inth-hosting.mdx" />
 
@@ -20,8 +20,7 @@ Borlabs Cookie is a WordPress product with local visitor data, individual servic
 | Control the interface | Themes, component parts and headless APIs | Dialog settings, custom content placeholders and JavaScript API |
 | Let visitors choose services | Category and individual vendor state | Service groups with individual service choices |
 | Control scripts and embeds | Declared rules for scripts, requests and embeds | Script, style and content controls |
-| Keep records on your servers | Deploy the supplied c15t backend | Consent logs within the WordPress setup. Visitor data stays on your server |
-| Use a managed backend | Inth hosts the backend and stores records in its database. Self-hosting is optional | Consent runs within your WordPress installation |
+| Use a managed backend | Inth hosts the backend and stores records in its database | Consent runs within your WordPress installation |
 | Discover services | **No automatic scanner in the packages** | Scanner with suggested service packages |
 | Operate within WordPress | Developer setup. No bundled WordPress wizard | Setup assistant, package library, WP CLI and Composer support |
 
@@ -35,7 +34,7 @@ Inth adds a [native workflow across web frameworks](/docs/frameworks). Your team
 
 Use [headless APIs](/docs/frameworks/react/headless) for your markup. Declare [vendors](/docs/frameworks/react/vendor-consent) beside the integrations they control.
 
-The backend is a separate service that can run with your chosen database. That separation helps when the application frontend and consent service need their own deployment lifecycle.
+The backend is a separate service that Inth runs, so the application frontend and the consent records keep their own lifecycles.
 
 ## Choose where administration belongs
 
@@ -54,7 +53,7 @@ With either product, your team must check new integrations and consent changes. 
 
 Some integrations load with denied signals. Withdrawal normally reloads the page, and optional cleanup cannot remove all vendor data.
 
-Include setup and backend operation when you compare the total work and cost.
+Include setup and your Inth plan when you compare the total work and cost.
 
 ## Test the application boundary
 

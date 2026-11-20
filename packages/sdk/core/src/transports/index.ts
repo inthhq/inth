@@ -1,8 +1,6 @@
 /**
- * Transport factories. Each export is optional — consumers pick the one
- * that matches their backend shape. An adapter author who builds their own
- * transport returns a `KernelTransport`: a plain object with optional async
- * `init`, `save` and `identify`, typed by the names re-exported below.
+ * Transports for an Inth project's `/v1` routes, the offline transport, and
+ * the types a provider's transport factory works with.
  *
  * Public subpath: `@inth/sdk/transports`.
  */
@@ -15,13 +13,6 @@ export type {
 	SavePayload,
 	SaveResult,
 } from '../types';
-export type { HostedKernelTransport, HostedTransportOptions } from './hosted';
-export { createHostedTransport } from './hosted';
-export type {
-	HostedRecordTransport,
-	HostedRecordTransportOptions,
-} from './hosted-records';
-export { createHostedRecordTransport } from './hosted-records';
 export type {
 	MapInitOutputOptions,
 	TransportInitResponse,
@@ -62,29 +53,10 @@ export { createOfflineTransport } from './offline';
 // Deprecated, kept for `@inth/react-native` only.
 export { offline } from './offline';
 export type { OfflineModeOptions } from './offline';
-export { custom } from './custom';
 export {
 	ConsentSaveRejectedError,
 	isConsentSaveRejection,
 } from './save-rejection';
-export type { SubjectPostBody, SubjectSavePayload } from './subject-body';
-export { buildConfirmedChoiceWire, buildSubjectPostBody } from './subject-body';
-export type {
-	MapSubjectRecordOptions,
-	TransportHydrationRecords,
-} from './subject-record';
-export {
-	mapSubjectRecordToHydrationRecords,
-	reviveSubjectRecord,
-} from './subject-record';
-export {
-	INTH_POLICY_CONTRACT_HEADER,
-	INTH_VERSION_HEADER,
-	inthProtocolHeaders,
-	inthProtocolParams,
-	inthVersionHeaders,
-	readProducerPolicyContract,
-} from '../libs/version-header';
 export {
 	deferInitGvl,
 	createGvlReferenceUrl,

@@ -69,7 +69,7 @@ export interface LoadConsentOptions extends ConsentRequestOptions {
 	fetch?: typeof globalThis.fetch;
 
 	/**
-	 * Longest `loadConsent` waits for the manifest or the backend `/init`,
+	 * Longest `loadConsent` waits for the manifest or the backend `/v1/consent/init`,
 	 * in milliseconds. When it runs out, `loadConsent` returns the
 	 * cookie-only state, the same as when the call fails: the page renders
 	 * without consent UI in the server HTML, optional categories stay
@@ -86,7 +86,7 @@ export interface LoadConsentOptions extends ConsentRequestOptions {
 	/**
 	 * The banner experiment with the arm this request runs, from your
 	 * feature flag. While the visitor has no stored choice, the server's
-	 * `/init` carries the arm, or its session report does in manifest mode.
+	 * `/v1/consent/init` carries the arm, or its session report does in manifest mode.
 	 * The state carries the experiment to `ConsentRoot`.
 	 */
 	experiment?: ServerExperiment;
@@ -160,7 +160,7 @@ const requestFrom = function requestFrom(
  * It resolves with the mode `inthHandle()` was given. With none, or with
  * `manifest()`, it resolves from the snapshot `consentManifest()`
  * downloaded, or fetches and caches the backend's manifest. With
- * `hosted()` it asks the backend's `/init`.
+ * `hosted()` it asks the backend's `/v1/consent/init`.
  *
  * Never throws: a failed upstream call degrades to the cookie-only state
  * rather than taking the page down with it. Neither does a slow one: after

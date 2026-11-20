@@ -83,7 +83,7 @@ const alias = {
 	),
 	'@inth/sdk/transports/manifest': resolve(
 		__dirname,
-		'../core/src/transports/manifest.ts'
+		'../core/src/transports/v1/manifest.ts'
 	),
 	'@inth/sdk/transports': resolve(__dirname, '../core/src/transports/index.ts'),
 	'@inth/sdk/consent-record': resolve(

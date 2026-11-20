@@ -137,7 +137,7 @@ describe('browser outbox store', () => {
 			.fn()
 			.mockRejectedValueOnce(
 				new ConsentSaveRejectedError({
-					code: 'SUBJECT_CONFLICT',
+					code: 'subject_conflict',
 					message: '/subjects responded 409',
 					status: 409,
 				})
@@ -250,7 +250,7 @@ describe('browser outbox store', () => {
 			.fn()
 			.mockRejectedValueOnce(
 				new ConsentSaveRejectedError({
-					code: 'SUBJECT_CONFLICT',
+					code: 'subject_conflict',
 					message: '/subjects responded 409',
 					status: 409,
 				})

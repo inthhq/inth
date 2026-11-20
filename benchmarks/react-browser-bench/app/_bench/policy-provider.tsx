@@ -8,7 +8,7 @@ import {
 	hosted,
 } from '@inth/react';
 import type { ConsentProviderOptions, WithProjectUrl } from '@inth/react';
-import { createConsentKernel, createHostedTransport } from '@inth/sdk/engine';
+import { createConsentKernel, createV1HostedTransport } from '@inth/sdk/engine';
 import type { InitResponse } from '@inth/sdk/engine';
 import { createPersistence } from '@inth/sdk/modules/persistence';
 import { useEffect } from 'react';
@@ -86,7 +86,7 @@ const measureHydration = async function measureHydration(
 ): Promise<PolicyHydrationMeasurement> {
 	// Resolve the fixture's init once; each kernel then carries that policy
 	// and pays only the synchronous storage read during hydrate().
-	const transport = createHostedTransport({ projectUrl });
+	const transport = createV1HostedTransport({ projectUrl });
 	const response = (await transport.init?.({
 		overrides: {},
 		user: null,

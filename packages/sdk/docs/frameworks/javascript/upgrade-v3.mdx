@@ -16,7 +16,7 @@ group: frameworks
   5. The codemods write c15t v3 paths. Point `c15t` imports at `@inth/sdk/engine`, `c15t/runtime` at `@inth/sdk/runtime` and `@c15t/integrations` at `@inth/integrations`, then remove the c15t packages.
   6. If you picked `createConsentRuntime`, call `runtime.start()` after creating it. Replace each store call with its v3 equivalent from the guide's mapping table.
   7. Update callbacks and policy presets as the guide describes.
-  8. Keep the existing backend URL. If the app runs its own c15t backend, stop and tell me, because it has to be upgraded in the same release with https://v3.c15t.com/docs/self-host/upgrade-v3.md.
+  8. Point the app at its Inth project URL. If the app uses a c15t backend it runs itself, stop and tell me: Inth's SDK talks only to an Inth project.
   9. Run the typecheck and build, and resolve every `TODO(c15t v3)` comment.
 
   When you finish, list the files you changed, anything you could not migrate, and how you checked that vendor requests still wait for consent.
@@ -24,10 +24,8 @@ group: frameworks
 
 ## Before you start
 
-If you run your own c15t backend, upgrade it in the same release. A v3 client
-can't read a v2 backend. See
-[Upgrade a self-hosted backend](/docs/self-host/upgrade-v3).
-Inth-hosted backends need no change.
+The Inth SDK talks only to an Inth project. An app on a c15t backend it runs
+itself moves to an Inth project first.
 
 Install the [Inth CLI](/docs/cli/overview#install-the-inth-cli) to run the
 codemods through `inth c15t codemods`. The codemods come from c15t, so they
@@ -107,7 +105,7 @@ choice, so don't treat a `true` permission as a recorded grant. See
 | `loadScripts`, `unloadScripts`, `updateScripts`, `isScriptLoaded`, `getLoadedScriptIds` | Removed. Pass `scripts` to `createConsentRuntime()`, which mounts the loader on `start()`. To run a loader yourself, `createScriptLoader({ kernel, scripts })` from `@inth/sdk/modules/script-loader` returns `updateScripts(next)`, `getLoadedScriptIds()` and `dispose()`. Use `getLoadedScriptIds().includes(id)` for `isScriptLoaded(id)`. |
 | `createIframeBlocker` | `@inth/sdk/modules/iframe-blocker` |
 | `getEffectivePolicy`, `filterConsentCategoriesByPolicy` and the other policy helpers | `resolveConsentPresentation()` from `@inth/sdk/engine` and the helpers in `@inth/sdk/surface-actions` |
-| `C15tClient`, `OfflineClient`, `CustomClient`, `API_ENDPOINTS` | Transports: `hosted()`, `local()` and `custom()` from `@inth/sdk/engine` |
+| `C15tClient`, `OfflineClient`, `CustomClient`, `API_ENDPOINTS` | Modes: `hosted()` and `manifest()` from `@inth/sdk`, or `testing()` from `@inth/sdk/testing` |
 | `policyPackPresets` | `policyRulePresets` |
 | `configureConsentManager`, `createConsentManagerStore`, `clearConsentRuntimeCache` | Removed |
 

@@ -15,7 +15,7 @@ import type {
 } from '@inth/nextjs';
 // The provider arms take transports; `hosted` from `@inth/nextjs` is data.
 import { hosted as hostedTransport } from '@inth/sdk/transports';
-import { createManifestTransport } from '@inth/sdk/transports/manifest';
+import { createV1ManifestTransport } from '@inth/sdk/transports/manifest';
 import { useMemo } from 'react';
 import type { ReactNode } from 'react';
 
@@ -113,7 +113,7 @@ export const NextjsManifestClientBenchmarkProvider = ({
 }) => {
 	const transport = useMemo(
 		() =>
-			createManifestTransport({
+			createV1ManifestTransport({
 				manifestUrl: '/api/inth/v1/consent/manifest',
 				projectUrl: '/api/bench-consent',
 			}),

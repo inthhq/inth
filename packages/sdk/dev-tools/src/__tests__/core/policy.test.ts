@@ -287,7 +287,10 @@ it('preserves an edit made while an earlier save waits for its canonical subject
 		subjectId: string;
 	}>();
 	const save = vi.fn(() => acknowledgement.promise);
-	const kernel = createConsentKernel({ transport: { save } });
+	const kernel = createConsentKernel({
+		initialRecords: { subject: { subjectId: 'sub_legacy_devtools' } },
+		transport: { save },
+	});
 	cleanups.push(kernel.dispose);
 	// A c15t visitor: the backend answers the UUID of its `sub_` ID.
 	kernel.set.subjectId('sub_2VZxR7YmNpKq3WfLs8TgHd');

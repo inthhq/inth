@@ -202,7 +202,7 @@ const noop = () => {
  * The consent engine is a chunk of its own. Until it loads, the manager
  * renders the snapshot the server rendered with (or a pending one without
  * a server render), and a banner tap is recorded without it. It starts
- * (storage, `/init`, script loading, IAB) only in the browser, after the
+ * (storage, `/v1/consent/init`, script loading, IAB) only in the browser, after the
  * first render, so hydration sees the state the server rendered with; for
  * a visitor the server's state lets wait, after the page's priority
  * images (`deferred/trigger.ts`).

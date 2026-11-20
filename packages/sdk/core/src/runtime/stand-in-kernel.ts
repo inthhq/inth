@@ -84,7 +84,7 @@ export interface StandInKernelHandle {
 	) => boolean;
 	/**
 	 * Replace the snapshot reads return until the engine attaches, as when a
-	 * client-rendered root learns the policy from a prefetched `/init`.
+	 * client-rendered root learns the policy from a prefetched `/v1/consent/init`.
 	 * Ignored once attached.
 	 */
 	setSnapshot: (snapshot: ConsentSnapshot) => void;

@@ -143,7 +143,7 @@ export const selectedMode = function selectedMode(options: {
 
 /**
  * Resolve policies from a consent manifest, on the server or in the
- * browser. The resolver loads with the first `/init` it answers.
+ * browser. The resolver loads with the first `/v1/consent/init` it answers.
  *
  * @param options - The manifest's URL or snapshot, and where to resolve.
  * @returns A transport factory for `provideInth()`'s `mode`, carrying its

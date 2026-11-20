@@ -1,6 +1,6 @@
 /**
  * The warning manifest mode logs when it answers from the backend's
- * `/init` because the consent manifest is unavailable.
+ * `/v1/consent/init` because the consent manifest is unavailable.
  *
  * @packageDocumentation
  * @internal
@@ -10,7 +10,7 @@ const warned = new Set<string>();
 
 /**
  * Warns, once per manifest source, that consent resolves from the
- * backend's `/init` because the manifest could not be read.
+ * backend's `/v1/consent/init` because the manifest could not be read.
  *
  * @param source - The manifest URL, or another name for where it was read.
  * @internal

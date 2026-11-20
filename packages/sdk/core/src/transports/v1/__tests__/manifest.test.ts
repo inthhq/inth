@@ -115,6 +115,20 @@ describe('GET /v1/consent/manifest', () => {
 	});
 });
 
+describe('options', () => {
+	test('names projectUrl when only manifestUrl is set', () => {
+		expect(() =>
+			createV1ManifestTransport({
+				manifestUrl: 'https://cdn.example.com/policy.json',
+			} as never)
+		).toThrowError(
+			new TypeError(
+				'Inth manifest transport: pass projectUrl, your Inth project URL. Saves go there, and the manifest is read from it unless manifestUrl is set.'
+			)
+		);
+	});
+});
+
 describe('a manifest body that is not an object', () => {
 	test('fails the init and is fetched again by the next one', async () => {
 		let attempts = 0;
@@ -163,6 +177,95 @@ describe('the IAB vendor list', () => {
 		await transport.init({ overrides: {}, user: null });
 
 		expect(urls).toEqual([`${PROJECT_URL}/gvl/vendor-list.json`]);
+	});
+});
+
+/** An IAB manifest that lists Google Additional Consent providers at `url`. */
+const iabManifest = function iabManifest(additionalConsent?: {
+	providers: number[];
+	url: string;
+}): ConsentManifest {
+	return {
+		...MANIFEST,
+		cmpId: 28,
+		iab: {
+			enabled: true,
+			gvl: { url: '/gvl/vendor-list.json' },
+			...(additionalConsent && { additionalConsent }),
+		},
+		policyPacks: [
+			createConsentManifestPolicyPack({
+				id: 'iab',
+				match: { fallback: true },
+				model: 'iab',
+				prompt: 'choice',
+			}),
+		],
+	} as unknown as ConsentManifest;
+};
+
+const META = { id: 89, name: 'Meta', policyUrl: 'https://meta.example/p' };
+
+describe('Google Additional Consent providers', () => {
+	test('loads the providers the manifest lists', async () => {
+		const { calls, fetch } = stubFetch(() =>
+			json(200, { providers: { '89': META } })
+		);
+		const transport = createV1ManifestTransport({
+			fetch,
+			fetchGvl: () => Promise.resolve(null),
+			projectUrl: PROJECT_URL,
+			snapshot: iabManifest({
+				providers: [89, 404],
+				url: 'https://lists.example/ac-manifest',
+			}),
+		});
+
+		const response = await transport.init({ overrides: {}, user: null });
+
+		expect(response.adTechProviders).toEqual([META]);
+		expect(calls.map((call) => call.url)).toEqual([
+			'https://lists.example/ac-manifest?providerIds=89%2C404',
+		]);
+	});
+
+	test('resolves a relative provider URL against the manifest URL, not projectUrl', async () => {
+		const { calls, fetch } = stubFetch(() =>
+			json(200, { providers: { '89': META } })
+		);
+		const transport = createV1ManifestTransport({
+			fetch,
+			fetchGvl: () => Promise.resolve(null),
+			manifestUrl: 'https://cdn.example.com/policies/manifest.json',
+			projectUrl: PROJECT_URL,
+			snapshot: iabManifest({ providers: [89], url: 'ac-providers.json' }),
+		});
+
+		const response = await transport.init({ overrides: {}, user: null });
+
+		expect(calls.map((call) => call.url)).toEqual([
+			'https://cdn.example.com/policies/ac-providers.json?providerIds=89',
+		]);
+		expect(response.adTechProviders).toHaveLength(1);
+	});
+
+	test('withdraws them once the manifest stops listing them, but not when the list is down', async () => {
+		const init = (snapshot: ConsentManifest, fetch: typeof globalThis.fetch) =>
+			createV1ManifestTransport({
+				fetch,
+				fetchGvl: () => Promise.resolve(null),
+				projectUrl: PROJECT_URL,
+				snapshot,
+			}).init({ overrides: {}, user: null });
+
+		const unlisted = await init(iabManifest(), stubFetch().fetch);
+		expect(unlisted.adTechProviders).toEqual([]);
+
+		const down = await init(
+			iabManifest({ providers: [89], url: 'https://lists.example/ac-down' }),
+			stubFetch(() => new Response('', { status: 503 })).fetch
+		);
+		expect(down).not.toHaveProperty('adTechProviders');
 	});
 });
 
@@ -216,6 +319,36 @@ describe('saves in manifest mode', () => {
 });
 
 describe('POST /v1/consent/sessions', () => {
+	test('reports the journey under the configured property', async () => {
+		const { calls, fetch } = stubFetch(
+			() => new Response(null, { status: 202 })
+		);
+		let reported: Promise<void> | undefined;
+		const transport = createV1ManifestTransport({
+			fetch,
+			projectUrl: PROJECT_URL,
+			property: 'shop.example',
+			report: {
+				source: 'render',
+				waitUntil: (task) => {
+					reported = task;
+				},
+			},
+			snapshot: MANIFEST,
+		});
+
+		await transport.init({
+			journey: JOURNEY,
+			overrides: { country: 'DE' },
+			user: null,
+		});
+		await reported;
+
+		expect(calls[0]?.body).toMatchObject({
+			journey: { id: JOURNEY.id, property: 'shop.example' },
+		});
+	});
+
 	test('a server caller reports the resolution with the visitor headers', async () => {
 		const { calls, fetch } = stubFetch(
 			() => new Response(null, { status: 202 })

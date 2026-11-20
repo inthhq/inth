@@ -41,8 +41,8 @@ export interface InthHandleOptions extends ConsentRequestOptions {
 	 *
 	 * - Omitted, or `manifest()` from `@inth/svelte/kit`: resolve from the
 	 *   backend's consent manifest, which the build downloads. When it is
-	 *   unavailable, ask the backend's `/init` and log a warning.
-	 * - `hosted()` from `@inth/svelte/kit`: ask the backend's `/init` for
+	 *   unavailable, ask the backend's `/v1/consent/init` and log a warning.
+	 * - `hosted()` from `@inth/svelte/kit`: ask the backend's `/v1/consent/init` for
 	 *   every visitor.
 	 * - `testing()` from `@inth/svelte/testing`: the server resolves
 	 *   nothing, and the browser resolves a policy with no network; its
@@ -56,7 +56,7 @@ export interface InthHandleOptions extends ConsentRequestOptions {
 	 * `src/routes/api/inth/[...path]/+server.ts`. The browser then resolves
 	 * consent on pages the server did not, such as prerendered ones,
 	 * through the app's own route. Without it, the browser asks the
-	 * backend's `/init`. `/` is rejected: a catch-all route at the site
+	 * backend's `/v1/consent/init`. `/` is rejected: a catch-all route at the site
 	 * root would catch every page.
 	 */
 	routePrefix?: string;

@@ -18,7 +18,7 @@ Valibot schemas and TypeScript types for the Inth consent API. The Inth backend,
 
 ## Installation
 
-Most apps get this package through `@inth/sdk`, `@c15t/backend`, or `@c15t/node-sdk`. Install it directly to validate consent API payloads in your own code:
+Most apps get this package through `@inth/sdk`. Install it directly to validate consent API payloads in your own code:
 
 ```bash
 pnpm add @inth/sdk-schema
@@ -26,7 +26,7 @@ pnpm add @inth/sdk-schema
 
 ## Documentation
 
-See the [documentation](https://c15t.com/docs/self-host/api/node-sdk) for guides, API reference, and examples.
+See the [documentation](https://c15t.com/docs) for guides, API reference, and examples.
 
 ## Support
 

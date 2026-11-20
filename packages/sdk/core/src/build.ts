@@ -70,7 +70,7 @@ const resolveBuildManifestUrl = (
 
 /**
  * Loads a snapshot from an absolute upstream URL during framework setup.
- * @param options - Manifest URL, or backend URL whose `/manifest` is read.
+ * @param options - Manifest URL, or backend URL whose `/v1/consent/manifest` is read.
  * @param label - Framework name for errors.
  * @throws {Error} When the source is relative, missing or cannot be fetched.
  * @internal
@@ -101,7 +101,7 @@ const BUILD_MANIFEST_TIMEOUT_MS = 10_000;
 /**
  * Whether a build can fetch the manifest: the upstream URL is absolute
  * http(s). A relative URL points at the app being built.
- * @param options - Manifest URL, or backend URL whose `/manifest` is read.
+ * @param options - Manifest URL, or backend URL whose `/v1/consent/manifest` is read.
  * @returns `true` when {@link loadBuildManifest} has a URL to fetch.
  * @internal
  */
@@ -120,7 +120,7 @@ const hasBuildManifestSource = (options: {
 /**
  * What happens when the build-time manifest fetch fails. `'runtime'` (the
  * default) logs a warning, and the server fetches the policy at runtime,
- * falling back to the backend's `/init` when the manifest is still
+ * falling back to the backend's `/v1/consent/init` when the manifest is still
  * unavailable. `'fail'` stops the command with an error.
  */
 export type ManifestBuildErrorMode = 'runtime' | 'fail';
@@ -469,7 +469,7 @@ const reportFetchFailure = (
  * - The fetch waits at most 10 seconds.
  * - When it fails, `onBuildError` decides: `'runtime'` (the default)
  *   warns and returns `undefined` so the server fetches the policy at
- *   runtime, and asks the backend's `/init` when that fails too. `'fail'`
+ *   runtime, and asks the backend's `/v1/consent/init` when that fails too. `'fail'`
  *   throws. `INTH_ON_BUILD_ERROR` overrides the option.
  * - A missing backend URL counts as a failed fetch: `'fail'` throws, the
  *   default warns, and an explicit `'runtime'` skips with a notice.
@@ -477,7 +477,7 @@ const reportFetchFailure = (
  *   non-http(s) URL, unless `onBuildError` is explicitly `'fail'`, which
  *   then throws.
  *
- * @param source - Manifest URL, or backend URL whose `/manifest` is read.
+ * @param source - Manifest URL, or backend URL whose `/v1/consent/manifest` is read.
  * @param policy - Command, label, logger, `onBuildError` and skip reason.
  * @returns The deployment's manifest, or `undefined` to fetch at runtime.
  * @throws {Error} When the fetch fails in `'fail'` mode, or `onBuildError`
@@ -547,14 +547,14 @@ export const loadManifestForBuild = async (
 /** Options every build integration takes. */
 export interface ManifestBuildOptions {
 	/**
-	 * Absolute backend base URL. The build appends `/manifest`. Framework
+	 * Absolute backend base URL. The build appends `/v1/consent/manifest`. Framework
 	 * integrations read their public backend URL variable when it is unset.
 	 */
 	projectUrl?: string;
 	/**
 	 * What a failed manifest fetch does. `'runtime'` (the default) logs a
 	 * warning, and the server fetches the policy at runtime, asking the
-	 * backend's `/init` while the manifest is unavailable. `'fail'` stops
+	 * backend's `/v1/consent/init` while the manifest is unavailable. `'fail'` stops
 	 * the command. The `INTH_ON_BUILD_ERROR` environment variable
 	 * overrides this option.
 	 */
@@ -582,7 +582,7 @@ export interface ConsentManifestPluginOptions extends ManifestBuildOptions {
 	 */
 	source?: 'build' | 'runtime';
 	/**
-	 * Adds an inline script to `index.html` that sends the `/init` request
+	 * Adds an inline script to `index.html` that sends the `/v1/consent/init` request
 	 * as the browser parses `<head>`, while the bundle downloads. `hosted()`
 	 * then reads that response instead of sending its own request.
 	 *
@@ -590,7 +590,7 @@ export interface ConsentManifestPluginOptions extends ManifestBuildOptions {
 	 * `manifest()` does, or sets `source: 'runtime'` leaves the script out,
 	 * and so does a server-rendered app. The dev server can't tell which
 	 * mode the app uses and always adds it, so a `manifest()` app sends one
-	 * unused `/init` per page load in dev. Pass `false` to turn it off, or
+	 * unused `/v1/consent/init` per page load in dev. Pass `false` to turn it off, or
 	 * an object when the app sets `credentials`, `overrides` or `storageKey`
 	 * on `hosted()` or the provider, turns `journey` off or runs an
 	 * `experiment`, so the early request matches the one the app would send.
@@ -607,7 +607,7 @@ export interface ConsentManifestPluginOptions extends ManifestBuildOptions {
 	 *
 	 * `vite build` reads the manifest and renders the banner of its first
 	 * choice policy, in the page's `<html lang>` (else English), hidden. The
-	 * `/init` script then shows it when the answer names the same policy,
+	 * `/v1/consent/init` script then shows it when the answer names the same policy,
 	 * language, branding and copy, and the visitor has no stored choice;
 	 * otherwise the page removes it. `<ConsentBanner />` takes its place when
 	 * it renders. A tap on it before then hides it and is recorded once the
@@ -629,7 +629,7 @@ export interface ConsentManifestPluginOptions extends ManifestBuildOptions {
 	staticBanner?: boolean;
 }
 
-/** Options of the inline `/init` script `initPrefetch` adds. */
+/** Options of the inline `/v1/consent/init` script `initPrefetch` adds. */
 export type InitPrefetchOptions = Pick<
 	PrefetchOptions,
 	'credentials' | 'experiment' | 'journey' | 'overrides' | 'storageKey'
@@ -1059,7 +1059,7 @@ export interface ManifestHtmlContext {
 /**
  * Logged when a single-page app bundles a policy that depends on where the
  * visitor is. The browser doesn't know that, so `manifest()` asks the
- * backend's `/init` anyway unless the page supplies a location.
+ * backend's `/v1/consent/init` anyway unless the page supplies a location.
  */
 const LOCATION_ADVICE =
 	"the consent policy depends on the visitor's location, which the browser doesn't know. Unless you pass `inputs` or `geoUrl` to `manifest()`, every first visit still calls the backend's init, so the bundled policy adds bytes without saving a request. Consider leaving out `mode` and setting only `projectUrl`, which asks the hosted backend instead.";
@@ -1305,7 +1305,7 @@ export const createConsentManifestPlugin = (
 	/**
 	 * Whether this build puts the stock banner's stylesheets in its pages,
 	 * and so gives `@inth/react` the sheets' deferred modules: a production
-	 * client build of HTML pages that get the `/init` script.
+	 * client build of HTML pages that get the `/v1/consent/init` script.
 	 */
 	const staticBannerOn = (): boolean => {
 		const { initPrefetch = true } = options;
@@ -1333,7 +1333,7 @@ export const createConsentManifestPlugin = (
 	};
 	/**
 	 * Adds the banner's stylesheets to a page whose entry imports the stock
-	 * banner, and the banner itself when the page got the `/init` script.
+	 * banner, and the banner itself when the page got the `/v1/consent/init` script.
 	 */
 	const addStaticBanner = async (
 		html: string,
@@ -1596,7 +1596,7 @@ export const createConsentManifestPlugin = (
  * `snapshot` is `undefined`. Set `onBuildError` or `INTH_ON_BUILD_ERROR` to
  * change that. When the policy depends on the visitor's location, it warns
  * and suggests the hosted backend, since the browser's `manifest()` then still asks
- * the backend's `/init` unless the page passes `inputs` or `geoUrl`. With
+ * the backend's `/v1/consent/init` unless the page passes `inputs` or `geoUrl`. With
  * an absolute `manifest({ manifestUrl })` or
  * `manifest({ source: 'runtime' })`, pass `source: 'runtime'` here too, so
  * the build never fetches a snapshot the app would discard.

@@ -23,7 +23,7 @@ const prefetchBaseFor = function prefetchBaseFor(
 /**
  * Finds the init response a `consentPrefetchHead()` script started for
  * this root's init endpoint, so the provider can consume it instead of
- * issuing a second `/init` request. Client only; `undefined` on the server
+ * issuing a second `/v1/consent/init` request. Client only; `undefined` on the server
  * or when no matching prefetch exists.
  */
 export const readPrefetchedInitialData =
@@ -42,7 +42,7 @@ export const readPrefetchedInitialData =
 	};
 
 /**
- * Builds a route `head()` fragment that starts the `/init` prefetch before
+ * Builds a route `head()` fragment that starts the `/v1/consent/init` prefetch before
  * hydration. This is the TanStack Start equivalent of the Next.js
  * `InthPrefetch` script: the inline script issues the init request as
  * early as the browser parses `<head>`, and the client runtime consumes

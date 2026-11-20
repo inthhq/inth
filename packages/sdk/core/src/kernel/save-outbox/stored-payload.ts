@@ -15,9 +15,9 @@ import type { SavePayload } from '../../types';
  * @returns The payload to store.
  * @internal
  */
-export const toStoredPayload = function toStoredPayload(
-	payload: SavePayload
-): SavePayload {
+export const toStoredPayload = function toStoredPayload<
+	Payload extends Pick<SavePayload, 'user'>,
+>(payload: Payload): Payload {
 	if (payload.user?.identityToken === undefined) {
 		return payload;
 	}

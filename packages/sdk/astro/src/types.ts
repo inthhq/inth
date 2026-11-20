@@ -101,7 +101,7 @@ export interface InthAstroOptions {
 	/**
 	 * Your Inth backend: the browser saves consent there with
 	 * `POST /v1/consent/records`, `manifest()` reads `${projectUrl}/v1/consent/manifest`, and
-	 * `hosted()` asks its `/init`. Required unless `mode` is `testing()`.
+	 * `hosted()` asks its `/v1/consent/init`. Required unless `mode` is `testing()`.
 	 *
 	 * Defaults to `PUBLIC_INTH_PROJECT_URL`, read from the environment or a
 	 * `.env` file in the project root when `astro.config.mjs` loads.
@@ -114,10 +114,10 @@ export interface InthAstroOptions {
 	 * `manifest()` downloads your project's policy when `astro build` or
 	 * `astro dev` starts and resolves each visitor on the server. When the
 	 * manifest is unavailable, the server and the consent route ask the
-	 * backend's `/init` and log a warning.
+	 * backend's `/v1/consent/init` and log a warning.
 	 * `manifest({ source: 'runtime' })` fetches it at runtime instead, so
 	 * policy edits apply without a rebuild. `hosted()` asks the backend's
-	 * `/init` for every visitor. `testing()` resolves a policy with no
+	 * `/v1/consent/init` for every visitor. `testing()` resolves a policy with no
 	 * backend, for tests, and throws in production builds.
 	 *
 	 * @default manifest()
@@ -127,7 +127,7 @@ export interface InthAstroOptions {
 	 * Path of the route the integration injects for `manifest()` mode, which
 	 * answers `${routePrefix}/v1/consent/init` and `${routePrefix}/v1/consent/manifest`. A page
 	 * whose consent changes after it loads asks it again. `false` injects
-	 * nothing, and the browser then asks the backend's `/init` instead; it
+	 * nothing, and the browser then asks the backend's `/v1/consent/init` instead; it
 	 * never calls a route of your own at that path.
 	 *
 	 * The route renders on demand, so `astro build` needs a server adapter.
@@ -142,7 +142,7 @@ export interface InthAstroOptions {
 	/**
 	 * What a failed build-time manifest fetch does. `'runtime'` (the
 	 * default) logs a warning, and the server fetches the policy at
-	 * runtime, asking the backend's `/init` while the manifest is
+	 * runtime, asking the backend's `/v1/consent/init` while the manifest is
 	 * unavailable. `'fail'` stops `astro build` and `astro dev`. The
 	 * `INTH_ON_BUILD_ERROR` environment variable
 	 * overrides this option. The fetch waits at most 10 seconds.
@@ -380,13 +380,13 @@ export interface InthIABOptions {
 	 *
 	 * The server needs a GVL to render `<IABConsentBanner />` at all — the
 	 * banner names the purposes and counts the vendors — so hosted and
-	 * manifest mode get theirs from `/init`. Offline mode has no backend to
+	 * manifest mode get theirs from `/v1/consent/init`. Offline mode has no backend to
 	 * ask, which is what this is for: a pinned list, or a fixture in a
 	 * demo. It is inlined into the page's boot payload, so keep it trimmed
 	 * to the vendors the site actually works with.
 	 */
 	gvl?: GlobalVendorList;
-	/** IAB-registered CMP ID. A hosted backend can supply it through `/init`. */
+	/** IAB-registered CMP ID. A hosted backend can supply it through `/v1/consent/init`. */
 	cmpId?: number;
 	/** CMP version reported through `__tcfapi`. */
 	cmpVersion?: number;
@@ -523,7 +523,7 @@ export interface InthLocals {
 	/**
 	 * Server-resolved kernel configuration. `<ConsentScript />` and
 	 * `<ConsentBanner />` inline it as a JSON data block (see
-	 * `buildConfigJSON()`) so the browser boots with no `/init` roundtrip.
+	 * `buildConfigJSON()`) so the browser boots with no `/v1/consent/init` roundtrip.
 	 */
 	config: KernelConfig;
 

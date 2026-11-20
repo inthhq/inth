@@ -12,7 +12,7 @@ import { testWire } from './policy-fixture';
  * @param gvl - `'inline'` sends the list itself; `'reference'` sends the
  * reference Inth's own init routes send in its place; `'null'` turns IAB
  * off for the request.
- * @returns A fresh `/init` response.
+ * @returns A fresh `/v1/consent/init` response.
  */
 export const iabInitResponse = function iabInitResponse(
 	gvl: 'inline' | 'reference' | 'null' = 'inline'

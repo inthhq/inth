@@ -420,6 +420,12 @@ describe('GET /v1/consent/check', () => {
 		expect(Object.keys(output.results)).toEqual(['constructor', 'terms_us']);
 	});
 
+	it('refuses an answer with no result', () => {
+		expect(
+			v.safeParse(v1ConsentCheckOutputSchema, { results: {} }).success
+		).toBe(false);
+	});
+
 	it('refuses a malformed result', () => {
 		expect(
 			v.safeParse(v1ConsentCheckOutputSchema, {

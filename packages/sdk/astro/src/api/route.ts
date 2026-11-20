@@ -3,7 +3,7 @@
  * `${routePrefix}/[...path]`.
  *
  * `init` resolves the visitor's policy from the build's snapshot, or a
- * cached manifest, so a page that inits again gets an `/init` payload
+ * cached manifest, so a page that inits again gets a `/v1/consent/init` payload
  * without the backend on the request path and without the manifest in
  * client JavaScript. `manifest` proxies the backend's manifest with its
  * cache headers intact.

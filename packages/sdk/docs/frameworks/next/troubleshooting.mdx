@@ -19,7 +19,7 @@ Without it, the helper logs a warning only outside production.
 URL.
 
 **Fix.** Set the config's `projectUrl`, or `NEXT_PUBLIC_INTH_PROJECT_URL`, to
-the absolute Inth or self-hosted backend endpoint. To send the browser through
+your absolute Inth project URL. To send the browser through
 `/api/inth`, set `proxy: true` and `routePrefix` instead of a relative
 `projectUrl`; the route keeps the absolute URL. See
 [Next.js optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin).
@@ -62,7 +62,7 @@ error. The usual cause is an import Node can't load at build time, such as a
 stylesheet. Keep `inth.config.ts` to the config and the packages it needs.
 
 **Fix.** Set `NEXT_PUBLIC_INTH_PROJECT_URL` to the absolute backend URL from your Inth
-project, or your self-hosted origin with its path prefix, wherever
+project wherever
 `next build` runs, including CI. To deploy while the backend is down, run the
 build with `INTH_ON_BUILD_ERROR=runtime`, or set `onBuildError: 'runtime'`.
 The deployment then works without a snapshot, and each server fetches the

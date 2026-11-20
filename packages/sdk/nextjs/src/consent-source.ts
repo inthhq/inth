@@ -31,7 +31,7 @@ export interface ConsentSourceOptions {
 	projectUrl?: string;
 
 	/**
-	 * Absolute `GET /manifest` URL. Defaults to the mode's absolute
+	 * Absolute `GET /v1/consent/manifest` URL. Defaults to the mode's absolute
 	 * `manifestUrl`, then `${projectUrl}/v1/consent/manifest`. Setting it resolves
 	 * from the manifest whatever the mode.
 	 */

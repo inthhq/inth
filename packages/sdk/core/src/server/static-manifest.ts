@@ -1,6 +1,6 @@
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 
-import { failedResponseError } from '../libs/failed-response';
+import { readApiError } from '../transports/v1/error';
 import { V1_ROUTES } from '../transports/v1/paths';
 
 /** Names that parse but cannot be bound with `export const`. */
@@ -80,10 +80,7 @@ export const loadStaticManifest = async (
 		method: 'GET',
 	});
 	if (!response.ok) {
-		throw await failedResponseError(
-			`${label}: ${V1_ROUTES.manifest}`,
-			response
-		);
+		throw await readApiError(`${label}: ${V1_ROUTES.manifest}`, response);
 	}
 	try {
 		// Build/static loading owns validation; request resolvers need no schemas.

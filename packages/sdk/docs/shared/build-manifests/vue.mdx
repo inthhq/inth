@@ -25,7 +25,7 @@ backend's `/init` instead. The app bundles the policy and English copy, and
 loads the resolver as its own chunk when it needs it.
 
 When the build has no snapshot, as in `vite dev` after a failed download,
-`manifest()` fetches `${projectUrl}/manifest` when the app starts.
+`manifest()` fetches `${projectUrl}/v1/consent/manifest` when the app starts.
 
 <include src="../build-time-manifest-notes.mdx" />
 

@@ -142,8 +142,14 @@ expectTypeOf<
 // queued save is stored without it and a replay sends none. A native queue that
 // replays verbatim therefore matches the kernel without it, and the phone has no
 // browser journey to send.
-expectTypeOf<Wire<NativeSavePayload>>().toEqualTypeOf<
-	Wire<Omit<KernelSavePayload, 'journey'>>
+//
+// `idempotencyKey` is optional here and required in the kernel: the native cores
+// make no key, and their queue replays a stored body as it was written.
+expectTypeOf<Wire<Omit<NativeSavePayload, 'idempotencyKey'>>>().toEqualTypeOf<
+	Wire<Omit<KernelSavePayload, 'journey' | 'idempotencyKey'>>
+>();
+expectTypeOf<NativeSavePayload['idempotencyKey']>().toEqualTypeOf<
+	KernelSavePayload['idempotencyKey'] | undefined
 >();
 expectTypeOf<KernelUser>().toEqualTypeOf<KernelUserType>();
 

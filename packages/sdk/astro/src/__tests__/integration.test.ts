@@ -376,7 +376,7 @@ describe('resolveOptions', () => {
 				projectUrl: 'https://consent.example.com',
 			})
 		).rejects.toThrow(
-			"@inth/astro: could not fetch the consent manifest from https://consent.example.com/v1/consent/manifest during the build (/v1/consent/manifest responded 503 ). Set `INTH_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
+			"@inth/astro: could not fetch the consent manifest from https://consent.example.com/v1/consent/manifest during the build (/v1/consent/manifest responded 503 (server_error)). Set `INTH_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
 		);
 	});
 
@@ -705,7 +705,7 @@ describe('resolveOptions', () => {
 	});
 
 	it('rejects a manifestUrl with nowhere to save consent', () => {
-		// The injected routes serve init and manifest; `POST /subjects` is
+		// The injected routes serve init and manifest; `POST /v1/consent/records` is
 		// the backend's, so a `manifestUrl` without one would 404 on save.
 		expect(() =>
 			resolveOptions({ mode: manifestMode({ manifestUrl: '/m.json' }) })

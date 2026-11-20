@@ -429,11 +429,7 @@ a flag on those pages.
 
 ### Where the counts go
 
-On Inth, the dashboard reads both counts for you. A self-hosted backend
-hands each session report to `sessions.onReport`, which is where you log or
-count it; `experiment` is on the report. Choices are in the `consent` table,
-and [`GET /experiments/:id/summary`](#read-the-summary-from-your-backend)
-groups them per arm.
+The Inth dashboard reads both counts for you.
 
 The opt-in rate of an arm is visitors with an `accept_all` choice under that
 arm, divided by visitors whose session reports carry the arm. Count
@@ -471,89 +467,6 @@ per visitor owed the banner.
 Time to decision is the median `timeToDecisionMs` per arm over the choices.
 Use the median, not the mean: a visitor who leaves the tab open skews the
 mean without saying anything about the arm.
-
-## Read the summary from your backend
-
-The self-hosted backend copies `experiment.id`, `experiment.arm` and
-`timeToDecisionMs` out of `metadata` onto their own columns (migration
-`6-experiment-attribution`), so `GET /experiments/:id/summary` can group
-choices per arm without a JSON query. It needs an API key.
-
-```bash
-curl 'https://app.example.com/api/inth/experiments/banner-shape/summary?from=2026-09-01&to=2026-09-30' \
-  -H "Authorization: Bearer $INTH_API_KEY"
-```
-
-```json
-{
-	"experimentId": "banner-shape",
-	"from": "2026-09-01T00:00:00.000Z",
-	"to": "2026-09-30T23:59:59.999Z",
-	"arms": [
-		{
-			"arm": "wall",
-			"choices": 120,
-			"byAction": {
-				"accept_all": 80,
-				"custom": 10,
-				"opt_out": 0,
-				"reject_all": 30,
-				"unknown": 0
-			},
-			"bySurface": { "banner": 100, "dialog": 20 },
-			"medianTimeToDecisionMs": 4200
-		},
-		{
-			"arm": "control",
-			"choices": 95,
-			"byAction": {
-				"accept_all": 50,
-				"custom": 5,
-				"opt_out": 0,
-				"reject_all": 40,
-				"unknown": 0
-			},
-			"bySurface": { "banner": 90, "dialog": 5 },
-			"medianTimeToDecisionMs": 5100
-		}
-	]
-}
-```
-
-`byAction` always has all five keys. They are the action the backend
-stored, not the client's `consent_action`: `accept_all` for accept,
-`reject_all` for reject, `opt_out` for a reject under an opt-out policy,
-`custom` for a saved selection, and `unknown` for a record without one.
-`choices` counts consent records, so a visitor who changes their mind under
-the same arm counts twice.
-
-`from` and `to` accept an ISO 8601 date or timestamp and filter on the
-consent's `givenAt`, both ends inclusive. A date without a time is the whole
-of that day in UTC: `from=2026-09-01` starts at midnight and `to=2026-09-30`
-runs to the end of the 30th, so the example above covers all of September. A
-`from` later than `to` is a 400. `domain` narrows to one domain name. An
-experiment id no consent carries returns `arms: []`.
-
-From server code, the [Node.js SDK](/docs/self-host/api/node-sdk#read-an-experiment-summary)
-makes the same call. Create the client with an API key; `from` and `to` also
-take a `Date`:
-
-```ts
-const inth = createInthClient({
-	baseUrl: 'https://app.example.com/api/inth',
-	apiKey,
-});
-
-const result = await inth.experiments.summary('banner-shape', {
-	from: '2026-09-01',
-	to: '2026-09-30',
-});
-```
-
-The summary counts choices. The other half of an opt-in rate, the visitors
-each arm's banner was owed to, is on the session reports `/v1/consent/init` produces
-(see [Measure the results](#measure-the-results)). Divide `accept_all` per
-arm by the visitors whose reports carry that arm.
 
 ## Try it
 

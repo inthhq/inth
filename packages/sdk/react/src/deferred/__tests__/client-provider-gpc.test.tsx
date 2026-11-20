@@ -1,6 +1,6 @@
 /**
  * `ConsentProvider` on a client-rendered page in a browser that sends the
- * Global Privacy Control signal: the stand-in reads the `/init` answer
+ * Global Privacy Control signal: the stand-in reads the `/v1/consent/init` answer
  * under the signal, as the engine does. Under a policy the signal answers
  * for, it shows no banner and leaves the visitor to the engine, where it
  * used to show one and let an Accept grant what the signal denies. Its own
@@ -141,7 +141,7 @@ test('the stand-in reads the browser signal, and shows no banner the signal answ
 		</ConsentProvider>
 	);
 	const probe = screen.getByTestId('probe');
-	// Before `/init` answers: the pending state already carries the signal.
+	// Before `/v1/consent/init` answers: the pending state already carries the signal.
 	await expect.element(probe).toHaveAttribute('data-gpc', 'true');
 
 	answer({ init: signalled });
@@ -154,7 +154,7 @@ test('the stand-in reads the browser signal, and shows no banner the signal answ
 	await expect.element(probe).toHaveAttribute('data-active-ui', 'none');
 	await expect.element(probe).toHaveAttribute('data-gpc', 'true');
 	// The prefetch was sent under the signal, so the provider sent no
-	// `/init` of its own.
+	// `/v1/consent/init` of its own.
 	expect(initRequests()).toEqual([]);
 
 	// The engine reads the same answer the same way.

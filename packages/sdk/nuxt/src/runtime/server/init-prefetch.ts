@@ -1,9 +1,9 @@
 /**
- * The `/init` request an `ssr: false` Nuxt page starts from its own HTML.
+ * The `/v1/consent/init` request an `ssr: false` Nuxt page starts from its own HTML.
  *
  * Nuxt answers an `ssr: false` route with an HTML shell, and consent starts
  * only once the app's JavaScript has downloaded and run. An inline script in
- * the shell's `<head>`, core's `buildPrefetchScript`, starts `/init` while
+ * the shell's `<head>`, core's `buildPrefetchScript`, starts `/v1/consent/init` while
  * the browser is still parsing. When the plugin starts the runtime, the
  * hosted transport finds that request on `window` and waits for it instead
  * of sending its own.
@@ -13,12 +13,12 @@
  *
  * - The page is a shell (`ssr: false` for the app or the route). A server
  *   rendered page already carries the visitor's policy.
- * - The app calls the backend's `/init`: `hosted()` mode, without init
+ * - The app calls the backend's `/v1/consent/init`: `hosted()` mode, without init
  *   `headers`. `manifest()` asks the Nuxt consent route, which core's
  *   script does not address, or resolves in the browser; `local()` makes
  *   no request.
  * - Nothing replaces the request: no `consentSource`, `experiment` (the
- *   arm travels with `/init`) or `prefetch`.
+ *   arm travels with `/v1/consent/init`) or `prefetch`.
  *
  * The config is what both sides read: module options through the public
  * runtime config, with `app.config.ts` merged over them. A page whose
@@ -39,7 +39,7 @@ import type {
 
 /** The `inth` key of a Nitro route rule. */
 export interface InitPrefetchRouteRule {
-	/** `false` writes no `/init` script into this route's HTML shell. */
+	/** `false` writes no `/v1/consent/init` script into this route's HTML shell. */
 	initPrefetch?: boolean;
 }
 
@@ -68,7 +68,7 @@ const escapeAttribute = (value: string): string =>
 	value.replaceAll('&', '&amp;').replaceAll('"', '&quot;');
 
 /**
- * The inline `<script>` that starts this page's `/init` request, or
+ * The inline `<script>` that starts this page's `/v1/consent/init` request, or
  * `undefined` when the page should not get one.
  *
  * @internal

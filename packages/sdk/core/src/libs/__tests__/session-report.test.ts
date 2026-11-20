@@ -1,13 +1,15 @@
-import { createConsentManifestPolicyPack } from '@inth/sdk-schema/types';
+import {
+	buildConsentSessionReport,
+	createConsentManifestPolicyPack,
+} from '@inth/sdk-schema/types';
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 import { describe, expect, test, vi } from 'vitest';
 
-import { createManifestTransport } from '../../transports/manifest';
+import { createV1ManifestTransport } from '../../transports/v1/manifest';
+import { reportV1ConsentSession } from '../../transports/v1/session-report';
 import {
-	buildConsentSessionReport,
 	forwardSessionReportHeaders,
 	isSpeculativeRequest,
-	reportConsentSession,
 	resolveSessionReportProjectUrl,
 } from '../session-report';
 
@@ -43,7 +45,7 @@ const manifest: ConsentManifest = {
 const resolveInit = async (
 	overrides: { country?: string; gpc?: boolean } = {}
 ) => {
-	const transport = createManifestTransport({
+	const transport = createV1ManifestTransport({
 		projectUrl: 'https://consent.example.com',
 		snapshot: manifest,
 	});
@@ -160,16 +162,16 @@ describe('forwardSessionReportHeaders', () => {
 	});
 });
 
-describe('reportConsentSession', () => {
+describe('reportV1ConsentSession', () => {
 	const JOURNEY_ID = '3b241101-e2bb-4255-8caf-4136c566a962';
 	const journeyURL = `https://shop.example.com/api/inth/init?journey=${JOURNEY_ID}&journeyScope=page&stored=1`;
 
-	test('reads the journey from the request URL, with the Origin as domain', async () => {
+	test('reads the journey from the request URL, with the Origin host as property', async () => {
 		const init = await resolveInit();
 		const fetchSpy = vi
 			.fn()
 			.mockResolvedValue(new Response(null, { status: 204 }));
-		await reportConsentSession({
+		await reportV1ConsentSession({
 			fetch: fetchSpy,
 			headers: new Headers({ origin: 'https://www.example.org' }),
 			init: init as never,
@@ -179,9 +181,9 @@ describe('reportConsentSession', () => {
 			url: journeyURL,
 		});
 		expect(readBody(fetchSpy.mock.calls[0]).journey).toEqual({
-			domain: 'www.example.org',
 			id: JOURNEY_ID,
 			prompt: 'stored',
+			property: 'www.example.org',
 			scope: 'page',
 			storedChoice: true,
 		});
@@ -197,7 +199,7 @@ describe('reportConsentSession', () => {
 			scope: 'tab',
 			storedChoice: false,
 		} as const;
-		await reportConsentSession({
+		await reportV1ConsentSession({
 			fetch: fetchSpy,
 			init: init as never,
 			journey: explicit,
@@ -212,14 +214,14 @@ describe('reportConsentSession', () => {
 		});
 	});
 
-	test('posts the report with the visitor headers and the protocol headers', async () => {
+	test('posts the report with the visitor headers only', async () => {
 		const init = await resolveInit();
 		const fetchSpy = vi
 			.fn()
 			.mockResolvedValue(new Response(null, { status: 204 }));
 		const registered: Promise<void>[] = [];
 
-		await reportConsentSession({
+		await reportV1ConsentSession({
 			adapter: '@inth/svelte',
 			fetch: fetchSpy,
 			headers: new Headers({
@@ -239,14 +241,14 @@ describe('reportConsentSession', () => {
 
 		expect(registered).toHaveLength(1);
 		const [url, request] = fetchSpy.mock.calls[0] as [string, RequestInit];
-		expect(url).toBe('https://consent.example.com/sessions');
+		expect(url).toBe('https://consent.example.com/v1/consent/sessions');
 		expect(request.method).toBe('POST');
 		const headers = request.headers as Record<string, string>;
 		expect(headers['content-type']).toBe('application/json');
 		expect(headers['x-inth-client-ip']).toBe('203.0.113.42');
 		expect(headers['user-agent']).toBe('UA');
 		expect(headers).not.toHaveProperty('cookie');
-		expect(typeof headers['x-inth-version']).toBe('string');
+		expect(headers).not.toHaveProperty('x-inth-version');
 		expect(readBody(fetchSpy.mock.calls[0])).toMatchObject({
 			adapter: '@inth/svelte',
 			country: 'DE',
@@ -259,7 +261,7 @@ describe('reportConsentSession', () => {
 		const init = await resolveInit();
 		const failing = vi.fn().mockRejectedValue(new Error('backend down'));
 		await expect(
-			reportConsentSession({
+			reportV1ConsentSession({
 				fetch: failing,
 				init: init as never,
 				manifest,
@@ -270,7 +272,7 @@ describe('reportConsentSession', () => {
 		expect(failing).toHaveBeenCalledTimes(1);
 
 		const unused = vi.fn();
-		await reportConsentSession({
+		await reportV1ConsentSession({
 			fetch: unused,
 			init: init as never,
 			manifest,
@@ -302,7 +304,7 @@ describe('isSpeculativeRequest', () => {
 	test('a speculative request sends no report', async () => {
 		const init = await resolveInit();
 		const fetchSpy = vi.fn();
-		await reportConsentSession({
+		await reportV1ConsentSession({
 			fetch: fetchSpy,
 			headers: new Headers({ 'next-router-prefetch': '1' }),
 			init: init as never,
@@ -314,14 +316,14 @@ describe('isSpeculativeRequest', () => {
 	});
 });
 
-describe('reportConsentSession lifetime hook', () => {
+describe('session report lifetime hook', () => {
 	test('a throwing waitUntil never reaches the caller', async () => {
 		const init = await resolveInit();
 		const fetchSpy = vi
 			.fn()
 			.mockResolvedValue(new Response(null, { status: 204 }));
 		await expect(
-			reportConsentSession({
+			reportV1ConsentSession({
 				fetch: fetchSpy,
 				init: init as never,
 				manifest,
@@ -336,7 +338,7 @@ describe('reportConsentSession lifetime hook', () => {
 	});
 });
 
-describe('reportConsentSession never blocks the resolution', () => {
+describe('a session report never blocks the resolution', () => {
 	test('the init resolves while the report is still in flight', async () => {
 		// A backend that never answers must not hold the visitor's init: the
 		// report is detached, and the transport returns without it.
@@ -346,7 +348,7 @@ describe('reportConsentSession never blocks the resolution', () => {
 		});
 		const fetchSpy = vi.fn().mockReturnValue(pending);
 		const registered: Promise<void>[] = [];
-		const transport = createManifestTransport({
+		const transport = createV1ManifestTransport({
 			fetch: fetchSpy,
 			projectUrl: 'https://consent.example.com',
 			report: {
@@ -383,7 +385,7 @@ describe('reportConsentSession never blocks the resolution', () => {
 			.fn()
 			.mockResolvedValue(new Response('nope', { status: 500 }));
 		await expect(
-			reportConsentSession({
+			reportV1ConsentSession({
 				fetch: refused,
 				init: init as never,
 				manifest,
@@ -402,7 +404,7 @@ describe('reportConsentSession never blocks the resolution', () => {
 			);
 		});
 		await expect(
-			reportConsentSession({
+			reportV1ConsentSession({
 				fetch: timedOut as unknown as typeof globalThis.fetch,
 				init: init as never,
 				manifest,
@@ -416,7 +418,7 @@ describe('reportConsentSession never blocks the resolution', () => {
 	test('hands waitUntil the same promise it returns', async () => {
 		const init = await resolveInit();
 		const registered: Promise<void>[] = [];
-		const returned = reportConsentSession({
+		const returned = reportV1ConsentSession({
 			fetch: vi.fn().mockResolvedValue(new Response(null, { status: 204 })),
 			init: init as never,
 			manifest,
@@ -435,7 +437,7 @@ describe('reportConsentSession never blocks the resolution', () => {
 		const fetchSpy = vi
 			.fn()
 			.mockResolvedValue(new Response(null, { status: 204 }));
-		await reportConsentSession({
+		await reportV1ConsentSession({
 			fetch: fetchSpy,
 			init: init as never,
 			manifest,
@@ -445,7 +447,7 @@ describe('reportConsentSession never blocks the resolution', () => {
 		});
 		expect(fetchSpy).not.toHaveBeenCalled();
 
-		await reportConsentSession({
+		await reportV1ConsentSession({
 			fetch: fetchSpy,
 			init: init as never,
 			manifest,
@@ -457,43 +459,19 @@ describe('reportConsentSession never blocks the resolution', () => {
 	});
 });
 
-describe('createManifestTransport report option', () => {
-	test('never reports to the origin its manifest URL came from', async () => {
-		// The transport derives a backend from its manifest URL for saves; a
-		// report never uses that, since a manifest may live on a CDN that
-		// exists only to hand out public policy data.
-		const fetchSpy = vi
-			.fn()
-			.mockImplementation((url: string) =>
-				Promise.resolve(
-					url.endsWith('/tenant.json')
-						? new Response(JSON.stringify(manifest))
-						: new Response(null, { status: 204 })
-				)
-			);
-		const transport = createManifestTransport({
-			fetch: fetchSpy,
-			manifestUrl: 'https://cdn.example.com/tenant.json',
-			report: { source: 'render' },
-		});
-		await transport.init({ overrides: { country: 'DE' }, user: null });
-		await new Promise<void>((resolve) => {
-			setTimeout(resolve, 0);
-		});
-		expect(
-			fetchSpy.mock.calls.some(([url]) => String(url).includes('/sessions'))
-		).toBe(false);
-	});
-
+describe('the manifest transport report option', () => {
 	test('reports after each init with the transport backend and headers', async () => {
 		const fetchSpy = vi
 			.fn()
 			.mockResolvedValue(new Response(null, { status: 204 }));
-		const transport = createManifestTransport({
+		const transport = createV1ManifestTransport({
 			fetch: fetchSpy,
-			headers: { cookie: 'inth=secret', 'x-forwarded-for': '203.0.113.42' },
 			projectUrl: 'https://consent.example.com',
-			report: { adapter: '@inth/nextjs', source: 'render' },
+			report: {
+				adapter: '@inth/nextjs',
+				headers: { cookie: 'inth=secret', 'x-forwarded-for': '203.0.113.42' },
+				source: 'render',
+			},
 			snapshot: manifest,
 		});
 
@@ -507,7 +485,7 @@ describe('createManifestTransport report option', () => {
 		});
 
 		const call = fetchSpy.mock.calls.find(
-			([url]) => url === 'https://consent.example.com/sessions'
+			([url]) => url === 'https://consent.example.com/v1/consent/sessions'
 		);
 		expect(call).toBeDefined();
 		const headers = ((call as unknown[])[1] as RequestInit).headers as Record<
@@ -527,7 +505,7 @@ describe('createManifestTransport report option', () => {
 
 	test('sends nothing without the option', async () => {
 		const fetchSpy = vi.fn();
-		const transport = createManifestTransport({
+		const transport = createV1ManifestTransport({
 			fetch: fetchSpy,
 			projectUrl: 'https://consent.example.com',
 			snapshot: manifest,

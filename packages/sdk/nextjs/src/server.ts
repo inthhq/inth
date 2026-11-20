@@ -148,7 +148,7 @@ export interface ResolveConsentOptions
 
 	/**
 	 * Request headers to forward onto the backend call, such as an
-	 * authentication token. Backend `/init` always gets the resolved geo,
+	 * authentication token. Backend `/v1/consent/init` always gets the resolved geo,
 	 * language and GPC, the user agent, and, over `https` or to a loopback
 	 * host, the consent cookie alone, never the rest of the cookie jar. The
 	 * manifest request carries only these headers. `cookie` and
@@ -159,7 +159,7 @@ export interface ResolveConsentOptions
 	/**
 	 * Resolve a relative backend or manifest URL against the request's
 	 * `forwarded`, `x-forwarded-host` and `x-forwarded-proto` headers
-	 * instead of `host`, and forward the visitor IP to backend `/init`. Any
+	 * instead of `host`, and forward the visitor IP to backend `/v1/consent/init`. Any
 	 * client can send those headers, so set this only behind a proxy that
 	 * sets them and drops incoming ones.
 	 *
@@ -199,7 +199,7 @@ export interface ResolveConsentOptions
 	/**
 	 * The banner experiment with the arm this request runs, from your
 	 * feature flag. While the visitor has no stored choice, the server's
-	 * `/init` carries the arm, or its session report does in manifest mode,
+	 * `/v1/consent/init` carries the arm, or its session report does in manifest mode,
 	 * so the backend counts the visitors each arm's banner was owed to. The
 	 * returned state carries the experiment to `ConsentRoot`, so the client
 	 * needs no `experiment` option of its own.

@@ -1,4 +1,3 @@
-import { INTH_POLICY_CONTRACT_HEADER } from '@inth/sdk/engine';
 import type { InitOutput } from '@inth/sdk/schema/types';
 import {
 	resolvePolicyRules,
@@ -128,11 +127,7 @@ const renderOnServer = async function renderOnServer(
 		'fetch',
 		vi.fn(() => {
 			nuxt.fetches += 1;
-			return Promise.resolve(
-				new Response(JSON.stringify(nuxt.response), {
-					headers: { [INTH_POLICY_CONTRACT_HEADER]: '1' },
-				})
-			);
+			return Promise.resolve(new Response(JSON.stringify(nuxt.response)));
 		})
 	);
 	try {
@@ -241,7 +236,6 @@ test('the browser resolves a prerendered page itself and keeps a stored rejectio
 				new Response(JSON.stringify(visitorInit), {
 					headers: {
 						'content-type': 'application/json',
-						[INTH_POLICY_CONTRACT_HEADER]: '1',
 					},
 					status: 200,
 				})

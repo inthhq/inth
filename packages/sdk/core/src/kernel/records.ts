@@ -7,7 +7,7 @@
  * - `hydrate()` replaces records (SSR seeds, storage, a clear with `null`s).
  *   Replacing or clearing the choice or the subject bumps the records
  *   generation, which fences every async read or save started before it.
- * - Server records (an `/init` response, a subject read after `identify()`)
+ * - Server records (a `/v1/consent/init` response, a subject read after `identify()`)
  *   merge newest-wins per category and never remove local standing state,
  *   so a delayed server read cannot overwrite a newer local action.
  * - `identify()` and `set.subjectId` change who the records belong to.

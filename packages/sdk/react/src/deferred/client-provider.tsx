@@ -5,7 +5,7 @@
  * after the page's priority images when the visitor still has to choose.
  *
  * The page renders at once, under a stand-in kernel (`deferred-kernel.ts`).
- * The `/init` request, from the inline prefetch that `consentManifest()` or
+ * The `/v1/consent/init` request, from the inline prefetch that `consentManifest()` or
  * `buildPrefetchScript()` put in the HTML or else started by the provider
  * as it first renders, carries the policy and the copy, so once it
  * answers, the stand-in takes the snapshot the kernel would compute from
@@ -162,8 +162,8 @@ const plan = function plan(
 		translationOverrides: options.i18n?.messages,
 	};
 	// Without an inline prefetch in the page, the provider sends that
-	// request itself, so the banner waits for `/init` alone, not for the
-	// engine's chunk and then `/init`.
+	// request itself, so the banner waits for `/v1/consent/init` alone, not for the
+	// engine's chunk and then `/v1/consent/init`.
 	// Picked as the engine will, without building the hosted transport's
 	// factory: the first load needs only the backend URL.
 	const selected = options.mode;
@@ -203,7 +203,7 @@ const plan = function plan(
 	const readOpened = new Promise<void>((resolve) => {
 		openRead = resolve;
 	});
-	// The `/init` answer, read once `openRead` ran, with the code that reads
+	// The `/v1/consent/init` answer, read once `openRead` ran, with the code that reads
 	// it: a chunk after the page's own.
 	const resolved: Promise<ConsentSnapshot | undefined> = (async () => {
 		await readOpened;
@@ -355,7 +355,7 @@ export const createConsentProvider = function createConsentProvider(
  * With a `hosted()` mode, the page renders at once and the consent engine
  * loads after the page's priority images, or on the first input on the
  * banner, for a visitor who still has to choose. The banner shows as soon
- * as `/init` answers: the request an inline prefetch already sent (the
+ * as `/v1/consent/init` answers: the request an inline prefetch already sent (the
  * `consentManifest()` setup), or else the one the provider sends as it
  * first renders, which the engine then reuses. A returning visitor's
  * engine loads at once. Every other setup renders once the engine has

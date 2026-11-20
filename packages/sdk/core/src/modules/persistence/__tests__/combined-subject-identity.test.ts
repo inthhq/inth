@@ -19,7 +19,6 @@ import {
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../index';
 import { getRawCookieValue } from '../../../libs/cookie';
-import { generateSubjectId } from '../../../libs/generate-subject-id';
 import { legacySubjectIdKey } from '../../../libs/legacy-subject-id';
 import {
 	resolveStorageKeys,
@@ -392,7 +391,7 @@ test.each(STORAGE)(
 		first.handle.dispose();
 		// An older c15t on another tab, or a server response, stored its own
 		// ID meanwhile.
-		const other = generateSubjectId();
+		const other = 'sub_2VZxR7YmNpKq3WfLs8TgHd';
 		const sid = legacySubjectIdKey(storageConfig);
 		document.cookie = `${sid}=${other}; path=/`;
 		localStorage.setItem(sid, other);

@@ -37,13 +37,9 @@ Inth is the open standard for cookie banners. It's an open-source cookie consent
 
 ## Hosting
 
-Inth needs somewhere to keep policies and consent records. Pick one:
+[Inth](https://inth.com?utm_source=github&utm_medium=repo_homepage) keeps your policies and consent records. You get policy storage, consent records, audit history, and a dashboard, with no database or server to run. Sign-up is free. Set the project URL from your Inth dashboard as `projectUrl`.
 
-- **Hosted on [Inth](https://inth.com?utm_source=github&utm_medium=repo_homepage)**: Inth runs the backend for you. You get policy storage, consent records, audit history, and a dashboard, with no database or server to run. Sign-up is free.
-- **Self-hosted**: Run [`@c15t/backend`](./packages/backend) on your own server with PostgreSQL, MySQL, or SQLite. You own migrations, backups, and uptime. See the [self-hosting guide](https://c15t.com/docs/self-host/quickstart).
-- **Offline**: Choices stay in the browser, with no consent records. Use it for local development, previews, and demos, not production.
-
-The frontend code is the same for Inth and a self-hosted backend. Only the backend URL changes.
+For local development, previews, and tests, `testing()` keeps choices in the browser and sends no consent records. It throws in production builds.
 
 ## Example
 
@@ -146,7 +142,6 @@ The layout stays a Server Component. You write no `'use client'` wrapper and nee
 | [`@inth/sdk/iab`](./packages/sdk/iab) | IAB TCF 2.4 and GPP for programmatic advertising | <a href="https://www.npmjs.com/package/@inth/sdk/iab"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/npm/@inth/sdk/iab.svg?variant=outline&size=sm&mode=dark"><img src="https://shieldcn.dev/npm/@inth/sdk/iab.svg?variant=outline&size=sm&mode=light" alt="npm"></picture></a> |
 | [`@inth/sdk/translations`](./packages/sdk/translations) | Banner and dialog text in 53 languages | <a href="https://www.npmjs.com/package/@inth/sdk/translations"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/npm/@inth/sdk/translations.svg?variant=outline&size=sm&mode=dark"><img src="https://shieldcn.dev/npm/@inth/sdk/translations.svg?variant=outline&size=sm&mode=light" alt="npm"></picture></a> |
 | [`@inth/sdk/ui`](./packages/sdk/ui) | The primitives, CSS, and theme tokens behind the Inth components | <a href="https://www.npmjs.com/package/@inth/sdk/ui"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/npm/@inth/sdk/ui.svg?variant=outline&size=sm&mode=dark"><img src="https://shieldcn.dev/npm/@inth/sdk/ui.svg?variant=outline&size=sm&mode=light" alt="npm"></picture></a> |
-| [`@c15t/backend`](./packages/backend) | The self-hosted consent backend, for PostgreSQL, MySQL, or SQLite | <a href="https://www.npmjs.com/package/@c15t/backend"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/npm/@c15t/backend.svg?variant=outline&size=sm&mode=dark"><img src="https://shieldcn.dev/npm/@c15t/backend.svg?variant=outline&size=sm&mode=light" alt="npm"></picture></a> |
 | [`@c15t/node-sdk`](./packages/node-sdk) | Read and write consent records from your server | <a href="https://www.npmjs.com/package/@c15t/node-sdk"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/npm/@c15t/node-sdk.svg?variant=outline&size=sm&mode=dark"><img src="https://shieldcn.dev/npm/@c15t/node-sdk.svg?variant=outline&size=sm&mode=light" alt="npm"></picture></a> |
 | [`@inth/sdk/devtools`](./packages/sdk/dev-tools) | Inspect consent state while you develop | <a href="https://www.npmjs.com/package/@inth/sdk/devtools"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/npm/@inth/sdk/devtools.svg?variant=outline&size=sm&mode=dark"><img src="https://shieldcn.dev/npm/@inth/sdk/devtools.svg?variant=outline&size=sm&mode=light" alt="npm"></picture></a> |
 | [`@inth/sdk/schema`](./packages/sdk/schema) | Valibot schemas and TypeScript types for the consent API | <a href="https://www.npmjs.com/package/@inth/sdk/schema"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/npm/@inth/sdk/schema.svg?variant=outline&size=sm&mode=dark"><img src="https://shieldcn.dev/npm/@inth/sdk/schema.svg?variant=outline&size=sm&mode=light" alt="npm"></picture></a> |

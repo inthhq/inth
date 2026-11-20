@@ -1,6 +1,6 @@
 /**
  * The browser manifest resolver: English bundled, other languages loaded on
- * demand, and a location from the page, `geoUrl` or the backend's `/init`.
+ * demand, and a location from the page, `geoUrl` or the backend's `/v1/consent/init`.
  */
 import {
 	createConsentManifestPolicyPack,
@@ -251,7 +251,7 @@ describe('createBrowserManifestTransport()', () => {
 		expect(response?.location?.countryCode).toBe('DE');
 	});
 
-	test('falls back to GET /init without a location', async () => {
+	test('falls back to GET /v1/consent/init without a location', async () => {
 		const fetchSpy = vi.fn<typeof fetch>(() =>
 			Promise.reject(new Error('offline'))
 		);
@@ -313,7 +313,7 @@ describe('createBrowserManifestTransport()', () => {
 		expect(response?.location?.countryCode).toBeNull();
 	});
 
-	test('asks GET /init, with a warning, when the manifest is unavailable', async () => {
+	test('asks GET /v1/consent/init, with a warning, when the manifest is unavailable', async () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 		const fetchSpy = vi.fn<typeof fetch>((input) =>
 			Promise.resolve(

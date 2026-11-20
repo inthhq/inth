@@ -6,7 +6,7 @@
  * Two handles, picked by path:
  *
  * - `/ssr` resolves `hosted()`: `loadConsent` asks the fixture backend's
- *   `/init` on the request path, so the consent round-trip lands in the
+ *   `/v1/consent/init` on the request path, so the consent round-trip lands in the
  *   page's TTFB. This is the arm manifest mode is measured against.
  * - Every other route resolves `manifest()` on the server from the
  *   fixture's manifest, fetched at runtime and cached in-process. The

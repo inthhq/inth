@@ -16,7 +16,7 @@ The Markdown under `./docs` matches the installed version. Read it before writin
 ## Rules
 
 - Install with `npm install @inth/nextjs`. Keep every Inth package on the same release.
-- The backend URL comes from the user's Inth project or self-hosted backend. It is public configuration. Never invent one; ask for it or read it from the environment.
+- The backend URL is the user's Inth project URL. It is public configuration. Never invent one; ask for it or read it from the environment.
 - Register analytics, pixels and embeds through Inth and remove the vendor's own loader or plugin. With a bundler, use `@inth/integrations` helpers and `ConsentGate`. On a plain HTML page, change the vendor's `<script>` to `type="text/plain"` with `data-inth-category`. A banner does not block code loaded elsewhere.
 - Gate features on the current permission. Never save a consent choice on page load or from code; only a visitor action records one.
 - Offline mode keeps policies in code and choices in the browser, with no consent records. Not recommended for production environments.

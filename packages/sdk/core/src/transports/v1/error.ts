@@ -8,6 +8,9 @@ import type { V1ErrorCode } from '@inth/sdk-schema/types';
 /** Stop waiting for an error body after this long. */
 const BODY_TIMEOUT_MS = 2000;
 
+/** Error bodies past this many bytes are not read further. */
+const MAX_BODY_BYTES = 16 * 1024;
+
 /** Longest backend message an error carries. */
 const MAX_MESSAGE_LENGTH = 500;
 
@@ -118,8 +121,8 @@ const cancelQuietly = async function cancelQuietly(
 
 /**
  * The body as text, or `''` when it cannot be read within
- * {@link BODY_TIMEOUT_MS}. A body still open at the deadline is cancelled,
- * so a stalled gateway answer stops downloading.
+ * {@link BODY_TIMEOUT_MS} or runs past {@link MAX_BODY_BYTES}. Either way
+ * the rest is cancelled, so a stalled or oversized answer stops downloading.
  */
 const readText = async function readText(response: Response): Promise<string> {
 	const reader = response.body?.getReader();
@@ -132,6 +135,7 @@ const readText = async function readText(response: Response): Promise<string> {
 	});
 	const decoder = new TextDecoder();
 	let text = '';
+	let bytes = 0;
 	try {
 		for (;;) {
 			// oxlint-disable-next-line no-await-in-loop -- Chunks arrive in order.
@@ -142,6 +146,11 @@ const readText = async function readText(response: Response): Promise<string> {
 			}
 			if (chunk.done) {
 				return text + decoder.decode();
+			}
+			bytes += chunk.value.byteLength;
+			if (bytes > MAX_BODY_BYTES) {
+				void cancelQuietly(reader);
+				return '';
 			}
 			text += decoder.decode(chunk.value, { stream: true });
 		}

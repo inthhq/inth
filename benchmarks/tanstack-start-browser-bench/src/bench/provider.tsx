@@ -2,7 +2,7 @@
 // the dependency graph used by baseline comparisons.
 import { IABProvider, IABConsentBanner } from '@inth/react/iab';
 import { hosted } from '@inth/sdk/engine';
-import { createManifestTransport } from '@inth/sdk/transports/manifest';
+import { createV1ManifestTransport } from '@inth/sdk/transports/manifest';
 import {
 	ConsentBanner,
 	ConsentDialog,
@@ -123,8 +123,8 @@ export const TanstackManifestClientBenchmarkProvider = ({
 }) => {
 	const transport = useMemo(
 		() =>
-			createManifestTransport({
-				manifestUrl: '/api/inth/manifest',
+			createV1ManifestTransport({
+				manifestUrl: '/api/inth/v1/consent/manifest',
 				projectUrl: BENCH_BACKEND_URL,
 			}),
 		[]
@@ -145,7 +145,7 @@ export const TanstackManifestClientBenchmarkProvider = ({
 /**
  * `ssr` arm: the loader already carries the init response and the backend
  * URL, so the root renders the banner into the first HTML. Without
- * `routePrefix`, any client refresh calls the backend's `/init` directly,
+ * `routePrefix`, any client refresh calls the backend's `/v1/consent/init` directly,
  * matching the Next arm.
  */
 export const TanstackPrefetchedBenchmarkProvider = ({

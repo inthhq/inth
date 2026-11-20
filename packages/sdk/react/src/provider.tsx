@@ -141,7 +141,7 @@ export interface ConsentProviderOptions
 	 */
 	experiment?: ConsentExperiment;
 	/**
-	 * Random journey id that links each `/init` to the save that follows:
+	 * Random journey id that links each `/v1/consent/init` to the save that follows:
 	 * `'page'`, `'tab'` or `false`. Initial-only.
 	 *
 	 * @default 'page'
@@ -195,7 +195,7 @@ export interface ConsentProviderOptions
 	 *
 	 * - Omitted, or `hosted()`: ask `${projectUrl}/v1/consent/init`.
 	 * - `manifest()` from `@inth/react`: resolve from the backend's consent
-	 *   manifest in the browser, falling back to `/init` with a warning
+	 *   manifest in the browser, falling back to `/v1/consent/init` with a warning
 	 *   when the manifest is unavailable.
 	 * - `testing()` from `@inth/react/testing`: resolve a policy with no
 	 *   backend, for tests. It sends nothing and throws in production
@@ -506,7 +506,7 @@ const treeIABModes = new WeakMap<
 	ProviderTransportFactory
 >();
 /**
- * The mode an early `/init` was sent for: the `hosted()` options, or a
+ * The mode an early `/v1/consent/init` was sent for: the `hosted()` options, or a
  * mode that registered in `earlyInitModes` (such as `manifest()` from
  * `@inth/react`) and the global `fetch` its transport would use.
  */
@@ -514,7 +514,7 @@ type EarlySource =
 	| { readonly hosted: HostedModeOptions }
 	| { readonly mode: EarlyInitMode; readonly fetch: typeof globalThis.fetch };
 /**
- * An `/init` request a render sent, the mode and the serialized init
+ * A `/v1/consent/init` request a render sent, the mode and the serialized init
  * context it was sent for, and the transport that sent it.
  */
 interface EarlyInit {
@@ -594,7 +594,7 @@ const toRuntimeOptions = function toRuntimeOptions(
  * Whether the visitor has a stored choice, read the way the runtime's
  * persistence will hydrate on `start()`: not at all with persistence off or
  * `skipHydration`, otherwise from its storage at its clock. The early
- * `/init` leaves before that, and its journey says whether a choice was
+ * `/v1/consent/init` leaves before that, and its journey says whether a choice was
  * stored. It is sent only without a `prefetch`, so no seed decides
  * hydration here.
  */
@@ -619,7 +619,7 @@ const hasStoredChoice = function hasStoredChoice(
 };
 
 /**
- * What makes two `/init` requests the same: the decision inputs, the user,
+ * What makes two `/v1/consent/init` requests the same: the decision inputs, the user,
  * and the journey the request carries (its id, scope and stored flag).
  */
 const earlyInitKey = function earlyInitKey(
@@ -634,7 +634,7 @@ const earlyInitKey = function earlyInitKey(
 };
 
 /**
- * Whether a client render sends the runtime's first `/init` now, and for
+ * Whether a client render sends the runtime's first `/v1/consent/init` now, and for
  * which mode. `undefined` for a server render, a runtime that already has
  * or is getting its policy another way, and a mode that may not be asked
  * before mount.
@@ -725,7 +725,7 @@ let entrySequence = 0;
  * blocked. On the server nothing is held and nothing is tracked.
  *
  * In a client render, a `hosted()` runtime that will ask the backend for
- * its policy sends that `/init` request here, during the render, instead
+ * its policy sends that `/v1/consent/init` request here, during the render, instead
  * of from the mount effect: before the first paint rather than after it.
  * `clientRender` comes from React, not from `window`: a server render
  * never mounts, even with a DOM shim, and hydration asks at mount as
@@ -934,7 +934,7 @@ const useOwnedRuntime = function useOwnedRuntime(
 	const [holder] = useState(createRuntimeHolder);
 	const [, rerender] = useReducer(increment, 0);
 	// React's server snapshot on the server and while hydrating: only a
-	// client render sends `/init` early.
+	// client render sends `/v1/consent/init` early.
 	const clientRender = useIsHydrated();
 	const rebuild = useCallback(() => {
 		holder.reset();
@@ -952,7 +952,7 @@ const useBrowserLayoutEffect =
 /**
  * Drives a provider-built runtime: hands it new options, then starts and
  * disposes it. Rendered before the provider's children, so the runtime
- * starts (stored choice applied, `/init` sent or the prefetch adopted,
+ * starts (stored choice applied, `/v1/consent/init` sent or the prefetch adopted,
  * modules mounted) before their mount effects run.
  */
 const OwnedRuntimeLifecycle = ({

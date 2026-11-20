@@ -5,11 +5,11 @@ import type { NuxtMode } from './nuxt-mode';
 /**
  * The mode the browser runs: browser resolution gets the snapshot the
  * build bundled for it, and the hosted backend gets the consent headers the
- * server read from the request (a CDN's country, for example) to `/init`.
+ * server read from the request (a CDN's country, for example) to `/v1/consent/init`.
  *
  * As in every single-page app, a policy that depends on a location that
  * neither `inputs` nor `geoUrl` supplies is resolved by the backend's
- * `/init`, never as an unknown location: that could apply another
+ * `/v1/consent/init`, never as an unknown location: that could apply another
  * region's rules.
  *
  * @internal

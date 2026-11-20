@@ -203,7 +203,7 @@ export const replayEarlyConsentTaps = (
 		apply(kernel, tap, view, options);
 	};
 	// Either one tells us the runtime started: adopting a prefetch emits
-	// `init:applied`, and a resolved `/init` commits a snapshot. Outside the
+	// `init:applied`, and a resolved `/v1/consent/init` commits a snapshot. Outside the
 	// commit or event that announced it.
 	const recheck = () => queueMicrotask(settle);
 	stops.push(

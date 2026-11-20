@@ -155,7 +155,7 @@ The handlers the injected route uses are exported as
 them yourself for other clients, or for browser resolution: with
 `mode: manifest({ resolve: 'browser', manifestUrl: '/api/inth/v1/consent/manifest' })`,
 the browser fetches the manifest from your route, and the route reads
-`${projectUrl}/manifest`. `GET(request, { locals, path })` dispatches by
+`${projectUrl}/v1/consent/manifest`. `GET(request, { locals, path })` dispatches by
 the route's rest parameter, or by the last path segment without one.
 
 ## Helpers in `@inth/astro/server`

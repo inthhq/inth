@@ -42,9 +42,9 @@ import type { Theme } from '@inth/sdk-ui/theme';
  * `init()` from `@inth/sdk` takes `hosted()` or a factory instead.
  *
  * - `hosted` — `GET /v1/consent/init` and `POST /v1/consent/records` against `projectUrl`.
- * - `manifest` — the backend's cacheable `/manifest` inlined or fetched,
- *   resolved locally so the banner can render without waiting on `/init`.
- *   Falls back to `/init` with a warning when the manifest is unavailable.
+ * - `manifest` — the backend's cacheable `/v1/consent/manifest` inlined or fetched,
+ *   resolved locally so the banner can render without waiting on `/v1/consent/init`.
+ *   Falls back to `/v1/consent/init` with a warning when the manifest is unavailable.
  *
  * Tests load `inth.testing.js` instead, which resolves a policy with no
  * backend.
@@ -280,7 +280,7 @@ export interface ConsentClientBaseOptions extends Pick<
 	overrides?: KernelOverrides;
 	/**
 	 * A server-resolved init answer. When it carries a policy and a
-	 * decision the runtime renders from it and never calls `/init`.
+	 * decision the runtime renders from it and never calls `/v1/consent/init`.
 	 */
 	prefetch?: KernelConfig;
 	/** Identified visitor. */
@@ -336,7 +336,7 @@ export interface ConsentClientOptions extends ConsentClientBaseOptions {
 	 *
 	 * - Omitted, or `hosted()`: ask `${projectUrl}/v1/consent/init`.
 	 * - `manifest()`: resolve from the backend's consent manifest in the
-	 *   browser, falling back to `/init` with a warning when it is
+	 *   browser, falling back to `/v1/consent/init` with a warning when it is
 	 *   unavailable. Import it only if you use it, so the bundler leaves
 	 *   it out otherwise.
 	 * - `testing()` from `@inth/sdk/testing`: resolve a policy with no
@@ -367,7 +367,7 @@ export interface ScriptTagClientOptions extends ConsentClientBaseOptions {
 	manifest?: ConsentManifest;
 	/**
 	 * Manifest URL for `manifest` mode. URLs other than the backend's
-	 * `/manifest` endpoint require an explicit `projectUrl`.
+	 * `/v1/consent/manifest` endpoint require an explicit `projectUrl`.
 	 */
 	manifestUrl?: string;
 }

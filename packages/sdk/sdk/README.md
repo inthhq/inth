@@ -9,7 +9,7 @@ pnpm add @inth/sdk
 ## Prerequisites
 
 - Node.js 20.19 or later for a bundled app
-- An [Inth project](https://inth.com) (free sign-up), a [self-hosted backend](https://c15t.com/docs/self-host/quickstart), or local mode for development and tests
+- An [Inth project](https://inth.com) (free sign-up), or `testing()` for development and tests
 
 ## Usage
 
