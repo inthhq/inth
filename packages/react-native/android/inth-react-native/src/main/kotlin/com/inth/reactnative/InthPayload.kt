@@ -225,6 +225,11 @@ object InthPayload {
 		// The iOS bridge reads whether the TC String consents to the marketing purposes, for
 		// App Tracking Transparency. Android has no ATT, so the key is always present and null.
 		conformed["iabMarketingPurposes"] = JsonNull
+		// Durable opt-out records are not implemented in the Kotlin core yet; keep the key
+		// present as explicit null on the bridge payload until SnapshotWire carries it.
+		if (!conformed.containsKey("optOut")) {
+			conformed["optOut"] = JsonNull
+		}
 
 		// The headless TCF state rides inside `iab`: the committed decision a screen shows and
 		// reopens with (`null` while none is current), whether a draft can be edited and saved

@@ -444,6 +444,18 @@ describe('wire drift', () => {
 		expect(warnings.warn).not.toHaveBeenCalled();
 	});
 
+	test('fills optOut with null for a binary built before it existed, without drift', () => {
+		const warnings = captureWarnings();
+		const { optOut: _absent, ...older } = buildSnapshot();
+		const { client } = makeClient({ snapshot: older as ConsentSnapshot });
+
+		const snapshot = client.getSnapshot();
+
+		expect(Object.hasOwn(snapshot, 'optOut')).toBe(true);
+		expect(snapshot.optOut).toBeNull();
+		expect(warnings.warn).not.toHaveBeenCalled();
+	});
+
 	test('keeps a gppString the native build sent', () => {
 		const warnings = captureWarnings();
 		const { client } = makeClient({

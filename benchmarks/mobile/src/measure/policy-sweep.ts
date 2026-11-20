@@ -48,6 +48,7 @@ interface EvaluationFixture {
 		storedRecords?: {
 			choice?: unknown;
 			noticeDismissal?: unknown;
+			optOut?: unknown;
 			subject?: { subjectId?: string } | null;
 		} | null;
 		transport?: FixtureTransport;
@@ -119,6 +120,9 @@ const hydrationFor = function hydrationFor(
 		records?.noticeDismissal !== undefined
 	) {
 		hydration.noticeDismissal = records.noticeDismissal;
+	}
+	if (records?.optOut !== null && records?.optOut !== undefined) {
+		hydration.optOut = records.optOut;
 	}
 	if (records?.subject !== null && records?.subject !== undefined) {
 		hydration.subject = records.subject;

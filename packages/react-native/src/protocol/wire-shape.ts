@@ -61,6 +61,7 @@ export const SNAPSHOT_KEYS = [
 	'error',
 	'iab',
 	'gppString',
+	'optOut',
 ] as const;
 
 /**
@@ -92,12 +93,14 @@ export const BRIDGE_SNAPSHOT_KEYS = [
  *
  * `gppString: null` means the build writes no GPP string, which is also what a build
  * with GPP off reports. `iabMarketingPurposes: null` means no TC String answer is
- * known, so the ATT sequence does not ask under an IAB policy. `promptOwedSince: null`
+ * known, so the ATT sequence does not ask under an IAB policy. `optOut: null` means
+ * the build holds no durable opt-out record. `promptOwedSince: null`
  * means the build names no owed prompt.
  */
 export const ADDITIVE_SNAPSHOT_DEFAULTS = {
 	gppString: null,
 	iabMarketingPurposes: null,
+	optOut: null,
 	promptOwedSince: null,
 } as const satisfies Partial<
 	Record<
@@ -214,6 +217,11 @@ export const KERNEL_OWNED_KEYS = [
 		optional: [],
 		path: 'explicitChoice',
 		required: ['version', 'categories'],
+	},
+	{
+		optional: [],
+		path: 'optOut',
+		required: ['heldBy', 'method', 'recordedAt', 'rights'],
 	},
 	{
 		// The bridge's own additions beside the kernel's `gvl`; see ADDITIVE_IAB_DEFAULTS.

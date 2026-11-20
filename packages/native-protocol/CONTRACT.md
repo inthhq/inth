@@ -187,6 +187,7 @@ mobile:
     privacySignals: { gpc: { detected, override | null, active } }
     translations: KernelTranslations | null
     nextDeadline: number | null
+    optOut: { rights, method, recordedAt, heldBy } | null
     evaluatedAt: number
     error: { code, message } | null
     iab: { gvl } | null               // the `/init`-served vendor list, see the top of this file
@@ -253,7 +254,9 @@ Four fields are deliberately missing from the list above: `promptRequirement`,
 they keep the kernel's own key names. `promptRequirement` is `{ kind, reason }`, not
 a notice/acknowledge/purpose triple. `subject` is keyed `subjectId`, not `id`.
 `location` is `{ countryCode, regionCode }`, not `country` and `region`.
-`explicitChoice` is the kernel's `ExplicitChoice`.
+`explicitChoice` is the kernel's `ExplicitChoice`. `optOut` is also a kernel-owned
+object (`{ rights, method, recordedAt, heldBy } | null`) added without a protocol
+bump; older binaries omit it and the client reads it as `null`.
 
 The declaration is `ConsentSnapshot` in `packages/react-native/src/protocol/snapshot.ts`,
 which says plainly that it is the shape on the wire and that the JavaScript layer never
@@ -890,9 +893,9 @@ directive an alpha build stored. Every alpha snapshot wrote `optOutDirectives`, 
 an empty list, and a category it denied carried an `opt-out-directive` restriction.
 Both cores drop the key, and drop that reason from `restrictions`, before the
 unknown-key check runs; any other unknown restriction reason still makes the envelope
-unreadable. Dropping is safe because a directive only ever restricted, v3 no longer
-stores one, and hydration re-runs the evaluator with the signal as it is now, so a GPC
-signal that is still live puts its `gpc` restriction straight back. Refusing instead
+unreadable. Dropping is safe because that alpha directive format was retired, durable
+opt-outs in v3 use the separate `optOut` record instead, and hydration re-runs the
+evaluator with the live signal as it is now. Refusing instead
 would reset every alpha install to deny-all.
 - a document from another codec entirely, including a genuine web v3 envelope.
 
@@ -1680,7 +1683,8 @@ mean "this build has no such state". The key goes in `ADDITIVE_SNAPSHOT_DEFAULTS
 (`packages/react-native/src/protocol/wire-shape.ts`) with that default, and the
 client fills it before reading or grading the snapshot, so an older binary is
 neither `undefined` behind a typed field nor reported as drift. `gppString` is
-one: an older binary has no GPP, so it reads as `null`. `promptOwedSince` is
+one: an older binary has no GPP, so it reads as `null`. `optOut` is another: an
+older binary holds no durable opt-out record, so it reads as `null`. `promptOwedSince` is
 another, and a bridge-added one (`BRIDGE_SNAPSHOT_KEYS`): an older binary names
 no owed prompt, so it reads as `null`. A key whose absence cannot be answered
 that way needs a new protocol version.
@@ -2239,12 +2243,19 @@ the contract moved, not the kernel.
 - Privacy signals follow `KernelPrivacySignals`: `gpc` is an object with
   `detected`, `override`, and `active`, and the evaluator honors `active`. There
   is no `msa` signal anywhere in v3.
-- GPC is a live signal, never a stored record. The snapshot has no
-  `optOutDirectives` and `restrictions` has no `opt-out-directive` reason: the `gpc`
-  restriction applies while `privacySignals.gpc.active` is true and lifts when it is
-  not. No directive is stored or sent to a server; the signal reaches the backend
-  only as the decision inputs of a save. An alpha of v3 briefly recorded a standing directive from a live
-  signal; that was removed, and the native cores never recorded one.
+- The retired alpha `optOutDirectives` snapshot field and `opt-out-directive`
+  restriction reason remain gone. Instead, the kernel models a durable opt-out record
+  on `snapshot.optOut` (`{ rights, method, recordedAt, heldBy } | null`) and an
+  `opt-out` restriction reason. The `gpc` restriction applies while
+  `privacySignals.gpc.active` is true under a matched rule that maps GPC. The first
+  time a live kernel sees an active GPC signal under a matched rule with a GPC deny
+  list, it records a durable opt-out with `method: 'gpc'` and `heldBy: 'device'`.
+  When the signal stops, the `gpc` restriction lifts, while the durable opt-out
+  record stays and keeps `marketing` and `measurement` in scope restricted with
+  `opt-out`. Under an `opt-out` rule, a save that refuses every opt-out category in
+  scope (such as rejecting all) also records a durable opt-out with `method: 'button'`,
+  and a save that grants one lifts a device-held opt-out when GPC is not active. The
+  durable opt-out record never expires and ignores policy changes.
 - `revision` is a monotonic counter over committed mutations, not a count of the
   steps a runner took. It is not comparable
   across the three implementations, because hydration and bootstrap are mutations in

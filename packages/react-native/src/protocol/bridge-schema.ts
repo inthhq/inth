@@ -29,7 +29,13 @@ import {
 	TRACKING_PRESENTATIONS,
 	TRACKING_REQUEST_STAGES,
 } from './tracking';
-import { ACTIVE_SURFACES, NATIVE_MODELS, PROMPT_REASONS } from './vocabulary';
+import {
+	ACTIVE_SURFACES,
+	NATIVE_MODELS,
+	OPT_OUT_HOLDERS,
+	OPT_OUT_METHODS,
+	PROMPT_REASONS,
+} from './vocabulary';
 
 /** JSON value kinds a field can hold. */
 export type BridgeValueKind =
@@ -211,6 +217,15 @@ export const BRIDGE_PAYLOADS = {
 		},
 		model: { enum: NATIVE_MODELS },
 		nextDeadline: 'number | null',
+		optOut: {
+			fields: {
+				heldBy: { enum: OPT_OUT_HOLDERS },
+				method: { enum: OPT_OUT_METHODS },
+				recordedAt: 'number',
+				rights: 'array',
+			},
+			nullable: true,
+		},
 		overrides: {
 			fields: {
 				country: 'string | null',

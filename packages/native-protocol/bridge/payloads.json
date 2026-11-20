@@ -543,6 +543,35 @@
 					"required": true,
 					"type": "number"
 				},
+				"optOut": {
+					"nullable": true,
+					"required": true,
+					"fields": {
+						"heldBy": {
+							"nullable": false,
+							"required": true,
+							"type": "string",
+							"values": ["device", "person", "both"]
+						},
+						"method": {
+							"nullable": false,
+							"required": true,
+							"type": "string",
+							"values": ["button", "gpc", "api", "propagated"]
+						},
+						"recordedAt": {
+							"nullable": false,
+							"required": true,
+							"type": "number"
+						},
+						"rights": {
+							"nullable": false,
+							"required": true,
+							"type": "array"
+						}
+					},
+					"type": "object"
+				},
 				"overrides": {
 					"nullable": false,
 					"required": true,

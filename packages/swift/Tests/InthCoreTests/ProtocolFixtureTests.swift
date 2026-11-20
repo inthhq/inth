@@ -645,6 +645,10 @@ final class ProtocolFixtureTests: XCTestCase {
         guard let now = input["now"]?.intValue else {
             throw Failure.unsupported(fixture: entry.id, detail: "input.now is missing")
         }
+        // Durable opt-out records are not implemented in the Swift core yet; the
+        // runner reads the field to enforce the hydration invariant and leaves it
+        // unseeded so the ledger records the real differences against the kernel.
+        let hasStoredOptOut = input["storedRecords"]?["optOut"].map { !$0.isNull } ?? false
         if input["hydrated"]?.boolValue ?? true {
             var seeded = ConsentSnapshot(revision: 0)
             if let choice = input["storedRecords"]?["choice"], !choice.isNull {
@@ -672,6 +676,12 @@ final class ProtocolFixtureTests: XCTestCase {
             )
             store.set(try InthJSON.encode(envelope), for: StorageKey.snapshot)
         } else {
+            if hasStoredOptOut {
+                throw Failure.unsupported(
+                    fixture: entry.id,
+                    detail: "hydrated is false but storedRecords carries optOut, which only exists inside an envelope"
+                )
+            }
             // The claim has to hold in the store or the fixture proves nothing: a seeded
             // envelope would let `hydrate()` raise `ready` and the init whose latch is
             // under test would never be asked to. Asserted rather than trusted, so a
@@ -1435,6 +1445,11 @@ final class ProtocolFixtureTests: XCTestCase {
     private enum Field: String {
         case revision = "revision"
         case deadline = "nextDeadline"
+        case optOut = "optOut"
+        case permissionMarketing = "effectivePermissions.marketing"
+        case permissionMeasurement = "effectivePermissions.measurement"
+        case restrictionMarketing = "restrictions.marketing"
+        case restrictionMeasurement = "restrictions.measurement"
     }
 
     /// One row per snapshot a fixture asserts: which fields this build cannot match
@@ -1452,7 +1467,7 @@ final class ProtocolFixtureTests: XCTestCase {
         ("evaluation-eu-opt-in", "expected.snapshot", [.revision]),
         ("evaluation-us-ccpa-opt-out", "expected.snapshot", [.revision]),
         ("evaluation-no-rule-matched", "expected.snapshot", [.revision]),
-        ("evaluation-gpc-signal-present", "expected.snapshot", [.revision]),
+        ("evaluation-gpc-signal-present", "expected.snapshot", [.revision, .optOut, .restrictionMarketing, .restrictionMeasurement]),
         ("evaluation-notice-pending", "expected.snapshot", [.revision]),
         ("evaluation-eu-explicit-grants", "expected.snapshot", [.revision]),
         ("evaluation-eu-partial-denials", "expected.snapshot", [.revision]),
@@ -1479,7 +1494,7 @@ final class ProtocolFixtureTests: XCTestCase {
         ("evaluation-opt-in-grant-expired", "expected.snapshot", [.revision]),
         ("evaluation-opt-out-denial-under-stale-policy", "expected.snapshot", [.revision]),
         ("evaluation-opt-out-grant-under-stale-policy", "expected.snapshot", [.revision]),
-        ("evaluation-gpc-under-opt-in-no-receipt", "expected.snapshot", [.revision]),
+        ("evaluation-gpc-under-opt-in-no-receipt", "expected.snapshot", [.revision, .optOut, .restrictionMarketing, .restrictionMeasurement]),
         // An app that declares no categories. The choice scope, the acknowledgement and
         // its reasons match the kernel; the numbering runs ahead as it does everywhere.
         ("evaluation-necessary-only-pending", "expected.snapshot", [.revision]),
@@ -1489,14 +1504,38 @@ final class ProtocolFixtureTests: XCTestCase {
         ("evaluation-necessary-only-answered-by-decision", "expected.snapshot", [.revision]),
         ("evaluation-nothing-declared-strict", "expected.snapshot", [.revision]),
         ("evaluation-nothing-declared-iab", "expected.snapshot", [.revision]),
+        // Durable opt-out record scenarios. Web implements the durable opt-out record first.
+        (
+            "evaluation-opt-out-stored-without-gpc",
+            "expected.snapshot",
+            [.revision, .permissionMarketing, .permissionMeasurement, .optOut, .restrictionMarketing, .restrictionMeasurement]
+        ),
+        (
+            "evaluation-opt-out-aged-over-year",
+            "expected.snapshot",
+            [.revision, .permissionMarketing, .permissionMeasurement, .optOut, .restrictionMarketing, .restrictionMeasurement]
+        ),
+        (
+            "evaluation-opt-out-under-stale-policy",
+            "expected.snapshot",
+            [.revision, .permissionMarketing, .permissionMeasurement, .optOut, .restrictionMarketing, .restrictionMeasurement]
+        ),
         ("save-body-all", "expected.snapshotBefore", [.revision]),
         ("save-body-all", "expected.snapshotAfter", [.revision]),
         ("save-body-necessary", "expected.snapshotBefore", [.revision]),
         ("save-body-necessary", "expected.snapshotAfter", [.revision]),
         ("save-body-explicit-partial", "expected.snapshotBefore", [.revision]),
         ("save-body-explicit-partial", "expected.snapshotAfter", [.revision]),
-        ("save-body-ccpa-gpc", "expected.snapshotBefore", [.revision]),
-        ("save-body-ccpa-gpc", "expected.snapshotAfter", [.revision, .deadline]),
+        ("save-body-ccpa-gpc", "expected.snapshotBefore", [.revision, .optOut, .restrictionMarketing, .restrictionMeasurement]),
+        ("save-body-ccpa-gpc", "expected.snapshotAfter", [.revision, .deadline, .optOut, .restrictionMarketing, .restrictionMeasurement]),
+        ("save-body-ccpa-reject-all", "expected.snapshotBefore", [.revision]),
+        ("save-body-ccpa-reject-all", "expected.snapshotAfter", [.revision, .optOut, .restrictionMarketing, .restrictionMeasurement]),
+        (
+            "save-body-ccpa-opt-out-lifted",
+            "expected.snapshotBefore",
+            [.revision, .permissionMarketing, .permissionMeasurement, .optOut, .restrictionMarketing, .restrictionMeasurement]
+        ),
+        ("save-body-ccpa-opt-out-lifted", "expected.snapshotAfter", [.revision, .deadline]),
         ("save-body-necessary-only-all", "expected.snapshotBefore", [.revision]),
         ("save-body-necessary-only-all", "expected.snapshotAfter", [.revision]),
         ("save-body-necessary-only-necessary", "expected.snapshotBefore", [.revision]),
@@ -1527,6 +1566,8 @@ final class ProtocolFixtureTests: XCTestCase {
             return reasonRevision
         case .deadline:
             return reasonDeadline
+        case .optOut, .permissionMarketing, .permissionMeasurement, .restrictionMarketing, .restrictionMeasurement:
+            return reasonOptOutRecord
         }
     }
 
@@ -1541,4 +1582,7 @@ final class ProtocolFixtureTests: XCTestCase {
     /// prompt, so the kernel reports no deadline. This one reports the expiry anyway.
     private static let reasonDeadline =
         "the core reports a choice expiry the kernel does not: nothing changes when it passes under an opt-out rule."
+
+    private static let reasonOptOutRecord =
+        "The durable opt-out record is implemented in the web kernel first. The native core must add snapshot.optOut, stored opt-out persistence, the opt-out restriction reason for marketing and measurement in scope, automatic GPC opt-out recording, and button opt-out recording and lifting on save."
 }

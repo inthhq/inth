@@ -1,0 +1,205 @@
+{
+	"description": "A stored durable opt-out minted under the first revision of an opt-out policy and replayed after the publisher revised the copy. A durable opt-out ignores policy changes, so marketing and measurement stay denied with reason opt-out.",
+	"expected": {
+		"snapshot": {
+			"activeUI": "none",
+			"consentCategories": [
+				"necessary",
+				"experience",
+				"functionality",
+				"marketing",
+				"measurement"
+			],
+			"effectivePermissions": {
+				"necessary": true,
+				"functionality": true,
+				"experience": true,
+				"measurement": false,
+				"marketing": false
+			},
+			"error": null,
+			"evaluatedAt": 1770000000000,
+			"explicitChoice": null,
+			"gppString": null,
+			"iab": null,
+			"location": {
+				"countryCode": "US",
+				"regionCode": "CA"
+			},
+			"model": "opt-out",
+			"nextDeadline": null,
+			"optOut": {
+				"heldBy": "device",
+				"method": "button",
+				"recordedAt": 1770000000000,
+				"rights": ["sale", "share"]
+			},
+			"overrides": {
+				"country": "US",
+				"gpc": null,
+				"language": "en",
+				"region": "CA"
+			},
+			"policyPending": false,
+			"policySnapshotToken": "tok-stale-opt-out-replay",
+			"privacySignals": {
+				"gpc": {
+					"active": false,
+					"detected": false,
+					"override": null
+				}
+			},
+			"promptRequirement": {
+				"kind": "none"
+			},
+			"ready": true,
+			"resolution": {
+				"fingerprint": "8a8c07a970d4b887574b0e5aa62a6a5a9991d5a7acf45c5111adf0524d1e6eca",
+				"policyId": "fixture_california_opt_out_no_prompt",
+				"status": "matched"
+			},
+			"restrictions": {
+				"measurement": ["opt-out"],
+				"marketing": ["opt-out"]
+			},
+			"revision": 1,
+			"subject": {
+				"subjectId": "019c1c38-a400-7100-8000-000000000001"
+			},
+			"translations": {
+				"language": "en",
+				"translations": {
+					"common": {
+						"acceptAll": "Accept all",
+						"customize": "Customize",
+						"rejectAll": "Reject all",
+						"save": "Save"
+					},
+					"consentManagerDialog": {},
+					"consentTypes": {},
+					"cookieBanner": {},
+					"rights": {}
+				}
+			}
+		}
+	},
+	"id": "evaluation-opt-out-under-stale-policy",
+	"input": {
+		"hydrated": true,
+		"now": 1770000000000,
+		"overrides": {
+			"country": null,
+			"gpc": null,
+			"language": "en",
+			"region": null
+		},
+		"privacySignals": {
+			"gpc": {
+				"detected": false,
+				"override": null
+			}
+		},
+		"storedRecords": {
+			"choice": null,
+			"noticeDismissal": null,
+			"optOut": {
+				"heldBy": "device",
+				"method": "button",
+				"recordedAt": 1770000000000,
+				"rights": ["sale", "share"]
+			},
+			"subject": {
+				"subjectId": "019c1c38-a400-7100-8000-000000000001"
+			}
+		},
+		"transport": {
+			"body": {
+				"branding": "c15t",
+				"location": {
+					"countryCode": "US",
+					"regionCode": "CA"
+				},
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "98c0fb6f39997bf7be4b5057defa34d9775f58a82d20504002b25c69571da09a",
+						"notice": "a0c811447d9c21dbfb47b796d99ac4fe043c6e624cb384cb1c3c30eb49249a04",
+						"policy": "8a8c07a970d4b887574b0e5aa62a6a5a9991d5a7acf45c5111adf0524d1e6eca"
+					},
+					"matchedBy": "country",
+					"policy": {
+						"actions": {
+							"allowed": [],
+							"equivalent": [],
+							"required": []
+						},
+						"copyRevision": "v2",
+						"id": "fixture_california_opt_out_no_prompt",
+						"model": "opt-out",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": []
+							}
+						},
+						"prompt": "none",
+						"proof": {
+							"storeIp": false,
+							"storeLanguage": false,
+							"storeUserAgent": false
+						},
+						"rights": ["disclosure", "opt-out", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "permissive",
+						"validity": {
+							"choiceMs": 2592000000,
+							"noticeMs": 31536000000
+						}
+					},
+					"policyId": "fixture_california_opt_out_no_prompt",
+					"status": "matched",
+					"version": 1
+				},
+				"translations": {
+					"language": "en",
+					"translations": {
+						"common": {
+							"acceptAll": "Accept all",
+							"customize": "Customize",
+							"rejectAll": "Reject all",
+							"save": "Save"
+						},
+						"consentManagerDialog": {},
+						"consentTypes": {},
+						"cookieBanner": {},
+						"rights": {}
+					}
+				},
+				"policySnapshotToken": "tok-stale-opt-out-replay"
+			},
+			"headers": {
+				"x-request-id": "req_fixture_init"
+			},
+			"status": 200
+		},
+		"user": null
+	},
+	"kind": "evaluation",
+	"notes": [
+		"Compare parsed values, not serialized bytes: object key order is not part of the contract.",
+		"transport is the /init response to serve, headers included. Answer it once, before any save.",
+		"storedRecords is what protected storage holds before the core starts. A null member means nothing is stored for it. The subject id is always supplied, never generated, so no fixture depends on a random uuid.",
+		"input.overrides and input.privacySignals are what the device reports. expected.overrides and expected.privacySignals are what the kernel settled: init.location sets country and region, init.translations sets language, and privacySignals.gpc.active is the override when set, otherwise the detection.",
+		"there is no test override and no msa signal. Overrides are country, region, language, and gpc; gpc is a detected / override / active triple. See \"Corrections to this contract\" in packages/native-protocol/CONTRACT.md.",
+		"revision is a monotonic counter that starts at 0 and bumps once per committed mutation. It is not a count of the steps a runner took. Compare it as a number, and read the pinned value rather than deriving it.",
+		"The gpc restriction applies while privacySignals.gpc.active is true and the matched rule maps GPC. The first time a live kernel sees an active GPC signal under a matched rule that maps GPC, it records a durable opt-out on snapshot.optOut with method gpc, and marketing and measurement in scope carry the opt-out restriction even after the signal stops. No snapshot carries the retired optOutDirectives field.",
+		"evaluatedAt equals input.now. Both it and ready are native lifecycle facts, not kernel output: ready is latched by a hydrate() that found a stored envelope and by the first /init that lands a definitive answer, which on /v1 is any 200 body. Nothing stored plus a resolved init is therefore ready true, and only an init that failed or never arrived leaves it false.",
+		"error is null in every fixture: no fixture exercises a transport failure or an unreadable wire.",
+		"Any field this file does not mention must not be invented. Unknown wire values fail closed."
+	],
+	"protocolVersion": 1
+}

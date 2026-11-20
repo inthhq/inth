@@ -21,6 +21,7 @@ import type {
 	KernelModel,
 	KernelTranslations,
 	LocationResponse,
+	OptOutRecord,
 	OptionalConsentCategory,
 	PolicyResolutionStatus,
 	PromptRequirement,
@@ -361,6 +362,11 @@ export interface ConsentSnapshot {
 	readonly translations: KernelTranslations | null;
 	/** Earliest future time (epoch ms) that can change permissions. */
 	readonly nextDeadline: number | null;
+	/**
+	 * Durable opt-out record, or `null` when none is held. A binary built before
+	 * this field existed omits it, and the client reads that as `null`.
+	 */
+	readonly optOut: OptOutRecord | null;
 	/** Epoch milliseconds of the last evaluation. */
 	readonly evaluatedAt: number;
 	/** Failure the core is holding, or `null`. */
