@@ -1309,8 +1309,6 @@ class ProtocolFixtureTest {
 
 	const val REVISION = "hydration and bootstrap each count as a mutation here, so this build runs ahead of the kernel, which numbers committed state changes only. The contract has to pick one numbering."
 
-	const val DEADLINE_OVER = "the core reports a choice expiry the kernel does not: under this policy nothing changes when that deadline passes, so the kernel leaves nextDeadline unset."
-
 	/**
 	 * One row per fixture, snapshot root, and field this build cannot match yet.
 	 *
@@ -1362,6 +1360,7 @@ class ProtocolFixtureTest {
 			"evaluation-opt-out-stored-without-gpc" to emptyList<Pair<String, String>>(),
 			"evaluation-opt-out-aged-over-year" to emptyList<Pair<String, String>>(),
 			"evaluation-opt-out-under-stale-policy" to emptyList<Pair<String, String>>(),
+			"evaluation-opt-out-measurement-granted" to emptyList<Pair<String, String>>(),
 		).forEach { (fixture, fields) -> add(fixture, "expected.snapshot", *fields.toTypedArray()) }
 
 		// The snapshot a `native-envelope` write case stores is the same snapshot the
@@ -1372,9 +1371,7 @@ class ProtocolFixtureTest {
 			"native-envelope-opt-in-grants" to emptyList<Pair<String, String>>(),
 			"native-envelope-partial-denials" to emptyList<Pair<String, String>>(),
 			"native-envelope-notice-dismissed" to emptyList<Pair<String, String>>(),
-			"native-envelope-opt-out-grants" to listOf(
-				"nextDeadline" to DEADLINE_OVER,
-			),
+			"native-envelope-opt-out-grants" to emptyList<Pair<String, String>>(),
 		).forEach { (fixture, fields) -> add(fixture, "expected.snapshot", *fields.toTypedArray()) }
 
 		val before = emptyList<Pair<String, String>>()
@@ -1382,9 +1379,7 @@ class ProtocolFixtureTest {
 		listOf(
 			"save-body-all" to emptyList<Pair<String, String>>(),
 			"save-body-explicit-partial" to emptyList<Pair<String, String>>(),
-			"save-body-necessary" to listOf(
-				"nextDeadline" to DEADLINE_OVER,
-			),
+			"save-body-necessary" to emptyList<Pair<String, String>>(),
 		).forEach { (fixture, extra) ->
 			add(fixture, "expected.snapshotBefore", *before.toTypedArray())
 			add(fixture, "expected.snapshotAfter", *(after + extra).toTypedArray())
@@ -1411,38 +1406,6 @@ class ProtocolFixtureTest {
 			)
 		}
 
-		add("save-body-ccpa-gpc", "expected.snapshotAfter", "nextDeadline" to DEADLINE_OVER)
-		add("save-body-ccpa-reject-all", "expected.snapshotAfter", "nextDeadline" to DEADLINE_OVER)
-		add("save-body-ccpa-opt-out-lifted", "expected.snapshotAfter", "nextDeadline" to DEADLINE_OVER)
-		add(
-			"evaluation-opt-out-measurement-granted",
-			"expected.snapshot",
-			"optOut" to OPT_OUT_RECORD,
-			"restrictions.marketing" to OPT_OUT_RECORD,
-		)
-		add(
-			"save-body-ccpa-refuse-marketing",
-			"expected.snapshotAfter",
-			"effectivePermissions.measurement" to OPT_OUT_RECORD,
-			"nextDeadline" to DEADLINE_OVER,
-			"optOut" to OPT_OUT_RECORD,
-			"restrictions.marketing" to OPT_OUT_RECORD,
-			"restrictions.measurement" to OPT_OUT_RECORD,
-		)
-		add(
-			"save-body-ccpa-opt-out-measurement-grant",
-			"expected.snapshotBefore",
-			"nextDeadline" to DEADLINE_OVER,
-			"optOut" to OPT_OUT_RECORD,
-			"restrictions.marketing" to OPT_OUT_RECORD,
-			"restrictions.measurement" to OPT_OUT_RECORD,
-		)
-		add(
-			"save-body-ccpa-opt-out-measurement-grant",
-			"expected.snapshotAfter",
-			"optOut" to OPT_OUT_RECORD,
-			"restrictions.marketing" to OPT_OUT_RECORD,
-		)
 		return rows
 	}
 }

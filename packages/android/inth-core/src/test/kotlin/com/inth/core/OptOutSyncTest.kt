@@ -57,11 +57,12 @@ class OptOutSyncTest {
 		policySnapshotToken: String? = "snapshot-token",
 		country: String = "US",
 		region: String = "CA",
+		model: String = "\"opt-out\"",
 	): TransportOutcome {
 		val base = json.parseToJsonElement(
 			initBody(
 				policyId = "us-ca-opt-out",
-				model = "\"opt-out\"",
+				model = model,
 				prompt = prompt,
 				scope = scope,
 				scopeMode = "\"permissive\"",
@@ -986,6 +987,231 @@ class OptOutSyncTest {
 		assertNull(kernel.snapshot().optOut)
 		assertTrue(transport.liftOptOutRequests.isEmpty())
 		assertTrue(store.readPendingOptOuts().isEmpty())
+	}
+
+	@Test
+	fun `refusing marketing and granting measurement in one save keeps measurement permitted after the server replaces recordedAt with a later timestamp`() {
+		val backend = InMemoryKeyValueStore()
+		seedSubject(backend)
+		val clock = FixedClock(NOW)
+		val serverRecordedAt = NOW + 60_000L
+		val serverOptOut = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.BUTTON,
+			recordedAt = serverRecordedAt,
+			heldBy = OptOutHolder.DEVICE,
+		)
+		val transport = RecordingTransport()
+			.respondInit(optOutInit())
+			.respondSave(SaveOutcome.Delivered(subjectId = SUBJECT))
+			.respondOptOut(OptOutOutcome.Delivered(subjectId = SUBJECT, optOut = serverOptOut))
+		val kernel = testKernel(store = InthStore(backend), clock = clock, transport = transport)
+		kernel.bootstrap()
+
+		kernel.save(
+			CommitIntent.Custom(
+				mapOf(
+					ConsentCategory.MARKETING to false,
+					ConsentCategory.MEASUREMENT to true,
+				),
+			),
+		)
+
+		assertEquals(serverOptOut, kernel.snapshot().optOut)
+		assertFalse(kernel.isAllowed(ConsentCategory.MARKETING))
+		assertTrue(kernel.isAllowed(ConsentCategory.MEASUREMENT))
+		assertEquals(
+			mapOf("marketing" to listOf("explicit-denial", "opt-out")),
+			kernel.snapshot().restrictions,
+		)
+	}
+
+	@Test
+	fun `holding an opt-out under an opt-in rule, granting marketing lifts and sends one lift, and refusing marketing records nothing`() {
+		val backend = InMemoryKeyValueStore()
+		seedOptOut(
+			backend,
+			OptOutRecord(
+				rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+				method = OptOutMethod.BUTTON,
+				recordedAt = NOW - 1_000L,
+				heldBy = OptOutHolder.DEVICE,
+			),
+		)
+		val clock = FixedClock(NOW)
+		val transport = RecordingTransport()
+			.respondInit(optOutInit(model = "\"opt-in\"", prompt = "\"choice\"", gpcDenyCategories = "[]"))
+			.respondSave(SaveOutcome.Delivered(subjectId = SUBJECT))
+			.respondLiftOptOut(LiftOptOutOutcome.Delivered(subjectId = SUBJECT, optOut = null, cleared = true))
+		val kernel = testKernel(store = InthStore(backend), clock = clock, transport = transport)
+		kernel.bootstrap()
+
+		kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to true)))
+
+		assertNull(kernel.snapshot().optOut)
+		assertEquals(1, transport.liftOptOutRequests.size)
+		assertEquals("snapshot-token", transport.liftOptOutRequests.single().first.policySnapshotToken)
+		assertTrue(transport.optOutRequests.isEmpty())
+
+		kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to false)))
+		assertNull(kernel.snapshot().optOut)
+		assertTrue(transport.optOutRequests.isEmpty())
+	}
+
+	@Test
+	fun `lift body carries policySnapshotToken when held, omits it when absent, and preserves it on queued replay`() {
+		val record = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.BUTTON,
+			recordedAt = NOW - 1_000L,
+			heldBy = OptOutHolder.DEVICE,
+		)
+
+		// With token held.
+		val withTokenBackend = InMemoryKeyValueStore()
+		seedOptOut(withTokenBackend, record)
+		val withTokenHttp = RecordingHttpClient { request ->
+			when {
+				request.url.endsWith(InthProtocol.INIT_PATH) ->
+					HttpResponse(200, emptyMap(), optOutInitBodyJson(policySnapshotToken = "lift-token-1"))
+
+				else ->
+					HttpResponse(200, emptyMap(), """{"recordId":"$RECORD","subjectId":"$SUBJECT","optOut":null}""")
+			}
+		}
+		val withToken = testKernel(
+			store = InthStore(withTokenBackend),
+			clock = FixedClock(NOW),
+			transport = HostedTransport(withTokenHttp, TEST_CONFIG, FixedClock(NOW)),
+		)
+		withToken.bootstrap()
+		assertTrue(withToken.optIn().ok)
+		val withTokenBody = json.parseToJsonElement(
+			requireNotNull(withTokenHttp.requests.single { it.url.endsWith(InthProtocol.OPT_OUT_LIFT_PATH) }.body),
+		).jsonObject
+		assertEquals("lift-token-1", withTokenBody["policySnapshotToken"]?.jsonPrimitive?.content)
+
+		// Without token held.
+		val withoutTokenBackend = InMemoryKeyValueStore()
+		seedOptOut(withoutTokenBackend, record)
+		val withoutTokenHttp = RecordingHttpClient { request ->
+			when {
+				request.url.endsWith(InthProtocol.INIT_PATH) ->
+					HttpResponse(200, emptyMap(), optOutInitBodyJson(policySnapshotToken = null))
+
+				else ->
+					HttpResponse(200, emptyMap(), """{"recordId":"$RECORD","subjectId":"$SUBJECT","optOut":null}""")
+			}
+		}
+		val withoutToken = testKernel(
+			store = InthStore(withoutTokenBackend),
+			clock = FixedClock(NOW),
+			transport = HostedTransport(withoutTokenHttp, TEST_CONFIG, FixedClock(NOW)),
+		)
+		withoutToken.bootstrap()
+		assertTrue(withoutToken.optIn().ok)
+		val withoutTokenBody = json.parseToJsonElement(
+			requireNotNull(withoutTokenHttp.requests.single { it.url.endsWith(InthProtocol.OPT_OUT_LIFT_PATH) }.body),
+		).jsonObject
+		assertFalse("policySnapshotToken" in withoutTokenBody, "absent token must be omitted: $withoutTokenBody")
+
+		// Queued lift replays with its original token even after a later init serves a newer token.
+		val queuedBackend = InMemoryKeyValueStore()
+		seedOptOut(queuedBackend, record)
+		val offlineHttp = RecordingHttpClient { request ->
+			if (request.url.endsWith(InthProtocol.INIT_PATH)) {
+				HttpResponse(200, emptyMap(), optOutInitBodyJson(policySnapshotToken = "queued-lift-token"))
+			} else {
+				throw java.io.IOException("offline")
+			}
+		}
+		val first = testKernel(
+			store = InthStore(queuedBackend),
+			clock = FixedClock(NOW),
+			transport = HostedTransport(offlineHttp, TEST_CONFIG, FixedClock(NOW)),
+		)
+		first.bootstrap()
+		assertTrue(first.optIn().ok)
+		val queued = InthStore(queuedBackend).readPendingOptOuts()
+		assertEquals(1, queued.size)
+		assertEquals(OptOutActKind.LIFT, queued.single().kind)
+		assertEquals("queued-lift-token", queued.single().liftPayload?.policySnapshotToken)
+
+		val replayHttp = RecordingHttpClient { request ->
+			when {
+				request.url.endsWith(InthProtocol.INIT_PATH) ->
+					HttpResponse(200, emptyMap(), optOutInitBodyJson(policySnapshotToken = "newer-token-ignored-by-replay"))
+
+				else ->
+					HttpResponse(200, emptyMap(), """{"recordId":"$RECORD","subjectId":"$SUBJECT","optOut":null}""")
+			}
+		}
+		val replayed = testKernel(
+			store = InthStore(queuedBackend),
+			clock = FixedClock(NOW),
+			transport = HostedTransport(replayHttp, TEST_CONFIG, FixedClock(NOW)),
+		)
+		replayed.bootstrap()
+		val replayLiftPosts = replayHttp.requests.filter { it.url.endsWith(InthProtocol.OPT_OUT_LIFT_PATH) }
+		assertEquals(1, replayLiftPosts.size)
+		val replayBody = json.parseToJsonElement(requireNotNull(replayLiftPosts.single().body)).jsonObject
+		assertEquals("queued-lift-token", replayBody["policySnapshotToken"]?.jsonPrimitive?.content)
+		assertTrue(InthStore(queuedBackend).readPendingOptOuts().isEmpty())
+	}
+
+	@Test
+	fun `a lift answer with optOut null clears snapshot and storage for device, person and both via optIn and granting save`() {
+		for (holder in listOf(OptOutHolder.DEVICE, OptOutHolder.PERSON, OptOutHolder.BOTH)) {
+			for (action in listOf("optIn", "save")) {
+				val backend = InMemoryKeyValueStore()
+				val record = OptOutRecord(
+					rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+					method = if (holder == OptOutHolder.DEVICE) OptOutMethod.BUTTON else OptOutMethod.PROPAGATED,
+					recordedAt = NOW - 1_000L,
+					heldBy = holder,
+				)
+				seedOptOut(backend, record)
+				val clock = FixedClock(NOW)
+				val transport = RecordingTransport()
+					.respondInit(optOutInit())
+					.respondLink(LinkOutcome.Linked(subjectId = SUBJECT, optOut = record))
+					.respondSave(SaveOutcome.Delivered(subjectId = SUBJECT))
+					.respondLiftOptOut(LiftOptOutOutcome.Delivered(subjectId = SUBJECT, optOut = null, cleared = true))
+				val kernel = testKernel(store = InthStore(backend), clock = clock, transport = transport)
+				kernel.bootstrap()
+				if (holder != OptOutHolder.DEVICE) {
+					kernel.identify(KernelUser("user_123", identityProvider = "clerk"), identityToken = "tok_verified")
+				}
+				assertEquals(record, kernel.snapshot().optOut, "$holder/$action must hold record before lift")
+
+				if (action == "optIn") {
+					val res = kernel.optIn()
+					assertTrue(res.ok, "$holder/optIn must succeed")
+				} else {
+					val res = kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to true)))
+					assertTrue(res.ok, "$holder/save must succeed")
+				}
+
+				assertEquals(1, transport.liftOptOutRequests.size, "$holder/$action must send one lift")
+				assertEquals("snapshot-token", transport.liftOptOutRequests.single().first.policySnapshotToken, "$holder/$action")
+				if (holder != OptOutHolder.DEVICE) {
+					assertEquals("tok_verified", transport.liftOptOutRequests.single().second, "$holder/$action")
+				}
+				assertNull(kernel.snapshot().optOut, "$holder/$action must clear snapshot.optOut")
+				assertTrue(kernel.isAllowed(ConsentCategory.MARKETING), "$holder/$action must permit marketing")
+				assertNull(assertNotNull(InthStore(backend).readEnvelope()).snapshot.optOut, "$holder/$action must clear stored optOut")
+
+				// Reloading from storage confirms the opt-out stays cleared.
+				val reloaded = testKernel(
+					store = InthStore(backend),
+					clock = clock,
+					transport = RecordingTransport().respondInit(optOutInit()),
+				)
+				reloaded.bootstrap()
+				assertNull(reloaded.snapshot().optOut, "$holder/$action reload must stay clear")
+				assertTrue(reloaded.isAllowed(ConsentCategory.MARKETING), "$holder/$action reload must permit marketing")
+			}
+		}
 	}
 
 	private companion object {

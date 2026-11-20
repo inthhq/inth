@@ -299,7 +299,7 @@ class OptOutRecordTest {
 	// -- save() interactions --------------------------------------------------
 
 	@Test
-	fun `grant wins when a single save grants one opt-out category and refuses the other`() {
+	fun `granting marketing lifts while measurement stays refused`() {
 		val backend = InMemoryKeyValueStore()
 		seedOptOut(
 			backend,
@@ -325,7 +325,7 @@ class OptOutRecordTest {
 			),
 		)
 
-		assertNull(kernel.snapshot().optOut, "the grant lifts the held opt-out and does not record a new one")
+		assertNull(kernel.snapshot().optOut, "granting marketing lifts the held opt-out and does not record a new one")
 		assertTrue(kernel.isAllowed(ConsentCategory.MARKETING))
 		assertFalse(kernel.isAllowed(ConsentCategory.MEASUREMENT))
 		assertEquals(listOf("explicit-denial"), kernel.snapshot().restrictions["measurement"])
@@ -333,7 +333,40 @@ class OptOutRecordTest {
 	}
 
 	@Test
-	fun `turning off marketing and measurement across two saves records on the second save`() {
+	fun `refusing marketing alone records while measurement is undecided, granted or refused`() {
+		val cases = listOf(
+			Triple("undecided", mapOf(ConsentCategory.MARKETING to false), false),
+			Triple("granted", mapOf(ConsentCategory.MARKETING to false, ConsentCategory.MEASUREMENT to true), true),
+			Triple("refused", mapOf(ConsentCategory.MARKETING to false, ConsentCategory.MEASUREMENT to false), false),
+		)
+		for ((label, consents, measurementAllowed) in cases) {
+			val clock = FixedClock(1_770_000_000_000L)
+			val kernel = testKernel(
+				store = InthStore(InMemoryKeyValueStore()),
+				clock = clock,
+				transport = RecordingTransport().respondInit(optOutInit()),
+			)
+			kernel.bootstrap()
+
+			kernel.save(CommitIntent.Custom(consents))
+
+			assertEquals(
+				OptOutRecord(
+					rights = emptyList(),
+					method = OptOutMethod.BUTTON,
+					recordedAt = clock.now,
+					heldBy = OptOutHolder.DEVICE,
+				),
+				kernel.snapshot().optOut,
+				"refusing marketing with measurement $label must record an opt-out",
+			)
+			assertFalse(kernel.isAllowed(ConsentCategory.MARKETING), "marketing denied when measurement is $label")
+			assertEquals(measurementAllowed, kernel.isAllowed(ConsentCategory.MEASUREMENT), "measurement permission when $label")
+		}
+	}
+
+	@Test
+	fun `refusing measurement alone records nothing when marketing is in scope`() {
 		val clock = FixedClock(1_770_000_000_000L)
 		val kernel = testKernel(
 			store = InthStore(InMemoryKeyValueStore()),
@@ -342,10 +375,79 @@ class OptOutRecordTest {
 		)
 		kernel.bootstrap()
 
-		kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to false)))
-		assertNull(kernel.snapshot().optOut, "refusing only one of two in-scope categories does not opt out yet")
+		kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to false)))
+		assertNull(kernel.snapshot().optOut, "refusing measurement alone must not opt out when marketing is in scope")
 
+		// A later save refusing marketing records the opt-out.
 		clock.advance(2_000L)
+		kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to false)))
+		assertEquals(
+			OptOutRecord(
+				rights = emptyList(),
+				method = OptOutMethod.BUTTON,
+				recordedAt = clock.now,
+				heldBy = OptOutHolder.DEVICE,
+			),
+			kernel.snapshot().optOut,
+		)
+	}
+
+	@Test
+	fun `granting measurement alone does not lift a held opt-out when marketing is in scope`() {
+		val clock = FixedClock(1_770_000_000_000L)
+		val backend = InMemoryKeyValueStore()
+		val existing = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.BUTTON,
+			recordedAt = clock.now - 1_000L,
+			heldBy = OptOutHolder.DEVICE,
+		)
+		seedOptOut(backend, existing)
+		val kernel = testKernel(
+			store = InthStore(backend),
+			clock = clock,
+			transport = RecordingTransport().respondInit(optOutInit()),
+		)
+		kernel.bootstrap()
+		kernel.save(
+			CommitIntent.Custom(
+				mapOf(
+					ConsentCategory.MARKETING to false,
+					ConsentCategory.MEASUREMENT to false,
+				),
+			),
+		)
+
+		kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to true)))
+
+		assertEquals(existing, kernel.snapshot().optOut)
+		assertFalse(kernel.isAllowed(ConsentCategory.MARKETING))
+		assertTrue(kernel.isAllowed(ConsentCategory.MEASUREMENT))
+		assertEquals(
+			mapOf("marketing" to listOf("explicit-denial", "opt-out")),
+			kernel.snapshot().restrictions,
+		)
+	}
+
+	@Test
+	fun `when marketing is not in scope, measurement decides both recording and lifting`() {
+		val clock = FixedClock(1_770_000_000_000L)
+		val kernel = testKernel(
+			config = TEST_CONFIG.copy(
+				consentCategories = listOf(
+					ConsentCategory.NECESSARY,
+					ConsentCategory.FUNCTIONALITY,
+					ConsentCategory.MEASUREMENT,
+				),
+			),
+			store = InthStore(InMemoryKeyValueStore()),
+			clock = clock,
+			transport = RecordingTransport().respondInit(
+				optOutInit(scope = """["functionality","measurement"]""", gpcDenyCategories = "[]"),
+			),
+		)
+		kernel.bootstrap()
+
 		kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to false)))
 		assertEquals(
 			OptOutRecord(
@@ -356,6 +458,286 @@ class OptOutRecordTest {
 			),
 			kernel.snapshot().optOut,
 		)
+		assertFalse(kernel.isAllowed(ConsentCategory.MEASUREMENT))
+
+		kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to true)))
+		assertNull(kernel.snapshot().optOut)
+		assertTrue(kernel.isAllowed(ConsentCategory.MEASUREMENT))
+
+		// When measurement is the deciding category, a held opt-out still denies a stored measurement grant.
+		val heldBackend = InMemoryKeyValueStore()
+		heldBackend.putSilently(
+			InthStoreKeys.SUBJECT,
+			InthJson.storage.encodeToString(ConsentSubject.serializer(), ConsentSubject(id = "sub_2")),
+		)
+		heldBackend.putSilently(
+			InthStoreKeys.SNAPSHOT,
+			InthJson.storage.encodeToString(
+				SnapshotEnvelope.serializer(),
+				SnapshotEnvelope(
+					snapshot = ConsentSnapshot(
+						subject = ConsentSubject(id = "sub_2"),
+						explicitChoice = com.inth.core.model.ExplicitChoice(
+							consents = mapOf("marketing" to false, "measurement" to true),
+							action = com.inth.core.model.ConsentAction.CUSTOM,
+							actionAt = clock.now,
+							fingerprint = "choice-fp-1",
+						),
+						optOut = OptOutRecord(
+							rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+							method = OptOutMethod.BUTTON,
+							recordedAt = clock.now,
+							heldBy = OptOutHolder.DEVICE,
+						),
+					),
+				),
+			),
+		)
+		val heldKernel = testKernel(
+			config = TEST_CONFIG.copy(
+				consentCategories = listOf(
+					ConsentCategory.NECESSARY,
+					ConsentCategory.FUNCTIONALITY,
+					ConsentCategory.MEASUREMENT,
+				),
+			),
+			store = InthStore(heldBackend),
+			clock = clock,
+			transport = RecordingTransport().respondInit(
+				optOutInit(scope = """["functionality","measurement"]""", gpcDenyCategories = "[]"),
+			),
+		)
+		heldKernel.bootstrap()
+		assertFalse(heldKernel.isAllowed(ConsentCategory.MEASUREMENT))
+		assertEquals(listOf("opt-out"), heldKernel.snapshot().restrictions["measurement"])
+	}
+
+	@Test
+	fun `held opt-out lets valid explicit measurement grant stand when marketing is explicitly false and schedules expiry`() {
+		val choiceMs = 30L * 86_400_000L
+		val clock = FixedClock(1_770_000_000_000L)
+		val backend = InMemoryKeyValueStore()
+		val existing = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.BUTTON,
+			recordedAt = clock.now - 1_000L,
+			heldBy = OptOutHolder.DEVICE,
+		)
+		seedOptOut(backend, existing)
+		val kernel = testKernel(
+			store = InthStore(backend),
+			clock = clock,
+			transport = RecordingTransport().respondInit(optOutInit()),
+		)
+		kernel.bootstrap()
+		val savedAt = clock.now
+		kernel.save(
+			CommitIntent.Custom(
+				mapOf(
+					ConsentCategory.MARKETING to false,
+					ConsentCategory.MEASUREMENT to true,
+				),
+			),
+		)
+
+		assertEquals(existing, kernel.snapshot().optOut)
+		assertFalse(kernel.isAllowed(ConsentCategory.MARKETING))
+		assertTrue(kernel.isAllowed(ConsentCategory.MEASUREMENT))
+		assertEquals(
+			mapOf("marketing" to listOf("explicit-denial", "opt-out")),
+			kernel.snapshot().restrictions,
+		)
+		assertEquals(savedAt + choiceMs, kernel.snapshot().nextDeadline)
+	}
+
+	@Test
+	fun `measurement grant does not stand over a held opt-out when marketing is granted or undecided`() {
+		val clock = FixedClock(1_770_000_000_000L)
+		val existing = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.BUTTON,
+			recordedAt = clock.now,
+			heldBy = OptOutHolder.DEVICE,
+		)
+		val cases = listOf(
+			"marketing granted" to mapOf("marketing" to true, "measurement" to true),
+			"marketing undecided" to mapOf("measurement" to true),
+		)
+		for ((label, consents) in cases) {
+			val backend = InMemoryKeyValueStore()
+			backend.putSilently(
+				InthStoreKeys.SUBJECT,
+				InthJson.storage.encodeToString(ConsentSubject.serializer(), ConsentSubject(id = "sub_2")),
+			)
+			backend.putSilently(
+				InthStoreKeys.SNAPSHOT,
+				InthJson.storage.encodeToString(
+					SnapshotEnvelope.serializer(),
+					SnapshotEnvelope(
+						snapshot = ConsentSnapshot(
+							subject = ConsentSubject(id = "sub_2"),
+							explicitChoice = com.inth.core.model.ExplicitChoice(
+								consents = consents,
+								action = com.inth.core.model.ConsentAction.CUSTOM,
+								actionAt = clock.now,
+								fingerprint = "choice-fp-1",
+							),
+							optOut = existing,
+						),
+					),
+				),
+			)
+			val kernel = testKernel(
+				store = InthStore(backend),
+				clock = clock,
+				transport = RecordingTransport().respondInit(optOutInit()),
+			)
+			kernel.bootstrap()
+
+			assertFalse(kernel.isAllowed(ConsentCategory.MEASUREMENT), "$label must not let measurement stand")
+			assertEquals(listOf("opt-out"), kernel.snapshot().restrictions["measurement"], label)
+			assertNull(kernel.snapshot().nextDeadline, label)
+		}
+	}
+
+	@Test
+	fun `expired or policy-changed measurement grant does not stand over a held opt-out`() {
+		val choiceMs = 1_000L
+		val clock = FixedClock(1_770_000_000_000L)
+		val backend = InMemoryKeyValueStore()
+		val existing = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.BUTTON,
+			recordedAt = clock.now - 1_000L,
+			heldBy = OptOutHolder.DEVICE,
+		)
+		seedOptOut(backend, existing)
+		val transport = RecordingTransport().respondInit(
+			initSuccess(
+				body = initBody(
+					policyId = "us-ca-opt-out",
+					model = "\"opt-out\"",
+					prompt = "\"none\"",
+					scope = """["experience","functionality","marketing","measurement"]""",
+					scopeMode = "\"permissive\"",
+					choiceMs = choiceMs,
+					choiceFingerprint = "choice-fp-1",
+					gpcDenyCategories = """["marketing","measurement"]""",
+				),
+			),
+		)
+		val kernel = testKernel(store = InthStore(backend), clock = clock, transport = transport)
+		kernel.bootstrap()
+		kernel.save(
+			CommitIntent.Custom(
+				mapOf(
+					ConsentCategory.MARKETING to false,
+					ConsentCategory.MEASUREMENT to true,
+				),
+			),
+		)
+		assertTrue(kernel.isAllowed(ConsentCategory.MEASUREMENT))
+		assertEquals(clock.now + choiceMs, kernel.snapshot().nextDeadline)
+
+		// Expiry restores the opt-out restriction and clears nextDeadline.
+		clock.advance(choiceMs + 1L)
+		kernel.refresh()
+		assertFalse(kernel.isAllowed(ConsentCategory.MEASUREMENT))
+		assertEquals(listOf("opt-out"), kernel.snapshot().restrictions["measurement"])
+		assertNull(kernel.snapshot().nextDeadline)
+
+		// A fresh grant is also invalidated when the choice fingerprint changes.
+		kernel.save(
+			CommitIntent.Custom(
+				mapOf(
+					ConsentCategory.MARKETING to false,
+					ConsentCategory.MEASUREMENT to true,
+				),
+			),
+		)
+		assertTrue(kernel.isAllowed(ConsentCategory.MEASUREMENT))
+		transport.respondInit(
+			initSuccess(
+				body = initBody(
+					policyId = "us-ca-opt-out",
+					model = "\"opt-out\"",
+					prompt = "\"none\"",
+					scope = """["experience","functionality","marketing","measurement"]""",
+					scopeMode = "\"permissive\"",
+					choiceMs = choiceMs,
+					choiceFingerprint = "choice-fp-2",
+					gpcDenyCategories = """["marketing","measurement"]""",
+				),
+			),
+		)
+		kernel.refresh()
+		assertFalse(kernel.isAllowed(ConsentCategory.MEASUREMENT))
+		assertEquals(listOf("opt-out"), kernel.snapshot().restrictions["measurement"])
+		assertNull(kernel.snapshot().nextDeadline)
+	}
+
+	@Test
+	fun `with GPC active and mapping measurement, measurement stays denied with gpc`() {
+		val clock = FixedClock(1_770_000_000_000L)
+		val kernel = testKernel(
+			config = TEST_CONFIG.copy(detectedGpc = true),
+			store = InthStore(InMemoryKeyValueStore()),
+			clock = clock,
+			transport = RecordingTransport().respondInit(optOutInit()),
+		)
+		kernel.bootstrap()
+		assertEquals(OptOutMethod.GPC, kernel.snapshot().optOut?.method)
+
+		kernel.save(
+			CommitIntent.Custom(
+				mapOf(
+					ConsentCategory.MARKETING to false,
+					ConsentCategory.MEASUREMENT to true,
+				),
+			),
+		)
+
+		assertFalse(kernel.isAllowed(ConsentCategory.MARKETING))
+		assertFalse(kernel.isAllowed(ConsentCategory.MEASUREMENT))
+		assertEquals(
+			mapOf(
+				"marketing" to listOf("explicit-denial", "gpc", "opt-out"),
+				"measurement" to listOf("gpc"),
+			),
+			kernel.snapshot().restrictions,
+		)
+	}
+
+	@Test
+	fun `under an opt-in rule, granting marketing lifts a held opt-out while granting measurement does not and refusing marketing records none`() {
+		val backend = InMemoryKeyValueStore()
+		val existing = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.BUTTON,
+			recordedAt = 1_770_000_000_000L,
+			heldBy = OptOutHolder.DEVICE,
+		)
+		seedOptOut(backend, existing)
+		val kernel = testKernel(
+			store = InthStore(backend),
+			transport = RecordingTransport().respondInit(
+				optOutInit(model = "\"opt-in\"", prompt = "\"choice\"", gpcDenyCategories = "[]"),
+			),
+		)
+		kernel.bootstrap()
+
+		// Granting measurement alone does not lift.
+		kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to true)))
+		assertEquals(existing, kernel.snapshot().optOut)
+
+		// Granting marketing lifts under opt-in.
+		kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to true)))
+		assertNull(kernel.snapshot().optOut)
+		assertTrue(kernel.isAllowed(ConsentCategory.MARKETING))
+
+		// Refusing marketing under opt-in never records an opt-out.
+		kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to false)))
+		assertNull(kernel.snapshot().optOut)
 	}
 
 	@Test
