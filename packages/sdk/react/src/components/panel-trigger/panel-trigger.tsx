@@ -1,10 +1,14 @@
 'use client';
 
+import { isOptOutTrigger } from '@inth/sdk/surface-actions';
+import { resolveOptOutLink } from '@inth/sdk/surface-state';
 import { createElement, useEffect, useMemo, useState } from 'react';
 import type { ComponentProps, FC, ReactNode } from 'react';
 
+import { useTranslations } from '~/component-hooks/use-translations';
 import { useTriggerLabels } from '~/component-hooks/use-trigger-labels';
 import { useDevToolsLauncherAvailable } from '~/devtools-launcher';
+import { useResolvedPresentation, useSnapshot } from '~/hooks';
 
 import { TriggerButton } from './atoms/button';
 import type { TriggerButtonProps } from './atoms/button';
@@ -123,8 +127,14 @@ const ConsentDialogTriggerComponent = ({
 	// With <ConsentDevTools> mounted, become a two-item toolbar that carries
 	// the DevTools launcher, so one control occupies the corner.
 	const hostsDevTools = useDevToolsLauncherAvailable();
+	const snapshot = useSnapshot();
+	const translations = useTranslations();
+	const presentation = useResolvedPresentation();
 	const triggerLabels = useTriggerLabels();
-	const label = ariaLabel ?? triggerLabels.label;
+	const defaultLabel = isOptOutTrigger(snapshot)
+		? resolveOptOutLink(translations, presentation?.optOutLink).label
+		: triggerLabels.label;
+	const label = ariaLabel ?? defaultLabel;
 	const preferences = useMemo(
 		() => ({ className, icon, label }),
 		[className, icon, label]

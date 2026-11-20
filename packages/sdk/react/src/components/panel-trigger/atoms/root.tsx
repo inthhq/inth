@@ -32,6 +32,7 @@ export interface TriggerContextValue {
 	dragStyle: React.CSSProperties;
 	/** Branding from consent manager */
 	branding: KernelBranding;
+	isOptOut: boolean;
 	openDialog: () => void;
 	isVisible: boolean;
 }
@@ -111,7 +112,11 @@ export const TriggerRoot = ({
 	onClick,
 }: TriggerRootProps): ReactNode => {
 	const branding = useBranding();
-	const { isVisible: computedVisible, openDialog } = useConsentDialogTrigger({
+	const {
+		isOptOut,
+		isVisible: computedVisible,
+		openDialog,
+	} = useConsentDialogTrigger({
 		onClick,
 		showWhen,
 	});
@@ -141,6 +146,7 @@ export const TriggerRoot = ({
 			endsDrag,
 			handlers,
 			isDragging,
+			isOptOut,
 			isSnapping,
 			isVisible,
 			openDialog,
@@ -152,6 +158,7 @@ export const TriggerRoot = ({
 			endsDrag,
 			handlers,
 			isDragging,
+			isOptOut,
 			isSnapping,
 			isVisible,
 			openDialog,

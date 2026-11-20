@@ -129,3 +129,51 @@ export const FloatingBottomCenter: Story = {
 		</StorybookConsentProvider>
 	),
 };
+
+/** Notice banner with the statutory opt-out link. */
+export const OptOutLink: Story = {
+	render: () => (
+		<StorybookConsentProvider
+			options={{
+				...editableConsentOptions,
+				mode: storybookMode([
+					{
+						...storybookPolicy,
+						id: 'storybook-opt-out-link',
+						model: 'opt-out',
+						prompt: 'notice',
+						rights: ['opt-out', 'preferences'],
+					},
+				]),
+				presentation: { optOutLink: 'do-not-sell' },
+			}}
+		>
+			<ConsentBanner disableAnimation />
+			<ConsentDialog disableAnimation />
+		</StorybookConsentProvider>
+	),
+};
+
+/** Notice banner with the Privacy Choices link and CPPA opt-out icon. */
+export const PrivacyChoicesLink: Story = {
+	render: () => (
+		<StorybookConsentProvider
+			options={{
+				...editableConsentOptions,
+				mode: storybookMode([
+					{
+						...storybookPolicy,
+						id: 'storybook-privacy-choices-link',
+						model: 'opt-out',
+						prompt: 'notice',
+						rights: ['opt-out', 'preferences'],
+					},
+				]),
+				presentation: { optOutLink: 'privacy-choices' },
+			}}
+		>
+			<ConsentBanner disableAnimation />
+			<ConsentDialog disableAnimation />
+		</StorybookConsentProvider>
+	),
+};

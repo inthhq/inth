@@ -19,7 +19,7 @@ group: reference
 
   `useBannerCopy()` returns `title` and `description` for the active prompt. A notice reads `cookieBanner.noticeTitle` and `cookieBanner.noticeDescription`, then falls back to choice copy in the same language before English. `useConsentLabels()` returns `actions`, a label for each action, and `preferenceControls`, a label for each preference control. `dismiss` reads `common.acknowledge`, then `common.dismiss`. Both hooks follow the active language, fill missing keys from English, and return the same strings the built-in banner renders.
 
-  Those hooks wrap `resolvePromptCopy`, `resolveActionLabels`, and `resolvePreferenceControlLabels`. Each takes a translations object and ships from `@inth/sdk/engine` so code outside React can produce identical copy.
+  Those hooks wrap `resolvePromptCopy`, `resolveActionLabels`, `resolveOptOutLink`, and `resolvePreferenceControlLabels`. Each takes a translations object and ships from `@inth/sdk/engine` so code outside React can produce identical copy. Call `useOptOut()` from `@inth/react/headless` to record an opt-out in one click and open `OptOutConfirmation` under an opt-out policy, or open the preference center under other policy models.
 
   `performAction` saves all categories for `accept`, none for `reject`, the current draft for `save`, records a dismissal for `dismiss`, and opens the preference center for `customize`. `banner.diagnostics` reports when a host layout drops a required action or gives equivalent actions different prominence. Review every diagnostic when configuring custom presentation.
 

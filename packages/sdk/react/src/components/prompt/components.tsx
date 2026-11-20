@@ -1,14 +1,37 @@
 import type { PolicyRight } from '@inth/sdk/schema/types';
+import { resolveOptOutLink } from '@inth/sdk/surface-state';
 import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 import styles from '@inth/sdk/ui/styles/components/consent-banner';
-import { forwardRef as createForwardRef, isValidElement, useRef } from 'react';
-import type { ButtonHTMLAttributes, MouseEvent, ReactNode, Ref } from 'react';
+import {
+	cloneElement,
+	forwardRef as createForwardRef,
+	isValidElement,
+	useRef,
+} from 'react';
+import type {
+	ButtonHTMLAttributes,
+	MouseEvent,
+	ReactElement,
+	ReactNode,
+	Ref,
+} from 'react';
 
 import { useConsentLabels } from '~/component-hooks/use-consent-labels';
 import { useHeadlessConsentUI } from '~/component-hooks/use-headless-consent-ui';
+import { useTranslations } from '~/component-hooks/use-translations';
 import { useComposedRefs } from '~/components/shared/libs/compose-refs';
 import { Slot } from '~/components/shared/libs/slot';
-import { usePolicyRule, useSetActiveUI } from '~/hooks';
+import { OptOutIcon } from '~/components/shared/ui/opt-out-icon';
+import {
+	toSaveUISource,
+	useConsentTracking,
+} from '~/context/consent-tracking-context';
+import {
+	useOptOut,
+	usePolicyRule,
+	useResolvedPresentation,
+	useSetActiveUI,
+} from '~/hooks';
 import { useFocusTrap } from '~/hooks/use-focus-trap';
 import { useTheme } from '~/hooks/use-theme';
 import { useUIConfig } from '~/ui-config-context';
@@ -459,26 +482,63 @@ const ConsentBannerRightLink = createForwardRef<
 		ref
 	) => {
 		const labels = useConsentLabels();
+		const translations = useTranslations();
+		const presentation = useResolvedPresentation();
 		const policy = usePolicyRule();
 		const { components } = useUIConfig();
 		const { noStyle: contextNoStyle } = useTheme();
+		const { uiSource } = useConsentTracking();
 		const setActiveUI = useSetActiveUI();
-		const label = labels.preferenceControls[right];
+		const optOut = useOptOut();
+		const resolvedNoStyle = Boolean(noStyle ?? contextNoStyle);
+		const optOutLink =
+			right === 'opt-out'
+				? resolveOptOutLink(translations, presentation?.optOutLink)
+				: null;
+		const label = optOutLink
+			? optOutLink.label
+			: labels.preferenceControls[right];
+		const showOptOutIcon = optOutLink?.variant === 'privacy-choices';
 		const mergedProps = mergeSlotProps(
 			getSlotProps(components, 'banner.rightLink'),
 			{
 				baseClassName: styles.rightLink,
 				className,
-				noStyle: noStyle ?? contextNoStyle,
+				noStyle: resolvedNoStyle,
 				style,
 			}
 		);
 		const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
 			onClick?.(event);
 			if (!event.defaultPrevented) {
-				setActiveUI('dialog');
+				if (right === 'opt-out') {
+					void optOut({ uiSource: toSaveUISource(uiSource) });
+				} else {
+					setActiveUI('dialog');
+				}
 			}
 		};
+		const icon = showOptOutIcon ? (
+			<OptOutIcon className={resolvedNoStyle ? undefined : styles.optOutIcon} />
+		) : null;
+		const content = icon ? (
+			<>
+				{icon}
+				{children ?? label}
+			</>
+		) : (
+			(children ?? label)
+		);
+		let asChildContent: ReactNode = children ?? label;
+		if (asChild && icon && isValidElement<{ children?: ReactNode }>(children)) {
+			// oxlint-disable-next-line react/no-clone-element -- Injects the mandated CPPA icon into an asChild Privacy Choices element so it cannot render without it.
+			asChildContent = cloneElement(
+				children as ReactElement<{ children?: ReactNode }>,
+				undefined,
+				icon,
+				children.props.children
+			);
+		}
 		const Comp = asChild ? Slot : 'button';
 		return (
 			<Comp
@@ -486,13 +546,14 @@ const ConsentBannerRightLink = createForwardRef<
 				type={asChild ? undefined : 'button'}
 				{...mergedProps}
 				data-action="right"
+				data-opt-out-variant={optOutLink?.variant}
 				data-right={right}
 				data-inth-rights={policy.rights.join(' ')}
 				data-testid={`consent-banner-right-link-${right}`}
 				onClick={handleClick}
 				{...props}
 			>
-				{children ?? label}
+				{asChild ? asChildContent : content}
 			</Comp>
 		);
 	}

@@ -35,6 +35,7 @@ type SurfaceProps = Record<string, unknown>;
 interface EngineSurfaces {
 	ConsentBanner: AnyComponent;
 	ConsentDialog: AnyComponent;
+	OptOutConfirmation: AnyComponent;
 }
 
 const deferredSurface = function deferredSurface<Module>(
@@ -78,7 +79,7 @@ const deferredSurface = function deferredSurface<Module>(
 };
 
 /** A deferred surface with lazily created deferred parts under `names`. */
-const surfaceWithParts = function surfaceWithParts<Module>(
+export const surfaceWithParts = function surfaceWithParts<Module>(
 	key: keyof EngineSurfaces,
 	load: () => Promise<Module>,
 	root: (module: Module) => AnyComponent,

@@ -131,14 +131,14 @@ describe('ConsentBanner notice prompt', () => {
 		expect(query('consent-banner-dismiss-button')).toHaveTextContent('Got it');
 	});
 
-	test('the opt-out control opens the preference center', async () => {
+	test('the opt-out control opts out in one click and does not open preferences', async () => {
 		const screen = await renderBanner({ model: 'opt-out', prompt: 'notice' });
 		await waitForBanner();
 
 		await screen.getByTestId('consent-banner-right-link-opt-out').click();
 
 		await vi.waitFor(() => {
-			expect(query('active-ui')).toHaveTextContent('dialog');
+			expect(query('active-ui')).toHaveTextContent('none');
 		});
 	});
 

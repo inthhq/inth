@@ -57,7 +57,11 @@ import type { ConsentState } from './server';
 
 // The stock surfaces a deferred root renders come from this chunk, so
 // they share its modules instead of carrying copies.
-export { ConsentBanner, ConsentDialog } from '@inth/react/deferred/engine';
+export {
+	ConsentBanner,
+	ConsentDialog,
+	OptOutConfirmation,
+} from '@inth/react/deferred/engine';
 
 type RecordedState = PromiseLike<ConsentState> & {
 	status?: string;

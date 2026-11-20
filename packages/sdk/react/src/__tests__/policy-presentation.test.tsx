@@ -247,6 +247,10 @@ describe('policy presentation reference behavior', () => {
 		expect(trigger).not.toBeNull();
 		trigger?.click();
 		await expect
+			.element(screen.getByTestId('opt-out-confirmation-preferences-link'))
+			.toBeVisible();
+		await screen.getByTestId('opt-out-confirmation-preferences-link').click();
+		await expect
 			.element(screen.getByTestId('consent-widget-footer-save-button'))
 			.toBeVisible();
 		await screen.getByTestId('consent-widget-footer-save-button').click();

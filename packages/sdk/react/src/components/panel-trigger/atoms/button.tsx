@@ -1,12 +1,14 @@
 'use client';
 
+import { resolveOptOutLink } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import { forwardRef as createForwardRef } from 'react';
 import type { FocusEvent, MouseEvent, PointerEvent, ReactNode } from 'react';
 
 import { useIdleDialogWarming, warmDialogChunk } from '~/chunk-warming';
+import { useTranslations } from '~/component-hooks/use-translations';
 import { useTriggerLabels } from '~/component-hooks/use-trigger-labels';
-import { usePolicyRule } from '~/hooks';
+import { usePolicyRule, useResolvedPresentation } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
 import { useUIConfig } from '~/ui-config-context';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
@@ -80,18 +82,24 @@ export const TriggerButton = createForwardRef<
 		ref
 	) => {
 		const policy = usePolicyRule();
+		const translations = useTranslations();
+		const presentation = useResolvedPresentation();
 		const triggerLabels = useTriggerLabels();
 		const { components } = useUIConfig();
 		const { disableAnimation, noStyle: contextNoStyle } = useTheme();
 		const {
 			corner,
 			isDragging,
+			isOptOut,
 			isSnapping,
 			endsDrag,
 			handlers,
 			dragStyle,
 			openDialog,
 		} = useTriggerContext();
+		const defaultLabel = isOptOut
+			? resolveOptOutLink(translations, presentation?.optOutLink).label
+			: triggerLabels.label;
 
 		// The trigger only opens the dialog, so it preloads it like every other
 		// dialog opener: in idle time while mounted, and on hover or focus.
@@ -140,7 +148,7 @@ export const TriggerButton = createForwardRef<
 				data-inth-rights={policy.rights.join(' ')}
 				// Stops the hover and snap transitions, as on the other surfaces.
 				data-disable-animation={disableAnimation ? '' : undefined}
-				aria-label={ariaLabel ?? triggerLabels.label}
+				aria-label={ariaLabel ?? defaultLabel}
 				onClick={handleClick}
 				onFocus={handleFocus}
 				onPointerEnter={handlePointerEnter}

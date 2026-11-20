@@ -13,6 +13,7 @@ export {
 	ConsentDialog,
 	ConsentDialogLink,
 	InthProvider,
+	OptOutConfirmation,
 } from './client-components';
 export type { InthProviderProps } from './root';
 export type {

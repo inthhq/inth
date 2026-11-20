@@ -7,6 +7,10 @@ import type { ConsentDialogTriggerProps } from '~/components/panel-trigger';
 import type { InlineLegalLinksProps } from '~/components/shared/primitives/legal-links';
 import { useActiveUI } from '~/hooks';
 import { useComponentConfig } from '~/hooks/use-component-config';
+import {
+	useHasOptOutConfirmationHost,
+	useOptOutConfirmationOpen,
+} from '~/hooks/use-opt-out';
 import { createDeferredModule } from '~/utils/deferred-module';
 
 import { ConsentCustomizationCard } from './atoms/card';
@@ -20,6 +24,10 @@ import { Root as ConsentDialogRoot } from './atoms/root';
 const LazyConsentDialogTrigger = createDeferredModule(
 	() => import('~/components/panel-trigger')
 ).component((module) => module.ConsentDialogTrigger);
+
+const LazyOptOutConfirmation = createDeferredModule(
+	() => import('~/components/opt-out-confirmation')
+).component((module) => module.OptOutConfirmation);
 
 /**
  * Props for the `<ConsentDialog />` convenience component.
@@ -128,6 +136,8 @@ export const ConsentDialog: FC<ConsentDialogProps> = ({
 	uiSource,
 }) => {
 	const activeUI = useActiveUI();
+	const confirmationOpen = useOptOutConfirmationOpen();
+	const hasStandaloneConfirmation = useHasOptOutConfirmationHost();
 
 	const config = useComponentConfig({
 		disableAnimation: localDisableAnimation,
@@ -156,6 +166,15 @@ export const ConsentDialog: FC<ConsentDialogProps> = ({
 	return (
 		<>
 			{triggerProps && <LazyConsentDialogTrigger {...triggerProps} />}
+			{confirmationOpen && !hasStandaloneConfirmation && (
+				<LazyOptOutConfirmation
+					embedded
+					noStyle={config.noStyle}
+					disableAnimation={config.disableAnimation}
+					scrollLock={localScrollLock}
+					trapFocus={localTrapFocus}
+				/>
+			)}
 			<ConsentDialogRoot {...rootProps}>
 				<ConsentCustomizationCard
 					noStyle={rootProps.noStyle}

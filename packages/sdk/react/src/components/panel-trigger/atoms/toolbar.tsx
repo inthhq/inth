@@ -1,6 +1,7 @@
 'use client';
 
 import type { PolicyRight } from '@inth/sdk/schema/types';
+import { resolveOptOutLink } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import { followDevToolsDock } from '@inth/sdk/ui/utils/devtools-launcher';
 import {
@@ -11,9 +12,10 @@ import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { useConsentLabels } from '~/component-hooks/use-consent-labels';
+import { useTranslations } from '~/component-hooks/use-translations';
 import { useTriggerLabels } from '~/component-hooks/use-trigger-labels';
 import { useDevToolsLauncher } from '~/devtools-launcher';
-import { usePolicyRule } from '~/hooks';
+import { usePolicyRule, useResolvedPresentation } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
 import type { ClassNameStyle } from '~/types/theme';
 import { useUIConfig } from '~/ui-config-context';
@@ -120,15 +122,23 @@ interface PreferencesActionDefaults {
 const usePreferencesActionDefaults =
 	function usePreferencesActionDefaults(): PreferencesActionDefaults {
 		const policy = usePolicyRule();
+		const translations = useTranslations();
+		const presentation = useResolvedPresentation();
 		const { preferenceControls } = useConsentLabels();
 		return useMemo(() => {
 			const right = resolvePreferencesRight(policy.rights);
 			const label =
 				right === 'opt-out' && policy.i18n?.messageProfile !== 'preferences'
-					? preferenceControls['opt-out']
+					? resolveOptOutLink(translations, presentation?.optOutLink).label
 					: preferenceControls.preferences;
 			return { label, right, rights: policy.rights.join(' ') };
-		}, [policy.rights, policy.i18n?.messageProfile, preferenceControls]);
+		}, [
+			policy.rights,
+			policy.i18n?.messageProfile,
+			preferenceControls,
+			presentation?.optOutLink,
+			translations,
+		]);
 	};
 
 const createToolbarItems = function createToolbarItems(
