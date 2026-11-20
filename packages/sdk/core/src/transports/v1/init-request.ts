@@ -49,13 +49,17 @@ export const createV1InitRequest = function createV1InitRequest(options: {
 }): V1InitRequest {
 	const inBrowser = typeof document !== 'undefined';
 	// A browser's init is a plain GET, so no custom header leaves it: the
-	// caller's header inputs travel as overrides, in the query.
+	// caller's geo and GPC headers travel as overrides, in the query, and its
+	// Accept-Language, which is safelisted, goes as it is, weights and all.
+	const { language: _primary, ...headerInputs } = inBrowser
+		? extractConsentRequestInputs(options.headers ?? {})
+		: {};
 	const overrides = inBrowser
-		? {
-				...extractConsentRequestInputs(options.headers ?? {}),
-				...definedEntries(options.overrides),
-			}
+		? { ...headerInputs, ...definedEntries(options.overrides) }
 		: options.overrides;
+	const acceptLanguage = inBrowser
+		? new Headers(options.headers).get('accept-language')
+		: null;
 	const base =
 		options.initUrl ??
 		`${trimTrailingSlash(options.projectUrl)}${V1_ROUTES.init}`;
@@ -87,6 +91,7 @@ export const createV1InitRequest = function createV1InitRequest(options: {
 			headers: {
 				accept: 'application/json',
 				...(!inBrowser && options.headers),
+				...(acceptLanguage && { 'accept-language': acceptLanguage }),
 				...buildRequestContextSentHeaders(overrides),
 			},
 			method: 'GET',

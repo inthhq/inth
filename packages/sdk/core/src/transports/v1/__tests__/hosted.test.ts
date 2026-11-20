@@ -139,7 +139,8 @@ describe('init: GET /v1/consent/init', () => {
 			credentials: 'include',
 			fetch,
 			headers: {
-				'Accept-Language': 'de',
+				// A weighted list: the backend picks the first language it has.
+				'Accept-Language': 'zz;q=1, de;q=0.9',
 				'cf-ipcountry': 'FR',
 				'x-inth-gpc': '1',
 				'x-inth-region': 'BY',
@@ -151,7 +152,7 @@ describe('init: GET /v1/consent/init', () => {
 
 		expect(calls[0]?.headers).toEqual({
 			accept: 'application/json',
-			'accept-language': 'de',
+			'accept-language': 'zz;q=1, de;q=0.9',
 		});
 		expect(calls[0]?.init.credentials).toBe('same-origin');
 		expect(
