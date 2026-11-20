@@ -46,7 +46,7 @@ final class DryRunTests: XCTestCase {
         let result = core.save(.all)
         XCTAssertEqual(result.status, .committed)
         XCTAssertFalse(result.queued, "a dry-run save succeeds and queues nothing")
-        core.identify(KernelUser(externalId: "user-1", identityProvider: nil))
+        core.identify(KernelUser(externalId: "user-1", identityProvider: nil), identityToken: "token")
         core.flushPending()
         core.logout()
         await core.waitUntilIdle()

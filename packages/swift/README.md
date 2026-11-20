@@ -98,6 +98,12 @@ error that says what to write. There is no self-hosted or offline mode and no
 custom transport. A bundled manifest or an in-code `policy` covers a launch
 with no network.
 
+Each consent record names a `property`. It is the app's bundle identifier,
+lowercased, unless you set `property:` on `InthAppleConfiguration`.
+`identify(_:identityToken:)` keeps the external ID on the device and on later
+records. It links the person on the backend only when you pass an identity
+token, and it never stores the token.
+
 `dryRun: true` is for development and CI. The prompt, storage, gates and
 consent signals work as normal, and consent records are dropped instead of
 queued or sent. A release build refuses to install with it, so pass it only

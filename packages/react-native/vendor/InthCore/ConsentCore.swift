@@ -110,6 +110,9 @@ public struct CoreConfig: @unchecked Sendable {
     /// Turns on the IAB GPP string: ``ConsentSnapshot/gppString`` and the `IABGPP_*`
     /// rows on ``storageBus``. `nil`, the default, writes no GPP signal.
     public let gpp: GPPOptions?
+    /// Makes each save's idempotency key: a UUIDv7 from the same generator as the
+    /// subject id. Internal API, so a fixture can pin the key it expects.
+    @_spi(InthInternal) public let makeIdempotencyKey: @Sendable () -> String
 
     /// Internal API for tests and first-party fixtures. Apps install through
     /// `InthApple.install(InthAppleConfiguration(backendURL:))`.
@@ -131,7 +134,8 @@ public struct CoreConfig: @unchecked Sendable {
         initRetry: InitRetry? = InitRetry(),
         flushPendingOnBootstrap: Bool = true,
         storageBus: (any TcStorageBusWriting)? = nil,
-        gpp: GPPOptions? = nil
+        gpp: GPPOptions? = nil,
+        makeIdempotencyKey: (@Sendable () -> String)? = nil
     ) {
         self.store = store
         precondition(
@@ -154,6 +158,7 @@ public struct CoreConfig: @unchecked Sendable {
         self.flushPendingOnBootstrap = flushPendingOnBootstrap
         self.storageBus = storageBus
         self.gpp = gpp
+        self.makeIdempotencyKey = makeIdempotencyKey ?? { SubjectId.generate() }
     }
 }
 
@@ -188,6 +193,9 @@ public final class ConsentCore: @unchecked Sendable {
     private var config: CoreConfig?
     private var queue: PendingSaveQueue?
     private var identity: SubjectIdentity?
+    /// Ids this subject had before a response named its canonical id. A queued body or
+    /// a stored IAB decision frozen with one still belongs to this subject.
+    private var previousSubjectIds: [String] = []
     private var resolvedPolicy: ResolvedPolicy?
     private var policyWire: JSONValue?
     private var bundledPolicyAuthority: BundledPolicyAuthority?
@@ -1008,7 +1016,7 @@ public final class ConsentCore: @unchecked Sendable {
 
             // The surface the subject acted on, read before the commit rewrites it.
             // `uiSource` records where the decision was made, so a save that clears
-            // the prompt must not report "no surface": `buildSubjectPostBody` reads
+            // the prompt must not report "no surface": the web kernel's body builder reads
             // the pre-commit `activeUI` for the same reason.
             let surfaceAtAction = currentSnapshot.activeUI
             // Computed, not installed. State moves only once the queue has the bytes
@@ -1036,6 +1044,7 @@ public final class ConsentCore: @unchecked Sendable {
                 draft.error = nil
             }
             let payload = SavePayload(
+                idempotencyKey: config?.makeIdempotencyKey() ?? SubjectId.generate(),
                 subjectId: identity.id,
                 subject: ConsentSubject(
                     subjectId: identity.id,
@@ -1064,9 +1073,9 @@ public final class ConsentCore: @unchecked Sendable {
             )
 
             do {
-                let body = try SubjectPostBodyBuilder.body(
+                let body = try ConsentRecordBodyBuilder.body(
                     for: payload,
-                    domain: config?.transport?.domain ?? ""
+                    property: config?.transport?.property ?? ""
                 )
                 return .success(Planned(
                     payload: payload,
@@ -1127,7 +1136,8 @@ public final class ConsentCore: @unchecked Sendable {
                 if dryRun { return plan.queue.persist($0, droppingQueue: true) ? "" : nil }
                 return plan.queue.commit($0, body: plan.body,
                     subjectId: plan.payload.subjectId, actionAt: actionAt,
-                    supersedeGrants: plan.isIAB)
+                    supersedeGrants: plan.isIAB,
+                    subjectIds: lock.withLock { Set([identity?.id].compactMap { $0 } + previousSubjectIds) })
             }
             guard let queuedID = queued else {
                 let changed = lock.withLock { currentSnapshot.revision != plan.baseRevision }
@@ -1190,9 +1200,10 @@ public final class ConsentCore: @unchecked Sendable {
                     guard queue.isPending(id: queuedID), self.canDeliverIAB(body) else { return }
 
                     switch await transport.sendSave(body) {
-                    case .success:
+                    case let .success(canonical):
                         queue.remove(id: queuedID)
                         self.events.emit(.saveDelivered(subjectId: subjectId))
+                        self.adoptCanonicalSubjectId(canonical, sentFor: subjectId)
                     case let .failure(error):
                         self.settleFailedSend(
                             error,
@@ -1214,8 +1225,8 @@ public final class ConsentCore: @unchecked Sendable {
     /// says nothing about the body, so the entry keeps its place in the queue with
     /// one attempt spent and the next launch tries again. A backend that refused the
     /// body on its own terms says something permanent, because the queue replays
-    /// frozen bytes: `INPUT_VALIDATION_FAILED` on the first try is
-    /// `INPUT_VALIDATION_FAILED` on the tenth.
+    /// frozen bytes: `invalid_request` on the first try is `invalid_request` on the
+    /// tenth.
     ///
     /// Frozen withdrawals remain queued even after a refusal. Other permanently
     /// refused bodies are dropped rather than kept. It is not a lost
@@ -1345,7 +1356,15 @@ public final class ConsentCore: @unchecked Sendable {
 
     /// Attach an identified user. The Inth subject id does not change: an external
     /// id is a second key on the same subject, not a new subject.
-    public func identify(_ user: KernelUser) {
+    ///
+    /// The external id is kept locally and goes on every later save body. With an
+    /// `identityToken` the core also sends `POST /v1/subjects/:id/link` once; without
+    /// one it sends nothing, because a device has no secret key and the backend
+    /// refuses a link without proof. The token is held for that one request and never
+    /// stored. A failed link emits an error with the backend's code and keeps the local
+    /// identity; the host calls `identify` again with a fresh token. Under `dryRun`
+    /// nothing is sent.
+    public func identify(_ user: KernelUser, identityToken: String? = nil) {
         let mutation = mutationGate.acquire()
         defer { mutation.release() }
         let transition = transitionIAB(user: user, reset: false)
@@ -1367,17 +1386,77 @@ public final class ConsentCore: @unchecked Sendable {
             return self.identity
         }
         publish(persist: transition == nil, mutation: mutation)
-        guard let identity else { return }
+        guard let identity, let identityToken else { return }
         schedule {
             guard let transport = self.transport else { return }
-            if case let .failure(error) = await transport.patchIdentity(
+            switch await transport.linkSubject(
                 subjectId: identity.id,
                 externalId: user.externalId,
-                identityProvider: user.identityProvider
+                identityProvider: user.identityProvider,
+                identityToken: identityToken
             ) {
-                self.events.emit(.error(error.info))
+            case let .success(canonical):
+                self.adoptCanonicalSubjectId(canonical, sentFor: identity.id, linkedUser: user)
+            case let .failure(error):
+                // A refused link names the backend's `error.code`, such as
+                // `identity_token_invalid`, so the host can tell a stale token from a conflict.
+                if case let .httpStatus(_, code?, _, _) = error {
+                    self.events.emit(.error(CoreErrorInfo(code: code, message: error.message)))
+                } else {
+                    self.events.emit(.error(error.info))
+                }
             }
         }
+    }
+
+    /// Adopt the canonical subject id a `/v1` response named.
+    ///
+    /// `packages/native-protocol/CONTRACT.md`, "Adopting the canonical id": when it is a
+    /// UUIDv7 and differs from the stored id, the identity slot and the envelope change
+    /// together as one identity change, with one revision and one publication and the
+    /// same decision. Anything else is ignored, and so is an answer to a request sent for
+    /// a subject the core no longer holds, such as one a reset replaced while it was in
+    /// flight. Queued bodies keep the id they were frozen with; the replaced id is
+    /// remembered so they still count as this subject's.
+    ///
+    /// A link names the canonical id of the person it linked, so with `linkedUser` the id
+    /// is adopted only while the core still holds that external id and identity provider.
+    /// An `identify` for another person while the link was in flight keeps the local id.
+    private func adoptCanonicalSubjectId(
+        _ candidate: String?, sentFor sentId: String, linkedUser: KernelUser? = nil
+    ) {
+        guard let candidate, SubjectId.isUUIDv7(candidate) else { return }
+        let mutation = mutationGate.acquire()
+        defer { mutation.release() }
+        let wired = lock.withLock { () -> (CoreConfig, SubjectIdentity, [String])? in
+            guard let config, let identity, identity.id == sentId, identity.id != candidate else { return nil }
+            if let linkedUser,
+                user?.externalId != linkedUser.externalId
+                    || user?.identityProvider != linkedUser.identityProvider
+            {
+                return nil
+            }
+            return (config, identity, previousSubjectIds)
+        }
+        guard let (config, current, previous) = wired,
+            let adopted = SubjectIdentity.adoptCanonical(
+                candidate, replacing: current, previousIds: previous, in: config.store)
+        else { return }
+        lock.withLock {
+            identity = adopted.identity
+            previousSubjectIds = adopted.previousIds
+            currentSnapshot = currentSnapshot.byApplying { draft in
+                draft.subject = adopted.identity.snapshot(externalId: user?.externalId)
+            }
+        }
+        publish(persist: true, mutation: mutation)
+    }
+
+    /// Whether `id` names this subject: its id, or one a canonical id replaced.
+    /// Callers must already hold the lock.
+    private func isOwnSubjectIdLocked(_ id: String?) -> Bool {
+        guard let id else { return false }
+        return id == identity?.id || previousSubjectIds.contains(id)
     }
 
     /// Forget the external id. Consent records and the subject id stay: the
@@ -1617,8 +1696,12 @@ public final class ConsentCore: @unchecked Sendable {
         let envelopeData = config.store.data(for: StorageKey.snapshot)
         var envelope = envelopeData.flatMap(StoredEnvelope.decode)
         let replacementReason = identityRead.replacementReason
+        // An envelope under a replaced id is the same subject: adoption writes the
+        // identity slot first, and a process that stops before the envelope write
+        // leaves exactly that.
+        let knownIds = [identity.id] + identityRead.previousIds
         if replacementReason != nil && hadRecords
-            || envelope.map({ $0.snapshot.subject?.id != identity.id }) == true {
+            || envelope.map({ !knownIds.contains($0.snapshot.subject?.id ?? "") }) == true {
             config.store.set(nil, for: StorageKey.snapshot)
             config.store.set(nil, for: StorageKey.pendingSaves)
             envelope = nil
@@ -1634,6 +1717,7 @@ public final class ConsentCore: @unchecked Sendable {
 
         let restored = lock.withLock { () -> ConsentSnapshot in
             self.identity = identity
+            self.previousSubjectIds = identityRead.previousIds
             self.restoredFromStore = envelope != nil
             // A missing host override restores the last explicitly stored account.
             // Logout persists nil; installation identity never supplies an account ID.
@@ -1804,16 +1888,14 @@ public final class ConsentCore: @unchecked Sendable {
         guard !alreadyAnnounced else { return }
 
         let origin = unusable.legacyShape
-            ? "it has the UUID shape this SDK wrote before the sub_ format existed"
+            ? "it has the UUIDv4 shape an early prerelease of this SDK wrote"
             : "it is a format this SDK never wrote"
         events.emit(.error(CoreErrorInfo(
             code: "subject-id-unusable",
-            message: "Inth: the stored subject id \(unusable.id) \(origin), and the Inth "
-                + "backend only accepts ids matching ^sub_[1-9A-HJ-NP-Za-km-z]+$, so this "
-                + "build cannot use that identity. The consent saved under it was discarded "
-                + "with it, because the backend refused every save that carried it and holds "
-                + "no decision for it. A new subject id was minted, so the app asks for "
-                + "consent again; nothing the subject chose was overwritten on the server."
+            message: "Inth: the stored subject id \(unusable.id) \(origin). This build "
+                + "reads only a lowercase UUIDv7 or a c15t sub_ id, so it cannot use that "
+                + "identity. The consent saved under it was discarded with it. A new subject "
+                + "id was minted, so the app asks for consent again."
         )))
     }
 
@@ -1949,7 +2031,7 @@ public final class ConsentCore: @unchecked Sendable {
             let gvl = currentSnapshot.iab?.gvl,
             saved.vendorListVersion == gvl.vendorListVersion, saved.policyVersion == gvl.tcfPolicyVersion,
             saved.disclosureID == (try? IABAuthority.disclosureID(gvl)),
-            saved.subjectId == identity?.id, saved.externalId == user?.externalId,
+            isOwnSubjectIdLocked(saved.subjectId), saved.externalId == user?.externalId,
             resolvedPolicy?.policy.model == .iab, saved.fingerprint == resolvedPolicy?.choiceFingerprint,
             let rebuilt = try? IABAuthority.build(
                 configuration: c, choices: saved.choices,
@@ -2241,8 +2323,16 @@ public final class ConsentCore: @unchecked Sendable {
         }
         guard let transport = config.transport else { return }
         let context = lock.withLock {
-            InitContext(
-                overrides: wireOverrides,
+            // Init names GPC only when there is a signal: the app's override, or a
+            // detection. A device with neither sends no `gpc`.
+            let signal = gpcSignal
+            return InitContext(
+                overrides: KernelOverridesWire(
+                    country: overrides.country,
+                    region: overrides.region,
+                    language: overrides.language,
+                    gpc: signal.override ?? (signal.active ? true : nil)
+                ),
                 user: user,
                 subjectId: identity?.id ?? "",
                 vendors: config.vendors
@@ -2496,29 +2586,6 @@ public final class ConsentCore: @unchecked Sendable {
         if changed { publish(persist: true, mutation: mutation) }
         mutation.release()
         events.emit(.error(error.info))
-        // An unsupported contract will not fix itself on a retry: the producer is
-        // speaking a wire this build cannot read, and no amount of asking changes
-        // that. Say it once, stop asking, and stay exactly where the core is.
-        if error.code == PolicyFailureReason.unsupportedContract.rawValue {
-            let mutation = mutationGate.acquire()
-            defer { mutation.release() }
-            lock.withLock {
-                currentSnapshot = currentSnapshot.byApplying { draft in
-                    draft.error = error.info
-                }
-            }
-            // `error` is a snapshot field, so this is a committed change like every
-            // other one, and ``publish(persist:)`` is the one path that announces it:
-            // the revision event, the snapshot observers, and the envelope write
-            // together. Emitting a `.snapshot` event alone announces a revision to a
-            // listener list the bridge is not on -- `InthCoreSubscriber` feeds the
-            // React Native pump from `onChange`, not from the event hub -- so the new
-            // revision would never reach JavaScript, and a relaunch would forget a
-            // misconfiguration that has not changed. The pair is the rule: see
-            // "Revisions and error writes" in `packages/native-protocol/CONTRACT.md`.
-            publish(persist: true, mutation: mutation)
-            return
-        }
 
         guard let retry, attempt < retry.maxAttempts else { return }
         let delayMs = retry.delay(afterAttempt: attempt)
@@ -2541,8 +2608,8 @@ public final class ConsentCore: @unchecked Sendable {
     /// contract describes: a pass reads the queue once and then sends entry by entry,
     /// so every entry it read stays readable until its own send lands, and the second
     /// pass resends whatever the first is still sending. The bytes are frozen and
-    /// carry the same consent id, so the backend dedupes and no stored state moves --
-    /// the only trace is a second `POST /subjects` for a decision the subject already
+    /// carry the same idempotency key, so the backend dedupes and no stored state moves --
+    /// the only trace is a second `POST /v1/consent/records` for a decision the subject already
     /// saw delivered, once per entry per wake-up.
     ///
     /// The guard is the guarantee, not the shape of the concurrency. This core hands
@@ -2639,7 +2706,7 @@ public final class ConsentCore: @unchecked Sendable {
     private func canDeliverIAB(_ body: Data) -> Bool {
         let wire = InthJSON.parse(body)
         if ConsentDelivery.isWithdrawal(body) { return true }
-        guard wire?["subjectId"]?.stringValue == lock.withLock({ identity?.id }) else { return false }
+        guard lock.withLock({ isOwnSubjectIdLocked(wire?["subjectId"]?.stringValue) }) else { return false }
         let tcString = wire?["tcString"]?.stringValue
         let requiresIAB = wire?["model"]?.stringValue == "iab" || lock.withLock { config?.iab != nil && resolvedPolicy?.policy.model == .iab }
         if tcString == nil && !requiresIAB { return true }
@@ -2647,7 +2714,7 @@ public final class ConsentCore: @unchecked Sendable {
         return tcString == saved.tcString && wire?["addtlConsent"]?.stringValue == saved.addtlConsent
             && wire?["subjectId"]?.stringValue == saved.subjectId
             && wire?["givenAt"]?.intValue == saved.actionAt
-            && wire?["externalSubjectId"]?.stringValue == saved.externalId
+            && wire?["externalId"]?.stringValue == saved.externalId
             && wire?["model"]?.stringValue == "iab"
     }
 
@@ -2655,11 +2722,12 @@ public final class ConsentCore: @unchecked Sendable {
         guard let transport = self.transport else { return .empty }
         let queue = lock.withLock { self.queue }
         guard let queue else { return .empty }
-        // Nothing can be delivered to a producer whose contract this build cannot
-        // read, and the queue already holds the bodies for a later attempt.
         let report = await queue.replay(using: transport, shouldDeliver: { self.canDeliverIAB($0.body) }) {
             entry, result in
             self.events.emit(.saveReplayed(subjectId: entry.subjectId, ok: result.isSuccess))
+            if case let .success(canonical) = result {
+                self.adoptCanonicalSubjectId(canonical, sentFor: entry.subjectId)
+            }
         } onDrop: { entry, error, outcome in
             // A pass that reported only deliveries would leave this entry missing
             // from both the queue and the record of what happened to it.

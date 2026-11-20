@@ -52,7 +52,7 @@ public struct InthBridgeConfiguration: Sendable, Equatable {
         autoBootstrap: Bool = true,
         backendURL: String? = nil,
         dryRun: Bool = false,
-        domain: String? = nil,
+        property: String? = nil,
         storageMode: StorageMode = .keychain,
         keychainService: String = InthBridgeConfiguration.defaultKeychainService,
         overrides: ConsentOverrides = .default(),
@@ -67,7 +67,7 @@ public struct InthBridgeConfiguration: Sendable, Equatable {
         self.autoBootstrap = autoBootstrap
         self.backendURL = backendURL
         self.dryRun = dryRun
-        self.domain = domain
+        self.property = property
         self.storageMode = storageMode
         self.keychainService = keychainService
         self.overrides = overrides
@@ -88,8 +88,9 @@ public struct InthBridgeConfiguration: Sendable, Equatable {
     /// `com.inth.dryRun`. Development and CI only: consent records are dropped, not
     /// queued or sent. A release build refuses to start with it.
     public var dryRun: Bool
-    /// The `domain` field sent on `POST /subjects`.
-    public var domain: String?
+    /// The `property` each consent record names, from `com.inth.backend.domain`, the key the Expo plugin writes.
+    /// `nil` names the app's bundle identifier. Sent lowercase.
+    public var property: String?
     public var storageMode: StorageMode
     public var keychainService: String
     public var overrides: ConsentOverrides
@@ -294,7 +295,7 @@ public struct InthBridgeConfiguration: Sendable, Equatable {
             autoBootstrap: (infoPlist[InfoPlistKey.autoBootstrap] as? Bool) ?? true,
             backendURL: backendURL,
             dryRun: (infoPlist[InfoPlistKey.dryRun] as? Bool) ?? false,
-            domain: infoPlist[InfoPlistKey.domain] as? String,
+            property: infoPlist[InfoPlistKey.domain] as? String,
             storageMode: (infoPlist[InfoPlistKey.storageMode] as? String)
                 .flatMap(StorageMode.parse(_:)) ?? .keychain,
             keychainService: (infoPlist[InfoPlistKey.keychainService] as? String)
@@ -540,7 +541,7 @@ public struct InthBridgeConfiguration: Sendable, Equatable {
         var configuration = InthAppleConfiguration(
             backendURL: backendURL, dryRun: dryRun,
             storage: appleStorage(fileStoreDirectory: fileStoreDirectory),
-            domain: domain, consentCategories: consentCategories,
+            property: property, consentCategories: consentCategories,
             vendors: vendors, overrides: overrides, gpc: gpc,
             // The Apple configuration rebinds the manifest to the checked project URL.
             bundledPolicy: bundledPolicyResource.flatMap { name -> BundledPolicyResource? in

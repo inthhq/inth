@@ -151,7 +151,7 @@ final class FoundationRepairTests: XCTestCase {
         XCTAssertNil(loggedOut.iabConsent())
     }
 
-    func testFrozenOwnersAndDomainsDoNotCoalesceAtCapacity() async throws {
+    func testADenialReplacesAQueuedOneOnlyWhenItsAnswerNamesEveryCategory() async throws {
         let vector = try IABCommitTests().fixture()
         let store = InMemoryStore()
         let http = StubHTTP()
@@ -162,15 +162,47 @@ final class FoundationRepairTests: XCTestCase {
         let envelope = try XCTUnwrap(store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode))
         let original = try XCTUnwrap(envelope.pendingSaves?.last?.body)
         let queue = PendingSaveQueue(store: store, now: { vector.now })
-        func body(_ owner: Int, _ domain: Int, subject: String? = nil, marker: String = "") throws -> Data {
+        queue.clear()
+        func denial(_ categories: [String], at time: Int64) throws -> Data {
             var fields = try XCTUnwrap(InthJSON.parse(original)?.objectValue)
-            fields["externalSubjectId"] = .string("u\(owner)")
-            fields["domain"] = .string("d\(domain).example.test")
+            fields["givenAt"] = .number(Double(time))
+            fields["answer"] = .object(["categories": .object(Dictionary(uniqueKeysWithValues: categories.map {
+                ($0, JSONValue.object(["value": .bool(false), "confirmedAt": .number(Double(time))]))
+            }))])
+            return try XCTUnwrap(InthJSON.encode(JSONValue.object(fields)))
+        }
+        let all = ["experience", "functionality", "marketing", "measurement"]
+        let subject = envelope.snapshot.subject!.id
+        let first = try denial(all, at: vector.now)
+        let narrow = try denial(["measurement"], at: vector.now + 1)
+        XCTAssertNotNil(queue.commit(envelope, body: first, subjectId: subject, actionAt: vector.now))
+        XCTAssertNotNil(queue.commit(envelope, body: narrow, subjectId: subject, actionAt: vector.now + 1))
+        XCTAssertEqual(queue.entries().map(\.body), [first, narrow], "the narrow denial does not carry marketing")
+        let covering = try denial(all, at: vector.now + 2)
+        XCTAssertNotNil(queue.commit(envelope, body: covering, subjectId: subject, actionAt: vector.now + 2))
+        XCTAssertEqual(queue.entries().map(\.body), [covering])
+    }
+
+    func testFrozenOwnersAndPropertiesDoNotCoalesceAtCapacity() async throws {
+        let vector = try IABCommitTests().fixture()
+        let store = InMemoryStore()
+        let http = StubHTTP()
+        http.setSavesFail(true)
+        let core = try await cold(vector, store: store, http: http, user: nil)
+        XCTAssertEqual(core.save(.necessary).status, .committed)
+        await core.waitUntilIdle()
+        let envelope = try XCTUnwrap(store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode))
+        let original = try XCTUnwrap(envelope.pendingSaves?.last?.body)
+        let queue = PendingSaveQueue(store: store, now: { vector.now })
+        func body(_ owner: Int, _ property: Int, subject: String? = nil, marker: String = "") throws -> Data {
+            var fields = try XCTUnwrap(InthJSON.parse(original)?.objectValue)
+            fields["externalId"] = .string("u\(owner)")
+            fields["property"] = .string("d\(property).example.test")
             fields["givenAt"] = .number(Double(vector.now + Int64(marker.count)))
             if let subject { fields["subjectId"] = .string(subject) }
             return try InthJSON.encode(JSONValue.object(fields))
         }
-        // Replace initial anonymous body, then fill with distinct owner/domain pairs.
+        // Replace initial anonymous body, then fill with distinct owner/property pairs.
         queue.clear()
         var bodies: [Data] = []
         for i in 0 ..< 20 {

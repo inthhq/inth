@@ -233,7 +233,7 @@ func headlessFixtureCore(_ fixture: String, store: any ConsentStore = InMemorySt
         let body: Data
         func send(_ request: HTTPRequest) async throws -> HTTPResponse {
             request.method == .get
-                ? HTTPResponse(status: 200, headers: ["x-inth-policy-contract": "1"], body: body)
+                ? HTTPResponse(status: 200, body: body)
                 : HTTPResponse(status: 503)
         }
     }

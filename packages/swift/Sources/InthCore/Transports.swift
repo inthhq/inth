@@ -5,7 +5,7 @@ import FoundationNetworking
 
 // MARK: - Version and header contract
 
-/// The values every inth-bound request carries.
+/// Version and request-header constants.
 extension Inth {
     /// Version of this native core.
     ///
@@ -13,24 +13,17 @@ extension Inth {
     /// module and local CocoaPods spec. Independent of the RN npm version.
     public static let version = "3.0.0-alpha.1"
 
-    /// The `x-inth-version` header name. Telemetry only: it lets the backend
-    /// attribute traffic, and is never used to guess what a client can represent.
-    public static let versionHeader = "x-inth-version"
-
-    /// The `x-inth-policy-contract` header name: the capability declaration.
-    public static let policyContractHeader = "x-inth-policy-contract"
-
     /// The `x-inth-vendors` header name: the publisher's declared vendor scope.
     ///
     /// A scope declaration, not a filter the client relies on. It is the mobile
     /// spelling of the `vendorIds` parameter that
     /// `gvlRequestUrl` in `packages/backend/src/http/gvl.ts` puts on the upstream
-    /// GVL request, which is why it travels as a header: `/init` is a GET the core
+    /// GVL request, which is why it travels as a header: init is a GET the core
     /// builds from the project URL, and a client that invented query parameters on
     /// a route it does not own would break every deployment behind a proxy. It is a
     /// header and not a body field for the same reason as the country and region
     /// overrides beside it: the producer has to read it before it decides what to
-    /// build, and `/init` has no body to put it in.
+    /// build, and init has no body to put it in.
     ///
     /// A hint about bytes, never the answer about disclosure. A producer that
     /// honours it sends a list that needs no pruning; a producer that ignores it
@@ -74,21 +67,10 @@ extension Inth {
         return ids.map(String.init).joined(separator: ",")
     }
 
-    /// Unprefixed semantic version accepted by hosted gateways, matching the web format.
-    public static let versionHeaderValue = version
-
     /// The native protocol revision the JavaScript boundary handshakes against.
     /// A provider that does not recognize it is talking to an embedded native
     /// build from before its own release, which is the Expo Updates failure mode.
     public static let protocolVersion = 1
-
-    /// Headers for every backend-bound request.
-    public static var protocolHeaders: [String: String] {
-        [
-            versionHeader: versionHeaderValue,
-            policyContractHeader: String(inthPolicyContractVersion),
-        ]
-    }
 }
 
 // MARK: - Errors
@@ -97,11 +79,10 @@ extension Inth {
 public enum InthError: Error, Sendable, Equatable {
     /// No connectivity.
     case offline
-    /// The producer serves a policy contract this build cannot represent. The
-    /// contract calls this a hard configuration error: the core reports it and
-    /// stays deny-all instead of guessing at the wire.
-    case unsupportedContract(declared: String?, expected: Int)
-    case httpStatus(status: Int, message: String)
+    /// A non-2xx answer. `code` is the backend's `error.code` and `requestId` its
+    /// `requestId` (or the `x-request-id` header); either is `nil` when the response
+    /// did not carry it. `message` is `error.message`, or the raw body text.
+    case httpStatus(status: Int, code: String?, requestId: String?, message: String)
     case invalidPayload(String)
     case transport(String)
     /// No transport is configured, so async commands are no-ops.
@@ -111,7 +92,6 @@ public enum InthError: Error, Sendable, Equatable {
     public var code: String {
         switch self {
         case .offline: return "offline"
-        case .unsupportedContract: return "unsupported-contract"
         case .httpStatus: return "http-status"
         case .invalidPayload: return "invalid-payload"
         case .transport: return "transport"
@@ -122,10 +102,9 @@ public enum InthError: Error, Sendable, Equatable {
     public var message: String {
         switch self {
         case .offline: return "No network transport is available."
-        case let .unsupportedContract(declared, expected):
-            return "Backend serves policy contract \(declared ?? "unknown"); this build reads version \(expected)."
-        case let .httpStatus(status, message):
-            return "Inth backend responded \(status): \(message)"
+        case let .httpStatus(status, code, requestId, message):
+            return "Inth backend responded \(status) \(code ?? "without an error code")"
+                + " (request \(requestId ?? "unknown")): \(message)"
         case let .invalidPayload(detail): return "Invalid response payload: \(detail)"
         case let .transport(detail): return "Transport failed: \(detail)"
         case .notConfigured: return "No Inth transport is configured."
@@ -134,25 +113,39 @@ public enum InthError: Error, Sendable, Equatable {
 
     var info: CoreErrorInfo { CoreErrorInfo(code: code, message: message) }
 
+    /// Read a failed `/v1` response:
+    /// `{ "error": { "code", "message", "details"? }, "requestId" }`.
+    ///
+    /// The request id falls back to the `x-request-id` header and the message to the
+    /// raw body text, so a gateway page or an empty body still reports something.
+    static func http(_ response: HTTPResponse) -> InthError {
+        let text = String(decoding: response.body, as: UTF8.self)
+        let parsed = InthJSON.parse(response.body)
+        let error = parsed?["error"]?.objectValue
+        return .httpStatus(
+            status: response.status,
+            code: error?["code"]?.stringValue,
+            requestId: parsed?["requestId"]?.stringValue ?? response.header("x-request-id"),
+            message: error?["message"]?.stringValue ?? text
+        )
+    }
+
     /// Whether retrying this exact body can ever change the answer.
     ///
     /// A queued body is frozen bytes: that is the whole point of the queue, so a
     /// replay carries the receipts the subject actually gave. Freezing cuts the
     /// other way too, because it means a rejection that came from reading those
     /// bytes says the same thing on the eleventh try as on the first. `400` with
-    /// `INPUT_VALIDATION_FAILED` is that case, and so is a contract this build
-    /// cannot speak. A `503`, a timeout, a dropped socket, and a rate limit are
-    /// not: they say the same body may be accepted a moment later.
+    /// `invalid_request` is that case. A `503`, a timeout, a dropped socket, and a
+    /// rate limit are not: they say the same body may be accepted a moment later.
     ///
     /// `401`/`403` count as permanent for a body but not for a device, and the
     /// queue only ever holds bodies, so a credential that comes back later cannot
     /// rescue bytes the producer already refused on its own terms.
     var isPermanentlyRejected: Bool {
         switch self {
-        case let .httpStatus(status, _):
+        case let .httpStatus(status, _, _, _):
             return (400 ..< 500).contains(status) && status != 408 && status != 425 && status != 429
-        case .unsupportedContract:
-            return true
         case .offline, .invalidPayload, .transport, .notConfigured:
             return false
         }
@@ -167,7 +160,6 @@ public struct HTTPRequest: Sendable, Equatable {
     public enum Method: String, Sendable, Equatable {
         case get = "GET"
         case post = "POST"
-        case patch = "PATCH"
     }
 
     public let method: Method
@@ -222,6 +214,8 @@ public struct HTTPResponse: Sendable, Equatable {
         var urlRequest = URLRequest(url: request.url)
         urlRequest.httpMethod = request.method.rawValue
         urlRequest.httpBody = request.body
+        // The app's shared cookie store is not the SDK's to send, and `/v1` reads none.
+        urlRequest.httpShouldHandleCookies = false
         for (name, value) in request.headers {
             urlRequest.setValue(value, forHTTPHeaderField: name)
         }
@@ -293,7 +287,7 @@ public struct HydrationRecords: Sendable, Equatable {
     }
 }
 
-/// A decoded `/init` response.
+/// A decoded `/v1/consent/init` response.
 ///
 /// Field-for-field the subset of `@inth/sdk-core`'s `InitResponse` that means
 /// something on mobile. `gvl` is read: the backend embeds it whenever the matched
@@ -373,10 +367,6 @@ public struct InitResponse: Sendable, Equatable {
         guard let parsed = InthJSON.parse(response.body), parsed.objectValue != nil else {
             return .failure(.invalidPayload("response body is not a JSON object"))
         }
-        let contractError = producerContractError(in: response)
-        if case let .failure(error) = contractError {
-            return .failure(error)
-        }
         return .success(InitResponse(
             policyResolution: parsed["policyResolution"],
             subjectId: parsed["subjectId"]?.stringValue,
@@ -396,28 +386,6 @@ public struct InitResponse: Sendable, Equatable {
             customVendorsInvalid: parsed["customVendors"] != nil
                 && IABCustomVendor.list(parsed["customVendors"]) == nil
         ))
-    }
-
-    /// A producer that declares a contract this build does not speak is a
-    /// configuration error, checked before anything in the body is read.
-    ///
-    /// A missing header means the producer predates the declaration, which is not
-    /// an error; the body still gets read strictly.
-    static func producerContractError(in response: HTTPResponse) -> Result<Void, InthError>? {
-        guard let declared = response.header(Inth.policyContractHeader) else { return nil }
-        guard let version = Int(declared.trimmingCharacters(in: .whitespaces)) else {
-            return .failure(.unsupportedContract(
-                declared: declared,
-                expected: inthPolicyContractVersion
-            ))
-        }
-        guard version == inthPolicyContractVersion else {
-            return .failure(.unsupportedContract(
-                declared: declared,
-                expected: inthPolicyContractVersion
-            ))
-        }
-        return nil
     }
 
     /// Read the init response's `location`.
@@ -468,7 +436,7 @@ public struct InitResponse: Sendable, Equatable {
 
 // MARK: - Transport
 
-/// Carries the async commands: init, save, and identity.
+/// Carries the async commands: init, save, and linking a person.
 ///
 /// Implementations are value types or internally synchronized classes. None of
 /// them may hold consent state: the core owns it, and a transport that cached
@@ -480,8 +448,8 @@ public struct InitResponse: Sendable, Equatable {
     /// A test transport can provide this URL to retain authority without seed bytes.
     var policyEndpoint: URL? { get }
 
-    /// The `domain` field sent on `POST /subjects`.
-    var domain: String { get }
+    /// The `property` field sent on `POST /v1/consent/records`, lowercase.
+    var property: String { get }
 
     func performInit(_ context: InitContext) async -> Result<InitResponse, InthError>
 
@@ -489,14 +457,20 @@ public struct InitResponse: Sendable, Equatable {
     ///
     /// Takes bytes, not a payload, because the bytes are the durable artifact. A
     /// re-encode at replay time would be free to drift from what the subject chose.
-    func sendSave(_ body: Data) async -> Result<Void, InthError>
+    ///
+    /// - Returns: the `subjectId` the `200` names, if any. The core adopts it when it
+    ///   is a canonical UUIDv7.
+    func sendSave(_ body: Data) async -> Result<String?, InthError>
 
-    /// Attach an external id to the subject.
-    func patchIdentity(
+    /// Link the device subject to a person with an identity token.
+    ///
+    /// - Returns: the `subjectId` the `200` names, if any.
+    func linkSubject(
         subjectId: String,
         externalId: String,
-        identityProvider: String?
-    ) async -> Result<Void, InthError>
+        identityProvider: String?,
+        identityToken: String
+    ) async -> Result<String?, InthError>
 }
 
 @_spi(InthInternal) extension InthTransport {
@@ -506,45 +480,51 @@ public struct InitResponse: Sendable, Equatable {
     /// The hosted transport for a project URL.
     public static func hosted(
         projectURL: URL,
-        domain: String? = nil,
+        property: String? = nil,
         headers: [String: String] = [:],
         client: any HTTPTransport = URLSession.shared
     ) -> HostedTransport {
         HostedTransport(
             baseURL: projectURL,
-            domain: domain,
+            property: property,
             extraHeaders: headers,
             client: client
         )
     }
 }
 
-/// Talks to an Inth backend's `/init`, `/subjects`, and `/subjects/:id`.
+/// Talks to an Inth backend's `/v1/consent/init`, `/v1/consent/records`, and
+/// `/v1/subjects/:id/link`, and nothing else.
 ///
 /// Internal API. This type does not check the host: the public install path
 /// normalises the project URL before it builds one.
 @_spi(InthInternal) public struct HostedTransport: InthTransport {
     public let baseURL: URL
     public var policyEndpoint: URL? { baseURL }
-    public let domain: String
+    public let property: String
     public let extraHeaders: [String: String]
     public let client: any HTTPTransport
 
+    /// - Parameter property: the save body's `property`, trimmed and lowercased. `nil` or
+    ///   blank falls back to the project URL's host, which is all a core with no
+    ///   platform context has; the Apple installer passes the bundle identifier.
     public init(
         baseURL: URL,
-        domain: String? = nil,
+        property: String? = nil,
         extraHeaders: [String: String] = [:],
         client: any HTTPTransport = URLSession.shared
     ) {
         let base = baseURL.trimmingTrailingSlash()
         self.baseURL = base
-        self.domain = domain ?? base.host ?? base.absoluteString
+        let configured = property?.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.property = ((configured?.isEmpty == false ? configured : nil) ?? base.host ?? base.absoluteString)
+            .lowercased()
         self.extraHeaders = extraHeaders
         self.client = client
     }
 
     public func performInit(_ context: InitContext) async -> Result<InitResponse, InthError> {
-        var headers = jsonHeaders
+        var headers = requestHeaders(withBody: false)
         if let language = context.overrides.language, !language.isEmpty {
             headers["accept-language"] = language
         }
@@ -563,10 +543,7 @@ public struct InitResponse: Sendable, Equatable {
                 body: nil
             ))
             guard (200..<300).contains(response.status) else {
-                return .failure(.httpStatus(
-                    status: response.status,
-                    message: String(data: response.body, encoding: .utf8) ?? ""
-                ))
+                return .failure(.http(response))
             }
             return InitResponse.decode(response)
         } catch let error as InthError {
@@ -576,42 +553,25 @@ public struct InitResponse: Sendable, Equatable {
         }
     }
 
-    public func sendSave(_ body: Data) async -> Result<Void, InthError> {
-        do {
-            let response = try await client.send(HTTPRequest(
-                method: .post,
-                url: baseURL.appendingPathComponent("subjects"),
-                headers: jsonHeaders,
-                body: body
-            ))
-            if let contractError = InitResponse.producerContractError(in: response) {
-                return contractError
-            }
-            guard (200..<300).contains(response.status) else {
-                return .failure(.httpStatus(
-                    status: response.status,
-                    message: String(data: response.body, encoding: .utf8) ?? ""
-                ))
-            }
-            return .success(())
-        } catch let error as InthError {
-            return .failure(error)
-        } catch {
-            return .failure(.transport(String(describing: error)))
-        }
+    public func sendSave(_ body: Data) async -> Result<String?, InthError> {
+        await post(baseURL.appendingPathComponent("v1/consent/records"), body: body)
     }
 
-    public func patchIdentity(
+    public func linkSubject(
         subjectId: String,
         externalId: String,
-        identityProvider: String?
-    ) async -> Result<Void, InthError> {
-        var fields: [String: JSONValue] = ["externalId": .string(externalId)]
+        identityProvider: String?,
+        identityToken: String
+    ) async -> Result<String?, InthError> {
+        var fields: [String: JSONValue] = [
+            "externalId": .string(externalId),
+            "identityToken": .string(identityToken),
+        ]
         if let identityProvider {
             fields["identityProvider"] = .string(identityProvider)
         }
         guard let body = InthJSON.encode(.object(fields)) else {
-            return .failure(.invalidPayload("identity body could not be encoded"))
+            return .failure(.invalidPayload("link body could not be encoded"))
         }
         // Escaped defensively, because the id was read back from storage. The
         // punctuation both id formats use stays literal: `encodeURIComponent` on the
@@ -620,20 +580,25 @@ public struct InitResponse: Sendable, Equatable {
         let encodedSubjectId = subjectId.addingPercentEncoding(
             withAllowedCharacters: .alphanumerics.union(CharacterSet(charactersIn: "-_"))
         ) ?? subjectId
+        return await post(
+            baseURL.appendingPathComponent("v1/subjects/\(encodedSubjectId)/link"),
+            body: body
+        )
+    }
+
+    /// Send a JSON body and read the canonical `subjectId` out of a `2xx` answer.
+    private func post(_ url: URL, body: Data) async -> Result<String?, InthError> {
         do {
             let response = try await client.send(HTTPRequest(
-                method: .patch,
-                url: baseURL.appendingPathComponent("subjects/\(encodedSubjectId)"),
-                headers: jsonHeaders,
+                method: .post,
+                url: url,
+                headers: requestHeaders(withBody: true),
                 body: body
             ))
             guard (200..<300).contains(response.status) else {
-                return .failure(.httpStatus(
-                    status: response.status,
-                    message: String(data: response.body, encoding: .utf8) ?? ""
-                ))
+                return .failure(.http(response))
             }
-            return .success(())
+            return .success(InthJSON.parse(response.body)?["subjectId"]?.stringValue)
         } catch let error as InthError {
             return .failure(error)
         } catch {
@@ -641,20 +606,18 @@ public struct InitResponse: Sendable, Equatable {
         }
     }
 
-    private var jsonHeaders: [String: String] {
-        var headers = [
-            "accept": "application/json",
-            "content-type": "application/json",
-        ]
-        for (name, value) in Inth.protocolHeaders { headers[name] = value }
+    /// `accept` always, `content-type` with a body, then the host's telemetry headers.
+    private func requestHeaders(withBody: Bool) -> [String: String] {
+        var headers = ["accept": "application/json"]
+        if withBody { headers["content-type"] = "application/json" }
         for (name, value) in extraHeaders { headers[name] = value }
         return headers
     }
 
-    /// Overrides ride as query parameters so a proxy that forwards `/init`
-    /// unchanged still resolves the same policy the client expects.
+    /// Overrides ride as query parameters so a proxy that forwards init unchanged
+    /// still resolves the same policy the client expects.
     private func initURL(withContext context: InitContext) -> URL {
-        let initURL = baseURL.appendingPathComponent("init")
+        let initURL = baseURL.appendingPathComponent("v1/consent/init")
         guard var components = URLComponents(url: initURL, resolvingAgainstBaseURL: false)
         else { return initURL }
         var items = components.queryItems ?? []

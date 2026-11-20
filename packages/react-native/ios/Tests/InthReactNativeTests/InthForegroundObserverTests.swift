@@ -237,7 +237,7 @@ final class InthForegroundObserverTests: XCTestCase {
     }
 
     private final class HeldReplayTransport: InthTransport, @unchecked Sendable {
-        let domain = "held-replay"
+        let property = "held-replay"
         private let lock = NSLock()
         private var replayStarted: XCTestExpectation?
         private var refreshStarted: XCTestExpectation?
@@ -279,7 +279,7 @@ final class InthForegroundObserverTests: XCTestCase {
             return .success(InitResponse(policyResolution: RecordingTransport.unconfiguredResolution))
         }
 
-        func sendSave(_ body: Data) async -> Result<Void, InthError> {
+        func sendSave(_ body: Data) async -> Result<String?, InthError> {
             let recovering = lock.withLock {
                 if self.recovering { calls.append("save-start") }
                 return self.recovering
@@ -296,15 +296,16 @@ final class InthForegroundObserverTests: XCTestCase {
                 if alreadyReleased { continuation.resume() }
             }
             lock.withLock { calls.append("save-finish") }
-            return .success(())
+            return .success(nil)
         }
 
-        func patchIdentity(
+        func linkSubject(
             subjectId: String,
             externalId: String,
-            identityProvider: String?
-        ) async -> Result<Void, InthError> {
-            .success(())
+            identityProvider: String?,
+            identityToken: String
+        ) async -> Result<String?, InthError> {
+            .success(nil)
         }
     }
 

@@ -10,7 +10,7 @@ import XCTest
 /// stays readable until its own send lands. A second pass that reads during that window
 /// resends whatever the first is still sending. The bytes are frozen and carry the same
 /// consent id, so the backend dedupes them into one consent row and nothing in stored
-/// state moves -- the only symptom is a second `POST /subjects` per entry per wake-up.
+/// state moves -- the only symptom is a second `POST /v1/consent/records` per entry per wake-up.
 /// So these tests watch the transport rather than the snapshot, which cannot see this
 /// defect at all.
 ///
@@ -268,7 +268,7 @@ final class DeliveryPassExclusivityTests: XCTestCase {
     private func gatedTransport() -> HostedTransport {
         HostedTransport(
             baseURL: URL(string: "https://consent.example.com")!,
-            domain: "app.example.com",
+            property: "com.example.app",
             client: http
         )
     }

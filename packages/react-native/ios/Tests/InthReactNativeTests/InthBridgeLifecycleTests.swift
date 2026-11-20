@@ -32,10 +32,10 @@ final class InthChangePumpTests: XCTestCase {
 
     func testErrorEventCarriesCodeAndMessage() {
         let sink = RecordingSink()
-        InthChangePump(sink: sink).onError(code: "unsupported-contract", message: "backend refused the wire")
+        InthChangePump(sink: sink).onError(code: "save-rejected", message: "HTTP 422 invalid_request")
 
         let payload = jsonObject(sink.payloads(for: "error").first ?? "{}")
-        XCTAssertEqual(payload["code"] as? String, "unsupported-contract")
+        XCTAssertEqual(payload["code"] as? String, "save-rejected")
     }
 
     func testSubscriberReportsTheCoreCurrentSnapshotOnAttach() {
@@ -125,10 +125,23 @@ final class InthBootstrapTests: XCTestCase {
         let core = try XCTUnwrap(configuration.makeCoreConfiguration())
         let transport = try XCTUnwrap(core.transport as? HostedTransport)
         XCTAssertEqual(transport.baseURL, URL(string: "https://your-project.inth.app"))
-        XCTAssertEqual(transport.domain, "your-project.inth.app")
+        // No `com.inth.backend.domain`: records name the app's bundle identifier.
+        XCTAssertEqual(transport.property, (Bundle.main.bundleIdentifier ?? "your-project.inth.app").lowercased())
         // ENG-530: a React Native app reports `rn`, not the Swift app's `apple`.
         XCTAssertEqual(transport.extraHeaders["x-inth-platform"], "rn->\(Inth.version)")
         XCTAssertFalse(core.dryRun)
+    }
+
+    func testADeclaredPropertyReachesTheTransportLowercased() throws {
+        var configuration = InthBridgeConfiguration.from(infoPlist: [
+            InthBridgeConfiguration.InfoPlistKey.backendURL: testProjectURL,
+            "com.inth.backend.domain": "Com.Acme.App",
+        ])
+        configuration.storageMode = .memory
+
+        let core = try XCTUnwrap(configuration.makeCoreConfiguration())
+        let transport = try XCTUnwrap(core.transport as? HostedTransport)
+        XCTAssertEqual(transport.property, "com.acme.app")
     }
 
     func testAHostThatIsNotAnInthProjectDoesNotStart() {

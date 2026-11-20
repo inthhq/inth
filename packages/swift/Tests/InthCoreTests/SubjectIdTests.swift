@@ -3,124 +3,54 @@ import XCTest
 
 @_spi(InthInternal) @testable import InthCore
 
-/// Subject id generation, pinned to the vectors the two native cores and the web SDK
-/// share, and to the regex the backend actually applies.
+/// Subject id minting and reading, pinned to `packages/native-protocol/subject-id/uuidv7.json`,
+/// which the Kotlin core reads too.
 final class SubjectIdTests: XCTestCase {
-    /// The backend's own check, `subjectIdSchema` in
-    /// `packages/sdk/schema/src/api/subject/post.ts`.
-    private static let backendPattern = "^sub_[1-9A-HJ-NP-Za-km-z]+$"
+    private struct Shared: Decodable {
+        struct Vector: Decodable {
+            let clock: Int64
+            let randomHex: String
+            let id: String
+        }
 
-    /// One vector: the 12 random bytes, the wall clock in epoch milliseconds, and the
-    /// id every SDK must return for that pair. `nowMillis` is the reading the generator
-    /// is pinned to, not the offset it encodes: the epoch is subtracted inside, the way
-    /// `generateSubjectId` subtracts it from `Date.now()`. Reading it as an offset still
-    /// returns a well formed `sub_` id, so only the expected string catches that.
-    private struct Vector {
-        let randomBytes: String
-        let nowMillis: Int64
-        let id: String
+        struct Read: Decodable {
+            let id: String
+            let kind: String
+        }
+
+        let vectors: [Vector]
+        let read: [Read]
     }
 
-    private static let vectors: [Vector] = [
-        Vector(
-            randomBytes: "000000000000000000000000",
-            nowMillis: 1,
-            id: "sub_4Zrjtb44miwSTU2EYMYtuVWfaAPR"
-        ),
-        Vector(
-            randomBytes: "000000000000000000000001",
-            nowMillis: 58_123_456_789,
-            id: "sub_4ZrjtiRsJnoW34Px8dAvhPTKJiWc"
-        ),
-        Vector(
-            randomBytes: "ffffffffffffffffffffffff",
-            nowMillis: 58_123_456_789,
-            id: "sub_4ZrjtiRsJnoasFgQkJmLeDNrs7fC"
-        ),
-        // A clock set before the epoch: the offset is negative and is encoded as
-        // two's complement, not clamped.
-        Vector(
-            randomBytes: "01096a7b8c9d0e1f20ab11cd",
-            nowMillis: -100_000_000_000,
-            id: "sub_4ZrjtNN3QTDfdH8RQdZEAE8ohrCk"
-        ),
-        Vector(
-            randomBytes: "a1b2c3d4e5f60718293a4b5c",
-            nowMillis: 58_123_456_789,
-            id: "sub_4ZrjtiRsJnoZ63G1p3FjTdWdHA6P"
-        ),
-        // A clock ahead of the epoch, which is every real device. Everything above
-        // sits behind it, so without this row an encoder that handled only negative
-        // offsets would pass the whole table.
-        Vector(
-            randomBytes: "9a0f1c2b3d4e5f60718293ab",
-            nowMillis: 80_000_000_000,
-            id: "sub_4ZrjtmCtGLiMkPniH4rf1naxRKTp"
-        ),
-        // One millisecond past the epoch: seven zero bytes in front of the offset, so
-        // seven `1`s in front of the digits.
-        Vector(
-            randomBytes: "000000000000000000000000",
-            nowMillis: 1_700_000_000_001,
-            id: "sub_11111115qCHTcgbQwpvYZQ9d"
-        ),
-        // The one input where the division loop never runs, so the leading zeros are
-        // the whole encoding.
-        Vector(
-            randomBytes: "000000000000000000000000",
-            nowMillis: 1_700_000_000_000,
-            id: "sub_11111111111111111111"
-        ),
-    ]
+    private static func shared() throws -> Shared {
+        let url = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("../../../native-protocol/subject-id/uuidv7.json")
+            .standardizedFileURL
+        return try JSONDecoder().decode(Shared.self, from: Data(contentsOf: url))
+    }
 
-    // MARK: - Byte-for-byte parity
+    // MARK: - Minting
 
-    func testGeneratedIdsMatchTheCrossLanguageVectors() {
-        for vector in Self.vectors {
+    func testGeneratedIdsMatchTheSharedVectors() throws {
+        let vectors = try Self.shared().vectors
+        XCTAssertFalse(vectors.isEmpty)
+        for vector in vectors {
             XCTAssertEqual(
-                SubjectId.generate(now: { vector.nowMillis }, entropy: { hexBytes(vector.randomBytes) }),
+                SubjectId.generate(now: { vector.clock }, entropy: { hexBytes(vector.randomHex) }),
                 vector.id,
-                "clock \(vector.nowMillis) with entropy \(vector.randomBytes)"
+                "clock \(vector.clock) with random bytes \(vector.randomHex)"
             )
         }
     }
 
-    // MARK: - Format
-
-    func testEveryGeneratedIdMatchesTheBackendRegex() throws {
-        let regex = try NSRegularExpression(pattern: Self.backendPattern)
+    func testEveryGeneratedIdIsALowercaseUUIDv7() {
         for _ in 0..<500 {
             let id = SubjectId.generate()
-            XCTAssertNotNil(
-                regex.firstMatch(in: id, range: NSRange(id.startIndex..., in: id)),
-                "the backend would reject \(id)"
-            )
-            XCTAssertTrue(SubjectId.isValid(id))
+            XCTAssertTrue(SubjectId.isUUIDv7(id), "not a UUIDv7: \(id)")
+            XCTAssertEqual(SubjectId.kind(of: id), .uuidv7)
         }
-    }
-
-    func testIdentityMintsABackendAcceptableId() {
-        // The regression this whole format exists for: an identity built from a UUID
-        // is well-formed Swift and `INPUT_VALIDATION_FAILED` at the backend.
-        let id = SubjectIdentity.generate().id
-        XCTAssertTrue(SubjectId.isValid(id), "expected a sub_ id, got \(id)")
-        XCTAssertTrue(SubjectIdentity.isValid(id))
-    }
-
-    func testFormatCheckRejectsWhatTheBackendRejects() {
-        // `SubjectId.isValid` and `SubjectIdentity.isValid` are the same gate: the
-        // producer's pattern, with no legacy exception on the read side.
-        for rejected in [
-            "sub_",
-            "sub_0", // `0` is out of the alphabet
-            "sub_OI", // so are `O`, `I`, and `l`
-            "sub_9ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyZl",
-            "cns_4Zrjtb44miwSTU2EYMYtuVWfaAPR",
-            "6f1d2c3a-8b4e-4a7f-9c21-0d5e7a9b1c01",
-            "",
-        ] {
-            XCTAssertFalse(SubjectId.isValid(rejected), "\(rejected) must not pass")
-        }
+        XCTAssertTrue(SubjectId.isUUIDv7(SubjectIdentity.generate().id))
     }
 
     func testGeneratedIdsAreDistinct() {
@@ -128,90 +58,61 @@ final class SubjectIdTests: XCTestCase {
         XCTAssertEqual(Set(ids).count, ids.count, "two ids came out of the same entropy")
     }
 
-    func testEntropyIsDrawnOnEveryGeneration() {
-        // Fresh bytes per id, not one draw reused: the clock here is fixed, so a cached
-        // entropy value would repeat the id instead of differing.
-        var draws = 0
-        let entropy: () -> [UInt8]? = {
-            draws += 1
-            return hexBytes(String(repeating: "ab", count: SubjectId.randomByteCount))?
-                .map { $0 ^ UInt8(draws) }
-        }
-        let ids = (0..<3).map { _ in SubjectId.generate(now: { 1_758_100_000_000 }, entropy: entropy) }
-        XCTAssertEqual(draws, 3)
-        XCTAssertEqual(Set(ids).count, 3)
-    }
+    // MARK: - Reading
 
-    // MARK: - Reading an id back
+    func testReadCasesMatchTheSharedRule() throws {
+        let cases = try Self.shared().read
+        XCTAssertFalse(cases.isEmpty)
+        for entry in cases {
+            XCTAssertEqual(SubjectId.kind(of: entry.id).rawValue, entry.kind, "reading \"\(entry.id)\"")
 
-    func testStoredSubIdIsAdoptedExactlyAsStored() throws {
-        // An install that upgrades keeps the subject its consent is already keyed to, so
-        // the one shape the producer accepts is the one shape that survives a read.
-        let id = "sub_4ZrjtiRsJnoW34Px8dAvhPTKJiWc"
-        let store = InMemoryStore()
-        store.encode(["id": id], for: StorageKey.subject)
-        let read = SubjectIdentity.loadOrCreate(from: store)
-        XCTAssertEqual(read.identity.id, id, "reading back \(id)")
-        XCTAssertNil(read.unusable, "an id the producer accepts is never reported unusable")
-    }
-
-    func testForeignStoredIdIsReplacedWithAFreshSubId() {
-        // IDFV-shaped and uppercase: a device identifier, never a subject.
-        let store = InMemoryStore()
-        store.encode(["id": "6E9A1F2C-3B4D-5E6F-A7B8-C9D0E1F2A3B4"], for: StorageKey.subject)
-        let read = SubjectIdentity.loadOrCreate(from: store)
-        XCTAssertNotEqual(read.identity.id, "6E9A1F2C-3B4D-5E6F-A7B8-C9D0E1F2A3B4")
-        XCTAssertTrue(SubjectId.isValid(read.identity.id))
-        XCTAssertEqual(read.unusable?.id, "6E9A1F2C-3B4D-5E6F-A7B8-C9D0E1F2A3B4")
-        XCTAssertEqual(read.unusable?.legacyShape, false, "uppercase is not the shape this SDK wrote")
-    }
-
-    func testStoredIdsTheProducerRefusesAreNeverAdopted() {
-        // The read-side half of the format rule. Every one of these earns
-        // `INPUT_VALIDATION_FAILED` at `POST /subjects`, so an install holding one has
-        // consent attributed to an id no query returns, and adopting it again keeps the
-        // core reporting a committed save that can never land.
-        let refused = [
-            "6f1d2c3a-8b4e-4a7f-9c21-0d5e7a9b1c01", // the legacy shape this SDK used to mint
-            "6F1D2C3A-8B4E-4A7F-9C21-0D5E7A9B1C01", // IDFV / ADID
-            "sub_", // prefix and nothing else
-            "sub_0OI", // characters outside the alphabet
-            "not-an-id",
-            "",
-        ]
-        for id in refused {
             let store = InMemoryStore()
-            store.encode(["id": id], for: StorageKey.subject)
+            store.encode(["id": entry.id], for: StorageKey.subject)
             let read = SubjectIdentity.loadOrCreate(from: store)
-            XCTAssertNotEqual(read.identity.id, id, "\(id) must not be adopted")
-            XCTAssertTrue(SubjectId.isValid(read.identity.id), "\(id) must leave a backend-acceptable id")
-            XCTAssertEqual(read.unusable?.id, id, "\(id) must be reported so the caller drops its records")
+            if entry.kind == "unusable" {
+                XCTAssertNotEqual(read.identity.id, entry.id, "\(entry.id) must not be adopted")
+                XCTAssertEqual(read.unusable?.id, entry.id, "\(entry.id) must be reported")
+                XCTAssertTrue(SubjectId.isUUIDv7(read.identity.id), "the replacement is a fresh UUIDv7")
+            } else {
+                XCTAssertEqual(read.identity.id, entry.id, "\(entry.id) is adopted exactly as stored")
+                XCTAssertNil(read.unusable)
+            }
         }
     }
 
-    func testLegacyUuidShapeIsRecognisedForDiagnosisAndNeverAdopted() {
-        // What this check is now for: recognising the legacy shape tells a host *why* a
-        // returning user is being asked again, which is worth saying out loud. It is not
-        // an adoption gate -- `isValid` is, and it answers the backend's pattern only.
-        // Every id below is one this SDK once wrote and the producer still refuses.
-        XCTAssertTrue(SubjectIdentity.isLegacyUUIDv4("6f1d2c3a-8b4e-4a7f-9c21-0d5e7a9b1c01"))
-        XCTAssertFalse(SubjectIdentity.isLegacyUUIDv4("6F1D2C3A-8B4E-4A7F-9C21-0D5E7A9B1C01"))
-        XCTAssertFalse(SubjectIdentity.isLegacyUUIDv4("6f1d2c3a-8b4e-5a7f-9c21-0d5e7a9b1c01")) // not v4
-        XCTAssertFalse(SubjectIdentity.isLegacyUUIDv4("6f1d2c3a-8b4e-4a7f-cc21-0d5e7a9b1c01")) // bad variant
-        XCTAssertFalse(SubjectIdentity.isLegacyUUIDv4("not-an-id"))
-
-        // Recognition must never reach adoption: the same id is a legacy shape and an
-        // unusable identity, and the read is the only thing that decides what to keep.
-        let legacy = "6f1d2c3a-8b4e-4a7f-9c21-0d5e7a9b1c01"
+    func testThePrereleaseUUIDv4ShapeIsRecognisedForDiagnosisAndNeverAdopted() {
+        let legacy = "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b"
         XCTAssertTrue(SubjectIdentity.isLegacyUUIDv4(legacy))
+        XCTAssertFalse(SubjectIdentity.isLegacyUUIDv4(legacy.uppercased()))
         XCTAssertFalse(SubjectIdentity.isValid(legacy))
         XCTAssertThrowsError(try SubjectIdentity(id: legacy))
 
         let store = InMemoryStore()
         store.encode(["id": legacy], for: StorageKey.subject)
-        let read = SubjectIdentity.loadOrCreate(from: store)
-        XCTAssertEqual(read.unusable?.legacyShape, true)
-        XCTAssertNotEqual(read.identity.id, legacy)
+        XCTAssertEqual(SubjectIdentity.loadOrCreate(from: store).unusable?.legacyShape, true)
+    }
+
+    // MARK: - Canonical id
+
+    func testOnlyACanonicalUUIDv7ReplacesTheStoredIdAndTheOldOneIsRemembered() throws {
+        let store = InMemoryStore()
+        store.encode(["id": "sub_2VZxR7YmNpKq3WfLs8TgHd"], for: StorageKey.subject)
+        let current = SubjectIdentity.loadOrCreate(from: store).identity
+
+        for ignored in ["sub_1119tDZHoarNxm6kSm3BN6ze9d", "0193E5A8-6F00-7C3A-8A1B-5D2E7F9A0B1C", current.id] {
+            XCTAssertNil(SubjectIdentity.adoptCanonical(ignored, replacing: current, previousIds: [], in: store))
+        }
+
+        let canonical = "0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c"
+        let adopted = try XCTUnwrap(
+            SubjectIdentity.adoptCanonical(canonical, replacing: current, previousIds: [], in: store))
+        XCTAssertEqual(adopted.identity.id, canonical)
+        XCTAssertEqual(adopted.previousIds, [current.id])
+
+        let reread = SubjectIdentity.loadOrCreate(from: store)
+        XCTAssertEqual(reread.identity.id, canonical)
+        XCTAssertEqual(reread.previousIds, [current.id])
+        XCTAssertNil(reread.unusable)
     }
 }
 

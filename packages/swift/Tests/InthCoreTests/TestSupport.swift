@@ -5,13 +5,13 @@ import XCTest
 /// A backend nobody can reach: every call fails with `.offline`. It names no policy
 /// endpoint, so a bundled manifest keeps its own binding.
 struct UnreachableTransport: InthTransport {
-    var domain = "offline"
+    var property = "offline"
 
     func performInit(_ context: InitContext) async -> Result<InitResponse, InthError> { .failure(.offline) }
-    func sendSave(_ body: Data) async -> Result<Void, InthError> { .failure(.offline) }
-    func patchIdentity(
-        subjectId: String, externalId: String, identityProvider: String?
-    ) async -> Result<Void, InthError> { .failure(.offline) }
+    func sendSave(_ body: Data) async -> Result<String?, InthError> { .failure(.offline) }
+    func linkSubject(
+        subjectId: String, externalId: String, identityProvider: String?, identityToken: String
+    ) async -> Result<String?, InthError> { .failure(.offline) }
 }
 
 /// A controllable clock, so expiry and `actionAt` are set rather than waited for.
@@ -61,6 +61,8 @@ final class StubHTTP: HTTPTransport, @unchecked Sendable {
     var onSave: (@Sendable (Data) -> Void)?
     var initResponse: HTTPResponse = .json(#"{"policyResolution": null}"#)
     var saveResponse: HTTPResponse = .json("{}")
+    /// What `POST /v1/subjects/:id/link` answers.
+    var linkResponse: HTTPResponse = .json("{}")
 
     func enqueueInit(_ response: HTTPResponse) {
         lock.lock()
@@ -173,6 +175,13 @@ final class StubHTTP: HTTPTransport, @unchecked Sendable {
             lock.unlock()
             return canned ?? initResponse
 
+        case .post where request.url.path.hasSuffix("/link"):
+            lock.lock()
+            identityRequests.append(request)
+            let response = linkResponse
+            lock.unlock()
+            return response
+
         case .post:
             lock.lock()
             saveRequests.append(request)
@@ -207,12 +216,6 @@ final class StubHTTP: HTTPTransport, @unchecked Sendable {
                 return HTTPResponse(status: saveFailureStatus, body: Data("unavailable".utf8))
             }
             return canned ?? saveResponse
-
-        case .patch:
-            lock.lock()
-            identityRequests.append(request)
-            lock.unlock()
-            return HTTPResponse(status: 200)
         }
     }
 }
@@ -221,7 +224,7 @@ extension HTTPResponse {
     static func json(_ body: String, status: Int = 200) -> HTTPResponse {
         HTTPResponse(
             status: status,
-            headers: ["x-inth-policy-contract": String(inthPolicyContractVersion)],
+            headers: ["x-request-id": "req_test"],
             body: Data(body.utf8)
         )
     }
@@ -470,7 +473,7 @@ enum Fixture {
     static func transport(_ http: StubHTTP) -> HostedTransport {
         HostedTransport(
             baseURL: URL(string: "https://consent.example.com")!,
-            domain: "app.example.com",
+            property: "com.example.app",
             client: http
         )
     }

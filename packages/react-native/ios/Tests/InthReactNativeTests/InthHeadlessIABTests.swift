@@ -3,13 +3,13 @@
 import Foundation
 import XCTest
 
-/// Serves one `/init` body and refuses every save, so a commit stays queued on the device.
+/// Serves one init body and refuses every save, so a commit stays queued on the device.
 final class ServedInit: HTTPTransport, @unchecked Sendable {
     let body: Data
     init(body: Data) { self.body = body }
     func send(_ request: HTTPRequest) async throws -> HTTPResponse {
-        request.url.path.hasSuffix("/init")
-            ? HTTPResponse(status: 200, headers: ["x-inth-policy-contract": "1"], body: body)
+        request.url.path.hasSuffix("/v1/consent/init")
+            ? HTTPResponse(status: 200, body: body)
             : HTTPResponse(status: 503)
     }
 }

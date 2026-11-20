@@ -24,6 +24,28 @@ final class OverrideAndSignalTests: XCTestCase {
         try InthJSON.decode(ConsentSnapshot.self, from: try XCTUnwrap(InthJSON.encode(.object(fields))))
     }
 
+    // MARK: - Init
+
+    func testInitNamesGpcOnlyWhenThereIsASignal() async throws {
+        func initQuery(override: Bool?, detected: Bool?) async throws -> [String: String] {
+            let http = StubHTTP()
+            let core = ConsentCore()
+            await core.bootstrapAndSettle(Fixture.configured(
+                store: InMemoryStore(), transport: Fixture.transport(http), clock: TestClock(),
+                overrides: ConsentOverrides(country: nil, region: nil, language: "en", gpc: override),
+                gpc: detected))
+            let url = try XCTUnwrap(http.recordedInitRequests.first?.url)
+            let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+            return Dictionary(uniqueKeysWithValues: items.map { ($0.name, $0.value ?? "") })
+        }
+        let none = try await initQuery(override: nil, detected: nil)
+        XCTAssertNil(none["gpc"], "no override and no detection")
+        let off = try await initQuery(override: false, detected: true)
+        XCTAssertEqual(off["gpc"], "0", "the override wins")
+        let detected = try await initQuery(override: nil, detected: true)
+        XCTAssertEqual(detected["gpc"], "1")
+    }
+
     // MARK: - Shape
 
     func testOverridesEncodeTheFourKernelFieldsAndNothingElse() throws {
@@ -225,8 +247,9 @@ final class OverrideAndSignalTests: XCTestCase {
             gpc: true
         )
         let payload = SavePayload(
-            subjectId: "sub_4ZrjtNN3QTDfdH8RQdZEAE8ohrCk",
-            subject: ConsentSubject(subjectId: "sub_4ZrjtNN3QTDfdH8RQdZEAE8ohrCk", externalId: nil, identityProvider: nil),
+            idempotencyKey: "019c1c38-a400-7100-8000-000000000103",
+            subjectId: "019c1c38-a400-7100-8000-000000000002",
+            subject: ConsentSubject(subjectId: "019c1c38-a400-7100-8000-000000000002", externalId: nil, identityProvider: nil),
             choice: .empty,
             confirmed: ConfirmedCoverage(categories: [:], actionAt: 1),
             consents: ConsentState(),
@@ -245,7 +268,7 @@ final class OverrideAndSignalTests: XCTestCase {
         XCTAssertEqual(encoded?["decisionInputs"]?["gpc"]?.boolValue, true)
         XCTAssertNil(
             InthJSON.parse(
-                try SubjectPostBodyBuilder.body(for: payload, domain: "app.example.com")
+                try ConsentRecordBodyBuilder.body(for: payload, property: "com.example.app")
             )?["gpc"],
             "the token is the stronger claim, so the flat assertion stays off the wire"
         )

@@ -429,8 +429,8 @@ final class InthPayloadTests: XCTestCase {
         XCTAssertEqual(initialized["ready"] as? Bool, true)
         XCTAssertEqual(initialized["policyPending"] as? Bool, false)
 
-        let error = jsonObject(InthPayload.errorEvent(code: "unsupported-contract", message: "nope"))
-        XCTAssertEqual(error["code"] as? String, "unsupported-contract")
+        let error = jsonObject(InthPayload.errorEvent(code: "save-rejected", message: "nope"))
+        XCTAssertEqual(error["code"] as? String, "save-rejected")
         XCTAssertEqual(error["message"] as? String, "nope")
     }
 
