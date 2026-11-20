@@ -335,7 +335,8 @@ jobs:
   # main-branch or scheduled run fails.
   report-failure:
     name: Report a failed main or nightly run
-    needs: [native, react-native-build, react-native, expo-build, expo-vendor-sdks]
+    needs:
+      [native, react-native-build, react-native, expo-build, expo-vendor-sdks]
     if: ${{ failure() && github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'push') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
