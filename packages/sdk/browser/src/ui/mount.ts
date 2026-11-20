@@ -14,6 +14,7 @@ import type {
 import { createBanner } from './banner';
 import { createDialog } from './dialog-surface';
 import { h } from './dom';
+import { subscribeOptOutConfirmation } from './opt-out-confirmation-state';
 import { applyColorScheme, createStyle, createUIRoot } from './root';
 import type { UIRoot } from './root';
 import { createSlotApplier } from './slots';
@@ -280,11 +281,13 @@ export const mountConsentUI = function mountConsentUI(
 		}
 	};
 	const unsubscribe = client.subscribe(update);
+	const unsubscribeOptOut = subscribeOptOutConfirmation(client.kernel, update);
 	update();
 
 	return {
 		destroy() {
 			unsubscribe();
+			unsubscribeOptOut();
 			releaseScheme();
 			for (const surface of surfaces) {
 				surface.destroy();

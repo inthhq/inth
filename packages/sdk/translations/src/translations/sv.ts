@@ -170,6 +170,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Integritetspolicy',
 		termsOfService: 'Användarvillkor',
 	},
+	optOut: {
+		description:
+			'Den här webbplatsen säljer eller delar inte dina personuppgifter, och ditt val är sparat i den här webbläsaren.',
+		done: 'Klar',
+		lockedByAccount:
+			'Ditt konto har valt bort detta, och du kan ändra det efter att du loggat in.',
+		lockedByGpc:
+			'Webbläsarens Global Privacy Control-signal är på, så detta förblir avstängt.',
+		statusRequest: 'Begäran om att välja bort har följts',
+		statusSignal: 'Signal om bortvalspreferens har följts',
+	},
 	rights: {
 		californiaPrivacyChoices: 'Dina integritetsval i Kalifornien',
 		optOut: 'Sälj eller dela inte mina uppgifter',

@@ -172,6 +172,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Politica de confidențialitate',
 		termsOfService: 'Termeni și condiții',
 	},
+	optOut: {
+		description:
+			'Acest site nu va vinde și nu va partaja informațiile tale personale, iar alegerea ta este salvată în acest browser.',
+		done: 'Gata',
+		lockedByAccount:
+			'Contul tău a renunțat și poți schimba aceasta după autentificare.',
+		lockedByGpc:
+			'Semnalul Global Privacy Control al browserului tău este activ, așa că această opțiune rămâne dezactivată.',
+		statusRequest: 'Solicitarea de renunțare a fost respectată',
+		statusSignal: 'Semnalul de preferință pentru renunțare a fost respectat',
+	},
 	rights: {
 		californiaPrivacyChoices:
 			'Opțiunile dumneavoastră de confidențialitate din California',

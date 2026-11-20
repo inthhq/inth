@@ -176,6 +176,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: '개인정보 처리방침',
 		termsOfService: '서비스 이용약관',
 	},
+	optOut: {
+		description:
+			'이 사이트는 귀하의 개인정보를 판매하거나 공유하지 않으며, 선택 내용은 이 브라우저에 저장됩니다.',
+		done: '완료',
+		lockedByAccount:
+			'계정에서 거부로 설정되어 있으며, 로그인 후 변경할 수 있습니다.',
+		lockedByGpc:
+			'브라우저의 Global Privacy Control 신호가 켜져 있어 이 설정은 꺼진 상태로 유지됩니다.',
+		statusRequest: '거부 요청이 반영되었습니다',
+		statusSignal: '거부 기본 설정 신호가 반영되었습니다',
+	},
 	rights: {
 		californiaPrivacyChoices: '캘리포니아 개인정보 보호 선택',
 		optOut: '내 개인정보 판매 및 공유 거부',

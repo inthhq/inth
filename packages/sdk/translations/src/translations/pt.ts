@@ -171,6 +171,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Política de Privacidade',
 		termsOfService: 'Termos de Serviço',
 	},
+	optOut: {
+		description:
+			'Este site não venderá nem compartilhará suas informações pessoais, e sua escolha está salva neste navegador.',
+		done: 'Concluído',
+		lockedByAccount:
+			'Sua conta optou por sair, e você pode alterar isso após fazer login.',
+		lockedByGpc:
+			'O sinal Global Privacy Control do seu navegador está ativado, portanto esta opção permanece desativada.',
+		statusRequest: 'Solicitação de exclusão atendida',
+		statusSignal: 'Sinal de preferência de exclusão atendido',
+	},
 	rights: {
 		californiaPrivacyChoices: 'As suas escolhas de privacidade na Califórnia',
 		optOut: 'Não vender nem partilhar os meus dados',

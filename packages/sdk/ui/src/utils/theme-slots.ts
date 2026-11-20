@@ -60,6 +60,16 @@ export const THEME_SLOT_COMPONENT_KEYS = {
 	iabConsentDialogHeader: 'iab-dialog.header',
 	iabConsentDialogOverlay: 'iab-dialog.overlay',
 	iabConsentDialogTag: 'tag.iab-dialog',
+	optOutConfirmation: 'opt-out-confirmation.root',
+	optOutConfirmationCard: 'opt-out-confirmation.card',
+	optOutConfirmationDescription: 'opt-out-confirmation.description',
+	optOutConfirmationDoneButton: 'opt-out-confirmation.doneButton',
+	optOutConfirmationFooter: 'opt-out-confirmation.footer',
+	optOutConfirmationHeader: 'opt-out-confirmation.header',
+	optOutConfirmationOverlay: 'opt-out-confirmation.overlay',
+	optOutConfirmationPreferencesLink: 'opt-out-confirmation.preferencesLink',
+	optOutConfirmationStatus: 'opt-out-confirmation.status',
+	optOutConfirmationTitle: 'opt-out-confirmation.title',
 	toggle: 'switch.root',
 } as const satisfies Record<AllThemeKeys, `${string}.${string}`>;
 

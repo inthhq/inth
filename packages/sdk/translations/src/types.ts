@@ -43,6 +43,22 @@ export interface TriggerTranslations {
 	devToolsLabel: string;
 }
 
+/** Copy for the opt-out confirmation view and opt-out notices in preferences. */
+export interface OptOutTranslations {
+	/** Status shown when the visitor's own opt-out request is honored. */
+	statusRequest: string;
+	/** Status shown when a Global Privacy Control signal is honored. */
+	statusSignal: string;
+	/** Body text in the opt-out confirmation view. */
+	description: string;
+	/** Label of the single button that closes the opt-out confirmation view. */
+	done: string;
+	/** Notice shown on a category locked off by an active GPC signal. */
+	lockedByGpc: string;
+	/** Notice shown on a category held off by an account-level opt-out. */
+	lockedByAccount: string;
+}
+
 export interface LegalLinksTranslations {
 	privacyPolicy: string;
 	cookiePolicy: string;
@@ -289,6 +305,11 @@ export interface CompleteTranslations {
 	 * Optional so custom translation objects keep compiling; English
 	 * provides it and fills the gaps for every other language.
 	 */
+	optOut?: OptOutTranslations;
+	/**
+	 * Optional so custom translation objects keep compiling; English
+	 * provides it and fills the gaps for every other language.
+	 */
 	trigger?: TriggerTranslations;
 }
 
@@ -310,6 +331,7 @@ export interface Translations {
 	frame?: Partial<ConsentGateTranslations>;
 	legalLinks?: Partial<LegalLinksTranslations>;
 	iab?: DeepPartial<IABTranslations>;
+	optOut?: Partial<OptOutTranslations>;
 	rights?: Partial<RightsTranslations>;
 	trigger?: Partial<TriggerTranslations>;
 }

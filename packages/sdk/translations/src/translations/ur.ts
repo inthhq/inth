@@ -176,6 +176,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'رازداری کی پالیسی',
 		termsOfService: 'شرائطِ خدمت',
 	},
+	optOut: {
+		description:
+			'یہ سائٹ آپ کی ذاتی معلومات فروخت یا شیئر نہیں کرے گی، اور آپ کا انتخاب اس براؤزر میں محفوظ ہے۔',
+		done: 'مکمل',
+		lockedByAccount:
+			'آپ کے اکاؤنٹ نے آپٹ آؤٹ کیا ہے، اور آپ سائن ان کرنے کے بعد اسے تبدیل کر سکتے ہیں۔',
+		lockedByGpc:
+			'آپ کے براؤزر کا Global Privacy Control سگنل آن ہے، اس لیے یہ بند رہتا ہے۔',
+		statusRequest: 'آپٹ آؤٹ درخواست پر عمل کر دیا گیا',
+		statusSignal: 'آپٹ آؤٹ ترجیحی سگنل پر عمل کر دیا گیا',
+	},
 	rights: {
 		californiaPrivacyChoices: 'کیلیفورنیا میں آپ کے رازداری کے انتخابات',
 		optOut: 'میرا ڈیٹا فروخت یا شیئر نہ کریں',

@@ -8,6 +8,7 @@ import { renderBranding } from './branding';
 import { resolveCopy } from './copy';
 import { h, readDurationMs, supportsStartingStyle } from './dom';
 import { setupFocusTrap, setupScrollLock } from './locks';
+import { createOptOutConfirmation } from './opt-out-confirmation';
 import { renderLegalLinks } from './surface';
 import type { Surface, SurfaceContext } from './surface';
 import { createWidget } from './widget';
@@ -290,11 +291,15 @@ export const createDialog = function createDialog(
 		closeTimer = setTimeout(removeNow, duration);
 	};
 
+	const optOutConfirmation = createOptOutConfirmation(ctx, options);
+
 	return {
 		destroy() {
+			optOutConfirmation.destroy();
 			removeNow();
 		},
 		sync(snapshot) {
+			optOutConfirmation.sync(snapshot);
 			const shouldShow =
 				snapshot.activeUI === 'dialog' && snapshot.policyRule.model !== 'iab';
 			if (!shouldShow) {

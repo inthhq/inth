@@ -96,6 +96,7 @@ const ACTIONS = [
 	'save',
 	'saveIAB',
 	'dismissNotice',
+	'optOut',
 	'showBanner',
 	'openDialog',
 	'closeDialog',
@@ -112,6 +113,7 @@ const ASYNC = new Set<string>([
 	'save',
 	'saveIAB',
 	'dismissNotice',
+	'optOut',
 	'identify',
 ]);
 
@@ -122,6 +124,7 @@ const PAGE_ACTIONS: Record<string, string> = {
 	close: 'closeDialog',
 	customize: 'openDialog',
 	dismiss: 'dismissNotice',
+	'opt-out': 'optOut',
 	reject: 'rejectAll',
 };
 
@@ -727,6 +730,7 @@ export const runInitScript = function runInitScript(
 			acceptAll: () => tap('all'),
 			dismissNotice: () => act('dismissNotice', []),
 			openDialog,
+			optOut: () => act('optOut', []),
 			presentation: current.presentation,
 			rejectAll: () => tap('none'),
 		} as unknown as ConsentClient;
@@ -1201,6 +1205,9 @@ export const runInitScript = function runInitScript(
 			if (canOpenEarly()) {
 				void loadDialog();
 			}
+		} else if (action === 'opt-out') {
+			// Opt-out runs in the engine; holdsEngine returns false so the
+			// press loads the engine at once instead of fetching inth.commit.js.
 		} else if (onUI) {
 			// Never rejects; the tap reads what it provided.
 			void loadPart('commit');

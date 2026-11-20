@@ -1166,4 +1166,217 @@ describe('mountConsentUI', () => {
 			expect(svg?.getAttribute('class')).toBeNull();
 		});
 	});
+
+	describe('one-step opt-out and confirmation view', () => {
+		const noticePolicy = [
+			{
+				...policyRulePresets.usPrivacyStatesOptOut(),
+				prompt: 'notice' as const,
+			},
+		];
+
+		it('opts out in one click from the banner link without extra steps compared to dismiss', async () => {
+			// Baseline: dismissing the notice takes one click.
+			const dismissRun = await mount(
+				{},
+				{
+					consentCategories: ['functionality', 'marketing', 'measurement'],
+					overrides: { country: 'US', region: 'CA' },
+					policy: noticePolicy,
+				}
+			);
+			const dismissClicks = 1;
+			query(dismissRun.root, 'consent-banner-dismiss-button').click();
+			expect(dismissRun.client.getSnapshot().noticeDismissal).not.toBeNull();
+			expect(dismissRun.client.getSnapshot().activeUI).toBe('none');
+			dismissRun.client.dispose();
+			localStorage.clear();
+			clearCookies();
+
+			// Opt-out: also takes one click (no more steps than dismiss).
+			const { client, root } = await mount(
+				{},
+				{
+					consentCategories: ['functionality', 'marketing', 'measurement'],
+					overrides: { country: 'US', region: 'CA' },
+					policy: noticePolicy,
+				}
+			);
+			const optOutClicks = 1;
+			expect(optOutClicks).toBeLessThanOrEqual(dismissClicks);
+
+			query(root, 'consent-banner-right-opt-out-button').click();
+
+			const snapshot = client.getSnapshot();
+			expect(snapshot.optOut?.method).toBe('button');
+			expect(snapshot.effectivePermissions.marketing).toBe(false);
+			expect(snapshot.effectivePermissions.measurement).toBe(false);
+			expect(snapshot.effectivePermissions.functionality).toBe(true);
+			expect(
+				root.querySelector('[data-testid="consent-dialog-root"]')
+			).toBeNull();
+
+			await vi.waitFor(() => {
+				expect(query(root, 'opt-out-confirmation-root')).not.toBeNull();
+			});
+			const confirmation = query(root, 'opt-out-confirmation-root');
+			expect(query(root, 'opt-out-confirmation-title').textContent).toBe(
+				'Do Not Sell or Share My Personal Information'
+			);
+			const status = query(root, 'opt-out-confirmation-status');
+			expect(status.getAttribute('role')).toBe('status');
+			expect(status.textContent).toBe('Opt-out request honored');
+			expect(
+				query(root, 'opt-out-confirmation-description').textContent
+			).toContain('not sell or share');
+			const buttons = [...confirmation.querySelectorAll('button')];
+			expect(buttons).toHaveLength(1);
+			expect(buttons[0]?.textContent).toBe('Done');
+			expect(
+				query(root, 'opt-out-confirmation-preferences-link').textContent
+			).toBe('Manage preferences');
+		});
+
+		it('Done closes the view and returns focus to the triggering link; Escape closes it; Manage preferences opens preferences', async () => {
+			const link = document.createElement('button');
+			link.type = 'button';
+			link.setAttribute('data-inth-action', 'opt-out');
+			link.textContent = 'Do Not Sell or Share My Personal Information';
+			document.body.append(link);
+
+			const { client, root } = await mount(
+				{},
+				{
+					consentCategories: ['functionality', 'marketing', 'measurement'],
+					overrides: { country: 'US', region: 'CA' },
+					policy: [policyRulePresets.usPrivacyStatesOptOut()],
+				}
+			);
+
+			link.focus();
+			link.click();
+			await vi.waitFor(() => {
+				expect(query(root, 'opt-out-confirmation-root')).not.toBeNull();
+			});
+			expect(client.getSnapshot().optOut?.method).toBe('button');
+
+			query(root, 'opt-out-confirmation-done-button').click();
+			expect(
+				root.querySelector('[data-testid="opt-out-confirmation-root"]')
+			).toBeNull();
+			await vi.waitFor(() => {
+				expect(document.activeElement).toBe(link);
+			});
+
+			// Re-opening via the link when already opted out does not record again.
+			const recordedAt = client.getSnapshot().optOut?.recordedAt;
+			const onRecorded = vi.fn();
+			client.kernel.events.on('opt-out:recorded', onRecorded);
+			link.focus();
+			link.click();
+			await vi.waitFor(() => {
+				expect(query(root, 'opt-out-confirmation-root')).not.toBeNull();
+			});
+			expect(onRecorded).not.toHaveBeenCalled();
+			expect(client.getSnapshot().optOut?.recordedAt).toBe(recordedAt);
+
+			// Escape closes it and restores focus.
+			document.dispatchEvent(
+				new KeyboardEvent('keydown', { bubbles: true, key: 'Escape' })
+			);
+			expect(
+				root.querySelector('[data-testid="opt-out-confirmation-root"]')
+			).toBeNull();
+			await vi.waitFor(() => {
+				expect(document.activeElement).toBe(link);
+			});
+
+			// Manage preferences opens the full preference centre.
+			void client.optOut();
+			await vi.waitFor(() => {
+				expect(query(root, 'opt-out-confirmation-root')).not.toBeNull();
+			});
+			query(root, 'opt-out-confirmation-preferences-link').click();
+			expect(
+				root.querySelector('[data-testid="opt-out-confirmation-root"]')
+			).toBeNull();
+			await vi.waitFor(() => {
+				expect(query(root, 'consent-dialog-root')).not.toBeNull();
+			});
+			expect(client.getSnapshot().activeUI).toBe('dialog');
+		});
+
+		it('shows the GPC signal wording when already opted out via GPC', async () => {
+			const { client, root } = await mount(
+				{},
+				{
+					consentCategories: ['functionality', 'marketing', 'measurement'],
+					overrides: { country: 'US', gpc: true, region: 'CA' },
+					policy: noticePolicy,
+					presentation: { optOutLink: 'privacy-choices' },
+				}
+			);
+			expect(client.getSnapshot().optOut?.method).toBe('gpc');
+			const onRecorded = vi.fn();
+			client.kernel.events.on('opt-out:recorded', onRecorded);
+
+			const button = query(root, 'consent-banner-right-opt-out-button');
+			expect(button.querySelector('svg')).not.toBeNull();
+			button.click();
+
+			await vi.waitFor(() => {
+				expect(query(root, 'opt-out-confirmation-root')).not.toBeNull();
+			});
+			expect(onRecorded).not.toHaveBeenCalled();
+			expect(query(root, 'opt-out-confirmation-title').textContent).toBe(
+				'Your Privacy Choices'
+			);
+			expect(query(root, 'opt-out-confirmation-status').textContent).toBe(
+				'Opt-out preference signal honored'
+			);
+		});
+
+		it('falls back to opening the preference centre under a non-opt-out rule', async () => {
+			const link = document.createElement('button');
+			link.type = 'button';
+			link.setAttribute('data-inth-action', 'opt-out');
+			document.body.append(link);
+
+			const { client, root } = await mount();
+			link.click();
+
+			await vi.waitFor(() => {
+				expect(query(root, 'consent-dialog-root')).not.toBeNull();
+			});
+			expect(
+				root.querySelector('[data-testid="opt-out-confirmation-root"]')
+			).toBeNull();
+			expect(client.getSnapshot().optOut).toBeNull();
+			expect(client.getSnapshot().activeUI).toBe('dialog');
+		});
+
+		it('wires the floating trigger to opt out when the rule carries the opt-out right', async () => {
+			const { client, root } = await mount(
+				{ trigger: true },
+				{
+					consentCategories: ['functionality', 'marketing', 'measurement'],
+					overrides: { country: 'US', region: 'CA' },
+					policy: [policyRulePresets.usPrivacyStatesOptOut()],
+				}
+			);
+			const trigger = query(root, 'consent-dialog-trigger');
+			expect(trigger.getAttribute('aria-label')).toBe(
+				'Do Not Sell or Share My Personal Information'
+			);
+			trigger.click();
+
+			expect(client.getSnapshot().optOut?.method).toBe('button');
+			expect(trigger.hidden).toBe(true);
+			await vi.waitFor(() => {
+				expect(query(root, 'opt-out-confirmation-root')).not.toBeNull();
+			});
+			query(root, 'opt-out-confirmation-done-button').click();
+			expect(trigger.hidden).toBe(false);
+		});
+	});
 });

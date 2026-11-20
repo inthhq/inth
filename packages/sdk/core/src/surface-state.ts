@@ -28,6 +28,7 @@ export {
 	resolveActionLabels,
 	resolveCategoryTitle,
 	resolveIABCopy,
+	resolveOptOutCopy,
 	resolveOptOutLink,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
@@ -41,6 +42,12 @@ export type {
 	ResolvedIABCopy,
 	ResolvedOptOutLink,
 } from './libs/consent-copy';
+export { resolveOptOutState } from './libs/opt-out-state';
+export type {
+	OptOutLock,
+	OptOutVia,
+	ResolvedOptOutState,
+} from './libs/opt-out-state';
 export {
 	applyExperimentAssignment,
 	applyExperimentTheme,

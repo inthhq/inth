@@ -170,6 +170,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Kebijakan Privasi',
 		termsOfService: 'Syarat Layanan',
 	},
+	optOut: {
+		description:
+			'Situs ini tidak akan menjual atau membagikan informasi pribadi Anda, dan pilihan Anda disimpan di peramban ini.',
+		done: 'Selesai',
+		lockedByAccount:
+			'Akun Anda telah memilih keluar, dan Anda dapat mengubahnya setelah masuk.',
+		lockedByGpc:
+			'Sinyal Global Privacy Control peramban Anda aktif, sehingga ini tetap nonaktif.',
+		statusRequest: 'Permintaan keluar dipenuhi',
+		statusSignal: 'Sinyal preferensi keluar dipenuhi',
+	},
 	rights: {
 		californiaPrivacyChoices: 'Pilihan Privasi California Anda',
 		optOut: 'Jangan jual atau bagikan data saya',

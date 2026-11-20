@@ -173,6 +173,16 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Zásady ochrany osobních údajů',
 		termsOfService: 'Podmínky služby',
 	},
+	optOut: {
+		description:
+			'Tento web nebude prodávat ani sdílet vaše osobní údaje a vaše volba je uložena v tomto prohlížeči.',
+		done: 'Hotovo',
+		lockedByAccount: 'Váš účet se odhlásil a po přihlášení to můžete změnit.',
+		lockedByGpc:
+			'Signál Global Privacy Control ve vašem prohlížeči je zapnutý, takže toto zůstává vypnuté.',
+		statusRequest: 'Žádost o odhlášení byla respektována',
+		statusSignal: 'Signál předvolby odhlášení byl respektován',
+	},
 	rights: {
 		californiaPrivacyChoices: 'Vaše volby ochrany osobních údajů v Kalifornii',
 		optOut: 'Neprodávejte ani nesdílejte moje údaje',

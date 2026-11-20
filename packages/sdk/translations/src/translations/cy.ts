@@ -170,6 +170,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Polisi preifatrwydd',
 		termsOfService: 'Telerau gwasanaeth',
 	},
+	optOut: {
+		description:
+			'Ni fydd y wefan hon yn gwerthu nac yn rhannu eich gwybodaeth bersonol, ac mae eich dewis wedi ei gadw yn y porwr hwn.',
+		done: 'Wedi gorffen',
+		lockedByAccount:
+			'Mae eich cyfrif wedi optio allan, a gallwch newid hyn ar ôl mewngofnodi.',
+		lockedByGpc:
+			'Mae signal Global Privacy Control eich porwr ymlaen, felly mae hyn yn aros i ffwrdd.',
+		statusRequest: 'Cais optio allan wedi ei anrhydeddu',
+		statusSignal: 'Signal dewis optio allan wedi ei anrhydeddu',
+	},
 	rights: {
 		californiaPrivacyChoices: 'Eich Dewisiadau Preifatrwydd yng Nghaliffornia',
 		optOut: 'Peidiwch â gwerthu na rhannu fy nata',

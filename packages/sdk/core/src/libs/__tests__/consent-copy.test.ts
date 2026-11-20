@@ -5,6 +5,7 @@ import {
 	resolveActionLabels,
 	resolveCategoryTitle,
 	resolveIABCopy,
+	resolveOptOutCopy,
 	resolveOptOutLink,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
@@ -172,6 +173,22 @@ describe('consent copy', () => {
 				toolbarLabel: 'Privacy controls',
 			}
 		);
+	});
+
+	it('resolves opt-out copy from the bundle with English fallbacks', () => {
+		expect(resolveOptOutCopy(undefined)).toEqual(en.optOut);
+		expect(
+			resolveOptOutCopy({
+				optOut: {
+					done: 'Fertig',
+					statusRequest: 'Widerspruch berücksichtigt',
+				},
+			})
+		).toEqual({
+			...en.optOut,
+			done: 'Fertig',
+			statusRequest: 'Widerspruch berücksichtigt',
+		});
 	});
 });
 

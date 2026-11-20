@@ -38,6 +38,7 @@ const COMPONENTS = {
 	dialog: 'consent-dialog',
 	legalLinks: 'legal-links',
 	manager: 'consent-manager',
+	optOutConfirmation: 'opt-out-confirmation',
 	preferenceItem: 'preference-item',
 	switch: 'switch',
 	trigger: 'consent-dialog-trigger',

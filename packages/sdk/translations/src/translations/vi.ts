@@ -176,6 +176,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Chính sách quyền riêng tư',
 		termsOfService: 'Điều khoản dịch vụ',
 	},
+	optOut: {
+		description:
+			'Trang web này sẽ không bán hoặc chia sẻ thông tin cá nhân của bạn và lựa chọn của bạn đã được lưu trên trình duyệt này.',
+		done: 'Xong',
+		lockedByAccount:
+			'Tài khoản của bạn đã chọn từ chối và bạn có thể thay đổi sau khi đăng nhập.',
+		lockedByGpc:
+			'Tín hiệu Global Privacy Control của trình duyệt đang bật nên tùy chọn này vẫn tắt.',
+		statusRequest: 'Đã thực hiện yêu cầu từ chối',
+		statusSignal: 'Đã thực hiện tín hiệu tùy chọn từ chối',
+	},
 	rights: {
 		californiaPrivacyChoices: 'Lựa chọn quyền riêng tư tại California của bạn',
 		optOut: 'Không bán hoặc chia sẻ dữ liệu của tôi',

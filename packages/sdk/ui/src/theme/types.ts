@@ -384,6 +384,27 @@ export interface ComponentSlots {
 	/** Backdrop overlay rendered behind the dialog. */
 	consentDialogOverlay?: SlotStyle;
 
+	/** Root wrapper for the opt-out confirmation view. */
+	optOutConfirmation?: SlotStyle;
+	/** Card container for the opt-out confirmation view. */
+	optOutConfirmationCard?: SlotStyle;
+	/** Header region of the opt-out confirmation view. */
+	optOutConfirmationHeader?: SlotStyle;
+	/** Heading text element of the opt-out confirmation view. */
+	optOutConfirmationTitle?: SlotStyle;
+	/** Status element announcing the honored opt-out. */
+	optOutConfirmationStatus?: SlotStyle;
+	/** Confirmation body text element. */
+	optOutConfirmationDescription?: SlotStyle;
+	/** Footer region holding the Done action and preferences link. */
+	optOutConfirmationFooter?: SlotStyle;
+	/** Done button that closes the opt-out confirmation view. */
+	optOutConfirmationDoneButton?: SlotStyle;
+	/** Text link that opens the full preference center. */
+	optOutConfirmationPreferencesLink?: SlotStyle;
+	/** Backdrop overlay rendered behind the opt-out confirmation view. */
+	optOutConfirmationOverlay?: SlotStyle;
+
 	/**
 	 * Floating button that reopens the preference center. The same part
 	 * React and Vue style through `components.trigger.root`.

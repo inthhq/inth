@@ -170,6 +170,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Datenschutzerklärung',
 		termsOfService: 'Nutzungsbedingungen',
 	},
+	optOut: {
+		description:
+			'Diese Website verkauft oder teilt deine personenbezogenen Daten nicht, und deine Auswahl ist in diesem Browser gespeichert.',
+		done: 'Fertig',
+		lockedByAccount:
+			'Dein Konto hat widersprochen, und du kannst dies nach der Anmeldung ändern.',
+		lockedByGpc:
+			'Das Global-Privacy-Control-Signal deines Browsers ist aktiv, daher bleibt dies deaktiviert.',
+		statusRequest: 'Widerspruchsanfrage berücksichtigt',
+		statusSignal: 'Widerspruchssignal berücksichtigt',
+	},
 	rights: {
 		californiaPrivacyChoices: 'Ihre kalifornischen Datenschutzeinstellungen',
 		optOut: 'Meine Daten nicht verkaufen oder weitergeben',

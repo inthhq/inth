@@ -5,6 +5,7 @@
  */
 import type { OptOutRecord, OptOutRight } from '@inth/sdk-schema/types';
 
+import { optOutLiftBlocker } from '../consent-record/opt-out';
 import { validateOptOutRecord } from '../consent-record/validation';
 import { createIdempotencyKey } from '../libs/subject-uuid';
 import type {
@@ -35,30 +36,7 @@ export const nextButtonOptOutRecord = function nextButtonOptOutRecord(
 	};
 };
 
-/**
- * Reason an opt-out cannot be lifted locally, or `null` when it can.
- *
- * `held-by-account` tells `commands.optIn()` and `commands.save()` to ask
- * the backend to lift the account's opt-out instead of clearing it locally.
- */
-export const optOutLiftBlocker = function optOutLiftBlocker(
-	snapshot: ConsentSnapshot
-): 'not-opted-out' | 'gpc-active' | 'held-by-account' | null {
-	const { optOut } = snapshot;
-	if (!optOut) {
-		return 'not-opted-out';
-	}
-	if (
-		snapshot.privacySignals.gpc.active &&
-		snapshot.evaluationPolicy.gpcDenyCategories.length > 0
-	) {
-		return 'gpc-active';
-	}
-	if (optOut.heldBy === 'person' || optOut.heldBy === 'both') {
-		return 'held-by-account';
-	}
-	return null;
-};
+export { optOutLiftBlocker };
 
 /**
  * Whether a live kernel must record a durable GPC opt-out for `snapshot`.

@@ -174,6 +174,36 @@ describe('trigger with DevTools', () => {
 			root.querySelector('[data-testid="consent-dialog-trigger"]')
 		).not.toBeNull();
 	});
+
+	it('opts out in one step from the toolbar when the rule carries the opt-out right', async () => {
+		const client = createConsentClient(
+			{
+				overrides: { country: 'US', region: 'CA' },
+				policy: ['usPrivacyStatesOptOut'],
+				ui,
+			},
+			{ mountUI: mountConsentUI, pkg: '@inth/sdk/test' }
+		);
+		clients.push(client);
+		client.start();
+		await client.ready();
+		const { root } = client.ui as ConsentUIHandle;
+		devTools(client);
+
+		const preferencesItem = action(root, 'preferences');
+		expect(preferencesItem?.getAttribute('aria-label')).toBe(
+			'Do Not Sell or Share My Personal Information'
+		);
+		preferencesItem?.click();
+
+		expect(client.getSnapshot().optOut?.method).toBe('button');
+		expect(root.querySelector('[role="toolbar"]')).toBeNull();
+		await vi.waitFor(() => {
+			expect(
+				root.querySelector('[data-testid="opt-out-confirmation-root"]')
+			).not.toBeNull();
+		});
+	});
 });
 
 describe('inth.devtools.js', () => {

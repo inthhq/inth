@@ -1,4 +1,8 @@
-import { resolveTriggerLabels } from '@inth/sdk-core';
+import {
+	resolveOptOutLink,
+	resolveOptOutState,
+	resolveTriggerLabels,
+} from '@inth/sdk-core';
 import type { ConsentSnapshot, Translations } from '@inth/sdk-core';
 import { hasConsentPreferences } from '@inth/sdk-core/surface-actions';
 import {
@@ -16,10 +20,12 @@ import {
 } from '@inth/sdk-ui/utils/devtools-launcher';
 import type { DevToolsLauncherTarget } from '@inth/sdk-ui/utils/devtools-launcher';
 
+import { dropRejection } from '../drop-rejection';
 import { classes } from '../generated/styles';
 import type { ConsentTriggerOptions } from '../types';
 import { createBrandMark } from './branding';
 import { cx, h } from './dom';
+import { isOptOutConfirmationOpen } from './opt-out-confirmation-state';
 import type { Surface, SurfaceContext } from './surface';
 import { createTriggerToolbar } from './trigger-toolbar';
 import type { TriggerToolbar } from './trigger-toolbar';
@@ -76,16 +82,36 @@ export const createTrigger = function createTrigger(
 
 	// The mark follows the resolved branding, like the React trigger's.
 	let { branding } = ctx.client.getSnapshot();
-	const labels = function labels(snapshot: ConsentSnapshot) {
-		const translated = resolveTriggerLabels(
-			snapshot.translations?.translations as Partial<Translations> | undefined
+	const isOptOutTrigger = function isOptOutTrigger(
+		snapshot: ConsentSnapshot
+	): boolean {
+		return (
+			resolveOptOutState(snapshot).available &&
+			snapshot.policyRule.rights.includes('opt-out') &&
+			snapshot.policyRule.i18n?.messageProfile !== 'preferences'
 		);
+	};
+	const labels = function labels(snapshot: ConsentSnapshot) {
+		const bundle = snapshot.translations?.translations as
+			| Partial<Translations>
+			| undefined;
+		const translated = resolveTriggerLabels(bundle);
+		const defaultLabel = isOptOutTrigger(snapshot)
+			? resolveOptOutLink(bundle, ctx.client.presentation?.optOutLink).label
+			: translated.label;
 		return {
 			...translated,
-			label: options.ariaLabel ?? translated.label,
+			label: options.ariaLabel ?? defaultLabel,
 		};
 	};
 	let renderedLabels = labels(ctx.client.getSnapshot());
+	const activate = function activate(): void {
+		if (isOptOutTrigger(ctx.client.getSnapshot())) {
+			dropRejection(ctx.client.optOut());
+		} else {
+			ctx.client.openDialog();
+		}
+	};
 
 	const createIcon = function createIcon(): HTMLSpanElement {
 		return slot(
@@ -228,13 +254,13 @@ export const createTrigger = function createTrigger(
 	const shouldActivate = (event: MouseEvent): boolean => !drag.endsDrag(event);
 	element.addEventListener('click', (event) => {
 		if (shouldActivate(event)) {
-			ctx.client.openDialog();
+			activate();
 		}
 	});
 	element.addEventListener('keydown', (event) => {
 		if (event.key === 'Enter' || event.key === ' ') {
 			event.preventDefault();
-			ctx.client.openDialog();
+			activate();
 		}
 	});
 
@@ -244,7 +270,7 @@ export const createTrigger = function createTrigger(
 			labels: renderedLabels,
 			noStyle,
 			onDevTools: () => launcher?.toggle(),
-			onPreferences: () => ctx.client.openDialog(),
+			onPreferences: activate,
 			shouldActivate,
 			size,
 		});
@@ -310,7 +336,9 @@ export const createTrigger = function createTrigger(
 		},
 		sync(snapshot: ConsentSnapshot) {
 			visible = isTriggerVisible({
-				dialogOpen: snapshot.activeUI === 'dialog',
+				dialogOpen:
+					snapshot.activeUI === 'dialog' ||
+					isOptOutConfirmationOpen(ctx.client.kernel),
 				hasConsentPreferences: hasConsentPreferences(snapshot),
 				promptOwed: snapshot.promptRequirement.kind !== 'none',
 				showWhen,

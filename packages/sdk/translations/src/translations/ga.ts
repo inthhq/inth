@@ -172,6 +172,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Beartas Príobháideachta',
 		termsOfService: 'Téarmaí Seirbhíse',
 	},
+	optOut: {
+		description:
+			'Ní dhíolfaidh ná ní roinnfidh an suíomh seo do chuid faisnéise pearsanta, agus tá do rogha sábháilte sa bhrabhsálaí seo.',
+		done: 'Déanta',
+		lockedByAccount:
+			'Tá do chuntas tar éis diúltú, agus is féidir leat é seo a athrú tar éis duit síniú isteach.',
+		lockedByGpc:
+			'Tá comhartha Global Privacy Control do bhrabhsálaí ar siúl, mar sin fanann sé seo múchta.',
+		statusRequest: 'Iarratas diúltaithe comhlíonta',
+		statusSignal: 'Comhartha rogha diúltaithe comhlíonta',
+	},
 	rights: {
 		californiaPrivacyChoices: 'Do Roghanna Príobháideachais i gCalifornia',
 		optOut: 'Ná díol agus ná roinn mo shonraí',

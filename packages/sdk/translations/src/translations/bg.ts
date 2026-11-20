@@ -171,6 +171,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Политика за поверителност',
 		termsOfService: 'Общи условия',
 	},
+	optOut: {
+		description:
+			'Този сайт няма да продава или споделя личните ви данни и изборът ви е запазен в този браузър.',
+		done: 'Готово',
+		lockedByAccount:
+			'Вашият акаунт е заявил отказ и можете да промените това след влизане.',
+		lockedByGpc:
+			'Сигналът Global Privacy Control на браузъра ви е включен, затова тази настройка остава изключена.',
+		statusRequest: 'Заявката за отказ е уважена',
+		statusSignal: 'Сигналът за предпочитание за отказ е уважен',
+	},
 	rights: {
 		californiaPrivacyChoices: 'Вашите избори за поверителност в Калифорния',
 		optOut: 'Не продавайте и не споделяйте данните ми',

@@ -112,6 +112,55 @@ describe('bundled notice and rights translations', () => {
 	);
 });
 
+describe('bundled optOut translations', () => {
+	const expectNonEmpty = (value: string | undefined) => {
+		expect(value).toEqual(expect.any(String));
+		expect(value?.trim()).not.toBe('');
+	};
+
+	it('uses the expected English opt-out confirmation and lock copy', () => {
+		expect(bundledTranslations.en.optOut).toEqual({
+			description:
+				'This site will not sell or share your personal information, and your choice is saved on this browser.',
+			done: 'Done',
+			lockedByAccount:
+				'Your account has opted out, and you can change this after signing in.',
+			lockedByGpc:
+				"Your browser's Global Privacy Control signal is on, so this stays off.",
+			statusRequest: 'Opt-out request honored',
+			statusSignal: 'Opt-out preference signal honored',
+		});
+	});
+
+	it.each(Object.entries(bundledTranslations))(
+		'%s defines every opt-out key',
+		(_language, translations) => {
+			const { optOut } = translations;
+			expectNonEmpty(optOut?.statusRequest);
+			expectNonEmpty(optOut?.statusSignal);
+			expectNonEmpty(optOut?.description);
+			expectNonEmpty(optOut?.done);
+			expectNonEmpty(optOut?.lockedByGpc);
+			expectNonEmpty(optOut?.lockedByAccount);
+		}
+	);
+
+	it.each(
+		Object.entries(bundledTranslations).filter(
+			([language]) => language !== 'en'
+		)
+	)('%s does not reuse the English opt-out copy', (_language, translations) => {
+		const english = bundledTranslations.en.optOut;
+		const { optOut } = translations;
+		expect(optOut?.statusRequest).not.toBe(english?.statusRequest);
+		expect(optOut?.statusSignal).not.toBe(english?.statusSignal);
+		expect(optOut?.description).not.toBe(english?.description);
+		expect(optOut?.done).not.toBe(english?.done);
+		expect(optOut?.lockedByGpc).not.toBe(english?.lockedByGpc);
+		expect(optOut?.lockedByAccount).not.toBe(english?.lockedByAccount);
+	});
+});
+
 describe('bundled IAB banner translations', () => {
 	// Existing mismatches; this list should only shrink. `bg` and `cs` also
 	// ship ICU plural syntax that nothing formats.
@@ -268,6 +317,17 @@ describe('deepMergeTranslations', () => {
 		expect(result.trigger).toEqual({
 			label: 'Base label',
 			toolbarLabel: 'Custom toolbar',
+		});
+	});
+
+	it('merges the optOut section', () => {
+		const result = deepMergeTranslations(
+			{ ...baseTranslations, optOut: { statusRequest: 'Base status' } },
+			{ optOut: { done: 'Finished' } }
+		);
+		expect(result.optOut).toEqual({
+			done: 'Finished',
+			statusRequest: 'Base status',
 		});
 	});
 });

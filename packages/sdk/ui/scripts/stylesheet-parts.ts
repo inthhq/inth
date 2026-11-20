@@ -58,6 +58,7 @@ export const DIALOG_COMPONENTS = [
 	'accordion',
 	'collapsible',
 	'manager',
+	'opt-out-confirmation',
 	'panel',
 	'preference-item',
 	'switch',

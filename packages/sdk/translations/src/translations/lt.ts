@@ -172,6 +172,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Privatumo politika',
 		termsOfService: 'Naudojimosi sąlygos',
 	},
+	optOut: {
+		description:
+			'Ši svetainė neparduos ir nesidalins jūsų asmens duomenimis, o jūsų pasirinkimas išsaugotas šioje naršyklėje.',
+		done: 'Atlikta',
+		lockedByAccount:
+			'Jūsų paskyra atsisakė, ir tai galite pakeisti prisijungę.',
+		lockedByGpc:
+			'Jūsų naršyklės Global Privacy Control signalas įjungtas, todėl tai lieka išjungta.',
+		statusRequest: 'Atsisakymo prašymas įvykdytas',
+		statusSignal: 'Atsisakymo nuostatos signalas įvykdytas',
+	},
 	rights: {
 		californiaPrivacyChoices: 'Jūsų Kalifornijos privatumo pasirinkimai',
 		optOut: 'Neparduoti ir nesidalyti mano duomenimis',

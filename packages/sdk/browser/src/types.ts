@@ -17,6 +17,7 @@ import type {
 	KernelUser,
 	LegalLinks,
 	OnSurfaceShownPayload,
+	OptOutResult,
 	PolicyRule,
 	policyRulePresets,
 	ProviderTransportFactory,
@@ -529,6 +530,11 @@ export interface ConsentClient {
 	saveIAB: () => Promise<SaveResult>;
 	/** Acknowledge a notice without recording category choices. */
 	dismissNotice: () => Promise<NoticeDismissResult>;
+	/**
+	 * Opt out of sale and sharing in one step and open the confirmation view.
+	 * Falls back to the preference centre when the active rule is not opt-out.
+	 */
+	optOut: () => Promise<OptOutResult>;
 	/** Show the banner. */
 	showBanner: () => void;
 	/** Open the preference centre. */

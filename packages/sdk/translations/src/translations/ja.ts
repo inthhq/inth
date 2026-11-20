@@ -177,6 +177,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'プライバシーポリシー',
 		termsOfService: '利用規約',
 	},
+	optOut: {
+		description:
+			'このサイトはあなたの個人情報を販売または共有しません。この選択はこのブラウザに保存されています。',
+		done: '完了',
+		lockedByAccount:
+			'アカウントでオプトアウトが設定されています。サインイン後に変更できます。',
+		lockedByGpc:
+			'ブラウザのGlobal Privacy Control信号がオンになっているため、これはオフのままになります。',
+		statusRequest: 'オプトアウトのリクエストを反映しました',
+		statusSignal: 'オプトアウト設定信号を反映しました',
+	},
 	rights: {
 		californiaPrivacyChoices: 'カリフォルニア州におけるプライバシーの選択',
 		optOut: '個人データの販売・共有を拒否する',

@@ -169,6 +169,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'Persónuverndarstefna',
 		termsOfService: 'Þjónustuskilmálar',
 	},
+	optOut: {
+		description:
+			'Þessi vefsíða mun ekki selja eða deila persónuupplýsingum þínum og val þitt er vistað í þessum vafra.',
+		done: 'Lokið',
+		lockedByAccount:
+			'Reikningur þinn hefur afþakkað og þú getur breytt þessu eftir innskráningu.',
+		lockedByGpc:
+			'Global Privacy Control-merki vafrans þíns er virkt, svo þetta helst óvirkt.',
+		statusRequest: 'Beiðni um afþökkun virt',
+		statusSignal: 'Kjörstillingamerki um afþökkun virt',
+	},
 	rights: {
 		californiaPrivacyChoices: 'Persónuverndarval þitt í Kaliforníu',
 		optOut: 'Ekki selja eða deila gögnunum mínum',

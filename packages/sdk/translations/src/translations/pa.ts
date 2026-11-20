@@ -173,6 +173,17 @@ export const translations: CompleteTranslations = {
 		privacyPolicy: 'ਪਰਦੇਦਾਰੀ ਨੀਤੀ',
 		termsOfService: 'ਸੇਵਾ ਦੀਆਂ ਸ਼ਰਤਾਂ',
 	},
+	optOut: {
+		description:
+			'ਇਹ ਸਾਈਟ ਤੁਹਾਡੀ ਨਿੱਜੀ ਜਾਣਕਾਰੀ ਨਹੀਂ ਵੇਚੇਗੀ ਜਾਂ ਸਾਂਝੀ ਨਹੀਂ ਕਰੇਗੀ, ਅਤੇ ਤੁਹਾਡੀ ਚੋਣ ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਸੁਰੱਖਿਅਤ ਹੈ।',
+		done: 'ਹੋ ਗਿਆ',
+		lockedByAccount:
+			'ਤੁਹਾਡੇ ਖਾਤੇ ਨੇ ਔਪਟ-ਆਊਟ ਕੀਤਾ ਹੈ, ਅਤੇ ਤੁਸੀਂ ਸਾਈਨ ਇਨ ਕਰਨ ਤੋਂ ਬਾਅਦ ਇਸਨੂੰ ਬਦਲ ਸਕਦੇ ਹੋ।',
+		lockedByGpc:
+			'ਤੁਹਾਡੇ ਬ੍ਰਾਊਜ਼ਰ ਦਾ Global Privacy Control ਸਿਗਨਲ ਚਾਲੂ ਹੈ, ਇਸ ਲਈ ਇਹ ਬੰਦ ਰਹਿੰਦਾ ਹੈ।',
+		statusRequest: 'ਔਪਟ-ਆਊਟ ਬੇਨਤੀ ਮੰਨ ਲਈ ਗਈ',
+		statusSignal: 'ਔਪਟ-ਆਊਟ ਤਰਜੀਹ ਸਿਗਨਲ ਮੰਨ ਲਿਆ ਗਿਆ',
+	},
 	rights: {
 		californiaPrivacyChoices: 'ਤੁਹਾਡੀਆਂ ਕੈਲੀਫੋਰਨੀਆ ਗੋਪਨੀਯਤਾ ਚੋਣਾਂ',
 		optOut: 'ਮੇਰਾ ਡਾਟਾ ਨਾ ਵੇਚੋ ਅਤੇ ਨਾ ਸਾਂਝਾ ਕਰੋ',
