@@ -24,6 +24,7 @@ import {
   legacySnippets,
   mergeFile,
 } from "../../vendor/c15t/generate/merge.ts";
+import { adaptAstroGeneration } from "./c15t-astro.ts";
 import { runHtmlGenerationWorkflow } from "./c15t-html.ts";
 import { adaptNextGeneration, addNextConfigInstructions } from "./c15t-next.ts";
 import { adaptNuxtGeneration } from "./c15t-nuxt.ts";
@@ -178,6 +179,7 @@ export const runGenerationWorkflow = async (
     requireNativeInstaller();
   }
   const recovered = flags.resume ? recoverGeneration(options.cwd) : false;
+  adaptAstroGeneration(generation.data, options.cwd);
   adaptNextGeneration(generation.data, options.cwd);
   adaptNuxtGeneration(generation.data, options.cwd);
   adaptReactGeneration(generation.data, options.cwd);

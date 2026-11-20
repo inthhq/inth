@@ -266,6 +266,26 @@ it.each([undefined, "npm"] as const)(
   }
 );
 
+it.each(["src/inth.client.js", "src/inth.client.mjs"])(
+  "targets an existing %s instead of shadowing it with src/inth.client.ts",
+  async (name) => {
+    const content = "export default { scripts: [] };\n";
+    await mkdir(path.join(directory, "src"), { recursive: true });
+    await writeFile(path.join(directory, name), content);
+    await expect(
+      runGenerationWorkflow(
+        ["setup", "--framework", "astro-static", "--apply", "--skip-install"],
+        { generation: { ...context.generation, scripts: ["posthog"] } },
+        { cwd: directory }
+      )
+    ).rejects.toThrow(`Refusing to overwrite existing file: ${name}`);
+    expect(await readFile(path.join(directory, name), "utf-8")).toBe(content);
+    expect(await readdir(path.join(directory, "src"))).not.toContain(
+      "inth.client.ts"
+    );
+  }
+);
+
 it("keeps Nuxt 3 vendor config beside its root app and preserves environment merge guidance", async () => {
   await writeFile(
     path.join(directory, "app.vue"),
