@@ -26,7 +26,7 @@ export const adaptAstroGeneration = (
   if (!existing) {
     return;
   }
-  delete generation.files[CLIENT];
+  delete generation.files["src/inth.client.ts"];
   generation.files[existing] = content
     .replaceAll(/^import type .*\n/gmu, "")
     .replace(" satisfies InthClientOptionsExtension", "");
