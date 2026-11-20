@@ -28,6 +28,10 @@ import type {
 	KernelTranslations as KernelTranslationsType,
 	KernelUser as KernelUserType,
 	LocationResponse as KernelLocationResponse,
+	OptOutHolder as KernelOptOutHolder,
+	OptOutMethod as KernelOptOutMethod,
+	OptOutRecord as KernelOptOutRecord,
+	OptOutRight as KernelOptOutRight,
 	OptionalConsentCategory as KernelOptionalConsentCategory,
 	PolicyResolution as KernelPolicyResolution,
 	PolicyResolutionFailure as KernelPolicyResolutionFailure,
@@ -57,6 +61,10 @@ import type {
 	KernelModel,
 	KernelTranslations,
 	LocationResponse,
+	OptOutHolder,
+	OptOutMethod,
+	OptOutRecord,
+	OptOutRight,
 	OptionalConsentCategory,
 	PolicyResolutionStatus,
 	PromptReason,
@@ -111,6 +119,10 @@ expectTypeOf<CategoryDecision>().toEqualTypeOf<KernelCategoryDecision>();
 expectTypeOf<ExplicitChoice>().toEqualTypeOf<KernelExplicitChoice>();
 expectTypeOf<ConsentSubject>().toEqualTypeOf<KernelConsentSubject>();
 expectTypeOf<LocationResponse>().toEqualTypeOf<KernelLocationResponse>();
+expectTypeOf<OptOutRight>().toEqualTypeOf<KernelOptOutRight>();
+expectTypeOf<OptOutMethod>().toEqualTypeOf<KernelOptOutMethod>();
+expectTypeOf<OptOutHolder>().toEqualTypeOf<KernelOptOutHolder>();
+expectTypeOf<OptOutRecord>().toEqualTypeOf<KernelOptOutRecord>();
 
 // Mobile adds retry copy; the rest of the transported bundle matches the kernel.
 expectTypeOf<Omit<KernelTranslations, 'translations'>>().toEqualTypeOf<

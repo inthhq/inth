@@ -108,6 +108,7 @@ public enum InthPayload {
         "nextDeadline",
         "error",
         "gppString",
+        "optOut",
     ]
 
     private static let overridesNullKeys = ["country", "region", "gpc"]

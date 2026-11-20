@@ -71,6 +71,7 @@ export const buildFakeSnapshot = function buildFakeSnapshot(
 		location: { countryCode: 'DE', regionCode: null },
 		model: 'opt-in',
 		nextDeadline: null,
+		optOut: null,
 		overrides: { country: 'DE', gpc: null, language: 'en', region: null },
 		policyPending: false,
 		policySnapshotToken: null,

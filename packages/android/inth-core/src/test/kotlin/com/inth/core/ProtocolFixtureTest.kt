@@ -555,6 +555,10 @@ class ProtocolFixtureTest {
 			// runner rather than the core.
 			json.decodeFromString(NoticeDismissal.serializer(), it.toString())
 		}
+		// Durable opt-out records are not implemented in the Kotlin core yet; the
+		// runner reads the field to enforce the hydration invariant and leaves it
+		// unseeded so the ledger records the real differences against the kernel.
+		val optOut = stored["optOut"]?.takeUnless { it is JsonNull }
 		// `hydrated` says whether an envelope is in the snapshot slot before the core
 		// starts. A fixture that says false is a first launch: the identity slot is
 		// filled, because the contract keeps the two slots apart so that refusing an
@@ -562,7 +566,7 @@ class ProtocolFixtureTest {
 		// Seeding one anyway would let hydration latch `ready` from bytes the fixture says
 		// are not there, and the init whose latch is under test would never be asked for it.
 		val hydrated = input["hydrated"]?.takeUnless { it is JsonNull }?.jsonPrimitive?.booleanOrNull ?: true
-		if (!hydrated && (choice != null || dismissal != null)) {
+		if (!hydrated && (choice != null || dismissal != null || optOut != null)) {
 			fail("$fixtureId: hydrated is false but storedRecords carries a record, which only exists inside an envelope")
 		}
 		if (hydrated) {
@@ -1293,6 +1297,8 @@ class ProtocolFixtureTest {
 
 	const val DEADLINE_OVER = "the core reports a choice expiry the kernel does not: under this policy nothing changes when that deadline passes, so the kernel leaves nextDeadline unset."
 
+	const val OPT_OUT_RECORD = "The durable opt-out record is implemented in the web kernel first. The native core must add snapshot.optOut, stored opt-out persistence, the opt-out restriction reason for marketing and measurement in scope, automatic GPC opt-out recording, and button opt-out recording and lifting on save."
+
 	/**
 	 * One row per fixture, snapshot root, and field this build cannot match yet.
 	 *
@@ -1323,12 +1329,25 @@ class ProtocolFixtureTest {
 			}
 		}
 
+		val optOutRestrictionFields = listOf(
+			"optOut" to OPT_OUT_RECORD,
+			"restrictions.marketing" to OPT_OUT_RECORD,
+			"restrictions.measurement" to OPT_OUT_RECORD,
+		)
+		val storedOptOutFields = listOf(
+			"effectivePermissions.marketing" to OPT_OUT_RECORD,
+			"effectivePermissions.measurement" to OPT_OUT_RECORD,
+			"optOut" to OPT_OUT_RECORD,
+			"restrictions.marketing" to OPT_OUT_RECORD,
+			"restrictions.measurement" to OPT_OUT_RECORD,
+		)
+
 		listOf(
 			"evaluation-eu-opt-in" to emptyList<Pair<String, String>>(),
 			"evaluation-us-ccpa-opt-out" to emptyList<Pair<String, String>>(),
 			"evaluation-no-rule-matched" to emptyList<Pair<String, String>>(),
-			"evaluation-gpc-signal-present" to emptyList<Pair<String, String>>(),
-			"evaluation-gpc-under-opt-in-no-receipt" to emptyList<Pair<String, String>>(),
+			"evaluation-gpc-signal-present" to optOutRestrictionFields,
+			"evaluation-gpc-under-opt-in-no-receipt" to optOutRestrictionFields,
 			"evaluation-notice-pending" to emptyList<Pair<String, String>>(),
 			"evaluation-eu-explicit-grants" to emptyList<Pair<String, String>>(),
 			// Both rows the evaluator used to need here are gone: the core now reports
@@ -1341,6 +1360,9 @@ class ProtocolFixtureTest {
 			// the kernel outright.
 			"evaluation-eu-fresh-install" to emptyList<Pair<String, String>>(),
 			"evaluation-us-ccpa-fresh-install" to emptyList<Pair<String, String>>(),
+			"evaluation-opt-out-stored-without-gpc" to storedOptOutFields,
+			"evaluation-opt-out-aged-over-year" to storedOptOutFields,
+			"evaluation-opt-out-under-stale-policy" to storedOptOutFields,
 		).forEach { (fixture, fields) -> add(fixture, "expected.snapshot", *fields.toTypedArray()) }
 
 		// The snapshot a `native-envelope` write case stores is the same snapshot the
@@ -1390,7 +1412,19 @@ class ProtocolFixtureTest {
 			)
 		}
 
-		add("save-body-ccpa-gpc", "expected.snapshotAfter", "nextDeadline" to DEADLINE_OVER)
+		add("save-body-ccpa-gpc", "expected.snapshotBefore", *optOutRestrictionFields.toTypedArray())
+		add(
+			"save-body-ccpa-gpc",
+			"expected.snapshotAfter",
+			*(listOf("nextDeadline" to DEADLINE_OVER) + optOutRestrictionFields).toTypedArray(),
+		)
+		add(
+			"save-body-ccpa-reject-all",
+			"expected.snapshotAfter",
+			*(listOf("nextDeadline" to DEADLINE_OVER) + optOutRestrictionFields).toTypedArray(),
+		)
+		add("save-body-ccpa-opt-out-lifted", "expected.snapshotBefore", *storedOptOutFields.toTypedArray())
+		add("save-body-ccpa-opt-out-lifted", "expected.snapshotAfter", "nextDeadline" to DEADLINE_OVER)
 		return rows
 	}
 }

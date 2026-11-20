@@ -201,7 +201,10 @@ describe('describeSnapshotWireDrift on a hand-written payload', () => {
 					return [key, owned[key]];
 				}
 
-				return [key, key === 'iab' || key === 'error' ? null : {}];
+				return [
+					key,
+					key === 'iab' || key === 'error' || key === 'optOut' ? null : {},
+				];
 			})
 		);
 	};

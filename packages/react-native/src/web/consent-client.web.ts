@@ -213,6 +213,14 @@ export const toNativeSnapshot = function toNativeSnapshot(
 		location: kernel.location,
 		model: kernel.model,
 		nextDeadline: kernel.nextDeadline,
+		optOut: kernel.optOut
+			? {
+					heldBy: kernel.optOut.heldBy,
+					method: kernel.optOut.method,
+					recordedAt: kernel.optOut.recordedAt,
+					rights: [...kernel.optOut.rights],
+				}
+			: null,
 		overrides: {
 			country: overrides.country ?? null,
 			gpc: overrides.gpc ?? null,
@@ -473,7 +481,8 @@ export const createWebConsentClient = function createWebConsentClient(
 			(runtime.started &&
 				(!kernel.policyPending ||
 					kernel.explicitChoice !== null ||
-					kernel.noticeDismissal !== null));
+					kernel.noticeDismissal !== null ||
+					kernel.optOut !== null));
 		if (kernel === mappedFrom && nextReady === ready) {
 			return snapshot;
 		}

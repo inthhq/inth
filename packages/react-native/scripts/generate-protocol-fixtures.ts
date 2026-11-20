@@ -109,6 +109,7 @@ import type {
 	KernelUser,
 	LocationResponse,
 	NoticeDismissal,
+	OptOutRecord,
 	OptionalConsentCategory,
 	PolicyResolution,
 	PolicyResolutionWire,
@@ -203,6 +204,8 @@ const SUBJECT_MINTS: Record<string, { clock: number; randomHex: string }> = {
 const IDEMPOTENCY_MINTS: Record<string, string> = {
 	all: '01000000000000000101',
 	'ccpa-gpc': '01000000000000000104',
+	'ccpa-opt-out-lifted': '01000000000000000108',
+	'ccpa-reject-all': '01000000000000000107',
 	'explicit-partial': '01000000000000000103',
 	necessary: '01000000000000000102',
 	'necessary-only-all': '01000000000000000105',
@@ -331,11 +334,12 @@ const NARROW_IAB_RULE = narrowRule(
  * can grade the reason a device reports for a category the model had already
  * denied. `collectRestrictions` in
  * `packages/sdk/core/src/consent-record/evaluate.ts` gathers reasons independently
- * of the answer, so the web answer here is `marketing: ['gpc']` on a category
- * that was denied before the signal was read. A core that only records a reason
- * when it is the reason that flipped the answer publishes nothing, which is a
- * different snapshot over the bridge rather than the same denial arrived at
- * another way.
+ * of the answer, and a live kernel also records a durable GPC opt-out when a
+ * matched rule maps GPC, so the web answer here is `marketing: ['gpc', 'opt-out']`
+ * and `measurement: ['opt-out']` on categories the model had already denied. A core
+ * that only records a reason when it is the reason that flipped the answer publishes
+ * nothing, which is a different snapshot over the bridge rather than the same denial
+ * arrived at another way.
  */
 const GPC_DENYING_OPT_IN_RULE: PolicyRule = {
 	categories: ['experience', 'functionality', 'marketing', 'measurement'],
@@ -385,7 +389,8 @@ const necessaryOnlyRule = function necessaryOnlyRule(
  */
 const stalePolicyRule = function stalePolicyRule(
 	copyRevision: string,
-	id: string
+	id: string,
+	prompt: 'choice' | 'none' = 'choice'
 ): PolicyRule {
 	return {
 		categories: ['experience', 'functionality', 'marketing', 'measurement'],
@@ -393,7 +398,7 @@ const stalePolicyRule = function stalePolicyRule(
 		id,
 		match: { countries: ['US'] },
 		model: 'opt-out',
-		prompt: 'choice',
+		prompt,
 		validity: { choiceDays: 30 },
 	};
 };
@@ -548,6 +553,7 @@ interface FixtureSnapshot {
 	readonly location: LocationResponse | null;
 	readonly model: Exclude<KernelModel, 'iab'>;
 	readonly nextDeadline: number | null;
+	readonly optOut: OptOutRecord | null;
 	readonly overrides: FixtureOverrides;
 	readonly policyPending: boolean;
 	readonly policySnapshotToken: string | null;
@@ -568,6 +574,7 @@ interface StoredRecords {
 	subject: ConsentSubject | null;
 	choice: ExplicitChoice | null;
 	noticeDismissal: NoticeDismissal | null;
+	optOut: OptOutRecord | null;
 }
 
 /**
@@ -1069,6 +1076,9 @@ const hydrationFor = function hydrationFor(
 	if (records.noticeDismissal !== null) {
 		hydrated.noticeDismissal = records.noticeDismissal;
 	}
+	if (records.optOut !== null) {
+		hydrated.optOut = records.optOut;
+	}
 	if (records.subject !== null) {
 		hydrated.subject = records.subject;
 	}
@@ -1329,6 +1339,8 @@ const runFixture = async function runFixture(
 	options: {
 		/** Dismiss the current notice before the snapshot is read. */
 		dismiss?: boolean;
+		/** Record a durable button opt-out before the snapshot is read. */
+		optOut?: boolean;
 		intent?: CommitIntent;
 		actionAt?: number;
 	} = {}
@@ -1349,6 +1361,11 @@ const runFixture = async function runFixture(
 			actionAt: options.actionAt ?? input.now,
 		});
 		payload = payloads[0] ?? null;
+	}
+	if (options.optOut) {
+		await kernel.commands.optOut({
+			actionAt: options.actionAt ?? input.now,
+		});
 	}
 	if (options.dismiss) {
 		await kernel.commands.dismissNotice();
@@ -1425,7 +1442,7 @@ const NOTES = [
 	'input.overrides and input.privacySignals are what the device reports. expected.overrides and expected.privacySignals are what the kernel settled: init.location sets country and region, init.translations sets language, and privacySignals.gpc.active is the override when set, otherwise the detection.',
 	'there is no test override and no msa signal. Overrides are country, region, language, and gpc; gpc is a detected / override / active triple. See "Corrections to this contract" in packages/native-protocol/CONTRACT.md.',
 	'revision is a monotonic counter that starts at 0 and bumps once per committed mutation. It is not a count of the steps a runner took. Compare it as a number, and read the pinned value rather than deriving it.',
-	'GPC is a live signal only. Nothing records it: the gpc restriction applies while privacySignals.gpc.active is true and lifts when it is not, and no snapshot carries a stored directive for it.',
+	'The gpc restriction applies while privacySignals.gpc.active is true and the matched rule maps GPC. The first time a live kernel sees an active GPC signal under a matched rule that maps GPC, it records a durable opt-out on snapshot.optOut with method gpc, and marketing and measurement in scope carry the opt-out restriction even after the signal stops. No snapshot carries the retired optOutDirectives field.',
 	'evaluatedAt equals input.now. Both it and ready are native lifecycle facts, not kernel output: ready is latched by a hydrate() that found a stored envelope and by the first /init that lands a definitive answer, which on /v1 is any 200 body. Nothing stored plus a resolved init is therefore ready true, and only an init that failed or never arrived leaves it false.',
 	'error is null in every fixture: no fixture exercises a transport failure or an unreadable wire.',
 	'Any field this file does not mention must not be invented. Unknown wire values fail closed.',
@@ -1524,6 +1541,14 @@ const toFixtureSnapshot = function toFixtureSnapshot(
 		location: snapshot.location ? { ...snapshot.location } : null,
 		model: snapshot.model,
 		nextDeadline: snapshot.nextDeadline,
+		optOut: snapshot.optOut
+			? {
+					heldBy: snapshot.optOut.heldBy,
+					method: snapshot.optOut.method,
+					recordedAt: snapshot.optOut.recordedAt,
+					rights: [...snapshot.optOut.rights],
+				}
+			: null,
 		overrides: fixtureOverrides(overrides),
 		policyPending: snapshot.policyPending,
 		policySnapshotToken: snapshot.policySnapshotToken,
@@ -1547,11 +1572,16 @@ const toFixtureSnapshot = function toFixtureSnapshot(
 
 const storedFor = function storedFor(
 	subjectId: string,
-	extras: { choice?: ExplicitChoice; noticeDismissal?: NoticeDismissal } = {}
+	extras: {
+		choice?: ExplicitChoice;
+		noticeDismissal?: NoticeDismissal;
+		optOut?: OptOutRecord;
+	} = {}
 ): StoredRecords {
 	return {
 		choice: extras.choice ?? null,
 		noticeDismissal: extras.noticeDismissal ?? null,
+		optOut: extras.optOut ?? null,
 		subject: { subjectId },
 	};
 };
@@ -1619,6 +1649,24 @@ const STALE_POLICY_REPLAY_SCENARIO: Scenario = {
 	...STALE_POLICY_MINT_SCENARIO,
 	policyRules: [stalePolicyRule('v2', 'fixture_california_opt_out')],
 	policySnapshotToken: 'tok-stale-replay',
+};
+
+/** A no-prompt opt-out rule on the stale-policy axis, for durable opt-out replay. */
+const STALE_OPT_OUT_MINT_SCENARIO: Scenario = {
+	...STALE_POLICY_MINT_SCENARIO,
+	policyRules: [
+		stalePolicyRule('v1', 'fixture_california_opt_out_no_prompt', 'none'),
+	],
+	policySnapshotToken: 'tok-stale-opt-out-mint',
+};
+
+/** The same no-prompt opt-out rule after the publisher revised the copy. */
+const STALE_OPT_OUT_REPLAY_SCENARIO: Scenario = {
+	...STALE_OPT_OUT_MINT_SCENARIO,
+	policyRules: [
+		stalePolicyRule('v2', 'fixture_california_opt_out_no_prompt', 'none'),
+	],
+	policySnapshotToken: 'tok-stale-opt-out-replay',
 };
 
 /**
@@ -1724,6 +1772,21 @@ const ageDismissal = function ageDismissal(
 	days: number
 ): NoticeDismissal {
 	return { ...dismissal, dismissedAt: dismissal.dismissedAt - days * DAY_MS };
+};
+
+/**
+ * Move an opt-out record's timestamp back by `days`, the way `ageChoice` ages a receipt.
+ * The record is otherwise the one the opt-out command wrote.
+ */
+const ageOptOut = function ageOptOut(
+	optOut: OptOutRecord,
+	days: number
+): OptOutRecord {
+	return {
+		...optOut,
+		recordedAt: optOut.recordedAt - days * DAY_MS,
+		rights: [...optOut.rights],
+	};
 };
 
 // -- Fixtures ---------------------------------------------------------------
@@ -1893,7 +1956,7 @@ const buildEvaluationFixtures =
 			},
 			{
 				description:
-					'An active GPC signal under the CCPA opt-out rule denies marketing and measurement even though the model would allow them, and records the reason on the snapshot.',
+					'An active GPC signal under the CCPA opt-out rule denies marketing and measurement even though the model would allow them, records a durable opt-out with method gpc and rights sale and share, and reports both gpc and opt-out restrictions on the snapshot.',
 				id: 'gpc-signal-present',
 				scenario: GPC_SCENARIO,
 			},
@@ -2081,7 +2144,7 @@ const buildEvaluationFixtures =
 			},
 			{
 				description:
-					'An active GPC signal under an opt-in rule that names marketing. The model had already denied every optional category, and marketing still carries the gpc reason beside the other three, because reasons are gathered independently of the answer they accompany.',
+					'An active GPC signal under an opt-in rule that maps marketing. The live kernel records a durable opt-out with method gpc, so marketing carries gpc and opt-out and measurement carries opt-out beside the other two categories, because reasons are gathered independently of the opt-in default.',
 				id: 'gpc-under-opt-in-no-receipt',
 				scenario: GPC_DENYING_SCENARIO,
 				subjectId: SUBJECT.europe,
@@ -2198,6 +2261,79 @@ const buildEvaluationFixtures =
 		}
 
 		fixtures.push(...(await buildNothingDeclaredEvaluationFixtures()));
+
+		// -- Durable opt-out record axes -----------------------------------------
+		// Each stored opt-out below comes from a real kernel run rather than a
+		// hand-built object, so the rights, method, holder and timestamp match
+		// what the kernel actually writes.
+		const gpcRecorded = await runFixture(inputFor(GPC_SCENARIO));
+		if (!gpcRecorded.after.optOut) {
+			throw new Error(
+				'An active GPC signal under the CCPA opt-out rule recorded no opt-out, so the stored opt-out axis proves nothing.'
+			);
+		}
+		const storedWithoutGpcInput = inputFor(CCPA_SCENARIO, {
+			records: storedFor(SUBJECT.gpc, {
+				optOut: gpcRecorded.after.optOut,
+			}),
+		});
+		const storedWithoutGpc = await runFixture(storedWithoutGpcInput);
+		fixtures.push(
+			evaluationFixture(
+				'opt-out-stored-without-gpc',
+				'A stored durable opt-out recorded earlier from GPC, replayed under the CCPA opt-out rule after GPC turns off. The gpc restriction lifts, while the durable opt-out stays held and keeps marketing and measurement denied with reason opt-out.',
+				storedWithoutGpcInput,
+				storedWithoutGpc.after
+			)
+		);
+
+		const buttonOptOutRun = await runFixture(inputFor(CCPA_SCENARIO), {
+			optOut: true,
+		});
+		if (!buttonOptOutRun.after.optOut) {
+			throw new Error(
+				'commands.optOut() under the CCPA opt-out rule recorded no opt-out, so the aged opt-out axis proves nothing.'
+			);
+		}
+		const agedOptOutInput = inputFor(CCPA_SCENARIO, {
+			records: storedFor(SUBJECT.california, {
+				optOut: ageOptOut(buttonOptOutRun.after.optOut, 400),
+			}),
+		});
+		const agedOptOut = await runFixture(agedOptOutInput);
+		fixtures.push(
+			evaluationFixture(
+				'opt-out-aged-over-year',
+				'A stored button opt-out with rights sale and share evaluated 400 days after recordedAt under the CCPA opt-out rule. A durable opt-out never expires, so marketing and measurement stay denied with reason opt-out, no deadline is scheduled, and no prompt is owed.',
+				agedOptOutInput,
+				agedOptOut.after
+			)
+		);
+
+		const staleOptOutMint = await runFixture(
+			inputFor(STALE_OPT_OUT_MINT_SCENARIO),
+			{ optOut: true }
+		);
+		if (!staleOptOutMint.after.optOut) {
+			throw new Error(
+				'commands.optOut() under the stale-policy opt-out rule recorded no opt-out, so the policy-change opt-out axis proves nothing.'
+			);
+		}
+		const staleOptOutInput = inputFor(STALE_OPT_OUT_REPLAY_SCENARIO, {
+			records: storedFor(SUBJECT.california, {
+				optOut: staleOptOutMint.after.optOut,
+			}),
+		});
+		const staleOptOut = await runFixture(staleOptOutInput);
+		fixtures.push(
+			evaluationFixture(
+				'opt-out-under-stale-policy',
+				'A stored durable opt-out minted under the first revision of an opt-out policy and replayed after the publisher revised the copy. A durable opt-out ignores policy changes, so marketing and measurement stay denied with reason opt-out.',
+				staleOptOutInput,
+				staleOptOut.after
+			)
+		);
+
 		return fixtures;
 	};
 
@@ -2215,6 +2351,14 @@ const SAVE_NOTES = [
 const buildSaveBodyFixtures = async function buildSaveBodyFixtures(): Promise<
 	SaveBodyFixture[]
 > {
+	const buttonOptOutRun = await runFixture(inputFor(CCPA_SCENARIO), {
+		optOut: true,
+	});
+	if (!buttonOptOutRun.after.optOut) {
+		throw new Error(
+			'commands.optOut() under the CCPA opt-out rule recorded no opt-out, so the opt-out lift fixture proves nothing.'
+		);
+	}
 	const cases: {
 		id: string;
 		description: string;
@@ -2222,6 +2366,8 @@ const buildSaveBodyFixtures = async function buildSaveBodyFixtures(): Promise<
 		intent: CommitIntent;
 		/** Set on the cases about an app that declares nothing. See `FixtureInput`. */
 		declared?: null;
+		/** Stored records to seed instead of the scenario's defaults. */
+		records?: StoredRecords;
 	}[] = [
 		{
 			description:
@@ -2249,10 +2395,30 @@ const buildSaveBodyFixtures = async function buildSaveBodyFixtures(): Promise<
 		},
 		{
 			description:
-				'Accept all under the CCPA opt-out rule while GPC is active. The receipts record the grant the subject made, while the effective permissions and the decision inputs carry the GPC denial, so the backend sees both facts.',
+				'Accept all under the CCPA opt-out rule while GPC is active. The live kernel records a durable GPC opt-out before the save, and accepting all cannot lift it while GPC stays active, so the receipts record the grants while marketing and measurement keep both gpc and opt-out restrictions.',
 			id: 'ccpa-gpc',
 			intent: { action: 'all' },
 			scenario: GPC_SCENARIO,
+		},
+		{
+			description:
+				'Reject all under the CCPA opt-out rule. Every optional category gets an explicit false receipt, and refusing both marketing and measurement under an opt-out rule records a durable opt-out with method button and rights sale and share.',
+			id: 'ccpa-reject-all',
+			intent: { action: 'necessary' },
+			scenario: CCPA_SCENARIO,
+		},
+		{
+			description:
+				'A stored device-held button opt-out under the CCPA opt-out rule followed by a save that grants marketing. With GPC inactive, granting an opt-out category lifts the durable opt-out record, clears the opt-out restrictions, and allows marketing and measurement.',
+			id: 'ccpa-opt-out-lifted',
+			intent: {
+				action: 'explicit',
+				consents: { marketing: true },
+			},
+			records: storedFor(SUBJECT.california, {
+				optOut: buttonOptOutRun.after.optOut,
+			}),
+			scenario: CCPA_SCENARIO,
 		},
 		{
 			declared: null,
@@ -2276,7 +2442,10 @@ const buildSaveBodyFixtures = async function buildSaveBodyFixtures(): Promise<
 	// time against the pinned clock.
 	/* oxlint-disable no-await-in-loop -- sequential on purpose, see above */
 	for (const testCase of cases) {
-		const input = inputFor(testCase.scenario, { declared: testCase.declared });
+		const input = inputFor(testCase.scenario, {
+			declared: testCase.declared,
+			records: testCase.records,
+		});
 		const { after, before, payload } = await runFixture(input, {
 			actionAt: input.now,
 			intent: testCase.intent,
@@ -2777,6 +2946,7 @@ const RESET_BASELINE: Omit<
 	location: null,
 	model: 'opt-in',
 	nextDeadline: null,
+	optOut: null,
 	policyPending: true,
 	policySnapshotToken: null,
 	promptRequirement: { kind: 'none' },
@@ -2793,7 +2963,7 @@ const RESET_BASELINE: Omit<
 const RESET_NOTES = [
 	...NOTES,
 	'a wipe is judged against one yardstick: the state a device that has never been used boots into. expected.baseline is that state, and every field of it is either installed by the wipe or kept by it, never carried over from whatever the device was doing.',
-	'installed: policyPending true, ready false, promptRequirement none, activeUI none, effectivePermissions necessary-only, evaluatedAt equal to input.now, and no explicitChoice, notice dismissal, policy claim, resolution, snapshot token, location, translations, deadline, or error. A device that stops at a recorded denial instead would keep promptRequirement at none and no surface would ever come back, which is the one state a subject cannot get out of.',
+	'installed: policyPending true, ready false, promptRequirement none, activeUI none, effectivePermissions necessary-only, evaluatedAt equal to input.now, and no explicitChoice, notice dismissal, optOut, policy claim, resolution, snapshot token, location, translations, deadline, or error. A device that stops at a recorded denial instead would keep promptRequirement at none and no surface would ever come back, which is the one state a subject cannot get out of.',
 	'kept: the subject id, because packages/native-protocol/CONTRACT.md refuses to orphan the audit history the backend holds against it; overrides and privacySignals, because a country pinned for QA and a GPC switch are configuration rather than consent; and the configured category scope, which a wipe recomputes from configuration rather than consent. No fixture configures a narrower scope, so the baseline lists `necessary` plus every optional category: the rows the safe fallback rule covers until a policy resolves.',
 	'revision is not pinned. A wipe is a committed mutation, so it publishes the revision the device was on plus one, and packages/native-protocol/CONTRACT.md refuses to compare the absolute numbering the three implementations start from. A core that restarts the numbering at the cold-start baseline fails anyway, because the revision it announces goes backwards.',
 	'revisionDelta is the one revision claim this kind can make. A wipe is a committed mutation, so it publishes current + 1, and a core that installs the baseline silently or restarts the numbering fails here.',
@@ -3120,10 +3290,12 @@ const assertHydrationClaims = function assertHydrationClaims(
 		}
 		const { hydrated, storedRecords } = fixture.input;
 		const recordsInsideEnvelope =
-			storedRecords.choice !== null || storedRecords.noticeDismissal !== null;
+			storedRecords.choice !== null ||
+			storedRecords.noticeDismissal !== null ||
+			storedRecords.optOut !== null;
 		if (!hydrated && recordsInsideEnvelope) {
 			throw new Error(
-				`${fixture.id}: input.hydrated is false but storedRecords carries a choice or a dismissal, which only exists inside a stored envelope.`
+				`${fixture.id}: input.hydrated is false but storedRecords carries a choice, a dismissal, or an opt-out, which only exists inside a stored envelope.`
 			);
 		}
 		if (hydrated && !recordsInsideEnvelope && storedRecords.subject === null) {

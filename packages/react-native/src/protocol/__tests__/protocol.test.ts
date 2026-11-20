@@ -380,8 +380,8 @@ describe('protocol fixtures', () => {
 			// the package that generated the fixtures, not on a device.
 			expect(describeSnapshotWireDrift(snapshot)).toEqual([]);
 			expect(snapshot.iab).toBeNull();
-			// GPC is a live signal and nothing records it, so no snapshot carries a
-			// stored directive for it.
+			// The retired alpha optOutDirectives key never appears on any snapshot;
+			// durable opt-out records live on snapshot.optOut.
 			expect(snapshot).not.toHaveProperty('optOutDirectives');
 			expect(snapshot.error).toBeNull();
 			expect(typeof snapshot.ready).toBe('boolean');
