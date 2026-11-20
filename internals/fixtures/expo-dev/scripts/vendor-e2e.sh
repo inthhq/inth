@@ -159,7 +159,9 @@ install_apk() {
 # `adb reconnect offline` brings the device back in about 2 s. Recover once, say so
 # as a CI warning and in adb-recovered.txt, and fail as before if that does not work.
 recover_offline_device() {
-  [[ "$("${ADB}" -s "${DEVICE}" get-state 2>/dev/null)" == offline ]] || return 1
+  # `adb get-state` prints nothing on stdout for an offline device, only an error
+  # on stderr, so read the state from the device list.
+  [[ "$("${ADB}" devices | awk -v serial="${DEVICE}" '$1 == serial { print $2 }')" == offline ]] || return 1
   echo "::warning title=Android emulator went offline (${LABEL})::adb lost the emulator before the install. Reconnecting and retrying the install once."
   printf '%s adb lost the emulator before the install; reconnecting\n' "$(date -u +%FT%TZ)" >> "${OUT}/adb-recovered.txt"
   "${ADB}" reconnect offline > /dev/null 2>&1 || true
