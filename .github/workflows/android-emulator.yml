@@ -138,6 +138,10 @@ jobs:
       - uses: ./.github/actions/setup-sdk
       - name: Prepare the Android toolchain
         run: bash scripts/ci-android-toolchain.sh
+      # The journeys join their screen recording into journey.mp4 with ffmpeg,
+      # which GitHub's ubuntu-24.04 image does not include.
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends ffmpeg
       - name: Run real consent controls and record the app
         run: pnpm --dir internals/fixtures/react-native-bare run e2e:android
       - name: Upload recordings, native snapshots, JUnit results and logs
@@ -170,6 +174,10 @@ jobs:
       - uses: ./.github/actions/setup-sdk
       - name: Prepare the Android toolchain
         run: bash scripts/ci-android-toolchain.sh
+      # The journeys join their screen recording into journey.mp4 with ffmpeg,
+      # which GitHub's ubuntu-24.04 image does not include.
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends ffmpeg
       - name: Run PostHog, Mixpanel, Amplitude, Sentry Replay and Firebase through the consent journey
         run: bash internals/fixtures/expo-dev/scripts/vendor-e2e.sh android
       - name: Upload vendor requests, Firebase log evidence and UIAutomator frames
