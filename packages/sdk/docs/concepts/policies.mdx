@@ -40,7 +40,7 @@ To test regional behavior locally or in automated tests without network calls, p
 
 - `overrides: { country: 'DE' }` or `'GB'` matches an opt-in banner in the built-in rule pack.
 - `overrides: { country: 'DE' }` with IAB enabled matches the IAB TCF banner.
-- `overrides: { country: 'US', region: 'CA' }` matches an opt-out rule with no automatic banner.
+- `overrides: { country: 'US', region: 'CA' }` matches California's dedicated opt-out rule with no automatic banner; other supported US privacy states match the US opt-out rule.
 - `overrides: { country: 'JP' }` matches a no-prompt `none` rule.
 - An omitted or unknown country uses the pack's strict opt-in fallback. A US country without a state uses the US opt-out fallback.
 

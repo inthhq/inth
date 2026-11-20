@@ -141,16 +141,18 @@ describe('policyRulePresets', () => {
 		expect(rules.map((rule) => rule.id)).toEqual([
 			'europe_opt_in',
 			'quebec_opt_in',
+			'california_opt_out',
 			'us_privacy_states_opt_out',
 			'world_none',
 		]);
-		expect(inspectPolicyRules(rules).errors).toEqual([]);
+		expect(inspectPolicyRules(rules)).toEqual({ errors: [], warnings: [] });
 		for (const [countryCode, regionCode, policyId, matchedBy] of [
 			[null, null, 'europe_opt_in', 'fallback'],
 			['DE', null, 'europe_opt_in', 'country'],
 			['GB', null, 'europe_opt_in', 'country'],
 			['CA', 'QC', 'quebec_opt_in', 'region'],
-			['US', 'CA', 'us_privacy_states_opt_out', 'region'],
+			['US', 'CA', 'california_opt_out', 'region'],
+			['US', 'CO', 'us_privacy_states_opt_out', 'region'],
 			['US', 'SD', 'world_none', 'default'],
 			['US', 'NY', 'world_none', 'default'],
 			['CA', null, 'europe_opt_in', 'fallback'],
@@ -179,13 +181,40 @@ describe('policyRulePresets', () => {
 		expect(recommendedPolicyRules({ iab: true })[0]?.id).toBe('europe_iab');
 	});
 
+	test('recommendedPolicyRules routes California to california_opt_out with full proof and GPC', () => {
+		const resolution = resolvePolicyRules({
+			countryCode: 'US',
+			regionCode: 'CA',
+			rules: recommendedPolicyRules(),
+		});
+		expect(resolution).toMatchObject({
+			matchedBy: 'region',
+			policy: {
+				model: 'opt-out',
+				privacySignals: {
+					gpc: { denyCategories: ['marketing', 'measurement'] },
+				},
+				prompt: 'none',
+				proof: {
+					storeIp: true,
+					storeLanguage: true,
+					storeUserAgent: true,
+				},
+				rights: expect.arrayContaining(['opt-out']),
+			},
+			policyId: 'california_opt_out',
+			status: 'matched',
+		});
+	});
+
 	test('the recommended pack builds the same rules as the named presets', () => {
-		const [europe, quebec, us, world] = recommendedPolicyRules();
+		const [europe, quebec, california, us, world] = recommendedPolicyRules();
 		expect(europe).toEqual(policyRulePresets.europeOptIn());
 		expect(recommendedPolicyRules({ iab: true })[0]).toEqual(
 			policyRulePresets.europeIab()
 		);
 		expect(quebec).toEqual(policyRulePresets.quebecOptIn());
+		expect(california).toEqual(policyRulePresets.californiaOptOut());
 		expect(us).toMatchObject({
 			...policyRulePresets.usPrivacyStatesOptOut(),
 			match: expect.any(Object),
