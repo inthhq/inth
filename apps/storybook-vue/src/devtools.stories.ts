@@ -18,6 +18,7 @@ import {
 	storybookConsentConfig,
 	storybookInit,
 	storybookMode,
+	storybookRecordAnswer,
 } from './storybook-consent-fixtures';
 
 /**
@@ -73,14 +74,7 @@ export const Default: Story = {
 						new Response(
 							JSON.stringify(
 								String(input).includes('/v1/consent/records')
-									? {
-											recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
-											subjectId: (
-												JSON.parse(String(request?.body)) as {
-													subjectId: string;
-												}
-											).subjectId,
-										}
+									? storybookRecordAnswer(request)
 									: init
 							),
 							{
@@ -89,7 +83,6 @@ export const Default: Story = {
 						)
 					)) as typeof fetch),
 				prefetch: init,
-				producerContract: 1,
 			});
 			hydrateRecords(context.kernel, {
 				now: devToolsPrefetch.now,

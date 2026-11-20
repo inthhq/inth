@@ -382,7 +382,7 @@ const verifyNuxtNitroRoutes = async function verifyNuxtNitroRoutes(app) {
 	);
 
 	// --- /api/inth/v1/consent/init: manifest-resolved init, geo/GPC/language aware ---
-	const { body: init, response: initResponse } = await fetchJsonResponse(
+	const { body: init } = await fetchJsonResponse(
 		app,
 		`${base}/api/inth/v1/consent/init`,
 		{
@@ -401,11 +401,6 @@ const verifyNuxtNitroRoutes = async function verifyNuxtNitroRoutes(app) {
 	assert(
 		hasInitTranslation(init),
 		`${app.label}: nitro init translations payload`
-	);
-	assertEqual(
-		initResponse.headers.get('x-inth-policy-contract'),
-		'1',
-		`${app.label}: nitro policy contract header`
 	);
 	assertEqual(
 		init.policyResolution?.version,

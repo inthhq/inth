@@ -768,7 +768,8 @@ describe('initPrefetch', () => {
 			consentManifest({
 				...optionsFor(root),
 				initPrefetch: {
-					credentials: 'include',
+					// A browser's init never sends cookies; `omit` passes through.
+					credentials: 'omit',
 					experiment: {
 						arms: { wall: { prompt: { variant: 'wall' } } },
 						id: 'banner-shape',
@@ -781,7 +782,7 @@ describe('initPrefetch', () => {
 			}),
 			HOSTED_ENTRY
 		);
-		expect(html).toContain('"credentials":"include"');
+		expect(html).toContain('"credentials":"omit"');
 		expect(html).toMatch(/[?&]country=DE[&"]/u);
 		expect(html).toContain('"language":"de"');
 		expect(html).toContain('"journey":null');

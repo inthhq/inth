@@ -72,6 +72,24 @@ export const storybookIABInit: InitOutput = {
 	),
 } as InitOutput;
 
+/**
+ * The backend's answer to a save: the subject ID it went out under, or a
+ * UUID for a c15t `sub_` ID, which the backend replaces.
+ */
+export const storybookRecordAnswer = function storybookRecordAnswer(
+	request?: RequestInit
+): { recordId: string; subjectId: string } {
+	const { subjectId = '' } = JSON.parse(String(request?.body ?? '{}')) as {
+		subjectId?: string;
+	};
+	return {
+		recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+		subjectId: /^[\da-f]{8}-[\da-f]{4}-7/u.test(subjectId)
+			? subjectId
+			: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+	};
+};
+
 const storybookFetch = function storybookFetch(): typeof fetch {
 	return ((input: RequestInfo | URL, request?: RequestInit) => {
 		const { pathname } = new URL(String(input), 'http://storybook.test');
@@ -84,21 +102,12 @@ const storybookFetch = function storybookFetch(): typeof fetch {
 			});
 		}
 		if (pathname.endsWith('/v1/consent/records')) {
-			const body = JSON.parse(String(request?.body ?? '{}')) as {
-				subjectId?: string;
-			};
-			return new Response(
-				JSON.stringify({
-					recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
-					subjectId: body.subjectId,
-				}),
-				{
-					headers: {
-						'content-type': 'application/json',
-					},
-					status: 200,
-				}
-			);
+			return new Response(JSON.stringify(storybookRecordAnswer(request)), {
+				headers: {
+					'content-type': 'application/json',
+				},
+				status: 200,
+			});
 		}
 		return new Response('not found', { status: 404 });
 	}) as typeof fetch;
