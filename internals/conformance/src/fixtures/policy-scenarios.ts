@@ -308,9 +308,11 @@ const gpc = (
 		},
 		{
 			expect: {
+				// Saved again in the same millisecond: dated one after the
+				// save the backend accepted.
 				choice: policyChoice(
 					{ marketing: true, measurement: true },
-					POLICY_NOW
+					POLICY_NOW + 1
 				),
 				consentCallbacks: 1,
 				events: { 'choice-recorded': 1, 'permissions-changed': 0 },

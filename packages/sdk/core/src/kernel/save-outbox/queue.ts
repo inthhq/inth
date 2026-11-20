@@ -551,20 +551,35 @@ export const createQueueWorker = function createQueueWorker({
 	 * for other categories keep waiting for their own replay.
 	 */
 	const discard = function discard(payload: SavePayload): Promise<void> {
-		const settled = JSON.stringify(tools.toStoredPayload(payload));
 		return store.transact((tx) => {
 			const pending = readPendingSaves(tx);
+			// The ids `payload`'s subject moved to since it was queued: a save
+			// sent under a `sub_` id is queued under the UUID by now.
+			const aliases = new Set([payload.subjectId]);
+			for (const { from, to } of readReassignments(tx)) {
+				if (aliases.has(from)) {
+					aliases.add(to);
+				}
+			}
 			const remaining = pending.flatMap((candidate) => {
+				if (
+					payload.idempotencyKey !== undefined &&
+					candidate.payload.idempotencyKey === payload.idempotencyKey
+				) {
+					return [];
+				}
 				// A receipt for strictly necessary alone confirms no category
 				// and no vendors, so supersession never covers it, not even
 				// by itself.
-				if (JSON.stringify(candidate.payload) === settled) {
-					return [];
-				}
-				const kept = withoutSuperseded(
-					candidate.payload,
-					supersededBy(candidate.payload, payload)
-				);
+				const kept = aliases.has(candidate.payload.subjectId)
+					? withoutSuperseded(
+							candidate.payload,
+							supersededBy(
+								candidate.payload,
+								withSubjectId(payload, candidate.payload.subjectId)
+							)
+						)
+					: candidate.payload;
 				return kept ? [{ ...candidate, payload: kept }] : [];
 			});
 			if (JSON.stringify(remaining) !== JSON.stringify(pending)) {

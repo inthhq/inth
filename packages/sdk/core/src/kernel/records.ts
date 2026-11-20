@@ -21,6 +21,7 @@ import type {
 	HydrationResult,
 	KernelTransport,
 	KernelUser,
+	SubjectDates,
 } from '../types';
 import type { SnapshotPatch } from './patch';
 import {
@@ -30,6 +31,31 @@ import {
 } from './record-validation';
 import type { ValidatedRecords } from './record-validation';
 import type { KernelRuntime } from './runtime';
+
+const DATE_KEYS = ['acceptedGivenAt', 'datedAt'] as const;
+
+/**
+ * The later of each time in `current` and `incoming`: `current` itself when
+ * nothing in `incoming` is later.
+ */
+const latestDates = function latestDates(
+	current: SubjectDates | null | undefined,
+	incoming: SubjectDates
+): SubjectDates {
+	const later = DATE_KEYS.filter(
+		(key) =>
+			incoming[key] !== undefined &&
+			(incoming[key] as number) > (current?.[key] ?? -1)
+	);
+	if (later.length === 0) {
+		return current ?? {};
+	}
+	const dates: SubjectDates = { ...current };
+	for (const key of later) {
+		dates[key] = incoming[key];
+	}
+	return dates;
+};
 
 /**
  * The patch server records make: the newest receipt per category, the
@@ -67,6 +93,12 @@ export const foldServerRecords = function foldServerRecords(
 			records.vendorChoice
 		);
 	}
+	if (records.subjectDates) {
+		patch.subjectDates = latestDates(
+			current.subjectDates,
+			records.subjectDates
+		);
+	}
 	return patch;
 };
 
@@ -77,8 +109,6 @@ export interface RecordsBoundaryOptions {
 	start: () => void;
 	/** Moves the visitor to the subject id a link answered for theirs. */
 	adoptSubject: (from: string, to: string) => Promise<void>;
-	/** Forgets the latest save date when the app switches the subject. */
-	forgetDates: () => void;
 }
 
 export interface RecordsBoundary {
@@ -95,7 +125,6 @@ export interface RecordsBoundary {
 
 export const createRecordsBoundary = function createRecordsBoundary({
 	adoptSubject,
-	forgetDates,
 	runtime,
 	transport,
 	start,
@@ -124,12 +153,20 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		if (fromServer) {
 			patch = foldServerRecords(before, validated.records, at);
 		} else {
-			const { choice, ...rest } = validated.records;
+			const { choice, subjectDates, ...rest } = validated.records;
 			patch = { ...rest, now: at };
+			// Times only move forward: an older copy read back keeps the newer.
+			if (subjectDates !== undefined) {
+				patch.subjectDates =
+					subjectDates && latestDates(before.subjectDates, subjectDates);
+			}
 			if (choice !== undefined) {
 				patch.explicitChoice = choice;
 			}
 			reset = choice === null || rest.subject === null;
+			if (rest.subject === null && subjectDates === undefined) {
+				patch.subjectDates = null;
+			}
 			if (reset && before.iab) {
 				patch.iab = { ...before.iab, authority: null, tcString: null };
 			}
@@ -242,11 +279,12 @@ export const createRecordsBoundary = function createRecordsBoundary({
 				return;
 			}
 			runtime.invalidateRecords();
-			forgetDates();
 			const patch: SnapshotPatch = {};
 			if (iab) {
 				patch.iab = { ...iab, authority: null, tcString: null };
 			}
+			// Another subject: nothing was dated or accepted for it yet.
+			patch.subjectDates = null;
 			if (id === null) {
 				const { subjectId: _dropped, ...rest } = subject ?? {};
 				patch.subject = Object.keys(rest).length > 0 ? rest : null;

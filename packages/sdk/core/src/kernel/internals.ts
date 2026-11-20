@@ -65,11 +65,12 @@ export interface InternalKernel extends ConsentKernel {
 	 */
 	holdSaves: (until: Promise<unknown>) => void;
 	/**
-	 * Keep the latest save date in localStorage, beside the consent record.
-	 * Persistence calls it when it mounts; a page that stores no record
-	 * keeps the date in memory only.
+	 * Register persistence's flush, which lands a scheduled write now. The
+	 * outbox runs it before an accepted save leaves the queue, so the
+	 * subject's accepted time is stored first. Returns the unregister
+	 * function.
 	 */
-	keepSaveDates: () => void;
+	flushRecordsWith: (flush: () => void) => () => void;
 	/**
 	 * Send the saves queued in the outbox now, as after a completed init.
 	 * A deferred root calls it when its engine starts after a banner tap

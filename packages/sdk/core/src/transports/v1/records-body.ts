@@ -1,7 +1,6 @@
 import type {
 	V1ConsentAnswer,
 	V1ConsentRecordInput,
-	VendorChoiceWire,
 } from '@inth/sdk-schema/types';
 
 import { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
@@ -16,17 +15,23 @@ export type V1ConsentRecordBody = Omit<
 >;
 
 /**
- * Every explicit receipt of a choice, in wire form. Receipts are copied,
- * never restamped, so a replay sends the same answer. `necessary` is left
- * out: the backend counts it as `true`.
+ * Every explicit receipt of a choice dated no later than `givenAt`, in wire
+ * form. Receipts are copied, never restamped, so a replay sends the same
+ * answer. `necessary` is left out: the backend counts it as `true`.
  */
 export const buildV1Answer = function buildV1Answer(
-	choice: Readonly<ExplicitChoice>
+	choice: Readonly<ExplicitChoice>,
+	givenAt: number
 ): V1ConsentAnswer {
 	const categories: V1ConsentAnswer['categories'] = {};
 	for (const category of OPTIONAL_CONSENT_CATEGORIES) {
 		const receipt = choice.categories[category];
-		if (receipt === undefined) {
+		// Last resort, for a receipt re-dated while the device clock was still
+		// wrong and corrected afterwards: every other receipt a save carries is
+		// dated no later than its givenAt. Sent with a later time it would be
+		// refused; dated givenAt it could overtake what another tab recorded
+		// since. Left out, the backend keeps what it holds for the category.
+		if (receipt === undefined || receipt.confirmedAt > givenAt) {
 			continue;
 		}
 		categories[category] = {
@@ -63,22 +68,6 @@ const buildMetadata = function buildMetadata(
 	return Object.keys(metadata).length > 0 ? metadata : undefined;
 };
 
-/** The vendor choice, dated `givenAt` when this action confirmed it. */
-const buildVendorChoice = function buildVendorChoice(
-	vendorChoice: NonNullable<SavePayload['vendorChoice']>,
-	actionAt: number,
-	givenAt: number
-): VendorChoiceWire {
-	return {
-		confirmedAt:
-			vendorChoice.confirmedAt === actionAt
-				? givenAt
-				: vendorChoice.confirmedAt,
-		grants: { ...vendorChoice.grants },
-		version: 1,
-	};
-};
-
 /**
  * Build the records body of one save.
  *
@@ -97,19 +86,13 @@ export const buildV1ConsentRecordBody = function buildV1ConsentRecordBody(
 			'Inth transport: a save needs an idempotencyKey. Make one with createIdempotencyKey() when the visitor acts, and send it unchanged on every retry.'
 		);
 	}
-	const answer = buildV1Answer(payload.choice);
+	const givenAt = payload.givenAt ?? payload.confirmed.actionAt;
+	const answer = buildV1Answer(payload.choice, givenAt);
 	const confirmed = OPTIONAL_CONSENT_CATEGORIES.filter(
 		(category) =>
 			Object.hasOwn(payload.confirmed.categories, category) &&
 			answer.categories[category] !== undefined
 	);
-	const givenAt = payload.givenAt ?? payload.confirmed.actionAt;
-	for (const category of confirmed) {
-		const receipt = answer.categories[category];
-		if (receipt) {
-			receipt.confirmedAt = givenAt;
-		}
-	}
 	const { user } = payload;
 	const body: V1ConsentRecordBody = {
 		answer,
@@ -144,12 +127,16 @@ export const buildV1ConsentRecordBody = function buildV1ConsentRecordBody(
 			body.addtlConsent = payload.addtlConsent;
 		}
 	}
-	if (payload.vendorChoice !== undefined) {
-		body.vendorChoice = buildVendorChoice(
-			payload.vendorChoice,
-			payload.confirmed.actionAt,
-			givenAt
-		);
+	// The same last resort as for a receipt: see buildV1Answer.
+	if (
+		payload.vendorChoice !== undefined &&
+		payload.vendorChoice.confirmedAt <= givenAt
+	) {
+		body.vendorChoice = {
+			confirmedAt: payload.vendorChoice.confirmedAt,
+			grants: { ...payload.vendorChoice.grants },
+			version: 1,
+		};
 	}
 	const metadata = buildMetadata(payload);
 	if (metadata) {

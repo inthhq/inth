@@ -112,11 +112,9 @@ describe.each([
 			subject: after.subject,
 		});
 		expect(sent).toHaveLength(1);
-		// Each build of an action makes its own idempotency key, and dates
-		// the save after the one built before it.
+		// Each build of an action makes its own idempotency key.
 		expect(plan?.payload).toEqual({
 			...sent[0],
-			givenAt: expect.any(Number),
 			idempotencyKey: expect.any(String),
 		});
 		expect(plan?.events.map((event) => event.type)).toEqual(

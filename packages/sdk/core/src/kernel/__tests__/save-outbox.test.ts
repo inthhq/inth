@@ -56,6 +56,10 @@ afterEach(() => {
 });
 
 /** A kernel whose outbox keeps its queue in `outboxStore`. */
+/** A c15t visitor's `sub_` ID, and the UUID the backend answers for it. */
+const LEGACY = 'sub_2VZxR7YmNpKq3WfLs8TgHd';
+const CANONICAL = '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c';
+
 const kernelOn = function kernelOn(
 	config: KernelConfig,
 	outboxStore: SaveOutboxStore = store
@@ -1120,20 +1124,6 @@ describe('save outbox: subject reassignment', () => {
 		kernel.dispose();
 	});
 
-	test('a canonical subject id returned by the resend is adopted', async () => {
-		const saveSpy = vi
-			.fn()
-			.mockRejectedValueOnce(refused('SUBJECT_CONFLICT'))
-			.mockResolvedValue({ ok: true, subjectId: 'sub_canonical' });
-		const kernel = kernelOn({ transport: { save: saveSpy } });
-
-		const result = await kernel.commands.save('all');
-
-		expect(result).toMatchObject({ ok: true, subjectId: 'sub_canonical' });
-		expect(kernel.getSnapshot().subject?.subjectId).toBe('sub_canonical');
-		kernel.dispose();
-	});
-
 	test('a visitor set back to the refused id moves to the same new one', async () => {
 		// Returning null here would drop a choice the kernel knows how to save.
 		const saveSpy = vi.fn(({ subjectId }: { subjectId: string }) =>
@@ -1644,10 +1634,14 @@ describe('save outbox: independent partial saves', () => {
 				)
 				.mockResolvedValue(
 					mapping === 'canonical-subject'
-						? { ok: true, subjectId: 'canonical' }
+						? { ok: true, subjectId: CANONICAL }
 						: { ok: true }
 				);
-			const kernel = kernelOn({ transport: { save: send } });
+			// The backend answers another id only for a c15t `sub_` id.
+			const kernel = kernelOn({
+				initialRecords: { subject: { subjectId: LEGACY } },
+				transport: { save: send },
+			});
 			const first = kernel.commands.save({ marketing: true });
 			await vi.waitFor(() => expect(send).toHaveBeenCalledTimes(1));
 			await kernel.commands.save({ measurement: false });
@@ -1658,7 +1652,7 @@ describe('save outbox: independent partial saves', () => {
 			const original = send.mock.calls[0]?.[0] as SavePayload;
 			// The queued save moved with the visitor to the id the backend named.
 			const subjectId =
-				mapping === 'canonical-subject' ? 'canonical' : original.subjectId;
+				mapping === 'canonical-subject' ? CANONICAL : original.subjectId;
 			expect(send.mock.calls[2]?.[0]).toEqual({
 				...original,
 				subject: { ...original.subject, subjectId },
@@ -1674,7 +1668,7 @@ describe('save outbox: independent partial saves', () => {
 		}
 	);
 
-	test('an older disjoint response cannot replace the latest canonical subject', async () => {
+	test('an older response cannot replace the UUID a newer save moved the visitor to', async () => {
 		let finish: (result: SaveResult) => void = () => {};
 		const send = vi
 			.fn()
@@ -1684,14 +1678,17 @@ describe('save outbox: independent partial saves', () => {
 						finish = resolve;
 					})
 			)
-			.mockResolvedValue({ ok: true, subjectId: 'latest' });
-		const kernel = kernelOn({ transport: { save: send } });
+			.mockResolvedValue({ ok: true, subjectId: CANONICAL });
+		const kernel = kernelOn({
+			initialRecords: { subject: { subjectId: LEGACY } },
+			transport: { save: send },
+		});
 		const first = kernel.commands.save({ marketing: true });
 		await vi.waitFor(() => expect(send).toHaveBeenCalledTimes(1));
 		await kernel.commands.save({ measurement: false });
-		finish({ ok: true, subjectId: 'older' });
+		finish({ ok: true, subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b9c' });
 		await first;
-		expect(kernel.getSnapshot().subject?.subjectId).toBe('latest');
+		expect(kernel.getSnapshot().subject?.subjectId).toBe(CANONICAL);
 		kernel.dispose();
 	});
 

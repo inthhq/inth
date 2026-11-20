@@ -630,15 +630,17 @@ test("withdrawn authority removes c15t's receipt too, so it cannot restore", asy
 	expect(localStorage.getItem('c15t-iab-authority-v1')).toBeNull();
 });
 
-test('server-assigned subject preserves locally confirmed authority', async () => {
+test('the UUID the backend answers for a sub_ subject preserves locally confirmed authority', async () => {
+	const uuid = '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c';
 	const kernel = makeKernel({
-		save: () => Promise.resolve({ ok: true, subjectId: 'canonical' }),
+		save: () => Promise.resolve({ ok: true, subjectId: uuid }),
 	});
+	kernel.set.subjectId('sub_2VZxR7YmNpKq3WfLs8TgHd');
 	const addon = createAddon(kernel);
 	addon.acceptAll();
 	const save = addon.save();
 	await vi.waitFor(() =>
-		expect(kernel.getSnapshot().subject?.subjectId ?? null).toBe('canonical')
+		expect(kernel.getSnapshot().subject?.subjectId ?? null).toBe(uuid)
 	);
 	await save;
 	expect(evaluateConsent(target, kernel.getSnapshot(), NOW)).toBe(true);

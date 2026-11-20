@@ -342,9 +342,28 @@ export interface VendorChoice {
  * `now` before anything is applied; an invalid input rejects the whole
  * call.
  */
+/**
+ * Times kept for the visitor's subject, so a device clock that moved back
+ * cannot date a choice before one already made. They stay with the visitor
+ * when the subject's id changes, such as from a c15t `sub_` id to its UUID.
+ *
+ * @internal
+ */
+export interface SubjectDates {
+	/** The latest `givenAt` the backend accepted for the subject. */
+	acceptedGivenAt?: number;
+	/**
+	 * The latest time a choice was dated with, kept only when it was after
+	 * the device clock. Stored records are checked against it.
+	 */
+	datedAt?: number;
+}
+
 export interface HydrationRecords {
 	choice?: ExplicitChoice | null;
 	subject?: ConsentSubject | null;
+	/** @internal */
+	subjectDates?: SubjectDates | null;
 	noticeDismissal?: NoticeDismissal | null;
 	/** Vendors the subject turned off. `null` clears the denial list. */
 	vendorChoice?: VendorChoice | null;
@@ -463,6 +482,8 @@ export interface ConsentSnapshot {
 	readonly vendors: Readonly<KernelVendorsState> | null;
 	/** Vendors the subject turned off, or `null` when none is denied. */
 	readonly vendorChoice: Readonly<VendorChoice> | null;
+	/** @internal */
+	readonly subjectDates?: Readonly<SubjectDates> | null;
 }
 
 /**
@@ -662,7 +683,11 @@ export interface InitResponse {
 /** Categories one save confirmed, with the single captured action time. */
 export interface ConfirmedCoverage {
 	categories: Readonly<Partial<Record<OptionalConsentCategory, boolean>>>;
-	/** Epoch milliseconds captured once, before any yield or network call. */
+	/**
+	 * The action's one time, set once before any yield or network call: the
+	 * device clock, or one millisecond after the subject's floor when that
+	 * is later. Its receipts carry it, and the queue orders by it.
+	 */
 	actionAt: number;
 }
 
@@ -723,11 +748,8 @@ export interface SavePayload {
 	 */
 	addtlConsent?: string;
 	/**
-	 * When the save says the visitor decided: `confirmed.actionAt`, or one
-	 * millisecond after the subject's floor when the device clock moved back
-	 * since a save the backend accepted or still holds queued. The categories
-	 * this action confirmed are sent with this time, and no time the save
-	 * carries is later.
+	 * The action's one time, the same as `confirmed.actionAt`: the device
+	 * clock, or one millisecond after the subject's floor when that is later.
 	 */
 	givenAt?: number;
 	/**

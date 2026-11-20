@@ -321,6 +321,7 @@ export const buildInitialSnapshot = function buildInitialSnapshot(
 	const noticeDismissal = records?.noticeDismissal ?? null;
 	const subject = records?.subject ?? null;
 	const vendorChoice = records?.vendorChoice ?? null;
+	const subjectDates = records?.subjectDates ?? null;
 
 	const iab = buildInitialIab(
 		config.initialExternalPermissions === undefined
@@ -398,6 +399,7 @@ export const buildInitialSnapshot = function buildInitialSnapshot(
 		revision: 0,
 		scriptRegistry: ownScriptRegistry(config.initialScriptRegistry),
 		subject,
+		subjectDates,
 		surfaceShownAt: config.initialSurfaceShownAt
 			? { ...UNSHOWN_SURFACES, ...config.initialSurfaceShownAt }
 			: UNSHOWN_SURFACES,

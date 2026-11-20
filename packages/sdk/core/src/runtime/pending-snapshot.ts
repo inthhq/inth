@@ -155,6 +155,7 @@ export const pendingBootSnapshot = function pendingBootSnapshot(
 		revision: 0,
 		scriptRegistry: null,
 		subject: null,
+		subjectDates: null,
 		surfaceShownAt: { banner: null, dialog: null },
 		translations: null,
 		user: null,

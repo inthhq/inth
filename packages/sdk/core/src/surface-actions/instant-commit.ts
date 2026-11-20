@@ -199,7 +199,10 @@ export const isShortCase = function isShortCase(
 		!Number.isSafeInteger(actionAt) ||
 		actionAt < 0 ||
 		actionAt > now ||
-		actionAt > MAX_DATE_MS
+		actionAt > MAX_DATE_MS ||
+		// The kernel dates the tap after a time the subject already holds.
+		(before.subjectDates?.acceptedGivenAt ?? -1) >= actionAt ||
+		(before.subjectDates?.datedAt ?? -1) >= actionAt
 	);
 };
 

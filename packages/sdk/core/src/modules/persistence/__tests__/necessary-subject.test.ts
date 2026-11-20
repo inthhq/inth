@@ -10,10 +10,7 @@ import {
 import { createConsentKernel } from '../../../index';
 import { getRawCookieValue } from '../../../libs/cookie';
 import { legacySubjectIdKey } from '../../../libs/legacy-subject-id';
-import {
-	GIVEN_AT_STORAGE_KEY,
-	resolveStorageKeys,
-} from '../../../libs/storage-keys';
+import { resolveStorageKeys } from '../../../libs/storage-keys';
 import { readRequestConsent } from '../../../server/request-consent';
 import type { HydrationRecords, KernelVendorsState } from '../../../types';
 import { createClearOnRevocation } from '../../clear-on-revocation';
@@ -61,8 +58,13 @@ test.each(['all', 'none'] as const)(
 	async (action) => {
 		const kernel = createConsentKernel({
 			consentCategories: ['necessary'],
+			initialRecords: { subject: { subjectId: 'sub_2VZxR7YmNpKq3WfLs8TgHd' } },
 			transport: {
-				save: () => Promise.resolve({ ok: true, subjectId: 'canonical' }),
+				save: () =>
+					Promise.resolve({
+						ok: true,
+						subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+					}),
 			},
 		});
 		const handle = createPersistence({ kernel });
@@ -75,14 +77,16 @@ test.each(['all', 'none'] as const)(
 		kernel.dispose();
 		const restored = createConsentKernel({ consentCategories: ['necessary'] });
 		const reader = createPersistence({ kernel: restored });
-		expect(restored.getSnapshot().subject?.subjectId).toBe('canonical');
+		expect(restored.getSnapshot().subject?.subjectId).toBe(
+			'0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c'
+		);
 		expect(restored.getSnapshot().explicitChoice).toBeNull();
 		expect(restored.getSnapshot().noticeDismissal).toEqual(notice);
 		expect(restored.getSnapshot().effectivePermissions.measurement).toBe(false);
 		expect(
 			readStoredRecordsFromCookieHeader(document.cookie, undefined, Date.now())
 				.subject?.subjectId
-		).toBe('canonical');
+		).toBe('0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c');
 		reader.clear();
 		reader.dispose();
 		restored.dispose();
@@ -93,7 +97,9 @@ test.each(['all', 'none'] as const)(
 		expect(cleared.getSnapshot().subject?.subjectId).toMatch(
 			/^[\da-f]{8}-[\da-f]{4}-7/u
 		);
-		expect(cleared.getSnapshot().subject?.subjectId).not.toBe('canonical');
+		expect(cleared.getSnapshot().subject?.subjectId).not.toBe(
+			'0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c'
+		);
 		expect(cleared.getSnapshot().noticeDismissal).toBeNull();
 		clearedHandle.dispose();
 		cleared.dispose();
@@ -109,6 +115,7 @@ test.each([false, true])(
 		}>();
 		const kernel = createConsentKernel({
 			consentCategories: ['necessary'],
+			initialRecords: { subject: { subjectId: 'sub_2VZxR7YmNpKq3WfLs8TgHd' } },
 			transport: { save: () => response.promise },
 		});
 		const handle = createPersistence({ kernel });
@@ -123,13 +130,13 @@ test.each([false, true])(
 		expect(beforeResponse.getSnapshot().subject?.subjectId).toBe(generated);
 		beforeHandle.dispose();
 		beforeResponse.dispose();
-		response.resolve({ ok, subjectId: 'canonical' });
+		response.resolve({ ok, subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c' });
 		await saving;
 		await vi.advanceTimersByTimeAsync(0);
 		const restored = createConsentKernel({ consentCategories: ['necessary'] });
 		const reader = createPersistence({ kernel: restored });
 		expect(restored.getSnapshot().subject?.subjectId).toBe(
-			ok ? 'canonical' : generated
+			ok ? '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c' : generated
 		);
 		reader.dispose();
 		restored.dispose();
@@ -142,6 +149,7 @@ test('a response arriving after another handle clears does not restore the visit
 	const response = Promise.withResolvers<{ ok: boolean; subjectId: string }>();
 	const kernel = createConsentKernel({
 		consentCategories: ['necessary'],
+		initialRecords: { subject: { subjectId: 'sub_2VZxR7YmNpKq3WfLs8TgHd' } },
 		transport: { save: () => response.promise },
 	});
 	const handle = createPersistence({ kernel, sync: false });
@@ -151,7 +159,10 @@ test('a response arriving after another handle clears does not restore the visit
 	const otherHandle = createPersistence({ kernel: other });
 	await vi.advanceTimersByTimeAsync(1);
 	otherHandle.clear();
-	response.resolve({ ok: true, subjectId: 'canonical' });
+	response.resolve({
+		ok: true,
+		subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+	});
 	await saving;
 	await vi.advanceTimersByTimeAsync(0);
 	const restored = createConsentKernel({ consentCategories: ['necessary'] });
@@ -161,7 +172,9 @@ test('a response arriving after another handle clears does not restore the visit
 	expect(restored.getSnapshot().subject?.subjectId).toMatch(
 		/^[\da-f]{8}-[\da-f]{4}-7/u
 	);
-	expect(restored.getSnapshot().subject?.subjectId).not.toBe('canonical');
+	expect(restored.getSnapshot().subject?.subjectId).not.toBe(
+		'0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c'
+	);
 	expect(restored.getSnapshot().noticeDismissal).toBeNull();
 	reader.dispose();
 	restored.dispose();
@@ -178,8 +191,13 @@ test('a fresh necessary-only acknowledgement after clear persists and another ha
 	await vi.advanceTimersByTimeAsync(1);
 	const second = createConsentKernel({
 		consentCategories: ['necessary'],
+		initialRecords: { subject: { subjectId: 'sub_2VZxR7YmNpKq3WfLs8TgHd' } },
 		transport: {
-			save: () => Promise.resolve({ ok: true, subjectId: 'new-subject' }),
+			save: () =>
+				Promise.resolve({
+					ok: true,
+					subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b2c',
+				}),
 		},
 	});
 	const secondHandle = createPersistence({ kernel: second });
@@ -189,14 +207,20 @@ test('a fresh necessary-only acknowledgement after clear persists and another ha
 	await vi.advanceTimersByTimeAsync(0);
 	secondHandle.reconcile();
 	firstHandle.reconcile();
-	expect(first.getSnapshot().subject?.subjectId).toBe('new-subject');
+	expect(first.getSnapshot().subject?.subjectId).toBe(
+		'0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b2c'
+	);
 	expect(first.getSnapshot().explicitChoice).toBeNull();
 	const restored = createConsentKernel({ consentCategories: ['necessary'] });
 	const reader = createPersistence({ kernel: restored });
-	expect(restored.getSnapshot().subject?.subjectId).toBe('new-subject');
+	expect(restored.getSnapshot().subject?.subjectId).toBe(
+		'0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b2c'
+	);
 	secondHandle.clear();
 	firstHandle.reconcile();
-	expect(first.getSnapshot().subject).toEqual({ subjectId: 'new-subject' });
+	expect(first.getSnapshot().subject).toEqual({
+		subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b2c',
+	});
 	expect(first.getSnapshot().noticeDismissal).toBeNull();
 	reader.dispose();
 	restored.dispose();
@@ -210,6 +234,7 @@ test('a canonical subject in localStorage survives a dropped cookie rewrite', as
 	const response = Promise.withResolvers<{ ok: boolean; subjectId: string }>();
 	const kernel = createConsentKernel({
 		consentCategories: ['necessary'],
+		initialRecords: { subject: { subjectId: 'sub_2VZxR7YmNpKq3WfLs8TgHd' } },
 		transport: { save: () => response.promise },
 	});
 	const handle = createPersistence({ kernel });
@@ -218,14 +243,19 @@ test('a canonical subject in localStorage survives a dropped cookie rewrite', as
 	const dropped = vi
 		.spyOn(document, 'cookie', 'set')
 		.mockImplementation(() => {});
-	response.resolve({ ok: true, subjectId: 'canonical' });
+	response.resolve({
+		ok: true,
+		subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+	});
 	await saving;
 	handle.dispose();
 	kernel.dispose();
 	dropped.mockRestore();
 	const restored = createConsentKernel({ consentCategories: ['necessary'] });
 	const reader = createPersistence({ kernel: restored });
-	expect(restored.getSnapshot().subject?.subjectId).toBe('canonical');
+	expect(restored.getSnapshot().subject?.subjectId).toBe(
+		'0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c'
+	);
 	expect(restored.getSnapshot().explicitChoice).toBeNull();
 	reader.dispose();
 	restored.dispose();
@@ -288,8 +318,13 @@ test.each([undefined, 'custom-consent'])(
 		const storageConfig = { storageKey };
 		const kernel = createConsentKernel({
 			consentCategories: ['necessary'],
+			initialRecords: { subject: { subjectId: 'sub_2VZxR7YmNpKq3WfLs8TgHd' } },
 			transport: {
-				save: () => Promise.resolve({ ok: true, subjectId: 'cookie-visitor' }),
+				save: () =>
+					Promise.resolve({
+						ok: true,
+						subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b3c',
+					}),
 			},
 		});
 		const handle = createPersistence({ kernel, storageConfig });
@@ -304,11 +339,15 @@ test.each([undefined, 'custom-consent'])(
 			storageConfig,
 			Date.now()
 		);
-		expect(stored.subject?.subjectId).toBe('cookie-visitor');
+		expect(stored.subject?.subjectId).toBe(
+			'0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b3c'
+		);
 		expect(stored.choice).toBeNull();
 		const restored = createConsentKernel({ consentCategories: ['necessary'] });
 		const reader = createPersistence({ kernel: restored, storageConfig });
-		expect(restored.getSnapshot().subject?.subjectId).toBe('cookie-visitor');
+		expect(restored.getSnapshot().subject?.subjectId).toBe(
+			'0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b3c'
+		);
 		reader.clear();
 		// Nothing stored names the visitor after the clear.
 		const cleared = readStoredRecordsFromCookieHeader(
@@ -317,7 +356,9 @@ test.each([undefined, 'custom-consent'])(
 			Date.now()
 		);
 		expect(cleared.subject).toBeNull();
-		expect(document.cookie).not.toContain('cookie-visitor');
+		expect(document.cookie).not.toContain(
+			'0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b3c'
+		);
 		expect(cleared.noticeDismissal).toBeNull();
 		expect(
 			getRawCookieValue(`${resolveStorageKeys(storageConfig).notice}-subject`)
@@ -546,8 +587,13 @@ test.each([undefined, { storageKey: 'custom-consent' }])(
 	async (storageConfig) => {
 		const kernel = createConsentKernel({
 			consentCategories: ['necessary'],
+			initialRecords: { subject: { subjectId: 'sub_2VZxR7YmNpKq3WfLs8TgHd' } },
 			transport: {
-				save: () => Promise.resolve({ ok: true, subjectId: 'visitor' }),
+				save: () =>
+					Promise.resolve({
+						ok: true,
+						subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b4c',
+					}),
 			},
 		});
 		const handle = createPersistence({ kernel, storageConfig });
@@ -569,7 +615,9 @@ test.each([undefined, { storageKey: 'custom-consent' }])(
 		kernel.dispose();
 		const restored = createConsentKernel({ consentCategories: ['necessary'] });
 		const reader = createPersistence({ kernel: restored, storageConfig });
-		expect(restored.getSnapshot().subject?.subjectId).toBe('visitor');
+		expect(restored.getSnapshot().subject?.subjectId).toBe(
+			'0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b4c'
+		);
 		expect(restored.getSnapshot().explicitChoice).toBeNull();
 		reader.clear();
 		reader.dispose();
@@ -661,6 +709,7 @@ test.each(['notice-subject', 'all'] as const)(
 		}>();
 		const kernel = createConsentKernel({
 			consentCategories: ['necessary'],
+			initialRecords: { subject: { subjectId: 'sub_2VZxR7YmNpKq3WfLs8TgHd' } },
 			transport: { save: () => response.promise },
 		});
 		const handle = createPersistence({ kernel });
@@ -683,7 +732,10 @@ test.each(['notice-subject', 'all'] as const)(
 				}
 			});
 		try {
-			response.resolve({ ok: true, subjectId: 'canonical' });
+			response.resolve({
+				ok: true,
+				subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+			});
 			await saving;
 			await vi.runOnlyPendingTimersAsync();
 		} finally {
@@ -712,7 +764,9 @@ test.each(['notice-subject', 'all'] as const)(
 			kernel: seeded,
 			skipHydration: true,
 		});
-		expect(seeded.getSnapshot().subject?.subjectId).toBe('canonical');
+		expect(seeded.getSnapshot().subject?.subjectId).toBe(
+			'0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c'
+		);
 		expect(seeded.getSnapshot().explicitChoice).toBeNull();
 		expect(localStorage.getItem(legacySubjectIdKey(undefined))).toBeNull();
 		expect(getRawCookieValue(legacySubjectIdKey(undefined))).toBeNull();
@@ -721,7 +775,9 @@ test.each(['notice-subject', 'all'] as const)(
 
 		const restored = createConsentKernel({ consentCategories: ['necessary'] });
 		const reader = createPersistence({ kernel: restored });
-		expect(restored.getSnapshot().subject?.subjectId).toBe('canonical');
+		expect(restored.getSnapshot().subject?.subjectId).toBe(
+			'0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c'
+		);
 		expect(restored.getSnapshot().explicitChoice).toBeNull();
 		expect(restored.getSnapshot().effectivePermissions.measurement).toBe(false);
 		reader.dispose();
@@ -1524,9 +1580,7 @@ test.each([
 		const { subject: before } = tab.getSnapshot();
 		expect(before?.externalId).toBe('account-c');
 		// The receipt is the only record: no acknowledgement, no vendors.
-		expect(Object.keys(localStorage).sort()).toEqual(
-			[GIVEN_AT_STORAGE_KEY, keys.consent].sort()
-		);
+		expect(Object.keys(localStorage).sort()).toEqual([keys.consent].sort());
 
 		localStorage.removeItem(keys.consent);
 		document.cookie = `${keys.consent}=; max-age=0; path=/`;
@@ -1589,7 +1643,9 @@ test.each(['removed', 'written again without a subject'] as const)(
 		);
 		const id = first.getSnapshot().subject?.subjectId as string;
 		const notice = readStoredNoticeDismissal(undefined, Date.now());
-		expect(notice?.ok && notice.record.subject).toEqual({ subjectId: id });
+		expect(notice?.ok && notice.record.subject).toEqual({
+			subjectId: id,
+		});
 		firstHandle.dispose();
 		first.dispose();
 

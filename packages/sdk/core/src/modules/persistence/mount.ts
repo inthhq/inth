@@ -172,9 +172,6 @@ export const mountPersistence = function mountPersistence(
 	let disposed = false;
 	const keys = resolveStorageKeys(storageConfig);
 	const consentKey = keys.consent;
-	if (browser) {
-		kernel.keepSaveDates();
-	}
 
 	let writer: PersistenceWriter | undefined;
 	// The read memory last matched, for the writer to start from, and
@@ -349,7 +346,27 @@ export const mountPersistence = function mountPersistence(
 		}
 	};
 
+	let acceptedGivenAt = kernel.getSnapshot().subjectDates?.acceptedGivenAt;
 	const unsubscribers = [
+		// The subject's accepted time lives with the visitor's main record: a
+		// save's answer rewrites it, and the outbox lands that write before
+		// the save leaves the queue. A notice acknowledgement keeps the
+		// subject it was made under.
+		kernel.subscribe((snapshot) => {
+			const at = snapshot.subjectDates?.acceptedGivenAt;
+			if (at === acceptedGivenAt) {
+				return;
+			}
+			acceptedGivenAt = at;
+			if (snapshot.explicitChoice) {
+				request('choice');
+			} else if (snapshot.vendorChoice) {
+				request('vendors');
+			} else if (snapshot.noticeDismissal) {
+				request('notice');
+			}
+		}),
+		kernel.flushRecordsWith(() => landedWriter()?.flush()),
 		kernel.events.on('command:save:started', () => {
 			saving = true;
 			state.subjectBeforeSave = kernel.getSnapshot().subject?.subjectId;

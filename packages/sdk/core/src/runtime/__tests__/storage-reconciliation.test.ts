@@ -292,6 +292,8 @@ test.each([
 			{},
 			createTransport({ save: vi.fn(() => response.promise) })
 		);
+		// A c15t visitor: the backend answers the UUID of its `sub_` ID.
+		active.kernel.set.subjectId('sub_2VZxR7YmNpKq3WfLs8TgHd');
 		void active.kernel.commands.save('all');
 		await nextTask();
 		await nextTask();
@@ -301,9 +303,14 @@ test.each([
 		await nextTask();
 
 		// The slow save response resolves the subject and queues a rewrite.
-		response.resolve({ ok: true, subjectId: 'sub_server' });
+		response.resolve({
+			ok: true,
+			subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b5c',
+		});
 		await vi.waitFor(() => {
-			expect(active.kernel.getSnapshot().subject?.subjectId).toBe('sub_server');
+			expect(active.kernel.getSnapshot().subject?.subjectId).toBe(
+				'0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b5c'
+			);
 		});
 		await nextTask();
 
@@ -679,6 +686,15 @@ test('a late subject acknowledgement does not replace a subject another runtime 
 		},
 	];
 	const response = Promise.withResolvers<{ ok: true; subjectId: string }>();
+	// A c15t visitor: the backend answers the UUID of its `sub_` ID.
+	writeStoredConsentEnvelope(
+		{
+			categories: {},
+			subject: { subjectId: 'sub_2VZxR7YmNpKq3WfLs8TgHd' },
+			version: 3,
+		},
+		{ now: Date.now() }
+	);
 	const late = start(
 		{ vendors },
 		createTransport({ save: vi.fn(() => response.promise) })
@@ -699,10 +715,13 @@ test('a late subject acknowledgement does not replace a subject another runtime 
 	await nextTask();
 	await nextTask();
 
-	response.resolve({ ok: true, subjectId: 'sub_late_server' });
+	response.resolve({
+		ok: true,
+		subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b7c',
+	});
 	await vi.waitFor(() => {
 		expect(late.kernel.getSnapshot().subject?.subjectId).toBe(
-			'sub_late_server'
+			'0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b7c'
 		);
 	});
 	await nextTask();

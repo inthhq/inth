@@ -53,6 +53,7 @@ import {
 	storageKeyFamilies,
 } from '../../libs/storage-keys';
 import type { StorageKeyFamily } from '../../libs/storage-keys';
+import type { SubjectDates } from '../../types';
 import {
 	choiceSinceEpoch,
 	noticeSinceEpoch,
@@ -127,6 +128,8 @@ export interface DecodedStoredConsent {
 	format: StoredRecordFormat;
 	choice: ExplicitChoice;
 	subject: ConsentSubject | null;
+	/** The subject's times the envelope carries, `null` for none. */
+	subjectDates: SubjectDates | null;
 	iab: StoredIabMetadata | null;
 	/** Clear epoch the record was written under; `0` for legacy records. */
 	epoch: number;
@@ -465,6 +468,7 @@ const decodeLegacyRecord = function decodeLegacyRecord(
 			format: 'legacy-v2',
 			iab: iab ?? null,
 			subject: normalized.subject,
+			subjectDates: null,
 		},
 	};
 };
@@ -484,6 +488,15 @@ const decodeEnvelope = function decodeEnvelope(
 			format: 'v3',
 			iab: record.iab ?? null,
 			subject: record.subject ?? null,
+			subjectDates:
+				record.acceptedGivenAt === undefined && record.datedAt === undefined
+					? null
+					: {
+							...(record.acceptedGivenAt !== undefined && {
+								acceptedGivenAt: record.acceptedGivenAt,
+							}),
+							...(record.datedAt !== undefined && { datedAt: record.datedAt }),
+						},
 		},
 	};
 };

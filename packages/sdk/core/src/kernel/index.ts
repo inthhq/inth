@@ -121,7 +121,6 @@ export const createKernel = function createKernel(
 	});
 	const records = createRecordsBoundary({
 		adoptSubject: outbox.adoptSubject,
-		forgetDates: outbox.forgetDates,
 		runtime,
 		start: lifecycle.start,
 		transport,
@@ -166,13 +165,13 @@ export const createKernel = function createKernel(
 			emit: eventBus.emit,
 			on: eventBus.on,
 		},
+		flushRecordsWith: outbox.flushWith,
 		getProvisionalSubject: records.getProvisionalSubject,
 		getRecordsGeneration: runtime.getGeneration,
 		getServerSnapshot: () => serverSnapshot,
 		getSnapshot: runtime.getSnapshot,
 		holdSaves: outbox.hold,
 		hydrate: records.hydrate,
-		keepSaveDates: outbox.keepDates,
 		markLive: runtime.markLive,
 		markProvisionalSubject: records.markProvisionalSubject,
 		refresh: lifecycle.refresh,

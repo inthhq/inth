@@ -794,6 +794,10 @@ export const selectReconciledRecords = function selectReconciledRecords(
 	}
 
 	applyVoided(records, view, snapshot);
+	// The stored times are what the receipts read back are checked against.
+	if (Object.keys(records).length > 0 && stored.subjectDates) {
+		records.subjectDates = stored.subjectDates;
+	}
 
 	return {
 		records: Object.keys(records).length > 0 ? { ...records, now } : null,

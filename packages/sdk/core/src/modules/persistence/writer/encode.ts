@@ -118,6 +118,11 @@ export const encodeStoredConsentEnvelopeJson =
 		if (envelope.epoch) {
 			ordered.epoch = envelope.epoch;
 		}
+		for (const key of ['acceptedGivenAt', 'datedAt'] as const) {
+			if (envelope[key] !== undefined) {
+				ordered[key] = envelope[key];
+			}
+		}
 		ordered.categories = categories;
 		if (envelope.iab) {
 			ordered.iab = envelope.iab;
@@ -157,6 +162,8 @@ const encodeBooleanMap = function encodeBooleanMap(
  * eid=<uri-encoded externalId>         (optional)
  * idp=<uri-encoded identityProvider>   (optional)
  * e=<clear epoch>                      (optional, only after a clear)
+ * agt=<accepted givenAt>               (optional)
+ * dat=<latest dated time>              (optional, only when after the clock)
  * b=<basis>|<basis>                    (when any category is present)
  * fn=<0|1>.<confirmedAt>.<basisIndex>  (per present category: fn ex me mk)
  * icv=<0|1>.<uri-encoded vendorId>|... (optional)
@@ -177,6 +184,12 @@ export const encodeStoredConsentEnvelopeCompact =
 		const fields = [field('v', 3), ...subjectFields(envelope.subject)];
 		if (envelope.epoch) {
 			fields.push(field('e', envelope.epoch));
+		}
+		if (envelope.acceptedGivenAt !== undefined) {
+			fields.push(field('agt', envelope.acceptedGivenAt));
+		}
+		if (envelope.datedAt !== undefined) {
+			fields.push(field('dat', envelope.datedAt));
 		}
 
 		const bases: string[] = [];

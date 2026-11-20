@@ -27,6 +27,7 @@ import type {
 	SaveInput,
 	SavePayload,
 	SaveUISource,
+	SubjectDates,
 } from '../types';
 import type { SnapshotPatch } from './next-snapshot';
 
@@ -146,6 +147,22 @@ export const saveSubject = function saveSubject(
 	return subject;
 };
 
+/**
+ * The subject's times after an action dated `actionAt`, or `undefined` when
+ * they do not change: only a choice dated after the device clock is kept,
+ * as the ceiling its stored records are checked against.
+ */
+export const datedSubjectDates = function datedSubjectDates(
+	snapshot: ConsentSnapshot,
+	actionAt: number,
+	now: number
+): SubjectDates | undefined {
+	if (actionAt <= now || (snapshot.subjectDates?.datedAt ?? -1) >= actionAt) {
+		return undefined;
+	}
+	return { ...snapshot.subjectDates, datedAt: actionAt };
+};
+
 /** Capture the action’s policy evidence before init or navigation changes it. */
 export const saveDecisionInputs = (
 	snapshot: ConsentSnapshot
@@ -229,40 +246,7 @@ export interface SavePayloadInput {
 	timing: Pick<SavePayload, 'experiment' | 'timeToDecisionMs'>;
 	/** The vendor choice the save carries, if any. */
 	vendorChoice?: SavePayload['vendorChoice'];
-	/**
-	 * Dates the save: the later of `time` and one millisecond after the
-	 * subject's floor.
-	 */
-	date: (time: number) => number;
 }
-
-/**
- * `choice` with every receipt later than `givenAt` dated `givenAt`. A
- * receipt from a device clock that ran ahead would otherwise date the save
- * after `givenAt`, which the backend refuses.
- */
-const receiptsUntil = function receiptsUntil(
-	choice: ExplicitChoice,
-	givenAt: number
-): ExplicitChoice {
-	const entries = Object.entries(choice.categories);
-	if (
-		entries.every(([, receipt]) => !receipt || receipt.confirmedAt <= givenAt)
-	) {
-		return choice;
-	}
-	return {
-		...choice,
-		categories: Object.fromEntries(
-			entries.map(([category, receipt]) => [
-				category,
-				receipt && receipt.confirmedAt > givenAt
-					? { ...receipt, confirmedAt: givenAt }
-					: receipt,
-			])
-		),
-	};
-};
 
 /**
  * The payload one recorded action sends, built once so a queued replay
@@ -289,15 +273,14 @@ export const buildSavePayload = function buildSavePayload(
 			confirmedCategories[category as OptionalConsentCategory] = decision.value;
 		}
 	}
-	const givenAt = input.date(input.actionAt);
 	const { vendorChoice } = input;
 	return {
-		choice: receiptsUntil(input.choice, givenAt),
+		choice: input.choice,
 		confirmed: { actionAt: input.actionAt, categories: confirmedCategories },
 		consentAction: input.consentAction,
 		consents: after.effectivePermissions,
 		...saveDecisionInputs(after),
-		givenAt,
+		givenAt: input.actionAt,
 		idempotencyKey: createIdempotencyKey(),
 		model: after.model,
 		overrides: after.overrides,
@@ -307,12 +290,7 @@ export const buildSavePayload = function buildSavePayload(
 		tcString: after.iab?.tcString ?? null,
 		uiSource: input.uiSource,
 		user: after.user,
-		...(vendorChoice && {
-			vendorChoice: {
-				...vendorChoice,
-				confirmedAt: Math.min(vendorChoice.confirmedAt, givenAt),
-			},
-		}),
+		...(vendorChoice && { vendorChoice }),
 		...input.timing,
 	};
 };

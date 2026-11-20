@@ -158,10 +158,16 @@ describe('vendor persistence', () => {
 			initialPolicyResolution: matchedResolution(
 				optInRule({ categories: ['marketing'] })
 			),
+			initialRecords: { subject: { subjectId: 'sub_2VZxR7YmNpKq3WfLs8TgHd' } },
 			initialVendors: vendors,
 			now: NOW,
 			transport: {
-				save: () => Promise.resolve({ ok: true, subjectId: 'sub_srv' }),
+				// The UUID of the visitor's `sub_` ID.
+				save: () =>
+					Promise.resolve({
+						ok: true,
+						subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b6c',
+					}),
 			},
 		});
 		const persistence = createPersistence({
@@ -175,7 +181,9 @@ describe('vendor persistence', () => {
 		await vi.runAllTimersAsync();
 		await saved;
 		await vi.runAllTimersAsync();
-		expect(kernel.getSnapshot().subject?.subjectId).toBe('sub_srv');
+		expect(kernel.getSnapshot().subject?.subjectId).toBe(
+			'0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b6c'
+		);
 		expect(readStoredVendorChoice(undefined, NOW)).toMatchObject({
 			ok: true,
 			record: { denied: ['meta-pixel'] },

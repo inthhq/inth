@@ -463,7 +463,10 @@ test.each([
 test.each(['can be read', 'cannot be read'] as const)(
 	'a tab keeps an ID the server resolved over a rename at the same time when cookies %s',
 	async (cookies) => {
-		const first = createConsentKernel({ consentCategories: ['necessary'] });
+		const first = createConsentKernel({
+			consentCategories: ['necessary'],
+			initialRecords: { subject: { subjectId: 'sub_2VZxR7YmNpKq3WfLs8TgHd' } },
+		});
 		disposers.push(() => first.dispose());
 		const firstHandle = createPersistence({ kernel: first });
 		await settleAll(first.commands.save('none'));
@@ -476,14 +479,21 @@ test.each(['can be read', 'cannot be read'] as const)(
 
 		const tab = createConsentKernel({
 			consentCategories: ['necessary'],
+			initialRecords: { subject: { subjectId: 'sub_2VZxR7YmNpKq3WfLs8TgHd' } },
 			transport: {
-				save: () => Promise.resolve({ ok: true, subjectId: 'sub_server' }),
+				save: () =>
+					Promise.resolve({
+						ok: true,
+						subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b5c',
+					}),
 			},
 		});
 		disposers.push(() => tab.dispose());
 		disposers.push(persist(tab).dispose);
 		await settleAll(tab.commands.save('none'));
-		expect(tab.getSnapshot().subject?.subjectId).toBe('sub_server');
+		expect(tab.getSnapshot().subject?.subjectId).toBe(
+			'0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b5c'
+		);
 		const acknowledged = tab.getSnapshot().noticeDismissal;
 
 		const other = createConsentKernel({ consentCategories: ['necessary'] });
@@ -495,7 +505,9 @@ test.each(['can be read', 'cannot be read'] as const)(
 		window.dispatchEvent(new StorageEvent('storage', { key: 'inth-notice' }));
 		window.dispatchEvent(new Event('focus'));
 		await settleAll();
-		expect(tab.getSnapshot().subject?.subjectId).toBe('sub_server');
+		expect(tab.getSnapshot().subject?.subjectId).toBe(
+			'0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b5c'
+		);
 		expect(tab.getSnapshot().noticeDismissal).toEqual(acknowledged);
 	}
 );
