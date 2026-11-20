@@ -1,7 +1,7 @@
 /** Shared manifest HTTP cache. Does not load translations or resolve policy. */
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 
-import { V1_ROUTES } from '../transports/v1/routes';
+import { V1_ROUTES } from '../transports/v1/paths';
 import { boundedSet, mapFor } from './bounded-map';
 import {
 	forbidsReuse,

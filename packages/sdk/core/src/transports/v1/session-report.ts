@@ -21,7 +21,8 @@ import {
 	resolveSessionReportProjectUrl,
 } from '../../libs/session-report';
 import type { SessionReportHeaders } from '../../libs/session-report';
-import { toProperty, V1_ROUTES } from './routes';
+import { V1_ROUTES } from './paths';
+import { toProperty } from './routes';
 
 /** How long a report may take before it is abandoned. */
 const REPORT_TIMEOUT_MS = 3000;

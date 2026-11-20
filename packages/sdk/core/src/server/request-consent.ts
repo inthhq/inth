@@ -85,7 +85,7 @@ import {
 } from '../transports/init-output';
 import { createOfflineTransport } from '../transports/offline';
 import type { OfflineTransportOptions } from '../transports/offline';
-import { V1_ROUTES } from '../transports/v1/routes';
+import { V1_ROUTES } from '../transports/v1/paths';
 import type { KernelConfig } from '../types';
 import {
 	CONSENT_PROXY_FORWARDING_HEADERS,

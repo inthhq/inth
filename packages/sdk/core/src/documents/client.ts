@@ -25,15 +25,14 @@ import type {
 } from '@inth/sdk-schema/types';
 
 import { readApiError } from '../transports/v1/error';
+import { trimTrailingSlash, V1_ROUTES } from '../transports/v1/paths';
 import {
 	currentDocumentPath,
 	isUuidV7,
 	readJson,
 	resolveV1Fetch,
 	toProperty,
-	trimTrailingSlash,
 	V1_JSON_HEADERS,
-	V1_ROUTES,
 } from '../transports/v1/routes';
 
 const LABEL = 'Inth documents';

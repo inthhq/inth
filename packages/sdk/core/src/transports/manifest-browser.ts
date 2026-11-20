@@ -45,7 +45,7 @@ import type {
 	ProviderTransportFactory,
 } from './mode';
 import { createV1HostedTransport } from './v1/hosted';
-import { V1_ROUTES } from './v1/routes';
+import { V1_ROUTES } from './v1/paths';
 
 /** Options for {@link manifest} and {@link createBrowserManifestTransport}. */
 export type BrowserManifestOptions = ManifestModeBaseOptions &

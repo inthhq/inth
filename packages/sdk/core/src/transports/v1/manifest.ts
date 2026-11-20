@@ -36,9 +36,10 @@ import { fetchCachedGvl } from '../gvl-cache';
 import { mapInitOutputToInitResponse } from '../init-output';
 import type { TransportInitResponse } from '../init-output';
 import { readApiError } from './error';
+import { trimTrailingSlash, V1_ROUTES } from './paths';
 import { createV1RecordTransport } from './records';
 import type { V1RecordTransport, V1RecordTransportOptions } from './records';
-import { resolveV1Fetch, trimTrailingSlash, V1_ROUTES } from './routes';
+import { resolveV1Fetch } from './routes';
 import {
 	reportV1ConsentSession,
 	sendsV1ConsentSessionReport,

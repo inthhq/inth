@@ -27,7 +27,7 @@ import type { ConsentMode } from './modes';
 import { buildSnapshotSkipReason } from './server/server-mode';
 import { loadStaticManifest } from './server/static-manifest';
 import { manifestNeedsLocation } from './transports/manifest-browser-location';
-import { V1_ROUTES } from './transports/v1/routes';
+import { V1_ROUTES } from './transports/v1/paths';
 
 export type { ConsentManifest } from '@inth/sdk-schema/types';
 export { createDialogChunkPlugin } from './build-dialog-chunk';

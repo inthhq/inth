@@ -34,7 +34,7 @@ import type { ConsentManifest, PolicyRule } from '@inth/sdk-schema/types';
 
 import type { ConsentMode, TestingMode } from '../modes';
 import { assertNotProduction } from '../transports/testing';
-import { V1_ROUTES } from '../transports/v1/routes';
+import { V1_ROUTES } from '../transports/v1/paths';
 import type { ConsentRouteHandlerOptions } from './consent-route';
 import type { ResolveRequestConsentOptions } from './request-consent';
 import { DEFAULT_CONSENT_ROUTE_PREFIX } from './shared';

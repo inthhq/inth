@@ -9,7 +9,7 @@ import {
 import type { InitOutput } from '@inth/sdk-schema/types';
 
 import type { SSRInitialData } from '../../options/ssr';
-import { V1_ROUTES } from '../../transports/v1/routes';
+import { V1_ROUTES } from '../../transports/v1/paths';
 import type { InitContext, KernelJourney } from '../../types';
 import {
 	claimEarlyExperimentArm,

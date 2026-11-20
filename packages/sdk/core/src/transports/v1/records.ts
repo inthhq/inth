@@ -18,6 +18,7 @@ import type {
 import { buildDecisionAssertion } from '../decision-inputs';
 import type { RememberedDecisionInputs } from '../decision-inputs';
 import { readApiError } from './error';
+import { trimTrailingSlash, V1_ROUTES } from './paths';
 import { buildV1ConsentRecordBody } from './records-body';
 import {
 	isUuidV7,
@@ -25,9 +26,7 @@ import {
 	resolveProperty,
 	resolveV1Fetch,
 	subjectLinkPath,
-	trimTrailingSlash,
 	V1_JSON_HEADERS,
-	V1_ROUTES,
 } from './routes';
 import { readSaveFailure } from './save-rejected';
 

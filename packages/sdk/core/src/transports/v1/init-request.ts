@@ -13,7 +13,7 @@ import {
 	DEFAULT_INIT_CREDENTIALS,
 } from '../../libs/request-context-headers';
 import type { InitContext } from '../../types';
-import { trimTrailingSlash, V1_ROUTES } from './routes';
+import { trimTrailingSlash, V1_ROUTES } from './paths';
 
 export interface V1InitRequest {
 	url: string;

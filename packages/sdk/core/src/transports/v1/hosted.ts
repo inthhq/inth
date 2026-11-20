@@ -23,9 +23,10 @@ import { mapInitOutputToInitResponse } from '../init-output';
 import type { TransportInitResponse } from '../init-output';
 import { readApiError } from './error';
 import { createV1InitRequest } from './init-request';
+import { trimTrailingSlash, V1_ROUTES } from './paths';
 import { createV1RecordTransport } from './records';
 import type { V1RecordTransport, V1RecordTransportOptions } from './records';
-import { resolveV1Fetch, trimTrailingSlash, V1_ROUTES } from './routes';
+import { resolveV1Fetch } from './routes';
 
 /** Options for {@link createV1HostedTransport}. */
 export interface V1HostedTransportOptions extends V1RecordTransportOptions {

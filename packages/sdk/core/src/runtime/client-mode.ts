@@ -38,8 +38,8 @@ import type {
 import type * as TestingTransportModule from '../transports/testing';
 import type * as HostedModule from '../transports/v1/hosted';
 import { createV1InitRequest } from '../transports/v1/init-request';
+import { V1_ROUTES } from '../transports/v1/paths';
 import { createV1RecordTransport } from '../transports/v1/records';
-import { V1_ROUTES } from '../transports/v1/routes';
 import type { InitContext, KernelConfig, KernelTransport } from '../types';
 
 /** Where a client root's transport sends requests. */

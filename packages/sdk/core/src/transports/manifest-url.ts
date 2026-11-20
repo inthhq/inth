@@ -1,5 +1,5 @@
 import { trimSlash } from '../libs/url';
-import { V1_ROUTES } from './v1/routes';
+import { V1_ROUTES } from './v1/paths';
 
 /** The backend's manifest route, then a same-origin consent route's. */
 const MANIFEST_PATHS = [V1_ROUTES.manifest, '/manifest'] as const;

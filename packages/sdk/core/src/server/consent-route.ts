@@ -78,7 +78,7 @@ import {
 	getResolverInputsFromHeaders,
 	resolveManifestInit,
 } from '../transports/manifest-cache';
-import { V1_ROUTES } from '../transports/v1/routes';
+import { V1_ROUTES } from '../transports/v1/paths';
 import { reportV1ConsentSession } from '../transports/v1/session-report';
 import {
 	CONSENT_PROXY_FORWARDING_HEADERS,
