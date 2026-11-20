@@ -195,8 +195,8 @@ const refusal = v.object({
 	error: v.optional(
 		v.fallback(
 			v.object({
-				code: v.optional(v.string()),
-				message: v.optional(v.string()),
+				code: v.fallback(v.optional(v.string()), undefined),
+				message: v.fallback(v.optional(v.string()), undefined),
 			}),
 			{}
 		)
@@ -513,7 +513,7 @@ const settledBeforeBody = (
 		return {
 			error: new InthError(
 				'unexpected_response',
-				`The API redirected this request${location ? ` to ${location}` : ''}. Pass the address it ends at as \`baseUrl\``,
+				`The API redirected this request${location ? ` to ${location}` : ''}, which the client does not follow so the key goes nowhere else. Check the project URL in the Dashboard`,
 				details
 			),
 			final: true,
@@ -543,6 +543,27 @@ const settledBeforeBody = (
 	return undefined;
 };
 
+/**
+ * `value` as one path segment, or `undefined` for a string no URL can carry,
+ * such as one with a lone UTF-16 surrogate, which `encodeURIComponent` throws on
+ */
+const segment = (value: string): string | undefined => {
+	try {
+		return encodeURIComponent(value);
+	} catch {
+		return undefined;
+	}
+};
+
+/** The refusal for a path parameter `segment` cannot encode */
+const unusableSegment = (name: string): InthResult<never> =>
+	failed(
+		new InthError(
+			'invalid_request',
+			`\`${name}\` holds a character no URL can carry`
+		)
+	);
+
 const wait = (milliseconds: number, signal: AbortSignal | undefined) =>
 	new Promise<void>((resolve) => {
 		// Removed on both paths: a caller may share one signal across every
@@ -569,11 +590,10 @@ type Send = <Schema extends v.GenericSchema>(
 		/** A route that needs no key, which is not sent */
 		readonly keyless?: true;
 		/**
-		 * A write a late second try could undo, such as a publish arriving
-		 * after a newer one. Tried again only when the API refused it unread,
-		 * with a 429, never after a failure that may have left it stored
+		 * Tried once, never again: a write a late second try could undo, such
+		 * as a publish arriving after a newer one made since
 		 */
-		readonly retryOnlyUnread?: true;
+		readonly once?: true;
 	},
 	options: InthRequestOptions | undefined
 ) => Promise<InthResult<v.InferOutput<Schema>>>;
@@ -663,6 +683,10 @@ class Users {
 		params: IdentifyParams,
 		options?: InthRequestOptions
 	): Promise<InthResult<InthLink>> {
+		const subject = segment(params.subjectId);
+		if (subject === undefined) {
+			return unusableSegment('subjectId');
+		}
 		return await this.#send(
 			linkAnswer,
 			{
@@ -671,7 +695,7 @@ class Users {
 					identityProvider: params.provider,
 				}),
 				method: 'POST',
-				path: `/v1/subjects/${encodeURIComponent(params.subjectId)}/link`,
+				path: `/v1/subjects/${subject}/link`,
 			},
 			options
 		);
@@ -909,13 +933,17 @@ class Documents {
 			requiresAcceptance: params.requiresAcceptance,
 			version: params.version,
 		};
+		const type = segment(params.type);
+		if (type === undefined) {
+			return unusableSegment('type');
+		}
 		const answer = await this.#send(
 			publishedAnswer,
 			{
 				body: JSON.stringify(body),
 				method: 'PUT',
-				path: `/v1/documents/${encodeURIComponent(params.type)}/current`,
-				retryOnlyUnread: true,
+				once: true,
+				path: `/v1/documents/${type}/current`,
 			},
 			options
 		);
@@ -934,12 +962,16 @@ class Documents {
 		params: CurrentDocumentParams,
 		options?: InthRequestOptions
 	): Promise<InthResult<InthCurrentDocument>> {
+		const type = segment(params.type);
+		if (type === undefined) {
+			return unusableSegment('type');
+		}
 		return await this.#send(
 			currentAnswer,
 			{
 				keyless: true,
 				method: 'GET',
-				path: `/v1/documents/${encodeURIComponent(params.type)}/current`,
+				path: `/v1/documents/${type}/current`,
 			},
 			options
 		);
@@ -969,13 +1001,18 @@ class Documents {
 			hash,
 			type,
 		}));
-		// All are recorded or none are, so a success must name each one sent:
-		// checked as the answer is read, so a failure keeps its request id
+		// All are recorded or none are, so a success must name each release
+		// sent, by type and hash: checked as the answer is read, so a failure
+		// keeps its request id
 		const recordedAll = v.pipe(
 			acceptedAnswer,
 			v.check(({ acceptances: recorded }) =>
-				acceptances.every(({ type }) =>
-					recorded.some((accepted) => accepted.type === type)
+				acceptances.every(({ hash, type }) =>
+					recorded.some(
+						(accepted) =>
+							accepted.type === type &&
+							accepted.hash.toLowerCase() === hash.toLowerCase()
+					)
 				)
 			)
 		);
@@ -1197,12 +1234,13 @@ export class Inth {
 		});
 
 		const send: Send = async (schema, request, overrides) => {
-			const { retries, timeout } = limitsFor(overrides);
+			const { retries: asked, timeout } = limitsFor(overrides);
 			const cancelled = overrides?.signal;
-			const badLimits = unusableLimits({ maxRetries: retries, timeout });
+			const badLimits = unusableLimits({ maxRetries: asked, timeout });
 			if (badLimits !== undefined) {
 				return failed(new InthError('invalid_request', badLimits));
 			}
+			const retries = request.once ? 0 : asked;
 			for (let tried = 0; ; tried += 1) {
 				if (cancelled?.aborted) {
 					return failed(new InthError('aborted', 'The call was cancelled'));
@@ -1223,9 +1261,7 @@ export class Inth {
 				if (
 					tried >= retries ||
 					('final' in result && result.final) ||
-					!(request.retryOnlyUnread
-						? result.error.code === 'rate_limited'
-						: RETRIED.has(result.error.code))
+					!RETRIED.has(result.error.code)
 				) {
 					return failed(result.error);
 				}

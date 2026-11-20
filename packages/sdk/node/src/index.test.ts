@@ -334,6 +334,29 @@ describe('a /v1 refusal', () => {
 		);
 	});
 
+	it('keeps the half of a nested refusal it can read', async () => {
+		for (const [error, expected] of [
+			[
+				{ code: 404, message: 'No such document' },
+				{ apiCode: undefined, message: 'No such document' },
+			],
+			[
+				{ code: 'document_unknown', message: 7 },
+				{ apiCode: 'document_unknown', message: 'The API answered 404' },
+			],
+		] as const) {
+			const { inth } = stubbed([
+				() => Response.json({ error, requestId: 'req_1' }, { status: 404 }),
+			]);
+			// oxlint-disable-next-line no-await-in-loop -- One stubbed client at a time
+			const refused = await checkTerms(inth);
+			assert.deepStrictEqual(
+				{ apiCode: refused.error?.apiCode, message: refused.error?.message },
+				expected
+			);
+		}
+	});
+
 	it('takes the request id from the header when there is one', async () => {
 		const { inth } = stubbed([
 			refusedWith(404, 'not_found', { 'x-request-id': 'req_header' }),
@@ -683,7 +706,8 @@ describe('documents', () => {
 			Response.json({
 				acceptances: types.map((type) => ({
 					acceptedAt: 1763467200000,
-					hash: HASH,
+					// The hash each type is sent with below
+					hash: type === 'privacy_policy' ? PRIVACY_HASH : TERMS_HASH,
 					type,
 					version: '2026-11-18',
 				})),
@@ -713,21 +737,17 @@ describe('documents', () => {
 		const publishedOk = () =>
 			Response.json({ document: { ...DOCUMENT, id: 'doc_1' } });
 
-		it('does not try a publish again after a failure that may have stored it', async () => {
-			const { inth, sent } = stubbed([
+		it('never tries a publish again, which a newer one may have followed', async () => {
+			for (const failure of [
 				() => new Response('Gateway Timeout', { status: 504 }),
-				publishedOk,
-			]);
-			const published = await inth.documents.publish(PUBLISH);
-			assert.strictEqual(published.error?.code, 'server_error');
-			assert.strictEqual(sent.length, 1);
-		});
-
-		it('tries a publish again after a 429, which stored nothing', async () => {
-			const { inth, sent } = stubbed([limited, publishedOk]);
-			const published = await inth.documents.publish(PUBLISH);
-			assert.isNull(published.error);
-			assert.strictEqual(sent.length, 2);
+				limited,
+			]) {
+				const { inth, sent } = stubbed([failure, publishedOk]);
+				// oxlint-disable-next-line no-await-in-loop -- One stubbed client at a time
+				const published = await inth.documents.publish(PUBLISH);
+				assert.isNotNull(published.error);
+				assert.strictEqual(sent.length, 1);
+			}
 		});
 	});
 
@@ -857,6 +877,35 @@ describe('documents', () => {
 			},
 			{ code: 'unexpected_response', requestId: 'req_partial', status: 200 }
 		);
+	});
+
+	it('reports a receipt for another release of the type sent', async () => {
+		const { inth } = stubbed([
+			() =>
+				Response.json({
+					acceptances: [
+						{
+							acceptedAt: 1763467200000,
+							hash: `sha256:${'c'.repeat(64)}`,
+							type: 'terms_us',
+							version: '2026-01-01',
+						},
+					],
+					subjectId: UUID,
+				}),
+		]);
+		const accepted = await inth.documents.accept(ACCEPTANCE);
+		assert.strictEqual(accepted.error?.code, 'unexpected_response');
+	});
+
+	it('refuses a subject id no URL can carry, without sending it', async () => {
+		const { inth, sent } = stubbed([checked]);
+		const linked = await inth.users.identify({
+			externalId: 'user_1',
+			subjectId: 'sub_\uD800',
+		});
+		assert.strictEqual(linked.error?.code, 'invalid_request');
+		assert.strictEqual(sent.length, 0);
 	});
 
 	it('records acceptances for a device by its subject id alone', async () => {

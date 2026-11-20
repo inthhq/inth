@@ -291,13 +291,12 @@ a network failure, a timeout, a 408, a 429 or a 5xx. It waits between tries, and
 follows `Retry-After` when the API sends one. A refused request, such as a
 wrong key, is not tried again.
 
-`documents.publish` is tried again only after a 429. After any other failure
-the version may have been stored, and a late second try could make it current
-again after a newer one. Check with `documents.current` before you publish
-again.
+`documents.publish` is never tried again. The version may have been stored
+before the failure, and a late second try could make it current again after
+a newer one. Check with `documents.current` before you publish again.
 
 A redirect is not followed, so the key is never sent to another address. The
-call returns `unexpected_response`; pass the address it ends at as `baseUrl`.
+call returns `unexpected_response`; check the project URL in the Dashboard.
 
 When the API asks for a wait longer than five seconds, the call returns
 `rate_limited` at once instead of trying again too early.
