@@ -13,7 +13,7 @@ afterEach(() => {
 	delete (window as Partial<Window>).dataLayer;
 });
 
-test('Google Consent Mode updates each permission and follows the live GPC signal', async () => {
+test('Google Consent Mode updates each permission and keeps the GPC denial until the visitor opts back in', async () => {
 	const now = Date.now();
 	const transport = createOfflineTransport({
 		acknowledgeNoRecords: true,
@@ -60,10 +60,16 @@ test('Google Consent Mode updates each permission and follows the live GPC signa
 			ad_storage: 'denied',
 			security_storage: 'granted',
 		});
-		// GPC is live-only: once the browser stops sending it, the saved
-		// grant applies again.
+		// The signal recorded an opt-out, so the denial outlasts it.
 		kernel.set.privacySignals({ gpc: false });
-		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		expect(lastUpdate()).toMatchObject({
+			ad_storage: 'denied',
+			security_storage: 'granted',
+		});
+		// Granting the category once the signal is gone lifts the opt-out.
+		await kernel.commands.save({ marketing: true });
+		expect(kernel.getSnapshot().optOut).toBeNull();
 		expect(lastUpdate()).toMatchObject({
 			ad_storage: 'granted',
 			security_storage: 'granted',
