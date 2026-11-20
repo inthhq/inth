@@ -73,6 +73,7 @@ export * from '@inth/react';
 export {
 	DeferredConsentBanner as ConsentBanner,
 	DeferredConsentDialog as ConsentDialog,
+	DeferredOptOutConfirmation as OptOutConfirmation,
 } from '@inth/react/deferred';
 export { consentPrefetchHead } from './libs/prefetch-head';
 export type { InthProviderOptions, InthProviderProps } from './root';

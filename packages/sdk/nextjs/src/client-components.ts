@@ -13,5 +13,6 @@ export { InthProvider } from './root';
 export {
 	DeferredConsentBanner as ConsentBanner,
 	DeferredConsentDialog as ConsentDialog,
+	DeferredOptOutConfirmation as OptOutConfirmation,
 } from '@inth/react/deferred';
 export { ConsentDialogLink } from '@inth/react/components/consent-dialog-link';

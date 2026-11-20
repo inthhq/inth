@@ -9,6 +9,7 @@
 
 // oxlint-disable-next-line oxc/no-barrel-file -- The subpath's public interface.
 export { DeferredConsentBanner, DeferredConsentDialog } from './surfaces';
+export { DeferredOptOutConfirmation } from './opt-out-confirmation';
 export type { ConsentBoot, RootEngineInputs } from './boot';
 export type { DeferredCommitConfig, DeferredCommitted } from './committed';
 export {

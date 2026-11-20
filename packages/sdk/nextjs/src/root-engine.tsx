@@ -44,7 +44,11 @@ import type { ConsentClientOptions, ConsentState } from './types';
 
 // The stock surfaces a deferred root renders come from this chunk, so
 // they share its modules instead of carrying copies.
-export { ConsentBanner, ConsentDialog } from '@inth/react/deferred/engine';
+export {
+	ConsentBanner,
+	ConsentDialog,
+	OptOutConfirmation,
+} from '@inth/react/deferred/engine';
 
 /**
  * Bundlers replace `process.env.NODE_ENV` at build time, so production

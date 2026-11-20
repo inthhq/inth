@@ -143,7 +143,7 @@ Use individual parts when you need custom ordering or markup:
 
 - `ConsentBanner.AcceptButton`, `ConsentBanner.RejectButton`, `ConsentBanner.CustomizeButton`, and `ConsentBanner.DismissButton` render one action each (`DismissButton` defaults to `common.acknowledge`).
 - `ConsentBanner.Rights` renders recommended preferences links, or nothing when empty. Pass `rights` to override.
-- `ConsentBanner.RightLink` renders one right (`'opt-out'` or `'preferences'`) as an underlined text button with `data-action="right"` and `data-right`. It opens the preference center on click and accepts `asChild` to render your own element, such as an anchor to a dedicated opt-out page.
+- `ConsentBanner.RightLink` renders one right (`'opt-out'` or `'preferences'`) as an underlined text button with `data-action="right"` and `data-right`. Under an `opt-out` policy, activating `right="opt-out"` records the opt-out in one click and opens `OptOutConfirmation`; under other models it opens the preference center. Set `presentation.optOutLink` to `'do-not-sell'`, `'privacy-choices'`, or `'california-privacy-choices'`; the two "Privacy Choices" forms always render with the California Privacy Protection Agency opt-out icon. Pass `asChild` to render your own element, such as an anchor to a dedicated opt-out page.
 
 ```tsx
 <ConsentBanner.Rights>

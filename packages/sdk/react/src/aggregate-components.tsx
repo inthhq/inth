@@ -7,6 +7,10 @@ import {
 	useIdleDialogWarming,
 } from './chunk-warming';
 import type {
+	OptOutConfirmationCompoundComponent,
+	OptOutConfirmationProps,
+} from './components/opt-out-confirmation';
+import type {
 	ConsentDialogCompoundComponent,
 	ConsentDialogProps,
 } from './components/panel';
@@ -18,6 +22,10 @@ import { BANNER_SHEETS } from './components/shared/first-paint-sheets';
 import { preloadSurfaceSheets } from './components/shared/surface-styles';
 import { importDialog } from './deferred/trigger';
 import { useActiveUI } from './hooks';
+import {
+	useHasOptOutConfirmationHost,
+	useOptOutConfirmationOpen,
+} from './hooks/use-opt-out';
 import { createDeferredModule } from './utils/deferred-module';
 
 type AnyComponent = ComponentType<Record<string, unknown>>;
@@ -36,12 +44,20 @@ const dialogModule = createDeferredModule(async () => {
 const widgetModule = createDeferredModule(
 	() => import('./components/preferences')
 );
+const optOutConfirmationModule = createDeferredModule(async () => {
+	void preloadSurfaceSheets(BANNER_SHEETS);
+	return await import('./components/opt-out-confirmation');
+});
 const lazyDialogExport = (name: string) =>
 	dialogModule.component(
 		(module) => (module as Record<string, unknown>)[name] as AnyComponent
 	);
 const lazyWidgetExport = (name: string) =>
 	widgetModule.component(
+		(module) => (module as Record<string, unknown>)[name] as AnyComponent
+	);
+const lazyOptOutConfirmationExport = (name: string) =>
+	optOutConfirmationModule.component(
 		(module) => (module as Record<string, unknown>)[name] as AnyComponent
 	);
 
@@ -54,17 +70,41 @@ const LazyConsentDialogComponent = dialogModule.component(
 const LazyConsentWidgetComponent = widgetModule.component(
 	(module) => module.ConsentWidget
 );
+const LazyOptOutConfirmationComponent = optOutConfirmationModule.component(
+	(module) => module.OptOutConfirmation
+);
 
 const LazyConsentDialog = (props: ConsentDialogProps) => {
 	const activeUI = useActiveUI();
+	const confirmationOpen = useOptOutConfirmationOpen();
+	const hasStandaloneConfirmation = useHasOptOutConfirmationHost();
 	// A shown banner can open the dialog at any moment, whatever renders it.
 	useIdleDialogWarming(activeUI === 'banner');
 	const shouldLoadDialog =
 		props.open === true || activeUI === 'dialog' || Boolean(props.showTrigger);
-	if (!shouldLoadDialog) {
+	if (shouldLoadDialog) {
+		return <LazyConsentDialogComponent {...props} />;
+	}
+	if (confirmationOpen && !hasStandaloneConfirmation) {
+		return (
+			<LazyOptOutConfirmationComponent
+				embedded
+				noStyle={props.noStyle}
+				disableAnimation={props.disableAnimation}
+				scrollLock={props.scrollLock}
+				trapFocus={props.trapFocus}
+			/>
+		);
+	}
+	return null;
+};
+
+const LazyOptOutConfirmation = (props: OptOutConfirmationProps) => {
+	const confirmationOpen = useOptOutConfirmationOpen();
+	if (props.open !== true && !confirmationOpen) {
 		return null;
 	}
-	return <LazyConsentDialogComponent {...props} />;
+	return <LazyOptOutConfirmationComponent {...props} />;
 };
 
 const LazyConsentWidget = (props: ConsentWidgetProps) => (
@@ -134,3 +174,20 @@ export const ConsentWidget = withLazyProperties(
 	],
 	lazyWidgetExport
 ) as ConsentWidgetCompoundComponent;
+
+export const OptOutConfirmation = withLazyProperties(
+	LazyOptOutConfirmation,
+	[
+		'Card',
+		'Description',
+		'DoneButton',
+		'Footer',
+		'Header',
+		'Overlay',
+		'PreferencesLink',
+		'Root',
+		'Status',
+		'Title',
+	],
+	lazyOptOutConfirmationExport
+) as OptOutConfirmationCompoundComponent;

@@ -14,7 +14,7 @@ group: reference
   | `persistPosition` | `boolean` | `true` | Remembers the corner the visitor dragged it to. |
   | `showWhen` | `'always' \| 'after-prompt' \| 'never'` | `'always'` | Controls when the button appears. `after-prompt` waits until no choice or notice is owed. |
   | `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Button size. |
-  | `ariaLabel` | `string` | `'Open privacy settings'` | Accessible name. |
+  | `ariaLabel` | `string` | `'Open privacy settings'` or opt-out link label | Accessible name. Under an opt-out rule with the `opt-out` right, defaults to the resolved opt-out link title and activating the trigger records an opt-out in one click and opens `OptOutConfirmation`. |
   | `noStyle` | `boolean` | `false` | Removes default styling. |
 </section>
 

@@ -877,20 +877,26 @@ const createSession = function createSession<EngineModule>(
 		return false;
 	};
 
+	const routePressed = (pressed: string): void => {
+		if (pressed === 'accept' || pressed === 'reject') {
+			prepare(pressed, true);
+		} else if (pressed === 'opt-out') {
+			start();
+		} else if (pressed === 'customize') {
+			// Once the engine is on its way, it opens the dialog: an
+			// early one's chunks would only share the connection with it.
+			if (commitConfig && !requested) {
+				void loadDialog();
+			} else {
+				// Only the engine opens the dialog.
+				start();
+			}
+		}
+	};
+
 	const routeTap = (pressed?: string): void => {
 		if (pressed !== undefined) {
-			if (pressed === 'accept' || pressed === 'reject') {
-				prepare(pressed, true);
-			} else if (pressed === 'customize') {
-				// Once the engine is on its way, it opens the dialog: an
-				// early one's chunks would only share the connection with it.
-				if (commitConfig && !requested) {
-					void loadDialog();
-				} else {
-					// Only the engine opens the dialog.
-					start();
-				}
-			}
+			routePressed(pressed);
 			return;
 		}
 		const taps = earlyTapQueue()?.taps ?? [];

@@ -133,7 +133,13 @@ export function CompactBanner() {
 - `ConsentBanner.AcceptButton`, `RejectButton`, `CustomizeButton` and
   `DismissButton` render individual actions.
 - `ConsentBanner.Rights` and `ConsentBanner.RightLink` (`right="opt-out"` or
-  `"preferences"`, supports `asChild`) render preference links.
+  `"preferences"`, supports `asChild`) render preference links. Under an
+  `opt-out` policy, activating `right="opt-out"` records the opt-out in one
+  click and opens `OptOutConfirmation`; under other models it opens the
+  preference center. Set `presentation.optOutLink` to `'do-not-sell'`,
+  `'privacy-choices'`, or `'california-privacy-choices'`; the two "Privacy
+  Choices" forms always render with the California Privacy Protection Agency
+  opt-out icon.
 - `useBannerCopy()` returns `title`, `description` and prompt kind for custom
   headers.
 

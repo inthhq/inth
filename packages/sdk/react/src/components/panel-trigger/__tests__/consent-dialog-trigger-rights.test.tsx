@@ -95,7 +95,7 @@ describe('ConsentDialogTriggerToolbar rights-aware action', () => {
 		expect(action.dataset.right).toBe('opt-out');
 	});
 
-	test('the built-in action still opens the preference center', async () => {
+	test('the built-in opt-out action opts out and opens the confirmation view', async () => {
 		// The notice renders as a bottom bar, so keep the toolbar clear of it.
 		renderWithRule(
 			OPT_OUT_NOTICE,
@@ -110,7 +110,7 @@ describe('ConsentDialogTriggerToolbar rights-aware action', () => {
 
 		await vi.waitFor(() => {
 			expect(
-				document.querySelector('[data-testid="consent-dialog-root"]')
+				document.querySelector('[data-testid="opt-out-confirmation-root"]')
 			).toBeInTheDocument();
 		});
 	});

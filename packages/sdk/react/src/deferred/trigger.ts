@@ -130,9 +130,14 @@ export const scheduleDeferredEngine = function scheduleDeferredEngine(
 				if (!routed(event)) {
 					return;
 				}
-				const action = (event.target as Element)
-					.closest('[data-action]')
-					?.getAttribute('data-action');
+				const button = (event.target as Element).closest('[data-action]');
+				let action = button?.getAttribute('data-action');
+				if (action === 'right') {
+					action =
+						button?.getAttribute('data-right') === 'opt-out'
+							? 'opt-out'
+							: 'customize';
+				}
 				if (action) {
 					onTap(action);
 				}

@@ -613,6 +613,13 @@ export const createFrameworkPolicyDriver = ({
 			button.click();
 			await settle();
 		};
+		const openPreferencesFromTrigger = async () => {
+			await click('consent-dialog-trigger');
+			if (kernel.getSnapshot().activeUI !== 'dialog') {
+				await click('opt-out-confirmation-preferences-link');
+			}
+		};
+
 		return {
 			baseline,
 			dispose() {
@@ -647,7 +654,7 @@ export const createFrameworkPolicyDriver = ({
 						) {
 							await click('consent-banner-accept-button');
 						} else {
-							await click('consent-dialog-trigger');
+							await openPreferencesFromTrigger();
 							await click('consent-widget-footer-accept-all-button');
 						}
 						break;
@@ -659,13 +666,13 @@ export const createFrameworkPolicyDriver = ({
 						) {
 							await click('consent-banner-reject-button');
 						} else {
-							await click('consent-dialog-trigger');
+							await openPreferencesFromTrigger();
 							await click('consent-widget-reject-button');
 						}
 						break;
 					case 'save-current':
 						if (kernel.getSnapshot().activeUI !== 'dialog') {
-							await click('consent-dialog-trigger');
+							await openPreferencesFromTrigger();
 						}
 						await click('consent-widget-footer-save-button');
 						break;
@@ -731,11 +738,11 @@ export const createFrameworkPolicyDriver = ({
 						root?.render(tree());
 						break;
 					case 'open-preferences':
-						await click(
-							operation.via === 'trigger'
-								? 'consent-dialog-trigger'
-								: 'consent-dialog-link'
-						);
+						if (operation.via === 'trigger') {
+							await openPreferencesFromTrigger();
+						} else {
+							await click('consent-dialog-link');
+						}
 						// The framework boundary applies the surface change a tick after
 						// the click, later than a fixed settle covers under load.
 						await vi.waitFor(
