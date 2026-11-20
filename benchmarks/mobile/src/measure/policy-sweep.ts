@@ -23,11 +23,10 @@ import { join, resolve } from 'node:path';
 
 import type { HydrationRecords, KernelUser } from '@inth/sdk/engine';
 import {
-	INTH_POLICY_CONTRACT_HEADER,
-	inthProtocolHeaders,
 	createConsentKernel,
 	mapInitOutputToInitResponse,
 } from '@inth/sdk/engine';
+import { POLICY_CONTRACT_VERSION } from '@inth/sdk/schema/types';
 
 import { REPO_ROOT } from './native';
 
@@ -85,9 +84,7 @@ const FIXTURE_DIR = resolve(REPO_ROOT, 'packages', 'native-protocol');
  * because the path is the version, so this is the kernel's own current contract, as
  * the fixture producer uses.
  */
-const POLICY_CONTRACT = Number(
-	inthProtocolHeaders[INTH_POLICY_CONTRACT_HEADER]
-);
+const POLICY_CONTRACT = POLICY_CONTRACT_VERSION;
 
 const median = function median(values: number[]): number {
 	if (values.length === 0) {
