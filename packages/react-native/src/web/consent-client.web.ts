@@ -136,14 +136,14 @@ interface ClientState {
  * `init` alone, so the page still shows the project's policy.
  *
  * @param projectUrl - The project URL.
- * @param domain - The `domain` a save would carry.
+ * @param property - The `property` a save would carry.
  * @returns A transport factory that never writes.
  */
 const dryRunMode = function dryRunMode(
 	projectUrl: string,
-	domain: string | undefined
+	property: string | undefined
 ): ProviderTransportFactory {
-	const transport = createV1HostedTransport({ projectUrl, property: domain });
+	const transport = createV1HostedTransport({ projectUrl, property });
 	const dropping: KernelTransport = {
 		identify: () => Promise.resolve(),
 		init: (context) =>
@@ -384,9 +384,9 @@ export const createWebConsentClient = function createWebConsentClient(
 	const projectUrl = normalizeProjectUrl(options.projectUrl, {
 		relaxed: dryRun,
 	});
-	// The browser engine still names this option `domain`. The native cores
-	// trim and lowercase it, so the same app names one property everywhere.
-	const domain = options.property?.trim().toLowerCase() || undefined;
+	// The native cores trim and lowercase the property, so the same app names
+	// one property everywhere.
+	const property = options.property?.trim().toLowerCase() || undefined;
 
 	const bootstrap: BootstrapPayload = {
 		commitRevision: true,
@@ -423,8 +423,8 @@ export const createWebConsentClient = function createWebConsentClient(
 		mode:
 			dependencies.mode ??
 			(dryRun
-				? dryRunMode(projectUrl, domain)
-				: hosted({ projectUrl, property: domain })),
+				? dryRunMode(projectUrl, property)
+				: hosted({ projectUrl, property })),
 		projectUrl,
 		// A decision input from the first request on, so /init resolves the
 		// policy for a GPC visitor; the kernel derives the signal from it.

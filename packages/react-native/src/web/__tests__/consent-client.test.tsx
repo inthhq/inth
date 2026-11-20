@@ -553,7 +553,7 @@ describe('dryRun on web', () => {
 		expect(saves).not.toHaveLength(0);
 		for (const [, request] of saves) {
 			const body = JSON.parse(String((request as RequestInit).body));
-			expect(body.domain).toBe('com.acme.app');
+			expect(body.property).toBe('com.acme.app');
 		}
 	});
 
