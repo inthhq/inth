@@ -11,7 +11,11 @@
  * `createIdempotencyKey()` and send the same key on every retry of it, so
  * the backend records the action once.
  */
-import { V1_DOCUMENT_TYPE_PATTERN } from '@inth/sdk-schema/types';
+import {
+	V1_DOCUMENT_TYPE_PATTERN,
+	V1_MAX_ACCEPTANCES,
+	V1_UUID_PATTERN,
+} from '@inth/sdk-schema/types';
 import type {
 	V1DocumentAcceptanceItem,
 	V1DocumentAcceptancesInput,
@@ -161,16 +165,22 @@ const readAcceptances = function readAcceptances(
  *
  * @param input - What the caller passed.
  * @returns The body of `POST /v1/documents/acceptances`.
- * @throws {TypeError} When there is no acceptance, no idempotency key, no
- * subject ID or external ID, or a document type is malformed.
+ * @throws {TypeError} When there are no acceptances or too many, no
+ * lowercase UUID idempotency key, no subject ID or external ID, or a document type or the
+ * property is malformed.
  */
 const buildAcceptancesBody = function buildAcceptancesBody(
 	input: RecordAcceptancesInput
 ): V1DocumentAcceptancesInput {
-	if (input.acceptances.length === 0) {
-		throw new TypeError(`${LABEL}: pass at least one acceptance.`);
+	if (
+		input.acceptances.length === 0 ||
+		input.acceptances.length > V1_MAX_ACCEPTANCES
+	) {
+		throw new TypeError(
+			`${LABEL}: pass 1 to ${V1_MAX_ACCEPTANCES} acceptances.`
+		);
 	}
-	if (!input.idempotencyKey) {
+	if (!V1_UUID_PATTERN.test(input.idempotencyKey)) {
 		throw new TypeError(
 			`${LABEL}: pass an idempotencyKey from createIdempotencyKey().`
 		);
@@ -203,6 +213,11 @@ const buildAcceptancesBody = function buildAcceptancesBody(
 	}
 	if (input.property) {
 		body.property = toProperty(input.property);
+		if (body.property === undefined) {
+			throw new TypeError(
+				`${LABEL}: property "${input.property}" is not a host name or app ID.`
+			);
+		}
 	}
 	if (input.context) {
 		body.context = { ...input.context };

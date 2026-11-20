@@ -229,6 +229,17 @@ describe('recordAcceptances: POST /v1/documents/acceptances', () => {
 			{ acceptances: [], idempotencyKey: KEY, subjectId: SUBJECT },
 		],
 		[
+			'more than 20 acceptances',
+			{
+				acceptances: Array.from({ length: 21 }, () => ({
+					proofToken: 'p',
+					type: 'terms_us',
+				})),
+				idempotencyKey: KEY,
+				subjectId: SUBJECT,
+			},
+		],
+		[
 			'no key',
 			{
 				acceptances: [{ proofToken: 'p', type: 'terms_us' }],
@@ -237,10 +248,27 @@ describe('recordAcceptances: POST /v1/documents/acceptances', () => {
 			},
 		],
 		[
+			'an uppercase key',
+			{
+				acceptances: [{ proofToken: 'p', type: 'terms_us' }],
+				idempotencyKey: KEY.toUpperCase(),
+				subjectId: SUBJECT,
+			},
+		],
+		[
 			'no subject or person',
 			{
 				acceptances: [{ proofToken: 'p', type: 'terms_us' }],
 				idempotencyKey: KEY,
+			},
+		],
+		[
+			'a property that is not a host name',
+			{
+				acceptances: [{ proofToken: 'p', type: 'terms_us' }],
+				idempotencyKey: KEY,
+				property: 'https://example.com',
+				subjectId: SUBJECT,
 			},
 		],
 		[

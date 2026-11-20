@@ -7,7 +7,13 @@
 
 import * as v from 'valibot';
 
-import { V1_LEGACY_SUBJECT_ID_PATTERN, V1_UUID_V7_PATTERN } from './constants';
+import {
+	V1_LEGACY_SUBJECT_ID_PATTERN,
+	V1_PROPERTY_MAX_LENGTH,
+	V1_PROPERTY_PATTERN,
+	V1_UUID_PATTERN,
+	V1_UUID_V7_PATTERN,
+} from './constants';
 
 /** A canonical subject ID, as every `/v1` response names it. */
 export const v1CanonicalSubjectIdSchema = v.pipe(
@@ -41,23 +47,22 @@ export const v1SubjectIdSchema = v.pipe(
  */
 export const v1IdempotencyKeySchema = v.pipe(
 	v.string(),
-	v.uuid('Idempotency key must be a UUID'),
+	v.regex(V1_UUID_PATTERN, 'Idempotency key must be a lowercase UUID'),
 	v.description(
 		'UUID made once per user action and reused on every retry of that action.'
 	),
 	v.examples(['0193e5a8-7c1e-7b7a-9d7e-2f0c9a3b4d5e'])
 );
 
-/**
- * Where consent was given: a site's host name (lowercase, no scheme, port
- * or path), or an app's application or bundle ID (lowercase).
- */
+/** Where consent was given. See {@link V1_PROPERTY_PATTERN}. */
 export const v1PropertySchema = v.pipe(
 	v.string(),
-	v.minLength(1, 'Property must not be empty'),
-	v.maxLength(253, 'Property must be at most 253 characters'),
+	v.maxLength(
+		V1_PROPERTY_MAX_LENGTH,
+		`Property must be at most ${V1_PROPERTY_MAX_LENGTH} characters`
+	),
 	v.regex(
-		/^[\d_a-z-]+(?:\.[\d_a-z-]+)*$/u,
+		V1_PROPERTY_PATTERN,
 		'Property must be a lowercase host name or app ID'
 	),
 	v.description(
@@ -77,6 +82,7 @@ export const v1ExternalIdSchema = v.pipe(
 /** Name of the identity provider that issued an external ID. */
 export const v1IdentityProviderSchema = v.pipe(
 	v.string(),
+	v.minLength(1, 'Identity provider must not be empty'),
 	v.description('Identity provider that issued the external ID.'),
 	v.examples(['clerk', 'auth0'])
 );

@@ -52,11 +52,9 @@ type Ok<Id extends keyof operations> = operations[Id] extends {
 }
 	? Json
 	: never;
-type Query<Id extends keyof operations> = [
-	NonNullable<operations[Id]['parameters']['query']>,
-] extends [never]
-	? Record<never, never>
-	: NonNullable<operations[Id]['parameters']['query']>;
+type Query<Id extends keyof operations> = NonNullable<
+	operations[Id]['parameters']['query']
+>;
 type PathParams<Id extends keyof operations> = NonNullable<
 	operations[Id]['parameters']['path']
 >;
@@ -174,45 +172,18 @@ type Found =
  * backend to fix.
  */
 type DocumentGaps =
-	// The contract keeps the 3.x journey query parameters on init and on
-	// records. The document lists neither.
-	| 'init query.journey: only in SDK'
-	| 'init query.journeyScope: only in SDK'
-	| 'init query.stored: only in SDK'
-	| 'records query.journey: only in SDK'
-	| 'records query.journeyScope: only in SDK'
-	// The contract keeps these 3.x fields in the records body: the save's
-	// action, model and UI source, the snapshot token, the decision-input
-	// assertion, the IAB strings, the vendor choice and the metadata. The
-	// document leaves them out.
-	| 'records body.addtlConsent: only in SDK'
-	| 'records body.consentAction: only in SDK'
-	| 'records body.country: only in SDK'
-	| 'records body.fingerprint: only in SDK'
-	| 'records body.gpc: only in SDK'
-	| 'records body.language: only in SDK'
-	| 'records body.metadata: only in SDK'
-	| 'records body.model: only in SDK'
-	| 'records body.policyId: only in SDK'
-	| 'records body.policySnapshotToken: only in SDK'
-	| 'records body.region: only in SDK'
-	| 'records body.tcString: only in SDK'
-	| 'records body.uiSource: only in SDK'
-	| 'records body.vendorChoice: only in SDK'
-	// The contract has the manifest answer unchanged from 3.x. The document
-	// gives it no properties.
-	| 'manifest answer: record in document only'
-	// Contract does not say. The document types the `gpc` query parameter
-	// as any string; the SDK sends `0` or `1`, as 3.x reads it.
-	| 'init query.gpc: types differ'
-	// Contract does not say. The init answer carries `scriptRegistry` when
-	// the project has a script registry; the document does not list it.
+	// Clarification 19 says the document describes `scriptRegistry`, but the
+	// backend does not answer it on `/v1` yet and the document leaves it out.
+	// The SDK reads it when present.
 	| 'init answer.scriptRegistry: only in SDK'
-	// Contract does not say. The document lets a document `hash` be null;
-	// the contract's hash rule and the publish body require one.
-	| 'acceptances answer.acceptances[].hash: nullable in document only'
-	| 'current answer.document.hash: nullable in document only'
-	| 'publish answer.document.hash: nullable in document only';
+	| 'manifest answer.scriptRegistry: only in SDK'
+	// The manifest type is shared with the 3.x routes, whose producer may
+	// name a tenant. `/v1` names none, and the SDK does not send it on.
+	| 'manifest answer.tenantId: only in SDK'
+	// The document leaves the manifest's translation inputs open. The SDK
+	// types them as the 3.x manifest does.
+	| 'manifest answer.translations.customTranslations.*: record in document only'
+	| 'manifest answer.translations.i18n: record in document only';
 
 /** A mismatch this file does not list. */
 export type UnlistedMismatches = ExpectNone<Exclude<Found, DocumentGaps>>;

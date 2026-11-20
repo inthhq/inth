@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Inth API",
 		"description": "Inth consent and legal document API",
-		"version": "3.2.2"
+		"version": "1.0.0"
 	},
 	"servers": [
 		{
@@ -26,1344 +26,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"type": "object",
-									"properties": {
-										"adTechProviders": {
-											"type": "array",
-											"items": {
-												"type": "object",
-												"properties": {
-													"id": {
-														"type": "integer",
-														"minimum": 1,
-														"maximum": 9007199254740991
-													},
-													"name": {
-														"type": "string",
-														"minLength": 1
-													},
-													"policyUrl": {
-														"type": "string",
-														"pattern": "^https?:\\/\\/"
-													}
-												},
-												"required": [
-													"id",
-													"name",
-													"policyUrl"
-												]
-											}
-										},
-										"branding": {
-											"enum": [
-												"c15t",
-												"inth",
-												"consent",
-												"none"
-											],
-											"type": "string"
-										},
-										"cmpId": {
-											"type": "number"
-										},
-										"customVendors": {
-											"type": "array",
-											"items": {
-												"type": "object",
-												"properties": {
-													"cookieMaxAgeSeconds": {
-														"type": "integer",
-														"minimum": 1
-													},
-													"dataCategories": {
-														"type": "array",
-														"items": {
-															"type": "integer",
-															"minimum": 1,
-															"maximum": 11
-														}
-													},
-													"dataRetentionDays": {
-														"type": "integer",
-														"minimum": 1
-													},
-													"description": {
-														"type": "string"
-													},
-													"features": {
-														"type": "array",
-														"items": {
-															"type": "integer",
-															"minimum": 1,
-															"maximum": 3
-														}
-													},
-													"id": {
-														"anyOf": [
-															{
-																"type": "string"
-															},
-															{
-																"type": "integer"
-															}
-														]
-													},
-													"legIntPurposes": {
-														"type": "array",
-														"items": {
-															"type": "integer",
-															"minimum": 1,
-															"maximum": 11
-														}
-													},
-													"name": {
-														"type": "string"
-													},
-													"privacyPolicyUrl": {
-														"type": "string",
-														"format": "uri"
-													},
-													"purposes": {
-														"type": "array",
-														"items": {
-															"type": "integer",
-															"minimum": 1,
-															"maximum": 11
-														}
-													},
-													"specialFeatures": {
-														"type": "array",
-														"items": {
-															"type": "integer",
-															"minimum": 1,
-															"maximum": 2
-														}
-													},
-													"usesCookies": {
-														"type": "boolean"
-													},
-													"usesNonCookieAccess": {
-														"type": "boolean"
-													}
-												},
-												"required": [
-													"id",
-													"name",
-													"privacyPolicyUrl",
-													"purposes"
-												]
-											}
-										},
-										"gvl": {
-											"anyOf": [
-												{
-													"type": "object",
-													"properties": {
-														"dataCategories": {
-															"type": "object",
-															"propertyNames": {
-																"type": "string"
-															},
-															"additionalProperties": {
-																"type": "object",
-																"properties": {
-																	"description": {
-																		"type": "string"
-																	},
-																	"id": {
-																		"type": "number"
-																	},
-																	"name": {
-																		"type": "string"
-																	}
-																},
-																"required": [
-																	"description",
-																	"id",
-																	"name"
-																]
-															}
-														},
-														"features": {
-															"type": "object",
-															"propertyNames": {
-																"type": "string"
-															},
-															"additionalProperties": {
-																"type": "object",
-																"properties": {
-																	"description": {
-																		"type": "string"
-																	},
-																	"descriptionLegal": {
-																		"type": "string"
-																	},
-																	"id": {
-																		"type": "number"
-																	},
-																	"illustrations": {
-																		"type": "array",
-																		"items": {
-																			"type": "string"
-																		}
-																	},
-																	"name": {
-																		"type": "string"
-																	}
-																},
-																"required": [
-																	"description",
-																	"id",
-																	"illustrations",
-																	"name"
-																]
-															}
-														},
-														"gvlSpecificationVersion": {
-															"type": "number"
-														},
-														"lastUpdated": {
-															"type": "string"
-														},
-														"purposes": {
-															"type": "object",
-															"propertyNames": {
-																"type": "string"
-															},
-															"additionalProperties": {
-																"type": "object",
-																"properties": {
-																	"description": {
-																		"type": "string"
-																	},
-																	"descriptionLegal": {
-																		"type": "string"
-																	},
-																	"id": {
-																		"type": "number"
-																	},
-																	"illustrations": {
-																		"type": "array",
-																		"items": {
-																			"type": "string"
-																		}
-																	},
-																	"name": {
-																		"type": "string"
-																	}
-																},
-																"required": [
-																	"description",
-																	"id",
-																	"illustrations",
-																	"name"
-																]
-															}
-														},
-														"specialFeatures": {
-															"type": "object",
-															"propertyNames": {
-																"type": "string"
-															},
-															"additionalProperties": {
-																"type": "object",
-																"properties": {
-																	"description": {
-																		"type": "string"
-																	},
-																	"descriptionLegal": {
-																		"type": "string"
-																	},
-																	"id": {
-																		"type": "number"
-																	},
-																	"illustrations": {
-																		"type": "array",
-																		"items": {
-																			"type": "string"
-																		}
-																	},
-																	"name": {
-																		"type": "string"
-																	}
-																},
-																"required": [
-																	"description",
-																	"id",
-																	"illustrations",
-																	"name"
-																]
-															}
-														},
-														"specialPurposes": {
-															"type": "object",
-															"propertyNames": {
-																"type": "string"
-															},
-															"additionalProperties": {
-																"type": "object",
-																"properties": {
-																	"description": {
-																		"type": "string"
-																	},
-																	"descriptionLegal": {
-																		"type": "string"
-																	},
-																	"id": {
-																		"type": "number"
-																	},
-																	"illustrations": {
-																		"type": "array",
-																		"items": {
-																			"type": "string"
-																		}
-																	},
-																	"name": {
-																		"type": "string"
-																	}
-																},
-																"required": [
-																	"description",
-																	"id",
-																	"illustrations",
-																	"name"
-																]
-															}
-														},
-														"stacks": {
-															"type": "object",
-															"propertyNames": {
-																"type": "string"
-															},
-															"additionalProperties": {
-																"type": "object",
-																"properties": {
-																	"description": {
-																		"type": "string"
-																	},
-																	"id": {
-																		"type": "number"
-																	},
-																	"name": {
-																		"type": "string"
-																	},
-																	"purposes": {
-																		"type": "array",
-																		"items": {
-																			"type": "number"
-																		}
-																	},
-																	"specialFeatures": {
-																		"type": "array",
-																		"items": {
-																			"type": "number"
-																		}
-																	}
-																},
-																"required": [
-																	"description",
-																	"id",
-																	"name",
-																	"purposes",
-																	"specialFeatures"
-																]
-															}
-														},
-														"standardTexts": {
-															"type": "object",
-															"properties": {
-																"features": {
-																	"type": "string"
-																},
-																"purposes": {
-																	"type": "string"
-																},
-																"specialFeatures": {
-																	"type": "string"
-																},
-																"specialPurposes": {
-																	"type": "string"
-																}
-															},
-															"required": [
-																"features"
-															]
-														},
-														"tcfPolicyVersion": {
-															"type": "number"
-														},
-														"vendorListVersion": {
-															"type": "number"
-														},
-														"vendors": {
-															"type": "object",
-															"propertyNames": {
-																"type": "string"
-															},
-															"additionalProperties": {
-																"type": "object",
-																"properties": {
-																	"cookieMaxAgeSeconds": {
-																		"anyOf": [
-																			{
-																				"type": "number"
-																			},
-																			{
-																				"type": "null"
-																			}
-																		]
-																	},
-																	"cookieRefresh": {
-																		"type": "boolean"
-																	},
-																	"dataCategories": {
-																		"type": "array",
-																		"items": {
-																			"type": "number"
-																		}
-																	},
-																	"dataRetention": {
-																		"type": "object",
-																		"properties": {
-																			"purposes": {
-																				"type": "object",
-																				"propertyNames": {
-																					"type": "string"
-																				},
-																				"additionalProperties": {
-																					"type": "number"
-																				}
-																			},
-																			"specialPurposes": {
-																				"type": "object",
-																				"propertyNames": {
-																					"type": "string"
-																				},
-																				"additionalProperties": {
-																					"type": "number"
-																				}
-																			},
-																			"stdRetention": {
-																				"type": "number"
-																			}
-																		},
-																		"required": []
-																	},
-																	"deletedDate": {
-																		"type": "string"
-																	},
-																	"deviceStorageDisclosureUrl": {
-																		"type": "string"
-																	},
-																	"features": {
-																		"type": "array",
-																		"items": {
-																			"type": "number"
-																		}
-																	},
-																	"flexiblePurposes": {
-																		"type": "array",
-																		"items": {
-																			"type": "number"
-																		}
-																	},
-																	"id": {
-																		"type": "number"
-																	},
-																	"legIntPurposes": {
-																		"type": "array",
-																		"items": {
-																			"type": "number"
-																		}
-																	},
-																	"name": {
-																		"type": "string"
-																	},
-																	"overflow": {
-																		"type": "object",
-																		"properties": {
-																			"httpGetLimit": {
-																				"type": "number"
-																			}
-																		},
-																		"required": [
-																			"httpGetLimit"
-																		]
-																	},
-																	"purposes": {
-																		"type": "array",
-																		"items": {
-																			"type": "number"
-																		}
-																	},
-																	"specialFeatures": {
-																		"type": "array",
-																		"items": {
-																			"type": "number"
-																		}
-																	},
-																	"specialPurposes": {
-																		"type": "array",
-																		"items": {
-																			"type": "number"
-																		}
-																	},
-																	"urls": {
-																		"type": "array",
-																		"items": {
-																			"type": "object",
-																			"properties": {
-																				"langId": {
-																					"type": "string"
-																				},
-																				"legIntClaim": {
-																					"type": "string"
-																				},
-																				"privacy": {
-																					"type": "string"
-																				}
-																			},
-																			"required": [
-																				"langId"
-																			]
-																		}
-																	},
-																	"usesCookies": {
-																		"type": "boolean"
-																	},
-																	"usesNonCookieAccess": {
-																		"type": "boolean"
-																	}
-																},
-																"required": [
-																	"cookieMaxAgeSeconds",
-																	"cookieRefresh",
-																	"features",
-																	"flexiblePurposes",
-																	"id",
-																	"legIntPurposes",
-																	"name",
-																	"purposes",
-																	"specialFeatures",
-																	"specialPurposes",
-																	"urls",
-																	"usesCookies",
-																	"usesNonCookieAccess"
-																]
-															}
-														}
-													},
-													"required": [
-														"features",
-														"gvlSpecificationVersion",
-														"lastUpdated",
-														"purposes",
-														"specialFeatures",
-														"specialPurposes",
-														"stacks",
-														"tcfPolicyVersion",
-														"vendorListVersion",
-														"vendors"
-													]
-												},
-												{
-													"type": "null"
-												}
-											]
-										},
-										"gvlReference": {
-											"type": "object",
-											"properties": {
-												"context": {
-													"type": "object",
-													"properties": {
-														"country": {
-															"type": "string"
-														},
-														"gpc": {
-															"type": "boolean"
-														},
-														"region": {
-															"type": "string"
-														}
-													},
-													"required": []
-												},
-												"format": {
-													"const": "init"
-												},
-												"language": {
-													"type": "string"
-												},
-												"summary": {
-													"type": "object",
-													"properties": {
-														"items": {
-															"type": "array",
-															"items": {
-																"type": "string"
-															}
-														},
-														"vendorCount": {
-															"type": "number"
-														}
-													},
-													"required": [
-														"items",
-														"vendorCount"
-													]
-												},
-												"url": {
-													"type": "string"
-												},
-												"vendorListVersion": {
-													"type": "number"
-												}
-											},
-											"required": [
-												"language",
-												"url",
-												"vendorListVersion"
-											]
-										},
-										"hosting": {
-											"enum": [
-												"inth",
-												"self-hosted"
-											],
-											"type": "string"
-										},
-										"location": {
-											"type": "object",
-											"properties": {
-												"countryCode": {
-													"anyOf": [
-														{
-															"type": "string"
-														},
-														{
-															"type": "null"
-														}
-													]
-												},
-												"regionCode": {
-													"anyOf": [
-														{
-															"type": "string"
-														},
-														{
-															"type": "null"
-														}
-													]
-												}
-											},
-											"required": [
-												"countryCode",
-												"regionCode"
-											]
-										},
-										"policyResolution": {
-											"oneOf": [
-												{
-													"type": "object",
-													"properties": {
-														"policy": {
-															"type": "null"
-														},
-														"status": {
-															"const": "unconfigured"
-														},
-														"version": {
-															"const": 1
-														}
-													},
-													"required": [
-														"policy",
-														"status",
-														"version"
-													],
-													"additionalProperties": false
-												},
-												{
-													"type": "object",
-													"properties": {
-														"policy": {
-															"type": "null"
-														},
-														"status": {
-															"const": "no-match"
-														},
-														"version": {
-															"const": 1
-														}
-													},
-													"required": [
-														"policy",
-														"status",
-														"version"
-													],
-													"additionalProperties": false
-												},
-												{
-													"type": "object",
-													"properties": {
-														"policy": {
-															"type": "null"
-														},
-														"reason": {
-															"enum": [
-																"invalid-configuration",
-																"insufficient-inputs",
-																"transport",
-																"unsupported-contract",
-																"invalid-payload"
-															],
-															"type": "string"
-														},
-														"status": {
-															"const": "failed"
-														},
-														"version": {
-															"const": 1
-														}
-													},
-													"required": [
-														"policy",
-														"reason",
-														"status",
-														"version"
-													],
-													"additionalProperties": false
-												},
-												{
-													"type": "object",
-													"properties": {
-														"fingerprints": {
-															"type": "object",
-															"properties": {
-																"choice": {
-																	"type": "string",
-																	"minLength": 1
-																},
-																"legacyMaterial": {
-																	"type": "string"
-																},
-																"notice": {
-																	"type": "string",
-																	"minLength": 1
-																},
-																"policy": {
-																	"type": "string",
-																	"minLength": 1
-																}
-															},
-															"required": [
-																"choice",
-																"notice",
-																"policy"
-															],
-															"additionalProperties": false
-														},
-														"matchedBy": {
-															"enum": [
-																"region",
-																"country",
-																"default",
-																"fallback"
-															],
-															"type": "string"
-														},
-														"policy": {
-															"type": "object",
-															"properties": {
-																"actions": {
-																	"type": "object",
-																	"properties": {
-																		"allowed": {
-																			"type": "array",
-																			"items": {
-																				"enum": [
-																					"accept",
-																					"reject",
-																					"customize",
-																					"dismiss"
-																				],
-																				"type": "string"
-																			}
-																		},
-																		"equivalent": {
-																			"type": "array",
-																			"items": {
-																				"type": "array",
-																				"items": {
-																					"enum": [
-																						"accept",
-																						"reject",
-																						"customize",
-																						"dismiss"
-																					],
-																					"type": "string"
-																				}
-																			}
-																		},
-																		"required": {
-																			"type": "array",
-																			"items": {
-																				"enum": [
-																					"accept",
-																					"reject",
-																					"customize",
-																					"dismiss"
-																				],
-																				"type": "string"
-																			}
-																		}
-																	},
-																	"required": [
-																		"allowed",
-																		"equivalent",
-																		"required"
-																	],
-																	"additionalProperties": false
-																},
-																"copyRevision": {
-																	"anyOf": [
-																		{
-																			"type": "string"
-																		},
-																		{
-																			"type": "null"
-																		}
-																	]
-																},
-																"i18n": {
-																	"type": "object",
-																	"properties": {
-																		"language": {
-																			"type": "string"
-																		},
-																		"messageProfile": {
-																			"type": "string"
-																		}
-																	},
-																	"required": [],
-																	"additionalProperties": false
-																},
-																"id": {
-																	"type": "string",
-																	"minLength": 1
-																},
-																"model": {
-																	"enum": [
-																		"opt-in",
-																		"opt-out",
-																		"iab",
-																		"none"
-																	],
-																	"type": "string"
-																},
-																"preselectedCategories": {
-																	"type": "array",
-																	"items": {
-																		"enum": [
-																			"experience",
-																			"functionality",
-																			"marketing",
-																			"measurement"
-																		],
-																		"type": "string"
-																	}
-																},
-																"privacySignals": {
-																	"type": "object",
-																	"properties": {
-																		"gpc": {
-																			"type": "object",
-																			"properties": {
-																				"denyCategories": {
-																					"type": "array",
-																					"items": {
-																						"enum": [
-																							"experience",
-																							"functionality",
-																							"marketing",
-																							"measurement"
-																						],
-																						"type": "string"
-																					}
-																				}
-																			},
-																			"required": [
-																				"denyCategories"
-																			],
-																			"additionalProperties": false
-																		}
-																	},
-																	"required": [
-																		"gpc"
-																	],
-																	"additionalProperties": false
-																},
-																"prompt": {
-																	"enum": [
-																		"choice",
-																		"notice",
-																		"none"
-																	],
-																	"type": "string"
-																},
-																"proof": {
-																	"type": "object",
-																	"properties": {
-																		"storeIp": {
-																			"type": "boolean"
-																		},
-																		"storeLanguage": {
-																			"type": "boolean"
-																		},
-																		"storeUserAgent": {
-																			"type": "boolean"
-																		}
-																	},
-																	"required": [
-																		"storeIp",
-																		"storeLanguage",
-																		"storeUserAgent"
-																	],
-																	"additionalProperties": false
-																},
-																"rights": {
-																	"type": "array",
-																	"items": {
-																		"enum": [
-																			"disclosure",
-																			"preferences",
-																			"opt-out"
-																		],
-																		"type": "string"
-																	}
-																},
-																"scope": {
-																	"type": "array",
-																	"items": {
-																		"enum": [
-																			"experience",
-																			"functionality",
-																			"marketing",
-																			"measurement"
-																		],
-																		"type": "string"
-																	}
-																},
-																"scopeMode": {
-																	"enum": [
-																		"strict",
-																		"permissive"
-																	],
-																	"type": "string"
-																},
-																"validity": {
-																	"type": "object",
-																	"properties": {
-																		"choiceMs": {
-																			"type": "number",
-																			"exclusiveMinimum": 0,
-																			"maximum": 9007199254740991
-																		},
-																		"noticeMs": {
-																			"type": "number",
-																			"exclusiveMinimum": 0,
-																			"maximum": 9007199254740991
-																		}
-																	},
-																	"required": [
-																		"choiceMs",
-																		"noticeMs"
-																	],
-																	"additionalProperties": false
-																}
-															},
-															"required": [
-																"actions",
-																"copyRevision",
-																"id",
-																"model",
-																"preselectedCategories",
-																"privacySignals",
-																"prompt",
-																"proof",
-																"rights",
-																"scope",
-																"scopeMode",
-																"validity"
-															],
-															"additionalProperties": false
-														},
-														"policyId": {
-															"type": "string",
-															"minLength": 1
-														},
-														"status": {
-															"const": "matched"
-														},
-														"version": {
-															"const": 1
-														}
-													},
-													"required": [
-														"fingerprints",
-														"matchedBy",
-														"policy",
-														"policyId",
-														"status",
-														"version"
-													],
-													"additionalProperties": false
-												}
-											]
-										},
-										"policySnapshotToken": {
-											"type": "string"
-										},
-										"resolvedPrivacySignals": {
-											"type": "object",
-											"properties": {
-												"gpc": {
-													"type": "boolean"
-												}
-											},
-											"required": []
-										},
-										"translations": {
-											"type": "object",
-											"properties": {
-												"language": {
-													"type": "string"
-												},
-												"translations": {
-													"type": "object",
-													"properties": {
-														"common": {
-															"type": "object",
-															"properties": {
-																"acceptAll": {
-																	"type": "string"
-																},
-																"acknowledge": {
-																	"type": "string"
-																},
-																"customize": {
-																	"type": "string"
-																},
-																"dismiss": {
-																	"type": "string"
-																},
-																"rejectAll": {
-																	"type": "string"
-																},
-																"save": {
-																	"type": "string"
-																}
-															},
-															"required": []
-														},
-														"consentGate": {
-															"type": "object",
-															"properties": {
-																"actionButton": {
-																	"type": "string"
-																},
-																"title": {
-																	"type": "string"
-																}
-															},
-															"required": []
-														},
-														"consentManagerDialog": {
-															"type": "object",
-															"properties": {
-																"description": {
-																	"type": "string"
-																},
-																"title": {
-																	"type": "string"
-																},
-																"vendors": {
-																	"type": "object",
-																	"properties": {
-																		"disabledByCategory": {
-																			"type": "string"
-																		},
-																		"privacyPolicy": {
-																			"type": "string"
-																		},
-																		"switchLabel": {
-																			"type": "string"
-																		},
-																		"title": {
-																			"type": "string"
-																		}
-																	},
-																	"required": []
-																}
-															},
-															"required": []
-														},
-														"consentTypes": {
-															"type": "object",
-															"properties": {
-																"experience": {
-																	"type": "object",
-																	"properties": {
-																		"description": {
-																			"type": "string"
-																		},
-																		"title": {
-																			"type": "string"
-																		}
-																	},
-																	"required": []
-																},
-																"functionality": {
-																	"type": "object",
-																	"properties": {
-																		"description": {
-																			"type": "string"
-																		},
-																		"title": {
-																			"type": "string"
-																		}
-																	},
-																	"required": []
-																},
-																"marketing": {
-																	"type": "object",
-																	"properties": {
-																		"description": {
-																			"type": "string"
-																		},
-																		"title": {
-																			"type": "string"
-																		}
-																	},
-																	"required": []
-																},
-																"measurement": {
-																	"type": "object",
-																	"properties": {
-																		"description": {
-																			"type": "string"
-																		},
-																		"title": {
-																			"type": "string"
-																		}
-																	},
-																	"required": []
-																},
-																"necessary": {
-																	"type": "object",
-																	"properties": {
-																		"description": {
-																			"type": "string"
-																		},
-																		"title": {
-																			"type": "string"
-																		}
-																	},
-																	"required": []
-																}
-															},
-															"required": []
-														},
-														"cookieBanner": {
-															"type": "object",
-															"properties": {
-																"description": {
-																	"type": "string"
-																},
-																"title": {
-																	"type": "string"
-																},
-																"noticeDescription": {
-																	"type": "string"
-																},
-																"noticeTitle": {
-																	"type": "string"
-																}
-															},
-															"required": []
-														},
-														"legalLinks": {
-															"type": "object",
-															"properties": {
-																"cookiePolicy": {
-																	"type": "string"
-																},
-																"privacyPolicy": {
-																	"type": "string"
-																},
-																"termsOfService": {
-																	"type": "string"
-																}
-															},
-															"required": []
-														},
-														"rights": {
-															"type": "object",
-															"properties": {
-																"optOut": {
-																	"type": "string"
-																},
-																"preferences": {
-																	"type": "string"
-																}
-															},
-															"required": []
-														}
-													},
-													"required": [
-														"common",
-														"consentManagerDialog",
-														"consentTypes",
-														"cookieBanner"
-													]
-												}
-											},
-											"required": [
-												"language",
-												"translations"
-											]
-										},
-										"vendorListVersion": {
-											"type": "string"
-										},
-										"vendors": {
-											"type": "array",
-											"items": {
-												"type": "object",
-												"properties": {
-													"category": {
-														"$ref": "#/$defs/0"
-													},
-													"description": {
-														"type": "string"
-													},
-													"disabled": {
-														"type": "boolean"
-													},
-													"homepageUrl": {
-														"type": "string",
-														"format": "uri"
-													},
-													"id": {
-														"type": "string",
-														"pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
-														"description": "Stable vendor slug used by scripts, rules and iframes.",
-														"examples": [
-															"meta-pixel",
-															"google-analytics"
-														]
-													},
-													"legalName": {
-														"type": "string"
-													},
-													"name": {
-														"type": "string"
-													},
-													"privacyPolicyUrl": {
-														"type": "string",
-														"format": "uri"
-													}
-												},
-												"required": [
-													"category",
-													"id",
-													"name",
-													"privacyPolicyUrl"
-												]
-											}
-										}
-									},
-									"required": [
-										"branding",
-										"location",
-										"policyResolution",
-										"translations"
-									],
-									"$defs": {
-										"0": {
-											"anyOf": [
-												{
-													"enum": [
-														"necessary",
-														"functionality",
-														"experience",
-														"measurement",
-														"marketing"
-													],
-													"type": "string"
-												},
-												{
-													"type": "object",
-													"properties": {
-														"and": {
-															"anyOf": [
-																{
-																	"$ref": "#/$defs/0"
-																},
-																{
-																	"type": "array",
-																	"items": {
-																		"$ref": "#/$defs/0"
-																	},
-																	"minItems": 1
-																}
-															]
-														}
-													},
-													"required": [
-														"and"
-													],
-													"additionalProperties": false
-												},
-												{
-													"type": "object",
-													"properties": {
-														"or": {
-															"anyOf": [
-																{
-																	"$ref": "#/$defs/0"
-																},
-																{
-																	"type": "array",
-																	"items": {
-																		"$ref": "#/$defs/0"
-																	},
-																	"minItems": 1
-																}
-															]
-														}
-													},
-													"required": [
-														"or"
-													],
-													"additionalProperties": false
-												},
-												{
-													"type": "object",
-													"properties": {
-														"not": {
-															"$ref": "#/$defs/0"
-														}
-													},
-													"required": [
-														"not"
-													],
-													"additionalProperties": false
-												}
-											]
-										}
-									}
+									"$ref": "#/components/schemas/ConsentInitResponse"
 								}
 							}
 						},
@@ -1590,10 +253,14 @@
 						}
 					},
 					{
-						"description": "`1` when the browser sends Global Privacy Control.",
+						"description": "`1` when the browser sends Global Privacy Control, `0` when it does not.",
 						"in": "query",
 						"name": "gpc",
 						"schema": {
+							"enum": [
+								"0",
+								"1"
+							],
 							"type": "string"
 						}
 					},
@@ -1602,6 +269,39 @@
 						"in": "query",
 						"name": "experiment",
 						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "The ID of the visit’s consent journey, made by the SDK.",
+						"in": "query",
+						"name": "journey",
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					},
+					{
+						"description": "How long the journey lasts: one page, or the tab.",
+						"in": "query",
+						"name": "journeyScope",
+						"schema": {
+							"enum": [
+								"page",
+								"tab"
+							],
+							"type": "string"
+						}
+					},
+					{
+						"description": "`1` when the browser already holds a stored answer, `0` when it does not.",
+						"in": "query",
+						"name": "stored",
+						"schema": {
+							"enum": [
+								"0",
+								"1"
+							],
 							"type": "string"
 						}
 					}
@@ -1617,10 +317,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"type": "object",
-									"properties": {},
-									"required": [],
-									"description": "Every policy the project serves, with the banner text in each language, independent of the visitor."
+									"$ref": "#/components/schemas/ConsentManifestResponse"
 								}
 							}
 						},
@@ -1822,61 +519,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"type": "object",
-									"properties": {
-										"link": {
-											"anyOf": [
-												{
-													"type": "object",
-													"properties": {
-														"stored": {
-															"const": true
-														},
-														"verifiedBy": {
-															"const": "identity_token"
-														}
-													},
-													"required": [
-														"stored",
-														"verifiedBy"
-													]
-												},
-												{
-													"type": "object",
-													"properties": {
-														"reason": {
-															"enum": [
-																"unverified",
-																"invalid_token"
-															],
-															"type": "string"
-														},
-														"stored": {
-															"const": false
-														}
-													},
-													"required": [
-														"reason",
-														"stored"
-													]
-												}
-											]
-										},
-										"recordId": {
-											"type": "string",
-											"format": "uuid",
-											"description": "The event that recorded the save."
-										},
-										"subjectId": {
-											"type": "string",
-											"format": "uuid",
-											"description": "The subject’s UUID. Store it in place of the ID sent."
-										}
-									},
-									"required": [
-										"recordId",
-										"subjectId"
-									]
+									"$ref": "#/components/schemas/ConsentRecordResponse"
 								}
 							}
 						},
@@ -2181,374 +824,34 @@
 					"Consent"
 				],
 				"x-inth-access": "none",
+				"parameters": [
+					{
+						"description": "The ID of the visit’s consent journey, made by the SDK.",
+						"in": "query",
+						"name": "journey",
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					},
+					{
+						"description": "How long the journey lasts: one page, or the tab.",
+						"in": "query",
+						"name": "journeyScope",
+						"schema": {
+							"enum": [
+								"page",
+								"tab"
+							],
+							"type": "string"
+						}
+					}
+				],
 				"requestBody": {
 					"content": {
 						"application/json": {
 							"schema": {
-								"type": "object",
-								"properties": {
-									"answer": {
-										"type": "object",
-										"properties": {
-											"categories": {
-												"type": "object",
-												"properties": {
-													"necessary": {
-														"type": "object",
-														"properties": {
-															"basis": {
-																"oneOf": [
-																	{
-																		"type": "object",
-																		"properties": {
-																			"fingerprint": {
-																				"type": "string",
-																				"minLength": 1,
-																				"description": "Choice prompt fingerprint (domain choice, version 1)."
-																			},
-																			"kind": {
-																				"const": "choice-v1"
-																			}
-																		},
-																		"required": [
-																			"fingerprint",
-																			"kind"
-																		],
-																		"additionalProperties": false
-																	},
-																	{
-																		"type": "object",
-																		"properties": {
-																			"kind": {
-																				"const": "legacy-v2"
-																			},
-																			"materialFingerprint": {
-																				"type": "string",
-																				"minLength": 1,
-																				"description": "v2 material policy fingerprint, when the record had one."
-																			}
-																		},
-																		"required": [
-																			"kind"
-																		],
-																		"additionalProperties": false
-																	}
-																]
-															},
-															"confirmedAt": {
-																"type": "integer",
-																"minimum": 0,
-																"maximum": 8640000000000000,
-																"description": "Epoch milliseconds when the category was confirmed."
-															},
-															"value": {
-																"type": "boolean"
-															}
-														},
-														"required": [
-															"basis",
-															"confirmedAt",
-															"value"
-														],
-														"additionalProperties": false
-													},
-													"experience": {
-														"type": "object",
-														"properties": {
-															"basis": {
-																"oneOf": [
-																	{
-																		"type": "object",
-																		"properties": {
-																			"fingerprint": {
-																				"type": "string",
-																				"minLength": 1,
-																				"description": "Choice prompt fingerprint (domain choice, version 1)."
-																			},
-																			"kind": {
-																				"const": "choice-v1"
-																			}
-																		},
-																		"required": [
-																			"fingerprint",
-																			"kind"
-																		],
-																		"additionalProperties": false
-																	},
-																	{
-																		"type": "object",
-																		"properties": {
-																			"kind": {
-																				"const": "legacy-v2"
-																			},
-																			"materialFingerprint": {
-																				"type": "string",
-																				"minLength": 1,
-																				"description": "v2 material policy fingerprint, when the record had one."
-																			}
-																		},
-																		"required": [
-																			"kind"
-																		],
-																		"additionalProperties": false
-																	}
-																]
-															},
-															"confirmedAt": {
-																"type": "integer",
-																"minimum": 0,
-																"maximum": 8640000000000000,
-																"description": "Epoch milliseconds when the category was confirmed."
-															},
-															"value": {
-																"type": "boolean"
-															}
-														},
-														"required": [
-															"basis",
-															"confirmedAt",
-															"value"
-														],
-														"additionalProperties": false
-													},
-													"functionality": {
-														"type": "object",
-														"properties": {
-															"basis": {
-																"oneOf": [
-																	{
-																		"type": "object",
-																		"properties": {
-																			"fingerprint": {
-																				"type": "string",
-																				"minLength": 1,
-																				"description": "Choice prompt fingerprint (domain choice, version 1)."
-																			},
-																			"kind": {
-																				"const": "choice-v1"
-																			}
-																		},
-																		"required": [
-																			"fingerprint",
-																			"kind"
-																		],
-																		"additionalProperties": false
-																	},
-																	{
-																		"type": "object",
-																		"properties": {
-																			"kind": {
-																				"const": "legacy-v2"
-																			},
-																			"materialFingerprint": {
-																				"type": "string",
-																				"minLength": 1,
-																				"description": "v2 material policy fingerprint, when the record had one."
-																			}
-																		},
-																		"required": [
-																			"kind"
-																		],
-																		"additionalProperties": false
-																	}
-																]
-															},
-															"confirmedAt": {
-																"type": "integer",
-																"minimum": 0,
-																"maximum": 8640000000000000,
-																"description": "Epoch milliseconds when the category was confirmed."
-															},
-															"value": {
-																"type": "boolean"
-															}
-														},
-														"required": [
-															"basis",
-															"confirmedAt",
-															"value"
-														],
-														"additionalProperties": false
-													},
-													"marketing": {
-														"type": "object",
-														"properties": {
-															"basis": {
-																"oneOf": [
-																	{
-																		"type": "object",
-																		"properties": {
-																			"fingerprint": {
-																				"type": "string",
-																				"minLength": 1,
-																				"description": "Choice prompt fingerprint (domain choice, version 1)."
-																			},
-																			"kind": {
-																				"const": "choice-v1"
-																			}
-																		},
-																		"required": [
-																			"fingerprint",
-																			"kind"
-																		],
-																		"additionalProperties": false
-																	},
-																	{
-																		"type": "object",
-																		"properties": {
-																			"kind": {
-																				"const": "legacy-v2"
-																			},
-																			"materialFingerprint": {
-																				"type": "string",
-																				"minLength": 1,
-																				"description": "v2 material policy fingerprint, when the record had one."
-																			}
-																		},
-																		"required": [
-																			"kind"
-																		],
-																		"additionalProperties": false
-																	}
-																]
-															},
-															"confirmedAt": {
-																"type": "integer",
-																"minimum": 0,
-																"maximum": 8640000000000000,
-																"description": "Epoch milliseconds when the category was confirmed."
-															},
-															"value": {
-																"type": "boolean"
-															}
-														},
-														"required": [
-															"basis",
-															"confirmedAt",
-															"value"
-														],
-														"additionalProperties": false
-													},
-													"measurement": {
-														"type": "object",
-														"properties": {
-															"basis": {
-																"oneOf": [
-																	{
-																		"type": "object",
-																		"properties": {
-																			"fingerprint": {
-																				"type": "string",
-																				"minLength": 1,
-																				"description": "Choice prompt fingerprint (domain choice, version 1)."
-																			},
-																			"kind": {
-																				"const": "choice-v1"
-																			}
-																		},
-																		"required": [
-																			"fingerprint",
-																			"kind"
-																		],
-																		"additionalProperties": false
-																	},
-																	{
-																		"type": "object",
-																		"properties": {
-																			"kind": {
-																				"const": "legacy-v2"
-																			},
-																			"materialFingerprint": {
-																				"type": "string",
-																				"minLength": 1,
-																				"description": "v2 material policy fingerprint, when the record had one."
-																			}
-																		},
-																		"required": [
-																			"kind"
-																		],
-																		"additionalProperties": false
-																	}
-																]
-															},
-															"confirmedAt": {
-																"type": "integer",
-																"minimum": 0,
-																"maximum": 8640000000000000,
-																"description": "Epoch milliseconds when the category was confirmed."
-															},
-															"value": {
-																"type": "boolean"
-															}
-														},
-														"required": [
-															"basis",
-															"confirmedAt",
-															"value"
-														],
-														"additionalProperties": false
-													}
-												},
-												"required": [],
-												"additionalProperties": false
-											}
-										},
-										"required": [
-											"categories"
-										],
-										"additionalProperties": false
-									},
-									"confirmed": {
-										"type": "array",
-										"items": {
-											"enum": [
-												"necessary",
-												"experience",
-												"functionality",
-												"marketing",
-												"measurement"
-											],
-											"type": "string"
-										}
-									},
-									"externalId": {
-										"type": "string",
-										"minLength": 1
-									},
-									"givenAt": {
-										"type": "integer",
-										"minimum": 0,
-										"maximum": 8640000000000000,
-										"description": "Epoch milliseconds when the category was confirmed."
-									},
-									"idempotencyKey": {
-										"type": "string",
-										"format": "uuid"
-									},
-									"identityProvider": {
-										"type": "string"
-									},
-									"identityToken": {
-										"type": "string"
-									},
-									"property": {
-										"type": "string",
-										"maxLength": 253,
-										"pattern": "^[a-z0-9](?:[a-z0-9._-]*[a-z0-9_])?$"
-									},
-									"subjectId": {
-										"type": "string",
-										"description": "A lower-case UUIDv7 the SDK makes. A legacy `sub_` ID is accepted too; the answer names the subject’s UUID, to store in its place."
-									}
-								},
-								"required": [
-									"answer",
-									"confirmed",
-									"givenAt",
-									"idempotencyKey",
-									"property",
-									"subjectId"
-								]
+								"$ref": "#/components/schemas/ConsentRecordRequest"
 							}
 						}
 					},
@@ -2807,177 +1110,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"type": "object",
-								"properties": {
-									"adapter": {
-										"type": "string"
-									},
-									"country": {
-										"anyOf": [
-											{
-												"type": "string"
-											},
-											{
-												"type": "null"
-											}
-										]
-									},
-									"experiment": {
-										"type": "object",
-										"properties": {
-											"arm": {
-												"type": "string",
-												"minLength": 1,
-												"maxLength": 128
-											},
-											"id": {
-												"type": "string",
-												"minLength": 1,
-												"maxLength": 128
-											}
-										},
-										"required": [
-											"arm",
-											"id"
-										]
-									},
-									"gpc": {
-										"type": "boolean"
-									},
-									"journey": {
-										"type": "object",
-										"properties": {
-											"id": {
-												"type": "string",
-												"format": "uuid"
-											},
-											"prompt": {
-												"enum": [
-													"due",
-													"stored",
-													"not-required"
-												],
-												"type": "string"
-											},
-											"scope": {
-												"enum": [
-													"page",
-													"tab"
-												],
-												"type": "string"
-											},
-											"storedChoice": {
-												"type": "boolean"
-											},
-											"property": {
-												"type": "string",
-												"maxLength": 253,
-												"pattern": "^[a-z0-9](?:[a-z0-9._-]*[a-z0-9_])?$"
-											}
-										},
-										"required": [
-											"id",
-											"prompt",
-											"scope",
-											"storedChoice"
-										]
-									},
-									"language": {
-										"type": "string"
-									},
-									"policy": {
-										"anyOf": [
-											{
-												"type": "object",
-												"properties": {
-													"fingerprint": {
-														"type": "string"
-													},
-													"id": {
-														"type": "string"
-													},
-													"matchedBy": {
-														"enum": [
-															"region",
-															"country",
-															"default",
-															"fallback"
-														],
-														"type": "string"
-													},
-													"model": {
-														"enum": [
-															"opt-in",
-															"opt-out",
-															"iab",
-															"none"
-														],
-														"type": "string"
-													}
-												},
-												"required": [
-													"fingerprint",
-													"id",
-													"matchedBy",
-													"model"
-												]
-											},
-											{
-												"type": "null"
-											}
-										]
-									},
-									"region": {
-										"anyOf": [
-											{
-												"type": "string"
-											},
-											{
-												"type": "null"
-											}
-										]
-									},
-									"resolution": {
-										"enum": [
-											"matched",
-											"no-match",
-											"unconfigured",
-											"failed"
-										],
-										"type": "string"
-									},
-									"revision": {
-										"type": "string"
-									},
-									"source": {
-										"enum": [
-											"render",
-											"route",
-											"init"
-										],
-										"type": "string"
-									},
-									"tenantId": {
-										"anyOf": [
-											{
-												"type": "string"
-											},
-											{
-												"type": "null"
-											}
-										]
-									}
-								},
-								"required": [
-									"country",
-									"gpc",
-									"language",
-									"policy",
-									"region",
-									"resolution",
-									"revision",
-									"source"
-								]
+								"$ref": "#/components/schemas/ConsentSessionRequest"
 							}
 						}
 					},
@@ -2994,29 +1127,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"type": "object",
-									"properties": {
-										"externalId": {
-											"type": "string"
-										},
-										"subjectId": {
-											"type": "string",
-											"format": "uuid",
-											"description": "The device’s UUID. Store it in place of the ID sent."
-										},
-										"verifiedBy": {
-											"enum": [
-												"api_key",
-												"identity_token"
-											],
-											"type": "string"
-										}
-									},
-									"required": [
-										"externalId",
-										"subjectId",
-										"verifiedBy"
-									]
+									"$ref": "#/components/schemas/SubjectLinkResponse"
 								}
 							}
 						},
@@ -3313,23 +1424,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"type": "object",
-								"properties": {
-									"externalId": {
-										"type": "string",
-										"minLength": 1
-									},
-									"identityProvider": {
-										"type": "string",
-										"minLength": 1
-									},
-									"identityToken": {
-										"type": "string"
-									}
-								},
-								"required": [
-									"externalId"
-								]
+								"$ref": "#/components/schemas/SubjectLinkRequest"
 							}
 						}
 					},
@@ -3346,56 +1441,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"type": "object",
-									"properties": {
-										"document": {
-											"type": "object",
-											"properties": {
-												"effectiveDate": {
-													"type": "string",
-													"format": "date-time"
-												},
-												"hash": {
-													"anyOf": [
-														{
-															"type": "string"
-														},
-														{
-															"type": "null"
-														}
-													]
-												},
-												"requiresAcceptance": {
-													"type": "boolean"
-												},
-												"type": {
-													"type": "string"
-												},
-												"version": {
-													"type": "string"
-												},
-												"id": {
-													"type": "string",
-													"format": "uuid"
-												},
-												"isCurrent": {
-													"type": "boolean"
-												}
-											},
-											"required": [
-												"effectiveDate",
-												"hash",
-												"requiresAcceptance",
-												"type",
-												"version",
-												"id",
-												"isCurrent"
-											]
-										}
-									},
-									"required": [
-										"document"
-									]
+									"$ref": "#/components/schemas/DocumentPublishResponse"
 								}
 							}
 						},
@@ -3688,31 +1734,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"type": "object",
-								"properties": {
-									"effectiveDate": {
-										"type": "string",
-										"description": "An ISO-8601 date, or a date and time that names its zone."
-									},
-									"hash": {
-										"type": "string",
-										"description": "`sha256:` and the lower-case hex SHA-256 of the exact bytes of the published file.",
-										"pattern": "^sha256:[0-9a-f]{64}$"
-									},
-									"requiresAcceptance": {
-										"type": "boolean",
-										"default": true
-									},
-									"version": {
-										"type": "string",
-										"minLength": 1
-									}
-								},
-								"required": [
-									"effectiveDate",
-									"hash",
-									"version"
-								]
+								"$ref": "#/components/schemas/DocumentPublishRequest"
 							}
 						}
 					},
@@ -3727,57 +1749,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"type": "object",
-									"properties": {
-										"document": {
-											"type": "object",
-											"properties": {
-												"effectiveDate": {
-													"type": "string",
-													"format": "date-time"
-												},
-												"hash": {
-													"anyOf": [
-														{
-															"type": "string"
-														},
-														{
-															"type": "null"
-														}
-													]
-												},
-												"requiresAcceptance": {
-													"type": "boolean"
-												},
-												"type": {
-													"type": "string"
-												},
-												"version": {
-													"type": "string"
-												}
-											},
-											"required": [
-												"effectiveDate",
-												"hash",
-												"requiresAcceptance",
-												"type",
-												"version"
-											]
-										},
-										"proofToken": {
-											"type": "string",
-											"description": "Send it back with an acceptance. It pins the type, version and hash shown."
-										},
-										"proofTokenExpiresAt": {
-											"type": "string",
-											"format": "date-time"
-										}
-									},
-									"required": [
-										"document",
-										"proofToken",
-										"proofTokenExpiresAt"
-									]
+									"$ref": "#/components/schemas/DocumentCurrentResponse"
 								}
 							}
 						},
@@ -3981,52 +1953,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"type": "object",
-									"properties": {
-										"acceptances": {
-											"type": "array",
-											"items": {
-												"type": "object",
-												"properties": {
-													"acceptedAt": {
-														"type": "number",
-														"description": "Epoch milliseconds."
-													},
-													"hash": {
-														"anyOf": [
-															{
-																"type": "string"
-															},
-															{
-																"type": "null"
-															}
-														]
-													},
-													"type": {
-														"type": "string"
-													},
-													"version": {
-														"type": "string"
-													}
-												},
-												"required": [
-													"acceptedAt",
-													"hash",
-													"type",
-													"version"
-												]
-											}
-										},
-										"subjectId": {
-											"type": "string",
-											"format": "uuid",
-											"description": "The device’s UUID when the request named a device, which replaces the ID sent, and the person’s otherwise."
-										}
-									},
-									"required": [
-										"acceptances",
-										"subjectId"
-									]
+									"$ref": "#/components/schemas/DocumentAcceptancesResponse"
 								}
 							}
 						},
@@ -4314,77 +2241,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"type": "object",
-								"properties": {
-									"acceptances": {
-										"type": "array",
-										"items": {
-											"type": "object",
-											"properties": {
-												"proofToken": {
-													"type": "string",
-													"minLength": 1
-												},
-												"type": {
-													"type": "string",
-													"pattern": "^[a-z][a-z0-9_]*$"
-												}
-											},
-											"required": [
-												"proofToken",
-												"type"
-											]
-										},
-										"minItems": 1,
-										"maxItems": 20
-									},
-									"acceptedAt": {
-										"type": "integer",
-										"minimum": 0,
-										"maximum": 8640000000000000
-									},
-									"context": {
-										"type": "object",
-										"properties": {
-											"ipAddress": {
-												"type": "string"
-											},
-											"userAgent": {
-												"type": "string"
-											}
-										},
-										"required": []
-									},
-									"externalId": {
-										"type": "string",
-										"minLength": 1
-									},
-									"idempotencyKey": {
-										"type": "string",
-										"format": "uuid"
-									},
-									"identityProvider": {
-										"type": "string",
-										"minLength": 1
-									},
-									"identityToken": {
-										"type": "string"
-									},
-									"property": {
-										"type": "string",
-										"maxLength": 253,
-										"pattern": "^[a-z0-9](?:[a-z0-9._-]*[a-z0-9_])?$"
-									},
-									"subjectId": {
-										"type": "string",
-										"description": "A lower-case UUIDv7 the SDK makes. A legacy `sub_` ID is accepted too; the answer names the subject’s UUID, to store in its place."
-									}
-								},
-								"required": [
-									"acceptances",
-									"acceptedAt",
-									"idempotencyKey"
-								]
+								"$ref": "#/components/schemas/DocumentAcceptancesRequest"
 							}
 						}
 					},
@@ -4401,33 +2258,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"type": "object",
-									"properties": {
-										"results": {
-											"type": "object",
-											"propertyNames": {
-												"type": "string"
-											},
-											"additionalProperties": {
-												"type": "object",
-												"properties": {
-													"hasConsent": {
-														"type": "boolean"
-													},
-													"isLatestPolicy": {
-														"type": "boolean"
-													}
-												},
-												"required": [
-													"hasConsent",
-													"isLatestPolicy"
-												]
-											}
-										}
-									},
-									"required": [
-										"results"
-									]
+									"$ref": "#/components/schemas/ConsentCheckResponse"
 								}
 							}
 						},
@@ -4703,6 +2534,2899 @@
 	},
 	"components": {
 		"schemas": {
+			"ConsentCheckResponse": {
+				"type": "object",
+				"properties": {
+					"results": {
+						"type": "object",
+						"propertyNames": {
+							"type": "string"
+						},
+						"additionalProperties": {
+							"type": "object",
+							"properties": {
+								"hasConsent": {
+									"type": "boolean"
+								},
+								"isLatestPolicy": {
+									"type": "boolean"
+								}
+							},
+							"required": [
+								"hasConsent",
+								"isLatestPolicy"
+							]
+						}
+					}
+				},
+				"required": [
+					"results"
+				]
+			},
+			"ConsentInitResponse": {
+				"type": "object",
+				"properties": {
+					"adTechProviders": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"id": {
+									"type": "integer",
+									"minimum": 1,
+									"maximum": 9007199254740991
+								},
+								"name": {
+									"type": "string",
+									"minLength": 1
+								},
+								"policyUrl": {
+									"type": "string",
+									"pattern": "^https?:\\/\\/"
+								}
+							},
+							"required": [
+								"id",
+								"name",
+								"policyUrl"
+							]
+						}
+					},
+					"branding": {
+						"enum": [
+							"c15t",
+							"inth",
+							"consent",
+							"none"
+						],
+						"type": "string"
+					},
+					"cmpId": {
+						"type": "number"
+					},
+					"customVendors": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"cookieMaxAgeSeconds": {
+									"type": "integer",
+									"minimum": 1
+								},
+								"dataCategories": {
+									"type": "array",
+									"items": {
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 11
+									}
+								},
+								"dataRetentionDays": {
+									"type": "integer",
+									"minimum": 1
+								},
+								"description": {
+									"type": "string"
+								},
+								"features": {
+									"type": "array",
+									"items": {
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 3
+									}
+								},
+								"id": {
+									"anyOf": [
+										{
+											"type": "string"
+										},
+										{
+											"type": "integer"
+										}
+									]
+								},
+								"legIntPurposes": {
+									"type": "array",
+									"items": {
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 11
+									}
+								},
+								"name": {
+									"type": "string"
+								},
+								"privacyPolicyUrl": {
+									"type": "string",
+									"format": "uri"
+								},
+								"purposes": {
+									"type": "array",
+									"items": {
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 11
+									}
+								},
+								"specialFeatures": {
+									"type": "array",
+									"items": {
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 2
+									}
+								},
+								"usesCookies": {
+									"type": "boolean"
+								},
+								"usesNonCookieAccess": {
+									"type": "boolean"
+								}
+							},
+							"required": [
+								"id",
+								"name",
+								"privacyPolicyUrl",
+								"purposes"
+							]
+						}
+					},
+					"gvl": {
+						"anyOf": [
+							{
+								"type": "object",
+								"properties": {
+									"dataCategories": {
+										"type": "object",
+										"propertyNames": {
+											"type": "string"
+										},
+										"additionalProperties": {
+											"type": "object",
+											"properties": {
+												"description": {
+													"type": "string"
+												},
+												"id": {
+													"type": "number"
+												},
+												"name": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"description",
+												"id",
+												"name"
+											]
+										}
+									},
+									"features": {
+										"type": "object",
+										"propertyNames": {
+											"type": "string"
+										},
+										"additionalProperties": {
+											"type": "object",
+											"properties": {
+												"description": {
+													"type": "string"
+												},
+												"descriptionLegal": {
+													"type": "string"
+												},
+												"id": {
+													"type": "number"
+												},
+												"illustrations": {
+													"type": "array",
+													"items": {
+														"type": "string"
+													}
+												},
+												"name": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"description",
+												"id",
+												"illustrations",
+												"name"
+											]
+										}
+									},
+									"gvlSpecificationVersion": {
+										"type": "number"
+									},
+									"lastUpdated": {
+										"type": "string"
+									},
+									"purposes": {
+										"type": "object",
+										"propertyNames": {
+											"type": "string"
+										},
+										"additionalProperties": {
+											"type": "object",
+											"properties": {
+												"description": {
+													"type": "string"
+												},
+												"descriptionLegal": {
+													"type": "string"
+												},
+												"id": {
+													"type": "number"
+												},
+												"illustrations": {
+													"type": "array",
+													"items": {
+														"type": "string"
+													}
+												},
+												"name": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"description",
+												"id",
+												"illustrations",
+												"name"
+											]
+										}
+									},
+									"specialFeatures": {
+										"type": "object",
+										"propertyNames": {
+											"type": "string"
+										},
+										"additionalProperties": {
+											"type": "object",
+											"properties": {
+												"description": {
+													"type": "string"
+												},
+												"descriptionLegal": {
+													"type": "string"
+												},
+												"id": {
+													"type": "number"
+												},
+												"illustrations": {
+													"type": "array",
+													"items": {
+														"type": "string"
+													}
+												},
+												"name": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"description",
+												"id",
+												"illustrations",
+												"name"
+											]
+										}
+									},
+									"specialPurposes": {
+										"type": "object",
+										"propertyNames": {
+											"type": "string"
+										},
+										"additionalProperties": {
+											"type": "object",
+											"properties": {
+												"description": {
+													"type": "string"
+												},
+												"descriptionLegal": {
+													"type": "string"
+												},
+												"id": {
+													"type": "number"
+												},
+												"illustrations": {
+													"type": "array",
+													"items": {
+														"type": "string"
+													}
+												},
+												"name": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"description",
+												"id",
+												"illustrations",
+												"name"
+											]
+										}
+									},
+									"stacks": {
+										"type": "object",
+										"propertyNames": {
+											"type": "string"
+										},
+										"additionalProperties": {
+											"type": "object",
+											"properties": {
+												"description": {
+													"type": "string"
+												},
+												"id": {
+													"type": "number"
+												},
+												"name": {
+													"type": "string"
+												},
+												"purposes": {
+													"type": "array",
+													"items": {
+														"type": "number"
+													}
+												},
+												"specialFeatures": {
+													"type": "array",
+													"items": {
+														"type": "number"
+													}
+												}
+											},
+											"required": [
+												"description",
+												"id",
+												"name",
+												"purposes",
+												"specialFeatures"
+											]
+										}
+									},
+									"standardTexts": {
+										"type": "object",
+										"properties": {
+											"features": {
+												"type": "string"
+											},
+											"purposes": {
+												"type": "string"
+											},
+											"specialFeatures": {
+												"type": "string"
+											},
+											"specialPurposes": {
+												"type": "string"
+											}
+										},
+										"required": [
+											"features"
+										]
+									},
+									"tcfPolicyVersion": {
+										"type": "number"
+									},
+									"vendorListVersion": {
+										"type": "number"
+									},
+									"vendors": {
+										"type": "object",
+										"propertyNames": {
+											"type": "string"
+										},
+										"additionalProperties": {
+											"type": "object",
+											"properties": {
+												"cookieMaxAgeSeconds": {
+													"anyOf": [
+														{
+															"type": "number"
+														},
+														{
+															"type": "null"
+														}
+													]
+												},
+												"cookieRefresh": {
+													"type": "boolean"
+												},
+												"dataCategories": {
+													"type": "array",
+													"items": {
+														"type": "number"
+													}
+												},
+												"dataRetention": {
+													"type": "object",
+													"properties": {
+														"purposes": {
+															"type": "object",
+															"propertyNames": {
+																"type": "string"
+															},
+															"additionalProperties": {
+																"type": "number"
+															}
+														},
+														"specialPurposes": {
+															"type": "object",
+															"propertyNames": {
+																"type": "string"
+															},
+															"additionalProperties": {
+																"type": "number"
+															}
+														},
+														"stdRetention": {
+															"type": "number"
+														}
+													},
+													"required": []
+												},
+												"deletedDate": {
+													"type": "string"
+												},
+												"deviceStorageDisclosureUrl": {
+													"type": "string"
+												},
+												"features": {
+													"type": "array",
+													"items": {
+														"type": "number"
+													}
+												},
+												"flexiblePurposes": {
+													"type": "array",
+													"items": {
+														"type": "number"
+													}
+												},
+												"id": {
+													"type": "number"
+												},
+												"legIntPurposes": {
+													"type": "array",
+													"items": {
+														"type": "number"
+													}
+												},
+												"name": {
+													"type": "string"
+												},
+												"overflow": {
+													"type": "object",
+													"properties": {
+														"httpGetLimit": {
+															"type": "number"
+														}
+													},
+													"required": [
+														"httpGetLimit"
+													]
+												},
+												"purposes": {
+													"type": "array",
+													"items": {
+														"type": "number"
+													}
+												},
+												"specialFeatures": {
+													"type": "array",
+													"items": {
+														"type": "number"
+													}
+												},
+												"specialPurposes": {
+													"type": "array",
+													"items": {
+														"type": "number"
+													}
+												},
+												"urls": {
+													"type": "array",
+													"items": {
+														"type": "object",
+														"properties": {
+															"langId": {
+																"type": "string"
+															},
+															"legIntClaim": {
+																"type": "string"
+															},
+															"privacy": {
+																"type": "string"
+															}
+														},
+														"required": [
+															"langId"
+														]
+													}
+												},
+												"usesCookies": {
+													"type": "boolean"
+												},
+												"usesNonCookieAccess": {
+													"type": "boolean"
+												}
+											},
+											"required": [
+												"cookieMaxAgeSeconds",
+												"cookieRefresh",
+												"features",
+												"flexiblePurposes",
+												"id",
+												"legIntPurposes",
+												"name",
+												"purposes",
+												"specialFeatures",
+												"specialPurposes",
+												"urls",
+												"usesCookies",
+												"usesNonCookieAccess"
+											]
+										}
+									}
+								},
+								"required": [
+									"features",
+									"gvlSpecificationVersion",
+									"lastUpdated",
+									"purposes",
+									"specialFeatures",
+									"specialPurposes",
+									"stacks",
+									"tcfPolicyVersion",
+									"vendorListVersion",
+									"vendors"
+								]
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"gvlReference": {
+						"type": "object",
+						"properties": {
+							"context": {
+								"type": "object",
+								"properties": {
+									"country": {
+										"type": "string"
+									},
+									"gpc": {
+										"type": "boolean"
+									},
+									"region": {
+										"type": "string"
+									}
+								},
+								"required": []
+							},
+							"format": {
+								"const": "init"
+							},
+							"language": {
+								"type": "string"
+							},
+							"summary": {
+								"type": "object",
+								"properties": {
+									"items": {
+										"type": "array",
+										"items": {
+											"type": "string"
+										}
+									},
+									"vendorCount": {
+										"type": "number"
+									}
+								},
+								"required": [
+									"items",
+									"vendorCount"
+								]
+							},
+							"url": {
+								"type": "string"
+							},
+							"vendorListVersion": {
+								"type": "number"
+							}
+						},
+						"required": [
+							"language",
+							"url",
+							"vendorListVersion"
+						]
+					},
+					"hosting": {
+						"enum": [
+							"inth",
+							"self-hosted"
+						],
+						"type": "string"
+					},
+					"location": {
+						"type": "object",
+						"properties": {
+							"countryCode": {
+								"anyOf": [
+									{
+										"type": "string"
+									},
+									{
+										"type": "null"
+									}
+								]
+							},
+							"regionCode": {
+								"anyOf": [
+									{
+										"type": "string"
+									},
+									{
+										"type": "null"
+									}
+								]
+							}
+						},
+						"required": [
+							"countryCode",
+							"regionCode"
+						]
+					},
+					"policyResolution": {
+						"oneOf": [
+							{
+								"type": "object",
+								"properties": {
+									"policy": {
+										"type": "null"
+									},
+									"status": {
+										"const": "unconfigured"
+									},
+									"version": {
+										"const": 1
+									}
+								},
+								"required": [
+									"policy",
+									"status",
+									"version"
+								],
+								"additionalProperties": false
+							},
+							{
+								"type": "object",
+								"properties": {
+									"policy": {
+										"type": "null"
+									},
+									"status": {
+										"const": "no-match"
+									},
+									"version": {
+										"const": 1
+									}
+								},
+								"required": [
+									"policy",
+									"status",
+									"version"
+								],
+								"additionalProperties": false
+							},
+							{
+								"type": "object",
+								"properties": {
+									"policy": {
+										"type": "null"
+									},
+									"reason": {
+										"enum": [
+											"invalid-configuration",
+											"insufficient-inputs",
+											"transport",
+											"unsupported-contract",
+											"invalid-payload"
+										],
+										"type": "string"
+									},
+									"status": {
+										"const": "failed"
+									},
+									"version": {
+										"const": 1
+									}
+								},
+								"required": [
+									"policy",
+									"reason",
+									"status",
+									"version"
+								],
+								"additionalProperties": false
+							},
+							{
+								"type": "object",
+								"properties": {
+									"fingerprints": {
+										"type": "object",
+										"properties": {
+											"choice": {
+												"type": "string",
+												"minLength": 1
+											},
+											"legacyMaterial": {
+												"type": "string"
+											},
+											"notice": {
+												"type": "string",
+												"minLength": 1
+											},
+											"policy": {
+												"type": "string",
+												"minLength": 1
+											}
+										},
+										"required": [
+											"choice",
+											"notice",
+											"policy"
+										],
+										"additionalProperties": false
+									},
+									"matchedBy": {
+										"enum": [
+											"region",
+											"country",
+											"default",
+											"fallback"
+										],
+										"type": "string"
+									},
+									"policy": {
+										"type": "object",
+										"properties": {
+											"actions": {
+												"type": "object",
+												"properties": {
+													"allowed": {
+														"type": "array",
+														"items": {
+															"enum": [
+																"accept",
+																"reject",
+																"customize",
+																"dismiss"
+															],
+															"type": "string"
+														}
+													},
+													"equivalent": {
+														"type": "array",
+														"items": {
+															"type": "array",
+															"items": {
+																"enum": [
+																	"accept",
+																	"reject",
+																	"customize",
+																	"dismiss"
+																],
+																"type": "string"
+															}
+														}
+													},
+													"required": {
+														"type": "array",
+														"items": {
+															"enum": [
+																"accept",
+																"reject",
+																"customize",
+																"dismiss"
+															],
+															"type": "string"
+														}
+													}
+												},
+												"required": [
+													"allowed",
+													"equivalent",
+													"required"
+												],
+												"additionalProperties": false
+											},
+											"copyRevision": {
+												"anyOf": [
+													{
+														"type": "string"
+													},
+													{
+														"type": "null"
+													}
+												]
+											},
+											"i18n": {
+												"type": "object",
+												"properties": {
+													"language": {
+														"type": "string"
+													},
+													"messageProfile": {
+														"type": "string"
+													}
+												},
+												"required": [],
+												"additionalProperties": false
+											},
+											"id": {
+												"type": "string",
+												"minLength": 1
+											},
+											"model": {
+												"enum": [
+													"opt-in",
+													"opt-out",
+													"iab",
+													"none"
+												],
+												"type": "string"
+											},
+											"preselectedCategories": {
+												"type": "array",
+												"items": {
+													"enum": [
+														"experience",
+														"functionality",
+														"marketing",
+														"measurement"
+													],
+													"type": "string"
+												}
+											},
+											"privacySignals": {
+												"type": "object",
+												"properties": {
+													"gpc": {
+														"type": "object",
+														"properties": {
+															"denyCategories": {
+																"type": "array",
+																"items": {
+																	"enum": [
+																		"experience",
+																		"functionality",
+																		"marketing",
+																		"measurement"
+																	],
+																	"type": "string"
+																}
+															}
+														},
+														"required": [
+															"denyCategories"
+														],
+														"additionalProperties": false
+													}
+												},
+												"required": [
+													"gpc"
+												],
+												"additionalProperties": false
+											},
+											"prompt": {
+												"enum": [
+													"choice",
+													"notice",
+													"none"
+												],
+												"type": "string"
+											},
+											"proof": {
+												"type": "object",
+												"properties": {
+													"storeIp": {
+														"type": "boolean"
+													},
+													"storeLanguage": {
+														"type": "boolean"
+													},
+													"storeUserAgent": {
+														"type": "boolean"
+													}
+												},
+												"required": [
+													"storeIp",
+													"storeLanguage",
+													"storeUserAgent"
+												],
+												"additionalProperties": false
+											},
+											"rights": {
+												"type": "array",
+												"items": {
+													"enum": [
+														"disclosure",
+														"preferences",
+														"opt-out"
+													],
+													"type": "string"
+												}
+											},
+											"scope": {
+												"type": "array",
+												"items": {
+													"enum": [
+														"experience",
+														"functionality",
+														"marketing",
+														"measurement"
+													],
+													"type": "string"
+												}
+											},
+											"scopeMode": {
+												"enum": [
+													"strict",
+													"permissive"
+												],
+												"type": "string"
+											},
+											"validity": {
+												"type": "object",
+												"properties": {
+													"choiceMs": {
+														"type": "number",
+														"exclusiveMinimum": 0,
+														"maximum": 9007199254740991
+													},
+													"noticeMs": {
+														"type": "number",
+														"exclusiveMinimum": 0,
+														"maximum": 9007199254740991
+													}
+												},
+												"required": [
+													"choiceMs",
+													"noticeMs"
+												],
+												"additionalProperties": false
+											}
+										},
+										"required": [
+											"actions",
+											"copyRevision",
+											"id",
+											"model",
+											"preselectedCategories",
+											"privacySignals",
+											"prompt",
+											"proof",
+											"rights",
+											"scope",
+											"scopeMode",
+											"validity"
+										],
+										"additionalProperties": false
+									},
+									"policyId": {
+										"type": "string",
+										"minLength": 1
+									},
+									"status": {
+										"const": "matched"
+									},
+									"version": {
+										"const": 1
+									}
+								},
+								"required": [
+									"fingerprints",
+									"matchedBy",
+									"policy",
+									"policyId",
+									"status",
+									"version"
+								],
+								"additionalProperties": false
+							}
+						]
+					},
+					"policySnapshotToken": {
+						"type": "string"
+					},
+					"resolvedPrivacySignals": {
+						"type": "object",
+						"properties": {
+							"gpc": {
+								"type": "boolean"
+							}
+						},
+						"required": []
+					},
+					"translations": {
+						"type": "object",
+						"properties": {
+							"language": {
+								"type": "string"
+							},
+							"translations": {
+								"type": "object",
+								"properties": {
+									"common": {
+										"type": "object",
+										"properties": {
+											"acceptAll": {
+												"type": "string"
+											},
+											"acknowledge": {
+												"type": "string"
+											},
+											"customize": {
+												"type": "string"
+											},
+											"dismiss": {
+												"type": "string"
+											},
+											"rejectAll": {
+												"type": "string"
+											},
+											"save": {
+												"type": "string"
+											}
+										},
+										"required": []
+									},
+									"consentGate": {
+										"type": "object",
+										"properties": {
+											"actionButton": {
+												"type": "string"
+											},
+											"title": {
+												"type": "string"
+											}
+										},
+										"required": []
+									},
+									"consentManagerDialog": {
+										"type": "object",
+										"properties": {
+											"description": {
+												"type": "string"
+											},
+											"title": {
+												"type": "string"
+											},
+											"vendors": {
+												"type": "object",
+												"properties": {
+													"disabledByCategory": {
+														"type": "string"
+													},
+													"privacyPolicy": {
+														"type": "string"
+													},
+													"switchLabel": {
+														"type": "string"
+													},
+													"title": {
+														"type": "string"
+													}
+												},
+												"required": []
+											}
+										},
+										"required": []
+									},
+									"consentTypes": {
+										"type": "object",
+										"properties": {
+											"experience": {
+												"type": "object",
+												"properties": {
+													"description": {
+														"type": "string"
+													},
+													"title": {
+														"type": "string"
+													}
+												},
+												"required": []
+											},
+											"functionality": {
+												"type": "object",
+												"properties": {
+													"description": {
+														"type": "string"
+													},
+													"title": {
+														"type": "string"
+													}
+												},
+												"required": []
+											},
+											"marketing": {
+												"type": "object",
+												"properties": {
+													"description": {
+														"type": "string"
+													},
+													"title": {
+														"type": "string"
+													}
+												},
+												"required": []
+											},
+											"measurement": {
+												"type": "object",
+												"properties": {
+													"description": {
+														"type": "string"
+													},
+													"title": {
+														"type": "string"
+													}
+												},
+												"required": []
+											},
+											"necessary": {
+												"type": "object",
+												"properties": {
+													"description": {
+														"type": "string"
+													},
+													"title": {
+														"type": "string"
+													}
+												},
+												"required": []
+											}
+										},
+										"required": []
+									},
+									"cookieBanner": {
+										"type": "object",
+										"properties": {
+											"description": {
+												"type": "string"
+											},
+											"title": {
+												"type": "string"
+											},
+											"noticeDescription": {
+												"type": "string"
+											},
+											"noticeTitle": {
+												"type": "string"
+											}
+										},
+										"required": []
+									},
+									"legalLinks": {
+										"type": "object",
+										"properties": {
+											"cookiePolicy": {
+												"type": "string"
+											},
+											"privacyPolicy": {
+												"type": "string"
+											},
+											"termsOfService": {
+												"type": "string"
+											}
+										},
+										"required": []
+									},
+									"rights": {
+										"type": "object",
+										"properties": {
+											"optOut": {
+												"type": "string"
+											},
+											"preferences": {
+												"type": "string"
+											}
+										},
+										"required": []
+									}
+								},
+								"required": [
+									"common",
+									"consentManagerDialog",
+									"consentTypes",
+									"cookieBanner"
+								]
+							}
+						},
+						"required": [
+							"language",
+							"translations"
+						]
+					},
+					"vendorListVersion": {
+						"type": "string"
+					},
+					"vendors": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"category": {
+									"$ref": "#/components/schemas/VendorCategoryCondition"
+								},
+								"description": {
+									"type": "string"
+								},
+								"disabled": {
+									"type": "boolean"
+								},
+								"homepageUrl": {
+									"type": "string",
+									"format": "uri"
+								},
+								"id": {
+									"type": "string",
+									"pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
+									"description": "Stable vendor slug used by scripts, rules and iframes.",
+									"examples": [
+										"meta-pixel",
+										"google-analytics"
+									]
+								},
+								"legalName": {
+									"type": "string"
+								},
+								"name": {
+									"type": "string"
+								},
+								"privacyPolicyUrl": {
+									"type": "string",
+									"format": "uri"
+								}
+							},
+							"required": [
+								"category",
+								"id",
+								"name",
+								"privacyPolicyUrl"
+							]
+						}
+					}
+				},
+				"required": [
+					"branding",
+					"location",
+					"policyResolution",
+					"translations"
+				]
+			},
+			"ConsentManifestResponse": {
+				"type": "object",
+				"properties": {
+					"appName": {
+						"type": "string"
+					},
+					"branding": {
+						"enum": [
+							"c15t",
+							"inth",
+							"consent",
+							"none"
+						],
+						"type": "string"
+					},
+					"cmpId": {
+						"type": "number"
+					},
+					"hosting": {
+						"enum": [
+							"inth",
+							"self-hosted"
+						],
+						"type": "string"
+					},
+					"iab": {
+						"type": "object",
+						"properties": {
+							"additionalConsent": {
+								"type": "object",
+								"properties": {
+									"providers": {
+										"type": "array",
+										"items": {
+											"type": "number"
+										}
+									},
+									"url": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"providers",
+									"url"
+								]
+							},
+							"customVendors": {
+								"type": "array",
+								"items": {
+									"type": "object",
+									"properties": {
+										"cookieMaxAgeSeconds": {
+											"type": "integer",
+											"minimum": 1
+										},
+										"dataCategories": {
+											"type": "array",
+											"items": {
+												"type": "integer",
+												"minimum": 1,
+												"maximum": 11
+											}
+										},
+										"dataRetentionDays": {
+											"type": "integer",
+											"minimum": 1
+										},
+										"description": {
+											"type": "string"
+										},
+										"features": {
+											"type": "array",
+											"items": {
+												"type": "integer",
+												"minimum": 1,
+												"maximum": 3
+											}
+										},
+										"id": {
+											"anyOf": [
+												{
+													"type": "string"
+												},
+												{
+													"type": "integer"
+												}
+											]
+										},
+										"legIntPurposes": {
+											"type": "array",
+											"items": {
+												"type": "integer",
+												"minimum": 1,
+												"maximum": 11
+											}
+										},
+										"name": {
+											"type": "string"
+										},
+										"privacyPolicyUrl": {
+											"type": "string",
+											"format": "uri"
+										},
+										"purposes": {
+											"type": "array",
+											"items": {
+												"type": "integer",
+												"minimum": 1,
+												"maximum": 11
+											}
+										},
+										"specialFeatures": {
+											"type": "array",
+											"items": {
+												"type": "integer",
+												"minimum": 1,
+												"maximum": 2
+											}
+										},
+										"usesCookies": {
+											"type": "boolean"
+										},
+										"usesNonCookieAccess": {
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"id",
+										"name",
+										"privacyPolicyUrl",
+										"purposes"
+									]
+								}
+							},
+							"enabled": {
+								"type": "boolean"
+							},
+							"gvl": {
+								"type": "object",
+								"properties": {
+									"url": {
+										"type": "string"
+									},
+									"version": {
+										"anyOf": [
+											{
+												"type": "number"
+											},
+											{
+												"type": "string"
+											}
+										]
+									}
+								},
+								"required": [
+									"url"
+								]
+							}
+						},
+						"required": [
+							"enabled"
+						]
+					},
+					"policyFailure": {
+						"type": "object",
+						"properties": {
+							"errors": {
+								"type": "array",
+								"items": {
+									"type": "string"
+								}
+							},
+							"reason": {
+								"const": "invalid-configuration"
+							}
+						},
+						"required": [
+							"errors",
+							"reason"
+						]
+					},
+					"policyPacks": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"fingerprints": {
+									"type": "object",
+									"properties": {
+										"choice": {
+											"type": "string",
+											"minLength": 1
+										},
+										"legacyMaterial": {
+											"type": "string"
+										},
+										"notice": {
+											"type": "string",
+											"minLength": 1
+										},
+										"policy": {
+											"type": "string",
+											"minLength": 1
+										}
+									},
+									"required": [
+										"choice",
+										"notice",
+										"policy"
+									],
+									"additionalProperties": false
+								},
+								"match": {
+									"type": "object",
+									"properties": {
+										"countries": {
+											"type": "array",
+											"items": {
+												"type": "string"
+											}
+										},
+										"fallback": {
+											"type": "boolean"
+										},
+										"isDefault": {
+											"type": "boolean"
+										},
+										"regionFallbacks": {
+											"type": "array",
+											"items": {
+												"type": "string"
+											},
+											"description": "Countries whose missing region uses this rule, after country matches."
+										},
+										"regions": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"country": {
+														"type": "string"
+													},
+													"region": {
+														"type": "string"
+													}
+												},
+												"required": [
+													"country",
+													"region"
+												]
+											}
+										}
+									},
+									"required": []
+								},
+								"rule": {
+									"type": "object",
+									"properties": {
+										"actions": {
+											"type": "object",
+											"properties": {
+												"allowed": {
+													"type": "array",
+													"items": {
+														"enum": [
+															"accept",
+															"reject",
+															"customize",
+															"dismiss"
+														],
+														"type": "string"
+													}
+												},
+												"equivalent": {
+													"type": "array",
+													"items": {
+														"type": "array",
+														"items": {
+															"enum": [
+																"accept",
+																"reject",
+																"customize",
+																"dismiss"
+															],
+															"type": "string"
+														}
+													}
+												},
+												"required": {
+													"type": "array",
+													"items": {
+														"enum": [
+															"accept",
+															"reject",
+															"customize",
+															"dismiss"
+														],
+														"type": "string"
+													}
+												}
+											},
+											"required": [
+												"allowed",
+												"equivalent",
+												"required"
+											],
+											"additionalProperties": false
+										},
+										"copyRevision": {
+											"anyOf": [
+												{
+													"type": "string"
+												},
+												{
+													"type": "null"
+												}
+											]
+										},
+										"i18n": {
+											"type": "object",
+											"properties": {
+												"language": {
+													"type": "string"
+												},
+												"messageProfile": {
+													"type": "string"
+												}
+											},
+											"required": [],
+											"additionalProperties": false
+										},
+										"id": {
+											"type": "string",
+											"minLength": 1
+										},
+										"model": {
+											"enum": [
+												"opt-in",
+												"opt-out",
+												"iab",
+												"none"
+											],
+											"type": "string"
+										},
+										"preselectedCategories": {
+											"type": "array",
+											"items": {
+												"enum": [
+													"experience",
+													"functionality",
+													"marketing",
+													"measurement"
+												],
+												"type": "string"
+											}
+										},
+										"privacySignals": {
+											"type": "object",
+											"properties": {
+												"gpc": {
+													"type": "object",
+													"properties": {
+														"denyCategories": {
+															"type": "array",
+															"items": {
+																"enum": [
+																	"experience",
+																	"functionality",
+																	"marketing",
+																	"measurement"
+																],
+																"type": "string"
+															}
+														}
+													},
+													"required": [
+														"denyCategories"
+													],
+													"additionalProperties": false
+												}
+											},
+											"required": [
+												"gpc"
+											],
+											"additionalProperties": false
+										},
+										"prompt": {
+											"enum": [
+												"choice",
+												"notice",
+												"none"
+											],
+											"type": "string"
+										},
+										"proof": {
+											"type": "object",
+											"properties": {
+												"storeIp": {
+													"type": "boolean"
+												},
+												"storeLanguage": {
+													"type": "boolean"
+												},
+												"storeUserAgent": {
+													"type": "boolean"
+												}
+											},
+											"required": [
+												"storeIp",
+												"storeLanguage",
+												"storeUserAgent"
+											],
+											"additionalProperties": false
+										},
+										"rights": {
+											"type": "array",
+											"items": {
+												"enum": [
+													"disclosure",
+													"preferences",
+													"opt-out"
+												],
+												"type": "string"
+											}
+										},
+										"scope": {
+											"type": "array",
+											"items": {
+												"enum": [
+													"experience",
+													"functionality",
+													"marketing",
+													"measurement"
+												],
+												"type": "string"
+											}
+										},
+										"scopeMode": {
+											"enum": [
+												"strict",
+												"permissive"
+											],
+											"type": "string"
+										},
+										"validity": {
+											"type": "object",
+											"properties": {
+												"choiceMs": {
+													"type": "number",
+													"exclusiveMinimum": 0,
+													"maximum": 9007199254740991
+												},
+												"noticeMs": {
+													"type": "number",
+													"exclusiveMinimum": 0,
+													"maximum": 9007199254740991
+												}
+											},
+											"required": [
+												"choiceMs",
+												"noticeMs"
+											],
+											"additionalProperties": false
+										}
+									},
+									"required": [
+										"actions",
+										"copyRevision",
+										"id",
+										"model",
+										"preselectedCategories",
+										"privacySignals",
+										"prompt",
+										"proof",
+										"rights",
+										"scope",
+										"scopeMode",
+										"validity"
+									],
+									"additionalProperties": false
+								}
+							},
+							"required": [
+								"fingerprints",
+								"match",
+								"rule"
+							]
+						}
+					},
+					"revision": {
+						"type": "string",
+						"description": "Fingerprints the manifest. It is also the ETag."
+					},
+					"schemaVersion": {
+						"const": 2
+					},
+					"translations": {
+						"type": "object",
+						"properties": {
+							"customTranslations": {
+								"type": "object",
+								"propertyNames": {
+									"type": "string"
+								},
+								"additionalProperties": {
+									"type": "object",
+									"properties": {},
+									"required": []
+								},
+								"description": "Banner text overrides, by language."
+							},
+							"i18n": {
+								"type": "object",
+								"properties": {},
+								"required": [],
+								"description": "Message profiles and the default profile."
+							}
+						},
+						"required": []
+					},
+					"vendorListVersion": {
+						"type": "string"
+					},
+					"vendors": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"category": {
+									"$ref": "#/components/schemas/VendorCategoryCondition"
+								},
+								"description": {
+									"type": "string"
+								},
+								"disabled": {
+									"type": "boolean"
+								},
+								"homepageUrl": {
+									"type": "string",
+									"format": "uri"
+								},
+								"id": {
+									"type": "string",
+									"pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
+									"description": "Stable vendor slug used by scripts, rules and iframes.",
+									"examples": [
+										"meta-pixel",
+										"google-analytics"
+									]
+								},
+								"legalName": {
+									"type": "string"
+								},
+								"name": {
+									"type": "string"
+								},
+								"privacyPolicyUrl": {
+									"type": "string",
+									"format": "uri"
+								}
+							},
+							"required": [
+								"category",
+								"id",
+								"name",
+								"privacyPolicyUrl"
+							]
+						}
+					}
+				},
+				"required": [
+					"branding",
+					"revision",
+					"schemaVersion"
+				],
+				"description": "Every policy the project serves, with the banner text in each language, independent of the visitor."
+			},
+			"ConsentRecordRequest": {
+				"type": "object",
+				"properties": {
+					"addtlConsent": {
+						"type": "string",
+						"pattern": "^2~(?:[1-9]\\d*(?:\\.[1-9]\\d*)*)?~dv(?:\\.(?:[1-9]\\d*(?:\\.[1-9]\\d*)*)?)?$",
+						"description": "Google Additional Consent v2 string for ad tech providers outside the IAB Global Vendor List. Stored only with tcString.",
+						"examples": [
+							"2~89.486~dv.2572"
+						]
+					},
+					"consentAction": {
+						"type": "string",
+						"description": "User action that produced this consent state.",
+						"examples": [
+							"all",
+							"necessary",
+							"custom"
+						]
+					},
+					"country": {
+						"anyOf": [
+							{
+								"type": "string",
+								"description": "Country input used by manifest-mode decision replay.",
+								"examples": [
+									"DE"
+								]
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"fingerprint": {
+						"type": "string",
+						"description": "Runtime policy fingerprint asserted by manifest-mode clients."
+					},
+					"gpc": {
+						"type": "boolean",
+						"description": "Global Privacy Control input used by manifest-mode saves."
+					},
+					"language": {
+						"type": "string",
+						"description": "Language input used by manifest-mode decision replay.",
+						"examples": [
+							"en"
+						]
+					},
+					"metadata": {
+						"type": "object",
+						"propertyNames": {
+							"type": "string"
+						},
+						"additionalProperties": {},
+						"description": "Additional audit metadata to store with the consent."
+					},
+					"model": {
+						"type": "string",
+						"description": "Consent model the client applied. Used when no policy decision is available.",
+						"examples": [
+							"opt-in",
+							"opt-out",
+							"iab"
+						]
+					},
+					"policyId": {
+						"anyOf": [
+							{
+								"type": "string",
+								"description": "Runtime policy ID to recompute on write. Null asserts a successful no-match resolution.",
+								"examples": [
+									"eu_opt_in"
+								]
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"policySnapshotToken": {
+						"type": "string",
+						"description": "The signed policy snapshot token `GET /v1/consent/init` answered with."
+					},
+					"region": {
+						"anyOf": [
+							{
+								"type": "string",
+								"description": "Region input used by manifest-mode decision replay.",
+								"examples": [
+									"BE"
+								]
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"tcString": {
+						"type": "string",
+						"description": "IAB TCF TC string for IAB consent submissions."
+					},
+					"uiSource": {
+						"type": "string",
+						"description": "UI surface that collected the consent.",
+						"examples": [
+							"banner",
+							"dialog",
+							"widget"
+						]
+					},
+					"vendorChoice": {
+						"type": "object",
+						"properties": {
+							"confirmedAt": {
+								"type": "integer",
+								"minimum": 0,
+								"maximum": 8640000000000000,
+								"description": "Epoch milliseconds when the vendor grants were confirmed."
+							},
+							"grants": {
+								"type": "object",
+								"propertyNames": {
+									"type": "string",
+									"pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
+									"description": "Stable vendor slug used by scripts, rules and iframes.",
+									"examples": [
+										"meta-pixel",
+										"google-analytics"
+									]
+								},
+								"additionalProperties": {
+									"type": "boolean"
+								},
+								"description": "Granted flag per declared vendor id."
+							},
+							"version": {
+								"const": 1
+							}
+						},
+						"required": [
+							"confirmedAt",
+							"grants",
+							"version"
+						],
+						"additionalProperties": false
+					},
+					"answer": {
+						"type": "object",
+						"properties": {
+							"categories": {
+								"type": "object",
+								"properties": {
+									"necessary": {
+										"type": "object",
+										"properties": {
+											"basis": {
+												"oneOf": [
+													{
+														"type": "object",
+														"properties": {
+															"fingerprint": {
+																"type": "string",
+																"minLength": 1,
+																"description": "Choice prompt fingerprint (domain choice, version 1)."
+															},
+															"kind": {
+																"const": "choice-v1"
+															}
+														},
+														"required": [
+															"fingerprint",
+															"kind"
+														],
+														"additionalProperties": false
+													},
+													{
+														"type": "object",
+														"properties": {
+															"kind": {
+																"const": "legacy-v2"
+															},
+															"materialFingerprint": {
+																"type": "string",
+																"minLength": 1,
+																"description": "v2 material policy fingerprint, when the record had one."
+															}
+														},
+														"required": [
+															"kind"
+														],
+														"additionalProperties": false
+													}
+												]
+											},
+											"confirmedAt": {
+												"type": "integer",
+												"minimum": 0,
+												"maximum": 8640000000000000,
+												"description": "Epoch milliseconds when the category was confirmed."
+											},
+											"value": {
+												"type": "boolean"
+											}
+										},
+										"required": [
+											"basis",
+											"confirmedAt",
+											"value"
+										],
+										"additionalProperties": false
+									},
+									"experience": {
+										"type": "object",
+										"properties": {
+											"basis": {
+												"oneOf": [
+													{
+														"type": "object",
+														"properties": {
+															"fingerprint": {
+																"type": "string",
+																"minLength": 1,
+																"description": "Choice prompt fingerprint (domain choice, version 1)."
+															},
+															"kind": {
+																"const": "choice-v1"
+															}
+														},
+														"required": [
+															"fingerprint",
+															"kind"
+														],
+														"additionalProperties": false
+													},
+													{
+														"type": "object",
+														"properties": {
+															"kind": {
+																"const": "legacy-v2"
+															},
+															"materialFingerprint": {
+																"type": "string",
+																"minLength": 1,
+																"description": "v2 material policy fingerprint, when the record had one."
+															}
+														},
+														"required": [
+															"kind"
+														],
+														"additionalProperties": false
+													}
+												]
+											},
+											"confirmedAt": {
+												"type": "integer",
+												"minimum": 0,
+												"maximum": 8640000000000000,
+												"description": "Epoch milliseconds when the category was confirmed."
+											},
+											"value": {
+												"type": "boolean"
+											}
+										},
+										"required": [
+											"basis",
+											"confirmedAt",
+											"value"
+										],
+										"additionalProperties": false
+									},
+									"functionality": {
+										"type": "object",
+										"properties": {
+											"basis": {
+												"oneOf": [
+													{
+														"type": "object",
+														"properties": {
+															"fingerprint": {
+																"type": "string",
+																"minLength": 1,
+																"description": "Choice prompt fingerprint (domain choice, version 1)."
+															},
+															"kind": {
+																"const": "choice-v1"
+															}
+														},
+														"required": [
+															"fingerprint",
+															"kind"
+														],
+														"additionalProperties": false
+													},
+													{
+														"type": "object",
+														"properties": {
+															"kind": {
+																"const": "legacy-v2"
+															},
+															"materialFingerprint": {
+																"type": "string",
+																"minLength": 1,
+																"description": "v2 material policy fingerprint, when the record had one."
+															}
+														},
+														"required": [
+															"kind"
+														],
+														"additionalProperties": false
+													}
+												]
+											},
+											"confirmedAt": {
+												"type": "integer",
+												"minimum": 0,
+												"maximum": 8640000000000000,
+												"description": "Epoch milliseconds when the category was confirmed."
+											},
+											"value": {
+												"type": "boolean"
+											}
+										},
+										"required": [
+											"basis",
+											"confirmedAt",
+											"value"
+										],
+										"additionalProperties": false
+									},
+									"marketing": {
+										"type": "object",
+										"properties": {
+											"basis": {
+												"oneOf": [
+													{
+														"type": "object",
+														"properties": {
+															"fingerprint": {
+																"type": "string",
+																"minLength": 1,
+																"description": "Choice prompt fingerprint (domain choice, version 1)."
+															},
+															"kind": {
+																"const": "choice-v1"
+															}
+														},
+														"required": [
+															"fingerprint",
+															"kind"
+														],
+														"additionalProperties": false
+													},
+													{
+														"type": "object",
+														"properties": {
+															"kind": {
+																"const": "legacy-v2"
+															},
+															"materialFingerprint": {
+																"type": "string",
+																"minLength": 1,
+																"description": "v2 material policy fingerprint, when the record had one."
+															}
+														},
+														"required": [
+															"kind"
+														],
+														"additionalProperties": false
+													}
+												]
+											},
+											"confirmedAt": {
+												"type": "integer",
+												"minimum": 0,
+												"maximum": 8640000000000000,
+												"description": "Epoch milliseconds when the category was confirmed."
+											},
+											"value": {
+												"type": "boolean"
+											}
+										},
+										"required": [
+											"basis",
+											"confirmedAt",
+											"value"
+										],
+										"additionalProperties": false
+									},
+									"measurement": {
+										"type": "object",
+										"properties": {
+											"basis": {
+												"oneOf": [
+													{
+														"type": "object",
+														"properties": {
+															"fingerprint": {
+																"type": "string",
+																"minLength": 1,
+																"description": "Choice prompt fingerprint (domain choice, version 1)."
+															},
+															"kind": {
+																"const": "choice-v1"
+															}
+														},
+														"required": [
+															"fingerprint",
+															"kind"
+														],
+														"additionalProperties": false
+													},
+													{
+														"type": "object",
+														"properties": {
+															"kind": {
+																"const": "legacy-v2"
+															},
+															"materialFingerprint": {
+																"type": "string",
+																"minLength": 1,
+																"description": "v2 material policy fingerprint, when the record had one."
+															}
+														},
+														"required": [
+															"kind"
+														],
+														"additionalProperties": false
+													}
+												]
+											},
+											"confirmedAt": {
+												"type": "integer",
+												"minimum": 0,
+												"maximum": 8640000000000000,
+												"description": "Epoch milliseconds when the category was confirmed."
+											},
+											"value": {
+												"type": "boolean"
+											}
+										},
+										"required": [
+											"basis",
+											"confirmedAt",
+											"value"
+										],
+										"additionalProperties": false
+									}
+								},
+								"required": [],
+								"additionalProperties": false
+							}
+						},
+						"required": [
+							"categories"
+						],
+						"additionalProperties": false
+					},
+					"confirmed": {
+						"type": "array",
+						"items": {
+							"enum": [
+								"necessary",
+								"experience",
+								"functionality",
+								"marketing",
+								"measurement"
+							],
+							"type": "string"
+						}
+					},
+					"externalId": {
+						"type": "string",
+						"minLength": 1
+					},
+					"givenAt": {
+						"type": "integer",
+						"minimum": 0,
+						"maximum": 8640000000000000,
+						"description": "When the visitor gave this answer, in epoch milliseconds."
+					},
+					"idempotencyKey": {
+						"type": "string",
+						"format": "uuid",
+						"description": "A UUID of any version, in lower case, made once per user action and sent again on every retry of it."
+					},
+					"identityProvider": {
+						"type": "string",
+						"minLength": 1
+					},
+					"identityToken": {
+						"type": "string"
+					},
+					"property": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 253,
+						"pattern": "^[a-z0-9_-]+(\\.[a-z0-9_-]+)*$",
+						"description": "Where the answer was given: a site’s host name, or an app’s application or bundle ID, in lower case."
+					},
+					"subjectId": {
+						"type": "string",
+						"description": "A lower-case UUIDv7 the SDK makes. A legacy `sub_` ID is accepted too; the answer names the subject’s UUID, to store in its place."
+					}
+				},
+				"required": [
+					"answer",
+					"confirmed",
+					"givenAt",
+					"idempotencyKey",
+					"property",
+					"subjectId"
+				]
+			},
+			"ConsentRecordResponse": {
+				"type": "object",
+				"properties": {
+					"link": {
+						"anyOf": [
+							{
+								"type": "object",
+								"properties": {
+									"stored": {
+										"const": true
+									},
+									"verifiedBy": {
+										"const": "identity_token"
+									}
+								},
+								"required": [
+									"stored",
+									"verifiedBy"
+								]
+							},
+							{
+								"type": "object",
+								"properties": {
+									"reason": {
+										"enum": [
+											"unverified",
+											"invalid_token"
+										],
+										"type": "string"
+									},
+									"stored": {
+										"const": false
+									}
+								},
+								"required": [
+									"reason",
+									"stored"
+								]
+							}
+						]
+					},
+					"recordId": {
+						"type": "string",
+						"format": "uuid",
+						"description": "The event that recorded the save."
+					},
+					"subjectId": {
+						"type": "string",
+						"format": "uuid",
+						"description": "The subject’s UUID. Store it in place of the ID sent."
+					}
+				},
+				"required": [
+					"recordId",
+					"subjectId"
+				]
+			},
+			"ConsentSessionRequest": {
+				"type": "object",
+				"properties": {
+					"adapter": {
+						"type": "string"
+					},
+					"country": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"experiment": {
+						"type": "object",
+						"properties": {
+							"arm": {
+								"type": "string",
+								"minLength": 1,
+								"maxLength": 128
+							},
+							"id": {
+								"type": "string",
+								"minLength": 1,
+								"maxLength": 128
+							}
+						},
+						"required": [
+							"arm",
+							"id"
+						]
+					},
+					"gpc": {
+						"type": "boolean"
+					},
+					"journey": {
+						"type": "object",
+						"properties": {
+							"id": {
+								"type": "string",
+								"format": "uuid"
+							},
+							"prompt": {
+								"enum": [
+									"due",
+									"stored",
+									"not-required"
+								],
+								"type": "string"
+							},
+							"scope": {
+								"enum": [
+									"page",
+									"tab"
+								],
+								"type": "string"
+							},
+							"storedChoice": {
+								"type": "boolean"
+							},
+							"property": {
+								"type": "string",
+								"minLength": 1,
+								"maxLength": 253,
+								"pattern": "^[a-z0-9_-]+(\\.[a-z0-9_-]+)*$",
+								"description": "Where the answer was given: a site’s host name, or an app’s application or bundle ID, in lower case."
+							}
+						},
+						"required": [
+							"id",
+							"prompt",
+							"scope",
+							"storedChoice"
+						]
+					},
+					"language": {
+						"type": "string"
+					},
+					"policy": {
+						"anyOf": [
+							{
+								"type": "object",
+								"properties": {
+									"fingerprint": {
+										"type": "string"
+									},
+									"id": {
+										"type": "string"
+									},
+									"matchedBy": {
+										"enum": [
+											"region",
+											"country",
+											"default",
+											"fallback"
+										],
+										"type": "string"
+									},
+									"model": {
+										"enum": [
+											"opt-in",
+											"opt-out",
+											"iab",
+											"none"
+										],
+										"type": "string"
+									}
+								},
+								"required": [
+									"fingerprint",
+									"id",
+									"matchedBy",
+									"model"
+								]
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"region": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"resolution": {
+						"enum": [
+							"matched",
+							"no-match",
+							"unconfigured",
+							"failed"
+						],
+						"type": "string"
+					},
+					"revision": {
+						"type": "string"
+					},
+					"source": {
+						"enum": [
+							"render",
+							"route",
+							"init"
+						],
+						"type": "string"
+					}
+				},
+				"required": [
+					"country",
+					"gpc",
+					"language",
+					"policy",
+					"region",
+					"resolution",
+					"revision",
+					"source"
+				]
+			},
+			"DocumentAcceptancesRequest": {
+				"type": "object",
+				"properties": {
+					"acceptances": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"proofToken": {
+									"type": "string",
+									"minLength": 1
+								},
+								"type": {
+									"type": "string",
+									"pattern": "^[a-z][a-z0-9_]*$"
+								}
+							},
+							"required": [
+								"proofToken",
+								"type"
+							]
+						},
+						"minItems": 1,
+						"maxItems": 20
+					},
+					"acceptedAt": {
+						"type": "integer",
+						"minimum": 0,
+						"maximum": 8640000000000000
+					},
+					"context": {
+						"type": "object",
+						"properties": {
+							"ipAddress": {
+								"type": "string"
+							},
+							"userAgent": {
+								"type": "string"
+							}
+						},
+						"required": []
+					},
+					"externalId": {
+						"type": "string",
+						"minLength": 1
+					},
+					"idempotencyKey": {
+						"type": "string",
+						"format": "uuid",
+						"description": "A UUID of any version, in lower case, made once per user action and sent again on every retry of it."
+					},
+					"identityProvider": {
+						"type": "string",
+						"minLength": 1
+					},
+					"identityToken": {
+						"type": "string"
+					},
+					"property": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 253,
+						"pattern": "^[a-z0-9_-]+(\\.[a-z0-9_-]+)*$",
+						"description": "Where the answer was given: a site’s host name, or an app’s application or bundle ID, in lower case."
+					},
+					"subjectId": {
+						"type": "string",
+						"description": "A lower-case UUIDv7 the SDK makes. A legacy `sub_` ID is accepted too; the answer names the subject’s UUID, to store in its place."
+					}
+				},
+				"required": [
+					"acceptances",
+					"acceptedAt",
+					"idempotencyKey"
+				]
+			},
+			"DocumentAcceptancesResponse": {
+				"type": "object",
+				"properties": {
+					"acceptances": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"acceptedAt": {
+									"type": "number",
+									"description": "Epoch milliseconds."
+								},
+								"hash": {
+									"type": "string",
+									"pattern": "^sha256:[0-9a-f]{64}$",
+									"description": "`sha256:` and the lower-case hex SHA-256 of the exact bytes of the published file."
+								},
+								"type": {
+									"type": "string"
+								},
+								"version": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"acceptedAt",
+								"hash",
+								"type",
+								"version"
+							]
+						}
+					},
+					"subjectId": {
+						"type": "string",
+						"format": "uuid",
+						"description": "The device’s UUID when the request named a device, which replaces the ID sent, and the person’s otherwise."
+					}
+				},
+				"required": [
+					"acceptances",
+					"subjectId"
+				]
+			},
+			"DocumentCurrentResponse": {
+				"type": "object",
+				"properties": {
+					"document": {
+						"type": "object",
+						"properties": {
+							"effectiveDate": {
+								"type": "string",
+								"format": "date-time"
+							},
+							"hash": {
+								"type": "string",
+								"pattern": "^sha256:[0-9a-f]{64}$",
+								"description": "`sha256:` and the lower-case hex SHA-256 of the exact bytes of the published file."
+							},
+							"requiresAcceptance": {
+								"type": "boolean"
+							},
+							"type": {
+								"type": "string"
+							},
+							"version": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"effectiveDate",
+							"hash",
+							"requiresAcceptance",
+							"type",
+							"version"
+						]
+					},
+					"proofToken": {
+						"type": "string",
+						"description": "Send it back with an acceptance. It pins the type, version and hash shown."
+					},
+					"proofTokenExpiresAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"document",
+					"proofToken",
+					"proofTokenExpiresAt"
+				]
+			},
+			"DocumentPublishRequest": {
+				"type": "object",
+				"properties": {
+					"effectiveDate": {
+						"type": "string",
+						"description": "An ISO-8601 date, or a date and time that names its zone."
+					},
+					"hash": {
+						"type": "string",
+						"description": "`sha256:` and the lower-case hex SHA-256 of the exact bytes of the published file.",
+						"pattern": "^sha256:[0-9a-f]{64}$"
+					},
+					"requiresAcceptance": {
+						"type": "boolean",
+						"default": true
+					},
+					"version": {
+						"type": "string",
+						"minLength": 1
+					}
+				},
+				"required": [
+					"effectiveDate",
+					"hash",
+					"version"
+				]
+			},
+			"DocumentPublishResponse": {
+				"type": "object",
+				"properties": {
+					"document": {
+						"type": "object",
+						"properties": {
+							"effectiveDate": {
+								"type": "string",
+								"format": "date-time"
+							},
+							"hash": {
+								"type": "string",
+								"pattern": "^sha256:[0-9a-f]{64}$",
+								"description": "`sha256:` and the lower-case hex SHA-256 of the exact bytes of the published file."
+							},
+							"requiresAcceptance": {
+								"type": "boolean"
+							},
+							"type": {
+								"type": "string"
+							},
+							"version": {
+								"type": "string"
+							},
+							"id": {
+								"type": "string",
+								"format": "uuid"
+							},
+							"isCurrent": {
+								"type": "boolean"
+							}
+						},
+						"required": [
+							"effectiveDate",
+							"hash",
+							"requiresAcceptance",
+							"type",
+							"version",
+							"id",
+							"isCurrent"
+						]
+					}
+				},
+				"required": [
+					"document"
+				]
+			},
+			"SubjectLinkRequest": {
+				"type": "object",
+				"properties": {
+					"externalId": {
+						"type": "string",
+						"minLength": 1
+					},
+					"identityProvider": {
+						"type": "string",
+						"minLength": 1
+					},
+					"identityToken": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"externalId"
+				]
+			},
+			"SubjectLinkResponse": {
+				"type": "object",
+				"properties": {
+					"externalId": {
+						"type": "string"
+					},
+					"subjectId": {
+						"type": "string",
+						"format": "uuid",
+						"description": "The device’s UUID. Store it in place of the ID sent."
+					},
+					"verifiedBy": {
+						"enum": [
+							"api_key",
+							"identity_token"
+						],
+						"type": "string"
+					}
+				},
+				"required": [
+					"externalId",
+					"subjectId",
+					"verifiedBy"
+				]
+			},
 			"V1Error": {
 				"description": "Every /v1 failure. `details` is optional; for a refused body it holds the issues by field.",
 				"properties": {
@@ -4755,6 +5479,78 @@
 					"requestId"
 				],
 				"type": "object"
+			},
+			"VendorCategoryCondition": {
+				"anyOf": [
+					{
+						"enum": [
+							"necessary",
+							"functionality",
+							"experience",
+							"measurement",
+							"marketing"
+						],
+						"type": "string"
+					},
+					{
+						"type": "object",
+						"properties": {
+							"and": {
+								"anyOf": [
+									{
+										"$ref": "#/components/schemas/VendorCategoryCondition"
+									},
+									{
+										"type": "array",
+										"items": {
+											"$ref": "#/components/schemas/VendorCategoryCondition"
+										},
+										"minItems": 1
+									}
+								]
+							}
+						},
+						"required": [
+							"and"
+						],
+						"additionalProperties": false
+					},
+					{
+						"type": "object",
+						"properties": {
+							"or": {
+								"anyOf": [
+									{
+										"$ref": "#/components/schemas/VendorCategoryCondition"
+									},
+									{
+										"type": "array",
+										"items": {
+											"$ref": "#/components/schemas/VendorCategoryCondition"
+										},
+										"minItems": 1
+									}
+								]
+							}
+						},
+						"required": [
+							"or"
+						],
+						"additionalProperties": false
+					},
+					{
+						"type": "object",
+						"properties": {
+							"not": {
+								"$ref": "#/components/schemas/VendorCategoryCondition"
+							}
+						},
+						"required": [
+							"not"
+						],
+						"additionalProperties": false
+					}
+				]
 			}
 		},
 		"securitySchemes": {

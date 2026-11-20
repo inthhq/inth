@@ -270,6 +270,17 @@ describe('save idempotency key', () => {
 		expect(keys.size).toBe(4);
 	});
 
+	test.each(['', 'not-a-uuid', '0193E5A8-7C1E-7B7A-9D7E-2F0C9A3B4D5E'])(
+		'a stored key %j that is not a lowercase UUID is replaced by the keyless one',
+		(key) => {
+			const { payload, queuedAt } = keylessEntry();
+			expect(
+				withStoredIdempotencyKey({ ...payload, idempotencyKey: key }, queuedAt)
+					.idempotencyKey
+			).toBe(withStoredIdempotencyKey(payload, queuedAt).idempotencyKey);
+		}
+	);
+
 	test('a stored save keeps its key across releases', () => {
 		// A browser whose storage refuses the write-back derives the key again
 		// after every upgrade. Changing this value sends its saves twice.

@@ -281,12 +281,15 @@ export const v1ConsentSessionJourneySchema = v.object({
 	property: v.optional(v1PropertySchema),
 });
 
+const { tenantId: _tenantId, ...reportEntries } =
+	consentSessionReportSchema.entries;
+
 /**
  * Body of `POST /v1/consent/sessions`, sent by a server that resolved init
  * from a manifest. The visitor's IP and user agent travel as headers.
  */
 export const v1ConsentSessionReportSchema = v.object({
-	...consentSessionReportSchema.entries,
+	...reportEntries,
 	journey: v.optional(v1ConsentSessionJourneySchema),
 });
 

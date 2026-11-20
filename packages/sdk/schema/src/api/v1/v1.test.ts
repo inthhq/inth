@@ -13,7 +13,9 @@ import {
 	v1DocumentTypeSchema,
 	v1ErrorBodySchema,
 	v1PropertySchema,
+	v1IdempotencyKeySchema,
 	v1SubjectIdSchema,
+	v1SubjectLinkInputSchema,
 	v1SubjectLinkOutputSchema,
 } from './index';
 
@@ -74,12 +76,16 @@ describe('v1 subject IDs', () => {
 });
 
 describe('v1 property', () => {
-	it.each(['www.example.com', 'localhost', 'com.example.app', 'my_app.id'])(
-		'accepts %s',
-		(value) => {
-			expect(v.is(v1PropertySchema, value)).toBe(true);
-		}
-	);
+	it.each([
+		'www.example.com',
+		'localhost',
+		'com.example.app',
+		'my_app.id',
+		'-x._y',
+		`${'a'.repeat(249)}.com`,
+	])('accepts %s', (value) => {
+		expect(v.is(v1PropertySchema, value)).toBe(true);
+	});
 
 	it.each([
 		'https://example.com',
@@ -88,8 +94,24 @@ describe('v1 property', () => {
 		'Example.com',
 		'',
 		'.example.com',
+		'example.com.',
+		'a..b',
+		`${'a'.repeat(250)}.com`,
 	])('rejects %s', (value) => {
 		expect(v.is(v1PropertySchema, value)).toBe(false);
+	});
+});
+
+describe('v1 idempotency key', () => {
+	it('accepts a lowercase UUID of any version', () => {
+		expect(v.is(v1IdempotencyKeySchema, KEY)).toBe(true);
+		expect(
+			v.is(v1IdempotencyKeySchema, '0193e5a8-7c1e-8b7a-9d7e-2f0c9a3b4d5e')
+		).toBe(true);
+	});
+
+	it('rejects an uppercase UUID', () => {
+		expect(v.is(v1IdempotencyKeySchema, KEY.toUpperCase())).toBe(false);
 	});
 });
 
@@ -225,6 +247,15 @@ describe('POST /v1/consent/sessions', () => {
 });
 
 describe('POST /v1/subjects/:id/link', () => {
+	it('rejects an empty identity provider', () => {
+		expect(
+			v.is(v1SubjectLinkInputSchema, {
+				externalId: 'user_123',
+				identityProvider: '',
+			})
+		).toBe(false);
+	});
+
 	it('reads the answer', () => {
 		expect(
 			v.is(v1SubjectLinkOutputSchema, {
@@ -259,6 +290,56 @@ describe('documents', () => {
 		});
 		expect(result.requiresAcceptance).toBe(true);
 	});
+
+	it.each([
+		['a date', '2026-11-18', true],
+		['a date and time with a zone', '2026-11-18T00:00:00+01:00', true],
+		['a date and time without a zone', '2026-11-18T00:00:00', false],
+		['a leap day', '2028-02-29', true],
+		['February 29 in a common year', '2026-02-29', false],
+		['a day past the month', '2026-02-31T00:00:00.000Z', false],
+	])('takes %s as the effective date on publish', (_label, date, valid) => {
+		expect(
+			v.is(v1DocumentPublishInputSchema, {
+				effectiveDate: date,
+				hash: HASH,
+				version: '2026-11-18',
+			})
+		).toBe(valid);
+	});
+
+	it.each([
+		['June 30', '2026-06-30T00:00:00.000Z', '2026-11-19T00:00:00.000Z', true],
+		[
+			'an effective date of June 31',
+			'2026-06-31T00:00:00.000Z',
+			'2026-11-19T00:00:00.000Z',
+			false,
+		],
+		[
+			'a proof expiry of June 31',
+			'2026-06-30T00:00:00.000Z',
+			'2026-06-31T00:00:00.000Z',
+			false,
+		],
+	])(
+		'reads a current document dated %s',
+		(_label, effectiveDate, expiresAt, valid) => {
+			expect(
+				v.is(v1DocumentCurrentOutputSchema, {
+					document: {
+						effectiveDate,
+						hash: HASH,
+						requiresAcceptance: true,
+						type: 'terms_us',
+						version: '2026-11-18',
+					},
+					proofToken: 'token',
+					proofTokenExpiresAt: expiresAt,
+				})
+			).toBe(valid);
+		}
+	);
 
 	it('rejects a hash that is not lowercase sha256 hex', () => {
 		const result = v.safeParse(v1DocumentPublishInputSchema, {
@@ -313,14 +394,22 @@ describe('documents', () => {
 		).toBe(true);
 	});
 
-	it('needs at least one acceptance', () => {
+	it.each([
+		[0, false],
+		[1, true],
+		[20, true],
+		[21, false],
+	])('takes %i acceptances: %s', (count, valid) => {
 		expect(
-			v.safeParse(v1DocumentAcceptancesInputSchema, {
+			v.is(v1DocumentAcceptancesInputSchema, {
 				...acceptances,
-				acceptances: [],
+				acceptances: Array.from({ length: count }, () => ({
+					proofToken: 'a',
+					type: 'terms_us',
+				})),
 				subjectId: SUBJECT,
-			}).success
-		).toBe(false);
+			})
+		).toBe(valid);
 	});
 });
 

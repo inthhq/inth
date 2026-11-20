@@ -349,6 +349,33 @@ describe('POST /v1/consent/sessions', () => {
 		}
 	);
 
+	test('leaves off a journey site that is not a host name', () => {
+		const report = buildV1ConsentSessionReport({
+			init: {
+				location: { countryCode: null, regionCode: null },
+				translations: { language: 'en' },
+			} as never,
+			journey: { ...JOURNEY, domain: '[::1]' },
+			manifest: MANIFEST,
+			source: 'route',
+		});
+
+		expect(report.journey).not.toHaveProperty('property');
+	});
+
+	test('leaves off the tenant a 3.x manifest names', () => {
+		const report = buildV1ConsentSessionReport({
+			init: {
+				location: { countryCode: null, regionCode: null },
+				translations: { language: 'en' },
+			} as never,
+			manifest: { ...MANIFEST, tenantId: 'tenant_1' },
+			source: 'route',
+		});
+
+		expect(report).not.toHaveProperty('tenantId');
+	});
+
 	test('a relative project URL reports nothing', async () => {
 		const { calls, fetch } = stubFetch(() =>
 			json(200, { recordId: RECORD, subjectId: SUBJECT })

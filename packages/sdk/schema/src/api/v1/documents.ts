@@ -20,7 +20,7 @@ import {
 	v1PropertySchema,
 	v1SubjectIdSchema,
 } from './common';
-import { V1_DOCUMENT_TYPE_PATTERN } from './constants';
+import { V1_DOCUMENT_TYPE_PATTERN, V1_MAX_ACCEPTANCES } from './constants';
 
 export const v1DocumentTypeSchema = v.pipe(
 	v.string(),
@@ -50,11 +50,40 @@ const versionSchema = v.pipe(
 	v.examples(['2026-11-18'])
 );
 
-const effectiveDateSchema = v.pipe(
+/** Whether the date `value` starts with is a day on the calendar. */
+const isCalendarDay = function isCalendarDay(value: string): boolean {
+	const year = Number(value.slice(0, 4));
+	const month = Number(value.slice(5, 7)) - 1;
+	const day = Number(value.slice(8, 10));
+	const date = new Date(0);
+	date.setUTCFullYear(year, month, day);
+	return date.getUTCMonth() === month && date.getUTCDate() === day;
+};
+
+/**
+ * An ISO 8601 date and time with a zone, on a day the calendar has:
+ * `v.isoTimestamp()` alone takes June 31.
+ */
+const timestampSchema = v.pipe(
 	v.string(),
 	v.isoTimestamp(),
+	v.check(isCalendarDay, 'Timestamp must be on a day of the calendar')
+);
+
+const effectiveDateSchema = v.pipe(
+	timestampSchema,
 	v.description('ISO 8601 date and time the version takes effect.'),
 	v.examples(['2026-11-18T00:00:00.000Z'])
+);
+
+/** A publish may name the day alone; the answers carry a date and time. */
+const publishEffectiveDateSchema = v.pipe(
+	v.union([v.pipe(v.string(), v.isoDate()), effectiveDateSchema]),
+	v.check(isCalendarDay, 'Effective date must be a day on the calendar'),
+	v.description(
+		'ISO 8601 date, or date and time with a zone, the version takes effect.'
+	),
+	v.examples(['2026-11-18', '2026-11-18T00:00:00.000Z'])
 );
 
 export const v1DocumentParamsSchema = v.object({
@@ -66,7 +95,7 @@ export const v1DocumentParamsSchema = v.object({
 // ---------------------------------------------------------------------------
 
 export const v1DocumentPublishInputSchema = v.object({
-	effectiveDate: effectiveDateSchema,
+	effectiveDate: publishEffectiveDateSchema,
 	hash: v1DocumentHashSchema,
 	/**
 	 * `false` marks a small edit: people who accepted the previous required
@@ -109,7 +138,7 @@ export const v1CurrentDocumentSchema = v.object({
 export const v1DocumentCurrentOutputSchema = v.object({
 	document: v1CurrentDocumentSchema,
 	proofToken: v.pipe(v.string(), v.minLength(1)),
-	proofTokenExpiresAt: v.pipe(v.string(), v.isoTimestamp()),
+	proofTokenExpiresAt: timestampSchema,
 });
 
 // ---------------------------------------------------------------------------
@@ -131,7 +160,11 @@ export const v1DocumentAcceptancesInputSchema = v.pipe(
 	v.object({
 		acceptances: v.pipe(
 			v.array(v1DocumentAcceptanceItemSchema),
-			v.minLength(1, 'At least one acceptance is required')
+			v.minLength(1, 'At least one acceptance is required'),
+			v.maxLength(
+				V1_MAX_ACCEPTANCES,
+				`At most ${V1_MAX_ACCEPTANCES} acceptances are allowed`
+			)
 		),
 		acceptedAt: v1EpochMillisecondsSchema,
 		context: v.optional(

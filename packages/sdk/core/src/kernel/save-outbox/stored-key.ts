@@ -2,6 +2,14 @@
 
 import type { SavePayload } from '../../types';
 
+/**
+ * `V1_UUID_PATTERN` from `@inth/sdk-schema/types`, copied: this module loads
+ * with the stored queue alone, so it imports no values
+ * (`save-outbox-chunk.test.ts`).
+ */
+const LOWERCASE_UUID =
+	/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/u;
+
 const toHex = (lane: number): string =>
 	(lane >>> 0).toString(16).padStart(8, '0');
 
@@ -30,7 +38,8 @@ const hashLanes = function hashLanes(
 
 /**
  * `payload` with an idempotency key. A c15t client, or a release before
- * keys, stored saves without one.
+ * keys, stored saves without one; a key that is not a lowercase UUID is
+ * replaced the same way.
  *
  * The key is a UUIDv8 hashed from the stored payload, which holds the
  * subject ID, and the time it was queued, not a random one: a browser whose
@@ -48,10 +57,16 @@ export const withStoredIdempotencyKey = function withStoredIdempotencyKey(
 	payload: SavePayload,
 	queuedAt: number
 ): SavePayload {
-	if (payload.idempotencyKey !== undefined) {
+	if (
+		payload.idempotencyKey !== undefined &&
+		LOWERCASE_UUID.test(payload.idempotencyKey)
+	) {
 		return payload;
 	}
-	const [h1, h2, h3, h4] = hashLanes(`${queuedAt}\n${JSON.stringify(payload)}`);
+	// A key that is not a lowercase UUID was never accepted by the backend,
+	// so the save gets the key it would have had with none.
+	const { idempotencyKey: _malformed, ...keyless } = payload;
+	const [h1, h2, h3, h4] = hashLanes(`${queuedAt}\n${JSON.stringify(keyless)}`);
 	const hex = [
 		h1,
 		(h2 & 0xff_ff_0f_ff) | 0x80_00,

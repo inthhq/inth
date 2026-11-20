@@ -6,7 +6,7 @@ import {
 	v1ConsentRecordInputSchema,
 	v1ConsentRecordQuerySchema,
 } from '@inth/sdk-schema/v1';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
 import { isUuidV7 } from '../../../libs/subject-uuid';
 import {
@@ -214,6 +214,32 @@ describe('save: POST /v1/consent/records', () => {
 		expect(bodyAt(calls, 0).property).toBe('www.example.com');
 	});
 
+	test('names an IPv6 page localhost', async () => {
+		vi.stubGlobal('window', { location: { hostname: '[::1]' } });
+		try {
+			const { calls, fetch } = stubFetch(() =>
+				json(200, { recordId: RECORD, subjectId: SUBJECT })
+			);
+
+			await createV1RecordTransport({ fetch, projectUrl: PROJECT_URL }).save(
+				savePayload()
+			);
+
+			expect(bodyAt(calls, 0).property).toBe('localhost');
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+
+	test.each(['www.example.com..', 'https://example.com', '[::1]'])(
+		'refuses the property option %s',
+		(option) => {
+			const { fetch } = stubFetch(() => json(200, {}));
+
+			expect(() => transportWith(fetch, option)).toThrow(TypeError);
+		}
+	);
+
 	test('lowercases the property', async () => {
 		const { calls, fetch } = stubFetch(() =>
 			json(200, { recordId: RECORD, subjectId: SUBJECT })
@@ -276,6 +302,10 @@ describe('save: the answer', () => {
 			() => json(200, { recordId: RECORD, subjectId: LEGACY_SUBJECT }),
 		],
 		['no record ID', () => json(200, { subjectId: SUBJECT })],
+		[
+			'a record ID that is not a UUID',
+			() => json(200, { recordId: 'unknown', subjectId: SUBJECT }),
+		],
 		['a page', () => new Response('<html>ok</html>', { status: 200 })],
 	])('retries an answer with %s', async (_label, answer) => {
 		const { fetch } = stubFetch(answer);
