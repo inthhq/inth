@@ -21,14 +21,20 @@ servers) and `localStorage`, restoring them synchronously on page load. Both
 | Vendor choice | `inth-vendors` |
 | Queued unsent saves | Separate `localStorage` queue |
 
+`inth-opt-out` stores a durable opt-out recorded by `commands.optOut()`, a
+detected GPC signal, or a save under an `opt-out` policy that rejects all or
+turns both `marketing` and `measurement` off. It switches off `marketing` and
+`measurement` in scope, and persistence deletes it when `commands.optIn()` or
+turning either category back on lifts the opt-out.
+
 ## The subject ID
 
 Every session receives a subject ID (`sub_...`) in `snapshot.subject.subjectId`:
 
 - Before a visitor acts, the ID lives only in memory so Inth writes zero
   cookies or storage before consent.
-- The first choice, vendor switch or notice dismissal persists the ID with
-  that record.
+- The first choice, durable opt-out, vendor switch or notice dismissal
+  persists the ID with that record.
 - `clear()` deletes records while keeping the ID in memory; call
   `kernel.set.subjectId(null)` to generate a new ID.
 - Across multiple open tabs, tabs that have not saved adopt the ID saved by

@@ -10,6 +10,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+	DAY,
 	explicitChoice,
 	matchedResolution,
 	noticeRule,
@@ -129,7 +130,6 @@ describe('opt-out codec', () => {
 		['unknown method', `v=1&r=sa&m=x&t=${NOW - 1}&h=d`],
 		['raw method name', `v=1&r=sa&m=button&t=${NOW - 1}&h=d`],
 		['unknown holder', `v=1&r=sa&m=b&t=${NOW - 1}&h=x`],
-		['future time', `v=1&r=sa&m=b&t=${NOW + 1}&h=d`],
 		['missing time', 'v=1&r=sa&m=b&h=d'],
 		['unknown field', `v=1&r=sa&m=b&t=${NOW - 1}&h=d&z=1`],
 		['duplicate field', `v=1&r=sa&m=b&t=${NOW - 1}&t=${NOW - 2}&h=d`],
@@ -172,16 +172,6 @@ describe('opt-out codec', () => {
 			},
 		],
 		[
-			'future time',
-			{
-				heldBy: 'device',
-				method: 'button',
-				recordedAt: NOW + 1,
-				rights: ['sale'],
-				version: 1,
-			},
-		],
-		[
 			'invalid subject',
 			{
 				heldBy: 'device',
@@ -194,6 +184,46 @@ describe('opt-out codec', () => {
 		],
 	])('rejects malformed JSON value: %s', (_label, input) => {
 		expect(decodeOptOutRecord(input, NOW).ok).toBe(false);
+	});
+	it('round-trips a record dated one day ahead of now through codec and storage', () => {
+		const futureRecord: StoredOptOutRecord = {
+			heldBy: 'person',
+			method: 'api',
+			recordedAt: NOW + DAY,
+			rights: ['sale', 'share'],
+			subject: { subjectId: 'sub_future' },
+			version: 1,
+		};
+		const compact = encodeOptOutRecordCompact(futureRecord);
+		expect(decodeOptOutRecordCompact(compact, NOW)).toEqual({
+			ok: true,
+			record: futureRecord,
+		});
+		const json = encodeOptOutRecord(futureRecord);
+		expect(decodeOptOutRecord(JSON.parse(json), NOW)).toEqual({
+			ok: true,
+			record: futureRecord,
+		});
+
+		expect(writeStoredOptOutRecord(futureRecord, undefined, NOW).ok).toBe(true);
+		expect(readStoredOptOutRecord(undefined, NOW)).toEqual({
+			ok: true,
+			record: futureRecord,
+		});
+		expect(readStoredRecords(undefined, NOW).records.optOut).toEqual({
+			heldBy: 'person',
+			method: 'api',
+			recordedAt: NOW + DAY,
+			rights: ['sale', 'share'],
+		});
+		expect(
+			readStoredRecordsFromCookieHeader(document.cookie, undefined, NOW).optOut
+		).toEqual({
+			heldBy: 'person',
+			method: 'api',
+			recordedAt: NOW + DAY,
+			rights: ['sale', 'share'],
+		});
 	});
 });
 

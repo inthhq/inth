@@ -207,6 +207,31 @@ describe('policyRulePresets', () => {
 		});
 	});
 
+	test('recommendedPolicyRules keeps Nevada on world_none while usPrivacyStatesOptOut covers it', () => {
+		expect(
+			resolvePolicyRules({
+				countryCode: 'US',
+				regionCode: 'NV',
+				rules: recommendedPolicyRules(),
+			})
+		).toMatchObject({
+			matchedBy: 'default',
+			policyId: 'world_none',
+			status: 'matched',
+		});
+		expect(
+			resolvePolicyRules({
+				countryCode: 'US',
+				regionCode: 'NV',
+				rules: [policyRulePresets.usPrivacyStatesOptOut()],
+			})
+		).toMatchObject({
+			matchedBy: 'region',
+			policyId: 'us_privacy_states_opt_out',
+			status: 'matched',
+		});
+	});
+
 	test('the recommended pack builds the same rules as the named presets', () => {
 		const [europe, quebec, california, us, world] = recommendedPolicyRules();
 		expect(europe).toEqual(policyRulePresets.europeOptIn());

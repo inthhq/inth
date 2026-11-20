@@ -144,10 +144,7 @@ export interface EvaluationPolicy {
 	 * no comparison is possible and legacy decisions are grandfathered.
 	 */
 	legacyMaterialFingerprint: string | null;
-	/**
-	 * Categories an opt-out switches off, whether it came from GPC or from an
-	 * opt-out action. Empty means neither GPC nor opt-out restricts any category.
-	 */
+	/** Categories an active GPC signal denies. Empty means GPC is ignored. */
 	gpcDenyCategories: readonly OptionalConsentCategory[];
 }
 

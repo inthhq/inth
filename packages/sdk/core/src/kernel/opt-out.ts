@@ -3,7 +3,7 @@
  * union, liftability checks and the live GPC recording trigger.
  */
 import { OPT_OUT_RIGHTS, resolveOptOutRights } from '@inth/sdk-schema/types';
-import type { OptOutRight } from '@inth/sdk-schema/types';
+import type { OptOutRecord, OptOutRight } from '@inth/sdk-schema/types';
 
 import type { ConsentSnapshot } from '../types';
 
@@ -28,6 +28,37 @@ export const mergeOptOutRights = function mergeOptOutRights(
 ): OptOutRight[] {
 	const merged = new Set<OptOutRight>([...existing, ...needed]);
 	return OPT_OUT_RIGHTS.filter((right) => merged.has(right));
+};
+
+/**
+ * Next durable opt-out record for a visitor-initiated opt-out at `actionAt`,
+ * or `null` when an existing record already covers every right the visitor's
+ * location needs. Preserves `heldBy` when expanding an existing record.
+ */
+export const nextButtonOptOutRecord = function nextButtonOptOutRecord(
+	snapshot: Pick<ConsentSnapshot, 'location' | 'optOut' | 'overrides'>,
+	actionAt: number
+): OptOutRecord | null {
+	const needed = optOutRightsForSnapshot(snapshot);
+	if (
+		snapshot.optOut !== null &&
+		needed.every((right) => snapshot.optOut?.rights.includes(right))
+	) {
+		return null;
+	}
+	return snapshot.optOut === null
+		? {
+				heldBy: 'device',
+				method: 'button',
+				recordedAt: actionAt,
+				rights: needed,
+			}
+		: {
+				heldBy: snapshot.optOut.heldBy,
+				method: 'button',
+				recordedAt: actionAt,
+				rights: mergeOptOutRights(snapshot.optOut.rights, needed),
+			};
 };
 
 /**

@@ -1,10 +1,10 @@
 /**
  * Structural validation helpers shared by the record readers.
  *
- * Deterministic and side-effect free. Timestamps must be finite,
- * non-negative safe integers in epoch milliseconds and must not be later
- * than the supplied `now`; there is deliberately no clock-skew tolerance
- * in this slice.
+ * Deterministic and side-effect free. Choice and notice timestamps must be
+ * finite, non-negative safe integers in epoch milliseconds no later than the
+ * supplied `now`. Durable opt-out timestamps are never rejected for being in
+ * the future so a slow device clock does not drop a backend-stamped record.
  *
  * @internal
  */
@@ -90,6 +90,17 @@ export const ownValue = function ownValue(
 	return Object.hasOwn(value, key) ? value[key] : undefined;
 };
 
+const isValidTimestamp = function isValidTimestamp(
+	value: unknown
+): value is number {
+	return (
+		typeof value === 'number' &&
+		Number.isSafeInteger(value) &&
+		value >= 0 &&
+		value <= MAX_DATE_MS
+	);
+};
+
 /**
  * Checks an epoch-millisecond timestamp. Returns the issue code when the
  * value is unusable, or `null` when it is valid.
@@ -98,12 +109,7 @@ export const checkTimestamp = function checkTimestamp(
 	value: unknown,
 	now: number
 ): RecordIssue['code'] | null {
-	if (
-		typeof value !== 'number' ||
-		!Number.isSafeInteger(value) ||
-		value < 0 ||
-		value > MAX_DATE_MS
-	) {
+	if (!isValidTimestamp(value)) {
 		return 'invalid-timestamp';
 	}
 	if (value > now) {
@@ -290,12 +296,14 @@ const OPT_OUT_HOLDER_SET: ReadonlySet<string> = new Set(OPT_OUT_HOLDERS);
 
 /**
  * Validates a durable opt-out record. Rejects unknown keys, empty or duplicate
- * rights, unknown methods or holders, and invalid or future timestamps. Returns
- * `rights` in canonical order (`sale`, `share`, `targeted_ads`).
+ * rights, unknown methods or holders, and non-integer or negative timestamps.
+ * Future timestamps are accepted so a slow device clock never drops a record
+ * stamped by the backend. Returns `rights` in canonical order (`sale`, `share`,
+ * `targeted_ads`).
  */
 export const validateOptOutRecord = function validateOptOutRecord(
 	input: unknown,
-	now: number
+	_now?: number
 ): ValidationResult<OptOutRecord> {
 	if (!isPlainRecord(input)) {
 		return { issues: [{ code: 'not-an-object', path: '' }], ok: false };
@@ -331,9 +339,8 @@ export const validateOptOutRecord = function validateOptOutRecord(
 		issues.push({ code: 'invalid-value', path: 'method' });
 	}
 	const recordedAt = ownValue(input, 'recordedAt');
-	const timestampIssue = checkTimestamp(recordedAt, now);
-	if (timestampIssue) {
-		issues.push({ code: timestampIssue, path: 'recordedAt' });
+	if (!isValidTimestamp(recordedAt)) {
+		issues.push({ code: 'invalid-timestamp', path: 'recordedAt' });
 	}
 	const heldBy = ownValue(input, 'heldBy');
 	if (typeof heldBy !== 'string' || !OPT_OUT_HOLDER_SET.has(heldBy)) {

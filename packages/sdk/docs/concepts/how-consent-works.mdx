@@ -65,7 +65,7 @@ Never copy a permission into a saved choice. Hydrating server state, reading a c
 
 Dismissing a notice records an acknowledgement only. It grants no optional categories and leaves earlier refusals intact.
 
-Global Privacy Control, or GPC, asks sites not to sell or share personal data. The first time Inth sees GPC under a policy that maps it, Inth records a durable opt-out. The opt-out stays in effect after the browser stops sending GPC and survives reloads and policy changes. The visitor lifts it by turning the restricted category back on in preferences once the browser stops sending GPC. Inth also receives the current GPC value on backend requests.
+Global Privacy Control, or GPC, asks sites not to sell or share personal data. The first time Inth sees GPC under a policy that maps it, Inth records a durable opt-out. Under an opt-out policy, rejecting all or turning both `marketing` and `measurement` off in preferences records a durable opt-out too. A durable opt-out switches off `marketing` and `measurement` in scope, stays in effect after the browser stops sending GPC, and survives reloads and policy changes. Turning either `marketing` or `measurement` back on in preferences lifts a device-held opt-out once the browser stops sending GPC. Inth also receives the current GPC value on backend requests.
 
 ## What happens when a visitor saves
 

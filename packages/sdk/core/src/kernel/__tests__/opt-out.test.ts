@@ -8,9 +8,12 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
 	choiceRecords,
+	DAY,
 	matchedResolution,
+	noneRule,
 	noticeRule,
 	NOW,
+	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import type { KernelConfig } from '../../types';
@@ -176,7 +179,7 @@ describe('commands.optOut()', () => {
 		kernel.dispose();
 	});
 
-	test('returns not-available when the active rule has an empty deny list', async () => {
+	test('works under an opt-out rule with no GPC mapping and denies marketing and measurement', async () => {
 		const kernel = createKernel({
 			initialPolicyResolution: matchedResolution(
 				optOutRule({ privacySignals: { gpc: { denyCategories: [] } } })
@@ -187,11 +190,74 @@ describe('commands.optOut()', () => {
 
 		const result = await kernel.commands.optOut();
 
-		expect(result).toEqual({ ok: false, reason: 'not-available' });
-		expect(kernel.getSnapshot().optOut).toBeNull();
-		expect(recorded).not.toHaveBeenCalled();
+		expect(result).toEqual({
+			changed: true,
+			ok: true,
+			optOut: {
+				heldBy: 'device',
+				method: 'button',
+				recordedAt: NOW,
+				rights: ['sale', 'share'],
+			},
+		});
+		const snap = kernel.getSnapshot();
+		expect(snap.effectivePermissions.marketing).toBe(false);
+		expect(snap.effectivePermissions.measurement).toBe(false);
+		expect(snap.effectivePermissions.functionality).toBe(true);
+		expect(snap.restrictions).toEqual({
+			marketing: ['opt-out'],
+			measurement: ['opt-out'],
+		});
+		expect(recorded).toHaveBeenCalledTimes(1);
 		kernel.dispose();
 	});
+
+	test('records the opt-out under an opt-out rule where neither marketing nor measurement is in scope', async () => {
+		const kernel = createKernel({
+			initialPolicyResolution: matchedResolution(
+				optOutRule({
+					categories: ['functionality', 'experience'],
+					prompt: 'none',
+					scopeMode: 'permissive',
+				})
+			),
+		});
+
+		const result = await kernel.commands.optOut();
+
+		expect(result.ok).toBe(true);
+		expect(kernel.getSnapshot().optOut).toEqual({
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW,
+			rights: ['sale', 'share'],
+		});
+		expect(kernel.getSnapshot().restrictions).toEqual({});
+		kernel.dispose();
+	});
+
+	test.each([
+		['opt-in', { initialPolicyResolution: matchedResolution(optInRule()) }],
+		['none', { initialPolicyResolution: matchedResolution(noneRule()) }],
+		[
+			'pending fallback',
+			{ initialPolicyPending: true, initialPolicyResolution: undefined },
+		],
+	] as [string, KernelConfig][])(
+		'returns not-available under a %s rule',
+		async (_label, config) => {
+			const kernel = createKernel(config);
+			const recorded = vi.fn();
+			kernel.events.on('opt-out:recorded', recorded);
+
+			const result = await kernel.commands.optOut();
+
+			expect(result).toEqual({ ok: false, reason: 'not-available' });
+			expect(kernel.getSnapshot().optOut).toBeNull();
+			expect(recorded).not.toHaveBeenCalled();
+			kernel.dispose();
+		}
+	);
 
 	test('acknowledges an owed notice prompt in the same commit', async () => {
 		const kernel = createKernel({
@@ -407,6 +473,242 @@ describe('commands.save() interaction with opt-out', () => {
 		}
 	);
 
+	test('granting one switched-off category lifts a device-held opt-out even when the other stays refused and GPC mapping is empty', async () => {
+		const kernel = createKernel({
+			initialPolicyResolution: matchedResolution(
+				optOutRule({
+					privacySignals: { gpc: { denyCategories: [] } },
+					prompt: 'none',
+				})
+			),
+			initialRecords: {
+				...choiceRecords({ marketing: false, measurement: false }),
+				now: NOW,
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: NOW - 1000,
+					rights: ['sale', 'share'],
+				},
+			},
+		});
+		const lifted = vi.fn();
+		kernel.events.on('opt-out:lifted', lifted);
+
+		await kernel.commands.save({ marketing: true });
+
+		expect(kernel.getSnapshot().optOut).toBeNull();
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
+		expect(kernel.getSnapshot().effectivePermissions.measurement).toBe(false);
+		expect(kernel.getSnapshot().restrictions).toEqual({
+			measurement: ['explicit-denial'],
+		});
+		expect(lifted).toHaveBeenCalledTimes(1);
+		kernel.dispose();
+	});
+
+	test('granting one and refusing the other in one save lifts the opt-out and does not record one', async () => {
+		const kernel = createKernel({
+			initialRecords: {
+				now: NOW,
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: NOW - 1000,
+					rights: ['sale', 'share'],
+				},
+			},
+		});
+		const lifted = vi.fn();
+		const recorded = vi.fn();
+		kernel.events.on('opt-out:lifted', lifted);
+		kernel.events.on('opt-out:recorded', recorded);
+
+		await kernel.commands.save({ marketing: true, measurement: false });
+
+		expect(kernel.getSnapshot().optOut).toBeNull();
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
+		expect(kernel.getSnapshot().effectivePermissions.measurement).toBe(false);
+		expect(lifted).toHaveBeenCalledTimes(1);
+		expect(recorded).not.toHaveBeenCalled();
+		kernel.dispose();
+	});
+
+	test('reject-all under an opt-out rule records an opt-out in the same commit after choice:recorded', async () => {
+		const kernel = createKernel({
+			consentCategories: [
+				'necessary',
+				'functionality',
+				'experience',
+				'measurement',
+				'marketing',
+			],
+			initialPolicyResolution: matchedResolution(
+				optOutRule({
+					privacySignals: { gpc: { denyCategories: [] } },
+					prompt: 'none',
+				})
+			),
+		});
+		const order: string[] = [];
+		const seenOptOutInChoice: (OptOutRecord | null)[] = [];
+		const recorded = vi.fn();
+		kernel.events.on('choice:recorded', ({ snapshot }) => {
+			order.push('choice:recorded');
+			seenOptOutInChoice.push(snapshot.optOut);
+		});
+		kernel.events.on('opt-out:recorded', (event) => {
+			order.push('opt-out:recorded');
+			recorded(event);
+		});
+
+		await kernel.commands.save('none', { uiSource: 'dialog' });
+
+		expect(order).toEqual(['choice:recorded', 'opt-out:recorded']);
+		const snap = kernel.getSnapshot();
+		expect(snap.optOut).toEqual({
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW,
+			rights: ['sale', 'share'],
+		});
+		expect(seenOptOutInChoice).toEqual([snap.optOut]);
+		expect(recorded.mock.calls[0]?.[0]).toMatchObject({
+			actionAt: NOW,
+			optOut: snap.optOut,
+			snapshot: snap,
+			type: 'opt-out:recorded',
+			uiSource: 'dialog',
+		});
+		kernel.dispose();
+	});
+
+	test('turning both marketing and measurement off in one save records an opt-out', async () => {
+		const kernel = createKernel();
+		const recorded = vi.fn();
+		kernel.events.on('opt-out:recorded', recorded);
+
+		await kernel.commands.save(
+			{ marketing: false, measurement: false },
+			{ uiSource: 'widget' }
+		);
+
+		expect(kernel.getSnapshot().optOut).toEqual({
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW,
+			rights: ['sale', 'share'],
+		});
+		expect(recorded).toHaveBeenCalledTimes(1);
+		expect(recorded.mock.calls[0]?.[0].uiSource).toBe('widget');
+		kernel.dispose();
+	});
+
+	test('turning off only one keeps a plain choice, and turning off the second in a later save records an opt-out', async () => {
+		const kernel = createKernel();
+		const recorded = vi.fn();
+		kernel.events.on('opt-out:recorded', recorded);
+
+		await kernel.commands.save({ marketing: false });
+		expect(kernel.getSnapshot().optOut).toBeNull();
+		expect(recorded).not.toHaveBeenCalled();
+
+		vi.setSystemTime(NOW + 2000);
+		await kernel.commands.save({ measurement: false });
+		expect(kernel.getSnapshot().optOut).toEqual({
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW + 2000,
+			rights: ['sale', 'share'],
+		});
+		expect(recorded).toHaveBeenCalledTimes(1);
+
+		// A later save when the opt-out already covers location rights is a no-op
+		// for the opt-out record.
+		vi.setSystemTime(NOW + 4000);
+		await kernel.commands.save({ marketing: false });
+		expect(kernel.getSnapshot().optOut?.recordedAt).toBe(NOW + 2000);
+		expect(recorded).toHaveBeenCalledTimes(1);
+		kernel.dispose();
+	});
+
+	test('refusal save unions rights when an existing opt-out lacks rights for the location', async () => {
+		const existing: OptOutRecord = {
+			heldBy: 'person',
+			method: 'api',
+			recordedAt: NOW - 5000,
+			rights: ['sale'],
+		};
+		const kernel = createKernel({
+			consentCategories: [
+				'necessary',
+				'functionality',
+				'experience',
+				'measurement',
+				'marketing',
+			],
+			initialLocation: { countryCode: 'US', regionCode: 'CA' },
+			initialRecords: { now: NOW, optOut: existing },
+		});
+		const recorded = vi.fn();
+		kernel.events.on('opt-out:recorded', recorded);
+
+		await kernel.commands.save('none', { uiSource: 'dialog' });
+
+		expect(kernel.getSnapshot().optOut).toEqual({
+			heldBy: 'person',
+			method: 'button',
+			recordedAt: NOW,
+			rights: ['sale', 'share'],
+		});
+		expect(recorded).toHaveBeenCalledTimes(1);
+		expect(recorded.mock.calls[0]?.[0].uiSource).toBe('dialog');
+		kernel.dispose();
+	});
+
+	test('a save under an opt-out rule where neither marketing nor measurement is in scope never records an opt-out', async () => {
+		const kernel = createKernel({
+			consentCategories: ['necessary', 'experience', 'functionality'],
+			initialPolicyResolution: matchedResolution(
+				optOutRule({
+					categories: ['experience', 'functionality'],
+					prompt: 'none',
+					scopeMode: 'permissive',
+				})
+			),
+		});
+		const recorded = vi.fn();
+		kernel.events.on('opt-out:recorded', recorded);
+
+		const result = await kernel.commands.save('none');
+		expect(result.confirmed).toEqual(['experience', 'functionality']);
+		expect(kernel.getSnapshot().optOut).toBeNull();
+		expect(recorded).not.toHaveBeenCalled();
+		kernel.dispose();
+	});
+
+	test('refusals under an opt-in rule never record an opt-out', async () => {
+		const kernel = createKernel({
+			consentCategories: [
+				'necessary',
+				'functionality',
+				'experience',
+				'measurement',
+				'marketing',
+			],
+			initialPolicyResolution: matchedResolution(optInRule()),
+		});
+		const recorded = vi.fn();
+		kernel.events.on('opt-out:recorded', recorded);
+
+		const rejectResult = await kernel.commands.save('none');
+		expect(rejectResult.confirmed?.length).toBeGreaterThan(0);
+		await kernel.commands.save({ marketing: false, measurement: false });
+		expect(kernel.getSnapshot().optOut).toBeNull();
+		expect(recorded).not.toHaveBeenCalled();
+		kernel.dispose();
+	});
+
 	test('denying or saving untouched categories leaves the opt-out alone', async () => {
 		const existing: OptOutRecord = {
 			heldBy: 'device',
@@ -579,13 +881,24 @@ describe('hydration of opt-out records', () => {
 		expect(kernel.getSnapshot().optOut).toBeNull();
 		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
 
+		const futureRecord: OptOutRecord = {
+			heldBy: 'person',
+			method: 'api',
+			recordedAt: NOW + DAY,
+			rights: ['sale', 'share'],
+		};
+		const futureApplied = kernel.hydrate({ now: NOW, optOut: futureRecord });
+		expect(futureApplied).toEqual({ changed: true, ok: true });
+		expect(kernel.getSnapshot().optOut).toEqual(futureRecord);
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+
 		const beforeBad = kernel.getSnapshot();
 		const invalid = kernel.hydrate({
 			now: NOW,
 			optOut: {
 				heldBy: 'device',
 				method: 'button',
-				recordedAt: NOW + 1000,
+				recordedAt: -1,
 				rights: ['sale'],
 			},
 		});

@@ -19,6 +19,7 @@
  * @internal
  */
 
+import { optOutDenyCategories } from '../consent-record/opt-out';
 import { recordCategoryPatch } from '../consent-record/record';
 import type { OptionalConsentCategory } from '../consent-record/types';
 import { buildNextSnapshot } from '../kernel/next-snapshot';
@@ -158,6 +159,22 @@ export const planEarlyCommit = function planEarlyCommit(
 		recorded.confirmed.length === 0 ||
 		choiceAcknowledgement(before, actionAt) !== null
 	) {
+		return null;
+	}
+	const optOutCategories = optOutDenyCategories(before.evaluationPolicy);
+	if (
+		before.evaluationPolicy.model === 'opt-out' &&
+		optOutCategories.length > 0 &&
+		recorded.confirmed.some(
+			(category) =>
+				optOutCategories.includes(category) &&
+				recorded.choice.categories[category]?.value === false
+		) &&
+		optOutCategories.every(
+			(category) => recorded.choice.categories[category]?.value === false
+		)
+	) {
+		// Refusing the opt-out categories records a durable opt-out in the kernel.
 		return null;
 	}
 	const { uiSource, ...timing } = saveAttribution(

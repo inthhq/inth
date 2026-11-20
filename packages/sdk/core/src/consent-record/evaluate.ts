@@ -13,6 +13,7 @@
 
 import type { OptOutRecord } from '@inth/sdk-schema/types';
 
+import { optOutDenyCategories } from './opt-out';
 import { OPTIONAL_CONSENT_CATEGORIES } from './types';
 import type {
 	CategoryDecision,
@@ -135,7 +136,7 @@ const collectRestrictions = function collectRestrictions(
 	if (input.gpc === true && input.policy.gpcDenyCategories.includes(category)) {
 		restrictions.push('gpc');
 	}
-	if (input.optOut && input.policy.gpcDenyCategories.includes(category)) {
+	if (input.optOut && optOutDenyCategories(input.policy).includes(category)) {
 		restrictions.push('opt-out');
 	}
 	return restrictions;

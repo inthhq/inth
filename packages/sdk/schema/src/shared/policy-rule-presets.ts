@@ -792,9 +792,11 @@ export interface RecommendedPolicyRulesOptions {
  * The recommended global pack, in match order: Europe (EEA, UK, Gibraltar,
  * and the geo fallback for an unknown location) opt-in or IAB, Quebec
  * opt-in, California opt-out with GPC and full proof, the other US privacy
- * states and missing US states opt-out with GPC, and `none` for every other
- * known location. A missing Canadian province remains strict. `testing()`
- * and `createOfflineTransport()` resolve this pack when no rules are passed.
+ * states (excluding Nevada, which hosts add through
+ * `policyRulePresets.usPrivacyStatesOptOut()`) and missing US states opt-out
+ * with GPC, and `none` for every other known location. A missing Canadian
+ * province remains strict. `testing()` and `createOfflineTransport()` resolve
+ * this pack when no rules are passed.
  *
  * @example
  * ```ts
@@ -816,7 +818,11 @@ export const recommendedPolicyRules = function recommendedPolicyRules(
 			match: policyMatchers.merge(
 				{
 					...us.match,
-					regions: us.match.regions?.filter((region) => region.region !== 'CA'),
+					// California has its own rule above; Nevada is a preset a host adds
+					// explicitly rather than part of the default pack.
+					regions: us.match.regions?.filter(
+						(region) => region.region !== 'CA' && region.region !== 'NV'
+					),
 				},
 				policyMatchers.regionFallback(['US'])
 			),

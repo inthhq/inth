@@ -933,10 +933,13 @@ const OPT_OUT_STORED_KEYS = [
 	'subject',
 ] as const;
 
-/** Validates a parsed stored opt-out record. */
+/**
+ * Validates a parsed stored opt-out record. Future `recordedAt` timestamps are
+ * kept so a slow or rewound device clock never drops a stored opt-out.
+ */
 export const decodeOptOutRecord = function decodeOptOutRecord(
 	input: unknown,
-	now: number
+	now?: number
 ): DecodeResult<StoredOptOutRecord> {
 	if (!isPlainRecord(input)) {
 		return { issues: [{ code: 'not-an-object', path: '' }], ok: false };
@@ -984,7 +987,7 @@ export const decodeOptOutRecord = function decodeOptOutRecord(
 /** Decodes a compact opt-out cookie through the shared validator. */
 export const decodeOptOutRecordCompact = function decodeOptOutRecordCompact(
 	rawValue: string,
-	now: number
+	now?: number
 ): DecodeResult<StoredOptOutRecord> {
 	const issues: StorageIssue[] = [];
 	const fields = parseCompactFields(rawValue, COMPACT_OPT_OUT_PREFIX, issues);
