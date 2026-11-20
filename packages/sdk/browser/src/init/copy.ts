@@ -75,6 +75,10 @@ export const resolveCopy = function resolveCopy(
 		},
 		dir: getTextDirection(language),
 		language,
+		optOutLink: {
+			label: rights?.optOut ?? '',
+			variant: 'do-not-sell',
+		},
 		prompt: notice
 			? {
 					description: t.cookieBanner.noticeDescription,

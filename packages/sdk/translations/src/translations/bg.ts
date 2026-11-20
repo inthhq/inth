@@ -172,8 +172,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Общи условия',
 	},
 	rights: {
+		californiaPrivacyChoices: 'Вашите избори за поверителност в Калифорния',
 		optOut: 'Не продавайте и не споделяйте данните ми',
 		preferences: 'Управление на предпочитанията',
+		privacyChoices: 'Вашите избори за поверителност',
 	},
 };
 export default translations;

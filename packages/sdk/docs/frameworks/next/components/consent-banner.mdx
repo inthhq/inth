@@ -24,7 +24,7 @@ or Pages Router `getServerSideProps`, it ships in the initial server HTML:
   Customize when offered by the rule (or a "Manage preferences" button if
   Customize is omitted).
 - **`notice` prompt:** shows an "OK" button and an underlined
-  "Do not sell or share my data" button that opens preferences. Notices never
+  "Do Not Sell or Share My Personal Information" button that opens preferences. Notices never
   lock scroll or trap focus, and acknowledging records a dismissal without
   changing permissions.
 - **`prompt: 'none'` or unresolved policy:** renders nothing. Opt-out rules
@@ -140,7 +140,9 @@ export function CompactBanner() {
 ```tsx
 <ConsentBanner.Rights>
 	<ConsentBanner.RightLink right="opt-out" asChild>
-		<a href="/privacy/do-not-sell">Do not sell or share my data</a>
+		<a href="/privacy/do-not-sell">
+			Do Not Sell or Share My Personal Information
+		</a>
 	</ConsentBanner.RightLink>
 </ConsentBanner.Rights>;
 ```

@@ -66,7 +66,8 @@ hands off cleanly without re-sending `/v1/consent/init` or flashing the banner.
 
 `inth.js` loads the full engine immediately when custom options require it
 (`theme`, `css`, `stylesheetUrls`, `i18n`, `container`, `data-shadow="false"`,
-`noStyle`, `experiment`, `storageConfig`, `persistence`, `consentSource`,
+`noStyle`, a `privacy-choices` or `california-privacy-choices` opt-out link,
+`experiment`, `storageConfig`, `persistence`, `consentSource`,
 `vendors`, `user`, `prefetch`, `headers` or `fetch`). Until the engine loads,
 `inth.client` is `null` and `inth.isVendorAllowed()` throws; use
 `inth.onInit((client) => ...)` to access the full client.
@@ -99,6 +100,7 @@ Attributes are read once on startup. `inth.js` uses hosted mode and requires
 | `data-color-scheme` | `light`, `dark` or `system` (default `system`). |
 | `data-trigger` | Show the [floating trigger](/docs/frameworks/html/components/trigger). |
 | `data-hide-branding` | Hide the "Secured by" tag (the IAB banner always keeps it). |
+| `data-opt-out-link` | `do-not-sell` (default), `privacy-choices` ("Your Privacy Choices") or `california-privacy-choices` ("Your California Privacy Choices"). The two "Privacy Choices" forms always render with the California Privacy Protection Agency opt-out icon. |
 | `data-shadow="false"` | Render into the page DOM so page CSS applies; see [style it with your own stylesheet](/docs/frameworks/html/customize#style-it-with-your-own-stylesheet). |
 | `data-no-ui` | Run without stock UI (load `inth.headless.js` instead to omit UI bytes). |
 | `data-hosted-src`, `data-commit-src`, `data-records-src`, `data-dialog-src` | Custom URLs for companion files loaded by `inth.js`. |

@@ -148,9 +148,25 @@ describe('readScriptOptions', () => {
 	it('ignores unknown modes and schemes', () => {
 		expect(
 			readScriptOptions(
-				scriptWith({ 'data-color-scheme': 'sepia', 'data-mode': 'magic' })
+				scriptWith({
+					'data-color-scheme': 'sepia',
+					'data-mode': 'magic',
+					'data-opt-out-link': 'unknown',
+				})
 			)
 		).toEqual({});
+	});
+
+	it.each([
+		'do-not-sell',
+		'privacy-choices',
+		'california-privacy-choices',
+	] as const)('reads data-opt-out-link="%s" into presentation', (value) => {
+		expect(
+			readScriptOptions(scriptWith({ 'data-opt-out-link': value }))
+		).toEqual({
+			presentation: { optOutLink: value },
+		});
 	});
 
 	it('returns nothing without a script element', () => {
@@ -243,6 +259,18 @@ describe('readPageOptions', () => {
 	it('does not select links supplied only through programmatic config', () => {
 		const config = { legalLinks: { privacyPolicy: { href: '/privacy' } } };
 		expect(readPageOptions(null, [config]).options).toEqual(config);
+	});
+
+	it('keeps data-opt-out-link when queued config sets prompt presentation', () => {
+		const { options } = readPageOptions(
+			scriptWith({ 'data-opt-out-link': 'privacy-choices' }),
+			[{ presentation: { prompt: { variant: 'bar' } } }]
+		);
+
+		expect(options.presentation).toEqual({
+			optOutLink: 'privacy-choices',
+			prompt: { variant: 'bar' },
+		});
 	});
 });
 

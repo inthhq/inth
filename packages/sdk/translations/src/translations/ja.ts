@@ -178,8 +178,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: '利用規約',
 	},
 	rights: {
+		californiaPrivacyChoices: 'カリフォルニア州におけるプライバシーの選択',
 		optOut: '個人データの販売・共有を拒否する',
 		preferences: '設定を管理する',
+		privacyChoices: 'プライバシーの選択',
 	},
 };
 

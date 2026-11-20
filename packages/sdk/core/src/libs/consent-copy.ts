@@ -18,6 +18,32 @@ import type { PresentationAction } from './policy-actions';
 /** Rights a surface exposes as a control. `disclosure` is carried by legal links. */
 export type PreferenceControl = Exclude<PolicyRight, 'disclosure'>;
 
+/**
+ * Form of the opt-out link under CCPA regulations (sections 7015 and 7026).
+ *
+ * - `'do-not-sell'`: "Do Not Sell or Share My Personal Information" with no icon.
+ * - `'privacy-choices'`: "Your Privacy Choices" paired with the CPPA opt-out icon.
+ * - `'california-privacy-choices'`: "Your California Privacy Choices" paired with
+ *   the CPPA opt-out icon.
+ */
+export type OptOutLinkVariant =
+	| 'do-not-sell'
+	| 'privacy-choices'
+	| 'california-privacy-choices';
+
+/** Icon marker for the California Privacy Protection Agency opt-out icon. */
+export type OptOutLinkIcon = 'cppa-opt-out';
+
+/**
+ * Opt-out link presentation returned by {@link resolveOptOutLink}.
+ *
+ * The `'privacy-choices'` member always carries `icon: 'cppa-opt-out'` so
+ * neither "Privacy Choices" title renders without the mandated icon.
+ */
+export type ResolvedOptOutLink =
+	| { variant: 'do-not-sell'; label: string }
+	| { variant: 'privacy-choices'; label: string; icon: OptOutLinkIcon };
+
 /** Banner heading and body text under the active policy prompt. */
 export interface PromptCopy {
 	title: string;
@@ -118,6 +144,52 @@ export const resolvePreferenceControlLabels =
 			preferences: rights?.preferences ?? fallback.preferences,
 		};
 	};
+
+/**
+ * Presentation of the opt-out link for the active translations and chosen form.
+ *
+ * @remarks
+ * `'do-not-sell'` returns the standard "Do Not Sell or Share My Personal
+ * Information" title with no icon. `'privacy-choices'` ("Your Privacy Choices")
+ * and `'california-privacy-choices'` ("Your California Privacy Choices") both
+ * return `variant: 'privacy-choices'` with `icon: 'cppa-opt-out'`.
+ *
+ * @param translations - The active language bundle. Missing keys use English.
+ * @param variant - Opt-out link form. Defaults to `'do-not-sell'`.
+ * @returns The resolved opt-out link presentation.
+ *
+ * @example
+ * ```ts
+ * const link = resolveOptOutLink(translations, 'privacy-choices');
+ * // { variant: 'privacy-choices', label: 'Your Privacy Choices', icon: 'cppa-opt-out' }
+ * ```
+ */
+export const resolveOptOutLink = function resolveOptOutLink(
+	translations: Partial<Translations> | undefined,
+	variant: OptOutLinkVariant = 'do-not-sell'
+): ResolvedOptOutLink {
+	const rights = translations?.rights;
+	const fallback = enTranslations.rights;
+	if (variant === 'privacy-choices') {
+		return {
+			icon: 'cppa-opt-out',
+			label: rights?.privacyChoices ?? fallback.privacyChoices,
+			variant: 'privacy-choices',
+		};
+	}
+	if (variant === 'california-privacy-choices') {
+		return {
+			icon: 'cppa-opt-out',
+			label:
+				rights?.californiaPrivacyChoices ?? fallback.californiaPrivacyChoices,
+			variant: 'privacy-choices',
+		};
+	}
+	return {
+		label: rights?.optOut ?? fallback.optOut,
+		variant: 'do-not-sell',
+	};
+};
 
 /**
  * Display title of a consent category.

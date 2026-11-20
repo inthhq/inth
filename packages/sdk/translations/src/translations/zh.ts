@@ -159,8 +159,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: '服务条款',
 	},
 	rights: {
+		californiaPrivacyChoices: '您的加利福尼亚隐私选择',
 		optOut: '请勿出售或共享我的数据',
 		preferences: '管理偏好设置',
+		privacyChoices: '您的隐私选择',
 	},
 };
 export default translations;

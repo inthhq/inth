@@ -174,8 +174,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Podmínky služby',
 	},
 	rights: {
+		californiaPrivacyChoices: 'Vaše volby ochrany osobních údajů v Kalifornii',
 		optOut: 'Neprodávejte ani nesdílejte moje údaje',
 		preferences: 'Spravovat předvolby',
+		privacyChoices: 'Vaše volby ochrany osobních údajů',
 	},
 };
 export default translations;

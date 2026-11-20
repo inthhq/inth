@@ -174,8 +174,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Όροι χρήσης',
 	},
 	rights: {
+		californiaPrivacyChoices: 'Οι επιλογές απορρήτου σας στην Καλιφόρνια',
 		optOut: 'Μην πουλάτε και μην κοινοποιείτε τα δεδομένα μου',
 		preferences: 'Διαχείριση προτιμήσεων',
+		privacyChoices: 'Οι επιλογές απορρήτου σας',
 	},
 };
 export default translations;

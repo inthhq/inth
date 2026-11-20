@@ -1,7 +1,9 @@
 import type {
 	AllConsentNames,
+	ConsentPresentation,
 	KernelOverrides,
 	LegalLinks,
+	OptOutLinkVariant,
 } from '@inth/sdk-core';
 
 import type {
@@ -17,6 +19,11 @@ export const MANUAL_ATTRIBUTE = 'data-manual';
 const MODES: ReadonlySet<string> = new Set<ConsentModeName>([
 	'hosted',
 	'manifest',
+]);
+const OPT_OUT_LINKS: ReadonlySet<string> = new Set<OptOutLinkVariant>([
+	'do-not-sell',
+	'privacy-choices',
+	'california-privacy-choices',
 ]);
 const SCHEMES: ReadonlySet<string> = new Set(['light', 'dark', 'system']);
 
@@ -145,6 +152,10 @@ export const readScriptOptions = function readScriptOptions(
 	if (nonce) {
 		options.nonce = nonce;
 	}
+	const optOutLink = element.getAttribute('data-opt-out-link');
+	if (optOutLink && OPT_OUT_LINKS.has(optOutLink)) {
+		options.presentation = { optOutLink: optOutLink as OptOutLinkVariant };
+	}
 	if (readFlag(element, 'data-no-ui')) {
 		options.ui = false;
 		return options;
@@ -203,11 +214,28 @@ const mergeUI = function mergeUI(
 	return merged;
 };
 
+const mergePresentation = function mergePresentation(
+	base: ConsentPresentation | undefined,
+	override: ConsentPresentation | undefined
+): ConsentPresentation | undefined {
+	if (!(base && override)) {
+		return override ?? base;
+	}
+	const merged: ConsentPresentation = { ...base, ...override };
+	if (base.prompt && override.prompt) {
+		merged.prompt = { ...base.prompt, ...override.prompt };
+	}
+	if (base.preferences && override.preferences) {
+		merged.preferences = { ...base.preferences, ...override.preferences };
+	}
+	return merged;
+};
+
 /**
- * Layer one options object over another. `ui` and its banner/dialog
- * option objects merge, so a queued `config` can change the branding
- * without discarding the script tag's legal links. Booleans replace
- * the corresponding UI or surface configuration.
+ * Layer one options object over another. `ui`, `presentation` and their
+ * nested surface option objects merge, so a queued `config` can change the
+ * branding without discarding the script tag's legal links or opt-out link
+ * variant. Booleans replace the corresponding UI or surface configuration.
  *
  * @param base - The options underneath.
  * @param override - The options on top.
@@ -219,8 +247,12 @@ export const mergeClientOptions = function mergeClientOptions(
 	const merged: ScriptTagClientOptions = {
 		...base,
 		...override,
+		presentation: mergePresentation(base.presentation, override.presentation),
 		ui: mergeUI(base.ui, override.ui),
 	};
+	if (merged.presentation === undefined) {
+		delete merged.presentation;
+	}
 	if (merged.ui === undefined) {
 		delete merged.ui;
 	}

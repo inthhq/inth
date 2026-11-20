@@ -172,8 +172,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'సేవా నిబంధనలు',
 	},
 	rights: {
+		californiaPrivacyChoices: 'మీ కాలిఫోర్నియా గోప్యతా ఎంపికలు',
 		optOut: 'నా డేటాను అమ్మవద్దు లేదా పంచుకోవద్దు',
 		preferences: 'ప్రాధాన్యతలను నిర్వహించండి',
+		privacyChoices: 'మీ గోప్యతా ఎంపికలు',
 	},
 };
 

@@ -173,8 +173,11 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Termeni și condiții',
 	},
 	rights: {
+		californiaPrivacyChoices:
+			'Opțiunile dumneavoastră de confidențialitate din California',
 		optOut: 'Nu vindeți și nu partajați datele mele',
 		preferences: 'Gestionează preferințele',
+		privacyChoices: 'Opțiunile dumneavoastră de confidențialitate',
 	},
 };
 export default translations;

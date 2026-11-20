@@ -1094,4 +1094,76 @@ describe('mountConsentUI', () => {
 			]);
 		});
 	});
+
+	describe('opt-out link variants', () => {
+		const noticePolicy = [
+			{
+				...policyRulePresets.usPrivacyStatesOptOut(),
+				prompt: 'notice' as const,
+			},
+		];
+
+		it('renders "Do Not Sell or Share My Personal Information" with no icon by default', async () => {
+			const { root } = await mount(
+				{},
+				{
+					overrides: { country: 'US', region: 'CA' },
+					policy: noticePolicy,
+				}
+			);
+			const button = query(root, 'consent-banner-right-opt-out-button');
+			expect(button.textContent).toBe(
+				'Do Not Sell or Share My Personal Information'
+			);
+			expect(button.dataset.optOutVariant).toBe('do-not-sell');
+			expect(button.querySelector('svg')).toBeNull();
+		});
+
+		it.each([
+			['privacy-choices', 'Your Privacy Choices'],
+			['california-privacy-choices', 'Your California Privacy Choices'],
+		] as const)(
+			'renders %s with the CPPA opt-out icon and exact title "%s"',
+			async (optOutLink, expectedTitle) => {
+				const { root } = await mount(
+					{},
+					{
+						overrides: { country: 'US', region: 'CA' },
+						policy: noticePolicy,
+						presentation: { optOutLink },
+					}
+				);
+				const button = query(root, 'consent-banner-right-opt-out-button');
+				expect(button.textContent).toBe(expectedTitle);
+				expect(button.dataset.optOutVariant).toBe('privacy-choices');
+				const svg = button.querySelector('svg');
+				expect(svg).not.toBeNull();
+				expect(svg?.getAttribute('aria-hidden')).toBe('true');
+				expect(svg?.getAttribute('focusable')).toBe('false');
+				expect(svg?.getAttribute('viewBox')).toBe('0 0 30 14');
+				expect(svg?.getAttribute('class')).toBe(classes.banner.optOutIcon);
+				const fills = [...(svg?.querySelectorAll('path') ?? [])].map((path) =>
+					path.getAttribute('fill')
+				);
+				expect(fills).toEqual(['#FFFFFF', '#0066FF', '#FFFFFF', '#0066FF']);
+			}
+		);
+
+		it('keeps the CPPA opt-out icon rendered when noStyle is enabled', async () => {
+			const { root } = await mount(
+				{ noStyle: true },
+				{
+					overrides: { country: 'US', region: 'CA' },
+					policy: noticePolicy,
+					presentation: { optOutLink: 'privacy-choices' },
+				}
+			);
+			const button = query(root, 'consent-banner-right-opt-out-button');
+			expect(button.textContent).toBe('Your Privacy Choices');
+			const svg = button.querySelector('svg');
+			expect(svg).not.toBeNull();
+			expect(svg?.getAttribute('aria-hidden')).toBe('true');
+			expect(svg?.getAttribute('class')).toBeNull();
+		});
+	});
 });

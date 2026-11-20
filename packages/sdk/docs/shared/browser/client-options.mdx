@@ -55,7 +55,7 @@ group: reference
   | Option | Type | Default | What it does |
   | --- | --- | --- | --- |
   | `ui` | UI options or `false` | stock UI on | Theme tokens, CSS, surfaces and mounting. `false` starts the client with no UI. See [UI options](#ui-options). |
-  | `presentation` | `{ prompt?, preferences? }` | floating banner, bottom left | Banner shape, position, button layout and blocking, within what the policy allows. |
+  | `presentation` | `{ prompt?, preferences?, optOutLink? }` | floating banner, bottom left, `'do-not-sell'` | Banner shape, position, button layout, blocking and opt-out link form (`'do-not-sell'`, `'privacy-choices'` or `'california-privacy-choices'`), within what the policy allows. Both `'privacy-choices'` and `'california-privacy-choices'` always render with the California Privacy Protection Agency opt-out icon. |
   | `i18n` | `{ locale?, messages }` | English | The language to start in, and messages per language that override the bundled, Inth or manifest copy key by key for that language. |
   | `legalLinks` | `{ privacyPolicy?, cookiePolicy?, termsOfService? }` | none | Each link is `{ href, label?, target?, rel? }`. The banner and dialog show only the links their `legalLinks` option lists. |
 </section>

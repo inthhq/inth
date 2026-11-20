@@ -85,6 +85,7 @@ export { version } from './version';
 export type {
 	ConsentSnapshot,
 	ConsentState,
+	OptOutLinkVariant,
 	ResolvedVendor,
 	Vendor,
 	VendorChoice,

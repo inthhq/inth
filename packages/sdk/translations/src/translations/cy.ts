@@ -171,8 +171,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Telerau gwasanaeth',
 	},
 	rights: {
+		californiaPrivacyChoices: 'Eich Dewisiadau Preifatrwydd yng Nghaliffornia',
 		optOut: 'Peidiwch â gwerthu na rhannu fy nata',
 		preferences: 'Rheoli dewisiadau',
+		privacyChoices: 'Eich Dewisiadau Preifatrwydd',
 	},
 };
 export default translations;

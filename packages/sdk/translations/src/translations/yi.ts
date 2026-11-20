@@ -178,8 +178,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'באַניץ־באַדינגונגען',
 	},
 	rights: {
+		californiaPrivacyChoices: 'אײַערע קאַליפֿאָרניע פּריוואַטקײט־אױסוואַלן',
 		optOut: 'נישט פֿאַרקױפֿן און נישט טײלן מײַנע דאַטן',
 		preferences: 'ענדערן אײַנשטעלונגען',
+		privacyChoices: 'אײַערע פּריוואַטקײט־אױסוואַלן',
 	},
 };
 

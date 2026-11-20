@@ -172,8 +172,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Felhasználási feltételek',
 	},
 	rights: {
+		californiaPrivacyChoices: 'Az Ön kaliforniai adatvédelmi beállításai',
 		optOut: 'Ne adják el és ne osszák meg az adataimat',
 		preferences: 'Beállítások kezelése',
+		privacyChoices: 'Az Ön adatvédelmi beállításai',
 	},
 };
 export default translations;

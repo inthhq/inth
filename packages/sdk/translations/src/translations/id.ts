@@ -171,8 +171,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Syarat Layanan',
 	},
 	rights: {
+		californiaPrivacyChoices: 'Pilihan Privasi California Anda',
 		optOut: 'Jangan jual atau bagikan data saya',
 		preferences: 'Kelola preferensi',
+		privacyChoices: 'Pilihan Privasi Anda',
 	},
 };
 export default translations;

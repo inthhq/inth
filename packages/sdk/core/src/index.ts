@@ -342,6 +342,7 @@ export {
 	resolveActionLabels,
 	resolveCategoryTitle,
 	resolveIABCopy,
+	resolveOptOutLink,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
 	resolveSurfaceTranslations,
@@ -349,9 +350,12 @@ export {
 	resolveVendorListCopy,
 } from './libs/consent-copy';
 export type {
+	OptOutLinkIcon,
+	OptOutLinkVariant,
 	PreferenceControl,
 	PromptCopy,
 	ResolvedIABCopy,
+	ResolvedOptOutLink,
 } from './libs/consent-copy';
 
 export {

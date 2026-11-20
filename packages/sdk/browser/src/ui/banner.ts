@@ -10,6 +10,7 @@ import { renderActionFooter, resolveActions } from './actions';
 import { renderBranding } from './branding';
 import { resolveCopy } from './copy';
 import { h, markLateEntry, readDurationMs, supportsStartingStyle } from './dom';
+import { createOptOutIcon } from './opt-out-icon';
 import { renderLegalLinks } from './surface';
 import type { Surface, SurfaceContext } from './surface';
 
@@ -63,16 +64,6 @@ export const createBanner = function createBanner(
 
 	// oxlint-disable-next-line complexity -- Notice copy, action labels and presentation are resolved together.
 	const build = function build(snapshot: ConsentSnapshot): HTMLElement {
-		const copy = resolveCopy(snapshot);
-		const { t } = copy;
-		const labels: Record<PresentationAction, string> = {
-			...copy.actions,
-			accept: options.acceptButtonText ?? copy.actions.accept,
-			customize: options.customizeButtonText ?? copy.actions.customize,
-			reject: options.rejectButtonText ?? copy.actions.reject,
-		};
-		const title = options.title ?? copy.prompt.title;
-		const description = options.description ?? copy.prompt.description;
 		const actions = resolveActions(
 			snapshot,
 			'prompt',
@@ -83,6 +74,16 @@ export const createBanner = function createBanner(
 			},
 			ctx.client.theme
 		);
+		const copy = resolveCopy(snapshot, actions.optOutLink);
+		const { t } = copy;
+		const labels: Record<PresentationAction, string> = {
+			...copy.actions,
+			accept: options.acceptButtonText ?? copy.actions.accept,
+			customize: options.customizeButtonText ?? copy.actions.customize,
+			reject: options.rejectButtonText ?? copy.actions.reject,
+		};
+		const title = options.title ?? copy.prompt.title;
+		const description = options.description ?? copy.prompt.description;
 		({ trapFocus, scrollLock } = actions);
 		const { position } = actions;
 
@@ -166,6 +167,18 @@ export const createBanner = function createBanner(
 		);
 
 		for (const control of actions.preferenceControls) {
+			let content: (Node | string)[];
+			if (control === 'opt-out') {
+				content =
+					copy.optOutLink.variant === 'privacy-choices'
+						? [
+								createOptOutIcon(noStyle ? '' : styles.optOutIcon),
+								copy.optOutLink.label,
+							]
+						: [copy.optOutLink.label];
+			} else {
+				content = [copy.controls[control]];
+			}
 			card.append(
 				slot(
 					h(
@@ -174,13 +187,15 @@ export const createBanner = function createBanner(
 							class: noStyle ? '' : classes.button.button,
 							'data-action': 'customize',
 							'data-mode': noStyle ? undefined : 'stroke',
+							'data-opt-out-variant':
+								control === 'opt-out' ? copy.optOutLink.variant : undefined,
 							'data-size': noStyle ? undefined : 'small',
 							'data-testid': `consent-banner-right-${control}-button`,
 							'data-variant': noStyle ? undefined : 'neutral',
 							onclick: () => ctx.client.openDialog(),
 							type: 'button',
 						},
-						copy.controls[control]
+						...content
 					),
 					'consentBannerRightLink'
 				)

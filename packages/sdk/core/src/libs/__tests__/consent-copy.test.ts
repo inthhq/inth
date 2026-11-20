@@ -5,6 +5,7 @@ import {
 	resolveActionLabels,
 	resolveCategoryTitle,
 	resolveIABCopy,
+	resolveOptOutLink,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
 	resolveSurfaceTranslations,
@@ -73,8 +74,69 @@ describe('consent copy', () => {
 			save: 'Save Settings',
 		});
 		expect(resolvePreferenceControlLabels(undefined)).toEqual({
-			'opt-out': 'Do not sell or share my data',
+			'opt-out': 'Do Not Sell or Share My Personal Information',
 			preferences: 'Manage preferences',
+		});
+	});
+
+	it('resolves the opt-out link presentation for each variant with English fallbacks', () => {
+		expect(resolveOptOutLink(undefined)).toEqual({
+			label: 'Do Not Sell or Share My Personal Information',
+			variant: 'do-not-sell',
+		});
+		expect(resolveOptOutLink(undefined, 'do-not-sell')).toEqual({
+			label: 'Do Not Sell or Share My Personal Information',
+			variant: 'do-not-sell',
+		});
+		expect('icon' in resolveOptOutLink(undefined, 'do-not-sell')).toBe(false);
+
+		expect(resolveOptOutLink(undefined, 'privacy-choices')).toEqual({
+			icon: 'cppa-opt-out',
+			label: 'Your Privacy Choices',
+			variant: 'privacy-choices',
+		});
+		expect(resolveOptOutLink(undefined, 'california-privacy-choices')).toEqual({
+			icon: 'cppa-opt-out',
+			label: 'Your California Privacy Choices',
+			variant: 'privacy-choices',
+		});
+
+		const translated = {
+			rights: {
+				californiaPrivacyChoices: 'Sus opciones de privacidad de California',
+				optOut: 'No vender ni compartir mi información personal',
+				privacyChoices: 'Sus opciones de privacidad',
+			},
+		};
+		expect(resolveOptOutLink(translated, 'do-not-sell')).toEqual({
+			label: 'No vender ni compartir mi información personal',
+			variant: 'do-not-sell',
+		});
+		expect(resolveOptOutLink(translated, 'privacy-choices')).toEqual({
+			icon: 'cppa-opt-out',
+			label: 'Sus opciones de privacidad',
+			variant: 'privacy-choices',
+		});
+		expect(resolveOptOutLink(translated, 'california-privacy-choices')).toEqual(
+			{
+				icon: 'cppa-opt-out',
+				label: 'Sus opciones de privacidad de California',
+				variant: 'privacy-choices',
+			}
+		);
+
+		// Missing keys inside a partial rights section fall back to English.
+		expect(resolveOptOutLink({ rights: {} }, 'privacy-choices')).toEqual({
+			icon: 'cppa-opt-out',
+			label: 'Your Privacy Choices',
+			variant: 'privacy-choices',
+		});
+		expect(
+			resolveOptOutLink({ rights: {} }, 'california-privacy-choices')
+		).toEqual({
+			icon: 'cppa-opt-out',
+			label: 'Your California Privacy Choices',
+			variant: 'privacy-choices',
 		});
 	});
 

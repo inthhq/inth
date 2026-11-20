@@ -166,8 +166,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'સેવાની શરતો',
 	},
 	rights: {
+		californiaPrivacyChoices: 'તમારી કેલિફોર્નિયા ગોપનીયતા પસંદગીઓ',
 		optOut: 'મારો ડેટા વેચશો કે શેર કરશો નહીં',
 		preferences: 'પસંદગીઓ મેનેજ કરો',
+		privacyChoices: 'તમારી ગોપનીયતા પસંદગીઓ',
 	},
 };
 

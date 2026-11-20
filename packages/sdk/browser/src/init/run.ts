@@ -153,6 +153,10 @@ const announce = function announce(
 	}
 };
 
+const usesPrivacyChoicesLink = (options: ScriptTagClientOptions): boolean =>
+	options.presentation?.optOutLink === 'privacy-choices' ||
+	options.presentation?.optOutLink === 'california-privacy-choices';
+
 /**
  * Whether the engine's banner would look the same as the one the init
  * script renders: the stock banner in a shadow root, the stock sheet, no
@@ -167,6 +171,7 @@ const supportsEarlyBanner = function supportsEarlyBanner(
 		ui?.banner !== false &&
 		!(
 			options.i18n ||
+			usesPrivacyChoicesLink(options) ||
 			ui?.theme ||
 			ui?.css ||
 			ui?.stylesheetUrls?.length ||

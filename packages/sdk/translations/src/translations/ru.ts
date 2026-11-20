@@ -176,8 +176,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Условия использования',
 	},
 	rights: {
+		californiaPrivacyChoices: 'Ваши настройки конфиденциальности в Калифорнии',
 		optOut: 'Не продавать и не передавать мои данные',
 		preferences: 'Управление настройками',
+		privacyChoices: 'Ваши настройки конфиденциальности',
 	},
 };
 

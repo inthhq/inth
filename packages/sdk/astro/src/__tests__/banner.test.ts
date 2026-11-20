@@ -609,7 +609,7 @@ describe('<ConsentBanner /> under a notice prompt', () => {
 		expect(optOutButton).toContain(bannerStyles.rightLink);
 		expect(optOutButton).not.toContain('data-variant=');
 		expect(optOutButton).not.toContain('data-mode=');
-		expect(html).toContain('Do not sell or share my data');
+		expect(html).toContain('Do Not Sell or Share My Personal Information');
 		expect(html).toContain('data-action="dismiss"');
 		expect(html).toContain('data-inth-action="dismiss"');
 		// The only button leads, as it does in the React and Svelte banners.

@@ -88,6 +88,10 @@ export const resolveExperimentPresentation =
 		if (preferences) {
 			merged.preferences = preferences;
 		}
+		const optOutLink = arm.optOutLink ?? base?.optOutLink;
+		if (optOutLink !== undefined) {
+			merged.optOutLink = optOutLink;
+		}
 		return merged;
 	};
 

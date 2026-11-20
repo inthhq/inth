@@ -174,8 +174,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'ਸੇਵਾ ਦੀਆਂ ਸ਼ਰਤਾਂ',
 	},
 	rights: {
+		californiaPrivacyChoices: 'ਤੁਹਾਡੀਆਂ ਕੈਲੀਫੋਰਨੀਆ ਗੋਪਨੀਯਤਾ ਚੋਣਾਂ',
 		optOut: 'ਮੇਰਾ ਡਾਟਾ ਨਾ ਵੇਚੋ ਅਤੇ ਨਾ ਸਾਂਝਾ ਕਰੋ',
 		preferences: 'ਤਰਜੀਹਾਂ ਦਾ ਪ੍ਰਬੰਧ ਕਰੋ',
+		privacyChoices: 'ਤੁਹਾਡੀਆਂ ਗੋਪਨੀਯਤਾ ਚੋਣਾਂ',
 	},
 };
 

@@ -69,7 +69,7 @@ describe('ConsentDialogTriggerToolbar rights-aware action', () => {
 		const action = await waitForPreferencesAction();
 		expect(action).toHaveAttribute(
 			'aria-label',
-			'Do not sell or share my data'
+			'Do Not Sell or Share My Personal Information'
 		);
 		expect(action.dataset.right).toBe('opt-out');
 		expect(action.dataset.inthRights?.split(' ')).toContain('opt-out');

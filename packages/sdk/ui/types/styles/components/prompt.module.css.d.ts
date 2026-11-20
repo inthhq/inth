@@ -13,6 +13,7 @@ declare const styles: {
   readonly "description": string;
   readonly "footer": string;
   readonly "header": string;
+  readonly "optOutIcon": string;
   readonly "overlay": string;
   readonly "overlayEnterActive": string;
   readonly "overlayEnterFrom": string;

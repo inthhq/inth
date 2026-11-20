@@ -119,7 +119,7 @@ export interface ConsentDialogTriggerToolbarPreferences {
 	 * Accessible name announced for the preferences button.
 	 *
 	 * Defaults to the active rule's rights: the translated opt-out label
-	 * ("Do not sell or share my data") when the rule
+	 * ("Do Not Sell or Share My Personal Information") when the rule
 	 * carries the `opt-out` right, otherwise the translated preferences
 	 * label ("Manage preferences").
 	 */

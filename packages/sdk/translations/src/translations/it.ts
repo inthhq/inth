@@ -172,8 +172,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Termini di Servizio',
 	},
 	rights: {
+		californiaPrivacyChoices: 'Le tue scelte sulla privacy in California',
 		optOut: 'Non vendere né condividere i miei dati',
 		preferences: 'Gestisci preferenze',
+		privacyChoices: 'Le tue scelte sulla privacy',
 	},
 };
 export default translations;

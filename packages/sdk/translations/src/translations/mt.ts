@@ -172,8 +172,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Termini tas-Servizz',
 	},
 	rights: {
+		californiaPrivacyChoices: "L-Għażliet tal-Privatezza Tiegħek f'Kalifornja",
 		optOut: 'Tbigħx u taqsamx id-data tiegħi',
 		preferences: 'Immaniġġja l-preferenzi',
+		privacyChoices: 'L-Għażliet tal-Privatezza Tiegħek',
 	},
 };
 export default translations;

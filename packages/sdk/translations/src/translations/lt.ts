@@ -173,8 +173,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Naudojimosi sąlygos',
 	},
 	rights: {
+		californiaPrivacyChoices: 'Jūsų Kalifornijos privatumo pasirinkimai',
 		optOut: 'Neparduoti ir nesidalyti mano duomenimis',
 		preferences: 'Tvarkyti nuostatas',
+		privacyChoices: 'Jūsų privatumo pasirinkimai',
 	},
 };
 export default translations;

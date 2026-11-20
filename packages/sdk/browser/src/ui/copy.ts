@@ -1,14 +1,17 @@
 import {
 	resolveActionLabels,
+	resolveOptOutLink,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
 	resolveSurfaceTranslations,
 } from '@inth/sdk-core';
 import type {
 	ConsentSnapshot,
+	OptOutLinkVariant,
 	PreferenceControl,
 	PresentationAction,
 	PromptCopy,
+	ResolvedOptOutLink,
 	Translations,
 } from '@inth/sdk-core';
 import type { CompleteTranslations } from '@inth/sdk-translations';
@@ -24,6 +27,8 @@ export interface SurfaceCopy {
 	actions: Record<PresentationAction, string>;
 	/** Label for each control that opens preferences. */
 	controls: Record<PreferenceControl, string>;
+	/** Resolved opt-out link presentation for the configured variant. */
+	optOutLink: ResolvedOptOutLink;
 	/** The resolved language, if the transport reported one. */
 	language: string | undefined;
 	/** Text direction for the resolved language. */
@@ -38,7 +43,8 @@ export interface SurfaceCopy {
  * in the framework surfaces.
  */
 export const resolveCopy = function resolveCopy(
-	snapshot: ConsentSnapshot
+	snapshot: ConsentSnapshot,
+	optOutLinkVariant?: OptOutLinkVariant
 ): SurfaceCopy {
 	const bundle = snapshot.translations?.translations as
 		| Partial<Translations>
@@ -49,6 +55,7 @@ export const resolveCopy = function resolveCopy(
 		controls: resolvePreferenceControlLabels(bundle),
 		dir: getTextDirection(language),
 		language,
+		optOutLink: resolveOptOutLink(bundle, optOutLinkVariant),
 		prompt: resolvePromptCopy(bundle, snapshot.policyRule.prompt),
 		t: resolveSurfaceTranslations(snapshot),
 	};

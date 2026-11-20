@@ -170,8 +170,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Pakalpojumu sniegšanas noteikumi',
 	},
 	rights: {
+		californiaPrivacyChoices: 'Jūsu Kalifornijas privātuma izvēles',
 		optOut: 'Nepārdot un nekopīgot manus datus',
 		preferences: 'Pārvaldīt preferences',
+		privacyChoices: 'Jūsu privātuma izvēles',
 	},
 };
 export default translations;

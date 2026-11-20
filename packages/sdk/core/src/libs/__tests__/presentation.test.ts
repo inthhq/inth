@@ -444,3 +444,23 @@ it.each([{ scrollLock: true }, { trapFocus: true }])(
 		expect(result.trapFocus).toBe(true);
 	}
 );
+
+it('resolves optOutLink to do-not-sell by default and passes configured variants through', () => {
+	expect(
+		resolveConsentPresentation({ policy: choice, surface: 'prompt' }).optOutLink
+	).toBe('do-not-sell');
+	expect(
+		resolveConsentPresentation({
+			policy: choice,
+			presentation: { optOutLink: 'privacy-choices' },
+			surface: 'prompt',
+		}).optOutLink
+	).toBe('privacy-choices');
+	expect(
+		resolveConsentPresentation({
+			policy: choice,
+			presentation: { optOutLink: 'california-privacy-choices' },
+			surface: 'prompt',
+		}).optOutLink
+	).toBe('california-privacy-choices');
+});

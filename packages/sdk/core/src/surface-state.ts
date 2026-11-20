@@ -28,13 +28,19 @@ export {
 	resolveActionLabels,
 	resolveCategoryTitle,
 	resolveIABCopy,
+	resolveOptOutLink,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
 	resolveSurfaceTranslations,
 	resolveTriggerLabels,
 	resolveVendorListCopy,
 } from './libs/consent-copy';
-export type { ResolvedIABCopy } from './libs/consent-copy';
+export type {
+	OptOutLinkIcon,
+	OptOutLinkVariant,
+	ResolvedIABCopy,
+	ResolvedOptOutLink,
+} from './libs/consent-copy';
 export {
 	applyExperimentAssignment,
 	applyExperimentTheme,

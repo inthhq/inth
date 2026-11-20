@@ -40,6 +40,7 @@ export const init = function init(
 export {
 	resolveActionLabels,
 	resolveConsentPresentation,
+	resolveOptOutLink,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
 } from '@inth/sdk-core';
@@ -76,10 +77,13 @@ export { version } from './version';
 export type {
 	ConsentSnapshot,
 	ConsentState,
+	OptOutLinkIcon,
+	OptOutLinkVariant,
 	PreferenceControl,
 	PresentationAction,
 	PromptCopy,
 	ResolvedConsentPresentation,
+	ResolvedOptOutLink,
 	ResolvedVendor,
 	Vendor,
 	VendorChoice,

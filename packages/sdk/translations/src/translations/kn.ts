@@ -173,8 +173,10 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'ಸೇವಾ ನಿಯಮಗಳು',
 	},
 	rights: {
+		californiaPrivacyChoices: 'ನಿಮ್ಮ ಕ್ಯಾಲಿಫೋರ್ನಿಯಾ ಗೌಪ್ಯತಾ ಆಯ್ಕೆಗಳು',
 		optOut: 'ನನ್ನ ಡೇಟಾವನ್ನು ಮಾರಾಟ ಮಾಡಬೇಡಿ ಅಥವಾ ಹಂಚಿಕೊಳ್ಳಬೇಡಿ',
 		preferences: 'ಆದ್ಯತೆಗಳನ್ನು ನಿರ್ವಹಿಸಿ',
+		privacyChoices: 'ನಿಮ್ಮ ಗೌಪ್ಯತಾ ಆಯ್ಕೆಗಳು',
 	},
 };
 
