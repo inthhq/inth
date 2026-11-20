@@ -384,6 +384,11 @@
 			"import": "./lib/schema/dist/canonical-order.js",
 			"default": "./lib/schema/dist/canonical-order.js"
 		},
+		"./schema/v1": {
+			"types": "./lib/schema/dist-types/api/v1/index.d.ts",
+			"import": "./lib/schema/dist/api/v1/index.js",
+			"default": "./lib/schema/dist/api/v1/index.js"
+		},
 		"./translations": {
 			"types": "./lib/translations/dist-types/index.d.ts",
 			"import": "./lib/translations/dist/index.js",
