@@ -1,6 +1,10 @@
 <script lang="ts">
 	import type { ConsentDialogTriggerVisibility } from '@inth/sdk/schema/config';
-	import { resolveTriggerLabels } from '@inth/sdk/surface-state';
+	import { isOptOutTrigger } from '@inth/sdk/surface-actions';
+	import {
+		resolveOptOutLink,
+		resolveTriggerLabels,
+	} from '@inth/sdk/surface-state';
 	import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 	import {
 		createInitialDragState,
@@ -35,6 +39,7 @@
 	import { portal } from '../actions/portal';
 	import { getConsentContext, getThemeContext } from '../context.svelte';
 	import { holdIdleDialogWarming, warmDialog } from '../dialog-warming';
+	import { useOptOutConfirmationState } from '../opt-out-confirmation-state.svelte';
 	import { TRIGGER_SHEETS } from '../surface-styles';
 	import BrandMark from './icons/brand-mark.svelte';
 	import DevToolsIcon from './icons/dev-tools-icon.svelte';
@@ -68,6 +73,7 @@
 
 	const consent = getConsentContext();
 	const theme = getThemeContext();
+	const confirmation = useOptOutConfirmationState(() => consent.kernel);
 
 	let corner: CornerPosition = $state(untrack(() => defaultPosition));
 
@@ -84,16 +90,25 @@
 	});
 
 	const brandMark = $derived(resolveBrandMark(consent.state.branding));
+	const isOptOut = $derived(isOptOutTrigger(consent.snapshot));
 	const visible = $derived(
 		isTriggerVisible({
-			dialogOpen: consent.snapshot.activeUI === 'dialog',
+			dialogOpen: consent.snapshot.activeUI === 'dialog' || confirmation.open,
 			hasConsentPreferences: consent.state.hasConsentPreferences,
 			promptOwed: consent.snapshot.promptRequirement.kind !== 'none',
 			showWhen,
 		})
 	);
 	const labels = $derived(resolveTriggerLabels(consent.state.copy));
-	const preferencesLabel = $derived(ariaLabel ?? labels.label);
+	const optOutLink = $derived(
+		resolveOptOutLink(
+			consent.state.copy,
+			consent.state.presentation?.optOutLink
+		)
+	);
+	const preferencesLabel = $derived(
+		ariaLabel ?? (isOptOut ? optOutLink.label : labels.label)
+	);
 
 	// Load the deferred dialog before the first click, but only while the
 	// button is shown: a hidden trigger can't open the dialog.
@@ -239,7 +254,11 @@
 		}
 		onclick?.(e);
 		if (!e.defaultPrevented) {
-			consent.state.setActiveUI('dialog');
+			if (isOptOut) {
+				void consent.state.requestOptOut();
+			} else {
+				consent.state.setActiveUI('dialog');
+			}
 		}
 	};
 

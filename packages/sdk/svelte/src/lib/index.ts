@@ -74,6 +74,7 @@ export { default as ConsentWidget } from './components/preferences.svelte';
 export { default as ConsentGate } from './components/consent-gate.svelte';
 export { default as IABConsentBanner } from './components/iab-prompt.svelte';
 export { default as IABConsentDialog } from './components/iab-panel.svelte';
+export { default as OptOutConfirmation } from './components/deferred-opt-out-confirmation.svelte';
 export {
 	getConsentKernel,
 	getConsentManager,
@@ -119,18 +120,23 @@ export {
 	resolveActionLabels,
 	resolveConsentPresentation,
 	resolveOptOutCopy,
+	resolveOptOutLink,
 	resolveOptOutState,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
 } from '@inth/sdk/engine';
 export type {
 	ConsentPresentation,
+	OptOutLinkIcon,
+	OptOutLinkVariant,
 	OptOutLock,
+	OptOutResult,
 	OptOutVia,
 	PreferenceControl,
 	PresentationAction,
 	PromptCopy,
 	ResolvedConsentPresentation,
+	ResolvedOptOutLink,
 	ResolvedOptOutState,
 } from '@inth/sdk/engine';
 

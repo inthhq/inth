@@ -21,7 +21,7 @@ first render.
 | `persistPosition` | `boolean` | `true` | Remembers the corner a visitor drags it to, in local storage. |
 | `showWhen` | `'always'` or `'never'` | `'always'` | `'never'` hides it. |
 | `size` | `'sm'`, `'md'` or `'lg'` | `'md'` | Button size. |
-| `ariaLabel` | `string` | `'Open privacy settings'` | Accessible name. Translate it yourself; it does not come from `i18n`. |
+| `ariaLabel` | `string` | Resolved opt-out link title or `trigger.label` translation | Accessible name. Under an opt-out rule with the `opt-out` right, defaults to the resolved opt-out link title and activating the trigger records an opt-out in one click and opens `OptOutConfirmation`. |
 | `noStyle` | `boolean` | `false` | Drops Inth's classes, including the fixed positioning. |
 | `class` | `string` | none | Extra class on the button. |
 | `onclick` | `(event: MouseEvent) => void` | none | Runs before the dialog opens. Call `event.preventDefault()` to stop it. |

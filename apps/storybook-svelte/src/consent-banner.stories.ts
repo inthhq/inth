@@ -82,3 +82,21 @@ export const BannerFocusManagement: Story = {
 	},
 	play: bannerFocusManagement,
 };
+
+/** Notice banner with the statutory opt-out link. */
+export const OptOutLink: Story = {
+	args: {
+		disableAnimation: true,
+		notice: true,
+		optOutLink: 'do-not-sell',
+	},
+};
+
+/** Notice banner with the Privacy Choices link and CPPA opt-out icon. */
+export const PrivacyChoicesLink: Story = {
+	args: {
+		disableAnimation: true,
+		notice: true,
+		optOutLink: 'privacy-choices',
+	},
+};

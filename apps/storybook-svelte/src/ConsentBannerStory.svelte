@@ -1,5 +1,9 @@
 <script lang="ts">
-	import type { PromptPosition, PromptVariant } from '@inth/sdk/engine';
+	import type {
+		OptOutLinkVariant,
+		PromptPosition,
+		PromptVariant,
+	} from '@inth/sdk/engine';
 	import { ConsentBanner, ConsentDialog } from '@inth/svelte';
 
 	import {
@@ -13,6 +17,8 @@
 		includeDialog = false,
 		trapFocus = undefined,
 		notice = false,
+		optOutLink = undefined,
+		disableAnimation = undefined,
 		variant = undefined,
 		position = undefined,
 		blocking = undefined,
@@ -20,13 +26,15 @@
 		includeDialog?: boolean;
 		trapFocus?: boolean;
 		notice?: boolean;
+		optOutLink?: OptOutLinkVariant;
+		disableAnimation?: boolean;
 		variant?: PromptVariant;
 		position?: PromptPosition;
 		blocking?: boolean;
 	} = $props();
 
-	// A notice under an opt-out model: an opt-out link plus a primary Accept All.
-	const noticeOptions = {
+	// A notice under an opt-out model: an opt-out link plus a primary OK.
+	const noticeOptions = $derived({
 		mode: storybookMode([
 			{
 				...storybookPolicy,
@@ -35,8 +43,8 @@
 				prompt: 'notice' as const,
 			},
 		]),
-		presentation: undefined,
-	};
+		presentation: optOutLink ? { optOutLink } : undefined,
+	});
 </script>
 
 <StorybookConsentProvider
@@ -47,12 +55,16 @@
 	}}
 >
 	<ConsentBanner
+		{disableAnimation}
 		{trapFocus}
 		{variant}
 		{position}
 		{blocking}
 	/>
 	{#if includeDialog || notice}
-		<ConsentDialog {trapFocus} />
+		<ConsentDialog
+			{disableAnimation}
+			{trapFocus}
+		/>
 	{/if}
 </StorybookConsentProvider>

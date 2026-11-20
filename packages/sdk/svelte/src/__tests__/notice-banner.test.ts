@@ -95,7 +95,7 @@ describe('notice banner', () => {
 		view.unmount();
 	});
 
-	test('the opt-out link opens the preference center without a choice', async () => {
+	test('the opt-out link opts out in one click and opens confirmation', async () => {
 		const { context, view } = renderFixture(notice());
 		const optOut = required(
 			query('[data-testid="consent-banner-right-link-opt-out"]')
@@ -105,9 +105,9 @@ describe('notice banner', () => {
 		);
 		await fireEvent.click(optOut);
 		await waitFor(() =>
-			expect(query('[data-testid="consent-dialog-root"]')).not.toBeNull()
+			expect(query('[data-testid="opt-out-confirmation-root"]')).not.toBeNull()
 		);
-		expect(context.current.state.activeUI).toBe('dialog');
+		expect(context.current.snapshot.optOut?.method).toBe('button');
 		expect(context.current.snapshot.explicitChoice).toBeNull();
 		view.unmount();
 	});
