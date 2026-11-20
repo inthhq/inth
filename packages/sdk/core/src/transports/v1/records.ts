@@ -103,7 +103,7 @@ const readLink = function readLink(
 	return undefined;
 };
 
-/** The save result, or `undefined` for an answer that is not `{ subjectId, recordId }` with a UUIDv7 subject and a UUID record. */
+/** The save result, or `undefined` for an answer that is not `{ subjectId, recordId }` with a UUIDv7 subject and a UUID record in any case. */
 const toSaveResult = function toSaveResult(
 	data: unknown
 ): (V1SaveResult & { subjectId: string }) | undefined {
@@ -115,7 +115,8 @@ const toSaveResult = function toSaveResult(
 		typeof body.subjectId !== 'string' ||
 		!isUuidV7(body.subjectId) ||
 		typeof body.recordId !== 'string' ||
-		!V1_UUID_PATTERN.test(body.recordId)
+		// A UUID in any case, as the documents client reads a document ID.
+		!V1_UUID_PATTERN.test(body.recordId.toLowerCase())
 	) {
 		return undefined;
 	}

@@ -292,6 +292,20 @@ describe('save: the answer', () => {
 		expect(result).toEqual({ ok: true, recordId: RECORD, subjectId: SUBJECT });
 	});
 
+	test('reads a record ID in uppercase', async () => {
+		const { fetch } = stubFetch(() =>
+			json(200, { recordId: RECORD.toUpperCase(), subjectId: SUBJECT })
+		);
+
+		const result = await transportWith(fetch).save(savePayload());
+
+		expect(result).toEqual({
+			ok: true,
+			recordId: RECORD.toUpperCase(),
+			subjectId: SUBJECT,
+		});
+	});
+
 	test.each([
 		[
 			{ stored: true, verifiedBy: 'identity_token' },
