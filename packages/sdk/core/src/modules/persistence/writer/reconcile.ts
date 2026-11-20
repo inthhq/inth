@@ -273,7 +273,8 @@ export const mayWriteOptOut = function mayWriteOptOut(
 	ours: OptOutRecord | null,
 	stored: OptOutRecord | null,
 	subjectOnly: boolean,
-	storedWinsTies: boolean
+	storedWinsTies: boolean,
+	synced = false
 ): boolean {
 	if (subjectOnly) {
 		return (
@@ -284,6 +285,12 @@ export const mayWriteOptOut = function mayWriteOptOut(
 		return !stored || !storedWinsTies;
 	}
 	if (!stored) {
+		return true;
+	}
+	// A backend answer carries the server's authoritative time, which can be
+	// earlier than a fast device clock. Overwrite storage when no other
+	// runtime changed it since this runtime last saw it.
+	if (synced && !storedWinsTies) {
 		return true;
 	}
 	return isNewerThanStored(ours.recordedAt, stored.recordedAt, storedWinsTies);

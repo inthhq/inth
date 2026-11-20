@@ -12,6 +12,9 @@ export const C15T_STORAGE_KEY = 'c15t';
 /** Failed v3 consent saves waiting for a backend replay. */
 export const PENDING_SAVES_STORAGE_KEY = 'inth-pending-consent-saves:v1';
 
+/** Queued durable opt-out acts (record and lift) waiting for a backend replay. */
+export const PENDING_OPT_OUTS_STORAGE_KEY = 'inth-pending-opt-outs:v1';
+
 /**
  * c15t's {@link PENDING_SAVES_STORAGE_KEY}. The browser outbox store moves
  * what it holds into that key and replays it against this page's backend,

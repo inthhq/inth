@@ -1,11 +1,11 @@
 /**
  * Storage seam of the save outbox.
  *
- * The outbox keeps two lists: saves waiting for a replay and subject
- * reassignments. A store holds them and gives the outbox exclusive access
- * for one read-modify-write at a time. The outbox owns what the lists mean
- * and validates whatever a store hands back; a store only keeps the values
- * and serializes access to them.
+ * The outbox keeps three lists: saves waiting for a replay, opt-out acts
+ * waiting for a replay, and subject reassignments. A store holds them and
+ * gives the outbox exclusive access for one read-modify-write at a time. The
+ * outbox owns what the lists mean and validates whatever a store hands back;
+ * a store only keeps the values and serializes access to them.
  *
  * Adapters:
  * - {@link createBrowserOutboxStore}: localStorage under a Web Lock, shared
@@ -20,12 +20,17 @@ import {
 	C15T_PENDING_SAVES_STORAGE_KEY,
 	C15T_STORAGE_KEY,
 	C15T_SUBJECT_REASSIGNMENTS_STORAGE_KEY,
+	PENDING_OPT_OUTS_STORAGE_KEY,
 	PENDING_SAVES_STORAGE_KEY,
 	resolveStorageKeys,
 	SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 } from '../../libs/storage-keys';
 import { decodeClearEpoch } from '../../modules/persistence/record-codec';
-import type { SavePayload } from '../../types';
+import type {
+	LiftOptOutPayload,
+	OptOutPayload,
+	SavePayload,
+} from '../../types';
 import { toStoredPayload, withoutStoredTokens } from './stored-payload';
 import type { PendingSaveEntry } from './supersession';
 
@@ -37,7 +42,24 @@ import type { PendingSaveEntry } from './supersession';
 const OUTBOX_LOCK_NAME = 'c15t-v3-pending-consent-saves:v1';
 
 /** The lists a store keeps. */
-export type OutboxSlot = 'saves' | 'reassignments';
+export type OutboxSlot = 'saves' | 'reassignments' | 'optOuts';
+
+/** One opt-out act (record or lift) waiting for a replay. */
+export type OptOutAct =
+	| { kind: 'record'; payload: OptOutPayload }
+	| { kind: 'lift'; payload: LiftOptOutPayload };
+
+/** A queued opt-out entry stored in the `optOuts` slot. */
+export type PendingOptOutEntry = OptOutAct & {
+	idempotencyKey: string;
+	queuedAt: number;
+	attempts: number;
+	/**
+	 * Its place in the queue, numbered under the store's lock so opt-out acts
+	 * replay in the exact order they were queued across tabs.
+	 */
+	seq?: number;
+};
 
 /** Access to the stored lists inside one {@link SaveOutboxStore.transact}. */
 export interface OutboxTransaction {
@@ -126,6 +148,28 @@ export const appendSave = (
 	]);
 
 /**
+ * The `optOuts` list as read, with `act` queued after every entry in it,
+ * without its identity token.
+ *
+ * @param now - When it was queued.
+ * @internal
+ */
+export const appendOptOut = (
+	stored: unknown,
+	act: OptOutAct,
+	now: number
+): unknown[] =>
+	appendSaves(stored, [
+		{
+			attempts: 0,
+			idempotencyKey: act.payload.idempotencyKey,
+			kind: act.kind,
+			payload: toStoredPayload(act.payload),
+			queuedAt: now,
+		} as PendingOptOutEntry,
+	]);
+
+/**
  * Queues `payload` after the saves `store` holds, for the kernel's replay
  * to send. The replay validates and orders every entry, so this one
  * appends without loading the queue's code.
@@ -175,11 +219,12 @@ const browserEnvironment: BrowserOutboxEnvironment = {
 };
 
 const SLOT_KEYS: Record<OutboxSlot, string> = {
+	optOuts: PENDING_OPT_OUTS_STORAGE_KEY,
 	reassignments: SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 	saves: PENDING_SAVES_STORAGE_KEY,
 };
 
-const C15T_SLOT_KEYS: Record<OutboxSlot, string> = {
+const C15T_SLOT_KEYS: Record<'saves' | 'reassignments', string> = {
 	reassignments: C15T_SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 	saves: C15T_PENDING_SAVES_STORAGE_KEY,
 };

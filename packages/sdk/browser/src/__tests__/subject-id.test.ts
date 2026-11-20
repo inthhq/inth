@@ -61,10 +61,12 @@ const geoManifest: ConsentManifest = {
 
 const saves: unknown[] = [];
 
-const backend = vi.fn<typeof fetch>((_input, init) => {
+const backend = vi.fn<typeof fetch>((input, init) => {
 	if (init?.method === 'POST' && typeof init.body === 'string') {
 		const body = JSON.parse(init.body) as { subjectId?: string };
-		saves.push(body);
+		if (String(input).endsWith('/v1/consent/records')) {
+			saves.push(body);
+		}
 		return Promise.resolve(
 			Response.json(
 				{

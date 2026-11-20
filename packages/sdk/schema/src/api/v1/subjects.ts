@@ -14,7 +14,12 @@
 
 import * as v from 'valibot';
 
-import { v1CanonicalSubjectIdSchema, v1SubjectIdSchema } from './common';
+import {
+	v1CanonicalSubjectIdSchema,
+	v1EffectiveOptOutSchema,
+	v1SubjectIdSchema,
+} from './common';
+import type { V1EffectiveOptOut } from './common';
 import {
 	identityTokenRequestSchema,
 	identityTokenResponseSchema,
@@ -36,6 +41,7 @@ export const v1SubjectLinkInputSchema = subjectLinkRequestSchema;
 export const v1SubjectLinkOutputSchema = jsonObject(
 	v.object({
 		...subjectLinkResponseSchema.entries,
+		optOut: v.optional(v1EffectiveOptOutSchema),
 		subjectId: v1CanonicalSubjectIdSchema,
 	})
 );
@@ -56,6 +62,9 @@ export type V1SubjectLinkParams = v.InferOutput<
 	typeof v1SubjectLinkParamsSchema
 >;
 export type V1SubjectLinkInput = v.InferOutput<typeof v1SubjectLinkInputSchema>;
-export type V1SubjectLinkOutput = v.InferOutput<
-	typeof v1SubjectLinkOutputSchema
->;
+export type V1SubjectLinkOutput = Omit<
+	v.InferOutput<typeof v1SubjectLinkOutputSchema>,
+	'optOut'
+> & {
+	optOut?: V1EffectiveOptOut;
+};

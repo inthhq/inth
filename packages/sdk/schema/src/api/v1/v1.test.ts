@@ -3,6 +3,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
 	v1CanonicalSubjectIdSchema,
+	v1ConsentOptOutInputSchema,
+	v1ConsentOptOutLiftInputSchema,
+	v1ConsentOptOutLiftOutputSchema,
+	v1ConsentOptOutOutputSchema,
 	v1ConsentRecordInputSchema,
 	v1ConsentRecordOutputSchema,
 	v1ConsentSessionReportSchema,
@@ -307,6 +311,136 @@ describe('POST /v1/consent/records answer', () => {
 			v.safeParse(v1ConsentRecordOutputSchema, { subjectId: SUBJECT }).success
 		).toBe(false);
 	});
+
+	it('reads an optional effective optOut', () => {
+		const optOut = {
+			heldBy: 'person' as const,
+			method: 'api' as const,
+			recordedAt: 1_763_467_200_000,
+			rights: ['sale', 'share'] as const,
+		};
+		const result = v.parse(v1ConsentRecordOutputSchema, {
+			optOut,
+			recordId: RECORD,
+			subjectId: SUBJECT,
+		});
+		expect(result.optOut).toEqual(optOut);
+	});
+});
+
+describe('POST /v1/consent/opt-outs', () => {
+	const RECORD = '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d';
+	const effectiveOptOut = {
+		heldBy: 'device' as const,
+		method: 'button' as const,
+		recordedAt: 1_763_467_200_500,
+		rights: ['sale', 'share'] as const,
+	};
+	const optOutBody = {
+		country: 'US',
+		givenAt: 1_763_467_200_000,
+		idempotencyKey: KEY,
+		language: 'en',
+		method: 'button' as const,
+		policyId: 'us-ca',
+		policySnapshotToken: 'snapshot-token',
+		property: 'www.example.com',
+		region: 'CA',
+		rights: ['sale', 'share'] as const,
+		subjectId: SUBJECT,
+		uiSource: 'widget',
+	};
+
+	it('accepts a valid opt-out request with context and identity fields', () => {
+		expect(
+			v.safeParse(v1ConsentOptOutInputSchema, {
+				...optOutBody,
+				externalId: 'user_123',
+				identityProvider: 'clerk',
+				identityToken: 'tok',
+				metadata: { source: 'footer' },
+			}).success
+		).toBe(true);
+		expect(
+			v.safeParse(v1ConsentOptOutInputSchema, {
+				...optOutBody,
+				method: 'gpc',
+			}).success
+		).toBe(true);
+	});
+
+	it('rejects empty, duplicate or invalid opt-out rights and non-client methods', () => {
+		expect(
+			v.is(v1ConsentOptOutInputSchema, { ...optOutBody, rights: [] })
+		).toBe(false);
+		expect(
+			v.is(v1ConsentOptOutInputSchema, {
+				...optOutBody,
+				rights: ['sale', 'sale'],
+			})
+		).toBe(false);
+		expect(
+			v.is(v1ConsentOptOutInputSchema, { ...optOutBody, method: 'api' })
+		).toBe(false);
+	});
+
+	it('reads the opt-out answer', () => {
+		const parsed = v.parse(v1ConsentOptOutOutputSchema, {
+			link: { stored: true, verifiedBy: 'identity_token' },
+			optOut: effectiveOptOut,
+			recordId: RECORD,
+			subjectId: SUBJECT,
+		});
+		expect(parsed.optOut).toEqual(effectiveOptOut);
+	});
+});
+
+describe('POST /v1/consent/opt-outs/lift', () => {
+	const RECORD = '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d';
+	const liftBody = {
+		givenAt: 1_763_467_200_000,
+		idempotencyKey: KEY,
+		property: 'www.example.com',
+		subjectId: SUBJECT,
+		uiSource: 'dialog',
+	};
+
+	it('accepts a lift body with or without rights', () => {
+		expect(v.is(v1ConsentOptOutLiftInputSchema, liftBody)).toBe(true);
+		expect(
+			v.is(v1ConsentOptOutLiftInputSchema, {
+				...liftBody,
+				externalId: 'user_123',
+				identityToken: 'tok',
+				rights: ['sale'],
+			})
+		).toBe(true);
+	});
+
+	it('reads a lift answer with null or an effective opt-out and optional recordId', () => {
+		expect(
+			v.parse(v1ConsentOptOutLiftOutputSchema, {
+				optOut: null,
+				subjectId: SUBJECT,
+			})
+		).toEqual({ optOut: null, subjectId: SUBJECT });
+		expect(
+			v.parse(v1ConsentOptOutLiftOutputSchema, {
+				optOut: {
+					heldBy: 'person',
+					method: 'propagated',
+					recordedAt: 1_763_467_200_500,
+					rights: ['sale', 'share'],
+				},
+				recordId: RECORD,
+				subjectId: SUBJECT,
+			})
+		).toMatchObject({
+			optOut: { heldBy: 'person', method: 'propagated' },
+			recordId: RECORD,
+			subjectId: SUBJECT,
+		});
+	});
 });
 
 describe('POST /v1/consent/sessions', () => {
@@ -355,6 +489,19 @@ describe('POST /v1/subjects/:id/link', () => {
 		expect(
 			v.is(v1SubjectLinkOutputSchema, {
 				externalId: 'user_123',
+				subjectId: SUBJECT,
+				verifiedBy: 'identity_token',
+			})
+		).toBe(true);
+		expect(
+			v.is(v1SubjectLinkOutputSchema, {
+				externalId: 'user_123',
+				optOut: {
+					heldBy: 'person',
+					method: 'api',
+					recordedAt: 1_763_467_200_000,
+					rights: ['sale', 'share'],
+				},
 				subjectId: SUBJECT,
 				verifiedBy: 'identity_token',
 			})

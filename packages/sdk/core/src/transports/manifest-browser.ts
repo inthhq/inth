@@ -401,6 +401,8 @@ const transportFrom = function transportFrom(
 			}
 			return initFrom(resolved, ctx);
 		},
+		liftOptOut: hosted.liftOptOut,
+		optOut: hosted.optOut,
 		save: (payload) => hosted.save(unreported.strip(payload)),
 	};
 };

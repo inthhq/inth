@@ -54,7 +54,7 @@ Set `journey` on your runtime or provider: `defineConsentConfig({ journey })` in
 
 ## Hosted `/init` and head prefetching
 
-`hosted()` resolves policies through `GET ${projectUrl}/v1/consent/init` and posts choices to `POST ${projectUrl}/v1/consent/records`.
+`hosted()` resolves policies through `GET ${projectUrl}/v1/consent/init`, posts choices to `POST ${projectUrl}/v1/consent/records`, and syncs durable opt-outs and lifts through `POST ${projectUrl}/v1/consent/opt-outs` and `POST ${projectUrl}/v1/consent/opt-outs/lift`. Failed opt-out acts queue in browser storage and replay on the next initialization or reconnect; a backend answering `404` keeps opt-outs local.
 
 {/* example: fragment */}
 

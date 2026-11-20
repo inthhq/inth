@@ -436,8 +436,8 @@ export const mountPersistence = function mountPersistence(
 			} else {
 				request('optOut');
 			}
-			// An opt-out sends nothing to the network yet, so the ID stops being
-			// provisional once the stored opt-out record carries it.
+			// Without a network opt-out endpoint, the ID stops being provisional
+			// once the stored opt-out record carries it.
 			const id = snapshot.subject?.subjectId;
 			void (async () => {
 				await landing;
@@ -455,6 +455,11 @@ export const mountPersistence = function mountPersistence(
 		}),
 		kernel.events.on('opt-out:lifted', () => {
 			state.optOutRecorded = true;
+			request('optOut');
+		}),
+		kernel.events.on('opt-out:synced', () => {
+			state.optOutRecorded = true;
+			state.optOutSynced = true;
 			request('optOut');
 		}),
 	];
@@ -1166,6 +1171,7 @@ export const mountPersistence = function mountPersistence(
 			state.choiceRecorded = false;
 			state.noticeRecorded = false;
 			state.optOutRecorded = false;
+			state.optOutSynced = false;
 			state.vendorsRecorded = false;
 			// The cleared records' identity is gone, and the ID stays: an ID
 			// a save already under way generates is a new local one, not one

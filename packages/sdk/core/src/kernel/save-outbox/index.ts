@@ -1,49 +1,44 @@
 /**
- * The save outbox: everything that happens to a recorded choice after
- * `commands.save()` recorded it.
+ * The save outbox: everything that happens to a recorded choice or durable
+ * opt-out act after the kernel records it.
  *
- * `send()` takes the payload of one recorded action and owns the rest:
- * the transport call, trimming what newer state superseded, queueing what
- * the transport could not take, replaying the queue, moving the visitor to
- * a new subject id when the backend refuses theirs, and asking for a retry
- * when the browser comes back online. The queue lives in a
+ * `send()` owns category and vendor saves: the transport call, trimming what
+ * newer state superseded, queueing what the transport could not take,
+ * replaying the queue, moving the visitor to a new subject id when the
+ * backend refuses theirs, and asking for a retry when the browser comes back
+ * online. `sendOptOut()` and `sendOptOutLift()` run durable opt-out acts
+ * through the same outbox, in their own `optOuts` slot in the
  * {@link SaveOutboxStore}.
  *
  * The send path loads with the kernel. Everything that reads the stored
  * queue (validation, replay, reassignment) is in `queue.ts`, imported the
- * first time a visitor saves or replays a choice.
- * Queueing never waits for it: until it has loaded, the entry is
- * appended as is and normalized on the next read.
+ * first time a visitor saves, opts out, or replays a queue. Queueing never
+ * waits for it: until it has loaded, the entry is appended as is and
+ * normalized on the next read.
  *
  * Interface:
- * - Queue before send. An explicit action is stored before its transport
- *   starts, so a page that unloads with an in-flight request leaves a replay
- *   for the next page. Successful and permanently rejected saves remove it.
- * - Write before send. `send()` makes no transport call before the
- *   macrotask after it was called. `commands.save()` calls it once the
- *   action's commit has notified every listener, so a local writer that
- *   handed its write to a macrotask from a listener (persistence schedules
- *   `setTimeout(0)`) lands it before the request leaves: timers with the
- *   same delay run in the order they were set. A writer that cannot write
- *   by then (persistence while its write code loads) holds the request
- *   through `kernel.holdSaves()` (`hold()` here). `send()` waits for that
- *   hold first, and without a transport `save` it resolves only after it,
- *   so nothing that waits for a save's completion (a revocation reload)
- *   overtakes the write either. A writer that defers longer without holding gives up
- *   that guarantee.
- * - A save is only ever sent, queued or discarded for the part of it the
- *   current state still holds ({@link withoutSuperseded}). Once the stored
- *   records were replaced or cleared, or the visitor or the choice contract
- *   changed, nothing of it is sent or queued. This is checked again inside
- *   the queue transaction, so a clear that lands while a save waits for the
- *   store cannot be undone by it.
- * - `clear()` empties the queue and the reassignment records. The kernel
- *   calls it on `records:cleared`, so every way of clearing the visitor's
- *   records drops the saves of the subject they reset away from. Storage is
- *   emptied before the event returns, without waiting for another tab's
- *   lock, so a page that closes right after a clear leaves nothing for the
- *   next page to replay; a transaction under the lock then empties it
- *   again.
+ * - Queue before send. An explicit save or opt-out act is stored before its
+ *   transport starts, so a page that unloads with an in-flight request leaves
+ *   a replay for the next page. Successful and permanently rejected requests
+ *   remove it.
+ * - Write before send. `send()`, `sendOptOut()` and `sendOptOutLift()` make
+ *   no transport call before the macrotask after they were called. The kernel
+ *   calls them once the commit has notified every listener, so a local writer
+ *   that handed its write to a macrotask from a listener (persistence
+ *   schedules `setTimeout(0)`) lands it before the request leaves. A writer
+ *   that cannot write by then (persistence while its write code loads) holds
+ *   the request through `kernel.holdSaves()` (`hold()` here).
+ * - Saves are only ever sent, queued or discarded for the part of them the
+ *   current state still holds ({@link withoutSuperseded}). Opt-out entries
+ *   are never narrowed, superseded or dropped because the policy, the
+ *   fingerprint or the policy snapshot changed, and replay in the exact order
+ *   they were queued.
+ * - A `404` on an opt-out route means the backend does not store opt-outs.
+ *   The outbox removes every queued opt-out entry, stops sending further
+ *   opt-out requests for this kernel, and reports no error or warning.
+ * - `clear()` empties all three slots (saves, opt-out acts, reassignments).
+ *   The kernel calls it on `records:cleared`, so clearing records drops
+ *   queued work of the cleared subject immediately and again under the lock.
  * - Whenever a send or replay leaves something queued, the outbox calls
  *   `retryWhenOnline`. The kernel's one connectivity listener then calls
  *   `replay()` on `online`, next to its init retry, and only while the
@@ -52,6 +47,8 @@
  *   not block other tabs. Two tabs may replay the same entry; the persisted
  *   idempotency key makes the backend record it once.
  */
+
+import type { OptOutRecord } from '@inth/sdk-schema/types';
 
 import type { OptionalConsentCategory } from '../../consent-record/types';
 import { warnInDevelopment } from '../../libs/is-production';
@@ -62,31 +59,56 @@ import {
 import type {
 	ConsentSnapshot,
 	KernelTransport,
+	LiftOptOutPayload,
+	OptOutPayload,
 	SavePayload,
 	SaveResult,
 } from '../../types';
+import { applySyncedOptOut } from '../opt-out';
 import type { KernelRuntime } from '../runtime';
 import type { EnqueueResult, QueueWorker, QueueWorkerOptions } from './queue';
 import { queueTools } from './queue-tools';
-import { appendSave } from './store';
-import type { SaveOutboxStore } from './store';
+import { appendOptOut, appendSave } from './store';
+import type { OptOutAct, SaveOutboxStore } from './store';
 import {
 	liveSupersession,
 	withoutSuperseded,
 	withSubjectId,
 } from './supersession';
 
-export type { OutboxSlot, OutboxTransaction, SaveOutboxStore } from './store';
+export type {
+	OptOutAct,
+	OutboxSlot,
+	OutboxTransaction,
+	PendingOptOutEntry,
+	SaveOutboxStore,
+} from './store';
 export { createBrowserOutboxStore, createMemoryOutboxStore } from './store';
 
 /** One recorded action, as `commands.save()` hands it to the outbox. */
 export interface RecordedAction {
 	/** Records generation the action landed in. */
 	generation: number;
+	/** Local opt-out act counter when the action landed. */
+	optOutActVersion: number;
 	/** The snapshot the action committed. */
 	snapshot: ConsentSnapshot;
 	/** Categories the action confirmed, echoed in the result. */
 	confirmed: readonly OptionalConsentCategory[];
+}
+
+/** Fencing context for a queued opt-out act. */
+export interface OptOutActionContext {
+	actVersion: number;
+	generation: number;
+}
+
+/** Outcome of an immediate, non-queued account opt-out lift. */
+export interface AccountLiftOutcome {
+	ok: boolean;
+	optOut?: OptOutRecord | null;
+	subjectId?: string;
+	unsupported?: boolean;
 }
 
 export interface SaveOutbox {
@@ -96,15 +118,32 @@ export interface SaveOutbox {
 	 * resolves at once as accepted.
 	 */
 	send: (payload: SavePayload, action: RecordedAction) => Promise<SaveResult>;
+	/** Queue and send one local opt-out act (`button` or `gpc`). */
+	sendOptOut: (
+		payload: OptOutPayload,
+		context: OptOutActionContext
+	) => Promise<void>;
+	/** Queue and send one local device opt-out lift. */
+	sendOptOutLift: (
+		payload: LiftOptOutPayload,
+		context: OptOutActionContext
+	) => Promise<void>;
 	/**
-	 * Replay the queue, one entry at a time, emitting `save:replayed` for
-	 * each. Overlapping calls share one run. Asks for an online retry while
-	 * anything is left.
+	 * Send one account-held opt-out lift now without queueing on failure.
+	 * Handles `404` and `409 subject_conflict`.
+	 */
+	liftAccountOptOut: (
+		payload: LiftOptOutPayload
+	) => Promise<AccountLiftOutcome>;
+	/**
+	 * Replay queued saves and opt-out acts, one entry at a time. Overlapping
+	 * calls share one run. Asks for an online retry while anything is left.
 	 */
 	replay: () => Promise<void>;
 	/**
-	 * Drop every queued save and subject reassignment: from storage before
-	 * it returns, and again under the store's lock once that is granted.
+	 * Drop every queued save, opt-out act and subject reassignment: from
+	 * storage before it returns, and again under the store's lock once that
+	 * is granted.
 	 */
 	clear: () => Promise<void>;
 	/**
@@ -114,10 +153,10 @@ export interface SaveOutbox {
 	hold: (until: Promise<unknown>) => void;
 	/**
 	 * Move the visitor from the `sub_` id `from` to the UUID the backend
-	 * answered for it, in every tab, with the saves queued under `from`. Does
-	 * nothing when `from` is not a `sub_` id.
+	 * answered for it, in every tab, with the entries queued under `from`.
+	 * Returns the adopted UUID when it moved, else `null`.
 	 */
-	adoptSubject: (from: string, to: string) => Promise<void>;
+	adoptSubject: (from: string, to: string) => Promise<string | null>;
 }
 
 export interface SaveOutboxOptions {
@@ -145,8 +184,27 @@ const SAVE_FAILED_WARNINGS = {
 		'[inth] Consent save failed, and storage refused to queue it, so it will not be resent. The choice is kept in this browser only.',
 } as const;
 
+const OPT_OUT_FAILED_WARNINGS = {
+	queued:
+		'[inth] Opt-out request failed. The opt-out is kept in this browser and queued, and is resent on the next init or when the browser comes back online.',
+	rejected:
+		'[inth] The backend refused the opt-out request, so it will not be resent. The opt-out is kept in this browser only.',
+	unstored:
+		'[inth] Opt-out request failed, and storage refused to queue it, so it will not be resent. The opt-out is kept in this browser only.',
+} as const;
+
 /** The prefix of a subject ID a c15t client made. */
 const LEGACY_SUBJECT_PREFIX = 'sub_';
+
+const isUnsupportedStatus = function isUnsupportedStatus(
+	error: unknown
+): boolean {
+	return (
+		typeof error === 'object' &&
+		error !== null &&
+		(error as { status?: unknown }).status === 404
+	);
+};
 
 const warnSaveFailed = function warnSaveFailed(
 	outcome: keyof typeof SAVE_FAILED_WARNINGS | 'superseded',
@@ -158,6 +216,14 @@ const warnSaveFailed = function warnSaveFailed(
 	}
 };
 
+const warnOptOutFailed = function warnOptOutFailed(
+	outcome: keyof typeof OPT_OUT_FAILED_WARNINGS,
+	error?: unknown
+): void {
+	warnInDevelopment(OPT_OUT_FAILED_WARNINGS[outcome], error);
+};
+
+// oxlint-disable-next-line max-lines-per-function -- Save and opt-out delivery share the store, worker and lock state.
 export const createSaveOutbox = function createSaveOutbox({
 	runtime,
 	transport,
@@ -169,6 +235,7 @@ export const createSaveOutbox = function createSaveOutbox({
 	let worker: QueueWorker | undefined;
 	// Instance-local: another page must still recover a stranded request.
 	const directSends = new Set<SavePayload>();
+	const directOptOutSends = new Set<string>();
 	// By key: the stored entry of a save in flight is still this action
 	// after it was narrowed, or moved to another subject id.
 	const isSending = (payload: SavePayload): boolean =>
@@ -176,8 +243,15 @@ export const createSaveOutbox = function createSaveOutbox({
 		[...directSends].some(
 			(pending) => pending.idempotencyKey === payload.idempotencyKey
 		);
+	const isSendingOptOut = (idempotencyKey: string): boolean =>
+		directOptOutSends.has(idempotencyKey);
 	// What requests wait for after the pre-send macrotask: see `hold()`.
 	let held: Promise<unknown> | undefined;
+	// Remembered per kernel once either opt-out route answers 404.
+	let optOutsUnsupported = false;
+	// Bumped on `clear()` so pre-clear opt-out sends waiting for the macrotask
+	// do not leave after a clear.
+	let clearVersion = 0;
 
 	/** The queue module, loaded once; `undefined` when it cannot load. */
 	const loadWorker = async function loadWorker(): Promise<
@@ -188,6 +262,7 @@ export const createSaveOutbox = function createSaveOutbox({
 				const { createQueueWorker } = await loadQueue();
 				worker ??= createQueueWorker({
 					isSending,
+					isSendingOptOut,
 					runtime,
 					store,
 					tools: queueTools,
@@ -199,20 +274,12 @@ export const createSaveOutbox = function createSaveOutbox({
 		return worker;
 	};
 
-	const hasQueued = function hasQueued(): Promise<boolean> {
-		return store.transact((tx) => tx.read('saves') !== undefined);
+	const hasQueued = function hasQueued(
+		slot: 'saves' | 'optOuts'
+	): Promise<boolean> {
+		return store.transact((tx) => tx.read(slot) !== undefined);
 	};
 
-	/**
-	 * Queue what `current()` still holds. Until the queue module has loaded,
-	 * the entry is appended as is and the module starts loading; its next
-	 * read normalizes the list. A failed save therefore settles without
-	 * waiting for code, and is kept even when the network that failed it
-	 * cannot deliver the module either.
-	 *
-	 * Nothing is queued when the records were cleared or replaced while the
-	 * transaction waited for the store, or when storage refuses the write.
-	 */
 	const enqueue = function enqueue(
 		current: () => SavePayload | null
 	): Promise<EnqueueResult> {
@@ -234,20 +301,49 @@ export const createSaveOutbox = function createSaveOutbox({
 		});
 	};
 
-	/**
-	 * Drop `payload` and the queued saves it superseded, so a later replay
-	 * cannot overwrite the newer receipts with stale ones.
-	 */
+	const enqueueOptOut = function enqueueOptOut(
+		act: OptOutAct
+	): Promise<'queued' | 'unstored'> {
+		if (worker) {
+			return worker.enqueueOptOut(act);
+		}
+		void loadWorker();
+		return store.transact((tx) =>
+			tx.write('optOuts', appendOptOut(tx.read('optOuts'), act, Date.now()))
+				? 'queued'
+				: 'unstored'
+		);
+	};
+
 	const discard = async function discard(payload: SavePayload): Promise<void> {
-		if (await hasQueued()) {
+		if (await hasQueued('saves')) {
 			await (await loadWorker())?.discard(payload);
 		}
 	};
 
+	const discardOptOut = async function discardOptOut(
+		idempotencyKey: string
+	): Promise<void> {
+		if (await hasQueued('optOuts')) {
+			await (await loadWorker())?.discardOptOut(idempotencyKey);
+		}
+	};
+
+	const markOptOutsUnsupported =
+		async function markOptOutsUnsupported(): Promise<void> {
+			optOutsUnsupported = true;
+			await store.transact((tx) => {
+				if (tx.read('optOuts') !== undefined) {
+					tx.write('optOuts', []);
+				}
+			});
+		};
+
 	const clear = function clear(): Promise<void> {
+		clearVersion += 1;
 		// At once, so the page can close before the lock is granted: a later
-		// page must not replay the cleared subject's saves. Then again under
-		// the lock, after any transaction that read the lists before this.
+		// page must not replay the cleared subject's saves or opt-outs. Then
+		// again under the lock, after any transaction that read the lists first.
 		store.clear();
 		return store.transact(() => {
 			store.clear();
@@ -256,26 +352,49 @@ export const createSaveOutbox = function createSaveOutbox({
 
 	const replay = async function replay(): Promise<void> {
 		const save = transport?.save;
-		if (!save || !(await hasQueued())) {
+		const hasSaves = Boolean(save) && (await hasQueued('saves'));
+		const hasOptOutTransport =
+			!optOutsUnsupported &&
+			Boolean(transport?.optOut || transport?.liftOptOut);
+		const hasOptOuts = hasOptOutTransport && (await hasQueued('optOuts'));
+		if (!hasSaves && !hasOptOuts) {
 			return;
 		}
-		// A replay is no longer the page that made the save: it carries no
-		// consent journey, so a backend never links it to this page load.
-		const resend: NonNullable<KernelTransport['save']> = (payload) =>
-			save(payload, { replay: true });
-		if (await (await loadWorker())?.replay(resend)) {
+		const loaded = await loadWorker();
+		if (!loaded) {
+			return;
+		}
+		let leftQueued = false;
+		if (hasSaves && save) {
+			// A replay is no longer the page that made the save: it carries no
+			// consent journey, so a backend never links it to this page load.
+			const resend: NonNullable<KernelTransport['save']> = (payload) =>
+				save(payload, { replay: true });
+			if (await loaded.replay(resend)) {
+				leftQueued = true;
+			}
+		}
+		if (hasOptOuts && !optOutsUnsupported) {
+			const remainingOptOuts = await loaded.replayOptOuts(
+				{
+					liftOptOut: transport?.liftOptOut,
+					optOut: transport?.optOut,
+				},
+				() => {
+					optOutsUnsupported = true;
+				}
+			);
+			if (remainingOptOuts) {
+				leftQueued = true;
+			}
+		}
+		if (leftQueued) {
 			retryWhenOnline();
 		}
 	};
 
 	// -- Send ------------------------------------------------------------------
 
-	/**
-	 * Queue a save the transport threw on, unless the backend refused it for
-	 * good: that one would be refused again on every replay. Queued older
-	 * saves it replaced are dropped instead, so they can't replay over the
-	 * newer choice. The choice stays recorded locally either way.
-	 */
 	const settleThrownSave = async function settleThrownSave(
 		payload: SavePayload,
 		ensureQueued: () => Promise<EnqueueResult>,
@@ -290,36 +409,25 @@ export const createSaveOutbox = function createSaveOutbox({
 		retryWhenOnline();
 	};
 
-	/**
-	 * Move the visitor from the `sub_` id `from` to the id the backend
-	 * answered for it. Only that move: an answer never moves a visitor who
-	 * is already on a UUID. The move is recorded with the queue, so every tab
-	 * treats saves under either id as one subject's, also when nothing was
-	 * queued under `from`; the queue's code loads for it.
-	 */
 	const adoptSubject = async function adoptSubject(
 		from: string,
 		to: string
-	): Promise<void> {
+	): Promise<string | null> {
 		if (from.startsWith(LEGACY_SUBJECT_PREFIX) && from !== to) {
-			await (await loadWorker())?.reassignSubject(from, to);
+			return (await (await loadWorker())?.reassignSubject(from, to)) ?? null;
 		}
+		return null;
 	};
 
-	/**
-	 * Take the id a save answered for the subject it went out under, while
-	 * that subject is still the visitor's. A save answered late must not
-	 * replace a UUID the visitor got since, from a link or a newer save. A
-	 * choice made since does not matter.
-	 */
-	const adoptServerSubject = async function adoptServerSubject(
+	const adoptServerSubjectById = async function adoptServerSubjectById(
 		subjectId: string | undefined,
-		action: ConsentSnapshot
-	): Promise<void> {
+		sentSubjectId: string | undefined
+	): Promise<string | undefined> {
 		const from = getSnapshot().subject?.subjectId;
-		if (subjectId && from && from === action.subject?.subjectId) {
-			await adoptSubject(from, subjectId);
+		if (subjectId && from && from === sentSubjectId) {
+			return (await adoptSubject(from, subjectId)) ?? undefined;
 		}
+		return undefined;
 	};
 
 	const trackDirectSend = async function trackDirectSend(
@@ -336,11 +444,30 @@ export const createSaveOutbox = function createSaveOutbox({
 		}
 	};
 
-	/**
-	 * Transport phase of one action. The outcome only touches the queue
-	 * while the action's confirmed receipts are current. Disjoint category
-	 * actions remain independent.
-	 */
+	const settleAcceptedSave = async function settleAcceptedSave(
+		payload: SavePayload,
+		result: SaveResult,
+		action: RecordedAction
+	): Promise<void> {
+		// The whole action, not the part still current: a newer choice
+		// that storage refused never narrowed the queued entry.
+		await discard(payload);
+		// Also when a newer choice superseded this one: the answer names
+		// the subject, and saves queued under the old id move with it.
+		const adopted = await adoptServerSubjectById(
+			result.subjectId,
+			action.snapshot.subject?.subjectId
+		);
+		if (result.optOut !== undefined) {
+			applySyncedOptOut(runtime, result.optOut, {
+				actVersion: action.optOutActVersion,
+				allowClear: false,
+				generation: action.generation,
+				subjectId: adopted ?? action.snapshot.subject?.subjectId ?? null,
+			});
+		}
+	};
+
 	const performSendAction = async function performSendAction(
 		payload: SavePayload,
 		action: RecordedAction,
@@ -396,12 +523,7 @@ export const createSaveOutbox = function createSaveOutbox({
 			}
 			const result = await save(sending);
 			if (result.ok) {
-				// The whole action, not the part still current: a newer choice
-				// that storage refused never narrowed the queued entry.
-				await discard(payload);
-				// Also when a newer choice superseded this one: the answer names
-				// the subject, and saves queued under the old id move with it.
-				await adoptServerSubject(result.subjectId, actionSnapshot);
+				await settleAcceptedSave(payload, result, action);
 			} else if (currentPayload()) {
 				warnSaveFailed(await ensureQueued());
 				retryWhenOnline();
@@ -447,14 +569,181 @@ export const createSaveOutbox = function createSaveOutbox({
 		}
 	};
 
+	const trackDirectOptOut = async function trackDirectOptOut(
+		idempotencyKey: string,
+		run: () => Promise<void>
+	): Promise<void> {
+		directOptOutSends.add(idempotencyKey);
+		try {
+			await run();
+		} finally {
+			directOptOutSends.delete(idempotencyKey);
+		}
+	};
+
+	const sendOptOutAct = (act: OptOutAct) =>
+		act.kind === 'record'
+			? transport?.optOut?.(act.payload)
+			: transport?.liftOptOut?.(act.payload);
+
+	// oxlint-disable-next-line complexity -- Direct send handles queue-before-send, 404, 409 reassignment and answer sync.
+	const performSendOptOut = async function performSendOptOut(
+		act: OptOutAct,
+		context: OptOutActionContext,
+		reassign: boolean
+	): Promise<void> {
+		if (optOutsUnsupported) {
+			return;
+		}
+		const hasTransport =
+			act.kind === 'record'
+				? Boolean(transport?.optOut)
+				: Boolean(transport?.liftOptOut);
+		const startedClear = clearVersion;
+		let staged: 'queued' | 'unstored' = 'unstored';
+		if (hasTransport) {
+			staged = await enqueueOptOut(act);
+		}
+		if (held) {
+			await held;
+		}
+		if (!hasTransport || optOutsUnsupported || clearVersion !== startedClear) {
+			return;
+		}
+		try {
+			// Write before send: persistence writes in a macrotask before the
+			// request leaves.
+			await new Promise((resolve) => {
+				setTimeout(resolve, 0);
+			});
+			if (optOutsUnsupported || clearVersion !== startedClear) {
+				return;
+			}
+			const result = await sendOptOutAct(act);
+			if (!result) {
+				return;
+			}
+			if (result.unsupported) {
+				await markOptOutsUnsupported();
+				return;
+			}
+			if (result.ok) {
+				await discardOptOut(act.payload.idempotencyKey);
+				const adopted = await adoptServerSubjectById(
+					result.subjectId,
+					act.payload.subjectId
+				);
+				if (result.optOut !== undefined) {
+					applySyncedOptOut(runtime, result.optOut, {
+						actVersion: context.actVersion,
+						allowClear: act.kind === 'lift',
+						generation: context.generation,
+						subjectId: adopted ?? act.payload.subjectId,
+					});
+				}
+			} else if (clearVersion === startedClear) {
+				warnOptOutFailed(
+					staged === 'queued' ? 'queued' : await enqueueOptOut(act)
+				);
+				retryWhenOnline();
+			}
+		} catch (error) {
+			if (isUnsupportedStatus(error)) {
+				await markOptOutsUnsupported();
+				return;
+			}
+			if (reassign && clearVersion === startedClear && isSubjectConflict(error)) {
+				const subjectId =
+					(await (await loadWorker())?.reassignSubject(
+						act.payload.subjectId
+					)) ?? null;
+				if (subjectId !== null) {
+					const reassigned: OptOutAct =
+						act.kind === 'record'
+							? { kind: 'record', payload: { ...act.payload, subjectId } }
+							: { kind: 'lift', payload: { ...act.payload, subjectId } };
+					return performSendOptOut(reassigned, context, false);
+				}
+			}
+			emit({
+				command: act.kind === 'lift' ? 'optIn' : 'optOut',
+				error,
+				type: 'command:error',
+			});
+			if (isConsentSaveRejection(error)) {
+				warnOptOutFailed('rejected', error);
+				await discardOptOut(act.payload.idempotencyKey);
+			} else if (clearVersion === startedClear) {
+				warnOptOutFailed(
+					staged === 'queued' ? 'queued' : await enqueueOptOut(act),
+					error
+				);
+				retryWhenOnline();
+			}
+		}
+	};
+
+	const performAccountLift = async function performAccountLift(
+		payload: LiftOptOutPayload,
+		reassign: boolean
+	): Promise<AccountLiftOutcome> {
+		const lift = transport?.liftOptOut;
+		if (optOutsUnsupported || !lift) {
+			return { ok: false };
+		}
+		try {
+			const result = await lift(payload);
+			if (result.unsupported) {
+				await markOptOutsUnsupported();
+				return { ok: false, unsupported: true };
+			}
+			if (!result.ok) {
+				return { ok: false };
+			}
+			const adopted = await adoptServerSubjectById(
+				result.subjectId,
+				payload.subjectId
+			);
+			return {
+				ok: true,
+				optOut: result.optOut,
+				subjectId: adopted ?? payload.subjectId,
+			};
+		} catch (error) {
+			if (isUnsupportedStatus(error)) {
+				await markOptOutsUnsupported();
+				return { ok: false, unsupported: true };
+			}
+			if (reassign && isSubjectConflict(error)) {
+				const subjectId =
+					(await (await loadWorker())?.reassignSubject(payload.subjectId)) ??
+					null;
+				if (subjectId !== null) {
+					return performAccountLift({ ...payload, subjectId }, false);
+				}
+			}
+			emit({ command: 'optIn', error, type: 'command:error' });
+			return { ok: false };
+		}
+	};
+
 	return {
 		adoptSubject,
 		clear,
 		hold(until) {
 			held = Promise.allSettled([held, until]);
 		},
+		liftAccountOptOut: (payload) => performAccountLift(payload, true),
 		replay,
 		send: (payload, action) =>
 			trackDirectSend(payload, () => performSendAction(payload, action, true)),
+		sendOptOut: (payload, context) =>
+			trackDirectOptOut(payload.idempotencyKey, () =>
+				performSendOptOut({ kind: 'record', payload }, context, true)
+			),
+		sendOptOutLift: (payload, context) =>
+			trackDirectOptOut(payload.idempotencyKey, () =>
+				performSendOptOut({ kind: 'lift', payload }, context, true)
+			),
 	};
 };

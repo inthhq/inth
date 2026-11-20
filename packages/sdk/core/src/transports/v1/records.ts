@@ -7,17 +7,26 @@
  * read a subject, so there is no `loadSubjectRecord`.
  */
 import { appendJourneyParams, V1_UUID_PATTERN } from '@inth/sdk-schema/types';
-import type { V1ConsentRecordLink } from '@inth/sdk-schema/types';
+import type { OptOutRecord, V1ConsentRecordLink } from '@inth/sdk-schema/types';
 
+import { validateOptOutRecord } from '../../consent-record/validation';
 import type {
 	KernelTransport,
 	KernelUser,
+	LiftOptOutPayload,
+	LiftOptOutTransportResult,
+	OptOutPayload,
+	OptOutTransportResult,
 	SavePayload,
 	SaveResult,
 } from '../../types';
 import { buildDecisionAssertion } from '../decision-inputs';
 import type { RememberedDecisionInputs } from '../decision-inputs';
 import { readApiError } from './error';
+import {
+	buildV1ConsentOptOutBody,
+	buildV1ConsentOptOutLiftBody,
+} from './opt-outs-body';
 import { trimTrailingSlash, V1_ROUTES } from './paths';
 import { buildV1ConsentRecordBody } from './records-body';
 import {
@@ -28,7 +37,7 @@ import {
 	subjectLinkPath,
 	V1_JSON_HEADERS,
 } from './routes';
-import { readSaveFailure } from './save-rejected';
+import { readOptOutFailure, readSaveFailure } from './save-rejected';
 
 /** Options for {@link createV1RecordTransport}. */
 export interface V1RecordTransportOptions {
@@ -59,6 +68,20 @@ export interface V1SaveResult extends SaveResult {
 	link?: V1ConsentRecordLink;
 }
 
+/** Result of `POST /v1/consent/opt-outs`. */
+export interface V1OptOutResult extends OptOutTransportResult {
+	/** ID of the event that recorded the opt-out, absent on `404`. */
+	recordId?: string;
+	/** Present when the request sent an `externalId`. */
+	link?: V1ConsentRecordLink;
+}
+
+/** Result of `POST /v1/consent/opt-outs/lift`. */
+export interface V1LiftOptOutResult extends LiftOptOutTransportResult {
+	/** ID of the event that recorded the lift, when the backend created one. */
+	recordId?: string;
+}
+
 /** Where saves find the policy decision they assert. */
 export interface V1DecisionSource {
 	/** Refuse a save until an init resolved a decision. */
@@ -72,11 +95,23 @@ export interface V1DecisionSource {
 /** The record methods of a `/v1` transport. */
 export interface V1RecordTransport extends KernelTransport {
 	save: (payload: SavePayload) => Promise<V1SaveResult>;
+	optOut: (payload: OptOutPayload) => Promise<V1OptOutResult>;
+	liftOptOut: (payload: LiftOptOutPayload) => Promise<V1LiftOptOutResult>;
 	identify: (
 		user: KernelUser,
 		subjectId: string | null
-	) => Promise<{ subjectId: string } | undefined>;
+	) => Promise<{ subjectId: string; optOut?: OptOutRecord } | undefined>;
 }
+
+const readOptOut = function readOptOut(
+	value: unknown
+): OptOutRecord | undefined {
+	if (value === undefined || value === null) {
+		return undefined;
+	}
+	const validated = validateOptOutRecord(value);
+	return validated.ok ? validated.record : undefined;
+};
 
 const readLink = function readLink(
 	value: unknown
@@ -109,7 +144,12 @@ const toSaveResult = function toSaveResult(
 ): (V1SaveResult & { subjectId: string }) | undefined {
 	const body =
 		typeof data === 'object' && data !== null
-			? (data as { link?: unknown; recordId?: unknown; subjectId?: unknown })
+			? (data as {
+					link?: unknown;
+					optOut?: unknown;
+					recordId?: unknown;
+					subjectId?: unknown;
+				})
 			: {};
 	if (
 		typeof body.subjectId !== 'string' ||
@@ -128,6 +168,81 @@ const toSaveResult = function toSaveResult(
 	const link = readLink(body.link);
 	if (link) {
 		result.link = link;
+	}
+	const optOut = readOptOut(body.optOut);
+	if (optOut) {
+		result.optOut = optOut;
+	}
+	return result;
+};
+
+const toOptOutResult = function toOptOutResult(
+	data: unknown
+): (V1OptOutResult & { recordId: string; subjectId: string }) | undefined {
+	const body =
+		typeof data === 'object' && data !== null
+			? (data as {
+					link?: unknown;
+					optOut?: unknown;
+					recordId?: unknown;
+					subjectId?: unknown;
+				})
+			: {};
+	if (
+		typeof body.subjectId !== 'string' ||
+		!isUuidV7(body.subjectId) ||
+		typeof body.recordId !== 'string' ||
+		!V1_UUID_PATTERN.test(body.recordId.toLowerCase())
+	) {
+		return undefined;
+	}
+	const result: V1OptOutResult & { recordId: string; subjectId: string } = {
+		ok: true,
+		recordId: body.recordId,
+		subjectId: body.subjectId,
+	};
+	const link = readLink(body.link);
+	if (link) {
+		result.link = link;
+	}
+	const optOut = readOptOut(body.optOut);
+	if (optOut) {
+		result.optOut = optOut;
+	}
+	return result;
+};
+
+const toLiftOptOutResult = function toLiftOptOutResult(
+	data: unknown
+): (V1LiftOptOutResult & { subjectId: string }) | undefined {
+	const body =
+		typeof data === 'object' && data !== null
+			? (data as {
+					optOut?: unknown;
+					recordId?: unknown;
+					subjectId?: unknown;
+				})
+			: {};
+	if (typeof body.subjectId !== 'string' || !isUuidV7(body.subjectId)) {
+		return undefined;
+	}
+	const result: V1LiftOptOutResult & { subjectId: string } = {
+		ok: true,
+		subjectId: body.subjectId,
+	};
+	if (
+		typeof body.recordId === 'string' &&
+		V1_UUID_PATTERN.test(body.recordId.toLowerCase())
+	) {
+		result.recordId = body.recordId;
+	}
+	if (body.optOut === null) {
+		result.optOut = null;
+	} else {
+		const optOut = readOptOut(body.optOut);
+		if (optOut) {
+			result.optOut = optOut;
+		}
 	}
 	return result;
 };
@@ -182,7 +297,7 @@ export const createV1RecordTransport = function createV1RecordTransport(
 				);
 			}
 			const answer = (await readJson(response)) as
-				| { subjectId?: unknown }
+				| { optOut?: unknown; subjectId?: unknown }
 				| undefined;
 			const canonical = answer?.subjectId;
 			if (typeof canonical !== 'string' || !isUuidV7(canonical)) {
@@ -190,7 +305,58 @@ export const createV1RecordTransport = function createV1RecordTransport(
 					`Inth transport: ${V1_ROUTES.subjectLink} answered ${response.status} without a canonical subject ID`
 				);
 			}
-			return { subjectId: canonical };
+			const optOut = readOptOut(answer?.optOut);
+			return optOut
+				? { optOut, subjectId: canonical }
+				: { subjectId: canonical };
+		},
+
+		async liftOptOut(payload): Promise<V1LiftOptOutResult> {
+			const response = await post(
+				`${base}${V1_ROUTES.optOutLift}`,
+				buildV1ConsentOptOutLiftBody(payload, property)
+			);
+			if (!response.ok) {
+				const failure = await readOptOutFailure(
+					`Inth transport: ${V1_ROUTES.optOutLift}`,
+					response
+				);
+				if (failure === null) {
+					return { ok: false, unsupported: true };
+				}
+				throw failure;
+			}
+			const result = toLiftOptOutResult(await readJson(response));
+			if (!result) {
+				throw new Error(
+					`Inth transport: ${V1_ROUTES.optOutLift} answered ${response.status} without a canonical subject ID`
+				);
+			}
+			return result;
+		},
+
+		async optOut(payload): Promise<V1OptOutResult> {
+			const response = await post(
+				`${base}${V1_ROUTES.optOuts}`,
+				buildV1ConsentOptOutBody(payload, property)
+			);
+			if (!response.ok) {
+				const failure = await readOptOutFailure(
+					`Inth transport: ${V1_ROUTES.optOuts}`,
+					response
+				);
+				if (failure === null) {
+					return { ok: false, unsupported: true };
+				}
+				throw failure;
+			}
+			const result = toOptOutResult(await readJson(response));
+			if (!result) {
+				throw new Error(
+					`Inth transport: ${V1_ROUTES.optOuts} answered ${response.status} without a subject ID and record ID`
+				);
+			}
+			return result;
 		},
 
 		async save(payload): Promise<V1SaveResult> {

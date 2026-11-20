@@ -90,6 +90,8 @@ export interface PersistenceState {
 	noticeRecorded?: boolean;
 	/** An opt-out was recorded or lifted since the last opt-out write. */
 	optOutRecorded?: boolean;
+	/** A backend opt-out answer replaced the local record since the last opt-out write. */
+	optOutSynced?: boolean;
 	/** A vendor decision was recorded since the last vendor write. */
 	vendorsRecorded: boolean;
 	/** The subject id held when the current save started. */

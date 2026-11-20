@@ -20,7 +20,11 @@
  * development: the save already reported its first failure.
  */
 
-import type { CONSENT_MODELS } from '@inth/sdk-schema/types';
+import type {
+	CONSENT_MODELS,
+	OPT_OUT_RIGHTS,
+	OptOutRecord,
+} from '@inth/sdk-schema/types';
 
 import type { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
 import type {
@@ -34,9 +38,24 @@ import type {
 	isConsentSaveRejection,
 	isSubjectConflict,
 } from '../../transports/save-rejection';
-import type { ConsentSubject, KernelTransport, SavePayload } from '../../types';
+import type {
+	ConsentSubject,
+	KernelTransport,
+	KernelUser,
+	LiftOptOutPayload,
+	OptOutPayload,
+	SavePayload,
+} from '../../types';
+import type { applySyncedOptOut } from '../opt-out';
 import type { KernelRuntime } from '../runtime';
-import type { appendSave, OutboxTransaction, SaveOutboxStore } from './store';
+import type {
+	appendOptOut,
+	appendSave,
+	OptOutAct,
+	OutboxTransaction,
+	PendingOptOutEntry,
+	SaveOutboxStore,
+} from './store';
 import { withStoredIdempotencyKey } from './stored-key';
 import type { StoredSavePayload } from './stored-key';
 import type { toStoredPayload } from './stored-payload';
@@ -57,11 +76,14 @@ import type {
  * @internal
  */
 export interface QueueTools {
+	appendOptOut: typeof appendOptOut;
 	appendSave: typeof appendSave;
+	applySyncedOptOut: typeof applySyncedOptOut;
 	generateUuidV7: typeof generateUuidV7;
 	isConsentSaveRejection: typeof isConsentSaveRejection;
 	isPlainRecord: typeof isPlainRecord;
 	isSubjectConflict: typeof isSubjectConflict;
+	optOutRights: typeof OPT_OUT_RIGHTS;
 	optionalCategories: typeof OPTIONAL_CONSENT_CATEGORIES;
 	/** The schema's `CONSENT_MODELS`. */
 	consentModels: typeof CONSENT_MODELS;
@@ -107,11 +129,13 @@ const createStoredLists = function createStoredLists(
 	const {
 		consentModels,
 		isPlainRecord,
+		optOutRights,
 		optionalCategories,
 		toStoredPayload,
 		validateExplicitChoice,
 		withoutSuperseded,
 	} = tools;
+	const optOutRightSet = new Set<string>(optOutRights);
 
 	// ---------------------------------------------------------------------------
 	// Stored entry validation
@@ -309,6 +333,112 @@ const createStoredLists = function createStoredLists(
 		);
 	};
 
+	const isOptionalUiSource = function isOptionalUiSource(
+		value: unknown
+	): boolean {
+		return (
+			value === undefined ||
+			value === null ||
+			value === 'none' ||
+			value === 'banner' ||
+			value === 'dialog' ||
+			value === 'widget'
+		);
+	};
+
+	const isOptionalNullableString = function isOptionalNullableString(
+		value: unknown
+	): boolean {
+		return value === undefined || value === null || typeof value === 'string';
+	};
+
+	const isOptOutRights = function isOptOutRights(value: unknown): boolean {
+		if (!Array.isArray(value) || value.length === 0) {
+			return false;
+		}
+		const seen = new Set<string>();
+		for (const item of value) {
+			if (
+				typeof item !== 'string' ||
+				!optOutRightSet.has(item) ||
+				seen.has(item)
+			) {
+				return false;
+			}
+			seen.add(item);
+		}
+		return true;
+	};
+
+	const isOptOutPayload = function isOptOutPayload(
+		value: unknown
+	): value is OptOutPayload {
+		return (
+			isPlainRecord(value) &&
+			typeof value.subjectId === 'string' &&
+			typeof value.idempotencyKey === 'string' &&
+			value.idempotencyKey.length > 0 &&
+			isOptOutRights(value.rights) &&
+			(value.method === 'button' || value.method === 'gpc') &&
+			typeof value.givenAt === 'number' &&
+			Number.isSafeInteger(value.givenAt) &&
+			value.givenAt >= 0 &&
+			isSaveUser(value.user) &&
+			isOptionalUiSource(value.uiSource) &&
+			(value.metadata === undefined || isPlainRecord(value.metadata)) &&
+			isOptionalNullableString(value.policyId) &&
+			isOptionalNullableString(value.country) &&
+			isOptionalNullableString(value.region) &&
+			isOptionalString(value.language) &&
+			isOptionalNullableString(value.policySnapshotToken)
+		);
+	};
+
+	const isLiftOptOutPayload = function isLiftOptOutPayload(
+		value: unknown
+	): value is LiftOptOutPayload {
+		return (
+			isPlainRecord(value) &&
+			typeof value.subjectId === 'string' &&
+			typeof value.idempotencyKey === 'string' &&
+			value.idempotencyKey.length > 0 &&
+			typeof value.givenAt === 'number' &&
+			Number.isSafeInteger(value.givenAt) &&
+			value.givenAt >= 0 &&
+			isSaveUser(value.user) &&
+			isOptionalUiSource(value.uiSource)
+		);
+	};
+
+	const isPendingOptOutEntry = function isPendingOptOutEntry(
+		value: unknown
+	): value is PendingOptOutEntry {
+		if (!isPlainRecord(value)) {
+			return false;
+		}
+		const validPayload =
+			(value.kind === 'record' && isOptOutPayload(value.payload)) ||
+			(value.kind === 'lift' && isLiftOptOutPayload(value.payload));
+		if (!validPayload) {
+			return false;
+		}
+		const payload = value.payload as { idempotencyKey: string };
+		return (
+			typeof value.idempotencyKey === 'string' &&
+			value.idempotencyKey === payload.idempotencyKey &&
+			typeof value.queuedAt === 'number' &&
+			Number.isFinite(value.queuedAt) &&
+			value.queuedAt >= 0 &&
+			typeof value.attempts === 'number' &&
+			Number.isInteger(value.attempts) &&
+			value.attempts >= 0 &&
+			(value.seq === undefined ||
+				(typeof value.seq === 'number' &&
+					Number.isSafeInteger(value.seq) &&
+					value.seq > 0))
+		);
+	};
+
 	// ---------------------------------------------------------------------------
 	// Stored lists
 	// ---------------------------------------------------------------------------
@@ -425,6 +555,65 @@ const createStoredLists = function createStoredLists(
 	};
 
 	/**
+	 * Valid, live opt-out entries in the exact order they were queued (`seq`).
+	 * Opt-out entries are never narrowed or superseded by later entries or by
+	 * policy changes.
+	 */
+	const normalizePendingOptOuts = function normalizePendingOptOuts(
+		value: unknown,
+		now: number
+	): PendingOptOutEntry[] {
+		if (!Array.isArray(value)) {
+			return [];
+		}
+		const cutoff = now - MAX_PENDING_SAVE_AGE_MS;
+		const entries: PendingOptOutEntry[] = [];
+		for (const entry of value) {
+			if (
+				!isPendingOptOutEntry(entry) ||
+				entry.attempts >= MAX_REPLAY_ATTEMPTS
+			) {
+				continue;
+			}
+			const queuedAt = Math.min(entry.queuedAt, now);
+			if (queuedAt < cutoff) {
+				continue;
+			}
+			entries.push(
+				entry.kind === 'record'
+					? {
+							...entry,
+							payload: toStoredPayload(entry.payload),
+							queuedAt,
+						}
+					: {
+							...entry,
+							payload: toStoredPayload(entry.payload),
+							queuedAt,
+						}
+			);
+		}
+		entries.sort((left, right) => (left.seq ?? 0) - (right.seq ?? 0));
+		return entries;
+	};
+
+	/** The queued opt-out acts, rewriting the stored list when normalizing changed it. */
+	const readPendingOptOuts = function readPendingOptOuts(
+		tx: OutboxTransaction,
+		now = Date.now()
+	): PendingOptOutEntry[] {
+		const stored = tx.read('optOuts');
+		if (stored === undefined) {
+			return [];
+		}
+		const normalized = normalizePendingOptOuts(stored, now);
+		if (JSON.stringify(normalized) !== JSON.stringify(stored)) {
+			tx.write('optOuts', normalized);
+		}
+		return normalized;
+	};
+
+	/**
 	 * Stored reassignments, dropping malformed ones and those no queued save can
 	 * still need: older than a queued save may live, and with no save left
 	 * queued under the old id. A tab still on the old id can queue a save days
@@ -440,9 +629,10 @@ const createStoredLists = function createStoredLists(
 			return [];
 		}
 		const cutoff = now - MAX_PENDING_SAVE_AGE_MS;
-		const queued = new Set(
-			readPendingSaves(tx, now).map((entry) => entry.payload.subjectId)
-		);
+		const queued = new Set([
+			...readPendingSaves(tx, now).map((entry) => entry.payload.subjectId),
+			...readPendingOptOuts(tx, now).map((entry) => entry.payload.subjectId),
+		]);
 		const kept = stored
 			.filter(isSubjectReassignment)
 			// A time ahead of the clock counts as now, as for a queued save.
@@ -454,7 +644,13 @@ const createStoredLists = function createStoredLists(
 		return kept;
 	};
 
-	return { normalizePendingSaves, readPendingSaves, readReassignments };
+	return {
+		normalizePendingOptOuts,
+		normalizePendingSaves,
+		readPendingOptOuts,
+		readPendingSaves,
+		readReassignments,
+	};
 };
 
 /**
@@ -477,28 +673,84 @@ interface ReplayResult {
 	error: unknown;
 }
 
+/** Transports the opt-out replay path calls. */
+export interface OptOutReplayTransports {
+	optOut?: KernelTransport['optOut'];
+	liftOptOut?: KernelTransport['liftOptOut'];
+}
+
 export interface QueueWorkerOptions {
 	runtime: KernelRuntime;
 	store: SaveOutboxStore;
 	tools: QueueTools;
 	/** Whether this instance already owns a direct send for the action. */
 	isSending?: (payload: SavePayload) => boolean;
+	/** Whether this instance already owns a direct send for an opt-out act. */
+	isSendingOptOut?: (idempotencyKey: string) => boolean;
 }
 
 /** The queue operations of one outbox. */
 export interface QueueWorker {
 	/** Queue what `current()` still holds, read inside the transaction. */
 	enqueue: (current: () => SavePayload | null) => Promise<EnqueueResult>;
+	/** Queue one opt-out act (record or lift), without its identity token. */
+	enqueueOptOut: (act: OptOutAct) => Promise<'queued' | 'unstored'>;
 	/** Drop `payload` and the queued saves it superseded. */
 	discard: (payload: SavePayload) => Promise<void>;
+	/** Drop one opt-out act by its idempotency key. */
+	discardOptOut: (idempotencyKey: string) => Promise<void>;
+	/** Remove every queued opt-out act (used when the backend answers 404). */
+	clearOptOuts: () => Promise<void>;
 	/**
 	 * Move the visitor off a subject id: to a new one when the backend
 	 * refused it, or to the canonical one it answered for a `sub_` id.
 	 */
 	reassignSubject: (from: string, to?: string) => Promise<string | null>;
-	/** Replay every queued entry; resolves to whether any is left. */
+	/** Replay every queued save entry; resolves to whether any is left. */
 	replay: (save: NonNullable<KernelTransport['save']>) => Promise<boolean>;
+	/** Replay every queued opt-out entry in order; resolves to whether any is left. */
+	replayOptOuts: (
+		transports: OptOutReplayTransports,
+		onUnsupported: () => void
+	) => Promise<boolean>;
 }
+
+const isUnsupportedStatus = function isUnsupportedStatus(
+	error: unknown
+): boolean {
+	return (
+		typeof error === 'object' &&
+		error !== null &&
+		(error as { status?: unknown }).status === 404
+	);
+};
+
+const withCurrentIdentityToken = function withCurrentIdentityToken<
+	Payload extends { user: Readonly<KernelUser> | null },
+>(payload: Payload, currentUser: Readonly<KernelUser> | null): Payload {
+	if (
+		!currentUser?.identityToken ||
+		!payload.user ||
+		payload.user.externalId !== currentUser.externalId ||
+		(payload.user.identityProvider ?? undefined) !==
+			(currentUser.identityProvider ?? undefined)
+	) {
+		return payload;
+	}
+	return {
+		...payload,
+		user: { ...payload.user, identityToken: currentUser.identityToken },
+	};
+};
+
+const withOptOutSubjectId = function withOptOutSubjectId(
+	entry: PendingOptOutEntry,
+	subjectId: string
+): PendingOptOutEntry {
+	return entry.kind === 'record'
+		? { ...entry, payload: { ...entry.payload, subjectId } }
+		: { ...entry, payload: { ...entry.payload, subjectId } };
+};
 
 /**
  * Create the queue operations of one outbox.
@@ -509,10 +761,13 @@ export const createQueueWorker = function createQueueWorker({
 	store,
 	tools,
 	isSending = () => false,
+	isSendingOptOut = () => false,
 }: QueueWorkerOptions): QueueWorker {
 	const { batch, commit, emit, getSnapshot } = runtime;
 	const {
+		appendOptOut,
 		appendSave,
+		applySyncedOptOut,
 		generateUuidV7,
 		isConsentSaveRejection,
 		isSubjectConflict,
@@ -528,6 +783,21 @@ export const createQueueWorker = function createQueueWorker({
 		emit({ command: 'save', error, type: 'command:error' });
 		warnInDevelopment(
 			'[inth] A queued consent save was dropped and will not be resent. The choice is kept in this browser only.',
+			error
+		);
+	};
+
+	const reportOptOutDropped = function reportOptOutDropped(
+		kind: PendingOptOutEntry['kind'],
+		error: unknown
+	): void {
+		emit({
+			command: kind === 'lift' ? 'optIn' : 'optOut',
+			error,
+			type: 'command:error',
+		});
+		warnInDevelopment(
+			'[inth] A queued opt-out request was dropped and will not be resent. The opt-out stays recorded in this browser only.',
 			error
 		);
 	};
@@ -548,8 +818,13 @@ export const createQueueWorker = function createQueueWorker({
 		});
 	};
 
-	const { normalizePendingSaves, readPendingSaves, readReassignments } =
-		createStoredLists(tools, reportExpired);
+	const {
+		normalizePendingOptOuts,
+		normalizePendingSaves,
+		readPendingOptOuts,
+		readPendingSaves,
+		readReassignments,
+	} = createStoredLists(tools, reportExpired);
 	// Subject ids this kernel replaced after the backend refused them as
 	// another tenant's, old to the claim for the new one. A live save and a
 	// replay can both hit the same refusal; this sends both to one new id
@@ -561,6 +836,7 @@ export const createQueueWorker = function createQueueWorker({
 		{ claim: Promise<string | null>; generation: number }
 	>();
 	let activeReplay: Promise<boolean> | null = null;
+	let activeOptOutReplay: Promise<boolean> | null = null;
 
 	const currentSubjectId = () => getSnapshot().subject?.subjectId;
 
@@ -576,6 +852,18 @@ export const createQueueWorker = function createQueueWorker({
 			const now = Date.now();
 			const pending = appendSave(readPendingSaves(tx, now), payload, now);
 			return tx.write('saves', normalizePendingSaves(tx, pending, now))
+				? 'queued'
+				: 'unstored';
+		});
+	};
+
+	const enqueueOptOut = function enqueueOptOut(
+		act: OptOutAct
+	): Promise<'queued' | 'unstored'> {
+		return store.transact((tx) => {
+			const now = Date.now();
+			const pending = appendOptOut(readPendingOptOuts(tx, now), act, now);
+			return tx.write('optOuts', normalizePendingOptOuts(pending, now))
 				? 'queued'
 				: 'unstored';
 		});
@@ -598,6 +886,28 @@ export const createQueueWorker = function createQueueWorker({
 			);
 			if (remaining.length !== pending.length) {
 				tx.write('saves', remaining);
+			}
+		});
+	};
+
+	const discardOptOut = function discardOptOut(
+		idempotencyKey: string
+	): Promise<void> {
+		return store.transact((tx) => {
+			const pending = readPendingOptOuts(tx);
+			const remaining = pending.filter(
+				(candidate) => candidate.idempotencyKey !== idempotencyKey
+			);
+			if (remaining.length !== pending.length) {
+				tx.write('optOuts', remaining);
+			}
+		});
+	};
+
+	const clearOptOuts = function clearOptOuts(): Promise<void> {
+		return store.transact((tx) => {
+			if (tx.read('optOuts') !== undefined) {
+				tx.write('optOuts', []);
 			}
 		});
 	};
@@ -646,6 +956,15 @@ export const createQueueWorker = function createQueueWorker({
 						: entry
 				);
 				tx.write('saves', normalizePendingSaves(tx, moved, now));
+			}
+			const pendingOptOuts = readPendingOptOuts(tx, now);
+			if (pendingOptOuts.some((entry) => entry.payload.subjectId === from)) {
+				const movedOptOuts = pendingOptOuts.map((entry) =>
+					entry.payload.subjectId === from
+						? withOptOutSubjectId(entry, to)
+						: entry
+				);
+				tx.write('optOuts', normalizePendingOptOuts(movedOptOuts, now));
 			}
 			return to;
 		});
@@ -769,19 +1088,21 @@ export const createQueueWorker = function createQueueWorker({
 		from: string,
 		canonical: string | undefined,
 		moved: Map<string, string> | null
-	): Promise<void> {
+	): Promise<string | undefined> {
 		if (
 			!moved ||
 			canonical === undefined ||
 			canonical === from ||
 			!from.startsWith(LEGACY_SUBJECT_PREFIX)
 		) {
-			return;
+			return undefined;
 		}
 		const to = await reassignSubject(from, canonical);
 		if (to !== null) {
 			moved.set(from, to);
+			return to;
 		}
+		return undefined;
 	};
 
 	/**
@@ -805,6 +1126,59 @@ export const createQueueWorker = function createQueueWorker({
 	 * the same time finds it gone, or its attempt already counted, and
 	 * reports nothing.
 	 */
+	const recordSaveAttempt = function recordSaveAttempt(
+		key: string | undefined,
+		outcome: ReplayOutcome,
+		isEntry: (candidate: PendingSaveEntry) => boolean
+	): Promise<{ attempts: number | null; written: boolean }> {
+		return store.transact((tx) => {
+			let counted: number | null = null;
+			const next: PendingSaveEntry[] = [];
+			for (const candidate of readPendingSaves(tx)) {
+				// Sent and answered: the entry goes whatever another tab did to
+				// it since. A retry counts only once per attempt.
+				if (
+					candidate.payload.idempotencyKey !== key ||
+					(outcome === 'retry' && !isEntry(candidate))
+				) {
+					next.push(candidate);
+					continue;
+				}
+				counted = candidate.attempts + 1;
+				if (outcome === 'retry' && counted < MAX_REPLAY_ATTEMPTS) {
+					next.push({ ...candidate, attempts: counted });
+				}
+			}
+			return { attempts: counted, written: tx.write('saves', next) };
+		});
+	};
+
+	const settleSaveRemoval = function settleSaveRemoval(
+		outcome: ReplayOutcome,
+		attempts: number | null,
+		written: boolean,
+		failure: unknown
+	): boolean {
+		// A refused write leaves the entry stored as it was: it stays queued,
+		// and a drop is reported only by the write that removes it.
+		const removed =
+			attempts !== null &&
+			written &&
+			(outcome === 'rejected' ||
+				(outcome === 'retry' && attempts >= MAX_REPLAY_ATTEMPTS));
+		if (removed) {
+			reportDropped(
+				outcome === 'rejected'
+					? failure
+					: new Error(
+							`inth save outbox: dropped a queued consent save after ${MAX_REPLAY_ATTEMPTS} failed attempts`,
+							{ cause: failure }
+						)
+			);
+		}
+		return attempts !== null && outcome !== 'saved' && !removed;
+	};
+
 	const replayEntry = async function replayEntry(
 		save: NonNullable<KernelTransport['save']>,
 		queued: PendingSaveEntry,
@@ -825,10 +1199,14 @@ export const createQueueWorker = function createQueueWorker({
 		let rejected: string | undefined;
 		let failure: unknown;
 		let canonical: string | undefined;
+		let answeredOptOut: OptOutRecord | undefined;
+		const actVersion = runtime.getOptOutActVersion();
+		const generation = runtime.getGeneration();
 		try {
 			const result = await save(entry.payload);
 			outcome = result.ok ? 'saved' : 'retry';
 			canonical = result.subjectId;
+			answeredOptOut = result.optOut;
 		} catch (error) {
 			failure = error;
 			if (moved && isSubjectConflict(error)) {
@@ -852,14 +1230,51 @@ export const createQueueWorker = function createQueueWorker({
 		// The entry's attempts after this one, or `null` when another kernel
 		// removed it, or counted this attempt, while the request was out; and
 		// whether storage took the updated list.
-		const { attempts, written } = await store.transact((tx) => {
+		const { attempts, written } = await recordSaveAttempt(
+			key,
+			outcome,
+			isEntry
+		);
+		const kept = settleSaveRemoval(outcome, attempts, written, failure);
+		const { subjectId } = entry.payload;
+		const adopted = await followCanonicalSubject(
+			subjectId,
+			outcome === 'saved' ? canonical : undefined,
+			moved
+		);
+		if (outcome === 'saved' && answeredOptOut !== undefined) {
+			applySyncedOptOut(runtime, answeredOptOut, {
+				actVersion,
+				allowClear: false,
+				generation,
+				subjectId: adopted ?? subjectId,
+			});
+		}
+		return {
+			error: failure,
+			event:
+				rejected === undefined
+					? { ok: outcome === 'saved', subjectId }
+					: { ok: false, rejected, subjectId },
+			kept,
+		};
+	};
+
+	const recordOptOutAttempt = function recordOptOutAttempt(
+		key: string,
+		outcome: ReplayOutcome,
+		isEntry: (candidate: PendingOptOutEntry) => boolean
+	): Promise<{
+		attempts: number | null;
+		remainingCount: number;
+		written: boolean;
+	}> {
+		return store.transact((tx) => {
 			let counted: number | null = null;
-			const next: PendingSaveEntry[] = [];
-			for (const candidate of readPendingSaves(tx)) {
-				// Sent and answered: the entry goes whatever another tab did to
-				// it since. A retry counts only once per attempt.
+			const next: PendingOptOutEntry[] = [];
+			for (const candidate of readPendingOptOuts(tx)) {
 				if (
-					candidate.payload.idempotencyKey !== key ||
+					candidate.idempotencyKey !== key ||
 					(outcome === 'retry' && !isEntry(candidate))
 				) {
 					next.push(candidate);
@@ -870,40 +1285,195 @@ export const createQueueWorker = function createQueueWorker({
 					next.push({ ...candidate, attempts: counted });
 				}
 			}
-			return { attempts: counted, written: tx.write('saves', next) };
+			return {
+				attempts: counted,
+				remainingCount: next.length,
+				written: tx.write('optOuts', next),
+			};
 		});
-		// A refused write leaves the entry stored as it was: it stays queued,
-		// and a drop is reported only by the write that removes it.
+	};
+
+	const dispatchOptOutReplay = (
+		transports: OptOutReplayTransports,
+		entry: PendingOptOutEntry,
+		currentUser: Readonly<KernelUser> | null
+	) =>
+		entry.kind === 'record'
+			? transports.optOut?.(
+					withCurrentIdentityToken(entry.payload, currentUser),
+					{ replay: true }
+				)
+			: transports.liftOptOut?.(
+					withCurrentIdentityToken(entry.payload, currentUser),
+					{ replay: true }
+				);
+
+	const settleOptOutRemoval = function settleOptOutRemoval(
+		kind: PendingOptOutEntry['kind'],
+		outcome: ReplayOutcome,
+		attempts: number | null,
+		written: boolean,
+		failure: unknown
+	): boolean {
 		const removed =
 			attempts !== null &&
 			written &&
 			(outcome === 'rejected' ||
 				(outcome === 'retry' && attempts >= MAX_REPLAY_ATTEMPTS));
-		const kept = attempts !== null && outcome !== 'saved' && !removed;
-		if (removed && outcome === 'rejected') {
-			reportDropped(failure);
-		} else if (removed) {
-			reportDropped(
-				new Error(
-					`inth save outbox: dropped a queued consent save after ${MAX_REPLAY_ATTEMPTS} failed attempts`,
-					{ cause: failure }
-				)
+		if (removed) {
+			reportOptOutDropped(
+				kind,
+				outcome === 'rejected'
+					? failure
+					: new Error(
+							`inth save outbox: dropped a queued opt-out request after ${MAX_REPLAY_ATTEMPTS} failed attempts`,
+							{ cause: failure }
+						)
 			);
 		}
-		const { subjectId } = entry.payload;
-		await followCanonicalSubject(
-			subjectId,
-			outcome === 'saved' ? canonical : undefined,
-			moved
+		return attempts !== null && outcome !== 'saved' && !removed;
+	};
+
+	const replayOptOutEntry = async function replayOptOutEntry(
+		transports: OptOutReplayTransports,
+		queued: PendingOptOutEntry,
+		moved: Map<string, string> | null,
+		isLast: boolean,
+		onUnsupported: () => void
+	): Promise<{ kept: boolean; error: unknown; unsupported?: boolean } | null> {
+		const key = queued.idempotencyKey;
+		const isEntry = (candidate: PendingOptOutEntry) =>
+			candidate.idempotencyKey === key &&
+			candidate.attempts === queued.attempts;
+		const entry = await store.transact((tx) =>
+			readPendingOptOuts(tx).find(isEntry)
 		);
-		return {
-			error: failure,
-			event:
-				rejected === undefined
-					? { ok: outcome === 'saved', subjectId }
-					: { ok: false, rejected, subjectId },
-			kept,
-		};
+		if (!entry || isSendingOptOut(entry.idempotencyKey)) {
+			return null;
+		}
+		let outcome: ReplayOutcome = 'retry';
+		let failure: unknown;
+		let canonical: string | undefined;
+		let answeredOptOut: OptOutRecord | null | undefined;
+		const actVersion = runtime.getOptOutActVersion();
+		const generation = runtime.getGeneration();
+		try {
+			const result = await dispatchOptOutReplay(
+				transports,
+				entry,
+				getSnapshot().user
+			);
+			if (!result) {
+				return null;
+			}
+			if (result.unsupported) {
+				onUnsupported();
+				await clearOptOuts();
+				return { error: undefined, kept: false, unsupported: true };
+			}
+			outcome = result.ok ? 'saved' : 'retry';
+			canonical = result.subjectId;
+			answeredOptOut = result.optOut;
+		} catch (error) {
+			if (isUnsupportedStatus(error)) {
+				onUnsupported();
+				await clearOptOuts();
+				return { error: undefined, kept: false, unsupported: true };
+			}
+			failure = error;
+			if (moved && isSubjectConflict(error)) {
+				const subjectId = await reassignSubject(entry.payload.subjectId);
+				if (subjectId !== null) {
+					moved.set(entry.payload.subjectId, subjectId);
+					return replayOptOutEntry(
+						transports,
+						withOptOutSubjectId(entry, subjectId),
+						null,
+						isLast,
+						onUnsupported
+					);
+				}
+			}
+			if (isConsentSaveRejection(error)) {
+				outcome = 'rejected';
+			}
+		}
+
+		const { attempts, remainingCount, written } = await recordOptOutAttempt(
+			key,
+			outcome,
+			isEntry
+		);
+		const kept = settleOptOutRemoval(
+			entry.kind,
+			outcome,
+			attempts,
+			written,
+			failure
+		);
+		if (outcome === 'saved') {
+			const { subjectId } = entry.payload;
+			const adopted = await followCanonicalSubject(subjectId, canonical, moved);
+			if (isLast && remainingCount === 0 && answeredOptOut !== undefined) {
+				applySyncedOptOut(runtime, answeredOptOut, {
+					actVersion,
+					allowClear: entry.kind === 'lift',
+					generation,
+					subjectId: adopted ?? subjectId,
+				});
+			}
+		}
+		return { error: failure, kept };
+	};
+
+	const runOptOutReplay = async function runOptOutReplay(
+		transports: OptOutReplayTransports,
+		onUnsupported: () => void
+	): Promise<boolean> {
+		const pending = await store.transact((tx) => readPendingOptOuts(tx));
+		let kept = 0;
+		let lastError: unknown;
+		const moved = new Map<string, string>();
+		for (const [index, queued] of pending.entries()) {
+			const to = moved.get(queued.payload.subjectId);
+			const entry = to === undefined ? queued : withOptOutSubjectId(queued, to);
+			// Replay queued opt-out acts one at a time in the exact order queued.
+			// oxlint-disable-next-line no-await-in-loop
+			const result = await replayOptOutEntry(
+				transports,
+				entry,
+				moved,
+				index === pending.length - 1,
+				onUnsupported
+			);
+			if (result?.unsupported) {
+				return false;
+			}
+			if (result?.kept) {
+				kept += 1;
+				lastError = result.error ?? lastError;
+			}
+		}
+		if (kept > 0) {
+			warnInDevelopment(
+				kept === 1
+					? '[inth] Resending a queued opt-out request failed. It stays queued and is resent on the next init or when the browser comes back online.'
+					: `[inth] Resending ${kept} queued opt-out requests failed. They stay queued and are resent on the next init or when the browser comes back online.`,
+				lastError
+			);
+		}
+		return store.transact((tx) => readPendingOptOuts(tx).length > 0);
+	};
+
+	const runSharedOptOutReplay = async function runSharedOptOutReplay(
+		transports: OptOutReplayTransports,
+		onUnsupported: () => void
+	): Promise<boolean> {
+		try {
+			return await runOptOutReplay(transports, onUnsupported);
+		} finally {
+			activeOptOutReplay = null;
+		}
 	};
 
 	/** Replay every queued entry; resolves to whether any is left. */
@@ -961,12 +1531,19 @@ export const createQueueWorker = function createQueueWorker({
 	};
 
 	return {
+		clearOptOuts,
 		discard,
+		discardOptOut,
 		enqueue,
+		enqueueOptOut,
 		reassignSubject,
 		replay(save) {
 			activeReplay ??= runSharedReplay(save);
 			return activeReplay;
+		},
+		replayOptOuts(transports, onUnsupported) {
+			activeOptOutReplay ??= runSharedOptOutReplay(transports, onUnsupported);
+			return activeOptOutReplay;
 		},
 	};
 };

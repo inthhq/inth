@@ -10,7 +10,9 @@
  * - Server records (a `/v1/consent/init` response, a subject read after `identify()`)
  *   merge newest-wins per category and never remove local standing state,
  *   so a delayed server read cannot overwrite a newer local action.
- * - `identify()` and `set.subjectId` change who the records belong to.
+ * - `identify()` and `set.subjectId` change who the records belong to. When
+ *   the backend's link answer carries an effective opt-out, `identify()`
+ *   applies it to the snapshot and emits `opt-out:synced`.
  *
  * Clearing (`clear-records.ts`) is `hydrate()` with `null`s followed by
  * `records:cleared`, which the save outbox listens for.
@@ -22,6 +24,7 @@ import type {
 	KernelTransport,
 	KernelUser,
 } from '../types';
+import { applySyncedOptOut } from './opt-out';
 import type { SnapshotPatch } from './patch';
 import {
 	mergeNewestChoice,
@@ -80,7 +83,7 @@ export interface RecordsBoundaryOptions {
 	/** Starts the lifecycle; hydration counts as a lifecycle command. */
 	start: () => void;
 	/** Moves a visitor on a `sub_` id to the UUID a link answered for it. */
-	adoptSubject: (from: string, to: string) => Promise<void>;
+	adoptSubject: (from: string, to: string) => Promise<string | null>;
 }
 
 export interface RecordsBoundary {
@@ -140,6 +143,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		if (
 			reset ||
 			after.explicitChoice !== before.explicitChoice ||
+			after.optOut !== before.optOut ||
 			after.subject !== before.subject
 		) {
 			runtime.invalidateRecords();
@@ -181,6 +185,42 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		}
 	};
 
+	const linkSubject = async function linkSubject(
+		user: KernelUser,
+		linkedId: string | null,
+		subjectId: string | null,
+		attempt: number,
+		generation: number,
+		optOutActVersion: number
+	): Promise<string | null> {
+		if (!transport?.identify) {
+			return subjectId;
+		}
+		let linked: Awaited<ReturnType<typeof transport.identify>>;
+		try {
+			linked = await transport.identify({ ...user }, linkedId);
+		} catch (error) {
+			emit({ command: 'identify', error, type: 'command:error' });
+			throw error;
+		}
+		let effectiveSubjectId = subjectId;
+		if (linkedId && linked?.subjectId && linked.subjectId !== linkedId) {
+			const adopted = await adoptSubject(linkedId, linked.subjectId);
+			if (adopted !== null) {
+				effectiveSubjectId = adopted;
+			}
+		}
+		if (attempt === identifyGeneration && linked?.optOut !== undefined) {
+			applySyncedOptOut(runtime, linked.optOut, {
+				actVersion: optOutActVersion,
+				allowClear: false,
+				generation,
+				subjectId: effectiveSubjectId,
+			});
+		}
+		return effectiveSubjectId;
+	};
+
 	return {
 		getProvisionalSubject: () => provisionalSubjectId,
 
@@ -193,6 +233,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			identifyGeneration += 1;
 			const attempt = identifyGeneration;
 			const generation = runtime.getGeneration();
+			const optOutActVersion = runtime.getOptOutActVersion();
 			const { subject, iab } = getSnapshot();
 			const subjectId = subject?.subjectId ?? null;
 			// A provisional ID is gone on the next page load, so linking it
@@ -205,22 +246,18 @@ export const createRecordsBoundary = function createRecordsBoundary({
 				patch.iab = { ...iab, authority: null, tcString: null };
 			}
 			runtime.announce(patch, 'user:identified', true);
-			if (transport?.identify) {
-				let linked: Awaited<ReturnType<typeof transport.identify>>;
-				try {
-					linked = await transport.identify({ ...user }, linkedId);
-				} catch (error) {
-					emit({ command: 'identify', error, type: 'command:error' });
-					throw error;
-				}
-				if (linkedId && linked?.subjectId && linked.subjectId !== linkedId) {
-					await adoptSubject(linkedId, linked.subjectId);
-				}
-			}
+			const effectiveSubjectId = await linkSubject(
+				user,
+				linkedId,
+				subjectId,
+				attempt,
+				generation,
+				optOutActVersion
+			);
 			if (
 				attempt !== identifyGeneration ||
 				runtime.getGeneration() !== generation ||
-				(getSnapshot().subject?.subjectId ?? null) !== subjectId
+				(getSnapshot().subject?.subjectId ?? null) !== effectiveSubjectId
 			) {
 				return;
 			}

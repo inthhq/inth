@@ -13,6 +13,8 @@ export const V1_ROUTES = {
 	currentDocument: '/v1/documents/:type/current',
 	init: '/v1/consent/init',
 	manifest: '/v1/consent/manifest',
+	optOutLift: '/v1/consent/opt-outs/lift',
+	optOuts: '/v1/consent/opt-outs',
 	records: '/v1/consent/records',
 	sessions: '/v1/consent/sessions',
 	subjectLink: '/v1/subjects/:id/link',

@@ -17,9 +17,17 @@ import { initOutputSchema } from '../init';
 import type { InitOutput } from '../init';
 import {
 	v1CanonicalSubjectIdSchema,
+	v1EffectiveOptOutSchema,
+	v1EpochMillisecondsSchema,
+	v1ExternalIdSchema,
 	v1IdempotencyKeySchema,
+	v1IdentityProviderSchema,
+	v1IdentityTokenSchema,
+	v1OptOutRightsSchema,
+	v1PropertySchema,
 	v1SubjectIdSchema,
 } from './common';
+import type { V1EffectiveOptOut } from './common';
 import {
 	consentRecordRequestSchema,
 	consentRecordResponseSchema,
@@ -28,7 +36,7 @@ import {
 	getV1ConsentManifestQuerySchema,
 	postV1ConsentRecordsQuerySchema,
 } from './generated/schemas';
-import { jsonObject } from './json-schema';
+import { jsonObject, jsonRecord } from './json-schema';
 
 // ---------------------------------------------------------------------------
 // GET /v1/consent/init and GET /v1/consent/manifest
@@ -115,6 +123,124 @@ export const v1ConsentRecordLinkSchema =
 export const v1ConsentRecordOutputSchema = jsonObject(
 	v.object({
 		...consentRecordResponseSchema.entries,
+		optOut: v.optional(v1EffectiveOptOutSchema),
+		subjectId: v1CanonicalSubjectIdSchema,
+	})
+);
+
+// ---------------------------------------------------------------------------
+// POST /v1/consent/opt-outs
+// ---------------------------------------------------------------------------
+
+/**
+ * Body of `POST /v1/consent/opt-outs`: record a durable opt-out.
+ *
+ * Context fields (`policyId`, `country`, `region`, `language`,
+ * `policySnapshotToken`) are recorded and never validated. Identity problems
+ * never fail the opt-out.
+ */
+export const v1ConsentOptOutInputSchema = jsonObject(
+	v.object({
+		country: consentRecordRequestSchema.entries.country,
+		externalId: v.optional(v1ExternalIdSchema),
+		givenAt: v1EpochMillisecondsSchema,
+		idempotencyKey: v1IdempotencyKeySchema,
+		identityProvider: v.optional(v1IdentityProviderSchema),
+		identityToken: v.optional(v1IdentityTokenSchema),
+		language: consentRecordRequestSchema.entries.language,
+		metadata: v.optional(
+			v.pipe(
+				jsonRecord(v.string(), v.unknown()),
+				v.description('Audit metadata to store with the opt-out.')
+			)
+		),
+		method: v.pipe(
+			v.picklist(['button', 'gpc']),
+			v.description('How the visitor recorded this opt-out.')
+		),
+		policyId: consentRecordRequestSchema.entries.policyId,
+		policySnapshotToken: v.optional(
+			v.pipe(
+				v.string(),
+				v.description('Signed policy snapshot token from init, if held.')
+			)
+		),
+		property: v1PropertySchema,
+		region: consentRecordRequestSchema.entries.region,
+		rights: v1OptOutRightsSchema,
+		subjectId: v1SubjectIdSchema,
+		uiSource: v.optional(
+			v.pipe(
+				v.string(),
+				v.description('UI surface that collected the opt-out.'),
+				v.examples(['banner', 'dialog', 'widget'])
+			)
+		),
+	})
+);
+
+/**
+ * Answer of `POST /v1/consent/opt-outs`. `subjectId` is canonical and
+ * `optOut.recordedAt` is the backend's authoritative time.
+ */
+export const v1ConsentOptOutOutputSchema = jsonObject(
+	v.object({
+		link: v.optional(v1ConsentRecordLinkSchema),
+		optOut: v1EffectiveOptOutSchema,
+		recordId: v.pipe(
+			v.string(),
+			v.uuid('Record ID must be a UUID'),
+			v.description('ID of the event that recorded the opt-out.')
+		),
+		subjectId: v1CanonicalSubjectIdSchema,
+	})
+);
+
+// ---------------------------------------------------------------------------
+// POST /v1/consent/opt-outs/lift
+// ---------------------------------------------------------------------------
+
+/**
+ * Body of `POST /v1/consent/opt-outs/lift`: lift an opt-out.
+ *
+ * Omit `rights` to lift every right the device holds. With a verifying
+ * `identityToken`, the account's opt-out lifts too.
+ */
+export const v1ConsentOptOutLiftInputSchema = jsonObject(
+	v.object({
+		externalId: v.optional(v1ExternalIdSchema),
+		givenAt: v1EpochMillisecondsSchema,
+		idempotencyKey: v1IdempotencyKeySchema,
+		identityProvider: v.optional(v1IdentityProviderSchema),
+		identityToken: v.optional(v1IdentityTokenSchema),
+		property: v1PropertySchema,
+		rights: v.optional(v1OptOutRightsSchema),
+		subjectId: v1SubjectIdSchema,
+		uiSource: v.optional(
+			v.pipe(
+				v.string(),
+				v.description('UI surface that lifted the opt-out.'),
+				v.examples(['banner', 'dialog', 'widget'])
+			)
+		),
+	})
+);
+
+/**
+ * Answer of `POST /v1/consent/opt-outs/lift`. `optOut` is `null` once no
+ * opt-out remains in force, or the account's remaining opt-out when the
+ * device alone was lifted.
+ */
+export const v1ConsentOptOutLiftOutputSchema = jsonObject(
+	v.object({
+		optOut: v.nullable(v1EffectiveOptOutSchema),
+		recordId: v.optional(
+			v.pipe(
+				v.string(),
+				v.uuid('Record ID must be a UUID'),
+				v.description('ID of the event that recorded the lift, when one ran.')
+			)
+		),
 		subjectId: v1CanonicalSubjectIdSchema,
 	})
 );
@@ -153,9 +279,30 @@ export type V1ConsentRecordInput = v.InferOutput<
 export type V1ConsentRecordLink = v.InferOutput<
 	typeof v1ConsentRecordLinkSchema
 >;
-export type V1ConsentRecordOutput = v.InferOutput<
-	typeof v1ConsentRecordOutputSchema
+export type V1ConsentRecordOutput = Omit<
+	v.InferOutput<typeof v1ConsentRecordOutputSchema>,
+	'optOut'
+> & {
+	optOut?: V1EffectiveOptOut;
+};
+export type V1ConsentOptOutInput = v.InferOutput<
+	typeof v1ConsentOptOutInputSchema
 >;
+export type V1ConsentOptOutOutput = Omit<
+	v.InferOutput<typeof v1ConsentOptOutOutputSchema>,
+	'optOut'
+> & {
+	optOut: V1EffectiveOptOut;
+};
+export type V1ConsentOptOutLiftInput = v.InferOutput<
+	typeof v1ConsentOptOutLiftInputSchema
+>;
+export type V1ConsentOptOutLiftOutput = Omit<
+	v.InferOutput<typeof v1ConsentOptOutLiftOutputSchema>,
+	'optOut'
+> & {
+	optOut: V1EffectiveOptOut | null;
+};
 export type V1ConsentSessionJourney = v.InferOutput<
 	typeof v1ConsentSessionJourneySchema
 >;

@@ -8,7 +8,7 @@
  *
  * @internal
  */
-import { CONSENT_MODELS } from '@inth/sdk-schema/types';
+import { CONSENT_MODELS, OPT_OUT_RIGHTS } from '@inth/sdk-schema/types';
 
 import { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
 import {
@@ -21,19 +21,23 @@ import {
 	isConsentSaveRejection,
 	isSubjectConflict,
 } from '../../transports/save-rejection';
+import { applySyncedOptOut } from '../opt-out';
 import type { QueueTools } from './queue';
-import { appendSave } from './store';
+import { appendOptOut, appendSave } from './store';
 import { toStoredPayload } from './stored-payload';
 import { withoutSuperseded, withSubjectId } from './supersession';
 
 /** @internal */
 export const queueTools: QueueTools = {
+	appendOptOut,
 	appendSave,
+	applySyncedOptOut,
 	consentModels: CONSENT_MODELS,
 	generateUuidV7,
 	isConsentSaveRejection,
 	isPlainRecord,
 	isSubjectConflict,
+	optOutRights: OPT_OUT_RIGHTS,
 	optionalCategories: OPTIONAL_CONSENT_CATEGORIES,
 	toStoredPayload,
 	validateExplicitChoice,

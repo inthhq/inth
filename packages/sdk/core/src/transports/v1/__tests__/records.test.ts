@@ -3,6 +3,8 @@
  * stubbed `fetch`: the exact request, and how each answer is read.
  */
 import {
+	v1ConsentOptOutInputSchema,
+	v1ConsentOptOutLiftInputSchema,
 	v1ConsentRecordInputSchema,
 	v1ConsentRecordQuerySchema,
 } from '@inth/sdk-schema/v1';
@@ -13,6 +15,10 @@ import {
 	isSubjectConflict,
 } from '../../save-rejection';
 import { InthApiError, isInthApiError } from '../error';
+import {
+	buildV1ConsentOptOutBody,
+	buildV1ConsentOptOutLiftBody,
+} from '../opt-outs-body';
 import { createV1RecordTransport } from '../records';
 import { InthApiSaveRejectedError } from '../save-rejected';
 import {
@@ -522,6 +528,396 @@ describe('identify: POST /v1/subjects/:id/link', () => {
 			code: 'identity_token_invalid',
 			requestId: 'req_link',
 			status: 401,
+		});
+	});
+
+	test('reads a valid optOut from a link answer and ignores an invalid one', async () => {
+		const validOptOut = {
+			heldBy: 'person' as const,
+			method: 'api' as const,
+			recordedAt: ACTION_AT + 1000,
+			rights: ['sale', 'share'] as const,
+		};
+		const { fetch: fetchValid } = stubFetch(() =>
+			json(200, {
+				externalId: 'user_123',
+				optOut: validOptOut,
+				subjectId: SUBJECT,
+				verifiedBy: 'identity_token',
+			})
+		);
+		await expect(
+			transportWith(fetchValid).identify(
+				{ ...user, identityToken: 'token' },
+				SUBJECT
+			)
+		).resolves.toEqual({ optOut: validOptOut, subjectId: SUBJECT });
+
+		const { fetch: fetchInvalid } = stubFetch(() =>
+			json(200, {
+				externalId: 'user_123',
+				optOut: { heldBy: 'device', method: 'button', recordedAt: -1, rights: [] },
+				subjectId: SUBJECT,
+				verifiedBy: 'identity_token',
+			})
+		);
+		await expect(
+			transportWith(fetchInvalid).identify(
+				{ ...user, identityToken: 'token' },
+				SUBJECT
+			)
+		).resolves.toEqual({ subjectId: SUBJECT });
+	});
+});
+
+describe('save: optional optOut in answer', () => {
+	test('reads a valid optOut from POST /v1/consent/records and treats an invalid one as no information', async () => {
+		const validOptOut = {
+			heldBy: 'both' as const,
+			method: 'button' as const,
+			recordedAt: ACTION_AT + 500,
+			rights: ['sale', 'share'] as const,
+		};
+		const { fetch: fetchValid } = stubFetch(() =>
+			json(200, { optOut: validOptOut, recordId: RECORD, subjectId: SUBJECT })
+		);
+		await expect(transportWith(fetchValid).save(savePayload())).resolves.toEqual(
+			{
+				ok: true,
+				optOut: validOptOut,
+				recordId: RECORD,
+				subjectId: SUBJECT,
+			}
+		);
+
+		const { fetch: fetchInvalid } = stubFetch(() =>
+			json(200, {
+				optOut: { heldBy: 'unknown', method: 'button', recordedAt: ACTION_AT, rights: ['sale'] },
+				recordId: RECORD,
+				subjectId: SUBJECT,
+			})
+		);
+		const invalidResult = await transportWith(fetchInvalid).save(savePayload());
+		expect(invalidResult).toEqual({
+			ok: true,
+			recordId: RECORD,
+			subjectId: SUBJECT,
+		});
+		expect('optOut' in invalidResult).toBe(false);
+	});
+});
+
+describe('opt-out body builders', () => {
+	test('buildV1ConsentOptOutBody produces the exact wire body with context and identity', () => {
+		const body = buildV1ConsentOptOutBody(
+			{
+				country: 'US',
+				givenAt: ACTION_AT,
+				idempotencyKey: KEY,
+				language: 'en',
+				metadata: { source: 'footer' },
+				method: 'button',
+				policyId: 'us-ca',
+				policySnapshotToken: 'stale-token',
+				region: 'CA',
+				rights: ['sale', 'share'],
+				subjectId: SUBJECT,
+				uiSource: 'widget',
+				user: {
+					externalId: 'user_123',
+					identityProvider: 'clerk',
+					identityToken: 'tok_123',
+				},
+			},
+			'www.example.com'
+		);
+
+		expect(body).toEqual({
+			country: 'US',
+			externalId: 'user_123',
+			givenAt: ACTION_AT,
+			idempotencyKey: KEY,
+			identityProvider: 'clerk',
+			identityToken: 'tok_123',
+			language: 'en',
+			metadata: { source: 'footer' },
+			method: 'button',
+			policyId: 'us-ca',
+			policySnapshotToken: 'stale-token',
+			property: 'www.example.com',
+			region: 'CA',
+			rights: ['sale', 'share'],
+			subjectId: SUBJECT,
+			uiSource: 'widget',
+		});
+		expect(
+			v1ConsentOptOutInputSchema['~standard'].validate(body)
+		).not.toHaveProperty('issues');
+	});
+
+	test('buildV1ConsentOptOutBody throws without an idempotencyKey', () => {
+		expect(() =>
+			buildV1ConsentOptOutBody(
+				{
+					givenAt: ACTION_AT,
+					idempotencyKey: '',
+					method: 'gpc',
+					rights: ['sale'],
+					subjectId: SUBJECT,
+					user: null,
+				},
+				'www.example.com'
+			)
+		).toThrow(/createIdempotencyKey\(\)/u);
+	});
+
+	test('buildV1ConsentOptOutLiftBody produces the exact lift wire body without rights', () => {
+		const body = buildV1ConsentOptOutLiftBody(
+			{
+				givenAt: ACTION_AT,
+				idempotencyKey: KEY,
+				subjectId: SUBJECT,
+				uiSource: 'dialog',
+				user: {
+					externalId: 'user_123',
+					identityProvider: 'clerk',
+					identityToken: 'tok_123',
+				},
+			},
+			'www.example.com'
+		);
+
+		expect(body).toEqual({
+			externalId: 'user_123',
+			givenAt: ACTION_AT,
+			idempotencyKey: KEY,
+			identityProvider: 'clerk',
+			identityToken: 'tok_123',
+			property: 'www.example.com',
+			subjectId: SUBJECT,
+			uiSource: 'dialog',
+		});
+		expect('rights' in body).toBe(false);
+		expect(
+			v1ConsentOptOutLiftInputSchema['~standard'].validate(body)
+		).not.toHaveProperty('issues');
+	});
+
+	test('buildV1ConsentOptOutLiftBody throws without an idempotencyKey', () => {
+		expect(() =>
+			buildV1ConsentOptOutLiftBody(
+				{
+					givenAt: ACTION_AT,
+					idempotencyKey: '',
+					subjectId: SUBJECT,
+					user: null,
+				},
+				'www.example.com'
+			)
+		).toThrow(/createIdempotencyKey\(\)/u);
+	});
+});
+
+describe('optOut: POST /v1/consent/opt-outs', () => {
+	const optOutPayload = {
+		country: 'US',
+		givenAt: ACTION_AT,
+		idempotencyKey: KEY,
+		language: 'en',
+		method: 'button' as const,
+		policyId: 'us-ca',
+		policySnapshotToken: 'snapshot-token',
+		region: 'CA',
+		rights: ['sale', 'share'] as const,
+		subjectId: SUBJECT,
+		uiSource: 'widget' as const,
+		user: null,
+	};
+
+	const serverOptOut = {
+		heldBy: 'device' as const,
+		method: 'button' as const,
+		recordedAt: ACTION_AT + 10_000,
+		rights: ['sale', 'share'] as const,
+	};
+
+	test('posts the body and parses recordId, subjectId, optOut and link', async () => {
+		const { calls, fetch } = stubFetch(() =>
+			json(200, {
+				link: { stored: true, verifiedBy: 'identity_token' },
+				optOut: serverOptOut,
+				recordId: RECORD,
+				subjectId: SUBJECT,
+			})
+		);
+
+		const result = await transportWith(fetch).optOut(optOutPayload);
+
+		expect(calls).toHaveLength(1);
+		expect(calls[0]?.url).toBe(`${PROJECT_URL}/v1/consent/opt-outs`);
+		expect(calls[0]?.init.method).toBe('POST');
+		expect(calls[0]?.body).toMatchObject({
+			givenAt: ACTION_AT,
+			idempotencyKey: KEY,
+			method: 'button',
+			policySnapshotToken: 'snapshot-token',
+			property: 'www.example.com',
+			rights: ['sale', 'share'],
+			subjectId: SUBJECT,
+		});
+		expect(result).toEqual({
+			link: { stored: true, verifiedBy: 'identity_token' },
+			ok: true,
+			optOut: serverOptOut,
+			recordId: RECORD,
+			subjectId: SUBJECT,
+		});
+	});
+
+	test('treats an invalid optOut in the response as no information', async () => {
+		const { fetch } = stubFetch(() =>
+			json(200, {
+				optOut: { heldBy: 'device', method: 'bogus', recordedAt: ACTION_AT, rights: ['sale'] },
+				recordId: RECORD,
+				subjectId: SUBJECT,
+			})
+		);
+
+		const result = await transportWith(fetch).optOut(optOutPayload);
+		expect(result).toEqual({
+			ok: true,
+			recordId: RECORD,
+			subjectId: SUBJECT,
+		});
+		expect('optOut' in result).toBe(false);
+	});
+
+	test('returns unsupported without throwing on 404', async () => {
+		const { fetch } = stubFetch(() => v1Error(404, 'not_found'));
+
+		await expect(transportWith(fetch).optOut(optOutPayload)).resolves.toEqual({
+			ok: false,
+			unsupported: true,
+		});
+	});
+
+	test.each([
+		[400, 'invalid_request'],
+		[413, 'payload_too_large'],
+	])('a %i %s is refused for good', async (status, code) => {
+		const { fetch } = stubFetch(() => v1Error(status, code, 'req_opt'));
+
+		const error = await transportWith(fetch)
+			.optOut(optOutPayload)
+			.catch((caught: unknown) => caught);
+
+		expect(error).toBeInstanceOf(InthApiSaveRejectedError);
+		expect(isConsentSaveRejection(error)).toBe(true);
+		expect(error).toMatchObject({ code, requestId: 'req_opt', status });
+	});
+
+	test('409 subject_conflict is classified for subject recovery', async () => {
+		const { fetch } = stubFetch(() => v1Error(409, 'subject_conflict'));
+
+		const error = await transportWith(fetch)
+			.optOut(optOutPayload)
+			.catch((caught: unknown) => caught);
+
+		expect(isSubjectConflict(error)).toBe(true);
+	});
+
+	test.each([
+		[409, 'policy_snapshot_expired'],
+		[409, 'policy_snapshot_invalid'],
+		[409, 'policy_snapshot_required'],
+		[409, 'conflict'],
+		[401, 'unauthorized'],
+		[429, 'rate_limited'],
+		[500, 'server_error'],
+		[502, 'bad_gateway'],
+	])('a %i %s stays retryable and is never treated as permanent', async (status, code) => {
+		const { fetch } = stubFetch(() => v1Error(status, code));
+
+		const error = await transportWith(fetch)
+			.optOut(optOutPayload)
+			.catch((caught: unknown) => caught);
+
+		expect(error).toBeInstanceOf(InthApiError);
+		expect(isConsentSaveRejection(error)).toBe(false);
+		expect(error).toMatchObject({ code, status });
+	});
+
+	test('retries a 400 whose body names no code', async () => {
+		const { fetch } = stubFetch(
+			() => new Response('<html>Bad</html>', { status: 400 })
+		);
+
+		const error = await transportWith(fetch)
+			.optOut(optOutPayload)
+			.catch((caught: unknown) => caught);
+
+		expect(error).toBeInstanceOf(InthApiError);
+		expect(isConsentSaveRejection(error)).toBe(false);
+	});
+});
+
+describe('liftOptOut: POST /v1/consent/opt-outs/lift', () => {
+	const liftPayload = {
+		givenAt: ACTION_AT,
+		idempotencyKey: KEY,
+		subjectId: SUBJECT,
+		uiSource: 'dialog' as const,
+		user: { externalId: 'user_123', identityToken: 'tok_123' },
+	};
+
+	test('posts without rights and parses null or effective optOut with optional recordId', async () => {
+		const { calls, fetch } = stubFetch(() =>
+			json(200, { optOut: null, subjectId: SUBJECT })
+		);
+
+		const lifted = await transportWith(fetch).liftOptOut(liftPayload);
+
+		expect(calls).toHaveLength(1);
+		expect(calls[0]?.url).toBe(`${PROJECT_URL}/v1/consent/opt-outs/lift`);
+		expect('rights' in bodyAt(calls, 0)).toBe(false);
+		expect(lifted).toEqual({ ok: true, optOut: null, subjectId: SUBJECT });
+
+		const remaining = {
+			heldBy: 'person' as const,
+			method: 'propagated' as const,
+			recordedAt: ACTION_AT - 5000,
+			rights: ['sale', 'share'] as const,
+		};
+		const { fetch: fetchPerson } = stubFetch(() =>
+			json(200, { optOut: remaining, recordId: RECORD, subjectId: SUBJECT })
+		);
+		await expect(transportWith(fetchPerson).liftOptOut(liftPayload)).resolves.toEqual({
+			ok: true,
+			optOut: remaining,
+			recordId: RECORD,
+			subjectId: SUBJECT,
+		});
+	});
+
+	test('treats an invalid optOut in a lift answer as no information rather than null', async () => {
+		const { fetch } = stubFetch(() =>
+			json(200, {
+				optOut: { heldBy: 'person', method: 'api', recordedAt: -1, rights: ['sale'] },
+				subjectId: SUBJECT,
+			})
+		);
+
+		const result = await transportWith(fetch).liftOptOut(liftPayload);
+		expect(result).toEqual({ ok: true, subjectId: SUBJECT });
+		expect('optOut' in result).toBe(false);
+	});
+
+	test('returns unsupported without throwing on 404', async () => {
+		const { fetch } = stubFetch(() => v1Error(404, 'not_found'));
+
+		await expect(transportWith(fetch).liftOptOut(liftPayload)).resolves.toEqual({
+			ok: false,
+			unsupported: true,
 		});
 	});
 });
