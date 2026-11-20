@@ -137,6 +137,17 @@ export {
 	nonIABVendorSchema,
 } from './non-iab-vendor';
 export {
+	OPT_OUT_HOLDERS,
+	OPT_OUT_METHODS,
+	OPT_OUT_RIGHTS,
+	type OptOutHolder,
+	type OptOutLocation,
+	type OptOutMethod,
+	type OptOutRecord,
+	type OptOutRight,
+	resolveOptOutRights,
+} from './opt-out';
+export {
 	type Vendor,
 	type VendorCategoryCondition,
 	vendorCategoryConditionSchema,

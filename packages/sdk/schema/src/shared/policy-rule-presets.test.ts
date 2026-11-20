@@ -337,7 +337,7 @@ describe('regional starter coverage', () => {
 	);
 
 	test.each(
-		'CA CO CT DE FL IA IN KY MD MN MT NE NH NJ OR RI TN TX UT VA'.split(' ')
+		'CA CO CT DE FL IA IN KY MD MN MT NE NH NJ NV OR RI TN TX UT VA'.split(' ')
 	)('US-%s has no automatic prompt and keeps GPC opt-out', (region) => {
 		expect(
 			resolvePolicyRules({
@@ -373,7 +373,7 @@ describe('regional starter coverage', () => {
 		}
 	);
 	test.each(
-		'CA CO CT DE FL IA IN KY MD MN MT NE NH NJ OR RI TN TX UT VA'.split(' ')
+		'CA CO CT DE FL IA IN KY MD MN MT NE NH NJ NV OR RI TN TX UT VA'.split(' ')
 	)(
 		'US-%s can select an opt-in choice with the same GPC restrictions',
 		(region) => {
@@ -470,7 +470,7 @@ describe('regional starter coverage', () => {
 		first.privacySignals?.gpc?.denyCategories?.pop();
 		expect(
 			policyRulePresets.usPrivacyStatesOptOut().match.regions
-		).toHaveLength(20);
+		).toHaveLength(21);
 		expect(
 			policyRulePresets.usPrivacyStatesOptOut().privacySignals?.gpc
 				?.denyCategories

@@ -4,11 +4,12 @@
  */
 
 import { GppModel } from '@iabgpp/cmpapi';
+import { resolveOptOutRights } from '@inth/sdk-schema/types';
 import { describe, expect, test } from 'vitest';
 
 import { encodeGPPString, encodeUSSection } from '../gpp/encoder';
 import type { GPPFieldValues } from '../gpp/encoder';
-import { US_SECTIONS } from '../gpp/sections';
+import { US_SECTIONS, US_STATE_SECTIONS } from '../gpp/sections';
 import type { USSectionDefinition } from '../gpp/sections';
 
 /**
@@ -114,4 +115,16 @@ describe('GPP encoder', () => {
 			})
 		).toThrow(RangeError);
 	});
+
+	test.each(Object.entries(US_STATE_SECTIONS))(
+		'US-%s GPP opt-out fields agree with schema resolveOptOutRights',
+		(state, definition) => {
+			const fieldNames = new Set(definition.core.map(([name]) => name));
+			const rights = resolveOptOutRights({ country: 'US', region: state });
+			expect(fieldNames.has('SharingOptOut')).toBe(rights.includes('share'));
+			expect(fieldNames.has('TargetedAdvertisingOptOut')).toBe(
+				rights.includes('targeted_ads')
+			);
+		}
+	);
 });
