@@ -17,6 +17,7 @@ import type {
 } from '../consent-record/types';
 import type { AllConsentNames } from '../consent/consent-types';
 import type { ExperimentAssignment } from '../libs/experiment';
+import { createIdempotencyKey } from '../libs/subject-uuid';
 import { presentedSelection, scopeSelection } from '../policy-choice';
 import type { PresentedSelection } from '../policy-choice';
 import type {
@@ -258,6 +259,7 @@ export const buildSavePayload = function buildSavePayload(
 		consents: after.effectivePermissions,
 		...saveDecisionInputs(after),
 		givenAt: input.actionAt,
+		idempotencyKey: createIdempotencyKey(),
 		model: after.model,
 		overrides: after.overrides,
 		policySnapshotToken: after.policySnapshotToken,
