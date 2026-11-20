@@ -120,6 +120,7 @@ object SaveBodyBuilder {
 		payload.user?.identityProvider?.takeIf { it.isNotEmpty() }?.let { put("identityProvider", it) }
 		identityToken?.takeIf { it.isNotEmpty() }?.let { put("identityToken", it) }
 		payload.uiSource?.let { put("uiSource", it.wireName) }
+		payload.policySnapshotToken?.takeIf { it.isNotEmpty() }?.let { put("policySnapshotToken", it) }
 	}
 
 	/** Every receipt in the complete choice after the act, `necessary` left out. */

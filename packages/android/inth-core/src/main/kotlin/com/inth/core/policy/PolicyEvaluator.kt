@@ -46,6 +46,15 @@ object PolicyEvaluator {
 	}
 
 	/**
+	 * The category that decides an opt-out under [policy]: `marketing` when in
+	 * [EvaluationPolicy.scope], else `measurement` when in scope, else `null`.
+	 *
+	 * Port of `optOutDecidingCategory` in `packages/sdk/core/src/consent-record/types.ts`.
+	 */
+	fun optOutDecidingCategory(policy: EvaluationPolicy?): ConsentCategory? =
+		optOutDenyCategories(policy).firstOrNull()
+
+	/**
 	 * Evaluate [snapshot] against [policy] at [now] and return a snapshot with
 	 * [ConsentSnapshot.effectivePermissions], [ConsentSnapshot.promptRequirement],
 	 * [ConsentSnapshot.activeUI], [ConsentSnapshot.restrictions],
@@ -105,23 +114,23 @@ object PolicyEvaluator {
 		}
 
 		val choice = snapshot.explicitChoice
-		val choiceCurrent = choice != null &&
-			choice.matchesFingerprint(policy.choiceFingerprint) &&
-			now - choice.actionAt <= policy.choiceMs
 
 		// The snapshot's signal is already the override-merged view, so reading
 		// `active` is the whole rule. Reading `detected` here would let a device
 		// report override an app that turned GPC off.
 		val gpcActive = snapshot.privacySignals.gpc.active
 		val optOutDenied = if (snapshot.optOut != null) optOutDenyCategories(policy) else emptyList()
+		val decidingCategory = if (snapshot.optOut != null) optOutDecidingCategory(policy) else null
 
 		val permissions = LinkedHashMap<ConsentCategory, Boolean>(ConsentCategory.OPTIONAL.size)
+		val authorities = LinkedHashMap<ConsentCategory, Authority>(ConsentCategory.OPTIONAL.size)
 		val restrictions = LinkedHashMap<String, List<String>>()
 
 		for (category in ConsentCategory.OPTIONAL) {
 			val inScope = category in policy.scope
 			val decision = choice?.valueOf(category)
 			val authority = authorityOf(choice, category, policy, now)
+			authorities[category] = authority
 
 			// Reasons are gathered before the permission is decided, in the order the
 			// kernel pushes them, because the pair `["explicit-denial", "strict-scope"]`
@@ -139,7 +148,15 @@ object PolicyEvaluator {
 				reasons += RESTRICTION_GPC
 			}
 			if (category in optOutDenied) {
-				reasons += RESTRICTION_OPT_OUT
+				val explicitGrantStands =
+					decidingCategory != null &&
+						category != decidingCategory &&
+						decision == true &&
+						authority == Authority.VALID &&
+						choice?.valueOf(decidingCategory) == false
+				if (!explicitGrantStands) {
+					reasons += RESTRICTION_OPT_OUT
+				}
 			}
 
 			var allowed = defaultPermission(policy.model, inScope, policy.scopeMode)
@@ -155,9 +172,6 @@ object PolicyEvaluator {
 				restrictions[category.wireName] = reasons.toList()
 			}
 		}
-
-		val noticeCurrent = noticeDismissal != null &&
-			noticeDismissal.covers(policy.noticeFingerprint, now, policy.noticeMs)
 
 		val purpose =
 			if (choice == null && noticeDismissal == null) PromptPurpose.INITIAL else PromptPurpose.UPDATE
@@ -198,14 +212,18 @@ object PolicyEvaluator {
 			PolicyPrompt.NONE -> PromptRequirement.NONE
 		}
 
-		// The next moment a receipt lapses and permissions or the prompt change. An
-		// answered acknowledgement asks again once the last record answering it runs
-		// out, which is `acknowledgementDeadline` in the kernel.
-		val nextDeadline = listOfNotNull(
-			choice?.let { it.actionAt + policy.choiceMs }?.takeIf { choiceCurrent && it > now },
-			noticeDismissal?.let { it.dismissedAt + policy.noticeMs }?.takeIf { noticeCurrent && it > now },
-			acknowledgedUntil?.takeIf { it > now },
-		).minOrNull()
+		val nextDeadline = deriveNextDeadline(
+			choice = choice,
+			policy = policy,
+			noticeDismissal = noticeDismissal,
+			now = now,
+			asked = asked,
+			optOutDenied = optOutDenied,
+			authorities = authorities,
+			restrictions = restrictions,
+			prompt = prompt,
+			acknowledgedUntil = acknowledgedUntil,
+		)
 
 		var state = ConsentState(necessary = true)
 		for ((category, allowed) in permissions) {
@@ -246,7 +264,72 @@ object PolicyEvaluator {
 		}
 		// The same boundary the receipts have always been judged against here, so
 		// closing the evaluator's three gaps does not move the expiry instant too.
-		return if (now - choice.actionAt > policy.choiceMs) Authority.EXPIRED else Authority.VALID
+		return if (now - choice.confirmedAtOf(category.wireName) > policy.choiceMs) Authority.EXPIRED else Authority.VALID
+	}
+
+	private fun grantExpiryChangesPermission(
+		policy: EvaluationPolicy,
+		category: ConsentCategory,
+		optOutDenied: List<ConsentCategory>,
+		restrictions: Map<String, List<String>>,
+	): Boolean =
+		restrictions[category.wireName].isNullOrEmpty() &&
+			(!defaultPermission(policy.model, inScope = true, policy.scopeMode) || category in optOutDenied)
+
+	/**
+	 * Earliest future time at which permissions or the prompt can change.
+	 *
+	 * Port of `deriveNextDeadline` in `packages/sdk/core/src/consent-record/evaluate.ts`.
+	 * A positive in-scope grant matters when its expiry changes a permission (opt-in, IAB,
+	 * or a non-deciding grant standing over a durable opt-out) or a choice prompt; a
+	 * dismissal matters under a notice prompt, and as an acknowledgement under a choice
+	 * prompt with an empty choice scope.
+	 */
+	private fun deriveNextDeadline(
+		choice: com.inth.core.model.ExplicitChoice?,
+		policy: EvaluationPolicy,
+		noticeDismissal: NoticeDismissal?,
+		now: Long,
+		asked: List<ConsentCategory>,
+		optOutDenied: List<ConsentCategory>,
+		authorities: Map<ConsentCategory, Authority>,
+		restrictions: Map<String, List<String>>,
+		prompt: PromptRequirement,
+		acknowledgedUntil: Long?,
+	): Long? {
+		val candidates = mutableListOf<Long>()
+		val choicePromptCanChange =
+			policy.prompt == PolicyPrompt.CHOICE &&
+				!prompt.notice &&
+				!prompt.acknowledge &&
+				asked.none { restrictions[it.wireName]?.isNotEmpty() == true }
+		if (choice != null) {
+			for (category in policy.scope) {
+				if (
+					choice.valueOf(category) == true &&
+					authorities[category] == Authority.VALID &&
+					(grantExpiryChangesPermission(policy, category, optOutDenied, restrictions) ||
+						(choicePromptCanChange && category in asked))
+				) {
+					val expiresAt = choice.confirmedAtOf(category.wireName) + policy.choiceMs
+					if (expiresAt > now) {
+						candidates += expiresAt
+					}
+				}
+			}
+		}
+		acknowledgedUntil?.takeIf { it > now }?.let { candidates += it }
+		if (
+			policy.prompt == PolicyPrompt.NOTICE &&
+			noticeDismissal != null &&
+			noticeDismissal.fingerprint == policy.noticeFingerprint
+		) {
+			val expiresAt = noticeDismissal.dismissedAt + policy.noticeMs
+			if (expiresAt > now) {
+				candidates += expiresAt
+			}
+		}
+		return candidates.minOrNull()
 	}
 
 	/**

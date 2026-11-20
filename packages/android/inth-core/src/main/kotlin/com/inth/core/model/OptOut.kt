@@ -206,6 +206,7 @@ data class LiftOptOutPayload(
 	val givenAt: Long,
 	val user: KernelUser? = null,
 	val uiSource: ActiveUI? = null,
+	val policySnapshotToken: String? = null,
 ) {
 	init {
 		require(idempotencyKey.isNotEmpty()) {

@@ -1110,18 +1110,16 @@ class ConsentCore @InthInternalApi constructor(
 						.orEmpty(),
 				)
 			}
-			val optOutCategories = PolicyEvaluator.optOutDenyCategories(policy)
-			val grantsOptOutCategory = optOutCategories.any { confirmed[it.wireName] == true }
+			val decidingCategory = PolicyEvaluator.optOutDecidingCategory(policy)
+			val confirmedDeciding = decidingCategory?.let { confirmed[it.wireName] }
+			val grantsDecidingCategory = confirmedDeciding == true
 			val optOutBlocker = optOutLiftBlocker(current, policy)
-			liftsOptOut = grantsOptOutCategory && optOutBlocker == null
-			liftsAccountOptOut = grantsOptOutCategory && optOutBlocker == OptInRefusalReason.HELD_BY_ACCOUNT
-			val refusesOptOutCategories =
-				!grantsOptOutCategory &&
+			liftsOptOut = grantsDecidingCategory && optOutBlocker == null
+			liftsAccountOptOut = grantsDecidingCategory && optOutBlocker == OptInRefusalReason.HELD_BY_ACCOUNT
+			recordedOptOut =
+				current.optOut == null &&
 					policy?.model == ConsentModel.OPT_OUT &&
-					optOutCategories.isNotEmpty() &&
-					optOutCategories.any { confirmed[it.wireName] == false } &&
-					optOutCategories.all { choice?.valueOf(it) == false }
-			recordedOptOut = refusesOptOutCategories && current.optOut == null
+					confirmedDeciding == false
 			val nextOptOut = when {
 				liftsOptOut -> null
 				recordedOptOut -> OptOutRecord(
@@ -3209,6 +3207,7 @@ class ConsentCore @InthInternalApi constructor(
 		givenAt = actionAt,
 		user = currentUserFor(snapshot.subject),
 		uiSource = uiSource,
+		policySnapshotToken = snapshot.policySnapshotToken,
 	)
 
 	private fun buildLiftOptOutEntry(
