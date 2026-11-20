@@ -45,16 +45,25 @@ interface SentRecord {
 let records: SentRecord[] = [];
 /** The backend's clock, which the device clock does not move. */
 const SERVER_NOW = 1_800_000_000_000;
+const HOUR = 3_600_000;
 /** What the backend holds per category: a value and the time it stored. */
 let backendHolds: Record<string, { at: number; value?: boolean }> = {};
+/** The idempotency keys of the saves the backend stored. */
+let storedKeys = new Set<string>();
 
 /**
- * The backend's ordering of saves. The last save to arrive wins for the
- * categories it confirmed. A `givenAt` ahead of the backend's clock is stored
- * as the backend's time. A carried receipt is accepted whatever its time,
- * and never overwrites a newer stored value.
+ * The backend's ordering of saves. It models the rule the hosted API is
+ * about to adopt, not the one it runs today. A save whose key it already
+ * stored changes nothing. The last save to arrive wins for the categories
+ * it confirmed. A `givenAt` ahead of the backend's clock is stored as the
+ * backend's time. A carried receipt is accepted whatever its time, and
+ * never overwrites a newer stored value.
  */
 const backendStores = function backendStores(record: SentRecord): void {
+	if (storedKeys.has(record.idempotencyKey)) {
+		return;
+	}
+	storedKeys.add(record.idempotencyKey);
 	const at = Math.min(record.givenAt, SERVER_NOW);
 	for (const [category, receipt] of Object.entries(record.answer.categories)) {
 		if (record.confirmed.includes(category)) {
@@ -135,6 +144,84 @@ const settle = () =>
 const subjectOf = (runtime: ConsentRuntime) =>
 	runtime.kernel.getSnapshot().subject?.subjectId;
 
+/** The categories each save in the stored queue confirmed, in queue order. */
+const queuedChoices = () =>
+	(
+		JSON.parse(localStorage.getItem(PENDING_SAVES_STORAGE_KEY) ?? '[]') as {
+			payload: { confirmed: { categories: Record<string, boolean> } };
+		}[]
+	).map(({ payload }) => payload.confirmed.categories);
+
+/** What the backend received for marketing, in order of arrival. */
+const sentMarketing = () =>
+	records.map((record) => record.answer.categories.marketing?.value);
+
+interface StoredState {
+	cookie: string;
+	local: [string, string][];
+}
+
+/**
+ * Watches writes to the stored queue, and keeps localStorage and cookies as
+ * they stand at the first one `at` picks: before a removal, after a write.
+ */
+const watchQueue = function watchQueue(
+	at: (write: { removed: boolean; value?: string }) => boolean
+) {
+	let state: StoredState | undefined;
+	const real = window.localStorage;
+	const keep = () => {
+		state ??= { cookie: document.cookie, local: Object.entries({ ...real }) };
+	};
+	const watched = {
+		clear: () => real.clear(),
+		getItem: (key: string) => real.getItem(key),
+		key: (index: number) => real.key(index),
+		get length() {
+			return real.length;
+		},
+		removeItem(key: string) {
+			if (key === PENDING_SAVES_STORAGE_KEY && at({ removed: true })) {
+				keep();
+			}
+			real.removeItem(key);
+		},
+		setItem(key: string, value: string) {
+			real.setItem(key, value);
+			if (key === PENDING_SAVES_STORAGE_KEY && at({ removed: false, value })) {
+				keep();
+			}
+		},
+	} as Storage;
+	const getter = vi
+		.spyOn(window, 'localStorage', 'get')
+		.mockReturnValue(watched);
+	return {
+		state: () => {
+			if (!state) {
+				throw new Error('the queue was never written that way');
+			}
+			return state;
+		},
+		stop: () => getter.mockRestore(),
+	};
+};
+
+/** A page load from storage as it stood in `state`, as after a crash. */
+const loadFrom = function loadFrom(state: StoredState) {
+	localStorage.clear();
+	clearStoredConsentRecords();
+	for (const [key, value] of state.local) {
+		localStorage.setItem(key, value);
+	}
+	for (const cookie of state.cookie.split('; ')) {
+		if (cookie) {
+			document.cookie = `${cookie}; path=/`;
+		}
+	}
+	return load();
+};
+
 /** What a c15t client left: its consent cookie and storage, and a sub_ id. */
 const leaveC15tVisitor = async () => {
 	const c15t = createConsentKernel({
@@ -157,6 +244,7 @@ beforeEach(() => {
 	clearStoredConsentRecords();
 	records = [];
 	backendHolds = {};
+	storedKeys = new Set();
 	offline = false;
 	recordsAnswer = answerRecord;
 });
@@ -270,10 +358,144 @@ test('a save from a device clock one hour ahead is accepted', async () => {
 	const result = await page.kernel.commands.save({ marketing: true });
 	await settle();
 
+	// Dated by the device clock, nothing refused, nothing left queued.
 	expect(result.ok).toBe(true);
 	expect(errors).toEqual([]);
 	expect(records).toHaveLength(1);
 	expect(records[0]?.givenAt).toBe(ahead);
-	expect(backendHolds.marketing).toEqual({ at: SERVER_NOW, value: true });
 	expect(localStorage.getItem(PENDING_SAVES_STORAGE_KEY)).toBeNull();
+});
+
+test('a withdrawal queued after the clock was corrected replaces the grant queued while it ran ahead', async () => {
+	vi.useFakeTimers({ toFake: ['Date'] });
+	vi.setSystemTime(SERVER_NOW + 2 * HOUR);
+	const page = await load();
+	offline = true;
+	await page.kernel.commands.save({ marketing: true });
+	vi.setSystemTime(SERVER_NOW);
+	await page.kernel.commands.save({ marketing: false });
+
+	expect(queuedChoices()).toEqual([{ marketing: false }]);
+
+	offline = false;
+	window.dispatchEvent(new Event('online'));
+	await vi.waitFor(() => expect(records).toHaveLength(1));
+	await settle();
+	expect(sentMarketing()).toEqual([false]);
+	expect(backendHolds.marketing?.value).toBe(false);
+	expect(localStorage.getItem(PENDING_SAVES_STORAGE_KEY)).toBeNull();
+});
+
+test('a withdrawal sent after the clock was corrected leaves nothing of the grant queued while it ran ahead', async () => {
+	vi.useFakeTimers({ toFake: ['Date'] });
+	vi.setSystemTime(SERVER_NOW + 2 * HOUR);
+	const page = await load();
+	offline = true;
+	await page.kernel.commands.save({ marketing: true });
+	vi.setSystemTime(SERVER_NOW);
+	offline = false;
+	await page.kernel.commands.save({ marketing: false });
+
+	expect(localStorage.getItem(PENDING_SAVES_STORAGE_KEY)).toBeNull();
+	window.dispatchEvent(new Event('online'));
+	await settle();
+	expect(sentMarketing()).toEqual([false]);
+	expect(backendHolds.marketing?.value).toBe(false);
+});
+
+test('after a grant queued with the clock a minute fast and a withdrawal sent, the next page replays nothing', async () => {
+	vi.useFakeTimers({ toFake: ['Date'] });
+	vi.setSystemTime(SERVER_NOW + 60_000);
+	const page = await load();
+	offline = true;
+	await page.kernel.commands.save({ marketing: true });
+	vi.setSystemTime(SERVER_NOW);
+	offline = false;
+	await page.kernel.commands.save({ marketing: false });
+	await settle();
+	unload(page);
+
+	await load();
+	await settle();
+	expect(sentMarketing()).toEqual([false]);
+	expect(backendHolds.marketing?.value).toBe(false);
+	expect(localStorage.getItem(PENDING_SAVES_STORAGE_KEY)).toBeNull();
+});
+
+test('two saves in flight under a sub_ ID end under the UUID, stored and not resent', async () => {
+	await leaveC15tVisitor();
+	const page = await load();
+	const answers = [
+		Promise.withResolvers<Response>(),
+		Promise.withResolvers<Response>(),
+	];
+	recordsAnswer = () => answers[records.length - 1]?.promise ?? answerRecord();
+	const first = page.kernel.commands.save({ marketing: true });
+	await vi.waitFor(() => expect(records).toHaveLength(1));
+	const second = page.kernel.commands.save({ measurement: false });
+	await vi.waitFor(() => expect(records).toHaveLength(2));
+	answers[0]?.resolve(Response.json(recordAnswer({ body: '{}' })));
+	await first;
+	answers[1]?.resolve(Response.json(recordAnswer({ body: '{}' })));
+	await second;
+	await settle();
+
+	expect(records.map((record) => record.subjectId)).toEqual([
+		LEGACY_SUBJECT,
+		LEGACY_SUBJECT,
+	]);
+	expect(subjectOf(page)).toBe(SUBJECT);
+	expect(localStorage.getItem(PENDING_SAVES_STORAGE_KEY)).toBeNull();
+	unload(page);
+
+	recordsAnswer = answerRecord;
+	const next = await load();
+	await settle();
+	expect(subjectOf(next)).toBe(SUBJECT);
+	expect(records).toHaveLength(2);
+});
+
+test('a reload as an accepted save leaves the queue resends it once under its key, and the answer moves the page to the UUID', async () => {
+	await leaveC15tVisitor();
+	const page = await load();
+	const watch = watchQueue(({ removed }) => removed);
+	await page.kernel.commands.save({ marketing: true });
+	watch.stop();
+	unload(page);
+
+	const next = await loadFrom(watch.state());
+	await vi.waitFor(() => expect(records).toHaveLength(2));
+	await vi.waitFor(() => expect(subjectOf(next)).toBe(SUBJECT));
+	// The backend took the same key twice and stored it once.
+	expect(records[1]?.idempotencyKey).toBe(records[0]?.idempotencyKey);
+	expect(storedKeys.size).toBe(1);
+	expect(localStorage.getItem(PENDING_SAVES_STORAGE_KEY)).toBeNull();
+});
+
+test('a reload between the move of the queue to the UUID and the cookie write keeps the sub_ ID until the next save', async () => {
+	await leaveC15tVisitor();
+	const page = await load();
+	offline = true;
+	await page.kernel.commands.save({ marketing: true });
+	offline = false;
+	// The queue holds the grant under the UUID; the cookie still has sub_.
+	const watch = watchQueue(
+		({ value }) => value?.includes(`"subjectId":"${SUBJECT}"`) === true
+	);
+	await page.kernel.commands.save({ measurement: true });
+	watch.stop();
+	unload(page);
+
+	const next = await loadFrom(watch.state());
+	await vi.waitFor(() => expect(records).toHaveLength(2));
+	await settle();
+	// The replay went out under the UUID; the page stays on the sub_ ID,
+	// which the backend maps to the same UUID.
+	expect(records[1]?.subjectId).toBe(SUBJECT);
+	expect(subjectOf(next)).toBe(LEGACY_SUBJECT);
+
+	await next.kernel.commands.save({ marketing: false });
+	expect(records[2]?.subjectId).toBe(LEGACY_SUBJECT);
+	await vi.waitFor(() => expect(subjectOf(next)).toBe(SUBJECT));
+	expect(backendHolds.marketing?.value).toBe(false);
 });

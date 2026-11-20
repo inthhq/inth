@@ -22,20 +22,19 @@ import {
 	isSubjectConflict,
 } from '../../transports/save-rejection';
 import type { QueueTools } from './queue';
-import { pendingSave } from './store';
+import { appendSave } from './store';
 import { toStoredPayload } from './stored-payload';
-import { supersededBy, withoutSuperseded, withSubjectId } from './supersession';
+import { withoutSuperseded, withSubjectId } from './supersession';
 
 /** @internal */
 export const queueTools: QueueTools = {
+	appendSave,
 	consentModels: CONSENT_MODELS,
 	generateUuidV7,
 	isConsentSaveRejection,
 	isPlainRecord,
 	isSubjectConflict,
 	optionalCategories: OPTIONAL_CONSENT_CATEGORIES,
-	pendingSave,
-	supersededBy,
 	toStoredPayload,
 	validateExplicitChoice,
 	warnInDevelopment,

@@ -14,6 +14,12 @@ export interface PendingSaveEntry {
 	payload: SavePayload;
 	queuedAt: number;
 	attempts: number;
+	/**
+	 * Its place in the queue, numbered when it was added to the stored list
+	 * under the store's lock, so in the order saves were queued across tabs.
+	 * Absent on an entry an older release queued; those come first.
+	 */
+	seq?: number;
 }
 
 /**
@@ -24,11 +30,6 @@ export interface Supersession {
 	category: (category: OptionalConsentCategory) => boolean;
 	vendors: boolean;
 }
-
-const NOTHING_SUPERSEDED: Supersession = {
-	category: () => false,
-	vendors: false,
-};
 
 /**
  * The part of a save nothing newer covers, or `null` when nothing is left.
@@ -42,7 +43,7 @@ const NOTHING_SUPERSEDED: Supersession = {
  *
  * Every caller that asks "is this save superseded?" asks it here: the
  * outbox for a send in flight ({@link liveSupersession}) and the queue for
- * stored entries ({@link supersededBy}).
+ * stored entries.
  */
 export const withoutSuperseded = function withoutSuperseded(
 	payload: SavePayload,
@@ -87,27 +88,6 @@ export const withoutSuperseded = function withoutSuperseded(
 	return Object.keys(remaining.confirmed.categories).length > 0
 		? remaining
 		: null;
-};
-
-/**
- * What `newer` covers of `older`: the categories it confirmed and, when it
- * carried one, the vendor map. Nothing when it belongs to another subject
- * or acted before `older`.
- */
-export const supersededBy = function supersededBy(
-	older: SavePayload,
-	newer: SavePayload
-): Supersession {
-	if (
-		older.subjectId !== newer.subjectId ||
-		older.confirmed.actionAt > newer.confirmed.actionAt
-	) {
-		return NOTHING_SUPERSEDED;
-	}
-	return {
-		category: (category) => Object.hasOwn(newer.confirmed.categories, category),
-		vendors: newer.vendorChoice !== undefined,
-	};
 };
 
 /**

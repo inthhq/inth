@@ -89,7 +89,7 @@ afterEach(() => {
 // Use the public Vue context and real transports: injected kernel transports
 // cannot detect methods lost by a framework wrapper.
 test.each(modes)(
-	'%s transport links an identity and moves to the subject id it answers, without writes',
+	'%s transport links an identity without writes',
 	async (_name, createMode) => {
 		vi.spyOn(Date, 'now').mockReturnValue(now);
 		const fetchMock = vi.fn<FetchRequest>((url) =>
@@ -123,7 +123,8 @@ test.each(modes)(
 				.filter(([url]) => String(url) === linkURL)
 				.map(([, init]) => init?.method)
 		).toEqual(['POST']);
-		expect(context.snapshot.value.subject?.subjectId).toBe(linkedId);
+		// Only a `sub_` id moves to the id a link answers.
+		expect(context.snapshot.value.subject?.subjectId).toBe(subjectId);
 		expect(onChoiceRecorded).not.toHaveBeenCalled();
 	}
 );

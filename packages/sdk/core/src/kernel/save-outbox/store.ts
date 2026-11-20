@@ -77,19 +77,53 @@ export interface SaveOutboxStore {
 }
 
 /**
- * A save as the outbox queues it, without its identity token.
+ * The `saves` list as read, with `entries` appended and numbered after every
+ * entry it holds (`seq`). Called inside a transaction, so the numbers follow
+ * the order saves were queued in, across tabs. Entries keep any identity
+ * token out ({@link withoutStoredTokens}).
+ */
+const appendSaves = function appendSaves(
+	stored: unknown,
+	entries: readonly unknown[]
+): unknown[] {
+	const list = withoutStoredTokens(stored);
+	let seq = 0;
+	for (const entry of list) {
+		const number = (entry as { seq?: unknown } | null)?.seq;
+		if (typeof number === 'number' && number > seq) {
+			seq = number;
+		}
+	}
+	return [
+		...list,
+		...withoutStoredTokens(entries).map((entry) => {
+			seq += 1;
+			return entry !== null && typeof entry === 'object'
+				? { ...entry, seq }
+				: entry;
+		}),
+	];
+};
+
+/**
+ * The `saves` list as read, with `payload` queued after every entry in it,
+ * without its identity token.
  *
  * @param now - When it was queued.
  * @internal
  */
-export const pendingSave = (
+export const appendSave = (
+	stored: unknown,
 	payload: SavePayload,
 	now: number
-): PendingSaveEntry => ({
-	attempts: 0,
-	payload: toStoredPayload(payload),
-	queuedAt: now,
-});
+): unknown[] =>
+	appendSaves(stored, [
+		{
+			attempts: 0,
+			payload: toStoredPayload(payload),
+			queuedAt: now,
+		} satisfies PendingSaveEntry,
+	]);
 
 /**
  * Queues `payload` after the saves `store` holds, for the kernel's replay
@@ -105,13 +139,9 @@ export const enqueueSave = function enqueueSave(
 	payload: SavePayload,
 	now: number = Date.now()
 ): Promise<boolean> {
-	return store.transact((tx) => {
-		const stored = tx.read('saves');
-		return tx.write('saves', [
-			...withoutStoredTokens(stored),
-			pendingSave(payload, now),
-		]);
-	});
+	return store.transact((tx) =>
+		tx.write('saves', appendSave(tx.read('saves'), payload, now))
+	);
 };
 
 /** The part of `Storage` a store uses. */
@@ -205,9 +235,10 @@ const c15tClearEpoch = function c15tClearEpoch(storage: TextStorage): number {
  * The outbox store every tab of an origin shares: JSON arrays in
  * localStorage under {@link PENDING_SAVES_STORAGE_KEY} and
  * {@link SUBJECT_REASSIGNMENTS_STORAGE_KEY}. Every transaction first
- * appends c15t's lists to these, its saves without their identity tokens,
- * and removes them, so the outbox replays what a c15t page queued; `clear`
- * removes c15t's lists too.
+ * appends c15t's lists to these, its saves without their identity tokens
+ * and numbered after this list's in their own order, and removes them, so
+ * the outbox replays what a c15t page queued; `clear` removes c15t's lists
+ * too.
  *
  * Every transaction holds one Web Lock, so two tabs cannot overwrite each
  * other's entries or replay one twice. Without
@@ -296,14 +327,14 @@ export const createBrowserOutboxStore = function createBrowserOutboxStore(
 					}
 					if (Array.isArray(adopted)) {
 						const own = readKey(SLOT_KEYS[slot]);
+						const marked = adopted.map(markAdopted);
 						if (
-							!tx.write(slot, [
-								...(Array.isArray(own) ? own : []),
-								...(slot === 'saves'
-									? withoutStoredTokens(adopted)
-									: adopted
-								).map(markAdopted),
-							])
+							!tx.write(
+								slot,
+								slot === 'saves'
+									? appendSaves(own, marked)
+									: [...(Array.isArray(own) ? own : []), ...marked]
+							)
 						) {
 							continue;
 						}

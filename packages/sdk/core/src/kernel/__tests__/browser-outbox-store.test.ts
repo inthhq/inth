@@ -124,6 +124,7 @@ describe('browser outbox store', () => {
 					subjectId: kernel.getSnapshot().subject?.subjectId,
 				}),
 				queuedAt: expect.any(Number),
+				seq: 1,
 			},
 		]);
 		expect(new Set(names)).toEqual(new Set([LOCK_NAME]));
@@ -316,9 +317,11 @@ describe('browser outbox store', () => {
 		await vi.waitFor(() => {
 			expect(storage.getItem(SAVES_KEY)).toBeNull();
 		});
+		// In queue order: c15t's entries were queued after these, in their own
+		// order.
 		expect(save.mock.calls.map(([payload]) => payload)).toEqual([
-			{ ...other.payload, idempotencyKey: expect.any(String) },
 			{ ...newer.payload, idempotencyKey: expect.any(String) },
+			{ ...other.payload, idempotencyKey: expect.any(String) },
 		]);
 		expect(storage.getItem(C15T_SAVES_KEY)).toBeNull();
 		kernel.dispose();

@@ -75,7 +75,7 @@ export interface RecordsBoundaryOptions {
 	transport: KernelTransport | undefined;
 	/** Starts the lifecycle; hydration counts as a lifecycle command. */
 	start: () => void;
-	/** Moves the visitor to the subject id a link answered for theirs. */
+	/** Moves a visitor on a `sub_` id to the UUID a link answered for it. */
 	adoptSubject: (from: string, to: string) => Promise<void>;
 }
 
