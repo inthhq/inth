@@ -1,9 +1,6 @@
-# Android suites that need a booted emulator. They run on Depot CI because its
-# sandboxes expose /dev/kvm; Depot's GitHub Actions runners do not, so these
-# jobs cannot live in .github/workflows next to the rest of CI.
-#
-# Depot CI runs these for this repository. `uses: ./.github/actions/setup-sdk`
-# resolves to .depot/actions/setup-sdk, a symlink back to the shared action.
+# Android suites that need a booted emulator. The emulator needs KVM, which
+# GitHub-hosted Linux runners provide. Depot's GitHub Actions runners never had
+# it, and Depot CI sandboxes stopped exposing it in November 2026.
 name: Android emulator
 
 on:
@@ -24,8 +21,9 @@ on:
       - "packages/sdk/schema/**"
       - "packages/sdk/translations/**"
       - "scripts/ci-android-emulator.sh"
+      - "scripts/ci-android-toolchain.sh"
       - "scripts/vendor_capture.py"
-      - ".depot/**"
+      - ".github/workflows/android-emulator.yml"
       - ".github/actions/setup-sdk/**"
       - "pnpm-lock.yaml"
   push:
@@ -37,9 +35,8 @@ on:
 permissions:
   contents: read
 
-# A newer push to the same pull request replaces its run. Every other run,
-# including `depot ci run` from a working tree, gets its own group, so
-# parallel manual runs never cancel each other.
+# A newer push to the same pull request replaces its run. Every other run gets
+# its own group, so parallel manual runs never cancel each other.
 concurrency:
   group: android-emulator-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -51,14 +48,14 @@ env:
 jobs:
   native:
     name: Native instrumented suites (kernel and consent demo)
-    runs-on: depot-ubuntu-24.04-8
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
       - name: Prepare the Android toolchain
-        run: bash .depot/android-toolchain.sh
+        run: bash scripts/ci-android-toolchain.sh
       - name: Boot the emulator
         run: bash scripts/ci-android-emulator.sh start
       - name: Android kernel instrumented suite
@@ -98,19 +95,19 @@ jobs:
           retention-days: 7
 
   # Device screenshots of the stock screens and of the app-owned example built on the headless
-  # blocks, for pull request descriptions. Dispatch it, or run it from a working tree with
-  # `depot ci run --workflow .depot/workflows/android-emulator.yml --job screenshots`.
+  # blocks, for pull request descriptions. Dispatch it with
+  # `gh workflow run android-emulator.yml --ref <branch>`.
   screenshots:
     name: Stock and custom consent screenshots
     if: ${{ github.event_name != 'pull_request' && github.event_name != 'push' && github.event_name != 'schedule' }}
-    runs-on: depot-ubuntu-24.04-8
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
       - name: Prepare the Android toolchain
-        run: bash .depot/android-toolchain.sh
+        run: bash scripts/ci-android-toolchain.sh
       - name: Boot the emulator
         run: bash scripts/ci-android-emulator.sh start
       - name: Capture every screen in light and dark
@@ -132,7 +129,7 @@ jobs:
 
   react-native:
     name: Release RN app on Android Emulator, UIAutomator
-    runs-on: depot-ubuntu-24.04-8
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -140,7 +137,7 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-sdk
       - name: Prepare the Android toolchain
-        run: bash .depot/android-toolchain.sh
+        run: bash scripts/ci-android-toolchain.sh
       - name: Run real consent controls and record the app
         run: pnpm --dir internals/fixtures/react-native-bare run e2e:android
       - name: Upload recordings, native snapshots, JUnit results and logs
@@ -154,7 +151,7 @@ jobs:
 
   expo-vendor-sdks:
     name: Expo ${{ matrix.cell }} with real vendor SDKs on Android Emulator
-    runs-on: depot-ubuntu-24.04-8
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -172,7 +169,7 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-sdk
       - name: Prepare the Android toolchain
-        run: bash .depot/android-toolchain.sh
+        run: bash scripts/ci-android-toolchain.sh
       - name: Run PostHog, Mixpanel, Amplitude, Sentry Replay and Firebase through the consent journey
         run: bash internals/fixtures/expo-dev/scripts/vendor-e2e.sh android
       - name: Upload vendor requests, Firebase log evidence and UIAutomator frames

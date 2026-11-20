@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Point a Depot CI sandbox at its preinstalled Android SDK and JDK 17, and add
-# the emulator pieces the image leaves out. Exports go through GITHUB_ENV and
+# Point a CI runner at its preinstalled Android SDK and JDK 17, and add the
+# emulator pieces the image leaves out. Exports go through GITHUB_ENV and
 # GITHUB_PATH so later steps see them.
 set -euo pipefail
 
@@ -43,3 +43,6 @@ for attempt in 1 2 3; do
 	sleep 5
 done
 sudo chmod 666 /dev/kvm 2>/dev/null || true
+# Without KVM the x86_64 emulator either exits at once or never finishes
+# booting, which used to cost a full job timeout. Stop here instead.
+[[ -w /dev/kvm ]] || { echo "::error::This runner has no usable /dev/kvm, so the Android emulator cannot boot." >&2; exit 1; }

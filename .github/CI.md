@@ -36,7 +36,7 @@ The six CLI jobs are required checks on `main` under their exact names. They alw
 
 ## Runners
 
-The CLI jobs keep the Blacksmith runners they used before. The SDK and mobile jobs use GitHub-hosted runners: `ubuntu-24.04`, and `macos-26` for Swift. The Android emulator suites in `.depot/workflows` need KVM and run on Depot CI, which this repository is connected to. They report as `Android emulator / …` checks. **CI result** does not cover them, because they are not jobs in `ci.yml`.
+The CLI jobs keep the Blacksmith runners they used before. The SDK and mobile jobs use GitHub-hosted runners: `ubuntu-24.04`, and `macos-26` for Swift. The Android emulator suites in `android-emulator.yml` need KVM and run on `ubuntu-24.04`, which provides it. They report as `Android emulator / …` checks. **CI result** does not cover them, because they are not jobs in `ci.yml`. The manual live PostHog check in `.depot/workflows` still runs on Depot CI, which holds its secret. Depot CI sandboxes have had no KVM since November 2026, so it cannot boot the emulator until Depot restores it or the check moves here with a GitHub secret.
 
 ## Releases
 

@@ -4,7 +4,7 @@
 #   scripts/ci-android-emulator.sh start   # prints nothing; exports ANDROID_SERIAL via GITHUB_ENV when set
 #   scripts/ci-android-emulator.sh stop
 #
-# Needs KVM. Depot CI sandboxes have it; Depot's GitHub Actions runners do not.
+# Needs KVM. GitHub-hosted Linux runners have it.
 set -euo pipefail
 
 : "${ANDROID_HOME:?ANDROID_HOME must point at the Android SDK}"

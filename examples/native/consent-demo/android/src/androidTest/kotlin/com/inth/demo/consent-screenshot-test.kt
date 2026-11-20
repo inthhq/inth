@@ -18,7 +18,7 @@ import org.junit.runner.RunWith
 /**
  * Opens the first-layer prompt, preferences and the IAB screen in the stock UI and in the
  * app-owned UI built on the headless blocks, in light and dark, and saves a device screenshot
- * of each to [DIRECTORY]. The `screenshots` job in `.depot/workflows/android-emulator.yml`
+ * of each to [DIRECTORY]. The `screenshots` job in `.github/workflows/android-emulator.yml`
  * pulls them. It also proves the custom example reaches every screen on a device.
  */
 @RunWith(AndroidJUnit4::class)
