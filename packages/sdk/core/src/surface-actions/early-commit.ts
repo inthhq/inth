@@ -20,7 +20,6 @@
  */
 
 import { recordCategoryPatch } from '../consent-record/record';
-import { optOutDenyCategories } from '../consent-record/types';
 import type { OptionalConsentCategory } from '../consent-record/types';
 import { buildNextSnapshot } from '../kernel/next-snapshot';
 import type { PolicyResolvers, SnapshotPatch } from '../kernel/next-snapshot';
@@ -67,6 +66,7 @@ import {
 	hasStoredClearEpoch,
 	kernelOnly,
 	pendingIsInert,
+	saveRecordsOptOut,
 } from './instant-commit';
 import type { InstantCommit } from './instant-commit';
 
@@ -161,20 +161,17 @@ export const planEarlyCommit = function planEarlyCommit(
 	) {
 		return null;
 	}
-	const optOutCategories = optOutDenyCategories(before.evaluationPolicy);
 	if (
-		before.evaluationPolicy.model === 'opt-out' &&
-		optOutCategories.length > 0 &&
-		recorded.confirmed.some(
+		saveRecordsOptOut(
+			before.evaluationPolicy,
 			(category) =>
-				optOutCategories.includes(category) &&
-				recorded.choice.categories[category]?.value === false
-		) &&
-		optOutCategories.every(
-			(category) => recorded.choice.categories[category]?.value === false
+				recorded.confirmed.includes(category)
+					? recorded.choice.categories[category]?.value
+					: undefined,
+			before.optOut !== null
 		)
 	) {
-		// Refusing the opt-out categories records a durable opt-out in the kernel.
+		// Refusing the deciding category records a durable opt-out in the kernel.
 		return null;
 	}
 	const { uiSource, ...timing } = saveAttribution(

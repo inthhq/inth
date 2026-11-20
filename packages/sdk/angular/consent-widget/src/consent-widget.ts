@@ -36,6 +36,7 @@ import type { AllConsentNames, ConsentType } from '@inth/sdk/engine';
 import { actionAppearanceFromTheme } from '@inth/sdk/engine';
 import { createPreferenceDraft } from '@inth/sdk/preference-draft';
 import {
+	resolveCategoryOptOutLock,
 	resolveCategoryTitle,
 	resolveConsentPresentation,
 	resolveOptOutCopy,
@@ -455,13 +456,8 @@ export class ConsentWidgetRoot {
 
 	/** @internal */
 	protected isGpcLocked(name: AllConsentNames): boolean {
-		if (name === 'necessary') {
-			return false;
-		}
-		const state = this.optOutState();
 		return (
-			(state.lock === 'gpc-active' && state.categories.includes(name)) ||
-			this.consent.restrictions()[name]?.includes('gpc') === true
+			resolveCategoryOptOutLock(this.consent.snapshot(), name) === 'gpc-active'
 		);
 	}
 
@@ -479,11 +475,11 @@ export class ConsentWidgetRoot {
 		if (name === 'necessary') {
 			return null;
 		}
-		if (this.isGpcLocked(name)) {
+		const lock = resolveCategoryOptOutLock(this.consent.snapshot(), name);
+		if (lock === 'gpc-active') {
 			return this.optOutCopy().lockedByGpc;
 		}
-		const state = this.optOutState();
-		if (state.lock === 'held-by-account' && state.categories.includes(name)) {
+		if (lock === 'held-by-account') {
 			return this.optOutCopy().lockedByAccount;
 		}
 		const category = name as ChoiceCategory;

@@ -34,6 +34,7 @@ export {
 	OPT_OUT_REPROMPT_WAIT_MS,
 	OPTIONAL_CONSENT_CATEGORIES,
 	optInPromptAllowedAt,
+	optOutDecidingCategory,
 	optOutDenyCategories,
 } from './consent-record';
 export { createConsentKernel } from './kernel';
@@ -372,8 +373,13 @@ export type {
 	ResolvedIABCopy,
 	ResolvedOptOutLink,
 } from './libs/consent-copy';
-export { isOptedOut, resolveOptOutState } from './libs/opt-out-state';
+export {
+	isOptedOut,
+	resolveCategoryOptOutLock,
+	resolveOptOutState,
+} from './libs/opt-out-state';
 export type {
+	CategoryOptOutLockSnapshot,
 	OptOutCheckSnapshot,
 	OptOutLock,
 	OptOutVia,

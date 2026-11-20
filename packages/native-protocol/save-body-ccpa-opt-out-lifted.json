@@ -1,5 +1,5 @@
 {
-	"description": "A stored device-held button opt-out under the CCPA opt-out rule followed by a save that grants marketing. With GPC inactive, granting an opt-out category lifts the durable opt-out record, clears the opt-out restrictions, and allows marketing and measurement.",
+	"description": "A stored device-held button opt-out under the CCPA opt-out rule followed by a save that grants marketing. With GPC inactive, granting the deciding category lifts the durable opt-out record, clears the opt-out restrictions, and allows marketing and measurement.",
 	"expected": {
 		"request": {
 			"body": {

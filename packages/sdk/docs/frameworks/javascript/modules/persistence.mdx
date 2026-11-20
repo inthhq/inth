@@ -23,9 +23,10 @@ servers) and `localStorage`, restoring them synchronously on page load. Both
 
 `inth-opt-out` stores a durable opt-out recorded by `commands.optOut()`, a
 detected GPC signal, or a save under an `opt-out` policy that rejects all or
-turns both `marketing` and `measurement` off. It switches off `marketing` and
-`measurement` in scope, and persistence deletes it when `commands.optIn()` or
-turning either category back on lifts the opt-out.
+turns `marketing` off (`measurement` when `marketing` is not in scope). It
+switches off `marketing` and `measurement` in scope by default, and persistence
+deletes it when `commands.optIn()` or turning `marketing` back on lifts the
+opt-out.
 
 ## The subject ID
 

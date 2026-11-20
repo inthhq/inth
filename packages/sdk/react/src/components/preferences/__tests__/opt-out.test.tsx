@@ -115,6 +115,17 @@ describe('consent widget opt-out parity', () => {
 		expect(kernel.getSnapshot().optOut).not.toBeNull();
 		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
 
+		// Turning measurement on while marketing stays off keeps the opt-out and lets measurement stand.
+		await expect.element(measurement).not.toBeDisabled();
+		await measurement.click();
+		await expect.element(measurement).toHaveAttribute('aria-checked', 'true');
+		await page.getByTestId('consent-widget-footer-save-button').click();
+		await vi.waitFor(() => {
+			expect(kernel.getSnapshot().effectivePermissions.measurement).toBe(true);
+		});
+		expect(kernel.getSnapshot().optOut).not.toBeNull();
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+
 		// Turning marketing on and saving lifts the device opt-out.
 		await marketing.click();
 		await expect.element(marketing).toHaveAttribute('aria-checked', 'true');
@@ -274,6 +285,11 @@ describe('consent widget opt-out parity', () => {
 		);
 		expect(notice).not.toBeNull();
 		expect(notice?.textContent).toContain('account');
+		expect(
+			document.querySelector(
+				'[data-testid="consent-widget-restriction-measurement"]'
+			)
+		).toBeNull();
 		await expect.element(marketing).not.toBeDisabled();
 		await expect.element(marketing).toHaveAttribute('aria-checked', 'false');
 		await expect

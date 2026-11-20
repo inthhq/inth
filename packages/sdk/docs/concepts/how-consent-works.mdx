@@ -65,7 +65,7 @@ Never copy a permission into a saved choice. Hydrating server state, reading a c
 
 Dismissing a notice records an acknowledgement only. It grants no optional categories and leaves earlier refusals intact.
 
-Global Privacy Control, or GPC, asks sites not to sell or share personal data. The first time Inth sees GPC under a policy that maps it, Inth records a durable opt-out. Under an opt-out policy, rejecting all or turning both `marketing` and `measurement` off in preferences records a durable opt-out too. A durable opt-out switches off `marketing` and `measurement` in scope, stays in effect after the browser stops sending GPC, and survives reloads and policy changes. Turning either `marketing` or `measurement` back on in preferences lifts a device-held opt-out once the browser stops sending GPC. Inth also receives the current GPC value on backend requests.
+Global Privacy Control, or GPC, asks sites not to sell or share personal data. The first time Inth sees GPC under a policy that maps it, Inth records a durable opt-out. Under an opt-out policy, rejecting all or turning `marketing` off in preferences records a durable opt-out too (`measurement` decides when `marketing` is not in the rule's scope). Nothing under an opt-in policy records an opt-out. A durable opt-out switches off `marketing` and `measurement` in scope by default, stays in effect after the browser stops sending GPC, and survives reloads and policy changes. If a visitor turns `measurement` back on while `marketing` stays off, `measurement` stays allowed and the opt-out remains in effect. Turning `marketing` back on and saving under any policy model lifts a device-held opt-out once the browser stops sending GPC. Inth also receives the current GPC value on backend requests.
 
 ## What happens when a visitor saves
 
@@ -77,7 +77,7 @@ When a visitor clicks Accept, Reject, or Save, Inth runs five steps:
 4. Applies any authoritative opt-out record returned by the backend (replacing the local timestamp, method, and holder) and persists it.
 5. Reloads the page if the visitor revoked a previously allowed category, because already-executed code cannot be unloaded. Set `reloadOnConsentRevoked: false` to handle revocation yourself.
 
-When `identify()` links the device to an account, the link response can carry the account's active opt-out (`heldBy: 'person'`). Inth adopts that record, switches off `marketing` and `measurement` in scope, and persists it across reloads. Lifting an account-held opt-out requires an `optIn()` call (or a granting save) with a verifying identity token.
+When `identify()` links the device to an account, the link response can carry the account's active opt-out (`heldBy: 'person'`). Inth adopts that record, switches off `marketing` and `measurement` in scope by default, and persists it across reloads. Lifting an account-held opt-out requires an `optIn()` call (or a save that grants `marketing`) with a verifying identity token; when the backend clears the opt-out and answers `optOut: null`, Inth removes the local record as well.
 
 ## Next steps
 

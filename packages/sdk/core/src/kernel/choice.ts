@@ -27,7 +27,8 @@ import {
 import type { OptOutRecord, OptOutRight } from '@inth/sdk-schema/types';
 
 import { EMPTY_CHOICE, recordCategoryPatch } from '../consent-record/record';
-import { optOutDenyCategories } from '../consent-record/types';
+import { optOutDecidingCategory } from '../consent-record/types';
+import type { OptionalConsentCategory } from '../consent-record/types';
 import type { AllConsentNames } from '../consent/consent-types';
 import { extractConsentNamesFromCondition, has } from '../libs/has';
 import type { HasCondition } from '../libs/has';
@@ -35,6 +36,7 @@ import { generateUuidV7 } from '../libs/subject-uuid';
 import { vendorAxisActive } from '../libs/vendors';
 import { toggleableVendorIds } from '../modules/vendor-denial';
 import type { PresentedSelection } from '../policy-choice';
+import { saveRecordsOptOut } from '../surface-actions/instant-commit';
 import type {
 	ConsentSnapshot,
 	ConsentState,
@@ -1054,32 +1056,24 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				now: currentTime,
 				subject,
 			};
-			const optOutCategories = optOutDenyCategories(before.evaluationPolicy);
-			const grantsOptOutCategory =
-				categoriesChanged &&
-				recorded.confirmed.some(
-					(category) =>
-						optOutCategories.includes(category) &&
-						recorded.choice.categories[category]?.value === true
-				);
+			const confirmedValue = (
+				category: OptionalConsentCategory
+			): boolean | undefined =>
+				recorded.confirmed.includes(category)
+					? recorded.choice.categories[category]?.value
+					: undefined;
+			const decidingCategory = optOutDecidingCategory(before.evaluationPolicy);
+			const grantsDecidingCategory =
+				decidingCategory !== null && confirmedValue(decidingCategory) === true;
 			const optOutBlocker = optOutLiftBlocker(before);
-			const liftsOptOut = grantsOptOutCategory && optOutBlocker === null;
+			const liftsOptOut = grantsDecidingCategory && optOutBlocker === null;
 			const liftsAccountOptOut =
-				grantsOptOutCategory && optOutBlocker === 'held-by-account';
-			const refusesOptOutCategories =
-				!grantsOptOutCategory &&
-				before.evaluationPolicy.model === 'opt-out' &&
-				optOutCategories.length > 0 &&
-				categoriesChanged &&
-				recorded.confirmed.some(
-					(category) =>
-						optOutCategories.includes(category) &&
-						recorded.choice.categories[category]?.value === false
-				) &&
-				optOutCategories.every(
-					(category) => recorded.choice.categories[category]?.value === false
-				);
-			const recordedOptOut = refusesOptOutCategories
+				grantsDecidingCategory && optOutBlocker === 'held-by-account';
+			const recordedOptOut = saveRecordsOptOut(
+				before.evaluationPolicy,
+				confirmedValue,
+				before.optOut !== null
+			)
 				? nextButtonOptOutRecord(before, actionAt, defaultOptOutRights())
 				: null;
 			if (categoriesChanged) {

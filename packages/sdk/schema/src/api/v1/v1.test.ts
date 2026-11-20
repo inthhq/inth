@@ -418,13 +418,14 @@ describe('POST /v1/consent/opt-outs/lift', () => {
 		uiSource: 'dialog',
 	};
 
-	it('accepts a lift body with or without rights', () => {
+	it('accepts a lift body with or without rights and policySnapshotToken', () => {
 		expect(v.is(v1ConsentOptOutLiftInputSchema, liftBody)).toBe(true);
 		expect(
 			v.is(v1ConsentOptOutLiftInputSchema, {
 				...liftBody,
 				externalId: 'user_123',
 				identityToken: 'tok',
+				policySnapshotToken: 'snapshot-token',
 				rights: ['sale'],
 			})
 		).toBe(true);

@@ -92,8 +92,8 @@ hydrates storage and syncs tabs automatically.
 | `choice:recorded` | `snapshot`, `confirmed`, `actionAt` | Visitor recorded categories. |
 | `permissions:changed` | `snapshot`, `previous` | Effective permissions changed for any reason. |
 | `notice:dismissed` | `snapshot`, `dismissal` | Notice acknowledged. |
-| `opt-out:recorded` | `snapshot`, `optOut`, `actionAt`, `uiSource?` | Durable opt-out recorded from `commands.optOut()`, a detected GPC signal, or a save under an `opt-out` policy that rejects all or turns both `marketing` and `measurement` off. |
-| `opt-out:lifted` | `snapshot`, `actionAt`, `uiSource?` | Durable opt-out lifted from `commands.optIn()` or a save that turns `marketing` or `measurement` back on. |
+| `opt-out:recorded` | `snapshot`, `optOut`, `actionAt`, `uiSource?` | Durable opt-out recorded from `commands.optOut()`, a detected GPC signal, or a save under an `opt-out` policy that refuses `marketing` (or `measurement` when `marketing` is not in scope). |
+| `opt-out:lifted` | `snapshot`, `actionAt`, `uiSource?` | Durable opt-out lifted from `commands.optIn()` or a save under any model that grants `marketing` (or `measurement` when `marketing` is not in scope). |
 | `opt-out:synced` | `snapshot`, `optOut` | Backend's effective opt-out replaced the local record after an opt-out, lift, save or `identify` answer, or a `404` filled an empty local `rights` list with all three rights. Emits no network request. |
 | `vendors:recorded` | `snapshot`, `actionAt` | Vendor denials changed. |
 | `vendors:set` | `snapshot` | Declared vendors changed. |

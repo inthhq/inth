@@ -56,7 +56,7 @@ group: reference
 
   Copy comes from `consentManagerDialog.title`, `consentManagerDialog.description`, `common.acceptAll`, `common.rejectAll`, `common.save`, `optOut.statusRequest`, `optOut.statusSignal`, `optOut.lockedByGpc`, `optOut.lockedByAccount`, and `consentTypes.<category>.title` and `.description` for each row.
 
-  When a durable opt-out is held, the preference center inside the dialog renders an opt-out status line (`role="status"`) above the category list and shows opted-out categories off. While Global Privacy Control is active under a policy that maps it, those switches stay off and disabled with the GPC notice below each row, and Save Settings and Accept All skip locked categories. When an account holds the opt-out and GPC is off, the account notice shows below each row and the switches stay usable. Read the same state with `useOptOutState()`.
+  When a durable opt-out is held, the preference center inside the dialog renders an opt-out status line (`role="status"`) above the category list and shows opted-out categories off by default. While Global Privacy Control is active under a policy that maps it, signal-restricted switches and `marketing` (or `measurement` when `marketing` is not in scope) stay off and disabled with the GPC notice below each locked row, and Save Settings and Accept All skip locked categories. When an account holds the opt-out and GPC is off, the account notice shows below `marketing` (or `measurement` when `marketing` is not in scope) and the switches stay usable. Turning `measurement` on while `marketing` stays off allows `measurement` without lifting the opt-out; turning `marketing` back on and saving lifts it. Read the same state with `useOptOutState()`.
 </section>
 
 <section id="accessibility">

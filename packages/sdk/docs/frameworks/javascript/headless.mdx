@@ -88,8 +88,10 @@ holds its view box and paths for a framework that builds the element itself.
 confirmation and lock-reason copy. `resolveOptOutState(snapshot)` derives what
 an opt-out confirmation or preference surface renders from a snapshot:
 `available`, `honored`, `via` (`'signal'`, `'request'` or `null`), `lock`
-(`'gpc-active'`, `'held-by-account'` or `null`), `categories` and
-`optInPromptAllowedAt`.
+(`'gpc-active'`, `'held-by-account'` or `null`), `categories`,
+`decidingCategory` and `optInPromptAllowedAt`.
+`resolveCategoryOptOutLock(snapshot, category)` returns `'gpc-active'`,
+`'held-by-account'` or `null` for one category row.
 
 ## Build a preference form with a draft
 

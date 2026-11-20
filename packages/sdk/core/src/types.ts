@@ -780,6 +780,7 @@ export interface LiftOptOutPayload {
 	givenAt: number;
 	user: Readonly<KernelUser> | null;
 	uiSource?: SaveUISource;
+	policySnapshotToken?: string | null;
 }
 
 /** Result returned by `transport.optOut()`. */

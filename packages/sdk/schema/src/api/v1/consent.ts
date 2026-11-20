@@ -221,6 +221,12 @@ export const v1ConsentOptOutLiftInputSchema = jsonObject(
 		idempotencyKey: v1IdempotencyKeySchema,
 		identityProvider: v.optional(v1IdentityProviderSchema),
 		identityToken: v.optional(v1IdentityTokenSchema),
+		policySnapshotToken: v.optional(
+			v.pipe(
+				v.string(),
+				v.description('Signed policy snapshot token from init, if held.')
+			)
+		),
 		property: v1PropertySchema,
 		rights: v.optional(v1OptOutRightsSchema),
 		subjectId: v1SubjectIdSchema,

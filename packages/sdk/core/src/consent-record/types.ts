@@ -210,3 +210,13 @@ export const optOutDenyCategories = function optOutDenyCategories(
 		policy.scope.includes(category)
 	);
 };
+
+/**
+ * The category that decides an opt-out under `policy`: `marketing` when in
+ * scope, else `measurement` when in scope, else `null`.
+ */
+export const optOutDecidingCategory = function optOutDecidingCategory(
+	policy: Pick<EvaluationPolicy, 'scope'>
+): OptionalConsentCategory | null {
+	return optOutDenyCategories(policy)[0] ?? null;
+};

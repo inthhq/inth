@@ -380,7 +380,8 @@ const createStoredLists = function createStoredLists(
 			Number.isSafeInteger(value.givenAt) &&
 			value.givenAt >= 0 &&
 			isSaveUser(value.user) &&
-			isOptionalUiSource(value.uiSource)
+			isOptionalUiSource(value.uiSource) &&
+			isOptionalNullableString(value.policySnapshotToken)
 		);
 	};
 

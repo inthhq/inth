@@ -17,7 +17,7 @@ export {
 	optInPromptAllowedAt,
 } from './evaluate';
 export type { ConsentEvaluationInput } from './evaluate';
-export { optOutDenyCategories } from './types';
+export { optOutDecidingCategory, optOutDenyCategories } from './types';
 export {
 	canonicalizeCategories,
 	createEvaluationPolicy,

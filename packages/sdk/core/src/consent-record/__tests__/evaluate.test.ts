@@ -1237,6 +1237,141 @@ describe('evaluateConsentRecord: durable opt-out record', () => {
 		expect(OPT_OUT_REPROMPT_WAIT_MS).toBe(366 * DAY);
 		expect(optInPromptAllowedAt(optOut)).toBe(NOW + 366 * DAY);
 	});
+
+	it('lets a valid explicit measurement grant stand while marketing is explicitly false', () => {
+		const choice = makeChoice(
+			{ marketing: false, measurement: true },
+			NOW,
+			currentBasis(usOptOutPolicy)
+		);
+		const result = evaluateConsentRecord({
+			choice,
+			noticeDismissal: null,
+			now: NOW + DAY,
+			optOut,
+			policy: usOptOutPolicy,
+		});
+		expect(result.permissions.marketing).toBe(false);
+		expect(result.permissions.measurement).toBe(true);
+		expect(result.categories.measurement.source).toBe('grant');
+		expect(result.restrictions).toEqual({
+			marketing: ['explicit-denial', 'opt-out'],
+		});
+		// Measurement grant expiry will restore the opt-out restriction.
+		expect(result.nextDeadline).toBe(NOW + 365 * DAY);
+	});
+
+	it('does not let a measurement grant stand when marketing is true or undecided', () => {
+		const staleGrant = makeChoice(
+			{ marketing: true, measurement: true },
+			NOW,
+			currentBasis(usOptOutPolicy)
+		);
+		const withMarketingTrue = evaluateConsentRecord({
+			choice: staleGrant,
+			noticeDismissal: null,
+			now: NOW,
+			optOut,
+			policy: usOptOutPolicy,
+		});
+		expect(withMarketingTrue.permissions.measurement).toBe(false);
+		expect(withMarketingTrue.restrictions.measurement).toEqual(['opt-out']);
+
+		const marketingUndecided = makeChoice(
+			{ measurement: true },
+			NOW,
+			currentBasis(usOptOutPolicy)
+		);
+		const withMarketingUndecided = evaluateConsentRecord({
+			choice: marketingUndecided,
+			noticeDismissal: null,
+			now: NOW,
+			optOut,
+			policy: usOptOutPolicy,
+		});
+		expect(withMarketingUndecided.permissions.measurement).toBe(false);
+		expect(withMarketingUndecided.restrictions.measurement).toEqual([
+			'opt-out',
+		]);
+	});
+
+	it('does not let an expired or policy-changed measurement grant stand', () => {
+		const choice = makeChoice(
+			{ marketing: false, measurement: true },
+			NOW,
+			currentBasis(usOptOutPolicy)
+		);
+		const expired = evaluateConsentRecord({
+			choice,
+			noticeDismissal: null,
+			now: NOW + 365 * DAY,
+			optOut,
+			policy: usOptOutPolicy,
+		});
+		expect(expired.permissions.measurement).toBe(false);
+		expect(expired.restrictions.measurement).toEqual(['opt-out']);
+		expect(expired.nextDeadline).toBeNull();
+
+		const changedPolicy = makePolicy({
+			...usOptOutPolicy,
+			choice: { fingerprint: 'choice-fp-2', maxAgeMs: 365 * DAY },
+		});
+		const policyChanged = evaluateConsentRecord({
+			choice,
+			noticeDismissal: null,
+			now: NOW + DAY,
+			optOut,
+			policy: changedPolicy,
+		});
+		expect(policyChanged.permissions.measurement).toBe(false);
+		expect(policyChanged.restrictions.measurement).toEqual(['opt-out']);
+	});
+
+	it('keeps measurement denied with gpc when GPC is active and maps measurement', () => {
+		const choice = makeChoice(
+			{ marketing: false, measurement: true },
+			NOW,
+			currentBasis(usOptOutPolicy)
+		);
+		const result = evaluateConsentRecord({
+			choice,
+			gpc: true,
+			noticeDismissal: null,
+			now: NOW,
+			optOut,
+			policy: usOptOutPolicy,
+		});
+		expect(result.permissions.marketing).toBe(false);
+		expect(result.permissions.measurement).toBe(false);
+		expect(result.restrictions).toEqual({
+			marketing: ['explicit-denial', 'gpc', 'opt-out'],
+			measurement: ['gpc'],
+		});
+	});
+
+	it('does not exempt measurement when marketing is out of scope and measurement decides', () => {
+		const measurementOnly = makePolicy({
+			choice: { fingerprint: 'choice-fp-1', maxAgeMs: 365 * DAY },
+			gpcDenyCategories: [],
+			model: 'opt-out',
+			prompt: 'none',
+			scope: ['functionality', 'measurement'],
+			scopeMode: 'permissive',
+		});
+		const result = evaluateConsentRecord({
+			choice: makeChoice(
+				{ marketing: false, measurement: true },
+				NOW,
+				currentBasis(measurementOnly)
+			),
+			noticeDismissal: null,
+			now: NOW,
+			optOut,
+			policy: measurementOnly,
+		});
+		expect(result.permissions.measurement).toBe(false);
+		expect(result.restrictions.measurement).toEqual(['opt-out']);
+	});
 });
 
 describe('validateOptOutRecord', () => {

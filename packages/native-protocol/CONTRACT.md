@@ -2252,10 +2252,15 @@ the contract moved, not the kernel.
   list, it records a durable opt-out with `method: 'gpc'` and `heldBy: 'device'`.
   When the signal stops, the `gpc` restriction lifts, while the durable opt-out
   record stays and keeps `marketing` and `measurement` in scope restricted with
-  `opt-out`. Under an `opt-out` rule, a save that refuses every opt-out category in
-  scope (such as rejecting all) also records a durable opt-out with `method: 'button'`,
-  and a save that grants one lifts a device-held opt-out when GPC is not active. The
-  durable opt-out record never expires and ignores policy changes. The backend
+  `opt-out`, except when a non-deciding category holds a valid explicit grant
+  while the deciding category holds an explicit `false`. The deciding category
+  is `marketing` when it is in scope, else `measurement` when it is in scope,
+  else none. Under an `opt-out` rule, a save that refuses the deciding category
+  (such as rejecting all or turning `marketing` off) records a durable opt-out
+  with `method: 'button'`. Under any model, a save that grants the deciding
+  category lifts a device-held opt-out when GPC is not active; granting a
+  non-deciding category never lifts it. The durable opt-out record never expires
+  and ignores policy changes. The backend
   derives which legal rights apply from the visitor's location and returns them in
   `optOut.rights`: a local record starts with `rights: []` and keeps it until the
   backend answers. A native core always talks to a backend that stores opt-outs, and

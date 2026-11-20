@@ -36,11 +36,11 @@ visitors then get no section until their state resolves.
 ## What the US sections report
 
 - `SaleOptOut`, `SharingOptOut` and `TargetedAdvertisingOptOut`: `1` (opted
-  out) when an opt-out record is held, or when any opt-out category
-  (`marketing` and `measurement` in the active rule's scope by default) is not
-  permitted, otherwise `2`. A held opt-out record, a refusal of `marketing` or
-  `measurement`, a GPC signal the rule maps through `privacySignals.gpc`, and
-  an opt-in rule without a grant all count.
+  out) when an opt-out record is held, or when the deciding category
+  (`marketing` when in the active rule's scope, else `measurement` when in
+  scope) is not permitted, otherwise `2`. A held opt-out record, a refusal of
+  the deciding category, a GPC signal the rule maps through
+  `privacySignals.gpc`, and an opt-in rule without a grant all count.
 - The opt-out notices: `1` (given), since the rule offers an opt-out.
 - The sharing or processing notice: `1` when the rule has the `disclosure`
   right, otherwise `2`.
@@ -70,7 +70,7 @@ uses the defaults, as props on `ConsentGPP` in React, or to `mountGPP()` in
 | `usApproach` | `'state'` | `'state'` uses the visitor's state section. `'national'` reports `usnat` for every US visitor; the MSPA reserves it for signatories that chose the national approach. |
 | `usFallback` | `'usnat'` | Under the state approach, the section for a US visitor whose state is unknown or has no section: `'usnat'` or `'none'`. |
 | `mspaMode` | unset | `'opt-out-option'` or `'service-provider'`. Set it only if you signed the IAB Multi-State Privacy Agreement; the transaction is then reported as covered. In service provider mode the opt-outs are reported as not applicable. |
-| `optOutCategories` | `marketing` and `measurement` in the active rule's scope | Overrides which categories report an opt-out of sale, sharing and targeted advertising when no opt-out record is held. A held opt-out record always reports opted out regardless of this override. |
+| `optOutCategories` | `marketing` when in scope, else `measurement` | Overrides which categories report an opt-out of sale, sharing and targeted advertising when no opt-out record is held. A held opt-out record always reports opted out regardless of this override. |
 | `tcf` | `true` | Include the `tcfeuv2` section under an `iab` policy. It needs IAB TCF set up as well. |
 
 ## Check the signal
@@ -84,7 +84,7 @@ __gpp('ping', (data) => console.log(data));
 For a California visitor who has not opted out, the result includes
 `applicableSections: [8]`, `signalStatus: 'ready'` and
 `parsedSections.usca[0].SaleOptOut === 2`. After the visitor opts out or
-refuses `marketing` or `measurement`, `SaleOptOut` is `1`.
+refuses `marketing`, `SaleOptOut` is `1`.
 `__gpp('getField', cb, 'usca.SaleOptOut')`
 returns the same value. Scripts in iframes reach the API through the
 `__gppLocator` frame and `postMessage`.

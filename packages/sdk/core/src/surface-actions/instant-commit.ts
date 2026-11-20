@@ -21,7 +21,7 @@
 
 import {
 	OPTIONAL_CONSENT_CATEGORIES,
-	optOutDenyCategories,
+	optOutDecidingCategory,
 } from '../consent-record/types';
 import type {
 	CategoryDecision,
@@ -41,6 +41,26 @@ export { generateUuidV7 } from '../libs/subject-uuid';
 
 /** Latest valid epoch milliseconds, as the record validator reads them. */
 const MAX_DATE_MS = 8_640_000_000_000_000;
+
+/**
+ * Whether a save that confirms categories with `confirmed` under `policy`
+ * records a new durable opt-out (given no record is already held).
+ *
+ * @internal
+ */
+export const saveRecordsOptOut = function saveRecordsOptOut(
+	policy: Pick<EvaluationPolicy, 'model' | 'scope'>,
+	confirmed: (category: OptionalConsentCategory) => boolean | undefined,
+	hasOptOut = false
+): boolean {
+	const deciding = optOutDecidingCategory(policy);
+	return (
+		!hasOptOut &&
+		policy.model === 'opt-out' &&
+		deciding !== null &&
+		confirmed(deciding) === false
+	);
+};
 
 /**
  * Whether only the kernel can record a save from `snapshot`: no matched
@@ -339,13 +359,8 @@ export const planInstantCommit = function planInstantCommit(
 	if (!values || (expiresAt !== null && now >= expiresAt)) {
 		return null;
 	}
-	const optOutCategories = optOutDenyCategories(policy);
-	if (
-		policy.model === 'opt-out' &&
-		optOutCategories.length > 0 &&
-		optOutCategories.every((category) => values.get(category) === false)
-	) {
-		// Refusing the opt-out categories records a durable opt-out in the kernel.
+	if (saveRecordsOptOut(policy, (c) => values.get(c))) {
+		// Refusing the deciding category records a durable opt-out in the kernel.
 		return null;
 	}
 

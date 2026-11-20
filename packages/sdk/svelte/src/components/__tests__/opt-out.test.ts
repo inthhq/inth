@@ -99,6 +99,19 @@ describe('Svelte consent widget opt-out parity', () => {
 		expect(context.snapshot.optOut).not.toBeNull();
 		expect(context.snapshot.effectivePermissions.marketing).toBe(false);
 
+		// Turning measurement on while marketing stays off keeps the opt-out and lets measurement stand.
+		expect(measurement?.disabled).toBe(false);
+		await fireEvent.click(measurement as Element);
+		await waitFor(() => {
+			expect(measurement?.getAttribute('aria-checked')).toBe('true');
+		});
+		await fireEvent.click(part('consent-widget-footer-save-button') as Element);
+		await waitFor(() => {
+			expect(context.snapshot.effectivePermissions.measurement).toBe(true);
+		});
+		expect(context.snapshot.optOut).not.toBeNull();
+		expect(context.snapshot.effectivePermissions.marketing).toBe(false);
+
 		// Turning marketing on and saving lifts the device opt-out.
 		await fireEvent.click(marketing as Element);
 		await waitFor(() => {
@@ -245,6 +258,7 @@ describe('Svelte consent widget opt-out parity', () => {
 		expect(marketing?.getAttribute('aria-checked')).toBe('false');
 		expect(marketing?.getAttribute('aria-describedby')).toBe(notice?.id);
 		expect(notice?.textContent).toContain('account');
+		expect(part('consent-widget-restriction-measurement')).toBeNull();
 
 		await fireEvent.click(marketing as Element);
 		await waitFor(() => {

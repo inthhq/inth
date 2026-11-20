@@ -679,11 +679,12 @@ describe('opt-out body builders', () => {
 		).toThrow(/createIdempotencyKey\(\)/u);
 	});
 
-	test('buildV1ConsentOptOutLiftBody produces the exact lift wire body without rights', () => {
+	test('buildV1ConsentOptOutLiftBody produces the exact lift wire body without rights and carries policySnapshotToken when set', () => {
 		const body = buildV1ConsentOptOutLiftBody(
 			{
 				givenAt: ACTION_AT,
 				idempotencyKey: KEY,
+				policySnapshotToken: 'lift-snapshot-token',
 				subjectId: SUBJECT,
 				uiSource: 'dialog',
 				user: {
@@ -701,6 +702,7 @@ describe('opt-out body builders', () => {
 			idempotencyKey: KEY,
 			identityProvider: 'clerk',
 			identityToken: 'tok_123',
+			policySnapshotToken: 'lift-snapshot-token',
 			property: 'www.example.com',
 			subjectId: SUBJECT,
 			uiSource: 'dialog',
@@ -709,6 +711,18 @@ describe('opt-out body builders', () => {
 		expect(
 			v1ConsentOptOutLiftInputSchema['~standard'].validate(body)
 		).not.toHaveProperty('issues');
+
+		const withoutToken = buildV1ConsentOptOutLiftBody(
+			{
+				givenAt: ACTION_AT,
+				idempotencyKey: KEY,
+				policySnapshotToken: null,
+				subjectId: SUBJECT,
+				user: null,
+			},
+			'www.example.com'
+		);
+		expect('policySnapshotToken' in withoutToken).toBe(false);
 	});
 
 	test('buildV1ConsentOptOutLiftBody throws without an idempotencyKey', () => {

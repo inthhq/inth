@@ -657,7 +657,7 @@ export const POLICY_SCENARIOS: readonly PolicyScenario[] = [
 					},
 					firstLayer: 'hidden',
 					noticeDismissal: 'current',
-					permissions: { marketing: false, measurement: true },
+					permissions: { marketing: false, measurement: false },
 					prompt: { kind: 'none' },
 					storage: 'choice-and-notice',
 				},
@@ -671,7 +671,7 @@ export const POLICY_SCENARIOS: readonly PolicyScenario[] = [
 					choice: policyChoice({ marketing: false }, POLICY_NOW),
 					firstLayer: 'hidden',
 					noticeDismissal: 'current',
-					permissions: { marketing: false, measurement: true },
+					permissions: { marketing: false, measurement: false },
 					prompt: { kind: 'none' },
 				},
 				operation: { kind: 'reload' },
@@ -679,7 +679,7 @@ export const POLICY_SCENARIOS: readonly PolicyScenario[] = [
 			{
 				expect: {
 					...quiet,
-					permissions: { marketing: false, measurement: true },
+					permissions: { marketing: false, measurement: false },
 					prompt: { kind: 'notice', reason: 'expired' },
 				},
 				operation: { kind: 'advance-time', now: POLICY_NOW + POLICY_MAX_AGE },

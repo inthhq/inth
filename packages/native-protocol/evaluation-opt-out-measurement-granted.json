@@ -1,0 +1,245 @@
+{
+	"description": "A stored button opt-out under the CCPA opt-out rule alongside an explicit refusal of marketing and a valid grant of measurement. Marketing stays denied with explicit-denial and opt-out while the explicit measurement grant stands permitted.",
+	"expected": {
+		"snapshot": {
+			"activeUI": "none",
+			"consentCategories": [
+				"necessary",
+				"experience",
+				"functionality",
+				"marketing",
+				"measurement"
+			],
+			"effectivePermissions": {
+				"necessary": true,
+				"functionality": true,
+				"experience": true,
+				"measurement": true,
+				"marketing": false
+			},
+			"error": null,
+			"evaluatedAt": 1770000000000,
+			"explicitChoice": {
+				"categories": {
+					"marketing": {
+						"basis": {
+							"fingerprint": "f0a9519130a3c7706acc1dcb795f48eee79cfcde7de85e4384394583bd0db1b0",
+							"kind": "choice-v1"
+						},
+						"confirmedAt": 1770000000000,
+						"value": false
+					},
+					"measurement": {
+						"basis": {
+							"fingerprint": "f0a9519130a3c7706acc1dcb795f48eee79cfcde7de85e4384394583bd0db1b0",
+							"kind": "choice-v1"
+						},
+						"confirmedAt": 1770000000000,
+						"value": true
+					}
+				},
+				"version": 3
+			},
+			"gppString": null,
+			"iab": null,
+			"location": {
+				"countryCode": "US",
+				"regionCode": "CA"
+			},
+			"model": "opt-out",
+			"nextDeadline": 1801536000000,
+			"optOut": {
+				"heldBy": "device",
+				"method": "button",
+				"recordedAt": 1770000000000,
+				"rights": ["sale", "share"]
+			},
+			"overrides": {
+				"country": "US",
+				"gpc": null,
+				"language": "en",
+				"region": "CA"
+			},
+			"policyPending": false,
+			"policySnapshotToken": "tok-california-opt-out",
+			"privacySignals": {
+				"gpc": {
+					"active": false,
+					"detected": false,
+					"override": null
+				}
+			},
+			"promptRequirement": {
+				"kind": "none"
+			},
+			"ready": true,
+			"resolution": {
+				"fingerprint": "2add89cb0c497ef5bccaef815bae6277006e37bdc10d4d0e6b1f494aa754c087",
+				"policyId": "california_opt_out",
+				"status": "matched"
+			},
+			"restrictions": {
+				"marketing": ["explicit-denial", "opt-out"]
+			},
+			"revision": 1,
+			"subject": {
+				"subjectId": "019c1c38-a400-7100-8000-000000000001"
+			},
+			"translations": {
+				"language": "en",
+				"translations": {
+					"common": {
+						"acceptAll": "Accept all",
+						"customize": "Customize",
+						"rejectAll": "Reject all",
+						"save": "Save"
+					},
+					"consentManagerDialog": {},
+					"consentTypes": {},
+					"cookieBanner": {},
+					"rights": {}
+				}
+			}
+		}
+	},
+	"id": "evaluation-opt-out-measurement-granted",
+	"input": {
+		"hydrated": true,
+		"now": 1770000000000,
+		"overrides": {
+			"country": null,
+			"gpc": null,
+			"language": "en",
+			"region": null
+		},
+		"privacySignals": {
+			"gpc": {
+				"detected": false,
+				"override": null
+			}
+		},
+		"storedRecords": {
+			"choice": {
+				"categories": {
+					"marketing": {
+						"basis": {
+							"fingerprint": "f0a9519130a3c7706acc1dcb795f48eee79cfcde7de85e4384394583bd0db1b0",
+							"kind": "choice-v1"
+						},
+						"confirmedAt": 1770000000000,
+						"value": false
+					},
+					"measurement": {
+						"basis": {
+							"fingerprint": "f0a9519130a3c7706acc1dcb795f48eee79cfcde7de85e4384394583bd0db1b0",
+							"kind": "choice-v1"
+						},
+						"confirmedAt": 1770000000000,
+						"value": true
+					}
+				},
+				"version": 3
+			},
+			"noticeDismissal": null,
+			"optOut": {
+				"heldBy": "device",
+				"method": "button",
+				"recordedAt": 1770000000000,
+				"rights": ["sale", "share"]
+			},
+			"subject": {
+				"subjectId": "019c1c38-a400-7100-8000-000000000001"
+			}
+		},
+		"transport": {
+			"body": {
+				"branding": "c15t",
+				"location": {
+					"countryCode": "US",
+					"regionCode": "CA"
+				},
+				"policyResolution": {
+					"fingerprints": {
+						"choice": "f0a9519130a3c7706acc1dcb795f48eee79cfcde7de85e4384394583bd0db1b0",
+						"notice": "8d9a703452d973d7243cbba8bce68bd86d75d3edd7dff5b1e27d9e31dcb17cee",
+						"policy": "2add89cb0c497ef5bccaef815bae6277006e37bdc10d4d0e6b1f494aa754c087",
+						"legacyMaterial": "071ca579036f43b53790c7d934ece26b9535eb394ef101f4e18c547acc7b82da"
+					},
+					"matchedBy": "region",
+					"policy": {
+						"actions": {
+							"allowed": [],
+							"equivalent": [],
+							"required": []
+						},
+						"copyRevision": null,
+						"id": "california_opt_out",
+						"model": "opt-out",
+						"preselectedCategories": [],
+						"privacySignals": {
+							"gpc": {
+								"denyCategories": ["marketing", "measurement"]
+							}
+						},
+						"prompt": "none",
+						"proof": {
+							"storeIp": true,
+							"storeLanguage": true,
+							"storeUserAgent": true
+						},
+						"rights": ["disclosure", "opt-out", "preferences"],
+						"scope": [
+							"experience",
+							"functionality",
+							"marketing",
+							"measurement"
+						],
+						"scopeMode": "permissive",
+						"validity": {
+							"choiceMs": 31536000000,
+							"noticeMs": 31536000000
+						}
+					},
+					"policyId": "california_opt_out",
+					"status": "matched",
+					"version": 1
+				},
+				"translations": {
+					"language": "en",
+					"translations": {
+						"common": {
+							"acceptAll": "Accept all",
+							"customize": "Customize",
+							"rejectAll": "Reject all",
+							"save": "Save"
+						},
+						"consentManagerDialog": {},
+						"consentTypes": {},
+						"cookieBanner": {},
+						"rights": {}
+					}
+				},
+				"policySnapshotToken": "tok-california-opt-out"
+			},
+			"headers": {
+				"x-request-id": "req_fixture_init"
+			},
+			"status": 200
+		},
+		"user": null
+	},
+	"kind": "evaluation",
+	"notes": [
+		"Compare parsed values, not serialized bytes: object key order is not part of the contract.",
+		"transport is the /init response to serve, headers included. Answer it once, before any save.",
+		"storedRecords is what protected storage holds before the core starts. A null member means nothing is stored for it. The subject id is always supplied, never generated, so no fixture depends on a random uuid.",
+		"input.overrides and input.privacySignals are what the device reports. expected.overrides and expected.privacySignals are what the kernel settled: init.location sets country and region, init.translations sets language, and privacySignals.gpc.active is the override when set, otherwise the detection.",
+		"there is no test override and no msa signal. Overrides are country, region, language, and gpc; gpc is a detected / override / active triple. See \"Corrections to this contract\" in packages/native-protocol/CONTRACT.md.",
+		"revision is a monotonic counter that starts at 0 and bumps once per committed mutation. It is not a count of the steps a runner took. Compare it as a number, and read the pinned value rather than deriving it.",
+		"The gpc restriction applies while privacySignals.gpc.active is true and the matched rule maps GPC. The first time a live kernel sees an active GPC signal under a matched rule that maps GPC, it records a durable opt-out on snapshot.optOut with method gpc, and marketing and measurement in scope carry the opt-out restriction even after the signal stops. No snapshot carries the retired optOutDirectives field.",
+		"evaluatedAt equals input.now. Both it and ready are native lifecycle facts, not kernel output: ready is latched by a hydrate() that found a stored envelope and by the first /init that lands a definitive answer, which on /v1 is any 200 body. Nothing stored plus a resolved init is therefore ready true, and only an init that failed or never arrived leaves it false.",
+		"error is null in every fixture: no fixture exercises a transport failure or an unreadable wire.",
+		"Any field this file does not mention must not be invented. Unknown wire values fail closed."
+	],
+	"protocolVersion": 1
+}

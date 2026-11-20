@@ -41,6 +41,7 @@ import {
 	policyDefault,
 } from '../consent/consent-types';
 import type { AllConsentNames } from '../consent/consent-types';
+import { resolveCategoryOptOutLock } from '../libs/opt-out-state';
 import { listedVendors } from '../libs/vendor-listing';
 import { vendorAxisActive } from '../libs/vendors';
 import { deniedVendorIds, toggleableVendorIds } from '../modules/vendor-denial';
@@ -213,23 +214,15 @@ const vendorSurface = function vendorSurface(
 };
 
 /**
- * Optional categories locked off by an active GPC signal: categories carrying
- * a live `gpc` restriction, plus opt-out restricted categories while GPC maps
- * any category under the active policy.
+ * Optional categories locked off by an active GPC signal.
  */
 const gpcLockedCategories = function gpcLockedCategories(
 	snapshot: ConsentSnapshot
 ): ReadonlySet<AllConsentNames> {
 	const locked = new Set<AllConsentNames>();
-	const gpcActive =
-		snapshot.privacySignals.gpc.active &&
-		snapshot.evaluationPolicy.gpcDenyCategories.length > 0;
-	for (const [category, reasons] of Object.entries(snapshot.restrictions)) {
-		if (
-			reasons?.includes('gpc') ||
-			(gpcActive && reasons?.includes('opt-out'))
-		) {
-			locked.add(category as AllConsentNames);
+	for (const category of snapshot.evaluationPolicy.choiceScope) {
+		if (resolveCategoryOptOutLock(snapshot, category) === 'gpc-active') {
+			locked.add(category);
 		}
 	}
 	return locked;

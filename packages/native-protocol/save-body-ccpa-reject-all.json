@@ -1,5 +1,5 @@
 {
-	"description": "Reject all under the CCPA opt-out rule. Every optional category gets an explicit false receipt, and refusing both marketing and measurement under an opt-out rule records a durable opt-out with method button and no rights yet, because the backend has not answered.",
+	"description": "Reject all under the CCPA opt-out rule. Every optional category gets an explicit false receipt, and refusing marketing (the deciding category) under an opt-out rule records a durable opt-out with method button and no rights yet, because the backend has not answered.",
 	"expected": {
 		"request": {
 			"body": {
