@@ -1,6 +1,6 @@
 /**
  * The last script registry list this browser received for one backend,
- * kept so the loader can use it when `/init` fails.
+ * kept so the loader can use it when `/v1/consent/init` fails.
  *
  * It is an availability measure for honest failures, such as an outage, a
  * rate limit or a network that drops the request: any script on the origin
@@ -13,11 +13,11 @@ import { isRecord } from './registry';
 
 /**
  * How long a remembered list is used. Long enough to ride out an outage
- * over a weekend; short enough that a visitor whose `/init` keeps failing
- * falls back to the vendor's URLs, as without a list, instead of keeping a
- * list the registry may have changed. A version the registry has rejected
- * since does not load either way: the registry answers its URL with an
- * error, and the hash stops any other bytes.
+ * over a weekend; short enough that a visitor whose `/v1/consent/init`
+ * keeps failing falls back to the vendor's URLs, as without a list,
+ * instead of keeping a list the registry may have changed. A version the
+ * registry has rejected since does not load either way: the registry
+ * answers its URL with an error, and the hash stops any other bytes.
  */
 export const REMEMBERED_REGISTRY_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -33,7 +33,10 @@ export const REMEMBERED_REGISTRY_MAX_LENGTH = 256 * 1024;
 
 /** One backend's remembered list. */
 export interface RegistryMemory {
-	/** The list as `/init` carried it, or `undefined` with none usable. */
+	/**
+	 * The list as `/v1/consent/init` carried it, or `undefined` with none
+	 * usable.
+	 */
 	read: () => unknown;
 	/** Remember `registry`, or forget the list when it is not an object. */
 	write: (registry: unknown) => void;

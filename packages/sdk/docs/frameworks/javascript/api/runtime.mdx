@@ -123,7 +123,7 @@ choices apply as usual, and the list applies to every script that loads.
   nothing is remembered for it.
 - **Per backend.** One project's list is never read for another project or
   backend on the same origin. A runtime with no `projectUrl`, or one that never
-  calls `/init`, remembers nothing.
+  calls `/v1/consent/init`, remembers nothing.
 - **Replaced by every answer.** Each init that answers replaces the list. An
   answer with no `scriptRegistry` removes it, so turning the registry off for a
   project takes effect on the next visit that reaches `/v1/consent/init`. An `unavailable`

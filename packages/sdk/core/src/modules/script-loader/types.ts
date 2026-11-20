@@ -146,8 +146,8 @@ export interface ScriptLoaderOptions {
 		waitForInit: boolean;
 		/**
 		 * The last list this browser received from the backend. A runtime
-		 * that asks `/init` keeps it in step with each answer and loads by
-		 * it when init fails.
+		 * that asks `/v1/consent/init` keeps it in step with each answer and
+		 * loads by it when init fails.
 		 */
 		memory?: RegistryMemory;
 	};

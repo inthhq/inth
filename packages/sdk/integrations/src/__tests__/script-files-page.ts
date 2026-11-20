@@ -101,9 +101,7 @@ window.__scriptFiles = {
 	startFailing() {
 		const runtime = createConsentRuntime({
 			experimentalScriptRegistry: true,
-			mode: custom({
-				init: () => Promise.reject(new TypeError('Failed to fetch')),
-			}),
+			mode: initMode(() => Promise.reject(new TypeError('Failed to fetch'))),
 			persistence: { sync: false },
 			projectUrl: BACKEND,
 			scripts: [
