@@ -1,7 +1,10 @@
 # @inth/node
 
-The Inth client for a customer's server. A workspace package for now; it is
-not published.
+The Inth client for a customer's server.
+
+```sh
+npm install @inth/node
+```
 
 It links browsers to your own users, reads what they consent to, publishes your legal
 documents and records who accepted them, with the project's secret key. The
@@ -251,8 +254,9 @@ sent them.
 
 Two things throw. `new Inth()` throws when it has no key, a key a header
 cannot carry, or an address that is not a full `https://` URL (plain
-`http://` is allowed for `localhost` and `*.localhost` only), or when `timeout` or
-`maxRetries` is not a usable number. `hashDocument` throws a `TypeError`
+`http://` is allowed for `localhost` and `*.localhost` only) or one with a
+query, fragment, user name or password, or when `timeout` is not a whole number
+of milliseconds or `maxRetries` is not a whole number. `hashDocument` throws a `TypeError`
 when given anything but bytes.
 
 When the edge network in front of the API challenges a call, as it does an
@@ -285,7 +289,15 @@ declare module '@inth/node' {
 A request that could not be answered is tried again, up to twice by default:
 a network failure, a timeout, a 408, a 429 or a 5xx. It waits between tries, and
 follows `Retry-After` when the API sends one. A refused request, such as a
-wrong key, is not tried again. Every call here is safe to repeat.
+wrong key, is not tried again.
+
+`documents.publish` is tried again only after a 429. After any other failure
+the version may have been stored, and a late second try could make it current
+again after a newer one. Check with `documents.current` before you publish
+again.
+
+A redirect is not followed, so the key is never sent to another address. The
+call returns `unexpected_response`; pass the address it ends at as `baseUrl`.
 
 When the API asks for a wait longer than five seconds, the call returns
 `rate_limited` at once instead of trying again too early.

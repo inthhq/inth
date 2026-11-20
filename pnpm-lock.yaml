@@ -4730,6 +4730,9 @@ importers:
       '@vitest/coverage-istanbul':
         specifier: 4.1.10
         version: 4.1.10(supports-color@10.2.2)(vitest@4.1.10)
+      genversion:
+        specifier: 3.2.0
+        version: 3.2.0
       oxfmt:
         specifier: 0.65.0
         version: 0.65.0(svelte@5.57.1)

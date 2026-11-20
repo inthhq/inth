@@ -11,6 +11,7 @@ import { assert, describe, it } from 'vitest';
 import document from '../../schema/vendor/backend-openapi/openapi.json' with { type: 'json' };
 import { hashDocument, Inth } from './index';
 import type { InthOptions, InthRequestOptions } from './index';
+import { version } from './version';
 
 const SECRET = 'inth_prj_test';
 const PROJECT_URL = 'https://project.example.test';
@@ -57,7 +58,7 @@ const stubbed = (
 
 const KEYED = {
 	authorization: `Bearer ${SECRET}`,
-	'user-agent': 'inth-node/0.0.0',
+	'user-agent': `inth-node/${version}`,
 };
 const KEYED_JSON = { ...KEYED, 'content-type': 'application/json' };
 
@@ -303,6 +304,36 @@ describe('a /v1 refusal', () => {
 		}
 	);
 
+	it('keeps the refusal it can read when one field has an unexpected type', async () => {
+		const { inth } = stubbed([
+			() =>
+				Response.json(
+					{
+						code: 400,
+						error: {
+							code: 'invalid_request',
+							message: 'externalId is required',
+						},
+						requestId: 'req_body',
+					},
+					{ status: 400 }
+				),
+		]);
+		const refused = await checkTerms(inth);
+		assert.deepStrictEqual(
+			{
+				apiCode: refused.error?.apiCode,
+				message: refused.error?.message,
+				requestId: refused.error?.requestId,
+			},
+			{
+				apiCode: 'invalid_request',
+				message: 'externalId is required',
+				requestId: 'req_body',
+			}
+		);
+	});
+
 	it('takes the request id from the header when there is one', async () => {
 		const { inth } = stubbed([
 			refusedWith(404, 'not_found', { 'x-request-id': 'req_header' }),
@@ -496,6 +527,77 @@ describe('retries and limits', () => {
 		}
 	);
 
+	it('takes only a timeout that a timer can wait out', async () => {
+		for (const timeout of [1.5, 0, 2 ** 31]) {
+			assert.throws(
+				() => new Inth({ baseUrl: PROJECT_URL, secretKey: SECRET, timeout }),
+				/whole number of milliseconds/u
+			);
+		}
+		const { inth, sent } = stubbed([checked]);
+		const refused = await checkTerms(inth, { timeout: 1.5 });
+		assert.strictEqual(refused.error?.code, 'invalid_request');
+		assert.strictEqual(sent.length, 0);
+	});
+
+	it('reports a redirect instead of following it with the key', async () => {
+		const redirects: string[] = [];
+		const inth = new Inth({
+			baseUrl: PROJECT_URL,
+			fetch: (input, init) => {
+				redirects.push(new Request(input, init).redirect);
+				return Promise.resolve(
+					new Response(null, {
+						headers: { location: 'https://elsewhere.example/v1' },
+						status: 307,
+					})
+				);
+			},
+			secretKey: SECRET,
+		});
+		const redirected = await checkTerms(inth);
+		assert.deepStrictEqual(redirects, ['manual']);
+		assert.strictEqual(redirected.error?.code, 'unexpected_response');
+		assert.strictEqual(redirected.error?.status, 307);
+		assert.match(redirected.error?.message ?? '', /elsewhere\.example/u);
+	});
+
+	it('returns an edge challenge whose body never finishes cancelling', async () => {
+		const { inth } = stubbed([
+			() =>
+				new Response(
+					new ReadableStream({
+						cancel: () =>
+							new Promise<void>(() => {
+								// Never settles
+							}),
+					}),
+					{ headers: { 'x-vercel-mitigated': 'challenge' }, status: 403 }
+				),
+		]);
+		const challenged = await checkTerms(inth, { timeout: 1000 });
+		assert.strictEqual(challenged.error?.code, 'rate_limited');
+	});
+
+	it('reports a timeout as one, whatever error fetch rejects with', async () => {
+		const inth = new Inth({
+			baseUrl: PROJECT_URL,
+			// Rejects with a plain AbortError once the signal fires, as some
+			// fetch implementations do in place of a TimeoutError
+			fetch: (_input, init) =>
+				new Promise((_resolve, reject) => {
+					init?.signal?.addEventListener('abort', () =>
+						reject(new DOMException('The operation was aborted', 'AbortError'))
+					);
+				}),
+			maxRetries: 0,
+			secretKey: SECRET,
+			timeout: 10,
+		});
+		const timedOut = await checkTerms(inth);
+		assert.strictEqual(timedOut.error?.code, 'timeout');
+	});
+
 	it('stops when the caller cancels', async () => {
 		const { inth, sent } = stubbed([checked]);
 		const cancelled = await checkTerms(inth, { signal: AbortSignal.abort() });
@@ -532,6 +634,18 @@ it('cannot be made with a project URL it cannot use', () => {
 	// The key must not cross a network in the clear
 	assert.throws(make('http://your-project.inth.app'), /https/u);
 	assert.throws(make('ftp://your-project.inth.app'), /https/u);
+	// Each route is added to the end, where a query or fragment would hide it
+	for (const swallowing of [
+		'https://your-project.inth.app/?region=eu',
+		'https://your-project.inth.app?',
+		'https://your-project.inth.app/#top',
+	]) {
+		assert.throws(make(swallowing), /query or a fragment/u);
+	}
+	assert.throws(
+		make('https://user:pass@your-project.inth.app'),
+		/user name or password/u
+	);
 	for (const local of [
 		'http://localhost:8787',
 		'http://127.0.0.1:3000',
@@ -588,6 +702,34 @@ describe('documents', () => {
 	const keyOf = (sent: Sent | undefined) =>
 		v.parse(v.object({ idempotencyKey: v.string() }), sent?.body)
 			.idempotencyKey;
+
+	describe('publish retries', () => {
+		const PUBLISH = {
+			effectiveDate: '2026-11-18T00:00:00.000Z',
+			hash: HASH,
+			type: 'terms_us',
+			version: '2026-11-18',
+		};
+		const publishedOk = () =>
+			Response.json({ document: { ...DOCUMENT, id: 'doc_1' } });
+
+		it('does not try a publish again after a failure that may have stored it', async () => {
+			const { inth, sent } = stubbed([
+				() => new Response('Gateway Timeout', { status: 504 }),
+				publishedOk,
+			]);
+			const published = await inth.documents.publish(PUBLISH);
+			assert.strictEqual(published.error?.code, 'server_error');
+			assert.strictEqual(sent.length, 1);
+		});
+
+		it('tries a publish again after a 429, which stored nothing', async () => {
+			const { inth, sent } = stubbed([limited, publishedOk]);
+			const published = await inth.documents.publish(PUBLISH);
+			assert.isNull(published.error);
+			assert.strictEqual(sent.length, 2);
+		});
+	});
 
 	it('publishes a version on the /v1 route', async () => {
 		const { inth, sent } = stubbed([

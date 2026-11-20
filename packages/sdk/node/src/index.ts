@@ -21,12 +21,14 @@
 import * as v from 'valibot';
 
 import type { components, operations } from './generated/openapi';
+import { version } from './version';
 
-const VERSION = '0.0.0';
 const DEFAULT_TIMEOUT_MS = 10_000;
 const DEFAULT_MAX_RETRIES = 2;
 const RETRY_BASE_MS = 250;
 const RETRY_CAP_MS = 5000;
+/** The longest timer `AbortSignal.timeout` and `setTimeout` take */
+const MAX_TIMEOUT_MS = 2_147_483_647;
 
 export interface InthOptions {
 	/**
@@ -182,8 +184,10 @@ const linkAnswer = v.object({
  * `requestId` beside it, and older routes', with `code` or `cause.code`
  */
 const refusal = v.object({
-	cause: v.optional(v.object({ code: v.string() })),
-	code: v.optional(v.string()),
+	// Each field falls back alone, so one of an unexpected type, such as a
+	// numeric `code`, does not lose the others
+	cause: v.fallback(v.optional(v.object({ code: v.string() })), undefined),
+	code: v.fallback(v.optional(v.string()), undefined),
 	/**
 	 * Some older routes put a plain title here, which says nothing more than
 	 * the status does and is read as nothing
@@ -197,8 +201,8 @@ const refusal = v.object({
 			{}
 		)
 	),
-	message: v.optional(v.string()),
-	requestId: v.optional(v.string()),
+	message: v.fallback(v.optional(v.string()), undefined),
+	requestId: v.fallback(v.optional(v.string()), undefined),
 });
 
 /** The backend's schemas, generated from its OpenAPI document */
@@ -297,8 +301,11 @@ const unusableLimits = (limits: {
 	) {
 		return '`maxRetries` must be a whole number, 0 or more';
 	}
-	if (timeout !== undefined && !(Number.isFinite(timeout) && timeout > 0)) {
-		return '`timeout` must be a number of milliseconds above 0';
+	if (
+		timeout !== undefined &&
+		!(Number.isInteger(timeout) && timeout > 0 && timeout <= MAX_TIMEOUT_MS)
+	) {
+		return `\`timeout\` must be a whole number of milliseconds, from 1 to ${MAX_TIMEOUT_MS}`;
 	}
 	return undefined;
 };
@@ -321,6 +328,13 @@ const unusableBaseUrl = (base: string): string | undefined => {
 		url = new URL(base);
 	} catch {
 		return `Inth cannot read the project URL "${base}". Pass the full URL, such as https://your-project.inth.app.`;
+	}
+	// Each route is added to the end, so a query or fragment would swallow it
+	if (base.includes('?') || base.includes('#')) {
+		return 'The project URL cannot have a query or a fragment. Pass it as https://your-project.inth.app.';
+	}
+	if (url.username !== '' || url.password !== '') {
+		return 'The project URL cannot hold a user name or password. Pass the secret key as `secretKey`.';
 	}
 	if (url.protocol === 'https:') {
 		return undefined;
@@ -425,9 +439,14 @@ const delayBefore = (
 	return Math.random() * Math.min(RETRY_BASE_MS * 2 ** attempt, RETRY_CAP_MS);
 };
 
-/** Why `fetch` threw: the timeout ran out, or the request never completed */
-const fetchFailure = (error: unknown): InthError => {
-	if (error instanceof Error && error.name === 'TimeoutError') {
+/**
+ * Why `fetch` threw: the timeout ran out, or the request never completed.
+ * Read from the signal, since a `fetch` may reject a timed-out call with an
+ * `AbortError` rather than a `TimeoutError`. A caller's cancel is told apart
+ * after the attempt
+ */
+const fetchFailure = (error: unknown, signal: AbortSignal): InthError => {
+	if (signal.aborted) {
 		return new InthError('timeout', 'The API did not answer in time');
 	}
 	return new InthError(
@@ -455,6 +474,75 @@ const refusalError = (
 	);
 };
 
+/**
+ * Stops reading a body the client will not use. Not awaited by its callers:
+ * a cancel that never settles must not hold the call
+ */
+const discard = async (response: Response): Promise<void> => {
+	try {
+		await response.body?.cancel();
+	} catch {
+		// Nothing more to read either way
+	}
+};
+
+/**
+ * An answer settled from its status and headers alone, before its body is
+ * read, so a body that fails or stalls cannot make it a retried network
+ * error. `undefined` for an answer whose body must be read
+ */
+const settledBeforeBody = (
+	response: Response
+):
+	| {
+			readonly error: InthError;
+			readonly final: true;
+			readonly retryAfter: string | null;
+	  }
+	| undefined => {
+	const details = {
+		requestId: response.headers.get('x-request-id') ?? undefined,
+		status: response.status,
+	};
+	if (
+		response.type === 'opaqueredirect' ||
+		(response.status >= 300 && response.status < 400)
+	) {
+		void discard(response);
+		const location = response.headers.get('location');
+		return {
+			error: new InthError(
+				'unexpected_response',
+				`The API redirected this request${location ? ` to ${location}` : ''}. Pass the address it ends at as \`baseUrl\``,
+				details
+			),
+			final: true,
+			retryAfter: null,
+		};
+	}
+	if (
+		!response.ok &&
+		response.headers.get('x-vercel-mitigated') === 'challenge'
+	) {
+		// The edge in front of the API challenged the call as it would a
+		// browser, which a server cannot answer. Not the API's refusal: it
+		// passes once the traffic from this address slows down. That takes
+		// minutes, so a retry within this call would only add to the burst. A
+		// `deny` is a refusal and reads as one
+		void discard(response);
+		return {
+			error: new InthError(
+				'rate_limited',
+				'The edge in front of the API challenged this request. Send fewer requests from this address, and try again later',
+				details
+			),
+			final: true,
+			retryAfter: response.headers.get('retry-after'),
+		};
+	}
+	return undefined;
+};
+
 const wait = (milliseconds: number, signal: AbortSignal | undefined) =>
 	new Promise<void>((resolve) => {
 		// Removed on both paths: a caller may share one signal across every
@@ -480,6 +568,12 @@ type Send = <Schema extends v.GenericSchema>(
 		readonly body?: string;
 		/** A route that needs no key, which is not sent */
 		readonly keyless?: true;
+		/**
+		 * A write a late second try could undo, such as a publish arriving
+		 * after a newer one. Tried again only when the API refused it unread,
+		 * with a 429, never after a failure that may have left it stored
+		 */
+		readonly retryOnlyUnread?: true;
 	},
 	options: InthRequestOptions | undefined
 ) => Promise<InthResult<v.InferOutput<Schema>>>;
@@ -821,6 +915,7 @@ class Documents {
 				body: JSON.stringify(body),
 				method: 'PUT',
 				path: `/v1/documents/${encodeURIComponent(params.type)}/current`,
+				retryOnlyUnread: true,
 			},
 			options
 		);
@@ -1029,7 +1124,7 @@ export class Inth {
 					readonly retryAfter: string | null;
 			  }
 		> => {
-			const headers = new Headers({ 'user-agent': `inth-node/${VERSION}` });
+			const headers = new Headers({ 'user-agent': `inth-node/${version}` });
 			if (!request.keyless) {
 				headers.set('authorization', authorization);
 			}
@@ -1042,35 +1137,17 @@ export class Inth {
 					body: request.body,
 					headers,
 					method: request.method,
+					// A redirect is reported, not followed: some runtimes, Workers
+					// among them, would send the key on to wherever it points
+					redirect: 'manual',
 					signal,
 				});
 			} catch (error) {
-				return { error: fetchFailure(error), retryAfter: null };
+				return { error: fetchFailure(error, signal), retryAfter: null };
 			}
-			if (
-				!response.ok &&
-				response.headers.get('x-vercel-mitigated') === 'challenge'
-			) {
-				// The edge in front of the API challenged the call as it would a
-				// browser, which a server cannot answer. Not the API's refusal: it
-				// passes once the traffic from this address slows down. That takes
-				// minutes, so a retry within this call would only add to the
-				// burst. Settled before the body is read, so a body that fails or
-				// stalls cannot make it a retried network error. A `deny` is a
-				// refusal and reads as one, below
-				await response.body?.cancel().catch(() => undefined);
-				return {
-					error: new InthError(
-						'rate_limited',
-						'The edge in front of the API challenged this request. Send fewer requests from this address, and try again later',
-						{
-							requestId: response.headers.get('x-request-id') ?? undefined,
-							status: response.status,
-						}
-					),
-					final: true,
-					retryAfter: response.headers.get('retry-after'),
-				};
+			const settled = settledBeforeBody(response);
+			if (settled !== undefined) {
+				return settled;
 			}
 			// A `/v1` refusal also names it in the body, read below
 			const requestId = response.headers.get('x-request-id') ?? undefined;
@@ -1146,7 +1223,9 @@ export class Inth {
 				if (
 					tried >= retries ||
 					('final' in result && result.final) ||
-					!RETRIED.has(result.error.code)
+					!(request.retryOnlyUnread
+						? result.error.code === 'rate_limited'
+						: RETRIED.has(result.error.code))
 				) {
 					return failed(result.error);
 				}
