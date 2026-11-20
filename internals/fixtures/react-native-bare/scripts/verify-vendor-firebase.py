@@ -38,6 +38,9 @@ COLLECTION = re.compile(r'(?:analytics collection|measurement enabled)\D{0,40}?(
 STORAGE = re.compile(r'analytics_storage\W{0,6}(?P<state>granted|denied|true|false|1|0)\b', re.I)
 # Seconds after a probe starts in which a state Firebase logs still counts for it.
 LOG_GRACE_S = 2.0
+# Firebase quotes settings it rejected ('Ignoring lower-priority consent settings,
+# proposed settings: …'); those are not its state.
+REJECTED = re.compile(r'Ignoring lower-priority', re.I)
 # iOS: 'Logging event: …' and 'Event logged. …'; Android: 'Logging event (FE): …'.
 LOGGED = re.compile(r'Logging event|Event logged', re.I)
 
@@ -75,7 +78,7 @@ def first(lines, after: float, until: float, pattern: re.Pattern) -> tuple[str, 
             continue
         if at >= until:
             break
-        match = pattern.search(text)
+        match = None if REJECTED.search(text) else pattern.search(text)
         if match:
             return (match.group('state').lower(), text)
     return None
@@ -86,7 +89,7 @@ def latest(lines, before: float, pattern: re.Pattern) -> tuple[str, str] | None:
     for at, text in lines:
         if at > before:
             break
-        match = pattern.search(text)
+        match = None if REJECTED.search(text) else pattern.search(text)
         if match:
             found = (match.group('state').lower(), text)
     return found
