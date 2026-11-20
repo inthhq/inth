@@ -55,6 +55,7 @@ SUITES = {
         'scripts/mobile-compatibility.json',
         'scripts/vendor_capture.py',
         '.github/actions/setup-sdk',
+        '.node-version',
         'package.json',
         'patches',
         'pnpm-lock.yaml',

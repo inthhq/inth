@@ -37,6 +37,7 @@ on:
       - "scripts/vendor_capture.py"
       - ".github/workflows/android-emulator.yml"
       - ".github/actions/setup-sdk/**"
+      - ".node-version"
       - "package.json"
       - "patches/**"
       - "pnpm-lock.yaml"
