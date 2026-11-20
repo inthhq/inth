@@ -147,9 +147,10 @@ const createLazyInitTransport = function createLazyInitTransport(
 		...(records.liftOptOut && {
 			async liftOptOut(payload, context) {
 				const fn = (await recordTransport()).liftOptOut ?? records.liftOptOut;
-				return await (
-					fn as NonNullable<KernelTransport['liftOptOut']>
-				)(payload, context);
+				return await (fn as NonNullable<KernelTransport['liftOptOut']>)(
+					payload,
+					context
+				);
 			},
 		}),
 		async loadSubjectRecord(subjectId) {
@@ -160,9 +161,10 @@ const createLazyInitTransport = function createLazyInitTransport(
 		...(records.optOut && {
 			async optOut(payload, context) {
 				const fn = (await recordTransport()).optOut ?? records.optOut;
-				return await (
-					fn as NonNullable<KernelTransport['optOut']>
-				)(payload, context);
+				return await (fn as NonNullable<KernelTransport['optOut']>)(
+					payload,
+					context
+				);
 			},
 		}),
 		async save(payload) {

@@ -320,7 +320,11 @@ export const createRuntime = function createRuntime(
 			if (!next.subject?.subjectId) {
 				gpcPatch.subject = { ...next.subject, subjectId: generateUuidV7() };
 			}
-			next = gateExperiment(current, buildNextSnapshot(current, gpcPatch), patch);
+			next = gateExperiment(
+				current,
+				buildNextSnapshot(current, gpcPatch),
+				patch
+			);
 			recordedGpcOptOut = true;
 		}
 		if (impressionDue(next)) {

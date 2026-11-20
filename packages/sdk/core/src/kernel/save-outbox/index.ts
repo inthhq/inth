@@ -676,11 +676,15 @@ export const createSaveOutbox = function createSaveOutbox({
 				await markOptOutsUnsupported();
 				return;
 			}
-			if (reassign && clearVersion === startedClear && isSubjectConflict(error)) {
+			if (
+				reassign &&
+				clearVersion === startedClear &&
+				isSubjectConflict(error)
+			) {
 				const subjectId =
-					(await (await loadWorker())?.reassignSubject(
-						act.payload.subjectId
-					)) ?? null;
+					(await (
+						await loadWorker()
+					)?.reassignSubject(act.payload.subjectId)) ?? null;
 				if (subjectId !== null) {
 					const reassigned: OptOutAct =
 						act.kind === 'record'
