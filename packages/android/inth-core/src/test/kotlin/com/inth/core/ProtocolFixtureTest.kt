@@ -1425,6 +1425,35 @@ class ProtocolFixtureTest {
 		)
 		add("save-body-ccpa-opt-out-lifted", "expected.snapshotBefore", *storedOptOutFields.toTypedArray())
 		add("save-body-ccpa-opt-out-lifted", "expected.snapshotAfter", "nextDeadline" to DEADLINE_OVER)
+		add(
+			"evaluation-opt-out-measurement-granted",
+			"expected.snapshot",
+			"optOut" to OPT_OUT_RECORD,
+			"restrictions.marketing" to OPT_OUT_RECORD,
+		)
+		add(
+			"save-body-ccpa-refuse-marketing",
+			"expected.snapshotAfter",
+			"effectivePermissions.measurement" to OPT_OUT_RECORD,
+			"nextDeadline" to DEADLINE_OVER,
+			"optOut" to OPT_OUT_RECORD,
+			"restrictions.marketing" to OPT_OUT_RECORD,
+			"restrictions.measurement" to OPT_OUT_RECORD,
+		)
+		add(
+			"save-body-ccpa-opt-out-measurement-grant",
+			"expected.snapshotBefore",
+			"nextDeadline" to DEADLINE_OVER,
+			"optOut" to OPT_OUT_RECORD,
+			"restrictions.marketing" to OPT_OUT_RECORD,
+			"restrictions.measurement" to OPT_OUT_RECORD,
+		)
+		add(
+			"save-body-ccpa-opt-out-measurement-grant",
+			"expected.snapshotAfter",
+			"optOut" to OPT_OUT_RECORD,
+			"restrictions.marketing" to OPT_OUT_RECORD,
+		)
 		return rows
 	}
 }

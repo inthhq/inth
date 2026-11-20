@@ -557,17 +557,47 @@ describe('commands.save() interaction with opt-out', () => {
 		kernel.dispose();
 	});
 
-	test('turning off only one keeps a plain choice, and turning off the second in a later save records an opt-out', async () => {
+	test.each([
+		['undecided', { marketing: false }],
+		['granted', { marketing: false, measurement: true }],
+		['refused', { marketing: false, measurement: false }],
+	] as const)(
+		'refusing marketing alone records an opt-out while measurement is %s',
+		async (state, input) => {
+			const kernel = createKernel();
+			const recorded = vi.fn();
+			kernel.events.on('opt-out:recorded', recorded);
+
+			await kernel.commands.save(input, { uiSource: 'widget' });
+
+			expect(kernel.getSnapshot().optOut).toEqual({
+				heldBy: 'device',
+				method: 'button',
+				recordedAt: NOW,
+				rights: [...ALL_RIGHTS],
+			});
+			expect(recorded).toHaveBeenCalledTimes(1);
+			expect(recorded.mock.calls[0]?.[0].uiSource).toBe('widget');
+			expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+			expect(kernel.getSnapshot().effectivePermissions.measurement).toBe(
+				state === 'granted'
+			);
+			kernel.dispose();
+		}
+	);
+
+	test('refusing measurement alone records nothing when marketing is in scope', async () => {
 		const kernel = createKernel();
 		const recorded = vi.fn();
 		kernel.events.on('opt-out:recorded', recorded);
 
-		await kernel.commands.save({ marketing: false });
+		await kernel.commands.save({ measurement: false });
 		expect(kernel.getSnapshot().optOut).toBeNull();
 		expect(recorded).not.toHaveBeenCalled();
 
+		// A later save refusing marketing records the opt-out.
 		vi.setSystemTime(NOW + 2000);
-		await kernel.commands.save({ measurement: false });
+		await kernel.commands.save({ marketing: false });
 		expect(kernel.getSnapshot().optOut).toEqual({
 			heldBy: 'device',
 			method: 'button',
@@ -581,6 +611,125 @@ describe('commands.save() interaction with opt-out', () => {
 		await kernel.commands.save({ marketing: false });
 		expect(kernel.getSnapshot().optOut?.recordedAt).toBe(NOW + 2000);
 		expect(recorded).toHaveBeenCalledTimes(1);
+		kernel.dispose();
+	});
+
+	test('granting measurement alone does not lift a held opt-out when marketing is in scope', async () => {
+		const existing: OptOutRecord = {
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW - 1000,
+			rights: ['sale', 'share'],
+		};
+		const kernel = createKernel({
+			initialRecords: {
+				...choiceRecords({ marketing: false, measurement: false }),
+				now: NOW,
+				optOut: existing,
+			},
+		});
+		const lifted = vi.fn();
+		kernel.events.on('opt-out:lifted', lifted);
+
+		await kernel.commands.save({ measurement: true });
+
+		expect(kernel.getSnapshot().optOut).toEqual(existing);
+		expect(lifted).not.toHaveBeenCalled();
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		expect(kernel.getSnapshot().effectivePermissions.measurement).toBe(true);
+		expect(kernel.getSnapshot().restrictions).toEqual({
+			marketing: ['explicit-denial', 'opt-out'],
+		});
+		kernel.dispose();
+	});
+
+	test('when marketing is not in scope, measurement decides both recording and lifting', async () => {
+		const kernel = createKernel({
+			consentCategories: ['necessary', 'functionality', 'measurement'],
+			initialPolicyResolution: matchedResolution(
+				optOutRule({
+					categories: ['functionality', 'measurement'],
+					prompt: 'none',
+					scopeMode: 'permissive',
+				})
+			),
+		});
+		const recorded = vi.fn();
+		const lifted = vi.fn();
+		kernel.events.on('opt-out:recorded', recorded);
+		kernel.events.on('opt-out:lifted', lifted);
+
+		await kernel.commands.save({ measurement: false });
+		expect(kernel.getSnapshot().optOut).toEqual({
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW,
+			rights: [...ALL_RIGHTS],
+		});
+		expect(recorded).toHaveBeenCalledTimes(1);
+
+		await kernel.commands.save({ measurement: true });
+		expect(kernel.getSnapshot().optOut).toBeNull();
+		expect(lifted).toHaveBeenCalledTimes(1);
+		expect(kernel.getSnapshot().effectivePermissions.measurement).toBe(true);
+		kernel.dispose();
+	});
+
+	test('under an opt-in rule, granting marketing lifts a held opt-out while refusing marketing records none', async () => {
+		const existing: OptOutRecord = {
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW - 1000,
+			rights: ['sale', 'share'],
+		};
+		const kernel = createKernel({
+			consentCategories: [
+				'necessary',
+				'functionality',
+				'experience',
+				'measurement',
+				'marketing',
+			],
+			initialPolicyResolution: matchedResolution(optInRule()),
+			initialRecords: { now: NOW, optOut: existing },
+		});
+		const lifted = vi.fn();
+		const recorded = vi.fn();
+		kernel.events.on('opt-out:lifted', lifted);
+		kernel.events.on('opt-out:recorded', recorded);
+
+		// Granting measurement alone does not lift.
+		await kernel.commands.save({ measurement: true });
+		expect(kernel.getSnapshot().optOut).toEqual(existing);
+		expect(lifted).not.toHaveBeenCalled();
+
+		// Granting marketing lifts under opt-in.
+		await kernel.commands.save({ marketing: true });
+		expect(kernel.getSnapshot().optOut).toBeNull();
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
+		expect(lifted).toHaveBeenCalledTimes(1);
+
+		// Refusing marketing under opt-in never records an opt-out.
+		await kernel.commands.save({ marketing: false });
+		expect(kernel.getSnapshot().optOut).toBeNull();
+		expect(recorded).not.toHaveBeenCalled();
+		kernel.dispose();
+	});
+
+	test('with GPC active and mapping measurement, saving marketing false and measurement true keeps measurement denied with gpc', async () => {
+		const kernel = createKernel({
+			initialPrivacySignals: { gpc: true },
+		});
+		await kernel.commands.init();
+		expect(kernel.getSnapshot().optOut?.method).toBe('gpc');
+
+		await kernel.commands.save({ marketing: false, measurement: true });
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		expect(kernel.getSnapshot().effectivePermissions.measurement).toBe(false);
+		expect(kernel.getSnapshot().restrictions).toEqual({
+			marketing: ['explicit-denial', 'gpc', 'opt-out'],
+			measurement: ['gpc'],
+		});
 		kernel.dispose();
 	});
 

@@ -66,15 +66,19 @@ visitor request, or "Opt-out preference signal honored" when Global Privacy
 Control recorded or enforces it.
 
 - While the browser's GPC signal is active under a policy that maps it, the
-  opted-out category switches stay off and disabled. A notice below each row
+  signal-restricted switches and `marketing` (or `measurement` when `marketing`
+  is not in scope) stay off and disabled. A notice below each locked row
   explains why and is linked to the switch with `aria-describedby`. **Save
   Settings** and **Accept All** do not present or grant locked categories.
-- When an account holds the opt-out and GPC is off, the notice explains that
-  the account has opted out and the switches remain usable. Turning a category
-  back on and saving asks the backend to lift the account opt-out.
-- When the opt-out is device-held and GPC is off, turning a restricted
-  category back on and saving lifts the opt-out. Saving without changing a
-  switch keeps the opt-out in place.
+- When an account holds the opt-out and GPC is off, the notice appears below
+  `marketing` (or `measurement` when `marketing` is not in scope) to explain
+  that the account has opted out, and the switches remain usable. Turning
+  `marketing` back on and saving asks the backend to lift the account opt-out.
+- When the opt-out is device-held and GPC is off, turning `marketing` back on
+  and saving lifts the opt-out (`measurement` decides when `marketing` is not in
+  scope). Turning `measurement` back on while `marketing` stays off keeps
+  `measurement` allowed and leaves the opt-out in place. Saving without changing
+  a switch keeps the opt-out in place.
 
 ## Buttons
 

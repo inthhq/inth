@@ -707,4 +707,73 @@ describe('opt-out and GPC restrictions', () => {
 			measurement: false,
 		});
 	});
+
+	test('lets measurement turn on while marketing stays off under a request opt-out, keeping measurement on after save', async () => {
+		const { kernel } = setup(
+			{
+				consentCategories: ['functionality', 'marketing', 'measurement'],
+				initialRecords: {
+					optOut: {
+						heldBy: 'device',
+						method: 'button',
+						recordedAt: NOW,
+						rights: ['sale', 'share'],
+					},
+				},
+			},
+			gpcOptOutRule
+		);
+		const draft = createPreferenceDraft(kernel);
+		expect(draft.getState().values).toMatchObject({
+			marketing: false,
+			measurement: false,
+		});
+
+		draft.set('measurement', true);
+		expect(draft.getState().values).toMatchObject({
+			marketing: false,
+			measurement: true,
+		});
+		await draft.save();
+		expect(kernel.getSnapshot().optOut).not.toBeNull();
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		expect(kernel.getSnapshot().effectivePermissions.measurement).toBe(true);
+		expect(draft.getState().values).toMatchObject({
+			marketing: false,
+			measurement: true,
+		});
+	});
+
+	test('under active GPC mapping marketing only, locks marketing while keeping measurement usable', async () => {
+		const marketingOnlyGpcRule = optOutRule({
+			categories: ['functionality', 'marketing', 'measurement'],
+			privacySignals: { gpc: { denyCategories: ['marketing'] } },
+		});
+		const { kernel } = setup(
+			{
+				consentCategories: ['functionality', 'marketing', 'measurement'],
+				initialPrivacySignals: { gpc: true },
+				initialRecords: {
+					optOut: {
+						heldBy: 'device',
+						method: 'gpc',
+						recordedAt: NOW,
+						rights: ['sale', 'share'],
+					},
+				},
+			},
+			marketingOnlyGpcRule
+		);
+		const draft = createPreferenceDraft(kernel);
+		draft.set('marketing', true);
+		draft.set('measurement', true);
+		expect(draft.getState().values).toMatchObject({
+			marketing: false,
+			measurement: true,
+		});
+		await draft.save();
+		expect(kernel.getSnapshot().optOut).not.toBeNull();
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		expect(kernel.getSnapshot().effectivePermissions.measurement).toBe(true);
+	});
 });

@@ -1438,6 +1438,23 @@ describe('mountConsentUI', () => {
 				client.getSnapshot().explicitChoice?.categories.marketing?.value
 			).toBe(false);
 
+			// Turning measurement on while marketing stays off keeps the opt-out and lets measurement stand.
+			client.openDialog();
+			await vi.waitFor(() => {
+				expect(query(root, 'consent-dialog-root')).not.toBeNull();
+			});
+			const measurementToggle = query<HTMLButtonElement>(
+				root,
+				'consent-widget-switch-measurement'
+			);
+			expect(measurementToggle.disabled).toBe(false);
+			measurementToggle.click();
+			expect(measurementToggle.getAttribute('aria-checked')).toBe('true');
+			query(root, 'consent-widget-footer-save-button').click();
+			expect(client.getSnapshot().optOut).not.toBeNull();
+			expect(client.getSnapshot().effectivePermissions.marketing).toBe(false);
+			expect(client.getSnapshot().effectivePermissions.measurement).toBe(true);
+
 			// Re-open, turn marketing on, and save to lift the opt-out.
 			client.openDialog();
 			await vi.waitFor(() => {
@@ -1577,6 +1594,11 @@ describe('mountConsentUI', () => {
 			expect(marketing.getAttribute('aria-checked')).toBe('false');
 			expect(marketing.getAttribute('aria-describedby')).toBe(notice.id);
 			expect(notice.textContent).toContain('account');
+			expect(
+				root.querySelector(
+					'[data-testid="consent-widget-restriction-measurement"]'
+				)
+			).toBeNull();
 
 			// The switch stays usable and stages a toggle on.
 			marketing.click();

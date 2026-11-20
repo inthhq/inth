@@ -16,6 +16,7 @@ import {
 	DAY,
 	matchedResolution,
 	NOW,
+	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import {
@@ -1110,5 +1111,255 @@ describe('opt-out network sync and queue', () => {
 		expect(warn).toHaveBeenCalled();
 		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
 		kernel.dispose();
+	});
+
+	test('refusing marketing and granting measurement in one save keeps measurement permitted after the server replaces recordedAt with a later timestamp', async () => {
+		const serverRecordedAt = Date.now() + 60_000;
+		const save = vi.fn<NonNullable<KernelTransport['save']>>((payload) =>
+			Promise.resolve({ ok: true, subjectId: payload.subjectId })
+		);
+		const optOut = vi.fn<NonNullable<KernelTransport['optOut']>>((payload) =>
+			Promise.resolve({
+				ok: true,
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: serverRecordedAt,
+					rights: ['sale', 'share'],
+				},
+				subjectId: payload.subjectId,
+			})
+		);
+		const kernel = kernelOn({
+			initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
+			transport: { optOut, save },
+		});
+
+		await kernel.commands.save({ marketing: false, measurement: true });
+		expect(kernel.getSnapshot().optOut).not.toBeNull();
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		expect(kernel.getSnapshot().effectivePermissions.measurement).toBe(true);
+
+		await vi.waitFor(() =>
+			expect(kernel.getSnapshot().optOut?.recordedAt).toBe(serverRecordedAt)
+		);
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		expect(kernel.getSnapshot().effectivePermissions.measurement).toBe(true);
+		expect(kernel.getSnapshot().restrictions).toEqual({
+			marketing: ['explicit-denial', 'opt-out'],
+		});
+		kernel.dispose();
+	});
+
+	test('under an opt-in rule, granting marketing lifts a held opt-out and sends one lift request; refusing marketing sends none', async () => {
+		const save = vi.fn<NonNullable<KernelTransport['save']>>((payload) =>
+			Promise.resolve({ ok: true, subjectId: payload.subjectId })
+		);
+		const optOut = vi.fn<NonNullable<KernelTransport['optOut']>>();
+		const liftOptOut = vi.fn<NonNullable<KernelTransport['liftOptOut']>>(
+			(payload) =>
+				Promise.resolve({
+					ok: true,
+					optOut: null,
+					subjectId: payload.subjectId,
+				})
+		);
+		const kernel = kernelOn({
+			initialPolicyResolution: matchedResolution(optInRule()),
+			initialRecords: {
+				now: NOW,
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: NOW - 1000,
+					rights: ['sale', 'share'],
+				},
+				subject: { subjectId: SUBJECT },
+			},
+			transport: { liftOptOut, optOut, save },
+		});
+
+		await kernel.commands.save({ marketing: true });
+		await vi.waitFor(() => expect(liftOptOut).toHaveBeenCalledTimes(1));
+		expect(kernel.getSnapshot().optOut).toBeNull();
+		expect(liftOptOut.mock.calls[0]?.[0].policySnapshotToken).toBe(
+			'snapshot-token'
+		);
+
+		await kernel.commands.save({ marketing: false });
+		await flushMacrotasks();
+		expect(kernel.getSnapshot().optOut).toBeNull();
+		expect(optOut).not.toHaveBeenCalled();
+		kernel.dispose();
+	});
+
+	test.each([
+		['person', 'optIn'],
+		['person', 'save'],
+		['both', 'optIn'],
+		['both', 'save'],
+	] as const)(
+		'clearing an account-held opt-out (heldBy=%s) via %s when the lift answers null clears snapshot and storage',
+		async (heldBy, action) => {
+			const accountOptOut: OptOutRecord = {
+				heldBy,
+				method: 'propagated',
+				recordedAt: NOW - 1000,
+				rights: ['sale', 'share'],
+			};
+			const liftCalls: LiftOptOutPayload[] = [];
+			const transport: KernelTransport = {
+				identify: () =>
+					Promise.resolve({ optOut: accountOptOut, subjectId: SUBJECT }),
+				liftOptOut: (payload) => {
+					liftCalls.push(payload);
+					return Promise.resolve({
+						ok: true,
+						optOut: null,
+						subjectId: payload.subjectId,
+					});
+				},
+				save: (payload) =>
+					Promise.resolve({ ok: true, subjectId: payload.subjectId }),
+			};
+			const kernel = kernelOn({
+				initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
+				transport,
+			});
+			const persistence = createPersistence({ kernel });
+
+			await kernel.commands.identify({
+				externalId: 'user_123',
+				identityToken: 'tok_verified',
+			});
+			await flushMacrotasks();
+			expect(kernel.getSnapshot().optOut).toEqual(accountOptOut);
+			expect(readStoredOptOutRecord(undefined, Date.now())?.ok).toBe(true);
+
+			const actionResult =
+				action === 'optIn'
+					? await kernel.commands.optIn({ uiSource: 'dialog' })
+					: await kernel.commands.save({ marketing: true });
+			expect(actionResult.ok).toBe(true);
+			await vi.waitFor(() => expect(kernel.getSnapshot().optOut).toBeNull());
+			await flushMacrotasks();
+
+			expect(liftCalls).toHaveLength(1);
+			expect(liftCalls[0]?.user?.identityToken).toBe('tok_verified');
+			expect(liftCalls[0]?.policySnapshotToken).toBe('snapshot-token');
+			expect(kernel.getSnapshot().optOut).toBeNull();
+			expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
+			expect(readStoredOptOutRecord(undefined, Date.now())).toBeNull();
+
+			persistence.dispose();
+			kernel.dispose();
+
+			// Reload confirms storage stays clear.
+			const reloaded = kernelOn({ transport });
+			const secondPersistence = createPersistence({ kernel: reloaded });
+			expect(reloaded.getSnapshot().optOut).toBeNull();
+			expect(reloaded.getSnapshot().effectivePermissions.marketing).toBe(true);
+			secondPersistence.dispose();
+			reloaded.dispose();
+		}
+	);
+
+	test('lift sends policySnapshotToken when held, omits it when absent, and preserves it on queued replay', async () => {
+		const { calls, fetch } = stubFetch(() =>
+			json(200, { optOut: null, recordId: RECORD, subjectId: SUBJECT })
+		);
+		const transport = createV1HostedTransport({
+			fetch,
+			projectUrl: PROJECT_URL,
+			property: 'www.example.com',
+		});
+
+		const withToken = kernelOn({
+			initialPolicySnapshotToken: 'lift-token-1',
+			initialRecords: {
+				now: NOW,
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: NOW - 1000,
+					rights: ['sale', 'share'],
+				},
+				subject: { subjectId: SUBJECT },
+			},
+			transport: { liftOptOut: transport.liftOptOut },
+		});
+		await withToken.commands.optIn();
+		expect(calls).toHaveLength(1);
+		expect(bodyAt(calls, 0).policySnapshotToken).toBe('lift-token-1');
+		withToken.dispose();
+
+		const withoutToken = kernelOn({
+			initialPolicySnapshotToken: undefined,
+			initialRecords: {
+				now: NOW,
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: NOW - 1000,
+					rights: ['sale', 'share'],
+				},
+				subject: { subjectId: SUBJECT },
+			},
+			transport: { liftOptOut: transport.liftOptOut },
+		});
+		await withoutToken.commands.optIn();
+		expect(calls).toHaveLength(2);
+		expect('policySnapshotToken' in bodyAt(calls, 1)).toBe(false);
+		withoutToken.dispose();
+
+		// Queued lift preserves policySnapshotToken across reload and replay.
+		const browserStore = createBrowserOutboxStore();
+		const failLift = vi
+			.fn<NonNullable<KernelTransport['liftOptOut']>>()
+			.mockRejectedValue(new Error('offline'));
+		const first = kernelOn(
+			{
+				initialPolicySnapshotToken: 'queued-lift-token',
+				initialRecords: {
+					now: NOW,
+					optOut: {
+						heldBy: 'device',
+						method: 'button',
+						recordedAt: NOW - 1000,
+						rights: ['sale', 'share'],
+					},
+					subject: { subjectId: SUBJECT },
+				},
+				transport: { liftOptOut: failLift },
+			},
+			browserStore
+		);
+		await first.commands.optIn();
+		expect(await queuedOptOuts(browserStore)).toHaveLength(1);
+		first.dispose();
+
+		const replayed: LiftOptOutPayload[] = [];
+		const second = kernelOn(
+			{
+				initialPolicySnapshotToken: 'newer-token-ignored-by-replay',
+				initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
+				transport: {
+					liftOptOut: (payload) => {
+						replayed.push(payload);
+						return Promise.resolve({
+							ok: true,
+							optOut: null,
+							subjectId: payload.subjectId,
+						});
+					},
+				},
+			},
+			browserStore
+		);
+		await second.commands.init();
+		await vi.waitFor(() => expect(replayed).toHaveLength(1));
+		expect(replayed[0]?.policySnapshotToken).toBe('queued-lift-token');
+		expect(await queuedOptOuts(browserStore)).toEqual([]);
+		second.dispose();
 	});
 });

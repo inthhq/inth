@@ -184,13 +184,13 @@ describe('Shopify Customer Privacy bridge', () => {
 		]);
 	});
 
-	it('derives sale_of_data from the opt-out record and default opt-out categories', async () => {
+	it('derives sale_of_data from the opt-out record and deciding category', async () => {
 		const shopify = installCustomerPrivacy();
 		const kernel = kernelWith('opt-out');
 		const bridge = createShopifyCustomerPrivacy();
 		bridge.connect(kernel);
 
-		// Measurement alone denied with no opt-out record denies sale_of_data.
+		// Measurement alone denied with marketing granted and no opt-out record allows sale_of_data.
 		await kernel.commands.save({
 			functionality: true,
 			marketing: true,
@@ -202,7 +202,7 @@ describe('Shopify Customer Privacy bridge', () => {
 					analytics: false,
 					marketing: true,
 					preferences: true,
-					sale_of_data: false,
+					sale_of_data: true,
 				},
 			])
 		);
@@ -298,7 +298,7 @@ describe('Shopify Customer Privacy bridge', () => {
 		await vi.waitFor(() =>
 			expect(shopify.sent).toEqual([
 				{
-					analytics: true,
+					analytics: false,
 					marketing: false,
 					preferences: true,
 					sale_of_data: false,

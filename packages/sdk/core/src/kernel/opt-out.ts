@@ -129,6 +129,7 @@ export const buildLiftOptOutPayload = function buildLiftOptOutPayload(
 	const payload: LiftOptOutPayload = {
 		givenAt: actionAt,
 		idempotencyKey: createIdempotencyKey(),
+		policySnapshotToken: snapshot.policySnapshotToken,
 		subjectId,
 		user: snapshot.user ? { ...snapshot.user } : null,
 	};

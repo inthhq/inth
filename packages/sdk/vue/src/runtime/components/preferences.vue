@@ -15,6 +15,7 @@ import type { PresentationAction } from '@inth/sdk/engine';
 import { vendorsListedUnder } from '@inth/sdk/engine';
 import {
 	resolveActionLabels,
+	resolveCategoryOptOutLock,
 	resolveCategoryTitle,
 	resolveOptOutCopy,
 } from '@inth/sdk/surface-state';
@@ -142,14 +143,7 @@ const displayedVendors = function displayedVendors(category: CONSENT_CATEGORY) {
 };
 
 const isGpcLocked = function isGpcLocked(category: CONSENT_CATEGORY): boolean {
-	if (category === 'necessary') {
-		return false;
-	}
-	return (
-		(optOutState.value.lock === 'gpc-active' &&
-			optOutState.value.categories.includes(category)) ||
-		snapshot.value.restrictions[category]?.includes('gpc') === true
-	);
+	return resolveCategoryOptOutLock(snapshot.value, category) === 'gpc-active';
 };
 
 const isDisabled = function isDisabled(category: CONSENT_CATEGORY): boolean {
@@ -162,13 +156,11 @@ const restrictionReason = function restrictionReason(
 	if (category === 'necessary') {
 		return null;
 	}
-	if (isGpcLocked(category)) {
+	const lock = resolveCategoryOptOutLock(snapshot.value, category);
+	if (lock === 'gpc-active') {
 		return optOutCopy.value.lockedByGpc;
 	}
-	if (
-		optOutState.value.lock === 'held-by-account' &&
-		optOutState.value.categories.includes(category)
-	) {
+	if (lock === 'held-by-account') {
 		return optOutCopy.value.lockedByAccount;
 	}
 	const decision = snapshot.value.explicitChoice?.categories[category];

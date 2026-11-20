@@ -1,5 +1,6 @@
 import {
 	consentTypes,
+	resolveCategoryOptOutLock,
 	resolveCategoryTitle,
 	resolveOptOutCopy,
 	resolveOptOutState,
@@ -70,39 +71,19 @@ interface RowCopy {
 	restrictionReason: string | null;
 }
 
-const isGpcLockedCategory = function isGpcLockedCategory(
-	snapshot: ConsentSnapshot,
-	optOutState: ResolvedOptOutState,
-	name: AllConsentNames
-): boolean {
-	if (name === 'necessary') {
-		return false;
-	}
-	return (
-		(optOutState.lock === 'gpc-active' &&
-			optOutState.categories.includes(name)) ||
-		snapshot.restrictions[name]?.includes('gpc') === true
-	);
-};
-
 const resolveRowCopy = function resolveRowCopy(
 	snapshot: ConsentSnapshot,
 	t: CompleteTranslations,
-	optOutState: ResolvedOptOutState,
 	optOutCopy: OptOutTranslations,
 	name: AllConsentNames
 ): RowCopy {
 	const type = consentTypes.find((candidate) => candidate.name === name);
-	const gpcLocked = isGpcLockedCategory(snapshot, optOutState, name);
-	const accountHeld =
-		!gpcLocked &&
-		name !== 'necessary' &&
-		optOutState.lock === 'held-by-account' &&
-		optOutState.categories.includes(name);
+	const lock = resolveCategoryOptOutLock(snapshot, name);
+	const gpcLocked = lock === 'gpc-active';
 	let restrictionReason: string | null = null;
 	if (gpcLocked) {
 		restrictionReason = optOutCopy.lockedByGpc;
-	} else if (accountHeld) {
+	} else if (lock === 'held-by-account') {
 		restrictionReason = optOutCopy.lockedByAccount;
 	}
 	return {
@@ -128,6 +109,7 @@ const optOutRenderKey = function optOutRenderKey(
 		optOutState.honored,
 		optOutState.via ?? '',
 		optOutState.lock ?? '',
+		optOutState.decidingCategory ?? '',
 		optOutState.categories.join(','),
 		gpcRestricted,
 	].join('|');
@@ -445,10 +427,9 @@ export const createWidget = function createWidget(
 
 	const acceptUnlocked = function acceptUnlocked(): void {
 		const latest = ctx.client.getSnapshot();
-		const optOutState = resolveOptOutState(latest);
 		const displayed = draft.getState().displayedCategories;
-		const hasLocked = displayed.some((name) =>
-			isGpcLockedCategory(latest, optOutState, name)
+		const hasLocked = displayed.some(
+			(name) => resolveCategoryOptOutLock(latest, name) === 'gpc-active'
 		);
 		draft.reset();
 		if (!hasLocked) {
@@ -459,7 +440,7 @@ export const createWidget = function createWidget(
 		for (const name of displayed) {
 			if (
 				name !== 'necessary' &&
-				!isGpcLockedCategory(latest, optOutState, name)
+				resolveCategoryOptOutLock(latest, name) !== 'gpc-active'
 			) {
 				selection[name] = true;
 			}
@@ -533,11 +514,7 @@ export const createWidget = function createWidget(
 		element.replaceChildren();
 		element.setAttribute('dir', dir);
 		rows = categories.map((name) =>
-			buildRow(
-				snapshot,
-				resolveRowCopy(snapshot, t, optOutState, optOutCopy, name),
-				t
-			)
+			buildRow(snapshot, resolveRowCopy(snapshot, t, optOutCopy, name), t)
 		);
 		review = h(
 			'div',

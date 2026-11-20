@@ -205,6 +205,8 @@ const IDEMPOTENCY_MINTS: Record<string, string> = {
 	all: '01000000000000000101',
 	'ccpa-gpc': '01000000000000000104',
 	'ccpa-opt-out-lifted': '01000000000000000108',
+	'ccpa-opt-out-measurement-grant': '01000000000000000110',
+	'ccpa-refuse-marketing': '01000000000000000109',
 	'ccpa-reject-all': '01000000000000000107',
 	'explicit-partial': '01000000000000000103',
 	necessary: '01000000000000000102',
@@ -2358,6 +2360,38 @@ const buildEvaluationFixtures =
 			)
 		);
 
+		const measurementGrantedRun = await runFixture(inputFor(CCPA_SCENARIO), {
+			intent: {
+				action: 'explicit',
+				consents: { marketing: false, measurement: true },
+			},
+		});
+		if (
+			!(
+				measurementGrantedRun.after.optOut &&
+				measurementGrantedRun.after.explicitChoice
+			)
+		) {
+			throw new Error(
+				'Refusing marketing while granting measurement under the CCPA opt-out rule recorded no opt-out or choice.'
+			);
+		}
+		const measurementGrantedInput = inputFor(CCPA_SCENARIO, {
+			records: storedFor(SUBJECT.california, {
+				choice: measurementGrantedRun.after.explicitChoice,
+				optOut: storedCaliforniaRights(measurementGrantedRun.after.optOut),
+			}),
+		});
+		const measurementGranted = await runFixture(measurementGrantedInput);
+		fixtures.push(
+			evaluationFixture(
+				'opt-out-measurement-granted',
+				'A stored button opt-out under the CCPA opt-out rule alongside an explicit refusal of marketing and a valid grant of measurement. Marketing stays denied with explicit-denial and opt-out while the explicit measurement grant stands permitted.',
+				measurementGrantedInput,
+				measurementGranted.after
+			)
+		);
+
 		return fixtures;
 	};
 
@@ -2381,6 +2415,17 @@ const buildSaveBodyFixtures = async function buildSaveBodyFixtures(): Promise<
 	if (!buttonOptOutRun.after.optOut) {
 		throw new Error(
 			'commands.optOut() under the CCPA opt-out rule recorded no opt-out, so the opt-out lift fixture proves nothing.'
+		);
+	}
+	const refusedBothRun = await runFixture(inputFor(CCPA_SCENARIO), {
+		intent: {
+			action: 'explicit',
+			consents: { marketing: false, measurement: false },
+		},
+	});
+	if (!(refusedBothRun.after.optOut && refusedBothRun.after.explicitChoice)) {
+		throw new Error(
+			'Refusing marketing and measurement under the CCPA opt-out rule recorded no opt-out or choice.'
 		);
 	}
 	const cases: {
@@ -2426,14 +2471,24 @@ const buildSaveBodyFixtures = async function buildSaveBodyFixtures(): Promise<
 		},
 		{
 			description:
-				'Reject all under the CCPA opt-out rule. Every optional category gets an explicit false receipt, and refusing both marketing and measurement under an opt-out rule records a durable opt-out with method button and no rights yet, because the backend has not answered.',
+				'Reject all under the CCPA opt-out rule. Every optional category gets an explicit false receipt, and refusing marketing (the deciding category) under an opt-out rule records a durable opt-out with method button and no rights yet, because the backend has not answered.',
 			id: 'ccpa-reject-all',
 			intent: { action: 'necessary' },
 			scenario: CCPA_SCENARIO,
 		},
 		{
 			description:
-				'A stored device-held button opt-out under the CCPA opt-out rule followed by a save that grants marketing. With GPC inactive, granting an opt-out category lifts the durable opt-out record, clears the opt-out restrictions, and allows marketing and measurement.',
+				'Refusing marketing alone under the CCPA opt-out rule. Marketing gets an explicit false receipt while measurement stays undecided, and refusing the deciding category records a durable opt-out with method button and no rights yet that denies both marketing and measurement.',
+			id: 'ccpa-refuse-marketing',
+			intent: {
+				action: 'explicit',
+				consents: { marketing: false },
+			},
+			scenario: CCPA_SCENARIO,
+		},
+		{
+			description:
+				'A stored device-held button opt-out under the CCPA opt-out rule followed by a save that grants marketing. With GPC inactive, granting the deciding category lifts the durable opt-out record, clears the opt-out restrictions, and allows marketing and measurement.',
 			id: 'ccpa-opt-out-lifted',
 			intent: {
 				action: 'explicit',
@@ -2442,6 +2497,23 @@ const buildSaveBodyFixtures = async function buildSaveBodyFixtures(): Promise<
 			records: storedFor(SUBJECT.california, {
 				optOut: {
 					...buttonOptOutRun.after.optOut,
+					rights: ['sale', 'share'],
+				},
+			}),
+			scenario: CCPA_SCENARIO,
+		},
+		{
+			description:
+				'A stored device-held button opt-out with marketing and measurement refused under the CCPA opt-out rule followed by a save that grants measurement alone. Granting a non-deciding category does not lift the opt-out; marketing stays denied with explicit-denial and opt-out while measurement becomes permitted.',
+			id: 'ccpa-opt-out-measurement-grant',
+			intent: {
+				action: 'explicit',
+				consents: { measurement: true },
+			},
+			records: storedFor(SUBJECT.california, {
+				choice: refusedBothRun.after.explicitChoice,
+				optOut: {
+					...refusedBothRun.after.optOut,
 					rights: ['sale', 'share'],
 				},
 			}),

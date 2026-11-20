@@ -39,7 +39,7 @@ kernel.subscribe((next) => {
 | --- | --- | --- |
 | `explicitChoice` | `{ version, categories } \| null` | Recorded decision per category (`value`, `confirmedAt`), or `null` if none. |
 | `noticeDismissal` | `{ dismissedAt, fingerprint } \| null` | Notice acknowledgement timestamp (not a consent grant). |
-| `optOut` | `{ rights, method, recordedAt, heldBy } \| null` | Durable opt-out record from `commands.optOut()`, a detected GPC signal, or refusing `marketing` and `measurement` under an `opt-out` policy. `rights` starts empty (`[]`) until the backend returns the rights for the visitor's location, or holds all three rights (`sale`, `share`, `targeted_ads`) when the transport has no `optOut` method or the backend does not store opt-outs. Switches off `marketing` and `measurement` in scope and never expires. |
+| `optOut` | `{ rights, method, recordedAt, heldBy } \| null` | Durable opt-out record from `commands.optOut()`, a detected GPC signal, or refusing `marketing` (or `measurement` when `marketing` is not in scope) under an `opt-out` policy. `rights` starts empty (`[]`) until the backend returns the rights for the visitor's location, or holds all three rights (`sale`, `share`, `targeted_ads`) when the transport has no `optOut` method or the backend does not store opt-outs. Switches off `marketing` and `measurement` in scope by default (an explicit valid `measurement` grant stands while `marketing` is explicitly `false`) and never expires. |
 | `vendorChoice` | `{ denied, confirmedAt } \| null` | Vendors switched off outside IAB. |
 | `subject` | `{ subjectId?, externalId?, identityProvider? } \| null` | Consent subject identity (`subjectId` alone is not a decision). |
 

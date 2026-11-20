@@ -159,6 +159,18 @@ describe('Angular consent widget opt-out parity', () => {
 		expect(consent.effectivePermissions().marketing).toBe(false);
 		expect(consent.explicitChoice()?.categories.marketing?.value).toBe(false);
 
+		// Turning measurement on while marketing stays off keeps the opt-out and lets measurement stand.
+		expect(measurement?.disabled).toBe(false);
+		measurement?.click();
+		fixture.detectChanges();
+		expect(measurement?.getAttribute('aria-checked')).toBe('true');
+		part(root, 'consent-widget-footer-save-button')?.click();
+		await fixture.whenStable();
+		fixture.detectChanges();
+		expect(consent.optOut()).not.toBeNull();
+		expect(consent.effectivePermissions().marketing).toBe(false);
+		expect(consent.effectivePermissions().measurement).toBe(true);
+
 		// Turning marketing on and saving lifts the device opt-out.
 		marketing.click();
 		fixture.detectChanges();
@@ -284,6 +296,7 @@ describe('Angular consent widget opt-out parity', () => {
 		expect(marketing.getAttribute('aria-checked')).toBe('false');
 		expect(marketing.getAttribute('aria-describedby')).toBe(notice.id);
 		expect(notice.textContent).toContain('account');
+		expect(part(root, 'consent-widget-restriction-measurement')).toBeNull();
 
 		marketing.click();
 		fixture.detectChanges();

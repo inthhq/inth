@@ -45,9 +45,9 @@ The consent route needs no custom handlers. The example wires Hydrogen's cart ha
 | `analytics` | `measurement` |
 | `marketing` | `marketing` |
 | `preferences` | `functionality` |
-| `sale_of_data` | Opt-out record, else `marketing` and `measurement` in the active rule's scope |
+| `sale_of_data` | Opt-out record, else `marketing` (or `measurement` when `marketing` is not in scope) |
 
-`analytics`, `marketing`, and `preferences` are `true` only while their mapped Inth category is allowed in `effectivePermissions`, which includes policy restrictions. `sale_of_data` is `false` when an opt-out record is held or when either `marketing` or `measurement` (whichever are in the active rule's scope) is not permitted. Override the mapping for `analytics`, `marketing`, or `preferences` with `categories`:
+`analytics`, `marketing`, and `preferences` are `true` only while their mapped Inth category is allowed in `effectivePermissions`, which includes policy restrictions. `sale_of_data` is `false` when an opt-out record is held or when the deciding category (`marketing` when in the active rule's scope, else `measurement` when in scope) is not permitted. Override the mapping for `analytics`, `marketing`, or `preferences` with `categories`:
 
 {/* example: fragment */}
 

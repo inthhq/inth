@@ -6,6 +6,7 @@
 	} from '@inth/sdk/engine';
 	import { createPreferenceDraft } from '@inth/sdk/preference-draft';
 	import {
+		resolveCategoryOptOutLock,
 		resolveCategoryTitle,
 		resolveOptOutCopy,
 	} from '@inth/sdk/surface-state';
@@ -53,14 +54,7 @@
 	const optOutCopy = $derived(resolveOptOutCopy(translations));
 
 	const isGpcLocked = function isGpcLocked(name: AllConsentNames): boolean {
-		if (name === 'necessary') {
-			return false;
-		}
-		return (
-			(optOutState.lock === 'gpc-active' &&
-				optOutState.categories.includes(name)) ||
-			consent.snapshot.restrictions[name]?.includes('gpc') === true
-		);
+		return resolveCategoryOptOutLock(consent.snapshot, name) === 'gpc-active';
 	};
 
 	const restrictionReasonFor = function restrictionReasonFor(
@@ -69,13 +63,11 @@
 		if (name === 'necessary') {
 			return null;
 		}
-		if (isGpcLocked(name)) {
+		const lock = resolveCategoryOptOutLock(consent.snapshot, name);
+		if (lock === 'gpc-active') {
 			return optOutCopy.lockedByGpc;
 		}
-		if (
-			optOutState.lock === 'held-by-account' &&
-			optOutState.categories.includes(name)
-		) {
+		if (lock === 'held-by-account') {
 			return optOutCopy.lockedByAccount;
 		}
 		const decision = consent.snapshot.explicitChoice?.categories[name];

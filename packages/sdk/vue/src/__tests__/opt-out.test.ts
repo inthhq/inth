@@ -232,6 +232,17 @@ describe('Vue consent widget opt-out parity', () => {
 			context.snapshot.value.explicitChoice?.categories.marketing?.value
 		).toBe(false);
 
+		// Turning measurement on while marketing stays off keeps the opt-out and lets measurement stand.
+		expect(measurement?.disabled).toBe(false);
+		measurement?.click();
+		await flushPromises();
+		expect(measurement?.getAttribute('aria-checked')).toBe('true');
+		part('consent-widget-footer-save-button')?.click();
+		await flushPromises();
+		expect(context.snapshot.value.optOut).not.toBeNull();
+		expect(context.snapshot.value.effectivePermissions.marketing).toBe(false);
+		expect(context.snapshot.value.effectivePermissions.measurement).toBe(true);
+
 		// Turning marketing back on and saving lifts the device opt-out.
 		marketing.click();
 		await flushPromises();
@@ -332,6 +343,7 @@ describe('Vue consent widget opt-out parity', () => {
 		expect(marketing.getAttribute('aria-checked')).toBe('false');
 		expect(marketing.getAttribute('aria-describedby')).toBe(notice.id);
 		expect(notice.textContent).toContain('account');
+		expect(part('consent-widget-restriction-measurement')).toBeNull();
 
 		marketing.click();
 		await flushPromises();

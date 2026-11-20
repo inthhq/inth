@@ -1,6 +1,7 @@
 import type { AllConsentNames, ConsentType } from '@inth/sdk/engine';
 import {
 	consentTypes,
+	resolveCategoryOptOutLock,
 	resolveCategoryTitle,
 	resolveOptOutCopy,
 } from '@inth/sdk/surface-state';
@@ -21,8 +22,7 @@ import { LucideIcon } from '~/components/shared/ui/icon';
 import * as PreferenceItem from '~/components/shared/ui/preference-item';
 import * as RadixSwitch from '~/components/shared/ui/switch';
 import { useConsentDraftSlice, useConsentDraftStore } from '~/draft';
-import { useExplicitChoice, useRestrictions } from '~/hooks';
-import { useOptOutState } from '~/hooks/use-opt-out-state';
+import { useSnapshot } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
 
 import { ConsentWidgetVendorList } from './vendor-list';
@@ -280,42 +280,27 @@ const ConsentWidgetAccordionItems = () => {
 		useConsentDraftStore(),
 		(state) => state.displayedCategories
 	);
-	const explicitChoice = useExplicitChoice();
-	const restrictions = useRestrictions();
-	const optOutState = useOptOutState();
+	const snapshot = useSnapshot();
 	const { noStyle, onToggleItem, openValues } =
 		useConsentWidgetAccordionContext();
 	const translations = useTranslations();
 	const optOutCopy = resolveOptOutCopy(translations);
 
-	const isGpcLocked = function isGpcLocked(name: AllConsentNames): boolean {
-		if (name === 'necessary') {
-			return false;
-		}
-		return (
-			(optOutState.lock === 'gpc-active' &&
-				optOutState.categories.includes(name)) ||
-			restrictions[name]?.includes('gpc') === true
-		);
-	};
-
 	const restrictionReasonFor = function restrictionReasonFor(
-		name: AllConsentNames
+		name: AllConsentNames,
+		optOutLock: ReturnType<typeof resolveCategoryOptOutLock>
 	): string | null {
 		if (name === 'necessary') {
 			return null;
 		}
-		if (isGpcLocked(name)) {
+		if (optOutLock === 'gpc-active') {
 			return optOutCopy.lockedByGpc;
 		}
-		if (
-			optOutState.lock === 'held-by-account' &&
-			optOutState.categories.includes(name)
-		) {
+		if (optOutLock === 'held-by-account') {
 			return optOutCopy.lockedByAccount;
 		}
-		const decision = explicitChoice?.categories[name];
-		const reasons = restrictions[name];
+		const decision = snapshot.explicitChoice?.categories[name];
+		const reasons = snapshot.restrictions[name];
 		if (
 			decision?.value === true &&
 			reasons?.some((reason) => reason !== 'opt-out')
@@ -333,22 +318,25 @@ const ConsentWidgetAccordionItems = () => {
 		[displayedCategories]
 	);
 
-	return consents.map((consent) => (
-		<ConsentWidgetAccordionRow
-			key={consent.name}
-			consent={consent}
-			description={
-				translations.consentTypes[consent.name]?.description ??
-				consent.description
-			}
-			gpcLocked={isGpcLocked(consent.name)}
-			noStyle={noStyle}
-			onToggleItem={onToggleItem}
-			open={openValues.includes(consent.name)}
-			restrictionReason={restrictionReasonFor(consent.name)}
-			title={resolveCategoryTitle(translations, consent.name)}
-		/>
-	));
+	return consents.map((consent) => {
+		const optOutLock = resolveCategoryOptOutLock(snapshot, consent.name);
+		return (
+			<ConsentWidgetAccordionRow
+				key={consent.name}
+				consent={consent}
+				description={
+					translations.consentTypes[consent.name]?.description ??
+					consent.description
+				}
+				gpcLocked={optOutLock === 'gpc-active'}
+				noStyle={noStyle}
+				onToggleItem={onToggleItem}
+				open={openValues.includes(consent.name)}
+				restrictionReason={restrictionReasonFor(consent.name, optOutLock)}
+				title={resolveCategoryTitle(translations, consent.name)}
+			/>
+		);
+	});
 };
 
 const ConsentWidgetAccordionItem = createForwardRef<

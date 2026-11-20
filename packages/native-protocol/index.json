@@ -1,6 +1,6 @@
 {
 	"clock": 1770000000000,
-	"count": 89,
+	"count": 92,
 	"fixtures": [
 		{
 			"bytes": 6370,
@@ -251,6 +251,14 @@
 			"sha256": "b247c603d4cf7c87a3b0c2de5926edca80c49cf3d6d6d06eee2652c8f0adc414"
 		},
 		{
+			"bytes": 7717,
+			"file": "evaluation-opt-out-measurement-granted.json",
+			"id": "evaluation-opt-out-measurement-granted",
+			"kind": "evaluation",
+			"protocolVersion": 1,
+			"sha256": "06b401b9ababd061c392afe2a5355332e78b6833dcafed5c1927c81a3f82e31d"
+		},
+		{
 			"bytes": 13763,
 			"file": "save-body-all.json",
 			"id": "save-body-all",
@@ -283,20 +291,36 @@
 			"sha256": "e24b5fae55fa5ff879aaf6a2b841ed48091a3091c169805a4feb7ddba76c148a"
 		},
 		{
-			"bytes": 14128,
+			"bytes": 14131,
 			"file": "save-body-ccpa-reject-all.json",
 			"id": "save-body-ccpa-reject-all",
 			"kind": "save-body",
 			"protocolVersion": 1,
-			"sha256": "0d38f6502b5e95b36cc54bb3a464b613fa702a1d940e383c26fe84f98e5f4d54"
+			"sha256": "0b14bc1d67c648336f74b5b75d2e3b6a73018dbe9e97ce171d5f8f2056edb69b"
 		},
 		{
-			"bytes": 11915,
+			"bytes": 11826,
+			"file": "save-body-ccpa-refuse-marketing.json",
+			"id": "save-body-ccpa-refuse-marketing",
+			"kind": "save-body",
+			"protocolVersion": 1,
+			"sha256": "0f074e698fd97cc6533899ac80bac21b9367f4455f83346aad7448ff2bcba403"
+		},
+		{
+			"bytes": 11917,
 			"file": "save-body-ccpa-opt-out-lifted.json",
 			"id": "save-body-ccpa-opt-out-lifted",
 			"kind": "save-body",
 			"protocolVersion": 1,
-			"sha256": "06da22facbff971fafd49443ef83c0b145c32c8de1af12e8d3348b603e457020"
+			"sha256": "3b240874db50a5b1080d10f947ddaebfdb993c4bad4ec83ee4279691943b483c"
+		},
+		{
+			"bytes": 13899,
+			"file": "save-body-ccpa-opt-out-measurement-grant.json",
+			"id": "save-body-ccpa-opt-out-measurement-grant",
+			"kind": "save-body",
+			"protocolVersion": 1,
+			"sha256": "86c028d3687bccf2e5e45371aa7e402a67f64837d5cd99384f914c48a5d6590e"
 		},
 		{
 			"bytes": 11763,

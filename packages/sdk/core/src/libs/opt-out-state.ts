@@ -9,7 +9,10 @@ import {
 	optInPromptAllowedAt,
 	optOutLiftBlocker,
 } from '../consent-record/opt-out-rules';
-import { optOutDenyCategories } from '../consent-record/types';
+import {
+	optOutDecidingCategory,
+	optOutDenyCategories,
+} from '../consent-record/types';
 import type {
 	EvaluationPolicy,
 	OptionalConsentCategory,
@@ -35,6 +38,8 @@ export interface ResolvedOptOutState {
 	lock: OptOutLock | null;
 	/** Categories the opt-out switches off under the active rule. */
 	categories: OptionalConsentCategory[];
+	/** Category that decides an opt-out under the active rule, or null. */
+	decidingCategory: OptionalConsentCategory | null;
 	/** Earliest time an opt-in prompt is allowed (the 12-month rule), or null. */
 	optInPromptAllowedAt: number | null;
 }
@@ -45,7 +50,7 @@ export interface ResolvedOptOutState {
  *
  * @param snapshot - The current consent snapshot.
  * @returns The availability, honored status, source, lock reason, affected
- * categories and 12-month reprompt timestamp.
+ * categories, deciding category and 12-month reprompt timestamp.
  */
 export const resolveOptOutState = function resolveOptOutState(
 	snapshot: Pick<
@@ -55,11 +60,13 @@ export const resolveOptOutState = function resolveOptOutState(
 ): ResolvedOptOutState {
 	const available = snapshot.evaluationPolicy.model === 'opt-out';
 	const categories = optOutDenyCategories(snapshot.evaluationPolicy);
+	const decidingCategory = optOutDecidingCategory(snapshot.evaluationPolicy);
 	const { optOut } = snapshot;
 	if (!optOut) {
 		return {
 			available,
 			categories,
+			decidingCategory,
 			honored: false,
 			lock: null,
 			optInPromptAllowedAt: null,
@@ -73,11 +80,45 @@ export const resolveOptOutState = function resolveOptOutState(
 	return {
 		available,
 		categories,
+		decidingCategory,
 		honored: true,
 		lock,
 		optInPromptAllowedAt: optInPromptAllowedAt(optOut),
 		via,
 	};
+};
+
+/** Snapshot fields read by {@link resolveCategoryOptOutLock}. */
+export type CategoryOptOutLockSnapshot = Pick<
+	ConsentSnapshot,
+	'evaluationPolicy' | 'optOut' | 'privacySignals' | 'restrictions'
+>;
+
+/**
+ * Answer why one category's preference switch is locked or annotated for an
+ * opt-out or privacy signal, or `null` when it is neither.
+ *
+ * - `'gpc-active'` when the category carries a live `gpc` restriction, or when
+ *   the opt-out lock is `'gpc-active'` and the category is the deciding one.
+ * - `'held-by-account'` when the opt-out lock is `'held-by-account'` and the
+ *   category is the deciding one.
+ * - `null` otherwise.
+ */
+export const resolveCategoryOptOutLock = function resolveCategoryOptOutLock(
+	snapshot: CategoryOptOutLockSnapshot,
+	category: AllConsentNames
+): OptOutLock | null {
+	if (category === 'necessary') {
+		return null;
+	}
+	if (snapshot.restrictions[category]?.includes('gpc') === true) {
+		return 'gpc-active';
+	}
+	const state = resolveOptOutState(snapshot);
+	if (state.decidingCategory === category && state.lock !== null) {
+		return state.lock;
+	}
+	return null;
 };
 
 /** Snapshot fields read by {@link isOptedOut}. */
@@ -91,11 +132,12 @@ export interface OptOutCheckSnapshot {
  * Answer whether the visitor is opted out of sale, sharing and targeted
  * advertising right now.
  *
- * Returns `true` when an opt-out record is held, and otherwise `true` when any
- * category in `categories` (defaulting to {@link optOutDenyCategories} for the
- * active policy) is not permitted in `effectivePermissions`. Passing
- * `categories` overrides only the category check; a held opt-out record still
- * returns `true`.
+ * Returns `true` when an opt-out record is held. Otherwise, when `categories`
+ * is passed, returns `true` when any listed category is not permitted in
+ * `effectivePermissions`. When `categories` is omitted, checks
+ * {@link optOutDecidingCategory} for the active policy (returns `false` when
+ * none is in scope). Passing `categories` overrides only the category check; a
+ * held opt-out record still returns `true`.
  *
  * @param snapshot - The current consent snapshot.
  * @param categories - Optional override for the categories checked when no
@@ -109,8 +151,11 @@ export const isOptedOut = function isOptedOut(
 	if (snapshot.optOut !== null) {
 		return true;
 	}
-	const checked = categories ?? optOutDenyCategories(snapshot.evaluationPolicy);
-	return checked.some(
-		(category) => snapshot.effectivePermissions[category] !== true
-	);
+	if (categories !== undefined) {
+		return categories.some(
+			(category) => snapshot.effectivePermissions[category] !== true
+		);
+	}
+	const deciding = optOutDecidingCategory(snapshot.evaluationPolicy);
+	return deciding !== null && snapshot.effectivePermissions[deciding] !== true;
 };

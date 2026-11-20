@@ -1520,6 +1520,11 @@ final class ProtocolFixtureTests: XCTestCase {
             "expected.snapshot",
             [.revision, .permissionMarketing, .permissionMeasurement, .optOut, .restrictionMarketing, .restrictionMeasurement]
         ),
+        (
+            "evaluation-opt-out-measurement-granted",
+            "expected.snapshot",
+            [.revision, .optOut, .restrictionMarketing]
+        ),
         ("save-body-all", "expected.snapshotBefore", [.revision]),
         ("save-body-all", "expected.snapshotAfter", [.revision]),
         ("save-body-necessary", "expected.snapshotBefore", [.revision]),
@@ -1530,12 +1535,28 @@ final class ProtocolFixtureTests: XCTestCase {
         ("save-body-ccpa-gpc", "expected.snapshotAfter", [.revision, .deadline, .optOut, .restrictionMarketing, .restrictionMeasurement]),
         ("save-body-ccpa-reject-all", "expected.snapshotBefore", [.revision]),
         ("save-body-ccpa-reject-all", "expected.snapshotAfter", [.revision, .optOut, .restrictionMarketing, .restrictionMeasurement]),
+        ("save-body-ccpa-refuse-marketing", "expected.snapshotBefore", [.revision]),
+        (
+            "save-body-ccpa-refuse-marketing",
+            "expected.snapshotAfter",
+            [.revision, .permissionMeasurement, .optOut, .restrictionMarketing, .restrictionMeasurement]
+        ),
         (
             "save-body-ccpa-opt-out-lifted",
             "expected.snapshotBefore",
             [.revision, .permissionMarketing, .permissionMeasurement, .optOut, .restrictionMarketing, .restrictionMeasurement]
         ),
         ("save-body-ccpa-opt-out-lifted", "expected.snapshotAfter", [.revision, .deadline]),
+        (
+            "save-body-ccpa-opt-out-measurement-grant",
+            "expected.snapshotBefore",
+            [.revision, .optOut, .restrictionMarketing, .restrictionMeasurement]
+        ),
+        (
+            "save-body-ccpa-opt-out-measurement-grant",
+            "expected.snapshotAfter",
+            [.revision, .optOut, .restrictionMarketing]
+        ),
         ("save-body-necessary-only-all", "expected.snapshotBefore", [.revision]),
         ("save-body-necessary-only-all", "expected.snapshotAfter", [.revision]),
         ("save-body-necessary-only-necessary", "expected.snapshotBefore", [.revision]),

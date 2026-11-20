@@ -17,7 +17,11 @@ import {
 	OPT_OUT_REPROMPT_WAIT_MS,
 	optInPromptAllowedAt,
 } from './opt-out-rules';
-import { OPTIONAL_CONSENT_CATEGORIES, optOutDenyCategories } from './types';
+import {
+	OPTIONAL_CONSENT_CATEGORIES,
+	optOutDecidingCategory,
+	optOutDenyCategories,
+} from './types';
 import type {
 	CategoryDecision,
 	CategoryEvaluation,
@@ -111,6 +115,7 @@ const defaultPermission = function defaultPermission(
 const collectRestrictions = function collectRestrictions(
 	category: OptionalConsentCategory,
 	decision: CategoryDecision | undefined,
+	authority: DecisionAuthority,
 	inScope: boolean,
 	input: ConsentEvaluationInput
 ): RestrictionReason[] {
@@ -125,7 +130,16 @@ const collectRestrictions = function collectRestrictions(
 		restrictions.push('gpc');
 	}
 	if (input.optOut && optOutDenyCategories(input.policy).includes(category)) {
-		restrictions.push('opt-out');
+		const deciding = optOutDecidingCategory(input.policy);
+		const explicitGrantStands =
+			deciding !== null &&
+			category !== deciding &&
+			decision?.value === true &&
+			authority === 'valid' &&
+			input.choice?.categories[deciding]?.value === false;
+		if (!explicitGrantStands) {
+			restrictions.push('opt-out');
+		}
 	}
 	return restrictions;
 };
@@ -142,7 +156,13 @@ const evaluateCategory = function evaluateCategory(
 		policy,
 		input.now
 	);
-	const restrictions = collectRestrictions(category, decision, inScope, input);
+	const restrictions = collectRestrictions(
+		category,
+		decision,
+		authority,
+		inScope,
+		input
+	);
 
 	let permitted = defaultPermission(policy, inScope);
 	let source: CategoryEvaluation['source'] = 'default';
@@ -358,12 +378,24 @@ const acknowledgementDeadline = function acknowledgementDeadline(
 	return typeof until === 'number' ? [until] : [];
 };
 
+const grantExpiryChangesPermission = function grantExpiryChangesPermission(
+	policy: EvaluationPolicy,
+	category: OptionalConsentCategory,
+	optOutDenied: readonly OptionalConsentCategory[],
+	evaluation: CategoryEvaluation
+): boolean {
+	return (
+		evaluation.restrictions.length === 0 &&
+		(!defaultPermission(policy, true) || optOutDenied.includes(category))
+	);
+};
+
 /**
  * Earliest future time at which permissions or the prompt can change.
  * A positive in-scope grant matters when its expiry changes a permission
- * (opt-in and IAB) or a choice prompt; a dismissal matters under a notice
- * prompt, and as an acknowledgement under a choice prompt with an empty
- * choice scope.
+ * (opt-in, IAB, or a non-deciding grant standing over a durable opt-out)
+ * or a choice prompt; a dismissal matters under a notice prompt, and as an
+ * acknowledgement under a choice prompt with an empty choice scope.
  */
 const deriveNextDeadline = function deriveNextDeadline(
 	input: ConsentEvaluationInput,
@@ -379,16 +411,20 @@ const deriveNextDeadline = function deriveNextDeadline(
 		policy.prompt === 'choice' &&
 		promptRequirement.kind === 'none' &&
 		!hasChoiceRefusal(policy, categories);
+	const optOutDenied = input.optOut ? optOutDenyCategories(policy) : [];
 	for (const category of policy.scope) {
 		const evaluation = categories[category];
 		const decision = input.choice?.categories[category];
-		const permissionCanChange =
-			!defaultPermission(policy, true) && evaluation.restrictions.length === 0;
 		if (
 			decision?.value === true &&
 			evaluation.authority === 'valid' &&
 			evaluation.expiresAt !== null &&
-			(permissionCanChange ||
+			(grantExpiryChangesPermission(
+				policy,
+				category,
+				optOutDenied,
+				evaluation
+			) ||
 				(choicePromptCanChange && choiceScope.includes(category)))
 		) {
 			candidates.push(evaluation.expiresAt);
