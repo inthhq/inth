@@ -69,7 +69,7 @@ export const generateHtmlBoilerplate = (
 	return {
 		dependencies: [],
 		files: {
-			'index.html': htmlPage('c15t with a script tag', `${indented}\n`, ''),
+			'index.html': htmlPage('Inth with a script tag', `${indented}\n`, ''),
 		},
 		instructions: [
 			'To hold another vendor script until consent, change its tag to type="text/plain" and add data-inth-category, such as data-inth-category="measurement".',
@@ -81,13 +81,18 @@ export const generateHtmlBoilerplate = (
 		merge: {
 			'index.html': {
 				// Each snippet on its own: a page may already load inth.js
-				// without the preferences link, or the other way round.
+				// without the preferences link, or the other way round. A page
+				// that still loads c15t.js already has a consent script.
 				inserts: [
-					{ before: '</head>', content: tag, marker: '/inth.js' },
+					{
+						before: '</head>',
+						content: tag,
+						marker: ['/inth.js', '/c15t.js'],
+					},
 					{
 						before: '</body>',
 						content: PREFERENCES_LINK,
-						marker: '#inth-preferences',
+						marker: ['#inth-preferences', '#c15t-preferences'],
 					},
 				],
 				type: 'insert',

@@ -53,7 +53,7 @@ import { ConsentDialogLink, InthProvider } from '@inth/vue/vue-plugin';
 <template>
 	<InthProvider />
 	<main>
-		<h1>c15t with Vue</h1>
+		<h1>Inth with Vue</h1>
 		<p>${options.scripts.includes('posthog') ? 'PostHog loads after you allow measurement.' : 'Your app goes here.'}</p>
 	</main>
 	<footer>

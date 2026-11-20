@@ -128,6 +128,24 @@ it.each(["", "src/"])("honors App Router extensions in %s", async (root) => {
   ).toBe(true);
 });
 
+it("points an existing Pages API handler at the generated route prefix", async () => {
+  const name = "pages/api/inth/[...inth].ts";
+  const content = "export default function handler() {}\n";
+  await mkdir(path.join(directory, "pages/api/inth"), { recursive: true });
+  await writeFile(path.join(directory, name), content);
+  const result = await runGenerationWorkflow(
+    ["setup", "--framework", "next-pages", "--apply", "--skip-install"],
+    context,
+    { cwd: directory }
+  );
+  expect(await readFile(path.join(directory, name), "utf-8")).toBe(content);
+  expect(
+    result.plan.instructions.find((instruction) =>
+      instruction.startsWith(`Integrate c15t into ${name}:`)
+    )
+  ).toContain("createPagesConsentRoute() as the default handler for /api/inth.");
+});
+
 it.each(["page.tsx", "page.jsx", "page.js"])(
   "generates a recognized App Router layout with %s",
   async (extension) => {

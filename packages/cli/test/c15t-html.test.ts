@@ -126,6 +126,28 @@ it.each(["EXDEV", "EPERM", "ENOTSUP", "EOPNOTSUPP", "ENOSYS"])(
   }
 );
 
+it("adds no second consent script to a page that still loads c15t.js", () => {
+  const root = directory();
+  const page = `<!doctype html>
+<html>
+  <head>
+    <script src="https://site.inth.app/c15t.js" defer></script>
+  </head>
+  <body>
+    <a href="#c15t-preferences">Privacy settings</a>
+  </body>
+</html>
+`;
+  fs.writeFileSync(fault.target, page);
+  const result = apply(root);
+  expect(fs.readFileSync(fault.target, "utf-8")).toBe(page);
+  expect(
+    result.plan.instructions.filter((instruction) =>
+      instruction.startsWith("Add to index.html:")
+    )
+  ).toEqual([]);
+});
+
 it("does not copy after an unrelated hard-link error", () => {
   const root = directory();
   fault.code = "EACCES";

@@ -59,7 +59,7 @@ export const generateJavaScriptBoilerplate = (
 		files: {
 			...envFile(BACKEND_URL_ENV.vite, options),
 			'index.html': htmlPage(
-				'c15t with JavaScript',
+				'Inth with JavaScript',
 				'',
 				'\t\t<script\n\t\t\ttype="module"\n\t\t\tsrc="/src/main.ts"\n\t\t></script>\n'
 			),
@@ -88,7 +88,7 @@ export default defineConfig({
 		merge: {
 			'index.html': {
 				inserts: [{ before: '</body>', content: PREFERENCES_LINK }],
-				marker: '#inth-preferences',
+				marker: ['#inth-preferences', '#c15t-preferences'],
 				type: 'insert',
 			},
 		},

@@ -81,7 +81,7 @@ const svelteFiles = (options: BoilerplateOptions): Record<string, string> => {
 
 ${openingTag('InthProvider', withScripts(options, [`mode={${mode}()}`]), '')}
 	<main>
-		<h1>c15t + Svelte</h1>
+		<h1>Inth + Svelte</h1>
 		<p>Your app goes here.</p>
 	</main>
 	<footer>

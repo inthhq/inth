@@ -671,6 +671,17 @@ const verifyNextEntryExtensions = async (
               ),
               name
             );
+            if (name.includes("/api/inth/")) {
+              assert.ok(
+                data.plan?.instructions.some(
+                  (instruction) =>
+                    instruction.startsWith(`Integrate c15t into ${name}:`) &&
+                    instruction.includes("createPagesConsentRoute") &&
+                    instruction.includes("/api/inth.")
+                ),
+                name
+              );
+            }
             assert.equal(
               await readFile(path.join(directory, name), "utf-8"),
               "// private-existing-entry\n"

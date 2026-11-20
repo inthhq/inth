@@ -5,6 +5,20 @@ import type { FileMerge } from './types.ts';
 const indentUnit = (content: string): string =>
 	content.match(/^(?:\t| +)(?=\S)/mu)?.[0] ?? '\t';
 
+/** Whether `content` has `marker`, or any of the markers in a list. */
+const hasMarker = (
+	content: string,
+	marker: string | string[] | undefined
+): boolean => {
+	if (marker === undefined) {
+		return false;
+	}
+	if (typeof marker === 'string') {
+		return content.includes(marker);
+	}
+	return marker.some((entry) => content.includes(entry));
+};
+
 /**
  * Apply a generated file to the file a project already has.
  * @param existing Current contents of the project's file.
@@ -34,12 +48,12 @@ export const mergeFile = (
 	if (merge.type === 'env') {
 		return mergeEnvFile(existing, generated);
 	}
-	if (merge.marker !== undefined && existing.includes(merge.marker)) {
+	if (hasMarker(existing, merge.marker)) {
 		return existing;
 	}
 	let merged = existing;
 	for (const { before, content, marker } of merge.inserts) {
-		if (marker !== undefined && merged.includes(marker)) {
+		if (hasMarker(merged, marker)) {
 			continue;
 		}
 		if (before === '') {
