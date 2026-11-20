@@ -396,6 +396,16 @@ describe('POST /v1/consent/opt-outs', () => {
 		});
 		expect(parsed.optOut).toEqual(effectiveOptOut);
 	});
+
+	it('reads a null opt-out, the answer to a retry that arrived after a lift', () => {
+		expect(
+			v.parse(v1ConsentOptOutOutputSchema, {
+				optOut: null,
+				recordId: RECORD,
+				subjectId: SUBJECT,
+			})
+		).toEqual({ optOut: null, recordId: RECORD, subjectId: SUBJECT });
+	});
 });
 
 describe('POST /v1/consent/opt-outs/lift', () => {
@@ -420,13 +430,20 @@ describe('POST /v1/consent/opt-outs/lift', () => {
 		).toBe(true);
 	});
 
-	it('reads a lift answer with null or an effective opt-out and optional recordId', () => {
+	it('reads a lift answer with null or an effective opt-out, and requires recordId', () => {
 		expect(
 			v.parse(v1ConsentOptOutLiftOutputSchema, {
 				optOut: null,
+				recordId: RECORD,
 				subjectId: SUBJECT,
 			})
-		).toEqual({ optOut: null, subjectId: SUBJECT });
+		).toEqual({ optOut: null, recordId: RECORD, subjectId: SUBJECT });
+		expect(
+			v.is(v1ConsentOptOutLiftOutputSchema, {
+				optOut: null,
+				subjectId: SUBJECT,
+			})
+		).toBe(false);
 		expect(
 			v.parse(v1ConsentOptOutLiftOutputSchema, {
 				optOut: {

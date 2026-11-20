@@ -556,7 +556,12 @@ describe('identify: POST /v1/subjects/:id/link', () => {
 		const { fetch: fetchInvalid } = stubFetch(() =>
 			json(200, {
 				externalId: 'user_123',
-				optOut: { heldBy: 'device', method: 'button', recordedAt: -1, rights: [] },
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: -1,
+					rights: [],
+				},
 				subjectId: SUBJECT,
 				verifiedBy: 'identity_token',
 			})
@@ -581,18 +586,23 @@ describe('save: optional optOut in answer', () => {
 		const { fetch: fetchValid } = stubFetch(() =>
 			json(200, { optOut: validOptOut, recordId: RECORD, subjectId: SUBJECT })
 		);
-		await expect(transportWith(fetchValid).save(savePayload())).resolves.toEqual(
-			{
-				ok: true,
-				optOut: validOptOut,
-				recordId: RECORD,
-				subjectId: SUBJECT,
-			}
-		);
+		await expect(
+			transportWith(fetchValid).save(savePayload())
+		).resolves.toEqual({
+			ok: true,
+			optOut: validOptOut,
+			recordId: RECORD,
+			subjectId: SUBJECT,
+		});
 
 		const { fetch: fetchInvalid } = stubFetch(() =>
 			json(200, {
-				optOut: { heldBy: 'unknown', method: 'button', recordedAt: ACTION_AT, rights: ['sale'] },
+				optOut: {
+					heldBy: 'unknown',
+					method: 'button',
+					recordedAt: ACTION_AT,
+					rights: ['sale'],
+				},
 				recordId: RECORD,
 				subjectId: SUBJECT,
 			})
@@ -775,10 +785,25 @@ describe('optOut: POST /v1/consent/opt-outs', () => {
 		});
 	});
 
+	test('reads a null optOut, which answers a retry that arrived after a lift, as recorded with nothing to apply', async () => {
+		const { fetch } = stubFetch(() =>
+			json(200, { optOut: null, recordId: RECORD, subjectId: SUBJECT })
+		);
+
+		const result = await transportWith(fetch).optOut(optOutPayload);
+		expect(result).toEqual({ ok: true, recordId: RECORD, subjectId: SUBJECT });
+		expect('optOut' in result).toBe(false);
+	});
+
 	test('treats an invalid optOut or empty server rights in the response as no information', async () => {
 		const { fetch } = stubFetch(() =>
 			json(200, {
-				optOut: { heldBy: 'device', method: 'bogus', recordedAt: ACTION_AT, rights: ['sale'] },
+				optOut: {
+					heldBy: 'device',
+					method: 'bogus',
+					recordedAt: ACTION_AT,
+					rights: ['sale'],
+				},
 				recordId: RECORD,
 				subjectId: SUBJECT,
 			})
@@ -794,7 +819,12 @@ describe('optOut: POST /v1/consent/opt-outs', () => {
 
 		const { fetch: fetchEmpty } = stubFetch(() =>
 			json(200, {
-				optOut: { heldBy: 'device', method: 'button', recordedAt: ACTION_AT, rights: [] },
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: ACTION_AT,
+					rights: [],
+				},
 				recordId: RECORD,
 				subjectId: SUBJECT,
 			})
@@ -851,17 +881,20 @@ describe('optOut: POST /v1/consent/opt-outs', () => {
 		[429, 'rate_limited'],
 		[500, 'server_error'],
 		[502, 'bad_gateway'],
-	])('a %i %s stays retryable and is never treated as permanent', async (status, code) => {
-		const { fetch } = stubFetch(() => v1Error(status, code));
+	])(
+		'a %i %s stays retryable and is never treated as permanent',
+		async (status, code) => {
+			const { fetch } = stubFetch(() => v1Error(status, code));
 
-		const error = await transportWith(fetch)
-			.optOut(optOutPayload)
-			.catch((caught: unknown) => caught);
+			const error = await transportWith(fetch)
+				.optOut(optOutPayload)
+				.catch((caught: unknown) => caught);
 
-		expect(error).toBeInstanceOf(InthApiError);
-		expect(isConsentSaveRejection(error)).toBe(false);
-		expect(error).toMatchObject({ code, status });
-	});
+			expect(error).toBeInstanceOf(InthApiError);
+			expect(isConsentSaveRejection(error)).toBe(false);
+			expect(error).toMatchObject({ code, status });
+		}
+	);
 
 	test('retries a 400 whose body names no code', async () => {
 		const { fetch } = stubFetch(
@@ -886,9 +919,9 @@ describe('liftOptOut: POST /v1/consent/opt-outs/lift', () => {
 		user: { externalId: 'user_123', identityToken: 'tok_123' },
 	};
 
-	test('posts without rights and parses null or effective optOut with optional recordId', async () => {
+	test('posts without rights and parses recordId with a null or effective optOut', async () => {
 		const { calls, fetch } = stubFetch(() =>
-			json(200, { optOut: null, subjectId: SUBJECT })
+			json(200, { optOut: null, recordId: RECORD, subjectId: SUBJECT })
 		);
 
 		const lifted = await transportWith(fetch).liftOptOut(liftPayload);
@@ -896,7 +929,12 @@ describe('liftOptOut: POST /v1/consent/opt-outs/lift', () => {
 		expect(calls).toHaveLength(1);
 		expect(calls[0]?.url).toBe(`${PROJECT_URL}/v1/consent/opt-outs/lift`);
 		expect('rights' in bodyAt(calls, 0)).toBe(false);
-		expect(lifted).toEqual({ ok: true, optOut: null, subjectId: SUBJECT });
+		expect(lifted).toEqual({
+			ok: true,
+			optOut: null,
+			recordId: RECORD,
+			subjectId: SUBJECT,
+		});
 
 		const remaining = {
 			heldBy: 'person' as const,
@@ -907,7 +945,9 @@ describe('liftOptOut: POST /v1/consent/opt-outs/lift', () => {
 		const { fetch: fetchPerson } = stubFetch(() =>
 			json(200, { optOut: remaining, recordId: RECORD, subjectId: SUBJECT })
 		);
-		await expect(transportWith(fetchPerson).liftOptOut(liftPayload)).resolves.toEqual({
+		await expect(
+			transportWith(fetchPerson).liftOptOut(liftPayload)
+		).resolves.toEqual({
 			ok: true,
 			optOut: remaining,
 			recordId: RECORD,
@@ -918,22 +958,40 @@ describe('liftOptOut: POST /v1/consent/opt-outs/lift', () => {
 	test('treats an invalid optOut in a lift answer as no information rather than null', async () => {
 		const { fetch } = stubFetch(() =>
 			json(200, {
-				optOut: { heldBy: 'person', method: 'api', recordedAt: -1, rights: ['sale'] },
+				optOut: {
+					heldBy: 'person',
+					method: 'api',
+					recordedAt: -1,
+					rights: ['sale'],
+				},
+				recordId: RECORD,
 				subjectId: SUBJECT,
 			})
 		);
 
 		const result = await transportWith(fetch).liftOptOut(liftPayload);
-		expect(result).toEqual({ ok: true, subjectId: SUBJECT });
+		expect(result).toEqual({ ok: true, recordId: RECORD, subjectId: SUBJECT });
 		expect('optOut' in result).toBe(false);
+	});
+
+	test('rejects a lift answer without a record ID so the lift is resent', async () => {
+		const { fetch } = stubFetch(() =>
+			json(200, { optOut: null, subjectId: SUBJECT })
+		);
+
+		await expect(transportWith(fetch).liftOptOut(liftPayload)).rejects.toThrow(
+			'without a subject ID and record ID'
+		);
 	});
 
 	test('returns unsupported without throwing on 404', async () => {
 		const { fetch } = stubFetch(() => v1Error(404, 'not_found'));
 
-		await expect(transportWith(fetch).liftOptOut(liftPayload)).resolves.toEqual({
-			ok: false,
-			unsupported: true,
-		});
+		await expect(transportWith(fetch).liftOptOut(liftPayload)).resolves.toEqual(
+			{
+				ok: false,
+				unsupported: true,
+			}
+		);
 	});
 });

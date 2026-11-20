@@ -186,11 +186,15 @@ export const v1ConsentOptOutInputSchema = jsonObject(
 /**
  * Answer of `POST /v1/consent/opt-outs`. `subjectId` is canonical and
  * `optOut.recordedAt` is the backend's authoritative time.
+ *
+ * `optOut` is `null` only when a retry arrives after that opt-out was
+ * lifted: the act is recorded under the first try's `recordId`, nothing is
+ * restored, and the device holds no opt-out.
  */
 export const v1ConsentOptOutOutputSchema = jsonObject(
 	v.object({
 		link: v.optional(v1ConsentRecordLinkSchema),
-		optOut: v1EffectiveOptOutSchema,
+		optOut: v.nullable(v1EffectiveOptOutSchema),
 		recordId: v.pipe(
 			v.string(),
 			v.uuid('Record ID must be a UUID'),
@@ -233,17 +237,16 @@ export const v1ConsentOptOutLiftInputSchema = jsonObject(
 /**
  * Answer of `POST /v1/consent/opt-outs/lift`. `optOut` is `null` once no
  * opt-out remains in force, or the account's remaining opt-out when the
- * device alone was lifted.
+ * device alone was lifted. A lift that lifts nothing is still recorded, so
+ * `recordId` is always present.
  */
 export const v1ConsentOptOutLiftOutputSchema = jsonObject(
 	v.object({
 		optOut: v.nullable(v1EffectiveOptOutSchema),
-		recordId: v.optional(
-			v.pipe(
-				v.string(),
-				v.uuid('Record ID must be a UUID'),
-				v.description('ID of the event that recorded the lift, when one ran.')
-			)
+		recordId: v.pipe(
+			v.string(),
+			v.uuid('Record ID must be a UUID'),
+			v.description('ID of the event that recorded the lift.')
 		),
 		subjectId: v1CanonicalSubjectIdSchema,
 	})
