@@ -1,6 +1,6 @@
 ---
 title: Upgrade from v2
-description: Upgrade a Next.js app from c15t v2 (@c15t/nextjs) to Inth v3 (@inth/nextjs). Covers packages, ConsentRoot or ConsentProvider, the useConsentManager codemod, callbacks, policies, styles, IAB and stored consent.
+description: Upgrade a Next.js app from c15t v2 (@c15t/nextjs) to Inth v3 (@inth/nextjs). Covers packages, InthProvider, the useConsentManager codemod, callbacks, policies, styles, IAB and stored consent.
 group: frameworks
 ---
 
@@ -13,8 +13,8 @@ group: frameworks
   2. Check that React is 18 or later and Next.js is 15 or later. Stop and tell me if either needs a major upgrade.
   3. Install `@inth/nextjs`, plus `@inth/integrations` if the app uses vendor helpers.
   4. Install the Inth CLI with `npm install -g @inth/cli` if `inth` is missing, then run `inth c15t codemods packages-to-c15t consent-provider-options root-exports-to-subpaths use-consent-manager-to-hooks scripts-to-integrations dev-tools-to-c15t policy-packs-to-policy-rules callbacks-to-v3 theme-to-consent-theme iab-option-to-iab-provider css-variables-to-v3 postcss-tailwind3 --dry-run --json`. Review the output, then run the same command without `--dry-run`. The codemods leave a `TODO(c15t v3)` comment wherever they need you to finish a change.
-  5. The codemods write c15t v3 paths. Point `c15t/next` imports at `@inth/nextjs`, `c15t/react` imports at `@inth/react` and `@c15t/integrations` imports at `@inth/integrations`, then remove the c15t packages.
-  6. If the app used `fetchInitialData()`, `C15tPrefetch` or `ssrData`, move it to `ConsentRoot` with `resolveConsent()`. Otherwise keep browser initialization with the `ConsentProvider` and `hosted()` the codemod wrote.
+  5. The codemods write c15t v3 paths and names. Point `c15t/next` imports at `@inth/nextjs`, `c15t/react` imports at `@inth/react` and `@c15t/integrations` imports at `@inth/integrations`. Rename `ConsentRoot` and `ConsentRootProps` to `InthProvider` and `InthProviderProps`. A `ConsentProvider` imported from `c15t/next` becomes `InthProvider` from `@inth/nextjs/react`, with its `ConsentProviderOptions`, `ConsentProviderCallbacks` and `ConsentProviderPrefetch` types renamed to `InthProviderOptions`, `InthProviderCallbacks` and `InthProviderPrefetch` from the same path. Then remove the c15t packages.
+  6. If the app used `fetchInitialData()`, `C15tPrefetch` or `ssrData`, move it to `InthProvider` with `resolveConsent()`. Otherwise keep browser initialization with the `InthProvider` from `@inth/nextjs/react`, as the guide shows.
   7. Update callbacks, policy presets, renamed options and components, theme CSS, CSS variables and IAB setup as the guide describes.
   8. Point the app at its Inth project URL. If the app uses a c15t backend it runs itself, stop and tell me: Inth's SDK talks only to an Inth project.
   9. Run the typecheck and build, and resolve every `TODO(c15t v3)` comment.
@@ -94,10 +94,10 @@ v3 gives you two ways forward.
 **Resolve consent on the server.** This is the recommended path. The server
 reads the visitor's policy and stored choice, so gated scripts can start right
 after hydration and the banner can be in the first HTML. Replace the client
-component with `ConsentRoot`. Pass it `resolveConsent()` from
+component with `InthProvider`. Pass it `resolveConsent()` from
 `@inth/nextjs/server` as `state` and your `defineConsentConfig()` result as
-`config`, then add the manifest route. `ConsentRoot` already wraps
-`ConsentProvider`, so don't mount both. If v2 set `storageConfig.storageKey`,
+`config`, then add the manifest route. It already wraps the
+`InthProvider` from `@inth/nextjs/react`, so don't mount both. If v2 set `storageConfig.storageKey`,
 pass the same name to `resolveConsent()` as `cookieName`, or the server won't
 find the stored choice. Follow the
 [App Router guide](/docs/frameworks/next/app-router) or the
@@ -105,24 +105,23 @@ find the stored choice. Follow the
 `fetchInitialData()`, `ssrData` and `C15tPrefetch`, which are gone.
 
 **Keep browser initialization**, as v2 did without `fetchInitialData()`. Keep
-your client component, import from `@inth/nextjs`, install `@inth/react` for
-the `hosted()` transport, and change the provider:
+your client component and render the `InthProvider` from `@inth/nextjs/react`,
+which takes the backend URL as `projectUrl`:
 
 {/* example: fragment */}
 
 ```tsx title="After (v3): components/consent-manager/provider.tsx, changed lines"
-import { ConsentBanner, ConsentDialog, ConsentProvider } from '@inth/nextjs';
-// @inth/nextjs's hosted() is data for inth.config.ts; the provider takes the transport.
-import { hosted } from '@inth/react';
+import { ConsentBanner, ConsentDialog } from '@inth/nextjs';
+import { InthProvider, hosted } from '@inth/nextjs/react';
 
 // In the component, replace ConsentManagerProvider:
-<ConsentProvider
-  options={{ mode: hosted({ backendURL: 'https://your-project.c15t.dev' }) }}
+<InthProvider
+  options={{ projectUrl: 'https://your-project.inth.app', mode: hosted() }}
 >
 ```
 
-The `consent-provider-options` codemod makes this change, including the
-`hosted` import:
+The `consent-provider-options` codemod rewrites the mode to `hosted()` and
+adds its import:
 
 ```bash
 inth c15t codemods consent-provider-options --dry-run --json
@@ -201,19 +200,22 @@ Next.js:
 
 | Removed | Use instead |
 | --- | --- |
+| `ConsentRoot` and `ConsentRootProps` | `InthProvider` and `InthProviderProps` |
+| `ConsentProvider` from `@inth/nextjs` | `InthProvider` from `@inth/nextjs/react` |
+| `ConsentProviderOptions`, `ConsentProviderCallbacks` and `ConsentProviderPrefetch` | `InthProviderOptions`, `InthProviderCallbacks` and `InthProviderPrefetch` from `@inth/nextjs/react`. `InthProviderOptions` from `@inth/nextjs` is the root's `options` |
 | `defineConsentConfig({ manifestURL, initURL })` | `routePrefix`, or `mode: manifest({ resolve: 'browser', manifestURL })` |
-| A named `consentConfig` export, passed to `ConsentRoot` as `config` | `export default defineConsentConfig(...)` in `inth.config.ts`. `withConsentManifest` finds the file. `config` stays as an optional override. |
-| `ConsentRoot`'s `backendURL` prop | `backendURL` in the config, or `NEXT_PUBLIC_INTH_PROJECT_URL` |
-| The `'use client'` wrapper that passed `config` and `scripts` | `scripts` and other browser options in `inth.config.ts`. A Server Component renders `ConsentRoot` directly. |
+| A named `consentConfig` export, passed to `InthProvider` as `config` | `export default defineConsentConfig(...)` in `inth.config.ts`. `withConsentManifest` finds the file. `config` stays as an optional override. |
+| `InthProvider`'s `backendURL` prop | `backendURL` in the config, or `NEXT_PUBLIC_INTH_PROJECT_URL` |
+| The `'use client'` wrapper that passed `config` and `scripts` | `scripts` and other browser options in `inth.config.ts`. A Server Component renders `InthProvider` directly. |
 | `createNextConsentRouteHandlers()`, its `GET` and `manifestGET` | `createConsentRoute()` in one catch-all route, `app/api/inth/[...inth]/route.ts` |
 | `createPagesApiHandlers()` and its `init` and `manifest` | `createPagesConsentRoute()` in `pages/api/inth/[...inth].ts` |
 | `resolveConsent(...)` with a JSON round trip in `getServerSideProps` | `export const getServerSideProps = withConsentProps()`, and `AppProps<ConsentPageProps>` in `_app.tsx` |
 | `resolveConsent({ manifest })`, and `manifest` on the route helpers | `snapshot`, which defaults to the build's |
 | `ConsentManifestOptions` and the `c15t.server.ts` module | `ResolveConsentOptions` or `NextConsentRouteOptions`. The helpers read the config and snapshot themselves. |
 | `resolveStrictestDefaultInit` from `c15t/next/static` | `resolveUnknownLocationInit` |
-| `ConsentRoot` falling back to local mode when no config or `NEXT_PUBLIC_INTH_PROJECT_URL` gives it a backend URL | `ConsentRoot` throws. Set `mode: local()` to run without a backend. |
+| `InthProvider` falling back to local mode when no config or `NEXT_PUBLIC_INTH_PROJECT_URL` gives it a backend URL | `InthProvider` throws. Set `mode: local()` to run without a backend. |
 | `onBuildError: 'runtime'` to build a `hosted()` or `local()` app while the backend is unreachable | Nothing. `withConsentManifest` reads the mode from `inth.config.ts` and skips the download for modes that don't use it. |
-| `hosted`, `offline` and `manifest` from `c15t/next` as transports | They are data for `inth.config.ts` now. A `ConsentProvider` imports them from `@inth/react`. |
+| `hosted`, `offline` and `manifest` from `c15t/next` as transports | They are data for `inth.config.ts` now. Import the transports from `@inth/react` for `options.mode`. |
 
 <include src="../../shared/upgrade-v3/cli.mdx" />
 

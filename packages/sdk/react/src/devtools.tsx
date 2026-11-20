@@ -50,7 +50,7 @@ export type DevToolsProps = ConsentDevToolsProps;
 const requireKernel = (kernel: ConsentKernel | null): ConsentKernel => {
 	if (!kernel) {
 		throw new Error(
-			'inth: DevTools must be rendered inside <ConsentProvider> from @inth/react.'
+			'inth: DevTools must be rendered inside <InthProvider> from @inth/react.'
 		);
 	}
 	return kernel;

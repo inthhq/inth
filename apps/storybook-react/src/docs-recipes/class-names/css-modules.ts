@@ -1,10 +1,10 @@
 // #region docs:class-names-css-modules title="src/consent-components.ts"
-import type { ConsentProviderOptions } from '@inth/react';
+import type { InthProviderOptions } from '@inth/react';
 
 import styles from './banner.module.css';
 
-/** Pass as `components` in your ConsentProvider options. */
-export const components: ConsentProviderOptions['components'] = {
+/** Pass as `components` in your InthProvider options. */
+export const components: InthProviderOptions['components'] = {
 	banner: {
 		card: { className: styles.card },
 	},

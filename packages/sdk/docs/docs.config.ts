@@ -169,7 +169,7 @@ export default defineDocsConfig({
 						{
 							pages: [
 								'components',
-								'components/consent-root',
+								'components/inth-provider',
 								'components/consent-banner',
 								'components/consent-dialog',
 								'components/consent-widget',
@@ -320,7 +320,7 @@ export default defineDocsConfig({
 						{
 							pages: [
 								'components',
-								'components/consent-provider',
+								'components/inth-provider',
 								'components/consent-banner',
 								'components/consent-dialog',
 								'components/consent-widget',
@@ -385,7 +385,7 @@ export default defineDocsConfig({
 						{
 							pages: [
 								'components',
-								'components/consent-root',
+								'components/inth-provider',
 								'components/consent-banner',
 								'components/consent-manager',
 								'components/consent-widget',
@@ -457,7 +457,7 @@ export default defineDocsConfig({
 						{
 							pages: [
 								'components',
-								'components/consent-root',
+								'components/inth-provider',
 								'components/consent-banner',
 								'components/consent-manager',
 								'components/consent-widget',
@@ -596,7 +596,7 @@ export default defineDocsConfig({
 						{
 							pages: [
 								'components',
-								'components/consent-provider',
+								'components/inth-provider',
 								'components/consent-banner',
 								'components/consent-dialog',
 								'components/consent-widget',
@@ -665,7 +665,7 @@ export default defineDocsConfig({
 						{
 							pages: [
 								'components',
-								'components/consent-root',
+								'components/inth-provider',
 								'components/consent-banner',
 								'components/consent-dialog',
 								'components/consent-widget',
@@ -742,7 +742,7 @@ export default defineDocsConfig({
 								'components',
 								'components/consent-banner',
 								'components/consent-dialog',
-								'components/consent-root',
+								'components/inth-provider',
 								'components/consent-widget',
 								'components/consent-dialog-link',
 								'components/consent-dialog-trigger',

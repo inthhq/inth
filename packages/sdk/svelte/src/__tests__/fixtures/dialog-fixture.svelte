@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Model } from '@inth/sdk/engine';
 
-	import ConsentProvider from '../../lib/components/consent-provider.svelte';
+	import InthProvider from '../../lib/components/inth-provider.svelte';
 	import ConsentDialog from '../../lib/components/panel.svelte';
 	import type { ConsentManagerOptions } from '../../lib/types';
 
@@ -18,10 +18,10 @@
 	} = $props();
 </script>
 
-<ConsentProvider {options}>
+<InthProvider {options}>
 	<ConsentDialog
 		{open}
 		{models}
 		{hideBranding}
 	/>
-</ConsentProvider>
+</InthProvider>

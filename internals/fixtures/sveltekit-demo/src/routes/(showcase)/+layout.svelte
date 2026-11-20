@@ -13,12 +13,12 @@
 		ConsentBanner,
 		ConsentDialog,
 		ConsentDialogTrigger,
-		ConsentProvider,
-		ConsentRoot,
 		IABConsentBanner,
 		IABConsentDialog,
+		InthProvider as BrowserProvider,
 	} from '@inth/svelte';
 	import type { ConsentManagerOptions } from '@inth/svelte';
+	import { InthProvider } from '@inth/svelte/kit';
 	import { testing } from '@inth/svelte/testing';
 
 	import { createDemoScripts } from '#lib/consent-manager/demo-scripts.js';
@@ -139,7 +139,7 @@
 {/if}
 {#if isIabPlayground}
 	<!-- The IAB playground resolves in the browser and keeps saves in memory. -->
-	<ConsentProvider
+	<BrowserProvider
 		mode={testing({
 			policy: [
 				{
@@ -159,17 +159,17 @@
 		}}
 	>
 		{@render surfaces()}
-	</ConsentProvider>
+	</BrowserProvider>
 {:else}
 	<!--
 		The server already resolved the policy in +layout.server.ts, so the
 		banner renders in the first HTML. The local transport keeps saves in
 		the browser.
 	-->
-	<ConsentRoot
+	<InthProvider
 		state={data.consent}
 		{...options}
 	>
 		{@render surfaces()}
-	</ConsentRoot>
+	</InthProvider>
 {/if}

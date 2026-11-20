@@ -2,7 +2,7 @@ import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { policyFixture } from '~/__tests__/policy-fixture';
-import { ConsentProvider } from '~/provider';
+import { InthProvider } from '~/provider';
 
 import { testing } from '../../../testing';
 import { Frame } from '../frame';
@@ -20,7 +20,7 @@ test('Frame renders the ConsentGate and warns once that it is deprecated', async
 		prefetch: policyFixture(),
 	};
 	const screen = await render(
-		<ConsentProvider options={options}>
+		<InthProvider options={options}>
 			<Frame
 				category="marketing"
 				data-testid="old"
@@ -39,7 +39,7 @@ test('Frame renders the ConsentGate and warns once that it is deprecated', async
 			>
 				<p>embed</p>
 			</ConsentGate>
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 	await expect.element(screen.getByTestId('old')).toBeInTheDocument();

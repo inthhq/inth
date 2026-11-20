@@ -93,7 +93,7 @@ describe('region extraction', () => {
 	test('reads names and title overrides from markup comments', () => {
 		const found = findRegions(
 			'examples/vue/src/App.vue',
-			'<!-- #region docs:root title="src/App.vue" -->\n<ConsentRoot />\n<!-- #endregion docs:root -->'
+			'<!-- #region docs:root title="src/App.vue" -->\n<InthProvider />\n<!-- #endregion docs:root -->'
 		);
 		expect(found).toEqual([
 			expect.objectContaining({
@@ -106,7 +106,7 @@ describe('region extraction', () => {
 	test('publishes acceptance fixtures under the fixture name', () => {
 		const [region] = findRegions(
 			'internals/fixtures/nuxt/app/app.vue',
-			'<!-- #region docs:root -->\n<ConsentRoot />\n<!-- #endregion docs:root -->'
+			'<!-- #region docs:root -->\n<InthProvider />\n<!-- #endregion docs:root -->'
 		);
 		expect(region).toMatchObject({
 			app: 'internals/fixtures/nuxt',
@@ -289,7 +289,7 @@ describe('hand-written docs examples', () => {
 	test('counts code fences that import inth, including indented tabs', () => {
 		const page = [
 			'```tsx title="app/layout.tsx"',
-			"import { ConsentRoot } from '@inth/nextjs';",
+			"import { InthProvider } from '@inth/nextjs';",
 			'```',
 			'',
 			'  ```ts',

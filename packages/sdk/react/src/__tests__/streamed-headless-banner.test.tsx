@@ -11,7 +11,7 @@ import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 import { StreamedConsentSurface, useHeadlessConsentUI } from '../headless';
-import { ConsentProvider } from '../index';
+import { InthProvider } from '../index';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 import {
@@ -61,7 +61,7 @@ const Page = ({
 	<html lang="en">
 		<head />
 		<body>
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: transportMode({ init: transportInit, save: transportSave }),
 					persistence: false,
@@ -76,7 +76,7 @@ const Page = ({
 				) : (
 					<HeadlessBanner />
 				)}
-			</ConsentProvider>
+			</InthProvider>
 		</body>
 	</html>
 );

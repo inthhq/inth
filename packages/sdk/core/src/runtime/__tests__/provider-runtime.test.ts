@@ -369,7 +369,7 @@ describe('update()', () => {
 	});
 
 	test('overrides changed before start make start ask the backend instead of adopting the prefetch', async () => {
-		// Vue's `ConsentRoot` props can change the overrides before mount.
+		// Vue's `InthProvider` props can change the overrides before mount.
 		const transport = createTransport();
 		const options: ConsentProviderRuntimeOptions = {
 			mode: transportMode(transport),

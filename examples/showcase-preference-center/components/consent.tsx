@@ -1,6 +1,6 @@
 'use client';
 
-import { ConsentDialog, ConsentRoot } from '@inth/nextjs';
+import { ConsentDialog, InthProvider } from '@inth/nextjs';
 import type { ReactNode } from 'react';
 
 import { northwindTheme } from '@/lib/theme';
@@ -16,7 +16,7 @@ const config = {
 };
 
 export const Consent = ({ children }: { children: ReactNode }) => (
-	<ConsentRoot
+	<InthProvider
 		config={config}
 		state={{}}
 		scripts={scripts}
@@ -29,5 +29,5 @@ export const Consent = ({ children }: { children: ReactNode }) => (
 		    stays for the "Do not sell or share" link some regions add to the
 		    banner. */}
 		<ConsentDialog />
-	</ConsentRoot>
+	</InthProvider>
 );

@@ -1,5 +1,5 @@
 /**
- * ConsentRoot applies a streamed state with code it loaded up front.
+ * InthProvider applies a streamed state with code it loaded up front.
  *
  * A streamed root loader hands the root its consent state unawaited. If
  * the code that applies a pending state loaded only once the root saw the
@@ -12,7 +12,7 @@ import { useActiveUI, useModel } from '@inth/react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ConsentRoot } from '../root';
+import { InthProvider } from '../root';
 import type { ConsentState } from '../server';
 import { policyFixture } from './policy-fixture';
 
@@ -34,7 +34,7 @@ const Status = () => {
 	return <div data-testid="status">{`${model ?? 'pending'}/${activeUI}`}</div>;
 };
 
-describe('ConsentRoot: streamed state', () => {
+describe('InthProvider: streamed state', () => {
 	test('shows the banner without loading code after mount', async () => {
 		let resolveState: (state: ConsentState) => void = () => undefined;
 		const state = new Promise<ConsentState>((resolve) => {
@@ -43,12 +43,12 @@ describe('ConsentRoot: streamed state', () => {
 		streamedInit.mounted = true;
 
 		const { getByTestId } = await render(
-			<ConsentRoot
+			<InthProvider
 				persistence={false}
 				state={state}
 			>
 				<Status />
-			</ConsentRoot>
+			</InthProvider>
 		);
 		await expect
 			.element(getByTestId('status'))

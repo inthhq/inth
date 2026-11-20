@@ -15,7 +15,7 @@ Network tab, find the init request.
 1. **The visitor's policy asks for no banner.** A policy with prompt `none`
    shows no banner, which is common in opt-out regions. See
    [why the banner may be absent](/docs/concepts/policies#why-the-banner-may-be-absent).
-2. **`ConsentRoot` is inside a page that unmounts.** Put it in `app.vue`.
+2. **`InthProvider` is inside a page that unmounts.** Put it in `app.vue`.
 3. **The policy did not resolve.** In the default `manifest()` mode,
    `/api/inth/v1/consent/init` must return 200. With `hosted()`, the backend's `/v1/consent/init`
    must. While resolution fails, Inth shows no UI and keeps every optional
@@ -188,6 +188,20 @@ longer reads them.
 | `initRoute`, `manifestRoute` | `routePrefix`, one catch-all for both |
 | `NUXT_PUBLIC_C15T_MANIFEST_URL`, `NUXT_C15T_MANIFEST_URL` | `mode: manifest({ manifestUrl })` in `nuxt.config.ts`. The variables are no longer read, so the manifest URL is fixed at build time. `NUXT_PUBLIC_INTH_PROJECT_URL` and `NUXT_INTH_PROJECT_URL` still work. |
 | `domain` | Nothing. Saves send the page's hostname. |
+
+## Names from an earlier alpha are missing
+
+**Check.** Nuxt warns that it cannot resolve a component such as `ConsentRoot`,
+or an import from `@inth/nuxt/components/consent-root` fails. The v3 alphas
+renamed these with no alias.
+
+**Fix.** Use the current names. Render the root as the global
+`<InthProvider />` in `app.vue`, with no import: the module registers the Nuxt
+component, whose banner renders on the server.
+
+| Earlier name | Now |
+| --- | --- |
+| `ConsentRoot`, `@inth/nuxt/components/consent-root` | The global `InthProvider` |
 | `ConsentPreferencesLink` | `ConsentDialogLink`. The floating `ConsentDialogTrigger` keeps its name. |
 | `ConsentFrame` | `ConsentGate` |
 

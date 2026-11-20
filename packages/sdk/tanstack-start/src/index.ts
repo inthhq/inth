@@ -5,7 +5,7 @@
  *   // src/routes/__root.tsx
  *   import { createRootRoute, Outlet } from '@tanstack/react-router';
  *   import { createServerFn } from '@tanstack/react-start';
- *   import { ConsentRoot } from '@inth/tanstack-start';
+ *   import { InthProvider } from '@inth/tanstack-start';
  *   import {
  *     consentLoaderOptions,
  *     createConsentStateHandler,
@@ -26,9 +26,9 @@
  *   function RootComponent() {
  *     const { consent } = Route.useLoaderData();
  *     return (
- *       <ConsentRoot state={consent}>
+ *       <InthProvider state={consent}>
  *         <Outlet />
- *       </ConsentRoot>
+ *       </InthProvider>
  *     );
  *   }
  *
@@ -37,7 +37,7 @@
  *   const allowed = useConsent('marketing');
  *
  * The backend URL comes from `consentManifest()` in `vite.config.ts`, and
- * the state carries it, the mode and the route prefix to `ConsentRoot`.
+ * the state carries it, the mode and the route prefix to `InthProvider`.
  * The browser gets init from `${projectUrl}/v1/consent/init` and saves to
  * `${projectUrl}/v1/consent/records`. Apps that mount `createConsentRoute()` at
  * `/api/inth/$` pass `routePrefix: '/api/inth'` to
@@ -47,7 +47,7 @@
  * init and saves then both go through the route.
  *
  * `manifest()` and `hosted()` here are plain data for
- * `createConsentStateHandler({ mode })`. `ConsentRoot` loads the code for a
+ * `createConsentStateHandler({ mode })`. `InthProvider` loads the code for a
  * mode only when the browser runs it.
  *
  * Server helpers return serializable data and avoid module-level runtime
@@ -75,6 +75,6 @@ export {
 	DeferredConsentDialog as ConsentDialog,
 } from '@inth/react/deferred';
 export { consentPrefetchHead } from './libs/prefetch-head';
-export type { ConsentRootProps } from './root';
-export { ConsentRoot } from './root';
+export type { InthProviderOptions, InthProviderProps } from './root';
+export { InthProvider } from './root';
 export type { ConsentPrefetchHead, ConsentPrefetchHeadOptions } from './types';

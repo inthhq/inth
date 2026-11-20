@@ -9,8 +9,8 @@ import {
 } from '~/chunk-warming';
 import { ConsentDialogLink } from '~/components/panel-link';
 import { ConsentBanner } from '~/components/prompt';
-import { ConsentProvider } from '~/provider';
-import type { ConsentProviderOptions } from '~/provider';
+import { InthProvider } from '~/provider';
+import type { InthProviderOptions } from '~/provider';
 
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
@@ -19,11 +19,11 @@ const fresh = {
 	mode: testing(),
 	persistence: false,
 	prefetch: policyFixture(),
-} satisfies ConsentProviderOptions;
+} satisfies InthProviderOptions;
 const saved = {
 	...fresh,
 	prefetch: policyFixture({ marketing: false }),
-} satisfies ConsentProviderOptions;
+} satisfies InthProviderOptions;
 
 interface ConnectionStub {
 	effectiveType?: string;
@@ -85,9 +85,9 @@ afterEach(() => {
 
 test('loads the dialog in idle time while the banner is shown', async () => {
 	await render(
-		<ConsentProvider options={fresh}>
+		<InthProvider options={fresh}>
 			<ConsentDialog />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await vi.waitFor(() => expect(idleCallbacks).toHaveLength(1));
 	expect(warmer).not.toHaveBeenCalled();
@@ -103,9 +103,9 @@ test('waits for the load event, then loads the dialog in the next idle period', 
 	});
 	try {
 		await render(
-			<ConsentProvider options={fresh}>
+			<InthProvider options={fresh}>
 				<ConsentDialog />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		await settle();
 		expect(idleCallbacks).toHaveLength(0);
@@ -126,9 +126,9 @@ test('waits for the page priority images, which share bandwidth with the dialog'
 	document.body.append(hero);
 	try {
 		await render(
-			<ConsentProvider options={fresh}>
+			<InthProvider options={fresh}>
 				<ConsentDialog />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		await settle();
 		expect(idleCallbacks).toHaveLength(0);
@@ -144,11 +144,11 @@ test('waits for the page priority images, which share bandwidth with the dialog'
 
 test('loads the dialog in idle time for a mounted trigger after consent was saved', async () => {
 	await render(
-		<ConsentProvider options={saved}>
+		<InthProvider options={saved}>
 			<ConsentBanner />
 			<ConsentDialog />
 			<ConsentDialogLink>Privacy settings</ConsentDialogLink>
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await vi.waitFor(() => expect(button('consent-dialog-link')).not.toBeNull());
 	expect(button('consent-banner-customize-button')).toBeNull();
@@ -163,11 +163,11 @@ test('loads the dialog in idle time for a mounted trigger after consent was save
 
 test('does not load the dialog after consent was saved when nothing can open it', async () => {
 	await render(
-		<ConsentProvider options={saved}>
+		<InthProvider options={saved}>
 			<ConsentBanner />
 			<ConsentDialog />
 			<p>Page content</p>
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await settle();
 	expect(button('consent-banner-customize-button')).toBeNull();
@@ -178,10 +178,10 @@ test('does not load the dialog after consent was saved when nothing can open it'
 
 test('does not load the dialog when the banner closed before idle time', async () => {
 	await render(
-		<ConsentProvider options={fresh}>
+		<InthProvider options={fresh}>
 			<ConsentBanner disableAnimation />
 			<ConsentDialog />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await vi.waitFor(() => expect(idleCallbacks).toHaveLength(1));
 	button('consent-banner-accept-button')?.click();
@@ -206,10 +206,10 @@ test.each([
 ])('skips idle loading when %s but still loads on focus', async (_, cell) => {
 	stubConnection(cell.connection);
 	await render(
-		<ConsentProvider options={cell.options}>
+		<InthProvider options={cell.options}>
 			<ConsentBanner disableAnimation />
 			<ConsentDialog />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await vi.waitFor(() =>
 		expect(button('consent-banner-customize-button')).not.toBeNull()

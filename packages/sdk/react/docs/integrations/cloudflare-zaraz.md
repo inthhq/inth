@@ -102,7 +102,7 @@ export default defineConsentConfig({ scripts });
 ```
 
 Keep the rest of your config, such as `mode` and `routePrefix`, in the
-same call. `ConsentRoot` reads the config in the browser, so the layout
+same call. `InthProvider` reads the config in the browser, so the layout
 keeps passing only `state`. App Router, Pages Router and static export all
 read the same file. See
 [Next.js scripts and embeds](https://c15t.com/docs/frameworks/next/scripts).
@@ -110,13 +110,13 @@ read the same file. See
 **TanStack Start**
 
 Import the configuration into your root route and pass it to the existing
-`ConsentRoot` as a top-level prop. Keep the loader from the
+`InthProvider` as a top-level prop. Keep the loader from the
 [TanStack Start quickstart](https://c15t.com/docs/frameworks/tanstack-start/quickstart):
 
 ```tsx title="src/routes/__root.tsx"
 import { scripts } from '../consent-scripts';
 
-<ConsentRoot state={consent} scripts={scripts}>
+<InthProvider state={consent} scripts={scripts}>
 ```
 
 Import vendor helpers in the root route module, not in a server function.
@@ -126,13 +126,13 @@ configurations carry callbacks. See
 
 **React**
 
-Add the configuration to the existing `ConsentProvider` options, next to
+Add the configuration to the existing `InthProvider` options, next to
 `mode`:
 
 ```tsx title="src/consent.tsx"
 import { scripts } from './consent-scripts';
 
-<ConsentProvider options={{ mode, scripts }}>
+<InthProvider options={{ mode, scripts }}>
 ```
 
 `mode` is the `manifest()` value from the
@@ -206,13 +206,13 @@ pass them as a top-level prop:
 
 ```svelte title="src/App.svelte"
 <script lang="ts">
-  import { ConsentProvider, manifest } from '@inth/svelte';
+  import { InthProvider, manifest } from '@inth/svelte';
   import { scripts } from './consent-scripts';
 </script>
 
-<ConsentProvider mode={manifest()} {scripts}>
+<InthProvider mode={manifest()} {scripts}>
   <!-- Keep your application, consent UI and preferences link here. -->
-</ConsentProvider>
+</InthProvider>
 ```
 
 Retain the styles and consent UI from the [Svelte quickstart](https://c15t.com/docs/frameworks/svelte/quickstart).
@@ -220,21 +220,21 @@ The provider owns the loader and disposes it on unmount.
 
 **SvelteKit**
 
-Add the scripts to the existing `ConsentRoot` in the root layout. Keep the
+Add the scripts to the existing `InthProvider` in the root layout. Keep the
 handle and the layout load from the [SvelteKit quickstart](https://c15t.com/docs/frameworks/sveltekit/quickstart).
 
 ```svelte title="src/routes/+layout.svelte"
 <script lang="ts">
-  import { ConsentRoot } from '@inth/svelte';
+  import { InthProvider } from '@inth/svelte/kit';
   import { scripts } from '../consent-scripts';
 
   let { children, data } = $props();
 </script>
 
-<ConsentRoot state={data.consent} {scripts}>
+<InthProvider state={data.consent} {scripts}>
   {@render children()}
   <!-- Keep your consent UI and preferences link here. -->
-</ConsentRoot>
+</InthProvider>
 ```
 
 Import vendor helpers in the layout component, not in `+layout.server.ts`:

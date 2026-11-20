@@ -80,7 +80,7 @@ export interface StreamedConsentSurfaceProps {
  * with the headless hooks. The stock `ConsentBanner` uses it too.
  *
  * While the provider's `prefetch` is a promise, as with Next.js
- * `<ConsentRoot state={resolveConsent()}>`, the surface waits for it in its
+ * `<InthProvider state={resolveConsent()}>`, the surface waits for it in its
  * own Suspense boundary: the rest of the page streams at once, and the
  * surface follows in a later chunk of the same response, rendered from the
  * resolved config. It shows only when that config carries a policy that

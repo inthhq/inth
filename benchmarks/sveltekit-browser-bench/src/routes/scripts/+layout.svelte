@@ -6,12 +6,12 @@
 		benchScripts,
 	} from '$lib/fixture';
 	import ScriptProbe from '$lib/script-probe.svelte';
-	import { ConsentRoot } from '@inth/svelte';
+	import { InthProvider } from '@inth/svelte/kit';
 
 	let { children, data } = $props();
 </script>
 
-<ConsentRoot
+<InthProvider
 	state={data.consent}
 	consentCategories={[...benchConsentCategories]}
 	scripts={benchScripts}
@@ -23,4 +23,4 @@
 		<ScriptProbe returning={false} />
 		{@render children()}
 	</BenchShell>
-</ConsentRoot>
+</InthProvider>

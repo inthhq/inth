@@ -4,7 +4,7 @@
  *
  * `consentManifest()` from `@inth/sdk/build` loads this
  * module in Node during `vite build`. It renders `<ConsentBanner />` the way
- * the client-rendered `ConsentProvider` renders it once the page's `/v1/consent/init`
+ * the client-rendered `InthProvider` renders it once the page's `/v1/consent/init`
  * answers: the same stand-in kernel, the same snapshot from the same answer.
  * The page shows that markup before its JavaScript has run, and the app's
  * banner replaces it when it renders.

@@ -16,7 +16,7 @@
 	import type { ConsentManagerOptions } from '../types';
 	import ProviderView from './provider-view.svelte';
 
-	type ConsentProviderProps =
+	type InthProviderProps =
 		| (ConsentManagerOptions &
 				ProviderRuntimeProps & {
 					options?: ProviderOptionsInput;
@@ -26,7 +26,7 @@
 					options: ConsentManagerOptions;
 				});
 
-	let props: ConsentProviderProps = $props();
+	let props: InthProviderProps = $props();
 
 	const options = $derived(resolveProviderOptions(props));
 

@@ -12,7 +12,7 @@ import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { afterEach, expect, test, vi } from 'vitest';
 
-import { ConsentRoot } from '../root';
+import { InthProvider } from '../root';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
@@ -58,7 +58,7 @@ test('a disabled root loads it during render despite a stored refusal and a cons
 	document.body.append(container);
 	root = createRoot(container);
 	root.render(
-		<ConsentRoot
+		<InthProvider
 			config={OFFLINE_CONFIG}
 			options={{
 				consentSource: {
@@ -73,7 +73,7 @@ test('a disabled root loads it during render despite a stored refusal and a cons
 			state={Promise.resolve(policyFixture({ marketing: false }))}
 		>
 			<Hold />
-		</ConsentRoot>
+		</InthProvider>
 	);
 	// Wait for the whole load, so it does not outlive the test.
 	await vi.waitFor(() => expect(loads.loaded).toBe(1));

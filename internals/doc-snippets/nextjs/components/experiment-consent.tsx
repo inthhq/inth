@@ -1,7 +1,7 @@
 'use client';
 
-import { ConsentBanner, ConsentDialog, ConsentRoot } from '@inth/nextjs';
-import type { ConsentRootProps } from '@inth/nextjs';
+import { ConsentBanner, ConsentDialog, InthProvider } from '@inth/nextjs';
+import type { InthProviderProps } from '@inth/nextjs';
 import type { ReactNode } from 'react';
 
 import { experimentCallbacks } from '@/lib/experiment';
@@ -12,14 +12,14 @@ export const ExperimentConsent = ({
 	state,
 }: {
 	children: ReactNode;
-	state: ConsentRootProps['state'];
+	state: InthProviderProps['state'];
 }) => (
-	<ConsentRoot
+	<InthProvider
 		state={state}
 		options={{ callbacks: experimentCallbacks }}
 	>
 		{children}
 		<ConsentBanner />
 		<ConsentDialog />
-	</ConsentRoot>
+	</InthProvider>
 );

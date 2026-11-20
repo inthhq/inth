@@ -3,11 +3,11 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogTrigger,
-	ConsentProvider,
+	InthProvider,
 } from '@inth/react';
 
 export const App = () => (
-	<ConsentProvider
+	<InthProvider
 		options={{
 			disableAnimation: true,
 			mode: benchPolicy({
@@ -35,5 +35,5 @@ export const App = () => (
 			<ConsentDialog />
 			<ConsentDialogTrigger />
 		</main>
-	</ConsentProvider>
+	</InthProvider>
 );

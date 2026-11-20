@@ -1,18 +1,18 @@
 import { describe, expect, test } from 'vitest';
 import { renderHook } from 'vitest-browser-react';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
-import type { ComponentFixtureOptions as ConsentProviderOptions } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
+import type { ComponentFixtureOptions as InthProviderOptions } from '~/__tests__/component-fixture-provider';
 
 import { testing } from '../../testing';
 import { useConsentTextDirection } from '../use-consent-text-direction';
 
 const createWrapper = function createWrapper(
-	options: Partial<ConsentProviderOptions> = {}
+	options: Partial<InthProviderOptions> = {}
 ) {
 	return function Wrapper({ children }: { children: React.ReactNode }) {
 		return (
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: testing(),
 					persistence: false,
@@ -20,7 +20,7 @@ const createWrapper = function createWrapper(
 				}}
 			>
 				{children}
-			</ConsentProvider>
+			</InthProvider>
 		);
 	};
 };

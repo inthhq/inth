@@ -1,5 +1,5 @@
 /**
- * A server render of `ConsentRoot` finds the engine already loaded: a
+ * A server render of `InthProvider` finds the engine already loaded: a
  * synchronous `renderToString` right after the import does not suspend.
  * Browser bundles resolve `#engine-now` to a stub and load the engine with
  * `import()` instead.
@@ -13,7 +13,7 @@ import {
 	NOW,
 	optInRule,
 } from '../../../core/src/__tests__/fixtures/kernel-fixtures';
-import { ConsentRoot } from '../root';
+import { InthProvider } from '../root';
 import { transportMode } from './fixtures/transport-mode';
 
 // The engine starts loading the server start's module as it is imported, and
@@ -35,10 +35,10 @@ afterAll(() => {
 	serverStart.release();
 });
 
-test('renderToString of ConsentRoot right after its import does not suspend', () => {
+test('renderToString of InthProvider right after its import does not suspend', () => {
 	const resolution = matchedResolution(optInRule());
 	const html = renderToString(
-		<ConsentRoot
+		<InthProvider
 			options={{ mode: transportMode({ init: () => Promise.resolve({}) }) }}
 			// A root script with a server start, whose code is in the module
 			// that is still loading.
@@ -63,7 +63,7 @@ test('renderToString of ConsentRoot right after its import does not suspend', ()
 			}}
 		>
 			<main id="page">Page</main>
-		</ConsentRoot>
+		</InthProvider>
 	);
 	expect(html).toContain('<main id="page">Page</main>');
 	// The first render in the process: the boot data may not share a

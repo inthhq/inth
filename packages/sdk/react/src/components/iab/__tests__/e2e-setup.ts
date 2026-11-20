@@ -3,7 +3,7 @@ import { vi } from 'vitest';
 
 import { DEFAULT_KEY_STORAGE } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
-import type { ConsentProviderOptions } from '~/provider';
+import type { InthProviderOptions } from '~/provider';
 
 import { testing } from '../../../testing';
 import { mockGVL } from './fixtures/mock-consent-state';
@@ -192,7 +192,7 @@ export const removeCMPEventListener = function removeCMPEventListener(
  * The mock GVL is passed directly in the IAB config to bypass network
  * fetching. This avoids module scope issues in Vitest browser mode.
  */
-export const defaultProviderIABOptions: ConsentProviderOptions = {
+export const defaultProviderIABOptions: InthProviderOptions = {
 	iab: {
 		cmpId: 160,
 		cmpVersion: 1,

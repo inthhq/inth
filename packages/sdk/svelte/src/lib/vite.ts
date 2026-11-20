@@ -267,10 +267,10 @@ export const createModulePreloadPlugin =
 	};
 
 /**
- * The small `@inth/sdk/engine` and `@inth/sdk/ui` modules that `ConsentRoot`'s
- * first-load code shares with the consent engine: the consent, vendor,
- * experiment and policy helpers the surfaces read, and what records a tap
- * before the engine.
+ * The small `@inth/sdk/engine` and `@inth/sdk/ui` modules that the SvelteKit
+ * `InthProvider`'s first-load code shares with the consent engine: the consent,
+ * vendor, experiment and policy helpers the surfaces read, and what records a
+ * tap before the engine.
  *
  * Only modules the first load imports belong here: the group puts every
  * module it matches in the first-load chunk. The surfaces read vendors and
@@ -328,19 +328,19 @@ export interface FirstLoadChunkPlugin {
 }
 
 /**
- * Puts the small Inth modules that `ConsentRoot`'s first-load code shares
- * with the consent engine into one chunk, in the browser build of a Vite
- * that bundles with Rolldown (Vite 8).
+ * Puts the small Inth modules that the SvelteKit `InthProvider`'s first-load
+ * code shares with the consent engine into one chunk, in the browser build of a
+ * Vite that bundles with Rolldown (Vite 8).
  *
- * Rolldown gives each set of modules that the same chunks import a chunk
- * of its own. The engine, the commit path and the dialog each share a
- * different few of those modules with the page, so without this the page
- * fetches about a dozen Inth files of a few hundred bytes, each with its
- * own request and headers. Every module in the group already loads with a
- * page that renders `ConsentRoot`, so the page loads no more code, and the
- * on-demand chunks import from the merged one. Rollup (Vite 7 and earlier)
- * places a module its importer has loaded already, so the plugin leaves
- * it alone. It does nothing when the app sets `manualChunks` or
+ * Rolldown gives each set of modules that the same chunks import a chunk of its
+ * own. The engine, the commit path and the dialog each share a different few of
+ * those modules with the page, so without this the page fetches about a dozen
+ * Inth files of a few hundred bytes, each with its own request and headers.
+ * Every module in the group already loads with a page that renders the
+ * SvelteKit `InthProvider`, so the page loads no more code, and the on-demand
+ * chunks import from the merged one. Rollup (Vite 7 and earlier) places a
+ * module its importer has loaded already, so the plugin leaves it alone. It
+ * does nothing when the app sets `manualChunks` or
  * `advancedChunks`, or turns code splitting off; groups the app sets in
  * `codeSplitting` come first.
  *

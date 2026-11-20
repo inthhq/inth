@@ -304,7 +304,7 @@ export default mergeConfig(
 							'src/**/*.spec.ts',
 						],
 						name: 'browser',
-						// `ConsentRoot` loads its engine with `import()`; tests that
+						// `InthProvider` loads its engine with `import()`; tests that
 						// render it synchronously need it loaded first.
 						setupFiles: ['./src/__tests__/setup-browser.ts'],
 					},

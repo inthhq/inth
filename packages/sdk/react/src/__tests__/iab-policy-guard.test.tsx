@@ -21,7 +21,7 @@ import { render } from 'vitest-browser-react';
 import { ConsentDialog } from '../components/panel';
 import { ConsentBanner } from '../components/prompt';
 import { missingIABProviderError } from '../hooks/use-iab-policy-guard';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { testing } from '../testing';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
@@ -55,15 +55,15 @@ class Boundary extends Component<
 }
 
 const mount = async function mount(
-	options: Parameters<typeof ConsentProvider>[0]['options'],
+	options: Parameters<typeof InthProvider>[0]['options'],
 	surface: 'banner' | 'dialog' = 'banner'
 ): Promise<{ errors: Error[] }> {
 	const errors: Error[] = [];
 	await render(
 		<Boundary onError={(error) => errors.push(error)}>
-			<ConsentProvider options={{ persistence: false, ...options }}>
+			<InthProvider options={{ persistence: false, ...options }}>
 				{surface === 'banner' ? <ConsentBanner /> : <ConsentDialog />}
-			</ConsentProvider>
+			</InthProvider>
 		</Boundary>
 	);
 	return { errors };
@@ -112,7 +112,7 @@ describe('an `iab` policy without <IABProvider>', () => {
 	it('throws during the server render too', () => {
 		expect(() =>
 			renderToString(
-				<ConsentProvider
+				<InthProvider
 					options={{
 						mode: transportMode({}),
 						persistence: false,
@@ -123,7 +123,7 @@ describe('an `iab` policy without <IABProvider>', () => {
 					}}
 				>
 					<ConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			)
 		).toThrow(MESSAGE);
 	});

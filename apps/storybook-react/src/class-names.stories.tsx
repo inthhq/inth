@@ -1,5 +1,5 @@
 import { ConsentBanner } from '@inth/react';
-import type { ConsentProviderOptions } from '@inth/react';
+import type { InthProviderOptions } from '@inth/react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, waitFor, within } from 'storybook/test';
 
@@ -21,7 +21,7 @@ interface CardStyle {
 }
 
 interface ClassNamesStoryProps {
-	components?: ConsentProviderOptions['components'];
+	components?: InthProviderOptions['components'];
 	/** Computed card styles the recipe's class must produce. */
 	expected?: CardStyle;
 }

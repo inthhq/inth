@@ -170,7 +170,7 @@ export const setupItems: SetupItem[] = [
 	},
 	{
 		description:
-			'Adds a ConsentManager that sets up ConsentProvider and renders the banner, the dialog and its trigger.',
+			'Adds a ConsentManager that sets up InthProvider and renders the banner, the dialog and its trigger.',
 		docs: [
 			'Add consentManifest() from @inth/sdk/build to vite.config.ts, then wrap your app in <ConsentManager>.',
 			'VITE_INTH_PROJECT_URL points at a demo project. Replace it with your Inth or self-hosted backend URL.',

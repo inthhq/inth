@@ -17,7 +17,7 @@ import {
 } from '../draft';
 import { useConsentSaveAction } from '../draft-context';
 import { useConsent, useSnapshot } from '../hooks';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
@@ -28,7 +28,7 @@ const Provider = ({
 	children: ReactNode;
 	options?: Record<string, unknown>;
 }) => (
-	<ConsentProvider
+	<InthProvider
 		options={{
 			// A permissive policy offers only what the site declares.
 			consentCategories: ['measurement', 'marketing'],
@@ -39,7 +39,7 @@ const Provider = ({
 		}}
 	>
 		{children}
-	</ConsentProvider>
+	</InthProvider>
 );
 
 test('a draft stages without touching the record, re-renders on edits and saves', async () => {

@@ -6,7 +6,7 @@ import { Profiler } from 'react';
 import { describe, expect, test } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ConsentProvider, useConsent, useSaveConsents } from '../index';
+import { InthProvider, useConsent, useSaveConsents } from '../index';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
@@ -69,7 +69,7 @@ const runBench = async function runBench(): Promise<Run> {
 	};
 
 	const { getByTestId } = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: testing(),
 				persistence: false,
@@ -83,7 +83,7 @@ const runBench = async function runBench(): Promise<Run> {
 				/>
 			))}
 			<Mutator />
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 	await settle();

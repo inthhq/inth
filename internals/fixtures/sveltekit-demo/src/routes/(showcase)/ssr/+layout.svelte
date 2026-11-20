@@ -5,7 +5,7 @@
 		ConsentBanner,
 		ConsentDialog,
 		ConsentDialogTrigger,
-		ConsentProvider,
+		InthProvider,
 		IABConsentBanner,
 		IABConsentDialog,
 	} from '@inth/svelte';
@@ -20,7 +20,7 @@
 	});
 </script>
 
-<ConsentProvider
+<InthProvider
 	options={{
 		mode: testing({ policy: rules }),
 		prefetch: { initialPolicyResolution: resolution },
@@ -88,4 +88,4 @@
 	<IABConsentDialog />
 	<ConsentDialogTrigger />
 	{@render children()}
-</ConsentProvider>
+</InthProvider>

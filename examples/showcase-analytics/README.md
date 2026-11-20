@@ -23,7 +23,7 @@ so their dialogs show categories only.
   measurement is allowed. The Meta
   `AddToCart` event goes out only while `useVendorAllowed('meta-pixel')` is
   true.
-- `components/consent.tsx` is the `ConsentRoot` with the scripts, the
+- `components/consent.tsx` is the `InthProvider` with the scripts, the
   revocation callback, `clearOnRevocation` and DevTools, which loads only in
   development.
 
@@ -48,7 +48,7 @@ Taking consent back can't unload code. Once the Meta Pixel has run, its
 listeners, timers and queued events stay in the page, and removing the
 `<script>` element doesn't stop them.
 
-So when a visitor turns off a category they had allowed, `ConsentRoot`
+So when a visitor turns off a category they had allowed, `InthProvider`
 reloads the page. The new page never starts the Meta Pixel. Turn off
 marketing in Privacy settings and you'll see:
 
@@ -99,5 +99,5 @@ config, and the Meta Pixel logs an invalid pixel ID. Put your own IDs in
   [Meta Pixel](https://c15t.com/docs/integrations/meta-pixel)
 - [Send events only to allowed integrations](https://c15t.com/docs/integrations/overview#send-events-only-to-allowed-integrations)
 - [Next.js scripts](https://c15t.com/docs/frameworks/next/scripts) and
-  [reload after revocation](https://c15t.com/docs/frameworks/next/components/consent-root#reload-after-revocation)
+  [reload after revocation](https://c15t.com/docs/frameworks/next/components/inth-provider#reload-after-revocation)
 - [DevTools](https://c15t.com/docs/frameworks/next/components/dev-tools)

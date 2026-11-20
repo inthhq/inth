@@ -1,6 +1,6 @@
 ---
 title: Scripts
-description: Register vendor scripts in a Next.js ConsentRoot, check how each vendor loads, let visitors turn off one vendor, clear stored data after revocation and replace @next/third-parties.
+description: Register vendor scripts in a Next.js InthProvider, check how each vendor loads, let visitors turn off one vendor, clear stored data after revocation and replace @next/third-parties.
 group: frameworks
 ---
 
@@ -16,7 +16,7 @@ they load. Install the helpers if you have not:
 
 Keep `next.config.ts` and the layout from your router guide. Adding a vendor
 needs no server change. Server-rendered state, a streamed promise and
-browser initialization without `state` all reach the same `ConsentRoot`, and
+browser initialization without `state` all reach the same `InthProvider`, and
 no script loads until the browser has a resolved policy and the visitor's
 choice allows it.
 
@@ -67,8 +67,8 @@ alone does not guarantee that no request happens. See the
 
 Removing a script element cannot undo JavaScript that already ran or requests
 already sent. When a visitor turns off a category they had granted,
-`ConsentRoot` reloads the page, so the next page runs only permitted code. See
-[reload after revocation](/docs/frameworks/next/components/consent-root#reload-after-revocation).
+`InthProvider` reloads the page, so the next page runs only permitted code. See
+[reload after revocation](/docs/frameworks/next/components/inth-provider#reload-after-revocation).
 
 Use [custom integrations](/docs/integrations/building-integrations) for a
 vendor without a helper. Google helpers follow the
@@ -87,14 +87,14 @@ Scripts cover vendor code Inth loads for you. For the rest:
 
 Optional: a visitor can allow marketing and still switch off one vendor in it.
 Skip this unless your site needs per-vendor choices. Declare
-the vendors and pass them to `ConsentRoot` as `vendors`; helpers from
+the vendors and pass them to `InthProvider` as `vendors`; helpers from
 `@inth/integrations` already carry their vendor slug. See
 [vendor consent](/docs/frameworks/next/vendor-consent).
 
 ## Clear stored tracking data
 
 Script gating does not remove cookies or Web Storage entries a script already
-wrote. Pass `clearOnRevocation` to `ConsentRoot` to remove declared data when
+wrote. Pass `clearOnRevocation` to `InthProvider` to remove declared data when
 its category is denied. See
 [clear on revocation](/docs/frameworks/next/clear-on-revocation) for
 configuration and browser limits.
@@ -123,7 +123,7 @@ package.
 
 Delete the components from `app/layout.tsx`, `pages/_app.tsx` or
 `pages/_document.tsx`. Add a helper for each one to the `scripts` array your
-`ConsentRoot` receives, with the same measurement ID and container ID:
+`InthProvider` receives, with the same measurement ID and container ID:
 
 <include src="../../shared/examples/nextjs/third-parties-scripts.mdx" />
 
@@ -142,7 +142,7 @@ The component props map to helper options:
 | `dataLayerName` on `GoogleTagManager` | `dataLayer` on `googleTagManager`. Keep the same name. |
 | `dataLayer` | No option. Seed the data layer before the container loads. See [keep initial data layer values](#keep-initial-data-layer-values). |
 | `auth`, `preview`, `gtmScriptUrl` | No option. Use a [custom integration](/docs/integrations/building-integrations) for GTM environments or a server-side tagging URL. |
-| `nonce` | `options={{ nonce }}` on `ConsentRoot`. See [Content Security Policy](/docs/frameworks/next/content-security-policy). |
+| `nonce` | `options={{ nonce }}` on `InthProvider`. See [Content Security Policy](/docs/frameworks/next/content-security-policy). |
 
 ### Keep initial data layer values
 
@@ -153,7 +153,7 @@ like an event, can arrive after those triggers have run.
 
 Seed the queue in the initial HTML instead, before Inth loads the container.
 Add a `beforeInteractive` script to the root `app/layout.tsx`, or to
-`pages/_document.tsx` with the Pages Router. Keep `ConsentRoot` and the rest
+`pages/_document.tsx` with the Pages Router. Keep `InthProvider` and the rest
 of your layout as they are:
 
 {/* example: fragment */}
@@ -253,7 +253,7 @@ or Google Maps until you allow the embed's category.
 ## Send your own analytics events
 
 `useEventDispatcher()` from `@inth/nextjs` returns the provider's event
-dispatcher. It sends to the `scripts` you passed to `ConsentRoot` and checks
+dispatcher. It sends to the `scripts` you passed to `InthProvider` and checks
 consent when an event goes out. For App Router pageviews, render a client
 component that watches `usePathname()` and `useSearchParams()`:
 

@@ -14,7 +14,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { KernelContext } from '../context';
-import { ConsentProvider, useSnapshot } from '../index';
+import { InthProvider, useSnapshot } from '../index';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
@@ -91,14 +91,14 @@ beforeEach(() => {
 	vi.restoreAllMocks();
 });
 
-describe('ConsentProvider prefetch promise', () => {
+describe('InthProvider prefetch promise', () => {
 	test('renders children while pending, then applies the policy without a network init', async () => {
 		const fetchSpy = vi.fn();
 		const prefetch = deferred<KernelConfig>();
 		const counts: InitCounts = { completed: 0 };
 
 		const { getByTestId } = await render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: hosted({ fetch: fetchSpy, projectUrl: '/api/inth' }),
 					persistence: false,
@@ -108,7 +108,7 @@ describe('ConsentProvider prefetch promise', () => {
 				<InitCounter counts={counts} />
 				<div data-testid="child">ready</div>
 				<Probe />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		await expect.element(getByTestId('child')).toHaveTextContent('ready');
@@ -129,7 +129,7 @@ describe('ConsentProvider prefetch promise', () => {
 
 	test('synchronous prefetch still renders the banner at once', async () => {
 		const { getByTestId } = await render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: transportMode({
 						init: vi.fn(() => Promise.resolve({})),
@@ -140,7 +140,7 @@ describe('ConsentProvider prefetch promise', () => {
 				}}
 			>
 				<Probe />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		await expect
@@ -164,7 +164,7 @@ describe('a streamed policy', () => {
 			return <Probe />;
 		};
 		const { getByTestId } = await render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: hosted({
 						assertDecisionInputs: true,
@@ -177,7 +177,7 @@ describe('a streamed policy', () => {
 				}}
 			>
 				<Capture />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		const config = policyConfig();
 		prefetch.resolve(config);

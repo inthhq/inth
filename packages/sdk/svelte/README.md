@@ -34,9 +34,9 @@ To manually install, follow the [quickstart](https://c15t.com/docs/frameworks/sv
 ## Usage
 
 1. Add `consentManifest()` from `@inth/svelte/vite` to `vite.config.ts`. It downloads your policy from `VITE_INTH_PROJECT_URL` (SvelteKit: `PUBLIC_INTH_PROJECT_URL`)
-2. Wrap your app with `ConsentProvider` in `manifest()` mode
+2. Wrap your app with `InthProvider` in `manifest()` mode
 3. Add `ConsentBanner` and `ConsentDialog` near the root
-4. In SvelteKit, render `ConsentRoot` with the state `loadConsent` from `@inth/svelte/kit` returns; see the [SvelteKit quickstart](https://c15t.com/docs/frameworks/sveltekit/quickstart)
+4. In SvelteKit, render `InthProvider` from `@inth/svelte/kit` with the state its `loadConsent` returns; see the [SvelteKit quickstart](https://c15t.com/docs/frameworks/sveltekit/quickstart)
 5. For the full setup, see the [Svelte quickstart docs](https://c15t.com/docs/frameworks/svelte/quickstart)
 
 ```svelte
@@ -46,17 +46,17 @@ To manually install, follow the [quickstart](https://c15t.com/docs/frameworks/sv
     ConsentBanner,
     ConsentDialog,
     ConsentDialogLink,
-    ConsentProvider,
+    InthProvider,
     manifest,
   } from '@inth/svelte';
 </script>
 
-<ConsentProvider mode={manifest()}>
+<InthProvider mode={manifest()}>
   <main>Your app goes here.</main>
   <ConsentBanner />
   <ConsentDialog />
   <ConsentDialogLink>Privacy settings</ConsentDialogLink>
-</ConsentProvider>
+</InthProvider>
 ```
 
 ## Hosting

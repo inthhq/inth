@@ -2,7 +2,7 @@
  * `@inth/svelte/testing` — render the banner and the consent flow in tests
  * with no backend.
  *
- * Pass `testing()` as `<ConsentProvider mode>`, or as
+ * Pass `testing()` as `<InthProvider mode>`, or as
  * `inthHandle({ mode })` in SvelteKit. It needs no `projectUrl`. It
  * resolves the recommended policy pack in the browser and sends nothing;
  * set `overrides.country` (and `overrides.region`) to pick the policy:
@@ -22,13 +22,13 @@
  * @example
  * ```svelte
  * <script lang="ts">
- *   import { ConsentBanner, ConsentProvider } from '@inth/svelte';
+ *   import { ConsentBanner, InthProvider } from '@inth/svelte';
  *   import { testing } from '@inth/svelte/testing';
  * </script>
  *
- * <ConsentProvider overrides={{ country: 'DE' }} mode={testing()}>
+ * <InthProvider overrides={{ country: 'DE' }} mode={testing()}>
  *   <ConsentBanner />
- * </ConsentProvider>
+ * </InthProvider>
  * ```
  *
  * @packageDocumentation

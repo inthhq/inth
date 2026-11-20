@@ -13,7 +13,7 @@ export interface ConsentBannerHarnessFilters extends BaseHarnessFilters {
 }
 
 /**
- * Drives `<inth-consent-banner>`, and the banner `<inth-consent-root>`
+ * Drives `<inth-consent-banner>`, and the banner `<inth-provider>`
  * renders.
  *
  * The banner renders into `<body>`, outside the component that declares it,

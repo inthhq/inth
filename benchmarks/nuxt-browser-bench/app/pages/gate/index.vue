@@ -3,7 +3,7 @@
  * Consent gate page: CookieBench's Nuxt fixture (`with-inth-nuxt/app/consent.vue`)
  * on this bench's local backend. The module's build-time `manifest()` mode
  * resolves each visitor on the server (the route plugin leaves `/gate` on
- * it), app.vue mounts the static `<ConsentRoot />`, and this page registers
+ * it), app.vue mounts the static `<InthProvider />`, and this page registers
  * the gated scripts with the module's loader and bridges the snapshot.
  */
 import {

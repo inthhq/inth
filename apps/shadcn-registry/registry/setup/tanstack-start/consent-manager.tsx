@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 import { createServerFn } from "@tanstack/react-start"
-import { ConsentRoot } from "@inth/tanstack-start"
+import { InthProvider } from "@inth/tanstack-start"
 import {
   createConsentStateHandler,
   type ConsentState,
@@ -24,11 +24,11 @@ export function ConsentManager({
   children: ReactNode
 }) {
   return (
-    <ConsentRoot state={state}>
+    <InthProvider state={state}>
       {children}
       <ConsentBanner />
       <ConsentDialog />
       <ConsentDialogTrigger showWhen="after-consent" />
-    </ConsentRoot>
+    </InthProvider>
   )
 }

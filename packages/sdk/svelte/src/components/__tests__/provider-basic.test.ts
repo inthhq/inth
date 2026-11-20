@@ -10,7 +10,7 @@ import {
 	transportMode,
 } from '../../__tests__/fixtures/transport-mode';
 import { testOffline } from '../../__tests__/test-offline';
-import ConsentProvider from '../../lib/components/consent-provider.svelte';
+import InthProvider from '../../lib/components/inth-provider.svelte';
 
 const mockFetch = vi.fn();
 window.fetch = mockFetch;
@@ -24,7 +24,7 @@ type WindowWithInth = Window & {
 	};
 };
 
-describe('ConsentProvider Basic Request Behavior', () => {
+describe('InthProvider Basic Request Behavior', () => {
 	beforeEach(() => {
 		delete (window as WindowWithInth).__inthDebug;
 		delete (window as WindowWithInth).__tcfapi;
@@ -164,11 +164,11 @@ describe('ConsentProvider Basic Request Behavior', () => {
 
 	test('throws when there is no backend URL', () => {
 		expect(() =>
-			render(ConsentProvider, {
+			render(InthProvider, {
 				// @ts-expect-error Verify the runtime guard for untyped callers.
 				options: {},
 			})
-		).toThrow('@inth/svelte ConsentProvider: `projectUrl` is required.');
+		).toThrow('@inth/svelte InthProvider: `projectUrl` is required.');
 	});
 
 	test('should not make fetch calls in offline mode', async () => {
@@ -190,7 +190,7 @@ describe('ConsentProvider Basic Request Behavior', () => {
 	test('should accept top-level options and prefer them over options object', async () => {
 		mockFetch.mockClear();
 
-		render(ConsentProvider, {
+		render(InthProvider, {
 			mode: testOffline(),
 			options: {
 				projectUrl: 'https://example.invalid',

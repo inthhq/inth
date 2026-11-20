@@ -57,7 +57,7 @@ Create `inth.config.ts` at the project root, next to `next.config.ts`:
 
 <include src="../../shared/examples/nextjs-pages-router/pages-config.mdx" />
 
-`withConsentManifest` finds the file, so `ConsentRoot`, `withConsentProps` and
+`withConsentManifest` finds the file, so `InthProvider`, `withConsentProps` and
 the consent route read it without an import. The file is bundled into the
 browser as well as the server, so it can hold `scripts` but must hold no
 secrets. The config sets no `mode`, so it uses `manifest()`; see
@@ -88,11 +88,11 @@ such as `createPagesConsentRoute({}, 'path')` for `[...path].ts`.
 There is no Inth stylesheet to import. The components render their own rules
 as `<style>` elements, so no stylesheet request holds back the first paint.
 With Tailwind CSS 3, import `@inth/nextjs/styles.css` yourself and set
-`styles: false` in `ConsentRoot`'s `options`, as
+`styles: false` in `InthProvider`'s `options`, as
 [Customize](/docs/frameworks/next/customize#load-the-stylesheet-yourself)
 shows.
 
-Render `ConsentRoot` in `_app.tsx`. It reads the state a page resolved on the
+Render `InthProvider` in `_app.tsx`. It reads the state a page resolved on the
 server from `pageProps.consent`:
 
 <include src="../../shared/examples/nextjs-pages-router/pages-app.mdx" />

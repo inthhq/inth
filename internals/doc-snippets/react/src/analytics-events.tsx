@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 
 /**
  * Sends a PostHog pageview for each new path. Call it once, inside
- * `ConsentProvider`, with your router's current path, such as
+ * `InthProvider`, with your router's current path, such as
  * `useLocation().pathname` from React Router.
  */
 export const usePageviews = (path: string) => {

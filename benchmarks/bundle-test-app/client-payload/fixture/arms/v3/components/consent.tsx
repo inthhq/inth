@@ -4,9 +4,9 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentRoot,
+	InthProvider,
 } from '@inth/nextjs';
-import type { ConsentRootProps } from '@inth/nextjs';
+import type { InthProviderProps } from '@inth/nextjs';
 import type { ReactNode } from 'react';
 
 import consentConfig from '../inth.config';
@@ -21,9 +21,9 @@ export const Consent = ({
 	state,
 }: {
 	children: ReactNode;
-	state: ConsentRootProps['state'];
+	state: InthProviderProps['state'];
 }) => (
-	<ConsentRoot
+	<InthProvider
 		config={consentConfig}
 		options={{ theme }}
 		state={state}
@@ -34,5 +34,5 @@ export const Consent = ({
 		<footer className="mx-auto max-w-3xl px-6 py-8">
 			<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 		</footer>
-	</ConsentRoot>
+	</InthProvider>
 );

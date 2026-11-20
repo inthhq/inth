@@ -37,7 +37,7 @@ const module = await server.ssrLoadModule(
 );
 
 const render = ({ fixture, props }) =>
-	fixture === 'consent-root'
+	fixture === 'kit-provider'
 		? module.renderRoot(props)
 		: module.renderFixture(props, fixture);
 

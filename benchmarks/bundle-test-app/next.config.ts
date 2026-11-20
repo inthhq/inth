@@ -14,8 +14,8 @@ const repositoryRoot = resolve(projectDir, '../..');
  * `@inth/nextjs` API, one side cannot compile the other's imports, so the
  * fixture imports a thin adapter and this overwrites it with the variant
  * the installed package exports. The tracked adapter is the `current`
- * copy so type-checking works without a build. Drop `legacy/` once every
- * measured base ships `ConsentRoot`.
+ * copy so type-checking works without a build. Drop `consent-root/` once
+ * every measured base ships `InthProvider`.
  */
 const selectConsentApi = function selectConsentApi(): void {
 	// Read the workspace package directly: `@inth/nextjs` resolves to it on
@@ -26,9 +26,9 @@ const selectConsentApi = function selectConsentApi(): void {
 		'packages/sdk/nextjs/dist-types/index.d.ts'
 	);
 	const variant =
-		existsSync(types) && readFileSync(types, 'utf8').includes('ConsentRoot')
-			? 'current'
-			: 'legacy';
+		existsSync(types) && /\bConsentRoot\b/u.test(readFileSync(types, 'utf8'))
+			? 'consent-root'
+			: 'current';
 	const adapters = join(projectDir, 'app/nextjs-ssr/consent-api');
 	for (const file of ['root.tsx', 'server.ts']) {
 		copyFileSync(join(adapters, variant, file), join(adapters, file));

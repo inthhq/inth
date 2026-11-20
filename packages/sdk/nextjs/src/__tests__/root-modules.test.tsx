@@ -3,17 +3,17 @@ import { ConsentGPP } from '@inth/react/gpp';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ConsentRoot } from '../root';
+import { InthProvider } from '../root';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 /** These tests are not about the backend; testing() needs none. */
 const OFFLINE_CONFIG = { mode: testing() };
 
-describe('ConsentRoot module props', () => {
+describe('InthProvider module props', () => {
 	test('scripts prop mounts <script> tags for eligible categories', async () => {
 		const { getByText } = await render(
-			<ConsentRoot
+			<InthProvider
 				config={OFFLINE_CONFIG}
 				state={policyFixture({ marketing: true })}
 				persistence={false}
@@ -26,7 +26,7 @@ describe('ConsentRoot module props', () => {
 				]}
 			>
 				<div>root rendered</div>
-			</ConsentRoot>
+			</InthProvider>
 		);
 
 		await expect.element(getByText('root rendered')).toBeInTheDocument();
@@ -44,13 +44,13 @@ describe('ConsentRoot module props', () => {
 
 	test('no module props → no extra DOM work beyond the children', async () => {
 		const { getByText } = await render(
-			<ConsentRoot
+			<InthProvider
 				config={OFFLINE_CONFIG}
 				state={{}}
 				persistence={false}
 			>
 				<div>plain root</div>
-			</ConsentRoot>
+			</InthProvider>
 		);
 		await expect.element(getByText('plain root')).toBeInTheDocument();
 	});
@@ -59,7 +59,7 @@ describe('ConsentRoot module props', () => {
 test('forwards clearOnRevocation and removes denied category storage', async () => {
 	localStorage.setItem('analytics:visitor', 'visitor');
 	const screen = await render(
-		<ConsentRoot
+		<InthProvider
 			config={OFFLINE_CONFIG}
 			state={policyFixture({ measurement: false })}
 			persistence={false}
@@ -68,7 +68,7 @@ test('forwards clearOnRevocation and removes denied category storage', async () 
 			}}
 		>
 			<div>cleanup configured</div>
-		</ConsentRoot>
+		</InthProvider>
 	);
 	await vi.waitFor(() =>
 		expect(localStorage.getItem('analytics:visitor')).toBeNull()
@@ -87,7 +87,7 @@ test('forwards vendors so the preference center lists them and gates their scrip
 		);
 	};
 	const { getByTestId } = await render(
-		<ConsentRoot
+		<InthProvider
 			config={OFFLINE_CONFIG}
 			state={policyFixture({ marketing: true })}
 			persistence={false}
@@ -101,14 +101,14 @@ test('forwards vendors so the preference center lists them and gates their scrip
 			]}
 		>
 			<Probe />
-		</ConsentRoot>
+		</InthProvider>
 	);
 	await expect
 		.element(getByTestId('probe'))
 		.toHaveTextContent('{"allowed":true,"ids":["meta-pixel"]}');
 });
 
-test('ConsentGPP mounts __gpp inside ConsentRoot, and unmount removes it', async () => {
+test('ConsentGPP mounts __gpp inside InthProvider, and unmount removes it', async () => {
 	type GPPPing = (
 		command: 'ping',
 		callback: (data: { cmpStatus: string }) => void
@@ -121,14 +121,14 @@ test('ConsentGPP mounts __gpp inside ConsentRoot, and unmount removes it', async
 		return status;
 	};
 	const screen = await render(
-		<ConsentRoot
+		<InthProvider
 			config={OFFLINE_CONFIG}
 			state={policyFixture()}
 			persistence={false}
 		>
 			<ConsentGPP />
 			<div>gpp configured</div>
-		</ConsentRoot>
+		</InthProvider>
 	);
 	await vi.waitFor(() => expect(cmpStatus()).toBe('loaded'), {
 		timeout: 5000,

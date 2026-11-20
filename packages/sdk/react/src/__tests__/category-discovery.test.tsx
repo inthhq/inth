@@ -8,7 +8,7 @@ import { ConsentGate } from '../components/consent-gate';
 import { ConsentDialog } from '../components/panel';
 import { ConsentBanner } from '../components/prompt';
 import { KernelContext } from '../context';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 
 for (const source of ['scripts', 'frames', 'iframes'] as const) {
 	test.each([undefined, ['necessary'] as const])(
@@ -45,7 +45,7 @@ for (const source of ['scripts', 'frames', 'iframes'] as const) {
 			const root = createRoot(container);
 			const save = vi.fn(() => Promise.resolve({ ok: true }));
 			root.render(
-				<ConsentProvider
+				<InthProvider
 					options={{
 						consentCategories: consentCategories
 							? [...consentCategories]
@@ -98,7 +98,7 @@ for (const source of ['scripts', 'frames', 'iframes'] as const) {
 						</>
 					)}
 					<ConsentDialog disableAnimation />
-				</ConsentProvider>
+				</InthProvider>
 			);
 			try {
 				await vi.waitFor(() =>
@@ -190,7 +190,7 @@ test('a site that declares nothing shows only Strictly necessary, and any banner
 		document.body.append(container);
 		const root = createRoot(container);
 		root.render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: Object.assign(() => ({ save }), { kind: 'custom' as const }),
 					prefetch: { initialPolicyResolution: resolution },
@@ -199,7 +199,7 @@ test('a site that declares nothing shows only Strictly necessary, and any banner
 				<Capture />
 				<ConsentBanner disableAnimation />
 				<ConsentDialog disableAnimation />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		return () => {
 			root.unmount();
@@ -281,7 +281,7 @@ test('a necessary-only dialog reopened after the acknowledgement closes on Save 
 	document.body.append(container);
 	const root = createRoot(container);
 	root.render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: Object.assign(() => ({ save }), { kind: 'custom' as const }),
 				persistence: false,
@@ -290,7 +290,7 @@ test('a necessary-only dialog reopened after the acknowledgement closes on Save 
 		>
 			<Capture />
 			<ConsentDialog disableAnimation />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	try {
 		await vi.waitFor(() => expect(kernel).toBeDefined());

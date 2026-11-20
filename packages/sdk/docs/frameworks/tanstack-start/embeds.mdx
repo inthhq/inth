@@ -1,6 +1,6 @@
 ---
 title: Embeds
-description: Keep YouTube videos, maps and other iframes out of a TanStack Start page until their consent category is allowed, with ConsentGate or the iframe blocker in ConsentRoot.
+description: Keep YouTube videos, maps and other iframes out of a TanStack Start page until their consent category is allowed, with ConsentGate or the iframe blocker in InthProvider.
 group: frameworks
 ---
 
@@ -17,7 +17,7 @@ the embed's host receives no request before consent.
 ## Gate an embed with ConsentGate
 
 Wrap the iframe in `ConsentGate` in any route under the root route that
-mounts `ConsentRoot`:
+mounts `InthProvider`:
 
 <include src="../../shared/examples/tanstack-start/video-embed.mdx" />
 
@@ -34,7 +34,7 @@ documents the built-in placeholder and every prop.
 
 ## Gate an iframe with the iframe blocker
 
-`ConsentRoot` runs the iframe blocker in the browser by default. Give an
+`InthProvider` runs the iframe blocker in the browser by default. Give an
 iframe `data-src` instead of `src`, and a `data-category`:
 
 {/* example: fragment */}
@@ -54,7 +54,7 @@ added by client-side navigation are handled too. Add `data-vendor` with a
 vendor ID to also block the iframe while the visitor has turned that vendor
 off.
 
-To turn the blocker off, set `iframeBlocker: false` in `ConsentRoot`'s
+To turn the blocker off, set `iframeBlocker: false` in `InthProvider`'s
 `options`.
 
 ## Verify the embeds

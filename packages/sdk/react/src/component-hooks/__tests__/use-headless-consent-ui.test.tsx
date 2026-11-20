@@ -7,7 +7,7 @@ import { useContext } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 import { renderHook } from 'vitest-browser-react';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { KernelContext } from '~/context';
 
@@ -21,7 +21,7 @@ const createWrapper = function createWrapper(ui: {
 }) {
 	return function Wrapper({ children }: { children: React.ReactNode }) {
 		return (
-			<ConsentProvider
+			<InthProvider
 				options={{
 					initialUI: ui?.mode,
 					mode: testing(),
@@ -39,7 +39,7 @@ const createWrapper = function createWrapper(ui: {
 				}}
 			>
 				{children}
-			</ConsentProvider>
+			</InthProvider>
 		);
 	};
 };

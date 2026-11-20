@@ -9,7 +9,7 @@ allows measurement.
   from `NUXT_PUBLIC_INTH_PROJECT_URL`, bundles the project's policy into the
   server and adds one consent route under `/api/inth`.
 - `app/app.config.ts` loads PostHog once the visitor allows measurement.
-- `app/app.vue` mounts `ConsentRoot` and a Privacy settings link.
+- `app/app.vue` mounts `InthProvider` and a Privacy settings link.
 
 ## Run it
 

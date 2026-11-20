@@ -2,7 +2,7 @@
 
 import { benchPolicy } from '@inth/benchmarking/bench-policy';
 import {
-	ConsentProvider,
+	InthProvider,
 	ConsentBanner,
 	ConsentDialog,
 	ConsentWidget,
@@ -71,9 +71,9 @@ const LoadedSurface = ({
 	}
 	if (variant === 'external' && runtime) {
 		return (
-			<ConsentProvider runtime={runtime}>
+			<InthProvider runtime={runtime}>
 				<Probe />
-			</ConsentProvider>
+			</InthProvider>
 		);
 	}
 	if (variant === 'astro-iab' && runtime) {
@@ -134,8 +134,8 @@ const Surface = ({ variant }: { variant: string }) => {
 	);
 };
 export const LoaderAudit = ({ variant }: { variant: string }) => (
-	<ConsentProvider options={options}>
+	<InthProvider options={options}>
 		<ConsentBanner />
 		<Surface variant={variant} />
-	</ConsentProvider>
+	</InthProvider>
 );

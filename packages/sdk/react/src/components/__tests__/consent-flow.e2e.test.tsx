@@ -4,10 +4,10 @@ import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
 import {
-	ComponentFixtureProvider as ConsentProvider,
+	ComponentFixtureProvider as InthProvider,
 	DEFAULT_KEY_STORAGE,
 } from '~/__tests__/component-fixture-provider';
-import type { ComponentFixtureOptions as ConsentProviderOptions } from '~/__tests__/component-fixture-provider';
+import type { ComponentFixtureOptions as InthProviderOptions } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentDialog } from '~/components/panel';
 import { ConsentDialogTrigger } from '~/components/panel-trigger';
@@ -46,7 +46,7 @@ Object.defineProperty(window, 'localStorage', {
 	value: localStorageMock,
 });
 
-const defaultOptions: ConsentProviderOptions = {
+const defaultOptions: InthProviderOptions = {
 	consentCategories: [
 		'necessary',
 		'functionality',
@@ -103,9 +103,9 @@ describe('Consent Flow E2E Tests', () => {
 	describe('First Visit Flow', () => {
 		test('should show cookie banner to first-time visitor', async () => {
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -121,9 +121,9 @@ describe('Consent Flow E2E Tests', () => {
 
 		test('should hide banner after accepting all', async () => {
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -154,9 +154,9 @@ describe('Consent Flow E2E Tests', () => {
 
 		test('should hide banner after rejecting all', async () => {
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -189,9 +189,9 @@ describe('Consent Flow E2E Tests', () => {
 	describe('Consent Persistence', () => {
 		test('should persist consent to localStorage on accept', async () => {
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -224,9 +224,9 @@ describe('Consent Flow E2E Tests', () => {
 
 		test('should persist reject decision to localStorage', async () => {
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -267,9 +267,9 @@ describe('Consent Flow E2E Tests', () => {
 			);
 
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			// Wait a bit to ensure banner would have shown if it was going to
@@ -292,9 +292,9 @@ describe('Consent Flow E2E Tests', () => {
 			);
 
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentDialogTrigger showWhen="always" />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -312,9 +312,9 @@ describe('Consent Flow E2E Tests', () => {
 	describe('Widget Integration', () => {
 		test('should render widget with all consent categories', async () => {
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentWidget />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -338,9 +338,9 @@ describe('Consent Flow E2E Tests', () => {
 
 		test('should have disabled necessary consent toggle', async () => {
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentWidget />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -360,9 +360,9 @@ describe('Consent Flow E2E Tests', () => {
 	describe('Dialog Integration', () => {
 		test('should show dialog when open prop is true', async () => {
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentDialog open={true} />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -378,9 +378,9 @@ describe('Consent Flow E2E Tests', () => {
 
 		test('should add aria-modal when focus trap is enabled', async () => {
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentDialog open={true} />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -397,9 +397,9 @@ describe('Consent Flow E2E Tests', () => {
 
 		test('should contain widget inside dialog', async () => {
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentDialog open={true} />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -415,9 +415,9 @@ describe('Consent Flow E2E Tests', () => {
 
 		test('should render stock dialog branding without an empty footer wrapper', async () => {
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentDialog open={true} />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -435,10 +435,10 @@ describe('Consent Flow E2E Tests', () => {
 
 		test('should close managed dialog on Escape', async () => {
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentBanner />
 					<ConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -502,10 +502,10 @@ describe('Consent Flow E2E Tests', () => {
 
 		test('brings the banner back while the visitor still owes a choice', async () => {
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentBanner />
 					<ConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(() => {
@@ -532,11 +532,11 @@ describe('Consent Flow E2E Tests', () => {
 
 		test('leaves nothing open once the visitor has chosen', async () => {
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentBanner />
 					<ConsentDialog />
 					<ConsentDialogTrigger showWhen="always" />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(() => {
@@ -564,10 +564,10 @@ describe('Consent Flow E2E Tests', () => {
 	describe('Complete Flow', () => {
 		test('should complete full consent flow: banner -> customize -> save', async () => {
 			render(
-				<ConsentProvider options={defaultOptions}>
+				<InthProvider options={defaultOptions}>
 					<ConsentBanner />
 					<ConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(

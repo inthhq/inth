@@ -8,7 +8,7 @@ group: frameworks
 
 `defineConsentConfig` from `@inth/nextjs` declares the app's consent setup in
 `inth.config.ts` at the project root. `withConsentManifest` in
-`next.config.ts` finds the file and hands it to `ConsentRoot`,
+`next.config.ts` finds the file and hands it to `InthProvider`,
 `resolveConsent`, `withConsentProps`, `createConsentRoute` and
 `createPagesConsentRoute`, so the app never imports it. For help choosing a
 setup, start with [rendering and deployment](/docs/frameworks/next/rendering).
@@ -20,8 +20,8 @@ Requires Next.js 15 or 16 (`next ^15.0.0 || ^16.0.0`).
 | `mode` | `manifest()` | `manifest()` or `hosted()` from `@inth/nextjs`, or `testing()` from `@inth/nextjs/testing`. `manifest()` falls back to the backend's `/v1/consent/init` with a warning when the manifest is unavailable. See [consent modes](/docs/concepts/modes). |
 | `routePrefix` | none | Where the catch-all consent route is mounted, such as `/api/inth`. A browser that resolves consent itself asks `${routePrefix}/v1/consent/init` instead of the backend's `/v1/consent/init`. Leave it unset when every page resolves consent on the server. |
 | `proxy` | `false` | The route at `routePrefix` forwards saves (`createConsentRoute({ proxy: true })`), so the browser saves there instead of `${projectUrl}/v1/consent/records`. The server helpers keep `projectUrl`. Needs `routePrefix`. See [optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin). |
-| `journey` | `'page'` | The consent journey scope, read by both `resolveConsent` and `ConsentRoot` so they agree. |
-| `scripts`, `vendors`, `clearOnRevocation`, `networkBlocker`, `persistence`, `scriptLoader`, `options` | none | Browser options. `ConsentRoot` props of the same name win over them. |
+| `journey` | `'page'` | The consent journey scope, read by both `resolveConsent` and `InthProvider` so they agree. |
+| `scripts`, `vendors`, `clearOnRevocation`, `networkBlocker`, `persistence`, `scriptLoader`, `options` | none | Browser options. `InthProvider` props of the same name win over them. |
 
 The file is bundled into the browser as well as the server, so it can hold
 functions such as `scripts` but must hold no secrets. Read server-only values,
@@ -45,7 +45,7 @@ checks, so they add no bytes there:
 | ``@inth/nextjs: defineConsentConfig needs `projectUrl`, or NEXT_PUBLIC_INTH_PROJECT_URL set at build time.`` | No backend URL, and the mode is not `testing()`. |
 | ``@inth/nextjs: defineConsentConfig `projectUrl` must be an absolute http(s) URL or a `/`-relative path, received "...".`` | A URL is protocol-relative, such as `//your-project.inth.app`, or bare, such as `api/inth`. The same check covers `routePrefix`, `mode.manifestUrl` and `mode.geoUrl`. |
 | ``@inth/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/inth'.`` | `routePrefix` is `'/'`. A catch-all route at the site root would catch every page. |
-| ``@inth/nextjs: defineConsentConfig `mode` must be manifest() or hosted() from @inth/nextjs, or testing() from @inth/nextjs/testing. Pass a transport through ConsentRoot `options.mode`.`` | `mode` is not one of the data factories. |
+| ``@inth/nextjs: defineConsentConfig `mode` must be manifest() or hosted() from @inth/nextjs, or testing() from @inth/nextjs/testing. Pass a transport through InthProvider `options.mode`.`` | `mode` is not one of the data factories. |
 | ``@inth/nextjs: defineConsentConfig `journey` must be 'page', 'tab' or false.`` | `journey` has another value. |
 | ``@inth/nextjs: `proxy` sends saves through the consent route, so it needs `routePrefix`.`` | `proxy: true` without `routePrefix`. |
 
@@ -140,7 +140,7 @@ network request and returns cookie- and header-only state; see
 | `trustForwardedHeaders` | `false` | Resolve a `/`-relative `projectUrl` or `manifestUrl` against the request's `forwarded`, `x-forwarded-host` and `x-forwarded-proto` headers instead of `host`, and forward the visitor IP to backend `/v1/consent/init` as `x-forwarded-for`. Set it only behind a proxy that sets those headers and drops the ones a client sends. |
 | `onError` | none | Receives the failure from the backend or manifest request, including a `ManifestUnavailableError` when `timeoutMs` runs out or the manifest is backing off after a failure. When omitted, failures are logged with `console.warn` only when `NODE_ENV` is not `production`. |
 | `timeoutMs` | `500` | Longest the render waits for policy, in milliseconds, counted from the start of the resolution. When it runs out, the helper returns the baseline state described below. `false` or `Infinity` waits for the manifest cache's 5 second request timeout, or for the `fetch` implementation on backend `/v1/consent/init`. Any other value that is not a finite, non-negative number uses the default. |
-| `journey` | the config's `journey` | The consent journey scope this render reports. `ConsentRoot` must use the same value. |
+| `journey` | the config's `journey` | The consent journey scope this render reports. `InthProvider` must use the same value. |
 | `experiment` | none | The banner experiment with the arm this request runs. See [banner experiments](/docs/guides/banner-experiments). |
 | `waitUntil` | none | Receives work that outlives the render so it survives the response: the session report, a manifest refresh, and a manifest request that `timeoutMs` stopped waiting for. In the App Router pass `(task) => after(() => task)` with `after` from `next/server`. The promise never rejects. |
 | `now` | `Date.now()` | Clock used to validate stored records and stamped into the result. |
@@ -169,7 +169,7 @@ warm manifest cache answers in about a millisecond, and a cold read over a new
 connection to a hosted backend usually takes a few hundred. When the budget
 runs out, the render uses the baseline state: no consent UI in the server HTML,
 optional categories denied, and consent-gated scripts and iframes blocked.
-`ConsentRoot` then initializes in the browser and shows the banner once the
+`InthProvider` then initializes in the browser and shows the banner once the
 backend answers, retrying failed attempts with backoff.
 
 The manifest request does not stop when the render gives up. It keeps running,
@@ -292,11 +292,11 @@ from the headers listed in [geography and privacy signals](#geography-and-privac
 
 | Type | Exported from | What it names |
 | --- | --- | --- |
-| `ConsentState` | `@inth/nextjs`, `@inth/nextjs/server`, `@inth/nextjs/pages` | The value `resolveConsent` returns and `ConsentRoot` takes as `state` |
+| `ConsentState` | `@inth/nextjs`, `@inth/nextjs/server`, `@inth/nextjs/pages` | The value `resolveConsent` returns and `InthProvider` takes as `state` |
 | `ResolveConsentOptions` | `@inth/nextjs/server` | The App Router options bag |
 | `ConsentRequestOptions` | `@inth/nextjs/server` | The request-reading subset: `now`, `cookieName`, `country`, `language`, `request` |
 | `PagesResolveConsentOptions` | `@inth/nextjs/pages` | `ResolveConsentOptions` with `req` in place of `request` |
-| `ConsentRootProps` | `@inth/nextjs` | Props of `ConsentRoot`; `ConsentRootProps['state']` also accepts the pending promise |
+| `InthProviderProps` | `@inth/nextjs` | Props of `InthProvider`; `InthProviderProps['state']` also accepts the pending promise |
 | `ConsentConfig` | `@inth/nextjs`, `@inth/nextjs/server`, `@inth/nextjs/pages`, `@inth/nextjs/api` | The frozen `defineConsentConfig` result |
 | `ConsentMode` | `@inth/nextjs` | What `manifest()`, `hosted()` and `testing()` return |
 | `NextConsentRouteOptions` | `@inth/nextjs/api` | Options of `createConsentRoute` and `createPagesConsentRoute` |
@@ -453,7 +453,7 @@ The [App Router](/docs/frameworks/next/app-router) and
    absolute backend's `/v1/consent/manifest` endpoint and caches the public policy data.
 2. `resolveConsent()` resolves policy from that snapshot or cache with the
    current request's inputs and restores valid consent cookies.
-3. `ConsentRoot` receives that result as `state` and reads the rest from
+3. `InthProvider` receives that result as `state` and reads the rest from
    `inth.config.ts`. Hydration preserves the resolved state.
 4. If browser initialization is needed, it asks `${routePrefix}/v1/consent/init`, whose
    route resolves the same snapshot on the server, or `${projectUrl}/v1/consent/init`
@@ -546,10 +546,10 @@ policy after hydration. `testing()` is data, so its rules load with
 production builds. Pass `testing({ policy })` to resolve your own rules
 instead of the recommended pack.
 
-`ConsentRoot` throws when `manifest()` or `hosted()` finds no backend URL: not
+`InthProvider` throws when `manifest()` or `hosted()` finds no backend URL: not
 in the config or `NEXT_PUBLIC_INTH_PROJECT_URL`. That happens only without a
 `inth.config.ts`, because `defineConsentConfig` throws without a backend URL.
-See [troubleshooting](/docs/frameworks/next/troubleshooting#why-does-consentroot-throw-that-it-needs-a-backend-url).
+See [troubleshooting](/docs/frameworks/next/troubleshooting#why-does-inthprovider-throw-that-it-needs-a-backend-url).
 
 ### Authenticated hosted vendor lists
 

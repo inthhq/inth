@@ -6,14 +6,16 @@ group: frameworks
 
 ## Component reference
 
-`@inth/nextjs` exports `ConsentRoot` and re-exports every component and hook from
-`@inth/react`, so a Next.js app needs one import path. Every component except
+`@inth/nextjs` exports its own `InthProvider`, `ConsentBanner` and
+`ConsentDialog`, and re-exports every other component and hook from
+`@inth/react`, so a Next.js app needs one import path. The `InthProvider` from
+`@inth/react`, for a runtime you manage yourself, is at `@inth/nextjs/react`. Every component except
 `ConsentTheme` ships with `'use client'`. You can still render them from a
 Server Component, as long as every prop you pass is serializable.
 
 | Component | Renders | Runs as | Reference |
 | --- | --- | --- | --- |
-| `ConsentRoot` | The consent runtime, seeded with the state `resolveConsent` returned | Client Component | [ConsentRoot](/docs/frameworks/next/components/consent-root) |
+| `InthProvider` | The consent runtime, seeded with the state `resolveConsent` returned | Client Component | [InthProvider](/docs/frameworks/next/components/inth-provider) |
 | `ConsentBanner` | The banner, when the visitor's policy asks for one | Client Component | [ConsentBanner](/docs/frameworks/next/components/consent-banner) |
 | `ConsentDialog` | The preference center as a modal | Client Component | [ConsentDialog](/docs/frameworks/next/components/consent-dialog) |
 | `ConsentWidget` | The preference center inline in a page, for a privacy route | Client Component | [ConsentWidget](/docs/frameworks/next/components/consent-widget) |
@@ -23,20 +25,20 @@ Server Component, as long as every prop you pass is serializable.
 | `ConsentTheme` | A `<style>` element with your theme tokens | Server-safe | [Customize](/docs/frameworks/next/customize) |
 | `DevTools` from `@inth/nextjs/devtools` | A development panel for consent state, scripts and events | Client Component | [DevTools](/docs/frameworks/next/components/dev-tools) |
 
-Render every component except `ConsentTheme` inside `ConsentRoot`, because
-they read the runtime `ConsentRoot` creates. `ConsentRoot` already renders
-`ConsentProvider`, so do not mount both.
+Render every component except `ConsentTheme` inside `InthProvider`, because
+they read the runtime `InthProvider` creates. It already renders the
+`InthProvider` from `@inth/nextjs/react`, so do not mount both.
 
-## Start with ConsentRoot, the banner and the dialog
+## Start with InthProvider, the banner and the dialog
 
-Most apps start with four components. `ConsentRoot` holds the runtime,
+Most apps start with four components. `InthProvider` holds the runtime,
 `ConsentBanner` and `ConsentDialog` ask for a choice, and a
 `ConsentDialogLink` lets visitors reopen their preferences. The quickstart
 renders them in the root layout, a Server Component:
 
 <include src="../../shared/examples/nextjs/quickstart-layout.mdx" />
 
-`ConsentRoot` reads `inth.config.ts`, so the layout passes it only the
+`InthProvider` reads `inth.config.ts`, so the layout passes it only the
 `state` from `resolveConsent`. The
 [Pages Router guide](/docs/frameworks/next/pages-router) renders the same
 components in `pages/_app.tsx`. Add `ConsentWidget`, `ConsentDialogTrigger` or
@@ -47,12 +49,12 @@ components in `pages/_app.tsx`. Add `ConsentWidget`, `ConsentDialogTrigger` or
 In the App Router, the `'use client'` boundary decides what you can pass as a
 prop:
 
-- **`ConsentRoot`** reads `inth.config.ts` in the browser, so a Server
+- **`InthProvider`** reads `inth.config.ts` in the browser, so a Server
   Component passes it only `state`. The `state` from `resolveConsent`, or its
   promise, is plain data and can cross. Put functions such as callbacks in
   the config, not in props from a Server Component.
 - **Banner, dialog, widget, link, trigger and gate** can render straight from
-  a Server Component page or layout under `ConsentRoot`. Strings, numbers,
+  a Server Component page or layout under `InthProvider`. Strings, numbers,
   booleans and JSX children cross the boundary. Function props, such as the
   `onSelect` handler of a `ConsentDialogTriggerToolbar` action, need a
   `'use client'` file.
@@ -68,7 +70,7 @@ always a Client Component. See [hooks](/docs/frameworks/next/hooks).
 
 `@inth/nextjs` does not re-export the IAB TCF components. Import
 `IABProvider`, `IABConsentBanner` and `IABConsentDialog` from `@inth/react/iab`,
-render them inside `ConsentRoot` next to
+render them inside `InthProvider` next to
 `ConsentBanner` and `ConsentDialog`, and load `@inth/nextjs/styles.css` and
 `@inth/nextjs/iab/styles.css` with `styles: false`. All three are Client
 Components. The stock banner and dialog stay closed

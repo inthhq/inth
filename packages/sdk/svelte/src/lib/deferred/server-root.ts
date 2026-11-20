@@ -1,8 +1,8 @@
 /**
- * `ConsentRoot`'s server render: the engine it renders with and the boot
- * data it leaves for the browser.
+ * The SvelteKit `InthProvider`'s server render: the engine it renders with and
+ * the boot data it leaves for the browser.
  *
- * `ConsentRoot` imports it as `#server-root`, which the package's
+ * `InthProvider` imports it as `#server-root`, which the package's
  * `imports` map resolves to `server-root-browser.ts` in a browser build.
  * A static import of the engine's modules from the component, even one
  * only a server branch uses, would put the browser's engine chunk on the
@@ -24,10 +24,10 @@ import type {
 import { modulePreloadMarker } from '../module-preload';
 import { createOwnedRuntime } from '../owned-runtime';
 import type { ProviderOptionsInput } from '../provider-options';
-import type { ConsentRootState } from '../types';
+import type { InthProviderState } from '../types';
 import { planServerBoot } from './boot-server';
 
-/** What a server render of `ConsentRoot` renders with. @internal */
+/** What a server render of `InthProvider` renders with. @internal */
 export interface ServerRoot {
 	runtime: ConsentProviderRuntime;
 	transport: ProviderTransportFactory;
@@ -48,7 +48,7 @@ export interface ServerRoot {
  * @internal
  */
 export const createServerRoot = function createServerRoot(input: {
-	state: ConsentRootState;
+	state: InthProviderState;
 	mode: ProviderTransportFactory | undefined;
 	options: ProviderOptionsInput;
 	runtimeOptions: (

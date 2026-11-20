@@ -8,7 +8,7 @@ import { useHeadlessConsentUI } from '../component-hooks/use-headless-consent-ui
 import { ConsentDialog } from '../components/panel';
 import { KernelContext } from '../context';
 import { ConsentDraftProvider, useConsentDraft } from '../draft';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 
 const STORAGE_KEY = 'inth';
 const nextFrame = () =>
@@ -55,7 +55,7 @@ const mountDialog = async function mountDialog(
 	document.body.append(container);
 	const view = createRoot(container);
 	view.render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				callbacks: { onError },
 				enabled: true,
@@ -95,7 +95,7 @@ const mountDialog = async function mountDialog(
 		>
 			<Capture />
 			<ConsentDialog disableAnimation />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	const dialog = () =>
 		document.querySelector('[data-testid="consent-dialog-root"]');
@@ -218,7 +218,7 @@ const mountActions = async function mountActions() {
 	document.body.append(container);
 	const view = createRoot(container);
 	view.render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				consentCategories: ['marketing', 'measurement'],
 				mode: Object.assign(() => ({ save }), { kind: 'custom' as const }),
@@ -244,7 +244,7 @@ const mountActions = async function mountActions() {
 			<ConsentDraftProvider>
 				<Capture />
 			</ConsentDraftProvider>
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await vi.waitFor(() =>
 		expect(controls.kernel?.getSnapshot().resolution.status).toBe('matched')

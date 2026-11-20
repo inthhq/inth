@@ -1,6 +1,6 @@
 ---
 title: Headless
-description: Build a custom consent banner or embed gate in React with the @inth/react/headless hooks inside your ConsentProvider.
+description: Build a custom consent banner or embed gate in React with the @inth/react/headless hooks inside your InthProvider.
 group: frameworks
 ---
 
@@ -15,7 +15,7 @@ state.
 
 ## Minimal example
 
-The headless hooks read the runtime from the nearest `ConsentProvider` from
+The headless hooks read the runtime from the nearest `InthProvider` from
 `@inth/react`. Render this component inside that provider in place of the stock
 banner, and keep the dialog and persistent preferences control.
 
@@ -29,7 +29,7 @@ banner, and keep the dialog and persistent preferences control.
 
 <include src="../../shared/examples/react/headless-consent-gate.mdx" />
 
-Render `VideoGate` inside your `ConsentProvider` around the embed, such as a
+Render `VideoGate` inside your `InthProvider` around the embed, such as a
 YouTube `iframe`.
 
 <import src="../../shared/react/headless.mdx#consent-gate-api" />

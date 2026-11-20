@@ -6,7 +6,7 @@ group: frameworks
 
 ## Register scripts in the root layout
 
-Pass the array from `src/lib/scripts.ts` to `ConsentRoot`
+Pass the array from `src/lib/scripts.ts` to `InthProvider`
 as the `scripts` prop in `src/routes/+layout.svelte`. The
 [quickstart](/docs/frameworks/sveltekit/quickstart) sets up both files:
 
@@ -55,7 +55,7 @@ hydration, and the loader adopts its tag. See
 
 `getEventDispatcher()` from `@inth/svelte` returns the provider's event
 dispatcher. It sends to the provider's `scripts` and checks consent when an
-event goes out. Call it in a component rendered inside `ConsentProvider`, and
+event goes out. Call it in a component rendered inside `InthProvider`, and
 send a pageview when `page.url` changes:
 
 <include src="../../shared/examples/sveltekit/pageviews.mdx" />

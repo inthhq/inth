@@ -45,7 +45,7 @@ framework:
 | Next.js, TanStack Start, React | `<ConsentTheme theme={theme} />`, rendered on the server where the app has one | `theme` in the provider options |
 | Nuxt, Vue | `theme` or `tokens` in the module or plugin options | Not available |
 | Astro | `theme` in the integration options | The same `theme` |
-| Svelte, SvelteKit | `generateThemeCSS(theme)` from `@inth/svelte` on the server, in a `<style>` element, or `--inth-*` variables in your stylesheet | `theme` on `ConsentProvider` (Svelte) or `ConsentRoot` (SvelteKit) |
+| Svelte, SvelteKit | `generateThemeCSS(theme)` from `@inth/svelte` on the server, in a `<style>` element, or `--inth-*` variables in your stylesheet | `theme` on `InthProvider`, from `@inth/svelte` or `@inth/svelte/kit` |
 | HTML, JavaScript | `ui.theme` | Not available |
 
 React and Svelte providers do not turn tokens in their `theme` option into

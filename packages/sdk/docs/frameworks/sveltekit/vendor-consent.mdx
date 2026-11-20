@@ -1,6 +1,6 @@
 ---
 title: Vendor consent
-description: Let visitors allow a category such as marketing in a SvelteKit app and still turn off one vendor in it, with the vendors prop on ConsentRoot and getConsentManager.
+description: Let visitors allow a category such as marketing in a SvelteKit app and still turn off one vendor in it, with the vendors prop on InthProvider and getConsentManager.
 group: frameworks
 ---
 
@@ -13,13 +13,14 @@ helpers then list their own vendor by name, so you only declare a vendor for a
 script of your own, or to replace a helper's name and privacy policy.
 
 Declare the vendors in the root layout, using the `vendor` slug each script
-already carries, and pass them to `ConsentRoot`:
+already carries, and pass them to `InthProvider`:
 
 {/* example: fragment */}
 
 ```svelte title="src/routes/+layout.svelte (partial)"
 <script lang="ts">
   import type { ConsentManagerOptions } from '@inth/svelte';
+  import { InthProvider } from '@inth/svelte/kit';
 
   const vendors: NonNullable<ConsentManagerOptions['vendors']> = [
     {
@@ -31,7 +32,7 @@ already carries, and pass them to `ConsentRoot`:
   ];
 </script>
 
-<ConsentRoot state={data.consent} {scripts} {vendors}>
+<InthProvider state={data.consent} {scripts} {vendors}>
 ```
 
 The provider reads `vendors` once, when it is created.

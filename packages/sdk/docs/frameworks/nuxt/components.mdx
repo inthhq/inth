@@ -12,7 +12,7 @@ you use them in templates without an import. Import the others by path.
 
 | Component | In Nuxt | What it renders |
 | --- | --- | --- |
-| [`ConsentRoot`](/docs/frameworks/nuxt/components/consent-root) | Global | The banner, rendered on the server, and the preference dialog once opened. Switches to the IAB surfaces under an IAB policy when `iab` is set. |
+| [`InthProvider`](/docs/frameworks/nuxt/components/inth-provider) | Global | The banner, rendered on the server, and the preference dialog once opened. Switches to the IAB surfaces under an IAB policy when `iab` is set. |
 | [`ConsentWidget`](/docs/frameworks/nuxt/components/consent-widget) | Global | Category switches and save actions inline, for a privacy page. |
 | [`ConsentDialogLink`](/docs/frameworks/nuxt/components/consent-dialog-link) | Global | A button that opens preferences. |
 | [`ConsentDialogTrigger`](/docs/frameworks/nuxt/components/consent-dialog-trigger) | Global | A floating, draggable button that opens preferences. |
@@ -31,14 +31,14 @@ Import the path components inside a Nuxt component's `<script setup>`:
 import ConsentBanner from '@inth/nuxt/components/consent-banner';
 ```
 
-## ConsentRoot or the parts
+## InthProvider or the parts
 
-`ConsentRoot` renders `ConsentBanner` and `ConsentManager`, or the IAB
-components when `iab` is set, for the visitor's policy. Mount `ConsentRoot`, or mount the parts,
+`InthProvider` renders `ConsentBanner` and `ConsentManager`, or the IAB
+components when `iab` is set, for the visitor's policy. Mount `InthProvider`, or mount the parts,
 never both, or the visitor sees two banners. Always use the global
-`ConsentRoot` in Nuxt, not the one `@inth/vue/vue-plugin` exports. The global
+`InthProvider` in Nuxt, not the one `@inth/vue/vue-plugin` exports. The global
 one renders the banner on the server. The module writes theme tokens into the page head
-whether you mount `ConsentRoot` or the parts.
+whether you mount `InthProvider` or the parts.
 
 ## Use the components in Vue Vapor
 
@@ -50,7 +50,7 @@ turn on `vue.vapor`:
 
 Mark a page or component with `<script setup vapor>` to compile it with Vapor.
 Inth's components stay on the virtual DOM, and Nuxt renders them inside Vapor
-components through its interop layer. Mount `ConsentRoot` in a Vapor
+components through its interop layer. Mount `InthProvider` in a Vapor
 `app.vue`, pass slots to `ConsentGate` or `ConsentDialogLink`, and call
 the composables in a Vapor `<script setup>`, as you would elsewhere:
 

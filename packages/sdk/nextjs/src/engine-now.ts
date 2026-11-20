@@ -1,5 +1,5 @@
 /**
- * `ConsentRoot`'s engine, imported statically wherever the code does not
+ * `InthProvider`'s engine, imported statically wherever the code does not
  * ship to a browser. A server render, including a synchronous
  * `renderToString`, then finds the engine loaded and never suspends on it.
  *

@@ -1,6 +1,6 @@
 ---
 title: Customize
-description: Load the Inth stylesheet yourself in Next.js when you need to, and change colors, radius, button roles, component parts, dark mode and banner shape with ConsentTheme and ConsentRoot options.
+description: Load the Inth stylesheet yourself in Next.js when you need to, and change colors, radius, button roles, component parts, dark mode and banner shape with ConsentTheme and InthProvider options.
 group: frameworks
 ---
 
@@ -54,7 +54,7 @@ routes under `app/branded`:
 <include src="../../shared/examples/nextjs/branded-layout.mdx" />
 
 To theme the whole site, render `<ConsentTheme theme={brandTheme} />` in your
-root layout, before `ConsentRoot`. View the page source to check that
+root layout, before `InthProvider`. View the page source to check that
 the `<style id="inth-theme">` element is in the server HTML. In the Pages
 Router, render `ConsentTheme` in `pages/_document.tsx`, which runs only on the
 server.
@@ -140,12 +140,12 @@ Modules, vanilla-extract, StyleX and Emotion.
 ## Turn on dark mode and change motion
 
 Pass `colorScheme` to `ConsentTheme` in your layout and the same value in
-`options` on `ConsentRoot`. Leave it unset to follow a `dark` class on
+`options` on `InthProvider`. Leave it unset to follow a `dark` class on
 `<html>`, such as the one next-themes sets, and add dark colors with
 `theme.dark`. [Dark mode](/docs/customization/dark-mode) covers each value
 and a dark first paint.
 
-`options.disableAnimation` on `ConsentRoot` turns off the banner and dialog
+`options.disableAnimation` on `InthProvider` turns off the banner and dialog
 animations, and the same prop on `ConsentBanner` or `ConsentDialog` overrides
 it for one surface. [Motion and animation](/docs/customization/motion) covers
 the duration and easing tokens and reduced motion.

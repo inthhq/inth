@@ -152,12 +152,12 @@ const replayQueued = (): void => {
  * image, while the server still renders its HTML.
  *
  * Call it at module scope in a `'use client'` file. The loaded component
- * should hold everything that uses Inth: `ConsentRoot`, the banner, the
+ * should hold everything that uses Inth: `InthProvider`, the banner, the
  * dialog, and any component that calls Inth hooks. Render the page itself
  * outside it, so the page hydrates without waiting for Inth.
  *
  * Until the module loads, the banner shows but its buttons only record
- * taps. Scripts that `ConsentRoot` starts on the server for a returning
+ * taps. Scripts that `InthProvider` starts on the server for a returning
  * visitor still start at parse time; scripts a client component registers
  * with `useScriptLoader` start after the module loads.
  *

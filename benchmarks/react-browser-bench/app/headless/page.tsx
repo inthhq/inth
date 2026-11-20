@@ -1,14 +1,14 @@
 'use client';
 
 import {
-	ConsentProvider,
+	InthProvider,
 	hosted,
 	useActiveUI,
 	useConsent,
 	useSaveConsents,
 	useSetActiveUI,
 } from '@inth/react';
-import type { ConsentProviderOptions } from '@inth/react';
+import type { InthProviderOptions } from '@inth/react';
 import { useEffect } from 'react';
 
 import { getBenchState, markInteraction } from '../_bench/state';
@@ -21,7 +21,7 @@ const consentCategories = [
 	'experience',
 	'measurement',
 	'marketing',
-] satisfies NonNullable<ConsentProviderOptions['consentCategories']>;
+] satisfies NonNullable<InthProviderOptions['consentCategories']>;
 
 const HeadlessBenchmarkUI = () => {
 	const activeUI = useActiveUI();
@@ -85,7 +85,7 @@ const HeadlessBenchmarkUI = () => {
 };
 
 const HeadlessPage = () => (
-	<ConsentProvider
+	<InthProvider
 		options={{
 			callbacks: {
 				onChoiceRecorded() {
@@ -107,7 +107,7 @@ const HeadlessPage = () => (
 		}}
 	>
 		<HeadlessBenchmarkUI />
-	</ConsentProvider>
+	</InthProvider>
 );
 
 export default HeadlessPage;

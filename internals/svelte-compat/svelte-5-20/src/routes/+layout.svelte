@@ -4,8 +4,8 @@
 		ConsentBanner,
 		ConsentDialog,
 		ConsentDialogLink,
-		ConsentRoot,
 	} from '@inth/svelte';
+	import { InthProvider } from '@inth/svelte/kit';
 
 	let { children, data } = $props();
 
@@ -20,7 +20,7 @@
 	];
 </script>
 
-<ConsentRoot
+<InthProvider
 	state={data.consent}
 	{scripts}
 >
@@ -30,4 +30,4 @@
 	</footer>
 	<ConsentBanner />
 	<ConsentDialog />
-</ConsentRoot>
+</InthProvider>

@@ -11,7 +11,7 @@ import { render } from 'vitest-browser-react';
 
 import { ConsentGate } from '../components/consent-gate';
 import { ConsentBanner } from '../components/prompt';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
@@ -35,7 +35,7 @@ describe('theme.slots in React', () => {
 
 	test('puts slot classes and styles on the stock banner under components', async () => {
 		const { unmount } = await render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					components: {
 						banner: {
@@ -60,7 +60,7 @@ describe('theme.slots in React', () => {
 				}}
 			>
 				<ConsentBanner disableAnimation />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		await vi.waitFor(() => expect(part('consent-banner-card')).not.toBeNull());
@@ -78,7 +78,7 @@ describe('theme.slots in React', () => {
 
 	test('drops the stock classes of a part whose slot sets noStyle', async () => {
 		const { unmount } = await render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					components: {
 						banner: { card: { className: 'app-card' } },
@@ -95,7 +95,7 @@ describe('theme.slots in React', () => {
 				}}
 			>
 				<ConsentBanner disableAnimation />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		await vi.waitFor(() => expect(part('consent-banner-card')).not.toBeNull());
@@ -114,7 +114,7 @@ describe('theme.slots in React', () => {
 
 	test('styles the ConsentGate placeholder through the consentGate slots', async () => {
 		const { unmount } = await render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					components: {
 						'consent-gate': {
@@ -143,7 +143,7 @@ describe('theme.slots in React', () => {
 				<ConsentGate category="marketing">
 					<div>Marketing content</div>
 				</ConsentGate>
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		await vi.waitFor(() =>

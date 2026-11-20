@@ -18,8 +18,8 @@
 	"usage": [
 		"Register the module and set `NUXT_PUBLIC_INTH_PROJECT_URL` to your Inth backend URL",
 		"```ts\n// nuxt.config.ts\nexport default defineNuxtConfig({\n  modules: ['@inth/nuxt'],\n})\n```",
-		"Add `ConsentRoot` and a link that opens the preference dialog to `app.vue`",
-		"```vue\n<!-- app/app.vue -->\n<template>\n  <ConsentRoot />\n  <NuxtPage />\n  <footer>\n    <ConsentDialogLink>Privacy settings</ConsentDialogLink>\n  </footer>\n</template>\n```",
+		"Add `InthProvider` and a link that opens the preference dialog to `app.vue`",
+		"```vue\n<!-- app/app.vue -->\n<template>\n  <InthProvider />\n  <NuxtPage />\n  <footer>\n    <ConsentDialogLink>Privacy settings</ConsentDialogLink>\n  </footer>\n</template>\n```",
 		"For the full setup, see the [Nuxt quickstart](https://c15t.com/docs/frameworks/nuxt/quickstart)"
 	],
 	"docsLink": "https://c15t.com/docs/frameworks/nuxt/quickstart",

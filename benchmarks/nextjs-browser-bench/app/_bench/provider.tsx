@@ -3,16 +3,13 @@
 import {
 	ConsentBanner,
 	ConsentDialog,
-	ConsentProvider,
-	ConsentRoot,
+	InthProvider,
 	hosted,
 	manifest,
 } from '@inth/nextjs';
-import type {
-	ConsentProviderOptions,
-	ConsentRootProps,
-	WithProjectUrl,
-} from '@inth/nextjs';
+import type { InthProviderProps, WithProjectUrl } from '@inth/nextjs';
+import { InthProvider as ReactProvider } from '@inth/nextjs/react';
+import type { InthProviderOptions as ReactProviderOptions } from '@inth/nextjs/react';
 // The provider arms take transports; `hosted` from `@inth/nextjs` is data.
 import { hosted as hostedTransport } from '@inth/sdk/transports';
 import { createV1ManifestTransport } from '@inth/sdk/transports/manifest';
@@ -35,11 +32,11 @@ const consentCategories = [
 	'experience',
 	'measurement',
 	'marketing',
-] satisfies NonNullable<ConsentProviderOptions['consentCategories']>;
+] satisfies NonNullable<ReactProviderOptions['consentCategories']>;
 
 const createOptions = function createOptions(
 	scenario: NextjsBenchScenario
-): WithProjectUrl<ConsentProviderOptions> {
+): WithProjectUrl<ReactProviderOptions> {
 	return {
 		callbacks: {
 			onChoiceRecorded() {
@@ -71,7 +68,7 @@ const createOptions = function createOptions(
 
 const createRootOptions = function createRootOptions(
 	scenario: NextjsBenchScenario
-): ConsentRootProps['options'] {
+): InthProviderProps['options'] {
 	const { mode, ...options } = createOptions(scenario);
 	void mode;
 	return options;
@@ -99,9 +96,9 @@ export const NextjsClientBenchmarkProvider = ({
 	children: ReactNode;
 	scenario: NextjsBenchScenario;
 }) => (
-	<ConsentProvider options={createOptions(scenario)}>
+	<ReactProvider options={createOptions(scenario)}>
 		<BenchmarkContents scenario={scenario}>{children}</BenchmarkContents>
-	</ConsentProvider>
+	</ReactProvider>
 );
 
 export const NextjsManifestClientBenchmarkProvider = ({
@@ -121,14 +118,14 @@ export const NextjsManifestClientBenchmarkProvider = ({
 	);
 
 	return (
-		<ConsentProvider
+		<ReactProvider
 			options={{
 				...createOptions(scenario),
 				mode: customMode(transport),
 			}}
 		>
 			<BenchmarkContents scenario={scenario}>{children}</BenchmarkContents>
-		</ConsentProvider>
+		</ReactProvider>
 	);
 };
 
@@ -138,22 +135,22 @@ export const NextjsPrefetchedBenchmarkProvider = ({
 	scenario,
 }: {
 	children: ReactNode;
-	state: ConsentRootProps['state'];
+	state: InthProviderProps['state'];
 	scenario: NextjsBenchScenario;
 }) => (
 	// One provider: the root forwards the server-resolved state as
 	// `options.prefetch` (authoritative → banner in first HTML). The old
-	// wiring nested a second ConsentProvider that shadowed the root's
+	// wiring nested a second ReactProvider that shadowed the root's
 	// kernel — its banner-in-first-HTML came from the synthetic placeholder
 	// policy, which authoritative-only rendering correctly suppresses.
 	// The prefetched arm consumes server init without a second browser init.
-	<ConsentRoot
+	<InthProvider
 		config={{ mode: hosted(), projectUrl: '/api/bench-consent' }}
 		state={state}
 		options={createRootOptions(scenario)}
 	>
 		<BenchmarkContents scenario={scenario}>{children}</BenchmarkContents>
-	</ConsentRoot>
+	</InthProvider>
 );
 
 export const NextjsManifestBenchmarkProvider = ({
@@ -163,7 +160,7 @@ export const NextjsManifestBenchmarkProvider = ({
 	surfaces = 'client',
 }: {
 	children: ReactNode;
-	state: ConsentRootProps['state'];
+	state: InthProviderProps['state'];
 	scenario: NextjsBenchScenario;
 	/**
 	 * 'client' renders the client ConsentBanner/Dialog; 'none' renders no
@@ -171,7 +168,7 @@ export const NextjsManifestBenchmarkProvider = ({
 	 */
 	surfaces?: 'client' | 'none';
 }) => (
-	<ConsentRoot
+	<InthProvider
 		config={{
 			// The browser resolves from the same-origin manifest route.
 			mode: manifest({
@@ -191,5 +188,5 @@ export const NextjsManifestBenchmarkProvider = ({
 				{children}
 			</>
 		)}
-	</ConsentRoot>
+	</InthProvider>
 );

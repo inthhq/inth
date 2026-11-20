@@ -1,6 +1,6 @@
 ---
 title: Headless
-description: Build your own consent banner and preference form in a Vue app with the Inth composables instead of ConsentRoot.
+description: Build your own consent banner and preference form in a Vue app with the Inth composables instead of InthProvider.
 group: frameworks
 ---
 
@@ -39,15 +39,15 @@ lists every field of the draft.
 Add focus handling, a close control and styles before you ship this. The
 component keeps the bare markup so the consent logic is easy to read.
 
-## Mount it instead of ConsentRoot
+## Mount it instead of InthProvider
 
-Render your component where `ConsentRoot` would go, and keep a way to reopen
+Render your component where `InthProvider` would go, and keep a way to reopen
 preferences:
 
 <include src="../../shared/examples/vue/headless-app.mdx" />
 
 Setting `activeUI` to `'manager'` opens your preference form. Do not render
-`ConsentRoot` as well, or the visitor sees two banners.
+`InthProvider` as well, or the visitor sees two banners.
 
 ## Show the buttons the policy requires
 

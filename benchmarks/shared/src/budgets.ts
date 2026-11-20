@@ -250,7 +250,7 @@ const CLIENT_MODE_BUNDLES_TARBALL_BYTES = 56_320;
 const CLIENT_MODE_BUNDLES_TARBALL_PERCENT = 18;
 
 /**
- * The deferred engine (#51). In a browser bundle `ConsentProvider` is a
+ * The deferred engine (#51). In a browser bundle `InthProvider` is a
  * shell that renders at once and loads the engine (the kernel, persistence,
  * the transports and the provider itself) through `import()`; the shell can
  * commit an Accept or Reject and open the stock dialog before the engine

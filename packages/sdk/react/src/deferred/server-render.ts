@@ -11,7 +11,7 @@ import { newRenderId } from '@inth/sdk/runtime/page-globals';
 import type * as ScriptServerStart from '@inth/sdk/runtime/script-server-start';
 import * as React from 'react';
 
-import type { ConsentProviderOptions } from '../provider';
+import type { InthProviderOptions } from '../provider';
 
 /** @internal */
 export type ScriptServerStartModule = typeof ScriptServerStart;
@@ -167,7 +167,7 @@ const renders = new WeakMap<object, Render>();
  * @internal
  */
 export const renderFor = function renderFor(
-	options: ConsentProviderOptions,
+	options: InthProviderOptions,
 	state: unknown
 ): Readonly<Render> {
 	let render = renders.get(options);
@@ -187,7 +187,7 @@ export const renderFor = function renderFor(
  */
 export const renderPlan = function renderPlan(
 	module: ScriptServerStartModule,
-	options: ConsentProviderOptions,
+	options: InthProviderOptions,
 	state: unknown
 ): ScriptServerStart.ServerScriptStartPlan {
 	const render: Render = renderFor(options, state);

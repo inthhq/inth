@@ -12,7 +12,7 @@ resolves its policy rules for it in the browser.
 
 ## The files that matter
 
-- [`components/consent.tsx`](./components/consent.tsx) sets up `ConsentRoot`
+- [`components/consent.tsx`](./components/consent.tsx) sets up `InthProvider`
   with the route's locale and the copy for each language. A
   small `FollowLocale` component calls `useSetLanguage` when the route's
   locale changes.

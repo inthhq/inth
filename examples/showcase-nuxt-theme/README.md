@@ -2,7 +2,7 @@
 
 Northwind Coffee's product page with Inth's stock banner and preference
 dialog in the shop's brand. Nothing is rebuilt: the components are the ones
-`ConsentRoot` renders, changed through module options in `nuxt.config.ts`.
+`InthProvider` renders, changed through module options in `nuxt.config.ts`.
 
 - `theme` sets Northwind's green, cream and border colors and smaller
   corners, with a second palette in `theme.dark`.
@@ -25,7 +25,7 @@ dialog in the shop's brand. Nothing is rebuilt: the components are the ones
   rules sit in a cascade layer, so these unlayered rules win without extra
   specificity. They read `--inth-primary`, so the rule follows the dark
   palette.
-- **`app/app.vue`** mounts `ConsentRoot`. The footer's Privacy settings link
+- **`app/app.vue`** mounts `InthProvider`. The footer's Privacy settings link
   is `ConsentDialogLink` with a class.
 
 The rest is the shop: the product page, header, footer and

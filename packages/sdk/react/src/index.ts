@@ -2,13 +2,13 @@
  * `@inth/react` — React adapter for the Inth consent kernel.
  *
  * Pattern:
- *   import { ConsentProvider, useConsent, useSaveConsents } from '@inth/react';
+ *   import { InthProvider, useConsent, useSaveConsents } from '@inth/react';
  *
  *   function App({ children }) {
  *     return (
- *       <ConsentProvider options={{ projectUrl: '/api/inth' }}>
+ *       <InthProvider options={{ projectUrl: '/api/inth' }}>
  *         {children}
- *       </ConsentProvider>
+ *       </InthProvider>
  *     );
  *   }
  *
@@ -104,10 +104,10 @@ export type {
 	UseScriptLoaderOptions,
 } from './module-hooks';
 export type {
-	ConsentProviderOptions,
-	ConsentProviderCallbacks,
-	ConsentProviderPrefetch,
-	ConsentProviderProps,
+	InthProviderOptions,
+	InthProviderCallbacks,
+	InthProviderPrefetch,
+	InthProviderProps,
 	ExternalRuntimeProviderOptions,
 	ExternalRuntimeProviderProps,
 	OwnedRuntimeProviderProps,

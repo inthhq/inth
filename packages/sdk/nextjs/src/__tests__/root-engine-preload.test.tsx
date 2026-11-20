@@ -15,8 +15,8 @@ import {
 	NOW,
 	optInRule,
 } from '../../../core/src/__tests__/fixtures/kernel-fixtures';
-import { ConsentRoot } from '../root';
-import type { ConsentRootProps } from '../root';
+import { InthProvider } from '../root';
+import type { InthProviderProps } from '../root';
 import { transportMode } from './fixtures/transport-mode';
 
 // A server process renders with the start module loaded; the first render
@@ -35,16 +35,16 @@ const choiceState = () => ({
 });
 
 const render = async (
-	props: Partial<ConsentRootProps> = {}
+	props: Partial<InthProviderProps> = {}
 ): Promise<string> => {
 	const stream = await renderToReadableStream(
-		<ConsentRoot
+		<InthProvider
 			options={{ mode: transportMode({ init: () => Promise.resolve({}) }) }}
 			state={choiceState()}
 			{...props}
 		>
 			<main id="page">Page</main>
-		</ConsentRoot>
+		</InthProvider>
 	);
 	await stream.allReady;
 	return new Response(stream).text();
@@ -151,7 +151,7 @@ test.each([
 		{ persistence: { skipHydration: false } },
 	],
 	['no request clock', { state: { ...grantedState(), now: undefined } }],
-] as [string, Partial<ConsentRootProps>][])(
+] as [string, Partial<InthProviderProps>][])(
 	'a returning visitor keeps the engine preload when the stored-choice check is off (%s)',
 	async (_case, props) => {
 		// The server leaves no stored-choice check, so the browser cannot
@@ -199,7 +199,7 @@ test.each([
 			{ ...startedPixel, id: 'other', resourceKey: 'shared' },
 		],
 	],
-] as [string, ConsentRootProps['scripts']][])(
+] as [string, InthProviderProps['scripts']][])(
 	'a returning visitor whose serverStart %s keeps the engine preload',
 	async (_case, scripts) => {
 		// The server start emits nothing for it, so the browser loads the
@@ -221,11 +221,11 @@ test.each([
 			},
 		},
 	],
-] as [string, Partial<ConsentRootProps>][])(
+] as [string, Partial<InthProviderProps>][])(
 	'a returning visitor whose root needs the engine at once (%s) gets no stored-choice check',
 	async (_case, props) => {
 		// Without the check the browser starts the engine's download as
-		// `ConsentRoot`'s chunk runs, before React reaches the root.
+		// `InthProvider`'s chunk runs, before React reaches the root.
 		const html = await render({ state: grantedState(), ...props });
 		expect(eagerPreload(html)).toBe(true);
 	}

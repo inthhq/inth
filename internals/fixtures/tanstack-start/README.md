@@ -7,7 +7,7 @@ A TanStack Start app wired to Inth through `@inth/tanstack-start`. The files tha
 - `src/routes/__root.tsx` declares `getConsentState` with
   `createServerFn().handler(createConsentStateHandler({ projectUrl }))`. The
   root loader awaits it on the server, so the banner is in the first HTML.
-  `ConsentRoot` reads the result, which carries the backend URL, with
+  `InthProvider` reads the result, which carries the backend URL, with
   `Route.useLoaderData()` and calls the backend directly from the browser.
 - `src/scripts.ts` registers PostHog and X Pixel.
 - `src/routes/api/inth/$.ts` mounts
@@ -56,7 +56,7 @@ default banner) or the `wall` arm in the browser, and the page shows
 resolves the arm in the root loader, on the server, where a flag provider's
 answer would go. The server function passes it to
 `resolveConsent({ experiment })`, which counts the arm through `/init` and
-returns the experiment in the state, so `ConsentRoot` needs no `experiment`
+returns the experiment in the state, so `InthProvider` needs no `experiment`
 option. Any other `arm` value runs `control`. The root's `onSurfaceShown` and
 `onChoiceRecorded` callbacks list each impression and choice under the arm and
 push them to `window.dataLayer` as `inth_surface_shown` and

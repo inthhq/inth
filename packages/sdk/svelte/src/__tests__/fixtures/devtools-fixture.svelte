@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolvePolicyRules } from '@inth/sdk/schema/types';
 
-	import ConsentProvider from '../../lib/components/consent-provider.svelte';
+	import InthProvider from '../../lib/components/inth-provider.svelte';
 	import ConsentDevToolsComponent from '../../lib/devtools';
 	import { testing } from '../../lib/testing';
 
@@ -53,7 +53,7 @@
 	});
 </script>
 
-<ConsentProvider
+<InthProvider
 	options={{
 		mode: testing(),
 		consentCategories: categories,
@@ -70,10 +70,10 @@
 		{shadow}
 		defaultOpen
 	/>
-</ConsentProvider>
+</InthProvider>
 
 {#if multiple}
-	<ConsentProvider options={{ mode: testing() }}>
+	<InthProvider options={{ mode: testing() }}>
 		<ConsentDevToolsComponent position="bottom-right" />
-	</ConsentProvider>
+	</InthProvider>
 {/if}

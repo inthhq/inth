@@ -362,7 +362,7 @@ describe('Sentry adapter through the kernel and script loader', () => {
 
 	it('declares Sentry by name so the preference surface lists it', () => {
 		// The runtime is where core reports undeclared vendors, as in
-		// `ConsentRoot`.
+		// `InthProvider`.
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		const { client } = createClient();
 		const runtime = createConsentRuntime({

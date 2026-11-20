@@ -7,7 +7,7 @@
 		ConsentBanner,
 		ConsentDialog,
 		ConsentDialogLink,
-		ConsentProvider,
+		InthProvider,
 		hosted,
 	} from '@inth/svelte';
 
@@ -20,7 +20,7 @@
 	];
 </script>
 
-<ConsentProvider mode={hosted()} {scripts}>
+<InthProvider mode={hosted()} {scripts}>
 	<main>
 		<h1>Inth + Svelte</h1>
 		<p>Your app goes here.</p>
@@ -30,5 +30,5 @@
 	</footer>
 	<ConsentBanner />
 	<ConsentDialog />
-</ConsentProvider>
+</InthProvider>
 ```

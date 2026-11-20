@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ConsentBanner, ConsentProvider } from '@inth/svelte';
+	import { ConsentBanner, InthProvider } from '@inth/svelte';
 	import type { Theme } from '@inth/svelte';
 	import { testing } from '@inth/svelte/testing';
 
@@ -545,7 +545,7 @@
 	</div>
 
 	{#key key}
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: testing({
 					policy: [
@@ -566,7 +566,7 @@
 				layout={currentThemeData.layout ?? [['reject', 'accept'], 'customize']}
 				primaryButton={currentThemeData.primaryButton ?? ['customize']}
 			/>
-		</ConsentProvider>
+		</InthProvider>
 	{/key}
 
 	<footer

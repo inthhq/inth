@@ -119,10 +119,10 @@ need control over the file:
 
 | Framework | Option | Files to import |
 | --- | --- | --- |
-| Next.js | `options.styles` in `inth.config.ts` or on `ConsentRoot` | `@inth/nextjs/styles.css`, and `@inth/nextjs/iab/styles.css` for IAB TCF |
-| TanStack Start | `options.styles` on `ConsentRoot` | `@inth/tanstack-start/styles.css`, and `@inth/tanstack-start/iab/styles.css` for IAB TCF |
-| React | `options.styles` on `ConsentProvider` | `@inth/react/styles.css`, and `@inth/react/iab/styles.css` for IAB TCF |
-| Svelte, SvelteKit | `options.styles` on `ConsentProvider` or `ConsentRoot` | `@inth/svelte/styles.css`, and `@inth/svelte/iab/styles.css` for IAB TCF |
+| Next.js | `options.styles` in `inth.config.ts` or on `InthProvider` | `@inth/nextjs/styles.css`, and `@inth/nextjs/iab/styles.css` for IAB TCF |
+| TanStack Start | `options.styles` on `InthProvider` | `@inth/tanstack-start/styles.css`, and `@inth/tanstack-start/iab/styles.css` for IAB TCF |
+| React | `options.styles` on `InthProvider` | `@inth/react/styles.css`, and `@inth/react/iab/styles.css` for IAB TCF |
+| Svelte, SvelteKit | `options.styles` on `InthProvider`, from `@inth/svelte` or `@inth/svelte/kit` | `@inth/svelte/styles.css`, and `@inth/svelte/iab/styles.css` for IAB TCF |
 | Astro | `styles` in the `inth()` integration options | See [load Astro's stylesheets yourself](#load-astros-stylesheets-yourself) |
 
 {/* example: fragment */}

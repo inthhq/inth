@@ -111,7 +111,7 @@ describe('resolveConsent wiring', () => {
 				snapshot: MANIFEST_FIXTURE,
 				...off,
 			});
-			// The state tells ConsentRoot this page has no journey.
+			// The state tells InthProvider this page has no journey.
 			expect(state.journey).toBeNull();
 		}
 	});

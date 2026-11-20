@@ -13,7 +13,7 @@ import type {
 	ScriptLoaderOptions,
 } from '@inth/sdk/modules/script-loader';
 
-import type { ConsentProviderOptions } from '../provider';
+import type { InthProviderOptions } from '../provider';
 
 /**
  * A banner choice recorded before the engine loaded. The engine starts from
@@ -42,7 +42,7 @@ export interface DeferredCommitted {
  */
 export interface DeferredCommitConfig {
 	/** `storageFor(options)`: where persistence keeps the records. */
-	storageConfig?: ConsentProviderOptions['storageConfig'];
+	storageConfig?: InthProviderOptions['storageConfig'];
 	/** The root's `scripts`, which the engine's loader would run. */
 	scripts?: Script[];
 	/** `scriptLoader.onDebug` for those scripts. */
@@ -50,7 +50,7 @@ export interface DeferredCommitConfig {
 	/** CSP nonce the engine's loader gives created elements. */
 	nonce?: string;
 	/** The root's callbacks, which the engine would call for the save. */
-	callbacks?: ConsentProviderOptions['callbacks'];
+	callbacks?: InthProviderOptions['callbacks'];
 	/**
 	 * The resources this render's server start reserved, which a plain
 	 * script must leave to it: `pageRender()?.starts`, read by the shell

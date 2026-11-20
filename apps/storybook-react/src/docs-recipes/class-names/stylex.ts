@@ -1,5 +1,5 @@
 // #region docs:class-names-stylex title="src/consent-components.ts"
-import type { ConsentProviderOptions } from '@inth/react';
+import type { InthProviderOptions } from '@inth/react';
 import * as stylex from '@stylexjs/stylex';
 
 const styles = stylex.create({
@@ -12,10 +12,10 @@ const styles = stylex.create({
 });
 
 /**
- * Pass as `components` in your ConsentProvider options. `stylex.props()`
+ * Pass as `components` in your InthProvider options. `stylex.props()`
  * returns `className` and, for dynamic styles, `style`; the slot takes both.
  */
-export const components: ConsentProviderOptions['components'] = {
+export const components: InthProviderOptions['components'] = {
 	banner: {
 		card: stylex.props(styles.card),
 	},

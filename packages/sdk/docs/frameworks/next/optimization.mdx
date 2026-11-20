@@ -133,7 +133,7 @@ Keep these details right:
   route that answers them with 404 or 405. To send only init through the route
   and keep saves going straight to the backend, drop `proxy` from both and keep
   `routePrefix`.
-- `options.mode` on `ConsentRoot` with a transport of its own keeps talking
+- `options.mode` on `InthProvider` with a transport of its own keeps talking
   to that transport's URL.
 - The proxy forwards the visitor's user agent, language, origin and location
   headers, so the backend's firewall sees a normal visitor. Set
@@ -226,15 +226,15 @@ consent saves reach the backend and policy updates appear after a rebuild, or
 the configured refresh window with runtime caching. If you set `proxy: true`,
 also confirm browser consent requests use your origin.
 
-## Know when ConsentRoot loads its engine
+## Know when InthProvider loads its engine
 
-`ConsentRoot` keeps Inth's consent engine out of the page's first-load
+`InthProvider` keeps Inth's consent engine out of the page's first-load
 JavaScript. The engine is the code that stores consent, saves choices and
 renders the banner in React. The server still renders the whole root, so the
 banner, its styles and any [scripts the server starts](/docs/frameworks/next/rendering#start-allowed-scripts-before-hydration)
 are in the first HTML.
 
-In the browser the page under `ConsentRoot` hydrates at once. Until the engine
+In the browser the page under `InthProvider` hydrates at once. Until the engine
 loads, Inth's hooks return the consent state the server rendered with, and
 most of their actions, such as `useSetActiveUI()`, wait for the engine and run
 when it arrives. The banner keeps its server HTML.
@@ -279,8 +279,8 @@ When the engine loads depends on the visitor:
 | Visitor | Engine loads |
 | --- | --- |
 | The banner asks them to choose and no optional category is allowed | When the first of these happens: every `<img fetchpriority="high">` on the page has loaded, the visitor presses a pointer or key or scrolls anywhere outside the banner, a tap on the banner was recorded (see above), or 10 seconds pass. A page without a priority image waits for the `load` event instead. |
-| A returning visitor who already chose and sees no banner or dialog | At the same moments as the row above. Until then `ConsentRoot` inserts the plain `scripts` and `useScriptLoader()` entries their choice allows itself, as hydration starts. |
-| Any other visitor, such as one under an IAB policy or one whose browser holds a newer choice than the server read | As soon as the browser runs `ConsentRoot`'s first-load chunk, before hydration. |
+| A returning visitor who already chose and sees no banner or dialog | At the same moments as the row above. Until then `InthProvider` inserts the plain `scripts` and `useScriptLoader()` entries their choice allows itself, as hydration starts. |
+| Any other visitor, such as one under an IAB policy or one whose browser holds a newer choice than the server read | As soon as the browser runs `InthProvider`'s first-load chunk, before hydration. |
 
 On a slow connection the engine would otherwise share bandwidth with the
 page's largest image and delay Largest Contentful Paint. The browser stops
@@ -302,12 +302,12 @@ would with the engine loaded at once, when the visitor next acts. A `scripts`
 entry with a vendor or IAB fields still loads the engine at once, and so do
 some entries with callbacks (see below).
 
-Some pages need the engine sooner. `ConsentRoot` loads it at once when:
+Some pages need the engine sooner. `InthProvider` loads it at once when:
 
-- a `scripts` entry, in `inth.config.ts` or on `ConsentRoot`, may run for
+- a `scripts` entry, in `inth.config.ts` or on `InthProvider`, may run for
   this visitor (`alwaysLoad`, or a category such as `necessary` that is
   allowed) and nothing else starts it: the server did not start it from the
-  HTML, and it is not a plain `src` entry `ConsentRoot` starts itself for a
+  HTML, and it is not a plain `src` entry `InthProvider` starts itself for a
   returning visitor (see the table above). An entry with callbacks, vendor
   or IAB fields needs the engine, as does any entry under
   `persistence: false` or `options.consentSource`;
@@ -327,7 +327,7 @@ Some pages need the engine sooner. `ConsentRoot` loads it at once when:
   `onConsentChange`, so it hears the denial straight away;
 - `useScriptLoader()` receives such a script, on mount or later.
 
-`ConsentRoot` renders the engine before the page hydrates, as a statically
+`InthProvider` renders the engine before the page hydrates, as a statically
 imported root would, when it has no `state`, when `options.enabled` is
 `false`, with an experiment, with a `networkBlocker` or `clearOnRevocation`
 in its config, for an IAB policy, or when the app renders `IABProvider`.
@@ -339,11 +339,11 @@ starts once the engine has loaded.
 
 ## Start returning visitors' scripts sooner
 
-`ConsentRoot` loads the script loader as a separate chunk, and only on pages
+`InthProvider` loads the script loader as a separate chunk, and only on pages
 whose `scripts` array is not empty. Pages without scripts never download it.
 By default the chunk loads once the page has hydrated.
 
-When `ConsentRoot` renders its engine at once and the visitor's consent
+When `InthProvider` renders its engine at once and the visitor's consent
 already lets one of those scripts run, it starts the download during its
 first render in the browser instead, so the chunk loads while React hydrates
 the rest of the page. It decides as the provider would once mounted: with the
@@ -366,31 +366,31 @@ source decides consent after the page mounts, so only `alwaysLoad` scripts
 start the download early.
 
 A returning visitor whose engine waits (see
-[Know when ConsentRoot loads its engine](#know-when-consentroot-loads-its-engine))
-downloads neither chunk at first. `ConsentRoot` inserts the plain `scripts`
+[Know when InthProvider loads its engine](#know-when-inthprovider-loads-its-engine))
+downloads neither chunk at first. `InthProvider` inserts the plain `scripts`
 and `useScriptLoader()` entries their choice allows itself, as hydration
 starts. The script loader downloads with the engine, at the moments that
 section's table lists, and takes those scripts over without inserting them
 again.
 
-The larger the tree inside `ConsentRoot`, the more of that request hydration
+The larger the tree inside `InthProvider`, the more of that request hydration
 covers. There is nothing to configure. The code that decides ships with
-`ConsentRoot` only: a `ConsentProvider` from `@inth/react` rendered without
-`ConsentRoot` loads the chunk when it mounts.
+`InthProvider` from `@inth/nextjs` only: the `InthProvider` from
+`@inth/react` rendered on its own loads the chunk when it mounts.
 
 Next.js assigns chunk file names in the browser build, and the server
-rendering `ConsentRoot` cannot read them. So the browser records the engine's
+rendering `InthProvider` cannot read them. So the browser records the engine's
 chunk URLs in `localStorage` (key `inth-engine-chunks`) the first time it
 loads the engine. It records only URLs under `/_next/static/`, never the
 consent-gated scripts that start while the engine loads. When the server
-renders a visitor the engine must serve at once, `ConsentRoot` adds a small
+renders a visitor the engine must serve at once, `InthProvider` adds a small
 inline script after the page that preloads those URLs at low priority while
 the HTML is still parsing. For a returning visitor who already chose,
 the preload runs only when the stored-choice check before it finds the
 choice changed in the browser; otherwise their engine waits for the page's
 priority images and nothing is preloaded. A root that must load the engine
 at once anyway gets no check and the plain preload: a `scripts` entry on
-`ConsentRoot` or in `inth.config.ts` that needs the script loader, a root
+`InthProvider` or in `inth.config.ts` that needs the script loader, a root
 with `persistence: false`, `options.consentSource`, `options.enabled:
 false`, an experiment or a `networkBlocker`. The record is
 tied to the page's build, so after a deploy nothing stale is fetched; the

@@ -14,7 +14,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { UNCOMMITTED_HOLD_MS } from '../module-hooks/network-hold';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
@@ -59,7 +59,7 @@ test('StrictMode starts one runtime: one /init, one hold, nothing left holding',
 	const { init, mode } = countingMode();
 	const view = await render(
 		<StrictMode>
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode,
 					networkBlocker: { logBlockedRequests: false, rules },
@@ -68,7 +68,7 @@ test('StrictMode starts one runtime: one /init, one hold, nothing left holding',
 				}}
 			>
 				{null}
-			</ConsentProvider>
+			</InthProvider>
 		</StrictMode>
 	);
 
@@ -99,9 +99,7 @@ test('StrictMode sends a single /init without a prefetch', async () => {
 	const { init, mode } = countingMode();
 	const view = await render(
 		<StrictMode>
-			<ConsentProvider options={{ mode, persistence: false }}>
-				{null}
-			</ConsentProvider>
+			<InthProvider options={{ mode, persistence: false }}>{null}</InthProvider>
 		</StrictMode>
 	);
 	await vi.waitFor(() => expect(init).toHaveBeenCalledTimes(1));
@@ -137,9 +135,9 @@ test('a render that suspends before its first commit leaves no runtime holding',
 	// runtime and hold are thrown away; the retry builds another.
 	await render(
 		<Suspense fallback={null}>
-			<ConsentProvider options={options}>
+			<InthProvider options={options}>
 				<SuspendsOnce />
-			</ConsentProvider>
+			</InthProvider>
 		</Suspense>
 	);
 	resume();
@@ -173,7 +171,7 @@ test('a runtime whose render never commits disposes itself and fails its hold cl
 
 	await expect(
 		render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode,
 					networkBlocker: { logBlockedRequests: false, rules },
@@ -181,7 +179,7 @@ test('a runtime whose render never commits disposes itself and fails its hold cl
 				}}
 			>
 				<Throws />
-			</ConsentProvider>
+			</InthProvider>
 		)
 	).rejects.toThrow('render failed before commit');
 

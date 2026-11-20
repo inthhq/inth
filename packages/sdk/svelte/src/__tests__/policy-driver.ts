@@ -53,7 +53,7 @@ import { validateStoredConsentEnvelope } from '../../../core/src/modules/persist
 import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/encode';
 import { gpcFromHeaders } from '../../../core/src/transports/decision-inputs';
 import { gtag } from '../../../integrations/src/vendors/analytics/google-tag';
-import type { ConsentProviderCallbacks } from '../lib/types';
+import type { InthProviderCallbacks } from '../lib/types';
 import PolicyFixture from './fixtures/policy-fixture.svelte';
 import { transportMode } from './fixtures/transport-mode';
 import { renderSsr } from './server-render';
@@ -364,12 +364,12 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 				callbacks: {
 					onChoiceRecorded: (
 						payload: Parameters<
-							NonNullable<ConsentProviderCallbacks['onChoiceRecorded']>
+							NonNullable<InthProviderCallbacks['onChoiceRecorded']>
 						>[0]
 					) => callbacks.push({ name: 'onChoiceRecorded', payload }),
 					onPermissionsChanged: (
 						payload: Parameters<
-							NonNullable<ConsentProviderCallbacks['onPermissionsChanged']>
+							NonNullable<InthProviderCallbacks['onPermissionsChanged']>
 						>[0]
 					) => callbacks.push({ name: 'onPermissionsChanged', payload }),
 				},

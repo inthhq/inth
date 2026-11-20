@@ -1,6 +1,6 @@
 ---
 title: Customize
-description: Change the colors, fonts, layout, button styles and copy of the Inth banner and dialog in a TanStack Start app with theme tokens, ConsentRoot options and component parts, and load the stylesheet yourself when you need to.
+description: Change the colors, fonts, layout, button styles and copy of the Inth banner and dialog in a TanStack Start app with theme tokens, InthProvider options and component parts, and load the stylesheet yourself when you need to.
 group: frameworks
 ---
 
@@ -16,7 +16,7 @@ group: frameworks
 | Labels and languages | [Copy and translations](#change-the-copy) |
 | Different markup entirely | [Headless](/docs/frameworks/tanstack-start/headless) |
 
-`ConsentRoot` passes every option other than its own props through `options`
+`InthProvider` passes every option other than its own props through `options`
 to the React provider, so the React styling options apply unchanged.
 [Customization](/docs/customization/overview) explains how the choices relate.
 
@@ -32,7 +32,7 @@ HTML for the banner. The rules live in `@layer components`, so Tailwind 4
 utilities override them without extra specificity.
 
 Load the stylesheet yourself with Tailwind CSS 3, to put Inth's rules in a
-named cascade layer. Set `styles: false` in `ConsentRoot`'s
+named cascade layer. Set `styles: false` in `InthProvider`'s
 `options`, so the components add no second copy, and link the stylesheet
 through `head()`:
 
@@ -44,7 +44,7 @@ import consentCss from '@inth/tanstack-start/styles.css?url';
 // In createRootRoute({ head: () => ({ links: [...] }) }):
 { href: consentCss, rel: 'stylesheet' }
 
-// On ConsentRoot:
+// On InthProvider:
 options={{ styles: false }}
 ```
 
@@ -103,12 +103,12 @@ tokens to one consent model.
 `consentActions` decides how each action looks. `default` applies to every
 button, `primary` to the action the policy or your props mark primary, and
 `accept`, `reject`, `customize` and `dismiss` to one action each. Pass it
-through `ConsentRoot`'s `options`:
+through `InthProvider`'s `options`:
 
 {/* example: fragment */}
 
 ```tsx title="src/routes/__root.tsx"
-<ConsentRoot
+<InthProvider
   state={consent}
   scripts={scripts}
   options={{
@@ -128,14 +128,14 @@ do nothing, and the provider logs a warning in development.
 
 `ConsentBanner` takes `variant` (`floating`, `bar`, `widget` or `wall`) and
 `position`, such as `<ConsentBanner variant="bar" position="bottom" />`. To use
-one shape everywhere, set `options.presentation.prompt` on `ConsentRoot`
+one shape everywhere, set `options.presentation.prompt` on `InthProvider`
 instead. [ConsentBanner](/docs/frameworks/tanstack-start/components/consent-banner#variants)
 lists every variant and position.
 
 ## Style one component part
 
 Each component part is a slot that accepts any attribute its element takes,
-such as `className` or `style`. Set slots in `ConsentRoot`'s
+such as `className` or `style`. Set slots in `InthProvider`'s
 `options.components`, keyed by component and part:
 
 {/* example: fragment */}
@@ -160,12 +160,12 @@ Modules, vanilla-extract, StyleX and Emotion.
 ## Turn on dark mode and change motion
 
 Pass `colorScheme` to `ConsentTheme` in the root route and the same value in
-`options` on `ConsentRoot`. Leave it unset to follow a `dark` class on
+`options` on `InthProvider`. Leave it unset to follow a `dark` class on
 `<html>`, and add dark colors with `theme.dark`.
 [Dark mode](/docs/customization/dark-mode) covers each value and a dark first
 paint.
 
-`options.disableAnimation` on `ConsentRoot` turns off the banner and dialog
+`options.disableAnimation` on `InthProvider` turns off the banner and dialog
 animations, and the same prop on `ConsentBanner` or `ConsentDialog` overrides
 it for one surface. [Motion and animation](/docs/customization/motion) covers
 the duration and easing tokens and reduced motion.
@@ -173,7 +173,7 @@ the duration and easing tokens and reduced motion.
 ## Change the copy
 
 Labels, descriptions and languages come from the translations in your Inth
-project and from `options.i18n` on `ConsentRoot`. For the visitor's language,
+project and from `options.i18n` on `InthProvider`. For the visitor's language,
 `i18n.messages` replace the project's copy key by key, and keys you leave out
 keep the project's wording.
 [Copy and translations](/docs/customization/translations) shows the message

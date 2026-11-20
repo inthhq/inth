@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
-import type { ComponentFixtureOptions as ConsentProviderOptions } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
+import type { ComponentFixtureOptions as InthProviderOptions } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 
 import { testing } from '../../../testing';
@@ -103,7 +103,7 @@ globalThis.fetch = vi.fn(() =>
 	)
 ) as typeof fetch;
 
-const defaultIABOptions: ConsentProviderOptions = {
+const defaultIABOptions: InthProviderOptions = {
 	iab: {
 		cmpId: 160,
 		cmpVersion: 1,
@@ -136,9 +136,9 @@ describe('IAB Consent Banner Unit Tests', () => {
 	describe('Component Rendering', () => {
 		test('should render banner when IAB is enabled', async () => {
 			render(
-				<ConsentProvider options={defaultIABOptions}>
+				<InthProvider options={defaultIABOptions}>
 					<IABConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -154,9 +154,9 @@ describe('IAB Consent Banner Unit Tests', () => {
 
 		test('should render accept button', async () => {
 			render(
-				<ConsentProvider options={defaultIABOptions}>
+				<InthProvider options={defaultIABOptions}>
 					<IABConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -172,9 +172,9 @@ describe('IAB Consent Banner Unit Tests', () => {
 
 		test('should render reject button', async () => {
 			render(
-				<ConsentProvider options={defaultIABOptions}>
+				<InthProvider options={defaultIABOptions}>
 					<IABConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -190,9 +190,9 @@ describe('IAB Consent Banner Unit Tests', () => {
 
 		test('should render customize button', async () => {
 			render(
-				<ConsentProvider options={defaultIABOptions}>
+				<InthProvider options={defaultIABOptions}>
 					<IABConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -208,9 +208,9 @@ describe('IAB Consent Banner Unit Tests', () => {
 
 		test('should render branding tag', async () => {
 			render(
-				<ConsentProvider options={defaultIABOptions}>
+				<InthProvider options={defaultIABOptions}>
 					<IABConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -228,9 +228,9 @@ describe('IAB Consent Banner Unit Tests', () => {
 	describe('Accessibility', () => {
 		test('should have region role by default', async () => {
 			render(
-				<ConsentProvider options={defaultIABOptions}>
+				<InthProvider options={defaultIABOptions}>
 					<IABConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -246,9 +246,9 @@ describe('IAB Consent Banner Unit Tests', () => {
 
 		test('should have aria-label', async () => {
 			render(
-				<ConsentProvider options={defaultIABOptions}>
+				<InthProvider options={defaultIABOptions}>
 					<IABConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -264,9 +264,9 @@ describe('IAB Consent Banner Unit Tests', () => {
 
 		test('should be focusable', async () => {
 			render(
-				<ConsentProvider options={defaultIABOptions}>
+				<InthProvider options={defaultIABOptions}>
 					<IABConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -284,9 +284,9 @@ describe('IAB Consent Banner Unit Tests', () => {
 	describe('Props', () => {
 		test('should accept primaryButton prop', async () => {
 			render(
-				<ConsentProvider options={defaultIABOptions}>
+				<InthProvider options={defaultIABOptions}>
 					<IABConsentBanner primaryButton="accept" />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -302,9 +302,9 @@ describe('IAB Consent Banner Unit Tests', () => {
 
 		test('should accept trapFocus prop', async () => {
 			render(
-				<ConsentProvider options={defaultIABOptions}>
+				<InthProvider options={defaultIABOptions}>
 					<IABConsentBanner trapFocus={true} />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -322,9 +322,9 @@ describe('IAB Consent Banner Unit Tests', () => {
 	describe('Content', () => {
 		test('should display header section', async () => {
 			render(
-				<ConsentProvider options={defaultIABOptions}>
+				<InthProvider options={defaultIABOptions}>
 					<IABConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -340,9 +340,9 @@ describe('IAB Consent Banner Unit Tests', () => {
 
 		test('should display footer section', async () => {
 			render(
-				<ConsentProvider options={defaultIABOptions}>
+				<InthProvider options={defaultIABOptions}>
 					<IABConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await vi.waitFor(
@@ -362,7 +362,7 @@ describe('IAB Consent Banner Unit Tests', () => {
 			const { renderToString } = await import('react-dom/server');
 			// A server-resolved state: the kernel already holds the vendor list,
 			// but no `IABProvider` effect has run, so there is no handle yet.
-			const options: ConsentProviderOptions = {
+			const options: InthProviderOptions = {
 				iab: { cmpId: 160, cmpVersion: 1 },
 				mode: testing(),
 				prefetch: {
@@ -376,9 +376,9 @@ describe('IAB Consent Banner Unit Tests', () => {
 			};
 
 			const html = renderToString(
-				<ConsentProvider options={options}>
+				<InthProvider options={options}>
 					<IABConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			expect(html).toContain('data-testid="iab-consent-banner-card"');

@@ -308,7 +308,7 @@ const withConsentAliases = function withConsentAliases(
  * manifest before Next.js builds or starts dev.
  *
  * `inth.config.ts` (or `.mts`, `.js`, `.mjs`) at the project root is
- * aliased into server and browser bundles, so `ConsentRoot`,
+ * aliased into server and browser bundles, so `InthProvider`,
  * `resolveConsent()`, `createConsentRoute()` and the Pages Router helpers
  * read it without the app importing it. Its default export must be a
  * `defineConsentConfig()` result. Browser bundles include it, so it must

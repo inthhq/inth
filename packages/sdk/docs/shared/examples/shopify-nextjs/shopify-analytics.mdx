@@ -36,7 +36,7 @@ export const ShopifyAnalytics = ({
 	);
 };
 
-/** Feeds each Inth snapshot to the bridge. Render it inside `ConsentRoot`. */
+/** Feeds each Inth snapshot to the bridge. Render it inside `InthProvider`. */
 export const ShopifyConsentSync = () => {
 	const snapshot = useSnapshot();
 	useEffect(() => shopifyPrivacy.update(snapshot), [snapshot]);

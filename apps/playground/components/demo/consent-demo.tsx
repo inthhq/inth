@@ -4,7 +4,7 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogTriggerToolbar,
-	ConsentProvider,
+	InthProvider,
 	hosted,
 } from '@inth/react';
 import { ConsentDevTools } from '@inth/react/devtools';
@@ -371,7 +371,7 @@ export const ConsentDemo = () => {
 					</div>
 				</header>
 
-				<ConsentProvider
+				<InthProvider
 					key={providerKey}
 					options={providerOptions}
 				>
@@ -520,7 +520,7 @@ export const ConsentDemo = () => {
 						/>
 						<IABConsentDialog />
 					</IABProvider>
-				</ConsentProvider>
+				</InthProvider>
 			</div>
 		</main>
 	);

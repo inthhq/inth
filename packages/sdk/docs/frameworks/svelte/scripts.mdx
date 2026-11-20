@@ -6,7 +6,7 @@ group: frameworks
 
 ## Register scripts on the provider
 
-Pass the array from `src/scripts.ts` to `ConsentProvider` as the
+Pass the array from `src/scripts.ts` to `InthProvider` as the
 `scripts` prop. The [quickstart](/docs/frameworks/svelte/quickstart) sets up
 this file:
 
@@ -25,7 +25,7 @@ it from the server-rendered page; the SvelteKit scripts guide shows how.
 
 `getEventDispatcher()` from `@inth/svelte` returns the provider's event
 dispatcher. It sends to the provider's `scripts` and checks consent when an
-event goes out. Call it while a component inside `ConsentProvider`
+event goes out. Call it while a component inside `InthProvider`
 initializes, and send a pageview when your router's path changes:
 
 <include src="../../shared/examples/svelte/analytics-events.mdx" />

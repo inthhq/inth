@@ -1,6 +1,6 @@
 /**
  * The static banner `consentManifest()` puts in `index.html`
- * (`@inth/react/static-banner`) and the client-rendered `ConsentProvider`
+ * (`@inth/react/static-banner`) and the client-rendered `InthProvider`
  * that replaces it: one banner at any time, no second entry, the page's
  * stylesheets adopted, and a tap on the static banner recorded once.
  */
@@ -15,7 +15,7 @@ import { ConsentBanner } from '../../components/prompt';
 import { STATIC_BANNER_ATTR } from '../../components/prompt/static-banner-shell';
 import { useSnapshot } from '../../hooks';
 import { renderStaticBanner, STATIC_BANNER_SHEETS } from '../../static-banner';
-import { ConsentProvider } from '../client-provider';
+import { InthProvider } from '../client-provider';
 
 /** What `POST /v1/consent/records` answers a save. */
 const recordAnswer = (request?: RequestInit) => ({
@@ -100,7 +100,7 @@ const mountStaticBanner = function mountStaticBanner(): HTMLElement {
 
 const renderPage = () =>
 	render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				consentCategories: ['necessary', 'measurement', 'marketing'],
 				journey: false,
@@ -109,7 +109,7 @@ const renderPage = () =>
 		>
 			<Probe />
 			<ConsentBanner />
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 beforeEach(() => {

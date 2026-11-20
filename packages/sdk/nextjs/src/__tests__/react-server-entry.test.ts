@@ -5,7 +5,7 @@
  * config helpers as plain functions.
  */
 import { ConsentDialogLink } from '@inth/react/components/consent-dialog-link';
-// The banner and dialog whose code loads with ConsentRoot's engine.
+// The banner and dialog whose code loads with InthProvider's engine.
 import {
 	DeferredConsentBanner as ConsentBanner,
 	DeferredConsentDialog as ConsentDialog,
@@ -17,7 +17,7 @@ import packageJson from '../../package.json';
 import clientComponentsSource from '../client-components.ts?raw';
 import { defineConsentConfig } from '../config';
 import * as reactServer from '../index.react-server';
-import { ConsentRoot } from '../root';
+import { InthProvider } from '../root';
 
 describe('@inth/nextjs react-server entry', () => {
 	test('resolves under the react-server condition', () => {
@@ -32,14 +32,13 @@ describe('@inth/nextjs react-server entry', () => {
 			ConsentBanner,
 			ConsentDialog,
 			ConsentDialogLink,
-			ConsentRoot,
+			InthProvider,
 		});
 	});
 
 	test('exports what a Server Component layout renders or passes on', () => {
 		expect(reactServer.ConsentDialogTrigger).toBeDefined();
 		expect(reactServer.ConsentGate).toBeDefined();
-		expect(reactServer.ConsentProvider).toBeDefined();
 		expect(reactServer.ConsentTheme).toBeDefined();
 		expect(reactServer.ConsentWidget).toBeDefined();
 		expect(reactServer.defineTheme).toBeDefined();

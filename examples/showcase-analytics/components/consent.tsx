@@ -1,7 +1,7 @@
 'use client';
 
-import { ConsentBanner, ConsentDialog, ConsentRoot } from '@inth/nextjs';
-import type { ClearOnRevocationConfig, ConsentRootProps } from '@inth/nextjs';
+import { ConsentBanner, ConsentDialog, InthProvider } from '@inth/nextjs';
+import type { ClearOnRevocationConfig, InthProviderProps } from '@inth/nextjs';
 import type { ReactNode } from 'react';
 
 import { brandTheme } from '@/lib/consent-theme';
@@ -17,7 +17,7 @@ const config = {
 		process.env.NEXT_PUBLIC_INTH_PROJECT_URL ?? 'https://your-project.inth.app',
 };
 
-const options: ConsentRootProps['options'] = {
+const options: InthProviderProps['options'] = {
 	callbacks: {
 		// Turning off a category that was on reloads the page, because code a
 		// vendor already ran can't be unloaded. Leave a note for the next page.
@@ -38,7 +38,7 @@ const clearOnRevocation: ClearOnRevocationConfig = {
 };
 
 export const Consent = ({ children }: { children: ReactNode }) => (
-	<ConsentRoot
+	<InthProvider
 		config={config}
 		state={{}}
 		scripts={scripts}
@@ -50,5 +50,5 @@ export const Consent = ({ children }: { children: ReactNode }) => (
 		<ConsentBanner />
 		<ConsentDialog />
 		<ConsentDevTools />
-	</ConsentRoot>
+	</InthProvider>
 );

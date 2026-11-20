@@ -3,7 +3,7 @@
 import {
 	ConsentBanner,
 	ConsentDialog,
-	ConsentProvider,
+	InthProvider,
 	ConsentWidget,
 	useConsentDraft,
 	useSnapshot,
@@ -728,7 +728,7 @@ export const PolicyActionsDemo = () => {
 	};
 
 	return (
-		<ConsentProvider
+		<InthProvider
 			key={providerKey}
 			options={{
 				legalLinks: {
@@ -751,6 +751,6 @@ export const PolicyActionsDemo = () => {
 				surface={surface}
 				onSurfaceChange={setSurface}
 			/>
-		</ConsentProvider>
+		</InthProvider>
 	);
 };

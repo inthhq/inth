@@ -1,11 +1,11 @@
 /**
- * The transport a `<ConsentProvider>`'s options select: `mode` when it is
+ * The transport an `<InthProvider>`'s options select: `mode` when it is
  * a factory or a `testing()` value, else the hosted backend at
  * `projectUrl`, which defaults to the URL `consentManifest()` from
  * `@inth/svelte/vite` read.
  *
- * Only the single-page provider imports this, so `ConsentRoot`'s first
- * load keeps the hosted transport out: it loads it on demand.
+ * Only the single-page provider imports this, so the SvelteKit `InthProvider`'s
+ * first load keeps the hosted transport out: it loads it on demand.
  *
  * @packageDocumentation
  * @internal

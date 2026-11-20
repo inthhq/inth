@@ -4,7 +4,7 @@ import { benchPolicy } from '@inth/benchmarking/bench-policy';
 import { ConsentDraftProvider } from '@inth/react/draft';
 import { useSaveConsents } from '@inth/react/hooks';
 import { useScriptLoader } from '@inth/react/module-hooks/script-loader';
-import { ConsentProvider } from '@inth/react/provider';
+import { InthProvider } from '@inth/react/provider';
 import { useEffect, useMemo, useState } from 'react';
 
 import { createInitialBenchState, listDomIds, makeScripts } from './fixtures';
@@ -74,7 +74,7 @@ const ScriptCountProbe = ({ count }: { count: number }) => {
 };
 
 export const ScriptCountBenchmark = ({ count }: { count: number }) => (
-	<ConsentProvider
+	<InthProvider
 		options={{
 			mode: benchPolicy({
 				policy: [
@@ -96,5 +96,5 @@ export const ScriptCountBenchmark = ({ count }: { count: number }) => (
 				<ScriptCountProbe count={count} />
 			</main>
 		</ConsentDraftProvider>
-	</ConsentProvider>
+	</InthProvider>
 );

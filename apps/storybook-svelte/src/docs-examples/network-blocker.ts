@@ -1,7 +1,7 @@
 // #region docs:network-blocker title="src/lib/network-blocker.ts"
 import type { UseNetworkBlockerOptions } from '@inth/svelte';
 
-// Pass as `networkBlocker={networkBlocker}` on ConsentProvider.
+// Pass as `networkBlocker={networkBlocker}` on InthProvider.
 export const networkBlocker: UseNetworkBlockerOptions = {
 	onRequestBlocked: ({ method, url }) => {
 		console.info('Blocked until consent', method, url);

@@ -46,9 +46,9 @@ it needs.
 | Nuxt | `@inth/nuxt` | `@inth/nuxt/testing` | `inth.mode` in `nuxt.config.ts` | Data |
 | Astro | `@inth/astro` | `@inth/astro/testing` | `inth({ mode })` in `astro.config.mjs` | Data |
 | SvelteKit | `@inth/svelte/kit` | `@inth/svelte/testing` | `inthHandle({ mode })` in `src/hooks.server.ts` | Data |
-| React | `@inth/react` | `@inth/react/testing` | `ConsentProvider`'s `options.mode` | Transport |
+| React | `@inth/react` | `@inth/react/testing` | `InthProvider`'s `options.mode` | Transport |
 | Vue | `@inth/vue/vue-plugin` | `@inth/vue/testing` | `app.use(inthVue, { mode })` | Transport |
-| Svelte | `@inth/svelte` | `@inth/svelte/testing` | `<ConsentProvider mode={...}>` | Transport |
+| Svelte | `@inth/svelte` | `@inth/svelte/testing` | `<InthProvider mode={...}>` | Transport |
 | Angular | `@inth/angular` | `@inth/angular/testing` | `provideInth({ mode })` | Transport |
 | JavaScript | `@inth/sdk` | `@inth/sdk/testing` | `init({ mode })` | Transport |
 | Script tag | none | `inth.testing.js` | `data-mode="manifest"` on the headless and IAB scripts | Name |
@@ -142,10 +142,10 @@ banner. No recommended rule shows the opt-out notice banner; pass a rule with
 {/* example: fragment */}
 
 ```tsx
-import { ConsentProvider } from '@inth/react';
+import { InthProvider } from '@inth/react';
 import { testing } from '@inth/react/testing';
 
-<ConsentProvider
+<InthProvider
 	options={{
 		mode: testing({
 			policy: {

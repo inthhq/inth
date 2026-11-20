@@ -5,7 +5,7 @@ import { expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { KernelContext } from '../context';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
@@ -35,7 +35,7 @@ const grantThenRevoke = async (reloadOnConsentRevoked?: boolean) => {
 	reload.mockClear();
 	const onBeforeConsentRevocationReload = vi.fn();
 	await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				callbacks: { onBeforeConsentRevocationReload },
 				mode: transportMode({ save: () => Promise.resolve({ ok: true }) }),
@@ -45,7 +45,7 @@ const grantThenRevoke = async (reloadOnConsentRevoked?: boolean) => {
 			}}
 		>
 			<Capture />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await kernel.commands.save({ marketing: true });
 	await kernel.commands.save({ marketing: false });

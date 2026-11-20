@@ -1,6 +1,6 @@
 ---
 title: Upgrade from v2
-description: Upgrade a React app from c15t v2 (@c15t/react) to Inth v3 (@inth/react). Covers packages, ConsentProvider and transports, the useConsentManager codemod, callbacks, policies, styles, IAB and stored consent.
+description: Upgrade a React app from c15t v2 (@c15t/react) to Inth v3 (@inth/react). Covers packages, InthProvider and transports, the useConsentManager codemod, callbacks, policies, styles, IAB and stored consent.
 group: frameworks
 ---
 
@@ -13,8 +13,8 @@ group: frameworks
   2. Check that React is 18 or later. Stop and tell me if it needs a major upgrade.
   3. Install `@inth/react`, plus `@inth/integrations` if the app uses vendor helpers.
   4. Install the Inth CLI with `npm install -g @inth/cli` if `inth` is missing, then run `inth c15t codemods packages-to-c15t consent-provider-options root-exports-to-subpaths use-consent-manager-to-hooks scripts-to-integrations dev-tools-to-c15t policy-packs-to-policy-rules callbacks-to-v3 theme-to-consent-theme iab-option-to-iab-provider css-variables-to-v3 postcss-tailwind3 --dry-run --json`. Review the output, then run the same command without `--dry-run`. The codemods leave a `TODO(c15t v3)` comment wherever they need you to finish a change.
-  5. The codemods write c15t v3 paths. Point `c15t/react` imports at `@inth/react` and `@c15t/integrations` imports at `@inth/integrations`, then remove the c15t packages.
-  6. Check that `ConsentManagerProvider` is now `ConsentProvider` from `@inth/react`, with a transport such as `hosted()` as `mode`. Finish any custom mode the codemod marked.
+  5. The codemods write c15t v3 paths and names. Point `c15t/react` imports at `@inth/react` and `@c15t/integrations` imports at `@inth/integrations`. Rename `ConsentProvider` to `InthProvider`, and `ConsentProviderProps`, `ConsentProviderOptions`, `ConsentProviderCallbacks` and `ConsentProviderPrefetch` to `InthProviderProps`, `InthProviderOptions`, `InthProviderCallbacks` and `InthProviderPrefetch`. Then remove the c15t packages.
+  6. Check that `ConsentManagerProvider` is now `InthProvider` from `@inth/react`, with a transport such as `hosted()` as `mode`. Finish any custom mode the codemod marked.
   7. Update callbacks, policy presets, renamed options and components, theme CSS, CSS variables and IAB setup as the guide describes.
   8. Point the app at its Inth project URL. If the app uses a c15t backend it runs itself, stop and tell me: Inth's SDK talks only to an Inth project.
   9. Run the typecheck and build, and resolve every `TODO(c15t v3)` comment.
@@ -62,7 +62,7 @@ Every v3 package ships ESM only. If a CommonJS file in your app calls
 
 ## Replace `ConsentManagerProvider`
 
-Swap `ConsentManagerProvider` for `ConsentProvider` from `@inth/react`, and pass
+Swap `ConsentManagerProvider` for `InthProvider` from `@inth/react`, and pass
 a transport as `mode`:
 
 | v2 option | v3 option |
@@ -74,10 +74,10 @@ a transport as `mode`:
 {/* example: fragment */}
 
 ```tsx title="After (v3): the provider, changed lines"
-import { ConsentBanner, ConsentDialog, ConsentProvider, hosted } from '@inth/react';
+import { ConsentBanner, ConsentDialog, InthProvider, hosted } from '@inth/react';
 
 // Replace ConsentManagerProvider:
-<ConsentProvider
+<InthProvider
   options={{ mode: hosted({ backendURL: 'https://your-project.c15t.dev' }) }}
 >
 ```
@@ -153,9 +153,16 @@ inth c15t codemods dev-tools-to-c15t --dry-run --json
 
 <include src="../../shared/upgrade-v3/earlier-alpha-modes.mdx" />
 
-React removes nothing besides the modes above. Import `manifest()` from
-`@inth/react`, next to `hosted()` and `local()`, instead of from
-`@c15t/browser/headless`; React apps need nothing from `@c15t/browser`.
+React renames the root and its types:
+
+| Removed | Use instead |
+| --- | --- |
+| `ConsentProvider` and `ConsentProviderProps` | `InthProvider` and `InthProviderProps` |
+| `ConsentProviderOptions`, `ConsentProviderCallbacks` and `ConsentProviderPrefetch` | `InthProviderOptions`, `InthProviderCallbacks` and `InthProviderPrefetch` |
+
+Import `manifest()` from `@inth/react`, next to `hosted()` and `local()`,
+instead of from `@c15t/browser/headless`; React apps need nothing from
+`@c15t/browser`.
 
 <include src="../../shared/upgrade-v3/cli.mdx" />
 

@@ -33,7 +33,7 @@ site's origin to its trusted origins. Copy the project's backend URL.
 There is no Inth stylesheet to import. The components render their own rules
 as `<style>` elements, so no stylesheet request holds back the first paint.
 With Tailwind CSS 3, import `@inth/nextjs/styles.css` yourself and set
-`styles: false` in `ConsentRoot`'s `options`, as
+`styles: false` in `InthProvider`'s `options`, as
 [Customize](/docs/frameworks/next/customize#load-the-stylesheet-yourself)
 shows.
 
@@ -64,7 +64,7 @@ Create `inth.config.ts` at the project root, next to `next.config.ts`:
 
 <include src="../../shared/examples/nextjs/quickstart-config.mdx" />
 
-`withConsentManifest` finds the file, so `ConsentRoot`, `resolveConsent` and
+`withConsentManifest` finds the file, so `InthProvider`, `resolveConsent` and
 the consent route read it without an import. Export the config as the file's
 default export. The file is bundled into the browser as well as the server,
 so it can hold `scripts` but must hold no secrets.
@@ -72,11 +72,11 @@ so it can hold `scripts` but must hold no secrets.
 | Option | Default | Behavior |
 | --- | --- | --- |
 | `projectUrl` | `NEXT_PUBLIC_INTH_PROJECT_URL` | Backend base URL. Choices post to `${projectUrl}/v1/consent/records`. |
-| `mode` | `manifest()` | `manifest()`, `hosted()` or `testing()` from `@inth/nextjs`. See [consent modes](/docs/concepts/modes). |
+| `mode` | `manifest()` | `manifest()` or `hosted()` from `@inth/nextjs`, or `testing()` from `@inth/nextjs/testing`. See [consent modes](/docs/concepts/modes). |
 | `routePrefix` | none | Where you mount the [consent route](#initialize-in-the-browser). Set it only when some pages resolve consent in the browser. |
 | `proxy` | `false` | Send browser saves through the consent route too. See [optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin). |
 | `journey` | `'page'` | The consent journey scope. |
-| `scripts`, `vendors`, `clearOnRevocation`, `networkBlocker`, `persistence`, `scriptLoader`, `options` | none | Browser options. `ConsentRoot` props of the same name win over them. |
+| `scripts`, `vendors`, `clearOnRevocation`, `networkBlocker`, `persistence`, `scriptLoader`, `options` | none | Browser options. `InthProvider` props of the same name win over them. |
 
 PostHog waits for measurement consent here. Replace `phc_your_project_key`
 with your project key, or use the [integration](/docs/integrations/overview)
@@ -86,15 +86,15 @@ and tag-manager entries, so the integration loads once.
 
 ## Start consent resolution in the root layout
 
-Render `ConsentRoot` in the root layout and pass it `resolveConsent()` without
+Render `InthProvider` in the root layout and pass it `resolveConsent()` without
 awaiting it:
 
 <include src="../../shared/examples/nextjs/quickstart-layout.mdx" />
 
-The layout is a Server Component. `@inth/nextjs` gives it `ConsentRoot`,
+The layout is a Server Component. `@inth/nextjs` gives it `InthProvider`,
 `ConsentBanner`, `ConsentDialog` and `ConsentDialogLink` as client components,
-so you write no `'use client'` wrapper. `ConsentRoot` already wraps
-`ConsentProvider`, so don't mount both.
+so you write no `'use client'` wrapper. It already wraps the
+`InthProvider` from `@inth/nextjs/react`, so don't mount both.
 
 `resolveConsent` reads the visitor's cookies and location headers and resolves
 the policy from the bundled manifest. Next.js renders the page without waiting
@@ -106,7 +106,7 @@ denied, `ConsentGate` shows its placeholder and gated scripts do not load. The
 browser makes no `/v1/consent/init` request.
 
 To mount the banner after hydration instead, pass `streamBanner: false` in
-`ConsentRoot`'s `options`.
+`InthProvider`'s `options`.
 
 A new visitor then sees the banner. A returning visitor with a valid stored
 choice sees none, and the scripts that choice allows load. A choice that has
@@ -152,7 +152,7 @@ page load.
 ## Initialize in the browser
 
 Static, ISR and `'use cache'` pages are shared between visitors, so the server
-cannot resolve consent into them. Render `ConsentRoot` without `state` in their
+cannot resolve consent into them. Render `InthProvider` without `state` in their
 root layout:
 
 <include src="../../shared/examples/nextjs/browser-layout.mdx" />

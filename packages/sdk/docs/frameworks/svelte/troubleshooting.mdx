@@ -75,7 +75,8 @@ alias.
 
 | Removed | Use instead |
 | --- | --- |
-| `ConsentManagerProvider` | `ConsentProvider` |
+| `ConsentManagerProvider`, `ConsentProvider` | `InthProvider` |
+| `ConsentProviderCallbacks` | `InthProviderCallbacks` |
 | `Frame` | `ConsentGate` |
 | `hosted({ url })` | `hosted()` with `VITE_INTH_PROJECT_URL`, or the provider's `projectUrl` prop |
 | `ConsentManifestOptions`, `consentManifest({ outputFile })` | Removed. `consentManifest()` serves the snapshot as `@inth/svelte/generated`. |

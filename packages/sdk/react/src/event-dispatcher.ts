@@ -22,7 +22,7 @@ import { useCommittedRef } from './hooks/use-committed-ref';
  * @param options - Extra `scripts`, SPA `pageviews` integrations and
  * injectable `globals`. The latest committed options apply on each call.
  * @returns A dispatcher with `track` and `pageview`.
- * @throws {Error} When called outside `ConsentProvider`.
+ * @throws {Error} When called outside `InthProvider`.
  * @example
  * ```tsx
  * const events = useEventDispatcher({ pageviews: ['posthog'] });
@@ -36,7 +36,7 @@ export const useEventDispatcher = function useEventDispatcher(
 	const services = useContext(ProviderServicesContext);
 	if (!services) {
 		throw new Error(
-			'inth: useEventDispatcher() needs <ConsentProvider> from @inth/react.'
+			'inth: useEventDispatcher() needs <InthProvider> from @inth/react.'
 		);
 	}
 	const latest = useCommittedRef(options);

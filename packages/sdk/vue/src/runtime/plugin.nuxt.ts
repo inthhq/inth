@@ -206,7 +206,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 	const routePrefix = readNuxtRoutePrefix(modeConfig);
 	const serverResolves = resolvesOnServer(mode);
 	// Tokens go in the head from the plugin, so the server HTML carries them
-	// for the first paint and composed surfaces without ConsentRoot get
+	// for the first paint and composed surfaces without InthProvider get
 	// them too. The color scheme script sets `inth-dark` in `<head>`, before
 	// the server-rendered banner paints. Registered before the first await,
 	// while the Nuxt context is still current.

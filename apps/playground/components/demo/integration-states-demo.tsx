@@ -1,6 +1,6 @@
 'use client';
 
-import { ConsentGate, ConsentProvider } from '@inth/react';
+import { ConsentGate, InthProvider } from '@inth/react';
 import { testing } from '@inth/react/testing';
 import { RotateCcw } from 'lucide-react';
 import { useState } from 'react';
@@ -86,7 +86,7 @@ const BlockedState = () => (
 );
 
 export const IntegrationStatesDemo = () => (
-	<ConsentProvider
+	<InthProvider
 		options={{
 			consentCategories: ['necessary', 'measurement', 'marketing'],
 			mode: testing({
@@ -120,5 +120,5 @@ export const IntegrationStatesDemo = () => (
 				<BlockedState />
 			</TabsContent>
 		</Tabs>
-	</ConsentProvider>
+	</InthProvider>
 );

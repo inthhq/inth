@@ -1,6 +1,6 @@
 ---
 title: Compose your own banner
-description: Build a TanStack Start consent banner from the ConsentBanner parts in @inth/tanstack-start, with your own markup and buttons, rendered inside ConsentRoot in the root route.
+description: Build a TanStack Start consent banner from the ConsentBanner parts in @inth/tanstack-start, with your own markup and buttons, rendered inside InthProvider in the root route.
 group: frameworks
 ---
 
@@ -22,10 +22,10 @@ for that button:
 
 <include src="../../shared/examples/tanstack-start/compose-banner.mdx" />
 
-`@inth/tanstack-start` re-exports every `@inth/react` component, so
-`ConsentBanner` and its parts come from the same import as `ConsentRoot`.
+`@inth/tanstack-start` re-exports the `@inth/react` components, so
+`ConsentBanner` and its parts come from the same import as `InthProvider`.
 
-The parts read the provider that `ConsentRoot` renders. In the
+The parts read the provider that `InthProvider` renders. In the
 `src/routes/__root.tsx` file from the
 [quickstart](/docs/frameworks/tanstack-start/quickstart), import
 `CookieBanner` from `../components/cookie-banner` and render it in place of
@@ -34,14 +34,14 @@ The parts read the provider that `ConsentRoot` renders. In the
 {/* example: fragment */}
 
 ```tsx title="src/routes/__root.tsx (partial)"
-<ConsentRoot state={consent} scripts={scripts}>
+<InthProvider state={consent} scripts={scripts}>
 	<Outlet />
 	<CookieBanner />
 	<ConsentDialog />
 	<footer>
 		<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 	</footer>
-</ConsentRoot>;
+</InthProvider>;
 ```
 
 The root route renders on the server, and `CookieBanner` renders there with
@@ -70,6 +70,6 @@ list every part and its slots.
 <import src="../../shared/react/compose.mdx#theming" />
 
 [Customize](/docs/frameworks/tanstack-start/customize) shows where to set
-tokens, slots and `consentActions` through `ConsentRoot`'s `options`.
+tokens, slots and `consentActions` through `InthProvider`'s `options`.
 
 <import src="../../shared/react/compose.mdx#verify" />

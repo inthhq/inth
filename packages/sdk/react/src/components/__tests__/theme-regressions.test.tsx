@@ -8,7 +8,7 @@ import switchStyles from '@inth/sdk/ui/styles/components/switch';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import {
 	StableTriggerProvider,
 	StableV3UIConfigProvider,
@@ -28,7 +28,7 @@ import { testing } from '../../testing';
 describe('Theme regressions', () => {
 	test('styles trigger toolbar atoms through component slots and direct overrides', async () => {
 		await render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					components: {
 						trigger: {
@@ -60,7 +60,7 @@ describe('Theme regressions', () => {
 					showWhen="always"
 					style={{ borderRadius: '12px' }}
 				/>
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		await vi.waitFor(() => {
@@ -189,7 +189,7 @@ describe('Theme regressions', () => {
 
 	test('provider noStyle strips v3 surface base classes', async () => {
 		await render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: testing(),
 					noStyle: true,
@@ -222,7 +222,7 @@ describe('Theme regressions', () => {
 					<TriggerButton data-testid="nostyle-trigger">Trigger</TriggerButton>
 				</StableTriggerProvider>
 				<Switch.Root data-testid="nostyle-switch" />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		await vi.waitFor(() => {
@@ -262,7 +262,7 @@ describe('Theme regressions', () => {
 
 	test('applies the vendor list row slot to ad tech provider rows', async () => {
 		await render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					components: {
 						'iab-vendor-list': {
@@ -286,7 +286,7 @@ describe('Theme regressions', () => {
 					]}
 					consents={{}}
 				/>
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		await vi.waitFor(() => {
@@ -305,7 +305,7 @@ describe('Theme regressions', () => {
 				.filter(Boolean)
 		);
 		await render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: testing(),
 					noStyle: true,
@@ -323,7 +323,7 @@ describe('Theme regressions', () => {
 						consents={{ '89': true }}
 					/>
 				</div>
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		await vi.waitFor(() => {

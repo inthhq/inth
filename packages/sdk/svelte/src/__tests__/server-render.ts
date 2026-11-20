@@ -113,9 +113,9 @@ export const renderSsr = (
 ): Promise<SsrRenderResult> =>
 	send({ fixture, props }) as Promise<SsrRenderResult>;
 
-/** A server render of `ConsentRoot` (`fixtures/consent-root-fixture.svelte`). */
+/** A server render of the SvelteKit `InthProvider` (`fixtures/kit-provider-fixture.svelte`). */
 export const renderRootSsr = (props: Record<string, unknown>) =>
-	send({ fixture: 'consent-root', props }) as Promise<{
+	send({ fixture: 'kit-provider', props }) as Promise<{
 		body: string;
 		head: string;
 	}>;

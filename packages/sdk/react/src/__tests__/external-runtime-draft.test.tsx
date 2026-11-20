@@ -7,11 +7,7 @@ import { render } from 'vitest-browser-react';
 
 import { KernelContext } from '../context';
 import type { ConsentDraftHandle } from '../index';
-import {
-	ConsentDraftProvider,
-	ConsentProvider,
-	useConsentDraft,
-} from '../index';
+import { ConsentDraftProvider, InthProvider, useConsentDraft } from '../index';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
@@ -64,9 +60,9 @@ type Layout = (input: {
 const layouts: Record<string, Layout> = {
 	// A preference UI with its own shared draft.
 	ConsentDraftProvider: ({ runtime, probe }) => (
-		<ConsentProvider runtime={runtime}>
+		<InthProvider runtime={runtime}>
 			<ConsentDraftProvider>{probe}</ConsentDraftProvider>
-		</ConsentProvider>
+		</InthProvider>
 	),
 	// An outer draft stays bound to the outer provider's runtime, so a
 	// nested provider that switches must not inherit it.
@@ -75,28 +71,28 @@ const layouts: Record<string, Layout> = {
 		runtime,
 		probe,
 	}) => (
-		<ConsentProvider runtime={first}>
+		<InthProvider runtime={first}>
 			<ConsentDraftProvider>
-				<ConsentProvider runtime={runtime}>
+				<InthProvider runtime={runtime}>
 					<ConsentDraftProvider>{probe}</ConsentDraftProvider>
-				</ConsentProvider>
+				</InthProvider>
 			</ConsentDraftProvider>
-		</ConsentProvider>
+		</InthProvider>
 	),
 	// A hook used without a draft provider keeps a local store.
 	'the useConsentDraft fallback': ({ runtime, probe }) => (
-		<ConsentProvider runtime={runtime}>{probe}</ConsentProvider>
+		<InthProvider runtime={runtime}>{probe}</InthProvider>
 	),
 	'the useConsentDraft fallback under an outer draft': ({
 		first,
 		runtime,
 		probe,
 	}) => (
-		<ConsentProvider runtime={first}>
+		<InthProvider runtime={first}>
 			<ConsentDraftProvider>
-				<ConsentProvider runtime={runtime}>{probe}</ConsentProvider>
+				<InthProvider runtime={runtime}>{probe}</InthProvider>
 			</ConsentDraftProvider>
-		</ConsentProvider>
+		</InthProvider>
 	),
 };
 

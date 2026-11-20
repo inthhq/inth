@@ -1,4 +1,4 @@
-import type { ConsentProviderCallbacks } from '@inth/tanstack-start';
+import type { InthProviderCallbacks } from '@inth/tanstack-start';
 
 export const callbacks = {
 	// Right before the page reloads because a save withdrew a permission.
@@ -18,4 +18,4 @@ export const callbacks = {
 	onPermissionsChanged: ({ previous, snapshot }) => {
 		console.info('Permissions', previous, snapshot.effectivePermissions);
 	},
-} satisfies ConsentProviderCallbacks;
+} satisfies InthProviderCallbacks;

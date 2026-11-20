@@ -144,9 +144,7 @@ const runtimeOwner = function runtimeOwner(pkg: string): string {
 	if (pkg === '@inth/vue') {
 		return 'the inthVue plugin';
 	}
-	return pkg === '@inth/nextjs' || pkg === '@inth/tanstack-start'
-		? 'ConsentRoot'
-		: 'ConsentProvider';
+	return 'InthProvider';
 };
 
 /**

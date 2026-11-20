@@ -41,7 +41,7 @@ export default defineConsentConfig({
 ```
 
 Keep your `scripts` in the same call. Keep the page content inside
-`ConsentRoot`. Blocking starts when it renders, so
+`InthProvider`. Blocking starts when it renders, so
 components outside it that send requests while rendering, and modules evaluated
 before it, are not covered. Requests your server makes, in Server Components,
 route handlers or `getServerSideProps`, are not blocked either.

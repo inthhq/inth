@@ -4,7 +4,7 @@ import {
 	gatePageHTML,
 } from '@inth/benchmarking/consent-gate-page';
 
-/** Consent gate page: CookieBench's article under `ConsentRoot`. */
+/** Consent gate page: CookieBench's article under `InthProvider`. */
 const GatePage = () => (
 	<>
 		<style dangerouslySetInnerHTML={{ __html: gatePageCSS }} />

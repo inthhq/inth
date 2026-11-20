@@ -55,7 +55,7 @@ export interface ConsentDialogCompoundComponent extends FC<ConsentDialogProps> {
  * @example
  * Preferred customization with stock structure:
  * ```tsx
- * <ConsentProvider
+ * <InthProvider
  *   options={{
  *     mode: hosted({ projectUrl: '/api/inth' }),
  *     components: {
@@ -72,7 +72,7 @@ export interface ConsentDialogCompoundComponent extends FC<ConsentDialogProps> {
  *   }}
  * >
  *   <ConsentDialog hideBranding showTrigger />
- * </ConsentProvider>
+ * </InthProvider>
  * ```
  *
  * @example

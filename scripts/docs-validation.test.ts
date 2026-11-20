@@ -285,7 +285,7 @@ test('vendor registration tabs survive package Markdown conversion', async () =>
 		[remarkInclude, ...defaultRemarkPlugins]
 	);
 	expect(markdown).toContain('npm install @inth/integrations');
-	expect(markdown).toContain('<ConsentProvider options={{ mode, scripts }}>');
+	expect(markdown).toContain('<InthProvider options={{ mode, scripts }}>');
 	expect(markdown).toContain('@inth/nextjs');
 	expect(markdown).toContain('@inth/sdk/modules/script-loader');
 	expect(markdown).toContain("loadMode: 'after-consent'");

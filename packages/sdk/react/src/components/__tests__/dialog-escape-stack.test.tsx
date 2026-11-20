@@ -7,7 +7,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentDialog } from '~/components/panel';
 import {
@@ -47,7 +47,7 @@ const topDialog = () => document.querySelector('[data-testid="top-dialog"]');
 describe('Escape with stacked dialogs', () => {
 	test('closes the dialog on top and leaves the consent dialog open', async () => {
 		const view = await render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					initialUI: 'dialog',
 					mode: testing(),
@@ -56,7 +56,7 @@ describe('Escape with stacked dialogs', () => {
 			>
 				<ConsentDialog disableAnimation />
 				<TopDialog />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		await vi.waitFor(() => {
 			expect(activeUI()).toBe('dialog');

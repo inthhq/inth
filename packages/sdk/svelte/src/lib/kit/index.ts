@@ -1,9 +1,12 @@
 /**
- * `@inth/svelte/kit` — the SvelteKit server layer.
+ * `@inth/svelte/kit` — the SvelteKit layer.
  *
- * Server-only: keep it to `hooks.server.ts`, `+*.server.ts` and
- * `+server.ts`. The modes here are plain data; `<ConsentRoot>` from
- * `@inth/svelte` turns them into a transport in the browser.
+ * `InthProvider` is the root for `+layout.svelte`. Everything else is
+ * server-only: keep it to `hooks.server.ts`, `+*.server.ts` and
+ * `+server.ts`. A browser build resolves this path to `./browser`, which
+ * has only `InthProvider`, so no server module reaches the client. The
+ * modes here are plain data; `InthProvider` turns them into a transport in
+ * the browser.
  *
  * ```ts
  * // src/hooks.server.ts
@@ -17,7 +20,12 @@
  *
  * ```svelte
  * <!-- src/routes/+layout.svelte -->
- * <ConsentRoot state={data.consent}>
+ * <script lang="ts">
+ *   import { InthProvider } from '@inth/svelte/kit';
+ *   let { children, data } = $props();
+ * </script>
+ *
+ * <InthProvider state={data.consent}>
  * ```
  *
  * Prerendered pages also need the consent route, and its prefix on the
@@ -47,7 +55,7 @@ export type {
 	ConsentRequestOptions,
 	ConsentState,
 } from './types';
-export type { ConsentRootState } from '../types';
+export type { InthProviderState } from '../types';
 
 export type {
 	ConsentMode,
@@ -57,3 +65,4 @@ export type {
 	TestingMode,
 } from '@inth/sdk/modes';
 export { hosted, manifest } from '@inth/sdk/modes';
+export { default as InthProvider } from './inth-provider.svelte';

@@ -3,9 +3,9 @@
 ## Every component
 
 Import every component from `@inth/svelte`, except the dev tools panel,
-which comes from `@inth/svelte/devtools`. Render them inside the provider:
-`ConsentProvider` in a Svelte app, or `ConsentRoot`, which renders
-`ConsentProvider`, in a SvelteKit root layout. A component outside it throws
+which comes from `@inth/svelte/devtools`. Render them inside `InthProvider`:
+from `@inth/svelte` in a Svelte app, or from `@inth/svelte/kit` in a
+SvelteKit root layout. A component outside it throws
 `inth: no v3 consent context`.
 
 | Component | Renders | Page |

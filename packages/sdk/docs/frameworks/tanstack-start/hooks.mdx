@@ -7,8 +7,8 @@ group: frameworks
 ## Read only the state you need
 
 `@inth/tanstack-start` re-exports every hook from `@inth/react`. Each hook reads
-the runtime from `ConsentRoot`, so call hooks in components rendered inside it.
-Any route component qualifies, because `ConsentRoot` wraps the `Outlet` in the
+the runtime from `InthProvider`, so call hooks in components rendered inside it.
+Any route component qualifies, because `InthProvider` wraps the `Outlet` in the
 root route.
 
 {/* example: fragment */}
@@ -29,7 +29,7 @@ renders the same result in the server HTML and in the first browser render.
 
 ## Open the preference dialog
 
-Set the active surface to `'dialog'` from any component inside `ConsentRoot`:
+Set the active surface to `'dialog'` from any component inside `InthProvider`:
 
 {/* example: fragment */}
 

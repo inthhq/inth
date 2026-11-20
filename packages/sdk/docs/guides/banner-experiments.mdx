@@ -59,7 +59,7 @@ Inth merges the arm over `presentation`, exposes it as `snapshot.experiment`,
 sends it with `/v1/consent/init`, and records it on the choices of visitors the banner
 showed it to, so you can compare opt-in rate and time to decision per arm.
 
-The same option exists in `@inth/nextjs` (`ConsentRoot` `options`), `@inth/vue`,
+The same option exists in `@inth/nextjs` (`InthProvider` `options`), `@inth/vue`,
 `@inth/svelte`, the `inth()` Astro integration from `@inth/astro`, and
 `@inth/sdk`. On a server-rendered page in Next.js, TanStack Start or
 SvelteKit, pass it to `resolveConsent` instead, which counts the arm and hands
@@ -174,7 +174,7 @@ keeps their arm when you change the weights.
 
 Resolve the flag where consent resolves and pass the experiment to
 `resolveConsent`. The server reports the arm with `/v1/consent/init`, and the returned
-state carries the experiment to `ConsentRoot`, so the client needs no
+state carries the experiment to `InthProvider`, so the client needs no
 `experiment` option of its own. In Next.js, do this in the root layout:
 
 <include src="../shared/examples/nextjs/experiment-layout.mdx" />
@@ -189,7 +189,7 @@ so the banner is in the server HTML already showing the visitor's arm.
 `resolveConsent` in `@inth/tanstack-start/server` and `loadConsent`
 in `@inth/svelte/kit` take the same `experiment`.
 
-If you pass `resolveConsent()` to `ConsentRoot` without awaiting it (the
+If you pass `resolveConsent()` to `InthProvider` without awaiting it (the
 streaming layout), the client mounts before the state arrives. Pass the
 same experiment to the client options as well; Inth warns in development
 when the streamed state carries an experiment the client did not get.

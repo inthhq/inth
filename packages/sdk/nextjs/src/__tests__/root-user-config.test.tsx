@@ -1,5 +1,5 @@
 /**
- * `ConsentRoot` reads `inth.config.ts` through the `@inth/nextjs/user-config`
+ * `InthProvider` reads `inth.config.ts` through the `@inth/nextjs/user-config`
  * alias `withConsentManifest` sets, so a Server Component layout renders it
  * with nothing but `state`.
  */
@@ -8,10 +8,10 @@ import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ConsentRoot } from '../root';
+import { InthProvider } from '../root';
 import { policyFixture } from './policy-fixture';
 
-// oxlint-disable-next-line anti-slop/no-module-mocking -- In an app build, the bundler alias `withConsentManifest` sets swaps this module for the app's inth.config.ts. The mock is that alias; ConsentRoot is real.
+// oxlint-disable-next-line anti-slop/no-module-mocking -- In an app build, the bundler alias `withConsentManifest` sets swaps this module for the app's inth.config.ts. The mock is that alias; InthProvider is real.
 vi.mock('@inth/nextjs/user-config', () => ({
 	default: {
 		// Manifest mode, so the browser inits through the route prefix.
@@ -38,15 +38,15 @@ afterEach(() => {
 	}
 });
 
-describe('ConsentRoot with inth.config.ts', () => {
+describe('InthProvider with inth.config.ts', () => {
 	test("loads the config's scripts", async () => {
 		const screen = await render(
-			<ConsentRoot
+			<InthProvider
 				state={policyFixture({ marketing: true })}
 				persistence={false}
 			>
 				<div>config root</div>
-			</ConsentRoot>
+			</InthProvider>
 		);
 
 		await expect.element(screen.getByText('config root')).toBeInTheDocument();
@@ -57,7 +57,7 @@ describe('ConsentRoot with inth.config.ts', () => {
 
 	test("props win over the config's options", async () => {
 		const screen = await render(
-			<ConsentRoot
+			<InthProvider
 				state={policyFixture({ marketing: true })}
 				persistence={false}
 				scripts={[
@@ -69,7 +69,7 @@ describe('ConsentRoot with inth.config.ts', () => {
 				]}
 			>
 				<div>prop root</div>
-			</ConsentRoot>
+			</InthProvider>
 		);
 
 		await expect.element(screen.getByText('prop root')).toBeInTheDocument();
@@ -118,9 +118,9 @@ describe('ConsentRoot with inth.config.ts', () => {
 		};
 
 		const screen = await render(
-			<ConsentRoot persistence={false}>
+			<InthProvider persistence={false}>
 				<Save />
-			</ConsentRoot>
+			</InthProvider>
 		);
 
 		await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));

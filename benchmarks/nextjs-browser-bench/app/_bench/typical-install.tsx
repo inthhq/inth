@@ -7,9 +7,9 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentRoot,
+	InthProvider,
 } from '@inth/nextjs';
-import type { ConsentRootProps } from '@inth/nextjs';
+import type { InthProviderProps } from '@inth/nextjs';
 import type { ReactNode } from 'react';
 
 import { NextjsBenchmarkProbe } from './probe';
@@ -44,7 +44,7 @@ const scripts = [
 	}),
 ];
 
-const options: ConsentRootProps['options'] = {
+const options: InthProviderProps['options'] = {
 	callbacks: {
 		onChoiceRecorded() {
 			const state = getState('typical-install');
@@ -78,7 +78,7 @@ const options: ConsentRootProps['options'] = {
 };
 
 /**
- * The quickstart's client wrapper: one `ConsentRoot` with the config,
+ * The quickstart's client wrapper: one `InthProvider` with the config,
  * the scripts, the stock banner and dialog, and a preferences link.
  */
 export const TypicalInstallConsent = ({
@@ -86,9 +86,9 @@ export const TypicalInstallConsent = ({
 	state,
 }: {
 	children: ReactNode;
-	state: ConsentRootProps['state'];
+	state: InthProviderProps['state'];
 }) => (
-	<ConsentRoot
+	<InthProvider
 		config={typicalInstallConfig}
 		options={options}
 		scripts={scripts}
@@ -101,5 +101,5 @@ export const TypicalInstallConsent = ({
 		<footer>
 			<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 		</footer>
-	</ConsentRoot>
+	</InthProvider>
 );

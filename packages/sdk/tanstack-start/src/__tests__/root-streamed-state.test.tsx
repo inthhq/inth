@@ -1,5 +1,5 @@
 /**
- * ConsentRoot accepts the pending consent state a streamed root loader
+ * InthProvider accepts the pending consent state a streamed root loader
  * returns (`loader: () => ({ consent: getConsentState() })`).
  *
  * Invariants verified:
@@ -20,7 +20,7 @@ import {
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ConsentRoot } from '../root';
+import { InthProvider } from '../root';
 import type { ConsentState } from '../server';
 import { policyFixture } from './policy-fixture';
 
@@ -69,17 +69,17 @@ const initResponse = () =>
 		translations: { language: 'en', translations: { common: {} } },
 	});
 
-describe('ConsentRoot: streamed state', () => {
+describe('InthProvider: streamed state', () => {
 	test('the server render with a pending state shows no consent UI', async () => {
 		const { renderToString } = await import('react-dom/server');
 		const { promise } = deferred();
 		const html = renderToString(
-			<ConsentRoot
+			<InthProvider
 				persistence={false}
 				state={promise}
 			>
 				<Status />
-			</ConsentRoot>
+			</InthProvider>
 		);
 		expect(html).toContain('pending/none/false');
 	});
@@ -93,13 +93,13 @@ describe('ConsentRoot: streamed state', () => {
 		const { promise, resolve: resolveState } = deferred();
 		try {
 			const { getByTestId } = await render(
-				<ConsentRoot
+				<InthProvider
 					persistence={false}
 					state={promise}
 				>
 					<Status />
 					<SaveButton />
-				</ConsentRoot>
+				</InthProvider>
 			);
 
 			await expect
@@ -133,12 +133,12 @@ describe('ConsentRoot: streamed state', () => {
 		const { promise, resolve: resolveState } = deferred();
 		try {
 			await render(
-				<ConsentRoot
+				<InthProvider
 					persistence={false}
 					state={promise}
 				>
 					<Status />
-				</ConsentRoot>
+				</InthProvider>
 			);
 			// Nothing goes out while the server is still resolving.
 			await new Promise((resolve) => {

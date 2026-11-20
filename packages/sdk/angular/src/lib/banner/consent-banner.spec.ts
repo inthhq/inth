@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { ConsentRoot } from '../../../consent-root/src/consent-root';
+import { InthProvider } from '../../../provider/src/inth-provider';
 import { testOptions } from '../../__tests__/test-local';
 import { ConsentManager } from '../core/consent-manager';
 import { provideInth } from '../core/provide-inth';
@@ -63,11 +63,20 @@ class CustomBannerHost {}
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [ConsentRoot],
+	imports: [InthProvider],
 	selector: 'test-root-host',
-	template: '<inth-consent-root [hideBranding]="true" />',
+	template: '<inth-provider [hideBranding]="true" />',
 })
 class RootHost {}
+
+@Component({
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [InthProvider],
+	selector: 'test-wrapping-root-host',
+	template:
+		'<inth-provider><p data-testid="wrapped-app">App</p></inth-provider>',
+})
+class WrappingRootHost {}
 
 const boot = async (host: new () => unknown) => {
 	TestBed.configureTestingModule({ providers: [provideInth(testOptions())] });
@@ -135,7 +144,7 @@ describe('<inth-consent-banner> templates', () => {
 	});
 });
 
-describe('<inth-consent-root>', () => {
+describe('<inth-provider>', () => {
 	test('renders the banner and opens the dialog from Customize', async () => {
 		const { byTestId, fixture } = await boot(RootHost);
 		expect(byTestId('consent-banner-root')).not.toBeNull();
@@ -146,6 +155,14 @@ describe('<inth-consent-root>', () => {
 		await vi.waitFor(() => {
 			expect(byTestId('consent-dialog-root')).not.toBeNull();
 		});
+	});
+
+	test('renders the content it wraps, without a box of its own', async () => {
+		const { byTestId } = await boot(WrappingRootHost);
+		expect(byTestId('wrapped-app')?.textContent).toBe('App');
+		expect(byTestId('consent-banner-root')).not.toBeNull();
+		const host = document.querySelector('inth-provider');
+		expect(host && getComputedStyle(host).display).toBe('contents');
 	});
 });
 

@@ -111,10 +111,10 @@ const preserveNextEntries = (
       "Keep your page content. For server consent, import withConsentProps from '@inth/nextjs/pages' and integrate it with getServerSideProps.";
     if (stem.endsWith("/layout")) {
       guidance =
-        "Keep your layout, styles, and metadata. Import ConsentRoot, ConsentBanner, ConsentDialog, and ConsentDialogLink from '@inth/nextjs', and resolveConsent from '@inth/nextjs/server'. Inside the body, wrap children and the consent components in <ConsentRoot state={resolveConsent()}>.";
+        "Keep your layout, styles, and metadata. Import InthProvider, ConsentBanner, ConsentDialog, and ConsentDialogLink from '@inth/nextjs', and resolveConsent from '@inth/nextjs/server'. Inside the body, wrap children and the consent components in <InthProvider state={resolveConsent()}>.";
     } else if (stem.endsWith("/_app")) {
       guidance =
-        "Keep your providers and styles. Import ConsentRoot, ConsentBanner, ConsentDialog, and ConsentDialogLink from '@inth/nextjs'. Wrap <Component {...pageProps} /> and the consent components in <ConsentRoot state={pageProps.consent}>.";
+        "Keep your providers and styles. Import InthProvider, ConsentBanner, ConsentDialog, and ConsentDialogLink from '@inth/nextjs'. Wrap <Component {...pageProps} /> and the consent components in <InthProvider state={pageProps.consent}>.";
     } else if (stem.endsWith("/[...c15t]")) {
       guidance =
         "Keep or adapt your existing consent handler. Import createPagesConsentRoute from '@inth/nextjs/pages' and use createPagesConsentRoute() as the default handler for /api/c15t.";

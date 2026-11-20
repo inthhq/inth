@@ -20,7 +20,7 @@ const consent = (options: BoilerplateOptions): string => {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentProvider,
+	InthProvider,
 	${mode},
 } from '@inth/react';`,
 		"import type { ReactNode } from 'react';",
@@ -32,14 +32,14 @@ const options = {
 ${scriptsProperty(options.scripts, '\t')}};
 
 export const Consent = ({ children }: { children: ReactNode }) => (
-	<ConsentProvider options={options}>
+	<InthProvider options={options}>
 		{children}
 		<ConsentBanner />
 		<ConsentDialog />
 		<footer>
 			<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 		</footer>
-	</ConsentProvider>
+	</InthProvider>
 );
 `;
 };

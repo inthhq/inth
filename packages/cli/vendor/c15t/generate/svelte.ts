@@ -72,14 +72,14 @@ const svelteFiles = (options: BoilerplateOptions): Record<string, string> => {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentProvider,
+	InthProvider,
 	${mode},
 } from '@inth/svelte';`,
 			],
 			''
 		)}
 
-${openingTag('ConsentProvider', withScripts(options, [`mode={${mode}()}`]), '')}
+${openingTag('InthProvider', withScripts(options, [`mode={${mode}()}`]), '')}
 	<main>
 		<h1>c15t + Svelte</h1>
 		<p>Your app goes here.</p>
@@ -89,7 +89,7 @@ ${openingTag('ConsentProvider', withScripts(options, [`mode={${mode}()}`]), '')}
 	</footer>
 	<ConsentBanner />
 	<ConsentDialog />
-</ConsentProvider>
+</InthProvider>
 `,
 		'vite.config.ts': viteConfig(options, false),
 	};
@@ -130,20 +130,20 @@ export const handle = c15tHandle(${offline ? '{ mode: offline() }' : ''});
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentRoot,
-} from '@inth/svelte';`,
+} from '@inth/svelte';
+import { InthProvider } from '@inth/svelte/kit';`,
 			],
 			'let { children, data } = $props();\n'
 		)}
 
-${openingTag('ConsentRoot', withScripts(options, ['state={data.consent}']), '')}
+${openingTag('InthProvider', withScripts(options, ['state={data.consent}']), '')}
 	{@render children()}
 	<footer>
 		<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 	</footer>
 	<ConsentBanner />
 	<ConsentDialog />
-</ConsentRoot>
+</InthProvider>
 `,
 		'vite.config.ts': viteConfig(options, true),
 	};
@@ -166,8 +166,8 @@ export const generateSvelteBoilerplate = (
 		files: kit ? svelteKitFiles(options) : svelteFiles(options),
 		instructions: [
 			kit
-				? 'The root layout renders ConsentRoot with the state loadConsent resolved on the server. Keep your own layout markup around {@render children()}.'
-				: 'src/App.svelte shows where ConsentProvider goes. Move your app inside it if you keep your own root component. It requires Svelte 5.',
+				? 'The root layout renders InthProvider with the state loadConsent resolved on the server. Keep your own layout markup around {@render children()}.'
+				: 'src/App.svelte shows where InthProvider goes. Move your app inside it if you keep your own root component. It requires Svelte 5.',
 			...vendorInstruction(
 				options,
 				kit ? 'src/routes/+layout.svelte' : 'src/App.svelte'

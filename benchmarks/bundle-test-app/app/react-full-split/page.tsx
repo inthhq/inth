@@ -10,7 +10,7 @@ import {
 	useExplicitChoice,
 	useSaveConsents,
 } from '@inth/react/hooks';
-import { ConsentProvider } from '@inth/react/provider';
+import { InthProvider } from '@inth/react/provider';
 import type { AllConsentNames } from '@inth/sdk/engine';
 
 const CATEGORIES: AllConsentNames[] = [
@@ -57,7 +57,7 @@ const TestComponent = () => {
 	);
 };
 const ReactFullSplitPage = () => (
-	<ConsentProvider
+	<InthProvider
 		options={{
 			mode: benchPolicy({
 				policy: [
@@ -81,7 +81,7 @@ const ReactFullSplitPage = () => (
 			<ConsentDialog />
 			<ConsentWidget />
 		</ConsentDraftProvider>
-	</ConsentProvider>
+	</InthProvider>
 );
 
 export default ReactFullSplitPage;

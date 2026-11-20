@@ -6,7 +6,7 @@ import { render } from 'vitest-browser-react';
 import { KernelContext } from '../context';
 import { useHasConsentUI, useSetActiveUI } from '../hooks';
 import { IABProvider, useIAB } from '../iab-context';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { transportMode } from './fixtures/transport-mode';
 
 let kernel: ConsentKernel;
@@ -57,7 +57,7 @@ test('standard React options share external authority, scripts and preferences u
 	const recorded = vi.fn();
 	const view = await render(
 		<StrictMode>
-			<ConsentProvider
+			<InthProvider
 				options={{
 					callbacks: { onChoiceRecorded: recorded },
 					consentSource: source,
@@ -67,7 +67,7 @@ test('standard React options share external authority, scripts and preferences u
 				}}
 			>
 				<Controls />
-			</ConsentProvider>
+			</InthProvider>
 		</StrictMode>
 	);
 	await vi.dynamicImportSettled();
@@ -118,7 +118,7 @@ test('external IAB saves reject instead of waiting for a handle that cannot moun
 		);
 	};
 	const view = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				consentSource: {
 					getPermissions: () => ({}),
@@ -133,7 +133,7 @@ test('external IAB saves reject instead of waiting for a handle that cannot moun
 			<IABProvider cmpId={42}>
 				<SaveIAB />
 			</IABProvider>
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await view.getByRole('button', { name: 'Save IAB' }).click();
 	await vi.waitFor(() =>

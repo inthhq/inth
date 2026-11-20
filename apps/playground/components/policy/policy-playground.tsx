@@ -4,7 +4,7 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogTriggerToolbar,
-	ConsentProvider,
+	InthProvider,
 	useSnapshot,
 } from '@inth/react';
 import { KernelContext, ProviderServicesContext } from '@inth/react/context';
@@ -770,7 +770,7 @@ const PresentationMap = ({
 };
 
 // ---------------------------------------------------------------------------
-// Runtime inspector (lives inside the ConsentProvider)
+// Runtime inspector (lives inside the InthProvider)
 // ---------------------------------------------------------------------------
 
 interface LogEntry {
@@ -1568,7 +1568,7 @@ export const PolicyPlayground = () => {
 								Live runtime
 							</h2>
 							<p className="text-muted-foreground text-sm">
-								A real <code>ConsentProvider</code> in offline mode running this
+								A real <code>InthProvider</code> in offline mode running this
 								rule for the simulated visitor. The banner and dialog below are
 								the stock components.
 							</p>
@@ -1576,7 +1576,7 @@ export const PolicyPlayground = () => {
 						<Card className="py-5">
 							<CardContent className="px-5">
 								{mounted ? (
-									<ConsentProvider
+									<InthProvider
 										key={providerKey}
 										options={providerOptions}
 									>
@@ -1622,7 +1622,7 @@ export const PolicyPlayground = () => {
 												<ConsentDialog />
 											</>
 										)}
-									</ConsentProvider>
+									</InthProvider>
 								) : (
 									<p className="text-muted-foreground text-sm">Loading…</p>
 								)}

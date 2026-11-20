@@ -1,4 +1,4 @@
-import type { ConsentProviderCallbacks } from '@inth/nextjs';
+import type { InthProviderCallbacks } from '@inth/nextjs';
 
 import { track } from './analytics';
 
@@ -35,4 +35,4 @@ export const callbacks = {
 			surface,
 		});
 	},
-} satisfies ConsentProviderCallbacks;
+} satisfies InthProviderCallbacks;

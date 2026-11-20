@@ -29,7 +29,7 @@ matches what each embed does in your policy.
 - [`app/page.tsx`](app/page.tsx) puts the video and the map behind
   `GatedEmbed`, and keeps the address, directions and a YouTube link outside
   the gate for visitors who say no.
-- [`components/consent.tsx`](components/consent.tsx) mounts `ConsentRoot`
+- [`components/consent.tsx`](components/consent.tsx) mounts `InthProvider`
   with the stock banner and dialog, and registers the Crisp script.
   [`components/support-chat.tsx`](components/support-chat.tsx) is the chat's
   placeholder card.

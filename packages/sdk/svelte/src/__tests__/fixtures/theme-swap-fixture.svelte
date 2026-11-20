@@ -2,7 +2,7 @@
 	import type { KernelOverrides, KernelUser } from '@inth/sdk/engine';
 	import type { Theme } from '@inth/sdk/ui/theme';
 
-	import ConsentProvider from '../../lib/components/consent-provider.svelte';
+	import InthProvider from '../../lib/components/inth-provider.svelte';
 	import type { ConsentManagerOptions } from '../../lib/types';
 
 	let {
@@ -27,6 +27,6 @@
 	} as ConsentManagerOptions);
 </script>
 
-<ConsentProvider {options}>
+<InthProvider {options}>
 	<div data-testid="theme-swap-child">child</div>
-</ConsentProvider>
+</InthProvider>

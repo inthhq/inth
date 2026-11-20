@@ -16,7 +16,7 @@ import { ConsentDialogTrigger } from '../components/panel-trigger';
 import { ConsentBanner } from '../components/prompt';
 import { KernelContext } from '../context';
 import { ConsentDraftProvider, useConsentDraft } from '../draft';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { consentMarkup } from './consent-markup';
 import { transportMode } from './fixtures/transport-mode';
 
@@ -88,7 +88,7 @@ describe('policy presentation reference behavior', () => {
 		const save = vi.fn();
 		const init = vi.fn();
 		const screen = await render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					callbacks: { onChoiceRecorded: choice },
 					mode: transportMode({ init, save }),
@@ -105,7 +105,7 @@ describe('policy presentation reference behavior', () => {
 				<Capture />
 				<ConsentBanner />
 				<ConsentDialogTrigger />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		await expect
 			.element(screen.getByTestId('consent-banner-dismiss-button'))
@@ -154,7 +154,7 @@ describe('policy presentation reference behavior', () => {
 		};
 		const choice = vi.fn();
 		const screen = await render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					callbacks: { onChoiceRecorded: choice },
 					mode: transportMode({}),
@@ -166,7 +166,7 @@ describe('policy presentation reference behavior', () => {
 				<ConsentDraftProvider>
 					<DraftProbe />
 				</ConsentDraftProvider>
-			</ConsentProvider>
+			</InthProvider>
 		);
 		await expect
 			.element(screen.getByTestId('draft'))
@@ -190,7 +190,7 @@ describe('policy presentation reference behavior', () => {
 		let policy = resolution();
 		const choice = vi.fn();
 		const screen = await render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					callbacks: { onChoiceRecorded: choice },
 					mode: transportMode({
@@ -204,7 +204,7 @@ describe('policy presentation reference behavior', () => {
 				<ConsentDraftProvider>
 					<DraftProbe />
 				</ConsentDraftProvider>
-			</ConsentProvider>
+			</InthProvider>
 		);
 		await screen.getByRole('button', { name: 'Select marketing' }).click();
 		policy = resolution({ copyRevision: 'changed' });
@@ -218,7 +218,7 @@ describe('policy presentation reference behavior', () => {
 	});
 	it('keeps preferences reachable before a choice and preserves a required notice after saving', async () => {
 		const screen = await render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: transportMode({}),
 					persistence: false,
@@ -235,7 +235,7 @@ describe('policy presentation reference behavior', () => {
 				<ConsentBanner />
 				<ConsentDialogTrigger />
 				<ConsentDialog />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		const trigger = document.querySelector<HTMLButtonElement>(
 			'[data-testid="consent-dialog-trigger"] button, button[data-testid="consent-dialog-trigger"]'
@@ -273,7 +273,7 @@ it('hydrates prepared server HTML without a prompt flash, callback, request or r
 	const setItem = vi.spyOn(Storage.prototype, 'setItem');
 	const errors = vi.spyOn(console, 'error');
 	const app = (
-		<ConsentProvider
+		<InthProvider
 			options={{
 				callbacks: { onChoiceRecorded, onPermissionsChanged },
 				mode: transportMode({ init }),
@@ -281,7 +281,7 @@ it('hydrates prepared server HTML without a prompt flash, callback, request or r
 			}}
 		>
 			<ConsentBanner />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	const host = document.createElement('div');
 	host.innerHTML = renderToString(app);
@@ -309,7 +309,7 @@ it('hydrates prepared server HTML without a prompt flash, callback, request or r
 it('diagnoses theme overrides that give equivalent actions unequal prominence', async () => {
 	const warning = vi.spyOn(console, 'warn').mockImplementation(() => {});
 	const screen = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: transportMode({}),
 				persistence: false,
@@ -323,7 +323,7 @@ it('diagnoses theme overrides that give equivalent actions unequal prominence', 
 			}}
 		>
 			<ConsentBanner />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await expect
 		.element(screen.getByTestId('consent-banner-accept-button'))
@@ -348,7 +348,7 @@ it('starts real expiry timers for prepared records without replaying choice or w
 	const onPermissionsChanged = vi.fn();
 	const writes = vi.spyOn(Storage.prototype, 'setItem');
 	const screen = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				callbacks: { onChoiceRecorded, onPermissionsChanged },
 				mode: transportMode({}),
@@ -376,7 +376,7 @@ it('starts real expiry timers for prepared records without replaying choice or w
 		>
 			<Capture />
 			<ConsentBanner />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	expect(
 		document.querySelector('[data-testid="consent-banner-root"]')
@@ -394,7 +394,7 @@ it.each([false, true])(
 	'honors blocking=%s without a visual dialog overlay',
 	async (blocking) => {
 		const screen = await render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					disableAnimation: true,
 					mode: transportMode({}),
@@ -416,7 +416,7 @@ it.each([false, true])(
 				>
 					<ConsentDialog.Card>Preferences</ConsentDialog.Card>
 				</ConsentDialog.Root>
-			</ConsentProvider>
+			</InthProvider>
 		);
 		await expect
 			.element(screen.getByTestId('consent-dialog-root'))
@@ -436,7 +436,7 @@ it('custom dialog content scrolls inside the capped card', async () => {
 	// content area, or a long composition spills past the card while the
 	// blocking dialog locks the page behind it.
 	const screen = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				disableAnimation: true,
 				mode: transportMode({}),
@@ -456,7 +456,7 @@ it('custom dialog content scrolls inside the capped card', async () => {
 					</ConsentDialog.Content>
 				</ConsentDialog.Card>
 			</ConsentDialog.Root>
-		</ConsentProvider>
+		</InthProvider>
 	);
 	await expect.element(screen.getByTestId('consent-dialog-root')).toBeVisible();
 	const card = document.querySelector<HTMLElement>(
@@ -481,7 +481,7 @@ it.each([false, true])(
 	'renders a custom backdrop only with blocking=%s',
 	async (blocking) => {
 		const screen = await render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					disableAnimation: true,
 					mode: transportMode({}),
@@ -496,7 +496,7 @@ it.each([false, true])(
 				>
 					<ConsentDialog.Card>Preferences</ConsentDialog.Card>
 				</ConsentDialog.Root>
-			</ConsentProvider>
+			</InthProvider>
 		);
 		await expect
 			.element(screen.getByTestId('consent-dialog-root'))

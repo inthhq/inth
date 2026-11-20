@@ -4,7 +4,7 @@
 		RuntimeEventDispatcherOptions,
 	} from '@inth/sdk/events';
 
-	import Provider from '../../lib/components/consent-provider.svelte';
+	import Provider from '../../lib/components/inth-provider.svelte';
 	import type { ConsentContextValue } from '../../lib/context.svelte';
 	import type { ConsentManagerOptions } from '../../lib/types';
 	import Reader from './event-dispatcher-reader.svelte';

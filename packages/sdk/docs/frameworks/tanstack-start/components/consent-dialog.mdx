@@ -7,7 +7,7 @@ group: frameworks
 ## Render the preference dialog
 
 `ConsentDialog` is the modal preference center. Render it once inside
-`ConsentRoot`, next to the banner. It opens when the banner's Customize button,
+`InthProvider`, next to the banner. It opens when the banner's Customize button,
 a `ConsentDialogLink`, a `ConsentDialogTrigger` or your own code makes `dialog`
 the active surface:
 
@@ -28,7 +28,7 @@ export function PrivacyMenuItem() {
 
 Under an IAB policy the dialog stays closed; render `IABConsentDialog` as
 described in [IAB TCF](/docs/frameworks/tanstack-start/iab). Provider options
-such as `preloadDialog` go through `ConsentRoot`'s `options` prop.
+such as `preloadDialog` go through `InthProvider`'s `options` prop.
 
 <import src="../../../shared/react/components/consent-dialog.mdx#props" />
 

@@ -1,0 +1,47 @@
+---
+title: InthProvider
+description: Render the Inth banner and preference dialog in one tag in an Angular app with inth-provider, its inputs, and when to use the two components on their own.
+group: frameworks
+---
+
+## Render the stock UI in one tag
+
+`<inth-provider>` renders `<inth-consent-banner>` and
+`<inth-consent-dialog>` together. Import `InthProvider` and put it in
+your root component instead of the two. Leave it empty, or wrap your app in
+it; wrapped content renders after the banner and dialog. The tag has
+`display: contents`, so it adds no box to your layout:
+
+{/* example: fragment */}
+
+```html
+<inth-provider [legalLinks]="['privacyPolicy', 'cookiePolicy']">
+  <router-outlet />
+</inth-provider>
+```
+
+`provideInth()` in your application config owns the consent state;
+`<inth-provider>` renders the UI for it. Import it from
+`@inth/angular/provider`. The dialog's code stays out of the first load
+and loads on demand, as described on
+[ConsentDialog](./consent-dialog#how-the-dialog-loads).
+
+## Inputs
+
+| Input | Type | Default | Behavior |
+| --- | --- | --- | --- |
+| `legalLinks` | array of `LegalLinks` keys, or `null` | every link set in `provideInth()` | Which of the legal links from `provideInth()` both surfaces show. |
+| `hideBranding` | `boolean` | `false` | Hides the "Secured by" tag on both surfaces. |
+| `showTrigger` | `boolean` or `ConsentDialogTriggerOptions` | `false` | Renders a floating `<inth-consent-dialog-trigger>` with the dialog. |
+| `noStyle` | `boolean` | `noStyle` from `provideInth()` | Drops Inth's classes on both surfaces. |
+| `disableAnimation` | `boolean` | the value from `provideInth()` | Turns off transitions on both surfaces. |
+
+To pass the banner its own inputs, such as `variant` or text, or to use its
+`ng-template` slots, render `<inth-consent-banner>` and
+`<inth-consent-dialog>` separately. The result is the same markup.
+
+## Verify it
+
+Open the page in a private window. The banner appears once the policy
+resolves, and its Customize button opens the dialog. In the Elements panel,
+both surfaces render in `<body>`, not inside `<inth-provider>`.

@@ -1,6 +1,6 @@
 ---
 title: Vendor consent
-description: Let visitors allow a category such as marketing in a TanStack Start app and still turn off one vendor in it, with the vendors prop on ConsentRoot and useVendorAllowed.
+description: Let visitors allow a category such as marketing in a TanStack Start app and still turn off one vendor in it, with the vendors prop on InthProvider and useVendorAllowed.
 group: frameworks
 ---
 
@@ -30,19 +30,19 @@ const vendors: Vendor[] = [
 ];
 ```
 
-Then pass them to `ConsentRoot` in the same module:
+Then pass them to `InthProvider` in the same module:
 
 {/* example: fragment */}
 
 ```tsx title="src/routes/__root.tsx (partial)"
-<ConsentRoot
+<InthProvider
 	state={consent}
 	scripts={scripts}
 	vendors={vendors}
 >
 ```
 
-`ConsentRoot` takes `vendors` as a top-level prop, not inside `options`.
+`InthProvider` takes `vendors` as a top-level prop, not inside `options`.
 
 <import src="../../shared/scripts/vendor-consent.mdx#fields" />
 

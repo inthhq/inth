@@ -161,9 +161,8 @@ They are the same plugin.
 Make four changes:
 
 1. Set `styles: false` where you configure Inth: `options` in Next.js
-   `inth.config.ts`, `options` on `ConsentRoot` in TanStack Start, `options`
-   on `ConsentProvider` in React, and `styles={false}` on `ConsentProvider` in
-   Svelte or `ConsentRoot` in SvelteKit.
+   `inth.config.ts`, `options` on `InthProvider` in TanStack Start and React,
+   and `styles={false}` on `InthProvider` in Svelte and SvelteKit.
    Vue, Nuxt and Astro need no change.
 2. Add the plugin to your PostCSS plugins, before `tailwindcss`. Write the plugins as an object, as the examples below do.
    PostCSS runs them in the order of the keys. Next.js also accepts an array
@@ -204,7 +203,7 @@ plugin and the build fails on Inth's stylesheet. Add the plugin before
 
     Import `@inth/nextjs/styles.css` above the directives. Turbopack fails the
     build when the import sits below them. The same order works with
-    webpack. Set `styles: false` in `ConsentRoot`'s `options` as well:
+    webpack. Set `styles: false` in `InthProvider`'s `options` as well:
 
     <include src="../shared/examples/tailwind-v3/next-16-turbopack/tailwind-css.mdx" />
   </Tab>
@@ -218,7 +217,7 @@ plugin and the build fails on Inth's stylesheet. Add the plugin before
 
     Import `@inth/tanstack-start/styles.css` above the directives, in the
     stylesheet your root route links, and set `styles: false` in
-    `ConsentRoot`'s `options`:
+    `InthProvider`'s `options`:
 
     <include src="../shared/examples/tailwind-v3/tanstack-start/tailwind-css.mdx" />
   </Tab>
@@ -232,7 +231,7 @@ plugin and the build fails on Inth's stylesheet. Add the plugin before
 
     Import `@inth/react/styles.css` above the directives, import this
     stylesheet from your entry module, and set `styles: false` in the
-    `ConsentProvider` options:
+    `InthProvider` options:
 
     <include src="../shared/examples/tailwind-v3/react/tailwind-css.mdx" />
   </Tab>
@@ -292,7 +291,7 @@ plugin and the build fails on Inth's stylesheet. Add the plugin before
 
     Import `@inth/svelte/styles.css` above the directives, import this
     stylesheet from `src/main.ts`, and pass `styles={false}` to
-    `ConsentProvider`:
+    `InthProvider`:
 
     <include src="../shared/examples/tailwind-v3/svelte/tailwind-css.mdx" />
   </Tab>
@@ -306,7 +305,7 @@ plugin and the build fails on Inth's stylesheet. Add the plugin before
 
     Import `@inth/svelte/styles.css` above the directives, import this
     stylesheet from your root `+layout.svelte`, and pass `styles={false}` to
-    `ConsentRoot`:
+    `InthProvider`:
 
     <include src="../shared/examples/tailwind-v3/sveltekit/tailwind-css.mdx" />
   </Tab>
@@ -343,7 +342,7 @@ Tailwind only generates classes it finds in the files its `content` globs or
 
 <Tabs items={['Next.js', 'TanStack Start', 'React', 'Nuxt', 'Vue', 'Astro', 'Svelte', 'SvelteKit', 'HTML', 'JavaScript']}>
   <Tab value="Next.js">
-    Add the classes to `options.components` on `ConsentRoot`, in the
+    Add the classes to `options.components` on `InthProvider`, in the
     `'use client'` wrapper from your quickstart:
 
     <include src="../shared/examples/tailwind-v4/next-16-turbopack/slot.mdx" />

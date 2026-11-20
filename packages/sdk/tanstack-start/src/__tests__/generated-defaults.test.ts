@@ -2,7 +2,7 @@
  * The quickstart passes no options: `createConsentStateHandler()` and
  * `createConsentRoute()` read the backend URL and the policy snapshot from
  * `@inth/sdk/generated`, which `consentManifest()` serves, and the state
- * hands the browser everything `ConsentRoot` needs.
+ * hands the browser everything `InthProvider` needs.
  */
 import { hosted } from '@inth/sdk/modes';
 import { createManifestCache } from '@inth/sdk/server';
@@ -142,7 +142,7 @@ describe('the client half of the state', () => {
 		);
 	});
 
-	test('browser resolution leaves the policy to ConsentRoot', async () => {
+	test('browser resolution leaves the policy to InthProvider', async () => {
 		const fetch = offlineFetch();
 		const state = await resolveConsent({
 			cache: createManifestCache(),

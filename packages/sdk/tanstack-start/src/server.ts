@@ -4,7 +4,7 @@
  * Reads the incoming request (cookies + headers via `getRequest()` from
  * `@tanstack/react-start/server`) and produces a JSON-serializable
  * `ConsentState` (a `KernelConfig` without `transport`). The root route
- * loader returns it, and the client `ConsentRoot` reads it back with
+ * loader returns it, and the client `InthProvider` reads it back with
  * `Route.useLoaderData()`.
  *
  * The recommended `__root.tsx` shape:
@@ -12,7 +12,7 @@
  * ```tsx
  * import { createRootRoute, Outlet } from '@tanstack/react-router';
  * import { createServerFn } from '@tanstack/react-start';
- * import { ConsentRoot } from '@inth/tanstack-start';
+ * import { InthProvider } from '@inth/tanstack-start';
  * import {
  *   consentLoaderOptions,
  *   createConsentStateHandler,
@@ -31,16 +31,16 @@
  * function RootComponent() {
  *   const { consent } = Route.useLoaderData();
  *   return (
- *     <ConsentRoot state={consent}>
+ *     <InthProvider state={consent}>
  *       <Outlet />
- *     </ConsentRoot>
+ *     </InthProvider>
  *   );
  * }
  * ```
  *
  * The backend URL and the policy snapshot come from `consentManifest()` in
  * `vite.config.ts` (`@inth/sdk/generated`). The state carries the backend
- * URL, the mode and the route prefix, so `ConsentRoot` needs nothing else.
+ * URL, the mode and the route prefix, so `InthProvider` needs nothing else.
  *
  * The state travels only through loader data, never through module state,
  * so the server-rendered HTML and the hydrated tree always agree. Because
@@ -158,7 +158,7 @@ export type { KernelConfig } from '@inth/sdk/engine';
 
 /**
  * Where the browser sends consent requests. {@link resolveConsent} puts it
- * on the state, so `ConsentRoot` reads it from there.
+ * on the state, so `InthProvider` reads it from there.
  */
 export interface ConsentClientConfig {
 	/**
@@ -174,13 +174,13 @@ export interface ConsentClientConfig {
 
 /**
  * The visitor's resolved consent state: the JSON-serializable subset of
- * `KernelConfig` the server helpers return and `ConsentRoot` consumes, plus
+ * `KernelConfig` the server helpers return and `InthProvider` consumes, plus
  * the {@link ConsentClientConfig} the browser needs.
  *
  * `KernelConfig.transport` holds functions, and TanStack Start's server
  * function types reject any return value that may carry one. Returning this
  * narrower type is what lets `createServerFn().handler(...)` accept the
- * helpers directly. `ConsentRoot` accepts it as-is.
+ * helpers directly. `InthProvider` accepts it as-is.
  */
 export type ConsentState = Omit<KernelConfig, 'transport'> &
 	ExperimentState &
@@ -193,7 +193,7 @@ export type ConsentState = Omit<KernelConfig, 'transport'> &
 export interface ResolveConsentOptions extends ConsentRequestOptions {
 	/**
 	 * How the visitor's policy is resolved. The state carries it to
-	 * `ConsentRoot`.
+	 * `InthProvider`.
 	 *
 	 * - Omitted, or `manifest()` from `@inth/tanstack-start`: resolve here
 	 *   from the policy snapshot the build downloaded, or the backend's
@@ -302,7 +302,7 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	timeoutMs?: number | false;
 
 	/**
-	 * The consent journey scope this render reports. Pass `ConsentRoot` the
+	 * The consent journey scope this render reports. Pass `InthProvider` the
 	 * same `journey`.
 	 */
 	journey?: ConsentJourneyOption;
@@ -312,7 +312,7 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	 * feature flag. While the visitor has no stored choice, the render's
 	 * session report carries the arm, so the backend counts the visitors
 	 * each arm's banner was owed to. The returned state carries the
-	 * experiment to `ConsentRoot`, so the client needs no `experiment`
+	 * experiment to `InthProvider`, so the client needs no `experiment`
 	 * option of its own.
 	 *
 	 * @example
@@ -324,7 +324,7 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 
 	/**
 	 * Where you mounted `createConsentRoute()`, such as `/api/inth` for
-	 * `src/routes/api/inth/$.ts`. The state carries it to `ConsentRoot`: the
+	 * `src/routes/api/inth/$.ts`. The state carries it to `InthProvider`: the
 	 * browser then gets init from `${routePrefix}/v1/consent/init`, and saves assert the
 	 * decision inputs it resolved. Deferred public vendor lists load through
 	 * the route, and the render never fetches a URL under the prefix on its
@@ -434,7 +434,7 @@ const resolveConsentState = async function resolveConsentState(
  *    request's country, region, language, and GPC signal.
  * 3. Folds the result into the state so first paint is correct without
  *    waiting for a client roundtrip, and adds the backend URL, mode and
- *    route prefix `ConsentRoot` needs.
+ *    route prefix `InthProvider` needs.
  *
  * Never calls the app's own consent route. If anything fails, or the
  * manifest does not arrive within `timeoutMs` (500 ms by default), returns
@@ -443,7 +443,7 @@ const resolveConsentState = async function resolveConsentState(
  *
  * @param options - Mode, route prefix and request overrides. The backend
  * URL and snapshot default to what `consentManifest()` provides.
- * @returns A serializable state for `ConsentRoot`.
+ * @returns A serializable state for `InthProvider`.
  * @throws {Error} When `proxy` is set without `routePrefix`.
  * @throws {TypeError} When `routePrefix` is `/` or not a path.
  */

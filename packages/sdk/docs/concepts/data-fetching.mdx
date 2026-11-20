@@ -91,7 +91,7 @@ Saves replayed after going offline carry none.
 | `false` | No journey. |
 
 Set it on the runtime or provider. In Next.js use `defineConsentConfig({ journey })`;
-in TanStack Start pass the same value to `resolveConsent` and `ConsentRoot`; with
+in TanStack Start pass the same value to `resolveConsent` and `InthProvider`; with
 the inline prefetch script, pass it to `buildPrefetchScript` or to
 `consentManifest({ initPrefetch: { journey } })`. Left unset, the script
 continues a `'tab'` journey the tab already holds. A tab's first page has
@@ -195,10 +195,10 @@ in bundles that import the `/testing` entry.
 {/* example: fragment */}
 
 ```tsx title="src/consent.test.tsx"
-import { ConsentProvider } from '@inth/react';
+import { InthProvider } from '@inth/react';
 import { testing } from '@inth/react/testing';
 
-<ConsentProvider options={{ overrides: { country: 'DE' }, mode: testing() }} />;
+<InthProvider options={{ overrides: { country: 'DE' }, mode: testing() }} />;
 ```
 
 With no `policy`, `testing()` uses the recommended rule pack, and the

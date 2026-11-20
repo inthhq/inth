@@ -199,7 +199,7 @@ describe('isDeferredBannerModule', () => {
 
 	test('leaves the global components and other packages alone', () => {
 		for (const id of [
-			'../../../packages/sdk/vue/dist/runtime/components/nuxt-root.vue',
+			'../../../packages/sdk/vue/dist/runtime/components/nuxt-inth-provider.vue',
 			'../node_modules/@inth/vue/dist/runtime/components/consent-gate.vue',
 			'../../../packages/sdk/react/dist/components/prompt.js',
 			'app/components/prompt.vue',

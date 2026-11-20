@@ -6,7 +6,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { KernelContext } from '../context';
-import { ConsentProvider, useConsent } from '../index';
+import { InthProvider, useConsent } from '../index';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
@@ -36,15 +36,15 @@ const MeasurementProbe = () => (
 	<output data-testid="measurement">{String(useConsent('measurement'))}</output>
 );
 
-describe('ConsentProvider with an external runtime', () => {
+describe('InthProvider with an external runtime', () => {
 	test('renders the runtime it was handed instead of building one', async () => {
 		const runtime = createRuntime();
 		const seen = vi.fn();
 
 		await render(
-			<ConsentProvider runtime={runtime}>
+			<InthProvider runtime={runtime}>
 				<KernelProbe onKernel={seen} />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		expect(seen).toHaveBeenCalledWith(runtime.kernel);
@@ -65,10 +65,10 @@ describe('ConsentProvider with an external runtime', () => {
 			};
 		});
 		const tree = (runtime: ConsentRuntime) => (
-			<ConsentProvider runtime={runtime}>
+			<InthProvider runtime={runtime}>
 				<KernelProbe onKernel={seen} />
 				<MeasurementProbe />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		const screen = await render(tree(first));
@@ -99,9 +99,9 @@ describe('ConsentProvider with an external runtime', () => {
 		const dispose = vi.spyOn(runtime.kernel, 'dispose');
 
 		const { unmount } = await render(
-			<ConsentProvider runtime={runtime}>
+			<InthProvider runtime={runtime}>
 				<div data-testid="child">borrowed</div>
-			</ConsentProvider>
+			</InthProvider>
 		);
 		unmount();
 
@@ -120,7 +120,7 @@ describe('ConsentProvider with an external runtime', () => {
 		localStorage.setItem('analytics:visitor', 'owner');
 
 		await render(
-			<ConsentProvider
+			<InthProvider
 				runtime={runtime}
 				options={{
 					clearOnRevocation: {
@@ -129,7 +129,7 @@ describe('ConsentProvider with an external runtime', () => {
 				}}
 			>
 				<div data-testid="child">borrowed</div>
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		// Cleanup follows the script loader's dynamic import. Wait for that
@@ -150,16 +150,16 @@ describe('ConsentProvider with an external runtime', () => {
 		const onChoiceRecorded = vi.fn();
 
 		await render(
-			<ConsentProvider
+			<InthProvider
 				runtime={runtime}
 				options={
 					{ callbacks: { onChoiceRecorded } } as unknown as NonNullable<
-						ComponentProps<typeof ConsentProvider>['options']
+						ComponentProps<typeof InthProvider>['options']
 					>
 				}
 			>
 				<div data-testid="child">borrowed</div>
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		expect(warn).toHaveBeenCalledWith(
@@ -179,9 +179,9 @@ describe('ConsentProvider with an external runtime', () => {
 		const runtime = createRuntime({ onChoiceRecorded });
 
 		await render(
-			<ConsentProvider runtime={runtime}>
+			<InthProvider runtime={runtime}>
 				<div data-testid="child">borrowed</div>
-			</ConsentProvider>
+			</InthProvider>
 		);
 		await runtime.kernel.commands.save('all');
 
@@ -199,9 +199,9 @@ describe('ConsentProvider with an external runtime', () => {
 	test('still owns the kernel when no runtime is passed', async () => {
 		const seen = vi.fn();
 		const { unmount } = await render(
-			<ConsentProvider options={{ mode: testing() }}>
+			<InthProvider options={{ mode: testing() }}>
 				<KernelProbe onKernel={seen} />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		const kernel = seen.mock.calls[0]?.[0] as { dispose: () => void };
 		const dispose = vi.spyOn(kernel, 'dispose');

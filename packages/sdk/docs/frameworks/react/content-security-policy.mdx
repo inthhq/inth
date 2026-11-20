@@ -1,6 +1,6 @@
 ---
 title: Content Security Policy
-description: Run Inth in a React app under a Content Security Policy, allow the consent backend and vendor hosts, and pass a nonce to ConsentProvider and ConsentTheme.
+description: Run Inth in a React app under a Content Security Policy, allow the consent backend and vendor hosts, and pass a nonce to InthProvider and ConsentTheme.
 group: frameworks
 ---
 
@@ -60,7 +60,7 @@ A nonce protects a page only when it changes on every response. A static host
 serves the same file to everyone, so use host allowlists there. Use a nonce
 when a server renders or rewrites your `index.html` per request.
 
-Pass the nonce as `options.nonce` on `ConsentProvider`. The script loader
+Pass the nonce as `options.nonce` on `InthProvider`. The script loader
 stamps it on every `<script>` it creates. A `nonce` on a single `scripts`
 entry takes precedence for that element. The stock components put it on the
 `<style>` elements that carry Inth's rules.
@@ -79,7 +79,7 @@ const nonce =
   document.querySelector<HTMLMetaElement>('meta[property="csp-nonce"]')
     ?.nonce || undefined;
 
-<ConsentProvider options={{ mode, scripts, nonce }}>
+<InthProvider options={{ mode, scripts, nonce }}>
 ```
 
 If you render `ConsentTheme`, pass it the same value:
@@ -99,7 +99,7 @@ The banner, dialog and other stock components render Inth's rules as
 `<style>` elements. A `style-src` without `'unsafe-inline'` must admit them.
 Either:
 
-- Set `options.nonce` on `ConsentProvider`, as in [use a nonce](#use-a-nonce).
+- Set `options.nonce` on `InthProvider`, as in [use a nonce](#use-a-nonce).
   The elements then render next to each component with the nonce. React 19
   would otherwise move them into `<head>` and drop the nonce.
 - Or set `styles: false` in the provider options and import

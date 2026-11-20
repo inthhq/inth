@@ -110,7 +110,7 @@ export const resolveConsentGateCopy = function resolveConsentGateCopy(
  *
  * @param category - The consent category the content needs, such as
  * `'marketing'`.
- * @throws {Error} When called outside a `ConsentProvider`.
+ * @throws {Error} When called outside an `InthProvider`.
  *
  * @example
  * ```tsx

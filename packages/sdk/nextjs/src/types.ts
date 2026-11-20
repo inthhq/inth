@@ -5,8 +5,8 @@ import type {
 	UseScriptLoaderOptions,
 } from '@inth/react/module-hooks';
 import type {
-	ConsentProviderOptions,
-	ConsentProviderPrefetch,
+	InthProviderOptions as ReactProviderOptions,
+	InthProviderPrefetch,
 } from '@inth/react/provider';
 import type { Vendor } from '@inth/sdk/engine';
 import type { ConsentMode } from '@inth/sdk/modes';
@@ -15,13 +15,13 @@ import type { Script } from '@inth/sdk/modules/script-loader';
 /**
  * The visitor's resolved consent state: serializable policy, records, and
  * request clock. Produced server-side by `resolveConsent()` and consumed by
- * `ConsentRoot`, which hands it to the React provider.
+ * `InthProvider`, which hands it to the React provider.
  */
-export type ConsentState = ConsentProviderPrefetch;
+export type ConsentState = InthProviderPrefetch;
 
 /**
- * Browser options `ConsentRoot` reads. Set them in `inth.config.ts`, or as
- * `ConsentRoot` props, which win over the config's.
+ * Browser options `InthProvider` reads. Set them in `inth.config.ts`, or as
+ * `InthProvider` props, which win over the config's.
  */
 export interface ConsentClientOptions {
 	/**
@@ -41,9 +41,9 @@ export interface ConsentClientOptions {
 	/**
 	 * Remove configured browser data for initially denied categories after
 	 * policy resolution and when consent is later revoked.
-	 * Initial-only: remount ConsentRoot to replace the cleanup configuration.
+	 * Initial-only: remount InthProvider to replace the cleanup configuration.
 	 */
-	clearOnRevocation?: ConsentProviderOptions['clearOnRevocation'];
+	clearOnRevocation?: ReactProviderOptions['clearOnRevocation'];
 
 	scriptLoader?: UseScriptLoaderOptions;
 
@@ -59,21 +59,28 @@ export interface ConsentClientOptions {
 	 * config's `mode`: `manifest()`, `hosted()` or `testing()`, or a
 	 * transport factory.
 	 */
-	options?: Omit<
-		ConsentProviderOptions,
-		| 'projectUrl'
-		| 'mode'
-		| 'clearOnRevocation'
-		| 'networkBlocker'
-		| 'persistence'
-		| 'prefetch'
-		| 'scriptLoader'
-		| 'scripts'
-		| 'vendors'
-		| '__debugPkg'
-		| '__preloadScriptLoader'
-		| '__resolveStreamedInit'
-	> & {
-		mode?: ConsentMode | ProviderTransportFactory;
-	};
+	options?: InthProviderOptions;
 }
+
+/**
+ * The `options` of `InthProvider` and `defineConsentConfig`: the options of
+ * the `InthProvider` from `@inth/nextjs/react`, less the ones the root and
+ * the config take on their own.
+ */
+export type InthProviderOptions = Omit<
+	ReactProviderOptions,
+	| 'projectUrl'
+	| 'mode'
+	| 'clearOnRevocation'
+	| 'networkBlocker'
+	| 'persistence'
+	| 'prefetch'
+	| 'scriptLoader'
+	| 'scripts'
+	| 'vendors'
+	| '__debugPkg'
+	| '__preloadScriptLoader'
+	| '__resolveStreamedInit'
+> & {
+	mode?: ConsentMode | ProviderTransportFactory;
+};

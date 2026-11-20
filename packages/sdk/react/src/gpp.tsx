@@ -24,8 +24,8 @@ export type ConsentGPPProps = RuntimeGPPOptions;
  * provider's kernel and keeps its GPP string in step with the visitor's
  * choices. Renders nothing. Unmounting removes `__gpp`.
  *
- * Render it inside `ConsentProvider` (or `ConsentRoot` in Next.js and
- * TanStack Start). Every prop is plain data, so a Server Component can
+ * Render it inside `InthProvider`, from `@inth/react`, `@inth/nextjs` or
+ * `@inth/tanstack-start`. Every prop is plain data, so a Server Component can
  * render it.
  *
  * @param props - GPP options. See `RuntimeGPPOptions`.
@@ -36,10 +36,10 @@ export type ConsentGPPProps = RuntimeGPPOptions;
  * ```tsx
  * import { ConsentGPP } from '@inth/react/gpp';
  *
- * <ConsentProvider options={{ mode: hosted({ projectUrl }) }}>
+ * <InthProvider options={{ mode: hosted({ projectUrl }) }}>
  *   <ConsentGPP usFallback="none" />
  *   <App />
- * </ConsentProvider>
+ * </InthProvider>
  * ```
  */
 export const ConsentGPP = ({
@@ -53,7 +53,7 @@ export const ConsentGPP = ({
 	const kernel = useContext(KernelContext);
 	if (!kernel) {
 		throw new Error(
-			'inth: ConsentGPP must be rendered inside <ConsentProvider> from @inth/react.'
+			'inth: ConsentGPP must be rendered inside <InthProvider> from @inth/react.'
 		);
 	}
 	// A key, so an inline array does not remount the API on every render.

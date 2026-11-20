@@ -10,7 +10,7 @@ import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { ConsentGPP } from '../gpp';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { offlineMode } from './fixtures/transport-mode';
 
 const mode = offlineMode([
@@ -33,12 +33,12 @@ afterEach(() => {
 
 test('mounts __gpp on the provider kernel and unmount removes it', async () => {
 	const screen = await render(
-		<ConsentProvider options={{ mode, overrides, persistence: false }}>
+		<InthProvider options={{ mode, overrides, persistence: false }}>
 			<ConsentGPP
 				optOutCategories={['marketing']}
 				usFallback="none"
 			/>
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 	await vi.waitFor(() =>
@@ -58,9 +58,9 @@ test('mounts on a borrowed runtime too', async () => {
 	const runtime = createConsentRuntime({ mode, overrides, persistence: false });
 	runtime.start();
 	const screen = await render(
-		<ConsentProvider runtime={runtime}>
+		<InthProvider runtime={runtime}>
 			<ConsentGPP />
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 	await vi.waitFor(() =>
@@ -77,10 +77,10 @@ test('logs a mount failure and leaves the app rendered', async () => {
 	const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 	// createGPP rejects a CMP ID that is neither 1 nor a registered ID.
 	const screen = await render(
-		<ConsentProvider options={{ mode, overrides, persistence: false }}>
+		<InthProvider options={{ mode, overrides, persistence: false }}>
 			<ConsentGPP cmpId={-1} />
 			<span>app</span>
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 	await expect.element(screen.getByText('app')).toBeVisible();
@@ -114,11 +114,9 @@ test('installs __gpp within a microtask of the first init()', async () => {
 		{ kind: 'custom' as const }
 	);
 	const screen = await render(
-		<ConsentProvider
-			options={{ mode: watching, overrides, persistence: false }}
-		>
+		<InthProvider options={{ mode: watching, overrides, persistence: false }}>
 			<ConsentGPP />
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 	await vi.waitFor(() => expect(seen.afterMicrotask).toBe(true));

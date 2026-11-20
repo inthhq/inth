@@ -1,6 +1,6 @@
 ---
 title: Clear on revocation
-description: Delete the first-party cookies and Web Storage keys a consent category owns in a React app when that category is denied, with the clearOnRevocation option on ConsentProvider.
+description: Delete the first-party cookies and Web Storage keys a consent category owns in a React app when that category is denied, with the clearOnRevocation option on InthProvider.
 group: frameworks
 ---
 
@@ -21,7 +21,7 @@ const clearOnRevocation: ClearOnRevocationConfig = {
   marketing: { cookies: ['_fbp'], sessionStorage: ['campaign-id'] },
 };
 
-<ConsentProvider options={{ mode, scripts, clearOnRevocation }}>
+<InthProvider options={{ mode, scripts, clearOnRevocation }}>
 ```
 
 The provider reads `clearOnRevocation` once, when it mounts; remount it to

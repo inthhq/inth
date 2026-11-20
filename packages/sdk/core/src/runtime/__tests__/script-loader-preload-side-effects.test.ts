@@ -243,7 +243,7 @@ const settle = async (): Promise<void> => {
 };
 
 /**
- * Build a provider runtime the way `ConsentRoot` does: persistence on, a
+ * Build a provider runtime the way `InthProvider` does: persistence on, a
  * lazy script loader and the early decision. It is never started.
  */
 const construct = function construct(

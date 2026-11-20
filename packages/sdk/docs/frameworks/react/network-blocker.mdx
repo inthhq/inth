@@ -1,6 +1,6 @@
 ---
 title: Network blocker
-description: Hold fetch and XMLHttpRequest calls in a React app until their consent category is allowed, with networkBlocker rules in the ConsentProvider options.
+description: Hold fetch and XMLHttpRequest calls in a React app until their consent category is allowed, with networkBlocker rules in the InthProvider options.
 group: frameworks
 ---
 
@@ -34,7 +34,7 @@ const networkBlocker = {
 	],
 };
 
-<ConsentProvider options={{ mode, scripts, networkBlocker }}>
+<InthProvider options={{ mode, scripts, networkBlocker }}>
 ```
 
 <import src="../../shared/react/network-blocker.mdx#rules" />

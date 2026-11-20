@@ -2,7 +2,7 @@
  * `@inth/react/headless` — hooks for building your own consent UI on the
  * kernel, without the prebuilt components or their CSS.
  *
- * Pair with `ConsentProvider` from `@inth/react` (or `@inth/react/provider`).
+ * Pair with `InthProvider` from `@inth/react` (or `@inth/react/provider`).
  */
 
 export {

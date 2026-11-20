@@ -8,7 +8,7 @@ these files:
 | `vite.config.ts` | `consentManifest` from `@inth/svelte/vite` fetches the policy. |
 | `src/hooks.server.ts` | `inthHandle()`, whose default mode, `manifest()`, resolves from the fetched policy. |
 | `src/routes/+layout.server.ts` | `export { loadConsent as load }` resolves each visitor. |
-| `src/routes/+layout.svelte` | `ConsentRoot state={data.consent}` renders the result. |
+| `src/routes/+layout.svelte` | `InthProvider` from `@inth/svelte/kit`, given `state={data.consent}`, renders the result. |
 
 The plugin's position in `plugins` does not matter. It fetches the policy
 once Vite has resolved its config, before anything compiles. Without a
@@ -16,7 +16,7 @@ once Vite has resolved its config, before anything compiles. Without a
 
 The plugin detects the `sveltekit()` plugin and keeps the snapshot on the
 server. `loadConsent` and `createConsentRoute()` read it without an import.
-The browser bundle never holds it: `ConsentRoot` gets the resolved policy
+The browser bundle never holds it: `InthProvider` gets the resolved policy
 from `loadConsent` instead.
 
 Static hosts follow [build a static site](/docs/frameworks/sveltekit/rendering#build-a-static-site)

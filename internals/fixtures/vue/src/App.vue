@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ConsentDialogLink, ConsentRoot } from '@inth/vue/vue-plugin';
+import { ConsentDialogLink, InthProvider } from '@inth/vue/vue-plugin';
 
 import HomePage from './HomePage.vue';
 </script>
 
 <template>
-	<ConsentRoot />
+	<InthProvider />
 	<HomePage />
 	<footer>
 		<ConsentDialogLink>Privacy settings</ConsentDialogLink>

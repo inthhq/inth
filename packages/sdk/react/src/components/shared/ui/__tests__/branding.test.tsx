@@ -4,7 +4,7 @@ import { renderToString } from 'react-dom/server';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import type { ConsentStateFixture } from '~/__tests__/consent-state-fixture';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentDialogFooter } from '~/components/panel/atoms/card';
@@ -64,13 +64,13 @@ const createConsentTree = function createConsentTree(
 	ui: ReactElement,
 	stateOverrides: Partial<ConsentManagerState> = {},
 	providerOverrides: Partial<
-		ComponentProps<typeof ConsentProvider>['options']
+		ComponentProps<typeof InthProvider>['options']
 	> = {}
 ) {
 	const state = createMockState(stateOverrides);
 
 	return (
-		<ConsentProvider
+		<InthProvider
 			options={{
 				components: providerOverrides.components,
 				initialUI: state.activeUI === 'dialog' ? 'dialog' : 'banner',
@@ -102,7 +102,7 @@ const createConsentTree = function createConsentTree(
 			}}
 		>
 			{ui}
-		</ConsentProvider>
+		</InthProvider>
 	);
 };
 

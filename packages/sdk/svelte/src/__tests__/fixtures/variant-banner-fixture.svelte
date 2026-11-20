@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { PromptPosition, PromptVariant } from '@inth/sdk/engine';
 
-	import Provider from '../../lib/components/consent-provider.svelte';
+	import Provider from '../../lib/components/inth-provider.svelte';
 	import Dialog from '../../lib/components/panel.svelte';
 	import Banner from '../../lib/components/prompt.svelte';
 	import type { ConsentManagerOptions } from '../../lib/types';

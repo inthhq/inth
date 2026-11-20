@@ -259,7 +259,7 @@ const workspaceAliases = [
 		replacement: resolve(__dirname, 'src/public-api.ts'),
 	},
 	{
-		find: /^@inth\/angular\/(?<entry>consent-dialog|consent-dialog-trigger|consent-gate|consent-root|consent-widget|iab|primitives)$/u,
+		find: /^@inth\/angular\/(?<entry>consent-dialog|consent-dialog-trigger|consent-gate|consent-widget|iab|primitives|provider)$/u,
 		replacement: resolve(__dirname, '$1/src/public-api.ts'),
 	},
 	{
@@ -293,7 +293,7 @@ export default mergeConfig(
 			environment: 'jsdom',
 			include: [
 				'src/**/*.spec.ts',
-				'{consent-dialog,consent-dialog-trigger,consent-gate,consent-root,consent-widget,iab,primitives}/src/**/*.spec.ts',
+				'{consent-dialog,consent-dialog-trigger,consent-gate,consent-widget,iab,primitives,provider}/src/**/*.spec.ts',
 				'devtools/src/**/*.spec.ts',
 				'ssr/src/**/*.spec.ts',
 				'testing/src/**/*.spec.ts',

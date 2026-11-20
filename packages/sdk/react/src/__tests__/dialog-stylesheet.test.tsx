@@ -11,7 +11,7 @@ import { createRoot } from 'react-dom/client';
 import { expect, test, vi } from 'vitest';
 
 import { ConsentDialog } from '../aggregate-components';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
@@ -58,7 +58,7 @@ test('the lazy dialog renders styled from its first frame', async () => {
 
 	try {
 		root.render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: testing(),
 					persistence: false,
@@ -69,7 +69,7 @@ test('the lazy dialog renders styled from its first frame', async () => {
 					disableAnimation
 					open
 				/>
-			</ConsentProvider>
+			</InthProvider>
 		);
 		await vi.waitFor(() => expect(atInsertion).toBeDefined());
 		expect(atInsertion).toEqual(STYLED_CARD);

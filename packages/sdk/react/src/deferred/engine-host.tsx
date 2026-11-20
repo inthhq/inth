@@ -2,7 +2,7 @@
 
 /**
  * The engine side of a deferred root, loaded on demand: the real
- * `ConsentProvider`, which builds and starts the runtime, and a publisher
+ * `InthProvider`, which builds and starts the runtime, and a publisher
  * that hands its kernel to the root's stand-in.
  *
  * @packageDocumentation
@@ -19,9 +19,9 @@ import {
 	ProviderServicesContext,
 	StreamedPrefetchContext,
 } from '../context';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import type {
-	ConsentProviderOptions,
+	InthProviderOptions,
 	OwnedRuntimeProviderProps,
 } from '../provider';
 import type { DeferredCommitted } from './committed';
@@ -88,7 +88,7 @@ const seedPrefetch = function seedPrefetch(
 };
 
 type CommittedParts = Pick<
-	ConsentProviderOptions,
+	InthProviderOptions,
 	'callbacks' | 'prefetch' | 'scripts'
 >;
 
@@ -127,7 +127,7 @@ const committedOptions = function committedOptions(
 		prefetch: seedPrefetch(
 			options.prefetch,
 			committed
-		) as ConsentProviderOptions['prefetch'],
+		) as InthProviderOptions['prefetch'],
 		scripts: committed.ownsScripts ? undefined : options.scripts,
 	};
 };
@@ -191,7 +191,7 @@ const Publisher = ({
 
 /** @internal */
 export interface DeferredEngineHostProps {
-	options: ConsentProviderOptions;
+	options: InthProviderOptions;
 	attach: (engine: DeferredEngine) => void;
 	/** A banner choice the root committed before the engine loaded. */
 	committed?: DeferredCommitted;
@@ -222,14 +222,12 @@ export const DeferredEngineHost = ({
 	const effective = parts ? { ...options, ...parts } : options;
 	return (
 		// The deferred root checked the backend when it took these options.
-		<ConsentProvider
-			options={effective as OwnedRuntimeProviderProps['options']}
-		>
+		<InthProvider options={effective as OwnedRuntimeProviderProps['options']}>
 			<Publisher
 				attach={attach}
 				committed={committed}
 			/>
 			{children}
-		</ConsentProvider>
+		</InthProvider>
 	);
 };

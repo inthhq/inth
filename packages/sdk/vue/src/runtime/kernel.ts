@@ -131,7 +131,7 @@ export interface VueConsentKernelContext {
 	/**
 	 * Whether the visitor's policy uses IAB TCF on an app without `iab`.
 	 * The context reports an {@link IABUnavailableError} for it, and
-	 * `ConsentRoot` renders no surface meanwhile.
+	 * `InthProvider` renders no surface meanwhile.
 	 */
 	iabUnavailable: Readonly<Ref<boolean>>;
 	ownsKernel: boolean;

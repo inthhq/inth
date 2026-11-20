@@ -19,7 +19,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { useSnapshot } from '../index';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { policyFixture } from './policy-fixture';
 
 const BACKEND = 'https://consent.example/api/inth';
@@ -109,13 +109,13 @@ test('sends /init during render, before mount effects, once under StrictMode', a
 	const options = { mode: registeredMode(true), persistence: false as const };
 	const view = await render(
 		<StrictMode>
-			<ConsentProvider options={options}>
+			<InthProvider options={options}>
 				<Timing
 					atMount={atMount}
 					atRender={atRender}
 				/>
 				<PolicyProbe />
-			</ConsentProvider>
+			</InthProvider>
 		</StrictMode>
 	);
 
@@ -136,15 +136,13 @@ test('a mode each render builds again sends one request, during render', async (
 	const atRender: number[] = [];
 	const atMount: number[] = [];
 	const App = () => (
-		<ConsentProvider
-			options={{ mode: registeredMode(true), persistence: false }}
-		>
+		<InthProvider options={{ mode: registeredMode(true), persistence: false }}>
 			<Timing
 				atMount={atMount}
 				atRender={atRender}
 			/>
 			<PolicyProbe />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	const view = await render(
 		<StrictMode>
@@ -163,14 +161,12 @@ test('sends nothing during render when the mode resolves locally', async () => {
 	const atRender: number[] = [];
 	const atMount: number[] = [];
 	const view = await render(
-		<ConsentProvider
-			options={{ mode: registeredMode(false), persistence: false }}
-		>
+		<InthProvider options={{ mode: registeredMode(false), persistence: false }}>
 			<Timing
 				atMount={atMount}
 				atRender={atRender}
 			/>
-		</ConsentProvider>
+		</InthProvider>
 	);
 	// The mount effect asks, as it did before.
 	expect(atRender[0]).toBe(0);
@@ -189,12 +185,12 @@ test('sends nothing during render for a returning visitor', async () => {
 		const atRender: number[] = [];
 		const atMount: number[] = [];
 		const view = await render(
-			<ConsentProvider options={{ mode: registeredMode(true) }}>
+			<InthProvider options={{ mode: registeredMode(true) }}>
 				<Timing
 					atMount={atMount}
 					atRender={atRender}
 				/>
-			</ConsentProvider>
+			</InthProvider>
 		);
 		expect(atRender[0]).toBe(0);
 		await view.unmount();
@@ -208,7 +204,7 @@ test('sends nothing during render for a returning visitor', async () => {
 test('an unmount before the answer leaves nothing for the next provider', async () => {
 	const onError = vi.fn();
 	const first = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				callbacks: { onError },
 				mode: registeredMode(true),
@@ -216,7 +212,7 @@ test('an unmount before the answer leaves nothing for the next provider', async 
 			}}
 		>
 			<PolicyProbe />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	expect(initCalls()).toHaveLength(1);
 	await first.unmount();
@@ -226,11 +222,9 @@ test('an unmount before the answer leaves nothing for the next provider', async 
 	// neither kept for it nor applied anywhere.
 	delete (window as Window & { __inthJourney?: unknown }).__inthJourney;
 	const second = await render(
-		<ConsentProvider
-			options={{ mode: registeredMode(true), persistence: false }}
-		>
+		<InthProvider options={{ mode: registeredMode(true), persistence: false }}>
 			<PolicyProbe />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	expect(initCalls()).toHaveLength(2);
 	respond[1]?.('fresh');

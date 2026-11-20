@@ -29,7 +29,7 @@ import { render } from 'vitest-browser-react';
 import { KernelContext } from '../context';
 import { useSnapshot } from '../index';
 import { UNCOMMITTED_HOLD_MS } from '../module-hooks/network-hold';
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { policyFixture } from './policy-fixture';
 
 const BACKEND = 'https://consent.example/api/inth';
@@ -110,10 +110,10 @@ test('sends /init once, before its children render, under StrictMode', async () 
 	const options = { mode: mode(), persistence: false as const };
 	const view = await render(
 		<StrictMode>
-			<ConsentProvider options={options}>
+			<InthProvider options={options}>
 				<SeenAtRender seen={seen} />
 				<PolicyProbe />
-			</ConsentProvider>
+			</InthProvider>
 		</StrictMode>
 	);
 
@@ -142,10 +142,10 @@ test('the early /init and the save it leads to carry one journey', async () => {
 	const options = { mode: mode(), persistence: false as const };
 	const view = await render(
 		<StrictMode>
-			<ConsentProvider options={options}>
+			<InthProvider options={options}>
 				<Capture />
 				<PolicyProbe />
-			</ConsentProvider>
+			</InthProvider>
 		</StrictMode>
 	);
 
@@ -181,11 +181,11 @@ test('a tab journey on the early /init continues the id an earlier page kept', a
 	const id = '3b241101-e2bb-4255-8caf-4136c566a962';
 	sessionStorage.setItem('inth-journey-v1', id);
 	const view = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{ journey: 'tab', mode: mode(), persistence: false }}
 		>
 			<PolicyProbe />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	expect(readJourneyParams(String(initCalls()[0]?.[0]))).toEqual({
 		id,
@@ -197,9 +197,9 @@ test('a tab journey on the early /init continues the id an earlier page kept', a
 
 test('a server render sends nothing, even where window exists', () => {
 	const html = renderToString(
-		<ConsentProvider options={{ mode: mode(), persistence: false }}>
+		<InthProvider options={{ mode: mode(), persistence: false }}>
 			<PolicyProbe />
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 	expect(html).toContain('pending');
@@ -209,10 +209,10 @@ test('a server render sends nothing, even where window exists', () => {
 test('hydration sends nothing during render and asks at mount', async () => {
 	const seen: number[] = [];
 	const app = (
-		<ConsentProvider options={{ mode: mode(), persistence: false }}>
+		<InthProvider options={{ mode: mode(), persistence: false }}>
 			<SeenAtRender seen={seen} />
 			<PolicyProbe />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	const host = document.createElement('div');
 	host.innerHTML = renderToString(app);
@@ -257,10 +257,10 @@ test('a render that suspends before its first commit and its retry share one req
 	// thrown away and the retry builds another.
 	const view = await render(
 		<Suspense fallback={null}>
-			<ConsentProvider options={options}>
+			<InthProvider options={options}>
 				<SuspendsOnce />
 				<PolicyProbe />
-			</ConsentProvider>
+			</InthProvider>
 		</Suspense>
 	);
 	// Sent by the render React threw away.
@@ -290,7 +290,7 @@ test('a hosted() mode created inline shares one request across StrictMode and a 
 	// Every render of the app builds a new `hosted()` factory, as in the
 	// provider's documented example.
 	const App = () => (
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: hosted({ fetch: backendFetch, projectUrl: BACKEND }),
 				persistence: false,
@@ -298,7 +298,7 @@ test('a hosted() mode created inline shares one request across StrictMode and a 
 		>
 			<SuspendsOnce />
 			<PolicyProbe />
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 	const view = await render(
@@ -339,10 +339,10 @@ test('a retry after the shared hosted() options changed sends its own request', 
 		projectUrl: BACKEND,
 	};
 	const App = () => (
-		<ConsentProvider options={{ mode: hosted(shared), persistence: false }}>
+		<InthProvider options={{ mode: hosted(shared), persistence: false }}>
 			<SuspendsOnce />
 			<PolicyProbe />
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 	const view = await render(
@@ -402,10 +402,10 @@ test('a retry after the global fetch changed sends its own request through the n
 	vi.stubGlobal('fetch', globalFetch('old'));
 	// No `fetch`: the transport takes the global one when it is built.
 	const App = () => (
-		<ConsentProvider options={{ persistence: false, projectUrl: BACKEND }}>
+		<InthProvider options={{ persistence: false, projectUrl: BACKEND }}>
 			<SuspendsOnce />
 			<Capture />
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 	const view = await render(
@@ -465,12 +465,12 @@ test('sibling providers given one mode object each get a transport and an /v1/co
 	const view = await render(
 		<StrictMode>
 			{['DE', 'FR'].map((country) => (
-				<ConsentProvider
+				<InthProvider
 					key={country}
 					options={{ mode: shared, overrides: { country }, persistence: false }}
 				>
 					<Capture name={country} />
-				</ConsentProvider>
+				</InthProvider>
 			))}
 		</StrictMode>
 	);
@@ -508,13 +508,13 @@ test('sibling providers given one hosted() mode each get their own /v1/consent/i
 	const view = await render(
 		<StrictMode>
 			{['DE', 'FR'].map((country) => (
-				<ConsentProvider
+				<InthProvider
 					key={country}
 					options={{ mode: shared, overrides: { country }, persistence: false }}
 				>
 					<SeenAtRender seen={seen} />
 					<Capture name={country} />
-				</ConsentProvider>
+				</InthProvider>
 			))}
 		</StrictMode>
 	);
@@ -576,14 +576,14 @@ test('a wrapper around hosted() keeps its own transport when another wrapper wit
 	const view = await render(
 		<>
 			<Suspense fallback={null}>
-				<ConsentProvider options={{ mode: wrap('A'), persistence: false }}>
+				<InthProvider options={{ mode: wrap('A'), persistence: false }}>
 					<SuspendsOnce />
 					<Capture name="A" />
-				</ConsentProvider>
+				</InthProvider>
 			</Suspense>
-			<ConsentProvider options={{ mode: wrap('B'), persistence: false }}>
+			<InthProvider options={{ mode: wrap('B'), persistence: false }}>
 				<Capture name="B" />
-			</ConsentProvider>
+			</InthProvider>
 		</>
 	);
 
@@ -632,7 +632,7 @@ test('a provider asking for another context leaves an early request to the provi
 	const view = await render(
 		<>
 			<Suspense fallback={null}>
-				<ConsentProvider
+				<InthProvider
 					options={{
 						mode: mode(),
 						overrides: { country: 'DE' },
@@ -641,9 +641,9 @@ test('a provider asking for another context leaves an early request to the provi
 				>
 					<SuspendsOnce />
 					<Capture name="DE" />
-				</ConsentProvider>
+				</InthProvider>
 			</Suspense>
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: mode(),
 					overrides: { country: 'FR' },
@@ -651,7 +651,7 @@ test('a provider asking for another context leaves an early request to the provi
 				}}
 			>
 				<Capture name="FR" />
-			</ConsentProvider>
+			</InthProvider>
 		</>
 	);
 
@@ -678,19 +678,19 @@ test('providers whose hosted() modes differ never share a request', async () => 
 	);
 	const view = await render(
 		<>
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: hosted({ fetch: backendFetch, projectUrl: BACKEND }),
 					persistence: false,
 				}}
 			/>
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: hosted({ fetch: backendFetch, projectUrl: `${BACKEND}/other` }),
 					persistence: false,
 				}}
 			/>
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: hosted({
 						fetch: backendFetch,
@@ -700,7 +700,7 @@ test('providers whose hosted() modes differ never share a request', async () => 
 					persistence: false,
 				}}
 			/>
-			<ConsentProvider
+			<InthProvider
 				options={{
 					mode: hosted({ fetch: otherFetch, projectUrl: BACKEND }),
 					persistence: false,
@@ -736,12 +736,12 @@ test('a retry with other overrides asks again rather than use the first answer',
 	const shared = mode();
 	const app = (country: string) => (
 		<Suspense fallback={null}>
-			<ConsentProvider
+			<InthProvider
 				options={{ mode: shared, overrides: { country }, persistence: false }}
 			>
 				<SuspendsOnce />
 				<PolicyProbe />
-			</ConsentProvider>
+			</InthProvider>
 		</Suspense>
 	);
 
@@ -789,11 +789,11 @@ test('a retry that turns the journey on asks again, and its save matches that re
 	const shared = mode();
 	const app = (journey: false | 'page') => (
 		<Suspense fallback={null}>
-			<ConsentProvider options={{ journey, mode: shared, persistence: false }}>
+			<InthProvider options={{ journey, mode: shared, persistence: false }}>
 				<SuspendsOnce />
 				<Capture />
 				<PolicyProbe />
-			</ConsentProvider>
+			</InthProvider>
 		</Suspense>
 	);
 
@@ -834,9 +834,9 @@ test('skipHydration: the early /init says no choice is stored, as the runtime wi
 		delete (window as Window & { __inthJourney?: unknown }).__inthJourney;
 		const before = initCalls().length;
 		const view = await render(
-			<ConsentProvider options={{ mode: mode(), persistence: options }}>
+			<InthProvider options={{ mode: mode(), persistence: options }}>
 				<PolicyProbe />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		const sent = readJourneyParams(String(initCalls()[before]?.[0]));
 		await view.unmount();
@@ -863,9 +863,9 @@ test('a dismissed notice: the early /init says an answer is stored', async () =>
 	await vi.waitFor(() => expect(document.cookie).toContain('inth-notice='));
 	try {
 		const view = await render(
-			<ConsentProvider options={{ mode: mode() }}>
+			<InthProvider options={{ mode: mode() }}>
 				<PolicyProbe />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		expect(readJourneyParams(String(initCalls()[0]?.[0]))?.storedChoice).toBe(
 			true
@@ -896,11 +896,11 @@ test('a runtime whose render never commits sends one request and reads nothing f
 
 	await expect(
 		render(
-			<ConsentProvider
+			<InthProvider
 				options={{ callbacks: { onError }, mode: mode(), persistence: false }}
 			>
 				<Throws />
-			</ConsentProvider>
+			</InthProvider>
 		)
 	).rejects.toThrow('render failed before commit');
 	expect(initCalls()).toHaveLength(1);
@@ -925,7 +925,7 @@ test('unmounting before the response arrives applies it nowhere', async () => {
 	const onPermissionsChanged = vi.fn();
 	const seen: number[] = [];
 	const view = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				callbacks: { onPermissionsChanged, onSurfaceShown },
 				mode: mode(),
@@ -933,7 +933,7 @@ test('unmounting before the response arrives applies it nowhere', async () => {
 			}}
 		>
 			<SeenAtRender seen={seen} />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	expect(seen[0]).toBe(1);
 	await view.unmount();
@@ -972,9 +972,9 @@ test.each([
 ])('%s sends nothing during render', async (_name, extra) => {
 	const seen: number[] = [];
 	const view = await render(
-		<ConsentProvider options={{ mode: mode(), persistence: false, ...extra }}>
+		<InthProvider options={{ mode: mode(), persistence: false, ...extra }}>
 			<SeenAtRender seen={seen} />
-		</ConsentProvider>
+		</InthProvider>
 	);
 	expect(seen[0]).toBe(0);
 	await view.unmount();

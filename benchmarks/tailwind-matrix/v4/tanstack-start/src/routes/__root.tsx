@@ -1,7 +1,7 @@
 import {
 	ConsentBanner,
 	ConsentDialog,
-	ConsentRoot,
+	InthProvider,
 } from '@inth/tanstack-start';
 import {
 	createRootRoute,
@@ -20,7 +20,7 @@ const RootComponent = () => (
 			<HeadContent />
 		</head>
 		<body>
-			<ConsentRoot
+			<InthProvider
 				persistence={false}
 				state={{ projectUrl }}
 				// #region docs:slot
@@ -36,7 +36,7 @@ const RootComponent = () => (
 				<Outlet />
 				<ConsentBanner />
 				<ConsentDialog />
-			</ConsentRoot>
+			</InthProvider>
 			<Scripts />
 		</body>
 	</html>

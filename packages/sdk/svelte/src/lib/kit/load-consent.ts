@@ -1,7 +1,7 @@
 /**
  * `loadConsent` — the `+layout.server.ts` half of the SvelteKit layer.
  *
- * Returns `{ consent }`: a plain, serializable state for `<ConsentRoot
+ * Returns `{ consent }`: a plain, serializable state for `<InthProvider
  * state>`. With it the kernel resolves the policy on the server, so the
  * banner is in the first HTML instead of appearing a frame after
  * hydration. The resolution itself is `resolveRequestConsent` from
@@ -23,7 +23,7 @@ import {
 import type { ServerMode } from '@inth/sdk/server';
 import type { RequestEvent } from '@sveltejs/kit';
 
-import type { ConsentRootState } from '../types';
+import type { InthProviderState } from '../types';
 import type { InthLocals, ConsentRequestOptions } from './types';
 
 /** Options for {@link loadConsent}, when you call it from your own `load`. */
@@ -87,7 +87,7 @@ export interface LoadConsentOptions extends ConsentRequestOptions {
 	 * The banner experiment with the arm this request runs, from your
 	 * feature flag. While the visitor has no stored choice, the server's
 	 * `/v1/consent/init` carries the arm, or its session report does in manifest mode.
-	 * The state carries the experiment to `ConsentRoot`.
+	 * The state carries the experiment to `InthProvider`.
 	 */
 	experiment?: ServerExperiment;
 }
@@ -144,7 +144,7 @@ const requestFrom = function requestFrom(
 };
 
 /**
- * Resolves the visitor's consent for `<ConsentRoot state>`. Export it as
+ * Resolves the visitor's consent for `<InthProvider state>`. Export it as
  * the root layout's `load`:
  *
  * ```ts
@@ -154,7 +154,7 @@ const requestFrom = function requestFrom(
  *
  * ```svelte
  * <!-- src/routes/+layout.svelte -->
- * <ConsentRoot state={data.consent}>
+ * <InthProvider state={data.consent}>
  * ```
  *
  * It resolves with the mode `inthHandle()` was given. With none, or with
@@ -168,12 +168,12 @@ const requestFrom = function requestFrom(
  * SvelteKit prerenders, the page carries no visitor's consent and makes no
  * upstream call; the browser resolves the visitor itself.
  *
- * @returns `{ consent }`, for `<ConsentRoot state={data.consent}>`.
+ * @returns `{ consent }`, for `<InthProvider state={data.consent}>`.
  */
 export const loadConsent = async function loadConsent(
 	event: RequestEvent,
 	options: LoadConsentOptions = {}
-): Promise<{ consent: ConsentRootState }> {
+): Promise<{ consent: InthProviderState }> {
 	const locals = readLocals(event);
 	const server = readServerMode(locals);
 	// Per-call inputs beat the handle's: a route that passes `country` is
@@ -208,7 +208,7 @@ export const loadConsent = async function loadConsent(
 		trustForwardedHeaders: options.trustForwardedHeaders,
 		waitUntil: backgroundWorkFor(event, options.onBackgroundRevalidate),
 	});
-	const consent: ConsentRootState = {
+	const consent: InthProviderState = {
 		mode: server.browser.mode,
 		prefetch: state,
 	};

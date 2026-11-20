@@ -18,7 +18,7 @@
  * backend save; then the engine loads, starts from the record and sends
  * the save without recording it again.
  *
- * The same design as `@inth/svelte`'s `ConsentRoot` and `@inth/vue`'s Nuxt
+ * The same design as `@inth/svelte`'s `InthProvider` and `@inth/vue`'s Nuxt
  * module.
  *
  * @packageDocumentation

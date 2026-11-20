@@ -1,12 +1,12 @@
 <script lang="ts">
 	import BenchShell from '$lib/bench-shell.svelte';
 	import { benchConsentCategories } from '$lib/fixture';
-	import { ConsentProvider, hosted } from '@inth/svelte';
+	import { InthProvider, hosted } from '@inth/svelte';
 
 	let { children } = $props();
 </script>
 
-<ConsentProvider
+<InthProvider
 	options={{
 		projectUrl: '/api/bench-consent',
 		mode: hosted(),
@@ -18,4 +18,4 @@
 	<BenchShell scenario="client">
 		{@render children()}
 	</BenchShell>
-</ConsentProvider>
+</InthProvider>

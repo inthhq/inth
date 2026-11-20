@@ -4,19 +4,19 @@ description: Render the Inth consent banner in Nuxt, choose its variant and posi
 group: frameworks
 ---
 
-## Import the banner in place of `ConsentRoot`
+## Import the banner in place of `InthProvider`
 
-`ConsentRoot` already renders `ConsentBanner`. Import the banner yourself
+`InthProvider` already renders `ConsentBanner`. Import the banner yourself
 only when you compose the surfaces, for example to set its variant in the
 template. The Nuxt module does not register `ConsentBanner` globally, so
 import it from `@inth/nuxt/components/consent-banner`:
 
 <include src="../../../shared/examples/nuxt/consent-surfaces.mdx" />
 
-Render this component in `app.vue` in place of `ConsentRoot`. Render
+Render this component in `app.vue` in place of `InthProvider`. Render
 `ConsentManager` with it, or Customize opens nothing. A statically imported
-`ConsentManager` is part of your main bundle, while `ConsentRoot` loads the
-dialog as a separate chunk. Unlike `ConsentRoot`, these components do not
+`ConsentManager` is part of your main bundle, while `InthProvider` loads the
+dialog as a separate chunk. Unlike `InthProvider`, these components do not
 switch to the IAB surfaces under an IAB policy. The module still writes the
 `tokens` option to the page head.
 

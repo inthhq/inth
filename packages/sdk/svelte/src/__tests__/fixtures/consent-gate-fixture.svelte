@@ -2,7 +2,7 @@
 	import type { AllConsentNames, ConsentKernel } from '@inth/sdk/engine';
 
 	import ConsentGate from '../../lib/components/consent-gate.svelte';
-	import ConsentProvider from '../../lib/components/consent-provider.svelte';
+	import InthProvider from '../../lib/components/inth-provider.svelte';
 	import type { ConsentManagerOptions } from '../../lib/types';
 	import Capture from './conformance-kernel-capture.svelte';
 
@@ -17,7 +17,7 @@
 	} = $props();
 </script>
 
-<ConsentProvider {options}>
+<InthProvider {options}>
 	<Capture {onKernel} />
 	<ConsentGate {category} />
-</ConsentProvider>
+</InthProvider>

@@ -145,6 +145,202 @@ const applyApiFallbacks = function applyApiFallbacks(base: string) {
 	}
 };
 
+const REACT_ROOT_NAMES = {
+	InthProvider: 'ConsentProvider',
+	InthProviderCallbacks: 'ConsentProviderCallbacks',
+	InthProviderOptions: 'ConsentProviderOptions',
+	InthProviderPrefetch: 'ConsentProviderPrefetch',
+	InthProviderProps: 'ConsentProviderProps',
+};
+const FRAMEWORK_ROOT_NAMES = {
+	...REACT_ROOT_NAMES,
+	InthProvider: 'ConsentRoot',
+	InthProviderProps: 'ConsentRootProps',
+};
+
+/**
+ * Where a head import comes from on an older base: the module to import
+ * from, the old name of each renamed export, and whether the head's module
+ * is missing there, so its other names move with them.
+ */
+interface ImportFallback {
+	module: string;
+	names: Record<string, string>;
+	moduleMissing?: boolean;
+}
+
+/** Each module's root names before every web package named its root `InthProvider`. */
+const ROOT_RENAME_IMPORTS: Record<string, ImportFallback> = {
+	'@inth/nextjs': { module: '@inth/nextjs', names: FRAMEWORK_ROOT_NAMES },
+	'@inth/nextjs/react': {
+		module: '@inth/nextjs',
+		moduleMissing: true,
+		names: REACT_ROOT_NAMES,
+	},
+	'@inth/react': { module: '@inth/react', names: REACT_ROOT_NAMES },
+	'@inth/react/provider': {
+		module: '@inth/react/provider',
+		names: REACT_ROOT_NAMES,
+	},
+	'@inth/svelte': {
+		module: '@inth/svelte',
+		names: {
+			InthProvider: 'ConsentProvider',
+			InthProviderCallbacks: 'ConsentProviderCallbacks',
+		},
+	},
+	'@inth/svelte/kit': {
+		module: '@inth/svelte',
+		names: {
+			InthProvider: 'ConsentRoot',
+			InthProviderState: 'ConsentRootState',
+		},
+	},
+	'@inth/tanstack-start': {
+		module: '@inth/tanstack-start',
+		names: FRAMEWORK_ROOT_NAMES,
+	},
+	'@inth/tanstack-start/react': {
+		module: '@inth/tanstack-start',
+		moduleMissing: true,
+		names: REACT_ROOT_NAMES,
+	},
+	'@inth/vue': { module: '@inth/vue', names: { InthProvider: 'ConsentRoot' } },
+	'@inth/vue/vue-plugin': {
+		module: '@inth/vue/vue-plugin',
+		names: { InthProvider: 'ConsentRoot' },
+	},
+};
+
+/**
+ * A base that has `InthProvider` but not the `/react` entries: React's
+ * provider, under the same names, is only at `@inth/react` there.
+ */
+const REACT_ENTRY_IMPORTS: Record<string, ImportFallback> = {
+	'@inth/nextjs/react': {
+		module: '@inth/react',
+		moduleMissing: true,
+		names: {},
+	},
+	'@inth/tanstack-start/react': {
+		module: '@inth/react',
+		moduleMissing: true,
+		names: {},
+	},
+};
+
+const MODULE_STATEMENT =
+	/\b(?<keyword>import|export)(?<typeOnly>\s+type)?\s*\{(?<list>[^}]*)\}\s*from\s*(?<quote>['"])(?<module>[^'"]+)\k<quote>;?/gu;
+const SPECIFIER =
+	/^(?<typePrefix>type\s+)?(?<name>\w+)(?:\s+as\s+(?<alias>\w+))?$/u;
+
+interface ModuleStatement {
+	keyword: string;
+	list: string;
+	module: string;
+	quote: string;
+	typeOnly?: string;
+}
+
+/**
+ * Imports and re-exports of a renamed name, aliased to the name the base
+ * exports, so the code that uses them stays as the head wrote it. Other
+ * names stay in the original statement, or move with them when the head's
+ * module is missing on the base.
+ */
+const aliasImports = function aliasImports(
+	source: string,
+	fallbacks: Record<string, ImportFallback>
+): string {
+	return source.replace(MODULE_STATEMENT, (statement: string, ...rest) => {
+		const {
+			keyword,
+			list,
+			module,
+			quote,
+			typeOnly = '',
+		} = rest.at(-1) as ModuleStatement;
+		const target = fallbacks[module];
+		if (!target) {
+			return statement;
+		}
+		const kept: string[] = [];
+		const moved: string[] = [];
+		for (const raw of list.split(',')) {
+			const specifier = raw.trim();
+			if (!specifier) {
+				continue;
+			}
+			const {
+				alias,
+				name,
+				typePrefix = '',
+			} = SPECIFIER.exec(specifier)?.groups ?? {};
+			const old = name === undefined ? undefined : target.names[name];
+			if (old === undefined) {
+				kept.push(specifier);
+			} else {
+				moved.push(`${typePrefix}${old} as ${alias ?? name}`);
+			}
+		}
+		if (moved.length === 0 && !target.moduleMissing) {
+			return statement;
+		}
+		const write = (specifiers: string[], from: string) =>
+			`${keyword}${typeOnly} { ${specifiers.join(', ')} } from ${quote}${from}${quote};`;
+		const keptModule = target.moduleMissing ? target.module : module;
+		return [
+			...(kept.length > 0 ? [write(kept, keptModule)] : []),
+			...(moved.length > 0 ? [write(moved, target.module)] : []),
+		].join('\n');
+	});
+};
+
+/**
+ * A base from before `InthProvider` gets the head's fixtures with their root
+ * imports aliased to the old names, and Nuxt's global component under its
+ * old tag. A base with `InthProvider` but no `/react` entries takes React's
+ * provider from `@inth/react`.
+ */
+const applyRootNameFallback = function applyRootNameFallback(
+	base: string,
+	files: string[]
+) {
+	const reactProvider = join(base, 'packages/sdk/react/src/provider.tsx');
+	const rootRenamed =
+		existsSync(reactProvider) &&
+		readFileSync(reactProvider, 'utf8').includes('export const InthProvider');
+	const reactEntry = existsSync(join(base, 'packages/sdk/nextjs/src/react.ts'));
+	if (rootRenamed && reactEntry) {
+		return;
+	}
+	const fallbacks = rootRenamed ? REACT_ENTRY_IMPORTS : ROOT_RENAME_IMPORTS;
+	for (const file of files) {
+		if (!/\.(?:[cm]?[jt]sx?|svelte|vue)$/u.test(file)) {
+			continue;
+		}
+		const path = join(base, file);
+		if (!existsSync(path)) {
+			continue;
+		}
+		const source = readFileSync(path, 'utf8');
+		let updated = aliasImports(source, fallbacks);
+		if (
+			!rootRenamed &&
+			file.endsWith('.vue') &&
+			!/\bInthProvider\b[^\n]*\bfrom\b/u.test(updated)
+		) {
+			updated = updated.replace(
+				/<(?<close>\/?)InthProvider\b/gu,
+				'<$<close>ConsentRoot'
+			);
+		}
+		if (updated !== source) {
+			writeFileSync(path, updated);
+		}
+	}
+};
+
 /** Use identical fixtures, including deletions, while retaining each revision's product. */
 export const replaceBenchmarkFixtures = function replaceBenchmarkFixtures(
 	source: string,
@@ -221,10 +417,12 @@ export const replaceBenchmarkFixtures = function replaceBenchmarkFixtures(
 		}
 		rmSync(join(base, file), { force: true });
 	}
+	const copied: string[] = [];
 	for (const file of tracked(source, true)) {
 		if (!existsSync(join(source, file)) || isInNewPackage(file)) {
 			continue;
 		}
+		copied.push(file);
 		mkdirSync(dirname(join(base, file)), { recursive: true });
 		const manifest = manifests.get(file);
 		if (manifest === undefined) {
@@ -235,4 +433,5 @@ export const replaceBenchmarkFixtures = function replaceBenchmarkFixtures(
 	}
 	preserveBaseStyleImports(base);
 	applyApiFallbacks(base);
+	applyRootNameFallback(base, copied);
 };

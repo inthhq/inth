@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 /**
  * Under `cacheComponents`, awaiting request data directly in a layout is a
  * build error (`blocking-prerender-dynamic`). The only way to keep the
- * documented `resolveConsent` + `ConsentRoot` pattern building
+ * documented `resolveConsent` + `InthProvider` pattern building
  * is to move the await into an async child behind `<Suspense>`, which puts
  * the whole root in the postponed hole. The suite then checks what that
  * costs: the first HTML no longer carries the banner.

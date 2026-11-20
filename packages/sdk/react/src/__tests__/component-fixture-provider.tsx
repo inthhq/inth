@@ -6,8 +6,8 @@ import { useContext, useEffect, useId } from 'react';
 import { KernelContext } from '../context';
 import { IABProvider } from '../iab-context';
 import type { IABProviderProps } from '../iab-context';
-import { ConsentProvider } from '../provider';
-import type { ConsentProviderOptions } from '../provider';
+import { InthProvider } from '../provider';
+import type { InthProviderOptions } from '../provider';
 import { policyFixture } from './policy-fixture';
 
 /**
@@ -25,7 +25,7 @@ const FILE_PREFIX = crypto.randomUUID().slice(0, 8);
 export const DEFAULT_KEY_STORAGE = { storageKey: CONSENT_STORAGE_KEY };
 
 /** Canonical provider options plus explicit test navigation and IAB composition. */
-export interface ComponentFixtureOptions extends ConsentProviderOptions {
+export interface ComponentFixtureOptions extends InthProviderOptions {
 	initialUI?: KernelActiveUI;
 	iab?: Omit<IABProviderProps, 'children'>;
 }
@@ -55,7 +55,7 @@ export const ComponentFixtureProvider = ({
 		</>
 	);
 	return (
-		<ConsentProvider
+		<InthProvider
 			options={{
 				...options,
 				persistence: options.persistence ?? { sync: false },
@@ -68,6 +68,6 @@ export const ComponentFixtureProvider = ({
 			) : (
 				content
 			)}
-		</ConsentProvider>
+		</InthProvider>
 	);
 };

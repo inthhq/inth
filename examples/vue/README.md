@@ -10,7 +10,7 @@ host.
   Vite's pre-bundling.
 - `src/main.ts` installs `inthVue` with `hosted()` and loads PostHog once the
   visitor allows measurement.
-- `src/App.vue` mounts `ConsentRoot` for the banner and dialog, and a Privacy
+- `src/App.vue` mounts `InthProvider` for the banner and dialog, and a Privacy
   settings link that reopens the dialog.
 
 ## Run it

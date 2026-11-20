@@ -26,19 +26,19 @@ These docs describe Inth v3. Find your app's row in Choose your setup, then foll
 ### Svelte
 
 - [Callbacks](./frameworks/svelte/callbacks.md): Run your own code in a Svelte app when a visitor records a choice or permissions change, with onChoiceRecorded, onPermissionsChanged and script callbacks.
-- [Clear on revocation](./frameworks/svelte/clear-on-revocation.md): Delete the first-party cookies and Web Storage keys a consent category owns in a Svelte app when that category is denied, with the clearOnRevocation prop on ConsentProvider.
-- [Components](./frameworks/svelte/components.md): Props and behavior of every @inth/svelte component in a Svelte app, from ConsentProvider and ConsentBanner to ConsentGate and DevTools.
+- [Clear on revocation](./frameworks/svelte/clear-on-revocation.md): Delete the first-party cookies and Web Storage keys a consent category owns in a Svelte app when that category is denied, with the clearOnRevocation prop on InthProvider.
+- [Components](./frameworks/svelte/components.md): Props and behavior of every @inth/svelte component in a Svelte app, from InthProvider and ConsentBanner to ConsentGate and DevTools.
 - [ConsentBanner](./frameworks/svelte/components/consent-banner.md): Show the Inth cookie banner in a Svelte app with ConsentBanner, and set its variant, position, button layout, copy, accessibility and styling hooks.
 - [ConsentButton](./frameworks/svelte/components/consent-button.md): Accept, reject, save or open preferences from your own Svelte markup with ConsentButton, and what each action records.
 - [ConsentDialog](./frameworks/svelte/components/consent-dialog.md): Add the Inth preference dialog to a Svelte app with ConsentDialog, including how it loads on first use, its props, keyboard behavior and theme slots.
 - [ConsentDialogLink](./frameworks/svelte/components/consent-dialog-link.md): Let visitors reopen Inth preferences from a Svelte footer with ConsentDialogLink, an unstyled button that renders only when the policy offers preferences.
 - [ConsentDialogTrigger](./frameworks/svelte/components/consent-dialog-trigger.md): Add a floating, draggable privacy button to a Svelte app with ConsentDialogTrigger, and set its corner, size, saved position, accessible name and callbacks.
 - [ConsentGate](./frameworks/svelte/components/consent-gate.md): Keep a YouTube video or map out of a Svelte page until its consent category is allowed with ConsentGate, and replace its placeholder.
-- [ConsentProvider](./frameworks/svelte/components/consent-provider.md): Mount ConsentProvider at the root of a Svelte app to start Inth, with every prop, its default, and which options update after mount.
 - [ConsentWidget](./frameworks/svelte/components/consent-widget.md): Put Inth's category switches inline on a Svelte privacy settings page with ConsentWidget, and how its draft, vendors and stale-policy alert behave.
 - [DevTools](./frameworks/svelte/components/dev-tools.md): Inspect consent, scripts, location and events in a Svelte app with ConsentDevTools from @inth/svelte/devtools, loaded only in development.
 - [IABConsentBanner](./frameworks/svelte/components/iab-consent-banner.md): Show the IAB TCF 2.4 first-layer banner to visitors under an IAB policy in a Svelte app with IABConsentBanner, its props and behavior.
 - [IABConsentDialog](./frameworks/svelte/components/iab-consent-dialog.md): Show the IAB TCF 2.4 preference center with purposes, features and vendors in a Svelte app with IABConsentDialog.
+- [InthProvider](./frameworks/svelte/components/inth-provider.md): Mount InthProvider at the root of a Svelte app to start Inth, with every prop, its default, and which options update after mount.
 - [Primitives](./frameworks/svelte/components/primitives.md): Build your own accessible consent dialog in Svelte with the Dialog, Switch, Tabs, Accordion and PreferenceItem primitives and the focusTrap, scrollLock and portal actions.
 - [Content Security Policy](./frameworks/svelte/content-security-policy.md): Write a Content Security Policy for a Svelte app using Inth, with the hosts to allow, the provider's nonce option and what Inth injects.
 - [Customize](./frameworks/svelte/customize.md): Change Inth's colors, shape, button styles and copy in a Svelte app with a token stylesheet, theme slots, presentation props and translations.
@@ -52,24 +52,24 @@ These docs describe Inth v3. Find your app's row in Choose your setup, then foll
 - [Scripts](./frameworks/svelte/scripts.md): Load vendor scripts, iframes and network requests in a Svelte app only after the visitor allows their consent category, and stop them when consent is withdrawn.
 - [Translations](./frameworks/svelte/translations.md): Change Inth banner and dialog copy in a Svelte app with component text props or the provider's i18n option, and switch languages at runtime.
 - [Troubleshooting](./frameworks/svelte/troubleshooting.md): Fix a Vite build that cannot fetch the Inth manifest, a missing bundled policy, a missing banner, a wrong backend URL, ignored theme colors and vendors that load before consent in a Svelte app.
-- [Vendor consent](./frameworks/svelte/vendor-consent.md): Let visitors allow a category such as marketing in a Svelte app and still turn off one vendor in it, with the vendors prop on ConsentProvider and getConsentManager.
+- [Vendor consent](./frameworks/svelte/vendor-consent.md): Let visitors allow a category such as marketing in a Svelte app and still turn off one vendor in it, with the vendors prop on InthProvider and getConsentManager.
 
 ### SvelteKit
 
 - [Callbacks](./frameworks/sveltekit/callbacks.md): Run your own code in a SvelteKit app when a visitor records a choice or permissions change, with onChoiceRecorded, onPermissionsChanged and script callbacks.
-- [Clear on revocation](./frameworks/sveltekit/clear-on-revocation.md): Delete the first-party cookies and Web Storage keys a consent category owns in a SvelteKit app when that category is denied, with the clearOnRevocation prop on ConsentRoot.
-- [Components](./frameworks/sveltekit/components.md): Props and behavior of every @inth/svelte component in a SvelteKit app, from ConsentRoot and ConsentBanner to ConsentGate and DevTools.
+- [Clear on revocation](./frameworks/sveltekit/clear-on-revocation.md): Delete the first-party cookies and Web Storage keys a consent category owns in a SvelteKit app when that category is denied, with the clearOnRevocation prop on InthProvider.
+- [Components](./frameworks/sveltekit/components.md): Props and behavior of every @inth/svelte component in a SvelteKit app, from InthProvider and ConsentBanner to ConsentGate and DevTools.
 - [ConsentBanner](./frameworks/sveltekit/components/consent-banner.md): Show the Inth cookie banner in SvelteKit server HTML with ConsentBanner, and set its variant, position, button layout, copy, accessibility and styling hooks.
 - [ConsentButton](./frameworks/sveltekit/components/consent-button.md): Accept, reject, save or open preferences from SvelteKit pages with ConsentButton, and what each action records.
 - [ConsentDialog](./frameworks/sveltekit/components/consent-dialog.md): Add the Inth preference dialog to a SvelteKit root layout with ConsentDialog, including how it loads after hydration, its props, keyboard behavior and theme slots.
 - [ConsentDialogLink](./frameworks/sveltekit/components/consent-dialog-link.md): Let visitors reopen Inth preferences from a SvelteKit layout footer with ConsentDialogLink, rendered in server HTML when the policy offers preferences.
 - [ConsentDialogTrigger](./frameworks/sveltekit/components/consent-dialog-trigger.md): Add a floating, draggable privacy button to a SvelteKit layout with ConsentDialogTrigger, and set its corner, size, saved position, accessible name and callbacks.
 - [ConsentGate](./frameworks/sveltekit/components/consent-gate.md): Keep a YouTube video or map out of SvelteKit server HTML until its consent category is allowed with ConsentGate, and replace its placeholder.
-- [ConsentRoot](./frameworks/sveltekit/components/consent-root.md): Mount ConsentRoot in a SvelteKit root layout with the state loadConsent returns, so the banner is in the first HTML, with every prop and its default.
 - [ConsentWidget](./frameworks/sveltekit/components/consent-widget.md): Put Inth's category switches inline on a SvelteKit privacy settings route with ConsentWidget, and how its draft, vendors and stale-policy alert behave.
 - [DevTools](./frameworks/sveltekit/components/dev-tools.md): Inspect consent, scripts, location and events in a SvelteKit app with ConsentDevTools, imported only when $app/env reports development.
 - [IABConsentBanner](./frameworks/sveltekit/components/iab-consent-banner.md): Show the IAB TCF 2.4 first-layer banner to visitors under an IAB policy in a SvelteKit app with IABConsentBanner, its props and behavior.
 - [IABConsentDialog](./frameworks/sveltekit/components/iab-consent-dialog.md): Show the IAB TCF 2.4 preference center with purposes, features and vendors in a SvelteKit app with IABConsentDialog.
+- [InthProvider](./frameworks/sveltekit/components/inth-provider.md): Mount InthProvider in a SvelteKit root layout with the state loadConsent returns, so the banner is in the first HTML, with every prop and its default.
 - [Primitives](./frameworks/sveltekit/components/primitives.md): Build your own accessible consent dialog in SvelteKit with the Dialog, Switch, Tabs, Accordion and PreferenceItem primitives and the focusTrap, scrollLock and portal actions.
 - [Content Security Policy](./frameworks/sveltekit/content-security-policy.md): Write a Content Security Policy for a SvelteKit app using Inth with SvelteKit's csp option, covering vendor hosts, Inth's style elements, the server-rendered theme style and style attributes.
 - [Customize](./frameworks/sveltekit/customize.md): Render Inth brand colors on the SvelteKit server with generateThemeCSS, and change slots, button styles, banner shape and copy.
@@ -80,13 +80,13 @@ These docs describe Inth v3. Find your app's row in Choose your setup, then foll
 - [Headless](./frameworks/sveltekit/headless.md): Replace the Inth banner or preference dialog with your own markup in a SvelteKit app while the provider keeps policy, storage and script loading.
 - [IAB TCF](./frameworks/sveltekit/iab.md): Turn on the IAB TCF 2.4 banner and preference center in a SvelteKit app with IABConsentBanner, IABConsentDialog and the provider's iab option.
 - [Network blocker](./frameworks/sveltekit/network-blocker.md): Hold browser fetch and XMLHttpRequest calls to tracking domains in a SvelteKit app until their consent category is allowed, with the networkBlocker option.
-- [Quickstart](./frameworks/sveltekit/quickstart.md): Bundle your Inth policy into a SvelteKit server at build time, resolve consent in the root layout load so the banner is in the server HTML, then hydrate ConsentRoot with consent-gated scripts and a preferences link.
+- [Quickstart](./frameworks/sveltekit/quickstart.md): Bundle your Inth policy into a SvelteKit server at build time, resolve consent in the root layout load so the banner is in the server HTML, then hydrate InthProvider with consent-gated scripts and a preferences link.
 - [Rendering and deployment](./frameworks/sveltekit/rendering.md): Use the recommended build-time manifest for SvelteKit server rendering, choose runtime fetching for policy updates without a rebuild, and handle prerendered pages, static sites and SPA mode.
 - [Scripts](./frameworks/sveltekit/scripts.md): Load vendor scripts, iframes and network requests in a SvelteKit app only after the visitor allows their consent category, and stop them when consent is withdrawn.
 - [Server API](./frameworks/sveltekit/server-api.md): Reference for inthHandle, loadConsent and createConsentRoute from @inth/svelte/kit, with every option and default.
 - [Translations](./frameworks/sveltekit/translations.md): Change Inth banner and dialog copy in a SvelteKit app, where the server-resolved consent carries the translations for the request's language.
 - [Troubleshooting](./frameworks/sveltekit/troubleshooting.md): Fix a SvelteKit build that cannot fetch the Inth manifest, a missing bundled policy, a banner missing from server HTML, failed saves through the consent route, a wrong backend URL and ignored theme colors.
-- [Vendor consent](./frameworks/sveltekit/vendor-consent.md): Let visitors allow a category such as marketing in a SvelteKit app and still turn off one vendor in it, with the vendors prop on ConsentRoot and getConsentManager.
+- [Vendor consent](./frameworks/sveltekit/vendor-consent.md): Let visitors allow a category such as marketing in a SvelteKit app and still turn off one vendor in it, with the vendors prop on InthProvider and getConsentManager.
 
 ## Concepts
 

@@ -4,7 +4,7 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentRoot,
+	InthProvider,
 } from '@inth/tanstack-start';
 import {
 	consentLoaderOptions,
@@ -35,7 +35,7 @@ const RootComponent = () => {
 				<HeadContent />
 			</head>
 			<body>
-				<ConsentRoot
+				<InthProvider
 					state={consent}
 					scripts={scripts}
 				>
@@ -45,7 +45,7 @@ const RootComponent = () => {
 					<footer>
 						<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 					</footer>
-				</ConsentRoot>
+				</InthProvider>
 				<Scripts />
 			</body>
 		</html>

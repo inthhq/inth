@@ -36,9 +36,9 @@ and caches it in memory. Keep the plugin: it still supplies the backend URL.
 Pass the same `mode`, and the same `routePrefix`, to `createConsentRoute`, so
 the route reads the manifest where the render does.
 
-`createConsentStateHandler({ mode })` takes `manifest()`, `hosted()` or
-`testing()` from `@inth/tanstack-start`. They are plain data, so the state
-carries the mode to `ConsentRoot`, and the browser loads only that mode's
+`createConsentStateHandler({ mode })` takes `manifest()` or `hosted()` from
+`@inth/tanstack-start`, or `testing()` from `@inth/tanstack-start/testing`. They are plain data, so the state
+carries the mode to `InthProvider`, and the browser loads only that mode's
 code. A mode's `snapshot` stays on the server.
 [Consent modes](/docs/concepts/modes) compares them.
 
@@ -50,7 +50,7 @@ manifest and add little time. Change the wait with `timeoutMs` in
 `createConsentStateHandler`.
 
 When the state shows that the visitor's consent already allows some `scripts`
-entries, through a stored choice or a policy that asks for none, `ConsentRoot`
+entries, through a stored choice or a policy that asks for none, `InthProvider`
 renders an inline script after your page content. After first paint, it runs
 those entries' setup and inserts their tags, so they start loading before the
 page hydrates. Entries with `alwaysLoad` start this way whatever the visitor
@@ -63,14 +63,14 @@ start this way, except Cloudflare Zaraz and Sentry. Those two helpers, and
 `scripts` entries you write yourself, start after hydration.
 
 To start every `scripts` entry after hydration instead, pass
-`scriptLoader={{ serverStart: false }}` to `ConsentRoot`. It then renders no
+`scriptLoader={{ serverStart: false }}` to `InthProvider`. It then renders no
 inline script.
 
 ## Stream the page while consent resolves
 
 With runtime fetching, return the pending server function call instead of
 awaiting it. TanStack Router streams the promise to the browser and
-`ConsentRoot` accepts it as `state`. This root fetches the manifest at
+`InthProvider` accepts it as `state`. This root fetches the manifest at
 runtime, and its loader does not await:
 
 <include src="../../shared/examples/tanstack-start/streamed-root.mdx" />
@@ -79,7 +79,7 @@ The response starts without waiting for the backend. What changes for the
 visitor:
 
 - The page streams at once. The banner follows in a later chunk of the same
-  response, before hydration. Pass `streamBanner: false` in `ConsentRoot`'s
+  response, before hydration. Pass `streamBanner: false` in `InthProvider`'s
   `options` to mount it after hydration instead.
 - Until then every optional category is denied, so gated scripts and embeds
   stay blocked. A returning visitor's stored choice applies when the state
@@ -120,7 +120,7 @@ Keep these details right:
 - `createConsentStateHandler` keeps the absolute backend URL from
   `consentManifest()` for its own requests. It never fetches under
   `routePrefix`, so the render cannot call its own route.
-- `routePrefix` puts the prefix on the state, so `ConsentRoot` sends the
+- `routePrefix` puts the prefix on the state, so `InthProvider` sends the
   browser's init to `/api/inth/v1/consent/init` and binds each save to the policy it
   resolved. It also makes the page load IAB vendor lists through the route.
   It means the same as Next.js `defineConsentConfig({ routePrefix })`, and
@@ -154,7 +154,7 @@ resolve consent from the backend URL `consentManifest()` read:
 
 - `state={{}}` means no server state. The page renders without consent UI and
   every optional category stays denied until the browser has the policy.
-  `ConsentRoot` takes the backend URL from `consentManifest()`; without the
+  `InthProvider` takes the backend URL from `consentManifest()`; without the
   plugin, an empty state throws, because there is no backend to ask. Pass
   `state={{ mode: testing() }}` to resolve without one.
 - The browser sends its `/v1/consent/init` request straight to your backend URL, so the
@@ -162,10 +162,10 @@ resolve consent from the backend URL `consentManifest()` read:
   your Inth project's trusted origins.
 - `consentPrefetchHead` is optional. It adds an inline script to `<head>` that
   starts the `/v1/consent/init` request before the app's JavaScript loads, and
-  `ConsentRoot` uses that response instead of sending its own. If Inth
+  `InthProvider` uses that response instead of sending its own. If Inth
   assigns a banner experiment's arm, pass the experiment too:
   `consentPrefetchHead({ projectUrl, experiment })`. Without it,
-  `ConsentRoot` sends a second `/v1/consent/init` for visitors who have not chosen yet.
+  `InthProvider` sends a second `/v1/consent/init` for visitors who have not chosen yet.
 
 Drop the consent loader from a prerendered root. A loader that stays anyway
 is safe: while TanStack Start prerenders (`TSS_PRERENDERING`),
@@ -186,15 +186,15 @@ answers. You write the consent transport yourself, and new policy needs a
 rebuild. A manifest with neither rule resolves to a failed
 `insufficient-inputs` result.
 
-## Know when ConsentRoot loads its engine
+## Know when InthProvider loads its engine
 
-`ConsentRoot` keeps Inth's consent engine out of the page's first-load
+`InthProvider` keeps Inth's consent engine out of the page's first-load
 JavaScript. The engine is the code that stores consent, saves choices and
 renders the banner in React. The server still renders the whole root, so the
 banner, its styles and any scripts the server starts are in the first HTML,
 with the consent state the page rendered from.
 
-In the browser the page under `ConsentRoot` hydrates at once. Until the engine
+In the browser the page under `InthProvider` hydrates at once. Until the engine
 loads, Inth's hooks return the consent state the server rendered with, and
 most of their actions, such as `useSetActiveUI()`, wait for the engine and run
 when it arrives. The banner keeps its server HTML.
@@ -223,8 +223,8 @@ When the engine loads depends on the visitor:
 | Visitor | Engine loads |
 | --- | --- |
 | The banner asks them to choose and no optional category is allowed | When the first of these happens: every `<img fetchpriority="high">` on the page has loaded, the visitor presses a pointer or key or scrolls anywhere outside the banner, a tap on the banner was recorded, or 10 seconds pass. A page without a priority image waits for the `load` event instead. |
-| A returning visitor who already chose and sees no banner or dialog | At the same moments as the row above. Until then `ConsentRoot` inserts the plain `scripts` and `useScriptLoader()` entries their choice allows itself, as hydration starts. |
-| Any other visitor, such as one under an IAB policy or one whose browser holds a newer choice than the server read | As soon as the browser runs `ConsentRoot`'s first-load chunk, before hydration. |
+| A returning visitor who already chose and sees no banner or dialog | At the same moments as the row above. Until then `InthProvider` inserts the plain `scripts` and `useScriptLoader()` entries their choice allows itself, as hydration starts. |
+| Any other visitor, such as one under an IAB policy or one whose browser holds a newer choice than the server read | As soon as the browser runs `InthProvider`'s first-load chunk, before hydration. |
 
 On a slow connection the engine would otherwise share bandwidth with the
 page's largest image and delay Largest Contentful Paint. The browser stops
@@ -250,7 +250,7 @@ some entries with callbacks (see below).
 choice was recorded, or a returning visitor's stored choice allows its
 scripts, and at once for a script that may run now.
 
-`ConsentRoot` loads the engine at once when a `scripts` entry may run for this
+`InthProvider` loads the engine at once when a `scripts` entry may run for this
 visitor (`alwaysLoad`, or a category that is allowed) and nothing else starts
 it: the server did not start it from the HTML, and it is not a plain `src`
 entry the root starts itself for a returning visitor (see the table above).
@@ -271,7 +271,7 @@ revoke, which loads the engine too. An entry the visitor denied that sets
 `observeConsentBeforeLoad` and `onConsentChange` loads the engine at once,
 so it hears the denial straight away.
 
-`ConsentRoot` renders the engine before the page hydrates, as a statically
+`InthProvider` renders the engine before the page hydrates, as a statically
 imported root would, when the state was not resolved for this request (a
 prerendered page, or the static root's `{}`), when `options.enabled` is
 `false`, with `options.experiment`, with a `networkBlocker` or

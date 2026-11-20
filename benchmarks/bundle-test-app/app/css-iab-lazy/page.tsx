@@ -1,7 +1,7 @@
 'use client';
 
 import { benchPolicy } from '@inth/benchmarking/bench-policy';
-import { ConsentProvider } from '@inth/react/provider';
+import { InthProvider } from '@inth/react/provider';
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
 
@@ -17,7 +17,7 @@ const CssIabLazyPage = () => {
 	const [open, setOpen] = useState(false);
 
 	return (
-		<ConsentProvider
+		<InthProvider
 			options={{
 				mode: benchPolicy({
 					policy: [
@@ -42,7 +42,7 @@ const CssIabLazyPage = () => {
 				</button>
 			</main>
 			{open ? <LazyIABConsentDialog /> : null}
-		</ConsentProvider>
+		</InthProvider>
 	);
 };
 

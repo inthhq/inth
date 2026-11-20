@@ -2,7 +2,7 @@ import { userEvent } from '@vitest/browser/context';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { IABConsentDialog } from '~/components/iab-panel';
 import { IABConsentBanner } from '~/components/iab-prompt';
 
@@ -27,10 +27,10 @@ describe('IAB Consent Flow E2E Tests', () => {
 	describe('Accept All Flow', () => {
 		test('complete flow: display → accept → signal → storage', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			const acceptButton = await waitForElement(
@@ -53,10 +53,10 @@ describe('IAB Consent Flow E2E Tests', () => {
 
 		test('should set all purposes to consented', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			const acceptButton = await waitForElement(
@@ -80,10 +80,10 @@ describe('IAB Consent Flow E2E Tests', () => {
 	describe('Reject All Flow', () => {
 		test('complete flow: display → reject → signal → storage', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			const rejectButton = await waitForElement(
@@ -108,10 +108,10 @@ describe('IAB Consent Flow E2E Tests', () => {
 	describe('Granular Consent Flow', () => {
 		test('should open preference center for granular selection', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			const customizeButton = await waitForElement(
@@ -126,10 +126,10 @@ describe('IAB Consent Flow E2E Tests', () => {
 
 		test('should save granular preferences', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			const customizeButton = await waitForElement(
@@ -176,10 +176,10 @@ describe('IAB Consent Flow E2E Tests', () => {
 	describe('Persistence & Restoration Flow', () => {
 		test('consent should be stored in localStorage', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			const acceptButton = await waitForElement(
@@ -202,10 +202,10 @@ describe('IAB Consent Flow E2E Tests', () => {
 
 		test('TC String should be stored', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			const acceptButton = await waitForElement(
@@ -232,10 +232,10 @@ describe('IAB Consent Flow E2E Tests', () => {
 	describe('First Visit vs Return Visit', () => {
 		test('first visit - banner should display', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await waitForElement('[data-testid="iab-consent-banner-card"]');
@@ -245,10 +245,10 @@ describe('IAB Consent Flow E2E Tests', () => {
 	describe('Event Notifications', () => {
 		test('should fire useractioncomplete on Accept All', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			await waitForElement('[data-testid="iab-consent-banner-card"]');

@@ -22,14 +22,14 @@
  *
  * @example
  * ```tsx
- * import { ConsentBanner, ConsentProvider } from '@inth/react';
+ * import { ConsentBanner, InthProvider } from '@inth/react';
  * import { testing } from '@inth/react/testing';
  *
- * <ConsentProvider
+ * <InthProvider
  *   options={{ overrides: { country: 'DE' }, mode: testing() }}
  * >
  *   <ConsentBanner />
- * </ConsentProvider>;
+ * </InthProvider>;
  * ```
  *
  * @packageDocumentation

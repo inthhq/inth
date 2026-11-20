@@ -1,6 +1,6 @@
 ---
 title: Headless
-description: Build a custom consent banner or embed gate in Next.js with the @inth/nextjs/headless hooks inside your existing ConsentRoot.
+description: Build a custom consent banner or embed gate in Next.js with the @inth/nextjs/headless hooks inside your existing InthProvider.
 group: frameworks
 ---
 
@@ -15,7 +15,7 @@ state.
 
 ## Minimal example
 
-The headless hooks read the runtime from the `ConsentRoot` set up in your
+The headless hooks read the runtime from the `InthProvider` set up in your
 [App Router](/docs/frameworks/next/app-router) or
 [Pages Router](/docs/frameworks/next/pages-router) guide, so they only run in a
 Client Component. Render this component inside that existing root in place
@@ -77,7 +77,7 @@ export function Banner() {
 ```
 
 With the [streamed layout](/docs/frameworks/next/rendering#stream-or-await-consent-in-the-app-router),
-`ConsentRoot` gets a pending promise. `StreamedConsentSurface` waits for it in
+`InthProvider` gets a pending promise. `StreamedConsentSurface` waits for it in
 its own `Suspense` boundary, so your banner follows in a later chunk of the
 same response and shows before hydration, like the stock one. Call the hooks
 in a component inside it. Hooks called above it read the state from before
@@ -93,8 +93,8 @@ they are.
 
 <include src="../../shared/examples/nextjs/headless-consent-gate.mdx" />
 
-The hook reads the runtime from `ConsentRoot`, so the gate is a Client
-Component. Render `VideoGate` inside your existing `ConsentRoot` around the
+The hook reads the runtime from `InthProvider`, so the gate is a Client
+Component. Render `VideoGate` inside your existing `InthProvider` around the
 embed, such as a YouTube `iframe`. A Server Component can render it and pass
 the embed as children.
 

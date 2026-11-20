@@ -1,5 +1,5 @@
 /**
- * `ConsentRoot`'s props and option merging, shared by the first-load shell
+ * `InthProvider`'s props and option merging, shared by the first-load shell
  * (`./root`) and the engine it loads (`./root-engine`).
  *
  * @internal
@@ -9,7 +9,7 @@ import type { ReactNode } from 'react';
 import type { ConsentConfig } from './config';
 import type { ConsentClientOptions, ConsentState } from './types';
 
-export interface ConsentRootProps extends ConsentClientOptions {
+export interface InthProviderProps extends ConsentClientOptions {
 	/**
 	 * The visitor's resolved consent state, produced server-side by
 	 * `resolveConsent()` from `@inth/nextjs/server` or `withConsentProps()`

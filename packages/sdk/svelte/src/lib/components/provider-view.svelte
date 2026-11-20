@@ -1,10 +1,10 @@
 <!--
 	@component
 	The provider's state, context and markup, around a runtime it is
-	handed. `ConsentProvider` hands it the engine it creates (or the one it
-	was given); `ConsentRoot` hands it the server's engine, and in the
-	browser the deferred runtime that stands in for the engine until it
-	loads (`../deferred/runtime.ts`). Both render through this component, so
+	handed. `InthProvider` from `@inth/svelte` hands it the engine it creates
+	(or the one it was given); the one from `@inth/svelte/kit` hands it the
+	server's engine, and in the browser the deferred runtime that stands in
+	for the engine until it loads (`../deferred/runtime.ts`). Both render through this component, so
 	the browser hydrates the server's markup whichever one it got.
 
 	@internal
@@ -58,8 +58,8 @@
 		/** `<meta name="inth-modulepreload">` content, or `''`. */
 		preloadMarker: string;
 		/**
-		 * HTML rendered after the children: the boot data `ConsentRoot`
-		 * leaves for the browser, else `''`.
+		 * HTML rendered after the children: the boot data the SvelteKit
+		 * `InthProvider` leaves for the browser, else `''`.
 		 */
 		boot?: string;
 	}
@@ -304,7 +304,7 @@
 	const throwIABUnavailable = function throwIABUnavailable(): never {
 		throw new IABUnavailableError(
 			'`iab` is not set',
-			'Set `iab` on <ConsentProvider> and render <IABConsentBanner>'
+			'Set `iab` on <InthProvider> and render <IABConsentBanner>'
 		);
 	};
 

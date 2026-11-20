@@ -847,8 +847,8 @@ export const buildProviderSnippet = function buildProviderSnippet(
 		? `, presentation: ${JSON.stringify(presentation)}`
 		: '';
 	const componentImports = options.toolbar
-		? 'ConsentBanner, ConsentDialog, ConsentDialogTriggerToolbar, ConsentProvider'
-		: 'ConsentBanner, ConsentDialog, ConsentProvider';
+		? 'ConsentBanner, ConsentDialog, ConsentDialogTriggerToolbar, InthProvider'
+		: 'ConsentBanner, ConsentDialog, InthProvider';
 	const toolbarLine = options.toolbar
 		? '\n    <ConsentDialogTriggerToolbar showWhen="after-consent" />'
 		: '';
@@ -865,11 +865,11 @@ import { testing } from '@inth/react/testing';
 
 ${rulesBlock}
 export const Providers = ({ children }) => (
-  <ConsentProvider options={{ mode: ${mode}${presentationOption} }}>
+  <InthProvider options={{ mode: ${mode}${presentationOption} }}>
     {children}
     <ConsentBanner />
     <ConsentDialog />${toolbarLine}
-  </ConsentProvider>
+  </InthProvider>
 );`;
 };
 

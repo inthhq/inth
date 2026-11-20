@@ -1,7 +1,7 @@
 /**
- * When `ConsentRoot` loads the consent engine for a visitor who still has
- * to choose. On a slow connection the engine's chunks share bandwidth with
- * the page's largest image; started after it, they no longer delay Largest
+ * When the SvelteKit `InthProvider` loads the consent engine for a visitor who
+ * still has to choose. On a slow connection the engine's chunks share bandwidth
+ * with the page's largest image; started after it, they no longer delay Largest
  * Contentful Paint (`afterPriorityImages` in
  * `@inth/sdk/runtime/page-globals`).
  *

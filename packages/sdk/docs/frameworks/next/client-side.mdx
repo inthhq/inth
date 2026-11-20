@@ -59,7 +59,7 @@ backend.
 
 The components render their own styles. With Tailwind CSS 3,
 [load the stylesheet yourself](/docs/frameworks/next/customize#load-the-stylesheet-yourself).
-In the App Router, render `ConsentRoot` in the root layout without `state`:
+In the App Router, render `InthProvider` in the root layout without `state`:
 
 <include src="../../shared/examples/nextjs/browser-layout.mdx" />
 
@@ -68,7 +68,7 @@ In the Pages Router, render it in `_app.tsx`. Without `withConsentProps`,
 
 <include src="../../shared/examples/nextjs-pages-router/pages-app.mdx" />
 
-Without server state, `ConsentRoot` initializes in the browser. Keep it
+Without server state, `InthProvider` initializes in the browser. Keep it
 mounted across client navigation.
 
 ## Optional same-origin requests

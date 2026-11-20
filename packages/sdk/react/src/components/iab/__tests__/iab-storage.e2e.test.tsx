@@ -2,7 +2,7 @@ import { userEvent } from '@vitest/browser/context';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { IABConsentDialog } from '~/components/iab-panel';
 import { IABConsentBanner } from '~/components/iab-prompt';
 
@@ -25,10 +25,10 @@ describe('IAB Storage E2E Tests', () => {
 	describe('localStorage Storage', () => {
 		test('should store consent to localStorage', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			const acceptButton = await waitForElement(
@@ -54,10 +54,10 @@ describe('IAB Storage E2E Tests', () => {
 
 		test('should store TC string in localStorage', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			const acceptButton = await waitForElement(
@@ -81,10 +81,10 @@ describe('IAB Storage E2E Tests', () => {
 
 		test('TC string should be valid base64url format', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			const acceptButton = await waitForElement(
@@ -114,10 +114,10 @@ describe('IAB Storage E2E Tests', () => {
 	describe('Storage Update on Consent Change', () => {
 		test('should update storage when Accept All clicked', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			const acceptButton = await waitForElement(
@@ -140,10 +140,10 @@ describe('IAB Storage E2E Tests', () => {
 
 		test('should update storage when Reject All clicked', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			const rejectButton = await waitForElement(
@@ -170,10 +170,10 @@ describe('IAB Storage E2E Tests', () => {
 	describe('Storage Content', () => {
 		test('should store consent info with timestamp', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			const acceptButton = await waitForElement(
@@ -207,10 +207,10 @@ describe('IAB Storage E2E Tests', () => {
 
 		test('should store consent info with subjectId', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			const acceptButton = await waitForElement(
@@ -242,10 +242,10 @@ describe('IAB Storage E2E Tests', () => {
 
 		test('the preference dialog shows the choices saved before a reload', async () => {
 			const firstVisit = await render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 			const acceptButton = await waitForElement(
 				'[data-testid="iab-consent-banner-accept-button"]'
@@ -259,12 +259,12 @@ describe('IAB Storage E2E Tests', () => {
 			delete (window as { __tcfapi?: unknown }).__tcfapi;
 
 			render(
-				<ConsentProvider
+				<InthProvider
 					options={{ ...defaultProviderIABOptions, initialUI: 'dialog' }}
 				>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 			await waitForCMP();
 			await waitForElement('[data-testid="iab-consent-dialog-card"]');
@@ -280,10 +280,10 @@ describe('IAB Storage E2E Tests', () => {
 	describe('inth Storage Key', () => {
 		test('should use "inth" key in localStorage', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			const acceptButton = await waitForElement(
@@ -304,10 +304,10 @@ describe('IAB Storage E2E Tests', () => {
 
 		test('should use "euconsent-v2" key for TC string', async () => {
 			render(
-				<ConsentProvider options={defaultProviderIABOptions}>
+				<InthProvider options={defaultProviderIABOptions}>
 					<IABConsentBanner />
 					<IABConsentDialog />
-				</ConsentProvider>
+				</InthProvider>
 			);
 
 			const acceptButton = await waitForElement(

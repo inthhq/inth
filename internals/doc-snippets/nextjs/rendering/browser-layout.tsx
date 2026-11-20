@@ -3,7 +3,7 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentRoot,
+	InthProvider,
 } from '@inth/nextjs';
 import type { ReactNode } from 'react';
 
@@ -13,14 +13,14 @@ import './globals.css';
 const RootLayout = ({ children }: { children: ReactNode }) => (
 	<html lang="en">
 		<body>
-			<ConsentRoot>
+			<InthProvider>
 				{children}
 				<ConsentBanner />
 				<ConsentDialog />
 				<footer>
 					<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 				</footer>
-			</ConsentRoot>
+			</InthProvider>
 		</body>
 	</html>
 );

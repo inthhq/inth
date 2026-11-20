@@ -32,7 +32,7 @@ import {
 } from '../../__tests__/streamed-ssr-harness';
 import type { StreamedPage } from '../../__tests__/streamed-ssr-harness';
 import { useSaveConsents, useSnapshot } from '../../hooks';
-import { ConsentProvider } from '../../index';
+import { InthProvider } from '../../index';
 import { useScriptLoader } from '../../module-hooks/script-loader';
 import type { Script } from '../../module-hooks/script-loader';
 import { readConsentBoot } from '../boot';
@@ -152,14 +152,14 @@ const ServerPage = ({ prefetch }: { prefetch: unknown }) => (
 	<html lang="en">
 		<head />
 		<body>
-			<ConsentProvider options={providerOptions(prefetch)}>
+			<InthProvider options={providerOptions(prefetch)}>
 				<Probe scripts={[]} />
 				<DeferredConsentBanner />
 				<DeferredConsentDialog />
 				<Suspense fallback={null}>
 					<ServerBootData />
 				</Suspense>
-			</ConsentProvider>
+			</InthProvider>
 		</body>
 	</html>
 );

@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ConsentProvider } from '../provider';
+import { InthProvider } from '../provider';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
@@ -61,7 +61,7 @@ const renderWithBeacons = (
 					label="sibling"
 					statuses={statuses}
 				/>
-				<ConsentProvider
+				<InthProvider
 					options={{
 						mode: testing(),
 						networkBlocker: { logBlockedRequests: false, rules },
@@ -73,7 +73,7 @@ const renderWithBeacons = (
 						label="child"
 						statuses={statuses}
 					/>
-				</ConsentProvider>
+				</InthProvider>
 			</>
 		)
 	);

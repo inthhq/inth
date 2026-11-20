@@ -1,5 +1,5 @@
 /**
- * `experimentalScriptRegistry` on `ConsentProvider` reaches the core
+ * `experimentalScriptRegistry` on `InthProvider` reaches the core
  * runtime: an integration init lists loads from the registry's URL with
  * its hash.
  */
@@ -7,7 +7,7 @@ import type { Script } from '@inth/sdk/engine';
 import { render } from '@testing-library/svelte';
 import { afterEach, expect, test, vi } from 'vitest';
 
-import ConsentProvider from '../lib/components/consent-provider.svelte';
+import InthProvider from '../lib/components/inth-provider.svelte';
 import type { ConsentManagerOptions } from '../lib/types';
 import { transportMode } from './fixtures/transport-mode';
 
@@ -43,7 +43,7 @@ afterEach(() => {
 
 /** Renders the provider, and returns the vendor's script tag once loaded. */
 const loadedTag = async (experimentalScriptRegistry?: boolean) => {
-	const view = render(ConsentProvider, {
+	const view = render(InthProvider, {
 		props: {
 			options: {
 				experimentalScriptRegistry,

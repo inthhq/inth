@@ -7,7 +7,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { page } from 'vitest/browser';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentWidget } from '~/components/preferences';
 
@@ -27,7 +27,7 @@ const restriction = (name: string) =>
 describe('consent widget restriction notice', () => {
 	test('does not appear when a draft toggle is switched on before saving', async () => {
 		render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					consentCategories: [...CATEGORIES],
 					mode: testing(),
@@ -40,7 +40,7 @@ describe('consent widget restriction notice', () => {
 				}}
 			>
 				<ConsentWidget />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		// A locator re-resolves the switch on every step and waits for it to be
@@ -58,7 +58,7 @@ describe('consent widget restriction notice', () => {
 
 	test('appears below the row for a saved grant that GPC overrides', async () => {
 		render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					consentCategories: [...CATEGORIES],
 					mode: testing(),
@@ -76,7 +76,7 @@ describe('consent widget restriction notice', () => {
 				}}
 			>
 				<ConsentWidget />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		const notice = await vi.waitFor(() => {

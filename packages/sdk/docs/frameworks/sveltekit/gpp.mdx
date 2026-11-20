@@ -12,13 +12,17 @@ Manager and other ad tech read US privacy signals from it.
 
 ## Turn on GPP
 
-Add `gpp` to `ConsentRoot` in your root layout, keeping your existing `state`
+Add `gpp` to `InthProvider` in your root layout, keeping your existing `state`
 and other props:
 
 {/* example: fragment */}
 
-```svelte title="src/routes/+layout.svelte"
-<ConsentRoot state={data.consent} {scripts} gpp>
+```svelte title="src/routes/+layout.svelte (partial)"
+<script lang="ts">
+	import { InthProvider } from '@inth/svelte/kit';
+</script>
+
+<InthProvider state={data.consent} {scripts} gpp>
 ```
 
 `gpp` on its own uses the defaults. Pass an object to change them, such as

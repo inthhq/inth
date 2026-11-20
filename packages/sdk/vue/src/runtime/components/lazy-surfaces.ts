@@ -4,7 +4,7 @@
  *
  * Only the non-IAB banner is statically imported by the Vue plugin's root:
  * it's the LCP-critical surface and must server-render into the first
- * HTML. Nuxt's root loads it as its own chunk too (see `nuxt-root.vue`).
+ * HTML. Nuxt's root loads it as its own chunk too (see `nuxt-inth-provider.vue`).
  * Everything else is split:
  * - manager/dialog: mounted once first needed, chunk prefetched on idle so
  *   the first "customize" click never pays network+parse
@@ -97,7 +97,7 @@ const deferredBanner = function deferredBanner(
 };
 
 /**
- * Renders the stock banner for `ConsentRoot`. Under a deferred context
+ * Renders the stock banner for `InthProvider`. Under a deferred context
  * the banner and its children read the context's banner view, so a choice
  * made before the banner hydrated does not change what it hydrates.
  *

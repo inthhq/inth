@@ -438,8 +438,8 @@ const declareVendor = (framework: Framework, dir: string, manager: string) => {
 	} else {
 		edit(
 			manager,
-			'<ConsentRoot state={state}>',
-			`<ConsentRoot\n      state={state}\n      vendors={[\n        ${fixtureVendor},\n      ]}\n    >`
+			'<InthProvider state={state}>',
+			`<InthProvider\n      state={state}\n      vendors={[\n        ${fixtureVendor},\n      ]}\n    >`
 		);
 	}
 };

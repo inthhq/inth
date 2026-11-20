@@ -1,2 +1,2 @@
 /** React provider entry. */
-export { ConsentProvider } from '@inth/react';
+export { InthProvider } from '@inth/react';

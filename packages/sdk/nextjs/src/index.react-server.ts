@@ -12,10 +12,14 @@ export {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	ConsentRoot,
+	InthProvider,
 } from './client-components';
-export type { ConsentRootProps } from './root';
-export type { ConsentClientOptions, ConsentState } from './types';
+export type { InthProviderProps } from './root';
+export type {
+	ConsentClientOptions,
+	ConsentState,
+	InthProviderOptions,
+} from './types';
 export type { ConsentConfig } from './config';
 export { defineConsentConfig } from './config';
 export type {
@@ -35,5 +39,4 @@ export {
 export { ConsentGate } from '@inth/react/components/consent-gate';
 export { ConsentWidget } from '@inth/react/consent-widget';
 export { ConsentDraftProvider } from '@inth/react/draft';
-export { ConsentProvider } from '@inth/react/provider';
 export { ConsentTheme, defineTheme } from '@inth/react/theme';

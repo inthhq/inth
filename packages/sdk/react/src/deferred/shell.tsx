@@ -10,7 +10,7 @@
  * records taps and hides it.
  *
  * Used by adapters whose server render leaves `ConsentBootData` in the
- * HTML, such as `ConsentRoot` in `@inth/nextjs`.
+ * HTML, such as `InthProvider` in `@inth/nextjs`.
  *
  * @packageDocumentation
  * @internal
@@ -51,7 +51,7 @@ import {
 	StreamedPrefetchContext,
 } from '../context';
 import { useColorScheme } from '../hooks/use-color-scheme';
-import type { ConsentProviderOptions } from '../provider';
+import type { InthProviderOptions } from '../provider';
 import { V3ThemeProvider } from '../theme-provider';
 import type { V3UIConfigValue } from '../ui-config-context';
 import {
@@ -88,7 +88,7 @@ import { importDialog, scheduleDeferredEngine } from './trigger';
 
 /** The provider options the shell itself reads. @internal */
 export type DeferredShellOptions = Pick<
-	ConsentProviderOptions,
+	InthProviderOptions,
 	| 'colorScheme'
 	| 'components'
 	| 'consentCategories'

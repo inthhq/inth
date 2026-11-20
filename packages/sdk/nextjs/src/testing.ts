@@ -2,7 +2,7 @@
  * `@inth/nextjs/testing` — run the consent flow in tests with no backend.
  *
  * Set `mode: testing()` in `inth.config.ts`, or pass it as
- * `ConsentRoot`'s `options.mode`. It needs no `projectUrl`. The server
+ * `InthProvider`'s `options.mode`. It needs no `projectUrl`. The server
  * resolves nothing, and the browser resolves the recommended policy pack
  * with no network; set `overrides.country` (and `overrides.region`) to
  * pick the policy:

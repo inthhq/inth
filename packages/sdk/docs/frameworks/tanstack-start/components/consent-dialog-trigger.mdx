@@ -7,7 +7,7 @@ group: frameworks
 ## Add a floating preferences button
 
 `ConsentDialogTrigger` is a draggable floating button that opens the
-preference dialog. Render it once inside `ConsentRoot`, next to the banner and
+preference dialog. Render it once inside `InthProvider`, next to the banner and
 dialog:
 
 {/* example: fragment */}
@@ -15,7 +15,7 @@ dialog:
 ```tsx title="src/routes/__root.tsx"
 import { ConsentDialogTrigger } from '@inth/tanstack-start';
 
-// Inside ConsentRoot, next to ConsentDialog:
+// Inside InthProvider, next to ConsentDialog:
 <ConsentDialogTrigger showWhen="after-consent" />;
 ```
 

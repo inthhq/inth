@@ -6,7 +6,7 @@ import '@inth/sdk/ui/styles.css';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
+import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import {
 	ConsentDialogTrigger,
 	ConsentDialogTriggerToolbar,
@@ -26,7 +26,7 @@ const longestTransition = (element: Element | null): number =>
 describe.each([false, true])('disableAnimation %s', (disableAnimation) => {
 	test('sets the trigger and toolbar motion', async () => {
 		const { unmount } = await render(
-			<ConsentProvider
+			<InthProvider
 				options={{
 					disableAnimation,
 					mode: testing(),
@@ -34,7 +34,7 @@ describe.each([false, true])('disableAnimation %s', (disableAnimation) => {
 			>
 				<ConsentDialogTrigger showWhen="always" />
 				<ConsentDialogTriggerToolbar showWhen="always" />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		const trigger = () =>
 			document.querySelector('[data-testid="consent-dialog-trigger"]');

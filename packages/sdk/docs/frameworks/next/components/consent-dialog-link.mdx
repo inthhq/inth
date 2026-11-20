@@ -1,6 +1,6 @@
 ---
 title: ConsentDialogLink
-description: Open the preference center from a Next.js footer with ConsentDialogLink, a Client Component that renders an unstyled button inside ConsentRoot.
+description: Open the preference center from a Next.js footer with ConsentDialogLink, a Client Component that renders an unstyled button inside InthProvider.
 group: frameworks
 ---
 
@@ -9,7 +9,7 @@ group: frameworks
 `ConsentDialogLink` is an unstyled button that opens the consent dialog.
 Put it where your site already keeps its legal links, so preferences stay
 reachable after the banner closes. It is a Client Component and must render
-inside the `ConsentRoot` from your
+inside the `InthProvider` from your
 [App Router](/docs/frameworks/next/app-router) or
 [Pages Router](/docs/frameworks/next/pages-router) setup, which also mounts
 the `ConsentDialog` it opens.
@@ -35,10 +35,10 @@ export function SiteFooter() {
 }
 ```
 
-Render `SiteFooter` inside `ConsentRoot`, in place of the inline footer the
+Render `SiteFooter` inside `InthProvider`, in place of the inline footer the
 router guides show. In the App Router, render it from the root layout, which
 stays a Server Component; only this file needs `'use client'`. In the Pages
-Router, render it from `pages/_app.tsx` inside `ConsentRoot`, next to
+Router, render it from `pages/_app.tsx` inside `InthProvider`, next to
 `<Component {...pageProps} />`. The link
 renders a `button`, so the CSS for `.footer-link` should reset button chrome
 if your footer styles target anchors only.

@@ -76,7 +76,7 @@ Create `inth.config.ts` at the project root:
 
 <include src="../../shared/examples/nextjs/quickstart-config.mdx" />
 
-`withConsentManifest` finds this file, so `ConsentRoot` and `resolveConsent`
+`withConsentManifest` finds this file, so `InthProvider` and `resolveConsent`
 read it without an import. Export the config as the file's default export.
 The browser bundle includes this file too, so keep secrets out of it. Scripts
 are fine.
@@ -95,15 +95,15 @@ consent.
 
 ## Resolve consent in the root layout
 
-Render `ConsentRoot` in the root layout and pass it `resolveConsent()` without
+Render `InthProvider` in the root layout and pass it `resolveConsent()` without
 awaiting it:
 
 <include src="../../shared/examples/nextjs/quickstart-layout.mdx" />
 
-The layout is a Server Component. `@inth/nextjs` gives it `ConsentRoot`,
+The layout is a Server Component. `@inth/nextjs` gives it `InthProvider`,
 `ConsentBanner`, `ConsentDialog` and `ConsentDialogLink` as client components,
-so you don't need a `'use client'` wrapper. `ConsentRoot` already wraps
-`ConsentProvider`, so don't mount both.
+so you don't need a `'use client'` wrapper. It already wraps the
+`InthProvider` from `@inth/nextjs/react`, so don't mount both.
 
 Because the layout doesn't await `resolveConsent()`, Next.js sends the page
 without waiting for it and streams the consent result later in the same response. Until

@@ -4,7 +4,7 @@ import { render } from 'svelte/server';
 
 import type { ConsentManagerOptions } from '../lib/types';
 import ConformanceFixture from './fixtures/conformance-fixture.svelte';
-import ConsentRootFixture from './fixtures/consent-root-fixture.svelte';
+import KitProviderFixture from './fixtures/kit-provider-fixture.svelte';
 import PolicyFixture from './fixtures/policy-fixture.svelte';
 import { transportMode } from './fixtures/transport-mode';
 
@@ -39,10 +39,10 @@ export const renderFixture = function renderFixture(
 	};
 };
 
-/** Server render of `ConsentRoot`: the HTML a browser hydrates. */
+/** Server render of `InthProvider`: the HTML a browser hydrates. */
 export const renderRoot = function renderRoot(
-	props: ComponentProps<typeof ConsentRootFixture>
+	props: ComponentProps<typeof KitProviderFixture>
 ) {
-	const output = render(ConsentRootFixture, { props });
+	const output = render(KitProviderFixture, { props });
 	return { body: output.body, head: output.head };
 };

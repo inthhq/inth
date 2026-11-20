@@ -7,13 +7,13 @@ group: frameworks
 ## Component reference
 
 `@inth/react` exports the provider, the consent UI and the hooks from one
-import path. Every component except `ConsentProvider` and `ConsentTheme`
+import path. Every component except `InthProvider` and `ConsentTheme`
 reads the runtime the provider creates, so render them inside
-`ConsentProvider`.
+`InthProvider`.
 
 | Component | Renders | Reference |
 | --- | --- | --- |
-| `ConsentProvider` | The consent runtime, which loads the policy, stores the choice and loads scripts. No markup of its own | [ConsentProvider](/docs/frameworks/react/components/consent-provider) |
+| `InthProvider` | The consent runtime, which loads the policy, stores the choice and loads scripts. No markup of its own | [InthProvider](/docs/frameworks/react/components/inth-provider) |
 | `ConsentBanner` | The banner, when the visitor's policy asks for one | [ConsentBanner](/docs/frameworks/react/components/consent-banner) |
 | `ConsentDialog` | The preference center as a modal | [ConsentDialog](/docs/frameworks/react/components/consent-dialog) |
 | `ConsentWidget` | The preference center inline in a page, for a privacy route | [ConsentWidget](/docs/frameworks/react/components/consent-widget) |
@@ -23,13 +23,13 @@ reads the runtime the provider creates, so render them inside
 | `ConsentTheme` | A `<style>` element with your theme tokens | [Customize](/docs/frameworks/react/customize) |
 | `DevTools` from `@inth/react/devtools` | A development panel for consent state, scripts and events | [DevTools](/docs/frameworks/react/components/dev-tools) |
 
-Mount one `ConsentProvider` at the root of the app and keep it mounted across
+Mount one `InthProvider` at the root of the app and keep it mounted across
 client navigation. The provider reads `mode` and its module options once,
 when it mounts.
 
 ## Start with the provider, banner and dialog
 
-Most apps start with four components. `ConsentProvider` holds the runtime,
+Most apps start with four components. `InthProvider` holds the runtime,
 `ConsentBanner` and `ConsentDialog` ask for a choice, and a
 `ConsentDialogLink` lets visitors reopen their preferences. The [quickstart](/docs/frameworks/react/quickstart) puts them in
 one file:
@@ -43,7 +43,7 @@ because the banner's Customize button and every dialog link open it.
 ## Server-rendered React apps
 
 React Router framework mode, Remix and other server-rendered React apps use the
-same components. `ConsentProvider` renders on the server without touching
+same components. `InthProvider` renders on the server without touching
 browser APIs, and the banner mounts after hydration, once the browser has
 resolved the policy. [Rendering](/docs/frameworks/react/rendering#react-router-remix-and-other-server-rendered-apps)
 explains the trade-off.
@@ -51,7 +51,7 @@ explains the trade-off.
 ## IAB TCF components
 
 Import `IABProvider`, `IABConsentBanner` and `IABConsentDialog` from
-`@inth/react/iab`, render them inside `ConsentProvider` next to
+`@inth/react/iab`, render them inside `InthProvider` next to
 `ConsentBanner` and `ConsentDialog`, and load `@inth/react/styles.css` and
 `@inth/react/iab/styles.css` with `styles: false`. The stock banner and dialog stay closed
 under an IAB policy. See

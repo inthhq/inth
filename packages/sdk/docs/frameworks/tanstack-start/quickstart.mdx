@@ -9,7 +9,7 @@ group: frameworks
 This guide sets up the recommended path for a TanStack Start app with server
 rendering. On each request, a server function in the root loader reads the
 visitor's consent cookie and location headers, resolves their policy from a
-build-time policy manifest, and hands the result to `ConsentRoot`. The banner is
+build-time policy manifest, and hands the result to `InthProvider`. The banner is
 part of the first HTML. Most vendor helper scripts the visitor's consent allows
 start before the page hydrates; see
 [Rendering](/docs/frameworks/tanstack-start/rendering).
@@ -70,7 +70,7 @@ The c15t name `VITE_C15T_BACKEND_URL` still works as a fallback. When both are
 set, `VITE_INTH_PROJECT_URL` wins.
 
 The example app's `.env` points at `https://example-inth.inth.app`, a demo
-project. The server function and `ConsentRoot` read the URL from the plugin,
+project. The server function and `InthProvider` read the URL from the plugin,
 so the app code never repeats it. If you pass `projectUrl` to the plugin
 instead, the plugin sets the variable to that URL. Vite writes its value into
 the server and browser builds, so setting it when you start a built app has
@@ -111,9 +111,9 @@ What each part does:
 - **The loader** awaits the result. `consentLoaderOptions` stops the loader
   from running again on client-side navigation, since the visitor's consent
   state does not change between routes.
-- **`ConsentRoot`** creates the consent runtime from that state, so the server
+- **`InthProvider`** creates the consent runtime from that state, so the server
   HTML and the first browser render match. The state carries the backend URL,
-  the mode and the route prefix, so `ConsentRoot` needs only `state`. The
+  the mode and the route prefix, so `InthProvider` needs only `state`. The
   browser sends its requests, including consent saves, straight to the
   backend URL the server function used, so saves reach the project the
   snapshot came from.
