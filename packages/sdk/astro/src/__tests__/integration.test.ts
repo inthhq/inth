@@ -376,7 +376,7 @@ describe('resolveOptions', () => {
 				projectUrl: 'https://consent.example.com',
 			})
 		).rejects.toThrow(
-			"@inth/astro: could not fetch the consent manifest from https://consent.example.com/v1/consent/manifest during the build (/v1/consent/manifest responded 503 ). Set `INTH_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
+			"@inth/astro: could not fetch the consent manifest from https://consent.example.com/v1/consent/manifest during the build (/v1/consent/manifest responded 503 (server_error)). Set `INTH_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
 		);
 	});
 
