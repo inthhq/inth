@@ -60,15 +60,18 @@ export const ConsentGPP = ({
 	const categories = optOutCategories?.join(',');
 
 	useEffect(() => {
+		let parsedCategories: AllConsentNames[] | undefined;
+		if (categories !== undefined) {
+			parsedCategories =
+				categories === '' ? [] : (categories.split(',') as AllConsentNames[]);
+		}
 		let handle: ReturnType<typeof createGPP> | null = null;
 		try {
 			handle = createGPP({
 				cmpId,
 				kernel,
 				mspaMode,
-				optOutCategories: categories?.split(',') as
-					| AllConsentNames[]
-					| undefined,
+				optOutCategories: parsedCategories,
 				tcf,
 				usApproach,
 				usFallback,

@@ -10,7 +10,7 @@ import {
 import { OPT_OUT_REPROMPT_WAIT_MS } from '../../consent-record';
 import { createConsentKernel } from '../../kernel';
 import type { OptOutRecord } from '../../types';
-import { resolveOptOutState } from '../opt-out-state';
+import { isOptedOut, resolveOptOutState } from '../opt-out-state';
 
 const optOutPolicy = optOutRule({
 	categories: ['functionality', 'marketing', 'measurement'],
@@ -215,5 +215,109 @@ describe('resolveOptOutState', () => {
 			optInPromptAllowedAt: null,
 			via: null,
 		});
+	});
+});
+
+describe('isOptedOut', () => {
+	const heldRecord: OptOutRecord = {
+		heldBy: 'device',
+		method: 'button',
+		recordedAt: NOW,
+		rights: ['sale', 'share', 'targeted_ads'],
+	};
+
+	test('returns false with no record when marketing and measurement are granted', () => {
+		expect(isOptedOut(createSnapshot({}))).toBe(false);
+	});
+
+	test('returns true when an opt-out record is held, even when effective permissions are granted', () => {
+		expect(isOptedOut(createSnapshot({ optOut: heldRecord }))).toBe(true);
+		expect(
+			isOptedOut({
+				effectivePermissions: {
+					experience: true,
+					functionality: true,
+					marketing: true,
+					measurement: true,
+					necessary: true,
+				},
+				evaluationPolicy: {
+					scope: ['functionality', 'marketing', 'measurement'],
+				},
+				optOut: heldRecord,
+			})
+		).toBe(true);
+	});
+
+	test('returns true with no record when marketing is denied', () => {
+		const base = createSnapshot({});
+		expect(
+			isOptedOut({
+				...base,
+				effectivePermissions: {
+					...base.effectivePermissions,
+					marketing: false,
+					measurement: true,
+				},
+			})
+		).toBe(true);
+	});
+
+	test('returns true with no record when measurement is denied', () => {
+		const base = createSnapshot({});
+		expect(
+			isOptedOut({
+				...base,
+				effectivePermissions: {
+					...base.effectivePermissions,
+					marketing: true,
+					measurement: false,
+				},
+			})
+		).toBe(true);
+	});
+
+	test('returns false with no record when the rule scope has neither marketing nor measurement', () => {
+		const snapshot = createSnapshot({
+			rule: optOutRule({ categories: ['functionality'] }),
+		});
+		expect(
+			isOptedOut({
+				...snapshot,
+				effectivePermissions: {
+					...snapshot.effectivePermissions,
+					marketing: false,
+					measurement: false,
+				},
+			})
+		).toBe(false);
+		expect(
+			isOptedOut(
+				createSnapshot({
+					optOut: heldRecord,
+					rule: optOutRule({ categories: ['functionality'] }),
+				})
+			)
+		).toBe(true);
+	});
+
+	test('honors a categories override without a record, while a held record always returns true', () => {
+		const base = createSnapshot({});
+		const marketingDenied = {
+			...base,
+			effectivePermissions: {
+				...base.effectivePermissions,
+				marketing: false,
+				measurement: true,
+			},
+		};
+		expect(isOptedOut(marketingDenied, ['measurement'])).toBe(false);
+		expect(isOptedOut(marketingDenied, [])).toBe(false);
+		expect(isOptedOut({ ...marketingDenied, optOut: heldRecord }, [])).toBe(
+			true
+		);
+		expect(isOptedOut({ ...base, optOut: heldRecord }, ['functionality'])).toBe(
+			true
+		);
 	});
 });

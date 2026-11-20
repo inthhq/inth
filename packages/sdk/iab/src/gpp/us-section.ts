@@ -8,6 +8,7 @@
  */
 
 import type { AllConsentNames, ConsentSnapshot } from '@inth/sdk-core';
+import { isOptedOut } from '@inth/sdk-core/surface-state';
 
 import type { USSectionValues } from './encoder';
 import { US_NATIONAL_SECTION, US_STATE_SECTIONS } from './sections';
@@ -50,7 +51,12 @@ export type GPPMspaMode = 'opt-out-option' | 'service-provider';
 /** Options that shape the US section values. */
 export interface USSectionOptions {
 	mspaMode?: GPPMspaMode;
-	optOutCategories: readonly AllConsentNames[];
+	/**
+	 * Optional override for the categories checked when no opt-out record is
+	 * held. Defaults to the active policy's opt-out categories. A held opt-out
+	 * record always reports opted out regardless of this override.
+	 */
+	optOutCategories?: readonly AllConsentNames[];
 }
 
 const OPT_OUT_NOTICES = new Set([
@@ -94,7 +100,9 @@ export const resolveUSState = function resolveUSState(
 export type USSectionSnapshot = Pick<
 	ConsentSnapshot,
 	| 'effectivePermissions'
+	| 'evaluationPolicy'
 	| 'location'
+	| 'optOut'
 	| 'overrides'
 	| 'policyRule'
 	| 'privacySignals'
@@ -143,27 +151,28 @@ export const resolveUSSectionDefinition = function resolveUSSectionDefinition(
 /**
  * Field values for a US section.
  *
- * A sale, sharing or targeted advertising opt-out is reported when any of
- * `optOutCategories` is not permitted, so the signal matches what Inth
- * gates on the page: a refused category, a GPC signal the policy honours,
- * or an opt-in policy without a grant. The opt-out notices are reported as
- * given, since the section only applies under a rule that offers an
- * opt-out; the sharing or processing notice is given when the rule has the
- * `disclosure` right. Sensitive data and known-child consents are reported
- * as not applicable: Inth has no category for them.
+ * A sale, sharing or targeted advertising opt-out is reported when an opt-out
+ * record is held, or when any checked category (`options.optOutCategories`, or
+ * the active policy's opt-out categories by default) is not permitted. The
+ * opt-out notices are reported as given, since the section only applies under
+ * a rule that offers an opt-out; the sharing or processing notice is given
+ * when the rule has the `disclosure` right. Sensitive data and known-child
+ * consents are reported as not applicable: Inth has no category for them.
  */
 export const resolveUSSectionValues = function resolveUSSectionValues(
 	definition: USSectionDefinition,
 	snapshot: Pick<
 		USSectionSnapshot,
-		'effectivePermissions' | 'policyRule' | 'privacySignals'
+		| 'effectivePermissions'
+		| 'evaluationPolicy'
+		| 'optOut'
+		| 'policyRule'
+		| 'privacySignals'
 	>,
-	options: USSectionOptions
+	options: USSectionOptions = {}
 ): USSectionValues {
 	const disclosed = snapshot.policyRule.rights.includes('disclosure');
-	const optedOut = options.optOutCategories.some(
-		(category) => snapshot.effectivePermissions[category] !== true
-	);
+	const optedOut = isOptedOut(snapshot, options.optOutCategories);
 	const covered = options.mspaMode !== undefined;
 	// In service provider mode nothing is sold, shared or used for targeted
 	// advertising, so the opt-outs and their notices do not apply.

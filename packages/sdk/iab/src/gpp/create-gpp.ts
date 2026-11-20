@@ -67,8 +67,11 @@ export interface CreateGPPOptions extends ConsentRuntimeGPPFactoryOptions {
 	 */
 	mspaMode?: GPPMspaMode;
 	/**
-	 * Categories whose refusal opts the visitor out of sale, sharing and
-	 * targeted advertising. Default: `['marketing']`.
+	 * Override which categories opt the visitor out of sale, sharing and
+	 * targeted advertising when no opt-out record is held. Defaults to the
+	 * active policy's opt-out categories (`marketing` and `measurement` in
+	 * scope). A held opt-out record always reports opted out regardless of
+	 * this override.
 	 */
 	optOutCategories?: readonly AllConsentNames[];
 	/**
@@ -124,7 +127,7 @@ export const createGPPRuntime = function createGPPRuntime(
 	const {
 		kernel,
 		mspaMode,
-		optOutCategories = ['marketing'],
+		optOutCategories,
 		tcf = true,
 		usApproach = 'state',
 		usFallback = 'usnat',

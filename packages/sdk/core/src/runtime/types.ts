@@ -263,8 +263,11 @@ export interface RuntimeGPPOptions {
 	 */
 	mspaMode?: 'opt-out-option' | 'service-provider';
 	/**
-	 * Categories whose refusal opts the visitor out of sale, sharing and
-	 * targeted advertising. Default: `['marketing']`.
+	 * Override which categories opt the visitor out of sale, sharing and
+	 * targeted advertising when no opt-out record is held. Defaults to the
+	 * active policy's opt-out categories (`marketing` and `measurement` in
+	 * scope). A held opt-out record always reports opted out regardless of
+	 * this override.
 	 */
 	optOutCategories?: readonly AllConsentNames[];
 	/** Add the TCF EU section under an `iab` policy. Default: `true`. */
