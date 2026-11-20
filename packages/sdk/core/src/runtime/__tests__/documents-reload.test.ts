@@ -14,9 +14,15 @@ import {
 	matchedResolution,
 	optInRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import { PENDING_SAVES_STORAGE_KEY } from '../../libs/storage-keys';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { hosted } from '../../transports/mode';
-import { recordAnswer, v1Error } from '../../transports/v1/__tests__/fixtures';
+import {
+	LEGACY_SUBJECT,
+	recordAnswer,
+	SUBJECT,
+	v1Error,
+} from '../../transports/v1/__tests__/fixtures';
 import { createRuntimeDocuments, isInthApiError } from '../documents';
 import { createConsentRuntime } from '../index';
 import type { ConsentRuntime, ConsentRuntimeOptions } from '../types';
@@ -44,6 +50,12 @@ let acceptanceHold: Promise<Response> | undefined;
 let conflicting = new Set<string>();
 /** The person's subject is this device's, as after a link. */
 let personIsDevice = false;
+/** Holds `/v1/consent/records` answers while set. */
+let recordsHold: Promise<void> | undefined;
+
+/** The UUID the backend keeps for a `sub_` ID. */
+const canonical = (subjectId: string | undefined) =>
+	subjectId?.startsWith('sub_') ? SUBJECT : subjectId;
 
 const backend: typeof globalThis.fetch = (input, init) => {
 	const { pathname } = new URL(String(input));
@@ -72,7 +84,10 @@ const backend: typeof globalThis.fetch = (input, init) => {
 					type,
 					version: '1',
 				})),
-				subjectId: body.externalId && !personIsDevice ? PERSON : body.subjectId,
+				subjectId:
+					body.externalId && !personIsDevice
+						? PERSON
+						: canonical(body.subjectId),
 			})
 		);
 	}
@@ -100,7 +115,11 @@ const backend: typeof globalThis.fetch = (input, init) => {
 		if (body.subjectId && conflicting.has(body.subjectId)) {
 			return Promise.resolve(v1Error(409, 'subject_conflict'));
 		}
-		return Promise.resolve(Response.json(recordAnswer(init)));
+		const held = recordsHold;
+		return (async () => {
+			await held;
+			return Response.json(recordAnswer(init));
+		})();
 	}
 	return Promise.resolve(
 		Response.json({
@@ -155,6 +174,7 @@ beforeEach(() => {
 	acceptanceHold = undefined;
 	conflicting = new Set();
 	personIsDevice = false;
+	recordsHold = undefined;
 });
 
 afterEach(() => {
@@ -462,4 +482,38 @@ describe('a stored entry the reader refuses', () => {
 			accepted: false,
 		});
 	});
+});
+
+test('a consent save under a sub_ ID that an acceptance canonicalised first is sent once', async () => {
+	const runtime = await load();
+	runtime.kernel.set.subjectId(LEGACY_SUBJECT);
+	const answer = Promise.withResolvers<undefined>();
+	recordsHold = answer.promise;
+	const saving = consent(runtime);
+	await vi.waitFor(() =>
+		expect(sent.at(-1)).toMatchObject({
+			path: '/v1/consent/records',
+			subjectId: LEGACY_SUBJECT,
+		})
+	);
+
+	await createRuntimeDocuments(() => runtime).accept(terms);
+	expect(subjectOf(runtime)).toBe(SUBJECT);
+	answer.resolve(undefined);
+	await saving;
+	recordsHold = undefined;
+	await vi.waitFor(() =>
+		expect(
+			JSON.parse(localStorage.getItem(PENDING_SAVES_STORAGE_KEY) ?? '[]')
+		).toEqual([])
+	);
+	unload(runtime);
+	await load();
+	await new Promise((resolve) => {
+		setTimeout(resolve, 50);
+	});
+
+	expect(
+		sent.filter((request) => request.path === '/v1/consent/records')
+	).toHaveLength(1);
 });

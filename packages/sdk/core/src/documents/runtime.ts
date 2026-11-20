@@ -339,9 +339,13 @@ export const acceptDocuments = async function acceptDocuments(
 		return answer;
 	}
 	let device = sent;
-	// The canonical UUID of a stored `sub_` ID. The kernel's adoption does
-	// nothing once the subject has moved on.
-	if (!isUuidV7(sent) && isUuidV7(answer.subjectId)) {
+	// Only the move a consent save's answer makes: from the `sub_` ID sent
+	// to its UUID, while that ID is still the visitor's.
+	if (
+		V1_LEGACY_SUBJECT_ID_PATTERN.test(sent) &&
+		isUuidV7(answer.subjectId) &&
+		kernel.getSnapshot().subject?.subjectId === sent
+	) {
 		await kernel.adoptSubject(sent, answer.subjectId);
 		device = answer.subjectId;
 	}

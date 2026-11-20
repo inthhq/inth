@@ -67,9 +67,10 @@ export interface InternalKernel extends ConsentKernel {
 	 */
 	markProvisionalSubject: (id: string | null) => void;
 	/**
-	 * Move the records from subject `from` to `to`, the canonical ID the
-	 * backend answered with, as a consent save's answer does. Does nothing
-	 * once the subject is no longer `from`.
+	 * Move the visitor from `from` to `to` in every tab, with the saves
+	 * queued under `from`: the move a consent save's answer makes from a
+	 * `sub_` ID to its UUID. The caller checks that `from` is a `sub_` ID
+	 * the visitor is still on.
 	 */
 	adoptSubject: (from: string, to: string) => Promise<void>;
 	/**
