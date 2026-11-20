@@ -170,13 +170,7 @@ type ObjectDiff<A, B, Path extends string, Depth extends unknown[]> =
 		: IsRecord<B> extends true
 			?
 					| `${Path}: record of ${ValueName<B[string & keyof B]>} in document only`
-					| KnownAgainstRecord<
-							Known<A>,
-							B[string & keyof B],
-							Path,
-							Depth,
-							true
-					  >
+					| KnownAgainstRecord<Known<A>, B[string & keyof B], Path, Depth, true>
 			: KnownDiff<Known<A>, Known<B>, Path, Depth>;
 
 type Diff<
