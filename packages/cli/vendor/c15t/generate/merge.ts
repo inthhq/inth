@@ -63,8 +63,9 @@ export const legacySnippets = (
 	};
 	for (const insert of merge.inserts) {
 		check(insert.marker, insert.content);
-		check(merge.marker, insert.content);
 	}
+	// The file-level marker covers every snippet, so report it once.
+	check(merge.marker, merge.inserts.map((insert) => insert.content).join('\n'));
 	return found;
 };
 
@@ -80,7 +81,7 @@ export const legacySnippetInstructions = (
 ): string[] =>
 	snippets.map(
 		({ found, current, content }) =>
-			`${path} still uses ${found}. Inth uses ${current} instead. Update it to match this snippet, and keep any attributes it already has, such as nonce:\n${content}`
+			`${path} still uses ${found}. Inth uses ${current} instead. Update it to match this snippet, and keep its other attributes:\n${content}`
 	);
 
 /**

@@ -142,6 +142,11 @@ it("asks a JavaScript page to rename its c15t preferences link", async () => {
   );
   expect(
     result.plan.instructions.filter((instruction) =>
+      instruction.startsWith("Add to index.html:")
+    )
+  ).toEqual([]);
+  expect(
+    result.plan.instructions.filter((instruction) =>
       instruction.includes("still uses")
     )
   ).toEqual([
