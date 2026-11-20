@@ -4,13 +4,19 @@
 # GITHUB_PATH so later steps see them.
 set -euo pipefail
 
+sudo chmod 666 /dev/kvm 2>/dev/null || true
+# Without KVM the x86_64 emulator either exits at once or never finishes
+# booting. Stop before the SDK downloads, so a runner without KVM fails in
+# seconds.
+[[ -w /dev/kvm ]] || { echo "::error::This runner has no usable /dev/kvm, so the Android emulator cannot boot." >&2; exit 1; }
+
 sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
 jdk="${JAVA_HOME_17_X64:-/usr/lib/jvm/temurin-17-jdk-amd64}"
 [[ -d "${sdk}/cmdline-tools/latest/bin" ]] || { echo "No Android SDK at ${sdk}" >&2; exit 1; }
 [[ -x "${jdk}/bin/java" ]] || { echo "No JDK 17 at ${jdk}" >&2; exit 1; }
-# On GitHub's ubuntu-24.04 image, avdmanager and the emulator default to
-# different AVD directories, so the emulator cannot find the AVD avdmanager just
-# made. Both honor ANDROID_AVD_HOME.
+# avdmanager and the emulator can default to different AVD directories (they do
+# on GitHub's ubuntu-24.04 image), and then the emulator cannot find the AVD
+# avdmanager just made. Both honor ANDROID_AVD_HOME.
 avd_home="${ANDROID_AVD_HOME:-${HOME}/.android/avd}"
 mkdir -p "${avd_home}"
 
@@ -48,7 +54,3 @@ for attempt in 1 2 3; do
 	[[ "${attempt}" -lt 3 ]] || exit 1
 	sleep 5
 done
-sudo chmod 666 /dev/kvm 2>/dev/null || true
-# Without KVM the x86_64 emulator either exits at once or never finishes
-# booting, which used to cost a full job timeout. Stop here instead.
-[[ -w /dev/kvm ]] || { echo "::error::This runner has no usable /dev/kvm, so the Android emulator cannot boot." >&2; exit 1; }

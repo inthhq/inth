@@ -4,7 +4,7 @@
 #   scripts/ci-android-emulator.sh start   # prints nothing; exports ANDROID_SERIAL via GITHUB_ENV when set
 #   scripts/ci-android-emulator.sh stop
 #
-# Needs KVM. GitHub-hosted Linux runners have it.
+# Needs KVM. scripts/ci-android-toolchain.sh stops the job when /dev/kvm is missing.
 set -euo pipefail
 
 : "${ANDROID_HOME:?ANDROID_HOME must point at the Android SDK}"
@@ -23,14 +23,28 @@ start)
 	nohup "${ANDROID_HOME}/emulator/emulator" -avd "${AVD_NAME}" -port "${PORT}" \
 		-no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -accel on \
 		> "${LOG_DIR}/emulator.log" 2>&1 &
-	echo $! > "${LOG_DIR}/emulator.pid"
-	"${ADB}" -s "${SERIAL}" wait-for-device
-	for _ in $(seq 1 240); do
-		[[ "$("${ADB}" -s "${SERIAL}" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == 1 ]] && break
-		kill -0 "$(cat "${LOG_DIR}/emulator.pid")"
+	pid=$!
+	echo "${pid}" > "${LOG_DIR}/emulator.pid"
+	# Poll rather than `adb wait-for-device`, which never returns if the emulator
+	# exits (no KVM, a missing AVD) and would hold the job until its timeout.
+	booted=false
+	for _ in $(seq 1 300); do
+		if ! kill -0 "${pid}" 2> /dev/null; then
+			echo "::error::The emulator exited before it finished booting. Last lines of its log:" >&2
+			tail -n 40 "${LOG_DIR}/emulator.log" >&2
+			exit 1
+		fi
+		if [[ "$("${ADB}" -s "${SERIAL}" shell getprop sys.boot_completed 2> /dev/null | tr -d '\r')" == 1 ]]; then
+			booted=true
+			break
+		fi
 		sleep 1
 	done
-	[[ "$("${ADB}" -s "${SERIAL}" shell getprop sys.boot_completed | tr -d '\r')" == 1 ]]
+	if [[ "${booted}" != true ]]; then
+		echo "::error::The emulator did not finish booting within 300 s. Last lines of its log:" >&2
+		tail -n 40 "${LOG_DIR}/emulator.log" >&2
+		exit 1
+	fi
 	# Keep the screen on and unlocked so Compose and UIAutomator see a resumed activity.
 	"${ADB}" -s "${SERIAL}" shell settings put system screen_off_timeout 2147483647
 	"${ADB}" -s "${SERIAL}" shell svc power stayon true
