@@ -32,13 +32,22 @@ export function SignUpForm() {
 		if (!terms) {
 			return;
 		}
-		if (!terms.accepted) {
-			try {
-				await accept({ type: 'terms_us', hash: terms.document.hash });
-			} catch {
-				setFailed(true);
-				return;
+		try {
+			// Check again: the visitor's subject or the release may have
+			// changed since the form showed.
+			const current = await check('terms_us');
+			if (!current.accepted) {
+				const shown =
+					!terms.accepted && terms.document.hash === current.document.hash;
+				if (!shown) {
+					setTerms(current);
+					return;
+				}
+				await accept({ type: 'terms_us', hash: current.document.hash });
 			}
+		} catch {
+			setFailed(true);
+			return;
 		}
 		// Create the account.
 	};
@@ -63,9 +72,10 @@ export function SignUpForm() {
 }
 ```
 
-The button stays disabled until `check` has answered, and the account is
-created only once `accept` has succeeded, so nobody signs up without the terms
-on record.
+The button stays disabled until `check` has answered. On submit the form checks
+again: when the terms now need accepting and the box was not on screen, it shows
+the box and waits for the next submit. The account is created only once `accept`
+has succeeded or the terms are already accepted.
 
 ## What `check` and `accept` do
 
@@ -84,10 +94,14 @@ force rejects with an API error whose `code` is `not_found`.
 with the `hash` that `check` gave. It waits until the visitor's subject ID is
 settled, then sends one `POST /v1/documents/acceptances` under it, with the
 property the consent records use, and resolves with what the backend recorded.
+This browser remembers a release only when `check` showed it on this page.
 
-The subject ID belongs to consent: `accept` never creates or changes it. When it
-changes, for example when another tab's consent record replaces it or the
-records are cleared, the visitor is asked again.
+The subject ID belongs to consent: `accept` never creates or changes it. When
+consent changes it, for example when another tab's consent record replaces it,
+the visitor is asked again. A visitor still on an ID an older c15t client
+stored (`sub_…`) gets an answer that names its UUID; the acceptance is
+remembered for the page under the ID that was sent, and once their next consent
+save moves them to the UUID they are asked again.
 
 Without a verified identity, the acceptance is recorded for the device. Pass
 `externalId` and `identityProvider` with an `identityToken` your server signed,
@@ -101,11 +115,15 @@ Both calls need a backend: the one your consent records go to. In tests, with
 
 The backend has no route that tells a browser what it accepted, so this browser
 remembers each acceptance it recorded, for the project and subject ID it was
-recorded under. While the visitor has a consent record, it is stored in
-`localStorage` and lasts as long as consent keeps that subject ID. Before the
-visitor's first consent choice it is remembered for the page only, so after a
-reload they are asked again. Clearing the visitor's consent records forgets it.
-Where storage is blocked, it is remembered for the page only.
+recorded under, with the ID of the document it accepted. While consent
+persistence stores the visitor's consent record, it is stored in `localStorage`
+and lasts as long as consent keeps that subject ID. Before the visitor's first
+consent choice, or with persistence off, it is remembered for the page only, so
+after a reload they are asked again. Clearing the visitor's consent records on a
+page that has called `check` or `accept` forgets it. A clear on a page that has
+not leaves the stored acceptance; it does not count until the visitor makes a
+consent choice again, under the same subject ID, which the backend still holds
+it for. Where storage is blocked, it is remembered for the page only.
 
 When your server knows who the person is, for example after sign-up, record the
 acceptance from the server with the project's secret key and the person's
@@ -114,11 +132,12 @@ acceptance from the server with the project's secret key and the person's
 ## Handle errors and retry
 
 Both calls reject with an API error when the backend refuses them; test it with
-`isInthApiError`. `accept` never sends anything again by itself. To retry after a
-network failure or a server error, send the same action with the same
-idempotency key, so the backend records it once. Do not retry other errors,
-such as `document_unknown` for a release the project never published, or
-`subject_conflict`.
+`isInthApiError`. `accept` never sends anything again by itself. To retry, send
+the same action with the same idempotency key, so the backend records it once,
+and only after a network failure, a server error or `rate_limited`. Do not retry
+anything else: a refusal such as `document_unknown` or `subject_conflict`, or an
+error of the SDK's own, such as a runtime with no subject or no backend, invalid
+input, or code that failed to load. The SDK's messages start with `Inth`.
 
 ```ts
 import {
@@ -130,12 +149,16 @@ const idempotencyKey = createIdempotencyKey();
 const send = () =>
 	accept({ type: 'terms_us', hash }, { idempotencyKey });
 
+/** The request did not reach the backend, or the backend failed or is busy. */
+const worthRetrying = (error: unknown): boolean =>
+	isInthApiError(error)
+		? error.status >= 500 || error.code === 'rate_limited'
+		: error instanceof TypeError && !error.message.startsWith('Inth');
+
 try {
 	await send();
 } catch (error) {
-	const temporary =
-		!isInthApiError(error) || error.status >= 500 || error.code === 'rate_limited';
-	if (!temporary) {
+	if (!worthRetrying(error)) {
 		throw error;
 	}
 	await send();
