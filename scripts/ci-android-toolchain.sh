@@ -8,8 +8,14 @@ sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
 jdk="${JAVA_HOME_17_X64:-/usr/lib/jvm/temurin-17-jdk-amd64}"
 [[ -d "${sdk}/cmdline-tools/latest/bin" ]] || { echo "No Android SDK at ${sdk}" >&2; exit 1; }
 [[ -x "${jdk}/bin/java" ]] || { echo "No JDK 17 at ${jdk}" >&2; exit 1; }
+# On GitHub's ubuntu-24.04 image, avdmanager and the emulator default to
+# different AVD directories, so the emulator cannot find the AVD avdmanager just
+# made. Both honor ANDROID_AVD_HOME.
+avd_home="${ANDROID_AVD_HOME:-${HOME}/.android/avd}"
+mkdir -p "${avd_home}"
 
 {
+	echo "ANDROID_AVD_HOME=${avd_home}"
 	echo "ANDROID_HOME=${sdk}"
 	echo "ANDROID_SDK_ROOT=${sdk}"
 	echo "JAVA_HOME=${jdk}"
