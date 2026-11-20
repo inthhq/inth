@@ -1460,6 +1460,333 @@
 				}
 			}
 		},
+		"/v1/subjects/identity-tokens": {
+			"post": {
+				"operationId": "postV1SubjectsIdentityTokens",
+				"description": "Signs a token, valid for an hour, that lets a browser act for one person: link its device, or record their acceptance. Needs the secret key. Make one per sign-in or page load, and do not store it. Nothing is stored.",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/IdentityTokenResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"invalid_request"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "invalid_request"
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"unauthorized"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "unauthorized"
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"forbidden"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "forbidden"
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"identity_tokens_disabled",
+																"not_found"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "identity_tokens_disabled, not_found"
+					},
+					"409": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"conflict"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "conflict"
+					},
+					"413": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"payload_too_large"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "payload_too_large"
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"rate_limited"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "rate_limited",
+						"headers": {
+							"Retry-After": {
+								"description": "Seconds to wait before trying again.",
+								"schema": {
+									"type": "integer"
+								}
+							}
+						}
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"server_error"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "server_error"
+					},
+					"502": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"bad_gateway"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "bad_gateway"
+					},
+					"504": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"gateway_timeout"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "gateway_timeout"
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"summary": "Create an identity token",
+				"tags": [
+					"Subjects"
+				],
+				"x-inth-access": "secret-key",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/IdentityTokenRequest"
+							}
+						}
+					},
+					"required": true
+				}
+			}
+		},
 		"/v1/documents/{type}/current": {
 			"put": {
 				"operationId": "putV1DocumentsByTypeCurrent",
@@ -2003,7 +2330,7 @@
 		"/v1/documents/acceptances": {
 			"post": {
 				"operationId": "postV1DocumentsAcceptances",
-				"description": "Records that a device or a person accepted one or more legal document releases, each named by its type and the hash `GET /v1/documents/{type}/current` gave. A release no longer in force can still be accepted; `GET /v1/consent/check` then reports the newer one as not accepted. All are recorded, or none. With only subjectId, the acceptances are the device’s and need no key. With externalId, they are the person’s, who is made when missing, and the request needs the secret key or an identityToken that names them. `context` carries the visitor’s IP address and user agent when your server records the acceptance, and is read only with the secret key; otherwise both come from the request. A retry with the same idempotencyKey is recorded once and answered as the first try was.",
+				"description": "Records that a device or a person accepted one or more legal document releases, each named by its type and the hash `GET /v1/documents/{type}/current` gave. A release no longer in force can still be accepted; `GET /v1/documents/check` then reports the newer one as not accepted. All are recorded, or none. With only subjectId, the acceptances are the device’s and need no key. With externalId, they are the person’s, who is made when missing, and the request needs the secret key or an identityToken that names them. `context` carries the visitor’s IP address and user agent when your server records the acceptance, and is read only with the secret key; otherwise both come from the request. A retry with the same idempotencyKey is recorded once and answered as the first try was.",
 				"responses": {
 					"200": {
 						"content": {
@@ -2332,16 +2659,16 @@
 				}
 			}
 		},
-		"/v1/consent/check": {
+		"/v1/documents/check": {
 			"get": {
-				"operationId": "getV1ConsentCheck",
-				"description": "For a person, by your account ID for them, and each document type asked for: hasConsent when they accepted any release, and isLatestPolicy when they accepted the latest release that requires acceptance, or one after it. Acceptances from devices linked to the person count. Every type asked for is in the answer.",
+				"operationId": "getV1DocumentsCheck",
+				"description": "For a person, by your account ID for them, and each document type asked for: accepted when they accepted any release, and acceptedLatest when they accepted the latest release that requires acceptance, or one after it. Acceptances from devices linked to the person count. Every type asked for is in the answer.",
 				"responses": {
 					"200": {
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ConsentCheckResponse"
+									"$ref": "#/components/schemas/DocumentCheckResponse"
 								}
 							}
 						},
@@ -2615,7 +2942,7 @@
 				],
 				"summary": "Check a person’s document acceptances",
 				"tags": [
-					"Consent"
+					"Documents"
 				],
 				"x-inth-access": "secret-key",
 				"parameters": [
@@ -2632,7 +2959,7 @@
 					{
 						"description": "Document types, comma separated.",
 						"in": "query",
-						"name": "type",
+						"name": "types",
 						"required": true,
 						"schema": {
 							"minLength": 1,
@@ -2645,35 +2972,6 @@
 	},
 	"components": {
 		"schemas": {
-			"ConsentCheckResponse": {
-				"type": "object",
-				"properties": {
-					"results": {
-						"type": "object",
-						"propertyNames": {
-							"type": "string"
-						},
-						"additionalProperties": {
-							"type": "object",
-							"properties": {
-								"hasConsent": {
-									"type": "boolean"
-								},
-								"isLatestPolicy": {
-									"type": "boolean"
-								}
-							},
-							"required": [
-								"hasConsent",
-								"isLatestPolicy"
-							]
-						}
-					}
-				},
-				"required": [
-					"results"
-				]
-			},
 			"ConsentInitResponse": {
 				"type": "object",
 				"properties": {
@@ -5379,6 +5677,35 @@
 					"subjectId"
 				]
 			},
+			"DocumentCheckResponse": {
+				"type": "object",
+				"properties": {
+					"documents": {
+						"type": "object",
+						"propertyNames": {
+							"type": "string"
+						},
+						"additionalProperties": {
+							"type": "object",
+							"properties": {
+								"accepted": {
+									"type": "boolean"
+								},
+								"acceptedLatest": {
+									"type": "boolean"
+								}
+							},
+							"required": [
+								"accepted",
+								"acceptedLatest"
+							]
+						}
+					}
+				},
+				"required": [
+					"documents"
+				]
+			},
 			"DocumentCurrentResponse": {
 				"type": "object",
 				"properties": {
@@ -5397,9 +5724,6 @@
 								"type": "string",
 								"format": "uuid"
 							},
-							"isCurrent": {
-								"type": "boolean"
-							},
 							"requiresAcceptance": {
 								"type": "boolean"
 							},
@@ -5414,7 +5738,6 @@
 							"effectiveDate",
 							"hash",
 							"id",
-							"isCurrent",
 							"requiresAcceptance",
 							"type",
 							"version"
@@ -5469,9 +5792,6 @@
 								"type": "string",
 								"format": "uuid"
 							},
-							"isCurrent": {
-								"type": "boolean"
-							},
 							"requiresAcceptance": {
 								"type": "boolean"
 							},
@@ -5486,7 +5806,6 @@
 							"effectiveDate",
 							"hash",
 							"id",
-							"isCurrent",
 							"requiresAcceptance",
 							"type",
 							"version"
@@ -5495,6 +5814,42 @@
 				},
 				"required": [
 					"document"
+				]
+			},
+			"IdentityTokenRequest": {
+				"type": "object",
+				"properties": {
+					"externalId": {
+						"type": "string",
+						"minLength": 1,
+						"description": "Your account ID for the person."
+					},
+					"identityProvider": {
+						"type": "string",
+						"minLength": 1,
+						"description": "Who issued the account ID, such as `clerk`. When set, the link must name the same identityProvider."
+					}
+				},
+				"required": [
+					"externalId"
+				]
+			},
+			"IdentityTokenResponse": {
+				"type": "object",
+				"properties": {
+					"expiresAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "When the token stops verifying, one hour after it was made."
+					},
+					"token": {
+						"type": "string",
+						"description": "Send it to the browser, which passes it as identityToken."
+					}
+				},
+				"required": [
+					"expiresAt",
+					"token"
 				]
 			},
 			"ScriptRegistry": {
@@ -5648,7 +6003,7 @@
 					},
 					"verifiedBy": {
 						"enum": [
-							"api_key",
+							"secret_key",
 							"identity_token"
 						],
 						"type": "string"
@@ -5675,6 +6030,7 @@
 									"identity_conflict",
 									"identity_token_invalid",
 									"identity_token_required",
+									"identity_tokens_disabled",
 									"invalid_request",
 									"not_found",
 									"payload_too_large",

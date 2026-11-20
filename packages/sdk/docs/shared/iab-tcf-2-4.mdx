@@ -69,8 +69,8 @@ Inth stores TCF choices per site and browser, which the TCF calls
 service-specific scope. It does not sync TC strings across devices, and every
 TC string it writes has `IsServiceSpecific` set to `1`.
 
-Do not use `/consent/check` or your own account data to skip the TCF banner on
-another device. That turns the choice into multi-device scope, which the TCF
-requires you to disclose in the first layer, and Inth does not show that
-disclosure. The `isServiceSpecific` option is deprecated. Inth ignores it and
-logs a warning when you pass `false`.
+Do not use your own account data to skip the TCF banner on another device. That
+turns the choice into multi-device scope, which the TCF requires you to disclose
+in the first layer, and Inth does not show that disclosure. The
+`isServiceSpecific` option is deprecated. Inth ignores it and logs a warning
+when you pass `false`.

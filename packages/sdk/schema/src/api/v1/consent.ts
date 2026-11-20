@@ -1,5 +1,5 @@
 /**
- * `/v1/consent/*` schemas: init, manifest, records, sessions and check.
+ * `/v1/consent/*` schemas: init, manifest, records and sessions.
  *
  * @packageDocumentation
  */
@@ -300,50 +300,6 @@ export const v1ConsentSessionReportSchema = v.object({
 });
 
 // ---------------------------------------------------------------------------
-// GET /v1/consent/check (secret key)
-// ---------------------------------------------------------------------------
-
-export const v1ConsentCheckQuerySchema = v.object({
-	externalId: v1ExternalIdSchema,
-	type: v.pipe(
-		v.string(),
-		v.minLength(1),
-		v.description('Consent type, or comma-separated types, to check.'),
-		v.examples(['cookie_banner', 'privacy_policy,terms_us'])
-	),
-});
-
-export const v1ConsentCheckResultSchema = v.object({
-	hasConsent: v.boolean(),
-	/**
-	 * For a document type: the person accepted the latest version that
-	 * requires acceptance.
-	 */
-	isLatestPolicy: v.boolean(),
-});
-
-/**
- * One result per type asked about, and at least one, since a check names at
- * least one type. Checked by hand: `v.record` drops a key such as
- * `constructor`, a valid document type, and still succeeds.
- */
-const checkResultsSchema = v.custom<
-	Record<string, v.InferOutput<typeof v1ConsentCheckResultSchema>>
->(
-	(input) =>
-		isPlainPolicyObject(input) &&
-		Object.keys(input).length > 0 &&
-		Object.values(input).every((result) =>
-			v.is(v1ConsentCheckResultSchema, result)
-		),
-	'Expected a check result for each type'
-);
-
-export const v1ConsentCheckOutputSchema = v.object({
-	results: checkResultsSchema,
-});
-
-// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -371,13 +327,4 @@ export type V1ConsentSessionJourney = v.InferOutput<
 >;
 export type V1ConsentSessionReport = v.InferOutput<
 	typeof v1ConsentSessionReportSchema
->;
-export type V1ConsentCheckQuery = v.InferOutput<
-	typeof v1ConsentCheckQuerySchema
->;
-export type V1ConsentCheckResult = v.InferOutput<
-	typeof v1ConsentCheckResultSchema
->;
-export type V1ConsentCheckOutput = v.InferOutput<
-	typeof v1ConsentCheckOutputSchema
 >;
