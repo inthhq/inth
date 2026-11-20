@@ -132,3 +132,25 @@ enum class PromptPurpose(val wireName: String) {
 		fun fromWireName(value: String?): PromptPurpose? = entries.firstOrNull { it.wireName == value }
 	}
 }
+
+/** Why a category is restricted regardless of grants or defaults. */
+@Serializable
+enum class RestrictionReason(val wireName: String) {
+	@SerialName("explicit-denial")
+	EXPLICIT_DENIAL("explicit-denial"),
+
+	@SerialName("strict-scope")
+	STRICT_SCOPE("strict-scope"),
+
+	@SerialName("gpc")
+	GPC("gpc"),
+
+	@SerialName("opt-out")
+	OPT_OUT("opt-out"),
+	;
+
+	companion object {
+		/** Parse a wire value, returning `null` for unknown values. */
+		fun fromWireName(value: String?): RestrictionReason? = entries.firstOrNull { it.wireName == value }
+	}
+}

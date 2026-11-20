@@ -378,6 +378,15 @@ data class ConsentSnapshot(
 	 * copy of a value it can recompute. The key is always present on the wire.
 	 */
 	val gppString: String? = null,
+	/**
+	 * Durable opt-out record, or `null` when none is held.
+	 *
+	 * Stored inside the envelope's snapshot alongside [explicitChoice]. An older stored
+	 * envelope written before this field existed decodes as `null`, and an older build that
+	 * does not model this key refuses envelopes written by this build instead of dropping it.
+	 * The key is always present on the wire.
+	 */
+	val optOut: OptOutRecord? = null,
 ) {
 	/**
 	 * Whether [category] may run right now.

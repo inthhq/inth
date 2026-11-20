@@ -4,9 +4,12 @@ import com.inth.core.model.ConsentLocation
 import com.inth.core.model.ConsentSnapshot
 import com.inth.core.model.ConsentSubject
 import com.inth.core.model.ExplicitChoice
+import com.inth.core.model.OptOutRecord
+import com.inth.core.model.OptOutRight
 import com.inth.core.model.PromptPurpose
 import com.inth.core.model.PromptRequirement
 import com.inth.core.store.InthJson
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -47,6 +50,7 @@ object SnapshotWire {
 	private const val LOCATION = "location"
 	private const val PROMPT_REQUIREMENT = "promptRequirement"
 	private const val EXPLICIT_CHOICE = "explicitChoice"
+	private const val OPT_OUT = "optOut"
 	private const val RESOLUTION = "resolution"
 
 	// subject
@@ -76,8 +80,14 @@ object SnapshotWire {
 	private const val BASIS_CHOICE_V1 = "choice-v1"
 	private const val BASIS_LEGACY_V2 = "legacy-v2"
 
+	// optOut
+	private const val RIGHTS = "rights"
+	private const val METHOD = "method"
+	private const val RECORDED_AT = "recordedAt"
+	private const val HELD_BY = "heldBy"
+
 	/**
-	 * The key names the kernel uses inside each of the four objects.
+	 * The key names the kernel uses inside each kernel-owned object.
 	 *
 	 * The writer spells these with the private constants above; they are public so a
 	 * reader on either side of the bridge can assert against one list rather than carry
@@ -88,6 +98,7 @@ object SnapshotWire {
 		LOCATION to setOf(COUNTRY_CODE, REGION_CODE),
 		PROMPT_REQUIREMENT to setOf(KIND, REASON),
 		EXPLICIT_CHOICE to setOf(VERSION, CATEGORIES),
+		OPT_OUT to setOf(RIGHTS, METHOD, RECORDED_AT, HELD_BY),
 	)
 
 	/**
@@ -125,6 +136,7 @@ object SnapshotWire {
 		wire[LOCATION] = locationOf(snapshot.location)
 		wire[PROMPT_REQUIREMENT] = promptOf(snapshot.promptRequirement)
 		wire[EXPLICIT_CHOICE] = choiceOf(snapshot.explicitChoice)
+		wire[OPT_OUT] = optOutOf(snapshot.optOut)
 		encoded[RESOLUTION]?.let { wire[RESOLUTION] = resolutionOf(it) }
 		return JsonObject(wire)
 	}
@@ -251,6 +263,22 @@ object SnapshotWire {
 		} else {
 			put(KIND, JsonPrimitive(BASIS_CHOICE_V1))
 			put(FINGERPRINT, JsonPrimitive(fingerprint))
+		}
+	}
+
+	/**
+	 * Durable opt-out record in the kernel's key names and canonical right order.
+	 */
+	private fun optOutOf(optOut: OptOutRecord?): JsonElement {
+		if (optOut == null) {
+			return JsonNull
+		}
+		val canonicalRights = OptOutRight.entries.filter { it in optOut.rights }
+		return buildJsonObject {
+			put(RIGHTS, JsonArray(canonicalRights.map { JsonPrimitive(it.wireName) }))
+			put(METHOD, JsonPrimitive(optOut.method.wireName))
+			put(RECORDED_AT, JsonPrimitive(optOut.recordedAt))
+			put(HELD_BY, JsonPrimitive(optOut.heldBy.wireName))
 		}
 	}
 

@@ -242,6 +242,28 @@ object Inth {
 		kernel.get()?.dismissNotice()
 	}
 
+	/** Record a durable button opt-out under an `opt-out` policy, or refuse when unavailable. */
+	fun optOut(): OptOutResult {
+		val active = kernel.get() ?: return OptOutResult(
+			ok = false,
+			revision = 0,
+			reason = OptOutRefusalReason.NOT_BOOTSTRAPPED,
+			error = KernelError("not-bootstrapped", "Inth: no core is installed. Call InthAndroid.install first"),
+		)
+		return active.optOut()
+	}
+
+	/** Lift a held device opt-out record, or refuse with the reason it cannot be lifted. */
+	fun optIn(): OptInResult {
+		val active = kernel.get() ?: return OptInResult(
+			ok = false,
+			revision = 0,
+			reason = OptInRefusalReason.NOT_BOOTSTRAPPED,
+			error = KernelError("not-bootstrapped", "Inth: no core is installed. Call InthAndroid.install first"),
+		)
+		return active.optIn()
+	}
+
 	/** Re-run init. */
 	fun refresh() {
 		kernel.get()?.refresh()

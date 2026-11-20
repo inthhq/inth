@@ -6,6 +6,7 @@ import com.inth.core.model.ConsentSnapshot
 import com.inth.core.model.ConsentSubject
 import com.inth.core.model.ExplicitChoice
 import com.inth.core.model.KernelOverrides
+import com.inth.core.model.OptOutRecord
 import com.inth.core.model.PrivacySignals
 import com.inth.core.policy.NoticeDismissal
 import com.inth.core.spi.HttpRequest
@@ -109,10 +110,11 @@ class ProtocolFixtureTest {
 				Divergence("a-fixture", "expected.snapshot.explicitChoice*", "the core carries consents"),
 				Divergence("a-fixture", "expected.snapshotAfter.location.country", "the core keys it country"),
 				Divergence("a-fixture", "expected.snapshot.promptRequirement", "a triple, not kind/reason"),
+				Divergence("a-fixture", "expected.snapshot.optOut", "a kernel-owned record"),
 			),
 		)
 		assertEquals(
-			4,
+			5,
 			planted.size,
 			"the guard stopped matching accepted-differences rows that name a kernel-owned key, " +
 				"which makes it a guard in name only",
@@ -555,10 +557,9 @@ class ProtocolFixtureTest {
 			// runner rather than the core.
 			json.decodeFromString(NoticeDismissal.serializer(), it.toString())
 		}
-		// Durable opt-out records are not implemented in the Kotlin core yet; the
-		// runner reads the field to enforce the hydration invariant and leaves it
-		// unseeded so the ledger records the real differences against the kernel.
-		val optOut = stored["optOut"]?.takeUnless { it is JsonNull }
+		val optOut = stored["optOut"]?.takeUnless { it is JsonNull }?.let {
+			InthJson.storage.decodeFromJsonElement(OptOutRecord.serializer(), it)
+		}
 		// `hydrated` says whether an envelope is in the snapshot slot before the core
 		// starts. A fixture that says false is a first launch: the identity slot is
 		// filled, because the contract keeps the two slots apart so that refusing an
@@ -573,7 +574,11 @@ class ProtocolFixtureTest {
 			// A stored receipt reaches a relaunch through the envelope's snapshot, which
 			// is where this core keeps it. The policy wire stays out of the envelope on
 			// purpose: the fixture serves the policy from the transport, as a launch does.
-			val seeded = ConsentSnapshot(subject = ConsentSubject(id = subjectId), explicitChoice = choice)
+			val seeded = ConsentSnapshot(
+				subject = ConsentSubject(id = subjectId),
+				explicitChoice = choice,
+				optOut = optOut,
+			)
 			backend.putSilently(
 				InthStoreKeys.SNAPSHOT,
 				InthJson.storage.encodeToString(
@@ -1297,8 +1302,6 @@ class ProtocolFixtureTest {
 
 	const val DEADLINE_OVER = "the core reports a choice expiry the kernel does not: under this policy nothing changes when that deadline passes, so the kernel leaves nextDeadline unset."
 
-	const val OPT_OUT_RECORD = "The durable opt-out record is implemented in the web kernel first. The native core must add snapshot.optOut, stored opt-out persistence, the opt-out restriction reason for marketing and measurement in scope, automatic GPC opt-out recording, and button opt-out recording and lifting on save."
-
 	/**
 	 * One row per fixture, snapshot root, and field this build cannot match yet.
 	 *
@@ -1329,25 +1332,12 @@ class ProtocolFixtureTest {
 			}
 		}
 
-		val optOutRestrictionFields = listOf(
-			"optOut" to OPT_OUT_RECORD,
-			"restrictions.marketing" to OPT_OUT_RECORD,
-			"restrictions.measurement" to OPT_OUT_RECORD,
-		)
-		val storedOptOutFields = listOf(
-			"effectivePermissions.marketing" to OPT_OUT_RECORD,
-			"effectivePermissions.measurement" to OPT_OUT_RECORD,
-			"optOut" to OPT_OUT_RECORD,
-			"restrictions.marketing" to OPT_OUT_RECORD,
-			"restrictions.measurement" to OPT_OUT_RECORD,
-		)
-
 		listOf(
 			"evaluation-eu-opt-in" to emptyList<Pair<String, String>>(),
 			"evaluation-us-ccpa-opt-out" to emptyList<Pair<String, String>>(),
 			"evaluation-no-rule-matched" to emptyList<Pair<String, String>>(),
-			"evaluation-gpc-signal-present" to optOutRestrictionFields,
-			"evaluation-gpc-under-opt-in-no-receipt" to optOutRestrictionFields,
+			"evaluation-gpc-signal-present" to emptyList<Pair<String, String>>(),
+			"evaluation-gpc-under-opt-in-no-receipt" to emptyList<Pair<String, String>>(),
 			"evaluation-notice-pending" to emptyList<Pair<String, String>>(),
 			"evaluation-eu-explicit-grants" to emptyList<Pair<String, String>>(),
 			// Both rows the evaluator used to need here are gone: the core now reports
@@ -1360,9 +1350,9 @@ class ProtocolFixtureTest {
 			// the kernel outright.
 			"evaluation-eu-fresh-install" to emptyList<Pair<String, String>>(),
 			"evaluation-us-ccpa-fresh-install" to emptyList<Pair<String, String>>(),
-			"evaluation-opt-out-stored-without-gpc" to storedOptOutFields,
-			"evaluation-opt-out-aged-over-year" to storedOptOutFields,
-			"evaluation-opt-out-under-stale-policy" to storedOptOutFields,
+			"evaluation-opt-out-stored-without-gpc" to emptyList<Pair<String, String>>(),
+			"evaluation-opt-out-aged-over-year" to emptyList<Pair<String, String>>(),
+			"evaluation-opt-out-under-stale-policy" to emptyList<Pair<String, String>>(),
 		).forEach { (fixture, fields) -> add(fixture, "expected.snapshot", *fields.toTypedArray()) }
 
 		// The snapshot a `native-envelope` write case stores is the same snapshot the
@@ -1412,18 +1402,8 @@ class ProtocolFixtureTest {
 			)
 		}
 
-		add("save-body-ccpa-gpc", "expected.snapshotBefore", *optOutRestrictionFields.toTypedArray())
-		add(
-			"save-body-ccpa-gpc",
-			"expected.snapshotAfter",
-			*(listOf("nextDeadline" to DEADLINE_OVER) + optOutRestrictionFields).toTypedArray(),
-		)
-		add(
-			"save-body-ccpa-reject-all",
-			"expected.snapshotAfter",
-			*(listOf("nextDeadline" to DEADLINE_OVER) + optOutRestrictionFields).toTypedArray(),
-		)
-		add("save-body-ccpa-opt-out-lifted", "expected.snapshotBefore", *storedOptOutFields.toTypedArray())
+		add("save-body-ccpa-gpc", "expected.snapshotAfter", "nextDeadline" to DEADLINE_OVER)
+		add("save-body-ccpa-reject-all", "expected.snapshotAfter", "nextDeadline" to DEADLINE_OVER)
 		add("save-body-ccpa-opt-out-lifted", "expected.snapshotAfter", "nextDeadline" to DEADLINE_OVER)
 		add(
 			"evaluation-opt-out-measurement-granted",

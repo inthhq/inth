@@ -1,6 +1,7 @@
 package com.inth.core
 
 import com.inth.core.model.KernelError
+import com.inth.core.model.OptOutRecord
 
 /**
  * Outcome of [ConsentCore.save].
@@ -58,6 +59,66 @@ data class FlushResult(
 	/** Entries still queued afterwards. */
 	val remaining: Int,
 	/** Set when the backend refused a payload, which a retry will not fix. */
+	val error: KernelError? = null,
+)
+
+/** Why [ConsentCore.optOut] did not record an opt-out. */
+enum class OptOutRefusalReason(val wireName: String) {
+	/** The active policy's model is not `opt-out`, or no policy has resolved yet. */
+	NOT_AVAILABLE("not-available"),
+
+	/** The durable envelope write failed, so no opt-out was recorded. */
+	STORAGE_FAILED("queue-write-failed"),
+
+	/** No core is installed on [Inth]. */
+	NOT_BOOTSTRAPPED("not-bootstrapped"),
+	;
+}
+
+/** Outcome of [ConsentCore.optOut]. */
+data class OptOutResult(
+	/** `true` when a durable opt-out record is held after this call (newly recorded or already present). */
+	val ok: Boolean,
+	/** Revision the call published, or the unchanged revision on a no-op or refusal. */
+	val revision: Long,
+	/** The held opt-out record when [ok], or `null` on a refusal. */
+	val optOut: OptOutRecord? = null,
+	/** `true` when this call recorded a new opt-out, `false` on a no-op or refusal. */
+	val changed: Boolean = false,
+	/** Why the command was refused, or `null` when [ok]. */
+	val reason: OptOutRefusalReason? = null,
+	/** Error detail emitted on a storage or bootstrap refusal, if any. */
+	val error: KernelError? = null,
+)
+
+/** Why [ConsentCore.optIn] did not lift the opt-out record. */
+enum class OptInRefusalReason(val wireName: String) {
+	/** No durable opt-out record is held. */
+	NOT_OPTED_OUT("not-opted-out"),
+
+	/** Global Privacy Control is active under a policy that maps it. */
+	GPC_ACTIVE("gpc-active"),
+
+	/** The opt-out is held by the person's account (`person` or `both`) and cannot be lifted locally. */
+	HELD_BY_ACCOUNT("held-by-account"),
+
+	/** The durable envelope write failed, so the opt-out record remains held. */
+	STORAGE_FAILED("queue-write-failed"),
+
+	/** No core is installed on [Inth]. */
+	NOT_BOOTSTRAPPED("not-bootstrapped"),
+	;
+}
+
+/** Outcome of [ConsentCore.optIn]. */
+data class OptInResult(
+	/** `true` when the held durable opt-out record was lifted and persisted. */
+	val ok: Boolean,
+	/** Revision the call published, or the unchanged revision on a refusal. */
+	val revision: Long,
+	/** Why the command was refused, or `null` when [ok]. */
+	val reason: OptInRefusalReason? = null,
+	/** Error detail emitted on a storage or bootstrap refusal, if any. */
 	val error: KernelError? = null,
 )
 
