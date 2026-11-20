@@ -27,16 +27,19 @@ export interface LegacySnippet {
 	current: string;
 	/** The generated snippet that replaces the old one. */
 	content: string;
+	/** Whether the file also has the current name, so the old copy is extra. */
+	duplicate: boolean;
 }
 
 /**
- * Find snippets an existing file has only under an older name. In a marker
- * list, the first entry is the current name and the rest are older names
- * that still count as present, so setup adds no second copy. The SDK only
- * answers to the current name, so the caller should ask for a rename.
+ * Find snippets an existing file has under an older name. In a marker list,
+ * the first entry is the current name and the rest are older names that
+ * still count as present, so setup adds no second copy. The SDK only answers
+ * to the current name, so the caller should ask for a rename, or for removal
+ * when the file has both.
  * @param existing Current contents of the project's file.
  * @param merge How the generated file merges into it.
- * @returns One entry per older name the file uses without the current one.
+ * @returns One entry per older name the file uses.
  */
 export const legacySnippets = (
 	existing: string,
@@ -51,13 +54,14 @@ export const legacySnippets = (
 			return;
 		}
 		const current = marker[0];
-		if (current === undefined || existing.includes(current)) {
+		if (current === undefined) {
 			return;
 		}
+		const duplicate = existing.includes(current);
 		for (let index = 1; index < marker.length; index += 1) {
 			const name = marker[index];
 			if (name !== undefined && existing.includes(name)) {
-				found.push({ found: name, current, content });
+				found.push({ found: name, current, content, duplicate });
 			}
 		}
 	};
@@ -79,9 +83,10 @@ export const legacySnippetInstructions = (
 	path: string,
 	snippets: LegacySnippet[]
 ): string[] =>
-	snippets.map(
-		({ found, current, content }) =>
-			`${path} still uses ${found}. Inth uses ${current} instead. Update it to match this snippet, and keep its other attributes:\n${content}`
+	snippets.map(({ found, current, content, duplicate }) =>
+		duplicate
+			? `${path} uses both ${current} and ${found}. Remove the copy that uses ${found}, so only one consent snippet runs.`
+			: `${path} still uses ${found}. Inth uses ${current} instead. Update it to match this snippet, and keep its other attributes:\n${content}`
 	);
 
 /**

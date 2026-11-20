@@ -179,6 +179,25 @@ it("asks to rename an old preferences link next to a new script", () => {
   ).toEqual([expect.stringContaining("still uses #c15t-preferences")]);
 });
 
+it("asks to remove an old consent script that runs next to the new one", () => {
+  const root = directory();
+  const page = legacyPage(
+    '    <script src="https://site.inth.app/inth.js" defer></script>\n    <script src="https://site.inth.app/c15t.js" defer></script>\n',
+    '    <a href="#inth-preferences">Privacy settings</a>\n'
+  );
+  fs.writeFileSync(fault.target, page);
+  const { instructions } = apply(root).plan;
+  expect(fs.readFileSync(fault.target, "utf-8")).toBe(page);
+  expect(
+    instructions.filter((instruction) => instruction.startsWith("Add to"))
+  ).toEqual([]);
+  expect(
+    instructions.filter((instruction) => instruction.includes("/c15t.js"))
+  ).toEqual([
+    "index.html uses both /inth.js and /c15t.js. Remove the copy that uses /c15t.js, so only one consent snippet runs.",
+  ]);
+});
+
 it("does not copy after an unrelated hard-link error", () => {
   const root = directory();
   fault.code = "EACCES";
