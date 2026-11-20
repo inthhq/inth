@@ -27,6 +27,8 @@ const props = defineProps<{
 	vendors: readonly ResolvedVendor[];
 	/** Granted flag per vendor from the draft. */
 	granted: Readonly<Record<string, boolean>>;
+	/** Hide the disabled-category hint when the parent switch is locked off. */
+	hideHint?: boolean;
 	noStyle: boolean;
 }>();
 
@@ -95,7 +97,7 @@ const contentId = (index: number) =>
 		:data-testid="`consent-widget-vendor-list-${category}`"
 	>
 		<p
-			v-if="!categoryOn"
+			v-if="!categoryOn && !hideHint"
 			:class="styles?.hint"
 			:data-testid="`consent-widget-vendor-hint-${category}`"
 		>

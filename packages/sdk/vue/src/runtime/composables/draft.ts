@@ -1,5 +1,6 @@
 import type { ConsentState, SaveResult } from '@inth/sdk/engine';
 import { createPreferenceDraft } from '@inth/sdk/preference-draft';
+import type { PreferenceDraftSaveOptions } from '@inth/sdk/preference-draft';
 import { computed, onScopeDispose, ref, shallowRef, watch } from 'vue';
 
 import { useResolvedPresentation } from './experiment';
@@ -70,11 +71,11 @@ export const useConsentDraft = function useConsentDraft() {
 			follow();
 		},
 		/**
-		 * Record `values` and the vendors the visitor moved. Resolves
-		 * `{ ok: false }` without recording while `isStale` is `true`.
+		 * Record `values` and the vendors the visitor moved, or a bulk choice.
+		 * Resolves `{ ok: false }` without recording while `isStale` is `true`.
 		 */
-		async save(): Promise<SaveResult> {
-			const pending = draft.save();
+		async save(options?: PreferenceDraftSaveOptions): Promise<SaveResult> {
+			const pending = draft.save(options);
 			follow();
 			return await pending;
 		},

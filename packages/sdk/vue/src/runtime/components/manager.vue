@@ -14,7 +14,6 @@ import {
 	useConsentConfig,
 	useConsentInit,
 	useConsentKernel,
-	useConsentSave,
 	useHasConsentUi,
 } from '../composables';
 import { useConsentDraft } from '../composables/draft';
@@ -47,7 +46,6 @@ const textDirection = computed(() =>
 
 const activeUI = useConsentActiveUI();
 const config = useConsentConfig();
-const save = useConsentSave();
 const kernel = useConsentKernel();
 // No resolved policy means nothing to manage: render no surface at all.
 const hasConsentUi = useHasConsentUi();
@@ -141,11 +139,7 @@ const onAction = async function onAction(action: PresentationAction) {
 			if (action === 'save') {
 				return saveDraft();
 			}
-			const bulk = save(action === 'accept' ? 'all' : 'none');
-			// Accept all and Reject all supersede every staged edit, even
-			// when they record nothing new.
-			resetDraft();
-			return bulk;
+			return saveDraft({ input: action === 'accept' ? 'all' : 'none' });
 		},
 		// A draft save that left edits staged (made while it ran, or a
 		// stale draft it refused) keeps the manager open.

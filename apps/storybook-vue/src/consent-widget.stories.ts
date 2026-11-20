@@ -12,6 +12,7 @@ import {
 import {
 	storybookInit,
 	useStorybookConsent as setupStorybookConsent,
+	useStorybookOptOutConsent as setupStorybookOptOutConsent,
 } from './storybook-consent-fixtures';
 
 const meta = {
@@ -67,4 +68,37 @@ export const WithVendors: Story = {
 export const WithVendorsExpanded: Story = {
 	...WithVendors,
 	play: expandedVendors,
+};
+
+/** Durable opt-out honored by a visitor request; switches stay off and usable. */
+export const OptOutHonoredByRequest: Story = {
+	render: () => ({
+		components: { ConsentWidget },
+		setup() {
+			setupStorybookOptOutConsent('request');
+		},
+		template: '<div style="width: 32rem;"><ConsentWidget /></div>',
+	}),
+};
+
+/** Durable opt-out honored by an active GPC signal; restricted switches are locked off. */
+export const OptOutGpcLocked: Story = {
+	render: () => ({
+		components: { ConsentWidget },
+		setup() {
+			setupStorybookOptOutConsent('gpc');
+		},
+		template: '<div style="width: 32rem;"><ConsentWidget /></div>',
+	}),
+};
+
+/** Account-held opt-out; switches stay usable with the account notice below each row. */
+export const OptOutHeldByAccount: Story = {
+	render: () => ({
+		components: { ConsentWidget },
+		setup() {
+			setupStorybookOptOutConsent('account');
+		},
+		template: '<div style="width: 32rem;"><ConsentWidget /></div>',
+	}),
 };
