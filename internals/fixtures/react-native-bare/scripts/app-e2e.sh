@@ -4,6 +4,17 @@ set -euo pipefail
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO_ROOT="$(cd "${APP_DIR}/../../.." && pwd)"
 PLATFORM="${1:?Usage: app-e2e.sh ios|android}"
+# INTH_APP_E2E_PHASE splits an Android run so CI builds on any runner and holds an
+# emulator (KVM) only for the journey. build stops after the APKs and leaves them
+# in $OUT/apk. run installs them from INTH_APP_E2E_BUILD, that build's evidence
+# directory, and builds nothing. Unset (all) does both, as before.
+PHASE="${INTH_APP_E2E_PHASE:-all}"
+case "${PHASE}" in all | build | run) ;; *) echo "Unknown INTH_APP_E2E_PHASE: ${PHASE}" >&2; exit 2 ;; esac
+[[ "${PHASE}" == all || "${PLATFORM}" == android ]] || { echo "INTH_APP_E2E_PHASE applies to Android only" >&2; exit 2; }
+if [[ "${PHASE}" == run ]]; then
+  BUILD="$(cd "${INTH_APP_E2E_BUILD:?INTH_APP_E2E_BUILD must point at the build phase evidence}" && pwd)"
+  [[ -s "${BUILD}/apk/app-release.apk" && -s "${BUILD}/apk/e2e-release.apk" ]] || { echo "No APKs in ${BUILD}/apk" >&2; exit 2; }
+fi
 RUN_ID="$(date +%Y%m%d-%H%M%S)-$$"
 OUT="${INTH_APP_E2E_OUT:-${APP_DIR}/.artifacts/app-e2e/${PLATFORM}-${RUN_ID}}"
 mkdir -p "${OUT}"
@@ -82,6 +93,11 @@ PYVIDEO
     [[ -z "${AVD_NAME}" ]] || "${AVDMANAGER}" delete avd --name "${AVD_NAME}"
   fi
   [[ -z "${BACKEND_PID}" ]] || { kill "${BACKEND_PID}"; wait "${BACKEND_PID}"; }
+  if [[ "${PHASE}" == build ]]; then
+    rm -rf "${TASK_TMP}"
+    printf 'Mobile app E2E build exit %s. Evidence: %s\n' "${result}" "${OUT}"
+    exit "${result}"
+  fi
   if [[ "${result}" == 0 && "${INTH_APP_E2E_SCENARIO}" == expiry ]]; then
     python3 "${APP_DIR}/scripts/verify-expiry.py" "${OUT}" > "${OUT}/expiry-verification.log" 2>&1 || result=1
   fi
@@ -111,12 +127,17 @@ cd "${REPO_ROOT}"
 git rev-parse HEAD > "${OUT}/source-head.txt"
 git diff --stat > "${OUT}/source-diff.txt"
 git diff --binary > "${OUT}/source.patch"
-bun --version > "${OUT}/bun-version.txt"
-bun turbo run build --filter=@inth/react-native --filter=@inth/sdk-schema > "${OUT}/dependencies.log" 2>&1
-
 [[ "${PLATFORM}" != android ]] || export INTH_E2E_URL=http://localhost:3000
-mkdir -p "${OUT}/policy-assets"
-INTH_E2E_BINDING="${INTH_E2E_URL}" INTH_E2E_FETCH="http://localhost:${BACKEND_PORT}" bunx tsx scripts/export-mobile-e2e-policy.ts "${OUT}/policy-assets/inth-policy.json"
+if [[ "${PHASE}" == run ]]; then
+  # Keep the build's evidence next to the journey's, without the APKs.
+  mkdir -p "${OUT}/build"
+  tar -C "${BUILD}" --exclude=./apk -cf - . | tar -C "${OUT}/build" -xf -
+else
+  bun --version > "${OUT}/bun-version.txt"
+  bun turbo run build --filter=@inth/react-native --filter=@inth/sdk-schema > "${OUT}/dependencies.log" 2>&1
+  mkdir -p "${OUT}/policy-assets"
+  INTH_E2E_BINDING="${INTH_E2E_URL}" INTH_E2E_FETCH="http://localhost:${BACKEND_PORT}" bunx tsx scripts/export-mobile-e2e-policy.ts "${OUT}/policy-assets/inth-policy.json"
+fi
 if [[ "${PLATFORM}" == ios ]]; then
   bun run --cwd "${APP_DIR}" pod-install > "${OUT}/pods.log" 2>&1
   RUNTIME="${INTH_IOS_RUNTIME:-$(xcrun simctl list runtimes -j | python3 -c 'import json,sys; print(next(r["identifier"] for r in json.load(sys.stdin)["runtimes"] if r["isAvailable"] and r["name"].startswith("iOS")))')}"
@@ -177,6 +198,25 @@ elif [[ "${PLATFORM}" == android ]]; then
   ADB="${ANDROID_HOME}/platform-tools/adb"
   AVDMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/avdmanager"
   IMAGE="${INTH_ANDROID_IMAGE:-system-images;android-36;google_apis;arm64-v8a}"
+  # Mixpanel's Android SDK sends nothing to a host that resolves to loopback, so it
+  # reaches the same backend through the emulator's alias for the host machine.
+  # The bundle inlines this URL, so it is set before the build.
+  export INTH_E2E_MIXPANEL_URL="http://10.0.2.2:${BACKEND_PORT}"
+  if [[ "${PHASE}" == run ]]; then
+    APK_DIR="${BUILD}/apk"
+  else
+    export INTH_MAVEN_URL="file://${REPO_ROOT}/packages/android/build/maven-staging"
+    sh "${REPO_ROOT}/packages/android/gradlew" -p "${REPO_ROOT}/packages/android" --max-workers=4 \
+      :inth-core:publishAllPublicationsToStagingRepository :inth-android:publishAllPublicationsToStagingRepository :inth-consent-ui:publishAllPublicationsToStagingRepository > "${OUT}/native-artifacts.log" 2>&1
+    ARCH="${INTH_ANDROID_ARCH:-arm64-v8a}"
+    rm -rf "${APP_DIR}/android/e2e/build/outputs/androidTest-results"
+    sh "${APP_DIR}/android/gradlew" -p "${APP_DIR}/android" --refresh-dependencies :app:assembleRelease :e2e:assembleRelease \
+      -Pinth.appE2e=true -Pinth.policyAssets="${OUT}/policy-assets" -PreactNativeArchitectures="${ARCH}" > "${OUT}/build.log" 2>&1
+    APK_DIR="${OUT}/apk"
+    mkdir -p "${APK_DIR}"
+    cp "${APP_DIR}/android/app/build/outputs/apk/release/app-release.apk" "${APP_DIR}/android/e2e/build/outputs/apk/release/e2e-release.apk" "${APK_DIR}/"
+  fi
+  [[ "${PHASE}" != build ]] || exit 0
   AVD_NAME="inth-app-e2e-${RUN_ID}"
   echo no | "${AVDMANAGER}" create avd --name "${AVD_NAME}" --package "${IMAGE}" --device pixel_6 > "${OUT}/avd.log" 2>&1
   PORT="$(python3 -c 'import socket
@@ -190,13 +230,14 @@ for p in list(range(5554, 5580, 2)) + [5582, 5584]:
   printf '%s\n' "${DEVICE}" > "${OUT}/device-id.txt"
   "${ANDROID_HOME}/emulator/emulator" -avd "${AVD_NAME}" -port "${PORT}" -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect > "${OUT}/emulator.log" 2>&1 &
   EMULATOR_PID=$!
-  "${ADB}" -s "${DEVICE}" wait-for-device
-  for attempt in {1..180}; do
-    [[ "$("${ADB}" -s "${DEVICE}" shell getprop sys.boot_completed | tr -d '\r')" != 1 ]] || break
-    kill -0 "${EMULATOR_PID}"
+  # Poll rather than `adb wait-for-device`, which never returns if the emulator exits.
+  for _ in {1..300}; do
+    kill -0 "${EMULATOR_PID}" 2>/dev/null || { echo "The emulator exited before it finished booting:" >&2; tail -n 40 "${OUT}/emulator.log" >&2; exit 1; }
+    [[ "$("${ADB}" -s "${DEVICE}" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" != 1 ]] || break
     sleep 1
   done
-  [[ "$("${ADB}" -s "${DEVICE}" shell getprop sys.boot_completed | tr -d '\r')" == 1 ]]
+  [[ "$("${ADB}" -s "${DEVICE}" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == 1 ]] \
+    || { echo "The emulator did not finish booting in 300 s:" >&2; tail -n 40 "${OUT}/emulator.log" >&2; exit 1; }
   "${ADB}" -s "${DEVICE}" shell getprop ro.build.version.sdk > "${OUT}/device-version.txt"
   "${ADB}" -s "${DEVICE}" shell getprop ro.build.version.release >> "${OUT}/device-version.txt"
   java -version > "${OUT}/toolchain.txt" 2>&1
@@ -204,19 +245,8 @@ for p in list(range(5554, 5580, 2)) + [5582, 5584]:
   "${ADB}" -s "${DEVICE}" shell svc power stayon true
   "${ADB}" -s "${DEVICE}" shell input keyevent 224
   "${ADB}" -s "${DEVICE}" shell input keyevent 82
-  "${ADB}" -s "${DEVICE}" reverse tcp:3000 "tcp:${BACKEND_PORT}"
   # JS/instrumentation keep a stable device endpoint; only this owned emulator is reversed.
-  export INTH_E2E_URL=http://localhost:3000
-  # Mixpanel's Android SDK sends nothing to a host that resolves to loopback, so it
-  # reaches the same backend through the emulator's alias for the host machine.
-  export INTH_E2E_MIXPANEL_URL="http://10.0.2.2:${BACKEND_PORT}"
-  export INTH_MAVEN_URL="file://${REPO_ROOT}/packages/android/build/maven-staging"
-  sh "${REPO_ROOT}/packages/android/gradlew" -p "${REPO_ROOT}/packages/android" --max-workers=4 \
-    :inth-core:publishAllPublicationsToStagingRepository :inth-android:publishAllPublicationsToStagingRepository :inth-consent-ui:publishAllPublicationsToStagingRepository > "${OUT}/native-artifacts.log" 2>&1
-  ARCH="${INTH_ANDROID_ARCH:-arm64-v8a}"
-  rm -rf "${APP_DIR}/android/e2e/build/outputs/androidTest-results"
-  sh "${APP_DIR}/android/gradlew" -p "${APP_DIR}/android" --refresh-dependencies :app:assembleRelease :e2e:assembleRelease \
-    -Pinth.appE2e=true -Pinth.policyAssets="${OUT}/policy-assets" -PreactNativeArchitectures="${ARCH}" > "${OUT}/build.log" 2>&1
+  "${ADB}" -s "${DEVICE}" reverse tcp:3000 "tcp:${BACKEND_PORT}"
   "${ADB}" -s "${DEVICE}" shell input keyevent 224
   # Firebase cannot be redirected; its verbose log is the evidence for its consent state.
   "${ADB}" -s "${DEVICE}" shell setprop log.tag.FA VERBOSE
@@ -239,8 +269,8 @@ SHVIDEO
   "${ADB}" -s "${DEVICE}" shell 'nohup sh /data/local/tmp/inth-record-video.sh >/data/local/tmp/inth-video.log 2>&1 </dev/null &'
   VIDEO_PID=remote
   "${ADB}" -s "${DEVICE}" reverse tcp:3000 "tcp:${BACKEND_PORT}"
-  "${ADB}" -s "${DEVICE}" install -r "${APP_DIR}/android/app/build/outputs/apk/release/app-release.apk" > "${OUT}/install.log" 2>&1
-  "${ADB}" -s "${DEVICE}" install -r "${APP_DIR}/android/e2e/build/outputs/apk/release/e2e-release.apk" >> "${OUT}/install.log" 2>&1
+  "${ADB}" -s "${DEVICE}" install -r "${APK_DIR}/app-release.apk" > "${OUT}/install.log" 2>&1
+  "${ADB}" -s "${DEVICE}" install -r "${APK_DIR}/e2e-release.apk" >> "${OUT}/install.log" 2>&1
   instrument_exit=0
   "${ADB}" -s "${DEVICE}" shell am instrument -w -r \
     -e scenario "${INTH_APP_E2E_SCENARIO}" -e class com.inth.bare.e2e.ConsentJourney \
