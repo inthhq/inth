@@ -385,6 +385,8 @@ export interface InitLifecycle {
 	adopt: (response: InitResponse, afterStart: boolean) => void;
 	/** See `InternalKernel.replaySaves`. */
 	replaySaves: () => void;
+	/** See `InternalKernel.initPending`. */
+	pending: () => boolean;
 	/**
 	 * Mark the lifecycle started and arm the deadline timer. The first call
 	 * reads the browser's GPC signal. Re-arms the timer after `dispose()`.
@@ -430,6 +432,8 @@ export const createInitLifecycle = function createInitLifecycle({
 	let adoptedGeneration = -1;
 	let deadlineTimer: ReturnType<typeof setTimeout> | null = null;
 	let pendingRetryAttempt: number | null = null;
+	// Attempts started and not completed, superseded ones included.
+	let attemptsInFlight = 0;
 	let retryInFlight = false;
 	let retryTimer: ReturnType<typeof setTimeout> | null = null;
 	// The one visibility listener and why it is wanted.
@@ -530,6 +534,7 @@ export const createInitLifecycle = function createInitLifecycle({
 	};
 
 	const complete = function complete(result: InitResult): InitResult {
+		attemptsInFlight -= 1;
 		emit({ result, type: 'command:init:completed' });
 		return result;
 	};
@@ -547,6 +552,7 @@ export const createInitLifecycle = function createInitLifecycle({
 	const runInitAttempt = async function runInitAttempt(
 		attempt: number
 	): Promise<InitResult> {
+		attemptsInFlight += 1;
 		emit({ type: 'command:init:started' });
 		start();
 		// One clock read: the impression stamped here and a local finalize
@@ -788,6 +794,7 @@ export const createInitLifecycle = function createInitLifecycle({
 		armDeadline,
 		dispose,
 		init,
+		pending: () => attemptsInFlight > 0 || pendingRetryAttempt !== null,
 		refresh,
 		replaySaves,
 		retryWhenOnline,

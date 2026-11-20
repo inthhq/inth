@@ -86,10 +86,12 @@ test('accepts for the provider subject, then checks as accepted', async () => {
 	await vi.waitFor(() => expect(documents).toBeDefined());
 	const subjectId = kernel?.getSnapshot().subject?.subjectId;
 
+	const before = await documents?.check('terms_us');
 	await documents?.accept({ hash: HASH, type: 'terms_us' });
 	const check = await documents?.check('terms_us');
 
 	expect(posted).toHaveLength(1);
 	expect(posted[0]?.subjectId).toBe(subjectId);
+	expect(before?.accepted).toBe(false);
 	expect(check?.accepted).toBe(true);
 });

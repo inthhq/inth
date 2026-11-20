@@ -2,17 +2,18 @@
  * `check` and `accept` of `@inth/sdk/runtime/documents`. They load on
  * their first call, through `runtime/lazy-documents.ts`.
  *
- * Documents never create, store or replace the visitor's subject: consent
- * persistence owns it. An acceptance is remembered for the subject it was
- * recorded under, for this page, and across reloads only while consent
- * persistence keeps that subject (the visitor has a consent record). When
- * the subject changes, the remembered acceptances no longer match.
+ * Documents never create, store or change the visitor's subject: consent
+ * owns it. An acceptance is remembered for the subject it was recorded
+ * under: for this page, and across reloads only while consent persistence
+ * stores that subject. When the subject changes, the remembered acceptances
+ * no longer match.
  *
  * @internal
  */
 import {
 	V1_DOCUMENT_HASH_PATTERN,
 	V1_LEGACY_SUBJECT_ID_PATTERN,
+	V1_UUID_PATTERN,
 } from '@inth/sdk-schema/types';
 import type {
 	V1DocumentAcceptanceItem,
@@ -28,12 +29,9 @@ import type {
 	DocumentCheck,
 } from '../runtime/documents';
 import type { ConsentRuntime, StreamedPrefetch } from '../runtime/types';
-import {
-	isUuidV7,
-	resolveProperty,
-	trimTrailingSlash,
-} from '../transports/v1/routes';
-import type { ConsentSnapshot } from '../types';
+import { readStoredRecordsForReconcile } from '../modules/persistence/hydrate';
+import { trimTrailingSlash } from '../transports/v1/paths';
+import { isUuidV7, resolveProperty } from '../transports/v1/routes';
 import { createDocumentsClient } from './client';
 
 /** Larger entries read as nothing. The writer stays below it. */
@@ -42,7 +40,9 @@ const MAX_ENTRY_LENGTH = 16 * 1024;
 const MAX_TYPES = 16;
 const MAX_HASHES = 4;
 
+/** One remembered acceptance of a release, with the release's document ID. */
 interface Accepted {
+	id: string;
 	version: string;
 	acceptedAt: number;
 }
@@ -53,6 +53,8 @@ interface Entry {
 	accepted: Record<string, Record<string, Accepted>>;
 }
 
+type Acceptance = Accepted & { type: string; hash: string };
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
 	typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -62,13 +64,15 @@ const isSubjectId = (value: unknown): value is string =>
 
 const isAccepted = (value: unknown): value is Accepted =>
 	isRecord(value) &&
+	typeof value.id === 'string' &&
+	V1_UUID_PATTERN.test(value.id) &&
 	typeof value.version === 'string' &&
 	typeof value.acceptedAt === 'number';
 
 /**
  * The one reader of a stored or remembered entry. A wrong shape, a
- * malformed subject or hash, missing metadata, more than the writer keeps
- * or more than the size limit reads as nothing.
+ * malformed subject, hash or document ID, missing metadata, more than the
+ * writer keeps or more than the size limit reads as nothing.
  */
 const readEntry = function readEntry(
 	text: string | null | undefined
@@ -125,16 +129,16 @@ const latestOf = (hashes: Record<string, Accepted>): number =>
  */
 const writeEntry = function writeEntry(
 	entry: Entry,
-	acceptances: V1DocumentAcceptancesOutput['acceptances']
+	acceptances: readonly Acceptance[]
 ): string | null {
 	const accepted: Entry['accepted'] = {};
 	for (const [type, hashes] of Object.entries(entry.accepted)) {
 		accepted[type] = { ...hashes };
 	}
-	for (const { acceptedAt, hash, type, version } of acceptances) {
+	for (const { acceptedAt, hash, id, type, version } of acceptances) {
 		accepted[type] = {
 			...(Object.hasOwn(accepted, type) ? accepted[type] : undefined),
-			[hash]: { acceptedAt, version },
+			[hash]: { acceptedAt, id, version },
 		};
 	}
 	let kept = newestFirst(Object.entries(accepted), latestOf)
@@ -161,25 +165,71 @@ const writeEntry = function writeEntry(
 	return null;
 };
 
-/** What each runtime's page remembers, by storage key, as stored text. */
-const pages = new WeakMap<InternalKernel, Map<string, string>>();
+/** What a runtime's page keeps: entries and checked documents. */
+interface Page {
+	/** Remembered acceptances, by storage key, as stored text. */
+	remembered: Map<string, string>;
+	/** The document ID each `check` saw, by storage key, type and hash. */
+	documentIds: Map<string, string>;
+	/** Every storage key the page used, for a clear to forget. */
+	keys: Set<string>;
+}
 
-const rememberedOf = function rememberedOf(
-	kernel: InternalKernel
-): Map<string, string> {
-	let remembered = pages.get(kernel);
-	if (!remembered) {
-		remembered = new Map();
-		pages.set(kernel, remembered);
+const pages = new WeakMap<InternalKernel, Page>();
+
+const pageOf = function pageOf(kernel: InternalKernel): Page {
+	let page = pages.get(kernel);
+	if (!page) {
+		page = { documentIds: new Map(), keys: new Set(), remembered: new Map() };
+		pages.set(kernel, page);
 	}
-	return remembered;
+	return page;
 };
 
-/** Whether consent persistence keeps the subject: a consent record exists. */
-const hasConsentRecord = (snapshot: ConsentSnapshot): boolean =>
-	Boolean(
-		snapshot.explicitChoice || snapshot.vendorChoice || snapshot.noticeDismissal
-	);
+const documentKey = (key: string, type: string, hash: string): string =>
+	`${key} ${type} ${hash}`;
+
+/**
+ * Whether consent persistence stored a record for `subjectId` in this
+ * browser, under whichever storage key it uses: each localStorage key and
+ * cookie name is tried as one. With persistence off, or before the
+ * visitor's first consent choice, nothing is stored for the subject.
+ */
+const storesSubject = function storesSubject(
+	subjectId: string | undefined
+): boolean {
+	if (!subjectId) {
+		return false;
+	}
+	const keys = new Set<string | undefined>([undefined]);
+	try {
+		const storage = localStorageOf();
+		for (let index = 0; index < (storage?.length ?? 0); index += 1) {
+			keys.add(storage?.key(index) ?? undefined);
+		}
+		for (const cookie of document.cookie.split(';')) {
+			keys.add(cookie.split('=')[0]?.trim() || undefined);
+		}
+	} catch {
+		// Unreadable storage keeps nothing this page can see.
+	}
+	const now = Date.now();
+	for (const storageKey of keys) {
+		try {
+			if (
+				readStoredRecordsForReconcile(
+					storageKey === undefined ? undefined : { storageKey },
+					now
+				).recordedSubjectId === subjectId
+			) {
+				return true;
+			}
+		} catch {
+			// Not a consent storage key.
+		}
+	}
+	return false;
+};
 
 const readStored = function readStored(key: string): Entry | null {
 	try {
@@ -209,63 +259,64 @@ const locked = async function locked(
 const forgetting = new WeakSet<InternalKernel>();
 
 /**
- * A clear forgets what this page and storage remember for the subject it
- * cleared. A clear before the documents code loaded leaves no consent
- * record, so a stored entry does not count until one is made again.
+ * A clear forgets what the page remembers, and what storage keeps for the
+ * cleared subject, for every project the page used.
  */
-const forgetOnClear = function forgetOnClear(
-	kernel: InternalKernel,
-	key: string
-): void {
+const forgetOnClear = function forgetOnClear(kernel: InternalKernel): void {
 	if (forgetting.has(kernel)) {
 		return;
 	}
 	forgetting.add(kernel);
 	kernel.events.on('records:cleared', () => {
 		const subjectId = kernel.getSnapshot().subject?.subjectId;
-		const remembered = rememberedOf(kernel);
-		if (readEntry(remembered.get(key))?.subjectId === subjectId) {
-			remembered.delete(key);
-		}
-		void locked(key, () => {
-			if (readStored(key)?.subjectId === subjectId) {
-				try {
-					localStorageOf()?.removeItem(key);
-				} catch {
-					// Without a consent record it no longer counts.
+		const page = pageOf(kernel);
+		page.remembered.clear();
+		for (const key of page.keys) {
+			void locked(key, () => {
+				if (readStored(key)?.subjectId === subjectId) {
+					try {
+						localStorageOf()?.removeItem(key);
+					} catch {
+						// Without a consent record it no longer counts.
+					}
 				}
-			}
-		});
+			});
+		}
 	});
 };
 
 /**
  * Wait until the runtime's subject is the one it keeps: a streamed
- * prefetch, and the first init, can still replace the ID it starts with.
+ * prefetch, and an init in flight or scheduled, can still replace the ID
+ * it starts with. After an init that failed for good, go on with the
+ * subject the runtime has.
  */
 const subjectSettled = async function subjectSettled(
 	runtime: ConsentRuntime
 ): Promise<void> {
 	await (runtime as { streamed?: StreamedPrefetch }).streamed?.settled;
-	const { kernel } = runtime;
-	if (!(runtime.started && kernel.getSnapshot().policyPending)) {
+	const kernel = runtime.kernel as InternalKernel;
+	const waiting = (): boolean =>
+		runtime.started &&
+		kernel.getSnapshot().policyPending &&
+		kernel.initPending();
+	if (!waiting()) {
 		return;
 	}
 	await new Promise<void>((resolve) => {
 		const unsubscribers: (() => void)[] = [];
-		const stop = (): void => {
+		const settle = (): void => {
+			if (waiting()) {
+				return;
+			}
 			for (const unsubscribe of unsubscribers) {
 				unsubscribe();
 			}
 			resolve();
 		};
 		unsubscribers.push(
-			kernel.subscribe(() => {
-				if (!kernel.getSnapshot().policyPending) {
-					stop();
-				}
-			}),
-			kernel.events.on('command:init:completed', stop)
+			kernel.subscribe(settle),
+			kernel.events.on('command:init:completed', settle)
 		);
 	});
 };
@@ -282,7 +333,8 @@ const bind = async function bind(runtime: ConsentRuntime) {
 	}
 	const projectUrl = trimTrailingSlash(backend.projectUrl);
 	const key = `${DOCUMENT_ACCEPTANCES_STORAGE_KEY}:${projectUrl}`;
-	forgetOnClear(kernel, key);
+	forgetOnClear(kernel);
+	pageOf(kernel).keys.add(key);
 	return {
 		client: createDocumentsClient({ fetch: backend.fetch, projectUrl }),
 		kernel,
@@ -297,17 +349,26 @@ export const checkDocument = async function checkDocument(
 ): Promise<DocumentCheck> {
 	const { client, kernel, key } = await bind(runtime);
 	const { document } = await client.getCurrent(type);
-	const snapshot = kernel.getSnapshot();
-	const subjectId = snapshot.subject?.subjectId;
-	const counts = (entry: Entry | null): boolean =>
-		entry !== null &&
-		entry.subjectId === subjectId &&
-		Object.hasOwn(entry.accepted, type) &&
-		Object.hasOwn(entry.accepted[type] ?? {}, document.hash);
+	const page = pageOf(kernel);
+	page.documentIds.set(documentKey(key, type, document.hash), document.id);
+	const subjectId = kernel.getSnapshot().subject?.subjectId;
+	const counts = (entry: Entry | null): boolean => {
+		const hashes =
+			entry !== null &&
+			entry.subjectId === subjectId &&
+			Object.hasOwn(entry.accepted, type)
+				? entry.accepted[type]
+				: undefined;
+		return Boolean(
+			hashes &&
+			Object.hasOwn(hashes, document.hash) &&
+			hashes[document.hash]?.id === document.id
+		);
+	};
 	return {
 		accepted:
-			counts(readEntry(rememberedOf(kernel).get(key))) ||
-			(hasConsentRecord(snapshot) && counts(readStored(key))),
+			counts(readEntry(page.remembered.get(key))) ||
+			(storesSubject(subjectId) && counts(readStored(key))),
 		document,
 	};
 };
@@ -334,58 +395,56 @@ export const acceptDocuments = async function acceptDocuments(
 		property,
 		subjectId: sent,
 	});
-	// A person's acceptance is not the device's to remember.
-	if (options.externalId) {
-		return answer;
-	}
-	let device = sent;
-	// Only the move a consent save's answer makes: from the `sub_` ID sent
-	// to its UUID, while that ID is still the visitor's.
+	// Nothing of the answer applies to a person's acceptance, or once the
+	// subject or the records changed while it was on its way.
 	if (
-		V1_LEGACY_SUBJECT_ID_PATTERN.test(sent) &&
-		isUuidV7(answer.subjectId) &&
-		kernel.getSnapshot().subject?.subjectId === sent
-	) {
-		await kernel.adoptSubject(sent, answer.subjectId);
-		device = answer.subjectId;
-	}
-	// `identify()` links the ID now: the backend has a record of it.
-	if (kernel.getProvisionalSubject() === device) {
-		kernel.markProvisionalSubject(null);
-	}
-	if (
-		answer.subjectId !== device ||
-		kernel.getSnapshot().subject?.subjectId !== device ||
+		options.externalId ||
+		kernel.getSnapshot().subject?.subjectId !== sent ||
 		kernel.getRecordsGeneration() !== generation
 	) {
 		return answer;
 	}
-	const persisted = hasConsentRecord(kernel.getSnapshot());
-	const empty: Entry = { accepted: {}, subjectId: device };
-	const remembered = rememberedOf(kernel);
-	const fromMemory = readEntry(remembered.get(key));
+	// `identify()` links the ID now: the backend has a record of it.
+	if (kernel.getProvisionalSubject() === sent) {
+		kernel.markProvisionalSubject(null);
+	}
+	const page = pageOf(kernel);
+	const acceptances: Acceptance[] = [];
+	for (const accepted of answer.acceptances) {
+		const id = page.documentIds.get(
+			documentKey(key, accepted.type, accepted.hash)
+		);
+		if (id) {
+			acceptances.push({ ...accepted, id });
+		}
+	}
+	const empty: Entry = { accepted: {}, subjectId: sent };
+	const fromPage = readEntry(page.remembered.get(key));
 	const text = writeEntry(
-		fromMemory?.subjectId === device ? fromMemory : empty,
-		answer.acceptances
+		fromPage?.subjectId === sent ? fromPage : empty,
+		acceptances
 	);
 	if (text) {
-		remembered.set(key, text);
+		page.remembered.set(key, text);
 	}
-	if (persisted) {
-		await locked(key, () => {
-			const stored = readStored(key);
-			const next = writeEntry(
-				stored?.subjectId === device ? stored : empty,
-				answer.acceptances
-			);
-			try {
-				if (next) {
-					localStorageOf()?.setItem(key, next);
-				}
-			} catch {
-				// Remembered for this page; asked again after a reload.
+	// The answer names the UUID of a `sub_` ID sent: kept for the page under
+	// the ID sent, until consent moves the visitor to the UUID.
+	if (answer.subjectId !== sent || !storesSubject(sent)) {
+		return answer;
+	}
+	await locked(key, () => {
+		const stored = readStored(key);
+		const next = writeEntry(
+			stored?.subjectId === sent ? stored : empty,
+			acceptances
+		);
+		try {
+			if (next) {
+				localStorageOf()?.setItem(key, next);
 			}
-		});
-	}
+		} catch {
+			// Remembered for this page; asked again after a reload.
+		}
+	});
 	return answer;
 };

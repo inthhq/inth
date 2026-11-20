@@ -22,6 +22,11 @@ const HASH =
 	'sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08';
 const EARLIER_HASH =
 	'sha256:60303ae22b998861bce3b28f33eec1be758a213c86c93c076dbe9f558c11c752';
+/** Each release is its own document, with its own ID. */
+const IDS: Record<string, string> = {
+	[EARLIER_HASH]: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1d',
+	[HASH]: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+};
 
 let current = { hash: HASH, requiresAcceptance: true };
 let sent: Record<string, unknown>[] = [];
@@ -56,7 +61,7 @@ const backend: typeof globalThis.fetch = (input, init) => {
 		Response.json({
 			document: {
 				effectiveDate: '2026-11-18T00:00:00.000Z',
-				id: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+				id: IDS[current.hash],
 				isCurrent: true,
 				type: 'terms_us',
 				version: '2026-11-18',
@@ -68,6 +73,12 @@ const backend: typeof globalThis.fetch = (input, init) => {
 
 let runtime: ConsentRuntime;
 const documents = createRuntimeDocuments(() => runtime);
+
+/** What a sign-up page does: check, then accept the release it showed. */
+const checkAndAccept = async () => {
+	const { document } = await documents.check('terms_us');
+	return documents.accept({ hash: document.hash, type: 'terms_us' });
+};
 
 beforeEach(() => {
 	localStorage.clear();
@@ -86,23 +97,31 @@ afterEach(() => {
 });
 
 describe('check', () => {
-	test('reads the release in force, not accepted with nothing stored', async () => {
+	test('reads the release in force, not accepted with nothing remembered', async () => {
 		const result = await documents.check('terms_us');
 
 		expect(result.accepted).toBe(false);
 		expect(result.document.hash).toBe(HASH);
 	});
 
-	test('is accepted once this browser accepted the same hash', async () => {
-		await documents.accept({ hash: HASH, type: 'terms_us' });
+	test('is accepted once the page accepted the release it checked', async () => {
+		await checkAndAccept();
 
 		expect((await documents.check('terms_us')).accepted).toBe(true);
+	});
+
+	test('an acceptance of a release the page never checked is not remembered', async () => {
+		await documents.accept({ hash: HASH, type: 'terms_us' });
+
+		expect(sent).toHaveLength(1);
+		expect((await documents.check('terms_us')).accepted).toBe(false);
 	});
 
 	test.each([true, false])(
 		'an earlier release accepted does not count, requiresAcceptance %s',
 		async (requiresAcceptance) => {
-			await documents.accept({ hash: EARLIER_HASH, type: 'terms_us' });
+			current = { hash: EARLIER_HASH, requiresAcceptance: true };
+			await checkAndAccept();
 			current = { hash: HASH, requiresAcceptance };
 
 			const result = await documents.check('terms_us');
@@ -113,8 +132,10 @@ describe('check', () => {
 	);
 
 	test('an older release accepted later keeps the newer one accepted', async () => {
-		await documents.accept({ hash: HASH, type: 'terms_us' });
-		await documents.accept({ hash: EARLIER_HASH, type: 'terms_us' });
+		await checkAndAccept();
+		current = { hash: EARLIER_HASH, requiresAcceptance: true };
+		await checkAndAccept();
+		current = { hash: HASH, requiresAcceptance: true };
 
 		expect((await documents.check('terms_us')).accepted).toBe(true);
 	});
@@ -167,7 +188,7 @@ describe('accept', () => {
 	test('rejects a subject_conflict and keeps the subject', async () => {
 		conflicts = 1;
 
-		const accepting = documents.accept({ hash: HASH, type: 'terms_us' });
+		const accepting = checkAndAccept();
 
 		await expect(accepting).rejects.toSatisfy(
 			(error) => isInthApiError(error) && error.code === 'subject_conflict'
@@ -177,13 +198,19 @@ describe('accept', () => {
 		expect((await documents.check('terms_us')).accepted).toBe(false);
 	});
 
-	test('adopts the subject ID the backend swapped a sub_ ID for', async () => {
+	test('an answer naming the UUID of a sub_ ID leaves the subject, and is remembered for the page under the sub_ ID only', async () => {
 		runtime.kernel.set.subjectId(LEGACY_SUBJECT);
 
-		await documents.accept({ hash: HASH, type: 'terms_us' });
+		await checkAndAccept();
 
 		expect(sent[0]?.subjectId).toBe(LEGACY_SUBJECT);
-		expect(runtime.kernel.getSnapshot().subject?.subjectId).toBe(SUBJECT);
+		expect(runtime.kernel.getSnapshot().subject?.subjectId).toBe(
+			LEGACY_SUBJECT
+		);
+		expect((await documents.check('terms_us')).accepted).toBe(true);
+		expect(Object.keys(localStorage)).toEqual([]);
+		runtime.kernel.set.subjectId(SUBJECT);
+		expect((await documents.check('terms_us')).accepted).toBe(false);
 	});
 });
 
@@ -192,9 +219,9 @@ test('without storage, accept records and the page remembers it', async () => {
 		throw new DOMException('blocked', 'SecurityError');
 	});
 
-	await expect(
-		documents.accept({ hash: HASH, type: 'terms_us' })
-	).resolves.toMatchObject({ subjectId: expect.any(String) });
+	await expect(checkAndAccept()).resolves.toMatchObject({
+		subjectId: expect.any(String),
+	});
 	expect(sent).toHaveLength(1);
 	expect((await documents.check('terms_us')).accepted).toBe(true);
 });

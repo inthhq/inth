@@ -177,14 +177,6 @@ describe('InthProvider: streamed state', () => {
 		const hash =
 			'sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08';
 		const streamed = '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b22';
-		// What an earlier page remembered for the subject the server keeps.
-		localStorage.setItem(
-			'inth-document-acceptances:v1:/api/inth',
-			JSON.stringify({
-				accepted: { terms_us: { [hash]: { acceptedAt: 1, version: '1' } } },
-				subjectId: streamed,
-			})
-		);
 		const fetchSpy = vi
 			.spyOn(globalThis, 'fetch')
 			.mockImplementation((_input, init) =>
@@ -221,11 +213,18 @@ describe('InthProvider: streamed state', () => {
 				</InthProvider>
 			);
 			await vi.waitFor(() => expect(documents).toBeDefined());
+			let settled = false;
 			const checking = documents?.check('terms_us');
 			const accepting = documents?.accept({ hash, type: 'privacy_policy' });
+			void (async () => {
+				await Promise.allSettled([checking, accepting]);
+				settled = true;
+			})();
 			await new Promise((resolve) => {
 				setTimeout(resolve, 50);
 			});
+			// Neither answers from the startup subject before the state arrives.
+			expect(settled).toBe(false);
 			expect(fetchSpy).not.toHaveBeenCalled();
 
 			const fixture = policyFixture({ marketing: true });
@@ -238,7 +237,7 @@ describe('InthProvider: streamed state', () => {
 				},
 			});
 
-			await expect(checking).resolves.toMatchObject({ accepted: true });
+			await expect(checking).resolves.toMatchObject({ accepted: false });
 			await accepting;
 			const calls = fetchSpy.mock.calls.map(([url, init]) => ({
 				subjectId: init?.body

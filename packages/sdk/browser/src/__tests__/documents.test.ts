@@ -54,11 +54,13 @@ test('accepts for the client subject, then checks as accepted', async () => {
 	client.runtime.kernel.set.subjectId('0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c');
 
 	try {
+		const before = await documents.check('terms_us');
 		await documents.accept({ hash: HASH, type: 'terms_us' });
 		const check = await documents.check('terms_us');
 
 		expect(posted).toHaveLength(1);
 		expect(posted[0]?.subjectId).toBe(client.getSnapshot().subject?.subjectId);
+		expect(before.accepted).toBe(false);
 		expect(check.accepted).toBe(true);
 	} finally {
 		client.dispose();

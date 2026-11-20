@@ -154,7 +154,6 @@ export const createKernel = function createKernel(
 
 	return {
 		adoptInit: lifecycle.adopt,
-		adoptSubject: outbox.adoptSubject,
 		commands: {
 			dismissNotice: choice.dismissNotice,
 			identify: records.identify,
@@ -172,6 +171,7 @@ export const createKernel = function createKernel(
 		getSnapshot: runtime.getSnapshot,
 		holdSaves: outbox.hold,
 		hydrate: records.hydrate,
+		initPending: lifecycle.pending,
 		markLive: runtime.markLive,
 		markProvisionalSubject: records.markProvisionalSubject,
 		refresh: lifecycle.refresh,

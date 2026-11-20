@@ -67,12 +67,11 @@ export interface InternalKernel extends ConsentKernel {
 	 */
 	markProvisionalSubject: (id: string | null) => void;
 	/**
-	 * Move the visitor from `from` to `to` in every tab, with the saves
-	 * queued under `from`: the move a consent save's answer makes from a
-	 * `sub_` ID to its UUID. The caller checks that `from` is a `sub_` ID
-	 * the visitor is still on.
+	 * Whether an init attempt is in flight or a retry is scheduled. After
+	 * an init that failed for good it is `false` and `policyPending` stays
+	 * `true`.
 	 */
-	adoptSubject: (from: string, to: string) => Promise<void>;
+	initPending: () => boolean;
 	/**
 	 * The backend this kernel's transport reported, for a kernel a runtime
 	 * built. `undefined` before it resolved one, and for a transport with no

@@ -41,7 +41,8 @@ export interface DocumentCheck {
 	document: V1DocumentCurrentOutput['document'];
 	/**
 	 * Whether this browser recorded an acceptance of this release, by its
-	 * hash, for the runtime's backend and current subject. An earlier release accepted
+	 * document ID and hash, for the runtime's backend and current subject.
+	 * An earlier release accepted
 	 * does not count: the browser cannot see the releases in between. Not
 	 * asking again when `document.requiresAcceptance` is `false` is the
 	 * app's call.

@@ -1,10 +1,12 @@
 import type { RuntimeDocuments } from '@inth/sdk/runtime/documents';
+import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
 import { hosted } from '@inth/sdk/transports';
 import { render } from '@testing-library/svelte';
 import { afterEach, expect, test, vi } from 'vitest';
 
 import type { ConsentContextValue } from '../lib/context.svelte';
 import Fixture from './fixtures/documents-fixture.svelte';
+import { policyFixture } from './policy-fixture';
 
 const HASH =
 	'sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08';
@@ -44,7 +46,16 @@ test('getDocuments accepts for the provider subject, then checks as accepted', a
 				})
 			);
 		}
-		return Promise.resolve(new Response(null, { status: 503 }));
+		return Promise.resolve(
+			Response.json({
+				branding: 'inth',
+				location: { countryCode: 'DE', regionCode: null },
+				policyResolution: writePolicyResolutionWire(
+					policyFixture().initialPolicyResolution
+				),
+				translations: { language: 'en', translations: { common: {} } },
+			})
+		);
 	});
 	let context!: ConsentContextValue;
 	let documents!: RuntimeDocuments;
@@ -63,11 +74,13 @@ test('getDocuments accepts for the provider subject, then checks as accepted', a
 	try {
 		const subjectId = context.kernel.getSnapshot().subject?.subjectId;
 
+		const before = await documents.check('terms_us');
 		await documents.accept({ hash: HASH, type: 'terms_us' });
 		const check = await documents.check('terms_us');
 
 		expect(posted).toHaveLength(1);
 		expect(posted[0]?.subjectId).toBe(subjectId);
+		expect(before.accepted).toBe(false);
 		expect(check.accepted).toBe(true);
 	} finally {
 		view.unmount();
