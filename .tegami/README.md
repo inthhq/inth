@@ -2,6 +2,8 @@
 
 Tegami manages the `@inth/cli` package and its four native packages as one release group. Versions and GitHub release tags stay together. Releases publish to the `latest` npm tag. The first release is `0.0.0`. The version PR flow follows the [events-sdk setup](https://github.com/inthhq/events-sdk/blob/main/scripts/tegami.mts).
 
+The SDK packages release separately, on the `alpha` dist-tag. See [sdk/README.md](sdk/README.md).
+
 ## Add a changelog
 
 Run `pnpm tegami` for a user-visible change, or add `.tegami/YYYY-MM-DD-description.md`:

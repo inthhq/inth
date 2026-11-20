@@ -1,6 +1,6 @@
 {
 	"name": "@inth/astro",
-	"version": "3.2.0-canary.0",
+	"version": "0.0.0-alpha.0",
 	"description": "Astro cookie consent banner for Inth, with server-rendered markup, preference center islands and geo-aware middleware.",
 	"keywords": [
 		"astro",
@@ -153,7 +153,8 @@
 		"./islands/consent-dialog-surface.vue": "./src/components/islands/panel-surface.vue"
 	},
 	"publishConfig": {
-		"access": "public"
+		"access": "public",
+		"tag": "alpha"
 	},
 	"scripts": {
 		"build": "rslib build && node ../../../scripts/normalize-dist-types.mjs && node ../shared/write-translation-entries.mjs dist dist-types",

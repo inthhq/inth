@@ -1,6 +1,6 @@
 {
 	"name": "@inth/sdk-iab",
-	"version": "3.2.0-canary.0",
+	"version": "0.0.0-alpha.0",
 	"private": true,
 	"description": "IAB TCF CMP addon for Inth (TCF 2.4). Generates TC Strings and GPP strings, loads the Global Vendor List (GVL) and collects consent for programmatic advertising.",
 	"keywords": [

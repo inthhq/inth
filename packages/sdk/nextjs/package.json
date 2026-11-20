@@ -1,6 +1,6 @@
 {
 	"name": "@inth/nextjs",
-	"version": "3.2.0-canary.0",
+	"version": "0.0.0-alpha.0",
 	"description": "Next.js cookie consent banner and consent management platform for Inth. Server-rendered for the App Router and Pages Router, with a consent dialog and preference center.",
 	"keywords": [
 		"app-router",
@@ -180,7 +180,8 @@
 		}
 	},
 	"publishConfig": {
-		"access": "public"
+		"access": "public",
+		"tag": "alpha"
 	},
 	"scripts": {
 		"build": "pnpm run prebuild && rslib build && node ../../../scripts/normalize-dist-types.mjs && bun ../shared/generate-distribution-css.ts && node ../shared/restore-client-directives.mjs src dist && node ../shared/write-translation-entries.mjs dist dist-types",

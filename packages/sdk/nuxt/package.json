@@ -1,6 +1,6 @@
 {
 	"name": "@inth/nuxt",
-	"version": "3.2.0-canary.0",
+	"version": "0.0.0-alpha.0",
 	"description": "Nuxt module for Inth cookie consent: banner, consent dialog, preference center, consent route and build-time manifest.",
 	"keywords": [
 		"banner",
@@ -74,7 +74,8 @@
 		"./package.json": "./package.json"
 	},
 	"publishConfig": {
-		"access": "public"
+		"access": "public",
+		"tag": "alpha"
 	},
 	"scripts": {
 		"build": "nuxt-module-build build",

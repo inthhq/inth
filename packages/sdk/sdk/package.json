@@ -1,6 +1,6 @@
 {
 	"name": "@inth/sdk",
-	"version": "3.2.0-canary.0",
+	"version": "0.0.0-alpha.0",
 	"description": "The Inth consent SDK: the vanilla JavaScript client, the consent engine, UI styles, translations and IAB TCF support. Framework packages such as @inth/react build on it.",
 	"keywords": [
 		"cmp",
@@ -893,7 +893,8 @@
 		"./package.json": "./package.json"
 	},
 	"publishConfig": {
-		"access": "public"
+		"access": "public",
+		"tag": "alpha"
 	},
 	"scripts": {
 		"build": "node scripts/assemble.ts",

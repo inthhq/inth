@@ -43,16 +43,18 @@ The CLI jobs keep the Blacksmith runners they used before. The SDK and mobile jo
 | Product | Workflow | Checks before publishing | Publishes to | Tags | State |
 | --- | --- | --- | --- | --- | --- |
 | CLI | `release.yml` (Release CLI) | CLI jobs only | npm, with trusted publishing | `inth@<version>` | Live |
-| Web SDK | `release-sdk.yml` | SDK jobs only | npm | `sdk@<version>` | Disabled |
+| Web SDK | `release-sdk.yml` (Release SDK) | SDK jobs only | npm `alpha` dist-tag, with trusted publishing | `sdk@<version>` | Disabled until `SDK_RELEASE_ENABLED` is `true`, after the first publish by hand and trusted publishing setup |
 | React Native | `release-react-native.yml` | React Native jobs | npm | `react-native@<version>` | Disabled |
 | Swift | `release-swift.yml` | Swift jobs | Git tags read by SwiftPM | `<version>`, no prefix | Disabled |
 | Android | `release-android.yml` | Android jobs | Maven Central | `android@<version>` | Disabled |
 
 SwiftPM resolves the root `Package.swift` from plain semver tags such as `1.2.3`. Only the Swift line may create those, so every other product uses a prefixed tag.
 
-`release.yml` keeps its file name because npm trusted publishing for `@inth/cli` names it (`packages/cli/scripts/tegami.ts`). Renaming the file makes npm reject the publish.
+`release.yml` keeps its file name because npm trusted publishing for `@inth/cli` names it (`packages/cli/scripts/tegami.ts`). Renaming the file makes npm reject the publish. `release-sdk.yml` keeps its name for the same reason (`tools/ci/sdk-release.ts`).
 
-The four disabled workflows run by hand only. Each verifies its product, then `tools/ci/release-guard.ts` stops the publish job. The guard refuses while the product's repository variable (`SDK_RELEASE_ENABLED`, `REACT_NATIVE_RELEASE_ENABLED`, `SWIFT_RELEASE_ENABLED`, `ANDROID_RELEASE_ENABLED`) is not `true`. It also refuses any `c15t`, `@c15t/*` or `com.c15t` artifact, even with the variable set. After the guard, each publish step is a placeholder that fails. Every product now carries Inth names. To turn a line on: wire its publish step, give that job the permissions it needs, put its credentials in a protected environment, then set the variable.
+The four workflows other than the CLI's run by hand only. Each verifies its product, then `tools/ci/release-guard.ts` stops the publish job. The guard refuses while the product's repository variable (`SDK_RELEASE_ENABLED`, `REACT_NATIVE_RELEASE_ENABLED`, `SWIFT_RELEASE_ENABLED`, `ANDROID_RELEASE_ENABLED`) is not `true`. It also refuses any `c15t`, `@c15t/*` or `com.c15t` artifact, even with the variable set. Every product now carries Inth names.
+
+Tegami publishes the SDK line with npm trusted publishing. [.tegami/sdk/README.md](../.tegami/sdk/README.md) covers the first publish by hand, trusted publishing setup and turning the line on. The other three publish steps are placeholders that fail. To turn one on: wire its publish step, give that job the permissions it needs, put its credentials in a protected environment, then set the variable.
 
 ## Secrets and variables
 
@@ -60,7 +62,8 @@ The four disabled workflows run by hand only. Each verifies its product, then `t
 | --- | --- | --- | --- |
 | `MACOS_CERTIFICATE`, `MACOS_CERTIFICATE_PASSWORD` | Secrets in the `macos-signing` environment | CLI release, macOS signing | The CLI release fails at signing, as before |
 | `SDK_RELEASE_ENABLED`, `REACT_NATIVE_RELEASE_ENABLED`, `SWIFT_RELEASE_ENABLED`, `ANDROID_RELEASE_ENABLED` | Repository variables | The disabled release workflows | The release refuses to publish |
-| npm trusted publishers for the SDK and React Native packages | npm settings | `release-sdk.yml`, `release-react-native.yml` | Not wired yet |
+| npm trusted publishers for the SDK packages, and the `npm-sdk` environment they name, limited to `main` | npm settings, after the first publish by hand; repository environments | `release-sdk.yml` | npm rejects the publish |
+| npm trusted publisher for the React Native package | npm settings | `release-react-native.yml` | Not wired yet |
 | Maven Central user token and a GPG signing key and password | Secrets | `release-android.yml` | Not wired yet |
 | `POSTHOG_E2E_PROJECT_KEY` | Depot CI secret | `.depot/workflows/android-posthog-live.yml` | The job prints a notice and skips |
 
