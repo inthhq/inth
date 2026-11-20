@@ -353,8 +353,9 @@ export interface SubjectDates {
 	/** The latest `givenAt` the backend accepted for the subject. */
 	acceptedGivenAt?: number;
 	/**
-	 * The latest time a choice was dated with, kept only when it was after
-	 * the device clock. Stored records are checked against it.
+	 * The latest time a choice whose save is queued was dated with. Stored
+	 * records are checked against it, so a record stands while its save
+	 * waits, however the device clock moved.
 	 */
 	datedAt?: number;
 }

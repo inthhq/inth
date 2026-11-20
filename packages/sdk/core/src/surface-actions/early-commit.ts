@@ -187,7 +187,8 @@ export const planEarlyCommit = function planEarlyCommit(
 		now,
 		subject,
 	};
-	const subjectDates = datedSubjectDates(before, actionAt, deviceNow);
+	// The commit's save is queued.
+	const subjectDates = datedSubjectDates(before, actionAt, true);
 	if (subjectDates) {
 		patch.subjectDates = subjectDates;
 	}

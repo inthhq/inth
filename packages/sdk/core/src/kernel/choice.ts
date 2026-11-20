@@ -619,7 +619,7 @@ const createBoundDraft = function createBoundDraft<Values>(
 export interface ChoiceRecorderOptions {
 	runtime: KernelRuntime;
 	/** Dates each action, and takes it from here on. */
-	outbox: Pick<SaveOutbox, 'dateChoice' | 'send'>;
+	outbox: Pick<SaveOutbox, 'dateChoice' | 'queues' | 'send'>;
 	/** Draft values staged by config. */
 	initialDraft: PresentedSelection | null;
 }
@@ -841,7 +841,11 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				now: Math.max(currentTime, actionAt),
 				subject,
 			};
-			const subjectDates = datedSubjectDates(before, actionAt, currentTime);
+			const subjectDates = datedSubjectDates(
+				before,
+				actionAt,
+				outbox.queues || actionAt > currentTime
+			);
 			if (subjectDates) {
 				patch.subjectDates = subjectDates;
 			}

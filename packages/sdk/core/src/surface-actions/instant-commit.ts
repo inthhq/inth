@@ -375,6 +375,8 @@ export const planInstantCommit = function planInstantCommit(
 				: evaluation.restrictions,
 			revision: before.revision + 1,
 			subject,
+			// Its save is queued, as the kernel's is.
+			subjectDates: { ...before.subjectDates, datedAt: actionAt },
 		},
 		subjectId: subject.subjectId,
 	};

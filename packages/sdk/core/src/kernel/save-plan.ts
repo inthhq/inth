@@ -149,15 +149,16 @@ export const saveSubject = function saveSubject(
 
 /**
  * The subject's times after an action dated `actionAt`, or `undefined` when
- * they do not change: only a choice dated after the device clock is kept,
- * as the ceiling its stored records are checked against.
+ * they do not change. The time is kept, as the ceiling the stored records
+ * are checked against, when the action's save is queued (`kept`), so the
+ * record stands while it waits however the device clock moves.
  */
 export const datedSubjectDates = function datedSubjectDates(
 	snapshot: ConsentSnapshot,
 	actionAt: number,
-	now: number
+	kept: boolean
 ): SubjectDates | undefined {
-	if (actionAt <= now || (snapshot.subjectDates?.datedAt ?? -1) >= actionAt) {
+	if (!kept || (snapshot.subjectDates?.datedAt ?? -1) >= actionAt) {
 		return undefined;
 	}
 	return { ...snapshot.subjectDates, datedAt: actionAt };

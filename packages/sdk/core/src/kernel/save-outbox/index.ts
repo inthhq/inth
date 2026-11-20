@@ -133,6 +133,8 @@ export interface SaveOutbox {
 	 * queued under `from`.
 	 */
 	adoptSubject: (from: string, to: string) => Promise<void>;
+	/** Whether a save is queued before it is sent: there is a transport. */
+	queues: boolean;
 	/**
 	 * The time to date a choice of `subjectId` with: the later of `time` and
 	 * one millisecond after the subject's floor.
@@ -188,9 +190,9 @@ const isRefusedAsInvalid = (error: unknown): boolean =>
 	error.code === 'invalid_request';
 
 /**
- * The receipts of `choice` that `refused` confirmed and that are still the
- * same, dated `at`: the new categories, the receipts to send, and which
- * categories they are.
+ * The receipts of `choice` that `refused` itself made, dated with its time,
+ * and that are still the same, dated `at`: the new categories, the receipts
+ * to send, and which categories they are.
  */
 const restampOwnReceipts = function restampOwnReceipts(
 	choice: ConsentSnapshot['explicitChoice'],
@@ -203,12 +205,14 @@ const restampOwnReceipts = function restampOwnReceipts(
 } {
 	const categories = { ...choice?.categories };
 	const sent: SavePayload['choice']['categories'] = {};
+	const actionAt = refused.givenAt ?? refused.confirmed.actionAt;
 	const confirmed = OPTIONAL_CONSENT_CATEGORIES.filter((category) => {
 		const receipt = categories[category];
 		const own = refused.choice.categories[category];
 		return (
 			Object.hasOwn(refused.confirmed.categories, category) &&
-			receipt?.confirmedAt === own?.confirmedAt &&
+			own?.confirmedAt === actionAt &&
+			receipt?.confirmedAt === own.confirmedAt &&
 			receipt?.value === own?.value &&
 			receipt !== undefined
 		);
@@ -412,6 +416,8 @@ export const createSaveOutbox = function createSaveOutbox({
 
 	/** Saves already re-dated once: a second refusal drops them. */
 	const redatedKeys = new Set<string>();
+	/** The UUID this kernel moved the visitor to from each `sub_` id. */
+	const movedTo = new Map<string, string>();
 
 	/**
 	 * A save the backend refused as invalid, dated again once by the device
@@ -424,30 +430,38 @@ export const createSaveOutbox = function createSaveOutbox({
 		refused: SavePayload
 	): { payload: SavePayload; action: RecordedAction } | null {
 		const current = getSnapshot();
+		// Under the visitor's subject, also once a `sub_` id it went out under
+		// moved to its UUID.
+		const subjectId = current.subject?.subjectId;
 		if (
 			!refused.idempotencyKey ||
 			redatedKeys.has(refused.idempotencyKey) ||
-			current.subject?.subjectId !== refused.subjectId
+			!subjectId ||
+			(subjectId !== refused.subjectId &&
+				movedTo.get(refused.subjectId) !== subjectId)
 		) {
 			return null;
 		}
 		// The refused save never counts toward the floor.
 		const at = dateChoice(
 			runtime.now(),
-			floor(refused.subjectId, refused.idempotencyKey)
+			floor(subjectId, refused.idempotencyKey)
 		);
 		const { categories, confirmed, sent } = restampOwnReceipts(
 			current.explicitChoice,
 			refused,
 			at
 		);
+		// The vendor choice is the action's own only when the action dated it;
+		// a carried one keeps its time.
+		const actionAt = refused.givenAt ?? refused.confirmed.actionAt;
 		const vendors =
-			refused.vendorChoice !== undefined &&
-			current.vendorChoice?.confirmedAt === refused.vendorChoice.confirmedAt;
+			refused.vendorChoice?.confirmedAt === actionAt &&
+			current.vendorChoice?.confirmedAt === actionAt;
 		if (confirmed.length === 0 && !vendors) {
 			return null;
 		}
-		const subjectDates = datedSubjectDates(current, at, runtime.now());
+		const subjectDates = datedSubjectDates(current, at, true);
 		const patch: SnapshotPatch = subjectDates ? { subjectDates } : {};
 		if (confirmed.length > 0 && current.explicitChoice) {
 			patch.explicitChoice = { ...current.explicitChoice, categories };
@@ -474,10 +488,11 @@ export const createSaveOutbox = function createSaveOutbox({
 			},
 			givenAt: at,
 			idempotencyKey: createIdempotencyKey(),
-			...(vendors &&
-				vendorChoice && {
-					vendorChoice: { ...vendorChoice, confirmedAt: at },
-				}),
+			...(vendorChoice && {
+				vendorChoice: vendors
+					? { ...vendorChoice, confirmedAt: at }
+					: vendorChoice,
+			}),
 		};
 		redatedKeys.add(payload.idempotencyKey as string);
 		return {
@@ -486,7 +501,7 @@ export const createSaveOutbox = function createSaveOutbox({
 				generation: runtime.getGeneration(),
 				snapshot: getSnapshot(),
 			},
-			payload,
+			payload: withSubjectId(payload, subjectId),
 		};
 	};
 
@@ -533,6 +548,7 @@ export const createSaveOutbox = function createSaveOutbox({
 		from: string,
 		to: string
 	): Promise<void> {
+		movedTo.set(from, to);
 		const queue = (await holdsSaveFor(from)) ? await loadWorker() : undefined;
 		if (queue) {
 			await queue.reassignSubject(from, to);
@@ -754,6 +770,7 @@ export const createSaveOutbox = function createSaveOutbox({
 		hold(until) {
 			held = Promise.allSettled([held, until]);
 		},
+		queues: transport?.save !== undefined,
 		replay,
 		send: sendAction,
 	};

@@ -589,4 +589,88 @@ describe('one time per choice', () => {
 		).toMatchObject({ confirmedAt: T + 2000, value: false });
 		expect(backendWord('marketing', accepted)).toBe(false);
 	});
+
+	test("a re-date keeps a carried vendor choice's time", async () => {
+		vi.useFakeTimers({ toFake: ['Date'] });
+		vi.setSystemTime(T);
+		const page = await loadWith({
+			vendors: [
+				{
+					category: 'marketing',
+					id: 'ads-one',
+					name: 'Ads One',
+					privacyPolicyUrl: 'https://example.com/privacy',
+				},
+			],
+		});
+		await page.kernel.commands.save(
+			{ marketing: true },
+			{ vendors: { 'ads-one': false } }
+		);
+		const held = holdAnswers();
+		vi.setSystemTime(T + 600_001);
+		const later = page.kernel.commands.save({ measurement: true });
+		await vi.waitFor(() => expect(held.count()).toBe(1));
+		vi.setSystemTime(T + 2000);
+		recordsAnswer = refusingTheFuture;
+		held.answer(0, v1Error(400, 'invalid_request'));
+		await later;
+		await vi.waitFor(() => expect(accepted).toHaveLength(2));
+
+		expect(records.map((record) => record.vendorChoice?.confirmedAt)).toEqual([
+			T,
+			T,
+			T,
+		]);
+		expect(records.at(-1)?.givenAt).toBe(T + 2000);
+		expect(page.kernel.getSnapshot().vendorChoice?.confirmedAt).toBe(T);
+	});
+
+	test('a far-future save refused after the move from sub_ is re-dated under the UUID', async () => {
+		vi.useFakeTimers({ toFake: ['Date'] });
+		vi.setSystemTime(T);
+		await leaveC15tVisitor();
+		const page = await load();
+		const held = holdAnswers();
+		const first = page.kernel.commands.save({ measurement: true });
+		await vi.waitFor(() => expect(held.count()).toBe(1));
+		vi.setSystemTime(T + 600_001);
+		const second = page.kernel.commands.save({ marketing: true });
+		await vi.waitFor(() => expect(held.count()).toBe(2));
+		held.answer(0, Response.json(recordAnswer({ body: '{}' })));
+		await first;
+		expect(subjectOf(page)).toBe(SUBJECT);
+		vi.setSystemTime(T + 2000);
+		recordsAnswer = refusingTheFuture;
+		held.answer(1, v1Error(400, 'invalid_request'));
+		await second;
+		await vi.waitFor(() => expect(accepted).toHaveLength(2));
+
+		expect(accepted.at(-1)).toMatchObject({
+			givenAt: T + 2000,
+			subjectId: SUBJECT,
+		});
+		expect(backendWord('marketing', accepted)).toBe(true);
+	});
+
+	test.each([100_000, 300_000])(
+		'a choice queued with the clock %ims fast stands after a reload with the clock corrected',
+		async (fast) => {
+			vi.useFakeTimers({ toFake: ['Date'] });
+			vi.setSystemTime(T + fast);
+			const page = await load();
+			offline = true;
+			await page.kernel.commands.save({ marketing: true, measurement: true });
+			await settle();
+			unload(page);
+
+			vi.setSystemTime(T);
+			offline = false;
+			const next = await load();
+			expect(next.kernel.getSnapshot().explicitChoice).not.toBeNull();
+			expect(next.kernel.getSnapshot().activeUI).toBe('none');
+			await vi.waitFor(() => expect(accepted).toHaveLength(1));
+			expect(accepted[0]?.givenAt).toBe(T + fast);
+		}
+	);
 });
