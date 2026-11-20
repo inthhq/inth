@@ -79,6 +79,7 @@ export const TEST_IDS = {
 		footerCustomizeButton: 'consent-widget-footer-customize-button',
 		footerSaveButton: 'consent-widget-footer-save-button',
 		footerSubGroup: 'consent-widget-footer-sub-group',
+		optOutStatus: 'consent-widget-opt-out-status',
 		rejectButton: 'consent-widget-reject-button',
 		root: 'consent-widget-root',
 	},

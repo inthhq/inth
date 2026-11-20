@@ -1379,4 +1379,212 @@ describe('mountConsentUI', () => {
 			expect(trigger.hidden).toBe(false);
 		});
 	});
+
+	describe('honored opt-out and locked toggles in preferences', () => {
+		const usOptOut = [policyRulePresets.usPrivacyStatesOptOut()];
+
+		it('shows the honored status, shows a stored grant off while opted out, preserves it on untouched save, and lifts on opt-in save', async () => {
+			const { client, root } = await mount(
+				{},
+				{
+					consentCategories: ['functionality', 'marketing', 'measurement'],
+					overrides: { country: 'US', region: 'CA' },
+					policy: usOptOut,
+				}
+			);
+			// Record a stored grant for marketing and measurement, then opt out.
+			await client.save({
+				functionality: true,
+				marketing: true,
+				measurement: true,
+			});
+			expect(
+				client.getSnapshot().explicitChoice?.categories.marketing?.value
+			).toBe(true);
+			await client.optOut();
+			expect(client.getSnapshot().optOut?.method).toBe('button');
+
+			client.openDialog();
+			await vi.waitFor(() => {
+				expect(query(root, 'consent-dialog-root')).not.toBeNull();
+			});
+
+			const status = query(root, 'consent-widget-opt-out-status');
+			expect(status.getAttribute('role')).toBe('status');
+			expect(status.textContent).toBe('Opt-out request honored');
+
+			const marketing = query<HTMLButtonElement>(
+				root,
+				'consent-widget-switch-marketing'
+			);
+			const measurement = query<HTMLButtonElement>(
+				root,
+				'consent-widget-switch-measurement'
+			);
+			const functionality = query<HTMLButtonElement>(
+				root,
+				'consent-widget-switch-functionality'
+			);
+			expect(marketing.getAttribute('aria-checked')).toBe('false');
+			expect(measurement.getAttribute('aria-checked')).toBe('false');
+			expect(functionality.getAttribute('aria-checked')).toBe('true');
+			expect(marketing.disabled).toBe(false);
+
+			// An untouched save must not re-confirm the stored grant or lift the opt-out.
+			query(root, 'consent-widget-footer-save-button').click();
+			expect(client.getSnapshot().optOut).not.toBeNull();
+			expect(client.getSnapshot().effectivePermissions.marketing).toBe(false);
+			expect(
+				client.getSnapshot().explicitChoice?.categories.marketing?.value
+			).toBe(false);
+
+			// Re-open, turn marketing on, and save to lift the opt-out.
+			client.openDialog();
+			await vi.waitFor(() => {
+				expect(query(root, 'consent-dialog-root')).not.toBeNull();
+			});
+			query<HTMLButtonElement>(root, 'consent-widget-switch-marketing').click();
+			expect(
+				query(root, 'consent-widget-switch-marketing').getAttribute(
+					'aria-checked'
+				)
+			).toBe('true');
+			query(root, 'consent-widget-footer-save-button').click();
+
+			expect(client.getSnapshot().optOut).toBeNull();
+			expect(client.getSnapshot().effectivePermissions.marketing).toBe(true);
+		});
+
+		it('locks opted-out categories under active GPC and blocks pointer, keyboard, save and accept-all', async () => {
+			const { client, root } = await mount(
+				{},
+				{
+					consentCategories: ['functionality', 'marketing', 'measurement'],
+					overrides: { country: 'US', gpc: true, region: 'CA' },
+					policy: usOptOut,
+				}
+			);
+			expect(client.getSnapshot().optOut?.method).toBe('gpc');
+
+			client.openDialog();
+			await vi.waitFor(() => {
+				expect(query(root, 'consent-dialog-root')).not.toBeNull();
+			});
+
+			const status = query(root, 'consent-widget-opt-out-status');
+			expect(status.getAttribute('role')).toBe('status');
+			expect(status.textContent).toBe('Opt-out preference signal honored');
+
+			for (const category of ['marketing', 'measurement'] as const) {
+				const sw = query<HTMLButtonElement>(
+					root,
+					`consent-widget-switch-${category}`
+				);
+				const notice = query(root, `consent-widget-restriction-${category}`);
+				expect(sw.disabled).toBe(true);
+				expect(sw.getAttribute('aria-checked')).toBe('false');
+				expect(sw.getAttribute('aria-describedby')).toBe(notice.id);
+				expect(notice.textContent).toContain('Global Privacy Control');
+				// Notice sits beside the trigger row, not inside the trigger button.
+				expect(
+					query(root, `consent-widget-accordion-trigger-${category}`).contains(
+						notice
+					)
+				).toBe(false);
+
+				// Pointer and keyboard attempts leave the switch off.
+				sw.click();
+				sw.dispatchEvent(
+					new KeyboardEvent('keydown', { bubbles: true, key: ' ' })
+				);
+				sw.dispatchEvent(
+					new KeyboardEvent('keydown', { bubbles: true, key: 'Enter' })
+				);
+				expect(sw.getAttribute('aria-checked')).toBe('false');
+			}
+
+			// Unlocked category has no restriction notice and stays interactive.
+			expect(
+				root.querySelector(
+					'[data-testid="consent-widget-restriction-functionality"]'
+				)
+			).toBeNull();
+
+			// Untouched save does not grant locked categories.
+			query(root, 'consent-widget-footer-save-button').click();
+			expect(client.getSnapshot().effectivePermissions.marketing).toBe(false);
+			expect(client.getSnapshot().effectivePermissions.measurement).toBe(false);
+			expect(
+				client.getSnapshot().explicitChoice?.categories.marketing?.value
+			).not.toBe(true);
+
+			// Accept all grants unlocked categories without presenting or granting locked ones.
+			client.openDialog();
+			await vi.waitFor(() => {
+				expect(query(root, 'consent-dialog-root')).not.toBeNull();
+			});
+			query(root, 'consent-widget-footer-accept-all-button').click();
+			expect(client.getSnapshot().effectivePermissions.functionality).toBe(
+				true
+			);
+			expect(client.getSnapshot().effectivePermissions.marketing).toBe(false);
+			expect(client.getSnapshot().effectivePermissions.measurement).toBe(false);
+			expect(
+				client.getSnapshot().explicitChoice?.categories.marketing?.value
+			).not.toBe(true);
+			expect(
+				client.getSnapshot().explicitChoice?.categories.measurement?.value
+			).not.toBe(true);
+		});
+
+		it('shows the account lock reason while keeping switches usable under an account-held opt-out', async () => {
+			const now = Date.now();
+			const { client, root } = await mount(
+				{},
+				{
+					consentCategories: ['functionality', 'marketing', 'measurement'],
+					overrides: { country: 'US', region: 'CA' },
+					policy: usOptOut,
+					prefetch: {
+						initialRecords: {
+							optOut: {
+								heldBy: 'person',
+								method: 'button',
+								recordedAt: now - 1000,
+								rights: ['sale', 'share'],
+							},
+						},
+						now,
+					},
+				}
+			);
+			expect(client.getSnapshot().optOut?.heldBy).toBe('person');
+
+			client.openDialog();
+			await vi.waitFor(() => {
+				expect(query(root, 'consent-dialog-root')).not.toBeNull();
+			});
+
+			expect(query(root, 'consent-widget-opt-out-status').textContent).toBe(
+				'Opt-out request honored'
+			);
+			const marketing = query<HTMLButtonElement>(
+				root,
+				'consent-widget-switch-marketing'
+			);
+			const notice = query(root, 'consent-widget-restriction-marketing');
+			expect(marketing.disabled).toBe(false);
+			expect(marketing.getAttribute('aria-checked')).toBe('false');
+			expect(marketing.getAttribute('aria-describedby')).toBe(notice.id);
+			expect(notice.textContent).toContain('account');
+
+			// The switch stays usable and stages a toggle on.
+			marketing.click();
+			expect(marketing.getAttribute('aria-checked')).toBe('true');
+			query(root, 'consent-widget-footer-save-button').click();
+			// Without a backend that clears the account opt-out, the category stays off.
+			expect(client.getSnapshot().optOut?.heldBy).toBe('person');
+			expect(client.getSnapshot().effectivePermissions.marketing).toBe(false);
+		});
+	});
 });

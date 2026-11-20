@@ -77,7 +77,8 @@ subpaths such as `@inth/sdk/translations/de` when you only need a few.
 | `consentManagerDialog.title`, `consentManagerDialog.description` | Dialog heading and body. |
 | `consentTypes.<category>.title`, `consentTypes.<category>.description` | Category row title and description. |
 | `legalLinks.privacyPolicy`, `legalLinks.cookiePolicy`, `legalLinks.termsOfService` | Legal link labels. |
-| `rights.optOut`, `rights.privacyChoices`, `rights.californiaPrivacyChoices`, `rights.preferences` | Rights button added under opt-out policies. `rights.privacyChoices` and `rights.californiaPrivacyChoices` always render with the California Privacy Protection Agency opt-out icon. |
+| `rights.optOut`, `rights.privacyChoices`, `rights.californiaPrivacyChoices`, `rights.preferences` | Rights button added under opt-out policies and the "Manage preferences" link in the opt-out confirmation view. `rights.privacyChoices` and `rights.californiaPrivacyChoices` always render with the California Privacy Protection Agency opt-out icon. |
+| `optOut.statusRequest`, `optOut.statusSignal`, `optOut.description`, `optOut.done`, `optOut.lockedByGpc`, `optOut.lockedByAccount` | Opt-out confirmation view, honored status line in preferences, and GPC and account lock notices below restricted categories. |
 
 Headless UIs read the same object from `snapshot.translations`.
 

@@ -166,6 +166,12 @@ export interface PreferenceDraft {
 export interface PreferenceDraftOptions {
 	/** Presentation defaults for categories without a recorded choice. */
 	defaults?: Partial<ConsentState>;
+	/**
+	 * Follow active opt-out and GPC restrictions in displayed values and locks:
+	 * restricted categories seed off, untouched saves do not re-confirm grants,
+	 * and GPC-locked categories cannot be staged on or granted by bulk accept.
+	 */
+	honorOptOut?: boolean;
 }
 
 /**
@@ -213,24 +219,61 @@ const vendorSurface = function vendorSurface(
 };
 
 /**
- * What a category shows before the visitor moves it: the recorded choice,
- * else the presentation default, else the policy default. `necessary` is
- * always on and a category outside the choice scope is off.
+ * Optional categories locked off by an active GPC signal: categories carrying
+ * a live `gpc` restriction, plus opt-out restricted categories while GPC maps
+ * any category under the active policy.
+ */
+const gpcLockedCategories = function gpcLockedCategories(
+	snapshot: ConsentSnapshot,
+	honorOptOut: boolean
+): ReadonlySet<AllConsentNames> {
+	const locked = new Set<AllConsentNames>();
+	if (!honorOptOut) {
+		return locked;
+	}
+	const gpcActive =
+		snapshot.privacySignals.gpc.active &&
+		snapshot.evaluationPolicy.gpcDenyCategories.length > 0;
+	for (const [category, reasons] of Object.entries(snapshot.restrictions)) {
+		if (
+			reasons?.includes('gpc') ||
+			(gpcActive && reasons?.includes('opt-out'))
+		) {
+			locked.add(category as AllConsentNames);
+		}
+	}
+	return locked;
+};
+
+/**
+ * What a category shows before the visitor moves it: `false` when
+ * `honorOptOut` is on and an active opt-out or GPC restriction denies it, else
+ * the recorded choice, else the presentation default, else the policy default.
+ * `necessary` is always on and a category outside the choice scope is off.
  */
 const recordedValues = function recordedValues(
 	snapshot: ConsentSnapshot,
 	scope: readonly AllConsentNames[],
-	defaults: Partial<ConsentState> | undefined
+	defaults: Partial<ConsentState> | undefined,
+	honorOptOut: boolean
 ): ConsentState {
 	const rule = snapshot.policyRule;
 	const recorded = snapshot.explicitChoice?.categories;
 	const values: ConsentState = { ...DENIED_CONSENTS };
 	for (const category of scope) {
 		if (category !== 'necessary') {
-			values[category] =
-				recorded?.[category]?.value ??
-				defaults?.[category] ??
-				policyDefault(rule, category);
+			const reasons = snapshot.restrictions[category];
+			if (
+				honorOptOut &&
+				(reasons?.includes('opt-out') || reasons?.includes('gpc'))
+			) {
+				values[category] = false;
+			} else {
+				values[category] =
+					recorded?.[category]?.value ??
+					defaults?.[category] ??
+					policyDefault(rule, category);
+			}
 		}
 	}
 	return values;
@@ -307,6 +350,7 @@ export const createPreferenceDraft = function createPreferenceDraft(
 	options: PreferenceDraftOptions = {}
 ): PreferenceDraft {
 	let { defaults } = options;
+	const honorOptOut = options.honorOptOut === true;
 	/**
 	 * The defaults the visitor is looking at. New defaults (an experiment
 	 * arm assigned after mount) wait until nothing is staged, so a switch
@@ -322,6 +366,7 @@ export const createPreferenceDraft = function createPreferenceDraft(
 	let seen = '';
 	let derivedFrom: ConsentSnapshot | null = null;
 	let baseline = {} as ConsentState;
+	let locked: ReadonlySet<AllConsentNames> = new Set();
 	let seeded: Grants = {};
 	let toggleable: ReadonlySet<string> = new Set();
 	const listeners = new Set<() => void>();
@@ -338,14 +383,18 @@ export const createPreferenceDraft = function createPreferenceDraft(
 		if (isClean()) {
 			shownDefaults = defaults;
 		}
-		baseline = recordedValues(snapshot, scope, shownDefaults);
+		locked = gpcLockedCategories(snapshot, honorOptOut);
+		baseline = recordedValues(snapshot, scope, shownDefaults, honorOptOut);
 		[seeded, toggleable] = recordedVendors(snapshot);
+		for (const category of locked) {
+			staged.delete(category);
+		}
 		// A staged value the record now holds is no longer an edit.
 		prune(staged, baseline);
 		prune(stagedVendors, seeded);
 		if (isClean() && shownDefaults !== defaults) {
 			shownDefaults = defaults;
-			baseline = recordedValues(snapshot, scope, shownDefaults);
+			baseline = recordedValues(snapshot, scope, shownDefaults, honorOptOut);
 		}
 		const isDirty = !isClean();
 		const review = [
@@ -423,7 +472,11 @@ export const createPreferenceDraft = function createPreferenceDraft(
 		let any = false;
 		for (const category of displayedCategories) {
 			const value = patch[category];
-			if (category !== 'necessary' && typeof value === 'boolean') {
+			if (
+				category !== 'necessary' &&
+				!locked.has(category) &&
+				typeof value === 'boolean'
+			) {
 				any = stage(staged, category, value, baseline[category]) || any;
 			}
 		}
@@ -504,6 +557,22 @@ export const createPreferenceDraft = function createPreferenceDraft(
 			const { categories, input, uiSource } = saveOptions;
 			const context = { categories, uiSource };
 			if (input === 'all' || input === 'none') {
+				const { displayedCategories } = current();
+				if (input === 'all' && locked.size > 0) {
+					const unlocked: PreferenceDraftSaveInput = {};
+					for (const category of displayedCategories) {
+						if (
+							category !== 'necessary' &&
+							!locked.has(category) &&
+							(categories === undefined || categories.includes(category))
+						) {
+							unlocked[category] = true;
+						}
+					}
+					const pending = kernel.commands.save(unlocked, context);
+					reset();
+					return pending;
+				}
 				const pending = kernel.commands.save(input, context);
 				// The bulk choice supersedes every staged edit.
 				reset();

@@ -5,7 +5,7 @@
  */
 import type { OptOutRecord, OptOutRight } from '@inth/sdk-schema/types';
 
-import { optOutLiftBlocker } from '../consent-record/opt-out';
+import { optOutLiftBlocker } from '../consent-record/opt-out-rules';
 import { validateOptOutRecord } from '../consent-record/validation';
 import { createIdempotencyKey } from '../libs/subject-uuid';
 import type {

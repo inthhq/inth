@@ -138,6 +138,7 @@ group: reference
   | `accept` | Like the banner's accept button, allows every category the dialog offers without IAB. Under an IAB policy it confirms the vendors' declared processing through the CMP. Optional categories without declared consent purposes remain denied. See [categories under an IAB policy](/docs/concepts/consent-state#categories-under-an-iab-policy). |
   | `reject` | Rejects every optional category the dialog offers. |
   | `customize` | Opens the preference dialog. Records nothing. |
+  | `opt-out` | Under an opt-out policy, records an opt-out in one click and opens the confirmation view. Under any other policy, opens the preference dialog. |
   | `dismiss` | Dismisses a notice. This records an acknowledgement, not consent, and does nothing unless the policy shows a notice. |
   | `banner` | Shows the banner again. Records nothing. |
   | `close` | Closes the banner or dialog. Records nothing. |

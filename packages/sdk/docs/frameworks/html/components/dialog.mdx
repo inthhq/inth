@@ -51,11 +51,30 @@ See [consent categories](/docs/concepts/consent-categories) and
 Each switch initializes in this precedence order:
 
 1. unsaved changes toggled while this dialog is open;
-2. the visitor's recorded choice;
-3. `presentation.preferences.defaults`, if configured;
-4. on under opt-out or preselected policy categories, otherwise off.
+2. off when an active durable opt-out or Global Privacy Control (GPC) signal restricts that category, even when a stored choice granted it;
+3. the visitor's recorded choice;
+4. `presentation.preferences.defaults`, if configured;
+5. on under opt-out or preselected policy categories, otherwise off.
 
 Closing without saving discards unsaved switch changes.
+
+## Honored opt-outs and locked switches
+
+When a durable opt-out is held, the dialog displays a status line
+(`role="status"`) above the category list: "Opt-out request honored" for a
+visitor request, or "Opt-out preference signal honored" when Global Privacy
+Control recorded or enforces it.
+
+- While the browser's GPC signal is active under a policy that maps it, the
+  opted-out category switches stay off and disabled. A notice below each row
+  explains why and is linked to the switch with `aria-describedby`. **Save
+  Settings** and **Accept All** do not present or grant locked categories.
+- When an account holds the opt-out and GPC is off, the notice explains that
+  the account has opted out and the switches remain usable. Turning a category
+  back on and saving asks the backend to lift the account opt-out.
+- When the opt-out is device-held and GPC is off, turning a restricted
+  category back on and saving lifts the opt-out. Saving without changing a
+  switch keeps the opt-out in place.
 
 ## Buttons
 
@@ -92,8 +111,10 @@ Shared theme tokens apply automatically (see
 | `consent-dialog-root` | Dialog element. |
 | `consent-dialog-card`, `consent-dialog-header`, `consent-dialog-content` | Card and inner sections. |
 | `consent-dialog-title`, `consent-dialog-description` | Heading and description. |
+| `consent-widget-opt-out-status` | Honored opt-out status line (`role="status"`). |
 | `consent-widget-accordion-item-<category>` | Category row (for example, `measurement`). |
 | `consent-widget-switch-<category>` | Category switch. |
+| `consent-widget-restriction-<category>` | GPC or account lock notice below a restricted category row. |
 | `consent-widget-vendor-list-<category>` | Category vendor list. |
 | `consent-widget-vendor-switch-<category>-<vendor>` | Individual vendor switch. |
 | `consent-widget-footer` | Button row. |

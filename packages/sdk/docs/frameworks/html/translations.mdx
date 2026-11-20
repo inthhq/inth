@@ -122,7 +122,8 @@ Omitted keys stay in English. Provide one entry per language you test so
 | `consentManagerDialog.title`, `consentManagerDialog.description` | Dialog heading and body. |
 | `consentTypes.<category>.title`, `consentTypes.<category>.description` | Each category row in the dialog. |
 | `legalLinks.privacyPolicy`, `legalLinks.cookiePolicy`, `legalLinks.termsOfService` | Legal link labels when no explicit `label` is set. |
-| `rights.optOut`, `rights.privacyChoices`, `rights.californiaPrivacyChoices`, `rights.preferences` | Rights button under opt-out policies. `rights.privacyChoices` and `rights.californiaPrivacyChoices` always render with the California Privacy Protection Agency opt-out icon. |
+| `rights.optOut`, `rights.privacyChoices`, `rights.californiaPrivacyChoices`, `rights.preferences` | Rights button under opt-out policies and the "Manage preferences" link in the opt-out confirmation view. `rights.privacyChoices` and `rights.californiaPrivacyChoices` always render with the California Privacy Protection Agency opt-out icon. |
+| `optOut.statusRequest`, `optOut.statusSignal`, `optOut.description`, `optOut.done`, `optOut.lockedByGpc`, `optOut.lockedByAccount` | Opt-out confirmation view, honored status line in preferences, and GPC and account lock notices below restricted categories. |
 
 Set the floating trigger's accessible label per page via
 `ui.trigger.ariaLabel`.

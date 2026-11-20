@@ -41,8 +41,13 @@ Inth delegates clicks on `document`, so:
 
 `accept` and `reject` record legal consent choices. Place them on clearly
 labelled buttons the visitor intentionally clicks, never triggered via
-`element.click()` or hidden inside broader clickable containers. Use
-`customize` for "Cookie settings" controls that only open the dialog.
+`element.click()` or hidden inside broader clickable containers.
+
+Use `customize` for "Cookie settings" controls that only open the preference
+dialog. Use `opt-out` for a "Do Not Sell or Share My Personal Information" or
+"Your Privacy Choices" link so one click records the opt-out under an opt-out
+policy and shows a confirmation view. Under any other policy, `opt-out` opens
+the preference dialog.
 
 ## Build a banner from action buttons
 

@@ -593,3 +593,118 @@ describe('stale drafts', () => {
 		expect(localeCompare).not.toHaveBeenCalled();
 	});
 });
+
+describe('opt-out and GPC restrictions', () => {
+	const gpcOptOutRule = optOutRule({
+		categories: ['functionality', 'marketing', 'measurement'],
+		privacySignals: { gpc: { denyCategories: ['marketing', 'measurement'] } },
+	});
+
+	test('seeds opted-out categories off even over a stored grant, and lifts on opt-in save', async () => {
+		const { kernel } = setup(
+			{
+				consentCategories: ['functionality', 'marketing', 'measurement'],
+				initialRecords: {
+					...choiceRecords({
+						functionality: true,
+						marketing: true,
+						measurement: true,
+					}),
+					optOut: {
+						heldBy: 'device',
+						method: 'button',
+						recordedAt: NOW,
+						rights: ['sale', 'share'],
+					},
+				},
+			},
+			gpcOptOutRule
+		);
+		const draft = createPreferenceDraft(kernel, { honorOptOut: true });
+		expect(draft.getState().values).toMatchObject({
+			functionality: true,
+			marketing: false,
+			measurement: false,
+		});
+
+		// An untouched save does not grant marketing or lift the opt-out.
+		await draft.save();
+		expect(kernel.getSnapshot().optOut).not.toBeNull();
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		expect(recorded(kernel).marketing).toBe(false);
+
+		// Turning marketing back on and saving lifts the device opt-out.
+		draft.set('marketing', true);
+		expect(draft.getState().values.marketing).toBe(true);
+		await draft.save();
+		expect(kernel.getSnapshot().optOut).toBeNull();
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
+	});
+
+	test('keeps GPC-locked categories off through set, acceptAll and bulk save', async () => {
+		const { kernel } = setup(
+			{
+				consentCategories: ['functionality', 'marketing', 'measurement'],
+				initialPrivacySignals: { gpc: true },
+				initialRecords: {
+					optOut: {
+						heldBy: 'device',
+						method: 'gpc',
+						recordedAt: NOW,
+						rights: ['sale', 'share'],
+					},
+				},
+			},
+			gpcOptOutRule
+		);
+		const draft = createPreferenceDraft(kernel, { honorOptOut: true });
+		expect(draft.getState().values).toMatchObject({
+			functionality: true,
+			marketing: false,
+			measurement: false,
+		});
+
+		draft.set('marketing', true);
+		expect(draft.getState().values.marketing).toBe(false);
+
+		draft.acceptAll();
+		expect(draft.getState().values).toMatchObject({
+			functionality: true,
+			marketing: false,
+			measurement: false,
+		});
+
+		await draft.save({ input: 'all' });
+		expect(recorded(kernel)).toEqual({ functionality: true });
+		expect(kernel.getSnapshot().effectivePermissions).toMatchObject({
+			functionality: true,
+			marketing: false,
+			measurement: false,
+		});
+	});
+
+	test('allows toggling categories held by an account opt-out when GPC is off', () => {
+		const { kernel } = setup(
+			{
+				consentCategories: ['functionality', 'marketing', 'measurement'],
+				initialRecords: {
+					optOut: {
+						heldBy: 'person',
+						method: 'button',
+						recordedAt: NOW,
+						rights: ['sale', 'share'],
+					},
+				},
+			},
+			gpcOptOutRule
+		);
+		const draft = createPreferenceDraft(kernel, { honorOptOut: true });
+		expect(draft.getState().values.marketing).toBe(false);
+		draft.set('marketing', true);
+		expect(draft.getState().values.marketing).toBe(true);
+		expect(draft.toSaveInput()).toMatchObject({
+			marketing: true,
+			measurement: false,
+		});
+	});
+});

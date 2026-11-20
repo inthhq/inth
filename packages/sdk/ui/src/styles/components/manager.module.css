@@ -50,6 +50,27 @@
 		margin-bottom: calc(1.5rem * var(--space-y-reverse));
 	}
 
+	.optOutStatus:not(:global(.headless)) {
+		margin: 0;
+		padding: var(--inth-space-xs) var(--inth-space-sm);
+		border-radius: var(--inth-radius-md);
+		border: 1px solid
+			color-mix(in srgb, var(--inth-primary) 28%, var(--inth-border));
+		background-color: color-mix(
+			in srgb,
+			var(--inth-primary) 10%,
+			var(--inth-surface)
+		);
+		color: var(--consent-manager-text-color);
+		font-size: var(--inth-font-size-sm);
+		font-weight: var(--inth-font-weight-medium);
+		line-height: var(--inth-line-height-normal);
+	}
+
+	:global(.inth-dark) .optOutStatus:not(:global(.headless)) {
+		color: var(--consent-manager-text-color-dark);
+	}
+
 	.footer:not(:global(.headless)) {
 		display: flex;
 		justify-content: space-between;

@@ -66,8 +66,9 @@ buttons and order required by the policy:
 `{ measurement: true }`. `dismissNotice()` records notice acknowledgement
 without granting consent.
 
-Use `resolveActionLabels`, `resolvePreferenceControlLabels`, `resolveOptOutLink`
-and `resolvePromptCopy` from `@inth/sdk/engine` (or `@inth/sdk/headless`) with
+Use `resolveActionLabels`, `resolvePreferenceControlLabels`, `resolveOptOutLink`,
+`resolveOptOutCopy` and `resolvePromptCopy` from `@inth/sdk/engine`,
+`@inth/sdk/surface-state` or `@inth/sdk/headless` with
 `snapshot.translations?.translations` to get localized copy with English
 fallbacks. `resolveOptOutLink` resolves `'do-not-sell'`, `'privacy-choices'`
 or `'california-privacy-choices'` and returns
@@ -83,6 +84,13 @@ holds its view box and paths for a framework that builds the element itself.
 
 <include src="../../shared/privacy-choices-link.mdx" />
 
+`resolveOptOutCopy` returns the opt-out
+confirmation and lock-reason copy. `resolveOptOutState(snapshot)` derives what
+an opt-out confirmation or preference surface renders from a snapshot:
+`available`, `honored`, `via` (`'signal'`, `'request'` or `null`), `lock`
+(`'gpc-active'`, `'held-by-account'` or `null`), `categories` and
+`optInPromptAllowedAt`.
+
 ## Build a preference form with a draft
 
 Use `createPreferenceDraft(kernel)` from `@inth/sdk/preference-draft` to
@@ -95,7 +103,7 @@ stage unsaved category and vendor switches before saving:
 | Field | What it holds |
 | --- | --- |
 | `displayedCategories` | `necessary` plus policy-editable categories in canonical order. |
-| `values` | Staged edit, else recorded choice, else policy default. |
+| `values` | Staged edit, else recorded choice, else policy default. Pass `honorOptOut: true` to seed restricted categories off and lock GPC-restricted categories against `set()`, `acceptAll()` and bulk `'all'` saves. |
 | `vendors` | Declared vendor switches (empty under IAB). |
 | `isDirty` | Whether any staged value differs from the stored record. |
 | `isStale` | Whether policy, categories or vendors changed since edits began. |
