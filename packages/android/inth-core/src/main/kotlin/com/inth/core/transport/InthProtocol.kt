@@ -1,17 +1,21 @@
 package com.inth.core.transport
 
 /**
- * Header contract shared with `@inth/sdk-core`.
- *
- * See `packages/sdk/core/src/libs/version-header.ts`. `x-inth-version` is
- * telemetry only. `x-inth-policy-contract` is the capability declaration: a
- * producer that speaks a different contract answers `unsupported-contract`
- * rather than a wire this build would misread.
+ * Routes and headers of the Inth backend's `/v1` consent API. See "Transports" in
+ * `packages/native-protocol/CONTRACT.md`.
  */
 object InthProtocol {
-	const val VERSION_HEADER = "x-inth-version"
+	/** `GET`: policy, location, translations and the vendor list. */
+	const val INIT_PATH = "/v1/consent/init"
 
-	const val POLICY_CONTRACT_HEADER = "x-inth-policy-contract"
+	/** `POST`: one consent save, the bytes the pending queue holds. */
+	const val RECORDS_PATH = "/v1/consent/records"
+
+	/** `POST /v1/subjects/{id}/link`, with [encodedSubjectId] already percent-encoded. */
+	fun linkPath(encodedSubjectId: String): String = "/v1/subjects/$encodedSubjectId/link"
+
+	/** The response header a request id falls back to when the error body names none. */
+	const val REQUEST_ID_HEADER = "x-request-id"
 
 	/**
 	 * The `x-inth-vendors` header name: the publisher's declared vendor scope.
@@ -47,15 +51,11 @@ object InthProtocol {
 	 */
 	const val MAX_VENDOR_SCOPE_HEADER_IDS = 500
 
-	/** Must stay equal to `POLICY_CONTRACT_VERSION` in `@inth/sdk-schema`. */
-	const val POLICY_CONTRACT_VERSION = 1
-
 	/**
-	 * The `x-inth-platform` header name: which host built the request.
+	 * The `x-inth-platform` header name: which host built the request. Telemetry only.
 	 *
 	 * The value is `<platform>-><sdkVersion>`, the same shape the Apple installer sends as
-	 * `apple-><version>`. The platform travels here rather than as a prefix on
-	 * [VERSION_HEADER], because hosted gateways may reject a version they cannot parse.
+	 * `apple-><version>`.
 	 */
 	const val PLATFORM_HEADER = "x-inth-platform"
 
@@ -69,17 +69,13 @@ object InthProtocol {
 	const val DEFAULT_SDK_VERSION = "3.0.0-alpha.1"
 
 	/**
-	 * Headers every inth-bound request carries.
-	 *
-	 * `x-inth-version` is the unprefixed native version, matching the web format and the
-	 * Swift core. [platform] adds [PLATFORM_HEADER]; `null` sends no platform header.
+	 * The telemetry header every Inth-bound request carries: [PLATFORM_HEADER] for
+	 * [platform], or no header when [platform] is `null`. There is no version header.
 	 */
 	fun protocolHeaders(
 		sdkVersion: String = DEFAULT_SDK_VERSION,
 		platform: String? = null,
 	): Map<String, String> = buildMap {
-		put(VERSION_HEADER, sdkVersion)
-		put(POLICY_CONTRACT_HEADER, POLICY_CONTRACT_VERSION.toString())
 		platform?.takeIf { it.isNotBlank() }?.let { put(PLATFORM_HEADER, "$it->$sdkVersion") }
 	}
 
@@ -114,35 +110,4 @@ object InthProtocol {
 		return ids.joinToString(",")
 	}
 
-}
-
-/**
- * What the producer said about the policy contract it speaks.
- *
- * The three cases are not interchangeable, so they stay three cases:
- * `@inth/sdk-core` reads the same distinction as `number | null | undefined`.
- * A producer that claims a contract this client cannot even parse is worse than
- * one that claims none, and both differ from a producer that predates the header.
- */
-sealed class ProducerContract {
-	/** No header: a producer that predates the contract. */
-	data object NotDeclared : ProducerContract()
-
-	/** A header that is not a plain integer: the claim is unreadable. */
-	data object Unreadable : ProducerContract()
-
-	/** A versioned claim, which may or may not be one this build speaks. */
-	data class Declared(val version: Int) : ProducerContract()
-
-	companion object {
-		/** Read [InthProtocol.POLICY_CONTRACT_HEADER] out of a response. */
-		fun fromHeader(headerValue: String?): ProducerContract {
-			val trimmed = headerValue?.trim() ?: return NotDeclared
-			if (trimmed.isEmpty()) {
-				return NotDeclared
-			}
-			val version = trimmed.toIntOrNull() ?: return Unreadable
-			return Declared(version)
-		}
-	}
 }

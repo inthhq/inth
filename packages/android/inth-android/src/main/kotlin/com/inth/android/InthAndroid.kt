@@ -51,7 +51,11 @@ object InthAndroid {
 	 */
 	const val META_POLICY_RULES = "com.inth.POLICY_RULES"
 
-	const val META_BACKEND_DOMAIN = "com.inth.BACKEND_DOMAIN"
+	/**
+	 * The `property` each consent record carries. Without it [install] sends the
+	 * application ID, lowercased.
+	 */
+	const val META_BACKEND_PROPERTY = "com.inth.BACKEND_PROPERTY"
 
 	/**
 	 * Comma-separated category ids the app offers, e.g.
@@ -108,7 +112,7 @@ object InthAndroid {
 	): ConsentCore {
 		// A repeated call returns the running core and never uses this config, so it is not checked.
 		if (Inth.current != null) return start(context, config, InthTransport.NONE, clock, observeForeground, observeReachability, logger)
-		val checked = checkedConfig(config, isDebuggable(context), enforceProjectUrl = true)
+		val checked = checkedConfig(config, isDebuggable(context), enforceProjectUrl = true, context.packageName)
 		return start(context, checked, HostedTransport(InthHttpClient(), checked), clock, observeForeground, observeReachability, logger)
 	}
 
@@ -128,7 +132,7 @@ object InthAndroid {
 		logger: (KernelError) -> Unit = defaultLogger,
 	): ConsentCore {
 		if (Inth.current != null) return start(context, config, transport, clock, observeForeground, observeReachability, logger)
-		val checked = checkedConfig(config, isDebuggable(context), enforceProjectUrl = false)
+		val checked = checkedConfig(config, isDebuggable(context), enforceProjectUrl = false, context.packageName)
 		return start(context, checked, transport, clock, observeForeground, observeReachability, logger)
 	}
 
@@ -142,13 +146,20 @@ object InthAndroid {
 	 * The start-time rules, in one place so tests can drive them without a device.
 	 *
 	 * Refuses `dryRun` unless the app is debuggable. With [enforceProjectUrl], checks
-	 * `backendUrl` and returns the config carrying its normal form, so the transport,
-	 * the bundled-policy binding and the save `domain` all read the same string.
+	 * `backendUrl` and returns the config carrying its normal form, so the transport and
+	 * the bundled-policy binding read the same string. A blank `property` defaults to
+	 * [applicationId]; the core lowercases whichever it sends.
 	 */
-	internal fun checkedConfig(config: NativeConfig, debuggable: Boolean, enforceProjectUrl: Boolean): NativeConfig {
+	internal fun checkedConfig(
+		config: NativeConfig,
+		debuggable: Boolean,
+		enforceProjectUrl: Boolean,
+		applicationId: String? = null,
+	): NativeConfig {
 		check(!config.dryRun || debuggable) { DRY_RUN_IN_RELEASE }
-		if (!enforceProjectUrl) return config
-		return config.copy(backendUrl = InthProjectUrl.normalize(config.backendUrl, relaxed = config.dryRun))
+		val withProperty = config.copy(property = config.property?.takeIf { it.isNotBlank() } ?: applicationId)
+		if (!enforceProjectUrl) return withProperty
+		return withProperty.copy(backendUrl = InthProjectUrl.normalize(config.backendUrl, relaxed = config.dryRun))
 	}
 
 	internal const val DRY_RUN_IN_RELEASE =
@@ -278,6 +289,7 @@ object InthAndroid {
 				catch (error: java.io.IOException) { Log.w(TAG, "Cannot read bundled policy $name", error); null }
 			},
 			debuggable = isDebuggable(context),
+			applicationId = context.packageName,
 		)
 	}
 
@@ -286,11 +298,12 @@ object InthAndroid {
 		read: (String) -> Any?,
 		readAsset: (String) -> String?,
 		debuggable: Boolean,
+		applicationId: String? = null,
 	): DeclaredConfig {
 		val declared = declaredConfig(read, readAsset)
 		if (declared !is DeclaredConfig.Valid) return declared
 		return try {
-			DeclaredConfig.Valid(checkedConfig(declared.config, debuggable, enforceProjectUrl = true))
+			DeclaredConfig.Valid(checkedConfig(declared.config, debuggable, enforceProjectUrl = true, applicationId))
 		} catch (error: IllegalStateException) {
 			DeclaredConfig.Refused("${error.message} Inth stays inactive.")
 		} catch (error: IllegalArgumentException) {
@@ -344,7 +357,7 @@ object InthAndroid {
 			bundledPolicy = bundledPolicy?.let(readAsset),
 			policy = declaredPolicy?.getOrNull(),
 			policyError = declaredPolicy?.exceptionOrNull()?.let { it.message ?: it.toString() },
-			domain = InthManifestValue.string(read(META_BACKEND_DOMAIN)),
+			property = InthManifestValue.string(read(META_BACKEND_PROPERTY)),
 			consentCategories = declaredCategories(read(META_CATEGORIES)),
 			vendors = declaredVendors(read(META_VENDORS)),
 			iab = when (val declared = declaredIab(read)) {

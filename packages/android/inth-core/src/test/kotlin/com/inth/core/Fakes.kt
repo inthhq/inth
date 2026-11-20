@@ -14,6 +14,7 @@ import com.inth.core.spi.TaskExecutor
 import com.inth.core.store.InthStore
 import com.inth.core.transport.InthTransport
 import com.inth.core.transport.InitContext
+import com.inth.core.transport.LinkOutcome
 import com.inth.core.transport.SaveOutcome
 import com.inth.core.transport.TransportOutcome
 
@@ -84,12 +85,19 @@ class RecordingTransport(
 	private val responses = mutableListOf<TransportOutcome>()
 	private val saveOutcomes = mutableListOf<SaveOutcome>()
 	private var lastInit: TransportOutcome? = null
-	private var lastSave: SaveOutcome = SaveOutcome.Delivered
+	private var lastSave: SaveOutcome = SaveOutcome.Delivered()
 
 	val initRequests = mutableListOf<InitContext>()
 	val saveRequests = mutableListOf<QueuedSave>()
-	val identifyRequests = mutableListOf<Pair<String, String>>()
-	val logoutRequests = mutableListOf<String>()
+	/** Each link request: subject id, external id, identity token. */
+	val linkRequests = mutableListOf<Triple<String, String, String>>()
+	private var linkOutcome: LinkOutcome = LinkOutcome.Linked()
+
+	/** Answer every later link request with [outcome]. */
+	fun respondLink(outcome: LinkOutcome): RecordingTransport {
+		linkOutcome = outcome
+		return this
+	}
 
 	/** Queue one more init answer; the last one sticks. */
 	fun respondInit(outcome: TransportOutcome): RecordingTransport {
@@ -123,17 +131,14 @@ class RecordingTransport(
 		eventLog?.add(event)
 	}
 
-	override fun identify(
+	override fun link(
 		subject: ConsentSubject,
 		user: KernelUser,
-	): TransportOutcome {
-		identifyRequests += subject.id to user.externalId
-		return TransportOutcome.Success(null, emptyMap())
-	}
-
-	override fun logout(subject: ConsentSubject): TransportOutcome {
-		logoutRequests += subject.id
-		return TransportOutcome.Success(null, emptyMap())
+		identityToken: String,
+	): LinkOutcome {
+		record("network:link")
+		linkRequests += Triple(subject.id, user.externalId, identityToken)
+		return linkOutcome
 	}
 }
 

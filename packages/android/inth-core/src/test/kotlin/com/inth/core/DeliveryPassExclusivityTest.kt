@@ -97,7 +97,7 @@ class DeliveryPassExclusivityTest {
 		// The backend answers now, and two flushes arrive at once. The first starts a pass
 		// that reads both entries and gets held inside the first send; the second asks while
 		// that pass is running, so its read would find the second entry still on disk.
-		harness.transport.outcome = SaveOutcome.Delivered
+		harness.transport.outcome = SaveOutcome.Delivered()
 		harness.transport.holdSends()
 		val passResult = AtomicReference<FlushResult?>()
 		val pass = Thread {
@@ -422,7 +422,7 @@ class DeliveryPassExclusivityTest {
 	private class GatedTransport(private val timeline: Timeline) : InthTransport {
 		/** What a send answers once the gate is open. */
 		@Volatile
-		var outcome: SaveOutcome = SaveOutcome.Delivered
+		var outcome: SaveOutcome = SaveOutcome.Delivered()
 
 		/** Scripted once so bootstrap's init stays out of the way. */
 		@Volatile
@@ -481,10 +481,11 @@ class DeliveryPassExclusivityTest {
 			}
 		}
 
-		override fun identify(
+		override fun link(
 			subject: ConsentSubject,
 			user: KernelUser,
-		): TransportOutcome = TransportOutcome.Success(null, emptyMap())
+			identityToken: String,
+		): com.inth.core.transport.LinkOutcome = com.inth.core.transport.LinkOutcome.Linked()
 	}
 
 	/**

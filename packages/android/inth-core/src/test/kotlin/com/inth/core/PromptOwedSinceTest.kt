@@ -52,7 +52,7 @@ class PromptOwedSinceTest {
 			.map { File(it, "examples/native/consent-demo/fixtures/category-init.json") }.first { it.exists() }.readText()
 		val client = object : HttpClient {
 			override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
-				HttpResponse(200, mapOf("x-inth-policy-contract" to "1"), body) else HttpResponse(503)
+				HttpResponse(200, emptyMap(), body) else HttpResponse(503)
 		}
 		val config = NativeConfig("https://fixture.invalid")
 		return ConsentCore(config, InthStore(InMemoryKeyValueStore()), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)

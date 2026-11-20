@@ -106,9 +106,10 @@ produces nothing, or if the spec reaches the AAR.
 
 The core reads its configuration from `AndroidManifest.xml` meta-data (see
 [`packages/android`](../../android)): `com.inth.BACKEND_URL`,
-`com.inth.DRY_RUN`, `com.inth.BACKEND_DOMAIN`, `com.inth.FORCE_GPC`. `com.inth.BACKEND_URL` is the
+`com.inth.DRY_RUN`, `com.inth.BACKEND_PROPERTY`, `com.inth.FORCE_GPC`. `com.inth.BACKEND_URL` is the
 project URL from the Inth dashboard, such as `https://your-project.inth.app`; the mobile SDKs
-work only with Inth. `com.inth.DRY_RUN` is for development and CI: consent works on the device
+work only with Inth. `com.inth.BACKEND_PROPERTY` is the `property` each consent record names;
+it defaults to the application ID and is sent lowercase. `com.inth.DRY_RUN` is for development and CI: consent works on the device
 and no record is sent, and a build that is not debuggable refuses it. Without a backend URL, or
 with one that is refused, nothing installs, the reason is logged under the `inth` tag, and the
 module answers with the deny-all snapshot. Each is read whichever type

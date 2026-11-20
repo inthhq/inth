@@ -1,5 +1,6 @@
 package com.inth.core.store
 
+import com.inth.core.model.covers
 import com.inth.core.model.isWithdrawal
 import com.inth.core.model.sameOwner
 
@@ -104,12 +105,11 @@ class InthStore(
 	/**
 	 * Read the stored subject, or `null` when absent, unparseable, or unusable.
 	 *
-	 * Unusable is the read-side half of the format rule, and it is the reason a prerelease
-	 * install sits at `INPUT_VALIDATION_FAILED` forever: an id the producer refuses can
-	 * never carry a save, so it is not an identity this build can answer with. Adopting it
-	 * again keeps the core reporting a committed save that cannot land and a subject whose
-	 * consent no query returns. Such an id reads as absent and is left in
-	 * [takeUnusableSubject] for whoever is going to say so out loud.
+	 * Unusable is the read-side half of the format rule: a stored id that is neither a
+	 * lowercase UUIDv7 nor a c15t `sub_` id (the `read` cases in
+	 * `packages/native-protocol/subject-id/uuidv7.json`) is not an identity the backend
+	 * takes, so it is not one this build can answer with. Such an id reads as absent and is
+	 * left in [takeUnusableSubject] for whoever is going to say so out loud.
 	 *
 	 * The stored value is not rewritten here. Dropping the identity is a decision with a
 	 * snapshot and a queue attached to it, and a store that quietly repaired an id would
@@ -159,6 +159,13 @@ class InthStore(
 	/** Persist [subject]. */
 	fun writeSubject(subject: ConsentSubject) {
 		backend.write(InthStoreKeys.SUBJECT, json.encodeToString(ConsentSubject.serializer(), subject))
+	}
+
+	/** Write the identity slot and report whether it reached durable storage. */
+	fun writeSubjectDurably(subject: ConsentSubject): Boolean = try {
+		backend.writeDurably(InthStoreKeys.SUBJECT, json.encodeToString(ConsentSubject.serializer(), subject))
+	} catch (_: Exception) {
+		false
 	}
 
 	/**
@@ -221,7 +228,7 @@ class InthStore(
 		publishBus: Boolean,
 	): Boolean {
 		val capacity = limit.coerceIn(1, PendingSaveQueue.DEFAULT_LIMIT)
-		val current = readPending().filterNot { entry.isWithdrawal() && it.sameOwner(entry) }
+		val current = readPending().filterNot { entry.isWithdrawal() && it.sameOwner(entry) && entry.covers(it) }
 		val withdrawals = current.filter { it.isWithdrawal() }
 		if (withdrawals.size >= capacity) return false
 		val grants = if (supersedeGrants) emptyList() else

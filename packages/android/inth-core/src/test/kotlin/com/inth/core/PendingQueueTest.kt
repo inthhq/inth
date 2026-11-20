@@ -13,12 +13,15 @@ import com.inth.core.transport.InthProtocol
 import com.inth.core.transport.HostedTransport
 import com.inth.core.transport.SaveOutcome
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -68,7 +71,7 @@ class PendingQueueTest {
 		// backend never sees.
 		val before = json.encodeToString(attempted.payload)
 
-		transport.respondSave(SaveOutcome.Delivered)
+		transport.respondSave(SaveOutcome.Delivered())
 		val flushed = kernel.flushPending()
 
 		assertEquals(1, flushed.delivered)
@@ -99,7 +102,7 @@ class PendingQueueTest {
 		assertEquals(2, transport.saveRequests.size, "both commits must be queued, not superseded")
 		val attempted = transport.saveRequests.map { json.encodeToString(it.payload) }
 
-		transport.respondSave(SaveOutcome.Delivered)
+		transport.respondSave(SaveOutcome.Delivered())
 		val flushed = kernel.flushPending()
 
 		assertEquals(2, flushed.delivered)
@@ -158,7 +161,7 @@ class PendingQueueTest {
 		assertEquals("eu-standard", kernel.snapshot().resolution.policyId)
 		assertEquals("token-new", kernel.snapshot().policySnapshotToken)
 
-		transport.respondSave(SaveOutcome.Delivered)
+		transport.respondSave(SaveOutcome.Delivered())
 		assertEquals(1, kernel.flushPending().delivered)
 
 		val replayed = transport.saveRequests.last().payload
@@ -185,7 +188,7 @@ class PendingQueueTest {
 	}
 
 	@Test
-	fun `every backend-bound request carries the protocol headers`() {
+	fun `a save through the hosted transport sends the v1 body`() {
 		val http = RecordingHttpClient { responseFor(it) }
 		val kernel = testKernel(
 			store = InthStore(InMemoryKeyValueStore()),
@@ -194,37 +197,121 @@ class PendingQueueTest {
 		kernel.bootstrap()
 		kernel.save(CommitIntent.All)
 
-		val init = http.requests.first { it.url == "https://test.inth.app/init" }
-		// The version is unprefixed, as on web and Swift; the host platform has its own header.
-		assertEquals(InthProtocol.DEFAULT_SDK_VERSION, init.headers[InthProtocol.VERSION_HEADER])
-		assertEquals("android->${InthProtocol.DEFAULT_SDK_VERSION}", init.headers[InthProtocol.PLATFORM_HEADER])
-		assertEquals("1", init.headers[InthProtocol.POLICY_CONTRACT_HEADER])
+		assertEquals(
+			listOf("GET https://test.inth.app/v1/consent/init", "POST https://test.inth.app/v1/consent/records"),
+			http.requests.map { "${it.method} ${it.url}" },
+		)
+		for (request in http.requests) {
+			assertEquals("android->${InthProtocol.DEFAULT_SDK_VERSION}", request.headers[InthProtocol.PLATFORM_HEADER])
+		}
 
-		val save = http.requests.first { it.url == "https://test.inth.app/subjects" }
-		assertEquals("1", save.headers[InthProtocol.POLICY_CONTRACT_HEADER])
-		assertEquals("android->${InthProtocol.DEFAULT_SDK_VERSION}", save.headers[InthProtocol.PLATFORM_HEADER])
+		val save = http.requests.last()
 		val body = json.parseToJsonElement(requireNotNull(save.body)).jsonObject
-		assertEquals("cookie_banner", body["type"]?.jsonPrimitive?.content)
-		assertEquals("test.inth.app", body["domain"]?.jsonPrimitive?.content, "domain falls back to the host")
+		assertEquals("test.inth.app", body["property"]?.jsonPrimitive?.content, "property falls back to the host")
 		assertEquals("all", body["consentAction"]?.jsonPrimitive?.content)
 		assertEquals("opt-in", body["model"]?.jsonPrimitive?.content)
 		assertEquals("snap-1", body["policySnapshotToken"]?.jsonPrimitive?.content)
+		assertTrue(SubjectIdGenerator.isUuidV7(body["idempotencyKey"]!!.jsonPrimitive.content))
 		assertEquals(
-			listOf(
+			setOf(
+				"answer",
+				"confirmed",
 				"consentAction",
-				"domain",
 				"givenAt",
+				"idempotencyKey",
 				"model",
 				"policySnapshotToken",
-				"preferences",
+				"property",
 				"subjectId",
-				"type",
 				"uiSource",
-				"choice",
 			),
-			body.keys.toList(),
-			"member order matches buildSubjectPostBody, so bodies stay comparable with the fixtures",
+			body.keys,
 		)
+	}
+
+	@Test
+	fun `a later save sends every receipt at the time it was confirmed`() {
+		val clock = FixedClock()
+		val http = RecordingHttpClient { responseFor(it) }
+		val kernel = testKernel(
+			store = InthStore(InMemoryKeyValueStore()),
+			clock = clock,
+			transport = HostedTransport(http, NativeConfig(backendUrl = "https://test.inth.app/")),
+		)
+		kernel.bootstrap()
+		kernel.save(CommitIntent.All)
+		val grantedAt = clock.now
+		clock.now += 60_000
+		kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to false)))
+
+		val bodies = http.requests.filter { it.url.endsWith("/v1/consent/records") }
+			.map { json.parseToJsonElement(requireNotNull(it.body)).jsonObject }
+		assertEquals(2, bodies.size)
+		val first = bodies[0]["answer"]!!.jsonObject["categories"]!!.jsonObject
+		assertEquals(grantedAt, first["marketing"]!!.jsonObject["confirmedAt"]!!.jsonPrimitive.long)
+		val second = bodies[1]["answer"]!!.jsonObject["categories"]!!.jsonObject
+		assertEquals(first.keys, second.keys, "the answer is complete")
+		assertEquals(grantedAt, second["marketing"]!!.jsonObject["confirmedAt"]!!.jsonPrimitive.long, "not renewed")
+		assertEquals(clock.now, second["measurement"]!!.jsonObject["confirmedAt"]!!.jsonPrimitive.long)
+	}
+
+	@Test
+	fun `a withdrawal that replaces a queued one still carries every denial`() {
+		val clock = FixedClock()
+		var online = true
+		val http = RecordingHttpClient { request ->
+			if (!online && request.url.endsWith("/v1/consent/records")) com.inth.core.spi.HttpResponse(status = 503, body = "") else responseFor(request)
+		}
+		val store = InthStore(InMemoryKeyValueStore())
+		val kernel = testKernel(
+			store = store,
+			clock = clock,
+			transport = HostedTransport(http, NativeConfig(backendUrl = "https://test.inth.app/")),
+		)
+		kernel.bootstrap()
+		kernel.save(CommitIntent.All)
+		online = false
+		clock.now += 1_000
+		val rejectedAt = clock.now
+		kernel.save(CommitIntent.Necessary)
+		clock.now += 1_000
+		kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to false)))
+
+		val queued = store.readPending()
+		assertEquals(1, queued.size, "the later withdrawal replaced the earlier one")
+		val answer = json.parseToJsonElement(requireNotNull(queued.single().body)).jsonObject["answer"]!!
+			.jsonObject["categories"]!!.jsonObject
+		assertEquals(setOf("experience", "functionality", "marketing", "measurement"), answer.keys)
+		for ((category, receipt) in answer) {
+			assertEquals(false, receipt.jsonObject["value"]!!.jsonPrimitive.boolean, category)
+		}
+		assertEquals(rejectedAt, answer["marketing"]!!.jsonObject["confirmedAt"]!!.jsonPrimitive.long)
+		assertEquals(clock.now, answer["measurement"]!!.jsonObject["confirmedAt"]!!.jsonPrimitive.long)
+	}
+
+	@Test
+	fun `a replay sends the idempotency key the action made`() {
+		val backend = InMemoryKeyValueStore()
+		val first = testKernel(
+			store = InthStore(backend),
+			transport = RecordingTransport().respondInit(initSuccess()).respondSave(SaveOutcome.Unavailable("offline")),
+		)
+		first.bootstrap()
+		assertTrue(first.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to true))).ok)
+		assertTrue(first.save(CommitIntent.All).ok)
+		val queued = InthStore(backend).readPending()
+		val keys = queued.map { assertNotNull(it.payload.idempotencyKey) }
+		assertEquals(2, keys.distinct().size, "one key per action")
+		for (entry in queued) {
+			assertTrue(SubjectIdGenerator.isUuidV7(entry.payload.idempotencyKey!!))
+			val frozen = json.parseToJsonElement(assertNotNull(entry.body)).jsonObject
+			assertEquals(entry.payload.idempotencyKey, frozen["idempotencyKey"]?.jsonPrimitive?.content)
+		}
+
+		val http = RecordingHttpClient { request -> responseFor(request) }
+		testKernel(store = InthStore(backend), transport = HostedTransport(http, TEST_CONFIG)).bootstrap()
+		val sent = http.requests.filter { it.url.endsWith("/v1/consent/records") }
+		assertEquals(queued.map { it.body }, sent.map { it.body }, "replays send the frozen bytes, key included")
 	}
 
 	@Test
@@ -241,12 +328,10 @@ class PendingQueueTest {
 			kernel.bootstrap()
 			kernel.save(CommitIntent.All)
 			assertTrue(http.requests.size >= 2, "an init and a save were sent")
-			assertTrue(http.requests.all { it.headers[InthProtocol.VERSION_HEADER] == "9.9.9" })
 			return http.requests.map { it.headers[InthProtocol.PLATFORM_HEADER] }.distinct()
 		}
 
-		// ENG-530: a React Native host reports `rn`, a Kotlin host `android`, and the
-		// version header never carries a platform prefix.
+		// ENG-530: a React Native host reports `rn`, a Kotlin host `android`.
 		assertEquals(listOf("rn->9.9.9"), platformHeaders(InthProtocol.PLATFORM_REACT_NATIVE))
 		assertEquals(listOf("android->9.9.9"), platformHeaders(InthProtocol.PLATFORM_ANDROID))
 		assertEquals(listOf<String?>(null), platformHeaders(null))
@@ -276,11 +361,7 @@ class PendingQueueTest {
 	}
 
 	private fun responseFor(request: com.inth.core.spi.HttpRequest) = when {
-		request.url.endsWith("/init") -> com.inth.core.spi.HttpResponse(
-			status = 200,
-			headers = mapOf(InthProtocol.POLICY_CONTRACT_HEADER to "1"),
-			body = initBody(),
-		)
+		request.url.endsWith("/v1/consent/init") -> com.inth.core.spi.HttpResponse(status = 200, body = initBody())
 
 		else -> com.inth.core.spi.HttpResponse(status = 200, body = "{}")
 	}

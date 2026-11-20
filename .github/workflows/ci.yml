@@ -490,6 +490,15 @@ jobs:
             packages/swift/.build
             packages/react-native/.build
           key: swiftpm-${{ runner.os }}-${{ hashFiles('Package.swift', 'packages/swift/Package.swift', 'packages/react-native/Package.swift') }}
+      # The React Native package ships a byte-for-byte copy of these sources, and its
+      # Swift tests below compile that copy, so a stale copy would still pass them.
+      - name: Check the React Native copy of the Swift sources
+        run: |
+          set -euo pipefail
+          for module in InthCore InthApple InthConsentUI; do
+            diff -r "packages/swift/Sources/${module}" "packages/react-native/vendor/${module}" \
+              || { echo "Run bun scripts/sync-vendored-core.ts and bun scripts/sync-vendored-apple.ts." >&2; exit 1; }
+          done
       - name: Build and test the Swift core
         run: |
           set -euxo pipefail

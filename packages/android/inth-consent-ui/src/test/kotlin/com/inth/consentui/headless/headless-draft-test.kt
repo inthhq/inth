@@ -262,7 +262,7 @@ internal fun fixtureCore(fixture: String, store: KeyValueStore, iab: Boolean = f
         .map { File(it, "examples/native/consent-demo/fixtures/$fixture") }.first { it.exists() }.readText()
     val client = object : HttpClient {
         override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
-            HttpResponse(200, mapOf("x-inth-policy-contract" to "1"), body) else HttpResponse(503)
+            HttpResponse(200, emptyMap(), body) else HttpResponse(503)
     }
     val identity = if (iab) IabConfiguration(cmpId = 53, cmpVersion = 7, publisherCountryCode = "GB") else null
     val config = if (listMaxAgeMs != null) NativeConfig("https://fixture.invalid", iab = identity, iabListMaxAgeMs = listMaxAgeMs) else NativeConfig("https://fixture.invalid", iab = identity)

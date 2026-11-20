@@ -197,20 +197,15 @@ internal class DeviceBackend(
 			saveCallers += caller
 			if (online) {
 				acceptedWrites += entry
-				SaveOutcome.Delivered
+				SaveOutcome.Delivered()
 			} else {
 				SaveOutcome.Unavailable("instrumented device is offline")
 			}
 		}
 	}
 
-	override fun identify(
-		subject: ConsentSubject,
-		user: KernelUser,
-	): TransportOutcome = TransportOutcome.NetworkFailure("no identity backend in an instrumented test")
-
-	override fun logout(subject: ConsentSubject): TransportOutcome =
-		TransportOutcome.NetworkFailure("no identity backend in an instrumented test")
+	override fun link(subject: ConsentSubject, user: KernelUser, identityToken: String): com.inth.core.transport.LinkOutcome =
+		com.inth.core.transport.LinkOutcome.Unavailable("offline")
 
 	/** Writes this backend took, oldest first. */
 	fun accepted(): List<QueuedSave> = synchronized(lock) { acceptedWrites.toList() }

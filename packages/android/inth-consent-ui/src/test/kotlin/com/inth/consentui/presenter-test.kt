@@ -39,7 +39,7 @@ class PresenterTest {
             .map { File(it, "examples/native/consent-demo/fixtures/iab-init.json") }.first { it.exists() }.readText()
         val client = object : HttpClient {
             override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
-                HttpResponse(200, mapOf("x-inth-policy-contract" to "1"), body) else HttpResponse(503)
+                HttpResponse(200, emptyMap(), body) else HttpResponse(503)
         }
         val config = NativeConfig("https://fixture.invalid", iab = IabConfiguration(cmpId = 53, cmpVersion = 7, publisherCountryCode = "GB"), iabListMaxAgeMs = 60_000)
         val core = ConsentCore(config, InthStore(store), clock = Clock { now.get() },
@@ -223,7 +223,7 @@ class PresenterTest {
             var body = fixture
             val client = object : HttpClient {
                 override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
-                    HttpResponse(200, mapOf("x-inth-policy-contract" to "1"), body) else HttpResponse(503)
+                    HttpResponse(200, emptyMap(), body) else HttpResponse(503)
             }
             val config = NativeConfig("https://fixture.invalid")
             val core = ConsentCore(config, InthStore(Memory()), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)

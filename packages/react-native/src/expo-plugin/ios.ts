@@ -149,8 +149,8 @@ export const buildInfoPlistEntries = function buildInfoPlistEntries(
 	if (params.policyRules !== null) {
 		entries[IOS_PLIST_KEY.policyRules] = POLICY_RULES_NAME;
 	}
-	if (params.domain !== null) {
-		entries[IOS_PLIST_KEY.domain] = params.domain;
+	if (params.property !== null) {
+		entries[IOS_PLIST_KEY.property] = params.property;
 	}
 	// A real plist array, not a joined string: the bridge reads this key as
 	// `[String]` and drops names that are not category raw values. An empty

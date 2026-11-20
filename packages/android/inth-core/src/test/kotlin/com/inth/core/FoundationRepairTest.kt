@@ -4,6 +4,7 @@ import com.inth.core.model.*
 import com.inth.core.spi.*
 import com.inth.core.store.*
 import com.inth.core.transport.*
+import com.inth.core.transport.TransportOutcome.HttpFailure
 import java.io.File
 import kotlin.test.*
 import kotlinx.serialization.json.*
@@ -38,7 +39,7 @@ class FoundationRepairTest {
 
 	@Test
 	fun `repeated refused withdrawals leave room for later actions`() {
-		val transport = RecordingTransport().respondInit(init()).respondSave(SaveOutcome.Rejected(400))
+		val transport = RecordingTransport().respondInit(init()).respondSave(SaveOutcome.Rejected(HttpFailure(400)))
 		val store = InthStore(InMemoryKeyValueStore()); val core = testKernel(config = config, store = store, transport = transport, clock = FixedClock(vector.now))
 		core.bootstrap()
 		repeat(64) {
@@ -55,7 +56,7 @@ class FoundationRepairTest {
 	@Test
 	fun `category withdrawal survives switch to IAB`() {
 		val store = InthStore(InMemoryKeyValueStore())
-		val transport = RecordingTransport().respondInit(initSuccess(body = initBody(model = "\"opt-in\""))).respondSave(SaveOutcome.Delivered)
+		val transport = RecordingTransport().respondInit(initSuccess(body = initBody(model = "\"opt-in\""))).respondSave(SaveOutcome.Delivered())
 		val core = testKernel(config = config, store = store, transport = transport, clock = FixedClock(vector.now))
 		core.bootstrap()
 		assertTrue(core.save(CommitIntent.All).ok)
@@ -64,12 +65,12 @@ class FoundationRepairTest {
 		val queued = store.readPending().single()
 		val frozen = assertNotNull(queued.body)
 		val client = RecordingHttpClient { HttpResponse(503, emptyMap(), "{}") }
-		HostedTransport(client, config.copy(domain = "changed.example.test")).save(queued)
+		HostedTransport(client, config.copy(property = "changed.example.test")).save(queued)
 		assertEquals(frozen, client.requests.single().body)
 		transport.respondInit(init())
 		core.refresh()
 		assertEquals(listOf(frozen), store.readPending().map { it.body })
-		val online = RecordingTransport().respondSave(SaveOutcome.Delivered)
+		val online = RecordingTransport().respondSave(SaveOutcome.Delivered())
 		val cold = testKernel(config = config, store = store, transport = online, clock = FixedClock(vector.now))
 		cold.bootstrap()
 		assertEquals(listOf(frozen), online.saveRequests.map { it.body })
@@ -96,7 +97,7 @@ class FoundationRepairTest {
 		assertNull(loggedOut.iabConsent)
 	}
 
-	@Test fun `frozen subject owner and domain remain separate at capacity`() {
+	@Test fun `frozen subject owner and property remain separate at capacity`() {
 		val store = InthStore(InMemoryKeyValueStore())
 		val transport = RecordingTransport().respondInit(init()).respondSave(SaveOutcome.Unavailable("offline"))
 		val core = testKernel(config = config, store = store, transport = transport, clock = FixedClock(vector.now))
@@ -105,13 +106,13 @@ class FoundationRepairTest {
 		val original = store.readPending().single()
 		val envelope = store.readEnvelope()!!
 		store.writePending(emptyList())
-		fun entry(owner: Int, domain: Int, subject: String = original.payload.subjectId, time: Long = vector.now): QueuedSave {
+		fun entry(owner: Int, property: Int, subject: String = original.payload.subjectId, time: Long = vector.now): QueuedSave {
 			val frozen = Json.parseToJsonElement(original.body!!).jsonObject.toMutableMap()
-			frozen["externalSubjectId"] = JsonPrimitive("u$owner")
-			frozen["domain"] = JsonPrimitive("d$domain.example.test")
+			frozen["externalId"] = JsonPrimitive("u$owner")
+			frozen["property"] = JsonPrimitive("d$property.example.test")
 			frozen["subjectId"] = JsonPrimitive(subject)
 			frozen["givenAt"] = JsonPrimitive(time)
-			return original.copy(id = "$owner-$domain-$subject-$time", body = JsonObject(frozen).toString(),
+			return original.copy(id = "$owner-$property-$subject-$time", body = JsonObject(frozen).toString(),
 				payload = original.payload.copy(subjectId = subject, givenAt = time,
 					subject = original.payload.subject.copy(id = subject, externalId = "u$owner")))
 		}
@@ -124,6 +125,31 @@ class FoundationRepairTest {
 		assertFalse(store.commit(envelope, entry(10, 0)))
 		assertFalse(store.commit(envelope, entry(0, 0, subject = "sub_other")))
 		assertEquals(expected, store.readPending())
+	}
+
+	@Test fun `a denial replaces a queued one only when its answer names every category`() {
+		val store = InthStore(InMemoryKeyValueStore())
+		val transport = RecordingTransport().respondInit(init()).respondSave(SaveOutcome.Unavailable("offline"))
+		val core = testKernel(config = config, store = store, transport = transport, clock = FixedClock(vector.now))
+		core.bootstrap()
+		assertTrue(core.save(CommitIntent.Necessary).ok)
+		val original = store.readPending().single()
+		val envelope = store.readEnvelope()!!
+		store.writePending(emptyList())
+		fun denial(id: String, categories: List<String>, time: Long): QueuedSave {
+			val frozen = Json.parseToJsonElement(original.body!!).jsonObject.toMutableMap()
+			frozen["givenAt"] = JsonPrimitive(time)
+			frozen["answer"] = JsonObject(mapOf("categories" to JsonObject(categories.associateWith {
+				JsonObject(mapOf("value" to JsonPrimitive(false), "confirmedAt" to JsonPrimitive(time)))
+			})))
+			return original.copy(id = id, body = JsonObject(frozen).toString(), payload = original.payload.copy(givenAt = time))
+		}
+		val all = listOf("experience", "functionality", "marketing", "measurement")
+		assertTrue(store.commit(envelope, denial("all", all, vector.now)))
+		assertTrue(store.commit(envelope, denial("narrow", listOf("measurement"), vector.now + 1)))
+		assertEquals(listOf("all", "narrow"), store.readPending().map { it.id }, "the narrow denial does not carry marketing")
+		assertTrue(store.commit(envelope, denial("covering", all, vector.now + 2)))
+		assertEquals(listOf("covering"), store.readPending().map { it.id })
 	}
 
 	@Test fun `IAB configuration or owed withdrawals do not wipe category consent on identify`() {

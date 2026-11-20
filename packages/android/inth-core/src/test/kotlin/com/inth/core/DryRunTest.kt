@@ -67,24 +67,25 @@ class DryRunTest {
 		val core = testKernel(dry, InthStore(InMemoryKeyValueStore()), transport = transport)
 		core.bootstrap()
 
-		core.identify(KernelUser(externalId = "user-1"))
+		core.identify(KernelUser(externalId = "user-1"), identityToken = "token-1")
 		assertEquals("user-1", core.snapshot().subject?.externalId)
 		core.logout()
 		assertEquals(null, core.snapshot().subject?.externalId)
 
-		assertTrue(transport.identifyRequests.isEmpty())
-		assertTrue(transport.logoutRequests.isEmpty())
+		assertTrue(transport.linkRequests.isEmpty(), "dryRun sends no link, even with a token")
 		assertTrue(transport.saveRequests.isEmpty())
 	}
 
-	@Test fun `the same identity calls reach the transport without dry-run`() {
+	@Test fun `without dry-run only identify with a token reaches the transport`() {
 		val transport = RecordingTransport().respondInit(initSuccess())
 		val core = testKernel(TEST_CONFIG, InthStore(InMemoryKeyValueStore()), transport = transport)
 		core.bootstrap()
+		val subject = assertNotNull(core.snapshot().subject).id
 		core.identify(KernelUser(externalId = "user-1"))
+		assertTrue(transport.linkRequests.isEmpty(), "no token, no request")
+		core.identify(KernelUser(externalId = "user-1"), identityToken = "token-1")
 		core.logout()
-		assertEquals(1, transport.identifyRequests.size)
-		assertEquals(1, transport.logoutRequests.size)
+		assertEquals(listOf(Triple(subject, "user-1", "token-1")), transport.linkRequests, "logout sends nothing")
 	}
 
 	@Test fun `an earlier queue is never flushed and a dry-run save drops it`() {
@@ -99,7 +100,7 @@ class DryRunTest {
 		assertEquals(1, owed.size)
 
 		val store = InthStore(backend)
-		val transport = RecordingTransport().respondInit(initSuccess()).respondSave(SaveOutcome.Delivered)
+		val transport = RecordingTransport().respondInit(initSuccess()).respondSave(SaveOutcome.Delivered())
 		val core = testKernel(dry, store, transport = transport)
 		core.bootstrap()
 		val flushed = core.flushPending()

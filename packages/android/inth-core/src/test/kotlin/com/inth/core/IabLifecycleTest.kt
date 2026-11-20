@@ -113,7 +113,7 @@ class IabLifecycleTest {
 		assertTrue(core.isAllowed(ConsentCategory.MARKETING))
 		assertEquals(listOf(true, false, true), values)
 		assertEquals(queued.body, store.readPending().single().body)
-		transport.respondSave(SaveOutcome.Delivered)
+		transport.respondSave(SaveOutcome.Delivered())
 		assertEquals(1, core.flushPending().delivered)
 		assertEquals(queued.body, transport.saveRequests.last().body)
 		assertTrue(store.readPending().isEmpty())

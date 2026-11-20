@@ -64,12 +64,12 @@ export interface InthExtraConfig {
 	consentCategories: readonly string[] | null;
 	/** Whether consent records are dropped instead of sent. */
 	dryRun: boolean;
-	/** `domain` sent on subject writes, or `null`. */
-	domain: string | null;
 	/** Whether the binary carries the App Tracking Transparency keys. */
 	enableAppTrackingTransparency: boolean;
 	/** Whether a GPC signal is reported for a staged or test build. Read on web. */
 	forceGPC: boolean;
+	/** `property` for consent records, or `null` for the platform default. */
+	property: string | null;
 	/** Protocol range this bundle speaks. */
 	protocol: ReturnType<typeof buildProtocolInfo>;
 }
@@ -82,11 +82,11 @@ const buildExtra = function buildExtra(
 			params.consentCategories.length > 0
 				? [...params.consentCategories]
 				: null,
-		domain: params.domain,
 		dryRun: params.dryRun,
 		enableAppTrackingTransparency: params.appTrackingTransparency.enabled,
 		forceGPC: params.forceGPC,
 		projectUrl: params.projectUrl,
+		property: params.property,
 		protocol: buildProtocolInfo(),
 	};
 };

@@ -1,6 +1,10 @@
+@file:OptIn(ExperimentalSerializationApi::class)
+
 package com.inth.core.model
 
 import com.inth.core.tc.GlobalVendorList
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -60,6 +64,11 @@ data class PolicyResolution(
 		const val REASON_INVALID_CONFIGURATION = "invalid-configuration"
 		const val REASON_INSUFFICIENT_INPUTS = "insufficient-inputs"
 		const val REASON_TRANSPORT = "transport"
+		/**
+		 * The policy resolution names a value from a newer schema, such as a right or a
+		 * `version` this build does not know. The `@inth/sdk-schema` reader's label for that
+		 * case; the core treats it as unreadable (contract rule 5).
+		 */
 		const val REASON_UNSUPPORTED_CONTRACT = "unsupported-contract"
 		const val REASON_INVALID_PAYLOAD = "invalid-payload"
 
@@ -74,19 +83,37 @@ data class PolicyResolution(
 /**
  * Subject identifiers.
  *
- * [id] is the inth-owned id minted at first launch by `SubjectIdGenerator`, in the
- * `sub_` format the backend's `subjectIdSchema` accepts. A stored id is adopted
- * untouched when the producer would take it and refused when it would not: an id every
- * save gets `INPUT_VALIDATION_FAILED` over is not an identity, and the envelope written
- * under it is worth the same nothing. See `SubjectIdGenerator.isValid` and
- * `packages/native-protocol/CONTRACT.md`, Subject identity. Never derived from IDFV, ADID, or any other
- * hardware identifier.
+ * [id] is the Inth-owned id minted at first launch by `SubjectIdGenerator`: a lowercase
+ * UUIDv7. A stored UUIDv7 or c15t `sub_` id is adopted untouched; anything else is
+ * refused with the envelope written under it. A `/v1` response that names a different
+ * canonical UUIDv7 replaces it. See `SubjectIdGenerator.isValid` and
+ * `packages/native-protocol/CONTRACT.md`, Subject identity. Never derived from IDFV, ADID,
+ * or any other hardware identifier.
+ *
+ * [previousIds] are the ids this subject replaced, newest first, at most
+ * [MAX_PREVIOUS_IDS]. They stay the same subject on the device: a body queued under one
+ * still delivers, and a decision stored under one still reads. They never reach the wire.
  */
 @Serializable
 data class ConsentSubject(
 	val id: String,
 	val externalId: String? = null,
-)
+	val previousIds: List<String> = emptyList(),
+) {
+	/** Whether [subjectId] is this subject: its id or one it replaced. */
+	fun owns(subjectId: String?): Boolean = subjectId != null && (subjectId == id || subjectId in previousIds)
+
+	/** This subject under [canonical], keeping [id] as the newest previous id. */
+	fun replacingId(canonical: String): ConsentSubject = copy(
+		id = canonical,
+		previousIds = (listOf(id) + previousIds).filter { it != canonical }.distinct().take(MAX_PREVIOUS_IDS),
+	)
+
+	companion object {
+		/** How many replaced ids the identity slot keeps, as the Swift core does. */
+		const val MAX_PREVIOUS_IDS = 4
+	}
+}
 
 /** Geographic context reported by the backend. */
 @Serializable
@@ -192,6 +219,10 @@ data class KernelError(
  * undecided and the evaluator fills them from the policy default. [fingerprint]
  * is the choice-prompt fingerprint the choice was made against, so a policy
  * change invalidates it instead of silently reusing an old grant.
+ *
+ * [confirmedAt] holds the time of each category an earlier action confirmed under the
+ * same [fingerprint] and this one kept. Every other category was confirmed at
+ * [actionAt].
  */
 @Serializable
 data class ExplicitChoice(
@@ -200,9 +231,14 @@ data class ExplicitChoice(
 	val actionAt: Long,
 	val fingerprint: String? = null,
 	val version: Int = 3,
+	@EncodeDefault(EncodeDefault.Mode.NEVER)
+	val confirmedAt: Map<String, Long> = emptyMap(),
 ) {
 	/** Read the explicit value for [category], `null` when undecided. */
 	fun valueOf(category: ConsentCategory): Boolean? = consents[category.wireName]
+
+	/** When [category], a wire name, was last confirmed. */
+	fun confirmedAtOf(category: String): Long = confirmedAt[category] ?: actionAt
 
 	/** `true` when the choice was made against [currentFingerprint]. */
 	fun matchesFingerprint(currentFingerprint: String?): Boolean {

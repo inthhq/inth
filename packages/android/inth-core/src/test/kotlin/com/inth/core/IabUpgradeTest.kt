@@ -2,10 +2,11 @@ package com.inth.core
 
 import com.inth.core.model.ConsentCategory
 import com.inth.core.store.InthStore
+import com.inth.core.transport.TransportOutcome.HttpFailure
 import java.io.File
 import java.util.Base64
-import kotlinx.serialization.json.*
 import kotlin.test.*
+import kotlinx.serialization.json.*
 
 class IabUpgradeTest {
 	@Test fun `permissive scope never grants without authority after commands`() {
@@ -26,7 +27,7 @@ class IabUpgradeTest {
 	@Test fun `configless withdrawal survives refusal reset and repeated clock`() {
 		val store = InthStore(InMemoryKeyValueStore())
 		val transport = RecordingTransport().respondInit(initSuccess(body = initBody(model = "\"iab\"")))
-			.respondSave(com.inth.core.transport.SaveOutcome.Rejected(400))
+			.respondSave(com.inth.core.transport.SaveOutcome.Rejected(HttpFailure(400)))
 		val now = 1_758_100_060_000L
 		val core = testKernel(store = store, transport = transport, clock = FixedClock(now))
 		core.bootstrap()
@@ -37,7 +38,7 @@ class IabUpgradeTest {
 		val frozen = store.readPending().single().body
 		core.reset()
 		assertTrue(store.readPending().any { it.body == frozen })
-		transport.respondSave(com.inth.core.transport.SaveOutcome.Delivered)
+		transport.respondSave(com.inth.core.transport.SaveOutcome.Delivered())
 		core.flushPending()
 		assertTrue(store.readPending().isEmpty())
 	}

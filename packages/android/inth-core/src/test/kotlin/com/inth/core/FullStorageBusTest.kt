@@ -157,7 +157,7 @@ class StorageBusIntegrationTest {
 		core.rebuildTcStorageBus()
 		assertNull(bus.live[TcStorageBusKeys.TC_STRING])
 		assertNull(bus.live[TcStorageBusKeys.ADDTL_CONSENT])
-		http.respondSave(SaveOutcome.Delivered)
+		http.respondSave(SaveOutcome.Delivered())
 		val sentBefore = http.saveRequests.size
 		assertEquals(1, core.flushPending().delivered)
 		assertEquals(listOf(frozenWithdrawal), http.saveRequests.drop(sentBefore).map { it.body })
@@ -249,7 +249,7 @@ class StorageBusIntegrationTest {
 			assertNull(bus.live[TcStorageBusKeys.ADDTL_CONSENT])
 			if (intent == CommitIntent.Necessary) {
 				val frozen = store.readPending().single().body
-				http.respondSave(SaveOutcome.Delivered)
+				http.respondSave(SaveOutcome.Delivered())
 				val sentBefore = http.saveRequests.size
 				assertEquals(1, core.flushPending().delivered)
 				assertEquals(listOf(frozen), http.saveRequests.drop(sentBefore).map { it.body })

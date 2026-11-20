@@ -20,10 +20,9 @@ import kotlin.test.assertTrue
 /**
  * The stored-id half of the subject identity rule, on this core's own bytes.
  *
- * The shape under test is an install written by a build that minted the legacy UUID
- * subject id. Every save that install made was refused by the producer, so the device
- * holds a decision attributed to an id no query returns while the core keeps reporting a
- * committed write and the backend holds nothing. `packages/native-protocol/CONTRACT.md` prices that
+ * The shape under test is an install written by a build that minted the UUIDv4 subject id,
+ * which is neither a UUIDv7 nor a c15t id, so no `/v1` route takes it.
+ * `packages/native-protocol/CONTRACT.md` prices that
  * identity at nothing, which means the whole stored envelope goes with it, and this is
  * the one fixture for this core that holds the line: a well-formed grant under a refused
  * id has to read exactly like a first launch, records and all, and must not put the old
@@ -90,7 +89,7 @@ class UnusableSubjectIdTest {
 		assertEquals(1, unusable.size, "a dropped identity is announced exactly once per launch")
 		val message = assertNotNull(unusable.first().message)
 		assertTrue(message.contains(LEGACY_UUID), "the message must name the id it refused: $message")
-		for (fragment in listOf("^sub_", "asks for", "consent again", "no decision for it")) {
+		for (fragment in listOf("UUIDv7", "^sub_", "asks for", "consent again")) {
 			assertTrue(message.contains(fragment), "the message must carry \"$fragment\": $message")
 		}
 
@@ -236,8 +235,8 @@ class UnusableSubjectIdTest {
 		/** The lowercase v4 shape a prerelease build minted and the producer refuses. */
 		const val LEGACY_UUID = "6f1d2c3a-8b4e-4a7f-9c21-0d5e7a9b1c01"
 
-		/** A usable id the install starts on, taken from the vector table the three SDKs share. */
-		const val HEALTHY_ID = "sub_4ZrjtiRsJnoW34Px8dAvhPTKJiWc"
+		/** A usable id the install starts on, from the `read` cases in `subject-id/uuidv7.json`. */
+		const val HEALTHY_ID = "0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c"
 
 		/** The code both cores emit on this path, per `packages/native-protocol/CONTRACT.md`. */
 		const val CODE = "subject-id-unusable"

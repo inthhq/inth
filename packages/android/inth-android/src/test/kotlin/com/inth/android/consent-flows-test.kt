@@ -149,10 +149,10 @@ class ConsentFlowsTest {
 			else TransportOutcome.NetworkFailure("offline")
 
 		override fun save(entry: QueuedSave): SaveOutcome =
-			if (online && delivering) SaveOutcome.Delivered else SaveOutcome.Unavailable("offline")
+			if (online && delivering) SaveOutcome.Delivered() else SaveOutcome.Unavailable("offline")
 
-		override fun identify(subject: ConsentSubject, user: KernelUser): TransportOutcome =
-			TransportOutcome.Success(null, emptyMap())
+		override fun link(subject: ConsentSubject, user: KernelUser, identityToken: String): com.inth.core.transport.LinkOutcome =
+			com.inth.core.transport.LinkOutcome.Unavailable("offline")
 	}
 
 	private class MemoryStore : KeyValueStore {

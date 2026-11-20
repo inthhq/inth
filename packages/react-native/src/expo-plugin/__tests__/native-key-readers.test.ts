@@ -72,7 +72,6 @@ const NATIVE_KEY_PREFIX = 'com.inth.';
 const EVERY_KEY_PROPS = {
 	autoBootstrap: false,
 	consentCategories: ['necessary', 'functionality', 'measurement', 'marketing'],
-	domain: 'app.example.com',
 	dryRun: true,
 	forceGPC: true,
 	gpp: {
@@ -88,6 +87,7 @@ const EVERY_KEY_PROPS = {
 	},
 	policyResource: './inth-policy.json',
 	projectUrl: 'https://acme.inth.app',
+	property: 'com.acme.app',
 	vendors: [8, 42, 755],
 } as const;
 

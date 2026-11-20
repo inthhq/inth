@@ -1127,6 +1127,11 @@ previous action time, so after the clock is set back a later decision can carry 
 earlier `confirmedAt` and lose to the receipt it meant to replace. This contract names
 no winner for two receipts of one category with the same `confirmedAt`.
 
+Both cores keep each receipt's own confirmation time. They differ on local expiry: Swift
+expires each category by its own time, while Kotlin judges the whole choice by its
+latest action, so a category confirmed long before a later partial save stays valid on
+an Android device until the choice as a whole expires.
+
 The body never carries `identityToken`. Queued bytes are written to disk and may be
 replayed long after a token expires, so the token goes only on the link request.
 Identity never fails a save: without a valid token the backend stores the save and
