@@ -59,6 +59,7 @@ export type {
 	V1ConsentInitOutput,
 	V1ConsentInitQuery,
 	V1ConsentManifest,
+	V1ConsentManifestQuery,
 	V1ConsentRecordInput,
 	V1ConsentRecordLink,
 	V1ConsentRecordOutput,

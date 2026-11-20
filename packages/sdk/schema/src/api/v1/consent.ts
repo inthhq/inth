@@ -68,6 +68,11 @@ export const v1ConsentInitQuerySchema = v.object({
 	),
 });
 
+/** Query of `GET /v1/consent/manifest`. */
+export const v1ConsentManifestQuerySchema = v.object({
+	language: optionalQueryString('Only the banner text in this language.'),
+});
+
 export const v1ConsentInitOutputSchema = initOutputSchema;
 
 // ---------------------------------------------------------------------------
@@ -343,6 +348,9 @@ export const v1ConsentCheckOutputSchema = v.object({
 // ---------------------------------------------------------------------------
 
 export type V1ConsentInitQuery = v.InferOutput<typeof v1ConsentInitQuerySchema>;
+export type V1ConsentManifestQuery = v.InferOutput<
+	typeof v1ConsentManifestQuerySchema
+>;
 export type V1ConsentInitOutput = InitOutput;
 export type V1ConsentManifest = ConsentManifest;
 export type V1ConsentAnswer = v.InferOutput<typeof v1ConsentAnswerSchema>;

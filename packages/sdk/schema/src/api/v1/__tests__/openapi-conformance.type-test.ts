@@ -15,6 +15,7 @@ import type {
 	v1ConsentCheckQuerySchema,
 	v1ConsentInitOutputSchema,
 	v1ConsentInitQuerySchema,
+	v1ConsentManifestQuerySchema,
 	v1ConsentRecordInputSchema,
 	v1ConsentRecordOutputSchema,
 	v1ConsentRecordQuerySchema,
@@ -98,6 +99,11 @@ type Found =
 			WithoutRegistry<Out<typeof v1ConsentInitOutputSchema>>,
 			WithoutRegistry<Ok<'getV1ConsentInit'>>,
 			'init answer'
+	  >
+	| WireDiff<
+			Out<typeof v1ConsentManifestQuerySchema>,
+			Query<'getV1ConsentManifest'>,
+			'manifest query'
 	  >
 	| WireDiff<
 			WithoutRegistry<ConsentManifest>,
