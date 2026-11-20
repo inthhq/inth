@@ -11,13 +11,18 @@ export {
 	mergeTranslationConfigs,
 	prepareTranslationConfig,
 	resolveActionLabels,
+	resolveOptOutCopy,
+	resolveOptOutState,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
 } from '@inth/sdk/engine';
 export type {
+	OptOutLock,
+	OptOutVia,
 	PreferenceControl,
 	PresentationAction,
 	PromptCopy,
+	ResolvedOptOutState,
 	ResolvedVendor,
 } from '@inth/sdk/engine';
 export {

@@ -84,7 +84,7 @@ describe('consent widget restriction notice', () => {
 			expect(element).toBeInTheDocument();
 			return element as HTMLElement;
 		});
-		expect(notice.textContent).toContain('restricted');
+		expect(notice.textContent).toContain('Global Privacy Control');
 
 		// The notice is a sibling of the trigger row, not a child of it.
 		const row = document.querySelector(
@@ -92,9 +92,11 @@ describe('consent widget restriction notice', () => {
 		);
 		expect(row?.contains(notice)).toBe(false);
 
-		const marketing = document.querySelector(
+		const marketing = document.querySelector<HTMLButtonElement>(
 			'[data-testid="consent-widget-switch-marketing"]'
 		);
+		expect(marketing?.disabled).toBe(true);
+		expect(marketing?.getAttribute('aria-checked')).toBe('false');
 		expect(marketing?.getAttribute('aria-describedby')).toBe(notice.id);
 
 		// A saved grant that nothing restricts gets no notice.
