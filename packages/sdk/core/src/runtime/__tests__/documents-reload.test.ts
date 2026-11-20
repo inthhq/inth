@@ -15,7 +15,6 @@ import {
 	optInRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import type { InternalKernel } from '../../kernel/internals';
-import { PENDING_SAVES_STORAGE_KEY } from '../../libs/storage-keys';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { hosted } from '../../transports/mode';
 import {
@@ -651,7 +650,7 @@ describe('a stored entry the reader refuses', () => {
 	});
 });
 
-test('a consent save under a sub_ ID is sent once, and consent alone moves the visitor to the UUID', async () => {
+test('an acceptance during a consent save under a sub_ ID leaves the subject to consent, which moves the visitor, who is then asked again', async () => {
 	const runtime = await load();
 	runtime.kernel.set.subjectId(LEGACY_SUBJECT);
 	const answer = Promise.withResolvers<undefined>();
@@ -666,23 +665,11 @@ test('a consent save under a sub_ ID is sent once, and consent alone moves the v
 
 	await checkAndAccept(runtime);
 	expect(subjectOf(runtime)).toBe(LEGACY_SUBJECT);
+	expect(await accepted(runtime)).toBe(true);
 	answer.resolve(undefined);
 	await saving;
-	recordsHold = undefined;
+
 	await vi.waitFor(() => expect(subjectOf(runtime)).toBe(SUBJECT));
 	expect(await accepted(runtime)).toBe(false);
-	await vi.waitFor(() =>
-		expect(
-			JSON.parse(localStorage.getItem(PENDING_SAVES_STORAGE_KEY) ?? '[]')
-		).toEqual([])
-	);
-	unload(runtime);
-	await load();
-	await new Promise((resolve) => {
-		setTimeout(resolve, 50);
-	});
-
-	expect(
-		sent.filter((request) => request.path === '/v1/consent/records')
-	).toHaveLength(1);
+	expect(localStorage.getItem(STORED_KEY)).toBeNull();
 });

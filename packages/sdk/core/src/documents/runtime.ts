@@ -24,12 +24,12 @@ import type { InternalKernel } from '../kernel/internals';
 import { localStorageOf } from '../libs/local-storage';
 import { DOCUMENT_ACCEPTANCES_STORAGE_KEY } from '../libs/storage-keys';
 import { createIdempotencyKey } from '../libs/subject-uuid';
+import { readStoredRecordsForReconcile } from '../modules/persistence/hydrate';
 import type {
 	AcceptDocumentsOptions,
 	DocumentCheck,
 } from '../runtime/documents';
 import type { ConsentRuntime, StreamedPrefetch } from '../runtime/types';
-import { readStoredRecordsForReconcile } from '../modules/persistence/hydrate';
 import { trimTrailingSlash } from '../transports/v1/paths';
 import { isUuidV7, resolveProperty } from '../transports/v1/routes';
 import { createDocumentsClient } from './client';
