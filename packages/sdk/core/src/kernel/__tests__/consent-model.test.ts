@@ -570,7 +570,7 @@ describe('notice prompts', () => {
 });
 
 describe('privacy signals', () => {
-	test('a detected signal masks a stored grant only while the browser sends it', async () => {
+	test('a detected signal records a durable opt-out that stays after the signal ends', async () => {
 		const kernel = createConsentKernel({
 			initialPolicyResolution: fixtureResolution({
 				model: 'opt-out',
@@ -584,21 +584,29 @@ describe('privacy signals', () => {
 		const choice = vi.fn();
 		kernel.events.on('choice:recorded', choice);
 
+		// Before init the kernel is not live: the live signal denies on first
+		// paint without creating a record.
 		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
 		expect(kernel.getSnapshot().restrictions.marketing).toEqual(['gpc']);
+		expect(kernel.getSnapshot().optOut).toBeNull();
 		expect(
 			kernel.getSnapshot().explicitChoice?.categories.marketing?.value
 		).toBe(true);
 
 		await kernel.commands.init();
-		expect(kernel.getSnapshot().restrictions.marketing).toEqual(['gpc']);
+		expect(kernel.getSnapshot().restrictions.marketing).toEqual([
+			'gpc',
+			'opt-out',
+		]);
+		expect(kernel.getSnapshot().optOut?.method).toBe('gpc');
 		expect(choice).not.toHaveBeenCalled();
 
-		// GPC is a live signal: once the browser stops sending it, the stored
-		// grant applies again.
+		// Once the browser stops sending GPC, the durable opt-out keeps
+		// marketing denied with reason `opt-out` only.
 		kernel.set.privacySignals({ gpc: false });
-		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
-		expect(kernel.getSnapshot().restrictions.marketing).toBeUndefined();
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		expect(kernel.getSnapshot().restrictions.marketing).toEqual(['opt-out']);
+		expect(kernel.getSnapshot().optOut?.method).toBe('gpc');
 	});
 
 	test('a signal under a policy without a mapping changes nothing', async () => {

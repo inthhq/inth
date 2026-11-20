@@ -35,6 +35,7 @@ export const clearKernelRecords = function clearKernelRecords(
 		choice: null,
 		noticeDismissal: null,
 		now,
+		optOut: null,
 		subject: subjectAfterClear(kernel.getSnapshot().subject),
 		vendorChoice: null,
 	});

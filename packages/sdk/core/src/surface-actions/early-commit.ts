@@ -43,6 +43,7 @@ import { resolveStorageKeys } from '../libs/storage-keys';
 import { generateUuidV7 } from '../libs/subject-uuid';
 import {
 	decodeNoticeDismissal,
+	decodeOptOutRecord,
 	decodeVendorChoice,
 	validateStoredConsentEnvelope,
 } from '../modules/persistence/record-codec';
@@ -223,6 +224,7 @@ export interface EarlyCommitStorage {
 
 const writeTools: RecordStoreTools = {
 	decodeNotice: decodeNoticeDismissal,
+	decodeOptOut: decodeOptOutRecord,
 	decodeVendors: decodeVendorChoice,
 	deleteCookie,
 	keys: resolveStorageKeys,

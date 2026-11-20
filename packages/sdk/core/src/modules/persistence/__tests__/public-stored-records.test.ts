@@ -28,7 +28,7 @@ describe('the exported StoredRecords type', () => {
 		const read = readStoredRecords(undefined, Date.now());
 		expectTypeOf(read.recordedSubjectId).toEqualTypeOf<string | null>();
 		expectTypeOf(read.subjectCarrier).toEqualTypeOf<
-			'choice' | 'vendors' | 'notice' | null
+			'choice' | 'vendors' | 'opt-out' | 'notice' | null
 		>();
 		const typed: StoredRecords = read;
 		expect(typed).toMatchObject({

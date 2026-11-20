@@ -142,6 +142,7 @@ export const pendingBootSnapshot = function pendingBootSnapshot(
 		model: 'opt-in',
 		nextDeadline: null,
 		noticeDismissal: null,
+		optOut: null,
 		overrides: { ...options.overrides },
 		policyPending: true,
 		policyRule: fallbackRule(),

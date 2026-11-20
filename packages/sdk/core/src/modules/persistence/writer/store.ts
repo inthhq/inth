@@ -16,6 +16,7 @@ import type {
 	StorageIssue,
 	StoredConsentEnvelope,
 	StoredNoticeDismissal,
+	StoredOptOutRecord,
 	StoredVendorChoice,
 } from '../record-codec';
 import type { StorageConfig } from '../types';
@@ -23,6 +24,8 @@ import {
 	encodeNoticeDismissal,
 	encodeNoticeDismissalCompact,
 	encodeNoticeSubjectCompact,
+	encodeOptOutRecord,
+	encodeOptOutRecordCompact,
 	encodeStoredConsentEnvelopeCompact,
 	encodeStoredConsentEnvelopeJson,
 	encodeVendorChoice,
@@ -98,6 +101,16 @@ export interface RecordStore {
 		now: number
 	) => DecodeResult<StoredVendorChoice> & { written?: AuxiliaryWriteReport };
 	clearStoredVendorChoice: (config?: StorageConfig) => void;
+	/**
+	 * Writes the durable opt-out record to localStorage and its compact cookie
+	 * projection. The consent record and its cookie are never touched.
+	 */
+	writeStoredOptOutRecord: (
+		record: StoredOptOutRecord,
+		config: StorageConfig | undefined,
+		now: number
+	) => DecodeResult<StoredOptOutRecord> & { written?: AuxiliaryWriteReport };
+	clearStoredOptOutRecord: (config?: StorageConfig) => void;
 }
 
 const hasLocalStorage = function hasLocalStorage(): boolean {
@@ -182,7 +195,14 @@ export const createRecordStore = function createRecordStore(
 		removeBoth(tools.keys(config).vendors, config);
 	};
 
+	const clearStoredOptOutRecord: RecordStore['clearStoredOptOutRecord'] = (
+		config
+	) => {
+		removeBoth(tools.keys(config).optOut, config);
+	};
+
 	return {
+		clearStoredOptOutRecord,
 		clearStoredVendorChoice,
 		writeStoredConsentEnvelope(envelope, options) {
 			const validated = tools.validateEnvelope(envelope, options.now);
@@ -268,6 +288,21 @@ export const createRecordStore = function createRecordStore(
 				);
 			}
 			return { ...validated, written };
+		},
+		writeStoredOptOutRecord(record, config, now) {
+			const validated = tools.decodeOptOut(record, now);
+			if (validated.ok === false) {
+				return validated;
+			}
+			return {
+				...validated,
+				written: writeBoth(
+					tools.keys(config).optOut,
+					encodeOptOutRecord(validated.record),
+					cookieText(() => encodeOptOutRecordCompact(validated.record)),
+					config
+				),
+			};
 		},
 		writeStoredVendorChoice(record, config, now) {
 			const validated = tools.decodeVendors(record, now);

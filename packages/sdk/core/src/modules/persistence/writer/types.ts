@@ -14,11 +14,13 @@ import type { clearStoredRecords } from '../clear';
 import type {
 	choiceSinceEpoch,
 	noticeSinceEpoch,
+	optOutSinceEpoch,
 	vendorChoiceSinceEpoch,
 } from '../epoch';
 import type { StoredRecords } from '../hydrate';
 import type {
 	decodeNoticeDismissal,
+	decodeOptOutRecord,
 	decodeVendorChoice,
 	validateStoredConsentEnvelope,
 } from '../record-codec';
@@ -44,9 +46,11 @@ export interface PersistenceTools {
 	deleteCookie: typeof deleteCookie;
 	validateEnvelope: typeof validateStoredConsentEnvelope;
 	decodeNotice: typeof decodeNoticeDismissal;
+	decodeOptOut: typeof decodeOptOutRecord;
 	decodeVendors: typeof decodeVendorChoice;
 	choiceSince: typeof choiceSinceEpoch;
 	noticeSince: typeof noticeSinceEpoch;
+	optOutSince: typeof optOutSinceEpoch;
 	vendorsSince: typeof vendorChoiceSinceEpoch;
 	merge: typeof mergeNewestChoice;
 	/** `removeLocalStorageKey`. */
@@ -59,6 +63,7 @@ export interface PersistenceTools {
 export type RecordStoreTools = Pick<
 	PersistenceTools,
 	| 'decodeNotice'
+	| 'decodeOptOut'
 	| 'decodeVendors'
 	| 'deleteCookie'
 	| 'keys'
@@ -69,7 +74,7 @@ export type RecordStoreTools = Pick<
 >;
 
 /** A record the writer stores on its own schedule. */
-export type WriteKind = 'choice' | 'notice' | 'vendors';
+export type WriteKind = 'choice' | 'notice' | 'optOut' | 'vendors';
 
 /**
  * What the kernel's events told persistence since the last write. The
@@ -83,6 +88,8 @@ export interface PersistenceState {
 	choiceRecorded: boolean;
 	/** A notice was acknowledged since the last notice write. */
 	noticeRecorded?: boolean;
+	/** An opt-out was recorded or lifted since the last opt-out write. */
+	optOutRecorded?: boolean;
 	/** A vendor decision was recorded since the last vendor write. */
 	vendorsRecorded: boolean;
 	/** The subject id held when the current save started. */

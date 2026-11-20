@@ -9,6 +9,18 @@
  * @internal
  */
 
+import {
+	OPT_OUT_HOLDERS,
+	OPT_OUT_METHODS,
+	OPT_OUT_RIGHTS,
+} from '@inth/sdk-schema/types';
+import type {
+	OptOutHolder,
+	OptOutMethod,
+	OptOutRecord,
+	OptOutRight,
+} from '@inth/sdk-schema/types';
+
 import { OPTIONAL_CONSENT_CATEGORIES } from './types';
 import type {
 	CategoryDecision,
@@ -30,7 +42,8 @@ export interface RecordIssue {
 		| 'future-timestamp'
 		| 'invalid-fingerprint'
 		| 'invalid-identifier'
-		| 'invalid-basis';
+		| 'invalid-basis'
+		| 'invalid-value';
 	path: string;
 }
 
@@ -266,6 +279,76 @@ export const validateNoticeDismissal = function validateNoticeDismissal(
 			dismissedAt: dismissedAt as number,
 			fingerprint: fingerprint as string,
 			version: 1,
+		},
+	};
+};
+
+const OPT_OUT_KEYS = ['rights', 'method', 'recordedAt', 'heldBy'] as const;
+const OPT_OUT_RIGHT_SET: ReadonlySet<string> = new Set(OPT_OUT_RIGHTS);
+const OPT_OUT_METHOD_SET: ReadonlySet<string> = new Set(OPT_OUT_METHODS);
+const OPT_OUT_HOLDER_SET: ReadonlySet<string> = new Set(OPT_OUT_HOLDERS);
+
+/**
+ * Validates a durable opt-out record. Rejects unknown keys, empty or duplicate
+ * rights, unknown methods or holders, and invalid or future timestamps. Returns
+ * `rights` in canonical order (`sale`, `share`, `targeted_ads`).
+ */
+export const validateOptOutRecord = function validateOptOutRecord(
+	input: unknown,
+	now: number
+): ValidationResult<OptOutRecord> {
+	if (!isPlainRecord(input)) {
+		return { issues: [{ code: 'not-an-object', path: '' }], ok: false };
+	}
+	const issues: RecordIssue[] = [];
+	for (const key of ownKeys(input)) {
+		if (!OPT_OUT_KEYS.includes(key as (typeof OPT_OUT_KEYS)[number])) {
+			issues.push({ code: 'unknown-key', path: key });
+		}
+	}
+	const rawRights = ownValue(input, 'rights');
+	const seenRights = new Set<OptOutRight>();
+	if (!Array.isArray(rawRights)) {
+		issues.push({ code: 'not-an-object', path: 'rights' });
+	} else if (rawRights.length === 0) {
+		issues.push({ code: 'invalid-value', path: 'rights' });
+	} else {
+		for (let index = 0; index < rawRights.length; index += 1) {
+			const entry: unknown = index in rawRights ? rawRights[index] : undefined;
+			if (
+				typeof entry !== 'string' ||
+				!OPT_OUT_RIGHT_SET.has(entry) ||
+				seenRights.has(entry as OptOutRight)
+			) {
+				issues.push({ code: 'invalid-value', path: `rights[${index}]` });
+				continue;
+			}
+			seenRights.add(entry as OptOutRight);
+		}
+	}
+	const method = ownValue(input, 'method');
+	if (typeof method !== 'string' || !OPT_OUT_METHOD_SET.has(method)) {
+		issues.push({ code: 'invalid-value', path: 'method' });
+	}
+	const recordedAt = ownValue(input, 'recordedAt');
+	const timestampIssue = checkTimestamp(recordedAt, now);
+	if (timestampIssue) {
+		issues.push({ code: timestampIssue, path: 'recordedAt' });
+	}
+	const heldBy = ownValue(input, 'heldBy');
+	if (typeof heldBy !== 'string' || !OPT_OUT_HOLDER_SET.has(heldBy)) {
+		issues.push({ code: 'invalid-value', path: 'heldBy' });
+	}
+	if (issues.length > 0) {
+		return { issues, ok: false };
+	}
+	return {
+		ok: true,
+		record: {
+			heldBy: heldBy as OptOutHolder,
+			method: method as OptOutMethod,
+			recordedAt: recordedAt as number,
+			rights: OPT_OUT_RIGHTS.filter((right) => seenRights.has(right)),
 		},
 	};
 };

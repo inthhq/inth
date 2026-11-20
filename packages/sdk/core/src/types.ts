@@ -5,6 +5,10 @@ import type {
 	GlobalVendorList,
 	LocationResponse,
 	NonIABVendor,
+	OptOutHolder,
+	OptOutMethod,
+	OptOutRecord,
+	OptOutRight,
 	PolicyResolution,
 	PolicyScopeMode,
 	ResolvedPolicyRule,
@@ -51,6 +55,10 @@ export type {
 	GlobalVendorList,
 	LocationResponse,
 	NonIABVendor,
+	OptOutHolder,
+	OptOutMethod,
+	OptOutRecord,
+	OptOutRight,
 	PolicyResolution,
 	PolicyScopeMode,
 	ResolvedPolicyRule,
@@ -345,6 +353,8 @@ export interface HydrationRecords {
 	choice?: ExplicitChoice | null;
 	subject?: ConsentSubject | null;
 	noticeDismissal?: NoticeDismissal | null;
+	/** Durable opt-out record. `null` clears it. */
+	optOut?: OptOutRecord | null;
 	/** Vendors the subject turned off. `null` clears the denial list. */
 	vendorChoice?: VendorChoice | null;
 	/** Evaluation time in epoch milliseconds. Defaults to `Date.now()`. */
@@ -376,13 +386,15 @@ export interface ConsentSnapshot {
 	readonly promptRequirement: Readonly<PromptRequirement>;
 	/** Local record that the current notice was dismissed. */
 	readonly noticeDismissal: Readonly<NoticeDismissal> | null;
+	/** Durable opt-out record, or `null` when the visitor has not opted out. */
+	readonly optOut: Readonly<OptOutRecord> | null;
 	/** Detected and overridden privacy signals. */
 	readonly privacySignals: KernelPrivacySignals;
 	/** Policy resolution outcome. `policy` is `null` for every non-matched status. */
 	readonly resolution: Readonly<PolicyResolution>;
 	/** Rule the evaluator uses: the matched rule or the safe opt-in fallback. */
 	readonly policyRule: Readonly<ResolvedPolicyRule>;
-	/** Categories restricted by a denial, strict scope or a live GPC signal. */
+	/** Categories restricted by a denial, strict scope, a live GPC signal or a durable opt-out. */
 	readonly restrictions: Readonly<
 		Partial<Record<OptionalConsentCategory, readonly RestrictionReason[]>>
 	>;
@@ -835,6 +847,21 @@ export type KernelEvent =
 			/** Experiment arm active at the dismissal. */
 			experiment?: ExperimentAssignment;
 	  }
+	| {
+			/** A durable opt-out was recorded, by explicit action or detected GPC. */
+			type: 'opt-out:recorded';
+			snapshot: ConsentSnapshot;
+			optOut: Readonly<OptOutRecord>;
+			actionAt: number;
+			uiSource?: SaveUISource;
+	  }
+	| {
+			/** A durable opt-out was lifted, by `optIn()` or a preference save. */
+			type: 'opt-out:lifted';
+			snapshot: ConsentSnapshot;
+			actionAt: number;
+			uiSource?: SaveUISource;
+	  }
 	| { type: 'overrides:set'; snapshot: ConsentSnapshot }
 	| { type: 'user:identified'; snapshot: ConsentSnapshot }
 	| {
@@ -947,6 +974,19 @@ export interface SaveResult {
 export type NoticeDismissResult =
 	| { ok: true; dismissal: NoticeDismissal }
 	| { ok: false; reason: 'not-required' };
+
+/** Result returned by `commands.optOut()`. */
+export type OptOutResult =
+	| { ok: true; optOut: Readonly<OptOutRecord>; changed: boolean }
+	| { ok: false; reason: 'not-available' };
+
+/** Result returned by `commands.optIn()`. */
+export type OptInResult =
+	| { ok: true; optOut: null }
+	| {
+			ok: false;
+			reason: 'not-opted-out' | 'gpc-active' | 'held-by-account';
+	  };
 
 /**
  * The public kernel contract.
@@ -1078,6 +1118,21 @@ export interface ConsentKernel {
 			/** When the visitor dismissed the notice. Defaults to now. */
 			actionAt?: number;
 		}) => Promise<NoticeDismissResult>;
+		/**
+		 * Record a durable opt-out for the visitor's location in one step,
+		 * without opening preferences or touching `explicitChoice`.
+		 */
+		optOut: (context?: {
+			uiSource?: SaveUISource;
+			actionAt?: number;
+		}) => Promise<OptOutResult>;
+		/**
+		 * Lift a device-held durable opt-out when GPC is not active.
+		 */
+		optIn: (context?: {
+			uiSource?: SaveUISource;
+			actionAt?: number;
+		}) => Promise<OptInResult>;
 		identify: (user: KernelUser) => Promise<void>;
 	};
 

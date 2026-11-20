@@ -11,6 +11,7 @@
  */
 import type {
 	LocationResponse,
+	OptOutRecord,
 	PolicyResolution,
 	ScriptRegistryWire,
 } from '@inth/sdk-schema/types';
@@ -57,6 +58,7 @@ export interface SnapshotPatch {
 	consentCategories?: readonly AllConsentNames[] | null;
 	explicitChoice?: ExplicitChoice | null;
 	noticeDismissal?: NoticeDismissal | null;
+	optOut?: OptOutRecord | null;
 	resolution?: PolicyResolution;
 	subject?: ConsentSubject | null;
 	/** Detected user-agent GPC signal. */
@@ -118,6 +120,7 @@ export const isUnchangedPatch = function isUnchangedPatch(
 			current.explicitChoice &&
 		pick(patch.noticeDismissal, current.noticeDismissal) ===
 			current.noticeDismissal &&
+		pick(patch.optOut, current.optOut) === current.optOut &&
 		pick(patch.consentCategories, current.consentCategories) ===
 			current.consentCategories &&
 		pick(patch.resolution, current.resolution) === current.resolution &&
@@ -306,6 +309,7 @@ export const buildNextSnapshot = function buildNextSnapshot(
 
 	const explicitChoice = pick(patch.explicitChoice, current.explicitChoice);
 	const noticeDismissal = pick(patch.noticeDismissal, current.noticeDismissal);
+	const optOut = pick(patch.optOut, current.optOut);
 	const overrides = pick(patch.overrides, current.overrides);
 	const detected = pick(
 		patch.privacyDetected,
@@ -337,6 +341,7 @@ export const buildNextSnapshot = function buildNextSnapshot(
 		evaluationPolicy === current.evaluationPolicy &&
 		explicitChoice === current.explicitChoice &&
 		noticeDismissal === current.noticeDismissal &&
+		optOut === current.optOut &&
 		privacySignals.gpc.active === current.privacySignals.gpc.active &&
 		now >= current.evaluatedAt &&
 		(current.nextDeadline === null || now < current.nextDeadline);
@@ -356,6 +361,7 @@ export const buildNextSnapshot = function buildNextSnapshot(
 				gpc: privacySignals.gpc.active,
 				noticeDismissal,
 				now,
+				optOut,
 				policy: evaluationPolicy,
 			});
 	if (externalPermissions) {
@@ -430,6 +436,7 @@ export const buildNextSnapshot = function buildNextSnapshot(
 		model: deriveModel(policyRule, iab?.enabled ?? false),
 		nextDeadline: evaluation.nextDeadline,
 		noticeDismissal,
+		optOut,
 		overrides,
 		policyPending,
 		policyRule,

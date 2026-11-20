@@ -29,7 +29,11 @@
  *   fields keep their reference when their value did not change.
  * - Only `commands.save()` records an explicit choice. Hydration,
  *   initialization, setters, elapsed time and privacy signals change
- *   permissions at most, never the choice.
+ *   permissions at most, never the choice. A durable opt-out record is
+ *   created by `commands.optOut()`, or automatically when a live kernel
+ *   observes an active GPC signal under a matched policy with a deny list,
+ *   and is lifted by `commands.optIn()` or a save that grants a denied
+ *   category.
  * - Timers and browser listeners are installed by lifecycle commands
  *   (`init`, `hydrate`) and removed by `dispose()`.
  * - Subscribers and event listeners are notified synchronously, in commit
@@ -158,6 +162,8 @@ export const createKernel = function createKernel(
 			dismissNotice: choice.dismissNotice,
 			identify: records.identify,
 			init: lifecycle.init,
+			optIn: choice.optIn,
+			optOut: choice.optOut,
 			save: choice.save,
 		},
 		dispose: lifecycle.dispose,

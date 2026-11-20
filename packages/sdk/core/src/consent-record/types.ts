@@ -144,12 +144,19 @@ export interface EvaluationPolicy {
 	 * no comparison is possible and legacy decisions are grandfathered.
 	 */
 	legacyMaterialFingerprint: string | null;
-	/** Categories an active GPC signal denies. Empty means GPC is not honored. */
+	/**
+	 * Categories an opt-out switches off, whether it came from GPC or from an
+	 * opt-out action. Empty means neither GPC nor opt-out restricts any category.
+	 */
 	gpcDenyCategories: readonly OptionalConsentCategory[];
 }
 
 /** Why a category is restricted regardless of grants or defaults. */
-export type RestrictionReason = 'explicit-denial' | 'strict-scope' | 'gpc';
+export type RestrictionReason =
+	| 'explicit-denial'
+	| 'strict-scope'
+	| 'gpc'
+	| 'opt-out';
 
 /** Authority status of a stored positive or negative decision. */
 export type DecisionAuthority =

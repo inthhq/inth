@@ -37,6 +37,7 @@ export const getEffectiveGateState = function getEffectiveGateState(
 		gpc: snapshot.privacySignals.gpc.active,
 		noticeDismissal: snapshot.noticeDismissal,
 		now,
+		optOut: snapshot.optOut,
 		policy: snapshot.evaluationPolicy,
 	});
 	return {

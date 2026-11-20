@@ -33,6 +33,8 @@
  * @internal
  */
 
+import { OPT_OUT_RIGHTS } from '@inth/sdk-schema/types';
+
 import { normalizeLegacyConsentRecord } from '../../consent-record/normalize';
 import type { LegacyRecordEncoding } from '../../consent-record/normalize';
 import type {
@@ -56,6 +58,7 @@ import type { StorageKeyFamily } from '../../libs/storage-keys';
 import {
 	choiceSinceEpoch,
 	noticeSinceEpoch,
+	optOutSinceEpoch,
 	vendorChoiceSinceEpoch,
 } from './epoch';
 import {
@@ -63,6 +66,8 @@ import {
 	decodeComponent,
 	decodeNoticeDismissal,
 	decodeNoticeDismissalCompact,
+	decodeOptOutRecord,
+	decodeOptOutRecordCompact,
 	decodeStoredConsentEnvelopeCompact,
 	decodeVendorChoice,
 	decodeVendorChoiceCompact,
@@ -76,6 +81,7 @@ import type {
 	StoredConsentEnvelope,
 	StoredIabMetadata,
 	StoredNoticeDismissal,
+	StoredOptOutRecord,
 	StoredVendorChoice,
 } from './record-codec';
 
@@ -1180,6 +1186,91 @@ export const readStoredVendorChoiceFromCookieHeader =
 					readCompactCookie(
 						readCookieValueFromHeader(cookieHeader, keys.vendors),
 						(text) => decodeVendorChoiceCompact(text, now)
+					),
+					legacyEpoch
+				)
+		);
+	};
+
+// ---------------------------------------------------------------------------
+// Auxiliary records: durable opt-out
+// ---------------------------------------------------------------------------
+
+/** The read, or `null` when it holds an opt-out recorded before `epoch`. */
+const optOutSince = function optOutSince(
+	read: DecodeResult<StoredOptOutRecord> | null,
+	epoch: number
+): DecodeResult<StoredOptOutRecord> | null {
+	return read?.ok && !optOutSinceEpoch(read.record, epoch) ? null : read;
+};
+
+/**
+ * Reads the durable opt-out record from cookie and localStorage. When both
+ * projections are valid, the newer one wins; on equal times, rights are
+ * unioned in canonical order so a dropped cookie write never loses an
+ * opt-out right. Each copy is cut to the clear epoch first.
+ */
+export const readStoredOptOutRecord = function readStoredOptOutRecord(
+	config: StorageConfig | undefined,
+	now: number,
+	onUnavailable?: () => void,
+	epoch: number = readStoredClearEpoch(config, now)
+): FamilyRead<StoredOptOutRecord> {
+	return firstValidAcrossFamilies(
+		config,
+		(family) => readEpochOf(family, now),
+		(keys, legacyEpoch) => {
+			const familyEpoch = Math.max(epoch, legacyEpoch);
+			const fromCookie = optOutSince(
+				readCompactCookie(
+					getRawCookieValue(keys.optOut, onUnavailable),
+					(text) => decodeOptOutRecordCompact(text, now)
+				),
+				familyEpoch
+			);
+			const fromLocal = optOutSince(
+				readLocalJson(
+					keys.optOut,
+					(value) => decodeOptOutRecord(value, now),
+					onUnavailable
+				),
+				familyEpoch
+			);
+			if (fromCookie?.ok && fromLocal?.ok) {
+				if (fromLocal.record.recordedAt < fromCookie.record.recordedAt) {
+					return fromCookie;
+				}
+				const mergedRights = new Set([
+					...fromCookie.record.rights,
+					...fromLocal.record.rights,
+				]);
+				const rights = OPT_OUT_RIGHTS.filter((right) =>
+					mergedRights.has(right)
+				);
+				return { ok: true, record: { ...fromLocal.record, rights } };
+			}
+			if (fromCookie?.ok) {
+				return fromCookie;
+			}
+			return fromLocal ?? fromCookie;
+		}
+	);
+};
+
+export const readStoredOptOutRecordFromCookieHeader =
+	function readStoredOptOutRecordFromCookieHeader(
+		cookieHeader: string | undefined,
+		config: StorageConfig | undefined,
+		now: number
+	): FamilyRead<StoredOptOutRecord> {
+		return firstValidAcrossFamilies(
+			config,
+			(family) => readEpochOfFromCookieHeader(cookieHeader, family, now),
+			(keys, legacyEpoch) =>
+				optOutSince(
+					readCompactCookie(
+						readCookieValueFromHeader(cookieHeader, keys.optOut),
+						(text) => decodeOptOutRecordCompact(text, now)
 					),
 					legacyEpoch
 				)

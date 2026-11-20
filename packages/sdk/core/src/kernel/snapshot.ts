@@ -8,7 +8,7 @@
  * snapshot.
  */
 
-import type { PolicyResolution } from '@inth/sdk-schema/types';
+import type { OptOutRecord, PolicyResolution } from '@inth/sdk-schema/types';
 
 import { evaluateConsentRecord } from '../consent-record/evaluate';
 import { OPTIONAL_CONSENT_CATEGORIES } from '../consent-record/types';
@@ -189,6 +189,14 @@ export const buildInitialVendors = function buildInitialVendors(
 	};
 };
 
+const freezeOptOut = function freezeOptOut(optOut: OptOutRecord | null): void {
+	if (!optOut || Object.isFrozen(optOut)) {
+		return;
+	}
+	Object.freeze(optOut.rights);
+	Object.freeze(optOut);
+};
+
 const freezeVendorChoice = function freezeVendorChoice(
 	choice: VendorChoice | null
 ): void {
@@ -262,6 +270,7 @@ export const freezeSnapshot = function freezeSnapshot(
 		deepFreeze(snapshot.evaluationPolicy);
 	}
 	freezeChoice(snapshot.explicitChoice as ExplicitChoice | null);
+	freezeOptOut(snapshot.optOut as OptOutRecord | null);
 	freezeVendorChoice(snapshot.vendorChoice as VendorChoice | null);
 	deepFreeze(snapshot.vendors);
 	for (const nested of [
@@ -319,6 +328,7 @@ export const buildInitialSnapshot = function buildInitialSnapshot(
 	const records = validated?.ok === true ? validated.records : null;
 	const explicitChoice = records?.choice ?? null;
 	const noticeDismissal = records?.noticeDismissal ?? null;
+	const optOut = records?.optOut ?? null;
 	const subject = records?.subject ?? null;
 	const vendorChoice = records?.vendorChoice ?? null;
 
@@ -346,13 +356,15 @@ export const buildInitialSnapshot = function buildInitialSnapshot(
 	const recordEvaluation =
 		evaluationPolicy === DEFAULT_EVALUATION_POLICY &&
 		explicitChoice === null &&
-		noticeDismissal === null
+		noticeDismissal === null &&
+		optOut === null
 			? DEFAULT_RECORD_EVALUATION
 			: evaluateConsentRecord({
 					choice: explicitChoice,
 					gpc: privacySignals.gpc.active,
 					noticeDismissal,
 					now,
+					optOut,
 					policy: evaluationPolicy,
 				});
 
@@ -385,6 +397,7 @@ export const buildInitialSnapshot = function buildInitialSnapshot(
 		model: deriveModel(effective.rule, iab?.enabled ?? false),
 		nextDeadline: evaluation.nextDeadline,
 		noticeDismissal,
+		optOut,
 		overrides: config.initialOverrides
 			? { ...config.initialOverrides }
 			: EMPTY_OVERRIDES,

@@ -31,7 +31,9 @@ export {
 	CONSENT_CATEGORIES,
 	createEvaluationPolicy,
 	evaluateConsentRecord,
+	OPT_OUT_REPROMPT_WAIT_MS,
 	OPTIONAL_CONSENT_CATEGORIES,
+	optInPromptAllowedAt,
 } from './consent-record';
 export { createConsentKernel } from './kernel';
 
@@ -142,6 +144,12 @@ export type {
 	LocationResponse,
 	NonIABVendor,
 	NoticeDismissResult,
+	OptInResult,
+	OptOutHolder,
+	OptOutMethod,
+	OptOutRecord,
+	OptOutResult,
+	OptOutRight,
 	PolicyResolution,
 	PolicyScopeMode,
 	ResolvedPolicyRule,

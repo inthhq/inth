@@ -10,6 +10,8 @@ const EVENT_TYPES = [
 	'surface:shown',
 	'permissions:changed',
 	'notice:dismissed',
+	'opt-out:recorded',
+	'opt-out:lifted',
 	'overrides:set',
 	'user:identified',
 	'subject:resolved',
@@ -162,6 +164,31 @@ export function kernelEventToDevToolsEvent(
 				},
 				id,
 				message: `Local notice dismissed from ${event.surface}`,
+				timestamp,
+				type: event.type,
+			};
+		case 'opt-out:recorded':
+			return {
+				data: {
+					...snapshotData(event.snapshot),
+					actionAt: event.actionAt,
+					optOut: event.optOut,
+					uiSource: event.uiSource,
+				},
+				id,
+				message: 'Opt-out recorded',
+				timestamp,
+				type: event.type,
+			};
+		case 'opt-out:lifted':
+			return {
+				data: {
+					...snapshotData(event.snapshot),
+					actionAt: event.actionAt,
+					uiSource: event.uiSource,
+				},
+				id,
+				message: 'Opt-out lifted',
 				timestamp,
 				type: event.type,
 			};

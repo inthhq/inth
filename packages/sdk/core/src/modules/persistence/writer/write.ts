@@ -1,11 +1,12 @@
 /**
  * Write kernel records to storage.
  *
- * Every write is driven by an explicit kernel event: a recorded choice
- * writes the v3 envelope, a dismissed notice writes the notice record and a
- * recorded vendor toggle writes the vendor record. Category times are
- * written exactly as the kernel holds them; nothing here stamps the clock
- * into a receipt. GPC is a live signal and is never written.
+ * Every write is driven by a kernel event: a recorded choice writes the v3
+ * envelope, a dismissed notice writes the notice record, a recorded vendor
+ * toggle writes the vendor record, a recorded opt-out writes the opt-out
+ * record, and a lifted opt-out removes it. Category times are written
+ * exactly as the kernel holds them; nothing here stamps the clock into a
+ * receipt.
  */
 
 import type { ConsentSnapshot } from '../../../types';
@@ -13,6 +14,7 @@ import type {
 	StoredConsentEnvelope,
 	StoredIabMetadata,
 	StoredNoticeDismissal,
+	StoredOptOutRecord,
 	StoredVendorChoice,
 } from '../record-codec';
 import type { StorageConfig } from '../types';
@@ -127,5 +129,38 @@ export const writeVendorChoiceToStorage = function writeVendorChoiceToStorage(
 			'[inth] Vendor choice cookie was not stored; the localStorage copy is current but a server render will not see it. Shorten vendor ids or deny fewer vendors.',
 			result.written.cookieDetail
 		);
+	}
+};
+
+/**
+ * Write the durable opt-out record, or remove it when lifted (`null`).
+ *
+ * Stored under its own `<key>-opt-out` key instead of inside the v3 consent
+ * envelope: the envelope is only written once a category choice exists, an
+ * opt-out can exist with no category choice, and envelope readers reject
+ * unknown keys. No-op outside the browser.
+ */
+export const writeOptOutToStorage = function writeOptOutToStorage(
+	store: RecordStore,
+	snapshot: ConsentSnapshot,
+	storageConfig: StorageConfig | undefined,
+	now: number
+): void {
+	if (typeof document === 'undefined') {
+		return;
+	}
+	if (!snapshot.optOut) {
+		store.clearStoredOptOutRecord(storageConfig);
+		return;
+	}
+	// The subject rides along so a visitor whose only act is an opt-out keeps
+	// one identity across reloads.
+	const record: StoredOptOutRecord = { ...snapshot.optOut, version: 1 };
+	if (snapshot.subject && Object.keys(snapshot.subject).length > 0) {
+		record.subject = { ...snapshot.subject };
+	}
+	const result = store.writeStoredOptOutRecord(record, storageConfig, now);
+	if (result.ok === false) {
+		console.warn('[inth] Opt-out record was not written.', result.issues);
 	}
 };

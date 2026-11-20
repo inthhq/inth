@@ -11,6 +11,12 @@
  * Pure.
  */
 import type {
+	OptOutHolder,
+	OptOutMethod,
+	OptOutRight,
+} from '@inth/sdk-schema/types';
+
+import type {
 	CategoryDecision,
 	ChoiceBasis,
 	ConsentSubject,
@@ -20,6 +26,7 @@ import type {
 	StoredConsentEnvelope,
 	StoredIabMetadata,
 	StoredNoticeDismissal,
+	StoredOptOutRecord,
 	StoredVendorChoice,
 } from '../record-codec';
 
@@ -53,6 +60,33 @@ export const IAB_CODES = [
 	['customVendorConsents', 'icv'],
 	['customVendorLegitimateInterests', 'icvli'],
 ] as const satisfies readonly (readonly [keyof StoredIabMetadata, string])[];
+
+/** Compact opt-out right codes, in canonical order. @internal */
+export const OPT_OUT_RIGHT_CODES = [
+	['sale', 'sa'],
+	['share', 'sh'],
+	['targeted_ads', 'ta'],
+] as const satisfies readonly (readonly [OptOutRight, string])[];
+
+/** Compact opt-out method codes. @internal */
+export const OPT_OUT_METHOD_CODES = [
+	['api', 'a'],
+	['button', 'b'],
+	['gpc', 'g'],
+	['propagated', 'p'],
+] as const satisfies readonly (readonly [OptOutMethod, string])[];
+
+/** Compact opt-out holder codes. @internal */
+export const OPT_OUT_HOLDER_CODES = [
+	['both', 'b'],
+	['device', 'd'],
+	['person', 'p'],
+] as const satisfies readonly (readonly [OptOutHolder, string])[];
+
+const OPT_OUT_METHOD_TO_CODE: Readonly<Record<OptOutMethod, string>> =
+	Object.fromEntries(OPT_OUT_METHOD_CODES) as Record<OptOutMethod, string>;
+const OPT_OUT_HOLDER_TO_CODE: Readonly<Record<OptOutHolder, string>> =
+	Object.fromEntries(OPT_OUT_HOLDER_CODES) as Record<OptOutHolder, string>;
 
 const field = function field(key: string, value: string | number): string {
 	return `${key}${KEY_VALUE_SEPARATOR}${value}`;
@@ -294,5 +328,53 @@ export const encodeVendorChoiceCompact = function encodeVendorChoiceCompact(
 		);
 	}
 	fields.push(...subjectFields(record.subject));
+	return fields.join(FIELD_SEPARATOR);
+};
+
+// ---------------------------------------------------------------------------
+// Durable opt-out record
+// ---------------------------------------------------------------------------
+
+/** Serializes a stored opt-out record to JSON with canonical right order. */
+export const encodeOptOutRecord = function encodeOptOutRecord(
+	record: StoredOptOutRecord
+): string {
+	const rightSet = new Set(record.rights);
+	const rights = OPT_OUT_RIGHT_CODES.filter(([right]) =>
+		rightSet.has(right)
+	).map(([right]) => right);
+	const encoded: StoredOptOutRecord = {
+		heldBy: record.heldBy,
+		method: record.method,
+		recordedAt: record.recordedAt,
+		rights,
+		version: 1,
+	};
+	if (record.subject && Object.keys(record.subject).length > 0) {
+		encoded.subject = { ...record.subject };
+	}
+	return JSON.stringify(encoded);
+};
+
+/**
+ * Compact durable opt-out for the `<key>-opt-out` cookie:
+ * `v=1&r=<sa|sh|ta...>&m=<b|g|a|p>&t=<recordedAt>&h=<d|p|b>`, followed by
+ * the subject fields (`sid`, `eid`, `idp`).
+ */
+export const encodeOptOutRecordCompact = function encodeOptOutRecordCompact(
+	record: StoredOptOutRecord
+): string {
+	const rightSet = new Set(record.rights);
+	const rights = OPT_OUT_RIGHT_CODES.filter(([right]) =>
+		rightSet.has(right)
+	).map(([, code]) => code);
+	const fields = [
+		field('v', 1),
+		field('r', rights.join(LIST_SEPARATOR)),
+		field('m', OPT_OUT_METHOD_TO_CODE[record.method]),
+		field('t', record.recordedAt),
+		field('h', OPT_OUT_HOLDER_TO_CODE[record.heldBy]),
+		...subjectFields(record.subject),
+	];
 	return fields.join(FIELD_SEPARATOR);
 };

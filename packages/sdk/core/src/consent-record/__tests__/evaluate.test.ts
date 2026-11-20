@@ -1,8 +1,14 @@
+import type { OptOutRecord } from '@inth/sdk-schema/types';
 import { describe, expect, it } from 'vitest';
 
-import { evaluateConsentRecord } from '../evaluate';
+import {
+	evaluateConsentRecord,
+	OPT_OUT_REPROMPT_WAIT_MS,
+	optInPromptAllowedAt,
+} from '../evaluate';
 import { normalizeLegacyConsentRecord } from '../normalize';
 import type { ExplicitChoice, NoticeDismissal } from '../types';
+import { validateOptOutRecord } from '../validation';
 import { currentBasis, DAY, makeChoice, makePolicy, NOW } from './fixtures';
 
 const allFalse = {
@@ -974,5 +980,301 @@ describe('evaluateConsentRecord: empty choice scope', () => {
 			kind: 'choice',
 			reason: 'missing',
 		});
+	});
+});
+
+describe('evaluateConsentRecord: durable opt-out record', () => {
+	const optOut: OptOutRecord = {
+		heldBy: 'device',
+		method: 'button',
+		recordedAt: NOW,
+		rights: ['sale', 'share'],
+	};
+	const usOptOutPolicy = makePolicy({
+		choice: { fingerprint: 'choice-fp-1', maxAgeMs: 365 * DAY },
+		gpcDenyCategories: ['marketing', 'measurement'],
+		model: 'opt-out',
+		prompt: 'none',
+	});
+
+	it('denies mapped categories with reason opt-out and allows other categories', () => {
+		const result = evaluateConsentRecord({
+			choice: null,
+			noticeDismissal: null,
+			now: NOW,
+			optOut,
+			policy: usOptOutPolicy,
+		});
+		expect(result.permissions).toEqual({
+			experience: true,
+			functionality: true,
+			marketing: false,
+			measurement: false,
+			necessary: true,
+		});
+		expect(result.restrictions).toEqual({
+			marketing: ['opt-out'],
+			measurement: ['opt-out'],
+		});
+	});
+
+	it('never expires past 365 days or far past it', () => {
+		for (const ageDays of [366, 800]) {
+			const result = evaluateConsentRecord({
+				choice: null,
+				noticeDismissal: null,
+				now: NOW + ageDays * DAY,
+				optOut,
+				policy: usOptOutPolicy,
+			});
+			expect(result.permissions.marketing).toBe(false);
+			expect(result.permissions.measurement).toBe(false);
+			expect(result.restrictions).toEqual({
+				marketing: ['opt-out'],
+				measurement: ['opt-out'],
+			});
+			expect(result.nextDeadline).toBeNull();
+		}
+	});
+
+	it('survives policy changes, expired grants and valid grants', () => {
+		const granted = makeChoice(
+			{ marketing: true },
+			NOW,
+			currentBasis(usOptOutPolicy)
+		);
+		const validGrantResult = evaluateConsentRecord({
+			choice: granted,
+			noticeDismissal: null,
+			now: NOW + DAY,
+			optOut,
+			policy: usOptOutPolicy,
+		});
+		expect(validGrantResult.permissions.marketing).toBe(false);
+		expect(validGrantResult.restrictions.marketing).toEqual(['opt-out']);
+
+		const changedPolicy = makePolicy({
+			choice: { fingerprint: 'choice-fp-2', maxAgeMs: 30 * DAY },
+			gpcDenyCategories: ['marketing', 'measurement'],
+			model: 'opt-out',
+			prompt: 'none',
+		});
+		const expiredAndChangedResult = evaluateConsentRecord({
+			choice: granted,
+			noticeDismissal: null,
+			now: NOW + 400 * DAY,
+			optOut,
+			policy: changedPolicy,
+		});
+		expect(expiredAndChangedResult.permissions.marketing).toBe(false);
+		expect(expiredAndChangedResult.permissions.measurement).toBe(false);
+		expect(expiredAndChangedResult.restrictions.marketing).toEqual(['opt-out']);
+	});
+
+	it('keeps denial when GPC is false, denies with gpc only without a record, and orders gpc before opt-out', () => {
+		const recordOnly = evaluateConsentRecord({
+			choice: null,
+			gpc: false,
+			noticeDismissal: null,
+			now: NOW,
+			optOut,
+			policy: usOptOutPolicy,
+		});
+		expect(recordOnly.permissions.marketing).toBe(false);
+		expect(recordOnly.restrictions.marketing).toEqual(['opt-out']);
+
+		const gpcOnly = evaluateConsentRecord({
+			choice: null,
+			gpc: true,
+			noticeDismissal: null,
+			now: NOW,
+			optOut: null,
+			policy: usOptOutPolicy,
+		});
+		expect(gpcOnly.permissions.marketing).toBe(false);
+		expect(gpcOnly.restrictions.marketing).toEqual(['gpc']);
+
+		const both = evaluateConsentRecord({
+			choice: null,
+			gpc: true,
+			noticeDismissal: null,
+			now: NOW,
+			optOut,
+			policy: usOptOutPolicy,
+		});
+		expect(both.restrictions.marketing).toEqual(['gpc', 'opt-out']);
+	});
+
+	it('keeps prompt requirement none at every age under a choice-prompt rule', () => {
+		const optInWithDeny = makePolicy({
+			choice: { fingerprint: 'choice-fp-1', maxAgeMs: 365 * DAY },
+			gpcDenyCategories: ['marketing', 'measurement'],
+			model: 'opt-in',
+			prompt: 'choice',
+		});
+		for (const ageDays of [1, 364, 366, 800]) {
+			const missingOther = evaluateConsentRecord({
+				choice: null,
+				noticeDismissal: null,
+				now: NOW + ageDays * DAY,
+				optOut,
+				policy: optInWithDeny,
+			});
+			expect(missingOther.promptRequirement).toEqual({ kind: 'none' });
+
+			const policyChanged = evaluateConsentRecord({
+				choice: makeChoice({ functionality: true }, NOW, {
+					fingerprint: 'old-fp',
+					kind: 'choice-v1',
+				}),
+				noticeDismissal: null,
+				now: NOW + ageDays * DAY,
+				optOut,
+				policy: optInWithDeny,
+			});
+			expect(policyChanged.promptRequirement).toEqual({ kind: 'none' });
+		}
+	});
+
+	it('restricts nothing when the policy deny list is empty', () => {
+		const noDenyPolicy = makePolicy({
+			gpcDenyCategories: [],
+			model: 'opt-out',
+			prompt: 'none',
+		});
+		const result = evaluateConsentRecord({
+			choice: null,
+			noticeDismissal: null,
+			now: NOW,
+			optOut,
+			policy: noDenyPolicy,
+		});
+		expect(result.permissions).toEqual(allTrue);
+		expect(result.restrictions).toEqual({});
+	});
+
+	it('computes the 366-day opt-in reprompt threshold from recordedAt', () => {
+		expect(OPT_OUT_REPROMPT_WAIT_MS).toBe(366 * DAY);
+		expect(optInPromptAllowedAt(optOut)).toBe(NOW + 366 * DAY);
+	});
+});
+
+describe('validateOptOutRecord', () => {
+	it('accepts all valid methods and holders and returns rights in canonical order', () => {
+		for (const method of ['button', 'gpc', 'api', 'propagated'] as const) {
+			for (const heldBy of ['device', 'person', 'both'] as const) {
+				const result = validateOptOutRecord(
+					{
+						heldBy,
+						method,
+						recordedAt: NOW - 10,
+						rights: ['targeted_ads', 'sale', 'share'],
+					},
+					NOW
+				);
+				expect(result).toEqual({
+					ok: true,
+					record: {
+						heldBy,
+						method,
+						recordedAt: NOW - 10,
+						rights: ['sale', 'share', 'targeted_ads'],
+					},
+				});
+			}
+		}
+	});
+
+	it.each([
+		['non-object', 'opt-out'],
+		['array', []],
+		['null', null],
+		[
+			'non-plain prototype',
+			Object.assign(Object.create({ extra: true }), {
+				heldBy: 'device',
+				method: 'button',
+				recordedAt: NOW,
+				rights: ['sale'],
+			}),
+		],
+		[
+			'inherited property',
+			Object.create({
+				heldBy: 'device',
+				method: 'button',
+				recordedAt: NOW,
+				rights: ['sale'],
+			}),
+		],
+		[
+			'unknown key',
+			{
+				extra: 1,
+				heldBy: 'device',
+				method: 'button',
+				recordedAt: NOW,
+				rights: ['sale'],
+			},
+		],
+		[
+			'empty rights',
+			{ heldBy: 'device', method: 'button', recordedAt: NOW, rights: [] },
+		],
+		[
+			'duplicate right',
+			{
+				heldBy: 'device',
+				method: 'button',
+				recordedAt: NOW,
+				rights: ['sale', 'sale'],
+			},
+		],
+		[
+			'unknown right',
+			{
+				heldBy: 'device',
+				method: 'button',
+				recordedAt: NOW,
+				rights: ['unknown'],
+			},
+		],
+		[
+			'unknown method',
+			{ heldBy: 'device', method: 'other', recordedAt: NOW, rights: ['sale'] },
+		],
+		[
+			'unknown holder',
+			{ heldBy: 'other', method: 'button', recordedAt: NOW, rights: ['sale'] },
+		],
+		[
+			'future timestamp',
+			{
+				heldBy: 'device',
+				method: 'button',
+				recordedAt: NOW + 1,
+				rights: ['sale'],
+			},
+		],
+		[
+			'negative timestamp',
+			{
+				heldBy: 'device',
+				method: 'button',
+				recordedAt: -1,
+				rights: ['sale'],
+			},
+		],
+		[
+			'non-integer timestamp',
+			{
+				heldBy: 'device',
+				method: 'button',
+				recordedAt: NOW - 0.5,
+				rights: ['sale'],
+			},
+		],
+	])('rejects %s', (_label, input) => {
+		expect(validateOptOutRecord(input, NOW).ok).toBe(false);
 	});
 });

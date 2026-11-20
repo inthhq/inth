@@ -7,6 +7,8 @@
  * supplied `now`; one invalid record rejects the whole input so nothing is
  * salvaged from a broken record.
  */
+import type { OptOutRecord } from '@inth/sdk-schema/types';
+
 import { OPTIONAL_CONSENT_CATEGORIES } from '../consent-record/types';
 import type {
 	ConsentSubject,
@@ -21,6 +23,7 @@ import {
 	ownValue,
 	validateExplicitChoice,
 	validateNoticeDismissal,
+	validateOptOutRecord,
 } from '../consent-record/validation';
 import type { RecordIssue } from '../consent-record/validation';
 import { isValidVendorId } from '../libs/vendors';
@@ -31,6 +34,7 @@ export interface ValidatedRecords {
 	choice?: ExplicitChoice | null;
 	subject?: ConsentSubject | null;
 	noticeDismissal?: NoticeDismissal | null;
+	optOut?: OptOutRecord | null;
 	vendorChoice?: VendorChoice | null;
 }
 
@@ -176,6 +180,23 @@ export const validateHydrationRecords = function validateHydrationRecords(
 			}
 		}
 	}
+	if (input.optOut !== undefined) {
+		if (input.optOut === null) {
+			records.optOut = null;
+		} else {
+			const result = validateOptOutRecord(input.optOut, now);
+			if (result.ok === true) {
+				records.optOut = result.record;
+			} else {
+				issues.push(
+					...result.issues.map((issue) => ({
+						...issue,
+						path: `optOut.${issue.path}`,
+					}))
+				);
+			}
+		}
+	}
 	if (input.vendorChoice !== undefined) {
 		if (input.vendorChoice === null) {
 			records.vendorChoice = null;
@@ -198,6 +219,23 @@ export const validateHydrationRecords = function validateHydrationRecords(
 		return { issues, ok: false };
 	}
 	return { ok: true, records };
+};
+
+/**
+ * Keep the newer of two opt-out records. Ties keep the current one, so a
+ * delayed server read never replaces a newer local opt-out.
+ */
+export const mergeNewestOptOut = function mergeNewestOptOut(
+	current: OptOutRecord | null,
+	incoming: OptOutRecord | null
+): OptOutRecord | null {
+	if (!current) {
+		return incoming;
+	}
+	if (!incoming) {
+		return current;
+	}
+	return incoming.recordedAt > current.recordedAt ? incoming : current;
 };
 
 /**

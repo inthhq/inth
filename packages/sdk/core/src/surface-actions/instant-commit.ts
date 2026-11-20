@@ -59,6 +59,7 @@ export const kernelOnly = function kernelOnly(
 		snapshot.evaluationPolicy.model === 'none' ||
 		Boolean(snapshot.experiment) ||
 		snapshot.experimentPending ||
+		snapshot.optOut !== null ||
 		// A bulk action also decides vendors; the kernel records that.
 		(snapshot.vendors?.declared.length ?? 0) > 0 ||
 		(snapshot.vendorChoice?.denied.length ?? 0) > 0

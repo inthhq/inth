@@ -12,10 +12,15 @@
 import type { ConsentSubject } from '../../consent-record/types';
 import type { InternalKernel } from '../../kernel/internals';
 import type { HydrationRecords } from '../../types';
-import { noticeSinceEpoch, vendorChoiceSinceEpoch } from './epoch';
+import {
+	noticeSinceEpoch,
+	optOutSinceEpoch,
+	vendorChoiceSinceEpoch,
+} from './epoch';
 import type {
 	StoredIabMetadata,
 	StoredNoticeDismissal,
+	StoredOptOutRecord,
 	StoredVendorChoice,
 } from './record-codec';
 import {
@@ -26,6 +31,8 @@ import {
 	readStoredConsentRecordFromCookieHeader,
 	readStoredNoticeDismissal,
 	readStoredNoticeDismissalFromCookieHeader,
+	readStoredOptOutRecord,
+	readStoredOptOutRecordFromCookieHeader,
 	readStoredVendorChoice,
 	readStoredVendorChoiceFromCookieHeader,
 } from './record-storage';
@@ -47,6 +54,8 @@ export interface StoredRecords {
 	 * `records.subject`, so this is the only place the vendor copy shows.
 	 */
 	vendorSubject: ConsentSubject | null;
+	/** Subject carried by the opt-out record, independently of other records. */
+	optOutSubject?: ConsentSubject | null;
 	/** Subject carried by the notice record, independently of other records. */
 	noticeSubject?: ConsentSubject | null;
 	/**
@@ -59,7 +68,7 @@ export interface StoredRecords {
 	 * a subject. A record stored without one, as older versions wrote them,
 	 * does not carry it.
 	 */
-	subjectCarrier: 'choice' | 'vendors' | 'notice' | null;
+	subjectCarrier: 'choice' | 'vendors' | 'opt-out' | 'notice' | null;
 	/**
 	 * The clear epoch in force: the newer of the stored epoch and the one
 	 * the envelope records, `0` when no clear was ever recorded. Records
@@ -93,13 +102,26 @@ const kernelNoticeDismissal = function kernelNoticeDismissal(
 	return dismissal;
 };
 
+/** Strip storage-only fields before applying an opt-out record to the kernel. */
+const kernelOptOutRecord = function kernelOptOutRecord(
+	record: StoredOptOutRecord | null
+): HydrationRecords['optOut'] {
+	if (!record) {
+		return null;
+	}
+	const { subject: _subject, version: _version, ...optOut } = record;
+	return optOut;
+};
+
 /**
  * The record that carries the subject among the surviving records: the
- * envelope, else the vendor record, else the notice record.
+ * envelope, else the vendor record, else the opt-out record, else the notice
+ * record.
  */
 const subjectCarrier = function subjectCarrier(
 	selected: StoredConsentSelection['selected'],
 	vendorRecord: StoredVendorChoice | null,
+	optOutRecord: StoredOptOutRecord | null,
 	noticeRecord: StoredNoticeDismissal | null
 ): StoredRecords['subjectCarrier'] {
 	if (selected?.subject) {
@@ -108,21 +130,35 @@ const subjectCarrier = function subjectCarrier(
 	if (vendorRecord?.subject) {
 		return 'vendors';
 	}
+	if (optOutRecord?.subject) {
+		return 'opt-out';
+	}
 	return noticeRecord?.subject ? 'notice' : null;
 };
 
 /**
  * The subject the surviving records carry: the envelope's, else the vendor
- * record's, else the notice record's.
+ * record's, else the opt-out record's, else the notice record's.
  */
 const recordedSubject = function recordedSubject(
 	selected: StoredConsentSelection['selected'],
 	vendorRecord: StoredVendorChoice | null,
+	optOutRecord: StoredOptOutRecord | null,
 	noticeRecord: StoredNoticeDismissal | null
 ): ConsentSubject | null {
 	return (
-		selected?.subject ?? vendorRecord?.subject ?? noticeRecord?.subject ?? null
+		selected?.subject ??
+		vendorRecord?.subject ??
+		optOutRecord?.subject ??
+		noticeRecord?.subject ??
+		null
 	);
+};
+
+const validRecord = function validRecord<RecordType>(
+	read: { ok: true; record: RecordType } | { ok: false } | null
+): RecordType | null {
+	return read?.ok ? read.record : null;
 };
 
 /**
@@ -135,40 +171,46 @@ const composeRecords = function composeRecords(
 	selection: StoredConsentSelection,
 	notice: ReturnType<typeof readStoredNoticeDismissal>,
 	vendors: ReturnType<typeof readStoredVendorChoice>,
+	optOut: ReturnType<typeof readStoredOptOutRecord>,
 	clearEpoch: number,
 	now: number
 ): StoredRecords {
 	const epoch = Math.max(clearEpoch, selection.selected?.epoch ?? 0);
 	const selected = consentSinceEpoch(selection.selected, clearEpoch);
-	const choice = selected?.choice ?? null;
-	const vendorRecord = vendorChoiceSinceEpoch(
-		vendors?.ok ? vendors.record : null,
-		epoch
+	const vendorRecord = vendorChoiceSinceEpoch(validRecord(vendors), epoch);
+	const optOutRecord = optOutSinceEpoch(validRecord(optOut), epoch);
+	const noticeRecord = noticeSinceEpoch(validRecord(notice), epoch);
+	const recorded = recordedSubject(
+		selected,
+		vendorRecord,
+		optOutRecord,
+		noticeRecord
 	);
-	const noticeRecord = noticeSinceEpoch(
-		notice?.ok ? notice.record : null,
-		epoch
-	);
-	const recorded = recordedSubject(selected, vendorRecord, noticeRecord);
 	const records: HydrationRecords = {
-		choice,
+		choice: selected?.choice ?? null,
 		noticeDismissal: kernelNoticeDismissal(noticeRecord),
 		now,
+		optOut: kernelOptOutRecord(optOutRecord),
 		subject: recorded,
 		vendorChoice: kernelVendorChoice(vendorRecord),
 	};
 	return {
 		candidates: selection.candidates,
 		epoch,
-		found:
-			selected !== null ||
-			vendorRecord !== null ||
-			records.noticeDismissal !== null,
+		found: Boolean(
+			selected || vendorRecord || optOutRecord || records.noticeDismissal
+		),
 		iab: selected?.iab ?? null,
 		noticeSubject: noticeRecord?.subject ?? null,
+		optOutSubject: optOutRecord?.subject ?? null,
 		recordedSubjectId: recorded?.subjectId ?? null,
 		records,
-		subjectCarrier: subjectCarrier(selected, vendorRecord, noticeRecord),
+		subjectCarrier: subjectCarrier(
+			selected,
+			vendorRecord,
+			optOutRecord,
+			noticeRecord
+		),
 		vendorSubject: vendorRecord?.subject ?? null,
 	};
 };
@@ -189,6 +231,7 @@ const hasUndecodableChoice = function hasUndecodableChoice(
 interface Unreadable {
 	choice: boolean;
 	notice: boolean;
+	optOut: boolean;
 	vendors: boolean;
 }
 
@@ -199,10 +242,11 @@ interface Unreadable {
 const markUndecodable = function markUndecodable(
 	unreadable: Unreadable,
 	selection: StoredConsentSelection,
-	results: Record<'notice' | 'vendors', { ok: boolean } | null>
+	results: Record<'notice' | 'optOut' | 'vendors', { ok: boolean } | null>
 ): void {
 	unreadable.choice ||= hasUndecodableChoice(selection);
 	unreadable.notice ||= results.notice?.ok === false;
+	unreadable.optOut ||= results.optOut?.ok === false;
 	unreadable.vendors ||= results.vendors?.ok === false;
 };
 
@@ -219,6 +263,7 @@ const readRecords = function readRecords(
 	const unreadable: Unreadable = {
 		choice: false,
 		notice: false,
+		optOut: false,
 		vendors: false,
 	};
 	const selection = readStoredConsentRecord(storageConfig, now, () => {
@@ -228,30 +273,51 @@ const readRecords = function readRecords(
 		unreadable.notice = true;
 	});
 	const clearEpoch = readStoredClearEpoch(storageConfig, now);
+	const effectiveEpoch = Math.max(clearEpoch, selection.selected?.epoch ?? 0);
 	const vendors = readStoredVendorChoice(
 		storageConfig,
 		now,
 		() => {
 			unreadable.vendors = true;
 		},
-		Math.max(clearEpoch, selection.selected?.epoch ?? 0)
+		effectiveEpoch
+	);
+	const optOut = readStoredOptOutRecord(
+		storageConfig,
+		now,
+		() => {
+			unreadable.optOut = true;
+		},
+		effectiveEpoch
 	);
 	if (preserveUndecodable) {
-		markUndecodable(unreadable, selection, { notice, vendors });
+		markUndecodable(unreadable, selection, { notice, optOut, vendors });
 	}
 	const {
 		choice: choiceUnavailable,
 		notice: noticeUnavailable,
+		optOut: optOutUnavailable,
 		vendors: vendorsUnavailable,
 	} = unreadable;
-	const stored = composeRecords(selection, notice, vendors, clearEpoch, now);
+	const stored = composeRecords(
+		selection,
+		notice,
+		vendors,
+		optOut,
+		clearEpoch,
+		now
+	);
 	// An absent value only clears memory when every candidate was readable.
 	// A valid record from an available source can still hydrate normally.
 	if (!selection.selected && choiceUnavailable) {
 		delete stored.records.choice;
-		// A readable vendor or notice record still supplies the subject it
-		// carries, linked identity included.
-		if (!stored.records.vendorChoice && stored.subjectCarrier !== 'notice') {
+		// A readable vendor, opt-out or notice record still supplies the
+		// subject it carries, linked identity included.
+		if (
+			!stored.records.vendorChoice &&
+			!stored.records.optOut &&
+			stored.subjectCarrier !== 'notice'
+		) {
 			delete stored.records.subject;
 		}
 	}
@@ -260,6 +326,9 @@ const readRecords = function readRecords(
 	}
 	if (!vendors?.ok && vendorsUnavailable) {
 		delete stored.records.vendorChoice;
+	}
+	if (!optOut?.ok && optOutUnavailable) {
+		delete stored.records.optOut;
 	}
 	return stored;
 };
@@ -298,6 +367,7 @@ const composeFromCookieHeader = function composeFromCookieHeader(
 		readStoredConsentRecordFromCookieHeader(cookieHeader, storageConfig, now),
 		readStoredNoticeDismissalFromCookieHeader(cookieHeader, storageConfig, now),
 		readStoredVendorChoiceFromCookieHeader(cookieHeader, storageConfig, now),
+		readStoredOptOutRecordFromCookieHeader(cookieHeader, storageConfig, now),
 		readStoredClearEpochFromCookieHeader(cookieHeader, storageConfig, now),
 		now
 	);
