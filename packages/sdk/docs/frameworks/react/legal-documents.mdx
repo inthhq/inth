@@ -71,33 +71,52 @@ on record.
 `GET /v1/documents/{type}/current` and resolves with `{ document, accepted }`.
 `document` carries the `version`, `hash`, `effectiveDate` and
 `requiresAcceptance` of that release. `accepted` is `true` only when this
-browser recorded an acceptance of that release, by its hash, for the visitor's
-current subject ID. An earlier release accepted does not count, because the
-browser cannot see the releases published in between. When
-`document.requiresAcceptance` is `false` you may choose not to ask again a
-visitor who accepted before; that is your app's call.
+browser remembers an acceptance of that release, by its hash, for the same
+project and the visitor's current subject ID. An earlier release accepted does
+not count, because the browser cannot see the releases published in between.
+When `document.requiresAcceptance` is `false` you may choose not to ask again a
+visitor who accepted before; that is your app's call. A type with no release in
+force rejects with an API error whose `code` is `not_found`.
 
 `accept(documents, options?)` takes one `{ type, hash }` or an array of them,
-with the `hash` that `check` gave. It sends one
-`POST /v1/documents/acceptances` for the visitor's subject ID, with the
-property the consent records use, and resolves with what the backend
-recorded. The subject ID is kept: after a reload, and in the visitor's next
-consent save, it is the same one.
+with the `hash` that `check` gave. It waits until the visitor's subject ID is
+settled, then sends one `POST /v1/documents/acceptances` under it, with the
+property the consent records use, and resolves with what the backend recorded.
+
+The subject ID belongs to consent: `accept` never creates or changes it. When it
+changes, for example when another tab's consent record replaces it or the
+records are cleared, the visitor is asked again.
 
 Without a verified identity, the acceptance is recorded for the device. Pass
 `externalId` and `identityProvider` with an `identityToken` your server signed,
-and it is recorded for the person; the device keeps its own subject ID.
+and it is recorded for the person; this browser then remembers nothing for the
+device.
 
 Both calls need a backend: the one your consent records go to. In tests, with
 `testing()` or an offline mode, they reject.
 
+## What this browser remembers
+
+The backend has no route that tells a browser what it accepted, so this browser
+remembers each acceptance it recorded, for the project and subject ID it was
+recorded under. While the visitor has a consent record, it is stored in
+`localStorage` and lasts as long as consent keeps that subject ID. Before the
+visitor's first consent choice it is remembered for the page only, so after a
+reload they are asked again. Clearing the visitor's consent records forgets it.
+Where storage is blocked, it is remembered for the page only.
+
+When your server knows who the person is, for example after sign-up, record the
+acceptance from the server with the project's secret key and the person's
+`externalId`. That record does not depend on this browser.
+
 ## Handle errors and retry
 
-Both calls reject with an API error when the backend refuses them. Test it
-with `isInthApiError`; a type with no release in force has the code
-`not_found`. `accept` sends nothing again by itself, so to retry an
-acceptance, send it with the same idempotency key, and the backend records the
-action once:
+Both calls reject with an API error when the backend refuses them; test it with
+`isInthApiError`. `accept` never sends anything again by itself. To retry after a
+network failure or a server error, send the same action with the same
+idempotency key, so the backend records it once. Do not retry other errors,
+such as `document_unknown` for a release the project never published, or
+`subject_conflict`.
 
 ```ts
 import {
@@ -112,30 +131,18 @@ const send = () =>
 try {
 	await send();
 } catch (error) {
-	if (isInthApiError(error) && error.code === 'not_found') {
-		// No terms are published.
-	} else {
-		await send();
+	const temporary =
+		!isInthApiError(error) || error.status >= 500 || error.code === 'rate_limited';
+	if (!temporary) {
+		throw error;
 	}
+	await send();
 }
 ```
 
-## What this browser stores
-
-The backend has no route that tells a browser what it accepted, so this
-browser stores each acceptance it recorded under
-`inth-document-acceptances:v1` in `localStorage`, with the project URL and the
-subject ID it was recorded for. `check` counts it only for the same project and
-subject, and clearing the visitor's consent records removes it. Another browser, or this one after its
-storage is cleared, reports `accepted: false` until the visitor accepts again.
-Where storage is blocked, `check` reports `accepted: false` and `accept` still
-records.
-
-## Record from your server when you know the person
-
-When your server knows who the person is, for example after sign-up, it can
-record the acceptance itself with the project's secret key and the person's
-`externalId`, instead of the browser.
+`isInthApiError` and `createIdempotencyKey` come from `@inth/sdk`. Add
+`@inth/sdk` to your app's dependencies: a strict package manager does not
+resolve it through `@inth/react`.
 
 The code behind `check` and `accept` loads the first time you call one of
 them, so a page that never calls them does not download it.
