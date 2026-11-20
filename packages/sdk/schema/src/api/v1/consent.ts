@@ -318,14 +318,16 @@ export const v1ConsentCheckResultSchema = v.object({
 });
 
 /**
- * One result per type asked about. Checked by hand: `v.record` drops a key
- * such as `constructor`, a valid document type, and still succeeds.
+ * One result per type asked about, and at least one, since a check names at
+ * least one type. Checked by hand: `v.record` drops a key such as
+ * `constructor`, a valid document type, and still succeeds.
  */
 const checkResultsSchema = v.custom<
 	Record<string, v.InferOutput<typeof v1ConsentCheckResultSchema>>
 >(
 	(input) =>
 		isPlainPolicyObject(input) &&
+		Object.keys(input).length > 0 &&
 		Object.values(input).every((result) =>
 			v.is(v1ConsentCheckResultSchema, result)
 		),
