@@ -220,6 +220,7 @@ const US_PRIVACY_STATES = [
 	'NE',
 	'NH',
 	'NJ',
+	'NV',
 	'OR',
 	'RI',
 	'TN',
@@ -283,10 +284,11 @@ const usPrivacyStatesRule = function usPrivacyStatesRule(
 				'https://www.legis.la.gov/legis/BillInfo.aspx?b=SB386&s=26RS&sbi=y',
 				'https://legislature.vermont.gov/Documents/2026/Docs/ACTS/ACT145/ACT145%20Act%20Summary.pdf',
 				'https://portal.ct.gov/ag/sections/privacy/the-connecticut-data-privacy-act',
+				'https://www.leg.state.nv.us/NRS/NRS-603A.html',
 				GPC_SOURCE,
 			],
 			[
-				'Curated coverage of 20 states as of 8 September 2026, including the narrower Florida law. Applicability thresholds and exemptions differ; location alone does not determine applicability.',
+				'Curated coverage of 21 states as of 8 September 2026, including the narrower Florida and Nevada laws. Applicability thresholds and exemptions differ; location alone does not determine applicability.',
 				'These variants cover ordinary adult, non-sensitive processing. Child protections, sensitive-data consent or prohibitions, assessments and appeal workflows need separate implementation.',
 				isOptOut
 					? 'No automatic banner. Supply timely disclosures and persistent opt-out controls; an optional notice dismissal records no consent.'
@@ -294,7 +296,7 @@ const usPrivacyStatesRule = function usPrivacyStatesRule(
 				'GPC denies marketing and measurement across the group as a conservative product mapping, not a claim that every state mandates GPC or all measurement is sale, sharing or targeted advertising.',
 				'The referenced GPC specification is a Working Draft, not a final Recommendation. Removing the signal does not withdraw a recorded opt-out.',
 				'Maryland collection minimization and sensitive-data/minor prohibitions require separate processing controls. Connecticut prohibits sale and targeted advertising using minors data from 1 July 2026. Consent cannot waive these limits.',
-				'Louisiana and Oklahoma start 1 January 2027, Alabama 1 May 2027 and Vermont 1 January 2028. These future laws are excluded from the current group. Nevada sale opt-outs and sector laws also apply outside it.',
+				'Louisiana and Oklahoma start 1 January 2027, Alabama 1 May 2027 and Vermont 1 January 2028. These future laws are excluded from the current group. Sector laws also apply outside it.',
 			]
 		),
 		validity: isOptOut
