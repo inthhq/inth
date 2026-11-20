@@ -19,8 +19,8 @@
  * @internal
  */
 
-import { optOutDenyCategories } from '../consent-record/opt-out';
 import { recordCategoryPatch } from '../consent-record/record';
+import { optOutDenyCategories } from '../consent-record/types';
 import type { OptionalConsentCategory } from '../consent-record/types';
 import { buildNextSnapshot } from '../kernel/next-snapshot';
 import type { PolicyResolvers, SnapshotPatch } from '../kernel/next-snapshot';

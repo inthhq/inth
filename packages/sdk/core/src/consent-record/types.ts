@@ -193,3 +193,20 @@ export interface ConsentEvaluation {
 	nextDeadline: number | null;
 	categories: Readonly<Record<OptionalConsentCategory, CategoryEvaluation>>;
 }
+
+/**
+ * Optional categories that a durable opt-out record switches off under
+ * `policy`: `marketing` and `measurement`, filtered to `policy.scope`.
+ *
+ * This is the single place that defines the set, so a later policy-rule
+ * field can replace it without touching callers. It lives beside the
+ * category vocabulary because a framework root's first load already holds
+ * this file: a module of its own would be one more file to fetch.
+ */
+export const optOutDenyCategories = function optOutDenyCategories(
+	policy: Pick<EvaluationPolicy, 'scope'>
+): OptionalConsentCategory[] {
+	return (['marketing', 'measurement'] as const).filter((category) =>
+		policy.scope.includes(category)
+	);
+};

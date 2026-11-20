@@ -13,12 +13,11 @@
 
 import type { OptOutRecord } from '@inth/sdk-schema/types';
 
-import { optOutDenyCategories } from './opt-out';
 import {
 	OPT_OUT_REPROMPT_WAIT_MS,
 	optInPromptAllowedAt,
 } from './opt-out-rules';
-import { OPTIONAL_CONSENT_CATEGORIES } from './types';
+import { OPTIONAL_CONSENT_CATEGORIES, optOutDenyCategories } from './types';
 import type {
 	CategoryDecision,
 	CategoryEvaluation,
