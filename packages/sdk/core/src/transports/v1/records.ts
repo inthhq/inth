@@ -78,7 +78,7 @@ export interface V1OptOutResult extends OptOutTransportResult {
 
 /** Result of `POST /v1/consent/opt-outs/lift`. */
 export interface V1LiftOptOutResult extends LiftOptOutTransportResult {
-	/** ID of the event that recorded the lift, when the backend created one. */
+	/** ID of the event that recorded the lift, absent on `404`. */
 	recordId?: string;
 }
 
@@ -217,7 +217,7 @@ const toOptOutResult = function toOptOutResult(
 
 const toLiftOptOutResult = function toLiftOptOutResult(
 	data: unknown
-): (V1LiftOptOutResult & { subjectId: string }) | undefined {
+): (V1LiftOptOutResult & { recordId: string; subjectId: string }) | undefined {
 	const body =
 		typeof data === 'object' && data !== null
 			? (data as {
@@ -226,19 +226,21 @@ const toLiftOptOutResult = function toLiftOptOutResult(
 					subjectId?: unknown;
 				})
 			: {};
-	if (typeof body.subjectId !== 'string' || !isUuidV7(body.subjectId)) {
+	// A lift is recorded even when it lifts nothing, so an answer without a
+	// record ID is not the backend's.
+	if (
+		typeof body.subjectId !== 'string' ||
+		!isUuidV7(body.subjectId) ||
+		typeof body.recordId !== 'string' ||
+		!V1_UUID_PATTERN.test(body.recordId.toLowerCase())
+	) {
 		return undefined;
 	}
-	const result: V1LiftOptOutResult & { subjectId: string } = {
+	const result: V1LiftOptOutResult & { recordId: string; subjectId: string } = {
 		ok: true,
+		recordId: body.recordId,
 		subjectId: body.subjectId,
 	};
-	if (
-		typeof body.recordId === 'string' &&
-		V1_UUID_PATTERN.test(body.recordId.toLowerCase())
-	) {
-		result.recordId = body.recordId;
-	}
 	if (body.optOut === null) {
 		result.optOut = null;
 	} else {
@@ -332,7 +334,7 @@ export const createV1RecordTransport = function createV1RecordTransport(
 			const result = toLiftOptOutResult(await readJson(response));
 			if (!result) {
 				throw new Error(
-					`Inth transport: ${V1_ROUTES.optOutLift} answered ${response.status} without a canonical subject ID`
+					`Inth transport: ${V1_ROUTES.optOutLift} answered ${response.status} without a subject ID and record ID`
 				);
 			}
 			return result;

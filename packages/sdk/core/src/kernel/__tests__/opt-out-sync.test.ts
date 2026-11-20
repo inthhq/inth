@@ -715,7 +715,11 @@ describe('opt-out network sync and queue', () => {
 				save: (payload: SavePayload): Promise<SaveResult> =>
 					Promise.resolve(
 						returnOptOut
-							? { ok: true, optOut: accountOptOut, subjectId: payload.subjectId }
+							? {
+									ok: true,
+									optOut: accountOptOut,
+									subjectId: payload.subjectId,
+								}
 							: { ok: true, subjectId: payload.subjectId }
 					),
 			},
@@ -737,7 +741,11 @@ describe('opt-out network sync and queue', () => {
 		);
 		const liftOptOut = vi.fn<NonNullable<KernelTransport['liftOptOut']>>(
 			(payload) =>
-				Promise.resolve({ ok: true, optOut: null, subjectId: payload.subjectId })
+				Promise.resolve({
+					ok: true,
+					optOut: null,
+					subjectId: payload.subjectId,
+				})
 		);
 		const kernel = kernelOn({
 			initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
@@ -889,6 +897,52 @@ describe('opt-out network sync and queue', () => {
 		expect(replayed.getSnapshot().optOut).toBeNull();
 		expect(synced).toEqual([]);
 		replayed.dispose();
+	});
+
+	test('a queued opt-out whose retry is answered after a lift restores nothing', async () => {
+		// The backend answers a retry that arrives after the lift with no
+		// opt-out: the act is recorded and the device holds none.
+		const optOut = vi
+			.fn<NonNullable<KernelTransport['optOut']>>()
+			.mockRejectedValueOnce(new Error('offline'))
+			.mockImplementation((payload) =>
+				Promise.resolve({ ok: true, subjectId: payload.subjectId })
+			);
+		const liftOptOut = vi
+			.fn<NonNullable<KernelTransport['liftOptOut']>>()
+			.mockImplementation((payload) =>
+				Promise.resolve({
+					ok: true,
+					optOut: null,
+					subjectId: payload.subjectId,
+				})
+			);
+		const kernel = kernelOn({
+			initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
+			transport: { liftOptOut, optOut },
+		});
+		const synced: (Readonly<OptOutRecord> | null)[] = [];
+		kernel.events.on('opt-out:synced', (event) => synced.push(event.optOut));
+
+		await kernel.commands.optOut();
+		expect(await queuedOptOuts()).toHaveLength(1);
+		expect(kernel.getSnapshot().optOut).not.toBeNull();
+
+		await kernel.commands.optIn();
+		expect(kernel.getSnapshot().optOut).toBeNull();
+
+		kernel.replaySaves();
+		await vi.waitFor(async () => expect(await queuedOptOuts()).toEqual([]));
+
+		// The retry carried the first try's key, and its success put nothing back.
+		expect(optOut).toHaveBeenCalledTimes(2);
+		expect(optOut.mock.calls[1]?.[0].idempotencyKey).toBe(
+			optOut.mock.calls[0]?.[0].idempotencyKey
+		);
+		expect(kernel.getSnapshot().optOut).toBeNull();
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
+		expect(synced.filter((record) => record !== null)).toEqual([]);
+		kernel.dispose();
 	});
 
 	test('clearing records empties the opt-out queue', async () => {
