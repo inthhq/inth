@@ -153,10 +153,7 @@ const htmlInstructions = (
       instructions.push(`Add to index.html:\n${snippets.join("\n")}`);
     }
     instructions.push(
-      ...legacySnippetInstructions(
-        "index.html",
-        legacySnippets(current, merge)
-      )
+      ...legacySnippetInstructions("index.html", legacySnippets(current, merge))
     );
   }
   return instructions;

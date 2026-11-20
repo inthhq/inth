@@ -150,9 +150,11 @@ it("asks to rename c15t snippets instead of adding second copies", () => {
   expect(
     instructions.filter((instruction) => instruction.includes("still uses"))
   ).toEqual([
-    expect.stringMatching(/^index\.html still uses \/c15t\.js,.*\/inth\.js:\n<script/su),
     expect.stringMatching(
-      /^index\.html still uses #c15t-preferences,.*#inth-preferences:\n<a href="#inth-preferences">/su
+      /^index\.html still uses \/c15t\.js\. Inth uses \/inth\.js instead\..*\n<script/su
+    ),
+    expect.stringMatching(
+      /^index\.html still uses #c15t-preferences\. Inth uses #inth-preferences instead\..*\n<a href="#inth-preferences">/su
     ),
   ]);
 });
@@ -168,7 +170,9 @@ it("asks to rename an old preferences link next to a new script", () => {
   expect(
     instructions.filter((instruction) => instruction.startsWith("Add to"))
   ).toEqual([
-    expect.stringMatching(/^Add to index\.html:\n<script\s+src="[^"]+\/inth\.js"/u),
+    expect.stringMatching(
+      /^Add to index\.html:\n<script\s+src="[^"]+\/inth\.js"/u
+    ),
   ]);
   expect(
     instructions.filter((instruction) => instruction.includes("still uses"))

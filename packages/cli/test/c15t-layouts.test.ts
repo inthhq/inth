@@ -146,7 +146,7 @@ it("asks a JavaScript page to rename its c15t preferences link", async () => {
     )
   ).toEqual([
     expect.stringMatching(
-      /^index\.html still uses #c15t-preferences,.*\n<a href="#inth-preferences">/su
+      /^index\.html still uses #c15t-preferences\. Inth uses #inth-preferences instead\..*\n<a href="#inth-preferences">/su
     ),
   ]);
 });
@@ -183,7 +183,9 @@ it("points an existing Pages API handler at the generated route prefix", async (
     result.plan.instructions.find((instruction) =>
       instruction.startsWith(`Integrate c15t into ${name}:`)
     )
-  ).toContain("createPagesConsentRoute() as the default handler for /api/inth.");
+  ).toContain(
+    "createPagesConsentRoute() as the default handler for /api/inth."
+  );
 });
 
 it.each(["page.tsx", "page.jsx", "page.js"])(

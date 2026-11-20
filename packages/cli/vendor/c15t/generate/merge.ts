@@ -80,7 +80,7 @@ export const legacySnippetInstructions = (
 ): string[] =>
 	snippets.map(
 		({ found, current, content }) =>
-			`${path} still uses ${found}, which Inth does not read. Replace it with this snippet, which uses ${current}:\n${content}`
+			`${path} still uses ${found}. Inth uses ${current} instead. Update it to match this snippet, and keep any attributes it already has, such as nonce:\n${content}`
 	);
 
 /**
