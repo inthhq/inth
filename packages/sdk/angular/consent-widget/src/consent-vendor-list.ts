@@ -54,7 +54,7 @@ import vendorListStyles from '@inth/sdk/ui/styles/components/vendor-list';
 		SwitchThumb,
 	],
 	selector: 'section[inth-consent-vendor-list]',
-	template: `@if (!categoryOn()) {
+	template: `@if (!categoryOn() && !hideHint()) {
 			<p
 				[class]="styles()?.hint ?? ''"
 				[attr.data-testid]="'consent-widget-vendor-hint-' + category()"
@@ -181,6 +181,8 @@ export class ConsentVendorList {
 
 	/** The category whose vendors to list. */
 	readonly category = input.required<AllConsentNames>();
+	/** Hide the disabled-category hint when the parent switch is locked off. */
+	readonly hideHint = input(false);
 	/** Drop the stock classes. */
 	readonly noStyle = input<boolean | undefined>(undefined);
 	/** @internal */
