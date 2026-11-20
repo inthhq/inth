@@ -8,6 +8,11 @@
 # Expo, React Native and React (scripts/mobile-compatibility.json), outside the
 # checkout. Unset, it builds this fixture in place at its committed versions.
 # The backend, capture server and Firebase log check are the bare fixture's.
+#
+# INTH_APP_E2E_PHASE splits an Android run so CI builds on any runner and holds an
+# emulator (KVM) only for the journey. build stops after the APK and leaves it in
+# $OUT/apk. run installs it from INTH_APP_E2E_BUILD, that build's evidence
+# directory, and builds nothing. Unset (all) does both.
 set -euo pipefail
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO_ROOT="$(cd "${APP_DIR}/../../.." && pwd)"
@@ -16,6 +21,13 @@ PLATFORM="${1:?Usage: vendor-e2e.sh ios|android}"
 [[ "${PLATFORM}" == ios || "${PLATFORM}" == android ]] || { echo "Unknown platform: ${PLATFORM}" >&2; exit 2; }
 CELL="${INTH_EXPO_CELL:-}"
 LABEL="${CELL:-fixture}"
+PHASE="${INTH_APP_E2E_PHASE:-all}"
+case "${PHASE}" in all | build | run) ;; *) echo "Unknown INTH_APP_E2E_PHASE: ${PHASE}" >&2; exit 2 ;; esac
+[[ "${PHASE}" == all || "${PLATFORM}" == android ]] || { echo "INTH_APP_E2E_PHASE applies to Android only" >&2; exit 2; }
+if [[ "${PHASE}" == run ]]; then
+  BUILD="$(cd "${INTH_APP_E2E_BUILD:?INTH_APP_E2E_BUILD must point at the build phase evidence}" && pwd)"
+  [[ -s "${BUILD}/apk/app-release.apk" && -s "${BUILD}/versions.json" ]] || { echo "No APK or versions.json in ${BUILD}" >&2; exit 2; }
+fi
 RUN_ID="$(date +%Y%m%d-%H%M%S)-$$"
 OUT="${INTH_APP_E2E_OUT:-${APP_DIR}/.artifacts/vendor-e2e/${LABEL}-${PLATFORM}-${RUN_ID}}"
 mkdir -p "${OUT}"
@@ -77,16 +89,18 @@ PYVIDEO
     [[ -z "${AVD_NAME}" ]] || "${AVDMANAGER}" delete avd --name "${AVD_NAME}"
   fi
   [[ -z "${BACKEND_PID}" ]] || { kill "${BACKEND_PID}"; wait "${BACKEND_PID}"; }
-  # The journey records each vendor step; Firebase is checked against its own log.
-  if [[ -s "${OUT}/vendor-steps.jsonl" ]]; then
-    python3 "${BARE_DIR}/scripts/verify-vendor-firebase.py" "${OUT}" "${PLATFORM}" > "${OUT}/vendor-firebase-verification.log" 2>&1 || result=1
+  if [[ "${PHASE}" != build ]]; then
+    # The journey records each vendor step; Firebase is checked against its own log.
+    if [[ -s "${OUT}/vendor-steps.jsonl" ]]; then
+      python3 "${BARE_DIR}/scripts/verify-vendor-firebase.py" "${OUT}" "${PLATFORM}" > "${OUT}/vendor-firebase-verification.log" 2>&1 || result=1
+    fi
+    python3 "${APP_DIR}/scripts/vendor-e2e-result.py" "${OUT}" "${PLATFORM}" "${result}" || result=1
   fi
-  python3 "${APP_DIR}/scripts/vendor-e2e-result.py" "${OUT}" "${PLATFORM}" "${result}" || result=1
   if [[ -n "${CONSUMER}" && "${INTH_KEEP_CONSUMER:-0}" != 1 ]]; then
     rm -rf "$(dirname "${CONSUMER}")"
   fi
   rm -rf "${TASK_TMP}"
-  printf 'Expo vendor E2E (%s, %s) exit %s. Evidence: %s\n' "${LABEL}" "${PLATFORM}" "${result}" "${OUT}"
+  printf 'Expo vendor E2E (%s, %s, %s) exit %s. Evidence: %s\n' "${LABEL}" "${PLATFORM}" "${PHASE}" "${result}" "${OUT}"
   exit "${result}"
 }
 trap cleanup EXIT
@@ -136,7 +150,7 @@ start_log_streams() {
 }
 
 install_apk() {
-  "${ADB}" -s "${DEVICE}" install -r "${APP}/android/app/build/outputs/apk/release/app-release.apk" > "${OUT}/install-apk.log" 2>&1
+  "${ADB}" -s "${DEVICE}" install -r "${APK}" > "${OUT}/install-apk.log" 2>&1
 }
 
 # On Depot CI the emulator's adb connection sometimes drops right after boot, about
@@ -145,7 +159,9 @@ install_apk() {
 # `adb reconnect offline` brings the device back in about 2 s. Recover once, say so
 # as a CI warning and in adb-recovered.txt, and fail as before if that does not work.
 recover_offline_device() {
-  [[ "$("${ADB}" -s "${DEVICE}" get-state 2>/dev/null)" == offline ]] || return 1
+  # `adb get-state` prints nothing on stdout for an offline device, only an error
+  # on stderr, so read the state from the device list.
+  [[ "$("${ADB}" devices | awk -v serial="${DEVICE}" '$1 == serial { print $2 }')" == offline ]] || return 1
   echo "::warning title=Android emulator went offline (${LABEL})::adb lost the emulator before the install. Reconnecting and retrying the install once."
   printf '%s adb lost the emulator before the install; reconnecting\n' "$(date -u +%FT%TZ)" >> "${OUT}/adb-recovered.txt"
   "${ADB}" reconnect offline > /dev/null 2>&1 || true
@@ -194,66 +210,76 @@ curl -fsS "http://127.0.0.1:${BACKEND_PORT}/health" > "${OUT}/backend-health.jso
 cd "${REPO_ROOT}"
 git rev-parse HEAD > "${OUT}/source-head.txt"
 git diff --stat > "${OUT}/source-diff.txt"
-bun turbo run build --filter=@inth/react-native --filter=@inth/sdk-schema > "${OUT}/dependencies.log" 2>&1
-
-# The URL the app dials. Android reaches the host through adb reverse on its own port 3000.
-if [[ "${PLATFORM}" == android ]]; then
-  APP_URL=http://localhost:3000
-  # Mixpanel's Android SDK sends nothing to a host that resolves to loopback, so it
-  # reaches the same backend through the emulator's alias for the host machine.
-  MIXPANEL_URL="http://10.0.2.2:${BACKEND_PORT}"
+if [[ "${PHASE}" == run ]]; then
+  # Keep the build's evidence next to the journey's, without the APK. The result
+  # check reads versions.json from the top level.
+  mkdir -p "${OUT}/build"
+  tar -C "${BUILD}" --exclude=./apk -cf - . | tar -C "${OUT}/build" -xf -
+  cp "${BUILD}/versions.json" "${OUT}/versions.json"
+  [[ ! -f "${BUILD}/r8-mapping.txt.gz" ]] || cp "${BUILD}/r8-mapping.txt.gz" "${OUT}/"
+  cat "${OUT}/versions.json"
 else
-  APP_URL="http://localhost:${BACKEND_PORT}"
-  MIXPANEL_URL="${APP_URL}"
-fi
-mkdir -p "${OUT}/policy-assets"
-INTH_E2E_BINDING="${APP_URL}" INTH_E2E_FETCH="http://localhost:${BACKEND_PORT}" \
-  bunx tsx scripts/export-mobile-e2e-policy.ts "${OUT}/policy-assets/inth-policy.json"
+  bun turbo run build --filter=@inth/react-native --filter=@inth/sdk-schema > "${OUT}/dependencies.log" 2>&1
 
-export CI=1 EXPO_NO_TELEMETRY=1 SENTRY_DISABLE_AUTO_UPLOAD=true INTH_LOCAL_PODS=false
-export EXPO_PUBLIC_INTH_APP_E2E=1 EXPO_PUBLIC_INTH_FAKE_NATIVE=false
-export EXPO_PUBLIC_INTH_PROJECT_URL="${APP_URL}/api/self-host"
-export EXPO_PUBLIC_INTH_E2E_URL="${APP_URL}" EXPO_PUBLIC_INTH_E2E_MIXPANEL_URL="${MIXPANEL_URL}"
-export INTH_E2E_POLICY="${OUT}/policy-assets/inth-policy.json"
+  # The URL the app dials. Android reaches the host through adb reverse on its own port 3000.
+  if [[ "${PLATFORM}" == android ]]; then
+    APP_URL=http://localhost:3000
+    # Mixpanel's Android SDK sends nothing to a host that resolves to loopback, so it
+    # reaches the same backend through the emulator's alias for the host machine.
+    MIXPANEL_URL="http://10.0.2.2:${BACKEND_PORT}"
+  else
+    APP_URL="http://localhost:${BACKEND_PORT}"
+    MIXPANEL_URL="${APP_URL}"
+  fi
+  mkdir -p "${OUT}/policy-assets"
+  INTH_E2E_BINDING="${APP_URL}" INTH_E2E_FETCH="http://localhost:${BACKEND_PORT}" \
+    bunx tsx scripts/export-mobile-e2e-policy.ts "${OUT}/policy-assets/inth-policy.json"
 
-if [[ -n "${CELL}" ]]; then
-  # A packed consumer at the cell's versions, outside the checkout.
-  CONSUMER="$(mktemp -d "${INTH_EXPO_CONSUMER_ROOT:-${HOME}}/inth-expo-${CELL}.XXXXXX")/app"
-  # pnpm, not `bun pm pack`: the workspace is a pnpm install, so only pnpm can
-  # resolve the package's `workspace:` dependency versions.
-  (cd "${REPO_ROOT}/packages/react-native" && pnpm --config.ignore-scripts=true pack --out "${OUT}/inth-react-native.tgz") > "${OUT}/pack.log" 2>&1
-  python3 "${APP_DIR}/scripts/prepare-packed-consumer.py" --package "${OUT}/inth-react-native.tgz" --output "${CONSUMER}" --cell "${CELL}" > "${OUT}/consumer.json"
-  APP="${CONSUMER}"
-  (cd "${APP}" && bun install) > "${OUT}/install.log" 2>&1
-  cp "${APP}/package.json" "${OUT}/consumer-package.json"
-  cp "${APP}/bun.lock" "${OUT}/consumer-bun.lock"
-else
-  APP="${APP_DIR}"
-fi
-printf '%s\n' "${APP}" > "${OUT}/app-dir.txt"
-node - "${APP}" > "${OUT}/versions.json" <<'NODE'
-const fs = require('node:fs');
-const path = require('node:path');
-const app = process.argv[2];
-// Some packages do not export package.json, so read it from the install itself.
-const installed = (name) => {
-  for (let dir = app; ; dir = path.dirname(dir)) {
-    const manifest = path.join(dir, 'node_modules', name, 'package.json');
-    if (fs.existsSync(manifest)) return JSON.parse(fs.readFileSync(manifest, 'utf8')).version;
-    if (dir === path.dirname(dir)) throw new Error(`${name} is not installed for ${app}`);
+  export CI=1 EXPO_NO_TELEMETRY=1 SENTRY_DISABLE_AUTO_UPLOAD=true INTH_LOCAL_PODS=false
+  export EXPO_PUBLIC_INTH_APP_E2E=1 EXPO_PUBLIC_INTH_FAKE_NATIVE=false
+  export EXPO_PUBLIC_INTH_PROJECT_URL="${APP_URL}/api/self-host"
+  export EXPO_PUBLIC_INTH_E2E_URL="${APP_URL}" EXPO_PUBLIC_INTH_E2E_MIXPANEL_URL="${MIXPANEL_URL}"
+  export INTH_E2E_POLICY="${OUT}/policy-assets/inth-policy.json"
+
+  if [[ -n "${CELL}" ]]; then
+    # A packed consumer at the cell's versions, outside the checkout.
+    CONSUMER="$(mktemp -d "${INTH_EXPO_CONSUMER_ROOT:-${HOME}}/inth-expo-${CELL}.XXXXXX")/app"
+    # pnpm, not `bun pm pack`: the workspace is a pnpm install, so only pnpm can
+    # resolve the package's `workspace:` dependency versions.
+    (cd "${REPO_ROOT}/packages/react-native" && pnpm --config.ignore-scripts=true pack --out "${OUT}/inth-react-native.tgz") > "${OUT}/pack.log" 2>&1
+    python3 "${APP_DIR}/scripts/prepare-packed-consumer.py" --package "${OUT}/inth-react-native.tgz" --output "${CONSUMER}" --cell "${CELL}" > "${OUT}/consumer.json"
+    APP="${CONSUMER}"
+    (cd "${APP}" && bun install) > "${OUT}/install.log" 2>&1
+    cp "${APP}/package.json" "${OUT}/consumer-package.json"
+    cp "${APP}/bun.lock" "${OUT}/consumer-bun.lock"
+  else
+    APP="${APP_DIR}"
+  fi
+  printf '%s\n' "${APP}" > "${OUT}/app-dir.txt"
+  node - "${APP}" > "${OUT}/versions.json" <<'NODE'
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const app = process.argv[2];
+  // Some packages do not export package.json, so read it from the install itself.
+  const installed = (name) => {
+    for (let dir = app; ; dir = path.dirname(dir)) {
+      const manifest = path.join(dir, 'node_modules', name, 'package.json');
+      if (fs.existsSync(manifest)) return JSON.parse(fs.readFileSync(manifest, 'utf8')).version;
+      if (dir === path.dirname(dir)) throw new Error(`${name} is not installed for ${app}`);
+    }
+  };
+  const names = ['expo', 'react', 'react-native', 'expo-build-properties', 'expo-constants', 'expo-dev-client',
+    '@inth/react-native', 'posthog-react-native', 'mixpanel-react-native', '@amplitude/analytics-react-native',
+    '@sentry/react-native', '@react-native-firebase/app', '@react-native-firebase/analytics',
+    '@react-native-async-storage/async-storage', 'react-native-get-random-values'];
+  const versions = {};
+  for (const name of names) {
+    versions[name] = installed(name);
   }
-};
-const names = ['expo', 'react', 'react-native', 'expo-build-properties', 'expo-constants', 'expo-dev-client',
-  '@inth/react-native', 'posthog-react-native', 'mixpanel-react-native', '@amplitude/analytics-react-native',
-  '@sentry/react-native', '@react-native-firebase/app', '@react-native-firebase/analytics',
-  '@react-native-async-storage/async-storage', 'react-native-get-random-values'];
-const versions = {};
-for (const name of names) {
-  versions[name] = installed(name);
-}
-process.stdout.write(`${JSON.stringify(versions, null, 2)}\n`);
+  process.stdout.write(`${JSON.stringify(versions, null, 2)}\n`);
 NODE
-cat "${OUT}/versions.json"
+  cat "${OUT}/versions.json"
+fi
 
 if [[ "${PLATFORM}" == ios ]]; then
   (cd "${APP}" && bun x expo prebuild --platform ios --clean) > "${OUT}/prebuild.log" 2>&1
@@ -343,18 +369,26 @@ else
   ADB="${ANDROID_HOME}/platform-tools/adb"
   AVDMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/avdmanager"
   IMAGE="${INTH_ANDROID_IMAGE:-system-images;android-36;google_apis;arm64-v8a}"
-  ARCH="${INTH_ANDROID_ARCH:-arm64-v8a}"
-  export INTH_MAVEN_URL="file://${REPO_ROOT}/packages/android/build/maven-staging"
-  sh "${REPO_ROOT}/packages/android/gradlew" -p "${REPO_ROOT}/packages/android" --max-workers=4 \
-    :inth-core:publishAllPublicationsToStagingRepository :inth-android:publishAllPublicationsToStagingRepository :inth-consent-ui:publishAllPublicationsToStagingRepository > "${OUT}/native-artifacts.log" 2>&1
-  (cd "${APP}" && bun x expo prebuild --platform android --clean --no-install) > "${OUT}/prebuild.log" 2>&1
-  sh "${APP}/android/gradlew" -p "${APP}/android" --refresh-dependencies :app:assembleRelease \
-    -PreactNativeArchitectures="${ARCH}" > "${OUT}/build.log" 2>&1
-  # The journey must run on R8 output, as users' Release builds do. R8 writes this map.
-  MAPPING="${APP}/android/app/build/outputs/mapping/release/mapping.txt"
-  [[ -s "${MAPPING}" ]] || { echo "The Release build did not run R8: no ${MAPPING}" >&2; exit 1; }
-  # Kept to read obfuscated stack traces from the journey logs.
-  gzip -c "${MAPPING}" > "${OUT}/r8-mapping.txt.gz"
+  if [[ "${PHASE}" == run ]]; then
+    APK="${BUILD}/apk/app-release.apk"
+  else
+    ARCH="${INTH_ANDROID_ARCH:-arm64-v8a}"
+    export INTH_MAVEN_URL="file://${REPO_ROOT}/packages/android/build/maven-staging"
+    sh "${REPO_ROOT}/packages/android/gradlew" -p "${REPO_ROOT}/packages/android" --max-workers=4 \
+      :inth-core:publishAllPublicationsToStagingRepository :inth-android:publishAllPublicationsToStagingRepository :inth-consent-ui:publishAllPublicationsToStagingRepository > "${OUT}/native-artifacts.log" 2>&1
+    (cd "${APP}" && bun x expo prebuild --platform android --clean --no-install) > "${OUT}/prebuild.log" 2>&1
+    sh "${APP}/android/gradlew" -p "${APP}/android" --refresh-dependencies :app:assembleRelease \
+      -PreactNativeArchitectures="${ARCH}" > "${OUT}/build.log" 2>&1
+    # The journey must run on R8 output, as users' Release builds do. R8 writes this map.
+    MAPPING="${APP}/android/app/build/outputs/mapping/release/mapping.txt"
+    [[ -s "${MAPPING}" ]] || { echo "The Release build did not run R8: no ${MAPPING}" >&2; exit 1; }
+    # Kept to read obfuscated stack traces from the journey logs.
+    gzip -c "${MAPPING}" > "${OUT}/r8-mapping.txt.gz"
+    mkdir -p "${OUT}/apk"
+    APK="${OUT}/apk/app-release.apk"
+    cp "${APP}/android/app/build/outputs/apk/release/app-release.apk" "${APK}"
+  fi
+  [[ "${PHASE}" != build ]] || exit 0
   AVD_NAME="inth-expo-e2e-${LABEL}-${RUN_ID}"
   echo no | "${AVDMANAGER}" create avd --name "${AVD_NAME}" --package "${IMAGE}" --device pixel_6 > "${OUT}/avd.log" 2>&1
   # Start above the default 5554 so a developer's own emulator keeps its port.

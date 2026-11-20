@@ -10,7 +10,9 @@ Firebase cannot be pointed at the capture server, so the journey's vendor steps
            collection is disabled and analytics_storage is denied.
 
 "At probe time" is the latest state logged before the probe starts, or, when
-Firebase has logged none yet, the first one logged within 2 seconds after.
+Firebase has logged none yet, the first one logged within 2 seconds after. When
+Firebase had not started at all by the probe (no line of its own before it), the
+first state it logs before the next probe is the one it applied to the probe.
 
 Probe times come from vendor-probes.json (device epoch ms). iOS reads the
 simulator's `log stream` (host clock, local time). Firebase's iOS debug log has
@@ -36,6 +38,9 @@ COLLECTION = re.compile(r'(?:analytics collection|measurement enabled)\D{0,40}?(
 STORAGE = re.compile(r'analytics_storage\W{0,6}(?P<state>granted|denied|true|false|1|0)\b', re.I)
 # Seconds after a probe starts in which a state Firebase logs still counts for it.
 LOG_GRACE_S = 2.0
+# Firebase quotes settings it rejected ('Ignoring lower-priority consent settings,
+# proposed settings: …'); those are not its state.
+REJECTED = re.compile(r'Ignoring lower-priority', re.I)
 # iOS: 'Logging event: …' and 'Event logged. …'; Android: 'Logging event (FE): …'.
 LOGGED = re.compile(r'Logging event|Event logged', re.I)
 
@@ -67,12 +72,24 @@ def parse(path: Path) -> list[tuple[float, str]]:
     return lines
 
 
+def first(lines, after: float, until: float, pattern: re.Pattern) -> tuple[str, str] | None:
+    for at, text in lines:
+        if at <= after:
+            continue
+        if at >= until:
+            break
+        match = None if REJECTED.search(text) else pattern.search(text)
+        if match:
+            return (match.group('state').lower(), text)
+    return None
+
+
 def latest(lines, before: float, pattern: re.Pattern) -> tuple[str, str] | None:
     found = None
     for at, text in lines:
         if at > before:
             break
-        match = pattern.search(text)
+        match = None if REJECTED.search(text) else pattern.search(text)
         if match:
             found = (match.group('state').lower(), text)
     return found
@@ -83,6 +100,7 @@ lines = parse(log) if log.exists() else []
 print(f'{len(lines)} Firebase lines from {log.name}')
 failures: list[str] = []
 report = []
+starts = sorted(probe['startedAt'] / 1000 for probe in probes.values())
 for step in steps:
     name = step.get('probe')
     probe = probes.get(name or '')
@@ -103,6 +121,15 @@ for step in steps:
     at = logged_at if logged_at is not None else probe['startedAt'] / 1000 + LOG_GRACE_S
     collection = latest(lines, at, COLLECTION)
     storage = latest(lines, at, STORAGE)
+    # A launch probe can start before Firebase does: on a slow emulator Firebase
+    # logged its first line 2.2 s after it. Firebase holds an event it gets before
+    # it starts, then applies the first state it adopts, so read that state, up to
+    # the next probe. Once Firebase has logged anything, the rule above stands.
+    started_at = probe['startedAt'] / 1000
+    if logged_at is None and not any(when <= started_at for when, _ in lines):
+        until = next((when for when in starts if when > started_at), float('inf'))
+        collection = first(lines, started_at, until, COLLECTION)
+        storage = first(lines, started_at, until, STORAGE)
     want_on = {'enabled', 'true', 'granted', '1'}
     checks = {
         'collection': collection is not None and (collection[0] in want_on) == granted,

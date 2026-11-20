@@ -1,0 +1,558 @@
+# Android suites that need a booted emulator, which needs KVM. Depot turned off
+# nested virtualization on its Linux runners in November 2026 (CVE-2026-99312),
+# so only the steps that boot an emulator run on GitHub-hosted ubuntu-24.04,
+# which has KVM. Every app and test APK builds on Depot runners first and is
+# handed to an emulator job, which only boots, installs and runs the tests.
+#
+# A suite runs only when its inputs changed since it last passed with them:
+# scripts/ci-android-fingerprint.py hashes them, and a passing suite leaves a
+# marker in the Actions cache. Scheduled and manual runs always run every suite.
+name: Android emulator
+
+on:
+  pull_request:
+    # Every input in scripts/ci-android-fingerprint.py must be listed here; the
+    # plan job fails when one is missing. More is fine: the plan skips suites
+    # whose inputs did not change.
+    paths:
+      - "packages/android/**"
+      - "packages/native-protocol/**"
+      - "packages/react-native/**"
+      - "packages/sdk/**"
+      - "packages/cli/vendor/c15t-mobile/**"
+      - "packages/cli/src/native/mobile/**"
+      - "examples/native/**"
+      - "internals/fixtures/react-native-bare/**"
+      - "internals/fixtures/expo-dev/**"
+      - "internals/typescript-config/**"
+      - "internals/vitest-config/**"
+      - "scripts/docs-origin.ts"
+      - "scripts/generate-package-docs.ts"
+      - "scripts/manifest-utils.ts"
+      - "scripts/normalize-dist-types.mjs"
+      - "scripts/package-doc-entry-points.ts"
+      - "scripts/package-skill.ts"
+      - "scripts/prune-dist-types.ts"
+      - "scripts/rewrite-package-doc-links.ts"
+      - "scripts/sync-vendored-apple.ts"
+      - "scripts/sync-vendored-core.ts"
+      - "scripts/verify-package-artifacts.ts"
+      - "scripts/ci-android-emulator.sh"
+      - "scripts/ci-android-fingerprint.py"
+      - "scripts/ci-android-instrument.py"
+      - "scripts/ci-android-toolchain.sh"
+      - "scripts/ci-report-failure.sh"
+      - "scripts/export-mobile-e2e-policy.ts"
+      - "scripts/export-mobile-policy.ts"
+      - "scripts/mobile-compatibility.json"
+      - "scripts/vendor_capture.py"
+      - ".github/workflows/android-emulator.yml"
+      - ".github/actions/setup-sdk/**"
+      - ".node-version"
+      - "package.json"
+      - "patches/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "turbo.json"
+  push:
+    branches: ["main"]
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push to the same pull request replaces its run. Every other run gets
+# its own group, so parallel manual runs never cancel each other.
+concurrency:
+  group: android-emulator-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  INTH_ANDROID_IMAGE: system-images;android-36;google_apis;x86_64
+  INTH_ANDROID_ARCH: x86_64
+
+jobs:
+  plan:
+    name: Plan which Android suites to run
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      native: ${{ steps.fingerprint.outputs.native }}
+      apps: ${{ steps.fingerprint.outputs.apps }}
+      run_native: ${{ steps.plan.outputs.run_native }}
+      run_react_native: ${{ steps.plan.outputs.run_react_native }}
+      expo_cells: ${{ steps.plan.outputs.expo_cells }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Check the pull request path filter covers every suite input
+        run: python3 scripts/ci-android-fingerprint.py --check .github/workflows/android-emulator.yml
+      - name: Fingerprint each suite's inputs
+        id: fingerprint
+        run: python3 scripts/ci-android-fingerprint.py | tee -a "${GITHUB_OUTPUT}"
+      # Lookups only: a hit means this suite already passed with these inputs. The
+      # cache is scoped like any Actions cache, so a pull request sees its own
+      # markers and main's, never another pull request's.
+      - name: Did the native suites pass with these inputs?
+        id: passed-native
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: .ci-reports/passed
+          key: android-emulator-passed-native-${{ steps.fingerprint.outputs.native }}
+          lookup-only: true
+      - name: Did the RN journey pass with these inputs?
+        id: passed-react-native
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: .ci-reports/passed
+          key: android-emulator-passed-react-native-${{ steps.fingerprint.outputs.apps }}
+          lookup-only: true
+      - name: Did Expo fixture pass with these inputs?
+        id: passed-expo-fixture
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: .ci-reports/passed
+          key: android-emulator-passed-expo-fixture-${{ steps.fingerprint.outputs.apps }}
+          lookup-only: true
+      - name: Did Expo expo-55 pass with these inputs?
+        id: passed-expo-55
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: .ci-reports/passed
+          key: android-emulator-passed-expo-expo-55-${{ steps.fingerprint.outputs.apps }}
+          lookup-only: true
+      - name: Did Expo expo-57 pass with these inputs?
+        id: passed-expo-57
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: .ci-reports/passed
+          key: android-emulator-passed-expo-expo-57-${{ steps.fingerprint.outputs.apps }}
+          lookup-only: true
+      - name: Choose the suites
+        id: plan
+        env:
+          NATIVE: ${{ steps.passed-native.outputs.cache-hit }}
+          REACT_NATIVE: ${{ steps.passed-react-native.outputs.cache-hit }}
+          EXPO_FIXTURE: ${{ steps.passed-expo-fixture.outputs.cache-hit }}
+          EXPO_55: ${{ steps.passed-expo-55.outputs.cache-hit }}
+          EXPO_57: ${{ steps.passed-expo-57.outputs.cache-hit }}
+        run: |
+          run() { [[ "$1" == true ]] && echo false || echo true; }
+          cells=()
+          [[ "${EXPO_FIXTURE}" == true ]] || cells+=('"fixture"')
+          [[ "${EXPO_55}" == true ]] || cells+=('"expo-55"')
+          [[ "${EXPO_57}" == true ]] || cells+=('"expo-57"')
+          {
+            echo "run_native=$(run "${NATIVE}")"
+            echo "run_react_native=$(run "${REACT_NATIVE}")"
+            echo "expo_cells=[$(IFS=,; echo "${cells[*]}")]"
+          } | tee -a "${GITHUB_OUTPUT}"
+          {
+            echo "## Android suites"
+            echo
+            echo "| Suite | Plan |"
+            echo "| --- | --- |"
+            for suite in NATIVE REACT_NATIVE EXPO_FIXTURE EXPO_55 EXPO_57; do
+              if [[ "${!suite}" == true ]]; then echo "| ${suite} | skipped: passed with these inputs |"; else echo "| ${suite} | runs |"; fi
+            done
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+  # Builds need no KVM, so they run on Depot, whose runners also share Gradle task
+  # outputs between runs through Depot Cache. Pull requests from forks get no
+  # Depot runner and build on GitHub instead.
+  native-build:
+    name: Build the native test apps
+    needs: plan
+    if: ${{ needs.plan.outputs.run_native == 'true' }}
+    runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-24.04' || 'depot-ubuntu-24.04-8' }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Prepare the Android toolchain
+        run: bash scripts/ci-android-toolchain.sh build --no-ndk
+      - name: Restore Gradle dependencies
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            ~/.gradle/caches/modules-2
+            ~/.gradle/wrapper
+          key: gradle-deps-native-build-${{ hashFiles('packages/android/**/*.gradle.kts', 'packages/android/gradle/**', 'examples/native/consent-demo/android/**/*.gradle.kts') }}
+          restore-keys: gradle-deps-native-build-
+      - name: Build the kernel suite and the consent demo with their test APKs
+        run: sh packages/android/gradlew -p packages/android :inth-android:assembleDebugAndroidTest :consent-demo:assembleDebug :consent-demo:assembleDebugAndroidTest
+      # Each test APK's package names its instrumentation, so the emulator job
+      # reads it instead of repeating applicationId rules.
+      - name: Collect the APKs
+        run: |
+          out=.ci-reports/native-build
+          mkdir -p "${out}"
+          cp packages/android/inth-android/build/outputs/apk/androidTest/debug/*.apk "${out}/kernel-test.apk"
+          cp examples/native/consent-demo/android/build/outputs/apk/debug/*.apk "${out}/consent-demo.apk"
+          cp examples/native/consent-demo/android/build/outputs/apk/androidTest/debug/*.apk "${out}/consent-demo-test.apk"
+          aapt2="$(find "${ANDROID_HOME}/build-tools" -name aapt2 | sort -V | tail -n 1)"
+          for apk in kernel-test consent-demo-test; do
+            "${aapt2}" dump packagename "${out}/${apk}.apk" > "${out}/${apk}.package"
+            echo "${apk}: $(cat "${out}/${apk}.package")"
+          done
+      - name: Upload the APKs
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: native-android-build
+          path: .ci-reports/native-build/
+          if-no-files-found: error
+          retention-days: 3
+
+  native:
+    name: Native instrumented suites (kernel and consent demo)
+    needs: [plan, native-build]
+    if: ${{ !cancelled() && needs.native-build.result == 'success' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      BUILD: .ci-reports/native-build
+      RUNNER: androidx.test.runner.AndroidJUnitRunner
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: native-android-build
+          path: .ci-reports/native-build
+      # Also pins the emulator: a new emulator release arrives only when the key changes.
+      - name: Restore the emulator and system image
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            /usr/local/lib/android/sdk/emulator
+            /usr/local/lib/android/sdk/system-images/android-36/google_apis/x86_64
+          key: android-emulator-android-36-google_apis-x86_64-v1
+      - name: Prepare the Android toolchain
+        run: bash scripts/ci-android-toolchain.sh emulator
+      - name: Boot the emulator
+        id: boot
+        run: bash scripts/ci-android-emulator.sh start
+      - name: Android kernel instrumented suite
+        run: |
+          python3 scripts/ci-android-instrument.py \
+            --test-apk "${BUILD}/kernel-test.apk" \
+            --instrumentation "$(cat "${BUILD}/kernel-test.package")/${RUNNER}" \
+            --out .ci-reports/native/kernel
+      # RealVendorSdkTest points PostHog, Mixpanel and Sentry at this server.
+      # The app reaches it as localhost through adb reverse, and Mixpanel, which
+      # refuses loopback hosts, as 10.0.2.2, the emulator's alias for this machine.
+      - name: Start the vendor capture server
+        if: ${{ !cancelled() && steps.boot.outcome == 'success' }}
+        run: |
+          out="${RUNNER_TEMP}/vendor-capture"
+          mkdir -p "${out}"
+          nohup python3 scripts/vendor_capture.py --port 39874 --out "${out}" > "${out}/server.log" 2>&1 &
+          for _ in $(seq 1 50); do [[ -f "${out}/vendor-capture-ready" ]] && break; sleep 0.2; done
+          curl -fsS http://localhost:39874/health
+          adb reverse tcp:39874 tcp:39874
+      - name: Consent demo journeys
+        if: ${{ !cancelled() && steps.boot.outcome == 'success' }}
+        run: |
+          python3 scripts/ci-android-instrument.py \
+            --apk "${BUILD}/consent-demo.apk" \
+            --test-apk "${BUILD}/consent-demo-test.apk" \
+            --instrumentation "$(cat "${BUILD}/consent-demo-test.package")/${RUNNER}" \
+            --arg inthVendorCapture=http://localhost:39874 \
+            --out .ci-reports/native/consent-demo
+      - name: Stop the emulator
+        if: always()
+        run: bash scripts/ci-android-emulator.sh stop
+      - name: Upload test reports and emulator logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: android-native-instrumented
+          path: |
+            .ci-reports/native/**
+            ${{ runner.temp }}/android-emulator/*.log
+            ${{ runner.temp }}/vendor-capture/vendor-requests.json
+            ${{ runner.temp }}/vendor-capture/server.log
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Mark these inputs as passed
+        run: mkdir -p .ci-reports/passed && echo "${GITHUB_SHA}" > .ci-reports/passed/native
+      - uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: .ci-reports/passed
+          key: android-emulator-passed-native-${{ needs.plan.outputs.native }}
+
+  # Device screenshots of the stock screens and of the app-owned example built on the headless
+  # blocks, for pull request descriptions. Dispatch it with
+  # `gh workflow run android-emulator.yml --ref <branch>`.
+  screenshots:
+    name: Stock and custom consent screenshots
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Restore the emulator and system image
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            /usr/local/lib/android/sdk/emulator
+            /usr/local/lib/android/sdk/system-images/android-36/google_apis/x86_64
+          key: android-emulator-android-36-google_apis-x86_64-v1
+      - name: Prepare the Android toolchain
+        run: bash scripts/ci-android-toolchain.sh emulator
+      - name: Boot the emulator
+        run: bash scripts/ci-android-emulator.sh start
+      - name: Capture every screen in light and dark
+        run: sh packages/android/gradlew -p packages/android --no-build-cache :consent-demo:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.inth.demo.ConsentScreenshotTest
+      - name: Pull the screenshots
+        run: |
+          adb pull /sdcard/Download/inth-consent-screenshots "${RUNNER_TEMP}/consent-screenshots"
+          test "$(find "${RUNNER_TEMP}/consent-screenshots" -name '*.png' | wc -l)" -eq 12
+      - name: Stop the emulator
+        if: always()
+        run: bash scripts/ci-android-emulator.sh stop
+      - name: Upload the screenshots
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: consent-screenshots-android
+          path: ${{ runner.temp }}/consent-screenshots/*.png
+          if-no-files-found: error
+          retention-days: 7
+
+  react-native-build:
+    name: Build the release RN app for the emulator
+    needs: plan
+    if: ${{ needs.plan.outputs.run_react_native == 'true' }}
+    runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-24.04' || 'depot-ubuntu-24.04-8' }}
+    timeout-minutes: 45
+    env:
+      INTH_APP_E2E_PHASE: build
+      INTH_APP_E2E_OUT: ${{ github.workspace }}/.ci-reports/rn-android-build
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Restore the NDK
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: /usr/local/lib/android/sdk/ndk/27.1.12297006
+          key: android-ndk-27.1.12297006-v1
+      - name: Prepare the Android toolchain
+        run: bash scripts/ci-android-toolchain.sh build
+      - uses: ./.github/actions/setup-sdk
+      - name: Restore Gradle dependencies
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            ~/.gradle/caches/modules-2
+            ~/.gradle/wrapper
+          key: gradle-deps-rn-${{ hashFiles('packages/android/**/*.gradle.kts', 'packages/android/gradle/**', 'packages/react-native/android/**/*.gradle*', 'internals/fixtures/react-native-bare/android/**/*.gradle', 'pnpm-lock.yaml') }}
+          restore-keys: gradle-deps-rn-
+      - name: Build the app and its UIAutomator runner
+        run: bash internals/fixtures/react-native-bare/scripts/app-e2e.sh android
+      - name: Upload the APKs and build logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: rn-android-build
+          path: .ci-reports/rn-android-build/
+          if-no-files-found: error
+          retention-days: 3
+
+  react-native:
+    name: Release RN app on Android Emulator, UIAutomator
+    needs: [plan, react-native-build]
+    if: ${{ !cancelled() && needs.react-native-build.result == 'success' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      INTH_APP_E2E_PHASE: run
+      INTH_APP_E2E_BUILD: ${{ github.workspace }}/.ci-reports/rn-android-build
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: rn-android-build
+          path: .ci-reports/rn-android-build
+      - name: Restore the emulator and system image
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            /usr/local/lib/android/sdk/emulator
+            /usr/local/lib/android/sdk/system-images/android-36/google_apis/x86_64
+          key: android-emulator-android-36-google_apis-x86_64-v1
+      - name: Prepare the Android toolchain
+        run: bash scripts/ci-android-toolchain.sh emulator
+      # The journeys join their screen recording into journey.mp4 with ffmpeg.
+      - name: Install ffmpeg if the image lacks it
+        run: command -v ffmpeg || { sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends ffmpeg; }
+      - name: Run real consent controls and record the app
+        run: bash internals/fixtures/react-native-bare/scripts/app-e2e.sh android
+      - name: Upload recordings, native snapshots, JUnit results and logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: mobile-app-e2e-android
+          path: internals/fixtures/react-native-bare/.artifacts/app-e2e/**
+          if-no-files-found: error
+          retention-days: 7
+      - name: Mark these inputs as passed
+        run: mkdir -p .ci-reports/passed && echo "${GITHUB_SHA}" > .ci-reports/passed/react-native
+      - uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: .ci-reports/passed
+          key: android-emulator-passed-react-native-${{ needs.plan.outputs.apps }}
+
+  expo-build:
+    name: Build Expo ${{ matrix.cell }} for the emulator
+    needs: plan
+    if: ${{ needs.plan.outputs.expo_cells != '[]' }}
+    runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-24.04' || 'depot-ubuntu-24.04-8' }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        # The fixture's own Expo 58 build, and as packed consumers the oldest Expo
+        # cell of scripts/mobile-compatibility.json and the newest one below the
+        # fixture's SDK. Expo 56 gets the packed type, Codegen and prebuild checks.
+        # The plan drops a cell that already passed with these inputs.
+        cell: ${{ fromJSON(needs.plan.outputs.expo_cells) }}
+    env:
+      INTH_APP_E2E_PHASE: build
+      INTH_EXPO_CELL: ${{ matrix.cell != 'fixture' && matrix.cell || '' }}
+      INTH_APP_E2E_OUT: ${{ github.workspace }}/.ci-reports/expo-build/${{ matrix.cell }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Restore the NDK
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: /usr/local/lib/android/sdk/ndk/27.1.12297006
+          key: android-ndk-27.1.12297006-v1
+      - name: Prepare the Android toolchain
+        run: bash scripts/ci-android-toolchain.sh build
+      - uses: ./.github/actions/setup-sdk
+      - name: Restore Gradle dependencies
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            ~/.gradle/caches/modules-2
+            ~/.gradle/wrapper
+          key: gradle-deps-expo-${{ matrix.cell }}-${{ hashFiles('packages/android/**/*.gradle.kts', 'packages/android/gradle/**', 'packages/react-native/android/**/*.gradle*', 'internals/fixtures/expo-dev/package.json', 'scripts/mobile-compatibility.json', 'pnpm-lock.yaml') }}
+          restore-keys: gradle-deps-expo-${{ matrix.cell }}-
+      - name: Build the app with the real vendor SDKs
+        run: bash internals/fixtures/expo-dev/scripts/vendor-e2e.sh android
+      - name: Upload the APK and build logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: expo-${{ matrix.cell }}-android-build
+          path: .ci-reports/expo-build/${{ matrix.cell }}/
+          if-no-files-found: error
+          retention-days: 3
+
+  expo-vendor-sdks:
+    name: Expo ${{ matrix.cell }} with real vendor SDKs on Android Emulator
+    needs: [plan, expo-build]
+    # One cell's failed build must not skip the others. A failed cell has no APK,
+    # and its job stops at the APK check.
+    if: ${{ !cancelled() && needs.plan.outputs.expo_cells != '[]' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        cell: ${{ fromJSON(needs.plan.outputs.expo_cells) }}
+    env:
+      INTH_APP_E2E_PHASE: run
+      INTH_EXPO_CELL: ${{ matrix.cell != 'fixture' && matrix.cell || '' }}
+      INTH_APP_E2E_BUILD: ${{ github.workspace }}/.ci-reports/expo-build/${{ matrix.cell }}
+      INTH_APP_E2E_OUT: ${{ github.workspace }}/.ci-reports/expo-vendor-e2e/${{ matrix.cell }}-android
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: expo-${{ matrix.cell }}-android-build
+          path: .ci-reports/expo-build/${{ matrix.cell }}
+      - name: Check the build produced an APK
+        run: test -s ".ci-reports/expo-build/${{ matrix.cell }}/apk/app-release.apk"
+      - name: Restore the emulator and system image
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            /usr/local/lib/android/sdk/emulator
+            /usr/local/lib/android/sdk/system-images/android-36/google_apis/x86_64
+          key: android-emulator-android-36-google_apis-x86_64-v1
+      - name: Prepare the Android toolchain
+        run: bash scripts/ci-android-toolchain.sh emulator
+      # The journeys join their screen recording into journey.mp4 with ffmpeg.
+      - name: Install ffmpeg if the image lacks it
+        run: command -v ffmpeg || { sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends ffmpeg; }
+      - name: Run PostHog, Mixpanel, Amplitude, Sentry Replay and Firebase through the consent journey
+        run: bash internals/fixtures/expo-dev/scripts/vendor-e2e.sh android
+      - name: Upload vendor requests, Firebase log evidence and UIAutomator frames
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: mobile-app-e2e-expo-${{ matrix.cell }}-android
+          path: .ci-reports/expo-vendor-e2e/${{ matrix.cell }}-android/**
+          if-no-files-found: error
+          retention-days: 7
+      - name: Mark these inputs as passed
+        run: mkdir -p .ci-reports/passed && echo "${GITHUB_SHA}" > ".ci-reports/passed/expo-${{ matrix.cell }}"
+      - uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: .ci-reports/passed
+          key: android-emulator-passed-expo-${{ matrix.cell }}-${{ needs.plan.outputs.apps }}
+
+  # Nobody watches a nightly. Open an issue, or comment on the open one, when a
+  # main-branch or scheduled run fails.
+  report-failure:
+    name: Report a failed main or nightly run
+    needs:
+      [
+        plan,
+        native-build,
+        native,
+        react-native-build,
+        react-native,
+        expo-build,
+        expo-vendor-sdks,
+      ]
+    if: ${{ failure() && github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'push') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    # One report at a time across runs, so a push run and a nightly run that fail
+    # together cannot both find no open issue and each open one.
+    concurrency:
+      group: android-emulator-report-failure
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Open or update the failure issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INTH_FAILURE_TITLE: Android emulator suites are failing on main
+        run: bash scripts/ci-report-failure.sh

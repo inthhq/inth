@@ -74,6 +74,63 @@ describe('verify-vendor-firebase.py', () => {
 		]);
 		expect(result.status).toBe(1);
 	});
+
+	it('reads the first state when Firebase starts after a launch probe', () => {
+		// Expo 55 on a GitHub runner: Firebase's first line came 2.2 s after the
+		// probe, and it applied the denied state 3 s after.
+		const result = check([
+			fa(start + 2.171, 'onActivityCreated'),
+			fa(start + 3.05, 'Setting app measurement enabled (FE): false'),
+			fa(
+				start + 3.05,
+				'Setting storage consent(FE): source=API,ad_storage=denied,analytics_storage=denied'
+			),
+		]);
+		expect(result.stdout).toContain('Firebase followed every Inth decision');
+		expect(result.status).toBe(0);
+	});
+
+	it('fails a refusal when Firebase starts after the probe with collection on, then turns it off', () => {
+		// The first state Firebase adopts governs the held probe, even when a later
+		// one inside the 2 s window looks right.
+		const result = check([
+			fa(start + 0.5, 'Setting app measurement enabled (FE): true'),
+			fa(start + 1.5, 'Setting app measurement enabled (FE): false'),
+			fa(
+				start + 3,
+				'Setting storage consent(FE): source=API,ad_storage=denied,analytics_storage=denied'
+			),
+		]);
+		expect(result.stdout).toContain('Firebase collection does not match');
+		expect(result.status).toBe(1);
+	});
+
+	it('ignores consent settings Firebase rejected', () => {
+		// Firebase quotes a proposal it turned down; that is not its state.
+		const result = check([
+			fa(
+				start + 2.46,
+				'Ignoring lower-priority consent settings, proposed settings: source=MANIFEST,ad_storage=denied,analytics_storage=denied'
+			),
+			fa(start + 3.05, 'Setting app measurement enabled (FE): false'),
+		]);
+		expect(result.stdout).toContain(
+			'Firebase analytics_storage does not match'
+		);
+		expect(result.status).toBe(1);
+	});
+
+	it('fails a refusal when Firebase starts after the probe with collection on', () => {
+		const result = check([
+			fa(
+				start + 2.46,
+				'Setting storage consent(FE): source=API,ad_storage=denied,analytics_storage=denied'
+			),
+			fa(start + 3.05, 'Setting app measurement enabled (FE): true'),
+		]);
+		expect(result.stdout).toContain('Firebase collection does not match');
+		expect(result.status).toBe(1);
+	});
 	it('reads a granted probe at the moment Firebase logged it', () => {
 		// Before each probe the journey re-syncs, and the Firebase helper turns
 		// collection off, applies consent, then turns it on. Expo 57 on Android
