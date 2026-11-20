@@ -91,7 +91,7 @@ switch visitors or backends after mounting.
 | `storageConfig` | Browser record storage configuration |
 | `enabled` | Set false only when intentionally bypassing consent enforcement |
 | `reloadOnConsentRevoked` | Reload the page after the visitor turns off a granted category or vendor; defaults to `true` |
-| `experimentalScriptRegistry` | Experimental. Loads `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. Defaults to `false`; read once. |
+| `experimentalScriptRegistry` | Experimental. Loads `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. An entry with Inth's release signature loads once it verifies. Pass `{ requireSignatures: true }` to refuse entries without one. Defaults to `false`; read once. |
 
 `enabled: false` grants categories and allows gated loading while suppressing
 consent UI. It is not a way to fix failed initialization or hide a banner in

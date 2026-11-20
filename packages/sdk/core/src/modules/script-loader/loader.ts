@@ -23,8 +23,13 @@ import {
 	normalizeScripts,
 } from './normalize';
 import { readScriptRegistry } from './registry';
+import { createRegistryVerifier } from './signature';
 import { createScriptSourceResolver } from './sources';
-import type { HeldScript, ScriptRegistryState } from './sources';
+import type {
+	HeldScript,
+	RegistryEntryCheck,
+	ScriptRegistryState,
+} from './sources';
 import type {
 	NormalizedScript,
 	PendingMount,
@@ -37,6 +42,17 @@ import type {
 } from './types';
 
 const MAX_RECONCILE_PASSES = 100;
+
+/** Why the loader holds `script` back, for `onDebug`. */
+const heldMessage = (reason: HeldScript['reason'], script: Script): string => {
+	if (reason === 'unparsable') {
+		return `scriptLoader.sources gives ${script.id} an integrity with no hash a browser can parse, so it does not load: the browser would run it unchecked.`;
+	}
+	if (reason === 'unsigned') {
+		return `The script registry lists ${script.id} without a release signature Inth can verify, so it loads neither from the registry nor from ${script.src}.`;
+	}
+	return `The script registry holds ${script.id} back, or lists it without an https src and an integrity hash, so it loads neither from the registry nor from ${script.src}.`;
+};
 
 const validateScripts = (scripts: Script[]): void => {
 	for (const script of scripts) {
@@ -104,9 +120,46 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		? readRegistry(kernel.getSnapshot())
 		: { status: 'failed' };
 	let stopWaiting: (() => void) | undefined;
+	/**
+	 * Called when a signature check that held a script finishes; set to
+	 * `resolveAgain` once the loader is built.
+	 */
+	let signatureSettled = (): void => undefined;
+	const unsignedIds = new Set<string>();
+	let verifyEntry: RegistryEntryCheck | undefined;
+	if (options.registry) {
+		const verifier = createRegistryVerifier({
+			keys: options.registry.signingKeys ?? 'production',
+			onSettled: () => {
+				signatureSettled();
+			},
+			requireSignatures: options.registry.requireSignatures ?? false,
+		});
+		verifyEntry = (script, entry) => {
+			const verdict = verifier(script.src ?? '', entry);
+			if (
+				verdict === 'load' &&
+				!entry.signature &&
+				!unsignedIds.has(script.id)
+			) {
+				unsignedIds.add(script.id);
+				// Reported, not counted as a failure: the script loads.
+				emitDebug({
+					action: 'error',
+					message: `The script registry lists ${script.id} with no release signature. It loads from the registry on its integrity hash; set experimentalScriptRegistry.requireSignatures to refuse entries without one.`,
+					scope: 'step',
+					scriptId: script.id,
+					source: 'script-loader',
+					timestamp: Date.now(),
+				});
+			}
+			return verdict;
+		};
+	}
 	const withSources = createScriptSourceResolver(
 		options.sources,
-		options.registry ? () => registryState : undefined
+		options.registry ? () => registryState : undefined,
+		verifyEntry
 	);
 	/** The list as given, so the registry's list can resolve it again. */
 	let configured: readonly Script[] = options.scripts;
@@ -129,10 +182,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			refusedIds.add(script.id);
 			emit({
 				action: 'error',
-				message:
-					reason === 'unparsable'
-						? `scriptLoader.sources gives ${script.id} an integrity with no hash a browser can parse, so it does not load: the browser would run it unchecked.`
-						: `The script registry holds ${script.id} back, or lists it without an https src and an integrity hash, so it loads neither from the registry nor from ${script.src}.`,
+				message: heldMessage(reason, script),
 				scope: 'lifecycle',
 				scriptId: script.id,
 				source: 'script-loader',
@@ -736,6 +786,29 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			drain();
 		},
 	};
+	/**
+	 * Resolve the configured list again, once the registry's list arrives
+	 * or a signature check that held a script finishes.
+	 */
+	const resolveAgain = (): void => {
+		if (disposed || (held.length === 0 && !staged)) {
+			return;
+		}
+		pendingScripts ??= configured;
+		try {
+			drain();
+		} catch (error) {
+			emit({
+				action: 'error',
+				message: `Applying the script registry's list failed: ${error instanceof Error ? error.message : String(error)}`,
+				scope: 'phase',
+				scriptId: '',
+				source: 'script-loader',
+				timestamp: Date.now(),
+			});
+		}
+	};
+	signatureSettled = resolveAgain;
 	if (options.registry && registryState.status === 'pending') {
 		const settle = (state: ScriptRegistryState): void => {
 			if (state.status === 'pending' || registryState.status !== 'pending') {
@@ -743,24 +816,9 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			}
 			registryState = state;
 			stopWaiting?.();
-			if (disposed || (held.length === 0 && !staged)) {
-				return;
-			}
-			// Resolve the list again: waiting scripts mount now, from the
-			// registry's source or their own URL.
-			pendingScripts ??= configured;
-			try {
-				drain();
-			} catch (error) {
-				emit({
-					action: 'error',
-					message: `Applying the script registry's list failed: ${error instanceof Error ? error.message : String(error)}`,
-					scope: 'phase',
-					scriptId: '',
-					source: 'script-loader',
-					timestamp: Date.now(),
-				});
-			}
+			// Waiting scripts mount now, from the registry's source or their
+			// own URL, or wait on to have their signatures checked.
+			resolveAgain();
 		};
 		const offSnapshot = kernel.subscribe((snapshot) => {
 			settle(readRegistry(snapshot));

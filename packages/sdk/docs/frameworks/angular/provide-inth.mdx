@@ -53,7 +53,7 @@ provider. Injecting one where `provideInth()` is missing throws Angular's
 | `callbacks` | `InthCallbacks` | none | `onChoiceRecorded`, `onPermissionsChanged`, `onSurfaceShown`, `onError` and `onBeforeConsentRevocationReload`. See [callbacks](./callbacks). |
 | `reloadOnConsentRevoked` | `boolean` | `true` | Reloads the page after a save withdraws a category or vendor that was granted. |
 | `clearOnRevocation` | `ClearOnRevocationConfig` | off | Deletes first-party cookies and storage entries when their category is withdrawn. See [clear on revocation](./clear-on-revocation). Read once. |
-| `experimentalScriptRegistry` | `boolean` | `false` | Experimental. Loads `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. Read once. |
+| `experimentalScriptRegistry` | `boolean` or object | `false` | Experimental. Loads `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. An entry with Inth's release signature loads once it verifies. Pass `{ requireSignatures: true }` to refuse entries without one. Read once. |
 | `overrides` | `{ country?, region?, language?, gpc? }` | none | Forces the location, language or Global Privacy Control signal the policy resolves for. |
 | `user` | `User` | none | Identity sent with the policy request and every saved choice. |
 | `storageConfig` | `StorageConfig` | cookie and key `inth` | Names and lifetime of the stored choice. Read once. With server rendering, pass the same name as `cookieName` to `provideInthServer()`. |

@@ -132,7 +132,7 @@ mode fits which deployment.
 | `storageConfig` | `{ storageKey: 'inth' }` | Cookie and localStorage name, `crossSubdomain`, `defaultDomain` and `defaultExpiryDays`. Use the same value in both config files. |
 | `reloadOnConsentRevoked` | `true` | Reloads the page when a save withdraws a granted category or vendor. |
 | `clearOnRevocation` | Unset | Deletes first-party cookies and storage keys for a withdrawn category. See [clear on revocation](/docs/frameworks/nuxt/clear-on-revocation). |
-| `experimentalScriptRegistry` | `false` | Experimental. Loads `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. Read once. |
+| `experimentalScriptRegistry` | `false` | Experimental. Loads `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. An entry with Inth's release signature loads once it verifies. Pass `{ requireSignatures: true }` to refuse entries without one. Read once. |
 | `iab` | Off | Turns IAB TCF on; `{}` is enough. Also takes publisher settings, such as `publisherRestrictions`; fields left out come from the policy. Unset, `false` or `{ enabled: false }` leaves IAB off, and an `iab` policy with a vendor list throws an `IABUnavailableError`. Set it here, not only in `app.config.ts`, so pages prefetch the IAB banner. See [IAB TCF](/docs/frameworks/nuxt/iab). |
 
 ### Scripts, blocking and events
