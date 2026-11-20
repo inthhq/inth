@@ -215,6 +215,11 @@ describe('Next.js request policy and RSC hydration', () => {
 				expect(
 					rendered.element.querySelector('[aria-modal="true"]')
 				).toBeNull();
+				// The dismissal is written once the write code has loaded. Wait
+				// for it, so it cannot land in a later test's cookies.
+				await vi.waitFor(() =>
+					expect(document.cookie).toContain(`${storageKey}-notice=`)
+				);
 			}
 			/* oxlint-enable vitest/no-conditional-expect */
 		});
