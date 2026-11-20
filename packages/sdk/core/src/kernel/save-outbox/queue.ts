@@ -37,6 +37,7 @@ import type {
 import type { ConsentSubject, KernelTransport, SavePayload } from '../../types';
 import type { KernelRuntime } from '../runtime';
 import type { OutboxTransaction, pendingSave, SaveOutboxStore } from './store';
+import { withStoredIdempotencyKey } from './stored-key';
 import type { toStoredPayload } from './stored-payload';
 import type {
 	PendingSaveEntry,
@@ -316,7 +317,13 @@ const createStoredLists = function createStoredLists(
 			) {
 				continue;
 			}
-			entries.push({ ...entry, payload: toStoredPayload(entry.payload) });
+			entries.push({
+				...entry,
+				payload: withStoredIdempotencyKey(
+					toStoredPayload(entry.payload),
+					entry.queuedAt
+				),
+			});
 		}
 		entries.sort(
 			(left, right) =>

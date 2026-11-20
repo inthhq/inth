@@ -513,7 +513,10 @@ describe('save outbox: queue and replay', () => {
 		});
 
 		expect(saveSpy).toHaveBeenCalledTimes(1);
-		expect(saveSpy).toHaveBeenCalledWith(validPayload, { replay: true });
+		expect(saveSpy).toHaveBeenCalledWith(
+			{ ...validPayload, idempotencyKey: expect.any(String) },
+			{ replay: true }
+		);
 		kernel.dispose();
 	});
 
