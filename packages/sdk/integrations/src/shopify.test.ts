@@ -3,11 +3,15 @@ import { createConsentKernel, resolvePolicyRules } from '@inth/sdk/engine';
 import type { ConsentKernel, KernelTransport } from '@inth/sdk/engine';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createShopifyCustomerPrivacy } from './shopify';
+import { createShopifyCustomerPrivacy, toShopifyConsent } from './shopify';
 import type {
 	ShopifyConsentPreferences,
 	ShopifyConsentSnapshot,
 } from './shopify';
+
+const FULL_SCOPE = {
+	scope: ['functionality', 'marketing', 'measurement'],
+} as const;
 
 const ALL_DENIED: ShopifyConsentPreferences = {
 	analytics: false,
@@ -155,11 +159,11 @@ describe('Shopify Customer Privacy bridge', () => {
 		expect(await isSettled(setup)).toBe(true);
 	});
 
-	it('maps categories and lets callers override them', async () => {
+	it('maps categories and lets callers override the category-mapped fields', async () => {
 		const shopify = installCustomerPrivacy();
 		const kernel = kernelWith('opt-in');
 		const bridge = createShopifyCustomerPrivacy({
-			categories: { sale_of_data: 'measurement' },
+			categories: { preferences: 'measurement' },
 		});
 		bridge.connect(kernel);
 
@@ -174,10 +178,92 @@ describe('Shopify Customer Privacy bridge', () => {
 			{
 				analytics: true,
 				marketing: false,
-				preferences: false,
-				sale_of_data: true,
+				preferences: true,
+				sale_of_data: false,
 			},
 		]);
+	});
+
+	it('derives sale_of_data from the opt-out record and default opt-out categories', async () => {
+		const shopify = installCustomerPrivacy();
+		const kernel = kernelWith('opt-out');
+		const bridge = createShopifyCustomerPrivacy();
+		bridge.connect(kernel);
+
+		// Measurement alone denied with no opt-out record denies sale_of_data.
+		await kernel.commands.save({
+			functionality: true,
+			marketing: true,
+			measurement: false,
+		});
+		await vi.waitFor(() =>
+			expect(shopify.sent).toEqual([
+				{
+					analytics: false,
+					marketing: true,
+					preferences: true,
+					sale_of_data: false,
+				},
+			])
+		);
+
+		// Both marketing and measurement granted with no record allows sale_of_data.
+		await kernel.commands.save({
+			functionality: true,
+			marketing: true,
+			measurement: true,
+		});
+		await vi.waitFor(() => expect(shopify.sent).toHaveLength(2));
+		expect(shopify.sent[1]).toEqual(ALL_GRANTED);
+
+		// A held opt-out record denies sale_of_data even when stored choices are grants.
+		await kernel.commands.optOut();
+		await vi.waitFor(() => expect(shopify.sent).toHaveLength(3));
+		expect(shopify.sent[2]).toEqual({
+			analytics: false,
+			marketing: false,
+			preferences: true,
+			sale_of_data: false,
+		});
+		expect(
+			toShopifyConsent({
+				effectivePermissions: {
+					experience: true,
+					functionality: true,
+					marketing: true,
+					measurement: true,
+					necessary: true,
+				},
+				evaluationPolicy: FULL_SCOPE,
+				optOut: kernel.getSnapshot().optOut,
+			})
+		).toEqual({
+			analytics: true,
+			marketing: true,
+			preferences: true,
+			sale_of_data: false,
+		});
+	});
+
+	it('sends sale_of_data false when an untouched opt-out visitor records an opt-out', async () => {
+		const shopify = installCustomerPrivacy();
+		const kernel = kernelWith('opt-out');
+		const bridge = createShopifyCustomerPrivacy();
+		bridge.connect(kernel);
+		await bridge.setup();
+		expect(shopify.sent).toEqual([]);
+
+		await kernel.commands.optOut();
+		await vi.waitFor(() =>
+			expect(shopify.sent).toEqual([
+				{
+					analytics: false,
+					marketing: false,
+					preferences: true,
+					sale_of_data: false,
+				},
+			])
+		);
 	});
 
 	it('waits for the policy, then leaves an untouched opt-out visitor to Shopify', async () => {
@@ -330,8 +416,10 @@ describe('Shopify Customer Privacy bridge', () => {
 				measurement: false,
 				necessary: true,
 			},
+			evaluationPolicy: FULL_SCOPE,
 			explicitChoice: null,
 			model: 'iab',
+			optOut: null,
 			policyPending: false,
 			promptRequirement: { kind: 'choice', reason: 'policy-changed' },
 		};
@@ -363,8 +451,10 @@ describe('Shopify Customer Privacy bridge', () => {
 				measurement: false,
 				necessary: true,
 			},
+			evaluationPolicy: FULL_SCOPE,
 			explicitChoice: null,
 			model: 'opt-in',
+			optOut: null,
 			policyPending: false,
 			promptRequirement: { kind: 'choice', reason: 'policy-changed' },
 		});
@@ -377,8 +467,10 @@ describe('Shopify Customer Privacy bridge', () => {
 				measurement: true,
 				necessary: true,
 			},
+			evaluationPolicy: FULL_SCOPE,
 			explicitChoice: null,
 			model: 'opt-out',
+			optOut: null,
 			policyPending: false,
 			promptRequirement: { kind: 'none' },
 		});
@@ -413,8 +505,10 @@ describe('Shopify Customer Privacy bridge', () => {
 				measurement: true,
 				necessary: true,
 			},
+			evaluationPolicy: FULL_SCOPE,
 			explicitChoice: null,
 			model: 'opt-out',
+			optOut: null,
 			policyPending: false,
 			promptRequirement: { kind: 'choice', reason: 'policy-changed' },
 		});
@@ -438,8 +532,10 @@ describe('Shopify Customer Privacy bridge', () => {
 				measurement: true,
 				necessary: true,
 			},
+			evaluationPolicy: FULL_SCOPE,
 			explicitChoice: null,
 			model: 'opt-out',
+			optOut: null,
 			policyPending: false,
 			promptRequirement: { kind: 'choice', reason: 'policy-changed' },
 		};
@@ -474,8 +570,10 @@ describe('Shopify Customer Privacy bridge', () => {
 				measurement: true,
 				necessary: true,
 			},
+			evaluationPolicy: FULL_SCOPE,
 			explicitChoice: null,
 			model: 'opt-out',
+			optOut: null,
 			policyPending: false,
 			promptRequirement: { kind: 'none' },
 		});

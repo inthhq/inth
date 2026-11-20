@@ -372,8 +372,9 @@ export type {
 	ResolvedIABCopy,
 	ResolvedOptOutLink,
 } from './libs/consent-copy';
-export { resolveOptOutState } from './libs/opt-out-state';
+export { isOptedOut, resolveOptOutState } from './libs/opt-out-state';
 export type {
+	OptOutCheckSnapshot,
 	OptOutLock,
 	OptOutVia,
 	ResolvedOptOutState,

@@ -10,7 +10,11 @@ import {
 	optInPromptAllowedAt,
 	optOutLiftBlocker,
 } from '../consent-record/opt-out-rules';
-import type { OptionalConsentCategory } from '../consent-record/types';
+import type {
+	EvaluationPolicy,
+	OptionalConsentCategory,
+} from '../consent-record/types';
+import type { AllConsentNames } from '../consent/consent-types';
 import type { ConsentSnapshot } from '../types';
 
 /** How an honored opt-out was recorded or is currently enforced. */
@@ -74,4 +78,39 @@ export const resolveOptOutState = function resolveOptOutState(
 		optInPromptAllowedAt: optInPromptAllowedAt(optOut),
 		via,
 	};
+};
+
+/** Snapshot fields read by {@link isOptedOut}. */
+export interface OptOutCheckSnapshot {
+	readonly effectivePermissions: ConsentSnapshot['effectivePermissions'];
+	readonly evaluationPolicy: Pick<EvaluationPolicy, 'scope'>;
+	readonly optOut: ConsentSnapshot['optOut'];
+}
+
+/**
+ * Answer whether the visitor is opted out of sale, sharing and targeted
+ * advertising right now.
+ *
+ * Returns `true` when an opt-out record is held, and otherwise `true` when any
+ * category in `categories` (defaulting to {@link optOutDenyCategories} for the
+ * active policy) is not permitted in `effectivePermissions`. Passing
+ * `categories` overrides only the category check; a held opt-out record still
+ * returns `true`.
+ *
+ * @param snapshot - The current consent snapshot.
+ * @param categories - Optional override for the categories checked when no
+ * opt-out record is held.
+ * @returns `true` when sale, sharing and targeted advertising are opted out.
+ */
+export const isOptedOut = function isOptedOut(
+	snapshot: OptOutCheckSnapshot,
+	categories?: readonly AllConsentNames[]
+): boolean {
+	if (snapshot.optOut !== null) {
+		return true;
+	}
+	const checked = categories ?? optOutDenyCategories(snapshot.evaluationPolicy);
+	return checked.some(
+		(category) => snapshot.effectivePermissions[category] !== true
+	);
 };

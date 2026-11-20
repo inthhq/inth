@@ -1,4 +1,10 @@
-import type { AllConsentNames, ConsentSnapshot } from '@inth/sdk/engine';
+import type {
+	AllConsentNames,
+	ConsentSnapshot,
+	EvaluationPolicy,
+	OptOutCheckSnapshot,
+} from '@inth/sdk/engine';
+import { isOptedOut } from '@inth/sdk/surface-state';
 
 /** The consent choices Shopify's Customer Privacy API accepts. */
 export interface ShopifyConsentPreferences {
@@ -8,9 +14,9 @@ export interface ShopifyConsentPreferences {
 	sale_of_data: boolean;
 }
 
-/** Which Inth category grants each Shopify consent. */
+/** Which Inth category grants each category-mapped Shopify consent. */
 export type ShopifyConsentCategories = Record<
-	keyof ShopifyConsentPreferences,
+	Exclude<keyof ShopifyConsentPreferences, 'sale_of_data'>,
 	AllConsentNames
 >;
 
@@ -33,9 +39,12 @@ export type ShopifyConsentSnapshot = Pick<
 	| 'effectivePermissions'
 	| 'explicitChoice'
 	| 'model'
+	| 'optOut'
 	| 'policyPending'
 	| 'promptRequirement'
->;
+> & {
+	readonly evaluationPolicy: Pick<EvaluationPolicy, 'scope'>;
+};
 
 /** A kernel, or anything else with the same snapshot store shape. */
 export interface ShopifyConsentSource {
@@ -47,8 +56,10 @@ export interface ShopifyConsentSource {
 
 export interface ShopifyCustomerPrivacyOptions {
 	/**
-	 * Override which Inth category grants each Shopify consent.
-	 * @default { analytics: 'measurement', marketing: 'marketing', preferences: 'functionality', sale_of_data: 'marketing' }
+	 * Override which Inth category grants `analytics`, `marketing` and
+	 * `preferences`. `sale_of_data` always follows the opt-out record and the
+	 * active policy's opt-out categories.
+	 * @default { analytics: 'measurement', marketing: 'marketing', preferences: 'functionality' }
 	 */
 	categories?: Partial<ShopifyConsentCategories>;
 	/**
@@ -91,7 +102,6 @@ export const DEFAULT_SHOPIFY_CONSENT_CATEGORIES: Readonly<ShopifyConsentCategori
 		analytics: 'measurement',
 		marketing: 'marketing',
 		preferences: 'functionality',
-		sale_of_data: 'marketing',
 	};
 
 // Hydrogen's framework-agnostic `ShopifyScripts` waits for the first, and
@@ -157,23 +167,28 @@ const setTrackingConsent = async (
 };
 
 /**
- * Map Inth's effective permissions to Shopify's consent choices.
+ * Map an Inth consent snapshot to Shopify's consent choices.
+ *
+ * `sale_of_data` is `false` when the visitor is opted out through a held
+ * opt-out record or because any opt-out category under the active policy is
+ * not permitted.
  *
  * @example
  * ```ts
- * toShopifyConsent(kernel.getSnapshot().effectivePermissions);
+ * toShopifyConsent(kernel.getSnapshot());
  * ```
  */
 export const toShopifyConsent = (
-	permissions: ShopifyConsentSnapshot['effectivePermissions'],
+	snapshot: OptOutCheckSnapshot,
 	categories: Partial<ShopifyConsentCategories> = {}
 ): ShopifyConsentPreferences => {
 	const mapping = { ...DEFAULT_SHOPIFY_CONSENT_CATEGORIES, ...categories };
+	const { effectivePermissions } = snapshot;
 	return {
-		analytics: permissions[mapping.analytics] === true,
-		marketing: permissions[mapping.marketing] === true,
-		preferences: permissions[mapping.preferences] === true,
-		sale_of_data: permissions[mapping.sale_of_data] === true,
+		analytics: effectivePermissions[mapping.analytics] === true,
+		marketing: effectivePermissions[mapping.marketing] === true,
+		preferences: effectivePermissions[mapping.preferences] === true,
+		sale_of_data: !isOptedOut(snapshot),
 	};
 };
 
@@ -223,7 +238,8 @@ const nextStep = (
 	if (snapshot.model === 'opt-in' || snapshot.model === 'iab') {
 		return owesChoice ? 'revoke' : 'send';
 	}
-	return owesChoice || snapshot.explicitChoice === null
+	return snapshot.optOut === null &&
+		(owesChoice || snapshot.explicitChoice === null)
 		? 'shopify-defaults'
 		: 'send';
 };
@@ -433,10 +449,7 @@ export const createShopifyCustomerPrivacy = (
 		revoking = step !== 'send';
 		holding = step === 'revoke';
 		storedChoice = snapshot.explicitChoice !== null;
-		latest = toShopifyConsent(
-			snapshot.effectivePermissions,
-			options.categories
-		);
+		latest = toShopifyConsent(snapshot, options.categories);
 		void flush();
 	};
 

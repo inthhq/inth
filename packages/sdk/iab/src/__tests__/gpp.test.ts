@@ -179,7 +179,7 @@ describe('createGPP: US state sections', () => {
 		expect(decoded.getFieldValue('usco', 'Gpc')).toBe(true);
 	});
 
-	test('an opt-in policy reports an opt-out until marketing is granted', async () => {
+	test('an opt-in policy reports an opt-out until marketing and measurement are granted', async () => {
 		const kernel = makeKernel(
 			{ ...US_OPT_OUT, model: 'opt-in', prompt: 'choice', rights: undefined },
 			{ initialLocation: { countryCode: 'US', regionCode: 'VA' } }
@@ -193,7 +193,138 @@ describe('createGPP: US state sections', () => {
 		await kernel.commands.save({ marketing: true });
 		expect(
 			new GppModel(ping().gppString).getFieldValue('usva', 'SaleOptOut')
+		).toBe(1);
+
+		await kernel.commands.save({ marketing: true, measurement: true });
+		expect(
+			new GppModel(ping().gppString).getFieldValue('usva', 'SaleOptOut')
 		).toBe(2);
+		expect(
+			new GppModel(ping().gppString).getFieldValue(
+				'usva',
+				'TargetedAdvertisingOptOut'
+			)
+		).toBe(2);
+	});
+
+	test.each([
+		{
+			approach: 'state' as const,
+			fields: ['SaleOptOut', 'SharingOptOut'],
+			name: 'California (usca)',
+			prefix: 'usca',
+			region: 'CA',
+		},
+		{
+			approach: 'state' as const,
+			fields: ['SaleOptOut', 'TargetedAdvertisingOptOut'],
+			name: 'Virginia (usva)',
+			prefix: 'usva',
+			region: 'VA',
+		},
+		{
+			approach: 'national' as const,
+			fields: ['SaleOptOut', 'SharingOptOut', 'TargetedAdvertisingOptOut'],
+			name: 'US National (usnat)',
+			prefix: 'usnat',
+			region: 'CA',
+		},
+	])(
+		'opt-out fields follow the opt-out record and default opt-out categories for $name',
+		async ({ approach, fields, prefix, region }) => {
+			const kernel = makeKernel(US_OPT_OUT, {
+				initialLocation: { countryCode: 'US', regionCode: region },
+			});
+			mount({ kernel, usApproach: approach });
+
+			const readOptOuts = () => {
+				const decoded = new GppModel(ping().gppString);
+				return fields.map((field) => decoded.getFieldValue(prefix, field));
+			};
+
+			// Both marketing and measurement are granted and no record is held.
+			expect(readOptOuts()).toEqual(fields.map(() => 2));
+
+			// Measurement alone denied with no opt-out record reports opted out.
+			await kernel.commands.save({ marketing: true, measurement: false });
+			expect(kernel.getSnapshot().optOut).toBeNull();
+			expect(readOptOuts()).toEqual(fields.map(() => 1));
+
+			// Granting both with no opt-out record reports not opted out.
+			await kernel.commands.save({ marketing: true, measurement: true });
+			expect(kernel.getSnapshot().optOut).toBeNull();
+			expect(readOptOuts()).toEqual(fields.map(() => 2));
+
+			// Recording an opt-out while stored choices are grants reports opted out.
+			const events = listen();
+			const beforeRecord = ping().gppString;
+			await kernel.commands.optOut();
+			expect(kernel.getSnapshot().optOut).not.toBeNull();
+			expect(
+				kernel.getSnapshot().explicitChoice?.categories.marketing?.value
+			).toBe(true);
+			expect(
+				kernel.getSnapshot().explicitChoice?.categories.measurement?.value
+			).toBe(true);
+			expect(readOptOuts()).toEqual(fields.map(() => 1));
+			expect(ping().gppString).not.toBe(beforeRecord);
+			expect(events.map(({ eventName, data }) => [eventName, data])).toEqual([
+				['listenerRegistered', true],
+				['signalStatus', 'not ready'],
+				['sectionChange', prefix],
+				['signalStatus', 'ready'],
+			]);
+
+			// Lifting the opt-out record updates the string and fires listeners.
+			const beforeLift = ping().gppString;
+			events.length = 0;
+			await kernel.commands.optIn();
+			expect(kernel.getSnapshot().optOut).toBeNull();
+			expect(readOptOuts()).toEqual(fields.map(() => 2));
+			expect(ping().gppString).not.toBe(beforeLift);
+			expect(events.map(({ eventName, data }) => [eventName, data])).toEqual([
+				['signalStatus', 'not ready'],
+				['sectionChange', prefix],
+				['signalStatus', 'ready'],
+			]);
+		}
+	);
+
+	test('a change of snapshot.optOut alone updates the GPP string and fires listeners', async () => {
+		const kernel = makeKernel(
+			{
+				...US_OPT_OUT,
+				categories: ['functionality'],
+				privacySignals: undefined,
+				scopeMode: 'permissive',
+			},
+			{ initialLocation: { countryCode: 'US', regionCode: 'CA' } }
+		);
+		mount({ kernel });
+		const events = listen();
+		const beforePermissions = kernel.getSnapshot().effectivePermissions;
+
+		await kernel.commands.optOut();
+		expect(kernel.getSnapshot().effectivePermissions).toBe(beforePermissions);
+		expect(call('getField', 'usca.SaleOptOut').data).toBe(1);
+		expect(call('getField', 'usca.SharingOptOut').data).toBe(1);
+		expect(events.map(({ eventName, data }) => [eventName, data])).toEqual([
+			['listenerRegistered', true],
+			['signalStatus', 'not ready'],
+			['sectionChange', 'usca'],
+			['signalStatus', 'ready'],
+		]);
+
+		events.length = 0;
+		await kernel.commands.optIn();
+		expect(kernel.getSnapshot().effectivePermissions).toBe(beforePermissions);
+		expect(call('getField', 'usca.SaleOptOut').data).toBe(2);
+		expect(call('getField', 'usca.SharingOptOut').data).toBe(2);
+		expect(events.map(({ eventName, data }) => [eventName, data])).toEqual([
+			['signalStatus', 'not ready'],
+			['sectionChange', 'usca'],
+			['signalStatus', 'ready'],
+		]);
 	});
 
 	test.each([
@@ -342,7 +473,7 @@ describe('createGPP: options', () => {
 		});
 	});
 
-	test('opt-out categories decide which refusal opts out', async () => {
+	test('opt-out categories override the category check, while a held record always reports opted out', async () => {
 		const kernel = makeKernel(US_OPT_OUT, {
 			initialLocation: { countryCode: 'US', regionCode: 'CA' },
 		});
@@ -351,6 +482,19 @@ describe('createGPP: options', () => {
 		expect(call('getField', 'usca.SaleOptOut').data).toBe(2);
 		await kernel.commands.save({ marketing: true, measurement: false });
 		expect(call('getField', 'usca.SaleOptOut').data).toBe(1);
+
+		await kernel.commands.save({ marketing: true, measurement: true });
+		expect(call('getField', 'usca.SaleOptOut').data).toBe(2);
+
+		const emptyKernel = makeKernel(US_OPT_OUT, {
+			initialLocation: { countryCode: 'US', regionCode: 'CA' },
+		});
+		mount({ kernel: emptyKernel, optOutCategories: [] });
+		await emptyKernel.commands.save({ marketing: false, measurement: true });
+		expect(call('getField', 'usca.SaleOptOut').data).toBe(2);
+		await emptyKernel.commands.optOut();
+		expect(call('getField', 'usca.SaleOptOut').data).toBe(1);
+		expect(call('getField', 'usca.SharingOptOut').data).toBe(1);
 	});
 
 	test('rejects a cmpId that is neither 1 nor a registered ID', () => {

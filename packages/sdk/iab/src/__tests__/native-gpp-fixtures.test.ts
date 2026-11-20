@@ -11,6 +11,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { GppModel } from '@iabgpp/cmpapi';
+import { OPTIONAL_CONSENT_CATEGORIES } from '@inth/sdk-core';
 import { readPolicyResolutionWire } from '@inth/sdk-schema/types';
 import { describe, expect, test } from 'vitest';
 
@@ -96,7 +97,9 @@ const webSections = function webSections(
 	}
 	const snapshot = {
 		effectivePermissions: { necessary: true, ...input.effectivePermissions },
+		evaluationPolicy: { scope: OPTIONAL_CONSENT_CATEGORIES },
 		location: { countryCode: input.location, regionCode: null },
+		optOut: null,
 		overrides: input.overrideCountry ? { country: input.overrideCountry } : {},
 		policyRule: input.policy,
 		privacySignals: { gpc: { active: input.gpc } },
@@ -108,9 +111,7 @@ const webSections = function webSections(
 	}
 	const values = resolveUSSectionValues(definition, snapshot, {
 		mspaMode: input.options.mspaMode,
-		optOutCategories: (input.options.optOutCategories ?? [
-			'marketing',
-		]) as never,
+		optOutCategories: input.options.optOutCategories as never,
 	});
 	return [{ encoded: encodeUSSection(definition, values), id: definition.id }];
 };

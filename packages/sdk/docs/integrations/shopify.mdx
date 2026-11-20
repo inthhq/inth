@@ -40,30 +40,30 @@ The consent route needs no custom handlers. The example wires Hydrogen's cart ha
 
 ## How categories map
 
-| Shopify consent | Inth category |
+| Shopify consent | Inth source |
 | --- | --- |
 | `analytics` | `measurement` |
 | `marketing` | `marketing` |
 | `preferences` | `functionality` |
-| `sale_of_data` | `marketing` |
+| `sale_of_data` | Opt-out record, else `marketing` and `measurement` in the active rule's scope |
 
-Each Shopify value is `true` only while its mapped Inth category is allowed in `effectivePermissions`, which includes policy restrictions. Override any mapping with `categories`:
+`analytics`, `marketing`, and `preferences` are `true` only while their mapped Inth category is allowed in `effectivePermissions`, which includes policy restrictions. `sale_of_data` is `false` when an opt-out record is held or when either `marketing` or `measurement` (whichever are in the active rule's scope) is not permitted. Override the mapping for `analytics`, `marketing`, or `preferences` with `categories`:
 
 {/* example: fragment */}
 
 ```ts
 const shopifyPrivacy = createShopifyCustomerPrivacy({
-	categories: { sale_of_data: 'measurement' },
+	categories: { preferences: 'experience' },
 });
 ```
 
-Call `toShopifyConsent(permissions, categories)` to compute the same four booleans in your own code.
+Call `toShopifyConsent(snapshot, categories)` to compute the same four booleans in your own code.
 
 ## Options
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `categories` | Default table above | Overrides the Inth category for any of the four Shopify values. |
+| `categories` | Default table above | Overrides the Inth category for `analytics`, `marketing`, or `preferences`. |
 | `onSync` | None | Runs after Shopify accepts an update, receiving all four values for a choice or the dropped grants for a revocation. |
 | `onError` | Logs to the console | Runs when Shopify rejects a choice or `onSync` throws. |
 
@@ -74,7 +74,7 @@ The bridge returns `update(snapshot)`, `connect(source)`, and `setup()`. `connec
 Shopify records consent only after a visitor acts, so the bridge sends nothing while `policyPending` is `true` or before a choice exists:
 
 - **Opt-in or IAB policy.** `setup` waits until the visitor answers the banner, including Reject All, so Hydrogen holds events until then.
-- **Opt-out policy.** `setup` resolves without recording a choice, and Shopify applies its region defaults, including Global Privacy Control, until the visitor saves a choice in Inth, unless a stale grant must be revoked first.
+- **Opt-out policy.** `setup` resolves without recording a choice, and Shopify applies its region defaults, including Global Privacy Control, until the visitor saves a choice or records an opt-out in Inth, unless a stale grant must be revoked first.
 
 After the first choice, the bridge sends each change once. When a visitor revokes a category, Inth reloads the page by default and the bridge sends the stored choice on load.
 
@@ -91,5 +91,5 @@ After the first choice, the bridge sends each change once. When a visitor revoke
 
 1. Load the page in a private window with an opt-in policy and confirm DevTools Network shows no `graphql.json` request containing `visitorConsent`.
 2. Click Reject All and confirm one request fires with every value set to `false`.
-3. Open Privacy settings, allow Marketing, and save. Confirm one request fires with `marketing` and `saleOfData` set to `true`.
+3. Open Privacy settings, allow Marketing and Measurement, and save. Confirm one request fires with `analytics`, `marketing`, and `saleOfData` set to `true`.
 4. On a live store, run `window.Shopify.customerPrivacy.currentVisitorConsent()` in the console and confirm it matches your saved choice.
