@@ -126,26 +126,53 @@ it.each(["EXDEV", "EPERM", "ENOTSUP", "EOPNOTSUPP", "ENOSYS"])(
   }
 );
 
-it("adds no second consent script to a page that still loads c15t.js", () => {
-  const root = directory();
-  const page = `<!doctype html>
+const legacyPage = (head: string, body: string): string => `<!doctype html>
 <html>
   <head>
-    <script src="https://site.inth.app/c15t.js" defer></script>
-  </head>
+${head}  </head>
   <body>
-    <a href="#c15t-preferences">Privacy settings</a>
-  </body>
+${body}  </body>
 </html>
 `;
+
+it("asks to rename c15t snippets instead of adding second copies", () => {
+  const root = directory();
+  const page = legacyPage(
+    '    <script src="https://site.inth.app/c15t.js" defer></script>\n',
+    '    <a href="#c15t-preferences">Privacy settings</a>\n'
+  );
   fs.writeFileSync(fault.target, page);
-  const result = apply(root);
+  const { instructions } = apply(root).plan;
   expect(fs.readFileSync(fault.target, "utf-8")).toBe(page);
   expect(
-    result.plan.instructions.filter((instruction) =>
-      instruction.startsWith("Add to index.html:")
-    )
+    instructions.filter((instruction) => instruction.startsWith("Add to"))
   ).toEqual([]);
+  expect(
+    instructions.filter((instruction) => instruction.includes("still uses"))
+  ).toEqual([
+    expect.stringMatching(/^index\.html still uses \/c15t\.js,.*\/inth\.js:\n<script/su),
+    expect.stringMatching(
+      /^index\.html still uses #c15t-preferences,.*#inth-preferences:\n<a href="#inth-preferences">/su
+    ),
+  ]);
+});
+
+it("asks to rename an old preferences link next to a new script", () => {
+  const root = directory();
+  const page = legacyPage(
+    "",
+    '    <a href="#c15t-preferences">Privacy settings</a>\n'
+  );
+  fs.writeFileSync(fault.target, page);
+  const { instructions } = apply(root).plan;
+  expect(
+    instructions.filter((instruction) => instruction.startsWith("Add to"))
+  ).toEqual([
+    expect.stringMatching(/^Add to index\.html:\n<script\s+src="[^"]+\/inth\.js"/u),
+  ]);
+  expect(
+    instructions.filter((instruction) => instruction.includes("still uses"))
+  ).toEqual([expect.stringContaining("still uses #c15t-preferences")]);
 });
 
 it("does not copy after an unrelated hard-link error", () => {

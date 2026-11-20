@@ -19,6 +19,70 @@ const hasMarker = (
 	return marker.some((entry) => content.includes(entry));
 };
 
+/** A snippet a file still has under an older name. */
+export interface LegacySnippet {
+	/** The older name the file uses, such as `#c15t-preferences`. */
+	found: string;
+	/** The name the generated snippet uses, such as `#inth-preferences`. */
+	current: string;
+	/** The generated snippet that replaces the old one. */
+	content: string;
+}
+
+/**
+ * Find snippets an existing file has only under an older name. In a marker
+ * list, the first entry is the current name and the rest are older names
+ * that still count as present, so setup adds no second copy. The SDK only
+ * answers to the current name, so the caller should ask for a rename.
+ * @param existing Current contents of the project's file.
+ * @param merge How the generated file merges into it.
+ * @returns One entry per older name the file uses without the current one.
+ */
+export const legacySnippets = (
+	existing: string,
+	merge: FileMerge | undefined
+): LegacySnippet[] => {
+	if (merge?.type !== 'insert') {
+		return [];
+	}
+	const found: LegacySnippet[] = [];
+	const check = (marker: string | string[] | undefined, content: string) => {
+		if (marker === undefined || typeof marker === 'string') {
+			return;
+		}
+		const current = marker[0];
+		if (current === undefined || existing.includes(current)) {
+			return;
+		}
+		for (let index = 1; index < marker.length; index += 1) {
+			const name = marker[index];
+			if (name !== undefined && existing.includes(name)) {
+				found.push({ found: name, current, content });
+			}
+		}
+	};
+	for (const insert of merge.inserts) {
+		check(insert.marker, insert.content);
+		check(merge.marker, insert.content);
+	}
+	return found;
+};
+
+/**
+ * Describe each snippet a file still has under an older name.
+ * @param path The file's path in the project.
+ * @param snippets What {@link legacySnippets} found.
+ * @returns One instruction per snippet.
+ */
+export const legacySnippetInstructions = (
+	path: string,
+	snippets: LegacySnippet[]
+): string[] =>
+	snippets.map(
+		({ found, current, content }) =>
+			`${path} still uses ${found}, which Inth does not read. Replace it with this snippet, which uses ${current}:\n${content}`
+	);
+
 /**
  * Apply a generated file to the file a project already has.
  * @param existing Current contents of the project's file.

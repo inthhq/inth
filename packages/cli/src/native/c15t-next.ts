@@ -165,6 +165,27 @@ export const adaptNextGeneration = (
       instruction.replaceAll(`${router}/`, `src/${router}/`)
     );
   }
+  // @inth/nextjs/build reads the first of these it finds, so a generated
+  // inth.config.ts would shadow an existing .mts, .js or .mjs config. Target
+  // the existing file instead so setup's overwrite check protects it.
+  const consentConfig = [
+    "inth.config.ts",
+    "inth.config.mts",
+    "inth.config.js",
+    "inth.config.mjs",
+  ].find((name) => existsSync(join(cwd, name)));
+  const consentContent = generation.files["inth.config.ts"];
+  if (
+    consentConfig &&
+    consentConfig !== "inth.config.ts" &&
+    consentContent !== undefined
+  ) {
+    delete generation.files["inth.config.ts"];
+    generation.files[consentConfig] = consentContent;
+    generation.instructions = generation.instructions.map((instruction) =>
+      instruction.replaceAll("inth.config.ts", consentConfig)
+    );
+  }
   const config = ["next.config.js", "next.config.mjs", "next.config.ts"].find(
     (name) => existsSync(join(cwd, name))
   );

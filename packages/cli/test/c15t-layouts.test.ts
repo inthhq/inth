@@ -128,6 +128,46 @@ it.each(["", "src/"])("honors App Router extensions in %s", async (root) => {
   ).toBe(true);
 });
 
+it("asks a JavaScript page to rename its c15t preferences link", async () => {
+  const page =
+    '<!doctype html>\n<html>\n  <body>\n    <a href="#c15t-preferences">Privacy settings</a>\n  </body>\n</html>\n';
+  await writeFile(path.join(directory, "index.html"), page);
+  const result = await runGenerationWorkflow(
+    ["setup", "--framework", "javascript", "--apply", "--skip-install"],
+    context,
+    { cwd: directory }
+  );
+  expect(await readFile(path.join(directory, "index.html"), "utf-8")).toBe(
+    page
+  );
+  expect(
+    result.plan.instructions.filter((instruction) =>
+      instruction.includes("still uses")
+    )
+  ).toEqual([
+    expect.stringMatching(
+      /^index\.html still uses #c15t-preferences,.*\n<a href="#inth-preferences">/su
+    ),
+  ]);
+});
+
+it.each(["inth.config.mts", "inth.config.js", "inth.config.mjs"])(
+  "targets an existing %s instead of shadowing it with inth.config.ts",
+  async (name) => {
+    const content = "export default { scripts: [] };\n";
+    await writeFile(path.join(directory, name), content);
+    await expect(
+      runGenerationWorkflow(
+        ["setup", "--framework", "next-app", "--apply", "--skip-install"],
+        context,
+        { cwd: directory }
+      )
+    ).rejects.toThrow(`Refusing to overwrite existing file: ${name}`);
+    expect(await readFile(path.join(directory, name), "utf-8")).toBe(content);
+    expect(await readdir(directory)).not.toContain("inth.config.ts");
+  }
+);
+
 it("points an existing Pages API handler at the generated route prefix", async () => {
   const name = "pages/api/inth/[...inth].ts";
   const content = "export default function handler() {}\n";

@@ -19,7 +19,11 @@ import type {
 } from "../../vendor/c15t/frontend/runtime/index.ts";
 import { requireNativeInstaller } from "../../vendor/c15t/frontend/runtime/install.ts";
 import type { GenerationPlan } from "../../vendor/c15t/generate/index.ts";
-import { mergeFile } from "../../vendor/c15t/generate/merge.ts";
+import {
+  legacySnippetInstructions,
+  legacySnippets,
+  mergeFile,
+} from "../../vendor/c15t/generate/merge.ts";
 import { runHtmlGenerationWorkflow } from "./c15t-html.ts";
 import { adaptNextGeneration, addNextConfigInstructions } from "./c15t-next.ts";
 import { adaptNuxtGeneration } from "./c15t-nuxt.ts";
@@ -62,11 +66,17 @@ const missingInsertInstructions = (
       current = merged;
     }
     const prefix = `Add to ${file.path}:\n`;
-    plan.instructions = plan.instructions.map((instruction) =>
-      instruction.startsWith(prefix)
-        ? `${prefix}${snippets.join("\n")}`
-        : instruction
-    );
+    plan.instructions = [
+      ...plan.instructions.map((instruction) =>
+        instruction.startsWith(prefix)
+          ? `${prefix}${snippets.join("\n")}`
+          : instruction
+      ),
+      ...legacySnippetInstructions(
+        file.path,
+        legacySnippets(file.content, merge)
+      ),
+    ];
   }
 };
 

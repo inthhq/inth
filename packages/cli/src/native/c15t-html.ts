@@ -27,7 +27,11 @@ import type {
   GenerationWorkflowResult,
 } from "../../vendor/c15t/frontend/runtime/index.ts";
 import type { GenerationPlan } from "../../vendor/c15t/generate/index.ts";
-import { mergeFile } from "../../vendor/c15t/generate/merge.ts";
+import {
+  legacySnippetInstructions,
+  legacySnippets,
+  mergeFile,
+} from "../../vendor/c15t/generate/merge.ts";
 
 const filesystemCode = (error: Error): string | undefined => {
   // eslint-disable-next-line anti-slop/no-runtime-typeof -- Decode Node's errno at the filesystem boundary; Scriptc errors use the message prefix.
@@ -148,6 +152,12 @@ const htmlInstructions = (
     if (snippets.length) {
       instructions.push(`Add to index.html:\n${snippets.join("\n")}`);
     }
+    instructions.push(
+      ...legacySnippetInstructions(
+        "index.html",
+        legacySnippets(current, merge)
+      )
+    );
   }
   return instructions;
 };
