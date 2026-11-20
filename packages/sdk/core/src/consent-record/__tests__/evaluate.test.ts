@@ -1136,7 +1136,7 @@ describe('evaluateConsentRecord: durable opt-out record', () => {
 		}
 	});
 
-	it('restricts nothing when the policy deny list is empty', () => {
+	it('denies marketing and measurement even when the GPC deny list is empty', () => {
 		const noDenyPolicy = makePolicy({
 			gpcDenyCategories: [],
 			model: 'opt-out',
@@ -1149,8 +1149,88 @@ describe('evaluateConsentRecord: durable opt-out record', () => {
 			optOut,
 			policy: noDenyPolicy,
 		});
-		expect(result.permissions).toEqual(allTrue);
-		expect(result.restrictions).toEqual({});
+		expect(result.permissions).toEqual({
+			experience: true,
+			functionality: true,
+			marketing: false,
+			measurement: false,
+			necessary: true,
+		});
+		expect(result.restrictions).toEqual({
+			marketing: ['opt-out'],
+			measurement: ['opt-out'],
+		});
+	});
+
+	it('denies only the marketing or measurement categories in scope', () => {
+		const marketingOnly = makePolicy({
+			gpcDenyCategories: [],
+			model: 'opt-out',
+			prompt: 'none',
+			scope: ['functionality', 'marketing'],
+			scopeMode: 'permissive',
+		});
+		const oneResult = evaluateConsentRecord({
+			choice: null,
+			noticeDismissal: null,
+			now: NOW,
+			optOut,
+			policy: marketingOnly,
+		});
+		expect(oneResult.permissions).toEqual({
+			experience: true,
+			functionality: true,
+			marketing: false,
+			measurement: true,
+			necessary: true,
+		});
+		expect(oneResult.restrictions).toEqual({
+			marketing: ['opt-out'],
+		});
+
+		const neitherInScope = makePolicy({
+			gpcDenyCategories: [],
+			model: 'opt-out',
+			prompt: 'none',
+			scope: ['experience', 'functionality'],
+			scopeMode: 'permissive',
+		});
+		const neitherResult = evaluateConsentRecord({
+			choice: null,
+			noticeDismissal: null,
+			now: NOW,
+			optOut,
+			policy: neitherInScope,
+		});
+		expect(neitherResult.permissions).toEqual(allTrue);
+		expect(neitherResult.restrictions).toEqual({});
+	});
+
+	it('applies under every policy model', () => {
+		for (const model of ['opt-in', 'opt-out', 'iab', 'none'] as const) {
+			const policy = makePolicy({
+				gpcDenyCategories: [],
+				model,
+				prompt: model === 'none' ? 'none' : 'choice',
+			});
+			const result = evaluateConsentRecord({
+				choice: makeChoice(
+					{ marketing: true, measurement: true },
+					NOW,
+					currentBasis(policy)
+				),
+				noticeDismissal: null,
+				now: NOW,
+				optOut,
+				policy,
+			});
+			expect(result.permissions.marketing).toBe(false);
+			expect(result.permissions.measurement).toBe(false);
+			expect(result.restrictions).toEqual({
+				marketing: ['opt-out'],
+				measurement: ['opt-out'],
+			});
+		}
 	});
 
 	it('computes the 366-day opt-in reprompt threshold from recordedAt', () => {
@@ -1183,6 +1263,29 @@ describe('validateOptOutRecord', () => {
 				});
 			}
 		}
+	});
+
+	it('accepts a recordedAt dated ahead of now so slow clocks never drop an opt-out', () => {
+		const future = NOW + DAY;
+		expect(
+			validateOptOutRecord(
+				{
+					heldBy: 'person',
+					method: 'api',
+					recordedAt: future,
+					rights: ['sale', 'share'],
+				},
+				NOW
+			)
+		).toEqual({
+			ok: true,
+			record: {
+				heldBy: 'person',
+				method: 'api',
+				recordedAt: future,
+				rights: ['sale', 'share'],
+			},
+		});
 	});
 
 	it.each([
@@ -1246,15 +1349,6 @@ describe('validateOptOutRecord', () => {
 		[
 			'unknown holder',
 			{ heldBy: 'other', method: 'button', recordedAt: NOW, rights: ['sale'] },
-		],
-		[
-			'future timestamp',
-			{
-				heldBy: 'device',
-				method: 'button',
-				recordedAt: NOW + 1,
-				rights: ['sale'],
-			},
 		],
 		[
 			'negative timestamp',

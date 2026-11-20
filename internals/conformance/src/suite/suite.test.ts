@@ -613,7 +613,7 @@ test.each([
 	}
 });
 
-test('broad GPC keeps unmapped grants and original receipts, and ends with the signal', async () => {
+test('broad GPC keeps unmapped grants and original receipts, and stays denied after the signal ends', async () => {
 	setSystemTime(POLICY_NOW);
 	const resolved = resolution(true, true);
 	if (resolved.status !== 'matched') {
@@ -664,8 +664,9 @@ test('broad GPC keeps unmapped grants and original receipts, and ends with the s
 		const corrupt = evidence(kernel);
 		corrupt.snapshot.effectivePermissions.experience = false;
 		await expect(checkObservation(corrupt, expected)).rejects.toThrow();
-		// GPC is read live: once the browser stops sending it, the stored
-		// grants apply again and still no choice is recorded.
+		// Once the browser stops sending GPC, the durable opt-out keeps the
+		// mapped categories denied while unmapped grants stay allowed and
+		// still no choice is recorded.
 		kernel.set.privacySignals({ gpc: false });
 		expect(kernel.getSnapshot().explicitChoice).toBe(original);
 		await checkObservation(evidence(kernel, { ...emptyLogs(), events }), {
@@ -673,8 +674,8 @@ test('broad GPC keeps unmapped grants and original receipts, and ends with the s
 			permissions: {
 				experience: true,
 				functionality: true,
-				marketing: true,
-				measurement: true,
+				marketing: false,
+				measurement: false,
 			},
 		});
 	} finally {

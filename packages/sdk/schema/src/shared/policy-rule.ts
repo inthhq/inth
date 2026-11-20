@@ -158,10 +158,10 @@ export interface PolicyRule {
 		choiceDays?: number;
 		noticeDays?: number;
 	};
-	/** Explicit opt-out category mapping. Omit when neither GPC nor opt-out restricts categories. */
+	/** Explicit privacy-signal handling. Omit to ignore the signal. */
 	privacySignals?: {
 		gpc?: {
-			/** Categories an opt-out switches off, whether from GPC or an opt-out action. Inside scope, no `necessary`. */
+			/** Categories an active GPC signal denies. A non-empty list also records a durable opt-out when GPC is active. Inside scope, no `necessary`. */
 			denyCategories: string[];
 		};
 	};
@@ -220,7 +220,7 @@ export interface ResolvedPolicyRule {
 	};
 	privacySignals: {
 		gpc: {
-			/** Sorted. Categories an opt-out switches off, whether from GPC or an opt-out action. Empty means neither restricts any category. */
+			/** Sorted. Categories an active GPC signal denies. Empty means GPC is ignored. */
 			denyCategories: PolicyOptionalCategory[];
 		};
 	};

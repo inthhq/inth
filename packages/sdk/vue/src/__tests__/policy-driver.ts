@@ -272,6 +272,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 		keys.consent,
 		legacyKey,
 		`${keys.consent}-notice`,
+		keys.optOut,
 		// A clear's epoch outlives it and would void the next seed's records.
 		keys.epoch,
 		// A clear keeps the subject ID; the next scenario is a new visitor.

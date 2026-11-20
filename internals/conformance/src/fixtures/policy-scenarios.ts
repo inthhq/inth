@@ -150,13 +150,22 @@ const noneRegime: readonly PolicyScenario[] = [
 		gpc: true,
 		id: 'none-gpc-restricts-mapped-categories',
 		now: POLICY_NOW,
-		policy: { ...POLICY_NONE, gpcDenyCategories: ['marketing'] },
+		policy: {
+			...POLICY_NONE,
+			gpcDenyCategories: POLICY_SCOPE,
+			scope: ['functionality', ...POLICY_SCOPE],
+		},
 		steps: [
 			{
 				expect: {
 					choice: null,
 					firstLayer: 'hidden',
-					permissions: { marketing: false, measurement: true, necessary: true },
+					permissions: {
+						functionality: true,
+						marketing: false,
+						measurement: false,
+						necessary: true,
+					},
 					prompt: { kind: 'none' },
 				},
 				operation: { kind: 'hydrate' },
@@ -270,12 +279,12 @@ const gpc = (
 			operation: { kind: 'hydrate' },
 		},
 		{
-			// The restriction ends with the signal; the stored grant applies again.
+			// The durable opt-out recorded from GPC stays in effect after the signal ends.
 			expect: {
 				...quiet,
 				choice: POLICY_RECORDS[record].expected.choice,
-				gates: openGates,
-				permissions: granted,
+				gates: blockedGates,
+				permissions: denied,
 				prompt: { kind: 'notice', reason: 'missing' },
 			},
 			operation: { active: false, kind: 'set-gpc' },
@@ -606,7 +615,7 @@ export const POLICY_SCENARIOS: readonly PolicyScenario[] = [
 				expect: {
 					...quiet,
 					choice: POLICY_RECORDS['legacy-broad-grant'].expected.choice,
-					permissions: { experience: true, functionality: true, ...granted },
+					permissions: { experience: true, functionality: true, ...denied },
 				},
 				operation: { active: false, kind: 'set-gpc' },
 			},

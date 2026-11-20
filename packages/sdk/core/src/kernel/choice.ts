@@ -22,6 +22,7 @@ import {
 } from '@inth/sdk-schema/types';
 import type { OptOutRecord } from '@inth/sdk-schema/types';
 
+import { optOutDenyCategories } from '../consent-record/opt-out';
 import { EMPTY_CHOICE, recordCategoryPatch } from '../consent-record/record';
 import type { AllConsentNames } from '../consent/consent-types';
 import { extractConsentNamesFromCondition, has } from '../libs/has';
@@ -44,11 +45,7 @@ import type {
 	SaveUISource,
 	VendorChoice,
 } from '../types';
-import {
-	mergeOptOutRights,
-	optOutLiftBlocker,
-	optOutRightsForSnapshot,
-} from './opt-out';
+import { nextButtonOptOutRecord, optOutLiftBlocker } from './opt-out';
 import type { SnapshotPatch } from './patch';
 import type { KernelRuntime } from './runtime';
 import type { SaveOutbox } from './save-outbox';
@@ -747,19 +744,8 @@ export const createChoiceRecorder = function createChoiceRecorder({
 					)
 				);
 			}
-			if (before.evaluationPolicy.gpcDenyCategories.length === 0) {
+			if (before.evaluationPolicy.model !== 'opt-out') {
 				return Promise.resolve({ ok: false, reason: 'not-available' });
-			}
-			const needed = optOutRightsForSnapshot(before);
-			if (
-				before.optOut !== null &&
-				needed.every((right) => before.optOut?.rights.includes(right))
-			) {
-				return Promise.resolve({
-					changed: false,
-					ok: true,
-					optOut: before.optOut,
-				});
 			}
 			const currentTime = runtime.now();
 			const actionAt =
@@ -767,20 +753,14 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				isValidSaveActionAt(context.actionAt, currentTime)
 					? context.actionAt
 					: currentTime;
-			const nextOptOut: OptOutRecord =
-				before.optOut === null
-					? {
-							heldBy: 'device',
-							method: 'button',
-							recordedAt: actionAt,
-							rights: needed,
-						}
-					: {
-							heldBy: before.optOut.heldBy,
-							method: 'button',
-							recordedAt: actionAt,
-							rights: mergeOptOutRights(before.optOut.rights, needed),
-						};
+			const nextOptOut = nextButtonOptOutRecord(before, actionAt);
+			if (nextOptOut === null) {
+				return Promise.resolve({
+					changed: false,
+					ok: true,
+					optOut: before.optOut as Readonly<OptOutRecord>,
+				});
+			}
 			const patch: SnapshotPatch = {
 				now: currentTime,
 				optOut: nextOptOut,
@@ -933,20 +913,39 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				now: currentTime,
 				subject,
 			};
+			const optOutCategories = optOutDenyCategories(before.evaluationPolicy);
 			const grantsOptOutCategory =
 				categoriesChanged &&
 				recorded.confirmed.some(
 					(category) =>
-						before.evaluationPolicy.gpcDenyCategories.includes(category) &&
+						optOutCategories.includes(category) &&
 						recorded.choice.categories[category]?.value === true
 				);
 			const liftsOptOut =
 				grantsOptOutCategory && optOutLiftBlocker(before) === null;
+			const refusesOptOutCategories =
+				!grantsOptOutCategory &&
+				before.evaluationPolicy.model === 'opt-out' &&
+				optOutCategories.length > 0 &&
+				categoriesChanged &&
+				recorded.confirmed.some(
+					(category) =>
+						optOutCategories.includes(category) &&
+						recorded.choice.categories[category]?.value === false
+				) &&
+				optOutCategories.every(
+					(category) => recorded.choice.categories[category]?.value === false
+				);
+			const recordedOptOut = refusesOptOutCategories
+				? nextButtonOptOutRecord(before, actionAt)
+				: null;
 			if (categoriesChanged) {
 				patch.explicitChoice = recorded.choice;
 			}
 			if (liftsOptOut) {
 				patch.optOut = null;
+			} else if (recordedOptOut !== null) {
+				patch.optOut = recordedOptOut;
 			}
 			if (vendorsChanged) {
 				patch.vendorChoice = nextVendorChoice;
@@ -987,6 +986,15 @@ export const createChoiceRecorder = function createChoiceRecorder({
 						actionAt,
 						snapshot: committed,
 						type: 'opt-out:lifted',
+						uiSource,
+					});
+				}
+				if (recordedOptOut !== null) {
+					emit({
+						actionAt,
+						optOut: committed.optOut as Readonly<OptOutRecord>,
+						snapshot: committed,
+						type: 'opt-out:recorded',
 						uiSource,
 					});
 				}

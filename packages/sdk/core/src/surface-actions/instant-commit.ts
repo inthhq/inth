@@ -19,6 +19,7 @@
  * @internal
  */
 
+import { optOutDenyCategories } from '../consent-record/opt-out';
 import { OPTIONAL_CONSENT_CATEGORIES } from '../consent-record/types';
 import type {
 	CategoryDecision,
@@ -334,6 +335,15 @@ export const planInstantCommit = function planInstantCommit(
 	const values = selectionValues(before, input.choice);
 	// A decision that expires at once is the kernel's to judge.
 	if (!values || (expiresAt !== null && now >= expiresAt)) {
+		return null;
+	}
+	const optOutCategories = optOutDenyCategories(policy);
+	if (
+		policy.model === 'opt-out' &&
+		optOutCategories.length > 0 &&
+		optOutCategories.every((category) => values.get(category) === false)
+	) {
+		// Refusing the opt-out categories records a durable opt-out in the kernel.
 		return null;
 	}
 

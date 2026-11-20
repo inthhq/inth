@@ -34,6 +34,7 @@ export {
 	OPT_OUT_REPROMPT_WAIT_MS,
 	OPTIONAL_CONSENT_CATEGORIES,
 	optInPromptAllowedAt,
+	optOutDenyCategories,
 } from './consent-record';
 export { createConsentKernel } from './kernel';
 
