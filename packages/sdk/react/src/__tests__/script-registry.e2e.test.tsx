@@ -3,13 +3,13 @@
  * runtime: an integration init lists loads from the registry's URL, and the
  * browser runs it only when its bytes match the hash.
  */
-import { custom } from '@inth/sdk/transports';
 import { useState } from 'react';
 import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { commands } from 'vitest/browser';
 
 import { InthProvider } from '../index';
+import { transportMode } from './fixtures/transport-mode';
 import {
 	integrationScript,
 	listing,
@@ -147,10 +147,10 @@ test("renders and updates a React tree with the pin on, and pins the file the in
 	const loaderIntegrity = await sha384(loaderBody);
 	const nativeInsertBefore = Node.prototype.insertBefore;
 	const screen = await render(
-		<ConsentProvider
+		<InthProvider
 			options={{
 				experimentalScriptRegistry: true,
-				mode: custom({
+				mode: transportMode({
 					init: () =>
 						Promise.resolve({
 							scriptRegistry: {
@@ -172,7 +172,7 @@ test("renders and updates a React tree with the pin on, and pins the file the in
 			}}
 		>
 			<Rows />
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 	await vi.waitFor(() =>

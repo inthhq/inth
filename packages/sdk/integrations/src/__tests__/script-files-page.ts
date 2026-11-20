@@ -5,11 +5,24 @@
  */
 import { createConsentRuntime } from '@inth/sdk/runtime';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
-import { custom } from '@inth/sdk/transports';
+import type {
+	KernelTransport,
+	ProviderTransportFactory,
+} from '@inth/sdk/transports';
 
 import { logRocket } from '../vendors/analytics/logrocket';
 
 const APP_ID = 'inth-test/script-files';
+
+/** A mode whose init answers as `init` does, standing in for the backend. */
+const initMode = (init: () => Promise<unknown>): ProviderTransportFactory =>
+	Object.assign(
+		(): KernelTransport => ({
+			init: init as never,
+			save: () => Promise.resolve({ ok: true }),
+		}),
+		{ kind: 'hosted' as const }
+	);
 
 export interface ScriptFilesPage {
 	/** The script id the registry's `sources` key LogRocket by. */
@@ -53,7 +66,7 @@ window.__scriptFiles = {
 		const runtime = createConsentRuntime({
 			enabled: false,
 			experimentalScriptRegistry: true,
-			mode: custom({ init: () => Promise.resolve({}) as never }),
+			mode: initMode(() => Promise.resolve({})),
 			persistence: false,
 			prefetch: {
 				initialPolicyPending: false,
@@ -76,13 +89,13 @@ window.__scriptFiles = {
 		// LogRocket needs no choice to load.
 		const runtime = createConsentRuntime({
 			experimentalScriptRegistry: true,
-			mode: custom({
-				init: () =>
+			mode: initMode(
+				() =>
 					// oxlint-disable-next-line promise/avoid-new -- Settled by the test.
 					new Promise((resolve) => {
 						answer = (registry) => resolve({ scriptRegistry: registry });
-					}) as never,
-			}),
+					})
+			),
 			persistence: false,
 			scripts: [{ ...logRocket({ appId: APP_ID }), category: 'necessary' }],
 		});

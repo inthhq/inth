@@ -40,6 +40,13 @@ const mode = transportMode({
 	save: () => Promise.resolve({ ok: true }),
 });
 
+/** A mode whose init answers `answer`, carrying `scriptRegistry`. */
+const initMode = (answer: () => Promise<Record<string, unknown>>) =>
+	transportMode({
+		init: answer as never,
+		save: () => Promise.resolve({ ok: true }),
+	});
+
 const vendorScript = (overrides: Partial<Script> = {}): Script => ({
 	anonymizeId: false,
 	attributes: { 'data-api-host': 'https://api.vendor.example' },
@@ -512,13 +519,6 @@ describe('experimentalScriptRegistry', () => {
 		});
 
 	const necessaryOther: Script = { ...otherScript, category: 'necessary' };
-
-	/** A mode whose init answers `answer`, carrying `scriptRegistry`. */
-	const initMode = (answer: () => Promise<Record<string, unknown>>) =>
-		transportMode({
-			init: answer as never,
-			save: () => Promise.resolve({ ok: true }),
-		});
 
 	const listed = (scriptSources: Record<string, unknown>) =>
 		initMode(() =>
@@ -1542,9 +1542,7 @@ describe('experimentalScriptRegistry files', () => {
 		const loaded: HTMLScriptElement[] = [];
 		begin({
 			experimentalScriptRegistry: true,
-			mode: custom({
-				init: () => Promise.resolve({ scriptRegistry: registry }) as never,
-			}),
+			mode: initMode(() => Promise.resolve({ scriptRegistry: registry })),
 			persistence: false,
 			scripts: [loaderScript(loaded)],
 		});
@@ -1558,12 +1556,12 @@ describe('experimentalScriptRegistry files', () => {
 		let answer: (response: Record<string, unknown>) => void = () => undefined;
 		begin({
 			experimentalScriptRegistry: true,
-			mode: custom({
-				init: () =>
+			mode: initMode(
+				() =>
 					new Promise((resolve) => {
 						answer = resolve;
-					}) as never,
-			}),
+					})
+			),
 			persistence: false,
 			scripts: [
 				integration(),
@@ -1598,12 +1596,12 @@ describe('experimentalScriptRegistry files', () => {
 		let fail: (error: Error) => void = () => undefined;
 		begin({
 			experimentalScriptRegistry: true,
-			mode: custom({
-				init: () =>
+			mode: initMode(
+				() =>
 					new Promise((_resolve, reject) => {
 						fail = reject;
-					}) as never,
-			}),
+					})
+			),
 			persistence: false,
 			scripts: [integration()],
 		});
@@ -1657,12 +1655,11 @@ describe('experimentalScriptRegistry files', () => {
 	test('does not patch the DOM when the list names no files', async () => {
 		begin({
 			experimentalScriptRegistry: true,
-			mode: custom({
-				init: () =>
-					Promise.resolve({
-						scriptRegistry: { sources: registry.sources },
-					}) as never,
-			}),
+			mode: initMode(() =>
+				Promise.resolve({
+					scriptRegistry: { sources: registry.sources },
+				})
+			),
 			persistence: false,
 			scripts: [integration()],
 		});
@@ -1675,9 +1672,7 @@ describe('experimentalScriptRegistry files', () => {
 
 	test('leaves the DOM alone with the registry off, even when init lists files', async () => {
 		begin({
-			mode: custom({
-				init: () => Promise.resolve({ scriptRegistry: registry }) as never,
-			}),
+			mode: initMode(() => Promise.resolve({ scriptRegistry: registry })),
 			persistence: false,
 			scripts: [integration()],
 		});
