@@ -118,15 +118,20 @@ export type { ConsentManagerState, ConsentDraftState } from './context.svelte';
 export {
 	resolveActionLabels,
 	resolveConsentPresentation,
+	resolveOptOutCopy,
+	resolveOptOutState,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
 } from '@inth/sdk/engine';
 export type {
 	ConsentPresentation,
+	OptOutLock,
+	OptOutVia,
 	PreferenceControl,
 	PresentationAction,
 	PromptCopy,
 	ResolvedConsentPresentation,
+	ResolvedOptOutState,
 } from '@inth/sdk/engine';
 
 // Engine types the guides use; the helpers are in the `engine` entry.

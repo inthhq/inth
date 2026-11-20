@@ -228,6 +228,13 @@
 				throw new Error('Unable to save preferences.');
 			}
 		},
+		saveBulk(input) {
+			if (preferenceDraft) {
+				return preferenceDraft.save({ input });
+			}
+			waiting = [];
+			return kernel.commands.save(input);
+		},
 		set(name, value) {
 			withDraft((current) => current.set(name, value));
 		},

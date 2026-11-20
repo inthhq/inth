@@ -23,6 +23,7 @@ import type {
 	KernelIABState,
 	Model,
 	ResolvedVendor,
+	SaveResult,
 } from '@inth/sdk/engine';
 import type { createPreferenceDraft } from '@inth/sdk/preference-draft';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
@@ -33,7 +34,11 @@ import {
 	saveConsentSurface,
 	showConsentSurface,
 } from '@inth/sdk/surface-actions';
-import { resolveSurfaceTranslations } from '@inth/sdk/surface-state';
+import {
+	resolveOptOutState,
+	resolveSurfaceTranslations,
+} from '@inth/sdk/surface-state';
+import type { ResolvedOptOutState } from '@inth/sdk/surface-state';
 import type { CompleteTranslations } from '@inth/sdk/translations';
 import type { Theme, UIOptions } from '@inth/sdk/ui/theme';
 import { getContext, setContext } from 'svelte';
@@ -94,6 +99,13 @@ export interface ConsentDraftState {
 	setVendor: (vendorId: string, granted: boolean) => void;
 	reset: () => void;
 	save: (categories: readonly AllConsentNames[]) => Promise<void>;
+	/**
+	 * Record a bulk choice (`'all'` or `'none'`), skipping GPC-locked
+	 * categories on `'all'`.
+	 *
+	 * @internal
+	 */
+	saveBulk?: (input: 'all' | 'none') => Promise<SaveResult>;
 }
 
 export interface ConsentManagerState extends Pick<
@@ -102,6 +114,7 @@ export interface ConsentManagerState extends Pick<
 	| 'effectivePermissions'
 	| 'promptRequirement'
 	| 'noticeDismissal'
+	| 'optOut'
 	| 'privacySignals'
 	| 'resolution'
 	| 'policyRule'
@@ -154,6 +167,8 @@ export interface ConsentManagerState extends Pick<
 	hasConsentUi: boolean;
 	/** Whether Inth or an external CMP offers a preferences control. */
 	hasConsentPreferences: boolean;
+	/** Opt-out display state derived from the current snapshot. */
+	readonly optOutState: ResolvedOptOutState;
 	legalLinks: ConsentManagerOptions['legalLinks'];
 	/**
 	 * The copy the surfaces render: the active language bundle with English
@@ -367,6 +382,12 @@ const createConsentState = function createConsentState(
 		get noticeDismissal() {
 			return getSnapshotLocal().noticeDismissal;
 		},
+		get optOut() {
+			return getSnapshotLocal().optOut;
+		},
+		get optOutState() {
+			return resolveOptOutState(getSnapshotLocal());
+		},
 		get privacySignals() {
 			return getSnapshotLocal().privacySignals;
 		},
@@ -415,9 +436,13 @@ const createConsentState = function createConsentState(
 					await draft.save(controller.consentCategories);
 					return { ok: true };
 				}
+				const input = type === 'all' ? 'all' : 'none';
+				if (draft.saveBulk) {
+					return draft.saveBulk(input);
+				}
 				// No category list: the kernel narrows a bulk choice to its own
 				// choice scope, the categories the draft displays.
-				const pending = kernel.commands.save(type === 'all' ? 'all' : 'none');
+				const pending = kernel.commands.save(input);
 				// A bulk choice supersedes every staged edit, even one that
 				// records nothing new.
 				draft.reset();

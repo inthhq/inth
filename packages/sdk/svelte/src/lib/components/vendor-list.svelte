@@ -17,9 +17,11 @@
 
 	let {
 		category,
+		hideHint = false,
 		noStyle = false,
 	}: {
 		category: AllConsentNames;
+		hideHint?: boolean;
 		noStyle?: boolean;
 	} = $props();
 
@@ -65,7 +67,7 @@
 		aria-label={title}
 		data-testid={`consent-widget-vendor-list-${category}`}
 	>
-		{#if !categoryOn}
+		{#if !categoryOn && !hideHint}
 			<p
 				class={styles?.hint}
 				data-testid={`consent-widget-vendor-hint-${category}`}

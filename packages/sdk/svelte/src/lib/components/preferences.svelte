@@ -5,7 +5,10 @@
 		resolveConsentPresentation,
 	} from '@inth/sdk/engine';
 	import { createPreferenceDraft } from '@inth/sdk/preference-draft';
-	import { resolveCategoryTitle } from '@inth/sdk/surface-state';
+	import {
+		resolveCategoryTitle,
+		resolveOptOutCopy,
+	} from '@inth/sdk/surface-state';
 	import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
 	import managerStyles from '@inth/sdk/ui/styles/components/consent-manager';
 	import switchStyles from '@inth/sdk/ui/styles/components/switch';
@@ -46,6 +49,45 @@
 	const noStyle = $derived(localNoStyle ?? theme.noStyle ?? false);
 
 	const translations = $derived(consent.state.copy);
+	const optOutState = $derived(consent.state.optOutState);
+	const optOutCopy = $derived(resolveOptOutCopy(translations));
+
+	const isGpcLocked = function isGpcLocked(name: AllConsentNames): boolean {
+		if (name === 'necessary') {
+			return false;
+		}
+		return (
+			(optOutState.lock === 'gpc-active' &&
+				optOutState.categories.includes(name)) ||
+			consent.snapshot.restrictions[name]?.includes('gpc') === true
+		);
+	};
+
+	const restrictionReasonFor = function restrictionReasonFor(
+		name: AllConsentNames
+	): string | null {
+		if (name === 'necessary') {
+			return null;
+		}
+		if (isGpcLocked(name)) {
+			return optOutCopy.lockedByGpc;
+		}
+		if (
+			optOutState.lock === 'held-by-account' &&
+			optOutState.categories.includes(name)
+		) {
+			return optOutCopy.lockedByAccount;
+		}
+		const decision = consent.snapshot.explicitChoice?.categories[name];
+		const reasons = consent.snapshot.restrictions[name];
+		if (
+			decision?.value === true &&
+			reasons?.some((reason) => reason !== 'opt-out')
+		) {
+			return 'Your saved choice is restricted by the current privacy settings.';
+		}
+		return null;
+	};
 
 	const textDirection = $derived(
 		getTextDirection(consent.state.translations?.language)
@@ -78,6 +120,15 @@
 			'consentWidget',
 			theme.theme,
 			{ baseClassName: managerStyles.manager, className },
+			noStyle
+		)
+	);
+
+	const optOutStatusStyle = $derived(
+		resolveStyles(
+			'consentWidgetOptOutStatus',
+			theme.theme,
+			{ baseClassName: managerStyles.optOutStatus, noStyle },
 			noStyle
 		)
 	);
@@ -148,6 +199,18 @@
 				>
 			</div>
 		{/if}
+		{#if optOutState.honored}
+			<p
+				class={optOutStatusStyle.className || ''}
+				style={toStyleAttributeValue(optOutStatusStyle.style)}
+				role="status"
+				data-testid="consent-widget-opt-out-status"
+			>
+				{optOutState.via === 'signal'
+					? optOutCopy.statusSignal
+					: optOutCopy.statusRequest}
+			</p>
+		{/if}
 		<div
 			class={accordionStyle.className || ''}
 			style={toStyleAttributeValue(accordionStyle.style)}
@@ -155,6 +218,8 @@
 		>
 			{#each displayedConsents as consentType (consentType.name)}
 				{@const isOpen = openItems[consentType.name] ?? false}
+				{@const gpcLocked = isGpcLocked(consentType.name)}
+				{@const restrictionReason = restrictionReasonFor(consentType.name)}
 				{@const isChecked =
 					consent.state.selectedConsents?.[consentType.name] ??
 					consent.snapshot.explicitChoice?.categories[
@@ -162,15 +227,9 @@
 					]?.value ??
 					false}
 				{@const isDisabled =
-					consentType.name === 'necessary' || (consentType.disabled ?? false)}
-				{@const restricted =
-					consentType.name !== 'necessary' &&
-					consent.snapshot.explicitChoice?.categories[
-						consentType.name as Exclude<AllConsentNames, 'necessary'>
-					]?.value === true &&
-					(consent.snapshot.restrictions[
-						consentType.name as Exclude<AllConsentNames, 'necessary'>
-					]?.length ?? 0) > 0}
+					consentType.name === 'necessary' ||
+					(consentType.disabled ?? false) ||
+					gpcLocked}
 				<PreferenceItem.Root
 					class={noStyle ? '' : accordionStyles.item || ''}
 					open={isOpen}
@@ -224,10 +283,14 @@
 									consentType.name
 								)}
 								checked={isChecked}
-								aria-describedby={restricted
+								aria-describedby={restrictionReason
 									? `${widgetId}-${consentType.name}-restriction`
 									: undefined}
-								onclick={() => toggleConsent(consentType.name, !isChecked)}
+								onclick={() => {
+									if (!isDisabled) {
+										toggleConsent(consentType.name, !isChecked);
+									}
+								}}
 								disabled={isDisabled}
 								class={toggleStyle.className || ''}
 								style={toStyleAttributeValue(toggleStyle.style)}
@@ -241,14 +304,14 @@
 						</PreferenceItem.Control>
 					</div>
 
-					{#if restricted}
-						<p
+					{#if restrictionReason}
+						<output
 							id={`${widgetId}-${consentType.name}-restriction`}
 							class={noStyle ? '' : accordionStyles.restriction || ''}
 							data-testid={`consent-widget-restriction-${consentType.name}`}
 						>
-							Your saved choice is restricted by the current privacy settings.
-						</p>
+							{restrictionReason}
+						</output>
 					{/if}
 					<PreferenceItem.Content
 						viewportClassName={noStyle
@@ -263,6 +326,7 @@
 							''}
 						<VendorList
 							category={consentType.name}
+							hideHint={gpcLocked}
 							{noStyle}
 						/>
 					</PreferenceItem.Content>

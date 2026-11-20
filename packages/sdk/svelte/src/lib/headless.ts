@@ -7,14 +7,19 @@ export type {
 export {
 	resolveActionLabels,
 	resolveIABCopy,
+	resolveOptOutCopy,
+	resolveOptOutState,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
 } from '@inth/sdk/engine';
 export type {
+	OptOutLock,
+	OptOutVia,
 	PreferenceControl,
 	PresentationAction,
 	PromptCopy,
 	ResolvedIABCopy,
+	ResolvedOptOutState,
 } from '@inth/sdk/engine';
 export { focusTrap } from './actions/focus-trap';
 export { portal } from './actions/portal';

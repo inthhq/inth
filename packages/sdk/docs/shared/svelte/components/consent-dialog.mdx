@@ -49,8 +49,16 @@ buttons the policy allows. Categories come from the provider's
 and cannot be switched off.
 
 Switches change an unsaved draft. The save button records the draft; the
-accept and reject buttons record every category at once. The dialog closes in the same task
-the choice is recorded. If the policy changes while the dialog is open, the
+accept and reject buttons record every unlocked category at once. When a
+durable opt-out is held, the widget inside the dialog shows a status line
+(`role="status"`) above the category list and keeps opted-out categories off.
+While Global Privacy Control is active under a policy that maps it, those
+switches stay off and disabled with the GPC notice below each row, and Save
+Settings and Accept All skip locked categories. When an account holds the
+opt-out and GPC is off, the account notice appears below each row and the
+switches stay usable. Read the same state from
+`getConsentManager().optOutState`. The dialog closes in the same task the
+choice is recorded. If the policy changes while the dialog is open, the
 widget shows an alert and asks the visitor to review before saving.
 
 ## Open and close the dialog
