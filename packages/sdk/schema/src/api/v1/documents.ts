@@ -1,6 +1,7 @@
 /**
  * `/v1/documents/*` schemas: publish a legal document version, read the
- * version in force, and record acceptances of a release by its hash.
+ * version in force, record acceptances of a release by its hash, and check
+ * what a person accepted.
  *
  * A document hash is the SHA-256 of the exact bytes of the published file,
  * in lowercase hex, prefixed `sha256:`.
@@ -10,6 +11,7 @@
 
 import * as v from 'valibot';
 
+import { isPlainPolicyObject } from '../../shared/policy-rule';
 import {
 	v1CanonicalSubjectIdSchema,
 	v1EpochMillisecondsSchema,
@@ -110,7 +112,6 @@ export const v1DocumentSchema = v.object({
 	effectiveDate: effectiveDateSchema,
 	hash: v1DocumentHashSchema,
 	id: v.pipe(v.string(), v.uuid()),
-	isCurrent: v.boolean(),
 	requiresAcceptance: v.boolean(),
 	type: v1DocumentTypeSchema,
 	version: versionSchema,
@@ -191,6 +192,50 @@ export const v1DocumentAcceptancesOutputSchema = v.object({
 });
 
 // ---------------------------------------------------------------------------
+// GET /v1/documents/check (secret key)
+// ---------------------------------------------------------------------------
+
+export const v1DocumentCheckQuerySchema = v.object({
+	externalId: v1ExternalIdSchema,
+	types: v.pipe(
+		v.string(),
+		v.minLength(1),
+		v.description('Document types, comma separated.'),
+		v.examples(['privacy_policy', 'privacy_policy,terms_us'])
+	),
+});
+
+export const v1DocumentCheckResultSchema = v.object({
+	accepted: v.boolean(),
+	/**
+	 * The person accepted the latest release that requires acceptance, or
+	 * one after it.
+	 */
+	acceptedLatest: v.boolean(),
+});
+
+/**
+ * One result per type asked about, and at least one, since a check names at
+ * least one type. Checked by hand: `v.record` drops a key such as
+ * `constructor`, a valid document type, and still succeeds.
+ */
+const checkDocumentsSchema = v.custom<
+	Record<string, v.InferOutput<typeof v1DocumentCheckResultSchema>>
+>(
+	(input) =>
+		isPlainPolicyObject(input) &&
+		Object.keys(input).length > 0 &&
+		Object.values(input).every((result) =>
+			v.is(v1DocumentCheckResultSchema, result)
+		),
+	'Expected a check result for each type'
+);
+
+export const v1DocumentCheckOutputSchema = v.object({
+	documents: checkDocumentsSchema,
+});
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -217,4 +262,13 @@ export type V1RecordedAcceptance = v.InferOutput<
 >;
 export type V1DocumentAcceptancesOutput = v.InferOutput<
 	typeof v1DocumentAcceptancesOutputSchema
+>;
+export type V1DocumentCheckQuery = v.InferOutput<
+	typeof v1DocumentCheckQuerySchema
+>;
+export type V1DocumentCheckResult = v.InferOutput<
+	typeof v1DocumentCheckResultSchema
+>;
+export type V1DocumentCheckOutput = v.InferOutput<
+	typeof v1DocumentCheckOutputSchema
 >;

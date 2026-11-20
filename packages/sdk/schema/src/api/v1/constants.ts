@@ -55,6 +55,7 @@ export const V1_ERROR_CODES = [
 	'unauthorized',
 	'identity_token_required',
 	'identity_token_invalid',
+	'identity_tokens_disabled',
 	'forbidden',
 	'not_found',
 	'conflict',

@@ -25,7 +25,6 @@ const CURRENT = {
 		effectiveDate: '2026-11-18T00:00:00.000Z',
 		hash: HASH,
 		id: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
-		isCurrent: true,
 		requiresAcceptance: true,
 		type: 'terms_us',
 		version: '2026-11-18',
@@ -86,6 +85,14 @@ describe('getCurrent: GET /v1/documents/:type/current', () => {
 		await expect(documents.getCurrent('terms_us')).resolves.toEqual(answer);
 	});
 
+	test('reads a document that still carries isCurrent', async () => {
+		const answer = { document: { ...CURRENT.document, isCurrent: true } };
+		const { fetch } = stubFetch(() => json(200, answer));
+		const documents = createDocumentsClient({ fetch, projectUrl: PROJECT_URL });
+
+		await expect(documents.getCurrent('terms_us')).resolves.toEqual(answer);
+	});
+
 	test.each([
 		['a page', () => new Response('<html>ok</html>', { status: 200 })],
 		[
@@ -108,13 +115,6 @@ describe('getCurrent: GET /v1/documents/:type/current', () => {
 			() =>
 				json(200, {
 					document: { ...CURRENT.document, hash: 'sha256:abc' },
-				}),
-		],
-		[
-			'a document without isCurrent',
-			() =>
-				json(200, {
-					document: { ...CURRENT.document, isCurrent: undefined },
 				}),
 		],
 	])('refuses an answer that is %s', async (_label, answer) => {

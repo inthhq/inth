@@ -11,8 +11,6 @@ import type {
 } from '../../../shared/script-sources';
 import type { v1ErrorBodySchema } from '../common';
 import type {
-	v1ConsentCheckOutputSchema,
-	v1ConsentCheckQuerySchema,
 	v1ConsentInitOutputSchema,
 	v1ConsentInitQuerySchema,
 	v1ConsentManifestQuerySchema,
@@ -25,12 +23,16 @@ import type { V1ErrorCode } from '../constants';
 import type {
 	v1DocumentAcceptancesInputSchema,
 	v1DocumentAcceptancesOutputSchema,
+	v1DocumentCheckOutputSchema,
+	v1DocumentCheckQuerySchema,
 	v1DocumentCurrentOutputSchema,
 	v1DocumentParamsSchema,
 	v1DocumentPublishInputSchema,
 	v1DocumentPublishOutputSchema,
 } from '../documents';
 import type {
+	v1SubjectIdentityTokenInputSchema,
+	v1SubjectIdentityTokenOutputSchema,
 	v1SubjectLinkInputSchema,
 	v1SubjectLinkOutputSchema,
 	v1SubjectLinkParamsSchema,
@@ -171,16 +173,6 @@ type Found =
 			'sessions body'
 	  >
 	| WireDiff<
-			Out<typeof v1ConsentCheckQuerySchema>,
-			Query<'getV1ConsentCheck'>,
-			'check query'
-	  >
-	| WireDiff<
-			Out<typeof v1ConsentCheckOutputSchema>,
-			Ok<'getV1ConsentCheck'>,
-			'check answer'
-	  >
-	| WireDiff<
 			Out<typeof v1SubjectLinkParamsSchema>,
 			PathParams<'postV1SubjectsByIdLink'>,
 			'link path'
@@ -194,6 +186,16 @@ type Found =
 			Out<typeof v1SubjectLinkOutputSchema>,
 			Ok<'postV1SubjectsByIdLink'>,
 			'link answer'
+	  >
+	| WireDiff<
+			Out<typeof v1SubjectIdentityTokenInputSchema>,
+			Body<'postV1SubjectsIdentityTokens'>,
+			'identity token body'
+	  >
+	| WireDiff<
+			Out<typeof v1SubjectIdentityTokenOutputSchema>,
+			Ok<'postV1SubjectsIdentityTokens'>,
+			'identity token answer'
 	  >
 	| WireDiff<
 			Out<typeof v1DocumentParamsSchema>,
@@ -229,6 +231,16 @@ type Found =
 			Out<typeof v1DocumentAcceptancesOutputSchema>,
 			Ok<'postV1DocumentsAcceptances'>,
 			'acceptances answer'
+	  >
+	| WireDiff<
+			Out<typeof v1DocumentCheckQuerySchema>,
+			Query<'getV1DocumentsCheck'>,
+			'check query'
+	  >
+	| WireDiff<
+			Out<typeof v1DocumentCheckOutputSchema>,
+			Ok<'getV1DocumentsCheck'>,
+			'check answer'
 	  >
 	| WireDiff<Out<typeof v1ErrorBodySchema>, DocumentErrorBody, 'error body'>
 	| WireDiff<V1ErrorCode, DocumentError['error']['code'], 'error codes'>;

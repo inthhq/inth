@@ -133,8 +133,7 @@ const readCurrent = function readCurrent(
 		typeof body.document.hash === 'string' &&
 		V1_DOCUMENT_HASH_PATTERN.test(body.document.hash) &&
 		typeof body.document.effectiveDate === 'string' &&
-		typeof body.document.requiresAcceptance === 'boolean' &&
-		typeof body.document.isCurrent === 'boolean'
+		typeof body.document.requiresAcceptance === 'boolean'
 	) {
 		return body as unknown as V1DocumentCurrentOutput;
 	}

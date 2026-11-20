@@ -1,8 +1,9 @@
 /**
- * `POST /v1/subjects/:id/link` schemas: link a device subject to a person.
+ * `/v1/subjects/*` schemas: link a device subject to a person, and sign an
+ * identity token for one.
  *
- * Without a secret key the request needs an `identityToken` that verifies
- * for `externalId`. There is no route for a browser to read a subject.
+ * Without a secret key a link needs an `identityToken` that verifies for
+ * `externalId`. There is no route for a browser to read a subject.
  *
  * @packageDocumentation
  */
@@ -30,9 +31,27 @@ export const v1SubjectLinkInputSchema = v.object({
 export const v1SubjectLinkOutputSchema = v.object({
 	externalId: v1ExternalIdSchema,
 	subjectId: v1CanonicalSubjectIdSchema,
-	verifiedBy: v.picklist(['api_key', 'identity_token']),
+	verifiedBy: v.picklist(['secret_key', 'identity_token']),
 });
 
+// POST /v1/subjects/identity-tokens (secret key)
+
+export const v1SubjectIdentityTokenInputSchema = v.object({
+	externalId: v1ExternalIdSchema,
+	identityProvider: v.optional(v1IdentityProviderSchema),
+});
+
+export const v1SubjectIdentityTokenOutputSchema = v.object({
+	expiresAt: v.pipe(v.string(), v.isoTimestamp()),
+	token: v1IdentityTokenSchema,
+});
+
+export type V1SubjectIdentityTokenInput = v.InferOutput<
+	typeof v1SubjectIdentityTokenInputSchema
+>;
+export type V1SubjectIdentityTokenOutput = v.InferOutput<
+	typeof v1SubjectIdentityTokenOutputSchema
+>;
 export type V1SubjectLinkParams = v.InferOutput<
 	typeof v1SubjectLinkParamsSchema
 >;

@@ -102,6 +102,26 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/v1/subjects/identity-tokens': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/**
+		 * Create an identity token
+		 * @description Signs a token, valid for an hour, that lets a browser act for one person: link its device, or record their acceptance. Needs the secret key. Make one per sign-in or page load, and do not store it. Nothing is stored.
+		 */
+		post: operations['postV1SubjectsIdentityTokens'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/v1/documents/{type}/current': {
 		parameters: {
 			query?: never;
@@ -137,7 +157,7 @@ export interface paths {
 		put?: never;
 		/**
 		 * Record document acceptances
-		 * @description Records that a device or a person accepted one or more legal document releases, each named by its type and the hash `GET /v1/documents/{type}/current` gave. A release no longer in force can still be accepted; `GET /v1/consent/check` then reports the newer one as not accepted. All are recorded, or none. With only subjectId, the acceptances are the device’s and need no key. With externalId, they are the person’s, who is made when missing, and the request needs the secret key or an identityToken that names them. `context` carries the visitor’s IP address and user agent when your server records the acceptance, and is read only with the secret key; otherwise both come from the request. A retry with the same idempotencyKey is recorded once and answered as the first try was.
+		 * @description Records that a device or a person accepted one or more legal document releases, each named by its type and the hash `GET /v1/documents/{type}/current` gave. A release no longer in force can still be accepted; `GET /v1/documents/check` then reports the newer one as not accepted. All are recorded, or none. With only subjectId, the acceptances are the device’s and need no key. With externalId, they are the person’s, who is made when missing, and the request needs the secret key or an identityToken that names them. `context` carries the visitor’s IP address and user agent when your server records the acceptance, and is read only with the secret key; otherwise both come from the request. A retry with the same idempotencyKey is recorded once and answered as the first try was.
 		 */
 		post: operations['postV1DocumentsAcceptances'];
 		delete?: never;
@@ -146,7 +166,7 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
-	'/v1/consent/check': {
+	'/v1/documents/check': {
 		parameters: {
 			query?: never;
 			header?: never;
@@ -155,9 +175,9 @@ export interface paths {
 		};
 		/**
 		 * Check a person’s document acceptances
-		 * @description For a person, by your account ID for them, and each document type asked for: hasConsent when they accepted any release, and isLatestPolicy when they accepted the latest release that requires acceptance, or one after it. Acceptances from devices linked to the person count. Every type asked for is in the answer.
+		 * @description For a person, by your account ID for them, and each document type asked for: accepted when they accepted any release, and acceptedLatest when they accepted the latest release that requires acceptance, or one after it. Acceptances from devices linked to the person count. Every type asked for is in the answer.
 		 */
-		get: operations['getV1ConsentCheck'];
+		get: operations['getV1DocumentsCheck'];
 		put?: never;
 		post?: never;
 		delete?: never;
@@ -170,14 +190,6 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
 	schemas: {
-		ConsentCheckResponse: {
-			results: {
-				[key: string]: {
-					hasConsent: boolean;
-					isLatestPolicy: boolean;
-				};
-			};
-		};
 		ConsentInitResponse: {
 			adTechProviders?: {
 				id: number;
@@ -923,6 +935,14 @@ export interface components {
 			 */
 			subjectId: string;
 		};
+		DocumentCheckResponse: {
+			documents: {
+				[key: string]: {
+					accepted: boolean;
+					acceptedLatest: boolean;
+				};
+			};
+		};
 		DocumentCurrentResponse: {
 			document: {
 				/** Format: date-time */
@@ -931,7 +951,6 @@ export interface components {
 				hash: string;
 				/** Format: uuid */
 				id: string;
-				isCurrent: boolean;
 				requiresAcceptance: boolean;
 				type: string;
 				version: string;
@@ -954,11 +973,25 @@ export interface components {
 				hash: string;
 				/** Format: uuid */
 				id: string;
-				isCurrent: boolean;
 				requiresAcceptance: boolean;
 				type: string;
 				version: string;
 			};
+		};
+		IdentityTokenRequest: {
+			/** @description Your account ID for the person. */
+			externalId: string;
+			/** @description Who issued the account ID, such as `clerk`. When set, the link must name the same identityProvider. */
+			identityProvider?: string;
+		};
+		IdentityTokenResponse: {
+			/**
+			 * Format: date-time
+			 * @description When the token stops verifying, one hour after it was made.
+			 */
+			expiresAt: string;
+			/** @description Send it to the browser, which passes it as identityToken. */
+			token: string;
 		};
 		/** @description The Script Registry scripts to load by hash. Absent when the registry lists no script for the project. */
 		ScriptRegistry:
@@ -1012,7 +1045,7 @@ export interface components {
 			 */
 			subjectId: string;
 			/** @enum {string} */
-			verifiedBy: 'api_key' | 'identity_token';
+			verifiedBy: 'secret_key' | 'identity_token';
 		};
 		/** @description Every /v1 failure. `details` is optional; for a refused body it holds the issues by field. */
 		V1Error: {
@@ -1027,6 +1060,7 @@ export interface components {
 					| 'identity_conflict'
 					| 'identity_token_invalid'
 					| 'identity_token_required'
+					| 'identity_tokens_disabled'
 					| 'invalid_request'
 					| 'not_found'
 					| 'payload_too_large'
@@ -1798,6 +1832,172 @@ export interface operations {
 			};
 		};
 	};
+	postV1SubjectsIdentityTokens: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['IdentityTokenRequest'];
+			};
+		};
+		responses: {
+			/** @description OK */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['IdentityTokenResponse'];
+				};
+			};
+			/** @description invalid_request */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['V1Error'] & {
+						error?: {
+							/** @enum {string} */
+							code?: 'invalid_request';
+						};
+					};
+				};
+			};
+			/** @description unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['V1Error'] & {
+						error?: {
+							/** @enum {string} */
+							code?: 'unauthorized';
+						};
+					};
+				};
+			};
+			/** @description forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['V1Error'] & {
+						error?: {
+							/** @enum {string} */
+							code?: 'forbidden';
+						};
+					};
+				};
+			};
+			/** @description identity_tokens_disabled, not_found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['V1Error'] & {
+						error?: {
+							/** @enum {string} */
+							code?: 'identity_tokens_disabled' | 'not_found';
+						};
+					};
+				};
+			};
+			/** @description conflict */
+			409: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['V1Error'] & {
+						error?: {
+							/** @enum {string} */
+							code?: 'conflict';
+						};
+					};
+				};
+			};
+			/** @description payload_too_large */
+			413: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['V1Error'] & {
+						error?: {
+							/** @enum {string} */
+							code?: 'payload_too_large';
+						};
+					};
+				};
+			};
+			/** @description rate_limited */
+			429: {
+				headers: {
+					/** @description Seconds to wait before trying again. */
+					'Retry-After'?: number;
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['V1Error'] & {
+						error?: {
+							/** @enum {string} */
+							code?: 'rate_limited';
+						};
+					};
+				};
+			};
+			/** @description server_error */
+			500: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['V1Error'] & {
+						error?: {
+							/** @enum {string} */
+							code?: 'server_error';
+						};
+					};
+				};
+			};
+			/** @description bad_gateway */
+			502: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['V1Error'] & {
+						error?: {
+							/** @enum {string} */
+							code?: 'bad_gateway';
+						};
+					};
+				};
+			};
+			/** @description gateway_timeout */
+			504: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['V1Error'] & {
+						error?: {
+							/** @enum {string} */
+							code?: 'gateway_timeout';
+						};
+					};
+				};
+			};
+		};
+	};
 	getV1DocumentsByTypeCurrent: {
 		parameters: {
 			query?: never;
@@ -2247,13 +2447,13 @@ export interface operations {
 			};
 		};
 	};
-	getV1ConsentCheck: {
+	getV1DocumentsCheck: {
 		parameters: {
 			query: {
 				/** @description Your account ID for the person. */
 				externalId: string;
 				/** @description Document types, comma separated. */
-				type: string;
+				types: string;
 			};
 			header?: never;
 			path?: never;
@@ -2267,7 +2467,7 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					'application/json': components['schemas']['ConsentCheckResponse'];
+					'application/json': components['schemas']['DocumentCheckResponse'];
 				};
 			};
 			/** @description invalid_request */

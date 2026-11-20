@@ -3,11 +3,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
 	v1CanonicalSubjectIdSchema,
-	v1ConsentCheckOutputSchema,
 	v1ConsentRecordInputSchema,
 	v1ConsentRecordOutputSchema,
 	v1ConsentSessionReportSchema,
 	v1DocumentAcceptancesInputSchema,
+	v1DocumentCheckOutputSchema,
 	v1DocumentCurrentOutputSchema,
 	v1DocumentPublishInputSchema,
 	v1DocumentTypeSchema,
@@ -313,7 +313,6 @@ describe('documents', () => {
 		effectiveDate: '2026-11-18T00:00:00.000Z',
 		hash: HASH,
 		id: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
-		isCurrent: true,
 		requiresAcceptance: true,
 		type: 'terms_us',
 		version: '2026-11-18',
@@ -330,13 +329,10 @@ describe('documents', () => {
 		).toBe(valid);
 	});
 
-	it.each(['id', 'isCurrent'])(
-		'refuses a current document without %s',
-		(field) => {
-			const { [field as keyof typeof current]: _left, ...document } = current;
-			expect(v.is(v1DocumentCurrentOutputSchema, { document })).toBe(false);
-		}
-	);
+	it('refuses a current document without id', () => {
+		const { id: _id, ...document } = current;
+		expect(v.is(v1DocumentCurrentOutputSchema, { document })).toBe(false);
+	});
 
 	it('rejects a hash that is not lowercase sha256 hex', () => {
 		const result = v.safeParse(v1DocumentPublishInputSchema, {
@@ -407,29 +403,31 @@ describe('documents', () => {
 	});
 });
 
-describe('GET /v1/consent/check', () => {
-	const result = { hasConsent: true, isLatestPolicy: false };
+describe('GET /v1/documents/check', () => {
+	const result = { accepted: true, acceptedLatest: false };
 
 	it('keeps the result of every type, including one named constructor', () => {
 		const output = v.parse(
-			v1ConsentCheckOutputSchema,
+			v1DocumentCheckOutputSchema,
 			JSON.parse(
-				JSON.stringify({ results: { constructor: result, terms_us: result } })
+				JSON.stringify({
+					documents: { constructor: result, terms_us: result },
+				})
 			)
 		);
-		expect(Object.keys(output.results)).toEqual(['constructor', 'terms_us']);
+		expect(Object.keys(output.documents)).toEqual(['constructor', 'terms_us']);
 	});
 
 	it('refuses an answer with no result', () => {
 		expect(
-			v.safeParse(v1ConsentCheckOutputSchema, { results: {} }).success
+			v.safeParse(v1DocumentCheckOutputSchema, { documents: {} }).success
 		).toBe(false);
 	});
 
 	it('refuses a malformed result', () => {
 		expect(
-			v.safeParse(v1ConsentCheckOutputSchema, {
-				results: { terms_us: { hasConsent: 'yes', isLatestPolicy: false } },
+			v.safeParse(v1DocumentCheckOutputSchema, {
+				documents: { terms_us: { accepted: 'yes', acceptedLatest: false } },
 			}).success
 		).toBe(false);
 	});
