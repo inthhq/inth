@@ -29,6 +29,7 @@ import {
 	EARLY_TAP_OPT_OUT,
 } from '../early-tap-script';
 import { replayEarlyConsentTaps } from '../early-taps';
+import { closeOptOutConfirmation, isOptOutConfirmationOpen } from '../opt-out';
 
 let policy = matchedResolution(optInRule());
 let unavailable = false;
@@ -251,6 +252,26 @@ describe('the inline script', () => {
 		}
 	});
 
+	test('captures an opt-out right link tap as opt-out and a preferences right link as customize', () => {
+		runScript();
+		document.body.innerHTML =
+			'<div data-testid="consent-banner-root" data-model="opt-out" data-prompt="notice"><button data-action="right" data-right="opt-out">Do Not Sell</button><button data-action="right" data-right="preferences">Manage preferences</button></div>';
+		document
+			.querySelector<HTMLButtonElement>('[data-right="preferences"]')
+			?.click();
+		expect(queue()?.taps?.map((entry) => entry.action)).toEqual(['customize']);
+		expect(hidden()).toBe(false);
+
+		document
+			.querySelector<HTMLButtonElement>('[data-right="opt-out"]')
+			?.click();
+		expect(queue()?.taps?.map((entry) => entry.action)).toEqual([
+			'customize',
+			'opt-out',
+		]);
+		expect(hidden()).toBe(true);
+	});
+
 	test('leaves the IAB banner and other buttons alone', () => {
 		runScript();
 		renderBanner('iab');
@@ -423,6 +444,29 @@ describe('replayEarlyConsentTaps', () => {
 		expect(
 			runtime.kernel.getSnapshot().explicitChoice?.categories.marketing?.value
 		).toBe(false);
+	});
+
+	test('replays an opt-out right link tap as a durable opt-out and opens confirmation', async () => {
+		policy = matchedResolution(noticeRule());
+		runScript();
+		document.body.innerHTML =
+			'<div data-testid="consent-banner-root" data-model="opt-out" data-prompt="notice"><button data-action="right" data-right="opt-out">Do Not Sell</button></div>';
+		document
+			.querySelector<HTMLButtonElement>('[data-right="opt-out"]')
+			?.click();
+		const tapAt = queue()?.taps?.[0]?.at ?? 0;
+		const runtime = createRuntime();
+		replayEarlyConsentTaps(runtime.kernel, {
+			started: () => runtime.started,
+		});
+		await startAndInit(runtime);
+		const snapshot = runtime.kernel.getSnapshot();
+		expect(snapshot.optOut?.method).toBe('button');
+		expect(snapshot.optOut?.recordedAt).toBe(tapAt);
+		expect(snapshot.effectivePermissions.marketing).toBe(false);
+		expect(snapshot.effectivePermissions.measurement).toBe(false);
+		expect(isOptOutConfirmationOpen(runtime.kernel)).toBe(true);
+		closeOptOutConfirmation(runtime.kernel);
 	});
 
 	test('does nothing without the script, and shows nothing hidden', () => {

@@ -121,6 +121,40 @@ describe('applyThemeSlots', () => {
 		});
 	});
 
+	test('maps the optOutConfirmation slots', () => {
+		expect(
+			applyThemeSlots(
+				{
+					optOutConfirmation: 'confirm-root',
+					optOutConfirmationCard: 'confirm-card',
+					optOutConfirmationDescription: 'confirm-desc',
+					optOutConfirmationDoneButton: 'confirm-done',
+					optOutConfirmationFooter: 'confirm-footer',
+					optOutConfirmationHeader: 'confirm-header',
+					optOutConfirmationOverlay: 'confirm-overlay',
+					optOutConfirmationPreferencesLink: 'confirm-prefs',
+					optOutConfirmationStatus: 'confirm-status',
+					optOutConfirmationTitle: 'confirm-title',
+				},
+				undefined,
+				'className'
+			)
+		).toEqual({
+			'opt-out-confirmation': {
+				card: { className: 'confirm-card' },
+				description: { className: 'confirm-desc' },
+				doneButton: { className: 'confirm-done' },
+				footer: { className: 'confirm-footer' },
+				header: { className: 'confirm-header' },
+				overlay: { className: 'confirm-overlay' },
+				preferencesLink: { className: 'confirm-prefs' },
+				root: { className: 'confirm-root' },
+				status: { className: 'confirm-status' },
+				title: { className: 'confirm-title' },
+			},
+		});
+	});
+
 	test('returns the components unchanged without slots', () => {
 		const components = { banner: { card: { className: 'app-card' } } };
 		expect(applyThemeSlots(undefined, components, 'className')).toBe(
