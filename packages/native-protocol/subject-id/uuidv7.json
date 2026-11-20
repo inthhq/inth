@@ -1,0 +1,111 @@
+{
+	"description": "Subject IDs. vectors: mint a UUIDv7 from clock (milliseconds since the Unix epoch, clamped to 0 and 2^48 - 1) and ten random bytes, and get id. read: how a core treats a stored ID. uuidv7 is the form this SDK writes; c15t is a sub_ ID a c15t client stored, which the core keeps and sends until a response carries the canonical subjectId; unusable is anything else, read as no identity at all.",
+	"layout": [
+		"bytes 0-5: clock, big-endian",
+		"byte 6: 0x70 | (random[0] & 0x0f)",
+		"byte 7: random[1]",
+		"byte 8: 0x80 | (random[2] & 0x3f)",
+		"bytes 9-15: random[3..9]",
+		"text: lowercase hex, 8-4-4-4-12"
+	],
+	"read": [
+		{
+			"id": "019c1c38-a400-7100-8000-000000000002",
+			"kind": "uuidv7"
+		},
+		{
+			"id": "0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c",
+			"kind": "uuidv7"
+		},
+		{
+			"id": "sub_1119tDZHoarNxm6kSm3BN6ze9d",
+			"kind": "c15t"
+		},
+		{
+			"id": "sub_2VZxR7YmNpKq3WfLs8TgHd",
+			"kind": "c15t"
+		},
+		{
+			"id": "0193E5A8-6F00-7C3A-8A1B-5D2E7F9A0B1C",
+			"kind": "unusable"
+		},
+		{
+			"id": "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b",
+			"kind": "unusable"
+		},
+		{
+			"id": "0193e5a8-6f00-7c3a-ca1b-5d2e7f9a0b1c",
+			"kind": "unusable"
+		},
+		{
+			"id": "00000000-0000-0000-0000-000000000000",
+			"kind": "unusable"
+		},
+		{
+			"id": "ffffffff-ffff-ffff-ffff-ffffffffffff",
+			"kind": "unusable"
+		},
+		{
+			"id": "0193e5a86f007c3a8a1b5d2e7f9a0b1c",
+			"kind": "unusable"
+		},
+		{
+			"id": "٠193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c",
+			"kind": "unusable"
+		},
+		{
+			"id": "sub_0OIl",
+			"kind": "unusable"
+		},
+		{
+			"id": "sub_",
+			"kind": "unusable"
+		},
+		{
+			"id": "",
+			"kind": "unusable"
+		}
+	],
+	"vectors": [
+		{
+			"clock": 1770000000000,
+			"randomHex": "00000000000000000000",
+			"id": "019c1c38-a400-7000-8000-000000000000"
+		},
+		{
+			"clock": 1770000000000,
+			"randomHex": "ffffffffffffffffffff",
+			"id": "019c1c38-a400-7fff-bfff-ffffffffffff"
+		},
+		{
+			"clock": 1770000000000,
+			"randomHex": "0123456789abcdef0123",
+			"id": "019c1c38-a400-7123-8567-89abcdef0123"
+		},
+		{
+			"clock": 0,
+			"randomHex": "0a0b0c0d0e0f10111213",
+			"id": "00000000-0000-7a0b-8c0d-0e0f10111213"
+		},
+		{
+			"clock": -1,
+			"randomHex": "0a0b0c0d0e0f10111213",
+			"id": "00000000-0000-7a0b-8c0d-0e0f10111213"
+		},
+		{
+			"clock": 281474976710655,
+			"randomHex": "5a5a5a5a5a5a5a5a5a5a",
+			"id": "ffffffff-ffff-7a5a-9a5a-5a5a5a5a5a5a"
+		},
+		{
+			"clock": 281474976710656,
+			"randomHex": "5a5a5a5a5a5a5a5a5a5a",
+			"id": "ffffffff-ffff-7a5a-9a5a-5a5a5a5a5a5a"
+		},
+		{
+			"clock": 1763467200000,
+			"randomHex": "c3d2e1f0a5b4c3d2e1f0",
+			"id": "019a96d6-0600-73d2-a1f0-a5b4c3d2e1f0"
+		}
+	]
+}

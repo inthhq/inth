@@ -57,7 +57,7 @@ describe('fixture shapes it cannot drive', () => {
 		expect(skipReason(fixture, 'x.json')).toContain('input.transport');
 	});
 
-	it('names a missing contract header, without which the body fails closed', () => {
+	it('times a /v1 fixture, whose response declares no contract', () => {
 		const fixture = {
 			id: 'x',
 			input: {
@@ -65,7 +65,7 @@ describe('fixture shapes it cannot drive', () => {
 				transport: { body: {}, headers: {}, status: 200 },
 			},
 		};
-		expect(skipReason(fixture, 'x.json')).toContain('x-inth-policy-contract');
+		expect(skipReason(fixture, 'x.json')).toBeNull();
 	});
 
 	it('names a fixture with no input at all', () => {
@@ -78,7 +78,7 @@ describe('fixture shapes it cannot drive', () => {
 			input: {
 				transport: {
 					body: {},
-					headers: { 'x-inth-policy-contract': '1' },
+					headers: {},
 					status: 200,
 				},
 			},

@@ -26,6 +26,7 @@ import {
 	createConsentKernel,
 	mapInitOutputToInitResponse,
 } from '@inth/sdk/engine';
+import { POLICY_CONTRACT_VERSION } from '@inth/sdk/schema/types';
 
 import { REPO_ROOT } from './native';
 
@@ -78,8 +79,12 @@ export interface PolicySweepResult {
 
 const FIXTURE_DIR = resolve(REPO_ROOT, 'packages', 'native-protocol');
 
-/** The contract declaration the kernel needs to trust a policy body. */
-const CONTRACT_HEADER = 'x-inth-policy-contract';
+/**
+ * The policy contract the kernel reads a body under. A `/v1` response declares none,
+ * because the path is the version, so this is the kernel's own current contract, as
+ * the fixture producer uses.
+ */
+const POLICY_CONTRACT = POLICY_CONTRACT_VERSION;
 
 const median = function median(values: number[]): number {
 	if (values.length === 0) {
@@ -174,9 +179,6 @@ export const skipReason = function skipReason(
 	if (!transport.body) {
 		return `${fixture.id ?? name} has an empty "input.transport.body"`;
 	}
-	if (typeof transport.headers?.[CONTRACT_HEADER] !== 'string') {
-		return `${fixture.id ?? name} is missing the "${CONTRACT_HEADER}" response header`;
-	}
 	if (typeof input.now !== 'number') {
 		return `${fixture.id ?? name} has no numeric "input.now"`;
 	}
@@ -187,7 +189,7 @@ export const skipReason = function skipReason(
  * Build the kernel the fixture describes, serving its own init response.
  *
  * This mirrors `runFixture` in the producer script so the sweep times the same
- * path that generated `expected`, including the contract-declaration header.
+ * path that generated `expected`, including the policy contract it reads under.
  */
 const kernelFor = function kernelFor(fixture: EvaluationFixture) {
 	const input = fixture.input as NonNullable<EvaluationFixture['input']>;
@@ -195,7 +197,7 @@ const kernelFor = function kernelFor(fixture: EvaluationFixture) {
 	const response = mapInitOutputToInitResponse(
 		transport.body as Parameters<typeof mapInitOutputToInitResponse>[0],
 		{},
-		{ producerContract: Number(transport.headers[CONTRACT_HEADER]) }
+		{ producerContract: POLICY_CONTRACT }
 	);
 
 	const overrides: Record<string, unknown> = {

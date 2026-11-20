@@ -1,0 +1,195 @@
+{
+	"description": "The /v1 transport, run by the Swift and Kotlin cores. init: the URL a GET /v1/consent/init request goes to for the given overrides. records: the save route. link: the URL and JSON body of POST /v1/subjects/:id/link. success: the subjectId a core reads from a 2xx body (null when the body names none). failure: how a core reads a non-2xx answer (the error body, then the x-request-id header and the raw text as fallbacks) and whether the status makes a queued body permanent.",
+	"projectUrl": "https://acme.inth.app",
+	"init": [
+		{
+			"name": "no inputs",
+			"overrides": {},
+			"url": "https://acme.inth.app/v1/consent/init"
+		},
+		{
+			"name": "every input",
+			"overrides": {
+				"country": "US",
+				"region": "US-CA",
+				"language": "pt-BR",
+				"gpc": false
+			},
+			"url": "https://acme.inth.app/v1/consent/init?country=US&region=US-CA&language=pt-BR&gpc=0"
+		},
+		{
+			"name": "gpc on",
+			"overrides": {
+				"gpc": true
+			},
+			"url": "https://acme.inth.app/v1/consent/init?gpc=1"
+		}
+	],
+	"records": {
+		"method": "POST",
+		"url": "https://acme.inth.app/v1/consent/records"
+	},
+	"link": [
+		{
+			"name": "c15t subject id with a provider",
+			"subjectId": "sub_1119tDZHoarNxm6kSm3BN6ze9d",
+			"externalId": "user_123",
+			"identityProvider": "clerk",
+			"identityToken": "token-1",
+			"method": "POST",
+			"url": "https://acme.inth.app/v1/subjects/sub_1119tDZHoarNxm6kSm3BN6ze9d/link",
+			"body": {
+				"externalId": "user_123",
+				"identityProvider": "clerk",
+				"identityToken": "token-1"
+			}
+		},
+		{
+			"name": "UUIDv7 subject id without a provider",
+			"subjectId": "019c1c38-a400-7100-8000-000000000002",
+			"externalId": "user_123",
+			"identityProvider": null,
+			"identityToken": "token-1",
+			"method": "POST",
+			"url": "https://acme.inth.app/v1/subjects/019c1c38-a400-7100-8000-000000000002/link",
+			"body": {
+				"externalId": "user_123",
+				"identityToken": "token-1"
+			}
+		}
+	],
+	"success": [
+		{
+			"name": "records answer with a link",
+			"body": "{\"subjectId\":\"0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c\",\"recordId\":\"0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1d\",\"link\":{\"stored\":false,\"reason\":\"invalid_token\"}}",
+			"subjectId": "0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c"
+		},
+		{
+			"name": "link answer",
+			"body": "{\"subjectId\":\"0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c\",\"externalId\":\"user_123\",\"verifiedBy\":\"identity_token\"}",
+			"subjectId": "0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c"
+		},
+		{
+			"name": "no subjectId",
+			"body": "{}",
+			"subjectId": null
+		},
+		{
+			"name": "empty body",
+			"body": "",
+			"subjectId": null
+		}
+	],
+	"failure": [
+		{
+			"name": "invalid request",
+			"status": 400,
+			"headers": {},
+			"body": "{\"error\":{\"code\":\"invalid_request\",\"message\":\"subjectId is required\"},\"requestId\":\"req_400\"}",
+			"code": "invalid_request",
+			"requestId": "req_400",
+			"message": "subjectId is required",
+			"permanent": true
+		},
+		{
+			"name": "body request id wins over the header",
+			"status": 401,
+			"headers": {
+				"x-request-id": "req_header"
+			},
+			"body": "{\"error\":{\"code\":\"identity_token_invalid\",\"message\":\"Token expired\"},\"requestId\":\"req_body\"}",
+			"code": "identity_token_invalid",
+			"requestId": "req_body",
+			"message": "Token expired",
+			"permanent": true
+		},
+		{
+			"name": "forbidden",
+			"status": 403,
+			"headers": {},
+			"body": "{\"error\":{\"code\":\"forbidden\",\"message\":\"no\"},\"requestId\":\"req_403\"}",
+			"code": "forbidden",
+			"requestId": "req_403",
+			"message": "no",
+			"permanent": true
+		},
+		{
+			"name": "timeout",
+			"status": 408,
+			"headers": {
+				"x-request-id": "req_408"
+			},
+			"body": "request timeout",
+			"code": null,
+			"requestId": "req_408",
+			"message": "request timeout",
+			"permanent": false
+		},
+		{
+			"name": "key reused",
+			"status": 409,
+			"headers": {},
+			"body": "{\"error\":{\"code\":\"conflict\",\"message\":\"idempotencyKey was recorded for another subject\"},\"requestId\":\"req_409\"}",
+			"code": "conflict",
+			"requestId": "req_409",
+			"message": "idempotencyKey was recorded for another subject",
+			"permanent": true
+		},
+		{
+			"name": "too early",
+			"status": 425,
+			"headers": {},
+			"body": "too early",
+			"code": null,
+			"requestId": null,
+			"message": "too early",
+			"permanent": false
+		},
+		{
+			"name": "rate limited",
+			"status": 429,
+			"headers": {
+				"Retry-After": "30"
+			},
+			"body": "{\"error\":{\"code\":\"rate_limited\",\"message\":\"slow down\"},\"requestId\":\"req_429\"}",
+			"code": "rate_limited",
+			"requestId": "req_429",
+			"message": "slow down",
+			"permanent": false
+		},
+		{
+			"name": "server error",
+			"status": 500,
+			"headers": {},
+			"body": "{\"error\":{\"code\":\"server_error\",\"message\":\"boom\"},\"requestId\":\"req_500\"}",
+			"code": "server_error",
+			"requestId": "req_500",
+			"message": "boom",
+			"permanent": false
+		},
+		{
+			"name": "gateway page, mixed-case header",
+			"status": 502,
+			"headers": {
+				"X-Request-Id": "req_header"
+			},
+			"body": "<html>bad gateway</html>",
+			"code": null,
+			"requestId": "req_header",
+			"message": "<html>bad gateway</html>",
+			"permanent": false
+		},
+		{
+			"name": "unavailable",
+			"status": 503,
+			"headers": {
+				"x-request-id": "req_503"
+			},
+			"body": "upstream down",
+			"code": null,
+			"requestId": "req_503",
+			"message": "upstream down",
+			"permanent": false
+		}
+	]
+}
