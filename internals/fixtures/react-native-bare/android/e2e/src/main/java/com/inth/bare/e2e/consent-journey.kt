@@ -235,12 +235,14 @@ class ConsentJourney {
         receipts != null && permissions != null && writes.length() == saves &&
             writes.getJSONObject(saves - 1).getString("consentAction") == action &&
             permissions.getBoolean("necessary") &&
+            // The wire map carries every receipt but necessary, and nothing else.
+            writes.getJSONObject(saves - 1).getJSONObject("answer").getJSONObject("categories").keys().asSequence().toSet() ==
+                receipts.keys().asSequence().toSet() - "necessary" &&
             categories.all { category ->
                 val receipt = receipts.optJSONObject(category)
                 val delivered = writes.getJSONObject(saves - 1)
-                val wireReceipt = delivered.getJSONObject("choice").getJSONObject("categories").getJSONObject(category)
+                val wireReceipt = delivered.getJSONObject("answer").getJSONObject("categories").getJSONObject(category)
                 permissions.getBoolean(category) == granted.contains(category) &&
-                    delivered.getJSONObject("preferences").getBoolean(category) == granted.contains(category) &&
                     delivered.getString("subjectId") == snapshot.getJSONObject("subject").getString("subjectId") &&
                     receipt != null && receipt.getBoolean("value") == granted.contains(category) &&
                     receipt.getLong("confirmedAt") > 0 &&
@@ -479,7 +481,9 @@ class ConsentJourney {
         network(true); launch()
         val replayed = expiryState("expiry-replayed-same-fingerprint") { snapshot, report -> denied(snapshot, report) && !snapshot.getBoolean("policyPending") && report.getJSONArray("saves").length() == 1 }
         val delivered = replayed.getJSONArray("saves").getJSONObject(0)
-        assertEquals(frozen, canonical(delivered.getJSONObject("choice")))
+        // The records body carries the same receipts as `answer.categories`, without `necessary`.
+        val frozenReceipts = JSONObject(denial.getJSONObject("native").getJSONObject("snapshot").getJSONObject("explicitChoice").getJSONObject("categories").toString()).apply { remove("necessary") }
+        assertEquals(canonical(frozenReceipts), canonical(delivered.getJSONObject("answer").getJSONObject("categories")))
         assertEquals("necessary", delivered.getString("consentAction"))
         capture("26-expiry-replayed")
         setControl(JSONObject().put("categories", org.json.JSONArray(listOf("necessary") + optional))); launch()

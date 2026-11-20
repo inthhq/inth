@@ -595,7 +595,7 @@ describe('subscriptions', () => {
 
 		emitNativeEvent(
 			'error',
-			JSON.stringify({ code: 'unsupported-contract', message: 'no' })
+			JSON.stringify({ code: 'save-rejected', message: 'no' })
 		);
 
 		expect(client.getSnapshot().error?.code).toBe('transport');
@@ -612,7 +612,7 @@ describe('subscriptions', () => {
 	 * paired `error` event is deliberately absent here: it is a convenience, and the
 	 * client must not need it.
 	 */
-	test('learns an unsupported-contract error from the snapshot event alone', () => {
+	test('learns a save-rejected error from the snapshot event alone', () => {
 		const { client, fake } = makeClient();
 		const codes = watch(client, (snapshot) => snapshot.error?.code ?? null);
 
@@ -629,8 +629,8 @@ describe('subscriptions', () => {
 						necessary: true,
 					},
 					error: {
-						code: 'unsupported-contract',
-						message: 'backend declares policy contract 2',
+						code: 'save-rejected',
+						message: 'HTTP 422 invalid_request',
 					},
 					policyPending: true,
 					revision: 4,
@@ -641,7 +641,7 @@ describe('subscriptions', () => {
 		emitNativeEvent('snapshot', JSON.stringify({ revision: 4 }));
 
 		expect(codes.calls()).toBe(1);
-		expect(client.getSnapshot().error?.code).toBe('unsupported-contract');
+		expect(client.getSnapshot().error?.code).toBe('save-rejected');
 
 		codes.stop();
 	});
@@ -747,6 +747,20 @@ describe('actions', () => {
 		expect(ready.calls()).toBe(0);
 
 		ready.stop();
+	});
+
+	test('hands identify the token, and always both arguments', async () => {
+		const { client, fake } = makeClient();
+
+		await client.identify('user-42', 'signed-token');
+		await client.identify('user-43');
+
+		// iOS puts the promise blocks after the arguments it was given, so a
+		// missing token would land the resolve block in the token's slot.
+		expect(fake.identify.mock.calls).toStrictEqual([
+			['user-42', 'signed-token'],
+			['user-43', null],
+		]);
 	});
 });
 

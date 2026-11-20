@@ -14,6 +14,7 @@ import com.inth.core.spi.TaskExecutor
 import com.inth.core.store.InthStore
 import com.inth.core.transport.InthTransport
 import com.inth.core.transport.InitContext
+import com.inth.core.transport.LinkOutcome
 import com.inth.core.transport.SaveOutcome
 import com.inth.core.transport.TransportOutcome
 import kotlinx.serialization.json.Json
@@ -39,7 +40,7 @@ class MeasurementConsentGateTest {
                     emptyMap(),
                 )
                 override fun save(entry: QueuedSave): SaveOutcome = SaveOutcome.Unavailable("offline")
-                override fun identify(subject: ConsentSubject, user: KernelUser): TransportOutcome = TransportOutcome.Success(null, emptyMap())
+                override fun link(subject: ConsentSubject, user: KernelUser, identityToken: String): LinkOutcome = LinkOutcome.Linked(null)
             },
         )
         var refusedDuringGrant = false

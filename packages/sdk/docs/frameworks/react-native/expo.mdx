@@ -81,7 +81,7 @@ to denied in `Info.plist` and `AndroidManifest.xml`, so Firebase grants nothing
 before Inth's consent is read. These keys are harmless in an app without
 Firebase. The native engine owns
 policy resolution and storage. You do not pass a backend URL to
-`ConsentProvider` in JavaScript.
+`InthProvider` in JavaScript.
 
 The plugin raises the iOS deployment target to 16.4 when needed and preserves
 a higher target. This includes Expo 55, whose default target is 15.1. Android
@@ -160,7 +160,7 @@ For an app whose entry point is `App.tsx`, use the quickstart's `App.tsx`
 example directly.
 
 For Expo Router, change your existing root layout instead. Import
-`ConsentProvider` from `@inth/react-native` in `app/_layout.tsx` or
+`InthProvider` from `@inth/react-native` in `app/_layout.tsx` or
 `src/app/_layout.tsx`. Wrap the existing `Stack` or `Slot` in that layout,
 keeping your other providers and navigation configuration. For example, this
 fragment wraps an existing `Stack`:
@@ -169,9 +169,9 @@ fragment wraps an existing `Stack`:
 
 ```tsx
 return (
-	<ConsentProvider privacyPolicyUrl="https://example.com/privacy">
+	<InthProvider privacyPolicyUrl="https://example.com/privacy">
 		<Stack />
-	</ConsentProvider>
+	</InthProvider>
 );
 ```
 
@@ -249,7 +249,7 @@ For a feature that needs Apple's tracking authorization, set
 `trackingMarkdownUsageDescription`, its localization map,
 `skAdNetworkIdentifiers` and `privacyTrackingDomains`.
 
-Once ATT is enabled, `<ConsentProvider>` asks for it after the consent prompt
+Once ATT is enabled, `<InthProvider>` asks for it after the consent prompt
 closes, and only if the person granted marketing. Set `trackingRequest` to
 `beforeConsent` or `manual` to change that. An Inth consent grant does not
 replace Apple's answer. Read

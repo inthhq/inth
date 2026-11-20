@@ -199,7 +199,7 @@ public struct InthBridgeConfiguration: Sendable, Equatable {
     /// the core's detection, never ``ConsentOverrides/gpc``.
     ///
     /// `com.inth.backend.mode` and `com.inth.backend.initUrl` went when mobile became
-    /// Inth hosted only. `replacement` is a full sentence, because for these the answer
+    /// Inth hosted only. `com.inth.backend.domain` became `com.inth.backend.property`. `replacement` is a full sentence, because for these the answer
     /// is not always another key. The Expo config plugin writes none of these keys.
     public static let retiredInfoPlistKeys: [RetiredInfoPlistKey] = [
         RetiredInfoPlistKey(
@@ -217,6 +217,10 @@ public struct InthBridgeConfiguration: Sendable, Equatable {
         RetiredInfoPlistKey(
             key: "com.inth.backend.initUrl",
             replacement: "Remove it. Policy is fetched from com.inth.backend.url."),
+        RetiredInfoPlistKey(
+            key: "com.inth.backend.domain",
+            replacement: "Rename it to com.inth.backend.property, the property each consent "
+                + "record names."),
     ]
 
     /// The retired keys present in `infoPlist`, in declaration order.

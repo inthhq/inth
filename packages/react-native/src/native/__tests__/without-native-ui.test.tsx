@@ -15,7 +15,7 @@ import {
 import { resetNativeStub } from '../../__tests__/helpers/react-native-stub';
 import { ConsentPrompt } from '../../headless/consent-prompt';
 import type { ConsentSnapshot } from '../../protocol';
-import { ConsentProvider } from '../../provider/consent-provider';
+import { InthProvider } from '../../provider/inth-provider';
 import { getConsentClient, resetConsentClient } from '../client';
 import {
 	UNCLAIMED_PROMPT_MS,
@@ -103,9 +103,9 @@ describe('a build without the stock native screens', () => {
 			snapshot: buildSnapshot(),
 		});
 		renderTree(
-			<ConsentProvider>
+			<InthProvider>
 				<ConsentPrompt>{() => null}</ConsentPrompt>
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		vi.advanceTimersByTime(UNCLAIMED_PROMPT_MS * 2);
@@ -118,9 +118,9 @@ describe('a build without the stock native screens', () => {
 			snapshot: buildSnapshot(),
 		});
 		const tree = renderTree(
-			<ConsentProvider>
+			<InthProvider>
 				<ConsentPrompt>{() => null}</ConsentPrompt>
-			</ConsentProvider>
+			</InthProvider>
 		);
 		// The timer fires while the prompt is claimed, so nothing is said yet.
 		vi.advanceTimersByTime(UNCLAIMED_PROMPT_MS * 2);

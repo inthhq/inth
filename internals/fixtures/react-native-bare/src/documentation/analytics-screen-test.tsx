@@ -6,7 +6,7 @@
  * fixture's own Vitest run away from it.
  */
 // #region docs:testing-component-test title="analytics-screen.test.tsx"
-import { ConsentProvider } from '@inth/react-native';
+import { InthProvider } from '@inth/react-native';
 import { createTestConsentClient } from '@inth/react-native/testing';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
@@ -17,12 +17,12 @@ describe('AnalyticsScreen', () => {
 		const consent = createTestConsentClient({ consent: 'unset' });
 
 		await render(
-			<ConsentProvider
+			<InthProvider
 				client={consent.client}
 				autoPresent={false}
 			>
 				<AnalyticsScreen />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		expect(screen.getByText('Analytics off')).toBeTruthy();
 
@@ -36,12 +36,12 @@ describe('AnalyticsScreen', () => {
 		const consent = createTestConsentClient({ consent: 'denied' });
 
 		await render(
-			<ConsentProvider
+			<InthProvider
 				client={consent.client}
 				autoPresent={false}
 			>
 				<AnalyticsScreen />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		consent.setConsent({ measurement: true });
 
@@ -52,12 +52,12 @@ describe('AnalyticsScreen', () => {
 		const consent = createTestConsentClient({ consent: 'unset' });
 
 		await render(
-			<ConsentProvider
+			<InthProvider
 				client={consent.client}
 				privacyPolicyUrl="https://example.com/privacy"
 			>
 				<AnalyticsScreen />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		expect(consent.prompt.isOpen).toBe(true);
 

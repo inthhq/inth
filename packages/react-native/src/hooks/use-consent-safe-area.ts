@@ -3,7 +3,7 @@
  *
  * Two sources exist, and they are not equally good:
  *
- * - The host measured them. Pass the numbers to `ConsentProvider` and every
+ * - The host measured them. Pass the numbers to `InthProvider` and every
  *   surface lays out against the real thing, which is what a notched iPhone
  *   needs. A host reading them from `react-native-safe-area-context` gets
  *   rotation, keyboard, and the collapsing iOS home indicator for free, because

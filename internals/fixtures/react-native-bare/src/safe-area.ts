@@ -7,7 +7,7 @@
  * package's own reserved floor covers the rest, which is enough to put nothing
  * under the clock or the home indicator.
  *
- * The numbers go to `ConsentProvider` as well, so the consent surfaces lay out
+ * The numbers go to `InthProvider` as well, so the consent surfaces lay out
  * against the same measurement as the tab bar above them rather than against a
  * second guess at the same hardware.
  */

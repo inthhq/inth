@@ -12,7 +12,7 @@
 
 import { median } from '@inth/benchmarking/utils';
 import {
-	ConsentProvider,
+	InthProvider,
 	ConsentBanner,
 	ConsentClientContext,
 	createConsentClient,
@@ -154,7 +154,7 @@ const mountBanner = function mountBanner(
 	// The JavaScript banner is the surface under test, so the provider presents
 	// no native prompt beside it, as the docs tell an app that renders it.
 	const banner = createElement(
-		ConsentProvider,
+		InthProvider,
 		{ autoPresent: false },
 		createElement(ConsentBanner)
 	);

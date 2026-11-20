@@ -5,7 +5,7 @@ group: frameworks
 ---
 
 Configure the consent engine in the native app before React starts. Expo uses
-the config plugin; bare RN uses native metadata. `ConsentProvider` reads the
+the config plugin; bare RN uses native metadata. `InthProvider` reads the
 installed engine and has no backend or policy-options prop.
 
 ## Set your Inth project URL
@@ -100,7 +100,7 @@ for a working `app.config.ts`. The plugin accepts:
 | --- | --- |
 | `projectUrl` | Required. The project URL from your Inth dashboard. See [Set your Inth project URL](#set-your-inth-project-url). |
 | `dryRun` | Development and CI switch that drops consent records. Defaults to false. See [Use dryRun in development and CI](#use-dryrun-in-development-and-ci). |
-| `domain` | Domain value sent with subject writes. |
+| `property` | The `property` each consent record names. Defaults to the iOS bundle identifier and the Android application ID. Sent lowercase. |
 | `consentCategories` | Optional app category declaration. |
 | `vendors` | Optional IAB disclosure scope. |
 | `iab` | Optional IAB TCF CMP identity and publisher settings. See [Turn on IAB TCF](#turn-on-iab-tcf). |
@@ -131,7 +131,7 @@ Use these keys when configuring the same engine without Expo:
 | --- | --- | --- |
 | `projectUrl` | `com.inth.backend.url` | `com.inth.BACKEND_URL` |
 | `dryRun` | `com.inth.dryRun`, boolean | `com.inth.DRY_RUN` |
-| `domain` | `com.inth.backend.domain` | `com.inth.BACKEND_DOMAIN` |
+| `property` | `com.inth.backend.property` | `com.inth.BACKEND_PROPERTY` |
 | `consentCategories` | `com.inth.categories`, string array | `com.inth.CATEGORIES`, comma-separated |
 | `vendors` | `com.inth.vendors` | `com.inth.VENDORS`, comma-separated |
 | `policyResource` | `com.inth.policy.resource` | `com.inth.POLICY_RESOURCE` |
@@ -150,6 +150,7 @@ Remove these retired keys. Expo prebuild deletes them for you.
 | --- | --- |
 | `com.inth.backend.mode` (iOS), `com.inth.MODE` (Android) | Nothing for hosted. `com.inth.dryRun` or `com.inth.DRY_RUN` in development and CI. |
 | `com.inth.backend.initUrl` (iOS), `com.inth.BACKEND_INIT_URL` (Android) | Nothing. The app fetches policy from the project URL. |
+| `com.inth.backend.domain` (iOS) | `com.inth.backend.property`. |
 
 A build that still declares one does not start the engine. iOS logs
 `INTH_CONFIGURATION_RETIRED` with the key and its replacement. Android logs an

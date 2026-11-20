@@ -27,7 +27,7 @@ import type {
 import { resetNativeStub } from '../../__tests__/helpers/react-native-stub';
 import { resetConsentClient } from '../../native/client';
 import type { ConsentSnapshot, TrackingAuthorization } from '../../protocol';
-import { ConsentProvider } from '../../provider/consent-provider';
+import { InthProvider } from '../../provider/inth-provider';
 import { useConsent } from '../use-consent';
 import type { ConsentActions } from '../use-consent-actions';
 import {
@@ -262,7 +262,7 @@ const mount = function mount(
 	probe.counts = {};
 
 	return renderTree(
-		<ConsentProvider autoPresent={false}>{children}</ConsentProvider>
+		<InthProvider autoPresent={false}>{children}</InthProvider>
 	);
 };
 
@@ -504,7 +504,7 @@ describe('useConsentActions', () => {
 		const { actions, identify, setOverrides } = capturedCommands();
 
 		await actions.refresh();
-		await identify({ externalId: 'user-7' });
+		await identify({ externalId: 'user-7', identityToken: 'signed-token' });
 		await actions.logout();
 		await actions.reset();
 		await setOverrides({ country: 'US' });
@@ -512,6 +512,7 @@ describe('useConsentActions', () => {
 
 		expect(fake.refreshCalls).toBe(1);
 		expect(fake.identifyCalls).toEqual(['user-7']);
+		expect(fake.identify).toHaveBeenCalledWith('user-7', 'signed-token');
 		expect(fake.logoutCalls).toBe(1);
 		expect(fake.resetCalls).toBe(1);
 		expect(fake.overrideCalls).toEqual(['{"country":"US"}']);
@@ -549,7 +550,7 @@ describe('wiring', () => {
 		]) {
 			expect(
 				captureErrorMessage(() => renderToStaticMarkup(<Missing />))
-			).toContain('<ConsentProvider>');
+			).toContain('<InthProvider>');
 		}
 	});
 });

@@ -363,15 +363,22 @@ final class InstallationTests: XCTestCase {
         _ = await native.sendSave(Data("{}".utf8))
         _ = await native.linkSubject(
             subjectId: "subject", externalId: "external", identityProvider: nil, identityToken: "token")
+        // `packages/native-protocol/transport/cases.json` names the platform header and the
+        // headers no request may carry.
+        let cases = try JSONSerialization.jsonObject(with: Data(contentsOf: URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().appendingPathComponent("native-protocol/transport/cases.json")))
+        let rule = try XCTUnwrap((cases as? [String: Any])?["headers"] as? [String: Any])
+        let platform = try XCTUnwrap(rule["platform"] as? String)
+        let forbiddenPrefixes = rule["forbiddenPrefixes"] as? [String] ?? []
+        let forbidden = rule["forbidden"] as? [String] ?? []
         XCTAssertEqual(http.requests.count, 3)
-        XCTAssertEqual(http.requests.map(\.url.path), [
-            "/v1/consent/init", "/v1/consent/records", "/v1/subjects/subject/link",
-        ])
         for request in http.requests {
-            XCTAssertNil(request.headers["x-inth-version"])
-            XCTAssertNil(request.headers["x-inth-policy-contract"])
-            XCTAssertEqual(request.headers["x-inth-platform"], "apple->\(InthApple.version)")
-            XCTAssertFalse(request.headers.values.contains { $0.hasPrefix("rn->") })
+            XCTAssertEqual(request.headers[platform], "apple->\(InthApple.version)")
+            let names = request.headers.keys.map { $0.lowercased() }
+            XCTAssertFalse(names.contains { name in
+                forbidden.contains(name) || forbiddenPrefixes.contains { name.hasPrefix($0) }
+            }, "\(request.url.path): \(names)")
         }
     }
 

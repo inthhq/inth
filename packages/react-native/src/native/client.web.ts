@@ -2,7 +2,7 @@
  * The app's consent client, on web.
  *
  * The `.web` twin of `client.ts`. Bundlers for React Native web resolve it in
- * place of the native file, so `ConsentProvider`, the hooks and the
+ * place of the native file, so `InthProvider`, the hooks and the
  * integrations run against the browser engine from `@inth/sdk/engine` instead of a
  * TurboModule, and an iOS or Android bundle reads exactly the code it read
  * before. Keep the export list equal to `client.ts`.
@@ -77,7 +77,7 @@ export const getConsentClient = function getConsentClient(): ConsentClient {
  * Make `next` the page's shared client, so {@link getConsentClient} returns it.
  *
  * Only `@inth/react-native/testing` calls this, so an app's own
- * `<ConsentProvider>` reaches the test client under a web test preset too.
+ * `<InthProvider>` reaches the test client under a web test preset too.
  *
  * @internal
  * @param next - The client to share. The previous one is disposed.

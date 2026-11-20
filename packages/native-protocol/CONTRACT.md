@@ -422,7 +422,7 @@ Presenting the consent prompt
 The stock UI presents an owed prompt by itself. It is on by default on every
 platform, and each one offers the same opt-out:
 
-    React Native   <ConsentProvider privacyPolicyURL="https://...">     autoPresent={false}
+    React Native   <InthProvider privacyPolicyUrl="https://...">     autoPresent={false}
     SwiftUI        view.inth(configuration, privacyPolicyURL:)  autoPresent: false
                    view.inth(privacyPolicyURL:)                 (core already installed)
     UIKit          ConsentRootViewController(root:configuration:privacyPolicyURL:)
@@ -474,7 +474,7 @@ The rules, identical on all three:
 
 **One decision, in native.** Only the native `ConsentPrompt` decides when a
 prompt is owed and opens it, on all three platforms. React Native does not
-decide: `ConsentProvider` hands native its settings and observes what native
+decide: `InthProvider` hands native its settings and observes what native
 shows, so no rule about when a prompt is owed exists in JavaScript.
 
 **The invariant.** If a prompt is owed, auto-present is on, and nothing of ours
@@ -558,7 +558,7 @@ In that last case `onConsentPresenterUnavailable` follows it, and the prompt
 shows when the app returns. On iOS the outcome also waits for the cover to
 animate away.
 
-`ConsentProvider` mirrors only what is on screen, from these events and from the
+`InthProvider` mirrors only what is on screen, from these events and from the
 answers to the app's own `presentConsentPrompt` and `presentPreferences`, so the
 ATT sequence can wait for it. With `trackingRequest="beforeConsent"` it keeps
 auto-present off until Apple has been asked: native opens an owed prompt the
@@ -576,7 +576,7 @@ as the host notices, so no request is answered with a session that is not
 visible. A repeated prompt request re-asks the open session, so a notice owed
 again shows. A refused privacy-policy URL is rejected with
 `INTH_PRESENTER_INVALID_URL`, by `configureAutoPresent` and the presenter calls
-alike; it is permanent, and `ConsentProvider` reports it with `console.error`.
+alike; it is permanent, and `InthProvider` reports it with `console.error`.
 A binary built without the stock screens rejects every presenter call, and
 `configureAutoPresent` with `autoPresent: true`, with `INTH_NATIVE_UI_EXCLUDED`,
 also permanent: the provider reports it once. When the bootstrap already says
@@ -596,7 +596,7 @@ follow the prompt, such as Apple's tracking request, attaches there. On iOS the
 React Native outcome is sent once the cover has finished animating away.
 
 The stock prompt sequences ATT through `trackingRequest` (`afterConsent` by
-default, `beforeConsent`, `manual`) on `<ConsentProvider>`, `.inth(...)`
+default, `beforeConsent`, `manual`) on `<InthProvider>`, `.inth(...)`
 and `ConsentRootViewController`. It asks only when
 `NSUserTrackingUsageDescription` is present, marketing is not refused (a stored
 choice, or a `gpc` or `explicit-denial` restriction on marketing), the app is
@@ -1061,9 +1061,8 @@ body permanent. Both cores run it.
 
 ### No negotiation
 
-The path is the version. A `/v1` request sends no `x-inth-version` header and no
-policy-contract header or query parameter, and a core reads no contract declaration
-from a response. Every `/v1` response uses the current policy contract, so a `200`
+The path is the version. A request sends no version header and no policy-contract
+header or query parameter, and a core reads no contract declaration from a response. Every `/v1` response uses the current policy contract, so a `200`
 from `/v1/consent/init` is a definitive answer, and a policy resolution the core
 cannot read is contract rule 5, not a configuration error. The policy reader names a
 resolution from a newer schema (an unknown `version`, right or field)
@@ -1077,6 +1076,13 @@ Every request carries `accept: application/json` and, with a body,
                        for a Kotlin app, rn-><version> for a core either React Native
                        binding configures
 
+Every application header is named `x-inth-<name>`, and no request carries an
+`x-c15t-` header, `x-inth-version` or `x-inth-policy-contract`. No request carries an
+`Origin` header either: the backend checks `property` against a project's trusted
+origins only for a request with an `Origin` header, which is how it accepts a bundle
+or application ID from an app. `transport/cases.json` pins these names and the
+forbidden ones.
+
 Kotlin reads the tag from `NativeConfig.platform`, which defaults to `android`; `null`
 sends no platform header. Swift reads it from `InthAppleConfiguration.platform`, which
 defaults to `apple`. No request carries cookies, and a core stores none a response
@@ -1085,8 +1091,10 @@ sets.
 `GET /v1/consent/init` takes its inputs in the query string: `country`, `region`,
 `language` and `gpc` (`1` or `0`), each only when the device has a value. The
 override headers that repeat them (`accept-language`, `x-inth-country`,
-`x-inth-region`, `sec-gpc`) and the vendor scope header `x-inth-vendors` are sent as
-before.
+`x-inth-region`, and for GPC `sec-gpc` from Swift, `x-inth-gpc` for an override and
+`sec-gpc` for a detected signal from Kotlin) and the vendor scope header
+`x-inth-vendors` are sent too. An app is not bound by the browser's CORS rule, so it
+may send them as headers.
 
 ### Saving: `POST /v1/consent/records`
 
@@ -1104,17 +1112,18 @@ The body is built once per action, frozen, and queued before the first send:
     model, uiSource    from the snapshot the action was made on
     policySnapshotToken  when the core holds one
     policyId, fingerprint, country, region, language, gpc
-                       the decision-input assertion, only when there is no token, by
-                       the same rule as before
+                       the decision-input assertion, only when there is no token.
+                       This `policyId` names the consent policy, not a legal document.
     tcString, addtlConsent   for an IAB save, which carries its vendor choices in `tcString`
     metadata           `{ userProperties }` when the identified user has properties
     externalId, identityProvider   when the subject is identified
     answer             `{ categories: { <category>: receipt } }`: every receipt the
-                       subject holds after the action, in the 3.x receipt shape
+                       subject holds after the action, each
                        `{ value, confirmedAt, basis }`. `necessary` is left out.
-    confirmed          the categories this action confirmed, in the order
-                       functionality, experience, measurement, marketing. Every entry
-                       is a key of `answer.categories`; it is empty for an
+    confirmed          the categories this action confirmed. It is a set: the cores
+                       write it in the order functionality, experience, measurement,
+                       marketing, and the backend gives the order no meaning. Every
+                       entry is a key of `answer.categories`; it is empty for an
                        acknowledgement.
 
 `answer` has no `version` field. The backend merges it per category, the receipt with
@@ -1144,7 +1153,10 @@ device sends no token it is `{ "stored": false, "reason": "unverified" }`, and
 the save is delivered and leaves the queue. `recordId` is not read.
 
 A refused request records nothing under its `idempotencyKey`, so a resend of the same
-bytes after a refusal is a new request, not a duplicate.
+bytes after a refusal is a new request, not a duplicate. A key the backend already
+recorded for another subject or property answers `409 conflict`. A core never sends
+that: the key is frozen in the body with its `subjectId` and `property`, and adopting
+a canonical subject ID does not rewrite a queued body.
 
 ### Errors
 
@@ -1276,9 +1288,10 @@ replacement:
     mode: 'custom'                                       autoBootstrap: false. Custom transports are gone.
     initURL, com.inth.backend.initUrl,                   None. Policy is fetched from the project URL.
       com.inth.BACKEND_INIT_URL, NativeConfig.initUrl
+    domain, com.inth.backend.domain                      property, com.inth.backend.property.
 
-The Expo plugin throws on `mode` and `initURL`. The iOS launch hook refuses
-`com.inth.backend.mode` and `com.inth.backend.initUrl` with
+The Expo plugin throws on `mode`, `initURL` and `domain`. The iOS launch hook refuses
+`com.inth.backend.mode`, `com.inth.backend.initUrl` and `com.inth.backend.domain` with
 `INTH_CONFIGURATION_RETIRED`. Android refuses `com.inth.MODE` and
 `com.inth.BACKEND_INIT_URL` with a logged error and leaves the core uninstalled.
 
@@ -1493,7 +1506,7 @@ New Architecture only. TurboModule plus Codegen, no legacy bridge, no
     setOverrides(overrides): Promise<void>
     dismissNotice(): void
     refresh(): Promise<void>
-    identify(externalId): Promise<void>
+    identify(externalId, identityToken | null): Promise<void>
     logout(): Promise<void>
     reset(): Promise<void>                      // wipe consent, keep the subject id
     getTrackingAuthorization(): TrackingAuthorizationPayload   // sync, JSON string
@@ -1628,7 +1641,7 @@ The bridge does not carry them, and it is the wrong place for them. Nothing in
 2 keeps the consent cores free of UI: a home indicator is not consent state, and
 neither core owns a window or a UI thread to read one from.
 
-The bands reach the surfaces from the app instead, through `ConsentProvider`'s
+The bands reach the surfaces from the app instead, through `InthProvider`'s
 `safeAreaInsets`, which the provider publishes on a context and
 `useConsentSafeArea()` reads. The host measures rather than the bridge because
 React Native itself has no inset API worth calling one: `SafeAreaView` is
@@ -1992,7 +2005,8 @@ string. `AutoBootstrap` is written only in the opt-out case, since on is the
 bridge's own default. The `dryRun` keys are written only when `dryRun` is on.
 
 Prebuild also deletes the retired keys `com.inth.backend.mode`,
-`com.inth.backend.initUrl`, `com.inth.MODE` and `com.inth.BACKEND_INIT_URL`. A
+`com.inth.backend.initUrl`, `com.inth.backend.domain`, `com.inth.MODE`,
+`com.inth.BACKEND_INIT_URL` and `com.inth.BACKEND_DOMAIN`. A
 prebuild without `--clean` keeps the old plist and manifest, and native start
 refuses a build that still declares one.
 

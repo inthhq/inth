@@ -625,7 +625,7 @@ export const createFakeNativeInth = function createFakeNativeInth(
 		const closing = session;
 		if (closing === null) {
 			throw new Error(
-				'No consent prompt or preferences screen is open. Render a <ConsentProvider> that presents (the default), or call presentConsentPrompt() or presentPreferences(), before answering it.'
+				'No consent prompt or preferences screen is open. Render an <InthProvider> that presents (the default), or call presentConsentPrompt() or presentPreferences(), before answering it.'
 			);
 		}
 		// The notice prompt offers Acknowledge and Privacy settings, not a

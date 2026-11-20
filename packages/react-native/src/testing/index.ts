@@ -3,21 +3,21 @@
  * in Jest or Vitest, where no native module exists.
  *
  * {@link createTestConsentClient} builds the real consent client over a fake
- * native core. Pass its `client` to `<ConsentProvider client>`, set the
+ * native core. Pass its `client` to `<InthProvider client>`, set the
  * starting consent, assert what the app committed, change consent from the
  * native side, and answer the simulated native prompt.
  *
  * @example
  * ```tsx
- * import { ConsentProvider } from '@inth/react-native';
+ * import { InthProvider } from '@inth/react-native';
  * import { createTestConsentClient } from '@inth/react-native/testing';
  *
  * const consent = createTestConsentClient({ consent: 'granted' });
  *
  * render(
- *     <ConsentProvider client={consent.client} autoPresent={false}>
+ *     <InthProvider client={consent.client} autoPresent={false}>
  *         <Screen />
- *     </ConsentProvider>
+ *     </InthProvider>
  * );
  * ```
  *

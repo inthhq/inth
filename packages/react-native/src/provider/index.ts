@@ -2,12 +2,12 @@
  * The provider and the context behind it.
  */
 
-export { ConsentProvider } from './consent-provider';
+export { InthProvider } from './inth-provider';
 export type {
-	ConsentProviderBaseProps,
-	ConsentProviderPromptProps,
-	ConsentProviderProps,
-} from './consent-provider';
+	InthProviderBaseProps,
+	InthProviderPromptProps,
+	InthProviderProps,
+} from './inth-provider';
 export type {
 	ConsentTrackingReprompt,
 	ConsentTrackingRequest,

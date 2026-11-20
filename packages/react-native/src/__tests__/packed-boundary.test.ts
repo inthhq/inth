@@ -272,12 +272,13 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 		writeFileSync(
 			join(directory, 'consumer.ts'),
 			`
-			import { ConsentProvider, useConsent, type ConsentSnapshot } from '@inth/react-native';
+			import { InthProvider, useConsent, type ConsentSnapshot, type InthProviderBaseProps, type InthProviderPromptProps, type InthProviderProps } from '@inth/react-native';
 			import withInth, { type InthPluginProps } from '@inth/react-native/expo-plugin';
 			import { connectAmplitude, connectFirebaseAnalytics, connectMixpanel, connectPostHog, connectSentryReplay } from '@inth/react-native/integrations';
-			export const provider: typeof ConsentProvider = ConsentProvider;
+			export const provider: typeof InthProvider = InthProvider;
 			export const gate: typeof useConsent = useConsent;
 			export type Snapshot = ConsentSnapshot;
+			export type RootProps = InthProviderProps | InthProviderBaseProps | InthProviderPromptProps;
 			export const plugin: typeof withInth = withInth;
 			export const pluginProps: InthPluginProps = { projectUrl: 'https://your-project.inth.app', policy: { rules: [{ id: 'everywhere', match: { fallback: true, isDefault: true }, model: 'opt-in', prompt: 'choice' }] } };
 			export const firebase: typeof connectFirebaseAnalytics = connectFirebaseAnalytics;
@@ -426,7 +427,7 @@ test('the actual local mobile tarball contains useful generated docs and no web 
 		);
 		expect(read('package.json')).not.toContain('workspace:');
 		expect(read('docs/frameworks/react-native/quickstart.md')).toContain(
-			'ConsentProvider'
+			'InthProvider'
 		);
 		expect(read('docs/frameworks/react-native/expo.md')).toContain(
 			'androidMavenRepository'

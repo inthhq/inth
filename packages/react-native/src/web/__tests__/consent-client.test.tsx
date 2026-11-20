@@ -21,7 +21,7 @@ import {
 	claimPrompt,
 	UNCLAIMED_PROMPT_MS,
 } from '../../native/without-native-ui';
-import { ConsentClientContext, ConsentProvider } from '../../provider';
+import { ConsentClientContext, InthProvider } from '../../provider';
 import {
 	createWebConsentClient,
 	WEB_CONFIGURATION_DRY_RUN_CODE,
@@ -520,6 +520,43 @@ describe('dryRun on web', () => {
 		).toBe(true);
 	});
 
+	test('sends the property lowercase, as the native cores do', async () => {
+		const init = await createOfflineTransport({
+			acknowledgeNoRecords: true,
+			policyRules: [...OPT_IN] as never,
+		}).init({ overrides: {}, user: null });
+		const fetch = vi.fn((url: string | URL | Request) =>
+			Promise.resolve(
+				new Response(
+					JSON.stringify(String(url).includes('/init') ? init : {}),
+					{ headers: { 'content-type': 'application/json' }, status: 200 }
+				)
+			)
+		);
+		vi.stubGlobal('fetch', fetch);
+		const client = webClient(
+			{
+				consentCategories: CATEGORIES,
+				projectUrl: PROJECT,
+				property: ' Com.Acme.App ',
+			},
+			{ production: false }
+		);
+		await started(client);
+
+		await client.commit({ action: 'all' });
+		await flushPromises();
+
+		const saves = fetch.mock.calls.filter(
+			([, request]) => (request as RequestInit | undefined)?.method === 'POST'
+		);
+		expect(saves).not.toHaveLength(0);
+		for (const [, request] of saves) {
+			const body = JSON.parse(String((request as RequestInit).body));
+			expect(body.property).toBe('com.acme.app');
+		}
+	});
+
 	test('keeps a forced GPC signal when the app clears its GPC override', async () => {
 		const init = await createOfflineTransport({
 			acknowledgeNoRecords: true,
@@ -654,9 +691,9 @@ describe('the shared provider on web', () => {
 
 		const tree = renderTree(
 			<ConsentClientContext.Provider value={client}>
-				<ConsentProvider autoPresent={false}>
+				<InthProvider autoPresent={false}>
 					<ConsentBanner />
-				</ConsentProvider>
+				</InthProvider>
 			</ConsentClientContext.Provider>
 		);
 		await act(async () => {

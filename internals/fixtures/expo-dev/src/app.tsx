@@ -89,7 +89,7 @@ class ErrorBoundary extends Component<
 						{this.state.error.message}
 					</NativeText>
 					<Hint>
-						`ConsentProvider` throws on purpose when the binary cannot speak the
+						`InthProvider` throws on purpose when the binary cannot speak the
 						protocol this bundle expects. Rebuild the app, or install the
 						@inth/react-native version that shipped with the binary.
 					</Hint>

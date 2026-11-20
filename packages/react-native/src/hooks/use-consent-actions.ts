@@ -170,18 +170,26 @@ export const useSaveConsents = function useSaveConsents(): (
 };
 
 /**
- * Attach an external id and load that subject's stored record.
+ * Attach an external id to the subject, and link it on the backend when an
+ * identity token comes with it.
  *
- * @returns A stable function that takes the user, whose `externalId` is the id
- *   from the app's own account system.
+ * `externalId` is the id from the app's own account system; it goes on every
+ * later consent record. `identityToken` is signed proof of that id, minted by
+ * your server. On iOS and Android, without a token, or under `dryRun`, no
+ * link request is sent. The token is used for that one request and never
+ * stored, so pass a fresh one each time.
+ *
+ * @returns A stable function that takes the user.
  */
 export const useIdentify = function useIdentify(): (user: {
 	readonly externalId: string;
+	readonly identityToken?: string;
 }) => Promise<void> {
 	const client = useConsentClient();
 
 	return useCallback(
-		(user: { readonly externalId: string }) => client.identify(user.externalId),
+		(user: { readonly externalId: string; readonly identityToken?: string }) =>
+			client.identify(user.externalId, user.identityToken),
 		[client]
 	);
 };

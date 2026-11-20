@@ -23,7 +23,7 @@ import type {
 	RenderHandle,
 } from '../../__tests__/helpers/fake-native';
 import type { ConsentSnapshot } from '../../protocol';
-import { ConsentProvider } from '../../provider/consent-provider';
+import { InthProvider } from '../../provider/inth-provider';
 
 /** The roles every control in these surfaces is expected to carry. */
 export const CONTROL_ROLES = ['button', 'link', 'switch'] as const;
@@ -109,7 +109,7 @@ export const mountSurface = function mountSurface(
 	let floor = 0;
 
 	const tree = renderTree(
-		<ConsentProvider autoPresent={false}>
+		<InthProvider autoPresent={false}>
 			<Profiler
 				id="surface"
 				onRender={() => {
@@ -118,7 +118,7 @@ export const mountSurface = function mountSurface(
 			>
 				{children}
 			</Profiler>
-		</ConsentProvider>
+		</InthProvider>
 	);
 
 	return {

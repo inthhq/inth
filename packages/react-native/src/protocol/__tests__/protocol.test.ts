@@ -124,7 +124,6 @@ interface FixtureIndex {
 	clock: number;
 	count: number;
 	fixtures: IndexEntry[];
-	policyContractHeader: string;
 	protocolVersion: number;
 }
 

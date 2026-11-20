@@ -10,7 +10,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Lock
 from time import time
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urlsplit
+from uuid import uuid4
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--out', type=Path, required=True)
@@ -40,7 +41,49 @@ js_block = {}
 control = {'now': 1793232000000, 'expiresAt': 1793232001000,
            'categories': ['necessary', 'functionality', 'experience', 'measurement', 'marketing']} if args.scenario == 'expiry' else {}
 saves = []
+# idempotencyKey -> (subjectId, property, response): a key is recorded once, as on /v1.
+recorded = {}
 lock = Lock()
+# The cores' base URL is this prefix; they call only the three /v1 routes under it.
+BASE = '/api/self-host'
+INIT = BASE + '/v1/consent/init'
+RECORDS = BASE + '/v1/consent/records'
+LINK = re.compile(re.escape(BASE) + r'/v1/subjects/([^/]+)/link')
+# The request headers no core may send, pinned by the shared transport fixture.
+HEADER_RULES = json.loads((root / 'packages/native-protocol/transport/cases.json').read_text())['headers']
+
+
+def header_problem(headers):
+    """The first request header the transport fixture forbids or requires, or None."""
+    for name in headers.keys():
+        lowered = name.lower()
+        if lowered in HEADER_RULES['forbidden'] or lowered.startswith(tuple(HEADER_RULES['forbiddenPrefixes'])):
+            return lowered + ' is a forbidden request header'
+    if not headers.get(HEADER_RULES['platform']):
+        return HEADER_RULES['platform'] + ' is missing'
+    return None
+
+
+def records_problem(body):
+    """Why a records body is not the /v1 shape, or None."""
+    if not isinstance(body, dict):
+        return 'body is not an object'
+    # The /v1 API types model and uiSource as strings; the native contract sends both on every save.
+    for field in ('idempotencyKey', 'subjectId', 'property', 'consentAction', 'model', 'uiSource'):
+        if not isinstance(body.get(field), str) or not body[field]:
+            return field + ' is required'
+    # givenAt is epoch milliseconds, an integer from 0 to the largest JavaScript date.
+    given_at = body.get('givenAt')
+    if not isinstance(given_at, int) or isinstance(given_at, bool) or not 0 <= given_at <= 8640000000000000:
+        return 'givenAt must be epoch milliseconds'
+    categories = (body.get('answer') or {}).get('categories') if isinstance(body.get('answer'), dict) else None
+    if not isinstance(categories, dict) or set(body['answer']) != {'categories'}:
+        return 'answer must be { categories }'
+    confirmed = body.get('confirmed')
+    if not isinstance(confirmed, list) or not all(isinstance(name, str) for name in confirmed) \
+            or not set(confirmed) <= set(categories):
+        return 'confirmed must name keys of answer.categories'
+    return None
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -66,9 +109,17 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header('Content-Type', 'application/json')
         self.send_header('Content-Length', str(len(data)))
-        self.send_header('x-inth-policy-contract', '1')
+        self.send_header('x-request-id', self.request_id)
         self.end_headers()
         self.wfile.write(data)
+
+    def fail(self, status, code, message):
+        """The /v1 error body."""
+        self.reply(status, {'error': {'code': code, 'message': message}, 'requestId': self.request_id})
+
+    def parse_request(self):
+        self.request_id = 'req_' + uuid4().hex
+        return super().parse_request()
 
     def do_GET(self):
         if self.vendor():
@@ -76,10 +127,14 @@ class Handler(BaseHTTPRequestHandler):
         with lock:
             if urlsplit(self.path).path == '/api/self-host/manifest':
                 self.reply(200, manifest)
-            elif urlsplit(self.path).path == '/api/self-host/init':
+            elif urlsplit(self.path).path == INIT:
                 if not online:
                     self.connection.shutdown(socket.SHUT_RDWR)
                     self.connection.close()
+                    return
+                problem = header_problem(self.headers)
+                if problem:
+                    self.fail(400, 'invalid_request', problem)
                     return
                 self.reply(transport['status'], transport['body'])
             elif self.path == '/e2e/control':
@@ -89,7 +144,7 @@ class Handler(BaseHTTPRequestHandler):
             elif self.path == '/health':
                 self.reply(200, {'fixture': 'evaluation-eu-fresh-install'})
             else:
-                self.reply(404, {'error': 'unexpected route'})
+                self.fail(404, 'not_found', 'unexpected route')
 
     def do_POST(self):
         global transport, online
@@ -106,7 +161,13 @@ class Handler(BaseHTTPRequestHandler):
             (screens / name).write_bytes(data)
             self.reply(200, {})
             return
-        body = json.loads(data)
+        try:
+            body = json.loads(data)
+        except ValueError:
+            self.fail(400, 'invalid_request', 'body is not JSON')
+            return
+        path = urlsplit(self.path).path
+        link = LINK.fullmatch(path)
         with lock:
             if self.path == '/e2e/control':
                 if args.scenario != 'expiry' or set(body) - {'now', 'categories'}:
@@ -150,20 +211,53 @@ class Handler(BaseHTTPRequestHandler):
                 state.update(body)
                 (args.out / 'native-state.json').write_text(json.dumps({**state, 'saves': saves, 'native': native_state, 'jsBlock': js_block, 'backendOnline': online}, indent=2))
                 self.reply(200, {})
-            elif self.path == '/api/self-host/subjects':
+            elif path == RECORDS:
                 with (args.out / 'delivery-attempts.jsonl').open('a') as attempts:
                     attempts.write(json.dumps({'at': time(), 'online': online, 'rawHex': data.hex(), 'body': body}) + '\n')
                 if not online:
                     self.connection.shutdown(socket.SHUT_RDWR)
                     self.connection.close()
                     return
-                if self.headers.get('x-inth-policy-contract') != '1' or not body.get('choice'):
-                    self.reply(400, {'error': 'missing native protocol receipt'})
+                problem = header_problem(self.headers) or records_problem(body)
+                if problem:
+                    self.fail(400, 'invalid_request', problem)
                     return
+                key = body['idempotencyKey']
+                if key in recorded:
+                    subject, prop, response = recorded[key]
+                    if (subject, prop) != (body['subjectId'], body['property']):
+                        self.fail(409, 'conflict', 'idempotencyKey was recorded for another subject or property')
+                        return
+                    # A resend of a recorded action: the same answer, recorded once.
+                    self.reply(200, response)
+                    return
+                response = {'subjectId': body['subjectId'], 'recordId': str(uuid4())}
+                if 'externalId' in body:
+                    response['link'] = {'stored': False, 'reason': 'unverified'}
+                recorded[key] = (body['subjectId'], body['property'], response)
                 saves.append(body)
-                self.reply(200, {})
+                self.reply(200, response)
+            elif link:
+                if not online:
+                    self.connection.shutdown(socket.SHUT_RDWR)
+                    self.connection.close()
+                    return
+                problem = header_problem(self.headers)
+                if problem:
+                    self.fail(400, 'invalid_request', problem)
+                    return
+                if not isinstance(body, dict):
+                    self.fail(400, 'invalid_request', 'body is not an object')
+                    return
+                if not isinstance(body.get('externalId'), str):
+                    self.fail(400, 'invalid_request', 'externalId is required')
+                    return
+                if not body.get('identityToken'):
+                    self.fail(401, 'identity_token_required', 'a device links only with an identity token')
+                    return
+                self.reply(200, {'subjectId': unquote(link.group(1)), 'externalId': body['externalId'], 'verifiedBy': 'identity_token'})
             else:
-                self.reply(404, {'error': 'unexpected route'})
+                self.fail(404, 'not_found', 'unexpected route')
                 return
             with (args.out / 'events.jsonl').open('a') as events:
                 events.write(json.dumps({'at': time(), 'path': self.path, 'body': body}) + '\n')

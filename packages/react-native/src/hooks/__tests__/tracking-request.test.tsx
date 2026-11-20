@@ -34,7 +34,7 @@ import { MAX_TRACKING_REQUEST_TURNS } from '../../lib/tracking-journey';
 import { resetConsentClient } from '../../native/client';
 import type { ConsentSnapshot } from '../../protocol';
 import type { OptionalConsentCategory } from '../../protocol/vocabulary';
-import { ConsentProvider } from '../../provider/consent-provider';
+import { InthProvider } from '../../provider/inth-provider';
 import { useTrackingRequest } from '../use-tracking-request';
 import type { TrackingRequest } from '../use-tracking-request';
 
@@ -135,9 +135,9 @@ const boot = function boot(
 	return {
 		fake,
 		tree: renderTree(
-			<ConsentProvider autoPresent={false}>
+			<InthProvider autoPresent={false}>
 				<Probe {...options} />
-			</ConsentProvider>
+			</InthProvider>
 		),
 	};
 };
@@ -519,14 +519,14 @@ describe('useTrackingRequest', () => {
 		// render. The journey reads the list when it needs it rather than capturing it,
 		// so a host's own memo of the button keeps holding.
 		tree.rerender(
-			<ConsentProvider autoPresent={false}>
+			<InthProvider autoPresent={false}>
 				<Probe categories={['marketing']} />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		tree.rerender(
-			<ConsentProvider autoPresent={false}>
+			<InthProvider autoPresent={false}>
 				<Probe categories={['marketing']} />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		expect(probe.tracking?.request).toBe(request);
@@ -551,9 +551,9 @@ describe('useTrackingRequest', () => {
 		// when the journey began still holds `marketing`, and ending here would leave
 		// the subject who kept measurement granted stuck without their sheet.
 		tree.rerender(
-			<ConsentProvider autoPresent={false}>
+			<InthProvider autoPresent={false}>
 				<Probe categories={['measurement']} />
-			</ConsentProvider>
+			</InthProvider>
 		);
 
 		close();
@@ -645,9 +645,9 @@ describe('a preference centre the host already owns', () => {
 		return {
 			fake,
 			tree: renderTree(
-				<ConsentProvider autoPresent={false}>
+				<InthProvider autoPresent={false}>
 					<SharedProbe />
-				</ConsentProvider>
+				</InthProvider>
 			),
 		};
 	};

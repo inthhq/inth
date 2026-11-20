@@ -54,6 +54,8 @@ final class StubHTTP: HTTPTransport, @unchecked Sendable {
     private var _savesFail = false
     private var _holdsSaves = false
     private var saveWaiters: [CheckedContinuation<Void, Never>] = []
+    private var _holdsLinks = false
+    private var linkWaiters: [CheckedContinuation<Void, Never>] = []
     private var arrivalWaiters: [CheckedContinuation<Void, Never>] = []
 
     /// Called with the body the transport is about to hand over. The test that has
@@ -121,6 +123,34 @@ final class StubHTTP: HTTPTransport, @unchecked Sendable {
         }
     }
 
+    /// Park every link response until ``releaseLinks()`` is called, as ``holdsSaves``
+    /// does for saves. `identify` sends the link on a detached task, and an instant
+    /// answer can land before the test's next `identify` does.
+    var holdsLinks: Bool {
+        get {
+            lock.lock()
+            defer { lock.unlock() }
+            return _holdsLinks
+        }
+        set {
+            lock.lock()
+            _holdsLinks = newValue
+            lock.unlock()
+        }
+    }
+
+    /// Stop parking links, and resume the ones already parked.
+    func releaseLinks() {
+        lock.lock()
+        _holdsLinks = false
+        let parked = linkWaiters
+        linkWaiters = []
+        lock.unlock()
+        for waiter in parked {
+            waiter.resume()
+        }
+    }
+
     /// Wait until `count` save requests have arrived and ``onSave`` has seen them,
     /// which is the only moment a "persisted before the request" check means
     /// something.
@@ -180,6 +210,19 @@ final class StubHTTP: HTTPTransport, @unchecked Sendable {
             identityRequests.append(request)
             let response = linkResponse
             lock.unlock()
+            if holdsLinks {
+                await withCheckedContinuation {
+                    (continuation: CheckedContinuation<Void, Never>) in
+                    lock.lock()
+                    if _holdsLinks {
+                        linkWaiters.append(continuation)
+                        lock.unlock()
+                    } else {
+                        lock.unlock()
+                        continuation.resume()
+                    }
+                }
+            }
             return response
 
         case .post:

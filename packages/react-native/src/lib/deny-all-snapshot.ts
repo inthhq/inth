@@ -19,7 +19,7 @@ import { CONSENT_CATEGORIES } from '../protocol/vocabulary';
  * Error code carried by a fail-closed snapshot built in JavaScript.
  *
  * The native cores never send it, which keeps it distinguishable from a native
- * `unsupported-contract` or transport failure in app logs.
+ * core's own error codes, such as a refused save, in app logs.
  */
 export const INVALID_NATIVE_SNAPSHOT_CODE = 'invalid-native-snapshot';
 

@@ -34,7 +34,7 @@ import {
 	presentPreferences,
 } from '../../native/presenter';
 import type { ConsentSnapshot } from '../../protocol';
-import { ConsentProvider } from '../consent-provider';
+import { InthProvider } from '../inth-provider';
 import type { ConsentTrackingRequest } from '../tracking-sequence';
 
 const URL = 'https://example.com/privacy';
@@ -290,19 +290,19 @@ const runSeed = async function runSeed(seed: number): Promise<string[]> {
 
 	const element = () =>
 		autoPresent ? (
-			<ConsentProvider
+			<InthProvider
 				privacyPolicyUrl={URL}
 				trackingRequest={mode}
 			>
 				{child ? <PresentsOnMount /> : null}
-			</ConsentProvider>
+			</InthProvider>
 		) : (
-			<ConsentProvider
+			<InthProvider
 				autoPresent={false}
 				trackingRequest={mode}
 			>
 				{child ? <PresentsOnMount /> : null}
-			</ConsentProvider>
+			</InthProvider>
 		);
 	let tree: RenderHandle | null = renderTree(element());
 	await flushPromises();

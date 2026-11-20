@@ -70,7 +70,7 @@ export class NativeInthUnavailableError extends Error {
 				'- The app runs in Expo Go, which cannot contain custom native modules. Use a development build instead.',
 				'- The iOS pods were not installed or the app was not rebuilt after installing @inth/react-native. Run pod install, then rebuild clean.',
 				'- The Android app was not rebuilt after installing @inth/react-native. Clean and rebuild the app.',
-				'- It runs on web, which has no native module; ConsentProvider uses the browser engine.',
+				'- It runs on web, which has no native module; InthProvider uses the browser engine.',
 				'',
 				'A JavaScript-only update (Expo Updates, CodePush) cannot add a missing native module; it has to ship inside the binary.',
 			].join('\n')

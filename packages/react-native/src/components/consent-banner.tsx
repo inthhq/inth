@@ -202,10 +202,10 @@ const ConsentBannerActions = ({
  *
  * @example
  * ```tsx
- * <ConsentProvider autoPresent={false}>
+ * <InthProvider autoPresent={false}>
  *     <App />
  *     <ConsentBanner />
- * </ConsentProvider>
+ * </InthProvider>
  * ```
  *
  * @param props - Banner props.

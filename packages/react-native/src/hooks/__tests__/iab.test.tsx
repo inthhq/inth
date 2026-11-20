@@ -27,7 +27,7 @@ import type {
 	NativeIABChoices,
 	NativeIABDisclosure,
 } from '../../protocol';
-import { ConsentProvider } from '../../provider/consent-provider';
+import { InthProvider } from '../../provider/inth-provider';
 import { useSaveConsents } from '../use-consent-actions';
 import type { IABDraftHandle } from '../use-iab';
 import {
@@ -218,9 +218,9 @@ const handle = function handle(): IABDraftHandle {
 const mount = function mount(snapshot: ConsentSnapshot): RenderHandle {
 	fake = createFakeNativeModule({ snapshot });
 	return renderTree(
-		<ConsentProvider autoPresent={false}>
+		<InthProvider autoPresent={false}>
 			<Probe />
-		</ConsentProvider>
+		</InthProvider>
 	);
 };
 

@@ -10,7 +10,7 @@
  *
  * Three layers, top down:
  *
- * - {@link ConsentProvider} attaches to the native instance the app already booted,
+ * - {@link InthProvider} attaches to the native instance the app already booted,
  *   checks the protocol handshake, and presents the native consent prompt when
  *   one is owed (`autoPresent={false}` turns that off).
  * - The read hooks ({@link useSnapshot}, {@link useConsent},
@@ -25,7 +25,7 @@
  * @example
  * ```tsx
  * import {
- *     ConsentProvider,
+ *     InthProvider,
  *     ConsentGate,
  *     useConsent,
  *     useSaveConsents,
@@ -202,14 +202,14 @@ export type {
 } from './native';
 export * from './protocol';
 export {
-	ConsentProvider,
+	InthProvider,
 	ConsentClientContext,
 	useConsentClient,
 } from './provider';
 export type {
-	ConsentProviderBaseProps,
-	ConsentProviderPromptProps,
-	ConsentProviderProps,
+	InthProviderBaseProps,
+	InthProviderPromptProps,
+	InthProviderProps,
 	ConsentTrackingReprompt,
 	ConsentTrackingRequest,
 } from './provider';

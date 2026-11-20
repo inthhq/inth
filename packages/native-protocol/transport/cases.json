@@ -1,5 +1,5 @@
 {
-	"description": "The /v1 transport, run by the Swift and Kotlin cores. init: the URL a GET /v1/consent/init request goes to for the given overrides. records: the save route. link: the URL and JSON body of POST /v1/subjects/:id/link. success: the subjectId a core reads from a 2xx body (null when the body names none). failure: how a core reads a non-2xx answer (the error body, then the x-request-id header and the raw text as fallbacks) and whether the status makes a queued body permanent.",
+	"description": "The /v1 transport, run by the Swift and Kotlin cores. init: the URL a GET /v1/consent/init request goes to for the given overrides. records: the save route. link: the URL and JSON body of POST /v1/subjects/:id/link. success: the subjectId a core reads from a 2xx body (null when the body names none). failure: how a core reads a non-2xx answer (the error body, then the x-request-id header and the raw text as fallbacks) and whether the status makes a queued body permanent. headers: the application headers a request carries. init sends the overrides and the vendor scope under these names; every request carries the platform header when a platform installer built the transport; no request carries a header with a forbidden prefix or name. The forbidden names include the version and policy-contract headers, which /v1 retired.",
 	"projectUrl": "https://acme.inth.app",
 	"init": [
 		{
@@ -191,5 +191,24 @@
 			"message": "upstream down",
 			"permanent": false
 		}
-	]
+	],
+	"headers": {
+		"init": {
+			"overrides": {
+				"country": "DE",
+				"region": "BE",
+				"language": "de"
+			},
+			"vendors": [755, 1, 755],
+			"sent": {
+				"accept-language": "de",
+				"x-inth-country": "DE",
+				"x-inth-region": "BE",
+				"x-inth-vendors": "1,755"
+			}
+		},
+		"platform": "x-inth-platform",
+		"forbiddenPrefixes": ["x-c15t-"],
+		"forbidden": ["origin", "x-inth-version", "x-inth-policy-contract"]
+	}
 }

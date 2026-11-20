@@ -5,6 +5,9 @@ import { join } from 'node:path';
 
 import { it, expect } from 'vitest';
 
+// The platform header both cores send, named by transport/cases.json.
+const PLATFORM = { 'x-inth-platform': 'rn->0.0.0' };
+
 it('keeps observer routes reachable while the consent backend is unavailable', async () => {
 	const out = await mkdtemp(join(tmpdir(), 'inth-backend-'));
 	const process = spawn(
@@ -33,10 +36,13 @@ it('keeps observer routes reachable while the consent backend is unavailable', a
 		expect((await (await fetch(`${url}/e2e/state`)).json()).backendOnline).toBe(
 			false
 		);
-		await expect(fetch(`${url}/api/self-host/init`)).rejects.toThrow();
-		const frozenBody = '{ "consentAction" : "necessary", "choice" : {} }';
 		await expect(
-			fetch(`${url}/api/self-host/subjects`, {
+			fetch(`${url}/api/self-host/v1/consent/init`)
+		).rejects.toThrow();
+		const frozenBody =
+			'{ "consentAction" : "necessary", "answer" : { "categories" : {} } }';
+		await expect(
+			fetch(`${url}/api/self-host/v1/consent/records`, {
 				body: frozenBody,
 				method: 'POST',
 			})
@@ -62,9 +68,15 @@ it('keeps observer routes reachable while the consent backend is unavailable', a
 			).ok
 		).toBe(true);
 		expect(
-			(await (await fetch(`${url}/api/self-host/init`)).json()).policyResolution
-				.status
+			(
+				await (
+					await fetch(`${url}/api/self-host/v1/consent/init`, {
+						headers: PLATFORM,
+					})
+				).json()
+			).policyResolution.status
 		).toBe('matched');
+		expect((await fetch(`${url}/api/self-host/init`)).status).toBe(404);
 		expect((await (await fetch(`${url}/e2e/state`)).json()).saves).toEqual([]);
 	} finally {
 		process.kill();
@@ -122,8 +134,164 @@ it('exposes fixed expiry controls only in the expiry fixture', async () => {
 			...narrowed,
 			expiresAt: initial.expiresAt,
 		});
-		await expect(fetch(`${url}/api/self-host/init`)).rejects.toThrow();
+		await expect(
+			fetch(`${url}/api/self-host/v1/consent/init`)
+		).rejects.toThrow();
 		expect((await (await fetch(`${url}/e2e/state`)).json()).saves).toEqual([]);
+	} finally {
+		process.kill();
+		await rm(out, { force: true, recursive: true });
+	}
+});
+
+it('records a /v1 body once per idempotency key, as the backend does', async () => {
+	const out = await mkdtemp(join(tmpdir(), 'c15t-records-backend-'));
+	const process = spawn(
+		'python3',
+		[
+			new URL(
+				'../internals/fixtures/react-native-bare/scripts/e2e-backend.py',
+				import.meta.url
+			).pathname,
+			'--port',
+			'0',
+			'--out',
+			out,
+		],
+		{ stdio: 'ignore' }
+	);
+	try {
+		await expect
+			.poll(
+				() => readFile(join(out, 'backend-ready'), 'utf8').catch(() => ''),
+				{ timeout: 3000 }
+			)
+			.not.toBe('');
+		const url = `http://127.0.0.1:${await readFile(join(out, 'backend-ready'), 'utf8')}`;
+		await fetch(`${url}/e2e/network`, {
+			body: JSON.stringify({ online: true }),
+			method: 'POST',
+		});
+		// The body both native cores send, pinned by the shared protocol fixture.
+		const { body } = JSON.parse(
+			await readFile(
+				new URL(
+					'../packages/native-protocol/save-body-explicit-partial.json',
+					import.meta.url
+				),
+				'utf8'
+			)
+		).expected.request;
+		const post = (payload: unknown) =>
+			fetch(`${url}/api/self-host/v1/consent/records`, {
+				body: JSON.stringify(payload),
+				headers: { 'content-type': 'application/json', ...PLATFORM },
+				method: 'POST',
+			});
+
+		const first = await post(body);
+		expect(first.status).toBe(200);
+		expect(first.headers.get('x-request-id')).toBeTruthy();
+		const answer = await first.json();
+		expect(answer).toEqual({
+			recordId: expect.any(String),
+			subjectId: body.subjectId,
+		});
+		expect(await (await post(body)).json()).toEqual(answer);
+
+		const conflict = await post({ ...body, property: 'com.example.other' });
+		expect(conflict.status).toBe(409);
+		expect((await conflict.json()).error.code).toBe('conflict');
+
+		const refused = await post({
+			...body,
+			answer: { categories: {} },
+			idempotencyKey: '019c1c38-a400-7100-8000-0000000001ff',
+		});
+		expect(refused.status).toBe(400);
+		expect((await refused.json()).error.code).toBe('invalid_request');
+
+		const malformed = await post({
+			...body,
+			confirmed: [{}],
+			idempotencyKey: '019c1c38-a400-7100-8000-0000000002ff',
+		});
+		expect(malformed.status).toBe(400);
+
+		// givenAt is required epoch milliseconds; model and uiSource are strings on every save.
+		const { model: _model, ...modelless } = body;
+		const refusals = await Promise.all(
+			[
+				{ ...body, givenAt: undefined },
+				{ ...body, givenAt: '1770000000000' },
+				{ ...body, givenAt: 1.5 },
+				modelless,
+				{ ...body, uiSource: 1 },
+			].map(async (payload, index) => {
+				const response = await post({
+					...payload,
+					idempotencyKey: `019c1c38-a400-7100-8000-00000000050${index}`,
+				});
+				return {
+					code: (await response.json()).error.code,
+					status: response.status,
+				};
+			})
+		);
+		for (const refusal of refusals) {
+			expect(refusal).toEqual({ code: 'invalid_request', status: 400 });
+		}
+
+		// A link body that is JSON but not an object gets the same 400, not a closed socket.
+		const links = await Promise.all(
+			[[], null].map(async (payload) => {
+				const link = await fetch(
+					`${url}/api/self-host/v1/subjects/${body.subjectId}/link`,
+					{
+						body: JSON.stringify(payload),
+						headers: { 'content-type': 'application/json', ...PLATFORM },
+						method: 'POST',
+					}
+				);
+				return { code: (await link.json()).error.code, status: link.status };
+			})
+		);
+		for (const link of links) {
+			expect(link).toEqual({ code: 'invalid_request', status: 400 });
+		}
+
+		// transport/cases.json forbids the x-c15t- headers and the version header /v1 retired.
+		const retired = await fetch(`${url}/api/self-host/v1/consent/records`, {
+			body: JSON.stringify({
+				...body,
+				idempotencyKey: '019c1c38-a400-7100-8000-0000000003ff',
+			}),
+			headers: {
+				'content-type': 'application/json',
+				'x-c15t-policy-contract': '1',
+				...PLATFORM,
+			},
+			method: 'POST',
+		});
+		expect(retired.status).toBe(400);
+		const init = await fetch(`${url}/api/self-host/v1/consent/init`, {
+			headers: { 'x-inth-version': '1', ...PLATFORM },
+		});
+		expect(init.status).toBe(400);
+		// It also names the platform header every request carries.
+		const anonymous = await fetch(`${url}/api/self-host/v1/consent/records`, {
+			body: JSON.stringify({
+				...body,
+				idempotencyKey: '019c1c38-a400-7100-8000-0000000004ff',
+			}),
+			headers: { 'content-type': 'application/json' },
+			method: 'POST',
+		});
+		expect(anonymous.status).toBe(400);
+
+		expect((await (await fetch(`${url}/e2e/state`)).json()).saves).toEqual([
+			body,
+		]);
 	} finally {
 		process.kill();
 		await rm(out, { force: true, recursive: true });

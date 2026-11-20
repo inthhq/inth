@@ -30,7 +30,7 @@ import {
 	presentPreferences,
 } from '../../native/presenter';
 import { isConsentScreenBusy } from '../auto-present';
-import { ConsentProvider } from '../consent-provider';
+import { InthProvider } from '../inth-provider';
 
 const URL = 'https://example.com/privacy';
 
@@ -44,7 +44,7 @@ const on = { autoPresent: true, privacyPolicyURL: URL };
 const off = { autoPresent: false, privacyPolicyURL: URL };
 
 const App = ({ children }: { readonly children?: ReactNode }): ReactNode => (
-	<ConsentProvider privacyPolicyUrl={URL}>{children}</ConsentProvider>
+	<InthProvider privacyPolicyUrl={URL}>{children}</InthProvider>
 );
 
 const rejectWith = (code: string): Promise<never> =>
@@ -68,7 +68,7 @@ describe('the settings native is told', () => {
 
 	test('autoPresent={false} turns it off', async () => {
 		const fake = createFakeNativeModule({ snapshot: owed });
-		const tree = renderTree(<ConsentProvider autoPresent={false} />);
+		const tree = renderTree(<InthProvider autoPresent={false} />);
 		await flushPromises();
 		expect(fake.autoPresentSettings).toStrictEqual([
 			{ autoPresent: false, privacyPolicyURL: null },
@@ -93,9 +93,9 @@ describe('the settings native is told', () => {
 		const fake = createFakeNativeModule({ snapshot: owed });
 		const tree = renderTree(
 			<App>
-				<ConsentProvider autoPresent={false}>
+				<InthProvider autoPresent={false}>
 					<span />
-				</ConsentProvider>
+				</InthProvider>
 			</App>
 		);
 		await flushPromises();
@@ -105,13 +105,13 @@ describe('the settings native is told', () => {
 
 	test('turning autoPresent on, and a new URL, reach native', async () => {
 		const fake = createFakeNativeModule({ snapshot: owed });
-		const tree = renderTree(<ConsentProvider autoPresent={false} />);
+		const tree = renderTree(<InthProvider autoPresent={false} />);
 		await flushPromises();
 		tree.rerender(<App />);
 		await flushPromises();
 		expect(fake.autoPresent).toStrictEqual(on);
 		const next = 'https://example.org/privacy';
-		tree.rerender(<ConsentProvider privacyPolicyUrl={next} />);
+		tree.rerender(<InthProvider privacyPolicyUrl={next} />);
 		await flushPromises();
 		expect(fake.autoPresent).toStrictEqual({
 			autoPresent: true,
@@ -169,7 +169,7 @@ describe('what native reports on screen', () => {
 					status: 'presented',
 				})
 			);
-		const tree = renderTree(<ConsentProvider autoPresent={false} />);
+		const tree = renderTree(<InthProvider autoPresent={false} />);
 		await flushPromises();
 		await presentPreferences(URL);
 		expect(isConsentScreenBusy(getConsentClient())).toBe(true);
@@ -180,7 +180,7 @@ describe('what native reports on screen', () => {
 
 	test('a session that closes while the app opted out is still heard', async () => {
 		createFakeNativeModule({ snapshot: owed });
-		const tree = renderTree(<ConsentProvider autoPresent={false} />);
+		const tree = renderTree(<InthProvider autoPresent={false} />);
 		await flushPromises();
 		emitPresented('s1', 'prompt', false);
 		tree.unmount();
@@ -290,7 +290,7 @@ describe('an older binary without configureAutoPresent', () => {
 		const error = vi
 			.spyOn(console, 'error')
 			.mockImplementation(() => undefined);
-		const tree = renderTree(<ConsentProvider autoPresent={false} />);
+		const tree = renderTree(<InthProvider autoPresent={false} />);
 		await flushPromises();
 		expect(error).not.toHaveBeenCalled();
 		tree.unmount();
@@ -308,9 +308,9 @@ describe('a binary without the stock native screens', () => {
 		withoutNativeUI();
 		const tree = renderTree(
 			// @ts-expect-error -- the types still require it; the build is only known at runtime.
-			<ConsentProvider>
+			<InthProvider>
 				<span />
-			</ConsentProvider>
+			</InthProvider>
 		);
 		await flushPromises();
 		expect(fake.autoPresentSettings).toStrictEqual([
@@ -324,9 +324,9 @@ describe('a binary without the stock native screens', () => {
 		withoutNativeUI();
 		expect(() =>
 			renderTree(
-				<ConsentProvider privacyPolicyUrl="http://example.com/privacy">
+				<InthProvider privacyPolicyUrl="http://example.com/privacy">
 					<span />
-				</ConsentProvider>
+				</InthProvider>
 			).unmount()
 		).not.toThrow();
 	});
@@ -338,9 +338,9 @@ describe('privacyPolicyUrl', () => {
 		const message = captureErrorMessage(() =>
 			renderTree(
 				// @ts-expect-error -- the types require it; this is the untyped caller.
-				<ConsentProvider>
+				<InthProvider>
 					<span />
-				</ConsentProvider>
+				</InthProvider>
 			)
 		);
 
@@ -357,9 +357,9 @@ describe('privacyPolicyUrl', () => {
 		const fake = createFakeNativeModule({ snapshot: owed });
 		const message = captureErrorMessage(() =>
 			renderTree(
-				<ConsentProvider privacyPolicyUrl={url}>
+				<InthProvider privacyPolicyUrl={url}>
 					<span />
-				</ConsentProvider>
+				</InthProvider>
 			)
 		);
 

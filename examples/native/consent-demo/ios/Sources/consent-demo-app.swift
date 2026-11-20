@@ -476,7 +476,7 @@ final class FixtureHTTP: HTTPTransport, @unchecked Sendable {
     init(body: Data, offline: Bool) { self.body = body; self.disconnected = offline }
     func send(_ request: HTTPRequest) async throws -> HTTPResponse {
         if request.method == .get {
-            return offline ? HTTPResponse(status: 503) : HTTPResponse(status: 200, headers: ["x-inth-policy-contract": "1"], body: body)
+            return offline ? HTTPResponse(status: 503) : HTTPResponse(status: 200, body: body)
         }
         if let data = request.body {
             let folder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
