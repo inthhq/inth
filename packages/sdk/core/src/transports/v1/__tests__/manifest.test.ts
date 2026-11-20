@@ -319,6 +319,36 @@ describe('saves in manifest mode', () => {
 });
 
 describe('POST /v1/consent/sessions', () => {
+	test('reports the journey under the configured property', async () => {
+		const { calls, fetch } = stubFetch(
+			() => new Response(null, { status: 202 })
+		);
+		let reported: Promise<void> | undefined;
+		const transport = createV1ManifestTransport({
+			fetch,
+			projectUrl: PROJECT_URL,
+			property: 'shop.example',
+			report: {
+				source: 'render',
+				waitUntil: (task) => {
+					reported = task;
+				},
+			},
+			snapshot: MANIFEST,
+		});
+
+		await transport.init({
+			journey: JOURNEY,
+			overrides: { country: 'DE' },
+			user: null,
+		});
+		await reported;
+
+		expect(calls[0]?.body).toMatchObject({
+			journey: { id: JOURNEY.id, property: 'shop.example' },
+		});
+	});
+
 	test('a server caller reports the resolution with the visitor headers', async () => {
 		const { calls, fetch } = stubFetch(
 			() => new Response(null, { status: 202 })

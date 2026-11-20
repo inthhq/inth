@@ -39,7 +39,7 @@ import { readApiError } from './error';
 import { trimTrailingSlash, V1_ROUTES } from './paths';
 import { createV1RecordTransport } from './records';
 import type { V1RecordTransport, V1RecordTransportOptions } from './records';
-import { resolveV1Fetch } from './routes';
+import { resolveProperty, resolveV1Fetch } from './routes';
 import {
 	reportV1ConsentSession,
 	sendsV1ConsentSessionReport,
@@ -159,6 +159,8 @@ export const createV1ManifestTransport = function createV1ManifestTransport(
 	const base = trimTrailingSlash(options.projectUrl);
 	const fetchImpl = resolveV1Fetch(options.fetch, 'createV1ManifestTransport');
 	const manifestUrl = options.manifestUrl ?? `${base}${V1_ROUTES.manifest}`;
+	// The site the records transport saves under, reported with the journey.
+	const property = resolveProperty(base, options.property);
 	const unreported = createUnreportedJourneys();
 	let lastDecisionInputs: RememberedDecisionInputs | undefined;
 	// Overlapping inits: only the latest may update the assertion state.
@@ -279,7 +281,7 @@ export const createV1ManifestTransport = function createV1ManifestTransport(
 				headers: options.report.headers,
 				init: payload,
 				inputs,
-				journey,
+				journey: journey && { ...journey, domain: property },
 				manifest,
 				method: options.report.method,
 				projectUrl: options.report.projectUrl ?? options.projectUrl,
