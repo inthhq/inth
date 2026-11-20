@@ -340,6 +340,11 @@ jobs:
     if: ${{ failure() && github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'push') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    # One report at a time across runs, so a push run and a nightly run that fail
+    # together cannot both find no open issue and each open one.
+    concurrency:
+      group: android-emulator-report-failure
+      cancel-in-progress: false
     permissions:
       contents: read
       issues: write
