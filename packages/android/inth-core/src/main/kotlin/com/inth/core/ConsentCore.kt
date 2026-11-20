@@ -21,6 +21,9 @@ import com.inth.core.model.KernelError
 import com.inth.core.model.KernelIabState
 import com.inth.core.model.KernelOverrides
 import com.inth.core.model.KernelUser
+import com.inth.core.model.OptOutHolder
+import com.inth.core.model.OptOutMethod
+import com.inth.core.model.OptOutRecord
 import com.inth.core.model.PrivacySignals
 import com.inth.core.model.QueuedSave
 import com.inth.core.model.SavePayload
@@ -520,11 +523,11 @@ class ConsentCore @InthInternalApi constructor(
 				publishPure(
 					validateIab(
 						PolicyEvaluator.evaluate(
-						hydrated,
-						envelope.evaluationPolicy,
-						envelope.noticeDismissal,
-						now,
-						choiceScopeOf(envelope.evaluationPolicy),
+							maybeRecordGpcOptOut(hydrated, envelope.evaluationPolicy, now),
+							envelope.evaluationPolicy,
+							envelope.noticeDismissal,
+							now,
+							choiceScopeOf(envelope.evaluationPolicy),
 						)
 					)
 				)
@@ -1018,9 +1021,29 @@ class ConsentCore @InthInternalApi constructor(
 						.orEmpty(),
 				)
 			}
+			val optOutCategories = PolicyEvaluator.optOutDenyCategories(policy)
+			val grantsOptOutCategory = optOutCategories.any { confirmed[it.wireName] == true }
+			val liftsOptOut = grantsOptOutCategory && optOutLiftBlocker(current, policy) == null
+			val refusesOptOutCategories =
+				!grantsOptOutCategory &&
+					policy?.model == ConsentModel.OPT_OUT &&
+					optOutCategories.isNotEmpty() &&
+					optOutCategories.any { confirmed[it.wireName] == false } &&
+					optOutCategories.all { choice?.valueOf(it) == false }
+			val nextOptOut = when {
+				liftsOptOut -> null
+				refusesOptOutCategories && current.optOut == null -> OptOutRecord(
+					rights = emptyList(),
+					method = OptOutMethod.BUTTON,
+					recordedAt = actionAt,
+					heldBy = OptOutHolder.DEVICE,
+				)
+				else -> current.optOut
+			}
 			published = PolicyEvaluator.evaluate(
 				snapshot = current.copy(
 					explicitChoice = choice,
+					optOut = nextOptOut,
 					revision = current.revision + 1,
 					error = null,
 				),
@@ -1175,6 +1198,175 @@ class ConsentCore @InthInternalApi constructor(
         notifySnapshot()
         true
     }
+
+	/**
+	 * Record a durable button opt-out under an `opt-out` policy.
+	 *
+	 * Available only while a non-provisional `opt-out` rule is in force. When an opt-out
+	 * record is already held, this is a no-op that returns the existing record with
+	 * [OptOutResult.changed] false and without bumping the revision. When a notice prompt
+	 * is owed under the same rule, it is acknowledged in the same commit.
+	 */
+	fun optOut(): OptOutResult = mutate { mutation ->
+		val now = clock.nowMillis()
+		val plan = synchronized(mutationLock) {
+			val current = state.get()
+			val policy = evaluationPolicy
+			if (
+				current.policyPending ||
+				policy == null ||
+				policy.model != ConsentModel.OPT_OUT ||
+				bundledPolicyAuthority?.isUsable(config.backendUrl, now) == false
+			) {
+				return@mutate OptOutResult(
+					ok = false,
+					revision = current.revision,
+					reason = OptOutRefusalReason.NOT_AVAILABLE,
+				)
+			}
+			current.optOut?.let { existing ->
+				return@mutate OptOutResult(
+					ok = true,
+					revision = current.revision,
+					optOut = existing,
+					changed = false,
+				)
+			}
+			val record = OptOutRecord(
+				rights = emptyList(),
+				method = OptOutMethod.BUTTON,
+				recordedAt = now,
+				heldBy = OptOutHolder.DEVICE,
+			)
+			val nextDismissal =
+				if (policy.prompt == PolicyPrompt.NOTICE &&
+					current.promptRequirement.notice &&
+					!current.promptRequirement.acknowledge
+				) {
+					NoticeDismissal(dismissedAt = now, fingerprint = policy.noticeFingerprint)
+				} else {
+					noticeDismissal
+				}
+			val next = PolicyEvaluator.evaluate(
+				snapshot = current.copy(
+					optOut = record,
+					revision = current.revision + 1,
+					error = null,
+				),
+				policy = policy,
+				noticeDismissal = nextDismissal,
+				now = now,
+				choiceScope = choiceScopeOf(policy),
+			)
+			val envelope = SnapshotEnvelope(
+				bundledPolicyAuthority = bundledPolicyAuthority,
+				snapshot = next.copy(iab = null, gppString = null),
+				evaluationPolicy = policy,
+				noticeDismissal = nextDismissal,
+				gvl = next.iab?.gvl,
+				iabConsent = committedIab,
+				additionalConsentList = additionalConsentList,
+				customVendors = customVendors,
+				iabListFetchedAt = iabListFetchedAt,
+				lastIabActionAt = lastIabActionAt,
+			)
+			Triple(next, nextDismissal, envelope)
+		}
+		val written = store.writeEnvelope(plan.third, publishBus = false)
+		if (!written) {
+			val error = KernelError("queue-write-failed", "The opt-out record could not be stored.")
+			emitError(error)
+			return@mutate OptOutResult(
+				ok = false,
+				revision = state.get().revision,
+				reason = OptOutRefusalReason.STORAGE_FAILED,
+				error = error,
+			)
+		}
+		store.flush()
+		synchronized(mutationLock) {
+			noticeDismissal = plan.second
+			installSnapshot(plan.first)
+		}
+		publishCurrentTcStorageBus()
+		mutation.release()
+		notifySnapshot()
+		OptOutResult(
+			ok = true,
+			revision = plan.first.revision,
+			optOut = plan.first.optOut,
+			changed = true,
+		)
+	}
+
+	/**
+	 * Lift a held device opt-out record.
+	 *
+	 * Refused without changing state when no record is held ([OptInRefusalReason.NOT_OPTED_OUT]),
+	 * when GPC is active under a policy that maps it ([OptInRefusalReason.GPC_ACTIVE]), or when
+	 * the record is held by the account ([OptInRefusalReason.HELD_BY_ACCOUNT]).
+	 */
+	fun optIn(): OptInResult = mutate { mutation ->
+		val now = clock.nowMillis()
+		val plan = synchronized(mutationLock) {
+			val current = state.get()
+			val policy = evaluationPolicy
+			optOutLiftBlocker(current, policy)?.let { reason ->
+				return@mutate OptInResult(
+					ok = false,
+					revision = current.revision,
+					reason = reason,
+				)
+			}
+			val evaluated = PolicyEvaluator.evaluate(
+				snapshot = current.copy(
+					optOut = null,
+					revision = current.revision + 1,
+					error = null,
+				),
+				policy = policy,
+				noticeDismissal = noticeDismissal,
+				now = now,
+				choiceScope = choiceScopeOf(policy),
+			)
+			val next = validateIab(evaluated)
+			val envelope = SnapshotEnvelope(
+				bundledPolicyAuthority = bundledPolicyAuthority,
+				snapshot = next.copy(iab = null, gppString = null),
+				evaluationPolicy = policy,
+				noticeDismissal = noticeDismissal,
+				gvl = next.iab?.gvl,
+				iabConsent = committedIab,
+				additionalConsentList = additionalConsentList,
+				customVendors = customVendors,
+				iabListFetchedAt = iabListFetchedAt,
+				lastIabActionAt = lastIabActionAt,
+			)
+			next to envelope
+		}
+		val written = store.writeEnvelope(plan.second, publishBus = false)
+		if (!written) {
+			val error = KernelError("queue-write-failed", "The opt-out lift could not be stored.")
+			emitError(error)
+			return@mutate OptInResult(
+				ok = false,
+				revision = state.get().revision,
+				reason = OptInRefusalReason.STORAGE_FAILED,
+				error = error,
+			)
+		}
+		store.flush()
+		synchronized(mutationLock) {
+			installSnapshot(plan.first)
+		}
+		publishCurrentTcStorageBus()
+		mutation.release()
+		notifySnapshot()
+		OptInResult(
+			ok = true,
+			revision = plan.first.revision,
+		)
+	}
 
 	/** Re-run init: policy, geo and translations. */
 	fun refresh() {
@@ -1398,14 +1590,18 @@ class ConsentCore @InthInternalApi constructor(
 			// Merged against the host's own pins rather than the snapshot's, which an
 			// earlier init may have widened with a matched country.
 			configuredOverrides = if (merge) merge(configuredOverrides, overrides) else overrides
+			val nextOverrides = if (merge) merge(current.overrides, overrides) else overrides
+			val now = clock.nowMillis()
+			val candidate = current.copy(
+				overrides = nextOverrides,
+				privacySignals = signalsFor(nextOverrides),
+				revision = current.revision + 1,
+			)
 			published = PolicyEvaluator.evaluate(
-				snapshot = current.copy(
-					overrides = if (merge) merge(current.overrides, overrides) else overrides,
-					revision = current.revision + 1,
-				),
+				snapshot = maybeRecordGpcOptOut(candidate, evaluationPolicy, now),
 				policy = evaluationPolicy,
 				noticeDismissal = noticeDismissal,
-				now = clock.nowMillis(),
+				now = now,
 				choiceScope = choiceScopeOf(evaluationPolicy),
 			)
 			if (
@@ -1877,38 +2073,40 @@ class ConsentCore @InthInternalApi constructor(
 			// subject's own refusal and invites a host to stop listening, which would
 			// make the category unrecoverable when the next resolution parses.
 			val superseded = mapped.policyPending && !base.policyPending && !mapped.isFinal
+			val now = clock.nowMillis()
+			val candidate = base.copy(
+				// The latch lands on the snapshot's own field, which is the copy the bridge
+				// reads, so the list behind a JavaScript disclosure is the list a host's own
+				// Kotlin reads off [vendorList].
+				iab = latchedVendorList?.let(::KernelIabState),
+				resolution = if (superseded) base.resolution else mapped.resolution,
+				policyPending = mapped.policyPending &&
+					(base.policyPending || mapped.policyUnreadable || mapped.isFinal),
+				// A failed init leaves the local state unready: nothing resolved, so
+				// gates keep denying. Only a definitive answer makes it ready.
+				ready = if (mapped.policyPending) base.ready else true,
+				subject = subject,
+				location = mapped.location ?: base.location,
+				// The overrides the decision was actually made against, which is
+				// what the backend recomputes before it accepts a save.
+				// `mapResolvedOverrides` and the merge in `@inth/sdk-core` fold the served
+				// location and translation language over the app's own overrides, so a
+				// device that pinned nothing still reports the country and region it
+				// was matched on. `gpc` survives from the app because `/init` serves a
+				// detection, not an override.
+				overrides = resolvedOverrides(base.overrides, mapped),
+				privacySignals = signalsFor(resolvedOverrides(base.overrides, mapped), detected),
+				policySnapshotToken = mapped.policySnapshotToken ?: base.policySnapshotToken,
+				translations = mapped.translations ?: base.translations,
+				error = mapped.error,
+				revision = base.revision + 1,
+				consentCategories = decidedCategories(evaluationPolicy),
+			)
 			published = PolicyEvaluator.evaluate(
-				snapshot = base.copy(
-					// The latch lands on the snapshot's own field, which is the copy the bridge
-					// reads, so the list behind a JavaScript disclosure is the list a host's own
-					// Kotlin reads off [vendorList].
-					iab = latchedVendorList?.let(::KernelIabState),
-					resolution = if (superseded) base.resolution else mapped.resolution,
-					policyPending = mapped.policyPending &&
-						(base.policyPending || mapped.policyUnreadable || mapped.isFinal),
-					// A failed init leaves the local state unready: nothing resolved, so
-					// gates keep denying. Only a definitive answer makes it ready.
-					ready = if (mapped.policyPending) base.ready else true,
-					subject = subject,
-					location = mapped.location ?: base.location,
-					// The overrides the decision was actually made against, which is
-					// what the backend recomputes before it accepts a save.
-					// `mapResolvedOverrides` and the merge in `@inth/sdk-core` fold the served
-					// location and translation language over the app's own overrides, so a
-					// device that pinned nothing still reports the country and region it
-					// was matched on. `gpc` survives from the app because `/init` serves a
-					// detection, not an override.
-					overrides = resolvedOverrides(base.overrides, mapped),
-					privacySignals = signalsFor(resolvedOverrides(base.overrides, mapped), detected),
-					policySnapshotToken = mapped.policySnapshotToken ?: base.policySnapshotToken,
-					translations = mapped.translations ?: base.translations,
-					error = mapped.error,
-					revision = base.revision + 1,
-					consentCategories = decidedCategories(evaluationPolicy),
-				),
+				snapshot = maybeRecordGpcOptOut(candidate, evaluationPolicy, now),
 				policy = evaluationPolicy,
 				noticeDismissal = noticeDismissal,
-				now = clock.nowMillis(),
+				now = now,
 				choiceScope = choiceScopeOf(evaluationPolicy),
 			)
 			published = validateIab(published)
@@ -2526,6 +2724,61 @@ class ConsentCore @InthInternalApi constructor(
 			?: base.language,
 		gpc = mapped.resolvedOverrides?.gpc ?: base.gpc,
 	)
+
+	/**
+	 * Whether this live core must record a durable GPC opt-out for [snapshot] under [policy].
+	 *
+	 * Port of `gpcOptOutDue` in `packages/sdk/core/src/kernel/opt-out.ts`: fires once when a
+	 * matched, non-provisional rule maps GPC, GPC is active, and no record is held yet.
+	 */
+	private fun gpcOptOutDue(
+		snapshot: ConsentSnapshot,
+		policy: EvaluationPolicy?,
+	): Boolean =
+		!snapshot.policyPending &&
+			snapshot.resolution.matched &&
+			snapshot.privacySignals.gpc.active &&
+			policy != null &&
+			policy.gpcDenyCategories.isNotEmpty() &&
+			snapshot.optOut == null
+
+	/** Record a local GPC opt-out on [snapshot] when [gpcOptOutDue] holds. */
+	private fun maybeRecordGpcOptOut(
+		snapshot: ConsentSnapshot,
+		policy: EvaluationPolicy?,
+		now: Long,
+	): ConsentSnapshot {
+		if (!gpcOptOutDue(snapshot, policy)) {
+			return snapshot
+		}
+		return snapshot.copy(
+			optOut = OptOutRecord(
+				rights = emptyList(),
+				method = OptOutMethod.GPC,
+				recordedAt = now,
+				heldBy = OptOutHolder.DEVICE,
+			),
+		)
+	}
+
+	/**
+	 * Reason the held opt-out cannot be lifted locally, or `null` when it can.
+	 *
+	 * Port of `optOutLiftBlocker` in `packages/sdk/core/src/consent-record/opt-out-rules.ts`.
+	 */
+	private fun optOutLiftBlocker(
+		snapshot: ConsentSnapshot,
+		policy: EvaluationPolicy?,
+	): OptInRefusalReason? {
+		val optOut = snapshot.optOut ?: return OptInRefusalReason.NOT_OPTED_OUT
+		if (snapshot.privacySignals.gpc.active && policy?.gpcDenyCategories?.isNotEmpty() == true) {
+			return OptInRefusalReason.GPC_ACTIVE
+		}
+		if (optOut.heldBy == OptOutHolder.PERSON || optOut.heldBy == OptOutHolder.BOTH) {
+			return OptInRefusalReason.HELD_BY_ACCOUNT
+		}
+		return null
+	}
 
 	/**
 	 * The signal view the snapshot carries, derived rather than stored. The app's

@@ -9,6 +9,10 @@ import com.inth.core.model.ConsentSubject
 import com.inth.core.model.ExplicitChoice
 import com.inth.core.model.KernelError
 import com.inth.core.model.KernelOverrides
+import com.inth.core.model.OptOutHolder
+import com.inth.core.model.OptOutMethod
+import com.inth.core.model.OptOutRecord
+import com.inth.core.model.OptOutRight
 import com.inth.core.model.PolicyResolution
 import com.inth.core.model.PromptPurpose
 import com.inth.core.model.PromptRequirement
@@ -18,6 +22,7 @@ import com.inth.core.wire.SnapshotWire
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
@@ -113,10 +118,34 @@ class SnapshotWireTest {
 		val ownedByKernel = SnapshotWire.KERNEL_OBJECT_KEYS.keys + "resolution"
 		val names = wire.keys.toList()
 		assertEquals(stored.keys.toList(), names, "the wire moves a key the model does not declare")
-		assertEquals(22, names.size, "the snapshot carries 22 keys, `iab` and `gppString` included")
+		assertEquals(23, names.size, "the snapshot carries 23 keys, `iab`, `gppString` and `optOut` included")
 		names.filterNot { it in ownedByKernel }.forEach { name ->
 			assertEquals(stored.getValue(name), wire.getValue(name), "$name was rewritten on the way out")
 		}
+	}
+
+	@Test
+	fun `optOut carries the kernel key names and canonical right order`() {
+		val bare = SnapshotWire.toJsonElement(snapshot())
+		assertEquals(JsonNull, bare.getValue("optOut"))
+
+		val record = OptOutRecord(
+			rights = listOf(OptOutRight.TARGETED_ADS, OptOutRight.SALE),
+			method = OptOutMethod.GPC,
+			recordedAt = ACTION_AT,
+			heldBy = OptOutHolder.DEVICE,
+		)
+		val wireOptOut = SnapshotWire.toJsonElement(snapshot().copy(optOut = record))
+			.getValue("optOut")
+			.jsonObject
+		assertEquals(setOf("rights", "method", "recordedAt", "heldBy"), wireOptOut.keys)
+		assertEquals(
+			listOf("sale", "targeted_ads"),
+			wireOptOut.getValue("rights").jsonArray.map { it.jsonPrimitive.content },
+		)
+		assertEquals("gpc", wireOptOut.getValue("method").jsonPrimitive.content)
+		assertEquals(ACTION_AT, wireOptOut.getValue("recordedAt").jsonPrimitive.long)
+		assertEquals("device", wireOptOut.getValue("heldBy").jsonPrimitive.content)
 	}
 
 	@Test

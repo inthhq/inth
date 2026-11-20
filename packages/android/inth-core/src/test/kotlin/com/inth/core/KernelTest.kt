@@ -311,7 +311,7 @@ class KernelTest {
 		val transport = RecordingTransport().respondInit(
 			initSuccess(
 				body = initBody(
-					scope = """["measurement","marketing"]""",
+					scope = """["functionality","measurement","marketing"]""",
 					scopeMode = "\"strict\"",
 					gpcDenyCategories = """["marketing"]""",
 				),
@@ -325,11 +325,13 @@ class KernelTest {
 		kernel.bootstrap()
 		kernel.save(CommitIntent.All)
 
-		assertTrue(kernel.isAllowed(ConsentCategory.MEASUREMENT))
-		assertFalse(kernel.isAllowed(ConsentCategory.MARKETING), "an active GPC signal denies it")
-		assertFalse(kernel.isAllowed(ConsentCategory.FUNCTIONALITY), "outside a strict scope")
-		assertEquals(listOf("gpc"), kernel.snapshot().restrictions["marketing"])
-		assertEquals(listOf("strict-scope"), kernel.snapshot().restrictions["functionality"])
+		assertTrue(kernel.isAllowed(ConsentCategory.FUNCTIONALITY))
+		assertFalse(kernel.isAllowed(ConsentCategory.MARKETING), "an active GPC signal and the recorded opt-out deny it")
+		assertFalse(kernel.isAllowed(ConsentCategory.MEASUREMENT), "the recorded GPC opt-out denies measurement in scope too")
+		assertFalse(kernel.isAllowed(ConsentCategory.EXPERIENCE), "outside a strict scope")
+		assertEquals(listOf("gpc", "opt-out"), kernel.snapshot().restrictions["marketing"])
+		assertEquals(listOf("opt-out"), kernel.snapshot().restrictions["measurement"])
+		assertEquals(listOf("strict-scope"), kernel.snapshot().restrictions["experience"])
 	}
 
 	@Test

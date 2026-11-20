@@ -26,6 +26,25 @@ object PolicyEvaluator {
 	/** Restriction reason for a category denied by an active GPC signal. */
 	const val RESTRICTION_GPC = "gpc"
 
+	/** Restriction reason for a category switched off by a durable opt-out record. */
+	const val RESTRICTION_OPT_OUT = "opt-out"
+
+	private val OPT_OUT_CATEGORIES = listOf(ConsentCategory.MARKETING, ConsentCategory.MEASUREMENT)
+
+	/**
+	 * Optional categories that a durable opt-out record switches off under [policy]:
+	 * `marketing` and `measurement`, filtered to [EvaluationPolicy.scope].
+	 *
+	 * Port of `optOutDenyCategories` in `packages/sdk/core/src/consent-record/types.ts`.
+	 * Every place that asks which categories an opt-out governs reads this function.
+	 */
+	fun optOutDenyCategories(policy: EvaluationPolicy?): List<ConsentCategory> {
+		if (policy == null) {
+			return emptyList()
+		}
+		return OPT_OUT_CATEGORIES.filter { it in policy.scope }
+	}
+
 	/**
 	 * Evaluate [snapshot] against [policy] at [now] and return a snapshot with
 	 * [ConsentSnapshot.effectivePermissions], [ConsentSnapshot.promptRequirement],
@@ -94,6 +113,7 @@ object PolicyEvaluator {
 		// `active` is the whole rule. Reading `detected` here would let a device
 		// report override an app that turned GPC off.
 		val gpcActive = snapshot.privacySignals.gpc.active
+		val optOutDenied = if (snapshot.optOut != null) optOutDenyCategories(policy) else emptyList()
 
 		val permissions = LinkedHashMap<ConsentCategory, Boolean>(ConsentCategory.OPTIONAL.size)
 		val restrictions = LinkedHashMap<String, List<String>>()
@@ -117,6 +137,9 @@ object PolicyEvaluator {
 			}
 			if (gpcActive && category in policy.gpcDenyCategories) {
 				reasons += RESTRICTION_GPC
+			}
+			if (category in optOutDenied) {
+				reasons += RESTRICTION_OPT_OUT
 			}
 
 			var allowed = defaultPermission(policy.model, inScope, policy.scopeMode)
