@@ -308,6 +308,32 @@ class ConsentJourney {
     }
 
     /**
+     * Return [switchId] once the app is back from the background.
+     *
+     * Android may restore the native preferences window over the fixture, or bring back the
+     * fixture alone, and then the journey reopens preferences; the draft must survive either
+     * way. The fixture can show for a moment before the restored window draws over it, and it
+     * can take longer than one short wait to show at all, so this decides from what stays on
+     * screen rather than from a single look.
+     */
+    private fun afterBackground(switchId: String): UiObject2 {
+        val deadline = SystemClock.elapsedRealtime() + REVEAL_TIMEOUT_MS
+        while (SystemClock.elapsedRealtime() < deadline) {
+            visible(switchId)?.let { return reveal(switchId) }
+            val opener = visible("fixture.open-preferences")
+            if (opener == null) {
+                device.wait(Until.hasObject(By.res(switchId)), 500)
+                continue
+            }
+            // A restored preferences window may still be drawing over the fixture.
+            if (device.wait(Until.hasObject(By.res(switchId)), 2000)) return reveal(switchId)
+            try { opener.click() } catch (_: StaleObjectException) { continue /* Covered meanwhile; look again. */ }
+            if (device.wait(Until.hasObject(By.res(switchId)), 10000)) return reveal(switchId)
+        }
+        error("Neither $switchId nor fixture.open-preferences came back after the app returned from the background")
+    }
+
+    /**
      * Wait for [id] in the window a configuration change recreated.
      *
      * `setOrientation*` returns once the display has rotated, before the Activity it
@@ -614,8 +640,7 @@ class ConsentJourney {
             assertFalse("Draft survives native host recreation", afterConfigurationChange("inth.prefs.category.measurement.switch").isChecked)
             device.pressHome()
             device.executeShellCommand("am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -f 0x10200000 -n $app/.MainActivity")
-            if (device.wait(Until.hasObject(By.res("fixture.open-preferences")), 3000)) tap("fixture.open-preferences")
-            assertFalse("Draft survives background", control("inth.prefs.category.measurement.switch").isChecked)
+            assertFalse("Draft survives background", afterBackground("inth.prefs.category.measurement.switch").isChecked)
             device.unfreezeRotation()
             capture("06-unsaved-draft")
             tap("inth.prefs.cancel")
@@ -652,7 +677,9 @@ class ConsentJourney {
             capture("09-withdrawal-relaunched")
             network(true); launch()
             val replayed = choice(emptySet(), 3)
-            assertEquals(choiceBytes(withdrawn), canonical(replayed.getJSONArray("saves").getJSONObject(2).getJSONObject("choice")))
+            // The replayed records body carries the withdrawal's receipts as `answer.categories`, without `necessary`.
+            val withdrawnReceipts = JSONObject(withdrawn.getJSONObject("snapshot").getJSONObject("explicitChoice").getJSONObject("categories").toString()).apply { remove("necessary") }
+            assertEquals(canonical(withdrawnReceipts), canonical(replayed.getJSONArray("saves").getJSONObject(2).getJSONObject("answer").getJSONObject("categories")))
             assertEquals(choiceBytes(withdrawn), choiceBytes(replayed))
             launch()
             choice(emptySet(), 3)
