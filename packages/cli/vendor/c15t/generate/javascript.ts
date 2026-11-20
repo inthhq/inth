@@ -13,7 +13,7 @@ import type { BoilerplateOptions, BoilerplateTemplate } from './types.ts';
 
 /** The link that opens the preference dialog, without any script. */
 export const PREFERENCES_LINK =
-	'<a href="#c15t-preferences">Privacy settings</a>';
+	'<a href="#inth-preferences">Privacy settings</a>';
 
 /**
  * A minimal page for a project without an `index.html`.
@@ -81,14 +81,14 @@ export default defineConfig({
 `,
 		},
 		instructions: [
-			'Call init() once from the script your page loads. The client opens the preference dialog for any link to #c15t-preferences.',
+			'Call init() once from the script your page loads. The client opens the preference dialog for any link to #inth-preferences.',
 			...vendorInstruction(options, 'src/main.ts'),
 			...offlineInstruction(options),
 		],
 		merge: {
 			'index.html': {
 				inserts: [{ before: '</body>', content: PREFERENCES_LINK }],
-				marker: '#c15t-preferences',
+				marker: '#inth-preferences',
 				type: 'insert',
 			},
 		},

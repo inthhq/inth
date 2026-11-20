@@ -159,8 +159,8 @@ def run_html_site():
             text = re.sub(rb"\x1b\[[0-9;?]*[A-Za-z]", b"", bytes(output)).decode()
             assert child.returncode == 0, text
             assert "Add to index.html:" in text, text
-            assert "#c15t-preferences" in text, text
-            assert "/c15t.js" in text, text
+            assert "#inth-preferences" in text, text
+            assert "/inth.js" in text, text
             with open(os.path.join(directory, "index.html")) as page:
                 assert page.read() == html
             assert os.listdir(directory) == ["index.html"], os.listdir(directory)

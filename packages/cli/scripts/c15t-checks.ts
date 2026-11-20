@@ -231,7 +231,7 @@ const verifyScaffold = async (
   const { data } = envelope.parse(JSON.parse(scaffold.stdout));
   assert.deepEqual(data.created, [
     ".env",
-    "c15t.config.ts",
+    "inth.config.ts",
     "next.config.ts",
     "app/layout.tsx",
   ]);
@@ -296,13 +296,13 @@ const verifyScaffold = async (
   assert.deepEqual(entries.toSorted(), [
     ".env",
     "app",
-    "c15t.config.ts",
+    "inth.config.ts",
     "next.config.ts",
     "package.json",
     "pnpm-lock.yaml",
   ]);
   await writeFile(
-    path.join(directory, "c15t.config.ts"),
+    path.join(directory, "inth.config.ts"),
     "// Custom consent configuration\n"
   );
   const conflict = run(
@@ -635,7 +635,7 @@ const verifyNextEntryExtensions = async (
             : [
                 `${root}pages/_app.${extension}`,
                 `${root}pages/index.${extension}`,
-                `${root}pages/api/c15t/[...c15t].${extension}`,
+                `${root}pages/api/inth/[...inth].${extension}`,
               ];
         for (const name of names) {
           await mkdir(path.dirname(path.join(directory, name)), {
@@ -756,7 +756,7 @@ const verifyNextPageExtensions = async (
             )
           );
         }
-        const api = `${route}/api/c15t/[...c15t].page.${script}`;
+        const api = `${route}/api/inth/[...inth].page.${script}`;
         assert.ok(names.includes(api), names.join(", "));
         assert.equal(
           await readFile(path.join(directory, "next.config.mjs"), "utf-8"),
@@ -764,7 +764,7 @@ const verifyNextPageExtensions = async (
         );
         assert.ok(!names.includes(`${route}/_app.tsx`));
         assert.ok(!names.includes(`${route}/index.tsx`));
-        assert.ok(!names.includes(`${route}/api/c15t/[...c15t].ts`));
+        assert.ok(!names.includes(`${route}/api/inth/[...inth].ts`));
         assert.doesNotMatch(
           result.stdout + result.stderr,
           /private-custom-page/u
@@ -827,7 +827,7 @@ const verifyNextPageExtensions = async (
     const names = [
       `pages/_app.${extension}`,
       `pages/index.${extension}`,
-      `pages/api/c15t/[...c15t].${script}`,
+      `pages/api/inth/[...inth].${script}`,
     ];
     for (const flag of ["--dry-run", "--yes", "--yes"]) {
       const result = run(test, [...args, flag], directory);
@@ -1031,7 +1031,7 @@ const verifyHtmlWithoutInstallation = async (
   }
   assert.match(
     await readFile(path.join(directory, "index.html"), "utf-8"),
-    /\/c15t.js/u
+    /\/inth.js/u
   );
 };
 
@@ -1498,11 +1498,11 @@ const verifyPartialHtml = async (
   test: string,
   parent: string
 ): Promise<void> => {
-  const script = `<script src="${BACKEND}/c15t.js" defer></script>`;
-  const link = '<a href="#c15t-preferences">Privacy settings</a>';
+  const script = `<script src="${BACKEND}/inth.js" defer></script>`;
+  const link = '<a href="#inth-preferences">Privacy settings</a>';
   for (const [name, head, body, missing, present] of [
-    ["html-script", script, "", "#c15t-preferences", "/c15t.js"],
-    ["html-link", "", link, "/c15t.js", "#c15t-preferences"],
+    ["html-script", script, "", "#inth-preferences", "/inth.js"],
+    ["html-link", "", link, "/inth.js", "#inth-preferences"],
     ["html-complete", script, link, "", ""],
   ]) {
     const directory = await app(parent, name ?? "", {});
@@ -1641,8 +1641,8 @@ const verifyHtmlSite = async (test: string, parent: string): Promise<void> => {
   ]);
   assert.deepEqual(await readdir(directory), ["index.html"]);
   const html = await readFile(path.join(directory, "index.html"), "utf-8");
-  assert.match(html, /\/c15t\.js/u);
-  assert.match(html, /#c15t-preferences/u);
+  assert.match(html, /\/inth\.js/u);
+  assert.match(html, /#inth-preferences/u);
   const repeated = run(test, [...args, "--yes"], directory);
   assert.equal(repeated.status, 0, repeated.stderr);
   assert.deepEqual(

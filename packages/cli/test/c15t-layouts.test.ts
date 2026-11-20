@@ -45,7 +45,7 @@ it.each(["page.jsx", "page.js", "js"])(
       expect.arrayContaining([
         `pages/_app.${extension}`,
         `pages/index.${extension}`,
-        `pages/api/c15t/[...c15t].${extension}`,
+        `pages/api/inth/[...inth].${extension}`,
       ])
     );
     expect(await readdir(path.join(directory, "pages"))).toEqual([
@@ -57,7 +57,7 @@ it.each(["page.jsx", "page.js", "js"])(
       [
         `pages/_app.${extension}`,
         `pages/index.${extension}`,
-        `pages/api/c15t/[...c15t].${extension}`,
+        `pages/api/inth/[...inth].${extension}`,
       ].map(async (filename) => {
         const content = await readFile(path.join(directory, filename), "utf-8");
         expect(() => transformSync(content, { loader: "jsx" })).not.toThrow();
@@ -80,7 +80,7 @@ it.each([
       { cwd: directory }
     );
     expect(result.created).toContain("pages/_app.tsx");
-    expect(result.created).toContain("pages/api/c15t/[...c15t].ts");
+    expect(result.created).toContain("pages/api/inth/[...inth].ts");
     expect(
       await readFile(path.join(directory, "next.config.mjs"), "utf-8")
     ).toBe(config);
@@ -97,7 +97,7 @@ it("reads a real extension property after comments without stripping URL strings
     { cwd: directory }
   );
   expect(result.created).toContain("pages/_app.page.js");
-  expect(result.created).toContain("pages/api/c15t/[...c15t].page.js");
+  expect(result.created).toContain("pages/api/inth/[...inth].page.js");
   expect(await readFile(path.join(directory, "next.config.mjs"), "utf-8")).toBe(
     config
   );

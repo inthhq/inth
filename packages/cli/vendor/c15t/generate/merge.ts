@@ -16,8 +16,8 @@ const indentUnit = (content: string): string =>
  * @example
  * mergeFile('<body>\n</body>\n', '', {
  *   type: 'insert',
- *   marker: '#c15t-preferences',
- *   inserts: [{ before: '</body>', content: '<a href="#c15t-preferences">Privacy settings</a>' }],
+ *   marker: '#inth-preferences',
+ *   inserts: [{ before: '</body>', content: '<a href="#inth-preferences">Privacy settings</a>' }],
  * });
  */
 export const mergeFile = (

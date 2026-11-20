@@ -119,7 +119,7 @@ it.each(["EXDEV", "EPERM", "ENOTSUP", "EOPNOTSUPP", "ENOSYS"])(
     const result = apply(root);
     expect(result.created).toEqual(["index.html"]);
     expect(fs.readFileSync(fault.target, "utf-8")).toContain(
-      "https://site.inth.app/c15t.js"
+      "https://site.inth.app/inth.js"
     );
     expect(fs.readdirSync(root)).toEqual(["index.html"]);
     expect(apply(root).created).toEqual([]);

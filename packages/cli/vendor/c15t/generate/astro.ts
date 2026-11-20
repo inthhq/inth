@@ -46,16 +46,16 @@ const { title } = Astro.props;
 `;
 
 /**
- * The mode a static site passes to `c15t()`. A static host has no server
+ * The mode a static site passes to `inth()`. A static host has no server
  * to resolve the policy per visitor, so it asks the backend's `/init`.
  */
 const integrationCall = (options: BoilerplateOptions, server: boolean) => {
 	if (options.mode === 'offline') {
-		return { call: 'c15t({ mode: offline() })', factory: 'offline' };
+		return { call: 'inth({ mode: offline() })', factory: 'offline' };
 	}
 	return server
-		? { call: 'c15t()', factory: '' }
-		: { call: 'c15t({ mode: hosted() })', factory: 'hosted' };
+		? { call: 'inth()', factory: '' }
+		: { call: 'inth({ mode: hosted() })', factory: 'hosted' };
 };
 
 const astroConfig = (options: BoilerplateOptions, server: boolean): string => {
@@ -65,8 +65,8 @@ const astroConfig = (options: BoilerplateOptions, server: boolean): string => {
 		"import svelte from '@astrojs/svelte';",
 		"import { defineConfig } from 'astro/config';",
 		factory
-			? `import c15t, { ${factory} } from '@inth/astro';`
-			: "import c15t from '@inth/astro';",
+			? `import inth, { ${factory} } from '@inth/astro';`
+			: "import inth from '@inth/astro';",
 	])}
 
 export default defineConfig({
@@ -78,7 +78,7 @@ ${server ? "\toutput: 'server',\n" : ''}});
 /**
  * Generate the Astro quickstart for server output (`astro`, resolved per
  * request) or static output (`astro-static`, `hosted()`): `astro.config.mjs`,
- * `src/layouts/base.astro` and, with vendors, `src/c15t.client.ts`.
+ * `src/layouts/base.astro` and, with vendors, `src/inth.client.ts`.
  * @param options Output, mode and vendor selections.
  * @returns Files relative to the project root.
  */
@@ -92,13 +92,13 @@ export const generateAstroBoilerplate = (
 		'src/layouts/base.astro': layout,
 	};
 	if (options.scripts.length) {
-		files['src/c15t.client.ts'] = `${sortImports([
+		files['src/inth.client.ts'] = `${sortImports([
 			...scriptImports(options.scripts),
-			"import type { C15tClientOptionsExtension } from '@inth/astro';",
+			"import type { InthClientOptionsExtension } from '@inth/astro';",
 		])}
 
 export default {
-${scriptsProperty(options.scripts, '\t')}} satisfies C15tClientOptionsExtension;
+${scriptsProperty(options.scripts, '\t')}} satisfies InthClientOptionsExtension;
 `;
 	}
 	return {
@@ -113,9 +113,9 @@ ${scriptsProperty(options.scripts, '\t')}} satisfies C15tClientOptionsExtension;
 		instructions: [
 			'Use src/layouts/base.astro as the layout of every page, or move ConsentScript into your own layout head and the banner, dialog and link into its body.',
 			server
-				? 'Server output resolves each visitor on the server and adds a consent route at /api/c15t. Keep your adapter if the project already has one.'
+				? 'Server output resolves each visitor on the server and adds a consent route at /api/inth. Keep your adapter if the project already has one.'
 				: 'Static output asks your backend for each visitor’s policy from the browser, so it needs no adapter.',
-			...vendorInstruction(options, 'src/c15t.client.ts'),
+			...vendorInstruction(options, 'src/inth.client.ts'),
 			...offlineInstruction(options),
 		],
 		merge: {},
