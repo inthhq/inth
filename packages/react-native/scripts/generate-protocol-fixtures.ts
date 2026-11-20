@@ -1956,7 +1956,7 @@ const buildEvaluationFixtures =
 			},
 			{
 				description:
-					'An active GPC signal under the CCPA opt-out rule denies marketing and measurement even though the model would allow them, records a durable opt-out with method gpc and rights sale and share, and reports both gpc and opt-out restrictions on the snapshot.',
+					'An active GPC signal under the CCPA opt-out rule denies marketing and measurement even though the model would allow them, records a durable opt-out with method gpc and all three rights locally because the fixture transport has no optOut method, and reports both gpc and opt-out restrictions on the snapshot.',
 				id: 'gpc-signal-present',
 				scenario: GPC_SCENARIO,
 			},
@@ -2263,9 +2263,13 @@ const buildEvaluationFixtures =
 		fixtures.push(...(await buildNothingDeclaredEvaluationFixtures()));
 
 		// -- Durable opt-out record axes -----------------------------------------
-		// Each stored opt-out below comes from a real kernel run rather than a
-		// hand-built object, so the rights, method, holder and timestamp match
-		// what the kernel actually writes.
+		// Each stored opt-out below starts from a real kernel run and sets the
+		// California backend's rights (`sale`, `share`), representing a device
+		// holding a record after a backend answered.
+		const storedCaliforniaRights = (optOut: OptOutRecord): OptOutRecord => ({
+			...optOut,
+			rights: ['sale', 'share'],
+		});
 		const gpcRecorded = await runFixture(inputFor(GPC_SCENARIO));
 		if (!gpcRecorded.after.optOut) {
 			throw new Error(
@@ -2274,7 +2278,7 @@ const buildEvaluationFixtures =
 		}
 		const storedWithoutGpcInput = inputFor(CCPA_SCENARIO, {
 			records: storedFor(SUBJECT.gpc, {
-				optOut: gpcRecorded.after.optOut,
+				optOut: storedCaliforniaRights(gpcRecorded.after.optOut),
 			}),
 		});
 		const storedWithoutGpc = await runFixture(storedWithoutGpcInput);
@@ -2297,7 +2301,9 @@ const buildEvaluationFixtures =
 		}
 		const agedOptOutInput = inputFor(CCPA_SCENARIO, {
 			records: storedFor(SUBJECT.california, {
-				optOut: ageOptOut(buttonOptOutRun.after.optOut, 400),
+				optOut: storedCaliforniaRights(
+					ageOptOut(buttonOptOutRun.after.optOut, 400)
+				),
 			}),
 		});
 		const agedOptOut = await runFixture(agedOptOutInput);
@@ -2321,7 +2327,7 @@ const buildEvaluationFixtures =
 		}
 		const staleOptOutInput = inputFor(STALE_OPT_OUT_REPLAY_SCENARIO, {
 			records: storedFor(SUBJECT.california, {
-				optOut: staleOptOutMint.after.optOut,
+				optOut: storedCaliforniaRights(staleOptOutMint.after.optOut),
 			}),
 		});
 		const staleOptOut = await runFixture(staleOptOutInput);
@@ -2402,7 +2408,7 @@ const buildSaveBodyFixtures = async function buildSaveBodyFixtures(): Promise<
 		},
 		{
 			description:
-				'Reject all under the CCPA opt-out rule. Every optional category gets an explicit false receipt, and refusing both marketing and measurement under an opt-out rule records a durable opt-out with method button and rights sale and share.',
+				'Reject all under the CCPA opt-out rule. Every optional category gets an explicit false receipt, and refusing both marketing and measurement under an opt-out rule records a durable opt-out with method button and all three rights locally because the fixture transport has no optOut method.',
 			id: 'ccpa-reject-all',
 			intent: { action: 'necessary' },
 			scenario: CCPA_SCENARIO,
@@ -2416,7 +2422,10 @@ const buildSaveBodyFixtures = async function buildSaveBodyFixtures(): Promise<
 				consents: { marketing: true },
 			},
 			records: storedFor(SUBJECT.california, {
-				optOut: buttonOptOutRun.after.optOut,
+				optOut: {
+					...buttonOptOutRun.after.optOut,
+					rights: ['sale', 'share'],
+				},
 			}),
 			scenario: CCPA_SCENARIO,
 		},

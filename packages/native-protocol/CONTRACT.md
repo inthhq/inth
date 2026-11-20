@@ -2255,7 +2255,12 @@ the contract moved, not the kernel.
   `opt-out`. Under an `opt-out` rule, a save that refuses every opt-out category in
   scope (such as rejecting all) also records a durable opt-out with `method: 'button'`,
   and a save that grants one lifts a device-held opt-out when GPC is not active. The
-  durable opt-out record never expires and ignores policy changes.
+  durable opt-out record never expires and ignores policy changes. The backend
+  derives which legal rights apply from the visitor's location and returns them in
+  `optOut.rights`: a local record starts with `rights: []` when the transport has an
+  `optOut` method, or with all three rights (`sale`, `share`, `targeted_ads`) when
+  the transport has no `optOut` method (including the fixture generator's transport)
+  or when the backend answers `404`.
 - `revision` is a monotonic counter over committed mutations, not a count of the
   steps a runner took. It is not comparable
   across the three implementations, because hydration and bootstrap are mutations in

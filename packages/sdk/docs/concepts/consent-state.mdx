@@ -67,17 +67,17 @@ Saves update the browser optimistically before sending to Inth. Stock surfaces a
 
 ## Sync durable opt-outs
 
-When the transport supports opt-outs (`hosted()` and `manifest()`), every local opt-out act syncs to Inth:
+A local opt-out takes effect in the browser at once with `rights: []` and blocks `marketing` and `measurement` in scope before any network call. When the transport supports opt-outs (`hosted()` and `manifest()`), every local opt-out act syncs to Inth:
 
-- `POST /v1/consent/opt-outs` runs when `commands.optOut()` records an opt-out, a save under an opt-out policy refuses `marketing` and `measurement`, or a live browser kernel detects GPC under a policy that maps it. The body carries `subjectId`, `property`, `rights`, `method` (`'button'` or `'gpc'`), `givenAt`, a per-act UUID `idempotencyKey`, optional identity fields, and snapshot context (`policyId`, `country`, `region`, `language`, `policySnapshotToken`).
+- `POST /v1/consent/opt-outs` runs when `commands.optOut()` records an opt-out, a save under an opt-out policy refuses `marketing` and `measurement`, or a live browser kernel detects GPC under a policy that maps it. The body carries `subjectId`, `property`, `method` (`'button'` or `'gpc'`), `givenAt`, a per-act UUID `idempotencyKey`, optional identity fields, and snapshot context (`policyId`, `country`, `region`, `language`, `policySnapshotToken`). The SDK omits `rights`: the backend derives which rights apply from the visitor's location and returns them in `optOut.rights`.
 - `POST /v1/consent/opt-outs/lift` runs when `commands.optIn()` lifts an opt-out or a save grants `marketing` or `measurement` while an opt-out is active. The body carries `subjectId`, `property`, `givenAt`, `idempotencyKey`, optional identity fields, and `uiSource`, omitting `rights` so all device-held rights lift.
 - `POST /v1/consent/records` and `POST /v1/subjects/:id/link` can also return an effective `optOut` object.
 
 Local device acts queue in `localStorage` under `inth-pending-opt-outs:v1` before the request starts, separate from pending consent saves. Queued acts replay in strict order on the next init and on reconnect, without narrowing or supersession, and are never dropped for policy or snapshot-token changes. Identity tokens are never written to storage; a replay reads the token from the current user if set. A `409 subject_conflict` moves the visitor to a new subject ID and resends once; `413` and `400 invalid_request` drop the entry.
 
-If the backend answers `404` on either opt-out route, Inth assumes the backend does not store opt-outs. It empties the opt-out queue, stops sending opt-out requests for that kernel, reports no error or warning, and keeps the local opt-out active.
+If the transport has no `optOut` method (such as `testing()`, the offline transport, or a custom transport without one), Inth records all three rights (`sale`, `share`, `targeted_ads`) locally. If the backend answers `404` on either opt-out route, Inth treats the backend as not storing opt-outs. It empties the opt-out queue, fills an empty local `rights` list with all three rights through `opt-out:synced` without overwriting backend-supplied rights, creates later local records on that kernel with all three rights, stops sending opt-out requests, and reports no error or warning.
 
-When any response carries a valid `optOut` (or a lift returns `optOut: null`), Inth stores the backend's authoritative record (using the server's `recordedAt`, `method`, and `heldBy`), emits `opt-out:synced`, and writes the updated record to storage without sending another request. Stale answers that arrive after a newer local opt-out act, a records clear, or a subject switch are ignored.
+When any response carries a valid `optOut` (or a lift returns `optOut: null`), Inth stores the backend's authoritative record (using the server's `rights`, `recordedAt`, `method`, and `heldBy`), emits `opt-out:synced`, and writes the updated record to storage without sending another request. Stale answers that arrive after a newer local opt-out act, a records clear, or a subject switch are ignored.
 
 ## Storage persistence and conflict rules
 

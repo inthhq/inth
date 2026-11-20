@@ -141,11 +141,9 @@ export {
 	OPT_OUT_METHODS,
 	OPT_OUT_RIGHTS,
 	type OptOutHolder,
-	type OptOutLocation,
 	type OptOutMethod,
 	type OptOutRecord,
 	type OptOutRight,
-	resolveOptOutRights,
 } from './opt-out';
 export {
 	type Vendor,

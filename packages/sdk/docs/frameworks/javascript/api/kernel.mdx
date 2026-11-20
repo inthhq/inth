@@ -47,7 +47,7 @@ Commands are asynchronous and are the only way to record choices:
 | `commands.save({ marketing: false })` | `Promise<SaveResult>` | Records named categories only. |
 | `commands.save()` | `Promise<SaveResult>` | Records staged draft (falling back to current choice or policy defaults). |
 | `commands.dismissNotice()` | `Promise<NoticeDismissResult>` | Acknowledges a notice without granting consent. |
-| `commands.optOut(context?)` | `Promise<OptOutResult>` | Records a durable opt-out for the visitor's location without touching `explicitChoice`, then sends it through the save queue when the transport supports opt-outs. Switches off `marketing` and `measurement` in scope. Works under any `opt-out` policy and returns `{ ok: false, reason: 'not-available' }` under other models. |
+| `commands.optOut(context?)` | `Promise<OptOutResult>` | Records a durable opt-out at once without touching `explicitChoice`, then sends it through the save queue when the transport supports opt-outs. Starts with `rights: []` until the backend returns the rights for the visitor's location, or with all three rights when the transport has no `optOut` method or the backend answers `404`. Switches off `marketing` and `measurement` in scope. Works under any `opt-out` policy and returns `{ ok: false, reason: 'not-available' }` under other models. |
 | `commands.optIn(context?)` | `Promise<OptInResult>` | Lifts an opt-out when GPC is not active. Clears a device-held opt-out at once and queues a lift request. For an account-held opt-out (`heldBy` is `'person'` or `'both'`), sends a lift with the current user's identity token and waits for the answer; clears the record when the backend returns `optOut: null`, and otherwise returns `{ ok: false, reason: 'held-by-account' }`. |
 | `commands.identify(user)` | `Promise<void>` | Links record to `{ externalId, identityProvider?, identityToken? }` (where `identityToken` verifies the link on the server), applies any effective opt-out returned in the link answer, and loads that subject's server record. |
 
@@ -94,7 +94,7 @@ hydrates storage and syncs tabs automatically.
 | `notice:dismissed` | `snapshot`, `dismissal` | Notice acknowledged. |
 | `opt-out:recorded` | `snapshot`, `optOut`, `actionAt`, `uiSource?` | Durable opt-out recorded from `commands.optOut()`, a detected GPC signal, or a save under an `opt-out` policy that rejects all or turns both `marketing` and `measurement` off. |
 | `opt-out:lifted` | `snapshot`, `actionAt`, `uiSource?` | Durable opt-out lifted from `commands.optIn()` or a save that turns `marketing` or `measurement` back on. |
-| `opt-out:synced` | `snapshot`, `optOut` | Backend's effective opt-out replaced the local record after an opt-out, lift, save or `identify` answer. Emits no network request. |
+| `opt-out:synced` | `snapshot`, `optOut` | Backend's effective opt-out replaced the local record after an opt-out, lift, save or `identify` answer, or a `404` filled an empty local `rights` list with all three rights. Emits no network request. |
 | `vendors:recorded` | `snapshot`, `actionAt` | Vendor denials changed. |
 | `vendors:set` | `snapshot` | Declared vendors changed. |
 | `overrides:set` | `snapshot` | Decision overrides changed. |

@@ -8,6 +8,9 @@ import type { LiftOptOutPayload, OptOutPayload } from '../../types';
 /**
  * Build the request body for `POST /v1/consent/opt-outs`.
  *
+ * Omits `rights` so the backend derives the applicable rights from the
+ * visitor's location.
+ *
  * @param payload - The kernel's opt-out payload.
  * @param property - Lowercase host name or app ID the opt-out belongs to.
  * @returns The `/v1` request body.
@@ -29,7 +32,6 @@ export const buildV1ConsentOptOutBody = function buildV1ConsentOptOutBody(
 		idempotencyKey: payload.idempotencyKey,
 		method: payload.method,
 		property,
-		rights: [...payload.rights],
 		subjectId: payload.subjectId,
 	};
 	if (user?.externalId) {

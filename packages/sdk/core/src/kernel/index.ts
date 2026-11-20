@@ -44,6 +44,9 @@
  *   hides the change from other listeners. A commit's follow-up event is
  *   delivered before any transition a listener starts in response.
  */
+import { OPT_OUT_RIGHTS } from '@inth/sdk-schema/types';
+import type { OptOutRight } from '@inth/sdk-schema/types';
+
 import type { ConsentKernel, ConsentSnapshot, KernelConfig } from '../types';
 import { createChoiceRecorder } from './choice';
 import { createDispatcher } from './dispatch';
@@ -98,7 +101,14 @@ export const createKernel = function createKernel(
 	// rendered even when client boot mutations land before hydration completes.
 	const serverSnapshot = initialSnapshot;
 
+	const defaultOptOutRights = (): OptOutRight[] =>
+		// oxlint-disable-next-line no-use-before-define -- Checked only after assembly.
+		!transport?.optOut || outbox.areOptOutsUnsupported()
+			? [...OPT_OUT_RIGHTS]
+			: [];
+
 	const runtime = createRuntime({
+		defaultOptOutRights,
 		dispatcher,
 		emit: eventBus.emit,
 		initialSnapshot,
@@ -174,6 +184,7 @@ export const createKernel = function createKernel(
 		}
 	});
 	const choice = createChoiceRecorder({
+		defaultOptOutRights,
 		initialDraft: buildDraft(config.initialDraft),
 		outbox,
 		runtime,

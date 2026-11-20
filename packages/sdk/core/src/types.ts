@@ -754,8 +754,6 @@ export interface OptOutPayload {
 	subjectId: string;
 	/** UUID made once with the act and sent unchanged on every retry. */
 	idempotencyKey: string;
-	/** Refused opt-out rights in canonical order. */
-	rights: readonly OptOutRight[];
 	/** How the browser recorded this opt-out. */
 	method: 'button' | 'gpc';
 	/** Epoch milliseconds when the visitor acted. */
@@ -1201,8 +1199,8 @@ export interface ConsentKernel {
 			actionAt?: number;
 		}) => Promise<NoticeDismissResult>;
 		/**
-		 * Record a durable opt-out for the visitor's location in one step,
-		 * without opening preferences or touching `explicitChoice`.
+		 * Record a durable opt-out in one step, without opening preferences or
+		 * touching `explicitChoice`.
 		 */
 		optOut: (context?: {
 			uiSource?: SaveUISource;

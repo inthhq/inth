@@ -27,12 +27,12 @@
 			"sha256": "d39240a12d3c5c3e40667e64df4b7921c526944b6e32b38e722e536495769314"
 		},
 		{
-			"bytes": 6616,
+			"bytes": 6686,
 			"file": "evaluation-gpc-signal-present.json",
 			"id": "evaluation-gpc-signal-present",
 			"kind": "evaluation",
 			"protocolVersion": 1,
-			"sha256": "ebfc87d7eeb830613cb98b2506eb51d8ab83d7ab2b70e0b8ea7ad2ddc7be7ae8"
+			"sha256": "c868ca5ac89fb7891507451ecd0ef621b9e92c6082e44a59c1446382907b7456"
 		},
 		{
 			"bytes": 6178,
@@ -275,20 +275,20 @@
 			"sha256": "e3ccd6cc6ede04863848ea423e26503e707adef2d03aede7983242e951f09fa5"
 		},
 		{
-			"bytes": 14199,
+			"bytes": 14231,
 			"file": "save-body-ccpa-gpc.json",
 			"id": "save-body-ccpa-gpc",
 			"kind": "save-body",
 			"protocolVersion": 1,
-			"sha256": "09088d18f98401260aac6f4594183caab2d380756457df347ff39ee0e14eff23"
+			"sha256": "09e0f90b0ef3561cb09d5dab33d9b7744329d6ce02eae61edb79dc3924120939"
 		},
 		{
-			"bytes": 14113,
+			"bytes": 14183,
 			"file": "save-body-ccpa-reject-all.json",
 			"id": "save-body-ccpa-reject-all",
 			"kind": "save-body",
 			"protocolVersion": 1,
-			"sha256": "eceaed11c32e410d6f6225f9154ce16706a21077a989698bc40c06ab195ae58b"
+			"sha256": "72ad385b439fd7886bccf75e73b41f73a8ebd8fff873783a2752443c84114643"
 		},
 		{
 			"bytes": 11915,

@@ -121,10 +121,68 @@ describe('opt-out codec', () => {
 		});
 	});
 
+	it('round-trips an empty rights list through compact cookie, JSON and storage', () => {
+		const record: StoredOptOutRecord = {
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW - 1,
+			rights: [],
+			subject: { subjectId: 'sub_pending' },
+			version: 1,
+		};
+		const compact = encodeOptOutRecordCompact(record);
+		expect(compact).toBe(`v=1&r=&m=b&t=${NOW - 1}&h=d&sid=sub_pending`);
+		expect(decodeOptOutRecordCompact(compact, NOW)).toEqual({
+			ok: true,
+			record,
+		});
+		const json = encodeOptOutRecord(record);
+		expect(decodeOptOutRecord(JSON.parse(json), NOW)).toEqual({
+			ok: true,
+			record,
+		});
+
+		expect(writeStoredOptOutRecord(record, undefined, NOW).ok).toBe(true);
+		expect(readStoredOptOutRecord(undefined, NOW)).toEqual({
+			ok: true,
+			record,
+		});
+		expect(readStoredRecords(undefined, NOW).records.optOut).toEqual({
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW - 1,
+			rights: [],
+		});
+		expect(
+			readStoredRecordsFromCookieHeader(document.cookie, undefined, NOW).optOut
+		).toEqual({
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW - 1,
+			rights: [],
+		});
+
+		const kernel = createConsentKernel({
+			initialLocation: { countryCode: 'US', regionCode: 'CA' },
+			initialPolicyResolution: usOptOutResolution(),
+			now: NOW,
+		});
+		const persistence = createPersistence({ kernel });
+		expect(kernel.getSnapshot().optOut).toEqual({
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW - 1,
+			rights: [],
+		});
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		expect(kernel.getSnapshot().effectivePermissions.measurement).toBe(false);
+		persistence.dispose();
+		kernel.dispose();
+	});
+
 	it.each([
 		['unknown version', `v=2&r=sa&m=b&t=${NOW - 1}&h=d`],
 		['missing rights', `v=1&m=b&t=${NOW - 1}&h=d`],
-		['empty rights', `v=1&r=&m=b&t=${NOW - 1}&h=d`],
 		['duplicate right', `v=1&r=sa|sa&m=b&t=${NOW - 1}&h=d`],
 		['raw right name instead of code', `v=1&r=sale&m=b&t=${NOW - 1}&h=d`],
 		['unknown method', `v=1&r=sa&m=x&t=${NOW - 1}&h=d`],
@@ -158,16 +216,6 @@ describe('opt-out codec', () => {
 				method: 'button',
 				recordedAt: NOW,
 				rights: ['sale'],
-				version: 1,
-			},
-		],
-		[
-			'empty rights',
-			{
-				heldBy: 'device',
-				method: 'button',
-				recordedAt: NOW,
-				rights: [],
 				version: 1,
 			},
 		],
@@ -358,7 +406,7 @@ describe('opt-out persistence lifecycle', () => {
 			heldBy: 'device',
 			method: 'button',
 			recordedAt: NOW,
-			rights: ['sale', 'share'],
+			rights: ['sale', 'share', 'targeted_ads'],
 		});
 		expect(reloaded.getSnapshot().effectivePermissions.marketing).toBe(false);
 		expect(reloaded.getSnapshot().effectivePermissions.measurement).toBe(false);

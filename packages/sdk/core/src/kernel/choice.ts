@@ -24,7 +24,7 @@ import {
 	AD_TECH_PROVIDER_PURPOSES,
 	ADDITIONAL_CONSENT_V2_PATTERN,
 } from '@inth/sdk-schema/types';
-import type { OptOutRecord } from '@inth/sdk-schema/types';
+import type { OptOutRecord, OptOutRight } from '@inth/sdk-schema/types';
 
 import { optOutDenyCategories } from '../consent-record/opt-out';
 import { EMPTY_CHOICE, recordCategoryPatch } from '../consent-record/record';
@@ -639,6 +639,8 @@ export interface ChoiceRecorderOptions {
 	>;
 	/** Draft values staged by config. */
 	initialDraft: PresentedSelection | null;
+	/** Rights placed on a newly created local opt-out record. */
+	defaultOptOutRights?: () => OptOutRight[];
 }
 
 /**
@@ -650,6 +652,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 	runtime,
 	outbox,
 	initialDraft,
+	defaultOptOutRights = () => [],
 }: ChoiceRecorderOptions) {
 	const { batch, getSnapshot, commit, emit } = runtime;
 	const draft = createBoundDraft<PresentedSelection>(getSnapshot, initialDraft);
@@ -863,7 +866,11 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				isValidSaveActionAt(context.actionAt, currentTime)
 					? context.actionAt
 					: currentTime;
-			const nextOptOut = nextButtonOptOutRecord(before, actionAt);
+			const nextOptOut = nextButtonOptOutRecord(
+				before,
+				actionAt,
+				defaultOptOutRights()
+			);
 			if (nextOptOut === null) {
 				return {
 					changed: false,
@@ -1073,7 +1080,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 					(category) => recorded.choice.categories[category]?.value === false
 				);
 			const recordedOptOut = refusesOptOutCategories
-				? nextButtonOptOutRecord(before, actionAt)
+				? nextButtonOptOutRecord(before, actionAt, defaultOptOutRights())
 				: null;
 			if (categoriesChanged) {
 				patch.explicitChoice = recorded.choice;

@@ -20,11 +20,7 @@
  * development: the save already reported its first failure.
  */
 
-import type {
-	CONSENT_MODELS,
-	OPT_OUT_RIGHTS,
-	OptOutRecord,
-} from '@inth/sdk-schema/types';
+import type { CONSENT_MODELS, OptOutRecord } from '@inth/sdk-schema/types';
 
 import type { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
 import type {
@@ -83,7 +79,6 @@ export interface QueueTools {
 	isConsentSaveRejection: typeof isConsentSaveRejection;
 	isPlainRecord: typeof isPlainRecord;
 	isSubjectConflict: typeof isSubjectConflict;
-	optOutRights: typeof OPT_OUT_RIGHTS;
 	optionalCategories: typeof OPTIONAL_CONSENT_CATEGORIES;
 	/** The schema's `CONSENT_MODELS`. */
 	consentModels: typeof CONSENT_MODELS;
@@ -129,13 +124,11 @@ const createStoredLists = function createStoredLists(
 	const {
 		consentModels,
 		isPlainRecord,
-		optOutRights,
 		optionalCategories,
 		toStoredPayload,
 		validateExplicitChoice,
 		withoutSuperseded,
 	} = tools;
-	const optOutRightSet = new Set<string>(optOutRights);
 
 	// ---------------------------------------------------------------------------
 	// Stored entry validation
@@ -352,24 +345,6 @@ const createStoredLists = function createStoredLists(
 		return value === undefined || value === null || typeof value === 'string';
 	};
 
-	const isOptOutRights = function isOptOutRights(value: unknown): boolean {
-		if (!Array.isArray(value) || value.length === 0) {
-			return false;
-		}
-		const seen = new Set<string>();
-		for (const item of value) {
-			if (
-				typeof item !== 'string' ||
-				!optOutRightSet.has(item) ||
-				seen.has(item)
-			) {
-				return false;
-			}
-			seen.add(item);
-		}
-		return true;
-	};
-
 	const isOptOutPayload = function isOptOutPayload(
 		value: unknown
 	): value is OptOutPayload {
@@ -378,7 +353,6 @@ const createStoredLists = function createStoredLists(
 			typeof value.subjectId === 'string' &&
 			typeof value.idempotencyKey === 'string' &&
 			value.idempotencyKey.length > 0 &&
-			isOptOutRights(value.rights) &&
 			(value.method === 'button' || value.method === 'gpc') &&
 			typeof value.givenAt === 'number' &&
 			Number.isSafeInteger(value.givenAt) &&

@@ -346,12 +346,14 @@ describe('POST /v1/consent/opt-outs', () => {
 		policySnapshotToken: 'snapshot-token',
 		property: 'www.example.com',
 		region: 'CA',
-		rights: ['sale', 'share'] as const,
 		subjectId: SUBJECT,
 		uiSource: 'widget',
 	};
 
-	it('accepts a valid opt-out request with context and identity fields', () => {
+	it('accepts a valid opt-out request with or without rights, context and identity fields', () => {
+		expect(v.safeParse(v1ConsentOptOutInputSchema, optOutBody).success).toBe(
+			true
+		);
 		expect(
 			v.safeParse(v1ConsentOptOutInputSchema, {
 				...optOutBody,
@@ -359,6 +361,7 @@ describe('POST /v1/consent/opt-outs', () => {
 				identityProvider: 'clerk',
 				identityToken: 'tok',
 				metadata: { source: 'footer' },
+				rights: ['sale', 'share'] as const,
 			}).success
 		).toBe(true);
 		expect(

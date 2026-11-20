@@ -40,7 +40,7 @@ Omitting `projectUrl` outside `testing()` throws:
 
 ## Hosted
 
-With `projectUrl` and no `mode`, or with `mode: hosted()`, the runtime resolves policies from `${projectUrl}/v1/consent/init`, posts choices to `${projectUrl}/v1/consent/records`, and syncs durable opt-outs through `${projectUrl}/v1/consent/opt-outs` and `${projectUrl}/v1/consent/opt-outs/lift` (if a backend answers `404` on those opt-out routes, Inth keeps opt-outs local without errors):
+With `projectUrl` and no `mode`, or with `mode: hosted()`, the runtime resolves policies from `${projectUrl}/v1/consent/init`, posts choices to `${projectUrl}/v1/consent/records`, and syncs durable opt-outs through `${projectUrl}/v1/consent/opt-outs` and `${projectUrl}/v1/consent/opt-outs/lift` (the backend derives which rights apply from the visitor's location; if a backend answers `404` on those opt-out routes, Inth keeps opt-outs local with all three rights without errors):
 
 <include src="../../shared/examples/javascript/runtime.mdx" />
 

@@ -1,5 +1,5 @@
 {
-	"description": "Reject all under the CCPA opt-out rule. Every optional category gets an explicit false receipt, and refusing both marketing and measurement under an opt-out rule records a durable opt-out with method button and rights sale and share.",
+	"description": "Reject all under the CCPA opt-out rule. Every optional category gets an explicit false receipt, and refusing both marketing and measurement under an opt-out rule records a durable opt-out with method button and all three rights locally because the fixture transport has no optOut method.",
 	"expected": {
 		"request": {
 			"body": {
@@ -205,7 +205,7 @@
 				"heldBy": "device",
 				"method": "button",
 				"recordedAt": 1770000000000,
-				"rights": ["sale", "share"]
+				"rights": ["sale", "share", "targeted_ads"]
 			},
 			"overrides": {
 				"country": "US",

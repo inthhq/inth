@@ -123,11 +123,18 @@ describe('opt-out network sync and queue', () => {
 
 		await first.commands.optOut({ uiSource: 'widget' });
 
+		expect(first.getSnapshot().optOut).toMatchObject({
+			heldBy: 'device',
+			method: 'button',
+			rights: [],
+		});
+		expect(first.getSnapshot().effectivePermissions.marketing).toBe(false);
+		expect(first.getSnapshot().effectivePermissions.measurement).toBe(false);
 		expect(offline).toHaveBeenCalledTimes(1);
 		const sent = offline.mock.calls[0]?.[0] as OptOutPayload;
 		expect(sent.idempotencyKey).toMatch(V1_UUID_PATTERN);
 		expect(sent.method).toBe('button');
-		expect(sent.rights).toEqual(['sale', 'share']);
+		expect('rights' in sent).toBe(false);
 		expect(sent.subjectId).toBe(SUBJECT);
 		expect(sent.policySnapshotToken).toBe('snapshot-token');
 		expect(sent.uiSource).toBe('widget');
@@ -140,7 +147,16 @@ describe('opt-out network sync and queue', () => {
 
 		const replayed: OptOutPayload[] = [];
 		const next = kernelOn({
-			initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
+			initialRecords: {
+				now: NOW,
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: NOW,
+					rights: [],
+				},
+				subject: { subjectId: SUBJECT },
+			},
 			transport: {
 				optOut: (payload) => {
 					replayed.push(payload);
@@ -161,8 +177,14 @@ describe('opt-out network sync and queue', () => {
 		await next.commands.init();
 		await vi.waitFor(() => expect(replayed).toHaveLength(1));
 		expect(replayed[0]?.idempotencyKey).toBe(sent.idempotencyKey);
+		expect('rights' in (replayed[0] as OptOutPayload)).toBe(false);
 		expect(await queuedOptOuts()).toEqual([]);
-		expect(next.getSnapshot().optOut?.recordedAt).toBe(NOW + 5000);
+		expect(next.getSnapshot().optOut).toEqual({
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW + 5000,
+			rights: ['sale', 'share'],
+		});
 		next.dispose();
 	});
 
@@ -201,6 +223,7 @@ describe('opt-out network sync and queue', () => {
 		await kernel.commands.optOut();
 		expect(calls).toHaveLength(1);
 		expect(bodyAt(calls, 0).policySnapshotToken).toBe('stale-token');
+		expect('rights' in bodyAt(calls, 0)).toBe(false);
 		// Still queued despite 409 policy_snapshot_expired.
 		expect(await queuedOptOuts()).toHaveLength(1);
 
@@ -213,7 +236,7 @@ describe('opt-out network sync and queue', () => {
 		kernel.dispose();
 	});
 
-	test('404 empties the opt-out queue, stops further requests, reports no error or console output, and keeps categories denied', async () => {
+	test('404 empties the opt-out queue, fills all three rights locally via opt-out:synced, persists them, stops further requests, and creates later records with all three', async () => {
 		const consoleError = vi
 			.spyOn(console, 'error')
 			.mockImplementation(() => undefined);
@@ -234,10 +257,41 @@ describe('opt-out network sync and queue', () => {
 			},
 		});
 		const errors: unknown[] = [];
+		const recordedRights: (readonly string[])[] = [];
+		const synced: (Readonly<OptOutRecord> | null)[] = [];
 		kernel.events.on('command:error', ({ error }) => errors.push(error));
+		kernel.events.on('opt-out:recorded', ({ optOut }) =>
+			recordedRights.push([...optOut.rights])
+		);
+		kernel.events.on('opt-out:synced', ({ optOut }) => synced.push(optOut));
+		const persistence = createPersistence({ kernel });
 
-		await kernel.commands.optOut();
+		const firstResult = await kernel.commands.optOut();
+		await flushMacrotasks();
+
 		expect(calls).toHaveLength(1);
+		expect('rights' in bodyAt(calls, 0)).toBe(false);
+		expect(recordedRights).toEqual([[]]);
+		expect(firstResult).toMatchObject({
+			changed: true,
+			ok: true,
+			optOut: {
+				heldBy: 'device',
+				method: 'button',
+				rights: ['sale', 'share', 'targeted_ads'],
+			},
+		});
+		expect(synced).toHaveLength(1);
+		expect(synced[0]?.rights).toEqual(['sale', 'share', 'targeted_ads']);
+		expect(kernel.getSnapshot().optOut?.rights).toEqual([
+			'sale',
+			'share',
+			'targeted_ads',
+		]);
+		expect(readStoredOptOutRecord(undefined, Date.now())).toMatchObject({
+			ok: true,
+			record: { rights: ['sale', 'share', 'targeted_ads'] },
+		});
 		expect(await queuedOptOuts()).toEqual([]);
 		expect(errors).toEqual([]);
 		expect(consoleError).not.toHaveBeenCalled();
@@ -245,16 +299,114 @@ describe('opt-out network sync and queue', () => {
 		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
 		expect(kernel.getSnapshot().effectivePermissions.measurement).toBe(false);
 
-		// Further opt-out acts on this kernel send nothing.
+		// Further opt-out acts on this kernel send nothing and start with all three rights.
 		await kernel.commands.optIn();
-		await kernel.commands.optOut();
+		const secondResult = await kernel.commands.optOut();
+		await flushMacrotasks();
 		expect(calls).toHaveLength(1);
+		expect(secondResult).toMatchObject({
+			changed: true,
+			ok: true,
+			optOut: { rights: ['sale', 'share', 'targeted_ads'] },
+		});
+		expect(recordedRights).toEqual([[], ['sale', 'share', 'targeted_ads']]);
+		expect(synced).toHaveLength(1);
 		expect(await queuedOptOuts()).toEqual([]);
 		expect(errors).toEqual([]);
+		persistence.dispose();
 		kernel.dispose();
 	});
 
-	test('server answer replaces local record including a future recordedAt, persists it, and drives optInPromptAllowedAt', async () => {
+	test('404 during replay fills hydrated empty rights and persists them', async () => {
+		const offline = vi
+			.fn<NonNullable<KernelTransport['optOut']>>()
+			.mockRejectedValue(new Error('offline'));
+		const first = kernelOn({
+			initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
+			transport: { optOut: offline },
+		});
+		const firstPersistence = createPersistence({ kernel: first });
+		await first.commands.optOut();
+		await flushMacrotasks();
+		expect(readStoredOptOutRecord(undefined, Date.now())).toMatchObject({
+			ok: true,
+			record: { rights: [] },
+		});
+		firstPersistence.dispose();
+		first.dispose();
+
+		const { calls, fetch } = stubFetch(() => v1Error(404, 'not_found'));
+		const transport = createV1HostedTransport({
+			fetch,
+			projectUrl: PROJECT_URL,
+			property: 'www.example.com',
+		});
+		const reloaded = kernelOn({
+			transport: {
+				liftOptOut: transport.liftOptOut,
+				optOut: transport.optOut,
+			},
+		});
+		const synced: (Readonly<OptOutRecord> | null)[] = [];
+		reloaded.events.on('opt-out:synced', ({ optOut }) => synced.push(optOut));
+		const secondPersistence = createPersistence({ kernel: reloaded });
+		expect(reloaded.getSnapshot().optOut?.rights).toEqual([]);
+
+		await reloaded.commands.init();
+		await vi.waitFor(() => expect(calls).toHaveLength(1));
+		await flushMacrotasks();
+
+		expect(reloaded.getSnapshot().optOut?.rights).toEqual([
+			'sale',
+			'share',
+			'targeted_ads',
+		]);
+		expect(synced).toHaveLength(1);
+		expect(readStoredOptOutRecord(undefined, Date.now())).toMatchObject({
+			ok: true,
+			record: { rights: ['sale', 'share', 'targeted_ads'] },
+		});
+		expect(await queuedOptOuts()).toEqual([]);
+		secondPersistence.dispose();
+		reloaded.dispose();
+	});
+
+	test('404 never overwrites rights a backend supplied', async () => {
+		const serverOptOut: OptOutRecord = {
+			heldBy: 'person',
+			method: 'api',
+			recordedAt: NOW - 1000,
+			rights: ['sale'],
+		};
+		const { fetch } = stubFetch(() => v1Error(404, 'not_found'));
+		const transport = createV1HostedTransport({
+			fetch,
+			projectUrl: PROJECT_URL,
+			property: 'www.example.com',
+		});
+		const kernel = kernelOn({
+			initialRecords: {
+				now: NOW,
+				optOut: serverOptOut,
+				subject: { subjectId: SUBJECT },
+			},
+			initialUser: { externalId: 'user_123', identityToken: 'tok_1' },
+			transport: {
+				liftOptOut: transport.liftOptOut,
+				optOut: transport.optOut,
+			},
+		});
+		const synced = vi.fn();
+		kernel.events.on('opt-out:synced', synced);
+
+		const result = await kernel.commands.optIn();
+		expect(result).toEqual({ ok: false, reason: 'held-by-account' });
+		expect(kernel.getSnapshot().optOut).toEqual(serverOptOut);
+		expect(synced).not.toHaveBeenCalled();
+		kernel.dispose();
+	});
+
+	test('server answer replaces local empty rights including a future recordedAt, persists it, and drives optInPromptAllowedAt', async () => {
 		const serverTime = Date.now() + 7 * DAY;
 		const serverOptOut: OptOutRecord = {
 			heldBy: 'both',
@@ -273,13 +425,18 @@ describe('opt-out network sync and queue', () => {
 					}),
 			},
 		});
+		const recordedRights: (readonly string[])[] = [];
 		const synced: (Readonly<OptOutRecord> | null)[] = [];
+		kernel.events.on('opt-out:recorded', ({ optOut }) =>
+			recordedRights.push([...optOut.rights])
+		);
 		kernel.events.on('opt-out:synced', ({ optOut }) => synced.push(optOut));
 		const persistence = createPersistence({ kernel });
 
 		await kernel.commands.optOut();
 		await flushMacrotasks();
 
+		expect(recordedRights).toEqual([[]]);
 		expect(kernel.getSnapshot().optOut).toEqual(serverOptOut);
 		expect(synced).toEqual([serverOptOut]);
 		expect(optInPromptAllowedAt(kernel.getSnapshot().optOut)).toBe(
@@ -288,7 +445,11 @@ describe('opt-out network sync and queue', () => {
 		const stored = readStoredOptOutRecord(undefined, Date.now());
 		expect(stored).toMatchObject({
 			ok: true,
-			record: { heldBy: 'both', recordedAt: serverTime },
+			record: {
+				heldBy: 'both',
+				recordedAt: serverTime,
+				rights: ['sale', 'share'],
+			},
 		});
 		persistence.dispose();
 		kernel.dispose();
@@ -328,7 +489,7 @@ describe('opt-out network sync and queue', () => {
 		kernel.dispose();
 	});
 
-	test('automatic GPC record sends method gpc once', async () => {
+	test('automatic GPC record starts with empty rights, sends method gpc once without rights, and applies the server rights', async () => {
 		const optOut = vi.fn<NonNullable<KernelTransport['optOut']>>((payload) =>
 			Promise.resolve({
 				ok: true,
@@ -336,7 +497,7 @@ describe('opt-out network sync and queue', () => {
 					heldBy: 'device',
 					method: 'gpc',
 					recordedAt: payload.givenAt,
-					rights: [...payload.rights],
+					rights: ['sale', 'targeted_ads'],
 				},
 				subjectId: payload.subjectId,
 			})
@@ -347,14 +508,29 @@ describe('opt-out network sync and queue', () => {
 			initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
 			transport: { optOut },
 		});
+		const recordedRights: (readonly string[])[] = [];
+		kernel.events.on('opt-out:recorded', ({ optOut: record }) =>
+			recordedRights.push([...record.rights])
+		);
 
 		await kernel.commands.init();
+		expect(recordedRights).toEqual([[]]);
 		await vi.waitFor(() => expect(optOut).toHaveBeenCalledTimes(1));
 		expect(optOut.mock.calls[0]?.[0]).toMatchObject({
+			country: 'US',
 			method: 'gpc',
-			rights: ['sale', 'targeted_ads'],
+			region: 'CO',
 			subjectId: SUBJECT,
 		});
+		const sentGpc = optOut.mock.calls[0]?.[0];
+		expect(sentGpc).toBeDefined();
+		expect('rights' in (sentGpc as OptOutPayload)).toBe(false);
+		await vi.waitFor(() =>
+			expect(kernel.getSnapshot().optOut?.rights).toEqual([
+				'sale',
+				'targeted_ads',
+			])
+		);
 
 		// Re-evaluating or toggling GPC does not send again.
 		kernel.refresh();
@@ -365,7 +541,7 @@ describe('opt-out network sync and queue', () => {
 		kernel.dispose();
 	});
 
-	test('a refusing save() under an opt-out rule sends both the records save and the opt-out', async () => {
+	test('a refusing save() under an opt-out rule starts with empty rights and sends both the records save and the opt-out without rights', async () => {
 		const save = vi.fn<NonNullable<KernelTransport['save']>>((payload) =>
 			Promise.resolve({ ok: true, subjectId: payload.subjectId })
 		);
@@ -376,7 +552,7 @@ describe('opt-out network sync and queue', () => {
 					heldBy: 'device',
 					method: 'button',
 					recordedAt: payload.givenAt,
-					rights: [...payload.rights],
+					rights: ['sale', 'share'],
 				},
 				subjectId: payload.subjectId,
 			})
@@ -392,16 +568,28 @@ describe('opt-out network sync and queue', () => {
 			initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
 			transport: { optOut, save },
 		});
+		const recordedRights: (readonly string[])[] = [];
+		kernel.events.on('opt-out:recorded', ({ optOut: record }) =>
+			recordedRights.push([...record.rights])
+		);
 
 		await kernel.commands.save('none', { uiSource: 'dialog' });
+		expect(recordedRights).toEqual([[]]);
 		await vi.waitFor(() => expect(optOut).toHaveBeenCalledTimes(1));
 		expect(save).toHaveBeenCalledTimes(1);
 		expect(optOut.mock.calls[0]?.[0]).toMatchObject({
+			country: 'US',
 			method: 'button',
-			rights: ['sale', 'share'],
+			region: 'CA',
 			subjectId: SUBJECT,
 			uiSource: 'dialog',
 		});
+		const sentRefusal = optOut.mock.calls[0]?.[0];
+		expect(sentRefusal).toBeDefined();
+		expect('rights' in (sentRefusal as OptOutPayload)).toBe(false);
+		await vi.waitFor(() =>
+			expect(kernel.getSnapshot().optOut?.rights).toEqual(['sale', 'share'])
+		);
 		kernel.dispose();
 	});
 

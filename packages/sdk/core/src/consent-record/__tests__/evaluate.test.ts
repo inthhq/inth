@@ -1288,6 +1288,28 @@ describe('validateOptOutRecord', () => {
 		});
 	});
 
+	it('accepts an empty rights list for a local opt-out waiting on the backend', () => {
+		expect(
+			validateOptOutRecord(
+				{
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: NOW,
+					rights: [],
+				},
+				NOW
+			)
+		).toEqual({
+			ok: true,
+			record: {
+				heldBy: 'device',
+				method: 'button',
+				recordedAt: NOW,
+				rights: [],
+			},
+		});
+	});
+
 	it.each([
 		['non-object', 'opt-out'],
 		['array', []],
@@ -1319,10 +1341,6 @@ describe('validateOptOutRecord', () => {
 				recordedAt: NOW,
 				rights: ['sale'],
 			},
-		],
-		[
-			'empty rights',
-			{ heldBy: 'device', method: 'button', recordedAt: NOW, rights: [] },
 		],
 		[
 			'duplicate right',
