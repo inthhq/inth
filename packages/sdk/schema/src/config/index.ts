@@ -89,6 +89,18 @@ export interface ConsentComponentSlots<T = Record<string, unknown>> {
 		actions?: T;
 		actionGroup?: T;
 	};
+	'opt-out-confirmation'?: {
+		root?: T;
+		card?: T;
+		header?: T;
+		title?: T;
+		status?: T;
+		description?: T;
+		footer?: T;
+		doneButton?: T;
+		preferencesLink?: T;
+		overlay?: T;
+	};
 	/** The placeholder `ConsentGate` renders while its category is denied. */
 	'consent-gate'?: {
 		/** Placeholder card, `ConsentGate.Root` in React. */
@@ -372,6 +384,18 @@ export const CONSENT_COMPONENT_SLOT_KEY_MAP = {
 		footer: true,
 		optOutStatus: true,
 		root: true,
+	},
+	'opt-out-confirmation': {
+		card: true,
+		description: true,
+		doneButton: true,
+		footer: true,
+		header: true,
+		overlay: true,
+		preferencesLink: true,
+		root: true,
+		status: true,
+		title: true,
 	},
 	switch: {
 		root: true,

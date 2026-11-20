@@ -125,7 +125,7 @@ export const startedElements = (): Record<string, StartedElement> | undefined =>
 
 /** One tap the early-tap script recorded. @internal */
 export interface EarlyConsentTap {
-	action: 'accept' | 'reject' | 'dismiss' | 'customize';
+	action: 'accept' | 'reject' | 'dismiss' | 'customize' | 'opt-out';
 	/** Epoch milliseconds of the click. */
 	at: number;
 	/** The banner root's `data-model` when it was tapped. */

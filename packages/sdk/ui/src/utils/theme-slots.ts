@@ -1,22 +1,6 @@
 import type { AllThemeKeys, CSSProperties, SlotStyle } from '../theme/types';
 
 /**
- * Theme slot keys rendered by the browser package that React and Vue do not
- * yet bind into their `components` map.
- */
-type BrowserOnlyThemeKeys =
-	| 'optOutConfirmation'
-	| 'optOutConfirmationCard'
-	| 'optOutConfirmationDescription'
-	| 'optOutConfirmationDoneButton'
-	| 'optOutConfirmationFooter'
-	| 'optOutConfirmationHeader'
-	| 'optOutConfirmationOverlay'
-	| 'optOutConfirmationPreferencesLink'
-	| 'optOutConfirmationStatus'
-	| 'optOutConfirmationTitle';
-
-/**
  * The `components` slot that styles the same part as each `theme.slots`
  * key.
  *
@@ -77,11 +61,18 @@ export const THEME_SLOT_COMPONENT_KEYS = {
 	iabConsentDialogHeader: 'iab-dialog.header',
 	iabConsentDialogOverlay: 'iab-dialog.overlay',
 	iabConsentDialogTag: 'tag.iab-dialog',
+	optOutConfirmation: 'opt-out-confirmation.root',
+	optOutConfirmationCard: 'opt-out-confirmation.card',
+	optOutConfirmationDescription: 'opt-out-confirmation.description',
+	optOutConfirmationDoneButton: 'opt-out-confirmation.doneButton',
+	optOutConfirmationFooter: 'opt-out-confirmation.footer',
+	optOutConfirmationHeader: 'opt-out-confirmation.header',
+	optOutConfirmationOverlay: 'opt-out-confirmation.overlay',
+	optOutConfirmationPreferencesLink: 'opt-out-confirmation.preferencesLink',
+	optOutConfirmationStatus: 'opt-out-confirmation.status',
+	optOutConfirmationTitle: 'opt-out-confirmation.title',
 	toggle: 'switch.root',
-} as const satisfies Record<
-	Exclude<AllThemeKeys, BrowserOnlyThemeKeys>,
-	`${string}.${string}`
->;
+} as const satisfies Record<AllThemeKeys, `${string}.${string}`>;
 
 /** The attributes one `components` slot binds. */
 export type ComponentSlotAttributes = Record<string, unknown>;

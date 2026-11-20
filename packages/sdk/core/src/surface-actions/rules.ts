@@ -15,6 +15,19 @@ import type { ConsentKernel, ConsentSnapshot, KernelActiveUI } from '../types';
  */
 export const actions = new WeakMap<ConsentKernel, object>();
 
+const navigationHooks = new Set<(kernel: ConsentKernel) => void>();
+
+/**
+ * Register a callback invoked whenever explicit surface navigation occurs.
+ *
+ * @internal
+ */
+export const onSurfaceNavigation = (
+	hook: (kernel: ConsentKernel) => void
+): void => {
+	navigationHooks.add(hook);
+};
+
 /**
  * Whether a surface is showing. `null` is the kernel's legacy "none".
  *
@@ -72,6 +85,9 @@ export const showConsentSurface = (
 	surface: KernelActiveUI
 ): void => {
 	beginAction(kernel);
+	for (const hook of navigationHooks) {
+		hook(kernel);
+	}
 	const snapshot = kernel.getSnapshot();
 	kernel.set.activeUI(
 		isOpen(surface) || snapshot.activeUI !== 'dialog'

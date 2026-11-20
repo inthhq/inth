@@ -29,6 +29,7 @@ import type {
 	EarlyConsentTapQueue,
 } from '../libs/page-globals';
 import type { ConsentKernel, ConsentSnapshot, SaveUISource } from '../types';
+import { optOutConsentSurface } from './opt-out';
 import { showConsentSurface } from './rules';
 import { saveConsentSurface } from './save';
 
@@ -102,6 +103,14 @@ const apply = (
 	if (tap.action === 'customize') {
 		showConsentSurface(kernel, 'dialog');
 		unhide(view);
+		return;
+	}
+	if (tap.action === 'opt-out') {
+		void optOutConsentSurface(kernel, {
+			actionAt: tap.at,
+			uiSource: options.uiSource ?? 'banner',
+		});
+		unhideWhenGone(kernel, view);
 		return;
 	}
 	if (tap.action === 'dismiss') {
