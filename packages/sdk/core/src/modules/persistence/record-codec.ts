@@ -24,6 +24,13 @@
  */
 
 import type {
+	OptOutHolder,
+	OptOutMethod,
+	OptOutRecord,
+	OptOutRight,
+} from '@inth/sdk-schema/types';
+
+import type {
 	CategoryDecision,
 	ChoiceBasis,
 	ConsentSubject,
@@ -39,6 +46,7 @@ import {
 	ownValue,
 	validateExplicitChoice,
 	validateNoticeDismissal,
+	validateOptOutRecord,
 } from '../../consent-record/validation';
 import type { RecordIssue } from '../../consent-record/validation';
 import { isValidVendorId } from '../../libs/vendors';
@@ -87,6 +95,21 @@ export type StoredVendorChoice = VendorChoice & {
 	 * Subject identity, carried so a visitor whose first act only decided
 	 * vendors keeps the same subject after a reload. The consent envelope needs
 	 * a category choice to exist and cannot hold it for that visitor.
+	 */
+	subject?: ConsentSubject;
+};
+
+/**
+ * Local durable opt-out record. Stored under `<key>-opt-out`, outside the v3
+ * consent envelope: the envelope is only written once a category choice exists,
+ * an opt-out can exist with no category choice, and envelope readers reject
+ * unknown keys.
+ */
+export type StoredOptOutRecord = OptOutRecord & {
+	version: 1;
+	/**
+	 * Subject identity, carried so a visitor whose only act is an opt-out keeps
+	 * the same subject across reloads.
 	 */
 	subject?: ConsentSubject;
 };
@@ -850,6 +873,162 @@ export const decodeVendorChoiceCompact = function decodeVendorChoiceCompact(
 		candidate.subject = subject;
 	}
 	return decodeVendorChoice(candidate, now);
+};
+
+/** Compact opt-out right codes. The encoder repeats them (`writer/encode.ts`). @internal */
+export const OPT_OUT_RIGHT_CODES = {
+	sale: 'sa',
+	share: 'sh',
+	targeted_ads: 'ta',
+} as const satisfies Record<OptOutRight, string>;
+
+const CODE_TO_OPT_OUT_RIGHT: ReadonlyMap<string, OptOutRight> = new Map(
+	Object.entries(OPT_OUT_RIGHT_CODES).map(([right, code]) => [
+		code,
+		right as OptOutRight,
+	])
+);
+
+/** Compact opt-out method codes. The encoder repeats them. @internal */
+export const OPT_OUT_METHOD_CODES = {
+	api: 'a',
+	button: 'b',
+	gpc: 'g',
+	propagated: 'p',
+} as const satisfies Record<OptOutMethod, string>;
+
+const CODE_TO_OPT_OUT_METHOD: ReadonlyMap<string, OptOutMethod> = new Map(
+	Object.entries(OPT_OUT_METHOD_CODES).map(([method, code]) => [
+		code,
+		method as OptOutMethod,
+	])
+);
+
+/** Compact opt-out holder codes. The encoder repeats them. @internal */
+export const OPT_OUT_HOLDER_CODES = {
+	both: 'b',
+	device: 'd',
+	person: 'p',
+} as const satisfies Record<OptOutHolder, string>;
+
+const CODE_TO_OPT_OUT_HOLDER: ReadonlyMap<string, OptOutHolder> = new Map(
+	Object.entries(OPT_OUT_HOLDER_CODES).map(([holder, code]) => [
+		code,
+		holder as OptOutHolder,
+	])
+);
+
+// ---------------------------------------------------------------------------
+// Durable opt-out record (JSON + compact cookie projection)
+// ---------------------------------------------------------------------------
+
+export const COMPACT_OPT_OUT_PREFIX = 'v=1';
+
+const OPT_OUT_STORED_KEYS = [
+	'version',
+	'rights',
+	'method',
+	'recordedAt',
+	'heldBy',
+	'subject',
+] as const;
+
+/** Validates a parsed stored opt-out record. */
+export const decodeOptOutRecord = function decodeOptOutRecord(
+	input: unknown,
+	now: number
+): DecodeResult<StoredOptOutRecord> {
+	if (!isPlainRecord(input)) {
+		return { issues: [{ code: 'not-an-object', path: '' }], ok: false };
+	}
+	if (ownValue(input, 'version') !== 1) {
+		return {
+			issues: [{ code: 'unsupported-version', path: 'version' }],
+			ok: false,
+		};
+	}
+	const issues: StorageIssue[] = [];
+	for (const key of ownKeys(input)) {
+		if (
+			!OPT_OUT_STORED_KEYS.includes(key as (typeof OPT_OUT_STORED_KEYS)[number])
+		) {
+			issues.push({ code: 'unknown-key', path: key });
+		}
+	}
+	const subject = validateSubject(ownValue(input, 'subject'), issues);
+	const inner = validateOptOutRecord(
+		{
+			heldBy: ownValue(input, 'heldBy'),
+			method: ownValue(input, 'method'),
+			recordedAt: ownValue(input, 'recordedAt'),
+			rights: ownValue(input, 'rights'),
+		},
+		now
+	);
+	if (inner.ok === false) {
+		issues.push(...inner.issues);
+	}
+	if (issues.length > 0 || inner.ok === false) {
+		return { issues, ok: false };
+	}
+	const record: StoredOptOutRecord = {
+		...inner.record,
+		version: 1,
+	};
+	if (subject) {
+		record.subject = subject;
+	}
+	return { ok: true, record };
+};
+
+/** Decodes a compact opt-out cookie through the shared validator. */
+export const decodeOptOutRecordCompact = function decodeOptOutRecordCompact(
+	rawValue: string,
+	now: number
+): DecodeResult<StoredOptOutRecord> {
+	const issues: StorageIssue[] = [];
+	const fields = parseCompactFields(rawValue, COMPACT_OPT_OUT_PREFIX, issues);
+	if (!fields) {
+		return { issues, ok: false };
+	}
+	const subject: ConsentSubject = {};
+	for (const [key, value] of fields) {
+		if (readSubjectField(key, value, subject, issues)) {
+			continue;
+		}
+		if (key !== 'r' && key !== 'm' && key !== 't' && key !== 'h') {
+			issues.push({ code: 'unknown-key', path: key });
+		}
+	}
+	if (issues.length > 0) {
+		return { issues, ok: false };
+	}
+	const rawRights = fields.get('r');
+	const rights =
+		rawRights !== undefined && rawRights.length > 0
+			? rawRights
+					.split(LIST_SEPARATOR)
+					.map((code) => CODE_TO_OPT_OUT_RIGHT.get(code))
+			: [];
+	const rawMethod = fields.get('m');
+	const rawHolder = fields.get('h');
+	const candidate: Record<string, unknown> = {
+		heldBy:
+			rawHolder === undefined
+				? undefined
+				: CODE_TO_OPT_OUT_HOLDER.get(rawHolder),
+		method:
+			rawMethod === undefined
+				? undefined
+				: CODE_TO_OPT_OUT_METHOD.get(rawMethod),
+		recordedAt: parseCompactInteger(fields.get('t')),
+		rights,
+		version: 1,
+	};
+	if (Object.keys(subject).length > 0) {
+		candidate.subject = subject;
+	}
+	return decodeOptOutRecord(candidate, now);
 };
 
 // ---------------------------------------------------------------------------

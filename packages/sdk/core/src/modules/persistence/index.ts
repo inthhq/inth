@@ -29,10 +29,11 @@
  *   carry the subject for a visitor with no category choice yet.
  *   A canonical subject acknowledgement preserves every receipt timestamp.
  *   Separate writes follow
- *   `notice:dismissed` (the notice record and its cookie projection) and
- *   `vendors:recorded` (the vendor denial list and its cookie projection).
- *   Permission changes, policy changes, elapsed time and the live GPC
- *   signal never write.
+ *   `notice:dismissed` (the notice record and its cookie projection),
+ *   `opt-out:recorded` and `opt-out:lifted` (the opt-out record and its
+ *   cookie projection), and `vendors:recorded` (the vendor denial list and
+ *   its cookie projection). Permission changes, policy changes and elapsed
+ *   time never write.
  * - A recorded choice is stored before its save request leaves: writes
  *   are scheduled from the commit's listeners and run in the next macrotask,
  *   which the save outbox waits out before it sends (see
@@ -110,6 +111,7 @@ export interface StoredRecords extends Omit<
 export type {
 	StoredIabMetadata,
 	StoredConsentEnvelope,
+	StoredOptOutRecord,
 	StoredVendorChoice,
 } from './record-codec';
 export { resolveStorageKeys } from '../../libs/storage-keys';

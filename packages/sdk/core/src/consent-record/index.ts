@@ -11,7 +11,11 @@
  * or the DOM; callers pass `now`.
  */
 
-export { evaluateConsentRecord } from './evaluate';
+export {
+	evaluateConsentRecord,
+	OPT_OUT_REPROMPT_WAIT_MS,
+	optInPromptAllowedAt,
+} from './evaluate';
 export type { ConsentEvaluationInput } from './evaluate';
 export {
 	canonicalizeCategories,
@@ -48,9 +52,16 @@ export type {
 	RecordValidity,
 	RestrictionReason,
 } from './types';
+export type {
+	OptOutHolder,
+	OptOutMethod,
+	OptOutRecord,
+	OptOutRight,
+} from '@inth/sdk-schema/types';
 export {
 	isOptionalConsentCategory,
 	validateExplicitChoice,
 	validateNoticeDismissal,
+	validateOptOutRecord,
 } from './validation';
 export type { RecordIssue, ValidationResult } from './validation';

@@ -35,6 +35,8 @@
  * per-category merge and the clear-epoch rules come in as tools: they are
  * the kernel's and the read path's own, and this file loads on demand.
  */
+import type { OptOutRecord } from '@inth/sdk-schema/types';
+
 import type {
 	ConsentSubject,
 	ExplicitChoice,
@@ -51,13 +53,18 @@ import type { PersistenceTools } from './types';
 /** The first-load rules reconciliation applies. */
 type Rules = Pick<
 	PersistenceTools,
-	'choiceSince' | 'merge' | 'noticeSince' | 'vendorsSince'
+	'choiceSince' | 'merge' | 'noticeSince' | 'optOutSince' | 'vendorsSince'
 >;
 
 /** The parts of a storage read that reconciliation consults. */
 export type StoredRead = Pick<
 	StoredRecords,
-	'records' | 'vendorSubject' | 'noticeSubject' | 'subjectCarrier' | 'epoch'
+	| 'records'
+	| 'vendorSubject'
+	| 'optOutSubject'
+	| 'noticeSubject'
+	| 'subjectCarrier'
+	| 'epoch'
 >;
 
 const canonical = function canonical(value: unknown): unknown {
@@ -256,12 +263,38 @@ export const mayWriteNotice = function mayWriteNotice(
 	);
 };
 
+/**
+ * Whether the durable opt-out record may be written or removed over what
+ * storage holds. Lifting (`ours === null`) removes a record that storage
+ * still holds from before; a subject-only rewrite lands only on a record
+ * storage still holds from this runtime and never removes or recreates one.
+ */
+export const mayWriteOptOut = function mayWriteOptOut(
+	ours: OptOutRecord | null,
+	stored: OptOutRecord | null,
+	subjectOnly: boolean,
+	storedWinsTies: boolean
+): boolean {
+	if (subjectOnly) {
+		return (
+			Boolean(ours && stored) && !storedWinsTies && sameRecord(stored, ours)
+		);
+	}
+	if (!ours) {
+		return !stored || !storedWinsTies;
+	}
+	if (!stored) {
+		return true;
+	}
+	return isNewerThanStored(ours.recordedAt, stored.recordedAt, storedWinsTies);
+};
+
 // ---------------------------------------------------------------------------
 // Reconciliation
 // ---------------------------------------------------------------------------
 
 /** The stored records, each read and written on its own. */
-export type StoredRecordKind = 'choice' | 'notice' | 'vendors';
+export type StoredRecordKind = 'choice' | 'notice' | 'optOut' | 'vendors';
 
 /**
  * What storage held for each record the last time this runtime read or
@@ -278,14 +311,15 @@ const fingerprint = function fingerprint(value: unknown): string {
 const ABSENT: Record<StoredRecordKind, string> = {
 	choice: fingerprint(null),
 	notice: fingerprint([null, null]),
+	optOut: fingerprint([null, null]),
 	vendors: fingerprint([null, null]),
 };
 
 /**
  * Fingerprints of the readable records in a storage read. The envelope's
- * print includes its subject; the vendor record's print includes the
- * subject the vendor record itself carries. An absent envelope prints the
- * same whatever subject the vendor record holds.
+ * print includes its subject; the vendor and opt-out records' prints include
+ * the subject they carry. An absent envelope prints the same whatever subject
+ * another record holds.
  *
  * @param read - A storage read; omitted records were unreadable.
  * @returns One fingerprint per readable record.
@@ -305,6 +339,12 @@ export const fingerprintStoredRecords = function fingerprintStoredRecords(
 		prints.notice = fingerprint([
 			stored.noticeDismissal,
 			read.noticeSubject ?? null,
+		]);
+	}
+	if (stored.optOut !== undefined) {
+		prints.optOut = fingerprint([
+			stored.optOut,
+			stored.optOut ? (read.optOutSubject ?? null) : null,
 		]);
 	}
 	if (stored.vendorChoice !== undefined) {
@@ -450,7 +490,9 @@ const reconcileNoticeSubject = function reconcileNoticeSubject(
 ): HydrationRecords['subject'] {
 	if (carries && movement.changed('notice')) {
 		if (movement.removed('notice')) {
-			return stored.choice === null && stored.vendorChoice === null
+			return stored.choice === null &&
+				stored.vendorChoice === null &&
+				stored.optOut === null
 				? subjectAfterClear(snapshot.subject)
 				: candidate;
 		} else if (
@@ -490,13 +532,107 @@ const subjectAfterNoticeLeft = function subjectAfterNoticeLeft(
 		: candidate;
 };
 
+const reconcileSingleRecordSubject = function reconcileSingleRecordSubject(
+	snapshot: ConsentSnapshot,
+	stored: HydrationRecords,
+	removed: boolean,
+	storedAt: number,
+	memoryAt: number,
+	subjectYields: boolean,
+	provenance: SubjectProvenance
+): HydrationRecords['subject'] {
+	if (removed) {
+		return subjectAfterClear(snapshot.subject);
+	}
+	return prefersStoredSubject(
+		snapshot.subject,
+		stored.subject,
+		storedAt,
+		memoryAt,
+		subjectYields,
+		provenance
+	)
+		? stored.subject
+		: undefined;
+};
+
+const timeOrNegInf = (time: number | undefined): number =>
+	time ?? Number.NEGATIVE_INFINITY;
+
+const reconcilePrimarySubject = function reconcilePrimarySubject(
+	snapshot: ConsentSnapshot,
+	stored: HydrationRecords,
+	carried: ConsentSubject | null,
+	carries: (kind: StoredRecordKind, present: boolean) => boolean,
+	provenance: SubjectProvenance,
+	records: HydrationRecords,
+	movement: Movement,
+	subjectYields: boolean
+): HydrationRecords['subject'] {
+	const { explicitChoice, optOut, vendorChoice } = snapshot;
+	if (records.choice === null) {
+		return subjectAfterRemoval(
+			snapshot,
+			stored,
+			carried,
+			movement,
+			subjectYields,
+			provenance
+		);
+	}
+	if (stored.choice && carries('choice', true)) {
+		return movement.changed('choice') || records.choice !== undefined
+			? reconcileSingleRecordSubject(
+					snapshot,
+					stored,
+					false,
+					latestDecisionAt(stored.choice),
+					latestDecisionAt(explicitChoice),
+					subjectYields,
+					provenance
+				)
+			: undefined;
+	}
+	if (
+		carries('vendors', explicitChoice === null) &&
+		movement.changed('vendors')
+	) {
+		return reconcileSingleRecordSubject(
+			snapshot,
+			stored,
+			stored.choice === null && movement.removed('vendors'),
+			timeOrNegInf(stored.vendorChoice?.confirmedAt),
+			timeOrNegInf(vendorChoice?.confirmedAt),
+			subjectYields,
+			provenance
+		);
+	}
+	if (
+		carries('optOut', explicitChoice === null && !stored.vendorChoice) &&
+		movement.changed('optOut')
+	) {
+		return reconcileSingleRecordSubject(
+			snapshot,
+			stored,
+			stored.choice === null &&
+				stored.vendorChoice === null &&
+				movement.removed('optOut'),
+			timeOrNegInf(stored.optOut?.recordedAt),
+			timeOrNegInf(optOut?.recordedAt),
+			subjectYields,
+			provenance
+		);
+	}
+	return undefined;
+};
+
 /**
  * The subject to apply, or `undefined` to keep the one in memory.
  *
  * The subject belongs to the record it was stored with: the envelope,
- * a vendor decision, or a notice acknowledgement. A record stored without
- * a subject, as older versions wrote them, does not carry it, so the
- * subject follows the record that does, as a reload selects it. It
+ * a vendor decision, an opt-out record, or a notice acknowledgement. A record
+ * stored without a subject, as older versions wrote them, does not carry it,
+ * so the subject follows the record that does, as a reload selects it. It
  * is only considered when that record changed in storage, so focus or an
  * unrelated key never moves the subject, and follows
  * {@link prefersStoredSubject}. Only the removal of the record that carried
@@ -512,66 +648,26 @@ const reconcileSubject = function reconcileSubject(
 	recordMovement: Movement,
 	subjectYields: boolean
 ): HydrationRecords['subject'] {
-	const { explicitChoice, vendorChoice } = snapshot;
-	// With no record carrying it, the subject lives in memory only and goes
-	// with the records present.
+	const carrierOf = (kind: StoredRecordKind): StoredRead['subjectCarrier'] =>
+		kind === 'optOut' ? 'opt-out' : kind;
 	const carries = (kind: StoredRecordKind, present: boolean): boolean =>
-		carrier === kind || (carrier === null && present);
-	// The subject moves with the record that carries it: when that record
-	// changed, or when another record that did not change carries it now
-	// because the one that did was removed or lost its subject.
+		carrier === carrierOf(kind) || (carrier === null && present);
 	const movement: Movement = {
 		changed: (kind) =>
 			recordMovement.changed(kind) ||
-			(carrier === kind && provenance.seenCarrier !== carrier),
+			(carrier === carrierOf(kind) && provenance.seenCarrier !== carrier),
 		removed: recordMovement.removed,
 	};
-	let candidate: HydrationRecords['subject'];
-	if (records.choice === null) {
-		candidate = subjectAfterRemoval(
-			snapshot,
-			stored,
-			carried,
-			movement,
-			subjectYields,
-			provenance
-		);
-	} else if (stored.choice && carries('choice', true)) {
-		const relevant = movement.changed('choice') || records.choice !== undefined;
-		if (
-			relevant &&
-			prefersStoredSubject(
-				snapshot.subject,
-				stored.subject,
-				latestDecisionAt(stored.choice),
-				latestDecisionAt(explicitChoice),
-				subjectYields,
-				provenance
-			)
-		) {
-			candidate = stored.subject;
-		}
-	} else if (
-		carries('vendors', explicitChoice === null) &&
-		movement.changed('vendors')
-	) {
-		// No choice on either side, an unreadable one, or one stored without
-		// a subject: the vendor record carries the subject.
-		if (stored.choice === null && movement.removed('vendors')) {
-			candidate = subjectAfterClear(snapshot.subject);
-		} else if (
-			prefersStoredSubject(
-				snapshot.subject,
-				stored.subject,
-				stored.vendorChoice?.confirmedAt ?? Number.NEGATIVE_INFINITY,
-				vendorChoice?.confirmedAt ?? Number.NEGATIVE_INFINITY,
-				subjectYields,
-				provenance
-			)
-		) {
-			candidate = stored.subject;
-		}
-	}
+	let candidate = reconcilePrimarySubject(
+		snapshot,
+		stored,
+		carried,
+		carries,
+		provenance,
+		records,
+		movement,
+		subjectYields
+	);
 	candidate = subjectAfterNoticeLeft(
 		snapshot,
 		carrier,
@@ -584,7 +680,10 @@ const reconcileSubject = function reconcileSubject(
 		stored,
 		carries(
 			'notice',
-			explicitChoice === null && !stored.choice && !stored.vendorChoice
+			snapshot.explicitChoice === null &&
+				!stored.choice &&
+				!stored.vendorChoice &&
+				!stored.optOut
 		),
 		movement,
 		subjectYields,
@@ -670,6 +769,7 @@ const sinceEpoch = function sinceEpoch(
 			!clearMissed
 		),
 		noticeDismissal: rules.noticeSince(snapshot.noticeDismissal, epoch),
+		optOut: rules.optOutSince(snapshot.optOut, epoch),
 		subject:
 			clearMissed && !subjectSurvives
 				? subjectAfterClear(snapshot.subject)
@@ -681,6 +781,7 @@ const sinceEpoch = function sinceEpoch(
 const EPOCH_FIELDS = [
 	['choice', 'explicitChoice'],
 	['noticeDismissal', 'noticeDismissal'],
+	['optOut', 'optOut'],
 	['subject', 'subject'],
 	['vendorChoice', 'vendorChoice'],
 ] as const;
@@ -759,9 +860,9 @@ export const selectReconciledRecords = function selectReconciledRecords(
 	const records = reconcileChoice(
 		view,
 		stored,
-		// The identity a vendor or notice record still carries once the
+		// The identity a vendor, opt-out or notice record still carries once the
 		// choice is gone.
-		read.vendorSubject ?? read.noticeSubject ?? null,
+		read.vendorSubject ?? read.optOutSubject ?? read.noticeSubject ?? null,
 		read.subjectCarrier,
 		provenance,
 		movement,
@@ -779,6 +880,18 @@ export const selectReconciledRecords = function selectReconciledRecords(
 		)
 	) {
 		records.vendorChoice = stored.vendorChoice ?? null;
+	}
+
+	if (
+		movement.changed('optOut') &&
+		adoptNewer(
+			view.optOut,
+			stored.optOut ?? null,
+			movement.removed('optOut'),
+			(record) => record.recordedAt
+		)
+	) {
+		records.optOut = stored.optOut ?? null;
 	}
 
 	if (

@@ -120,6 +120,10 @@ describe('browser IAB policy and pending confirmations', () => {
 		);
 		client.setOverrides({ gpc: false });
 		await client.kernel.commands.init();
+		// GPC recorded a durable opt-out that stays active after the signal ends.
+		expect(evaluateConsent(target, client.getSnapshot())).toBe(false);
+		expect(client.getSnapshot().optOut?.method).toBe('gpc');
+		await client.kernel.commands.optIn();
 		await vi.waitFor(() =>
 			expect(evaluateConsent(target, client.getSnapshot())).toBe(true)
 		);

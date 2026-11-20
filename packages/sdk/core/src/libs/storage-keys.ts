@@ -71,6 +71,8 @@ export interface StorageKeyFamily {
 	noticeSubject: string;
 	/** localStorage marker for dropped notice cookie writes. */
 	noticeCookieMiss: string;
+	/** Durable opt-out record (separate from the v3 consent envelope). */
+	optOut: string;
 	vendors: string;
 	/** Time of the last clear. Survives the clear it records. */
 	epoch: string;
@@ -109,6 +111,7 @@ const familyOf = function familyOf(consent: string): StorageKeyFamily {
 		notice: `${consent}-notice`,
 		noticeCookieMiss: `${consent}-notice-cookie-miss`,
 		noticeSubject: `${consent}-notice-subject`,
+		optOut: `${consent}-opt-out`,
 		privacy: `${consent}-privacy`,
 		vendors: `${consent}-vendors`,
 	};

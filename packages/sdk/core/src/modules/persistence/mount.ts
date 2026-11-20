@@ -24,6 +24,7 @@ import { clearStoredRecords } from './clear';
 import {
 	choiceSinceEpoch,
 	noticeSinceEpoch,
+	optOutSinceEpoch,
 	vendorChoiceSinceEpoch,
 } from './epoch';
 import {
@@ -38,6 +39,8 @@ import {
 	readStoredConsentRecordFromCookieHeader,
 	readStoredNoticeDismissal,
 	readStoredNoticeDismissalFromCookieHeader,
+	readStoredOptOutRecord,
+	readStoredOptOutRecordFromCookieHeader,
 	readStoredVendorChoice,
 	readStoredVendorChoiceFromCookieHeader,
 } from './record-storage';
@@ -161,6 +164,7 @@ export const mountPersistence = function mountPersistence(
 	const now = options.now ?? (() => Date.now());
 	const state: PersistenceContext['state'] = {
 		choiceRecorded: false,
+		optOutRecorded: false,
 		vendorsRecorded: false,
 	};
 	const browser = typeof document !== 'undefined';
@@ -338,6 +342,9 @@ export const mountPersistence = function mountPersistence(
 		if (snapshot.noticeDismissal) {
 			kinds.push('notice');
 		}
+		if (snapshot.optOut) {
+			kinds.push('optOut');
+		}
 		if (snapshot.vendorChoice) {
 			kinds.push('vendors');
 		}
@@ -415,6 +422,41 @@ export const mountPersistence = function mountPersistence(
 				request('vendors');
 			}
 		}),
+		kernel.events.on('opt-out:recorded', ({ actionAt, snapshot }) => {
+			if (saving) {
+				noteGeneratedSubject(snapshot, actionAt);
+			}
+			state.optOutRecorded = true;
+			if (
+				snapshot.noticeDismissal &&
+				snapshot.noticeDismissal.dismissedAt === actionAt
+			) {
+				state.noticeRecorded = true;
+				request('optOut', 'notice');
+			} else {
+				request('optOut');
+			}
+			// An opt-out sends nothing to the network yet, so the ID stops being
+			// provisional once the stored opt-out record carries it.
+			const id = snapshot.subject?.subjectId;
+			void (async () => {
+				await landing;
+				writer?.flush();
+				if (
+					id !== undefined &&
+					kernel.getSnapshot().subject?.subjectId === id &&
+					readStoredRecordsForReconcile(storageConfig, now())
+						.recordedSubjectId === id
+				) {
+					kernel.markProvisionalSubject(null);
+					provisionalSubjectId = undefined;
+				}
+			})();
+		}),
+		kernel.events.on('opt-out:lifted', () => {
+			state.optOutRecorded = true;
+			request('optOut');
+		}),
 	];
 
 	/**
@@ -436,8 +478,14 @@ export const mountPersistence = function mountPersistence(
 	const configuredFamilyHolds = function configuredFamilyHolds(
 		read: StoredRecords,
 		at: number
-	): { choice: boolean; notice: boolean; vendors: boolean } {
+	): { choice: boolean; notice: boolean; optOut: boolean; vendors: boolean } {
 		const notice = readStoredNoticeDismissal(storageConfig, at);
+		const optOut = readStoredOptOutRecord(
+			storageConfig,
+			at,
+			undefined,
+			read.epoch
+		);
 		const vendors = readStoredVendorChoice(
 			storageConfig,
 			at,
@@ -450,6 +498,7 @@ export const mountPersistence = function mountPersistence(
 					candidate.status === 'valid' && !candidate.source.startsWith('legacy')
 			),
 			notice: notice?.ok === true && !notice.legacy,
+			optOut: optOut?.ok === true && !optOut.legacy,
 			vendors: vendors?.ok === true && !vendors.legacy,
 		};
 	};
@@ -464,29 +513,44 @@ export const mountPersistence = function mountPersistence(
 	 *   kind in its cookie, since a seed no cookie holds any more may be a
 	 *   legacy family's that a legacy clear removed.
 	 */
+	const readSeedCookies = function readSeedCookies(at: number) {
+		const header = readCookieHeader();
+		if (header === null) {
+			return null;
+		}
+		return {
+			choice: readStoredConsentRecordFromCookieHeader(header, storageConfig, at)
+				.selected,
+			notice: readStoredNoticeDismissalFromCookieHeader(
+				header,
+				storageConfig,
+				at
+			),
+			optOut: readStoredOptOutRecordFromCookieHeader(header, storageConfig, at),
+			vendors: readStoredVendorChoiceFromCookieHeader(
+				header,
+				storageConfig,
+				at
+			),
+		};
+	};
+
 	const weighSeed = function weighSeed(
-		held: { choice: boolean; notice: boolean; vendors: boolean },
+		held: {
+			choice: boolean;
+			notice: boolean;
+			optOut: boolean;
+			vendors: boolean;
+		},
 		epoch: number,
 		at: number
 	) {
-		const header = readCookieHeader();
-		const choice =
-			header === null
-				? undefined
-				: readStoredConsentRecordFromCookieHeader(header, storageConfig, at)
-						.selected;
-		const vendors =
-			header === null
-				? undefined
-				: readStoredVendorChoiceFromCookieHeader(header, storageConfig, at);
-		const notice =
-			header === null
-				? undefined
-				: readStoredNoticeDismissalFromCookieHeader(header, storageConfig, at);
+		const cookies = readSeedCookies(at);
 		const gone = {
-			choice: header !== null && !choice,
-			notice: header !== null && notice?.ok !== true,
-			vendors: header !== null && !vendors,
+			choice: cookies !== null && !cookies.choice,
+			notice: cookies !== null && cookies.notice?.ok !== true,
+			optOut: cookies !== null && cookies.optOut?.ok !== true,
+			vendors: cookies !== null && !cookies.vendors,
 		};
 		const legacyEpoch = Math.max(
 			epoch,
@@ -494,16 +558,20 @@ export const mountPersistence = function mountPersistence(
 		);
 		const epochOf = (kind: keyof typeof held) =>
 			held[kind] && !gone[kind] ? epoch : legacyEpoch;
+		const isLegacyRead = (read: { ok?: boolean; legacy?: true } | null) =>
+			read?.ok === true && read.legacy === true;
 		return {
 			epochs: {
 				choice: epochOf('choice'),
 				notice: epochOf('notice'),
+				optOut: epochOf('optOut'),
 				vendors: epochOf('vendors'),
 			},
 			outranks: {
-				choice: held.choice && choice?.source === 'legacy-cookie',
-				notice: held.notice && notice?.ok === true && notice.legacy === true,
-				vendors: held.vendors && vendors?.legacy === true,
+				choice: held.choice && cookies?.choice?.source === 'legacy-cookie',
+				notice: held.notice && isLegacyRead(cookies?.notice ?? null),
+				optOut: held.optOut && isLegacyRead(cookies?.optOut ?? null),
+				vendors: held.vendors && cookies?.vendors?.legacy === true,
 			},
 		};
 	};
@@ -555,6 +623,33 @@ export const mountPersistence = function mountPersistence(
 	 * grant left out here stays out until another runtime writes storage.
 	 * Returns the subject the stored records carry, `null` for none.
 	 */
+	const patchSeededChoice = function patchSeededChoice(
+		snapshot: ConsentSnapshot,
+		records: HydrationRecords,
+		epoch: number,
+		outranks: boolean
+	): HydrationRecords['choice'] {
+		const choice = choiceSinceEpoch(snapshot.explicitChoice, epoch, true);
+		const seeded = choice?.categories ?? {};
+		const denials = Object.entries(records.choice?.categories ?? {}).filter(
+			([category, decision]) =>
+				isNewerDenial(decision, seeded[category as keyof typeof seeded])
+		);
+		if (choice !== snapshot.explicitChoice) {
+			return records.choice === undefined ? choice : records.choice;
+		}
+		if (records.choice && outranks) {
+			return records.choice;
+		}
+		if (denials.length > 0) {
+			return {
+				categories: { ...seeded, ...Object.fromEntries(denials) },
+				version: 3,
+			};
+		}
+		return undefined;
+	};
+
 	const applyNewerStoredRecords =
 		function applyNewerStoredRecords(): ConsentSubject | null {
 			const at = now();
@@ -562,28 +657,20 @@ export const mountPersistence = function mountPersistence(
 			baseline = [read, false];
 			const records = withQueued(read.records);
 			const snapshot = kernel.getSnapshot();
-			const held = configuredFamilyHolds(read, at);
-			const { epochs, outranks } = weighSeed(held, read.epoch, at);
+			const { epochs, outranks } = weighSeed(
+				configuredFamilyHolds(read, at),
+				read.epoch,
+				at
+			);
 			const patch: HydrationRecords = {};
-			const choice = choiceSinceEpoch(
-				snapshot.explicitChoice,
+			const nextChoice = patchSeededChoice(
+				snapshot,
+				records,
 				epochs.choice,
-				true
+				outranks.choice
 			);
-			const seeded = choice?.categories ?? {};
-			const denials = Object.entries(records.choice?.categories ?? {}).filter(
-				([category, decision]) =>
-					isNewerDenial(decision, seeded[category as keyof typeof seeded])
-			);
-			if (choice !== snapshot.explicitChoice) {
-				patch.choice = records.choice === undefined ? choice : records.choice;
-			} else if (records.choice && outranks.choice) {
-				patch.choice = records.choice;
-			} else if (denials.length > 0) {
-				patch.choice = {
-					categories: { ...seeded, ...Object.fromEntries(denials) },
-					version: 3,
-				};
+			if (nextChoice !== undefined) {
+				patch.choice = nextChoice;
 			}
 			const notice = seededRecordPatch(
 				snapshot.noticeDismissal,
@@ -594,19 +681,31 @@ export const mountPersistence = function mountPersistence(
 			if (notice) {
 				patch.noticeDismissal = notice.value;
 			}
-			const kept = vendorChoiceSinceEpoch(
+			const keptVendors = vendorChoiceSinceEpoch(
 				snapshot.vendorChoice,
 				epochs.vendors
 			);
 			const vendors = seededRecordPatch(
 				snapshot.vendorChoice,
-				kept,
+				keptVendors,
 				records.vendorChoice,
 				outranks.vendors ||
-					(records.vendorChoice?.confirmedAt ?? -1) > (kept?.confirmedAt ?? -1)
+					(records.vendorChoice?.confirmedAt ?? -1) >
+						(keptVendors?.confirmedAt ?? -1)
 			);
 			if (vendors) {
 				patch.vendorChoice = vendors.value;
+			}
+			const keptOptOut = optOutSinceEpoch(snapshot.optOut, epochs.optOut);
+			const optOut = seededRecordPatch(
+				snapshot.optOut,
+				keptOptOut,
+				records.optOut,
+				outranks.optOut ||
+					(records.optOut?.recordedAt ?? -1) > (keptOptOut?.recordedAt ?? -1)
+			);
+			if (optOut) {
+				patch.optOut = optOut.value;
 			}
 			if (Object.keys(patch).length > 0) {
 				kernel.hydrate({ ...patch, now: at });
@@ -707,6 +806,7 @@ export const mountPersistence = function mountPersistence(
 			unusedSubjectId =
 				snapshot.explicitChoice ||
 				snapshot.vendorChoice ||
+				snapshot.optOut ||
 				snapshot.noticeDismissal
 					? undefined
 					: next;
@@ -723,6 +823,7 @@ export const mountPersistence = function mountPersistence(
 		if (
 			(snapshot.explicitChoice ||
 				snapshot.vendorChoice ||
+				snapshot.optOut ||
 				snapshot.noticeDismissal) &&
 			readStoredRecordsForReconcile(storageConfig, now()).recordedSubjectId !==
 				id
@@ -814,6 +915,7 @@ export const mountPersistence = function mountPersistence(
 				legacy &&
 				(snapshot.explicitChoice ||
 					snapshot.vendorChoice ||
+					snapshot.optOut ||
 					snapshot.noticeDismissal)
 			) {
 				return [{ ...subject, subjectId: legacy }, false, 'legacy'];
@@ -860,7 +962,11 @@ export const mountPersistence = function mountPersistence(
 			// runtime stored.
 			state.freshSubjectId = id;
 			state.freshSubjectAt = now();
-			if (!snapshot.explicitChoice && !snapshot.vendorChoice) {
+			if (
+				!snapshot.explicitChoice &&
+				!snapshot.vendorChoice &&
+				!snapshot.optOut
+			) {
 				unusedSubjectId = id;
 			}
 		}
@@ -943,6 +1049,7 @@ export const mountPersistence = function mountPersistence(
 				...storageKeyFamilies(keys).flatMap((family) => [
 					family.consent,
 					family.notice,
+					family.optOut,
 					family.vendors,
 					family.epoch,
 				]),
@@ -1058,6 +1165,7 @@ export const mountPersistence = function mountPersistence(
 			queuedWrites.delete(consentKey);
 			state.choiceRecorded = false;
 			state.noticeRecorded = false;
+			state.optOutRecorded = false;
 			state.vendorsRecorded = false;
 			// The cleared records' identity is gone, and the ID stays: an ID
 			// a save already under way generates is a new local one, not one

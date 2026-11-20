@@ -11,6 +11,8 @@
  * @internal
  */
 
+import type { OptOutRecord } from '@inth/sdk-schema/types';
+
 import { OPTIONAL_CONSENT_CATEGORIES } from './types';
 import type {
 	CategoryDecision,
@@ -27,11 +29,30 @@ import type {
 	RestrictionReason,
 } from './types';
 
+/**
+ * Minimum wait before asking a visitor who opted out to opt back in.
+ * Uses 366 days in milliseconds so a leap year is still at least 12 months
+ * under California regulations (section 7026(k)).
+ */
+export const OPT_OUT_REPROMPT_WAIT_MS = 366 * 86_400_000;
+
+/**
+ * Earliest epoch millisecond from which an opt-in prompt is allowed for an
+ * opt-out record.
+ */
+export const optInPromptAllowedAt = function optInPromptAllowedAt(
+	optOut: Pick<OptOutRecord, 'recordedAt'>
+): number {
+	return optOut.recordedAt + OPT_OUT_REPROMPT_WAIT_MS;
+};
+
 export interface ConsentEvaluationInput {
 	policy: EvaluationPolicy;
 	/** Validated explicit choice, or `null` when none is usable. */
 	choice: ExplicitChoice | null;
 	noticeDismissal: NoticeDismissal | null;
+	/** Validated durable opt-out record, or `null` when none is held. */
+	optOut?: OptOutRecord | null;
 	/** Detected GPC signal. Only a strict `true` counts. */
 	gpc?: boolean;
 	/** Current time in epoch milliseconds. */
@@ -113,6 +134,9 @@ const collectRestrictions = function collectRestrictions(
 	}
 	if (input.gpc === true && input.policy.gpcDenyCategories.includes(category)) {
 		restrictions.push('gpc');
+	}
+	if (input.optOut && input.policy.gpcDenyCategories.includes(category)) {
+		restrictions.push('opt-out');
 	}
 	return restrictions;
 };

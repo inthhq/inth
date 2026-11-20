@@ -25,6 +25,7 @@ import type {
 import type { SnapshotPatch } from './patch';
 import {
 	mergeNewestChoice,
+	mergeNewestOptOut,
 	mergeNewestVendorChoice,
 	validateHydrationRecords,
 } from './record-validation';
@@ -60,6 +61,9 @@ export const foldServerRecords = function foldServerRecords(
 		patch.subject = records.subject
 			? { ...current.subject, ...records.subject }
 			: current.subject;
+	}
+	if (records.optOut !== undefined) {
+		patch.optOut = mergeNewestOptOut(current.optOut, records.optOut);
 	}
 	if (records.vendorChoice !== undefined) {
 		patch.vendorChoice = mergeNewestVendorChoice(

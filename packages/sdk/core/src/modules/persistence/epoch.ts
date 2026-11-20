@@ -33,6 +33,8 @@
  *
  * Pure.
  */
+import type { OptOutRecord } from '@inth/sdk-schema/types';
+
 import type {
 	ExplicitChoice,
 	NoticeDismissal,
@@ -88,4 +90,11 @@ export const noticeSinceEpoch = function noticeSinceEpoch<
 	RecordType extends NoticeDismissal,
 >(record: RecordType | null, epoch: number): RecordType | null {
 	return record && record.dismissedAt >= epoch ? record : null;
+};
+
+/** The opt-out record, or `null` when it was recorded before `epoch`. */
+export const optOutSinceEpoch = function optOutSinceEpoch<
+	RecordType extends OptOutRecord,
+>(record: RecordType | null, epoch: number): RecordType | null {
+	return record && record.recordedAt >= epoch ? record : null;
 };

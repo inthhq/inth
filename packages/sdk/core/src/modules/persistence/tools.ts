@@ -18,11 +18,13 @@ import { clearStoredRecords } from './clear';
 import {
 	choiceSinceEpoch,
 	noticeSinceEpoch,
+	optOutSinceEpoch,
 	vendorChoiceSinceEpoch,
 } from './epoch';
 import { readStoredRecordsForReconcile } from './hydrate';
 import {
 	decodeNoticeDismissal,
+	decodeOptOutRecord,
 	decodeVendorChoice,
 	validateStoredConsentEnvelope,
 } from './record-codec';
@@ -33,11 +35,13 @@ export const persistenceTools: PersistenceTools = {
 	choiceSince: choiceSinceEpoch,
 	clear: clearStoredRecords,
 	decodeNotice: decodeNoticeDismissal,
+	decodeOptOut: decodeOptOutRecord,
 	decodeVendors: decodeVendorChoice,
 	deleteCookie,
 	keys: resolveStorageKeys,
 	merge: mergeNewestChoice,
 	noticeSince: noticeSinceEpoch,
+	optOutSince: optOutSinceEpoch,
 	rawCookie: getRawCookieValue,
 	read: readStoredRecordsForReconcile,
 	removeLocal: removeLocalStorageKey,

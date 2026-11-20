@@ -70,6 +70,22 @@ describe('kernel event mapping', () => {
 				surface: 'banner',
 				type: 'notice:dismissed',
 			},
+			{
+				actionAt: 1,
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: 1,
+					rights: ['sale', 'share'],
+				},
+				snapshot,
+				type: 'opt-out:recorded',
+			},
+			{
+				actionAt: 1,
+				snapshot,
+				type: 'opt-out:lifted',
+			},
 			{ snapshot, type: 'overrides:set' },
 			{ snapshot, type: 'user:identified' },
 			{ snapshot, type: 'subject:resolved' },

@@ -1,6 +1,6 @@
 # Internal consent records
 
-These helpers implement the record model used by the kernel, persistence, transports and framework adapters. The record API is exported from `@inth/sdk/consent-record`. The kernel exposes explicit choices, effective permissions, prompt requirements and notice dismissals as separate facts. GPC is a live signal read on each evaluation and is never stored.
+These helpers implement the record model used by the kernel, persistence, transports and framework adapters. The record API is exported from `@inth/sdk/consent-record`. The kernel exposes explicit choices, durable opt-outs, effective permissions, prompt requirements and notice dismissals as separate facts. GPC restricts permissions immediately on evaluation and, once a live browser kernel resolves a policy with a deny list, creates a durable opt-out record that persists after the browser stops sending the signal.
 
 ## Files
 
@@ -15,7 +15,7 @@ These helpers implement the record model used by the kernel, persistence, transp
 
 ## Semantics
 
-Opt-in and IAB default to denied within scope; opt-out defaults to allowed. Outside scope, strict mode denies and permissive mode allows. A compatible, unexpired positive decision grants within scope. Explicit false, strict scope exclusion and an applicable live GPC signal override grants and defaults. Denials do not expire. An expired opt-out grant can still be allowed by default, with its source reported as `default`.
+Opt-in and IAB default to denied within scope; opt-out defaults to allowed. Outside scope, strict mode denies and permissive mode allows. A compatible, unexpired positive decision grants within scope. Explicit false, strict scope exclusion, an applicable live GPC signal and a durable opt-out record override grants and defaults. Denials and opt-out records do not expire and do not depend on the choice fingerprint. An expired opt-out grant can still be allowed by default, with its source reported as `default`.
 
 A `choice-v1` basis must match the policy's choice fingerprint. A `legacy-v2` basis compares only with the policy's legacy material fingerprint. If either legacy fingerprint is absent, the decision is grandfathered.
 
@@ -31,4 +31,4 @@ A notice prompt depends only on its dismissal. Missing dismissal yields `missing
 
 The kernel records choices through accept, reject and save, then evaluates these records against the current resolved policy. Persistence reads raw v2 and v3 records without creating a choice or writing during hydration. Producers compute policy and prompt fingerprints before the kernel applies a resolution.
 
-Notice dismissal has its own command, record and event. GPC has no record: when the browser stops sending the signal, its restriction stops applying. Clearing Inth data invalidates pending record work. Transport acknowledgements may associate a successful current save with its canonical subject; failures preserve the local choice and existing subject.
+Notice dismissal has its own command, record and event. An opt-out has its own durable record, commands (`optOut` and `optIn`) and events (`opt-out:recorded` and `opt-out:lifted`): once a live browser kernel sees GPC under a matched rule with a deny list, it records an opt-out so the denial survives after the browser stops sending GPC. Lifting the opt-out requires an explicit `optIn()` or a preference save that grants a denied category while GPC is off and the opt-out is device-held. Clearing Inth data invalidates pending record work. Transport acknowledgements may associate a successful current save with its canonical subject; failures preserve the local choice and existing subject.

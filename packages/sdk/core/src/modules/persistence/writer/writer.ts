@@ -26,6 +26,7 @@ import {
 	choiceToWrite,
 	fingerprintStoredRecords,
 	mayWriteNotice,
+	mayWriteOptOut,
 	mayWriteVendorChoice,
 	sameRecord,
 	selectReconciledRecords,
@@ -44,6 +45,7 @@ import type {
 import {
 	writeChoiceToStorage,
 	writeNoticeToStorage,
+	writeOptOutToStorage,
 	writeVendorChoiceToStorage,
 } from './write';
 
@@ -355,15 +357,46 @@ export const createPersistenceWriter = function createPersistenceWriter(
 		);
 		markWritten('vendors', sameRecord(subject, snapshot.subject));
 	});
+	const optOutWrites = createWriteScheduler(() => {
+		const subjectOnly = !state.optOutRecorded;
+		state.optOutRecorded = false;
+		const snapshot = kernel.getSnapshot();
+		const at = now();
+		const read = tools.read(storageConfig, at);
+		const clearMissed = read.epoch > memoryEpoch;
+		const ours = tools.optOutSince(snapshot.optOut, read.epoch);
+		if (
+			(snapshot.optOut && !ours) ||
+			(subjectOnly && clearMissed) ||
+			!mayWriteOptOut(
+				ours,
+				read.records.optOut ?? null,
+				subjectOnly,
+				changedSinceSeen('optOut', read)
+			)
+		) {
+			return;
+		}
+		const subject = writtenSubject(
+			snapshot,
+			read.optOutSubject,
+			subjectOnly,
+			read
+		);
+		writeOptOutToStorage(store, { ...snapshot, subject }, storageConfig, at);
+		markWritten('optOut', sameRecord(subject, snapshot.subject));
+	});
 	const writes = {
 		choice: choiceWrites,
 		notice: noticeWrites,
+		optOut: optOutWrites,
 		vendors: vendorWrites,
 	} satisfies Record<WriteKind, unknown>;
 
 	const flush = function flush(): void {
 		choiceWrites.flush();
 		noticeWrites.flush();
+		optOutWrites.flush();
 		vendorWrites.flush();
 	};
 
@@ -481,6 +514,7 @@ export const createPersistenceWriter = function createPersistenceWriter(
 			// anything recorded since is after the clear.
 			choiceWrites.cancel();
 			noticeWrites.cancel();
+			optOutWrites.cancel();
 			vendorWrites.cancel();
 			unadopted.clear();
 			ownDecisions.clear();

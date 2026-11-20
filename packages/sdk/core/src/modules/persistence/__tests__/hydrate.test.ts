@@ -45,6 +45,7 @@ describe('readStoredRecords', () => {
 			choice: null,
 			noticeDismissal: null,
 			now: NOW,
+			optOut: null,
 			subject: null,
 			vendorChoice: null,
 		});
@@ -71,6 +72,7 @@ describe('readStoredRecords', () => {
 			choice: explicitChoice({ marketing: true }),
 			noticeDismissal: null,
 			now: NOW,
+			optOut: null,
 			subject: null,
 			vendorChoice: null,
 		});
@@ -146,6 +148,7 @@ describe('readStoredRecordsFromCookieHeader', () => {
 				version: 1,
 			},
 			now: NOW,
+			optOut: null,
 			subject: null,
 			vendorChoice: null,
 		});
@@ -195,6 +198,7 @@ describe("a legacy family's own clear epoch", () => {
 			choice: null,
 			noticeDismissal: null,
 			now: NOW,
+			optOut: null,
 			subject: null,
 			vendorChoice: null,
 		});

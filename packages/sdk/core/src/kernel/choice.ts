@@ -20,6 +20,7 @@ import {
 	AD_TECH_PROVIDER_PURPOSES,
 	ADDITIONAL_CONSENT_V2_PATTERN,
 } from '@inth/sdk-schema/types';
+import type { OptOutRecord } from '@inth/sdk-schema/types';
 
 import { EMPTY_CHOICE, recordCategoryPatch } from '../consent-record/record';
 import type { AllConsentNames } from '../consent/consent-types';
@@ -35,12 +36,19 @@ import type {
 	KernelEvent,
 	KernelIABAuthority,
 	NoticeDismissResult,
+	OptInResult,
+	OptOutResult,
 	SaveInput,
 	SavePayload,
 	SaveResult,
 	SaveUISource,
 	VendorChoice,
 } from '../types';
+import {
+	mergeOptOutRights,
+	optOutLiftBlocker,
+	optOutRightsForSnapshot,
+} from './opt-out';
 import type { SnapshotPatch } from './patch';
 import type { KernelRuntime } from './runtime';
 import type { SaveOutbox } from './save-outbox';
@@ -690,6 +698,113 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			draft.set(mergeDraft(draft.get(), input));
 		},
 
+		optIn(context?: {
+			uiSource?: SaveUISource;
+			actionAt?: number;
+		}): Promise<OptInResult> {
+			const before = getSnapshot();
+			if (before.externalPermissions) {
+				return Promise.reject(
+					new Error(
+						'Consent is owned by an external CMP. Save through that provider.'
+					)
+				);
+			}
+			const blocker = optOutLiftBlocker(before);
+			if (blocker !== null) {
+				return Promise.resolve({ ok: false, reason: blocker });
+			}
+			const currentTime = runtime.now();
+			const actionAt =
+				context?.actionAt !== undefined &&
+				isValidSaveActionAt(context.actionAt, currentTime)
+					? context.actionAt
+					: currentTime;
+			batch(() => {
+				commit({ now: currentTime, optOut: null });
+				const event: Extract<KernelEvent, { type: 'opt-out:lifted' }> = {
+					actionAt,
+					snapshot: getSnapshot(),
+					type: 'opt-out:lifted',
+				};
+				if (context?.uiSource !== undefined) {
+					event.uiSource = context.uiSource;
+				}
+				emit(event);
+			});
+			return Promise.resolve({ ok: true, optOut: null });
+		},
+
+		optOut(context?: {
+			uiSource?: SaveUISource;
+			actionAt?: number;
+		}): Promise<OptOutResult> {
+			const before = getSnapshot();
+			if (before.externalPermissions) {
+				return Promise.reject(
+					new Error(
+						'Consent is owned by an external CMP. Save through that provider.'
+					)
+				);
+			}
+			if (before.evaluationPolicy.gpcDenyCategories.length === 0) {
+				return Promise.resolve({ ok: false, reason: 'not-available' });
+			}
+			const needed = optOutRightsForSnapshot(before);
+			if (
+				before.optOut !== null &&
+				needed.every((right) => before.optOut?.rights.includes(right))
+			) {
+				return Promise.resolve({
+					changed: false,
+					ok: true,
+					optOut: before.optOut,
+				});
+			}
+			const currentTime = runtime.now();
+			const actionAt =
+				context?.actionAt !== undefined &&
+				isValidSaveActionAt(context.actionAt, currentTime)
+					? context.actionAt
+					: currentTime;
+			const nextOptOut: OptOutRecord =
+				before.optOut === null
+					? {
+							heldBy: 'device',
+							method: 'button',
+							recordedAt: actionAt,
+							rights: needed,
+						}
+					: {
+							heldBy: before.optOut.heldBy,
+							method: 'button',
+							recordedAt: actionAt,
+							rights: mergeOptOutRights(before.optOut.rights, needed),
+						};
+			const patch: SnapshotPatch = {
+				now: currentTime,
+				optOut: nextOptOut,
+			};
+			applyNoticeAcknowledgement(patch, before, actionAt);
+			const recorded = batch(() => {
+				commit(patch);
+				const committed = getSnapshot();
+				const optOut = committed.optOut as Readonly<OptOutRecord>;
+				const event: Extract<KernelEvent, { type: 'opt-out:recorded' }> = {
+					actionAt,
+					optOut,
+					snapshot: committed,
+					type: 'opt-out:recorded',
+				};
+				if (context?.uiSource !== undefined) {
+					event.uiSource = context.uiSource;
+				}
+				emit(event);
+				return optOut;
+			});
+			return Promise.resolve({ changed: true, ok: true, optOut: recorded });
+		},
+
 		// oxlint-disable-next-line complexity -- One action records categories and vendors together in a fixed order.
 		async save(
 			rawInput?: SaveInput,
@@ -818,8 +933,20 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				now: currentTime,
 				subject,
 			};
+			const grantsOptOutCategory =
+				categoriesChanged &&
+				recorded.confirmed.some(
+					(category) =>
+						before.evaluationPolicy.gpcDenyCategories.includes(category) &&
+						recorded.choice.categories[category]?.value === true
+				);
+			const liftsOptOut =
+				grantsOptOutCategory && optOutLiftBlocker(before) === null;
 			if (categoriesChanged) {
 				patch.explicitChoice = recorded.choice;
+			}
+			if (liftsOptOut) {
+				patch.optOut = null;
 			}
 			if (vendorsChanged) {
 				patch.vendorChoice = nextVendorChoice;
@@ -853,6 +980,14 @@ export const createChoiceRecorder = function createChoiceRecorder({
 						type: 'choice:recorded',
 						uiSource,
 						...decisionTiming,
+					});
+				}
+				if (liftsOptOut) {
+					emit({
+						actionAt,
+						snapshot: committed,
+						type: 'opt-out:lifted',
+						uiSource,
 					});
 				}
 				if (vendorsChanged) {

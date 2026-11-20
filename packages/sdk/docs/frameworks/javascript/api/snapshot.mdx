@@ -29,7 +29,7 @@ kernel.subscribe((next) => {
 | Field | Type | What it holds |
 | --- | --- | --- |
 | `effectivePermissions` | `Record<category, boolean>` | Current permission per category (may be `true` before a choice under opt-out). |
-| `restrictions` | per category list of `'explicit-denial'`, `'strict-scope'` or `'gpc'` | Why a category is denied. |
+| `restrictions` | per category list of `'explicit-denial'`, `'strict-scope'`, `'gpc'` or `'opt-out'` | Why a category is denied. |
 | `privacySignals.gpc` | `{ detected, override, active }` | Browser Global Privacy Control signal, override and active state. |
 | `nextDeadline` | `number \| null` | Epoch ms when a choice or notice expires next. |
 
@@ -39,6 +39,7 @@ kernel.subscribe((next) => {
 | --- | --- | --- |
 | `explicitChoice` | `{ version, categories } \| null` | Recorded decision per category (`value`, `confirmedAt`), or `null` if none. |
 | `noticeDismissal` | `{ dismissedAt, fingerprint } \| null` | Notice acknowledgement timestamp (not a consent grant). |
+| `optOut` | `{ rights, method, recordedAt, heldBy } \| null` | Durable opt-out record from `commands.optOut()` or a detected GPC signal. Never expires. |
 | `vendorChoice` | `{ denied, confirmedAt } \| null` | Vendors switched off outside IAB. |
 | `subject` | `{ subjectId?, externalId?, identityProvider? } \| null` | Consent subject identity (`subjectId` alone is not a decision). |
 

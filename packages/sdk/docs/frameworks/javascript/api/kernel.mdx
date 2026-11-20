@@ -47,6 +47,8 @@ Commands are asynchronous and are the only way to record choices:
 | `commands.save({ marketing: false })` | `Promise<SaveResult>` | Records named categories only. |
 | `commands.save()` | `Promise<SaveResult>` | Records staged draft (falling back to current choice or policy defaults). |
 | `commands.dismissNotice()` | `Promise<NoticeDismissResult>` | Acknowledges a notice without granting consent. |
+| `commands.optOut(context?)` | `Promise<OptOutResult>` | Records a durable opt-out for the visitor's location without touching `explicitChoice`. Returns `{ ok: false, reason: 'not-available' }` when the active policy has no opt-out deny list. |
+| `commands.optIn(context?)` | `Promise<OptInResult>` | Lifts a device-held opt-out when GPC is not active. Returns `{ ok: false, reason }` when no opt-out exists, GPC is active, or the opt-out is held by the visitor's account. |
 | `commands.identify(user)` | `Promise<void>` | Links record to `{ externalId, identityProvider?, identityToken? }` (where `identityToken` verifies the link on the server) and loads that subject's server record. |
 
 `save(input, context)` accepts `context.categories` to scope bulk actions and
@@ -90,6 +92,8 @@ hydrates storage and syncs tabs automatically.
 | `choice:recorded` | `snapshot`, `confirmed`, `actionAt` | Visitor recorded categories. |
 | `permissions:changed` | `snapshot`, `previous` | Effective permissions changed for any reason. |
 | `notice:dismissed` | `snapshot`, `dismissal` | Notice acknowledged. |
+| `opt-out:recorded` | `snapshot`, `optOut`, `actionAt`, `uiSource?` | Durable opt-out recorded from `commands.optOut()` or a detected GPC signal. |
+| `opt-out:lifted` | `snapshot`, `actionAt`, `uiSource?` | Durable opt-out lifted from `commands.optIn()` or a save that granted a denied category. |
 | `vendors:recorded` | `snapshot`, `actionAt` | Vendor denials changed. |
 | `vendors:set` | `snapshot` | Declared vendors changed. |
 | `overrides:set` | `snapshot` | Decision overrides changed. |

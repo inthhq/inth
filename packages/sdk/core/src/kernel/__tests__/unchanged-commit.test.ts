@@ -43,6 +43,7 @@ const expectFullDerivation = function expectFullDerivation(
 		gpc: snapshot.privacySignals.gpc.active,
 		noticeDismissal: snapshot.noticeDismissal,
 		now: snapshot.evaluatedAt,
+		optOut: snapshot.optOut,
 		policy: snapshot.evaluationPolicy,
 	});
 	expect(snapshot.effectivePermissions).toEqual(evaluation.permissions);
@@ -167,6 +168,25 @@ test('every snapshot input agrees with the full evaluator', async () => {
 			idempotent: true,
 			run: (k) => k.refresh(NOW + 1000),
 			unchanged: true,
+		},
+		optOut: {
+			config: {
+				initialPolicyResolution: matchedResolution(
+					optOutRule({
+						privacySignals: { gpc: { denyCategories: ['marketing'] } },
+					})
+				),
+			},
+			idempotent: false,
+			run: (k) =>
+				k.hydrate({
+					optOut: {
+						heldBy: 'device',
+						method: 'button',
+						recordedAt: NOW,
+						rights: ['sale', 'share'],
+					},
+				}),
 		},
 		overrides: {
 			idempotent: false,

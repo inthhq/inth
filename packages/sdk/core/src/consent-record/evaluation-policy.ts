@@ -34,7 +34,10 @@ export interface EvaluationPolicyInput {
 	choice: RecordValidity;
 	/** Notice prompt fingerprint and semantic validity. */
 	notice: RecordValidity;
-	/** Explicit GPC deny mapping. Omit or leave empty when GPC is not honored. */
+	/**
+	 * Categories an opt-out switches off, whether from GPC or an opt-out action.
+	 * Omit or leave empty when neither restricts any category.
+	 */
 	gpcDenyCategories?: readonly OptionalConsentCategory[];
 	/** Legacy material fingerprint of the same policy, when resolution has it. */
 	legacyMaterialFingerprint?: string | null;

@@ -14,8 +14,10 @@ export {
 } from '../clear';
 
 export const {
+	clearStoredOptOutRecord,
 	clearStoredVendorChoice,
 	writeStoredConsentEnvelope,
 	writeStoredNoticeDismissal,
+	writeStoredOptOutRecord,
 	writeStoredVendorChoice,
 } = createRecordStore(persistenceTools);

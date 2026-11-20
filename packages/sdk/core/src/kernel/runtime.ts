@@ -18,6 +18,8 @@
  * the records boundary (`records.ts`), the setters and the save outbox all
  * write through this cell and own nothing of it.
  */
+import type { OptOutRecord } from '@inth/sdk-schema/types';
+
 import type { ExperimentAssignment, ExperimentGate } from '../libs/experiment';
 import type {
 	ConsentSnapshot,
@@ -27,6 +29,7 @@ import type {
 } from '../types';
 import { createListenerSet } from './dispatch';
 import type { Dispatcher, ListenerSet } from './dispatch';
+import { gpcOptOutDue, optOutRightsForSnapshot } from './opt-out';
 import { buildNextSnapshot, isUnchangedPatch, snapshotChanged } from './patch';
 import type { SnapshotPatch } from './patch';
 import { freezeSnapshot, isPromptSurface } from './snapshot';
@@ -236,7 +239,8 @@ export const createRuntime = function createRuntime(
 	const publish = function publish(
 		current: ConsentSnapshot,
 		adopted: ConsentSnapshot,
-		shown: PromptSurface | null
+		shown: PromptSurface | null,
+		recordedOptOut: Readonly<OptOutRecord> | null = null
 	): void {
 		dispatcher.batch(() => {
 			if (listeners) {
@@ -262,7 +266,60 @@ export const createRuntime = function createRuntime(
 				}
 				emit(event);
 			}
+			if (recordedOptOut !== null) {
+				emit({
+					actionAt: recordedOptOut.recordedAt,
+					optOut: recordedOptOut,
+					snapshot: adopted,
+					type: 'opt-out:recorded',
+				});
+			}
 		});
+	};
+
+	const deriveCandidate = function deriveCandidate(
+		current: ConsentSnapshot,
+		patch: SnapshotPatch
+	): { next: ConsentSnapshot; recordedGpcOptOut: boolean } {
+		let next = gateExperiment(
+			current,
+			buildNextSnapshot(current, patch),
+			patch
+		);
+		let recordedGpcOptOut = false;
+		// Record a durable GPC opt-out once the kernel is live (after stored
+		// records have been read), the policy is matched and not provisional,
+		// GPC is active, and the rule maps it to at least one category.
+		// Explicit `optOut` patches (such as hydration, clear or commands)
+		// never trigger auto-recording in the same commit.
+		if (patch.optOut === undefined && gpcOptOutDue(next, live)) {
+			const optOut: OptOutRecord = {
+				heldBy: 'device',
+				method: 'gpc',
+				recordedAt: next.evaluatedAt,
+				rights: optOutRightsForSnapshot(next),
+			};
+			next = gateExperiment(
+				current,
+				buildNextSnapshot(current, { ...patch, optOut }),
+				patch
+			);
+			recordedGpcOptOut = true;
+		}
+		if (impressionDue(next)) {
+			next = stampImpression(next);
+		}
+		return { next, recordedGpcOptOut };
+	};
+
+	const canSkipDerivation = function canSkipDerivation(
+		current: ConsentSnapshot,
+		patch: SnapshotPatch
+	): boolean {
+		return (
+			isUnchangedPatch(current, patch) &&
+			!(patch.optOut === undefined && gpcOptOutDue(current, live))
+		);
 	};
 
 	const commit = function commit(patch: SnapshotPatch): boolean {
@@ -271,24 +328,19 @@ export const createRuntime = function createRuntime(
 		}
 		const current = snapshot;
 		let adopted: ConsentSnapshot;
-		if (isUnchangedPatch(current, patch)) {
+		let recordedGpcOptOut = false;
+		if (canSkipDerivation(current, patch)) {
 			if (!impressionDue(current)) {
 				return false;
 			}
 			adopted = stampCurrent(current, patch.now ?? current.evaluatedAt);
 		} else {
-			let next = gateExperiment(
-				current,
-				buildNextSnapshot(current, patch),
-				patch
-			);
-			if (impressionDue(next)) {
-				next = stampImpression(next);
-			}
-			if (!snapshotChanged(current, next)) {
+			const derived = deriveCandidate(current, patch);
+			if (!snapshotChanged(current, derived.next)) {
 				return false;
 			}
-			adopted = freezeSnapshot(next);
+			adopted = freezeSnapshot(derived.next);
+			({ recordedGpcOptOut } = derived);
 		}
 		snapshot = adopted;
 		const surface = adopted.activeUI;
@@ -323,7 +375,7 @@ export const createRuntime = function createRuntime(
 		// this commit's events nor see a stale `hiddenBySave`. Deliver the
 		// snapshot this commit produced, never the live cell, so later
 		// listeners still observe this transition first.
-		publish(current, adopted, shown);
+		publish(current, adopted, shown, recordedGpcOptOut ? adopted.optOut : null);
 		if (adopted.nextDeadline !== current.nextDeadline) {
 			onDeadlineChange();
 		}
@@ -376,11 +428,15 @@ export const createRuntime = function createRuntime(
 			return;
 		}
 		live = true;
+		const current = snapshot;
+		if (gpcOptOutDue(current, live)) {
+			commit({ now: at });
+			return;
+		}
 		// A surface visible before init ran is first shown now; the stamp
 		// records that impression once and emits `surface:shown` for it.
 		// Only the stamp changes, so skip the patch checks a commit runs:
 		// this sits on every first visit's init.
-		const current = snapshot;
 		if (!impressionDue(current)) {
 			return;
 		}
