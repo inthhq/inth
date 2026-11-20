@@ -64,9 +64,10 @@ of its own.
 
 Stripping the headers also turns off the `country` and `region` props of
 `ConsentRoot` when the server resolves the policy. In the browser, those
-props reach the
-`/api/inth/v1/consent/init` route as `x-inth-country` and `x-inth-region` headers, so
-the edge removes them too.
+props reach the `/api/inth/v1/consent/init` route as the `country`, `region`
+and `gpc` query parameters, which the route reads like the `x-inth-*`
+headers. Stripping headers does not remove them: have the edge drop those
+query parameters from requests to that route too.
 
 Do not strip them in a Nitro server middleware. During server rendering, the
 Inth plugin forwards the visitor's location headers to the module's init

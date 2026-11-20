@@ -963,8 +963,8 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		url: URL,
 		context: ConsentRouteRequestContext
 	): Promise<Response> {
-		// A browser sends its version, contract, overrides and experiment arm
-		// as query parameters, so a cross-origin `/init` needs no preflight.
+		// A browser sends its overrides and experiment arm as query
+		// parameters, so a cross-origin init needs no preflight.
 		// Folded onto their header names, every reader below, the backend
 		// fallback and the session report see one set of inputs.
 		// Copy the fields instead of passing `incoming` as the input: the App
