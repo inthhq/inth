@@ -9,7 +9,7 @@ const path = require('node:path');
  * `process.env` from being frozen into the bundle by accident, and keeps the
  * rest of the machine's environment out of the artifact.
  */
-const PREFIX = 'C15T_';
+const PREFIX = 'INTH_';
 
 /**
  * Read the `KEY=value` lines a `.env` file holds.
@@ -73,7 +73,7 @@ for (const [key, value] of Object.entries(loaded)) {
 }
 
 /**
- * Replace `process.env.C15T_*` reads with their build-time value.
+ * Replace `process.env.INTH_*` reads with their build-time value.
  *
  * @returns {object} A Babel plugin.
  */

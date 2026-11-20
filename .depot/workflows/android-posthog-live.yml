@@ -57,7 +57,7 @@ jobs:
           echo "PostHog run_id: ${run_id} (event: ${GITHUB_EVENT_NAME})"
       - name: Prepare the Android toolchain
         if: steps.run.outputs.available == 'true'
-        run: bash .depot/android-toolchain.sh
+        run: bash scripts/ci-android-toolchain.sh
       - name: Boot the emulator
         if: steps.run.outputs.available == 'true'
         id: boot

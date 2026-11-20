@@ -36,7 +36,7 @@ The six CLI jobs are required checks on `main` under their exact names. They alw
 
 ## Runners
 
-The CLI jobs keep the Blacksmith runners they used before. The SDK and mobile jobs use GitHub-hosted runners: `ubuntu-24.04`, and `macos-26` for Swift. The Android emulator suites in `.depot/workflows` need KVM and run on Depot CI, which this repository is connected to. They report as `Android emulator / …` checks. **CI result** does not cover them, because they are not jobs in `ci.yml`.
+The CLI jobs keep the Blacksmith runners they used before. The SDK and mobile jobs use GitHub-hosted runners: `ubuntu-24.04`, and `macos-26` for Swift. The Android emulator suites in `.depot/workflows` need KVM and run on Depot CI, which this repository is connected to. They report as `Android emulator / …` checks. **CI result** does not cover them, because they are not jobs in `ci.yml`. Depot CI sandboxes have had no `/dev/kvm` since November 2026. Until Depot restores it, these jobs stop at the toolchain step with a "no usable /dev/kvm" error. GitHub-hosted `ubuntu-24.04` runners do have KVM: moving `android-emulator.yml` to `.github/workflows` with `runs-on: ubuntu-24.04` runs the suites there.
 
 ## Releases
 

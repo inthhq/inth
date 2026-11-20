@@ -1,7 +1,7 @@
 /**
  * Build-time configuration for the fixture.
  *
- * Each `process.env.C15T_*` read below has to stay a literal property access:
+ * Each `process.env.INTH_*` read below has to stay a literal property access:
  * the plugin in `babel.config.js` rewrites exactly that shape, and a computed
  * `process.env[name]` would survive into the bundle and read an empty object on
  * device. `.env` is loaded by the same plugin before Metro transforms anything.

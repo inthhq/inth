@@ -1,9 +1,10 @@
 # Android suites that need a booted emulator. They run on Depot CI because its
-# sandboxes expose /dev/kvm; Depot's GitHub Actions runners do not, so these
-# jobs cannot live in .github/workflows next to the rest of CI.
+# sandboxes are meant to expose /dev/kvm; Depot's GitHub Actions runners do not.
+# Since November 2026 the sandboxes have had no /dev/kvm, and these jobs stop
+# at the toolchain step until Depot restores it.
 #
-# Depot CI runs these for this repository. `uses: ./.github/actions/setup-sdk`
-# resolves to .depot/actions/setup-sdk, a symlink back to the shared action.
+# `uses: ./.github/actions/setup-sdk` resolves to .depot/actions/setup-sdk, a
+# symlink back to the shared action.
 name: Android emulator
 
 on:
@@ -24,6 +25,7 @@ on:
       - "packages/sdk/schema/**"
       - "packages/sdk/translations/**"
       - "scripts/ci-android-emulator.sh"
+      - "scripts/ci-android-toolchain.sh"
       - "scripts/vendor_capture.py"
       - ".depot/**"
       - ".github/actions/setup-sdk/**"
@@ -58,8 +60,9 @@ jobs:
         with:
           persist-credentials: false
       - name: Prepare the Android toolchain
-        run: bash .depot/android-toolchain.sh
+        run: bash scripts/ci-android-toolchain.sh
       - name: Boot the emulator
+        id: boot
         run: bash scripts/ci-android-emulator.sh start
       - name: Android kernel instrumented suite
         run: sh packages/android/gradlew -p packages/android --no-build-cache :inth-android:connectedDebugAndroidTest
@@ -67,7 +70,7 @@ jobs:
       # The app reaches it as localhost through adb reverse, and Mixpanel, which
       # refuses loopback hosts, as 10.0.2.2, the emulator's alias for this machine.
       - name: Start the vendor capture server
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.boot.outcome == 'success' }}
         run: |
           out="${RUNNER_TEMP}/vendor-capture"
           mkdir -p "${out}"
@@ -76,7 +79,7 @@ jobs:
           curl -fsS http://localhost:39874/health
           adb reverse tcp:39874 tcp:39874
       - name: Consent demo journeys
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.boot.outcome == 'success' }}
         run: sh packages/android/gradlew -p packages/android --no-build-cache :consent-demo:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.inthVendorCapture=http://localhost:39874
       - name: Stop the emulator
         if: always()
@@ -110,7 +113,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Prepare the Android toolchain
-        run: bash .depot/android-toolchain.sh
+        run: bash scripts/ci-android-toolchain.sh
       - name: Boot the emulator
         run: bash scripts/ci-android-emulator.sh start
       - name: Capture every screen in light and dark
@@ -138,9 +141,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: ./.github/actions/setup-sdk
+      # First, so a runner without KVM fails before the dependency install.
       - name: Prepare the Android toolchain
-        run: bash .depot/android-toolchain.sh
+        run: bash scripts/ci-android-toolchain.sh
+      - uses: ./.github/actions/setup-sdk
+      # The journeys join their screen recording into journey.mp4 with ffmpeg.
+      - name: Install ffmpeg if the image lacks it
+        run: command -v ffmpeg || { sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends ffmpeg; }
       - name: Run real consent controls and record the app
         run: pnpm --dir internals/fixtures/react-native-bare run e2e:android
       - name: Upload recordings, native snapshots, JUnit results and logs
@@ -170,9 +177,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: ./.github/actions/setup-sdk
+      # First, so a runner without KVM fails before the dependency install.
       - name: Prepare the Android toolchain
-        run: bash .depot/android-toolchain.sh
+        run: bash scripts/ci-android-toolchain.sh
+      - uses: ./.github/actions/setup-sdk
+      # The journeys join their screen recording into journey.mp4 with ffmpeg.
+      - name: Install ffmpeg if the image lacks it
+        run: command -v ffmpeg || { sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends ffmpeg; }
       - name: Run PostHog, Mixpanel, Amplitude, Sentry Replay and Firebase through the consent journey
         run: bash internals/fixtures/expo-dev/scripts/vendor-e2e.sh android
       - name: Upload vendor requests, Firebase log evidence and UIAutomator frames
