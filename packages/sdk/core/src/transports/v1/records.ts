@@ -110,7 +110,10 @@ const readOptOut = function readOptOut(
 		return undefined;
 	}
 	const validated = validateOptOutRecord(value);
-	return validated.ok ? validated.record : undefined;
+	// A backend answer names the applicable rights, never an empty list.
+	return validated.ok && validated.record.rights.length > 0
+		? validated.record
+		: undefined;
 };
 
 const readLink = function readLink(

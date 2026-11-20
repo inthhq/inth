@@ -608,7 +608,7 @@ describe('save: optional optOut in answer', () => {
 });
 
 describe('opt-out body builders', () => {
-	test('buildV1ConsentOptOutBody produces the exact wire body with context and identity', () => {
+	test('buildV1ConsentOptOutBody produces the exact wire body without rights, with context and identity', () => {
 		const body = buildV1ConsentOptOutBody(
 			{
 				country: 'US',
@@ -620,7 +620,6 @@ describe('opt-out body builders', () => {
 				policyId: 'us-ca',
 				policySnapshotToken: 'stale-token',
 				region: 'CA',
-				rights: ['sale', 'share'],
 				subjectId: SUBJECT,
 				uiSource: 'widget',
 				user: {
@@ -646,10 +645,10 @@ describe('opt-out body builders', () => {
 			policySnapshotToken: 'stale-token',
 			property: 'www.example.com',
 			region: 'CA',
-			rights: ['sale', 'share'],
 			subjectId: SUBJECT,
 			uiSource: 'widget',
 		});
+		expect('rights' in body).toBe(false);
 		expect(
 			v1ConsentOptOutInputSchema['~standard'].validate(body)
 		).not.toHaveProperty('issues');
@@ -662,7 +661,6 @@ describe('opt-out body builders', () => {
 					givenAt: ACTION_AT,
 					idempotencyKey: '',
 					method: 'gpc',
-					rights: ['sale'],
 					subjectId: SUBJECT,
 					user: null,
 				},
@@ -728,7 +726,6 @@ describe('optOut: POST /v1/consent/opt-outs', () => {
 		policyId: 'us-ca',
 		policySnapshotToken: 'snapshot-token',
 		region: 'CA',
-		rights: ['sale', 'share'] as const,
 		subjectId: SUBJECT,
 		uiSource: 'widget' as const,
 		user: null,
@@ -741,7 +738,7 @@ describe('optOut: POST /v1/consent/opt-outs', () => {
 		rights: ['sale', 'share'] as const,
 	};
 
-	test('posts the body and parses recordId, subjectId, optOut and link', async () => {
+	test('posts the body without rights and parses recordId, subjectId, optOut and link', async () => {
 		const { calls, fetch } = stubFetch(() =>
 			json(200, {
 				link: { stored: true, verifiedBy: 'identity_token' },
@@ -757,14 +754,18 @@ describe('optOut: POST /v1/consent/opt-outs', () => {
 		expect(calls[0]?.url).toBe(`${PROJECT_URL}/v1/consent/opt-outs`);
 		expect(calls[0]?.init.method).toBe('POST');
 		expect(calls[0]?.body).toMatchObject({
+			country: 'US',
 			givenAt: ACTION_AT,
 			idempotencyKey: KEY,
+			language: 'en',
 			method: 'button',
+			policyId: 'us-ca',
 			policySnapshotToken: 'snapshot-token',
 			property: 'www.example.com',
-			rights: ['sale', 'share'],
+			region: 'CA',
 			subjectId: SUBJECT,
 		});
+		expect('rights' in bodyAt(calls, 0)).toBe(false);
 		expect(result).toEqual({
 			link: { stored: true, verifiedBy: 'identity_token' },
 			ok: true,
@@ -774,7 +775,7 @@ describe('optOut: POST /v1/consent/opt-outs', () => {
 		});
 	});
 
-	test('treats an invalid optOut in the response as no information', async () => {
+	test('treats an invalid optOut or empty server rights in the response as no information', async () => {
 		const { fetch } = stubFetch(() =>
 			json(200, {
 				optOut: { heldBy: 'device', method: 'bogus', recordedAt: ACTION_AT, rights: ['sale'] },
@@ -790,6 +791,21 @@ describe('optOut: POST /v1/consent/opt-outs', () => {
 			subjectId: SUBJECT,
 		});
 		expect('optOut' in result).toBe(false);
+
+		const { fetch: fetchEmpty } = stubFetch(() =>
+			json(200, {
+				optOut: { heldBy: 'device', method: 'button', recordedAt: ACTION_AT, rights: [] },
+				recordId: RECORD,
+				subjectId: SUBJECT,
+			})
+		);
+		const emptyResult = await transportWith(fetchEmpty).optOut(optOutPayload);
+		expect(emptyResult).toEqual({
+			ok: true,
+			recordId: RECORD,
+			subjectId: SUBJECT,
+		});
+		expect('optOut' in emptyResult).toBe(false);
 	});
 
 	test('returns unsupported without throwing on 404', async () => {

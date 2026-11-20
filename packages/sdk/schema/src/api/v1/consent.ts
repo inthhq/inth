@@ -135,6 +135,9 @@ export const v1ConsentRecordOutputSchema = jsonObject(
 /**
  * Body of `POST /v1/consent/opt-outs`: record a durable opt-out.
  *
+ * When `rights` is omitted, the server derives the applicable rights from
+ * the visitor's location (the verified `policySnapshotToken`, else the
+ * request's geo location, else `country` and `region`, else all three).
  * Context fields (`policyId`, `country`, `region`, `language`,
  * `policySnapshotToken`) are recorded and never validated. Identity problems
  * never fail the opt-out.
@@ -167,7 +170,8 @@ export const v1ConsentOptOutInputSchema = jsonObject(
 		),
 		property: v1PropertySchema,
 		region: consentRecordRequestSchema.entries.region,
-		rights: v1OptOutRightsSchema,
+		/** Optional. When absent, the server derives the applicable rights from the visitor's location. */
+		rights: v.optional(v1OptOutRightsSchema),
 		subjectId: v1SubjectIdSchema,
 		uiSource: v.optional(
 			v.pipe(

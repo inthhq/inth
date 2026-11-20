@@ -34,7 +34,8 @@
  *   fingerprint or the policy snapshot changed, and replay in the exact order
  *   they were queued.
  * - A `404` on an opt-out route means the backend does not store opt-outs.
- *   The outbox removes every queued opt-out entry, stops sending further
+ *   The outbox removes every queued opt-out entry, fills empty local `rights`
+ *   with all three rights through `opt-out:synced`, stops sending further
  *   opt-out requests for this kernel, and reports no error or warning.
  * - `clear()` empties all three slots (saves, opt-out acts, reassignments).
  *   The kernel calls it on `records:cleared`, so clearing records drops
@@ -48,6 +49,7 @@
  *   idempotency key makes the backend record it once.
  */
 
+import { OPT_OUT_RIGHTS } from '@inth/sdk-schema/types';
 import type { OptOutRecord } from '@inth/sdk-schema/types';
 
 import type { OptionalConsentCategory } from '../../consent-record/types';
@@ -157,6 +159,8 @@ export interface SaveOutbox {
 	 * Returns the adopted UUID when it moved, else `null`.
 	 */
 	adoptSubject: (from: string, to: string) => Promise<string | null>;
+	/** Whether an opt-out route answered `404` on this kernel. */
+	areOptOutsUnsupported: () => boolean;
 }
 
 export interface SaveOutboxOptions {
@@ -329,9 +333,28 @@ export const createSaveOutbox = function createSaveOutbox({
 		}
 	};
 
+	const fillUnsupportedOptOutRights =
+		function fillUnsupportedOptOutRights(): void {
+			const current = getSnapshot();
+			if (!current.optOut || current.optOut.rights.length > 0) {
+				return;
+			}
+			applySyncedOptOut(
+				runtime,
+				{ ...current.optOut, rights: [...OPT_OUT_RIGHTS] },
+				{
+					actVersion: runtime.getOptOutActVersion(),
+					allowClear: false,
+					generation: runtime.getGeneration(),
+					subjectId: current.subject?.subjectId ?? null,
+				}
+			);
+		};
+
 	const markOptOutsUnsupported =
 		async function markOptOutsUnsupported(): Promise<void> {
 			optOutsUnsupported = true;
+			fillUnsupportedOptOutRights();
 			await store.transact((tx) => {
 				if (tx.read('optOuts') !== undefined) {
 					tx.write('optOuts', []);
@@ -382,6 +405,7 @@ export const createSaveOutbox = function createSaveOutbox({
 				},
 				() => {
 					optOutsUnsupported = true;
+					fillUnsupportedOptOutRights();
 				}
 			);
 			if (remainingOptOuts) {
@@ -729,6 +753,7 @@ export const createSaveOutbox = function createSaveOutbox({
 
 	return {
 		adoptSubject,
+		areOptOutsUnsupported: () => optOutsUnsupported,
 		clear,
 		hold(until) {
 			held = Promise.allSettled([held, until]);

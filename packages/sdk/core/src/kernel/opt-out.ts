@@ -1,9 +1,8 @@
 /**
- * Pure helpers for the durable opt-out record: location rights lookup, rights
- * union, liftability checks, payload builders, answer application and the live
- * GPC recording trigger.
+ * Pure helpers for the durable opt-out record: local record creation,
+ * liftability checks, payload builders, answer application and the live GPC
+ * recording trigger.
  */
-import { OPT_OUT_RIGHTS, resolveOptOutRights } from '@inth/sdk-schema/types';
 import type { OptOutRecord, OptOutRight } from '@inth/sdk-schema/types';
 
 import { validateOptOutRecord } from '../consent-record/validation';
@@ -17,57 +16,23 @@ import type {
 import type { KernelRuntime } from './runtime';
 
 /**
- * Rights an opt-out refuses for the snapshot's effective location.
- * Developer overrides win over the backend's location, matching `resolveUSState`.
- */
-export const optOutRightsForSnapshot = function optOutRightsForSnapshot(
-	snapshot: Pick<ConsentSnapshot, 'location' | 'overrides'>
-): OptOutRight[] {
-	return resolveOptOutRights({
-		country:
-			snapshot.overrides.country ?? snapshot.location?.countryCode ?? null,
-		region: snapshot.overrides.region ?? snapshot.location?.regionCode ?? null,
-	});
-};
-
-/** Union of two right lists in canonical order (`sale`, `share`, `targeted_ads`). */
-export const mergeOptOutRights = function mergeOptOutRights(
-	existing: readonly OptOutRight[],
-	needed: readonly OptOutRight[]
-): OptOutRight[] {
-	const merged = new Set<OptOutRight>([...existing, ...needed]);
-	return OPT_OUT_RIGHTS.filter((right) => merged.has(right));
-};
-
-/**
  * Next durable opt-out record for a visitor-initiated opt-out at `actionAt`,
- * or `null` when an existing record already covers every right the visitor's
- * location needs. Preserves `heldBy` when expanding an existing record.
+ * or `null` when an opt-out record already exists.
  */
 export const nextButtonOptOutRecord = function nextButtonOptOutRecord(
-	snapshot: Pick<ConsentSnapshot, 'location' | 'optOut' | 'overrides'>,
-	actionAt: number
+	snapshot: Pick<ConsentSnapshot, 'optOut'>,
+	actionAt: number,
+	rights: readonly OptOutRight[] = []
 ): OptOutRecord | null {
-	const needed = optOutRightsForSnapshot(snapshot);
-	if (
-		snapshot.optOut !== null &&
-		needed.every((right) => snapshot.optOut?.rights.includes(right))
-	) {
+	if (snapshot.optOut !== null) {
 		return null;
 	}
-	return snapshot.optOut === null
-		? {
-				heldBy: 'device',
-				method: 'button',
-				recordedAt: actionAt,
-				rights: needed,
-			}
-		: {
-				heldBy: snapshot.optOut.heldBy,
-				method: 'button',
-				recordedAt: actionAt,
-				rights: mergeOptOutRights(snapshot.optOut.rights, needed),
-			};
+	return {
+		heldBy: 'device',
+		method: 'button',
+		recordedAt: actionAt,
+		rights: [...rights],
+	};
 };
 
 /**
@@ -135,7 +100,8 @@ export const sameOptOutRecord = function sameOptOutRecord(
 
 /**
  * Build the transport payload for a local opt-out act (`button` or `gpc`),
- * with one idempotency key and the snapshot's context.
+ * with one idempotency key and the snapshot's context. Omits `rights` so
+ * the backend derives the applicable rights from the visitor's location.
  */
 export const buildOptOutPayload = function buildOptOutPayload(
 	snapshot: ConsentSnapshot,
@@ -160,7 +126,6 @@ export const buildOptOutPayload = function buildOptOutPayload(
 				: null,
 		policySnapshotToken: snapshot.policySnapshotToken,
 		region,
-		rights: [...optOut.rights],
 		subjectId: snapshot.subject?.subjectId ?? '',
 		user: snapshot.user ? { ...snapshot.user } : null,
 	};
@@ -226,7 +191,7 @@ export const applySyncedOptOut = function applySyncedOptOut(
 	let next: OptOutRecord | null = null;
 	if (incoming !== null) {
 		const validated = validateOptOutRecord(incoming);
-		if (!validated.ok) {
+		if (!validated.ok || validated.record.rights.length === 0) {
 			return false;
 		}
 		next = validated.record;

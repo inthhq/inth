@@ -1007,12 +1007,15 @@ export const decodeOptOutRecordCompact = function decodeOptOutRecordCompact(
 		return { issues, ok: false };
 	}
 	const rawRights = fields.get('r');
-	const rights =
-		rawRights !== undefined && rawRights.length > 0
-			? rawRights
-					.split(LIST_SEPARATOR)
-					.map((code) => CODE_TO_OPT_OUT_RIGHT.get(code))
-			: [];
+	let rights: unknown;
+	if (rawRights !== undefined) {
+		rights =
+			rawRights.length > 0
+				? rawRights
+						.split(LIST_SEPARATOR)
+						.map((code) => CODE_TO_OPT_OUT_RIGHT.get(code))
+				: [];
+	}
 	const rawMethod = fields.get('m');
 	const rawHolder = fields.get('h');
 	const candidate: Record<string, unknown> = {

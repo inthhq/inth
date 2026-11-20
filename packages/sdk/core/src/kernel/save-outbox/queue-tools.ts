@@ -8,7 +8,7 @@
  *
  * @internal
  */
-import { CONSENT_MODELS, OPT_OUT_RIGHTS } from '@inth/sdk-schema/types';
+import { CONSENT_MODELS } from '@inth/sdk-schema/types';
 
 import { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
 import {
@@ -37,7 +37,6 @@ export const queueTools: QueueTools = {
 	isConsentSaveRejection,
 	isPlainRecord,
 	isSubjectConflict,
-	optOutRights: OPT_OUT_RIGHTS,
 	optionalCategories: OPTIONAL_CONSENT_CATEGORIES,
 	toStoredPayload,
 	validateExplicitChoice,

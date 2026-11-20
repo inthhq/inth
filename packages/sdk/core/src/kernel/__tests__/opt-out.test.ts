@@ -44,140 +44,93 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
+const ALL_RIGHTS = ['sale', 'share', 'targeted_ads'] as const;
+
 describe('commands.optOut()', () => {
-	test.each([
-		['CA', ['sale', 'share']],
-		['CO', ['sale', 'targeted_ads']],
-		['NV', ['sale']],
-		[null, ['sale', 'share', 'targeted_ads']],
-	] as const)(
-		'records the right set of rights for US-%s without touching explicitChoice',
-		async (regionCode, expectedRights) => {
-			const kernel = createKernel({
-				initialLocation: { countryCode: 'US', regionCode },
-			});
-			const recorded = vi.fn();
-			const choiceRecorded = vi.fn();
-			kernel.events.on('opt-out:recorded', recorded);
-			kernel.events.on('choice:recorded', choiceRecorded);
+	test('records all three rights locally when the transport has no optOut method, without touching explicitChoice', async () => {
+		const kernel = createKernel({
+			initialLocation: { countryCode: 'US', regionCode: 'CA' },
+		});
+		const recorded = vi.fn();
+		const choiceRecorded = vi.fn();
+		kernel.events.on('opt-out:recorded', recorded);
+		kernel.events.on('choice:recorded', choiceRecorded);
 
-			const result = await kernel.commands.optOut({ uiSource: 'widget' });
+		const result = await kernel.commands.optOut({ uiSource: 'widget' });
 
-			expect(result).toEqual({
-				changed: true,
-				ok: true,
-				optOut: {
-					heldBy: 'device',
-					method: 'button',
-					recordedAt: NOW,
-					rights: [...expectedRights],
-				},
-			});
-			const snap = kernel.getSnapshot();
-			expect(snap.optOut).toEqual({
+		expect(result).toEqual({
+			changed: true,
+			ok: true,
+			optOut: {
 				heldBy: 'device',
 				method: 'button',
 				recordedAt: NOW,
-				rights: [...expectedRights],
+				rights: [...ALL_RIGHTS],
+			},
+		});
+		const snap = kernel.getSnapshot();
+		expect(snap.optOut).toEqual({
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW,
+			rights: [...ALL_RIGHTS],
+		});
+		expect(Object.isFrozen(snap.optOut)).toBe(true);
+		expect(Object.isFrozen(snap.optOut?.rights)).toBe(true);
+		expect(snap.explicitChoice).toBeNull();
+		expect(snap.effectivePermissions.marketing).toBe(false);
+		expect(snap.effectivePermissions.measurement).toBe(false);
+		expect(snap.effectivePermissions.functionality).toBe(true);
+		expect(snap.restrictions).toEqual({
+			marketing: ['opt-out'],
+			measurement: ['opt-out'],
+		});
+		expect(recorded).toHaveBeenCalledTimes(1);
+		expect(recorded.mock.calls[0]?.[0]).toMatchObject({
+			actionAt: NOW,
+			optOut: snap.optOut,
+			snapshot: snap,
+			type: 'opt-out:recorded',
+			uiSource: 'widget',
+		});
+		expect(choiceRecorded).not.toHaveBeenCalled();
+		kernel.dispose();
+	});
+
+	test.each([
+		['empty rights', [] as const],
+		['subset of rights', ['sale'] as const],
+		['state rights', ['sale', 'share'] as const],
+		['all rights', ALL_RIGHTS],
+	])(
+		'is a no-op when an opt-out record already exists (%s)',
+		async (_label, rights) => {
+			const existing: OptOutRecord = {
+				heldBy: 'person',
+				method: 'gpc',
+				recordedAt: NOW - 5000,
+				rights: [...rights],
+			};
+			const kernel = createKernel({
+				initialLocation: { countryCode: 'US', regionCode: 'CA' },
+				initialRecords: { now: NOW, optOut: existing },
 			});
-			expect(Object.isFrozen(snap.optOut)).toBe(true);
-			expect(Object.isFrozen(snap.optOut?.rights)).toBe(true);
-			expect(snap.explicitChoice).toBeNull();
-			expect(snap.effectivePermissions.marketing).toBe(false);
-			expect(snap.effectivePermissions.measurement).toBe(false);
-			expect(snap.effectivePermissions.functionality).toBe(true);
-			expect(snap.restrictions).toEqual({
-				marketing: ['opt-out'],
-				measurement: ['opt-out'],
+			const recorded = vi.fn();
+			kernel.events.on('opt-out:recorded', recorded);
+			const before = kernel.getSnapshot();
+
+			const result = await kernel.commands.optOut();
+
+			expect(result).toEqual({
+				changed: false,
+				ok: true,
+				optOut: existing,
 			});
-			expect(recorded).toHaveBeenCalledTimes(1);
-			expect(recorded.mock.calls[0]?.[0]).toMatchObject({
-				actionAt: NOW,
-				optOut: snap.optOut,
-				snapshot: snap,
-				type: 'opt-out:recorded',
-				uiSource: 'widget',
-			});
-			expect(choiceRecorded).not.toHaveBeenCalled();
+			expect(kernel.getSnapshot()).toBe(before);
+			expect(recorded).not.toHaveBeenCalled();
 			kernel.dispose();
 		}
 	);
-
-	test('prefers override country and region over snapshot.location', async () => {
-		const kernel = createKernel({
-			initialLocation: { countryCode: 'US', regionCode: 'CA' },
-			initialOverrides: { country: 'US', region: 'US-NV' },
-		});
-		const result = await kernel.commands.optOut();
-		expect(result).toEqual({
-			changed: true,
-			ok: true,
-			optOut: {
-				heldBy: 'device',
-				method: 'button',
-				recordedAt: NOW,
-				rights: ['sale'],
-			},
-		});
-		kernel.dispose();
-	});
-
-	test('is a no-op when an existing opt-out already covers every right the location needs', async () => {
-		const existing: OptOutRecord = {
-			heldBy: 'person',
-			method: 'gpc',
-			recordedAt: NOW - 5000,
-			rights: ['sale', 'share'],
-		};
-		const kernel = createKernel({
-			initialLocation: { countryCode: 'US', regionCode: 'CA' },
-			initialRecords: { now: NOW, optOut: existing },
-		});
-		const recorded = vi.fn();
-		kernel.events.on('opt-out:recorded', recorded);
-		const before = kernel.getSnapshot();
-
-		const result = await kernel.commands.optOut();
-
-		expect(result).toEqual({
-			changed: false,
-			ok: true,
-			optOut: existing,
-		});
-		expect(kernel.getSnapshot()).toBe(before);
-		expect(recorded).not.toHaveBeenCalled();
-		kernel.dispose();
-	});
-
-	test('unions rights when an existing opt-out lacks some of the location rights and keeps heldBy', async () => {
-		const existing: OptOutRecord = {
-			heldBy: 'person',
-			method: 'api',
-			recordedAt: NOW - 5000,
-			rights: ['sale'],
-		};
-		const kernel = createKernel({
-			initialLocation: { countryCode: 'US', regionCode: 'CA' },
-			initialRecords: { now: NOW, optOut: existing },
-		});
-		const recorded = vi.fn();
-		kernel.events.on('opt-out:recorded', recorded);
-
-		const result = await kernel.commands.optOut();
-
-		expect(result).toEqual({
-			changed: true,
-			ok: true,
-			optOut: {
-				heldBy: 'person',
-				method: 'button',
-				recordedAt: NOW,
-				rights: ['sale', 'share'],
-			},
-		});
-		expect(recorded).toHaveBeenCalledTimes(1);
-		kernel.dispose();
-	});
 
 	test('works under an opt-out rule with no GPC mapping and denies marketing and measurement', async () => {
 		const kernel = createKernel({
@@ -197,7 +150,7 @@ describe('commands.optOut()', () => {
 				heldBy: 'device',
 				method: 'button',
 				recordedAt: NOW,
-				rights: ['sale', 'share'],
+				rights: [...ALL_RIGHTS],
 			},
 		});
 		const snap = kernel.getSnapshot();
@@ -230,7 +183,7 @@ describe('commands.optOut()', () => {
 			heldBy: 'device',
 			method: 'button',
 			recordedAt: NOW,
-			rights: ['sale', 'share'],
+			rights: [...ALL_RIGHTS],
 		});
 		expect(kernel.getSnapshot().restrictions).toEqual({});
 		kernel.dispose();
@@ -570,7 +523,7 @@ describe('commands.save() interaction with opt-out', () => {
 			heldBy: 'device',
 			method: 'button',
 			recordedAt: NOW,
-			rights: ['sale', 'share'],
+			rights: [...ALL_RIGHTS],
 		});
 		expect(seenOptOutInChoice).toEqual([snap.optOut]);
 		expect(recorded.mock.calls[0]?.[0]).toMatchObject({
@@ -597,7 +550,7 @@ describe('commands.save() interaction with opt-out', () => {
 			heldBy: 'device',
 			method: 'button',
 			recordedAt: NOW,
-			rights: ['sale', 'share'],
+			rights: [...ALL_RIGHTS],
 		});
 		expect(recorded).toHaveBeenCalledTimes(1);
 		expect(recorded.mock.calls[0]?.[0].uiSource).toBe('widget');
@@ -619,12 +572,11 @@ describe('commands.save() interaction with opt-out', () => {
 			heldBy: 'device',
 			method: 'button',
 			recordedAt: NOW + 2000,
-			rights: ['sale', 'share'],
+			rights: [...ALL_RIGHTS],
 		});
 		expect(recorded).toHaveBeenCalledTimes(1);
 
-		// A later save when the opt-out already covers location rights is a no-op
-		// for the opt-out record.
+		// A later save when an opt-out already exists records nothing new.
 		vi.setSystemTime(NOW + 4000);
 		await kernel.commands.save({ marketing: false });
 		expect(kernel.getSnapshot().optOut?.recordedAt).toBe(NOW + 2000);
@@ -632,7 +584,7 @@ describe('commands.save() interaction with opt-out', () => {
 		kernel.dispose();
 	});
 
-	test('refusal save unions rights when an existing opt-out lacks rights for the location', async () => {
+	test('refusal save records nothing new when an opt-out already exists', async () => {
 		const existing: OptOutRecord = {
 			heldBy: 'person',
 			method: 'api',
@@ -655,14 +607,8 @@ describe('commands.save() interaction with opt-out', () => {
 
 		await kernel.commands.save('none', { uiSource: 'dialog' });
 
-		expect(kernel.getSnapshot().optOut).toEqual({
-			heldBy: 'person',
-			method: 'button',
-			recordedAt: NOW,
-			rights: ['sale', 'share'],
-		});
-		expect(recorded).toHaveBeenCalledTimes(1);
-		expect(recorded.mock.calls[0]?.[0].uiSource).toBe('dialog');
+		expect(kernel.getSnapshot().optOut).toEqual(existing);
+		expect(recorded).not.toHaveBeenCalled();
 		kernel.dispose();
 	});
 
@@ -752,7 +698,7 @@ describe('live GPC opt-out recording', () => {
 			heldBy: 'device',
 			method: 'gpc',
 			recordedAt: NOW,
-			rights: ['sale', 'targeted_ads'],
+			rights: [...ALL_RIGHTS],
 		});
 
 		vi.setSystemTime(NOW + 5000);
@@ -801,7 +747,7 @@ describe('live GPC opt-out recording', () => {
 			heldBy: 'device',
 			method: 'gpc',
 			recordedAt: NOW,
-			rights: ['sale', 'share'],
+			rights: [...ALL_RIGHTS],
 		});
 		expect(recordedPending).toHaveBeenCalledTimes(1);
 		pending.dispose();
@@ -840,7 +786,7 @@ describe('live GPC opt-out recording', () => {
 			heldBy: 'device',
 			method: 'gpc',
 			recordedAt: NOW,
-			rights: ['sale', 'share'],
+			rights: [...ALL_RIGHTS],
 		});
 		expect(recorded).toHaveBeenCalledTimes(1);
 		bySignal.dispose();

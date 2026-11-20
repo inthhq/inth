@@ -295,11 +295,12 @@ const OPT_OUT_METHOD_SET: ReadonlySet<string> = new Set(OPT_OUT_METHODS);
 const OPT_OUT_HOLDER_SET: ReadonlySet<string> = new Set(OPT_OUT_HOLDERS);
 
 /**
- * Validates a durable opt-out record. Rejects unknown keys, empty or duplicate
- * rights, unknown methods or holders, and non-integer or negative timestamps.
- * Future timestamps are accepted so a slow device clock never drops a record
- * stamped by the backend. Returns `rights` in canonical order (`sale`, `share`,
- * `targeted_ads`).
+ * Validates a durable opt-out record. Rejects unknown keys, duplicate or
+ * unknown rights, unknown methods or holders, and non-integer or negative
+ * timestamps. Accepts an empty `rights` list for a local opt-out waiting for
+ * the backend's answer. Future timestamps are accepted so a slow device clock
+ * never drops a record stamped by the backend. Returns `rights` in canonical
+ * order (`sale`, `share`, `targeted_ads`).
  */
 export const validateOptOutRecord = function validateOptOutRecord(
 	input: unknown,
@@ -316,11 +317,7 @@ export const validateOptOutRecord = function validateOptOutRecord(
 	}
 	const rawRights = ownValue(input, 'rights');
 	const seenRights = new Set<OptOutRight>();
-	if (!Array.isArray(rawRights)) {
-		issues.push({ code: 'not-an-object', path: 'rights' });
-	} else if (rawRights.length === 0) {
-		issues.push({ code: 'invalid-value', path: 'rights' });
-	} else {
+	if (Array.isArray(rawRights)) {
 		for (let index = 0; index < rawRights.length; index += 1) {
 			const entry: unknown = index in rawRights ? rawRights[index] : undefined;
 			if (
@@ -333,6 +330,8 @@ export const validateOptOutRecord = function validateOptOutRecord(
 			}
 			seenRights.add(entry as OptOutRight);
 		}
+	} else {
+		issues.push({ code: 'not-an-object', path: 'rights' });
 	}
 	const method = ownValue(input, 'method');
 	if (typeof method !== 'string' || !OPT_OUT_METHOD_SET.has(method)) {

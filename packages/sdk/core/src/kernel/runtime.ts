@@ -18,7 +18,7 @@
  * the records boundary (`records.ts`), the setters and the save outbox all
  * write through this cell and own nothing of it.
  */
-import type { OptOutRecord } from '@inth/sdk-schema/types';
+import type { OptOutRecord, OptOutRight } from '@inth/sdk-schema/types';
 
 import type { ExperimentAssignment, ExperimentGate } from '../libs/experiment';
 import { generateUuidV7 } from '../libs/subject-uuid';
@@ -30,7 +30,7 @@ import type {
 } from '../types';
 import { createListenerSet } from './dispatch';
 import type { Dispatcher, ListenerSet } from './dispatch';
-import { gpcOptOutDue, optOutRightsForSnapshot } from './opt-out';
+import { gpcOptOutDue } from './opt-out';
 import { buildNextSnapshot, isUnchangedPatch, snapshotChanged } from './patch';
 import type { SnapshotPatch } from './patch';
 import { freezeSnapshot, isPromptSurface } from './snapshot';
@@ -113,12 +113,19 @@ export interface RuntimeOptions {
 	dispatcher: Dispatcher;
 	/** Called after a commit moved `nextDeadline`. */
 	onDeadlineChange: () => void;
+	/** Rights placed on an automatically recorded GPC opt-out. */
+	defaultOptOutRights?: () => OptOutRight[];
 }
 
 export const createRuntime = function createRuntime(
 	options: RuntimeOptions
 ): KernelRuntime {
-	const { dispatcher, emit, onDeadlineChange } = options;
+	const {
+		defaultOptOutRights = () => [],
+		dispatcher,
+		emit,
+		onDeadlineChange,
+	} = options;
 	let snapshot = options.initialSnapshot;
 	let live = false;
 	/**
@@ -307,7 +314,7 @@ export const createRuntime = function createRuntime(
 				heldBy: 'device',
 				method: 'gpc',
 				recordedAt: next.evaluatedAt,
-				rights: optOutRightsForSnapshot(next),
+				rights: defaultOptOutRights(),
 			};
 			const gpcPatch: SnapshotPatch = { ...patch, optOut };
 			if (!next.subject?.subjectId) {

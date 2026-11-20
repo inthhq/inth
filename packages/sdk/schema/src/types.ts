@@ -229,7 +229,6 @@ export {
 	REGION_HEADERS,
 	requiredPolicyRights,
 	resolveInitFromManifest,
-	resolveOptOutRights,
 	resolvePolicyResolutionFromManifest,
 	resolvePolicyRules,
 	SAFE_FALLBACK_POLICY_FINGERPRINTS,
