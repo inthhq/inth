@@ -1,12 +1,10 @@
 import type {
 	V1ConsentAnswer,
 	V1ConsentRecordInput,
-	VendorChoiceWire,
 } from '@inth/sdk-schema/types';
 
 import { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
 import type { ExplicitChoice } from '../../consent-record/types';
-import { createIdempotencyKey } from '../../libs/subject-uuid';
 import type { SavePayload } from '../../types';
 import type { DecisionAssertion } from '../decision-inputs';
 
@@ -64,16 +62,6 @@ const buildMetadata = function buildMetadata(
 	return Object.keys(metadata).length > 0 ? metadata : undefined;
 };
 
-const buildVendorChoice = function buildVendorChoice(
-	vendorChoice: NonNullable<SavePayload['vendorChoice']>
-): VendorChoiceWire {
-	return {
-		confirmedAt: vendorChoice.confirmedAt,
-		grants: { ...vendorChoice.grants },
-		version: 1,
-	};
-};
-
 /**
  * Build the records body of one save.
  *
@@ -85,6 +73,13 @@ export const buildV1ConsentRecordBody = function buildV1ConsentRecordBody(
 	payload: SavePayload,
 	property: string
 ): V1ConsentRecordBody {
+	if (!payload.idempotencyKey) {
+		// A key made here would differ on every retry, so the backend would
+		// record each retry as a new choice.
+		throw new TypeError(
+			'Inth transport: a save needs an idempotencyKey. Make one with createIdempotencyKey() when the visitor acts, and send it unchanged on every retry.'
+		);
+	}
 	const answer = buildV1Answer(payload.choice);
 	const confirmed = OPTIONAL_CONSENT_CATEGORIES.filter(
 		(category) =>
@@ -97,7 +92,7 @@ export const buildV1ConsentRecordBody = function buildV1ConsentRecordBody(
 		confirmed,
 		consentAction: payload.consentAction,
 		givenAt: payload.confirmed.actionAt,
-		idempotencyKey: payload.idempotencyKey ?? createIdempotencyKey(),
+		idempotencyKey: payload.idempotencyKey,
 		property,
 		subjectId: payload.subjectId,
 	};
@@ -126,7 +121,11 @@ export const buildV1ConsentRecordBody = function buildV1ConsentRecordBody(
 		}
 	}
 	if (payload.vendorChoice !== undefined) {
-		body.vendorChoice = buildVendorChoice(payload.vendorChoice);
+		body.vendorChoice = {
+			confirmedAt: payload.vendorChoice.confirmedAt,
+			grants: { ...payload.vendorChoice.grants },
+			version: 1,
+		};
 	}
 	const metadata = buildMetadata(payload);
 	if (metadata) {

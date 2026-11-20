@@ -36,7 +36,7 @@ beforeEach(() => {
 	});
 });
 
-const MANIFEST_URL = 'https://cdn.example.test/manifest';
+const MANIFEST_URL = 'https://cdn.example.test/v1/consent/manifest';
 
 const cleanups: (() => void)[] = [];
 

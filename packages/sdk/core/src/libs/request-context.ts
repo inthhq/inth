@@ -1,7 +1,7 @@
 import type { Overrides } from '../options/overrides';
 import type { SSRInitRequestContext } from '../options/ssr';
 import { hasGlobalPrivacyControlSignal } from './global-privacy-control';
-import { DEFAULT_INIT_CREDENTIALS } from './request-context-headers';
+import { browserInitCredentials } from './request-context-headers';
 
 const ABSOLUTE_URL_REGEX = /^https?:\/\//u;
 
@@ -65,7 +65,7 @@ export const createBrowserRequestContext =
 
 		return {
 			country: options.overrides?.country ?? null,
-			credentials: options.credentials ?? DEFAULT_INIT_CREDENTIALS,
+			credentials: browserInitCredentials(options.credentials),
 			gpc:
 				options.gpc ?? (typeof detectedGpc === 'boolean' ? detectedGpc : false),
 			language: options.overrides?.language ?? null,
@@ -90,7 +90,7 @@ export const createRuntimeRequestContextMatcher =
 
 		return {
 			country: options.overrides?.country,
-			credentials: options.credentials ?? DEFAULT_INIT_CREDENTIALS,
+			credentials: browserInitCredentials(options.credentials),
 			gpc:
 				options.overrides?.gpc ??
 				(typeof detectedGpc === 'boolean' ? detectedGpc : false),

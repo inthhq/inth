@@ -14,7 +14,7 @@ import { hosted as hostedMode } from '../mode';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
 import type { InthAstroOptions, InthLocals } from '../types';
-import { testRule, testWire } from './policy-fixture';
+import { testRule } from './policy-fixture';
 
 let container: AstroContainer;
 
@@ -81,7 +81,7 @@ describe('<ConsentBanner />', () => {
 		expect(html).not.toContain('onclick=');
 	});
 
-	it('inlines the resolved config so the browser skips /init', async () => {
+	it('inlines the resolved config so the browser skips /v1/consent/init', async () => {
 		const html = await render(await buildLocals());
 		// A data block: it never runs, so no CSP has to allow it.
 		expect(html).toMatch(
@@ -489,19 +489,14 @@ describe('<ConsentBanner />', () => {
 });
 
 describe('<ConsentBanner /> without a resolved policy', () => {
-	// A hosted backend speaking an unsupported policy contract yields a failed
-	// resolution, the same way the middleware tests produce one.
+	// An init answer without a policy resolution yields a failed resolution.
 	const withoutPolicy = () =>
 		resolveConsentContext({
 			fetch: vi.fn(() =>
-				Response.json(
-					{
-						location: { countryCode: null, regionCode: null },
-						policyResolution: testWire(),
-						translations: { language: 'en', translations: {} },
-					},
-					{ headers: { 'x-inth-policy-contract': '999' } }
-				)
+				Response.json({
+					location: { countryCode: null, regionCode: null },
+					translations: { language: 'en', translations: {} },
+				})
 			) as never,
 			headers: new Headers(),
 			options: resolveOptions({

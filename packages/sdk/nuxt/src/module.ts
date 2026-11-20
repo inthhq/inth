@@ -465,8 +465,8 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 			}
 		}
 
-		// One catch-all answers `${routePrefix}/init` and
-		// `${routePrefix}/manifest` in `manifest()` mode.
+		// One catch-all answers `${routePrefix}/v1/consent/init` and
+		// `${routePrefix}/v1/consent/manifest` in `manifest()` mode.
 		if (routePrefix !== undefined) {
 			addServerHandler({
 				handler: resolver.resolve('./runtime/server/consent-route'),

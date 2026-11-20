@@ -231,9 +231,12 @@ describe('inthHandle on the consent route', () => {
 		async (_, prefix, options) => {
 			const setCookie = vi.fn();
 			const event = createEvent({
-				route: { id: `${prefix}/[...path]`, params: { path: 'manifest' } },
+				route: {
+					id: `${prefix}/[...path]`,
+					params: { path: 'v1/consent/manifest' },
+				},
 				setCookie,
-				url: `https://shop.example${prefix}/manifest`,
+				url: `https://shop.example${prefix}/v1/consent/manifest`,
 			});
 			const { GET } = createConsentRoute({
 				fetch: vi.fn<typeof globalThis.fetch>().mockResolvedValue(

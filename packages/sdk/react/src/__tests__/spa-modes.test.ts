@@ -36,9 +36,12 @@ describe('manifest() from @inth/react', () => {
 		expect(
 			withBuildDefaults({ source: 'runtime' }, build).snapshot
 		).toBeUndefined();
-		expect(withBuildDefaults({ manifestUrl: '/inth/manifest' }, build)).toEqual(
-			{ manifestUrl: '/inth/manifest', projectUrl: 'https://built.example' }
-		);
+		expect(
+			withBuildDefaults({ manifestUrl: '/inth/v1/consent/manifest' }, build)
+		).toEqual({
+			manifestUrl: '/inth/v1/consent/manifest',
+			projectUrl: 'https://built.example',
+		});
 		expect(
 			withBuildDefaults({ projectUrl: '/api/inth' }, build).projectUrl
 		).toBe('/api/inth');

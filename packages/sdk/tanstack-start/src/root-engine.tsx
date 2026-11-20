@@ -131,7 +131,7 @@ const deferredTransport = function deferredTransport(
 			};
 			return {
 				async identify(user, subjectId) {
-					await (await load()).identify?.(user, subjectId);
+					return await (await load()).identify?.(user, subjectId);
 				},
 				async init(ctx) {
 					return (await (await load()).init?.(ctx)) ?? {};

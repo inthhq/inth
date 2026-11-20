@@ -123,7 +123,7 @@ const configuration = {
 // IAB vendor IDs, so they never touch it; its purposes still count, as the web's
 // `processPurposes` and `applyBlanket` count them. Purpose 3 sits in its
 // legitimate-interest list to check that TCF's consent-only purposes stay out.
-/** A custom vendor as `/init` serves it, `NonIABVendor` in `@inth/sdk/schema`. */
+/** A custom vendor as `/v1/consent/init` serves it, `NonIABVendor` in `@inth/sdk/schema`. */
 interface CustomVendor {
 	id: string;
 	name: string;

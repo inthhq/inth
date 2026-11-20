@@ -46,7 +46,7 @@ import type {
 	DeferredCommitted,
 } from '@inth/sdk/surface-actions/early-commit';
 import {
-	generateSubjectId,
+	generateUuidV7,
 	hasStoredClearEpoch,
 	pendingIsInert,
 	planInstantCommit,
@@ -182,7 +182,7 @@ export const createDeferredRuntime = function createDeferredRuntime(
 	const readAhead = () => {
 		ahead ??= {
 			clearEpoch: hasStoredClearEpoch(storageFor(options.options())),
-			subjectId: generateSubjectId(),
+			subjectId: generateUuidV7(),
 		};
 		return ahead;
 	};

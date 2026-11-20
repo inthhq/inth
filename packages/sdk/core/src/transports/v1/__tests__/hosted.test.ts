@@ -8,7 +8,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { createKernel } from '../../../kernel';
 import { createMemoryOutboxStore } from '../../../kernel/save-outbox';
-import { ApiError } from '../error';
+import { InthApiError } from '../error';
 import { createV1HostedTransport } from '../hosted';
 import {
 	bodyAt,
@@ -27,6 +27,7 @@ await import('../../../kernel/save-outbox/queue');
 afterEach(() => {
 	vi.useRealTimers();
 	vi.restoreAllMocks();
+	vi.unstubAllGlobals();
 });
 
 const INIT_OUTPUT = {
@@ -131,6 +132,34 @@ describe('init: GET /v1/consent/init', () => {
 		});
 	});
 
+	test('in a browser, sends no custom header and no cookies; header inputs go in the query', async () => {
+		vi.stubGlobal('document', {});
+		const { calls, fetch } = stubFetch(() => json(200, INIT_OUTPUT));
+		const transport = createV1HostedTransport({
+			credentials: 'include',
+			fetch,
+			headers: {
+				// A weighted list: the backend picks the first language it has.
+				'Accept-Language': 'zz;q=1, de;q=0.9',
+				'cf-ipcountry': 'FR',
+				'x-inth-gpc': '1',
+				'x-inth-region': 'BY',
+			},
+			projectUrl: PROJECT_URL,
+		});
+
+		await transport.init({ overrides: {}, user: null });
+
+		expect(calls[0]?.headers).toEqual({
+			accept: 'application/json',
+			'accept-language': 'zz;q=1, de;q=0.9',
+		});
+		expect(calls[0]?.init.credentials).toBe('same-origin');
+		expect(
+			Object.fromEntries(new URL(calls[0]?.url ?? '').searchParams)
+		).toMatchObject({ country: 'FR', gpc: '1', region: 'BY' });
+	});
+
 	test('maps the answer as the current policy contract', async () => {
 		const { fetch } = stubFetch(() => json(200, INIT_OUTPUT));
 		const transport = createV1HostedTransport({
@@ -161,7 +190,7 @@ describe('init: GET /v1/consent/init', () => {
 			.init({ overrides: {}, user: null })
 			.catch((caught: unknown) => caught);
 
-		expect(error).toBeInstanceOf(ApiError);
+		expect(error).toBeInstanceOf(InthApiError);
 		expect(error).toMatchObject({
 			code: 'bad_gateway',
 			requestId: 'req_header',
@@ -187,13 +216,13 @@ describe('init: GET /v1/consent/init', () => {
 		const { calls, fetch } = stubFetch(() => json(200, INIT_OUTPUT));
 		const transport = createV1HostedTransport({
 			fetch,
-			initUrl: '/api/inth/init',
+			initUrl: '/api/inth/v1/consent/init',
 			projectUrl: PROJECT_URL,
 		});
 
 		await transport.init({ overrides: {}, user: null });
 
-		expect(calls[0]?.url).toBe('/api/inth/init');
+		expect(calls[0]?.url).toBe('/api/inth/v1/consent/init');
 	});
 });
 

@@ -37,7 +37,7 @@ describe('resolveConsent wiring', () => {
 	test('the server function resolves a build-time snapshot without runtime policy requests', async () => {
 		const manifest = await loadStaticManifest({
 			fetch: manifestFetch(),
-			manifestUrl: 'https://consent.example.com/manifest',
+			manifestUrl: 'https://consent.example.com/v1/consent/manifest',
 		});
 		const fetch = vi.fn<typeof globalThis.fetch>();
 		const handler = createConsentStateHandler({
@@ -75,7 +75,7 @@ describe('resolveConsent wiring', () => {
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
 		expect(String(fetch.mock.calls[0]?.[0])).toBe(
-			'https://consent.example.com/manifest'
+			'https://consent.example.com/v1/consent/manifest'
 		);
 		expect(state.initialPolicyResolution).toMatchObject({
 			policyId: 'eu-opt-in',
@@ -162,7 +162,7 @@ describe('resolveConsent wiring', () => {
 			snapshot: undefined,
 		});
 		expect(String(fetch.mock.calls[0]?.[0])).toBe(
-			'https://app.example.com/api/backend/manifest'
+			'https://app.example.com/api/backend/v1/consent/manifest'
 		);
 		expect(state.initialPolicyResolution).toMatchObject({
 			policyId: 'eu-opt-in',
@@ -243,7 +243,7 @@ describe('resolveConsent wiring', () => {
 		vi.unstubAllGlobals();
 		expect(fetch).not.toHaveBeenCalled();
 		expect(state.initialIab?.gvlReference?.url).toMatch(
-			/^\/api\/consent\/init\?inth-gvl=7/u
+			/^\/api\/consent\/v1\/consent\/init\?inth-gvl=7/u
 		);
 		expect(state.routePrefix).toBe('/api/consent');
 	});

@@ -9,7 +9,7 @@
  * trailing slashes.
  *
  * A prefix of `/` is rejected: a catch-all consent route at the site root
- * would answer every page in the app, and `${routePrefix}/init` would read
+ * would answer every page in the app, and `${routePrefix}/v1/consent/init` would read
  * as `//init`, a protocol-relative URL.
  *
  * @param adapter - The package name the error starts with, such as

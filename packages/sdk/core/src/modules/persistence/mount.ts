@@ -6,7 +6,6 @@
  */
 import { clearKernelRecords } from '../../kernel/clear-records';
 import type { InternalKernel } from '../../kernel/internals';
-import { generateSubjectId } from '../../libs/generate-subject-id';
 import {
 	readLegacySubjectId,
 	removeLegacySubjectId,
@@ -15,6 +14,7 @@ import {
 	storageKeyFamilies,
 	resolveStorageKeys,
 } from '../../libs/storage-keys';
+import { generateUuidV7 } from '../../libs/subject-uuid';
 import type {
 	ConsentSnapshot,
 	ConsentSubject,
@@ -701,7 +701,7 @@ export const mountPersistence = function mountPersistence(
 		const previous = subjectId;
 		subjectId = id;
 		if (!id) {
-			const next = generateSubjectId();
+			const next = generateUuidV7();
 			// The records rewritten under the new ID, a notice acknowledgement
 			// included, keep it from following another tab.
 			unusedSubjectId =
@@ -818,7 +818,7 @@ export const mountPersistence = function mountPersistence(
 			) {
 				return [{ ...subject, subjectId: legacy }, false, 'legacy'];
 			}
-			return [{ ...subject, subjectId: generateSubjectId() }, true, 'new'];
+			return [{ ...subject, subjectId: generateUuidV7() }, true, 'new'];
 		}
 		if (
 			subject &&

@@ -381,7 +381,12 @@ export const assertPolicyObservation = function assertPolicyObservation(
 	if (expected.subject === 'generated') {
 		api.expect(Object.keys(snapshot.subject ?? {})).toEqual(['subjectId']);
 		api
-			.expect(snapshot.subject?.subjectId?.startsWith('sub_'), 'subject ID')
+			.expect(
+				/^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/u.test(
+					snapshot.subject?.subjectId ?? ''
+				),
+				'subject ID is a UUIDv7'
+			)
 			.toBe(true);
 	} else if (expected.subject !== undefined) {
 		api.expect(snapshot.subject).toEqual(expected.subject);

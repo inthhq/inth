@@ -19,9 +19,9 @@ fetches the policy at runtime.
 | --- | --- |
 | `no backend URL is set` | Set `VITE_INTH_PROJECT_URL` in `.env` or the build environment, or pass `projectUrl`. `vite build` stops on this; `vite dev` warns |
 | `skipped the consent manifest fetch because ... is not an absolute http(s) URL` | Set `VITE_INTH_PROJECT_URL` to the absolute backend URL, such as `https://your-project.inth.app`, not `/api/inth`. With `onBuildError: 'fail'`, this is the error `build-time manifests require an absolute upstream URL` |
-| `/manifest responded 404` | The URL is not an Inth backend, or it is missing a path prefix. Copy the backend URL from Inth exactly |
-| `/manifest responded` with another status | The backend refused or failed the request. Check that the project exists and that the build machine can reach it |
-| `/manifest returned an invalid consent manifest` | The URL answered with something other than an Inth manifest, such as an HTML page. Check the URL |
+| `/v1/consent/manifest responded 404` | The URL is not an Inth backend, or it is missing a path prefix. Copy the backend URL from Inth exactly |
+| `/v1/consent/manifest responded` with another status | The backend refused or failed the request. Check that the project exists and that the build machine can reach it |
+| `/v1/consent/manifest returned an invalid consent manifest` | The URL answered with something other than an Inth manifest, such as an HTML page. Check the URL |
 | `fetch failed`, with `ENOTFOUND` or another network error, or `no response within 10 seconds` | The build machine cannot reach the backend. Allow the request. To deploy while the backend is down, build with `INTH_ON_BUILD_ERROR=runtime`, or switch to [runtime fetching](/docs/frameworks/tanstack-start/rendering#await-consent-in-the-loader) |
 
 ## snapshot is undefined
@@ -87,7 +87,7 @@ instead.
 
 ## Saves through /api/inth fail with 403 or a challenge page
 
-**Check.** The backend's firewall blocks the proxied `POST /subjects`. A
+**Check.** The backend's firewall blocks the proxied `POST /v1/consent/records`. A
 server cannot solve a browser challenge, such as Vercel Attack Challenge Mode
 or Cloudflare Super Bot Fight Mode.
 
@@ -97,16 +97,16 @@ firewall rule. If rate limits treat every visitor as one IP address, and your
 host overwrites `x-forwarded-for`, set `trustForwardedHeaders: true` on
 `createConsentRoute`.
 
-## The browser calls /api/inth/init and gets a 404
+## The browser calls /api/inth/v1/consent/init and gets a 404
 
-**Check.** `ConsentRoot` calls `/api/inth/init` only when the state carries
+**Check.** `ConsentRoot` calls `/api/inth/v1/consent/init` only when the state carries
 `routePrefix: '/api/inth'`, from `createConsentStateHandler`. Confirm that the
 app mounts the consent route at `src/routes/api/inth/$.ts`.
 
 **Fix.** Mount the
 [same-origin route](/docs/frameworks/tanstack-start/rendering#keep-consent-requests-on-your-origin),
 or remove `routePrefix`, so the browser calls your backend directly. Earlier
-alphas sent init to `/api/inth/init` by default; now there is no default.
+alphas sent init to `/api/inth/v1/consent/init` by default; now there is no default.
 
 ## ConsentRoot throws that it needs a backend URL
 

@@ -41,8 +41,8 @@ export interface ManifestModeInputs {
 export interface ManifestModeBaseOptions {
 	/**
 	 * Where to fetch the manifest at runtime. On the server it defaults to
-	 * `${projectUrl}/manifest`. In the browser it defaults to
-	 * `${routePrefix}/manifest`, else `${projectUrl}/manifest`.
+	 * `${projectUrl}/v1/consent/manifest`. In the browser it defaults to
+	 * `${routePrefix}/v1/consent/manifest`, else `${projectUrl}/v1/consent/manifest`.
 	 */
 	manifestUrl?: string;
 	/**

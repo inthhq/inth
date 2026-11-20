@@ -1,8 +1,7 @@
 import { createStaticConsentResolver } from '@inth/nextjs/static';
 import type { StaticConsentResolverOptions } from '@inth/nextjs/static';
 import {
-	buildSubjectPostBody,
-	inthVersionHeaders,
+	createV1RecordTransport,
 	mapInitOutputToInitResponse,
 } from '@inth/sdk/transports';
 import type { KernelTransport } from '@inth/sdk/transports';
@@ -14,7 +13,7 @@ import type { KernelTransport } from '@inth/sdk/transports';
 export type CompatManifest = StaticConsentResolverOptions['manifest'];
 
 export interface StaticTransportOptions {
-	/** Absolute backend URL used for `POST /subjects`. */
+	/** Absolute project URL used for `POST /v1/consent/records`. */
 	projectUrl: string;
 	/** Manifest generated at build time by `createStaticManifestModule`. */
 	manifest: CompatManifest;
@@ -24,17 +23,6 @@ export interface StaticTransportOptions {
 	 */
 	geoUrl?: string;
 }
-
-const resolveDomain = function resolveDomain(projectUrl: string): string {
-	if (typeof window !== 'undefined' && window.location?.hostname) {
-		return window.location.hostname;
-	}
-	try {
-		return new URL(projectUrl).hostname;
-	} catch {
-		return 'localhost';
-	}
-};
 
 /**
  * The `output: 'export'` path: init comes from the manifest bundled into the
@@ -47,31 +35,12 @@ export const createStaticTransport = function createStaticTransport({
 	geoUrl,
 }: StaticTransportOptions): KernelTransport {
 	const resolution = createStaticConsentResolver({ geoUrl, manifest });
-	const base = projectUrl.endsWith('/') ? projectUrl.slice(0, -1) : projectUrl;
+	const records = createV1RecordTransport({ projectUrl });
 
 	return {
 		async init() {
 			return mapInitOutputToInitResponse(await resolution.resolved, {});
 		},
-		async save(payload) {
-			const response = await fetch(`${base}/subjects`, {
-				body: JSON.stringify(
-					buildSubjectPostBody(payload, { domain: resolveDomain(base) })
-				),
-				credentials: 'include',
-				headers: {
-					accept: 'application/json',
-					'content-type': 'application/json',
-					...inthVersionHeaders,
-				},
-				method: 'POST',
-			});
-			if (!response.ok) {
-				throw new Error(
-					`next-compat static transport: /subjects responded ${response.status} ${response.statusText}`
-				);
-			}
-			return (await response.json()) as { ok: boolean; subjectId?: string };
-		},
+		save: records.save,
 	};
 };

@@ -203,7 +203,7 @@ describe('consentManifest staticBanner', () => {
 		);
 		const html = pages['index.html'] ?? '';
 		expect(fetch).toHaveBeenCalledWith(
-			'https://consent.example.com/manifest',
+			'https://consent.example.com/v1/consent/manifest',
 			expect.anything()
 		);
 		// The banner starts the body, hidden, followed by the reveal script.

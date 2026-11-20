@@ -21,7 +21,7 @@
  *   a client language switch re-hits it.
  *
  * The backend URL and the policy snapshot default to what
- * `consentManifest()` provides. By default `POST /subjects` is not
+ * `consentManifest()` provides. By default `POST /v1/consent/records` is not
  * proxied: consent saves go straight to the backend, which mirrors the
  * Next.js and Nuxt adapters. Pass `proxy: true` to forward the remaining
  * consent paths through the same route, and `proxy: true` to
@@ -85,7 +85,7 @@ export interface ConsentRouteOptions {
 	projectUrl?: string;
 
 	/**
-	 * Full manifest URL. Overrides `${projectUrl}/manifest` and the mode's.
+	 * Full manifest URL. Overrides `${projectUrl}/v1/consent/manifest` and the mode's.
 	 */
 	manifestUrl?: string;
 	/**
@@ -165,7 +165,7 @@ export interface ConsentRouteOptions {
 	 * header give the platform a stable key for a firewall bypass rule.
 	 *
 	 * Operational note: Vercel Attack Challenge Mode and Cloudflare Super Bot
-	 * Fight Mode still block the proxied `POST /subjects` unless the consent
+	 * Fight Mode still block the proxied `POST /v1/consent/records` unless the consent
 	 * paths are exempted, because a server cannot solve a browser challenge.
 	 *
 	 * @defaultValue false

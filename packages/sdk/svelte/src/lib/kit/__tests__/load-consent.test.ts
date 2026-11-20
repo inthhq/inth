@@ -103,7 +103,7 @@ describe('loadConsent', () => {
 			});
 			expect(consent.prefetch.initialPolicyResolution?.status).toBe('matched');
 			expect(fetch).toHaveBeenCalledWith(
-				`${BACKEND}/sessions`,
+				`${BACKEND}/v1/consent/sessions`,
 				expect.objectContaining({ method: 'POST' })
 			);
 			const hook = hasPlatformHook ? platform.waitUntil : callerHook;
@@ -169,7 +169,7 @@ describe('loadConsent', () => {
 		const { consent } = await loadConsent(event, {
 			fetch,
 		});
-		expect(fetch.mock.calls[0]?.[0]).toBe(`${BACKEND}/manifest`);
+		expect(fetch.mock.calls[0]?.[0]).toBe(`${BACKEND}/v1/consent/manifest`);
 		expect(consent.prefetch.initialPolicyResolution?.policyId).toBe(
 			'eu-opt-in'
 		);
@@ -249,7 +249,7 @@ describe('loadConsent', () => {
 		);
 		const { consent } = await loadConsent(event);
 		expect(String(fetch.mock.calls[0]?.[0]).split('?')[0]).toBe(
-			'/api/self-host/init'
+			'/api/self-host/v1/consent/init'
 		);
 		expect(consent.prefetch.initialPolicyResolution?.policyId).toBe(
 			'eu-opt-in'
@@ -267,7 +267,7 @@ describe('loadConsent', () => {
 		await loadConsent(event, { fetch });
 		expect(eventFetch).not.toHaveBeenCalled();
 		expect(String(fetch.mock.calls[0]?.[0]).split('?')[0]).toBe(
-			'https://api.example.com/init'
+			'https://api.example.com/v1/consent/init'
 		);
 	});
 

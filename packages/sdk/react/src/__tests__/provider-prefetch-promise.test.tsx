@@ -18,6 +18,13 @@ import { ConsentProvider, useSnapshot } from '../index';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
+/** What `POST /v1/consent/records` answers a save. */
+const recordAnswer = (request?: RequestInit) => ({
+	recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+	subjectId: (JSON.parse(String(request?.body)) as { subjectId: string })
+		.subjectId,
+});
+
 const policyConfig = function policyConfig(): KernelConfig {
 	return {
 		initialBranding: 'inth',
@@ -51,8 +58,10 @@ const Probe = () => {
 			{snapshot.activeUI}|{String(snapshot.policyPending)}|
 			{snapshot.policyPending ? 'none' : snapshot.policyRule.id}|
 			{String(!!snapshot.explicitChoice)}|
-			{snapshot.subject?.subjectId?.startsWith('sub_') ? 'subject' : 'none'}|
-			{snapshot.overrides.country ?? 'none'}|
+			{/^[\da-f]{8}-[\da-f]{4}-7/u.test(snapshot.subject?.subjectId ?? '')
+				? 'subject'
+				: 'none'}
+			|{snapshot.overrides.country ?? 'none'}|
 			{String(snapshot.effectivePermissions.marketing)}
 		</div>
 	);
@@ -143,11 +152,9 @@ describe('ConsentProvider prefetch promise', () => {
 describe('a streamed policy', () => {
 	test('saves a streamed policy through an assertion transport without another init', async () => {
 		const prefetch = deferred<KernelConfig>();
-		const fetch = vi
-			.fn()
-			.mockResolvedValue(
-				new Response(JSON.stringify({ ok: true, subjectId: 'subject' }))
-			);
+		const fetch = vi.fn((_url: string, init?: RequestInit) =>
+			Promise.resolve(Response.json(recordAnswer(init)))
+		);
 		let kernel: ConsentKernel | null = null;
 		const Capture = () => {
 			const current = useContext(KernelContext);
@@ -162,7 +169,7 @@ describe('a streamed policy', () => {
 					mode: hosted({
 						assertDecisionInputs: true,
 						fetch,
-						initUrl: '/api/consent/init',
+						initUrl: '/api/consent/v1/consent/init',
 						projectUrl: '/api/inth',
 					}),
 					persistence: false,
@@ -185,9 +192,9 @@ describe('a streamed policy', () => {
 		expect(fetch).toHaveBeenCalledTimes(1);
 		// The path; the query carries the consent journey.
 		expect(String(fetch.mock.calls[0]?.[0]).split('?')[0]).toBe(
-			'/api/inth/subjects'
+			'/api/inth/v1/consent/records'
 		);
-		expect(JSON.parse(fetch.mock.calls[0]?.[1].body)).toMatchObject({
+		expect(JSON.parse(String(fetch.mock.calls[0]?.[1]?.body))).toMatchObject({
 			country: 'DE',
 			fingerprint:
 				config.initialPolicyResolution?.status === 'matched'

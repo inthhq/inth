@@ -14,7 +14,7 @@
  */
 
 import {
-	generateSubjectId,
+	generateUuidV7,
 	hasStoredClearEpoch,
 	isShortCase,
 	pendingIsInert,
@@ -53,7 +53,7 @@ export const readAheadOfTap = function readAheadOfTap(
 ): InstantCommitAhead {
 	return {
 		clearEpoch: hasStoredClearEpoch(config.storageConfig),
-		subjectId: generateSubjectId(),
+		subjectId: generateUuidV7(),
 	};
 };
 

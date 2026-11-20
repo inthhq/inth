@@ -171,14 +171,14 @@ inline code with a nonce instead.
 
 ## Allow the consent backend in `connect-src`
 
-The browser sends consent to `${projectUrl}/subjects`, and requests `/init`
+The browser sends consent to `${projectUrl}/v1/consent/records`, and requests `/v1/consent/init`
 when the server did not resolve the policy. Allow those origins:
 
 | Mode | Browser requests go to |
 | --- | --- |
-| `manifest()`, the default | Your own origin for `/api/inth/init`, and the backend origin for `/subjects` |
-| `manifest({ resolve: 'browser' })` | Your own origin for `/api/inth/manifest`, the backend origin for `/subjects`, and `geoUrl` if set |
-| `hosted()` | The backend origin, for `/init` and `/subjects` |
+| `manifest()`, the default | Your own origin for `/api/inth/v1/consent/init`, and the backend origin for `/v1/consent/records` |
+| `manifest({ resolve: 'browser' })` | Your own origin for `/api/inth/v1/consent/manifest`, the backend origin for `/v1/consent/records`, and `geoUrl` if set |
+| `hosted()` | The backend origin, for `/v1/consent/init` and `/v1/consent/records` |
 | `testing()` | No consent backend |
 
 {/* example: fragment */}
@@ -190,7 +190,7 @@ connect-src 'self' https://your-project.inth.app;
 Replace `https://your-project.inth.app` with the URL from your Inth project or
 your self-hosted backend. Server-side requests from the middleware and the
 injected routes run in Astro and are not subject to the browser's policy.
-Under an IAB TCF policy, the browser fetches the vendor list from the `/init`
+Under an IAB TCF policy, the browser fetches the vendor list from the `/v1/consent/init`
 route or the URL the policy names. Allow that host too.
 
 Vendors add their own hosts to `script-src`, `connect-src`, `img-src` and
@@ -212,4 +212,4 @@ requests to expect.
    `style-src` violation.
 5. Allow a category that gates a vendor. The vendor's script loads, and no
    `connect-src` or `script-src` violation mentions its host.
-6. Save a choice. The request to `/subjects` succeeds in DevTools Network.
+6. Save a choice. The request to `/v1/consent/records` succeeds in DevTools Network.

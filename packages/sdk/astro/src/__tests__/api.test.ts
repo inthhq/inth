@@ -56,7 +56,7 @@ afterEach(() => {
 describe('createConsentRouteHandlers', () => {
 	it('reads the manifest from the mode: manifestUrl or projectUrl', async () => {
 		for (const [mode, expected] of [
-			[manifestMode(), `${BACKEND}/manifest`],
+			[manifestMode(), `${BACKEND}/v1/consent/manifest`],
 			[
 				manifestMode({ manifestUrl: 'https://cdn.example.com/m.json' }),
 				'https://cdn.example.com/m.json',
@@ -68,7 +68,7 @@ describe('createConsentRouteHandlers', () => {
 			await createConsentRouteHandlers({
 				fetch,
 				options: options({ mode, projectUrl: BACKEND }),
-			}).manifest(request('/api/inth/manifest'));
+			}).manifest(request('/api/inth/v1/consent/manifest'));
 			expect(fetch.mock.calls[0]?.[0]).toBe(expected);
 		}
 	});
@@ -84,7 +84,7 @@ describe('createConsentRouteHandlers', () => {
 				}),
 				projectUrl: '',
 			}),
-		}).manifest(request('/api/inth/manifest'));
+		}).manifest(request('/api/inth/v1/consent/manifest'));
 		expect(response.status).toBe(200);
 		expect(fetch.mock.calls[0]?.[0]).toBe('https://cdn.example.com/m.json');
 	});
@@ -99,7 +99,7 @@ describe('createConsentRouteHandlers', () => {
 			}),
 		});
 		const response = await handlers.init(
-			request('/api/inth/init', { 'x-inth-country': 'DE' })
+			request('/api/inth/v1/consent/init', { 'x-inth-country': 'DE' })
 		);
 		expect(response.status).toBe(200);
 		expect(
@@ -118,7 +118,7 @@ describe('createConsentRouteHandlers', () => {
 		});
 		const payload = await (
 			await handlers.init(
-				request('/api/inth/init', {
+				request('/api/inth/v1/consent/init', {
 					'accept-language': 'fr',
 					'x-inth-country': 'DE',
 				})
@@ -134,9 +134,9 @@ describe('createConsentRouteHandlers', () => {
 		});
 		const get = (path: string) =>
 			handlers.GET(request(`/api/inth/${path}`), { path });
-		const manifest = await get('manifest');
-		const init = await get('init');
-		const other = await get('subjects');
+		const manifest = await get('v1/consent/manifest');
+		const init = await get('v1/consent/init');
+		const other = await get('v1/consent/records');
 		expect(manifest.headers.get('cache-control')).toBe('s-maxage=60');
 		expect(init.headers.get('cache-control')).toBe('private, no-store');
 		expect(other.status).toBe(404);
@@ -155,7 +155,7 @@ describe('createConsentRouteHandlers', () => {
 		await createConsentRouteHandlers({
 			fetch: upstream(),
 			options: options(),
-		}).init(request('/api/inth/init'), {
+		}).init(request('/api/inth/v1/consent/init'), {
 			locals: { cfContext: { waitUntil } },
 		});
 		expect(waitUntil).toHaveBeenCalledTimes(1);
@@ -216,11 +216,11 @@ it('serves Astro manifest SSR references through the same-origin init route', as
 	const reference = context.config.initialIab?.gvlReference;
 	expect(context.config.initialIab?.gvl).toBeNull();
 	expect(reference?.url).toBe(
-		`/privacy/init?inth-gvl=${completeGVL.vendorListVersion}&language=en`
+		`/privacy/v1/consent/init?inth-gvl=${completeGVL.vendorListVersion}&language=en`
 	);
 	const handlers = createConsentRouteHandlers({ options: resolved });
 	const init = await handlers.init(
-		request('/privacy/init', { 'x-inth-country': 'DE' })
+		request('/privacy/v1/consent/init', { 'x-inth-country': 'DE' })
 	);
 	expect((await init.json()).gvlReference.url).toBe(reference?.url);
 	const list = await handlers.init(request(reference?.url ?? ''));

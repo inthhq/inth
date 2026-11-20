@@ -72,7 +72,7 @@ so it can hold `scripts` but must hold no secrets.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `projectUrl` | `NEXT_PUBLIC_INTH_PROJECT_URL` | Backend base URL. Choices post to `${projectUrl}/subjects`. |
+| `projectUrl` | `NEXT_PUBLIC_INTH_PROJECT_URL` | Backend base URL. Choices post to `${projectUrl}/v1/consent/records`. |
 | `mode` | `manifest()` | `manifest()`, `hosted()` or `testing()` from `@inth/nextjs`. See [consent modes](/docs/concepts/modes). |
 | `routePrefix` | none | Where you mount the [consent route](#initialize-in-the-browser). Set it only when some pages resolve consent in the browser. |
 | `proxy` | `false` | Send browser saves through the consent route too. See [optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin). |
@@ -104,7 +104,7 @@ shows a banner, `ConsentBanner` renders on the server and arrives in that later
 chunk, so it is visible before the page hydrates. Until the browser applies the
 result after hydration, the dialog stays hidden, optional categories stay
 denied, `ConsentGate` shows its placeholder and gated scripts do not load. The
-browser makes no `/init` request.
+browser makes no `/v1/consent/init` request.
 
 To mount the banner after hydration instead, pass `streamBanner: false` in
 `ConsentRoot`'s `options`.
@@ -168,14 +168,14 @@ Then mount one catch-all route under it:
 
 <include src="../../shared/examples/nextjs/consent-route.mdx" />
 
-`createConsentRoute()` answers `GET /api/inth/init` and
-`GET /api/inth/manifest` from the bundled snapshot. Any other path under
+`createConsentRoute()` answers `GET /api/inth/v1/consent/init` and
+`GET /api/inth/v1/consent/manifest` from the bundled snapshot. Any other path under
 `/api/inth` returns 404. To keep saves on your origin too, set `proxy: true`
 in `inth.config.ts` and pass `createConsentRoute({ proxy: true })`, which
-forwards the remaining consent paths, such as `/subjects`, to the backend; see
+forwards the remaining consent paths, such as `/v1/consent/records`, to the backend; see
 [optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin).
 
-Without `routePrefix`, a page without `state` calls `${projectUrl}/init`. The
+Without `routePrefix`, a page without `state` calls `${projectUrl}/v1/consent/init`. The
 HTML is the same for every visitor either way. To mix these pages with
 server-rendered ones, see
 [static, ISR and cached pages](/docs/frameworks/next/rendering#render-static-isr-and-cached-pages).
@@ -195,8 +195,8 @@ export default defineConsentConfig({ mode: hosted() });
 Keep `withConsentManifest` in `next.config.ts`: it is what finds
 `inth.config.ts`. With `hosted()` it downloads no manifest, so `next build`
 does not contact the backend. The layouts stay the same. `resolveConsent`
-and the browser now call `${projectUrl}/init`, and consent choices still go to
-`${projectUrl}/subjects`. Every visit makes a backend request, which the
+and the browser now call `${projectUrl}/v1/consent/init`, and consent choices still go to
+`${projectUrl}/v1/consent/records`. Every visit makes a backend request, which the
 manifest avoids. For a browser-only setup with no server work, follow
 [client-side initialization](/docs/frameworks/next/client-side).
 
@@ -224,8 +224,8 @@ site in a fresh browser session with DevTools open.
    `measurement` category). PostHog loads.
 4. Open **Privacy settings** again and turn **Analytics** off. The page reloads
    and PostHog does not load again.
-5. The browser makes no `/init` request, and choices post to
-   `${projectUrl}/subjects`.
+5. The browser makes no `/v1/consent/init` request, and choices post to
+   `${projectUrl}/v1/consent/records`.
 
 Test a new visitor and two locations. Requests without location headers
 follow your unknown-location rule. [Script loading](/docs/frameworks/next/scripts)

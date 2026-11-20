@@ -24,16 +24,15 @@ import type {
 	V1DocumentCurrentOutput,
 } from '@inth/sdk-schema/types';
 
-import { isUuidV7 } from '../libs/subject-uuid';
 import { readApiError } from '../transports/v1/error';
+import { trimTrailingSlash, V1_ROUTES } from '../transports/v1/paths';
 import {
 	currentDocumentPath,
+	isUuidV7,
 	readJson,
 	resolveV1Fetch,
 	toProperty,
-	trimTrailingSlash,
 	V1_JSON_HEADERS,
-	V1_ROUTES,
 } from '../transports/v1/routes';
 
 const LABEL = 'Inth documents';
@@ -96,13 +95,13 @@ export interface RecordAcceptancesInput {
 /** The documents client. */
 export interface DocumentsClient {
 	/**
-	 * Read the release of `type` in force. Throws an `ApiError` with code
+	 * Read the release of `type` in force. Throws an `InthApiError` with code
 	 * `not_found` when the type has no current version.
 	 */
 	getCurrent: (type: string) => Promise<V1DocumentCurrentOutput>;
 	/**
 	 * Record acceptances. Resolves with the canonical subject ID and what
-	 * was recorded; throws an `ApiError` (for example `document_unknown`,
+	 * was recorded; throws an `InthApiError` (for example `document_unknown`,
 	 * for a release the project never published) when nothing was.
 	 */
 	recordAcceptances: (

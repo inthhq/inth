@@ -76,17 +76,15 @@ vi.mock('#imports', async () => {
 			fetch: (input: string, init?: RequestInit) => {
 				const headers = Object.fromEntries(new Headers(init?.headers));
 				nuxt.fetchHeaders.push(headers);
-				expect(headers[INTH_POLICY_CONTRACT_HEADER]).toBe('1');
+				// `/v1` reads no contract header: the path names the contract.
+				expect(headers).not.toHaveProperty(INTH_POLICY_CONTRACT_HEADER);
 				nuxt.requests += 1;
-				const body = input.split('?')[0]?.endsWith('/manifest')
+				const body = input.split('?')[0]?.endsWith('/v1/consent/manifest')
 					? nuxt.manifestDocument
 					: nuxt.response;
 				return Promise.resolve(
 					new Response(JSON.stringify(body), {
-						headers: {
-							'content-type': 'application/json',
-							[INTH_POLICY_CONTRACT_HEADER]: '1',
-						},
+						headers: { 'content-type': 'application/json' },
 					})
 				);
 			},
@@ -474,7 +472,7 @@ test('an `ssr: false` route asks for the policy before the app mounts', async ()
 	});
 	// `/init` is on its way before the app mounts, and nothing waits for mount.
 	await vi.waitFor(() =>
-		expect(requests.some((url) => url.endsWith('/init'))).toBe(true)
+		expect(requests.some((url) => url.endsWith('/v1/consent/init'))).toBe(true)
 	);
 	expect(hooks).not.toContain('app:mounted');
 	const container = document.createElement('div');
@@ -486,7 +484,9 @@ test('an `ssr: false` route asks for the policy before the app mounts', async ()
 				document.querySelector('[data-testid="consent-banner-root"]')
 			).not.toBeNull()
 		);
-		expect(requests.filter((url) => url.endsWith('/init'))).toHaveLength(1);
+		expect(
+			requests.filter((url) => url.endsWith('/v1/consent/init'))
+		).toHaveLength(1);
 	} finally {
 		app.unmount();
 	}
@@ -523,7 +523,9 @@ test('an `ssr: false` route that resolves in the browser starts once the app mou
 	// The manifest request left when the runtime was built; starting before
 	// the mount would only put work in front of it.
 	await vi.waitFor(() =>
-		expect(requests.some((url) => url.includes('/manifest'))).toBe(true)
+		expect(requests.some((url) => url.includes('/v1/consent/manifest'))).toBe(
+			true
+		)
 	);
 	expect(hooks).toContain('app:mounted');
 });

@@ -21,7 +21,7 @@ import type {
 
 const BUILT: BuiltOptions = {
 	mode: {
-		manifestUrl: 'http://localhost:3000/api/bench-consent/manifest',
+		manifestUrl: 'http://localhost:3000/api/bench-consent/v1/consent/manifest',
 		resolve: 'browser',
 		type: 'manifest',
 	},
@@ -60,14 +60,14 @@ describe('pinBuildOptions', () => {
 	test('keeps the mode fields the server reads at runtime', () => {
 		const runtimeConfig = overridden({
 			mode: {
-				manifestUrl: 'http://localhost:4100/manifest?cold=1',
+				manifestUrl: 'http://localhost:4100/v1/consent/manifest?cold=1',
 				projectUrl: 'https://runtime.example.com',
 				type: 'hosted',
 			},
 		});
 		pinBuildOptions(runtimeConfig, BUILT);
 		expect(runtimeConfig.public.inth.mode).toEqual({
-			manifestUrl: 'http://localhost:4100/manifest?cold=1',
+			manifestUrl: 'http://localhost:4100/v1/consent/manifest?cold=1',
 			projectUrl: 'https://runtime.example.com',
 			resolve: 'browser',
 			type: 'manifest',
@@ -115,7 +115,7 @@ describe('findOverriddenOptions', () => {
 			findOverriddenOptions(
 				overridden({
 					mode: {
-						manifestUrl: 'http://localhost:4100/manifest',
+						manifestUrl: 'http://localhost:4100/v1/consent/manifest',
 						projectUrl: 'https://runtime.example.com',
 						source: 'runtime',
 					},
@@ -141,12 +141,12 @@ describe('createBuildOptionsGuard', () => {
 		const warned: BuiltOptionName[] = [];
 		const guard = createBuildOptionsGuard(BUILT, (name) => warned.push(name));
 		const runtimeConfig = overridden({
-			mode: { manifestUrl: 'http://localhost:4100/manifest?cold=1' },
+			mode: { manifestUrl: 'http://localhost:4100/v1/consent/manifest?cold=1' },
 		});
 		guard(runtimeConfig);
 		expect(runtimeConfig.public.inth.mode).toHaveProperty(
 			'manifestUrl',
-			'http://localhost:4100/manifest?cold=1'
+			'http://localhost:4100/v1/consent/manifest?cold=1'
 		);
 		expect(warned).toEqual([]);
 	});

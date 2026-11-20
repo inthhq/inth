@@ -6,7 +6,7 @@ const getBenchManifestUrl = function getBenchManifestUrl() {
 	const token = process.env.INTH_BENCH_COLD_MANIFEST_TOKEN;
 	const base =
 		process.env.INTH_BENCH_MANIFEST_URL ??
-		'http://127.0.0.1:4313/api/bench-consent/manifest';
+		'http://127.0.0.1:4313/api/bench-consent/v1/consent/manifest';
 	return token
 		? `${base}${base.includes('?') ? '&' : '?'}cold=${encodeURIComponent(token)}`
 		: base;

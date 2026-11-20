@@ -91,7 +91,7 @@ describe('consent middleware', () => {
 		// counted below are the refresh alone.
 		const options: InthAstroOptions = {
 			mode: manifestMode({
-				manifestUrl: 'https://consent.example.com/manifest',
+				manifestUrl: 'https://consent.example.com/v1/consent/manifest',
 			}),
 			projectUrl: '/api/self-host',
 		};
@@ -286,7 +286,9 @@ describe('consent middleware', () => {
 		expect(fetchImpl).toHaveBeenCalledOnce();
 		const [url, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
 		// The query carries the consent journey the render started.
-		expect(url.split('?')[0]).toBe('https://consent.example.com/init');
+		expect(url.split('?')[0]).toBe(
+			'https://consent.example.com/v1/consent/init'
+		);
 		expect((init.headers as Record<string, string>)['x-inth-country']).toBe(
 			'DE'
 		);
@@ -366,33 +368,6 @@ describe('consent middleware', () => {
 		expect(copy?.cookieBanner.description).toBeTruthy();
 	});
 
-	it.each(['999', 'invalid'])(
-		'denies an unsupported producer contract %s',
-		async (contract) => {
-			const inth = await run({
-				fetch: vi.fn(() =>
-					Response.json(
-						{
-							location: { countryCode: null, regionCode: null },
-							policyResolution: testWire({ model: 'opt-out', prompt: 'none' }),
-							translations: { language: 'en', translations: {} },
-						},
-						{ headers: { 'x-inth-policy-contract': contract } }
-					)
-				) as never,
-				options: {
-					mode: hostedMode(),
-					projectUrl: 'https://consent.example.com',
-				},
-			});
-			expect(inth.snapshot.resolution).toMatchObject({
-				reason: 'unsupported-contract',
-				status: 'failed',
-			});
-			expect(inth.snapshot.effectivePermissions.marketing).toBe(false);
-		}
-	);
-
 	it('degrades silently when the backend is down', async () => {
 		const fetchImpl = vi.fn(() => {
 			throw new Error('ECONNREFUSED');
@@ -407,44 +382,11 @@ describe('consent middleware', () => {
 		expect(inth.config.initialTranslations?.language).toBe('en');
 	});
 
-	it('forwards only the consent cookie to the backend', async () => {
+	it('sends init no cookie, a consent cookie included', async () => {
 		const fetchImpl = vi.fn(() => Response.json({}));
 		await run({
 			fetch: fetchImpl as never,
 			headers: { cookie: 'session=abc; inth=c.necessary:1' },
-			options: {
-				mode: hostedMode(),
-				projectUrl: 'https://consent.example.com',
-			},
-		});
-		const [, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
-		expect((init.headers as Record<string, string>).cookie).toBe(
-			'inth=c.necessary:1'
-		);
-	});
-
-	it('forwards the configured consent cookie name', async () => {
-		const fetchImpl = vi.fn(() => Response.json({}));
-		await run({
-			fetch: fetchImpl as never,
-			headers: { cookie: 'session=abc; my-consent=c.necessary:1' },
-			options: {
-				mode: hostedMode(),
-				projectUrl: 'https://consent.example.com',
-				storageConfig: { storageKey: 'my-consent' },
-			},
-		});
-		const [, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
-		expect((init.headers as Record<string, string>).cookie).toBe(
-			'my-consent=c.necessary:1'
-		);
-	});
-
-	it('sends no cookie when nothing consent-related is present', async () => {
-		const fetchImpl = vi.fn(() => Response.json({}));
-		await run({
-			fetch: fetchImpl as never,
-			headers: { cookie: 'session=abc' },
 			options: {
 				mode: hostedMode(),
 				projectUrl: 'https://consent.example.com',
@@ -463,7 +405,9 @@ describe('consent middleware', () => {
 			options: { mode: hostedMode(), projectUrl: '/api/consent' },
 		});
 		const [url] = fetchImpl.mock.calls[0] as [string, RequestInit];
-		expect(url.split('?')[0]).toBe('https://example.com/api/consent/init');
+		expect(url.split('?')[0]).toBe(
+			'https://example.com/api/consent/v1/consent/init'
+		);
 	});
 
 	it('never fetches its own injected init route', async () => {
@@ -475,37 +419,10 @@ describe('consent middleware', () => {
 		expect(fetchImpl).not.toHaveBeenCalled();
 		expect(result.hasPolicy).toBe(false);
 	});
-
-	it('withholds the consent cookie from a cleartext backend', async () => {
-		const fetchImpl = vi.fn(() => Response.json({}));
-		await run({
-			fetch: fetchImpl as never,
-			headers: { cookie: 'inth=c.necessary:1' },
-			options: {
-				mode: hostedMode(),
-				projectUrl: 'http://consent.example.com',
-			},
-		});
-		const [, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
-		expect((init.headers as Record<string, string>).cookie).toBeUndefined();
-	});
-
-	it('still sends the consent cookie to a loopback backend', async () => {
-		const fetchImpl = vi.fn(() => Response.json({}));
-		await run({
-			fetch: fetchImpl as never,
-			headers: { cookie: 'inth=c.necessary:1' },
-			options: { mode: hostedMode(), projectUrl: 'http://localhost:8787' },
-		});
-		const [, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
-		expect((init.headers as Record<string, string>).cookie).toBe(
-			'inth=c.necessary:1'
-		);
-	});
 });
 
 it.each(['inth=consent', 'session=unrelated'])(
-	'preserves hosted Astro vendor loading when the request cookie is %s',
+	'defers the hosted vendor list to the browser when the request cookie is %s',
 	async (cookie) => {
 		const fetch = vi.fn(() =>
 			Promise.resolve(
@@ -530,12 +447,9 @@ it.each(['inth=consent', 'session=unrelated'])(
 				},
 			});
 			expect(fetch).toHaveBeenCalledOnce();
-			expect(result.config.initialIab?.gvl).toEqual(
-				cookie.startsWith('inth=') ? completeGVL : null
-			);
-			expect(Boolean(result.config.initialIab?.gvlReference)).toBe(
-				!cookie.startsWith('inth=')
-			);
+			// No cookie travels to init, so the browser can ask it for the list.
+			expect(result.config.initialIab?.gvl).toBeNull();
+			expect(result.config.initialIab?.gvlReference).toBeDefined();
 		} finally {
 			vi.unstubAllGlobals();
 		}

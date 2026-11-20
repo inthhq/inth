@@ -22,7 +22,7 @@ afterEach(() => {
 	vi.unstubAllGlobals();
 });
 
-test('a render starts a page journey and sends it on the hosted /init', async () => {
+test('a render starts a page journey and sends it on the hosted /v1/consent/init', async () => {
 	const fetch = backend();
 	vi.stubGlobal('fetch', fetch);
 	const state = await resolveNuxtConsent(
@@ -46,6 +46,6 @@ test('manifest() without a consent route reads the manifest itself', async () =>
 		request
 	);
 	expect(String(fetch.mock.calls[0]?.[0])).toBe(
-		'https://consent.example.com/manifest'
+		'https://consent.example.com/v1/consent/manifest'
 	);
 });

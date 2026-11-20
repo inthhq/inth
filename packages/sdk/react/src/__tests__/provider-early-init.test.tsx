@@ -34,7 +34,7 @@ import { policyFixture } from './policy-fixture';
 
 const BACKEND = 'https://consent.example/api/inth';
 
-/** An `/init` body for a policy whose id tells the responses apart. */
+/** An `/v1/consent/init` body for a policy whose id tells the responses apart. */
 const initBody = (id: string) =>
 	JSON.stringify({
 		branding: 'inth',
@@ -71,12 +71,7 @@ beforeEach(() => {
 					),
 					fail: () => reject(new TypeError('Failed to fetch')),
 					headers: init.headers,
-					respond: (policyId) =>
-						resolve(
-							new Response(initBody(policyId), {
-								headers: { 'x-inth-policy-contract': '1' },
-							})
-						),
+					respond: (policyId) => resolve(new Response(initBody(policyId))),
 				});
 			})
 	);
@@ -87,13 +82,13 @@ afterEach(() => {
 	vi.unstubAllGlobals();
 });
 
-/** `/init` requests, by path: a mounted runtime adds its journey as a query. */
+/** `/v1/consent/init` requests, by path: a mounted runtime adds its journey as a query. */
 const initCalls = () =>
 	backendFetch.mock.calls.filter(([url]) =>
-		String(url).split('?')[0]?.endsWith('/init')
+		String(url).split('?')[0]?.endsWith('/v1/consent/init')
 	);
 
-/** Records, while it renders, how many `/init` requests were already out. */
+/** Records, while it renders, how many `/v1/consent/init` requests were already out. */
 const SeenAtRender = ({ seen }: { seen: number[] }) => {
 	seen.push(initCalls().length);
 	return null;
@@ -173,7 +168,7 @@ test('the early /init and the save it leads to carry one journey', async () => {
 	requests[1]?.respond('early');
 	await saving;
 	const save = backendFetch.mock.calls.find(([url]) =>
-		String(url).split('?')[0]?.endsWith('/subjects')
+		String(url).split('?')[0]?.endsWith('/v1/consent/records')
 	);
 	expect(readJourneyParams(String(save?.[0]))).toEqual({
 		id: early?.id,
@@ -418,7 +413,7 @@ test('a retry after the global fetch changed sends its own request through the n
 			<App />
 		</Suspense>
 	);
-	expect(calls).toEqual(['old /init']);
+	expect(calls).toEqual(['old /v1/consent/init']);
 
 	// An instrumentation wrapper installed before React retries.
 	vi.stubGlobal('fetch', globalFetch('new'));
@@ -433,13 +428,15 @@ test('a retry after the global fetch changed sends its own request through the n
 	kernel?.commands.save('none');
 	// Every request after the thrown-away render's goes through the new one.
 	await vi.waitFor(() =>
-		expect(calls.filter((call) => !call.endsWith('/init'))).not.toEqual([])
+		expect(
+			calls.filter((call) => !call.endsWith('/v1/consent/init'))
+		).not.toEqual([])
 	);
 	expect(calls.slice(1).filter((call) => !call.startsWith('new '))).toEqual([]);
 	await view.unmount();
 });
 
-test('sibling providers given one mode object each get a transport and an /init', async () => {
+test('sibling providers given one mode object each get a transport and an /v1/consent/init', async () => {
 	const kernels = new Map<string, ConsentKernel>();
 	const Capture = ({ name }: { name: string }) => {
 		const kernel = useContext(KernelContext);
@@ -495,7 +492,7 @@ test('sibling providers given one mode object each get a transport and an /init'
 	await view.unmount();
 });
 
-test('sibling providers given one hosted() mode each get their own /init', async () => {
+test('sibling providers given one hosted() mode each get their own /v1/consent/init', async () => {
 	const seen: number[] = [];
 	const kernels = new Map<string, ConsentKernel>();
 	const Capture = ({ name }: { name: string }) => {
@@ -713,9 +710,9 @@ test('providers whose hosted() modes differ never share a request', async () => 
 	);
 
 	expect(initCalls().map(([url]) => String(url).split('?')[0])).toEqual([
-		`${BACKEND}/init`,
-		`${BACKEND}/other/init`,
-		`${BACKEND}/init`,
+		`${BACKEND}/v1/consent/init`,
+		`${BACKEND}/other/v1/consent/init`,
+		`${BACKEND}/v1/consent/init`,
 	]);
 	expect(requests[2]?.headers['accept-language']).toBe('fr');
 	expect(otherFetch).toHaveBeenCalledTimes(1);
@@ -818,7 +815,7 @@ test('a retry that turns the journey on asks again, and its save matches that re
 	requests[2]?.respond('with');
 	await saving;
 	const save = backendFetch.mock.calls.find(([url]) =>
-		String(url).split('?')[0]?.endsWith('/subjects')
+		String(url).split('?')[0]?.endsWith('/v1/consent/records')
 	);
 	expect(readJourneyParams(String(save?.[0]))?.id).toBe(asked?.id);
 });

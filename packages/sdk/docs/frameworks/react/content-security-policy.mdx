@@ -14,9 +14,9 @@ A React app with Inth adds these to the page, and your policy must allow them:
 | `@inth/react/styles.css`, only if you import it with `styles: false` | `style-src 'self'` |
 | The `<style id="inth-theme">` element, if you render `ConsentTheme` | `style-src` with a nonce or its hash |
 | `<script>` elements the script loader creates for `scripts` entries, both `src` and inline | `script-src` with each vendor's host, or a nonce |
-| The inline `<script>` that `consentManifest()` adds to `index.html` to send `/init` early | `script-src` with a nonce or its hash |
+| The inline `<script>` that `consentManifest()` adds to `index.html` to send `/v1/consent/init` early | `script-src` with a nonce or its hash |
 | With server rendering, the inline `<script>` before the banner's buttons that holds a tap made before hydration | `script-src` with a nonce or its hash |
-| Browser requests to your backend's `/init` and `/subjects` | `connect-src` with the backend origin |
+| Browser requests to your backend's `/v1/consent/init` and `/v1/consent/records` | `connect-src` with the backend origin |
 | Iframes inside `ConsentGate`, and the frames, images and requests your vendors load | `frame-src`, `img-src`, `connect-src` for each vendor |
 
 In a client-rendered app, Inth components set their inline styles through
@@ -25,9 +25,9 @@ directive.
 
 ## Allow the consent backend
 
-With `hosted()`, the browser calls `GET {url}/init` on every page load
-and `POST {url}/subjects` when the visitor accepts, rejects or saves. With
-`manifest()`, it calls `POST {url}/subjects`, and `GET {url}/init` only when
+With `hosted()`, the browser calls `GET {url}/v1/consent/init` on every page load
+and `POST {url}/v1/consent/records` when the visitor accepts, rejects or saves. With
+`manifest()`, it calls `POST {url}/v1/consent/records`, and `GET {url}/v1/consent/init` only when
 the policy needs a location the browser does not know. Add the
 backend's origin to `connect-src`:
 
@@ -70,7 +70,7 @@ With Vite, set `html.cspNonce` to a placeholder in `vite.config.ts`, and have
 your server replace it with a new nonce on every response. Vite then adds
 `<meta property="csp-nonce" nonce="...">` to the page, and the browser keeps the
 value in the tag's `nonce` property. Vite also stamps the nonce on the early
-`/init` script. Read it where you create the provider, in the
+`/v1/consent/init` script. Read it where you create the provider, in the
 quickstart's `src/consent.tsx`:
 
 {/* example: fragment */}
@@ -90,9 +90,9 @@ The provider reads `options.nonce` once, when it mounts. A server-rendered
 React app, such as one built with React Router framework mode, reads the nonce
 from its own request and passes it the same way.
 
-On a static host, allow the early `/init` script by the hash in the browser's
+On a static host, allow the early `/v1/consent/init` script by the hash in the browser's
 `Refused to execute inline script` error. If the policy blocks it, the app
-sends `/init` itself.
+sends `/v1/consent/init` itself.
 
 ## Allow Inth's style elements
 
@@ -143,7 +143,7 @@ opt-in policy.
 3. Click **Accept All**. The vendor scripts load, and their `<script>` elements have ids
    starting `inth-`. With a nonce, read each element's `nonce` property in the
    console. Browsers hide the attribute from `getAttribute`.
-4. The save to `/subjects` succeeds. A `connect-src` violation here means the
+4. The save to `/v1/consent/records` succeeds. A `connect-src` violation here means the
    backend origin is missing.
 5. Reload. The banner stays closed, and the vendors load without a console
    error.

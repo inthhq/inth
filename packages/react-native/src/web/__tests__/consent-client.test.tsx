@@ -514,7 +514,9 @@ describe('dryRun on web', () => {
 		const urls = fetch.mock.calls.map(([url]) => String(url));
 		expect(urls.length).toBeGreaterThan(0);
 		expect(
-			urls.every((url) => url.startsWith('http://localhost:8787/init'))
+			urls.every((url) =>
+				url.startsWith('http://localhost:8787/v1/consent/init')
+			)
 		).toBe(true);
 	});
 
@@ -580,7 +582,7 @@ describe('dryRun on web', () => {
 
 		// A browser's GET /init carries the GPC override in the query string.
 		const first = new URL(String(fetch.mock.calls[0]?.[0]));
-		expect(first.pathname).toBe('/init');
+		expect(first.pathname).toBe('/v1/consent/init');
 		expect(first.searchParams.get('gpc')).toBe('1');
 		expect(client.getSnapshot().privacySignals.gpc.active).toBe(true);
 	});

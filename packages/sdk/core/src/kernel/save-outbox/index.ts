@@ -50,7 +50,7 @@
  *   kernel is not disposed.
  * - Queue transactions never span a network call: a hung transport must
  *   not block other tabs. Two tabs may replay the same entry; the persisted
- *   `givenAt` makes the backend derive the same consent id for both.
+ *   idempotency key makes the backend record it once.
  */
 
 import type { OptionalConsentCategory } from '../../consent-record/types';
@@ -68,8 +68,8 @@ import type {
 import type { KernelRuntime } from '../runtime';
 import type { EnqueueResult, QueueWorker, QueueWorkerOptions } from './queue';
 import { queueTools } from './queue-tools';
+import { appendSave } from './store';
 import type { SaveOutboxStore } from './store';
-import { toStoredPayload, withoutStoredTokens } from './stored-payload';
 import {
 	liveSupersession,
 	withoutSuperseded,
@@ -112,6 +112,12 @@ export interface SaveOutbox {
 	 * is not ready yet. Requests already sent are not held.
 	 */
 	hold: (until: Promise<unknown>) => void;
+	/**
+	 * Move the visitor from the `sub_` id `from` to the UUID the backend
+	 * answered for it, in every tab, with the saves queued under `from`. Does
+	 * nothing when `from` is not a `sub_` id.
+	 */
+	adoptSubject: (from: string, to: string) => Promise<void>;
 }
 
 export interface SaveOutboxOptions {
@@ -139,6 +145,9 @@ const SAVE_FAILED_WARNINGS = {
 		'[inth] Consent save failed, and storage refused to queue it, so it will not be resent. The choice is kept in this browser only.',
 } as const;
 
+/** The prefix of a subject ID a c15t client made. */
+const LEGACY_SUBJECT_PREFIX = 'sub_';
+
 const warnSaveFailed = function warnSaveFailed(
 	outcome: keyof typeof SAVE_FAILED_WARNINGS | 'superseded',
 	error?: unknown
@@ -156,20 +165,16 @@ export const createSaveOutbox = function createSaveOutbox({
 	retryWhenOnline,
 	loadQueue = () => import('./queue'),
 }: SaveOutboxOptions): SaveOutbox {
-	const { batch, commit, emit, getSnapshot } = runtime;
+	const { emit, getSnapshot } = runtime;
 	let worker: QueueWorker | undefined;
 	// Instance-local: another page must still recover a stranded request.
 	const directSends = new Set<SavePayload>();
+	// By key: the stored entry of a save in flight is still this action
+	// after it was narrowed, or moved to another subject id.
 	const isSending = (payload: SavePayload): boolean =>
+		payload.idempotencyKey !== undefined &&
 		[...directSends].some(
-			(pending) =>
-				pending.subjectId === payload.subjectId &&
-				pending.confirmed.actionAt === payload.confirmed.actionAt &&
-				// A narrowed replay is still this action; disjoint confirmations
-				// sharing its timestamp remain free to retry independently.
-				Object.keys(payload.confirmed.categories).every((category) =>
-					Object.hasOwn(pending.confirmed.categories, category)
-				)
+			(pending) => pending.idempotencyKey === payload.idempotencyKey
 		);
 	// What requests wait for after the pre-send macrotask: see `hold()`.
 	let held: Promise<unknown> | undefined;
@@ -220,15 +225,10 @@ export const createSaveOutbox = function createSaveOutbox({
 			if (!payload) {
 				return 'superseded';
 			}
-			const stored = tx.read('saves');
-			return tx.write('saves', [
-				...withoutStoredTokens(stored),
-				{
-					attempts: 0,
-					payload: toStoredPayload(payload),
-					queuedAt: Date.now(),
-				},
-			])
+			return tx.write(
+				'saves',
+				appendSave(tx.read('saves'), payload, Date.now())
+			)
 				? 'queued'
 				: 'unstored';
 		});
@@ -291,30 +291,35 @@ export const createSaveOutbox = function createSaveOutbox({
 	};
 
 	/**
-	 * Take the subject id the backend returned for the newest action: only
-	 * while the action's choice and subject are still the current ones.
+	 * Move the visitor from the `sub_` id `from` to the id the backend
+	 * answered for it. Only that move: an answer never moves a visitor who
+	 * is already on a UUID. The move is recorded with the queue, so every tab
+	 * treats saves under either id as one subject's, also when nothing was
+	 * queued under `from`; the queue's code loads for it.
 	 */
-	const adoptServerSubject = function adoptServerSubject(
+	const adoptSubject = async function adoptSubject(
+		from: string,
+		to: string
+	): Promise<void> {
+		if (from.startsWith(LEGACY_SUBJECT_PREFIX) && from !== to) {
+			await (await loadWorker())?.reassignSubject(from, to);
+		}
+	};
+
+	/**
+	 * Take the id a save answered for the subject it went out under, while
+	 * that subject is still the visitor's. A save answered late must not
+	 * replace a UUID the visitor got since, from a link or a newer save. A
+	 * choice made since does not matter.
+	 */
+	const adoptServerSubject = async function adoptServerSubject(
 		subjectId: string | undefined,
 		action: ConsentSnapshot
-	): void {
-		const current = getSnapshot();
-		if (
-			!subjectId ||
-			subjectId === current.subject?.subjectId ||
-			current.explicitChoice !== action.explicitChoice ||
-			current.subject?.subjectId !== action.subject?.subjectId
-		) {
-			return;
+	): Promise<void> {
+		const from = getSnapshot().subject?.subjectId;
+		if (subjectId && from && from === action.subject?.subjectId) {
+			await adoptSubject(from, subjectId);
 		}
-		batch(() => {
-			commit({ subject: { ...current.subject, subjectId } });
-			emit({
-				previousSubjectId: current.subject?.subjectId,
-				snapshot: getSnapshot(),
-				type: 'subject:resolved',
-			});
-		});
 	};
 
 	const trackDirectSend = async function trackDirectSend(
@@ -334,8 +339,7 @@ export const createSaveOutbox = function createSaveOutbox({
 	/**
 	 * Transport phase of one action. The outcome only touches the queue
 	 * while the action's confirmed receipts are current. Disjoint category
-	 * actions remain independent. Only the newest action can map the subject
-	 * returned by the server; older outcomes cannot replace its identity.
+	 * actions remain independent.
 	 */
 	const performSendAction = async function performSendAction(
 		payload: SavePayload,
@@ -391,21 +395,18 @@ export const createSaveOutbox = function createSaveOutbox({
 				return { confirmed, ok: false };
 			}
 			const result = await save(sending);
-			const remaining = currentPayload();
-			if (!remaining) {
-				await discard(payload);
-				return { ...result, confirmed };
-			}
 			if (result.ok) {
 				// The whole action, not the part still current: a newer choice
 				// that storage refused never narrowed the queued entry.
 				await discard(payload);
-			} else {
+				// Also when a newer choice superseded this one: the answer names
+				// the subject, and saves queued under the old id move with it.
+				await adoptServerSubject(result.subjectId, actionSnapshot);
+			} else if (currentPayload()) {
 				warnSaveFailed(await ensureQueued());
 				retryWhenOnline();
-			}
-			if (result.ok && currentPayload()) {
-				adoptServerSubject(result.subjectId, actionSnapshot);
+			} else {
+				await discard(payload);
 			}
 			return { ...result, confirmed };
 		} catch (error) {
@@ -447,6 +448,7 @@ export const createSaveOutbox = function createSaveOutbox({
 	};
 
 	return {
+		adoptSubject,
 		clear,
 		hold(until) {
 			held = Promise.allSettled([held, until]);

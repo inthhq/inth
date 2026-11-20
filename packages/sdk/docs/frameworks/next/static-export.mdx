@@ -30,7 +30,7 @@ has nothing to answer it. `NEXT_PUBLIC_C15T_BACKEND_URL` works too; when both
 are set, `NEXT_PUBLIC_INTH_PROJECT_URL` wins.
 
 Create `inth.config.ts` at the project root with `mode: hosted()`. Without a
-server there is no consent route, so the browser calls `${projectUrl}/init`.
+server there is no consent route, so the browser calls `${projectUrl}/v1/consent/init`.
 
 <include src="../../shared/examples/nextjs/client-side-config.mdx" />
 
@@ -56,7 +56,7 @@ have no `getServerSideProps`, so `pageProps.consent` is undefined:
 <include src="../../shared/examples/nextjs-pages-router/pages-app.mdx" />
 
 Without server state, `ConsentRoot` initializes in the browser. Backend
-`/init` reads the visitor's location from its own request, so location-based
+`/v1/consent/init` reads the visitor's location from its own request, so location-based
 policies depend on the backend host's geography headers, not on your static
 host.
 
@@ -64,7 +64,7 @@ host.
 
 The exported HTML is the same for every visitor and cannot contain one
 visitor's consent. After the page loads, the browser restores the stored choice
-and requests the policy from `/init`. Until the policy resolves, optional
+and requests the policy from `/v1/consent/init`. Until the policy resolves, optional
 categories stay denied and the banner stays hidden. Do not add an unconditional
 analytics script to the exported HTML to work around that wait.
 
@@ -74,7 +74,7 @@ Run `next build` and serve the generated `out/` directory with a static file
 server. `next dev` can hide a dependency on an API route that the export does
 not have. Then open the site in a fresh browser session with DevTools open.
 
-1. The Network panel shows `/init` and `/subjects` requests to your backend's
+1. The Network panel shows `/v1/consent/init` and `/v1/consent/records` requests to your backend's
    origin, and no failed same-origin `/api/inth` request.
 2. Under an opt-in policy, the banner appears and no PostHog request runs.
    Click **Reject All** and reload. The banner stays closed and PostHog does
@@ -97,7 +97,7 @@ To resolve a manifest in the browser instead, set
 `mode: manifest({ resolve: 'browser', manifestUrl })` with an absolute
 `manifestUrl` the browser can fetch, such as
 `https://your-project.inth.app/manifest`. Browser resolution has no location
-input of its own, so location-based policies call the backend's `/init`
+input of its own, so location-based policies call the backend's `/v1/consent/init`
 unless you pass `geoUrl`. `@inth/nextjs/static` has lower-level helpers that
 resolve a bundled manifest; see
 [static manifest helpers](/docs/frameworks/next/data-fetching-reference#static-manifest-helpers).

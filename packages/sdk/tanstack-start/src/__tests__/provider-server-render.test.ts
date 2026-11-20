@@ -9,7 +9,7 @@ import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
 import { expect, test, vi } from 'vitest';
 
-test('a server render of a hosted provider sends no /init', () => {
+test('a server render of a hosted provider sends no /v1/consent/init', () => {
 	const fetch = vi.fn();
 	vi.stubGlobal('fetch', fetch);
 	const html = renderToString(

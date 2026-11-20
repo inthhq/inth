@@ -36,9 +36,10 @@ import { fetchCachedGvl } from '../gvl-cache';
 import { mapInitOutputToInitResponse } from '../init-output';
 import type { TransportInitResponse } from '../init-output';
 import { readApiError } from './error';
+import { trimTrailingSlash, V1_ROUTES } from './paths';
 import { createV1RecordTransport } from './records';
 import type { V1RecordTransport, V1RecordTransportOptions } from './records';
-import { resolveV1Fetch, trimTrailingSlash, V1_ROUTES } from './routes';
+import { resolveV1Fetch } from './routes';
 import {
 	reportV1ConsentSession,
 	sendsV1ConsentSessionReport,
@@ -210,7 +211,11 @@ export const createV1ManifestTransport = function createV1ManifestTransport(
 
 	const records = createV1RecordTransport(
 		{ ...options, fetch: fetchImpl, projectUrl: base },
-		() => lastDecisionInputs
+		{
+			inputs: () => lastDecisionInputs,
+			pending: () => undefined,
+			required: false,
+		}
 	);
 
 	return {

@@ -275,7 +275,7 @@ describe('<IABConsentBanner />', () => {
 		expect(html).toContain('data-position="bottom"');
 	});
 
-	it('inlines the resolved config so the browser skips /init', async () => {
+	it('inlines the resolved config so the browser skips /v1/consent/init', async () => {
 		const html = await render(await buildLocals());
 		// A data block: it never runs, so no CSP has to allow it.
 		expect(html).toMatch(

@@ -33,7 +33,8 @@ type FetchRequest = (
 
 const now = 1_800_000_000_000;
 const subjectId = 'backend+literal';
-const subjectURL = '/api/review/subjects/backend%2Bliteral';
+const linkURL = '/api/review/v1/subjects/backend%2Bliteral/link';
+const linkedId = '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c';
 const policy = normalizePolicyRule({
 	categories: ['marketing', 'measurement'],
 	id: 'vue-transport',
@@ -85,29 +86,20 @@ afterEach(() => {
 	vi.unstubAllGlobals();
 });
 
-const receipt = {
-	basis: { fingerprint: fingerprints.choice, kind: 'choice-v1' },
-	confirmedAt: now - 1000,
-	value: true,
-};
-
 // Use the public Vue context and real transports: injected kernel transports
 // cannot detect methods lost by a framework wrapper.
 test.each(modes)(
-	'%s transport identifies and hydrates server records without writes',
+	'%s transport links an identity without writes',
 	async (_name, createMode) => {
 		vi.spyOn(Date, 'now').mockReturnValue(now);
-		const fetchMock = vi.fn<FetchRequest>((url, init) =>
+		const fetchMock = vi.fn<FetchRequest>((url) =>
 			Promise.resolve(
 				Response.json(
-					String(url) === subjectURL && init?.method === 'GET'
+					String(url) === linkURL
 						? {
-								consents: [],
-								subject: { externalId: 'person', id: subjectId },
-								subjectChoice: {
-									categories: { marketing: receipt },
-									version: 3,
-								},
+								externalId: 'person',
+								subjectId: linkedId,
+								verifiedBy: 'identity_token',
 							}
 						: {}
 				)
@@ -119,30 +111,21 @@ test.each(modes)(
 			mode: createMode(Object.assign(fetchMock, { preconnect: vi.fn() })),
 			now,
 			prefetch,
-			producerContract: 1,
 		});
 		disposers.push(context.dispose);
 		hydrateRecords(context.kernel, {});
-		expect(
-			fetchMock.mock.calls.filter(([url]) => !String(url).endsWith('/manifest'))
-		).toEqual([]);
-		await context.kernel.commands.identify({ externalId: 'person' });
+		await context.kernel.commands.identify({
+			externalId: 'person',
+			identityToken: 'token',
+		});
 		expect(
 			fetchMock.mock.calls
-				.filter(([url]) => String(url) === subjectURL)
+				.filter(([url]) => String(url) === linkURL)
 				.map(([, init]) => init?.method)
-		).toEqual(['PATCH', 'GET']);
-		expect(context.snapshot.value.subject).toEqual({
-			externalId: 'person',
-			subjectId,
-		});
-		expect(context.snapshot.value.explicitChoice?.categories.marketing).toEqual(
-			receipt
-		);
+		).toEqual(['POST']);
+		// Only a `sub_` id moves to the id a link answers.
+		expect(context.snapshot.value.subject?.subjectId).toBe(subjectId);
 		expect(onChoiceRecorded).not.toHaveBeenCalled();
-		expect(
-			fetchMock.mock.calls.filter(([, init]) => init?.method === 'POST')
-		).toEqual([]);
 	}
 );
 
@@ -153,8 +136,8 @@ test.each(modes)(
 		const fetchMock = vi.fn<FetchRequest>((url, init) =>
 			Promise.resolve(
 				Response.json(
-					String(url) === subjectURL && init?.method === 'GET'
-						? { consents: [], subject: { externalId: 'person', id: subjectId } }
+					String(url) === linkURL && init?.method === 'POST'
+						? { externalId: 'person', subjectId: linkedId }
 						: {}
 				)
 			)
@@ -165,7 +148,6 @@ test.each(modes)(
 			mode: createMode(Object.assign(fetchMock, { preconnect: vi.fn() })),
 			now,
 			prefetch,
-			producerContract: 1,
 		});
 		disposers.push(context.dispose);
 		hydrateRecords(context.kernel, {});

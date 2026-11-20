@@ -61,7 +61,7 @@ describe('manifest()', () => {
 	});
 
 	test("a manifestUrl is fetched at runtime and wins over the build's snapshot", async () => {
-		const manifestUrl = 'https://cdn.example.com/manifest';
+		const manifestUrl = 'https://cdn.example.com/v1/consent/manifest';
 		const withPolicy = (id: string): ConsentManifest => ({
 			...BUILT,
 			policyPacks: [

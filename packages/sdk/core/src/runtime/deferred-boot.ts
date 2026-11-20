@@ -17,16 +17,15 @@ import { hasGlobalPrivacyControlSignal } from '../libs/global-privacy-control';
 import { hasStoredConsentRecord } from '../libs/journey';
 import { PREFETCH_WINDOW_KEY } from '../libs/page-globals';
 import { primeInitRequest } from '../libs/prefetch/prefetch';
-import type { PrefetchedInitialData } from '../libs/prefetch/prefetch';
 import type { PrefetchOptions } from '../libs/prefetch/types';
 import { DEFAULT_INIT_CREDENTIALS } from '../libs/request-context-headers';
+import type { SSRInitialData } from '../options/ssr';
 import { readHostedMode } from '../transports/hosted-modes';
 import type { ProviderTransportFactory } from '../transports/mode';
 import type { KernelOverrides } from '../types';
 
 export { hasGlobalPrivacyControlSignal } from '../libs/global-privacy-control';
 export { primeInitRequest } from '../libs/prefetch/prefetch';
-export type { PrefetchedInitialData } from '../libs/prefetch/prefetch';
 
 export { pendingBootSnapshot } from './pending-snapshot';
 export type { PendingSnapshotOptions } from './pending-snapshot';
@@ -45,7 +44,7 @@ export type { PendingSnapshotOptions } from './pending-snapshot';
 export const findPrefetchedInitFor = function findPrefetchedInitFor(
 	url: string,
 	overrides?: KernelOverrides
-): Promise<PrefetchedInitialData | undefined> | undefined {
+): Promise<SSRInitialData | undefined> | undefined {
 	if (typeof window === 'undefined') {
 		return undefined;
 	}
@@ -64,7 +63,7 @@ export const findPrefetchedInitFor = function findPrefetchedInitFor(
 			| Record<
 					string,
 					{
-						promise: Promise<PrefetchedInitialData | undefined>;
+						promise: Promise<SSRInitialData | undefined>;
 						requestContext?: Record<string, unknown> | null;
 					}
 			  >
@@ -101,7 +100,7 @@ export const findPrefetchedInitFor = function findPrefetchedInitFor(
 export const findPrefetchedInit = function findPrefetchedInit(
 	mode: ProviderTransportFactory,
 	overrides?: KernelOverrides
-): Promise<PrefetchedInitialData | undefined> | undefined {
+): Promise<SSRInitialData | undefined> | undefined {
 	const hosted = readHostedMode(mode);
 	// A custom init URL, headers or `fetch` send a request of their own
 	// (the transport reads the page's prefetch only without them), so there
@@ -133,7 +132,7 @@ export const startPrefetchedHostedInit = function startPrefetchedHostedInit(
 	projectUrl: string,
 	overrides?: KernelOverrides,
 	request: Pick<PrefetchOptions, 'journey' | 'storageKey'> = {}
-): Promise<PrefetchedInitialData | undefined> | undefined {
+): Promise<SSRInitialData | undefined> | undefined {
 	if (typeof window === 'undefined' || !projectUrl) {
 		return undefined;
 	}
@@ -172,7 +171,7 @@ export const startPrefetchedInit = function startPrefetchedInit(
 	mode: ProviderTransportFactory,
 	overrides?: KernelOverrides,
 	request: Pick<PrefetchOptions, 'journey' | 'storageKey'> = {}
-): Promise<PrefetchedInitialData | undefined> | undefined {
+): Promise<SSRInitialData | undefined> | undefined {
 	const found = findPrefetchedInit(mode, overrides);
 	const hosted = readHostedMode(mode);
 	if (

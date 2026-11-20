@@ -14,6 +14,13 @@ import { ConsentBanner } from '../../components/prompt';
 import { useSnapshot } from '../../hooks';
 import { createConsentProvider } from '../client-provider';
 
+/** What `POST /v1/consent/records` answers a save. */
+const recordAnswer = (request?: RequestInit) => ({
+	recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+	subjectId: (JSON.parse(String(request?.body)) as { subjectId: string })
+		.subjectId,
+});
+
 /** Holds the engine's module until a test releases it. */
 const engineGate = (() => {
 	let release: () => void = () => undefined;
@@ -55,13 +62,8 @@ const Probe = () => {
 };
 
 let answer: (value: unknown) => void = () => undefined;
-const fetchMock = vi.fn(() =>
-	Promise.resolve(
-		new Response('{}', {
-			headers: { 'content-type': 'application/json' },
-			status: 200,
-		})
-	)
+const fetchMock = vi.fn((_url: string, request?: RequestInit) =>
+	Promise.resolve(Response.json(request?.body ? recordAnswer(request) : {}))
 );
 
 const requestContext = {
@@ -73,7 +75,7 @@ const requestContext = {
 	region: null,
 };
 
-/** What the inline prefetch script stores, before `/init` answers. */
+/** What the inline prefetch script stores, before `/v1/consent/init` answers. */
 const prefetch = function prefetch() {
 	const promise = new Promise((resolve) => {
 		answer = (value) =>
@@ -88,7 +90,9 @@ const prefetch = function prefetch() {
 };
 
 const initRequests = () =>
-	fetchMock.mock.calls.filter(([url]) => String(url).includes('/init'));
+	fetchMock.mock.calls.filter(([url]) =>
+		String(url).includes('/v1/consent/init')
+	);
 
 const clearStorage = function clearStorage() {
 	for (const pair of document.cookie.split('; ')) {
@@ -142,7 +146,9 @@ afterEach(() => {
 });
 
 const subjectSaves = () =>
-	fetchMock.mock.calls.filter(([url]) => String(url).includes('/subjects'));
+	fetchMock.mock.calls.filter(([url]) =>
+		String(url).includes('/v1/consent/records')
+	);
 
 // First in the file: the provider loads its engine once per page.
 test('Accept before the engine commits without it; the engine sends the save once', async () => {
@@ -155,7 +161,7 @@ test('Accept before the engine commits without it; the engine sends the save onc
 	const onChoiceRecorded = vi.fn();
 	const onPermissionsChanged = vi.fn();
 	const screen = await renderPage({ onChoiceRecorded, onPermissionsChanged });
-	answer({ init, producerPolicyContract: '1' });
+	answer({ init });
 	const accept = screen.getByTestId('consent-banner-accept-button');
 	await expect.element(accept).toBeVisible();
 	// What the page's effect had seen when the task after the click began.
@@ -218,7 +224,7 @@ test('a network blocker turned off leaves the engine deferred', async () => {
 	const probe = screen.getByTestId('probe');
 	await expect.element(probe).toHaveAttribute('data-active-ui', 'none');
 
-	answer({ init, producerPolicyContract: '1' });
+	answer({ init });
 	await expect
 		.element(screen.getByTestId('consent-banner-accept-button'))
 		.toBeVisible();
@@ -233,7 +239,7 @@ test('the page renders before /init answers, and the banner from its answer', as
 		document.querySelector('[data-testid="consent-banner-root"]')
 	).toBeNull();
 
-	answer({ init, producerPolicyContract: '1' });
+	answer({ init });
 	await expect
 		.element(screen.getByTestId('consent-banner-accept-button'))
 		.toBeVisible();
@@ -242,7 +248,7 @@ test('the page renders before /init answers, and the banner from its answer', as
 
 test('Accept hides the banner at once, and the engine applies it', async () => {
 	const screen = await renderPage();
-	answer({ init, producerPolicyContract: '1' });
+	answer({ init });
 	const accept = screen.getByTestId('consent-banner-accept-button');
 	await expect.element(accept).toBeVisible();
 	await accept.click();
@@ -260,14 +266,14 @@ test('Accept hides the banner at once, and the engine applies it', async () => {
 test('a returning visitor gets the stored choice without a banner', async () => {
 	// A choice saved on an earlier visit.
 	const first = await renderPage();
-	answer({ init, producerPolicyContract: '1' });
+	answer({ init });
 	await first.getByTestId('consent-banner-reject-button').click();
 	await vi.waitFor(() => expect(stored()).toBe(true), { timeout: 5000 });
 	first.unmount();
 
 	prefetch();
 	const screen = await renderPage();
-	answer({ init, producerPolicyContract: '1' });
+	answer({ init });
 	await expect
 		.element(screen.getByTestId('probe'))
 		.toHaveAttribute('data-active-ui', 'none');

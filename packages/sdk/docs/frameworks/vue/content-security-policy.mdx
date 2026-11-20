@@ -10,10 +10,10 @@ A Vue app with Inth adds these to the page, and your policy must allow them:
 
 | What | Directive |
 | --- | --- |
-| Requests to your backend's `/subjects`, plus `/init` with `hosted()` or `/manifest` with `manifest({ source: 'runtime' })` | `connect-src` |
+| Requests to your backend's `/v1/consent/records`, plus `/v1/consent/init` with `hosted()` or `/v1/consent/manifest` with `manifest({ source: 'runtime' })` | `connect-src` |
 | Chunks your build splits out, such as the manifest resolver and the copy for a language other than English | `script-src 'self'` |
 | `<script>` elements the script loader creates for `scripts` | `script-src` |
-| The inline `<script>` that `consentManifest()` adds to `index.html` to send `/init` early | `script-src` with a nonce or its hash |
+| The inline `<script>` that `consentManifest()` adds to `index.html` to send `/v1/consent/init` early | `script-src` with a nonce or its hash |
 | Scripts, frames, images and requests your vendors load | `script-src`, `frame-src`, `img-src`, `connect-src` for each vendor |
 | The components' CSS, which Vite bundles with your app | `style-src` |
 | The `<style id="inth-css-vars">` element with your theme tokens, in `<head>` | `style-src` |
@@ -51,12 +51,12 @@ Add `'strict-dynamic'` to `script-src` to allow them, or list their hosts.
 app.use(inthVue, { mode: hosted(), nonce, scripts });
 ```
 
-The plugin's `nonce` option does not reach the early `/init` script, because
+The plugin's `nonce` option does not reach the early `/v1/consent/init` script, because
 that script is already in `index.html`. With a nonce per response, set Vite's
 `html.cspNonce` to a placeholder and have your server replace it with each
 response's nonce; the script carries it. On a static host, allow the script by
 the hash in the browser's `Refused to execute inline script` error. If the
-policy blocks it, the app sends `/init` itself.
+policy blocks it, the app sends `/v1/consent/init` itself.
 
 ## Allow styles
 
@@ -84,4 +84,4 @@ token colors, and the console shows no
 `Refused to connect`, `Refused to load the script` or `Refused to apply
 inline style` error that mentions your backend, an Inth element or a vendor
 you allowed. Click **Accept All**, and the vendor scripts load. The save to
-`/subjects` succeeds.
+`/v1/consent/records` succeeds.

@@ -110,8 +110,8 @@ export const handle = inthHandle({ routePrefix: '/api/inth' });
 
 | Request | Response |
 | --- | --- |
-| `GET /api/inth/init` | The visitor's resolved policy, like the backend's `/init`. `Cache-Control: private, no-store`. |
-| `GET /api/inth/manifest` | The manifest, with the backend's `Cache-Control` and `ETag`. Answers `If-None-Match` with `304`. |
+| `GET /api/inth/v1/consent/init` | The visitor's resolved policy, like the backend's `/init`. `Cache-Control: private, no-store`. |
+| `GET /api/inth/v1/consent/manifest` | The manifest, with the backend's `Cache-Control` and `ETag`. Answers `If-None-Match` with `304`. |
 
 The route resolves from the snapshot `consentManifest` downloaded and reads
 the backend URL from it, so it needs no options. It also reads what you pass
@@ -236,7 +236,7 @@ own handles through `sequence(inthHandle(), yourHandle)` from
 | `cookieName` | `inth` | The consent cookie. Match the provider's `storageConfig.storageKey`. |
 | `country`, `region`, `language` | from headers | Forces one input for every request. |
 
-`inthHandle` sets no cookie. The visitor's subject ID (`sub_…`) lives in
+`inthHandle` sets no cookie. The visitor's subject ID, a UUIDv7, lives in
 the consent records their first save writes, and `loadConsent` reads it from
 those cookies.
 
@@ -307,7 +307,7 @@ app keep the banner in their HTML.
 Where the browser asks depends on the handle:
 
 - With [`routePrefix` and the consent route](#serve-the-consent-route), it
-  asks your own `/api/inth/init`, which resolves from the bundled snapshot.
+  asks your own `/api/inth/v1/consent/init`, which resolves from the bundled snapshot.
 - Without them, it asks the backend's `/init`.
 
 ## Build a static site

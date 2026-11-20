@@ -709,6 +709,7 @@ test.each([false, true])(
 		}>();
 		const kernel = createConsentKernel({
 			initialPolicyResolution: matchedResolution(optOutRule()),
+			initialRecords: { subject: { subjectId: 'sub_2VZxR7YmNpKq3WfLs8TgHd' } },
 			transport: { save: () => response.promise },
 		});
 		const persistence = createPersistence({ kernel, skipHydration: true });
@@ -719,7 +720,7 @@ test.each([false, true])(
 		const provisionalSubject = kernel.getSnapshot().subject?.subjectId;
 		await vi.advanceTimersByTimeAsync(0);
 		vi.setSystemTime(NOW + 1000);
-		response.resolve({ ok, subjectId: 'canonical' });
+		response.resolve({ ok, subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c' });
 		await pending;
 		flushWrites();
 		const restored = createConsentKernel({
@@ -728,7 +729,7 @@ test.each([false, true])(
 		const reader = createPersistence({ kernel: restored });
 		expect(restored.getSnapshot().explicitChoice).toEqual(original);
 		expect(restored.getSnapshot().subject?.subjectId).toBe(
-			ok ? 'canonical' : provisionalSubject
+			ok ? '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c' : provisionalSubject
 		);
 		expect(choices).toHaveBeenCalledTimes(1);
 		reader.dispose();
@@ -741,8 +742,13 @@ test.each([false, true])(
 test('clear cancels a queued canonical subject write', async () => {
 	const kernel = createConsentKernel({
 		initialPolicyResolution: matchedResolution(optOutRule()),
+		initialRecords: { subject: { subjectId: 'sub_2VZxR7YmNpKq3WfLs8TgHd' } },
 		transport: {
-			save: () => Promise.resolve({ ok: true, subjectId: 'canonical' }),
+			save: () =>
+				Promise.resolve({
+					ok: true,
+					subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+				}),
 		},
 	});
 	const persistence = createPersistence({ kernel, skipHydration: true });
@@ -753,12 +759,16 @@ test('clear cancels a queued canonical subject write', async () => {
 	flushWrites();
 	// The clear keeps the subject ID in memory, and nothing else of the
 	// subject.
-	expect(kernel.getSnapshot().subject).toEqual({ subjectId: 'canonical' });
+	expect(kernel.getSnapshot().subject).toEqual({
+		subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+	});
 	const restored = createConsentKernel();
 	const reader = createPersistence({ kernel: restored });
 	expect(restored.getSnapshot().explicitChoice).toBeNull();
 	// No queued write brought the cleared record back under the canonical ID.
-	expect(restored.getSnapshot().subject?.subjectId).not.toBe('canonical');
+	expect(restored.getSnapshot().subject?.subjectId).not.toBe(
+		'0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c'
+	);
 	reader.dispose();
 	restored.dispose();
 	persistence.dispose();

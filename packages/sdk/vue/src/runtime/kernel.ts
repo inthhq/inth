@@ -474,7 +474,6 @@ export interface VueConsentContextOptions {
 	 * @internal
 	 */
 	kernelConfig?: KernelConfig;
-	producerContract?: number | null;
 	/** A runtime the host owns. The context renders it and starts nothing. */
 	runtime?: ConsentRuntime;
 	/**
@@ -525,10 +524,7 @@ export const createVueConsentKernelContext =
 			const initOutput = options.prefetch ?? config.prefetch;
 			const { transport, ...kernelConfig } = options.kernelConfig ?? {};
 			const initialConfig =
-				options.prefetchState ??
-				initOutputToKernelConfig(initOutput, headers, {
-					producerContract: options.producerContract,
-				});
+				options.prefetchState ?? initOutputToKernelConfig(initOutput, headers);
 			const rawRecords = options.initialRecords ?? config.initialRecords;
 			const prefetch: RuntimePrefetch = {
 				...initialConfig,

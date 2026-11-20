@@ -75,6 +75,8 @@ export interface RecordsBoundaryOptions {
 	transport: KernelTransport | undefined;
 	/** Starts the lifecycle; hydration counts as a lifecycle command. */
 	start: () => void;
+	/** Moves a visitor on a `sub_` id to the UUID a link answered for it. */
+	adoptSubject: (from: string, to: string) => Promise<void>;
 }
 
 export interface RecordsBoundary {
@@ -90,6 +92,7 @@ export interface RecordsBoundary {
 }
 
 export const createRecordsBoundary = function createRecordsBoundary({
+	adoptSubject,
 	runtime,
 	transport,
 	start,
@@ -199,11 +202,15 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			}
 			runtime.announce(patch, 'user:identified', true);
 			if (transport?.identify) {
+				let linked: Awaited<ReturnType<typeof transport.identify>>;
 				try {
-					await transport.identify({ ...user }, linkedId);
+					linked = await transport.identify({ ...user }, linkedId);
 				} catch (error) {
 					emit({ command: 'identify', error, type: 'command:error' });
 					throw error;
+				}
+				if (linkedId && linked?.subjectId && linked.subjectId !== linkedId) {
+					await adoptSubject(linkedId, linked.subjectId);
 				}
 			}
 			if (

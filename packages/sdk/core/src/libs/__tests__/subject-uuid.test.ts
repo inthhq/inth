@@ -1,10 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import {
-	createIdempotencyKey,
-	generateUuidV7,
-	isUuidV7,
-} from '../subject-uuid';
+import { isUuidV7 } from '../../transports/v1/routes';
+import { createIdempotencyKey, generateUuidV7 } from '../subject-uuid';
 
 afterEach(() => {
 	vi.useRealTimers();

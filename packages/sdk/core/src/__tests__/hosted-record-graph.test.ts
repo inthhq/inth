@@ -72,14 +72,14 @@ const staticGraph = function staticGraph(entry: string): {
 };
 
 describe('hosted record transport graph', () => {
-	test('reaches no init-path or subject-record module', () => {
-		const { files, packageImports } = staticGraph(
-			'transports/hosted-records.ts'
-		);
-
-		expect(files).not.toContain('transports/hosted.ts');
+	test.each([
+		'transports/v1/records.ts',
+		'transports/v1/init-request.ts',
+		'libs/prefetch/window-key.ts',
+	])('%s reaches no init-path module', (entry) => {
+		const { files, packageImports } = staticGraph(entry);
+		expect(files).not.toContain('transports/v1/hosted.ts');
 		expect(files).not.toContain('transports/init-output.ts');
-		expect(files).not.toContain('transports/subject-record.ts');
 		expect(files).not.toContain('libs/request-context.ts');
 		expect(files).not.toContain('libs/prefetch/prefetch.ts');
 		expect(packageImports).not.toContain(
@@ -87,21 +87,17 @@ describe('hosted record transport graph', () => {
 		);
 	});
 
-	test('the init request builder and the prefetch probe reach no init-path module', () => {
-		for (const entry of [
-			'transports/hosted-init-request.ts',
-			'libs/prefetch/window-key.ts',
-		]) {
-			const { files, packageImports } = staticGraph(entry);
-			expect(files).not.toContain('transports/hosted.ts');
-			expect(files).not.toContain('transports/init-output.ts');
-			expect(files).not.toContain('libs/request-context.ts');
-			expect(files).not.toContain('libs/prefetch/prefetch.ts');
-			expect(packageImports).not.toContain(
-				'@inth/sdk/schema/types#extractConsentRequestInputs'
-			);
+	test.each(['index.ts', 'transports/index.ts', 'runtime/client-mode.ts'])(
+		'%s does not load every language, as the server resolvers do',
+		(entry) => {
+			const { packageImports } = staticGraph(entry);
+			expect(
+				packageImports.filter((name) =>
+					name.startsWith('@inth/sdk-translations/all#')
+				)
+			).toEqual([]);
 		}
-	});
+	);
 
 	test.each(['index.ts', 'runtime/index.ts', 'runtime/client-mode.ts'])(
 		'%s does not reach the testing transport or the offline transport',
@@ -112,12 +108,6 @@ describe('hosted record transport graph', () => {
 			expect(files).not.toContain('transports/offline.ts');
 		}
 	);
-
-	test('the full hosted transport loads the subject-record reviver on demand', () => {
-		expect(staticGraph('transports/hosted.ts').files).not.toContain(
-			'transports/subject-record.ts'
-		);
-	});
 });
 
 describe('createHostedRecordTransport', () => {

@@ -314,7 +314,7 @@ describe('resolveConsent: manifest session reports', () => {
 
 		expect(fetchSpy).toHaveBeenCalledTimes(1);
 		const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
-		expect(url).toBe('https://consent.example.com/sessions');
+		expect(url).toBe('https://consent.example.com/v1/consent/sessions');
 		const headers = init.headers as Record<string, string>;
 		expect(headers['x-inth-client-ip']).toBe('203.0.113.42');
 		expect(headers['user-agent']).toBe('Mozilla/5.0');

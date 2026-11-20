@@ -1,4 +1,3 @@
-import { inthProtocolHeaders } from '@inth/sdk/engine';
 import {
 	createConsentRouteHandler,
 	createConsentRouteMethodHandlers,
@@ -85,14 +84,14 @@ export interface NextConsentRouteOptions extends ConsentSourceOptions {
 }
 
 /**
- * The upstream manifest request as the App Router sees it: JSON with the
- * Inth protocol headers, and a `next.revalidate` hint for the Data Cache.
+ * The upstream manifest request as the App Router sees it: JSON, with a
+ * `next.revalidate` hint for the Data Cache.
  */
 export const createManifestFetchInit = function createManifestFetchInit(
 	options: Pick<NextConsentRouteOptions, 'manifestRevalidateSeconds'> = {}
 ): NextFetchInit {
 	return {
-		headers: { accept: 'application/json', ...inthProtocolHeaders },
+		headers: { accept: 'application/json' },
 		method: 'GET',
 		next: {
 			revalidate:

@@ -42,7 +42,7 @@ import type { ConsentSnapshot, ResolvedVendor } from '@inth/sdk/engine';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
 import { EARLY_TAP_ROOT } from '@inth/sdk/runtime/page-globals';
 import {
-	generateSubjectId,
+	generateUuidV7,
 	hasStoredClearEpoch,
 	planInstantCommit,
 } from '@inth/sdk/surface-actions/instant-commit';
@@ -291,7 +291,7 @@ export const startDeferredClient = function startDeferredClient(
 	// clear stored after this is caught by the commit chunk.
 	const ahead = {
 		clearEpoch: hasStoredClearEpoch(options.storageConfig),
-		subjectId: generateSubjectId(),
+		subjectId: generateUuidV7(),
 	};
 	let snapshot = boot.s;
 	let committed: DeferredCommitted | undefined;

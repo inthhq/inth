@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import type { PrefetchedInitialData } from '@inth/sdk-core/runtime/deferred-snapshot';
+import type { SSRInitialData } from '@inth/sdk-core/runtime/deferred-snapshot';
 import { afterEach, expect, test } from 'vitest';
 
 import { readPolicyCache, writePolicyCache } from '../init/policy-cache';
@@ -22,8 +22,7 @@ test('keeps the script registry list with the cached policy', () => {
 			policyResolution: { status: 'unconfigured' },
 			scriptRegistry: { sources: scriptSources },
 		},
-		producerPolicyContract: '1',
-	} as unknown as PrefetchedInitialData);
+	} as unknown as SSRInitialData);
 
 	const cached = readPolicyCache('https://acme.inth.app')?.init as
 		| { scriptRegistry?: { sources?: unknown } }

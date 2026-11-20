@@ -21,14 +21,18 @@ import { createConsentKernel } from '../../../index';
 import { getRawCookieValue } from '../../../libs/cookie';
 import { generateSubjectId } from '../../../libs/generate-subject-id';
 import { legacySubjectIdKey } from '../../../libs/legacy-subject-id';
-import { resolveStorageKeys } from '../../../libs/storage-keys';
+import {
+	resolveStorageKeys,
+	SUBJECT_REASSIGNMENTS_STORAGE_KEY,
+} from '../../../libs/storage-keys';
 import { readRequestConsent } from '../../../server/request-consent';
 import type { ConsentKernel, ConsentSnapshot, SaveInput } from '../../../types';
 import { createClearOnRevocation } from '../../clear-on-revocation';
 import { createPersistence, readStoredRecordsFromCookieHeader } from '../index';
 import type { StorageConfig } from '../types';
 
-const CANONICAL = 'sub_canonical';
+/** The UUID the backend answers for a c15t visitor's `sub_` ID. */
+const CANONICAL = '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c';
 const STORAGE = [
 	['the default', undefined],
 	['a custom', { storageKey: 'site-consent' }],
@@ -158,11 +162,23 @@ const storedSid = function storedSid(storageConfig?: StorageConfig) {
 	};
 };
 
-/** Every cookie and localStorage value, decoded, as one string. */
+/**
+ * Start as a visitor a c15t client gave a `sub_` ID: the only ID the
+ * backend answers another one for.
+ */
+const asC15tVisitor = function asC15tVisitor(kernel: ConsentKernel): void {
+	kernel.set.subjectId('sub_2VZxR7YmNpKq3WfLs8TgHd');
+};
+
+/**
+ * Every cookie and localStorage value, decoded, as one string. The save
+ * outbox's record of a subject move is left out: it names the old ID so
+ * other tabs can follow the move.
+ */
 const everythingStored = function everythingStored(): string {
-	const local = Object.keys(localStorage).map(
-		(key) => `${key}=${localStorage.getItem(key)}`
-	);
+	const local = Object.keys(localStorage)
+		.filter((key) => key !== SUBJECT_REASSIGNMENTS_STORAGE_KEY)
+		.map((key) => `${key}=${localStorage.getItem(key)}`);
 	const cookies = document.cookie.split('; ').map((pair) => {
 		try {
 			return decodeURIComponent(pair);
@@ -220,7 +236,7 @@ test.each(
 		const sent: (string | undefined)[] = [];
 		const first = boot({ scope: 'necessary-only', sent, storageConfig });
 		const startup = subjectIdOf(first.kernel);
-		expect(startup).toMatch(/^sub_/u);
+		expect(startup).toMatch(/^[\da-f]{8}-[\da-f]{4}-7/u);
 		expect(first.kernel.getSnapshot().explicitChoice).toBeNull();
 		expect(first.kernel.getSnapshot().noticeDismissal).toBeNull();
 		expect(first.kernel.getSnapshot().activeUI).toBe('banner');
@@ -272,6 +288,7 @@ test.each(
 			scope,
 			storageConfig,
 		});
+		asC15tVisitor(first.kernel);
 		const startup = subjectIdOf(first.kernel) as string;
 
 		await save(first.kernel, refuse(first.kernel, scope));
@@ -307,6 +324,7 @@ test.each(STORAGE)(
 			scope: 'necessary-only',
 			storageConfig,
 		});
+		asC15tVisitor(first.kernel);
 		const startup = subjectIdOf(first.kernel) as string;
 		const saving = first.kernel.commands.save('none');
 		await vi.advanceTimersByTimeAsync(0);
@@ -412,6 +430,7 @@ test.each(
 			scope: 'necessary-only',
 			storageConfig,
 		});
+		asC15tVisitor(first.kernel);
 		await save(first.kernel, 'none');
 		expect(first.kernel.getSnapshot().noticeDismissal).not.toBeNull();
 		await vi.advanceTimersByTimeAsync(1000);
@@ -453,7 +472,7 @@ test.each(
 
 		// Nothing stored the ID, so the next page load starts a new one.
 		const { kernel } = boot({ scope: 'necessary-only', storageConfig });
-		expect(subjectIdOf(kernel)).toMatch(/^sub_/u);
+		expect(subjectIdOf(kernel)).toMatch(/^[\da-f]{8}-[\da-f]{4}-7/u);
 		expect(subjectIdOf(kernel)).not.toBe(CANONICAL);
 		expect(kernel.getSnapshot().noticeDismissal).toBeNull();
 		expect(kernel.getSnapshot().explicitChoice).toBeNull();
@@ -516,7 +535,7 @@ test.each(
 		first.handle.dispose();
 
 		const { kernel } = boot({ storageConfig });
-		expect(subjectIdOf(kernel)).toMatch(/^sub_/u);
+		expect(subjectIdOf(kernel)).toMatch(/^[\da-f]{8}-[\da-f]{4}-7/u);
 		expect(subjectIdOf(kernel)).not.toBe(subjectId);
 		expect(kernel.getSnapshot().subject?.externalId).toBeUndefined();
 		expect(kernel.getSnapshot().explicitChoice).toBeNull();
@@ -540,6 +559,7 @@ test.each(
 			scope: 'necessary-only',
 			storageConfig,
 		});
+		asC15tVisitor(first.kernel);
 		const startup = subjectIdOf(first.kernel) as string;
 		await save(first.kernel, 'none');
 		const notice = first.kernel.getSnapshot().noticeDismissal;
@@ -548,7 +568,7 @@ test.each(
 		first.kernel.set.subjectId(next);
 		await vi.advanceTimersByTimeAsync(0);
 		const replaced = subjectIdOf(first.kernel) as string;
-		expect(replaced).toMatch(/^sub_/u);
+		expect(replaced).toMatch(next ?? /^[\da-f]{8}-[\da-f]{4}-7/u);
 		expect([startup, CANONICAL]).not.toContain(replaced);
 		expect(replaced).toBe(next ?? replaced);
 		expect(storedSid(storageConfig)).toEqual({ cookie: null, local: null });

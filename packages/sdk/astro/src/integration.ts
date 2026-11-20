@@ -203,7 +203,7 @@ const resolveRoutePrefix = function resolveRoutePrefix(
 /**
  * Check the mode is plain data from `manifest()`, `hosted()` or
  * `testing()`, and that it has a backend to talk to: the browser saves
- * consent at `${projectUrl}/subjects`, and the injected route answers `GET`
+ * consent at `${projectUrl}/v1/consent/records`, and the injected route answers `GET`
  * only, whatever `routePrefix` is.
  *
  * @param mode - The configured mode, or `undefined` for the default.

@@ -78,6 +78,17 @@ export { clearGvlCache, fetchCachedGvl } from './transports/gvl-cache';
 export type { HostedTransportOptions } from './transports/hosted';
 export { createHostedTransport } from './transports/hosted';
 export type {
+	InthApiErrorCode,
+	InthApiErrorDetail,
+} from './transports/v1/error';
+export { InthApiError, isInthApiError } from './transports/v1/error';
+export type {
+	V1HostedTransport,
+	V1HostedTransportOptions,
+} from './transports/v1/hosted';
+export { createV1HostedTransport } from './transports/v1/hosted';
+export { InthApiSaveRejectedError } from './transports/v1/save-rejected';
+export type {
 	HostedRecordTransport,
 	HostedRecordTransportOptions,
 } from './transports/hosted-records';

@@ -90,11 +90,11 @@ const routeDependencies = {
 	useRuntimeConfig: mocks.useRuntimeConfig,
 };
 const callManifestRoute = callRoute(
-	'/api/inth/manifest',
+	'/api/inth/v1/consent/manifest',
 	createConsentRoute(routeDependencies)
 );
 const callInitRoute = callRoute(
-	'/api/inth/init',
+	'/api/inth/v1/consent/init',
 	createConsentRoute(routeDependencies)
 );
 
@@ -121,11 +121,11 @@ describe('manifest route background revalidation', () => {
 		});
 		const dependencies = { ...routeDependencies, manifest: MANIFEST };
 		const callSnapshotManifestRoute = callRoute(
-			'/api/inth/manifest',
+			'/api/inth/v1/consent/manifest',
 			createConsentRoute(dependencies)
 		);
 		const callSnapshotInitRoute = callRoute(
-			'/api/inth/init',
+			'/api/inth/v1/consent/init',
 			createConsentRoute(dependencies)
 		);
 		expect(await (await callSnapshotManifestRoute()).json()).toEqual(MANIFEST);
@@ -157,7 +157,7 @@ describe('manifest route background revalidation', () => {
 			);
 			const registered: { refresh: Promise<void>; method: string }[] = [];
 			const call = callRoute(
-				'/api/inth/manifest',
+				'/api/inth/v1/consent/manifest',
 				createConsentRoute({
 					...routeDependencies,
 					onBackgroundRevalidate: (refresh, event) => {
@@ -202,16 +202,19 @@ describe('manifest route default background registration', () => {
 			const handler = createConsentRoute(routeDependencies);
 			const call = () => {
 				const app = createApp();
-				app.use('/api/inth/manifest', (event) => {
+				app.use('/api/inth/v1/consent/manifest', (event) => {
 					(event as { waitUntil?: unknown }).waitUntil = (
 						promise: Promise<unknown>
 					) => {
 						registered.push(promise);
 					};
 				});
-				(app.use as unknown as MountRoute)('/api/inth/manifest', handler);
+				(app.use as unknown as MountRoute)(
+					'/api/inth/v1/consent/manifest',
+					handler
+				);
 				return toWebHandler(app)(
-					new Request('http://localhost/api/inth/manifest')
+					new Request('http://localhost/api/inth/v1/consent/manifest')
 				);
 			};
 
@@ -272,13 +275,13 @@ describe('init route', () => {
 		const response = await callInitRoute({ 'x-inth-country': 'DE' });
 
 		expect(response.headers.get('cache-control')).toBe('private, no-store');
-		expect(response.headers.get('x-inth-policy-contract')).toBe('1');
+		expect(response.headers.has('x-inth-policy-contract')).toBe(false);
 		expect(await response.json()).toMatchObject({
 			location: { countryCode: 'DE' },
 			policyResolution: { policyId: 'eu-opt-in' },
 		});
 		expect(mocks.serverFetch).toHaveBeenCalledWith(
-			'/api/self-host/manifest',
+			'/api/self-host/v1/consent/manifest',
 			expect.anything()
 		);
 		// A relative backend is this app's own proxy: no session report.
@@ -297,7 +300,7 @@ describe('init route', () => {
 		// throws ERR_INVALID_URL in Node.
 		// oxlint-disable-next-line require-await -- Preserve sequential execution and callback compatibility.
 		mocks.serverFetch.mockImplementation(async (url: string) => {
-			if (url.includes('/manifest')) {
+			if (url.includes('/v1/consent/manifest')) {
 				return new Response('nope', { status: 404 });
 			}
 			return new Response(
@@ -325,7 +328,7 @@ describe('init route', () => {
 		});
 		expect(body).not.toHaveProperty('jurisdiction');
 		expect(mocks.serverFetch).toHaveBeenLastCalledWith(
-			'/api/self-host/init',
+			'/api/self-host/v1/consent/init',
 			expect.objectContaining({
 				headers: expect.objectContaining({ 'x-inth-country': 'DE' }),
 			})
@@ -342,7 +345,7 @@ describe('init route', () => {
 		await callInitRoute();
 
 		expect(mocks.serverFetch.mock.calls[0]?.[0]).toBe(
-			'https://private.example/manifest'
+			'https://private.example/v1/consent/manifest'
 		);
 	});
 
@@ -357,7 +360,7 @@ describe('init route', () => {
 		await callInitRoute();
 
 		expect(mocks.serverFetch.mock.calls[0]?.[0]).toBe(
-			'https://public.example/manifest'
+			'https://public.example/v1/consent/manifest'
 		);
 	});
 
@@ -422,11 +425,14 @@ describe('serverFetch', () => {
 		);
 		mocks.localFetch.mockResolvedValue(new Response('ok'));
 
-		await serverFetch('/api/self-host/manifest', { method: 'GET' });
+		await serverFetch('/api/self-host/v1/consent/manifest', { method: 'GET' });
 
-		expect(mocks.localFetch).toHaveBeenCalledWith('/api/self-host/manifest', {
-			method: 'GET',
-		});
+		expect(mocks.localFetch).toHaveBeenCalledWith(
+			'/api/self-host/v1/consent/manifest',
+			{
+				method: 'GET',
+			}
+		);
 	});
 });
 

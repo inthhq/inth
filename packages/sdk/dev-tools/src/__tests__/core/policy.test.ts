@@ -289,6 +289,8 @@ it('preserves an edit made while an earlier save waits for its canonical subject
 	const save = vi.fn(() => acknowledgement.promise);
 	const kernel = createConsentKernel({ transport: { save } });
 	cleanups.push(kernel.dispose);
+	// A c15t visitor: the backend answers the UUID of its `sub_` ID.
+	kernel.set.subjectId('sub_2VZxR7YmNpKq3WfLs8TgHd');
 	const tools = createDevTools({ kernel });
 	cleanups.push(tools.destroy);
 	tools.actions.setDraft({ marketing: false });
@@ -297,14 +299,14 @@ it('preserves an edit made while an earlier save waits for its canonical subject
 	tools.actions.setDraft({ marketing: false, measurement: false });
 	acknowledgement.resolve({
 		ok: true,
-		subjectId: 'canonical-devtools-subject',
+		subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
 	});
 	await pending;
 	expect(kernel.getSnapshot().explicitChoice?.categories.marketing?.value).toBe(
 		true
 	);
 	expect(kernel.getSnapshot().subject?.subjectId).toBe(
-		'canonical-devtools-subject'
+		'0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c'
 	);
 	expect(tools.getState().draft).toEqual({
 		marketing: false,

@@ -56,7 +56,7 @@ experiment: { ...bannerExperiment, split: { control: 60, wall: 40 } }
 | `acknowledgeDiagnostics` | Run an arm that trips a presentation diagnostic and record that you reviewed it |
 
 Inth merges the arm over `presentation`, exposes it as `snapshot.experiment`,
-sends it with `/init`, and records it on the choices of visitors the banner
+sends it with `/v1/consent/init`, and records it on the choices of visitors the banner
 showed it to, so you can compare opt-in rate and time to decision per arm.
 
 The same option exists in `@inth/nextjs` (`ConsentRoot` `options`), `@inth/vue`,
@@ -173,7 +173,7 @@ Keep `identify` returning a stable id. Vercel splits on it, so a visitor
 keeps their arm when you change the weights.
 
 Resolve the flag where consent resolves and pass the experiment to
-`resolveConsent`. The server reports the arm with `/init`, and the returned
+`resolveConsent`. The server reports the arm with `/v1/consent/init`, and the returned
 state carries the experiment to `ConsentRoot`, so the client needs no
 `experiment` option of its own. In Next.js, do this in the root layout:
 
@@ -253,7 +253,7 @@ misconfiguration.
 ## Let Inth assign the arm
 
 Omit `arm` and Inth picks one by `split` (equal by default) when the page
-starts, before `/init`, and records `assignedBy: 'inth'`. A visitor who
+starts, before `/v1/consent/init`, and records `assignedBy: 'inth'`. A visitor who
 already saw an arm keeps it.
 
 The banner waits until the arm is picked, so the visitor never sees the base
@@ -292,7 +292,7 @@ arm re-assigns only the visitors who were in it. For a clean analysis, change
 Built-in assignment is not available in Astro; see
 [Astro](#astro).
 
-A Vite app's early `/init` script, from `consentManifest()`, picks the arm
+A Vite app's early `/v1/consent/init` script, from `consentManifest()`, picks the arm
 the same way when you pass it the experiment, and the app then runs that
 arm. Import the same object into `vite.config.ts`:
 
@@ -302,13 +302,13 @@ arm. Import the same object into `vite.config.ts`:
 consentManifest({ initPrefetch: { experiment: bannerExperiment } });
 ```
 
-Without it, the app sends its own `/init` for visitors who have not chosen
+Without it, the app sends its own `/v1/consent/init` for visitors who have not chosen
 yet. The same goes for `consentPrefetchHead` in TanStack Start and
 `buildPrefetchScript` elsewhere, which take the same `experiment` option.
 
 When a feature flag picks the arm, leave `experiment` out of
 `initPrefetch`. The script would pick its own arm and send it to the
-backend, and the app would then send a second `/init` with the flag's arm.
+backend, and the app would then send a second `/v1/consent/init` with the flag's arm.
 
 ## Acknowledge presentation diagnostics
 
@@ -387,7 +387,7 @@ from a footer link, or saves from an inline widget, never saw the arm's
 banner, so their choice is recorded without it and does not count toward any
 arm.
 
-Each choice saved through `POST /subjects` carries in `metadata`:
+Each choice saved through `POST /v1/consent/records` carries in `metadata`:
 
 | Key | Value |
 | --- | --- |
@@ -407,24 +407,24 @@ owed to, and how many of them accepted. Inth sends both to the backend on
 its own; you do not wire anything up.
 
 - **Visitors owed the banner.** While a visitor has no stored choice, every
-  `/init` carries their arm as `<id>=<arm>` in the `experiment` query
+  `/v1/consent/init` carries their arm as `<id>=<arm>` in the `experiment` query
   parameter, and the backend puts it on that request's session report as
   `experiment: { id, arm }`. In manifest mode, the server render or the
-  init route puts it on the report it sends to `POST /sessions`. A visitor
+  init route puts it on the report it sends to `POST /v1/consent/sessions`. A visitor
   who already chose is not shown the banner, so is not counted. A
   server-to-server caller can send the `x-inth-experiment` header instead.
-- **Choices.** Every choice saved through `POST /subjects` carries the arm
+- **Choices.** Every choice saved through `POST /v1/consent/records` carries the arm
   in `metadata.experiment`, as above.
 
-On a server-rendered page the server calls `/init`, not the browser, so the
+On a server-rendered page the server calls `/v1/consent/init`, not the browser, so the
 server has to know the arm. Pass the experiment to `resolveConsent`, as in
 [Vercel Flags SDK](#vercel-flags-sdk): it sends only `{ id, arm }` to the
 backend and hands the full experiment to the client in its state.
 `resolveConsent` takes `experiment` in `@inth/nextjs/server` and
 `@inth/tanstack-start/server`, as `loadConsent` does in `@inth/svelte/kit`;
 Astro and Nuxt pass the arm they rendered on their own. When Inth picks the arm in the browser,
-the browser's own `/init` carries it, so a server-rendered page that skips
-the client `/init` has no count for built-in assignment. Resolve the arm with
+the browser's own `/v1/consent/init` carries it, so a server-rendered page that skips
+the client `/v1/consent/init` has no count for built-in assignment. Resolve the arm with
 a flag on those pages.
 
 ### Where the counts go
@@ -551,7 +551,7 @@ const result = await inth.experiments.summary('banner-shape', {
 ```
 
 The summary counts choices. The other half of an opt-in rate, the visitors
-each arm's banner was owed to, is on the session reports `/init` produces
+each arm's banner was owed to, is on the session reports `/v1/consent/init` produces
 (see [Measure the results](#measure-the-results)). Divide `accept_all` per
 arm by the visitors whose reports carry that arm.
 

@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { corsPreflightReasons } from '../../../__tests__/fixtures/cors-safelist';
-import { createHostedTransport } from '../../../transports/hosted';
+import { createV1HostedTransport as createHostedTransport } from '../../../transports/v1/hosted';
 import type { KernelJourney } from '../../../types';
 import { buildPrefetchScript, primePrefetchedInitialData } from '../prefetch';
 
@@ -10,18 +10,14 @@ const legacyPolicy = { id: 'legacy', model: 'opt-in', ui: { mode: 'banner' } };
 const payload = {
 	policyResolution: { policy: null, status: 'no-match', version: 1 },
 };
-const response = (
-	body: Record<string, unknown> = payload,
-	contract: string | null = '1'
-) =>
+const response = (body: Record<string, unknown> = payload) =>
 	new Response(
 		JSON.stringify({
 			branding: 'inth',
 			location: { countryCode: null, regionCode: null },
 			translations: { language: 'en', translations: {} },
 			...body,
-		}),
-		{ headers: contract === null ? {} : { 'x-inth-policy-contract': contract } }
+		})
 	);
 beforeEach(() => {
 	delete (window as Window & { __inthInitialDataPromises?: unknown })
@@ -63,7 +59,7 @@ describe('hosted browser prefetch consumption', () => {
 		}
 	);
 
-	it('consumes the generated script response once and preserves protocol negotiation', async () => {
+	it('consumes the generated script response once', async () => {
 		const fetch = vi.fn().mockImplementation(() => Promise.resolve(response()));
 		vi.stubGlobal('fetch', fetch);
 		// Execute the actual beforeInteractive script, including its window registry.
@@ -73,8 +69,7 @@ describe('hosted browser prefetch consumption', () => {
 		const first = await transport.init?.(context);
 		expect(first?.policyResolution).toEqual(payload.policyResolution);
 		expect(fetch).toHaveBeenCalledTimes(1);
-		const [url, init] = fetch.mock.calls[0] ?? [];
-		expect(new URL(url).searchParams.get('contract')).toBe('1');
+		const [, init] = fetch.mock.calls[0] ?? [];
 		// A cross-origin backend answers this without a CORS preflight.
 		expect(corsPreflightReasons(init)).toEqual([]);
 		await transport.init?.(context);
@@ -99,41 +94,18 @@ describe('hosted browser prefetch consumption', () => {
 		expect(signed).toHaveBeenCalledTimes(1);
 	});
 
-	it.each([
-		['1', 'invalid-payload'],
-		['99', 'unsupported-contract'],
-	])(
-		'keeps a producer %s declaration when its early response is consumed',
-		async (contract, reason) => {
-			const fetch = vi
-				.fn()
-				.mockResolvedValue(response({ policy: legacyPolicy }, contract));
-			vi.stubGlobal('fetch', fetch);
-			await primePrefetchedInitialData({ projectUrl: '/api/inth' });
-			const result = await createHostedTransport({
-				projectUrl: '/api/inth',
-			}).init?.(context);
-			expect(result?.policyResolution).toMatchObject({
-				reason,
-				status: 'failed',
-			});
-			expect(fetch).toHaveBeenCalledTimes(1);
-		}
-	);
-
-	it('rejects cached responses that predate the policy contract', async () => {
-		vi.stubGlobal(
-			'fetch',
-			vi.fn().mockResolvedValue(response({ policy: legacyPolicy }, null))
-		);
+	it('an early response without a policy resolution is a failed payload', async () => {
+		const fetch = vi.fn().mockResolvedValue(response({ policy: legacyPolicy }));
+		vi.stubGlobal('fetch', fetch);
 		await primePrefetchedInitialData({ projectUrl: '/api/inth' });
 		const result = await createHostedTransport({
 			projectUrl: '/api/inth',
 		}).init?.(context);
 		expect(result?.policyResolution).toMatchObject({
-			reason: 'unsupported-contract',
+			reason: 'invalid-payload',
 			status: 'failed',
 		});
+		expect(fetch).toHaveBeenCalledTimes(1);
 	});
 
 	it('retries once after a failed early request', async () => {
@@ -160,7 +132,7 @@ describe('hosted browser prefetch consumption', () => {
 		});
 		expect(fetch).toHaveBeenCalledTimes(2);
 		await createHostedTransport({
-			initUrl: '/other/init',
+			initUrl: '/other/v1/consent/init',
 			projectUrl: '/api/inth',
 		}).init?.(context);
 		expect(fetch).toHaveBeenCalledTimes(3);
@@ -295,7 +267,6 @@ describe('hosted browser prefetch consumption', () => {
 			const transport = createHostedTransport({
 				initialData: Promise.resolve({
 					init: await response().json(),
-					producerPolicyContract: '1',
 				}),
 				projectUrl: '/api/inth',
 			});

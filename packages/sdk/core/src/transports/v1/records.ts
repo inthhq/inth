@@ -9,7 +9,6 @@
 import { appendJourneyParams, V1_UUID_PATTERN } from '@inth/sdk-schema/types';
 import type { V1ConsentRecordLink } from '@inth/sdk-schema/types';
 
-import { isUuidV7 } from '../../libs/subject-uuid';
 import type {
 	KernelTransport,
 	KernelUser,
@@ -19,15 +18,15 @@ import type {
 import { buildDecisionAssertion } from '../decision-inputs';
 import type { RememberedDecisionInputs } from '../decision-inputs';
 import { readApiError } from './error';
+import { trimTrailingSlash, V1_ROUTES } from './paths';
 import { buildV1ConsentRecordBody } from './records-body';
 import {
+	isUuidV7,
 	readJson,
 	resolveProperty,
 	resolveV1Fetch,
 	subjectLinkPath,
-	trimTrailingSlash,
 	V1_JSON_HEADERS,
-	V1_ROUTES,
 } from './routes';
 import { readSaveFailure } from './save-rejected';
 
@@ -47,12 +46,6 @@ export interface V1RecordTransportOptions {
 	 * name, else the project URL's.
 	 */
 	property?: string;
-	/**
-	 * Called when an answer names a subject ID other than the one sent, such
-	 * as the UUID for a stored `sub_` ID. The kernel reads a first save's ID
-	 * from its result; a replay's and a link's reach it only here.
-	 */
-	onSubjectId?: (subjectId: string, previous: string) => void;
 }
 
 /** A save result with the record ID and the answer about the identity link. */
@@ -66,10 +59,23 @@ export interface V1SaveResult extends SaveResult {
 	link?: V1ConsentRecordLink;
 }
 
+/** Where saves find the policy decision they assert. */
+export interface V1DecisionSource {
+	/** Refuse a save until an init resolved a decision. */
+	required: boolean;
+	/** The init in flight, if any. A save waits for it before asserting. */
+	pending: () => Promise<unknown> | undefined;
+	/** Decision inputs the latest init remembered. */
+	inputs: () => RememberedDecisionInputs | undefined;
+}
+
 /** The record methods of a `/v1` transport. */
 export interface V1RecordTransport extends KernelTransport {
 	save: (payload: SavePayload) => Promise<V1SaveResult>;
-	identify: (user: KernelUser, subjectId: string | null) => Promise<void>;
+	identify: (
+		user: KernelUser,
+		subjectId: string | null
+	) => Promise<{ subjectId: string } | undefined>;
 }
 
 const readLink = function readLink(
@@ -129,8 +135,8 @@ const toSaveResult = function toSaveResult(
  * Build the record half of a `/v1` transport. Safe to create per request.
  *
  * @param options - Project URL and request settings.
- * @param decisionInputs - The decision a save without a policy snapshot
- *   token asserts, when the transport remembers one.
+ * @param decision - The decision a save without a policy snapshot token
+ *   asserts, when the transport remembers one.
  * @returns Save and identify methods.
  * @example
  * ```ts
@@ -142,17 +148,11 @@ const toSaveResult = function toSaveResult(
  */
 export const createV1RecordTransport = function createV1RecordTransport(
 	options: V1RecordTransportOptions,
-	decisionInputs?: () => RememberedDecisionInputs | undefined
+	decision?: V1DecisionSource
 ): V1RecordTransport {
 	const base = trimTrailingSlash(options.projectUrl);
 	const fetchImpl = resolveV1Fetch(options.fetch, 'createV1RecordTransport');
 	const property = resolveProperty(base, options.property);
-
-	const reportSubjectId = (canonical: string, sent: string) => {
-		if (canonical !== sent) {
-			options.onSubjectId?.(canonical, sent);
-		}
-	};
 
 	const post = (url: string, body: unknown) =>
 		fetchImpl(url, {
@@ -163,9 +163,9 @@ export const createV1RecordTransport = function createV1RecordTransport(
 		});
 
 	return {
-		async identify(user, subjectId): Promise<void> {
+		async identify(user, subjectId) {
 			if (!(subjectId && user.identityToken)) {
-				return;
+				return undefined;
 			}
 			const response = await post(`${base}${subjectLinkPath(subjectId)}`, {
 				externalId: user.externalId,
@@ -189,10 +189,27 @@ export const createV1RecordTransport = function createV1RecordTransport(
 					`Inth transport: ${V1_ROUTES.subjectLink} answered ${response.status} without a canonical subject ID`
 				);
 			}
-			reportSubjectId(canonical, subjectId);
+			return { subjectId: canonical };
 		},
 
 		async save(payload): Promise<V1SaveResult> {
+			if (
+				decision?.required &&
+				!payload.policySnapshotToken &&
+				!payload.decisionInputs
+			) {
+				let awaited = decision.pending();
+				while (awaited) {
+					// oxlint-disable-next-line no-await-in-loop -- Each iteration waits for the init that superseded the last.
+					await awaited.catch(() => undefined);
+					awaited = decision.pending();
+				}
+				if (!buildDecisionAssertion(payload, decision.inputs())) {
+					throw new Error(
+						'Inth transport: cannot save before init resolved a policy decision (assertDecisionInputs is set).'
+					);
+				}
+			}
 			const url = `${base}${V1_ROUTES.records}`;
 			const response = await post(
 				payload.journey
@@ -203,7 +220,7 @@ export const createV1RecordTransport = function createV1RecordTransport(
 					: url,
 				{
 					...buildV1ConsentRecordBody(payload, property),
-					...buildDecisionAssertion(payload, decisionInputs?.()),
+					...buildDecisionAssertion(payload, decision?.inputs()),
 				}
 			);
 			if (!response.ok) {
@@ -220,7 +237,6 @@ export const createV1RecordTransport = function createV1RecordTransport(
 					`Inth transport: ${V1_ROUTES.records} answered ${response.status} without a subject ID and record ID`
 				);
 			}
-			reportSubjectId(result.subjectId, payload.subjectId);
 			return result;
 		},
 	};

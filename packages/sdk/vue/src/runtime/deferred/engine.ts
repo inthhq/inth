@@ -86,9 +86,9 @@ const committedConfig = function committedConfig(
 declare const process: { env: { NODE_ENV?: string } };
 
 /**
- * The transport for the mode the browser runs. The hosted backend keeps
- * the consent headers the server forwarded; the rest go through
- * `clientMode()`.
+ * The transport for the mode the browser runs. Hosted mode takes the
+ * consent headers the server read, which its init sends in the query; the
+ * rest go through `clientMode()`.
  */
 const nuxtClientMode = function nuxtClientMode(
 	mode: NuxtMode,

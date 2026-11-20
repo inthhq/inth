@@ -43,6 +43,17 @@ export type {
 	ProviderTransportKind,
 } from './mode';
 export { hosted } from './mode';
+export type { InthApiErrorCode, InthApiErrorDetail } from './v1/error';
+export { InthApiError, isInthApiError } from './v1/error';
+export type { V1HostedTransport, V1HostedTransportOptions } from './v1/hosted';
+export { createV1HostedTransport } from './v1/hosted';
+export type {
+	V1RecordTransport,
+	V1RecordTransportOptions,
+	V1SaveResult,
+} from './v1/records';
+export { createV1RecordTransport } from './v1/records';
+export { InthApiSaveRejectedError } from './v1/save-rejected';
 export type {
 	OfflineKernelTransport,
 	OfflineTransportOptions,

@@ -52,8 +52,10 @@ describe('defaults from @inth/sdk/generated', () => {
 		const fetch = offlineFetch();
 		const { GET } = createConsentRoute({ fetch });
 		const response = await GET({
-			params: { _splat: 'manifest' },
-			request: new Request('https://app.example.com/api/inth/manifest'),
+			params: { _splat: 'v1/consent/manifest' },
+			request: new Request(
+				'https://app.example.com/api/inth/v1/consent/manifest'
+			),
 		});
 		expect(await response.json()).toEqual(MANIFEST_FIXTURE);
 		expect(fetch).not.toHaveBeenCalled();
@@ -67,14 +69,19 @@ describe('the consent route with the render mode', () => {
 			.mockResolvedValue(Response.json(MANIFEST_FIXTURE));
 		const { GET } = createConsentRoute({
 			fetch,
-			mode: { manifestUrl: 'https://cdn.example/manifest', type: 'manifest' },
+			mode: {
+				manifestUrl: 'https://cdn.example/v1/consent/manifest',
+				type: 'manifest',
+			},
 		});
 		await GET({
-			params: { _splat: 'manifest' },
-			request: new Request('https://app.example.com/api/inth/manifest'),
+			params: { _splat: 'v1/consent/manifest' },
+			request: new Request(
+				'https://app.example.com/api/inth/v1/consent/manifest'
+			),
 		});
 		expect(String(fetch.mock.calls[0]?.[0])).toBe(
-			'https://cdn.example/manifest'
+			'https://cdn.example/v1/consent/manifest'
 		);
 	});
 });
@@ -83,7 +90,7 @@ describe('the client half of the state', () => {
 	test('carries the mode and route prefix, never the snapshot', async () => {
 		const state = await resolveConsent({
 			mode: {
-				manifestUrl: 'https://cdn.example/manifest',
+				manifestUrl: 'https://cdn.example/v1/consent/manifest',
 				snapshot: MANIFEST_FIXTURE,
 				type: 'manifest',
 			},
@@ -94,7 +101,7 @@ describe('the client half of the state', () => {
 			policyId: 'eu-opt-in',
 		});
 		expect(state.mode).toEqual({
-			manifestUrl: 'https://cdn.example/manifest',
+			manifestUrl: 'https://cdn.example/v1/consent/manifest',
 			type: 'manifest',
 		});
 		expect(state.routePrefix).toBe('/api/inth');
@@ -131,7 +138,7 @@ describe('the client half of the state', () => {
 		expect(state.mode).toEqual({ type: 'hosted' });
 		// The server still asks the hosted backend.
 		expect(String(fetch.mock.calls[0]?.[0])).toMatch(
-			/^https:\/\/backend\.example\/init/u
+			/^https:\/\/backend\.example\/v1\/consent\/init/u
 		);
 	});
 

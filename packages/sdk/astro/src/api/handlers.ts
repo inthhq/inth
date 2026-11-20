@@ -1,5 +1,5 @@
 /**
- * Route handlers for `${routePrefix}/init` and `${routePrefix}/manifest`.
+ * Route handlers for `${routePrefix}/v1/consent/init` and `${routePrefix}/v1/consent/manifest`.
  *
  * The routes themselves live in `@inth/sdk/server`
  * (`createConsentRouteHandler`), shared with the Next.js, Nuxt, SvelteKit
@@ -89,10 +89,10 @@ export interface ConsentRouteHandlerOptions {
  *
  * With `routePrefix: false` the browser never calls a route you build from
  * these: a page the server resolved inits again through the backend's
- * `/init`. Mount them for other clients, or let browser resolution fetch
+ * `/v1/consent/init`. Mount them for other clients, or let browser resolution fetch
  * the manifest from them with
- * `manifest({ resolve: 'browser', manifestUrl: '/api/inth/manifest' })`.
- * To have the browser use the route for `/init`, keep the injected route
+ * `manifest({ resolve: 'browser', manifestUrl: '/api/inth/v1/consent/manifest' })`.
+ * To have the browser use the route for init, keep the injected route
  * and change its path with `routePrefix`.
  *
  * @param handlerOptions - Integration options plus test seams.
@@ -101,7 +101,7 @@ export interface ConsentRouteHandlerOptions {
  * @example
  * ```ts
  * // src/pages/api/inth/[...path].ts, with routePrefix: false and
- * // mode: manifest({ resolve: 'browser', manifestUrl: '/api/inth/manifest' })
+ * // mode: manifest({ resolve: 'browser', manifestUrl: '/api/inth/v1/consent/manifest' })
  * import options from 'virtual:inth/options';
  * import { createConsentRouteHandlers } from '@inth/astro/server';
  *
@@ -148,7 +148,7 @@ export const createConsentRouteHandlers = function createConsentRouteHandlers(
 	};
 
 	/**
-	 * `GET ${routePrefix}/init` — a resolved `InitOutput`, never cached.
+	 * `GET ${routePrefix}/v1/consent/init` — a resolved `InitOutput`, never cached.
 	 *
 	 * @param lifetime - The route's `{ locals }`, so detached work can be
 	 * registered with the adapter's `waitUntil`.
@@ -165,7 +165,7 @@ export const createConsentRouteHandlers = function createConsentRouteHandlers(
 	};
 
 	/**
-	 * `GET ${routePrefix}/manifest` — the manifest, with its own cache headers.
+	 * `GET ${routePrefix}/v1/consent/manifest` — the manifest, with its own cache headers.
 	 *
 	 * @param lifetime - The route's `{ locals }`, so a background manifest
 	 * refresh can be registered with the adapter's `waitUntil`.

@@ -6,7 +6,7 @@ import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
 } from '@inth/sdk/schema/types';
-import { describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { defineConsentConfig } from '../config';
@@ -40,6 +40,11 @@ const POLICY_RESOLUTION = writePolicyResolutionWire(
 		],
 	})
 );
+
+// A save one test leaves queued would replay in the next one.
+beforeEach(() => {
+	localStorage.clear();
+});
 
 describe('ConsentRoot: projectUrl triggers auto-init', () => {
 	test('root reports Next.js adapter identity on window.__inthDebug', async () => {
@@ -280,13 +285,13 @@ describe('ConsentRoot: config picks the transport', () => {
 		[
 			'saves post to the backend',
 			undefined,
-			'https://consent.example.com/subjects',
+			'https://consent.example.com/v1/consent/records',
 			manifest(),
 		],
 		[
 			'with proxy, saves post to the route too',
 			true,
-			'/api/consent/subjects',
+			'/api/consent/v1/consent/records',
 			manifest(),
 		],
 	])(
@@ -294,8 +299,11 @@ describe('ConsentRoot: config picks the transport', () => {
 		async (_name, proxy, saveURL, mode) => {
 			const fetchSpy = vi.fn((url: string, _init?: RequestInit) =>
 				Promise.resolve(
-					url.endsWith('/subjects')
-						? jsonResponse({ ok: true, subjectId: 'sub_saved' })
+					url.endsWith('/v1/consent/records')
+						? jsonResponse({
+								recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+								subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+							})
 						: jsonResponse({
 								branding: 'inth',
 								location: { countryCode: 'DE', regionCode: null },
@@ -359,7 +367,7 @@ describe('ConsentRoot: config picks the transport', () => {
 					);
 				await vi.waitFor(() => {
 					expect(thisPage().map(([url]) => pathOf(url))).toEqual([
-						'/api/consent/init',
+						'/api/consent/v1/consent/init',
 						saveURL,
 					]);
 				});
@@ -386,8 +394,11 @@ describe('ConsentRoot: config picks the transport', () => {
 	test("resolve: 'browser': init resolves in the browser from the manifest route", async () => {
 		const fetchSpy = vi.fn((url: string) =>
 			Promise.resolve(
-				url.endsWith('/subjects')
-					? jsonResponse({ ok: true, subjectId: 'sub_saved' })
+				url.endsWith('/v1/consent/records')
+					? jsonResponse({
+							recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+							subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+						})
 					: jsonResponse(MANIFEST_FIXTURE)
 			)
 		);
@@ -415,8 +426,8 @@ describe('ConsentRoot: config picks the transport', () => {
 			await getByTestId('save').click();
 			await vi.waitFor(() => {
 				expect(fetchSpy.mock.calls.map(([url]) => pathOf(url))).toEqual([
-					'/api/consent/manifest',
-					'https://consent.example.com/subjects',
+					'/api/consent/v1/consent/manifest',
+					'https://consent.example.com/v1/consent/records',
 				]);
 			});
 		} finally {
@@ -427,7 +438,7 @@ describe('ConsentRoot: config picks the transport', () => {
 	test("resolve: 'browser' asks the backend /init for a country the manifest splits by region", async () => {
 		const fetchSpy = vi.fn((url: string) =>
 			Promise.resolve(
-				pathOf(url).endsWith('/init')
+				pathOf(url).endsWith('/v1/consent/init')
 					? jsonResponse({
 							branding: 'inth',
 							location: { countryCode: 'US', regionCode: 'CA' },
@@ -462,15 +473,15 @@ describe('ConsentRoot: config picks the transport', () => {
 				.element(getByTestId('probe'))
 				.toHaveTextContent('us-ca-opt-out|US|false');
 			expect(fetchSpy.mock.calls.map(([url]) => pathOf(url))).toEqual([
-				'/api/consent/manifest',
-				'https://consent.example.com/init',
+				'/api/consent/v1/consent/manifest',
+				'https://consent.example.com/v1/consent/init',
 			]);
 		} finally {
 			globalThis.fetch = originalFetch;
 		}
 	});
 
-	test('projectUrl only: manifest() re-inits against the backend /init', async () => {
+	test('projectUrl only: manifest() re-inits against the backend /v1/consent/init', async () => {
 		const fetchSpy = vi.fn().mockResolvedValue(
 			jsonResponse({
 				branding: 'inth',
@@ -501,7 +512,7 @@ describe('ConsentRoot: config picks the transport', () => {
 				.element(getByTestId('probe'))
 				.toHaveTextContent('gdpr|DE|false');
 			expect(pathOf(fetchSpy.mock.calls[0]?.[0])).toBe(
-				'https://consent.example.com/init'
+				'https://consent.example.com/v1/consent/init'
 			);
 		} finally {
 			globalThis.fetch = originalFetch;
@@ -511,8 +522,11 @@ describe('ConsentRoot: config picks the transport', () => {
 	test('config journey false: neither the init nor the save carries one', async () => {
 		const fetchSpy = vi.fn((url: string, _init?: RequestInit) =>
 			Promise.resolve(
-				pathOf(url).endsWith('/subjects')
-					? jsonResponse({ ok: true, subjectId: 'sub_saved' })
+				pathOf(url).endsWith('/v1/consent/records')
+					? jsonResponse({
+							recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+							subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+						})
 					: jsonResponse({
 							branding: 'inth',
 							location: { countryCode: 'DE', regionCode: null },
@@ -544,7 +558,9 @@ describe('ConsentRoot: config picks the transport', () => {
 			await getByTestId('save').click();
 			await vi.waitFor(() =>
 				expect(
-					fetchSpy.mock.calls.some(([url]) => pathOf(url).endsWith('/subjects'))
+					fetchSpy.mock.calls.some(([url]) =>
+						pathOf(url).endsWith('/v1/consent/records')
+					)
 				).toBe(true)
 			);
 			for (const [url] of fetchSpy.mock.calls) {
@@ -557,7 +573,12 @@ describe('ConsentRoot: config picks the transport', () => {
 
 	test('a server state with no journey: the save carries none', async () => {
 		const fetchSpy = vi.fn((_url: string, _init?: RequestInit) =>
-			Promise.resolve(jsonResponse({ ok: true, subjectId: 'sub_saved' }))
+			Promise.resolve(
+				jsonResponse({
+					recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+					subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+				})
+			)
 		);
 		const originalFetch = globalThis.fetch;
 		globalThis.fetch = fetchSpy as unknown as typeof globalThis.fetch;
@@ -579,7 +600,7 @@ describe('ConsentRoot: config picks the transport', () => {
 			await getByTestId('save').click();
 			await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalled());
 			expect(pathOf(fetchSpy.mock.calls[0]?.[0])).toBe(
-				'https://consent.example.com/subjects'
+				'https://consent.example.com/v1/consent/records'
 			);
 			expect(String(fetchSpy.mock.calls[0]?.[0])).not.toContain('journey');
 		} finally {

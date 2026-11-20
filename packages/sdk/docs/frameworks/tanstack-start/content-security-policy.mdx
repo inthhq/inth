@@ -18,7 +18,7 @@ allow them:
 | The inline `<script>` that `ConsentRoot` renders when the visitor's consent or `alwaysLoad` already lets some vendor helper entries in `scripts` run | `script-src` with the request nonce |
 | The inline `consentPrefetchHead` script, on prerendered pages that use it | `script-src` with its hash |
 | Browser requests to `/api/inth/*`, when you mount the consent route | `connect-src 'self'` |
-| Browser requests to your backend's `/init` and `/subjects` | `connect-src` with the backend origin |
+| Browser requests to your backend's `/v1/consent/init` and `/v1/consent/records` | `connect-src` with the backend origin |
 | Iframes inside `ConsentGate`, and the frames, images and requests your vendors load | `frame-src`, `img-src`, `connect-src` for each vendor |
 
 Requests the Start server makes, such as the manifest fetch in
@@ -141,12 +141,12 @@ Which consent requests the browser makes depends on your
 
 | Setup | Browser requests | Policy |
 | --- | --- | --- |
-| Quickstart | `/init` and `/subjects` on your backend URL | `connect-src` with the backend origin |
-| Consent route with `createConsentStateHandler({ routePrefix: '/api/inth' })` | `/api/inth/init` on your origin, `/subjects` on your backend URL | `connect-src 'self'` plus the backend origin |
+| Quickstart | `/v1/consent/init` and `/v1/consent/records` on your backend URL | `connect-src` with the backend origin |
+| Consent route with `createConsentStateHandler({ routePrefix: '/api/inth' })` | `/api/inth/v1/consent/init` on your origin, `/v1/consent/records` on your backend URL | `connect-src 'self'` plus the backend origin |
 | Consent route with `proxy: true` on the route and on `createConsentStateHandler({ proxy: true, routePrefix: '/api/inth' })` | Every consent request on your origin | `connect-src 'self'` |
 
 Under an IAB TCF policy the browser also loads the Global Vendor List. With the
-consent route and `routePrefix`, it comes through `/api/inth/init`, which
+consent route and `routePrefix`, it comes through `/api/inth/v1/consent/init`, which
 `'self'` covers. Otherwise the browser fetches it from the URL the policy
 provides, so allow that host in `connect-src`. See
 [IAB TCF](/docs/frameworks/tanstack-start/iab).
@@ -182,6 +182,6 @@ such as an EU opt-in policy.
 3. Before a choice, DevTools Network shows no vendor requests.
 4. Click **Accept All**. The script loader's `<script>` elements, with ids starting
    `inth-`, carry the nonce, and the vendor requests appear.
-5. The save to `/subjects` succeeds. A `connect-src` violation here means the
+5. The save to `/v1/consent/records` succeeds. A `connect-src` violation here means the
    backend origin is missing.
 6. Reload. The header has a new nonce, and the elements carry the new value.

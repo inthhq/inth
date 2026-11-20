@@ -1,6 +1,7 @@
 /** Shared manifest HTTP cache. Does not load translations or resolve policy. */
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 
+import { V1_ROUTES } from '../transports/v1/paths';
 import { boundedSet, mapFor } from './bounded-map';
 import {
 	forbidsReuse,
@@ -14,7 +15,6 @@ import {
 	PUBLIC_REQUEST_HEADERS,
 } from './identity-headers';
 import { trimSlash } from './url';
-import { inthProtocolHeaders } from './version-header';
 
 /**
  * Just the call signature the manifest cache needs.
@@ -491,7 +491,7 @@ const resolveEntryLifetime = function resolveEntryLifetime(input: {
 
 /** Where a server adapter reads the manifest from. */
 export interface ManifestSourceOptions {
-	/** Backend URL; the manifest is read from `${projectUrl}/manifest`. */
+	/** Backend URL; the manifest is read from `${projectUrl}/v1/consent/manifest`. */
 	projectUrl?: string;
 	/** Explicit manifest URL. Takes precedence over `projectUrl`. */
 	manifestUrl?: string;
@@ -513,7 +513,7 @@ export const resolveManifestSourceUrl = function resolveManifestSourceUrl(
 			'inth manifest cache: `projectUrl` or `manifestUrl` is required.'
 		);
 	}
-	return `${trimSlash(options.projectUrl)}/manifest`;
+	return `${trimSlash(options.projectUrl)}${V1_ROUTES.manifest}`;
 };
 
 /**
@@ -651,14 +651,13 @@ export interface FetchCachedManifestOptions {
 
 /**
  * Request headers that carry no visitor identity: the public browser
- * headers and this client's protocol headers. Anything else a host
+ * headers. Anything else a host
  * forwards (an API key, a tenant selector) is treated as a credential for
  * transport purposes.
  */
-const PUBLIC_MANIFEST_HEADERS: ReadonlySet<string> = new Set([
-	...PUBLIC_REQUEST_HEADERS,
-	...Object.keys(inthProtocolHeaders),
-]);
+const PUBLIC_MANIFEST_HEADERS: ReadonlySet<string> = new Set(
+	PUBLIC_REQUEST_HEADERS
+);
 
 const findIdentityHeader = (
 	headers: Record<string, string> | undefined
@@ -720,7 +719,7 @@ const defaultRequestHeaders = function defaultRequestHeaders(): Record<
 	string,
 	string
 > {
-	return { accept: 'application/json', ...inthProtocolHeaders };
+	return { accept: 'application/json' };
 };
 
 /**

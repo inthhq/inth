@@ -29,7 +29,10 @@ export const inthVue: Plugin<[InthVuePluginOptions?]> = {
 				? rest
 				: {
 						...rest,
-						mode: hosted({ domain, projectUrl: projectUrl ?? '/api/inth' }),
+						mode: hosted({
+							projectUrl: projectUrl ?? '/api/inth',
+							property: domain,
+						}),
 					}) as PluginOptions
 		);
 	},

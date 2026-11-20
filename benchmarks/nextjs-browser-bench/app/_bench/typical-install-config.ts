@@ -9,7 +9,10 @@ import { defineConsentConfig, manifest } from '@inth/nextjs';
 export const typicalInstallConfig = defineConsentConfig({
 	// The server reads the backend's manifest; a browser re-init resolves
 	// from the app's cached manifest route.
-	mode: manifest({ manifestUrl: '/api/inth/manifest', resolve: 'browser' }),
+	mode: manifest({
+		manifestUrl: '/api/inth/v1/consent/manifest',
+		resolve: 'browser',
+	}),
 	projectUrl: '/api/bench-consent',
 });
 

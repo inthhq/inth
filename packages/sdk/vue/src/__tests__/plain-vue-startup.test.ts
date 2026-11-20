@@ -74,7 +74,7 @@ test.each([false, true])(
 	}
 );
 
-test("manifest() without a build snapshot reads the backend's /manifest", async () => {
+test("manifest() without a build snapshot reads the backend's /v1/consent/manifest", async () => {
 	const fetch = vi.fn((_input: RequestInfo | URL) =>
 		Promise.resolve(new Response('{}', { status: 503 }))
 	);
@@ -92,7 +92,7 @@ test("manifest() without a build snapshot reads the backend's /manifest", async 
 	});
 	await expect.poll(() => fetch.mock.calls.length).toBeGreaterThan(0);
 	expect(String(fetch.mock.calls[0]?.[0])).toBe(
-		'https://consent.example.test/api/manifest'
+		'https://consent.example.test/api/v1/consent/manifest'
 	);
 });
 
@@ -157,7 +157,9 @@ test('manifest() with a manifestUrl asks the backend /init when the manifest is 
 	const app = createApp(defineComponent({ setup: () => () => h('main') }));
 	// Plain Vue has no Nuxt server, so there is no `/api/inth/init` to call.
 	app.use(inthVue, {
-		mode: manifest({ manifestUrl: 'https://cdn.example.test/manifest' }),
+		mode: manifest({
+			manifestUrl: 'https://cdn.example.test/v1/consent/manifest',
+		}),
 	});
 	cleanups.push(() => {
 		app.unmount();
@@ -167,10 +169,10 @@ test('manifest() with a manifestUrl asks the backend /init when the manifest is 
 
 	await expect
 		.poll(() => requests)
-		.toContain('https://cdn.example.test/manifest');
+		.toContain('https://cdn.example.test/v1/consent/manifest');
 	// No Nuxt route: the fallback goes to the backend the manifest URL names.
 	await expect
 		.poll(() => requests.map((url) => url.split('?')[0]))
-		.toContain('https://cdn.example.test/init');
+		.toContain('https://cdn.example.test/v1/consent/init');
 	expect(requests.some((url) => url.includes('/api/inth'))).toBe(false);
 });

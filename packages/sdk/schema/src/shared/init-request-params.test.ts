@@ -27,7 +27,7 @@ describe('init query parameters', () => {
 
 	it('writes every input in a fixed order and keeps a relative URL relative', () => {
 		expect(
-			appendInitParams('/api/inth/init?site=shop#top', {
+			appendInitParams('/api/inth/v1/consent/init?site=shop#top', {
 				country: 'DE',
 				experiment: { arm: 'a=b', id: 'banner shape' },
 				gpc: false,
@@ -36,13 +36,13 @@ describe('init query parameters', () => {
 				version: '3.0.0',
 			})
 		).toBe(
-			'/api/inth/init?site=shop&v=3.0.0&contract=1&country=DE&region=BE&gpc=0&experiment=banner%2520shape%3Da%253Db#top'
+			'/api/inth/v1/consent/init?site=shop&v=3.0.0&contract=1&country=DE&region=BE&gpc=0&experiment=banner%2520shape%3Da%253Db#top'
 		);
 	});
 
 	it('leaves out absent inputs, and the URL alone when there are none', () => {
-		expect(appendInitParams('https://c.example/init', {})).toBe(
-			'https://c.example/init'
+		expect(appendInitParams('https://c.example/v1/consent/init', {})).toBe(
+			'https://c.example/v1/consent/init'
 		);
 		expect(appendInitParams('', { version: '3.0.0' })).toBe('?v=3.0.0');
 	});
@@ -52,11 +52,11 @@ describe('init query parameters', () => {
 		// Inth's value wins, and the app's other parameters keep their order
 		// and encoding.
 		const url = appendInitParams(
-			'/api/consent/init?country=US&site=a%20b&v=1&tag=x#top',
+			'/api/consent/v1/consent/init?country=US&site=a%20b&v=1&tag=x#top',
 			{ country: 'GB', version: '3.0.0' }
 		);
 		expect(url).toBe(
-			'/api/consent/init?site=a%20b&tag=x&v=3.0.0&country=GB#top'
+			'/api/consent/v1/consent/init?site=a%20b&tag=x&v=3.0.0&country=GB#top'
 		);
 		const params = new URL(url, 'https://shop.example').searchParams;
 		expect(params.getAll('country')).toEqual(['GB']);
@@ -64,23 +64,23 @@ describe('init query parameters', () => {
 	});
 
 	it('leaves a parameter inth does not send for the backend to read', () => {
-		const url = appendInitParams('/api/consent/init?region=CA', {
+		const url = appendInitParams('/api/consent/v1/consent/init?region=CA', {
 			country: 'US',
 		});
-		expect(url).toBe('/api/consent/init?region=CA&country=US');
+		expect(url).toBe('/api/consent/v1/consent/init?region=CA&country=US');
 		expect(
 			applyInitParamsToHeaders(url, new Headers()).get('x-inth-region')
 		).toBe('CA');
 	});
 
 	it('matches an encoded name in the existing query', () => {
-		expect(appendInitParams('/init?%63ountry=US&gpc', { country: 'GB' })).toBe(
-			'/init?gpc&country=GB'
-		);
+		expect(
+			appendInitParams('/v1/consent/init?%63ountry=US&gpc', { country: 'GB' })
+		).toBe('/v1/consent/init?gpc&country=GB');
 	});
 
 	it('round-trips through the header names a backend reads', () => {
-		const url = appendInitParams('https://c.example/init', {
+		const url = appendInitParams('https://c.example/v1/consent/init', {
 			country: 'DE',
 			experiment: { arm: 'a=b', id: 'banner shape' },
 			gpc: true,
@@ -104,7 +104,7 @@ describe('init query parameters', () => {
 
 	it('lets a parameter win over the legacy header and keeps the other headers', () => {
 		const headers = applyInitParamsToHeaders(
-			'/init?country=FR&contract=2',
+			'/v1/consent/init?country=FR&contract=2',
 			new Headers({
 				'cf-ipcountry': 'US',
 				'x-inth-country': 'DE',
@@ -130,7 +130,7 @@ describe('init query parameters', () => {
 			'x-inth-version': '2.0.0',
 		});
 		const headers = applyInitParamsToHeaders(
-			new URL('https://c.example/init'),
+			new URL('https://c.example/v1/consent/init'),
 			original
 		);
 		expect(Object.fromEntries(headers)).toEqual(Object.fromEntries(original));
@@ -139,7 +139,7 @@ describe('init query parameters', () => {
 
 	it('ignores empty values and a GPC value other than 1 or 0', () => {
 		const headers = applyInitParamsToHeaders(
-			'/init?country=&gpc=yes',
+			'/v1/consent/init?country=&gpc=yes',
 			new Headers({ 'sec-gpc': '1' })
 		);
 		expect(headers.has('x-inth-country')).toBe(false);

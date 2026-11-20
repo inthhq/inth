@@ -36,7 +36,6 @@ import type {
 	ManifestCache,
 	ManifestFetch,
 } from '../libs/manifest-cache-runtime';
-import { INTH_VERSION_HEADER } from '../libs/version-header';
 import * as server from '../server';
 import { stripIdentityForCleartext } from '../server/consent-proxy';
 import {
@@ -44,11 +43,11 @@ import {
 	resolveManifestInit,
 } from '../transports/manifest-cache';
 
-const SOURCE_URL = 'https://backend.example/manifest';
+const SOURCE_URL = 'https://backend.example/v1/consent/manifest';
 
 const minimalManifest = { revision: 'r1', schemaVersion: 1 };
-const URL_UNDER_TEST = 'https://consent.example.com/manifest';
-const PROTECTED_URL = 'https://api.test/manifest';
+const URL_UNDER_TEST = 'https://consent.example.com/v1/consent/manifest';
+const PROTECTED_URL = 'https://api.test/v1/consent/manifest';
 
 const jsonResponse = function jsonResponse(
 	headers: Record<string, string>,
@@ -161,12 +160,10 @@ describe('fetchCachedManifest', () => {
 
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 		expect(fetchMock.mock.calls[0]?.[0]).toBe(SOURCE_URL);
-		expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
-			headers: {
-				accept: 'application/json',
-				[INTH_VERSION_HEADER]: expect.any(String),
-			},
-			method: 'GET',
+		expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ method: 'GET' });
+		// `/v1` reads no version or contract header.
+		expect(fetchMock.mock.calls[0]?.[1]?.headers).toEqual({
+			accept: 'application/json',
 		});
 		expect(first).toMatchObject({
 			expiresAt: 61_000,
@@ -393,7 +390,7 @@ describe('manifest source URLs', () => {
 			})
 		).toBe('https://cdn.example/manifest.json');
 		expect(resolveManifestSourceUrl({ projectUrl: '/api/inth/' })).toBe(
-			'/api/inth/manifest'
+			'/api/inth/v1/consent/manifest'
 		);
 		expect(() => resolveManifestSourceUrl({})).toThrow(
 			'inth manifest cache: `projectUrl` or `manifestUrl` is required.'
@@ -440,8 +437,11 @@ describe('manifest source URLs', () => {
 		).toBe(`${SOURCE_URL}?lang=de+x&v=2&v=1`);
 		// A relative source follows the same rule.
 		expect(
-			createManifestRequestUrl({ query: 'b=2&a=1', sourceUrl: '/manifest' })
-		).toBe('/manifest?a=1&b=2');
+			createManifestRequestUrl({
+				query: 'b=2&a=1',
+				sourceUrl: '/v1/consent/manifest',
+			})
+		).toBe('/v1/consent/manifest?a=1&b=2');
 	});
 
 	test('requests the source URL and query as written, under the normalised key', async () => {
@@ -739,7 +739,7 @@ describe('fetchCachedManifest: restrictive directives and credential scope', () 
 				cache: createManifestCache(),
 				fetch: fetchMock,
 				headers: { cookie: 'inth=abc' },
-				sourceUrl: 'http://backend.example/manifest',
+				sourceUrl: 'http://backend.example/v1/consent/manifest',
 			})
 		).rejects.toThrow(/refusing to send credentials over http/u);
 		expect(fetchMock).not.toHaveBeenCalled();
@@ -748,7 +748,7 @@ describe('fetchCachedManifest: restrictive directives and credential scope', () 
 			cache: createManifestCache(),
 			fetch: fetchMock,
 			headers: { cookie: 'inth=abc' },
-			sourceUrl: 'http://localhost:3010/manifest',
+			sourceUrl: 'http://localhost:3010/v1/consent/manifest',
 		});
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 	});
@@ -943,14 +943,14 @@ describe('fetchCachedManifest: custom identity headers over cleartext', () => {
 		);
 		const forwarded = stripIdentityForCleartext(
 			{ cookie: 'inth=abc', 'sec-fetch-site': 'same-origin' },
-			'http://backend.example/manifest'
+			'http://backend.example/v1/consent/manifest'
 		);
 		expect(forwarded).toEqual({ 'sec-fetch-site': 'same-origin' });
 		await fetchCachedManifest({
 			cache: createManifestCache(),
 			fetch: fetchMock,
 			headers: forwarded,
-			sourceUrl: 'http://backend.example/manifest',
+			sourceUrl: 'http://backend.example/v1/consent/manifest',
 		});
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 	});
@@ -964,7 +964,7 @@ describe('fetchCachedManifest: custom identity headers over cleartext', () => {
 				cache: createManifestCache(),
 				fetch: fetchMock,
 				headers: { 'x-api-key': 'tenant-a' },
-				sourceUrl: 'http://backend.example/manifest',
+				sourceUrl: 'http://backend.example/v1/consent/manifest',
 			})
 		).rejects.toThrow(/refusing to send credentials over http .*x-api-key/u);
 		expect(fetchMock).not.toHaveBeenCalled();
@@ -973,7 +973,7 @@ describe('fetchCachedManifest: custom identity headers over cleartext', () => {
 			cache: createManifestCache(),
 			fetch: fetchMock,
 			headers: { 'accept-language': 'de', 'x-api-key': 'tenant-a' },
-			sourceUrl: 'https://backend.example/manifest',
+			sourceUrl: 'https://backend.example/v1/consent/manifest',
 		});
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 	});
@@ -2623,19 +2623,21 @@ describe('createManifestCache bounds', () => {
 		const cache = createManifestCache({ maxEntries: 8 });
 		for (let index = 0; index < 1000; index += 1) {
 			cache.set(
-				`https://c.example/manifest?language=aa-${index}`,
+				`https://c.example/v1/consent/manifest?language=aa-${index}`,
 				boundsEntry(BOUNDS_FUTURE)
 			);
 		}
 		let size = 0;
 		for (let index = 992; index < 1000; index += 1) {
-			if (cache.get(`https://c.example/manifest?language=aa-${index}`)) {
+			if (
+				cache.get(`https://c.example/v1/consent/manifest?language=aa-${index}`)
+			) {
 				size += 1;
 			}
 		}
 		expect(size).toBe(8);
 		expect(
-			cache.get('https://c.example/manifest?language=aa-0')
+			cache.get('https://c.example/v1/consent/manifest?language=aa-0')
 		).toBeUndefined();
 	});
 });

@@ -124,7 +124,7 @@ describe('defineConsentConfig', () => {
 		expect(() =>
 			defineConsentConfig({
 				mode: manifest({
-					manifestUrl: 'http://localhost:3000/api/consent/manifest',
+					manifestUrl: 'http://localhost:3000/api/consent/v1/consent/manifest',
 				}),
 				projectUrl: '/api/inth',
 			})

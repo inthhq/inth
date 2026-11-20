@@ -77,7 +77,7 @@ describe('@inth/tanstack-start/static', () => {
 		const source = await createStaticManifestModule({
 			exportName: 'testManifest',
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
-			manifestUrl: 'https://consent.example.com/manifest',
+			manifestUrl: 'https://consent.example.com/v1/consent/manifest',
 		});
 
 		expect(source).toContain(
@@ -94,7 +94,7 @@ describe('createStaticManifestModule: exportName', () => {
 			createStaticManifestModule({
 				exportName: 'consent-manifest',
 				fetch: vi.fn() as unknown as typeof globalThis.fetch,
-				manifestUrl: 'https://consent.example.com/manifest',
+				manifestUrl: 'https://consent.example.com/v1/consent/manifest',
 			})
 		).rejects.toThrow(/valid identifier/u);
 	});
@@ -106,7 +106,7 @@ describe('createStaticManifestModule: reserved export names', () => {
 			createStaticManifestModule({
 				exportName: 'default',
 				fetch: vi.fn() as unknown as typeof globalThis.fetch,
-				manifestUrl: 'https://consent.example.com/manifest',
+				manifestUrl: 'https://consent.example.com/v1/consent/manifest',
 			})
 		).rejects.toThrow(/valid identifier/u);
 	});
@@ -118,7 +118,7 @@ describe('createStaticManifestModule: strict-mode names', () => {
 			createStaticManifestModule({
 				exportName,
 				fetch: vi.fn() as unknown as typeof globalThis.fetch,
-				manifestUrl: 'https://consent.example.com/manifest',
+				manifestUrl: 'https://consent.example.com/v1/consent/manifest',
 			})
 		).rejects.toThrow(/valid identifier/u);
 	});
@@ -136,7 +136,7 @@ describe('createStaticManifestModule: importSource', () => {
 		const source = await createStaticManifestModule({
 			fetch: fetchManifest(),
 			importSource: '@inth/tanstack-start/static',
-			manifestUrl: 'https://consent.example.com/manifest',
+			manifestUrl: 'https://consent.example.com/v1/consent/manifest',
 		});
 		expect(source).toContain(
 			"import type { ConsentManifest } from '@inth/tanstack-start/static';"
@@ -148,7 +148,7 @@ describe('createStaticManifestModule: importSource', () => {
 			createStaticManifestModule({
 				fetch: fetchManifest(),
 				importSource: "x'; import evil from 'y",
-				manifestUrl: 'https://consent.example.com/manifest',
+				manifestUrl: 'https://consent.example.com/v1/consent/manifest',
 			})
 		).rejects.toThrow(/importSource/u);
 	});

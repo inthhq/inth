@@ -116,11 +116,11 @@ export interface ConsentRouteOptions {
 	/**
 	 * The Inth backend. Defaults to the handle's `projectUrl`, then the URL
 	 * `consentManifest()` read from `PUBLIC_INTH_PROJECT_URL`. The manifest
-	 * is read from `${projectUrl}/manifest` when there is no snapshot.
+	 * is read from `${projectUrl}/v1/consent/manifest` when there is no snapshot.
 	 */
 	projectUrl?: string;
 	/**
-	 * Full manifest URL. Takes precedence over `${projectUrl}/manifest`.
+	 * Full manifest URL. Takes precedence over `${projectUrl}/v1/consent/manifest`.
 	 * Defaults to the `manifestUrl` of the handle's `manifest()` mode,
 	 * unless that one is this route's own.
 	 */

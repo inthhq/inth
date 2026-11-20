@@ -556,7 +556,7 @@ const freshColdState = function freshColdState(
 		return describeColdState({
 			freshBrowserContext: true,
 			manifestCacheKeyIsNew: true,
-			note: 'first measured visit to this route since the server started with a new manifest token (includes loading the route module); earlier scenarios in the same process may have fetched the manifest through /api/inth/manifest; server HTML reads are omitted because they run after the samples, with a warm cache',
+			note: 'first measured visit to this route since the server started with a new manifest token (includes loading the route module); earlier scenarios in the same process may have fetched the manifest through /api/inth/v1/consent/manifest; server HTML reads are omitted because they run after the samples, with a warm cache',
 			usesManifestCache,
 		});
 	}

@@ -12,11 +12,11 @@ import { createScriptTagConsentClient as createConsentClient } from '../script-t
 import { manifest, manifestNeedsLocation } from '../transports/manifest';
 import type { ConsentClient } from '../types';
 
-/** A query pair Inth adds to `/init`. */
+/** A query pair Inth adds to `/v1/consent/init`. */
 const INIT_PAIR =
 	/^(?:v|contract|country|region|gpc|experiment|journey|journeyScope|stored)=/u;
 
-/** A request URL without the parameters a client adds to `/init`. */
+/** A request URL without the parameters a client adds to `/v1/consent/init`. */
 const pathOf = (url: unknown): string => {
 	const text = String(url);
 	const [base = '', query] = text.split('?');
@@ -204,7 +204,7 @@ describe('manifestNeedsLocation', () => {
 
 describe('manifest() first paint without a known location', () => {
 	const isInit = (input: unknown): boolean =>
-		pathOf(input).split('?')[0]?.endsWith('/init') === true;
+		pathOf(input).split('?')[0]?.endsWith('/v1/consent/init') === true;
 
 	const start = function start(
 		inlineManifest: ConsentManifest,
@@ -244,7 +244,14 @@ describe('manifest() first paint without a known location', () => {
 
 	it('binds the save to the policy an unknown location resolves to', async () => {
 		const fetchSpy = vi.fn<typeof fetch>(() =>
-			Promise.resolve(new Response(JSON.stringify({ subjectId: 'sub_1' })))
+			Promise.resolve(
+				new Response(
+					JSON.stringify({
+						recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+						subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+					})
+				)
+			)
 		);
 		const client = start(sameBannerEverywhereManifest, fetchSpy);
 		await client.ready();
@@ -304,9 +311,16 @@ describe('manifest() first paint without a known location', () => {
 		expect(snapshot.policyRule.id).toBe('world_none');
 	});
 
-	it('shows a returning visitor no banner and sends no /init', async () => {
+	it('shows a returning visitor no banner and sends no /v1/consent/init', async () => {
 		const fetchSpy = vi.fn<typeof fetch>(() =>
-			Promise.resolve(new Response(JSON.stringify({ subjectId: 'sub_1' })))
+			Promise.resolve(
+				new Response(
+					JSON.stringify({
+						recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+						subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+					})
+				)
+			)
 		);
 		const first = start(sameBannerEverywhereManifest, fetchSpy);
 		await first.ready();
@@ -366,7 +380,7 @@ describe('manifest() first paint without a known location', () => {
 
 describe('manifest() with GPP and an unknown location', () => {
 	const isInit = (input: unknown): boolean =>
-		pathOf(input).split('?')[0]?.endsWith('/init') === true;
+		pathOf(input).split('?')[0]?.endsWith('/v1/consent/init') === true;
 	const californiaAnswer = () =>
 		Promise.resolve(
 			new Response(
@@ -464,7 +478,7 @@ describe('manifest() transports', () => {
 		);
 		void transport.init?.({ overrides: { language: 'en' }, user: null });
 		expect(fetchSpy).toHaveBeenCalledOnce();
-		expect(String(fetchSpy.mock.calls[0]?.[0])).toContain('/init');
+		expect(String(fetchSpy.mock.calls[0]?.[0])).toContain('/v1/consent/init');
 	});
 
 	it('builds a transport of its own for every call', () => {
@@ -477,7 +491,12 @@ describe('manifest()', () => {
 	it('sends the locally resolved policy assertion when saving', async () => {
 		const fetchSpy = vi.fn<typeof fetch>(() =>
 			Promise.resolve(
-				new Response(JSON.stringify({ ok: true, subjectId: 'sub_browser1' }))
+				new Response(
+					JSON.stringify({
+						recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+						subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+					})
+				)
 			)
 		);
 		const client = createConsentClient({
@@ -496,12 +515,12 @@ describe('manifest()', () => {
 		// Resolved in the browser: no /init or report named a journey, so the
 		// save carries none.
 		expect(String(fetchSpy.mock.calls[0]?.[0])).toBe(
-			'https://example.test/subjects'
+			'https://example.test/v1/consent/records'
 		);
 		const body = JSON.parse(String(fetchSpy.mock.calls[0]?.[1]?.body));
 		expect(body.policyId).toBe('everywhere');
 		expect(body.fingerprint).toEqual(expect.any(String));
-		expect(body.choice.categories.measurement.value).toBe(true);
+		expect(body.answer.categories.measurement.value).toBe(true);
 	});
 
 	it('resolves an unknown region through the backend even when the country is known', async () => {
@@ -524,7 +543,7 @@ describe('manifest()', () => {
 		clients.push(client);
 		client.start();
 		await client.ready();
-		expect(pathOf(fetchSpy.mock.calls[0]?.[0])).toContain('/init');
+		expect(pathOf(fetchSpy.mock.calls[0]?.[0])).toContain('/v1/consent/init');
 	});
 	it('throws without a manifest source', () => {
 		expect(() => manifest({})).toThrow(/manifest/u);
@@ -533,9 +552,14 @@ describe('manifest()', () => {
 	it("reads the backend's /manifest when the build had no snapshot", async () => {
 		const fetchSpy = vi.fn<typeof fetch>((input) =>
 			Promise.resolve(
-				String(input) === 'https://example.test/api/manifest'
+				String(input) === 'https://example.test/api/v1/consent/manifest'
 					? new Response(JSON.stringify(everywhereManifest))
-					: new Response(JSON.stringify({ subjectId: 'sub_browser1' }))
+					: new Response(
+							JSON.stringify({
+								recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+								subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+							})
+						)
 			)
 		);
 		const client = createConsentClient({
@@ -549,7 +573,7 @@ describe('manifest()', () => {
 		client.start();
 		await client.ready();
 		expect(fetchSpy.mock.calls.map(([input]) => pathOf(input))).toEqual([
-			'https://example.test/api/manifest',
+			'https://example.test/api/v1/consent/manifest',
 		]);
 	});
 
@@ -594,11 +618,16 @@ describe('manifest()', () => {
 				if (url === manifestUrl) {
 					return Promise.resolve(new Response(JSON.stringify(geoManifest)));
 				}
-				if (url.split('?')[0]?.endsWith('/init')) {
+				if (url.split('?')[0]?.endsWith('/v1/consent/init')) {
 					return Promise.resolve(initResponse());
 				}
 				return Promise.resolve(
-					new Response(JSON.stringify({ subjectId: 'sub_browser1' }))
+					new Response(
+						JSON.stringify({
+							recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+							subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+						})
+					)
 				);
 			});
 			const client = createConsentClient({
@@ -610,8 +639,8 @@ describe('manifest()', () => {
 			await expect(client.acceptAll()).resolves.toMatchObject({ ok: true });
 			expect(fetchSpy.mock.calls.map(([input]) => pathOf(input))).toEqual([
 				manifestUrl,
-				`${expectedBackend}/init`,
-				`${expectedBackend}/subjects`,
+				`${expectedBackend}/v1/consent/init`,
+				`${expectedBackend}/v1/consent/records`,
 			]);
 		}
 	);
@@ -619,7 +648,12 @@ describe('manifest()', () => {
 	it('honours an explicit same-origin backend with an inline manifest', async () => {
 		const fetchSpy = vi.fn<typeof fetch>(() =>
 			Promise.resolve(
-				new Response(JSON.stringify({ subjectId: 'sub_browser1' }))
+				new Response(
+					JSON.stringify({
+						recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+						subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+					})
+				)
 			)
 		);
 		const client = createConsentClient({
@@ -635,7 +669,7 @@ describe('manifest()', () => {
 		expect(fetchSpy).not.toHaveBeenCalled();
 		await expect(client.acceptAll()).resolves.toMatchObject({ ok: true });
 		expect(fetchSpy.mock.calls.map(([input]) => pathOf(input))).toEqual([
-			'/subjects',
+			'/v1/consent/records',
 		]);
 	});
 
@@ -683,7 +717,7 @@ describe('manifest()', () => {
 		const snapshot = await client.ready();
 
 		expect(fetchSpy).toHaveBeenCalledOnce();
-		expect(pathOf(fetchSpy.mock.calls[0]?.[0])).toContain('/init');
+		expect(pathOf(fetchSpy.mock.calls[0]?.[0])).toContain('/v1/consent/init');
 		expect(snapshot.location?.countryCode).toBe('DE');
 	});
 
@@ -711,11 +745,11 @@ describe('manifest()', () => {
 	});
 
 	it.each([
-		['/manifest', ''],
+		['/v1/consent/manifest', ''],
 		['/consent/manifest/?language=en#policy', '/consent'],
-		['./api/manifest', './api'],
+		['./api/v1/consent/manifest', './api'],
 		[
-			'https://api.example.test/inth/manifest?revision=1',
+			'https://api.example.test/inth/v1/consent/manifest?revision=1',
 			'https://api.example.test/inth',
 		],
 	])('derives the API endpoints from %s', async (manifestUrl, projectUrl) => {
@@ -723,11 +757,16 @@ describe('manifest()', () => {
 			if (String(input) === manifestUrl) {
 				return Promise.resolve(new Response(JSON.stringify(geoManifest)));
 			}
-			if (String(input).split('?')[0]?.endsWith('/init')) {
+			if (String(input).split('?')[0]?.endsWith('/v1/consent/init')) {
 				return Promise.resolve(initResponse());
 			}
 			return Promise.resolve(
-				new Response(JSON.stringify({ subjectId: 'sub_browser1' }))
+				new Response(
+					JSON.stringify({
+						recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+						subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+					})
+				)
 			);
 		});
 		const client = createConsentClient({
@@ -739,8 +778,8 @@ describe('manifest()', () => {
 		await expect(client.acceptAll()).resolves.toMatchObject({ ok: true });
 		expect(fetchSpy.mock.calls.map(([input]) => pathOf(input))).toEqual([
 			manifestUrl,
-			`${projectUrl}/init`,
-			`${projectUrl}/subjects`,
+			`${projectUrl}/v1/consent/init`,
+			`${projectUrl}/v1/consent/records`,
 		]);
 		expect(snapshot.location?.countryCode).toBe('DE');
 	});
@@ -758,7 +797,7 @@ describe('manifest()', () => {
 			{
 				mode: manifest({
 					fetch: fetchSpy,
-					manifestUrl: 'https://x.c15t.dev/manifest',
+					manifestUrl: 'https://x.c15t.dev/v1/consent/manifest',
 				}),
 			},
 			{ pkg: 'test' }
@@ -775,7 +814,7 @@ describe('manifest()', () => {
 
 		expect(fetchSpy).toHaveBeenCalledOnce();
 		expect(pathOf(fetchSpy.mock.calls[0]?.[0])).toBe(
-			'https://x.c15t.dev/manifest'
+			'https://x.c15t.dev/v1/consent/manifest'
 		);
 	});
 });

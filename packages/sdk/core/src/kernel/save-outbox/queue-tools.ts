@@ -15,27 +15,26 @@ import {
 	isPlainRecord,
 	validateExplicitChoice,
 } from '../../consent-record/validation';
-import { generateSubjectId } from '../../libs/generate-subject-id';
 import { warnInDevelopment } from '../../libs/is-production';
+import { generateUuidV7 } from '../../libs/subject-uuid';
 import {
 	isConsentSaveRejection,
 	isSubjectConflict,
 } from '../../transports/save-rejection';
 import type { QueueTools } from './queue';
-import { pendingSave } from './store';
+import { appendSave } from './store';
 import { toStoredPayload } from './stored-payload';
-import { supersededBy, withoutSuperseded, withSubjectId } from './supersession';
+import { withoutSuperseded, withSubjectId } from './supersession';
 
 /** @internal */
 export const queueTools: QueueTools = {
+	appendSave,
 	consentModels: CONSENT_MODELS,
-	generateSubjectId,
+	generateUuidV7,
 	isConsentSaveRejection,
 	isPlainRecord,
 	isSubjectConflict,
 	optionalCategories: OPTIONAL_CONSENT_CATEGORIES,
-	pendingSave,
-	supersededBy,
 	toStoredPayload,
 	validateExplicitChoice,
 	warnInDevelopment,

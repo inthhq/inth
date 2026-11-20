@@ -35,6 +35,12 @@ import type {
 } from './test-kernel';
 import { inthVue } from './test-plugin';
 
+/** What `POST /v1/consent/records` answers a save of a generated subject. */
+const SAVED = {
+	recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+	subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+};
+
 type WindowWithInth = Window & {
 	__inthDebug?: {
 		version: string;
@@ -124,19 +130,22 @@ const createFetchMock = function createFetchMock() {
 	const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
 		// The path alone: the runtime adds its consent journey as a query.
 		const url = String(input).split('?')[0] ?? '';
-		if (url.endsWith('/init')) {
+		if (url.endsWith('/v1/consent/init')) {
 			return new Response(JSON.stringify(initFixture), {
 				headers: { 'content-type': 'application/json' },
 				status: 200,
 			});
 		}
-		if (url.endsWith('/subjects')) {
+		if (url.endsWith('/v1/consent/records')) {
 			const body = JSON.parse(String(init?.body ?? '{}')) as {
 				subjectId?: string;
 			};
 			subjectBodies.push(body);
 			return new Response(
-				JSON.stringify({ ok: true, subjectId: body.subjectId }),
+				JSON.stringify({
+					recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+					subjectId: body.subjectId,
+				}),
 				{
 					headers: { 'content-type': 'application/json' },
 					status: 200,
@@ -501,28 +510,21 @@ describe('@inth/vue kernel runtime', () => {
 		}
 	});
 
-	test.each([1, 99, null])(
-		'prefetch fails closed for missing or unsupported negotiated contract %s',
-		(producerContract) => {
-			const { policyResolution: _removedWire, ...unversionedInit } =
-				initFixture;
-			const context = createVueConsentKernelContext({
-				config: {},
-				// @ts-expect-error Deliberately test a producer omitting the required contract.
-				prefetch: unversionedInit,
-				producerContract,
-			});
-			try {
-				expect(context.snapshot.value.resolution.status).toBe('failed');
-				expect(context.snapshot.value.effectivePermissions.marketing).toBe(
-					false
-				);
-				expect(context.snapshot.value.policySnapshotToken).toBeNull();
-			} finally {
-				context.dispose();
-			}
+	test('a prefetch without a policy resolution fails closed', () => {
+		const { policyResolution: _removedWire, ...unversionedInit } = initFixture;
+		const context = createVueConsentKernelContext({
+			config: {},
+			// @ts-expect-error Deliberately test an answer without the resolution.
+			prefetch: unversionedInit,
+		});
+		try {
+			expect(context.snapshot.value.resolution.status).toBe('failed');
+			expect(context.snapshot.value.effectivePermissions.marketing).toBe(false);
+			expect(context.snapshot.value.policySnapshotToken).toBeNull();
+		} finally {
+			context.dispose();
 		}
-	);
+	});
 
 	test('prefetch seeds overrides from init location and language', () => {
 		const context = createVueConsentKernelContext({
@@ -581,15 +583,15 @@ describe('@inth/vue kernel runtime', () => {
 			expect(subjectBodies).toHaveLength(1);
 		});
 		expect(subjectBodies[0]).toMatchObject({
-			consentAction: 'all',
-			domain: 'consent.example',
-			policySnapshotToken: 'token_gdpr',
-			preferences: {
-				marketing: true,
-				measurement: true,
-				necessary: true,
+			answer: {
+				categories: {
+					marketing: { value: true },
+					measurement: { value: true },
+				},
 			},
-			type: 'cookie_banner',
+			consentAction: 'all',
+			policySnapshotToken: 'token_gdpr',
+			property: 'consent.example',
 		});
 
 		wrapper.unmount();
@@ -861,9 +863,7 @@ test('with `iab` set, mounts the shared CMP for a prefetched IAB reference and e
 	const fetchMock = vi.fn((input: RequestInfo | URL) =>
 		Promise.resolve(
 			Response.json(
-				String(input).includes('/vendor-list')
-					? completeGVL
-					: { subjectId: 'subject-iab' }
+				String(input).includes('/vendor-list') ? completeGVL : SAVED
 			)
 		)
 	);
@@ -937,7 +937,7 @@ describe('IAB is opt-in', () => {
 		) as InitOutput;
 	};
 
-	/** A hosted backend whose `/init` answers with an IAB policy. */
+	/** A hosted backend whose `/v1/consent/init` answers with an IAB policy. */
 	const stubIABBackend = async function stubIABBackend(
 		init: InitOutput | Promise<InitOutput> = createIABInit()
 	) {
@@ -946,7 +946,7 @@ describe('IAB is opt-in', () => {
 		const answer = await init;
 		const fetchMock = vi.fn((input: RequestInfo | URL) => {
 			const url = String(input).split('?')[0] ?? '';
-			if (url.endsWith('/init')) {
+			if (url.endsWith('/v1/consent/init')) {
 				return Promise.resolve(Response.json(answer));
 			}
 			return Promise.resolve(
@@ -1024,7 +1024,7 @@ describe('IAB is opt-in', () => {
 		}
 	});
 
-	test('without `iab`, an IAB answer from `/init` reports the error once and shows no surface', async () => {
+	test('without `iab`, an IAB answer from `/v1/consent/init` reports the error once and shows no surface', async () => {
 		await stubIABBackend();
 		const config: RuntimeConsentConfig = {
 			iframeBlocker: false,
@@ -1124,7 +1124,7 @@ describe('IAB is opt-in', () => {
 		}
 	});
 
-	test('with `iab: {}`, the same `/init` answer mounts the CMP', async () => {
+	test('with `iab: {}`, the same `/v1/consent/init` answer mounts the CMP', async () => {
 		await stubIABBackend();
 		const errors: unknown[] = [];
 		const context = createVueConsentKernelContext({
@@ -1166,7 +1166,7 @@ test('IAB publisher restrictions configured in Vue reach the CMP and its TC stri
 	};
 	vi.stubGlobal(
 		'fetch',
-		vi.fn(() => Promise.resolve(Response.json({ subjectId: 'subject-iab' })))
+		vi.fn(() => Promise.resolve(Response.json(SAVED)))
 	);
 	const context = createVueConsentKernelContext({
 		config,

@@ -6,7 +6,7 @@ group: frameworks
 
 ## When to initialize in the browser
 
-This setup has the fewest files. The browser calls your Inth backend's `/init`
+This setup has the fewest files. The browser calls your Inth backend's `/v1/consent/init`
 after the page loads, so the server does no consent work and every page can be
 static. The HTML is the same for every visitor, and the banner appears after
 hydration.
@@ -14,7 +14,7 @@ hydration.
 Use it when you do not need the banner in the server HTML and do not want a
 consent route. For a server app, the [App Router](/docs/frameworks/next/app-router)
 and [Pages Router](/docs/frameworks/next/pages-router) guides resolve consent
-on the server and make no `/init` request per visit. For `output: 'export'`,
+on the server and make no `/v1/consent/init` request per visit. For `output: 'export'`,
 follow [static export](/docs/frameworks/next/static-export).
 [Rendering and deployment](/docs/frameworks/next/rendering) compares every
 path.
@@ -44,8 +44,8 @@ Create `inth.config.ts` at the project root with `mode: hosted()`:
 
 <include src="../../shared/examples/nextjs/client-side-config.mdx" />
 
-`hosted()` initializes through `${projectUrl}/init` and posts choices to
-`${projectUrl}/subjects`. Add your `scripts` to the same config, as the
+`hosted()` initializes through `${projectUrl}/v1/consent/init` and posts choices to
+`${projectUrl}/v1/consent/records`. Add your `scripts` to the same config, as the
 [quickstart](/docs/frameworks/next/quickstart#add-the-consent-config) shows.
 The file is bundled into the browser, so it must hold no secrets.
 
@@ -84,7 +84,7 @@ needs a Next.js server. See
 
 Open the production build in a fresh browser session with DevTools open.
 
-1. The browser calls `${projectUrl}/init` once, then shows the banner. No
+1. The browser calls `${projectUrl}/v1/consent/init` once, then shows the banner. No
    PostHog request runs.
 2. Click **Reject All** and reload. The banner stays closed and PostHog does
    not load.

@@ -1,27 +1,27 @@
 import type { V1ErrorCode } from '@inth/sdk-schema/types';
 
 import { ConsentSaveRejectedError } from '../save-rejection';
-import { ApiError, describeApiError, readApiErrorDetail } from './error';
-import type { ApiErrorDetail } from './error';
+import { InthApiError, describeApiError, readApiErrorDetail } from './error';
+import type { InthApiErrorDetail } from './error';
 
 /**
  * A consent save the backend refused for good. The kernel drops it rather
  * than replaying a save that would be refused the same way.
  */
-export class ApiSaveRejectedError extends ConsentSaveRejectedError {
+export class InthApiSaveRejectedError extends ConsentSaveRejectedError {
 	readonly inthApiError = true;
 	readonly requestId: string | undefined;
 	readonly details: unknown;
 	readonly retryAfter: number | undefined;
 
-	constructor(message: string, detail: ApiErrorDetail) {
+	constructor(message: string, detail: InthApiErrorDetail) {
 		super({
 			code: detail.code,
 			message,
 			reason: detail.message || undefined,
 			status: detail.status,
 		});
-		this.name = 'ApiSaveRejectedError';
+		this.name = 'InthApiSaveRejectedError';
 		this.requestId = detail.requestId;
 		this.details = detail.details;
 		this.retryAfter = detail.retryAfter;
@@ -29,7 +29,7 @@ export class ApiSaveRejectedError extends ConsentSaveRejectedError {
 }
 
 /** Anything a `/v1` save threw for a failed response. */
-export type ApiFailure = ApiError | ApiSaveRejectedError;
+export type ApiFailure = InthApiError | InthApiSaveRejectedError;
 
 /**
  * `409` codes a resent save gets again. The kernel recovers from
@@ -45,10 +45,10 @@ const PERMANENT_SAVE_CODES: ReadonlySet<string> = new Set<V1ErrorCode>([
 
 /**
  * The error for a failed `POST /v1/consent/records`: an
- * {@link ApiSaveRejectedError} when a replay would be refused the
- * same way (`413`, and the `409` codes above when the body names them),
- * else an
- * {@link ApiError} the kernel queues and retries.
+ * {@link InthApiSaveRejectedError} when a replay would be refused the
+ * same way (`413`, a `400` whose body names `invalid_request`, and the
+ * `409` codes above when the body names them), else an
+ * {@link InthApiError} the kernel queues and retries.
  *
  * A `401` is retried: the backend never refuses a save for its identity
  * token, it leaves the link off.
@@ -65,10 +65,13 @@ export const readSaveFailure = async function readSaveFailure(
 	const message = describeApiError(label, detail);
 	const permanent =
 		response.status === 413 ||
+		(response.status === 400 &&
+			detail.codeFromBody &&
+			detail.code === 'invalid_request') ||
 		(response.status === 409 &&
 			detail.codeFromBody &&
 			PERMANENT_SAVE_CODES.has(detail.code));
 	return permanent
-		? new ApiSaveRejectedError(message, detail)
-		: new ApiError(message, detail);
+		? new InthApiSaveRejectedError(message, detail)
+		: new InthApiError(message, detail);
 };

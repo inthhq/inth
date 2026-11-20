@@ -264,7 +264,7 @@ describe('createBrowserManifestTransport()', () => {
 		await transport.init?.(initContext({ language: 'en' })).catch(() => null);
 
 		expect(String(fetchSpy.mock.calls[0]?.[0])).toContain(
-			'https://backend.example/init'
+			'https://backend.example/v1/consent/init'
 		);
 	});
 
@@ -295,7 +295,7 @@ describe('createBrowserManifestTransport()', () => {
 
 		expect(german?.location?.countryCode).toBe('DE');
 		expect(fetchSpy).toHaveBeenCalledTimes(1);
-		expect(String(fetchSpy.mock.calls[0]?.[0])).toContain('/init');
+		expect(String(fetchSpy.mock.calls[0]?.[0])).toContain('/v1/consent/init');
 	});
 
 	test('with initFallback off, resolves for an unknown location', async () => {
@@ -317,7 +317,7 @@ describe('createBrowserManifestTransport()', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 		const fetchSpy = vi.fn<typeof fetch>((input) =>
 			Promise.resolve(
-				String(input).endsWith('/manifest')
+				String(input).endsWith('/v1/consent/manifest')
 					? new Response('missing', { status: 404 })
 					: jsonResponse({
 							location: { countryCode: 'DE', regionCode: null },
@@ -335,12 +335,12 @@ describe('createBrowserManifestTransport()', () => {
 		expect(
 			fetchSpy.mock.calls.map(([url]) => String(url).split('?')[0])
 		).toEqual([
-			'https://fallback.example/manifest',
-			'https://fallback.example/init',
+			'https://fallback.example/v1/consent/manifest',
+			'https://fallback.example/v1/consent/init',
 		]);
 		expect(warn).toHaveBeenCalledWith(
 			expect.stringContaining(
-				'could not read the consent manifest from https://fallback.example/manifest'
+				'could not read the consent manifest from https://fallback.example/v1/consent/manifest'
 			)
 		);
 		warn.mockRestore();
@@ -354,7 +354,7 @@ describe('createBrowserManifestTransport()', () => {
 			credentials: 'include',
 			fetch: fetchSpy,
 			headers: { 'x-test': '1' },
-			manifestUrl: 'https://backend.example/manifest',
+			manifestUrl: 'https://backend.example/v1/consent/manifest',
 		});
 
 		await transport.init?.(initContext({ language: 'en' }));
@@ -362,7 +362,7 @@ describe('createBrowserManifestTransport()', () => {
 
 		expect(fetchSpy).toHaveBeenCalledTimes(1);
 		const [url, init] = fetchSpy.mock.calls[0] ?? [];
-		expect(url).toBe('https://backend.example/manifest');
+		expect(url).toBe('https://backend.example/v1/consent/manifest');
 		expect(init?.credentials).toBe('include');
 		expect(init?.headers).toMatchObject({
 			accept: 'application/json',
@@ -473,7 +473,7 @@ describe('createBrowserManifestTransport() for an unknown location', () => {
 
 		await transport.init?.(initContext({ language: 'en' })).catch(() => null);
 
-		expect(String(fetchSpy.mock.calls[0]?.[0])).toContain('/init');
+		expect(String(fetchSpy.mock.calls[0]?.[0])).toContain('/v1/consent/init');
 	});
 
 	test('starts the /init request within the init() call', () => {
@@ -492,7 +492,7 @@ describe('createBrowserManifestTransport() for an unknown location', () => {
 		void transport.init?.(initContext({ language: 'en' }));
 
 		expect(fetchSpy).toHaveBeenCalledOnce();
-		expect(String(fetchSpy.mock.calls[0]?.[0])).toContain('/init');
+		expect(String(fetchSpy.mock.calls[0]?.[0])).toContain('/v1/consent/init');
 	});
 });
 
@@ -517,7 +517,10 @@ describe('withEarlyInit()', () => {
 		);
 		const fetched = earlyInitModes.get(
 			withEarlyInit(
-				manifest({ fetch: fetchSpy, manifestUrl: 'https://x.test/manifest' })
+				manifest({
+					fetch: fetchSpy,
+					manifestUrl: 'https://x.test/v1/consent/manifest',
+				})
 			)
 		);
 

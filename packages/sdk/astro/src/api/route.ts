@@ -10,7 +10,7 @@
  *
  * The route renders on demand. For `manifest({ resolve: 'browser' })` on
  * a site with no adapter, the integration prerenders it instead, and
- * `getStaticPaths` writes only `${routePrefix}/manifest`.
+ * `getStaticPaths` writes only `${routePrefix}/v1/consent/manifest`.
  */
 
 import type { APIRoute, GetStaticPaths } from 'astro';
@@ -27,8 +27,8 @@ export const GET: APIRoute = ({ locals, params, request }) =>
  * The paths a prerendered route writes: only the manifest, which the
  * browser resolver fetches. Ignored when the route renders on demand.
  *
- * @returns The `manifest` path.
+ * @returns The `v1/consent/manifest` path.
  */
 export const getStaticPaths: GetStaticPaths = () => [
-	{ params: { path: 'manifest' } },
+	{ params: { path: 'v1/consent/manifest' } },
 ];

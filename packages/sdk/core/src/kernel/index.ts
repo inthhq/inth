@@ -120,6 +120,7 @@ export const createKernel = function createKernel(
 		transport,
 	});
 	const records = createRecordsBoundary({
+		adoptSubject: outbox.adoptSubject,
 		runtime,
 		start: lifecycle.start,
 		transport,

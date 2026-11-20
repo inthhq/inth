@@ -16,7 +16,7 @@ islands. For each request it:
 3. Resolves the policy through the integration's `mode`.
 4. Stores the result in `Astro.locals.inth`.
 
-It sets no cookie. The visitor's subject ID (`sub_…`) lives in the consent
+It sets no cookie. The visitor's subject ID, a UUIDv7, lives in the consent
 records their first save writes, and the middleware reads it from those
 cookies.
 
@@ -107,9 +107,9 @@ next visitor.
 - For a page that must be cached, prerender it, or render the banner with
   [`ConsentBannerDeferred`](/docs/frameworks/astro/components/consent-banner-deferred).
   Both keep visitor state out of the cached HTML.
-- The injected `/api/inth/init` route answers with `Cache-Control: private,
+- The injected `/api/inth/v1/consent/init` route answers with `Cache-Control: private,
   no-store`. Keep it out of shared caches too.
-- Without a bundled manifest, the injected `/api/inth/manifest` route passes
+- Without a bundled manifest, the injected `/api/inth/v1/consent/manifest` route passes
   the backend's `Cache-Control` and `ETag` through and answers
   `If-None-Match` with `304`, so a CDN can cache it. With one, it returns the
   build's snapshot with no cache headers.
@@ -121,8 +121,8 @@ In `manifest()` mode the integration injects one on-demand route,
 
 | Request | Returns |
 | --- | --- |
-| `GET /api/inth/init` | The policy for this request, resolved from the bundled or cached manifest. The browser calls it on prerendered pages, after a failed server resolution, and when a page's consent changes after it loads |
-| `GET /api/inth/manifest` | Your project's public policy file: the build's snapshot when the build bundled one, otherwise proxied from the backend with its cache headers |
+| `GET /api/inth/v1/consent/init` | The policy for this request, resolved from the bundled or cached manifest. The browser calls it on prerendered pages, after a failed server resolution, and when a page's consent changes after it loads |
+| `GET /api/inth/v1/consent/manifest` | Your project's public policy file: the build's snapshot when the build bundled one, otherwise proxied from the backend with its cache headers |
 
 The route is the consent route handler from `@inth/sdk/server`, shared
 with the Next.js, TanStack Start, SvelteKit and Nuxt adapters. A vendor list that cannot be loaded
@@ -139,7 +139,7 @@ the backend URL directly, not to this route.
 
 Change the path with `routePrefix: '/consent'`. With
 `manifest({ resolve: 'browser' })` and no adapter, the integration prerenders
-the route and writes only `${routePrefix}/manifest`, which the browser
+the route and writes only `${routePrefix}/v1/consent/manifest`, which the browser
 fetches. `hosted()` and `testing()` inject no route.
 
 ### Serve the routes yourself
@@ -153,7 +153,7 @@ it with `routePrefix` instead.
 The handlers the injected route uses are exported as
 `createConsentRouteHandlers({ options })` from `@inth/astro/server`. Mount
 them yourself for other clients, or for browser resolution: with
-`mode: manifest({ resolve: 'browser', manifestUrl: '/api/inth/manifest' })`,
+`mode: manifest({ resolve: 'browser', manifestUrl: '/api/inth/v1/consent/manifest' })`,
 the browser fetches the manifest from your route, and the route reads
 `${projectUrl}/manifest`. `GET(request, { locals, path })` dispatches by
 the route's rest parameter, or by the last path segment without one.
@@ -191,5 +191,5 @@ register `onRequest` from `@inth/astro/middleware` with Astro's `sequence()` in
    `<script type="application/json" data-inth-config>` data block.
 2. Choose, then reload. The source has no banner markup, and DevTools Network
    shows no browser request to `/init` on that page.
-3. Request `/api/inth/init` and check the `Cache-Control: private, no-store`
+3. Request `/api/inth/v1/consent/init` and check the `Cache-Control: private, no-store`
    response header.

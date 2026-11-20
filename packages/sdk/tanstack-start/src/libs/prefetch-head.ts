@@ -10,7 +10,7 @@ import type { ConsentPrefetchHead, ConsentPrefetchHeadOptions } from '../types';
 /**
  * Base URL the head prefetch script keyed its request on: the route prefix
  * when the root sends init through the consent route, or the backend itself
- * when it calls the backend directly. The script requests `${base}/init`.
+ * when it calls the backend directly. The script requests `${base}/v1/consent/init`.
  * The prefix comes from the state, which `resolveConsent` normalized.
  */
 const prefetchBaseFor = function prefetchBaseFor(

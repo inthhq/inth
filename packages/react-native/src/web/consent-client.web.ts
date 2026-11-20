@@ -28,7 +28,7 @@ import type {
 } from '@inth/sdk/engine';
 import { createConsentRuntime } from '@inth/sdk/runtime';
 import type { ConsentRuntime, ConsentRuntimeOptions } from '@inth/sdk/runtime';
-import { createHostedTransport, custom, hosted } from '@inth/sdk/transports';
+import { createV1HostedTransport, custom, hosted } from '@inth/sdk/transports';
 
 import { normalizeProjectUrl } from '../expo-plugin/project-url';
 import { denyAllSnapshot } from '../lib/deny-all-snapshot';
@@ -143,7 +143,7 @@ const dryRunMode = function dryRunMode(
 	projectUrl: string,
 	domain: string | undefined
 ): ProviderTransportFactory {
-	const transport = createHostedTransport({ domain, projectUrl });
+	const transport = createV1HostedTransport({ projectUrl, property: domain });
 	const dropping: KernelTransport = {
 		identify: () => Promise.resolve(),
 		init: (context) =>
@@ -422,7 +422,7 @@ export const createWebConsentClient = function createWebConsentClient(
 			dependencies.mode ??
 			(dryRun
 				? dryRunMode(projectUrl, domain)
-				: hosted({ domain, projectUrl })),
+				: hosted({ projectUrl, property: domain })),
 		projectUrl,
 		// A decision input from the first request on, so /init resolves the
 		// policy for a GPC visitor; the kernel derives the signal from it.

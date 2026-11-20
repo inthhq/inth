@@ -41,7 +41,7 @@ import type { Theme } from '@inth/sdk-ui/theme';
  * The transports a script-tag site can name without importing anything.
  * `init()` from `@inth/sdk` takes `hosted()` or a factory instead.
  *
- * - `hosted` — `GET /init` and `POST /subjects` against `projectUrl`.
+ * - `hosted` — `GET /v1/consent/init` and `POST /v1/consent/records` against `projectUrl`.
  * - `manifest` — the backend's cacheable `/manifest` inlined or fetched,
  *   resolved locally so the banner can render without waiting on `/init`.
  *   Falls back to `/init` with a warning when the manifest is unavailable.
@@ -334,7 +334,7 @@ export interface ConsentClientOptions extends ConsentClientBaseOptions {
 	/**
 	 * How the visitor's policy is resolved.
 	 *
-	 * - Omitted, or `hosted()`: ask `${projectUrl}/init`.
+	 * - Omitted, or `hosted()`: ask `${projectUrl}/v1/consent/init`.
 	 * - `manifest()`: resolve from the backend's consent manifest in the
 	 *   browser, falling back to `/init` with a warning when it is
 	 *   unavailable. Import it only if you use it, so the bundler leaves

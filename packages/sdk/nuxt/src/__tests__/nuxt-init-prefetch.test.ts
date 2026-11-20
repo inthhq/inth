@@ -163,7 +163,7 @@ const bannerShown = () =>
 const initRequests = (fetch: ReturnType<typeof vi.fn>) =>
 	fetch.mock.calls.filter(([input]) =>
 		// The path alone: the runtime adds its consent journey as a query.
-		String(input).split('?')[0]?.endsWith('/init')
+		String(input).split('?')[0]?.endsWith('/v1/consent/init')
 	);
 
 beforeEach(() => {
@@ -190,7 +190,7 @@ describe('an ssr: false page', () => {
 		expect(initRequests(fetch)).toHaveLength(1);
 		const sent = new URL(String(initRequests(fetch)[0]?.[0]));
 		expect(`${sent.origin}${sent.pathname}`).toBe(
-			`${window.location.origin}/api/inth/init`
+			`${window.location.origin}/api/inth/v1/consent/init`
 		);
 		// It starts the page's consent journey, which the runtime continues.
 		expect(sent.searchParams.get('journeyScope')).toBe('page');
@@ -343,7 +343,7 @@ describe('pages whose request the server cannot know get no script', () => {
 	test.each([
 		['manifest(), which asks the Nuxt consent route', HOSTED_BACKEND],
 		[
-			"manifest({ resolve: 'browser' }), which sends no /init",
+			"manifest({ resolve: 'browser' }), which sends no /v1/consent/init",
 			{ ...HOSTED_BACKEND, mode: { resolve: 'browser', type: 'manifest' } },
 		],
 		[
@@ -363,7 +363,7 @@ describe('pages whose request the server cannot know get no script', () => {
 			{ ...HOSTED, consentSource: { subscribe: () => () => undefined } },
 		],
 		[
-			'an experiment, whose arm travels with /init',
+			'an experiment, whose arm travels with /v1/consent/init',
 			{ ...HOSTED, experiment: { arms: {}, id: 'x' } },
 		],
 		['a prefetch already in the config', { ...HOSTED, prefetch: initResponse }],

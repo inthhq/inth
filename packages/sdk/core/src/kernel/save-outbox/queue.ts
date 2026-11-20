@@ -28,20 +28,20 @@ import type {
 	validateExplicitChoice,
 } from '../../consent-record/validation';
 import { isExperimentAssignment } from '../../libs/experiment-record';
-import type { generateSubjectId } from '../../libs/generate-subject-id';
 import type { warnInDevelopment } from '../../libs/is-production';
+import type { generateUuidV7 } from '../../libs/subject-uuid';
 import type {
 	isConsentSaveRejection,
 	isSubjectConflict,
 } from '../../transports/save-rejection';
 import type { ConsentSubject, KernelTransport, SavePayload } from '../../types';
 import type { KernelRuntime } from '../runtime';
-import type { OutboxTransaction, pendingSave, SaveOutboxStore } from './store';
+import type { appendSave, OutboxTransaction, SaveOutboxStore } from './store';
 import { withStoredIdempotencyKey } from './stored-key';
 import type { toStoredPayload } from './stored-payload';
 import type {
 	PendingSaveEntry,
-	supersededBy,
+	Supersession,
 	withoutSuperseded,
 	withSubjectId,
 } from './supersession';
@@ -56,15 +56,14 @@ import type {
  * @internal
  */
 export interface QueueTools {
-	generateSubjectId: typeof generateSubjectId;
+	appendSave: typeof appendSave;
+	generateUuidV7: typeof generateUuidV7;
 	isConsentSaveRejection: typeof isConsentSaveRejection;
 	isPlainRecord: typeof isPlainRecord;
 	isSubjectConflict: typeof isSubjectConflict;
 	optionalCategories: typeof OPTIONAL_CONSENT_CATEGORIES;
 	/** The schema's `CONSENT_MODELS`. */
 	consentModels: typeof CONSENT_MODELS;
-	pendingSave: typeof pendingSave;
-	supersededBy: typeof supersededBy;
 	toStoredPayload: typeof toStoredPayload;
 	validateExplicitChoice: typeof validateExplicitChoice;
 	warnInDevelopment: typeof warnInDevelopment;
@@ -74,6 +73,8 @@ export interface QueueTools {
 
 const MAX_PENDING_SAVE_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_REPLAY_ATTEMPTS = 10;
+/** The prefix of a c15t subject id; `LEGACY_SUBJECT_PREFIX` in `index.ts`. */
+const LEGACY_SUBJECT_PREFIX = 'sub_';
 
 /** A subject id the backend refused, and the one this browser moved to. */
 interface SubjectReassignment {
@@ -81,6 +82,15 @@ interface SubjectReassignment {
 	to: string;
 	at: number;
 }
+
+/**
+ * What `newer` covers of an older save of the same subject: the categories
+ * it confirmed and, when it carried one, the vendor map.
+ */
+const supersededBy = (newer: SavePayload): Supersession => ({
+	category: (category) => Object.hasOwn(newer.confirmed.categories, category),
+	vendors: newer.vendorChoice !== undefined,
+});
 
 /**
  * Validation and normalization of the stored lists, over the first-load
@@ -97,7 +107,6 @@ const createStoredLists = function createStoredLists(
 		consentModels,
 		isPlainRecord,
 		optionalCategories,
-		supersededBy,
 		toStoredPayload,
 		validateExplicitChoice,
 		withoutSuperseded,
@@ -221,7 +230,9 @@ const createStoredLists = function createStoredLists(
 			!isSubject(value.subject) ||
 			!isDecisionInputs(value.decisionInputs) ||
 			!isConfirmedCoverage(value.confirmed) ||
-			!validateExplicitChoice(value.choice, Date.now()).ok
+			// No clock: a device clock moved back since the save was queued
+			// must not make its dates look like they are in the future.
+			!validateExplicitChoice(value.choice, Number.MAX_SAFE_INTEGER).ok
 		) {
 			return false;
 		}
@@ -275,7 +286,11 @@ const createStoredLists = function createStoredLists(
 			value.queuedAt >= 0 &&
 			typeof value.attempts === 'number' &&
 			Number.isInteger(value.attempts) &&
-			value.attempts >= 0
+			value.attempts >= 0 &&
+			(value.seq === undefined ||
+				(typeof value.seq === 'number' &&
+					Number.isSafeInteger(value.seq) &&
+					value.seq > 0))
 		);
 	};
 
@@ -296,10 +311,42 @@ const createStoredLists = function createStoredLists(
 	// ---------------------------------------------------------------------------
 
 	/**
-	 * The valid, live entries in action order, each narrowed by every later
-	 * entry so no stale category replays over a newer one.
+	 * The subject each id stands for: the last id the recorded moves lead it
+	 * to. A `sub_` id and the UUID it moved to are one subject, so a save
+	 * under either covers the other's older saves, in every tab.
+	 */
+	const subjectOf = function subjectOf(
+		tx: OutboxTransaction
+	): (id: string) => string {
+		const stored = tx.read('reassignments');
+		const moves = new Map(
+			(Array.isArray(stored) ? stored : [])
+				.filter(isSubjectReassignment)
+				.map(({ from, to }) => [from, to])
+		);
+		return (id) => {
+			let subject = id;
+			// A record can't lead back to itself, but storage is not trusted.
+			for (let step = 0; step <= moves.size; step += 1) {
+				const to = moves.get(subject);
+				if (to === undefined) {
+					break;
+				}
+				subject = to;
+			}
+			return subject;
+		};
+	};
+
+	/**
+	 * The valid, live entries in the order they were queued (`seq`; an older
+	 * release's entries first, as stored), each narrowed by every later entry
+	 * of its subject, so no stale category replays over a newer one. The
+	 * device clock plays no part in the order: a save queued later is the
+	 * newer one, whatever the clock said.
 	 */
 	const normalizePendingSaves = function normalizePendingSaves(
+		tx: OutboxTransaction,
 		value: unknown,
 		now: number
 	): PendingSaveEntry[] {
@@ -310,11 +357,13 @@ const createStoredLists = function createStoredLists(
 		const cutoff = now - MAX_PENDING_SAVE_AGE_MS;
 		const entries: PendingSaveEntry[] = [];
 		for (const entry of value) {
-			if (
-				!isPendingSaveEntry(entry) ||
-				entry.queuedAt < cutoff ||
-				entry.attempts >= MAX_REPLAY_ATTEMPTS
-			) {
+			if (!isPendingSaveEntry(entry) || entry.attempts >= MAX_REPLAY_ATTEMPTS) {
+				continue;
+			}
+			// A queue time ahead of the clock counts as now, and is stored so:
+			// the week runs out however far ahead the clock was.
+			const queuedAt = Math.min(entry.queuedAt, now);
+			if (queuedAt < cutoff) {
 				continue;
 			}
 			entries.push({
@@ -323,21 +372,17 @@ const createStoredLists = function createStoredLists(
 					toStoredPayload(entry.payload),
 					entry.queuedAt
 				),
+				queuedAt,
 			});
 		}
-		entries.sort(
-			(left, right) =>
-				left.payload.confirmed.actionAt - right.payload.confirmed.actionAt ||
-				left.queuedAt - right.queuedAt
-		);
+		entries.sort((left, right) => (left.seq ?? 0) - (right.seq ?? 0));
+		const subject = subjectOf(tx);
 		return entries.flatMap((entry, index) => {
 			let payload: SavePayload | null = entry.payload;
+			const own = subject(entry.payload.subjectId);
 			for (const later of entries.slice(index + 1)) {
-				if (payload) {
-					payload = withoutSuperseded(
-						payload,
-						supersededBy(payload, later.payload)
-					);
+				if (payload && subject(later.payload.subjectId) === own) {
+					payload = withoutSuperseded(payload, supersededBy(later.payload));
 				}
 			}
 			return payload ? [{ ...entry, payload }] : [];
@@ -353,7 +398,7 @@ const createStoredLists = function createStoredLists(
 		if (stored === undefined) {
 			return [];
 		}
-		const normalized = normalizePendingSaves(stored, now);
+		const normalized = normalizePendingSaves(tx, stored, now);
 		if (JSON.stringify(normalized) !== JSON.stringify(stored)) {
 			// Storage that refused the write still holds the expired saves,
 			// so they are reported by the read that removes them.
@@ -395,25 +440,18 @@ const createStoredLists = function createStoredLists(
 		const queued = new Set(
 			readPendingSaves(tx, now).map((entry) => entry.payload.subjectId)
 		);
-		return stored.filter(
-			(item): item is SubjectReassignment =>
-				isSubjectReassignment(item) &&
-				(item.at >= cutoff || queued.has(item.from))
-		);
+		const kept = stored
+			.filter(isSubjectReassignment)
+			// A time ahead of the clock counts as now, as for a queued save.
+			.map((item) => (item.at > now ? { ...item, at: now } : item))
+			.filter((item) => item.at >= cutoff || queued.has(item.from));
+		if (JSON.stringify(kept) !== JSON.stringify(stored)) {
+			tx.write('reassignments', kept);
+		}
+		return kept;
 	};
 
 	return { normalizePendingSaves, readPendingSaves, readReassignments };
-};
-
-const isSamePendingSave = function isSamePendingSave(
-	left: PendingSaveEntry,
-	right: PendingSaveEntry
-): boolean {
-	return (
-		left.queuedAt === right.queuedAt &&
-		left.attempts === right.attempts &&
-		JSON.stringify(left.payload) === JSON.stringify(right.payload)
-	);
 };
 
 /**
@@ -450,8 +488,11 @@ export interface QueueWorker {
 	enqueue: (current: () => SavePayload | null) => Promise<EnqueueResult>;
 	/** Drop `payload` and the queued saves it superseded. */
 	discard: (payload: SavePayload) => Promise<void>;
-	/** Move the visitor off a subject id the backend refused. */
-	reassignSubject: (from: string) => Promise<string | null>;
+	/**
+	 * Move the visitor off a subject id: to a new one when the backend
+	 * refused it, or to the canonical one it answered for a `sub_` id.
+	 */
+	reassignSubject: (from: string, to?: string) => Promise<string | null>;
 	/** Replay every queued entry; resolves to whether any is left. */
 	replay: (save: NonNullable<KernelTransport['save']>) => Promise<boolean>;
 }
@@ -468,13 +509,11 @@ export const createQueueWorker = function createQueueWorker({
 }: QueueWorkerOptions): QueueWorker {
 	const { batch, commit, emit, getSnapshot } = runtime;
 	const {
-		generateSubjectId,
+		appendSave,
+		generateUuidV7,
 		isConsentSaveRejection,
 		isSubjectConflict,
-		pendingSave,
-		supersededBy,
 		warnInDevelopment,
-		withoutSuperseded,
 		withSubjectId,
 	} = tools;
 
@@ -532,37 +571,29 @@ export const createQueueWorker = function createQueueWorker({
 				return 'superseded';
 			}
 			const now = Date.now();
-			const pending = readPendingSaves(tx, now);
-			pending.push(pendingSave(payload, now));
-			return tx.write('saves', normalizePendingSaves(pending, now))
+			const pending = appendSave(readPendingSaves(tx, now), payload, now);
+			return tx.write('saves', normalizePendingSaves(tx, pending, now))
 				? 'queued'
 				: 'unstored';
 		});
 	};
 
 	/**
-	 * Drop `payload` and the queued saves it superseded, so a later replay
-	 * cannot overwrite the newer receipts with stale ones. Queued actions
-	 * for other categories keep waiting for their own replay.
+	 * Drop the queued entry of `payload`, found by its idempotency key, so
+	 * also after it was narrowed or moved to another subject id. Every save
+	 * queued before it was narrowed by it when it was queued, so nothing
+	 * older can replay over it. Queued actions for other categories keep
+	 * waiting for their own replay.
 	 */
 	const discard = function discard(payload: SavePayload): Promise<void> {
-		const settled = JSON.stringify(tools.toStoredPayload(payload));
+		const key = payload.idempotencyKey;
 		return store.transact((tx) => {
 			const pending = readPendingSaves(tx);
-			const remaining = pending.flatMap((candidate) => {
-				// A receipt for strictly necessary alone confirms no category
-				// and no vendors, so supersession never covers it, not even
-				// by itself.
-				if (JSON.stringify(candidate.payload) === settled) {
-					return [];
-				}
-				const kept = withoutSuperseded(
-					candidate.payload,
-					supersededBy(candidate.payload, payload)
-				);
-				return kept ? [{ ...candidate, payload: kept }] : [];
-			});
-			if (JSON.stringify(remaining) !== JSON.stringify(pending)) {
+			const remaining = pending.filter(
+				(candidate) =>
+					key === undefined || candidate.payload.idempotencyKey !== key
+			);
+			if (remaining.length !== pending.length) {
 				tx.write('saves', remaining);
 			}
 		});
@@ -611,7 +642,7 @@ export const createQueueWorker = function createQueueWorker({
 						? { ...entry, payload: withSubjectId(entry.payload, to) }
 						: entry
 				);
-				tx.write('saves', normalizePendingSaves(moved, now));
+				tx.write('saves', normalizePendingSaves(tx, moved, now));
 			}
 			return to;
 		});
@@ -664,7 +695,8 @@ export const createQueueWorker = function createQueueWorker({
 	 * now.
 	 */
 	const reassignSubject = async function reassignSubject(
-		from: string
+		from: string,
+		proposed?: string
 	): Promise<string | null> {
 		const generation = runtime.getGeneration();
 		const cached = reassignedSubjects.get(from);
@@ -684,7 +716,11 @@ export const createQueueWorker = function createQueueWorker({
 		};
 		let claim = earlier;
 		if (claim === undefined) {
-			claim = claimReassignment(from, generateSubjectId(), unchanged());
+			claim = claimReassignment(
+				from,
+				proposed ?? generateUuidV7(),
+				unchanged()
+			);
 			reassignedSubjects.set(from, { claim, generation });
 		}
 		const to = await claim;
@@ -721,6 +757,31 @@ export const createQueueWorker = function createQueueWorker({
 	// -- Replay ----------------------------------------------------------------
 
 	/**
+	 * A `sub_` id a replay was answered with its UUID for: the visitor and
+	 * every save still queued under it move to the UUID, so it is not sent
+	 * again. An answer never moves a save or a visitor off a UUID. Not on the
+	 * second attempt after a reassignment (`moved` is `null` there).
+	 */
+	const followCanonicalSubject = async function followCanonicalSubject(
+		from: string,
+		canonical: string | undefined,
+		moved: Map<string, string> | null
+	): Promise<void> {
+		if (
+			!moved ||
+			canonical === undefined ||
+			canonical === from ||
+			!from.startsWith(LEGACY_SUBJECT_PREFIX)
+		) {
+			return;
+		}
+		const to = await reassignSubject(from, canonical);
+		if (to !== null) {
+			moved.set(from, to);
+		}
+	};
+
+	/**
 	 * Replay one entry. Returns `null` when another kernel already replayed
 	 * or dropped it, otherwise the replay outcome. A save the backend refused
 	 * for good (a `ConsentSaveRejectedError`) leaves the queue at once
@@ -733,31 +794,38 @@ export const createQueueWorker = function createQueueWorker({
 	 * its other saves under the new id too. `moved` is `null` for the second
 	 * attempt, so a backend that refuses every id cannot keep the loop going.
 	 *
-	 * An entry this call removes without the backend taking it (refused, or
-	 * out of attempts) is reported through {@link reportDropped}. Another
-	 * kernel that replayed the same entry at the same time finds it changed
-	 * and reports nothing.
+	 * The entry is found by its idempotency key, so also after another tab
+	 * narrowed it or moved it to another subject id, and the stored version
+	 * is the one sent. An entry this call removes without the backend taking
+	 * it (refused, or out of attempts) is reported through
+	 * {@link reportDropped}. Another kernel that replayed the same entry at
+	 * the same time finds it gone, or its attempt already counted, and
+	 * reports nothing.
 	 */
 	const replayEntry = async function replayEntry(
 		save: NonNullable<KernelTransport['save']>,
-		entry: PendingSaveEntry,
+		queued: PendingSaveEntry,
 		moved: Map<string, string> | null
 	): Promise<ReplayResult | null> {
-		const stillQueued = await store.transact((tx) =>
-			readPendingSaves(tx).some((candidate) =>
-				isSamePendingSave(candidate, entry)
-			)
+		const key = queued.payload.idempotencyKey;
+		const isEntry = (candidate: PendingSaveEntry) =>
+			candidate.payload.idempotencyKey === key &&
+			candidate.attempts === queued.attempts;
+		const entry = await store.transact((tx) =>
+			readPendingSaves(tx).find(isEntry)
 		);
-		if (!stillQueued || isSending(entry.payload)) {
+		if (!entry || isSending(entry.payload)) {
 			return null;
 		}
 
 		let outcome: ReplayOutcome = 'retry';
 		let rejected: string | undefined;
 		let failure: unknown;
+		let canonical: string | undefined;
 		try {
-			const { ok } = await save(entry.payload);
-			outcome = ok ? 'saved' : 'retry';
+			const result = await save(entry.payload);
+			outcome = result.ok ? 'saved' : 'retry';
+			canonical = result.subjectId;
 		} catch (error) {
 			failure = error;
 			if (moved && isSubjectConflict(error)) {
@@ -779,13 +847,18 @@ export const createQueueWorker = function createQueueWorker({
 			}
 		}
 		// The entry's attempts after this one, or `null` when another kernel
-		// changed or removed it while the request was out; and whether
-		// storage took the updated list.
+		// removed it, or counted this attempt, while the request was out; and
+		// whether storage took the updated list.
 		const { attempts, written } = await store.transact((tx) => {
 			let counted: number | null = null;
 			const next: PendingSaveEntry[] = [];
 			for (const candidate of readPendingSaves(tx)) {
-				if (!isSamePendingSave(candidate, entry)) {
+				// Sent and answered: the entry goes whatever another tab did to
+				// it since. A retry counts only once per attempt.
+				if (
+					candidate.payload.idempotencyKey !== key ||
+					(outcome === 'retry' && !isEntry(candidate))
+				) {
 					next.push(candidate);
 					continue;
 				}
@@ -815,6 +888,11 @@ export const createQueueWorker = function createQueueWorker({
 			);
 		}
 		const { subjectId } = entry.payload;
+		await followCanonicalSubject(
+			subjectId,
+			outcome === 'saved' ? canonical : undefined,
+			moved
+		);
 		return {
 			error: failure,
 			event:

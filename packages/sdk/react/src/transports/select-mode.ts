@@ -15,7 +15,7 @@ import type {
 	ProviderTransportFactory,
 } from '@inth/sdk/engine';
 import type { ConsentTesting } from '@inth/sdk/testing';
-import { createHostedTransport } from '@inth/sdk/transports';
+import { createV1HostedTransport } from '@inth/sdk/transports';
 import { createHostedModeFactory } from '@inth/sdk/transports/hosted-factory';
 
 /** One factory per backend URL, so each render hands the provider the same. */
@@ -33,7 +33,7 @@ export const hostedFor = function hostedFor(
 ): HostedModeFactory {
 	let mode = hostedByURL.get(projectUrl);
 	if (!mode) {
-		mode = createHostedModeFactory({ projectUrl }, createHostedTransport);
+		mode = createHostedModeFactory({ projectUrl }, createV1HostedTransport);
 		hostedByURL.set(projectUrl, mode);
 	}
 	return mode;

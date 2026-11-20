@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { ApiError, isApiError, readApiError } from '../error';
+import { InthApiError, isInthApiError, readApiError } from '../error';
 import { json } from './fixtures';
 
 describe('readApiError', () => {
@@ -24,8 +24,8 @@ describe('readApiError', () => {
 			)
 		);
 
-		expect(error).toBeInstanceOf(ApiError);
-		expect(isApiError(error)).toBe(true);
+		expect(error).toBeInstanceOf(InthApiError);
+		expect(isInthApiError(error)).toBe(true);
 		expect(error).toMatchObject({
 			code: 'invalid_request',
 			details: { fieldErrors: { property: ['Required'] }, formErrors: [] },

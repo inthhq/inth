@@ -22,7 +22,7 @@ describe('consentPrefetchHead', () => {
 		const head = consentPrefetchHead({ projectUrl: '/api/inth' });
 		expect(head.scripts).toHaveLength(1);
 		expect(head.scripts[0]?.id).toBe('inth-initial-data-prefetch');
-		expect(head.scripts[0]?.children).toContain('/init');
+		expect(head.scripts[0]?.children).toContain('/v1/consent/init');
 	});
 });
 

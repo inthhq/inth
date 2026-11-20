@@ -27,6 +27,7 @@ import type { ConsentMode } from './modes';
 import { buildSnapshotSkipReason } from './server/server-mode';
 import { loadStaticManifest } from './server/static-manifest';
 import { manifestNeedsLocation } from './transports/manifest-browser-location';
+import { V1_ROUTES } from './transports/v1/paths';
 
 export type { ConsentManifest } from '@inth/sdk-schema/types';
 export { createDialogChunkPlugin } from './build-dialog-chunk';
@@ -62,7 +63,7 @@ const resolveBuildManifestUrl = (
 		);
 	}
 	if (options.manifestUrl === undefined) {
-		url.pathname = `${url.pathname.replace(/\/+$/u, '')}/manifest`;
+		url.pathname = `${url.pathname.replace(/\/+$/u, '')}${V1_ROUTES.manifest}`;
 	}
 	return url.href;
 };
@@ -425,7 +426,7 @@ const reportMissingSource = (
 		return;
 	}
 	logger.warn(
-		`${missing} The server fetches it at runtime, or asks the backend's /init.`
+		`${missing} The server fetches it at runtime, or asks the backend's init.`
 	);
 };
 
@@ -453,7 +454,7 @@ const reportFetchFailure = (
 		);
 	}
 	logger.warn(
-		`${failure} The server fetches it at runtime instead, and asks the backend's /init while it is unavailable.${
+		`${failure} The server fetches it at runtime instead, and asks the backend's init while it is unavailable.${
 			resolved.explicit
 				? ''
 				: ` Set \`${MANIFEST_BUILD_ERROR_ENV}=fail\` (or \`onBuildError: 'fail'\`) to stop the build on this error.`
@@ -574,7 +575,7 @@ export interface ConsentManifestPluginOptions extends ManifestBuildOptions {
 	 * `manifestUrl` or `source: 'runtime'` (the modes `needsBuildSnapshot`
 	 * in `@inth/sdk/server` says read none). Those discard the build's
 	 * snapshot, but the bundle still imports it, so without this option the
-	 * build fetches `${projectUrl}/manifest` and fails when that fetch
+	 * build fetches `${projectUrl}/v1/consent/manifest` and fails when that fetch
 	 * fails.
 	 *
 	 * @default 'build'
@@ -1061,7 +1062,7 @@ export interface ManifestHtmlContext {
  * backend's `/init` anyway unless the page supplies a location.
  */
 const LOCATION_ADVICE =
-	"the consent policy depends on the visitor's location, which the browser doesn't know. Unless you pass `inputs` or `geoUrl` to `manifest()`, every first visit still calls the backend's /init, so the bundled policy adds bytes without saving a request. Consider leaving out `mode` and setting only `projectUrl`, which asks the hosted backend instead.";
+	"the consent policy depends on the visitor's location, which the browser doesn't know. Unless you pass `inputs` or `geoUrl` to `manifest()`, every first visit still calls the backend's init, so the bundled policy adds bytes without saving a request. Consider leaving out `mode` and setting only `projectUrl`, which asks the hosted backend instead.";
 
 /** The resolved id of the virtual `@inth/sdk/generated` module. */
 const VIRTUAL_GENERATED_ID = '\0@inth/sdk/generated';

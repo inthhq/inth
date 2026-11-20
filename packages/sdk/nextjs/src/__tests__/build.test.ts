@@ -96,7 +96,7 @@ describe('Next.js build-time manifest', () => {
 			await expect(stat(join(root, 'inth-manifest.ts'))).rejects.toThrow();
 			expect(options.fetch).toHaveBeenCalledTimes(1);
 			expect(options.fetch).toHaveBeenCalledWith(
-				'https://consent.example.com/manifest',
+				'https://consent.example.com/v1/consent/manifest',
 				expect.any(Object)
 			);
 		}
@@ -253,7 +253,7 @@ describe('Next.js build-time manifest', () => {
 		await expect(
 			wrapped('phase-production-build', { defaultConfig: {} })
 		).rejects.toThrow(
-			"@inth/nextjs/build: could not fetch the consent manifest from https://consent.example.com/manifest during the build (backend unavailable). Set `INTH_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
+			"@inth/nextjs/build: could not fetch the consent manifest from https://consent.example.com/v1/consent/manifest during the build (backend unavailable). Set `INTH_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
 		);
 		expect(await readServerModule(root)).toBe(before);
 	});
@@ -273,7 +273,7 @@ describe('Next.js build-time manifest', () => {
 		);
 		expect(warn).toHaveBeenCalledWith(
 			expect.stringContaining(
-				'@inth/nextjs/build: could not fetch the consent manifest from https://consent.example.com/manifest during dev (backend unavailable)'
+				'@inth/nextjs/build: could not fetch the consent manifest from https://consent.example.com/v1/consent/manifest during dev (backend unavailable)'
 			)
 		);
 	});
@@ -306,7 +306,7 @@ describe('Next.js build-time manifest', () => {
 			defaultConfig: {},
 		});
 		expect(fetch).toHaveBeenCalledWith(
-			'https://env.example.com/api/manifest',
+			'https://env.example.com/api/v1/consent/manifest',
 			expect.any(Object)
 		);
 		expect(await readServerModule(root)).toContain(
@@ -331,7 +331,7 @@ describe('Next.js build-time manifest', () => {
 			const { fetch } = optionsFor();
 			const config = await build({ fetch });
 			expect(fetch).toHaveBeenCalledWith(
-				`${C15T}/manifest`,
+				`${C15T}/v1/consent/manifest`,
 				expect.any(Object)
 			);
 			expect(await readServerModule(root)).toContain(
@@ -357,7 +357,7 @@ describe('Next.js build-time manifest', () => {
 			const { fetch } = optionsFor();
 			const config = await build({ fetch });
 			expect(fetch).toHaveBeenCalledWith(
-				`${C15T}/manifest`,
+				`${C15T}/v1/consent/manifest`,
 				expect.any(Object)
 			);
 			expect(config.env?.NEXT_PUBLIC_INTH_PROJECT_URL).toBe(C15T);
@@ -370,7 +370,7 @@ describe('Next.js build-time manifest', () => {
 			const { fetch } = optionsFor();
 			const config = await build({ fetch });
 			expect(fetch).toHaveBeenCalledWith(
-				`${INTH}/manifest`,
+				`${INTH}/v1/consent/manifest`,
 				expect.any(Object)
 			);
 			expect(config.env).toEqual({ OTHER: '1' });
@@ -388,7 +388,7 @@ describe('Next.js build-time manifest', () => {
 			const { fetch } = optionsFor();
 			await build({ fetch });
 			expect(fetch).toHaveBeenCalledWith(
-				'https://config.example.com/manifest',
+				'https://config.example.com/v1/consent/manifest',
 				expect.any(Object)
 			);
 			expect(
@@ -399,7 +399,7 @@ describe('Next.js build-time manifest', () => {
 			fetch.mockClear();
 			await build({ fetch, projectUrl: 'https://option.example.com' });
 			expect(fetch).toHaveBeenCalledWith(
-				'https://option.example.com/manifest',
+				'https://option.example.com/v1/consent/manifest',
 				expect.any(Object)
 			);
 		});
@@ -490,7 +490,7 @@ describe('Next.js build-time manifest', () => {
 			defaultConfig: {},
 		});
 		expect(fetch).toHaveBeenCalledWith(
-			'https://config.example.com/manifest',
+			'https://config.example.com/v1/consent/manifest',
 			expect.any(Object)
 		);
 		expect(await readServerModule(root)).toContain(

@@ -18,6 +18,7 @@ import {
 	storybookConsentConfig,
 	storybookInit,
 	storybookMode,
+	storybookRecordAnswer,
 } from './storybook-consent-fixtures';
 
 /**
@@ -65,22 +66,23 @@ export const Default: Story = {
 			};
 			const context = createVueConsentKernelContext({
 				config,
-				mode: storybookMode(((input: RequestInfo | URL) =>
+				mode: storybookMode(((
+					input: RequestInfo | URL,
+					request?: RequestInit
+				) =>
 					Promise.resolve(
 						new Response(
 							JSON.stringify(
-								String(input).endsWith('/subjects') ? { ok: true } : init
+								String(input).includes('/v1/consent/records')
+									? storybookRecordAnswer(request)
+									: init
 							),
 							{
-								headers: {
-									'content-type': 'application/json',
-									'x-inth-policy-contract': '1',
-								},
+								headers: { 'content-type': 'application/json' },
 							}
 						)
 					)) as typeof fetch),
 				prefetch: init,
-				producerContract: 1,
 			});
 			hydrateRecords(context.kernel, {
 				now: devToolsPrefetch.now,

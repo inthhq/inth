@@ -47,13 +47,13 @@ export interface ConsentRouteOptions {
 	 */
 	mode?: InthOptions['mode'];
 	/**
-	 * The Inth backend. The manifest is read from `${projectUrl}/manifest`
+	 * The Inth backend. The manifest is read from `${projectUrl}/v1/consent/manifest`
 	 * unless `manifestUrl` or `snapshot` is set; session reports and the
 	 * proxy go here. Must not name this route.
 	 */
 	projectUrl?: string;
 	/**
-	 * Full manifest URL. Takes precedence over `${projectUrl}/manifest` and
+	 * Full manifest URL. Takes precedence over `${projectUrl}/v1/consent/manifest` and
 	 * the mode's.
 	 */
 	manifestUrl?: string;

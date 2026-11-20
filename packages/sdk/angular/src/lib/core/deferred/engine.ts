@@ -15,7 +15,7 @@ import type {
 	ConsentProviderRuntimeOptions,
 } from '@inth/sdk/runtime/provider';
 import type { DeferredCommitted } from '@inth/sdk/surface-actions/early-commit';
-import { createHostedTransport } from '@inth/sdk/transports';
+import { createV1HostedTransport } from '@inth/sdk/transports';
 
 import { provideModeTransports } from '../modes';
 import { createOwnedRuntime } from '../owned-runtime';
@@ -88,7 +88,7 @@ export const createEngine = function createEngine(
 ): ConsentProviderRuntime {
 	// The mode factories build their transports with the code this chunk
 	// carries.
-	provideModeTransports({ hosted: createHostedTransport });
+	provideModeTransports({ hosted: createV1HostedTransport });
 	return createOwnedRuntime(
 		committed ? committedOptions(options, committed) : options
 	);

@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { version } from '../version';
 import { fetchSSRData } from './fetch-ssr-data';
 
 const createRequestHeaders = function createRequestHeaders(): Headers {
@@ -97,60 +96,28 @@ describe('fetchSSRData', () => {
 		});
 	});
 
-	it('sends the SDK version and policy contract, and returns the producer contract', async () => {
-		const fetchMock = vi.fn().mockResolvedValue(
-			new Response(JSON.stringify({ categories: [], gvl: null }), {
-				headers: { 'x-inth-policy-contract': '2' },
-				status: 200,
-			})
-		);
+	it('asks /v1 init with no version, contract or cookie header', async () => {
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValue(createResponse({ categories: [], gvl: null }));
 		vi.stubGlobal('fetch', fetchMock);
+		const headers = createRequestHeaders();
+		headers.set('x-inth-version', '3.0.0-proxy');
+		headers.set('cookie', 'inth=c.necessary:1');
 
-		const result = await fetchSSRData({
-			headers: createRequestHeaders(),
+		await fetchSSRData({
+			headers,
 			projectUrl: 'https://consent.example.com/api/inth',
 		});
 
-		const sent = fetchMock.mock.calls[0]?.[1]?.headers as Record<
-			string,
-			string
-		>;
 		expect(fetchMock.mock.calls[0]?.[0]).toBe(
-			'https://consent.example.com/api/inth/init'
+			'https://consent.example.com/api/inth/v1/consent/init'
 		);
-		expect(sent['x-inth-version']).toBe(version);
-		expect(sent['x-inth-policy-contract']).toMatch(/^\d+$/u);
-		expect(result?.producerPolicyContract).toBe('2');
+		const sent = new Headers(fetchMock.mock.calls[0]?.[1]?.headers);
+		expect(sent.has('x-inth-version')).toBe(false);
+		expect(sent.has('x-inth-policy-contract')).toBe(false);
+		expect(sent.has('cookie')).toBe(false);
 	});
-
-	it.each([undefined, '3.0.0-proxy'])(
-		'sends the incoming version %s or the package version on init',
-		async (incomingVersion) => {
-			const fetchMock = vi
-				.fn()
-				.mockResolvedValue(createResponse({ categories: [], gvl: null }));
-			vi.stubGlobal('fetch', fetchMock);
-
-			const requestHeaders = createRequestHeaders();
-			if (incomingVersion !== undefined) {
-				requestHeaders.set('x-inth-version', incomingVersion);
-			}
-
-			await fetchSSRData({
-				headers: requestHeaders,
-				projectUrl: 'https://consent.example.com/api/inth',
-			});
-
-			expect(fetchMock).toHaveBeenCalledWith(
-				'https://consent.example.com/api/inth/init',
-				expect.objectContaining({
-					headers: expect.objectContaining({
-						'x-inth-version': incomingVersion ?? version,
-					}),
-				})
-			);
-		}
-	);
 
 	it('forwards the prefetch markers, so the backend can tell a prefetch from a view', async () => {
 		const fetchMock = vi
@@ -226,7 +193,7 @@ describe('fetchSSRData', () => {
 		await fetchSSRData({ headers, projectUrl: '/api/inth' });
 
 		expect(fetchMock).toHaveBeenCalledWith(
-			'https://example.com/api/inth/init',
+			'https://example.com/api/inth/v1/consent/init',
 			expect.any(Object)
 		);
 		const sent = fetchMock.mock.calls[0]?.[1]?.headers as Record<
@@ -250,7 +217,7 @@ describe('fetchSSRData', () => {
 		await fetchSSRData({ headers, projectUrl: '/api/inth' });
 
 		expect(fetchMock).toHaveBeenCalledWith(
-			'https://example.com/api/inth/init',
+			'https://example.com/api/inth/v1/consent/init',
 			expect.any(Object)
 		);
 		const sent = fetchMock.mock.calls[0]?.[1]?.headers as Record<

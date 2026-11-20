@@ -492,7 +492,7 @@ describe('@inth/sdk/generated in Vite', () => {
 			)
 		).toContain('export const projectUrl = "https://env.example.com/api";');
 		expect(fetch).toHaveBeenCalledWith(
-			'https://env.example.com/api/manifest',
+			'https://env.example.com/api/v1/consent/manifest',
 			expect.any(Object)
 		);
 	});
@@ -528,7 +528,7 @@ describe('@inth/sdk/generated in Vite', () => {
 			);
 			expect(env.VITE_INTH_PROJECT_URL).toBe('https://inth.example.com');
 			expect(fetch).toHaveBeenCalledWith(
-				'https://inth.example.com/manifest',
+				'https://inth.example.com/v1/consent/manifest',
 				expect.any(Object)
 			);
 		});
@@ -768,7 +768,8 @@ describe('initPrefetch', () => {
 			consentManifest({
 				...optionsFor(root),
 				initPrefetch: {
-					credentials: 'include',
+					// A browser's init never sends cookies; `omit` passes through.
+					credentials: 'omit',
 					experiment: {
 						arms: { wall: { prompt: { variant: 'wall' } } },
 						id: 'banner-shape',
@@ -781,7 +782,7 @@ describe('initPrefetch', () => {
 			}),
 			HOSTED_ENTRY
 		);
-		expect(html).toContain('"credentials":"include"');
+		expect(html).toContain('"credentials":"omit"');
 		expect(html).toMatch(/[?&]country=DE[&"]/u);
 		expect(html).toContain('"language":"de"');
 		expect(html).toContain('"journey":null');
@@ -1035,15 +1036,21 @@ describe('node_modules/.cache/inth output', () => {
 	});
 
 	test.each([
-		['https://consent.example.com', 'https://consent.example.com/manifest'],
-		['https://consent.example.com/', 'https://consent.example.com/manifest'],
+		[
+			'https://consent.example.com',
+			'https://consent.example.com/v1/consent/manifest',
+		],
+		[
+			'https://consent.example.com/',
+			'https://consent.example.com/v1/consent/manifest',
+		],
 		[
 			'https://consent.example.com/api/inth///',
-			'https://consent.example.com/api/inth/manifest',
+			'https://consent.example.com/api/inth/v1/consent/manifest',
 		],
 		[
 			'https://consent.example.com/api/?key=x#config',
-			'https://consent.example.com/api/manifest?key=x#config',
+			'https://consent.example.com/api/v1/consent/manifest?key=x#config',
 		],
 	])(
 		'fetches /manifest under projectUrl %s',
@@ -1105,7 +1112,7 @@ describe('build-time manifest policy', () => {
 		const { logger, source } = await write({ fetch });
 		expect(source).toContain(STUB);
 		expect(logger.warn).toHaveBeenCalledWith(
-			"could not fetch the consent manifest from https://consent.example.com/manifest during the build (fetch failed: connect ECONNREFUSED 127.0.0.1:9). The server fetches it at runtime instead, and asks the backend's /init while it is unavailable. Set `INTH_ON_BUILD_ERROR=fail` (or `onBuildError: 'fail'`) to stop the build on this error."
+			"could not fetch the consent manifest from https://consent.example.com/v1/consent/manifest during the build (fetch failed: connect ECONNREFUSED 127.0.0.1:9). The server fetches it at runtime instead, and asks the backend's init while it is unavailable. Set `INTH_ON_BUILD_ERROR=fail` (or `onBuildError: 'fail'`) to stop the build on this error."
 		);
 	});
 
@@ -1113,7 +1120,7 @@ describe('build-time manifest policy', () => {
 		const fetch = vi.fn<typeof globalThis.fetch>().mockRejectedValue(refused());
 		const { error, root } = await write({ fetch, onBuildError: 'fail' });
 		expect(error?.message).toBe(
-			"test/build: could not fetch the consent manifest from https://consent.example.com/manifest during the build (fetch failed: connect ECONNREFUSED 127.0.0.1:9). Set `INTH_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
+			"test/build: could not fetch the consent manifest from https://consent.example.com/v1/consent/manifest during the build (fetch failed: connect ECONNREFUSED 127.0.0.1:9). Set `INTH_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
 		);
 		await expect(
 			stat(join(root, MANIFEST_CACHE_DIR, 'manifest.js'))
@@ -1125,7 +1132,7 @@ describe('build-time manifest policy', () => {
 		const { logger, source } = await write({ fetch }, 'dev');
 		expect(source).toContain(STUB);
 		expect(logger.warn).toHaveBeenCalledWith(
-			"could not fetch the consent manifest from https://consent.example.com/manifest during dev (fetch failed: connect ECONNREFUSED 127.0.0.1:9). The server fetches it at runtime instead, and asks the backend's /init while it is unavailable. Set `INTH_ON_BUILD_ERROR=fail` (or `onBuildError: 'fail'`) to stop the build on this error."
+			"could not fetch the consent manifest from https://consent.example.com/v1/consent/manifest during dev (fetch failed: connect ECONNREFUSED 127.0.0.1:9). The server fetches it at runtime instead, and asks the backend's init while it is unavailable. Set `INTH_ON_BUILD_ERROR=fail` (or `onBuildError: 'fail'`) to stop the build on this error."
 		);
 	});
 
@@ -1136,7 +1143,7 @@ describe('build-time manifest policy', () => {
 		const { logger, source } = await write({ fetch, onBuildError: 'runtime' });
 		expect(source).toContain(STUB);
 		expect(logger.warn).toHaveBeenCalledWith(
-			expect.stringContaining('(/manifest responded 503')
+			expect.stringContaining('(/v1/consent/manifest responded 503')
 		);
 	});
 
@@ -1257,7 +1264,7 @@ describe('build-time manifest policy', () => {
 			);
 			expect(source).toContain(STUB);
 			expect(logger.warn).toHaveBeenCalledWith(
-				`no backend URL is set, so ${command === 'build' ? 'the build' : 'dev'} cannot fetch the consent manifest. Pass projectUrl or set VITE_INTH_PROJECT_URL. The server fetches it at runtime, or asks the backend's /init.`
+				`no backend URL is set, so ${command === 'build' ? 'the build' : 'dev'} cannot fetch the consent manifest. Pass projectUrl or set VITE_INTH_PROJECT_URL. The server fetches it at runtime, or asks the backend's init.`
 			);
 		}
 	);
@@ -1322,12 +1329,12 @@ describe('framework build snapshot', () => {
 			)
 		).toEqual(MANIFEST_FIXTURE);
 		expect(options.fetch).toHaveBeenCalledWith(
-			'https://consent.example.com/api/manifest',
+			'https://consent.example.com/api/v1/consent/manifest',
 			expect.any(Object)
 		);
 	});
 
-	test.each(['/api/inth/manifest', 'file:///manifest.json', ''])(
+	test.each(['/api/inth/v1/consent/manifest', 'file:///manifest.json', ''])(
 		'rejects a source the build cannot fetch: %s',
 		(manifestUrl) => {
 			expect(() => loadBuildManifest({ manifestUrl }, 'test/build')).toThrow(
@@ -1385,7 +1392,7 @@ describe('build snapshot validation', () => {
 				Promise.resolve(Response.json(body))
 			);
 			await expect(loadBuildManifest(options, 'test/build')).rejects.toThrow(
-				'test/build: /manifest returned an invalid consent manifest'
+				'test/build: /v1/consent/manifest returned an invalid consent manifest'
 			);
 			await expect(
 				writeManifestCacheModule(

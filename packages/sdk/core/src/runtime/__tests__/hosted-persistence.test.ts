@@ -9,10 +9,10 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
-import { inthProtocolHeaders } from '../../libs/version-header';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { hosted } from '../../transports/mode';
 import type { ProviderTransportFactory } from '../../transports/mode';
+import { recordAnswer } from '../../transports/v1/__tests__/fixtures';
 import { createConsentRuntime } from '../index';
 import type { ConsentRuntime, ConsentRuntimeOptions } from '../types';
 
@@ -50,22 +50,21 @@ const createRuntime = (options: RuntimeOverrides = {}) => {
 	const runtime = createConsentRuntime({
 		consentCategories: ['necessary', 'measurement'],
 		mode: hosted({
-			fetch: (input) => {
+			fetch: (input, init) => {
 				if (unavailable) {
 					return Promise.resolve(new Response(null, { status: 503 }));
 				}
 				return Promise.resolve(
 					Response.json(
 						// The path alone: the runtime adds its consent journey as a query.
-						String(input).split('?')[0]?.endsWith('/init')
+						String(input).split('?')[0]?.endsWith('/v1/consent/init')
 							? {
 									branding: 'inth',
 									location: { countryCode: 'US', regionCode: 'CA' },
 									policyResolution: writePolicyResolutionWire(policy),
 									translations: { language: 'en', translations },
 								}
-							: {},
-						{ headers: inthProtocolHeaders }
+							: recordAnswer(init)
 					)
 				);
 			},

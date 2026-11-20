@@ -16,10 +16,10 @@ Requires Next.js 15 or 16 (`next ^15.0.0 || ^16.0.0`).
 
 | Property | Default | Behavior |
 | --- | --- | --- |
-| `projectUrl` | `NEXT_PUBLIC_INTH_PROJECT_URL` | Backend base URL. Consent submissions go to `/subjects` under it, and the server reads `/manifest` or `/init` from it. |
-| `mode` | `manifest()` | `manifest()` or `hosted()` from `@inth/nextjs`, or `testing()` from `@inth/nextjs/testing`. `manifest()` falls back to the backend's `/init` with a warning when the manifest is unavailable. See [consent modes](/docs/concepts/modes). |
-| `routePrefix` | none | Where the catch-all consent route is mounted, such as `/api/inth`. A browser that resolves consent itself asks `${routePrefix}/init` instead of the backend's `/init`. Leave it unset when every page resolves consent on the server. |
-| `proxy` | `false` | The route at `routePrefix` forwards saves (`createConsentRoute({ proxy: true })`), so the browser saves there instead of `${projectUrl}/subjects`. The server helpers keep `projectUrl`. Needs `routePrefix`. See [optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin). |
+| `projectUrl` | `NEXT_PUBLIC_INTH_PROJECT_URL` | Backend base URL. Consent submissions go to `/v1/consent/records` under it, and the server reads `/v1/consent/manifest` or `/v1/consent/init` from it. |
+| `mode` | `manifest()` | `manifest()` or `hosted()` from `@inth/nextjs`, or `testing()` from `@inth/nextjs/testing`. `manifest()` falls back to the backend's `/v1/consent/init` with a warning when the manifest is unavailable. See [consent modes](/docs/concepts/modes). |
+| `routePrefix` | none | Where the catch-all consent route is mounted, such as `/api/inth`. A browser that resolves consent itself asks `${routePrefix}/v1/consent/init` instead of the backend's `/v1/consent/init`. Leave it unset when every page resolves consent on the server. |
+| `proxy` | `false` | The route at `routePrefix` forwards saves (`createConsentRoute({ proxy: true })`), so the browser saves there instead of `${projectUrl}/v1/consent/records`. The server helpers keep `projectUrl`. Needs `routePrefix`. See [optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin). |
 | `journey` | `'page'` | The consent journey scope, read by both `resolveConsent` and `ConsentRoot` so they agree. |
 | `scripts`, `vendors`, `clearOnRevocation`, `networkBlocker`, `persistence`, `scriptLoader`, `options` | none | Browser options. `ConsentRoot` props of the same name win over them. |
 
@@ -68,26 +68,26 @@ For Pages Router, use this file instead:
 
 <include src="../../shared/examples/nextjs-pages-router/pages-consent-route.mdx" />
 
-The route answers `GET ${routePrefix}/init` by resolving the bundled manifest
+The route answers `GET ${routePrefix}/v1/consent/init` by resolving the bundled manifest
 with the browser request's location headers, so those pages get the same
-policy a server render would. It also answers `GET ${routePrefix}/manifest`
+policy a server render would. It also answers `GET ${routePrefix}/v1/consent/manifest`
 for `manifest({ resolve: 'browser' })`.
 
-Without `routePrefix`, browser initialization calls the backend's `/init`.
+Without `routePrefix`, browser initialization calls the backend's `/v1/consent/init`.
 See [geography and privacy signals](#geography-and-privacy-signals).
 
 ### Mode combinations
 
 | Config | Server render | Browser initialization |
 | --- | --- | --- |
-| `manifest()`, the default, with `routePrefix` | Resolves the snapshot with request inputs | Calls `${routePrefix}/init`, whose route resolves the snapshot with request inputs |
-| `manifest()` without `routePrefix` | Resolves the snapshot with request inputs | Calls `${projectUrl}/init` |
-| `manifest({ resolve: 'browser' })` | Resolves the snapshot with request inputs | Loads the resolver lazily and fetches `${routePrefix}/manifest`, else `${projectUrl}/manifest` |
-| `manifest({ source: 'runtime' })` | Fetches and caches `${projectUrl}/manifest` | As `manifest()` |
-| `hosted()` | Calls `${projectUrl}/init` | Calls `${projectUrl}/init` |
+| `manifest()`, the default, with `routePrefix` | Resolves the snapshot with request inputs | Calls `${routePrefix}/v1/consent/init`, whose route resolves the snapshot with request inputs |
+| `manifest()` without `routePrefix` | Resolves the snapshot with request inputs | Calls `${projectUrl}/v1/consent/init` |
+| `manifest({ resolve: 'browser' })` | Resolves the snapshot with request inputs | Loads the resolver lazily and fetches `${routePrefix}/v1/consent/manifest`, else `${projectUrl}/v1/consent/manifest` |
+| `manifest({ source: 'runtime' })` | Fetches and caches `${projectUrl}/v1/consent/manifest` | As `manifest()` |
+| `hosted()` | Calls `${projectUrl}/v1/consent/init` | Calls `${projectUrl}/v1/consent/init` |
 | `testing()` | No policy request | Resolves the test's rules in the browser |
 
-Hosted and manifest modes submit choices to `${projectUrl}/subjects`.
+Hosted and manifest modes submit choices to `${projectUrl}/v1/consent/records`.
 `testing()` uses browser persistence only. A prepared server result
 satisfies the first browser initialization; the browser column describes
 what happens when initialization is needed, including recovery after the
@@ -103,7 +103,7 @@ out of the browser bundle; see
 Set `mode: hosted()` in `inth.config.ts`. The
 [client-side guide](/docs/frameworks/next/client-side#configure-the-backend-and-the-mode)
 has the complete config. For server rendering, keep the layout from your
-router guide. `resolveConsent` will call backend `/init` per request.
+router guide. `resolveConsent` will call backend `/v1/consent/init` per request.
 
 Remove the consent route if no page needs it, unless `proxy: true` sends
 browser saves through it. See
@@ -122,8 +122,8 @@ replaces only the `request` adapter.
 `resolveConsent()` needs no options: it reads `inth.config.ts` and the
 snapshot `withConsentManifest` downloaded. What it does depends on the mode.
 `manifest()` resolves policy from the snapshot, or from
-`${projectUrl}/manifest` through the in-process cache without one. `hosted()`
-calls `${projectUrl}/init`. `testing()`, or no backend URL at all, makes no
+`${projectUrl}/v1/consent/manifest` through the in-process cache without one. `hosted()`
+calls `${projectUrl}/v1/consent/init`. `testing()`, or no backend URL at all, makes no
 network request and returns cookie- and header-only state; see
 [cookie-only state](#cookie-only-state).
 
@@ -132,14 +132,14 @@ network request and returns cookie- and header-only state; see
 | Option | Default | Behavior |
 | --- | --- | --- |
 | `config` | `inth.config.ts` | The config to use instead of the file. Explicit options on this bag win over its fields. In manifest mode, its `routePrefix` names the same-origin route the browser loads a deferred IAB Global Vendor List from. |
-| `projectUrl` | the mode's, then the config's, then `NEXT_PUBLIC_INTH_PROJECT_URL` | Backend base URL. With `hosted()`, `resolveConsent` calls `${projectUrl}/init`. |
-| `manifestUrl` | the mode's absolute `manifestUrl`, then `${projectUrl}/manifest` | Absolute `GET /manifest` URL. Setting it resolves from the manifest whatever the mode, through the in-process manifest cache. A `/`-relative `manifestUrl` on the mode is the browser's, so the server ignores it. |
+| `projectUrl` | the mode's, then the config's, then `NEXT_PUBLIC_INTH_PROJECT_URL` | Backend base URL. With `hosted()`, `resolveConsent` calls `${projectUrl}/v1/consent/init`. |
+| `manifestUrl` | the mode's absolute `manifestUrl`, then `${projectUrl}/v1/consent/manifest` | Absolute `GET /v1/consent/manifest` URL. Setting it resolves from the manifest whatever the mode, through the in-process manifest cache. A `/`-relative `manifestUrl` on the mode is the browser's, so the server ignores it. |
 | `snapshot` | the snapshot `withConsentManifest` downloaded | A manifest to resolve from instead. Setting it resolves from the manifest whatever the mode. |
-| `fetch` | `globalThis.fetch` | Fetch implementation for the backend `/init` or manifest request. Manifest requests already pass `next: { revalidate: 300 }` for the App Router Data Cache. The `/init` call can carry the consent cookie and returns per-visitor state, so it uses `cache: 'no-store'`. A custom fetch must preserve these options. It also keeps the IAB Global Vendor List inline, since the browser cannot replay it. |
+| `fetch` | `globalThis.fetch` | Fetch implementation for the backend `/v1/consent/init` or manifest request. Manifest requests already pass `next: { revalidate: 300 }` for the App Router Data Cache. The `/v1/consent/init` call can carry the consent cookie and returns per-visitor state, so it uses `cache: 'no-store'`. A custom fetch must preserve these options. It also keeps the IAB Global Vendor List inline, since the browser cannot replay it. |
 | `forwardHeaders` | `[]` | Extra request header names copied onto the outgoing call, such as a token a private backend needs. They travel only over `https` or to a loopback host. `cookie` and `forwarded`/`x-forwarded-*` cannot be named here. Headers absent from the request are skipped. |
-| `trustForwardedHeaders` | `false` | Resolve a `/`-relative `projectUrl` or `manifestUrl` against the request's `forwarded`, `x-forwarded-host` and `x-forwarded-proto` headers instead of `host`, and forward the visitor IP to backend `/init` as `x-forwarded-for`. Set it only behind a proxy that sets those headers and drops the ones a client sends. |
+| `trustForwardedHeaders` | `false` | Resolve a `/`-relative `projectUrl` or `manifestUrl` against the request's `forwarded`, `x-forwarded-host` and `x-forwarded-proto` headers instead of `host`, and forward the visitor IP to backend `/v1/consent/init` as `x-forwarded-for`. Set it only behind a proxy that sets those headers and drops the ones a client sends. |
 | `onError` | none | Receives the failure from the backend or manifest request, including a `ManifestUnavailableError` when `timeoutMs` runs out or the manifest is backing off after a failure. When omitted, failures are logged with `console.warn` only when `NODE_ENV` is not `production`. |
-| `timeoutMs` | `500` | Longest the render waits for policy, in milliseconds, counted from the start of the resolution. When it runs out, the helper returns the baseline state described below. `false` or `Infinity` waits for the manifest cache's 5 second request timeout, or for the `fetch` implementation on backend `/init`. Any other value that is not a finite, non-negative number uses the default. |
+| `timeoutMs` | `500` | Longest the render waits for policy, in milliseconds, counted from the start of the resolution. When it runs out, the helper returns the baseline state described below. `false` or `Infinity` waits for the manifest cache's 5 second request timeout, or for the `fetch` implementation on backend `/v1/consent/init`. Any other value that is not a finite, non-negative number uses the default. |
 | `journey` | the config's `journey` | The consent journey scope this render reports. `ConsentRoot` must use the same value. |
 | `experiment` | none | The banner experiment with the arm this request runs. See [banner experiments](/docs/guides/banner-experiments). |
 | `waitUntil` | none | Receives work that outlives the render so it survives the response: the session report, a manifest refresh, and a manifest request that `timeoutMs` stopped waiting for. In the App Router pass `(task) => after(() => task)` with `after` from `next/server`. The promise never rejects. |
@@ -155,7 +155,7 @@ rejects (the default adapter rejects outside a request scope), and when your
 resolution errors are handled: they return the same baseline state as the
 cookie-only call, with stored records, geography, language and GPC from the
 request but no resolved policy. The page still renders and the browser initializes
-consent on mount. Non-2xx responses from backend `/init` are failures too, so
+consent on mount. Non-2xx responses from backend `/v1/consent/init` are failures too, so
 a `500` renders the baseline rather than throwing. A successful response whose
 body reports `policyResolution.status: 'failed'`, for example an unsupported
 policy contract, is different: that failed resolution is kept as the prepared
@@ -208,7 +208,7 @@ Absolute `http(s)` URLs are used as given. `resolveConsent` resolves a
 header. A domain name resolves over `https`. `localhost`, an IP address or a
 single-label host such as `app:3000` resolves over `http`. The
 `x-forwarded-host`, `x-forwarded-proto`, `forwarded` and `referer` headers
-are ignored, because any client can send them and the `/init` call carries the
+are ignored, because any client can send them and the `/v1/consent/init` call carries the
 visitor's consent cookie to the resolved host. When no `host` header is
 available, `resolveConsent` reports the error and returns the baseline state.
 
@@ -220,7 +220,7 @@ to keep the browser on your origin.
 
 Any other same-origin `projectUrl` is a backend reached through your app, such
 as `/api/inth` with a rewrite or a mounted `@c15t/backend`. `resolveConsent`
-calls its `/init` like any backend. That request goes back through your own
+calls its `/v1/consent/init` like any backend. That request goes back through your own
 server, which costs a second function invocation on serverless hosts and fails
 behind deployment protection; the render then returns the baseline state and
 the browser resolves the policy. Pass the backend's own URL to skip the hop.
@@ -230,12 +230,12 @@ If the prefix reaches no backend and a page answers instead, that page's
 Behind a proxy that sets `x-forwarded-host` and `x-forwarded-proto` and drops
 the values a client sends, pass `trustForwardedHeaders: true` to resolve
 against them instead. Use `https` for any production `projectUrl`. Over plain
-HTTP to anything but a loopback host, the `/init` call carries no cookie, no
+HTTP to anything but a loopback host, the `/v1/consent/init` call carries no cookie, no
 `forwardHeaders` and no client IP.
 
 Forwarded headers differ by path, and only what the backend needs travels:
 
-- The backend `/init` call carries the resolved `x-inth-country`,
+- The backend `/v1/consent/init` call carries the resolved `x-inth-country`,
   `x-inth-region`, `accept-language` and `sec-gpc`, the `user-agent`, and the
   experiment arm while the visitor has no stored choice. Over `https` or to a
   loopback host it also carries the consent cookie (`cookieName`, never the
@@ -256,7 +256,7 @@ when the inline manifest has `iab.enabled: true` with an `iab.gvl` reference
 and the matched rule uses the `iab` model, the transport fetches the Global
 Vendor List with the `fetch` option, and a blocked network there also falls
 back to the baseline. `projectUrl` is still required because choices post to
-`${projectUrl}/subjects`.
+`${projectUrl}/v1/consent/records`.
 
 `onError` replaces the default logging entirely. Without it, production
 deployments render the baseline silently; pass `onError` to report failures to
@@ -343,16 +343,22 @@ export function resolveRequestConsent(req: IncomingMessage) {
 
 `createConsentRoute(options?)` from `@inth/nextjs/api` returns `GET` for one
 catch-all route, such as `app/api/inth/[...inth]/route.ts`. `GET` answers
-`/init` and `/manifest` under the route; every other path answers 404. With
+`/v1/consent/init` and `/v1/consent/manifest` under the route; every other path answers 404. With
 `proxy`, it also returns `POST`, `PATCH`, `PUT`, `DELETE` and `OPTIONS`, and
 forwards the other consent paths to the backend. Everything defaults to
 `inth.config.ts` and the snapshot `withConsentManifest` downloaded.
 
+An app that mounts one file per route instead of a catch-all must move them
+under `v1/consent/`, or the browser's requests answer 404:
+`app/api/inth/init/route.ts` becomes `app/api/inth/v1/consent/init/route.ts`,
+and `app/api/inth/manifest/route.ts` becomes
+`app/api/inth/v1/consent/manifest/route.ts`. A catch-all route needs no change.
+
 | Option | Default | Behavior |
 | --- | --- | --- |
 | `config` | `inth.config.ts` | The config to use instead of the file. |
-| `projectUrl` | the config's, then `NEXT_PUBLIC_INTH_PROJECT_URL` | Backend base URL. Without a snapshot, the route fetches `${projectUrl}/manifest`. |
-| `manifestUrl` | the mode's absolute `manifestUrl` | Full upstream manifest URL. Takes precedence over `projectUrl` plus `/manifest`. |
+| `projectUrl` | the config's, then `NEXT_PUBLIC_INTH_PROJECT_URL` | Backend base URL. Without a snapshot, the route fetches `${projectUrl}/v1/consent/manifest`. |
+| `manifestUrl` | the mode's absolute `manifestUrl` | Full upstream manifest URL. Takes precedence over `projectUrl` plus `/v1/consent/manifest`. |
 | `snapshot` | the snapshot `withConsentManifest` downloaded | Takes precedence over upstream URLs, serves the manifest and resolves each visitor without fetching policy. Stays fixed until rebuilding. |
 | `proxy` | `false` | Forward `subjects`, `subjects/:id`, `health` and `status` to the backend, so browser saves stay on your origin. Pair it with `proxy: true` in `inth.config.ts`. `createPagesConsentRoute` takes it too. |
 | `manifestRevalidateSeconds` | `300` | Next.js Data Cache revalidation for the manifest fetch. `false` disables it. |
@@ -380,24 +386,19 @@ The handlers are built on the consent route handler in `@inth/sdk/server`,
 which the TanStack Start, SvelteKit, Astro and Nuxt adapters share, so the
 rules below are the same in every framework.
 
-`GET ${routePrefix}/init` resolves the build snapshot or runtime cached manifest with the request's
-geography, language and GPC headers and responds with `cache-control: private, no-store` and
-`x-inth-policy-contract: 1`. The payload echoes the inputs it used as
-`resolvedOverrides` and `resolvedPrivacySignals`. The browser sends its
-overrides and policy contract as the `country`, `region`, `gpc` and
-`contract` query parameters, which win over the matching `x-inth-*` headers. When the request declares a different policy contract in
-either form, the response keeps the
-translations and UI data but sets `policyResolution` to `status: 'failed'`
-with `reason: 'unsupported-contract'`. Whenever the resolution is not
-`matched`, the payload carries no `policySnapshotToken`, `gvl`,
-`gvlReference`, `cmpId` or `customVendors`. Requests that declare no contract
-are treated as compatible.
+`GET ${routePrefix}/v1/consent/init` resolves the build snapshot or runtime cached manifest with the request's
+geography, language and GPC headers and responds with `cache-control: private, no-store`.
+The payload echoes the inputs it used as `resolvedOverrides` and
+`resolvedPrivacySignals`. The browser sends its overrides as the `country`,
+`region` and `gpc` query parameters, which win over the matching `x-inth-*`
+headers. Whenever the resolution is not `matched`, the payload carries no
+`policySnapshotToken`, `gvl`, `gvlReference`, `cmpId` or `customVendors`.
 
-With a snapshot, `GET ${routePrefix}/manifest` returns the complete snapshot as
+With a snapshot, `GET ${routePrefix}/v1/consent/manifest` returns the complete snapshot as
 JSON with status `200`. It makes no upstream request, adds no cache or validator
 headers and does not answer `If-None-Match` with `304` or slice by `language`.
 
-With runtime fetching, `GET ${routePrefix}/manifest` forwards the upstream `cache-control`,
+With runtime fetching, `GET ${routePrefix}/v1/consent/manifest` forwards the upstream `cache-control`,
 `etag`, `last-modified` and `content-language` headers, adds `content-type: application/json` and an
 `age` computed from the in-process cache, and answers a matching
 `If-None-Match` with `304`. It never invents a `cache-control` header the
@@ -407,8 +408,8 @@ is dropped, so a visitor's query string neither reaches the backend nor adds
 cache entries.
 
 With runtime fetching, when the manifest cannot be read and `projectUrl` is
-set, `GET ${routePrefix}/init` asks the backend's own `GET /init` instead, forwarding only the geography, language and
-GPC headers. This covers backends without `/manifest`. It happens for a `404`
+set, `GET ${routePrefix}/v1/consent/init` asks the backend's own `GET /v1/consent/init` instead, forwarding only the geography, language and
+GPC headers. This covers backends without `/v1/consent/manifest`. It happens for a `404`
 and for the first failure of a failing backend, not for every request while
 the manifest cache backs off. Otherwise the handler rejects and Next.js
 answers `500`.
@@ -447,20 +448,20 @@ only with `trustForwardedHeaders: true`.
 The [App Router](/docs/frameworks/next/app-router) and
 [Pages Router](/docs/frameworks/next/pages-router) manifest setups use this flow:
 
-1. `next build` bundles the backend's `/manifest` response as a snapshot.
+1. `next build` bundles the backend's `/v1/consent/manifest` response as a snapshot.
    With `manifest({ source: 'runtime' })` instead, the server fetches the
-   absolute backend's `/manifest` endpoint and caches the public policy data.
+   absolute backend's `/v1/consent/manifest` endpoint and caches the public policy data.
 2. `resolveConsent()` resolves policy from that snapshot or cache with the
    current request's inputs and restores valid consent cookies.
 3. `ConsentRoot` receives that result as `state` and reads the rest from
    `inth.config.ts`. Hydration preserves the resolved state.
-4. If browser initialization is needed, it asks `${routePrefix}/init`, whose
-   route resolves the same snapshot on the server, or `${projectUrl}/init`
+4. If browser initialization is needed, it asks `${routePrefix}/v1/consent/init`, whose
+   route resolves the same snapshot on the server, or `${projectUrl}/v1/consent/init`
    without `routePrefix`. `manifest({ resolve: 'browser' })` resolves in the
    browser instead.
-5. Browser choices post to `${projectUrl}/subjects`.
+5. Browser choices post to `${projectUrl}/v1/consent/records`.
 
-A warm policy cache avoids backend `/init` during request resolution. The app
+A warm policy cache avoids backend `/v1/consent/init` during request resolution. The app
 may still read its consent route, cold caches fetch upstream data, and choices
 still reach the backend. IAB policies can also require a Global Vendor List
 fetch. See [manifest caching](/docs/frameworks/next/optimization) for cache
@@ -496,7 +497,7 @@ A generated manifest contains public policy, not a visitor's choice. The
 helpers do not mount a provider, persist choices or send consent to the
 backend. You wire them into a custom transport passed as `options.mode`, and
 publishing new policy needs a rebuild. The
-[static export guide](/docs/frameworks/next/static-export) uses backend `/init`
+[static export guide](/docs/frameworks/next/static-export) uses backend `/v1/consent/init`
 instead, which needs none of this. Never bake a build machine's location or
 cookies into a shared static page.
 
@@ -520,7 +521,7 @@ the resolver does not infer country from the Next.js server's IP. Test unknown
 country and region against your configured policy rules.
 
 Browser manifest resolution uses location overrides from prefetch, `inputs`
-or `geoUrl`. Without them, a location-based policy asks the backend's `/init`.
+or `geoUrl`. Without them, a location-based policy asks the backend's `/v1/consent/init`.
 The [consent route](#do-i-need-the-consent-route) reads geographic headers on
 the server and keeps resolver code and translations out of browser
 initialization.

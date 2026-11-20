@@ -136,7 +136,7 @@ describe('ConsentRoot: transport selection', () => {
 			});
 			// The query carries the consent journey.
 			expect(String(fetchSpy.mock.calls[0]?.[0]).split('?')[0]).toBe(
-				'https://consent.example.com/init'
+				'https://consent.example.com/v1/consent/init'
 			);
 		} finally {
 			fetchSpy.mockRestore();
@@ -166,7 +166,7 @@ describe('ConsentRoot: transport selection', () => {
 				expect(fetchSpy).toHaveBeenCalled();
 			});
 			expect(String(fetchSpy.mock.calls[0]?.[0]).split('?')[0]).toBe(
-				'/api/inth/init'
+				'/api/inth/v1/consent/init'
 			);
 		} finally {
 			fetchSpy.mockRestore();
@@ -197,7 +197,7 @@ describe('ConsentRoot: transport selection', () => {
 			});
 			// The query carries the consent journey.
 			expect(String(fetchSpy.mock.calls[0]?.[0]).split('?')[0]).toBe(
-				'/api/inth/init'
+				'/api/inth/v1/consent/init'
 			);
 		} finally {
 			fetchSpy.mockRestore();

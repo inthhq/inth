@@ -41,14 +41,14 @@ describe('ConsentRoot', () => {
 
 		await vi.waitFor(() => {
 			expect(String(mockFetch.mock.calls[0]?.[0])).toMatch(
-				/^\/api\/inth\/init/u
+				/^\/api\/inth\/v1\/consent\/init/u
 			);
 		});
 		expect((window as WindowWithInth).__inthDebug?.mode).toBe('manifest');
 		result.unmount();
 	});
 
-	test("asks the backend's /init for a hosted() page", async () => {
+	test("asks the backend's init for a hosted() page", async () => {
 		const result = render(ConsentRoot, {
 			state: {
 				mode: { type: 'hosted' },
@@ -59,7 +59,7 @@ describe('ConsentRoot', () => {
 
 		await vi.waitFor(() => {
 			expect(String(mockFetch.mock.calls[0]?.[0])).toMatch(
-				/^https:\/\/consent\.example\.com\/init/u
+				/^https:\/\/consent\.example\.com\/v1\/consent\/init/u
 			);
 		});
 		expect((window as WindowWithInth).__inthDebug?.mode).toBe('hosted');

@@ -698,7 +698,7 @@ for (const target of selectedTargets()) {
 					const url = new URL(request.url());
 					if (
 						request.method() === 'POST' &&
-						url.pathname.endsWith('/subjects')
+						url.pathname.endsWith('/v1/consent/records')
 					) {
 						saves.push(url.origin);
 					}
@@ -816,11 +816,14 @@ for (const target of selectedTargets()) {
 					await server.restart({
 						NUXT_PUBLIC_INTH_PROJECT_URL: `http://127.0.0.1:${address.port}`,
 					});
-					const response = await fetch(`${server.baseURL}/api/inth/init`, {
-						headers: { 'x-vercel-ip-country': 'DE' },
-					});
+					const response = await fetch(
+						`${server.baseURL}/api/inth/v1/consent/init`,
+						{
+							headers: { 'x-vercel-ip-country': 'DE' },
+						}
+					);
 					expect(response.status).toBe(200);
-					expect(received).toContain('GET /manifest');
+					expect(received).toContain('GET /v1/consent/manifest');
 				} finally {
 					relay.closeAllConnections();
 					relay.close();

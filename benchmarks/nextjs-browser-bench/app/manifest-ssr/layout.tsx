@@ -11,8 +11,8 @@ import { NextjsManifestBenchmarkProvider } from '../_bench/provider';
 const getBenchManifestUrl = function getBenchManifestUrl() {
 	const token = process.env.INTH_BENCH_COLD_MANIFEST_TOKEN;
 	return token
-		? `/api/bench-consent/manifest?cold=${encodeURIComponent(token)}`
-		: '/api/bench-consent/manifest';
+		? `/api/bench-consent/v1/consent/manifest?cold=${encodeURIComponent(token)}`
+		: '/api/bench-consent/v1/consent/manifest';
 };
 
 const ManifestSSRLayout = async ({ children }: { children: ReactNode }) => {

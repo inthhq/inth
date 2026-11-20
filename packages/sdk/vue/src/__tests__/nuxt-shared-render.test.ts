@@ -274,7 +274,7 @@ test('the browser resolves a prerendered page itself and keeps a stored rejectio
 		});
 		await nextTick();
 
-		expect(initRequests).toEqual(['https://consent.example/init']);
+		expect(initRequests).toEqual(['https://consent.example/v1/consent/init']);
 		expect(context.snapshot.value.explicitChoice?.categories).toMatchObject({
 			marketing: { value: false },
 			measurement: { value: false },

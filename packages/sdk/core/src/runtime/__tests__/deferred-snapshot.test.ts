@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { createConsentKernel } from '../../kernel/index';
 import { PREFETCH_WINDOW_KEY } from '../../libs/page-globals';
-import type { PrefetchedInitialData } from '../../libs/prefetch/prefetch';
+import type { SSRInitialData } from '../../options/ssr';
 import { mapInitOutputToInitResponse } from '../../transports/init-output';
 import { hosted } from '../../transports/mode';
 import {
@@ -21,14 +21,8 @@ import init from './fixtures/hosted-init-gb.json' with { type: 'json' };
 
 const NOW = Date.UTC(2026, 10, 2, 12);
 const categories = ['necessary', 'measurement', 'marketing'] as const;
-const prefetched = (
-	payload: unknown = init,
-	contract: string | null = '1'
-): PrefetchedInitialData =>
-	({
-		init: payload,
-		producerPolicyContract: contract,
-	}) as PrefetchedInitialData;
+const prefetched = (payload: unknown = init): SSRInitialData =>
+	({ init: payload }) as SSRInitialData;
 
 const engineSnapshot = async function engineSnapshot() {
 	const kernel = createConsentKernel({
@@ -95,7 +89,7 @@ describe('snapshotFromPrefetchedInit', () => {
 		}
 	});
 
-	test('leaves IAB, vendor and unknown-contract responses to the engine', () => {
+	test('leaves IAB and vendor responses to the engine', () => {
 		const options = { consentCategories: [...categories] };
 		expect(
 			snapshotFromPrefetchedInit(prefetched({ ...init, gvl: {} }), options)
@@ -105,9 +99,6 @@ describe('snapshotFromPrefetchedInit', () => {
 				prefetched({ ...init, vendors: [{ id: 'x' }] }),
 				options
 			)
-		).toBeUndefined();
-		expect(
-			snapshotFromPrefetchedInit(prefetched(init, '2'), options)
 		).toBeUndefined();
 		expect(snapshotFromPrefetchedInit(undefined, options)).toBeUndefined();
 	});
@@ -202,7 +193,7 @@ describe('findPrefetchedInit', () => {
 		expect(
 			findPrefetchedInit(
 				hosted({
-					initUrl: '/api/init',
+					initUrl: '/api/v1/consent/init',
 					projectUrl: 'https://consent.example.com',
 				})
 			)

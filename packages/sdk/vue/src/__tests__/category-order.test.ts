@@ -68,7 +68,6 @@ test('the widget lists categories in the draft order, not the policy or configur
 	const context = createVueConsentKernelContext({
 		config,
 		prefetch: init,
-		producerContract: 1,
 	});
 	const wrapper = mount(ConsentWidget, {
 		attachTo: document.body,

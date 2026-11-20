@@ -44,7 +44,7 @@ page.
 | Fetching path | Work during initialization |
 | --- | --- |
 | Build-time manifest, recommended | Resolve consent locally from the deployment's snapshot, including on a fresh server instance. |
-| Regular backend `/init` | Wait for the backend to resolve consent and return the result. |
+| Regular backend `/v1/consent/init` | Wait for the backend to resolve consent and return the result. |
 | Cold manifest cache | Fetch public policy from the backend, cache it and resolve consent locally. |
 | Warm manifest cache | Reuse cached policy and resolve consent locally; local route requests and rendering still take time. |
 
@@ -66,7 +66,7 @@ Measure your own deployment before you choose a layout for speed.
 
 ## Keep browser consent requests on your origin
 
-By default the browser saves consent to `${projectUrl}/subjects`, a separate
+By default the browser saves consent to `${projectUrl}/v1/consent/records`, a separate
 origin. Sending those requests through your own app can avoid a separate
 browser DNS lookup and TLS connection to the consent backend, and lets a
 `connect-src 'self'` policy cover them. Manifests and server rendering work
@@ -115,9 +115,9 @@ What the route serves:
 
 | Request | Handled by |
 | --- | --- |
-| `GET /api/inth/init` | The route, from the bundled manifest, for this request's location, language and privacy signal |
-| `GET /api/inth/manifest` | The route, serving the bundled manifest |
-| `POST /api/inth/subjects` and other consent paths | Forwarded to your backend because `proxy: true` |
+| `GET /api/inth/v1/consent/init` | The route, from the bundled manifest, for this request's location, language and privacy signal |
+| `GET /api/inth/v1/consent/manifest` | The route, serving the bundled manifest |
+| `POST /api/inth/v1/consent/records` and other consent paths | Forwarded to your backend because `proxy: true` |
 | Any other path | `404`, so the route is never an open proxy |
 
 Keep these details right:
@@ -165,7 +165,7 @@ do not use the App Router Data Cache.
 For route handlers, `manifestRevalidateSeconds` changes the Data Cache's
 300-second revalidation interval. Set it to `false` or `0` to skip that layer.
 The SDK cache still follows the upstream cache headers. Visitor-specific
-backend `/init` calls use `cache: 'no-store'`, and resolved consent is never
+backend `/v1/consent/init` calls use `cache: 'no-store'`, and resolved consent is never
 shared between visitors.
 
 Once the upstream `s-maxage` has passed, the in-process cache keeps serving the
@@ -200,8 +200,8 @@ Without it the response still returns at once; only the refresh may be cut
 short, in which case the next request starts another.
 
 The same hook receives the route's session report. A host that resolves
-init from the manifest never calls `/init`, so after each resolution the route
-posts a small report to the backend's `POST /sessions`, server-to-server, and
+init from the manifest never calls `/v1/consent/init`, so after each resolution the route
+posts a small report to the backend's `POST /v1/consent/sessions`, server-to-server, and
 the backend counts the visitor from that instead. The browser makes no request.
 `resolveConsent` reports its renders the same way through its `waitUntil`
 option. Pass `reportSessions: false` to either to send none.

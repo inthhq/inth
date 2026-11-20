@@ -15,7 +15,7 @@ const BACKEND = 'https://consent.example.com';
 const upstream = () =>
 	vi.fn<typeof globalThis.fetch>().mockImplementation((input) =>
 		Promise.resolve(
-			String(input).endsWith('/manifest')
+			String(input).endsWith('/v1/consent/manifest')
 				? Response.json(MANIFEST_FIXTURE, {
 						headers: { 'cache-control': 'public, s-maxage=120' },
 					})
@@ -37,16 +37,16 @@ describe('createConsentRoute', () => {
 		expect(
 			await (
 				await GET({
-					params: { _splat: 'manifest' },
-					request: request('manifest'),
+					params: { _splat: 'v1/consent/manifest' },
+					request: request('v1/consent/manifest'),
 				})
 			).json()
 		).toEqual(MANIFEST_FIXTURE);
 		expect(
 			await (
 				await GET({
-					params: { _splat: 'init' },
-					request: request('init', {
+					params: { _splat: 'v1/consent/init' },
+					request: request('v1/consent/init', {
 						headers: { 'x-vercel-ip-country': 'DE' },
 					}),
 				})
@@ -85,13 +85,13 @@ describe('createConsentRoute', () => {
 			projectUrl: BACKEND,
 		});
 		const served = await GET({
-			params: { _splat: 'manifest' },
+			params: { _splat: 'v1/consent/manifest' },
 			request: request('ignored'),
 		});
-		const init = await GET({ request: request('init') });
+		const init = await GET({ request: request('v1/consent/init') });
 		const unknown = await GET({
-			params: { _splat: 'subjects' },
-			request: request('subjects'),
+			params: { _splat: 'v1/consent/records' },
+			request: request('v1/consent/records'),
 		});
 		expect(served.headers.get('cache-control')).toBe('public, s-maxage=120');
 		expect(init.headers.get('cache-control')).toBe('private, no-store');
@@ -108,7 +108,9 @@ describe('createConsentRoute', () => {
 			fetch: upstream(),
 			projectUrl: BACKEND,
 		});
-		const incoming = request('init', { headers: { 'x-inth-country': 'US' } });
+		const incoming = request('v1/consent/init', {
+			headers: { 'x-inth-country': 'US' },
+		});
 		rememberConsentInputs(incoming, { country: 'DE', language: 'de' });
 		const body = await (await GET({ request: incoming })).json();
 		expect(body).toMatchObject({
@@ -127,8 +129,8 @@ describe('createConsentRoute', () => {
 			trustForwardedHeaders: true,
 		});
 		const response = await POST({
-			params: { _splat: 'subjects' },
-			request: request('subjects', {
+			params: { _splat: 'v1/consent/records' },
+			request: request('v1/consent/records', {
 				body: '{}',
 				headers: { 'x-forwarded-host': 'public.example' },
 				method: 'POST',
@@ -136,7 +138,7 @@ describe('createConsentRoute', () => {
 		});
 		expect(response.status).toBe(201);
 		const headers = new Headers(fetch.mock.calls[0]?.[1]?.headers);
-		expect(fetch.mock.calls[0]?.[0]).toBe(`${BACKEND}/subjects`);
+		expect(fetch.mock.calls[0]?.[0]).toBe(`${BACKEND}/v1/consent/records`);
 		expect(headers.get('x-inth-proxy')).toBe('@inth/tanstack-start');
 		expect(headers.get('x-forwarded-host')).toBe('public.example');
 	});
@@ -152,11 +154,11 @@ describe('createConsentRoute', () => {
 			},
 			projectUrl: BACKEND,
 		});
-		await GET({ request: request('init') });
+		await GET({ request: request('v1/consent/init') });
 		expect(registered).toHaveLength(1);
 		await registered[0];
 		expect(fetch).toHaveBeenLastCalledWith(
-			`${BACKEND}/sessions`,
+			`${BACKEND}/v1/consent/sessions`,
 			expect.objectContaining({ method: 'POST' })
 		);
 	});

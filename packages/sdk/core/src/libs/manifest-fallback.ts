@@ -25,6 +25,6 @@ export const warnManifestFallback = function warnManifestFallback(
 	warned.add(source);
 	const reason = cause instanceof Error ? cause.message : String(cause);
 	console.warn(
-		`inth: could not read the consent manifest from ${source} (${reason}). Consent resolves from the backend's /init until it can.`
+		`inth: could not read the consent manifest from ${source} (${reason}). Consent resolves from the backend's init until it can.`
 	);
 };

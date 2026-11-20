@@ -166,7 +166,7 @@ test('keeps the kernel across rerenders and synchronizes identity and geographic
 	await vi.waitFor(() => expect(init).toHaveBeenCalledTimes(1));
 });
 
-test('a prefetch still marked pending is not adopted: the provider asks /init', async () => {
+test('a prefetch still marked pending is not adopted: the provider asks /v1/consent/init', async () => {
 	const init = vi.fn(() =>
 		Promise.resolve({
 			policyResolution: writePolicyResolutionWire(

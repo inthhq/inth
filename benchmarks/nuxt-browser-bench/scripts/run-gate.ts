@@ -57,7 +57,7 @@ const serverEnv = (port: number, backendLatencyMs: number) => ({
 	NITRO_HOST: HOST,
 	NITRO_PORT: `${port}`,
 	// nuxt.config.ts bakes the fixture manifest URL for the default port.
-	NUXT_PUBLIC_INTH_MODE_MANIFEST_URL: `http://${HOST}:${port}/api/bench-consent/manifest`,
+	NUXT_PUBLIC_INTH_MODE_MANIFEST_URL: `http://${HOST}:${port}/api/bench-consent/v1/consent/manifest`,
 	PORT: `${port}`,
 });
 

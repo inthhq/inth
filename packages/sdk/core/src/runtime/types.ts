@@ -430,8 +430,8 @@ export interface ConsentRuntimeOptions {
 	enabled?: boolean;
 	/**
 	 * Backend URL, relative (`/api/inth`) or absolute. Each init asks
-	 * `${projectUrl}/init` (or reads its consent manifest with
-	 * `mode: manifest()`), and saves go to `${projectUrl}/subjects`.
+	 * `${projectUrl}/v1/consent/init` (or reads its consent manifest with
+	 * `mode: manifest()`), and saves go to `${projectUrl}/v1/consent/records`.
 	 * Required unless `mode` is `testing()` or `enabled` is `false`; a
 	 * runtime without one throws. Initial-only.
 	 */
@@ -439,7 +439,7 @@ export interface ConsentRuntimeOptions {
 	/**
 	 * How the visitor's policy is resolved. Initial-only.
 	 *
-	 * - Omitted, or `hosted()` from `@inth/sdk/engine`: ask `${projectUrl}/init`.
+	 * - Omitted, or `hosted()` from `@inth/sdk/engine`: ask `${projectUrl}/v1/consent/init`.
 	 * - `manifest()` from `@inth/sdk/transports/manifest-browser`: resolve
 	 *   from the backend's consent manifest in the browser, falling back to
 	 *   `/init` with a warning when the manifest is unavailable.

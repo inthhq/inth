@@ -112,7 +112,7 @@ for (const action of ['accept', 'reject', 'save'] as const) {
 		test(`the manager closes on ${action} before a ${outcome} save settles`, async () => {
 			let storedAtSave: string | null = null;
 			const fetch = vi.fn((input: RequestInfo | URL) => {
-				if (!String(input).split('?')[0]?.endsWith('/subjects')) {
+				if (!String(input).split('?')[0]?.endsWith('/v1/consent/records')) {
 					return Promise.resolve(Response.json({}));
 				}
 				storedAtSave = localStorage.getItem('inth');
@@ -180,7 +180,7 @@ for (const action of ['accept', 'reject', 'save'] as const) {
 				await vi.waitFor(() =>
 					expect(
 						fetch.mock.calls.some(([input]) =>
-							String(input).split('?')[0]?.endsWith('/subjects')
+							String(input).split('?')[0]?.endsWith('/v1/consent/records')
 						)
 					).toBe(true)
 				);
@@ -215,7 +215,7 @@ for (const action of ['accept', 'reject', 'save'] as const) {
 	test(`with nothing declared, ${action} in the necessary-only manager acknowledges and closes before the save settles`, async () => {
 		const bodies: unknown[] = [];
 		const fetch = vi.fn((input: RequestInfo | URL, request?: RequestInit) => {
-			if (!String(input).split('?')[0]?.endsWith('/subjects')) {
+			if (!String(input).split('?')[0]?.endsWith('/v1/consent/records')) {
 				return Promise.resolve(Response.json({}));
 			}
 			bodies.push(JSON.parse(String(request?.body)));
@@ -266,8 +266,8 @@ for (const action of ['accept', 'reject', 'save'] as const) {
 			});
 			await vi.waitFor(() => expect(bodies).toHaveLength(1));
 			expect(bodies[0]).toMatchObject({
-				choice: { categories: {}, version: 3 },
-				preferences: { necessary: true },
+				answer: { categories: {} },
+				confirmed: [],
 			});
 			// Reopened later, the prompt is already answered: only the renewed
 			// acknowledgement tells the manager to close before the request.

@@ -8,7 +8,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { ConsentSaveRejectedError, createConsentKernel } from '../../index';
-import type { KernelConfig, SavePayload } from '../../types';
+import type { KernelConfig, SavePayload, SaveResult } from '../../types';
 import { clearKernelRecords } from '../clear-records';
 import { createKernel } from '../index';
 import { createBrowserOutboxStore } from '../save-outbox';
@@ -124,6 +124,7 @@ describe('browser outbox store', () => {
 					subjectId: kernel.getSnapshot().subject?.subjectId,
 				}),
 				queuedAt: expect.any(Number),
+				seq: 1,
 			},
 		]);
 		expect(new Set(names)).toEqual(new Set([LOCK_NAME]));
@@ -316,9 +317,11 @@ describe('browser outbox store', () => {
 		await vi.waitFor(() => {
 			expect(storage.getItem(SAVES_KEY)).toBeNull();
 		});
+		// In queue order: c15t's entries were queued after these, in their own
+		// order.
 		expect(save.mock.calls.map(([payload]) => payload)).toEqual([
-			{ ...other.payload, idempotencyKey: expect.any(String) },
 			{ ...newer.payload, idempotencyKey: expect.any(String) },
+			{ ...other.payload, idempotencyKey: expect.any(String) },
 		]);
 		expect(storage.getItem(C15T_SAVES_KEY)).toBeNull();
 		kernel.dispose();
@@ -603,5 +606,125 @@ describe('browser outbox store', () => {
 			kernel.dispose();
 			window.localStorage.removeItem(SAVES_KEY);
 		}
+	});
+});
+
+describe('the UUID the backend answers for a sub_ id', () => {
+	const UUID = '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c';
+	/** A second queued save of the same visitor, from a later action. */
+	const laterEntry = {
+		...legacyEntry,
+		payload: {
+			...legacyEntry.payload,
+			confirmed: {
+				actionAt: 1_700_000_100_000,
+				categories: { measurement: false },
+			},
+			givenAt: 1_700_000_100_000,
+		},
+		queuedAt: legacyEntry.queuedAt + 1000,
+	};
+	const subjects = (save: ReturnType<typeof vi.fn>) =>
+		save.mock.calls.map(([payload]) => (payload as SavePayload).subjectId);
+
+	test('a replay moves the visitor and the rest of the queue to it', async () => {
+		const storage = memoryStorage();
+		storage.setItem(C15T_SAVES_KEY, JSON.stringify([legacyEntry, laterEntry]));
+		const save = vi.fn().mockResolvedValue({ ok: true, subjectId: UUID });
+		const kernel = kernelOn(
+			{
+				initialRecords: { subject: { subjectId: 'sub_legacy' } },
+				transport: { init: vi.fn().mockResolvedValue({}), save },
+			},
+			{ localStorage: () => storage, locks: () => serialLocks().locks }
+		);
+
+		await kernel.commands.init();
+		await vi.waitFor(() => {
+			expect(storage.getItem(SAVES_KEY)).toBeNull();
+		});
+		expect(subjects(save)).toEqual(['sub_legacy', UUID]);
+		expect(kernel.getSnapshot().subject?.subjectId).toBe(UUID);
+		kernel.dispose();
+	});
+
+	test('a direct save moves the saves queued under the sub_ id to it', async () => {
+		const storage = memoryStorage();
+		storage.setItem(SAVES_KEY, JSON.stringify([legacyEntry]));
+		const save = vi.fn().mockResolvedValue({ ok: true, subjectId: UUID });
+		const kernel = kernelOn(
+			{
+				initialRecords: { subject: { subjectId: 'sub_legacy' } },
+				transport: { save },
+			},
+			{ localStorage: () => storage, locks: () => serialLocks().locks }
+		);
+
+		await kernel.commands.save({ measurement: true });
+
+		expect(subjects(save)).toEqual(['sub_legacy']);
+		expect(kernel.getSnapshot().subject?.subjectId).toBe(UUID);
+		const queued = JSON.parse(storage.getItem(SAVES_KEY) ?? '[]') as {
+			payload: SavePayload;
+		}[];
+		expect(queued.map((entry) => entry.payload.subjectId)).toEqual([UUID]);
+		kernel.dispose();
+	});
+
+	test.each([
+		['another category', { measurement: true }],
+		['the same category, superseding it', { marketing: false }],
+	] as const)(
+		'a save answered after a newer choice in %s still moves the visitor and the queue to it',
+		async (_name, newer) => {
+			const storage = memoryStorage();
+			const marketing = Promise.withResolvers<SaveResult>();
+			const save = vi
+				.fn()
+				.mockReturnValueOnce(marketing.promise)
+				.mockRejectedValueOnce(new Error('offline'));
+			const kernel = kernelOn(
+				{
+					initialRecords: { subject: { subjectId: 'sub_legacy' } },
+					transport: { save },
+				},
+				{ localStorage: () => storage, locks: () => serialLocks().locks }
+			);
+
+			const held = kernel.commands.save({ marketing: true });
+			await vi.waitFor(() => expect(save).toHaveBeenCalledOnce());
+			await kernel.commands.save(newer);
+			marketing.resolve({ ok: true, subjectId: UUID });
+			await held;
+
+			expect(subjects(save)).toEqual(['sub_legacy', 'sub_legacy']);
+			expect(kernel.getSnapshot().subject?.subjectId).toBe(UUID);
+			const queued = JSON.parse(storage.getItem(SAVES_KEY) ?? '[]') as {
+				payload: SavePayload;
+			}[];
+			expect(queued.map((entry) => entry.payload.subjectId)).toEqual([UUID]);
+			kernel.dispose();
+		}
+	);
+
+	test('a link moves the visitor to it', async () => {
+		const storage = memoryStorage();
+		const kernel = kernelOn(
+			{
+				initialRecords: { subject: { subjectId: 'sub_legacy' } },
+				transport: {
+					identify: vi.fn().mockResolvedValue({ subjectId: UUID }),
+				},
+			},
+			{ localStorage: () => storage, locks: () => serialLocks().locks }
+		);
+
+		await kernel.commands.identify({
+			externalId: 'user-1',
+			identityToken: 'token',
+		});
+
+		expect(kernel.getSnapshot().subject?.subjectId).toBe(UUID);
+		kernel.dispose();
 	});
 });

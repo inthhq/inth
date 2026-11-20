@@ -70,7 +70,9 @@ const fetchMock = vi.fn(() =>
 );
 
 const initRequests = () =>
-	fetchMock.mock.calls.filter(([url]) => String(url).includes('/init'));
+	fetchMock.mock.calls.filter(([url]) =>
+		String(url).includes('/v1/consent/init')
+	);
 
 const bannerRoot = () =>
 	document.querySelector('[data-testid="consent-banner-root"]');
@@ -142,7 +144,7 @@ test('the stand-in reads the browser signal, and shows no banner the signal answ
 	// Before `/init` answers: the pending state already carries the signal.
 	await expect.element(probe).toHaveAttribute('data-gpc', 'true');
 
-	answer({ init: signalled, producerPolicyContract: '1' });
+	answer({ init: signalled });
 	// The stand-in read the answer under the signal, which answers for this
 	// visitor: no banner to show, so the engine loads at once. Without the
 	// signal it would show the banner first, and an Accept on it would

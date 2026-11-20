@@ -36,11 +36,11 @@ const custom = (
 		kind: 'custom' as const,
 	});
 
-/** A query pair Inth adds to `/init`. */
+/** A query pair Inth adds to `/v1/consent/init`. */
 const INIT_PAIR =
 	/^(?:v|contract|country|region|gpc|experiment|journey|journeyScope|stored)=/u;
 
-/** A request URL without the parameters a client adds to `/init`. */
+/** A request URL without the parameters a client adds to `/v1/consent/init`. */
 const pathOf = (url: unknown): string => {
 	const text = String(url);
 	const [base = '', query] = text.split('?');
@@ -101,7 +101,10 @@ const initResponse = (): Response =>
 	);
 
 const saveResponse = (): Response =>
-	Response.json({ ok: true, subjectId: 'sub_browser_entry' });
+	Response.json({
+		recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+		subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+	});
 
 const track = (client: ConsentClient): ConsentClient => {
 	clients.push(client);
@@ -163,7 +166,7 @@ describe.each(['hosted', 'testing'] as const)('%s browser entry', (mode) => {
 	it('keeps page actions, the preference draft and script gating working', async () => {
 		const fetchSpy = vi.fn<typeof fetch>((input) =>
 			Promise.resolve(
-				String(input).split('?')[0]?.endsWith('/init')
+				String(input).split('?')[0]?.endsWith('/v1/consent/init')
 					? initResponse()
 					: saveResponse()
 			)
@@ -232,9 +235,10 @@ describe.each(['hosted', 'testing'] as const)('%s browser entry', (mode) => {
 			fetchSpy.mock.calls.every(
 				([input]) =>
 					mode === 'hosted' &&
-					[`${projectUrl}/init`, `${projectUrl}/subjects`].includes(
-						pathOf(input)
-					)
+					[
+						`${projectUrl}/v1/consent/init`,
+						`${projectUrl}/v1/consent/records`,
+					].includes(pathOf(input))
 			)
 		).toBe(true);
 
@@ -261,7 +265,7 @@ describe('hosted browser entry', () => {
 		const snapshot = await client.ready();
 
 		expect(fetchSpy.mock.calls.map(([input]) => pathOf(input))).toEqual([
-			`${projectUrl}/init`,
+			`${projectUrl}/v1/consent/init`,
 		]);
 		expect(snapshot.resolution.status).toBe('matched');
 		expect(snapshot.policyRule.id).toBe(authoredRule.id);
@@ -270,12 +274,14 @@ describe('hosted browser entry', () => {
 		expect(client.has('measurement')).toBe(false);
 	});
 
-	it('preserves the hosted factory fetch, init URL and allowed headers', async () => {
+	it('preserves the hosted factory fetch and init URL, and sends header inputs in the query', async () => {
 		const globalFetch = vi.fn<typeof fetch>();
 		vi.stubGlobal('fetch', globalFetch);
 		const fetchSpy = vi.fn<typeof fetch>((input) =>
 			Promise.resolve(
-				pathOf(input) === '/consent/init' ? initResponse() : saveResponse()
+				pathOf(input) === '/consent/v1/consent/init'
+					? initResponse()
+					: saveResponse()
 			)
 		);
 		const client = track(
@@ -287,7 +293,7 @@ describe('hosted browser entry', () => {
 						Authorization: 'must-not-forward',
 						'CF-IPCountry': 'DE',
 					},
-					initUrl: '/consent/init',
+					initUrl: '/consent/v1/consent/init',
 					projectUrl: `${projectUrl}/api/`,
 				}),
 				ui: false,
@@ -298,17 +304,21 @@ describe('hosted browser entry', () => {
 		await expect(client.acceptAll()).resolves.toMatchObject({ ok: true });
 
 		expect(fetchSpy.mock.calls.map(([input]) => pathOf(input))).toEqual([
-			'/consent/init',
-			`${projectUrl}/api/subjects`,
+			'/consent/v1/consent/init',
+			`${projectUrl}/api/v1/consent/records`,
 		]);
-		const headers = new Headers(fetchSpy.mock.calls[0]?.[1]?.headers);
-		expect(headers.get('accept-language')).toBe('de');
-		expect(headers.get('cf-ipcountry')).toBe('DE');
-		expect(headers.has('authorization')).toBe(false);
+		const [initInput, init] = fetchSpy.mock.calls[0] ?? [];
+		expect([...new Headers(init?.headers)].toSorted()).toEqual([
+			['accept', 'application/json'],
+			['accept-language', 'de'],
+		]);
+		expect(
+			new URL(String(initInput), projectUrl).searchParams.get('country')
+		).toBe('DE');
 		expect(globalFetch).not.toHaveBeenCalled();
 	});
 
-	it('uses a ready server prefetch without calling /init', async () => {
+	it('uses a ready server prefetch without calling /v1/consent/init', async () => {
 		const fetchSpy = vi.fn<typeof fetch>(() => Promise.resolve(saveResponse()));
 		vi.stubGlobal('fetch', fetchSpy);
 		const client = track(
@@ -326,7 +336,7 @@ describe('hosted browser entry', () => {
 		expect(fetchSpy).not.toHaveBeenCalled();
 		await client.rejectAll();
 		expect(fetchSpy.mock.calls.map(([input]) => pathOf(input))).toEqual([
-			`${projectUrl}/subjects`,
+			`${projectUrl}/v1/consent/records`,
 		]);
 	});
 
@@ -335,7 +345,7 @@ describe('hosted browser entry', () => {
 		async (action) => {
 			const request = Promise.withResolvers<Response>();
 			const fetchSpy = vi.fn<typeof fetch>((input) =>
-				String(input).split('?')[0]?.endsWith('/init')
+				String(input).split('?')[0]?.endsWith('/v1/consent/init')
 					? Promise.resolve(initResponse())
 					: request.promise
 			);
@@ -505,7 +515,7 @@ const manifest = {
 const hostedInvalidCases: [string, ScriptTagClientOptions][] = [
 	['missing backend', {}],
 	['inline manifest', { manifest, projectUrl }],
-	['manifest URL', { manifestUrl: '/manifest', projectUrl }],
+	['manifest URL', { manifestUrl: '/v1/consent/manifest', projectUrl }],
 	['manifest mode', { mode: 'manifest', projectUrl }],
 	['testing()', { mode: testing() as never }],
 	['custom factory', { mode: custom({}) }],
@@ -513,7 +523,7 @@ const hostedInvalidCases: [string, ScriptTagClientOptions][] = [
 const testingInvalidCases: [string, TestingScriptTagOptions][] = [
 	['backend URL', { projectUrl } as never],
 	['inline manifest', { manifest } as never],
-	['manifest URL', { manifestUrl: '/manifest' } as never],
+	['manifest URL', { manifestUrl: '/v1/consent/manifest' } as never],
 	['hosted mode', { mode: 'hosted' } as never],
 	['manifest mode', { mode: 'manifest' } as never],
 ];

@@ -1,6 +1,6 @@
 /**
- * The `/v1` routes of an Inth backend, and the request helpers their
- * clients share.
+ * The request helpers the clients of the `/v1` routes share. The paths
+ * are in `paths.ts`, which first-load code reads alone.
  *
  * @internal
  */
@@ -8,18 +8,21 @@
 import {
 	V1_PROPERTY_MAX_LENGTH,
 	V1_PROPERTY_PATTERN,
+	V1_UUID_V7_PATTERN,
 } from '@inth/sdk-schema/types';
 
-/** Route paths below the project URL. */
-export const V1_ROUTES = {
-	acceptances: '/v1/documents/acceptances',
-	currentDocument: '/v1/documents/:type/current',
-	init: '/v1/consent/init',
-	manifest: '/v1/consent/manifest',
-	records: '/v1/consent/records',
-	sessions: '/v1/consent/sessions',
-	subjectLink: '/v1/subjects/:id/link',
-} as const;
+import { V1_ROUTES } from './paths';
+
+/**
+ * Whether `id` has the layout of a `/v1` subject ID. The timestamp is not
+ * judged.
+ *
+ * @param id - The string to check.
+ * @returns `true` for a lowercase UUIDv7.
+ */
+export const isUuidV7 = function isUuidV7(id: string): boolean {
+	return V1_UUID_V7_PATTERN.test(id);
+};
 
 export const subjectLinkPath = function subjectLinkPath(
 	subjectId: string
@@ -36,12 +39,6 @@ export const currentDocumentPath = function currentDocumentPath(
 export const V1_JSON_HEADERS: Readonly<Record<string, string>> = {
 	accept: 'application/json',
 	'content-type': 'application/json',
-};
-
-export const trimTrailingSlash = function trimTrailingSlash(
-	url: string
-): string {
-	return url.replace(/\/+$/u, '');
 };
 
 export const resolveV1Fetch = function resolveV1Fetch(

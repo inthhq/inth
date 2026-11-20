@@ -317,6 +317,7 @@ describe('identity token in the save queue', () => {
 				attempts: 1,
 				payload: { subjectId: 'sub_c15t', user: STORED_USER },
 				queuedAt: NOW,
+				seq: 1,
 			},
 		]);
 	});

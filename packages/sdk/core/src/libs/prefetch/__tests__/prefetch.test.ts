@@ -107,7 +107,8 @@ describe('prefetch utilities', () => {
 			},
 		});
 		const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-		expect(new URL(url).searchParams.get('v')).toEqual(expect.any(String));
+		expect(new URL(url).pathname).toBe('/api/inth/v1/consent/init');
+		expect(new URL(url).searchParams.has('v')).toBe(false);
 		// A cross-origin backend answers this without a CORS preflight.
 		expect(corsPreflightReasons(init)).toEqual([]);
 		expect(init.headers).toEqual({ 'accept-language': 'de' });
@@ -124,9 +125,10 @@ describe('prefetch utilities', () => {
 		);
 		const [url, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
 		expect(corsPreflightReasons(init)).toEqual([]);
+		expect(new URL(url).pathname).toBe('/v1/consent/init');
 		const query = new URL(url).searchParams;
-		expect(query.get('v')).toEqual(expect.any(String));
-		expect(query.get('contract')).toBe('1');
+		expect(query.has('v')).toBe(false);
+		expect(query.has('contract')).toBe(false);
 		expect(query.get('country')).toBe('DE');
 		expect(query.get('region')).toBe('BE');
 		expect(query.get('gpc')).toBe('0');
@@ -152,6 +154,24 @@ describe('prefetch utilities', () => {
 		expect(script?.[1].headers).toEqual(runtime?.[1].headers);
 		expect(script?.[1].credentials).toBe('same-origin');
 		expect(runtime?.[1].credentials).toBe('same-origin');
+	});
+
+	it('sends no cookies when the caller asks for `include`', () => {
+		const fetch = vi.fn(() => Promise.resolve(new Response('{}')));
+		vi.stubGlobal('fetch', fetch);
+		const options = {
+			credentials: 'include' as const,
+			journey: false as const,
+			projectUrl: 'https://consent.example.com',
+		};
+		window.eval(buildPrefetchScript(options));
+		delete (window as Window & { __inthInitialDataPromises?: unknown })
+			.__inthInitialDataPromises;
+		void primePrefetchedInitialData(options);
+		const inits = (fetch.mock.calls as unknown as [string, RequestInit][]).map(
+			([, init]) => init.credentials
+		);
+		expect(inits).toEqual(['same-origin', 'same-origin']);
 	});
 
 	it('still starts the request after a server bundle rewrites `typeof window`', () => {
@@ -463,10 +483,10 @@ describe('prefetch utilities', () => {
 			);
 			const third = new URL(String(fetch.mock.calls[2]?.[0]));
 			expect(`${third.origin}${third.pathname}`).toBe(
-				'http://localhost:3000/api/third/init'
+				'http://localhost:3000/api/third/v1/consent/init'
 			);
 			expect(readJourneyParams(third)).toBeNull();
-			expect([...third.searchParams.keys()]).toEqual(['v', 'contract']);
+			expect([...third.searchParams.keys()]).toEqual([]);
 		});
 
 		it('primePrefetchedInitialData sends the same journey as the script', () => {

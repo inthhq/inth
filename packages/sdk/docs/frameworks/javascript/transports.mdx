@@ -11,13 +11,13 @@ to record their choice.
 
 | Transport | Policy comes from | Choices go to | Use it when |
 | --- | --- | --- | --- |
-| `manifest()` with a build-time snapshot, recommended | Public policy bundled during the build, resolved in the browser | The backend's `/subjects` | You use Vite and can rebuild after policy edits. Regional policies may still request location. |
-| `hosted()` | The backend's `/init`, per visit | The backend's `/subjects` | Policy changes must apply without rebuilding, or you need backend resolution on every visit. |
-| `manifest()` at runtime | The backend's public `/manifest`, resolved in the browser | The backend's `/subjects` | You want the banner to render without a per-visit `/init` request and cannot bundle the policy. |
+| `manifest()` with a build-time snapshot, recommended | Public policy bundled during the build, resolved in the browser | The backend's `/v1/consent/records` | You use Vite and can rebuild after policy edits. Regional policies may still request location. |
+| `hosted()` | The backend's `/v1/consent/init`, per visit | The backend's `/v1/consent/records` | Policy changes must apply without rebuilding, or you need backend resolution on every visit. |
+| `manifest()` at runtime | The backend's public `/v1/consent/manifest`, resolved in the browser | The backend's `/v1/consent/records` | You want the banner to render without a per-visit `/v1/consent/init` request and cannot bundle the policy. |
 | `testing()` | A policy you pass, or the recommended rules, resolved in the browser | Nowhere; the browser only | Tests. It throws in production builds. |
 
 Every setup needs `projectUrl`, your Inth project URL, unless the mode is
-`testing()`. With no `mode`, a JavaScript app asks the backend's `/init`.
+`testing()`. With no `mode`, a JavaScript app asks the backend's `/v1/consent/init`.
 
 [Consent modes](/docs/concepts/modes) covers the same factories in every
 framework, and [data fetching](/docs/concepts/data-fetching) compares the
@@ -53,7 +53,7 @@ Leaving out `projectUrl` throws:
 ## Hosted
 
 With `projectUrl` and no mode, or with `mode: hosted()`, the runtime asks your
-Inth backend's `/init` for each visitor and saves to its `/subjects`:
+Inth backend's `/v1/consent/init` for each visitor and saves to its `/v1/consent/records`:
 
 <include src="../../shared/examples/javascript/runtime.mdx" />
 
@@ -64,16 +64,16 @@ create yourself, `createHostedTransport({ projectUrl })` from
 | Option | What it does |
 | --- | --- |
 | `projectUrl` | The backend URL. Relative URLs such as `/api/inth` work behind a proxy. |
-| `headers` | Request headers to forward on `/init`: `accept-language`, the geo headers and `sec-gpc`. Meant for server code forwarding a visitor's request. |
+| `headers` | Request headers to forward on `/v1/consent/init`: `accept-language`, the geo headers and `sec-gpc`. Meant for server code forwarding a visitor's request. |
 | `fetch` | A `fetch` implementation, for tests or unusual runtimes. |
 | `domain` | The domain recorded with each save. Defaults to the page's host. |
-| `initUrl` | Send `/init` somewhere else, such as a same-origin route, while saves still go to `projectUrl`. Saves then assert the policy they were made against. |
+| `initUrl` | Send `/v1/consent/init` somewhere else, such as a same-origin route, while saves still go to `projectUrl`. Saves then assert the policy they were made against. |
 | `assertDecisionInputs` | Send the resolved policy inputs with each save, so the backend can reject a save made against a stale policy. Defaults to `true` when `initUrl` is set. |
 
 Add your app's origin to the Inth project's trusted origins, or the browser
 blocks consent saves with a CORS error.
 
-A cross-origin `/init` is a CORS simple request: the client version, policy
+A cross-origin `/v1/consent/init` is a CORS simple request: the client version, policy
 contract, overrides and experiment arm go in the query string, and the request
 carries no cookies, so the browser sends it without an `OPTIONS` preflight.
 Saves still go out with cookies and still need the trusted origin.
@@ -83,32 +83,32 @@ Saves still go out with cookies and still need the trusted origin.
 `manifest()` from `@inth/sdk` resolves the policy in the browser from the
 backend's public manifest. With no options it uses the snapshot and backend
 URL `consentManifest()` downloaded; without a snapshot it fetches
-`${projectUrl}/manifest` once. When the manifest is unavailable, it asks the
-backend's `/init` and logs a warning. It works with `init()` and with
+`${projectUrl}/v1/consent/manifest` once. When the manifest is unavailable, it asks the
+backend's `/v1/consent/init` and logs a warning. It works with `init()` and with
 `createConsentRuntime`:
 
 <include src="../../shared/examples/javascript/transport-manifest.mdx" />
 
 | Option | What it does |
 | --- | --- |
-| `manifestUrl` | Where to fetch the manifest when the page loads. The build's snapshot is not used, but saves still go to the build's backend URL. Without one, a URL that ends in `/manifest` also gives the backend URL. |
+| `manifestUrl` | Where to fetch the manifest when the page loads. The build's snapshot is not used, but saves still go to the build's backend URL. Without one, a URL that ends in `/v1/consent/manifest` also gives the backend URL. |
 | `snapshot` | The manifest object itself, inlined into the page. No manifest request at all. Defaults to the build's snapshot unless you set `manifestUrl`. |
 | `source` | `'runtime'` ignores the build's snapshot and fetches the manifest. You can pass `snapshot` or `source`, not both. |
-| `projectUrl` | Where saves go. Defaults to the build's backend URL. Required otherwise, unless `manifestUrl` ends in `/manifest`. `''` means this origin. |
+| `projectUrl` | Where saves go. Defaults to the build's backend URL. Required otherwise, unless `manifestUrl` ends in `/v1/consent/manifest`. `''` means this origin. |
 | `inputs` | `{ country, region }` known ahead of time, such as a country your edge injected into the page. |
 | `geoUrl` | A same-origin route that answers `{ country, region }`, asked when the policy needs a location the page doesn't have. |
-| `initFallback` | `false` resolves for an unknown location instead of asking the backend's `/init`. Defaults to `true`. |
+| `initFallback` | `false` resolves for an unknown location instead of asking the backend's `/v1/consent/init`. Defaults to `true`. |
 | `fetch` | A `fetch` implementation. |
 
 When some locations get a different banner than others, or no banner, and
 neither the page nor `geoUrl` supplies a country, the transport asks the
-backend's `/init` instead, so the answer stays correct. That visitor's banner
+backend's `/v1/consent/init` instead, so the answer stays correct. That visitor's banner
 waits for the round trip. Rules keyed by country or region that all give the
 same banner (same model, prompt, categories, copy and GPC handling, only the
 rule id differs) resolve in the browser, so the banner shows without a
 request. Such a manifest needs a default rule, plus a fallback rule when it
 has region rules, so that every location matches one. When the location is
-unknown, an IAB policy behind country or region rules still goes to `/init`.
+unknown, an IAB policy behind country or region rules still goes to `/v1/consent/init`.
 `manifestNeedsLocation(manifest)` from `@inth/sdk` tells you in advance.
 
 The browser bundle carries English base copy. Another language's base copy
@@ -118,9 +118,9 @@ apply on top.
 A manifest resolved in the browser without a known location reports no
 location: `getSnapshot().location` and `useLocation()` have a `null` country
 and region. Code that reads the visitor's country should supply it through
-`inputs`, or use `/init`. IAB GPP needs it for its US state sections, so when
+`inputs`, or use `/v1/consent/init`. IAB GPP needs it for its US state sections, so when
 GPP is on, through the runtime's `gpp` option, `<ConsentGPP>` or `mountGPP()`,
-an unknown location goes to `/init` even when every location gets the same
+an unknown location goes to `/v1/consent/init` even when every location gets the same
 banner. The script-tag build counts GPP as on, because `inth.gpp.js` can load
 after `init()`; pass `gpp: false` to `inth.init()` to resolve in the browser on
 pages that do not load it.
@@ -172,10 +172,10 @@ in `data-policy`; see [Modes](/docs/concepts/modes#testing).
 
 ## Check it works
 
-1. With hosted mode, the Network tab shows one `/init` request per fresh
-   visit and a `/subjects` request after a choice.
-2. With a build-time manifest, it shows no `/manifest` request. With runtime
-   manifest mode, it shows a `/manifest` request. Neither calls `/init`, unless
+1. With hosted mode, the Network tab shows one `/v1/consent/init` request per fresh
+   visit and a `/v1/consent/records` request after a choice.
+2. With a build-time manifest, it shows no `/v1/consent/manifest` request. With runtime
+   manifest mode, it shows a `/v1/consent/manifest` request. Neither calls `/v1/consent/init`, unless
    the policy needs a country the page did not supply.
 3. In a test with `testing()`, it shows no Inth request at all, and the
    choice survives a reload.

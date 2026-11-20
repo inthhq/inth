@@ -10,9 +10,10 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { optInRule } from '../../__tests__/fixtures/kernel-fixtures';
 import { primePrefetchedInitialData } from '../../libs/prefetch/prefetch';
 import { hosted, manifest } from '../../modes';
-import { createHostedTransport } from '../../transports/hosted';
 import { createBrowserManifestTransport } from '../../transports/manifest-browser';
 import type { ProviderTransportContext } from '../../transports/mode';
+import { recordAnswer } from '../../transports/v1/__tests__/fixtures';
+import { createV1HostedTransport } from '../../transports/v1/hosted';
 import type { InitContext, KernelTransport, SavePayload } from '../../types';
 import {
 	clientMode,
@@ -31,7 +32,7 @@ const context = {
 	translations: { language: 'en', translations: {} },
 } as unknown as ProviderTransportContext;
 
-/** A request URL without the query Inth adds to `/init`. */
+/** A request URL without the query Inth adds to `/v1/consent/init`. */
 const pathOf = (url: unknown): string => String(url).split('?')[0] ?? '';
 
 const initContext = (overrides: InitContext['overrides'] = {}): InitContext =>
@@ -55,16 +56,16 @@ const everywhereManifest: ConsentManifest = {
 	schemaVersion: 2,
 };
 
-const fetchSpy = vi.fn((_url: string, _init?: RequestInit) =>
-	Promise.resolve(jsonResponse({ subjectId: 'sub_saved' }))
+const fetchSpy = vi.fn((_url: string, init?: RequestInit) =>
+	Promise.resolve(jsonResponse(recordAnswer(init)))
 );
 
 const originalFetch = globalThis.fetch;
 
 beforeEach(() => {
 	fetchSpy.mockReset();
-	fetchSpy.mockImplementation(() =>
-		Promise.resolve(jsonResponse({ subjectId: 'sub_saved' }))
+	fetchSpy.mockImplementation((_url, init) =>
+		Promise.resolve(jsonResponse(recordAnswer(init)))
 	);
 	globalThis.fetch = fetchSpy as unknown as typeof globalThis.fetch;
 });
@@ -84,7 +85,7 @@ describe('clientMode()', () => {
 		}).toEqual({ kind: 'manifest', type: 'manifest' });
 	});
 
-	test('hosted() asks the backend /init', async () => {
+	test('hosted() asks the backend /v1/consent/init', async () => {
 		const mode = clientMode(hosted(), {
 			projectUrl: 'https://backend.example',
 		});
@@ -95,7 +96,7 @@ describe('clientMode()', () => {
 			.init?.(initContext())
 			.catch(() => undefined);
 		expect(pathOf(fetchSpy.mock.calls[0]?.[0])).toBe(
-			'https://backend.example/init'
+			'https://backend.example/v1/consent/init'
 		);
 	});
 
@@ -126,7 +127,9 @@ describe('clientMode()', () => {
 
 		fetchSpy.mockImplementation(() => Promise.reject(new Error('offline')));
 		await transport.init?.(initContext()).catch(() => undefined);
-		expect(pathOf(fetchSpy.mock.calls[0]?.[0])).toBe('/api/inth/init');
+		expect(pathOf(fetchSpy.mock.calls[0]?.[0])).toBe(
+			'/api/inth/v1/consent/init'
+		);
 	});
 
 	test('manifest() without a route prefix inits against the backend, unasserted', async () => {
@@ -138,7 +141,7 @@ describe('clientMode()', () => {
 		await transport.init?.(initContext()).catch(() => undefined);
 
 		expect(pathOf(fetchSpy.mock.calls[0]?.[0])).toBe(
-			'https://backend.example/init'
+			'https://backend.example/v1/consent/init'
 		);
 	});
 
@@ -169,10 +172,13 @@ describe('clientMode()', () => {
 			confirmed: { actionAt: 1, categories: {} },
 			consents: { necessary: true },
 			decisionInputs: { fingerprint: 'f', policyId: 'p' },
+			idempotencyKey: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1d',
 			subjectId: 'sub_1',
 		} as unknown as SavePayload);
 
-		expect(pathOf(fetchSpy.mock.calls[0]?.[0])).toBe('/api/inth/subjects');
+		expect(pathOf(fetchSpy.mock.calls[0]?.[0])).toBe(
+			'/api/inth/v1/consent/records'
+		);
 	});
 
 	test('a testing value needs no backend URL', () => {
@@ -215,12 +221,13 @@ describe('lazyHosted()', () => {
 			choice: { categories: {}, version: 3 },
 			confirmed: { actionAt: 1, categories: {} },
 			consents: { necessary: true },
+			idempotencyKey: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1d',
 			subjectId: 'sub_1',
 		} as unknown as SavePayload);
 
 		expect(load).not.toHaveBeenCalled();
 		expect(String(fetchSpy.mock.calls[0]?.[0])).toBe(
-			'https://backend.example/subjects'
+			'https://backend.example/v1/consent/records'
 		);
 	});
 
@@ -240,7 +247,7 @@ describe('lazyHosted()', () => {
 		});
 		const load = vi.fn<LoadHostedModule>(async () => {
 			await released;
-			return { createHostedTransport };
+			return { createV1HostedTransport };
 		});
 		const transport = lazyHosted(
 			{ projectUrl: 'https://backend.example' },
@@ -256,7 +263,7 @@ describe('lazyHosted()', () => {
 		const [url, init] = fetchSpy.mock.calls[0] ?? [];
 		const sent = new URL(String(url));
 		expect(`${sent.origin}${sent.pathname}`).toBe(
-			'https://backend.example/init'
+			'https://backend.example/v1/consent/init'
 		);
 		expect(sent.searchParams.get('country')).toBe('DE');
 		// Only `Accept` and `Accept-Language`: no CORS preflight.
@@ -287,7 +294,7 @@ describe('lazyHosted()', () => {
 		});
 		const transport = lazyHosted(
 			{ projectUrl: 'https://backend.example' },
-			() => Promise.resolve({ createHostedTransport })
+			() => Promise.resolve({ createV1HostedTransport })
 		)(context);
 
 		await transport.init?.(initContext());
@@ -295,7 +302,7 @@ describe('lazyHosted()', () => {
 		expect(fetchSpy).toHaveBeenCalledTimes(1);
 	});
 
-	test('with a banner experiment arm, the first init sends one /init', async () => {
+	test('with a banner experiment arm, the first init sends one /v1/consent/init', async () => {
 		fetchSpy.mockImplementation(() =>
 			Promise.resolve(
 				jsonResponse({
@@ -307,7 +314,7 @@ describe('lazyHosted()', () => {
 		);
 		const transport = lazyHosted(
 			{ projectUrl: 'https://backend.example' },
-			() => Promise.resolve({ createHostedTransport })
+			() => Promise.resolve({ createV1HostedTransport })
 		)(context);
 
 		await transport.init?.({
@@ -329,8 +336,8 @@ describe('lazyHosted()', () => {
 			},
 			() =>
 				Promise.resolve({
-					createHostedTransport: () =>
-						({ init }) as unknown as ReturnType<typeof createHostedTransport>,
+					createV1HostedTransport: () =>
+						({ init }) as unknown as ReturnType<typeof createV1HostedTransport>,
 				})
 		)(context);
 
@@ -340,7 +347,7 @@ describe('lazyHosted()', () => {
 		expect(init).toHaveBeenCalledTimes(1);
 	});
 
-	test('the first init reads initialData and sends no /init', async () => {
+	test('the first init reads initialData and sends no /v1/consent/init', async () => {
 		const transport = clientMode(manifest(), {
 			initialData: Promise.resolve({
 				init: {
@@ -365,8 +372,8 @@ describe('lazyHosted()', () => {
 			.fn<LoadHostedModule>()
 			.mockRejectedValueOnce(new Error('chunk failed'))
 			.mockResolvedValueOnce({
-				createHostedTransport: () =>
-					({ init }) as unknown as ReturnType<typeof createHostedTransport>,
+				createV1HostedTransport: () =>
+					({ init }) as unknown as ReturnType<typeof createV1HostedTransport>,
 			});
 		fetchSpy.mockImplementation(() => Promise.reject(new Error('offline')));
 		const transport = lazyHosted({ projectUrl: '/api/inth' }, load)(context);
@@ -420,7 +427,7 @@ describe('lazyBrowserManifest()', () => {
 	test('starts the resolver chunk and the manifest request when built', async () => {
 		fetchSpy.mockImplementation((url: string) =>
 			Promise.resolve(
-				String(url) === '/api/inth/manifest'
+				String(url) === '/api/inth/v1/consent/manifest'
 					? jsonResponse(everywhereManifest)
 					: jsonResponse({ subjectId: 'sub_saved' })
 			)
@@ -434,7 +441,7 @@ describe('lazyBrowserManifest()', () => {
 		});
 		const built = lazyBrowserManifest(
 			{
-				manifestUrl: '/api/inth/manifest',
+				manifestUrl: '/api/inth/v1/consent/manifest',
 				projectUrl: 'https://backend.example',
 			},
 			load
@@ -443,7 +450,7 @@ describe('lazyBrowserManifest()', () => {
 		expect(transport.kind).toBe('manifest');
 		expect(load).toHaveBeenCalledTimes(1);
 		expect(fetchSpy.mock.calls.map(([url]) => String(url))).toEqual([
-			'/api/inth/manifest',
+			'/api/inth/v1/consent/manifest',
 		]);
 
 		const response = await built.init?.(initContext({ country: 'DE' }));
@@ -461,7 +468,7 @@ describe('lazyBrowserManifest()', () => {
 	const routeManifest = () =>
 		fetchSpy.mockImplementation((url: string) =>
 			Promise.resolve(
-				String(url) === '/api/inth/manifest'
+				String(url) === '/api/inth/v1/consent/manifest'
 					? jsonResponse(everywhereManifest)
 					: jsonResponse({ subjectId: 'sub_saved' })
 			)
@@ -473,7 +480,7 @@ describe('lazyBrowserManifest()', () => {
 	) =>
 		lazyBrowserManifest(
 			{
-				manifestUrl: '/api/inth/manifest',
+				manifestUrl: '/api/inth/v1/consent/manifest',
 				projectUrl: 'https://backend.example',
 			},
 			load
@@ -507,7 +514,7 @@ describe('lazyBrowserManifest()', () => {
 		const response = built.init?.(initContext());
 
 		expect(fetchSpy.mock.calls.map(([url]) => String(url))).toEqual([
-			'/api/inth/manifest',
+			'/api/inth/v1/consent/manifest',
 		]);
 		chunk.resolve({ createBrowserManifestTransport });
 		expect((await response)?.policyResolution).toMatchObject({
@@ -565,7 +572,7 @@ describe('lazyBrowserManifest()', () => {
 		stream.resolve(undefined);
 		await vi.waitFor(() => expect(load).toHaveBeenCalledTimes(1));
 		expect(fetchSpy.mock.calls.map(([url]) => String(url))).toEqual([
-			'/api/inth/manifest',
+			'/api/inth/v1/consent/manifest',
 		]);
 
 		const response = await built.init?.(initContext());
