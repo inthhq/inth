@@ -187,6 +187,14 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'உங்கள் உலாவியின் Global Privacy Control சிக்னல் இயக்கத்தில் உள்ளதால் இது முடக்கத்தில் இருக்கும்.',
 		notOptedOut: 'இந்த உலாவியில் நீங்கள் விலகவில்லை.',
+		optInCancel: 'விலகியே இருங்கள்',
+		optInConfirm: 'மீண்டும் இணையுங்கள்',
+		optInDescription:
+			'உறுதிப்படுத்துவது இந்த உலாவியில் உங்கள் விலகலை முடிவுக்குக் கொண்டுவரும்.',
+		optInDescriptionWithRights:
+			'உறுதிப்படுத்துவது இந்த உலாவியில் {rights} இலிருந்து உங்கள் விலகலை முடிவுக்குக் கொண்டுவரும்.',
+		optInLink: 'மீண்டும் இணையுங்கள்…',
+		optInTitle: 'மீண்டும் இணைய விரும்புகிறீர்களா?',
 		receiptAccount: 'இந்த உலாவியிலும் உங்கள் கணக்கிலும் விலகியுள்ளீர்கள்.',
 		receiptAccountWithRights:
 			'இந்த உலாவியிலும் உங்கள் கணக்கிலும் {rights} ஆகியவற்றிலிருந்து விலகியுள்ளீர்கள்.',

@@ -185,6 +185,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Signal Global Privacy Control u vašem pregledniku je uključen, pa ova postavka ostaje isključena.',
 		notOptedOut: 'Niste odustali u ovom pregledniku.',
+		optInCancel: 'Ostani odjavljen',
+		optInConfirm: 'Ponovno se uključi',
+		optInDescription: 'Potvrda završava vaše isključenje u ovom pregledniku.',
+		optInDescriptionWithRights:
+			'Potvrda završava vaše isključenje iz {rights} u ovom pregledniku.',
+		optInLink: 'Ponovno se uključi…',
+		optInTitle: 'Ponovno se uključiti?',
 		receiptAccount: 'Isključeni ste u ovom pregledniku i na svom računu.',
 		receiptAccountWithRights:
 			'Isključeni ste iz {rights} u ovom pregledniku i na svom računu.',

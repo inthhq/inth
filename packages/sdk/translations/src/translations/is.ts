@@ -184,6 +184,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Global Privacy Control-merki vafrans þíns er virkt, svo þetta helst óvirkt.',
 		notOptedOut: 'Þú hefur ekki afþakkað í þessum vafra.',
+		optInCancel: 'Vera áfram afskráður',
+		optInConfirm: 'Skrá aftur inn',
+		optInDescription: 'Staðfesting lýkur afskráningu þinni í þessum vafra.',
+		optInDescriptionWithRights:
+			'Staðfesting lýkur afskráningu þinni frá {rights} í þessum vafra.',
+		optInLink: 'Skrá aftur inn…',
+		optInTitle: 'Skrá aftur inn?',
 		receiptAccount: 'Þú hefur afþakkað í þessum vafra og á reikningnum þínum.',
 		receiptAccountWithRights:
 			'Þú hefur afþakkað {rights} í þessum vafra og á reikningnum þínum.',

@@ -185,6 +185,14 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Mae signal Global Privacy Control eich porwr ymlaen, felly mae hyn yn aros i ffwrdd.',
 		notOptedOut: 'Nid ydych wedi optio allan ar y porwr hwn.',
+		optInCancel: 'Aros wedi optio allan',
+		optInConfirm: 'Optio yn ôl i mewn',
+		optInDescription:
+			"Mae cadarnhau yn dod â'ch optio allan i ben ar y porwr hwn.",
+		optInDescriptionWithRights:
+			"Mae cadarnhau yn dod â'ch optio allan o {rights} i ben ar y porwr hwn.",
+		optInLink: 'Optio yn ôl i mewn…',
+		optInTitle: 'Optio yn ôl i mewn?',
 		receiptAccount: 'Rydych wedi optio allan yn y porwr hwn ac ar eich cyfrif.',
 		receiptAccountWithRights:
 			'Rydych wedi optio allan o {rights} yn y porwr hwn ac ar eich cyfrif.',

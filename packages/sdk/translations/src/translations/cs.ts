@@ -185,6 +185,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Signál Global Privacy Control ve vašem prohlížeči je zapnutý, takže toto zůstává vypnuté.',
 		notOptedOut: 'V tomto prohlížeči jste se neodhlásili.',
+		optInCancel: 'Zůstat odhlášen',
+		optInConfirm: 'Znovu se přihlásit',
+		optInDescription: 'Potvrzením ukončíte své odhlášení v tomto prohlížeči.',
+		optInDescriptionWithRights:
+			'Potvrzením ukončíte své odhlášení z {rights} v tomto prohlížeči.',
+		optInLink: 'Znovu se přihlásit…',
+		optInTitle: 'Znovu se přihlásit?',
 		receiptAccount: 'Jste odhlášeni v tomto prohlížeči a ve svém účtu.',
 		receiptAccountWithRights:
 			'Jste odhlášeni z {rights} v tomto prohlížeči a ve svém účtu.',

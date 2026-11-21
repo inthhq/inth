@@ -188,6 +188,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Siyal Global Privacy Control navigatè ou a aktive, kidonk sa a rete etenn.',
 		notOptedOut: 'Ou pa refize sou navigatè sa a.',
+		optInCancel: 'Rete refize',
+		optInConfirm: 'Aksepte ankò',
+		optInDescription: 'Konfime mete fen nan refi ou sou navigatè sa a.',
+		optInDescriptionWithRights:
+			'Konfime mete fen nan refi ou pou {rights} sou navigatè sa a.',
+		optInLink: 'Aksepte ankò…',
+		optInTitle: 'Aksepte ankò?',
 		receiptAccount: 'Ou dezabòne sou navigatè sa a ak sou kont ou.',
 		receiptAccountWithRights:
 			'Ou dezabòne pou {rights} sou navigatè sa a ak sou kont ou.',

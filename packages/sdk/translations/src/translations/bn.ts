@@ -184,6 +184,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'আপনার ব্রাউজারের Global Privacy Control সংকেত চালু আছে, তাই এটি বন্ধ থাকবে।',
 		notOptedOut: 'আপনি এই ব্রাউজারে অপ্ট আউট করেননি।',
+		optInCancel: 'অপ্ট-আউট থাকুন',
+		optInConfirm: 'আবার অপ্ট-ইন করুন',
+		optInDescription: 'নিশ্চিত করলে এই ব্রাউজারে আপনার অপ্ট-আউট শেষ হবে।',
+		optInDescriptionWithRights:
+			'নিশ্চিত করলে এই ব্রাউজারে {rights} থেকে আপনার অপ্ট-আউট শেষ হবে।',
+		optInLink: 'আবার অপ্ট-ইন করুন…',
+		optInTitle: 'আবার অপ্ট-ইন করবেন?',
 		receiptAccount: 'এই ব্রাউজার এবং আপনার অ্যাকাউন্টে আপনি অপ্ট-আউট করেছেন।',
 		receiptAccountWithRights:
 			'এই ব্রাউজার এবং আপনার অ্যাকাউন্টে আপনি {rights} থেকে অপ্ট-আউট করেছেন।',

@@ -187,6 +187,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'إشارة التحكم العالمي في الخصوصية في متصفحك مفعلة، لذا يبقى هذا الخيار متوقفاً.',
 		notOptedOut: 'لم تقم بإلغاء الاشتراك في هذا المتصفح.',
+		optInCancel: 'الاستمرار في الرفض',
+		optInConfirm: 'إعادة الاشتراك',
+		optInDescription: 'يؤدي التأكيد إلى إنهاء إلغاء الاشتراك على هذا المتصفح.',
+		optInDescriptionWithRights:
+			'يؤدي التأكيد إلى إنهاء إلغاء الاشتراك في {rights} على هذا المتصفح.',
+		optInLink: 'إعادة الاشتراك…',
+		optInTitle: 'هل تريد إعادة الاشتراك؟',
 		receiptAccount: 'تم تسجيل إلغاء اشتراكك في هذا المتصفح وحسابك.',
 		receiptAccountWithRights:
 			'تم تسجيل إلغاء اشتراكك في {rights} في هذا المتصفح وحسابك.',

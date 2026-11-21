@@ -187,6 +187,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'ਤੁਹਾਡੇ ਬ੍ਰਾਊਜ਼ਰ ਦਾ Global Privacy Control ਸਿਗਨਲ ਚਾਲੂ ਹੈ, ਇਸ ਲਈ ਇਹ ਬੰਦ ਰਹਿੰਦਾ ਹੈ।',
 		notOptedOut: 'ਤੁਸੀਂ ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਤੇ ਆਪਟ ਆਊਟ ਨਹੀਂ ਕੀਤਾ ਹੈ।',
+		optInCancel: 'ਆਪਟ-ਆਊਟ ਰਹੋ',
+		optInConfirm: 'ਦੁਬਾਰਾ ਆਪਟ-ਇਨ ਕਰੋ',
+		optInDescription: 'ਪੁਸ਼ਟੀ ਕਰਨ ਨਾਲ ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਤੇ ਤੁਹਾਡਾ ਆਪਟ-ਆਊਟ ਖ਼ਤਮ ਹੋ ਜਾਂਦਾ ਹੈ।',
+		optInDescriptionWithRights:
+			'ਪੁਸ਼ਟੀ ਕਰਨ ਨਾਲ ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਤੇ {rights} ਤੋਂ ਤੁਹਾਡਾ ਆਪਟ-ਆਊਟ ਖ਼ਤਮ ਹੋ ਜਾਂਦਾ ਹੈ।',
+		optInLink: 'ਦੁਬਾਰਾ ਆਪਟ-ਇਨ ਕਰੋ…',
+		optInTitle: 'ਕੀ ਦੁਬਾਰਾ ਆਪਟ-ਇਨ ਕਰਨਾ ਹੈ?',
 		receiptAccount: 'ਤੁਸੀਂ ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਅਤੇ ਆਪਣੇ ਖਾਤੇ ਵਿੱਚ ਔਪਟ-ਆਊਟ ਹੋ ਗਏ ਹੋ।',
 		receiptAccountWithRights:
 			'ਤੁਸੀਂ ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਅਤੇ ਆਪਣੇ ਖਾਤੇ ਵਿੱਚ {rights} ਤੋਂ ਔਪਟ-ਆਊਟ ਹੋ ਗਏ ਹੋ।',

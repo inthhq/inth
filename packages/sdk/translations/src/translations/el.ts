@@ -188,6 +188,14 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Το σήμα Global Privacy Control του προγράμματος περιήγησής σας είναι ενεργό, οπότε αυτή η επιλογή παραμένει ανενεργή.',
 		notOptedOut: 'Δεν έχετε εξαιρεθεί σε αυτό το πρόγραμμα περιήγησης.',
+		optInCancel: 'Παραμονή εκτός',
+		optInConfirm: 'Επανένταξη',
+		optInDescription:
+			'Η επιβεβαίωση τερματίζει την εξαίρεσή σας σε αυτό το πρόγραμμα περιήγησης.',
+		optInDescriptionWithRights:
+			'Η επιβεβαίωση τερματίζει την εξαίρεσή σας από {rights} σε αυτό το πρόγραμμα περιήγησης.',
+		optInLink: 'Επανένταξη…',
+		optInTitle: 'Θέλετε να επανενταχθείτε;',
 		receiptAccount:
 			'Έχετε εξαιρεθεί σε αυτό το πρόγραμμα περιήγησης και στον λογαριασμό σας.',
 		receiptAccountWithRights:

@@ -371,6 +371,26 @@ export const resolveOptOutBlockHeading = function resolveOptOutBlockHeading(
 };
 
 /**
+ * Resolve the body sentence for the two-step opt-in confirmation dialog.
+ *
+ * Names confirmed rights only for the three standard combinations (sale+share,
+ * sale+targeted_ads, all three). Any other set, or unconfirmed rights (which
+ * `resolveOptOutReceipt` leaves empty), uses the neutral sentence.
+ */
+export const resolveOptInConfirmationSentence =
+	function resolveOptInConfirmationSentence(
+		translations: Partial<Translations> | undefined,
+		receipt: { readonly rights: readonly OptOutRight[] }
+	): string {
+		const copy = resolveOptOutCopy(translations);
+		const phrase = rightsPhraseFor(copy, receipt.rights);
+		if (phrase !== null) {
+			return copy.optInDescriptionWithRights.replace('{rights}', phrase);
+		}
+		return copy.optInDescription;
+	};
+
+/**
  * Resolve the receipt sentence for an opt-out confirmation view.
  *
  * Names confirmed rights only for the three standard combinations (sale+share,

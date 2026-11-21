@@ -186,6 +186,14 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'A böngésződ Global Privacy Control jelzése be van kapcsolva, ezért ez kikapcsolva marad.',
 		notOptedOut: 'Ebben a böngészőben még nem iratkozott le.',
+		optInCancel: 'Maradjon letiltva',
+		optInConfirm: 'Újbóli engedélyezés',
+		optInDescription:
+			'A megerősítés megszünteti a letiltást ebben a böngészőben.',
+		optInDescriptionWithRights:
+			'A megerősítés megszünteti a letiltást a következőkre ebben a böngészőben: {rights}.',
+		optInLink: 'Újbóli engedélyezés…',
+		optInTitle: 'Újra engedélyezi?',
 		receiptAccount: 'Leiratkoztál ebben a böngészőben és a fiókodban.',
 		receiptAccountWithRights:
 			'Leiratkoztál a következőkről ebben a böngészőben és a fiókodban: {rights}.',

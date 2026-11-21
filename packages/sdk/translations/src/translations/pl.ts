@@ -185,6 +185,14 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Sygnał Global Privacy Control w Twojej przeglądarce jest włączony, więc ta opcja pozostaje wyłączona.',
 		notOptedOut: 'Nie zrezygnowano w tej przeglądarce.',
+		optInCancel: 'Pozostań wyłączony',
+		optInConfirm: 'Włącz ponownie',
+		optInDescription:
+			'Potwierdzenie kończy Twoją rezygnację w tej przeglądarce.',
+		optInDescriptionWithRights:
+			'Potwierdzenie kończy Twoją rezygnację z {rights} w tej przeglądarce.',
+		optInLink: 'Włącz ponownie…',
+		optInTitle: 'Włączyć ponownie?',
 		receiptAccount: 'Zrezygnowałeś w tej przeglądarce i na swoim koncie.',
 		receiptAccountWithRights:
 			'Zrezygnowałeś z {rights} w tej przeglądarce i na swoim koncie.',

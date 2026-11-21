@@ -188,6 +188,14 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Jūsų naršyklės Global Privacy Control signalas įjungtas, todėl tai lieka išjungta.',
 		notOptedOut: 'Šioje naršyklėje neatsisakėte.',
+		optInCancel: 'Likti atsisakius',
+		optInConfirm: 'Vėl sutikti',
+		optInDescription:
+			'Patvirtinimas užbaigia jūsų atsisakymą šioje naršyklėje.',
+		optInDescriptionWithRights:
+			'Patvirtinimas užbaigia jūsų atsisakymą nuo {rights} šioje naršyklėje.',
+		optInLink: 'Vėl sutikti…',
+		optInTitle: 'Vėl sutikti?',
 		receiptAccount: 'Atsisakėte šioje naršyklėje ir savo paskyroje.',
 		receiptAccountWithRights:
 			'Atsisakėte {rights} šioje naršyklėje ir savo paskyroje.',

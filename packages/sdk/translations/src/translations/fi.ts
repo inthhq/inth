@@ -183,6 +183,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Selaimesi Global Privacy Control -signaali on päällä, joten tämä pysyy poissa käytöstä.',
 		notOptedOut: 'Et ole kieltäytynyt tässä selaimessa.',
+		optInCancel: 'Pysy kieltäytyneenä',
+		optInConfirm: 'Salli uudelleen',
+		optInDescription: 'Vahvistaminen päättää kieltäytymisesi tässä selaimessa.',
+		optInDescriptionWithRights:
+			'Vahvistaminen päättää kieltäytymisesi kohteesta {rights} tässä selaimessa.',
+		optInLink: 'Salli uudelleen…',
+		optInTitle: 'Sallitaanko uudelleen?',
 		receiptAccount: 'Olet kieltäytynyt tässä selaimessa ja tililläsi.',
 		receiptAccountWithRights:
 			'Olet kieltäytynyt kohteesta {rights} tässä selaimessa ja tililläsi.',

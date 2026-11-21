@@ -191,6 +191,14 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Tín hiệu Global Privacy Control của trình duyệt đang bật nên tùy chọn này vẫn tắt.',
 		notOptedOut: 'Bạn chưa từ chối trên trình duyệt này.',
+		optInCancel: 'Giữ từ chối',
+		optInConfirm: 'Tham gia lại',
+		optInDescription:
+			'Xác nhận sẽ kết thúc lựa chọn từ chối của bạn trên trình duyệt này.',
+		optInDescriptionWithRights:
+			'Xác nhận sẽ kết thúc lựa chọn từ chối {rights} của bạn trên trình duyệt này.',
+		optInLink: 'Tham gia lại…',
+		optInTitle: 'Tham gia lại?',
 		receiptAccount: 'Bạn đã từ chối trên trình duyệt này và tài khoản của bạn.',
 		receiptAccountWithRights:
 			'Bạn đã từ chối {rights} trên trình duyệt này và tài khoản của bạn.',

@@ -186,6 +186,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'La señal Global Privacy Control de tu navegador está activada, por lo que esto permanece desactivado.',
 		notOptedOut: 'No se ha excluido en este navegador.',
+		optInCancel: 'Seguir excluido',
+		optInConfirm: 'Volver a participar',
+		optInDescription: 'Confirmar finaliza tu exclusión en este navegador.',
+		optInDescriptionWithRights:
+			'Confirmar finaliza tu exclusión de {rights} en este navegador.',
+		optInLink: 'Volver a participar…',
+		optInTitle: '¿Volver a participar?',
 		receiptAccount: 'Has quedado excluido en este navegador y en tu cuenta.',
 		receiptAccountWithRights:
 			'Has quedado excluido de {rights} en este navegador y en tu cuenta.',

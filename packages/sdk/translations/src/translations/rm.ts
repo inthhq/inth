@@ -186,6 +186,14 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Il signal Global Privacy Control da tes navigatur è activà, perquai resta questa opziun deactivada.',
 		notOptedOut: 'Ti n’has betg renunzià en quest navigatur.',
+		optInCancel: 'Restar deannunzià',
+		optInConfirm: "S'annunziar puspè",
+		optInDescription:
+			'Cun confermar finescha tia deannunzia en quest navigatur.',
+		optInDescriptionWithRights:
+			'Cun confermar finescha tia deannunzia da {rights} en quest navigatur.',
+		optInLink: "S'annunziar puspè…",
+		optInTitle: "S'annunziar puspè?",
 		receiptAccount: 'Ti es annullà en quest navigatur e sin tes conto.',
 		receiptAccountWithRights:
 			'Ti es annullà da {rights} en quest navigatur e sin tes conto.',

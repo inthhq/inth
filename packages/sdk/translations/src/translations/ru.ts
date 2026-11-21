@@ -190,6 +190,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Сигнал Global Privacy Control в вашем браузере включён, поэтому эта настройка остаётся отключённой.',
 		notOptedOut: 'Вы не отказались в этом браузере.',
+		optInCancel: 'Оставить отказ',
+		optInConfirm: 'Снова согласиться',
+		optInDescription: 'Подтверждение отменит ваш отказ в этом браузере.',
+		optInDescriptionWithRights:
+			'Подтверждение отменит ваш отказ от {rights} в этом браузере.',
+		optInLink: 'Снова согласиться…',
+		optInTitle: 'Снова согласиться?',
 		receiptAccount: 'Вы отказались в этом браузере и в своей учётной записи.',
 		receiptAccountWithRights:
 			'Вы отказались от {rights} в этом браузере и в своей учётной записи.',

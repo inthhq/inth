@@ -185,6 +185,14 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Webbläsarens Global Privacy Control-signal är på, så detta förblir avstängt.',
 		notOptedOut: 'Du har inte avsagt dig i den här webbläsaren.',
+		optInCancel: 'Förbli avanmäld',
+		optInConfirm: 'Gå med igen',
+		optInDescription:
+			'Bekräftelse avslutar din avanmälan i den här webbläsaren.',
+		optInDescriptionWithRights:
+			'Bekräftelse avslutar din avanmälan från {rights} i den här webbläsaren.',
+		optInLink: 'Gå med igen…',
+		optInTitle: 'Gå med igen?',
 		receiptAccount: 'Du har valt bort i den här webbläsaren och på ditt konto.',
 		receiptAccountWithRights:
 			'Du har valt bort {rights} i den här webbläsaren och på ditt konto.',

@@ -185,6 +185,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನ Global Privacy Control ಸಂಕೇತ ಆನ್ ಆಗಿದೆ, ಆದ್ದರಿಂದ ಇದು ಆಫ್ ಆಗಿಯೇ ಇರುತ್ತದೆ.',
 		notOptedOut: 'ನೀವು ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಹೊರಗುಳಿದಿಲ್ಲ.',
+		optInCancel: 'ಆಪ್ಟ್-ಔಟ್ ಆಗಿಯೇ ಇರಿ',
+		optInConfirm: 'ಮತ್ತೆ ಆಪ್ಟ್-ಇನ್ ಮಾಡಿ',
+		optInDescription: 'ದೃಢೀಕರಿಸುವುದರಿಂದ ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ನಿಮ್ಮ ಆಪ್ಟ್-ಔಟ್ ಕೊನೆಗೊಳ್ಳುತ್ತದೆ.',
+		optInDescriptionWithRights:
+			'ದೃಢೀಕರಿಸುವುದರಿಂದ ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ {rights} ಗಾಗಿ ನಿಮ್ಮ ಆಪ್ಟ್-ಔಟ್ ಕೊನೆಗೊಳ್ಳುತ್ತದೆ.',
+		optInLink: 'ಮತ್ತೆ ಆಪ್ಟ್-ಇನ್ ಮಾಡಿ…',
+		optInTitle: 'ಮತ್ತೆ ಆಪ್ಟ್-ಇನ್ ಮಾಡಬೇಕೆ?',
 		receiptAccount: 'ಈ ಬ್ರೌಸರ್ ಮತ್ತು ನಿಮ್ಮ ಖಾತೆಯಲ್ಲಿ ನೀವು ಆಪ್ಟ್-ಔಟ್ ಆಗಿದ್ದೀರಿ.',
 		receiptAccountWithRights:
 			'ಈ ಬ್ರೌಸರ್ ಮತ್ತು ನಿಮ್ಮ ಖಾತೆಯಲ್ಲಿ ನೀವು {rights} ನಿಂದ ಆಪ್ಟ್-ಔಟ್ ಆಗಿದ್ದೀರಿ.',

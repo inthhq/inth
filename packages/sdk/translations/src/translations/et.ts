@@ -182,6 +182,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Teie brauseri Global Privacy Control signaal on sisse lülitatud, seega jääb see välja lülitatuks.',
 		notOptedOut: 'Te ei ole selles brauseris loobunud.',
+		optInCancel: 'Jää loobunuks',
+		optInConfirm: 'Nõustu uuesti',
+		optInDescription: 'Kinnitamine lõpetab sinu loobumise selles brauseris.',
+		optInDescriptionWithRights:
+			'Kinnitamine lõpetab sinu loobumise tegevustest {rights} selles brauseris.',
+		optInLink: 'Nõustu uuesti…',
+		optInTitle: 'Kas soovid uuesti nõustuda?',
 		receiptAccount: 'Olete selles brauseris ja oma kontol loobunud.',
 		receiptAccountWithRights:
 			'Olete selles brauseris ja oma kontol loobunud järgmisest: {rights}.',

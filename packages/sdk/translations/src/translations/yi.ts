@@ -192,6 +192,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'דער Global Privacy Control סיגנאַל פֿון אײַער בלעטערער איז אָן, אַזוי בלײַבט דאָס אויס.',
 		notOptedOut: 'איר האָט זיך נישט אָפּגעזאָגט אויף דעם בלעטערער.',
+		optInCancel: 'בלײַבן אָפּגעזאָגט',
+		optInConfirm: 'ווידער אײַנשטימען',
+		optInDescription: 'באַשטעטיקן ענדיקט דײַן אָפּזאָג אויף דעם בלעטערער.',
+		optInDescriptionWithRights:
+			'באַשטעטיקן ענדיקט דײַן אָפּזאָג פֿון {rights} אויף דעם בלעטערער.',
+		optInLink: 'ווידער אײַנשטימען…',
+		optInTitle: 'ווידער אײַנשטימען?',
 		receiptAccount: 'איר זענט אָפּגעזאָגט אין דעם בלעטערער און אין אייער קאָנטע.',
 		receiptAccountWithRights:
 			'איר זענט אָפּגעזאָגט פֿון {rights} אין דעם בלעטערער און אין אייער קאָנטע.',
