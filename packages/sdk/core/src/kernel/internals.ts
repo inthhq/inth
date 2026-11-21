@@ -65,6 +65,11 @@ export interface InternalKernel extends ConsentKernel {
 	 */
 	holdSaves: (until: Promise<unknown>) => void;
 	/**
+	 * The pending promise passed to {@link holdSaves}, or `undefined` once
+	 * every local write hold has settled.
+	 */
+	getSavesHold: () => Promise<unknown> | undefined;
+	/**
 	 * Send the saves queued in the outbox now, as after a completed init.
 	 * A deferred root calls it when its engine starts after a banner tap
 	 * that queued its save without a kernel. Does nothing once disposed.

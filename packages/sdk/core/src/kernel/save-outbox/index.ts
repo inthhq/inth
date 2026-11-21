@@ -153,6 +153,8 @@ export interface SaveOutbox {
 	 * is not ready yet. Requests already sent are not held.
 	 */
 	hold: (until: Promise<unknown>) => void;
+	/** Pending promise from {@link hold}, or `undefined` once settled. */
+	getHold: () => Promise<unknown> | undefined;
 	/**
 	 * Move the visitor from the `sub_` id `from` to the UUID the backend
 	 * answered for it, in every tab, with the entries queued under `from`.
@@ -820,9 +822,17 @@ export const createSaveOutbox = function createSaveOutbox({
 		adoptSubject,
 		areOptOutsUnsupported: () => optOutsUnsupported,
 		clear,
+		getHold: () => held,
 		getOptOutRequestsInFlight: () => optOutRequestsInFlight,
 		hold(until) {
-			held = Promise.allSettled([held, until]);
+			const next = Promise.allSettled([held, until]);
+			held = next;
+			void (async () => {
+				await next;
+				if (held === next) {
+					held = undefined;
+				}
+			})();
 		},
 		liftAccountOptOut: (payload) =>
 			optOutsUnsupported || !transport?.liftOptOut

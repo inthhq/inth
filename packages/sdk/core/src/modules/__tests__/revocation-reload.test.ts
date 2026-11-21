@@ -192,7 +192,7 @@ describe('watchRevocationReload', () => {
 		expect(reload).not.toHaveBeenCalled();
 	});
 
-	it('waits for the save request before reloading', async () => {
+	it('waits for the save request up to the cap before reloading', async () => {
 		let finishSave: (result: SaveResult) => void = () => undefined;
 		let saves = 0;
 		const kernel = createKernel({
@@ -212,23 +212,81 @@ describe('watchRevocationReload', () => {
 		await grantMarketing(kernel);
 
 		const saving = kernel.commands.save({ marketing: false });
-		await vi.advanceTimersByTimeAsync(1000);
+		await vi.advanceTimersByTimeAsync(500);
 		expect(reload).not.toHaveBeenCalled();
 
 		finishSave({ ok: true });
 		await saving;
 		await vi.advanceTimersByTimeAsync(0);
 		expect(reload).toHaveBeenCalledOnce();
+
+		// Passing the cap after the reload already fired must not reload again.
+		await vi.advanceTimersByTimeAsync(2000);
+		expect(reload).toHaveBeenCalledOnce();
 	});
 
-	it('cancels a pending reload on dispose', async () => {
-		const kernel = createKernel();
+	it('reloads at 1,000 ms after onBeforeConsentRevocationReload when a save request never settles', async () => {
+		let finishSave: (result: SaveResult) => void = () => undefined;
+		let saves = 0;
+		const kernel = createKernel({
+			transport: {
+				save: () => {
+					saves += 1;
+					if (saves === 1) {
+						return Promise.resolve({ ok: true });
+					}
+					return new Promise<SaveResult>((resolve) => {
+						finishSave = resolve;
+					});
+				},
+			},
+		});
+		const { onBeforeReload, reload } = watch(kernel);
+		await grantMarketing(kernel);
+
+		const saving = kernel.commands.save({ marketing: false });
+		await vi.advanceTimersByTimeAsync(999);
+		expect(onBeforeReload).not.toHaveBeenCalled();
+		expect(reload).not.toHaveBeenCalled();
+
+		await vi.advanceTimersByTimeAsync(1);
+		expect(onBeforeReload).toHaveBeenCalledOnce();
+		expect(onBeforeReload.mock.calls[0]?.[0].preferences.marketing).toBe(false);
+		expect(reload).toHaveBeenCalledOnce();
+		expect(onBeforeReload.mock.invocationCallOrder[0]).toBeLessThan(
+			reload.mock.invocationCallOrder[0] ?? 0
+		);
+
+		// A late answer after the cap must not trigger a second reload.
+		finishSave({ ok: true });
+		await saving;
+		await vi.runAllTimersAsync();
+		expect(onBeforeReload).toHaveBeenCalledOnce();
+		expect(reload).toHaveBeenCalledOnce();
+	});
+
+	it('cancels a pending reload and its cap timer on dispose', async () => {
+		let saves = 0;
+		const kernel = createKernel({
+			transport: {
+				save: () => {
+					saves += 1;
+					if (saves === 1) {
+						return Promise.resolve({ ok: true });
+					}
+					return new Promise<SaveResult>(() => {
+						// Never settles.
+					});
+				},
+			},
+		});
 		const { dispose, reload } = watch(kernel);
 		await grantMarketing(kernel);
 
-		await kernel.commands.save({ marketing: false });
+		void kernel.commands.save({ marketing: false });
+		await vi.advanceTimersByTimeAsync(100);
 		dispose();
-		await vi.runAllTimersAsync();
+		await vi.advanceTimersByTimeAsync(2000);
 
 		expect(reload).not.toHaveBeenCalled();
 	});
@@ -478,7 +536,7 @@ describe('watchRevocationReload with durable opt-out', () => {
 		expect(reload).not.toHaveBeenCalled();
 	});
 
-	it('waits for the opt-out request before reloading and replays a failed opt-out on a new kernel', async () => {
+	it('waits for the opt-out request up to the cap before reloading and replays a failed opt-out on a new kernel', async () => {
 		const outboxStore = createMemoryOutboxStore();
 		let finishOptOut: (result: OptOutResult) => void = () => undefined;
 		const sentKeys: string[] = [];
@@ -498,12 +556,12 @@ describe('watchRevocationReload with durable opt-out', () => {
 		const { reload } = watch(first);
 
 		const optingOut = first.commands.optOut();
-		await vi.advanceTimersByTimeAsync(1000);
+		await vi.advanceTimersByTimeAsync(500);
 		expect(sentKeys).toHaveLength(1);
 		expect(reload).not.toHaveBeenCalled();
 
-		// Request fails: reload still happens once the attempt settles, and
-		// the entry remains queued in the outbox store for the next load.
+		// Request fails before the cap: reload happens then, and the entry remains
+		// queued in the outbox store for the next load.
 		finishOptOut({ ok: false });
 		await optingOut;
 		await vi.advanceTimersByTimeAsync(0);
@@ -530,6 +588,38 @@ describe('watchRevocationReload with durable opt-out', () => {
 		});
 	});
 
+	it('reloads at 1,000 ms after onBeforeConsentRevocationReload when an opt-out request never settles', async () => {
+		let finishOptOut: (result: OptOutTransportResult) => void = () => undefined;
+		const kernel = createOptOutKernel({
+			transport: {
+				optOut: () =>
+					new Promise<OptOutTransportResult>((resolve) => {
+						finishOptOut = resolve;
+					}),
+			},
+		});
+		const { onBeforeReload, reload } = watch(kernel);
+
+		const optingOut = kernel.commands.optOut();
+		await vi.advanceTimersByTimeAsync(999);
+		expect(onBeforeReload).not.toHaveBeenCalled();
+		expect(reload).not.toHaveBeenCalled();
+
+		await vi.advanceTimersByTimeAsync(1);
+		expect(onBeforeReload).toHaveBeenCalledOnce();
+		expect(onBeforeReload.mock.calls[0]?.[0].preferences.marketing).toBe(false);
+		expect(reload).toHaveBeenCalledOnce();
+		expect(onBeforeReload.mock.invocationCallOrder[0]).toBeLessThan(
+			reload.mock.invocationCallOrder[0] ?? 0
+		);
+
+		finishOptOut({ ok: true });
+		await optingOut;
+		await vi.runAllTimersAsync();
+		expect(onBeforeReload).toHaveBeenCalledOnce();
+		expect(reload).toHaveBeenCalledOnce();
+	});
+
 	it('reloads once when a save refuses marketing under an opt-out rule and also records an opt-out', async () => {
 		const kernel = createOptOutKernel();
 		const { onBeforeReload, reload } = watch(kernel);
@@ -544,7 +634,7 @@ describe('watchRevocationReload with durable opt-out', () => {
 		expect(reload).toHaveBeenCalledOnce();
 	});
 
-	it('waits for a pending opt-out request started by save() before reloading and resolves save() first', async () => {
+	it('waits for a pending opt-out request started by save() up to the cap and resolves save() first', async () => {
 		let finishOptOut: (result: OptOutTransportResult) => void = () => undefined;
 		const optOut = vi.fn(
 			() =>
@@ -567,8 +657,8 @@ describe('watchRevocationReload with durable opt-out', () => {
 		expect(saveResult.ok).toBe(true);
 		expect(optOut).toHaveBeenCalledOnce();
 
-		// The save resolved, but the opt-out request is still in flight.
-		await vi.advanceTimersByTimeAsync(1000);
+		// The save resolved, but the opt-out request is still in flight before the cap.
+		await vi.advanceTimersByTimeAsync(500);
 		expect(onBeforeReload).not.toHaveBeenCalled();
 		expect(reload).not.toHaveBeenCalled();
 
@@ -578,7 +668,64 @@ describe('watchRevocationReload with durable opt-out', () => {
 		expect(reload).toHaveBeenCalledOnce();
 	});
 
-	it('waits for a pending account opt-out lift started by save() when another category was revoked', async () => {
+	it('starts the 1,000 ms cap when the revoking action is recorded, not when a follow-up request starts', async () => {
+		let finishSave: (result: SaveResult) => void = () => undefined;
+		const liftOptOut = vi.fn(
+			() =>
+				new Promise<LiftOptOutTransportResult>(() => {
+					// Never settles.
+				})
+		);
+		const kernel = createKernel({
+			initialPolicyResolution: matchedResolution(
+				optOutRule({
+					categories: ['functionality', 'marketing', 'measurement'],
+					privacySignals: {
+						gpc: { denyCategories: ['marketing'] },
+					},
+				})
+			),
+			initialRecords: {
+				optOut: {
+					heldBy: 'person',
+					method: 'api',
+					recordedAt: NOW - 1000,
+					rights: ['sale', 'share'],
+				},
+			},
+			transport: {
+				liftOptOut,
+				save: () =>
+					new Promise<SaveResult>((resolve) => {
+						finishSave = resolve;
+					}),
+			},
+		});
+		const { onBeforeReload, reload } = watch(kernel);
+
+		const saving = kernel.commands.save({
+			functionality: false,
+			marketing: true,
+		});
+		await vi.advanceTimersByTimeAsync(400);
+		expect(reload).not.toHaveBeenCalled();
+
+		// Save finishes at 400 ms and starts the hanging account lift.
+		finishSave({ ok: true });
+		await saving;
+		expect(liftOptOut).toHaveBeenCalledOnce();
+
+		// 599 ms later (999 ms total since revocation): still waiting.
+		await vi.advanceTimersByTimeAsync(599);
+		expect(reload).not.toHaveBeenCalled();
+
+		// At 1,000 ms total since revocation (not 1,000 ms after the lift started): reloads once.
+		await vi.advanceTimersByTimeAsync(1);
+		expect(onBeforeReload).toHaveBeenCalledOnce();
+		expect(reload).toHaveBeenCalledOnce();
+	});
+
+	it('waits for a pending account opt-out lift started by save() up to the cap when another category was revoked', async () => {
 		let finishLift: (result: LiftOptOutTransportResult) => void = () =>
 			undefined;
 		const liftOptOut = vi.fn(
@@ -623,8 +770,8 @@ describe('watchRevocationReload with durable opt-out', () => {
 		expect(saveResult.ok).toBe(true);
 		expect(liftOptOut).toHaveBeenCalledOnce();
 
-		// The save resolved, but the account opt-out lift is still in flight.
-		await vi.advanceTimersByTimeAsync(1000);
+		// The save resolved, but the account opt-out lift is still in flight before the cap.
+		await vi.advanceTimersByTimeAsync(500);
 		expect(onBeforeReload).not.toHaveBeenCalled();
 		expect(reload).not.toHaveBeenCalled();
 
@@ -634,7 +781,7 @@ describe('watchRevocationReload with durable opt-out', () => {
 		expect(reload).toHaveBeenCalledOnce();
 	});
 
-	it('waits for a pending device opt-out lift started by save() when another category was revoked', async () => {
+	it('waits for a pending device opt-out lift started by save() up to the cap when another category was revoked', async () => {
 		let finishLift: (result: LiftOptOutTransportResult) => void = () =>
 			undefined;
 		const liftOptOut = vi.fn(
@@ -678,8 +825,8 @@ describe('watchRevocationReload with durable opt-out', () => {
 		expect(saveResult.ok).toBe(true);
 		expect(liftOptOut).toHaveBeenCalledOnce();
 
-		// The save resolved, but the device opt-out lift is still in flight.
-		await vi.advanceTimersByTimeAsync(1000);
+		// The save resolved, but the device opt-out lift is still in flight before the cap.
+		await vi.advanceTimersByTimeAsync(500);
 		expect(onBeforeReload).not.toHaveBeenCalled();
 		expect(reload).not.toHaveBeenCalled();
 
