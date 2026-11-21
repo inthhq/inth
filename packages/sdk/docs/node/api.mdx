@@ -53,7 +53,7 @@ Without them, a call returns `forbidden`.
 | Method | Returns | What it does |
 | --- | --- | --- |
 | `documents.publish({ type, version, hash, effectiveDate, requiresAcceptance? })` | `InthDocument` | Publishes a version and makes it current. Sent once, never retried. |
-| `documents.current({ type })` | `InthDocument` | The version in force. Needs no key. |
+| `documents.current({ type })` | `InthDocument` | The version in force. The request carries no key, but `new Inth()` still needs one. |
 | `documents.accept({ externalId?, subjectId?, acceptances, context, acceptedAt?, property?, idempotencyKey? })` | `InthAcceptances` | Records acceptances for a user, a device or both. All or none. |
 | `documents.check({ externalId, types })` | `Record<type, InthDocumentCheck>` | `accepted` and `acceptedLatest` for each type asked about. |
 
