@@ -210,6 +210,9 @@ export const applySyncedOptOut = function applySyncedOptOut(
 	) {
 		return false;
 	}
+	if (next === null && optOutLiftBlocker(current) === 'gpc-active') {
+		return false;
+	}
 	if (sameOptOutRecord(current.optOut, next)) {
 		return false;
 	}
