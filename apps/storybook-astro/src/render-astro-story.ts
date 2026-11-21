@@ -194,8 +194,14 @@ export const renderAstroStory = function renderAstroStory(
 	// Storybook mounts the returned element after the story function
 	// returns, but `boot()` has to see the markup to wire the banner. Queue
 	// the boot for the next task instead of guessing.
+	// The story opts out on mount to show the confirmation. A revocation
+	// reload would navigate away mid-story and replay the opt-out, so the
+	// story confirms in place.
+	const options = variant.openOptOutConfirmation
+		? { ...(entry.options as object), reloadOnConsentRevoked: false }
+		: entry.options;
 	queueMicrotask(() => {
-		const client = boot(entry.options as Parameters<typeof boot>[0], extension);
+		const client = boot(options as Parameters<typeof boot>[0], extension);
 		if (variant.openDialog) {
 			void client.openDialog(variant.openDialog);
 		}
