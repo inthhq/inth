@@ -11,6 +11,8 @@ import { assert, describe, expectTypeOf, it, vi } from 'vitest';
 import document from '../../schema/vendor/backend-openapi/openapi.json' with { type: 'json' };
 import { hashDocument, Inth, InthError } from './index';
 import type {
+	AcceptDocumentsParams,
+	InthApiCode,
 	InthDocument,
 	InthDocumentCheck,
 	InthOptions,
@@ -384,6 +386,14 @@ describe('a /v1 refusal', () => {
 			[details, details],
 			// A form the client does not read is left out, not guessed at
 			['Invalid body', undefined],
+			// Details in another form are not field errors, and are not
+			// passed off as an empty set of them
+			[{}, undefined],
+			[{ reason: 'quota' }, undefined],
+			[
+				{ formErrors: ['The body is incomplete'] },
+				{ fieldErrors: {}, formErrors: ['The body is incomplete'] },
+			],
 		] as const) {
 			const { inth } = stubbed([
 				() =>
@@ -593,6 +603,7 @@ describe('retries and limits', () => {
 		});
 		const cut = await checkTerms(inth);
 		assert.strictEqual(cut.error?.code, 'network_error');
+		assert.instanceOf(cut.error?.cause, TypeError);
 		assert.strictEqual(calls, 2);
 	});
 
@@ -801,6 +812,20 @@ it('cannot be made without a key or a project URL, and says so as an InthError',
 	}
 });
 
+it('refuses an option that is not a string, as an InthError', () => {
+	for (const options of [
+		{ projectUrl: 42, secretKey: SECRET },
+		{ projectUrl: PROJECT_URL, secretKey: { key: SECRET } },
+	]) {
+		assert.throws(
+			// SAFETY: a caller without types, which is what this tests
+			() => new Inth(options as unknown as InthOptions),
+			InthError,
+			/must be a string/u
+		);
+	}
+});
+
 it('reads the key and the project URL from the environment', async () => {
 	vi.stubEnv('INTH_SECRET_KEY', SECRET);
 	vi.stubEnv('INTH_PROJECT_URL', PROJECT_URL);
@@ -836,8 +861,27 @@ it('types each answer by what was asked', async () => {
 		Awaited<ReturnType<Inth['documents']['publish']>>['data']
 	>().toEqualTypeOf<InthDocument | null>();
 	// The API's listed codes autocomplete, and an unlisted one still fits
-	expectTypeOf<'document_unknown'>().toExtend<InthError['apiCode']>();
-	expectTypeOf<'RATE_LIMITED'>().toExtend<InthError['apiCode']>();
+	expectTypeOf<InthError['apiCode']>().toEqualTypeOf<InthApiCode | undefined>();
+	expectTypeOf<'document_unknown'>().toExtend<InthApiCode>();
+	expectTypeOf<'RATE_LIMITED'>().toExtend<InthApiCode>();
+	// Once `error` is ruled out, `data` is there
+	const answered = await checkTerms(inth);
+	if (answered.error === null) {
+		expectTypeOf(answered.data).toEqualTypeOf<
+			Readonly<Record<'terms_us', InthDocumentCheck>>
+		>();
+	}
+	// An acceptance names a person, a device, or both
+	expectTypeOf({
+		acceptances: [],
+		context: {},
+	}).not.toExtend<AcceptDocumentsParams>();
+	expectTypeOf({
+		acceptances: [],
+		acceptedAt: new Date(),
+		context: {},
+		subjectId: UUID,
+	}).toExtend<AcceptDocumentsParams>();
 });
 
 describe('documents', () => {
@@ -897,6 +941,10 @@ describe('documents', () => {
 				// oxlint-disable-next-line no-await-in-loop -- One stubbed client at a time
 				const published = await inth.documents.publish(PUBLISH);
 				assert.isNotNull(published.error);
+				// It may have been stored, so a caller's generic retry must not
+				// send it again
+				assert.isFalse(published.error?.retryable);
+				assert.match(String(published.error?.message), /documents\.current/u);
 				assert.strictEqual(sent.length, 1);
 			}
 		});
@@ -972,6 +1020,33 @@ describe('documents', () => {
 		await inth.documents.accept({
 			...ACCEPTANCE,
 			acceptedAt: new Date(1763467200000),
+		});
+		assert.deepNestedInclude(sent[0], { 'body.acceptedAt': 1763467200000 });
+	});
+
+	it('reads a Date made in another realm', async () => {
+		const { inth, sent } = stubbed([ACCEPTED]);
+		const foreign = (source: string): Date =>
+			// SAFETY: the context runs `new Date(...)`, which makes a Date
+			runInNewContext(source) as Date;
+
+		const invalid = await inth.documents.accept({
+			...ACCEPTANCE,
+			acceptedAt: foreign("new Date('')"),
+		});
+		assert.strictEqual(invalid.error?.code, 'invalid_request');
+		const unpublished = await inth.documents.publish({
+			effectiveDate: foreign("new Date('')"),
+			hash: HASH,
+			type: 'terms_us',
+			version: '2026-11-18',
+		});
+		assert.strictEqual(unpublished.error?.code, 'invalid_request');
+		assert.strictEqual(sent.length, 0);
+
+		await inth.documents.accept({
+			...ACCEPTANCE,
+			acceptedAt: foreign('new Date(1763467200000)'),
 		});
 		assert.deepNestedInclude(sent[0], { 'body.acceptedAt': 1763467200000 });
 	});
@@ -1124,6 +1199,9 @@ describe('documents', () => {
 		assert.strictEqual(linked.error?.code, 'invalid_request');
 		assert.strictEqual(current.error?.code, 'invalid_request');
 		assert.strictEqual(unnamed.error?.code, 'invalid_request');
+		// Named as the API names a field it refuses
+		assert.hasAllKeys(linked.error?.details?.fieldErrors, ['subjectId']);
+		assert.hasAllKeys(current.error?.details?.fieldErrors, ['type']);
 		assert.strictEqual(sent.length, 0);
 	});
 

@@ -27,6 +27,11 @@ const { data: link, error: linkError } = await inth.users.identify({
 	externalId: user.id,
 	subjectId,
 });
+if (linkError) {
+	// Sign-in can go on. Log it: this browser's choices do not count as the
+	// user's until a later sign-in links it
+	console.error(linkError);
+}
 
 // Has this user accepted the latest privacy policy that requires acceptance?
 const { data, error } = await inth.documents.check({
@@ -42,7 +47,8 @@ if (!data.privacy_policy.acceptedLatest) {
 	// Ask them to accept it
 }
 
-// Does this user allow marketing, on any of their devices?
+// Does this user allow marketing, on any of their devices? A failed check
+// leaves `consent` null, which reads as no
 const { data: consent } = await inth.consents.check({ externalId: user.id });
 if (consent?.marketing === true) {
 	// Send the newsletter
@@ -53,13 +59,26 @@ On Cloudflare Workers without the `nodejs_compat` flag there is no
 `process.env`, so pass both from the Worker's environment:
 
 ```ts
+import { Inth } from '@inth/node';
+
+interface Env {
+	INTH_PROJECT_URL: string;
+	// Set with `wrangler secret put INTH_SECRET_KEY`
+	INTH_SECRET_KEY: string;
+}
+
 export default {
-	async fetch(request: Request, env: Env) {
+	async fetch(request: Request, env: Env): Promise<Response> {
 		const inth = new Inth({
 			projectUrl: env.INTH_PROJECT_URL,
 			secretKey: env.INTH_SECRET_KEY,
 		});
-		// ...
+		const externalId = new URL(request.url).searchParams.get('user') ?? '';
+		const { data, error } = await inth.consents.check({ externalId });
+		if (error) {
+			return Response.json({ error: error.message }, { status: 502 });
+		}
+		return Response.json(data);
 	},
 };
 ```
@@ -278,21 +297,25 @@ with exactly one of the two set. Check `error` first and TypeScript knows
 `conflict`, `network_error`, `timeout`, `aborted`, `server_error`,
 `unexpected_response`. The error also carries:
 
-- `retryable`: whether the same call may succeed later. It is true for a
-  network failure, a timeout, a 429 or a 5xx, which the client has already
-  tried again.
+- `retryable`: whether sending the same call again later may succeed. It is
+  true for a network failure, a timeout, a 429 or a 5xx, and always false
+  for `documents.publish`, whose failure may have been stored. The client
+  tries these again itself within `maxRetries`, unless the API asked for a
+  longer wait than it makes or the edge challenged the call.
 - `retryAfter`: how long the API asked you to wait, in milliseconds, when it
   sent `Retry-After`.
 - `status`: the HTTP status, or 0 when no answer arrived.
 - `apiCode`: the API's own code, such as `identity_conflict` or
   `document_unknown`. Your editor lists the codes the `/v1` routes send.
 - `details`: for a refused body, the messages for each field in
-  `fieldErrors`, such as `effectiveDate`, and the rest in `formErrors`.
+  `fieldErrors`, such as `effectiveDate`, and the rest in `formErrors`. A
+  field the client refuses itself, such as an invalid `Date`, is named here
+  too.
 - `requestId`: the id to quote to support.
 - `cause`: what `fetch` threw, when no answer arrived.
 
 Two things throw. `new Inth()` throws an `InthError` with the code
-`invalid_request` when it has no key, a key a header
+`invalid_request` and `status` 0 when it has no key, a key a header
 cannot carry, or an address that is not a full `https://` URL (plain
 `http://` is allowed for `localhost` and `*.localhost` only) or one with a
 query, fragment, user name or password, or when `timeout` is not a whole number

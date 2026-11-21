@@ -117,7 +117,10 @@ export interface InthErrorDetails {
 	readonly formErrors: readonly string[];
 }
 
-/** A call that failed. Returned, not thrown */
+/**
+ * A call that failed, returned rather than thrown. `new Inth()` also throws
+ * one, with the code `invalid_request`, for options it cannot use
+ */
 export class InthError extends Error {
 	/** Always `InthError`, for logs */
 	override readonly name = 'InthError';
@@ -132,10 +135,12 @@ export class InthError extends Error {
 	/** The id to quote to support, when the API sent one */
 	readonly requestId: string | undefined;
 	/**
-	 * Whether the same call may succeed later: a network failure, a timeout,
-	 * a 429 or a 5xx. The client already tried it again. A failed
-	 * `documents.publish` may have been stored, so check `documents.current`
-	 * before you send it again
+	 * Whether sending the same call again later may succeed: a network
+	 * failure, a timeout, a 429 or a 5xx. The client tries these again itself
+	 * within `maxRetries`, unless the API asked for a longer wait than it
+	 * makes or the edge challenged the call. Always false for
+	 * `documents.publish`: a failed publish may have been stored, so check
+	 * `documents.current` before you publish again
 	 */
 	readonly retryable: boolean;
 	/**
@@ -149,11 +154,13 @@ export class InthError extends Error {
 		message: string,
 		options: {
 			readonly status?: number;
-			readonly apiCode?: string;
+			readonly apiCode?: InthApiCode;
 			readonly details?: InthErrorDetails;
 			readonly requestId?: string;
+			/** Defaults to whether `code` is one worth trying again */
+			readonly retryable?: boolean;
 			readonly retryAfter?: number;
-			/** What `fetch` threw, for a request that got no answer */
+			/** What `fetch` or the body read threw, for an answer that never arrived */
 			readonly cause?: unknown;
 		} = {}
 	) {
@@ -163,7 +170,7 @@ export class InthError extends Error {
 		this.apiCode = options.apiCode;
 		this.details = options.details;
 		this.requestId = options.requestId;
-		this.retryable = RETRIED.has(code);
+		this.retryable = options.retryable ?? RETRIED.has(code);
 		this.retryAfter = options.retryAfter;
 	}
 }
@@ -265,8 +272,8 @@ const refusal = v.object({
 				details: v.fallback(
 					v.optional(
 						v.object({
-							fieldErrors: v.fallback(ownRecord(v.array(v.string())), {}),
-							formErrors: v.fallback(v.array(v.string()), []),
+							fieldErrors: v.optional(ownRecord(v.array(v.string()))),
+							formErrors: v.optional(v.array(v.string())),
 						})
 					),
 					undefined
@@ -527,6 +534,25 @@ const fetchFailure = (error: unknown, signal: AbortSignal): InthError => {
 	);
 };
 
+/**
+ * The field errors a refusal sent. `undefined` for details in another form,
+ * such as `{ reason }`, which are not field errors
+ */
+const fieldErrorsOf = (
+	sent:
+		| {
+				readonly fieldErrors?: InthErrorDetails['fieldErrors'];
+				readonly formErrors?: InthErrorDetails['formErrors'];
+		  }
+		| undefined
+): InthErrorDetails | undefined =>
+	sent?.fieldErrors === undefined && sent?.formErrors === undefined
+		? undefined
+		: {
+				fieldErrors: sent.fieldErrors ?? {},
+				formErrors: sent.formErrors ?? [],
+			};
+
 /** A refusal, read from whichever error shape the body carries */
 const refusalError = (
 	response: Response,
@@ -541,7 +567,7 @@ const refusalError = (
 		output?.message ?? output?.error?.message ?? `The API answered ${status}`,
 		{
 			apiCode: output?.cause?.code ?? output?.code ?? output?.error?.code,
-			details: output?.error?.details,
+			details: fieldErrorsOf(output?.error?.details),
 			requestId: requestId ?? output?.requestId,
 			retryAfter: askedWait(response.headers.get('retry-after')),
 			status,
@@ -646,13 +672,24 @@ const uncarried = (
 		return value !== undefined && encoded(value) === undefined;
 	});
 
+/**
+ * A refusal the client makes itself, before sending anything, for one
+ * field: shaped as the API's own, so `details.fieldErrors` names the field
+ */
+const refusedField = (name: string, reason: string): InthResult<never> => {
+	const message = `\`${name}\` ${reason}`;
+	return failed(
+		new InthError('invalid_request', message, {
+			details: { fieldErrors: { [name]: [message] }, formErrors: [] },
+		})
+	);
+};
+
 /** The refusal for a parameter no URL can carry */
 const unusableSegment = (name: string): InthResult<never> =>
-	failed(
-		new InthError(
-			'invalid_request',
-			`\`${name}\` cannot be sent in a URL: it is empty or a dot segment, or holds a character no URL can carry`
-		)
+	refusedField(
+		name,
+		'cannot be sent in a URL: it is empty or a dot segment, or holds a character no URL can carry'
 	);
 
 const wait = (milliseconds: number, signal: AbortSignal | undefined) =>
@@ -827,6 +864,7 @@ class Users {
 	 * const { data, error } = await inth.users.createIdentityToken({
 	 *   externalId: user.id,
 	 * });
+	 * if (error) throw error;
 	 * // In the browser:
 	 * // await client.identify({ externalId: user.id, identityToken: data.token });
 	 */
@@ -1022,13 +1060,26 @@ export type AcceptDocumentsParams = AcceptDocumentsBase &
 		| { readonly externalId?: undefined; readonly subjectId: string }
 	);
 
-/** Whether `value` is a `Date` that names no time, such as `new Date('')` */
-const isInvalidDate = (value: unknown): boolean =>
-	value instanceof Date && Number.isNaN(value.getTime());
+/**
+ * The time a `Date` names, in milliseconds since the epoch, `NaN` for an
+ * invalid one, or `undefined` for anything else. Read with
+ * `Date.prototype.getTime`, which throws on anything else, not `instanceof`,
+ * so a `Date` made in another realm, such as a `vm` context, is read too
+ */
+const timeOf = (value: unknown): number | undefined => {
+	if (typeof value !== 'object' || value === null) {
+		return undefined;
+	}
+	try {
+		return Date.prototype.getTime.call(value);
+	} catch {
+		return undefined;
+	}
+};
 
-/** The refusal for a date that names no time */
+/** The refusal for a date that names no time, such as `new Date('')` */
 const invalidDate = (name: string): InthResult<never> =>
-	failed(new InthError('invalid_request', `\`${name}\` is an invalid date`));
+	refusedField(name, 'is an invalid date');
 
 class Documents {
 	/** Sends one call, with the client's retries and limits */
@@ -1055,15 +1106,15 @@ class Documents {
 		params: PublishDocumentParams,
 		options?: InthRequestOptions
 	): Promise<InthResult<InthDocument>> {
-		const { effectiveDate } = params;
-		if (isInvalidDate(effectiveDate)) {
+		const effectiveTime = timeOf(params.effectiveDate);
+		if (Number.isNaN(effectiveTime)) {
 			return invalidDate('effectiveDate');
 		}
 		const body: Schemas['DocumentPublishRequest'] = {
 			effectiveDate:
-				effectiveDate instanceof Date
-					? effectiveDate.toISOString()
-					: effectiveDate,
+				effectiveTime === undefined
+					? String(params.effectiveDate)
+					: new Date(effectiveTime).toISOString(),
 			hash: params.hash,
 			requiresAcceptance: params.requiresAcceptance,
 			version: params.version,
@@ -1082,6 +1133,25 @@ class Documents {
 			},
 			options
 		);
+		if (answer.error?.retryable) {
+			// It may have been stored, so it must not be sent again unchecked
+			const { error } = answer;
+			return failed(
+				new InthError(
+					error.code,
+					`${error.message}. The version may have been stored: check documents.current before you publish again`,
+					{
+						apiCode: error.apiCode,
+						cause: error.cause,
+						details: error.details,
+						requestId: error.requestId,
+						retryAfter: error.retryAfter,
+						retryable: false,
+						status: error.status,
+					}
+				)
+			);
+		}
 		return answer.error ? answer : ok(answer.data.document);
 	}
 
@@ -1136,8 +1206,8 @@ class Documents {
 		params: AcceptDocumentsParams,
 		options?: InthRequestOptions
 	): Promise<InthResult<InthAcceptances>> {
-		const { acceptedAt } = params;
-		if (isInvalidDate(acceptedAt)) {
+		const acceptedTime = timeOf(params.acceptedAt);
+		if (Number.isNaN(acceptedTime)) {
 			return invalidDate('acceptedAt');
 		}
 		// Copied once, so the body and the check below read the same list
@@ -1167,9 +1237,9 @@ class Documents {
 				body: JSON.stringify({
 					acceptances,
 					acceptedAt:
-						acceptedAt instanceof Date
-							? acceptedAt.getTime()
-							: (acceptedAt ?? Date.now()),
+						typeof params.acceptedAt === 'number'
+							? params.acceptedAt
+							: (acceptedTime ?? Date.now()),
 					context: {
 						ipAddress: params.context.ipAddress,
 						userAgent: params.context.userAgent,
@@ -1196,7 +1266,9 @@ class Documents {
 	 *   externalId: user.id,
 	 *   types: ['privacy_policy'],
 	 * });
-	 * if (error || !data.privacy_policy.acceptedLatest) askToAccept();
+	 * // A failed check says nothing about the user: do not ask them again
+	 * if (error) throw error;
+	 * if (!data.privacy_policy.acceptedLatest) askToAccept();
 	 */
 	async check<const Types extends readonly InthDocumentType[]>(
 		params: CheckDocumentsParams<Types>,
@@ -1261,6 +1333,13 @@ export class Inth {
 	constructor(options: InthOptions = {}) {
 		// Workers without `nodejs_compat` have no `process`: pass both there
 		const environment = globalThis.process?.env;
+		// A caller without types may pass anything
+		for (const name of ['secretKey', 'projectUrl'] as const) {
+			const value: unknown = options[name];
+			if (value !== undefined && typeof value !== 'string') {
+				throw unusableSetup(`\`${name}\` must be a string.`);
+			}
+		}
 		const secretKey = (
 			options.secretKey ??
 			environment?.INTH_SECRET_KEY ??
@@ -1346,7 +1425,11 @@ export class Inth {
 			// The body can still fail after the headers arrive. One that
 			// stalls is a timeout and one that is cut off is a network failure;
 			// neither is an answer in the wrong shape
-			const text = await response.text().catch(() => undefined);
+			let readFailure: unknown;
+			const text = await response.text().catch((error: unknown) => {
+				readFailure = error;
+				return undefined;
+			});
 			if (text === undefined && !response.ok) {
 				// The status says what happened, and its `Retry-After` still holds
 				return { error: refusalError(response, undefined, requestId) };
@@ -1358,7 +1441,7 @@ export class Inth {
 						signal.aborted
 							? 'The API did not answer in time'
 							: 'The answer was cut off',
-						{ requestId, status: response.status }
+						{ cause: readFailure, requestId, status: response.status }
 					),
 				};
 			}
