@@ -180,6 +180,8 @@ export interface OptOutSurfaceContext {
 /**
  * Record an opt-out in one click and open the confirmation view under an
  * opt-out policy. Under any other policy model, open the preference dialog.
+ * When an external CMP owns consent, record nothing and ask that provider to
+ * open its own preferences; the result is `not-available`.
  *
  * `commands.optOut()` records locally before its first `await`, so the
  * confirmation view opens synchronously without waiting on the network.
@@ -193,13 +195,16 @@ export const optOutConsentSurface = function optOutConsentSurface(
 	const opener =
 		context?.opener === undefined ? readFocusedElement() : context.opener;
 	const before = kernel.getSnapshot();
+	if (before.externalPermissions) {
+		// An external CMP owns the decision, and the kernel rejects a local
+		// opt-out. Ask that provider to open its own preferences instead.
+		showConsentSurface(kernel, 'dialog');
+		return Promise.resolve({ ok: false, reason: 'not-available' });
+	}
 	const pending = kernel.commands.optOut({
 		actionAt: context?.actionAt,
 		uiSource: context?.uiSource ?? before.activeUI,
 	});
-	if (before.externalPermissions) {
-		return pending;
-	}
 	if (!resolveOptOutState(before).available) {
 		showConsentSurface(kernel, 'dialog');
 		return pending;

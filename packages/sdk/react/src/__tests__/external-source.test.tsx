@@ -3,6 +3,7 @@ import { useContext, useEffect, StrictMode } from 'react';
 import { expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
+import { ConsentDialogLink } from '../components/consent-preferences-link';
 import { KernelContext } from '../context';
 import { useHasConsentUI, useSetActiveUI } from '../hooks';
 import { IABProvider, useIAB } from '../iab-context';
@@ -143,5 +144,42 @@ test('external IAB saves reject instead of waiting for a handle that cannot moun
 			})
 		)
 	);
+	await view.unmount();
+});
+
+test('the opt-out link under an external source opens that source and records nothing here', async () => {
+	const openPreferences = vi.fn();
+	const unhandled = vi.fn();
+	window.addEventListener('unhandledrejection', unhandled);
+	const view = await render(
+		<InthProvider
+			options={{
+				consentSource: {
+					getPermissions: () => ({ marketing: true }),
+					openPreferences,
+					subscribe: () => () => {},
+				},
+				iframeBlocker: false,
+				mode: transportMode({ init: vi.fn() }),
+			}}
+		>
+			<Controls />
+			<ConsentDialogLink right="opt-out">Do not sell</ConsentDialogLink>
+		</InthProvider>
+	);
+	await vi.dynamicImportSettled();
+
+	await view.getByRole('button', { name: 'Do not sell' }).click();
+	await vi.waitFor(() => expect(openPreferences).toHaveBeenCalledTimes(1));
+	// The link discards the action's promise, so a rejection would surface here.
+	await new Promise((resolve) => {
+		setTimeout(resolve, 50);
+	});
+
+	expect(unhandled).not.toHaveBeenCalled();
+	expect(openPreferences).toHaveBeenCalledTimes(1);
+	expect(kernel.getSnapshot().optOut).toBeNull();
+	expect(kernel.getSnapshot().activeUI).toBe('none');
+	window.removeEventListener('unhandledrejection', unhandled);
 	await view.unmount();
 });
