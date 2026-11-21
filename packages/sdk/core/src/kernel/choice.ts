@@ -1071,6 +1071,10 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			const decidingCategory = optOutDecidingCategory(before.evaluationPolicy);
 			const grantsDecidingCategory =
 				decidingCategory !== null && confirmedValue(decidingCategory) === true;
+			const keepsOptOut =
+				before.optOut !== null &&
+				decidingCategory !== null &&
+				confirmedValue(decidingCategory) === false;
 			const optOutBlocker = optOutLiftBlocker(before);
 			const liftsOptOut = grantsDecidingCategory && optOutBlocker === null;
 			const liftsAccountOptOut =
@@ -1105,7 +1109,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			// even when a listener records another choice in response.
 			const { after, generation, optOutActVersion } = batch(() => {
 				const actVersion =
-					liftsOptOut || recordedOptOut !== null
+					liftsOptOut || recordedOptOut !== null || keepsOptOut
 						? runtime.noteOptOutAct()
 						: runtime.getOptOutActVersion();
 				commit(patch);

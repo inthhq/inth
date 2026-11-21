@@ -2449,4 +2449,49 @@ describe('opt-out network sync and queue', () => {
 		expect(kernel.getSnapshot().optOut).toEqual(accountOptOut);
 		kernel.dispose();
 	});
+
+	test('save() granting marketing does not lift an account-held opt-out after a newer refusal', async () => {
+		const accountOptOut: OptOutRecord = {
+			heldBy: 'person',
+			method: 'api',
+			recordedAt: NOW - 1000,
+			rights: ['sale', 'share'],
+		};
+		const grantDeferred = Promise.withResolvers<SaveResult>();
+		const save = vi
+			.fn<NonNullable<KernelTransport['save']>>()
+			.mockImplementationOnce(() => grantDeferred.promise)
+			.mockImplementation((payload) =>
+				Promise.resolve({ ok: true, subjectId: payload.subjectId })
+			);
+		const liftOptOut = vi.fn<NonNullable<KernelTransport['liftOptOut']>>(
+			(payload) =>
+				Promise.resolve({
+					ok: true,
+					optOut: null,
+					subjectId: payload.subjectId,
+				})
+		);
+		const kernel = kernelOn({
+			initialRecords: {
+				now: NOW,
+				optOut: accountOptOut,
+				subject: { subjectId: SUBJECT },
+			},
+			initialUser: { externalId: 'user_123', identityToken: 'tok_1' },
+			transport: { liftOptOut, save },
+		});
+
+		const grantSave = kernel.commands.save({ marketing: true });
+		await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+
+		await kernel.commands.save({ marketing: false });
+		grantDeferred.resolve({ ok: true, subjectId: SUBJECT });
+		await grantSave;
+		await flushMacrotasks();
+
+		expect(liftOptOut).not.toHaveBeenCalled();
+		expect(kernel.getSnapshot().optOut).toEqual(accountOptOut);
+		kernel.dispose();
+	});
 });
