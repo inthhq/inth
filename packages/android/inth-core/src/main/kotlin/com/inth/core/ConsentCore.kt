@@ -1373,6 +1373,9 @@ class ConsentCore @InthInternalApi constructor(
 	 * record is already held, this is a no-op that returns the existing record with
 	 * [OptOutResult.changed] false and without bumping the revision. When a notice prompt
 	 * is owed under the same rule, it is acknowledged in the same commit.
+	 *
+	 * Performs a blocking durable write. Android app code should call `awaitOptOut()`
+	 * from `inth-android` rather than calling this on the main thread.
 	 */
 	fun optOut(): OptOutResult = mutate { mutation ->
 		val now = clock.nowMillis()
@@ -1522,6 +1525,10 @@ class ConsentCore @InthInternalApi constructor(
 	 * answer clears the record and reports success; a non-null answer stores it and reports
 	 * [OptInRefusalReason.HELD_BY_ACCOUNT]; a failed request keeps the record, queues nothing
 	 * and reports [OptInRefusalReason.HELD_BY_ACCOUNT].
+	 *
+	 * Performs blocking disk I/O, and blocks on the network when the account holds the record.
+	 * Android app code should call `awaitOptIn()` from `inth-android` rather than calling this
+	 * on the main thread.
 	 */
 	fun optIn(): OptInResult {
 		val now = clock.nowMillis()

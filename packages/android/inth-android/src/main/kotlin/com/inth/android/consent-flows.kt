@@ -6,6 +6,8 @@ import com.inth.core.CommitIntent
 import com.inth.core.CommitResult
 import com.inth.core.ConsentCore
 import com.inth.core.FlushResult
+import com.inth.core.OptInResult
+import com.inth.core.OptOutResult
 import com.inth.core.Subscription
 import com.inth.core.model.ConsentCategory
 import com.inth.core.model.ConsentDecision
@@ -89,6 +91,31 @@ suspend fun ConsentCore.awaitRefresh() {
  */
 suspend fun ConsentCore.awaitFlushPending(): FlushResult =
 	withContext(Dispatchers.IO) { flushPending() }
+
+/**
+ * [ConsentCore.optOut] as a suspend function, run on [Dispatchers.IO].
+ *
+ * Recording an opt-out performs a durable write, so it never runs on the caller's
+ * thread. Cancelling the caller does not cancel an opt-out that has started: the
+ * record is either persisted whole or refused whole, and the result is dropped.
+ *
+ * @return The same [OptOutResult] the blocking call returns.
+ */
+suspend fun ConsentCore.awaitOptOut(): OptOutResult =
+	withContext(Dispatchers.IO) { optOut() }
+
+/**
+ * [ConsentCore.optIn] as a suspend function, run on [Dispatchers.IO].
+ *
+ * Lifting a device-held opt-out performs a durable write, and lifting an account-held
+ * opt-out (`person` or `both`) makes a blocking network request to the backend, so
+ * this never runs on the caller's thread. Cancelling the caller does not stop a lift
+ * that has started.
+ *
+ * @return The same [OptInResult] the blocking call returns.
+ */
+suspend fun ConsentCore.awaitOptIn(): OptInResult =
+	withContext(Dispatchers.IO) { optIn() }
 
 /**
  * The hot flows for one core, created on first use and kept for the core's lifetime.
