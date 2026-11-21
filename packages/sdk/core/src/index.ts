@@ -36,6 +36,7 @@ export {
 	optInPromptAllowedAt,
 	optOutDecidingCategory,
 	optOutDenyCategories,
+	saveWouldLiftOptOut,
 } from './consent-record';
 export { createConsentKernel } from './kernel';
 

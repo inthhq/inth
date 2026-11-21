@@ -35,6 +35,7 @@
  */
 import { compareCanonical } from '@inth/sdk-schema/canonical-order';
 
+import { saveWouldLiftOptOut } from '../consent-record/opt-out-rules';
 import {
 	DENIED_CONSENTS,
 	displayedCategories as listDisplayed,
@@ -45,6 +46,8 @@ import { resolveCategoryOptOutLock } from '../libs/opt-out-state';
 import { listedVendors } from '../libs/vendor-listing';
 import { vendorAxisActive } from '../libs/vendors';
 import { deniedVendorIds, toggleableVendorIds } from '../modules/vendor-denial';
+import { openOptInConfirmation } from '../surface-actions/opt-in';
+import { saveConsentSurface } from '../surface-actions/save';
 import type {
 	ConsentKernel,
 	ConsentSnapshot,
@@ -551,6 +554,16 @@ export const createPreferenceDraft = function createPreferenceDraft(
 					reset();
 					return pending;
 				}
+				if (saveWouldLiftOptOut(kernel.getSnapshot(), input, categories)) {
+					openOptInConfirmation(kernel, () =>
+						saveConsentSurface(kernel, () => {
+							const pending = kernel.commands.save(input, context);
+							reset();
+							return pending;
+						})
+					);
+					return Promise.resolve({ ok: false });
+				}
 				const pending = kernel.commands.save(input, context);
 				// The bulk choice supersedes every staged edit.
 				reset();
@@ -558,6 +571,20 @@ export const createPreferenceDraft = function createPreferenceDraft(
 			}
 			const draftInput = toSaveInput(categories);
 			if (!draftInput) {
+				return Promise.resolve({ ok: false });
+			}
+			if (saveWouldLiftOptOut(kernel.getSnapshot(), draftInput, categories)) {
+				openOptInConfirmation(kernel, () =>
+					saveConsentSurface(
+						kernel,
+						() => {
+							const pending = kernel.commands.save(draftInput, context);
+							refresh();
+							return pending;
+						},
+						() => !current().isDirty
+					)
+				);
 				return Promise.resolve({ ok: false });
 			}
 			const pending = kernel.commands.save(draftInput, context);
