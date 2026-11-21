@@ -14,6 +14,7 @@ import {
 	createConsentKernel,
 	createKernel as createInternalKernel,
 } from '../../kernel';
+import type { InternalKernel } from '../../kernel/internals';
 import { createMemoryOutboxStore } from '../../kernel/save-outbox';
 import type { SaveOutboxStore } from '../../kernel/save-outbox';
 import { OPT_OUT_CONFIRMATION_STORAGE_KEY } from '../../libs/storage-keys';
@@ -34,7 +35,6 @@ import type {
 	KernelConfig,
 	KernelVendorsState,
 	LiftOptOutTransportResult,
-	OptOutResult,
 	OptOutTransportResult,
 	SaveResult,
 } from '../../types';
@@ -422,8 +422,10 @@ describe('watchRevocationReload with durable opt-out', () => {
 			initialRecords: {
 				choice: explicitChoice(
 					{ marketing: false, measurement: false },
-					resolution.fingerprints.choice,
-					NOW - 1000
+					{
+						confirmedAt: NOW - 1000,
+						fingerprint: resolution.fingerprints.choice,
+					}
 				),
 			},
 		});
@@ -459,7 +461,7 @@ describe('watchRevocationReload with durable opt-out', () => {
 
 	it('does not reload when a Global Privacy Control signal records an opt-out', async () => {
 		const kernel = createOptOutKernel();
-		kernel.markLive();
+		(kernel as InternalKernel).markLive();
 		const { onBeforeReload, reload } = watch(kernel);
 		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
 
@@ -564,14 +566,14 @@ describe('watchRevocationReload with durable opt-out', () => {
 
 	it('waits for the opt-out request up to the cap before reloading and replays a failed opt-out on a new kernel', async () => {
 		const outboxStore = createMemoryOutboxStore();
-		let finishOptOut: (result: OptOutResult) => void = () => undefined;
+		let finishOptOut: (result: OptOutTransportResult) => void = () => undefined;
 		const sentKeys: string[] = [];
 		const first = createOptOutKernel(
 			{
 				transport: {
 					optOut: (payload) => {
 						sentKeys.push(payload.idempotencyKey);
-						return new Promise<OptOutResult>((resolve) => {
+						return new Promise<OptOutTransportResult>((resolve) => {
 							finishOptOut = resolve;
 						});
 					},
