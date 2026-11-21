@@ -6,6 +6,7 @@ import {
 	inject,
 	input,
 	signal,
+	untracked,
 } from '@angular/core';
 import {
 	ConsentButton,
@@ -15,6 +16,7 @@ import {
 	SURFACE_SCOPES,
 	ɵBranding as Branding,
 	ɵNoStyleScope as NoStyleScope,
+	ɵOptInConfirmation as OptInConfirmation,
 	ɵPolicyActions as PolicyActions,
 	ɵresolveNoStyle as resolveNoStyle,
 	ɵshouldShowBranding as shouldShowBranding,
@@ -32,17 +34,26 @@ import {
 	SwitchThumb,
 	uniqueId,
 } from '@inth/angular/primitives';
-import type { AllConsentNames, ConsentType } from '@inth/sdk/engine';
+import type {
+	AllConsentNames,
+	ConsentType,
+	SaveUISource,
+} from '@inth/sdk/engine';
 import { actionAppearanceFromTheme } from '@inth/sdk/engine';
 import { createPreferenceDraft } from '@inth/sdk/preference-draft';
+import { optInConsentSurface } from '@inth/sdk/surface-actions';
 import {
 	resolveCategoryOptOutLock,
 	resolveCategoryTitle,
 	resolveConsentPresentation,
+	resolveOptOutBlockHeading,
 	resolveOptOutCopy,
+	resolveOptOutReceiptSentence,
 } from '@inth/sdk/surface-state';
 import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
+import buttonStyles from '@inth/sdk/ui/styles/components/button';
 import managerStyles from '@inth/sdk/ui/styles/components/consent-manager';
+import optOutConfirmationStyles from '@inth/sdk/ui/styles/components/opt-out-confirmation';
 import switchStyles from '@inth/sdk/ui/styles/components/switch';
 import { resolveActionAppearance } from '@inth/sdk/ui/theme';
 import type { ConsentActionKey } from '@inth/sdk/ui/theme';
@@ -56,6 +67,23 @@ import { ConsentVendorList } from './consent-vendor-list';
 import { DIALOG_SHEETS } from './dialog-sheets';
 
 type ChoiceCategory = Exclude<AllConsentNames, 'necessary'>;
+
+const formatRecordedAt = function formatRecordedAt(
+	at: number,
+	language: string
+): string {
+	try {
+		return new Intl.DateTimeFormat(language, {
+			dateStyle: 'medium',
+			timeStyle: 'short',
+		}).format(at);
+	} catch {
+		return new Intl.DateTimeFormat(undefined, {
+			dateStyle: 'medium',
+			timeStyle: 'short',
+		}).format(at);
+	}
+};
 
 /**
  * The widget's root element and everything in it. The host is the root
@@ -105,18 +133,153 @@ type ChoiceCategory = Exclude<AllConsentNames, 'necessary'>;
 				</button>
 			</div>
 		}
-		@if (optOutState().honored) {
+		@if (optOutState().available) {
+			<section
+				[attr.aria-labelledby]="optOutHeadingId"
+				[class]="optOutBlockStyle().className || ''"
+				[attr.style]="styleOf(optOutBlockStyle())"
+				data-testid="consent-widget-opt-out"
+			>
+				<h3
+					[id]="optOutHeadingId"
+					[class]="resolvedNoStyle() ? '' : manager.optOutHeading || ''"
+					data-testid="consent-widget-opt-out-heading"
+				>
+					{{ optOutBlockHeading() }}
+				</h3>
+				@if (optOutState().honored) {
+					<p
+						[class]="optOutStatusStyle().className || ''"
+						[attr.style]="styleOf(optOutStatusStyle())"
+						role="status"
+						data-testid="consent-widget-opt-out-status"
+					>
+						{{ optOutStatusText() }}
+					</p>
+					<p
+						[class]="
+							resolvedNoStyle() ? '' : optOutConfirmation.description || ''
+						"
+						data-testid="consent-widget-opt-out-description"
+					>
+						{{ receiptSentence() }}
+					</p>
+					@if (hasReceiptDetails()) {
+						<dl
+							[class]="
+								resolvedNoStyle() ? '' : optOutConfirmation.receipt || ''
+							"
+							data-testid="consent-widget-opt-out-receipt"
+						>
+							@if (recordedAt(); as recorded) {
+								<div
+									[class]="
+										resolvedNoStyle() ? '' : optOutConfirmation.receiptRow || ''
+									"
+								>
+									<dt
+										[class]="
+											resolvedNoStyle()
+												? ''
+												: optOutConfirmation.receiptLabel || ''
+										"
+									>
+										{{ optOutCopy().recordedLabel }}
+									</dt>
+									<dd
+										[class]="
+											resolvedNoStyle()
+												? ''
+												: optOutConfirmation.receiptValue || ''
+										"
+									>
+										<time
+											[attr.datetime]="recorded.iso"
+											data-testid="consent-widget-opt-out-recorded-at"
+										>
+											{{ recorded.formatted }}
+										</time>
+									</dd>
+								</div>
+							}
+							@if (optOutReceipt().reference; as reference) {
+								<div
+									[class]="
+										resolvedNoStyle() ? '' : optOutConfirmation.receiptRow || ''
+									"
+								>
+									<dt
+										[class]="
+											resolvedNoStyle()
+												? ''
+												: optOutConfirmation.receiptLabel || ''
+										"
+									>
+										{{ optOutCopy().referenceLabel }}
+									</dt>
+									<dd
+										[class]="
+											resolvedNoStyle()
+												? ''
+												: optOutConfirmation.receiptValue || ''
+										"
+									>
+										<code
+											[class]="
+												resolvedNoStyle()
+													? ''
+													: optOutConfirmation.reference || ''
+											"
+											data-testid="consent-widget-opt-out-reference"
+										>
+											{{ reference }}
+										</code>
+									</dd>
+								</div>
+							}
+						</dl>
+					}
+					@if (optOutState().lock !== 'gpc-active') {
+						<button
+							type="button"
+							[class]="resolvedNoStyle() ? '' : manager.optInLink || ''"
+							data-testid="consent-widget-opt-in-link"
+							(click)="requestOptIn()"
+						>
+							{{ optOutCopy().optInLink }}
+						</button>
+					}
+				} @else {
+					<p
+						[class]="resolvedNoStyle() ? '' : manager.optOutDescription || ''"
+						data-testid="consent-widget-opt-out-description"
+					>
+						{{ optOutCopy().notOptedOut }}
+					</p>
+					<div [class]="resolvedNoStyle() ? '' : manager.optOutActions || ''">
+						<button
+							type="button"
+							[attr.data-mode]="resolvedNoStyle() ? null : 'filled'"
+							[attr.data-size]="resolvedNoStyle() ? null : 'small'"
+							[attr.data-variant]="resolvedNoStyle() ? null : 'primary'"
+							[class]="optOutButtonStyle().className || ''"
+							[attr.style]="styleOf(optOutButtonStyle())"
+							data-testid="consent-widget-opt-out-button"
+							(click)="requestOptOut()"
+						>
+							{{ optOutCopy().action }}
+						</button>
+					</div>
+				}
+			</section>
+		} @else if (optOutState().honored) {
 			<p
 				[class]="optOutStatusStyle().className || ''"
 				[attr.style]="styleOf(optOutStatusStyle())"
 				role="status"
 				data-testid="consent-widget-opt-out-status"
 			>
-				{{
-					optOutState().via === 'signal'
-						? optOutCopy().statusSignal
-						: optOutCopy().statusRequest
-				}}
+				{{ optOutStatusText() }}
 			</p>
 		}
 		<div
@@ -324,11 +487,19 @@ export class ConsentWidgetRoot {
 	readonly noStyle = input<boolean | undefined>(undefined);
 	/** Extra class for the widget's root element. */
 	readonly rootClass = input<string | undefined>(undefined);
+	/** Source identifier recorded with opt-out and opt-in actions. */
+	readonly uiSource = input<SaveUISource>('widget');
 
 	/** @internal */
 	protected readonly accordion = accordionStyles;
 	/** @internal */
+	protected readonly manager = managerStyles;
+	/** @internal */
+	protected readonly optOutConfirmation = optOutConfirmationStyles;
+	/** @internal */
 	protected readonly switches = switchStyles;
+	/** @internal */
+	protected readonly optOutHeadingId = `${this.#id}-opt-out-heading`;
 
 	/** @internal */
 	protected readonly resolvedNoStyle = resolveNoStyle(this.noStyle);
@@ -337,9 +508,49 @@ export class ConsentWidgetRoot {
 	/** @internal */
 	protected readonly optOutState = this.consent.optOutState;
 	/** @internal */
+	protected readonly optOutReceipt = this.consent.optOutReceipt;
+	/** @internal */
+	protected readonly language = computed(
+		() => this.consent.translations()?.language ?? 'en'
+	);
+	/** @internal */
 	protected readonly optOutCopy = computed(() =>
 		resolveOptOutCopy(this.translations())
 	);
+	/** @internal */
+	protected readonly optOutStatusText = computed(() =>
+		this.optOutState().via === 'signal'
+			? this.optOutCopy().statusSignal
+			: this.optOutCopy().statusRequest
+	);
+	/** @internal */
+	protected readonly optOutBlockHeading = computed(() =>
+		resolveOptOutBlockHeading(
+			this.translations(),
+			this.optOutReceipt(),
+			this.consent.presentation()?.optOutLink
+		)
+	);
+	/** @internal */
+	protected readonly receiptSentence = computed(() =>
+		resolveOptOutReceiptSentence(this.translations(), this.optOutReceipt())
+	);
+	/** @internal */
+	protected readonly hasReceiptDetails = computed(() => {
+		const receipt = this.optOutReceipt();
+		return receipt.at !== null || receipt.reference !== null;
+	});
+	/** @internal */
+	protected readonly recordedAt = computed(() => {
+		const { at } = this.optOutReceipt();
+		if (at === null) {
+			return null;
+		}
+		return {
+			formatted: formatRecordedAt(at, this.language()),
+			iso: new Date(at).toISOString(),
+		};
+	});
 	/** @internal */
 	protected readonly textDirection = computed(() =>
 		getTextDirection(this.consent.translations()?.language)
@@ -367,6 +578,14 @@ export class ConsentWidgetRoot {
 			},
 			this.resolvedNoStyle()
 		)
+	);
+	/** @internal */
+	protected readonly optOutBlockStyle = computed(() =>
+		this.#slot('consentWidgetOptOut', managerStyles.optOut)
+	);
+	/** @internal */
+	protected readonly optOutButtonStyle = computed(() =>
+		this.#slot('buttonPrimary', buttonStyles.button)
 	);
 	/** @internal */
 	protected readonly optOutStatusStyle = computed(() =>
@@ -504,6 +723,18 @@ export class ConsentWidgetRoot {
 	}
 
 	/** @internal */
+	protected requestOptOut(): void {
+		void this.consent.requestOptOut({ uiSource: this.uiSource() });
+	}
+
+	/** @internal */
+	protected requestOptIn(): void {
+		optInConsentSurface(untracked(this.consent.kernel), {
+			uiSource: this.uiSource(),
+		});
+	}
+
+	/** @internal */
 	protected toggleConsent(name: AllConsentNames, checked: boolean): void {
 		this.consent.setSelectedConsent(name, checked);
 	}
@@ -556,9 +787,10 @@ export class ConsentWidgetRoot {
 	// The host adds no box: the root inside lays out as if it were the
 	// host's place in the page.
 	host: { style: 'display: contents' },
-	imports: [ConsentWidgetRoot],
+	imports: [ConsentWidgetRoot, OptInConfirmation],
 	selector: 'inth-consent-widget',
 	template: `@if (consent.hasConsentUi()) {
+		<inth-opt-in-confirmation [noStyle]="noStyle()" />
 		<div
 			data-testid="consent-widget-root"
 			[hideBranding]="hideBranding()"

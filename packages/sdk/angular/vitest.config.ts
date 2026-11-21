@@ -259,7 +259,7 @@ const workspaceAliases = [
 		replacement: resolve(__dirname, 'src/public-api.ts'),
 	},
 	{
-		find: /^@inth\/angular\/(?<entry>consent-dialog|consent-dialog-trigger|consent-gate|consent-widget|iab|primitives|provider)$/u,
+		find: /^@inth\/angular\/(?<entry>consent-dialog|consent-dialog-trigger|consent-gate|consent-widget|iab|primitives|provider|testing)$/u,
 		replacement: resolve(__dirname, '$1/src/public-api.ts'),
 	},
 	{

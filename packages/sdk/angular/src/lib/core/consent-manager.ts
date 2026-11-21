@@ -41,6 +41,8 @@ import type {
 } from '@inth/sdk/preference-draft';
 import type { ConsentRuntime } from '@inth/sdk/runtime/provider';
 import {
+	getOptOutReceiptData,
+	getServerOptOutReceiptData,
 	hasConsentPreferences,
 	hasConsentUI,
 	hasOptOutConfirmationHost,
@@ -48,8 +50,10 @@ import {
 	isSnapshotVendorAllowed,
 	optOutConsentSurface,
 	saveConsentSurface,
+	saveConsentSurfaceWithOptInCheck,
 	showConsentSurface,
 	subscribeOptOutConfirmation,
+	subscribeOptOutReceiptData,
 } from '@inth/sdk/surface-actions';
 import {
 	allConsentNames,
@@ -62,11 +66,16 @@ import {
 	iabSurfaceActions,
 	pendingBootSnapshot,
 	policyNeedsIAB,
+	resolveOptOutReceipt,
 	resolveOptOutState,
 	resolveSurfaceTranslations,
 	vendorsListedUnder,
 } from '@inth/sdk/surface-state';
-import type { ResolvedOptOutState } from '@inth/sdk/surface-state';
+import type {
+	OptOutReceipt,
+	OptOutReceiptData,
+	ResolvedOptOutState,
+} from '@inth/sdk/surface-state';
 import type { CompleteTranslations } from '@inth/sdk/translations';
 import type { Theme } from '@inth/sdk/ui/theme';
 
@@ -255,8 +264,14 @@ export class ConsentManager {
 	#draftFailures = 0;
 	#unsubscribeKernel: () => void = noop;
 	#unsubscribeOptOutConfirmation: () => void = noop;
+	#unsubscribeOptOutReceiptData: () => void = noop;
 	readonly #optOutConfirmationOpen = signal(false);
 	readonly #hasStandaloneOptOutConfirmation = signal(false);
+	readonly #optOutReceiptData = signal<Readonly<OptOutReceiptData>>({
+		localAct: null,
+		reference: null,
+		rightsConfirmed: false,
+	});
 	readonly #consentListeners = new Set<(state: ConsentState) => void>();
 	#noBootPrefetch = false;
 
@@ -341,6 +356,8 @@ export class ConsentManager {
 	readonly optOut: Signal<ConsentSnapshot['optOut']>;
 	/** Opt-out display state derived from the current snapshot. */
 	readonly optOutState: Signal<ResolvedOptOutState>;
+	/** Opt-out receipt derived from the current snapshot and local receipt data. */
+	readonly optOutReceipt: Signal<OptOutReceipt>;
 	/** Whether the opt-out confirmation view is currently open. */
 	readonly optOutConfirmationOpen: Signal<boolean> =
 		this.#optOutConfirmationOpen.asReadonly();
@@ -480,6 +497,12 @@ export class ConsentManager {
 		this.noticeDismissal = field('noticeDismissal');
 		this.optOut = field('optOut');
 		this.optOutState = computed(() => resolveOptOutState(snapshot()));
+		this.optOutReceipt = computed(() =>
+			resolveOptOutReceipt(
+				{ optOut: snapshot().optOut },
+				this.#optOutReceiptData()
+			)
+		);
 		this.privacySignals = field('privacySignals');
 		this.resolution = field('resolution');
 		this.policyRule = field('policyRule');
@@ -567,6 +590,7 @@ export class ConsentManager {
 			unsubscribeRuntime();
 			this.#unsubscribeKernel();
 			this.#unsubscribeOptOutConfirmation();
+			this.#unsubscribeOptOutReceiptData();
 			this.#stopDraft();
 			owned?.dispose();
 		});
@@ -676,22 +700,33 @@ export class ConsentManager {
 		const kernel = untracked(this.#kernel);
 		const { draft } = this;
 		const categories = untracked(this.consentCategories);
-		const result = await saveConsentSurface(kernel, async () => {
-			if (type === 'custom') {
+		if (type === 'custom') {
+			const result = await saveConsentSurface(kernel, async () => {
 				await draft.save(categories);
 				return { ok: true };
+			});
+			if (!result.ok) {
+				throw new Error('Unable to save preferences.');
 			}
-			const input = type === 'all' ? 'all' : 'none';
-			if (this.#preferenceDraft) {
-				return this.#preferenceDraft.save({ input });
-			}
-			// No category list: the kernel narrows a bulk choice to its own
-			// choice scope, the categories the draft displays.
-			const pending = kernel.commands.save(input);
-			// A bulk choice supersedes every staged edit.
-			draft.reset();
-			return pending;
-		});
+			return;
+		}
+		const input = type === 'all' ? 'all' : 'none';
+		const preferenceDraft = this.#preferenceDraft;
+		const result = preferenceDraft
+			? await saveConsentSurface(kernel, () => preferenceDraft.save({ input }))
+			: await saveConsentSurfaceWithOptInCheck(
+					kernel,
+					input,
+					() => {
+						// No category list: the kernel narrows a bulk choice to its own
+						// choice scope, the categories the draft displays.
+						const pending = kernel.commands.save(input);
+						// A bulk choice supersedes every staged edit.
+						draft.reset();
+						return pending;
+					},
+					{ categories }
+				);
 		if (!result.ok) {
 			throw new Error('Unable to save preferences.');
 		}
@@ -910,6 +945,7 @@ export class ConsentManager {
 	#follow(kernel: ConsentKernel): void {
 		this.#unsubscribeKernel();
 		this.#unsubscribeOptOutConfirmation();
+		this.#unsubscribeOptOutReceiptData();
 		this.#kernel.set(kernel);
 		const syncConfirmation = () => {
 			this.#optOutConfirmationOpen.set(isOptOutConfirmationOpen(kernel));
@@ -921,6 +957,17 @@ export class ConsentManager {
 		this.#unsubscribeOptOutConfirmation = subscribeOptOutConfirmation(
 			kernel,
 			syncConfirmation
+		);
+		const readReceiptData = () =>
+			this.#browser
+				? getOptOutReceiptData(kernel)
+				: getServerOptOutReceiptData(kernel);
+		this.#optOutReceiptData.set(readReceiptData());
+		this.#unsubscribeOptOutReceiptData = subscribeOptOutReceiptData(
+			kernel,
+			() => {
+				this.#optOutReceiptData.set(readReceiptData());
+			}
 		);
 		const emit = (snapshot: ConsentSnapshot) => {
 			this.#snapshot.set(snapshot);

@@ -43,6 +43,7 @@ import {
 } from '../core/consent-styles';
 import { ConsentTheme } from '../core/consent-theme';
 import { NoStyleScope, resolveNoStyle } from '../core/no-style';
+import { OptInConfirmation } from '../dialog/opt-in-confirmation';
 import { FocusTrap } from '../overlay/focus-trap';
 import { Overlay } from '../overlay/overlay';
 import { Portal } from '../overlay/portal';
@@ -121,6 +122,7 @@ const primaryActions = function primaryActions(
 		FocusTrap,
 		InlineLegalLinks,
 		NgTemplateOutlet,
+		OptInConfirmation,
 		OptOutIcon,
 		Overlay,
 		PolicyActions,
@@ -130,7 +132,10 @@ const primaryActions = function primaryActions(
 	// Its parts resolve `noStyle` through this surface.
 	providers: [NoStyleScope],
 	selector: 'inth-consent-banner',
-	template: `
+	template: `<inth-opt-in-confirmation
+			[noStyle]="resolvedNoStyle()"
+			[disableAnimation]="resolvedDisableAnimation()"
+		/>
 		@if (visibility.shouldRender()) {
 			<div inthPortal>
 				@if (presentation().scrollLock) {
@@ -325,8 +330,7 @@ const primaryActions = function primaryActions(
 					</button>
 				}
 			}
-		</ng-template>
-	`,
+		</ng-template> `,
 })
 export class ConsentBanner {
 	/** @internal */
@@ -417,7 +421,6 @@ export class ConsentBanner {
 		() =>
 			this.consent.hasConsentUi() &&
 			this.consent.activeUI() === 'banner' &&
-			this.consent.promptRequirement().kind !== 'none' &&
 			this.models().includes(this.consent.model())
 	);
 
