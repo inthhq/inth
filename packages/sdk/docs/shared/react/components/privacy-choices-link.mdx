@@ -1,0 +1,54 @@
+---
+title: "PrivacyChoicesLink"
+description: "Shared PrivacyChoicesLink reference for React, TanStack Start, and Next.js."
+group: reference
+---
+
+{/* This file is NOT rendered directly. Sections are imported by framework pages. */}
+
+<section id="props">
+  ## Props
+
+  | Prop | Type | Default | Description |
+  | --- | --- | --- | --- |
+  | `variant` | `'do-not-sell' \| 'privacy-choices' \| 'california-privacy-choices'` | `presentation.optOutLink` (or `'do-not-sell'`) | Overrides the configured `presentation.optOutLink` form for this link. |
+  | `children` | `ReactNode` | Resolved link title | Replaces the default text while keeping the California Privacy Protection Agency opt-out icon for Privacy Choices variants. |
+  | `asChild` | `boolean` | `false` | Renders your own element, such as an anchor, instead of a `button`, and attaches the click handler and icon to it. |
+  | `noStyle` | `boolean` | `true` | Omits Inth button classes so your footer CSS controls the appearance. Pass `false` for Inth button styling. |
+  | `onClick` | `(event) => void` | none | Runs before the dialog opens. Call `event.preventDefault()` to keep it closed. |
+
+  Other `button` attributes such as `className`, `style`, `id`, and `aria-*` pass through to the rendered element. The component forwards a `ref` to the rendered button.
+</section>
+
+<section id="behavior">
+  ## Behavior
+
+  `PrivacyChoicesLink` renders the title resolved for the configured `presentation.optOutLink` (or the `variant` prop override):
+
+  - `'privacy-choices'`: "Your Privacy Choices" with the California Privacy Protection Agency opt-out icon beside it.
+  - `'california-privacy-choices'`: "Your California Privacy Choices" with the California Privacy Protection Agency opt-out icon beside it.
+  - `'do-not-sell'`: "Do Not Sell or Share My Personal Information" with no icon.
+
+  Activating `PrivacyChoicesLink` always opens `ConsentDialog`. It never records an opt-out by itself. Mount one `ConsentDialog` inside the same `InthProvider`.
+
+  `PrivacyChoicesLink` renders nothing when the active policy gives no opt-out right:
+
+  - No policy has resolved yet.
+  - The active policy model is not `opt-out` (such as an `opt-in` or `none` rule).
+  - The active rule's `rights` list does not include `'opt-out'`.
+  - An external consent source owns consent.
+
+  <include src="../../privacy-choices-link.mdx" />
+</section>
+
+<section id="accessibility">
+  ## Accessibility
+
+  The rendered `button` uses `type="button"`, carries `data-testid="privacy-choices-link"`, and activates with Enter and Space. The California Privacy Protection Agency opt-out icon carries `aria-hidden="true"` so screen readers announce the visible label once. With `asChild`, pass a focusable element such as a `button` or an anchor with an `href`.
+</section>
+
+<section id="verify">
+  ## Verify
+
+  Open the page under a US opt-out policy and check the footer. Confirm the link renders with the California opt-out icon for `'privacy-choices'` and `'california-privacy-choices'`, and without an icon for `'do-not-sell'`. Click it and confirm `ConsentDialog` opens without recording an opt-out. Switch to an EU opt-in region and confirm the link is absent from the DOM.
+</section>

@@ -152,6 +152,11 @@
 			"import": "./dist/panel-link.js",
 			"default": "./dist/panel-link.js"
 		},
+		"./privacy-choices-link": {
+			"types": "./dist-types/privacy-choices-link.d.ts",
+			"import": "./dist/privacy-choices-link.js",
+			"default": "./dist/privacy-choices-link.js"
+		},
 		"./consent-dialog-trigger": {
 			"types": "./dist-types/panel-trigger.d.ts",
 			"import": "./dist/panel-trigger.js",
@@ -225,6 +230,11 @@
 			"types": "./dist-types/components/panel-link/index.d.ts",
 			"import": "./dist/components/panel-link/index.js",
 			"default": "./dist/components/panel-link/index.js"
+		},
+		"./components/privacy-choices-link": {
+			"types": "./dist-types/components/privacy-choices-link/index.d.ts",
+			"import": "./dist/components/privacy-choices-link/index.js",
+			"default": "./dist/components/privacy-choices-link/index.js"
 		},
 		"./components/consent-widget": {
 			"types": "./dist-types/components/preferences/index.d.ts",

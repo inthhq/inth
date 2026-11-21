@@ -38,6 +38,7 @@ export {
 	ConsentDialogTriggerToolbar,
 } from '@inth/react/components/consent-dialog-trigger';
 export { ConsentGate } from '@inth/react/components/consent-gate';
+export { PrivacyChoicesLink } from '@inth/react/components/privacy-choices-link';
 export { ConsentWidget } from '@inth/react/consent-widget';
 export { ConsentDraftProvider } from '@inth/react/draft';
 export { ConsentTheme, defineTheme } from '@inth/react/theme';

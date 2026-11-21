@@ -1,0 +1,48 @@
+---
+title: PrivacyChoicesLink
+description: Add a PrivacyChoicesLink to your Next.js footer for US opt-out regions inside InthProvider.
+group: frameworks
+---
+
+## Add the link to your footer
+
+`PrivacyChoicesLink` renders an unstyled `<button>` for US opt-out regions and always opens `ConsentDialog`. Mount it inside `InthProvider` from your [App Router](/docs/frameworks/next/app-router) or [Pages Router](/docs/frameworks/next/pages-router) setup:
+
+{/* example: fragment */}
+
+```tsx title="components/site-footer.tsx"
+'use client';
+
+import { PrivacyChoicesLink } from '@inth/nextjs';
+import Link from 'next/link';
+
+export function SiteFooter() {
+	return (
+		<footer>
+			<nav aria-label="Legal">
+				<Link href="/privacy">Privacy policy</Link>
+				<Link href="/terms">Terms</Link>
+				<PrivacyChoicesLink className="footer-link" />
+			</nav>
+		</footer>
+	);
+}
+```
+
+Pass `variant` to override `presentation.optOutLink` for one link, or `asChild` to reuse an existing link element:
+
+```tsx
+<PrivacyChoicesLink variant="california-privacy-choices" asChild>
+	<a href="#privacy-choices">Your California Privacy Choices</a>
+</PrivacyChoicesLink>;
+```
+
+<import src="../../../shared/react/components/privacy-choices-link.mdx#props" />
+
+<import src="../../../shared/react/components/privacy-choices-link.mdx#behavior" />
+
+See [ConsentDialogLink](./consent-dialog-link) for a link that shows under every policy that offers preferences.
+
+<import src="../../../shared/react/components/privacy-choices-link.mdx#accessibility" />
+
+<import src="../../../shared/react/components/privacy-choices-link.mdx#verify" />

@@ -1,0 +1,44 @@
+---
+title: PrivacyChoicesLink
+description: Add a PrivacyChoicesLink to your TanStack Start footer for US opt-out regions inside InthProvider.
+group: frameworks
+---
+
+Add a footer link for US opt-out regions that renders the configured opt-out title with the California Privacy Protection Agency opt-out icon when required and always opens `ConsentDialog`.
+
+## Add the link to your footer
+
+Mount `PrivacyChoicesLink` inside `InthProvider` with `ConsentDialog` mounted:
+
+{/* example: fragment */}
+
+```tsx title="src/components/site-footer.tsx"
+import { PrivacyChoicesLink } from '@inth/tanstack-start';
+
+export function SiteFooter() {
+	return (
+		<footer>
+			<a href="/privacy">Privacy policy</a>
+			<PrivacyChoicesLink className="footer-link" />
+		</footer>
+	);
+}
+```
+
+Pass `variant` to override `presentation.optOutLink` for one link, or `asChild` to render your own element:
+
+```tsx
+<PrivacyChoicesLink variant="california-privacy-choices" asChild>
+	<a href="#privacy-choices">Your California Privacy Choices</a>
+</PrivacyChoicesLink>;
+```
+
+<import src="../../../shared/react/components/privacy-choices-link.mdx#props" />
+
+<import src="../../../shared/react/components/privacy-choices-link.mdx#behavior" />
+
+See [ConsentDialogLink](./consent-dialog-link) for a link that shows under every policy that offers preferences.
+
+<import src="../../../shared/react/components/privacy-choices-link.mdx#accessibility" />
+
+<import src="../../../shared/react/components/privacy-choices-link.mdx#verify" />

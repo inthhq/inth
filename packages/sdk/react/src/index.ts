@@ -95,6 +95,7 @@ export type {
 	OptOutConfirmationRootProps,
 } from './components/opt-out-confirmation';
 export type { ConsentDialogLinkProps } from './components/panel-link';
+export type { PrivacyChoicesLinkProps } from './components/privacy-choices-link';
 export type {
 	ConsentDialogTriggerProps,
 	ConsentDialogTriggerToolbarAction,
@@ -154,6 +155,7 @@ export * from './index-parts/presets';
 export * from './index-parts/consent-dialog';
 export * from './index-parts/consent-banner';
 export * from './index-parts/consent-dialog-link';
+export * from './index-parts/privacy-choices-link';
 export * from './index-parts/consent-dialog-trigger';
 export * from './index-parts/consent-gate';
 export * from './index-parts/frame';
