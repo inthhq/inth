@@ -2148,12 +2148,14 @@ class ConsentCore @InthInternalApi constructor(
 			)
 			installSnapshot(published)
 		}
-		persist(optOutEntry = gpcAct?.entry)
+		val written = persist(optOutEntry = gpcAct?.entry)
 		mutation.release()
 		notifySnapshot()
-		gpcAct?.let { act ->
-			background.execute {
-				requestDeliveryPass { deliverOptOutIfOwed(act.entry, act.fence) }
+		if (written) {
+			gpcAct?.let { act ->
+				background.execute {
+					requestDeliveryPass { deliverOptOutIfOwed(act.entry, act.fence) }
+				}
 			}
 		}
 		refresh()
@@ -2744,9 +2746,9 @@ class ConsentCore @InthInternalApi constructor(
 
 		// A resolved subject belongs in protected storage as soon as it is known.
 		published.subject?.let { store.writeSubject(it) }
-		persist(optOutEntry = gpcAct?.entry)
+		val written = persist(optOutEntry = gpcAct?.entry)
 		mutation.release()
-		InitApplied(changed = true, error = emitted, gpcOptOut = gpcAct)
+		InitApplied(changed = true, error = emitted, gpcOptOut = if (written) gpcAct else null)
 	}
 
 	/**
@@ -3684,6 +3686,7 @@ class ConsentCore @InthInternalApi constructor(
 			needsGrantCleanup.also { needsGrantCleanup = false }
 		}
 		if (cleanup) queue.discardGrants()
+		val markGpcReported = optOutEntry?.recordPayload?.method == OptOutMethod.GPC
 		val envelope = synchronized(mutationLock) {
 				val snapshot = state.get()
 				SnapshotEnvelope(bundledPolicyAuthority = bundledPolicyAuthority,
@@ -3695,7 +3698,7 @@ class ConsentCore @InthInternalApi constructor(
 				snapshot = snapshot.copy(iab = null, gppString = null),
 				evaluationPolicy = evaluationPolicy,
 				noticeDismissal = noticeDismissal,
-				optOutGpcReported = optOutGpcReported && snapshot.optOut != null,
+				optOutGpcReported = (optOutGpcReported || markGpcReported) && snapshot.optOut != null,
 				gvl = snapshot.iab?.gvl,
 					iabConsent = committedIab,
 					additionalConsentList = additionalConsentList,
@@ -3708,6 +3711,13 @@ class ConsentCore @InthInternalApi constructor(
 			store.commitOptOut(envelope, optOutEntry, config.maxPendingSaves, publishBus = false)
 		} else {
 			store.writeEnvelope(envelope, publishBus = false)
+		}
+		if (written && markGpcReported) {
+			synchronized(mutationLock) {
+				if (state.get().optOut != null) {
+					optOutGpcReported = true
+				}
+			}
 		}
 		store.flush()
 		publishCurrentTcStorageBus(allowConsent = written)
@@ -3785,9 +3795,10 @@ class ConsentCore @InthInternalApi constructor(
 	): Boolean = gpcSignalApplicable(snapshot, policy) && snapshot.optOut != null && !reported
 
 	/**
-	 * Updates [optOutGpcReported] for [evaluated] and returns one queued `gpc` opt-out act
-	 * when either [gpcRecorded] just created a record or [gpcSignalReportDue] holds for a
-	 * record already held. Must be called under [mutationLock].
+	 * Clears [optOutGpcReported] when GPC turns off or the record is gone, and returns one
+	 * queued `gpc` opt-out act when either [gpcRecorded] just created a record or
+	 * [gpcSignalReportDue] holds for a record already held. [persist] sets [optOutGpcReported]
+	 * to true only after the queued act is written durably. Must be called under [mutationLock].
 	 */
 	private fun reconcileGpcOptOutLocked(
 		previous: ConsentSnapshot,
@@ -3801,7 +3812,6 @@ class ConsentCore @InthInternalApi constructor(
 			if (config.dryRun) {
 				return null
 			}
-			optOutGpcReported = true
 			val entry = buildOptOutEntry(
 				snapshot = evaluated,
 				policy = policy,
@@ -3829,7 +3839,6 @@ class ConsentCore @InthInternalApi constructor(
 		if (!gpcSignalReportDue(evaluated, policy, optOutGpcReported) || config.dryRun) {
 			return null
 		}
-		optOutGpcReported = true
 		val entry = buildOptOutEntry(
 			snapshot = evaluated,
 			policy = policy,

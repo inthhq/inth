@@ -1464,6 +1464,206 @@ class OptOutSyncTest {
 		}
 	}
 
+	@Test
+	fun `failed durable write during applyInit for a held click opt-out leaves mark unset until a working refresh reports once`() {
+		val backend = InMemoryKeyValueStore()
+		val held = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.BUTTON,
+			recordedAt = NOW - 5_000L,
+			heldBy = OptOutHolder.DEVICE,
+		)
+		// Stored envelope has no evaluationPolicy yet, so applyInit is the call site that reconciles GPC.
+		seedOptOut(backend, held)
+		backend.refuseDurableWrites = true
+
+		val clock = FixedClock(NOW)
+		val errors = mutableListOf<KernelError>()
+		val transport = RecordingTransport()
+			.respondInit(optOutInit())
+			.respondOptOut(OptOutOutcome.Delivered(subjectId = SUBJECT, optOut = held))
+		val kernel = testKernel(
+			config = TEST_CONFIG.copy(detectedGpc = true),
+			store = InthStore(backend),
+			clock = clock,
+			transport = transport,
+			logger = { errors += it },
+		)
+
+		kernel.bootstrap()
+
+		assertTrue(transport.optOutRequests.isEmpty())
+		assertTrue(errors.isEmpty())
+		assertFalse(assertNotNull(InthStore(backend).readEnvelope()).optOutGpcReported)
+		assertTrue(InthStore(backend).readPendingOptOuts().isEmpty())
+		assertEquals(FlushResult(delivered = 0, remaining = 0), kernel.flushPending())
+
+		backend.refuseDurableWrites = false
+		kernel.refresh()
+
+		assertEquals(1, transport.optOutRequests.size)
+		assertEquals(OptOutMethod.GPC, transport.optOutRequests.single().first.method)
+		assertTrue(assertNotNull(InthStore(backend).readEnvelope()).optOutGpcReported)
+		assertTrue(InthStore(backend).readPendingOptOuts().isEmpty())
+
+		kernel.refresh()
+		assertEquals(1, transport.optOutRequests.size)
+	}
+
+	@Test
+	fun `failed durable write when init first activates GPC and records the opt-out retries once on a working refresh`() {
+		val backend = InMemoryKeyValueStore()
+		seedSubject(backend)
+		backend.refuseDurableWrites = true
+
+		val clock = FixedClock(NOW)
+		val errors = mutableListOf<KernelError>()
+		val serverGpc = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.TARGETED_ADS),
+			method = OptOutMethod.GPC,
+			recordedAt = NOW + 100L,
+			heldBy = OptOutHolder.DEVICE,
+		)
+		val transport = RecordingTransport()
+			.respondInit(optOutInit(country = "US", region = "CO"))
+			.respondOptOut(OptOutOutcome.Delivered(subjectId = SUBJECT, optOut = serverGpc))
+		val kernel = testKernel(
+			config = TEST_CONFIG.copy(detectedGpc = true),
+			store = InthStore(backend),
+			clock = clock,
+			transport = transport,
+			logger = { errors += it },
+		)
+
+		kernel.bootstrap()
+
+		assertEquals(OptOutMethod.GPC, kernel.snapshot().optOut?.method)
+		assertTrue(transport.optOutRequests.isEmpty())
+		assertTrue(errors.isEmpty())
+		assertNull(InthStore(backend).readEnvelope())
+		assertTrue(InthStore(backend).readPendingOptOuts().isEmpty())
+		assertEquals(FlushResult(delivered = 0, remaining = 0), kernel.flushPending())
+
+		backend.refuseDurableWrites = false
+		kernel.refresh()
+
+		assertEquals(1, transport.optOutRequests.size)
+		assertEquals(OptOutMethod.GPC, transport.optOutRequests.single().first.method)
+		assertEquals(serverGpc, kernel.snapshot().optOut)
+		assertTrue(assertNotNull(InthStore(backend).readEnvelope()).optOutGpcReported)
+		assertTrue(InthStore(backend).readPendingOptOuts().isEmpty())
+
+		kernel.refresh()
+		assertEquals(1, transport.optOutRequests.size)
+	}
+
+	@Test
+	fun `failed durable write in setOverrides leaves mark unset until a working refresh reports once`() {
+		val backend = InMemoryKeyValueStore()
+		seedSubject(backend)
+		val clock = FixedClock(NOW)
+		val buttonAnswer = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.BUTTON,
+			recordedAt = NOW,
+			heldBy = OptOutHolder.DEVICE,
+		)
+		val errors = mutableListOf<KernelError>()
+		val transport = RecordingTransport()
+			.respondInit(optOutInit())
+			.respondOptOut(OptOutOutcome.Delivered(subjectId = SUBJECT, optOut = buttonAnswer))
+			.respondOptOut(OptOutOutcome.Delivered(subjectId = SUBJECT, optOut = buttonAnswer))
+		val kernel = testKernel(
+			store = InthStore(backend),
+			clock = clock,
+			transport = transport,
+			logger = { errors += it },
+		)
+		kernel.bootstrap()
+		assertTrue(kernel.optOut().ok)
+		assertEquals(1, transport.optOutRequests.size)
+		assertEquals(OptOutMethod.BUTTON, transport.optOutRequests.single().first.method)
+		assertFalse(assertNotNull(InthStore(backend).readEnvelope()).optOutGpcReported)
+
+		backend.refuseDurableWrites = true
+		kernel.setOverrides(KernelOverrides(gpc = true))
+
+		assertEquals(1, transport.optOutRequests.size)
+		assertTrue(errors.isEmpty())
+		assertFalse(assertNotNull(InthStore(backend).readEnvelope()).optOutGpcReported)
+		assertTrue(InthStore(backend).readPendingOptOuts().isEmpty())
+		assertEquals(FlushResult(delivered = 0, remaining = 0), kernel.flushPending())
+
+		backend.refuseDurableWrites = false
+		kernel.refresh()
+
+		assertEquals(2, transport.optOutRequests.size)
+		assertEquals(OptOutMethod.GPC, transport.optOutRequests[1].first.method)
+		assertTrue(assertNotNull(InthStore(backend).readEnvelope()).optOutGpcReported)
+
+		kernel.refresh()
+		assertEquals(2, transport.optOutRequests.size)
+	}
+
+	@Test
+	fun `failed durable write during bootstrap hydration leaves mark unset so a working init reports once`() {
+		val backend = InMemoryKeyValueStore()
+		seedSubject(backend)
+		val clock = FixedClock(NOW)
+		val buttonAnswer = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.BUTTON,
+			recordedAt = NOW,
+			heldBy = OptOutHolder.DEVICE,
+		)
+		// First session stores a matched opt-out policy and a clicked opt-out with GPC off.
+		val firstTransport = RecordingTransport()
+			.respondInit(optOutInit())
+			.respondOptOut(OptOutOutcome.Delivered(subjectId = SUBJECT, optOut = buttonAnswer))
+		val first = testKernel(store = InthStore(backend), clock = clock, transport = firstTransport)
+		first.bootstrap()
+		assertTrue(first.optOut().ok)
+		assertFalse(assertNotNull(InthStore(backend).readEnvelope()).optOutGpcReported)
+
+		// Restart with GPC on while the store refuses bootstrap's durable write.
+		backend.refuseDurableWrites = true
+		val tasks = ArrayDeque<() -> Unit>()
+		val errors = mutableListOf<KernelError>()
+		val restartTransport = RecordingTransport()
+			.respondInit(optOutInit())
+			.respondOptOut(OptOutOutcome.Delivered(subjectId = SUBJECT, optOut = buttonAnswer))
+		val restarted = testKernel(
+			config = TEST_CONFIG.copy(detectedGpc = true),
+			store = InthStore(backend),
+			clock = clock,
+			transport = restartTransport,
+			executor = TaskExecutor { tasks.addLast(it) },
+			logger = { errors += it },
+		)
+		restarted.bootstrap()
+		// First queued task is flushPending(); run it while writes are still refused.
+		assertTrue(tasks.isNotEmpty())
+		tasks.removeFirst()()
+		assertTrue(restartTransport.optOutRequests.isEmpty())
+		assertTrue(errors.isEmpty())
+		assertFalse(assertNotNull(InthStore(backend).readEnvelope()).optOutGpcReported)
+		assertTrue(InthStore(backend).readPendingOptOuts().isEmpty())
+
+		// Store recovers before the deferred runInit() executes: applyInit must see the
+		// mark still unset and report GPC once.
+		backend.refuseDurableWrites = false
+		while (tasks.isNotEmpty()) tasks.removeFirst()()
+
+		assertEquals(1, restartTransport.optOutRequests.size)
+		assertEquals(OptOutMethod.GPC, restartTransport.optOutRequests.single().first.method)
+		assertTrue(assertNotNull(InthStore(backend).readEnvelope()).optOutGpcReported)
+		assertTrue(InthStore(backend).readPendingOptOuts().isEmpty())
+
+		restarted.refresh()
+		while (tasks.isNotEmpty()) tasks.removeFirst()()
+		assertEquals(1, restartTransport.optOutRequests.size)
+	}
+
 	private companion object {
 		const val NOW = 1_770_000_000_000L
 		const val SUBJECT = "019c1c38-a400-7100-8000-000000000001"
