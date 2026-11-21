@@ -19,7 +19,7 @@ Calls about a user take `externalId`, your own id for them.
 ```ts
 import { Inth } from '@inth/node';
 
-// Reads INTH_SECRET_KEY and INTH_URL when you pass nothing
+// Reads INTH_SECRET_KEY and INTH_PROJECT_URL when you pass nothing
 const inth = new Inth();
 
 // When a user signs in: link the browser to your user
@@ -27,21 +27,60 @@ const { data: link, error: linkError } = await inth.users.identify({
 	externalId: user.id,
 	subjectId,
 });
+if (linkError) {
+	// Sign-in can go on. Log it: this browser's choices do not count as the
+	// user's until a later sign-in links it
+	console.error(linkError);
+}
 
 // Has this user accepted the latest privacy policy that requires acceptance?
 const { data, error } = await inth.documents.check({
 	externalId: user.id,
 	types: ['privacy_policy'],
 });
-if (error || !data.privacy_policy.acceptedLatest) {
+if (error) {
+	// The check failed, which says nothing about the user. Log it, and do
+	// not ask them to accept again because of it
+	throw error;
+}
+if (!data.privacy_policy.acceptedLatest) {
 	// Ask them to accept it
 }
 
-// Does this user allow marketing, on any of their devices?
+// Does this user allow marketing, on any of their devices? A failed check
+// leaves `consent` null, which reads as no
 const { data: consent } = await inth.consents.check({ externalId: user.id });
 if (consent?.marketing === true) {
 	// Send the newsletter
 }
+```
+
+On Cloudflare Workers without the `nodejs_compat` flag there is no
+`process.env`, so pass both from the Worker's environment:
+
+```ts
+import { Inth } from '@inth/node';
+
+interface Env {
+	INTH_PROJECT_URL: string;
+	// Set with `wrangler secret put INTH_SECRET_KEY`
+	INTH_SECRET_KEY: string;
+}
+
+export default {
+	async fetch(request: Request, env: Env): Promise<Response> {
+		const inth = new Inth({
+			projectUrl: env.INTH_PROJECT_URL,
+			secretKey: env.INTH_SECRET_KEY,
+		});
+		const externalId = new URL(request.url).searchParams.get('user') ?? '';
+		const { data, error } = await inth.consents.check({ externalId });
+		if (error) {
+			return Response.json({ error: error.message }, { status: 502 });
+		}
+		return Response.json(data);
+	},
+};
 ```
 
 ## Where the subject ID comes from
@@ -97,7 +136,7 @@ await client.identify({ externalId: user.id, identityToken: token });
 
 The token proves the browser belongs to that user, and expires after an
 hour. Make one per sign-in or page load; do not store it. When you pass
-`provider`, the browser must pass the same `identityProvider` to `identify`.
+`identityProvider`, the browser must pass the same one to `identify`.
 When identity tokens are not enabled for the project, the call returns
 `not_found` with `apiCode` `identity_tokens_disabled`.
 
@@ -143,9 +182,12 @@ const { error } = await inth.documents.publish({
 	type: 'terms_us',
 	version: '2026-11-18',
 	hash: await hashDocument(await readFile('public/terms-us.html')),
-	effectiveDate: '2026-11-18T00:00:00.000Z',
+	effectiveDate: new Date('2026-11-18T00:00:00Z'),
 });
 ```
+
+`effectiveDate` takes a `Date` or an ISO 8601 string. The published version
+comes back in `data`, the same shape `documents.current` answers with.
 
 A type starts with a lowercase letter, followed by lowercase letters, digits
 and `_`, such as `privacy_policy`. Make
@@ -167,9 +209,10 @@ const [terms, privacy] = await Promise.all([
 ]);
 if (terms.error || privacy.error) {
 	// Do not show the form without the documents
+	throw terms.error ?? privacy.error;
 }
-// Link to /terms/${terms.data.document.version} and the same for privacy,
-// and send terms.data.document.hash and privacy.data.document.hash with the form
+// Link to /terms/${terms.data.version} and the same for privacy,
+// and send terms.data.hash and privacy.data.hash with the form
 ```
 
 When the form comes back, create the user first. Then record the acceptance
@@ -197,7 +240,7 @@ const acceptance = {
 
 const { error } = await inth.documents.accept(acceptance);
 if (error) {
-	if (['timeout', 'network_error', 'server_error', 'rate_limited'].includes(error.code)) {
+	if (error.retryable) {
 		// It may or may not be recorded. Save `acceptance` and resend it
 		// later, from a job, until it succeeds
 	} else {
@@ -223,18 +266,22 @@ project never published is refused with `conflict` and `apiCode`
 The client makes an idempotency key for each call and sends it on each of its
 own retries, so a retried call is recorded once. To resend a call yourself,
 make a key once with `crypto.randomUUID()` and pass it as `idempotencyKey`,
-with the same `acceptedAt`, each time. The key must be a UUID. A refused call
+with the same `acceptedAt`, each time. `acceptedAt` takes a `Date` or
+milliseconds since the epoch. The key must be a UUID. A refused call
 records nothing under its key, so you can resend it once the cause is fixed.
 
 `documents.check` then says whether the user accepted the latest version that
 requires acceptance:
 
 ```ts
-const { data } = await inth.documents.check({
+const { data, error } = await inth.documents.check({
 	externalId: user.id,
 	types: ['terms_us'],
 });
-if (data && !data.terms_us.acceptedLatest) {
+if (error) {
+	throw error;
+}
+if (!data.terms_us.acceptedLatest) {
 	// Ask them to accept the new terms
 }
 ```
@@ -248,11 +295,27 @@ with exactly one of the two set. Check `error` first and TypeScript knows
 `error.code` is one of a fixed set, so you can branch on it:
 `unauthorized`, `forbidden`, `rate_limited`, `invalid_request`, `not_found`,
 `conflict`, `network_error`, `timeout`, `aborted`, `server_error`,
-`unexpected_response`. The error also carries the HTTP `status`, the API's
-own `apiCode`, such as `identity_conflict`, and a `requestId` when the API
-sent them.
+`unexpected_response`. The error also carries:
 
-Two things throw. `new Inth()` throws when it has no key, a key a header
+- `retryable`: whether sending the same call again later may succeed. It is
+  true for a network failure, a timeout, a 429 or a 5xx, and always false
+  for `documents.publish`, whose failure may have been stored. The client
+  tries these again itself within `maxRetries`, unless the API asked for a
+  longer wait than it makes or the edge challenged the call.
+- `retryAfter`: how long the API asked you to wait, in milliseconds, when it
+  sent `Retry-After`.
+- `status`: the HTTP status, or 0 when no answer arrived.
+- `apiCode`: the API's own code, such as `identity_conflict` or
+  `document_unknown`. Your editor lists the codes the `/v1` routes send.
+- `details`: for a refused body, the messages for each field in
+  `fieldErrors`, such as `effectiveDate`, and the rest in `formErrors`. A
+  field the client refuses itself, such as an invalid `Date`, is named here
+  too.
+- `requestId`: the id to quote to support.
+- `cause`: what `fetch` threw, when no answer arrived.
+
+Two things throw. `new Inth()` throws an `InthError` with the code
+`invalid_request` and `status` 0 when it has no key, a key a header
 cannot carry, or an address that is not a full `https://` URL (plain
 `http://` is allowed for `localhost` and `*.localhost` only) or one with a
 query, fragment, user name or password, or when `timeout` is not a whole number
@@ -302,7 +365,8 @@ A redirect is not followed, so the key is never sent to another address. The
 call returns `unexpected_response`; check the project URL in the Dashboard.
 
 When the API asks for a wait longer than five seconds, the call returns
-`rate_limited` at once instead of trying again too early.
+`rate_limited` at once instead of trying again too early, with the wait in
+`error.retryAfter`.
 
 Each try may take 10 seconds by default. Set both for the client or for one
 call, and cancel a call with a signal:
@@ -318,7 +382,7 @@ await inth.documents.check(
 
 ## Where it points
 
-`baseUrl` is the project's URL, the same address the banner uses, such as
+`projectUrl` is the project's URL, the same address the banner uses, such as
 `https://your-project.inth.app`. The key is the project's secret key
 (`inth_prj_...`), or an organization API key (`inth_...`) that reaches the
 project and holds the permissions the calls need: `consent.subjects.read`
