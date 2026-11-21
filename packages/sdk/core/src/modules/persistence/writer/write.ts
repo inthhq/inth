@@ -144,7 +144,8 @@ export const writeOptOutToStorage = function writeOptOutToStorage(
 	store: RecordStore,
 	snapshot: ConsentSnapshot,
 	storageConfig: StorageConfig | undefined,
-	now: number
+	now: number,
+	gpcReported = false
 ): void {
 	if (typeof document === 'undefined') {
 		return;
@@ -156,6 +157,9 @@ export const writeOptOutToStorage = function writeOptOutToStorage(
 	// The subject rides along so a visitor whose only act is an opt-out keeps
 	// one identity across reloads.
 	const record: StoredOptOutRecord = { ...snapshot.optOut, version: 1 };
+	if (gpcReported) {
+		record.gpcReported = true;
+	}
 	if (snapshot.subject && Object.keys(snapshot.subject).length > 0) {
 		record.subject = { ...snapshot.subject };
 	}

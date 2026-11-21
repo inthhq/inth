@@ -355,6 +355,12 @@ export interface HydrationRecords {
 	noticeDismissal?: NoticeDismissal | null;
 	/** Durable opt-out record. `null` clears it. */
 	optOut?: OptOutRecord | null;
+	/**
+	 * Whether this browser has already handed a GPC opt-out request to the save
+	 * outbox for the hydrated opt-out record. Omitted or `false` means not yet
+	 * reported.
+	 */
+	optOutGpcReported?: boolean;
 	/** Vendors the subject turned off. `null` clears the denial list. */
 	vendorChoice?: VendorChoice | null;
 	/** Evaluation time in epoch milliseconds. Defaults to `Date.now()`. */

@@ -39,9 +39,10 @@ export const nextButtonOptOutRecord = function nextButtonOptOutRecord(
 export { optOutLiftBlocker };
 
 /**
- * Whether a live kernel must record a durable GPC opt-out for `snapshot`.
+ * Whether a live kernel sees an active GPC signal under a matched,
+ * non-provisional rule that maps it.
  */
-export const gpcOptOutDue = function gpcOptOutDue(
+export const gpcSignalApplicable = function gpcSignalApplicable(
 	snapshot: ConsentSnapshot,
 	live: boolean
 ): boolean {
@@ -51,8 +52,33 @@ export const gpcOptOutDue = function gpcOptOutDue(
 		!snapshot.policyPending &&
 		snapshot.resolution.status === 'matched' &&
 		snapshot.privacySignals.gpc.active &&
-		snapshot.evaluationPolicy.gpcDenyCategories.length > 0 &&
-		snapshot.optOut === null
+		snapshot.evaluationPolicy.gpcDenyCategories.length > 0
+	);
+};
+
+/**
+ * Whether a live kernel must record a durable GPC opt-out for `snapshot`.
+ */
+export const gpcOptOutDue = function gpcOptOutDue(
+	snapshot: ConsentSnapshot,
+	live: boolean
+): boolean {
+	return gpcSignalApplicable(snapshot, live) && snapshot.optOut === null;
+};
+
+/**
+ * Whether a live kernel must report an active GPC signal for an opt-out record
+ * already held in `snapshot`.
+ */
+export const gpcSignalReportDue = function gpcSignalReportDue(
+	snapshot: ConsentSnapshot,
+	live: boolean,
+	gpcReported: boolean
+): boolean {
+	return (
+		gpcSignalApplicable(snapshot, live) &&
+		snapshot.optOut !== null &&
+		!gpcReported
 	);
 };
 
@@ -83,7 +109,7 @@ export const sameOptOutRecord = function sameOptOutRecord(
  */
 export const buildOptOutPayload = function buildOptOutPayload(
 	snapshot: ConsentSnapshot,
-	optOut: Readonly<OptOutRecord>,
+	optOut: Pick<OptOutRecord, 'method'>,
 	actionAt: number,
 	uiSource?: SaveUISource
 ): OptOutPayload {

@@ -318,7 +318,7 @@ const fingerprint = function fingerprint(value: unknown): string {
 const ABSENT: Record<StoredRecordKind, string> = {
 	choice: fingerprint(null),
 	notice: fingerprint([null, null]),
-	optOut: fingerprint([null, null]),
+	optOut: fingerprint([null, null, false]),
 	vendors: fingerprint([null, null]),
 };
 
@@ -352,6 +352,7 @@ export const fingerprintStoredRecords = function fingerprintStoredRecords(
 		prints.optOut = fingerprint([
 			stored.optOut,
 			stored.optOut ? (read.optOutSubject ?? null) : null,
+			stored.optOut ? stored.optOutGpcReported === true : false,
 		]);
 	}
 	if (stored.vendorChoice !== undefined) {
@@ -812,6 +813,38 @@ const applyVoided = function applyVoided(
 	}
 };
 
+const reconcileOptOutRecord = function reconcileOptOutRecord(
+	view: ConsentSnapshot,
+	stored: HydrationRecords,
+	movement: Movement,
+	records: HydrationRecords
+): void {
+	if (!movement.changed('optOut')) {
+		return;
+	}
+	if (
+		adoptNewer(
+			view.optOut,
+			stored.optOut ?? null,
+			movement.removed('optOut'),
+			(record) => record.recordedAt
+		)
+	) {
+		records.optOut = stored.optOut ?? null;
+		if (stored.optOut && stored.optOutGpcReported) {
+			records.optOutGpcReported = true;
+		}
+		return;
+	}
+	if (
+		view.optOut !== null &&
+		stored.optOut &&
+		sameRecord(view.optOut, stored.optOut)
+	) {
+		records.optOutGpcReported = stored.optOutGpcReported === true;
+	}
+};
+
 /**
  * Records to apply so the kernel reflects what storage holds, by the rules
  * at the top of this file. Only differences are returned, so an unchanged
@@ -889,17 +922,7 @@ export const selectReconciledRecords = function selectReconciledRecords(
 		records.vendorChoice = stored.vendorChoice ?? null;
 	}
 
-	if (
-		movement.changed('optOut') &&
-		adoptNewer(
-			view.optOut,
-			stored.optOut ?? null,
-			movement.removed('optOut'),
-			(record) => record.recordedAt
-		)
-	) {
-		records.optOut = stored.optOut ?? null;
-	}
+	reconcileOptOutRecord(view, stored, movement, records);
 
 	if (
 		movement.changed('notice') &&
