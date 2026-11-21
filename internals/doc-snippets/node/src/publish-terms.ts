@@ -1,0 +1,18 @@
+// #region docs:node-publish-terms title="scripts/publish-terms.ts"
+import { readFile } from 'node:fs/promises';
+
+import { hashDocument, Inth } from '@inth/node';
+
+const inth = new Inth();
+
+const { data, error } = await inth.documents.publish({
+	effectiveDate: new Date('2026-11-18T00:00:00Z'),
+	hash: await hashDocument(await readFile('public/terms-us.html')),
+	type: 'terms_us',
+	version: '2026-11-18',
+});
+if (error) {
+	throw error;
+}
+console.log(`Published ${data.type} ${data.version}`);
+// #endregion docs:node-publish-terms

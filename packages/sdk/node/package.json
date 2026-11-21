@@ -23,7 +23,10 @@
 	},
 	"files": [
 		"dist",
-		"dist-types"
+		"dist-types",
+		"AGENTS.md",
+		"SKILL.md",
+		"docs"
 	],
 	"type": "module",
 	"sideEffects": false,
@@ -42,10 +45,12 @@
 	},
 	"scripts": {
 		"build": "pnpm run prebuild && rslib build && node ../../../scripts/normalize-dist-types.mjs",
+		"build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/node",
 		"check-types": "pnpm run prebuild && tsc --noEmit && tsc -p tsconfig.test.json",
 		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
 		"lint": "oxlint -c ../../../oxlint.sdk.config.ts ./src",
 		"prebuild": "genversion --esm --semi src/version.ts",
+		"prepack": "pnpm run build:docs && pnpm run build",
 		"test": "pnpm run prebuild && vitest run",
 		"test:watch": "pnpm run prebuild && vitest"
 	},

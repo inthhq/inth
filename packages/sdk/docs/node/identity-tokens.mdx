@@ -1,0 +1,47 @@
+---
+title: Identity tokens
+description: Link users to their consent from an API on another domain or a mobile backend, using @inth/node identity tokens.
+group: server
+---
+
+Link a browser to one of your users when your server cannot read the consent
+cookie, such as an API on another domain or a mobile backend. Your server
+makes a short-lived token, and the browser links itself with it.
+
+## Make a token after sign-in
+
+```ts title="session.ts"
+const { data, error } = await inth.users.createIdentityToken({
+	externalId: user.id,
+});
+if (error) {
+	throw error;
+}
+// Send data.token to the browser with the session
+```
+
+The token expires after an hour, at `data.expiresAt`. Make one per sign-in or
+page load, and do not store it.
+
+When identity tokens are not enabled for the project, the call returns
+`not_found` with `apiCode` `identity_tokens_disabled`.
+
+## Link the browser
+
+In the browser, pass the token to the Inth client's `identify`:
+
+```ts title="client.ts"
+await client.identify({ externalId: user.id, identityToken: token });
+```
+
+The token proves the browser belongs to that user, so the link needs no
+secret key in the browser.
+
+If you pass `identityProvider` when you make the token, such as `workos`, the
+browser must pass the same `identityProvider` to `identify`.
+
+## Check it works
+
+1. Sign in from the browser and make a token.
+2. After `identify` resolves, call `consents.check` on your server for that
+   user. It returns the choices saved in that browser.
