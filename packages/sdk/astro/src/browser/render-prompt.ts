@@ -112,6 +112,7 @@ const renderFooter = function renderFooter(
 								class: model.classes.rightLink,
 								'data-action': 'right',
 								'data-inth-action': action,
+								'data-inth-rights': model.policyRights,
 								'data-opt-out-variant': optOutVariant,
 								'data-right': right,
 								'data-testid': `consent-banner-right-link-${right}`,

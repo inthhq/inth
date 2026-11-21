@@ -62,6 +62,7 @@ const optOutLink = isOptOut
 	: null;
 const showOptOutIcon = optOutLink?.variant === 'privacy-choices';
 const optOutIconClass = noStyle ? undefined : promptClassNames.banner.optOutIcon;
+const policyRights = inth ? inth.snapshot.policyRule.rights.join(' ') : undefined;
 ---
 
 <ComponentStyles />
@@ -70,17 +71,15 @@ const optOutIconClass = noStyle ? undefined : promptClassNames.banner.optOutIcon
 	class={className}
 	data-inth-action={isOptOut ? 'opt-out' : 'customize'}
 	data-inth-dialog={kind}
+	data-inth-rights={policyRights}
 	data-inth-surface="trigger"
 	data-opt-out-variant={optOutLink?.variant}
 	data-right={isOptOut ? 'opt-out' : undefined}
-	data-testid="consent-dialog-trigger"
+	data-testid="consent-dialog-link"
 	hidden={hasConsentUi ? undefined : true}
 	href={as === 'a' ? '#inth-preferences' : undefined}
 	type={as === 'button' ? 'button' : undefined}
->
-	{showOptOutIcon && <Fragment set:html={cppaOptOutIconSvg(optOutIconClass)} />}
-	<slot>{optOutLink ? optOutLink.label : ''}</slot>
-</Tag>
+>{showOptOutIcon && <Fragment set:html={cppaOptOutIconSvg(optOutIconClass)} />}<slot>{optOutLink ? optOutLink.label : ''}</slot></Tag>
 
 <script>
 	import { attachBannerActions } from '@inth/astro/client';
