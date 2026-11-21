@@ -541,6 +541,80 @@ describe('opt-out network sync and queue', () => {
 		kernel.dispose();
 	});
 
+	test('with GPC on and a record already held, loading sends no opt-out', async () => {
+		const optOut = vi.fn<NonNullable<KernelTransport['optOut']>>();
+		const held: OptOutRecord = {
+			heldBy: 'device',
+			method: 'gpc',
+			recordedAt: NOW - 5000,
+			rights: ['sale', 'share'],
+		};
+		const kernel = kernelOn({
+			initialPrivacySignals: { gpc: true },
+			initialRecords: {
+				now: NOW,
+				optOut: held,
+				subject: { subjectId: SUBJECT },
+			},
+			transport: { optOut },
+		});
+		const recorded = vi.fn();
+		kernel.events.on('opt-out:recorded', recorded);
+
+		await kernel.commands.init();
+		kernel.refresh();
+		kernel.replaySaves();
+		await flushMacrotasks();
+
+		expect(kernel.getSnapshot().optOut).toEqual(held);
+		expect(recorded).not.toHaveBeenCalled();
+		expect(optOut).not.toHaveBeenCalled();
+		kernel.dispose();
+	});
+
+	test('with GPC on and no record left after a lift, the signal records and sends a new opt-out', async () => {
+		const optOut = vi.fn<NonNullable<KernelTransport['optOut']>>((payload) =>
+			Promise.resolve({ ok: true, subjectId: payload.subjectId })
+		);
+		const liftOptOut = vi.fn<NonNullable<KernelTransport['liftOptOut']>>(
+			(payload) =>
+				Promise.resolve({
+					ok: true,
+					optOut: null,
+					subjectId: payload.subjectId,
+				})
+		);
+		const kernel = kernelOn({
+			initialRecords: {
+				now: NOW,
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: NOW - 5000,
+					rights: ['sale', 'share'],
+				},
+				subject: { subjectId: SUBJECT },
+			},
+			transport: { liftOptOut, optOut },
+		});
+		await kernel.commands.init();
+
+		// The signal is off, so the lift goes through and leaves no record.
+		await kernel.commands.optIn();
+		expect(kernel.getSnapshot().optOut).toBeNull();
+		expect(optOut).not.toHaveBeenCalled();
+
+		// The browser then sends the signal: a new record, sent once as `gpc`.
+		kernel.set.privacySignals({ gpc: true });
+		expect(kernel.getSnapshot().optOut?.method).toBe('gpc');
+		await vi.waitFor(() => expect(optOut).toHaveBeenCalledTimes(1));
+		expect(optOut.mock.calls[0]?.[0].method).toBe('gpc');
+		kernel.refresh();
+		await flushMacrotasks();
+		expect(optOut).toHaveBeenCalledTimes(1);
+		kernel.dispose();
+	});
+
 	test('a refusing save() under an opt-out rule starts with empty rights and sends both the records save and the opt-out without rights', async () => {
 		const save = vi.fn<NonNullable<KernelTransport['save']>>((payload) =>
 			Promise.resolve({ ok: true, subjectId: payload.subjectId })
