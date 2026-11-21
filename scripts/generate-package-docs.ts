@@ -294,7 +294,8 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 		name: '@inth/node',
 		outDir: 'packages/sdk/node',
 		skill: {
-			install: '`npm install @inth/node`',
+			install:
+				'`npm install @inth/node @inth/sdk`; `@inth/sdk/server` reads the subject ID from the consent cookie',
 			topic:
 				'server code reads what a signed-in user consents to, links users to their browsers, or publishes and records acceptance of legal documents',
 		},
