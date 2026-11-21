@@ -1755,4 +1755,184 @@ describe('mountConsentUI', () => {
 			expect(client.getSnapshot().effectivePermissions.marketing).toBe(false);
 		});
 	});
+
+	describe('sale-and-sharing block in preference dialog', () => {
+		const usOptOut = [policyRulePresets.usPrivacyStatesOptOut()];
+
+		it('renders before the category list outside accordion items, opts out in one click, and shows the receipt on reopen', async () => {
+			const { client, root } = await mount(
+				{ theme: { slots: { consentWidgetOptOut: 'brand-opt-out-block' } } },
+				{
+					consentCategories: ['functionality', 'marketing', 'measurement'],
+					overrides: { country: 'US', gpc: false, region: 'CA' },
+					policy: usOptOut,
+					presentation: { optOutLink: 'privacy-choices' },
+					reloadOnConsentRevoked: false,
+				}
+			);
+
+			client.openDialog();
+			await vi.waitFor(() => {
+				expect(query(root, 'consent-dialog-root')).not.toBeNull();
+			});
+
+			const block = query(root, 'consent-widget-opt-out');
+			const accordion = query(root, 'consent-widget-accordion');
+			expect(block.classList).toContain('brand-opt-out-block');
+			expect(
+				Boolean(
+					block.compareDocumentPosition(accordion) &
+					Node.DOCUMENT_POSITION_FOLLOWING
+				)
+			).toBe(true);
+			expect(
+				block.closest('[data-testid^="consent-widget-accordion-item-"]')
+			).toBeNull();
+			expect(
+				query(root, 'consent-widget-opt-out-heading').textContent?.toLowerCase()
+			).not.toMatch(/sale|sharing|targeted/u);
+
+			query(root, 'consent-widget-opt-out-button').click();
+			expect(client.getSnapshot().optOut?.method).toBe('button');
+			expect(client.getSnapshot().effectivePermissions.marketing).toBe(false);
+			expect(client.getSnapshot().activeUI).not.toBe('dialog');
+
+			client.openDialog();
+			await vi.waitFor(() => {
+				expect(query(root, 'consent-dialog-root')).not.toBeNull();
+			});
+			const reopened = query(root, 'consent-widget-opt-out');
+			const status = reopened.querySelector(
+				'[data-testid="consent-widget-opt-out-status"]'
+			);
+			expect(status?.getAttribute('role')).toBe('status');
+			const timeEl = reopened.querySelector('time');
+			expect(timeEl?.getAttribute('datetime')).toBeTruthy();
+			expect(timeEl?.textContent?.trim()).not.toBe('');
+			const refEl = reopened.querySelector('code');
+			expect(refEl?.textContent).toMatch(V1_UUID_PATTERN);
+			expect(
+				reopened.querySelector('[data-testid="consent-widget-opt-out-button"]')
+			).toBeNull();
+		});
+
+		it('keeps the heading neutral before backend confirmation and names confirmed rights once answered', async () => {
+			let resolveAnswer: ((result: OptOutTransportResult) => void) | undefined;
+			let sentPayload: OptOutPayload | undefined;
+			const baseMode = createTestingMode('@inth/sdk/test', {
+				policy: usOptOut,
+			}).transport;
+			const deferredMode: ProviderTransportFactory = Object.assign(
+				(context: Parameters<ProviderTransportFactory>[0]) => ({
+					...baseMode(context),
+					optOut: (payload: OptOutPayload) => {
+						sentPayload = payload;
+						return new Promise<OptOutTransportResult>((resolve) => {
+							resolveAnswer = resolve;
+						});
+					},
+				}),
+				{ kind: 'offline' as const }
+			);
+
+			const { client, root } = await mount(
+				{},
+				{
+					consentCategories: ['functionality', 'marketing', 'measurement'],
+					mode: deferredMode,
+					overrides: { country: 'US', gpc: false, region: 'CA' },
+					persistence: false,
+					presentation: { optOutLink: 'privacy-choices' },
+					reloadOnConsentRevoked: false,
+				}
+			);
+
+			client.openDialog();
+			await vi.waitFor(() => {
+				expect(query(root, 'consent-widget-opt-out-button')).not.toBeNull();
+			});
+			query(root, 'consent-widget-opt-out-button').click();
+			client.openDialog();
+			await vi.waitFor(() => {
+				expect(query(root, 'consent-widget-opt-out-status')).not.toBeNull();
+			});
+
+			expect(
+				query(root, 'consent-widget-opt-out-heading').textContent?.toLowerCase()
+			).not.toMatch(/sale|sharing|targeted/u);
+
+			await vi.waitFor(() => expect(resolveAnswer).toBeDefined());
+			resolveAnswer?.({
+				ok: true,
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: sentPayload?.givenAt ?? Date.now(),
+					rights: ['sale', 'share'],
+				},
+				subjectId: sentPayload?.subjectId,
+			});
+
+			await vi.waitFor(() => {
+				const text =
+					query(
+						root,
+						'consent-widget-opt-out-heading'
+					).textContent?.toLowerCase() ?? '';
+				expect(text).toContain('sale');
+				expect(text).toContain('sharing');
+			});
+			expect(
+				query(root, 'consent-widget-opt-out-heading').textContent?.toLowerCase()
+			).not.toContain('targeted');
+		});
+
+		it('shows the signal status inside the block when GPC is active under a policy that maps it', async () => {
+			const { client, root } = await mount(
+				{},
+				{
+					consentCategories: ['functionality', 'marketing', 'measurement'],
+					overrides: { country: 'US', gpc: true, region: 'CA' },
+					policy: usOptOut,
+					presentation: { optOutLink: 'privacy-choices' },
+				}
+			);
+
+			client.openDialog();
+			await vi.waitFor(() => {
+				expect(query(root, 'consent-widget-opt-out')).not.toBeNull();
+			});
+			const block = query(root, 'consent-widget-opt-out');
+			const status = block.querySelector(
+				'[data-testid="consent-widget-opt-out-status"]'
+			);
+			expect(status?.getAttribute('role')).toBe('status');
+			expect(status?.textContent).toBe('Opt-out preference signal honored');
+			expect(
+				block.querySelector('[data-testid="consent-widget-opt-out-button"]')
+			).toBeNull();
+		});
+
+		it('omits the block under an opt-in policy and keeps the existing dialog structure', async () => {
+			const { client, root } = await mount();
+			client.openDialog();
+			await vi.waitFor(() => {
+				expect(query(root, 'consent-dialog-root')).not.toBeNull();
+			});
+
+			expect(
+				root.querySelector('[data-testid="consent-widget-opt-out"]')
+			).toBeNull();
+			expect(
+				root.querySelector('[data-testid="consent-widget-opt-out-status"]')
+			).toBeNull();
+			expect(query(root, 'consent-dialog-title')).not.toBeNull();
+			expect(query(root, 'consent-dialog-description')).not.toBeNull();
+			expect(query(root, 'consent-widget-accordion')).not.toBeNull();
+			expect(
+				query(root, 'consent-widget-accordion-item-necessary')
+			).not.toBeNull();
+			expect(query(root, 'consent-widget-footer')).not.toBeNull();
+		});
+	});
 });
