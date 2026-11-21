@@ -171,13 +171,21 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Nutzungsbedingungen',
 	},
 	optOut: {
+		action: 'Widersprechen',
 		description:
 			'Diese Website verkauft oder teilt deine personenbezogenen Daten nicht, und deine Auswahl ist in diesem Browser gespeichert.',
 		done: 'Fertig',
+		headingAll:
+			'Verkauf und Weitergabe deiner personenbezogenen Daten sowie zielgerichtete Werbung',
+		headingSaleAndShare:
+			'Verkauf und Weitergabe deiner personenbezogenen Daten',
+		headingSaleAndTargetedAds:
+			'Verkauf deiner personenbezogenen Daten und zielgerichtete Werbung',
 		lockedByAccount:
 			'Dein Konto hat widersprochen, und du kannst dies nach der Anmeldung ändern.',
 		lockedByGpc:
 			'Das Global-Privacy-Control-Signal deines Browsers ist aktiv, daher bleibt dies deaktiviert.',
+		notOptedOut: 'Du bist in diesem Browser nicht abgemeldet.',
 		receiptAccount: 'Du bist in diesem Browser und in deinem Konto abgemeldet.',
 		receiptAccountWithRights:
 			'Du bist in diesem Browser und in deinem Konto von {rights} abgemeldet.',

@@ -177,13 +177,20 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Điều khoản dịch vụ',
 	},
 	optOut: {
+		action: 'Từ chối',
 		description:
 			'Trang web này sẽ không bán hoặc chia sẻ thông tin cá nhân của bạn và lựa chọn của bạn đã được lưu trên trình duyệt này.',
 		done: 'Xong',
+		headingAll:
+			'Bán và chia sẻ thông tin cá nhân của bạn cũng như quảng cáo nhắm mục tiêu',
+		headingSaleAndShare: 'Bán và chia sẻ thông tin cá nhân của bạn',
+		headingSaleAndTargetedAds:
+			'Bán thông tin cá nhân của bạn và quảng cáo nhắm mục tiêu',
 		lockedByAccount:
 			'Tài khoản của bạn đã chọn từ chối và bạn có thể thay đổi sau khi đăng nhập.',
 		lockedByGpc:
 			'Tín hiệu Global Privacy Control của trình duyệt đang bật nên tùy chọn này vẫn tắt.',
+		notOptedOut: 'Bạn chưa từ chối trên trình duyệt này.',
 		receiptAccount: 'Bạn đã từ chối trên trình duyệt này và tài khoản của bạn.',
 		receiptAccountWithRights:
 			'Bạn đã từ chối {rights} trên trình duyệt này và tài khoản của bạn.',

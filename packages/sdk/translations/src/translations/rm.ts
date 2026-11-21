@@ -172,13 +172,20 @@ export const translations: CompleteTranslations = {
 		termsOfService: "Cundiziuns d'utilisaziun",
 	},
 	optOut: {
+		action: 'Renunziar',
 		description:
 			'Questa pagina na venda e na cundivida betg tias datas persunalas, e tia elecziun è memorisada en quest navigatur.',
 		done: 'Finì',
+		headingAll:
+			'Vendita e cundivisiun da tias datas persunalas e reclama dirigida',
+		headingSaleAndShare: 'Vendita e cundivisiun da tias datas persunalas',
+		headingSaleAndTargetedAds:
+			'Vendita da tias datas persunalas e reclama dirigida',
 		lockedByAccount:
 			'Tes conto ha refusà e ti pos midar quai suenter esser s’annunzià.',
 		lockedByGpc:
 			'Il signal Global Privacy Control da tes navigatur è activà, perquai resta questa opziun deactivada.',
+		notOptedOut: 'Ti n’has betg renunzià en quest navigatur.',
 		receiptAccount: 'Ti es annullà en quest navigatur e sin tes conto.',
 		receiptAccountWithRights:
 			'Ti es annullà da {rights} en quest navigatur e sin tes conto.',

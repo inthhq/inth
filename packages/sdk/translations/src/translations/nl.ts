@@ -172,13 +172,20 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Servicevoorwaarden',
 	},
 	optOut: {
+		action: 'Afmelden',
 		description:
 			'Deze site verkoopt of deelt je persoonsgegevens niet, en je keuze is opgeslagen in deze browser.',
 		done: 'Klaar',
+		headingAll:
+			'Verkoop en delen van uw persoonlijke gegevens en gerichte advertenties',
+		headingSaleAndShare: 'Verkoop en delen van uw persoonlijke gegevens',
+		headingSaleAndTargetedAds:
+			'Verkoop van uw persoonlijke gegevens en gerichte advertenties',
 		lockedByAccount:
 			'Je account heeft zich afgemeld en je kunt dit wijzigen nadat je bent ingelogd.',
 		lockedByGpc:
 			'Het Global Privacy Control-signaal van je browser staat aan, dus dit blijft uitgeschakeld.',
+		notOptedOut: 'U bent in deze browser niet afgemeld.',
 		receiptAccount: 'Je bent afgemeld in deze browser en op je account.',
 		receiptAccountWithRights:
 			'Je bent afgemeld voor {rights} in deze browser en op je account.',

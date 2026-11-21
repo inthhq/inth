@@ -171,13 +171,20 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Regulamin',
 	},
 	optOut: {
+		action: 'Zrezygnuj',
 		description:
 			'Ta witryna nie będzie sprzedawać ani udostępniać Twoich danych osobowych, a Twój wybór został zapisany w tej przeglądarce.',
 		done: 'Gotowe',
+		headingAll:
+			'Sprzedaż i udostępnianie Twoich danych osobowych oraz reklama kierowana',
+		headingSaleAndShare: 'Sprzedaż i udostępnianie Twoich danych osobowych',
+		headingSaleAndTargetedAds:
+			'Sprzedaż Twoich danych osobowych i reklama kierowana',
 		lockedByAccount:
 			'Twoje konto zrezygnowało, a możesz to zmienić po zalogowaniu.',
 		lockedByGpc:
 			'Sygnał Global Privacy Control w Twojej przeglądarce jest włączony, więc ta opcja pozostaje wyłączona.',
+		notOptedOut: 'Nie zrezygnowano w tej przeglądarce.',
 		receiptAccount: 'Zrezygnowałeś w tej przeglądarce i na swoim koncie.',
 		receiptAccountWithRights:
 			'Zrezygnowałeś z {rights} w tej przeglądarce i na swoim koncie.',

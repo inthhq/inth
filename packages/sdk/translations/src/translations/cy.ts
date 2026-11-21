@@ -171,13 +171,20 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Telerau gwasanaeth',
 	},
 	optOut: {
+		action: 'Optio allan',
 		description:
 			'Ni fydd y wefan hon yn gwerthu nac yn rhannu eich gwybodaeth bersonol, ac mae eich dewis wedi ei gadw yn y porwr hwn.',
 		done: 'Wedi gorffen',
+		headingAll:
+			'Gwerthu a rhannu eich gwybodaeth bersonol a hysbysebu wedi’i dargedu',
+		headingSaleAndShare: 'Gwerthu a rhannu eich gwybodaeth bersonol',
+		headingSaleAndTargetedAds:
+			'Gwerthu eich gwybodaeth bersonol a hysbysebu wedi’i dargedu',
 		lockedByAccount:
 			'Mae eich cyfrif wedi optio allan, a gallwch newid hyn ar ôl mewngofnodi.',
 		lockedByGpc:
 			'Mae signal Global Privacy Control eich porwr ymlaen, felly mae hyn yn aros i ffwrdd.',
+		notOptedOut: 'Nid ydych wedi optio allan ar y porwr hwn.',
 		receiptAccount: 'Rydych wedi optio allan yn y porwr hwn ac ar eich cyfrif.',
 		receiptAccountWithRights:
 			'Rydych wedi optio allan o {rights} yn y porwr hwn ac ar eich cyfrif.',

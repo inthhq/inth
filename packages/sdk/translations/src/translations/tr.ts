@@ -176,13 +176,20 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Hizmet Şartları',
 	},
 	optOut: {
+		action: 'Vazgeç',
 		description:
 			'Bu site kişisel bilgilerinizi satmaz veya paylaşmaz ve seçiminiz bu tarayıcıda kaydedilir.',
 		done: 'Tamam',
+		headingAll:
+			'Kişisel bilgilerinizin satışı, paylaşımı ve hedefli reklamcılık',
+		headingSaleAndShare: 'Kişisel bilgilerinizin satışı ve paylaşımı',
+		headingSaleAndTargetedAds:
+			'Kişisel bilgilerinizin satışı ve hedefli reklamcılık',
 		lockedByAccount:
 			'Hesabınız kapsam dışı bırakıldı, oturum açtıktan sonra bunu değiştirebilirsiniz.',
 		lockedByGpc:
 			'Tarayıcınızın Global Privacy Control sinyali açık olduğundan bu ayar kapalı kalır.',
+		notOptedOut: 'Bu tarayıcıda vazgeçmediniz.',
 		receiptAccount: 'Bu tarayıcıda ve hesabınızda kapsam dışı bırakıldınız.',
 		receiptAccountWithRights:
 			'Bu tarayıcıda ve hesabınızda {rights} kapsamı dışında bırakıldınız.',

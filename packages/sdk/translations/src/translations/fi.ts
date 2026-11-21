@@ -170,13 +170,19 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Käyttöehdot',
 	},
 	optOut: {
+		action: 'Kieltäydy',
 		description:
 			'Tämä sivusto ei myy eikä jaa henkilötietojasi, ja valintasi on tallennettu tähän selaimeen.',
 		done: 'Valmis',
+		headingAll: 'Henkilötietojesi myynti, jakaminen ja kohdennettu mainonta',
+		headingSaleAndShare: 'Henkilötietojesi myynti ja jakaminen',
+		headingSaleAndTargetedAds:
+			'Henkilötietojesi myynti ja kohdennettu mainonta',
 		lockedByAccount:
 			'Tilisi on kieltäytynyt, ja voit muuttaa tätä kirjauduttuasi sisään.',
 		lockedByGpc:
 			'Selaimesi Global Privacy Control -signaali on päällä, joten tämä pysyy poissa käytöstä.',
+		notOptedOut: 'Et ole kieltäytynyt tässä selaimessa.',
 		receiptAccount: 'Olet kieltäytynyt tässä selaimessa ja tililläsi.',
 		receiptAccountWithRights:
 			'Olet kieltäytynyt kohteesta {rights} tässä selaimessa ja tililläsi.',

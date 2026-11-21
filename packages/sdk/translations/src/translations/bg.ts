@@ -172,13 +172,20 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Общи условия',
 	},
 	optOut: {
+		action: 'Отказ',
 		description:
 			'Този сайт няма да продава или споделя личните ви данни и изборът ви е запазен в този браузър.',
 		done: 'Готово',
+		headingAll:
+			'Продажба и споделяне на личните ви данни и таргетирана реклама',
+		headingSaleAndShare: 'Продажба и споделяне на личните ви данни',
+		headingSaleAndTargetedAds:
+			'Продажба на личните ви данни и таргетирана реклама',
 		lockedByAccount:
 			'Вашият акаунт е заявил отказ и можете да промените това след влизане.',
 		lockedByGpc:
 			'Сигналът Global Privacy Control на браузъра ви е включен, затова тази настройка остава изключена.',
+		notOptedOut: 'Не сте се отказали в този браузър.',
 		receiptAccount: 'Отказали сте се в този браузър и в акаунта си.',
 		receiptAccountWithRights:
 			'Отказали сте се от {rights} в този браузър и в акаунта си.',

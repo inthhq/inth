@@ -172,13 +172,20 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Términos de Servicio',
 	},
 	optOut: {
+		action: 'Excluirme',
 		description:
 			'Este sitio no venderá ni compartirá tu información personal, y tu elección queda guardada en este navegador.',
 		done: 'Listo',
+		headingAll:
+			'Venta e intercambio de su información personal y publicidad dirigida',
+		headingSaleAndShare: 'Venta e intercambio de su información personal',
+		headingSaleAndTargetedAds:
+			'Venta de su información personal y publicidad dirigida',
 		lockedByAccount:
 			'Tu cuenta ha optado por excluirse, y puedes cambiar esto después de iniciar sesión.',
 		lockedByGpc:
 			'La señal Global Privacy Control de tu navegador está activada, por lo que esto permanece desactivado.',
+		notOptedOut: 'No se ha excluido en este navegador.',
 		receiptAccount: 'Has quedado excluido en este navegador y en tu cuenta.',
 		receiptAccountWithRights:
 			'Has quedado excluido de {rights} en este navegador y en tu cuenta.',

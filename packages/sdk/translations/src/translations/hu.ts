@@ -172,13 +172,20 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Felhasználási feltételek',
 	},
 	optOut: {
+		action: 'Leiratkozás',
 		description:
 			'Ez az oldal nem adja el és nem osztja meg személyes adataidat, választásodat pedig ebben a böngészőben mentettük.',
 		done: 'Kész',
+		headingAll:
+			'Személyes adatainak értékesítése és megosztása, valamint célzott hirdetések',
+		headingSaleAndShare: 'Személyes adatainak értékesítése és megosztása',
+		headingSaleAndTargetedAds:
+			'Személyes adatainak értékesítése és célzott hirdetések',
 		lockedByAccount:
 			'Fiókod leiratkozott, és ezt bejelentkezés után módosíthatod.',
 		lockedByGpc:
 			'A böngésződ Global Privacy Control jelzése be van kapcsolva, ezért ez kikapcsolva marad.',
+		notOptedOut: 'Ebben a böngészőben még nem iratkozott le.',
 		receiptAccount: 'Leiratkoztál ebben a böngészőben és a fiókodban.',
 		receiptAccountWithRights:
 			'Leiratkoztál a következőkről ebben a böngészőben és a fiókodban: {rights}.',

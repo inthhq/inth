@@ -175,13 +175,18 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'شروط الخدمة',
 	},
 	optOut: {
+		action: 'إلغاء الاشتراك',
 		description:
 			'لن يبيع هذا الموقع معلوماتك الشخصية أو يشاركها، وقد تم حفظ اختيارك على هذا المتصفح.',
 		done: 'تم',
+		headingAll: 'بيع ومشاركة معلوماتك الشخصية والإعلانات المستهدفة',
+		headingSaleAndShare: 'بيع ومشاركة معلوماتك الشخصية',
+		headingSaleAndTargetedAds: 'بيع معلوماتك الشخصية والإعلانات المستهدفة',
 		lockedByAccount:
 			'اختار حسابك عدم المشاركة، ويمكنك تغيير ذلك بعد تسجيل الدخول.',
 		lockedByGpc:
 			'إشارة التحكم العالمي في الخصوصية في متصفحك مفعلة، لذا يبقى هذا الخيار متوقفاً.',
+		notOptedOut: 'لم تقم بإلغاء الاشتراك في هذا المتصفح.',
 		receiptAccount: 'تم تسجيل إلغاء اشتراكك في هذا المتصفح وحسابك.',
 		receiptAccountWithRights:
 			'تم تسجيل إلغاء اشتراكك في {rights} في هذا المتصفح وحسابك.',

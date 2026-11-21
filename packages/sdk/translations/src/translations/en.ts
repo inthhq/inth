@@ -175,13 +175,20 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Terms of Service',
 	},
 	optOut: {
+		action: 'Opt out',
 		description:
 			'This site will not sell or share your personal information, and your choice is saved on this browser.',
 		done: 'Done',
+		headingAll:
+			'Sale and sharing of your personal information and targeted advertising',
+		headingSaleAndShare: 'Sale and sharing of your personal information',
+		headingSaleAndTargetedAds:
+			'Sale of your personal information and targeted advertising',
 		lockedByAccount:
 			'Your account has opted out, and you can change this after signing in.',
 		lockedByGpc:
 			"Your browser's Global Privacy Control signal is on, so this stays off.",
+		notOptedOut: "You haven't opted out on this browser.",
 		receiptAccount: "You're opted out on this browser and your account.",
 		receiptAccountWithRights:
 			"You're opted out of {rights} on this browser and your account.",

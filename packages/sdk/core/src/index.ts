@@ -358,6 +358,7 @@ export {
 	resolveActionLabels,
 	resolveCategoryTitle,
 	resolveIABCopy,
+	resolveOptOutBlockHeading,
 	resolveOptOutCopy,
 	resolveOptOutLink,
 	resolveOptOutReceiptSentence,

@@ -176,13 +176,18 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Kondisyon itilizasyon',
 	},
 	optOut: {
+		action: 'Refize',
 		description:
 			'Sit sa a p ap vann ni pataje enfòmasyon pèsonèl ou yo, epi chwa ou anrejistre nan navigatè sa a.',
 		done: 'Fini',
+		headingAll: 'Vant ak pataj enfòmasyon pèsonèl ou ak piblisite sible',
+		headingSaleAndShare: 'Vant ak pataj enfòmasyon pèsonèl ou',
+		headingSaleAndTargetedAds: 'Vant enfòmasyon pèsonèl ou ak piblisite sible',
 		lockedByAccount:
 			'Kont ou a te refize pataj la, epi ou ka chanje sa apre ou fin konekte.',
 		lockedByGpc:
 			'Siyal Global Privacy Control navigatè ou a aktive, kidonk sa a rete etenn.',
+		notOptedOut: 'Ou pa refize sou navigatè sa a.',
 		receiptAccount: 'Ou dezabòne sou navigatè sa a ak sou kont ou.',
 		receiptAccountWithRights:
 			'Ou dezabòne pou {rights} sou navigatè sa a ak sou kont ou.',

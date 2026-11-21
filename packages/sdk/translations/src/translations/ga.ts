@@ -173,13 +173,20 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Téarmaí Seirbhíse',
 	},
 	optOut: {
+		action: 'Diúltaigh',
 		description:
 			'Ní dhíolfaidh ná ní roinnfidh an suíomh seo do chuid faisnéise pearsanta, agus tá do rogha sábháilte sa bhrabhsálaí seo.',
 		done: 'Déanta',
+		headingAll:
+			'Díol agus comhroinnt do chuid faisnéise pearsanta agus fógraíocht spriocdhírithe',
+		headingSaleAndShare: 'Díol agus comhroinnt do chuid faisnéise pearsanta',
+		headingSaleAndTargetedAds:
+			'Díol do chuid faisnéise pearsanta agus fógraíocht spriocdhírithe',
 		lockedByAccount:
 			'Tá do chuntas tar éis diúltú, agus is féidir leat é seo a athrú tar éis duit síniú isteach.',
 		lockedByGpc:
 			'Tá comhartha Global Privacy Control do bhrabhsálaí ar siúl, mar sin fanann sé seo múchta.',
+		notOptedOut: 'Níor dhiúltaigh tú ar an mbrabhsálaí seo.',
 		receiptAccount:
 			'Tá tú tar éis diúltú sa bhrabhsálaí seo agus ar do chuntas.',
 		receiptAccountWithRights:

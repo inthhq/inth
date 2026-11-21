@@ -45,10 +45,20 @@ export interface TriggerTranslations {
 
 /** Copy for the opt-out confirmation view and opt-out notices in preferences. */
 export interface OptOutTranslations {
+	/** Label of the direct opt-out button in the preference center. */
+	action: string;
 	/** Status shown when the visitor's own opt-out request is honored. */
 	statusRequest: string;
 	/** Status shown when a Global Privacy Control signal is honored. */
 	statusSignal: string;
+	/** Neutral status sentence shown when the visitor has not opted out on this browser. */
+	notOptedOut: string;
+	/** Block heading when confirmed rights are `sale` and `share`. */
+	headingSaleAndShare: string;
+	/** Block heading when confirmed rights are `sale` and `targeted_ads`. */
+	headingSaleAndTargetedAds: string;
+	/** Block heading when confirmed rights are `sale`, `share` and `targeted_ads`. */
+	headingAll: string;
 	/**
 	 * Body text in the opt-out confirmation view.
 	 * @deprecated Use the receipt keys (`receiptBrowser`, `receiptAccount`, etc.).

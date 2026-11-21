@@ -172,13 +172,20 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Conditions de Service',
 	},
 	optOut: {
+		action: 'Refuser',
 		description:
 			'Ce site ne vendra ni ne partagera vos informations personnelles, et votre choix est enregistré dans ce navigateur.',
 		done: 'Terminé',
+		headingAll:
+			'Vente et partage de vos informations personnelles et publicité ciblée',
+		headingSaleAndShare: 'Vente et partage de vos informations personnelles',
+		headingSaleAndTargetedAds:
+			'Vente de vos informations personnelles et publicité ciblée',
 		lockedByAccount:
 			'Votre compte a choisi de se désinscrire, et vous pouvez modifier cela après connexion.',
 		lockedByGpc:
 			'Le signal Global Privacy Control de votre navigateur est activé, cette option reste donc désactivée.',
+		notOptedOut: 'Vous ne vous êtes pas opposé sur ce navigateur.',
 		receiptAccount:
 			'Vous êtes désinscrit sur ce navigateur et sur votre compte.',
 		receiptAccountWithRights:
