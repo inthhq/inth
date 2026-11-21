@@ -30,15 +30,17 @@ group: reference
 
   If the policy changes in a way that affects choices while the draft has unsaved edits, the widget displays an alert, "The privacy policy changed. Review the current choices before saving.", with a Review choices button that resets the draft, and blocks saving until reviewed. A clean draft reseeds silently.
 
-  ### Honored opt-outs and locked switches
+  ### Sale-and-sharing opt-out block and locked switches
 
-  When a durable opt-out is held, the widget shows a status line (`role="status"`) above the category list: "Opt-out request honored" for a visitor request, or "Opt-out preference signal honored" when Global Privacy Control recorded or enforces it.
+  Under an `opt-out` policy, the widget renders a sale-and-sharing block first, above the category list and outside any accordion item. Under any other policy model, no block renders and the layout stays unchanged.
 
+  - Before the visitor opts out, the block displays the configured opt-out link title from `presentation.optOutLink`, a neutral status sentence (`optOut.notOptedOut`), and an `Opt out` button (`optOut.action`). One click records the opt-out immediately through the same shared action as the opt-out link, with no category toggle and no Save step.
+  - Once a durable opt-out is held, the button is removed and the block shows the status line (`role="status"`) with "Opt-out request honored" for a visitor request or "Opt-out preference signal honored" when Global Privacy Control recorded or enforces it. Below the status line, the block renders the same receipt sentence, recorded time, and local reference as `OptOutConfirmation`. When a backend response confirms the refused rights, the heading names them (`sale` and `share`, `sale` and `targeted_ads`, or all three); before confirmation, it keeps the configured link title.
   - While the browser's GPC signal is active under a policy that maps it, the signal-restricted switches and `marketing` (or `measurement` when `marketing` is not in scope) stay off and disabled. A notice below each locked row explains why and connects to the switch with `aria-describedby`. Save Settings and Accept All do not present or grant locked categories.
   - When an account holds the opt-out and GPC is off, the notice appears below `marketing` (or `measurement` when `marketing` is not in scope) to explain that the account has opted out, and the switches stay usable. Turning `marketing` back on and saving asks the backend to lift the account opt-out.
   - When a device holds the opt-out and GPC is off, turning `marketing` back on and saving lifts the opt-out (`measurement` decides when `marketing` is not in scope). Turning `measurement` back on while `marketing` stays off keeps `measurement` allowed and leaves the opt-out in place. Saving without changing a switch keeps the opt-out in place.
 
-  Read the same derived opt-out state in custom components with `useOptOutState()`.
+  Read the same derived opt-out state and receipt in custom components with `useOptOutState()` and `useOptOutReceipt()`.
 
   ### Vendors
 
@@ -66,7 +68,7 @@ group: reference
 <section id="composition">
   ## Composition
 
-  Every part is available as `ConsentWidget.<Part>`. `Root` supplies the draft and accepts `noStyle`, `disableAnimation`, and `uiSource`. `OptOutStatus` renders the honored opt-out status line (`role="status"`). `Accordion` and `AccordionItems` render the built-in rows; `AccordionItem`, `AccordionTrigger`, `AccordionTriggerInner`, `AccordionContent`, `AccordionArrow`, and `Switch` let you build custom rows; `VendorList` renders one category's vendor rows for a `category` prop. `PolicyActions` renders the resolved actions inside `Footer` and `FooterSubGroup` and accepts `renderAction` to replace any button; `AcceptAllButton`, `RejectButton`, `SaveButton`, and `CustomizeButton` render individual buttons.
+  Every part is available as `ConsentWidget.<Part>`. `Root` supplies the draft and accepts `noStyle`, `disableAnimation`, and `uiSource`. `OptOut` renders the direct sale-and-sharing block above the category list under an `opt-out` policy; `OptOutStatus` renders the honored opt-out status line (`role="status"`). `Accordion` and `AccordionItems` render the built-in rows; `AccordionItem`, `AccordionTrigger`, `AccordionTriggerInner`, `AccordionContent`, `AccordionArrow`, and `Switch` let you build custom rows; `VendorList` renders one category's vendor rows for a `category` prop. `PolicyActions` renders the resolved actions inside `Footer` and `FooterSubGroup` and accepts `renderAction` to replace any button; `AcceptAllButton`, `RejectButton`, `SaveButton`, and `CustomizeButton` render individual buttons.
 
   `Accordion` is controlled: pass `value` and `onValueChange` or no category description opens. The built-in `ConsentWidget` manages that state for you. In this snippet, `ConsentWidget` comes from the same import shown at the top of the page:
 
@@ -90,7 +92,7 @@ group: reference
   }
   ```
 
-  Provider component slots for the built-in layout are `manager.root`, `manager.optOutStatus`, `manager.footer`, `manager.actionGroup`, `accordion.root`, `accordion.triggerRow`, `accordion.title`, `accordion.control`, `accordion-item.root`, `accordion-item.trigger`, `accordion-item.content`, `vendor-list.root`, `vendor-list.trigger`, `vendor-list.content`, `vendor-list.item`, `vendor-list.header`, `vendor-list.name`, `vendor-list.description`, `vendor-list.link`, `vendor-list.control`, and `tag.manager`.
+  Provider component slots for the built-in layout are `manager.root`, `manager.optOut`, `manager.optOutStatus`, `manager.footer`, `manager.actionGroup`, `accordion.root`, `accordion.triggerRow`, `accordion.title`, `accordion.control`, `accordion-item.root`, `accordion-item.trigger`, `accordion-item.content`, `vendor-list.root`, `vendor-list.trigger`, `vendor-list.content`, `vendor-list.item`, `vendor-list.header`, `vendor-list.name`, `vendor-list.description`, `vendor-list.link`, `vendor-list.control`, and `tag.manager`.
 
   `ConsentWidget` from the package root and `@inth/react/consent-widget` loads its code in a separate chunk on first render, keeping pages that never render it smaller. `@inth/react/components/consent-widget` exports the widget without deferral plus each part as a named export.
 </section>
