@@ -72,8 +72,16 @@ and `resolvePromptCopy` from `@inth/sdk/engine` (or `@inth/sdk/headless`) with
 fallbacks. `resolveOptOutLink` resolves `'do-not-sell'`, `'privacy-choices'`
 or `'california-privacy-choices'` and returns
 `{ variant: 'privacy-choices', label, icon: 'cppa-opt-out' }` for both
-"Privacy Choices" forms so neither renders without the California Privacy
-Protection Agency opt-out icon.
+"Privacy Choices" forms.
+
+`resolveOptOutLink` returns data and renders nothing. When the result carries
+`icon: 'cppa-opt-out'`, your own markup must render the California Privacy
+Protection Agency opt-out icon next to the label, because neither Privacy
+Choices title may appear without it. Get the icon from `@inth/sdk/ui/utils`:
+`cppaOptOutIconSvg()` returns it as an `<svg>` string, and `CPPA_OPT_OUT_ICON`
+holds its view box and paths for a framework that builds the element itself.
+
+<include src="../../shared/privacy-choices-link.mdx" />
 
 ## Build a preference form with a draft
 
