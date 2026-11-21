@@ -46,7 +46,7 @@ and Accept All skip locked categories. When an account holds the opt-out and
 GPC is off, the account notice appears below `marketing` (or `measurement` when
 `marketing` is not in scope) and the switches stay usable. Turning `measurement`
 on while `marketing` stays off allows `measurement` without lifting the
-opt-out; turning `marketing` back on and saving lifts it. Read the same derived
+opt-out; turning `marketing` back on and saving asks the backend to lift the account's opt-out, which stays in force until the backend confirms it. Read the same derived
 state from `getConsentManager().optOutState`.
 
 A category with declared vendors lists them under its description, each with

@@ -59,7 +59,7 @@ an account holds the opt-out and GPC is off, the account notice appears below
 `marketing` (or `measurement` when `marketing` is not in scope) and the
 switches stay usable. Turning `measurement` on while `marketing` stays off
 allows `measurement` without lifting the opt-out; turning `marketing` back on
-and saving lifts it. Read the same state from `getConsentManager().optOutState`. The dialog closes in the same task the
+and saving asks the backend to lift the account's opt-out, which stays in force until the backend confirms it. Read the same state from `getConsentManager().optOutState`. The dialog closes in the same task the
 choice is recorded. If the policy changes while the dialog is open, the
 widget shows an alert and asks the visitor to review before saving.
 

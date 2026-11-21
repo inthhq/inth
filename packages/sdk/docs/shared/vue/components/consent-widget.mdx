@@ -32,7 +32,7 @@ group: reference
     off, the account notice appears below `marketing` (or `measurement` when
     `marketing` is not in scope) and the switches stay usable. Turning
     `measurement` on while `marketing` stays off allows `measurement` without
-    lifting the opt-out; turning `marketing` back on and saving lifts it. Read
+    lifting the opt-out; turning `marketing` back on and saving asks the backend to lift the account's opt-out, which stays in force until the backend confirms it. Read
     the same derived state with `useOptOutState()`.
   - A choice saved elsewhere updates untouched switches and preserves edits
     the visitor already made.
