@@ -179,6 +179,16 @@ export const translations: CompleteTranslations = {
 			'Tes conto ha refusà e ti pos midar quai suenter esser s’annunzià.',
 		lockedByGpc:
 			'Il signal Global Privacy Control da tes navigatur è activà, perquai resta questa opziun deactivada.',
+		receiptAccount: 'Ti es annullà en quest navigatur e sin tes conto.',
+		receiptAccountWithRights:
+			'Ti es annullà da {rights} en quest navigatur e sin tes conto.',
+		receiptBrowser: 'Ti es annullà en quest navigatur.',
+		receiptBrowserWithRights: 'Ti es annullà da {rights} en quest navigatur.',
+		recordedLabel: 'Registrà',
+		referenceLabel: 'Referenza',
+		rightsAll: 'vendita, cundivisiun e reclama dirigida',
+		rightsSaleAndShare: 'vendita e cundivisiun',
+		rightsSaleAndTargetedAds: 'vendita e reclama dirigida',
 		statusRequest: 'Dumonda da refusa resguardada',
 		statusSignal: 'Signal da preferenza da refusa resguardà',
 	},

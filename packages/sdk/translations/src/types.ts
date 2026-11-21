@@ -49,8 +49,29 @@ export interface OptOutTranslations {
 	statusRequest: string;
 	/** Status shown when a Global Privacy Control signal is honored. */
 	statusSignal: string;
-	/** Body text in the opt-out confirmation view. */
+	/**
+	 * Body text in the opt-out confirmation view.
+	 * @deprecated Use the receipt keys (`receiptBrowser`, `receiptAccount`, etc.).
+	 */
 	description: string;
+	/** Neutral receipt sentence when only this browser is covered. */
+	receiptBrowser: string;
+	/** Neutral receipt sentence when this browser and the account are covered. */
+	receiptAccount: string;
+	/** Receipt sentence naming confirmed rights for this browser. Use `{rights}`. */
+	receiptBrowserWithRights: string;
+	/** Receipt sentence naming confirmed rights for this browser and account. Use `{rights}`. */
+	receiptAccountWithRights: string;
+	/** Confirmed rights phrase for `sale` and `share`. */
+	rightsSaleAndShare: string;
+	/** Confirmed rights phrase for `sale` and `targeted_ads`. */
+	rightsSaleAndTargetedAds: string;
+	/** Confirmed rights phrase for `sale`, `share` and `targeted_ads`. */
+	rightsAll: string;
+	/** Label for the recorded time line in the opt-out receipt. */
+	recordedLabel: string;
+	/** Label for the local reference line in the opt-out receipt. */
+	referenceLabel: string;
 	/** Label of the single button that closes the opt-out confirmation view. */
 	done: string;
 	/** Notice shown on a category locked off by an active GPC signal. */

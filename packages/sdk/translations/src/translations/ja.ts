@@ -185,6 +185,17 @@ export const translations: CompleteTranslations = {
 			'アカウントでオプトアウトが設定されています。サインイン後に変更できます。',
 		lockedByGpc:
 			'ブラウザのGlobal Privacy Control信号がオンになっているため、これはオフのままになります。',
+		receiptAccount: 'このブラウザとアカウントでオプトアウトされています。',
+		receiptAccountWithRights:
+			'このブラウザとアカウントで{rights}からオプトアウトされています。',
+		receiptBrowser: 'このブラウザでオプトアウトされています。',
+		receiptBrowserWithRights:
+			'このブラウザで{rights}からオプトアウトされています。',
+		recordedLabel: '記録日時',
+		referenceLabel: '参照番号',
+		rightsAll: '販売、共有、ターゲティング広告',
+		rightsSaleAndShare: '販売および共有',
+		rightsSaleAndTargetedAds: '販売およびターゲティング広告',
 		statusRequest: 'オプトアウトのリクエストを反映しました',
 		statusSignal: 'オプトアウト設定信号を反映しました',
 	},

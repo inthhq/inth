@@ -178,6 +178,17 @@ export const translations: CompleteTranslations = {
 			'Ditt konto har valt bort detta, och du kan ändra det efter att du loggat in.',
 		lockedByGpc:
 			'Webbläsarens Global Privacy Control-signal är på, så detta förblir avstängt.',
+		receiptAccount: 'Du har valt bort i den här webbläsaren och på ditt konto.',
+		receiptAccountWithRights:
+			'Du har valt bort {rights} i den här webbläsaren och på ditt konto.',
+		receiptBrowser: 'Du har valt bort i den här webbläsaren.',
+		receiptBrowserWithRights:
+			'Du har valt bort {rights} i den här webbläsaren.',
+		recordedLabel: 'Registrerat',
+		referenceLabel: 'Referens',
+		rightsAll: 'försäljning, delning och riktad annonsering',
+		rightsSaleAndShare: 'försäljning och delning',
+		rightsSaleAndTargetedAds: 'försäljning och riktad annonsering',
 		statusRequest: 'Begäran om att välja bort har följts',
 		statusSignal: 'Signal om bortvalspreferens har följts',
 	},

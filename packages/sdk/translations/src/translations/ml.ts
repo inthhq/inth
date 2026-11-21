@@ -182,6 +182,17 @@ export const translations: CompleteTranslations = {
 			'നിങ്ങളുടെ അക്കൗണ്ട് ഒപ്റ്റ്-ഔട്ട് ചെയ്തിരിക്കുന്നു, സൈൻ ഇൻ ചെയ്ത ശേഷം ഇത് മാറ്റാം.',
 		lockedByGpc:
 			'നിങ്ങളുടെ ബ്രൗസറിന്റെ Global Privacy Control സിഗ്നൽ ഓണായതിനാൽ ഇത് ഓഫായി തുടരും.',
+		receiptAccount: 'ഈ ബ്രൗസറിലും നിങ്ങളുടെ അക്കൗണ്ടിലും നിങ്ങൾ ഒപ്റ്റ്-ഔട്ട് ചെയ്തു.',
+		receiptAccountWithRights:
+			'ഈ ബ്രൗസറിലും നിങ്ങളുടെ അക്കൗണ്ടിലും നിങ്ങൾ {rights} എന്നിവയിൽ നിന്ന് ഒപ്റ്റ്-ഔട്ട് ചെയ്തു.',
+		receiptBrowser: 'ഈ ബ്രൗസറിൽ നിങ്ങൾ ഒപ്റ്റ്-ഔട്ട് ചെയ്തു.',
+		receiptBrowserWithRights:
+			'ഈ ബ്രൗസറിൽ നിങ്ങൾ {rights} എന്നിവയിൽ നിന്ന് ഒപ്റ്റ്-ഔട്ട് ചെയ്തു.',
+		recordedLabel: 'രേഖപ്പെടുത്തിയത്',
+		referenceLabel: 'റഫറൻസ്',
+		rightsAll: 'വിൽപ്പന, പങ്കിടൽ, ലക്ഷ്യമിട്ട പരസ്യം',
+		rightsSaleAndShare: 'വിൽപ്പനയും പങ്കിടലും',
+		rightsSaleAndTargetedAds: 'വിൽപ്പനയും ലക്ഷ്യമിട്ട പരസ്യവും',
 		statusRequest: 'ഒപ്റ്റ്-ഔട്ട് അഭ്യർത്ഥന നടപ്പാക്കി',
 		statusSignal: 'ഒപ്റ്റ്-ഔട്ട് മുൻഗണന സിഗ്നൽ നടപ്പാക്കി',
 	},

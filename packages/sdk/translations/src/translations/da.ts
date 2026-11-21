@@ -177,6 +177,16 @@ export const translations: CompleteTranslations = {
 			'Din konto har fravalgt dette, og du kan ændre det efter login.',
 		lockedByGpc:
 			'Din browsers Global Privacy Control-signal er slået til, så dette forbliver slået fra.',
+		receiptAccount: 'Du er frameldt i denne browser og på din konto.',
+		receiptAccountWithRights:
+			'Du er frameldt {rights} i denne browser og på din konto.',
+		receiptBrowser: 'Du er frameldt i denne browser.',
+		receiptBrowserWithRights: 'Du er frameldt {rights} i denne browser.',
+		recordedLabel: 'Registreret',
+		referenceLabel: 'Reference',
+		rightsAll: 'salg, deling og målrettet annoncering',
+		rightsSaleAndShare: 'salg og deling',
+		rightsSaleAndTargetedAds: 'salg og målrettet annoncering',
 		statusRequest: 'Anmodning om fravalg er imødekommet',
 		statusSignal: 'Signal om fravalgspræference er imødekommet',
 	},

@@ -179,6 +179,17 @@ export const translations: CompleteTranslations = {
 			'Tu cuenta ha optado por excluirse, y puedes cambiar esto después de iniciar sesión.',
 		lockedByGpc:
 			'La señal Global Privacy Control de tu navegador está activada, por lo que esto permanece desactivado.',
+		receiptAccount: 'Has quedado excluido en este navegador y en tu cuenta.',
+		receiptAccountWithRights:
+			'Has quedado excluido de {rights} en este navegador y en tu cuenta.',
+		receiptBrowser: 'Has quedado excluido en este navegador.',
+		receiptBrowserWithRights:
+			'Has quedado excluido de {rights} en este navegador.',
+		recordedLabel: 'Registrado',
+		referenceLabel: 'Referencia',
+		rightsAll: 'venta, intercambio y publicidad dirigida',
+		rightsSaleAndShare: 'venta e intercambio',
+		rightsSaleAndTargetedAds: 'venta y publicidad dirigida',
 		statusRequest: 'Solicitud de exclusión aplicada',
 		statusSignal: 'Señal de preferencia de exclusión aplicada',
 	},

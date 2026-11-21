@@ -178,6 +178,17 @@ export const translations: CompleteTranslations = {
 			'Mae eich cyfrif wedi optio allan, a gallwch newid hyn ar ôl mewngofnodi.',
 		lockedByGpc:
 			'Mae signal Global Privacy Control eich porwr ymlaen, felly mae hyn yn aros i ffwrdd.',
+		receiptAccount: 'Rydych wedi optio allan yn y porwr hwn ac ar eich cyfrif.',
+		receiptAccountWithRights:
+			'Rydych wedi optio allan o {rights} yn y porwr hwn ac ar eich cyfrif.',
+		receiptBrowser: 'Rydych wedi optio allan yn y porwr hwn.',
+		receiptBrowserWithRights:
+			'Rydych wedi optio allan o {rights} yn y porwr hwn.',
+		recordedLabel: 'Cofnodwyd',
+		referenceLabel: 'Cyfeirnod',
+		rightsAll: 'gwerthu, rhannu a hysbysebu wedi’i dargedu',
+		rightsSaleAndShare: 'gwerthu a rhannu',
+		rightsSaleAndTargetedAds: 'gwerthu a hysbysebu wedi’i dargedu',
 		statusRequest: 'Cais optio allan wedi ei anrhydeddu',
 		statusSignal: 'Signal dewis optio allan wedi ei anrhydeddu',
 	},

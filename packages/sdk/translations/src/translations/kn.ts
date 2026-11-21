@@ -180,6 +180,16 @@ export const translations: CompleteTranslations = {
 			'ನಿಮ್ಮ ಖಾತೆಯು ಆಪ್ಟ್-ಔಟ್ ಮಾಡಿದೆ, ಮತ್ತು ಸೈನ್ ಇನ್ ಮಾಡಿದ ನಂತರ ನೀವು ಇದನ್ನು ಬದಲಾಯಿಸಬಹುದು.',
 		lockedByGpc:
 			'ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನ Global Privacy Control ಸಂಕೇತ ಆನ್ ಆಗಿದೆ, ಆದ್ದರಿಂದ ಇದು ಆಫ್ ಆಗಿಯೇ ಇರುತ್ತದೆ.',
+		receiptAccount: 'ಈ ಬ್ರೌಸರ್ ಮತ್ತು ನಿಮ್ಮ ಖಾತೆಯಲ್ಲಿ ನೀವು ಆಪ್ಟ್-ಔಟ್ ಆಗಿದ್ದೀರಿ.',
+		receiptAccountWithRights:
+			'ಈ ಬ್ರೌಸರ್ ಮತ್ತು ನಿಮ್ಮ ಖಾತೆಯಲ್ಲಿ ನೀವು {rights} ನಿಂದ ಆಪ್ಟ್-ಔಟ್ ಆಗಿದ್ದೀರಿ.',
+		receiptBrowser: 'ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ನೀವು ಆಪ್ಟ್-ಔಟ್ ಆಗಿದ್ದೀರಿ.',
+		receiptBrowserWithRights: 'ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ನೀವು {rights} ನಿಂದ ಆಪ್ಟ್-ಔಟ್ ಆಗಿದ್ದೀರಿ.',
+		recordedLabel: 'ದಾಖಲಿಸಲಾಗಿದೆ',
+		referenceLabel: 'ಉಲ್ಲೇಖ',
+		rightsAll: 'ಮಾರಾಟ, ಹಂಚಿಕೆ ಮತ್ತು ಗುರಿಪಡಿಸಿದ ಜಾಹೀರಾತು',
+		rightsSaleAndShare: 'ಮಾರಾಟ ಮತ್ತು ಹಂಚಿಕೆ',
+		rightsSaleAndTargetedAds: 'ಮಾರಾಟ ಮತ್ತು ಗುರಿಪಡಿಸಿದ ಜಾಹೀರಾತು',
 		statusRequest: 'ಆಪ್ಟ್-ಔಟ್ ವಿನಂತಿಯನ್ನು ಗೌರವಿಸಲಾಗಿದೆ',
 		statusSignal: 'ಆಪ್ಟ್-ಔಟ್ ಆದ್ಯತೆಯ ಸಂಕೇತವನ್ನು ಗೌರವಿಸಲಾಗಿದೆ',
 	},

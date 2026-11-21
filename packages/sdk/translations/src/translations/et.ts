@@ -177,6 +177,17 @@ export const translations: CompleteTranslations = {
 			'Teie konto on loobunud ja saate seda muuta pärast sisselogimist.',
 		lockedByGpc:
 			'Teie brauseri Global Privacy Control signaal on sisse lülitatud, seega jääb see välja lülitatuks.',
+		receiptAccount: 'Olete selles brauseris ja oma kontol loobunud.',
+		receiptAccountWithRights:
+			'Olete selles brauseris ja oma kontol loobunud järgmisest: {rights}.',
+		receiptBrowser: 'Olete selles brauseris loobunud.',
+		receiptBrowserWithRights:
+			'Olete selles brauseris loobunud järgmisest: {rights}.',
+		recordedLabel: 'Salvestatud',
+		referenceLabel: 'Viide',
+		rightsAll: 'müük, jagamine ja sihitud reklaam',
+		rightsSaleAndShare: 'müük ja jagamine',
+		rightsSaleAndTargetedAds: 'müük ja sihitud reklaam',
 		statusRequest: 'Loobumistaotlus on täidetud',
 		statusSignal: 'Loobumiseelistuse signaal on täidetud',
 	},

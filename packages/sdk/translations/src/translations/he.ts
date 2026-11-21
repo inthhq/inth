@@ -170,6 +170,16 @@ export const translations: CompleteTranslations = {
 		lockedByAccount: 'החשבון שלך ביטל השתתפות, ותוכל לשנות זאת לאחר ההתחברות.',
 		lockedByGpc:
 			'אות Global Privacy Control של הדפדפן שלך פעיל, ולכן אפשרות זו נשארת כבויה.',
+		receiptAccount: 'ביטלת את ההשתתפות בדפדפן זה ובחשבון שלך.',
+		receiptAccountWithRights:
+			'ביטלת את ההשתתפות ב-{rights} בדפדפן זה ובחשבון שלך.',
+		receiptBrowser: 'ביטלת את ההשתתפות בדפדפן זה.',
+		receiptBrowserWithRights: 'ביטלת את ההשתתפות ב-{rights} בדפדפן זה.',
+		recordedLabel: 'נרשם',
+		referenceLabel: 'אסמכתא',
+		rightsAll: 'מכירה, שיתוף ופרסום ממוקד',
+		rightsSaleAndShare: 'מכירה ושיתוף',
+		rightsSaleAndTargetedAds: 'מכירה ופרסום ממוקד',
 		statusRequest: 'בקשת ביטול ההשתתפות כובדה',
 		statusSignal: 'אות העדפת ביטול ההשתתפות כובד',
 	},

@@ -181,6 +181,16 @@ export const translations: CompleteTranslations = {
 			'ਤੁਹਾਡੇ ਖਾਤੇ ਨੇ ਔਪਟ-ਆਊਟ ਕੀਤਾ ਹੈ, ਅਤੇ ਤੁਸੀਂ ਸਾਈਨ ਇਨ ਕਰਨ ਤੋਂ ਬਾਅਦ ਇਸਨੂੰ ਬਦਲ ਸਕਦੇ ਹੋ।',
 		lockedByGpc:
 			'ਤੁਹਾਡੇ ਬ੍ਰਾਊਜ਼ਰ ਦਾ Global Privacy Control ਸਿਗਨਲ ਚਾਲੂ ਹੈ, ਇਸ ਲਈ ਇਹ ਬੰਦ ਰਹਿੰਦਾ ਹੈ।',
+		receiptAccount: 'ਤੁਸੀਂ ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਅਤੇ ਆਪਣੇ ਖਾਤੇ ਵਿੱਚ ਔਪਟ-ਆਊਟ ਹੋ ਗਏ ਹੋ।',
+		receiptAccountWithRights:
+			'ਤੁਸੀਂ ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਅਤੇ ਆਪਣੇ ਖਾਤੇ ਵਿੱਚ {rights} ਤੋਂ ਔਪਟ-ਆਊਟ ਹੋ ਗਏ ਹੋ।',
+		receiptBrowser: 'ਤੁਸੀਂ ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਔਪਟ-ਆਊਟ ਹੋ ਗਏ ਹੋ।',
+		receiptBrowserWithRights: 'ਤੁਸੀਂ ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ {rights} ਤੋਂ ਔਪਟ-ਆਊਟ ਹੋ ਗਏ ਹੋ।',
+		recordedLabel: 'ਦਰਜ ਕੀਤਾ ਗਿਆ',
+		referenceLabel: 'ਹਵਾਲਾ',
+		rightsAll: 'ਵਿਕਰੀ, ਸਾਂਝਾਕਰਨ ਅਤੇ ਨਿਸ਼ਾਨਾ ਵਿਗਿਆਪਨ',
+		rightsSaleAndShare: 'ਵਿਕਰੀ ਅਤੇ ਸਾਂਝਾਕਰਨ',
+		rightsSaleAndTargetedAds: 'ਵਿਕਰੀ ਅਤੇ ਨਿਸ਼ਾਨਾ ਵਿਗਿਆਪਨ',
 		statusRequest: 'ਔਪਟ-ਆਊਟ ਬੇਨਤੀ ਮੰਨ ਲਈ ਗਈ',
 		statusSignal: 'ਔਪਟ-ਆਊਟ ਤਰਜੀਹ ਸਿਗਨਲ ਮੰਨ ਲਿਆ ਗਿਆ',
 	},

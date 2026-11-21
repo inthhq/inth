@@ -179,6 +179,18 @@ export const translations: CompleteTranslations = {
 			'Il-kont tiegħek għażel li joħroġ, u tista’ tibdel dan wara li tidħol.',
 		lockedByGpc:
 			'Is-sinjal Global Privacy Control tal-brawżer tiegħek huwa mixgħul, għalhekk dan jibqa’ mitfi.',
+		receiptAccount:
+			'Inti għażilt li toħroġ fuq dan il-brawżer u fuq il-kont tiegħek.',
+		receiptAccountWithRights:
+			'Inti għażilt li toħroġ minn {rights} fuq dan il-brawżer u fuq il-kont tiegħek.',
+		receiptBrowser: 'Inti għażilt li toħroġ fuq dan il-brawżer.',
+		receiptBrowserWithRights:
+			'Inti għażilt li toħroġ minn {rights} fuq dan il-brawżer.',
+		recordedLabel: 'Irreġistrat',
+		referenceLabel: 'Referenza',
+		rightsAll: 'bejgħ, qsim u reklamar immirat',
+		rightsSaleAndShare: 'bejgħ u qsim',
+		rightsSaleAndTargetedAds: 'bejgħ u reklamar immirat',
 		statusRequest: 'It-talba għall-ħruġ ġiet rispettata',
 		statusSignal: 'Is-sinjal tal-preferenza għall-ħruġ ġie rispettat',
 	},

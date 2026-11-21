@@ -177,6 +177,16 @@ export const translations: CompleteTranslations = {
 			'Vaš račun se je odjavil in to lahko spremenite po prijavi.',
 		lockedByGpc:
 			'Signal Global Privacy Control v vašem brskalniku je vklopljen, zato to ostaja izklopljeno.',
+		receiptAccount: 'Odjavljeni ste v tem brskalniku in v svojem računu.',
+		receiptAccountWithRights:
+			'Odjavljeni ste od {rights} v tem brskalniku in v svojem računu.',
+		receiptBrowser: 'Odjavljeni ste v tem brskalniku.',
+		receiptBrowserWithRights: 'Odjavljeni ste od {rights} v tem brskalniku.',
+		recordedLabel: 'Zabeleženo',
+		referenceLabel: 'Sklic',
+		rightsAll: 'prodaje, deljenja in ciljanega oglaševanja',
+		rightsSaleAndShare: 'prodaje in deljenja',
+		rightsSaleAndTargetedAds: 'prodaje in ciljanega oglaševanja',
 		statusRequest: 'Zahteva za zavrnitev je upoštevana',
 		statusSignal: 'Signal nastavitve zavrnitve je upoštevan',
 	},

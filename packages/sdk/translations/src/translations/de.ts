@@ -178,6 +178,17 @@ export const translations: CompleteTranslations = {
 			'Dein Konto hat widersprochen, und du kannst dies nach der Anmeldung ändern.',
 		lockedByGpc:
 			'Das Global-Privacy-Control-Signal deines Browsers ist aktiv, daher bleibt dies deaktiviert.',
+		receiptAccount: 'Du bist in diesem Browser und in deinem Konto abgemeldet.',
+		receiptAccountWithRights:
+			'Du bist in diesem Browser und in deinem Konto von {rights} abgemeldet.',
+		receiptBrowser: 'Du bist in diesem Browser abgemeldet.',
+		receiptBrowserWithRights:
+			'Du bist in diesem Browser von {rights} abgemeldet.',
+		recordedLabel: 'Aufgezeichnet',
+		referenceLabel: 'Referenz',
+		rightsAll: 'Verkauf, Weitergabe und zielgerichteter Werbung',
+		rightsSaleAndShare: 'Verkauf und Weitergabe',
+		rightsSaleAndTargetedAds: 'Verkauf und zielgerichteter Werbung',
 		statusRequest: 'Widerspruchsanfrage berücksichtigt',
 		statusSignal: 'Widerspruchssignal berücksichtigt',
 	},

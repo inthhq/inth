@@ -185,6 +185,17 @@ export const translations: CompleteTranslations = {
 			'אײַער קאָנטע האָט זיך אָפּגעזאָגט, און איר קענט דאָס ענדערן נאָך אַרײַנשרייבן.',
 		lockedByGpc:
 			'דער Global Privacy Control סיגנאַל פֿון אײַער בלעטערער איז אָן, אַזוי בלײַבט דאָס אויס.',
+		receiptAccount: 'איר זענט אָפּגעזאָגט אין דעם בלעטערער און אין אייער קאָנטע.',
+		receiptAccountWithRights:
+			'איר זענט אָפּגעזאָגט פֿון {rights} אין דעם בלעטערער און אין אייער קאָנטע.',
+		receiptBrowser: 'איר זענט אָפּגעזאָגט אין דעם בלעטערער.',
+		receiptBrowserWithRights:
+			'איר זענט אָפּגעזאָגט פֿון {rights} אין דעם בלעטערער.',
+		recordedLabel: 'פֿאַרשריבן',
+		referenceLabel: 'רעפֿערענץ',
+		rightsAll: 'פֿאַרקויף, טיילן און געצילטע רעקלאַמע',
+		rightsSaleAndShare: 'פֿאַרקויף און טיילן',
+		rightsSaleAndTargetedAds: 'פֿאַרקויף און געצילטע רעקלאַמע',
 		statusRequest: 'אָפּזאָג־בקשה אָנגענומען',
 		statusSignal: 'אָפּזאָג־פּרעפֿערענץ סיגנאַל אָנגענומען',
 	},

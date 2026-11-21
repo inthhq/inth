@@ -184,6 +184,16 @@ export const translations: CompleteTranslations = {
 			'Tài khoản của bạn đã chọn từ chối và bạn có thể thay đổi sau khi đăng nhập.',
 		lockedByGpc:
 			'Tín hiệu Global Privacy Control của trình duyệt đang bật nên tùy chọn này vẫn tắt.',
+		receiptAccount: 'Bạn đã từ chối trên trình duyệt này và tài khoản của bạn.',
+		receiptAccountWithRights:
+			'Bạn đã từ chối {rights} trên trình duyệt này và tài khoản của bạn.',
+		receiptBrowser: 'Bạn đã từ chối trên trình duyệt này.',
+		receiptBrowserWithRights: 'Bạn đã từ chối {rights} trên trình duyệt này.',
+		recordedLabel: 'Đã ghi nhận',
+		referenceLabel: 'Mã tham chiếu',
+		rightsAll: 'việc bán, chia sẻ và quảng cáo nhắm mục tiêu',
+		rightsSaleAndShare: 'việc bán và chia sẻ',
+		rightsSaleAndTargetedAds: 'việc bán và quảng cáo nhắm mục tiêu',
 		statusRequest: 'Đã thực hiện yêu cầu từ chối',
 		statusSignal: 'Đã thực hiện tín hiệu tùy chọn từ chối',
 	},

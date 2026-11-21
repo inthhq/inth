@@ -177,6 +177,17 @@ export const translations: CompleteTranslations = {
 			'Äre Kont huet ofgeleent, an Dir kënnt dat no der Umeldung änneren.',
 		lockedByGpc:
 			'D’Global-Privacy-Control-Signal vun Ärem Browser ass aktiv, dowéinst bleift dëst ausgeschalt.',
+		receiptAccount: 'Dir sidd an dësem Browser an an Ärem Kont ofgemellt.',
+		receiptAccountWithRights:
+			'Dir sidd an dësem Browser an an Ärem Kont vu {rights} ofgemellt.',
+		receiptBrowser: 'Dir sidd an dësem Browser ofgemellt.',
+		receiptBrowserWithRights:
+			'Dir sidd an dësem Browser vu {rights} ofgemellt.',
+		recordedLabel: 'Opgezeechent',
+		referenceLabel: 'Referenz',
+		rightsAll: 'Verkaf, Weiderginn an gezielter Reklamm',
+		rightsSaleAndShare: 'Verkaf a Weiderginn',
+		rightsSaleAndTargetedAds: 'Verkaf an gezielter Reklamm',
 		statusRequest: 'Ofleenungsufro berücksichtegt',
 		statusSignal: 'Ofleenungssignal berücksichtegt',
 	},

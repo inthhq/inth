@@ -178,6 +178,16 @@ export const translations: CompleteTranslations = {
 		lockedByAccount: 'మీ ఖాతా ఆప్ట్-అవుట్ చేసింది, మీరు సైన్ ఇన్ చేసిన తర్వాత దీనిని మార్చవచ్చు.',
 		lockedByGpc:
 			'మీ బ్రౌజర్ యొక్క Global Privacy Control సిగ్నల్ ఆన్‌లో ఉంది, కాబట్టి ఇది ఆఫ్‌లోనే ఉంటుంది.',
+		receiptAccount: 'ఈ బ్రౌజర్‌లో మరియు మీ ఖాతాలో మీరు ఆప్ట్-అవుట్ చేశారు.',
+		receiptAccountWithRights:
+			'ఈ బ్రౌజర్‌లో మరియు మీ ఖాతాలో మీరు {rights} నుండి ఆప్ట్-అవుట్ చేశారు.',
+		receiptBrowser: 'ఈ బ్రౌజర్‌లో మీరు ఆప్ట్-అవుట్ చేశారు.',
+		receiptBrowserWithRights: 'ఈ బ్రౌజర్‌లో మీరు {rights} నుండి ఆప్ట్-అవుట్ చేశారు.',
+		recordedLabel: 'నమోదు చేయబడింది',
+		referenceLabel: 'రిఫరెన్స్',
+		rightsAll: 'విక్రయం, భాగస్వామ్యం మరియు లక్ష్య ప్రకటనలు',
+		rightsSaleAndShare: 'విక్రయం మరియు భాగస్వామ్యం',
+		rightsSaleAndTargetedAds: 'విక్రయం మరియు లక్ష్య ప్రకటనలు',
 		statusRequest: 'ఆప్ట్-అవుట్ అభ్యర్థన గౌరవించబడింది',
 		statusSignal: 'ఆప్ట్-అవుట్ ప్రాధాన్యత సిగ్నల్ గౌరవించబడింది',
 	},

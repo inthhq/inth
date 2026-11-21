@@ -180,6 +180,16 @@ export const translations: CompleteTranslations = {
 		lockedByAccount: 'Váš účet se odhlásil a po přihlášení to můžete změnit.',
 		lockedByGpc:
 			'Signál Global Privacy Control ve vašem prohlížeči je zapnutý, takže toto zůstává vypnuté.',
+		receiptAccount: 'Jste odhlášeni v tomto prohlížeči a ve svém účtu.',
+		receiptAccountWithRights:
+			'Jste odhlášeni z {rights} v tomto prohlížeči a ve svém účtu.',
+		receiptBrowser: 'Jste odhlášeni v tomto prohlížeči.',
+		receiptBrowserWithRights: 'Jste odhlášeni z {rights} v tomto prohlížeči.',
+		recordedLabel: 'Zaznamenáno',
+		referenceLabel: 'Reference',
+		rightsAll: 'prodeje, sdílení a cílené reklamy',
+		rightsSaleAndShare: 'prodeje a sdílení',
+		rightsSaleAndTargetedAds: 'prodeje a cílené reklamy',
 		statusRequest: 'Žádost o odhlášení byla respektována',
 		statusSignal: 'Signál předvolby odhlášení byl respektován',
 	},

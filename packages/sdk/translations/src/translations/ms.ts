@@ -184,6 +184,18 @@ export const translations: CompleteTranslations = {
 			'Akaun anda telah memilih keluar, dan anda boleh menukarnya selepas log masuk.',
 		lockedByGpc:
 			'Isyarat Global Privacy Control pelayar anda dihidupkan, jadi tetapan ini kekal dimatikan.',
+		receiptAccount:
+			'Anda telah memilih keluar pada pelayar ini dan akaun anda.',
+		receiptAccountWithRights:
+			'Anda telah memilih keluar daripada {rights} pada pelayar ini dan akaun anda.',
+		receiptBrowser: 'Anda telah memilih keluar pada pelayar ini.',
+		receiptBrowserWithRights:
+			'Anda telah memilih keluar daripada {rights} pada pelayar ini.',
+		recordedLabel: 'Direkodkan',
+		referenceLabel: 'Rujukan',
+		rightsAll: 'jualan, perkongsian dan pengiklanan disasarkan',
+		rightsSaleAndShare: 'jualan dan perkongsian',
+		rightsSaleAndTargetedAds: 'jualan dan pengiklanan disasarkan',
 		statusRequest: 'Permintaan memilih keluar dipenuhi',
 		statusSignal: 'Isyarat keutamaan memilih keluar dipenuhi',
 	},

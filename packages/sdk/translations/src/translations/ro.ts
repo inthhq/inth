@@ -180,6 +180,16 @@ export const translations: CompleteTranslations = {
 			'Contul tău a renunțat și poți schimba aceasta după autentificare.',
 		lockedByGpc:
 			'Semnalul Global Privacy Control al browserului tău este activ, așa că această opțiune rămâne dezactivată.',
+		receiptAccount: 'Ai renunțat în acest browser și pe contul tău.',
+		receiptAccountWithRights:
+			'Ai renunțat la {rights} în acest browser și pe contul tău.',
+		receiptBrowser: 'Ai renunțat în acest browser.',
+		receiptBrowserWithRights: 'Ai renunțat la {rights} în acest browser.',
+		recordedLabel: 'Înregistrat',
+		referenceLabel: 'Referință',
+		rightsAll: 'vânzare, partajare și publicitate direcționată',
+		rightsSaleAndShare: 'vânzare și partajare',
+		rightsSaleAndTargetedAds: 'vânzare și publicitate direcționată',
 		statusRequest: 'Solicitarea de renunțare a fost respectată',
 		statusSignal: 'Semnalul de preferință pentru renunțare a fost respectat',
 	},

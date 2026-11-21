@@ -7,6 +7,7 @@ import {
 	resolveIABCopy,
 	resolveOptOutCopy,
 	resolveOptOutLink,
+	resolveOptOutReceiptSentence,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
 	resolveSurfaceTranslations,
@@ -189,6 +190,47 @@ describe('consent copy', () => {
 			done: 'Fertig',
 			statusRequest: 'Widerspruch berücksichtigt',
 		});
+	});
+
+	it('resolves the receipt sentence for neutral and confirmed rights combinations', () => {
+		expect(
+			resolveOptOutReceiptSentence(en, { rights: [], scope: 'browser' })
+		).toBe("You're opted out on this browser.");
+		expect(
+			resolveOptOutReceiptSentence(en, { rights: [], scope: 'account' })
+		).toBe("You're opted out on this browser and your account.");
+		expect(
+			resolveOptOutReceiptSentence(en, {
+				rights: ['sale', 'share'],
+				scope: 'browser',
+			})
+		).toBe("You're opted out of sale and sharing on this browser.");
+		expect(
+			resolveOptOutReceiptSentence(en, {
+				rights: ['sale', 'targeted_ads'],
+				scope: 'browser',
+			})
+		).toBe(
+			"You're opted out of sale and targeted advertising on this browser."
+		);
+		expect(
+			resolveOptOutReceiptSentence(en, {
+				rights: ['sale', 'share', 'targeted_ads'],
+				scope: 'account',
+			})
+		).toBe(
+			"You're opted out of sale, sharing and targeted advertising on this browser and your account."
+		);
+		// Any other combination falls back to the neutral sentence.
+		expect(
+			resolveOptOutReceiptSentence(en, { rights: ['sale'], scope: 'browser' })
+		).toBe("You're opted out on this browser.");
+		expect(
+			resolveOptOutReceiptSentence(en, {
+				rights: ['share', 'targeted_ads'],
+				scope: 'account',
+			})
+		).toBe("You're opted out on this browser and your account.");
 	});
 });
 

@@ -179,6 +179,17 @@ export const translations: CompleteTranslations = {
 			'Fiókod leiratkozott, és ezt bejelentkezés után módosíthatod.',
 		lockedByGpc:
 			'A böngésződ Global Privacy Control jelzése be van kapcsolva, ezért ez kikapcsolva marad.',
+		receiptAccount: 'Leiratkoztál ebben a böngészőben és a fiókodban.',
+		receiptAccountWithRights:
+			'Leiratkoztál a következőkről ebben a böngészőben és a fiókodban: {rights}.',
+		receiptBrowser: 'Leiratkoztál ebben a böngészőben.',
+		receiptBrowserWithRights:
+			'Leiratkoztál a következőkről ebben a böngészőben: {rights}.',
+		recordedLabel: 'Rögzítve',
+		referenceLabel: 'Hivatkozás',
+		rightsAll: 'értékesítés, megosztás és célzott hirdetés',
+		rightsSaleAndShare: 'értékesítés és megosztás',
+		rightsSaleAndTargetedAds: 'értékesítés és célzott hirdetés',
 		statusRequest: 'Leiratkozási kérelem teljesítve',
 		statusSignal: 'Leiratkozási preferenciajelzés teljesítve',
 	},

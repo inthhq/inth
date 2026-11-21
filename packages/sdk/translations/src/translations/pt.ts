@@ -179,6 +179,17 @@ export const translations: CompleteTranslations = {
 			'Sua conta optou por sair, e você pode alterar isso após fazer login.',
 		lockedByGpc:
 			'O sinal Global Privacy Control do seu navegador está ativado, portanto esta opção permanece desativada.',
+		receiptAccount: 'Você optou por sair neste navegador e na sua conta.',
+		receiptAccountWithRights:
+			'Você optou por sair de {rights} neste navegador e na sua conta.',
+		receiptBrowser: 'Você optou por sair neste navegador.',
+		receiptBrowserWithRights:
+			'Você optou por sair de {rights} neste navegador.',
+		recordedLabel: 'Registrado',
+		referenceLabel: 'Referência',
+		rightsAll: 'venda, compartilhamento e publicidade direcionada',
+		rightsSaleAndShare: 'venda e compartilhamento',
+		rightsSaleAndTargetedAds: 'venda e publicidade direcionada',
 		statusRequest: 'Solicitação de exclusão atendida',
 		statusSignal: 'Sinal de preferência de exclusão atendido',
 	},

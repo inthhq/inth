@@ -182,6 +182,16 @@ export const translations: CompleteTranslations = {
 			'Your account has opted out, and you can change this after signing in.',
 		lockedByGpc:
 			"Your browser's Global Privacy Control signal is on, so this stays off.",
+		receiptAccount: "You're opted out on this browser and your account.",
+		receiptAccountWithRights:
+			"You're opted out of {rights} on this browser and your account.",
+		receiptBrowser: "You're opted out on this browser.",
+		receiptBrowserWithRights: "You're opted out of {rights} on this browser.",
+		recordedLabel: 'Recorded',
+		referenceLabel: 'Reference',
+		rightsAll: 'sale, sharing and targeted advertising',
+		rightsSaleAndShare: 'sale and sharing',
+		rightsSaleAndTargetedAds: 'sale and targeted advertising',
 		statusRequest: 'Opt-out request honored',
 		statusSignal: 'Opt-out preference signal honored',
 	},

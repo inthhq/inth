@@ -179,6 +179,16 @@ export const translations: CompleteTranslations = {
 			'আপনার অ্যাকাউন্ট থেকে অপ্ট-আউট করা হয়েছে, এবং সাইন ইন করার পর আপনি এটি পরিবর্তন করতে পারবেন।',
 		lockedByGpc:
 			'আপনার ব্রাউজারের Global Privacy Control সংকেত চালু আছে, তাই এটি বন্ধ থাকবে।',
+		receiptAccount: 'এই ব্রাউজার এবং আপনার অ্যাকাউন্টে আপনি অপ্ট-আউট করেছেন।',
+		receiptAccountWithRights:
+			'এই ব্রাউজার এবং আপনার অ্যাকাউন্টে আপনি {rights} থেকে অপ্ট-আউট করেছেন।',
+		receiptBrowser: 'এই ব্রাউজারে আপনি অপ্ট-আউট করেছেন।',
+		receiptBrowserWithRights: 'এই ব্রাউজারে আপনি {rights} থেকে অপ্ট-আউট করেছেন।',
+		recordedLabel: 'রেকর্ড করা হয়েছে',
+		referenceLabel: 'রেফারেন্স',
+		rightsAll: 'বিক্রয়, শেয়ারিং এবং লক্ষ্যযুক্ত বিজ্ঞাপন',
+		rightsSaleAndShare: 'বিক্রয় এবং শেয়ারিং',
+		rightsSaleAndTargetedAds: 'বিক্রয় এবং লক্ষ্যযুক্ত বিজ্ঞাপন',
 		statusRequest: 'অপ্ট-আউট অনুরোধ কার্যকর হয়েছে',
 		statusSignal: 'অপ্ট-আউট পছন্দের সংকেত কার্যকর হয়েছে',
 	},

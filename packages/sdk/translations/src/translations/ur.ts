@@ -184,6 +184,17 @@ export const translations: CompleteTranslations = {
 			'آپ کے اکاؤنٹ نے آپٹ آؤٹ کیا ہے، اور آپ سائن ان کرنے کے بعد اسے تبدیل کر سکتے ہیں۔',
 		lockedByGpc:
 			'آپ کے براؤزر کا Global Privacy Control سگنل آن ہے، اس لیے یہ بند رہتا ہے۔',
+		receiptAccount: 'آپ اس براؤزر اور اپنے اکاؤنٹ میں آپٹ آؤٹ ہو چکے ہیں۔',
+		receiptAccountWithRights:
+			'آپ اس براؤزر اور اپنے اکاؤنٹ میں {rights} سے آپٹ آؤٹ ہو چکے ہیں۔',
+		receiptBrowser: 'آپ اس براؤزر میں آپٹ آؤٹ ہو چکے ہیں۔',
+		receiptBrowserWithRights:
+			'آپ اس براؤزر میں {rights} سے آپٹ آؤٹ ہو چکے ہیں۔',
+		recordedLabel: 'درج کیا گیا',
+		referenceLabel: 'حوالہ',
+		rightsAll: 'فروخت، اشتراک اور ہدف شدہ اشتہارات',
+		rightsSaleAndShare: 'فروخت اور اشتراک',
+		rightsSaleAndTargetedAds: 'فروخت اور ہدف شدہ اشتہارات',
 		statusRequest: 'آپٹ آؤٹ درخواست پر عمل کر دیا گیا',
 		statusSignal: 'آپٹ آؤٹ ترجیحی سگنل پر عمل کر دیا گیا',
 	},
