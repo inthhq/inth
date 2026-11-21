@@ -178,6 +178,16 @@ export const translations: CompleteTranslations = {
 			'Twoje konto zrezygnowało, a możesz to zmienić po zalogowaniu.',
 		lockedByGpc:
 			'Sygnał Global Privacy Control w Twojej przeglądarce jest włączony, więc ta opcja pozostaje wyłączona.',
+		receiptAccount: 'Zrezygnowałeś w tej przeglądarce i na swoim koncie.',
+		receiptAccountWithRights:
+			'Zrezygnowałeś z {rights} w tej przeglądarce i na swoim koncie.',
+		receiptBrowser: 'Zrezygnowałeś w tej przeglądarce.',
+		receiptBrowserWithRights: 'Zrezygnowałeś z {rights} w tej przeglądarce.',
+		recordedLabel: 'Zapisano',
+		referenceLabel: 'Numer referencyjny',
+		rightsAll: 'sprzedaży, udostępniania i reklam ukierunkowanych',
+		rightsSaleAndShare: 'sprzedaży i udostępniania',
+		rightsSaleAndTargetedAds: 'sprzedaży i reklam ukierunkowanych',
 		statusRequest: 'Żądanie rezygnacji zostało uwzględnione',
 		statusSignal: 'Sygnał preferencji rezygnacji został uwzględniony',
 	},

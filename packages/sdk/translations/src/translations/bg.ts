@@ -179,6 +179,16 @@ export const translations: CompleteTranslations = {
 			'Вашият акаунт е заявил отказ и можете да промените това след влизане.',
 		lockedByGpc:
 			'Сигналът Global Privacy Control на браузъра ви е включен, затова тази настройка остава изключена.',
+		receiptAccount: 'Отказали сте се в този браузър и в акаунта си.',
+		receiptAccountWithRights:
+			'Отказали сте се от {rights} в този браузър и в акаунта си.',
+		receiptBrowser: 'Отказали сте се в този браузър.',
+		receiptBrowserWithRights: 'Отказали сте се от {rights} в този браузър.',
+		recordedLabel: 'Записано',
+		referenceLabel: 'Референтен номер',
+		rightsAll: 'продажба, споделяне и насочена реклама',
+		rightsSaleAndShare: 'продажба и споделяне',
+		rightsSaleAndTargetedAds: 'продажба и насочена реклама',
 		statusRequest: 'Заявката за отказ е уважена',
 		statusSignal: 'Сигналът за предпочитание за отказ е уважен',
 	},

@@ -179,6 +179,18 @@ export const translations: CompleteTranslations = {
 			'Il tuo account ha scelto di opporsi e puoi modificare questa impostazione dopo aver effettuato l’accesso.',
 		lockedByGpc:
 			'Il segnale Global Privacy Control del browser è attivo, quindi questa opzione resta disattivata.',
+		receiptAccount:
+			'Hai effettuato l’esclusione su questo browser e sul tuo account.',
+		receiptAccountWithRights:
+			'Hai effettuato l’esclusione da {rights} su questo browser e sul tuo account.',
+		receiptBrowser: 'Hai effettuato l’esclusione su questo browser.',
+		receiptBrowserWithRights:
+			'Hai effettuato l’esclusione da {rights} su questo browser.',
+		recordedLabel: 'Registrato',
+		referenceLabel: 'Riferimento',
+		rightsAll: 'vendita, condivisione e pubblicità mirata',
+		rightsSaleAndShare: 'vendita e condivisione',
+		rightsSaleAndTargetedAds: 'vendita e pubblicità mirata',
 		statusRequest: 'Richiesta di esclusione rispettata',
 		statusSignal: 'Segnale di preferenza di esclusione rispettato',
 	},

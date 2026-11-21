@@ -177,6 +177,17 @@ export const translations: CompleteTranslations = {
 			'Jūsu konts ir atteicies, un jūs varat to mainīt pēc pierakstīšanās.',
 		lockedByGpc:
 			'Jūsu pārlūkprogrammas Global Privacy Control signāls ir ieslēgts, tāpēc tas paliek izslēgts.',
+		receiptAccount: 'Jūs esat atteicies šajā pārlūkprogrammā un savā kontā.',
+		receiptAccountWithRights:
+			'Jūs esat atteicies no {rights} šajā pārlūkprogrammā un savā kontā.',
+		receiptBrowser: 'Jūs esat atteicies šajā pārlūkprogrammā.',
+		receiptBrowserWithRights:
+			'Jūs esat atteicies no {rights} šajā pārlūkprogrammā.',
+		recordedLabel: 'Reģistrēts',
+		referenceLabel: 'Atsauce',
+		rightsAll: 'pārdošanas, kopīgošanas un mērķētas reklāmas',
+		rightsSaleAndShare: 'pārdošanas un kopīgošanas',
+		rightsSaleAndTargetedAds: 'pārdošanas un mērķētas reklāmas',
 		statusRequest: 'Atteikšanās pieprasījums ievērots',
 		statusSignal: 'Atteikšanās preferences signāls ievērots',
 	},

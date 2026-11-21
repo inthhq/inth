@@ -179,6 +179,16 @@ export const translations: CompleteTranslations = {
 			'Je account heeft zich afgemeld en je kunt dit wijzigen nadat je bent ingelogd.',
 		lockedByGpc:
 			'Het Global Privacy Control-signaal van je browser staat aan, dus dit blijft uitgeschakeld.',
+		receiptAccount: 'Je bent afgemeld in deze browser en op je account.',
+		receiptAccountWithRights:
+			'Je bent afgemeld voor {rights} in deze browser en op je account.',
+		receiptBrowser: 'Je bent afgemeld in deze browser.',
+		receiptBrowserWithRights: 'Je bent afgemeld voor {rights} in deze browser.',
+		recordedLabel: 'Vastgelegd',
+		referenceLabel: 'Referentie',
+		rightsAll: 'verkoop, delen en gerichte advertenties',
+		rightsSaleAndShare: 'verkoop en delen',
+		rightsSaleAndTargetedAds: 'verkoop en gerichte advertenties',
 		statusRequest: 'Afmeldingsverzoek gehonoreerd',
 		statusSignal: 'Signaal voor afmeldingsvoorkeur gehonoreerd',
 	},

@@ -1,5 +1,9 @@
 /** Resolve the copy a consent UI renders from the active translations. */
-import type { PolicyPrompt, PolicyRight } from '@inth/sdk-schema/types';
+import type {
+	OptOutRight,
+	PolicyPrompt,
+	PolicyRight,
+} from '@inth/sdk-schema/types';
 import type {
 	CompleteTranslations,
 	IABTranslations,
@@ -299,6 +303,57 @@ export const resolveOptOutCopy = function resolveOptOutCopy(
 		translations?.optOut
 	);
 };
+
+const rightsPhraseFor = function rightsPhraseFor(
+	copy: OptOutTranslations,
+	rights: readonly OptOutRight[]
+): string | null {
+	const unique = new Set(rights);
+	if (!unique.has('sale')) {
+		return null;
+	}
+	const hasShare = unique.has('share');
+	const hasTargetedAds = unique.has('targeted_ads');
+	if (unique.size === 3 && hasShare && hasTargetedAds) {
+		return copy.rightsAll;
+	}
+	if (unique.size === 2 && hasShare) {
+		return copy.rightsSaleAndShare;
+	}
+	if (unique.size === 2 && hasTargetedAds) {
+		return copy.rightsSaleAndTargetedAds;
+	}
+	return null;
+};
+
+/**
+ * Resolve the receipt sentence for an opt-out confirmation view.
+ *
+ * Names confirmed rights only for the three standard combinations (sale+share,
+ * sale+targeted_ads, all three). Any other set of rights uses the neutral
+ * sentence for the active scope.
+ */
+export const resolveOptOutReceiptSentence =
+	function resolveOptOutReceiptSentence(
+		translations: Partial<Translations> | undefined,
+		receipt: {
+			readonly rights: readonly OptOutRight[];
+			readonly scope: 'browser' | 'account' | null;
+		}
+	): string {
+		const copy = resolveOptOutCopy(translations);
+		const phrase = rightsPhraseFor(copy, receipt.rights);
+		if (phrase !== null) {
+			const template =
+				receipt.scope === 'account'
+					? copy.receiptAccountWithRights
+					: copy.receiptBrowserWithRights;
+			return template.replace('{rights}', phrase);
+		}
+		return receipt.scope === 'account'
+			? copy.receiptAccount
+			: copy.receiptBrowser;
+	};
 
 /**
  * Accessible names for the floating trigger and its toolbar.

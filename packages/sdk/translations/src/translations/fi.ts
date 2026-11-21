@@ -177,6 +177,17 @@ export const translations: CompleteTranslations = {
 			'Tilisi on kieltäytynyt, ja voit muuttaa tätä kirjauduttuasi sisään.',
 		lockedByGpc:
 			'Selaimesi Global Privacy Control -signaali on päällä, joten tämä pysyy poissa käytöstä.',
+		receiptAccount: 'Olet kieltäytynyt tässä selaimessa ja tililläsi.',
+		receiptAccountWithRights:
+			'Olet kieltäytynyt kohteesta {rights} tässä selaimessa ja tililläsi.',
+		receiptBrowser: 'Olet kieltäytynyt tässä selaimessa.',
+		receiptBrowserWithRights:
+			'Olet kieltäytynyt kohteesta {rights} tässä selaimessa.',
+		recordedLabel: 'Tallennettu',
+		referenceLabel: 'Viite',
+		rightsAll: 'myynti, jakaminen ja kohdennettu mainonta',
+		rightsSaleAndShare: 'myynti ja jakaminen',
+		rightsSaleAndTargetedAds: 'myynti ja kohdennettu mainonta',
 		statusRequest: 'Kieltäytymispyyntö huomioitu',
 		statusSignal: 'Kieltäytymissignaali huomioitu',
 	},

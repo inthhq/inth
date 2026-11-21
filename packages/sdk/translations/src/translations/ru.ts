@@ -183,6 +183,16 @@ export const translations: CompleteTranslations = {
 			'Для вашей учётной записи установлен отказ, и вы можете изменить это после входа.',
 		lockedByGpc:
 			'Сигнал Global Privacy Control в вашем браузере включён, поэтому эта настройка остаётся отключённой.',
+		receiptAccount: 'Вы отказались в этом браузере и в своей учётной записи.',
+		receiptAccountWithRights:
+			'Вы отказались от {rights} в этом браузере и в своей учётной записи.',
+		receiptBrowser: 'Вы отказались в этом браузере.',
+		receiptBrowserWithRights: 'Вы отказались от {rights} в этом браузере.',
+		recordedLabel: 'Записано',
+		referenceLabel: 'Номер обращения',
+		rightsAll: 'продажи, передачи и таргетированной рекламы',
+		rightsSaleAndShare: 'продажи и передачи',
+		rightsSaleAndTargetedAds: 'продажи и таргетированной рекламы',
 		statusRequest: 'Запрос на отказ выполнен',
 		statusSignal: 'Сигнал предпочтения отказа выполнен',
 	},

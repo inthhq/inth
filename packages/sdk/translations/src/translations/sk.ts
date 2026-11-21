@@ -177,6 +177,16 @@ export const translations: CompleteTranslations = {
 		lockedByAccount: 'Váš účet sa odhlásil a po prihlásení to môžete zmeniť.',
 		lockedByGpc:
 			'Signál Global Privacy Control vo vašom prehliadači je zapnutý, takže toto zostáva vypnuté.',
+		receiptAccount: 'Ste odhlásení v tomto prehliadači a vo svojom účte.',
+		receiptAccountWithRights:
+			'Ste odhlásení z {rights} v tomto prehliadači a vo svojom účte.',
+		receiptBrowser: 'Ste odhlásení v tomto prehliadači.',
+		receiptBrowserWithRights: 'Ste odhlásení z {rights} v tomto prehliadači.',
+		recordedLabel: 'Zaznamenané',
+		referenceLabel: 'Referencia',
+		rightsAll: 'predaja, zdieľania a cielenej reklamy',
+		rightsSaleAndShare: 'predaja a zdieľania',
+		rightsSaleAndTargetedAds: 'predaja a cielenej reklamy',
 		statusRequest: 'Žiadosť o odhlásenie bola splnená',
 		statusSignal: 'Signál predvoľby odhlásenia bol splnený',
 	},

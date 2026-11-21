@@ -182,6 +182,17 @@ export const translations: CompleteTranslations = {
 		lockedByAccount: 'உங்கள் கணக்கு விலகியுள்ளது, உள்நுழைந்த பிறகு இதை மாற்றலாம்.',
 		lockedByGpc:
 			'உங்கள் உலாவியின் Global Privacy Control சிக்னல் இயக்கத்தில் உள்ளதால் இது முடக்கத்தில் இருக்கும்.',
+		receiptAccount: 'இந்த உலாவியிலும் உங்கள் கணக்கிலும் விலகியுள்ளீர்கள்.',
+		receiptAccountWithRights:
+			'இந்த உலாவியிலும் உங்கள் கணக்கிலும் {rights} ஆகியவற்றிலிருந்து விலகியுள்ளீர்கள்.',
+		receiptBrowser: 'இந்த உலாவியில் விலகியுள்ளீர்கள்.',
+		receiptBrowserWithRights:
+			'இந்த உலாவியில் {rights} ஆகியவற்றிலிருந்து விலகியுள்ளீர்கள்.',
+		recordedLabel: 'பதிவு செய்யப்பட்டது',
+		referenceLabel: 'குறிப்பு',
+		rightsAll: 'விற்பனை, பகிர்வு மற்றும் இலக்கு விளம்பரம்',
+		rightsSaleAndShare: 'விற்பனை மற்றும் பகிர்வு',
+		rightsSaleAndTargetedAds: 'விற்பனை மற்றும் இலக்கு விளம்பரம்',
 		statusRequest: 'விலகல் கோரிக்கை நிறைவேற்றப்பட்டது',
 		statusSignal: 'விலகல் விருப்ப சிக்னல் நிறைவேற்றப்பட்டது',
 	},

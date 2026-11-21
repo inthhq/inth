@@ -183,6 +183,17 @@ export const translations: CompleteTranslations = {
 			'Hesabınız kapsam dışı bırakıldı, oturum açtıktan sonra bunu değiştirebilirsiniz.',
 		lockedByGpc:
 			'Tarayıcınızın Global Privacy Control sinyali açık olduğundan bu ayar kapalı kalır.',
+		receiptAccount: 'Bu tarayıcıda ve hesabınızda kapsam dışı bırakıldınız.',
+		receiptAccountWithRights:
+			'Bu tarayıcıda ve hesabınızda {rights} kapsamı dışında bırakıldınız.',
+		receiptBrowser: 'Bu tarayıcıda kapsam dışı bırakıldınız.',
+		receiptBrowserWithRights:
+			'Bu tarayıcıda {rights} kapsamı dışında bırakıldınız.',
+		recordedLabel: 'Kaydedildi',
+		referenceLabel: 'Referans',
+		rightsAll: 'satış, paylaşım ve hedefli reklamcılık',
+		rightsSaleAndShare: 'satış ve paylaşım',
+		rightsSaleAndTargetedAds: 'satış ve hedefli reklamcılık',
 		statusRequest: 'Kapsam dışı bırakma isteği uygulandı',
 		statusSignal: 'Kapsam dışı bırakma tercih sinyali uygulandı',
 	},

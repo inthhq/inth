@@ -127,21 +127,65 @@ describe('bundled optOut translations', () => {
 				'Your account has opted out, and you can change this after signing in.',
 			lockedByGpc:
 				"Your browser's Global Privacy Control signal is on, so this stays off.",
+			receiptAccount: "You're opted out on this browser and your account.",
+			receiptAccountWithRights:
+				"You're opted out of {rights} on this browser and your account.",
+			receiptBrowser: "You're opted out on this browser.",
+			receiptBrowserWithRights: "You're opted out of {rights} on this browser.",
+			recordedLabel: 'Recorded',
+			referenceLabel: 'Reference',
+			rightsAll: 'sale, sharing and targeted advertising',
+			rightsSaleAndShare: 'sale and sharing',
+			rightsSaleAndTargetedAds: 'sale and targeted advertising',
 			statusRequest: 'Opt-out request honored',
 			statusSignal: 'Opt-out preference signal honored',
 		});
 	});
 
+	const requiredOptOutKeys = [
+		'statusRequest',
+		'statusSignal',
+		'description',
+		'receiptBrowser',
+		'receiptAccount',
+		'receiptBrowserWithRights',
+		'receiptAccountWithRights',
+		'rightsSaleAndShare',
+		'rightsSaleAndTargetedAds',
+		'rightsAll',
+		'recordedLabel',
+		'referenceLabel',
+		'done',
+		'lockedByGpc',
+		'lockedByAccount',
+	] as const;
+
+	const localizedOptOutKeys = [
+		'statusRequest',
+		'statusSignal',
+		'description',
+		'receiptBrowser',
+		'receiptAccount',
+		'receiptBrowserWithRights',
+		'receiptAccountWithRights',
+		'rightsSaleAndShare',
+		'rightsSaleAndTargetedAds',
+		'rightsAll',
+		'recordedLabel',
+		'done',
+		'lockedByGpc',
+		'lockedByAccount',
+	] as const;
+
 	it.each(Object.entries(bundledTranslations))(
 		'%s defines every opt-out key',
 		(_language, translations) => {
 			const { optOut } = translations;
-			expectNonEmpty(optOut?.statusRequest);
-			expectNonEmpty(optOut?.statusSignal);
-			expectNonEmpty(optOut?.description);
-			expectNonEmpty(optOut?.done);
-			expectNonEmpty(optOut?.lockedByGpc);
-			expectNonEmpty(optOut?.lockedByAccount);
+			for (const key of requiredOptOutKeys) {
+				expectNonEmpty(optOut?.[key]);
+			}
+			expect(optOut?.receiptBrowserWithRights).toContain('{rights}');
+			expect(optOut?.receiptAccountWithRights).toContain('{rights}');
 		}
 	);
 
@@ -152,12 +196,9 @@ describe('bundled optOut translations', () => {
 	)('%s does not reuse the English opt-out copy', (_language, translations) => {
 		const english = bundledTranslations.en.optOut;
 		const { optOut } = translations;
-		expect(optOut?.statusRequest).not.toBe(english?.statusRequest);
-		expect(optOut?.statusSignal).not.toBe(english?.statusSignal);
-		expect(optOut?.description).not.toBe(english?.description);
-		expect(optOut?.done).not.toBe(english?.done);
-		expect(optOut?.lockedByGpc).not.toBe(english?.lockedByGpc);
-		expect(optOut?.lockedByAccount).not.toBe(english?.lockedByAccount);
+		for (const key of localizedOptOutKeys) {
+			expect(optOut?.[key]).not.toBe(english?.[key]);
+		}
 	});
 });
 

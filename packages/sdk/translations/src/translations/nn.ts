@@ -178,6 +178,18 @@ export const translations: CompleteTranslations = {
 			'Kontoen din har reservert seg, og du kan endre dette etter innlogging.',
 		lockedByGpc:
 			'Nettlesaren sitt Global Privacy Control-signal er på, så dette vert verande av.',
+		receiptAccount:
+			'Du har reservert deg i denne nettlesaren og på kontoen din.',
+		receiptAccountWithRights:
+			'Du har reservert deg mot {rights} i denne nettlesaren og på kontoen din.',
+		receiptBrowser: 'Du har reservert deg i denne nettlesaren.',
+		receiptBrowserWithRights:
+			'Du har reservert deg mot {rights} i denne nettlesaren.',
+		recordedLabel: 'Registrert',
+		referenceLabel: 'Referanse',
+		rightsAll: 'sal, deling og målretta annonsering',
+		rightsSaleAndShare: 'sal og deling',
+		rightsSaleAndTargetedAds: 'sal og målretta annonsering',
 		statusRequest: 'Reservasjonsførespurnad følgd',
 		statusSignal: 'Reservasjonssignal følgd',
 	},

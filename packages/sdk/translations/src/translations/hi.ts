@@ -174,6 +174,16 @@ export const translations: CompleteTranslations = {
 			'आपके खाते ने ऑप्ट-आउट किया है, और आप साइन इन करने के बाद इसे बदल सकते हैं।',
 		lockedByGpc:
 			'आपके ब्राउज़र का Global Privacy Control सिग्नल चालू है, इसलिए यह बंद रहता है।',
+		receiptAccount: 'आप इस ब्राउज़र और अपने खाते में ऑप्ट-आउट हो गए हैं।',
+		receiptAccountWithRights:
+			'आप इस ब्राउज़र और अपने खाते में {rights} से ऑप्ट-आउट हो गए हैं।',
+		receiptBrowser: 'आप इस ब्राउज़र में ऑप्ट-आउट हो गए हैं।',
+		receiptBrowserWithRights: 'आप इस ब्राउज़र में {rights} से ऑप्ट-आउट हो गए हैं।',
+		recordedLabel: 'दर्ज किया गया',
+		referenceLabel: 'संदर्भ',
+		rightsAll: 'बिक्री, साझाकरण और लक्षित विज्ञापन',
+		rightsSaleAndShare: 'बिक्री और साझाकरण',
+		rightsSaleAndTargetedAds: 'बिक्री और लक्षित विज्ञापन',
 		statusRequest: 'ऑप्ट-आउट अनुरोध का सम्मान किया गया',
 		statusSignal: 'ऑप्ट-आउट प्राथमिकता सिग्नल का सम्मान किया गया',
 	},

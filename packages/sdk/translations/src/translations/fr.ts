@@ -179,6 +179,18 @@ export const translations: CompleteTranslations = {
 			'Votre compte a choisi de se désinscrire, et vous pouvez modifier cela après connexion.',
 		lockedByGpc:
 			'Le signal Global Privacy Control de votre navigateur est activé, cette option reste donc désactivée.',
+		receiptAccount:
+			'Vous êtes désinscrit sur ce navigateur et sur votre compte.',
+		receiptAccountWithRights:
+			'Vous êtes désinscrit de {rights} sur ce navigateur et sur votre compte.',
+		receiptBrowser: 'Vous êtes désinscrit sur ce navigateur.',
+		receiptBrowserWithRights:
+			'Vous êtes désinscrit de {rights} sur ce navigateur.',
+		recordedLabel: 'Enregistré',
+		referenceLabel: 'Référence',
+		rightsAll: 'la vente, le partage et la publicité ciblée',
+		rightsSaleAndShare: 'la vente et le partage',
+		rightsSaleAndTargetedAds: 'la vente et la publicité ciblée',
 		statusRequest: 'Demande de refus prise en compte',
 		statusSignal: 'Signal de préférence de refus pris en compte',
 	},

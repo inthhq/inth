@@ -184,6 +184,17 @@ export const translations: CompleteTranslations = {
 			'계정에서 거부로 설정되어 있으며, 로그인 후 변경할 수 있습니다.',
 		lockedByGpc:
 			'브라우저의 Global Privacy Control 신호가 켜져 있어 이 설정은 꺼진 상태로 유지됩니다.',
+		receiptAccount: '이 브라우저와 계정에서 거부 설정이 적용되었습니다.',
+		receiptAccountWithRights:
+			'이 브라우저와 계정에서 {rights}에 대한 거부 설정이 적용되었습니다.',
+		receiptBrowser: '이 브라우저에서 거부 설정이 적용되었습니다.',
+		receiptBrowserWithRights:
+			'이 브라우저에서 {rights}에 대한 거부 설정이 적용되었습니다.',
+		recordedLabel: '기록 시각',
+		referenceLabel: '참조 번호',
+		rightsAll: '판매, 공유 및 맞춤형 광고',
+		rightsSaleAndShare: '판매 및 공유',
+		rightsSaleAndTargetedAds: '판매 및 맞춤형 광고',
 		statusRequest: '거부 요청이 반영되었습니다',
 		statusSignal: '거부 기본 설정 신호가 반영되었습니다',
 	},

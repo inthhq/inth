@@ -360,6 +360,7 @@ export {
 	resolveIABCopy,
 	resolveOptOutCopy,
 	resolveOptOutLink,
+	resolveOptOutReceiptSentence,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
 	resolveSurfaceTranslations,

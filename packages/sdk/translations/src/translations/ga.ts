@@ -180,6 +180,18 @@ export const translations: CompleteTranslations = {
 			'Tá do chuntas tar éis diúltú, agus is féidir leat é seo a athrú tar éis duit síniú isteach.',
 		lockedByGpc:
 			'Tá comhartha Global Privacy Control do bhrabhsálaí ar siúl, mar sin fanann sé seo múchta.',
+		receiptAccount:
+			'Tá tú tar éis diúltú sa bhrabhsálaí seo agus ar do chuntas.',
+		receiptAccountWithRights:
+			'Tá tú tar éis diúltú do {rights} sa bhrabhsálaí seo agus ar do chuntas.',
+		receiptBrowser: 'Tá tú tar éis diúltú sa bhrabhsálaí seo.',
+		receiptBrowserWithRights:
+			'Tá tú tar éis diúltú do {rights} sa bhrabhsálaí seo.',
+		recordedLabel: 'Taifeadta',
+		referenceLabel: 'Tagairt',
+		rightsAll: 'díol, comhroinnt agus fógraíocht spriocdhírithe',
+		rightsSaleAndShare: 'díol agus comhroinnt',
+		rightsSaleAndTargetedAds: 'díol agus fógraíocht spriocdhírithe',
 		statusRequest: 'Iarratas diúltaithe comhlíonta',
 		statusSignal: 'Comhartha rogha diúltaithe comhlíonta',
 	},

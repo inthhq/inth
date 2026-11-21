@@ -182,6 +182,17 @@ export const translations: CompleteTranslations = {
 			'اختار حسابك عدم المشاركة، ويمكنك تغيير ذلك بعد تسجيل الدخول.',
 		lockedByGpc:
 			'إشارة التحكم العالمي في الخصوصية في متصفحك مفعلة، لذا يبقى هذا الخيار متوقفاً.',
+		receiptAccount: 'تم تسجيل إلغاء اشتراكك في هذا المتصفح وحسابك.',
+		receiptAccountWithRights:
+			'تم تسجيل إلغاء اشتراكك في {rights} في هذا المتصفح وحسابك.',
+		receiptBrowser: 'تم تسجيل إلغاء اشتراكك في هذا المتصفح.',
+		receiptBrowserWithRights:
+			'تم تسجيل إلغاء اشتراكك في {rights} في هذا المتصفح.',
+		recordedLabel: 'وقت التسجيل',
+		referenceLabel: 'المرجع',
+		rightsAll: 'البيع والمشاركة والإعلانات المستهدفة',
+		rightsSaleAndShare: 'البيع والمشاركة',
+		rightsSaleAndTargetedAds: 'البيع والإعلانات المستهدفة',
 		statusRequest: 'تم تنفيذ طلب عدم المشاركة',
 		statusSignal: 'تم تنفيذ إشارة تفضيل عدم المشاركة',
 	},

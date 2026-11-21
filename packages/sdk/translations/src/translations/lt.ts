@@ -180,6 +180,16 @@ export const translations: CompleteTranslations = {
 			'Jūsų paskyra atsisakė, ir tai galite pakeisti prisijungę.',
 		lockedByGpc:
 			'Jūsų naršyklės Global Privacy Control signalas įjungtas, todėl tai lieka išjungta.',
+		receiptAccount: 'Atsisakėte šioje naršyklėje ir savo paskyroje.',
+		receiptAccountWithRights:
+			'Atsisakėte {rights} šioje naršyklėje ir savo paskyroje.',
+		receiptBrowser: 'Atsisakėte šioje naršyklėje.',
+		receiptBrowserWithRights: 'Atsisakėte {rights} šioje naršyklėje.',
+		recordedLabel: 'Užregistruota',
+		referenceLabel: 'Nuoroda',
+		rightsAll: 'pardavimo, dalijimosi ir tikslinės reklamos',
+		rightsSaleAndShare: 'pardavimo ir dalijimosi',
+		rightsSaleAndTargetedAds: 'pardavimo ir tikslinės reklamos',
 		statusRequest: 'Atsisakymo prašymas įvykdytas',
 		statusSignal: 'Atsisakymo nuostatos signalas įvykdytas',
 	},

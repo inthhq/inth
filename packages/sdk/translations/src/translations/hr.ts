@@ -178,6 +178,16 @@ export const translations: CompleteTranslations = {
 			'Vaš je račun zatražio isključivanje, a to možete promijeniti nakon prijave.',
 		lockedByGpc:
 			'Signal Global Privacy Control u vašem pregledniku je uključen, pa ova postavka ostaje isključena.',
+		receiptAccount: 'Isključeni ste u ovom pregledniku i na svom računu.',
+		receiptAccountWithRights:
+			'Isključeni ste iz {rights} u ovom pregledniku i na svom računu.',
+		receiptBrowser: 'Isključeni ste u ovom pregledniku.',
+		receiptBrowserWithRights: 'Isključeni ste iz {rights} u ovom pregledniku.',
+		recordedLabel: 'Zabilježeno',
+		referenceLabel: 'Referenca',
+		rightsAll: 'prodaje, dijeljenja i ciljanog oglašavanja',
+		rightsSaleAndShare: 'prodaje i dijeljenja',
+		rightsSaleAndTargetedAds: 'prodaje i ciljanog oglašavanja',
 		statusRequest: 'Zahtjev za isključivanje je uvažen',
 		statusSignal: 'Signal postavke isključivanja je uvažen',
 	},

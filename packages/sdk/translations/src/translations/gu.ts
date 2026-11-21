@@ -173,6 +173,16 @@ export const translations: CompleteTranslations = {
 			'તમારા ખાતાએ ઓપ્ટ-આઉટ કર્યું છે, અને તમે સાઇન ઇન કર્યા પછી આ બદલી શકો છો.',
 		lockedByGpc:
 			'તમારા બ્રાઉઝરનું Global Privacy Control સિગ્નલ ચાલુ છે, તેથી આ બંધ રહે છે.',
+		receiptAccount: 'તમે આ બ્રાઉઝર અને તમારા ખાતામાં ઑપ્ટ-આઉટ કર્યું છે.',
+		receiptAccountWithRights:
+			'તમે આ બ્રાઉઝર અને તમારા ખાતામાં {rights} માંથી ઑપ્ટ-આઉટ કર્યું છે.',
+		receiptBrowser: 'તમે આ બ્રાઉઝરમાં ઑપ્ટ-આઉટ કર્યું છે.',
+		receiptBrowserWithRights: 'તમે આ બ્રાઉઝરમાં {rights} માંથી ઑપ્ટ-આઉટ કર્યું છે.',
+		recordedLabel: 'નોંધાયેલ',
+		referenceLabel: 'સંદર્ભ',
+		rightsAll: 'વેચાણ, શેરિંગ અને લક્ષિત જાહેરાત',
+		rightsSaleAndShare: 'વેચાણ અને શેરિંગ',
+		rightsSaleAndTargetedAds: 'વેચાણ અને લક્ષિત જાહેરાત',
 		statusRequest: 'ઓપ્ટ-આઉટ વિનંતી માન્ય રાખવામાં આવી',
 		statusSignal: 'ઓપ્ટ-આઉટ પસંદગી સિગ્નલ માન્ય રાખવામાં આવ્યું',
 	},

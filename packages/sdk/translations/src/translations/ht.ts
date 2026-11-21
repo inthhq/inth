@@ -183,6 +183,16 @@ export const translations: CompleteTranslations = {
 			'Kont ou a te refize pataj la, epi ou ka chanje sa apre ou fin konekte.',
 		lockedByGpc:
 			'Siyal Global Privacy Control navigatè ou a aktive, kidonk sa a rete etenn.',
+		receiptAccount: 'Ou dezabòne sou navigatè sa a ak sou kont ou.',
+		receiptAccountWithRights:
+			'Ou dezabòne pou {rights} sou navigatè sa a ak sou kont ou.',
+		receiptBrowser: 'Ou dezabòne sou navigatè sa a.',
+		receiptBrowserWithRights: 'Ou dezabòne pou {rights} sou navigatè sa a.',
+		recordedLabel: 'Anrejistre',
+		referenceLabel: 'Referans',
+		rightsAll: 'vant, pataj ak piblisite sible',
+		rightsSaleAndShare: 'vant ak pataj',
+		rightsSaleAndTargetedAds: 'vant ak piblisite sible',
 		statusRequest: 'Demann refi a respekte',
 		statusSignal: 'Siyal preferans refi a respekte',
 	},

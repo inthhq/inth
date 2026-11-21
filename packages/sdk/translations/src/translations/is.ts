@@ -177,6 +177,16 @@ export const translations: CompleteTranslations = {
 			'Reikningur þinn hefur afþakkað og þú getur breytt þessu eftir innskráningu.',
 		lockedByGpc:
 			'Global Privacy Control-merki vafrans þíns er virkt, svo þetta helst óvirkt.',
+		receiptAccount: 'Þú hefur afþakkað í þessum vafra og á reikningnum þínum.',
+		receiptAccountWithRights:
+			'Þú hefur afþakkað {rights} í þessum vafra og á reikningnum þínum.',
+		receiptBrowser: 'Þú hefur afþakkað í þessum vafra.',
+		receiptBrowserWithRights: 'Þú hefur afþakkað {rights} í þessum vafra.',
+		recordedLabel: 'Skráð',
+		referenceLabel: 'Tilvísun',
+		rightsAll: 'sölu, deilingu og markvissar auglýsingar',
+		rightsSaleAndShare: 'sölu og deilingu',
+		rightsSaleAndTargetedAds: 'sölu og markvissar auglýsingar',
 		statusRequest: 'Beiðni um afþökkun virt',
 		statusSignal: 'Kjörstillingamerki um afþökkun virt',
 	},

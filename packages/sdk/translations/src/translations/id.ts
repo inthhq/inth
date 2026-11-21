@@ -178,6 +178,18 @@ export const translations: CompleteTranslations = {
 			'Akun Anda telah memilih keluar, dan Anda dapat mengubahnya setelah masuk.',
 		lockedByGpc:
 			'Sinyal Global Privacy Control peramban Anda aktif, sehingga ini tetap nonaktif.',
+		receiptAccount:
+			'Anda telah memilih keluar di browser ini dan di akun Anda.',
+		receiptAccountWithRights:
+			'Anda telah memilih keluar dari {rights} di browser ini dan di akun Anda.',
+		receiptBrowser: 'Anda telah memilih keluar di browser ini.',
+		receiptBrowserWithRights:
+			'Anda telah memilih keluar dari {rights} di browser ini.',
+		recordedLabel: 'Tercatat',
+		referenceLabel: 'Referensi',
+		rightsAll: 'penjualan, berbagi, dan iklan bertarget',
+		rightsSaleAndShare: 'penjualan dan berbagi',
+		rightsSaleAndTargetedAds: 'penjualan dan iklan bertarget',
 		statusRequest: 'Permintaan keluar dipenuhi',
 		statusSignal: 'Sinyal preferensi keluar dipenuhi',
 	},
