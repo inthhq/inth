@@ -1,0 +1,101 @@
+---
+title: Quickstart
+description: Read what a signed-in user consents to from your Node.js, Vercel Functions or Cloudflare Workers server with @inth/node.
+group: server
+---
+
+Link each signed-in user to the consent they gave in the browser, then read
+it on your server before you send them marketing email. The answer counts
+every device the user signed in on.
+
+<Prompt title="Read Inth consent from this server" description="Paste into Claude Code, Codex, Cursor or another coding agent at the root of your app.">
+  Add @inth/node to this app's server so it can read what each signed-in user consents to.
+
+  1. Check that the site already shows the Inth consent banner from an @inth web package. If it does not, stop and tell me.
+  2. Install `@inth/node` and `@inth/sdk`, on the same release as the app's other Inth packages. Read `node_modules/@inth/node/AGENTS.md`, then follow the Node.js quickstart it links to, in order. Do not guess the API from memory.
+  3. Set `INTH_SECRET_KEY` and `INTH_PROJECT_URL` in the server environment. Ask me for both. Never put the secret key in a variable the browser bundle can read, such as one starting with `NEXT_PUBLIC_` or `VITE_`.
+  4. In the sign-in handler, read the subject ID with `readRequestConsent` from `@inth/sdk/server` and call `inth.users.identify`. Skip the call when there is no subject ID. Log a failure; do not fail the sign-in.
+  5. Where the app sends marketing, call `inth.consents.check`. Check `error` before `data`. A missing category gets the policy's default, which is refused under opt-in.
+  6. Run the app. Reject marketing in the banner, sign in, and confirm the check returns `marketing: false`.
+
+  List the files you changed and what the check returned.
+</Prompt>
+
+## Prerequisites
+
+- A site that shows the Inth consent banner. Set one up from the
+  [framework list](/docs/frameworks) first.
+- A server on Node.js 20.3 or later, Vercel Functions or Cloudflare Workers.
+- Your Inth project's URL and secret key (`inth_prj_...`) from the Dashboard.
+
+## Install the client
+
+<CommandTabs command="@inth/node @inth/sdk" mode="install" />
+
+`@inth/sdk/server` reads the consent cookie. Your site's Inth package already
+depends on `@inth/sdk`; install it directly so your server code can import it,
+on the same release as your other Inth packages.
+
+## Set the secret key and project URL
+
+Add both to your server's environment:
+
+```sh title=".env"
+INTH_SECRET_KEY=inth_prj_xxxxxxxxx
+INTH_PROJECT_URL=https://your-project.inth.app
+```
+
+The key can act for every user in the project. Keep it out of any variable
+your browser bundle reads, such as one that starts with `NEXT_PUBLIC_`.
+
+## Link the browser at sign-in
+
+The banner gives each browser a subject ID when the visitor saves a choice.
+At sign-in, read it from the request's cookies and link it to your user:
+
+<include src="../shared/examples/node/node-sign-in.mdx" />
+
+Set `adapter` to the Inth package your site uses, and `storage` to the
+banner's `storageConfig` if it sets its own `storageKey`, or the cookie isn't
+found and nothing is linked. Read the subject ID with
+`readRequestConsent`, not by parsing the cookie: the cookie format can change
+between releases. On Cloudflare Workers without `nodejs_compat`, pass
+`secretKey` and `projectUrl` from `env`; see the
+[API reference](/docs/node/api#create-a-client).
+
+## Read what the user consents to
+
+```ts title="newsletter.ts"
+const { data, error } = await inth.consents.check({ externalId: user.id });
+if (error) {
+	throw error;
+}
+if (data.marketing === true) {
+	await sendNewsletter(user);
+}
+```
+
+`data` holds each category the user answered, such as
+`{ marketing: false, measurement: true }`. A category they never answered is
+absent. Under an opt-in policy, treat absent as refused.
+
+## Check it works
+
+1. Open your site in a private window and click **Reject All** in the banner.
+2. Sign in. The `identify` call returns a `data.subjectId` UUID.
+3. Call `consents.check` for that user. It returns `marketing: false`.
+4. Open **Privacy settings**, turn on **Marketing**, save, and sign in again.
+   The check returns `marketing: true`.
+
+If a call fails, look up its `error.code` in
+[Troubleshooting](/docs/node/troubleshooting).
+
+## Next steps
+
+- [Legal documents](/docs/node/legal-documents): publish your
+  terms and record who accepted them at sign-up.
+- [Identity tokens](/docs/node/identity-tokens): link users from a
+  server that never sees the consent cookie.
+- [Errors and retries](/docs/node/errors): what each error code
+  means and when to try again.
+- [API reference](/docs/node/api): every option, method and type.

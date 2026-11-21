@@ -35,6 +35,7 @@ const DOCUMENTED_PACKAGES: Record<string, string> = {
 	'@inth/astro': 'packages/sdk/astro',
 	'@inth/integrations': 'packages/sdk/integrations',
 	'@inth/nextjs': 'packages/sdk/nextjs',
+	'@inth/node': 'packages/sdk/node',
 	'@inth/nuxt': 'packages/sdk/nuxt',
 	'@inth/react': 'packages/sdk/react',
 	'@inth/react-native': 'packages/react-native',

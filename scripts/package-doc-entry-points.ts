@@ -15,6 +15,7 @@ const frameworkEntryPoints = [
 	['frameworks/angular/quickstart.md', 'Angular quickstart'],
 	['frameworks/html/quickstart.md', 'HTML quickstart'],
 	['frameworks/javascript/quickstart.md', 'JavaScript quickstart'],
+	['node/quickstart.md', 'Node.js quickstart'],
 	['frameworks/react-native/quickstart.md', 'React Native quickstart'],
 	['frameworks/react-native/expo.md', 'Expo and EAS setup'],
 	['frameworks/react-native/bare.md', 'Bare React Native setup'],

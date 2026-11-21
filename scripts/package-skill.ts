@@ -114,6 +114,50 @@ export const renderPackageSkill = function renderPackageSkill(
 			'',
 		].join('\n');
 	}
+	if (packageName === '@inth/node') {
+		const guides = [
+			['quickstart', 'Quickstart: link users at sign-in and read consent'],
+			['legal-documents', 'Publish documents and record acceptance'],
+			['identity-tokens', 'Link users from a server without the cookie'],
+			['errors', 'Error codes, retries and timeouts'],
+			['api', 'API reference'],
+			['troubleshooting', 'Troubleshooting'],
+		]
+			.map(([file, label]) =>
+				link(bundledFiles, `node/${file}.md`, label ?? '')
+			)
+			.filter(Boolean);
+		return [
+			'---',
+			`name: ${packageSkillName(packageName)}`,
+			`description: Call the Inth API from a server with ${packageName}. Use when ${skill.topic}, on Node.js, Vercel Functions or Cloudflare Workers.`,
+			'---',
+			'',
+			`# Inth with ${packageName}`,
+			'',
+			'The Markdown under `./docs` matches the installed version. Read it before writing code instead of guessing APIs from memory.',
+			'',
+			'## Start here',
+			'',
+			...guides.map((guide) => `- ${guide}`),
+			'',
+			'## Rules',
+			'',
+			`- Install with ${skill.install}.`,
+			'- ALWAYS keep the secret key on the server, in `INTH_SECRET_KEY`. It can act for every user in the project. NEVER put it in a variable the browser bundle reads, such as one starting with `NEXT_PUBLIC_` or `VITE_`.',
+			"- `INTH_PROJECT_URL` is the user's Inth project URL. Never invent one; ask for it. On Cloudflare Workers without `nodejs_compat`, pass `secretKey` and `projectUrl` from `env`, because there is no `process.env`.",
+			'- ALWAYS check `error` before reading `data`. A failed call says nothing about the user: NEVER treat it as a refusal, re-prompt for documents or record anything because of it.',
+			'- Branch on `error.retryable` to decide whether to try again later. NEVER resend `documents.publish` blindly: a failed publish may have been stored, so call `documents.current` first.',
+			'- Read the subject ID with `readRequestConsent` from `@inth/sdk/server`. NEVER parse the consent cookie: its format changes between releases.',
+			'- A category absent from `consents.check` was never answered or has expired. Apply the policy default; under opt-in, treat it as refused.',
+			"- Record acceptance with the `hash` that `documents.current` gave when the form was shown, and the visitor's IP address and user agent from the request. NEVER take the first entry of `x-forwarded-for`: the visitor writes it.",
+			'',
+			'## Finish with a check',
+			'',
+			'Run the app. Reject marketing in the banner, sign in, and confirm `consents.check` returns `marketing: false` for that user.',
+			'',
+		].join('\n');
+	}
 	const slug = packageSkillName(packageName);
 	const packageLabel = packageName;
 	const heading = `Inth with ${packageName}`;
