@@ -20,7 +20,11 @@ import { getTextDirection } from '@inth/sdk/ui/utils';
 import { findFocusRestoreEquivalent } from '@inth/sdk/ui/utils/dom';
 import { computed, onBeforeUnmount, watch } from 'vue';
 
-import { useConsentConfig, useConsentInit, useConsentKernel } from '../composables';
+import {
+	useConsentConfig,
+	useConsentInit,
+	useConsentKernel,
+} from '../composables';
 import {
 	useOptInConfirmationOpen,
 	useOptOutReceipt,

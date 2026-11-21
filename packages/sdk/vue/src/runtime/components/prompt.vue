@@ -145,9 +145,7 @@ const isOpen = computed(() => {
 		!models?.length ||
 		(model !== undefined && model !== 'none' && models.includes(model));
 	return (
-		activeUI.value === 'banner' &&
-		matchesModel &&
-		!snapshot.value.policyPending
+		activeUI.value === 'banner' && matchesModel && !snapshot.value.policyPending
 	);
 });
 

@@ -1,4 +1,7 @@
-import type { HydrationRecords, ProviderTransportFactory } from '@inth/sdk/engine';
+import type {
+	HydrationRecords,
+	ProviderTransportFactory,
+} from '@inth/sdk/engine';
 import type { InitOutput, PolicyRule } from '@inth/sdk/schema/types';
 import type { App } from 'vue';
 import { onUnmounted, provide } from 'vue';
@@ -224,7 +227,8 @@ export const useStorybookOptOutConsent = function useStorybookOptOutConsent(
 		config.overrides = { gpc: true };
 	}
 	const now = Date.now();
-	const baseRecords = kind === 'none' ? undefined : storybookOptOutRecords(kind);
+	const baseRecords =
+		kind === 'none' ? undefined : storybookOptOutRecords(kind);
 	const initialRecords =
 		baseRecords || options.initialRecords
 			? {

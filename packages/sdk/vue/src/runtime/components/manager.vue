@@ -41,10 +41,7 @@ import {
 import { slotAttrs } from '../utils/slot-attrs';
 import { symbolConfirmationHosted } from '../utils/symbols';
 import ConsentDescription from './description.vue';
-import {
-	LazyOptInConfirmation,
-	LazyOptOutConfirmation,
-} from './lazy-surfaces';
+import { LazyOptInConfirmation, LazyOptOutConfirmation } from './lazy-surfaces';
 import { consentWidgetManagerKey } from './preferences-manager-context';
 import ConsentWidget from './preferences.vue';
 import ConsentTag from './tag.vue';
@@ -81,6 +78,17 @@ const disableAnimation = computed(() =>
 	Boolean(props.disableAnimation ?? config.value.disableAnimation)
 );
 const isOverlayVisible = computed(() => activeUI.value === 'manager');
+const overlayClasses = computed(() => {
+	if (disableAnimation.value) {
+		return [dialogStyles.overlay];
+	}
+	return [
+		dialogStyles.overlay,
+		isOverlayVisible.value
+			? dialogStyles.overlayVisible
+			: dialogStyles.overlayHidden,
+	];
+});
 const overlayFallbackStyle = ref<Record<string, string> | undefined>();
 
 const refreshOverlayFallback = async function refreshOverlayFallback() {
@@ -207,16 +215,8 @@ provide(consentWidgetManagerKey, { draft: draftState, onAction });
 			<DialogOverlay
 				v-if="surface.blocking"
 				:style="overlayFallbackStyle"
-				v-bind="
-					slotAttrs(config.components?.dialog?.overlay, [
-						dialogStyles.overlay,
-						isOverlayVisible
-							? dialogStyles.overlayVisible
-							: dialogStyles.overlayHidden,
-					])
-				"
+				v-bind="slotAttrs(config.components?.dialog?.overlay, overlayClasses)"
 				data-testid="consent-dialog-overlay"
-				:data-disable-animation="disableAnimation ? true : undefined"
 			/>
 			<!-- The outer element only positions the panel over the
 			     viewport. `DialogContent` is the panel itself: it carries the
