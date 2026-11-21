@@ -112,39 +112,43 @@ describe('one-step opt-out and confirmation view in Svelte', () => {
 
 		await fireEvent.click(optOutLink);
 
-		const snapshot = activeContext?.kernel.getSnapshot();
-		expect(snapshot?.optOut?.method).toBe('button');
-		expect(snapshot?.effectivePermissions.marketing).toBe(false);
-		expect(snapshot?.effectivePermissions.measurement).toBe(false);
-		expect(snapshot?.effectivePermissions.functionality).toBe(true);
+		const snapshot = (
+			activeContext as ConsentContextValue
+		).kernel.getSnapshot();
+		expect(snapshot.optOut?.method).toBe('button');
+		expect(snapshot.effectivePermissions.marketing).toBe(false);
+		expect(snapshot.effectivePermissions.measurement).toBe(false);
+		expect(snapshot.effectivePermissions.functionality).toBe(true);
 		expect(query('consent-dialog-root')).toBeNull();
 
 		await waitFor(() =>
 			expect(query('opt-out-confirmation-root')).not.toBeNull()
 		);
 		const root = query('opt-out-confirmation-root') as HTMLElement;
-		expect(query('opt-out-confirmation-title')?.textContent?.trim()).toBe(
+		const title = query('opt-out-confirmation-title') as HTMLElement;
+		expect(title.textContent?.trim()).toBe(
 			'Do Not Sell or Share My Personal Information'
 		);
-		const status = query('opt-out-confirmation-status');
-		expect(status?.getAttribute('role')).toBe('status');
-		expect(status?.textContent?.trim()).toBe('Opt-out request honored');
+		const status = query('opt-out-confirmation-status') as HTMLElement;
+		expect(status.getAttribute('role')).toBe('status');
+		expect(status.textContent?.trim()).toBe('Opt-out request honored');
 		const recordedAt = query<HTMLTimeElement>(
 			'opt-out-confirmation-recorded-at'
-		);
+		) as HTMLTimeElement;
 		expect(recordedAt).not.toBeNull();
-		expect(recordedAt?.getAttribute('datetime')).toBeTruthy();
-		expect(recordedAt?.textContent?.trim()).not.toBe('');
-		const reference = query('opt-out-confirmation-reference');
+		expect(recordedAt.getAttribute('datetime')).toBeTruthy();
+		expect(recordedAt.textContent?.trim()).not.toBe('');
+		const reference = query('opt-out-confirmation-reference') as HTMLElement;
 		expect(reference).not.toBeNull();
-		expect(reference?.textContent?.trim()).toMatch(V1_UUID_PATTERN);
+		expect(reference.textContent?.trim()).toMatch(V1_UUID_PATTERN);
 		expect(root.querySelectorAll('input, textarea, select')).toHaveLength(0);
 		const buttons = [...root.querySelectorAll('button')];
 		expect(buttons).toHaveLength(1);
 		expect(buttons[0]?.textContent?.trim()).toBe('Done');
-		expect(
-			query('opt-out-confirmation-preferences-link')?.textContent?.trim()
-		).toBe('Manage preferences');
+		const preferencesLink = query(
+			'opt-out-confirmation-preferences-link'
+		) as HTMLElement;
+		expect(preferencesLink.textContent?.trim()).toBe('Manage preferences');
 
 		view.unmount();
 	});

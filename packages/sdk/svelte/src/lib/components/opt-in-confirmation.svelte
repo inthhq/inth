@@ -136,10 +136,7 @@
 		if (disableAnimation) {
 			return styles.overlay;
 		}
-		return [
-			styles.overlay,
-			open ? styles.overlayVisible : styles.overlayHidden,
-		]
+		return [styles.overlay, open ? styles.overlayVisible : styles.overlayHidden]
 			.filter(Boolean)
 			.join(' ');
 	});
