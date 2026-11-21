@@ -27,6 +27,7 @@ import {
 import { useConsentDraft } from '../composables/draft';
 import {
 	useHasOptOutConfirmationHost,
+	useOptInConfirmationHost,
 	useOptOutConfirmationOpen,
 } from '../composables/kernel';
 import { useConsentPolicyActions } from '../composables/use-consent-policy-actions';
@@ -40,7 +41,10 @@ import {
 import { slotAttrs } from '../utils/slot-attrs';
 import { symbolConfirmationHosted } from '../utils/symbols';
 import ConsentDescription from './description.vue';
-import { LazyOptOutConfirmation } from './lazy-surfaces';
+import {
+	LazyOptInConfirmation,
+	LazyOptOutConfirmation,
+} from './lazy-surfaces';
 import { consentWidgetManagerKey } from './preferences-manager-context';
 import ConsentWidget from './preferences.vue';
 import ConsentTag from './tag.vue';
@@ -66,6 +70,7 @@ const hasConsentUi = useHasConsentUi();
 const confirmationHostedByProvider = inject(symbolConfirmationHosted, false);
 const confirmationOpen = useOptOutConfirmationOpen();
 const hasStandaloneConfirmation = useHasOptOutConfirmationHost();
+const optInConfirmationActive = useOptInConfirmationHost();
 
 const { presentation: surface } = useConsentPolicyActions('preferences');
 let actionSequence = 0;
@@ -174,6 +179,10 @@ provide(consentWidgetManagerKey, { draft: draftState, onAction });
 			!hasStandaloneConfirmation
 		"
 		embedded
+		:disable-animation="props.disableAnimation"
+	/>
+	<LazyOptInConfirmation
+		v-if="optInConfirmationActive"
 		:disable-animation="props.disableAnimation"
 	/>
 	<div

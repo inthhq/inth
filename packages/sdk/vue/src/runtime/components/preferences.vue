@@ -13,11 +13,14 @@ import type { CONSENT_CATEGORY } from '@inth/sdk/consent-record';
  */
 import type { PresentationAction } from '@inth/sdk/engine';
 import { vendorsListedUnder } from '@inth/sdk/engine';
+import { optInConsentSurface } from '@inth/sdk/surface-actions';
 import {
 	resolveActionLabels,
 	resolveCategoryOptOutLock,
 	resolveCategoryTitle,
+	resolveOptOutBlockHeading,
 	resolveOptOutCopy,
+	resolveOptOutReceiptSentence,
 } from '@inth/sdk/surface-state';
 import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
 
@@ -31,6 +34,9 @@ import '@inth/sdk/ui/styles/components/consent-actions.css';
 import managerStyles from '@inth/sdk/ui/styles/components/consent-manager';
 
 import '@inth/sdk/ui/styles/components/consent-manager.css';
+import optOutConfirmationStyles from '@inth/sdk/ui/styles/components/opt-out-confirmation';
+
+import '@inth/sdk/ui/styles/components/opt-out-confirmation.css';
 import { resolveActionAppearance } from '@inth/sdk/ui/theme';
 import { getTextDirection } from '@inth/sdk/ui/utils/dom';
 import { computed, inject, mergeProps, ref, useId } from 'vue';
@@ -41,10 +47,20 @@ import {
 	useHasConsentUi,
 } from '../composables';
 import { useConsentDraft } from '../composables/draft';
-import { useConsentSnapshot, useOptOutState } from '../composables/kernel';
+import {
+	useConsentKernel,
+	useConsentSnapshot,
+	useOptInConfirmationHost,
+	useOptOut,
+	useOptOutReceipt,
+	useOptOutState,
+} from '../composables/kernel';
 import { useConsentPolicyActions } from '../composables/use-consent-policy-actions';
+import { useSurfaceTranslations } from '../composables/use-surface-translations';
 import { switchVariants } from '../primitives/switch-variants';
 import { slotAttrs } from '../utils/slot-attrs';
+import { LazyOptInConfirmation } from './lazy-surfaces';
+import OptOutReceiptDetails from './opt-out-receipt-details.vue';
 import { consentWidgetManagerKey } from './preferences-manager-context';
 import ConsentTag from './tag.vue';
 import ConsentWidgetVendorList from './vendor-list.vue';
@@ -129,15 +145,37 @@ const {
 const categories = draftCategories;
 
 /** Vendors to list under each category; none under an `iab` policy. */
+const kernel = useConsentKernel();
 const snapshot = useConsentSnapshot();
+const translations = useSurfaceTranslations();
 const optOutState = useOptOutState();
-const optOutCopy = computed(() =>
-	resolveOptOutCopy(
-		init.value?.translations?.translations as
-			| Parameters<typeof resolveOptOutCopy>[0]
-			| undefined
+const optOutReceipt = useOptOutReceipt();
+const optOut = useOptOut();
+const optInConfirmationActive = useOptInConfirmationHost();
+const optOutCopy = computed(() => resolveOptOutCopy(translations.value));
+const optOutHeadingId = `inth-opt-out-heading-${uid}`;
+const optOutBlockHeading = computed(() =>
+	resolveOptOutBlockHeading(
+		translations.value,
+		optOutReceipt.value,
+		surface.value.optOutLink
 	)
 );
+const optOutReceiptSentence = computed(() =>
+	resolveOptOutReceiptSentence(translations.value, optOutReceipt.value)
+);
+const optOutStatusText = computed(() =>
+	optOutState.value.via === 'signal'
+		? optOutCopy.value.statusSignal
+		: optOutCopy.value.statusRequest
+);
+const uiSource = manager ? 'dialog' : 'widget';
+const onOptOutClick = function onOptOutClick() {
+	void optOut({ uiSource });
+};
+const onOptInClick = function onOptInClick() {
+	optInConsentSurface(kernel, { uiSource });
+};
 const displayedVendors = function displayedVendors(category: CONSENT_CATEGORY) {
 	return vendorsListedUnder(snapshot.value, category);
 };
@@ -284,6 +322,10 @@ const onAction = async function onAction(action: PresentationAction) {
 </script>
 
 <template>
+	<LazyOptInConfirmation
+		v-if="hasConsentUi && optInConfirmationActive"
+		:no-style="noStyle"
+	/>
 	<div
 		v-if="hasConsentUi && isStale && !manager"
 		role="status"
@@ -308,8 +350,88 @@ const onAction = async function onAction(action: PresentationAction) {
 		data-testid="consent-widget-root"
 		:data-disable-animation="config.disableAnimation ? true : undefined"
 	>
+		<section
+			v-if="optOutState.available"
+			v-bind="
+				slotAttrs(
+					config.components?.manager?.optOut,
+					noStyle ? undefined : managerStyles.optOut
+				)
+			"
+			:aria-labelledby="optOutHeadingId"
+			data-testid="consent-widget-opt-out"
+		>
+			<h3
+				:id="optOutHeadingId"
+				:class="noStyle ? undefined : managerStyles.optOutHeading"
+				data-testid="consent-widget-opt-out-heading"
+			>
+				{{ optOutBlockHeading }}
+			</h3>
+			<template v-if="optOutState.honored">
+				<p
+					v-bind="
+						slotAttrs(
+							config.components?.manager?.optOutStatus,
+							noStyle ? undefined : managerStyles.optOutStatus
+						)
+					"
+					data-testid="consent-widget-opt-out-status"
+					role="status"
+				>
+					{{ optOutStatusText }}
+				</p>
+				<p
+					:class="noStyle ? undefined : optOutConfirmationStyles.description"
+					data-testid="consent-widget-opt-out-description"
+				>
+					{{ optOutReceiptSentence }}
+				</p>
+				<OptOutReceiptDetails
+					:no-style="noStyle"
+					recorded-at-test-id="consent-widget-opt-out-recorded-at"
+					reference-test-id="consent-widget-opt-out-reference"
+					test-id="consent-widget-opt-out-receipt"
+				/>
+				<button
+					v-if="optOutState.lock !== 'gpc-active'"
+					type="button"
+					:class="noStyle ? undefined : managerStyles.optInLink"
+					data-testid="consent-widget-opt-in-link"
+					@click="onOptInClick"
+				>
+					{{ optOutCopy.optInLink }}
+				</button>
+			</template>
+			<template v-else>
+				<p
+					:class="noStyle ? undefined : managerStyles.optOutDescription"
+					data-testid="consent-widget-opt-out-description"
+				>
+					{{ optOutCopy.notOptedOut }}
+				</p>
+				<div :class="noStyle ? undefined : managerStyles.optOutActions">
+					<button
+						type="button"
+						:data-mode="noStyle ? undefined : 'filled'"
+						:data-size="noStyle ? undefined : 'small'"
+						:data-variant="noStyle ? undefined : 'primary'"
+						v-bind="
+							slotAttrs(
+								config.components?.button?.primary,
+								noStyle ? undefined : buttonStyles.button
+							)
+						"
+						data-testid="consent-widget-opt-out-button"
+						@click="onOptOutClick"
+					>
+						{{ optOutCopy.action }}
+					</button>
+				</div>
+			</template>
+		</section>
 		<p
-			v-if="optOutState.honored"
+			v-else-if="optOutState.honored"
 			v-bind="
 				slotAttrs(
 					config.components?.manager?.optOutStatus,
@@ -319,11 +441,7 @@ const onAction = async function onAction(action: PresentationAction) {
 			data-testid="consent-widget-opt-out-status"
 			role="status"
 		>
-			{{
-				optOutState.via === 'signal'
-					? optOutCopy.statusSignal
-					: optOutCopy.statusRequest
-			}}
+			{{ optOutStatusText }}
 		</p>
 		<div
 			v-bind="
