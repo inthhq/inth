@@ -99,18 +99,23 @@ in `provideInth()`. With the default `'do-not-sell'` ("Do Not Sell or Share My
 Personal Information"), activating the link records the opt-out in one click
 and opens `<inth-opt-out-confirmation>` (reloading first when that turns off a
 running category and `reloadOnConsentRevoked` is enabled; rendered lazily by
-`<inth-consent-dialog>` or a standalone `<inth-opt-out-confirmation>`). With
-`'privacy-choices'` or `'california-privacy-choices'`, the link renders with
-the California Privacy Protection Agency opt-out icon and opens
-`<inth-consent-dialog>` without recording an opt-out. Programmatic calls to
-`ConsentManager.requestOptOut()` still opt out in one step whatever
+`<inth-consent-dialog>` or a standalone `<inth-opt-out-confirmation>`). The
+confirmation view displays a receipt with the status line, what the opt-out
+covers (naming rights only when confirmed by the backend), the recorded time,
+the local reference when this browser recorded it, Done and Manage
+preferences. With `'privacy-choices'` or `'california-privacy-choices'`, the
+link renders with the California Privacy Protection Agency opt-out icon and
+opens `<inth-consent-dialog>` without recording an opt-out. Programmatic calls
+to `ConsentManager.requestOptOut()` still opt out in one step whatever
 `presentation.optOutLink` is set to. When only the `preferences` right is
 shown, the link opens `<inth-consent-dialog>`.
 
 <include src="../../../shared/privacy-choices-link.mdx" />
 
 Accept and Reject record the choice and close the banner immediately, then
-send the request to Inth in the background.
+send the request to Inth in the background. Under an `opt-out` policy while an
+opt-out is held, Accept opens the two-step opt-in confirmation dialog before
+saving.
 
 ## Accessibility
 
