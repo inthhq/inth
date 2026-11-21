@@ -10,15 +10,20 @@ group: reference
   ## What ConsentDialogLink renders
 
   `ConsentDialogLink` renders a `button` that sets `activeUI` to `'manager'`
-  to open the preference dialog. Pass `right="opt-out"` to record an opt-out in
-  one click and open `OptOutConfirmation` under an opt-out policy, falling back
-  to the preference dialog under other policy models. With `right="opt-out"`,
-  the default label follows `presentation.optOutLink` and the two "Privacy
-  Choices" forms always render with the California Privacy Protection Agency
-  opt-out icon. Otherwise its default label comes from the
-  `consentManagerDialog.title` translation ("Privacy Settings" in English),
-  updating to the visitor's language once init delivers copy. Pass default slot
-  content to replace the label.
+  to open the preference dialog. With `right="opt-out"` under an opt-out
+  policy, the action follows the resolved `presentation.optOutLink` title:
+  `'do-not-sell'` (the default) records an opt-out in one click and opens
+  `OptOutConfirmation`, while `'privacy-choices'` and
+  `'california-privacy-choices'` render with the California Privacy Protection
+  Agency opt-out icon and open the preference dialog without recording an
+  opt-out. Programmatic calls to `useOptOut()` still opt out in one step
+  whatever `presentation.optOutLink` is set to. Under other policy models the
+  link opens the preference dialog. When `right` is omitted, the default label
+  comes from the `consentManagerDialog.title` translation ("Privacy Settings" in
+  English), updating to the visitor's language once init delivers copy. Pass
+  default slot content to replace the label.
+
+  <include src="../../privacy-choices-link.mdx" />
 
   The button renders only when preferences apply:
 

@@ -31,7 +31,7 @@ import {
 	ɵresolveNoStyle as resolveNoStyle,
 } from '@inth/angular';
 import type { ConsentDialogTriggerVisibility } from '@inth/sdk/schema/config';
-import { isOptOutTrigger } from '@inth/sdk/surface-actions';
+import { activateOptOutLink, isOptOutTrigger } from '@inth/sdk/surface-actions';
 import {
 	resolveOptOutLink,
 	resolveTriggerLabels,
@@ -296,16 +296,17 @@ export class ConsentDialogTrigger {
 		resolveTriggerLabels(this.#translations())
 	);
 	readonly #isOptOut = computed(() => isOptOutTrigger(this.consent.snapshot()));
+	readonly #optOutLink = computed(() =>
+		resolveOptOutLink(
+			this.#translations(),
+			this.consent.presentation()?.optOutLink
+		)
+	);
 	/** @internal */
 	protected readonly resolvedLabel = computed(
 		() =>
 			this.label() ??
-			(this.#isOptOut()
-				? resolveOptOutLink(
-						this.#translations(),
-						this.consent.presentation()?.optOutLink
-					).label
-				: this.labels().label)
+			(this.#isOptOut() ? this.#optOutLink().label : this.labels().label)
 	);
 
 	/** @internal */
@@ -600,7 +601,10 @@ export class ConsentDialogTrigger {
 		this.triggerClick.emit(event);
 		if (!event.defaultPrevented) {
 			if (this.#isOptOut()) {
-				void this.consent.requestOptOut();
+				void activateOptOutLink(
+					this.consent.kernel(),
+					this.#optOutLink().variant
+				);
 			} else {
 				this.consent.setActiveUI('dialog');
 			}

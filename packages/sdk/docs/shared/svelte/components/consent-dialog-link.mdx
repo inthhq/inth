@@ -9,7 +9,7 @@ renders.
 | Prop | Type | Default | Behavior |
 | --- | --- | --- | --- |
 | `children` | `Snippet` | dialog title or opt-out link label | The visible label, such as "Privacy settings". When `right="opt-out"` is set and omitted, uses the resolved opt-out link title from `presentation.optOutLink`. |
-| `right` | `'opt-out' \| 'preferences'` | none | Set to `'opt-out'` to record an opt-out in one click and open `OptOutConfirmation` under an opt-out policy, with the California Privacy Protection Agency opt-out icon for both "Privacy Choices" variants. |
+| `right` | `'opt-out' \| 'preferences'` | none | Under an opt-out policy, `'opt-out'` follows `presentation.optOutLink`: `'do-not-sell'` records an opt-out in one click and opens `OptOutConfirmation`, while `'privacy-choices'` and `'california-privacy-choices'` render with the California Privacy Protection Agency opt-out icon and open `ConsentDialog` without recording an opt-out. Under other models it opens `ConsentDialog`. |
 | `noStyle` | `boolean` | `true` | Unstyled by default so it matches your footer links. Set `false` for Inth's button style. |
 | `onclick` | `(event: MouseEvent) => void` | none | Runs before the dialog opens. Call `event.preventDefault()` to stop it opening. |
 | any button attribute | | | Passed to the `<button>`. |

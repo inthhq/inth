@@ -131,6 +131,7 @@ closing matches Inth's framework adapters:
 | `saveConsentBlanket(kernel, 'all' \| 'none', runtime.iab)` | Runs Accept All or Reject All (routing through the CMP under IAB). |
 | `saveIABConsentSurface(kernel, saveFn)` | Closes an IAB surface immediately and restores it if the CMP could not record. |
 | `showConsentSurface(kernel, 'banner' \| 'dialog' \| 'none')` | Opens or closes a surface, restoring the banner if a prompt is still due. |
+| `activateOptOutLink(kernel, variant, context?)` | Runs the rule for an opt-out link, banner link or trigger: `'privacy-choices'` opens the preference dialog without recording, `'do-not-sell'` opts out in one click. |
 | `hasConsentUI(snapshot)` | Whether the resolved policy owes any Inth UI. |
 | `hasConsentPreferences(snapshot)` | Whether a privacy settings link has a destination (Inth UI or external CMP). |
 

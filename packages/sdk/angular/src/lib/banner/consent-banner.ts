@@ -15,7 +15,10 @@ import {
 import type { Model, PromptPosition, PromptVariant } from '@inth/sdk/engine';
 import { actionAppearanceFromTheme } from '@inth/sdk/engine';
 import type { PolicyRight } from '@inth/sdk/schema/types';
-import { replayEarlyConsentTaps } from '@inth/sdk/surface-actions';
+import {
+	activateOptOutLink,
+	replayEarlyConsentTaps,
+} from '@inth/sdk/surface-actions';
 import {
 	resolveActionLabels,
 	resolveConsentPresentation,
@@ -625,14 +628,18 @@ export class ConsentBanner {
 	}
 
 	/**
-	 * Handle a persistent-right control click: opt out in one click for
-	 * `'opt-out'`, or open the preference center for `'preferences'`.
+	 * Handle a persistent-right control click according to the resolved
+	 * opt-out link variant, or open the preference center for `'preferences'`.
 	 *
 	 * @internal
 	 */
 	protected onRightClick(right: PolicyRight): void {
 		if (right === 'opt-out') {
-			void this.consent.requestOptOut({ uiSource: 'banner' });
+			void activateOptOutLink(
+				this.consent.kernel(),
+				this.optOutLink().variant,
+				{ uiSource: 'banner' }
+			);
 			return;
 		}
 		this.consent.setActiveUI('dialog');

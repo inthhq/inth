@@ -388,6 +388,81 @@ describe.each(['react', 'vue'] as const)(
 				document.querySelector('[data-testid="opt-out-confirmation-root"]')
 			).toBeNull();
 		});
+
+		it.each(['privacy-choices', 'california-privacy-choices'] as const)(
+			'opens the preference dialog and records nothing from banner link and data-inth-action="opt-out" when optOutLink=%s',
+			async (optOutLink) => {
+				const client = mountBannerAndClient(ui, {
+					presentation: { optOutLink },
+				});
+
+				const bannerLink = document.querySelector<HTMLButtonElement>(
+					'[data-testid="consent-banner-right-link-opt-out"]'
+				);
+				expect(bannerLink).not.toBeNull();
+				bannerLink?.click();
+
+				await vi.waitFor(
+					() =>
+						expect(
+							document.querySelector('[data-testid="consent-dialog-root"]')
+						).not.toBeNull(),
+					ISLAND_RENDER_TIMEOUT
+				);
+				expect(client.getConsent().optOut).toBeNull();
+				expect(
+					document.querySelector('[data-testid="opt-out-confirmation-root"]')
+				).toBeNull();
+
+				client.closeDialog();
+				await vi.waitFor(
+					() =>
+						expect(
+							document.querySelector('[data-testid="consent-dialog-root"]')
+						).toBeNull(),
+					ISLAND_RENDER_TIMEOUT
+				);
+
+				const footerLink = document.createElement('button');
+				footerLink.type = 'button';
+				footerLink.setAttribute('data-inth-action', 'opt-out');
+				footerLink.textContent = 'Privacy choices';
+				document.body.append(footerLink);
+				cleanup.push(() => footerLink.remove());
+
+				footerLink.click();
+				await vi.waitFor(
+					() =>
+						expect(
+							document.querySelector('[data-testid="consent-dialog-root"]')
+						).not.toBeNull(),
+					ISLAND_RENDER_TIMEOUT
+				);
+				expect(client.getConsent().optOut).toBeNull();
+				expect(
+					document.querySelector('[data-testid="opt-out-confirmation-root"]')
+				).toBeNull();
+			}
+		);
+
+		it('keeps programmatic client.optOut() opting out in one step even when optOutLink is privacy-choices', async () => {
+			const client = mountBannerAndClient(ui, {
+				presentation: { optOutLink: 'privacy-choices' },
+			});
+
+			await client.optOut();
+			await vi.waitFor(
+				() =>
+					expect(
+						document.querySelector('[data-testid="opt-out-confirmation-root"]')
+					).not.toBeNull(),
+				ISLAND_RENDER_TIMEOUT
+			);
+			expect(client.getConsent().optOut?.method).toBe('button');
+			expect(
+				document.querySelector('[data-testid="consent-dialog-root"]')
+			).toBeNull();
+		});
 	}
 );
 

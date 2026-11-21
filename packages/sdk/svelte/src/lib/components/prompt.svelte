@@ -11,6 +11,7 @@
 	} from '@inth/sdk/engine';
 	import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 	import {
+		activateOptOutLink,
 		EARLY_CONSENT_TAP_SCRIPT,
 		replayEarlyConsentTaps,
 	} from '@inth/sdk/surface-actions';
@@ -242,14 +243,6 @@
 		)
 	);
 
-	const onRightClick = function onRightClick(right: string) {
-		if (right === 'opt-out') {
-			void consent.state.requestOptOut({ uiSource: 'banner' });
-			return;
-		}
-		consent.state.setActiveUI('dialog');
-	};
-
 	const finalClassName = $derived(
 		noStyle
 			? rootStyle.className || ''
@@ -320,6 +313,15 @@
 	const optOutLink = $derived(
 		resolveOptOutLink(translations, presentation.optOutLink)
 	);
+	const onRightClick = function onRightClick(right: string) {
+		if (right === 'opt-out') {
+			void activateOptOutLink(consent.kernel, optOutLink.variant, {
+				uiSource: 'banner',
+			});
+			return;
+		}
+		consent.state.setActiveUI('dialog');
+	};
 	// Acknowledgement records no category choice.
 	const resolvedDismissText = $derived(
 		dismissButtonText ?? actionLabels.dismiss

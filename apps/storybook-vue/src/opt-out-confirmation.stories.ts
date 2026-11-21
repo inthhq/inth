@@ -56,7 +56,7 @@ export const RequestHonored: Story = {
 export const SignalHonored: Story = {
 	play: async () => {
 		const link = await within(document.body).findByRole('button', {
-			name: 'Your Privacy Choices',
+			name: 'Do Not Sell or Share My Personal Information',
 		});
 		await userEvent.click(link);
 		const status = await within(document.body).findByTestId(
@@ -74,7 +74,7 @@ export const SignalHonored: Story = {
 				{
 					disableAnimation: true,
 					overrides: { gpc: true },
-					presentation: { optOutLink: 'privacy-choices' },
+					presentation: { optOutLink: 'do-not-sell' },
 					reloadOnConsentRevoked: false,
 				},
 				storybookOptOutInit

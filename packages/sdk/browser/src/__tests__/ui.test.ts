@@ -1464,9 +1464,7 @@ describe('mountConsentUI', () => {
 			const onRecorded = vi.fn();
 			client.kernel.events.on('opt-out:recorded', onRecorded);
 
-			const button = query(root, 'consent-banner-right-opt-out-button');
-			expect(button.querySelector('svg')).not.toBeNull();
-			button.click();
+			void client.optOut();
 
 			await vi.waitFor(() => {
 				expect(query(root, 'opt-out-confirmation-root')).not.toBeNull();
@@ -1522,6 +1520,89 @@ describe('mountConsentUI', () => {
 			});
 			query(root, 'opt-out-confirmation-done-button').click();
 			expect(trigger.hidden).toBe(false);
+		});
+
+		it.each(['privacy-choices', 'california-privacy-choices'] as const)(
+			'opens the preference dialog and records nothing from banner link, page action and trigger when optOutLink=%s',
+			async (optOutLink) => {
+				const pageLink = document.createElement('button');
+				pageLink.type = 'button';
+				pageLink.setAttribute('data-inth-action', 'opt-out');
+				pageLink.textContent = 'Your Privacy Choices';
+				document.body.append(pageLink);
+
+				const { client, root } = await mount(
+					{ trigger: true },
+					{
+						consentCategories: ['functionality', 'marketing', 'measurement'],
+						overrides: { country: 'US', region: 'CA' },
+						policy: noticePolicy,
+						presentation: { optOutLink },
+						reloadOnConsentRevoked: false,
+					}
+				);
+
+				query(root, 'consent-banner-right-opt-out-button').click();
+				await vi.waitFor(() => {
+					expect(query(root, 'consent-dialog-root')).not.toBeNull();
+				});
+				expect(client.getSnapshot().optOut).toBeNull();
+				expect(
+					root.querySelector('[data-testid="opt-out-confirmation-root"]')
+				).toBeNull();
+
+				client.closeDialog();
+				await vi.waitFor(() => {
+					expect(
+						root.querySelector('[data-testid="consent-dialog-root"]')
+					).toBeNull();
+				});
+
+				pageLink.click();
+				await vi.waitFor(() => {
+					expect(query(root, 'consent-dialog-root')).not.toBeNull();
+				});
+				expect(client.getSnapshot().optOut).toBeNull();
+				expect(
+					root.querySelector('[data-testid="opt-out-confirmation-root"]')
+				).toBeNull();
+
+				client.closeDialog();
+				await vi.waitFor(() => {
+					expect(query(root, 'consent-dialog-trigger').hidden).toBe(false);
+				});
+
+				query(root, 'consent-dialog-trigger').click();
+				await vi.waitFor(() => {
+					expect(query(root, 'consent-dialog-root')).not.toBeNull();
+				});
+				expect(client.getSnapshot().optOut).toBeNull();
+				expect(
+					root.querySelector('[data-testid="opt-out-confirmation-root"]')
+				).toBeNull();
+			}
+		);
+
+		it('keeps programmatic client.optOut() opting out in one step even when optOutLink is privacy-choices', async () => {
+			const { client, root } = await mount(
+				{},
+				{
+					consentCategories: ['functionality', 'marketing', 'measurement'],
+					overrides: { country: 'US', region: 'CA' },
+					policy: noticePolicy,
+					presentation: { optOutLink: 'privacy-choices' },
+					reloadOnConsentRevoked: false,
+				}
+			);
+
+			await client.optOut();
+			await vi.waitFor(() => {
+				expect(query(root, 'opt-out-confirmation-root')).not.toBeNull();
+			});
+			expect(client.getSnapshot().optOut?.method).toBe('button');
+			expect(
+				root.querySelector('[data-testid="consent-dialog-root"]')
+			).toBeNull();
 		});
 	});
 

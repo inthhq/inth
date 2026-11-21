@@ -15,15 +15,18 @@ Import `ConsentDialogLink` and add `inthConsentDialogLink` to your own
 <include src="../../../shared/examples/angular/app-component.mdx" />
 
 Clicking the element sets `activeUI` to `'dialog'`, opening
-`<inth-consent-dialog>`. Pass `right="opt-out"` to record an opt-out in one
-click and open `<inth-opt-out-confirmation>` under an opt-out policy, falling
-back to `<inth-consent-dialog>` under other models. With `right="opt-out"` and
-`presentation.optOutLink` set to `'privacy-choices'` or
-`'california-privacy-choices'`, the directive prepends the California Privacy
-Protection Agency opt-out icon and supplies the statutory label when the host
-element is empty. Keep `<inth-consent-dialog>` or `<inth-opt-out-confirmation>`
-rendered in your root component. A click handler that runs first and calls
-`event.preventDefault()` cancels the action.
+`<inth-consent-dialog>`. With `right="opt-out"` under an opt-out policy, the
+action follows the resolved `presentation.optOutLink` title: `'do-not-sell'`
+(the default) records an opt-out in one click and opens
+`<inth-opt-out-confirmation>`, while `'privacy-choices'` and
+`'california-privacy-choices'` prepend the California Privacy Protection Agency
+opt-out icon and open `<inth-consent-dialog>` without recording an opt-out.
+When the host element is empty, the directive supplies the resolved statutory
+label. Programmatic calls to `ConsentManager.requestOptOut()` still opt out in
+one step whatever `presentation.optOutLink` is set to. Under other models, the
+link opens `<inth-consent-dialog>`. Keep `<inth-consent-dialog>` or
+`<inth-opt-out-confirmation>` rendered in your root component. A click handler
+that runs first and calls `event.preventDefault()` cancels the action.
 
 <include src="../../../shared/privacy-choices-link.mdx" />
 

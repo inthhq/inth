@@ -44,10 +44,14 @@ labelled buttons the visitor intentionally clicks, never triggered via
 `element.click()` or hidden inside broader clickable containers.
 
 Use `customize` for "Cookie settings" controls that only open the preference
-dialog. Use `opt-out` for a "Do Not Sell or Share My Personal Information" or
-"Your Privacy Choices" link so one click records the opt-out under an opt-out
-policy and shows a confirmation view. Under any other policy, `opt-out` opens
-the preference dialog.
+dialog. Use `opt-out` for an opt-out link: under an opt-out policy, it follows
+the configured `presentation.optOutLink` (`data-opt-out-link`). With the
+default `'do-not-sell'` ("Do Not Sell or Share My Personal Information"), one
+click records the opt-out and shows a confirmation view. With
+`'privacy-choices'` or `'california-privacy-choices'`, a click opens the
+preference dialog and records nothing. Programmatic calls to `inth.optOut()`
+still opt out in one step whatever `data-opt-out-link` is set to. Under any
+other policy, `opt-out` opens the preference dialog.
 
 <include src="../../../shared/privacy-choices-link.mdx" />
 

@@ -1,10 +1,10 @@
-import {
-	resolveOptOutLink,
-	resolveOptOutState,
-	resolveTriggerLabels,
-} from '@inth/sdk-core';
+import { resolveOptOutLink, resolveTriggerLabels } from '@inth/sdk-core';
 import type { ConsentSnapshot, Translations } from '@inth/sdk-core';
-import { hasConsentPreferences } from '@inth/sdk-core/surface-actions';
+import {
+	activateOptOutLink,
+	hasConsentPreferences,
+	isOptOutTrigger,
+} from '@inth/sdk-core/surface-actions';
 import {
 	createTriggerDrag,
 	getPersistedPosition,
@@ -82,15 +82,6 @@ export const createTrigger = function createTrigger(
 
 	// The mark follows the resolved branding, like the React trigger's.
 	let { branding } = ctx.client.getSnapshot();
-	const isOptOutTrigger = function isOptOutTrigger(
-		snapshot: ConsentSnapshot
-	): boolean {
-		return (
-			resolveOptOutState(snapshot).available &&
-			snapshot.policyRule.rights.includes('opt-out') &&
-			snapshot.policyRule.i18n?.messageProfile !== 'preferences'
-		);
-	};
 	const labels = function labels(snapshot: ConsentSnapshot) {
 		const bundle = snapshot.translations?.translations as
 			| Partial<Translations>
@@ -106,8 +97,13 @@ export const createTrigger = function createTrigger(
 	};
 	let renderedLabels = labels(ctx.client.getSnapshot());
 	const activate = function activate(): void {
-		if (isOptOutTrigger(ctx.client.getSnapshot())) {
-			dropRejection(ctx.client.optOut());
+		const snapshot = ctx.client.getSnapshot();
+		if (isOptOutTrigger(snapshot)) {
+			const { variant } = resolveOptOutLink(
+				undefined,
+				ctx.client.presentation?.optOutLink
+			);
+			dropRejection(activateOptOutLink(ctx.client.kernel, variant));
 		} else {
 			ctx.client.openDialog();
 		}

@@ -65,7 +65,7 @@ The other snapshot fields are signals too: `restrictions()`,
 | `saveConsents('necessary')` | Denies every optional category and closes the surface. |
 | `saveConsents('custom')` | Records the draft. Throws when the draft is stale. |
 | `dismissNotice()` | Records that the visitor dismissed a notice. |
-| `requestOptOut()` | Records an opt-out in one click and opens `<inth-opt-out-confirmation>` under an opt-out policy, or opens the preference dialog under other models. |
+| `requestOptOut()` | Records an opt-out in one click and opens `<inth-opt-out-confirmation>` under an opt-out policy regardless of `presentation.optOutLink`, or opens the preference dialog under other models. |
 | `setActiveUI(ui)` | Opens `'banner'` or `'dialog'`, or closes with `'none'`. |
 | `setLanguage(code)` | Switches the copy and resolves the policy again. See [translations](./translations). |
 | `clearRecords()` | Clears receipts, identity and stored records, for tests and dev tools. |

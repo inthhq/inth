@@ -934,14 +934,20 @@ export const runInitScript = function runInitScript(
 		const named = element
 			?.closest(`[${ACTION_ATTRIBUTE}]`)
 			?.getAttribute(ACTION_ATTRIBUTE);
-		const action =
-			(named && PAGE_ACTIONS[named]) ||
-			(element
+		const resolvedOptions = options ?? readPageOptions(script, configs).options;
+		let action: string | null = null;
+		if (named === 'opt-out' && usesPrivacyChoicesLink(resolvedOptions)) {
+			action = 'openDialog';
+		} else if (named && PAGE_ACTIONS[named]) {
+			action = PAGE_ACTIONS[named];
+		} else if (
+			element
 				?.closest('a[href]')
 				?.getAttribute('href')
 				?.endsWith(PREFERENCES_HASH)
-				? 'openDialog'
-				: null);
+		) {
+			action = 'openDialog';
+		}
 		if (!action) {
 			return;
 		}

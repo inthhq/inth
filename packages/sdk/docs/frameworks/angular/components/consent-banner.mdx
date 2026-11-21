@@ -94,17 +94,18 @@ a dismiss button using `noticeTitle` and `noticeDescription`; dismissing a
 notice records acknowledgement rather than consent.
 
 When the policy grants the `opt-out` right, the banner shows an underlined
-opt-out link. Under an opt-out policy, activating it records the opt-out in one
-click. When that turns off a category that was running and
-`reloadOnConsentRevoked` is enabled, Inth waits for the opt-out request,
-reloads the page, and opens `<inth-opt-out-confirmation>` once on the new page;
-otherwise it opens immediately (rendered lazily by `<inth-consent-dialog>` or a
-standalone `<inth-opt-out-confirmation>`). Set
-`presentation.optOutLink` in `provideInth()` to `'do-not-sell'`,
-`'privacy-choices'`, or `'california-privacy-choices'`; the two "Privacy
-Choices" forms always render with the California Privacy Protection Agency
-opt-out icon. When only the `preferences` right is shown, the link opens
-`<inth-consent-dialog>`.
+opt-out link whose action follows the resolved `presentation.optOutLink` title
+in `provideInth()`. With the default `'do-not-sell'` ("Do Not Sell or Share My
+Personal Information"), activating the link records the opt-out in one click
+and opens `<inth-opt-out-confirmation>` (reloading first when that turns off a
+running category and `reloadOnConsentRevoked` is enabled; rendered lazily by
+`<inth-consent-dialog>` or a standalone `<inth-opt-out-confirmation>`). With
+`'privacy-choices'` or `'california-privacy-choices'`, the link renders with
+the California Privacy Protection Agency opt-out icon and opens
+`<inth-consent-dialog>` without recording an opt-out. Programmatic calls to
+`ConsentManager.requestOptOut()` still opt out in one step whatever
+`presentation.optOutLink` is set to. When only the `preferences` right is
+shown, the link opens `<inth-consent-dialog>`.
 
 <include src="../../../shared/privacy-choices-link.mdx" />
 

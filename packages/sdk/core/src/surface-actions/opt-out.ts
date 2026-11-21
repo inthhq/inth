@@ -8,6 +8,7 @@
  */
 
 import type { InternalKernel } from '../kernel/internals';
+import type { ResolvedOptOutLink } from '../libs/consent-copy';
 import {
 	EMPTY_OPT_OUT_RECEIPT_DATA,
 	resolveOptOutState,
@@ -430,4 +431,24 @@ export const optOutConsentSurface = function optOutConsentSurface(
 		() => undefined
 	);
 	return pending;
+};
+
+/**
+ * Activate an opt-out link, banner link, floating trigger or
+ * `data-inth-action="opt-out"` element for its resolved link variant.
+ *
+ * A `'privacy-choices'` variant opens the preference dialog and records
+ * nothing. A `'do-not-sell'` variant records an opt-out in one click through
+ * {@link optOutConsentSurface}.
+ */
+export const activateOptOutLink = function activateOptOutLink(
+	kernel: ConsentKernel,
+	variant: ResolvedOptOutLink['variant'],
+	context?: OptOutSurfaceContext
+): Promise<OptOutResult> | undefined {
+	if (variant === 'privacy-choices') {
+		showConsentSurface(kernel, 'dialog');
+		return undefined;
+	}
+	return optOutConsentSurface(kernel, context);
 };

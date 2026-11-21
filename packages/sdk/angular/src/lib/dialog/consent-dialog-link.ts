@@ -11,6 +11,7 @@ import {
 	PLATFORM_ID,
 } from '@angular/core';
 import type { PolicyRight } from '@inth/sdk/schema/types';
+import { activateOptOutLink } from '@inth/sdk/surface-actions';
 import { resolveOptOutLink } from '@inth/sdk/surface-state';
 import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
 import { CPPA_OPT_OUT_ICON } from '@inth/sdk/ui/utils';
@@ -185,8 +186,9 @@ export class ConsentDialogLink {
 			return;
 		}
 		event.preventDefault();
-		if (this.right() === 'opt-out') {
-			void this.consent.requestOptOut();
+		const link = this.optOutLink();
+		if (link) {
+			void activateOptOutLink(this.consent.kernel(), link.variant);
 			return;
 		}
 		this.consent.setActiveUI('dialog');

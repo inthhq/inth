@@ -98,6 +98,24 @@ class TriggerDialogHost {}
 })
 class BothHostsHost {}
 
+@Component({
+	imports: [
+		ConsentBanner,
+		ConsentDialog,
+		ConsentDialogLink,
+		ConsentDialogTrigger,
+	],
+	template: `<inth-consent-banner [disableAnimation]="true" />
+		<button
+			type="button"
+			inthConsentDialogLink
+			right="opt-out"
+		></button>
+		<inth-consent-dialog-trigger showWhen="always" />
+		<inth-consent-dialog [disableAnimation]="true" />`,
+})
+class AllControlsHost {}
+
 let activeConsent: ConsentManager | null = null;
 
 const boot = async <Host>(
@@ -268,19 +286,11 @@ describe('one-step opt-out and confirmation view in Angular', () => {
 			presentation: { optOutLink: 'privacy-choices' },
 		});
 
-		await vi.waitFor(() =>
-			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
-		);
 		expect(consent.snapshot().optOut?.method).toBe('gpc');
 		const onRecorded = vi.fn();
 		consent.kernel().events.on('opt-out:recorded', onRecorded);
 
-		const link = query<HTMLButtonElement>(
-			'consent-banner-right-link-opt-out'
-		) as HTMLButtonElement;
-		expect(link.textContent?.trim()).toBe('Your Privacy Choices');
-		expect(link.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
-		link.click();
+		void consent.requestOptOut();
 
 		await vi.waitFor(async () => {
 			await fixture.whenStable();
@@ -527,5 +537,67 @@ describe('one-step opt-out and confirmation view in Angular', () => {
 		});
 		await third.fixture.whenStable();
 		expect(query('opt-out-confirmation-root')).toBeNull();
+	});
+
+	test.each(['privacy-choices', 'california-privacy-choices'] as const)(
+		'opens the dialog and records nothing from banner link, footer link and trigger when optOutLink=%s',
+		async (optOutLink) => {
+			const { consent, fixture } = await boot(AllControlsHost, {
+				presentation: { optOutLink },
+			});
+
+			await vi.waitFor(() =>
+				expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+			);
+			query<HTMLButtonElement>('consent-banner-right-link-opt-out')?.click();
+			await vi.waitFor(async () => {
+				await fixture.whenStable();
+				expect(query('consent-dialog-root')).not.toBeNull();
+			});
+			expect(consent.snapshot().optOut).toBeNull();
+			expect(query('opt-out-confirmation-root')).toBeNull();
+
+			consent.setActiveUI('none');
+			await vi.waitFor(async () => {
+				await fixture.whenStable();
+				expect(query('consent-dialog-root')).toBeNull();
+			});
+
+			query<HTMLButtonElement>('consent-dialog-link')?.click();
+			await vi.waitFor(async () => {
+				await fixture.whenStable();
+				expect(query('consent-dialog-root')).not.toBeNull();
+			});
+			expect(consent.snapshot().optOut).toBeNull();
+			expect(query('opt-out-confirmation-root')).toBeNull();
+
+			consent.setActiveUI('none');
+			await vi.waitFor(async () => {
+				await fixture.whenStable();
+				expect(query('consent-dialog-trigger')).not.toBeNull();
+			});
+
+			query<HTMLButtonElement>('consent-dialog-trigger')?.click();
+			await vi.waitFor(async () => {
+				await fixture.whenStable();
+				expect(query('consent-dialog-root')).not.toBeNull();
+			});
+			expect(consent.snapshot().optOut).toBeNull();
+			expect(query('opt-out-confirmation-root')).toBeNull();
+		}
+	);
+
+	test('keeps requestOptOut opting out in one step even when optOutLink is privacy-choices', async () => {
+		const { consent, fixture } = await boot(BothHostsHost, {
+			presentation: { optOutLink: 'privacy-choices' },
+		});
+
+		void consent.requestOptOut();
+		await vi.waitFor(async () => {
+			await fixture.whenStable();
+			expect(query('opt-out-confirmation-root')).not.toBeNull();
+		});
+		expect(consent.snapshot().optOut?.method).toBe('button');
+		expect(query('consent-dialog-root')).toBeNull();
 	});
 });

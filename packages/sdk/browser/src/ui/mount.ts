@@ -1,9 +1,13 @@
 import { applyExperimentTheme } from '@inth/sdk-core';
-import { saveConsentSurfaceWithOptInCheck } from '@inth/sdk-core/surface-actions';
+import {
+	activateOptOutLink,
+	saveConsentSurfaceWithOptInCheck,
+} from '@inth/sdk-core/surface-actions';
 import { generateThemeCSS } from '@inth/sdk-ui/theme';
 import type { Theme } from '@inth/sdk-ui/theme';
 import { prefersReducedMotion } from '@inth/sdk-ui/utils/reduced-motion';
 
+import { dropRejection } from '../drop-rejection';
 import { stylesheet } from '../generated/styles';
 import { takeInitUI } from '../init/adopt';
 import type { AdoptedBanner, AdoptedDialog, InitUI } from '../init/boot';
@@ -240,6 +244,11 @@ export const mountConsentUI = function mountConsentUI(
 		disableAnimation: options.disableAnimation ?? prefersReducedMotion(),
 		legalLinks: client.options.legalLinks,
 		noStyle: options.noStyle ?? false,
+		onOptOutLink: (variant) => {
+			dropRejection(
+				activateOptOutLink(client.kernel, variant, { uiSource: 'banner' })
+			);
+		},
 		root: themeRoot,
 		// Surfaces keep this function; it reads the current arm's slots, which
 		// `update()` swaps before the surfaces rebuild for the new arm.

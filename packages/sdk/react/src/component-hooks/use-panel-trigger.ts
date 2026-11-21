@@ -1,19 +1,22 @@
 'use client';
 
 import type { ConsentDialogTriggerVisibility } from '@inth/sdk/schema/config';
-import { isOptOutTrigger } from '@inth/sdk/surface-actions';
+import { activateOptOutLink, isOptOutTrigger } from '@inth/sdk/surface-actions';
+import { resolveOptOutLink } from '@inth/sdk/surface-state';
 import { isTriggerVisible } from '@inth/sdk/ui/utils/trigger-utils';
 import { useCallback } from 'react';
 
 import {
 	useActiveUI,
 	useHasConsentPreferences,
-	useOptOut,
 	usePromptRequirement,
+	useResolvedPresentation,
 	useSetActiveUI,
 	useSnapshot,
 } from '../hooks';
 import { useOptOutConfirmationOpen } from '../hooks/use-opt-out';
+import { useKernel } from '../kernel-selector';
+import { useTranslations } from './use-translations';
 
 /**
  * When a trigger surface is visible.
@@ -40,22 +43,27 @@ export const useConsentDialogTrigger = function useConsentDialogTrigger(
 	options: UseConsentDialogTriggerOptions = {}
 ): UseConsentDialogTriggerResult {
 	const { showWhen = 'always', onClick } = options;
+	const kernel = useKernel();
 	const setActiveUI = useSetActiveUI();
-	const optOut = useOptOut();
 	const activeUI = useActiveUI();
 	const confirmationOpen = useOptOutConfirmationOpen();
 	const snapshot = useSnapshot();
+	const translations = useTranslations();
+	const presentation = useResolvedPresentation();
 	const promptRequirement = usePromptRequirement();
 	const hasConsentUI = useHasConsentPreferences();
 	const isOptOut = isOptOutTrigger(snapshot);
+	const optOutVariant = isOptOut
+		? resolveOptOutLink(translations, presentation?.optOutLink).variant
+		: null;
 	const openDialog = useCallback(() => {
 		onClick?.();
-		if (isOptOut) {
-			void optOut();
+		if (optOutVariant) {
+			void activateOptOutLink(kernel, optOutVariant);
 		} else {
 			setActiveUI('dialog');
 		}
-	}, [isOptOut, onClick, optOut, setActiveUI]);
+	}, [kernel, onClick, optOutVariant, setActiveUI]);
 	return {
 		isOptOut,
 		isVisible: isTriggerVisible({
