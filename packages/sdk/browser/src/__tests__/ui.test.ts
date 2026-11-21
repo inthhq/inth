@@ -70,6 +70,7 @@ afterEach(() => {
 		client.dispose();
 	}
 	localStorage.clear();
+	sessionStorage.clear();
 	clearCookies();
 	document.body.replaceChildren();
 	document.head.querySelector('#inth-styles')?.remove();
@@ -1200,6 +1201,7 @@ describe('mountConsentUI', () => {
 					consentCategories: ['functionality', 'marketing', 'measurement'],
 					overrides: { country: 'US', region: 'CA' },
 					policy: noticePolicy,
+					reloadOnConsentRevoked: false,
 				}
 			);
 			const optOutClicks = 1;
@@ -1250,6 +1252,7 @@ describe('mountConsentUI', () => {
 					consentCategories: ['functionality', 'marketing', 'measurement'],
 					overrides: { country: 'US', region: 'CA' },
 					policy: [policyRulePresets.usPrivacyStatesOptOut()],
+					reloadOnConsentRevoked: false,
 				}
 			);
 
@@ -1362,6 +1365,7 @@ describe('mountConsentUI', () => {
 					consentCategories: ['functionality', 'marketing', 'measurement'],
 					overrides: { country: 'US', region: 'CA' },
 					policy: [policyRulePresets.usPrivacyStatesOptOut()],
+					reloadOnConsentRevoked: false,
 				}
 			);
 			const trigger = query(root, 'consent-dialog-trigger');
@@ -1390,6 +1394,7 @@ describe('mountConsentUI', () => {
 					consentCategories: ['functionality', 'marketing', 'measurement'],
 					overrides: { country: 'US', region: 'CA' },
 					policy: usOptOut,
+					reloadOnConsentRevoked: false,
 				}
 			);
 			// Record a stored grant for marketing and measurement, then opt out.

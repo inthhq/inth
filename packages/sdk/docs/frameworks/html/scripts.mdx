@@ -43,8 +43,10 @@ order, copied attributes and dynamically added tags.
 ## What happens when a visitor withdraws permission
 
 A script that has already executed cannot be unloaded. When a visitor turns
-off a previously allowed category, Inth saves the choice and reloads the page
-so gated tags start inert again. Granting a category never reloads.
+off a previously allowed category through preferences or a one-click opt-out,
+Inth records the change and reloads the page so gated tags start inert again.
+Privacy signals and backend-synced opt-outs do not reload. Granting a category
+never reloads.
 
 To handle withdrawal yourself, such as calling a vendor's opt-out API, set
 `reloadOnConsentRevoked: false` in `config`. `callbacks.onBeforeConsentRevocationReload`

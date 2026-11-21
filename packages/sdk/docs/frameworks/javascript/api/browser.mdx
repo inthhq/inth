@@ -85,7 +85,7 @@ Call these only from user interactions:
 | `save(consents)` | `Promise<SaveResult>` | Saves named categories (`{ measurement: true }`). Resolves `{ ok: false }` under IAB; use `saveIAB()`. |
 | `saveIAB()` | `Promise<SaveResult>` | Confirms IAB choices on `runtime.iab` (IAB entry only). |
 | `dismissNotice()` | `Promise<NoticeDismissResult>` | Acknowledges a notice without granting consent. |
-| `optOut()` | `Promise<OptOutResult>` | Under an opt-out policy, records a durable opt-out in one step and opens the confirmation view without waiting on the network. Under any other policy, opens the preference dialog and resolves `{ ok: false, reason: 'not-available' }`. |
+| `optOut()` | `Promise<OptOutResult>` | Under an opt-out policy, records a durable opt-out in one step. When it turns off a category that was allowed and `reloadOnConsentRevoked` is enabled, it waits for the opt-out request, reloads the page, and shows the confirmation view once on the new page. Otherwise it opens the confirmation view without waiting on the network. Under any other policy, opens the preference dialog and resolves `{ ok: false, reason: 'not-available' }`. |
 | `identify(user)` | `Promise<void>` | Links the consent record to `{ externalId, identityProvider?, identityToken? }`, where `identityToken` verifies the link on the server. Failures emit `error`. |
 
 Saves apply locally and close the active surface before the network request

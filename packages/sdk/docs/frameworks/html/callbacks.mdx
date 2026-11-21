@@ -93,7 +93,7 @@ Pass lifecycle callbacks under `callbacks` in a queued `config` call:
 | `onChoiceRecorded` | `{ snapshot, confirmed, actionAt }` | Visitor accepted, rejected or saved. |
 | `onPermissionsChanged` | `{ snapshot, previous }` | Effective permissions changed for any reason. |
 | `onError` | `{ error }` (message string) | A backend request or command failed. |
-| `onBeforeConsentRevocationReload` | `{ preferences }` | Synchronously right before a withdrawal reload. Keep it brief. |
+| `onBeforeConsentRevocationReload` | `{ preferences }` | Synchronously right before the reload that follows a saved withdrawal or one-click opt-out. Keep it brief. |
 
 ## A recorded choice is not a permission change
 

@@ -6,7 +6,6 @@ import {
 	forgetOwnedVendors,
 	IABUnavailableError,
 	isVendorAllowed,
-	resolveOptOutState,
 } from '@inth/sdk-core';
 import type {
 	AllConsentNames,
@@ -29,6 +28,7 @@ import type {
 	RuntimeGPPOptions,
 } from '@inth/sdk-core/runtime';
 import {
+	optOutConsentSurface,
 	saveConsentSurface,
 	saveIABConsentSurface,
 	showConsentSurface,
@@ -52,11 +52,7 @@ import type {
 	ConsentUIMounter,
 	ConsentUIOptions,
 } from './types';
-import {
-	closeOptOutConfirmation,
-	openOptOutConfirmation,
-	readFocusedElement,
-} from './ui/opt-out-confirmation-state';
+import { closeOptOutConfirmation } from './ui/opt-out-confirmation-state';
 
 export { ACTION_ATTRIBUTE, PREFERENCES_HASH } from './page-actions';
 
@@ -414,41 +410,7 @@ export const createConsentClientWith = function createConsentClientWith(
 		closeOptOutConfirmation(kernel);
 		showConsentSurface(kernel, 'banner');
 	};
-	const optOut = (): Promise<OptOutResult> => {
-		const opener = readFocusedElement();
-		const before = kernel.getSnapshot();
-		if (before.externalPermissions) {
-			// An external CMP owns the decision, and the kernel rejects a local
-			// opt-out. Ask that provider to open its own preferences instead.
-			openDialog();
-			return Promise.resolve({ ok: false, reason: 'not-available' });
-		}
-		const pending = kernel.commands.optOut({ uiSource: before.activeUI });
-		if (!resolveOptOutState(before).available) {
-			openDialog();
-			return pending;
-		}
-		if (before.activeUI === 'dialog') {
-			showConsentSurface(kernel, 'none');
-		}
-		// `commands.optOut()` writes the local record synchronously before its
-		// first await, so the snapshot already reflects the honored opt-out.
-		if (resolveOptOutState(kernel.getSnapshot()).honored) {
-			openOptOutConfirmation(kernel, opener);
-		}
-		// Fall back to the preference centre if a custom kernel reports not-available.
-		// oxlint-disable-next-line promise/prefer-await-to-then -- Synchronous open must not await the network.
-		void pending.then(
-			(result) => {
-				if (!result.ok && result.reason === 'not-available') {
-					closeOptOutConfirmation(kernel);
-					openDialog();
-				}
-			},
-			() => undefined
-		);
-		return pending;
-	};
+	const optOut = (): Promise<OptOutResult> => optOutConsentSurface(kernel);
 	const saveSelection = (input: SaveInput): Promise<SaveResult> => {
 		closeOptOutConfirmation(kernel);
 		return saveConsentSurface(kernel, () =>
