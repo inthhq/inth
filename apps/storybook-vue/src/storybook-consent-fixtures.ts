@@ -1,3 +1,4 @@
+import type { HydrationRecords, ProviderTransportFactory } from '@inth/sdk/engine';
 import type { InitOutput, PolicyRule } from '@inth/sdk/schema/types';
 import type { App } from 'vue';
 import { onUnmounted, provide } from 'vue';
@@ -207,22 +208,35 @@ export const storybookOptOutInit: InitOutput = {
 };
 
 export const useStorybookOptOutConsent = function useStorybookOptOutConsent(
-	kind: 'request' | 'gpc' | 'account'
+	kind: 'none' | 'request' | 'gpc' | 'account',
+	options: {
+		activeUI?: StoryActiveUI;
+		configOverrides?: Partial<ConsentConfig>;
+		initialRecords?: HydrationRecords;
+		mode?: ProviderTransportFactory;
+	} = {}
 ) {
 	const config: ConsentConfig & { overrides?: { gpc: boolean } } = {
 		...storybookConsentConfig,
+		...options.configOverrides,
 	};
 	if (kind === 'gpc') {
 		config.overrides = { gpc: true };
 	}
 	const now = Date.now();
+	const baseRecords = kind === 'none' ? undefined : storybookOptOutRecords(kind);
+	const initialRecords =
+		baseRecords || options.initialRecords
+			? {
+					...baseRecords,
+					...options.initialRecords,
+					now,
+				}
+			: undefined;
 	const context = createVueConsentKernelContext({
 		config,
-		initialRecords: {
-			...storybookOptOutRecords(kind),
-			now,
-		},
-		mode: storybookMode(),
+		initialRecords,
+		mode: options.mode ?? storybookMode(),
 		now,
 		prefetch: storybookOptOutInit,
 		producerContract: 1,
@@ -230,7 +244,7 @@ export const useStorybookOptOutConsent = function useStorybookOptOutConsent(
 	if (kind === 'gpc') {
 		context.kernel.set.privacySignals({ gpc: true });
 	}
-	context.activeUI.value = null;
+	context.activeUI.value = options.activeUI ?? null;
 	provideStorybookConsentContext(null, context, config);
 	onUnmounted(() => context.dispose());
 	return context;
@@ -240,7 +254,8 @@ export const useStorybookConsent = function useStorybookConsent(
 	activeUI: StoryActiveUI,
 	configOverrides?: Partial<ConsentConfig>,
 	prefetch: InitOutput = storybookInit,
-	storedConsent?: Record<string, boolean>
+	storedConsent?: Record<string, boolean>,
+	mode?: ProviderTransportFactory
 ) {
 	const config = configOverrides
 		? ({ ...storybookConsentConfig, ...configOverrides } as ConsentConfig)
@@ -250,7 +265,7 @@ export const useStorybookConsent = function useStorybookConsent(
 	// prefetch would carry it.
 	const context = createVueConsentKernelContext({
 		config,
-		mode: storybookMode(),
+		mode: mode ?? storybookMode(),
 		prefetch,
 		producerContract: 1,
 		...(storedConsent && {

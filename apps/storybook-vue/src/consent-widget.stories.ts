@@ -3,6 +3,7 @@ import {
 	expandedVendors,
 } from '@inth/conformance/play/consent-widget';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
+import { expect, within } from 'storybook/test';
 
 import ConsentWidget from '../../../packages/sdk/vue/src/runtime/components/preferences.vue';
 import {
@@ -14,6 +15,8 @@ import {
 	useStorybookConsent as setupStorybookConsent,
 	useStorybookOptOutConsent as setupStorybookOptOutConsent,
 } from './storybook-consent-fixtures';
+
+const OPT_OUT_REFERENCE = '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d';
 
 const meta = {
 	component: ConsentWidget,
@@ -70,19 +73,90 @@ export const WithVendorsExpanded: Story = {
 	play: expandedVendors,
 };
 
-/** Durable opt-out honored by a visitor request; switches stay off and usable. */
-export const OptOutHonoredByRequest: Story = {
+/** Under an opt-out policy before the visitor opts out. */
+export const OptOutNotOptedOut: Story = {
 	render: () => ({
 		components: { ConsentWidget },
 		setup() {
-			setupStorybookOptOutConsent('request');
+			setupStorybookOptOutConsent('none', {
+				configOverrides: {
+					presentation: { optOutLink: 'do-not-sell' },
+				},
+			});
 		},
 		template: '<div style="width: 32rem;"><ConsentWidget /></div>',
 	}),
 };
 
-/** Durable opt-out honored by an active GPC signal; restricted switches are locked off. */
+/** Durable opt-out honored by a visitor request before backend rights confirmation. */
+export const OptOutHonoredByRequest: Story = {
+	render: () => ({
+		components: { ConsentWidget },
+		setup() {
+			setupStorybookOptOutConsent('request', {
+				configOverrides: {
+					presentation: { optOutLink: 'do-not-sell' },
+				},
+				initialRecords: {
+					optOutReference: OPT_OUT_REFERENCE,
+				},
+			});
+		},
+		template: '<div style="width: 32rem;"><ConsentWidget /></div>',
+	}),
+};
+
+/** Durable opt-out with sale and sharing confirmed by the backend. */
+export const OptOutConfirmedSaleAndShare: Story = {
+	render: () => ({
+		components: { ConsentWidget },
+		setup() {
+			setupStorybookOptOutConsent('request', {
+				configOverrides: {
+					presentation: { optOutLink: 'do-not-sell' },
+				},
+				initialRecords: {
+					optOutReference: OPT_OUT_REFERENCE,
+					optOutRightsConfirmed: true,
+				},
+			});
+		},
+		template: '<div style="width: 32rem;"><ConsentWidget /></div>',
+	}),
+};
+
+/** Durable opt-out honored by a visitor request with the "Opt back in…" link. */
+export const OptOutWithOptInLink: Story = {
+	play: async ({ canvasElement }) => {
+		const link = await within(canvasElement).findByTestId(
+			'consent-widget-opt-in-link'
+		);
+		await expect(link).toBeVisible();
+	},
+	render: () => ({
+		components: { ConsentWidget },
+		setup() {
+			setupStorybookOptOutConsent('request', {
+				configOverrides: {
+					presentation: { optOutLink: 'do-not-sell' },
+				},
+				initialRecords: {
+					optOutReference: OPT_OUT_REFERENCE,
+				},
+			});
+		},
+		template: '<div style="width: 32rem;"><ConsentWidget /></div>',
+	}),
+};
+
+/** Durable opt-out honored by an active GPC signal; restricted switches are locked off and no opt-in link is shown. */
 export const OptOutGpcLocked: Story = {
+	play: async ({ canvasElement }) => {
+		await within(canvasElement).findByTestId('consent-widget-opt-out-status');
+		await expect(
+			within(canvasElement).queryByTestId('consent-widget-opt-in-link')
+		).toBeNull();
+	},
 	render: () => ({
 		components: { ConsentWidget },
 		setup() {
