@@ -647,6 +647,8 @@ describe('retries and limits', () => {
 		const limitedCall = await checkTerms(inth);
 		assert.strictEqual(limitedCall.error?.code, 'rate_limited');
 		assert.strictEqual(limitedCall.error?.status, 429);
+		// The body's own failure stays on the error
+		assert.instanceOf(limitedCall.error?.cause, TypeError);
 		// Asked to wait two minutes, longer than the client waits: no retry
 		assert.strictEqual(calls, 1);
 	});

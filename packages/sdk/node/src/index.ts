@@ -621,7 +621,9 @@ const fieldErrorsOf = (
 const refusalError = (
 	response: Response,
 	body: unknown,
-	requestId: string | undefined
+	requestId: string | undefined,
+	/** What the body read threw, for a refusal whose body never arrived */
+	cause?: unknown
 ): InthError => {
 	const { status } = response;
 	const refused = v.safeParse(refusal, body);
@@ -631,6 +633,7 @@ const refusalError = (
 		output?.message ?? output?.error?.message ?? `The API answered ${status}`,
 		{
 			apiCode: output?.cause?.code ?? output?.code ?? output?.error?.code,
+			cause,
 			details: fieldErrorsOf(output?.error?.details),
 			requestId: requestId ?? output?.requestId,
 			retryAfter: askedWait(response.headers.get('retry-after')),
@@ -1552,7 +1555,9 @@ export class Inth {
 			const readFailure = 'failure' in bodyRead ? bodyRead.failure : undefined;
 			if (text === undefined && !response.ok) {
 				// The status says what happened, and its `Retry-After` still holds
-				return { error: refusalError(response, undefined, requestId) };
+				return {
+					error: refusalError(response, undefined, requestId, readFailure),
+				};
 			}
 			if (text === undefined) {
 				return {
