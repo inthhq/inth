@@ -26,7 +26,7 @@ import { createDialog } from '../ui/dialog';
 import { createOptInConfirmation } from '../ui/opt-in-confirmation';
 import { createOptOutConfirmation } from '../ui/opt-out-confirmation';
 import { createStyle } from '../ui/root';
-import type { Surface } from '../ui/surface';
+import type { Surface, SurfaceContext } from '../ui/surface';
 import type { InitUI } from './boot';
 
 /** What the init script hands the dialog. @internal */
@@ -143,14 +143,13 @@ export const openEarlyDialog = function openEarlyDialog(
 			};
 			// oxlint-disable-next-line promise/prefer-await-to-then -- Not in an async function.
 			void engine.ready().then(release, release);
-			const confirmationCtx = {
+			const confirmationCtx: SurfaceContext = {
 				client: engine,
-				disableAnimation:
-					uiOptions.disableAnimation ?? prefersReducedMotion(),
+				disableAnimation: uiOptions.disableAnimation ?? prefersReducedMotion(),
 				legalLinks: options.legalLinks,
 				noStyle: false,
 				root: ui.themeRoot,
-				slot: (element: HTMLElement | null) => element,
+				slot: (element) => element,
 			};
 			const dialogOptions =
 				typeof uiOptions.dialog === 'object' ? uiOptions.dialog : {};

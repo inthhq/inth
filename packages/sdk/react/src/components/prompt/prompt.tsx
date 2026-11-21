@@ -20,10 +20,6 @@ import { useIABPolicyGuard } from '~/hooks/use-iab-policy-guard';
 import { useOptInConfirmationHost } from '~/hooks/use-opt-out';
 import { createDeferredModule } from '~/utils/deferred-module';
 
-const LazyOptInConfirmation = createDeferredModule(
-	() => import('~/components/opt-in-confirmation')
-).component((module) => module.OptInConfirmation);
-
 import { StreamedConsentSurface } from '../shared/streamed-surface';
 import { ConsentBannerRoot } from './atoms/root';
 import {
@@ -40,6 +36,10 @@ import {
 	ConsentBannerTitle,
 } from './components';
 import { ErrorBoundary } from './error-boundary';
+
+const LazyOptInConfirmation = createDeferredModule(
+	() => import('~/components/opt-in-confirmation')
+).component((module) => module.OptInConfirmation);
 
 /**
  * Identifiers for the available buttons in the consent banner.
@@ -351,74 +351,74 @@ const ConsentBannerContent: FC<ConsentBannerProps> = ({
 			<ErrorBoundary
 				fallback={<div>Something went wrong with the Consent Banner.</div>}
 			>
-			<ConsentBannerRoot
-				{...config}
-				models={models}
-				uiSource={uiSource}
-				variant={variant}
-				position={position}
-				blocking={blocking}
-			>
-				<Box
-					baseClassName={styles.cardShell}
-					slotKey="banner.cardShell"
+				<ConsentBannerRoot
+					{...config}
+					models={models}
+					uiSource={uiSource}
+					variant={variant}
+					position={position}
+					blocking={blocking}
 				>
-					<BrandingTag
-						surface="banner"
-						hideBranding={hideBranding}
-					/>
-					<ConsentBannerCard>
-						<ConsentBannerHeader>
-							<ConsentBannerTitle>{title}</ConsentBannerTitle>
-							<ConsentBannerDescription legalLinks={legalLinks}>
-								{description}
-							</ConsentBannerDescription>
-						</ConsentBannerHeader>
-						<ConsentBannerFooter
-							className={actionStyles.actionRoot}
-							data-direction={resolvedDirection}
-							data-fill={shouldFillActions ? true : undefined}
-							data-split={
-								resolvedLayout.length > 1 && !shouldFillActions
-									? true
-									: undefined
-							}
-						>
-							<ConsentBannerRights rights={banner.preferenceControls} />
-							{resolvedLayout.map((item, index) => {
-								if (Array.isArray(item)) {
-									const filteredItems = item.filter((subItem) =>
-										allowedActions.has(subItem)
-									);
-									if (filteredItems.length === 0) {
+					<Box
+						baseClassName={styles.cardShell}
+						slotKey="banner.cardShell"
+					>
+						<BrandingTag
+							surface="banner"
+							hideBranding={hideBranding}
+						/>
+						<ConsentBannerCard>
+							<ConsentBannerHeader>
+								<ConsentBannerTitle>{title}</ConsentBannerTitle>
+								<ConsentBannerDescription legalLinks={legalLinks}>
+									{description}
+								</ConsentBannerDescription>
+							</ConsentBannerHeader>
+							<ConsentBannerFooter
+								className={actionStyles.actionRoot}
+								data-direction={resolvedDirection}
+								data-fill={shouldFillActions ? true : undefined}
+								data-split={
+									resolvedLayout.length > 1 && !shouldFillActions
+										? true
+										: undefined
+								}
+							>
+								<ConsentBannerRights rights={banner.preferenceControls} />
+								{resolvedLayout.map((item, index) => {
+									if (Array.isArray(item)) {
+										const filteredItems = item.filter((subItem) =>
+											allowedActions.has(subItem)
+										);
+										if (filteredItems.length === 0) {
+											return null;
+										}
+										const groupKey = item.join('-');
+										return (
+											<ConsentBannerFooterSubGroup
+												key={groupKey ? `group-${groupKey}` : `group-${index}`}
+												className={actionStyles.actionGroup}
+												data-direction={resolvedDirection}
+												data-fill={shouldFillActions ? true : undefined}
+											>
+												{filteredItems.map((subItem) => (
+													<Fragment key={subItem}>
+														{renderButton(subItem)}
+													</Fragment>
+												))}
+											</ConsentBannerFooterSubGroup>
+										);
+									}
+									if (!allowedActions.has(item)) {
 										return null;
 									}
-									const groupKey = item.join('-');
-									return (
-										<ConsentBannerFooterSubGroup
-											key={groupKey ? `group-${groupKey}` : `group-${index}`}
-											className={actionStyles.actionGroup}
-											data-direction={resolvedDirection}
-											data-fill={shouldFillActions ? true : undefined}
-										>
-											{filteredItems.map((subItem) => (
-												<Fragment key={subItem}>
-													{renderButton(subItem)}
-												</Fragment>
-											))}
-										</ConsentBannerFooterSubGroup>
-									);
-								}
-								if (!allowedActions.has(item)) {
-									return null;
-								}
-								return <Fragment key={item}>{renderButton(item)}</Fragment>;
-							})}
-						</ConsentBannerFooter>
-					</ConsentBannerCard>
-				</Box>
-			</ConsentBannerRoot>
-		</ErrorBoundary>
+									return <Fragment key={item}>{renderButton(item)}</Fragment>;
+								})}
+							</ConsentBannerFooter>
+						</ConsentBannerCard>
+					</Box>
+				</ConsentBannerRoot>
+			</ErrorBoundary>
 		</>
 	);
 };

@@ -158,6 +158,99 @@ const getOverlayClass = function getOverlayClass(
 	);
 };
 
+const resolveOptInOptions = function resolveOptInOptions(
+	local: OptInConfirmationProps,
+	global: ThemeContextValue
+) {
+	return {
+		disableAnimation:
+			local.disableAnimation ?? global.disableAnimation ?? false,
+		noStyle: local.noStyle ?? global.noStyle ?? false,
+		scrollLock: local.scrollLock ?? global.scrollLock ?? true,
+		trapFocus: local.trapFocus ?? global.trapFocus ?? true,
+	};
+};
+
+interface OptInDialogCardProps {
+	buttonProps: ReturnType<typeof mergeSlotProps>;
+	cancelLabel: string;
+	confirmLabel: string;
+	noStyle: boolean;
+	onCancel: () => void;
+	onConfirm: () => void;
+	sentence: string;
+	title: string;
+}
+
+const OptInDialogCard: FC<OptInDialogCardProps> = ({
+	buttonProps,
+	cancelLabel,
+	confirmLabel,
+	noStyle,
+	onCancel,
+	onConfirm,
+	sentence,
+	title,
+}) => {
+	const mode = noStyle ? undefined : 'stroke';
+	const size = noStyle ? undefined : 'small';
+	const variant = noStyle ? undefined : 'neutral';
+	return (
+		<div
+			className={noStyle ? undefined : styles.card}
+			data-testid="opt-in-confirmation-card"
+			tabIndex={-1}
+		>
+			<div
+				className={noStyle ? undefined : styles.header}
+				data-testid="opt-in-confirmation-header"
+			>
+				<h2
+					className={noStyle ? undefined : styles.title}
+					data-testid="opt-in-confirmation-title"
+					id="opt-in-confirmation-title"
+				>
+					{title}
+				</h2>
+			</div>
+			<p
+				className={noStyle ? undefined : styles.description}
+				data-testid="opt-in-confirmation-description"
+				id="opt-in-confirmation-description"
+			>
+				{sentence}
+			</p>
+			<div
+				className={noStyle ? undefined : styles.footer}
+				data-testid="opt-in-confirmation-footer"
+			>
+				<button
+					type="button"
+					data-mode={mode}
+					data-size={size}
+					data-variant={variant}
+					{...buttonProps}
+					data-testid="opt-in-confirmation-cancel-button"
+					onClick={onCancel}
+				>
+					{cancelLabel}
+				</button>
+				<button
+					type="button"
+					data-mode={mode}
+					data-size={size}
+					data-variant={variant}
+					{...buttonProps}
+					data-testid="opt-in-confirmation-confirm-button"
+					onClick={onConfirm}
+				>
+					{confirmLabel}
+				</button>
+			</div>
+		</div>
+	);
+};
+
 /**
  * Separate modal confirmation dialog for the second step of opting back in
  * under an opt-out policy (11 CCR §7028(a)).
@@ -167,12 +260,7 @@ const getOverlayClass = function getOverlayClass(
  *
  * @internal
  */
-export const OptInConfirmation: FC<OptInConfirmationProps> = ({
-	noStyle: localNoStyle,
-	disableAnimation: localDisableAnimation,
-	scrollLock: localScrollLock,
-	trapFocus: localTrapFocus,
-}) => {
+export const OptInConfirmation: FC<OptInConfirmationProps> = (props) => {
 	const kernel = useKernel();
 	const globalTheme = useTheme();
 	const { components } = useUIConfig();
@@ -182,11 +270,8 @@ export const OptInConfirmation: FC<OptInConfirmationProps> = ({
 	const textDirection = useTextDirection(language);
 	const confirmationOpen = useOptInConfirmationOpen();
 
-	const disableAnimation =
-		localDisableAnimation ?? globalTheme.disableAnimation ?? false;
-	const noStyle = localNoStyle ?? globalTheme.noStyle ?? false;
-	const scrollLock = localScrollLock ?? globalTheme.scrollLock ?? true;
-	const trapFocus = localTrapFocus ?? globalTheme.trapFocus ?? true;
+	const { disableAnimation, noStyle, scrollLock, trapFocus } =
+		resolveOptInOptions(props, globalTheme);
 
 	const sheetsReady = useSurfaceSheetsReady(DIALOG_SHEETS, noStyle);
 	const isMounted = useIsHydrated();
@@ -245,15 +330,7 @@ export const OptInConfirmation: FC<OptInConfirmationProps> = ({
 			noStyle,
 		}
 	);
-	const overlayClass = getOverlayClass(noStyle, disableAnimation, isVisible);
-	const positionerClass = getPositionerClass(
-		noStyle,
-		disableAnimation,
-		isVisible
-	);
-	const containerClass = noStyle
-		? undefined
-		: getContentClass(disableAnimation, isVisible);
+	const disableAnimationAttr = disableAnimation ? '' : undefined;
 
 	return createPortal(
 		<LocalThemeContext.Provider value={contextValue}>
@@ -263,16 +340,16 @@ export const OptInConfirmation: FC<OptInConfirmationProps> = ({
 			/>
 			<div
 				aria-hidden="true"
-				className={overlayClass}
-				data-disable-animation={disableAnimation ? '' : undefined}
+				className={getOverlayClass(noStyle, disableAnimation, isVisible)}
+				data-disable-animation={disableAnimationAttr}
 				data-stacked=""
 				data-state="open"
 				data-testid="opt-in-confirmation-overlay"
 				role="presentation"
 			/>
 			<div
-				className={positionerClass}
-				data-disable-animation={disableAnimation ? '' : undefined}
+				className={getPositionerClass(noStyle, disableAnimation, isVisible)}
+				data-disable-animation={disableAnimationAttr}
 				data-stacked=""
 				data-state="open"
 				dir={textDirection}
@@ -282,7 +359,9 @@ export const OptInConfirmation: FC<OptInConfirmationProps> = ({
 					aria-describedby="opt-in-confirmation-description"
 					aria-labelledby="opt-in-confirmation-title"
 					aria-modal="true"
-					className={containerClass}
+					className={
+						noStyle ? undefined : getContentClass(disableAnimation, isVisible)
+					}
 					data-state="open"
 					data-testid="opt-in-confirmation-root"
 					{...{ [SURFACE_ROOT_ATTRIBUTE]: 'dialog' }}
@@ -292,58 +371,16 @@ export const OptInConfirmation: FC<OptInConfirmationProps> = ({
 					role="dialog"
 					tabIndex={-1}
 				>
-					<div
-						className={noStyle ? undefined : styles.card}
-						data-testid="opt-in-confirmation-card"
-						tabIndex={-1}
-					>
-						<div
-							className={noStyle ? undefined : styles.header}
-							data-testid="opt-in-confirmation-header"
-						>
-							<h2
-								className={noStyle ? undefined : styles.title}
-								data-testid="opt-in-confirmation-title"
-								id="opt-in-confirmation-title"
-							>
-								{copy.optInTitle}
-							</h2>
-						</div>
-						<p
-							className={noStyle ? undefined : styles.description}
-							data-testid="opt-in-confirmation-description"
-							id="opt-in-confirmation-description"
-						>
-							{sentence}
-						</p>
-						<div
-							className={noStyle ? undefined : styles.footer}
-							data-testid="opt-in-confirmation-footer"
-						>
-							<button
-								type="button"
-								data-mode={noStyle ? undefined : 'stroke'}
-								data-size={noStyle ? undefined : 'small'}
-								data-variant={noStyle ? undefined : 'neutral'}
-								{...buttonProps}
-								data-testid="opt-in-confirmation-cancel-button"
-								onClick={handleCancel}
-							>
-								{copy.optInCancel}
-							</button>
-							<button
-								type="button"
-								data-mode={noStyle ? undefined : 'stroke'}
-								data-size={noStyle ? undefined : 'small'}
-								data-variant={noStyle ? undefined : 'neutral'}
-								{...buttonProps}
-								data-testid="opt-in-confirmation-confirm-button"
-								onClick={handleConfirm}
-							>
-								{copy.optInConfirm}
-							</button>
-						</div>
-					</div>
+					<OptInDialogCard
+						buttonProps={buttonProps}
+						cancelLabel={copy.optInCancel}
+						confirmLabel={copy.optInConfirm}
+						noStyle={noStyle}
+						onCancel={handleCancel}
+						onConfirm={handleConfirm}
+						sentence={sentence}
+						title={copy.optInTitle}
+					/>
 				</div>
 			</div>
 		</LocalThemeContext.Provider>,

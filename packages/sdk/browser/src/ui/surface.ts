@@ -1,4 +1,4 @@
-import type { ConsentSnapshot, LegalLinks } from '@inth/sdk-core';
+import type { ConsentSnapshot, LegalLinks, SaveResult } from '@inth/sdk-core';
 import type { LegalLinksTranslations } from '@inth/sdk-translations';
 import { resolveLegalLinkEntries } from '@inth/sdk-ui/utils/legal-links';
 
@@ -21,6 +21,8 @@ export interface SurfaceContext {
 	legalLinks: LegalLinks | undefined;
 	/** Marks an element as a `theme.slots` part and applies its overrides. */
 	slot: SlotApplier;
+	/** Banner Accept All handler that enforces two-step opt-in confirmation. */
+	acceptFromBanner?: () => Promise<SaveResult>;
 }
 
 /** A mounted surface. */

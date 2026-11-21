@@ -304,9 +304,7 @@ describe('consent copy', () => {
 		);
 		expect(
 			resolveOptInConfirmationSentence(en, { rights: ['sale', 'share'] })
-		).toBe(
-			'Confirming ends your opt-out of sale and sharing on this browser.'
-		);
+		).toBe('Confirming ends your opt-out of sale and sharing on this browser.');
 		expect(
 			resolveOptInConfirmationSentence(en, {
 				rights: ['sale', 'targeted_ads'],

@@ -11,7 +11,7 @@ import {
 	subscribeOptInConfirmation,
 	subscribeOptOutConfirmation,
 } from '@inth/sdk/surface-actions';
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
 
 import { useKernel } from '../kernel-selector';
 
@@ -102,12 +102,9 @@ export const useOptInConfirmationOpen =
 export const useOptInConfirmationHost =
 	function useOptInConfirmationHost(): boolean {
 		const kernel = useKernel();
-		const [token] = useState(() => Symbol('OptInConfirmation'));
+		const token = useMemo(() => Symbol('OptInConfirmation'), []);
 
-		useEffect(
-			() => claimOptInConfirmationHost(kernel, token),
-			[kernel, token]
-		);
+		useEffect(() => claimOptInConfirmationHost(kernel, token), [kernel, token]);
 
 		return useSyncExternalStore(
 			useCallback(
