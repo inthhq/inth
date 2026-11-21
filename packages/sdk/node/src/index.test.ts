@@ -890,7 +890,8 @@ describe('documents', () => {
 						acceptances: [
 							{
 								acceptedAt: 1763467200000,
-								hash: HASH,
+								// The release sent, so only the missing type can fail it
+								hash: TERMS_HASH,
 								type: 'terms_us',
 								version: '2026-11-18',
 							},

@@ -277,6 +277,9 @@ compile error.
 the compiler check them against your project, declare them once:
 
 ```ts
+// The import makes this file extend @inth/node rather than replace it
+import '@inth/node';
+
 declare module '@inth/node' {
 	interface Register {
 		documentTypes: 'privacy_policy' | 'terms_and_conditions';
