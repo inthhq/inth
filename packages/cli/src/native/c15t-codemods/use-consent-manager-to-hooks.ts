@@ -116,7 +116,7 @@ const MANUAL_HINTS = new Map(
     identifyUser: "useIdentify()",
     manager: "nothing; it was always null in v3",
     optOutDirectives:
-      "nothing; GPC is no longer stored, read the live signal with usePrivacySignals()",
+      "useOptOutState() for the opt-out Inth records from GPC, usePrivacySignals() for the live signal",
     saveConsents:
       "useHeadlessConsentUI().saveCustomPreferences('all' | 'none'), or with no argument for the draft",
     setConsent: "useSaveConsents(), called with { [category]: value }",

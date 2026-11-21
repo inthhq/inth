@@ -254,7 +254,7 @@ export const Gpc = () => {
     expect(updated).toContain("const privacySignals = usePrivacySignals();");
     expect(updated).not.toContain("useOptOutDirectives");
     expect(updated).toContain(
-      "// - optOutDirectives: nothing; GPC is no longer stored"
+      "// - optOutDirectives: useOptOutState() for the opt-out Inth records from GPC"
     );
     expect(updated).toContain(
       "const { optOutDirectives } = useConsentManager();"
