@@ -75,10 +75,4 @@ string: pass the file's bytes, such as `readFile(path)` without an encoding.
 `types` and `type` accept common document types and any other string. To have
 the compiler check them against your project, declare them once:
 
-```ts title="inth.d.ts"
-declare module '@inth/node' {
-	interface Register {
-		documentTypes: 'privacy_policy' | 'terms_us' | 'terms_eu';
-	}
-}
-```
+<include src="../shared/examples/node/node-register.mdx" />
