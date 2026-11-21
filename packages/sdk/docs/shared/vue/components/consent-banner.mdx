@@ -37,9 +37,13 @@ group: reference
   <include src="../../privacy-choices-link.mdx" />
 
   Accept All and Reject All record a choice for every category in the policy
-  and close the banner. Customize sets `activeUI` to `'manager'`, opening
+  and close the banner. Under an `opt-out` policy while an opt-out is held,
+  Accept All opens the two-step opt-in confirmation dialog instead of saving
+  right away. Customize sets `activeUI` to `'manager'`, opening
   `ConsentManager` if mounted. OK records a notice dismissal, grants nothing,
-  and leaves earlier refusals in place.
+  and leaves earlier refusals in place. `OptOutConfirmation` shows the status
+  line, a receipt sentence for what was covered, the recorded time, and the
+  local reference when this browser recorded the opt-out.
 
   Copy comes from the resolved Inth translations: `cookieBanner.title` and
   `cookieBanner.description` for a choice, `cookieBanner.noticeTitle` and
