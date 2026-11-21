@@ -205,6 +205,7 @@ const renderVariants = async function renderVariants(
 					},
 				},
 				projectUrl: 'https://consent.example',
+				reloadOnConsentRevoked: variant.options?.reloadOnConsentRevoked,
 				routePrefix: false,
 				ui: variant.ui ?? 'svelte',
 			};
@@ -221,7 +222,10 @@ const renderVariants = async function renderVariants(
 			const locals = await serverModule.resolveConsentContext({
 				fetch: storyFetch,
 				headers: new Headers(
-					variant.openOptOutConfirmation === 'signal' ? { 'sec-gpc': '1' } : {}
+					variant.openOptOutConfirmation === 'signal' ||
+						variant.optOutState === 'gpc'
+						? { 'sec-gpc': '1' }
+						: {}
 				),
 				options: resolved,
 			});
@@ -246,7 +250,10 @@ const renderVariants = async function renderVariants(
 			const clean = (html: string) =>
 				stripDevAttributes(html.replace(SCRIPT_TAG, '')).trim();
 			let html = clean(raw);
-			if (variant.openOptOutConfirmation === 'signal') {
+			if (
+				variant.withOptOutLink ||
+				variant.openOptOutConfirmation === 'signal'
+			) {
 				// oxlint-disable-next-line no-await-in-loop -- One shared container.
 				const link = await renderPart(
 					COMPONENT_FILES['consent-dialog-trigger'] as string,

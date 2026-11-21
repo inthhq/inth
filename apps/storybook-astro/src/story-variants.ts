@@ -50,6 +50,8 @@ export interface AstroStoryVariant {
 		iab?: boolean;
 		/** Use the opt-out policy pack instead of the default opt-in rule. */
 		policy?: 'default' | 'opt-out';
+		/** Prevent page reloads on opt-out revocation inside Storybook fixtures. */
+		reloadOnConsentRevoked?: boolean;
 		/** Banner presentation, merged over the shared story presentation. */
 		presentation?: {
 			optOutLink?:
@@ -77,6 +79,15 @@ export interface AstroStoryVariant {
 	 * after an interactive request or with a Global Privacy Control signal.
 	 */
 	openOptOutConfirmation?: 'request' | 'signal';
+	/** Seeded opt-out record state applied on boot for opt-out dialog and receipt stories. */
+	optOutState?: 'request' | 'request-confirmed' | 'gpc' | 'account-adopted';
+	/** Synthetic backend opt-out answer returned when the story opts out. */
+	optOutAnswer?: {
+		heldBy: 'device' | 'both';
+		rights: ('sale' | 'share' | 'targeted_ads')[];
+	};
+	/** Include a server-rendered `<ConsentDialogLink right="opt-out" />` beside the host. */
+	withOptOutLink?: boolean;
 	/**
 	 * Render the component as a docs design recipe: over the demo page, with
 	 * a "Privacy settings" `<ConsentDialogTrigger>` in its footer and a
@@ -134,6 +145,7 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 			colorScheme: 'light',
 			consentCategories: CATEGORIES,
 			policy: 'opt-out',
+			reloadOnConsentRevoked: false,
 		},
 		props: { disableAnimation: true, force: true },
 	},
@@ -145,6 +157,7 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 			consentCategories: CATEGORIES,
 			policy: 'opt-out',
 			presentation: { optOutLink: 'privacy-choices' },
+			reloadOnConsentRevoked: false,
 		},
 		props: { disableAnimation: true, force: true },
 	},
@@ -156,6 +169,42 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 			colorScheme: 'light',
 			consentCategories: CATEGORIES,
 			policy: 'opt-out',
+			presentation: { optOutLink: 'do-not-sell' },
+			reloadOnConsentRevoked: false,
+		},
+		props: { disableAnimation: true },
+	},
+	{
+		component: 'opt-out-confirmation',
+		id: 'opt-out-confirmation--request-confirmed',
+		openOptOutConfirmation: 'request',
+		optOutAnswer: {
+			heldBy: 'device',
+			rights: ['sale', 'share'],
+		},
+		options: {
+			colorScheme: 'light',
+			consentCategories: CATEGORIES,
+			policy: 'opt-out',
+			presentation: { optOutLink: 'do-not-sell' },
+			reloadOnConsentRevoked: false,
+		},
+		props: { disableAnimation: true },
+	},
+	{
+		component: 'opt-out-confirmation',
+		id: 'opt-out-confirmation--account-covered',
+		openOptOutConfirmation: 'request',
+		optOutAnswer: {
+			heldBy: 'both',
+			rights: ['sale', 'share'],
+		},
+		options: {
+			colorScheme: 'light',
+			consentCategories: CATEGORIES,
+			policy: 'opt-out',
+			presentation: { optOutLink: 'do-not-sell' },
+			reloadOnConsentRevoked: false,
 		},
 		props: { disableAnimation: true },
 	},
@@ -163,13 +212,31 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 		component: 'opt-out-confirmation',
 		id: 'opt-out-confirmation--signal-honored',
 		openOptOutConfirmation: 'signal',
+		optOutState: 'gpc',
 		options: {
 			colorScheme: 'light',
 			consentCategories: CATEGORIES,
 			policy: 'opt-out',
-			presentation: { optOutLink: 'privacy-choices' },
+			presentation: { optOutLink: 'do-not-sell' },
+			reloadOnConsentRevoked: false,
 		},
 		props: { disableAnimation: true },
+		withOptOutLink: true,
+	},
+	{
+		component: 'opt-out-confirmation',
+		id: 'opt-out-confirmation--account-adopted',
+		openOptOutConfirmation: 'request',
+		optOutState: 'account-adopted',
+		options: {
+			colorScheme: 'light',
+			consentCategories: CATEGORIES,
+			policy: 'opt-out',
+			presentation: { optOutLink: 'do-not-sell' },
+			reloadOnConsentRevoked: false,
+		},
+		props: { disableAnimation: true },
+		withOptOutLink: true,
 	},
 	{
 		component: 'consent-dialog',
@@ -181,6 +248,89 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 		id: 'consent-dialog--opened',
 		openDialog: 'preferences',
 		options: { colorScheme: 'light', consentCategories: CATEGORIES },
+	},
+	{
+		component: 'consent-dialog',
+		id: 'consent-dialog--opt-out-not-opted-out',
+		openDialog: 'preferences',
+		options: {
+			colorScheme: 'light',
+			consentCategories: CATEGORIES,
+			policy: 'opt-out',
+			presentation: { optOutLink: 'do-not-sell' },
+			reloadOnConsentRevoked: false,
+		},
+		props: { disableAnimation: true },
+	},
+	{
+		component: 'consent-dialog',
+		id: 'consent-dialog--opt-out-honored-by-request',
+		openDialog: 'preferences',
+		optOutState: 'request',
+		options: {
+			colorScheme: 'light',
+			consentCategories: CATEGORIES,
+			policy: 'opt-out',
+			presentation: { optOutLink: 'do-not-sell' },
+			reloadOnConsentRevoked: false,
+		},
+		props: { disableAnimation: true },
+	},
+	{
+		component: 'consent-dialog',
+		id: 'consent-dialog--opt-out-confirmed-sale-and-share',
+		openDialog: 'preferences',
+		optOutState: 'request-confirmed',
+		options: {
+			colorScheme: 'light',
+			consentCategories: CATEGORIES,
+			policy: 'opt-out',
+			presentation: { optOutLink: 'do-not-sell' },
+			reloadOnConsentRevoked: false,
+		},
+		props: { disableAnimation: true },
+	},
+	{
+		component: 'consent-dialog',
+		id: 'consent-dialog--opt-out-gpc-locked',
+		openDialog: 'preferences',
+		optOutState: 'gpc',
+		options: {
+			colorScheme: 'light',
+			consentCategories: CATEGORIES,
+			policy: 'opt-out',
+			presentation: { optOutLink: 'privacy-choices' },
+			reloadOnConsentRevoked: false,
+		},
+		props: { disableAnimation: true },
+	},
+	{
+		component: 'consent-dialog',
+		id: 'consent-dialog--opt-in-confirmation',
+		openDialog: 'preferences',
+		optOutState: 'request',
+		options: {
+			colorScheme: 'light',
+			consentCategories: CATEGORIES,
+			policy: 'opt-out',
+			presentation: { optOutLink: 'do-not-sell' },
+			reloadOnConsentRevoked: false,
+		},
+		props: { disableAnimation: true },
+	},
+	{
+		component: 'consent-dialog',
+		id: 'consent-dialog--opt-in-confirmation-confirmed-rights',
+		openDialog: 'preferences',
+		optOutState: 'request-confirmed',
+		options: {
+			colorScheme: 'light',
+			consentCategories: CATEGORIES,
+			policy: 'opt-out',
+			presentation: { optOutLink: 'do-not-sell' },
+			reloadOnConsentRevoked: false,
+		},
+		props: { disableAnimation: true },
 	},
 	{
 		component: 'consent-dialog-trigger',
