@@ -67,6 +67,17 @@ Dismissing a notice records an acknowledgement only. It grants no optional categ
 
 Global Privacy Control, or GPC, asks sites not to sell or share personal data. The first time Inth sees GPC under a policy that maps it, Inth records a durable opt-out. Under an opt-out policy, rejecting all or turning `marketing` off in preferences records a durable opt-out too (`measurement` decides when `marketing` is not in the rule's scope). Nothing under an opt-in policy records an opt-out. A durable opt-out switches off `marketing` and `measurement` in scope by default, stays in effect after the browser stops sending GPC, and survives reloads and policy changes. If a visitor turns `measurement` back on while `marketing` stays off, `measurement` stays allowed and the opt-out remains in effect. Turning `marketing` back on and saving under any policy model lifts a device-held opt-out once the browser stops sending GPC. Inth also receives the current GPC value on backend requests.
 
+A `measurement` grant stands under an opt-out only while `marketing` holds an
+explicit refusal. Inth does not compare the times of the two. This has two
+consequences:
+
+- After a one-click opt-out, `marketing` has no explicit choice yet. Saving
+  `{ measurement: true }` alone does not turn `measurement` on. Save
+  `{ marketing: false, measurement: true }` instead. The built-in preference
+  surfaces already do this, because they save every category they display.
+- A visitor who refused `marketing` and granted `measurement` before they
+  opted out keeps `measurement` on after the opt-out.
+
 ## What happens when a visitor saves
 
 When a visitor clicks Accept, Reject, or Save, Inth runs five steps:

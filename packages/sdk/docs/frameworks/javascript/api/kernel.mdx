@@ -44,7 +44,7 @@ Commands are asynchronous and are the only way to record choices:
 | `commands.init()` | `Promise<{ ok, error? }>` | Resolves the policy via transport (retries failures in background). |
 | `commands.save('all')` | `Promise<SaveResult>` | Grants every category in scope. |
 | `commands.save('none')` | `Promise<SaveResult>` | Denies every optional category in scope. |
-| `commands.save({ marketing: false })` | `Promise<SaveResult>` | Records named categories only. |
+| `commands.save({ marketing: false })` | `Promise<SaveResult>` | Records named categories only. While an opt-out is held, `{ measurement: true }` alone leaves `measurement` off unless `marketing` already holds an explicit refusal; save `{ marketing: false, measurement: true }` to keep the opt-out and allow `measurement`. |
 | `commands.save()` | `Promise<SaveResult>` | Records staged draft (falling back to current choice or policy defaults). |
 | `commands.dismissNotice()` | `Promise<NoticeDismissResult>` | Acknowledges a notice without granting consent. |
 | `commands.optOut(context?)` | `Promise<OptOutResult>` | Records a durable opt-out at once without touching `explicitChoice`, then sends it through the save queue when the transport supports opt-outs. Starts with `rights: []` until the backend returns the rights for the visitor's location, or with all three rights when the transport has no `optOut` method or the backend answers `404`. Switches off `marketing` and `measurement` in scope. Works under any `opt-out` policy and returns `{ ok: false, reason: 'not-available' }` under other models. |
