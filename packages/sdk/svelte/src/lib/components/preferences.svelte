@@ -1,17 +1,22 @@
 <script lang="ts">
-	import type { AllConsentNames } from '@inth/sdk/engine';
+	import type { AllConsentNames, SaveUISource } from '@inth/sdk/engine';
 	import {
 		actionAppearanceFromTheme,
 		resolveConsentPresentation,
 	} from '@inth/sdk/engine';
 	import { createPreferenceDraft } from '@inth/sdk/preference-draft';
+	import { optInConsentSurface } from '@inth/sdk/surface-actions';
 	import {
 		resolveCategoryOptOutLock,
 		resolveCategoryTitle,
+		resolveOptOutBlockHeading,
 		resolveOptOutCopy,
+		resolveOptOutReceiptSentence,
 	} from '@inth/sdk/surface-state';
 	import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
+	import buttonStyles from '@inth/sdk/ui/styles/components/button';
 	import managerStyles from '@inth/sdk/ui/styles/components/consent-manager';
+	import optOutConfirmationStyles from '@inth/sdk/ui/styles/components/opt-out-confirmation';
 	import switchStyles from '@inth/sdk/ui/styles/components/switch';
 	import { resolveActionAppearance } from '@inth/sdk/ui/theme';
 	import {
@@ -25,6 +30,8 @@
 	import { PreferenceItem, Switch } from '../primitives';
 	import ConsentButton from './action-button.svelte';
 	import Branding from './branding.svelte';
+	import DeferredOptInConfirmation from './deferred-opt-in-confirmation.svelte';
+	import OptOutReceiptDetails from './opt-out-receipt-details.svelte';
 	import PolicyActionsRenderer from './policy-actions-renderer.svelte';
 	import SurfaceStyles from './surface-styles.svelte';
 	import VendorList from './vendor-list.svelte';
@@ -32,10 +39,13 @@
 	let {
 		hideBranding = true,
 		noStyle: localNoStyle,
+		uiSource = 'widget' as SaveUISource,
 		class: className,
 	}: {
 		hideBranding?: boolean;
 		noStyle?: boolean;
+		/** @internal */
+		uiSource?: SaveUISource;
 		class?: string;
 	} = $props();
 
@@ -51,7 +61,27 @@
 
 	const translations = $derived(consent.state.copy);
 	const optOutState = $derived(consent.state.optOutState);
+	const optOutReceipt = $derived(consent.state.optOutReceipt);
 	const optOutCopy = $derived(resolveOptOutCopy(translations));
+	const optOutBlockHeading = $derived(
+		resolveOptOutBlockHeading(
+			translations,
+			optOutReceipt,
+			consent.state.presentation?.optOutLink
+		)
+	);
+	const optOutReceiptSentence = $derived(
+		resolveOptOutReceiptSentence(translations, optOutReceipt)
+	);
+	const optOutHeadingId = `${widgetId}-opt-out-heading`;
+
+	const handleOptOutClick = function handleOptOutClick() {
+		void consent.state.requestOptOut({ uiSource });
+	};
+
+	const handleOptInClick = function handleOptInClick() {
+		optInConsentSurface(consent.kernel, { uiSource });
+	};
 
 	const isGpcLocked = function isGpcLocked(name: AllConsentNames): boolean {
 		return resolveCategoryOptOutLock(consent.snapshot, name) === 'gpc-active';
@@ -112,6 +142,24 @@
 			'consentWidget',
 			theme.theme,
 			{ baseClassName: managerStyles.manager, className },
+			noStyle
+		)
+	);
+
+	const optOutBlockStyle = $derived(
+		resolveStyles(
+			'consentWidgetOptOut',
+			theme.theme,
+			{ baseClassName: managerStyles.optOut, noStyle },
+			noStyle
+		)
+	);
+
+	const optOutButtonStyle = $derived(
+		resolveStyles(
+			'buttonPrimary',
+			theme.theme,
+			{ baseClassName: buttonStyles.button, noStyle },
 			noStyle
 		)
 	);
@@ -177,6 +225,10 @@
 
 {#if consent.state.hasConsentUi}
 	<SurfaceStyles sheets={DIALOG_SHEETS} />
+	<DeferredOptInConfirmation
+		{noStyle}
+		disableAnimation={theme.disableAnimation}
+	/>
 	<div
 		class={widgetRootStyle.className || ''}
 		style={toStyleAttributeValue(widgetRootStyle.style)}
@@ -191,7 +243,77 @@
 				>
 			</div>
 		{/if}
-		{#if optOutState.honored}
+		{#if optOutState.available}
+			<section
+				aria-labelledby={optOutHeadingId}
+				class={optOutBlockStyle.className || undefined}
+				style={toStyleAttributeValue(optOutBlockStyle.style)}
+				data-testid="consent-widget-opt-out"
+			>
+				<h3
+					id={optOutHeadingId}
+					class={noStyle ? undefined : managerStyles.optOutHeading}
+					data-testid="consent-widget-opt-out-heading"
+				>
+					{optOutBlockHeading}
+				</h3>
+				{#if optOutState.honored}
+					<p
+						class={optOutStatusStyle.className || ''}
+						style={toStyleAttributeValue(optOutStatusStyle.style)}
+						role="status"
+						data-testid="consent-widget-opt-out-status"
+					>
+						{optOutState.via === 'signal'
+							? optOutCopy.statusSignal
+							: optOutCopy.statusRequest}
+					</p>
+					<p
+						class={noStyle ? undefined : optOutConfirmationStyles.description}
+						data-testid="consent-widget-opt-out-description"
+					>
+						{optOutReceiptSentence}
+					</p>
+					<OptOutReceiptDetails
+						{noStyle}
+						testId="consent-widget-opt-out-receipt"
+						recordedAtTestId="consent-widget-opt-out-recorded-at"
+						referenceTestId="consent-widget-opt-out-reference"
+					/>
+					{#if optOutState.lock !== 'gpc-active'}
+						<button
+							type="button"
+							class={noStyle ? undefined : managerStyles.optInLink}
+							data-testid="consent-widget-opt-in-link"
+							onclick={handleOptInClick}
+						>
+							{optOutCopy.optInLink}
+						</button>
+					{/if}
+				{:else}
+					<p
+						class={noStyle ? undefined : managerStyles.optOutDescription}
+						data-testid="consent-widget-opt-out-description"
+					>
+						{optOutCopy.notOptedOut}
+					</p>
+					<div class={noStyle ? undefined : managerStyles.optOutActions}>
+						<button
+							type="button"
+							data-mode={noStyle ? undefined : 'filled'}
+							data-size={noStyle ? undefined : 'small'}
+							data-variant={noStyle ? undefined : 'primary'}
+							class={optOutButtonStyle.className || undefined}
+							style={toStyleAttributeValue(optOutButtonStyle.style)}
+							data-testid="consent-widget-opt-out-button"
+							onclick={handleOptOutClick}
+						>
+							{optOutCopy.action}
+						</button>
+					</div>
+				{/if}
+			</section>
+		{:else if optOutState.honored}
 			<p
 				class={optOutStatusStyle.className || ''}
 				style={toStyleAttributeValue(optOutStatusStyle.style)}

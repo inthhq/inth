@@ -7,6 +7,7 @@ import {
 	EARLY_TAP_STYLE_ID,
 	EARLY_TAPS_WINDOW_KEY,
 } from '@inth/sdk/runtime/page-globals';
+import { V1_UUID_PATTERN } from '@inth/sdk/schema/types';
 import {
 	EARLY_CONSENT_TAP_SCRIPT,
 	closeOptOutConfirmation,
@@ -128,9 +129,16 @@ describe('one-step opt-out and confirmation view in Svelte', () => {
 		const status = query('opt-out-confirmation-status');
 		expect(status?.getAttribute('role')).toBe('status');
 		expect(status?.textContent?.trim()).toBe('Opt-out request honored');
-		expect(query('opt-out-confirmation-description')?.textContent).toContain(
-			'not sell or share'
+		const recordedAt = query<HTMLTimeElement>(
+			'opt-out-confirmation-recorded-at'
 		);
+		expect(recordedAt).not.toBeNull();
+		expect(recordedAt?.getAttribute('datetime')).toBeTruthy();
+		expect(recordedAt?.textContent?.trim()).not.toBe('');
+		const reference = query('opt-out-confirmation-reference');
+		expect(reference).not.toBeNull();
+		expect(reference?.textContent?.trim()).toMatch(V1_UUID_PATTERN);
+		expect(root.querySelectorAll('input, textarea, select')).toHaveLength(0);
 		const buttons = [...root.querySelectorAll('button')];
 		expect(buttons).toHaveLength(1);
 		expect(buttons[0]?.textContent?.trim()).toBe('Done');
@@ -564,6 +572,112 @@ describe('one-step opt-out and confirmation view in Svelte', () => {
 		);
 		expect(activeContext?.kernel.getSnapshot().optOut?.method).toBe('button');
 		expect(query('consent-dialog-root')).toBeNull();
+
+		view.unmount();
+	});
+
+	test('updates receipt from browser to account coverage when backend answers with heldBy both while keeping reference unchanged', async () => {
+		let resolveAnswer:
+			| ((result: Engine.OptOutTransportResult) => void)
+			| undefined;
+		let sentPayload: Engine.OptOutPayload | undefined;
+		const deferredOptOutMode: Engine.ProviderTransportFactory = Object.assign(
+			() => ({
+				optOut: (payload: Engine.OptOutPayload) => {
+					sentPayload = payload;
+					return new Promise<Engine.OptOutTransportResult>((resolve) => {
+						resolveAnswer = resolve;
+					});
+				},
+			}),
+			{ kind: 'offline' as const }
+		);
+
+		const { view } = renderSuite({ mode: deferredOptOutMode });
+
+		await waitFor(() =>
+			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+		);
+		await fireEvent.click(
+			query<HTMLButtonElement>(
+				'consent-banner-right-link-opt-out'
+			) as HTMLButtonElement
+		);
+
+		await waitFor(() =>
+			expect(query('opt-out-confirmation-root')).not.toBeNull()
+		);
+		const beforeDescription = query(
+			'opt-out-confirmation-description'
+		)?.textContent;
+		const beforeReference = query(
+			'opt-out-confirmation-reference'
+		)?.textContent?.trim();
+		expect(beforeDescription).toBeTruthy();
+		expect(beforeDescription?.toLowerCase()).not.toContain('account');
+		expect(beforeReference).toMatch(V1_UUID_PATTERN);
+		expect(query('opt-out-confirmation-recorded-at')).not.toBeNull();
+		expect(activeContext?.state.optOutReceipt.scope).toBe('browser');
+		expect(activeContext?.state.optOutReceipt.reference).toBe(beforeReference);
+
+		await waitFor(() => expect(resolveAnswer).toBeDefined());
+		resolveAnswer?.({
+			ok: true,
+			optOut: {
+				heldBy: 'both',
+				method: 'button',
+				recordedAt: sentPayload?.givenAt ?? Date.now(),
+				rights: ['sale', 'share'],
+			},
+			subjectId: sentPayload?.subjectId,
+		});
+
+		await waitFor(() =>
+			expect(
+				query('opt-out-confirmation-description')?.textContent?.toLowerCase()
+			).toContain('account')
+		);
+		expect(query('opt-out-confirmation-reference')?.textContent?.trim()).toBe(
+			beforeReference
+		);
+		expect(sentPayload?.idempotencyKey).toBe(beforeReference);
+		expect(activeContext?.state.optOutReceipt.scope).toBe('account');
+
+		view.unmount();
+	});
+
+	test('renders no reference for an account-held record this browser did not create', async () => {
+		const { view } = renderSuite(
+			{
+				prefetch: {
+					...policyFixture({}, noticeRule()),
+					initialRecords: {
+						optOut: {
+							heldBy: 'person',
+							method: 'propagated',
+							recordedAt: Date.now() - 60_000,
+							rights: ['sale', 'share'],
+						},
+						optOutRightsConfirmed: true,
+					},
+				},
+			},
+			{ showBanner: false, showDialog: true, showLink: true }
+		);
+
+		await waitFor(() => expect(query('consent-dialog-link')).not.toBeNull());
+		await fireEvent.click(
+			query<HTMLButtonElement>('consent-dialog-link') as HTMLButtonElement
+		);
+
+		await waitFor(() =>
+			expect(query('opt-out-confirmation-root')).not.toBeNull()
+		);
+		expect(
+			query('opt-out-confirmation-description')?.textContent?.toLowerCase()
+		).toContain('account');
+		expect(query('opt-out-confirmation-recorded-at')).not.toBeNull();
+		expect(query('opt-out-confirmation-reference')).toBeNull();
 
 		view.unmount();
 	});

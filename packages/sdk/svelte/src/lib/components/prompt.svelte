@@ -41,6 +41,7 @@
 	import { useBannerVisibility } from '../use-banner-visibility.svelte';
 	import ConsentButton from './action-button.svelte';
 	import Branding from './branding.svelte';
+	import DeferredOptInConfirmation from './deferred-opt-in-confirmation.svelte';
 	import OptOutIcon from './icons/opt-out-icon.svelte';
 	import InlineLegalLinks from './inline-legal-links.svelte';
 	import Overlay from './overlay.svelte';
@@ -149,7 +150,6 @@
 	const shouldShowBanner = $derived(
 		consent.state.hasConsentUi &&
 			consent.state.activeUI === 'banner' &&
-			consent.snapshot.promptRequirement.kind !== 'none' &&
 			models.includes(consent.state.model)
 	);
 
@@ -332,6 +332,11 @@
 		customizeButtonText ?? actionLabels.customize
 	);
 </script>
+
+<DeferredOptInConfirmation
+	{noStyle}
+	{disableAnimation}
+/>
 
 {#if visibility.isMounted && visibility.shouldRender}
 	<div use:portal>
