@@ -39,8 +39,15 @@ class InMemoryKeyValueStore(
 	val keys: Set<String>
 		get() = data.keys.toSet()
 
+	/** When true, [writeDurably] refuses every write and returns false without mutating [data]. */
+	var refuseDurableWrites: Boolean = false
+
 	// This fake's dictionary is its complete storage, with no buffered writes.
 	override fun writeDurably(key: String, value: String?): Boolean {
+		if (refuseDurableWrites) {
+			eventLog += "refused:$key"
+			return false
+		}
 		write(key, value)
 		return true
 	}
