@@ -79,6 +79,7 @@ export const TEST_IDS = {
 		footerCustomizeButton: 'consent-widget-footer-customize-button',
 		footerSaveButton: 'consent-widget-footer-save-button',
 		footerSubGroup: 'consent-widget-footer-sub-group',
+		optInLink: 'consent-widget-opt-in-link',
 		optOut: 'consent-widget-opt-out',
 		optOutButton: 'consent-widget-opt-out-button',
 		optOutDescription: 'consent-widget-opt-out-description',
@@ -114,6 +115,17 @@ export const TEST_IDS = {
 
 		overlay: 'iab-consent-dialog-overlay',
 		root: 'iab-consent-dialog-root',
+	},
+	optInConfirmation: {
+		cancelButton: 'opt-in-confirmation-cancel-button',
+		card: 'opt-in-confirmation-card',
+		confirmButton: 'opt-in-confirmation-confirm-button',
+		description: 'opt-in-confirmation-description',
+		footer: 'opt-in-confirmation-footer',
+		header: 'opt-in-confirmation-header',
+		overlay: 'opt-in-confirmation-overlay',
+		root: 'opt-in-confirmation-root',
+		title: 'opt-in-confirmation-title',
 	},
 	optOutConfirmation: {
 		card: 'opt-out-confirmation-card',

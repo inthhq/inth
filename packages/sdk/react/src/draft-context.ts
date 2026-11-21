@@ -9,7 +9,10 @@ import type {
 	SaveUISource,
 } from '@inth/sdk/engine';
 import type { PreferenceDraft } from '@inth/sdk/preference-draft';
-import { saveConsentSurface } from '@inth/sdk/surface-actions';
+import {
+	saveConsentSurface,
+	saveConsentSurfaceWithOptInCheck,
+} from '@inth/sdk/surface-actions';
 import { createContext, useCallback, useContext } from 'react';
 
 import { KernelContext, ProviderServicesContext } from './context';
@@ -96,24 +99,33 @@ export const useConsentSaveAction = function useConsentSaveAction() {
 			}
 			const categories = services?.getConsentCategories();
 			const bulk = input === 'all' || input === 'none';
-			const save = (): Promise<SaveResult> => {
-				if (draft && (bulk || input === undefined)) {
-					return draft.save({ categories, input, uiSource });
-				}
-				if (input === undefined) {
-					return saveFreshDraft(kernel, defaults, categories, uiSource);
-				}
-				return kernel.commands.save(input, {
-					...(categories !== undefined && { categories }),
-					...(uiSource !== undefined && { uiSource }),
-				});
-			};
-			// A draft save that left edits staged (made while it ran, or a
-			// stale draft it refused) keeps the dialog open.
-			return saveConsentSurface(
+			if (draft && (bulk || input === undefined)) {
+				return saveConsentSurface(
+					kernel,
+					() => draft.save({ categories, input, uiSource }),
+					() => input !== undefined || !draft.getState().isDirty
+				);
+			}
+			if (input === undefined) {
+				return saveConsentSurface(kernel, () =>
+					saveFreshDraft(kernel, defaults, categories, uiSource)
+				);
+			}
+			const saveContext: {
+				categories?: readonly AllConsentNames[];
+				uiSource?: SaveUISource;
+			} = {};
+			if (categories !== undefined) {
+				saveContext.categories = categories;
+			}
+			if (uiSource !== undefined) {
+				saveContext.uiSource = uiSource;
+			}
+			return saveConsentSurfaceWithOptInCheck(
 				kernel,
-				save,
-				() => input !== undefined || !draft?.getState().isDirty
+				input,
+				() => kernel.commands.save(input, saveContext),
+				{ categories }
 			);
 		},
 		[defaults, draft, isCurrent, kernel, services]

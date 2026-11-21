@@ -97,6 +97,7 @@ export const getFocusableElements = function getFocusableElements(
 
 let scrollLockCount = 0;
 let scrollLockRestore: (() => void) | null = null;
+const activeFocusTraps: HTMLElement[] = [];
 
 const hasVisibleOverflow = (style: CSSStyleDeclaration): boolean =>
 	[style.overflowX, style.overflowY].every(
@@ -378,6 +379,7 @@ export const setupFocusTrap = function setupFocusTrap(
 	if (container.tabIndex < 0) {
 		container.tabIndex = -1;
 	}
+	activeFocusTraps.push(container);
 	const initialTarget = () =>
 		(options.initialFocus === 'first-tabbable'
 			? firstTabbable(container)
@@ -410,7 +412,10 @@ export const setupFocusTrap = function setupFocusTrap(
 	}, 0);
 
 	const handleKeyDown = (e: KeyboardEvent) => {
-		if (e.key !== 'Tab') {
+		if (
+			e.key !== 'Tab' ||
+			activeFocusTraps[activeFocusTraps.length - 1] !== container
+		) {
 			return;
 		}
 
@@ -466,6 +471,10 @@ export const setupFocusTrap = function setupFocusTrap(
 	return () => {
 		clearTimeout(focusTimer);
 		document.removeEventListener('keydown', handleKeyDown);
+		const trapIndex = activeFocusTraps.lastIndexOf(container);
+		if (trapIndex !== -1) {
+			activeFocusTraps.splice(trapIndex, 1);
+		}
 
 		if (previousFocus && typeof previousFocus.focus === 'function') {
 			setTimeout(() => {

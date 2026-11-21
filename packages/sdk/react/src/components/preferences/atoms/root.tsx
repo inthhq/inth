@@ -18,8 +18,14 @@ import { LocalThemeContext } from '~/context/theme-context';
 import type { ThemeContextValue } from '~/context/theme-context';
 import { ConsentDraftProvider } from '~/draft';
 import { useHasConsentUI } from '~/hooks';
+import { useOptInConfirmationHost } from '~/hooks/use-opt-out';
 import { useTextDirection } from '~/hooks/use-text-direction';
 import { useTranslationLanguage } from '~/hooks/use-translation-language';
+import { createDeferredModule } from '~/utils/deferred-module';
+
+const LazyOptInConfirmation = createDeferredModule(
+	() => import('~/components/opt-in-confirmation')
+).component((module) => module.OptInConfirmation);
 
 /**
  * Props for the ConsentWidgetRoot component.
@@ -96,6 +102,7 @@ const ConsentWidgetRoot: FC<ConsentWidgetRootProps> = ({
 	);
 	const hasConsentUI = useHasConsentUI();
 	const sheetsReady = useSurfaceSheetsReady(DIALOG_SHEETS, noStyle);
+	const optInConfirmationActive = useOptInConfirmationHost();
 	if (!(hasConsentUI && sheetsReady)) {
 		// No resolved policy, or a `none` rule with no right to exercise: there
 		// is nothing to manage, so render nothing.
@@ -108,6 +115,12 @@ const ConsentWidgetRoot: FC<ConsentWidgetRootProps> = ({
 				sheets={DIALOG_SHEETS}
 				noStyle={noStyle}
 			/>
+			{optInConfirmationActive && (
+				<LazyOptInConfirmation
+					disableAnimation={disableAnimation}
+					noStyle={noStyle}
+				/>
+			)}
 			<Box
 				baseClassName={styles.manager}
 				data-testid="consent-widget-root"

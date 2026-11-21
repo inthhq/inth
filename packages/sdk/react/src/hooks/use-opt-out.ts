@@ -2,12 +2,16 @@
 
 import type { OptOutResult, SaveUISource } from '@inth/sdk/engine';
 import {
+	claimOptInConfirmationHost,
 	hasOptOutConfirmationHost,
+	isActiveOptInConfirmationHost,
+	isOptInConfirmationOpen,
 	isOptOutConfirmationOpen,
 	optOutConsentSurface,
+	subscribeOptInConfirmation,
 	subscribeOptOutConfirmation,
 } from '@inth/sdk/surface-actions';
-import { useCallback, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 
 import { useKernel } from '../kernel-selector';
 
@@ -66,6 +70,53 @@ export const useHasOptOutConfirmationHost =
 				[kernel]
 			),
 			() => hasOptOutConfirmationHost(kernel),
+			NOT_OPEN
+		);
+	};
+
+/**
+ * Whether the two-step opt-in confirmation dialog is currently open for the
+ * active kernel.
+ *
+ * @internal
+ */
+export const useOptInConfirmationOpen =
+	function useOptInConfirmationOpen(): boolean {
+		const kernel = useKernel();
+		return useSyncExternalStore(
+			useCallback(
+				(listener: () => void) => subscribeOptInConfirmation(kernel, listener),
+				[kernel]
+			),
+			() => isOptInConfirmationOpen(kernel),
+			NOT_OPEN
+		);
+	};
+
+/**
+ * Claim a host slot for the two-step opt-in confirmation dialog and return
+ * whether this host should render it right now.
+ *
+ * @internal
+ */
+export const useOptInConfirmationHost =
+	function useOptInConfirmationHost(): boolean {
+		const kernel = useKernel();
+		const [token] = useState(() => Symbol('OptInConfirmation'));
+
+		useEffect(
+			() => claimOptInConfirmationHost(kernel, token),
+			[kernel, token]
+		);
+
+		return useSyncExternalStore(
+			useCallback(
+				(listener: () => void) => subscribeOptInConfirmation(kernel, listener),
+				[kernel]
+			),
+			() =>
+				isOptInConfirmationOpen(kernel) &&
+				isActiveOptInConfirmationHost(kernel, token),
 			NOT_OPEN
 		);
 	};

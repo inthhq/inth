@@ -9,6 +9,7 @@ import { useActiveUI } from '~/hooks';
 import { useComponentConfig } from '~/hooks/use-component-config';
 import {
 	useHasOptOutConfirmationHost,
+	useOptInConfirmationHost,
 	useOptOutConfirmationOpen,
 } from '~/hooks/use-opt-out';
 import { createDeferredModule } from '~/utils/deferred-module';
@@ -28,6 +29,10 @@ const LazyConsentDialogTrigger = createDeferredModule(
 const LazyOptOutConfirmation = createDeferredModule(
 	() => import('~/components/opt-out-confirmation')
 ).component((module) => module.OptOutConfirmation);
+
+const LazyOptInConfirmation = createDeferredModule(
+	() => import('~/components/opt-in-confirmation')
+).component((module) => module.OptInConfirmation);
 
 /**
  * Props for the `<ConsentDialog />` convenience component.
@@ -138,6 +143,7 @@ export const ConsentDialog: FC<ConsentDialogProps> = ({
 	const activeUI = useActiveUI();
 	const confirmationOpen = useOptOutConfirmationOpen();
 	const hasStandaloneConfirmation = useHasOptOutConfirmationHost();
+	const optInConfirmationActive = useOptInConfirmationHost();
 
 	const config = useComponentConfig({
 		disableAnimation: localDisableAnimation,
@@ -169,6 +175,14 @@ export const ConsentDialog: FC<ConsentDialogProps> = ({
 			{confirmationOpen && !hasStandaloneConfirmation && (
 				<LazyOptOutConfirmation
 					embedded
+					noStyle={config.noStyle}
+					disableAnimation={config.disableAnimation}
+					scrollLock={localScrollLock}
+					trapFocus={localTrapFocus}
+				/>
+			)}
+			{optInConfirmationActive && (
+				<LazyOptInConfirmation
 					noStyle={config.noStyle}
 					disableAnimation={config.disableAnimation}
 					scrollLock={localScrollLock}

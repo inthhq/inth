@@ -98,6 +98,38 @@
 		gap: var(--inth-space-sm);
 	}
 
+	.optInLink:not(:global(.headless)) {
+		align-self: flex-start;
+		padding: 0;
+		border: 0;
+		background: transparent;
+		color: var(--consent-manager-text-muted-color);
+		font-family: inherit;
+		font-size: var(--inth-font-size-sm);
+		line-height: var(--inth-line-height-normal);
+		text-decoration: underline;
+		text-underline-offset: 2px;
+		border-radius: var(--inth-radius-sm);
+		cursor: pointer;
+	}
+
+	.optInLink:not(:global(.headless)):hover {
+		color: var(--consent-manager-text-color);
+	}
+
+	.optInLink:not(:global(.headless)):focus-visible {
+		outline: 2px solid var(--inth-primary);
+		outline-offset: 2px;
+	}
+
+	:global(.inth-dark) .optInLink:not(:global(.headless)) {
+		color: var(--consent-manager-text-muted-color-dark);
+	}
+
+	:global(.inth-dark) .optInLink:not(:global(.headless)):hover {
+		color: var(--consent-manager-text-color-dark);
+	}
+
 	.optOutStatus:not(:global(.headless)) {
 		margin: 0;
 		padding: var(--inth-space-xs) var(--inth-space-sm);
