@@ -327,6 +327,12 @@ const requiredPackedFilesByPackage: Record<string, string[]> = {
 		'src/iab/styles.css',
 		'src/iab/styles.tw3.css',
 	],
+	'@inth/node': [
+		'AGENTS.md',
+		'SKILL.md',
+		'docs/README.md',
+		'docs/node/quickstart.md',
+	],
 	'@inth/react': [
 		'AGENTS.md',
 		'docs/README.md',

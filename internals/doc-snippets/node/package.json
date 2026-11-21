@@ -1,0 +1,16 @@
+{
+	"name": "@inth/doc-snippets-node",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"check-types": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@inth/node": "workspace:*",
+		"@inth/sdk": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "25.5.0",
+		"typescript": "7.0.2"
+	}
+}

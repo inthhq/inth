@@ -1,0 +1,26 @@
+// #region docs:node-sign-up-form title="sign-up-form.ts"
+import { Inth } from '@inth/node';
+
+import { renderSignUpForm, saveShownDocuments } from './app';
+
+const inth = new Inth();
+
+export const showSignUp = async (request: Request): Promise<Response> => {
+	const [terms, privacy] = await Promise.all([
+		inth.documents.current({ type: 'terms_us' }),
+		inth.documents.current({ type: 'privacy_policy' }),
+	]);
+	if (terms.error || privacy.error) {
+		// Do not show the form without the documents
+		throw terms.error ?? privacy.error;
+	}
+	// Keep what this form showed on the server, where the visitor cannot
+	// change it, under an ID of its own: two open forms may show different
+	// versions. Link to /terms/${terms.data.version} in the form
+	const formId = await saveShownDocuments(request, [
+		{ hash: terms.data.hash, type: 'terms_us' },
+		{ hash: privacy.data.hash, type: 'privacy_policy' },
+	]);
+	return renderSignUpForm({ formId, privacy: privacy.data, terms: terms.data });
+};
+// #endregion docs:node-sign-up-form

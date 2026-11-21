@@ -7,6 +7,10 @@ export default defineDocsConfig({
 			title: 'Frameworks',
 		},
 		{
+			slug: 'server',
+			title: 'Server',
+		},
+		{
 			slug: 'concepts',
 			title: 'Concepts',
 		},
@@ -1013,6 +1017,19 @@ export default defineDocsConfig({
 			title: 'Frameworks',
 		},
 		{
+			base: 'node',
+			children: [
+				{
+					pages: ['api', 'troubleshooting'],
+					slug: 'reference',
+					title: 'Reference',
+				},
+			],
+			pages: ['quickstart', 'legal-documents', 'identity-tokens', 'errors'],
+			slug: 'node',
+			title: 'Node.js server',
+		},
+		{
 			base: 'integrations',
 			children: [
 				{
@@ -1164,6 +1181,6 @@ export default defineDocsConfig({
 		name: 'Inth',
 		repository: 'https://github.com/inthhq/inth',
 		tagline:
-			'Consent management for React, Next.js, Vue, Nuxt, Svelte, SvelteKit, Astro, TanStack Start, Angular, HTML, JavaScript, React Native, Swift and Android.',
+			'Consent management for React, Next.js, Vue, Nuxt, Svelte, SvelteKit, Astro, TanStack Start, Angular, HTML, JavaScript, React Native, Swift and Android, with a server client for Node.js.',
 	},
 });

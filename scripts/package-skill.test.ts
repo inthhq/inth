@@ -4,7 +4,10 @@ import { fileURLToPath } from 'node:url';
 import fg from 'fast-glob';
 import { expect, test } from 'vitest';
 
-import { PACKAGE_DOCS_CONFIGS } from './generate-package-docs';
+import {
+	PACKAGE_DOCS_CONFIGS,
+	withUsingTheseDocs,
+} from './generate-package-docs';
 import { packageSkillName, renderPackageSkill } from './package-skill';
 
 const docsRoot = fileURLToPath(
@@ -178,3 +181,36 @@ test.each(PACKAGE_DOCS_CONFIGS.filter((config) => config.skillDirectory))(
 		).toEqual([]);
 	}
 );
+
+test('the server skill gives server rules, not banner rules, and links only bundled guides', () => {
+	const config = PACKAGE_DOCS_CONFIGS.find(
+		(entry) => entry.name === '@inth/node'
+	);
+	if (!config) {
+		throw new Error('Missing @inth/node bundle');
+	}
+	const skill = renderPackageSkill(
+		config.name,
+		config.skill,
+		new Set(['node/quickstart.md', 'node/errors.md'])
+	);
+	expect(skill).toContain('name: inth-node');
+	expect(skill).toContain('(./docs/node/quickstart.md)');
+	expect(skill).not.toContain('(./docs/node/api.md)');
+	expect(skill).toContain('INTH_SECRET_KEY');
+	expect(skill).toContain('documents.current');
+	expect(skill).not.toContain('data-inth-category');
+	expect(skill).not.toContain('ConsentGate');
+});
+
+test('a package can replace the site-wide "Using these docs" paragraph', () => {
+	const agents =
+		'# @inth/node\n\n## Using these docs\n\nFind your banner setup.\n\n## Frameworks\n';
+	expect(withUsingTheseDocs(agents, undefined)).toBe(agents);
+	expect(withUsingTheseDocs(agents, 'Server code only.')).toBe(
+		'# @inth/node\n\n## Using these docs\n\nServer code only.\n\n## Frameworks\n'
+	);
+	expect(() =>
+		withUsingTheseDocs('# No section\n', 'Server code only.')
+	).toThrow(/Using these docs/u);
+});
