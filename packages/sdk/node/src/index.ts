@@ -10,7 +10,7 @@
  *
  * No method throws for a request that fails. Each resolves to `{ data, error }`
  * with exactly one of the two set, so a failure is in the types and cannot be
- * missed. Only two things throw: `new Inth()`, for a key or an address it
+ * missed. Only two things throw: `new Inth()`, an `InthError` for options it
  * cannot use, and `hashDocument`, for anything but bytes.
  *
  * It imports no Node module, only `fetch`, `AbortSignal` and Web Crypto, so it
@@ -27,6 +27,8 @@ const DEFAULT_TIMEOUT_MS = 10_000;
 const DEFAULT_MAX_RETRIES = 2;
 const RETRY_BASE_MS = 250;
 const RETRY_CAP_MS = 5000;
+/** The latest time a `Date` can hold, and the latest `acceptedAt` the API takes */
+const MAX_EPOCH_MS = 8_640_000_000_000_000;
 /** The longest timer `AbortSignal.timeout` and `setTimeout` take */
 const MAX_TIMEOUT_MS = 2_147_483_647;
 
@@ -39,9 +41,9 @@ export interface InthOptions {
 	readonly secretKey?: string;
 	/**
 	 * The project's URL, as the Dashboard shows it, such as
-	 * `https://your-project.inth.app`. Defaults to `INTH_URL`
+	 * `https://your-project.inth.app`. Defaults to `INTH_PROJECT_URL`
 	 */
-	readonly baseUrl?: string;
+	readonly projectUrl?: string;
 	/** How long one attempt may take, in milliseconds. Defaults to 10 seconds */
 	readonly timeout?: number;
 	/**
@@ -89,7 +91,38 @@ export type InthErrorCode =
 	/** The API answered in a shape this client does not read */
 	| 'unexpected_response';
 
-/** A call that failed. Returned, not thrown */
+/**
+ * The codes worth trying again later: the client tries these again itself,
+ * within `maxRetries`, before it returns one
+ */
+const RETRIED: ReadonlySet<InthErrorCode> = new Set([
+	'network_error',
+	'rate_limited',
+	'server_error',
+	'timeout',
+]);
+
+/**
+ * The API's own code for a refusal. The `/v1` routes send one of the listed
+ * codes; any other string is kept as it came
+ */
+export type InthApiCode =
+	| Schemas['V1Error']['error']['code']
+	// oxlint-disable-next-line typescript/ban-types -- `string & {}` keeps the listed codes in autocomplete
+	| (string & {});
+
+/** What the API found wrong with a body it refused */
+export interface InthErrorDetails {
+	/** The messages for each field, such as `effectiveDate` */
+	readonly fieldErrors: Readonly<Record<string, readonly string[]>>;
+	/** The messages about the body as a whole */
+	readonly formErrors: readonly string[];
+}
+
+/**
+ * A call that failed, returned rather than thrown. `new Inth()` also throws
+ * one, with the code `invalid_request`, for options it cannot use
+ */
 export class InthError extends Error {
 	/** Always `InthError`, for logs */
 	override readonly name = 'InthError';
@@ -98,24 +131,60 @@ export class InthError extends Error {
 	/** The HTTP status, or 0 when no response arrived */
 	readonly status: number;
 	/** The API's own code, such as `identity_conflict`, when it sent one */
-	readonly apiCode: string | undefined;
+	readonly apiCode: InthApiCode | undefined;
+	/** The fields the API refused and why, when it said */
+	readonly details: InthErrorDetails | undefined;
 	/** The id to quote to support, when the API sent one */
 	readonly requestId: string | undefined;
+	/**
+	 * What `fetch` or the body read threw, for an answer that never arrived.
+	 * Declared here so the published type has it whatever `lib` a caller
+	 * compiles with; `Error` sets it
+	 */
+	declare readonly cause: unknown;
+	/**
+	 * Whether sending the same call again later may succeed: a network
+	 * failure, a timeout, a 429 or a 5xx. The client tries these again itself
+	 * within `maxRetries`, unless the API asked for a longer wait than it
+	 * makes or the edge challenged the call. Always false for
+	 * `documents.publish`: a failed publish may have been stored, so check
+	 * `documents.current` before you publish again
+	 */
+	readonly retryable: boolean;
+	/**
+	 * How long the API asked you to wait before trying again, in
+	 * milliseconds from when it answered, when it said
+	 */
+	readonly retryAfter: number | undefined;
 
 	constructor(
 		code: InthErrorCode,
 		message: string,
-		details: {
+		options: {
 			readonly status?: number;
-			readonly apiCode?: string;
+			readonly apiCode?: InthApiCode;
+			readonly details?: InthErrorDetails;
 			readonly requestId?: string;
+			/** Defaults to whether `code` is one worth trying again */
+			readonly retryable?: boolean;
+			readonly retryAfter?: number;
+			/** What `fetch` or the body read threw, for an answer that never arrived */
+			readonly cause?: unknown;
 		} = {}
 	) {
-		super(message);
+		// Set only when there is one, so an error without a cause has no
+		// `cause` of its own
+		super(
+			message,
+			options.cause === undefined ? undefined : { cause: options.cause }
+		);
 		this.code = code;
-		this.status = details.status ?? 0;
-		this.apiCode = details.apiCode;
-		this.requestId = details.requestId;
+		this.status = options.status ?? 0;
+		this.apiCode = options.apiCode;
+		this.details = options.details;
+		this.requestId = options.requestId;
+		this.retryable = options.retryable ?? RETRIED.has(code);
+		this.retryAfter = options.retryAfter;
 	}
 }
 
@@ -134,6 +203,9 @@ const failed = (error: InthError): InthResult<never> => ({ data: null, error });
  * document types your project has:
  *
  * ```ts
+ * // The import makes this file extend @inth/node rather than replace it
+ * import '@inth/node';
+ *
  * declare module '@inth/node' {
  * 	interface Register {
  * 		documentTypes: 'privacy_policy' | 'terms_and_conditions';
@@ -212,6 +284,16 @@ const refusal = v.object({
 		v.fallback(
 			v.object({
 				code: v.fallback(v.optional(v.string()), undefined),
+				/** For a refused body, what was wrong with each field */
+				details: v.fallback(
+					v.optional(
+						v.object({
+							fieldErrors: v.optional(ownRecord(v.array(v.string()))),
+							formErrors: v.optional(v.array(v.string())),
+						})
+					),
+					undefined
+				),
 				message: v.fallback(v.optional(v.string()), undefined),
 			}),
 			{}
@@ -224,8 +306,9 @@ const refusal = v.object({
 /** The backend's schemas, generated from its OpenAPI document */
 type Schemas = components['schemas'];
 
-/** Whether a user has consented to one type */
-export type InthDocumentCheck = v.InferOutput<typeof checkSchema>;
+/** Whether a user accepted one document type */
+export type InthDocumentCheck =
+	Answer<'getV1DocumentsCheck'>['documents'][string];
 /** A device linked to one of your users */
 export type InthLink = Schemas['SubjectLinkResponse'];
 
@@ -251,6 +334,7 @@ type Holds<Check extends true> = Check;
 // oxlint-disable-next-line no-unused-vars -- Checked by the compiler, never used
 type SchemasMatchTheDocument = [
 	Holds<Same<v.InferOutput<typeof checkAnswer>, Answer<'getV1DocumentsCheck'>>>,
+	Holds<Same<v.InferOutput<typeof checkSchema>, InthDocumentCheck>>,
 	Holds<Same<v.InferOutput<typeof consentAnswer>, Answer<'getV1ConsentCheck'>>>,
 	Holds<Same<v.InferOutput<typeof linkAnswer>, InthLink>>,
 ];
@@ -264,8 +348,51 @@ export interface IdentifyParams {
 	 */
 	readonly subjectId: string;
 	/** Where your id comes from, such as `workos`. For your own records */
-	readonly provider?: string;
+	readonly identityProvider?: string;
 }
+
+/** True when `T` is a union of more than one member */
+type IsUnion<T, All = T> = T extends unknown
+	? [All] extends [T]
+		? false
+		: true
+	: never;
+
+/** True when `T` names exactly one document type */
+type IsOneType<T> = string extends T
+	? false
+	: true extends IsUnion<T>
+		? false
+		: true;
+
+/** The types a fixed list is sure to hold: each element that names one type */
+type SureTypes<Types extends readonly InthDocumentType[]> = {
+	[Index in keyof Types]: IsOneType<Types[Index]> extends true
+		? Types[Index]
+		: never;
+}[number];
+
+/** One list's answer: its sure types required, any other it may hold optional */
+type ChecksFor<Types extends readonly InthDocumentType[]> =
+	number extends Types['length']
+		? Readonly<Partial<Record<Types[number], InthDocumentCheck>>>
+		: Readonly<
+				{ [Type in SureTypes<Types>]: InthDocumentCheck } & {
+					[
+						Type in Exclude<Types[number], SureTypes<Types>>
+					]?: InthDocumentCheck;
+				}
+			>;
+
+/**
+ * The answer to `documents.check`, keyed by the types asked for. A type
+ * written in the call, such as `['privacy_policy']`, is sure to have an entry.
+ * A list built at run time, or an element that may be one of several types,
+ * may leave a type out, so its entry is optional. One of several lists, such
+ * as `isEu ? ['terms_eu'] : ['terms_us']`, is answered as one of their answers
+ */
+export type InthDocumentChecks<Types extends readonly InthDocumentType[]> =
+	Types extends unknown ? ChecksFor<Types> : never;
 
 export interface CheckDocumentsParams<
 	Types extends readonly InthDocumentType[],
@@ -283,7 +410,7 @@ export interface CreateIdentityTokenParams {
 	 * Where your id comes from, such as `workos`. When set, the browser
 	 * must pass the same `identityProvider` to `identify()`
 	 */
-	readonly provider?: string;
+	readonly identityProvider?: string;
 }
 
 const identityTokenSchema = v.object({
@@ -294,12 +421,12 @@ const identityTokenSchema = v.object({
 });
 
 /** A short-lived proof, for the browser, that it belongs to one of your users */
-export type InthIdentityToken = v.InferOutput<typeof identityTokenSchema>;
+export type InthIdentityToken = Schemas['IdentityTokenResponse'];
 
 /** Fails to compile when the schema above stops matching the document */
 // oxlint-disable-next-line no-unused-vars -- Checked by the compiler, never used
 type IdentityTokenMatchesTheDocument = Holds<
-	Same<InthIdentityToken, Schemas['IdentityTokenResponse']>
+	Same<v.InferOutput<typeof identityTokenSchema>, InthIdentityToken>
 >;
 
 /** A body read as JSON */
@@ -309,19 +436,24 @@ const json = v.pipe(v.string(), v.parseJson());
 const unusableLimits = (limits: {
 	readonly maxRetries?: number | undefined;
 	readonly timeout?: number | undefined;
-}): string | undefined => {
+}):
+	| { readonly name: 'maxRetries' | 'timeout'; readonly reason: string }
+	| undefined => {
 	const { maxRetries, timeout } = limits;
 	if (
 		maxRetries !== undefined &&
 		!(Number.isInteger(maxRetries) && maxRetries >= 0)
 	) {
-		return '`maxRetries` must be a whole number, 0 or more';
+		return { name: 'maxRetries', reason: 'must be a whole number, 0 or more' };
 	}
 	if (
 		timeout !== undefined &&
 		!(Number.isInteger(timeout) && timeout > 0 && timeout <= MAX_TIMEOUT_MS)
 	) {
-		return `\`timeout\` must be a whole number of milliseconds, from 1 to ${MAX_TIMEOUT_MS}`;
+		return {
+			name: 'timeout',
+			reason: `must be a whole number of milliseconds, from 1 to ${MAX_TIMEOUT_MS}`,
+		};
 	}
 	return undefined;
 };
@@ -338,7 +470,7 @@ const isLoopback = (hostname: string): boolean =>
 	LOOPBACK_HOSTS.has(hostname) || hostname.endsWith('.localhost');
 
 /** Why `base` cannot be the project's URL, or `undefined` when it can */
-const unusableBaseUrl = (base: string): string | undefined => {
+const unusableProjectUrl = (base: string): string | undefined => {
 	let url: URL;
 	try {
 		url = new URL(base);
@@ -418,13 +550,6 @@ const codeForStatus = (status: number): InthErrorCode => {
 	);
 };
 
-const RETRIED: ReadonlySet<InthErrorCode> = new Set([
-	'network_error',
-	'rate_limited',
-	'server_error',
-	'timeout',
-]);
-
 /** The wait a `Retry-After` header asks for: seconds, or a date */
 const askedWait = (retryAfter: string | null): number | undefined => {
 	if (retryAfter === null || retryAfter.trim() === '') {
@@ -445,9 +570,8 @@ const askedWait = (retryAfter: string | null): number | undefined => {
  */
 const delayBefore = (
 	attempt: number,
-	retryAfter: string | null
+	asked: number | undefined
 ): number | null => {
-	const asked = askedWait(retryAfter);
 	if (asked !== undefined) {
 		return asked > RETRY_CAP_MS ? null : asked;
 	}
@@ -463,20 +587,45 @@ const delayBefore = (
  */
 const fetchFailure = (error: unknown, signal: AbortSignal): InthError => {
 	if (signal.aborted) {
-		return new InthError('timeout', 'The API did not answer in time');
+		return new InthError('timeout', 'The API did not answer in time', {
+			cause: error,
+		});
 	}
 	return new InthError(
 		'network_error',
-		error instanceof Error ? error.message : 'The request failed'
+		error instanceof Error ? error.message : 'The request failed',
+		{ cause: error }
 	);
 };
 
+/**
+ * The field errors a refusal sent. `undefined` for details in another form,
+ * such as `{ reason }`, which are not field errors
+ */
+const fieldErrorsOf = (
+	sent:
+		| {
+				readonly fieldErrors?: InthErrorDetails['fieldErrors'];
+				readonly formErrors?: InthErrorDetails['formErrors'];
+		  }
+		| undefined
+): InthErrorDetails | undefined =>
+	sent?.fieldErrors === undefined && sent?.formErrors === undefined
+		? undefined
+		: {
+				fieldErrors: sent.fieldErrors ?? {},
+				formErrors: sent.formErrors ?? [],
+			};
+
 /** A refusal, read from whichever error shape the body carries */
 const refusalError = (
-	status: number,
+	response: Response,
 	body: unknown,
-	requestId: string | undefined
+	requestId: string | undefined,
+	/** What the body read threw, for a refusal whose body never arrived */
+	cause?: unknown
 ): InthError => {
+	const { status } = response;
 	const refused = v.safeParse(refusal, body);
 	const output = refused.success ? refused.output : undefined;
 	return new InthError(
@@ -484,7 +633,10 @@ const refusalError = (
 		output?.message ?? output?.error?.message ?? `The API answered ${status}`,
 		{
 			apiCode: output?.cause?.code ?? output?.code ?? output?.error?.code,
+			cause,
+			details: fieldErrorsOf(output?.error?.details),
 			requestId: requestId ?? output?.requestId,
+			retryAfter: askedWait(response.headers.get('retry-after')),
 			status,
 		}
 	);
@@ -509,13 +661,7 @@ const discard = async (response: Response): Promise<void> => {
  */
 const settledBeforeBody = (
 	response: Response
-):
-	| {
-			readonly error: InthError;
-			readonly final: true;
-			readonly retryAfter: string | null;
-	  }
-	| undefined => {
+): { readonly error: InthError; readonly final: true } | undefined => {
 	const details = {
 		requestId: response.headers.get('x-request-id') ?? undefined,
 		status: response.status,
@@ -533,7 +679,6 @@ const settledBeforeBody = (
 				details
 			),
 			final: true,
-			retryAfter: null,
 		};
 	}
 	if (
@@ -550,10 +695,12 @@ const settledBeforeBody = (
 			error: new InthError(
 				'rate_limited',
 				'The edge in front of the API challenged this request. Send fewer requests from this address, and try again later',
-				details
+				{
+					...details,
+					retryAfter: askedWait(response.headers.get('retry-after')),
+				}
 			),
 			final: true,
-			retryAfter: response.headers.get('retry-after'),
 		};
 	}
 	return undefined;
@@ -592,14 +739,67 @@ const uncarried = (
 		return value !== undefined && encoded(value) === undefined;
 	});
 
+/**
+ * A refusal the client makes itself, before sending anything, for one
+ * field: shaped as the API's own, so `details.fieldErrors` names the field
+ */
+const refusedField = (name: string, reason: string): InthResult<never> => {
+	const message = `\`${name}\` ${reason}`;
+	return failed(
+		new InthError('invalid_request', message, {
+			details: { fieldErrors: { [name]: [message] }, formErrors: [] },
+		})
+	);
+};
+
+/** The refusal for a query value no URL can carry */
+const unusableQuery = (name: string): InthResult<never> =>
+	refusedField(
+		name,
+		'cannot be sent in a URL: it holds a character no URL can carry, such as a lone UTF-16 surrogate'
+	);
+
 /** The refusal for a parameter no URL can carry */
 const unusableSegment = (name: string): InthResult<never> =>
-	failed(
-		new InthError(
-			'invalid_request',
-			`\`${name}\` cannot be sent in a URL: it is empty or a dot segment, or holds a character no URL can carry`
-		)
+	refusedField(
+		name,
+		'cannot be sent in a URL: it is empty or a dot segment, or holds a character no URL can carry'
 	);
+
+/**
+ * The body as text, or why it could not be read. Gives up when `signal`
+ * aborts and cancels the body: a fetch's own body stops with the signal, but
+ * a body an injected `fetch` made may not, and must not hold the call
+ */
+const readText = async (
+	response: Response,
+	signal: AbortSignal
+): Promise<{ readonly text: string } | { readonly failure: unknown }> => {
+	let giveUp = (): void => undefined;
+	const aborted = new Promise<{ readonly failure: unknown }>((resolve) => {
+		giveUp = () => {
+			void discard(response);
+			resolve({ failure: signal.reason });
+		};
+	});
+	if (signal.aborted) {
+		giveUp();
+	} else {
+		signal.addEventListener('abort', giveUp, { once: true });
+	}
+	const reading = (async () => {
+		try {
+			return { text: await response.text() };
+		} catch (error) {
+			return { failure: error };
+		}
+	})();
+	try {
+		return await Promise.race([reading, aborted]);
+	} finally {
+		signal.removeEventListener('abort', giveUp);
+	}
+};
 
 const wait = (milliseconds: number, signal: AbortSignal | undefined) =>
 	new Promise<void>((resolve) => {
@@ -615,8 +815,24 @@ const wait = (milliseconds: number, signal: AbortSignal | undefined) =>
 		signal?.addEventListener('abort', done, { once: true });
 	});
 
-type Send = <Schema extends v.GenericSchema>(
-	schema: Schema,
+/**
+ * Reads the body of a 2xx: its data, or `undefined` when it has another
+ * shape. A function, not a schema, so the published types need no validator
+ */
+type Reader<Data> = (body: unknown) => { readonly data: Data } | undefined;
+
+/** A reader for `schema` */
+const reader =
+	<Schema extends v.GenericSchema>(
+		schema: Schema
+	): Reader<v.InferOutput<Schema>> =>
+	(body) => {
+		const parsed = v.safeParse(schema, body);
+		return parsed.success ? { data: parsed.output } : undefined;
+	};
+
+type Send = <Data>(
+	read: Reader<Data>,
 	request: {
 		/** The HTTP method */
 		readonly method: 'GET' | 'POST' | 'PUT';
@@ -633,7 +849,7 @@ type Send = <Schema extends v.GenericSchema>(
 		readonly once?: true;
 	},
 	options: InthRequestOptions | undefined
-) => Promise<InthResult<v.InferOutput<Schema>>>;
+) => Promise<InthResult<Data>>;
 
 /** A consent category of the banner */
 export type InthConsentCategory =
@@ -687,14 +903,14 @@ class Consents {
 			property: params.property,
 		});
 		if (unusable !== undefined) {
-			return unusableSegment(unusable);
+			return unusableQuery(unusable);
 		}
 		const query = new URLSearchParams({ externalId: params.externalId });
 		if (params.property !== undefined) {
 			query.set('property', params.property);
 		}
 		const answer = await this.#send(
-			consentAnswer,
+			reader(consentAnswer),
 			{
 				method: 'GET',
 				path: `/v1/consent/check?${query}`,
@@ -732,11 +948,11 @@ class Users {
 			return unusableSegment('subjectId');
 		}
 		return await this.#send(
-			linkAnswer,
+			reader(linkAnswer),
 			{
 				body: JSON.stringify({
 					externalId: params.externalId,
-					identityProvider: params.provider,
+					identityProvider: params.identityProvider,
 				}),
 				method: 'POST',
 				path: `/v1/subjects/${subject}/link`,
@@ -757,6 +973,7 @@ class Users {
 	 * const { data, error } = await inth.users.createIdentityToken({
 	 *   externalId: user.id,
 	 * });
+	 * if (error) throw error;
 	 * // In the browser:
 	 * // await client.identify({ externalId: user.id, identityToken: data.token });
 	 */
@@ -766,10 +983,10 @@ class Users {
 	): Promise<InthResult<InthIdentityToken>> {
 		const body: Schemas['IdentityTokenRequest'] = {
 			externalId: params.externalId,
-			identityProvider: params.provider,
+			identityProvider: params.identityProvider,
 		};
 		return await this.#send(
-			identityTokenSchema,
+			reader(identityTokenSchema),
 			{
 				body: JSON.stringify(body),
 				method: 'POST',
@@ -831,6 +1048,8 @@ const documentSchema = v.object({
 	effectiveDate: v.string(),
 	/** `sha256:` and the hex hash of the published file */
 	hash: v.string(),
+	/** The version's id */
+	id: v.string(),
 	/** False for a small edit that people who accepted before need not accept */
 	requiresAcceptance: v.boolean(),
 	/** Such as `privacy_policy`, `terms_us` or `terms_eu` */
@@ -839,25 +1058,14 @@ const documentSchema = v.object({
 	version: v.string(),
 });
 
-/** A version of a legal document */
-export type InthDocument = v.InferOutput<typeof documentSchema>;
+/**
+ * A version of a legal document, as `publish()` stored it and `current()`
+ * finds it. Send its `hash` back with an acceptance
+ */
+export type InthDocument = Schemas['DocumentCurrentResponse']['document'];
 
-const publishedSchema = v.object({
-	...documentSchema.entries,
-	/** The version's id */
-	id: v.string(),
-});
-
-const publishedAnswer = v.object({ document: publishedSchema });
-
-/** A version as it was published */
-export type InthPublishedDocument =
-	Schemas['DocumentPublishResponse']['document'];
-
-const currentAnswer = v.object({ document: publishedSchema });
-
-/** The version in force. Send its `hash` back with an acceptance */
-export type InthCurrentDocument = Schemas['DocumentCurrentResponse'];
+/** The answer to a publish, and to a read of the version in force */
+const documentAnswer = v.object({ document: documentSchema });
 
 const acceptedAnswer = v.object({
 	acceptances: v.array(
@@ -879,8 +1087,18 @@ export type InthAcceptances = Schemas['DocumentAcceptancesResponse'];
 /** Fails to compile when a schema above stops matching the document */
 // oxlint-disable-next-line no-unused-vars -- Checked by the compiler, never used
 type DocumentSchemasMatchTheDocument = [
-	Holds<Same<v.InferOutput<typeof publishedSchema>, InthPublishedDocument>>,
-	Holds<Same<v.InferOutput<typeof currentAnswer>, InthCurrentDocument>>,
+	Holds<
+		Same<
+			v.InferOutput<typeof documentAnswer>,
+			Schemas['DocumentPublishResponse']
+		>
+	>,
+	Holds<
+		Same<
+			v.InferOutput<typeof documentAnswer>,
+			Schemas['DocumentCurrentResponse']
+		>
+	>,
 	Holds<Same<v.InferOutput<typeof acceptedAnswer>, InthAcceptances>>,
 ];
 
@@ -891,8 +1109,8 @@ export interface PublishDocumentParams {
 	readonly version: string;
 	/** `hashDocument()` of the published file */
 	readonly hash: string;
-	/** When it takes effect, as an ISO 8601 date */
-	readonly effectiveDate: string;
+	/** When it takes effect: a `Date`, or an ISO 8601 date such as `2026-11-18` */
+	readonly effectiveDate: Date | string;
 	/**
 	 * Whether people who accepted the previous version must accept this one.
 	 * Defaults to true. Pass false for a small edit
@@ -914,8 +1132,11 @@ interface AcceptDocumentsBase {
 		readonly type: InthDocumentType;
 		readonly hash: string;
 	}[];
-	/** When, in milliseconds since the epoch. Defaults to the time of the call */
-	readonly acceptedAt?: number;
+	/**
+	 * When: a `Date`, or milliseconds since the epoch. Defaults to the time
+	 * of the call
+	 */
+	readonly acceptedAt?: Date | number;
 	/**
 	 * The visitor's IP address and user agent, from the request that
 	 * accepted. The call comes from your server, so Inth cannot see them
@@ -948,6 +1169,27 @@ export type AcceptDocumentsParams = AcceptDocumentsBase &
 		| { readonly externalId?: undefined; readonly subjectId: string }
 	);
 
+/**
+ * The time a `Date` names, in milliseconds since the epoch, `NaN` for an
+ * invalid one, or `undefined` for anything else. Read with
+ * `Date.prototype.getTime`, which throws on anything else, not `instanceof`,
+ * so a `Date` made in another realm, such as a `vm` context, is read too
+ */
+const timeOf = (value: unknown): number | undefined => {
+	if (typeof value !== 'object' || value === null) {
+		return undefined;
+	}
+	try {
+		return Date.prototype.getTime.call(value);
+	} catch {
+		return undefined;
+	}
+};
+
+/** The refusal for a date that names no time, such as `new Date('')` */
+const invalidDate = (name: string): InthResult<never> =>
+	refusedField(name, 'is an invalid date');
+
 class Documents {
 	/** Sends one call, with the client's retries and limits */
 	readonly #send: Send;
@@ -972,9 +1214,16 @@ class Documents {
 	async publish(
 		params: PublishDocumentParams,
 		options?: InthRequestOptions
-	): Promise<InthResult<InthPublishedDocument>> {
+	): Promise<InthResult<InthDocument>> {
+		const effectiveTime = timeOf(params.effectiveDate);
+		if (Number.isNaN(effectiveTime)) {
+			return invalidDate('effectiveDate');
+		}
 		const body: Schemas['DocumentPublishRequest'] = {
-			effectiveDate: params.effectiveDate,
+			effectiveDate:
+				effectiveTime === undefined
+					? String(params.effectiveDate)
+					: new Date(effectiveTime).toISOString(),
 			hash: params.hash,
 			requiresAcceptance: params.requiresAcceptance,
 			version: params.version,
@@ -984,7 +1233,7 @@ class Documents {
 			return unusableSegment('type');
 		}
 		const answer = await this.#send(
-			publishedAnswer,
+			reader(documentAnswer),
 			{
 				body: JSON.stringify(body),
 				method: 'PUT',
@@ -993,6 +1242,26 @@ class Documents {
 			},
 			options
 		);
+		if (answer.error?.retryable) {
+			// It may have been stored, so it must not be sent again unchecked. A
+			// rate limit, the API's or the edge's, refused it before any store
+			const { error } = answer;
+			const stored =
+				error.code === 'rate_limited'
+					? ''
+					: '. The version may have been stored: check documents.current before you publish again';
+			return failed(
+				new InthError(error.code, `${error.message}${stored}`, {
+					apiCode: error.apiCode,
+					cause: error.cause,
+					details: error.details,
+					requestId: error.requestId,
+					retryAfter: error.retryAfter,
+					retryable: false,
+					status: error.status,
+				})
+			);
+		}
 		return answer.error ? answer : ok(answer.data.document);
 	}
 
@@ -1002,18 +1271,23 @@ class Documents {
 	 * type has no version yet
 	 *
 	 * @example
-	 * const { data: terms } = await inth.documents.current({ type: 'terms_us' });
+	 * const { data: terms, error } = await inth.documents.current({
+	 *   type: 'terms_us',
+	 * });
+	 * if (error) throw error;
+	 * // Link to terms.version. Keep terms.hash on the server, such as in the
+	 * // session, to record with the acceptance: never take it from the form
 	 */
 	async current(
 		params: CurrentDocumentParams,
 		options?: InthRequestOptions
-	): Promise<InthResult<InthCurrentDocument>> {
+	): Promise<InthResult<InthDocument>> {
 		const type = segment(params.type);
 		if (type === undefined) {
 			return unusableSegment('type');
 		}
-		return await this.#send(
-			currentAnswer,
+		const answer = await this.#send(
+			reader(documentAnswer),
 			{
 				keyless: true,
 				method: 'GET',
@@ -1021,6 +1295,7 @@ class Documents {
 			},
 			options
 		);
+		return answer.error ? answer : ok(answer.data.document);
 	}
 
 	/**
@@ -1029,9 +1304,11 @@ class Documents {
 	 * each try
 	 *
 	 * @example
+	 * // The releases your server showed and kept, never hashes from the form
+	 * const shown = await readShownDocuments(request);
 	 * const { error } = await inth.documents.accept({
 	 *   externalId: user.id,
-	 *   acceptances: [{ type: 'terms_us', hash: terms.document.hash }],
+	 *   acceptances: shown,
 	 *   context: {
 	 *     ipAddress: request.ip,
 	 *     userAgent: request.headers.get('user-agent') ?? undefined,
@@ -1042,6 +1319,26 @@ class Documents {
 		params: AcceptDocumentsParams,
 		options?: InthRequestOptions
 	): Promise<InthResult<InthAcceptances>> {
+		const acceptedTime = timeOf(params.acceptedAt);
+		if (Number.isNaN(acceptedTime)) {
+			return invalidDate('acceptedAt');
+		}
+		// A Date and a number are held to the one range the API takes
+		const acceptedAt =
+			acceptedTime ??
+			(typeof params.acceptedAt === 'number' ? params.acceptedAt : Date.now());
+		if (
+			!(
+				Number.isSafeInteger(acceptedAt) &&
+				acceptedAt >= 0 &&
+				acceptedAt <= MAX_EPOCH_MS
+			)
+		) {
+			return refusedField(
+				'acceptedAt',
+				`must be a whole number of milliseconds since the epoch, from 0 to ${MAX_EPOCH_MS}`
+			);
+		}
 		// Copied once, so the body and the check below read the same list
 		const acceptances = params.acceptances.map(({ hash, type }) => ({
 			hash,
@@ -1064,11 +1361,11 @@ class Documents {
 		);
 		// The body is made once, so each retry sends the same key and time
 		return await this.#send(
-			recordedAll,
+			reader(recordedAll),
 			{
 				body: JSON.stringify({
 					acceptances,
-					acceptedAt: params.acceptedAt ?? Date.now(),
+					acceptedAt,
 					context: {
 						ipAddress: params.context.ipAddress,
 						userAgent: params.context.userAgent,
@@ -1095,18 +1392,20 @@ class Documents {
 	 *   externalId: user.id,
 	 *   types: ['privacy_policy'],
 	 * });
-	 * if (error || !data.privacy_policy.acceptedLatest) askToAccept();
+	 * // A failed check says nothing about the user: do not ask them again
+	 * if (error) throw error;
+	 * if (!data.privacy_policy.acceptedLatest) askToAccept();
 	 */
 	async check<const Types extends readonly InthDocumentType[]>(
 		params: CheckDocumentsParams<Types>,
 		options?: InthRequestOptions
-	): Promise<InthResult<Readonly<Record<Types[number], InthDocumentCheck>>>> {
+	): Promise<InthResult<InthDocumentChecks<Types>>> {
 		// Copied once, so the query and the check below read the same list
 		const types = [...params.types];
 		const query = { externalId: params.externalId, types: types.join(',') };
 		const unusable = uncarried(query);
 		if (unusable !== undefined) {
-			return unusableSegment(unusable);
+			return unusableQuery(unusable);
 		}
 		// The answer must hold each type asked for: checked as it is read, so a
 		// failure keeps its status and request id
@@ -1117,7 +1416,7 @@ class Documents {
 			)
 		);
 		const answer = await this.#send(
-			answeredAll,
+			reader(answeredAll),
 			{
 				method: 'GET',
 				path: `/v1/documents/check?${new URLSearchParams(query)}`,
@@ -1128,20 +1427,20 @@ class Documents {
 			return answer;
 		}
 		// SAFETY: the schema above found every type asked for among the results
-		return ok(
-			answer.data.documents as Readonly<
-				Record<Types[number], InthDocumentCheck>
-			>
-		);
+		return ok(answer.data.documents as InthDocumentChecks<Types>);
 	}
 }
+
+/** What `new Inth()` throws for options it cannot use */
+const unusableSetup = (message: string): InthError =>
+	new InthError('invalid_request', message);
 
 /**
  * @example
  * import { Inth } from '@inth/node';
  *
  * const inth = new Inth({
- *   baseUrl: 'https://your-project.inth.app',
+ *   projectUrl: 'https://your-project.inth.app',
  *   secretKey: process.env.INTH_SECRET_KEY,
  * });
  */
@@ -1154,57 +1453,71 @@ export class Inth {
 	readonly consents: Consents;
 
 	constructor(options: InthOptions = {}) {
+		// Workers without `nodejs_compat` have no `process`: pass both there
 		const environment = globalThis.process?.env;
+		// A caller without types may pass anything
+		for (const name of ['secretKey', 'projectUrl'] as const) {
+			const value: unknown = options[name];
+			if (value !== undefined && typeof value !== 'string') {
+				throw unusableSetup(`\`${name}\` must be a string.`);
+			}
+		}
 		const secretKey = (
 			options.secretKey ??
 			environment?.INTH_SECRET_KEY ??
 			''
 		).trim();
 		if (secretKey === '') {
-			throw new Error(
+			throw unusableSetup(
 				'Inth needs a secret key. Pass `secretKey`, or set INTH_SECRET_KEY.'
 			);
 		}
-		let base = (options.baseUrl ?? environment?.INTH_URL ?? '').trim();
+		let base = (
+			options.projectUrl ??
+			environment?.INTH_PROJECT_URL ??
+			''
+		).trim();
 		while (base.endsWith('/')) {
 			base = base.slice(0, -1);
 		}
 		if (base === '') {
-			throw new Error(
-				'Inth needs the URL of your project. Pass `baseUrl`, or set INTH_URL.'
+			throw unusableSetup(
+				'Inth needs the URL of your project. Pass `projectUrl`, or set INTH_PROJECT_URL.'
 			);
 		}
-		const unusableUrl = unusableBaseUrl(base);
+		const unusableUrl = unusableProjectUrl(base);
 		if (unusableUrl !== undefined) {
-			throw new Error(unusableUrl);
+			throw unusableSetup(unusableUrl);
 		}
 		const authorization = `Bearer ${secretKey}`;
 		try {
 			// Throws for a key a header cannot carry, such as one with a newline
 			new Headers().set('authorization', authorization);
 		} catch {
-			throw new Error(
+			throw unusableSetup(
 				'Inth cannot send this secret key: it holds characters a header cannot carry.'
 			);
 		}
-		const fetcher = options.fetch ?? fetch;
+		// The global is read on each call, not here: a test may replace it after
+		// the client is made, and a runtime without one fails a call, not setup
+		const fetcher: typeof fetch =
+			options.fetch ?? ((input, init) => globalThis.fetch(input, init));
 		const unusable = unusableLimits(options);
 		if (unusable !== undefined) {
-			throw new Error(unusable);
+			throw unusableSetup(`\`${unusable.name}\` ${unusable.reason}`);
 		}
 
 		/** One attempt: a parsed answer, or why there is none */
-		const attempt = async <Schema extends v.GenericSchema>(
-			schema: Schema,
+		const attempt = async <Data>(
+			read: Reader<Data>,
 			request: Parameters<Send>[1],
 			signal: AbortSignal
 		): Promise<
-			| InthResult<v.InferOutput<Schema>>
+			| InthResult<Data>
 			| {
 					readonly error: InthError;
 					/** Set when trying again within this call cannot help */
 					readonly final?: true;
-					readonly retryAfter: string | null;
 			  }
 		> => {
 			const headers = new Headers({ 'user-agent': `inth-node/${version}` });
@@ -1226,7 +1539,7 @@ export class Inth {
 					signal,
 				});
 			} catch (error) {
-				return { error: fetchFailure(error, signal), retryAfter: null };
+				return { error: fetchFailure(error, signal) };
 			}
 			const settled = settledBeforeBody(response);
 			if (settled !== undefined) {
@@ -1237,12 +1550,13 @@ export class Inth {
 			// The body can still fail after the headers arrive. One that
 			// stalls is a timeout and one that is cut off is a network failure;
 			// neither is an answer in the wrong shape
-			const text = await response.text().catch(() => undefined);
+			const bodyRead = await readText(response, signal);
+			const text = 'text' in bodyRead ? bodyRead.text : undefined;
+			const readFailure = 'failure' in bodyRead ? bodyRead.failure : undefined;
 			if (text === undefined && !response.ok) {
 				// The status says what happened, and its `Retry-After` still holds
 				return {
-					error: refusalError(response.status, undefined, requestId),
-					retryAfter: response.headers.get('retry-after'),
+					error: refusalError(response, undefined, requestId, readFailure),
 				};
 			}
 			if (text === undefined) {
@@ -1252,24 +1566,20 @@ export class Inth {
 						signal.aborted
 							? 'The API did not answer in time'
 							: 'The answer was cut off',
-						{ requestId, status: response.status }
+						{ cause: readFailure, requestId, status: response.status }
 					),
-					retryAfter: null,
 				};
 			}
 			// A body that is not JSON, such as a proxy's error page, is read as
 			// no body: the status still says what happened
-			const read = v.safeParse(json, text);
-			const body = read.success ? read.output : undefined;
+			const asJson = v.safeParse(json, text);
+			const body = asJson.success ? asJson.output : undefined;
 			if (!response.ok) {
-				return {
-					error: refusalError(response.status, body, requestId),
-					retryAfter: response.headers.get('retry-after'),
-				};
+				return { error: refusalError(response, body, requestId) };
 			}
-			const parsed = v.safeParse(schema, body);
-			return parsed.success
-				? ok(parsed.output)
+			const parsed = read(body);
+			return parsed
+				? ok(parsed.data)
 				: failed(
 						new InthError(
 							'unexpected_response',
@@ -1286,12 +1596,12 @@ export class Inth {
 			timeout: overrides?.timeout ?? options.timeout ?? DEFAULT_TIMEOUT_MS,
 		});
 
-		const send: Send = async (schema, request, overrides) => {
+		const send: Send = async (read, request, overrides) => {
 			const { retries: asked, timeout } = limitsFor(overrides);
 			const cancelled = overrides?.signal;
 			const badLimits = unusableLimits({ maxRetries: asked, timeout });
 			if (badLimits !== undefined) {
-				return failed(new InthError('invalid_request', badLimits));
+				return refusedField(badLimits.name, badLimits.reason);
 			}
 			const retries = request.once ? 0 : asked;
 			for (let tried = 0; ; tried += 1) {
@@ -1301,7 +1611,7 @@ export class Inth {
 				const limit = AbortSignal.timeout(timeout);
 				// oxlint-disable-next-line no-await-in-loop -- Each retry waits for the try before it
 				const result = await attempt(
-					schema,
+					read,
 					request,
 					cancelled ? AbortSignal.any([cancelled, limit]) : limit
 				);
@@ -1318,10 +1628,7 @@ export class Inth {
 				) {
 					return failed(result.error);
 				}
-				const delay = delayBefore(
-					tried,
-					'retryAfter' in result ? result.retryAfter : null
-				);
+				const delay = delayBefore(tried, result.error.retryAfter);
 				if (delay === null) {
 					return failed(result.error);
 				}
