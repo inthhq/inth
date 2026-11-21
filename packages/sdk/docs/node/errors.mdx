@@ -1,0 +1,94 @@
+---
+title: Errors and retries
+description: Every @inth/node error code and field, which calls are retried, and how to set timeouts and cancel a call.
+group: server
+---
+
+Reference for how `@inth/node` reports a failed call and when it tries again.
+
+## Results
+
+No method throws for a request that fails. Each resolves to `{ data, error }`
+with exactly one of the two set. Check `error` first, and TypeScript knows
+`data` is there:
+
+```ts
+const { data, error } = await inth.consents.check({ externalId: user.id });
+if (error) {
+	console.error(error.code, error.requestId);
+	return;
+}
+```
+
+Two things throw: `new Inth()`, for options it cannot use, and
+`hashDocument`, for anything but bytes.
+
+## Error codes
+
+`error.code` is one of these:
+
+| Code | Meaning | Retried by the client |
+| --- | --- | --- |
+| `unauthorized` | The key is missing, wrong, revoked or expired. | No |
+| `forbidden` | The key may not make this call. | No |
+| `rate_limited` | Too many requests. | Yes |
+| `invalid_request` | The API, or the client before sending, refused what was sent. | No |
+| `not_found` | Nothing is stored under that ID. | No |
+| `conflict` | The request conflicts with what is stored. | No |
+| `network_error` | No answer arrived. | Yes |
+| `timeout` | No answer arrived in time. | Yes |
+| `aborted` | Your `signal` cancelled the call. | No |
+| `server_error` | The API failed. | Yes |
+| `unexpected_response` | The API answered in a shape this client does not read. | No |
+
+## Error fields
+
+| Field | Type | What it holds |
+| --- | --- | --- |
+| `code` | `InthErrorCode` | One of the codes above. |
+| `message` | `string` | What went wrong, in words. |
+| `retryable` | `boolean` | Whether the same call may succeed later. Always `false` for `documents.publish`. |
+| `retryAfter` | `number \| undefined` | The wait the API asked for, in milliseconds. |
+| `status` | `number` | The HTTP status, or `0` when no answer arrived. |
+| `apiCode` | `InthApiCode \| undefined` | The API's own code, such as `document_unknown` or `identity_tokens_disabled`. |
+| `details` | `InthErrorDetails \| undefined` | For a refused body, `fieldErrors` by field name and `formErrors` for the rest. |
+| `requestId` | `string \| undefined` | The ID to quote to support. |
+| `cause` | `unknown` | What `fetch` threw, when no answer arrived. |
+
+## Retries
+
+A call that could not be answered is tried again, up to twice by default:
+
+- It retries a network failure, a timeout, a 408, a 429 or a 5xx.
+- It waits with jitter between tries, and follows `Retry-After` when the API
+  sends one.
+- When the API asks for a wait longer than five seconds, the call returns
+  `rate_limited` at once, with the wait in `error.retryAfter`.
+- A refused request, such as one with a wrong key, is not tried again.
+
+`documents.accept` sends one idempotency key on each try, so a retried
+acceptance is recorded once. `documents.publish` is never retried.
+
+When the network in front of the API challenges a call, as it does an address
+that sends too many requests too fast, the call returns `rate_limited` with
+`status` 403. A server cannot pass the challenge, so the client does not
+retry it. Slow down and try again in a few minutes.
+
+A redirect is not followed, so the key is never sent to another address. The
+call returns `unexpected_response`.
+
+## Timeouts and cancelling
+
+Each try may take 10 seconds by default. Set `timeout` and `maxRetries` for
+the client or for one call, and cancel a call with a signal:
+
+```ts
+const inth = new Inth({ maxRetries: 3, timeout: 5000 });
+
+await inth.documents.check(
+	{ externalId: user.id, types: ['privacy_policy'] },
+	{ timeout: 1000, signal: AbortSignal.timeout(3000) }
+);
+```
+
+The signal covers every try and the waits between them.

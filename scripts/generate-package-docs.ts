@@ -52,6 +52,11 @@ export interface PackageDocsConfig {
 	 * links skills from transitive dependencies.
 	 */
 	skillDirectory?: boolean;
+	/**
+	 * Replaces the site-wide "Using these docs" paragraph in AGENTS.md, for a
+	 * package whose readers never set up a banner, such as a server client.
+	 */
+	usingTheseDocs?: string;
 }
 
 export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
@@ -284,6 +289,20 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 		summary:
 			'Inth for plain HTML sites from one script tag, and for bundled JavaScript apps with the stock UI: data attributes, the window.inth API, customization, script and iframe gating, IAB and integrations.',
 	},
+	{
+		include: ['node/**/*.mdx'],
+		name: '@inth/node',
+		outDir: 'packages/sdk/node',
+		skill: {
+			install: '`npm install @inth/node`',
+			topic:
+				'server code reads what a signed-in user consents to, links users to their browsers, or publishes and records acceptance of legal documents',
+		},
+		summary:
+			'Server client for the Inth API on Node.js, Vercel Functions and Cloudflare Workers: link signed-in users to their consent, read it, and publish and record acceptance of legal documents.',
+		usingTheseDocs:
+			'These docs describe `@inth/node`, the Inth client for server code. Start with the quickstart, which links users at sign-in and reads their consent. Keep the secret key on the server, and check `error` before reading `data`.',
+	},
 ];
 
 const configsByName = new Map(
@@ -303,6 +322,31 @@ const selectedConfigs = function selectedConfigs() {
 		}
 		return config;
 	});
+};
+
+/**
+ * AGENTS.md with its "Using these docs" paragraph replaced by `usage`, or
+ * unchanged when `usage` is not set.
+ *
+ * @param agents - The generated AGENTS.md.
+ * @param usage - The package's own paragraph.
+ * @returns The AGENTS.md to write.
+ */
+export const withUsingTheseDocs = function withUsingTheseDocs(
+	agents: string,
+	usage: string | undefined
+): string {
+	if (usage === undefined) {
+		return agents;
+	}
+	const replaced = agents.replace(
+		/(?<heading>## Using these docs\n\n)[^\n]+/u,
+		(_match, heading: string) => `${heading}${usage}`
+	);
+	if (replaced === agents) {
+		throw new Error('AGENTS.md has no "Using these docs" paragraph to replace');
+	}
+	return replaced;
 };
 
 const runLeadtype = async function runLeadtype(config: PackageDocsConfig) {
@@ -402,15 +446,18 @@ const runLeadtype = async function runLeadtype(config: PackageDocsConfig) {
 
 	const agentsPath = join(outDir, 'AGENTS.md');
 	const docsReadmePath = join(outDir, 'docs', 'README.md');
-	const agentsContent = withFrameworkGroups(
-		withPackageSetupLinks(
-			packageIndexLinks(
-				readFileSync(agentsPath, 'utf8'),
-				bundledFiles,
-				siteOrigin
-			),
-			bundledFiles
-		)
+	const agentsContent = withUsingTheseDocs(
+		withFrameworkGroups(
+			withPackageSetupLinks(
+				packageIndexLinks(
+					readFileSync(agentsPath, 'utf8'),
+					bundledFiles,
+					siteOrigin
+				),
+				bundledFiles
+			)
+		),
+		config.usingTheseDocs
 	);
 	writeFileSync(agentsPath, agentsContent);
 	const skill = renderPackageSkill(config.name, config.skill, bundledFiles);

@@ -1,0 +1,122 @@
+---
+title: Legal documents
+description: Publish terms and privacy policy versions, record who accepted them at sign-up, and check acceptance from your server with @inth/node.
+group: server
+---
+
+Publish each version of your terms and privacy policy, record the version a
+user accepted when they sign up, and ask again when a new version needs
+acceptance. This guide assumes you finished the
+[quickstart](/docs/node/quickstart).
+
+## Publish a version when you deploy
+
+Hash the exact file you serve, then publish it, from a deploy script or CI:
+
+<include src="../shared/examples/node/node-publish-terms.mdx" />
+
+A type starts with a lowercase letter, followed by lowercase letters, digits
+and `_`. Make one type per region, such as `terms_us` and `terms_eu`. Pass
+`requiresAcceptance: false` for a small edit: people who accepted the
+previous version are not asked again.
+
+The hash covers line endings, whitespace and encoding, so hash the file you
+serve, not a copy of its text.
+
+A publish is sent once and never retried, because a late second try could
+make an old version current after a newer one. When it fails, call
+`documents.current` before you publish again.
+
+## Show the version in force at sign-up
+
+When you render the sign-up form, fetch the version in force for each type and
+put its hash in the form:
+
+```ts title="sign-up-form.ts"
+const [terms, privacy] = await Promise.all([
+	inth.documents.current({ type: 'terms_us' }),
+	inth.documents.current({ type: 'privacy_policy' }),
+]);
+if (terms.error || privacy.error) {
+	// Do not show the form without the documents
+	throw terms.error ?? privacy.error;
+}
+// Link to /terms/${terms.data.version}, and send terms.data.hash and
+// privacy.data.hash back with the form
+```
+
+Link to that version's own URL, not to a page whose content can change while
+the form is open. The hash names exactly what the visitor saw.
+
+## Record the acceptance
+
+When the form comes back, create the user first. Then record what they
+accepted, with the visitor's IP address and user agent from the request:
+
+```ts title="sign-up.ts"
+const user = await createUser(form);
+
+const acceptance = {
+	idempotencyKey: crypto.randomUUID(),
+	acceptedAt: new Date(),
+	externalId: user.id,
+	acceptances: [
+		{ type: 'terms_us', hash: form.termsHash },
+		{ type: 'privacy_policy', hash: form.privacyHash },
+	],
+	context: {
+		ipAddress: clientIp(request),
+		userAgent: request.headers.get('user-agent') ?? undefined,
+	},
+};
+
+const { error } = await inth.documents.accept(acceptance);
+if (error?.retryable) {
+	// It may or may not be recorded. Save `acceptance` and resend it,
+	// unchanged, from a job until it succeeds
+} else if (error) {
+	// Refused. Ask the user to accept when they next sign in
+}
+```
+
+`clientIp` stands for however your platform gives the visitor's address, such
+as `request.ip` or a header your host sets. Do not take the first entry of
+`x-forwarded-for`: the visitor can write it.
+
+All the acceptances in one call are recorded, or none are. A resend with the
+same `idempotencyKey` and `acceptedAt` is recorded once. The client makes a
+key for you when you leave it out, so pass your own only when you may resend
+the call yourself.
+
+A hash the project never published returns `conflict` with `apiCode`
+`document_unknown`.
+
+## Ask again when a new version needs acceptance
+
+At sign-in, check whether the user accepted the latest version that requires
+acceptance:
+
+```ts title="sign-in.ts"
+const { data, error } = await inth.documents.check({
+	externalId: user.id,
+	types: ['terms_us', 'privacy_policy'],
+});
+if (error) {
+	// The check failed, which says nothing about the user
+	throw error;
+}
+if (!data.terms_us.acceptedLatest || !data.privacy_policy.acceptedLatest) {
+	// Show the documents again
+}
+```
+
+`accepted` is true when they accepted any version. Acceptances on every device
+linked to the user count. The answer has one entry for each type you asked
+about, so reading a type you did not ask for is a compile error.
+
+## Check it works
+
+1. Publish `terms_us` and `privacy_policy`, and sign up a test user.
+2. `documents.check` for that user returns `acceptedLatest: true` for both.
+3. Publish a new `terms_us` version with `requiresAcceptance: true`.
+   `documents.check` now returns `acceptedLatest: false` for `terms_us`.

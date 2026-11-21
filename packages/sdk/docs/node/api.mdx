@@ -1,0 +1,84 @@
+---
+title: "@inth/node API"
+description: Reference for the @inth/node client options, consents, users and documents methods, hashDocument, and document type narrowing.
+group: server
+---
+
+Reference for every option, method and type in `@inth/node`.
+
+## Create a client
+
+<include src="../shared/examples/node/node-client.mdx" />
+
+| Option | Default | What it sets |
+| --- | --- | --- |
+| `secretKey` | `INTH_SECRET_KEY` | The project's secret key (`inth_prj_...`), or an organization API key (`inth_...`) with the permissions below. |
+| `projectUrl` | `INTH_PROJECT_URL` | The project's URL, such as `https://your-project.inth.app`. Must use `https://`, except on `localhost`. |
+| `timeout` | `10000` | How long one try may take, in milliseconds. |
+| `maxRetries` | `2` | How many times a call that got no usable answer is tried again. |
+| `fetch` | global `fetch` | The `fetch` to call, for tests and runtimes without one. |
+
+Cloudflare Workers without the `nodejs_compat` flag have no `process.env`, so
+pass both from the Worker's `env`:
+
+<include src="../shared/examples/node/node-worker.mdx" />
+
+## Key permissions
+
+A project secret key can make every call. An organization API key must reach
+the project and hold the permissions for the calls it makes:
+
+| Calls | Permissions |
+| --- | --- |
+| `users.*`, `consents.check` | `consent.subjects.read` and `consent.subjects.write` |
+| `documents.*` | `documents.read` and `documents.write` |
+
+Without them, a call returns `forbidden`.
+
+## Consents
+
+| Method | Returns | What it does |
+| --- | --- | --- |
+| `consents.check({ externalId, property? })` | `InthConsent` | Each category the user answered, and whether they grant it now. Pass `property`, a host name or app bundle ID, to count only answers given there. |
+
+## Users
+
+| Method | Returns | What it does |
+| --- | --- | --- |
+| `users.identify({ externalId, subjectId, identityProvider? })` | `InthLink` | Links a browser's subject ID to your user. Safe to repeat. Returns the subject's UUID. |
+| `users.createIdentityToken({ externalId, identityProvider? })` | `InthIdentityToken` | A token, valid for an hour, that lets a browser link itself. |
+
+## Documents
+
+| Method | Returns | What it does |
+| --- | --- | --- |
+| `documents.publish({ type, version, hash, effectiveDate, requiresAcceptance? })` | `InthDocument` | Publishes a version and makes it current. Sent once, never retried. |
+| `documents.current({ type })` | `InthDocument` | The version in force. Needs no key. |
+| `documents.accept({ externalId?, subjectId?, acceptances, context, acceptedAt?, property?, idempotencyKey? })` | `InthAcceptances` | Records acceptances for a user, a device or both. All or none. |
+| `documents.check({ externalId, types })` | `Record<type, InthDocumentCheck>` | `accepted` and `acceptedLatest` for each type asked about. |
+
+`effectiveDate` takes a `Date` or an ISO 8601 string. `acceptedAt` takes a
+`Date` or milliseconds since the epoch, and defaults to the time of the call.
+
+Every method takes a second argument, `{ signal, timeout, maxRetries }`, for
+that call only. Every method resolves to `{ data, error }`; see
+[Errors and retries](/docs/node/errors).
+
+## hashDocument
+
+`hashDocument(bytes)` returns `sha256:` and the lowercase hex SHA-256 of the
+bytes, the form `documents.publish` takes. It throws a `TypeError` for a
+string: pass the file's bytes, such as `readFile(path)` without an encoding.
+
+## Your project's document types
+
+`types` and `type` accept common document types and any other string. To have
+the compiler check them against your project, declare them once:
+
+```ts title="inth.d.ts"
+declare module '@inth/node' {
+	interface Register {
+		documentTypes: 'privacy_policy' | 'terms_us' | 'terms_eu';
+	}
+}
+```

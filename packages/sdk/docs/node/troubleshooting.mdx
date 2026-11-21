@@ -1,0 +1,106 @@
+---
+title: Troubleshooting
+description: Fix @inth/node errors such as a missing secret key, an https project URL, unauthorized, forbidden, edge challenges and document_unknown.
+group: server
+---
+
+Find the error message or `error.code` you got, then apply the fix.
+
+## Inth needs a secret key. Pass `secretKey`, or set INTH_SECRET_KEY.
+
+**Cause.** `new Inth()` found no key in its options or in `process.env`. On
+Cloudflare Workers without `nodejs_compat` there is no `process.env`.
+
+**Fix.** Set `INTH_SECRET_KEY` in the server environment, or pass
+`secretKey` from the Worker's `env`.
+
+**Confirm.** `new Inth()` returns without throwing.
+
+## Inth needs the URL of your project. Pass `projectUrl`, or set INTH_PROJECT_URL.
+
+**Cause.** No project URL in the options or in `process.env`.
+
+**Fix.** Set `INTH_PROJECT_URL` to the URL the Dashboard shows, such as
+`https://your-project.inth.app`. It is the same URL the banner uses.
+
+**Confirm.** `new Inth()` returns without throwing.
+
+## The project URL must start with https://, so the secret key is never sent in the clear.
+
+**Cause.** The URL uses `http://` on a host other than `localhost`.
+
+**Fix.** Use the `https://` URL from the Dashboard. Plain `http://` works only
+for `localhost`, `127.0.0.1`, `[::1]` and `*.localhost`.
+
+**Confirm.** `new Inth()` returns without throwing.
+
+## A call returns `unauthorized`
+
+**Cause.** The key is missing, wrong, revoked or expired.
+
+**Fix.** Copy the secret key again from the Dashboard for the project whose
+URL you set, and restart the server so it reads the new value.
+
+**Confirm.** `consents.check` for any `externalId` returns `data`.
+
+## A call returns `forbidden`
+
+**Cause.** An organization API key lacks a permission the call needs.
+
+**Fix.** Give the key the permissions in
+[key permissions](/docs/node/api#key-permissions), or use the
+project's secret key.
+
+**Confirm.** The same call returns `data`.
+
+## The edge in front of the API challenged this request
+
+**Cause.** The call returned `rate_limited` with status 403 and this message.
+The network in front of the API challenged traffic from your server's address,
+usually after a burst of requests.
+
+**Fix.** Send fewer requests, such as one `consents.check` per user per
+session, and try again in a few minutes. The client does not retry this.
+
+**Confirm.** The next call, a few minutes later, returns `data`.
+
+## The API redirected this request
+
+**Cause.** The project URL answers with a redirect, such as from an old
+address. The client does not follow redirects, so the key is not sent
+anywhere else.
+
+**Fix.** Set the project URL exactly as the Dashboard shows it.
+
+**Confirm.** The call returns `data`.
+
+## `documents.accept` returns `conflict` with apiCode `document_unknown`
+
+**Cause.** A hash names no version the project published, often because the
+hash came from a different copy of the file.
+
+**Fix.** Send the `hash` that `documents.current` returned when you showed the
+form. Publish with `hashDocument` of the exact file you serve.
+
+**Confirm.** `documents.accept` returns `data.acceptances`.
+
+## `users.createIdentityToken` returns `not_found` with apiCode `identity_tokens_disabled`
+
+**Cause.** Identity tokens are not enabled for the project.
+
+**Fix.** Link users with `users.identify` from a server that reads the
+consent cookie, or have identity tokens enabled for the project.
+
+**Confirm.** `users.identify` returns `data.subjectId`, or, once tokens are
+enabled, `users.createIdentityToken` returns `data.token`.
+
+## `consents.check` returns an empty object
+
+**Cause.** No browser is linked to that `externalId`, or the user has not
+saved a choice in a linked browser.
+
+**Fix.** Call `users.identify` at sign-in, after the visitor saved a choice.
+Check that you pass the same `externalId` to both calls.
+
+**Confirm.** After a save and a sign-in, `consents.check` returns the
+categories the user answered.

@@ -1,0 +1,26 @@
+{
+	"title": "@inth/node: the Inth server client for consent and legal documents",
+	"description": "Read what your signed-in users consent to, link them to the browsers they chose on, and publish and record acceptance of your legal documents, from Node.js, Vercel Functions or Cloudflare Workers.",
+	"features": [
+		"Link a browser's consent to your user at sign-in, or from another domain with identity tokens",
+		"Read what a user consents to across every device they signed in on",
+		"Publish your terms and privacy policy, record who accepted which version, and check whether a user accepted the latest one",
+		"Every call resolves to `{ data, error }`, with typed error codes, field errors and safe retries",
+		"No Node built-ins: runs on Node.js 20.3 or later, Vercel Functions and Cloudflare Workers"
+	],
+	"prerequisites": [
+		"Node.js 20.3 or later, Vercel Functions or Cloudflare Workers",
+		"An [Inth project](https://inth.com) and its secret key, with the Inth consent banner on your site"
+	],
+	"manualInstallation": ["", "```bash\npnpm add @inth/node\n```"],
+	"usage": [
+		"Set `INTH_SECRET_KEY` and `INTH_PROJECT_URL` in your server's environment",
+		"At sign-in, call `inth.users.identify({ externalId, subjectId })` to link the browser to your user",
+		"Call `inth.consents.check({ externalId })` before you send marketing",
+		"For the full setup, see the [Node.js quickstart](https://inth.com/docs/node/quickstart)"
+	],
+	"docsLink": "https://inth.com/docs/node/quickstart",
+	"quickStartLink": "https://inth.com/docs/node/quickstart",
+	"showCLIGeneration": false,
+	"showHosting": false
+}
