@@ -3,6 +3,7 @@ import {
 	expandedVendors,
 } from '@inth/conformance/play/consent-widget';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 
 import { ConsentWidget } from '../../../packages/sdk/react/src/index';
 import {
@@ -146,8 +147,45 @@ export const OptOutConfirmedSaleAndShare: Story = {
 	),
 };
 
-/** Durable opt-out honored by an active GPC signal; restricted switches are locked off. */
+/** Durable opt-out honored by a visitor request with the "Opt back in…" link. */
+export const OptOutWithOptInLink: Story = {
+	play: async ({ canvasElement }) => {
+		const link = await within(canvasElement).findByTestId(
+			'consent-widget-opt-in-link'
+		);
+		await expect(link).toBeVisible();
+	},
+	render: () => (
+		<StorybookConsentProvider
+			options={{
+				...editableConsentOptions,
+				mode: storybookMode([storybookOptOutPolicy]),
+				overrides: { country: 'US', gpc: false, region: 'CA' },
+				prefetch: {
+					initialPolicyResolution: storybookOptOutPolicyResolution,
+					initialRecords: {
+						...storybookOptOutRecords('request'),
+						optOutReference: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+					},
+				},
+				presentation: { optOutLink: 'do-not-sell' },
+			}}
+		>
+			<div style={{ width: '32rem' }}>
+				<ConsentWidget />
+			</div>
+		</StorybookConsentProvider>
+	),
+};
+
+/** Durable opt-out honored by an active GPC signal; restricted switches are locked off and no opt-in link is shown. */
 export const OptOutGpcLocked: Story = {
+	play: async ({ canvasElement }) => {
+		await within(canvasElement).findByTestId('consent-widget-opt-out-status');
+		await expect(
+			within(canvasElement).queryByTestId('consent-widget-opt-in-link')
+		).toBeNull();
+	},
 	render: () => (
 		<StorybookConsentProvider
 			options={{
