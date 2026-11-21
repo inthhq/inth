@@ -1000,4 +1000,76 @@ describe('opt-out persistence lifecycle', () => {
 		persistence.dispose();
 		kernel.dispose();
 	});
+
+	it('retries a failed opt-out write on pagehide once storage works again so it survives reload', async () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const cookieDescriptor = Object.getOwnPropertyDescriptor(
+			Document.prototype,
+			'cookie'
+		);
+		let storageBlocked = true;
+		const setItemSpy = vi.spyOn(window.localStorage, 'setItem');
+		const originalSetItem = setItemSpy.getMockImplementation();
+		setItemSpy.mockImplementation((key: string, value: string) => {
+			if (storageBlocked) {
+				throw new DOMException('full', 'QuotaExceededError');
+			}
+			originalSetItem?.(key, value);
+		});
+		Object.defineProperty(document, 'cookie', {
+			configurable: true,
+			get: () => (cookieDescriptor?.get?.call(document) as string) ?? '',
+			set: (value: string) => {
+				if (!storageBlocked) {
+					cookieDescriptor?.set?.call(document, value);
+				}
+			},
+		});
+
+		const first = createConsentKernel({
+			initialLocation: { countryCode: 'US', regionCode: 'CA' },
+			initialPolicyResolution: usOptOutResolution(),
+			now: NOW,
+		});
+		const firstPersistence = createPersistence({ kernel: first });
+		try {
+			await first.commands.optOut();
+			await flushWrites();
+			expect(readStoredOptOutRecord(undefined, NOW)).toBeNull();
+
+			storageBlocked = false;
+			window.dispatchEvent(new Event('pagehide'));
+			expect(readStoredOptOutRecord(undefined, NOW)).toMatchObject({
+				ok: true,
+				record: { method: 'button', recordedAt: NOW },
+			});
+			firstPersistence.dispose();
+			first.dispose();
+
+			const reloaded = createConsentKernel({
+				initialLocation: { countryCode: 'US', regionCode: 'CA' },
+				initialPolicyResolution: usOptOutResolution(),
+				now: NOW + 1000,
+			});
+			const secondPersistence = createPersistence({ kernel: reloaded });
+			expect(reloaded.getSnapshot().optOut).toMatchObject({
+				heldBy: 'device',
+				method: 'button',
+				recordedAt: NOW,
+			});
+			secondPersistence.dispose();
+			reloaded.dispose();
+		} finally {
+			if (cookieDescriptor) {
+				Object.defineProperty(document, 'cookie', cookieDescriptor);
+			} else {
+				delete (document as { cookie?: string }).cookie;
+			}
+			if (originalSetItem) {
+				setItemSpy.mockImplementation(originalSetItem);
+			} else {
+				setItemSpy.mockRestore();
+			}
+		}
+	});
 });

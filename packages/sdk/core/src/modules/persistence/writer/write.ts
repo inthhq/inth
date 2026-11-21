@@ -146,13 +146,13 @@ export const writeOptOutToStorage = function writeOptOutToStorage(
 	storageConfig: StorageConfig | undefined,
 	now: number,
 	gpcReported = false
-): void {
+): boolean {
 	if (typeof document === 'undefined') {
-		return;
+		return true;
 	}
 	if (!snapshot.optOut) {
 		store.clearStoredOptOutRecord(storageConfig);
-		return;
+		return true;
 	}
 	// The subject rides along so a visitor whose only act is an opt-out keeps
 	// one identity across reloads.
@@ -166,5 +166,7 @@ export const writeOptOutToStorage = function writeOptOutToStorage(
 	const result = store.writeStoredOptOutRecord(record, storageConfig, now);
 	if (result.ok === false) {
 		console.warn('[inth] Opt-out record was not written.', result.issues);
+		return true;
 	}
+	return Boolean(result.written?.cookie || result.written?.localStorage);
 };
