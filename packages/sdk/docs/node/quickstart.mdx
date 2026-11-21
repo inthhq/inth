@@ -55,7 +55,9 @@ At sign-in, read it from the request's cookies and link it to your user:
 
 <include src="../shared/examples/node/node-sign-in.mdx" />
 
-Set `adapter` to the Inth package your site uses. Read the subject ID with
+Set `adapter` to the Inth package your site uses, and `storage` to the
+banner's `storageConfig` if it sets its own `storageKey`, or the cookie isn't
+found and nothing is linked. Read the subject ID with
 `readRequestConsent`, not by parsing the cookie: the cookie format can change
 between releases. On Cloudflare Workers without `nodejs_compat`, pass
 `secretKey` and `projectUrl` from `env`; see the

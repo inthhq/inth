@@ -9,6 +9,9 @@ export const onSignIn = async (request: Request, user: { id: string }) => {
 	const { state } = readRequestConsent({
 		adapter: '@inth/nextjs',
 		request: { headers: request.headers },
+		// The banner's storageConfig, when it sets its own storageKey: the
+		// cookie is read by that name
+		storage: { storageKey: 'inth' },
 	});
 	const subjectId = state.initialRecords?.subject?.subjectId;
 	if (!subjectId) {
