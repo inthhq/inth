@@ -20,6 +20,18 @@ describe('isPlainObject', () => {
 		['parsed JSON', JSON.parse('{"__proto__":1}'), true],
 		['an object from another realm', runInNewContext('({ a: 1 })'), true],
 		['an array from another realm', runInNewContext('[]'), false],
+		[
+			'an object whose prototype is a null-rooted object',
+			Object.create(Object.assign(Object.create(null), { categories: {} })),
+			false,
+		],
+		[
+			'an object whose null-rooted prototype claims Object as its constructor',
+			Object.create(
+				Object.assign(Object.create(null), { constructor: Object })
+			),
+			false,
+		],
 		['an array', [], false],
 		['a Date', new Date(0), false],
 		['a Map', new Map(), false],

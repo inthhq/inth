@@ -17,6 +17,34 @@
 
 import * as v from 'valibot';
 
+const OBJECT_SOURCE = Function.prototype.toString.call(Object);
+
+/**
+ * Whether `prototype` is the `Object.prototype` of some realm: the end of its
+ * chain, with the built-in `Object` as its constructor. An object made with
+ * `Object.create(null)` and used as a prototype is not one.
+ */
+const isObjectPrototype = function isObjectPrototype(
+	prototype: unknown
+): boolean {
+	if (
+		typeof prototype !== 'object' ||
+		prototype === null ||
+		Object.getPrototypeOf(prototype) !== null
+	) {
+		return false;
+	}
+	const constructor: unknown = Object.getOwnPropertyDescriptor(
+		prototype,
+		'constructor'
+	)?.value;
+	return (
+		typeof constructor === 'function' &&
+		constructor.prototype === prototype &&
+		Function.prototype.toString.call(constructor) === OBJECT_SOURCE
+	);
+};
+
 /**
  * Whether `input` is a plain object, as `JSON.parse` makes one: its prototype
  * is `null`, or an `Object.prototype`, from this realm or another, such as
@@ -29,7 +57,11 @@ export const isPlainObject = function isPlainObject(
 		return false;
 	}
 	const prototype: unknown = Object.getPrototypeOf(input);
-	return prototype === null || Object.getPrototypeOf(prototype) === null;
+	return (
+		prototype === null ||
+		prototype === Object.prototype ||
+		isObjectPrototype(prototype)
+	);
 };
 
 /** The shape of an object schema this module reads. */
