@@ -56,6 +56,27 @@ export const hasPendingOptOutConfirmation =
 		}
 	};
 
+/**
+ * Kernels whose page came back from an opt-out reload and found no opt-out
+ * held: storage kept nothing, or the site cleared it. Keyed by the kernel's
+ * events object, like the confirmation registry.
+ */
+const reloadSpent = new WeakSet<object>();
+
+/**
+ * Whether this tab already reloaded once for an opt-out that the page could
+ * not keep. True while the marker from that reload is still set, and for the
+ * rest of the page once the marker was consumed with no opt-out held.
+ *
+ * A second reload would lose the opt-out again, and a page that opts out on
+ * load would reload forever. The caller confirms in place instead.
+ */
+export const isOptOutReloadSpent = function isOptOutReloadSpent(
+	kernel: ConsentKernel
+): boolean {
+	return hasPendingOptOutConfirmation() || reloadSpent.has(kernel.events);
+};
+
 /** Clear the post-reload opt-out confirmation marker for this tab. */
 export const clearPendingOptOutConfirmation =
 	function clearPendingOptOutConfirmation(): void {
@@ -141,6 +162,11 @@ export const watchPendingOptOutConfirmation =
 			}
 			stop();
 			clearPendingOptOutConfirmation();
+			if (!resolveOptOutState(snapshot).honored) {
+				// The reload did not keep the opt-out. Do not reload for one again
+				// on this page.
+				reloadSpent.add(kernel.events);
+			}
 			if (canShowConfirmation(snapshot)) {
 				openOptOutConfirmation(kernel, null);
 			}

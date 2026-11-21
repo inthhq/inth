@@ -3,6 +3,7 @@ import { vendorAxisActive } from '../libs/vendors';
 import { registerOptOutReloadHook } from '../surface-actions/opt-out';
 import {
 	clearPendingOptOutConfirmation,
+	isOptOutReloadSpent,
 	markPendingOptOutConfirmation,
 	releasePendingOptOutConfirmation,
 } from '../surface-actions/opt-out-reload';
@@ -308,17 +309,30 @@ export const watchRevocationReload = function watchRevocationReload({
 		registerOptOutReloadHook(kernel, {
 			clearPending: clearPendingOptOutConfirmation,
 			markPending: markPendingOptOutConfirmation,
-			willReload: (before, after) =>
-				typeof window !== 'undefined' &&
-				isEnabled() &&
-				hasRevokedPermission(before, after),
+			willReload: (before, after) => {
+				if (
+					typeof window === 'undefined' ||
+					!isEnabled() ||
+					!hasRevokedPermission(before, after)
+				) {
+					return false;
+				}
+				if (isOptOutReloadSpent(kernel)) {
+					// This tab already reloaded once for an opt-out the page could
+					// not keep. Confirm in place and drop the stale marker.
+					clearPendingOptOutConfirmation();
+					return false;
+				}
+				return true;
+			},
 		}),
 		kernel.events.on('command:save:started', onCommandStarted),
 		kernel.events.on('command:opt-out:started', onCommandStarted),
 		kernel.events.on('choice:recorded', onRecorded),
 		kernel.events.on('vendors:recorded', onRecorded),
 		kernel.events.on('opt-out:recorded', ({ optOut, snapshot }) => {
-			if (optOut.method === 'button') {
+			// At most one reload per tab for an opt-out the page cannot keep.
+			if (optOut.method === 'button' && !isOptOutReloadSpent(kernel)) {
 				onRecorded({ snapshot });
 			}
 		}),
