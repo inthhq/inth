@@ -14,6 +14,7 @@
 	import { DIALOG_SHEETS } from '../dialog-sheets';
 	import { Dialog, Portal } from '../primitives';
 	import Branding from './branding.svelte';
+	import DeferredOptInConfirmation from './deferred-opt-in-confirmation.svelte';
 	import DeferredOptOutConfirmation from './deferred-opt-out-confirmation.svelte';
 	import InlineLegalLinks from './inline-legal-links.svelte';
 	import type { ConsentDialogProps } from './panel-props';
@@ -180,6 +181,10 @@
 		noStyle={localNoStyle}
 		disableAnimation={localDisableAnimation}
 	/>
+	<DeferredOptInConfirmation
+		noStyle={localNoStyle}
+		disableAnimation={localDisableAnimation}
+	/>
 {/if}
 
 <Dialog.Root
@@ -264,6 +269,7 @@
 						<ConsentWidget
 							hideBranding
 							{noStyle}
+							uiSource="dialog"
 						/>
 					</div>
 					<Branding

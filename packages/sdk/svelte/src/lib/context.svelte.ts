@@ -30,18 +30,25 @@ import type {
 import type { createPreferenceDraft } from '@inth/sdk/preference-draft';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
 import {
+	getOptOutReceiptData,
 	hasConsentPreferences,
 	hasConsentUI,
 	isSnapshotVendorAllowed,
 	optOutConsentSurface,
 	saveConsentSurface,
+	saveConsentSurfaceWithOptInCheck,
 	showConsentSurface,
 } from '@inth/sdk/surface-actions';
 import {
+	resolveOptOutReceipt,
 	resolveOptOutState,
 	resolveSurfaceTranslations,
 } from '@inth/sdk/surface-state';
-import type { ResolvedOptOutState } from '@inth/sdk/surface-state';
+import type {
+	OptOutReceipt,
+	OptOutReceiptData,
+	ResolvedOptOutState,
+} from '@inth/sdk/surface-state';
 import type { CompleteTranslations } from '@inth/sdk/translations';
 import type { Theme, UIOptions } from '@inth/sdk/ui/theme';
 import { getContext, setContext } from 'svelte';
@@ -172,6 +179,8 @@ export interface ConsentManagerState extends Pick<
 	hasConsentPreferences: boolean;
 	/** Opt-out display state derived from the current snapshot. */
 	readonly optOutState: ResolvedOptOutState;
+	/** Opt-out receipt derived from the current snapshot and local receipt data. */
+	readonly optOutReceipt: OptOutReceipt;
 	legalLinks: ConsentManagerOptions['legalLinks'];
 	/**
 	 * The copy the surfaces render: the active language bundle with English
@@ -260,6 +269,7 @@ export interface ConsentControllerOptions {
 	clearRecords: () => void;
 	setLanguage: (code: string) => void;
 	getSnapshot: () => ConsentSnapshot;
+	getOptOutReceiptData?: () => Readonly<OptOutReceiptData>;
 	getDraft: () => ConsentDraftState;
 	getIAB: () => SvelteIABState | null;
 	getConsentCategories: () => AllConsentNames[];
@@ -401,6 +411,11 @@ const createConsentState = function createConsentState(
 		get optOutState() {
 			return resolveOptOutState(getSnapshotLocal());
 		},
+		get optOutReceipt() {
+			const local =
+				options.getOptOutReceiptData?.() ?? getOptOutReceiptData(getKernel());
+			return resolveOptOutReceipt(getSnapshotLocal(), local);
+		},
 		get privacySignals() {
 			return getSnapshotLocal().privacySignals;
 		},
@@ -444,22 +459,36 @@ const createConsentState = function createConsentState(
 			// choice; see `saveConsentSurface`. The draft follows the record,
 			// so edits staged while the request runs stay staged. A stale
 			// draft rejects before recording and leaves the surface open.
-			const result = await saveConsentSurface(kernel, async () => {
-				if (type === 'custom') {
-					await draft.save(controller.consentCategories);
-					return { ok: true };
-				}
+			if (type !== 'custom') {
 				const input = type === 'all' ? 'all' : 'none';
-				if (draft.saveBulk) {
-					return draft.saveBulk(input);
+				const categories =
+					controller.consentCategories.length > 0
+						? controller.consentCategories
+						: undefined;
+				const result = draft.saveBulk
+					? await draft.saveBulk(input)
+					: await saveConsentSurfaceWithOptInCheck(
+							kernel,
+							input,
+							() => {
+								// No category list: the kernel narrows a bulk choice to its own
+								// choice scope, the categories the draft displays.
+								const pending = kernel.commands.save(input);
+								// A bulk choice supersedes every staged edit, even one that
+								// records nothing new.
+								draft.reset();
+								return pending;
+							},
+							{ categories }
+						);
+				if (!result.ok) {
+					throw new Error('Unable to save preferences.');
 				}
-				// No category list: the kernel narrows a bulk choice to its own
-				// choice scope, the categories the draft displays.
-				const pending = kernel.commands.save(input);
-				// A bulk choice supersedes every staged edit, even one that
-				// records nothing new.
-				draft.reset();
-				return pending;
+				return;
+			}
+			const result = await saveConsentSurface(kernel, async () => {
+				await draft.save(controller.consentCategories);
+				return { ok: true };
 			});
 			if (!result.ok) {
 				throw new Error('Unable to save preferences.');

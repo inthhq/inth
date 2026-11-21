@@ -5,6 +5,7 @@
 		ConsentDialog,
 		ConsentDialogLink,
 		ConsentDialogTrigger,
+		ConsentWidget,
 		InthProvider,
 		OptOutConfirmation,
 	} from '../../lib/index';
@@ -16,6 +17,8 @@
 		capture,
 		showBanner = true,
 		showDialog = true,
+		dialogOpen = undefined,
+		showWidget = false,
 		showLink = false,
 		showTrigger = false,
 		showStandaloneConfirmation = false,
@@ -24,6 +27,8 @@
 		capture: (context: ConsentContextValue) => void;
 		showBanner?: boolean;
 		showDialog?: boolean;
+		dialogOpen?: boolean;
+		showWidget?: boolean;
 		showLink?: boolean;
 		showTrigger?: boolean;
 		showStandaloneConfirmation?: boolean;
@@ -36,7 +41,13 @@
 		<ConsentBanner disableAnimation />
 	{/if}
 	{#if showDialog}
-		<ConsentDialog disableAnimation />
+		<ConsentDialog
+			disableAnimation
+			open={dialogOpen}
+		/>
+	{/if}
+	{#if showWidget}
+		<ConsentWidget />
 	{/if}
 	{#if showLink}
 		<ConsentDialogLink right="opt-out" />

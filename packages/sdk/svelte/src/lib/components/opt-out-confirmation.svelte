@@ -9,6 +9,7 @@
 	import {
 		resolveOptOutCopy,
 		resolveOptOutLink,
+		resolveOptOutReceiptSentence,
 		resolvePreferenceControlLabels,
 	} from '@inth/sdk/surface-state';
 	import { isDialogDismissKey, onDialogDismiss } from '@inth/sdk/ui/primitives';
@@ -25,6 +26,7 @@
 	import { DIALOG_SHEETS } from '../dialog-sheets';
 	import { useOptOutConfirmationState } from '../opt-out-confirmation-state.svelte';
 	import { Dialog, Portal } from '../primitives';
+	import OptOutReceiptDetails from './opt-out-receipt-details.svelte';
 	import SurfaceStyles from './surface-styles.svelte';
 
 	const {
@@ -66,10 +68,13 @@
 	const textDirection = $derived(
 		getTextDirection(consent.state.translations?.language)
 	);
-	const language = $derived(consent.state.translations?.language);
+	const language = $derived(consent.state.translations?.language ?? 'en');
 	const optOutCopy = $derived(resolveOptOutCopy(translations));
 	const optOutLink = $derived(
 		resolveOptOutLink(translations, consent.state.presentation?.optOutLink)
+	);
+	const receiptSentence = $derived(
+		resolveOptOutReceiptSentence(translations, consent.state.optOutReceipt)
 	);
 	const controls = $derived(resolvePreferenceControlLabels(translations));
 	const statusText = $derived(
@@ -332,8 +337,9 @@
 						data-testid="opt-out-confirmation-description"
 						id="opt-out-confirmation-description"
 					>
-						{optOutCopy.description}
+						{receiptSentence}
 					</p>
+					<OptOutReceiptDetails {noStyle} />
 					<div
 						class={footerStyle.className || ''}
 						style={toStyleAttributeValue(footerStyle.style)}

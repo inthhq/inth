@@ -27,7 +27,15 @@
 		ConsentProviderRuntime,
 		ConsentRuntime,
 	} from '@inth/sdk/runtime/provider';
+	import {
+		getOptOutReceiptData,
+		getServerOptOutReceiptData,
+		saveConsentSurface,
+		saveConsentSurfaceWithOptInCheck,
+		subscribeOptOutReceiptData,
+	} from '@inth/sdk/surface-actions';
 	import { iabSurfaceActions } from '@inth/sdk/surface-state';
+	import type { OptOutReceiptData } from '@inth/sdk/surface-state';
 	import { warnOnUnappliedThemeTokens } from '@inth/sdk/ui/theme';
 	import {
 		prefersReducedMotion,
@@ -100,6 +108,11 @@
 	const initialKernel = runtime.kernel;
 	let kernel = $state.raw<ConsentKernel>(initialKernel);
 	let snapshot = $state<ConsentSnapshot>(initialKernel.getSnapshot());
+	let optOutReceiptData = $state.raw<Readonly<OptOutReceiptData>>(
+		BROWSER
+			? getOptOutReceiptData(initialKernel)
+			: getServerOptOutReceiptData(initialKernel)
+	);
 
 	/** Presentation defaults of the arm this visitor runs. */
 	const draftDefaults = () =>
@@ -230,10 +243,23 @@
 		},
 		saveBulk(input) {
 			if (preferenceDraft) {
-				return preferenceDraft.save({ input });
+				return saveConsentSurface(kernel, () =>
+					(preferenceDraft as PreferenceDraft).save({ input })
+				);
 			}
-			waiting = [];
-			return kernel.commands.save(input);
+			const categories =
+				runtime.consentCategories.length > 0
+					? runtime.consentCategories
+					: undefined;
+			return saveConsentSurfaceWithOptInCheck(
+				kernel,
+				input,
+				() => {
+					waiting = [];
+					return kernel.commands.save(input);
+				},
+				{ categories }
+			);
 		},
 		set(name, value) {
 			withDraft((current) => current.set(name, value));
@@ -289,6 +315,7 @@
 		getExperiment: () => experiment,
 		getIAB: getIABState,
 		getLegalLinks: () => options.legalLinks,
+		getOptOutReceiptData: () => optOutReceiptData,
 		getPresentation: () => options.presentation,
 		getSnapshot: () => snapshot,
 		getTheme: () => options.theme,
@@ -300,6 +327,12 @@
 	let unsubscribe = initialKernel.subscribe((next) => {
 		snapshot = next;
 	});
+	let unsubscribeOptOutReceipt = subscribeOptOutReceiptData(
+		initialKernel,
+		() => {
+			optOutReceiptData = getOptOutReceiptData(kernel);
+		}
+	);
 
 	// IAB is opt-in. Without `iab` no CMP answers for an `iab` policy, and
 	// the standard banner does not handle it, so the visitor would get no
@@ -326,11 +359,16 @@
 			return;
 		}
 		unsubscribe();
+		unsubscribeOptOutReceipt();
 		({ kernel } = ownedRuntime);
 		snapshot = kernel.getSnapshot();
+		optOutReceiptData = getOptOutReceiptData(kernel);
 		followDraft(kernel);
 		unsubscribe = kernel.subscribe((next) => {
 			snapshot = next;
+		});
+		unsubscribeOptOutReceipt = subscribeOptOutReceiptData(kernel, () => {
+			optOutReceiptData = getOptOutReceiptData(kernel);
 		});
 	});
 
@@ -340,6 +378,7 @@
 		}
 		runtime.start();
 		snapshot = kernel.getSnapshot();
+		optOutReceiptData = getOptOutReceiptData(kernel);
 		return () => {
 			// Drop the IAB listener first: disposing the runtime emits a
 			// final `null` and this component is already tearing down.
@@ -433,6 +472,7 @@
 
 	onDestroy(() => {
 		unsubscribe();
+		unsubscribeOptOutReceipt();
 		unsubscribeIAB();
 		unsubscribeRuntime?.();
 		stopDraft();

@@ -39,6 +39,7 @@
 
 	import { getConsentContext } from '../context.svelte';
 	import { registerDialogWarmer } from '../dialog-warming';
+	import DeferredOptInConfirmation from './deferred-opt-in-confirmation.svelte';
 	import DeferredOptOutConfirmation from './deferred-opt-out-confirmation.svelte';
 	import type { ConsentDialogProps } from './panel-props';
 
@@ -130,6 +131,10 @@
 
 <DeferredOptOutConfirmation
 	embedded
+	noStyle={props.noStyle}
+	disableAnimation={props.disableAnimation}
+/>
+<DeferredOptInConfirmation
 	noStyle={props.noStyle}
 	disableAnimation={props.disableAnimation}
 />
