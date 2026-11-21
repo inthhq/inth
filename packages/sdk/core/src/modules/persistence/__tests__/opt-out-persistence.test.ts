@@ -775,4 +775,90 @@ describe('opt-out persistence lifecycle', () => {
 		thirdPersistence.dispose();
 		third.dispose();
 	});
+
+	it('does not copy a stored gpcReported mark onto a different seeded opt-out when skipHydration is true', async () => {
+		const storedRecord: StoredOptOutRecord = {
+			gpcReported: true,
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW - 2000,
+			rights: ['sale', 'share'],
+			subject: { subjectId: 'sub_gpc_seed' },
+			version: 1,
+		};
+
+		const runSeeded = async (seededOptOut: {
+			heldBy: 'device' | 'person' | 'both';
+			method: 'button' | 'gpc' | 'api' | 'propagated';
+			recordedAt: number;
+			rights: ('sale' | 'share' | 'targeted_ads')[];
+		}) => {
+			clearAll();
+			expect(writeStoredOptOutRecord(storedRecord, undefined, NOW).ok).toBe(
+				true
+			);
+			const optOut = vi.fn((payload: { method: string; subjectId: string }) =>
+				Promise.resolve({
+					ok: true,
+					optOut: seededOptOut,
+					subjectId: payload.subjectId,
+				})
+			);
+			const kernel = createConsentKernel({
+				initialLocation: { countryCode: 'US', regionCode: 'CA' },
+				initialPolicyResolution: usOptOutResolution(),
+				initialPrivacySignals: { gpc: true },
+				initialRecords: {
+					now: NOW,
+					optOut: seededOptOut,
+					subject: { subjectId: 'sub_gpc_seed' },
+				},
+				now: NOW,
+				transport: { optOut },
+			});
+			const persistence = createPersistence({ kernel, skipHydration: true });
+			await kernel.commands.init();
+			await flushWrites();
+			return {
+				dispose: () => {
+					persistence.dispose();
+					kernel.dispose();
+				},
+				kernel,
+				optOut,
+			};
+		};
+
+		// Newer seeded record must not inherit the older stored record's mark.
+		const newer = await runSeeded({
+			heldBy: 'person',
+			method: 'api',
+			recordedAt: NOW - 500,
+			rights: ['sale', 'share'],
+		});
+		expect(newer.optOut).toHaveBeenCalledTimes(1);
+		expect(newer.optOut.mock.calls[0]?.[0].method).toBe('gpc');
+		newer.dispose();
+
+		// Same timestamp but different record fields must not inherit the mark.
+		const sameTimeDifferent = await runSeeded({
+			heldBy: 'person',
+			method: 'propagated',
+			recordedAt: NOW - 2000,
+			rights: ['sale', 'share'],
+		});
+		expect(sameTimeDifferent.optOut).toHaveBeenCalledTimes(1);
+		expect(sameTimeDifferent.optOut.mock.calls[0]?.[0].method).toBe('gpc');
+		sameTimeDifferent.dispose();
+
+		// Identical seeded record keeps the stored mark and sends no duplicate report.
+		const identical = await runSeeded({
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW - 2000,
+			rights: ['sale', 'share'],
+		});
+		expect(identical.optOut).not.toHaveBeenCalled();
+		identical.dispose();
+	});
 });

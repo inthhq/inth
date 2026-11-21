@@ -108,6 +108,20 @@ const sameSubject = function sameSubject(
 	);
 };
 
+/** Whether two opt-out records carry the same fields and rights. */
+const sameOptOut = function sameOptOut(
+	left: NonNullable<ConsentSnapshot['optOut']>,
+	right: NonNullable<ConsentSnapshot['optOut']>
+): boolean {
+	return (
+		left.heldBy === right.heldBy &&
+		left.method === right.method &&
+		left.recordedAt === right.recordedAt &&
+		left.rights.length === right.rights.length &&
+		left.rights.every((entry, index) => entry === right.rights[index])
+	);
+};
+
 /** The complete subject a storage read's records carry, `null` for none. */
 const recordedSubjectOf = function recordedSubjectOf(
 	read: StoredRecords | null | undefined
@@ -694,7 +708,8 @@ export const mountPersistence = function mountPersistence(
 			keptOptOut !== null &&
 			records.optOut &&
 			records.optOutGpcReported === true &&
-			!kernel.isOptOutGpcReported()
+			!kernel.isOptOutGpcReported() &&
+			sameOptOut(keptOptOut, records.optOut)
 		) {
 			patch.optOutGpcReported = true;
 		}
