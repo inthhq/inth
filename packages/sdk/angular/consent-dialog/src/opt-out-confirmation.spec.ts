@@ -141,6 +141,13 @@ afterEach(() => {
 	host[EARLY_TAPS_WINDOW_KEY]?.stop?.();
 	Reflect.deleteProperty(window, EARLY_TAPS_WINDOW_KEY);
 	reload.mockClear();
+	localStorage.clear();
+	for (const entry of document.cookie.split(';')) {
+		const name = entry.split('=')[0]?.trim();
+		if (name) {
+			document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+		}
+	}
 	sessionStorage.clear();
 });
 
@@ -457,6 +464,7 @@ describe('one-step opt-out and confirmation view in Angular', () => {
 		const onBeforeReload = vi.fn();
 		const first = await boot(BannerDialogHost, {
 			callbacks: { onBeforeConsentRevocationReload: onBeforeReload },
+			persistence: true,
 			reloadOnConsentRevoked: true,
 		});
 
@@ -481,6 +489,7 @@ describe('one-step opt-out and confirmation view in Angular', () => {
 		// Next load after reload: opens once with the honored status, clears the
 		// marker, records nothing again, and does not reload again.
 		const second = await boot(BannerDialogHost, {
+			persistence: true,
 			prefetch: {
 				initialRecords: { optOut: recorded ?? undefined },
 			},
@@ -507,6 +516,7 @@ describe('one-step opt-out and confirmation view in Angular', () => {
 
 		// Load after that: marker is cleared, so confirmation does not reopen.
 		const third = await boot(BannerDialogHost, {
+			persistence: true,
 			prefetch: {
 				initialRecords: { optOut: recorded ?? undefined },
 			},

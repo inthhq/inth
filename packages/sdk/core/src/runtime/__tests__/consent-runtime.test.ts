@@ -8,12 +8,22 @@ import { baseTranslations } from '@inth/sdk-translations/all';
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import {
+	matchedResolution,
+	optOutRule,
+} from '../../__tests__/fixtures/kernel-fixtures';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { createIframeBlocker } from '../../modules/iframe-blocker';
 import { createNetworkBlocker } from '../../modules/network-blocker';
 import { holdNetworkRequests } from '../../modules/network-blocker/hold';
 import { createPersistence } from '../../modules/persistence';
 import { createScriptLoader } from '../../modules/script-loader';
+import {
+	closeOptOutConfirmation,
+	isOptOutConfirmationOpen,
+	optOutConsentSurface,
+} from '../../surface-actions/opt-out';
+import { hasPendingOptOutConfirmation } from '../../surface-actions/opt-out-reload';
 import { testing } from '../../testing';
 import { resolveLocalTranslations } from '../../translations';
 import type { KernelTransport } from '../../types';
@@ -1173,8 +1183,17 @@ describe('the runtime network hold', () => {
 });
 
 describe('revocation reload', () => {
+	const OPT_OUT_PREFETCH = {
+		initialPolicyResolution: matchedResolution(
+			optOutRule({
+				categories: ['marketing', 'measurement'],
+				prompt: 'notice',
+			})
+		),
+	};
+
 	const revoke = async function revoke(
-		options: { reloadOnConsentRevoked?: boolean } = {}
+		options: { persistence?: boolean; reloadOnConsentRevoked?: boolean } = {}
 	) {
 		vi.useFakeTimers();
 		const reload = vi.fn();
@@ -1212,6 +1231,135 @@ describe('revocation reload', () => {
 		});
 		expect(onBeforeConsentRevocationReload).not.toHaveBeenCalled();
 		expect(reload).not.toHaveBeenCalled();
+	});
+
+	test('skips reload on explicit revocation when persistence is false', async () => {
+		const { onBeforeConsentRevocationReload, reload } = await revoke({
+			persistence: false,
+		});
+		expect(onBeforeConsentRevocationReload).not.toHaveBeenCalled();
+		expect(reload).not.toHaveBeenCalled();
+	});
+
+	test('skips reload and opens confirmation on one-click opt-out when persistence is false', async () => {
+		vi.useFakeTimers();
+		const reload = vi.fn();
+		vi.spyOn(window, 'location', 'get').mockReturnValue({
+			reload,
+		} as unknown as Location);
+		const onBeforeConsentRevocationReload = vi.fn();
+		const runtime = createConsentRuntime({
+			callbacks: { onBeforeConsentRevocationReload },
+			consentCategories: ['necessary', 'marketing', 'measurement'],
+			mode: transportMode(createTransport()),
+			persistence: false,
+			prefetch: OPT_OUT_PREFETCH,
+		});
+		try {
+			runtime.start();
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				true
+			);
+			const optingOut = optOutConsentSurface(runtime.kernel);
+			await vi.advanceTimersByTimeAsync(10);
+			await optingOut;
+			await vi.advanceTimersByTimeAsync(10);
+
+			expect(reload).not.toHaveBeenCalled();
+			expect(onBeforeConsentRevocationReload).not.toHaveBeenCalled();
+			expect(runtime.kernel.getSnapshot().optOut).not.toBeNull();
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				false
+			);
+			expect(isOptOutConfirmationOpen(runtime.kernel)).toBe(true);
+			expect(hasPendingOptOutConfirmation()).toBe(false);
+		} finally {
+			closeOptOutConfirmation(runtime.kernel);
+			runtime.dispose();
+			sessionStorage.clear();
+			vi.useRealTimers();
+		}
+	});
+
+	test('tells a running script to stop and skips reload on a save that turns its category off when persistence is false', async () => {
+		vi.useFakeTimers();
+		const reload = vi.fn();
+		vi.spyOn(window, 'location', 'get').mockReturnValue({
+			reload,
+		} as unknown as Location);
+		const onLoad = vi.fn();
+		const onConsentChange = vi.fn();
+		const runtime = createConsentRuntime({
+			consentCategories: ['necessary', 'marketing', 'measurement'],
+			mode: transportMode(createTransport()),
+			persistence: false,
+			prefetch: OPT_OUT_PREFETCH,
+			scripts: [
+				{
+					callbackOnly: true,
+					category: 'marketing',
+					id: 'ads',
+					onConsentChange,
+					onLoad,
+				},
+			],
+		});
+		try {
+			runtime.start();
+			await vi.advanceTimersByTimeAsync(10);
+			expect(onLoad).toHaveBeenCalledOnce();
+
+			const saving = runtime.kernel.commands.save({ marketing: false });
+			await vi.advanceTimersByTimeAsync(10);
+			await saving;
+			await vi.advanceTimersByTimeAsync(2000);
+
+			expect(onConsentChange).toHaveBeenLastCalledWith(
+				expect.objectContaining({ hasConsent: false })
+			);
+			expect(reload).not.toHaveBeenCalled();
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				false
+			);
+		} finally {
+			runtime.dispose();
+			vi.useRealTimers();
+		}
+	});
+
+	test('skips reload on reject under an opt-out policy when persistence is false', async () => {
+		vi.useFakeTimers();
+		const reload = vi.fn();
+		vi.spyOn(window, 'location', 'get').mockReturnValue({
+			reload,
+		} as unknown as Location);
+		const onBeforeConsentRevocationReload = vi.fn();
+		const runtime = createConsentRuntime({
+			callbacks: { onBeforeConsentRevocationReload },
+			consentCategories: ['necessary', 'marketing', 'measurement'],
+			mode: transportMode(createTransport()),
+			persistence: false,
+			prefetch: OPT_OUT_PREFETCH,
+		});
+		try {
+			runtime.start();
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				true
+			);
+			const saving = runtime.kernel.commands.save('none');
+			await vi.advanceTimersByTimeAsync(10);
+			await saving;
+			await vi.advanceTimersByTimeAsync(10);
+
+			expect(reload).not.toHaveBeenCalled();
+			expect(onBeforeConsentRevocationReload).not.toHaveBeenCalled();
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				false
+			);
+		} finally {
+			runtime.dispose();
+			vi.useRealTimers();
+		}
 	});
 });
 

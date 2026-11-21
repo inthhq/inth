@@ -516,7 +516,6 @@ describe('one-step opt-out and confirmation view in React', () => {
 					consentCategories: ['functionality', 'marketing', 'measurement'],
 					mode: testing(),
 					overrides: { country: 'US', region: 'CA' },
-					persistence: false,
 					prefetch: policyFixture(undefined, noticeRule()),
 				}}
 			>
@@ -551,7 +550,6 @@ describe('one-step opt-out and confirmation view in React', () => {
 					consentCategories: ['functionality', 'marketing', 'measurement'],
 					mode: testing(),
 					overrides: { country: 'US', region: 'CA' },
-					persistence: false,
 					prefetch: {
 						...policyFixture(undefined, noticeRule()),
 						initialRecords: { optOut: recorded ?? undefined },
@@ -583,7 +581,6 @@ describe('one-step opt-out and confirmation view in React', () => {
 					consentCategories: ['functionality', 'marketing', 'measurement'],
 					mode: testing(),
 					overrides: { country: 'US', region: 'CA' },
-					persistence: false,
 					prefetch: {
 						...policyFixture(undefined, noticeRule()),
 						initialRecords: { optOut: recorded ?? undefined },

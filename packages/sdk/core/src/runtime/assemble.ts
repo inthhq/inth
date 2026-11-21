@@ -100,6 +100,8 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 ): AssembledRuntime {
 	const { consentSource } = options;
 	const enabled = options.enabled ?? true;
+	const mountsPersistence = (): boolean =>
+		enabled && !consentSource && options.persistence !== false;
 	const experiment = hostExperiment(options.experiment, options.prefetch);
 	const journey = createJourneyController({
 		// A server state that says the page has no journey wins.
@@ -149,7 +151,9 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 		modules.watchRevocationReload({
 			getOnBeforeReload: () =>
 				options.callbacks?.onBeforeConsentRevocationReload,
-			isEnabled: () => options.reloadOnConsentRevoked !== false,
+			isEnabled: () =>
+				options.reloadOnConsentRevoked !== false &&
+				(mountsPersistence() || Boolean(enabled && consentSource)),
 			kernel,
 		}),
 		// Vendors the backend declares arrive with init. Their categories
@@ -264,7 +268,7 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 			disposers.push(() => windowDebug.dispose());
 
 			const { persistence: persistenceOption } = options;
-			if (enabled && !consentSource && persistenceOption !== false) {
+			if (mountsPersistence()) {
 				const { now, skipHydration, sync } =
 					typeof persistenceOption === 'object' ? persistenceOption : {};
 				const seed = options.prefetch?.initialRecords;
